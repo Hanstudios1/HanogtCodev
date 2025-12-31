@@ -46,6 +46,22 @@ export default function Home() {
       {/* Image Slider Comparison - Replit vs Hanogt */}
       <ImageCarousel />
 
+      {/* Comparison Table Section */}
+      <section className="py-20 bg-zinc-50 dark:bg-zinc-900 flex flex-col items-center">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-3xl font-bold mb-10 text-center px-4"
+        >
+          {t("why_hanogt") || "Neden Hanogt Codev?"}
+        </motion.h2>
+        <div className="w-full px-6">
+          <Comparison />
+        </div>
+      </section>
+
       {/* Features Timeline Section */}
       <Timeline />
 
