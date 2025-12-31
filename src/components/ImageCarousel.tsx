@@ -8,6 +8,7 @@ export default function ImageSliderComparison() {
     const { t } = useI18n();
     const [sliderPosition, setSliderPosition] = useState(50);
     const [isDragging, setIsDragging] = useState(false);
+    const [containerWidth, setContainerWidth] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
 
     const handleMove = (clientX: number) => {
@@ -35,6 +36,18 @@ export default function ImageSliderComparison() {
         return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
     }, []);
 
+    // Update container width on mount and resize
+    useEffect(() => {
+        const updateWidth = () => {
+            if (containerRef.current) {
+                setContainerWidth(containerRef.current.offsetWidth);
+            }
+        };
+        updateWidth();
+        window.addEventListener("resize", updateWidth);
+        return () => window.removeEventListener("resize", updateWidth);
+    }, []);
+
     return (
         <section className="py-20 bg-white dark:bg-zinc-950">
             <div className="max-w-5xl mx-auto px-6">
@@ -58,34 +71,35 @@ export default function ImageSliderComparison() {
                     transition={{ duration: 0.6 }}
                     viewport={{ once: true }}
                     ref={containerRef}
-                    className="relative w-full aspect-video rounded-2xl overflow-hidden cursor-ew-resize border-4 border-zinc-200 dark:border-zinc-800 shadow-2xl"
+                    className="relative w-full aspect-video rounded-2xl overflow-hidden cursor-ew-resize border-4 border-zinc-200 dark:border-zinc-800 shadow-2xl select-none"
                     onMouseMove={handleMouseMove}
                     onTouchMove={handleTouchMove}
                 >
-                    {/* Hanogt Image (Right - Full) */}
+                    {/* Hanogt Image (Right - Full Background) */}
                     <div className="absolute inset-0">
                         <img
                             src="/comparison-hanogt.png"
                             alt="Hanogt Codev"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-left"
                             draggable={false}
                         />
                         {/* Label */}
-                        <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                        <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg z-20">
                             ✓ Hanogt Codev
                         </div>
                     </div>
 
-                    {/* Replit Image (Left - Clipped) */}
+                    {/* Replit Image (Left - Clipped with clip-path) */}
                     <div
-                        className="absolute inset-0 overflow-hidden"
-                        style={{ width: `${sliderPosition}%` }}
+                        className="absolute inset-0"
+                        style={{
+                            clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`
+                        }}
                     >
                         <img
                             src="/comparison-replit.png"
                             alt="Replit.com"
-                            className="w-full h-full object-cover"
-                            style={{ width: containerRef.current?.offsetWidth || "100%" }}
+                            className="w-full h-full object-cover object-left"
                             draggable={false}
                         />
                         {/* Label */}
