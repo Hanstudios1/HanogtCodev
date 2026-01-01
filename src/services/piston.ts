@@ -16,14 +16,19 @@ export const executeCode = async (language: string, source: string): Promise<Exe
     const langMap: Record<string, string> = {
         python: "python",
         javascript: "javascript",
+        typescript: "typescript",
         csharp: "csharp",
-        cpp: "c++", // Piston often uses c++ or cpp, need to check version usually, but generic might work or require specific version
+        cpp: "c++",
         java: "java",
         php: "php",
         go: "go",
         swift: "swift",
+        ruby: "ruby",
+        rust: "rust",
+        kotlin: "kotlin",
         lua: "lua",
-        // HTML is not supported by Piston (it's a runner backend). We handle HTML locally or mock.
+        sql: "sqlite3",
+        // HTML and CSS are not executable - handled separately
     };
 
     const pistonLang = langMap[language];
@@ -39,6 +44,21 @@ export const executeCode = async (language: string, source: string): Promise<Exe
                 },
                 language: "html",
                 version: "5"
+            });
+        });
+    }
+
+    if (language === 'css') {
+        return new Promise(resolve => {
+            resolve({
+                run: {
+                    stdout: "CSS is a styling language and cannot be executed directly. Use it with HTML.",
+                    stderr: "",
+                    code: 0,
+                    output: "CSS Preview Mode"
+                },
+                language: "css",
+                version: "3"
             });
         });
     }

@@ -17,10 +17,20 @@ import { useI18n } from "@/lib/i18n";
 const TEMPLATES: Record<string, string> = {
     python: "def main():\n    print('Hello World from Hanogt!')\n\nif __name__ == '__main__':\n    main()",
     javascript: "console.log('Hello World from Hanogt!');",
-    csharp: "using System;\n\nclass Program {\n    static void Main() {\n        Console.WriteLine('Hello World');\n    }\n}",
+    typescript: "const greeting: string = 'Hello World from Hanogt!';\nconsole.log(greeting);",
+    csharp: "using System;\n\nclass Program {\n    static void Main() {\n        Console.WriteLine(\"Hello World\");\n    }\n}",
     cpp: "#include <iostream>\n\nint main() {\n    std::cout << \"Hello World\";\n    return 0;\n}",
     java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");\n    }\n}",
     html: "<html>\n<body>\n    <h1>Hello World</h1>\n</body>\n</html>",
+    css: "body {\n    background-color: #1a1a1a;\n    color: white;\n    font-family: Arial, sans-serif;\n}",
+    php: "<?php\necho 'Hello World from Hanogt!';\n?>",
+    go: "package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println(\"Hello World from Hanogt!\")\n}",
+    swift: "import Foundation\n\nprint(\"Hello World from Hanogt!\")",
+    ruby: "puts 'Hello World from Hanogt!'",
+    rust: "fn main() {\n    println!(\"Hello World from Hanogt!\");\n}",
+    kotlin: "fun main() {\n    println(\"Hello World from Hanogt!\")\n}",
+    sql: "SELECT 'Hello World from Hanogt!' AS message;",
+    lua: "print('Hello World from Hanogt!')",
     // Fallback
     default: "// Start coding here...",
 };
