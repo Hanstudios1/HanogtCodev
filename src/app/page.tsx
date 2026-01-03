@@ -5,6 +5,7 @@ import Hero from "@/components/Hero";
 import Comparison from "@/components/Comparison";
 import Timeline from "@/components/Timeline";
 import ImageCarousel from "@/components/ImageCarousel";
+import ScrollLines from "@/components/ScrollLines";
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -40,6 +41,9 @@ export default function Home() {
       )}
 
       <Header />
+
+      {/* Animated Scroll Lines */}
+      <ScrollLines />
 
       <Hero />
 
