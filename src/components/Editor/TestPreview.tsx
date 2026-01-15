@@ -1,35 +1,33 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Play, RefreshCw, Maximize2, Minimize2, Smartphone, Monitor } from "lucide-react";
+import { RefreshCw, Maximize2, Minimize2, Smartphone, Monitor, Terminal } from "lucide-react";
 
 interface TestPreviewProps {
     code: string;
     language: string;
     cssCode?: string;
+    output?: string[];  // For non-web languages
 }
 
-export default function TestPreview({ code, language, cssCode }: TestPreviewProps) {
+export default function TestPreview({ code, language, cssCode, output = [] }: TestPreviewProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
     const [key, setKey] = useState(0);
 
-    const isWebContent = ["html", "css", "javascript"].includes(language.toLowerCase());
+    const isWebContent = ["html", "css", "javascript", "typescript"].includes(language.toLowerCase());
 
     const generatePreviewHTML = () => {
         const lang = language.toLowerCase();
 
         if (lang === "html") {
-            // Check if the code already has full HTML structure
             if (code.includes("<html") || code.includes("<!DOCTYPE")) {
-                // Inject CSS if provided
                 if (cssCode) {
                     return code.replace("</head>", `<style>${cssCode}</style></head>`);
                 }
                 return code;
             }
-            // Wrap in basic HTML structure
             return `
 <!DOCTYPE html>
 <html>
@@ -57,17 +55,17 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
     <style>${code}</style>
 </head>
 <body>
-    <div class="preview-container">
+    <div class="preview-container" style="padding: 20px;">
         <h1>CSS Önizleme</h1>
         <p>Bu bir paragraf örneğidir.</p>
         <button>Buton</button>
-        <div class="box">Kutu</div>
+        <div class="box" style="margin-top: 10px; padding: 20px; background: #eee;">Kutu</div>
     </div>
 </body>
 </html>`;
         }
 
-        if (lang === "javascript") {
+        if (lang === "javascript" || lang === "typescript") {
             return `
 <!DOCTYPE html>
 <html>
@@ -75,22 +73,26 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
     <meta charset="UTF-8">
     <style>
         body { font-family: system-ui; padding: 20px; background: #1a1a1a; color: #fff; }
-        #output { background: #2d2d2d; padding: 15px; border-radius: 8px; white-space: pre-wrap; }
+        #output { background: #2d2d2d; padding: 15px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; }
     </style>
 </head>
 <body>
-    <h3>JavaScript Çıktısı:</h3>
+    <h3 style="margin-bottom: 10px;">JavaScript Çıktısı:</h3>
     <div id="output"></div>
     <script>
+        const output = document.getElementById('output');
         const originalLog = console.log;
         console.log = (...args) => {
-            document.getElementById('output').innerHTML += args.join(' ') + '\\n';
+            output.innerHTML += args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ') + '\\n';
             originalLog.apply(console, args);
+        };
+        console.error = (...args) => {
+            output.innerHTML += '<span style="color: #ff6b6b;">Hata: ' + args.join(' ') + '</span>\\n';
         };
         try {
             ${code}
         } catch (e) {
-            document.getElementById('output').innerHTML += 'Hata: ' + e.message;
+            output.innerHTML += '<span style="color: #ff6b6b;">Hata: ' + e.message + '</span>';
         }
     </script>
 </body>
@@ -110,19 +112,40 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
             const blob = new Blob([html], { type: "text/html" });
             iframeRef.current.src = URL.createObjectURL(blob);
         }
-    }, [code, cssCode, key]);
+    }, [code, cssCode, key, isWebContent]);
 
+    // For non-web languages, show the output
     if (!isWebContent) {
         return (
-            <div className="h-full flex flex-col items-center justify-center text-zinc-500 p-4">
-                <div className="text-4xl mb-4">🎮</div>
-                <div className="text-center">
-                    <div className="font-medium mb-2">{language} Önizleme</div>
-                    <div className="text-sm">
-                        Bu dil için canlı önizleme mevcut değil.
-                        <br />
-                        Kodu çalıştırmak için RUN butonunu kullanın.
+            <div className={`h-full flex flex-col ${isFullscreen ? "fixed inset-0 z-50 bg-zinc-900" : ""}`}>
+                {/* Toolbar */}
+                <div className="flex items-center justify-between px-3 py-2 bg-zinc-800 border-b border-zinc-700">
+                    <div className="flex items-center gap-2">
+                        <Terminal className="w-4 h-4 text-zinc-400" />
+                        <span className="text-xs text-zinc-400 font-medium">{language} Çıktısı</span>
                     </div>
+                    <button
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                        className="p-1.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white"
+                    >
+                        {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    </button>
+                </div>
+
+                {/* Output Area */}
+                <div className="flex-1 bg-zinc-900 p-4 overflow-auto font-mono text-sm">
+                    {output.length > 0 ? (
+                        output.map((line, i) => (
+                            <div key={i} className={`${line.startsWith('Error') || line.startsWith('>') ? 'text-yellow-400' : 'text-green-400'}`}>
+                                {line}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-zinc-500 text-center mt-10">
+                            <div className="text-4xl mb-4">🚀</div>
+                            <div>Kodu çalıştırmak için <strong>RUN</strong> butonuna basın</div>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -171,7 +194,7 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
                         ref={iframeRef}
                         key={key}
                         className="w-full h-full border-0"
-                        sandbox="allow-scripts allow-same-origin"
+                        sandbox="allow-scripts"
                         title="Preview"
                     />
                 </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import Sidebar from "@/components/Editor/Sidebar";
 import CodeEditor from "@/components/Editor/CodeEditor";
 import Console from "@/components/Editor/Console";
@@ -295,8 +295,8 @@ function EditorContent() {
         setOpenTabMenuId(null);
     };
 
-    // AI Agent action handler
-    const handleAIAction = (action: {
+    // AI Agent action handler - useCallback to prevent stale closures
+    const handleAIAction = useCallback((action: {
         action: "EDIT_CODE" | "CREATE_TAB" | "DELETE_TAB" | "RENAME_TAB" | "EXPLAIN";
         code?: string;
         tabName?: string;
@@ -304,8 +304,6 @@ function EditorContent() {
         newName?: string;
     }) => {
         console.log("AI Action received:", action);
-        console.log("Active tab:", activeTab);
-        console.log("Active tab ID:", activeTabId);
 
         switch (action.action) {
             case "EDIT_CODE":
@@ -338,12 +336,15 @@ function EditorContent() {
                 break;
 
             case "DELETE_TAB":
-                if (tabs.length > 1) {
-                    const newTabs = tabs.filter(t => t.id !== activeTabId);
-                    setTabs(newTabs);
-                    setActiveTabId(newTabs[0].id);
-                    console.log("Tab deleted");
-                }
+                setTabs(prevTabs => {
+                    if (prevTabs.length > 1) {
+                        const newTabs = prevTabs.filter(t => t.id !== activeTabId);
+                        setActiveTabId(newTabs[0].id);
+                        console.log("Tab deleted");
+                        return newTabs;
+                    }
+                    return prevTabs;
+                });
                 break;
 
             case "RENAME_TAB":
@@ -361,7 +362,7 @@ function EditorContent() {
                 console.log("EXPLAIN action - no code change needed");
                 break;
         }
-    };
+    }, [activeTabId]);
 
     // Update tab code
     const handleCodeChange = (newCode: string) => {
@@ -378,17 +379,13 @@ function EditorContent() {
 
         const lang = activeTab.lang.toLowerCase();
 
-        // For web content (HTML/CSS/JS), switch to Test tab
-        if (["html", "css", "javascript"].includes(lang)) {
+        // For web content (HTML/CSS/JS), just switch to Test tab for live preview
+        if (["html", "css", "javascript", "typescript"].includes(lang)) {
             setOutputTab("test");
-            setTabs(prevTabs => prevTabs.map(t =>
-                t.id === activeTabId
-                    ? { ...t, output: [`> ${lang.toUpperCase()} canlı önizleme için Test sekmesine bakın.`] }
-                    : t
-            ));
             return;
         }
 
+        // For other languages, run via Piston API
         setTabs(prevTabs => prevTabs.map(t =>
             t.id === activeTabId
                 ? { ...t, isRunning: true, output: [] }
@@ -411,12 +408,15 @@ function EditorContent() {
                     }
                     : t
             ));
+            // Switch to Test tab to show output
+            setOutputTab("test");
         } catch (error) {
             setTabs(prevTabs => prevTabs.map(t =>
                 t.id === activeTabId
                     ? { ...t, isRunning: false, output: [`> Execution failed:`, String(error)] }
                     : t
             ));
+            setOutputTab("test");
         }
     };
 
@@ -716,6 +716,7 @@ function EditorContent() {
                                 <TestPreview
                                     code={activeTab?.code || ""}
                                     language={activeTab?.lang || "javascript"}
+                                    output={activeTab?.output || []}
                                 />
                             )}
                         </div>
