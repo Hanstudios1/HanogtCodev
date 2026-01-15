@@ -18,6 +18,8 @@ export const executeCode = async (language: string, source: string): Promise<Exe
         javascript: "javascript",
         typescript: "typescript",
         csharp: "csharp",
+        c: "c",
+        "c++": "c++",
         cpp: "c++",
         java: "java",
         php: "php",

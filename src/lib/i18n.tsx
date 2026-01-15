@@ -91,7 +91,13 @@ const DICTIONARY: Record<Language, Translations> = {
         keep_same_name: "İsmimi Koru",
         rename_tab: "İsmini Değiştir",
         rename_tab_prompt: "Sekme adını girin:",
-        // Timeline features
+        // Console translations
+        output: "Çıktı",
+        terminal: "Terminal",
+        running_script: "Script çalışıyor...",
+        no_output: "Görüntülenecek çıktı yok. Sonuçları görmek için kodunuzu çalıştırın.",
+        preview: "Önizleme",
+        live_preview: "Canlı Önizleme",
         why_features: "Neden",
         features_subtitle: "Modern geliştiriciler için tasarlandı. Her özellik, kodlama deneyiminizi daha iyi hale getirmek için düşünüldü.",
         feature_multi_lang: "Çoklu Dil Desteği",
@@ -257,6 +263,13 @@ const DICTIONARY: Record<Language, Translations> = {
         keep_same_name: "Keep Same Name",
         rename_tab: "Rename Tab",
         rename_tab_prompt: "Enter tab name:",
+        // Console translations
+        output: "Output",
+        terminal: "Terminal",
+        running_script: "Running script...",
+        no_output: "No output to display. Run your code to see results.",
+        preview: "Preview",
+        live_preview: "Live Preview",
         // Timeline features
         why_features: "Why",
         features_subtitle: "Designed for modern developers. Every feature is crafted to enhance your coding experience.",
@@ -438,6 +451,13 @@ const DICTIONARY: Record<Language, Translations> = {
         keep_same_name: "Сохранить имя",
         rename_tab: "Переименовать вкладку",
         rename_tab_prompt: "Введите имя вкладки:",
+        // Console translations
+        output: "Вывод",
+        terminal: "Терминал",
+        running_script: "Выполнение скрипта...",
+        no_output: "Нет данных для отображения. Запустите код.",
+        preview: "Предпросмотр",
+        live_preview: "Live Preview",
         why_features: "Почему",
         features_subtitle: "Создано для современных разработчиков. Каждая функция продумана для улучшения вашего опыта.",
         feature_multi_lang: "Мультиязычность",
