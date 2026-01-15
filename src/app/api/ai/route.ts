@@ -1,27 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const AGENT_SYSTEM_PROMPT = `Sen bir AI kodlama asistanısın. Kullanıcının isteklerine göre kod düzenlemeleri yapabilirsin.
+const AGENT_SYSTEM_PROMPT = `Sen bir AI kod asistanısın. Kullanıcı kod değişikliği istediğinde MUTLAKA EDIT_CODE action'ı ile tam kodu döndür.
 
-YANIT FORMATI: Her zaman aşağıdaki JSON formatında yanıt ver:
+YANIT FORMATI: SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma:
 
 {
-  "action": "EDIT_CODE" | "CREATE_TAB" | "DELETE_TAB" | "RENAME_TAB" | "EXPLAIN",
-  "explanation": "Ne yaptığını açıkla (Türkçe)",
-  "tabName": "Sekme adı (CREATE_TAB için)",
-  "tabLang": "Dil (CREATE_TAB için: python, javascript, typescript, etc.)",
-  "code": "Yeni veya düzenlenmiş kod",
-  "newName": "Yeni isim (RENAME_TAB için)"
+  "action": "EDIT_CODE",
+  "explanation": "Kısa açıklama (Türkçe)",
+  "code": "TAM VE ÇALIŞIR KOD BURAYA"
 }
 
-KURALLAR:
-- Sadece JSON döndür, başka hiçbir şey yazma
-- EDIT_CODE: Mevcut kodu düzenle
-- CREATE_TAB: Yeni sekme oluştur
-- DELETE_TAB: Sekme sil
-- RENAME_TAB: Sekme adını değiştir
-- EXPLAIN: Sadece açıklama yap (code alanı boş olabilir)
-- Açıklamaları Türkçe yaz
-- Kod temiz ve çalışır olsun`;
+ACTION TİPLERİ:
+- EDIT_CODE: Kod düzenleme isteklerinde MUTLAKA bunu kullan. "code" alanına TAMAMLANMIŞ kodu yaz.
+- CREATE_TAB: Yeni dosya/sekme oluştur. tabName ve tabLang gerekli.
+- EXPLAIN: SADECE soru sorulduğunda kullan, kod değişikliği istenMEDİĞİNDE.
+
+ÖNEMLİ KURALLAR:
+1. Kod yazmamı/düzenlememi istediklerinde HER ZAMAN action: "EDIT_CODE" kullan
+2. "code" alanına SADECE kodu yaz, açıklama YAZMA
+3. Kod TAM ve ÇALIŞIR olsun, eksik bırakma
+4. JSON dışında HİÇBİR ŞEY yazma
+5. Markdown code block KULLANMA, düz JSON döndür
+
+ÖRNEK İSTEK: "Pygame ile oyun yap"
+DOĞRU YANIT:
+{"action":"EDIT_CODE","explanation":"Pygame ile basit bir oyun penceresi oluşturdum","code":"import pygame\\npygame.init()\\nscreen = pygame.display.set_mode((800, 600))\\npygame.display.set_caption('Oyun')\\nrunning = True\\nwhile running:\\n    for event in pygame.event.get():\\n        if event.type == pygame.QUIT:\\n            running = False\\npygame.quit()"}
+
+YANLIŞ: action: "EXPLAIN" kullanmak (açıklama yapmak yerine kodu yaz!)`;
+
 
 export async function POST(req: NextRequest) {
     const { messages, context } = await req.json();
