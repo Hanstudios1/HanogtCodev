@@ -288,6 +288,65 @@ function EditorContent() {
         setOpenTabMenuId(null);
     };
 
+    // AI Agent action handler
+    const handleAIAction = (action: {
+        action: "EDIT_CODE" | "CREATE_TAB" | "DELETE_TAB" | "RENAME_TAB" | "EXPLAIN";
+        code?: string;
+        tabName?: string;
+        tabLang?: string;
+        newName?: string;
+    }) => {
+        switch (action.action) {
+            case "EDIT_CODE":
+                if (action.code && activeTab) {
+                    setTabs(tabs.map(t =>
+                        t.id === activeTabId
+                            ? { ...t, code: action.code!, isSaved: false }
+                            : t
+                    ));
+                }
+                break;
+
+            case "CREATE_TAB":
+                if (action.tabName && action.tabLang) {
+                    const newTab: Tab = {
+                        id: `tab-${Date.now()}`,
+                        name: action.tabName,
+                        lang: action.tabLang.toLowerCase(),
+                        code: action.code || TEMPLATES[action.tabLang.toLowerCase()] || TEMPLATES["default"],
+                        output: [],
+                        isRunning: false,
+                        isSaved: false,
+                    };
+                    setTabs([...tabs, newTab]);
+                    setActiveTabId(newTab.id);
+                }
+                break;
+
+            case "DELETE_TAB":
+                if (tabs.length > 1 && activeTab) {
+                    const newTabs = tabs.filter(t => t.id !== activeTabId);
+                    setTabs(newTabs);
+                    setActiveTabId(newTabs[0].id);
+                }
+                break;
+
+            case "RENAME_TAB":
+                if (action.newName && activeTab) {
+                    setTabs(tabs.map(t =>
+                        t.id === activeTabId
+                            ? { ...t, name: action.newName!, isSaved: false }
+                            : t
+                    ));
+                }
+                break;
+
+            case "EXPLAIN":
+                // Just explanation, no action needed
+                break;
+        }
+    };
+
     // Update tab code
     const handleCodeChange = (newCode: string) => {
         setTabs(tabs.map(t =>
@@ -595,8 +654,21 @@ function EditorContent() {
                     </div>
                 </div>
 
-                {/* AI Overlay */}
-                <AIAssistant />
+                {/* AI Agent Overlay */}
+                <AIAssistant
+                    currentCode={activeTab?.code || ""}
+                    currentLang={activeTab?.lang || ""}
+                    currentTabName={activeTab?.name || ""}
+                    allTabs={tabs.map(t => ({ id: t.id, name: t.name, lang: t.lang, code: t.code }))}
+                    onApplyAction={handleAIAction}
+                    onUndoAction={(previousCode: string) => {
+                        if (activeTab) {
+                            setTabs(tabs.map(t =>
+                                t.id === activeTabId ? { ...t, code: previousCode, isSaved: false } : t
+                            ));
+                        }
+                    }}
+                />
             </div>
 
             {/* Language Selection Modal */}
