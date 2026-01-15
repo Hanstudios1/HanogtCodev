@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Sidebar from "@/components/Editor/Sidebar";
 import CodeEditor from "@/components/Editor/CodeEditor";
 import Console from "@/components/Editor/Console";
@@ -88,9 +88,6 @@ function EditorContent() {
 
     // Tab menu state
     const [openTabMenuId, setOpenTabMenuId] = useState<string | null>(null);
-
-    // AI Admin Mode state
-    const [aiAdminMode, setAiAdminMode] = useState(false);
 
     // Output panel tab state (console or test preview)
     const [outputTab, setOutputTab] = useState<"console" | "test">("console");
@@ -295,75 +292,6 @@ function EditorContent() {
         setOpenTabMenuId(null);
     };
 
-    // AI Agent action handler - useCallback to prevent stale closures
-    const handleAIAction = useCallback((action: {
-        action: "EDIT_CODE" | "CREATE_TAB" | "DELETE_TAB" | "RENAME_TAB" | "EXPLAIN";
-        code?: string;
-        tabName?: string;
-        tabLang?: string;
-        newName?: string;
-    }) => {
-        console.log("AI Action received:", action);
-
-        switch (action.action) {
-            case "EDIT_CODE":
-                console.log("EDIT_CODE - code length:", action.code?.length);
-                if (action.code) {
-                    setTabs(prevTabs => prevTabs.map(t =>
-                        t.id === activeTabId
-                            ? { ...t, code: action.code!, isSaved: false }
-                            : t
-                    ));
-                    console.log("Code updated successfully");
-                }
-                break;
-
-            case "CREATE_TAB":
-                if (action.tabName && action.tabLang) {
-                    const newTab: Tab = {
-                        id: `tab-${Date.now()}`,
-                        name: action.tabName,
-                        lang: action.tabLang.toLowerCase(),
-                        code: action.code || TEMPLATES[action.tabLang.toLowerCase()] || TEMPLATES["default"],
-                        output: [],
-                        isRunning: false,
-                        isSaved: false,
-                    };
-                    setTabs(prevTabs => [...prevTabs, newTab]);
-                    setActiveTabId(newTab.id);
-                    console.log("Tab created:", newTab.name);
-                }
-                break;
-
-            case "DELETE_TAB":
-                setTabs(prevTabs => {
-                    if (prevTabs.length > 1) {
-                        const newTabs = prevTabs.filter(t => t.id !== activeTabId);
-                        setActiveTabId(newTabs[0].id);
-                        console.log("Tab deleted");
-                        return newTabs;
-                    }
-                    return prevTabs;
-                });
-                break;
-
-            case "RENAME_TAB":
-                if (action.newName) {
-                    setTabs(prevTabs => prevTabs.map(t =>
-                        t.id === activeTabId
-                            ? { ...t, name: action.newName!, isSaved: false }
-                            : t
-                    ));
-                    console.log("Tab renamed to:", action.newName);
-                }
-                break;
-
-            case "EXPLAIN":
-                console.log("EXPLAIN action - no code change needed");
-                break;
-        }
-    }, [activeTabId]);
-
     // Update tab code
     const handleCodeChange = (newCode: string) => {
         setTabs(tabs.map(t =>
@@ -561,8 +489,6 @@ function EditorContent() {
             <Sidebar
                 onSave={handleSave}
                 onDownload={handleDownload}
-                aiAdminMode={aiAdminMode}
-                onAiAdminModeChange={setAiAdminMode}
             />
 
             {/* Main Content */}
@@ -678,67 +604,66 @@ function EditorContent() {
                         )}
                     </div>
 
-                    {/* Console & Test Area (Right Side) */}
-                    <div className="h-[40%] lg:h-full lg:w-[450px] border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 bg-zinc-900 flex flex-col">
-                        {/* Tab Switcher */}
-                        <div className="flex border-b border-zinc-700">
-                            <button
-                                onClick={() => setOutputTab("console")}
-                                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${outputTab === "console"
-                                    ? "bg-zinc-800 text-white border-b-2 border-blue-500"
-                                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                                    }`}
-                            >
-                                Çıktı
-                            </button>
-                            <button
-                                onClick={() => setOutputTab("test")}
-                                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${outputTab === "test"
-                                    ? "bg-zinc-800 text-white border-b-2 border-green-500"
-                                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                                    }`}
-                            >
-                                Test
-                            </button>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="flex-1 overflow-hidden">
-                            {outputTab === "console" ? (
-                                <div className="h-full p-2 lg:p-4">
-                                    <Console
-                                        output={activeTab?.output || []}
-                                        isRunning={activeTab?.isRunning || false}
-                                        onClear={handleClearOutput}
-                                    />
+                    {/* Console Area (Right Side) */}
+                    <div className="h-[40%] lg:h-full lg:w-[400px] border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 bg-zinc-900 flex flex-col">
+                        {/* Show Test tab only for web languages */}
+                        {["html", "css", "javascript", "typescript"].includes(activeTab?.lang?.toLowerCase() || "") ? (
+                            <>
+                                {/* Tab Switcher */}
+                                <div className="flex border-b border-zinc-700">
+                                    <button
+                                        onClick={() => setOutputTab("console")}
+                                        className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${outputTab === "console"
+                                            ? "bg-zinc-800 text-white border-b-2 border-blue-500"
+                                            : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                                            }`}
+                                    >
+                                        Çıktı
+                                    </button>
+                                    <button
+                                        onClick={() => setOutputTab("test")}
+                                        className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${outputTab === "test"
+                                            ? "bg-zinc-800 text-white border-b-2 border-green-500"
+                                            : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                                            }`}
+                                    >
+                                        Önizleme
+                                    </button>
                                 </div>
-                            ) : (
-                                <TestPreview
-                                    code={activeTab?.code || ""}
-                                    language={activeTab?.lang || "javascript"}
+
+                                {/* Tab Content */}
+                                <div className="flex-1 overflow-hidden">
+                                    {outputTab === "console" ? (
+                                        <div className="h-full p-2 lg:p-4">
+                                            <Console
+                                                output={activeTab?.output || []}
+                                                isRunning={activeTab?.isRunning || false}
+                                                onClear={handleClearOutput}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <TestPreview
+                                            code={activeTab?.code || ""}
+                                            language={activeTab?.lang || "javascript"}
+                                        />
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            /* For non-web languages, just show Console */
+                            <div className="h-full p-2 lg:p-4">
+                                <Console
                                     output={activeTab?.output || []}
+                                    isRunning={activeTab?.isRunning || false}
+                                    onClear={handleClearOutput}
                                 />
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* AI Agent Overlay */}
-                <AIAssistant
-                    currentCode={activeTab?.code || ""}
-                    currentLang={activeTab?.lang || ""}
-                    currentTabName={activeTab?.name || ""}
-                    allTabs={tabs.map(t => ({ id: t.id, name: t.name, lang: t.lang, code: t.code }))}
-                    aiAdminMode={aiAdminMode}
-                    onApplyAction={handleAIAction}
-                    onUndoAction={(previousCode: string) => {
-                        if (activeTab) {
-                            setTabs(prevTabs => prevTabs.map(t =>
-                                t.id === activeTabId ? { ...t, code: previousCode, isSaved: false } : t
-                            ));
-                        }
-                    }}
-                />
+                {/* AI Asistan */}
+                <AIAssistant />
             </div>
 
             {/* Language Selection Modal */}

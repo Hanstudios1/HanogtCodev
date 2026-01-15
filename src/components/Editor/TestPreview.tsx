@@ -1,22 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RefreshCw, Maximize2, Minimize2, Smartphone, Monitor, Terminal } from "lucide-react";
+import { RefreshCw, Maximize2, Minimize2, Smartphone, Monitor } from "lucide-react";
 
 interface TestPreviewProps {
     code: string;
     language: string;
     cssCode?: string;
-    output?: string[];  // For non-web languages
 }
 
-export default function TestPreview({ code, language, cssCode, output = [] }: TestPreviewProps) {
+export default function TestPreview({ code, language, cssCode }: TestPreviewProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
     const [key, setKey] = useState(0);
-
-    const isWebContent = ["html", "css", "javascript", "typescript"].includes(language.toLowerCase());
 
     const generatePreviewHTML = () => {
         const lang = language.toLowerCase();
@@ -73,7 +70,7 @@ export default function TestPreview({ code, language, cssCode, output = [] }: Te
     <meta charset="UTF-8">
     <style>
         body { font-family: system-ui; padding: 20px; background: #1a1a1a; color: #fff; }
-        #output { background: #2d2d2d; padding: 15px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; }
+        #output { background: #2d2d2d; padding: 15px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; min-height: 100px; }
     </style>
 </head>
 <body>
@@ -107,57 +104,20 @@ export default function TestPreview({ code, language, cssCode, output = [] }: Te
     };
 
     useEffect(() => {
-        if (iframeRef.current && isWebContent) {
+        if (iframeRef.current && code) {
             const html = generatePreviewHTML();
             const blob = new Blob([html], { type: "text/html" });
             iframeRef.current.src = URL.createObjectURL(blob);
         }
-    }, [code, cssCode, key, isWebContent]);
-
-    // For non-web languages, show the output
-    if (!isWebContent) {
-        return (
-            <div className={`h-full flex flex-col ${isFullscreen ? "fixed inset-0 z-50 bg-zinc-900" : ""}`}>
-                {/* Toolbar */}
-                <div className="flex items-center justify-between px-3 py-2 bg-zinc-800 border-b border-zinc-700">
-                    <div className="flex items-center gap-2">
-                        <Terminal className="w-4 h-4 text-zinc-400" />
-                        <span className="text-xs text-zinc-400 font-medium">{language} Çıktısı</span>
-                    </div>
-                    <button
-                        onClick={() => setIsFullscreen(!isFullscreen)}
-                        className="p-1.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white"
-                    >
-                        {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                    </button>
-                </div>
-
-                {/* Output Area */}
-                <div className="flex-1 bg-zinc-900 p-4 overflow-auto font-mono text-sm">
-                    {output.length > 0 ? (
-                        output.map((line, i) => (
-                            <div key={i} className={`${line.startsWith('Error') || line.startsWith('>') ? 'text-yellow-400' : 'text-green-400'}`}>
-                                {line}
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-zinc-500 text-center mt-10">
-                            <div className="text-4xl mb-4">🚀</div>
-                            <div>Kodu çalıştırmak için <strong>RUN</strong> butonuna basın</div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    }
+    }, [code, cssCode, key, language]);
 
     return (
         <div className={`h-full flex flex-col ${isFullscreen ? "fixed inset-0 z-50 bg-zinc-900" : ""}`}>
             {/* Toolbar */}
             <div className="flex items-center justify-between px-3 py-2 bg-zinc-800 border-b border-zinc-700">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-400 font-medium">Test Önizleme</span>
-                    <span className="text-xs px-2 py-0.5 bg-green-600 text-white rounded">CANLI</span>
+                    <span className="text-xs text-zinc-400 font-medium">Canlı Önizleme</span>
+                    <span className="text-xs px-2 py-0.5 bg-green-600 text-white rounded">LIVE</span>
                 </div>
                 <div className="flex items-center gap-1">
                     <button
