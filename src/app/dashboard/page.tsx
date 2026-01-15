@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Code, FileCode, Clock, MoreVertical, Download, Trash2, FolderOpen } from "lucide-react";
+import { Plus, Code, FileCode, Clock, MoreVertical, Download, Trash2, FolderOpen, Pencil } from "lucide-react";
 import Header from "@/components/Header";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
 import DeleteProjectModal from "@/components/DeleteProjectModal";
 import { useSession } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
-import { getProjects, getProjectsFromCloud, deleteProjectFromCloud, deleteProject } from "@/lib/storage";
+import { getProjects, getProjectsFromCloud, deleteProjectFromCloud, deleteProject, renameProject } from "@/lib/storage";
 
 const LANGUAGES = [
     { name: "Python", ext: "py", color: "bg-blue-500", version: "3.12.0", logo: "/languages/python.png" },
@@ -143,6 +143,23 @@ export default function DashboardPage() {
         setProjectToDelete(null);
     };
 
+    const handleRenameProject = async (project: any) => {
+        const newName = prompt(t("rename_project_prompt") || "Yeni proje ismi girin:", project.name);
+        if (!newName || newName === project.name) {
+            setOpenMenuId(null);
+            return;
+        }
+
+        if (session?.user?.email) {
+            await renameProject(session.user.email, project.id, newName);
+            // Update local state
+            setProjects(projects.map(p =>
+                p.id === project.id ? { ...p, name: newName } : p
+            ));
+        }
+        setOpenMenuId(null);
+    };
+
     const openDeleteModal = (project: any) => {
         const skipConfirm = localStorage.getItem("hanogt_skip_delete_confirm");
         if (skipConfirm === "true") {
@@ -253,6 +270,16 @@ export default function DashboardPage() {
                                                     >
                                                         <Download className="w-4 h-4" />
                                                         {t("download_project") || "Projeyi İndir"}
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRenameProject(p);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                        {t("rename_project") || "İsmini Değiştir"}
                                                     </button>
                                                     <button
                                                         onClick={(e) => {

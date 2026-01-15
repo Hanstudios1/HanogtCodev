@@ -79,6 +79,13 @@ function EditorContent() {
     const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
     const [currentProjectName, setCurrentProjectName] = useState<string>("");
 
+    // Save modal state
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [saveModalDefaultName, setSaveModalDefaultName] = useState("");
+    const [saveModalInputName, setSaveModalInputName] = useState("");
+    const [pendingSaveCallback, setPendingSaveCallback] = useState<((name: string | null) => void) | null>(null);
+
+
     // Initialize first tab
     useEffect(() => {
         const loadProject = async () => {
@@ -307,45 +314,12 @@ function EditorContent() {
     // Track if project was originally single-tab
     const [wasOriginallyMultiTab, setWasOriginallyMultiTab] = useState<boolean | null>(null);
 
-    // Save project
-    const handleSave = () => {
-        if (!session?.user?.email) {
-            alert(t("please_login_first") || "Lütfen önce giriş yapın!");
-            return;
-        }
+    // Complete save with given name
+    const completeSave = (projectName: string, projectIdToUse: number | null) => {
+        if (!session?.user?.email) return;
 
-        let projectName = currentProjectName;
-        let projectIdToUse = currentProjectId;
-        const isNowMultiTab = tabs.length > 1;
-
-        // Ask for name if: new project OR single-tab became multi-tab
-        const shouldAskName = !projectIdToUse || (wasOriginallyMultiTab === false && isNowMultiTab);
-
-        if (shouldAskName) {
-            let defaultName: string;
-            if (isNowMultiTab) {
-                // Multiple tabs - default to "Genel Projem"
-                defaultName = t("general_project") || "Genel Projem";
-            } else {
-                // Single tab - default to language name
-                defaultName = `${t("my_lang_project_prefix") || "Benim"} ${activeTab?.lang.charAt(0).toUpperCase()}${activeTab?.lang.slice(1)} ${t("my_lang_project_suffix") || "Projem"}`;
-            }
-
-            const name = prompt(t("give_project_name") || "Projenize bir isim verin:", defaultName);
-            if (!name) return;
-            projectName = name;
-
-            if (!projectIdToUse) {
-                projectIdToUse = Date.now();
-            }
-            setCurrentProjectId(projectIdToUse);
-            setCurrentProjectName(projectName);
-        }
-
-        // Ensure we have a valid project ID
         const finalProjectId = projectIdToUse || Date.now();
 
-        // Save project with all tabs
         const projectData = {
             id: finalProjectId,
             name: projectName,
@@ -356,17 +330,51 @@ function EditorContent() {
         };
 
         saveProject(session.user.email, projectData);
-
-        // Update tracking
-        setWasOriginallyMultiTab(isNowMultiTab);
-
-        // Mark all tabs as saved
+        setWasOriginallyMultiTab(tabs.length > 1);
         setTabs(tabs.map(t => ({ ...t, isSaved: true })));
-
-        // Clear unsaved tabs from localStorage
         localStorage.removeItem("hanogt_unsaved_tabs");
-
+        setCurrentProjectId(finalProjectId);
+        setCurrentProjectName(projectName);
         alert(t("project_saved") || "Proje başarıyla kaydedildi! Dashboard'da görebilirsiniz.");
+    };
+
+    // Save project
+    const handleSave = () => {
+        if (!session?.user?.email) {
+            alert(t("please_login_first") || "Lütfen önce giriş yapın!");
+            return;
+        }
+
+        const isNowMultiTab = tabs.length > 1;
+        const isConvertingToMultiTab = wasOriginallyMultiTab === false && isNowMultiTab;
+
+        // Ask for name if: new project OR single-tab became multi-tab
+        const shouldAskName = !currentProjectId || isConvertingToMultiTab;
+
+        if (shouldAskName) {
+            let defaultName: string;
+            if (isNowMultiTab) {
+                defaultName = t("general_project") || "Genel Projem";
+            } else {
+                defaultName = `${t("my_lang_project_prefix") || "Benim"} ${activeTab?.lang.charAt(0).toUpperCase()}${activeTab?.lang.slice(1)} ${t("my_lang_project_suffix") || "Projem"}`;
+            }
+
+            // Show custom modal
+            setSaveModalDefaultName(defaultName);
+            setSaveModalInputName(isConvertingToMultiTab ? currentProjectName : defaultName);
+            setShowSaveModal(true);
+            return;
+        }
+
+        // Direct save without asking name
+        completeSave(currentProjectName, currentProjectId);
+    };
+
+    // Handle save modal confirm
+    const handleSaveModalConfirm = (keepSameName: boolean) => {
+        const nameToUse = keepSameName ? currentProjectName : saveModalInputName;
+        setShowSaveModal(false);
+        completeSave(nameToUse, currentProjectId);
     };
 
     // Download
@@ -573,6 +581,48 @@ function EditorContent() {
                                     <span className="font-semibold text-zinc-700 dark:text-zinc-200">{lang.name}</span>
                                 </button>
                             ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Save Name Modal */}
+            {showSaveModal && (
+                <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-zinc-200 dark:border-zinc-800">
+                        <h2 className="text-xl font-bold mb-4">{t("give_project_name") || "Projenize bir isim verin"}</h2>
+
+                        <input
+                            type="text"
+                            value={saveModalInputName}
+                            onChange={(e) => setSaveModalInputName(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder={saveModalDefaultName}
+                            autoFocus
+                        />
+
+                        <div className="flex flex-col gap-2">
+                            {currentProjectName && (
+                                <button
+                                    onClick={() => handleSaveModalConfirm(true)}
+                                    className="w-full px-4 py-3 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white rounded-xl font-medium transition-colors"
+                                >
+                                    {t("keep_same_name") || "İsmimi Koru"} ({currentProjectName})
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handleSaveModalConfirm(false)}
+                                disabled={!saveModalInputName.trim()}
+                                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-xl font-bold transition-colors"
+                            >
+                                {t("save") || "Kaydet"}
+                            </button>
+                            <button
+                                onClick={() => setShowSaveModal(false)}
+                                className="w-full px-4 py-2 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                            >
+                                {t("cancel") || "Vazgeç"}
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -120,3 +120,25 @@ export const deleteProject = (email: string, id: number) => {
     // Also delete from cloud
     deleteProjectFromCloud(String(id));
 };
+
+// Rename project
+export const renameProject = async (email: string, id: number | string, newName: string) => {
+    // Update in localStorage
+    const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const index = all.findIndex(p => p.email === email && String(p.id) === String(id));
+
+    if (index >= 0) {
+        all[index].name = newName;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    }
+
+    // Update in cloud
+    try {
+        const projectRef = doc(db, COLLECTION_NAME, String(id));
+        await setDoc(projectRef, { name: newName }, { merge: true });
+        return true;
+    } catch (error) {
+        console.error("Error renaming project:", error);
+        return false;
+    }
+};
