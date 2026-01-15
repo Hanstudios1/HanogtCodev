@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import Sidebar from "@/components/Editor/Sidebar";
 import CodeEditor from "@/components/Editor/CodeEditor";
 import Console from "@/components/Editor/Console";
+import TestPreview from "@/components/Editor/TestPreview";
 import AIAssistant from "@/components/Editor/AIAssistant";
 import { Play, Plus, X, MoreVertical, Pencil } from "lucide-react";
 import { executeCode } from "@/services/piston";
@@ -87,6 +88,12 @@ function EditorContent() {
 
     // Tab menu state
     const [openTabMenuId, setOpenTabMenuId] = useState<string | null>(null);
+
+    // AI Admin Mode state
+    const [aiAdminMode, setAiAdminMode] = useState(false);
+
+    // Output panel tab state (console or test preview)
+    const [outputTab, setOutputTab] = useState<"console" | "test">("console");
 
     // Initialize first tab
     useEffect(() => {
@@ -369,7 +376,20 @@ function EditorContent() {
     const handleRun = async () => {
         if (!activeTab) return;
 
-        setTabs(tabs.map(t =>
+        const lang = activeTab.lang.toLowerCase();
+
+        // For web content (HTML/CSS/JS), switch to Test tab
+        if (["html", "css", "javascript"].includes(lang)) {
+            setOutputTab("test");
+            setTabs(prevTabs => prevTabs.map(t =>
+                t.id === activeTabId
+                    ? { ...t, output: [`> ${lang.toUpperCase()} canlı önizleme için Test sekmesine bakın.`] }
+                    : t
+            ));
+            return;
+        }
+
+        setTabs(prevTabs => prevTabs.map(t =>
             t.id === activeTabId
                 ? { ...t, isRunning: true, output: [] }
                 : t
@@ -377,7 +397,7 @@ function EditorContent() {
 
         try {
             const result = await executeCode(activeTab.lang, activeTab.code);
-            setTabs(tabs.map(t =>
+            setTabs(prevTabs => prevTabs.map(t =>
                 t.id === activeTabId
                     ? {
                         ...t,
@@ -392,7 +412,7 @@ function EditorContent() {
                     : t
             ));
         } catch (error) {
-            setTabs(tabs.map(t =>
+            setTabs(prevTabs => prevTabs.map(t =>
                 t.id === activeTabId
                     ? { ...t, isRunning: false, output: [`> Execution failed:`, String(error)] }
                     : t
@@ -538,7 +558,12 @@ function EditorContent() {
     return (
         <div className="flex h-screen w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white transition-colors overflow-hidden">
             {/* Sidebar */}
-            <Sidebar onSave={handleSave} onDownload={handleDownload} />
+            <Sidebar
+                onSave={handleSave}
+                onDownload={handleDownload}
+                aiAdminMode={aiAdminMode}
+                onAiAdminModeChange={setAiAdminMode}
+            />
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-full relative">
@@ -653,13 +678,47 @@ function EditorContent() {
                         )}
                     </div>
 
-                    {/* Console Area (Right Side) */}
-                    <div className="h-[40%] lg:h-full lg:w-[400px] border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 bg-zinc-900 p-2 lg:p-4">
-                        <Console
-                            output={activeTab?.output || []}
-                            isRunning={activeTab?.isRunning || false}
-                            onClear={handleClearOutput}
-                        />
+                    {/* Console & Test Area (Right Side) */}
+                    <div className="h-[40%] lg:h-full lg:w-[450px] border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 bg-zinc-900 flex flex-col">
+                        {/* Tab Switcher */}
+                        <div className="flex border-b border-zinc-700">
+                            <button
+                                onClick={() => setOutputTab("console")}
+                                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${outputTab === "console"
+                                    ? "bg-zinc-800 text-white border-b-2 border-blue-500"
+                                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                                    }`}
+                            >
+                                Çıktı
+                            </button>
+                            <button
+                                onClick={() => setOutputTab("test")}
+                                className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${outputTab === "test"
+                                    ? "bg-zinc-800 text-white border-b-2 border-green-500"
+                                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                                    }`}
+                            >
+                                Test
+                            </button>
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="flex-1 overflow-hidden">
+                            {outputTab === "console" ? (
+                                <div className="h-full p-2 lg:p-4">
+                                    <Console
+                                        output={activeTab?.output || []}
+                                        isRunning={activeTab?.isRunning || false}
+                                        onClear={handleClearOutput}
+                                    />
+                                </div>
+                            ) : (
+                                <TestPreview
+                                    code={activeTab?.code || ""}
+                                    language={activeTab?.lang || "javascript"}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -669,10 +728,11 @@ function EditorContent() {
                     currentLang={activeTab?.lang || ""}
                     currentTabName={activeTab?.name || ""}
                     allTabs={tabs.map(t => ({ id: t.id, name: t.name, lang: t.lang, code: t.code }))}
+                    aiAdminMode={aiAdminMode}
                     onApplyAction={handleAIAction}
                     onUndoAction={(previousCode: string) => {
                         if (activeTab) {
-                            setTabs(tabs.map(t =>
+                            setTabs(prevTabs => prevTabs.map(t =>
                                 t.id === activeTabId ? { ...t, code: previousCode, isSaved: false } : t
                             ));
                         }

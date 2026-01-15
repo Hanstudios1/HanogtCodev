@@ -32,9 +32,10 @@ interface AIAssistantProps {
     currentCode: string;
     currentLang: string;
     currentTabName: string;
-    allTabs: TabInfo[];  // All tabs context
+    allTabs: TabInfo[];
+    aiAdminMode: boolean;  // Auto-execute mode
     onApplyAction: (action: AIAction) => void;
-    onUndoAction: (previousCode: string) => void;  // Undo support
+    onUndoAction: (previousCode: string) => void;
 }
 
 export default function AIAssistant({
@@ -42,6 +43,7 @@ export default function AIAssistant({
     currentLang,
     currentTabName,
     allTabs,
+    aiAdminMode,
     onApplyAction,
     onUndoAction
 }: AIAssistantProps) {
@@ -86,13 +88,28 @@ export default function AIAssistant({
             if (data.error) {
                 setMessages(prev => [...prev, { role: "ai", text: `Hata: ${data.error}` }]);
             } else if (data.type === "action") {
-                setMessages(prev => [...prev, {
-                    role: "ai",
-                    text: data.action.explanation,
-                    action: data.action,
-                    status: "pending",
-                    previousCode: currentCode  // Store for undo
-                }]);
+                const action = data.action;
+
+                // If AI Admin Mode is enabled, auto-execute the action
+                if (aiAdminMode) {
+                    onApplyAction(action);
+                    setMessages(prev => [...prev, {
+                        role: "ai",
+                        text: action.explanation,
+                        action: action,
+                        status: "approved",  // Auto-approved
+                        previousCode: currentCode
+                    }]);
+                } else {
+                    // Normal mode - wait for user approval
+                    setMessages(prev => [...prev, {
+                        role: "ai",
+                        text: action.explanation,
+                        action: action,
+                        status: "pending",
+                        previousCode: currentCode
+                    }]);
+                }
             } else {
                 setMessages(prev => [...prev, { role: "ai", text: data.message }]);
             }
