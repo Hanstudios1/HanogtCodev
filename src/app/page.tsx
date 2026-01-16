@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Comparison from "@/components/Comparison";
+import HowItWorks from "@/components/HowItWorks";
 import Timeline from "@/components/Timeline";
 import ImageCarousel from "@/components/ImageCarousel";
 import { useState, useEffect } from "react";
@@ -61,6 +62,9 @@ export default function Home() {
           <Comparison />
         </div>
       </section>
+
+      {/* How It Works Section */}
+      <HowItWorks />
 
       {/* Features Timeline Section */}
       <Timeline />
