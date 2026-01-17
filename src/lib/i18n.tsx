@@ -392,7 +392,15 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "Yorum yazın...",
         question: "Soru",
         feedback_label: "Geri Bildirim",
-        loading: "Yükleniyor..."
+        loading: "Yükleniyor...",
+        // Enhanced Feedback
+        edit: "Düzenle",
+        delete_item: "Sil",
+        reply: "Yanıtla",
+        add_description: "Açıklama Ekle",
+        description_placeholder: "Detaylı açıklama yazın...",
+        replying_to: "Yanıtlanıyor:",
+        save_changes: "Değişiklikleri Kaydet"
     },
     EN: {
         welcome: "Welcome",
@@ -774,7 +782,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "Write a comment...",
         question: "Question",
         feedback_label: "Feedback",
-        loading: "Loading..."
+        loading: "Loading...",
+        edit: "Edit",
+        delete_item: "Delete",
+        reply: "Reply",
+        add_description: "Add Description",
+        description_placeholder: "Write detailed description...",
+        replying_to: "Replying to:",
+        save_changes: "Save Changes"
     },
     RU: {
         welcome: "Добро пожаловать",
@@ -1062,7 +1077,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "Написать комментарий...",
         question: "Вопрос",
         feedback_label: "Отзыв",
-        loading: "Загрузка..."
+        loading: "Загрузка...",
+        edit: "Редактировать",
+        delete_item: "Удалить",
+        reply: "Ответить",
+        add_description: "Добавить описание",
+        description_placeholder: "Напишите подробное описание...",
+        replying_to: "Ответ на:",
+        save_changes: "Сохранить изменения"
     },
     AZ: {
         welcome: "Xoş gəlmisiniz",
@@ -1349,7 +1371,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "Şərh yazın...",
         question: "Sual",
         feedback_label: "Rəy",
-        loading: "Yüklənir..."
+        loading: "Yüklənir...",
+        edit: "Redaktə et",
+        delete_item: "Sil",
+        reply: "Cavabla",
+        add_description: "Açıqlama əlavə et",
+        description_placeholder: "Ətraflı açıqlama yazın...",
+        replying_to: "Cavab verilir:",
+        save_changes: "Dəyişiklikləri yadda saxla"
     },
     ES: {
         welcome: "Bienvenido",
@@ -1636,7 +1665,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "Escribe un comentario...",
         question: "Pregunta",
         feedback_label: "Comentario",
-        loading: "Cargando..."
+        loading: "Cargando...",
+        edit: "Editar",
+        delete_item: "Eliminar",
+        reply: "Responder",
+        add_description: "Añadir descripción",
+        description_placeholder: "Escribe una descripción detallada...",
+        replying_to: "Respondiendo a:",
+        save_changes: "Guardar cambios"
     },
     KZ: {
         welcome: "Қош келдіңіз",
@@ -1923,7 +1959,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "Пікір жазыңыз...",
         question: "Сұрақ",
         feedback_label: "Пікір",
-        loading: "Жүктелуде..."
+        loading: "Жүктелуде...",
+        edit: "Өңдеу",
+        delete_item: "Жою",
+        reply: "Жауап беру",
+        add_description: "Сипаттама қосу",
+        description_placeholder: "Толық сипаттама жазыңыз...",
+        replying_to: "Жауап:",
+        save_changes: "Өзгерістерді сақтау"
     },
     JP: {
         welcome: "ようこそ",
@@ -2210,7 +2253,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "コメントを書く...",
         question: "質問",
         feedback_label: "フィードバック",
-        loading: "読み込み中..."
+        loading: "読み込み中...",
+        edit: "編集",
+        delete_item: "削除",
+        reply: "返信",
+        add_description: "説明を追加",
+        description_placeholder: "詳細な説明を書いてください...",
+        replying_to: "返信先:",
+        save_changes: "変更を保存"
     },
     CN: {
         welcome: "欢迎",
@@ -2497,7 +2547,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "写评论...",
         question: "问题",
         feedback_label: "反馈",
-        loading: "加载中..."
+        loading: "加载中...",
+        edit: "编辑",
+        delete_item: "删除",
+        reply: "回复",
+        add_description: "添加描述",
+        description_placeholder: "写详细描述...",
+        replying_to: "回复:",
+        save_changes: "保存更改"
     },
     KR: {
         welcome: "환영합니다",
@@ -2784,7 +2841,14 @@ const DICTIONARY: Record<Language, Translations> = {
         feedback_comment_placeholder: "댓글 작성...",
         question: "질문",
         feedback_label: "피드백",
-        loading: "로딩 중..."
+        loading: "로딩 중...",
+        edit: "편집",
+        delete_item: "삭제",
+        reply: "답글",
+        add_description: "설명 추가",
+        description_placeholder: "자세한 설명을 작성하세요...",
+        replying_to: "답글 대상:",
+        save_changes: "변경사항 저장"
     }
 };
 
