@@ -2,6 +2,7 @@
 
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function PrivacyPolicyPage() {
     const { t } = useI18n();
@@ -10,10 +11,15 @@ export default function PrivacyPolicyPage() {
         <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white transition-colors">
             {/* Header */}
             <header className="py-6 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="max-w-4xl mx-auto px-6">
+                <div className="max-w-4xl mx-auto px-6 flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
+                        <ArrowLeft className="w-5 h-5" />
+                        <span>{t("back_button") || "Geri"}</span>
+                    </Link>
                     <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
                         Hanogt Codev
                     </Link>
+                    <div className="w-16"></div>
                 </div>
             </header>
 

@@ -371,6 +371,32 @@ export async function isUserBanned(email: string): Promise<{ banned: boolean; re
 }
 
 /**
+ * Unban a user - Admin only
+ */
+export async function unbanUser(email: string): Promise<boolean> {
+    try {
+        // Delete from banned_users collection
+        const banRef = doc(db, "banned_users", email);
+        const { deleteDoc } = await import("firebase/firestore");
+        await deleteDoc(banRef);
+
+        // Update user document to remove ban flag
+        const userRef = doc(db, "users", email);
+        await setDoc(userRef, {
+            banned: false,
+            banReason: null,
+            unbannedAt: serverTimestamp()
+        }, { merge: true });
+
+        console.log(`🛡️ [Hanogt Bot] User unbanned: ${email}`);
+        return true;
+    } catch (error) {
+        console.error("[Hanogt Bot] Error unbanning user:", error);
+        return false;
+    }
+}
+
+/**
  * Log security event
  */
 export async function logSecurityEvent(
