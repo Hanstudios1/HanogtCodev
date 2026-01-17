@@ -261,7 +261,13 @@ const DICTIONARY: Record<Language, Translations> = {
         threat_level: "Tehdit seviyesi",
         account_banned: "Hesabınız güvenlik nedeniyle engellenmiştir.",
         code_blocked: "Kod çalıştırma engellendi.",
-        security_warning: "Zararlı kod çalıştırmak yasaktır ve hesap engellemeye yol açar."
+        security_warning: "Zararlı kod çalıştırmak yasaktır ve hesap engellemeye yol açar.",
+        permanently_banned: "SONSUZA DEK BANLANDINIZ!",
+        ban_reason_label: "Ban Sebebi:",
+        malicious_code_reason: "Kötü amaçlı, zararlı veya virüslü kod yazdığınız ve çalıştırdığınız için",
+        ban_permanent_message: "Bu hesap Hanogt Security Bot tarafından tespit edilen zararlı kod aktivitesi nedeniyle kalıcı olarak engellenmiştir. Bu karar geri alınamaz.",
+        protected_by_hanogt_bot: "Hanogt Security Bot ile korunuyor",
+        ok: "Tamam"
     },
     EN: {
         welcome: "Welcome",

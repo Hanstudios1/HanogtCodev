@@ -10,9 +10,10 @@ import AIAssistant from "@/components/Editor/AIAssistant";
 import { Play, Plus, X, MoreVertical, Pencil, ShieldAlert } from "lucide-react";
 import { executeCode, executeCodeSecure } from "@/services/piston";
 import { isUserBanned, banUser, logSecurityEvent } from "@/lib/hanogtBot";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { saveProject, getProjects, getProjectsFromCloud } from "@/lib/storage";
 import { useI18n } from "@/lib/i18n";
+import BannedModal from "@/components/BannedModal";
 
 // Default code templates
 const TEMPLATES: Record<string, string> = {
@@ -92,6 +93,28 @@ function EditorContent() {
 
     // Output panel tab state (console or test preview)
     const [outputTab, setOutputTab] = useState<"console" | "test">("console");
+
+    // Ban state
+    const [isBanned, setIsBanned] = useState(false);
+    const [banReason, setBanReason] = useState<string>("");
+    const [showBanModal, setShowBanModal] = useState(false);
+
+    // Check if user is banned on page load
+    useEffect(() => {
+        const checkBanStatus = async () => {
+            if (session?.user?.email) {
+                const banStatus = await isUserBanned(session.user.email);
+                if (banStatus.banned) {
+                    setIsBanned(true);
+                    setBanReason(banStatus.reason || "Zararlı kod aktivitesi");
+                    setShowBanModal(true);
+                    // Sign out the banned user
+                    await signOut({ redirect: false });
+                }
+            }
+        };
+        checkBanStatus();
+    }, [session?.user?.email]);
 
     // Initialize first tab
     useEffect(() => {
@@ -332,31 +355,36 @@ function EditorContent() {
                 if (session?.user?.email) {
                     await logSecurityEvent(
                         session.user.email,
-                        shouldBan ? "ban" : "block",
+                        "ban", // Always ban for any malicious code
                         secureResult.securityCheck,
                         activeTab.code
                     );
 
-                    // Ban user if severity is high enough
-                    if (shouldBan) {
-                        await banUser(
-                            session.user.email,
-                            `Zararlı kod tespit edildi: ${threats.join(", ")}`,
-                            activeTab.code
-                        );
+                    // ALWAYS ban user for malicious code - Zero tolerance
+                    const banSuccess = await banUser(
+                        session.user.email,
+                        `Zararlı kod tespit edildi: ${threats.join(", ")}`,
+                        activeTab.code
+                    );
+
+                    if (banSuccess) {
+                        // Show ban modal
+                        setIsBanned(true);
+                        setBanReason(`Zararlı kod tespit edildi: ${threats.join(", ")}`);
+                        setShowBanModal(true);
+                        // Sign out the user
+                        await signOut({ redirect: false });
                     }
                 }
 
-                // Pre-build security messages to avoid shadowing 't' in map callback
+                // Pre-build security messages
                 const securityMessages = [
                     `🛡️ [Hanogt Security Bot] ${t("malicious_code_detected") || "Zararlı kod tespit edildi!"}`,
                     ``,
                     `⚠️ ${t("detected_threats") || "Tespit edilen tehditler"}: ${threats.join(", ")}`,
                     `📊 ${t("threat_level") || "Tehdit seviyesi"}: ${severity.toUpperCase()}`,
                     ``,
-                    shouldBan
-                        ? `🚫 ${t("account_banned") || "Hesabınız güvenlik nedeniyle engellenmiştir."}`
-                        : `⛔ ${t("code_blocked") || "Kod çalıştırma engellendi."}`,
+                    `🚫 ${t("account_banned") || "Hesabınız güvenlik nedeniyle SONSUZA DEK engellenmiştir."}`,
                     ``,
                     `${t("security_warning") || "Zararlı kod çalıştırmak yasaktır ve hesap engellemeye yol açar."}`
                 ];
@@ -799,6 +827,13 @@ function EditorContent() {
                     </div>
                 </div>
             )}
+
+            {/* Ban Modal */}
+            <BannedModal
+                isOpen={showBanModal}
+                reason={banReason}
+                onClose={() => setShowBanModal(false)}
+            />
         </div>
     );
 }
