@@ -267,7 +267,19 @@ const DICTIONARY: Record<Language, Translations> = {
         malicious_code_reason: "Kötü amaçlı, zararlı veya virüslü kod yazdığınız ve çalıştırdığınız için",
         ban_permanent_message: "Bu hesap Hanogt Security Bot tarafından tespit edilen zararlı kod aktivitesi nedeniyle kalıcı olarak engellenmiştir. Bu karar geri alınamaz.",
         protected_by_hanogt_bot: "Hanogt Security Bot ile korunuyor",
-        ok: "Tamam"
+        ok: "Tamam",
+        // Legal Pages
+        terms_of_use: "Kullanım Şartları",
+        disclosure_text: "Aydınlatma Metni",
+        terms_title: "Kullanım Şartları",
+        disclosure_title: "Kişisel Verilerin Korunması Aydınlatma Metni",
+        pp_hanogt_bot: "Platform, Hanogt Security Bot tarafından 7/24 izlenmekte ve zararlı aktivitelere karşı korunmaktadır.",
+        pp_prohibited_title: "Yasaklanan Aktiviteler",
+        pp_prohibited_warning: "Aşağıdaki aktiviteler kesinlikle yasaktır ve hesap kalıcı olarak kapatılır:",
+        pp_prohibited_1: "Zararlı, virüslü veya kötü amaçlı kod yazmak ve çalıştırmak",
+        pp_prohibited_2: "Platformu siber saldırı amacıyla kullanmak",
+        pp_prohibited_3: "Başkalarının verilerine yetkisiz erişim sağlamaya çalışmak",
+        pp_prohibited_4: "Yasalara aykırı içerik oluşturmak veya paylaşmak"
     },
     EN: {
         welcome: "Welcome",

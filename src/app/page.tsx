@@ -77,10 +77,22 @@ export default function Home() {
           </p>
           <div className="flex items-center gap-6 text-sm">
             <a
+              href="/terms-of-use"
+              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+            >
+              {t("terms_of_use") || "Kullanım Şartları"}
+            </a>
+            <a
               href="/privacy-policy"
               className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
             >
               {t("privacy_policy") || "Gizlilik Politikası"}
+            </a>
+            <a
+              href="/disclosure"
+              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+            >
+              {t("disclosure_text") || "Aydınlatma Metni"}
             </a>
             <a
               href="https://github.com/Hanstudios1/HanogtLanguageSoftwareScript"

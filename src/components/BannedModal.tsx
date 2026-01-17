@@ -24,12 +24,13 @@ export default function BannedModal({ isOpen, onClose, reason }: BannedModalProp
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
             <div className="bg-gradient-to-br from-red-950 to-black border-2 border-red-600 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl shadow-red-500/20 animate-pulse-slow">
-                {/* Shield Icon */}
+                {/* Hanogt Bot Logo */}
                 <div className="flex justify-center mb-6">
-                    <div className="relative">
-                        <ShieldAlert className="w-24 h-24 text-red-500" />
-                        <XCircle className="w-10 h-10 text-red-600 absolute -bottom-1 -right-1 bg-black rounded-full" />
-                    </div>
+                    <img
+                        src="/hanogt-bot-logo.png"
+                        alt="Hanogt Security Bot"
+                        className="w-24 h-24 object-contain"
+                    />
                 </div>
 
                 {/* Title */}
