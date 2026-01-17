@@ -175,6 +175,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "Gizlilik politikamız veya verilerinizle ilgili sorularınız için bizimle iletişime geçebilirsiniz.",
         pp_updated: "Bu gizlilik politikası en son",
         pp_updated_suffix: "tarihinde güncellenmiştir.",
+        update_date: "17 Ocak 2026",
         back_to_home: "Ana Sayfaya Dön",
         // How It Works Section
         hiw_title: "Nasıl Çalışır?",
@@ -565,6 +566,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "For questions about our privacy policy or your data, please contact us.",
         pp_updated: "This privacy policy was last updated on",
         pp_updated_suffix: ".",
+        update_date: "January 17, 2026",
         back_to_home: "Back to Home",
         // How It Works Section
         hiw_title: "How It Works?",
@@ -948,6 +950,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "По вопросам о нашей политике конфиденциальности свяжитесь с нами.",
         pp_updated: "Эта политика конфиденциальности была обновлена",
         pp_updated_suffix: ".",
+        update_date: "17 января 2026",
         back_to_home: "Вернуться на главную",
         // How It Works Section
         hiw_title: "Как это работает?",
@@ -1242,6 +1245,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "Məxfilik siyasətimiz və ya məlumatlarınızla bağlı suallarınız üçün bizimlə əlaqə saxlayın.",
         pp_updated: "Bu məxfilik siyasəti son yenilənmə tarixi",
         pp_updated_suffix: ".",
+        update_date: "17 Yanvar 2026",
         back_to_home: "Ana Səhifəyə Qayıt",
         // How It Works Section
         hiw_title: "Necə işləyir?",
@@ -1536,6 +1540,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "Para preguntas sobre nuestra política de privacidad o sus datos, contáctenos.",
         pp_updated: "Esta política de privacidad fue actualizada por última vez el",
         pp_updated_suffix: ".",
+        update_date: "17 de enero de 2026",
         back_to_home: "Volver al Inicio",
         // How It Works Section
         hiw_title: "¿Cómo funciona?",
@@ -1830,6 +1835,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "Құпиялылық саясатымыз немесе деректеріңіз туралы сұрақтар үшін бізге хабарласыңыз.",
         pp_updated: "Бұл құпиялылық саясаты соңғы рет жаңартылған",
         pp_updated_suffix: ".",
+        update_date: "2026 жылы 17 қаңтар",
         back_to_home: "Басты бетке оралу",
         // How It Works Section
         hiw_title: "Бұл қалай жұмыс істейді?",
@@ -2124,6 +2130,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "プライバシーポリシーまたはデータに関するご質問は、お問い合わせください。",
         pp_updated: "このプライバシーポリシーの最終更新日",
         pp_updated_suffix: "。",
+        update_date: "2026年1月17日",
         back_to_home: "ホームに戻る",
         // How It Works Section
         hiw_title: "使い方",
@@ -2418,6 +2425,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "如有关于隐私政策或数据的问题，请联系我们。",
         pp_updated: "本隐私政策的最后更新日期为",
         pp_updated_suffix: "。",
+        update_date: "2026年1月17日",
         back_to_home: "返回首页",
         // How It Works Section
         hiw_title: "如何使用?",
@@ -2712,6 +2720,7 @@ const DICTIONARY: Record<Language, Translations> = {
         pp_contact_text: "개인정보 보호정책 또는 데이터에 관한 질문이 있으시면 연락해 주세요.",
         pp_updated: "이 개인정보 보호정책의 마지막 업데이트 날짜",
         pp_updated_suffix: ".",
+        update_date: "2026년 1월 17일",
         back_to_home: "홈으로 돌아가기",
         // How It Works Section
         hiw_title: "어떻게 작동하나요?",

@@ -143,7 +143,7 @@ export default function PrivacyPolicyPage() {
 
                     <div className="mt-12 p-6 bg-zinc-100 dark:bg-zinc-900 rounded-xl text-center border border-zinc-200 dark:border-zinc-800">
                         <p className="text-zinc-500 dark:text-zinc-400">
-                            {t("pp_updated") || "Son güncelleme tarihi:"} <strong className="text-zinc-900 dark:text-white">17 Ocak 2026</strong>
+                            {t("pp_updated") || "Son güncelleme tarihi:"} <strong className="text-zinc-900 dark:text-white">{t("update_date") || "17 Ocak 2026"}</strong>
                         </p>
                     </div>
                 </div>

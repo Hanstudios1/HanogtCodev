@@ -149,7 +149,7 @@ export default function DisclosureTextPage() {
                             <li>5237 sayılı Türk Ceza Kanunu Madde 135-140 (Özel Hayata ve Hayatın Gizli Alanına Karşı Suçlar)</li>
                         </ul>
                         <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-4">
-                            {t("disclosure_updated") || "Son güncelleme tarihi:"} <strong className="text-zinc-900 dark:text-white">17 Ocak 2026</strong>
+                            {t("disclosure_updated") || "Son güncelleme tarihi:"} <strong className="text-zinc-900 dark:text-white">{t("update_date") || "17 Ocak 2026"}</strong>
                         </p>
                     </div>
                 </div>
