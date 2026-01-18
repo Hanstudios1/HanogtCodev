@@ -53,7 +53,7 @@ export default function Hero() {
     const ctaHref = session?.user ? "/dashboard" : "/signup";
 
     return (
-        <section className="flex flex-col items-center justify-center min-h-screen text-center px-4 relative overflow-hidden pt-20">
+        <section className="flex flex-col items-center justify-center min-h-screen text-center px-4 relative pt-20">
             {/* Background Gradients */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-500/20 blur-[100px] rounded-full -z-10 dark:bg-purple-900/20" />
 
