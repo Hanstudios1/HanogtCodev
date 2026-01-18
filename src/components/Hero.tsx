@@ -6,18 +6,20 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
 
-type Platform = "windows" | "linux" | "android";
+type Platform = "windows" | "linux" | "android" | "macos";
 
 const PLATFORMS: { id: Platform; name: string; logo: string; ext: string }[] = [
     { id: "windows", name: "Windows", logo: "/platforms/windows.png", ext: ".exe" },
     { id: "linux", name: "Linux", logo: "/platforms/linux.png", ext: ".AppImage" },
     { id: "android", name: "Android", logo: "/platforms/android.png", ext: ".apk" },
+    { id: "macos", name: "macOS", logo: "/platforms/macos.png", ext: ".dmg" },
 ];
 
 function detectPlatform(): Platform {
     if (typeof window === "undefined") return "windows";
     const ua = navigator.userAgent.toLowerCase();
     if (ua.includes("android")) return "android";
+    if (ua.includes("mac")) return "macos";
     if (ua.includes("linux")) return "linux";
     return "windows";
 }
@@ -33,13 +35,16 @@ export default function Hero() {
     }, []);
 
     const handleDownload = (platform: Platform) => {
+        const releaseBase = "https://github.com/Hanstudios1/HanogtCodev/releases/latest/download";
+
         if (platform === "windows") {
-            // GitHub Releases - Always downloads latest version
-            window.location.href = "https://github.com/Hanstudios1/HanogtCodev/releases/latest/download/HanogtCodev-Setup.exe";
+            window.location.href = `${releaseBase}/Hanogt-Codev-Setup-1.0.0.exe`;
+        } else if (platform === "linux") {
+            window.location.href = `${releaseBase}/Hanogt-Codev-1.0.0.AppImage`;
+        } else if (platform === "macos") {
+            window.location.href = `${releaseBase}/Hanogt-Codev-1.0.0.dmg`;
         } else if (platform === "android") {
             window.location.href = "/Hanogt-Codev.apk";
-        } else if (platform === "linux") {
-            window.location.href = "https://github.com/Hanstudios1/HanogtCodev/releases/latest/download/HanogtCodev.AppImage";
         }
         setShowDropdown(false);
     };
