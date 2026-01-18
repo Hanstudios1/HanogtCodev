@@ -1,16 +1,8 @@
-const { app, BrowserWindow, shell, protocol, net } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
-const url = require('url');
 
-// Custom protocol for serving static files
-function createProtocol() {
-    protocol.handle('app', (request) => {
-        const requestUrl = request.url.substring('app://'.length);
-        const decodedUrl = decodeURIComponent(requestUrl);
-        const filePath = path.join(__dirname, '..', 'out', decodedUrl);
-        return net.fetch(url.pathToFileURL(filePath).toString());
-    });
-}
+// Your deployed website URL
+const WEBSITE_URL = 'https://hanogt.pages.dev';
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
@@ -27,33 +19,29 @@ function createWindow() {
         autoHideMenuBar: true
     });
 
-    // Load the production build
-    const indexPath = path.join(__dirname, '../out/index.html');
-    mainWindow.loadFile(indexPath);
+    // Load the live website
+    mainWindow.loadURL(WEBSITE_URL);
 
     // Open external links in the default browser
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        if (url.startsWith('http://') || url.startsWith('https://')) {
+        if (!url.startsWith(WEBSITE_URL)) {
             shell.openExternal(url);
             return { action: 'deny' };
         }
         return { action: 'allow' };
     });
 
-    // Handle navigation for internal links
-    mainWindow.webContents.on('will-navigate', (event, navUrl) => {
-        const parsedUrl = new URL(navUrl);
-        if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
-            if (!navUrl.includes('localhost')) {
-                event.preventDefault();
-                shell.openExternal(navUrl);
-            }
+    // Handle navigation
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        // Keep internal navigation, open external links in browser
+        if (!url.startsWith(WEBSITE_URL) && !url.startsWith('https://accounts.google.com')) {
+            event.preventDefault();
+            shell.openExternal(url);
         }
     });
 }
 
 app.whenReady().then(() => {
-    createProtocol();
     createWindow();
 
     app.on('activate', () => {

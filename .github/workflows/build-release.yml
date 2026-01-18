@@ -13,13 +13,10 @@ jobs:
         include:
           - os: windows-latest
             platform: win
-            ext: exe
           - os: ubuntu-latest
             platform: linux
-            ext: AppImage
           - os: macos-latest
             platform: mac
-            ext: dmg
 
     runs-on: ${{ matrix.os }}
 
@@ -31,15 +28,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js
-        run: npm run build
-        env:
-          ELECTRON_BUILD: true
+      - name: Create out directory (for Electron files config)
+        run: mkdir -p out
+        shell: bash
 
       - name: Build Electron (${{ matrix.platform }})
         run: npx electron-builder --${{ matrix.platform }}
