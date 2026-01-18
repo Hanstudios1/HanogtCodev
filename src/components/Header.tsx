@@ -7,6 +7,8 @@ import { User, Settings, LogOut, ChevronDown } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import LangToggle from "./LangToggle";
 import { useI18n } from "@/lib/i18n";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Header() {
     const { data: session } = useSession();
@@ -14,6 +16,9 @@ export default function Header() {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    // User data from Firebase
+    const [userData, setUserData] = useState<{ username?: string; avatarUrl?: string } | null>(null);
 
     // Scroll detection for shrinking header
     useEffect(() => {
@@ -23,6 +28,22 @@ export default function Header() {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    // Load user data from Firebase
+    useEffect(() => {
+        const loadUserData = async () => {
+            if (!session?.user?.email) return;
+            try {
+                const userDoc = await getDoc(doc(db, "users", session.user.email));
+                if (userDoc.exists()) {
+                    setUserData(userDoc.data() as { username?: string; avatarUrl?: string });
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        };
+        loadUserData();
+    }, [session?.user?.email]);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -38,6 +59,10 @@ export default function Header() {
     const handleSignOut = async () => {
         await signOut({ callbackUrl: "/" });
     };
+
+    // Get display name and avatar - prefer Firebase data over session data
+    const displayName = userData?.username || session?.user?.name || t("user");
+    const displayAvatar = userData?.avatarUrl || session?.user?.image;
 
     return (
         <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
@@ -75,15 +100,15 @@ export default function Header() {
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                                 className="flex items-center gap-2 p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                             >
-                                {session.user.image ? (
+                                {displayAvatar ? (
                                     <img
-                                        src={session.user.image}
+                                        src={displayAvatar}
                                         alt="Profile"
                                         className={`rounded-full object-cover border-2 border-zinc-200 dark:border-zinc-700 transition-all duration-300 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}
                                     />
                                 ) : (
                                     <div className={`rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm transition-all duration-300 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}>
-                                        {session.user.name?.charAt(0) || session.user.email?.charAt(0) || "U"}
+                                        {displayName?.charAt(0) || "U"}
                                     </div>
                                 )}
                                 <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${showProfileMenu ? "rotate-180" : ""}`} />
@@ -95,7 +120,7 @@ export default function Header() {
                                     {/* User Info */}
                                     <div className="p-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
                                         <p className="font-bold text-zinc-900 dark:text-white truncate">
-                                            {session.user.name || t("user")}
+                                            {displayName}
                                         </p>
                                         <p className="text-sm text-zinc-500 truncate">
                                             {session.user.email}

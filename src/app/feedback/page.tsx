@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy, serverTimestamp, arrayUnion, arrayRemove, deleteDoc, getDoc } from "firebase/firestore";
 
 interface FeedbackItem {
     id: string;
@@ -53,10 +53,32 @@ export default function FeedbackPage() {
     // Reply states (WhatsApp style)
     const [replyingTo, setReplyingTo] = useState<{ itemId: string; commentId: string; author: string; content: string } | null>(null);
 
+    // User data from Firebase
+    const [userData, setUserData] = useState<{ username?: string } | null>(null);
+
     // Fetch items from Firebase
     useEffect(() => {
         fetchItems();
     }, []);
+
+    // Load user data from Firebase
+    useEffect(() => {
+        const loadUserData = async () => {
+            if (!session?.user?.email) return;
+            try {
+                const userDoc = await getDoc(doc(db, "users", session.user.email));
+                if (userDoc.exists()) {
+                    setUserData(userDoc.data() as { username?: string });
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        };
+        loadUserData();
+    }, [session?.user?.email]);
+
+    // Get display name - prefer Firebase data over session data
+    const displayName = userData?.username || session?.user?.name || session?.user?.email?.split("@")[0] || "User";
 
     const fetchItems = async () => {
         try {
@@ -92,7 +114,7 @@ export default function FeedbackPage() {
                 type,
                 content: message.trim(),
                 description: description.trim() || null,
-                author: session.user.name || session.user.email.split("@")[0],
+                author: displayName,
                 authorEmail: session.user.email,
                 createdAt: serverTimestamp(),
                 likes: [],
@@ -179,7 +201,7 @@ export default function FeedbackPage() {
 
         const newComment: Comment = {
             id: `comment_${Date.now()}`,
-            author: session.user.name || session.user.email.split("@")[0],
+            author: displayName,
             authorEmail: session.user.email,
             content: commentText[itemId].trim(),
             replyTo: replyingTo?.commentId || undefined,
