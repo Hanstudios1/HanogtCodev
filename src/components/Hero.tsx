@@ -38,11 +38,11 @@ export default function Hero() {
         const releaseBase = "https://github.com/Hanstudios1/HanogtCodev/releases/latest/download";
 
         if (platform === "windows") {
-            window.location.href = `${releaseBase}/Hanogt-Codev-Setup-1.0.0.exe`;
+            window.location.href = `${releaseBase}/Hanogt.Codev.Setup.1.0.0.exe`;
         } else if (platform === "linux") {
-            window.location.href = `${releaseBase}/Hanogt-Codev-1.0.0.AppImage`;
+            window.location.href = `${releaseBase}/Hanogt.Codev-1.0.0.AppImage`;
         } else if (platform === "macos") {
-            window.location.href = `${releaseBase}/Hanogt-Codev-1.0.0.dmg`;
+            window.location.href = `${releaseBase}/Hanogt.Codev-1.0.0-arm64.dmg`;
         } else if (platform === "android") {
             window.location.href = "/Hanogt-Codev.apk";
         }
