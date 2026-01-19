@@ -73,7 +73,7 @@ export default function Home() {
       <footer className="py-8 bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-            © 2025 Hanogt Codev. {t("all_rights_reserved") || "Tüm hakları saklıdır."}
+            © 2026 Hanogt Codev. {t("all_rights_reserved") || "Tüm hakları saklıdır."}
           </p>
           <div className="flex items-center gap-6 text-sm flex-wrap justify-center">
             <a
