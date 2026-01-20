@@ -22,6 +22,28 @@ export const metadata: Metadata = {
     shortcut: "/logo-dark.png",
     apple: "/logo-dark.png",
   },
+  openGraph: {
+    title: "Hanogt Codev",
+    description: "Hanogt Codev ile istediğin dilde özgürce kodla. %100 ücretsiz, reklamsız, sınırsız.",
+    url: "https://hanogtcodev.com",
+    siteName: "Hanogt Codev",
+    images: [
+      {
+        url: "/logo-dark.png",
+        width: 512,
+        height: 512,
+        alt: "Hanogt Codev Logo",
+      },
+    ],
+    locale: "tr_TR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Hanogt Codev",
+    description: "Hanogt Codev ile istediğin dilde özgürce kodla. %100 ücretsiz, reklamsız, sınırsız.",
+    images: ["/logo-dark.png"],
+  },
 };
 
 export default function RootLayout({
