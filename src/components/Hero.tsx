@@ -139,6 +139,16 @@ export default function Hero() {
                     </div>
                 </div>
             </div>
+
+            {/* Privacy Policy Link - Required for Google Verification */}
+            <div className="mt-8 text-center">
+                <a
+                    href="/privacy-policy"
+                    className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors underline"
+                >
+                    {t("privacy_policy") || "Gizlilik Politikası"}
+                </a>
+            </div>
         </section>
     );
 }
