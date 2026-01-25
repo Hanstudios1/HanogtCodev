@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /signup
+Disallow: /login
+Disallow: /privacy-policy
+Disallow: /terms-of-use
+Disallow: /disclosure
+Disallow: /about
+Disallow: /feedback
+Disallow: /dashboard
+Disallow: /editor
+Disallow: /account-settings
+Disallow: /settings
+Disallow: /api/
+
+Sitemap: https://hanogtcodev.com/sitemap.xml
