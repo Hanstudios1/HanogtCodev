@@ -79,9 +79,9 @@ export default function DashboardPage() {
         loadProjects();
     }, [session]);
 
-    const handleCreateScript = (lang: string) => {
-        // Navigate to editor with selected language
-        router.push(`/editor?lang=${lang.toLowerCase()}`);
+    const handleCreateScript = (lang: { name: string; ext: string }) => {
+        // Use extension for URL to avoid + encoding issues (C++ becomes cpp)
+        router.push(`/editor?lang=${lang.ext}`);
     };
 
     const handleDownloadProject = async (project: any) => {
@@ -324,7 +324,7 @@ export default function DashboardPage() {
                             {LANGUAGES.map((lang) => (
                                 <button
                                     key={lang.name}
-                                    onClick={() => handleCreateScript(lang.name)}
+                                    onClick={() => handleCreateScript(lang)}
                                     className="flex flex-col items-center justify-center p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-2 border-transparent hover:border-blue-500 transition-all gap-3"
                                 >
                                     {/* Logo or Extension Circle */}

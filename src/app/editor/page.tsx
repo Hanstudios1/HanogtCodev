@@ -56,6 +56,12 @@ const LANGUAGES = [
     { name: "Lua", ext: "lua", logo: "/languages/lua.png" },
 ];
 
+// Get display name from extension or lang
+const getDisplayName = (lang: string): string => {
+    const found = LANGUAGES.find(l => l.ext === lang || l.name.toLowerCase() === lang.toLowerCase());
+    return found?.name || lang.charAt(0).toUpperCase() + lang.slice(1);
+};
+
 // Tab interface
 interface Tab {
     id: string;
@@ -233,7 +239,7 @@ function EditorContent() {
             const langLower = initialLang.toLowerCase();
             const newTab: Tab = {
                 id: `tab-${Date.now()}`,
-                name: `${langLower.charAt(0).toUpperCase() + langLower.slice(1)} ${t("my_lang_project_suffix") || "Projem"}`,
+                name: `${getDisplayName(langLower)} ${t("my_lang_project_suffix") || "Projem"}`,
                 lang: langLower,
                 code: TEMPLATES[langLower] || TEMPLATES["default"],
                 output: [],
