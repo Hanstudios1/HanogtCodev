@@ -15,6 +15,7 @@ interface FeedbackItem {
     description?: string;
     author: string;
     authorEmail: string;
+    authorPhoto?: string;
     createdAt: Date;
     likes: string[];
     comments: Comment[];
@@ -24,6 +25,7 @@ interface Comment {
     id: string;
     author: string;
     authorEmail: string;
+    authorPhoto?: string;
     content: string;
     replyTo?: string;
     replyToContent?: string;
@@ -116,6 +118,7 @@ export default function FeedbackPage() {
                 description: description.trim() || null,
                 author: displayName,
                 authorEmail: session.user.email,
+                authorPhoto: session.user.image || null,
                 createdAt: serverTimestamp(),
                 likes: [],
                 comments: []
@@ -203,6 +206,7 @@ export default function FeedbackPage() {
             id: `comment_${Date.now()}`,
             author: displayName,
             authorEmail: session.user.email,
+            authorPhoto: session.user.image || null,
             content: commentText[itemId].trim(),
             replyTo: replyingTo?.commentId || null,
             replyToContent: replyingTo?.content || null,
@@ -413,9 +417,13 @@ export default function FeedbackPage() {
                                 {/* Author, Type, and Actions */}
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                                            <User className="w-4 h-4 text-white" />
-                                        </div>
+                                        {item.authorPhoto ? (
+                                            <img src={item.authorPhoto} alt={item.author} className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                                                <User className="w-4 h-4 text-white" />
+                                            </div>
+                                        )}
                                         <span className="font-medium text-zinc-700 dark:text-zinc-300">{item.author}</span>
                                         <span className={`px-2 py-0.5 rounded-full text-xs ${item.type === "question"
                                             ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
