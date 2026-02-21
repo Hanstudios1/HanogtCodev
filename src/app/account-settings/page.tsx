@@ -357,24 +357,32 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     {/* App Language */}
-                    <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div>
+                    <div className="py-4 border-b border-zinc-100 dark:border-zinc-800">
+                        <div className="mb-3">
                             <span className="block">{t("app_language") || "Uygulama Dili"}</span>
                             <span className="text-sm text-zinc-500">{t("app_language_desc") || "Arayüz dilini değiştir"}</span>
                         </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setLanguage("TR")}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${language === "TR" ? "bg-blue-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"}`}
-                            >
-                                🇹🇷 Türkçe
-                            </button>
-                            <button
-                                onClick={() => setLanguage("EN")}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${language === "EN" ? "bg-blue-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"}`}
-                            >
-                                🇬🇧 English
-                            </button>
+                        <div className="grid grid-cols-3 gap-2">
+                            {([
+                                { code: "TR" as const, flag: "🇹🇷", label: "Türkçe" },
+                                { code: "EN" as const, flag: "🇬🇧", label: "English" },
+                                { code: "RU" as const, flag: "🇷🇺", label: "Русский" },
+                                { code: "AZ" as const, flag: "🇦🇿", label: "Azərbaycan" },
+                                { code: "ES" as const, flag: "🇪🇸", label: "Español" },
+                                { code: "KZ" as const, flag: "🇰🇿", label: "Қазақ" },
+                                { code: "JP" as const, flag: "🇯🇵", label: "日本語" },
+                                { code: "CN" as const, flag: "🇨🇳", label: "中文" },
+                                { code: "KR" as const, flag: "🇰🇷", label: "한국어" },
+                            ]).map((lang) => (
+                                <button
+                                    key={lang.code}
+                                    onClick={() => setLanguage(lang.code)}
+                                    className={`px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-sm ${language === lang.code ? "bg-blue-600 text-white shadow-md" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
+                                >
+                                    <span className="text-base">{lang.flag}</span>
+                                    {lang.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
