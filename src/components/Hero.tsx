@@ -86,7 +86,7 @@ export default function Hero() {
                 {/* Main CTA - Goes to dashboard if logged in */}
                 <Link
                     href={ctaHref}
-                    className="px-8 py-4 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg transition-all shadow-lg hover:shadow-green-500/30 flex items-center gap-2"
+                    className="px-8 py-4 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-bold text-lg transition-all shadow-lg hover:shadow-green-500/30 flex items-center gap-2"
                 >
                     <Code2 className="w-5 h-5" />
                     {session?.user ? (t("go_to_dashboard") || "Dashboard'a Git") : t("cta_start")}
@@ -97,7 +97,7 @@ export default function Hero() {
                     <Link
                         href="https://github.com/Hanstudios1/HanogtLanguageSoftwareScript"
                         target="_blank"
-                        className="px-6 py-3 rounded-full bg-zinc-800 hover:bg-zinc-900 text-white font-medium transition-all shadow-md flex items-center gap-2 border border-zinc-700 hover:border-zinc-500"
+                        className="px-6 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-900 text-white font-medium transition-all shadow-md flex items-center gap-2 border border-zinc-700 hover:border-zinc-500"
                     >
                         <Github className="w-5 h-5" />
                         Github
@@ -107,7 +107,7 @@ export default function Hero() {
                     <div className="relative">
                         <button
                             onClick={() => setShowDropdown(!showDropdown)}
-                            className="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all shadow-md flex items-center gap-2"
+                            className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all shadow-md flex items-center gap-2"
                         >
                             <Download className="w-5 h-5" />
                             {t("download_app") || "Bu Uygulamayı Cihazına İndir"}
