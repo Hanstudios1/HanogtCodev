@@ -672,7 +672,7 @@ function EditorContent() {
                         <button
                             onClick={handleRun}
                             disabled={activeTab?.isRunning}
-                            className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-full font-bold flex items-center gap-2 shadow-lg hover:shadow-green-500/30 transition-all"
+                            className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:shadow-green-500/30 transition-all"
                         >
                             <Play className="w-4 h-4 fill-current" />
                             {activeTab?.isRunning ? "Running..." : "RUN"}

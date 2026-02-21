@@ -144,7 +144,7 @@ export default function Timeline() {
                 >
                     <Link
                         href={ctaHref}
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 font-bold rounded-full transition-all shadow-lg"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 font-bold rounded-2xl transition-all shadow-lg"
                     >
                         <Rocket className="w-5 h-5" />
                         {session?.user ? (t("go_to_dashboard") || "Dashboard'a Git") : (t("cta_start") || "Hemen Başla")}

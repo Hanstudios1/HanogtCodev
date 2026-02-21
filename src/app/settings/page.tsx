@@ -398,7 +398,7 @@ export default function EditorSettingsPage() {
                         setCursorStyle("line");
                         setSmoothScrolling(true);
                     }}
-                    className="w-full mt-6 px-6 py-3 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold rounded-full transition-all"
+                    className="w-full mt-6 px-6 py-3 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold rounded-2xl transition-all"
                 >
                     {t("reset_settings") || "Ayarları Sıfırla"}
                 </button>

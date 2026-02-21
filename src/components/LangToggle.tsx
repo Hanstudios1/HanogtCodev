@@ -29,7 +29,7 @@ export default function LangToggle() {
         <div className="relative">
             <button
                 onClick={() => setOpen(!open)}
-                className="flex items-center gap-2 px-3 py-1 rounded-full border border-gray-300 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-2 px-3 py-1 rounded-2xl border border-gray-300 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
             >
                 <Globe className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{language}</span>

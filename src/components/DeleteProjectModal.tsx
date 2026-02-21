@@ -59,13 +59,13 @@ export default function DeleteProjectModal({ projectName, onConfirm, onCancel }:
                 <div className="flex flex-col gap-3">
                     <button
                         onClick={onCancel}
-                        className="w-full px-6 py-3 bg-white dark:bg-zinc-800 text-black dark:text-white font-bold rounded-full border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all"
+                        className="w-full px-6 py-3 bg-white dark:bg-zinc-800 text-black dark:text-white font-bold rounded-2xl border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all"
                     >
                         {t("no_keep_project") || "Hayır, Projemi Silmeyeceğim"}
                     </button>
                     <button
                         onClick={handleConfirm}
-                        className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full transition-all"
+                        className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all"
                     >
                         {t("yes_delete_project") || "Tamam, Projemi Sonsuza Dek Kaldırın"}
                     </button>

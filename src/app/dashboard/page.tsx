@@ -188,7 +188,7 @@ export default function DashboardPage() {
                     </div>
                     <button
                         onClick={() => setShowLangModal(true)}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold shadow-lg flex items-center gap-2 transition-all"
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg flex items-center gap-2 transition-all"
                     >
                         <Plus className="w-5 h-5" />
                         {t("create_project")}

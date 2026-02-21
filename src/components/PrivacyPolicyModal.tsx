@@ -35,7 +35,7 @@ export default function PrivacyPolicyModal({ onAccept }: PrivacyPolicyModalProps
                     </p>
                     <button
                         onClick={() => window.location.href = "/"}
-                        className="mt-8 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full font-medium transition-all"
+                        className="mt-8 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-medium transition-all"
                     >
                         Ana Sayfaya Dön
                     </button>
@@ -155,13 +155,13 @@ export default function PrivacyPolicyModal({ onAccept }: PrivacyPolicyModalProps
                 <div className="p-6 border-t border-zinc-700 bg-zinc-900 flex flex-col sm:flex-row gap-4 justify-center">
                     <button
                         onClick={handleAccept}
-                        className="px-8 py-4 bg-white hover:bg-zinc-200 text-black font-bold rounded-full transition-all shadow-lg text-lg"
+                        className="px-8 py-4 bg-white hover:bg-zinc-200 text-black font-bold rounded-2xl transition-all shadow-lg text-lg"
                     >
                         Okudum, Kabul Ediyorum
                     </button>
                     <button
                         onClick={handleReject}
-                        className="px-8 py-4 bg-black hover:bg-zinc-800 text-white font-bold rounded-full transition-all border border-zinc-600 text-lg"
+                        className="px-8 py-4 bg-black hover:bg-zinc-800 text-white font-bold rounded-2xl transition-all border border-zinc-600 text-lg"
                     >
                         Hayır, Kabul Etmiyorum
                     </button>

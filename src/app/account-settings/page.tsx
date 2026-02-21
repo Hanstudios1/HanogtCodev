@@ -189,7 +189,7 @@ export default function AccountSettingsPage() {
                     <button
                         onClick={handleSaveProfile}
                         disabled={isLoading}
-                        className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-full transition-all flex items-center justify-center gap-2"
+                        className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
                     >
                         <Save className="w-5 h-5" />
                         {isLoading ? "..." : (t("save") || "Kaydet")}
@@ -207,7 +207,7 @@ export default function AccountSettingsPage() {
                     </p>
                     <button
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full transition-all"
+                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all"
                     >
                         {t("delete_account") || "Hesabımı Sil"}
                     </button>
@@ -226,14 +226,14 @@ export default function AccountSettingsPage() {
                             <div className="flex flex-col gap-3">
                                 <button
                                     onClick={() => setShowDeleteConfirm(false)}
-                                    className="w-full px-6 py-3 bg-white dark:bg-zinc-800 text-black dark:text-white font-bold rounded-full border border-zinc-300 dark:border-zinc-600 transition-all"
+                                    className="w-full px-6 py-3 bg-white dark:bg-zinc-800 text-black dark:text-white font-bold rounded-2xl border border-zinc-300 dark:border-zinc-600 transition-all"
                                 >
                                     {t("cancel") || "Vazgeç"}
                                 </button>
                                 <button
                                     onClick={handleDeleteAccount}
                                     disabled={isLoading}
-                                    className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full transition-all"
+                                    className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all"
                                 >
                                     {isLoading ? "..." : (t("confirm_delete") || "Evet, Hesabımı Sil")}
                                 </button>

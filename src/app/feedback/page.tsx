@@ -653,7 +653,7 @@ export default function FeedbackPage() {
                 <div className="mt-12 text-center">
                     <Link
                         href="/"
-                        className="inline-block px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-all shadow-lg"
+                        className="inline-block px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg"
                     >
                         {t("back_to_home") || "Ana Sayfaya Dön"}
                     </Link>

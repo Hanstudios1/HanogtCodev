@@ -160,7 +160,7 @@ export default function Header() {
                             </Link>
                             <Link
                                 href="/signup"
-                                className={`px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full transition-colors shadow-md ${isScrolled ? "text-sm" : ""}`}
+                                className={`px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl transition-colors shadow-md ${isScrolled ? "text-sm" : ""}`}
                             >
                                 {t("signup")}
                             </Link>
