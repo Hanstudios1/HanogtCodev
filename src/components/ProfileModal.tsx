@@ -166,13 +166,10 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                                 {user.username?.charAt(0) || "U"}
                             </div>
                         )}
-                        {/* Discord-style online indicator */}
+                        {/* Online indicator: centered dot + colored ring */}
                         <div className="absolute bottom-0 right-0">
-                            <div className={`w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 ${user.isOnline ? "bg-green-500" : "bg-zinc-400"
-                                }`}>
-                                {!user.isOnline && (
-                                    <div className="w-2.5 h-2.5 rounded-full bg-white dark:bg-zinc-900 mx-auto mt-[3px]" />
-                                )}
+                            <div className={`w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 flex items-center justify-center ${user.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
+                                <div className="w-2 h-2 rounded-full bg-black/30" />
                             </div>
                         </div>
                     </div>
@@ -219,8 +216,8 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                         <button
                             onClick={() => setActiveTab("about")}
                             className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "about"
-                                    ? "bg-white dark:bg-zinc-700 shadow-sm"
-                                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                                ? "bg-white dark:bg-zinc-700 shadow-sm"
+                                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                                 }`}
                         >
                             {t("bio") || "Hakkında"}
@@ -229,8 +226,8 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                             <button
                                 onClick={() => setActiveTab("projects")}
                                 className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "projects"
-                                        ? "bg-white dark:bg-zinc-700 shadow-sm"
-                                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                                    ? "bg-white dark:bg-zinc-700 shadow-sm"
+                                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                                     }`}
                             >
                                 {t("projects") || "Projeler"} ({projects.length})

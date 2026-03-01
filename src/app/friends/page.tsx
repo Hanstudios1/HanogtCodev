@@ -528,7 +528,18 @@ export default function FriendsPage() {
                                 <input
                                     type="text"
                                     value={addInput}
-                                    onChange={(e) => setAddInput(e.target.value)}
+                                    onChange={(e) => {
+                                        let val = e.target.value;
+                                        // Auto-add # after nickname if user types without it
+                                        if (val.length >= 1 && !val.includes("#") && /\d/.test(val.slice(-1)) && val.length >= 2) {
+                                            // If last char is digit and no # exists, try to insert #
+                                            const lastLetterIdx = val.split("").reduce((acc, c, i) => /[a-zA-ZğüşöçıİĞÜŞÖÇ]/.test(c) ? i : acc, -1);
+                                            if (lastLetterIdx >= 0 && lastLetterIdx < val.length - 1) {
+                                                val = val.substring(0, lastLetterIdx + 1) + "#" + val.substring(lastLetterIdx + 1);
+                                            }
+                                        }
+                                        setAddInput(val);
+                                    }}
                                     placeholder={t("tag_placeholder") || "Oyuncu#1234"}
                                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                                     onKeyDown={(e) => e.key === "Enter" && handleSendRequest()}
@@ -617,13 +628,14 @@ function FriendCard({ friend, onProfile, onRemove, onBlock, onMessage, t }: {
                         {friend.username?.charAt(0) || "?"}
                     </div>
                 )}
-                <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 ${friend.isOnline ? "bg-green-500" : "bg-zinc-400"
-                    }`} />
+                <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center ${friend.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black/30" />
+                </div>
             </button>
 
             {/* Info */}
             <button onClick={() => onProfile(friend as UserProfile)} className="flex-1 min-w-0 text-left">
-                <p className="font-semibold truncate">{friend.username}</p>
+                <p className="font-semibold truncate">{friend.username} {friend.nickname && <span className="text-xs text-zinc-400 font-normal">{friend.nickname}#{friend.nicknameTag}</span>}</p>
                 <p className="text-xs text-zinc-500 truncate">
                     {friend.customStatus
                         ? `${friend.statusEmoji || ""} ${friend.customStatus}`

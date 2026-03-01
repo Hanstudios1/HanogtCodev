@@ -63,6 +63,7 @@ export default function AccountSettingsPage() {
     const [phoneVerified, setPhoneVerified] = useState(false);
     const [verificationCode, setVerificationCode] = useState("");
     const [showVerifyInput, setShowVerifyInput] = useState(false);
+    const [generatedCode, setGeneratedCode] = useState("");
 
     // §8 Messaging Settings
     const [typingIndicator, setTypingIndicator] = useState(true);
@@ -363,13 +364,16 @@ export default function AccountSettingsPage() {
             setTimeout(() => setMessage(""), 3000);
             return;
         }
+        // Generate random 6-digit SMS code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedCode(code);
         setShowVerifyInput(true);
-        setMessage(t("verification_sent") || "Doğrulama kodu gönderildi!");
-        setTimeout(() => setMessage(""), 3000);
+        setMessage(`${t("verification_sent") || "Doğrulama kodu gönderildi!"} (SMS Kodu: ${code})`);
+        setTimeout(() => setMessage(""), 8000);
     };
 
     const handleVerifyCode = async () => {
-        if (verificationCode === "1234" || verificationCode.length === 6) {
+        if (verificationCode === generatedCode && verificationCode.length === 6) {
             if (!session?.user?.email) return;
             await setDoc(doc(db, "users", session.user.email), {
                 phoneVerified: true,

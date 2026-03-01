@@ -7,6 +7,8 @@ import { ArrowLeft, MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, Us
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy, serverTimestamp, arrayUnion, arrayRemove, deleteDoc, getDoc } from "firebase/firestore";
+import ProfileModal from "@/components/ProfileModal";
+import type { UserProfile } from "@/components/ProfileModal";
 
 interface FeedbackItem {
     id: string;
@@ -56,7 +58,9 @@ export default function FeedbackPage() {
     const [replyingTo, setReplyingTo] = useState<{ itemId: string; commentId: string; author: string; content: string } | null>(null);
 
     // User data from Firebase
-    const [userData, setUserData] = useState<{ username?: string } | null>(null);
+    const [userData, setUserData] = useState<any>(null);
+    const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+    const [authorProfiles, setAuthorProfiles] = useState<Record<string, any>>({});
 
     // Fetch items from Firebase
     useEffect(() => {
@@ -70,7 +74,7 @@ export default function FeedbackPage() {
             try {
                 const userDoc = await getDoc(doc(db, "users", session.user.email));
                 if (userDoc.exists()) {
-                    setUserData(userDoc.data() as { username?: string });
+                    setUserData(userDoc.data());
                 }
             } catch (error) {
                 console.error("Error loading user data:", error);
@@ -100,6 +104,17 @@ export default function FeedbackPage() {
             // Sort by likes count
             fetchedItems.sort((a, b) => b.likes.length - a.likes.length);
             setItems(fetchedItems);
+
+            // Fetch author profiles for all items
+            const emailSet = new Set(fetchedItems.map(i => i.authorEmail));
+            const profiles: Record<string, any> = {};
+            for (const email of emailSet) {
+                try {
+                    const uDoc = await getDoc(doc(db, "users", email));
+                    if (uDoc.exists()) profiles[email] = uDoc.data();
+                } catch { /* skip */ }
+            }
+            setAuthorProfiles(profiles);
         } catch (error) {
             console.error("Error fetching feedback:", error);
         } finally {
@@ -418,13 +433,16 @@ export default function FeedbackPage() {
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
                                         {item.authorPhoto ? (
-                                            <img src={item.authorPhoto} alt={item.author} className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" />
+                                            <img src={item.authorPhoto} alt={item.author} className="w-8 h-8 rounded-full object-cover cursor-pointer" referrerPolicy="no-referrer" onClick={() => { const p = authorProfiles[item.authorEmail]; if (p?.publicProfile !== false) setSelectedProfile({ ...p, email: item.authorEmail } as UserProfile); }} />
                                         ) : (
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center cursor-pointer" onClick={() => { const p = authorProfiles[item.authorEmail]; if (p?.publicProfile !== false) setSelectedProfile({ ...p, email: item.authorEmail } as UserProfile); }}>
                                                 <User className="w-4 h-4 text-white" />
                                             </div>
                                         )}
-                                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{item.author}</span>
+                                        <button onClick={() => { const p = authorProfiles[item.authorEmail]; if (p?.publicProfile !== false) setSelectedProfile({ ...p, email: item.authorEmail } as UserProfile); }} className="font-medium text-zinc-700 dark:text-zinc-300 hover:text-blue-500 transition-colors">
+                                            {authorProfiles[item.authorEmail]?.username || item.author}
+                                            {authorProfiles[item.authorEmail]?.nickname && <span className="text-xs text-zinc-400 ml-1">{authorProfiles[item.authorEmail].nickname}#{authorProfiles[item.authorEmail].nicknameTag}</span>}
+                                        </button>
                                         <span className={`px-2 py-0.5 rounded-full text-xs ${item.type === "question"
                                             ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400"
                                             : "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
@@ -674,6 +692,15 @@ export default function FeedbackPage() {
                     <p>© 2026 Hanogt Codev. {t("all_rights_reserved") || "Tüm hakları saklıdır."}</p>
                 </div>
             </footer>
+
+            {/* Profile Modal */}
+            {selectedProfile && (
+                <ProfileModal
+                    user={selectedProfile}
+                    isOpen={!!selectedProfile}
+                    onClose={() => setSelectedProfile(null)}
+                />
+            )}
         </div>
     );
 }
