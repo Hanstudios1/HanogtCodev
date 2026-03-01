@@ -6,6 +6,7 @@ import Comparison from "@/components/Comparison";
 import HowItWorks from "@/components/HowItWorks";
 import Timeline from "@/components/Timeline";
 import ImageCarousel from "@/components/ImageCarousel";
+import FloatingFooter from "@/components/FloatingFooter";
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -69,53 +70,17 @@ export default function Home() {
       {/* Features Timeline Section */}
       <Timeline />
 
-      {/* Footer */}
-      <footer className="py-8 bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+      {/* Copyright Footer */}
+      <footer className="py-6 bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-7xl mx-auto px-6 text-center">
           <p className="text-zinc-500 dark:text-zinc-400 text-sm">
             © 2026 Hanogt Codev. {t("all_rights_reserved") || "Tüm hakları saklıdır."}
           </p>
-          <div className="flex items-center gap-6 text-sm flex-wrap justify-center">
-            <a
-              href="/about"
-              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-            >
-              {t("about_link") || "Hakkımızda"}
-            </a>
-            <a
-              href="/feedback"
-              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-            >
-              {t("feedback_link") || "Geri Bildirim/SSS"}
-            </a>
-            <a
-              href="/terms-of-use"
-              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-            >
-              {t("terms_of_use") || "Kullanım Şartları"}
-            </a>
-            <a
-              href="/privacy-policy"
-              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-            >
-              {t("privacy_policy") || "Gizlilik Politikası"}
-            </a>
-            <a
-              href="/disclosure"
-              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-            >
-              {t("disclosure_text") || "Aydınlatma Metni"}
-            </a>
-            <a
-              href="https://github.com/Hanstudios1/HanogtLanguageSoftwareScript"
-              target="_blank"
-              className="text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-            >
-              GitHub
-            </a>
-          </div>
         </div>
       </footer>
+
+      {/* Floating Footer Bar */}
+      <FloatingFooter />
     </main>
   );
 }
