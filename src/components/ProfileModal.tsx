@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useI18n } from "@/lib/i18n";
 import { X, Github, Linkedin, Twitter, Globe2, Download, Heart, Code, Award, ExternalLink } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 // 15 User Badges
 const ALL_BADGES = [
@@ -39,6 +41,7 @@ interface UserProfile {
     socialTwitter?: string;
     socialWebsite?: string;
     isOnline?: boolean;
+    dndMode?: boolean;
     publicProfile?: boolean;
     publicProjects?: boolean;
     badges?: string[];
@@ -104,8 +107,30 @@ const getFileExtension = (lang: string): string => {
 export default function ProfileModal({ user, projects = [], isOpen, onClose, onLikeProject, onDownloadProject }: ProfileModalProps) {
     const { t } = useI18n();
     const [activeTab, setActiveTab] = useState<"about" | "projects">("about");
+    const [fetchedProjects, setFetchedProjects] = useState<Project[]>([]);
+    const [loadingProjects, setLoadingProjects] = useState(false);
+
+    // Fetch user projects from Firestore
+    useEffect(() => {
+        if (!isOpen || !user.email || !user.publicProjects) return;
+        const fetchProjects = async () => {
+            setLoadingProjects(true);
+            try {
+                const q = query(collection(db, "projects"), where("ownerEmail", "==", user.email));
+                const snap = await getDocs(q);
+                const projs: Project[] = snap.docs.map(d => ({ id: d.id, ...d.data() as Omit<Project, "id"> }));
+                setFetchedProjects(projs);
+            } catch {
+                setFetchedProjects([]);
+            }
+            setLoadingProjects(false);
+        };
+        fetchProjects();
+    }, [isOpen, user.email, user.publicProjects]);
 
     if (!isOpen) return null;
+
+    const allProjects = projects.length > 0 ? projects : fetchedProjects;
 
     const accent = user.accentColor || "#3B82F6";
     const userBadges = ALL_BADGES.filter(b => user.badges?.includes(b.id));
@@ -166,11 +191,17 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                                 {user.username?.charAt(0) || "U"}
                             </div>
                         )}
-                        {/* Online indicator: centered dot + colored ring */}
+                        {/* Online/DND indicator */}
                         <div className="absolute bottom-0 right-0">
-                            <div className={`w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 flex items-center justify-center ${user.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
-                                <div className="w-2 h-2 rounded-full bg-black/30" />
-                            </div>
+                            {user.dndMode ? (
+                                <div className="w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 bg-red-500 flex items-center justify-center">
+                                    <div className="w-2.5 h-0.5 rounded bg-white" />
+                                </div>
+                            ) : (
+                                <div className={`w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 flex items-center justify-center ${user.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
+                                    <div className="w-2 h-2 rounded-full bg-black/30" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -230,7 +261,7 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                                     : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                                     }`}
                             >
-                                {t("projects") || "Projeler"} ({projects.length})
+                                {t("projects") || "Projeler"} ({allProjects.length})
                             </button>
                         )}
                     </div>
@@ -307,10 +338,12 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                     ) : (
                         /* Projects Tab */
                         <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                            {projects.length === 0 ? (
+                            {loadingProjects ? (
+                                <p className="text-sm text-zinc-500 text-center py-4">{t("loading") || "Yükleniyor..."}</p>
+                            ) : allProjects.length === 0 ? (
                                 <p className="text-sm text-zinc-500 text-center py-4">{t("no_projects") || "Henüz proje yok."}</p>
                             ) : (
-                                projects.map(project => {
+                                allProjects.map(project => {
                                     const langInfo = LANG_ICONS[project.language];
                                     return (
                                         <div

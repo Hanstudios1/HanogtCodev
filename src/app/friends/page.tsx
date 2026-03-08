@@ -30,6 +30,7 @@ type Friend = {
     nickname: string;
     nicknameTag: string;
     isOnline: boolean;
+    dndMode?: boolean;
     customStatus?: string;
     statusEmoji?: string;
     bio?: string;
@@ -95,6 +96,7 @@ export default function FriendsPage() {
                             nickname: userData.nickname || "",
                             nicknameTag: userData.nicknameTag || "0000",
                             isOnline: userData.isOnline || false,
+                            dndMode: userData.dndMode || false,
                             customStatus: userData.customStatus,
                             statusEmoji: userData.statusEmoji,
                             bio: userData.bio,
@@ -628,9 +630,16 @@ function FriendCard({ friend, onProfile, onRemove, onBlock, onMessage, t }: {
                         {friend.username?.charAt(0) || "?"}
                     </div>
                 )}
-                <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center ${friend.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
-                    <div className="w-1.5 h-1.5 rounded-full bg-black/30" />
-                </div>
+                {/* Online/DND indicator */}
+                {friend.dndMode ? (
+                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 bg-red-500 flex items-center justify-center">
+                        <div className="w-1.5 h-0.5 rounded bg-white" />
+                    </div>
+                ) : (
+                    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center ${friend.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-black/30" />
+                    </div>
+                )}
             </button>
 
             {/* Info */}
@@ -639,9 +648,11 @@ function FriendCard({ friend, onProfile, onRemove, onBlock, onMessage, t }: {
                 <p className="text-xs text-zinc-500 truncate">
                     {friend.customStatus
                         ? `${friend.statusEmoji || ""} ${friend.customStatus}`
-                        : friend.isOnline
-                            ? (t("online") || "Çevrimiçi")
-                            : (t("offline") || "Çevrimdışı")
+                        : friend.dndMode
+                            ? (t("do_not_disturb") || "Rahatsız Etmeyin")
+                            : friend.isOnline
+                                ? (t("online") || "Çevrimiçi")
+                                : (t("offline") || "Çevrimdışı")
                     }
                 </p>
             </button>

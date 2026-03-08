@@ -59,8 +59,10 @@ export default function ChatPage() {
     const [replyTo, setReplyTo] = useState<Message | null>(null);
     const [playingAudio, setPlayingAudio] = useState<string | null>(null);
     const [showProfile, setShowProfile] = useState(false);
+    const [friendIsTyping, setFriendIsTyping] = useState(false);
     const recordingInterval = useRef<NodeJS.Timeout | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const chatId = [session?.user?.email, friendEmail].sort().join("_");
 
@@ -80,7 +82,30 @@ export default function ChatPage() {
                 }
             });
         });
-        return () => unsub();
+
+        // Set online status
+        if (session?.user?.email) {
+            setDoc(doc(db, "users", session.user.email), { isOnline: true }, { merge: true });
+        }
+
+        // Listen for friend typing status
+        const typingUnsub = onSnapshot(doc(db, "chats", chatId), (snap) => {
+            const data = snap.data();
+            if (data?.typingUser && data.typingUser !== session?.user?.email) {
+                setFriendIsTyping(true);
+            } else {
+                setFriendIsTyping(false);
+            }
+        });
+
+        return () => {
+            unsub();
+            typingUnsub();
+            // Set offline on unmount
+            if (session?.user?.email) {
+                setDoc(doc(db, "users", session.user.email), { isOnline: false }, { merge: true });
+            }
+        };
     }, [session, chatId]);
 
     const loadFriendData = async () => {
@@ -121,6 +146,20 @@ export default function ChatPage() {
 
     const handleSend = () => sendMessage(newMessage);
     const handleSticker = (emoji: string) => sendMessage(emoji, "sticker");
+
+    // Typing indicator: broadcast to Firestore
+    const handleTyping = (text: string) => {
+        setNewMessage(text);
+        if (text.trim() && session?.user?.email) {
+            setDoc(doc(db, "chats", chatId), { typingUser: session.user.email }, { merge: true });
+            if (typingTimeout.current) clearTimeout(typingTimeout.current);
+            typingTimeout.current = setTimeout(() => {
+                setDoc(doc(db, "chats", chatId), { typingUser: null }, { merge: true });
+            }, 2000);
+        } else {
+            setDoc(doc(db, "chats", chatId), { typingUser: null }, { merge: true });
+        }
+    };
 
     // Delete message
     const handleDeleteMsg = async (msgId: string) => {
@@ -243,10 +282,16 @@ export default function ChatPage() {
                                 {friendData?.username?.charAt(0) || "?"}
                             </div>
                         )}
-                        {/* Fixed online indicator: centered dot + colored ring */}
-                        <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center ${friendData?.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
-                            <div className="w-1.5 h-1.5 rounded-full bg-black/30" />
-                        </div>
+                        {/* Online/DND indicator */}
+                        {friendData?.dndMode ? (
+                            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 bg-red-500 flex items-center justify-center">
+                                <div className="w-1.5 h-0.5 rounded bg-white" />
+                            </div>
+                        ) : (
+                            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center ${friendData?.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
+                                <div className="w-1.5 h-1.5 rounded-full bg-black/30" />
+                            </div>
+                        )}
                     </div>
                     <div className="min-w-0">
                         <h2 className="font-semibold truncate">
@@ -254,7 +299,9 @@ export default function ChatPage() {
                             {friendData?.nickname && <span className="text-xs text-zinc-400 ml-1.5">{friendData.nickname}#{friendData.nicknameTag}</span>}
                         </h2>
                         <p className="text-xs text-zinc-500">
-                            {friendData?.isOnline ? (t("online") || "Çevrimiçi") : (t("offline") || "Çevrimdışı")}
+                            {friendData?.dndMode
+                                ? (t("do_not_disturb") || "Rahatsız Etmeyin")
+                                : friendData?.isOnline ? (t("online") || "Çevrimiçi") : (t("offline") || "Çevrimdışı")}
                         </p>
                     </div>
                 </button>
@@ -403,6 +450,19 @@ export default function ChatPage() {
                 </div>
             )}
 
+            {/* Typing Indicator — only shows for the other user */}
+            {friendIsTyping && (
+                <div className="px-4 py-2 flex items-center gap-2">
+                    <span className="text-xs text-zinc-500 font-medium">{friendData?.username || friendEmail}</span>
+                    <span className="flex gap-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </span>
+                    <span className="text-xs text-zinc-400">{t("is_typing") || "yazıyor..."}</span>
+                </div>
+            )}
+
             {/* Input Bar */}
             <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 px-4 py-3">
                 {isRecording ? (
@@ -425,7 +485,7 @@ export default function ChatPage() {
                             ref={inputRef}
                             type="text"
                             value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
+                            onChange={(e) => handleTyping(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSend()}
                             placeholder={t("type_message") || "Mesaj yazın..."}
                             className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
