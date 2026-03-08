@@ -309,13 +309,19 @@ export default function ChatPage() {
                 {/* Call Button — only if phone verified */}
                 <button
                     onClick={() => {
-                        if (!myData?.phoneVerified) { alert(t("phone_required_voice") || "Sesli arama için telefon doğrulama gerekli."); return; }
+                        if (!myData?.phoneVerified) {
+                            alert(t("phone_required_warning") || "Bu özelliğin açılması için Telefon No'nun doğrulanması gerek! Lütfen daha sonra telefon numaranızı doğrulayıp tekrar deneyin!");
+                            return;
+                        }
                         router.push(`/call/${encodeURIComponent(friendEmail)}`);
                     }}
-                    className="p-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                    title={t("voice_call") || "Sesli Arama"}
+                    className={`p-2.5 rounded-xl transition-colors ${myData?.phoneVerified
+                            ? "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            : "opacity-50 cursor-not-allowed"
+                        }`}
+                    title={myData?.phoneVerified ? (t("voice_call") || "Sesli Arama") : (t("phone_required_warning") || "Telefon doğrulaması gerekli")}
                 >
-                    <Phone className="w-5 h-5 text-green-500" />
+                    <Phone className={`w-5 h-5 ${myData?.phoneVerified ? "text-green-500" : "text-zinc-600 dark:text-zinc-500"}`} />
                 </button>
 
                 {/* Menu with Block */}
@@ -495,8 +501,20 @@ export default function ChatPage() {
                                 <Send className="w-5 h-5" />
                             </button>
                         ) : (
-                            <button onMouseDown={startRecording} className="p-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                                <Mic className="w-5 h-5 text-zinc-400" />
+                            <button
+                                onMouseDown={() => {
+                                    if (!myData?.phoneVerified) {
+                                        alert(t("phone_required_warning") || "Bu özelliğin açılması için Telefon No'nun doğrulanması gerek! Lütfen daha sonra telefon numaranızı doğrulayıp tekrar deneyin!");
+                                        return;
+                                    }
+                                    startRecording();
+                                }}
+                                className={`p-2.5 rounded-xl transition-colors ${myData?.phoneVerified
+                                        ? "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                        : "opacity-50 cursor-not-allowed"
+                                    }`}
+                            >
+                                <Mic className={`w-5 h-5 ${myData?.phoneVerified ? "text-zinc-400" : "text-zinc-600 dark:text-zinc-500"}`} />
                             </button>
                         )}
                     </div>
