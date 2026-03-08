@@ -116,7 +116,7 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
         const fetchProjects = async () => {
             setLoadingProjects(true);
             try {
-                const q = query(collection(db, "projects"), where("ownerEmail", "==", user.email));
+                const q = query(collection(db, "projects"), where("email", "==", user.email));
                 const snap = await getDocs(q);
                 const projs: Project[] = snap.docs.map(d => ({ id: d.id, ...d.data() as Omit<Project, "id"> }));
                 setFetchedProjects(projs);

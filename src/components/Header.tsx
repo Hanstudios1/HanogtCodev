@@ -20,7 +20,7 @@ export default function Header() {
     const menuRef = useRef<HTMLDivElement>(null);
 
     // User data from Firebase
-    const [userData, setUserData] = useState<{ username?: string; avatarUrl?: string } | null>(null);
+    const [userData, setUserData] = useState<{ username?: string; avatarUrl?: string; isOnline?: boolean } | null>(null);
 
     // Scroll detection for shrinking header
     useEffect(() => {
@@ -38,7 +38,7 @@ export default function Header() {
             try {
                 const userDoc = await getDoc(doc(db, "users", session.user.email));
                 if (userDoc.exists()) {
-                    setUserData(userDoc.data() as { username?: string; avatarUrl?: string });
+                    setUserData(userDoc.data() as { username?: string; avatarUrl?: string; isOnline?: boolean });
                 }
             } catch (error) {
                 console.error("Error loading user data:", error);
@@ -112,17 +112,21 @@ export default function Header() {
                                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                                     className="flex items-center gap-2 p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                                 >
-                                    {displayAvatar ? (
-                                        <img
-                                            src={displayAvatar}
-                                            alt="Profile"
-                                            className={`rounded-full object-cover border-2 border-zinc-200 dark:border-zinc-700 transition-all duration-300 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}
-                                        />
-                                    ) : (
-                                        <div className={`rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm transition-all duration-300 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}>
-                                            {displayName?.charAt(0) || "U"}
-                                        </div>
-                                    )}
+                                    <div className="relative">
+                                        {displayAvatar ? (
+                                            <img
+                                                src={displayAvatar}
+                                                alt="Profile"
+                                                className={`rounded-full object-cover border-2 border-zinc-200 dark:border-zinc-700 transition-all duration-300 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}
+                                            />
+                                        ) : (
+                                            <div className={`rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm transition-all duration-300 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}>
+                                                {displayName?.charAt(0) || "U"}
+                                            </div>
+                                        )}
+                                        {/* Online green ring */}
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-950 bg-green-500" />
+                                    </div>
                                     <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${showProfileMenu ? "rotate-180" : ""}`} />
                                 </button>
 
