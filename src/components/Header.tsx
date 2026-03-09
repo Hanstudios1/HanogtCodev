@@ -9,7 +9,7 @@ import LangToggle from "./LangToggle";
 import ChangelogModal from "./ChangelogModal";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 
 export default function Header() {
     const { data: session } = useSession();
@@ -31,20 +31,15 @@ export default function Header() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Load user data from Firebase
+    // Listen to user data from Firebase in real-time (for isOnline, avatar, etc.)
     useEffect(() => {
-        const loadUserData = async () => {
-            if (!session?.user?.email) return;
-            try {
-                const userDoc = await getDoc(doc(db, "users", session.user.email));
-                if (userDoc.exists()) {
-                    setUserData(userDoc.data() as { username?: string; avatarUrl?: string; isOnline?: boolean });
-                }
-            } catch (error) {
-                console.error("Error loading user data:", error);
+        if (!session?.user?.email) return;
+        const unsub = onSnapshot(doc(db, "users", session.user.email), (snap) => {
+            if (snap.exists()) {
+                setUserData(snap.data() as { username?: string; avatarUrl?: string; isOnline?: boolean });
             }
-        };
-        loadUserData();
+        });
+        return () => unsub();
     }, [session?.user?.email]);
 
     // Close menu when clicking outside
@@ -124,8 +119,8 @@ export default function Header() {
                                                 {displayName?.charAt(0) || "U"}
                                             </div>
                                         )}
-                                        {/* Online green ring */}
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-950 bg-green-500" />
+                                        {/* Online status ring — green if online, gray if offline */}
+                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-950 ${userData?.isOnline ? 'bg-green-500' : 'bg-zinc-400'}`} />
                                     </div>
                                     <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${showProfileMenu ? "rotate-180" : ""}`} />
                                 </button>
