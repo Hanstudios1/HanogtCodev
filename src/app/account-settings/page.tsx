@@ -492,15 +492,16 @@ export default function AccountSettingsPage() {
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
                     </div>
 
-                    <div className="p-6 -mt-10 relative">
-                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 mt-12">
+                    <div className="p-6 relative">
+                        {/* Profil Title - above avatar */}
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <User className="w-5 h-5 text-blue-500" />
                             {t("profile") || "Profil"}
                         </h2>
 
                         {/* Avatar */}
                         <div className="flex items-center gap-4 mb-6">
-                            <div className="relative -mt-16">
+                            <div className="relative">
                                 {avatarUrl ? (
                                     <img
                                         src={avatarUrl}
@@ -521,7 +522,7 @@ export default function AccountSettingsPage() {
                                     <Camera className="w-4 h-4 text-white" />
                                 </label>
                             </div>
-                            <div className="flex-1 mt-[-2rem]">
+                            <div className="flex-1">
                                 <label className="block text-sm font-medium text-zinc-500 mb-1">
                                     {t("avatar_url") || "Profil Resmi URL"}
                                 </label>
