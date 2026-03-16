@@ -1,15 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, MessageSquare, Send } from "lucide-react";
+import { X, MessageSquare, Send, Pencil, Trash2, MoreVertical } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc } from "firebase/firestore";
-
-interface ChangeItem {
-    text: string;
-}
+import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
 interface UpdateEntry {
     id: string;
@@ -21,6 +17,21 @@ interface UpdateEntry {
 }
 
 const UPDATES: UpdateEntry[] = [
+    {
+        id: "v0.0.2",
+        version: "v0.0.2",
+        date: "2026-03-16",
+        titleKey: "update_v002_title",
+        descKey: "update_v002_desc",
+        items: [
+            { key: "update_v002_item1" },
+            { key: "update_v002_item2" },
+            { key: "update_v002_item3" },
+            { key: "update_v002_item4" },
+            { key: "update_v002_item5" },
+            { key: "update_v002_item6" },
+        ],
+    },
     {
         id: "v0.0.1",
         version: "v0.0.1",
@@ -54,6 +65,7 @@ interface Comment {
     id: string;
     text: string;
     username: string;
+    email: string;
     avatarUrl?: string;
     createdAt: any;
 }
@@ -64,6 +76,9 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [myUsername, setMyUsername] = useState("");
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editText, setEditText] = useState("");
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -75,7 +90,6 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
         loadUser();
     }, [isOpen, session]);
 
-    // Listen for comments on changelog
     useEffect(() => {
         if (!isOpen) { setComments([]); return; }
         const q = query(collection(db, "changelog_comments", "v0.0.1", "comments"), orderBy("createdAt", "asc"));
@@ -95,6 +109,26 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
             createdAt: serverTimestamp(),
         });
         setNewComment("");
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        await deleteDoc(doc(db, "changelog_comments", "v0.0.1", "comments", commentId));
+        setOpenMenuId(null);
+    };
+
+    const handleStartEdit = (comment: Comment) => {
+        setEditingId(comment.id);
+        setEditText(comment.text);
+        setOpenMenuId(null);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingId || !editText.trim()) return;
+        await updateDoc(doc(db, "changelog_comments", "v0.0.1", "comments", editingId), {
+            text: editText.trim(),
+        });
+        setEditingId(null);
+        setEditText("");
     };
 
     if (!isOpen) return null;
@@ -125,18 +159,13 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
                     {UPDATES.map((upd) => (
                         <div key={upd.id}>
-                            {/* Version Header */}
                             <div className="flex items-baseline justify-between mb-2">
                                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{upd.version}</h3>
                                 <span className="text-sm text-zinc-400">{upd.date}</span>
                             </div>
-
-                            {/* Description */}
                             <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
                                 {t(upd.descKey) || upd.descKey}
                             </p>
-
-                            {/* Change Items */}
                             <ul className="space-y-1.5">
                                 {upd.items.map((item, i) => (
                                     <li key={i} className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400">
@@ -148,7 +177,6 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
                         </div>
                     ))}
 
-                    {/* Divider */}
                     <div className="border-t border-zinc-200 dark:border-zinc-700" />
 
                     {/* Comments Section */}
@@ -157,24 +185,66 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
                             <MessageSquare className="w-4 h-4" />
                             {t("comments") || "Yorumlar"} ({comments.length})
                         </h4>
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
                             {comments.length === 0 && (
                                 <p className="text-xs text-zinc-400 text-center py-3">{t("no_comments") || "Henüz yorum yok."}</p>
                             )}
                             {comments.map((c) => (
-                                <div key={c.id} className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/60">
+                                <div key={c.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 group relative">
                                     {c.avatarUrl ? (
-                                        <img src={c.avatarUrl} className="w-6 h-6 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                                        <img src={c.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
                                     ) : (
-                                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{c.username?.charAt(0)}</div>
+                                        <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{c.username?.charAt(0)}</div>
                                     )}
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{c.username}</span>
                                             <span className="text-[10px] text-zinc-400">{formatCommentTime(c.createdAt)}</span>
                                         </div>
-                                        <p className="text-xs text-zinc-600 dark:text-zinc-400 break-words">{c.text}</p>
+                                        {editingId === c.id ? (
+                                            <div className="flex items-center gap-1 mt-1">
+                                                <input
+                                                    type="text"
+                                                    value={editText}
+                                                    onChange={(e) => setEditText(e.target.value)}
+                                                    onKeyDown={(e) => e.key === "Enter" && handleSaveEdit()}
+                                                    className="flex-1 px-2 py-1 rounded text-xs bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-900 dark:text-white"
+                                                    autoFocus
+                                                />
+                                                <button onClick={handleSaveEdit} className="text-[10px] text-blue-500 font-semibold hover:text-blue-600">{t("save") || "Kaydet"}</button>
+                                                <button onClick={() => setEditingId(null)} className="text-[10px] text-zinc-400 hover:text-zinc-600">{t("cancel") || "İptal"}</button>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-zinc-600 dark:text-zinc-400 break-words">{c.text}</p>
+                                        )}
                                     </div>
+                                    {/* Actions menu for own comments */}
+                                    {session?.user?.email === c.email && editingId !== c.id && (
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
+                                                className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <MoreVertical className="w-3.5 h-3.5 text-zinc-400" />
+                                            </button>
+                                            {openMenuId === c.id && (
+                                                <div className="absolute right-0 top-full mt-1 w-28 bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden z-10">
+                                                    <button
+                                                        onClick={() => handleStartEdit(c)}
+                                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+                                                    >
+                                                        <Pencil className="w-3 h-3" /> {t("edit") || "Düzenle"}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteComment(c.id)}
+                                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
+                                                    >
+                                                        <Trash2 className="w-3 h-3" /> {t("delete") || "Sil"}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

@@ -9,8 +9,6 @@ import DeleteProjectModal from "@/components/DeleteProjectModal";
 import { useSession } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
 import { getProjects, getProjectsFromCloud, deleteProjectFromCloud, deleteProject, renameProject } from "@/lib/storage";
-import { db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
 
 const LANGUAGES = [
     { name: "Python", ext: "py", color: "bg-blue-500", version: "3.12.0", logo: "/languages/python.png" },
@@ -51,20 +49,7 @@ export default function DashboardPage() {
         }
     }, [session]);
 
-    // Set online status in Firestore
-    useEffect(() => {
-        if (!session?.user?.email) return;
-        const email = session.user.email;
-        setDoc(doc(db, "users", email), { isOnline: true }, { merge: true });
-        const handleBeforeUnload = () => {
-            setDoc(doc(db, "users", email), { isOnline: false }, { merge: true });
-        };
-        window.addEventListener("beforeunload", handleBeforeUnload);
-        return () => {
-            window.removeEventListener("beforeunload", handleBeforeUnload);
-            setDoc(doc(db, "users", email), { isOnline: false }, { merge: true });
-        };
-    }, [session]);
+    // Online status is now managed by Header component (always mounted)
 
     useEffect(() => {
         const loadProjects = async () => {

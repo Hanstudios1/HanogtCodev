@@ -9,7 +9,7 @@ import LangToggle from "./LangToggle";
 import ChangelogModal from "./ChangelogModal";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
 export default function Header() {
     const { data: session } = useSession();
@@ -30,6 +30,23 @@ export default function Header() {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    // Set online status in Firestore from Header (always mounted)
+    useEffect(() => {
+        if (!session?.user?.email) return;
+        const email = session.user.email;
+        // Mark user as online
+        setDoc(doc(db, "users", email), { isOnline: true }, { merge: true });
+        // When tab/browser closes, mark offline
+        const handleBeforeUnload = () => {
+            navigator.sendBeacon?.("/api/auth/signup"); // fallback ping
+            setDoc(doc(db, "users", email), { isOnline: false }, { merge: true });
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, [session?.user?.email]);
 
     // Listen to user data from Firebase in real-time (for isOnline, avatar, etc.)
     useEffect(() => {
