@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Provider from "@/components/Provider";
 import { I18nProvider } from "@/lib/i18n";
+import SecurityBotChat from "@/components/SecurityBotChat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,6 +60,7 @@ export default function RootLayout({
         <Provider>
           <I18nProvider>
             {children}
+            <SecurityBotChat />
           </I18nProvider>
         </Provider>
       </body>
