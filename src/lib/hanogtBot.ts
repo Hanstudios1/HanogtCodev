@@ -365,7 +365,111 @@ export function analyzeCodeBehavior(code: string): { suspicious: boolean; reason
     const hasExecution = /eval|exec|system|spawn/gi.test(code);
     if (hasEncoding && hasExecution) reasons.push("Encoded payload with execution");
 
+    // Entropy analysis - high entropy = possible encrypted/obfuscated payload
+    const entropy = calculateEntropy(code);
+    if (entropy > 5.5) reasons.push(`High entropy score (${entropy.toFixed(2)}) — possible encrypted payload`);
+
+    // Polymorphic code detection
+    const varNames = code.match(/(?:var|let|const)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g) || [];
+    const randomLookingVars = varNames.filter(v => {
+        const name = v.replace(/^(var|let|const)\s+/, '');
+        return name.length > 8 && /^[a-z]{2,4}\d{2,}$/i.test(name);
+    });
+    if (randomLookingVars.length > 5) reasons.push("Polymorphic variable naming pattern detected");
+
+    // Attack chain detection (recon → exploit → payload → persistence)
+    const hasRecon = /navigator\.|screen\.|platform|userAgent|cpuClass/gi.test(code);
+    const hasExploit = /overflow|exploit|payload|shellcode/gi.test(code);
+    const hasPersistence = /localStorage|sessionStorage|cookie|indexedDB|ServiceWorker/gi.test(code);
+    if (hasRecon && hasExploit) reasons.push("Attack chain: Reconnaissance + Exploit pattern");
+    if (hasExploit && hasPersistence) reasons.push("Attack chain: Exploit + Persistence pattern");
+
+    // Suspicious API usage patterns
+    const hasWebRTC = /RTCPeerConnection|createDataChannel|getUserMedia/gi.test(code);
+    const hasCanvas = /canvas.*toDataURL|getImageData|fingerprint/gi.test(code);
+    if (hasWebRTC && hasCanvas) reasons.push("Browser fingerprinting attempt detected");
+
+    // Timing attack patterns
+    const hasTimingAttack = /performance\.now|Date\.now.*-.*Date\.now|setTimeout.*\d{4,}/gi.test(code);
+    if (hasTimingAttack && hasExecution) reasons.push("Timing-based attack pattern");
+
     return { suspicious: reasons.length > 0, reasons };
+}
+
+/**
+ * Calculate Shannon entropy of a string
+ * Higher entropy = more randomness = possible encryption/obfuscation
+ */
+function calculateEntropy(str: string): number {
+    const len = str.length;
+    if (len === 0) return 0;
+    const freq: Record<string, number> = {};
+    for (const ch of str) freq[ch] = (freq[ch] || 0) + 1;
+    let entropy = 0;
+    for (const count of Object.values(freq)) {
+        const p = count / len;
+        if (p > 0) entropy -= p * Math.log2(p);
+    }
+    return entropy;
+}
+
+/**
+ * Deep scan - performs multi-pass analysis for sophisticated threats
+ */
+export function deepScanCode(code: string): {
+    threatLevel: "safe" | "suspicious" | "dangerous" | "critical";
+    findings: string[];
+    recommendation: string;
+} {
+    const findings: string[] = [];
+    
+    // Pass 1: Standard pattern check
+    const patternResult = checkMaliciousCode(code);
+    if (patternResult.isMalicious) {
+        findings.push(...patternResult.threats.map(t => `[PATTERN] ${t}`));
+    }
+
+    // Pass 2: Behavioral analysis
+    const behavior = analyzeCodeBehavior(code);
+    if (behavior.suspicious) {
+        findings.push(...behavior.reasons.map(r => `[BEHAVIOR] ${r}`));
+    }
+
+    // Pass 3: Deobfuscation + re-scan
+    const deobfuscated = deobfuscateCode(code);
+    if (deobfuscated.length > 10) {
+        const deobResult = checkMaliciousCode(deobfuscated);
+        if (deobResult.isMalicious) {
+            findings.push(...deobResult.threats.map(t => `[HIDDEN] ${t} (found after deobfuscation)`));
+        }
+    }
+
+    // Pass 4: Unicode/homoglyph attack detection
+    const hasHomoglyphs = /[\u0410-\u044F]/.test(code) && /[a-zA-Z]/.test(code);
+    if (hasHomoglyphs) findings.push("[UNICODE] Mixed Cyrillic/Latin characters — possible homoglyph attack");
+
+    const hasInvisibleChars = /[\u200B-\u200F\u2028-\u202F\uFEFF]/.test(code);
+    if (hasInvisibleChars) findings.push("[UNICODE] Invisible/zero-width characters detected");
+
+    // Determine threat level
+    let threatLevel: "safe" | "suspicious" | "dangerous" | "critical" = "safe";
+    if (findings.some(f => f.startsWith("[PATTERN]") || f.startsWith("[HIDDEN]"))) {
+        threatLevel = "critical";
+    } else if (findings.length > 3) {
+        threatLevel = "dangerous";
+    } else if (findings.length > 0) {
+        threatLevel = "suspicious";
+    }
+
+    const recommendation = threatLevel === "critical" 
+        ? "PERMANENT BAN — Malicious code confirmed"
+        : threatLevel === "dangerous"
+        ? "HIGH RISK — Multiple suspicious indicators"
+        : threatLevel === "suspicious"
+        ? "MONITOR — Suspicious patterns detected"
+        : "SAFE — No threats detected";
+
+    return { threatLevel, findings, recommendation };
 }
 
 // ═══════════════════════════════════════════════════════════════
