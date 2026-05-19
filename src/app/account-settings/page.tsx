@@ -1019,31 +1019,7 @@ export default function AccountSettingsPage() {
                     </button>
                 </section>
 
-                {/* ===== §5 PHONE VERIFICATION ===== */}
-                <section className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-green-500" />
-                        {t("phone_verification") || "Telefon Doğrulama"}
-                    </h2>
-                    <p className="text-zinc-500 text-sm mb-3">{t("phone_info") || "Telefon numaranızı doğrulamak sesli özellikler için gereklidir."}</p>
-                    <div className="flex gap-2">
-                        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+90 5XX XXX XX XX" disabled={phoneVerified} className="flex-1 px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50" />
-                        {!phoneVerified && (
-                            <button onClick={handleSendVerification} className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm transition-all">
-                                {t("send_code") || "Kod Gönder"}
-                            </button>
-                        )}
-                    </div>
-                    {phoneVerified && <p className="text-green-500 text-sm mt-2">✅ {t("phone_verified") || "Telefon numarası doğrulandı"}</p>}
-                    {showVerifyInput && !phoneVerified && (
-                        <div className="flex gap-2 mt-3">
-                            <input type="text" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} placeholder={t("enter_code") || "Doğrulama kodu"} maxLength={6} className="flex-1 px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-green-500 font-mono text-center tracking-widest" />
-                            <button onClick={handleVerifyCode} className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm">
-                                {t("verify") || "Doğrula"}
-                            </button>
-                        </div>
-                    )}
-                </section>
+
 
                 {/* ===== §8 MESSAGING SETTINGS ===== */}
                 <section className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6">
