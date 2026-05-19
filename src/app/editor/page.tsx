@@ -7,7 +7,7 @@ import CodeEditor from "@/components/Editor/CodeEditor";
 import Console from "@/components/Editor/Console";
 import TestPreview from "@/components/Editor/TestPreview";
 import AIAssistant from "@/components/Editor/AIAssistant";
-import { Play, Plus, X, MoreVertical, Pencil, ShieldAlert } from "lucide-react";
+import { Play, Plus, X, MoreVertical, Pencil, ShieldAlert, Clock } from "lucide-react";
 import { executeCode, executeCodeSecure } from "@/services/piston";
 import { isUserBanned, banUser, logSecurityEvent } from "@/lib/hanogtBot";
 import { useSession, signOut } from "next-auth/react";
@@ -104,6 +104,26 @@ function EditorContent() {
     const [isBanned, setIsBanned] = useState(false);
     const [banReason, setBanReason] = useState<string>("");
     const [showBanModal, setShowBanModal] = useState(false);
+
+    // Execution history
+    const [executionHistory, setExecutionHistory] = useState<{lang: string; time: string; status: string}[]>([]);
+    const [showHistory, setShowHistory] = useState(false);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                handleSave();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                handleRun();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    });
 
     // Check if user is banned on page load
     useEffect(() => {
@@ -420,11 +440,18 @@ function EditorContent() {
                                 `> Executing ${activeTab.lang} script...`,
                                 ...(result.run.stdout ? result.run.stdout.split('\n') : []),
                                 ...(result.run.stderr ? [`Error: ${result.run.stderr}`] : []),
+                                ...(secureResult.behaviorWarnings ? [``, `⚠️ Security Warnings:`, ...secureResult.behaviorWarnings.map(w => `  → ${w}`)] : []),
                                 `> Process finished with exit code ${result.run.code}`
                             ]
                         }
                         : t
                 ));
+                // Track execution history
+                setExecutionHistory(prev => [{
+                    lang: activeTab.lang,
+                    time: new Date().toLocaleTimeString(),
+                    status: result.run.code === 0 ? "✅" : "❌"
+                }, ...prev].slice(0, 50));
             }
             // Switch to Test tab to show output
             setOutputTab("test");
@@ -434,6 +461,11 @@ function EditorContent() {
                     ? { ...t, isRunning: false, output: [`> Execution failed:`, String(error)] }
                     : t
             ));
+            setExecutionHistory(prev => [{
+                lang: activeTab.lang,
+                time: new Date().toLocaleTimeString(),
+                status: "💥"
+            }, ...prev].slice(0, 50));
             setOutputTab("test");
         }
     };
@@ -669,6 +701,25 @@ function EditorContent() {
                     </h2>
 
                     <div className="flex items-center gap-3">
+                        {/* Keyboard shortcut hints */}
+                        <div className="hidden md:flex items-center gap-2 text-xs text-zinc-400">
+                            <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-300 dark:border-zinc-600 font-mono">Ctrl+S</kbd>
+                            <span>{t("save") || "Kaydet"}</span>
+                            <span className="mx-1">|</span>
+                            <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-300 dark:border-zinc-600 font-mono">Ctrl+Enter</kbd>
+                            <span>{t("run") || "Çalıştır"}</span>
+                        </div>
+                        {/* History button */}
+                        <button
+                            onClick={() => setShowHistory(!showHistory)}
+                            className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors relative"
+                            title={t("execution_history") || "Çalıştırma Geçmişi"}
+                        >
+                            <Clock className="w-4 h-4" />
+                            {executionHistory.length > 0 && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white text-[9px] rounded-full flex items-center justify-center">{executionHistory.length}</span>
+                            )}
+                        </button>
                         <button
                             onClick={handleRun}
                             disabled={activeTab?.isRunning}
@@ -831,6 +882,39 @@ function EditorContent() {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Execution History Panel */}
+            {showHistory && (
+                <div className="fixed right-4 top-20 z-[70] w-72 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 max-h-[60vh] flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+                        <h3 className="font-bold text-sm flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            {t("execution_history") || "Çalıştırma Geçmişi"}
+                        </h3>
+                        <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2">
+                        {executionHistory.length === 0 ? (
+                            <p className="text-xs text-zinc-400 text-center py-4">{t("no_history") || "Henüz çalıştırma yok."}</p>
+                        ) : (
+                            executionHistory.map((h, i) => (
+                                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs">
+                                    <span>{h.status}</span>
+                                    <span className="font-medium text-zinc-700 dark:text-zinc-300">{h.lang}</span>
+                                    <span className="ml-auto text-zinc-400">{h.time}</span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    {executionHistory.length > 0 && (
+                        <button onClick={() => setExecutionHistory([])} className="m-2 px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors">
+                            {t("clear_history") || "Geçmişi Temizle"}
+                        </button>
+                    )}
                 </div>
             )}
 

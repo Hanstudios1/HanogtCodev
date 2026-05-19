@@ -1183,6 +1183,44 @@ export default function AccountSettingsPage() {
                     </div>
                 </section>
 
+                {/* ===== DATA EXPORT ===== */}
+                <section className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 mb-6">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        <Database className="w-5 h-5 text-cyan-500" />
+                        {t("data_export") || "Veri Dışa Aktarma"}
+                    </h2>
+                    <p className="text-sm text-zinc-500 mb-4">
+                        {t("data_export_desc") || "Tüm hesap verilerinizi JSON formatında indirin. Projeleriniz, ayarlarınız ve profil bilgileriniz dahildir."}
+                    </p>
+                    <button
+                        onClick={async () => {
+                            if (!session?.user?.email) return;
+                            const userDoc = await getDoc(doc(db, "users", session.user.email));
+                            const userData = userDoc.exists() ? userDoc.data() : {};
+                            const editorSettings = localStorage.getItem("hanogt_editor_settings");
+                            const projects = localStorage.getItem(`hanogt_projects_${session.user.email}`);
+                            const exportData = {
+                                profile: userData,
+                                editorSettings: editorSettings ? JSON.parse(editorSettings) : {},
+                                projects: projects ? JSON.parse(projects) : [],
+                                exportDate: new Date().toISOString(),
+                                platform: "Hanogt Codev"
+                            };
+                            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `hanogt_data_${new Date().toISOString().split("T")[0]}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        }}
+                        className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all flex items-center gap-2"
+                    >
+                        <Download className="w-4 h-4" />
+                        {t("download_my_data") || "Verilerimi İndir"}
+                    </button>
+                </section>
+
                 {/* ===== DANGER ZONE ===== */}
                 <section className="bg-white dark:bg-zinc-900 rounded-2xl border border-red-200 dark:border-red-900/50 p-6">
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-red-600">
