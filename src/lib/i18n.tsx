@@ -694,6 +694,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Telefon numaranızı doğrulamak sesli özellikler için gereklidir.",
         send_code: "Kod Gönder",
         verify_code: "Doğrula",
+        ask_security_bot: "Güvenlik botu ile sohbet et...",
+        edit: "Düzenle",
     },
     EN: {
         welcome: "Welcome",
@@ -1374,6 +1376,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Chat with Security Bot...",
+        edit: "Edit",
     },
     RU: {
         welcome: "Добро пожаловать",
@@ -1958,6 +1962,9 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Подтверждение номера необходимо для голосовых функций.",
         send_code: "Отправить код",
         verify_code: "Подтвердить",
+        ask_security_bot: "Чат с ботом безопасности...",
+        cancel: "Отмена",
+        edit: "Редактировать",
     },
     AZ: {
         welcome: "Xoş gəlmisiniz",
@@ -2541,6 +2548,9 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Telefon nömrənizi doğrulamaq səsli funksiyalar üçün lazımdır.",
         send_code: "Kod Göndər",
         verify_code: "Doğrula",
+        ask_security_bot: "Təhlükəsizlik botu ilə söhbət et...",
+        cancel: "Ləğv et",
+        edit: "Redaktə et",
     },
     ES: {
         welcome: "Bienvenido",
@@ -3124,6 +3134,9 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verificar tu número es necesario para funciones de voz.",
         send_code: "Enviar código",
         verify_code: "Verificar",
+        ask_security_bot: "Chatea con el bot de seguridad...",
+        cancel: "Cancelar",
+        edit: "Editar",
     },
     KZ: {
         welcome: "Қош келдіңіз",
@@ -3707,6 +3720,9 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Телефон нөмірін растау дауысты функциялар үшін қажет.",
         send_code: "Код жіберу",
         verify_code: "Растау",
+        ask_security_bot: "Қауіпсіздік ботымен сөйлесу...",
+        cancel: "Болдырмау",
+        edit: "Өңдеу",
     },
     JP: {
         welcome: "ようこそ",
@@ -4290,6 +4306,9 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "電話番号の確認は音声機能に必要です。",
         send_code: "コード送信",
         verify_code: "認証する",
+        ask_security_bot: "セキュリティボットとチャット...",
+        cancel: "キャンセル",
+        edit: "編集",
     },
     CN: {
         welcome: "欢迎",
@@ -4873,6 +4892,9 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "验证电话号码是使用语音功能的前提。",
         send_code: "发送验证码",
         verify_code: "验证",
+        ask_security_bot: "与安全机器人聊天...",
+        cancel: "取消",
+        edit: "编辑",
     },
     KR: {
         welcome: "환영합니다",
@@ -5455,6 +5477,9 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "전화번호 인증은 음성 기능에 필요합니다.",
         send_code: "코드 보내기",
         verify_code: "인증하기",
+        ask_security_bot: "보안 봇과 채팅...",
+        cancel: "취소",
+        edit: "편집",
     },
     HI: {
         welcome: "स्वागत है",
@@ -6117,6 +6142,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "सुरक्षा बॉट से चैट करें...",
+        edit: "संपादित करें",
     },
     DE: {
         welcome: "Willkommen",
@@ -6779,6 +6806,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Mit dem Sicherheitsbot chatten...",
+        edit: "Bearbeiten",
     },
     FR: {
         welcome: "Bienvenue",
@@ -7441,6 +7470,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Discuter avec le bot de sécurité...",
+        edit: "Modifier",
     },
     NL: {
         welcome: "Welkom",
@@ -8103,6 +8134,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Chat met beveiligingsbot...",
+        edit: "Bewerken",
     },
     PL: {
         welcome: "Witaj",
@@ -8765,6 +8798,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Czat z botem bezpieczeństwa...",
+        edit: "Edytuj",
     },
     NO: {
         welcome: "Velkommen",
@@ -9427,6 +9462,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Chat med sikkerhetsboten...",
+        edit: "Rediger",
     },
     FI: {
         welcome: "Tervetuloa",
@@ -10089,6 +10126,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Keskustele tietoturvabotin kanssa...",
+        edit: "Muokkaa",
     },
     SV: {
         welcome: "Välkommen",
@@ -10751,6 +10790,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Chatta med säkerhetsboten...",
+        edit: "Redigera",
     },
     EL: {
         welcome: "Καλώς ήρθατε",
@@ -11413,6 +11454,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Συνομιλία με το bot ασφαλείας...",
+        edit: "Επεξεργασία",
     },
     NG: {
         welcome: "Welcome o",
@@ -12075,6 +12118,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Chat wit Security Bot...",
+        edit: "Edit",
     },
     BE: {
         welcome: "Welkom",
@@ -12737,6 +12782,8 @@ const DICTIONARY: Record<Language, Translations> = {
         phone_info: "Verifying your phone number is required for voice features.",
         send_code: "Send Code",
         verify_code: "Verify",
+        ask_security_bot: "Chat met beveiligingsbot...",
+        edit: "Bewerken",
     },
 
 };
