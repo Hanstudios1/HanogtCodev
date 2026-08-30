@@ -56,9 +56,36 @@ const LANGUAGES = [
     { name: "Lua", ext: "lua", logo: "/languages/lua.png" },
 ];
 
+// Normalize language key: convert any form (ext, display name) to internal key
+// Used for consistent TEMPLATES lookup, Piston API calls, and CodeEditor language prop
+const normalizeLang = (lang: string): string => {
+    const lower = lang.toLowerCase().trim();
+    const langNormMap: Record<string, string> = {
+        // Display names → internal keys
+        "c++": "cpp",
+        "c#": "csharp",
+        // Extensions → internal keys (template/piston compatible)
+        "py": "python",
+        "js": "javascript",
+        "ts": "typescript",
+        "cs": "csharp",
+        "rb": "ruby",
+        "rs": "rust",
+        "kt": "kotlin",
+    };
+    return langNormMap[lower] || lower;
+};
+
+// Check if language is a web language (for preview mode)
+const isWebLang = (lang: string): boolean => {
+    const normalized = normalizeLang(lang);
+    return ["html", "css", "javascript", "typescript"].includes(normalized);
+};
+
 // Get display name from extension or lang
 const getDisplayName = (lang: string): string => {
-    const found = LANGUAGES.find(l => l.ext === lang || l.name.toLowerCase() === lang.toLowerCase());
+    const normalized = normalizeLang(lang);
+    const found = LANGUAGES.find(l => l.ext === lang || l.name.toLowerCase() === normalized || normalizeLang(l.ext) === normalized);
     return found?.name || lang.charAt(0).toUpperCase() + lang.slice(1);
 };
 
@@ -256,12 +283,12 @@ function EditorContent() {
             }
 
             // New project - create first tab
-            const langLower = initialLang.toLowerCase();
+            const langNorm = normalizeLang(initialLang);
             const newTab: Tab = {
                 id: `tab-${Date.now()}`,
-                name: `${getDisplayName(langLower)} ${t("my_lang_project_suffix") || "Projem"}`,
-                lang: langLower,
-                code: TEMPLATES[langLower] || TEMPLATES["default"],
+                name: `${getDisplayName(langNorm)} ${t("my_lang_project_suffix") || "Projem"}`,
+                lang: langNorm,
+                code: TEMPLATES[langNorm] || TEMPLATES["default"],
                 output: [],
                 isRunning: false,
                 isSaved: false,
@@ -288,14 +315,15 @@ function EditorContent() {
     // Get active tab
     const activeTab = tabs.find(t => t.id === activeTabId);
 
+
     // Add new tab
-    const handleAddTab = (langName: string) => {
-        const langLower = langName.toLowerCase();
+    const handleAddTab = (langName: string, langExt?: string) => {
+        const langKey = normalizeLang(langExt || langName);
         const newTab: Tab = {
             id: `tab-${Date.now()}`,
             name: `${langName} Dosya`,
-            lang: langLower,
-            code: TEMPLATES[langLower] || TEMPLATES["default"],
+            lang: langKey,
+            code: TEMPLATES[langKey] || TEMPLATES["default"],
             output: [],
             isRunning: false,
             isSaved: false,
@@ -355,10 +383,10 @@ function EditorContent() {
     const handleRun = async () => {
         if (!activeTab) return;
 
-        const lang = activeTab.lang.toLowerCase();
+        const lang = normalizeLang(activeTab.lang);
 
         // For web content (HTML/CSS/JS), just switch to Test tab for live preview
-        if (["html", "css", "javascript", "typescript"].includes(lang)) {
+        if (isWebLang(lang)) {
             setOutputTab("test");
             return;
         }
@@ -372,7 +400,7 @@ function EditorContent() {
 
         try {
             // Use secure execution with malicious code check
-            const secureResult = await executeCodeSecure(activeTab.lang, activeTab.code, session?.user?.email || undefined);
+            const secureResult = await executeCodeSecure(lang, activeTab.code, session?.user?.email || undefined);
 
             if (secureResult.blocked && secureResult.securityCheck) {
                 const { threats, severity, shouldBan } = secureResult.securityCheck;
@@ -431,42 +459,74 @@ function EditorContent() {
             // Code is safe, show execution result
             if (secureResult.response) {
                 const result = secureResult.response;
+                const displayLang = getDisplayName(activeTab.lang);
+                const outputLines: string[] = [
+                    `> ${displayLang} kodu çalıştırılıyor...`,
+                ];
+
+                // Add stdout if present
+                if (result.run.stdout && result.run.stdout.trim()) {
+                    outputLines.push(...result.run.stdout.split('\n'));
+                }
+
+                // Add stderr if present
+                if (result.run.stderr && result.run.stderr.trim()) {
+                    outputLines.push(`Error: ${result.run.stderr}`);
+                }
+
+                // Add security warnings if any
+                if (secureResult.behaviorWarnings && secureResult.behaviorWarnings.length > 0) {
+                    outputLines.push(``, `⚠️ Güvenlik Uyarıları:`);
+                    secureResult.behaviorWarnings.forEach(w => outputLines.push(`  → ${w}`));
+                }
+
+                // Add exit code
+                outputLines.push(`> İşlem ${result.run.code} çıkış kodu ile tamamlandı`);
+
+                // If no stdout and no stderr, indicate empty output
+                if ((!result.run.stdout || !result.run.stdout.trim()) && (!result.run.stderr || !result.run.stderr.trim())) {
+                    outputLines.splice(1, 0, "(Çıktı yok)");
+                }
+
                 setTabs(prevTabs => prevTabs.map(t =>
                     t.id === activeTabId
-                        ? {
-                            ...t,
-                            isRunning: false,
-                            output: [
-                                `> Executing ${activeTab.lang} script...`,
-                                ...(result.run.stdout ? result.run.stdout.split('\n') : []),
-                                ...(result.run.stderr ? [`Error: ${result.run.stderr}`] : []),
-                                ...(secureResult.behaviorWarnings ? [``, `⚠️ Security Warnings:`, ...secureResult.behaviorWarnings.map(w => `  → ${w}`)] : []),
-                                `> Process finished with exit code ${result.run.code}`
-                            ]
-                        }
+                        ? { ...t, isRunning: false, output: outputLines }
                         : t
                 ));
-                // Track execution history
+
+                // Track execution history with display name
                 setExecutionHistory(prev => [{
-                    lang: activeTab.lang,
+                    lang: displayLang,
                     time: new Date().toLocaleTimeString(),
                     status: result.run.code === 0 ? "✅" : "❌"
                 }, ...prev].slice(0, 50));
             }
-            // Switch to Test tab to show output
-            setOutputTab("test");
-        } catch (error) {
+            // Switch to console tab to show output (not "test" — test is for web preview)
+            setOutputTab("console");
+        } catch (error: any) {
+            const errorMsg = error?.message || String(error);
+            const displayLang = getDisplayName(activeTab.lang);
             setTabs(prevTabs => prevTabs.map(t =>
                 t.id === activeTabId
-                    ? { ...t, isRunning: false, output: [`> Execution failed:`, String(error)] }
+                    ? {
+                        ...t,
+                        isRunning: false,
+                        output: [
+                            `> ${displayLang} kodu çalıştırılıyor...`,
+                            ``,
+                            `Error: ${errorMsg}`,
+                            ``,
+                            `> Çalıştırma başarısız oldu. Lütfen kodunuzu kontrol edin.`
+                        ]
+                    }
                     : t
             ));
             setExecutionHistory(prev => [{
-                lang: activeTab.lang,
+                lang: displayLang,
                 time: new Date().toLocaleTimeString(),
                 status: "💥"
             }, ...prev].slice(0, 50));
-            setOutputTab("test");
+            setOutputTab("console");
         }
     };
 
@@ -737,7 +797,7 @@ function EditorContent() {
                     <div className="flex-1 h-[60%] lg:h-full p-2 lg:p-4">
                         {activeTab && (
                             <CodeEditor
-                                language={activeTab.lang === 'c++' ? 'cpp' : activeTab.lang}
+                                language={normalizeLang(activeTab.lang)}
                                 theme="dark"
                                 value={activeTab.code}
                                 onChange={(val) => handleCodeChange(val || "")}
@@ -748,7 +808,7 @@ function EditorContent() {
                     {/* Console Area (Right Side) */}
                     <div className="h-[40%] lg:h-full lg:w-[400px] border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 bg-zinc-900 flex flex-col">
                         {/* Show Test tab only for web languages */}
-                        {["html", "css", "javascript", "typescript"].includes(activeTab?.lang?.toLowerCase() || "") ? (
+                        {isWebLang(activeTab?.lang || "") ? (
                             <>
                                 {/* Tab Switcher */}
                                 <div className="flex border-b border-zinc-700">
@@ -825,7 +885,7 @@ function EditorContent() {
                             {LANGUAGES.map((lang) => (
                                 <button
                                     key={lang.name}
-                                    onClick={() => handleAddTab(lang.name)}
+                                    onClick={() => handleAddTab(lang.name, lang.ext)}
                                     className="flex flex-col items-center justify-center p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-2 border-transparent hover:border-blue-500 transition-all gap-3"
                                 >
                                     <div className="w-12 h-12 rounded-full overflow-hidden bg-white dark:bg-zinc-900 shadow-md flex items-center justify-center p-2">

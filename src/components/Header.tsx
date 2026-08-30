@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { User, Settings, LogOut, ChevronDown, Info } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, Info, ShieldCheck } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import LangToggle from "./LangToggle";
 import ChangelogModal from "./ChangelogModal";
+import { SecurityBotChatWindow } from "./SecurityBotChat";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
@@ -17,6 +18,7 @@ export default function Header() {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
+    const [showSecurityBot, setShowSecurityBot] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     // User data from Firebase
@@ -114,6 +116,15 @@ export default function Header() {
                             <Info className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
                             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                         </button>
+                        {/* Security Bot Button */}
+                        <button
+                            onClick={() => setShowSecurityBot(!showSecurityBot)}
+                            className={`p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all relative overflow-hidden border-2 ${showSecurityBot ? 'border-green-500 ring-2 ring-green-500/30' : 'border-transparent hover:border-green-500/50'}`}
+                            title="Hanogt Security Bot"
+                        >
+                            <img src="/hanogt-bot-logo.png" alt="Security Bot" className="w-6 h-6 rounded-full object-cover" />
+                            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green-500 border border-white dark:border-zinc-950" />
+                        </button>
                         <LangToggle />
                         <ThemeToggle />
 
@@ -198,6 +209,7 @@ export default function Header() {
                 </div>
             </header>
             <ChangelogModal isOpen={showChangelog} onClose={() => setShowChangelog(false)} />
+            {showSecurityBot && <SecurityBotChatWindow onClose={() => setShowSecurityBot(false)} />}
         </>
     );
 }

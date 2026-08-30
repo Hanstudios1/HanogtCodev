@@ -67,9 +67,11 @@ function getBotResponse(userMsg: string, lang: string): string {
         : "🤔 Bu konuda bilgim yok. Şunları sorabilirsiniz:\n• Kurallar\n• Güvenlik\n• Ban politikası\n• Özellikler\n• Diller\n• Geri bildirim\n• Hesap ayarları";
 }
 
-export default function SecurityBotChat() {
+/**
+ * Chat window component - rendered from Header when bot button is clicked
+ */
+export function SecurityBotChatWindow({ onClose }: { onClose: () => void }) {
     const { t, language } = useI18n();
-    const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -83,8 +85,7 @@ export default function SecurityBotChat() {
     }, [messages, isTyping]);
 
     useEffect(() => {
-        if (isOpen && messages.length === 0) {
-            // Welcome message
+        if (messages.length === 0) {
             setMessages([{
                 id: `bot-${Date.now()}`,
                 role: "bot",
@@ -94,7 +95,8 @@ export default function SecurityBotChat() {
                 time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             }]);
         }
-    }, [isOpen]);
+        inputRef.current?.focus();
+    }, []);
 
     const handleSend = () => {
         if (!input.trim()) return;
@@ -108,7 +110,6 @@ export default function SecurityBotChat() {
         setInput("");
         setIsTyping(true);
 
-        // Simulate typing delay
         setTimeout(() => {
             const botResponse: ChatMessage = {
                 id: `bot-${Date.now()}`,
@@ -132,7 +133,6 @@ export default function SecurityBotChat() {
         setEditText("");
     };
 
-    // Render markdown-like bold text
     const renderText = (text: string) => {
         return text.split("\n").map((line, i) => {
             const parts = line.split(/(\*\*[^*]+\*\*)/g);
@@ -151,132 +151,122 @@ export default function SecurityBotChat() {
     };
 
     return (
-        <>
-            {/* Floating Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`fixed top-4 right-4 z-[80] w-11 h-11 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 ${isOpen ? "border-green-500 ring-2 ring-green-500/30" : "border-zinc-300 dark:border-zinc-600 hover:border-blue-500"}`}
-                title="Hanogt Security Bot"
-            >
-                <img src="/hanogt-bot-logo.png" alt="Security Bot" className="w-full h-full object-cover" />
-            </button>
-
-            {/* Chat Window */}
-            {isOpen && (
-                <div className="fixed top-16 right-4 z-[80] w-[380px] h-[520px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {/* Header */}
-                    <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-700 text-white">
-                        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
-                            <img src="/hanogt-bot-logo.png" alt="Bot" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-sm">Hanogt Security Bot</h3>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
-                                <span className="text-xs text-green-100">{t("online") || "Çevrimiçi"}</span>
-                            </div>
-                        </div>
-                        <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-zinc-50 dark:bg-zinc-950">
-                        {messages.map(msg => (
-                            <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} group`}>
-                                {/* Bot avatar */}
-                                {msg.role === "bot" && (
-                                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mr-2 mt-1 border border-zinc-200 dark:border-zinc-700">
-                                        <img src="/hanogt-bot-logo.png" alt="Bot" className="w-full h-full object-cover" />
-                                    </div>
-                                )}
-                                <div className={`max-w-[75%] relative ${msg.role === "user" ? "order-1" : ""}`}>
-                                    {editingId === msg.id ? (
-                                        <div className="flex flex-col gap-1">
-                                            <input
-                                                value={editText}
-                                                onChange={e => setEditText(e.target.value)}
-                                                onKeyDown={e => e.key === "Enter" && handleEditSave()}
-                                                className="px-3 py-2 rounded-xl text-xs bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-900 dark:text-white"
-                                                autoFocus
-                                            />
-                                            <div className="flex gap-1">
-                                                <button onClick={handleEditSave} className="text-[10px] text-blue-500 font-semibold">{t("save") || "Kaydet"}</button>
-                                                <button onClick={() => setEditingId(null)} className="text-[10px] text-zinc-400">{t("cancel") || "İptal"}</button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className={`px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed ${msg.role === "user"
-                                            ? "bg-blue-600 text-white rounded-br-md"
-                                            : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-md border border-zinc-100 dark:border-zinc-700"
-                                        }`}>
-                                            {renderText(msg.text)}
-                                        </div>
-                                    )}
-                                    <div className={`flex items-center gap-1.5 mt-0.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                                        <span className="text-[10px] text-zinc-400">{msg.time}</span>
-                                        {msg.role === "user" && editingId !== msg.id && (
-                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                                <button
-                                                    onClick={() => { setEditingId(msg.id); setEditText(msg.text); }}
-                                                    className="text-[10px] text-zinc-400 hover:text-blue-500"
-                                                >✏️</button>
-                                                <button
-                                                    onClick={() => handleDelete(msg.id)}
-                                                    className="text-[10px] text-zinc-400 hover:text-red-500"
-                                                >🗑️</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Typing indicator */}
-                        {isTyping && (
-                            <div className="flex items-start gap-2">
-                                <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
-                                    <img src="/hanogt-bot-logo.png" alt="Bot" className="w-full h-full object-cover" />
-                                </div>
-                                <div className="bg-white dark:bg-zinc-800 px-4 py-3 rounded-2xl rounded-bl-md border border-zinc-100 dark:border-zinc-700">
-                                    <div className="flex gap-1.5">
-                                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                                        <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    {/* Input */}
-                    <div className="px-3 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                        <div className="flex items-center gap-2">
-                            <input
-                                ref={inputRef}
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && handleSend()}
-                                placeholder={t("ask_security_bot") || "Güvenlik botu ile sohbet et..."}
-                                className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
-                            />
-                            <button
-                                onClick={handleSend}
-                                disabled={!input.trim()}
-                                className="p-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 text-white transition-all shadow-md hover:shadow-lg disabled:shadow-none"
-                            >
-                                <Send className="w-4 h-4" />
-                            </button>
-                        </div>
-                        <p className="text-[10px] text-zinc-400 mt-1.5 text-center">
-                            <ShieldCheck className="w-3 h-3 inline mr-1" />
-                            Hanogt Security Bot v3.0
-                        </p>
+        <div className="fixed top-16 right-4 z-[80] w-[380px] h-[520px] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col overflow-hidden" style={{ animation: "fadeSlideIn 0.2s ease-out" }}>
+            {/* Header */}
+            <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-700 text-white">
+                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
+                    <img src="/hanogt-bot-logo.png" alt="Bot" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm">Hanogt Security Bot</h3>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
+                        <span className="text-xs text-green-100">{t("online") || "Çevrimiçi"}</span>
                     </div>
                 </div>
-            )}
-        </>
+                <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-zinc-50 dark:bg-zinc-950">
+                {messages.map(msg => (
+                    <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} group`}>
+                        {msg.role === "bot" && (
+                            <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mr-2 mt-1 border border-zinc-200 dark:border-zinc-700">
+                                <img src="/hanogt-bot-logo.png" alt="Bot" className="w-full h-full object-cover" />
+                            </div>
+                        )}
+                        <div className={`max-w-[75%] relative ${msg.role === "user" ? "order-1" : ""}`}>
+                            {editingId === msg.id ? (
+                                <div className="flex flex-col gap-1">
+                                    <input
+                                        value={editText}
+                                        onChange={e => setEditText(e.target.value)}
+                                        onKeyDown={e => e.key === "Enter" && handleEditSave()}
+                                        className="px-3 py-2 rounded-xl text-xs bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-900 dark:text-white"
+                                        autoFocus
+                                    />
+                                    <div className="flex gap-1">
+                                        <button onClick={handleEditSave} className="text-[10px] text-blue-500 font-semibold">{t("save") || "Kaydet"}</button>
+                                        <button onClick={() => setEditingId(null)} className="text-[10px] text-zinc-400">{t("cancel") || "İptal"}</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className={`px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed ${msg.role === "user"
+                                    ? "bg-blue-600 text-white rounded-br-md"
+                                    : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-md border border-zinc-100 dark:border-zinc-700"
+                                }`}>
+                                    {renderText(msg.text)}
+                                </div>
+                            )}
+                            <div className={`flex items-center gap-1.5 mt-0.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                                <span className="text-[10px] text-zinc-400">{msg.time}</span>
+                                {msg.role === "user" && editingId !== msg.id && (
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                        <button
+                                            onClick={() => { setEditingId(msg.id); setEditText(msg.text); }}
+                                            className="text-[10px] text-zinc-400 hover:text-blue-500"
+                                        >✏️</button>
+                                        <button
+                                            onClick={() => handleDelete(msg.id)}
+                                            className="text-[10px] text-zinc-400 hover:text-red-500"
+                                        >🗑️</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                {/* Typing indicator */}
+                {isTyping && (
+                    <div className="flex items-start gap-2">
+                        <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-zinc-200 dark:border-zinc-700">
+                            <img src="/hanogt-bot-logo.png" alt="Bot" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="bg-white dark:bg-zinc-800 px-4 py-3 rounded-2xl rounded-bl-md border border-zinc-100 dark:border-zinc-700">
+                            <div className="flex gap-1.5">
+                                <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                                <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                                <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-3 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                <div className="flex items-center gap-2">
+                    <input
+                        ref={inputRef}
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && handleSend()}
+                        placeholder={t("ask_security_bot") || "Güvenlik botu ile sohbet et..."}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
+                    />
+                    <button
+                        onClick={handleSend}
+                        disabled={!input.trim()}
+                        className="p-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 text-white transition-all shadow-md hover:shadow-lg disabled:shadow-none"
+                    >
+                        <Send className="w-4 h-4" />
+                    </button>
+                </div>
+                <p className="text-[10px] text-zinc-400 mt-1.5 text-center">
+                    <ShieldCheck className="w-3 h-3 inline mr-1" />
+                    Hanogt Security Bot v3.0
+                </p>
+            </div>
+        </div>
     );
+}
+
+// Keep default export for backward compat but it does nothing now
+export default function SecurityBotChat() {
+    return null;
 }
