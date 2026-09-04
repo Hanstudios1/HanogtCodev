@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Provider from "@/components/Provider";
 import { I18nProvider } from "@/lib/i18n";
 import SecurityBotChat from "@/components/SecurityBotChat";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import VoiceCallProvider from "@/components/VoiceCallProvider";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://hanogtcodev.com"),
   title: "Hanogt Codev",
-  description: "Hanogt Codev ile istediğin dilde özgürce kodla. %100 ücretsiz, reklamsız, sınırsız.",
+  description: "Güvenlik katmanları, çoklu dosya projeleri ve arkadaş iletişimi sunan modern kod editörü.",
   icons: {
     icon: "/logo-dark.png",
     shortcut: "/logo-dark.png",
@@ -25,7 +16,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Hanogt Codev",
-    description: "Hanogt Codev ile istediğin dilde özgürce kodla. %100 ücretsiz, reklamsız, sınırsız.",
+    description: "Güvenlik katmanları, çoklu dosya projeleri ve arkadaş iletişimi sunan modern kod editörü.",
     url: "https://hanogtcodev.com",
     siteName: "Hanogt Codev",
     images: [
@@ -42,7 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "Hanogt Codev",
-    description: "Hanogt Codev ile istediğin dilde özgürce kodla. %100 ücretsiz, reklamsız, sınırsız.",
+    description: "Güvenlik katmanları, çoklu dosya projeleri ve arkadaş iletişimi sunan modern kod editörü.",
     images: ["/logo-dark.png"],
   },
 };
@@ -54,13 +45,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         <Provider>
           <I18nProvider>
-            {children}
-            <SecurityBotChat />
+            <VoiceCallProvider>
+              {children}
+              <SecurityBotChat />
+            </VoiceCallProvider>
           </I18nProvider>
         </Provider>
       </body>

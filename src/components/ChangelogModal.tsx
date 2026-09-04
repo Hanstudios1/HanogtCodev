@@ -1,11 +1,13 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import { useState, useEffect } from "react";
 import { X, MessageSquare, Send, Pencil, Trash2, MoreVertical } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, type Timestamp } from "firebase/firestore";
 
 interface UpdateEntry {
     id: string;
@@ -17,6 +19,39 @@ interface UpdateEntry {
 }
 
 const UPDATES: UpdateEntry[] = [
+    {
+        id: "v0.0.5",
+        version: "v0.0.5",
+        date: "2026-09-04",
+        titleKey: "update_v005_title",
+        descKey: "update_v005_desc",
+        items: [
+            { key: "update_v005_item1" },
+            { key: "update_v005_item2" },
+            { key: "update_v005_item3" },
+            { key: "update_v005_item4" },
+            { key: "update_v005_item5" },
+            { key: "update_v005_item6" },
+        ],
+    },
+    {
+        id: "v0.0.4",
+        version: "v0.0.4",
+        date: "2026-09-03",
+        titleKey: "update_v004_title",
+        descKey: "update_v004_desc",
+        items: [
+            { key: "update_v004_item1" },
+            { key: "update_v004_item2" },
+            { key: "update_v004_item3" },
+            { key: "update_v004_item4" },
+            { key: "update_v004_item5" },
+            { key: "update_v004_item6" },
+            { key: "update_v004_item7" },
+            { key: "update_v004_item8" },
+            { key: "update_v004_item9" },
+        ],
+    },
     {
         id: "v0.0.3",
         version: "v0.0.3",
@@ -83,7 +118,7 @@ interface Comment {
     username: string;
     email: string;
     avatarUrl?: string;
-    createdAt: any;
+    createdAt: Timestamp | Date | string | null;
 }
 
 export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -107,17 +142,19 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
     }, [isOpen, session]);
 
     useEffect(() => {
-        if (!isOpen) { setComments([]); return; }
-        const q = query(collection(db, "changelog_comments", "v0.0.1", "comments"), orderBy("createdAt", "asc"));
+        if (!isOpen || !session?.user) {
+            return;
+        }
+        const q = query(collection(db, "changelog_comments", "v0.0.5", "comments"), orderBy("createdAt", "asc"));
         const unsub = onSnapshot(q, (snap) => {
             setComments(snap.docs.map(d => ({ id: d.id, ...d.data() as Omit<Comment, "id"> })));
         });
         return () => unsub();
-    }, [isOpen]);
+    }, [isOpen, session?.user]);
 
     const handleSendComment = async () => {
         if (!newComment.trim() || !session?.user?.email) return;
-        await addDoc(collection(db, "changelog_comments", "v0.0.1", "comments"), {
+        await addDoc(collection(db, "changelog_comments", "v0.0.5", "comments"), {
             text: newComment.trim(),
             email: session.user.email,
             username: myUsername || session.user.name || "User",
@@ -128,7 +165,7 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
     };
 
     const handleDeleteComment = async (commentId: string) => {
-        await deleteDoc(doc(db, "changelog_comments", "v0.0.1", "comments", commentId));
+        await deleteDoc(doc(db, "changelog_comments", "v0.0.5", "comments", commentId));
         setOpenMenuId(null);
     };
 
@@ -140,7 +177,7 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
 
     const handleSaveEdit = async () => {
         if (!editingId || !editText.trim()) return;
-        await updateDoc(doc(db, "changelog_comments", "v0.0.1", "comments", editingId), {
+        await updateDoc(doc(db, "changelog_comments", "v0.0.5", "comments", editingId), {
             text: editText.trim(),
         });
         setEditingId(null);
@@ -149,9 +186,9 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
 
     if (!isOpen) return null;
 
-    const formatCommentTime = (ts: any) => {
+    const formatCommentTime = (ts: Comment["createdAt"]) => {
         if (!ts) return "";
-        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        const d = typeof ts === "object" && "toDate" in ts ? ts.toDate() : new Date(ts);
         return d.toLocaleString([], { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
     };
 
@@ -179,6 +216,9 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
                                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{upd.version}</h3>
                                 <span className="text-sm text-zinc-400">{upd.date}</span>
                             </div>
+                            <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-1">
+                                {t(upd.titleKey) || upd.titleKey}
+                            </p>
                             <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
                                 {t(upd.descKey) || upd.descKey}
                             </p>
@@ -208,7 +248,7 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
                             {comments.map((c) => (
                                 <div key={c.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 group relative">
                                     {c.avatarUrl ? (
-                                        <img src={c.avatarUrl} className="w-7 h-7 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                                        <OptimizedImage src={c.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
                                     ) : (
                                         <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{c.username?.charAt(0)}</div>
                                     )}

@@ -1,12 +1,14 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Bell, BellOff, UserPlus, MessageCircle, Phone, Star, Trash2, Check, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, onSnapshot, doc, setDoc, deleteDoc, getDocs, limit } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc, limit, type Timestamp } from "firebase/firestore";
 
 type Notification = {
     id: string;
@@ -16,7 +18,7 @@ type Notification = {
     fromEmail?: string;
     fromAvatar?: string;
     read: boolean;
-    createdAt: any;
+    createdAt: Timestamp | Date | string | null;
     actionUrl?: string;
 };
 
@@ -124,7 +126,7 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
                                     }`}
                             >
                                 {notif.fromAvatar ? (
-                                    <img src={notif.fromAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" referrerPolicy="no-referrer" />
+                                    <OptimizedImage src={notif.fromAvatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" referrerPolicy="no-referrer" />
                                 ) : (
                                     <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0 mt-0.5">
                                         {getIcon(notif.type)}

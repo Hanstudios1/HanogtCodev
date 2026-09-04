@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import OptimizedImage from "@/components/OptimizedImage";
+
+import { useCallback, useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { User, Trash2, Camera, ArrowLeft, Save, Bell, Globe, Shield, Database, Download, Clock, Eye, EyeOff, Mail, Megaphone, LogOut, Link2, Github, Linkedin, Twitter, Globe2, Hash, Palette, Heart, Image, MessageCircle, Star, Phone, Lock, Volume2, Paintbrush, Monitor, Snowflake } from "lucide-react";
+import { User, Trash2, Camera, ArrowLeft, Save, Bell, Globe, Shield, Database, Download, Clock, Eye, EyeOff, Mail, Megaphone, LogOut, Link2, Github, Linkedin, Twitter, Globe2, Hash, Palette, Image as ImageIcon, MessageCircle, Star, Lock, Paintbrush } from "lucide-react";
 import Header from "@/components/Header";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
-import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const PROGRAMMING_LANGUAGES = [
     "JavaScript", "TypeScript", "Python", "Java", "C++", "C#", "Go", "Rust",
@@ -19,6 +21,8 @@ const ACCENT_COLORS = [
     "#3B82F6", "#8B5CF6", "#EC4899", "#EF4444", "#F97316", "#EAB308",
     "#22C55E", "#06B6D4", "#6366F1", "#D946EF", "#14B8A6", "#F43F5E"
 ];
+
+const generateTag = () => String(Math.floor(1000 + Math.random() * 9000));
 
 export default function AccountSettingsPage() {
     const { data: session } = useSession();
@@ -58,16 +62,10 @@ export default function AccountSettingsPage() {
     const [lastLoginDate, setLastLoginDate] = useState("");
 
     // §7 Password Management
+    const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [hasPassword, setHasPassword] = useState(false);
-
-    // §5 Phone Verification
-    const [phoneNumber, setPhoneNumber] = useState("");
-    const [phoneVerified, setPhoneVerified] = useState(false);
-    const [verificationCode, setVerificationCode] = useState("");
-    const [showVerifyInput, setShowVerifyInput] = useState(false);
-    const [generatedCode, setGeneratedCode] = useState("");
 
     // §8 Messaging Settings
     const [typingIndicator, setTypingIndicator] = useState(true);
@@ -105,18 +103,7 @@ export default function AccountSettingsPage() {
     const [uiFontSize, setUiFontSize] = useState("medium");
     const [emojiStyle, setEmojiStyle] = useState("native");
 
-    // §8 Security Settings
-    const [freezeAccount, setFreezeAccount] = useState(false);
-
-    useEffect(() => {
-        if (!session?.user) {
-            router.push("/login");
-            return;
-        }
-        loadUserData();
-    }, [session]);
-
-    const loadUserData = async () => {
+    const loadUserData = useCallback(async () => {
         if (!session?.user?.email) return;
         try {
             const userDoc = await getDoc(doc(db, "users", session.user.email));
@@ -150,9 +137,6 @@ export default function AccountSettingsPage() {
                 setLastLoginDate(data.lastLoginDate || new Date().toISOString());
                 // §7 Password
                 setHasPassword(data.hasPassword || false);
-                // §5 Phone
-                setPhoneNumber(data.phoneNumber || "");
-                setPhoneVerified(data.phoneVerified || false);
                 // §8 Messaging
                 setTypingIndicator(data.typingIndicator ?? true);
                 setReadReceipts(data.readReceipts ?? true);
@@ -185,8 +169,6 @@ export default function AccountSettingsPage() {
                 setHighContrast(data.highContrast ?? false);
                 setUiFontSize(data.uiFontSize || "medium");
                 setEmojiStyle(data.emojiStyle || "native");
-                // §8 Security
-                setFreezeAccount(data.freezeAccount ?? false);
             } else {
                 setUsername(session.user.name || "");
                 setAvatarUrl(session.user.image || "");
@@ -195,11 +177,15 @@ export default function AccountSettingsPage() {
         } catch (error) {
             console.error("Error loading user data:", error);
         }
-    };
+    }, [session?.user?.email, session?.user?.image, session?.user?.name]);
 
-    const generateTag = () => {
-        return String(Math.floor(1000 + Math.random() * 9000));
-    };
+    useEffect(() => {
+        if (!session?.user) {
+            router.push("/login");
+            return;
+        }
+        void loadUserData();
+    }, [loadUserData, router, session?.user]);
 
     const handleSaveProfile = async () => {
         if (!session?.user?.email) return;
@@ -233,9 +219,6 @@ export default function AccountSettingsPage() {
                 socialFacebook,
                 lastLoginDate: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-                // §5 Phone
-                phoneNumber,
-                phoneVerified,
                 // §8 Messaging
                 typingIndicator,
                 readReceipts,
@@ -268,8 +251,27 @@ export default function AccountSettingsPage() {
                 highContrast,
                 uiFontSize,
                 emojiStyle,
-                // §8 Security
-                freezeAccount,
+            }, { merge: true });
+            await setDoc(doc(db, "public_profiles", session.user.email), {
+                email: session.user.email,
+                username,
+                avatarUrl,
+                bio,
+                nickname,
+                nicknameTag,
+                customStatus,
+                statusEmoji,
+                bannerUrl,
+                accentColor,
+                favoriteLangs,
+                socialGithub,
+                socialLinkedin,
+                socialTwitter,
+                socialWebsite,
+                publicProfile,
+                publicProjects,
+                dndMode,
+                updatedAt: new Date().toISOString(),
             }, { merge: true });
             setMessage(t("save_success") || "Başarıyla kaydedildi!");
             setTimeout(() => setMessage(""), 3000);
@@ -285,12 +287,9 @@ export default function AccountSettingsPage() {
         if (!session?.user?.email) return;
         setIsLoading(true);
         try {
-            const projectsQuery = query(collection(db, "projects"), where("email", "==", session.user.email));
-            const projectsSnapshot = await getDocs(projectsQuery);
-            for (const projectDoc of projectsSnapshot.docs) {
-                await deleteDoc(projectDoc.ref);
-            }
-            await deleteDoc(doc(db, "users", session.user.email));
+            const response = await fetch("/api/account/data", { method: "DELETE" });
+            const result = await response.json() as { error?: string };
+            if (!response.ok) throw new Error(result.error || "Hesap silinemedi.");
             localStorage.clear();
             await signOut({ redirect: false });
             router.push("/");
@@ -306,16 +305,12 @@ export default function AccountSettingsPage() {
         if (!session?.user?.email) return;
         setIsLoading(true);
         try {
-            const projectsQuery = query(collection(db, "projects"), where("email", "==", session.user.email));
-            const projectsSnapshot = await getDocs(projectsQuery);
-            const projects = projectsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            const userDoc = await getDoc(doc(db, "users", session.user.email));
-            const userData = userDoc.exists() ? userDoc.data() : {};
+            const response = await fetch("/api/account/data", { cache: "no-store" });
+            const serverData = await response.json() as { error?: string; user?: Record<string, unknown>; projects?: unknown[]; exportedAt?: string; note?: string };
+            if (!response.ok) throw new Error(serverData.error || "Veriler indirilemedi.");
             const exportData = {
-                user: userData,
-                projects,
+                ...serverData,
                 editorSettings: JSON.parse(localStorage.getItem("hanogt_editor_settings") || "{}"),
-                exportedAt: new Date().toISOString()
             };
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
@@ -341,8 +336,8 @@ export default function AccountSettingsPage() {
     };
 
     const handleSetPassword = async () => {
-        if (newPassword.length < 6) {
-            setMessage(t("password_min_length") || "Şifre en az 6 karakter olmalı!");
+        if (newPassword.length < 10) {
+            setMessage(language === "TR" ? "Şifre en az 10 karakter olmalı!" : "Password must be at least 10 characters.");
             setTimeout(() => setMessage(""), 3000);
             return;
         }
@@ -354,60 +349,24 @@ export default function AccountSettingsPage() {
         if (!session?.user?.email) return;
         setIsLoading(true);
         try {
-            await setDoc(doc(db, "users", session.user.email), {
-                hasPassword: true,
-                passwordHash: btoa(newPassword), // Demo: in production use proper hashing
-            }, { merge: true });
+            const response = await fetch("/api/account/password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+            const result = await response.json() as { error?: string };
+            if (!response.ok) throw new Error(result.error || "Şifre güncellenemedi.");
             setHasPassword(true);
+            setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
             setMessage(t("password_set_success") || "Şifre başarıyla oluşturuldu!");
             setTimeout(() => setMessage(""), 3000);
         } catch (error) {
-            setMessage(t("error_occurred") || "Hata oluştu!");
+            setMessage(error instanceof Error ? error.message : (t("error_occurred") || "Hata oluştu!"));
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const handleSendVerification = async () => {
-        if (!phoneNumber || phoneNumber.length < 10) {
-            setMessage(t("invalid_phone") || "Geçersiz telefon numarası!");
-            setTimeout(() => setMessage(""), 3000);
-            return;
-        }
-        // Generate random 6-digit SMS code
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        setGeneratedCode(code);
-        setShowVerifyInput(true);
-        setMessage(`${t("verification_sent") || "Doğrulama kodu gönderildi!"} (SMS Kodu: ${code})`);
-        setTimeout(() => setMessage(""), 8000);
-    };
-
-    const handleVerifyCode = async () => {
-        if (verificationCode === generatedCode && verificationCode.length === 6) {
-            if (!session?.user?.email) return;
-            await setDoc(doc(db, "users", session.user.email), {
-                phoneVerified: true,
-            }, { merge: true });
-            setPhoneVerified(true);
-            setShowVerifyInput(false);
-            setMessage(t("phone_verified") || "Telefon numarası doğrulandı!");
-            setTimeout(() => setMessage(""), 3000);
-        } else {
-            setMessage(t("invalid_code") || "Geçersiz doğrulama kodu!");
-            setTimeout(() => setMessage(""), 3000);
-        }
-    };
-
-    const handleFreezeAccount = async () => {
-        if (!session?.user?.email) return;
-        await setDoc(doc(db, "users", session.user.email), {
-            freezeAccount: !freezeAccount,
-        }, { merge: true });
-        setFreezeAccount(!freezeAccount);
-        setMessage(!freezeAccount ? (t("account_frozen") || "Hesap donduruldu.") : (t("account_unfrozen") || "Hesap aktifleştirildi."));
-        setTimeout(() => setMessage(""), 3000);
     };
 
     const toggleFavoriteLang = (lang: string) => {
@@ -503,7 +462,7 @@ export default function AccountSettingsPage() {
                         <div className="flex items-center gap-4 mb-6">
                             <div className="relative">
                                 {avatarUrl ? (
-                                    <img
+                                    <OptimizedImage
                                         src={avatarUrl}
                                         alt="Avatar"
                                         className="w-20 h-20 rounded-full object-cover border-4"
@@ -620,7 +579,7 @@ export default function AccountSettingsPage() {
                         {/* Banner URL */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <Image className="w-3.5 h-3.5 inline mr-1" />
+                                <ImageIcon className="w-3.5 h-3.5 inline mr-1" />
                                 {t("banner_url") || "Banner URL"}
                             </label>
                             <input
@@ -1011,6 +970,9 @@ export default function AccountSettingsPage() {
                         <p className="text-zinc-500 text-sm mb-3">{t("password_google_info") || "Google ile giriş yaptınız. İsteğe bağlı olarak bir şifre belirleyebilirsiniz."}</p>
                     )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                        {hasPassword && (
+                            <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" placeholder={t("current_password") || "Mevcut Şifre"} className="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:col-span-2" />
+                        )}
                         <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t("new_password") || "Yeni Şifre"} className="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t("confirm_password") || "Şifre Tekrar"} className="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
@@ -1170,15 +1132,6 @@ export default function AccountSettingsPage() {
                                 <span className="block">{t("last_login") || "Son giriş tarihi"}</span>
                                 <span className="text-sm text-zinc-500">{lastLoginDate ? new Date(lastLoginDate).toLocaleString() : "—"}</span>
                             </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <span className="block">{t("freeze_account") || "Hesabı Dondur"}</span>
-                                <span className="text-xs text-zinc-500">{t("freeze_account_desc") || "Hesabınız geçici olarak devre dışı bırakılır"}</span>
-                            </div>
-                            <button onClick={handleFreezeAccount} className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${freezeAccount ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600"}`}>
-                                {freezeAccount ? (t("unfreeze") || "Dondurma Kaldır") : (t("freeze") || "Dondur")}
-                            </button>
                         </div>
                     </div>
                 </section>

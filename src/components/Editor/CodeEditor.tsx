@@ -30,7 +30,7 @@ interface EditorSettings {
 
 const defaultSettings: EditorSettings = {
     fontSize: 14,
-    fontFamily: "JetBrains Mono",
+    fontFamily: "Cascadia Code, SFMono-Regular, Consolas, Liberation Mono, monospace",
     tabSize: 4,
     wordWrap: true,
     lineNumbers: true,
@@ -77,8 +77,8 @@ export default function CodeEditor({ language, theme, value, onChange }: CodeEdi
         return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
 
-    const handleEditorDidMount: OnMount = (editor, monaco) => {
-        // @ts-ignore
+    const handleEditorDidMount: OnMount = (editor) => {
+        // @ts-expect-error Monaco's standalone editor type is narrower than the shared editor ref.
         editorRef.current = editor;
     };
 

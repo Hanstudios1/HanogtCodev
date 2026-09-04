@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null && request.auth.token.app == "hanogt-codev";
+    }
+
+    function inChat(chatId) {
+      return signedIn()
+        && request.auth.token.email in firestore.get(/databases/(default)/documents/chats/$(chatId)).data.participants;
+    }
+
+    match /voice-messages/{chatId}/{fileName} {
+      allow read: if inChat(chatId);
+      allow create: if inChat(chatId)
+        && request.resource.size > 0
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*')
+        && request.resource.metadata.sender == request.auth.token.email;
+      allow delete: if inChat(chatId)
+        && resource.metadata.sender == request.auth.token.email;
+      allow update: if false;
+    }
+
+    match /group-voice-messages/{groupId}/{fileName} {
+      allow read: if signedIn()
+        && request.auth.token.email in firestore.get(/databases/(default)/documents/groups/$(groupId)).data.members;
+      allow create: if signedIn()
+        && request.auth.token.email in firestore.get(/databases/(default)/documents/groups/$(groupId)).data.members
+        && request.resource.size > 0
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*')
+        && request.resource.metadata.sender == request.auth.token.email;
+      allow delete: if signedIn()
+        && request.auth.token.email in firestore.get(/databases/(default)/documents/groups/$(groupId)).data.members
+        && resource.metadata.sender == request.auth.token.email;
+      allow update: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

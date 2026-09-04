@@ -1,5 +1,7 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,8 +31,8 @@ export default function SignupPage() {
             return;
         }
 
-        if (password.length < 6) {
-            setError(t("password_too_short") || "Şifre en az 6 karakter olmalıdır");
+        if (password.length < 10 || !/[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(password) || !/\d/.test(password)) {
+            setError(t("password_too_short") || "Şifre en az 10 karakter, bir harf ve bir rakam içermelidir.");
             return;
         }
 
@@ -69,7 +71,7 @@ export default function SignupPage() {
             } else {
                 router.push("/dashboard");
             }
-        } catch (err) {
+        } catch {
             setError(t("signup_error") || "Bir hata oluştu. Lütfen tekrar deneyin.");
         } finally {
             setLoading(false);
@@ -93,7 +95,7 @@ export default function SignupPage() {
                     onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
                     className="w-full h-12 flex items-center justify-center gap-3 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-xl transition-all text-zinc-900 dark:text-white font-medium mb-4"
                 >
-                    <img src="/google-logo.png" alt="Google" className="w-5 h-5" />
+                    <OptimizedImage src="/google-logo.png" alt="Google" className="w-5 h-5" />
                     {t("signup_google") || "Google ile Üye Ol"}
                 </button>
 
@@ -160,7 +162,9 @@ export default function SignupPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                minLength={6}
+                                minLength={10}
+                                maxLength={128}
+                                autoComplete="new-password"
                                 className="w-full pl-12 pr-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 placeholder="••••••••"
                             />
@@ -177,6 +181,9 @@ export default function SignupPage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
+                                minLength={10}
+                                maxLength={128}
+                                autoComplete="new-password"
                                 className="w-full pl-12 pr-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 placeholder="••••••••"
                             />

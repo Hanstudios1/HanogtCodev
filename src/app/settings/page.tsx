@@ -2,8 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Settings, ArrowLeft, Type, Palette, Code, Terminal, Eye, Keyboard, Moon, Sun, Sparkles, Zap, Braces, MousePointer, AlignLeft, Space, WrapText } from "lucide-react";
+import { Settings, ArrowLeft, Type, Palette, Code, Terminal, Keyboard, Moon, Sun, Sparkles, MousePointer } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+
+function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onToggle}
+            aria-pressed={enabled}
+            className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
+        >
+            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6" : "translate-x-0.5"}`} />
+        </button>
+    );
+}
+
+function SettingRow({ label, desc, children, border = true }: { label: string; desc?: string; children: React.ReactNode; border?: boolean }) {
+    return (
+        <div className={`flex items-center justify-between py-4 ${border ? "border-b border-zinc-100 dark:border-zinc-800" : ""}`}>
+            <div className="pr-4">
+                <span className="block">{label}</span>
+                {desc && <span className="text-sm text-zinc-500">{desc}</span>}
+            </div>
+            {children}
+        </div>
+    );
+}
 
 export default function EditorSettingsPage() {
     const router = useRouter();
@@ -48,6 +73,8 @@ export default function EditorSettingsPage() {
         const savedSettings = localStorage.getItem("hanogt_editor_settings");
         if (savedSettings) {
             const settings = JSON.parse(savedSettings);
+            // One-time hydration of persisted client-only editor preferences.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFontSize(settings.fontSize || 14);
             setTabSize(settings.tabSize || 4);
             setWordWrap(settings.wordWrap ?? true);
@@ -83,7 +110,7 @@ export default function EditorSettingsPage() {
     }, []);
 
     // Save settings to localStorage whenever they change
-    const saveSettings = () => {
+    useEffect(() => {
         const settings = {
             fontSize,
             tabSize,
@@ -118,10 +145,6 @@ export default function EditorSettingsPage() {
             inlineSuggest
         };
         localStorage.setItem("hanogt_editor_settings", JSON.stringify(settings));
-    };
-
-    useEffect(() => {
-        saveSettings();
     }, [fontSize, tabSize, wordWrap, lineNumbers, minimap, autoSave, theme, fontFamily, bracketPairColorization, cursorStyle, smoothScrolling, autoCloseBrackets, autoCloseQuotes, formatOnPaste, highlightActiveLine, renderIndentGuides, cursorBlinking, lineHeight, autocomplete, snippetSuggestions, parameterHints, hoverInfo, linkedEditing, insertFinalNewline, renderWhitespace, autoIndent, stickyScroll, formatOnType, codeLens, inlineSuggest]);
 
     const fontFamilies = [
@@ -159,27 +182,6 @@ export default function EditorSettingsPage() {
         { value: "brackets", label: t("indent_brackets") || "Parantez" },
         { value: "advanced", label: t("indent_advanced") || "Gelişmiş" }
     ];
-
-    // Toggle switch component
-    const ToggleSwitch = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
-        <button
-            onClick={onToggle}
-            className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
-        >
-            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6" : "translate-x-0.5"}`} />
-        </button>
-    );
-
-    // Setting row with description
-    const SettingRow = ({ label, desc, children, border = true }: { label: string; desc?: string; children: React.ReactNode; border?: boolean }) => (
-        <div className={`flex items-center justify-between py-4 ${border ? "border-b border-zinc-100 dark:border-zinc-800" : ""}`}>
-            <div className="pr-4">
-                <span className="block">{label}</span>
-                {desc && <span className="text-sm text-zinc-500">{desc}</span>}
-            </div>
-            {children}
-        </div>
-    );
 
     const handleReset = () => {
         localStorage.removeItem("hanogt_editor_settings");

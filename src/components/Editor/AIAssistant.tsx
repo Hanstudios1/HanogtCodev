@@ -36,7 +36,7 @@ export default function AIAssistant() {
             } else {
                 setMessages(prev => [...prev, { role: "ai", text: data.message }]);
             }
-        } catch (error) {
+        } catch {
             setMessages(prev => [...prev, { role: "ai", text: "Bağlantı hatası oluştu. Lütfen tekrar deneyin." }]);
         } finally {
             setIsLoading(false);

@@ -11,6 +11,7 @@
     "start": "next start",
     "export": "next build",
     "lint": "eslint",
+    "i18n:check": "node scripts/audit-i18n.mjs",
     "electron-start": "npx electron .",
     "electron-dev": "set ELECTRON_DEV=true && npx electron .",
     "dist": "npm run export && electron-builder",

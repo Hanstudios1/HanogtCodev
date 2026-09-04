@@ -10,6 +10,8 @@ export default function ThemeToggle() {
         // Check local storage or system preference
         const storedTheme = localStorage.getItem("theme");
         if (storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            // One-time hydration of the persisted client-only theme.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTheme("dark");
             document.documentElement.classList.add("dark");
         } else {

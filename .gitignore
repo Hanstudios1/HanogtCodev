@@ -48,3 +48,8 @@ next-env.d.ts
 /electron/build
 /electron/node_modules
 
+# Signed installers belong in the release registry, not the source repository.
+/public/*.apk
+/public/*.exe
+/*.apk
+/*.exe

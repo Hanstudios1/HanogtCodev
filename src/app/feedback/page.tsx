@@ -1,12 +1,14 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ArrowLeft, MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle } from "lucide-react";
+import { ArrowLeft, MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle, Search, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy, serverTimestamp, arrayUnion, arrayRemove, deleteDoc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, query, orderBy, getDoc } from "firebase/firestore";
 import ProfileModal from "@/components/ProfileModal";
 import type { UserProfile } from "@/components/ProfileModal";
 
@@ -34,6 +36,17 @@ interface Comment {
     createdAt: Date;
 }
 
+const FAQS = [
+    { category: "Hesap", question: "Parolam nasıl korunuyor?", answer: "Parolanın açık hâli saklanmaz. Sunucuda benzersiz tuz ve scrypt ile tek yönlü karma üretilir; kimlik bilgileri profil verilerinden ayrı tutulur." },
+    { category: "Kod", question: "Kodum nerede çalıştırılıyor?", answer: "Kod yalnızca yönetici tarafından yapılandırılan izole yürütücüye gönderilir. Herkese açık Piston/Wandbox servisleri üretim yedeği olarak kullanılmaz." },
+    { category: "Güvenlik", question: "Security Bot hesabımı otomatik olarak kalıcı engeller mi?", answer: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır." },
+    { category: "Aramalar", question: "Sesli aramalar kaydediliyor mu?", answer: "Hayır. WebRTC arama sesi kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır." },
+    { category: "Mesajlar", question: "Sesli mesajlar nasıl saklanıyor?", answer: "Sesli mesajlar Firestore içine base64 olarak yazılmaz. Yetkili sohbet katılımcılarının erişebildiği dosya depolamasında tutulur ve mesaj silinince dosyası da silinir." },
+    { category: "Gizlilik", question: "Verilerimi nasıl indirebilir veya silebilirim?", answer: "Hesap Ayarları içindeki Veri Dışa Aktarma ve Hesabı Sil seçeneklerini kullanabilir; KVKK talebinizi bu sayfadan Gizlilik/KVKK başlığıyla iletebilirsiniz." },
+    { category: "Bağlantı", question: "Arama neden bazı ağlarda bağlanmıyor?", answer: "Kurumsal ağlar ve sıkı NAT yapıları TURN sunucusu gerektirebilir. Yönetici TURN yapılandırmasını tamamlamadıysa uygulama bunu arama ekranında açıkça belirtir." },
+    { category: "Proje", question: "Çoklu dosya projeleri gerçekten ayrı mı saklanıyor?", answer: "Evet. Proje meta verisi ile her dosya ayrı Firestore alt belgesinde tutulur; düzenleyicideki sekmeler tek bir JSON alanına sıkıştırılmaz." },
+];
+
 export default function FeedbackPage() {
     const { t } = useI18n();
     const { data: session } = useSession();
@@ -44,6 +57,8 @@ export default function FeedbackPage() {
     const [items, setItems] = useState<FeedbackItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [faqQuery, setFaqQuery] = useState("");
+    const [openFaq, setOpenFaq] = useState<string | null>(FAQS[0].question);
     const [commentText, setCommentText] = useState<{ [key: string]: string }>({});
     const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({});
 
@@ -57,34 +72,23 @@ export default function FeedbackPage() {
     // Reply states (WhatsApp style)
     const [replyingTo, setReplyingTo] = useState<{ itemId: string; commentId: string; author: string; content: string } | null>(null);
 
-    // User data from Firebase
-    const [userData, setUserData] = useState<any>(null);
     const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
-    const [authorProfiles, setAuthorProfiles] = useState<Record<string, any>>({});
+    const [authorProfiles, setAuthorProfiles] = useState<Record<string, UserProfile>>({});
 
     // Fetch items from Firebase
     useEffect(() => {
         fetchItems();
     }, []);
 
-    // Load user data from Firebase
-    useEffect(() => {
-        const loadUserData = async () => {
-            if (!session?.user?.email) return;
-            try {
-                const userDoc = await getDoc(doc(db, "users", session.user.email));
-                if (userDoc.exists()) {
-                    setUserData(userDoc.data());
-                }
-            } catch (error) {
-                console.error("Error loading user data:", error);
-            }
-        };
-        loadUserData();
-    }, [session?.user?.email]);
-
-    // Get display name - prefer Firebase data over session data
-    const displayName = userData?.username || session?.user?.name || session?.user?.email?.split("@")[0] || "User";
+    const mutateFeedback = async (payload: Record<string, unknown>) => {
+        const response = await fetch("/api/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        const result = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(result.error || "İşlem tamamlanamadı.");
+    };
 
     const fetchItems = async () => {
         try {
@@ -107,11 +111,11 @@ export default function FeedbackPage() {
 
             // Fetch author profiles for all items
             const emailSet = new Set(fetchedItems.map(i => i.authorEmail));
-            const profiles: Record<string, any> = {};
+            const profiles: Record<string, UserProfile> = {};
             for (const email of emailSet) {
                 try {
-                    const uDoc = await getDoc(doc(db, "users", email));
-                    if (uDoc.exists()) profiles[email] = uDoc.data();
+                    const uDoc = await getDoc(doc(db, "public_profiles", email));
+                    if (uDoc.exists()) profiles[email] = { ...uDoc.data(), email } as UserProfile;
                 } catch { /* skip */ }
             }
             setAuthorProfiles(profiles);
@@ -127,16 +131,11 @@ export default function FeedbackPage() {
 
         setSubmitting(true);
         try {
-            await addDoc(collection(db, "feedback"), {
+            await mutateFeedback({
+                action: "create",
                 type,
                 content: message.trim(),
                 description: description.trim() || null,
-                author: displayName,
-                authorEmail: session.user.email,
-                authorPhoto: session.user.image || null,
-                createdAt: serverTimestamp(),
-                likes: [],
-                comments: []
             });
             setMessage("");
             setDescription("");
@@ -155,15 +154,8 @@ export default function FeedbackPage() {
         const item = items.find(i => i.id === itemId);
         if (!item) return;
 
-        const docRef = doc(db, "feedback", itemId);
-        const isLiked = item.likes.includes(session.user.email);
-
         try {
-            await updateDoc(docRef, {
-                likes: isLiked
-                    ? arrayRemove(session.user.email)
-                    : arrayUnion(session.user.email)
-            });
+            await mutateFeedback({ action: "like", itemId });
             fetchItems();
         } catch (error) {
             console.error("Error updating like:", error);
@@ -180,7 +172,7 @@ export default function FeedbackPage() {
         if (!confirm("Bu içeriği silmek istediğinize emin misiniz?")) return;
 
         try {
-            await deleteDoc(doc(db, "feedback", itemId));
+            await mutateFeedback({ action: "delete", itemId });
             fetchItems();
         } catch (error) {
             console.error("Error deleting item:", error);
@@ -198,7 +190,9 @@ export default function FeedbackPage() {
         if (!editContent.trim()) return;
 
         try {
-            await updateDoc(doc(db, "feedback", itemId), {
+            await mutateFeedback({
+                action: "edit",
+                itemId,
                 content: editContent.trim(),
                 description: editDescription.trim() || null
             });
@@ -214,23 +208,13 @@ export default function FeedbackPage() {
     const handleComment = async (itemId: string) => {
         if (!session?.user?.email || !commentText[itemId]?.trim()) return;
 
-        const item = items.find(i => i.id === itemId);
-        if (!item) return;
-
-        const newComment = {
-            id: `comment_${Date.now()}`,
-            author: displayName,
-            authorEmail: session.user.email,
-            authorPhoto: session.user.image || null,
-            content: commentText[itemId].trim(),
-            replyTo: replyingTo?.commentId || null,
-            replyToContent: replyingTo?.content || null,
-            createdAt: new Date().toISOString()
-        };
-
         try {
-            await updateDoc(doc(db, "feedback", itemId), {
-                comments: arrayUnion(newComment)
+            await mutateFeedback({
+                action: "comment",
+                itemId,
+                content: commentText[itemId].trim(),
+                replyTo: replyingTo?.commentId || null,
+                replyToContent: replyingTo?.content || null,
             });
             setCommentText(prev => ({ ...prev, [itemId]: "" }));
             setReplyingTo(null);
@@ -245,14 +229,8 @@ export default function FeedbackPage() {
     const handleDeleteComment = async (itemId: string, comment: Comment) => {
         if (!session?.user?.email || comment.authorEmail !== session.user.email) return;
 
-        const item = items.find(i => i.id === itemId);
-        if (!item) return;
-
         try {
-            const updatedComments = item.comments.filter(c => c.id !== comment.id);
-            await updateDoc(doc(db, "feedback", itemId), {
-                comments: updatedComments
-            });
+            await mutateFeedback({ action: "delete-comment", itemId, commentId: comment.id });
             fetchItems();
         } catch (error) {
             console.error("Error deleting comment:", error);
@@ -268,16 +246,8 @@ export default function FeedbackPage() {
     const handleSaveEditComment = async (itemId: string, commentId: string) => {
         if (!editCommentContent.trim()) return;
 
-        const item = items.find(i => i.id === itemId);
-        if (!item) return;
-
         try {
-            const updatedComments = item.comments.map(c =>
-                c.id === commentId ? { ...c, content: editCommentContent.trim() } : c
-            );
-            await updateDoc(doc(db, "feedback", itemId), {
-                comments: updatedComments
-            });
+            await mutateFeedback({ action: "edit-comment", itemId, commentId, content: editCommentContent.trim() });
             setEditingCommentId(null);
             setEditCommentContent("");
             fetchItems();
@@ -289,6 +259,7 @@ export default function FeedbackPage() {
     const filteredItems = items.filter(item =>
         activeTab === "questions" ? item.type === "question" : item.type === "feedback"
     );
+    const filteredFaqs = FAQS.filter((faq) => `${faq.category} ${faq.question} ${faq.answer}`.toLocaleLowerCase("tr-TR").includes(faqQuery.toLocaleLowerCase("tr-TR")));
 
     return (
         <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white transition-colors">
@@ -307,13 +278,29 @@ export default function FeedbackPage() {
             </header>
 
             {/* Content */}
-            <main className="max-w-4xl mx-auto px-6 py-12">
-                <h1 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                    {t("feedback_title") || "Geri Bildirim & SSS"}
-                </h1>
-                <p className="text-center text-zinc-600 dark:text-zinc-400 mb-10">
-                    {t("feedback_subtitle") || "Sorularınızı sorun, geri bildirimlerinizi paylaşın"}
-                </p>
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+                <section className="mb-10 overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-950 p-7 text-white shadow-xl dark:border-zinc-800 sm:p-10">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-blue-300"><Sparkles className="h-4 w-4" /> Yardım merkezi</div>
+                    <h1 className="mt-3 text-3xl md:text-5xl font-bold">{t("feedback_title") || "Geri Bildirim & SSS"}</h1>
+                    <p className="mt-4 max-w-2xl text-zinc-400">{t("feedback_subtitle") || "Hızlı yanıtları bulun, bir fikir paylaşın veya incelenebilir bir hata ve güvenlik bildirimi oluşturun."}</p>
+                    <div className="relative mt-7 max-w-2xl">
+                        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" />
+                        <input value={faqQuery} onChange={(event) => setFaqQuery(event.target.value)} placeholder="Bir konu, özellik veya hata ara…" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                    </div>
+                </section>
+
+                <section className="mb-10 grid gap-3 md:grid-cols-2">
+                    {filteredFaqs.map((faq) => {
+                        const open = openFaq === faq.question;
+                        return <article key={faq.question} className="self-start overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+                            <button onClick={() => setOpenFaq(open ? null : faq.question)} className="flex w-full items-start gap-3 p-5 text-left"><span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-300">{faq.category}</span><span className="flex-1 font-semibold">{faq.question}</span><ChevronDown className={`h-5 w-5 shrink-0 text-zinc-400 transition ${open ? "rotate-180" : ""}`} /></button>
+                            {open && <div className="border-t border-zinc-200 px-5 py-4 text-sm leading-6 text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">{faq.answer}</div>}
+                        </article>;
+                    })}
+                    {filteredFaqs.length === 0 && <div className="md:col-span-2 rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">Bu aramayla eşleşen hazır yanıt yok. Aşağıdan yeni bir soru gönderin.</div>}
+                </section>
+
+                <div className="mb-8 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200"><ShieldCheck className="h-5 w-5 shrink-0" />Güvenlik bildirimlerine hassas anahtar, gerçek parola veya kişisel veri eklemeyin. Kanıt için kod yerine mümkünse yeniden üretme adımlarını paylaşın.</div>
 
                 {/* Tabs */}
                 <div className="flex justify-center gap-4 mb-8">
@@ -433,7 +420,7 @@ export default function FeedbackPage() {
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
                                         {item.authorPhoto ? (
-                                            <img src={item.authorPhoto} alt={item.author} className="w-8 h-8 rounded-full object-cover cursor-pointer" referrerPolicy="no-referrer" onClick={() => { const p = authorProfiles[item.authorEmail]; if (p?.publicProfile !== false) setSelectedProfile({ ...p, email: item.authorEmail } as UserProfile); }} />
+                                            <OptimizedImage src={item.authorPhoto} alt={item.author} className="w-8 h-8 rounded-full object-cover cursor-pointer" referrerPolicy="no-referrer" onClick={() => { const p = authorProfiles[item.authorEmail]; if (p?.publicProfile !== false) setSelectedProfile({ ...p, email: item.authorEmail } as UserProfile); }} />
                                         ) : (
                                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center cursor-pointer" onClick={() => { const p = authorProfiles[item.authorEmail]; if (p?.publicProfile !== false) setSelectedProfile({ ...p, email: item.authorEmail } as UserProfile); }}>
                                                 <User className="w-4 h-4 text-white" />

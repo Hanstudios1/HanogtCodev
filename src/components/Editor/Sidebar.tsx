@@ -1,15 +1,16 @@
 "use client";
 
-import { Save, Download, FileText, Settings, ArrowLeft } from "lucide-react";
+import { Save, FileText, Settings, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 
 interface SidebarProps {
     onSave: () => void;
     onDownload: () => void;
+    backHref?: string;
 }
 
-export default function Sidebar({ onSave, onDownload }: SidebarProps) {
+export default function Sidebar({ onSave, onDownload, backHref = "/dashboard" }: SidebarProps) {
     const { t } = useI18n();
 
     return (
@@ -17,7 +18,7 @@ export default function Sidebar({ onSave, onDownload }: SidebarProps) {
             {/* Top Section */}
             <div>
                 <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
-                    <Link href="/dashboard" className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                    <Link href={backHref} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors" aria-label="Önceki çalışma alanına dön">
                         <ArrowLeft className="w-5 h-5 text-zinc-500" />
                     </Link>
                     <span className="font-bold text-lg hidden lg:block">Hanogt</span>

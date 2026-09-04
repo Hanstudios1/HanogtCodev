@@ -1,19 +1,19 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import OptimizedImage from "@/components/OptimizedImage";
+
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Sidebar from "@/components/Editor/Sidebar";
 import CodeEditor from "@/components/Editor/CodeEditor";
 import Console from "@/components/Editor/Console";
 import TestPreview from "@/components/Editor/TestPreview";
 import AIAssistant from "@/components/Editor/AIAssistant";
-import { Play, Plus, X, MoreVertical, Pencil, ShieldAlert, Clock } from "lucide-react";
-import { executeCode, executeCodeSecure } from "@/services/piston";
-import { isUserBanned, banUser, logSecurityEvent } from "@/lib/hanogtBot";
-import { useSession, signOut } from "next-auth/react";
-import { saveProject, getProjects, getProjectsFromCloud } from "@/lib/storage";
+import { Play, Plus, X, MoreVertical, Pencil, Clock } from "lucide-react";
+import { executeCodeSecure, executeProjectSecure } from "@/services/piston";
+import { useSession } from "next-auth/react";
+import { saveProject, saveProjectToCloud, getProjects, getProjectsFromCloud } from "@/lib/storage";
 import { useI18n } from "@/lib/i18n";
-import BannedModal from "@/components/BannedModal";
 
 // Default code templates
 const TEMPLATES: Record<string, string> = {
@@ -100,11 +100,24 @@ interface Tab {
     isSaved: boolean;
 }
 
+type StoredTab = Pick<Tab, "name" | "lang" | "code">;
+type GameScriptResponse = {
+    id: string;
+    name: string;
+    language: "csharp" | "cpp";
+    content: string;
+    revision?: string | null;
+};
+
 function EditorContent() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const initialLang = searchParams.get("lang") || "javascript";
     const projectId = searchParams.get("id");
+    const gameProjectId = searchParams.get("gameProject") || searchParams.get("gameProjectId");
+    const requestedGameScriptId = searchParams.get("gameScript") || searchParams.get("scriptId");
+    const requestedGameScriptName = searchParams.get("scriptName") || "";
+    const requestedReturn = searchParams.get("returnTo") || "";
+    const backHref = requestedReturn.startsWith("/game-engine") ? requestedReturn : "/dashboard";
     const { data: session } = useSession();
     const { t } = useI18n();
 
@@ -114,12 +127,13 @@ function EditorContent() {
     const [showLangModal, setShowLangModal] = useState(false);
     const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
     const [currentProjectName, setCurrentProjectName] = useState<string>("");
+    const [currentGameScriptId, setCurrentGameScriptId] = useState<string | null>(requestedGameScriptId);
+    const [gameScriptRevision, setGameScriptRevision] = useState<string | null>(null);
 
     // Save modal state
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [saveModalDefaultName, setSaveModalDefaultName] = useState("");
     const [saveModalInputName, setSaveModalInputName] = useState("");
-    const [pendingSaveCallback, setPendingSaveCallback] = useState<((name: string | null) => void) | null>(null);
 
     // Tab menu state
     const [openTabMenuId, setOpenTabMenuId] = useState<string | null>(null);
@@ -127,51 +141,60 @@ function EditorContent() {
     // Output panel tab state (console or test preview)
     const [outputTab, setOutputTab] = useState<"console" | "test">("console");
 
-    // Ban state
-    const [isBanned, setIsBanned] = useState(false);
-    const [banReason, setBanReason] = useState<string>("");
-    const [showBanModal, setShowBanModal] = useState(false);
-
     // Execution history
     const [executionHistory, setExecutionHistory] = useState<{lang: string; time: string; status: string}[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [projectOutput, setProjectOutput] = useState<string[]>([]);
+    const [isProjectRunning, setIsProjectRunning] = useState(false);
+    const shortcutActions = useRef<{ save: () => void; run: () => void | Promise<void> }>({ save: () => undefined, run: () => undefined });
 
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
-                handleSave();
+                shortcutActions.current.save();
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
-                handleRun();
+                shortcutActions.current.run();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    });
-
-    // Check if user is banned on page load
-    useEffect(() => {
-        const checkBanStatus = async () => {
-            if (session?.user?.email) {
-                const banStatus = await isUserBanned(session.user.email);
-                if (banStatus.banned) {
-                    setIsBanned(true);
-                    setBanReason(banStatus.reason || "Zararlı kod aktivitesi");
-                    setShowBanModal(true);
-                    // Sign out the banned user
-                    await signOut({ redirect: false });
-                }
-            }
-        };
-        checkBanStatus();
-    }, [session?.user?.email]);
+    }, []);
 
     // Initialize first tab
     useEffect(() => {
         const loadProject = async () => {
+            if (gameProjectId && session?.user?.email) {
+                try {
+                    if (requestedGameScriptId) {
+                        const response = await fetch(`/api/game-projects/${encodeURIComponent(gameProjectId)}/scripts/${encodeURIComponent(requestedGameScriptId)}`, { cache: "no-store" });
+                        const payload = await response.json() as { script?: GameScriptResponse; error?: string };
+                        if (!response.ok || !payload.script) throw new Error(payload.error || "Oyun scripti yüklenemedi.");
+                        const script = payload.script;
+                        const tab: Tab = { id: `game-script-${script.id}`, name: script.name, lang: script.language, code: script.content, output: [], isRunning: false, isSaved: true };
+                        setTabs([tab]);
+                        setActiveTabId(tab.id);
+                        setCurrentProjectName(script.name);
+                        setCurrentGameScriptId(script.id);
+                        setGameScriptRevision(script.revision || null);
+                        setWasOriginallyMultiTab(false);
+                        return;
+                    }
+                    const language = normalizeLang(initialLang) === "cpp" ? "cpp" : "csharp";
+                    const requestedName = requestedGameScriptName || (language === "cpp" ? "GameScript.cpp" : "GameScript.cs");
+                    const tab: Tab = { id: `game-script-${Date.now()}`, name: requestedName, lang: language, code: TEMPLATES[language], output: [], isRunning: false, isSaved: false };
+                    setTabs([tab]);
+                    setActiveTabId(tab.id);
+                    setCurrentProjectName(requestedName);
+                    setWasOriginallyMultiTab(false);
+                    return;
+                } catch (error) {
+                    alert(error instanceof Error ? error.message : "Oyun scripti yüklenemedi.");
+                }
+            }
             // Check for unsaved tabs in localStorage ONLY if no specific lang/project is requested
             const savedTabs = localStorage.getItem("hanogt_unsaved_tabs");
             const urlHasLang = new URLSearchParams(window.location.search).has("lang");
@@ -195,15 +218,32 @@ function EditorContent() {
                     const cloudProjects = await getProjectsFromCloud(session.user.email);
                     const project = cloudProjects.find(p => String(p.id) === projectId);
                     if (project) {
+                        if (project.files?.length) {
+                            const loadedTabs: Tab[] = project.files.map((file, index) => ({
+                                id: `tab-${Date.now()}-${index}`,
+                                name: file.name,
+                                lang: file.lang,
+                                code: file.code,
+                                output: [],
+                                isRunning: false,
+                                isSaved: true,
+                            }));
+                            setTabs(loadedTabs);
+                            setActiveTabId(loadedTabs[0].id);
+                            setCurrentProjectId(Number(project.id));
+                            setCurrentProjectName(project.name);
+                            setWasOriginallyMultiTab(loadedTabs.length > 1);
+                            return;
+                        }
                         // Check if it's a multi-tab project
                         if (project.isMultiTab || project.lang === "multi") {
                             try {
                                 const parsedTabs = JSON.parse(project.code);
-                                const loadedTabs: Tab[] = parsedTabs.map((t: any, i: number) => ({
+                                const loadedTabs: Tab[] = (parsedTabs as StoredTab[]).map((storedTab, i) => ({
                                     id: `tab-${Date.now()}-${i}`,
-                                    name: t.name,
-                                    lang: t.lang,
-                                    code: t.code,
+                                    name: storedTab.name,
+                                    lang: storedTab.lang,
+                                    code: storedTab.code,
                                     output: [],
                                     isRunning: false,
                                     isSaved: true,
@@ -241,15 +281,32 @@ function EditorContent() {
                 const localProjects = getProjects(session.user.email);
                 const project = localProjects.find(p => String(p.id) === projectId);
                 if (project) {
+                    if (project.files?.length) {
+                        const loadedTabs: Tab[] = project.files.map((file, index) => ({
+                            id: `tab-${Date.now()}-${index}`,
+                            name: file.name,
+                            lang: file.lang,
+                            code: file.code,
+                            output: [],
+                            isRunning: false,
+                            isSaved: true,
+                        }));
+                        setTabs(loadedTabs);
+                        setActiveTabId(loadedTabs[0].id);
+                        setCurrentProjectId(project.id);
+                        setCurrentProjectName(project.name);
+                        setWasOriginallyMultiTab(loadedTabs.length > 1);
+                        return;
+                    }
                     // Check if it's a multi-tab project
                     if (project.isMultiTab || project.lang === "multi") {
                         try {
                             const parsedTabs = JSON.parse(project.code);
-                            const loadedTabs: Tab[] = parsedTabs.map((t: any, i: number) => ({
+                            const loadedTabs: Tab[] = (parsedTabs as StoredTab[]).map((storedTab, i) => ({
                                 id: `tab-${Date.now()}-${i}`,
-                                name: t.name,
-                                lang: t.lang,
-                                code: t.code,
+                                name: storedTab.name,
+                                lang: storedTab.lang,
+                                code: storedTab.code,
                                 output: [],
                                 isRunning: false,
                                 isSaved: true,
@@ -286,7 +343,7 @@ function EditorContent() {
             const langNorm = normalizeLang(initialLang);
             const newTab: Tab = {
                 id: `tab-${Date.now()}`,
-                name: `${getDisplayName(langNorm)} ${t("my_lang_project_suffix") || "Projem"}`,
+                name: `${getDisplayName(langNorm)} Projesi`,
                 lang: langNorm,
                 code: TEMPLATES[langNorm] || TEMPLATES["default"],
                 output: [],
@@ -298,18 +355,23 @@ function EditorContent() {
         };
 
         loadProject();
-    }, [initialLang, projectId, session]);
+    }, [initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName, session]);
 
     // Save unsaved tabs to localStorage
     useEffect(() => {
-        if (tabs.length > 0) {
+        const timer = window.setTimeout(() => {
+            if (tabs.length === 0) return;
             const unsavedTabs = tabs.filter(t => !t.isSaved);
             if (unsavedTabs.length > 0) {
-                localStorage.setItem("hanogt_unsaved_tabs", JSON.stringify(tabs));
+                const recoverable = tabs.map(({ id, name, lang, code, isSaved }) => ({ id, name, lang, code, output: [], isRunning: false, isSaved }));
+                const serialized = JSON.stringify(recoverable);
+                if (serialized.length <= 1_000_000) localStorage.setItem("hanogt_unsaved_tabs", serialized);
+                else localStorage.removeItem("hanogt_unsaved_tabs");
             } else {
                 localStorage.removeItem("hanogt_unsaved_tabs");
             }
-        }
+        }, 500);
+        return () => window.clearTimeout(timer);
     }, [tabs]);
 
     // Get active tab
@@ -382,151 +444,80 @@ function EditorContent() {
     // Run code
     const handleRun = async () => {
         if (!activeTab) return;
+        const supported = new Set(["python", "javascript", "typescript", "csharp", "c", "cpp", "java", "php", "go", "swift", "ruby", "rust", "kotlin", "sql", "lua"]);
+        const runnableTabs = tabs.filter((tab) => supported.has(normalizeLang(tab.lang)) && tab.code.trim());
+        const activeLang = normalizeLang(activeTab.lang);
 
-        const lang = normalizeLang(activeTab.lang);
-
-        // For web content (HTML/CSS/JS), just switch to Test tab for live preview
-        if (isWebLang(lang)) {
+        if (!runnableTabs.length && isWebLang(activeLang)) {
             setOutputTab("test");
             return;
         }
+        if (!runnableTabs.length) return;
 
-        // For other languages, run via Piston API with security check
+        setProjectOutput([]);
+        setIsProjectRunning(true);
         setTabs(prevTabs => prevTabs.map(t =>
-            t.id === activeTabId
+            runnableTabs.some((candidate) => candidate.id === t.id)
                 ? { ...t, isRunning: true, output: [] }
                 : t
         ));
 
         try {
-            // Use secure execution with malicious code check
-            const secureResult = await executeCodeSecure(lang, activeTab.code, session?.user?.email || undefined);
+            const secureResult = runnableTabs.length === 1
+                ? await executeCodeSecure(normalizeLang(runnableTabs[0].lang), runnableTabs[0].code)
+                : await executeProjectSecure(runnableTabs.map((tab) => ({ name: tab.name, language: normalizeLang(tab.lang), code: tab.code })));
 
             if (secureResult.blocked && secureResult.securityCheck) {
-                const { threats, severity, shouldBan } = secureResult.securityCheck;
-
-                // Log security event
-                if (session?.user?.email) {
-                    await logSecurityEvent(
-                        session.user.email,
-                        "ban", // Always ban for any malicious code
-                        secureResult.securityCheck,
-                        activeTab.code
-                    );
-
-                    // ALWAYS ban user for malicious code - Zero tolerance
-                    const banSuccess = await banUser(
-                        session.user.email,
-                        `Zararlı kod tespit edildi: ${threats.join(", ")}`,
-                        activeTab.code
-                    );
-
-                    if (banSuccess) {
-                        // Show ban modal
-                        setIsBanned(true);
-                        setBanReason(`Zararlı kod tespit edildi: ${threats.join(", ")}`);
-                        setShowBanModal(true);
-                        // Sign out the user
-                        await signOut({ redirect: false });
-                    }
-                }
-
-                // Pre-build security messages
+                const { findings, risk } = secureResult.securityCheck;
                 const securityMessages = [
-                    `🛡️ [Hanogt Security Bot] ${t("malicious_code_detected") || "Zararlı kod tespit edildi!"}`,
+                    `🛡️ Hanogt Security Bot · ${t("execution_blocked") || "Çalıştırma engellendi"}`,
                     ``,
-                    `⚠️ ${t("detected_threats") || "Tespit edilen tehditler"}: ${threats.join(", ")}`,
-                    `📊 ${t("threat_level") || "Tehdit seviyesi"}: ${severity.toUpperCase()}`,
+                    ...findings.map((finding) => `⚠️ ${finding.message}`),
+                    `📊 ${t("threat_level") || "Risk seviyesi"}: ${risk.toUpperCase()}`,
                     ``,
-                    `🚫 ${t("account_banned") || "Hesabınız güvenlik nedeniyle SONSUZA DEK engellenmiştir."}`,
-                    ``,
-                    `${t("security_warning") || "Zararlı kod çalıştırmak yasaktır ve hesap engellemeye yol açar."}`
+                    `${t("security_review_note") || "Bu bir otomatik kötü amaçlı yazılım hükmü değildir. Yanlış engelleme olduğunu düşünüyorsanız geri bildirim sayfasından inceleme isteyebilirsiniz."}`
                 ];
 
-                setTabs(prevTabs => prevTabs.map(tab =>
-                    tab.id === activeTabId
-                        ? {
-                            ...tab,
-                            isRunning: false,
-                            output: securityMessages
-                        }
-                        : tab
-                ));
-                setOutputTab("test");
+                setProjectOutput(securityMessages);
+                setTabs(prevTabs => prevTabs.map(tab => ({ ...tab, isRunning: false })));
+                setOutputTab("console");
                 return;
             }
 
-            // Code is safe, show execution result
             if (secureResult.response) {
                 const result = secureResult.response;
-                const displayLang = getDisplayName(activeTab.lang);
-                const outputLines: string[] = [
-                    `> ${displayLang} kodu çalıştırılıyor...`,
-                ];
-
-                // Add stdout if present
-                if (result.run.stdout && result.run.stdout.trim()) {
-                    outputLines.push(...result.run.stdout.split('\n'));
-                }
-
-                // Add stderr if present
-                if (result.run.stderr && result.run.stderr.trim()) {
-                    outputLines.push(`Error: ${result.run.stderr}`);
-                }
-
-                // Add security warnings if any
-                if (secureResult.behaviorWarnings && secureResult.behaviorWarnings.length > 0) {
-                    outputLines.push(``, `⚠️ Güvenlik Uyarıları:`);
-                    secureResult.behaviorWarnings.forEach(w => outputLines.push(`  → ${w}`));
-                }
-
-                // Add exit code
-                outputLines.push(`> İşlem ${result.run.code} çıkış kodu ile tamamlandı`);
-
-                // If no stdout and no stderr, indicate empty output
-                if ((!result.run.stdout || !result.run.stdout.trim()) && (!result.run.stderr || !result.run.stderr.trim())) {
-                    outputLines.splice(1, 0, "(Çıktı yok)");
-                }
-
-                setTabs(prevTabs => prevTabs.map(t =>
-                    t.id === activeTabId
-                        ? { ...t, isRunning: false, output: outputLines }
-                        : t
-                ));
-
-                // Track execution history with display name
-                setExecutionHistory(prev => [{
-                    lang: displayLang,
-                    time: new Date().toLocaleTimeString(),
-                    status: result.run.code === 0 ? "✅" : "❌"
-                }, ...prev].slice(0, 50));
+                const jobs = result.jobs?.length ? result.jobs : [{ name: runnableTabs[0].name, language: result.language, version: result.version, run: result.run }];
+                const outputs = jobs.map((job) => {
+                    const lines = [`> ${job.name} · ${getDisplayName(job.language)} (${job.version})`];
+                    if (job.run.stdout?.trim()) lines.push(...job.run.stdout.split("\n"));
+                    if (job.run.stderr?.trim()) lines.push(`Error: ${job.run.stderr}`);
+                    if (!job.run.stdout?.trim() && !job.run.stderr?.trim()) lines.push("(Çıktı yok)");
+                    lines.push(`> ${job.run.code} çıkış koduyla tamamlandı`);
+                    return lines;
+                });
+                setProjectOutput(jobs.length > 1 ? ["> Proje çalıştırması · bağımsız dil işleri", "", ...outputs.flatMap((lines, index) => index ? ["", ...lines] : lines)] : []);
+                setTabs((current) => current.map((tab) => {
+                    const index = runnableTabs.findIndex((candidate) => candidate.id === tab.id);
+                    return index >= 0 ? { ...tab, isRunning: false, output: outputs[index] || [] } : tab;
+                }));
+                setExecutionHistory((previous) => [
+                    ...jobs.map((job) => ({ lang: getDisplayName(job.language), time: new Date().toLocaleTimeString(), status: job.run.code === 0 ? "✅" : "❌" })),
+                    ...previous,
+                ].slice(0, 50));
             }
-            // Switch to console tab to show output (not "test" — test is for web preview)
             setOutputTab("console");
-        } catch (error: any) {
-            const errorMsg = error?.message || String(error);
-            const displayLang = getDisplayName(activeTab.lang);
-            setTabs(prevTabs => prevTabs.map(t =>
-                t.id === activeTabId
-                    ? {
-                        ...t,
-                        isRunning: false,
-                        output: [
-                            `> ${displayLang} kodu çalıştırılıyor...`,
-                            ``,
-                            `Error: ${errorMsg}`,
-                            ``,
-                            `> Çalıştırma başarısız oldu. Lütfen kodunuzu kontrol edin.`
-                        ]
-                    }
-                    : t
-            ));
+        } catch (error: unknown) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            setProjectOutput(["> Proje çalıştırması", "", `Error: ${errorMsg}`, "", "> Çalıştırma başarısız oldu. Kodunuzu ve çalıştırıcı yapılandırmasını kontrol edin."]);
+            setTabs(prevTabs => prevTabs.map(t => ({ ...t, isRunning: false })));
             setExecutionHistory(prev => [{
-                lang: displayLang,
+                lang: runnableTabs.length > 1 ? `${runnableTabs.length} dosya` : getDisplayName(activeTab.lang),
                 time: new Date().toLocaleTimeString(),
-                status: "💥"
+                status: "❌"
             }, ...prev].slice(0, 50));
             setOutputTab("console");
+        } finally {
+            setIsProjectRunning(false);
         }
     };
 
@@ -534,8 +525,44 @@ function EditorContent() {
     const [wasOriginallyMultiTab, setWasOriginallyMultiTab] = useState<boolean | null>(null);
 
     // Complete save with given name
-    const completeSave = (projectName: string, projectIdToUse: number | null) => {
+    const completeSave = async (projectName: string, projectIdToUse: number | null) => {
         if (!session?.user?.email) return;
+
+        if (gameProjectId) {
+            const scriptTab = tabs[0];
+            if (!scriptTab || !["csharp", "cpp"].includes(scriptTab.lang)) {
+                alert("Oyun scriptleri yalnızca C# veya C++ olabilir.");
+                return;
+            }
+            const endpoint = currentGameScriptId
+                ? `/api/game-projects/${encodeURIComponent(gameProjectId)}/scripts/${encodeURIComponent(currentGameScriptId)}`
+                : `/api/game-projects/${encodeURIComponent(gameProjectId)}/scripts`;
+            const response = await fetch(endpoint, {
+                method: currentGameScriptId ? "PATCH" : "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: scriptTab.name || projectName,
+                    language: scriptTab.lang,
+                    content: scriptTab.code,
+                    ...(currentGameScriptId && gameScriptRevision ? { revision: gameScriptRevision } : {}),
+                }),
+            });
+            const payload = await response.json() as { script?: GameScriptResponse; error?: string };
+            if (!response.ok || !payload.script) {
+                alert(payload.error || "Oyun scripti kaydedilemedi; değişiklikler açık sekmede korunuyor.");
+                return;
+            }
+            setCurrentGameScriptId(payload.script.id);
+            setGameScriptRevision(payload.script.revision || null);
+            setCurrentProjectName(payload.script.name);
+            setTabs((current) => current.map((tab, index) => index === 0 ? { ...tab, name: payload.script!.name, isSaved: true } : tab));
+            localStorage.removeItem("hanogt_unsaved_tabs");
+            const url = new URL(window.location.href);
+            url.searchParams.set("gameScript", payload.script.id);
+            window.history.replaceState(null, "", url);
+            alert("Oyun scripti güvenli proje alanına kaydedildi.");
+            return;
+        }
 
         const finalProjectId = projectIdToUse || Date.now();
 
@@ -543,11 +570,20 @@ function EditorContent() {
             id: finalProjectId,
             name: projectName,
             lang: tabs.length === 1 ? tabs[0].lang : "multi",
-            code: tabs.length === 1 ? tabs[0].code : JSON.stringify(tabs.map(t => ({ name: t.name, lang: t.lang, code: t.code }))),
+            code: tabs[0]?.code || "",
             date: new Date().toLocaleDateString("tr-TR", { hour: '2-digit', minute: '2-digit' }),
             isMultiTab: tabs.length > 1,
+            files: tabs.map((tab, order) => ({ name: tab.name, lang: tab.lang, code: tab.code, order })),
         };
 
+        const cloudSaved = await saveProjectToCloud(session.user.email, {
+            ...projectData,
+            id: String(projectData.id),
+        });
+        if (!cloudSaved) {
+            alert(t("save_error") || "Proje buluta kaydedilemedi. Değişiklikleriniz açık sekmelerde korunuyor.");
+            return;
+        }
         saveProject(session.user.email, projectData);
         setWasOriginallyMultiTab(tabs.length > 1);
         setTabs(tabs.map(t => ({ ...t, isSaved: true })));
@@ -561,6 +597,11 @@ function EditorContent() {
     const handleSave = () => {
         if (!session?.user?.email) {
             alert(t("please_login_first") || "Lütfen önce giriş yapın!");
+            return;
+        }
+
+        if (gameProjectId) {
+            void completeSave(currentProjectName || tabs[0]?.name || "GameScript", null);
             return;
         }
 
@@ -586,14 +627,14 @@ function EditorContent() {
         }
 
         // Direct save without asking name
-        completeSave(currentProjectName, currentProjectId);
+        void completeSave(currentProjectName, currentProjectId);
     };
 
     // Handle save modal confirm
     const handleSaveModalConfirm = (keepSameName: boolean) => {
         const nameToUse = keepSameName ? currentProjectName : saveModalInputName;
         setShowSaveModal(false);
-        completeSave(nameToUse, currentProjectId);
+        void completeSave(nameToUse, currentProjectId);
     };
 
     // Download
@@ -614,11 +655,13 @@ function EditorContent() {
 
             const element = document.createElement("a");
             const file = new Blob([activeTab.code], { type: 'text/plain' });
-            element.href = URL.createObjectURL(file);
+            const objectUrl = URL.createObjectURL(file);
+            element.href = objectUrl;
             element.download = fileName;
             document.body.appendChild(element);
             element.click();
             document.body.removeChild(element);
+            URL.revokeObjectURL(objectUrl);
         } else {
             // Multi-tab - download as ZIP
             // Using JSZip dynamically
@@ -634,23 +677,27 @@ function EditorContent() {
 
                 const content = await zip.generateAsync({ type: 'blob' });
                 const element = document.createElement("a");
-                element.href = URL.createObjectURL(content);
+                const objectUrl = URL.createObjectURL(content);
+                element.href = objectUrl;
                 element.download = `${currentProjectName || "project"}.zip`;
                 document.body.appendChild(element);
                 element.click();
                 document.body.removeChild(element);
-            } catch (error) {
+                URL.revokeObjectURL(objectUrl);
+            } catch {
                 // Fallback: download each file separately
                 tabs.forEach((tab, index) => {
                     const ext = extensions[tab.lang.toLowerCase()] || "txt";
                     const fileName = `${index + 1}_${tab.name.replace(/[^a-zA-Z0-9]/g, "_")}.${ext}`;
                     const element = document.createElement("a");
                     const file = new Blob([tab.code], { type: 'text/plain' });
-                    element.href = URL.createObjectURL(file);
+                    const objectUrl = URL.createObjectURL(file);
+                    element.href = objectUrl;
                     element.download = fileName;
                     document.body.appendChild(element);
                     element.click();
                     document.body.removeChild(element);
+                    URL.revokeObjectURL(objectUrl);
                 });
             }
         }
@@ -658,6 +705,7 @@ function EditorContent() {
 
     // Clear output
     const handleClearOutput = () => {
+        setProjectOutput([]);
         setTabs(tabs.map(t =>
             t.id === activeTabId
                 ? { ...t, output: [] }
@@ -665,12 +713,17 @@ function EditorContent() {
         ));
     };
 
+    useEffect(() => {
+        shortcutActions.current = { save: handleSave, run: handleRun };
+    });
+
     return (
         <div className="flex h-screen w-full bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white transition-colors overflow-hidden">
             {/* Sidebar */}
             <Sidebar
                 onSave={handleSave}
                 onDownload={handleDownload}
+                backHref={backHref}
             />
 
             {/* Main Content */}
@@ -714,7 +767,7 @@ function EditorContent() {
                                 )}
                             </div>
 
-                            <img
+                            <OptimizedImage
                                 src={`/languages/${tab.lang.toLowerCase()}.png`}
                                 alt={tab.lang}
                                 className="w-4 h-4 object-contain"
@@ -739,25 +792,28 @@ function EditorContent() {
                     ))}
 
                     {/* New Tab Button */}
-                    <button
-                        onClick={() => setShowLangModal(true)}
-                        className="flex items-center gap-1 px-3 h-full bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span className="text-sm font-medium">{t("new_tab") || "Yeni Sekme"}</span>
-                    </button>
+                    {!gameProjectId && (
+                        <button
+                            onClick={() => setShowLangModal(true)}
+                            className="flex items-center gap-1 px-3 h-full bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span className="text-sm font-medium">{t("new_tab") || "Yeni Sekme"}</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Top Bar for Run Button */}
                 <div className="h-14 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-6 bg-white dark:bg-zinc-950">
                     <h2 className="font-bold text-lg capitalize flex items-center gap-2">
-                        <img
+                        <OptimizedImage
                             src={`/languages/${activeTab?.lang.toLowerCase()}.png`}
                             alt={activeTab?.lang}
                             className="w-6 h-6 object-contain"
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                         {activeTab?.name || "Project"}
+                        {gameProjectId && <span className="rounded-full bg-fuchsia-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-fuchsia-500">Oyun scripti</span>}
                     </h2>
 
                     <div className="flex items-center gap-3">
@@ -782,11 +838,11 @@ function EditorContent() {
                         </button>
                         <button
                             onClick={handleRun}
-                            disabled={activeTab?.isRunning}
+                            disabled={isProjectRunning}
                             className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:shadow-green-500/30 transition-all"
                         >
                             <Play className="w-4 h-4 fill-current" />
-                            {activeTab?.isRunning ? "Running..." : "RUN"}
+                            {isProjectRunning ? "Çalışıyor…" : tabs.filter((tab) => !["html", "css"].includes(normalizeLang(tab.lang))).length > 1 ? "TÜMÜNÜ ÇALIŞTIR" : "RUN"}
                         </button>
                     </div>
                 </div>
@@ -837,8 +893,8 @@ function EditorContent() {
                                     {outputTab === "console" ? (
                                         <div className="h-full p-2 lg:p-4">
                                             <Console
-                                                output={activeTab?.output || []}
-                                                isRunning={activeTab?.isRunning || false}
+                                                output={projectOutput.length ? projectOutput : (activeTab?.output || [])}
+                                                isRunning={isProjectRunning || activeTab?.isRunning || false}
                                                 onClear={handleClearOutput}
                                             />
                                         </div>
@@ -854,8 +910,8 @@ function EditorContent() {
                             /* For non-web languages, just show Console */
                             <div className="h-full p-2 lg:p-4">
                                 <Console
-                                    output={activeTab?.output || []}
-                                    isRunning={activeTab?.isRunning || false}
+                                    output={projectOutput.length ? projectOutput : (activeTab?.output || [])}
+                                    isRunning={isProjectRunning || activeTab?.isRunning || false}
                                     onClear={handleClearOutput}
                                 />
                             </div>
@@ -889,7 +945,7 @@ function EditorContent() {
                                     className="flex flex-col items-center justify-center p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-2 border-transparent hover:border-blue-500 transition-all gap-3"
                                 >
                                     <div className="w-12 h-12 rounded-full overflow-hidden bg-white dark:bg-zinc-900 shadow-md flex items-center justify-center p-2">
-                                        <img
+                                        <OptimizedImage
                                             src={lang.logo}
                                             alt={`${lang.name} logo`}
                                             className="w-full h-full object-contain"
@@ -978,12 +1034,6 @@ function EditorContent() {
                 </div>
             )}
 
-            {/* Ban Modal */}
-            <BannedModal
-                isOpen={showBanModal}
-                reason={banReason}
-                onClose={() => setShowBanModal(false)}
-            />
         </div>
     );
 }

@@ -4,12 +4,23 @@ import {
     doc,
     setDoc,
     getDocs,
-    deleteDoc,
+    getDoc,
     query,
     where,
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    deleteField,
+    type Timestamp,
+    writeBatch,
 } from "firebase/firestore";
+
+export interface ProjectFile {
+    id?: string;
+    name: string;
+    lang: string;
+    code: string;
+    order: number;
+}
 
 export interface Project {
     id: string;
@@ -18,8 +29,9 @@ export interface Project {
     code: string;
     date: string;
     email: string;
-    createdAt?: any;
+    createdAt?: Timestamp | Date | string;
     isMultiTab?: boolean;
+    files?: ProjectFile[];
 }
 
 const COLLECTION_NAME = "projects";
@@ -28,11 +40,43 @@ const COLLECTION_NAME = "projects";
 export const saveProjectToCloud = async (email: string, project: Omit<Project, "email" | "createdAt">) => {
     try {
         const projectRef = doc(db, COLLECTION_NAME, project.id);
-        await setDoc(projectRef, {
-            ...project,
+        const files: ProjectFile[] = project.files?.length
+            ? project.files
+            : [{ name: project.name, lang: project.lang, code: project.code, order: 0 }];
+        if (files.length > 50 || files.some((file) => file.code.length > 500_000)) {
+            throw new Error("Proje, 50 dosya veya dosya başına 500.000 karakter sınırını aşıyor.");
+        }
+        const [oldFiles, existingProject] = await Promise.all([
+            getDocs(collection(projectRef, "files")),
+            getDoc(projectRef),
+        ]);
+        const batch = writeBatch(db);
+        batch.set(projectRef, {
+            id: project.id,
+            name: project.name,
+            lang: project.lang,
+            date: project.date,
+            isMultiTab: files.length > 1,
+            schemaVersion: 2,
+            fileCount: files.length,
+            entryFile: files[0]?.name || project.name,
+            code: files.length === 1 ? files[0].code : deleteField(),
             email,
-            createdAt: serverTimestamp(),
+            ...(!existingProject.exists() ? { createdAt: serverTimestamp() } : {}),
+            updatedAt: serverTimestamp(),
+        }, { merge: true });
+        oldFiles.docs.forEach((file) => batch.delete(file.ref));
+        files.forEach((file, index) => {
+            const fileId = `${String(index).padStart(3, "0")}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80) || "file"}`;
+            batch.set(doc(projectRef, "files", fileId), {
+                name: file.name.slice(0, 120),
+                lang: file.lang,
+                code: file.code,
+                order: index,
+                updatedAt: serverTimestamp(),
+            });
         });
+        await batch.commit();
         return true;
     } catch (error) {
         console.error("Error saving project:", error);
@@ -49,10 +93,11 @@ export const getProjectsFromCloud = async (email: string): Promise<Project[]> =>
             orderBy("createdAt", "desc")
         );
         const querySnapshot = await getDocs(q);
-        const projects: Project[] = [];
-        querySnapshot.forEach((doc) => {
-            projects.push({ id: doc.id, ...doc.data() } as Project);
-        });
+        const projects = await Promise.all(querySnapshot.docs.map(async (projectDoc) => {
+            const fileSnapshot = await getDocs(query(collection(projectDoc.ref, "files"), orderBy("order", "asc")));
+            const files = fileSnapshot.docs.map((file) => ({ id: file.id, ...file.data() } as ProjectFile));
+            return { id: projectDoc.id, ...projectDoc.data(), files } as Project;
+        }));
         return projects;
     } catch (error) {
         console.error("Error getting projects:", error);
@@ -63,7 +108,12 @@ export const getProjectsFromCloud = async (email: string): Promise<Project[]> =>
 // Delete project from Firestore
 export const deleteProjectFromCloud = async (projectId: string) => {
     try {
-        await deleteDoc(doc(db, COLLECTION_NAME, projectId));
+        const projectRef = doc(db, COLLECTION_NAME, projectId);
+        const files = await getDocs(collection(projectRef, "files"));
+        const batch = writeBatch(db);
+        files.docs.forEach((file) => batch.delete(file.ref));
+        batch.delete(projectRef);
+        await batch.commit();
         return true;
     } catch (error) {
         console.error("Error deleting project:", error);
@@ -80,56 +130,56 @@ export interface LegacyProject {
     date: string;
     email: string;
     isMultiTab?: boolean;
+    files?: ProjectFile[];
 }
 
 const STORAGE_KEY = "hanogt_projects";
 
 export const saveProject = (email: string, project: Omit<LegacyProject, "email">) => {
-    const existing: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    const index = existing.findIndex(p => p.id === project.id && p.email === email);
-
-    if (index >= 0) {
-        existing[index] = { ...project, email };
-    } else {
-        existing.unshift({ ...project, email });
+    try {
+        const existing: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        const index = existing.findIndex(p => p.id === project.id && p.email === email);
+        if (index >= 0) existing[index] = { ...project, email };
+        else existing.unshift({ ...project, email });
+        const serialized = JSON.stringify(existing.slice(0, 20));
+        if (serialized.length <= 1_000_000) localStorage.setItem(STORAGE_KEY, serialized);
+    } catch {
+        // Local cache is best-effort; Firestore remains the source of truth.
     }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-
-    // Also save to cloud
-    saveProjectToCloud(email, {
-        id: String(project.id),
-        name: project.name,
-        lang: project.lang,
-        code: project.code,
-        date: project.date,
-    });
 };
 
 export const getProjects = (email: string): LegacyProject[] => {
     if (!email) return [];
-    const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    return all.filter(p => p.email === email);
+    try {
+        const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        return all.filter(p => p.email === email);
+    } catch {
+        return [];
+    }
 };
 
 export const deleteProject = (email: string, id: number) => {
-    const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    const filtered = all.filter(p => !(p.email === email && p.id === id));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-
-    // Also delete from cloud
-    deleteProjectFromCloud(String(id));
+    try {
+        const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        const filtered = all.filter(p => !(p.email === email && p.id === id));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    } catch {
+        localStorage.removeItem(STORAGE_KEY);
+    }
 };
 
 // Rename project
 export const renameProject = async (email: string, id: number | string, newName: string) => {
     // Update in localStorage
-    const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    const index = all.findIndex(p => p.email === email && String(p.id) === String(id));
-
-    if (index >= 0) {
-        all[index].name = newName;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    try {
+        const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        const index = all.findIndex(p => p.email === email && String(p.id) === String(id));
+        if (index >= 0) {
+            all[index].name = newName;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+        }
+    } catch {
+        localStorage.removeItem(STORAGE_KEY);
     }
 
     // Update in cloud

@@ -35,7 +35,7 @@ export default function DeleteProjectModal({ projectName, onConfirm, onCancel }:
                 </h3>
 
                 <p className="text-center text-zinc-500 mb-2">
-                    <strong className="text-zinc-900 dark:text-white">"{projectName}"</strong>
+                    <strong className="text-zinc-900 dark:text-white">&ldquo;{projectName}&rdquo;</strong>
                 </p>
 
                 <p className="text-center text-zinc-500 mb-6 text-sm">

@@ -102,7 +102,7 @@ export default function AboutPage() {
                             </h2>
                         </div>
                         <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("about_security_text") || "Platform güvenliği bizim için en önemli önceliktir. Hanogt Security Bot, zararlı kodları tespit eder ve kullanıcılarımızı korur. 7/24 aktif güvenlik sistemimiz sayesinde güvenle kod yazabilirsiniz."}
+                                {t("about_security_text") || "Güvenlik çok katmanlı uygulanır. Hanogt Security Bot sunucu taraflı bir statik ön-elemedir; antivirüs veya kusursuz tespit garantisi değildir. Asıl koruma oturum, yetki, oran sınırı ve izole çalıştırıcı kontrollerinden gelir."}
                         </p>
                     </section>
 

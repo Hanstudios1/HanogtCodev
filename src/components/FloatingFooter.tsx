@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
-import { Users, Info, MessageSquare, FileText, Shield, ScrollText, Github, ChevronUp, ChevronDown } from "lucide-react";
+import { Users, Info, MessageSquare, FileText, Shield, ScrollText, Github, ChevronUp, ChevronDown, Radio, UsersRound, Gamepad2 } from "lucide-react";
 
 export default function FloatingFooter() {
     const { t } = useI18n();
@@ -38,6 +38,9 @@ export default function FloatingFooter() {
     }, []);
 
     const links = [
+        { icon: Gamepad2, label: "Oyun Motoru", href: "/game-engine", color: "text-fuchsia-500" },
+        { icon: Radio, label: "Hanogt Media", href: "/media", color: "text-violet-500" },
+        { icon: UsersRound, label: "Gruplar", href: "/groups", color: "text-emerald-500" },
         { icon: Users, label: t("friends") || "Arkadaşlar", href: "/friends", color: "text-blue-500" },
         { icon: Info, label: t("about_link") || "Hakkımızda", href: "/about", color: "text-emerald-500" },
         { icon: MessageSquare, label: t("feedback_link") || "Geri Bildirim/SSS", href: "/feedback", color: "text-amber-500" },
