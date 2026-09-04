@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import OptimizedImage from "@/components/OptimizedImage";
+
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Send, Smile, Mic, MicOff, MoreVertical, Check, CheckCheck, Trash2, Edit3, Reply, Ban, Play, Pause, X } from "lucide-react";
+import { ArrowLeft, Send, Smile, Mic, MicOff, MoreVertical, Check, CheckCheck, Trash2, Edit3, Reply, Ban, Play, Pause, X, Phone, LoaderCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { db } from "@/lib/firebase";
-import { doc, setDoc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, updateDoc } from "firebase/firestore";
+import { db, storage } from "@/lib/firebase";
+import { doc, setDoc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteField, updateDoc, type Timestamp } from "firebase/firestore";
 import ProfileModal from "@/components/ProfileModal";
 import type { UserProfile } from "@/components/ProfileModal";
+import { deleteObject, getBlob, ref as storageRef, uploadBytes } from "firebase/storage";
+import { useVoiceCall } from "@/components/VoiceCallProvider";
 
 type Message = {
     id: string;
@@ -17,12 +21,18 @@ type Message = {
     type: "text" | "sticker" | "voice" | "image";
     stickerUrl?: string;
     voiceDuration?: number;
-    voiceUrl?: string;
-    createdAt: any;
+    voicePath?: string;
+    createdAt: Timestamp | Date | string | null;
     read: boolean;
     replyTo?: { id: string; text: string; fromEmail: string };
     edited?: boolean;
     deleted?: boolean;
+};
+
+type ChatProfile = UserProfile & { blockedUsers?: string[] };
+type MessageExtra = Partial<Pick<Message, "voiceDuration" | "voicePath" | "stickerUrl">>;
+type MessageDraft = Omit<Message, "id" | "createdAt" | "deleted" | "edited"> & {
+    createdAt: ReturnType<typeof serverTimestamp>;
 };
 
 const STICKERS = [
@@ -38,6 +48,7 @@ export default function ChatPage() {
     const router = useRouter();
     const params = useParams();
     const { t } = useI18n();
+    const { startCall } = useVoiceCall();
     const friendEmail = decodeURIComponent(params.friendId as string);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -46,30 +57,36 @@ export default function ChatPage() {
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
-    const [friendData, setFriendData] = useState<any>(null);
-    const [myData, setMyData] = useState<any>(null);
+    const [friendData, setFriendData] = useState<ChatProfile | null>(null);
     const [showStickers, setShowStickers] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [showMenu, setShowMenu] = useState(false);
-    const [selectedMsg, setSelectedMsg] = useState<Message | null>(null);
     const [showMsgMenu, setShowMsgMenu] = useState<string | null>(null);
     const [editingMsg, setEditingMsg] = useState<Message | null>(null);
     const [editText, setEditText] = useState("");
     const [replyTo, setReplyTo] = useState<Message | null>(null);
     const [playingAudio, setPlayingAudio] = useState<string | null>(null);
+    const [uploadingVoice, setUploadingVoice] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const [friendIsTyping, setFriendIsTyping] = useState(false);
     const recordingInterval = useRef<NodeJS.Timeout | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const audioObjectUrlRef = useRef<string | null>(null);
+    const recordingStartedAtRef = useRef(0);
+    const recordingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const chatId = [session?.user?.email, friendEmail].sort().join("_");
 
+    const loadFriendData = useCallback(async () => {
+        const friendDoc = await getDoc(doc(db, "public_profiles", friendEmail));
+        if (friendDoc.exists()) setFriendData({ ...friendDoc.data(), email: friendEmail } as ChatProfile);
+    }, [friendEmail]);
+
     useEffect(() => {
         if (!session?.user?.email) { router.push("/login"); return; }
         loadFriendData();
-        loadMyData();
         const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
         const unsub = onSnapshot(q, (snapshot) => {
             const msgs: Message[] = snapshot.docs.map(d => ({ id: d.id, ...d.data() as Omit<Message, "id"> }));
@@ -106,22 +123,11 @@ export default function ChatPage() {
                 setDoc(doc(db, "users", session.user.email), { isOnline: false }, { merge: true });
             }
         };
-    }, [session, chatId]);
+    }, [chatId, friendEmail, loadFriendData, router, session?.user?.email]);
 
-    const loadFriendData = async () => {
-        const friendDoc = await getDoc(doc(db, "users", friendEmail));
-        if (friendDoc.exists()) setFriendData(friendDoc.data());
-    };
-
-    const loadMyData = async () => {
-        if (!session?.user?.email) return;
-        const myDoc = await getDoc(doc(db, "users", session.user.email));
-        if (myDoc.exists()) setMyData(myDoc.data());
-    };
-
-    const sendMessage = async (text: string, type: "text" | "sticker" | "voice" = "text", extra?: any) => {
+    const sendMessage = async (text: string, type: "text" | "sticker" | "voice" = "text", extra: MessageExtra = {}) => {
         if (!session?.user?.email || (!text.trim() && type === "text")) return;
-        const msgData: any = {
+        const msgData: MessageDraft = {
             fromEmail: session.user.email,
             text,
             type,
@@ -132,9 +138,13 @@ export default function ChatPage() {
         if (replyTo) {
             msgData.replyTo = { id: replyTo.id, text: replyTo.text.substring(0, 100), fromEmail: replyTo.fromEmail };
         }
+        await setDoc(doc(db, "chats", chatId), {
+            participants: [session.user.email, friendEmail].sort(),
+            updatedAt: serverTimestamp(),
+        }, { merge: true });
         await addDoc(collection(db, "chats", chatId, "messages"), msgData);
         await setDoc(doc(db, "chats", chatId), {
-            participants: [session.user.email, friendEmail],
+            participants: [session.user.email, friendEmail].sort(),
             lastMessage: type === "sticker" ? "🎭 Sticker" : type === "voice" ? "🎤 " + (t("voice_message") || "Sesli Mesaj") : text,
             lastMessageAt: serverTimestamp(),
             lastSender: session.user.email,
@@ -162,8 +172,13 @@ export default function ChatPage() {
     };
 
     // Delete message
-    const handleDeleteMsg = async (msgId: string) => {
-        await updateDoc(doc(db, "chats", chatId, "messages", msgId), { deleted: true, text: t("message_deleted") || "Bu mesaj silindi" });
+    const handleDeleteMsg = async (message: Message) => {
+        if (message.voicePath) await deleteObject(storageRef(storage, message.voicePath)).catch(() => undefined);
+        await updateDoc(doc(db, "chats", chatId, "messages", message.id), {
+            deleted: true,
+            text: t("message_deleted") || "Bu mesaj silindi",
+            voicePath: deleteField(),
+        });
         setShowMsgMenu(null);
     };
 
@@ -190,71 +205,133 @@ export default function ChatPage() {
     // Voice recording with real audio
     const startRecording = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
+            if (!session?.user?.email || uploadingVoice) return;
+            await setDoc(doc(db, "chats", chatId), {
+                participants: [session.user.email, friendEmail].sort(),
+                updatedAt: serverTimestamp(),
+            }, { merge: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                video: false,
+            });
+            const supportedType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"]
+                .find((type) => MediaRecorder.isTypeSupported(type));
+            const mediaRecorder = new MediaRecorder(stream, supportedType ? { mimeType: supportedType, audioBitsPerSecond: 64000 } : undefined);
             mediaRecorderRef.current = mediaRecorder;
             audioChunksRef.current = [];
             mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-            mediaRecorder.start();
+            mediaRecorder.start(1000);
+            recordingStartedAtRef.current = Date.now();
             setIsRecording(true);
             setRecordingTime(0);
             recordingInterval.current = setInterval(() => setRecordingTime(p => p + 1), 1000);
+            recordingTimeoutRef.current = setTimeout(() => stopRecording(), 60_000);
         } catch {
             alert(t("mic_permission_denied") || "Mikrofon izni verilmedi.");
         }
     };
 
-    const stopRecording = () => {
+    const stopRecording = (discard = false) => {
         setIsRecording(false);
         if (recordingInterval.current) clearInterval(recordingInterval.current);
+        if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-            mediaRecorderRef.current.onstop = () => {
-                const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const base64 = reader.result as string;
-                    if (recordingTime > 0) {
-                        sendMessage(`🎤 ${t("voice_message") || "Sesli Mesaj"} (${formatTime(recordingTime)})`, "voice", { voiceDuration: recordingTime, voiceUrl: base64 });
-                    }
-                };
-                reader.readAsDataURL(blob);
-                mediaRecorderRef.current?.stream.getTracks().forEach(t => t.stop());
+            const recorder = mediaRecorderRef.current;
+            recorder.onstop = async () => {
+                const duration = Math.max(1, Math.round((Date.now() - recordingStartedAtRef.current) / 1000));
+                const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+                recorder.stream.getTracks().forEach((track) => track.stop());
+                audioChunksRef.current = [];
+                if (discard || !session?.user?.email || blob.size === 0) return;
+                if (blob.size > 3 * 1024 * 1024) {
+                    alert(t("voice_message_too_large") || "Sesli mesaj 3 MB sınırını aşıyor.");
+                    return;
+                }
+                setUploadingVoice(true);
+                const extension = recorder.mimeType.includes("mp4") ? "m4a" : "webm";
+                const path = `voice-messages/${chatId}/${crypto.randomUUID()}.${extension}`;
+                try {
+                    await uploadBytes(storageRef(storage, path), blob, {
+                        contentType: recorder.mimeType || "audio/webm",
+                        customMetadata: { sender: session.user.email, recipient: friendEmail },
+                    });
+                    await sendMessage(`🎤 ${t("voice_message") || "Sesli Mesaj"} (${formatTime(duration)})`, "voice", {
+                        voiceDuration: duration,
+                        voicePath: path,
+                    });
+                } catch {
+                    await deleteObject(storageRef(storage, path)).catch(() => undefined);
+                    alert(t("voice_message_failed") || "Sesli mesaj gönderilemedi.");
+                } finally {
+                    setUploadingVoice(false);
+                }
             };
-            mediaRecorderRef.current.stop();
+            recorder.stop();
         }
         setRecordingTime(0);
     };
 
-    // Play voice message
-    const playVoice = (msgId: string, voiceUrl?: string) => {
-        if (!voiceUrl) return;
+    // Voice blobs are fetched with the signed-in Firebase session and only kept
+    // in memory while playing; no base64 audio is stored in Firestore.
+    const playVoice = async (msgId: string, voicePath?: string) => {
+        if (!voicePath) return;
         if (playingAudio === msgId) {
             audioRef.current?.pause();
             setPlayingAudio(null);
             return;
         }
-        if (audioRef.current) audioRef.current.pause();
-        const audio = new Audio(voiceUrl);
-        audioRef.current = audio;
-        audio.onended = () => setPlayingAudio(null);
-        audio.play();
-        setPlayingAudio(msgId);
+        try {
+            audioRef.current?.pause();
+            if (audioObjectUrlRef.current) URL.revokeObjectURL(audioObjectUrlRef.current);
+            const blob = await getBlob(storageRef(storage, voicePath), 3 * 1024 * 1024);
+            const objectUrl = URL.createObjectURL(blob);
+            audioObjectUrlRef.current = objectUrl;
+            const audio = new Audio(objectUrl);
+            audioRef.current = audio;
+            audio.onended = () => {
+                setPlayingAudio(null);
+                URL.revokeObjectURL(objectUrl);
+                if (audioObjectUrlRef.current === objectUrl) audioObjectUrlRef.current = null;
+            };
+            await audio.play();
+            setPlayingAudio(msgId);
+        } catch {
+            alert(t("voice_message_unavailable") || "Sesli mesaj açılamadı veya süresi dolmuş.");
+        }
     };
+
+    useEffect(() => () => {
+        if (recordingInterval.current) clearInterval(recordingInterval.current);
+        if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
+        mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+        audioRef.current?.pause();
+        if (audioObjectUrlRef.current) URL.revokeObjectURL(audioObjectUrlRef.current);
+    }, []);
 
     // Block user
     const handleBlockUser = async () => {
         if (!session?.user?.email) return;
-        const myDoc = await getDoc(doc(db, "users", session.user.email));
-        const blocked: string[] = myDoc.data()?.blockedUsers || [];
-        await setDoc(doc(db, "users", session.user.email), { blockedUsers: [...blocked, friendEmail] }, { merge: true });
-        setShowMenu(false);
-        router.push("/friends");
+        try {
+            const response = await fetch("/api/friends", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "block", targetEmail: friendEmail }),
+            });
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({})) as { error?: string };
+                throw new Error(result.error || "Kullanıcı engellenemedi.");
+            }
+            setShowMenu(false);
+            router.push("/friends");
+        } catch (error) {
+            alert(error instanceof Error ? error.message : "Kullanıcı engellenemedi.");
+        }
     };
 
     const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
-    const formatMessageTime = (ts: any) => {
+    const formatMessageTime = (ts: Message["createdAt"]) => {
         if (!ts) return "";
-        const date = ts.toDate ? ts.toDate() : new Date(ts);
+        const date = typeof ts === "object" && "toDate" in ts ? ts.toDate() : new Date(ts);
         return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
 
@@ -272,7 +349,7 @@ export default function ChatPage() {
                 <button onClick={() => setShowProfile(true)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                     <div className="relative">
                         {friendData?.avatarUrl ? (
-                            <img src={friendData.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
+                            <OptimizedImage src={friendData.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
                                 {friendData?.username?.charAt(0) || "?"}
@@ -300,6 +377,15 @@ export default function ChatPage() {
                                 : friendData?.isOnline ? (t("online") || "Çevrimiçi") : (t("offline") || "Çevrimdışı")}
                         </p>
                     </div>
+                </button>
+
+                <button
+                    onClick={() => void startCall({ email: friendEmail, username: friendData?.username || friendEmail, avatarUrl: friendData?.avatarUrl })}
+                    className="p-2.5 rounded-xl text-green-500 hover:bg-green-50 dark:hover:bg-green-950/40"
+                    title={t("start_voice_call") || "Sesli Arama Başlat"}
+                    aria-label={t("start_voice_call") || "Sesli Arama Başlat"}
+                >
+                    <Phone className="w-5 h-5" />
                 </button>
 
                 {/* Menu with Block */}
@@ -375,7 +461,7 @@ export default function ChatPage() {
                                     <span className="text-4xl">{msg.text}</span>
                                 ) : msg.type === "voice" ? (
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => playVoice(msg.id, msg.voiceUrl)} className="p-1 rounded-full hover:bg-white/20">
+                                        <button onClick={() => void playVoice(msg.id, msg.voicePath)} className="p-1 rounded-full hover:bg-white/20">
                                             {playingAudio === msg.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                                         </button>
                                         <div className="flex-1 h-1 rounded bg-white/30 dark:bg-zinc-600">
@@ -408,7 +494,7 @@ export default function ChatPage() {
                                             </button>
                                         )}
                                         {isMine && (
-                                            <button onClick={() => handleDeleteMsg(msg.id)} className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex items-center gap-2 text-red-600">
+                                            <button onClick={() => void handleDeleteMsg(msg)} className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex items-center gap-2 text-red-600">
                                                 <Trash2 className="w-3.5 h-3.5" /> {t("delete") || "Sil"}
                                             </button>
                                         )}
@@ -456,8 +542,11 @@ export default function ChatPage() {
                             <span className="text-red-600 dark:text-red-400 font-mono font-bold">{formatTime(recordingTime)}</span>
                             <span className="text-sm text-red-500">{t("recording") || "Kaydediliyor..."}</span>
                         </div>
-                        <button onClick={stopRecording} className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors">
+                        <button onClick={() => stopRecording()} className="p-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors">
                             <MicOff className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => stopRecording(true)} className="p-3 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors" aria-label={t("discard_recording") || "Kaydı sil"}>
+                            <Trash2 className="w-5 h-5" />
                         </button>
                     </div>
                 ) : (
@@ -481,9 +570,10 @@ export default function ChatPage() {
                         ) : (
                             <button
                                 onMouseDown={() => startRecording()}
+                                disabled={uploadingVoice}
                                 className="p-2.5 rounded-xl transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                             >
-                                <Mic className="w-5 h-5 text-zinc-400" />
+                                {uploadingVoice ? <LoaderCircle className="w-5 h-5 text-blue-500 animate-spin" /> : <Mic className="w-5 h-5 text-zinc-400" />}
                             </button>
                         )}
                     </div>

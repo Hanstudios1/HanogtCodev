@@ -1,157 +1,24 @@
-"use client";
+import LegalPage, { LegalSection } from "@/components/LegalPage";
 
-import { useI18n } from "@/lib/i18n";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+const sections: LegalSection[] = [
+    { id: "contract", title: "Sözleşmenin kapsamı ve kabul", paragraphs: ["Bu şartlar Hanogt Codev web, masaüstü ve mobil uygulamalarının kullanımını düzenler. Hesap açarak veya hizmeti kullanarak şartların o tarihteki sürümünü kabul edersiniz. Reşit olmayan kullanıcılar için uygulanabilir hukuk uyarınca veli/vasi onayı gerekebilir.", "İşletmecinin kesin ticari unvanı, adresi, MERSİS/VKN ve iletişim kanalı üretim öncesinde yayımlanmalıdır. Ücretli hizmet başlatılırsa mesafeli sözleşme ön bilgilendirmesi, fiyat, cayma hakkı ve dijital içerik istisnaları ayrıca sunulur."] },
+    { id: "service", title: "Hizmetin niteliği", paragraphs: ["Hanogt Codev kod düzenleme, web tabanlı 2D/3D sahne oluşturma, oyun projesi ve C#/C++ script saklama, mesajlaşma, sesli mesaj, eşler arası sesli arama ve isteğe bağlı yapay zekâ/kod çalıştırma özellikleri sunar. Kod çalıştırma özelliği yalnızca yönetilen ve izole yürütücü yapılandırıldığında kullanılabilir. Kesintisiz veya hatasız hizmet garantisi verilmez; planlı bakım ve güvenlik müdahaleleri yapılabilir.", "Oyun motoru bir masaüstü Unity dağıtımı veya yerel C#/C++ derleyicisi değildir. Sahne önizlemesi tarayıcı çalışma zamanında yürütülür; C#/C++ kaynakları editörde hazırlanır ve yalnız yapılandırılmış izole runner ile ayrı test işi olarak çalıştırılabilir. Runner sonucu, scriptin sahneye güvenli biçimde bağlandığı veya dağıtıma hazır oyun üretildiği anlamına gelmez."] },
+    { id: "game-engine", title: "Oyun motoru projeleri", paragraphs: ["Oyun projesi; sahne hiyerarşisi, nesne kimliği, dönüşüm ve bileşen ayarlarıyla C#/C++ script kaynaklarını saklar. Kullanıcı uyumlu tarayıcı, ekran kartı ve WebGL desteğinin sonuçları etkileyebileceğini kabul eder. Kritik değişikliklerden önce dışa aktarma ve sürüm kontrolü önerilir.", "C# ve C++ script şablonları kullanıcıya aittir. Kodun derlenmesi, üçüncü taraf bağımlılıklar, lisanslar, performans, ağ erişimi ve hedef platform paketlemesi ayrıca doğrulanmalıdır. Önizleme fiziği ve bileşen davranışları prototipleme amaçlı ilk sürüm sınırlarına sahiptir; kesin fizik veya ticari motor uyumluluğu garantisi verilmez."] },
+    { id: "account", title: "Hesap güvenliği", items: ["Doğru ve güncel bilgi sağlamak, güçlü ve benzersiz parola kullanmak kullanıcının sorumluluğundadır.", "Hesap devredilemez; şüpheli erişim derhâl bildirilmelidir.", "Otomasyonla hesap açma, kimlik taklidi, oturum veya hız sınırı aşma girişimi yasaktır.", "İhlal şüphesinde önce orantılı kısıtlama ve inceleme uygulanır; otomatik tespit tek başına geri dönülmez kalıcı yaptırım sayılmaz."] },
+    { id: "content", title: "Kullanıcı içeriği ve fikrî haklar", paragraphs: ["Kullanıcı, yüklediği kod ve içeriğin hak sahibi olduğunu veya gerekli izne sahip bulunduğunu taahhüt eder. İçeriğin mülkiyeti kullanıcıda kalır. Hizmetin çalışması, yedeklenmesi, görüntülenmesi ve kullanıcı talebiyle çalıştırılması için sınırlı, geri alınabilir ve hizmet süresiyle bağlı teknik lisans verilir.", "5846 sayılı Fikir ve Sanat Eserleri Kanunu kapsamındaki mali ve manevi haklar ile üçüncü kişilerin marka, patent, ticari sır ve kişilik hakları ihlal edilemez. Bu kullanım şartı, kullanıcı içeriğinin hak sahipliğini Hanogt'a devretmez. Usulüne uygun ihlal bildirimi incelenir; gerektiğinde içerik erişimi geçici olarak sınırlandırılır."] },
+    { id: "media-license", title: "Hanogt Media yayın ve indirme kuralları", paragraphs: ["Media’ya yayınlama, kaynak dosyalarını internetten görüntülenebilir ve indirilebilir hâle getirir. Bu, tek başına açık kaynak lisansı seçildiği anlamına gelmez. Yayıncı, yeniden kullanım koşullarını proje açıklamasında veya lisans dosyasında belirtmelidir. Lisans belirtilmemiş içerik yalnızca platform işlevi kapsamında görüntülenip kişisel inceleme için indirilebilir; telif mevzuatının tanımadığı ek kullanım hakkı doğmaz.", "Yayıncı; kodda kişisel veri, sır, erişim anahtarı veya üçüncü kişiye ait izinsiz içerik bulunmadığını kontrol eder. İndiren kullanıcı ise bağımlılıkları, güvenliği ve lisansı kendi ortamında doğrulamadan kodu çalıştırmamalıdır. Beğeni sıralaması kalite veya güvenlik garantisi değildir."], items: ["Zararlı kod, yanıltıcı başlık, spam ve yapay etkileşim yasaktır.", "Telif veya kişilik hakkı ihlali bildirimi gerekçesi ve hak sahipliği bilgisiyle gönderilmelidir.", "Acil riskte yayın geçici gizlenebilir; yayıncıya itiraz ve açıklama olanağı sağlanır.", "Yayın silinse dahi daha önce üçüncü kişilerce hukuka uygun indirilen kopyaların uzaktan silinmesi teknik olarak mümkün değildir."] },
+    { id: "groups", title: "Grup ve ortak çalışma kuralları", paragraphs: ["Grup üyesi yalnızca kendi arkadaşı olan kullanıcıyı davet edebilir; davet edilen kişi üyelikten ayrılabilir ve uygunsuz davranışı bildirebilir. Üyeler grup içinde gördükleri e-posta, profil, kod, mesaj ve sesli mesajları grup amacı dışında kullanamaz veya izinsiz yayımlayamaz.", "Ortak editör anlık senkronizasyon sunar ancak tam bir sürüm kontrol sistemi veya çakışmasız CRDT garantisi vermez. Eş zamanlı yazmalarda son kayıt baskın olabilir. Ticari veya kritik kaynaklar için Git gibi sürüm kontrolü, yedek ve erişim politikası kullanılmalıdır."], items: ["Grup sahibi yönetimden ve üye erişimlerinin güncelliğinden sorumludur.", "Bir üyeyi eklemek, o üyeye ortak proje ve geçmiş grup sohbeti erişimi verebilir.", "Sesli mesaj bilerek kaydedilen kalıcı içeriktir; WebRTC arama sesi ise Hanogt tarafından kaydedilmez.", "Bir üyeye ait hesabın silinmesi üyeliği kaldırır; diğer üyelerin meşru mesaj bütünlüğü ile silme hakları dengelenir."] },
+    { id: "security-program", title: "Security Bot gönüllü katkı programı", paragraphs: ["Program varsayılan kapalıdır ve temel hizmetin şartı değildir. Kullanıcı yalnızca ayrıca seçtiği yayımlanmış projeyi insan denetimli güvenlik geliştirme değerlendirmesine aday gösterir. Hanogt; amacı, erişebilen rolleri, saklama süresini ve varsa model eğitimi yöntemini belgelemeden ham kodu kontrolsüz otomatik eğitimde kullanmaz.", "Kullanıcı hesap düzeyindeki izni geri çekebilir. Geri çekme yeni işlemeyi durdurur ve bekleyen katkı kayıtlarını silme sürecine alır; kanunen saklanması gereken kayıtlar ve geri döndürülmesi teknik olarak mümkün olmayan, usulüne uygun anonimleştirilmiş istatistikler bakımından yasal istisnalar saklıdır."] },
+    { id: "acceptable-use", title: "Kabul edilebilir kullanım", items: ["Zararlı yazılım yayma, kimlik bilgisi toplama, ters kabuk, kaynak tüketimi veya üçüncü sistemlere saldırı amacıyla hizmet kullanılamaz.", "Taciz, nefret, tehdit, dolandırıcılık, müstehcen veya hukuka aykırı içerik gönderilemez.", "Başkalarının gizliliği ihlal edilemez; sesli arama kaydı yapılacaksa tarafların bilgisi ve uygulanabilir rızası ayrıca alınmalıdır. Hanogt Codev aramayı kaydetmez.", "Güvenlik araştırması yalnızca açıkça izinli kapsamda yapılmalıdır. Yanlış pozitif tespitler için geri bildirim/itiraz yolu kullanılabilir."] },
+    { id: "moderation", title: "İhlal, inceleme ve itiraz", paragraphs: ["Riskli istek anlık olarak engellenebilir ve asgari bir denetim kaydı oluşturulabilir. Hesap kısıtlaması; ihlalin niteliği, tekrar durumu, zararın ağırlığı ve kullanıcının açıklaması değerlendirilerek uygulanır. Acil risk dışında kullanıcıya sebep ve itiraz kanalı bildirilir.", "Kullanıcı, Geri Bildirim ve SSS sayfasındaki Güvenlik İtirazı kategorisinden inceleme talep edebilir. Açık hata hâlinde kayıt düzeltilir ve kısıtlama kaldırılır."] },
+    { id: "platform-law", title: "İçerik bildirimi ve platform yükümlülükleri", paragraphs: ["Hanogt Codev'in somut faaliyette 5651 sayılı Kanun bakımından hangi hizmet sağlayıcı sıfatına girdiği, yerleşiklik ve faaliyet modeli kesinleştiğinde ayrıca değerlendirilir. Uygulanabilir olduğu ölçüde yetkili makam kararları ve hukuka uygun erişim/içerik çıkarma bildirimleri kayıt altına alınır, kapsamıyla sınırlı uygulanır ve kanunen yasak değilse içerik sahibine bilgi verilir.", "Telif veya kişilik hakkı bildiriminde bildirilen bağlantı/içerik, hak sahipliği dayanağı, iletişim bilgisi ve gerekçe istenir. Açıkça kötüye kullanılan bildirimler kabul edilmez; karşı açıklama ve insan incelemesi yolu korunur. Platform, sırf rapor sayısına dayanarak otomatik ve geri dönülmez karar vermez."] },
+    { id: "third-parties", title: "Üçüncü taraf hizmetleri", paragraphs: ["Google/Firebase, Google OAuth, AI sağlayıcısı, TURN/STUN ve yapılandırılan kod yürütücüsü kendi koşul ve kullanılabilirliklerine tabidir. Hanogt Codev bu hizmetlere ilişkin bağımlılıkları açıklar; üçüncü taraf altyapısını kendisine aitmiş gibi sunmaz. Kullanıcı tarafından AI veya çalıştırıcıya gönderilen kodda gizli anahtar bulunmamalıdır."] },
+    { id: "liability", title: "Sorumluluk ve tüketici hakları", paragraphs: ["Hizmet “olduğu gibi” sunulsa da 6098 sayılı Türk Borçlar Kanunu ve diğer emredici hükümler uyarınca tüketici hukuku, ayıplı hizmet, kişisel veri ve kast/ağır kusurdan doğan sorumluluk bertaraf edilmez. Kullanıcı, kod çıktısını üretim ortamında kullanmadan önce test etmek ve yedek almakla yükümlüdür.", "Ücretli sürüm sunulursa 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği kapsamındaki satıcı/sağlayıcı bilgisi, toplam fiyat, ön bilgilendirme, ödeme, ifa, fesih, cayma hakkı ve dijital içerik istisnaları siparişten önce ayrıca gösterilir.", "Ticari elektronik ileti gönderilirse 6563 sayılı Elektronik Ticaretin Düzenlenmesi Hakkında Kanun kapsamındaki onay, ret ve gerekli kayıt süreçleri işletilir. Hesap güvenliği ve hizmetin ifasına ilişkin zorunlu bildirimler pazarlama onayı olarak kullanılmaz."] },
+    { id: "termination", title: "Fesih, veri alma ve silme", paragraphs: ["Kullanıcı hesabını ayarlardan kapatabilir ve önce veri kopyasını indirebilir. Silme; yasal saklama zorunluluğu ve diğer kullanıcıların meşru iletişim kayıtları dikkate alınarak uygulanır. Hizmet, esaslı şart değişikliğinde kullanıcıya makul bildirim sağlar."] },
+    { id: "changes", title: "Değişiklikler, sürümleme ve bölünebilirlik", paragraphs: ["Şartlarda kullanıcı aleyhine esaslı değişiklik yapılırsa yürürlükten önce anlaşılır bildirim sunulur; gerekiyorsa yeniden kabul veya ayrı rıza alınır. Değişiklik günlüğü sürüm ve yürürlük tarihiyle korunur. Kullanıcının değişikliği kabul etmemesi hâlinde verisini dışa aktarıp hesabını kapatma hakkı saklıdır.", "Bir hükmün geçersiz olması diğer hükümlerin geçerliliğini kendiliğinden etkilemez. Emredici hukukla çelişen hükümler, emredici düzenlemeye uygun en dar kapsamda uygulanır. Türkçe metin ile çeviriler arasında çelişki olursa tüketici aleyhine yorum yasağı ve emredici hükümler saklı kalmak üzere Türkçe metin esas alınır."] },
+    { id: "law", title: "Uygulanacak hukuk ve uyuşmazlık", paragraphs: ["Türkiye Cumhuriyeti hukuku uygulanır. Tüketici sıfatı bulunan kullanıcıların tüketici hakem heyeti, tüketici mahkemesi ve yerleşim yeri yetkileri saklıdır. Diğer uyuşmazlıklarda emredici yetki kuralları saklı kalmak üzere işletmecinin merkezinin bulunduğu yer mahkemeleri yetkilidir."] },
+];
 
 export default function TermsOfUsePage() {
-    const { t } = useI18n();
-
-    return (
-        <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white transition-colors">
-            {/* Header */}
-            <header className="py-6 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="max-w-4xl mx-auto px-6 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
-                        <span>{t("back_button") || "Geri"}</span>
-                    </Link>
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
-                        Hanogt Codev
-                    </Link>
-                    <div className="w-16"></div>
-                </div>
-            </header>
-
-            {/* Content */}
-            <main className="max-w-4xl mx-auto px-6 py-12">
-                <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">
-                    {t("terms_title") || "Kullanım Şartları"}
-                </h1>
-
-                <div className="prose prose-zinc dark:prose-invert prose-lg max-w-none">
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            1. {t("terms_acceptance_title") || "Kabul ve Onay"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("terms_acceptance_text") || "Hanogt Codev platformuna üye olarak veya platformu kullanarak işbu Kullanım Şartları'nı okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan etmiş sayılırsınız. Bu şartları kabul etmiyorsanız, platformu kullanmayınız."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            2. {t("terms_service_title") || "Hizmet Tanımı"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("terms_service_text") || "Hanogt Codev, kullanıcılara çevrimiçi kod yazma, düzenleme, çalıştırma ve paylaşma imkânı sunan bir yazılım geliştirme platformudur. Platform, eğitim ve profesyonel amaçlarla kullanılabilir."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            3. {t("terms_user_resp_title") || "Kullanıcı Sorumlulukları"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
-                            {t("terms_user_resp_intro") || "Kullanıcılar aşağıdaki hususlara uymakla yükümlüdür:"}
-                        </p>
-                        <ul className="list-disc list-inside space-y-2 ml-4 text-zinc-600 dark:text-zinc-300">
-                            <li>{t("terms_resp_1") || "Doğru ve güncel bilgi sağlamak"}</li>
-                            <li>{t("terms_resp_2") || "Hesap güvenliğini korumak ve şifresini gizli tutmak"}</li>
-                            <li>{t("terms_resp_3") || "Yürürlükteki yasalara ve mevzuata uymak"}</li>
-                            <li>{t("terms_resp_4") || "Üçüncü şahısların haklarını ihlal etmemek"}</li>
-                            <li>{t("terms_resp_5") || "Platformun normal işleyişini bozmamak"}</li>
-                        </ul>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-red-500 dark:text-red-400">
-                            4. {t("terms_prohibited_title") || "Yasaklanan Eylemler"}
-                        </h2>
-                        <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-xl p-4 mb-4">
-                            <p className="text-red-700 dark:text-red-400 font-semibold">
-                                ⚠️ {t("terms_prohibited_warning") || "Aşağıdaki eylemler kesinlikle yasaktır ve hesap kalıcı olarak kapatılır:"}
-                            </p>
-                        </div>
-                        <ul className="list-disc list-inside space-y-2 ml-4 text-zinc-600 dark:text-zinc-300">
-                            <li>{t("terms_prohibited_1") || "Zararlı, virüslü veya kötü amaçlı kod yazmak ve çalıştırmak"}</li>
-                            <li>{t("terms_prohibited_2") || "Platformu siber saldırı amacıyla kullanmak"}</li>
-                            <li>{t("terms_prohibited_3") || "Başkalarının verilerine yetkisiz erişim sağlamaya çalışmak"}</li>
-                            <li>{t("terms_prohibited_4") || "Yasadışı içerik oluşturmak veya paylaşmak"}</li>
-                            <li>{t("terms_prohibited_5") || "Spam veya toplu mesaj göndermek"}</li>
-                            <li>{t("terms_prohibited_6") || "Telif hakkı ihlali yapmak"}</li>
-                        </ul>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            5. {t("terms_security_title") || "Güvenlik ve Hanogt Bot"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("terms_security_text") || "Platform, Hanogt Security Bot tarafından 7/24 izlenmektedir. Zararlı kod aktivitesi tespit edildiğinde, ilgili hesap herhangi bir uyarı yapılmaksızın kalıcı olarak engellenebilir. Bu karar kesindir ve itiraz edilemez."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            6. {t("terms_ip_title") || "Fikri Mülkiyet"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("terms_ip_text") || "Kullanıcıların oluşturduğu projeler ve kodlar kendilerine aittir. Hanogt Codev markası, logosu ve platform tasarımı üzerindeki tüm haklar şirkete aittir ve izinsiz kullanılamaz."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            7. {t("terms_liability_title") || "Sorumluluk Sınırı"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("terms_liability_text") || "Hanogt Codev, platformun kesintisiz veya hatasız çalışacağını garanti etmez. Kullanıcıların platformu kullanımından doğan doğrudan veya dolaylı zararlardan sorumlu tutulamaz."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            8. {t("terms_termination_title") || "Fesih"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("terms_termination_text") || "Hanogt Codev, bu şartların ihlali halinde kullanıcı hesabını askıya alabilir veya kalıcı olarak kapatabilir. Kullanıcılar da istedikleri zaman hesaplarını silebilir."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            9. {t("terms_law_title") || "Uygulanacak Hukuk"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("terms_law_text") || "Bu Kullanım Şartları, Türkiye Cumhuriyeti yasalarına tabi olup, uyuşmazlıklarda Türkiye Cumhuriyeti mahkemeleri yetkilidir."}
-                        </p>
-                    </section>
-
-                    <div className="mt-12 p-6 bg-zinc-100 dark:bg-zinc-900 rounded-xl text-center border border-zinc-200 dark:border-zinc-800">
-                        <p className="text-zinc-500 dark:text-zinc-400">
-                            {t("terms_updated") || "Son güncelleme tarihi:"} <strong className="text-zinc-900 dark:text-white">{t("update_date") || "17 Ocak 2026"}</strong>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Back to Home */}
-                <div className="mt-12 text-center">
-                    <Link
-                        href="/"
-                        className="inline-block px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg"
-                    >
-                        {t("back_to_home") || "Ana Sayfaya Dön"}
-                    </Link>
-                </div>
-            </main>
-
-            {/* Footer */}
-            <footer className="py-8 border-t border-zinc-200 dark:border-zinc-800 mt-12">
-                <div className="max-w-4xl mx-auto px-6 text-center text-zinc-500">
-                    <p>© 2026 Hanogt Codev. {t("all_rights_reserved") || "Tüm hakları saklıdır."}</p>
-                </div>
-            </footer>
-        </div>
-    );
+    return <LegalPage eyebrow="Hizmet koşulları" title="Kullanım Şartları" summary="Hesap, içerik, güvenlik, üçüncü taraf hizmetleri, yaptırım ve uyuşmazlık kurallarını açık ve dengeli biçimde belirler." sections={sections} notice="Bu metin genel bir taslaktır; işletme kimliği, satış modeli ve hedef kullanıcı kitlesi netleştiğinde Türkiye’de yetkili bir hukukçu tarafından üretim öncesinde doğrulanmalıdır." />;
 }

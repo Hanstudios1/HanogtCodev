@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import OptimizedImage from "@/components/OptimizedImage";
+
+import { useCallback, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus, Users, Clock, Ban, Search, Check, X, MessageCircle, UserX, Hash } from "lucide-react";
+import { ArrowLeft, UserPlus, Users, Clock, Ban, Search, Check, X, MessageCircle, UserX, Hash, Phone } from "lucide-react";
 import Header from "@/components/Header";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
-import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import ProfileModal from "@/components/ProfileModal";
 import type { UserProfile } from "@/components/ProfileModal";
+import { useVoiceCall } from "@/components/VoiceCallProvider";
 
 type FriendRequest = {
     id: string;
@@ -30,6 +33,7 @@ type Friend = {
     nickname: string;
     nicknameTag: string;
     isOnline: boolean;
+    lastSeenAt?: string;
     dndMode?: boolean;
     customStatus?: string;
     statusEmoji?: string;
@@ -52,6 +56,7 @@ export default function FriendsPage() {
     const { data: session } = useSession();
     const router = useRouter();
     const { t } = useI18n();
+    const { startCall } = useVoiceCall();
 
     const [activeTab, setActiveTab] = useState<Tab>("all");
     const [friends, setFriends] = useState<Friend[]>([]);
@@ -65,15 +70,7 @@ export default function FriendsPage() {
     const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        if (!session?.user) {
-            router.push("/login");
-            return;
-        }
-        loadFriendsData();
-    }, [session]);
-
-    const loadFriendsData = async () => {
+    const loadFriendsData = useCallback(async () => {
         if (!session?.user?.email) return;
         try {
             // Load friends list
@@ -86,7 +83,7 @@ export default function FriendsPage() {
                 // Load friend profiles
                 const friendProfiles: Friend[] = [];
                 for (const email of friendEmails) {
-                    const userDoc = await getDoc(doc(db, "users", email));
+                    const userDoc = await getDoc(doc(db, "public_profiles", email));
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         friendProfiles.push({
@@ -95,7 +92,8 @@ export default function FriendsPage() {
                             avatarUrl: userData.avatarUrl || "",
                             nickname: userData.nickname || "",
                             nicknameTag: userData.nicknameTag || "0000",
-                            isOnline: userData.isOnline || false,
+                            isOnline: Boolean(userData.isOnline && userData.lastSeenAt && Date.now() - new Date(userData.lastSeenAt).getTime() < 100_000),
+                            lastSeenAt: userData.lastSeenAt,
                             dndMode: userData.dndMode || false,
                             customStatus: userData.customStatus,
                             statusEmoji: userData.statusEmoji,
@@ -144,12 +142,30 @@ export default function FriendsPage() {
         } catch (error) {
             console.error("Error loading friends data:", error);
         }
-    };
+    }, [session?.user?.email]);
 
     const showMessage = (text: string, type: "success" | "error" = "success") => {
         setMessage(text);
         setMessageType(type);
         setTimeout(() => setMessage(""), 4000);
+    };
+
+    useEffect(() => {
+        if (!session?.user) {
+            router.push("/login");
+            return;
+        }
+        void loadFriendsData();
+    }, [loadFriendsData, router, session?.user]);
+
+    const runFriendAction = async (action: string, payload: Record<string, string>) => {
+        const response = await fetch("/api/friends", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action, ...payload }),
+        });
+        const result = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(result.error || "İşlem tamamlanamadı.");
     };
 
     const handleSendRequest = async () => {
@@ -168,7 +184,7 @@ export default function FriendsPage() {
         try {
             // Find user by nickname#tag
             const usersQuery = query(
-                collection(db, "users"),
+                collection(db, "public_profiles"),
                 where("nickname", "==", nickname),
                 where("nicknameTag", "==", tag)
             );
@@ -240,26 +256,7 @@ export default function FriendsPage() {
     const handleAcceptRequest = async (request: FriendRequest) => {
         if (!session?.user?.email) return;
         try {
-            // Add each other as friends
-            const myDoc = await getDoc(doc(db, "users", session.user.email));
-            const myFriends: string[] = myDoc.data()?.friends || [];
-
-            const theirDoc = await getDoc(doc(db, "users", request.fromEmail));
-            const theirFriends: string[] = theirDoc.data()?.friends || [];
-
-            await setDoc(doc(db, "users", session.user.email), {
-                friends: [...new Set([...myFriends, request.fromEmail])]
-            }, { merge: true });
-
-            await setDoc(doc(db, "users", request.fromEmail), {
-                friends: [...new Set([...theirFriends, session.user.email])]
-            }, { merge: true });
-
-            // Update request status
-            await setDoc(doc(db, "friendRequests", request.id), {
-                status: "accepted"
-            }, { merge: true });
-
+            await runFriendAction("accept", { requestId: request.id });
             showMessage(t("request_accepted") || "Arkadaşlık isteği kabul edildi!");
             loadFriendsData();
         } catch (error) {
@@ -270,10 +267,7 @@ export default function FriendsPage() {
 
     const handleRejectRequest = async (request: FriendRequest) => {
         try {
-            await setDoc(doc(db, "friendRequests", request.id), {
-                status: "rejected"
-            }, { merge: true });
-
+            await runFriendAction("reject", { requestId: request.id });
             showMessage(t("request_rejected") || "Arkadaşlık isteği reddedildi.");
             loadFriendsData();
         } catch (error) {
@@ -284,15 +278,7 @@ export default function FriendsPage() {
     const handleRemoveFriend = async (friendEmail: string) => {
         if (!session?.user?.email) return;
         try {
-            const myDoc = await getDoc(doc(db, "users", session.user.email));
-            const myFriends: string[] = (myDoc.data()?.friends || []).filter((e: string) => e !== friendEmail);
-
-            const theirDoc = await getDoc(doc(db, "users", friendEmail));
-            const theirFriends: string[] = (theirDoc.data()?.friends || []).filter((e: string) => e !== session.user?.email);
-
-            await setDoc(doc(db, "users", session.user.email), { friends: myFriends }, { merge: true });
-            await setDoc(doc(db, "users", friendEmail), { friends: theirFriends }, { merge: true });
-
+            await runFriendAction("remove", { targetEmail: friendEmail });
             showMessage(t("friend_removed") || "Arkadaş silindi.");
             loadFriendsData();
         } catch (error) {
@@ -303,12 +289,9 @@ export default function FriendsPage() {
     const handleBlockUser = async (email: string) => {
         if (!session?.user?.email) return;
         try {
-            const newBlocked = [...new Set([...blockedUsers, email])];
-            await setDoc(doc(db, "users", session.user.email), { blockedUsers: newBlocked }, { merge: true });
-            // Also remove from friends
-            await handleRemoveFriend(email);
-            setBlockedUsers(newBlocked);
+            await runFriendAction("block", { targetEmail: email });
             showMessage(t("user_blocked") || "Kullanıcı engellendi.");
+            await loadFriendsData();
         } catch (error) {
             console.error("Error blocking user:", error);
         }
@@ -317,10 +300,9 @@ export default function FriendsPage() {
     const handleUnblockUser = async (email: string) => {
         if (!session?.user?.email) return;
         try {
-            const newBlocked = blockedUsers.filter(e => e !== email);
-            await setDoc(doc(db, "users", session.user.email), { blockedUsers: newBlocked }, { merge: true });
-            setBlockedUsers(newBlocked);
+            await runFriendAction("unblock", { targetEmail: email });
             showMessage(t("user_unblocked") || "Kullanıcı engeli kaldırıldı.");
+            await loadFriendsData();
         } catch (error) {
             console.error("Error unblocking user:", error);
         }
@@ -347,7 +329,7 @@ export default function FriendsPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white">
             <Header />
 
-            <main className="pt-24 px-6 max-w-2xl mx-auto pb-12">
+            <main className="pt-24 px-4 sm:px-6 max-w-5xl mx-auto pb-12">
                 <button
                     onClick={() => router.back()}
                     className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white mb-6 transition-colors"
@@ -356,8 +338,30 @@ export default function FriendsPage() {
                     {t("back") || "Geri"}
                 </button>
 
-                <h1 className="text-3xl font-bold mb-2">{t("friends") || "Arkadaşlar"}</h1>
-                <p className="text-zinc-500 mb-6">{t("friends_desc") || "Arkadaşlarınızı yönetin ve yeni arkadaşlar ekleyin"}</p>
+                <section className="mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-7">
+                    <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                        <div>
+                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-500">Hanogt Social</p>
+                            <h1 className="text-3xl font-bold mb-2">{t("friends") || "Arkadaşlar"}</h1>
+                            <p className="max-w-xl text-zinc-500">{t("friends_desc") || "Arkadaşlarınızı yönetin, mesajlaşın ve güvenli sesli aramalar başlatın."}</p>
+                        </div>
+                        <div className="min-w-48 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/60">
+                            <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                                <span>{t("online") || "Çevrimiçi"}</span>
+                                <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-green-600 dark:text-green-400">{onlineFriends.length}</span>
+                            </div>
+                            <div className="flex min-h-11 -space-x-2">
+                                {onlineFriends.slice(0, 6).map((friend) => (
+                                    <button key={friend.email} onClick={() => setSelectedProfile(friend as UserProfile)} className="relative h-11 w-11 overflow-visible rounded-full border-2 border-white bg-gradient-to-br from-blue-500 to-violet-600 shadow-sm dark:border-zinc-950" title={friend.username}>
+                                        {friend.avatarUrl ? <OptimizedImage src={friend.avatarUrl} alt={friend.username} className="h-full w-full rounded-full object-cover" referrerPolicy="no-referrer" /> : <span className="flex h-full w-full items-center justify-center rounded-full text-sm font-bold text-white">{friend.username.charAt(0).toUpperCase()}</span>}
+                                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-zinc-950" />
+                                    </button>
+                                ))}
+                                {onlineFriends.length === 0 && <p className="self-center text-sm text-zinc-400">{t("no_online_friends") || "Şu anda çevrimiçi kimse yok."}</p>}
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 {/* Message */}
                 {message && (
@@ -429,7 +433,7 @@ export default function FriendsPage() {
                                             {t("online") || "Çevrimiçi"} — {onlineFriends.length}
                                         </p>
                                         {onlineFriends.map(friend => (
-                                            <FriendCard key={friend.email} friend={friend} onProfile={setSelectedProfile} onRemove={handleRemoveFriend} onBlock={handleBlockUser} onMessage={() => router.push(`/messages/${encodeURIComponent(friend.email)}`)} t={t} />
+                                            <FriendCard key={friend.email} friend={friend} onProfile={setSelectedProfile} onRemove={handleRemoveFriend} onBlock={handleBlockUser} onMessage={() => router.push(`/messages/${encodeURIComponent(friend.email)}`)} onCall={() => void startCall(friend)} t={t} />
                                         ))}
                                     </>
                                 )}
@@ -441,7 +445,7 @@ export default function FriendsPage() {
                                             {t("offline") || "Çevrimdışı"} — {offlineFriends.length}
                                         </p>
                                         {offlineFriends.map(friend => (
-                                            <FriendCard key={friend.email} friend={friend} onProfile={setSelectedProfile} onRemove={handleRemoveFriend} onBlock={handleBlockUser} onMessage={() => router.push(`/messages/${encodeURIComponent(friend.email)}`)} t={t} />
+                                            <FriendCard key={friend.email} friend={friend} onProfile={setSelectedProfile} onRemove={handleRemoveFriend} onBlock={handleBlockUser} onMessage={() => router.push(`/messages/${encodeURIComponent(friend.email)}`)} onCall={() => void startCall(friend)} t={t} />
                                         ))}
                                     </>
                                 )}
@@ -461,7 +465,7 @@ export default function FriendsPage() {
                             pendingRequests.map(req => (
                                 <div key={req.id} className="flex items-center gap-3 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
                                     {req.fromAvatar ? (
-                                        <img src={req.fromAvatar} alt="" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
+                                        <OptimizedImage src={req.fromAvatar} alt="" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
                                     ) : (
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
                                             {req.fromUsername?.charAt(0) || "?"}
@@ -609,24 +613,25 @@ export default function FriendsPage() {
 }
 
 // Friend Card Component
-function FriendCard({ friend, onProfile, onRemove, onBlock, onMessage, t }: {
+function FriendCard({ friend, onProfile, onRemove, onBlock, onMessage, onCall, t }: {
     friend: Friend;
     onProfile: (p: UserProfile) => void;
     onRemove: (email: string) => void;
     onBlock: (email: string) => void;
     onMessage: () => void;
+    onCall: () => void;
     t: (key: string) => string;
 }) {
     const [showMenu, setShowMenu] = useState(false);
 
     return (
-        <div className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors group">
+        <div className="flex items-center gap-3 p-3.5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-sm transition-all group">
             {/* Avatar + Online Status */}
             <button onClick={() => onProfile(friend as UserProfile)} className="relative flex-shrink-0">
                 {friend.avatarUrl ? (
-                    <img src={friend.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
+                    <OptimizedImage src={friend.avatarUrl} alt={friend.username} className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
                         {friend.username?.charAt(0) || "?"}
                     </div>
                 )}
@@ -658,13 +663,20 @@ function FriendCard({ friend, onProfile, onRemove, onBlock, onMessage, t }: {
             </button>
 
             {/* Actions */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <button
                     onClick={onMessage}
                     className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     title={t("send_message") || "Mesaj Gönder"}
                 >
                     <MessageCircle className="w-4 h-4 text-zinc-500" />
+                </button>
+                <button
+                    onClick={onCall}
+                    className="p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-950/40 transition-colors"
+                    title={t("start_voice_call") || "Sesli Arama Başlat"}
+                >
+                    <Phone className="w-4 h-4 text-green-500" />
                 </button>
                 <div className="relative">
                     <button

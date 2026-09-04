@@ -19,14 +19,14 @@ const FEATURES = [
         titleKey: "feature_instant_run",
         descKey: "feature_instant_run_desc",
         titleFallback: "Anında Çalıştırma",
-        descFallback: "Kodunuzu tek tıkla çalıştırın. Piston API ile güçlendirilmiş hızlı ve güvenli kod yürütme.",
+        descFallback: "Kodunuzu tek tıkla, yapılandırılmış izole yürütücüde çalıştırın.",
     },
     {
         icon: Shield,
         titleKey: "feature_secure",
         descKey: "feature_secure_desc",
         titleFallback: "Güvenli & Gizli",
-        descFallback: "Verileriniz sadece sizin sunucularımızda. Hiçbir veri üçüncü taraflarla paylaşılmaz.",
+        descFallback: "Erişim; hesap doğrulaması, sunucu kontrolleri ve veri katmanı kurallarıyla sınırlandırılır. Hizmet sağlayıcıları gizlilik metninde açıklanır.",
     },
     {
         icon: Globe,
@@ -46,8 +46,8 @@ const FEATURES = [
         icon: Rocket,
         titleKey: "feature_free",
         descKey: "feature_free_desc",
-        titleFallback: "%100 Ücretsiz",
-        descFallback: "Hiçbir gizli ücret yok. Sınırsız proje, reklamsız deneyim. Tamamen ücretsiz.",
+        titleFallback: "Ücretsiz Erişim",
+        descFallback: "Temel özellikler şu anda ücretsiz sunulur; güvenlik, kapasite ve adil kullanım sınırları uygulanabilir.",
     },
 ];
 

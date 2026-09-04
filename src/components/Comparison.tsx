@@ -1,19 +1,20 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
 
 export default function Comparison() {
-    const { t } = useI18n();
+    const { t, language } = useI18n();
 
+    const varies = language === "TR" ? "Sağlayıcıya göre" : "Varies by provider";
+    const included = language === "TR" ? "Dahil" : "Included";
     const COMPARISONS = [
-        { feature: t("f_free"), hanogt: true, replit: t("val_limited") },
-        { feature: t("f_no_ads"), hanogt: true, replit: false },
-        { feature: t("f_offline"), hanogt: true, replit: false },
-        { feature: t("f_setup"), hanogt: true, replit: true },
-        { feature: t("f_unlimited"), hanogt: true, replit: false },
-        { feature: t("f_ai"), hanogt: t("val_free"), replit: "Paid" },
+        { feature: t("f_free"), hanogt: included, alternative: varies },
+        { feature: t("f_no_ads"), hanogt: included, alternative: varies },
+        { feature: t("f_setup"), hanogt: included, alternative: varies },
+        { feature: t("f_unlimited"), hanogt: included, alternative: varies },
+        { feature: t("f_ai"), hanogt: language === "TR" ? "İsteğe bağlı" : "Optional", alternative: varies },
     ];
 
     return (
@@ -27,7 +28,7 @@ export default function Comparison() {
             <div className="grid grid-cols-3 bg-zinc-50 dark:bg-zinc-950 p-4 border-b border-zinc-200 dark:border-zinc-800">
                 <div className="col-span-1 font-bold text-zinc-500 dark:text-zinc-400 flex items-center">{t("comp_features")}</div>
                 <div className="col-span-1 font-bold text-center text-blue-600 dark:text-blue-400 text-lg">Hanogt Codev</div>
-                <div className="col-span-1 font-bold text-center text-zinc-500 dark:text-zinc-400">{t("comp_others")}</div>
+                <div className="col-span-1 font-bold text-center text-zinc-500 dark:text-zinc-400">{language === "TR" ? "Diğer bulut editörleri" : "Other cloud editors"}</div>
             </div>
 
             {COMPARISONS.map((item, idx) => (
@@ -42,21 +43,14 @@ export default function Comparison() {
                     <div className="col-span-1 font-medium text-zinc-700 dark:text-zinc-300 flex items-center">{item.feature}</div>
 
                     <div className="col-span-1 flex justify-center items-center">
-                        {item.hanogt === true ? (
-                            <Check className="w-6 h-6 text-green-500" />
-                        ) : (
-                            <span className="font-bold text-green-500">{item.hanogt}</span>
-                        )}
+                        <span className="inline-flex items-center gap-1.5 text-center text-sm font-semibold text-green-600 dark:text-green-400">
+                            <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            {item.hanogt}
+                        </span>
                     </div>
 
                     <div className="col-span-1 flex justify-center items-center">
-                        {item.replit === true ? (
-                            <Check className="w-5 h-5 text-zinc-400" />
-                        ) : item.replit === false ? (
-                            <X className="w-5 h-5 text-red-400" />
-                        ) : (
-                            <span className="text-zinc-500">{item.replit}</span>
-                        )}
+                        <span className="text-center text-sm text-zinc-500">{item.alternative}</span>
                     </div>
                 </motion.div>
             ))}

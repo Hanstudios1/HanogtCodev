@@ -1,4 +1,6 @@
-import { Terminal, Archive, Trash2, StopCircle } from "lucide-react";
+"use client";
+
+import { Info, ListTree, StopCircle, Terminal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 
@@ -10,108 +12,31 @@ interface ConsoleProps {
 
 export default function Console({ output, isRunning, onClear }: ConsoleProps) {
     const { t } = useI18n();
-    const [activeTab, setActiveTab] = useState<"output" | "terminal">("output");
-    const [terminalInput, setTerminalInput] = useState("");
-    const [terminalLogs, setTerminalLogs] = useState<string[]>([
-        "Microsoft Windows [Version 10.0.19045.3693]",
-        "(c) Microsoft Corporation. All rights reserved.",
-        "",
-        "C:\\Users\\Hanogt\\Projects> "
-    ]);
-
-    const handleTerminalCommand = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") {
-            const cmd = terminalInput.trim();
-            const newLogs = [...terminalLogs];
-
-            // Remove previous prompt line to append it with command
-            newLogs[newLogs.length - 1] = `C:\\Users\\Hanogt\\Projects> ${cmd}`;
-
-            if (cmd === "cls" || cmd === "clear") {
-                setTerminalLogs(["C:\\Users\\Hanogt\\Projects> "]);
-            } else if (cmd.startsWith("npm install") || cmd.startsWith("pip install")) {
-                newLogs.push(`> Installing packages...`);
-                newLogs.push(`+ ${cmd.split(' ')[2] || 'package'}@latest`);
-                newLogs.push(`added 1 package in 2s`);
-                newLogs.push("");
-                newLogs.push("C:\\Users\\Hanogt\\Projects> ");
-                setTerminalLogs(newLogs);
-            } else if (cmd === "help") {
-                newLogs.push("Available commands: npm, pip, node, cls, help");
-                newLogs.push("");
-                newLogs.push("C:\\Users\\Hanogt\\Projects> ");
-                setTerminalLogs(newLogs);
-            } else {
-                newLogs.push(`'${cmd.split(' ')[0]}' is not recognized as an internal or external command.`);
-                newLogs.push("");
-                newLogs.push("C:\\Users\\Hanogt\\Projects> ");
-                setTerminalLogs(newLogs);
-            }
-
-            setTerminalInput("");
-        }
-    };
+    const [activeTab, setActiveTab] = useState<"output" | "details">("output");
 
     return (
-        <div className="flex flex-col h-full bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden font-mono text-sm">
-            {/* Tabs */}
+        <div className="flex h-full flex-col overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 font-mono text-sm">
             <div className="flex items-center border-b border-zinc-700 bg-zinc-800">
-                <button
-                    onClick={() => setActiveTab("output")}
-                    className={`px-4 py-2 border-b-2 transition-colors ${activeTab === 'output' ? 'border-blue-500 text-white bg-zinc-700/50' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-                >
-                    {t("output")}
+                <button onClick={() => setActiveTab("output")} className={`flex items-center gap-2 border-b-2 px-4 py-2 transition-colors ${activeTab === "output" ? "border-blue-500 bg-zinc-700/50 text-white" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}>
+                    <Terminal className="h-4 w-4" />{t("output") || "Çıktı"}
                 </button>
-                <button
-                    onClick={() => setActiveTab("terminal")}
-                    className={`px-4 py-2 border-b-2 transition-colors ${activeTab === 'terminal' ? 'border-blue-500 text-white bg-zinc-700/50' : 'border-transparent text-zinc-400 hover:text-zinc-200'}`}
-                >
-                    {t("terminal")}
+                <button onClick={() => setActiveTab("details")} className={`flex items-center gap-2 border-b-2 px-4 py-2 transition-colors ${activeTab === "details" ? "border-blue-500 bg-zinc-700/50 text-white" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}>
+                    <ListTree className="h-4 w-4" />Çalıştırma bilgisi
                 </button>
                 <div className="flex-1" />
-                <button
-                    onClick={onClear}
-                    className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 transition-colors mr-2"
-                    title={t("delete")}
-                >
-                    <Trash2 className="w-4 h-4" />
-                </button>
+                <button onClick={onClear} className="mr-2 p-2 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300" title={t("delete") || "Temizle"}><Trash2 className="h-4 w-4" /></button>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-auto p-4 bg-zinc-950 text-zinc-300">
+            <div className="min-h-0 flex-1 overflow-auto bg-zinc-950 p-4 text-zinc-300">
                 {activeTab === "output" ? (
-                    isRunning ? (
-                        <div className="flex items-center gap-2 text-yellow-500 animate-pulse">
-                            <StopCircle className="w-4 h-4" />
-                            Running script...
-                        </div>
-                    ) : output.length === 0 ? (
-                        <span className="text-zinc-600 italic">No output to display. Run your code to see results.</span>
-                    ) : (
-                        output.map((line, i) => (
-                            <div key={i} className={`${line.startsWith("Error") ? "text-red-400" : line.startsWith(">") ? "text-blue-400" : "text-zinc-300"} pb-1 border-b border-zinc-900/50`}>
-                                {line}
-                            </div>
-                        ))
-                    )
+                    isRunning ? <div className="flex items-center gap-2 text-yellow-500"><StopCircle className="h-4 w-4 animate-pulse" />İzole çalıştırıcı yanıtı bekleniyor…</div>
+                        : output.length === 0 ? <span className="text-zinc-600 italic">Kodunuzu çalıştırdığınızda gerçek sunucu çıktısı burada görüntülenir.</span>
+                            : output.map((line, index) => <div key={`${index}-${line.slice(0, 20)}`} className={`whitespace-pre-wrap pb-1 ${line.startsWith("Error") ? "text-red-400" : line.startsWith(">") ? "text-blue-400" : "text-zinc-300"}`}>{line || " "}</div>)
                 ) : (
-                    <div className="flex flex-col h-full cursor-text" onClick={() => document.getElementById('term-input')?.focus()}>
-                        {terminalLogs.map((log, i) => (
-                            <div key={i} className="whitespace-pre-wrap">{log}</div>
-                        ))}
-                        <div className="flex items-center">
-                            <span className="mr-0">{terminalLogs[terminalLogs.length - 1].endsWith("> ") ? "" : ""}</span>
-                            <input
-                                id="term-input"
-                                type="text"
-                                value={terminalInput}
-                                onChange={(e) => setTerminalInput(e.target.value)}
-                                onKeyDown={handleTerminalCommand}
-                                className="flex-1 bg-transparent border-none outline-none text-zinc-300 focus:ring-0 p-0 m-0"
-                                autoFocus
-                            />
-                        </div>
+                    <div className="space-y-4 font-sans text-sm leading-6 text-zinc-400">
+                        <div className="flex gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4"><Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-400" /><p>Bu alan bir işletim sistemi terminali taklidi yapmaz. Çıktılar yalnızca yapılandırılmış, izole <code className="rounded bg-zinc-800 px-1 text-zinc-200">CODE_RUNNER_URL</code> hizmetinden gelir.</p></div>
+                        <p>Çok dosyalı projede desteklenen diller tek düğmeyle bağımsız işler olarak yürütülür ve sonuçları aynı çıktı alanında birleştirilir. Diller arası süreç iletişimi, paket kurulumu ve kalıcı disk varsayılan olarak kapalıdır.</p>
+                        <p>HTML/CSS önizlemesi tarayıcı içindeki ayrı önizleme sekmesinde çalışır. Gizli anahtar veya kişisel veri içeren kodları çalıştırıcıya göndermeyin.</p>
                     </div>
                 )}
             </div>

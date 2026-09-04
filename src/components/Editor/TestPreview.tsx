@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCw, Maximize2, Minimize2, Smartphone, Monitor } from "lucide-react";
 
 interface TestPreviewProps {
@@ -15,7 +15,7 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
     const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
     const [key, setKey] = useState(0);
 
-    const generatePreviewHTML = () => {
+    const generatePreviewHTML = useCallback(() => {
         const lang = language.toLowerCase();
 
         if (lang === "html") {
@@ -97,7 +97,7 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
         }
 
         return "";
-    };
+    }, [code, cssCode, language]);
 
     const refreshPreview = () => {
         setKey(k => k + 1);
@@ -107,9 +107,11 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
         if (iframeRef.current && code) {
             const html = generatePreviewHTML();
             const blob = new Blob([html], { type: "text/html" });
-            iframeRef.current.src = URL.createObjectURL(blob);
+            const url = URL.createObjectURL(blob);
+            iframeRef.current.src = url;
+            return () => URL.revokeObjectURL(url);
         }
-    }, [code, cssCode, key, language]);
+    }, [code, key, generatePreviewHTML]);
 
     return (
         <div className={`h-full flex flex-col ${isFullscreen ? "fixed inset-0 z-50 bg-zinc-900" : ""}`}>

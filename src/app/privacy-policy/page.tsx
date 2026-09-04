@@ -1,186 +1,23 @@
-"use client";
+import LegalPage, { LegalSection } from "@/components/LegalPage";
 
-import { useI18n } from "@/lib/i18n";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+const sections: LegalSection[] = [
+    { id: "scope", title: "Kapsam ve veri sorumlusu", paragraphs: ["Bu politika, Hanogt Codev web, masaüstü ve mobil uygulamalarında kişisel verilerin işlenmesini açıklar. Veri sorumlusu, hizmeti işleten HanStudios/Hanogt Codev işletmesidir. Ticari unvan, MERSİS/VKN, açık adres ve KEP bilgileri kesinleştirilmeden ücretli veya ticari sürüm yayımlanmamalı; kesin bilgiler yayımlandığında bu bölüm gecikmeksizin güncellenmelidir.", "Hesap içi başvurular Geri Bildirim ve SSS sayfasındaki “Gizlilik/KVKK” kategorisinden alınır. Bu kanal, hesapla ilişkilendirilmiş ve daha önce bildirilen e-posta üzerinden kimlik doğrulaması yapılarak işletilir."] },
+    { id: "data", title: "İşlenen veri kategorileri", items: ["Kimlik ve iletişim: e-posta adresi, kullanıcı adı, profil adı ve isteğe bağlı profil alanları.", "Hesap güvenliği: parola değil, tek yönlü scrypt parola karması; oturum, başarısız deneme ve güvenlik olayı bilgileri.", "İçerik: kod proje dosyaları; oyun projesi sahne, nesne ve bileşen verileri; C#/C++ script kaynakları; mesajlar, sesli mesaj dosyaları, geri bildirim ve yorumlar.", "Sosyal kullanım: arkadaşlık ilişkileri, engellenen kullanıcılar, çevrimiçi durum ve son görülme tercihi.", "Teknik kayıtlar: IP türevi hız-sınırı anahtarı, tarayıcı/cihaz bilgisi, zaman damgaları ve hata kayıtları.", "WebRTC: geçici SDP/ICE bağlantı verisi. Arama sesi kaydedilmez; ses, katılımcılar arasında gerçek zamanlı taşınır."] },
+    { id: "purposes", title: "Amaçlar ve hukuki sebepler", items: ["Hesap açma, oturum ve temel hizmet: sözleşmenin kurulması/ifası (KVKK m.5/2-c).", "Güvenlik, kötüye kullanımın önlenmesi ve denetim izi: veri sorumlusunun meşru menfaati (m.5/2-f) ve hukuki yükümlülükler (m.5/2-ç).", "Destek, geri bildirim ve iletişim: talebin yerine getirilmesi; gerektiğinde açık rıza.", "İsteğe bağlı profil görünürlüğü ve sosyal özellikler: kullanıcının ayarı ve hizmet sözleşmesi.", "Ticari elektronik ileti gönderilirse 6563 sayılı Kanun uyarınca ayrı onay alınır; hizmet mesajları pazarlama onayı sayılmaz."] },
+    { id: "sharing", title: "Alıcılar ve yurt dışı aktarım", paragraphs: ["“Hiçbir veri üçüncü tarafla paylaşılmaz” şeklinde bir taahhüt verilmez. Hizmetin çalışması için aşağıdaki sağlayıcılara, amaçla sınırlı veri aktarılabilir. Yurt dışı aktarım şartları KVKK m.9 ve yürürlükteki ikincil düzenlemelere göre değerlendirilir; gerekli uygun güvence veya açık rıza mekanizması kurulmadan ilgili özellik etkinleştirilmez."], items: ["Google/Firebase: kimlik, Firestore veritabanı ve dosya saklama altyapısı.", "Google OAuth: kullanıcı seçerse Google ile giriş.", "Groq veya yapılandırılan AI sağlayıcısı: yalnızca kullanıcının AI aracına gönderdiği istem ve kod parçaları.", "Yapılandırılan izole kod çalıştırıcı: yalnızca çalıştırılması istenen kaynak kod; e-posta ve profil verisi gönderilmez.", "TURN/STUN işletmecisi: WebRTC bağlantısı için IP ve ağ üst verisi; arama içeriği uygulama tarafından kaydedilmez.", "Yetkili kamu kurumları: bağlayıcı ve hukuka uygun talep bulunması hâlinde."] },
+    { id: "media", title: "Hanogt Media ve herkese açık içerikler", paragraphs: ["Hanogt Media’da yayımlanan proje başlığı, açıklama, etiketler, programlama dili, kaynak dosyaları, beğeni ve yorum sayıları internet kullanıcıları tarafından görülebilir ve proje dosyaları indirilebilir. Yayınlama, kullanıcının açık ve ayrı eylemiyle gerçekleşir; özel projeler kendiliğinden Media’ya aktarılmaz.", "Kullanıcı profil adını göstermeyi seçebilir veya anonim yayın yapabilir. E-posta adresi Media API yanıtlarında açıklanmaz. Bununla birlikte kaynak kodun içine yazılan ad, e-posta, erişim anahtarı veya diğer kişisel veriler otomatik olarak ayıklanamayabilir; yayımlamadan önce içeriği temizlemek yayıncının sorumluluğundadır."], items: ["Beğeni kayıtlarında kötüye kullanımı önlemek için hesap kimliği sunucu tarafında tutulur; diğer kullanıcılara açıklanmaz.", "Yorumlarda görünen profil adı ve isteğe bağlı avatar yayımlanır; yorum yazarı hesabıyla ilişkilendirilir.", "Zararlı kod, telif, kişisel veri ve spam bildirimleri; inceleme, savunma ve uyuşmazlık kaydı amacıyla sınırlı süre saklanır.", "Bir yayın silindiğinde anlık görüntü dosyaları, beğeni, yorum, rapor ilişkileri ve bekleyen güvenlik katkı kaydı silme kapsamına alınır."] },
+    { id: "groups", title: "Gruplar ve ortak çalışma", paragraphs: ["Grup üyeleri grup adı, üye listesi, üyelerin e-posta/profil bilgileri, ortak dosyalar, değişikliği yapan üye, sohbet ve sesli mesajlara erişebilir. Bir kullanıcı yalnızca kendi arkadaşını gruba davet edebilir; davet yedi gün içinde hedef kullanıcı tarafından kabul edilmedikçe grup içeriğine erişim başlamaz.", "Ortak dosyalarda güncellemeler gerçek zamanlı senkronize edilir. Eş zamanlı düzenlemelerde son yazma baskın olabilir; bu nedenle kritik projelerde yerel yedek ve sürüm kontrolü kullanılmalıdır. WebRTC üye aramalarının sesi kaydedilmez; grup sohbetindeki sesli mesaj ise kullanıcı tarafından özellikle kaydedilip gönderilen ayrı bir dosyadır."] },
+    { id: "security-contribution", title: "Security Bot katkı programı ve açık rıza", paragraphs: ["‘Hanogt Security Botu geliştirmek için verilerinizi paylaşmak ister misiniz?’ tercihi varsayılan olarak kapalıdır. Tercihin açılması tek başına bütün projeleri aktarmaz; kullanıcı ayrıca yayımlama ekranında ilgili projeyi katkıya dahil eder. Katkı amacı, güvenlik imzalarının ve yanlış pozitiflerin insan denetimli değerlendirilmesidir. Ham kod üzerinde kontrolsüz veya kendi kendine otomatik model eğitimi yapılmaz.", "Rıza geri çekildiğinde bekleyen katkı uygunluk kayıtları silinir ve yeni katkı alınmaz. Bir veri daha önce anonimleştirilmiş bir istatistiğe dönüştürülmüşse veya hukukî yükümlülükle tutuluyorsa sonuçlar her durumda geriye döndürülemeyebilir; böyle bir üretim süreci etkinleştirilmeden önce ayrı veri yönetişimi, saklama süresi, anonimleştirme testi ve rıza metni yayımlanmalıdır. Rızanın verilmemesi temel editör, arkadaşlık veya Media görüntüleme hizmetini engellemez."], items: ["Amaç: güvenlik ön-elemesini iyileştirmek ve yanlış pozitifleri azaltmak.", "Kapsam: yalnızca kullanıcının ayrıca işaretlediği Media proje anlık görüntüsü.", "Hukuki sebep: KVKK m.5 koşulları kapsamında özgür iradeyle verilen, belirli ve bilgilendirilmiş açık rıza.", "Geri çekme: Media sayfasındaki tercih düğmesi ve KVKK başvuru kanalı."] },
+    { id: "local-storage", title: "Çerezler, yerel depolama ve oturum", paragraphs: ["Zorunlu oturum çerezleri kimlik doğrulama ve hesap güvenliği için kullanılır. Tema, dil, editör ayarı, kaydedilmemiş sekme kurtarma ve gizlilik bildirimi tercihi tarayıcının yerel depolamasında tutulabilir. Pazarlama/analitik çerezler varsayılan mimarinin parçası değildir; eklenirse zorunlu olmayan çerezler çalıştırılmadan önce ayrı tercih merkezi sunulur.", "Ortak veya güvenilmeyen cihazlarda oturum kapatılmalı ve yerel proje taslakları temizlenmelidir. Tarayıcı depolamasının silinmesi buluttaki hesap verilerini silmez; hesap ayarlarındaki silme veya başvuru yolu kullanılmalıdır."] },
+    { id: "retention", title: "Saklama ve silme", items: ["Hesap, kod projesi ve oyun projesi verileri hesap sürdükçe; oyun projesi silindiğinde sahne ve C#/C++ script alt kayıtlarıyla birlikte, yasal zorunluluk yoksa silme sürecine alınır.", "Sesli mesaj, gönderen tarafından silindiğinde ilişkili depolama nesnesi de silinir; kullanılmayan yerel ses parçaları yükleme sonrasında bellekte tutulmaz.", "Sesli aramalar kaydedilmez. Geçici sinyalleşme belgesi normal kapanışta ve sayfadan ayrılırken silinir; beklenmeyen kesintiler için belge iki dakika sonra süresi dolmuş olarak işaretlenir ve altyapının TTL sürecinde silinir.", "Hız sınırı kayıtları kısa süreli TTL ile; güvenlik olayları orantılı denetim süresi boyunca, ham kod yerine kod özeti ve bulgu kimlikleriyle tutulur.", "Yedeklerde silinen kayıtlar olağan yedek döngüsünde erişilemez hâle getirilir; kesin süre altyapı sözleşmesine göre envanterde yayımlanır."] },
+    { id: "security", title: "Güvenlik tedbirleri ve doğru beyan", paragraphs: ["Parolalar tek yönlü scrypt karmasıyla ayrı ve istemci erişimine kapalı koleksiyonda tutulur. Hassas uçlar oturum, aynı-kaynak kontrolü, şema/boyut doğrulaması ve dağıtık hız sınırı uygular. Firestore ve Storage kuralları en az ayrıcalık ilkesine göre tanımlanır.", "Hanogt Security Bot bir imza ve davranış ön-eleme katmanıdır; tek başına antivirüs, güvenli sandbox veya kesin kötü amaçlı yazılım kararı değildir. Kod çalıştırma güvenliği ayrıca izole yürütücü, kaynak kotası, ağ kısıtı ve düzenli bağımsız test gerektirir. Uygulama, yapılmamış denetimleri yapılmış gibi beyan etmez."] },
+    { id: "automated-decisions", title: "Otomatik analiz, moderasyon ve insan incelemesi", paragraphs: ["Kod güvenlik taraması yüksek riskli imzaları tespit ettiğinde çalıştırma veya herkese açık yayın geçici olarak engellenebilir. Bu sonuç, kişi hakkında hukukî veya benzeri önemli etki doğuran nihai bir profil kararı değildir. Kullanıcı yanlış pozitif olduğuna inanıyorsa güvenlik itirazı gönderebilir ve insan incelemesi talep edebilir.", "Hesap askıya alma veya kalıcı yaptırım salt istemci regex sonucuna bağlanmaz. Acil zarar riski dışında ölçülülük, olay bağlamı, tekrar durumu ve kullanıcının açıklaması değerlendirilir. İlgili kişi KVKK m.11 kapsamındaki otomatik analiz itiraz hakkını kullanabilir."] },
+    { id: "breach", title: "İhlal yönetimi ve bildirim", paragraphs: ["Kişisel veri ihlali şüphesinde erişim sınırlandırma, delil bütünlüğünü koruma, etki/kapsam analizi, hizmet sağlayıcı koordinasyonu ve giderim adımları uygulanır. İhlalin ilgili kişiler açısından risk doğurması hâlinde yürürlükteki Kurul kararları ve mevzuatta öngörülen usul ve süreler dikkate alınarak Kurula ve etkilenen kişilere bildirim yapılır.", "Güvenlik açığı bulan araştırmacılar, kişisel veriye erişmeden ve hizmeti aksatmadan Geri Bildirim sayfasındaki güvenlik kanalını kullanmalıdır. İyi niyetli bildirim ayrıca yayımlanacak sorumlu açıklama politikasına göre ele alınır."] },
+    { id: "rights", title: "KVKK m.11 kapsamındaki haklar", items: ["Kişisel verinizin işlenip işlenmediğini öğrenme ve işlenmişse bilgi isteme.", "İşleme amacını ve amaca uygun kullanılıp kullanılmadığını öğrenme.", "Yurt içinde veya yurt dışında aktarılan üçüncü kişileri bilme.", "Eksik veya yanlış işlenen verinin düzeltilmesini isteme.", "Şartları oluştuğunda silme/yok etme ve işlemin aktarılanlara bildirilmesini isteme.", "Otomatik sistemlerle analiz sonucu aleyhe sonuca itiraz etme.", "Kanuna aykırı işleme nedeniyle zararın giderilmesini talep etme."] },
+    { id: "applications", title: "Başvuru usulü", paragraphs: ["Başvuruda ad-soyad, imza (yazılı başvuruda), T.C. kimlik numarası veya yabancılar için kimlik bilgisi, tebligata esas adres, varsa e-posta/telefon ve talep konusu bulunmalıdır. Hesap içi kanaldan yapılan başvuruda hesap e-postasıyla ek doğrulama istenebilir. Başvurular kural olarak en geç 30 gün içinde ücretsiz sonuçlandırılır; işlemin ayrıca maliyet gerektirmesi hâlinde Kurul tarifesi uygulanabilir.", "Yanıtın yetersiz bulunması veya süresinde yanıt verilmemesi hâlinde, KVKK’da öngörülen sürelerde Kişisel Verileri Koruma Kuruluna şikâyet hakkı saklıdır."] },
+    { id: "changes", title: "Değişiklikler ve çocuklar", paragraphs: ["Esaslı değişiklikler yürürlüğe girmeden önce uygulama içinde duyurulur. Yalnızca sessizce metin değiştirmek yerine sürüm ve tarih kaydı tutulur.", "Hizmet 13 yaş altına yönelik tasarlanmamıştır. Çocuk kullanıcılar bakımından geçerli yaş, veli/vasi onayı ve açık rıza gereklilikleri hizmet sunulan ülkeye göre ayrıca değerlendirilir."] },
+];
 
 export default function PrivacyPolicyPage() {
-    const { t } = useI18n();
-
-    return (
-        <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white transition-colors">
-            {/* Header */}
-            <header className="py-6 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="max-w-4xl mx-auto px-6 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
-                        <span>{t("back_button") || "Geri"}</span>
-                    </Link>
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
-                        Hanogt Codev
-                    </Link>
-                    <div className="w-16"></div>
-                </div>
-            </header>
-
-            {/* Content */}
-            <main className="max-w-4xl mx-auto px-6 py-12">
-                <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">
-                    {t("pp_title") || "Gizlilik Politikası"}
-                </h1>
-
-                <div className="prose prose-zinc dark:prose-invert prose-lg max-w-none">
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            1. {t("pp_intro_title") || "Giriş"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("pp_intro_text") || "Hanogt Codev olarak kullanıcılarımızın gizliliğine son derece önem vermekteyiz. Bu Gizlilik Politikası, platformumuzu kullanırken kişisel verilerinizin nasıl toplandığını, kullanıldığını ve korunduğunu açıklamaktadır."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            2. {t("pp_data_title") || "Toplanan Veriler"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
-                            {t("pp_data_intro") || "Platformumuz aşağıdaki bilgileri toplamaktadır:"}
-                        </p>
-                        <ul className="list-disc list-inside space-y-2 ml-4 text-zinc-600 dark:text-zinc-300">
-                            <li>{t("pp_data_1") || "E-posta adresi (hesap oluşturma ve kimlik doğrulama amacıyla)"}</li>
-                            <li>{t("pp_data_2") || "Kullanıcı adı ve profil bilgileri"}</li>
-                            <li>{t("pp_data_3") || "Oluşturduğunuz projeler ve kod dosyaları"}</li>
-                            <li>{t("pp_data_4") || "Oturum bilgileri, tercihler ve platform kullanım verileri"}</li>
-                        </ul>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            3. {t("pp_usage_title") || "Verilerin Kullanımı"}
-                        </h2>
-                        <div className="bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-xl p-4 mb-4">
-                            <p className="text-green-700 dark:text-green-400 font-semibold text-lg">
-                                ✓ {t("pp_no_share") || "Kişisel verileriniz hiçbir koşulda üçüncü taraflarla paylaşılmaz veya satılmaz."}
-                            </p>
-                        </div>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
-                            {t("pp_usage_intro") || "Topladığımız veriler yalnızca aşağıdaki amaçlarla kullanılır:"}
-                        </p>
-                        <ul className="list-disc list-inside space-y-2 ml-4 text-zinc-600 dark:text-zinc-300">
-                            <li>{t("pp_usage_1") || "Hesabınızı oluşturmak ve yönetmek"}</li>
-                            <li>{t("pp_usage_2") || "Projelerinizi güvenli bir şekilde saklamak"}</li>
-                            <li>{t("pp_usage_3") || "Platform deneyiminizi kişiselleştirmek"}</li>
-                            <li>{t("pp_usage_4") || "Teknik destek sağlamak"}</li>
-                        </ul>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            4. {t("pp_security_title") || "Veri Güvenliği"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed mb-4">
-                            {t("pp_security_text") || "Tüm kullanıcı verileri güvenli sunucularımızda saklanmaktadır. Verileriniz endüstri standardı şifreleme yöntemleriyle korunmaktadır."}
-                        </p>
-                        <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-xl p-4">
-                            <p className="text-blue-700 dark:text-blue-400 font-medium">
-                                🛡️ {t("pp_hanogt_bot") || "Platform, Hanogt Security Bot tarafından 7/24 izlenmekte ve zararlı aktivitelere karşı korunmaktadır."}
-                            </p>
-                        </div>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            5. {t("pp_cookies_title") || "Çerezler ve Yerel Depolama"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("pp_cookies_text") || "Platform, oturum bilgilerinizi ve tercihlerinizi saklamak için tarayıcınızın yerel depolama özelliğini kullanmaktadır. Bu veriler yalnızca sizin cihazınızda saklanır ve üçüncü taraflarla paylaşılmaz."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-red-500 dark:text-red-400">
-                            6. {t("pp_prohibited_title") || "Yasaklanan Aktiviteler"}
-                        </h2>
-                        <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-xl p-4 mb-4">
-                            <p className="text-red-700 dark:text-red-400 font-semibold">
-                                ⚠️ {t("pp_prohibited_warning") || "Aşağıdaki aktiviteler kesinlikle yasaktır ve hesap kalıcı olarak kapatılır:"}
-                            </p>
-                        </div>
-                        <ul className="list-disc list-inside space-y-2 ml-4 text-zinc-600 dark:text-zinc-300">
-                            <li>{t("pp_prohibited_1") || "Zararlı, virüslü veya kötü amaçlı kod yazmak ve çalıştırmak"}</li>
-                            <li>{t("pp_prohibited_2") || "Platformu siber saldırı amacıyla kullanmak"}</li>
-                            <li>{t("pp_prohibited_3") || "Başkalarının verilerine yetkisiz erişim sağlamaya çalışmak"}</li>
-                            <li>{t("pp_prohibited_4") || "Yasalara aykırı içerik oluşturmak veya paylaşmak"}</li>
-                        </ul>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            7. {t("pp_delete_title") || "Hesap Silme"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("pp_delete_text") || "Hesabınızı istediğiniz zaman Hesap Ayarları sayfasından silebilirsiniz. Hesabınız silindiğinde, tüm kişisel verileriniz ve projeleriniz sunucularımızdan kalıcı olarak kaldırılır."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            8. {t("pp_changes_title") || "Politika Değişiklikleri"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("pp_changes_text") || "Bu Gizlilik Politikası zaman zaman güncellenebilir. Önemli değişiklikler yapıldığında kullanıcılarımız bilgilendirilecektir."}
-                        </p>
-                    </section>
-
-                    <section className="mb-8">
-                        <h2 className="text-2xl font-bold mb-4 text-blue-500 dark:text-blue-400">
-                            9. {t("pp_contact_title") || "İletişim"}
-                        </h2>
-                        <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                            {t("pp_contact_text") || "Gizlilik politikamız veya verilerinizle ilgili sorularınız için hesap ayarlarınız üzerinden veya iletişim kanallarımız aracılığıyla bize ulaşabilirsiniz."}
-                        </p>
-                    </section>
-
-                    <div className="mt-12 p-6 bg-zinc-100 dark:bg-zinc-900 rounded-xl text-center border border-zinc-200 dark:border-zinc-800">
-                        <p className="text-zinc-500 dark:text-zinc-400">
-                            {t("pp_updated") || "Son güncelleme tarihi:"} <strong className="text-zinc-900 dark:text-white">{t("update_date") || "17 Ocak 2026"}</strong>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Related Links */}
-                <div className="mt-8 flex justify-center gap-4 flex-wrap">
-                    <Link
-                        href="/terms-of-use"
-                        className="px-6 py-2 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded-lg text-sm transition-colors"
-                    >
-                        {t("terms_of_use") || "Kullanım Şartları"}
-                    </Link>
-                    <Link
-                        href="/disclosure"
-                        className="px-6 py-2 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded-lg text-sm transition-colors"
-                    >
-                        {t("disclosure_text") || "Aydınlatma Metni"}
-                    </Link>
-                </div>
-
-                {/* Back to Home */}
-                <div className="mt-8 text-center">
-                    <Link
-                        href="/"
-                        className="inline-block px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg"
-                    >
-                        {t("back_to_home") || "Ana Sayfaya Dön"}
-                    </Link>
-                </div>
-            </main>
-
-            {/* Footer */}
-            <footer className="py-8 border-t border-zinc-200 dark:border-zinc-800 mt-12">
-                <div className="max-w-4xl mx-auto px-6 text-center text-zinc-500">
-                    <p>© 2026 Hanogt Codev. {t("all_rights_reserved") || "Tüm hakları saklıdır."}</p>
-                </div>
-            </footer>
-        </div>
-    );
+    return <LegalPage eyebrow="Gizlilik ve veri koruma" title="Gizlilik Politikası" summary="Hangi veriyi neden işlediğimizi, kimlerle paylaşabildiğimizi ve kontrolün sizde olduğu noktaları açık, ölçülü ve doğrulanabilir biçimde anlatır." sections={sections} notice="Bu metin teknik uygulamayla uyumlu olacak şekilde hazırlanmıştır; şirket unvanı, açık adres, KEP ve VERBİS yükümlülüğü gerçek işletme bilgileriyle hukuk danışmanı tarafından üretim öncesinde doğrulanmalıdır." />;
 }

@@ -1,0 +1,298 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.app == "hanogt-codev";
+    }
+
+    function email() {
+      return request.auth.token.email;
+    }
+
+    function isSelf(id) {
+      return signedIn() && email() == id;
+    }
+
+    function chatParticipant(chatId) {
+      return signedIn()
+        && email() in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+    }
+
+    function callParticipant(callId) {
+      return signedIn()
+        && email() in get(/databases/$(database)/documents/calls/$(callId)).data.participants;
+    }
+
+    function groupMember(groupId) {
+      return signedIn()
+        && email() in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+    }
+
+    function groupManager(groupId) {
+      return groupMember(groupId)
+        && (
+          get(/databases/$(database)/documents/groups/$(groupId)).data.ownerEmail == email()
+          || email() in get(/databases/$(database)/documents/groups/$(groupId)).data.admins
+        );
+    }
+
+    match /credentials/{id} {
+      allow read, write: if false;
+    }
+
+    match /security_rate_limits/{id} {
+      allow read, write: if false;
+    }
+
+    match /security_events/{id} {
+      allow read, write: if false;
+    }
+
+    match /media_posts/{postId} {
+      allow read, write: if false;
+      match /files/{fileId} {
+        allow read, write: if false;
+      }
+    }
+
+    match /media_likes/{id} {
+      allow read, write: if false;
+    }
+
+    match /media_comments/{id} {
+      allow read, write: if false;
+    }
+
+    match /media_reports/{id} {
+      allow read, write: if false;
+    }
+
+    match /security_training_contributions/{id} {
+      allow read, write: if false;
+    }
+
+    // Game projects and native-language script sources are mediated by the
+    // authenticated API so scene/schema and ownership checks cannot be bypassed.
+    match /game_projects/{projectId} {
+      allow read, write: if false;
+      match /scripts/{scriptId} {
+        allow read, write: if false;
+      }
+    }
+
+    match /groups/{groupId} {
+      allow read: if signedIn() && email() in resource.data.members;
+      allow write: if false;
+
+      match /files/{fileId} {
+        allow read: if groupMember(groupId);
+        allow create, update: if groupMember(groupId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 120
+          && request.resource.data.lang is string
+          && request.resource.data.lang.size() <= 30
+          && request.resource.data.code is string
+          && request.resource.data.code.size() <= 500000
+          && request.resource.data.updatedBy == email()
+          && request.resource.data.keys().hasOnly(["name", "lang", "code", "order", "updatedBy", "updatedAt"]);
+        allow delete: if groupManager(groupId);
+      }
+
+      match /messages/{messageId} {
+        allow read: if groupMember(groupId);
+        allow create: if groupMember(groupId)
+          && request.resource.data.fromEmail == email()
+          && request.resource.data.type in ["text", "voice"]
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 4000
+          && request.resource.data.keys().hasOnly(["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt"]);
+        allow update: if false;
+        allow delete: if groupMember(groupId) && resource.data.fromEmail == email();
+      }
+    }
+
+    match /group_invites/{inviteId} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isSelf(userId);
+      allow create: if isSelf(userId)
+        && request.resource.data.email == email()
+        && !request.resource.data.keys().hasAny([
+          "password", "passwordHash", "role", "banned", "suspended",
+          "phoneVerified", "securityScore", "securityResearchConsent",
+          "securityResearchConsentAt", "securityResearchConsentVersion"
+        ]);
+      allow update: if isSelf(userId)
+        && request.resource.data.email == email()
+        && request.resource.data.diff(resource.data).affectedKeys().hasNone([
+          "password", "passwordHash", "role", "banned", "suspended",
+          "phoneVerified", "securityScore", "email", "securityResearchConsent",
+          "securityResearchConsentAt", "securityResearchConsentVersion"
+        ]);
+      allow delete: if false;
+    }
+
+    match /public_profiles/{userId} {
+      allow read: if signedIn();
+      allow create, update: if isSelf(userId)
+        && request.resource.data.email == email()
+        && request.resource.data.keys().hasOnly([
+          "email", "username", "avatarUrl", "nickname", "nicknameTag", "bio",
+          "bannerUrl", "accentColor", "favoriteLangs", "socialGithub",
+          "socialLinkedin", "socialTwitter", "socialWebsite", "customStatus",
+          "statusEmoji", "isOnline", "lastSeenAt", "dndMode", "publicProfile",
+          "publicProjects", "badges", "updatedAt"
+        ]);
+      allow delete: if isSelf(userId);
+    }
+
+    match /friendRequests/{requestId} {
+      allow read: if signedIn()
+        && (resource.data.fromEmail == email() || resource.data.toEmail == email());
+      allow create: if signedIn()
+        && request.resource.data.fromEmail == email()
+        && request.resource.data.toEmail != email()
+        && request.resource.data.status == "pending"
+        && request.resource.data.keys().hasOnly(["fromEmail", "toEmail", "status", "createdAt"]);
+      allow update, delete: if false;
+    }
+
+    match /chats/{chatId} {
+      allow read: if signedIn() && email() in resource.data.participants;
+      allow create: if signedIn()
+        && email() in request.resource.data.participants
+        && request.resource.data.participants.size() == 2
+        && (
+          (request.resource.data.participants[0] == email() && request.resource.data.participants[1] in get(/databases/$(database)/documents/users/$(email())).data.friends)
+          || (request.resource.data.participants[1] == email() && request.resource.data.participants[0] in get(/databases/$(database)/documents/users/$(email())).data.friends)
+        );
+      allow update: if chatParticipant(chatId)
+        && request.resource.data.participants == resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "lastMessage", "lastMessageAt", "typingUser", "updatedAt"
+        ])
+        && (!request.resource.data.keys().hasAny(["typingUser"])
+          || request.resource.data.typingUser == null
+          || request.resource.data.typingUser == email());
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if chatParticipant(chatId);
+        allow create: if chatParticipant(chatId)
+          && request.resource.data.fromEmail == email()
+          && request.resource.data.type in ["text", "sticker", "voice"]
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 4000;
+        allow update: if chatParticipant(chatId)
+          && request.resource.data.fromEmail == resource.data.fromEmail
+          && (
+            (
+              resource.data.fromEmail == email()
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                "text", "edited", "deleted", "voicePath", "voiceDuration"
+              ])
+              && request.resource.data.text is string
+              && request.resource.data.text.size() <= 4000
+            )
+            || (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read"])
+              && resource.data.fromEmail != email()
+              && request.resource.data.read == true
+            )
+          );
+        allow delete: if chatParticipant(chatId) && resource.data.fromEmail == email();
+      }
+    }
+
+    match /calls/{callId} {
+      allow read: if signedIn() && email() in resource.data.participants;
+      allow create: if signedIn()
+        && request.resource.data.caller == email()
+        && request.resource.data.callee != email()
+        && request.resource.data.participants == [request.resource.data.caller, request.resource.data.callee]
+        && request.resource.data.callee in get(/databases/$(database)/documents/users/$(email())).data.friends
+        && request.resource.data.status in ["preparing", "ringing"];
+      allow update: if callParticipant(callId)
+        && request.resource.data.participants == resource.data.participants
+        && request.resource.data.caller == resource.data.caller
+        && request.resource.data.callee == resource.data.callee
+        && request.resource.data.status in ["preparing", "ringing", "active", "declined", "ended"]
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "status", "offer", "answer", "answeredAt", "callerCandidates", "calleeCandidates"
+        ]);
+      allow delete: if callParticipant(callId);
+
+      match /{candidateCollection}/{candidateId} {
+        allow read, create, delete: if candidateCollection in ["callerCandidates", "calleeCandidates"]
+          && callParticipant(callId);
+        allow update: if false;
+      }
+    }
+
+    match /projects/{projectId} {
+      allow read: if signedIn() && (resource.data.email == email() || resource.data.visibility == "public");
+      allow create: if signedIn()
+        && request.resource.data.email == email()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120;
+      allow update, delete: if signedIn()
+        && resource.data.email == email()
+        && request.resource.data.email == email()
+        && request.resource.data.diff(resource.data).affectedKeys().hasNone(["email"]);
+
+      match /files/{fileId} {
+        allow read: if signedIn()
+          && (get(/databases/$(database)/documents/projects/$(projectId)).data.email == email()
+            || get(/databases/$(database)/documents/projects/$(projectId)).data.visibility == "public");
+        allow create, update: if signedIn()
+          && get(/databases/$(database)/documents/projects/$(projectId)).data.email == email()
+          && (!request.resource.data.keys().hasAny(["email", "owner", "role"]))
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 120
+          && request.resource.data.lang is string
+          && request.resource.data.lang.size() <= 30
+          && request.resource.data.code is string
+          && request.resource.data.code.size() <= 500000;
+        allow delete: if signedIn()
+          && get(/databases/$(database)/documents/projects/$(projectId)).data.email == email();
+      }
+    }
+
+    match /feedback/{feedbackId} {
+      allow read: if signedIn();
+      allow create, update, delete: if false;
+    }
+
+    match /notifications/{userId}/items/{itemId} {
+      allow read, update, delete: if isSelf(userId);
+      allow create: if false;
+    }
+
+    match /changelog_comments/{version}/comments/{commentId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.email == email()
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.keys().hasOnly(["text", "email", "username", "avatarUrl", "createdAt"]);
+      allow update: if signedIn()
+        && resource.data.email == email()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text"])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000;
+      allow delete: if signedIn() && resource.data.email == email();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

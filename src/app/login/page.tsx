@@ -1,13 +1,13 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Mail, ShieldAlert } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
-import { isUserBanned } from "@/lib/hanogtBot";
-import BannedModal from "@/components/BannedModal";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -16,8 +16,6 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [showBanModal, setShowBanModal] = useState(false);
-    const [banReason, setBanReason] = useState("");
 
     const handleCredentialsLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,15 +23,6 @@ export default function LoginPage() {
         setError("");
 
         try {
-            // Check if user is banned BEFORE attempting login
-            const banStatus = await isUserBanned(email);
-            if (banStatus.banned) {
-                setBanReason(banStatus.reason || "Zararlı kod aktivitesi");
-                setShowBanModal(true);
-                setLoading(false);
-                return;
-            }
-
             const result = await signIn("credentials", {
                 email,
                 password,
@@ -45,7 +34,7 @@ export default function LoginPage() {
             } else {
                 router.push("/dashboard");
             }
-        } catch (err) {
+        } catch {
             setError(t("login_error") || "Bir hata oluştu");
         } finally {
             setLoading(false);
@@ -83,7 +72,7 @@ export default function LoginPage() {
                     onClick={handleGoogleLogin}
                     className="w-full h-12 flex items-center justify-center gap-3 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-xl transition-all text-zinc-900 dark:text-white font-medium mb-4"
                 >
-                    <img src="/google-logo.png" alt="Google" className="w-5 h-5" />
+                    <OptimizedImage src="/google-logo.png" alt="Google" className="w-5 h-5" />
                     {t("login_google") || "Google ile Oturum Aç"}
                 </button>
 
@@ -149,12 +138,6 @@ export default function LoginPage() {
                 </p>
             </div>
 
-            {/* Ban Modal */}
-            <BannedModal
-                isOpen={showBanModal}
-                reason={banReason}
-                onClose={() => setShowBanModal(false)}
-            />
         </div>
     );
 }

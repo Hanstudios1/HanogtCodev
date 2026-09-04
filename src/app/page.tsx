@@ -20,6 +20,8 @@ export default function Home() {
   useEffect(() => {
     const bannerClosed = localStorage.getItem("hanogt_banner_closed");
     if (!bannerClosed) {
+      // One-time hydration of a dismissible client-only banner.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowBanner(true);
     }
   }, []);
@@ -45,7 +47,7 @@ export default function Home() {
 
       <Hero />
 
-      {/* Image Slider Comparison - Replit vs Hanogt */}
+      {/* Image slider comparison */}
       <ImageCarousel />
 
       {/* Comparison Table Section */}

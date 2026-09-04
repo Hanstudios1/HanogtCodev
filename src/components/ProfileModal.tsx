@@ -1,8 +1,10 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import { useState, useEffect } from "react";
 import { useI18n } from "@/lib/i18n";
-import { X, Github, Linkedin, Twitter, Globe2, Download, Heart, Code, Award, ExternalLink } from "lucide-react";
+import { X, Github, Linkedin, Twitter, Globe2, Download, Heart, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
@@ -177,7 +179,7 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                 <div className="px-6 -mt-10 relative">
                     <div className="relative inline-block">
                         {user.avatarUrl ? (
-                            <img
+                            <OptimizedImage
                                 src={user.avatarUrl}
                                 alt={user.username}
                                 className="w-20 h-20 rounded-full object-cover border-4 border-white dark:border-zinc-900"

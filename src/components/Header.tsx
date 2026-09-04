@@ -1,9 +1,11 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { User, Settings, LogOut, ChevronDown, Info, ShieldCheck } from "lucide-react";
+import { Settings, LogOut, ChevronDown, Info, LayoutDashboard, Radio, UsersRound, Gamepad2 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import LangToggle from "./LangToggle";
 import ChangelogModal from "./ChangelogModal";
@@ -37,15 +39,20 @@ export default function Header() {
     useEffect(() => {
         if (!session?.user?.email) return;
         const email = session.user.email;
-        // Mark user as online
-        setDoc(doc(db, "users", email), { isOnline: true }, { merge: true });
-        // When tab/browser closes, mark offline
+        const markOnline = () => {
+            const presence = { isOnline: true, lastSeenAt: new Date().toISOString() };
+            setDoc(doc(db, "users", email), presence, { merge: true });
+            setDoc(doc(db, "public_profiles", email), { ...presence, email }, { merge: true });
+        };
+        markOnline();
+        const heartbeat = window.setInterval(markOnline, 45_000);
         const handleBeforeUnload = () => {
-            navigator.sendBeacon?.("/api/auth/signup"); // fallback ping
             setDoc(doc(db, "users", email), { isOnline: false }, { merge: true });
+            setDoc(doc(db, "public_profiles", email), { isOnline: false, lastSeenAt: new Date().toISOString(), email }, { merge: true });
         };
         window.addEventListener("beforeunload", handleBeforeUnload);
         return () => {
+            window.clearInterval(heartbeat);
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
     }, [session?.user?.email]);
@@ -89,12 +96,12 @@ export default function Header() {
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-3 group">
-                        <img
+                        <OptimizedImage
                             src="/logo-light.png"
                             alt="Hanogt Logo"
                             className={`object-contain block dark:hidden transition-all duration-300 ${isScrolled ? "w-10 h-10" : "w-14 h-14"}`}
                         />
-                        <img
+                        <OptimizedImage
                             src="/logo-dark.png"
                             alt="Hanogt Logo"
                             className={`object-contain hidden dark:block transition-all duration-300 ${isScrolled ? "w-10 h-10" : "w-14 h-14"}`}
@@ -104,6 +111,15 @@ export default function Header() {
                             Hanogt Codev
                         </h1>
                     </Link>
+
+                    {session?.user && (
+                        <nav className="hidden items-center gap-1 lg:flex" aria-label="Ana navigasyon">
+                            <Link href="/dashboard" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"><LayoutDashboard className="h-4 w-4" />Panel</Link>
+                            <Link href="/game-engine" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"><Gamepad2 className="h-4 w-4" />Oyun Motoru</Link>
+                            <Link href="/media" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"><Radio className="h-4 w-4" />Media</Link>
+                            <Link href="/groups" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"><UsersRound className="h-4 w-4" />Gruplar</Link>
+                        </nav>
+                    )}
 
                     {/* Right Side - Controls */}
                     <div className="flex items-center gap-2 md:gap-3">
@@ -122,7 +138,7 @@ export default function Header() {
                             className={`p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all relative overflow-hidden border-2 ${showSecurityBot ? 'border-green-500 ring-2 ring-green-500/30' : 'border-transparent hover:border-green-500/50'}`}
                             title="Hanogt Security Bot"
                         >
-                            <img src="/hanogt-bot-logo.png" alt="Security Bot" className="w-6 h-6 rounded-full object-cover" />
+                            <OptimizedImage src="/hanogt-bot-logo.png" alt="Security Bot" className="w-6 h-6 rounded-full object-cover" />
                             <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green-500 border border-white dark:border-zinc-950" />
                         </button>
                         <LangToggle />
@@ -137,7 +153,7 @@ export default function Header() {
                                 >
                                     <div className="relative">
                                         {displayAvatar ? (
-                                            <img
+                                            <OptimizedImage
                                                 src={displayAvatar}
                                                 alt="Profile"
                                                 className={`rounded-full object-cover border-2 border-zinc-200 dark:border-zinc-700 transition-all duration-300 ${isScrolled ? "w-7 h-7" : "w-8 h-8"}`}
@@ -168,6 +184,38 @@ export default function Header() {
 
                                         {/* Menu Items */}
                                         <div className="p-2">
+                                            <Link
+                                                href="/dashboard"
+                                                onClick={() => setShowProfileMenu(false)}
+                                                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300"
+                                            >
+                                                <LayoutDashboard className="w-5 h-5" />
+                                                Panel
+                                            </Link>
+                                            <Link
+                                                href="/game-engine"
+                                                onClick={() => setShowProfileMenu(false)}
+                                                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300 lg:hidden"
+                                            >
+                                                <Gamepad2 className="w-5 h-5" />
+                                                Oyun Motoru
+                                            </Link>
+                                            <Link
+                                                href="/media"
+                                                onClick={() => setShowProfileMenu(false)}
+                                                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300 lg:hidden"
+                                            >
+                                                <Radio className="w-5 h-5" />
+                                                Hanogt Media
+                                            </Link>
+                                            <Link
+                                                href="/groups"
+                                                onClick={() => setShowProfileMenu(false)}
+                                                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300 lg:hidden"
+                                            >
+                                                <UsersRound className="w-5 h-5" />
+                                                Gruplar
+                                            </Link>
                                             <Link
                                                 href="/account-settings"
                                                 onClick={() => setShowProfileMenu(false)}

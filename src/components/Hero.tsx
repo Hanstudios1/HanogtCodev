@@ -1,5 +1,7 @@
 "use client";
 
+import OptimizedImage from "@/components/OptimizedImage";
+
 import Link from "next/link";
 import { Github, Download, Code2, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -31,21 +33,20 @@ export default function Hero() {
     const [detectedPlatform, setDetectedPlatform] = useState<Platform>("windows");
 
     useEffect(() => {
+        // One-time client platform detection; the SSR default remains deterministic.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDetectedPlatform(detectPlatform());
     }, []);
 
     const handleDownload = (platform: Platform) => {
         const releaseBase = "https://github.com/Hanstudios1/HanogtCodev/releases/latest/download";
-
-        if (platform === "windows") {
-            window.location.href = `${releaseBase}/Hanogt.Codev.Setup.1.0.0.exe`;
-        } else if (platform === "linux") {
-            window.location.href = `${releaseBase}/Hanogt.Codev-1.0.0.AppImage`;
-        } else if (platform === "macos") {
-            window.location.href = `${releaseBase}/Hanogt.Codev-1.0.0-arm64.dmg`;
-        } else if (platform === "android") {
-            window.location.href = "/Hanogt-Codev.apk";
-        }
+        const downloads: Record<Platform, string> = {
+            windows: `${releaseBase}/Hanogt.Codev.Setup.1.0.0.exe`,
+            linux: `${releaseBase}/Hanogt.Codev-1.0.0.AppImage`,
+            macos: `${releaseBase}/Hanogt.Codev-1.0.0-arm64.dmg`,
+            android: `${releaseBase}/Hanogt-Codev.apk`,
+        };
+        window.open(downloads[platform], "_self", "noopener,noreferrer");
         setShowDropdown(false);
     };
 
@@ -58,12 +59,12 @@ export default function Hero() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-500/20 blur-[100px] rounded-full -z-10 dark:bg-purple-900/20" />
 
             {/* Watermark Logo */}
-            <img
+            <OptimizedImage
                 src="/logo-light.png"
                 alt="Watermark"
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] opacity-5 pointer-events-none dark:hidden"
             />
-            <img
+            <OptimizedImage
                 src="/logo-dark.png"
                 alt="Watermark"
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] opacity-5 pointer-events-none hidden dark:block"
@@ -124,7 +125,7 @@ export default function Hero() {
                                         className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-left ${platform.id === detectedPlatform ? "bg-blue-50 dark:bg-blue-900/30" : ""
                                             }`}
                                     >
-                                        <img src={platform.logo} alt={platform.name} className="w-6 h-6 object-contain" />
+                                        <OptimizedImage src={platform.logo} alt={platform.name} className="w-6 h-6 object-contain" />
                                         <div>
                                             <span className="font-medium text-zinc-900 dark:text-white">{platform.name}</span>
                                             {platform.id === detectedPlatform && (
