@@ -4,6 +4,7 @@ import { Box, Flame, Gamepad2, Heart, LoaderCircle, Play, Plus, Search, Sparkles
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/Header";
+import SiteFooter from "@/components/SiteFooter";
 import { PROJECT_TEMPLATES } from "@/lib/game-engine/templates";
 
 export interface ArcadeGameSummary {
@@ -189,6 +190,7 @@ export default function ArcadeGallery() {
                     {loading ? <p className="sr-only"><LoaderCircle className="animate-spin" />Yükleniyor</p> : null}
                 </section>
             </main>
+            <SiteFooter />
         </div>
     );
 }

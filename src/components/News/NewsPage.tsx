@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Header from "@/components/Header";
+import SiteFooter from "@/components/SiteFooter";
 import { useI18n } from "@/lib/i18n";
 import { NEWS_CATEGORIES, type NewsCategory } from "@/lib/news/sources";
 import AiRankings from "./AiRankings";
@@ -663,6 +664,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                     </aside>
                 </div>
             </main>
+            <SiteFooter />
 
             <CommentsDrawer item={active} locale={locale} onClose={closeComments} onCountChange={onCountChange} />
 

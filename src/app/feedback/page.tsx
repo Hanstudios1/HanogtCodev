@@ -5,11 +5,13 @@ import OptimizedImage from "@/components/OptimizedImage";
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ArrowLeft, MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle, Search, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
+import { MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle, Search, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, query, orderBy, getDoc } from "firebase/firestore";
 import ProfileModal from "@/components/ProfileModal";
+import Header from "@/components/Header";
+import SiteFooter from "@/components/SiteFooter";
 import type { UserProfile } from "@/components/ProfileModal";
 
 interface FeedbackItem {
@@ -262,23 +264,11 @@ export default function FeedbackPage() {
     const filteredFaqs = FAQS.filter((faq) => `${faq.category} ${faq.question} ${faq.answer}`.toLocaleLowerCase("tr-TR").includes(faqQuery.toLocaleLowerCase("tr-TR")));
 
     return (
-        <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white transition-colors">
-            {/* Header */}
-            <header className="py-6 border-b border-zinc-200 dark:border-zinc-800">
-                <div className="max-w-4xl mx-auto px-6 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
-                        <span>{t("back_button") || "Geri"}</span>
-                    </Link>
-                    <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
-                        Hanogt Codev
-                    </Link>
-                    <div className="w-16"></div>
-                </div>
-            </header>
+        <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white transition-colors">
+            <Header />
 
             {/* Content */}
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+            <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 pb-12 pt-24">
                 <section className="mb-10 overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-950 p-7 text-white shadow-xl dark:border-zinc-800 sm:p-10">
                     <div className="flex items-center gap-2 text-sm font-semibold text-blue-300"><Sparkles className="h-4 w-4" /> Yardım merkezi</div>
                     <h1 className="mt-3 text-3xl md:text-5xl font-bold">{t("feedback_title") || "Geri Bildirim & SSS"}</h1>
@@ -673,12 +663,7 @@ export default function FeedbackPage() {
                 </div>
             </main>
 
-            {/* Footer */}
-            <footer className="py-8 border-t border-zinc-200 dark:border-zinc-800 mt-12">
-                <div className="max-w-4xl mx-auto px-6 text-center text-zinc-500">
-                    <p>© 2026 Hanogt Codev. {t("all_rights_reserved") || "Tüm hakları saklıdır."}</p>
-                </div>
-            </footer>
+            <SiteFooter />
 
             {/* Profile Modal */}
             {selectedProfile && (
