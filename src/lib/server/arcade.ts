@@ -54,9 +54,14 @@ export function arcadeProject(record: ArcadeRecord, id: string): GameProjectDocu
     return project;
 }
 
-export function likeDocumentId(gameId: string, email: string) {
+/** Salted, non-reversible id of a user for like records (the e-mail itself is never stored). */
+export function likerHash(email: string) {
     const salt = process.env.RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET || "hanogt";
-    return `${gameId}__${createHash("sha256").update(`${salt}:${email}`).digest("hex").slice(0, 32)}`;
+    return createHash("sha256").update(`${salt}:${email}`).digest("hex").slice(0, 32);
+}
+
+export function likeDocumentId(gameId: string, email: string) {
+    return `${gameId}__${likerHash(email)}`;
 }
 
 export function assertGameId(value: unknown) {

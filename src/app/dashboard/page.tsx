@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, FileCode, Clock, MoreVertical, Download, Trash2, FolderOpen, Pencil, Gamepad2, Code2, Box, Boxes, Loader2, AlertTriangle, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
-import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
+import PrivacyPolicyModal, { legalNoticePending, legalNoticeUpdated } from "@/components/PrivacyPolicyModal";
 import DeleteProjectModal from "@/components/DeleteProjectModal";
 import { useSession } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
@@ -52,6 +52,7 @@ export default function DashboardPage() {
     const [projects, setProjects] = useState<DashboardProject[]>([]);
     const [gameProjects, setGameProjects] = useState<GameProjectSummary[]>([]);
     const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+    const [privacyUpdated, setPrivacyUpdated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isGameLoading, setIsGameLoading] = useState(true);
     const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -66,11 +67,13 @@ export default function DashboardPage() {
     const { t } = useI18n();
 
     useEffect(() => {
-        // Check if privacy policy was accepted
-        const privacyAccepted = localStorage.getItem("hanogt_privacy_accepted");
-        if (!privacyAccepted && session?.user) {
+        // Show the legal notice until the current version has been acknowledged in this browser.
+        if (!session?.user || !legalNoticePending()) return;
+        const timer = window.setTimeout(() => {
+            setPrivacyUpdated(legalNoticeUpdated());
             setShowPrivacyModal(true);
-        }
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [session]);
 
     // Online status is now managed by Header component (always mounted)
@@ -268,7 +271,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white transition-colors">
             {/* Privacy Policy Modal */}
             {showPrivacyModal && (
-                <PrivacyPolicyModal onAccept={() => setShowPrivacyModal(false)} />
+                <PrivacyPolicyModal updated={privacyUpdated} onAccept={() => setShowPrivacyModal(false)} />
             )}
 
             <Header />

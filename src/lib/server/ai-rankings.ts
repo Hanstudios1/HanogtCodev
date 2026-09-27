@@ -246,11 +246,16 @@ function expected(a: number, b: number) {
     return 1 / (1 + 10 ** ((b - a) / 400));
 }
 
+/** Salted pseudonym stored with arena votes instead of the e-mail. */
+export function voterHash(email: string) {
+    const salt = process.env.RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET || "hanogt";
+    return createHash("sha256").update(`${salt}:${email}`).digest("hex").slice(0, 24);
+}
+
 export async function recordArenaVote(email: string, category: ArenaCategory, a: ArenaModelId, b: ArenaModelId, result: "a" | "b" | "tie") {
     const day = new Date().toISOString().slice(0, 10);
     const pair = [a, b].sort().join(":");
-    const salt = process.env.RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET || "hanogt";
-    const voter = createHash("sha256").update(`${salt}:${email}`).digest("hex").slice(0, 24);
+    const voter = voterHash(email);
     const voteId = createHash("sha256").update(`${voter}:${category}:${pair}:${day}`).digest("hex").slice(0, 40);
 
     for (let attempt = 0; attempt < 4; attempt += 1) {

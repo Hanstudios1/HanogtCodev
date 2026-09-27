@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { nowIso } from "@/lib/game-engine/ids";
-import { assertGameId, likeDocumentId, type ArcadeRecord } from "@/lib/server/arcade";
+import { assertGameId, likeDocumentId, likerHash, type ArcadeRecord } from "@/lib/server/arcade";
 import { getActiveSession } from "@/lib/server/active-session";
 import { commitServerMutations, getServerDocument } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             ]);
         } else {
             await commitServerMutations([
-                { type: "create", path: likePath, data: { gameId, createdAt: nowIso() } },
+                { type: "create", path: likePath, data: { gameId, liker: likerHash(active.email), createdAt: nowIso() } },
                 { type: "increment", path: `arcade_games/${gameId}`, fields: { likes: 1 } },
             ]);
         }
