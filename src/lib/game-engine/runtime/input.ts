@@ -1,0 +1,323 @@
+/**
+ * Input state for play mode (keyboard, mouse, touch and on-screen buttons).
+ * Key names follow Unity's KeyCode names ("Space", "A", "LeftArrow"…).
+ */
+
+const CODE_TO_KEY: Record<string, string> = {
+    Space: "Space", Enter: "Return", NumpadEnter: "KeypadEnter", Escape: "Escape", Backspace: "Backspace", Tab: "Tab", Delete: "Delete",
+    ArrowUp: "UpArrow", ArrowDown: "DownArrow", ArrowLeft: "LeftArrow", ArrowRight: "RightArrow",
+    ShiftLeft: "LeftShift", ShiftRight: "RightShift", ControlLeft: "LeftControl", ControlRight: "RightControl", AltLeft: "LeftAlt", AltRight: "RightAlt",
+    CapsLock: "CapsLock", Insert: "Insert", Home: "Home", End: "End", PageUp: "PageUp", PageDown: "PageDown",
+    Minus: "Minus", Equal: "Equals", Comma: "Comma", Period: "Period", Slash: "Slash", Semicolon: "Semicolon", Quote: "Quote",
+    BracketLeft: "LeftBracket", BracketRight: "RightBracket", Backslash: "Backslash", Backquote: "BackQuote",
+    NumpadAdd: "KeypadPlus", NumpadSubtract: "KeypadMinus", NumpadMultiply: "KeypadMultiply", NumpadDivide: "KeypadDivide", NumpadDecimal: "KeypadPeriod",
+};
+
+const NAME_ALIASES: Record<string, string> = {
+    space: "Space", enter: "Return", return: "Return", escape: "Escape", esc: "Escape", tab: "Tab", backspace: "Backspace",
+    up: "UpArrow", down: "DownArrow", left: "LeftArrow", right: "RightArrow",
+    "left shift": "LeftShift", "right shift": "RightShift", shift: "LeftShift", "left ctrl": "LeftControl", "right ctrl": "RightControl", ctrl: "LeftControl",
+    "left alt": "LeftAlt", "right alt": "RightAlt", alt: "LeftAlt",
+};
+
+export function keyFromEvent(event: KeyboardEvent): string | null {
+    const code = event.code;
+    if (CODE_TO_KEY[code]) return CODE_TO_KEY[code];
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^Digit\d$/.test(code)) return `Alpha${code.slice(5)}`;
+    if (/^Numpad\d$/.test(code)) return `Keypad${code.slice(6)}`;
+    if (/^F\d{1,2}$/.test(code)) return code;
+    return null;
+}
+
+/** Accepts KeyCode names ("Space"), Unity input names ("space", "a") or chars. */
+export function normalizeKeyName(value: unknown): string {
+    const text = String(value ?? "").trim();
+    if (!text) return "None";
+    if (/^[a-z]$/i.test(text)) return text.toUpperCase();
+    if (/^\d$/.test(text)) return `Alpha${text}`;
+    const alias = NAME_ALIASES[text.toLowerCase()];
+    if (alias) return alias;
+    return text;
+}
+
+interface AxisState {
+    value: number;
+}
+
+export class InputManager {
+    private readonly held = new Set<string>();
+    private readonly pressedFrame = new Set<string>();
+    private readonly releasedFrame = new Set<string>();
+    private readonly pendingPressed = new Set<string>();
+    private readonly pendingReleased = new Set<string>();
+    private readonly mouseHeld = new Set<number>();
+    private readonly mouseDownFrame = new Set<number>();
+    private readonly mouseUpFrame = new Set<number>();
+    private readonly pendingMouseDown = new Set<number>();
+    private readonly pendingMouseUp = new Set<number>();
+    private readonly virtualHeld = new Set<string>();
+    private readonly axes = new Map<string, AxisState>();
+    private cleanup: Array<() => void> = [];
+    /** Mouse position in pixels, origin bottom-left (Unity convention). */
+    mouseX = 0;
+    mouseY = 0;
+    mouseDeltaX = 0;
+    mouseDeltaY = 0;
+    private pendingDeltaX = 0;
+    private pendingDeltaY = 0;
+    scrollDelta = 0;
+    private pendingScroll = 0;
+    touchCount = 0;
+    inputString = "";
+    private pendingString = "";
+    enabled = true;
+    private element: HTMLElement | null = null;
+
+    attach(element: HTMLElement, keyboardTarget: Window | HTMLElement = window) {
+        this.detach();
+        this.element = element;
+        const isEditable = (target: EventTarget | null) => {
+            const node = target as HTMLElement | null;
+            return Boolean(node && (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.isContentEditable));
+        };
+        const onKeyDown = (event: Event) => {
+            const keyboardEvent = event as KeyboardEvent;
+            if (!this.enabled || isEditable(keyboardEvent.target)) return;
+            const key = keyFromEvent(keyboardEvent);
+            if (!key) return;
+            if (["Space", "UpArrow", "DownArrow", "LeftArrow", "RightArrow", "Tab"].includes(key)) keyboardEvent.preventDefault();
+            if (!this.held.has(key)) this.pendingPressed.add(key);
+            this.held.add(key);
+            if (keyboardEvent.key.length === 1) this.pendingString += keyboardEvent.key;
+        };
+        const onKeyUp = (event: Event) => {
+            const key = keyFromEvent(event as KeyboardEvent);
+            if (!key) return;
+            this.held.delete(key);
+            this.pendingReleased.add(key);
+        };
+        const onBlur = () => {
+            for (const key of this.held) this.pendingReleased.add(key);
+            this.held.clear();
+            for (const button of this.mouseHeld) this.pendingMouseUp.add(button);
+            this.mouseHeld.clear();
+        };
+        const updatePointer = (clientX: number, clientY: number) => {
+            const rect = element.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = rect.height - (clientY - rect.top);
+            this.pendingDeltaX += x - this.mouseX;
+            this.pendingDeltaY += y - this.mouseY;
+            this.mouseX = x;
+            this.mouseY = y;
+        };
+        const onPointerDown = (event: PointerEvent) => {
+            if (!this.enabled) return;
+            updatePointer(event.clientX, event.clientY);
+            const button = event.pointerType === "touch" ? 0 : event.button;
+            this.mouseHeld.add(button);
+            this.pendingMouseDown.add(button);
+            if (event.pointerType === "touch") this.touchCount += 1;
+            element.focus?.({ preventScroll: true });
+        };
+        const onPointerUp = (event: PointerEvent) => {
+            const button = event.pointerType === "touch" ? 0 : event.button;
+            this.mouseHeld.delete(button);
+            this.pendingMouseUp.add(button);
+            if (event.pointerType === "touch") this.touchCount = Math.max(0, this.touchCount - 1);
+        };
+        const onPointerMove = (event: PointerEvent) => updatePointer(event.clientX, event.clientY);
+        const onWheel = (event: WheelEvent) => {
+            this.pendingScroll += -Math.sign(event.deltaY);
+        };
+        const onContextMenu = (event: Event) => event.preventDefault();
+        keyboardTarget.addEventListener("keydown", onKeyDown);
+        keyboardTarget.addEventListener("keyup", onKeyUp);
+        window.addEventListener("blur", onBlur);
+        element.addEventListener("pointerdown", onPointerDown);
+        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointermove", onPointerMove);
+        element.addEventListener("wheel", onWheel, { passive: true });
+        element.addEventListener("contextmenu", onContextMenu);
+        this.cleanup = [
+            () => keyboardTarget.removeEventListener("keydown", onKeyDown),
+            () => keyboardTarget.removeEventListener("keyup", onKeyUp),
+            () => window.removeEventListener("blur", onBlur),
+            () => element.removeEventListener("pointerdown", onPointerDown),
+            () => window.removeEventListener("pointerup", onPointerUp),
+            () => window.removeEventListener("pointermove", onPointerMove),
+            () => element.removeEventListener("wheel", onWheel),
+            () => element.removeEventListener("contextmenu", onContextMenu),
+        ];
+    }
+
+    detach() {
+        this.cleanup.forEach((dispose) => dispose());
+        this.cleanup = [];
+        this.element = null;
+        this.reset();
+    }
+
+    reset() {
+        this.held.clear();
+        this.pressedFrame.clear();
+        this.releasedFrame.clear();
+        this.pendingPressed.clear();
+        this.pendingReleased.clear();
+        this.mouseHeld.clear();
+        this.mouseDownFrame.clear();
+        this.mouseUpFrame.clear();
+        this.pendingMouseDown.clear();
+        this.pendingMouseUp.clear();
+        this.virtualHeld.clear();
+        this.axes.clear();
+        this.touchCount = 0;
+    }
+
+    /** On-screen touch buttons map onto regular keys. */
+    setVirtualKey(key: string, down: boolean) {
+        if (down) {
+            if (!this.held.has(key) && !this.virtualHeld.has(key)) this.pendingPressed.add(key);
+            this.virtualHeld.add(key);
+        } else {
+            this.virtualHeld.delete(key);
+            if (!this.held.has(key)) this.pendingReleased.add(key);
+        }
+    }
+
+    /** Called once at the start of every frame. */
+    beginFrame(deltaTime: number) {
+        this.pressedFrame.clear();
+        this.releasedFrame.clear();
+        for (const key of this.pendingPressed) this.pressedFrame.add(key);
+        for (const key of this.pendingReleased) this.releasedFrame.add(key);
+        this.pendingPressed.clear();
+        this.pendingReleased.clear();
+        this.mouseDownFrame.clear();
+        this.mouseUpFrame.clear();
+        for (const button of this.pendingMouseDown) this.mouseDownFrame.add(button);
+        for (const button of this.pendingMouseUp) this.mouseUpFrame.add(button);
+        this.pendingMouseDown.clear();
+        this.pendingMouseUp.clear();
+        this.mouseDeltaX = this.pendingDeltaX;
+        this.mouseDeltaY = this.pendingDeltaY;
+        this.pendingDeltaX = 0;
+        this.pendingDeltaY = 0;
+        this.scrollDelta = this.pendingScroll;
+        this.pendingScroll = 0;
+        this.inputString = this.pendingString;
+        this.pendingString = "";
+        // Smoothed axes (Unity: sensitivity 3, gravity 3, snap).
+        for (const name of ["Horizontal", "Vertical"]) {
+            const target = this.getAxisRaw(name);
+            const state = this.axes.get(name) ?? { value: 0 };
+            if (target !== 0 && Math.sign(target) !== Math.sign(state.value) && state.value !== 0) state.value = 0;
+            const speed = 3 * deltaTime;
+            if (state.value < target) state.value = Math.min(target, state.value + speed);
+            else if (state.value > target) state.value = Math.max(target, state.value - speed);
+            this.axes.set(name, state);
+        }
+    }
+
+    isHeld(key: string) {
+        return this.held.has(key) || this.virtualHeld.has(key);
+    }
+
+    getKey(value: unknown) {
+        const key = normalizeKeyName(value);
+        if (key.startsWith("Mouse")) return this.mouseHeld.has(Number(key.slice(5)));
+        return this.isHeld(key);
+    }
+
+    getKeyDown(value: unknown) {
+        const key = normalizeKeyName(value);
+        if (key.startsWith("Mouse")) return this.mouseDownFrame.has(Number(key.slice(5)));
+        return this.pressedFrame.has(key);
+    }
+
+    getKeyUp(value: unknown) {
+        const key = normalizeKeyName(value);
+        if (key.startsWith("Mouse")) return this.mouseUpFrame.has(Number(key.slice(5)));
+        return this.releasedFrame.has(key);
+    }
+
+    anyKey() {
+        return this.held.size > 0 || this.virtualHeld.size > 0 || this.mouseHeld.size > 0;
+    }
+
+    anyKeyDown() {
+        return this.pressedFrame.size > 0 || this.mouseDownFrame.size > 0;
+    }
+
+    getMouseButton(button: number) {
+        return this.mouseHeld.has(button);
+    }
+
+    getMouseButtonDown(button: number) {
+        return this.mouseDownFrame.has(button);
+    }
+
+    getMouseButtonUp(button: number) {
+        return this.mouseUpFrame.has(button);
+    }
+
+    getAxisRaw(name: string): number {
+        switch (name) {
+            case "Horizontal":
+                return (this.isHeld("D") || this.isHeld("RightArrow") ? 1 : 0) - (this.isHeld("A") || this.isHeld("LeftArrow") ? 1 : 0);
+            case "Vertical":
+                return (this.isHeld("W") || this.isHeld("UpArrow") ? 1 : 0) - (this.isHeld("S") || this.isHeld("DownArrow") ? 1 : 0);
+            case "Mouse X":
+                return this.mouseDeltaX * 0.1;
+            case "Mouse Y":
+                return this.mouseDeltaY * 0.1;
+            case "Mouse ScrollWheel":
+                return this.scrollDelta * 0.1;
+            case "Jump":
+                return this.isHeld("Space") ? 1 : 0;
+            case "Fire1":
+                return this.isHeld("LeftControl") || this.mouseHeld.has(0) ? 1 : 0;
+            default:
+                return 0;
+        }
+    }
+
+    getAxis(name: string): number {
+        const state = this.axes.get(name);
+        return state ? state.value : this.getAxisRaw(name);
+    }
+
+    private buttonKeys(name: string): { keys: string[]; mouse?: number } {
+        switch (name) {
+            case "Jump": return { keys: ["Space"] };
+            case "Fire1": return { keys: ["LeftControl"], mouse: 0 };
+            case "Fire2": return { keys: ["LeftAlt"], mouse: 1 };
+            case "Fire3": return { keys: ["LeftShift"], mouse: 2 };
+            case "Submit": return { keys: ["Return", "KeypadEnter", "Space"] };
+            case "Cancel": return { keys: ["Escape"] };
+            case "Horizontal": return { keys: ["A", "D", "LeftArrow", "RightArrow"] };
+            case "Vertical": return { keys: ["W", "S", "UpArrow", "DownArrow"] };
+            default: return { keys: [normalizeKeyName(name)] };
+        }
+    }
+
+    getButton(name: string) {
+        const { keys, mouse } = this.buttonKeys(name);
+        return keys.some((key) => this.isHeld(key)) || (mouse !== undefined && this.mouseHeld.has(mouse));
+    }
+
+    getButtonDown(name: string) {
+        const { keys, mouse } = this.buttonKeys(name);
+        return keys.some((key) => this.pressedFrame.has(key)) || (mouse !== undefined && this.mouseDownFrame.has(mouse));
+    }
+
+    getButtonUp(name: string) {
+        const { keys, mouse } = this.buttonKeys(name);
+        return keys.some((key) => this.releasedFrame.has(key)) || (mouse !== undefined && this.mouseUpFrame.has(mouse));
+    }
+
+    get attached() {
+        return this.element !== null;
+    }
+}

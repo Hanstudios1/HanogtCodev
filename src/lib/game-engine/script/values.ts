@@ -307,7 +307,8 @@ export interface HostObject {
     readonly hostType: string;
     get(name: string): VMValue;
     set(name: string, value: VMValue): void;
-    call(name: string, args: VMValue[], typeArgs: string[]): VMValue;
+    /** `refs[i]` is set when argument i was passed with `ref`/`out`. */
+    call(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue;
     /** False once the underlying engine object was destroyed (Unity "fake null"). */
     isAlive?(): boolean;
     /** Enables `foreach (Transform child in transform)`. */
@@ -338,7 +339,7 @@ export interface BehaviourBinding {
     gameObject: HostObject;
     getMember(name: string): VMValue | typeof NOT_FOUND;
     setMember(name: string, value: VMValue): boolean;
-    callMember(name: string, args: VMValue[], typeArgs: string[]): VMValue | typeof NOT_FOUND;
+    callMember(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue | typeof NOT_FOUND;
 }
 
 export const NOT_FOUND: unique symbol = Symbol("not-found");

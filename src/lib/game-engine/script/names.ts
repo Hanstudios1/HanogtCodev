@@ -9,7 +9,8 @@ export const BEHAVIOUR_MEMBERS = new Set([
     "GetComponent", "GetComponents", "GetComponentInChildren", "GetComponentInParent", "GetComponentsInChildren", "AddComponent", "TryGetComponent",
     "CompareTag", "Destroy", "DestroyImmediate", "Instantiate", "Invoke", "InvokeRepeating", "CancelInvoke", "IsInvoking",
     "StartCoroutine", "StopCoroutine", "StopAllCoroutines", "print", "SendMessage", "FindObjectOfType", "FindObjectsOfType",
-    "FindFirstObjectByType", "FindAnyObjectByType", "DontDestroyOnLoad",
+    "FindFirstObjectByType", "FindAnyObjectByType", "DontDestroyOnLoad", "GetInstanceID", "BroadcastMessage", "SendMessageUpwards",
+    "GetComponentsInParent", "useGUILayout", "FindObjectsByType",
 ]);
 
 /** Global static namespaces and functions (bare identifiers). */
@@ -19,7 +20,8 @@ export const GLOBAL_NAMES = new Set([
     "Color", "Color32", "Quaternion", "KeyCode", "GameObject", "Object", "Transform", "Physics", "Physics2D", "SceneManager",
     "Application", "Screen", "Camera", "Audio", "PlayerPrefs", "WaitForSeconds", "WaitForSecondsRealtime", "WaitForEndOfFrame",
     "WaitForFixedUpdate", "WaitUntil", "WaitWhile", "ForceMode", "ForceMode2D", "Space", "Rigidbody", "Rigidbody2D", "Collider",
-    "Collider2D", "UI", "HUD",
+    "Collider2D", "HUD", "PrimitiveType", "TouchPhase", "Resources", "Gizmos", "Cursor", "CursorLockMode", "LayerMask",
+    "RigidbodyType2D", "Ray", "AudioListener", "SendMessageOptions", "RuntimePlatform", "DestroyImmediate",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",

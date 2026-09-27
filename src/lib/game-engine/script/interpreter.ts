@@ -1553,8 +1553,8 @@ export class Interpreter {
                 return this.callFunction(name, values, callee, frame);
             }
             if (res?.kind === "behaviour") {
-                const { values } = this.evalArgs(expr.args, frame);
-                return this.callBehaviour(frame, name, this.derefArgs(values), typeArgs, callee);
+                const { values, refs } = this.evalArgs(expr.args, frame);
+                return this.callBehaviour(frame, name, this.derefArgs(values), typeArgs, callee, refs);
             }
             if (res?.kind === "global") {
                 const { values, refs } = this.evalArgs(expr.args, frame);
@@ -1597,11 +1597,11 @@ export class Interpreter {
         return this.callUserMethod(null, null, fn, args, frame);
     }
 
-    private callBehaviour(frame: Frame, name: string, args: VMValue[], typeArgs: string[], node: { line: number; col: number }): VMValue {
+    private callBehaviour(frame: Frame, name: string, args: VMValue[], typeArgs: string[], node: { line: number; col: number }, refs: Array<VMRef | null> = []): VMValue {
         const binding = frame.self?.behaviour;
         if (!binding) return this.fail(`'${name}' yalnızca sahnedeki bir bileşende kullanılabilir.`, node, frame);
         try {
-            const result = binding.callMember(name, args, typeArgs);
+            const result = binding.callMember(name, args, typeArgs, refs);
             if (result === NOT_FOUND) return this.fail(`'${name}' çağrılamadı.`, node, frame);
             return result;
         } catch (error) {
@@ -1637,7 +1637,7 @@ export class Interpreter {
             if (name in object.fields && isCallable(object.fields[name])) return this.callValue(object.fields[name], this.derefArgs(values), node, frame);
             if (object.behaviour) {
                 try {
-                    const result = object.behaviour.callMember(name, this.derefArgs(values), typeArgs);
+                    const result = object.behaviour.callMember(name, this.derefArgs(values), typeArgs, refs);
                     if (result !== NOT_FOUND) return result;
                 } catch (error) {
                     return this.wrapError(error, node, frame);
@@ -1655,7 +1655,7 @@ export class Interpreter {
                 return this.fail(`Yok edilmiş bir ${object.hostType} nesnesinde '${name}' çağrıldı.`, node, frame, "MissingReferenceException");
             }
             try {
-                return object.call(name, args, typeArgs);
+                return object.call(name, args, typeArgs, refs);
             } catch (error) {
                 return this.wrapError(error, node, frame);
             }
