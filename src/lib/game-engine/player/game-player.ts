@@ -84,6 +84,8 @@ export class GamePlayer {
             onVirtualKey: (key, down) => this.input.setVirtualKey(key, down),
         });
         this.input.attach(this.renderer.canvas, typeof window !== "undefined" ? window : this.root);
+        // Keys are only captured once the game runs (so the page can still scroll before "Play").
+        this.input.enabled = false;
         if (options.muted) this.audio.setMuted(true);
         this.world = this.createWorld();
 
@@ -197,6 +199,7 @@ export class GamePlayer {
             this.world.start();
         }
         this.setState("running");
+        this.input.enabled = true;
         this.last = 0;
         cancelAnimationFrame(this.raf);
         this.raf = requestAnimationFrame(this.loop);
@@ -224,6 +227,7 @@ export class GamePlayer {
     stop() {
         if (this.state === "stopped" || this.state === "idle") return;
         this.world.stop();
+        this.input.enabled = false;
         this.setState("stopped");
     }
 
