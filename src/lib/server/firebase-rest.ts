@@ -240,7 +240,7 @@ export async function queryServerCollection<T extends Record<string, unknown>>(
         .map((item) => decodeDocument<T>(item.document));
 }
 
-type QueryFilter = { field: string; op: "EQUAL" | "ARRAY_CONTAINS" | "GREATER_THAN" | "LESS_THAN" | "GREATER_THAN_OR_EQUAL" | "LESS_THAN_OR_EQUAL"; value: unknown };
+type QueryFilter = { field: string; op: "EQUAL" | "ARRAY_CONTAINS" | "IN" | "GREATER_THAN" | "LESS_THAN" | "GREATER_THAN_OR_EQUAL" | "LESS_THAN_OR_EQUAL"; value: unknown };
 
 /**
  * General structured query with optional field projection (`select`), filters

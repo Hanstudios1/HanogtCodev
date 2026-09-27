@@ -121,7 +121,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     const newsComments = await queryServerCollection<Record<string, unknown>>("news_comments", "authorEmail", "EQUAL", email).catch(() => []);
-    for (const comment of newsComments) await deleteServerDocument(comment._path);
+    for (const comment of newsComments) {
+        const newsId = typeof comment.newsId === "string" && /^[a-f0-9]{20}$/.test(comment.newsId) ? comment.newsId : "";
+        await commitServerMutations([
+            { type: "delete", path: String(comment._path) },
+            ...(newsId ? [{ type: "increment" as const, path: `news_meta/${newsId}`, fields: { commentCount: -1 } }] : []),
+        ]).catch(() => deleteServerDocument(String(comment._path)));
+    }
 
     const mediaPosts = await queryServerCollection<Record<string, unknown>>("media_posts", "ownerEmail", "EQUAL", email);
     for (const post of mediaPosts) {
