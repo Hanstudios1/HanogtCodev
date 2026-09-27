@@ -146,6 +146,16 @@ export class RuntimeEntity implements PhysicsEntity {
         return !this.destroyed;
     }
 
+    /** RenderEntity: drawn when active in the hierarchy. */
+    get visible(): boolean {
+        return this.activeInHierarchy;
+    }
+
+    /** RenderEntity: bumped on in-place component changes. */
+    get version(): number {
+        return this.renderVersion;
+    }
+
     /**
      * Invalidates the cached world transform of this subtree. A child cache can
      * only exist while the parent cache exists, so stopping early is safe.
