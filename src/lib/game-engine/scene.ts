@@ -1,238 +1,314 @@
+import {
+    createAudioSource,
+    createCamera,
+    createCollider,
+    createLight,
+    createMeshRenderer,
+    createParticleSystem,
+    createRigidBody,
+    createSpriteRenderer,
+    createTransform,
+    createUIText,
+} from "./components";
 import { createEngineId, nowIso } from "./ids";
-import { composeTransformMatrix, identityMatrix4, matrixPosition, multiplyMatrix4, type Matrix4 } from "./math";
-import type {
-  ComponentOfType,
-  ComponentType,
-  GameComponent,
-  GameDimension,
-  GameEntity,
-  GameProjectDocument,
-  SceneDocument,
-  TransformComponent,
-  Vector3,
+import { combineTRS, IDENTITY_TRS, quatFromEulerDeg, type TRS } from "./math";
+import { cloneJson, defaultSceneSettings } from "./schema";
+import {
+    GAME_ENGINE_SCHEMA_VERSION,
+    type ComponentOfType,
+    type ComponentType,
+    type GameComponent,
+    type GameDimension,
+    type GameEntity,
+    type GameProjectDocument,
+    type PrefabAsset,
+    type SceneDocument,
+    type TransformComponent,
+    type Vector3,
 } from "./types";
-import { GAME_ENGINE_SCHEMA_VERSION, SUPPORTED_SCRIPT_LANGUAGES } from "./types";
 
-export function cloneScene(scene: SceneDocument): SceneDocument {
-  return JSON.parse(JSON.stringify(scene)) as SceneDocument;
+export function getComponent<T extends ComponentType>(entity: Pick<GameEntity, "components">, type: T): ComponentOfType<T> | undefined {
+    return entity.components.find((component): component is ComponentOfType<T> => component.type === type);
 }
 
-export function cloneProject(project: GameProjectDocument): GameProjectDocument {
-  return JSON.parse(JSON.stringify(project)) as GameProjectDocument;
+export function getComponents<T extends ComponentType>(entity: Pick<GameEntity, "components">, type: T): ComponentOfType<T>[] {
+    return entity.components.filter((component): component is ComponentOfType<T> => component.type === type);
 }
 
-export function createTransform(overrides: Partial<Omit<TransformComponent, "type">> = {}): TransformComponent {
-  return {
-    id: overrides.id ?? createEngineId("component"),
-    type: "transform",
-    enabled: overrides.enabled ?? true,
-    position: { x: 0, y: 0, z: 0, ...overrides.position },
-    rotation: { x: 0, y: 0, z: 0, ...overrides.rotation },
-    scale: { x: 1, y: 1, z: 1, ...overrides.scale },
-  };
+export function getTransform(entity: Pick<GameEntity, "components">): TransformComponent {
+    const transform = getComponent(entity, "transform");
+    if (!transform) throw new Error("Nesnede Transform bileşeni yok.");
+    return transform;
 }
 
-export function createEntity(name = "Yeni Nesne", components: GameComponent[] = []): GameEntity {
-  const transform = components.find((component) => component.type === "transform");
-  const remaining = components.filter((component) => component.type !== "transform");
-  return {
-    id: createEngineId("entity"),
-    name,
-    parentId: null,
-    active: true,
-    components: [transform ?? createTransform(), ...remaining],
-  };
-}
-
-export function createScene(name: string, dimension: GameDimension, templateId: string | null = null): SceneDocument {
-  const timestamp = nowIso();
-  return {
-    version: GAME_ENGINE_SCHEMA_VERSION,
-    id: createEngineId("scene"),
-    name,
-    dimension,
-    objects: [],
-    settings: {
-      backgroundColor: dimension === "2d" ? "#111827" : "#0b1020",
-      ambientLight: dimension === "2d" ? 1 : 0.35,
-      physics: {
-        gravity: { x: 0, y: -9.81, z: 0 },
-        fixedTimeStep: 1 / 60,
-        maxSubSteps: 5,
-        worldBounds: {
-          enabled: false,
-          min: { x: -100, y: -100, z: -100 },
-          max: { x: 100, y: 100, z: 100 },
-        },
-      },
-    },
-    metadata: { createdAt: timestamp, updatedAt: timestamp, templateId },
-  };
-}
-
-export function createProject(name: string, dimension: GameDimension, initialScene?: SceneDocument): GameProjectDocument {
-  const scene = initialScene ? cloneScene(initialScene) : createScene("Ana Sahne", dimension);
-  if (scene.dimension !== dimension) {
-    throw new Error("Proje ve sahne boyutu aynı olmalıdır.");
-  }
-  const timestamp = nowIso();
-  return {
-    version: GAME_ENGINE_SCHEMA_VERSION,
-    id: createEngineId("game-project"),
-    name,
-    dimension,
-    activeSceneId: scene.id,
-    scenes: [scene],
-    supportedScriptLanguages: [...SUPPORTED_SCRIPT_LANGUAGES],
-    metadata: { createdAt: timestamp, updatedAt: timestamp },
-  };
-}
-
-export function getComponent<T extends ComponentType>(entity: GameEntity, type: T): ComponentOfType<T> | undefined {
-  return entity.components.find((component): component is ComponentOfType<T> => component.type === type);
-}
-
-export function getComponents<T extends ComponentType>(entity: GameEntity, type: T): ComponentOfType<T>[] {
-  return entity.components.filter((component): component is ComponentOfType<T> => component.type === type);
-}
-
-export function getTransform(entity: GameEntity): TransformComponent {
-  const transform = getComponent(entity, "transform");
-  if (!transform) {
-    throw new Error(`Nesne transform bileşeni içermiyor: ${entity.id}`);
-  }
-  return transform;
-}
-
-export function findEntity(scene: SceneDocument, entityId: string): GameEntity | undefined {
-  return scene.objects.find((entity) => entity.id === entityId);
-}
-
-export function getChildren(scene: SceneDocument, parentId: string | null): GameEntity[] {
-  return scene.objects.filter((entity) => entity.parentId === parentId);
-}
-
-export function getDescendantIds(scene: SceneDocument, entityId: string): string[] {
-  const descendants: string[] = [];
-  const queue = [entityId];
-  const visited = new Set<string>([entityId]);
-  while (queue.length > 0) {
-    const parentId = queue.shift() as string;
-    for (const child of getChildren(scene, parentId)) {
-      if (visited.has(child.id)) continue;
-      visited.add(child.id);
-      descendants.push(child.id);
-      queue.push(child.id);
-    }
-  }
-  return descendants;
-}
-
-function withUpdatedTimestamp(scene: SceneDocument): SceneDocument {
-  scene.metadata.updatedAt = nowIso();
-  return scene;
-}
-
-export function addEntity(scene: SceneDocument, entity: GameEntity, parentId: string | null = null): SceneDocument {
-  if (findEntity(scene, entity.id)) {
-    throw new Error(`Aynı kimliğe sahip bir nesne zaten var: ${entity.id}`);
-  }
-  if (parentId && !findEntity(scene, parentId)) {
-    throw new Error(`Üst nesne bulunamadı: ${parentId}`);
-  }
-  const next = cloneScene(scene);
-  const added = JSON.parse(JSON.stringify(entity)) as GameEntity;
-  added.parentId = parentId;
-  next.objects.push(added);
-  return withUpdatedTimestamp(next);
-}
-
-export function removeEntity(scene: SceneDocument, entityId: string, removeDescendants = true): SceneDocument {
-  const entity = findEntity(scene, entityId);
-  if (!entity) return cloneScene(scene);
-  const next = cloneScene(scene);
-  const descendants = new Set(getDescendantIds(scene, entityId));
-  if (removeDescendants) {
-    next.objects = next.objects.filter((candidate) => candidate.id !== entityId && !descendants.has(candidate.id));
-  } else {
-    next.objects = next.objects.filter((candidate) => candidate.id !== entityId);
-    for (const child of next.objects) {
-      if (child.parentId === entityId) child.parentId = entity.parentId;
-    }
-  }
-  return withUpdatedTimestamp(next);
-}
-
-export function setEntityParent(scene: SceneDocument, entityId: string, parentId: string | null): SceneDocument {
-  const entity = findEntity(scene, entityId);
-  if (!entity) throw new Error(`Nesne bulunamadı: ${entityId}`);
-  if (parentId === entityId) throw new Error("Bir nesne kendisinin üst nesnesi olamaz.");
-  if (parentId && !findEntity(scene, parentId)) throw new Error(`Üst nesne bulunamadı: ${parentId}`);
-  if (parentId && getDescendantIds(scene, entityId).includes(parentId)) {
-    throw new Error("Döngüsel transform hiyerarşisine izin verilmez.");
-  }
-
-  const next = cloneScene(scene);
-  const nextEntity = findEntity(next, entityId) as GameEntity;
-  nextEntity.parentId = parentId;
-  return withUpdatedTimestamp(next);
-}
-
-export function updateEntity(scene: SceneDocument, entityId: string, updater: (entity: GameEntity) => void): SceneDocument {
-  const next = cloneScene(scene);
-  const entity = findEntity(next, entityId);
-  if (!entity) throw new Error(`Nesne bulunamadı: ${entityId}`);
-  updater(entity);
-  return withUpdatedTimestamp(next);
-}
-
-export function addComponent(scene: SceneDocument, entityId: string, component: GameComponent): SceneDocument {
-  return updateEntity(scene, entityId, (entity) => {
-    if (entity.components.some((item) => item.id === component.id)) {
-      throw new Error(`Bileşen kimliği zaten kullanılıyor: ${component.id}`);
-    }
-    if (component.type === "transform" && getComponent(entity, "transform")) {
-      throw new Error("Bir nesnede yalnızca bir transform bileşeni olabilir.");
-    }
-    entity.components.push(JSON.parse(JSON.stringify(component)) as GameComponent);
-  });
-}
-
-export function removeComponent(scene: SceneDocument, entityId: string, componentId: string): SceneDocument {
-  return updateEntity(scene, entityId, (entity) => {
-    const component = entity.components.find((item) => item.id === componentId);
-    if (!component) return;
-    if (component.type === "transform") throw new Error("Transform bileşeni kaldırılamaz.");
-    entity.components = entity.components.filter((item) => item.id !== componentId);
-  });
-}
-
-export function reorderEntity(scene: SceneDocument, entityId: string, targetIndex: number): SceneDocument {
-  const next = cloneScene(scene);
-  const currentIndex = next.objects.findIndex((entity) => entity.id === entityId);
-  if (currentIndex < 0) throw new Error(`Nesne bulunamadı: ${entityId}`);
-  const [entity] = next.objects.splice(currentIndex, 1);
-  const safeIndex = Math.max(0, Math.min(targetIndex, next.objects.length));
-  next.objects.splice(safeIndex, 0, entity);
-  return withUpdatedTimestamp(next);
-}
-
-export function getWorldMatrix(scene: SceneDocument, entityId: string): Matrix4 {
-  const visited = new Set<string>();
-  const calculate = (id: string): Matrix4 => {
-    if (visited.has(id)) throw new Error("Transform hiyerarşisinde döngü algılandı.");
-    visited.add(id);
-    const entity = findEntity(scene, id);
-    if (!entity) throw new Error(`Nesne bulunamadı: ${id}`);
+export function localTRS(entity: Pick<GameEntity, "components">): TRS {
     const transform = getTransform(entity);
-    const local = composeTransformMatrix(transform);
-    const world = entity.parentId ? multiplyMatrix4(calculate(entity.parentId), local) : local;
-    visited.delete(id);
-    return world;
-  };
-  return calculate(entityId) ?? identityMatrix4();
+    return { position: transform.position, rotation: quatFromEulerDeg(transform.rotation), scale: transform.scale };
 }
 
-export function getWorldPosition(scene: SceneDocument, entityId: string): Vector3 {
-  return matrixPosition(getWorldMatrix(scene, entityId));
+export function buildEntityIndex(entities: GameEntity[]) {
+    const byId = new Map<string, GameEntity>();
+    const children = new Map<string | null, GameEntity[]>();
+    for (const entity of entities) {
+        byId.set(entity.id, entity);
+        const key = entity.parentId && entities.some((candidate) => candidate.id === entity.parentId) ? entity.parentId : null;
+        const list = children.get(key) ?? [];
+        list.push(entity);
+        children.set(key, list);
+    }
+    return { byId, children };
+}
+
+/** World transform of an entity (walks parents; cycles were removed by the schema). */
+export function worldTRS(entity: GameEntity, byId: Map<string, GameEntity>): TRS {
+    const chain: GameEntity[] = [];
+    let cursor: GameEntity | undefined = entity;
+    let guard = 0;
+    while (cursor && guard < 128) {
+        chain.push(cursor);
+        cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
+        guard += 1;
+    }
+    let result: TRS = IDENTITY_TRS;
+    for (let index = chain.length - 1; index >= 0; index -= 1) result = combineTRS(result, localTRS(chain[index]));
+    return result;
+}
+
+export function isActiveInHierarchy(entity: GameEntity, byId: Map<string, GameEntity>): boolean {
+    let cursor: GameEntity | undefined = entity;
+    let guard = 0;
+    while (cursor && guard < 128) {
+        if (!cursor.active) return false;
+        cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
+        guard += 1;
+    }
+    return true;
+}
+
+export function getDescendantIds(entities: GameEntity[], rootId: string): string[] {
+    const { children } = buildEntityIndex(entities);
+    const output: string[] = [];
+    const queue = [rootId];
+    while (queue.length) {
+        const current = queue.shift() as string;
+        for (const child of children.get(current) ?? []) {
+            output.push(child.id);
+            queue.push(child.id);
+        }
+    }
+    return output;
+}
+
+/** Ordered subtree (root first) — used for duplicate, copy/paste and prefabs. */
+export function collectSubtree(entities: GameEntity[], rootId: string): GameEntity[] {
+    const ids = new Set([rootId, ...getDescendantIds(entities, rootId)]);
+    return entities.filter((entity) => ids.has(entity.id));
+}
+
+/** Deep-clones entities with fresh entity and component ids, keeping internal parent links. */
+export function cloneEntitiesWithNewIds(entities: GameEntity[], rootParentId: string | null = null): GameEntity[] {
+    const idMap = new Map<string, string>();
+    for (const entity of entities) idMap.set(entity.id, createEngineId("entity"));
+    return entities.map((entity) => {
+        const copy = cloneJson(entity);
+        copy.id = idMap.get(entity.id) as string;
+        copy.parentId = entity.parentId && idMap.has(entity.parentId)
+            ? idMap.get(entity.parentId) as string
+            : rootParentId;
+        copy.components = copy.components.map((component) => {
+            const cloned = { ...component, id: createEngineId("cmp") } as GameComponent;
+            if (cloned.type === "script") {
+                // Entity references inside the subtree follow the clone.
+                const fields = { ...cloned.fields };
+                for (const [key, value] of Object.entries(fields)) {
+                    if (value && typeof value === "object" && "ref" in value && value.ref === "entity" && value.id && idMap.has(value.id)) {
+                        fields[key] = { ref: "entity", id: idMap.get(value.id) as string };
+                    }
+                }
+                cloned.fields = fields;
+            }
+            return cloned;
+        });
+        return copy;
+    });
+}
+
+export function uniqueName(base: string, existing: Iterable<string>): string {
+    const names = new Set(existing);
+    if (!names.has(base)) return base;
+    const stem = base.replace(/\s\(\d+\)$/, "");
+    for (let index = 1; index < 10_000; index += 1) {
+        const candidate = `${stem} (${index})`;
+        if (!names.has(candidate)) return candidate;
+    }
+    return `${stem} ${Date.now()}`;
+}
+
+// ---------------------------------------------------------------------------
+// Entity presets for the "Create" menu
+// ---------------------------------------------------------------------------
+
+export type EntityPreset =
+    | "empty"
+    | "sprite"
+    | "circleSprite"
+    | "cube"
+    | "sphere"
+    | "plane"
+    | "capsule"
+    | "cylinder"
+    | "cone"
+    | "torus"
+    | "camera"
+    | "directionalLight"
+    | "pointLight"
+    | "spotLight"
+    | "particles"
+    | "text"
+    | "audio";
+
+const PALETTE = ["#6366f1", "#22c55e", "#f97316", "#06b6d4", "#ec4899", "#eab308", "#8b5cf6"];
+
+export function createEntityFromPreset(preset: EntityPreset, dimension: GameDimension, position: Vector3 = { x: 0, y: 0, z: 0 }, seed = 0): GameEntity {
+    const color = PALETTE[Math.abs(seed) % PALETTE.length];
+    const transform = createTransform({ position });
+    const entity = (name: string, components: GameComponent[], tag = "Untagged"): GameEntity => ({
+        id: createEngineId("entity"),
+        name,
+        tag,
+        parentId: null,
+        active: true,
+        components: [transform, ...components],
+    });
+    const collider2d = () => createCollider({ shape: "box" });
+
+    switch (preset) {
+        case "empty":
+            return entity("GameObject", []);
+        case "sprite":
+            return entity("Sprite", [createSpriteRenderer({ color }), collider2d()]);
+        case "circleSprite":
+            return entity("Circle", [createSpriteRenderer({ color, shape: "circle" }), createCollider({ shape: "circle", radius: 0.5 })]);
+        case "cube":
+            return entity("Cube", [createMeshRenderer({ mesh: "cube", material: { color } }), createCollider({ shape: "box" })]);
+        case "sphere":
+            return entity("Sphere", [createMeshRenderer({ mesh: "sphere", material: { color } }), createCollider({ shape: "sphere", radius: 0.5 })]);
+        case "plane": {
+            transform.scale = { x: 10, y: 1, z: 10 };
+            return entity("Plane", [createMeshRenderer({ mesh: "plane", material: { color: "#64748b", roughness: 0.9 } }), createCollider({ shape: "box", size: { x: 1, y: 0.02, z: 1 } })], "Ground");
+        }
+        case "capsule":
+            return entity("Capsule", [createMeshRenderer({ mesh: "capsule", material: { color } }), createCollider({ shape: "box", size: { x: 1, y: 2, z: 1 } })]);
+        case "cylinder":
+            return entity("Cylinder", [createMeshRenderer({ mesh: "cylinder", material: { color } }), createCollider({ shape: "box", size: { x: 1, y: 2, z: 1 } })]);
+        case "cone":
+            return entity("Cone", [createMeshRenderer({ mesh: "cone", material: { color } })]);
+        case "torus":
+            return entity("Torus", [createMeshRenderer({ mesh: "torus", material: { color } })]);
+        case "camera": {
+            if (dimension === "2d") transform.position = { x: position.x, y: position.y, z: -10 };
+            return entity("Camera", [createCamera(dimension === "2d" ? { projection: "orthographic", primary: false } : { primary: false })], "MainCamera");
+        }
+        case "directionalLight":
+            transform.rotation = { x: 50, y: -30, z: 0 };
+            return entity("Directional Light", [createLight({ lightType: "directional", intensity: 1.4 })]);
+        case "pointLight":
+            return entity("Point Light", [createLight({ lightType: "point", intensity: 2, range: 10, color: "#fde68a", castShadows: false })]);
+        case "spotLight":
+            transform.rotation = { x: 90, y: 0, z: 0 };
+            return entity("Spot Light", [createLight({ lightType: "spot", intensity: 3, range: 18, spotAngle: 35 })]);
+        case "particles":
+            transform.rotation = dimension === "2d" ? { x: -90, y: 0, z: 0 } : { x: -90, y: 0, z: 0 };
+            return entity("Particle System", [createParticleSystem()]);
+        case "text":
+            return entity("UI Text", [createUIText({ text: "Skor: 0" })]);
+        case "audio":
+            return entity("Audio Source", [createAudioSource()]);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Scenes & projects
+// ---------------------------------------------------------------------------
+
+export function createEmptyScene(name: string, dimension: GameDimension, templateId: string | null = null): SceneDocument {
+    const timestamp = nowIso();
+    return {
+        version: GAME_ENGINE_SCHEMA_VERSION,
+        id: createEngineId("scene"),
+        name,
+        dimension,
+        objects: [],
+        settings: defaultSceneSettings(dimension),
+        metadata: { createdAt: timestamp, updatedAt: timestamp, templateId },
+    };
+}
+
+/** New scene with a camera (and a light for 3D) — what "New Scene" creates. */
+export function createDefaultScene(name: string, dimension: GameDimension): SceneDocument {
+    const scene = createEmptyScene(name, dimension);
+    if (dimension === "2d") {
+        const camera = createEntityFromPreset("camera", "2d");
+        camera.name = "Main Camera";
+        (getComponent(camera, "camera") as ComponentOfType<"camera">).primary = true;
+        scene.objects.push(camera);
+    } else {
+        const camera = createEntityFromPreset("camera", "3d", { x: 0, y: 4, z: -9 });
+        camera.name = "Main Camera";
+        getTransform(camera).rotation = { x: 18, y: 0, z: 0 };
+        (getComponent(camera, "camera") as ComponentOfType<"camera">).primary = true;
+        const light = createEntityFromPreset("directionalLight", "3d", { x: 0, y: 8, z: 0 });
+        const ground = createEntityFromPreset("plane", "3d", { x: 0, y: 0, z: 0 });
+        ground.name = "Ground";
+        scene.objects.push(camera, light, ground);
+    }
+    return scene;
+}
+
+export function createBlankProject(name: string, dimension: GameDimension, id = createEngineId("game")): GameProjectDocument {
+    const scene = createDefaultScene("Main Scene", dimension);
+    const timestamp = nowIso();
+    return {
+        version: GAME_ENGINE_SCHEMA_VERSION,
+        id,
+        name,
+        description: "",
+        dimension,
+        activeSceneId: scene.id,
+        scenes: [scene],
+        prefabs: [],
+        textures: [],
+        scripts: [],
+        settings: {
+            startSceneId: scene.id,
+            aspect: "free",
+            shadows: true,
+            antialias: true,
+            pixelArt: false,
+            showFps: false,
+            touchControls: true,
+        },
+        metadata: { createdAt: timestamp, updatedAt: timestamp },
+    };
+}
+
+export function getActiveScene(project: GameProjectDocument): SceneDocument {
+    return project.scenes.find((scene) => scene.id === project.activeSceneId) ?? project.scenes[0];
+}
+
+export function prefabFromEntities(entities: GameEntity[], name: string): PrefabAsset {
+    const cloned = cloneEntitiesWithNewIds(entities, null);
+    cloned[0].parentId = null;
+    const rootTransform = getTransform(cloned[0]);
+    rootTransform.position = { x: 0, y: 0, z: 0 };
+    return { id: createEngineId("prefab"), name, entities: cloned };
+}
+
+export function findPrimaryCamera(entities: GameEntity[]): GameEntity | undefined {
+    const { byId } = buildEntityIndex(entities);
+    const cameras = entities.filter((entity) => {
+        const camera = getComponent(entity, "camera");
+        return camera?.enabled && isActiveInHierarchy(entity, byId);
+    });
+    return cameras.find((entity) => getComponent(entity, "camera")?.primary) ?? cameras[0];
 }

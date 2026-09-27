@@ -73,6 +73,7 @@
     "clsx": "^2.1.1",
     "firebase": "^12.7.0",
     "framer-motion": "^12.23.26",
+    "immer": "^11.1.18",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
     "monaco-editor": "^0.55.1",
