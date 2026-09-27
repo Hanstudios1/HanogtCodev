@@ -5,7 +5,6 @@ import {
     createLight,
     createMeshRenderer,
     createParticleSystem,
-    createRigidBody,
     createSpriteRenderer,
     createTransform,
     createUIText,

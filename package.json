@@ -6,7 +6,7 @@
   "main": "electron/main.js",
   "author": "HanStudios",
   "scripts": {
-    "prepare:assets": "node scripts/copy-monaco.mjs",
+    "prepare:assets": "node scripts/copy-monaco.mjs && node scripts/build-player.mjs",
     "predev": "npm run prepare:assets",
     "dev": "next dev",
     "prebuild": "npm run prepare:assets",

@@ -1,4 +1,5 @@
 /** Runtime (play mode) representation of scene objects and behaviours. */
+/* eslint-disable @typescript-eslint/no-this-alias -- parent/base chains are walked starting from `this`. */
 import { combineTRS, conjugateQuat, eulerDegFromQuat, mulQuat, normalizeQuat, quatFromEulerDeg, worldToLocalPoint, type Quat, type TRS } from "../math";
 import type { ClassInfo, HostObject, ScriptObject, VMCoroutine, VMValue } from "../script/values";
 import type {

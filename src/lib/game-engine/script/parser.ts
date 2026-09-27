@@ -814,6 +814,20 @@ export class Parser {
                     break;
             }
         }
+        if (this.isIdent(0, "co_yield") || this.isIdent(0, "co_return")) {
+            // C++20 coroutine spelling: co_yield expr; / co_return;
+            const isReturn = this.isIdent(0, "co_return");
+            this.next();
+            this.yieldSeen = true;
+            if (isReturn) {
+                if (!this.is(";")) this.parseExpression();
+                this.expect(";");
+                return { type: "Yield", arg: null, isBreak: true, ...at };
+            }
+            const arg = this.is(";") ? null : this.parseExpression();
+            this.expect(";");
+            return { type: "Yield", arg, isBreak: false, ...at };
+        }
         if (this.isIdent(0, "yield") && (this.is("return", 1) || this.is("break", 1))) {
             this.next();
             this.yieldSeen = true;

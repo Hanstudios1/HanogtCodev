@@ -493,7 +493,7 @@ class Analyzer {
         return args.map((arg) => {
             if (arg.declare) {
                 this.declare(arg.declare.name, this.typeName(arg.declare.typeRef), arg.expr);
-                arg.expr.type === "Ident" && (arg.expr.res = { kind: "local" });
+                if (arg.expr.type === "Ident") arg.expr.res = { kind: "local" };
                 return null;
             }
             return this.expr(arg.expr);

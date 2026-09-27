@@ -1,4 +1,5 @@
 /** Runtime values of the Hanogt script VM. */
+/* eslint-disable @typescript-eslint/no-this-alias -- parent/base chains are walked starting from `this`. */
 import type { BlockStmt, ClassDecl, Expr, FieldDecl, MethodDecl, PropertyDecl, TypeRef } from "./ast";
 import type { ScriptFieldValue } from "../types";
 

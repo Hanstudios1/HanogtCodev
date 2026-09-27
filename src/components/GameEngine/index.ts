@@ -1,2 +1,1 @@
-export { default as GameEngineShell } from "./GameEngineShell";
-export type { EngineLog } from "./AssetsConsolePanel";
+export { default as GameEngineApp, EngineLoading } from "./GameEngineApp";
