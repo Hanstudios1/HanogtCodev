@@ -52,6 +52,13 @@ export default function Header() {
     const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
     const signedIn = Boolean(session?.user);
 
+    // Pages can open the Security Bot (e.g. the Security Center's "Ask Security Bot" button).
+    useEffect(() => {
+        const open = () => setShowSecurityBot(true);
+        window.addEventListener("hanogt:open-security-bot", open);
+        return () => window.removeEventListener("hanogt:open-security-bot", open);
+    }, []);
+
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
         onScroll();
