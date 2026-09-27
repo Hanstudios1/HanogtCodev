@@ -37,7 +37,8 @@ export interface Project {
 const COLLECTION_NAME = "projects";
 
 // Save project to Firestore
-export const saveProjectToCloud = async (email: string, project: Omit<Project, "email" | "createdAt">) => {
+export const saveProjectToCloud = async (rawEmail: string, project: Omit<Project, "email" | "createdAt">) => {
+    const email = rawEmail.toLowerCase();
     try {
         const projectRef = doc(db, COLLECTION_NAME, project.id);
         const files: ProjectFile[] = project.files?.length
@@ -84,21 +85,32 @@ export const saveProjectToCloud = async (email: string, project: Omit<Project, "
     }
 };
 
+function timestampMillis(value: unknown): number {
+    if (!value) return 0;
+    if (typeof value === "string") return Date.parse(value) || 0;
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === "object" && value !== null && "toMillis" in value && typeof (value as Timestamp).toMillis === "function") {
+        return (value as Timestamp).toMillis();
+    }
+    return 0;
+}
+
 // Get all projects for a user from Firestore
 export const getProjectsFromCloud = async (email: string): Promise<Project[]> => {
     try {
-        const q = query(
-            collection(db, COLLECTION_NAME),
-            where("email", "==", email),
-            orderBy("createdAt", "desc")
-        );
+        // Equality-only query: it needs no composite index and, unlike
+        // `orderBy("createdAt")`, it also returns older documents that were
+        // saved before `createdAt` existed. Sorting happens client-side.
+        const q = query(collection(db, COLLECTION_NAME), where("email", "==", email.toLowerCase()));
         const querySnapshot = await getDocs(q);
         const projects = await Promise.all(querySnapshot.docs.map(async (projectDoc) => {
             const fileSnapshot = await getDocs(query(collection(projectDoc.ref, "files"), orderBy("order", "asc")));
             const files = fileSnapshot.docs.map((file) => ({ id: file.id, ...file.data() } as ProjectFile));
-            return { id: projectDoc.id, ...projectDoc.data(), files } as Project;
+            return { id: projectDoc.id, ...projectDoc.data(), files } as Project & { updatedAt?: unknown };
         }));
-        return projects;
+        return projects.sort((a, b) => (
+            timestampMillis(b.updatedAt ?? b.createdAt) - timestampMillis(a.updatedAt ?? a.createdAt)
+        ) || (Number(b.id) || 0) - (Number(a.id) || 0));
     } catch (error) {
         console.error("Error getting projects:", error);
         return [];
@@ -158,10 +170,11 @@ export const getProjects = (email: string): LegacyProject[] => {
     }
 };
 
-export const deleteProject = (email: string, id: number) => {
+export const deleteProject = (email: string, id: number | string) => {
     try {
         const all: LegacyProject[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        const filtered = all.filter(p => !(p.email === email && p.id === id));
+        // Cloud ids are strings; comparing as strings also removes the local copy.
+        const filtered = all.filter(p => !(p.email === email && String(p.id) === String(id)));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
     } catch {
         localStorage.removeItem(STORAGE_KEY);

@@ -1,60 +1,74 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import Provider from "@/components/Provider";
 import { I18nProvider } from "@/lib/i18n";
-import SecurityBotChat from "@/components/SecurityBotChat";
 import VoiceCallProvider from "@/components/VoiceCallProvider";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://hanogtcodev.com"),
-  title: "Hanogt Codev",
-  description: "Güvenlik katmanları, çoklu dosya projeleri ve arkadaş iletişimi sunan modern kod editörü.",
-  icons: {
-    icon: "/logo-dark.png",
-    shortcut: "/logo-dark.png",
-    apple: "/logo-dark.png",
-  },
-  openGraph: {
-    title: "Hanogt Codev",
-    description: "Güvenlik katmanları, çoklu dosya projeleri ve arkadaş iletişimi sunan modern kod editörü.",
-    url: "https://hanogtcodev.com",
-    siteName: "Hanogt Codev",
-    images: [
-      {
-        url: "/logo-dark.png",
-        width: 512,
-        height: 512,
-        alt: "Hanogt Codev Logo",
-      },
-    ],
-    locale: "tr_TR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary",
-    title: "Hanogt Codev",
-    description: "Güvenlik katmanları, çoklu dosya projeleri ve arkadaş iletişimi sunan modern kod editörü.",
-    images: ["/logo-dark.png"],
-  },
+    metadataBase: new URL(SITE_URL),
+    title: {
+        default: `${SITE_NAME} — Kod editörü ve oyun motoru`,
+        template: `%s · ${SITE_NAME}`,
+    },
+    description: SITE_DESCRIPTION,
+    applicationName: SITE_NAME,
+    keywords: ["online kod editörü", "oyun motoru", "C# oyun", "C++ oyun", "WebGL", "2D oyun", "3D oyun", "Hanogt", "kod çalıştır", "tarayıcıda oyun yap"],
+    authors: [{ name: "HanStudios" }],
+    creator: "HanStudios",
+    icons: {
+        icon: "/logo-dark.png",
+        shortcut: "/logo-dark.png",
+        apple: "/logo-dark.png",
+    },
+    openGraph: {
+        title: SITE_NAME,
+        description: SITE_DESCRIPTION,
+        url: SITE_URL,
+        siteName: SITE_NAME,
+        images: [{ url: "/logo-dark.png", width: 500, height: 500, alt: `${SITE_NAME} logosu` }],
+        locale: "tr_TR",
+        type: "website",
+    },
+    twitter: {
+        card: "summary",
+        title: SITE_NAME,
+        description: SITE_DESCRIPTION,
+        images: ["/logo-dark.png"],
+    },
+    formatDetection: { telephone: false },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="tr" className="dark">
-      <body className="antialiased">
-        <Provider>
-          <I18nProvider>
-            <VoiceCallProvider>
-              {children}
-              <SecurityBotChat />
-            </VoiceCallProvider>
-          </I18nProvider>
-        </Provider>
-      </body>
-    </html>
-  );
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    themeColor: [
+        { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+        { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    ],
+    colorScheme: "dark light",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+    return (
+        // The theme class is decided by the inline script before hydration.
+        <html lang="tr" suppressHydrationWarning>
+            <head>
+                <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+            </head>
+            <body className="min-h-dvh antialiased">
+                <a href="#main-content" className="skip-link">İçeriğe geç</a>
+                <Provider>
+                    <I18nProvider>
+                        <VoiceCallProvider>
+                            {children}
+                        </VoiceCallProvider>
+                    </I18nProvider>
+                </Provider>
+            </body>
+        </html>
+    );
 }

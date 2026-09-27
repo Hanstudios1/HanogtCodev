@@ -118,8 +118,12 @@ function EditorContent() {
     const requestedGameScriptName = searchParams.get("scriptName") || "";
     const requestedReturn = searchParams.get("returnTo") || "";
     const backHref = requestedReturn.startsWith("/game-engine") ? requestedReturn : "/dashboard";
-    const { data: session } = useSession();
+    const { data: session, status: sessionStatus } = useSession();
+    const sessionEmail = session?.user?.email || "";
     const { t } = useI18n();
+    // Remembers which (project, user) combination is loaded so a session
+    // refresh does not wipe the open tabs and the user's unsaved code.
+    const loadedKeyRef = useRef<string | null>(null);
 
     // Multi-tab state
     const [tabs, setTabs] = useState<Tab[]>([]);
@@ -166,8 +170,12 @@ function EditorContent() {
 
     // Initialize first tab
     useEffect(() => {
+        if (sessionStatus === "loading") return;
+        const loadKey = [sessionEmail, initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName].join("|");
+        if (loadedKeyRef.current === loadKey) return;
+        loadedKeyRef.current = loadKey;
         const loadProject = async () => {
-            if (gameProjectId && session?.user?.email) {
+            if (gameProjectId && sessionEmail) {
                 try {
                     if (requestedGameScriptId) {
                         const response = await fetch(`/api/game-projects/${encodeURIComponent(gameProjectId)}/scripts/${encodeURIComponent(requestedGameScriptId)}`, { cache: "no-store" });
@@ -213,9 +221,9 @@ function EditorContent() {
             }
 
             // Load existing project
-            if (projectId && session?.user?.email) {
+            if (projectId && sessionEmail) {
                 try {
-                    const cloudProjects = await getProjectsFromCloud(session.user.email);
+                    const cloudProjects = await getProjectsFromCloud(sessionEmail);
                     const project = cloudProjects.find(p => String(p.id) === projectId);
                     if (project) {
                         if (project.files?.length) {
@@ -278,7 +286,7 @@ function EditorContent() {
                     console.error("Error loading from cloud:", error);
                 }
 
-                const localProjects = getProjects(session.user.email);
+                const localProjects = getProjects(sessionEmail);
                 const project = localProjects.find(p => String(p.id) === projectId);
                 if (project) {
                     if (project.files?.length) {
@@ -354,8 +362,8 @@ function EditorContent() {
             setActiveTabId(newTab.id);
         };
 
-        loadProject();
-    }, [initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName, session]);
+        void loadProject();
+    }, [initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName, sessionEmail, sessionStatus]);
 
     // Save unsaved tabs to localStorage
     useEffect(() => {
@@ -854,7 +862,7 @@ function EditorContent() {
                         {activeTab && (
                             <CodeEditor
                                 language={normalizeLang(activeTab.lang)}
-                                theme="dark"
+                                path={activeTab.id}
                                 value={activeTab.code}
                                 onChange={(val) => handleCodeChange(val || "")}
                             />

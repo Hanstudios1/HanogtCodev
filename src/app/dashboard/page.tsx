@@ -227,9 +227,10 @@ export default function DashboardPage() {
         if (!selectedProject || !session?.user?.email) return;
 
         try {
-            await deleteProjectFromCloud(String(selectedProject.id));
-            deleteProject(session.user.email, Number(selectedProject.id));
-            setProjects(projects.filter(p => p.id !== selectedProject.id));
+            const deleted = await deleteProjectFromCloud(String(selectedProject.id));
+            deleteProject(session.user.email, selectedProject.id);
+            if (!deleted) console.warn("Cloud copy could not be deleted; the local copy was removed.");
+            setProjects((current) => current.filter(p => String(p.id) !== String(selectedProject.id)));
         } catch (error) {
             console.error("Error deleting project:", error);
         }

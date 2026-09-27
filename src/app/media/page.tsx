@@ -11,7 +11,6 @@ import {
     Trash2, Upload, UserRound, X,
 } from "lucide-react";
 import Header from "@/components/Header";
-import { getProjectsFromCloud, type Project } from "@/lib/storage";
 
 type Post = {
     id: string;
@@ -33,6 +32,13 @@ type Post = {
 };
 
 type PostFile = { name: string; lang: string; code: string; order: number };
+type PublishableProject = { id: string; name: string; lang: string; fileCount: number; updatedAt: string };
+
+class MediaRequestError extends Error {
+    constructor(message: string, readonly findings: string[] = []) {
+        super(message);
+    }
+}
 type PostComment = { id: string; author: string; authorAvatar: string | null; text: string; createdAt?: string };
 type Detail = { post: Post; files: PostFile[]; comments: PostComment[] };
 
@@ -52,7 +58,9 @@ function avatar(post: Pick<Post, "author" | "authorAvatar">) {
 export default function MediaPage() {
     const { data: session } = useSession();
     const [posts, setPosts] = useState<Post[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
+    const [projects, setProjects] = useState<PublishableProject[]>([]);
+    const [projectsLoading, setProjectsLoading] = useState(false);
+    const [findings, setFindings] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
@@ -86,10 +94,30 @@ export default function MediaPage() {
     }, []);
 
     useEffect(() => { void load(); }, [load]);
-    useEffect(() => {
-        if (!session?.user?.email) return;
-        void getProjectsFromCloud(session.user.email).then(setProjects);
-    }, [session?.user?.email]);
+
+    // The publish dialog used to read projects with a client Firestore query
+    // that needs a composite index and a live Firebase session; when either
+    // was missing the list was silently empty and nothing could be published.
+    const loadPublishableProjects = useCallback(async () => {
+        setProjectsLoading(true);
+        try {
+            const response = await fetch("/api/media?scope=my-projects", { cache: "no-store" });
+            const data = await response.json().catch(() => ({})) as { projects?: PublishableProject[]; error?: string };
+            if (!response.ok) throw new Error(data.error || "Projeleriniz yüklenemedi.");
+            setProjects(data.projects || []);
+        } catch (projectError) {
+            setError(projectError instanceof Error ? projectError.message : "Projeleriniz yüklenemedi.");
+        } finally {
+            setProjectsLoading(false);
+        }
+    }, []);
+
+    const openPublish = () => {
+        if (!session?.user) { setError("Proje yayımlamak için giriş yapın."); return; }
+        setFindings([]);
+        setShowPublish(true);
+        void loadPublishableProjects();
+    };
 
     const languages = useMemo(() => [...new Set(posts.flatMap((post) => post.languages))].sort(), [posts]);
     const filtered = useMemo(() => {
@@ -105,8 +133,8 @@ export default function MediaPage() {
 
     const mutate = async (body: Record<string, unknown>) => {
         const response = await fetch("/api/media", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-        const data = await response.json().catch(() => ({})) as { error?: string; id?: string; liked?: boolean };
-        if (!response.ok) throw new Error(data.error || "İşlem tamamlanamadı.");
+        const data = await response.json().catch(() => ({})) as { error?: string; id?: string; liked?: boolean; findings?: string[] };
+        if (!response.ok) throw new MediaRequestError(data.error || "İşlem tamamlanamadı.", Array.isArray(data.findings) ? data.findings : []);
         return data;
     };
 
@@ -139,6 +167,7 @@ export default function MediaPage() {
     const publish = async () => {
         if (!form.projectId || !form.title.trim()) return;
         setBusy(true);
+        setFindings([]);
         try {
             await mutate({
                 action: "publish",
@@ -150,7 +179,11 @@ export default function MediaPage() {
             setForm({ projectId: "", title: "", description: "", tags: "", license: "all-rights-reserved", showAuthor: true, contribute: false });
             await load();
         } catch (publishError) {
-            setError(publishError instanceof Error ? publishError.message : "Proje yayımlanamadı.");
+            if (publishError instanceof MediaRequestError && publishError.findings.length) {
+                setFindings([publishError.message, ...publishError.findings]);
+            } else {
+                setError(publishError instanceof Error ? publishError.message : "Proje yayımlanamadı.");
+            }
         } finally {
             setBusy(false);
         }
@@ -241,7 +274,7 @@ export default function MediaPage() {
                     <div className="flex gap-3">
                         <label className={`${panel} flex items-center gap-2 rounded-2xl px-3`}><Filter className="h-4 w-4 text-zinc-400" /><select value={language} onChange={(event) => setLanguage(event.target.value)} className="h-12 bg-transparent text-sm outline-none"><option value="all">Tüm diller</option>{languages.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
                         <button onClick={() => setSort((value) => value === "popular" ? "newest" : "popular")} className={`${panel} flex h-12 items-center gap-2 rounded-2xl px-4 text-sm font-semibold`} title="Sıralamayı değiştir">{sort === "popular" ? <TrendingUp className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}{sort === "popular" ? "Popüler" : "En yeni"}</button>
-                        <button onClick={() => session?.user ? setShowPublish(true) : setError("Proje yayımlamak için giriş yapın.")} className="flex h-12 items-center gap-2 rounded-2xl bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 dark:bg-white dark:text-zinc-950"><Upload className="h-4 w-4" />Yayımla</button>
+                        <button onClick={openPublish} className="flex h-12 items-center gap-2 rounded-2xl bg-zinc-950 px-5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 dark:bg-white dark:text-zinc-950"><Upload className="h-4 w-4" />Yayımla</button>
                     </div>
                 </div>
 
@@ -268,7 +301,7 @@ export default function MediaPage() {
             </section>
 
             <AnimatePresence>
-                {showPublish && <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onMouseDown={() => setShowPublish(false)}><motion.div initial={{ opacity: 0, scale: .96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} onMouseDown={(event) => event.stopPropagation()} className={`${panel} max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-6`}><div className="flex items-center justify-between"><div><h2 className="text-2xl font-black">Projeyi Media’da yayımla</h2><p className="mt-1 text-sm text-zinc-500">Kaynak dosyalarının anlık bir kopyası paylaşılır.</p></div><button onClick={() => setShowPublish(false)} className="rounded-xl p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"><X className="h-5 w-5" /></button></div><div className="mt-6 space-y-4"><label className="block text-sm font-semibold">Proje<select value={form.projectId} onChange={(event) => { const project = projects.find((item) => item.id === event.target.value); setForm((current) => ({ ...current, projectId: event.target.value, title: current.title || project?.name || "" })); }} className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700"><option value="">Proje seçin</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label className="block text-sm font-semibold">Başlık<input value={form.title} maxLength={100} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700" /></label><label className="block text-sm font-semibold">Açıklama<textarea value={form.description} maxLength={1200} rows={4} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-2 w-full resize-none rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700" /></label><label className="block text-sm font-semibold">Etiketler <span className="font-normal text-zinc-400">(virgülle, en fazla 6)</span><input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder="web, araç, eğitim" className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700" /></label><label className="block text-sm font-semibold">Paylaşım lisansı<select value={form.license} onChange={(event) => setForm((current) => ({ ...current, license: event.target.value }))} className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none dark:border-zinc-700"><option value="all-rights-reserved">Lisans belirtilmedi · tüm haklar saklı</option><option value="MIT">MIT</option><option value="Apache-2.0">Apache 2.0</option><option value="GPL-3.0">GPL 3.0</option></select><span className="mt-1 block text-xs font-normal leading-5 text-zinc-500">Bir açık kaynak lisansı seçmek, alıcılara o lisansın koşullarıyla yeniden kullanım hakkı verir.</span></label><label className="flex items-start gap-3 rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-800"><input type="checkbox" checked={form.showAuthor} onChange={(event) => setForm((current) => ({ ...current, showAuthor: event.target.checked }))} className="mt-1 h-4 w-4" /><span><strong className="block text-sm">Profil adımı göster</strong><span className="text-xs leading-5 text-zinc-500">Kapalıysa yayın “Anonim geliştirici” adıyla görünür. E-posta hiçbir durumda yayınlanmaz.</span></span></label>{consent && <label className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30"><input type="checkbox" checked={form.contribute} onChange={(event) => setForm((current) => ({ ...current, contribute: event.target.checked }))} className="mt-1 h-4 w-4" /><span><strong className="block text-sm text-emerald-800 dark:text-emerald-200">Bu projeyi güvenlik katkısına dahil et</strong><span className="text-xs leading-5 text-emerald-700 dark:text-emerald-300">Otomatik eğitim yapılmaz; uygunluk ve amaç sınırı insan denetimiyle değerlendirilir.</span></span></label>}<button disabled={busy || !form.projectId || !form.title.trim()} onClick={publish} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:opacity-50">{busy ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}Güvenlik kontrolüyle yayımla</button></div></motion.div></div>}
+                {showPublish && <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onMouseDown={() => setShowPublish(false)}><motion.div initial={{ opacity: 0, scale: .96, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} onMouseDown={(event) => event.stopPropagation()} className={`${panel} max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl p-6`}><div className="flex items-center justify-between"><div><h2 className="text-2xl font-black">Projeyi Media’da yayımla</h2><p className="mt-1 text-sm text-zinc-500">Kaynak dosyalarının anlık bir kopyası paylaşılır.</p></div><button onClick={() => setShowPublish(false)} className="rounded-xl p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"><X className="h-5 w-5" /></button></div><div className="mt-6 space-y-4"><label className="block text-sm font-semibold">Proje<select value={form.projectId} disabled={projectsLoading} onChange={(event) => { const project = projects.find((item) => item.id === event.target.value); setForm((current) => ({ ...current, projectId: event.target.value, title: current.title || project?.name || "" })); }} className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 disabled:opacity-60 dark:border-zinc-700"><option value="">{projectsLoading ? "Projeler yükleniyor…" : projects.length ? "Proje seçin" : "Kayıtlı kod projeniz yok"}</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name} · {project.lang}{project.fileCount > 1 ? ` · ${project.fileCount} dosya` : ""}</option>)}</select>{!projectsLoading && projects.length === 0 && <span className="mt-2 block text-xs font-normal leading-5 text-zinc-500">Önce kod editöründe bir projeyi kaydedin; kaydedilen projeler burada listelenir.</span>}</label><label className="block text-sm font-semibold">Başlık<input value={form.title} maxLength={100} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700" /></label><label className="block text-sm font-semibold">Açıklama<textarea value={form.description} maxLength={1200} rows={4} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-2 w-full resize-none rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700" /></label><label className="block text-sm font-semibold">Etiketler <span className="font-normal text-zinc-400">(virgülle, en fazla 6)</span><input value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} placeholder="web, araç, eğitim" className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-blue-500 dark:border-zinc-700" /></label><label className="block text-sm font-semibold">Paylaşım lisansı<select value={form.license} onChange={(event) => setForm((current) => ({ ...current, license: event.target.value }))} className="mt-2 w-full rounded-2xl border border-zinc-200 bg-transparent px-4 py-3 outline-none dark:border-zinc-700"><option value="all-rights-reserved">Lisans belirtilmedi · tüm haklar saklı</option><option value="MIT">MIT</option><option value="Apache-2.0">Apache 2.0</option><option value="GPL-3.0">GPL 3.0</option></select><span className="mt-1 block text-xs font-normal leading-5 text-zinc-500">Bir açık kaynak lisansı seçmek, alıcılara o lisansın koşullarıyla yeniden kullanım hakkı verir.</span></label><label className="flex items-start gap-3 rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-800"><input type="checkbox" checked={form.showAuthor} onChange={(event) => setForm((current) => ({ ...current, showAuthor: event.target.checked }))} className="mt-1 h-4 w-4" /><span><strong className="block text-sm">Profil adımı göster</strong><span className="text-xs leading-5 text-zinc-500">Kapalıysa yayın “Anonim geliştirici” adıyla görünür. E-posta hiçbir durumda yayınlanmaz.</span></span></label>{consent && <label className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30"><input type="checkbox" checked={form.contribute} onChange={(event) => setForm((current) => ({ ...current, contribute: event.target.checked }))} className="mt-1 h-4 w-4" /><span><strong className="block text-sm text-emerald-800 dark:text-emerald-200">Bu projeyi güvenlik katkısına dahil et</strong><span className="text-xs leading-5 text-emerald-700 dark:text-emerald-300">Otomatik eğitim yapılmaz; uygunluk ve amaç sınırı insan denetimiyle değerlendirilir.</span></span></label>}{findings.length > 0 && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200"><strong className="block">{findings[0]}</strong><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">{findings.slice(1).map((finding) => <li key={finding}>{finding}</li>)}</ul><p className="mt-2 text-xs opacity-80">Yanlış bir eşleşme olduğunu düşünüyorsanız Geri Bildirim sayfasından inceleme isteyebilirsiniz.</p></div>}<button disabled={busy || !form.projectId || !form.title.trim()} onClick={publish} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3.5 font-bold text-white transition hover:bg-blue-700 disabled:opacity-50">{busy ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}Güvenlik kontrolüyle yayımla</button></div></motion.div></div>}
             </AnimatePresence>
 
             <AnimatePresence>

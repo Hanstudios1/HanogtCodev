@@ -53,3 +53,7 @@ next-env.d.ts
 /public/*.exe
 /*.apk
 /*.exe
+
+# generated at build time (self-hosted editor + standalone game player)
+/public/monaco
+/public/engine

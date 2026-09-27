@@ -8,6 +8,8 @@ import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
 
+const AUTH_SERVICE_UNAVAILABLE = "Giriş hizmetine şu anda ulaşılamıyor. Lütfen biraz sonra tekrar deneyin.";
+
 function normalizedEmail(value: string) {
     return value.trim().toLowerCase();
 }
@@ -33,19 +35,37 @@ export const authOptions: NextAuthOptions = {
             async authorize(credentials) {
                 if (!credentials?.email || !credentials.password) return null;
                 const email = normalizedEmail(credentials.email);
-                const rate = await enforceRateLimit(`login:${email}`, 10, 15 * 60_000);
-                if (!rate.allowed) return null;
+                let rate: Awaited<ReturnType<typeof enforceRateLimit>>;
+                try {
+                    rate = await enforceRateLimit(`login:${email}`, 10, 15 * 60_000);
+                } catch {
+                    // Thrown messages are forwarded to the login page as `?error=`,
+                    // so a configuration outage no longer looks like a wrong password.
+                    throw new Error(AUTH_SERVICE_UNAVAILABLE);
+                }
+                if (!rate.allowed) {
+                    throw new Error(`Çok fazla giriş denemesi. Lütfen ${Math.ceil(rate.retryAfterSeconds / 60)} dakika sonra tekrar deneyin.`);
+                }
 
-                const user = await getServerDocument<{
+                let user: {
                     username?: string;
                     avatarUrl?: string;
                     suspended?: boolean;
                     banned?: boolean;
                     password?: string;
-                }>(`users/${email}`);
-                if (!user || user.suspended || user.banned) return null;
+                } | null;
+                let credential: { passwordHash?: string } | null;
+                try {
+                    [user, credential] = await Promise.all([
+                        getServerDocument<NonNullable<typeof user>>(`users/${email}`),
+                        getServerDocument<{ passwordHash?: string }>(`credentials/${email}`),
+                    ]);
+                } catch {
+                    throw new Error(AUTH_SERVICE_UNAVAILABLE);
+                }
+                if (!user) return null;
+                if (user.suspended || user.banned) throw new Error("Bu hesap askıya alınmış. Ayrıntılar için Geri Bildirim sayfasından itiraz edebilirsiniz.");
 
-                const credential = await getServerDocument<{ passwordHash?: string }>(`credentials/${email}`);
                 let valid = credential?.passwordHash
                     ? await verifyPassword(credentials.password, credential.passwordHash)
                     : false;
@@ -76,7 +96,9 @@ export const authOptions: NextAuthOptions = {
             },
         }),
     ],
-    pages: { signIn: "/login" },
+    // Errors (OAuth callback failures, suspended accounts…) are rendered by
+    // the login page instead of NextAuth's unstyled default error screen.
+    pages: { signIn: "/login", error: "/login" },
     session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60, updateAge: 24 * 60 * 60 },
     cookies: {
         sessionToken: {
@@ -93,16 +115,21 @@ export const authOptions: NextAuthOptions = {
         async signIn({ user, account }) {
             if (!user.email) return false;
             const email = normalizedEmail(user.email);
+            user.email = email;
             const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean }>(`users/${email}`);
-            if (existing?.suspended || existing?.banned) return false;
+            if (existing?.suspended || existing?.banned) return "/login?error=AccountSuspended";
             if (account?.provider === "google") {
                 const existingProfile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
+                const fallbackName = user.name || email.split("@")[0];
+                // Only fill profile fields that are still empty: previously every
+                // Google sign-in overwrote the username/avatar chosen in settings.
+                const missing = (key: string) => !existingProfile || !existingProfile[key];
                 const profile = {
                     email,
-                    username: user.name || email.split("@")[0],
-                    avatarUrl: user.image || "",
-                    nickname: user.name || email.split("@")[0],
-                    nicknameTag: existingProfile ? undefined : String(randomInt(1000, 10000)),
+                    username: missing("username") ? fallbackName : undefined,
+                    avatarUrl: missing("avatarUrl") ? (user.image || "") : undefined,
+                    nickname: missing("nickname") ? fallbackName : undefined,
+                    nicknameTag: missing("nicknameTag") ? String(randomInt(1000, 10000)) : undefined,
                     publicProfile: existingProfile ? undefined : true,
                     publicProjects: existingProfile ? undefined : true,
                     updatedAt: new Date(),
@@ -110,7 +137,7 @@ export const authOptions: NextAuthOptions = {
                 await patchServerDocument(`public_profiles/${email}`, profile);
                 await patchServerDocument(`users/${email}`, {
                     ...profile,
-                    provider: "google",
+                    provider: existing ? undefined : "google",
                     lastLoginAt: new Date(),
                     createdAt: existing ? undefined : new Date(),
                 });
@@ -119,10 +146,17 @@ export const authOptions: NextAuthOptions = {
         },
         async jwt({ token, user }) {
             if (user) token.id = user.id || user.email;
+            // Firestore rules compare against the lower-cased e-mail carried by
+            // the Firebase token; mixed-case Google addresses used to make every
+            // client write fail with permission-denied.
+            if (typeof token.email === "string") token.email = normalizedEmail(token.email);
             return token;
         },
         async session({ session, token }) {
-            if (session.user) (session.user as typeof session.user & { id?: string }).id = String(token.id || token.sub || "");
+            if (session.user) {
+                (session.user as typeof session.user & { id?: string }).id = String(token.id || token.sub || "");
+                if (session.user.email) session.user.email = normalizedEmail(session.user.email);
+            }
             return session;
         },
         async redirect({ url, baseUrl }) {

@@ -1,44 +1,22 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useTheme } from "@/lib/theme";
 
-export default function ThemeToggle() {
-    const [theme, setTheme] = useState<"light" | "dark">("dark");
-
-    useEffect(() => {
-        // Check local storage or system preference
-        const storedTheme = localStorage.getItem("theme");
-        if (storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-            // One-time hydration of the persisted client-only theme.
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setTheme("dark");
-            document.documentElement.classList.add("dark");
-        } else {
-            setTheme("light");
-            document.documentElement.classList.remove("dark");
-        }
-    }, []);
-
-    const toggleTheme = () => {
-        if (theme === "dark") {
-            setTheme("light");
-            document.documentElement.classList.remove("dark");
-            localStorage.setItem("theme", "light");
-        } else {
-            setTheme("dark");
-            document.documentElement.classList.add("dark");
-            localStorage.setItem("theme", "dark");
-        }
-    };
+export default function ThemeToggle({ className = "" }: { className?: string }) {
+    const { theme, toggle } = useTheme();
+    const dark = theme === "dark";
 
     return (
         <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors"
-            aria-label="Toggle Theme"
+            type="button"
+            onClick={toggle}
+            className={`relative grid h-9 w-9 place-items-center rounded-xl text-zinc-600 transition hover:bg-zinc-900/5 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-white ${className}`}
+            aria-label={dark ? "Açık temaya geç" : "Koyu temaya geç"}
+            title={dark ? "Açık tema" : "Koyu tema"}
         >
-            {theme === "dark" ? <Sun className="w-5 h-5 text-white" /> : <Moon className="w-5 h-5 text-black" />}
+            <Sun className={`h-[18px] w-[18px] transition-all duration-300 ${dark ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"}`} />
+            <Moon className={`absolute h-[18px] w-[18px] transition-all duration-300 ${dark ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"}`} />
         </button>
     );
 }
