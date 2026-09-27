@@ -42,12 +42,14 @@ export async function GET() {
     if (!activeSession) return NextResponse.json({ error: "Etkin oturum gerekli." }, { status: 401 });
     const { email } = activeSession;
 
-    const [user, projects, gameProjects, mediaPosts, groups] = await Promise.all([
+    const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments] = await Promise.all([
         getServerDocument<Record<string, unknown>>(`users/${email}`),
         queryServerCollection<Record<string, unknown>>("projects", "email", "EQUAL", email),
         queryServerCollection<Record<string, unknown>>("game_projects", "ownerEmail", "EQUAL", email),
         queryServerCollection<Record<string, unknown>>("media_posts", "ownerEmail", "EQUAL", email),
         queryServerCollection<Record<string, unknown>>("groups", "members", "ARRAY_CONTAINS", email),
+        queryServerCollection<Record<string, unknown>>("arcade_games", "ownerEmail", "EQUAL", email).catch(() => []),
+        queryServerCollection<Record<string, unknown>>("news_comments", "authorEmail", "EQUAL", email).catch(() => []),
     ]);
     const exportedProjects = await Promise.all(projects.map(async (project) => ({
         ...publicAccountData(project),
@@ -66,6 +68,8 @@ export async function GET() {
         user: publicAccountData(user),
         projects: exportedProjects,
         gameProjects: exportedGameProjects,
+        arcadeGames: arcadeGames.map((game) => ({ ...publicAccountData(game), id: game._id })),
+        newsComments: newsComments.map((comment) => publicAccountData(comment)),
         mediaPosts: mediaPosts.map((post) => publicAccountData(post)),
         groups: groups.map((group) => publicAccountData(group)),
         exportedAt: new Date().toISOString(),
@@ -108,6 +112,16 @@ export async function DELETE(request: NextRequest) {
         await deleteCollection(`game_projects/${project._id}/scripts`);
         await deleteServerDocument(project._path);
     }
+
+    const arcadeGames = await queryServerCollection<Record<string, unknown>>("arcade_games", "ownerEmail", "EQUAL", email).catch(() => []);
+    for (const game of arcadeGames) {
+        const likes = await queryServerCollection<Record<string, unknown>>("arcade_likes", "gameId", "EQUAL", game._id).catch(() => []);
+        for (const like of likes) await deleteServerDocument(like._path);
+        await deleteServerDocument(game._path);
+    }
+
+    const newsComments = await queryServerCollection<Record<string, unknown>>("news_comments", "authorEmail", "EQUAL", email).catch(() => []);
+    for (const comment of newsComments) await deleteServerDocument(comment._path);
 
     const mediaPosts = await queryServerCollection<Record<string, unknown>>("media_posts", "ownerEmail", "EQUAL", email);
     for (const post of mediaPosts) {

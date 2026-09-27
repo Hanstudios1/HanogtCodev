@@ -81,6 +81,32 @@ service cloud.firestore {
       }
     }
 
+    // Published games, likes, news comments and the AI arena are served by
+    // rate-limited API routes only (validation, moderation, privacy).
+    match /arcade_games/{gameId} {
+      allow read, write: if false;
+    }
+
+    match /arcade_likes/{likeId} {
+      allow read, write: if false;
+    }
+
+    match /news_comments/{commentId} {
+      allow read, write: if false;
+    }
+
+    match /news_cache/{cacheId} {
+      allow read, write: if false;
+    }
+
+    match /arena_votes/{voteId} {
+      allow read, write: if false;
+    }
+
+    match /arena_stats/{modelId} {
+      allow read, write: if false;
+    }
+
     match /groups/{groupId} {
       allow read: if signedIn() && email() in resource.data.members;
       allow write: if false;
