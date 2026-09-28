@@ -11,7 +11,7 @@ interface ConsoleProps {
 }
 
 export default function Console({ output, isRunning, onClear }: ConsoleProps) {
-    const { t } = useI18n();
+    const { t, tx } = useI18n();
     const [activeTab, setActiveTab] = useState<"output" | "details">("output");
 
     return (
@@ -21,7 +21,7 @@ export default function Console({ output, isRunning, onClear }: ConsoleProps) {
                     <Terminal className="h-4 w-4" />{t("output") || "Çıktı"}
                 </button>
                 <button onClick={() => setActiveTab("details")} className={`flex items-center gap-2 border-b-2 px-4 py-2 transition-colors ${activeTab === "details" ? "border-blue-500 bg-zinc-700/50 text-white" : "border-transparent text-zinc-400 hover:text-zinc-200"}`}>
-                    <ListTree className="h-4 w-4" />Çalıştırma bilgisi
+                    <ListTree className="h-4 w-4" />{tx({ TR: "Çalıştırma bilgisi", EN: "Run info" })}
                 </button>
                 <div className="flex-1" />
                 <button onClick={onClear} className="mr-2 p-2 text-zinc-500 transition-colors hover:bg-zinc-700 hover:text-zinc-300" title={t("delete") || "Temizle"}><Trash2 className="h-4 w-4" /></button>
@@ -29,8 +29,8 @@ export default function Console({ output, isRunning, onClear }: ConsoleProps) {
 
             <div className="min-h-0 flex-1 overflow-auto bg-zinc-950 p-4 text-zinc-300">
                 {activeTab === "output" ? (
-                    isRunning ? <div className="flex items-center gap-2 text-yellow-500"><StopCircle className="h-4 w-4 animate-pulse" />İzole çalıştırıcı yanıtı bekleniyor…</div>
-                        : output.length === 0 ? <span className="text-zinc-600 italic">Kodunuzu çalıştırdığınızda gerçek sunucu çıktısı burada görüntülenir.</span>
+                    isRunning ? <div className="flex items-center gap-2 text-yellow-500"><StopCircle className="h-4 w-4 animate-pulse" />{tx({ TR: "İzole çalıştırıcı yanıtı bekleniyor…", EN: "Waiting for the isolated runner…" })}</div>
+                        : output.length === 0 ? <span className="text-zinc-600 italic">{tx({ TR: "Kodunuzu çalıştırdığınızda gerçek sunucu çıktısı burada görüntülenir.", EN: "When you run your code, the real server output appears here." })}</span>
                             : output.map((line, index) => <div key={`${index}-${line.slice(0, 20)}`} className={`whitespace-pre-wrap pb-1 ${line.startsWith("Error") ? "text-red-400" : line.startsWith(">") ? "text-blue-400" : "text-zinc-300"}`}>{line || " "}</div>)
                 ) : (
                     <div className="space-y-4 font-sans text-sm leading-6 text-zinc-400">

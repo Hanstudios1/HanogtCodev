@@ -1,6 +1,7 @@
 "use client";
 
 import OptimizedImage from "@/components/OptimizedImage";
+import { useI18n, type Copy } from "@/lib/i18n";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -31,8 +32,17 @@ export function useVoiceCall() {
     return useContext(VoiceCallContext);
 }
 
+/** Error codes raised inside call callbacks; they are translated while rendering. */
+const CALL_ERRORS: Record<string, Copy> = {
+    "call:ice": { TR: "Arama bağlantısı hazırlanamadı.", EN: "The call connection couldn't be prepared." },
+    "call:start": { TR: "Arama başlatılamadı.", EN: "The call couldn't be started." },
+    "call:inactive": { TR: "Arama artık etkin değil.", EN: "This call is no longer active." },
+    "call:answer": { TR: "Arama yanıtlanamadı.", EN: "The call couldn't be answered." },
+};
+
 export default function VoiceCallProvider({ children }: { children: React.ReactNode }) {
     const { data: session } = useSession();
+    const { tx } = useI18n();
     const email = session?.user?.email?.toLowerCase() || "";
     const [status, setStatus] = useState<CallStatus>("idle");
     const [peer, setPeer] = useState<CallPeer | null>(null);
@@ -91,7 +101,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
 
     const getIceServers = async () => {
         const response = await fetch("/api/calls/ice", { method: "POST", headers: { "Content-Type": "application/json" } });
-        if (!response.ok) throw new Error("Arama bağlantısı hazırlanamadı.");
+        if (!response.ok) throw new Error("call:ice");
         const data = await response.json() as { iceServers: RTCIceServer[]; turnConfigured: boolean };
         setTurnConfigured(data.turnConfigured);
         return data.iceServers;
@@ -198,7 +208,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
             });
             watchCall(id, connection, "caller");
         } catch (callError) {
-            setError(callError instanceof Error ? callError.message : "Arama başlatılamadı.");
+            setError(callError instanceof Error && callError.message ? callError.message : "call:start");
             await deleteCallArtifacts(id);
             resetLocalCall();
         }
@@ -210,7 +220,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
         setStatus("connecting");
         try {
             const snapshot = await getDoc(doc(db, "calls", callId));
-            if (!snapshot.exists() || !snapshot.data().offer) throw new Error("Arama artık etkin değil.");
+            if (!snapshot.exists() || !snapshot.data().offer) throw new Error("call:inactive");
             const iceServers = await getIceServers();
             const connection = await attachConnection(callId, "callee", iceServers);
             await connection.setRemoteDescription(new RTCSessionDescription(snapshot.data().offer));
@@ -223,7 +233,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
             });
             watchCall(callId, connection, "callee");
         } catch (callError) {
-            setError(callError instanceof Error ? callError.message : "Arama yanıtlanamadı.");
+            setError(callError instanceof Error && callError.message ? callError.message : "call:answer");
             await endCall();
         }
     };
@@ -296,33 +306,33 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
             {children}
             <audio ref={remoteAudioRef} autoPlay playsInline />
             {status !== "idle" && peer && (
-                <div className="fixed inset-0 z-[140] flex items-center justify-center bg-zinc-950/75 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-label="Sesli arama">
+                <div className="fixed inset-0 z-[140] flex items-center justify-center bg-zinc-950/75 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-label={tx({ TR: "Sesli arama", EN: "Voice call" })}>
                     <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-zinc-900 p-7 text-center text-white shadow-2xl">
-                        <button onClick={() => void endCall()} className="float-right rounded-full p-2 text-zinc-400 hover:bg-white/10 hover:text-white" aria-label="Aramayı kapat"><X className="h-5 w-5" /></button>
+                        <button onClick={() => void endCall()} className="float-right rounded-full p-2 text-zinc-400 hover:bg-white/10 hover:text-white" aria-label={tx({ TR: "Aramayı kapat", EN: "Close call" })}><X className="h-5 w-5" /></button>
                         <div className="mx-auto mt-7 h-24 w-24 overflow-hidden rounded-full border-4 border-blue-500/30 bg-gradient-to-br from-blue-500 to-violet-600 shadow-xl shadow-blue-500/20">
                             {peer.avatarUrl ? <OptimizedImage src={peer.avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <div className="flex h-full w-full items-center justify-center text-3xl font-bold">{peer.username.charAt(0).toUpperCase()}</div>}
                         </div>
                         <h2 className="mt-5 truncate text-xl font-bold">{peer.username}</h2>
                         <p className="mt-1 text-sm text-zinc-400">
-                            {status === "incoming" ? "Gelen sesli arama" : status === "calling" ? "Aranıyor…" : status === "connecting" ? "Bağlanıyor…" : duration}
+                            {status === "incoming" ? tx({ TR: "Gelen sesli arama", EN: "Incoming voice call" }) : status === "calling" ? tx({ TR: "Aranıyor…", EN: "Calling…" }) : status === "connecting" ? tx({ TR: "Bağlanıyor…", EN: "Connecting…" }) : duration}
                         </p>
-                        {error && <p className="mt-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
-                        {!turnConfigured && <p className="mt-3 text-xs text-amber-300">Bazı ağlarda bağlantı için TURN sunucusu gerekebilir.</p>}
+                        {error && <p className="mt-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{CALL_ERRORS[error] ? tx(CALL_ERRORS[error]) : error}</p>}
+                        {!turnConfigured && <p className="mt-3 text-xs text-amber-300">{tx({ TR: "Bazı ağlarda bağlantı için TURN sunucusu gerekebilir.", EN: "Some networks may need a TURN server to connect." })}</p>}
                         <div className="mt-7 flex items-center justify-center gap-4">
                             {status === "incoming" ? (
                                 <>
-                                    <button onClick={() => void endCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 hover:bg-red-600" aria-label="Reddet"><PhoneOff className="h-6 w-6" /></button>
-                                    <button onClick={() => void acceptCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500 hover:bg-green-600" aria-label="Yanıtla"><Phone className="h-6 w-6" /></button>
+                                    <button onClick={() => void endCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 hover:bg-red-600" aria-label={tx({ TR: "Reddet", EN: "Decline" })}><PhoneOff className="h-6 w-6" /></button>
+                                    <button onClick={() => void acceptCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500 hover:bg-green-600" aria-label={tx({ TR: "Yanıtla", EN: "Answer" })}><Phone className="h-6 w-6" /></button>
                                 </>
                             ) : (
                                 <>
-                                    <button onClick={toggleMute} className={`flex h-12 w-12 items-center justify-center rounded-full ${muted ? "bg-amber-500" : "bg-white/10 hover:bg-white/20"}`} aria-label={muted ? "Mikrofonu aç" : "Mikrofonu kapat"}>{muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}</button>
-                                    <button onClick={() => void endCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 hover:bg-red-600" aria-label="Aramayı bitir"><PhoneOff className="h-6 w-6" /></button>
+                                    <button onClick={toggleMute} className={`flex h-12 w-12 items-center justify-center rounded-full ${muted ? "bg-amber-500" : "bg-white/10 hover:bg-white/20"}`} aria-label={muted ? tx({ TR: "Mikrofonu aç", EN: "Unmute microphone" }) : tx({ TR: "Mikrofonu kapat", EN: "Mute microphone" })}>{muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}</button>
+                                    <button onClick={() => void endCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 hover:bg-red-600" aria-label={tx({ TR: "Aramayı bitir", EN: "End call" })}><PhoneOff className="h-6 w-6" /></button>
                                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10"><Volume2 className="h-5 w-5" /></div>
                                 </>
                             )}
                         </div>
-                        <div className="mt-7 flex items-center justify-center gap-1.5 text-xs text-zinc-500"><ShieldCheck className="h-3.5 w-3.5" />Ses kaydedilmez; geçici bağlantı verisi arama bitince silinir.</div>
+                        <div className="mt-7 flex items-center justify-center gap-1.5 text-xs text-zinc-500"><ShieldCheck className="h-3.5 w-3.5" />{tx({ TR: "Ses kaydedilmez; geçici bağlantı verisi arama bitince silinir.", EN: "Audio is never recorded; temporary connection data is deleted when the call ends." })}</div>
                     </div>
                 </div>
             )}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCw, Maximize2, Minimize2, Smartphone, Monitor } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface TestPreviewProps {
     code: string;
@@ -10,6 +11,7 @@ interface TestPreviewProps {
 }
 
 export default function TestPreview({ code, language, cssCode }: TestPreviewProps) {
+    const { tx } = useI18n();
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
@@ -118,14 +120,14 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
             {/* Toolbar */}
             <div className="flex items-center justify-between px-3 py-2 bg-zinc-800 border-b border-zinc-700">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-400 font-medium">Canlı Önizleme</span>
+                    <span className="text-xs text-zinc-400 font-medium">{tx({ TR: "Canlı Önizleme", EN: "Live preview" })}</span>
                     <span className="text-xs px-2 py-0.5 bg-green-600 text-white rounded">LIVE</span>
                 </div>
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => setViewMode(viewMode === "desktop" ? "mobile" : "desktop")}
                         className="p-1.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white"
-                        title={viewMode === "desktop" ? "Mobil Görünüm" : "Masaüstü Görünüm"}
+                        title={viewMode === "desktop" ? tx({ TR: "Mobil Görünüm", EN: "Mobile view" }) : tx({ TR: "Masaüstü Görünüm", EN: "Desktop view" })}
                     >
                         {viewMode === "desktop" ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
                     </button>
@@ -139,7 +141,7 @@ export default function TestPreview({ code, language, cssCode }: TestPreviewProp
                     <button
                         onClick={() => setIsFullscreen(!isFullscreen)}
                         className="p-1.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white"
-                        title={isFullscreen ? "Küçült" : "Tam Ekran"}
+                        title={isFullscreen ? tx({ TR: "Küçült", EN: "Exit fullscreen" }) : tx({ TR: "Tam Ekran", EN: "Fullscreen" })}
                     >
                         {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                     </button>

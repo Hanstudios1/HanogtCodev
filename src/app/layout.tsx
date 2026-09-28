@@ -4,6 +4,7 @@ import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import Provider from "@/components/Provider";
 import { I18nProvider } from "@/lib/i18n";
+import SkipLink from "@/components/SkipLink";
 import VoiceCallProvider from "@/components/VoiceCallProvider";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -60,9 +61,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
             </head>
             <body className="min-h-dvh antialiased">
-                <a href="#main-content" className="skip-link">İçeriğe geç</a>
                 <Provider>
                     <I18nProvider>
+                        <SkipLink />
                         <VoiceCallProvider>
                             {children}
                         </VoiceCallProvider>
