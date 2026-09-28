@@ -385,7 +385,7 @@ export default function AccountSettingsPage() {
             onClick={onToggle}
             className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
         >
-            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6" : "translate-x-0.5"}`} />
+            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6 rtl:-translate-x-6" : "translate-x-0.5 rtl:-translate-x-0.5"}`} />
         </button>
     );
 
@@ -415,7 +415,7 @@ export default function AccountSettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white">
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
             <Header />
 
             <main className="pt-24 px-6 max-w-2xl mx-auto pb-12">
@@ -424,7 +424,7 @@ export default function AccountSettingsPage() {
                     onClick={() => router.back()}
                     className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white mb-6 transition-colors"
                 >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
                     {t("back") || "Geri"}
                 </button>
 
@@ -477,7 +477,7 @@ export default function AccountSettingsPage() {
                                         {username?.charAt(0) || "U"}
                                     </div>
                                 )}
-                                <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
+                                <label className="absolute bottom-0 end-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
                                     <Camera className="w-4 h-4 text-white" />
                                 </label>
                             </div>
@@ -511,7 +511,7 @@ export default function AccountSettingsPage() {
                         {/* Nickname + Tag */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <Hash className="w-3.5 h-3.5 inline mr-1" />
+                                <Hash className="w-3.5 h-3.5 inline me-1" />
                                 {t("nickname_tag") || "Takma Ad & Etiket"}
                             </label>
                             <p className="text-xs text-zinc-400 mb-2">{t("nickname_tag_desc") || "Arkadaş eklemek için kullanılır (ör: Oyuncu#1234)"}</p>
@@ -534,7 +534,7 @@ export default function AccountSettingsPage() {
                         {/* Custom Status */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <MessageCircle className="w-3.5 h-3.5 inline mr-1" />
+                                <MessageCircle className="w-3.5 h-3.5 inline me-1" />
                                 {t("custom_status") || "Özel Durum"}
                             </label>
                             <div className="flex gap-2">
@@ -573,13 +573,13 @@ export default function AccountSettingsPage() {
                                 rows={3}
                                 className="w-full px-4 py-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                             />
-                            <div className="text-right text-xs text-zinc-400 mt-1">{bio.length}/200</div>
+                            <div className="text-end text-xs text-zinc-400 mt-1">{bio.length}/200</div>
                         </div>
 
                         {/* Banner URL */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <ImageIcon className="w-3.5 h-3.5 inline mr-1" />
+                                <ImageIcon className="w-3.5 h-3.5 inline me-1" />
                                 {t("banner_url") || "Banner URL"}
                             </label>
                             <input
@@ -594,7 +594,7 @@ export default function AccountSettingsPage() {
                         {/* Accent Color */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-2">
-                                <Palette className="w-3.5 h-3.5 inline mr-1" />
+                                <Palette className="w-3.5 h-3.5 inline me-1" />
                                 {t("accent_color") || "Profil Vurgu Rengi"}
                             </label>
                             <div className="flex gap-2 flex-wrap">
@@ -612,7 +612,7 @@ export default function AccountSettingsPage() {
                         {/* Favorite Languages */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <Star className="w-3.5 h-3.5 inline mr-1" />
+                                <Star className="w-3.5 h-3.5 inline me-1" />
                                 {t("favorite_langs") || "Favori Diller"} ({favoriteLangs.length}/5)
                             </label>
                             <p className="text-xs text-zinc-400 mb-2">{t("favorite_langs_desc") || "Profilinizde gösterilecek en fazla 5 programlama dili seçin"}</p>
@@ -789,7 +789,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-zinc-400" />
                                 <span>{t("email_notifications") || "E-posta Bildirimleri"}</span>
@@ -800,7 +800,7 @@ export default function AccountSettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between py-4">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 <Megaphone className="w-4 h-4 text-zinc-400" />
                                 <span>{t("new_feature_alerts") || "Yeni Özellik Duyuruları"}</span>
@@ -848,7 +848,7 @@ export default function AccountSettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between py-4">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-zinc-400" />
                                 <span>{t("timezone") || "Saat Dilimi"}</span>
@@ -875,7 +875,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 {publicProfile ? <Eye className="w-4 h-4 text-zinc-400" /> : <EyeOff className="w-4 h-4 text-zinc-400" />}
                                 <span>{t("public_profile") || "Herkese Açık Profil"}</span>
@@ -886,7 +886,7 @@ export default function AccountSettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("online_status") || "Çevrimiçi Durumu"}</span>
                             <span className="text-sm text-zinc-500">{t("online_status_desc") || "Diğer kullanıcılara çevrimiçi olduğunuzu gösterin"}</span>
                         </div>
@@ -930,7 +930,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("export_data") || "Verileri Dışa Aktar"}</span>
                             <span className="text-sm text-zinc-500">{t("export_data_desc") || "Tüm projelerinizi ve ayarlarınızı JSON olarak indirin"}</span>
                         </div>
@@ -945,7 +945,7 @@ export default function AccountSettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between py-4">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("reset_editor") || "Editör Ayarlarını Sıfırla"}</span>
                             <span className="text-sm text-zinc-500">{t("reset_editor_desc") || "Editör tercihlerini varsayılana döndür"}</span>
                         </div>
@@ -1182,7 +1182,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("sign_out") || "Oturumu Kapat"}</span>
                             <span className="text-sm text-zinc-500">{t("sign_out_desc") || "Hesabınızdan güvenli çıkış yapın"}</span>
                         </div>

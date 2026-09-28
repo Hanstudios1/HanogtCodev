@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Settings, ArrowLeft, Type, Palette, Code, Terminal, Keyboard, Moon, Sun, Sparkles, MousePointer } from "lucide-react";
+import Header from "@/components/Header";
 import { useI18n } from "@/lib/i18n";
 
 function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
@@ -13,7 +14,7 @@ function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () =>
             aria-pressed={enabled}
             className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
         >
-            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6" : "translate-x-0.5"}`} />
+            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6 rtl:-translate-x-6" : "translate-x-0.5 rtl:-translate-x-0.5"}`} />
         </button>
     );
 }
@@ -21,7 +22,7 @@ function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () =>
 function SettingRow({ label, desc, children, border = true }: { label: string; desc?: string; children: React.ReactNode; border?: boolean }) {
     return (
         <div className={`flex items-center justify-between py-4 ${border ? "border-b border-zinc-100 dark:border-zinc-800" : ""}`}>
-            <div className="pr-4">
+            <div className="pe-4">
                 <span className="block">{label}</span>
                 {desc && <span className="text-sm text-zinc-500">{desc}</span>}
             </div>
@@ -218,14 +219,15 @@ export default function EditorSettingsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white">
-            <main className="pt-8 px-6 max-w-2xl mx-auto pb-12">
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
+            <Header />
+            <main className="pt-24 px-6 max-w-2xl mx-auto pb-12">
                 {/* Back Button */}
                 <button
                     onClick={() => router.back()}
                     className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white mb-6 transition-colors"
                 >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
                     {t("back") || "Geri"}
                 </button>
 
@@ -507,7 +509,7 @@ export default function EditorSettingsPage() {
 
                     {/* Render Whitespace */}
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("render_whitespace") || "Boşlukları Göster"}</span>
                             <span className="text-sm text-zinc-500">{t("render_whitespace_desc") || "Boşluk ve tab karakterlerini görünür yap"}</span>
                         </div>
@@ -524,7 +526,7 @@ export default function EditorSettingsPage() {
 
                     {/* Auto Indent */}
                     <div className="flex items-center justify-between py-4">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("auto_indent") || "Otomatik Girinti"}</span>
                             <span className="text-sm text-zinc-500">{t("auto_indent_desc") || "Yeni satırda otomatik girinti"}</span>
                         </div>
