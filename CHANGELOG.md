@@ -1,5 +1,57 @@
 # Değişiklik Günlüğü
 
+## 0.1.0 — 2026-09-28
+
+Şimdiye kadarki en büyük güncelleme: canlı teknoloji haberleri, topluluk Arcade'i, baştan yazılan oyun motoru, yenilenen site arayüzü ve 30 dil.
+
+### Hanogt News
+
+- 23 kaynaktan RSS/Atom toplayan sunucu tarafı akış: önbellek, zaman aşımı, yinelenen haber temizliği ve kaynak durumu göstergesi.
+- Animasyonlu canlı akış: yeni haberler 75 saniyede bir düşer, son dakika bandı, kategori/dil filtreleri, arama (`/` kısayolu), gündem konuları ve "sonra oku" listesi.
+- Haber yorumları: giriş zorunlu, hız sınırlı; küfür, spam, bağlantı yığını ve kişisel veri (e-posta, telefon, T.C. kimlik no.) filtresi.
+- Yapay Zeka Arenası: asistanlar arasında ikili oylama; sıralama yalnızca gerçek topluluk oylarından Elo ile hesaplanır, dış sıralamalar kaynağıyla bağlantılanır.
+- Akış isteklerini bozan ASCII dışı User-Agent başlığı düzeltildi.
+
+### Hanogt Engine v2 ve Arcade
+
+- Şema v2 (sahneler, prefablar, dokular, script varlıkları, proje ayarları); v1 projeler otomatik taşınır.
+- HanogtScript sanal makinesi: C# ve C++ alt kümelerini tarayıcıda güvenli biçimde yorumlar (sınıflar, kalıtım, lambda, LINQ, coroutine, `std::vector`, komut bütçesiyle sonsuz döngü koruması, satır numaralı hatalar).
+- Unity benzeri yaşam döngüsü ve API'ler (Awake/Start/Update/FixedUpdate, coroutine, Instantiate/Destroy, Input, Physics, PlayerPrefs, SceneManager), OBB/SAT fiziği, raycast ve tetikleyiciler.
+- three.js tabanlı WebGL render: gölgeler, ışıklar, sis, parçacıklar, dönüşüm gizmoları; dokunmatik kontrollü oyun oynatıcısı.
+- Editör baştan yazıldı: hiyerarşi, Inspector, Proje/Asset paneli, Konsol, Monaco script editörü (canlı derleme hataları, API tamamlama), geri al/yinele, otomatik kayıt ve tek dosya HTML dışa aktarma.
+- Hazır şablonlar: 2D Platform, 3D Roll-a-Ball, Uzay Nişancısı, Tuğla Kırma.
+- Hanogt Arcade: oyun yayınlama (derleme ve güvenlik taraması), oynatma, tam ekran, beğeni, oynanma sayacı ve remiks; 17 bölümlük motor belgeleri.
+
+### Site arayüzü
+
+- Cam efektli sabit başlık, aktif sayfa göstergesi, kaydırma ilerleme çubuğu, mobil menü ve ortak alt bilgi.
+- Ana sayfa baştan tasarlandı: yazılan C# kodu, oynanabilir mini oyun, spot ışıklı kartlar, canlı haber önizlemesi.
+- Panel yenilendi: karşılama alanı, proje sayıları, Keşfet kısayolları, proje arama/sıralama; tüm metinler dile göre gösteriliyor ve sağdan sola dillerde aynalanıyor.
+- Kullanım kılavuzu etkileşimli Minecraft kitabına dönüştü: 9 bölüm, 25 sayfa, 3B sayfa çevirme, hotbar ile bölüm geçişi (1-9), başarım bildirimi; Hanogt News'in çalışma biçimi ayrıntılı anlatılıyor.
+
+### Hanogt Security
+
+- Güvenlik Merkezi (`/security`): tarayıcıda çalışan Kod Danışmanı (65+ kural, puan ve düzeltme önerileri), Parola Laboratuvarı (kırılma süresi tahmini, k-anonimlikle sızıntı kontrolü, güçlü parola üretici), Bağlantı Kontrolü (punycode/Kiril taklidi, sahte alan adları, kısaltıcılar) ve güvenlik kontrol listesi.
+- Security Bot v6: konu tanıma, yapıştırılan bağlantı ve kodun anında analizi, gizli anahtar uyarısı, öneri çipleri.
+- Sunucu korumasına disk silme, jeton hırsızı, yetki yükseltme, keylogger ve DoS aracı imzaları eklendi.
+
+### Diller
+
+- 10 yeni arayüz dili: Arapça (sağdan sola), Portekizce, İtalyanca, Ukraynaca, Endonezce, Vietnamca, Çekçe, Rumence, Macarca ve Özbekçe (toplam 30).
+- Aranabilir, bayraklı dil seçici; `<html lang>` ve `dir` seçilen dile göre ayarlanıyor.
+
+### Yasal metinler 3.0
+
+- Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları; Hanogt News, yapay zeka arenası, Arcade ve Güvenlik Merkezi dahil ayrıntılandırıldı.
+- Veri-amaç-hukuki sebep matrisi, alıcılar, çerez/depolama ve saklama süresi tabloları; sürüm geçmişi ve değişikliklerin kullanıcıya gösterilmesi.
+- Hesap dışa aktarma ve silme; Arcade beğenilerini, haber yorumlarını ve arena oy kayıtlarını da kapsıyor.
+
+### Düzeltmeler
+
+- Giriş kilidine yol açan oturum köprüsü sorunu, Google girişinde büyük harfli e-posta sorunu ve Hanogt Media yayımlama penceresi düzeltildi.
+- Monaco editörü CSP'ye takılmadan kendi alan adından yükleniyor; oturum yenilemesinde editör sekmelerinin sıfırlanması giderildi.
+- Panelde tüm dillerde görünen sabit Türkçe metinler kaldırıldı.
+
 ## 0.0.5 — 2026-09-04
 
 ### Hanogt Engine ve proje akışı
