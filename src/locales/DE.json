@@ -580,5 +580,6 @@
   "badge_speed_coder": "Speed-Coder",
   "badge_artist": "Künstler",
   "badge_pioneer": "Pionier",
-  "badge_community_star": "Community-Star"
+  "badge_community_star": "Community-Star",
+  "auth_error_network": "Der Anmeldeserver ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut."
 }

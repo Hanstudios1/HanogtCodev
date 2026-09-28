@@ -580,5 +580,6 @@
   "badge_speed_coder": "Lynkoder",
   "badge_artist": "Kunstner",
   "badge_pioneer": "Pioner",
-  "badge_community_star": "Fellesskapsstjerne"
+  "badge_community_star": "Fellesskapsstjerne",
+  "auth_error_network": "Får ikke kontakt med påloggingsserveren. Sjekk tilkoblingen og prøv igjen."
 }

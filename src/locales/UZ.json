@@ -566,5 +566,6 @@
   "badge_speed_coder": "Tezkor dasturchi",
   "badge_artist": "Rassom",
   "badge_pioneer": "Kashshof",
-  "badge_community_star": "Hamjamiyat yulduzi"
+  "badge_community_star": "Hamjamiyat yulduzi",
+  "auth_error_network": "Kirish serveriga ulanib boʻlmadi. Internet aloqasini tekshirib, qaytadan urinib koʻring."
 }

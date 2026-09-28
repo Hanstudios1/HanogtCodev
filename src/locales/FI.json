@@ -580,5 +580,6 @@
   "badge_speed_coder": "Pikakoodari",
   "badge_artist": "Taiteilija",
   "badge_pioneer": "Edelläkävijä",
-  "badge_community_star": "Yhteisön tähti"
+  "badge_community_star": "Yhteisön tähti",
+  "auth_error_network": "Kirjautumispalvelimeen ei saatu yhteyttä. Tarkista yhteytesi ja yritä uudelleen."
 }

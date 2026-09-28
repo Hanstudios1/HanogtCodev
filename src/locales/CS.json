@@ -566,5 +566,6 @@
   "badge_speed_coder": "Rychlý kodér",
   "badge_artist": "Umělec",
   "badge_pioneer": "Průkopník",
-  "badge_community_star": "Hvězda komunity"
+  "badge_community_star": "Hvězda komunity",
+  "auth_error_network": "Nepodařilo se spojit s přihlašovacím serverem. Zkontrolujte připojení a zkuste to znovu."
 }

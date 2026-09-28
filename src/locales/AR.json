@@ -566,5 +566,6 @@
   "badge_speed_coder": "مبرمج سريع",
   "badge_artist": "فنان",
   "badge_pioneer": "رائد",
-  "badge_community_star": "نجم المجتمع"
+  "badge_community_star": "نجم المجتمع",
+  "auth_error_network": "تعذّر الوصول إلى خادم تسجيل الدخول. تحقّق من اتصالك ثم حاول مرة أخرى."
 }

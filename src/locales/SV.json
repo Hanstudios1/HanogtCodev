@@ -580,5 +580,6 @@
   "badge_speed_coder": "Snabbkodare",
   "badge_artist": "Konstnär",
   "badge_pioneer": "Pionjär",
-  "badge_community_star": "Gemenskapsstjärna"
+  "badge_community_star": "Gemenskapsstjärna",
+  "auth_error_network": "Det gick inte att nå inloggningsservern. Kontrollera anslutningen och försök igen."
 }

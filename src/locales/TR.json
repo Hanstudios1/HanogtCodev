@@ -580,5 +580,6 @@
   "badge_speed_coder": "Hızlı Kodcu",
   "badge_artist": "Sanatçı",
   "badge_pioneer": "Öncü",
-  "badge_community_star": "Topluluk Yıldızı"
+  "badge_community_star": "Topluluk Yıldızı",
+  "auth_error_network": "Giriş sunucusuna ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin."
 }

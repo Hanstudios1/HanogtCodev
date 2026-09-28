@@ -580,5 +580,6 @@
   "badge_speed_coder": "Codeur éclair",
   "badge_artist": "Artiste",
   "badge_pioneer": "Pionnier",
-  "badge_community_star": "Star de la communauté"
+  "badge_community_star": "Star de la communauté",
+  "auth_error_network": "Impossible de joindre le serveur de connexion. Vérifie ta connexion et réessaie."
 }

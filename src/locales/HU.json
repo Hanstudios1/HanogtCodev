@@ -566,5 +566,6 @@
   "badge_speed_coder": "Villámkódoló",
   "badge_artist": "Művész",
   "badge_pioneer": "Úttörő",
-  "badge_community_star": "A közösség sztárja"
+  "badge_community_star": "A közösség sztárja",
+  "auth_error_network": "Nem sikerült elérni a bejelentkezési szervert. Ellenőrizd a kapcsolatot, és próbáld újra."
 }

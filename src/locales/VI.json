@@ -566,5 +566,6 @@
   "badge_speed_coder": "Lập trình tốc độ",
   "badge_artist": "Nghệ sĩ",
   "badge_pioneer": "Người tiên phong",
-  "badge_community_star": "Ngôi sao cộng đồng"
+  "badge_community_star": "Ngôi sao cộng đồng",
+  "auth_error_network": "Không thể kết nối tới máy chủ đăng nhập. Hãy kiểm tra kết nối rồi thử lại."
 }

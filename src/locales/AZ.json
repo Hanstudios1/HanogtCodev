@@ -580,5 +580,6 @@
   "badge_speed_coder": "Sürətli kodçu",
   "badge_artist": "Rəssam",
   "badge_pioneer": "Qabaqcıl",
-  "badge_community_star": "İcma ulduzu"
+  "badge_community_star": "İcma ulduzu",
+  "auth_error_network": "Giriş serverinə qoşulmaq mümkün olmadı. İnternet bağlantınızı yoxlayıb yenidən cəhd edin."
 }

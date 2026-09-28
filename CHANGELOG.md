@@ -53,6 +53,7 @@
 ### Düzeltmeler
 
 - Giriş kilidine yol açan oturum köprüsü sorunu, Google girişinde büyük harfli e-posta sorunu ve Hanogt Media yayımlama penceresi düzeltildi.
+- Giriş ve kayıt artık NextAuth'un ön sağlayıcı kontrolüne bağlı değil: `/api/auth/providers` bir an bile yanıt vermediğinde kullanıcı NextAuth'un "Error" sayfasına düşüyordu. İstekler doğrudan CSRF belirteciyle gönderiliyor, geçici ağ hataları bir kez yeniden deneniyor ve her hata giriş formunda kendi dilinde gösteriliyor.
 - Monaco editörü CSP'ye takılmadan kendi alan adından yükleniyor; oturum yenilemesinde editör sekmelerinin sıfırlanması giderildi.
 - Panelde tüm dillerde görünen sabit Türkçe metinler kaldırıldı.
 - Hesap Ayarları, Arkadaşlar ve Mesajlar sayfası yenilendiğinde oturum yüklenirken kullanıcıyı giriş sayfasına atma hatası giderildi.

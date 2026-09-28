@@ -4,9 +4,8 @@ import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Check, CheckCircle2, Eye, EyeOff, LoaderCircle, Lock, Mail, User } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
-import { safeCallbackPath } from "@/lib/auth-client";
+import { AUTH_NETWORK_ERROR, completeSignIn, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
 import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
 
 function passwordStrength(password: string) {
@@ -76,13 +75,13 @@ function SignupForm() {
                 return;
             }
             setSuccess(t("signup_success") || "Hesap oluşturuldu! Giriş yapılıyor...");
-            const loginResult = await signIn("credentials", { email: email.trim(), password, redirect: false, callbackUrl: callbackPath });
-            if (!loginResult || loginResult.error) {
-                router.push(`/login?callbackUrl=${encodeURIComponent(callbackPath)}`);
+            const loginError = await signInWithPassword(email.trim(), password, callbackPath);
+            if (loginError) {
+                // The account exists; let the login screen explain what went wrong.
+                router.push(`/login?callbackUrl=${encodeURIComponent(callbackPath)}&error=${encodeURIComponent(loginError)}`);
                 return;
             }
-            router.replace(callbackPath);
-            router.refresh();
+            completeSignIn(callbackPath);
         } catch {
             setError(t("signup_error") || "Hesap oluşturulamadı. Lütfen yeniden deneyin.");
         } finally {
@@ -96,7 +95,15 @@ function SignupForm() {
             subtitle={t("create_free_account") || "Hemen ücretsiz hesabını oluştur"}
             footer={<>{t("already_have_account") || "Zaten hesabın var mı?"} <Link href={`/login${callbackPath !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackPath)}` : ""}`} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{t("login") || "Giriş Yap"}</Link></>}
         >
-            <GoogleButton label={t("signup_google") || "Google ile Üye Ol"} onClick={() => { setGoogleLoading(true); void signIn("google", { callbackUrl: callbackPath }); }} disabled={googleLoading} />
+            <GoogleButton label={t("signup_google") || "Google ile Üye Ol"} onClick={() => {
+                setGoogleLoading(true);
+                setError("");
+                void startGoogleSignIn(callbackPath).then((code) => {
+                    if (!code) return;
+                    setError(code === AUTH_NETWORK_ERROR ? t("auth_error_network") : (t("auth_error_oauth") || "Google ile giriş tamamlanamadı. Lütfen tekrar deneyin."));
+                    setGoogleLoading(false);
+                });
+            }} disabled={googleLoading} />
             <Divider label={t("or") || "veya"} />
 
             {error && <div role="alert" className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-sm leading-5 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><span>{error}</span></div>}

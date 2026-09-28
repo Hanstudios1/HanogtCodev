@@ -580,5 +580,6 @@
   "badge_speed_coder": "Жылдам кодер",
   "badge_artist": "Суретші",
   "badge_pioneer": "Бастаушы",
-  "badge_community_star": "Қауымдастық жұлдызы"
+  "badge_community_star": "Қауымдастық жұлдызы",
+  "auth_error_network": "Кіру серверіне қосылу мүмкін болмады. Интернет байланысын тексеріп, қайта көріңіз."
 }

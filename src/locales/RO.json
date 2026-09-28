@@ -566,5 +566,6 @@
   "badge_speed_coder": "Programator rapid",
   "badge_artist": "Artist",
   "badge_pioneer": "Pionier",
-  "badge_community_star": "Vedeta comunității"
+  "badge_community_star": "Vedeta comunității",
+  "auth_error_network": "Serverul de autentificare nu poate fi contactat. Verifică conexiunea și încearcă din nou."
 }

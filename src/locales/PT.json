@@ -566,5 +566,6 @@
   "badge_speed_coder": "Programador veloz",
   "badge_artist": "Artista",
   "badge_pioneer": "Pioneiro",
-  "badge_community_star": "Estrela da comunidade"
+  "badge_community_star": "Estrela da comunidade",
+  "auth_error_network": "Não foi possível acessar o servidor de login. Verifique sua conexão e tente novamente."
 }

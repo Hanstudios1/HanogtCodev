@@ -566,5 +566,6 @@
   "badge_speed_coder": "Pengode kilat",
   "badge_artist": "Seniman",
   "badge_pioneer": "Perintis",
-  "badge_community_star": "Bintang komunitas"
+  "badge_community_star": "Bintang komunitas",
+  "auth_error_network": "Tidak dapat terhubung ke server masuk. Periksa koneksi Anda lalu coba lagi."
 }

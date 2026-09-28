@@ -580,5 +580,6 @@
   "badge_speed_coder": "तेज़ कोडर",
   "badge_artist": "कलाकार",
   "badge_pioneer": "अग्रणी",
-  "badge_community_star": "कम्युनिटी स्टार"
+  "badge_community_star": "कम्युनिटी स्टार",
+  "auth_error_network": "लॉगिन सर्वर से कनेक्ट नहीं हो सका। अपना इंटरनेट कनेक्शन जाँचें और फिर से कोशिश करें।"
 }

@@ -580,5 +580,6 @@
   "badge_speed_coder": "Szybki programista",
   "badge_artist": "Artysta",
   "badge_pioneer": "Pionier",
-  "badge_community_star": "Gwiazda społeczności"
+  "badge_community_star": "Gwiazda społeczności",
+  "auth_error_network": "Nie udało się połączyć z serwerem logowania. Sprawdź połączenie i spróbuj ponownie."
 }

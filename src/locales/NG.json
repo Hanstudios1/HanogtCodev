@@ -580,5 +580,6 @@
   "badge_speed_coder": "Speed Coder",
   "badge_artist": "Artist",
   "badge_pioneer": "Pioneer",
-  "badge_community_star": "Community Star"
+  "badge_community_star": "Community Star",
+  "auth_error_network": "We no fit reach di login server. Check your network, then try again."
 }

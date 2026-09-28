@@ -2,18 +2,19 @@
 
 import Link from "next/link";
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
 import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
-import { safeCallbackPath } from "@/lib/auth-client";
+import { AUTH_NETWORK_ERROR, completeSignIn, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
 
 function useAuthErrorMessage() {
     const { t } = useI18n();
     return (code: string | null) => {
         if (!code) return "";
         switch (code) {
+            case AUTH_NETWORK_ERROR:
+                return t("auth_error_network");
             case "CredentialsSignin":
                 return t("auth_error_credentials") || "E-posta veya şifre hatalı. Google ile kayıt olduysanız “Google ile devam et” seçeneğini kullanın.";
             case "OAuthSignin":
@@ -31,17 +32,15 @@ function useAuthErrorMessage() {
                 return t("auth_error_config") || "Giriş hizmeti şu anda yapılandırılmamış. Lütfen daha sonra tekrar deneyin.";
             case "SessionRequired":
                 return t("auth_error_session") || "Bu sayfayı görmek için giriş yapın.";
-            case "Default":
-                return t("auth_error_generic") || "Giriş sırasında bir sorun oluştu. Lütfen tekrar deneyin.";
             default:
-                // Messages thrown by our own authorize() (rate limits, outages) arrive verbatim.
-                return code.length <= 220 ? code : (t("auth_error_generic") || "Giriş sırasında bir sorun oluştu. Lütfen tekrar deneyin.");
+                // Messages thrown by our own authorize() (rate limits, outages) are sentences and
+                // arrive verbatim; unknown NextAuth codes ("Default", "undefined"…) get the generic text.
+                return /\s/.test(code) && code.length <= 220 ? code : (t("auth_error_generic") || "Giriş sırasında bir sorun oluştu. Lütfen tekrar deneyin.");
         }
     };
 }
 
 function LoginForm() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const { t, tx } = useI18n();
     const describeError = useAuthErrorMessage();
@@ -51,30 +50,32 @@ function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState(() => describeError(searchParams.get("error")));
+    // Store the code, not the text, so the message follows language changes.
+    const [errorCode, setErrorCode] = useState<string | null>(() => searchParams.get("error"));
+    const error = describeError(errorCode);
 
     const handleCredentialsLogin = async (event: React.FormEvent) => {
         event.preventDefault();
         setLoading(true);
-        setError("");
-        try {
-            const result = await signIn("credentials", { email: email.trim(), password, redirect: false, callbackUrl: callbackPath });
-            if (!result || result.error) {
-                setError(describeError(result?.error || "Default"));
-                return;
-            }
-            router.replace(callbackPath);
-            router.refresh();
-        } catch {
-            setError(describeError("Default"));
-        } finally {
+        setErrorCode(null);
+        const code = await signInWithPassword(email.trim(), password, callbackPath);
+        if (code) {
+            setErrorCode(code);
             setLoading(false);
+            return;
         }
+        // Keep the button busy until the full page load replaces this screen.
+        completeSignIn(callbackPath);
     };
 
-    const handleGoogleLogin = () => {
+    const handleGoogleLogin = async () => {
         setGoogleLoading(true);
-        void signIn("google", { callbackUrl: callbackPath });
+        setErrorCode(null);
+        const code = await startGoogleSignIn(callbackPath);
+        if (code) {
+            setErrorCode(code);
+            setGoogleLoading(false);
+        }
     };
 
     return (
@@ -83,7 +84,7 @@ function LoginForm() {
             subtitle={t("welcome_back") || "Hanogt Codev'e Hoşgeldiniz"}
             footer={<>{t("no_account") || "Hesabın yok mu?"} <Link href={`/signup${callbackPath !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackPath)}` : ""}`} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{t("signup_now") || "Hemen Üye Ol"}</Link></>}
         >
-            <GoogleButton label={t("login_google") || "Google ile Oturum Aç"} onClick={handleGoogleLogin} disabled={googleLoading} />
+            <GoogleButton label={t("login_google") || "Google ile Oturum Aç"} onClick={() => void handleGoogleLogin()} disabled={googleLoading} />
             <Divider label={t("or") || "veya"} />
 
             {error && (

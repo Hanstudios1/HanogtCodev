@@ -580,5 +580,6 @@
   "badge_speed_coder": "极速码农",
   "badge_artist": "艺术家",
   "badge_pioneer": "开拓者",
-  "badge_community_star": "社区之星"
+  "badge_community_star": "社区之星",
+  "auth_error_network": "无法连接登录服务器。请检查网络连接后重试。"
 }

@@ -580,5 +580,6 @@
   "badge_speed_coder": "Скоростной кодер",
   "badge_artist": "Художник",
   "badge_pioneer": "Первопроходец",
-  "badge_community_star": "Звезда сообщества"
+  "badge_community_star": "Звезда сообщества",
+  "auth_error_network": "Не удалось связаться с сервером входа. Проверьте подключение и попробуйте снова."
 }
