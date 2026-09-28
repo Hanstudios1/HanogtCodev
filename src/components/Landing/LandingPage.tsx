@@ -139,7 +139,7 @@ export default function LandingPage() {
                                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />{t("lp_new")}
                                 </span>
                                 {t("lp_news_live")}
-                                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                             </Link>
 
                             <h1 className="mt-6 text-[2.6rem] font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.1rem] animate-fade-up" style={{ animationDelay: "80ms" }}>
@@ -217,7 +217,7 @@ export default function LandingPage() {
                                         <h3 className="mt-4 text-2xl font-black">{tx(NAV_LABELS.editor)}</h3>
                                         <p className="mt-2 max-w-lg text-[14.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_editor_text")}</p>
                                     </div>
-                                    <Link href={signedIn ? "/dashboard" : "/signup"} className="hidden shrink-0 items-center gap-1 rounded-xl bg-zinc-900 px-3 py-2 text-[13px] font-bold text-white transition hover:gap-2 sm:inline-flex dark:bg-white dark:text-zinc-900">{t("lp_open")}<ArrowRight className="h-4 w-4" /></Link>
+                                    <Link href={signedIn ? "/dashboard" : "/signup"} className="hidden shrink-0 items-center gap-1 rounded-xl bg-zinc-900 px-3 py-2 text-[13px] font-bold text-white transition hover:gap-2 sm:inline-flex dark:bg-white dark:text-zinc-900">{t("lp_open")}<ArrowRight className="h-4 w-4 rtl:rotate-180" /></Link>
                                 </div>
                                 <div className="mt-6 flex flex-wrap gap-1.5">
                                     {CODE_LANGUAGES.map((language) => (
@@ -238,7 +238,7 @@ export default function LandingPage() {
                                 <h3 className="mt-4 text-2xl font-black">Hanogt News</h3>
                                 <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_news_text")}</p>
                                 <div className="mt-4 flex-1"><LiveNewsMini /></div>
-                                <Link href="/news" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-rose-600 hover:gap-2 dark:text-rose-400">{t("lp_all_stories")}<ArrowRight className="h-4 w-4" /></Link>
+                                <Link href="/news" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-rose-600 hover:gap-2 dark:text-rose-400">{t("lp_all_stories")}<ArrowRight className="h-4 w-4 rtl:rotate-180" /></Link>
                             </SpotlightCard>
                         </Reveal>
 
@@ -249,7 +249,7 @@ export default function LandingPage() {
                                         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25"><Boxes className="h-5 w-5" /></span>
                                         <h3 className="mt-4 text-2xl font-black">Hanogt Engine</h3>
                                         <p className="mt-2 text-[14.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_engine_text")}</p>
-                                        <Link href="/game-engine" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-violet-600 hover:gap-2 dark:text-violet-300">{t("lp_open_engine")}<ArrowRight className="h-4 w-4" /></Link>
+                                        <Link href="/game-engine" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-violet-600 hover:gap-2 dark:text-violet-300">{t("lp_open_engine")}<ArrowRight className="h-4 w-4 rtl:rotate-180" /></Link>
                                     </div>
                                     <ul className="space-y-2 text-[13.5px]">
                                         {[t("lp_engine_f1"), t("lp_engine_f2"), t("lp_engine_f3"), t("lp_engine_f4")].map((item, index) => (

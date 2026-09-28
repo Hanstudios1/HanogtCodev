@@ -50,7 +50,7 @@ export default function LiveNewsMini({ limit = 5 }: { limit?: number }) {
     if (state === "empty") {
         return (
             <Link href="/news" className="flex items-center justify-between rounded-xl border border-dashed border-zinc-300 px-3 py-3 text-[13px] text-zinc-500 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-white/10">
-                {t("lnm_open")}<ArrowRight className="h-4 w-4" />
+                {t("lnm_open")}<ArrowRight className="h-4 w-4 rtl:rotate-180" />
             </Link>
         );
     }

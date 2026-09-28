@@ -48,7 +48,7 @@ export default function AuthShell({ title, subtitle, children, footer }: Props) 
 
             <main id="main-content" className="relative flex flex-col px-5 py-6 sm:px-10">
                 <div className="flex items-center justify-between">
-                    <Link href="/" className="inline-flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-900 dark:hover:text-white"><ArrowLeft className="h-4 w-4" />{t("auth_back_home") || "Ana sayfa"}</Link>
+                    <Link href="/" className="inline-flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-900 dark:hover:text-white"><ArrowLeft className="h-4 w-4 rtl:rotate-180" />{t("auth_back_home") || "Ana sayfa"}</Link>
                     <div className="flex items-center gap-1"><LangToggle /><ThemeToggle /></div>
                 </div>
                 <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-10">

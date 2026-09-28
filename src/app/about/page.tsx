@@ -57,7 +57,7 @@ export default function AboutPage() {
                                     <span className={`grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br ${product.color} text-white shadow-lg`}><product.icon className="h-5 w-5" /></span>
                                     <h3 className="mt-4 text-lg font-black">{product.title}</h3>
                                     <p className="mt-1.5 flex-1 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{product.text}</p>
-                                    <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-bold text-indigo-600 transition group-hover:gap-2 dark:text-indigo-300">{tx(NAV_LABELS.explore)}<ArrowRight className="h-4 w-4" /></span>
+                                    <span className="mt-4 inline-flex items-center gap-1 text-[13px] font-bold text-indigo-600 transition group-hover:gap-2 dark:text-indigo-300">{tx(NAV_LABELS.explore)}<ArrowRight className="h-4 w-4 rtl:rotate-180" /></span>
                                 </Link>
                             </motion.div>
                         ))}
