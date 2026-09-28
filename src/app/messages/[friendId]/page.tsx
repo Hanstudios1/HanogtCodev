@@ -47,7 +47,7 @@ export default function ChatPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const params = useParams();
-    const { t } = useI18n();
+    const { t, tx, language } = useI18n();
     const { startCall } = useVoiceCall();
     const friendEmail = decodeURIComponent(params.friendId as string);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -322,12 +322,12 @@ export default function ChatPage() {
             });
             if (!response.ok) {
                 const result = await response.json().catch(() => ({})) as { error?: string };
-                throw new Error(result.error || "Kullanıcı engellenemedi.");
+                throw new Error(language === "TR" && result.error ? result.error : tx({ TR: "Kullanıcı engellenemedi.", EN: "The user couldn't be blocked." }));
             }
             setShowMenu(false);
             router.push("/friends");
         } catch (error) {
-            alert(error instanceof Error ? error.message : "Kullanıcı engellenemedi.");
+            alert(error instanceof Error && error.message ? error.message : tx({ TR: "Kullanıcı engellenemedi.", EN: "The user couldn't be blocked." }));
         }
     };
 
