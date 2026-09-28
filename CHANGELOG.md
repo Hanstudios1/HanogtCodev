@@ -39,6 +39,8 @@
 
 - 10 yeni arayüz dili: Arapça (sağdan sola), Portekizce, İtalyanca, Ukraynaca, Endonezce, Vietnamca, Çekçe, Rumence, Macarca ve Özbekçe (toplam 30).
 - Aranabilir, bayraklı dil seçici; `<html lang>` ve `dir` seçilen dile göre ayarlanıyor.
+- Oyun motoru, motor belgeleri, Arcade, Hanogt Media, Gruplar, Geri Bildirim/SSS, panel, kod editörü, sesli arama ve gizlilik bildirimi Türkçe ve İngilizce kullanılabilir; önceden yalnızca Türkçe olan ~400 arayüz metni çevrildi.
+- Hesap Ayarları'ndaki dil seçici 30 dilin tamamını gösteriyor; yasal metinlerin Türkçe sürümünün bağlayıcı olduğu diğer dillerde belirtiliyor.
 
 ### Yasal metinler 3.0
 
