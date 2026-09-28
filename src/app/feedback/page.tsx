@@ -4,7 +4,7 @@ import OptimizedImage from "@/components/OptimizedImage";
 
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle, Search, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
@@ -77,11 +77,6 @@ export default function FeedbackPage() {
     const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
     const [authorProfiles, setAuthorProfiles] = useState<Record<string, UserProfile>>({});
 
-    // Fetch items from Firebase
-    useEffect(() => {
-        fetchItems();
-    }, []);
-
     const mutateFeedback = async (payload: Record<string, unknown>) => {
         const response = await fetch("/api/feedback", {
             method: "POST",
@@ -92,7 +87,7 @@ export default function FeedbackPage() {
         if (!response.ok) throw new Error(result.error || "İşlem tamamlanamadı.");
     };
 
-    const fetchItems = async () => {
+    const fetchItems = useCallback(async () => {
         try {
             const q = query(collection(db, "feedback"), orderBy("createdAt", "desc"));
             const snapshot = await getDocs(q);
@@ -126,7 +121,13 @@ export default function FeedbackPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Fetch items from Firebase (deferred so the first render isn't followed by a synchronous state cascade).
+    useEffect(() => {
+        const timer = window.setTimeout(() => { void fetchItems(); }, 0);
+        return () => window.clearTimeout(timer);
+    }, [fetchItems]);
 
     const handleSubmit = async (type: "question" | "feedback") => {
         if (!session?.user?.email || !message.trim()) return;

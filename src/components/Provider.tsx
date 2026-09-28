@@ -3,8 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { SessionContext, SessionProvider, useSession } from "next-auth/react";
 import { signInWithCustomToken, signOut as signOutFirebase } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { AlertTriangle, RefreshCw, X } from "lucide-react";
-import { auth, hasFirebaseClientConfig } from "@/lib/firebase";
+import { auth, db, hasFirebaseClientConfig } from "@/lib/firebase";
 import { ThemeProvider } from "@/lib/theme";
 
 type FirebaseBridgeState = {
@@ -54,6 +55,37 @@ async function signInFirebase(email: string) {
         throw new Error(data.error || "Veri bağlantısı hazırlanamadı.");
     }
     await signInWithCustomToken(auth, data.token);
+}
+
+const PRESENCE_HEARTBEAT_MS = 45_000;
+
+/**
+ * Keeps the signed-in user's presence fresh on every page, including the
+ * full-screen editor, chat and game engine that do not render the header.
+ * Friends lists treat a user as online while `lastSeenAt` is recent.
+ */
+function PresenceHeartbeat() {
+    const { data } = useSession();
+    const email = data?.user?.email?.toLowerCase() || null;
+
+    useEffect(() => {
+        if (!email) return;
+        const write = (isOnline: boolean) => {
+            const presence = { isOnline, lastSeenAt: new Date().toISOString() };
+            void setDoc(doc(db, "users", email), presence, { merge: true }).catch(() => undefined);
+            void setDoc(doc(db, "public_profiles", email), { ...presence, email }, { merge: true }).catch(() => undefined);
+        };
+        write(true);
+        const heartbeat = window.setInterval(() => write(true), PRESENCE_HEARTBEAT_MS);
+        const markOffline = () => write(false);
+        window.addEventListener("pagehide", markOffline);
+        return () => {
+            window.clearInterval(heartbeat);
+            window.removeEventListener("pagehide", markOffline);
+        };
+    }, [email]);
+
+    return null;
 }
 
 /**
@@ -139,6 +171,7 @@ function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
         <FirebaseBridgeContext.Provider value={bridgeState}>
             <SessionContext.Provider value={gatedValue}>
                 {children}
+                <PresenceHeartbeat />
                 {bridgeError && !dismissed && (
                     <div role="status" className="fixed inset-x-3 bottom-3 z-[200] mx-auto flex max-w-xl items-start gap-3 rounded-2xl border border-amber-300/60 bg-amber-50/95 p-3 text-sm text-amber-900 shadow-2xl backdrop-blur dark:border-amber-500/30 dark:bg-zinc-900/95 dark:text-amber-200">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />

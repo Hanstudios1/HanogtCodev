@@ -55,7 +55,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         // The theme class is decided by the inline script before hydration.
-        <html lang="tr" suppressHydrationWarning>
+        <html lang="tr" data-scroll-behavior="smooth" suppressHydrationWarning>
             <head>
                 <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
             </head>

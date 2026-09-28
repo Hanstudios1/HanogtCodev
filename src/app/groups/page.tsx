@@ -39,7 +39,12 @@ export default function GroupsPage() {
         }
     }, [session?.user]);
 
-    useEffect(() => { if (session?.user) void load(); }, [load, session?.user]);
+    useEffect(() => {
+        if (!session?.user) return;
+        // Deferred to a task so the first render isn't followed by a synchronous state cascade.
+        const timer = window.setTimeout(() => { void load(); }, 0);
+        return () => window.clearTimeout(timer);
+    }, [load, session?.user]);
     useEffect(() => {
         if (session?.user?.email) void getProjectsFromCloud(session.user.email).then(setProjects);
     }, [session?.user?.email]);

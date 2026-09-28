@@ -53,7 +53,7 @@ type Friend = {
 type Tab = "all" | "pending" | "add" | "blocked";
 
 export default function FriendsPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
     const { t } = useI18n();
     const { startCall } = useVoiceCall();
@@ -70,11 +70,13 @@ export default function FriendsPage() {
     const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    const sessionEmail = session?.user?.email ?? null;
+
     const loadFriendsData = useCallback(async () => {
-        if (!session?.user?.email) return;
+        if (!sessionEmail) return;
         try {
             // Load friends list
-            const friendsDoc = await getDoc(doc(db, "users", session.user.email));
+            const friendsDoc = await getDoc(doc(db, "users", sessionEmail));
             if (friendsDoc.exists()) {
                 const data = friendsDoc.data();
                 const friendEmails: string[] = data.friends || [];
@@ -117,7 +119,7 @@ export default function FriendsPage() {
             // Load pending friend requests (received)
             const receivedQuery = query(
                 collection(db, "friendRequests"),
-                where("toEmail", "==", session.user.email),
+                where("toEmail", "==", sessionEmail),
                 where("status", "==", "pending")
             );
             const receivedSnapshot = await getDocs(receivedQuery);
@@ -130,7 +132,7 @@ export default function FriendsPage() {
             // Load sent requests
             const sentQuery = query(
                 collection(db, "friendRequests"),
-                where("fromEmail", "==", session.user.email),
+                where("fromEmail", "==", sessionEmail),
                 where("status", "==", "pending")
             );
             const sentSnapshot = await getDocs(sentQuery);
@@ -142,7 +144,7 @@ export default function FriendsPage() {
         } catch (error) {
             console.error("Error loading friends data:", error);
         }
-    }, [session?.user?.email]);
+    }, [sessionEmail]);
 
     const showMessage = (text: string, type: "success" | "error" = "success") => {
         setMessage(text);
@@ -150,13 +152,17 @@ export default function FriendsPage() {
         setTimeout(() => setMessage(""), 4000);
     };
 
+    // Only a confirmed signed-out state redirects; the session is still loading on the first render.
     useEffect(() => {
-        if (!session?.user) {
-            router.push("/login");
-            return;
-        }
-        void loadFriendsData();
-    }, [loadFriendsData, router, session?.user]);
+        if (status === "unauthenticated") router.push("/login");
+    }, [router, status]);
+
+    useEffect(() => {
+        if (!sessionEmail) return;
+        // Deferred to a task so the initial render isn't followed by a synchronous state cascade.
+        const timer = window.setTimeout(() => { void loadFriendsData(); }, 0);
+        return () => window.clearTimeout(timer);
+    }, [loadFriendsData, sessionEmail]);
 
     const runFriendAction = async (action: string, payload: Record<string, string>) => {
         const response = await fetch("/api/friends", {

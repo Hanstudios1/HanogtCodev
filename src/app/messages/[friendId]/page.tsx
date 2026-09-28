@@ -44,7 +44,7 @@ const STICKERS = [
 ];
 
 export default function ChatPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
     const params = useParams();
     const { t } = useI18n();
@@ -84,9 +84,19 @@ export default function ChatPage() {
         if (friendDoc.exists()) setFriendData({ ...friendDoc.data(), email: friendEmail } as ChatProfile);
     }, [friendEmail]);
 
+    // Only a confirmed signed-out state redirects; the session is still loading on the first render.
     useEffect(() => {
-        if (!session?.user?.email) { router.push("/login"); return; }
-        loadFriendData();
+        if (status === "unauthenticated") router.push("/login");
+    }, [router, status]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => { void loadFriendData(); }, 0);
+        return () => window.clearTimeout(timer);
+    }, [loadFriendData]);
+
+    useEffect(() => {
+        const myEmail = session?.user?.email;
+        if (!myEmail) return;
         const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
         const unsub = onSnapshot(q, (snapshot) => {
             const msgs: Message[] = snapshot.docs.map(d => ({ id: d.id, ...d.data() as Omit<Message, "id"> }));
@@ -94,36 +104,28 @@ export default function ChatPage() {
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
             // Mark unread messages as read
             msgs.forEach(m => {
-                if (!m.read && m.fromEmail === friendEmail && session?.user?.email) {
+                if (!m.read && m.fromEmail === friendEmail) {
                     updateDoc(doc(db, "chats", chatId, "messages", m.id), { read: true });
                 }
             });
         });
 
-        // Set online status
-        if (session?.user?.email) {
-            setDoc(doc(db, "users", session.user.email), { isOnline: true }, { merge: true });
-        }
-
         // Listen for friend typing status
         const typingUnsub = onSnapshot(doc(db, "chats", chatId), (snap) => {
             const data = snap.data();
-            if (data?.typingUser && data.typingUser !== session?.user?.email) {
+            if (data?.typingUser && data.typingUser !== myEmail) {
                 setFriendIsTyping(true);
             } else {
                 setFriendIsTyping(false);
             }
         });
 
+        // Presence is kept by the global heartbeat, so leaving the chat no longer marks the user offline.
         return () => {
             unsub();
             typingUnsub();
-            // Set offline on unmount
-            if (session?.user?.email) {
-                setDoc(doc(db, "users", session.user.email), { isOnline: false }, { merge: true });
-            }
         };
-    }, [chatId, friendEmail, loadFriendData, router, session?.user?.email]);
+    }, [chatId, friendEmail, session?.user?.email]);
 
     const sendMessage = async (text: string, type: "text" | "sticker" | "voice" = "text", extra: MessageExtra = {}) => {
         if (!session?.user?.email || (!text.trim() && type === "text")) return;
@@ -221,6 +223,7 @@ export default function ChatPage() {
             audioChunksRef.current = [];
             mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
             mediaRecorder.start(1000);
+            // eslint-disable-next-line react-hooks/purity -- runs in the record button's click handler, never during render
             recordingStartedAtRef.current = Date.now();
             setIsRecording(true);
             setRecordingTime(0);

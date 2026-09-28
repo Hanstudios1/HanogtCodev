@@ -156,7 +156,7 @@ export default function CodeEditor({ language, theme, value, onChange, path, rea
                     suggestOnTriggerCharacters: settings.autocomplete,
                     snippetSuggestions: settings.snippetSuggestions ? "inline" : "none",
                     parameterHints: { enabled: settings.parameterHints },
-                    hover: { enabled: settings.hoverInfo },
+                    hover: { enabled: settings.hoverInfo ? "on" : "off" },
                     linkedEditing: settings.linkedEditing,
                     renderWhitespace: settings.renderWhitespace,
                     autoIndent: settings.autoIndent,

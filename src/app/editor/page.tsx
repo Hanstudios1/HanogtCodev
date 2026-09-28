@@ -109,6 +109,10 @@ type GameScriptResponse = {
     revision?: string | null;
 };
 
+let tabSequence = 0;
+/** Unique tab id; a bare timestamp collided when two tabs were created in the same millisecond. */
+const newTabId = () => `tab-${Date.now().toString(36)}-${(tabSequence += 1)}`;
+
 function EditorContent() {
     const searchParams = useSearchParams();
     const initialLang = searchParams.get("lang") || "javascript";
@@ -133,6 +137,9 @@ function EditorContent() {
     const [currentProjectName, setCurrentProjectName] = useState<string>("");
     const [currentGameScriptId, setCurrentGameScriptId] = useState<string | null>(requestedGameScriptId);
     const [gameScriptRevision, setGameScriptRevision] = useState<string | null>(null);
+
+    // Track if project was originally single-tab
+    const [wasOriginallyMultiTab, setWasOriginallyMultiTab] = useState<boolean | null>(null);
 
     // Save modal state
     const [showSaveModal, setShowSaveModal] = useState(false);
@@ -268,7 +275,7 @@ function EditorContent() {
 
                         // Single tab project
                         const newTab: Tab = {
-                            id: `tab-${Date.now()}`,
+                            id: newTabId(),
                             name: project.name,
                             lang: project.lang,
                             code: project.code,
@@ -331,7 +338,7 @@ function EditorContent() {
 
                     // Single tab project
                     const newTab: Tab = {
-                        id: `tab-${Date.now()}`,
+                        id: newTabId(),
                         name: project.name,
                         lang: project.lang,
                         code: project.code,
@@ -350,7 +357,7 @@ function EditorContent() {
             // New project - create first tab
             const langNorm = normalizeLang(initialLang);
             const newTab: Tab = {
-                id: `tab-${Date.now()}`,
+                id: newTabId(),
                 name: `${getDisplayName(langNorm)} Projesi`,
                 lang: langNorm,
                 code: TEMPLATES[langNorm] || TEMPLATES["default"],
@@ -390,7 +397,7 @@ function EditorContent() {
     const handleAddTab = (langName: string, langExt?: string) => {
         const langKey = normalizeLang(langExt || langName);
         const newTab: Tab = {
-            id: `tab-${Date.now()}`,
+            id: newTabId(),
             name: `${langName} Dosya`,
             lang: langKey,
             code: TEMPLATES[langKey] || TEMPLATES["default"],
@@ -528,9 +535,6 @@ function EditorContent() {
             setIsProjectRunning(false);
         }
     };
-
-    // Track if project was originally single-tab
-    const [wasOriginallyMultiTab, setWasOriginallyMultiTab] = useState<boolean | null>(null);
 
     // Complete save with given name
     const completeSave = async (projectName: string, projectIdToUse: number | null) => {

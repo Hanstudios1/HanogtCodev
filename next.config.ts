@@ -4,6 +4,8 @@ const isElectron = process.env.ELECTRON_BUILD === "true";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Don't let `next dev` write AGENTS.md/CLAUDE.md into the repository root.
+  agentRules: false,
   compress: true,
   reactStrictMode: true,
   output: isElectron ? "export" : undefined, // Static export ONLY for Electron

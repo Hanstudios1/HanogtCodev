@@ -87,7 +87,12 @@ export default function GroupWorkspacePage() {
         }
     }, [groupId, session?.user]);
 
-    useEffect(() => { if (session?.user) void loadGroup(); }, [loadGroup, session?.user]);
+    useEffect(() => {
+        if (!session?.user) return;
+        // Deferred to a task so the first render isn't followed by a synchronous state cascade.
+        const timer = window.setTimeout(() => { void loadGroup(); }, 0);
+        return () => window.clearTimeout(timer);
+    }, [loadGroup, session?.user]);
     useEffect(() => {
         const updateTheme = () => setDark(document.documentElement.classList.contains("dark"));
         updateTheme();
@@ -178,6 +183,7 @@ export default function GroupWorkspacePage() {
             chunksRef.current = [];
             recorder.ondataavailable = (event) => { if (event.data.size) chunksRef.current.push(event.data); };
             recorder.start(1000);
+            // eslint-disable-next-line react-hooks/purity -- runs in the record button's click handler, never during render
             recordStartedRef.current = Date.now();
             setRecording(true);
             setRecordingSeconds(0);

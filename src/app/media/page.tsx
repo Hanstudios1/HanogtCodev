@@ -93,7 +93,11 @@ export default function MediaPage() {
         }
     }, []);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        // Deferred to a task so the first render isn't followed by a synchronous state cascade.
+        const timer = window.setTimeout(() => { void load(); }, 0);
+        return () => window.clearTimeout(timer);
+    }, [load]);
 
     // The publish dialog used to read projects with a client Firestore query
     // that needs a composite index and a live Firebase session; when either

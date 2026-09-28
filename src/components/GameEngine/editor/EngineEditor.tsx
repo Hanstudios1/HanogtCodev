@@ -130,6 +130,12 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const [muted, setMuted] = useState(false);
     const playerRef = useRef<GamePlayer | null>(null);
     const sceneApi = useRef<SceneViewApi | null>(null);
+    // Read lazily so the publish dialog captures the scene as it looks when the button is pressed.
+    const snapshotScene = useCallback(() => {
+        const api = sceneApi.current;
+        if (!api) throw new Error("scene view is not mounted");
+        return api.snapshot();
+    }, []);
     const [gameLogs, setGameLogs] = useState<ConsoleEntry[]>([]);
     const logBuffer = useRef<{ entries: Map<number, ConsoleEntry>; timer: number }>({ entries: new Map(), timer: 0 });
     const [bottomTab, setBottomTab] = useState<"project" | "console">("project");
@@ -177,7 +183,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             try {
                 savesSinceThumb.current += 1;
                 const wantThumb = options.thumbnail || savesSinceThumb.current >= 6;
-                const thumbnail = wantThumb ? await captureThumbnail(sceneApi.current?.snapshot) : null;
+                const thumbnail = wantThumb ? await captureThumbnail(snapshotScene) : null;
                 if (thumbnail) savesSinceThumb.current = 0;
                 if (source === "cloud") {
                     const result = await saveCloudProject(state.project, serverRevision.current, thumbnail);
@@ -203,7 +209,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         const result = await task;
         saving.current = null;
         return result;
-    }, [store, source, toast, t]);
+    }, [snapshotScene, store, source, toast, t]);
 
     // Autosave after edits settle (not while playing, not after a conflict).
     useEffect(() => {
@@ -310,11 +316,10 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         if (line) setGotoRequest({ id: scriptId, line, nonce: Date.now() });
     }, []);
 
-    useEffect(() => {
-        const ids = new Set(project.scripts.map((script) => script.id));
-        setScriptTabs((current) => (current.every((id) => ids.has(id)) ? current : current.filter((id) => ids.has(id))));
-        setActiveScript((current) => (current && !ids.has(current) ? null : current));
-    }, [project.scripts]);
+    // Tabs of scripts that were deleted (or undone away) drop out during render instead of in an extra effect pass.
+    const scriptIds = useMemo(() => new Set(project.scripts.map((script) => script.id)), [project.scripts]);
+    const openScriptTabs = scriptTabs.filter((id) => scriptIds.has(id));
+    const currentScript = activeScript && scriptIds.has(activeScript) ? activeScript : null;
 
     // ------------------------------------------------------------------
     // Keyboard shortcuts
@@ -554,9 +559,9 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                             <div className="flex-1" />
                             {playing ? <span className="flex items-center gap-1.5 rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-100"><span className={cx("h-1.5 w-1.5 rounded-full", playerState === "paused" ? "bg-amber-300" : "animate-pulse bg-emerald-400")} />{playerState === "paused" ? t("pause") : t("playingNote")}</span> : null}
                             {!program.ok ? <button type="button" onClick={() => setBottomTab("console")} className="flex items-center gap-1 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-red-200"><X className="h-3 w-3" />{t("compileErrors")}</button> : null}
-                            {scriptTabs.length ? (
+                            {openScriptTabs.length ? (
                                 <button type="button" onClick={() => setShowScripts(!showScripts)} className={cx("ml-1 flex h-7 items-center gap-1.5 rounded-md px-2 text-[11.5px] font-semibold", showScripts ? "bg-emerald-500/15 text-emerald-200" : "text-zinc-400 hover:bg-white/5")}>
-                                    <Info className="h-3.5 w-3.5" />Kod ({scriptTabs.length})
+                                    <Info className="h-3.5 w-3.5" />Kod ({openScriptTabs.length})
                                 </button>
                             ) : null}
                         </div>
@@ -581,19 +586,17 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                                     <Play className="h-3 w-3 fill-current" />{t("game")}
                                 </button>
                             ) : null}
-                            {scriptTabs.length ? (
+                            {openScriptTabs.length ? (
                                 <div className={cx("absolute inset-0 z-20", showScripts ? "animate-fade-up" : "hidden")}>
                                     <ScriptEditorPanel
-                                        tabs={scriptTabs}
-                                        activeId={activeScript}
+                                        tabs={openScriptTabs}
+                                        activeId={currentScript}
                                         onActivate={setActiveScript}
                                         onCloseTab={(id) => {
-                                            setScriptTabs((current) => {
-                                                const next = current.filter((item) => item !== id);
-                                                if (activeScript === id) setActiveScript(next[next.length - 1] ?? null);
-                                                if (!next.length) setShowScripts(false);
-                                                return next;
-                                            });
+                                            const next = openScriptTabs.filter((item) => item !== id);
+                                            setScriptTabs(next);
+                                            if (currentScript === id) setActiveScript(next[next.length - 1] ?? null);
+                                            if (!next.length) setShowScripts(false);
                                         }}
                                         onClose={() => setShowScripts(false)}
                                         goto={gotoRequest}
@@ -651,7 +654,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                     arcadeId={arcadeId}
                     onPublished={setArcadeId}
                     onSaveFirst={() => save({ thumbnail: true })}
-                    snapshot={sceneApi.current?.snapshot}
+                    snapshot={snapshotScene}
                 />
                 <Toasts toasts={toasts} onDismiss={dismiss} />
                 {saveStatus === "idle" && !dirty && revision > 0 ? <span className="sr-only" aria-live="polite"><Check className="h-3 w-3" />{t("saved")}</span> : null}

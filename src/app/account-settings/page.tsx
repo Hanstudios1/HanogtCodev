@@ -2,7 +2,7 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 
-import { useCallback, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { User, Trash2, Camera, ArrowLeft, Save, Bell, Globe, Shield, Database, Download, Clock, Eye, EyeOff, Mail, Megaphone, LogOut, Link2, Github, Linkedin, Twitter, Globe2, Hash, Palette, Image as ImageIcon, MessageCircle, Star, Lock, Paintbrush } from "lucide-react";
@@ -24,8 +24,21 @@ const ACCENT_COLORS = [
 
 const generateTag = () => String(Math.floor(1000 + Math.random() * 9000));
 
+function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onToggle}
+            aria-pressed={enabled}
+            className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
+        >
+            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6 rtl:-translate-x-6" : "translate-x-0.5 rtl:-translate-x-0.5"}`} />
+        </button>
+    );
+}
+
 export default function AccountSettingsPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
     const { t, language, setLanguage } = useI18n();
 
@@ -103,89 +116,97 @@ export default function AccountSettingsPage() {
     const [uiFontSize, setUiFontSize] = useState("medium");
     const [emojiStyle, setEmojiStyle] = useState("native");
 
-    const loadUserData = useCallback(async () => {
-        if (!session?.user?.email) return;
-        try {
-            const userDoc = await getDoc(doc(db, "users", session.user.email));
-            if (userDoc.exists()) {
-                const data = userDoc.data();
-                setUsername(data.username || session.user.name || "");
-                setAvatarUrl(data.avatarUrl || session.user.image || "");
-                // Load existing settings
-                setEmailNotifications(data.emailNotifications ?? true);
-                setNewFeatureAlerts(data.newFeatureAlerts ?? true);
-                setPublicProfile(data.publicProfile ?? true);
-                setShowOnlineStatus(data.showOnlineStatus ?? true);
-                setTimezone(data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
-                setBio(data.bio || "");
-                // Load new Phase 2 settings
-                setNickname(data.nickname || "");
-                setNicknameTag(data.nicknameTag || generateTag());
-                setCustomStatus(data.customStatus || "");
-                setStatusEmoji(data.statusEmoji || "😊");
-                setBannerUrl(data.bannerUrl || "");
-                setAccentColor(data.accentColor || "#3B82F6");
-                setFavoriteLangs(data.favoriteLangs || []);
-                setSocialGithub(data.socialGithub || "");
-                setSocialLinkedin(data.socialLinkedin || "");
-                setSocialTwitter(data.socialTwitter || "");
-                setSocialWebsite(data.socialWebsite || "");
-                setSocialYoutube(data.socialYoutube || "");
-                setSocialTiktok(data.socialTiktok || "");
-                setSocialInstagram(data.socialInstagram || "");
-                setSocialFacebook(data.socialFacebook || "");
-                setLastLoginDate(data.lastLoginDate || new Date().toISOString());
-                // §7 Password
-                setHasPassword(data.hasPassword || false);
-                // §8 Messaging
-                setTypingIndicator(data.typingIndicator ?? true);
-                setReadReceipts(data.readReceipts ?? true);
-                setMsgFontSize(data.msgFontSize || "medium");
-                setChatBackground(data.chatBackground || "default");
-                setVoiceMsgQuality(data.voiceMsgQuality || "normal");
-                setLinkPreview(data.linkPreview ?? true);
-                setGifAutoplay(data.gifAutoplay ?? true);
-                setEnterToSend(data.enterToSend ?? true);
-                setStickerSuggestions(data.stickerSuggestions ?? true);
-                // §8 Privacy
-                setWhoCanAdd(data.whoCanAdd || "everyone");
-                setHideFriendList(data.hideFriendList ?? false);
-                setShowLastSeen(data.showLastSeen ?? true);
-                setPhotoVisibility(data.photoVisibility || "everyone");
-                setBioVisibility(data.bioVisibility || "everyone");
-                setPublicProjects(data.publicProjects ?? true);
-                // §8 Notifications
-                setMsgNotifications(data.msgNotifications ?? true);
-                setCallNotifications(data.callNotifications ?? true);
-                setFriendReqNotifications(data.friendReqNotifications ?? true);
-                setLikeNotifications(data.likeNotifications ?? true);
-                setNotifSound(data.notifSound ?? true);
-                setDndMode(data.dndMode ?? false);
-                setDndSchedule(data.dndSchedule || "");
-                // §8 Appearance
-                setBubbleColor(data.bubbleColor || "#3B82F6");
-                setCompactMode(data.compactMode ?? false);
-                setReduceAnimations(data.reduceAnimations ?? false);
-                setHighContrast(data.highContrast ?? false);
-                setUiFontSize(data.uiFontSize || "medium");
-                setEmojiStyle(data.emojiStyle || "native");
-            } else {
-                setUsername(session.user.name || "");
-                setAvatarUrl(session.user.image || "");
-                setNicknameTag(generateTag());
-            }
-        } catch (error) {
-            console.error("Error loading user data:", error);
-        }
-    }, [session?.user?.email, session?.user?.image, session?.user?.name]);
+    const sessionEmail = session?.user?.email ?? null;
+    const sessionName = session?.user?.name ?? "";
+    const sessionImage = session?.user?.image ?? "";
+
+    // Only a confirmed signed-out state redirects; the session is still loading on the first render.
+    useEffect(() => {
+        if (status === "unauthenticated") router.push("/login");
+    }, [router, status]);
 
     useEffect(() => {
-        if (!session?.user) {
-            router.push("/login");
-            return;
-        }
+        if (!sessionEmail) return;
+        let cancelled = false;
+        const loadUserData = async () => {
+            try {
+                const userDoc = await getDoc(doc(db, "users", sessionEmail));
+                if (cancelled) return;
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    setUsername(data.username || sessionName);
+                    setAvatarUrl(data.avatarUrl || sessionImage);
+                    // Load existing settings
+                    setEmailNotifications(data.emailNotifications ?? true);
+                    setNewFeatureAlerts(data.newFeatureAlerts ?? true);
+                    setPublicProfile(data.publicProfile ?? true);
+                    setShowOnlineStatus(data.showOnlineStatus ?? true);
+                    setTimezone(data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+                    setBio(data.bio || "");
+                    // Load new Phase 2 settings
+                    setNickname(data.nickname || "");
+                    setNicknameTag(data.nicknameTag || generateTag());
+                    setCustomStatus(data.customStatus || "");
+                    setStatusEmoji(data.statusEmoji || "😊");
+                    setBannerUrl(data.bannerUrl || "");
+                    setAccentColor(data.accentColor || "#3B82F6");
+                    setFavoriteLangs(data.favoriteLangs || []);
+                    setSocialGithub(data.socialGithub || "");
+                    setSocialLinkedin(data.socialLinkedin || "");
+                    setSocialTwitter(data.socialTwitter || "");
+                    setSocialWebsite(data.socialWebsite || "");
+                    setSocialYoutube(data.socialYoutube || "");
+                    setSocialTiktok(data.socialTiktok || "");
+                    setSocialInstagram(data.socialInstagram || "");
+                    setSocialFacebook(data.socialFacebook || "");
+                    setLastLoginDate(data.lastLoginDate || new Date().toISOString());
+                    // §7 Password
+                    setHasPassword(data.hasPassword || false);
+                    // §8 Messaging
+                    setTypingIndicator(data.typingIndicator ?? true);
+                    setReadReceipts(data.readReceipts ?? true);
+                    setMsgFontSize(data.msgFontSize || "medium");
+                    setChatBackground(data.chatBackground || "default");
+                    setVoiceMsgQuality(data.voiceMsgQuality || "normal");
+                    setLinkPreview(data.linkPreview ?? true);
+                    setGifAutoplay(data.gifAutoplay ?? true);
+                    setEnterToSend(data.enterToSend ?? true);
+                    setStickerSuggestions(data.stickerSuggestions ?? true);
+                    // §8 Privacy
+                    setWhoCanAdd(data.whoCanAdd || "everyone");
+                    setHideFriendList(data.hideFriendList ?? false);
+                    setShowLastSeen(data.showLastSeen ?? true);
+                    setPhotoVisibility(data.photoVisibility || "everyone");
+                    setBioVisibility(data.bioVisibility || "everyone");
+                    setPublicProjects(data.publicProjects ?? true);
+                    // §8 Notifications
+                    setMsgNotifications(data.msgNotifications ?? true);
+                    setCallNotifications(data.callNotifications ?? true);
+                    setFriendReqNotifications(data.friendReqNotifications ?? true);
+                    setLikeNotifications(data.likeNotifications ?? true);
+                    setNotifSound(data.notifSound ?? true);
+                    setDndMode(data.dndMode ?? false);
+                    setDndSchedule(data.dndSchedule || "");
+                    // §8 Appearance
+                    setBubbleColor(data.bubbleColor || "#3B82F6");
+                    setCompactMode(data.compactMode ?? false);
+                    setReduceAnimations(data.reduceAnimations ?? false);
+                    setHighContrast(data.highContrast ?? false);
+                    setUiFontSize(data.uiFontSize || "medium");
+                    setEmojiStyle(data.emojiStyle || "native");
+                } else {
+                    setUsername(sessionName);
+                    setAvatarUrl(sessionImage);
+                    setNicknameTag(generateTag());
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        };
         void loadUserData();
-    }, [loadUserData, router, session?.user]);
+        return () => { cancelled = true; };
+    }, [sessionEmail, sessionImage, sessionName]);
+
 
     const handleSaveProfile = async () => {
         if (!session?.user?.email) return;
@@ -378,16 +399,6 @@ export default function AccountSettingsPage() {
                     : prev
         );
     };
-
-    // Toggle switch component
-    const ToggleSwitch = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
-        <button
-            onClick={onToggle}
-            className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
-        >
-            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6 rtl:-translate-x-6" : "translate-x-0.5 rtl:-translate-x-0.5"}`} />
-        </button>
-    );
 
     const timezones = [
         "Europe/Istanbul", "Europe/London", "Europe/Berlin", "Europe/Moscow",

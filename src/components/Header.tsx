@@ -9,7 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import OptimizedImage from "@/components/OptimizedImage";
 import { db } from "@/lib/firebase";
 import { useI18n } from "@/lib/i18n";
@@ -65,28 +65,6 @@ export default function Header() {
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
-
-    // Presence: the header is mounted on every signed-in page.
-    useEffect(() => {
-        if (!session?.user?.email) return;
-        const email = session.user.email;
-        const markOnline = () => {
-            const presence = { isOnline: true, lastSeenAt: new Date().toISOString() };
-            void setDoc(doc(db, "users", email), presence, { merge: true }).catch(() => undefined);
-            void setDoc(doc(db, "public_profiles", email), { ...presence, email }, { merge: true }).catch(() => undefined);
-        };
-        markOnline();
-        const heartbeat = window.setInterval(markOnline, 45_000);
-        const handleBeforeUnload = () => {
-            void setDoc(doc(db, "users", email), { isOnline: false }, { merge: true }).catch(() => undefined);
-            void setDoc(doc(db, "public_profiles", email), { isOnline: false, lastSeenAt: new Date().toISOString(), email }, { merge: true }).catch(() => undefined);
-        };
-        window.addEventListener("beforeunload", handleBeforeUnload);
-        return () => {
-            window.clearInterval(heartbeat);
-            window.removeEventListener("beforeunload", handleBeforeUnload);
-        };
-    }, [session?.user?.email]);
 
     useEffect(() => {
         if (!session?.user?.email) return;
