@@ -7,7 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { User, Trash2, Camera, ArrowLeft, Save, Bell, Globe, Shield, Database, Download, Clock, Eye, EyeOff, Mail, Megaphone, LogOut, Link2, Github, Linkedin, Twitter, Globe2, Hash, Palette, Image as ImageIcon, MessageCircle, Star, Lock, Paintbrush } from "lucide-react";
 import Header from "@/components/Header";
-import { useI18n } from "@/lib/i18n";
+import { LANGUAGES, useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -358,7 +358,7 @@ export default function AccountSettingsPage() {
 
     const handleSetPassword = async () => {
         if (newPassword.length < 10) {
-            setMessage(language === "TR" ? "Şifre en az 10 karakter olmalı!" : "Password must be at least 10 characters.");
+            setMessage(t("password_too_short"));
             setTimeout(() => setMessage(""), 3000);
             return;
         }
@@ -376,7 +376,7 @@ export default function AccountSettingsPage() {
                 body: JSON.stringify({ currentPassword, newPassword }),
             });
             const result = await response.json() as { error?: string };
-            if (!response.ok) throw new Error(result.error || "Şifre güncellenemedi.");
+            if (!response.ok) throw new Error(language === "TR" && result.error ? result.error : t("error_occurred"));
             setHasPassword(true);
             setCurrentPassword("");
             setNewPassword("");
@@ -834,25 +834,18 @@ export default function AccountSettingsPage() {
                             <span className="block">{t("app_language") || "Uygulama Dili"}</span>
                             <span className="text-sm text-zinc-500">{t("app_language_desc") || "Arayüz dilini değiştir"}</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            {([
-                                { code: "TR" as const, flag: "🇹🇷", label: "Türkçe" },
-                                { code: "EN" as const, flag: "🇬🇧", label: "English" },
-                                { code: "RU" as const, flag: "🇷🇺", label: "Русский" },
-                                { code: "AZ" as const, flag: "🇦🇿", label: "Azərbaycan" },
-                                { code: "ES" as const, flag: "🇪🇸", label: "Español" },
-                                { code: "KZ" as const, flag: "🇰🇿", label: "Қазақ" },
-                                { code: "JP" as const, flag: "🇯🇵", label: "日本語" },
-                                { code: "CN" as const, flag: "🇨🇳", label: "中文" },
-                                { code: "KR" as const, flag: "🇰🇷", label: "한국어" },
-                            ]).map((lang) => (
+                        {/* Every interface language, including right-to-left Arabic. */}
+                        <div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto pe-1 sm:grid-cols-3">
+                            {LANGUAGES.map((lang) => (
                                 <button
                                     key={lang.code}
                                     onClick={() => setLanguage(lang.code)}
-                                    className={`px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-sm ${language === lang.code ? "bg-blue-600 text-white shadow-md" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
+                                    aria-pressed={language === lang.code}
+                                    title={lang.english}
+                                    className={`min-w-0 px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-sm ${language === lang.code ? "bg-blue-600 text-white shadow-md" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
                                 >
                                     <span className="text-base">{lang.flag}</span>
-                                    {lang.label}
+                                    <span className="truncate" lang={lang.locale}>{lang.name}</span>
                                 </button>
                             ))}
                         </div>
