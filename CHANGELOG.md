@@ -51,6 +51,13 @@
 - Giriş kilidine yol açan oturum köprüsü sorunu, Google girişinde büyük harfli e-posta sorunu ve Hanogt Media yayımlama penceresi düzeltildi.
 - Monaco editörü CSP'ye takılmadan kendi alan adından yükleniyor; oturum yenilemesinde editör sekmelerinin sıfırlanması giderildi.
 - Panelde tüm dillerde görünen sabit Türkçe metinler kaldırıldı.
+- Hesap Ayarları, Arkadaşlar ve Mesajlar sayfası yenilendiğinde oturum yüklenirken kullanıcıyı giriş sayfasına atma hatası giderildi.
+- Çevrimiçi durum tüm sayfalarda (editör, sohbet, oyun motoru dahil) korunuyor; sohbetten çıkınca kullanıcı çevrimdışı görünmüyor.
+- Her sayfa kendi sekme başlığını gösteriyor; giriş gerektiren sayfalar arama motorlarında dizinlenmiyor.
+
+### Bağımlılıklar
+
+- Next.js 16.3, React 19.3, Firebase 12.19, Tailwind CSS 4.3 ve Monaco 0.57'ye güncellendi; `npm audit` bulguları 36'dan 5'e indi (kalanlar yalnızca masaüstü/mobil geliştirme araçlarında).
 
 ## 0.0.5 — 2026-09-04
 
