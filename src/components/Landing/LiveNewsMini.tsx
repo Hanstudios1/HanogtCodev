@@ -70,8 +70,8 @@ export default function LiveNewsMini({ limit = 5 }: { limit?: number }) {
                         <a href={item.link} target="_blank" rel="noopener noreferrer nofollow" className="group flex items-start gap-2.5 rounded-xl px-2.5 py-2 transition hover:bg-zinc-100 dark:hover:bg-white/[0.05]">
                             <span className="mt-0.5 text-base leading-none">{NEWS_CATEGORIES.find((entry) => entry.id === item.category)?.emoji ?? "📰"}</span>
                             <span className="min-w-0 flex-1">
-                                <span className="line-clamp-1 text-[13.5px] font-semibold text-zinc-800 group-hover:text-indigo-600 dark:text-zinc-100 dark:group-hover:text-indigo-300">{item.title}</span>
-                                <span className="block text-[11px] text-zinc-400">{item.source.name} · {timeAgo(item.publishedAt, locale, now)}</span>
+                                <span dir="auto" className="line-clamp-1 text-[13.5px] font-semibold text-zinc-800 group-hover:text-indigo-600 dark:text-zinc-100 dark:group-hover:text-indigo-300">{item.title}</span>
+                                <span dir="auto" className="block text-[11px] text-zinc-400">{item.source.name} · {timeAgo(item.publishedAt, locale, now)}</span>
                             </span>
                         </a>
                     </motion.li>

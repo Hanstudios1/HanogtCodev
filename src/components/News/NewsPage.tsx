@@ -210,9 +210,11 @@ function Ticker({ items, locale }: { items: NewsItemView[]; locale: "tr" | "en" 
 // ---------------------------------------------------------------------------
 
 export default function NewsPage({ initial }: { initial: NewsSnapshotView | null }) {
-    const { language } = useI18n();
+    const { language, dir } = useI18n();
     const locale: "tr" | "en" = language === "TR" ? "tr" : "en";
     const tr = locale === "tr";
+    // News copy exists in Turkish and English only, so right-to-left languages read it left-to-right.
+    const contentDir = dir === "rtl" ? "ltr" : undefined;
     const initialItems = initial?.items ?? [];
     const serverNow = initial ? Date.parse(initial.fetchedAt) || 0 : 0;
 
@@ -437,7 +439,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     return (
         <div className="min-h-dvh bg-zinc-50 dark:bg-zinc-950">
             <Header />
-            <main id="main-content">
+            <main id="main-content" dir={contentDir}>
                 {/* Hero */}
                 <section className="relative overflow-hidden">
                     <div className="absolute inset-0 bg-grid opacity-60 mask-fade-b" />
@@ -466,7 +468,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                             {[
                                 { icon: Newspaper, value: items.length, label: tr ? "haber" : "stories" },
                                 { icon: Radio, value: sources.length ? `${okSources}/${sources.length}` : "—", label: tr ? "kaynak aktif" : "sources live" },
-                                { icon: Clock, value: `${Math.round(REFRESH_MS / 1000)} sn`, label: tr ? "yenileme aralığı" : "refresh interval" },
+                                { icon: Clock, value: `${Math.round(REFRESH_MS / 1000)}${tr ? " sn" : "s"}`, label: tr ? "yenileme aralığı" : "refresh interval" },
                                 { icon: Bookmark, value: saved.length, label: tr ? "kaydedilen" : "saved" },
                             ].map((stat) => (
                                 <div key={stat.label} className="flex items-center gap-2.5 rounded-2xl border border-zinc-200/80 bg-white/80 px-3.5 py-2 backdrop-blur dark:border-white/[0.08] dark:bg-white/[0.04]">
@@ -666,6 +668,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
             </main>
             <SiteFooter />
 
+            <div dir={contentDir}>
             <CommentsDrawer item={active} locale={locale} onClose={closeComments} onCountChange={onCountChange} />
 
             <AnimatePresence>
@@ -681,6 +684,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                     </motion.div>
                 ) : null}
             </AnimatePresence>
+            </div>
         </div>
     );
 }
