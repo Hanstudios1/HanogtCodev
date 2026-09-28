@@ -131,7 +131,7 @@ export default function Header() {
                         </span>
                     </Link>
 
-                    <nav className="mx-auto hidden items-center gap-0.5 lg:flex" aria-label={tx({ TR: "Ana menü", EN: "Main navigation" })}>
+                    <nav className="mx-auto hidden items-center gap-0.5 lg:flex" aria-label={t("hd_main_nav")}>
                         {primary.map((item) => {
                             const Icon = NAV_ICONS[item.icon];
                             const active = isActivePath(pathname, item.href);
@@ -282,7 +282,7 @@ export default function Header() {
                                                     {item.live ? <span className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-red-600 dark:text-red-400">{tx(NAV_LABELS.live)}</span> : null}
                                                 </span>
                                                 <span className="text-[15px] font-bold text-zinc-900 dark:text-white">{tx(item.label)}</span>
-                                                <span className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(item.description)}</span>
+                                                <span className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{t(item.descKey)}</span>
                                             </Link>
                                         </motion.div>
                                     );
@@ -302,7 +302,7 @@ export default function Header() {
                                 </button>
                             </div>
                             <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-zinc-200 px-4 py-3 dark:border-white/[0.08]">
-                                <span className="text-[13px] font-semibold text-zinc-500">{tx({ TR: "Dil ve tema", EN: "Language & theme" })}</span>
+                                <span className="text-[13px] font-semibold text-zinc-500">{t("hd_lang_theme")}</span>
                                 <div className="flex items-center gap-1.5"><LangToggle /><ThemeToggle /></div>
                             </div>
                             {!signedIn ? (

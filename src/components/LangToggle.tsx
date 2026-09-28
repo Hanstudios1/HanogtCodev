@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { LANGUAGES, languageInfo, useI18n, type Language } from "@/lib/i18n";
 
 export default function LangToggle({ compact = false }: { compact?: boolean }) {
-    const { language, setLanguage, tx } = useI18n();
+    const { language, setLanguage, t } = useI18n();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const rootRef = useRef<HTMLDivElement>(null);
@@ -47,7 +47,7 @@ export default function LangToggle({ compact = false }: { compact?: boolean }) {
                 onClick={() => setOpen((value) => !value)}
                 aria-haspopup="listbox"
                 aria-expanded={open}
-                aria-label={tx({ TR: "Dil seç", EN: "Choose language" })}
+                aria-label={t("lt_choose")}
                 className={`flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200/80 px-2.5 text-[13px] font-semibold text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-900/5 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/10 ${compact ? "" : "min-w-[4.5rem]"}`}
             >
                 <Globe className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
@@ -70,12 +70,12 @@ export default function LangToggle({ compact = false }: { compact?: boolean }) {
                                     ref={searchRef}
                                     value={query}
                                     onChange={(event) => setQuery(event.target.value)}
-                                    placeholder={tx({ TR: "Dil ara…", EN: "Search languages…" })}
+                                    placeholder={t("lt_search")}
                                     className="h-8 w-full rounded-lg bg-zinc-100 pe-2 ps-8 text-[13px] text-zinc-800 outline-none focus:ring-2 focus:ring-indigo-500/30 dark:bg-white/[0.06] dark:text-zinc-100"
                                 />
                             </div>
                         </div>
-                        <ul role="listbox" aria-label={tx({ TR: "Diller", EN: "Languages" })} className="scrollbar-thin grid max-h-80 grid-cols-2 gap-0.5 overflow-y-auto p-1.5">
+                        <ul role="listbox" aria-label={t("lt_languages")} className="scrollbar-thin grid max-h-80 grid-cols-2 gap-0.5 overflow-y-auto p-1.5">
                             {list.map((entry) => (
                                 <li key={entry.code}>
                                     <button
@@ -94,7 +94,7 @@ export default function LangToggle({ compact = false }: { compact?: boolean }) {
                                     </button>
                                 </li>
                             ))}
-                            {!list.length ? <li className="col-span-2 px-2 py-4 text-center text-[12px] text-zinc-400">{tx({ TR: "Sonuç yok", EN: "No results" })}</li> : null}
+                            {!list.length ? <li className="col-span-2 px-2 py-4 text-center text-[12px] text-zinc-400">{t("lt_no_results")}</li> : null}
                         </ul>
                     </motion.div>
                 ) : null}

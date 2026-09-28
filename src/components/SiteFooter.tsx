@@ -16,6 +16,7 @@ type FooterLink = { href: string; label: Copy | string; external?: boolean };
 export default function SiteFooter({ className = "" }: { className?: string }) {
     const { t, tx } = useI18n();
     const label = (value: Copy | string) => (typeof value === "string" ? value : tx(value));
+    const [madeBefore, madeAfter = ""] = t("sf_made").split("{heart}");
 
     const columns: Array<{ title: Copy; links: FooterLink[] }> = [
         {
@@ -33,8 +34,8 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
             links: [
                 { href: "/groups", label: NAV_LABELS.groups },
                 { href: "/friends", label: NAV_LABELS.friends },
-                { href: "/feedback", label: t("feedback_link") || "Geri Bildirim" },
-                { href: "/about", label: t("about_link") || "Hakkımızda" },
+                { href: "/feedback", label: t("feedback_link") },
+                { href: "/about", label: t("about_link") },
             ],
         },
         {
@@ -43,15 +44,15 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
                 { href: "/guide", label: NAV_LABELS.guide },
                 { href: "/game-engine/docs", label: NAV_LABELS.docs },
                 { href: "/security", label: NAV_LABELS.security },
-                { href: RELEASES_URL, label: { TR: "Masaüstü uygulaması", EN: "Desktop app" }, external: true },
+                { href: RELEASES_URL, label: t("sf_desktop"), external: true },
             ],
         },
         {
             title: NAV_LABELS.legal,
             links: [
-                { href: "/terms-of-use", label: t("terms_of_use") || "Kullanım Şartları" },
-                { href: "/privacy-policy", label: t("privacy_policy") || "Gizlilik Politikası" },
-                { href: "/disclosure", label: t("disclosure_text") || "KVKK Aydınlatma Metni" },
+                { href: "/terms-of-use", label: t("terms_of_use") },
+                { href: "/privacy-policy", label: t("privacy_policy") },
+                { href: "/disclosure", label: t("disclosure_text") },
             ],
         },
     ];
@@ -69,10 +70,7 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
                             <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Hanogt <span className="text-gradient">Codev</span></span>
                         </Link>
                         <p className="mt-4 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">
-                            {tx({
-                                TR: "Tarayıcıda kod yaz, C# ve C++ ile 2D/3D oyun yap, Arcade'de yayınla, canlı teknoloji haberlerini takip et. Tek hesap, kurulum yok.",
-                                EN: "Code in the browser, build 2D/3D games with C# and C++, publish to the Arcade and follow live tech news. One account, no setup.",
-                            })}
+                            {t("sf_about")}
                         </p>
                         <div className="mt-5 flex items-center gap-2">
                             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-200 text-zinc-600 transition hover:-translate-y-0.5 hover:text-zinc-950 dark:border-white/10 dark:text-zinc-300 dark:hover:text-white" aria-label="GitHub">
@@ -102,8 +100,8 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
                     ))}
                 </div>
                 <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-zinc-200/80 pt-6 text-[13px] text-zinc-500 sm:flex-row sm:items-center dark:border-white/[0.06]">
-                    <p>© {YEAR} Hanogt Codev · HanStudios. {t("all_rights_reserved") || "Tüm hakları saklıdır."}</p>
-                    <p className="inline-flex items-center gap-1.5">{tx({ TR: "Geliştiriciler için", EN: "Made for developers with" })} <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" /> {tx({ TR: "ile yapıldı", EN: "" })}</p>
+                    <p>© {YEAR} Hanogt Codev · HanStudios. {t("all_rights_reserved")}</p>
+                    <p className="inline-flex items-center gap-1.5">{madeBefore.trim()}<Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" aria-hidden="true" />{madeAfter.trim()}</p>
                 </div>
             </div>
         </footer>

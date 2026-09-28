@@ -6,7 +6,8 @@ export interface NavItem {
     href: string;
     icon: NavIcon;
     label: Copy;
-    description: Copy;
+    /** Locale key for the one-line description shown in menus. */
+    descKey: string;
     /** Shown only to signed-in users. */
     auth?: boolean;
     live?: boolean;
@@ -35,19 +36,19 @@ export const NAV_LABELS = {
 } satisfies Record<string, Copy>;
 
 export const PRIMARY_NAV: NavItem[] = [
-    { href: "/dashboard", icon: "dashboard", label: NAV_LABELS.dashboard, auth: true, description: { TR: "Projelerin ve kod editörün", EN: "Your projects and code editor" } },
-    { href: "/news", icon: "news", label: NAV_LABELS.news, live: true, description: { TR: "Canlı teknoloji haberleri ve yapay zeka sıralamaları", EN: "Live tech news and AI leaderboards" } },
-    { href: "/arcade", icon: "arcade", label: NAV_LABELS.arcade, description: { TR: "Toplulukta yapılan oyunları oyna", EN: "Play games made by the community" } },
-    { href: "/game-engine", icon: "engine", label: NAV_LABELS.engine, description: { TR: "C# ve C++ ile 2D/3D oyun yap", EN: "Build 2D/3D games with C# and C++" } },
-    { href: "/media", icon: "media", label: NAV_LABELS.media, description: { TR: "Kod ve projelerini paylaş", EN: "Share code and projects" } },
-    { href: "/guide", icon: "guide", label: NAV_LABELS.guide, description: { TR: "Minecraft kitabı tarzında kullanım rehberi", EN: "A Minecraft-book style how-to" } },
+    { href: "/dashboard", icon: "dashboard", label: NAV_LABELS.dashboard, auth: true, descKey: "nd_dashboard" },
+    { href: "/news", icon: "news", label: NAV_LABELS.news, live: true, descKey: "nd_news" },
+    { href: "/arcade", icon: "arcade", label: NAV_LABELS.arcade, descKey: "nd_arcade" },
+    { href: "/game-engine", icon: "engine", label: NAV_LABELS.engine, descKey: "nd_engine" },
+    { href: "/media", icon: "media", label: NAV_LABELS.media, descKey: "nd_media" },
+    { href: "/guide", icon: "guide", label: NAV_LABELS.guide, descKey: "nd_guide" },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
-    { href: "/groups", icon: "groups", label: NAV_LABELS.groups, auth: true, description: { TR: "Ekip sohbetleri ve ortak projeler", EN: "Team chats and shared projects" } },
-    { href: "/friends", icon: "friends", label: NAV_LABELS.friends, auth: true, description: { TR: "Arkadaşların ve istekler", EN: "Your friends and requests" } },
-    { href: "/security", icon: "security", label: NAV_LABELS.security, description: { TR: "Güvenlik merkezi ve danışman", EN: "Security center and advisor" } },
-    { href: "/game-engine/docs", icon: "docs", label: NAV_LABELS.docs, description: { TR: "Script API ve örnekler", EN: "Script API and examples" } },
+    { href: "/groups", icon: "groups", label: NAV_LABELS.groups, auth: true, descKey: "nd_groups" },
+    { href: "/friends", icon: "friends", label: NAV_LABELS.friends, auth: true, descKey: "nd_friends" },
+    { href: "/security", icon: "security", label: NAV_LABELS.security, descKey: "nd_security" },
+    { href: "/game-engine/docs", icon: "docs", label: NAV_LABELS.docs, descKey: "nd_docs" },
 ];
 
 export function isActivePath(pathname: string | null, href: string) {

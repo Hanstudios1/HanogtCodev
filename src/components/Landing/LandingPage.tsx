@@ -12,30 +12,26 @@ import Comparison from "@/components/Comparison";
 import Header from "@/components/Header";
 import OptimizedImage from "@/components/OptimizedImage";
 import SiteFooter from "@/components/SiteFooter";
-import { LANGUAGES, useI18n, type Copy } from "@/lib/i18n";
+import { LANGUAGES, useI18n } from "@/lib/i18n";
+import { NAV_LABELS } from "@/lib/nav";
 import CodeShowcase from "./CodeShowcase";
 import DownloadMenu from "./DownloadMenu";
 import GuideTeaser from "./GuideTeaser";
 import LiveNewsMini from "./LiveNewsMini";
 import SpotlightCard from "./SpotlightCard";
 
-const ROTATING: Copy[] = [
-    { TR: "kod yaz.", EN: "write code.", DE: "programmieren.", ES: "programa.", FR: "code.", RU: "пиши код." },
-    { TR: "oyun yap.", EN: "build games.", DE: "Spiele bauen.", ES: "crea juegos.", FR: "crée des jeux.", RU: "делай игры." },
-    { TR: "yayınla.", EN: "publish.", DE: "veröffentlichen.", ES: "publica.", FR: "publie.", RU: "публикуй." },
-    { TR: "haberleri takip et.", EN: "follow the news.", DE: "News verfolgen.", ES: "sigue las noticias.", FR: "suis l'actu.", RU: "следи за новостями." },
-];
-
 const CODE_LANGUAGES = ["python", "javascript", "typescript", "csharp", "cpp", "java", "go", "rust", "kotlin", "swift", "php", "ruby", "lua", "sql", "html", "css"];
 
 function RotatingWord() {
-    const { tx } = useI18n();
+    const { t } = useI18n();
+    const words = [t("lp_rot_code"), t("lp_rot_games"), t("lp_rot_publish"), t("lp_rot_news")];
+    const count = words.length;
     const [index, setIndex] = useState(0);
     useEffect(() => {
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        const timer = window.setInterval(() => setIndex((value) => (value + 1) % ROTATING.length), 2400);
+        const timer = window.setInterval(() => setIndex((value) => (value + 1) % count), 2400);
         return () => window.clearInterval(timer);
-    }, []);
+    }, [count]);
     return (
         <span className="relative inline-grid align-bottom">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -47,7 +43,7 @@ function RotatingWord() {
                     transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                     className="text-gradient animate-gradient whitespace-nowrap pb-2"
                 >
-                    {tx(ROTATING[index])}
+                    {words[index]}
                 </motion.span>
             </AnimatePresence>
         </span>
@@ -105,7 +101,7 @@ export default function LandingPage() {
         element.style.setProperty("--hero-y", `${event.clientY - rect.top}px`);
     };
 
-    const trust: string[] = [t("f_free"), t("f_no_ads"), t("f_setup"), tx({ TR: `${LANGUAGES.length} arayüz dili`, EN: `${LANGUAGES.length} UI languages` })].filter(Boolean);
+    const trust: string[] = [t("f_free"), t("f_no_ads"), t("f_setup"), t("lp_ui_languages").replace("{count}", String(LANGUAGES.length))].filter(Boolean);
 
     return (
         <div className="min-h-dvh overflow-x-clip bg-white text-zinc-900 dark:bg-zinc-950 dark:text-white">
@@ -122,7 +118,7 @@ export default function LandingPage() {
                     >
                         <span className="text-lg leading-none">🧪</span>
                         <p className="flex-1 font-medium leading-snug">{t("banner_warning")}</p>
-                        <button type="button" onClick={closeBanner} className="grid h-6 w-6 place-items-center rounded-lg hover:bg-amber-500/20" aria-label={tx({ TR: "Kapat", EN: "Close" })}><X className="h-4 w-4" /></button>
+                        <button type="button" onClick={closeBanner} className="grid h-6 w-6 place-items-center rounded-lg hover:bg-amber-500/20" aria-label={t("ui_close")}><X className="h-4 w-4" /></button>
                     </motion.div>
                 ) : null}
             </AnimatePresence>
@@ -140,36 +136,33 @@ export default function LandingPage() {
                         <div className="min-w-0">
                             <Link href="/news" className="group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 py-1 pe-3 ps-1 text-[12.5px] font-semibold text-zinc-700 shadow-sm backdrop-blur transition hover:border-indigo-400 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-200 animate-fade-up">
                                 <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-red-500 to-rose-500 px-2 py-0.5 text-[10.5px] font-black uppercase tracking-wider text-white">
-                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />{tx({ TR: "Yeni", EN: "New" })}
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />{t("lp_new")}
                                 </span>
-                                {tx({ TR: "Hanogt News canlı yayında", EN: "Hanogt News is live" })}
+                                {t("lp_news_live")}
                                 <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
                             </Link>
 
                             <h1 className="mt-6 text-[2.6rem] font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.1rem] animate-fade-up" style={{ animationDelay: "80ms" }}>
-                                <span className="sr-only">{tx({ TR: "Tarayıcında kod yaz, oyun yap, yayınla ve haberleri takip et.", EN: "Write code, build games, publish and follow the news in your browser." })}</span>
+                                <span className="sr-only">{t("lp_hero_sr")}</span>
                                 <span aria-hidden="true">
-                                    {tx({ TR: "Tarayıcında", EN: "In your browser," })}
+                                    {t("lp_hero_prefix")}
                                     <br />
                                     <RotatingWord />
                                 </span>
                             </h1>
 
                             <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "160ms" }}>
-                                {tx({
-                                    TR: "16 programlama dili, C# ve C++ ile çalışan gerçek bir 2D/3D oyun motoru, topluluk Arcade'i ve canlı teknoloji haberleri. Kurulum yok; hepsi tek hesapta.",
-                                    EN: "16 programming languages, a real 2D/3D game engine scripted in C# and C++, a community Arcade and live tech news. No setup; all in one account.",
-                                })}
+                                {t("lp_hero_sub")}
                             </p>
 
                             <div className="mt-8 flex flex-wrap items-center gap-3 animate-fade-up" style={{ animationDelay: "240ms" }}>
                                 <Link href={signedIn ? "/dashboard" : "/signup"} className="group relative inline-flex h-12 items-center gap-2 overflow-hidden rounded-2xl bg-zinc-900 px-6 text-[15px] font-bold text-white shadow-xl shadow-indigo-500/20 transition hover:-translate-y-0.5 dark:bg-white dark:text-zinc-900">
                                     <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                                     <Rocket className="h-4.5 w-4.5" />
-                                    {signedIn ? (t("go_to_dashboard") || "Panele git") : tx({ TR: "Ücretsiz başla", EN: "Start for free" })}
+                                    {signedIn ? t("go_to_dashboard") : t("lp_start_free")}
                                 </Link>
                                 <Link href="/game-engine" className="inline-flex h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-6 text-[15px] font-bold text-white shadow-xl shadow-fuchsia-500/25 transition hover:-translate-y-0.5 hover:brightness-110">
-                                    <Gamepad2 className="h-4.5 w-4.5" />{tx({ TR: "Oyun motorunu dene", EN: "Try the game engine" })}
+                                    <Gamepad2 className="h-4.5 w-4.5" />{t("lp_try_engine")}
                                 </Link>
                                 <DownloadMenu />
                             </div>
@@ -184,17 +177,17 @@ export default function LandingPage() {
                         <div className="min-w-0 animate-fade-up" style={{ animationDelay: "200ms" }}>
                             <CodeShowcase labels={{
                                 file: "Runner.cs",
-                                play: tx({ TR: "Oynat", EN: "Play" }),
-                                hint: tx({ TR: "Tıkla / Space: zıpla", EN: "Click / Space: jump" }),
-                                compiled: tx({ TR: "Derlendi", EN: "Compiled" }),
+                                play: t("lp_demo_play"),
+                                hint: t("lp_demo_hint"),
+                                compiled: t("lp_demo_compiled"),
                             }} />
                         </div>
                     </div>
                 </section>
 
                 {/* ------------------------------------------------------------ Languages marquee */}
-                <section className="border-y border-zinc-200/70 bg-zinc-50/70 py-6 dark:border-white/[0.06] dark:bg-white/[0.02]" aria-label={tx({ TR: "Desteklenen diller", EN: "Supported languages" })}>
-                    <p className="mb-4 text-center text-[12px] font-bold uppercase tracking-[0.2em] text-zinc-400">{tx({ TR: "16 dilde yaz, tek tıkla çalıştır", EN: "Write in 16 languages, run with one click" })}</p>
+                <section className="border-y border-zinc-200/70 bg-zinc-50/70 py-6 dark:border-white/[0.06] dark:bg-white/[0.02]" aria-label={t("lp_supported_langs")}>
+                    <p className="mb-4 text-center text-[12px] font-bold uppercase tracking-[0.2em] text-zinc-400">{t("lp_marquee")}</p>
                     <div className="mask-fade-x overflow-hidden" dir="ltr">
                         <div className="flex w-max animate-marquee gap-10 hover:[animation-play-state:paused]">
                             {[...CODE_LANGUAGES, ...CODE_LANGUAGES].map((language, index) => (
@@ -210,9 +203,9 @@ export default function LandingPage() {
                 {/* ------------------------------------------------------------ Bento */}
                 <section className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6">
                     <Reveal className="mx-auto max-w-2xl text-center">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[12px] font-bold text-indigo-600 dark:text-indigo-300"><Sparkles className="h-3.5 w-3.5" />{tx({ TR: "Tek platform, her şey", EN: "One platform, everything" })}</span>
-                        <h2 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">{tx({ TR: "Üret, oyna, paylaş, öğren", EN: "Build, play, share, learn" })}</h2>
-                        <p className="mt-4 text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx({ TR: "Bir editörden çok daha fazlası: oyun motoru, topluluk ve güncel teknoloji gündemi aynı yerde.", EN: "Much more than an editor: a game engine, a community and the tech agenda in one place." })}</p>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[12px] font-bold text-indigo-600 dark:text-indigo-300"><Sparkles className="h-3.5 w-3.5" />{t("lp_features_kicker")}</span>
+                        <h2 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">{t("lp_features_title")}</h2>
+                        <p className="mt-4 text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_features_sub")}</p>
                     </Reveal>
 
                     <div className="mt-14 grid gap-4 md:grid-cols-6">
@@ -221,10 +214,10 @@ export default function LandingPage() {
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
                                         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 text-white shadow-lg shadow-sky-500/25"><Code2 className="h-5 w-5" /></span>
-                                        <h3 className="mt-4 text-2xl font-black">{tx({ TR: "Kod Editörü", EN: "Code Editor" })}</h3>
-                                        <p className="mt-2 max-w-lg text-[14.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx({ TR: "VS Code'un kalbi Monaco ile otomatik tamamlama, çoklu sekme, projeler ve yapay zeka asistanı. Kodu izole çalıştırıcıda tek tıkla çalıştır.", EN: "Monaco, the heart of VS Code, with autocomplete, tabs, projects and an AI assistant. Run code in an isolated runner with one click." })}</p>
+                                        <h3 className="mt-4 text-2xl font-black">{tx(NAV_LABELS.editor)}</h3>
+                                        <p className="mt-2 max-w-lg text-[14.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_editor_text")}</p>
                                     </div>
-                                    <Link href={signedIn ? "/dashboard" : "/signup"} className="hidden shrink-0 items-center gap-1 rounded-xl bg-zinc-900 px-3 py-2 text-[13px] font-bold text-white transition hover:gap-2 sm:inline-flex dark:bg-white dark:text-zinc-900">{tx({ TR: "Aç", EN: "Open" })}<ArrowRight className="h-4 w-4" /></Link>
+                                    <Link href={signedIn ? "/dashboard" : "/signup"} className="hidden shrink-0 items-center gap-1 rounded-xl bg-zinc-900 px-3 py-2 text-[13px] font-bold text-white transition hover:gap-2 sm:inline-flex dark:bg-white dark:text-zinc-900">{t("lp_open")}<ArrowRight className="h-4 w-4" /></Link>
                                 </div>
                                 <div className="mt-6 flex flex-wrap gap-1.5">
                                     {CODE_LANGUAGES.map((language) => (
@@ -240,12 +233,12 @@ export default function LandingPage() {
                             <SpotlightCard className="flex h-full flex-col p-6" color="rgba(244,63,94,0.16)">
                                 <div className="flex items-center gap-2">
                                     <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/25"><Newspaper className="h-5 w-5" /></span>
-                                    <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-red-600 dark:text-red-400"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />{tx({ TR: "Canlı", EN: "Live" })}</span>
+                                    <span className="ms-auto inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-red-600 dark:text-red-400"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />{tx(NAV_LABELS.live)}</span>
                                 </div>
                                 <h3 className="mt-4 text-2xl font-black">Hanogt News</h3>
-                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx({ TR: "Yapay zeka, yazılım, oyun ve uygulama dünyasından anlık haberler; yorumlar ve yapay zeka arenası.", EN: "Live stories from AI, software, games and apps; comments and an AI arena." })}</p>
+                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_news_text")}</p>
                                 <div className="mt-4 flex-1"><LiveNewsMini /></div>
-                                <Link href="/news" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-rose-600 hover:gap-2 dark:text-rose-400">{tx({ TR: "Tüm haberler", EN: "All stories" })}<ArrowRight className="h-4 w-4" /></Link>
+                                <Link href="/news" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-rose-600 hover:gap-2 dark:text-rose-400">{t("lp_all_stories")}<ArrowRight className="h-4 w-4" /></Link>
                             </SpotlightCard>
                         </Reveal>
 
@@ -255,18 +248,13 @@ export default function LandingPage() {
                                     <div>
                                         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25"><Boxes className="h-5 w-5" /></span>
                                         <h3 className="mt-4 text-2xl font-black">Hanogt Engine</h3>
-                                        <p className="mt-2 text-[14.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx({ TR: "Unity benzeri editör, fizik, parçacıklar, ses ve WebGL render. Scriptleri C# veya C++ ile yaz, oyunu tek dosya HTML olarak dışa aktar.", EN: "A Unity-like editor with physics, particles, audio and WebGL rendering. Script in C# or C++ and export a single-file HTML game." })}</p>
-                                        <Link href="/game-engine" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-violet-600 hover:gap-2 dark:text-violet-300">{tx({ TR: "Motoru aç", EN: "Open the engine" })}<ArrowRight className="h-4 w-4" /></Link>
+                                        <p className="mt-2 text-[14.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_engine_text")}</p>
+                                        <Link href="/game-engine" className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-bold text-violet-600 hover:gap-2 dark:text-violet-300">{t("lp_open_engine")}<ArrowRight className="h-4 w-4" /></Link>
                                     </div>
                                     <ul className="space-y-2 text-[13.5px]">
-                                        {[
-                                            { TR: "Hiyerarşi, Inspector, Scene & Game görünümü", EN: "Hierarchy, Inspector, Scene & Game views" },
-                                            { TR: "Rigidbody, collider, raycast ve tetikleyiciler", EN: "Rigidbody, colliders, raycasts and triggers" },
-                                            { TR: "Coroutine, Invoke, PlayerPrefs, prefab", EN: "Coroutines, Invoke, PlayerPrefs, prefabs" },
-                                            { TR: "Hazır 2D/3D şablonlar ve Arcade'de yayın", EN: "Ready 2D/3D templates and Arcade publishing" },
-                                        ].map((item, index) => (
-                                            <motion.li key={item.EN} initial={{ opacity: 0, x: 16 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + index * 0.08 }} className="flex items-start gap-2 rounded-xl bg-violet-500/[0.06] px-3 py-2 text-zinc-700 dark:text-zinc-300">
-                                                <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />{tx(item)}
+                                        {[t("lp_engine_f1"), t("lp_engine_f2"), t("lp_engine_f3"), t("lp_engine_f4")].map((item, index) => (
+                                            <motion.li key={index} initial={{ opacity: 0, x: 16 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + index * 0.08 }} className="flex items-start gap-2 rounded-xl bg-violet-500/[0.06] px-3 py-2 text-zinc-700 dark:text-zinc-300">
+                                                <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />{item}
                                             </motion.li>
                                         ))}
                                     </ul>
@@ -278,8 +266,8 @@ export default function LandingPage() {
                             <SpotlightCard className="h-full p-6" color="rgba(234,179,8,0.16)">
                                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/25"><Trophy className="h-5 w-5" /></span>
                                 <h3 className="mt-4 text-xl font-black">Arcade</h3>
-                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx({ TR: "Topluluğun yaptığı oyunları anında oyna, beğen ve remiksle.", EN: "Play community games instantly, like and remix them." })}</p>
-                                <Link href="/arcade" className="mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-bold text-amber-600 hover:gap-2 dark:text-amber-400"><Play className="h-4 w-4" />{tx({ TR: "Oyna", EN: "Play" })}</Link>
+                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_arcade_text")}</p>
+                                <Link href="/arcade" className="mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-bold text-amber-600 hover:gap-2 dark:text-amber-400"><Play className="h-4 w-4" />{t("lp_play")}</Link>
                             </SpotlightCard>
                         </Reveal>
                         <Reveal delay={0.06} className="md:col-span-2">
@@ -288,20 +276,20 @@ export default function LandingPage() {
                                     <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-lg"><Radio className="h-5 w-5" /></span>
                                     <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg"><UsersRound className="h-5 w-5" /></span>
                                 </div>
-                                <h3 className="mt-4 text-xl font-black">{tx({ TR: "Media & Gruplar", EN: "Media & Groups" })}</h3>
-                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx({ TR: "Kodunu paylaş, ekibinle sohbet et, sesli ara, ortak projeler yürüt.", EN: "Share code, chat with your team, voice call and run shared projects." })}</p>
+                                <h3 className="mt-4 text-xl font-black">{t("lp_media_title")}</h3>
+                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_media_text")}</p>
                                 <div className="mt-4 flex items-center gap-3 text-[13px] font-semibold text-zinc-500">
-                                    <span className="inline-flex items-center gap-1"><Heart className="h-4 w-4 text-rose-500" />{tx({ TR: "Beğeni", EN: "Likes" })}</span>
-                                    <span className="inline-flex items-center gap-1"><MessageSquare className="h-4 w-4 text-sky-500" />{tx({ TR: "Sohbet", EN: "Chat" })}</span>
+                                    <span className="inline-flex items-center gap-1"><Heart className="h-4 w-4 text-rose-500" />{t("lp_likes")}</span>
+                                    <span className="inline-flex items-center gap-1"><MessageSquare className="h-4 w-4 text-sky-500" />{t("lp_chat")}</span>
                                 </div>
                             </SpotlightCard>
                         </Reveal>
                         <Reveal delay={0.12} className="md:col-span-2">
                             <SpotlightCard className="h-full p-6" color="rgba(16,185,129,0.16)">
                                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25"><ShieldCheck className="h-5 w-5" /></span>
-                                <h3 className="mt-4 text-xl font-black">{tx({ TR: "Hanogt Security", EN: "Hanogt Security" })}</h3>
-                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx({ TR: "Sunucu tarafı tarama, güvenlik botu ve kodunu inceleyen güvenlik danışmanı.", EN: "Server-side scanning, a security bot and an advisor that reviews your code." })}</p>
-                                <Link href="/security" className="mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-bold text-emerald-600 hover:gap-2 dark:text-emerald-400"><Bot className="h-4 w-4" />{tx({ TR: "Danışmana sor", EN: "Ask the advisor" })}</Link>
+                                <h3 className="mt-4 text-xl font-black">Hanogt Security</h3>
+                                <p className="mt-2 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{t("lp_security_text")}</p>
+                                <Link href="/security" className="mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-bold text-emerald-600 hover:gap-2 dark:text-emerald-400"><Bot className="h-4 w-4" />{t("lp_ask_advisor")}</Link>
                             </SpotlightCard>
                         </Reveal>
                     </div>
@@ -312,7 +300,7 @@ export default function LandingPage() {
                 {/* ------------------------------------------------------------ Comparison */}
                 <section className="bg-zinc-50 py-24 dark:bg-white/[0.02]">
                     <Reveal className="mx-auto mb-10 max-w-2xl px-4 text-center">
-                        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{t("why_hanogt") || "Neden Hanogt Codev?"}</h2>
+                        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{t("why_hanogt")}</h2>
                         <p className="mt-3 text-[15px] text-zinc-600 dark:text-zinc-400">{t("comparison_quote")}</p>
                     </Reveal>
                     <div className="px-4"><Comparison /></div>
@@ -326,14 +314,14 @@ export default function LandingPage() {
                             <div className="absolute inset-0 bg-grid opacity-20" />
                             <div className="relative">
                                 <Globe2 className="mx-auto h-10 w-10 animate-float" />
-                                <h2 className="mx-auto mt-5 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">{tx({ TR: "Bir sonraki projen burada başlıyor", EN: "Your next project starts here" })}</h2>
-                                <p className="mx-auto mt-4 max-w-xl text-[16px] text-white/85">{t("create_free_account") || tx({ TR: "Hemen ücretsiz hesabını oluştur", EN: "Create your free account" })}</p>
+                                <h2 className="mx-auto mt-5 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">{t("lp_cta_title")}</h2>
+                                <p className="mx-auto mt-4 max-w-xl text-[16px] text-white/85">{t("lp_cta_sub")}</p>
                                 <div className="mt-8 flex flex-wrap justify-center gap-3">
                                     <Link href={signedIn ? "/dashboard" : "/signup"} className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-bold text-zinc-900 shadow-xl transition hover:-translate-y-0.5">
-                                        <Rocket className="h-4.5 w-4.5" />{signedIn ? (t("go_to_dashboard") || "Panele git") : tx({ TR: "Ücretsiz başla", EN: "Start for free" })}
+                                        <Rocket className="h-4.5 w-4.5" />{signedIn ? t("go_to_dashboard") : t("lp_start_free")}
                                     </Link>
                                     <Link href="/arcade" className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/40 bg-white/10 px-6 text-[15px] font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20">
-                                        <Gamepad2 className="h-4.5 w-4.5" />{tx({ TR: "Arcade'e göz at", EN: "Browse the Arcade" })}
+                                        <Gamepad2 className="h-4.5 w-4.5" />{t("lp_browse_arcade")}
                                     </Link>
                                 </div>
                             </div>

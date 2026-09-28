@@ -509,7 +509,7 @@ export default function DashboardPage() {
                                             {tx(item.label)}
                                             {item.live && <span className="relative flex h-2 w-2" aria-hidden><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" /></span>}
                                         </span>
-                                        <span className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{tx(item.description)}</span>
+                                        <span className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{t(item.descKey)}</span>
                                     </span>
                                 </Link>
                             );

@@ -10,7 +10,7 @@ import { timeAgo, type NewsItemView } from "@/components/News/NewsTypes";
 
 /** The five newest headlines from /api/news, refreshed every 90 seconds. */
 export default function LiveNewsMini({ limit = 5 }: { limit?: number }) {
-    const { language, tx } = useI18n();
+    const { language, t } = useI18n();
     const locale = language === "TR" ? "tr" : "en";
     const [items, setItems] = useState<NewsItemView[]>([]);
     const [now, setNow] = useState(0);
@@ -50,7 +50,7 @@ export default function LiveNewsMini({ limit = 5 }: { limit?: number }) {
     if (state === "empty") {
         return (
             <Link href="/news" className="flex items-center justify-between rounded-xl border border-dashed border-zinc-300 px-3 py-3 text-[13px] text-zinc-500 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-white/10">
-                {tx({ TR: "Haber akışını aç", EN: "Open the news feed" })}<ArrowRight className="h-4 w-4" />
+                {t("lnm_open")}<ArrowRight className="h-4 w-4" />
             </Link>
         );
     }
