@@ -529,7 +529,7 @@ function EditorContent() {
             setProjectOutput([tx({ TR: "> Proje çalıştırması", EN: "> Project run" }), "", `Error: ${errorMsg}`, "", tx({ TR: "> Çalıştırma başarısız oldu. Kodunuzu ve çalıştırıcı yapılandırmasını kontrol edin.", EN: "> The run failed. Check your code and the runner configuration." })]);
             setTabs(prevTabs => prevTabs.map(t => ({ ...t, isRunning: false })));
             setExecutionHistory(prev => [{
-                lang: runnableTabs.length > 1 ? `${runnableTabs.length} dosya` : getDisplayName(activeTab.lang),
+                lang: runnableTabs.length > 1 ? tx({ TR: `${runnableTabs.length} dosya`, EN: `${runnableTabs.length} files` }) : getDisplayName(activeTab.lang),
                 time: new Date().toLocaleTimeString(),
                 status: "❌"
             }, ...prev].slice(0, 50));
@@ -629,9 +629,9 @@ function EditorContent() {
         if (shouldAskName) {
             let defaultName: string;
             if (isNowMultiTab) {
-                defaultName = t("general_project") || "Genel Projem";
+                defaultName = t("general_project");
             } else {
-                defaultName = `${t("my_lang_project_prefix") || "Benim"} ${activeTab?.lang.charAt(0).toUpperCase()}${activeTab?.lang.slice(1)} ${t("my_lang_project_suffix") || "Projem"}`;
+                defaultName = t("my_lang_project").replace("{lang}", activeTab ? getDisplayName(activeTab.lang) : "");
             }
 
             // Show custom modal

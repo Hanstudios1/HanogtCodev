@@ -43,7 +43,7 @@ function useAuthErrorMessage() {
 function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { t } = useI18n();
+    const { t, tx } = useI18n();
     const describeError = useAuthErrorMessage();
     const callbackPath = safeCallbackPath(searchParams.get("callbackUrl") || searchParams.get("next"));
     const [loading, setLoading] = useState(false);
@@ -97,16 +97,16 @@ function LoginForm() {
                 <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold">{t("email") || "E-posta"}</span>
                     <span className="relative block">
-                        <Mail className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
-                        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" inputMode="email" className={inputClass} placeholder="ornek@email.com" />
+                        <Mail className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" inputMode="email" className={inputClass} placeholder={tx({ TR: "ornek@eposta.com", EN: "you@example.com" })} />
                     </span>
                 </label>
                 <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold">{t("password") || "Şifre"}</span>
                     <span className="relative block">
-                        <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
-                        <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" className={`${inputClass} pr-12`} placeholder="••••••••••" />
-                        <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label={showPassword ? (t("auth_hide_password") || "Şifreyi gizle") : (t("auth_show_password") || "Şifreyi göster")}>
+                        <Lock className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                        <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" className={`${inputClass} pe-12`} placeholder="••••••••••" />
+                        <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute end-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label={showPassword ? (t("auth_hide_password") || "Şifreyi gizle") : (t("auth_show_password") || "Şifreyi göster")}>
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                     </span>

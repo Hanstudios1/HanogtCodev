@@ -26,7 +26,7 @@ for (const file of sourceFiles) {
     if (file.includes(`${path.sep}GameEngine${path.sep}`) && !usesSiteT) continue;
     for (const match of source.matchAll(/\bt\(\s*["']([a-zA-Z0-9_]+)["']/g)) required.add(match[1]);
     // Keys stored in data tables (e.g. nav descriptions) and looked up later with t(item.descKey).
-    for (const match of source.matchAll(/\bdescKey:\s*["']([a-zA-Z0-9_]+)["']/g)) required.add(match[1]);
+    for (const match of source.matchAll(/\b(?:descKey|labelKey):\s*["']([a-zA-Z0-9_]+)["']/g)) required.add(match[1]);
 }
 
 const changelog = fs.readFileSync(path.join(sourceRoot, "components", "ChangelogModal.tsx"), "utf8");

@@ -41,6 +41,8 @@
 - Aranabilir, bayraklı dil seçici; `<html lang>` ve `dir` seçilen dile göre ayarlanıyor.
 - Oyun motoru, motor belgeleri, Arcade, Hanogt Media, Gruplar, Geri Bildirim/SSS, panel, kod editörü, sesli arama ve gizlilik bildirimi Türkçe ve İngilizce kullanılabilir; önceden yalnızca Türkçe olan ~400 arayüz metni çevrildi.
 - Hesap Ayarları'ndaki dil seçici 30 dilin tamamını gösteriyor; yasal metinlerin Türkçe sürümünün bağlayıcı olduğu diğer dillerde belirtiliyor.
+- Ana sayfa, menüler, alt bilgi, dil seçici ve Hakkında sayfası 30 dilin tamamında; Almanca, Fransızca, Felemenkçe, Flamanca, Lehçe, İsveççe, Norveççe, Fince, Yunanca ve Hintçede İngilizce kalmış ~3.500 metin (ayarlar, arkadaşlar, mesajlar, editör, sürüm notları) çevrildi.
+- Profil rozetlerinin adları 30 dilde gösteriliyor; editörün varsayılan proje adı her dilin kelime sırasına uyuyor; giriş ve kayıt formları sağdan sola dillerde doğru hizalanıyor.
 
 ### Yasal metinler 3.0
 

@@ -22,7 +22,7 @@ function passwordStrength(password: string) {
 function SignupForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { t } = useI18n();
+    const { t, tx } = useI18n();
     const callbackPath = safeCallbackPath(searchParams.get("callbackUrl") || searchParams.get("next"));
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
@@ -105,18 +105,18 @@ function SignupForm() {
             <form onSubmit={handleSignup} className="space-y-4">
                 <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold">{t("email") || "E-posta"}</span>
-                    <span className="relative block"><Mail className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" /><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" inputMode="email" maxLength={254} className={inputClass} placeholder="ornek@email.com" /></span>
+                    <span className="relative block"><Mail className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" /><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" inputMode="email" maxLength={254} className={inputClass} placeholder={tx({ TR: "ornek@eposta.com", EN: "you@example.com" })} /></span>
                 </label>
                 <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold">{t("username") || "Kullanıcı Adı"}</span>
-                    <span className="relative block"><User className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" /><input type="text" value={username} onChange={(event) => setUsername(event.target.value)} required autoComplete="username" maxLength={40} className={inputClass} placeholder="kullaniciadi" /></span>
+                    <span className="relative block"><User className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" /><input type="text" value={username} onChange={(event) => setUsername(event.target.value)} required autoComplete="username" maxLength={40} className={inputClass} placeholder={tx({ TR: "kullaniciadi", EN: "username" })} /></span>
                 </label>
                 <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold">{t("password") || "Şifre"}</span>
                     <span className="relative block">
-                        <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
-                        <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" className={`${inputClass} pr-12`} placeholder="••••••••••" />
-                        <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label={showPassword ? (t("auth_hide_password") || "Şifreyi gizle") : (t("auth_show_password") || "Şifreyi göster")}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                        <Lock className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                        <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" className={`${inputClass} pe-12`} placeholder="••••••••••" />
+                        <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute end-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label={showPassword ? (t("auth_hide_password") || "Şifreyi gizle") : (t("auth_show_password") || "Şifreyi göster")}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
                     </span>
                 </label>
                 {password && (
@@ -132,7 +132,7 @@ function SignupForm() {
                 )}
                 <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold">{t("confirm_password") || "Şifreyi Doğrula"}</span>
-                    <span className="relative block"><Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" /><input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" aria-invalid={mismatch} className={`${inputClass} ${mismatch ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`} placeholder="••••••••••" /></span>
+                    <span className="relative block"><Lock className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" /><input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" aria-invalid={mismatch} className={`${inputClass} ${mismatch ? "border-red-400 focus:border-red-500 focus:ring-red-500/15" : ""}`} placeholder="••••••••••" /></span>
                     {mismatch && <span className="mt-1.5 block text-xs text-red-500">{t("passwords_not_match") || "Şifreler eşleşmiyor!"}</span>}
                 </label>
                 <button type="submit" disabled={loading} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:brightness-110 disabled:opacity-60">

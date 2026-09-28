@@ -123,7 +123,7 @@ export default function FeedbackPage() {
             }
             setAuthorProfiles(profiles);
         } catch (error) {
-            console.error("Error fetching feedback:", error);
+            console.warn("Error fetching feedback:", error);
         } finally {
             setLoading(false);
         }
