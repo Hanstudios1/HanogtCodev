@@ -5,7 +5,8 @@ import tr from "@/locales/TR.json";
 import en from "@/locales/EN.json";
 
 export type Language =
-    | "TR" | "EN" | "RU" | "AZ" | "ES" | "KZ" | "JP" | "CN" | "KR" | "HI" | "DE" | "NG" | "FR" | "BE" | "NL" | "PL" | "NO" | "FI" | "SV" | "EL";
+    | "TR" | "EN" | "RU" | "AZ" | "ES" | "KZ" | "JP" | "CN" | "KR" | "HI" | "DE" | "NG" | "FR" | "BE" | "NL" | "PL" | "NO" | "FI" | "SV" | "EL"
+    | "AR" | "PT" | "IT" | "UK" | "ID" | "VI" | "CS" | "RO" | "HU" | "UZ";
 type Translations = Record<string, string>;
 
 export interface LanguageInfo {
@@ -26,17 +27,27 @@ export const LANGUAGES: LanguageInfo[] = [
     { code: "DE", name: "Deutsch", english: "German", locale: "de-DE", dir: "ltr", flag: "🇩🇪" },
     { code: "FR", name: "Français", english: "French", locale: "fr-FR", dir: "ltr", flag: "🇫🇷" },
     { code: "ES", name: "Español", english: "Spanish", locale: "es-ES", dir: "ltr", flag: "🇪🇸" },
+    { code: "PT", name: "Português", english: "Portuguese", locale: "pt-BR", dir: "ltr", flag: "🇧🇷" },
+    { code: "IT", name: "Italiano", english: "Italian", locale: "it-IT", dir: "ltr", flag: "🇮🇹" },
     { code: "RU", name: "Русский", english: "Russian", locale: "ru-RU", dir: "ltr", flag: "🇷🇺" },
+    { code: "UK", name: "Українська", english: "Ukrainian", locale: "uk-UA", dir: "ltr", flag: "🇺🇦" },
+    { code: "AR", name: "العربية", english: "Arabic", locale: "ar", dir: "rtl", flag: "🇸🇦" },
     { code: "AZ", name: "Azərbaycan", english: "Azerbaijani", locale: "az-AZ", dir: "ltr", flag: "🇦🇿" },
     { code: "KZ", name: "Қазақ", english: "Kazakh", locale: "kk-KZ", dir: "ltr", flag: "🇰🇿" },
+    { code: "UZ", name: "Oʻzbekcha", english: "Uzbek", locale: "uz-UZ", dir: "ltr", flag: "🇺🇿" },
     { code: "JP", name: "日本語", english: "Japanese", locale: "ja-JP", dir: "ltr", flag: "🇯🇵" },
     { code: "CN", name: "中文", english: "Chinese", locale: "zh-CN", dir: "ltr", flag: "🇨🇳" },
     { code: "KR", name: "한국어", english: "Korean", locale: "ko-KR", dir: "ltr", flag: "🇰🇷" },
     { code: "HI", name: "हिन्दी", english: "Hindi", locale: "hi-IN", dir: "ltr", flag: "🇮🇳" },
+    { code: "ID", name: "Bahasa Indonesia", english: "Indonesian", locale: "id-ID", dir: "ltr", flag: "🇮🇩" },
+    { code: "VI", name: "Tiếng Việt", english: "Vietnamese", locale: "vi-VN", dir: "ltr", flag: "🇻🇳" },
     { code: "NG", name: "Naijá", english: "Nigerian Pidgin", locale: "pcm-NG", dir: "ltr", flag: "🇳🇬" },
     { code: "NL", name: "Nederlands", english: "Dutch", locale: "nl-NL", dir: "ltr", flag: "🇳🇱" },
     { code: "BE", name: "Vlaams", english: "Flemish", locale: "nl-BE", dir: "ltr", flag: "🇧🇪" },
     { code: "PL", name: "Polski", english: "Polish", locale: "pl-PL", dir: "ltr", flag: "🇵🇱" },
+    { code: "CS", name: "Čeština", english: "Czech", locale: "cs-CZ", dir: "ltr", flag: "🇨🇿" },
+    { code: "RO", name: "Română", english: "Romanian", locale: "ro-RO", dir: "ltr", flag: "🇷🇴" },
+    { code: "HU", name: "Magyar", english: "Hungarian", locale: "hu-HU", dir: "ltr", flag: "🇭🇺" },
     { code: "NO", name: "Norsk", english: "Norwegian", locale: "nb-NO", dir: "ltr", flag: "🇳🇴" },
     { code: "SV", name: "Svenska", english: "Swedish", locale: "sv-SE", dir: "ltr", flag: "🇸🇪" },
     { code: "FI", name: "Suomi", english: "Finnish", locale: "fi-FI", dir: "ltr", flag: "🇫🇮" },
@@ -66,6 +77,16 @@ const loaders: Record<Language, () => Promise<Translations>> = {
     FI: async () => (await import("@/locales/FI.json")).default,
     SV: async () => (await import("@/locales/SV.json")).default,
     EL: async () => (await import("@/locales/EL.json")).default,
+    AR: async () => (await import("@/locales/AR.json")).default,
+    PT: async () => (await import("@/locales/PT.json")).default,
+    IT: async () => (await import("@/locales/IT.json")).default,
+    UK: async () => (await import("@/locales/UK.json")).default,
+    ID: async () => (await import("@/locales/ID.json")).default,
+    VI: async () => (await import("@/locales/VI.json")).default,
+    CS: async () => (await import("@/locales/CS.json")).default,
+    RO: async () => (await import("@/locales/RO.json")).default,
+    HU: async () => (await import("@/locales/HU.json")).default,
+    UZ: async () => (await import("@/locales/UZ.json")).default,
 };
 
 export function isLanguage(value: string | null | undefined): value is Language {
@@ -143,7 +164,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
             dir: info.dir,
             setLanguage,
             t: (key: string) => translations[key] || fallbackEN[key] || fallbackTR[key] || "",
-            tx: (copy: Copy) => copy[language] ?? copy.EN,
+            tx: (copy: Copy) => {
+                const own = copy[language];
+                if (own !== undefined) return own;
+                // Untranslated copy falls back to English. Inside right-to-left pages it is
+                // wrapped in a left-to-right isolate so its punctuation stays at the end.
+                return info.dir === "rtl" ? `\u2066${copy.EN}\u2069` : copy.EN;
+            },
         };
     }, [language, setLanguage, translations]);
 

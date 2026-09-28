@@ -12,7 +12,7 @@ import Comparison from "@/components/Comparison";
 import Header from "@/components/Header";
 import OptimizedImage from "@/components/OptimizedImage";
 import SiteFooter from "@/components/SiteFooter";
-import { useI18n, type Copy } from "@/lib/i18n";
+import { LANGUAGES, useI18n, type Copy } from "@/lib/i18n";
 import CodeShowcase from "./CodeShowcase";
 import DownloadMenu from "./DownloadMenu";
 import GuideTeaser from "./GuideTeaser";
@@ -105,7 +105,7 @@ export default function LandingPage() {
         element.style.setProperty("--hero-y", `${event.clientY - rect.top}px`);
     };
 
-    const trust: string[] = [t("f_free"), t("f_no_ads"), t("f_setup"), tx({ TR: "20 arayüz dili", EN: "20 UI languages" })].filter(Boolean);
+    const trust: string[] = [t("f_free"), t("f_no_ads"), t("f_setup"), tx({ TR: `${LANGUAGES.length} arayüz dili`, EN: `${LANGUAGES.length} UI languages` })].filter(Boolean);
 
     return (
         <div className="min-h-dvh overflow-x-clip bg-white text-zinc-900 dark:bg-zinc-950 dark:text-white">

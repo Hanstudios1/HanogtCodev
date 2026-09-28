@@ -68,7 +68,7 @@ export const PAGES: BookPage[] = [
             { type: "item", icon: "🧭", name: { TR: "Üst menü", EN: "Top menu" }, text: { TR: "Haberler, Arcade, Oyun Motoru, Media ve Kılavuz. Giriş yapınca Panel de gelir.", EN: "News, Arcade, Game Engine, Media and Guide. Dashboard appears once you sign in." } },
             { type: "item", icon: "✨", name: { TR: "Yenilikler", EN: "What's new" }, text: { TR: "Son güncellemelerin günlüğü.", EN: "The log of recent updates." } },
             { type: "item", icon: "🛡️", name: { TR: "Security Bot", EN: "Security Bot" }, text: { TR: "Güvenlik ve gizlilik sorularını yanıtlayan yeşil kalkan.", EN: "The green shield that answers security and privacy questions." } },
-            { type: "item", icon: "🌐", name: { TR: "Dil ve tema", EN: "Language & theme" }, text: { TR: "20 arayüz dili, açık ve koyu tema. Telefonda hepsi ☰ menüde.", EN: "20 interface languages, light and dark themes. On phones everything lives in the ☰ menu." } },
+            { type: "item", icon: "🌐", name: { TR: "Dil ve tema", EN: "Language & theme" }, text: { TR: "Sağdan sola Arapça dahil 30 arayüz dili, açık ve koyu tema. Telefonda hepsi ☰ menüde.", EN: "30 interface languages including right-to-left Arabic, light and dark themes. On phones everything lives in the ☰ menu." } },
         ],
     },
 
