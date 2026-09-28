@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Clock, ExternalLink, FileText, History, Link2, Printer, Scale, ShieldCheck } from "lucide-react";
+import { Check, Clock, ExternalLink, FileText, History, Languages, Link2, Printer, Scale, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import SiteFooter from "@/components/SiteFooter";
+import { useI18n } from "@/lib/i18n";
 import { LEGAL_CHANGES, LEGAL_EFFECTIVE_DATE, LEGAL_VERSION } from "@/lib/legal";
 
 export type LegalSection = {
@@ -42,6 +43,7 @@ export default function LegalPage({
     highlights?: LegalHighlight[];
     current: string;
 }) {
+    const { language } = useI18n();
     const [active, setActive] = useState(sections[0]?.id ?? "");
     const [copied, setCopied] = useState<string | null>(null);
     const words = sections.reduce((sum, section) => sum + [...(section.paragraphs ?? []), ...(section.items ?? []), ...(section.table?.rows.flat() ?? [])].join(" ").split(/\s+/).length, 0);
@@ -73,8 +75,15 @@ export default function LegalPage({
     return (
         <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
             <Header />
-            <main id="main-content" className="px-4 pb-16 pt-24 sm:px-6">
+            {/* The legal texts are written (and binding) in Turkish; lang lets browsers offer translation. */}
+            <main id="main-content" lang="tr" className="px-4 pb-16 pt-24 sm:px-6">
                 <div className="mx-auto max-w-6xl">
+                    {language !== "TR" ? (
+                        <div lang="en" dir="ltr" className="mb-4 flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-6 text-indigo-900 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100">
+                            <Languages className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                            <p>This document is published in Turkish, and the Turkish text is the legally binding version. Your browser&apos;s translate feature can show it in your language; for questions, contact us through the Feedback page.</p>
+                        </div>
+                    ) : null}
                     <motion.header initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-zinc-900">
                         <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-700 p-7 text-white sm:p-10">
                             <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
