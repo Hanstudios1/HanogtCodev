@@ -20,6 +20,24 @@ interface UpdateEntry {
 
 const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.1.0",
+        version: "v0.1.0",
+        date: "2026-09-28",
+        titleKey: "update_v006_title",
+        descKey: "update_v006_desc",
+        items: [
+            { key: "update_v006_item1" },
+            { key: "update_v006_item2" },
+            { key: "update_v006_item3" },
+            { key: "update_v006_item4" },
+            { key: "update_v006_item5" },
+            { key: "update_v006_item6" },
+            { key: "update_v006_item7" },
+            { key: "update_v006_item8" },
+            { key: "update_v006_item9" },
+        ],
+    },
+    {
         id: "v0.0.5",
         version: "v0.0.5",
         date: "2026-09-04",

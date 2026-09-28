@@ -2,12 +2,12 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 
-import { useCallback, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { User, Trash2, Camera, ArrowLeft, Save, Bell, Globe, Shield, Database, Download, Clock, Eye, EyeOff, Mail, Megaphone, LogOut, Link2, Github, Linkedin, Twitter, Globe2, Hash, Palette, Image as ImageIcon, MessageCircle, Star, Lock, Paintbrush } from "lucide-react";
 import Header from "@/components/Header";
-import { useI18n } from "@/lib/i18n";
+import { LANGUAGES, useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -24,8 +24,21 @@ const ACCENT_COLORS = [
 
 const generateTag = () => String(Math.floor(1000 + Math.random() * 9000));
 
+function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onToggle}
+            aria-pressed={enabled}
+            className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
+        >
+            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6 rtl:-translate-x-6" : "translate-x-0.5 rtl:-translate-x-0.5"}`} />
+        </button>
+    );
+}
+
 export default function AccountSettingsPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
     const { t, language, setLanguage } = useI18n();
 
@@ -103,89 +116,97 @@ export default function AccountSettingsPage() {
     const [uiFontSize, setUiFontSize] = useState("medium");
     const [emojiStyle, setEmojiStyle] = useState("native");
 
-    const loadUserData = useCallback(async () => {
-        if (!session?.user?.email) return;
-        try {
-            const userDoc = await getDoc(doc(db, "users", session.user.email));
-            if (userDoc.exists()) {
-                const data = userDoc.data();
-                setUsername(data.username || session.user.name || "");
-                setAvatarUrl(data.avatarUrl || session.user.image || "");
-                // Load existing settings
-                setEmailNotifications(data.emailNotifications ?? true);
-                setNewFeatureAlerts(data.newFeatureAlerts ?? true);
-                setPublicProfile(data.publicProfile ?? true);
-                setShowOnlineStatus(data.showOnlineStatus ?? true);
-                setTimezone(data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
-                setBio(data.bio || "");
-                // Load new Phase 2 settings
-                setNickname(data.nickname || "");
-                setNicknameTag(data.nicknameTag || generateTag());
-                setCustomStatus(data.customStatus || "");
-                setStatusEmoji(data.statusEmoji || "😊");
-                setBannerUrl(data.bannerUrl || "");
-                setAccentColor(data.accentColor || "#3B82F6");
-                setFavoriteLangs(data.favoriteLangs || []);
-                setSocialGithub(data.socialGithub || "");
-                setSocialLinkedin(data.socialLinkedin || "");
-                setSocialTwitter(data.socialTwitter || "");
-                setSocialWebsite(data.socialWebsite || "");
-                setSocialYoutube(data.socialYoutube || "");
-                setSocialTiktok(data.socialTiktok || "");
-                setSocialInstagram(data.socialInstagram || "");
-                setSocialFacebook(data.socialFacebook || "");
-                setLastLoginDate(data.lastLoginDate || new Date().toISOString());
-                // §7 Password
-                setHasPassword(data.hasPassword || false);
-                // §8 Messaging
-                setTypingIndicator(data.typingIndicator ?? true);
-                setReadReceipts(data.readReceipts ?? true);
-                setMsgFontSize(data.msgFontSize || "medium");
-                setChatBackground(data.chatBackground || "default");
-                setVoiceMsgQuality(data.voiceMsgQuality || "normal");
-                setLinkPreview(data.linkPreview ?? true);
-                setGifAutoplay(data.gifAutoplay ?? true);
-                setEnterToSend(data.enterToSend ?? true);
-                setStickerSuggestions(data.stickerSuggestions ?? true);
-                // §8 Privacy
-                setWhoCanAdd(data.whoCanAdd || "everyone");
-                setHideFriendList(data.hideFriendList ?? false);
-                setShowLastSeen(data.showLastSeen ?? true);
-                setPhotoVisibility(data.photoVisibility || "everyone");
-                setBioVisibility(data.bioVisibility || "everyone");
-                setPublicProjects(data.publicProjects ?? true);
-                // §8 Notifications
-                setMsgNotifications(data.msgNotifications ?? true);
-                setCallNotifications(data.callNotifications ?? true);
-                setFriendReqNotifications(data.friendReqNotifications ?? true);
-                setLikeNotifications(data.likeNotifications ?? true);
-                setNotifSound(data.notifSound ?? true);
-                setDndMode(data.dndMode ?? false);
-                setDndSchedule(data.dndSchedule || "");
-                // §8 Appearance
-                setBubbleColor(data.bubbleColor || "#3B82F6");
-                setCompactMode(data.compactMode ?? false);
-                setReduceAnimations(data.reduceAnimations ?? false);
-                setHighContrast(data.highContrast ?? false);
-                setUiFontSize(data.uiFontSize || "medium");
-                setEmojiStyle(data.emojiStyle || "native");
-            } else {
-                setUsername(session.user.name || "");
-                setAvatarUrl(session.user.image || "");
-                setNicknameTag(generateTag());
-            }
-        } catch (error) {
-            console.error("Error loading user data:", error);
-        }
-    }, [session?.user?.email, session?.user?.image, session?.user?.name]);
+    const sessionEmail = session?.user?.email ?? null;
+    const sessionName = session?.user?.name ?? "";
+    const sessionImage = session?.user?.image ?? "";
+
+    // Only a confirmed signed-out state redirects; the session is still loading on the first render.
+    useEffect(() => {
+        if (status === "unauthenticated") router.push("/login");
+    }, [router, status]);
 
     useEffect(() => {
-        if (!session?.user) {
-            router.push("/login");
-            return;
-        }
+        if (!sessionEmail) return;
+        let cancelled = false;
+        const loadUserData = async () => {
+            try {
+                const userDoc = await getDoc(doc(db, "users", sessionEmail));
+                if (cancelled) return;
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    setUsername(data.username || sessionName);
+                    setAvatarUrl(data.avatarUrl || sessionImage);
+                    // Load existing settings
+                    setEmailNotifications(data.emailNotifications ?? true);
+                    setNewFeatureAlerts(data.newFeatureAlerts ?? true);
+                    setPublicProfile(data.publicProfile ?? true);
+                    setShowOnlineStatus(data.showOnlineStatus ?? true);
+                    setTimezone(data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+                    setBio(data.bio || "");
+                    // Load new Phase 2 settings
+                    setNickname(data.nickname || "");
+                    setNicknameTag(data.nicknameTag || generateTag());
+                    setCustomStatus(data.customStatus || "");
+                    setStatusEmoji(data.statusEmoji || "😊");
+                    setBannerUrl(data.bannerUrl || "");
+                    setAccentColor(data.accentColor || "#3B82F6");
+                    setFavoriteLangs(data.favoriteLangs || []);
+                    setSocialGithub(data.socialGithub || "");
+                    setSocialLinkedin(data.socialLinkedin || "");
+                    setSocialTwitter(data.socialTwitter || "");
+                    setSocialWebsite(data.socialWebsite || "");
+                    setSocialYoutube(data.socialYoutube || "");
+                    setSocialTiktok(data.socialTiktok || "");
+                    setSocialInstagram(data.socialInstagram || "");
+                    setSocialFacebook(data.socialFacebook || "");
+                    setLastLoginDate(data.lastLoginDate || new Date().toISOString());
+                    // §7 Password
+                    setHasPassword(data.hasPassword || false);
+                    // §8 Messaging
+                    setTypingIndicator(data.typingIndicator ?? true);
+                    setReadReceipts(data.readReceipts ?? true);
+                    setMsgFontSize(data.msgFontSize || "medium");
+                    setChatBackground(data.chatBackground || "default");
+                    setVoiceMsgQuality(data.voiceMsgQuality || "normal");
+                    setLinkPreview(data.linkPreview ?? true);
+                    setGifAutoplay(data.gifAutoplay ?? true);
+                    setEnterToSend(data.enterToSend ?? true);
+                    setStickerSuggestions(data.stickerSuggestions ?? true);
+                    // §8 Privacy
+                    setWhoCanAdd(data.whoCanAdd || "everyone");
+                    setHideFriendList(data.hideFriendList ?? false);
+                    setShowLastSeen(data.showLastSeen ?? true);
+                    setPhotoVisibility(data.photoVisibility || "everyone");
+                    setBioVisibility(data.bioVisibility || "everyone");
+                    setPublicProjects(data.publicProjects ?? true);
+                    // §8 Notifications
+                    setMsgNotifications(data.msgNotifications ?? true);
+                    setCallNotifications(data.callNotifications ?? true);
+                    setFriendReqNotifications(data.friendReqNotifications ?? true);
+                    setLikeNotifications(data.likeNotifications ?? true);
+                    setNotifSound(data.notifSound ?? true);
+                    setDndMode(data.dndMode ?? false);
+                    setDndSchedule(data.dndSchedule || "");
+                    // §8 Appearance
+                    setBubbleColor(data.bubbleColor || "#3B82F6");
+                    setCompactMode(data.compactMode ?? false);
+                    setReduceAnimations(data.reduceAnimations ?? false);
+                    setHighContrast(data.highContrast ?? false);
+                    setUiFontSize(data.uiFontSize || "medium");
+                    setEmojiStyle(data.emojiStyle || "native");
+                } else {
+                    setUsername(sessionName);
+                    setAvatarUrl(sessionImage);
+                    setNicknameTag(generateTag());
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        };
         void loadUserData();
-    }, [loadUserData, router, session?.user]);
+        return () => { cancelled = true; };
+    }, [sessionEmail, sessionImage, sessionName]);
+
 
     const handleSaveProfile = async () => {
         if (!session?.user?.email) return;
@@ -337,7 +358,7 @@ export default function AccountSettingsPage() {
 
     const handleSetPassword = async () => {
         if (newPassword.length < 10) {
-            setMessage(language === "TR" ? "Şifre en az 10 karakter olmalı!" : "Password must be at least 10 characters.");
+            setMessage(t("password_too_short"));
             setTimeout(() => setMessage(""), 3000);
             return;
         }
@@ -355,7 +376,7 @@ export default function AccountSettingsPage() {
                 body: JSON.stringify({ currentPassword, newPassword }),
             });
             const result = await response.json() as { error?: string };
-            if (!response.ok) throw new Error(result.error || "Şifre güncellenemedi.");
+            if (!response.ok) throw new Error(language === "TR" && result.error ? result.error : t("error_occurred"));
             setHasPassword(true);
             setCurrentPassword("");
             setNewPassword("");
@@ -378,16 +399,6 @@ export default function AccountSettingsPage() {
                     : prev
         );
     };
-
-    // Toggle switch component
-    const ToggleSwitch = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
-        <button
-            onClick={onToggle}
-            className={`w-12 h-6 rounded-full transition-all flex-shrink-0 ${enabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
-        >
-            <div className={`w-5 h-5 bg-white rounded-full transition-all ${enabled ? "translate-x-6" : "translate-x-0.5"}`} />
-        </button>
-    );
 
     const timezones = [
         "Europe/Istanbul", "Europe/London", "Europe/Berlin", "Europe/Moscow",
@@ -415,7 +426,7 @@ export default function AccountSettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white">
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
             <Header />
 
             <main className="pt-24 px-6 max-w-2xl mx-auto pb-12">
@@ -424,7 +435,7 @@ export default function AccountSettingsPage() {
                     onClick={() => router.back()}
                     className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white mb-6 transition-colors"
                 >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
                     {t("back") || "Geri"}
                 </button>
 
@@ -477,7 +488,7 @@ export default function AccountSettingsPage() {
                                         {username?.charAt(0) || "U"}
                                     </div>
                                 )}
-                                <label className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
+                                <label className="absolute bottom-0 end-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
                                     <Camera className="w-4 h-4 text-white" />
                                 </label>
                             </div>
@@ -511,7 +522,7 @@ export default function AccountSettingsPage() {
                         {/* Nickname + Tag */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <Hash className="w-3.5 h-3.5 inline mr-1" />
+                                <Hash className="w-3.5 h-3.5 inline me-1" />
                                 {t("nickname_tag") || "Takma Ad & Etiket"}
                             </label>
                             <p className="text-xs text-zinc-400 mb-2">{t("nickname_tag_desc") || "Arkadaş eklemek için kullanılır (ör: Oyuncu#1234)"}</p>
@@ -534,7 +545,7 @@ export default function AccountSettingsPage() {
                         {/* Custom Status */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <MessageCircle className="w-3.5 h-3.5 inline mr-1" />
+                                <MessageCircle className="w-3.5 h-3.5 inline me-1" />
                                 {t("custom_status") || "Özel Durum"}
                             </label>
                             <div className="flex gap-2">
@@ -573,13 +584,13 @@ export default function AccountSettingsPage() {
                                 rows={3}
                                 className="w-full px-4 py-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                             />
-                            <div className="text-right text-xs text-zinc-400 mt-1">{bio.length}/200</div>
+                            <div className="text-end text-xs text-zinc-400 mt-1">{bio.length}/200</div>
                         </div>
 
                         {/* Banner URL */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <ImageIcon className="w-3.5 h-3.5 inline mr-1" />
+                                <ImageIcon className="w-3.5 h-3.5 inline me-1" />
                                 {t("banner_url") || "Banner URL"}
                             </label>
                             <input
@@ -594,7 +605,7 @@ export default function AccountSettingsPage() {
                         {/* Accent Color */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-2">
-                                <Palette className="w-3.5 h-3.5 inline mr-1" />
+                                <Palette className="w-3.5 h-3.5 inline me-1" />
                                 {t("accent_color") || "Profil Vurgu Rengi"}
                             </label>
                             <div className="flex gap-2 flex-wrap">
@@ -612,7 +623,7 @@ export default function AccountSettingsPage() {
                         {/* Favorite Languages */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-zinc-500 mb-1">
-                                <Star className="w-3.5 h-3.5 inline mr-1" />
+                                <Star className="w-3.5 h-3.5 inline me-1" />
                                 {t("favorite_langs") || "Favori Diller"} ({favoriteLangs.length}/5)
                             </label>
                             <p className="text-xs text-zinc-400 mb-2">{t("favorite_langs_desc") || "Profilinizde gösterilecek en fazla 5 programlama dili seçin"}</p>
@@ -789,7 +800,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-zinc-400" />
                                 <span>{t("email_notifications") || "E-posta Bildirimleri"}</span>
@@ -800,7 +811,7 @@ export default function AccountSettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between py-4">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 <Megaphone className="w-4 h-4 text-zinc-400" />
                                 <span>{t("new_feature_alerts") || "Yeni Özellik Duyuruları"}</span>
@@ -823,32 +834,25 @@ export default function AccountSettingsPage() {
                             <span className="block">{t("app_language") || "Uygulama Dili"}</span>
                             <span className="text-sm text-zinc-500">{t("app_language_desc") || "Arayüz dilini değiştir"}</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            {([
-                                { code: "TR" as const, flag: "🇹🇷", label: "Türkçe" },
-                                { code: "EN" as const, flag: "🇬🇧", label: "English" },
-                                { code: "RU" as const, flag: "🇷🇺", label: "Русский" },
-                                { code: "AZ" as const, flag: "🇦🇿", label: "Azərbaycan" },
-                                { code: "ES" as const, flag: "🇪🇸", label: "Español" },
-                                { code: "KZ" as const, flag: "🇰🇿", label: "Қазақ" },
-                                { code: "JP" as const, flag: "🇯🇵", label: "日本語" },
-                                { code: "CN" as const, flag: "🇨🇳", label: "中文" },
-                                { code: "KR" as const, flag: "🇰🇷", label: "한국어" },
-                            ]).map((lang) => (
+                        {/* Every interface language, including right-to-left Arabic. */}
+                        <div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto pe-1 sm:grid-cols-3">
+                            {LANGUAGES.map((lang) => (
                                 <button
                                     key={lang.code}
                                     onClick={() => setLanguage(lang.code)}
-                                    className={`px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-sm ${language === lang.code ? "bg-blue-600 text-white shadow-md" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
+                                    aria-pressed={language === lang.code}
+                                    title={lang.english}
+                                    className={`min-w-0 px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-sm ${language === lang.code ? "bg-blue-600 text-white shadow-md" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
                                 >
                                     <span className="text-base">{lang.flag}</span>
-                                    {lang.label}
+                                    <span className="truncate" lang={lang.locale}>{lang.name}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     <div className="flex items-center justify-between py-4">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-zinc-400" />
                                 <span>{t("timezone") || "Saat Dilimi"}</span>
@@ -875,7 +879,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <div className="flex items-center gap-2">
                                 {publicProfile ? <Eye className="w-4 h-4 text-zinc-400" /> : <EyeOff className="w-4 h-4 text-zinc-400" />}
                                 <span>{t("public_profile") || "Herkese Açık Profil"}</span>
@@ -886,7 +890,7 @@ export default function AccountSettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("online_status") || "Çevrimiçi Durumu"}</span>
                             <span className="text-sm text-zinc-500">{t("online_status_desc") || "Diğer kullanıcılara çevrimiçi olduğunuzu gösterin"}</span>
                         </div>
@@ -930,7 +934,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("export_data") || "Verileri Dışa Aktar"}</span>
                             <span className="text-sm text-zinc-500">{t("export_data_desc") || "Tüm projelerinizi ve ayarlarınızı JSON olarak indirin"}</span>
                         </div>
@@ -945,7 +949,7 @@ export default function AccountSettingsPage() {
                     </div>
 
                     <div className="flex items-center justify-between py-4">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("reset_editor") || "Editör Ayarlarını Sıfırla"}</span>
                             <span className="text-sm text-zinc-500">{t("reset_editor_desc") || "Editör tercihlerini varsayılana döndür"}</span>
                         </div>
@@ -1182,7 +1186,7 @@ export default function AccountSettingsPage() {
                     </h2>
 
                     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800">
-                        <div className="pr-4">
+                        <div className="pe-4">
                             <span className="block">{t("sign_out") || "Oturumu Kapat"}</span>
                             <span className="text-sm text-zinc-500">{t("sign_out_desc") || "Hesabınızdan güvenli çıkış yapın"}</span>
                         </div>

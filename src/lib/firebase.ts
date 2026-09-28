@@ -3,20 +3,23 @@ import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+// Values pasted into hosting dashboards frequently carry trailing spaces or
+// newlines, which made the strict API-key check below fail and disabled all
+// cloud features for signed-in users.
+const env = (value: string | undefined) => (value || "").trim();
+
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+    apiKey: env(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
+    authDomain: env(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN),
+    projectId: env(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
+    storageBucket: env(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
+    messagingSenderId: env(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
+    appId: env(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
 };
 
 export const hasFirebaseClientConfig = Boolean(
     firebaseConfig.apiKey
-    && firebaseConfig.authDomain
     && firebaseConfig.projectId
-    && firebaseConfig.storageBucket
     && firebaseConfig.appId
     && /^AIza[\w-]{35}$/.test(firebaseConfig.apiKey),
 );

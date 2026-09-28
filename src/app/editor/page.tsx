@@ -109,6 +109,10 @@ type GameScriptResponse = {
     revision?: string | null;
 };
 
+let tabSequence = 0;
+/** Unique tab id; a bare timestamp collided when two tabs were created in the same millisecond. */
+const newTabId = () => `tab-${Date.now().toString(36)}-${(tabSequence += 1)}`;
+
 function EditorContent() {
     const searchParams = useSearchParams();
     const initialLang = searchParams.get("lang") || "javascript";
@@ -118,8 +122,15 @@ function EditorContent() {
     const requestedGameScriptName = searchParams.get("scriptName") || "";
     const requestedReturn = searchParams.get("returnTo") || "";
     const backHref = requestedReturn.startsWith("/game-engine") ? requestedReturn : "/dashboard";
-    const { data: session } = useSession();
-    const { t } = useI18n();
+    const { data: session, status: sessionStatus } = useSession();
+    const sessionEmail = session?.user?.email || "";
+    const { t, tx } = useI18n();
+    // The project loader effect reads the latest translator without re-running on language changes.
+    const txRef = useRef(tx);
+    useEffect(() => { txRef.current = tx; }, [tx]);
+    // Remembers which (project, user) combination is loaded so a session
+    // refresh does not wipe the open tabs and the user's unsaved code.
+    const loadedKeyRef = useRef<string | null>(null);
 
     // Multi-tab state
     const [tabs, setTabs] = useState<Tab[]>([]);
@@ -129,6 +140,9 @@ function EditorContent() {
     const [currentProjectName, setCurrentProjectName] = useState<string>("");
     const [currentGameScriptId, setCurrentGameScriptId] = useState<string | null>(requestedGameScriptId);
     const [gameScriptRevision, setGameScriptRevision] = useState<string | null>(null);
+
+    // Track if project was originally single-tab
+    const [wasOriginallyMultiTab, setWasOriginallyMultiTab] = useState<boolean | null>(null);
 
     // Save modal state
     const [showSaveModal, setShowSaveModal] = useState(false);
@@ -166,13 +180,17 @@ function EditorContent() {
 
     // Initialize first tab
     useEffect(() => {
+        if (sessionStatus === "loading") return;
+        const loadKey = [sessionEmail, initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName].join("|");
+        if (loadedKeyRef.current === loadKey) return;
+        loadedKeyRef.current = loadKey;
         const loadProject = async () => {
-            if (gameProjectId && session?.user?.email) {
+            if (gameProjectId && sessionEmail) {
                 try {
                     if (requestedGameScriptId) {
                         const response = await fetch(`/api/game-projects/${encodeURIComponent(gameProjectId)}/scripts/${encodeURIComponent(requestedGameScriptId)}`, { cache: "no-store" });
                         const payload = await response.json() as { script?: GameScriptResponse; error?: string };
-                        if (!response.ok || !payload.script) throw new Error(payload.error || "Oyun scripti yüklenemedi.");
+                        if (!response.ok || !payload.script) throw new Error(txRef.current({ TR: payload.error || "Oyun scripti yüklenemedi.", EN: "The game script couldn't be loaded." }));
                         const script = payload.script;
                         const tab: Tab = { id: `game-script-${script.id}`, name: script.name, lang: script.language, code: script.content, output: [], isRunning: false, isSaved: true };
                         setTabs([tab]);
@@ -192,7 +210,7 @@ function EditorContent() {
                     setWasOriginallyMultiTab(false);
                     return;
                 } catch (error) {
-                    alert(error instanceof Error ? error.message : "Oyun scripti yüklenemedi.");
+                    alert(error instanceof Error && error.message ? error.message : txRef.current({ TR: "Oyun scripti yüklenemedi.", EN: "The game script couldn't be loaded." }));
                 }
             }
             // Check for unsaved tabs in localStorage ONLY if no specific lang/project is requested
@@ -213,9 +231,9 @@ function EditorContent() {
             }
 
             // Load existing project
-            if (projectId && session?.user?.email) {
+            if (projectId && sessionEmail) {
                 try {
-                    const cloudProjects = await getProjectsFromCloud(session.user.email);
+                    const cloudProjects = await getProjectsFromCloud(sessionEmail);
                     const project = cloudProjects.find(p => String(p.id) === projectId);
                     if (project) {
                         if (project.files?.length) {
@@ -260,7 +278,7 @@ function EditorContent() {
 
                         // Single tab project
                         const newTab: Tab = {
-                            id: `tab-${Date.now()}`,
+                            id: newTabId(),
                             name: project.name,
                             lang: project.lang,
                             code: project.code,
@@ -278,7 +296,7 @@ function EditorContent() {
                     console.error("Error loading from cloud:", error);
                 }
 
-                const localProjects = getProjects(session.user.email);
+                const localProjects = getProjects(sessionEmail);
                 const project = localProjects.find(p => String(p.id) === projectId);
                 if (project) {
                     if (project.files?.length) {
@@ -323,7 +341,7 @@ function EditorContent() {
 
                     // Single tab project
                     const newTab: Tab = {
-                        id: `tab-${Date.now()}`,
+                        id: newTabId(),
                         name: project.name,
                         lang: project.lang,
                         code: project.code,
@@ -342,7 +360,7 @@ function EditorContent() {
             // New project - create first tab
             const langNorm = normalizeLang(initialLang);
             const newTab: Tab = {
-                id: `tab-${Date.now()}`,
+                id: newTabId(),
                 name: `${getDisplayName(langNorm)} Projesi`,
                 lang: langNorm,
                 code: TEMPLATES[langNorm] || TEMPLATES["default"],
@@ -354,8 +372,8 @@ function EditorContent() {
             setActiveTabId(newTab.id);
         };
 
-        loadProject();
-    }, [initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName, session]);
+        void loadProject();
+    }, [initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName, sessionEmail, sessionStatus]);
 
     // Save unsaved tabs to localStorage
     useEffect(() => {
@@ -382,7 +400,7 @@ function EditorContent() {
     const handleAddTab = (langName: string, langExt?: string) => {
         const langKey = normalizeLang(langExt || langName);
         const newTab: Tab = {
-            id: `tab-${Date.now()}`,
+            id: newTabId(),
             name: `${langName} Dosya`,
             lang: langKey,
             code: TEMPLATES[langKey] || TEMPLATES["default"],
@@ -491,11 +509,11 @@ function EditorContent() {
                     const lines = [`> ${job.name} · ${getDisplayName(job.language)} (${job.version})`];
                     if (job.run.stdout?.trim()) lines.push(...job.run.stdout.split("\n"));
                     if (job.run.stderr?.trim()) lines.push(`Error: ${job.run.stderr}`);
-                    if (!job.run.stdout?.trim() && !job.run.stderr?.trim()) lines.push("(Çıktı yok)");
-                    lines.push(`> ${job.run.code} çıkış koduyla tamamlandı`);
+                    if (!job.run.stdout?.trim() && !job.run.stderr?.trim()) lines.push(tx({ TR: "(Çıktı yok)", EN: "(No output)" }));
+                    lines.push(tx({ TR: `> ${job.run.code} çıkış koduyla tamamlandı`, EN: `> Finished with exit code ${job.run.code}` }));
                     return lines;
                 });
-                setProjectOutput(jobs.length > 1 ? ["> Proje çalıştırması · bağımsız dil işleri", "", ...outputs.flatMap((lines, index) => index ? ["", ...lines] : lines)] : []);
+                setProjectOutput(jobs.length > 1 ? [tx({ TR: "> Proje çalıştırması · bağımsız dil işleri", EN: "> Project run · independent language jobs" }), "", ...outputs.flatMap((lines, index) => index ? ["", ...lines] : lines)] : []);
                 setTabs((current) => current.map((tab) => {
                     const index = runnableTabs.findIndex((candidate) => candidate.id === tab.id);
                     return index >= 0 ? { ...tab, isRunning: false, output: outputs[index] || [] } : tab;
@@ -508,10 +526,10 @@ function EditorContent() {
             setOutputTab("console");
         } catch (error: unknown) {
             const errorMsg = error instanceof Error ? error.message : String(error);
-            setProjectOutput(["> Proje çalıştırması", "", `Error: ${errorMsg}`, "", "> Çalıştırma başarısız oldu. Kodunuzu ve çalıştırıcı yapılandırmasını kontrol edin."]);
+            setProjectOutput([tx({ TR: "> Proje çalıştırması", EN: "> Project run" }), "", `Error: ${errorMsg}`, "", tx({ TR: "> Çalıştırma başarısız oldu. Kodunuzu ve çalıştırıcı yapılandırmasını kontrol edin.", EN: "> The run failed. Check your code and the runner configuration." })]);
             setTabs(prevTabs => prevTabs.map(t => ({ ...t, isRunning: false })));
             setExecutionHistory(prev => [{
-                lang: runnableTabs.length > 1 ? `${runnableTabs.length} dosya` : getDisplayName(activeTab.lang),
+                lang: runnableTabs.length > 1 ? tx({ TR: `${runnableTabs.length} dosya`, EN: `${runnableTabs.length} files` }) : getDisplayName(activeTab.lang),
                 time: new Date().toLocaleTimeString(),
                 status: "❌"
             }, ...prev].slice(0, 50));
@@ -521,9 +539,6 @@ function EditorContent() {
         }
     };
 
-    // Track if project was originally single-tab
-    const [wasOriginallyMultiTab, setWasOriginallyMultiTab] = useState<boolean | null>(null);
-
     // Complete save with given name
     const completeSave = async (projectName: string, projectIdToUse: number | null) => {
         if (!session?.user?.email) return;
@@ -531,7 +546,7 @@ function EditorContent() {
         if (gameProjectId) {
             const scriptTab = tabs[0];
             if (!scriptTab || !["csharp", "cpp"].includes(scriptTab.lang)) {
-                alert("Oyun scriptleri yalnızca C# veya C++ olabilir.");
+                alert(tx({ TR: "Oyun scriptleri yalnızca C# veya C++ olabilir.", EN: "Game scripts can only be C# or C++." }));
                 return;
             }
             const endpoint = currentGameScriptId
@@ -549,7 +564,7 @@ function EditorContent() {
             });
             const payload = await response.json() as { script?: GameScriptResponse; error?: string };
             if (!response.ok || !payload.script) {
-                alert(payload.error || "Oyun scripti kaydedilemedi; değişiklikler açık sekmede korunuyor.");
+                alert(tx({ TR: payload.error || "Oyun scripti kaydedilemedi; değişiklikler açık sekmede korunuyor.", EN: "The game script couldn't be saved; your changes are kept in the open tab." }));
                 return;
             }
             setCurrentGameScriptId(payload.script.id);
@@ -560,7 +575,7 @@ function EditorContent() {
             const url = new URL(window.location.href);
             url.searchParams.set("gameScript", payload.script.id);
             window.history.replaceState(null, "", url);
-            alert("Oyun scripti güvenli proje alanına kaydedildi.");
+            alert(tx({ TR: "Oyun scripti güvenli proje alanına kaydedildi.", EN: "The game script was saved to the secure project storage." }));
             return;
         }
 
@@ -614,9 +629,9 @@ function EditorContent() {
         if (shouldAskName) {
             let defaultName: string;
             if (isNowMultiTab) {
-                defaultName = t("general_project") || "Genel Projem";
+                defaultName = t("general_project");
             } else {
-                defaultName = `${t("my_lang_project_prefix") || "Benim"} ${activeTab?.lang.charAt(0).toUpperCase()}${activeTab?.lang.slice(1)} ${t("my_lang_project_suffix") || "Projem"}`;
+                defaultName = t("my_lang_project").replace("{lang}", activeTab ? getDisplayName(activeTab.lang) : "");
             }
 
             // Show custom modal
@@ -842,7 +857,7 @@ function EditorContent() {
                             className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:shadow-green-500/30 transition-all"
                         >
                             <Play className="w-4 h-4 fill-current" />
-                            {isProjectRunning ? "Çalışıyor…" : tabs.filter((tab) => !["html", "css"].includes(normalizeLang(tab.lang))).length > 1 ? "TÜMÜNÜ ÇALIŞTIR" : "RUN"}
+                            {isProjectRunning ? tx({ TR: "Çalışıyor…", EN: "Running…" }) : tabs.filter((tab) => !["html", "css"].includes(normalizeLang(tab.lang))).length > 1 ? tx({ TR: "TÜMÜNÜ ÇALIŞTIR", EN: "RUN ALL" }) : "RUN"}
                         </button>
                     </div>
                 </div>
@@ -854,7 +869,7 @@ function EditorContent() {
                         {activeTab && (
                             <CodeEditor
                                 language={normalizeLang(activeTab.lang)}
-                                theme="dark"
+                                path={activeTab.id}
                                 value={activeTab.code}
                                 onChange={(val) => handleCodeChange(val || "")}
                             />
@@ -875,7 +890,7 @@ function EditorContent() {
                                             : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
                                             }`}
                                     >
-                                        Çıktı
+                                        {t("output")}
                                     </button>
                                     <button
                                         onClick={() => setOutputTab("test")}
@@ -884,7 +899,7 @@ function EditorContent() {
                                             : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
                                             }`}
                                     >
-                                        Önizleme
+                                        {tx({ TR: "Önizleme", EN: "Preview" })}
                                     </button>
                                 </div>
 

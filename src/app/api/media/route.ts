@@ -69,15 +69,47 @@ function publicPost(post: MediaPost & { _id: string }, likeCount: number, commen
 }
 
 async function optionalActiveEmail() {
-    const session = await getServerSession(authOptions);
-    const email = session?.user?.email?.toLowerCase();
-    if (!email) return "";
-    const user = await getServerDocument<{ banned?: boolean; suspended?: boolean }>(`users/${email}`);
-    return user && !user.banned && !user.suspended ? email : "";
+    // Anonymous visitors must still be able to browse Media even when the
+    // session lookup fails (expired cookie, transient Firestore error).
+    try {
+        const session = await getServerSession(authOptions);
+        const email = session?.user?.email?.toLowerCase();
+        if (!email) return "";
+        const user = await getServerDocument<{ banned?: boolean; suspended?: boolean }>(`users/${email}`);
+        return user && !user.banned && !user.suspended ? email : "";
+    } catch {
+        return "";
+    }
+}
+
+type OwnProject = { name?: string; lang?: string; email?: string; fileCount?: number; date?: string; createdAt?: string; updatedAt?: string };
+
+/** Lists the caller's code projects for the publish dialog (server-side, no client index needed). */
+async function listPublishableProjects(email: string) {
+    const projects = await queryServerCollection<OwnProject>("projects", "email", "EQUAL", email, { limit: 200 });
+    return projects
+        .map((project) => ({
+            id: project._id,
+            name: cleanText(project.name, 120) || "İsimsiz proje",
+            lang: cleanText(project.lang, 30) || "text",
+            fileCount: Number(project.fileCount || 1),
+            updatedAt: String(project.updatedAt || project.createdAt || ""),
+        }))
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export async function GET(request: NextRequest) {
     const id = cleanText(request.nextUrl.searchParams.get("id"), 100);
+    const scope = cleanText(request.nextUrl.searchParams.get("scope"), 30);
+    if (scope === "my-projects") {
+        const activeSession = await getActiveSession();
+        if (!activeSession) return NextResponse.json({ error: "Projelerinizi görmek için giriş yapın." }, { status: 401, headers: jsonSecurityHeaders() });
+        try {
+            return NextResponse.json({ projects: await listPublishableProjects(activeSession.email) }, { headers: jsonSecurityHeaders() });
+        } catch {
+            return NextResponse.json({ error: "Projeleriniz şu anda yüklenemiyor." }, { status: 503, headers: jsonSecurityHeaders() });
+        }
+    }
     try {
         const email = await optionalActiveEmail();
         if (id) {
@@ -118,16 +150,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     if (!isSameOrigin(request)) return NextResponse.json({ error: "Geçersiz istek kaynağı." }, { status: 403 });
     const activeSession = await getActiveSession();
-    if (!activeSession) return NextResponse.json({ error: "Etkin oturum gerekli." }, { status: 401 });
+    if (!activeSession) return NextResponse.json({ error: "Bu işlem için giriş yapmanız gerekiyor." }, { status: 401 });
     const { email, session, user } = activeSession;
     const sessionName = session?.user?.name || email.split("@")[0];
     const sessionImage = session?.user?.image || null;
-    const rate = await enforceRateLimit(`media:${email}`, 40, 60_000);
-    if (!rate.allowed) return NextResponse.json({ error: "Çok fazla işlem. Biraz sonra tekrar deneyin." }, { status: 429 });
     const body = await request.json().catch(() => ({})) as Record<string, unknown>;
     const action = cleanText(body.action, 30);
 
     try {
+        const rate = await enforceRateLimit(`media:${email}`, 40, 60_000);
+        if (!rate.allowed) return NextResponse.json({ error: "Çok fazla işlem. Biraz sonra tekrar deneyin." }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }) });
+
         if (action === "consent") {
             const enabled = body.enabled === true;
             await patchServerDocument(`users/${email}`, {
@@ -149,14 +182,14 @@ export async function POST(request: NextRequest) {
             const license = ["all-rights-reserved", "MIT", "Apache-2.0", "GPL-3.0"].includes(String(body.license)) ? String(body.license) : "all-rights-reserved";
             if (!projectId || !title) return NextResponse.json({ error: "Proje ve başlık gereklidir." }, { status: 400 });
             const project = await getServerDocument<{ email?: string; lang?: string; name?: string }>(`projects/${projectId}`);
-            if (!project || project.email !== email) return NextResponse.json({ error: "Proje bulunamadı veya yetkiniz yok." }, { status: 404 });
+            if (!project || String(project.email || "").toLowerCase() !== email) return NextResponse.json({ error: "Proje bulunamadı veya yetkiniz yok." }, { status: 404 });
             const files = await listServerCollection<MediaFile>(`projects/${projectId}/files`, 50);
             if (!files.length) return NextResponse.json({ error: "Paylaşılabilir proje dosyası bulunamadı." }, { status: 409 });
             const totalCodeLength = files.reduce((total, file) => total + String(file.code || "").length, 0);
             if (totalCodeLength > 1_000_000) return NextResponse.json({ error: "Media yayını toplam 1.000.000 karakter sınırını aşıyor." }, { status: 413 });
             const combined = files.map((file) => `// ${file.name || "file"}\n${file.code || ""}`).join("\n");
             const scan = scanUntrustedCode(combined);
-            if (!scan.allowed) return NextResponse.json({ error: "Proje, herkese açık paylaşım için güvenlik incelemesine takıldı.", findings: scan.findings.map((finding) => finding.message) }, { status: 422 });
+            if (!scan.allowed) return NextResponse.json({ error: "Proje, herkese açık paylaşım için güvenlik incelemesine takıldı.", findings: scan.findings.map((finding) => finding.line ? `${finding.message} (satır ${finding.line})` : finding.message) }, { status: 422 });
             const profile = await getServerDocument<{ username?: string; avatarUrl?: string }>(`public_profiles/${email}`);
             const postId = randomUUID();
             const languages = [...new Set(files.map((file) => cleanText(file.lang, 30)).filter(Boolean))].slice(0, 12);

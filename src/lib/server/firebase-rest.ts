@@ -240,6 +240,45 @@ export async function queryServerCollection<T extends Record<string, unknown>>(
         .map((item) => decodeDocument<T>(item.document));
 }
 
+type QueryFilter = { field: string; op: "EQUAL" | "ARRAY_CONTAINS" | "IN" | "GREATER_THAN" | "LESS_THAN" | "GREATER_THAN_OR_EQUAL" | "LESS_THAN_OR_EQUAL"; value: unknown };
+
+/**
+ * General structured query with optional field projection (`select`), filters
+ * and ordering. Projections keep list endpoints small when documents carry
+ * large payloads (e.g. game content).
+ */
+export async function runServerQuery<T extends Record<string, unknown>>(options: {
+    collectionId: string;
+    parentPath?: string;
+    where?: QueryFilter[];
+    orderBy?: Array<{ field: string; direction?: "ASCENDING" | "DESCENDING" }>;
+    select?: string[];
+    limit?: number;
+}) {
+    const url = `${databaseDocumentsUrl(options.parentPath || "")}:runQuery`;
+    const filters = (options.where || []).map((filter) => ({
+        fieldFilter: { field: { fieldPath: filter.field }, op: filter.op, value: toFirestoreValue(filter.value) },
+    }));
+    const structuredQuery: Record<string, unknown> = {
+        from: [{ collectionId: options.collectionId }],
+        limit: Math.min(Math.max(options.limit || 100, 1), 1000),
+    };
+    if (filters.length === 1) structuredQuery.where = filters[0];
+    if (filters.length > 1) structuredQuery.where = { compositeFilter: { op: "AND", filters } };
+    if (options.orderBy?.length) structuredQuery.orderBy = options.orderBy.map((order) => ({ field: { fieldPath: order.field }, direction: order.direction || "ASCENDING" }));
+    if (options.select?.length) structuredQuery.select = { fields: options.select.map((fieldPath) => ({ fieldPath })) };
+    const response = await firestoreFetch(url, { method: "POST", body: JSON.stringify({ structuredQuery }) });
+    if (!response.ok) {
+        const error = new Error(`Firestore sorgu hatası (${response.status}).`) as Error & { status?: number };
+        error.status = response.status;
+        throw error;
+    }
+    const payload = await response.json() as Array<{ document?: FirestoreDocument }>;
+    return payload
+        .filter((item): item is { document: FirestoreDocument } => Boolean(item.document))
+        .map((item) => decodeDocument<T>(item.document));
+}
+
 export async function patchServerDocument(
     path: string,
     data: Record<string, unknown>,
@@ -299,8 +338,8 @@ type ServerMutation =
     | { type: "delete"; path: string; updateTime?: string }
     | { type: "increment"; path: string; fields: Record<string, number> };
 
-export async function commitServerMutations(mutations: ServerMutation[]) {
-    if (!mutations.length) return;
+export async function commitServerMutations(mutations: ServerMutation[]): Promise<{ writeResults: Array<{ updateTime?: string }>; commitTime: string | null }> {
+    if (!mutations.length) return { writeResults: [], commitTime: null };
     const projectId = getFirebaseProjectId();
     const writes = mutations.map((mutation) => {
         if (mutation.type === "delete") {
@@ -337,6 +376,8 @@ export async function commitServerMutations(mutations: ServerMutation[]) {
         error.status = response.status;
         throw error;
     }
+    const result = await response.json().catch(() => ({})) as { writeResults?: Array<{ updateTime?: string }>; commitTime?: string };
+    return { writeResults: result.writeResults || [], commitTime: result.commitTime || null };
 }
 
 export async function deleteServerDocument(path: string) {

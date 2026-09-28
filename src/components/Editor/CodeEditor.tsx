@@ -1,16 +1,26 @@
 "use client";
 
-import Editor, { OnMount } from "@monaco-editor/react";
-import { useRef, useState, useEffect } from "react";
+import Editor, { type OnMount } from "@monaco-editor/react";
+import { LoaderCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { configureMonaco } from "@/lib/monaco";
+import { useTheme } from "@/lib/theme";
+
+configureMonaco();
 
 interface CodeEditorProps {
     language: string;
-    theme: "light" | "dark";
     value: string;
     onChange: (value: string | undefined) => void;
+    /** Forces a Monaco theme; by default the saved editor setting or the site theme is used. */
+    theme?: "light" | "dark";
+    path?: string;
+    readOnly?: boolean;
+    onMount?: OnMount;
+    className?: string;
 }
 
-interface EditorSettings {
+export interface EditorSettings {
     fontSize: number;
     fontFamily: string;
     tabSize: number;
@@ -23,14 +33,27 @@ interface EditorSettings {
     autoCloseBrackets: boolean;
     autoCloseQuotes: boolean;
     formatOnPaste: boolean;
+    formatOnType: boolean;
     highlightActiveLine: boolean;
     renderIndentGuides: boolean;
     cursorBlinking: "blink" | "smooth" | "phase" | "expand" | "solid";
+    theme: "light" | "dark" | "system";
+    lineHeight: number;
+    autocomplete: boolean;
+    snippetSuggestions: boolean;
+    parameterHints: boolean;
+    hoverInfo: boolean;
+    linkedEditing: boolean;
+    renderWhitespace: "none" | "boundary" | "all";
+    autoIndent: "none" | "keep" | "brackets" | "advanced";
+    stickyScroll: boolean;
+    codeLens: boolean;
+    inlineSuggest: boolean;
 }
 
-const defaultSettings: EditorSettings = {
+export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
     fontSize: 14,
-    fontFamily: "Cascadia Code, SFMono-Regular, Consolas, Liberation Mono, monospace",
+    fontFamily: "JetBrains Mono",
     tabSize: 4,
     wordWrap: true,
     lineNumbers: true,
@@ -41,60 +64,78 @@ const defaultSettings: EditorSettings = {
     autoCloseBrackets: true,
     autoCloseQuotes: true,
     formatOnPaste: false,
+    formatOnType: false,
     highlightActiveLine: true,
     renderIndentGuides: true,
-    cursorBlinking: "blink"
+    cursorBlinking: "blink",
+    theme: "system",
+    lineHeight: 1.6,
+    autocomplete: true,
+    snippetSuggestions: true,
+    parameterHints: true,
+    hoverInfo: true,
+    linkedEditing: true,
+    renderWhitespace: "none",
+    autoIndent: "advanced",
+    stickyScroll: true,
+    codeLens: true,
+    inlineSuggest: true,
 };
 
-export default function CodeEditor({ language, theme, value, onChange }: CodeEditorProps) {
-    const editorRef = useRef(null);
-    const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
+const SETTINGS_KEY = "hanogt_editor_settings";
 
-    // Load settings from localStorage
+function readSettings(): EditorSettings {
+    try {
+        const saved = window.localStorage.getItem(SETTINGS_KEY);
+        if (!saved) return DEFAULT_EDITOR_SETTINGS;
+        const parsed = JSON.parse(saved) as Partial<EditorSettings>;
+        return { ...DEFAULT_EDITOR_SETTINGS, ...parsed };
+    } catch {
+        return DEFAULT_EDITOR_SETTINGS;
+    }
+}
+
+/** Editor preferences saved on the settings page, kept in sync across tabs. */
+export function useEditorSettings() {
+    const [settings, setSettings] = useState<EditorSettings>(DEFAULT_EDITOR_SETTINGS);
     useEffect(() => {
-        const loadSettings = () => {
-            const savedSettings = localStorage.getItem("hanogt_editor_settings");
-            if (savedSettings) {
-                try {
-                    const parsed = JSON.parse(savedSettings);
-                    setSettings({ ...defaultSettings, ...parsed });
-                } catch (e) {
-                    console.error("Error loading editor settings:", e);
-                }
-            }
+        const load = () => setSettings(readSettings());
+        const frame = window.requestAnimationFrame(load);
+        const onStorage = (event: StorageEvent) => { if (event.key === SETTINGS_KEY) load(); };
+        window.addEventListener("storage", onStorage);
+        return () => {
+            window.cancelAnimationFrame(frame);
+            window.removeEventListener("storage", onStorage);
         };
-
-        loadSettings();
-
-        // Listen for storage changes
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === "hanogt_editor_settings") {
-                loadSettings();
-            }
-        };
-
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
+    return settings;
+}
 
-    const handleEditorDidMount: OnMount = (editor) => {
-        // @ts-expect-error Monaco's standalone editor type is narrower than the shared editor ref.
-        editorRef.current = editor;
-    };
+const MONO_FALLBACK = "'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace";
+
+export default function CodeEditor({ language, theme, value, onChange, path, readOnly = false, onMount, className = "" }: CodeEditorProps) {
+    const settings = useEditorSettings();
+    const { theme: siteTheme } = useTheme();
+    const resolvedTheme = theme ?? (settings.theme === "system" ? siteTheme : settings.theme);
 
     return (
-        <div className="w-full h-full border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm">
+        <div className={`h-full w-full overflow-hidden rounded-xl border border-zinc-200 shadow-sm dark:border-zinc-800 ${className}`}>
             <Editor
                 height="100%"
                 language={language}
+                path={path}
                 value={value}
-                theme={theme === "dark" ? "vs-dark" : "light"}
+                theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
                 onChange={onChange}
-                onMount={handleEditorDidMount}
+                onMount={onMount}
+                loading={<div className="flex items-center gap-2 text-sm text-zinc-500"><LoaderCircle className="h-4 w-4 animate-spin" />Editör yükleniyor…</div>}
                 options={{
+                    readOnly,
                     minimap: { enabled: settings.minimap },
                     fontSize: settings.fontSize,
-                    fontFamily: settings.fontFamily,
+                    fontFamily: settings.fontFamily ? `'${settings.fontFamily.replace(/'/g, "")}', ${MONO_FALLBACK}` : MONO_FALLBACK,
+                    fontLigatures: true,
+                    lineHeight: settings.lineHeight,
                     tabSize: settings.tabSize,
                     wordWrap: settings.wordWrap ? "on" : "off",
                     lineNumbers: settings.lineNumbers ? "on" : "off",
@@ -103,16 +144,27 @@ export default function CodeEditor({ language, theme, value, onChange }: CodeEdi
                     smoothScrolling: settings.smoothScrolling,
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
-                    padding: { top: 16 },
+                    padding: { top: 14, bottom: 14 },
                     bracketPairColorization: { enabled: settings.bracketPairColorization },
                     autoClosingBrackets: settings.autoCloseBrackets ? "always" : "never",
                     autoClosingQuotes: settings.autoCloseQuotes ? "always" : "never",
                     formatOnPaste: settings.formatOnPaste,
+                    formatOnType: settings.formatOnType,
                     renderLineHighlight: settings.highlightActiveLine ? "all" : "none",
-                    guides: { indentation: settings.renderIndentGuides },
+                    guides: { indentation: settings.renderIndentGuides, bracketPairs: settings.bracketPairColorization },
+                    quickSuggestions: settings.autocomplete,
+                    suggestOnTriggerCharacters: settings.autocomplete,
+                    snippetSuggestions: settings.snippetSuggestions ? "inline" : "none",
+                    parameterHints: { enabled: settings.parameterHints },
+                    hover: { enabled: settings.hoverInfo ? "on" : "off" },
+                    linkedEditing: settings.linkedEditing,
+                    renderWhitespace: settings.renderWhitespace,
+                    autoIndent: settings.autoIndent,
+                    stickyScroll: { enabled: settings.stickyScroll },
+                    codeLens: settings.codeLens,
+                    inlineSuggest: { enabled: settings.inlineSuggest },
                 }}
             />
         </div>
     );
 }
-

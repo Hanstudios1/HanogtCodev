@@ -10,21 +10,21 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 
 // 15 User Badges
 const ALL_BADGES = [
-    { id: "early_adopter", icon: "🌟", color: "#EAB308" },
-    { id: "bug_hunter", icon: "🐛", color: "#EF4444" },
-    { id: "contributor", icon: "🤝", color: "#3B82F6" },
-    { id: "pro_coder", icon: "💻", color: "#8B5CF6" },
-    { id: "helper", icon: "🤗", color: "#22C55E" },
-    { id: "top_creator", icon: "🏆", color: "#F97316" },
-    { id: "verified", icon: "✅", color: "#06B6D4" },
-    { id: "streamer", icon: "🎬", color: "#EC4899" },
-    { id: "translator", icon: "🌐", color: "#14B8A6" },
-    { id: "mentor", icon: "🎓", color: "#6366F1" },
-    { id: "night_owl", icon: "🦉", color: "#7C3AED" },
-    { id: "speed_coder", icon: "⚡", color: "#FACC15" },
-    { id: "artist", icon: "🎨", color: "#F43F5E" },
-    { id: "pioneer", icon: "🚀", color: "#0EA5E9" },
-    { id: "community_star", icon: "⭐", color: "#D946EF" },
+    { id: "early_adopter", labelKey: "badge_early_adopter", icon: "🌟", color: "#EAB308" },
+    { id: "bug_hunter", labelKey: "badge_bug_hunter", icon: "🐛", color: "#EF4444" },
+    { id: "contributor", labelKey: "badge_contributor", icon: "🤝", color: "#3B82F6" },
+    { id: "pro_coder", labelKey: "badge_pro_coder", icon: "💻", color: "#8B5CF6" },
+    { id: "helper", labelKey: "badge_helper", icon: "🤗", color: "#22C55E" },
+    { id: "top_creator", labelKey: "badge_top_creator", icon: "🏆", color: "#F97316" },
+    { id: "verified", labelKey: "badge_verified", icon: "✅", color: "#06B6D4" },
+    { id: "streamer", labelKey: "badge_streamer", icon: "🎬", color: "#EC4899" },
+    { id: "translator", labelKey: "badge_translator", icon: "🌐", color: "#14B8A6" },
+    { id: "mentor", labelKey: "badge_mentor", icon: "🎓", color: "#6366F1" },
+    { id: "night_owl", labelKey: "badge_night_owl", icon: "🦉", color: "#7C3AED" },
+    { id: "speed_coder", labelKey: "badge_speed_coder", icon: "⚡", color: "#FACC15" },
+    { id: "artist", labelKey: "badge_artist", icon: "🎨", color: "#F43F5E" },
+    { id: "pioneer", labelKey: "badge_pioneer", icon: "🚀", color: "#0EA5E9" },
+    { id: "community_star", labelKey: "badge_community_star", icon: "⭐", color: "#D946EF" },
 ];
 
 interface UserProfile {
@@ -233,7 +233,9 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                                     key={badge.id}
                                     className="w-7 h-7 rounded-full flex items-center justify-center text-sm cursor-default"
                                     style={{ backgroundColor: badge.color + "20" }}
-                                    title={t(badge.id) || badge.id}
+                                    title={t(badge.labelKey)}
+                                    role="img"
+                                    aria-label={t(badge.labelKey)}
                                 >
                                     {badge.icon}
                                 </div>

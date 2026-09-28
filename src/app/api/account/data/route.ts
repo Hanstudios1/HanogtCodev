@@ -10,6 +10,8 @@ import {
     patchServerDocument,
     queryServerCollection,
 } from "@/lib/server/firebase-rest";
+import { voterHash } from "@/lib/server/ai-rankings";
+import { likerHash } from "@/lib/server/arcade";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 
@@ -42,12 +44,16 @@ export async function GET() {
     if (!activeSession) return NextResponse.json({ error: "Etkin oturum gerekli." }, { status: 401 });
     const { email } = activeSession;
 
-    const [user, projects, gameProjects, mediaPosts, groups] = await Promise.all([
+    const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes] = await Promise.all([
         getServerDocument<Record<string, unknown>>(`users/${email}`),
         queryServerCollection<Record<string, unknown>>("projects", "email", "EQUAL", email),
         queryServerCollection<Record<string, unknown>>("game_projects", "ownerEmail", "EQUAL", email),
         queryServerCollection<Record<string, unknown>>("media_posts", "ownerEmail", "EQUAL", email),
         queryServerCollection<Record<string, unknown>>("groups", "members", "ARRAY_CONTAINS", email),
+        queryServerCollection<Record<string, unknown>>("arcade_games", "ownerEmail", "EQUAL", email).catch(() => []),
+        queryServerCollection<Record<string, unknown>>("news_comments", "authorEmail", "EQUAL", email).catch(() => []),
+        queryServerCollection<Record<string, unknown>>("arcade_likes", "liker", "EQUAL", likerHash(email)).catch(() => []),
+        queryServerCollection<Record<string, unknown>>("arena_votes", "voter", "EQUAL", voterHash(email)).catch(() => []),
     ]);
     const exportedProjects = await Promise.all(projects.map(async (project) => ({
         ...publicAccountData(project),
@@ -66,6 +72,10 @@ export async function GET() {
         user: publicAccountData(user),
         projects: exportedProjects,
         gameProjects: exportedGameProjects,
+        arcadeGames: arcadeGames.map((game) => ({ ...publicAccountData(game), id: game._id })),
+        newsComments: newsComments.map((comment) => publicAccountData(comment)),
+        arcadeLikes: arcadeLikes.map((like) => ({ gameId: like.gameId, createdAt: like.createdAt })),
+        arenaVotes: arenaVotes.map((vote) => ({ category: vote.category, a: vote.a, b: vote.b, result: vote.result, day: vote.day })),
         mediaPosts: mediaPosts.map((post) => publicAccountData(post)),
         groups: groups.map((group) => publicAccountData(group)),
         exportedAt: new Date().toISOString(),
@@ -108,6 +118,34 @@ export async function DELETE(request: NextRequest) {
         await deleteCollection(`game_projects/${project._id}/scripts`);
         await deleteServerDocument(project._path);
     }
+
+    const arcadeGames = await queryServerCollection<Record<string, unknown>>("arcade_games", "ownerEmail", "EQUAL", email).catch(() => []);
+    for (const game of arcadeGames) {
+        const likes = await queryServerCollection<Record<string, unknown>>("arcade_likes", "gameId", "EQUAL", game._id).catch(() => []);
+        for (const like of likes) await deleteServerDocument(like._path);
+        await deleteServerDocument(game._path);
+    }
+
+    const newsComments = await queryServerCollection<Record<string, unknown>>("news_comments", "authorEmail", "EQUAL", email).catch(() => []);
+    for (const comment of newsComments) {
+        const newsId = typeof comment.newsId === "string" && /^[a-f0-9]{20}$/.test(comment.newsId) ? comment.newsId : "";
+        await commitServerMutations([
+            { type: "delete", path: String(comment._path) },
+            ...(newsId ? [{ type: "increment" as const, path: `news_meta/${newsId}`, fields: { commentCount: -1 } }] : []),
+        ]).catch(() => deleteServerDocument(String(comment._path)));
+    }
+
+    // Likes on other people's games (the like count is decremented) and pseudonymous arena votes.
+    const arcadeLikes = await queryServerCollection<Record<string, unknown>>("arcade_likes", "liker", "EQUAL", likerHash(email)).catch(() => []);
+    for (const like of arcadeLikes) {
+        const gameId = typeof like.gameId === "string" ? like.gameId : "";
+        await commitServerMutations([
+            { type: "delete", path: String(like._path) },
+            ...(gameId ? [{ type: "increment" as const, path: `arcade_games/${gameId}`, fields: { likes: -1 } }] : []),
+        ]).catch(() => deleteServerDocument(String(like._path)));
+    }
+    const arenaVotes = await queryServerCollection<Record<string, unknown>>("arena_votes", "voter", "EQUAL", voterHash(email)).catch(() => []);
+    for (const vote of arenaVotes) await deleteServerDocument(String(vote._path)).catch(() => undefined);
 
     const mediaPosts = await queryServerCollection<Record<string, unknown>>("media_posts", "ownerEmail", "EQUAL", email);
     for (const post of mediaPosts) {

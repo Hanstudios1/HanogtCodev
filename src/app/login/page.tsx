@@ -1,143 +1,134 @@
 "use client";
 
-import OptimizedImage from "@/components/OptimizedImage";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Mail, ShieldAlert } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { AlertCircle, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
+import { AUTH_NETWORK_ERROR, completeSignIn, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
 
-export default function LoginPage() {
-    const router = useRouter();
+function useAuthErrorMessage() {
     const { t } = useI18n();
+    return (code: string | null) => {
+        if (!code) return "";
+        switch (code) {
+            case AUTH_NETWORK_ERROR:
+                return t("auth_error_network");
+            case "CredentialsSignin":
+                return t("auth_error_credentials") || "E-posta veya şifre hatalı. Google ile kayıt olduysanız “Google ile devam et” seçeneğini kullanın.";
+            case "OAuthSignin":
+            case "OAuthCallback":
+            case "OAuthCreateAccount":
+            case "Callback":
+                return t("auth_error_oauth") || "Google ile giriş tamamlanamadı. Lütfen tekrar deneyin.";
+            case "OAuthAccountNotLinked":
+                return t("auth_error_not_linked") || "Bu e-posta başka bir giriş yöntemiyle kayıtlı. O yöntemle giriş yapın.";
+            case "AccessDenied":
+                return t("auth_error_denied") || "Giriş izni verilmedi.";
+            case "AccountSuspended":
+                return t("auth_error_suspended") || "Bu hesap askıya alınmış. Geri Bildirim sayfasından itiraz edebilirsiniz.";
+            case "Configuration":
+                return t("auth_error_config") || "Giriş hizmeti şu anda yapılandırılmamış. Lütfen daha sonra tekrar deneyin.";
+            case "SessionRequired":
+                return t("auth_error_session") || "Bu sayfayı görmek için giriş yapın.";
+            default:
+                // Messages thrown by our own authorize() (rate limits, outages) are sentences and
+                // arrive verbatim; unknown NextAuth codes ("Default", "undefined"…) get the generic text.
+                return /\s/.test(code) && code.length <= 220 ? code : (t("auth_error_generic") || "Giriş sırasında bir sorun oluştu. Lütfen tekrar deneyin.");
+        }
+    };
+}
+
+function LoginForm() {
+    const searchParams = useSearchParams();
+    const { t, tx } = useI18n();
+    const describeError = useAuthErrorMessage();
+    const callbackPath = safeCallbackPath(searchParams.get("callbackUrl") || searchParams.get("next"));
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    // Store the code, not the text, so the message follows language changes.
+    const [errorCode, setErrorCode] = useState<string | null>(() => searchParams.get("error"));
+    const error = describeError(errorCode);
 
-    const handleCredentialsLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCredentialsLogin = async (event: React.FormEvent) => {
+        event.preventDefault();
         setLoading(true);
-        setError("");
-
-        try {
-            const result = await signIn("credentials", {
-                email,
-                password,
-                redirect: false,
-            });
-
-            if (result?.error) {
-                setError(t("login_error") || "E-posta veya şifre hatalı");
-            } else {
-                router.push("/dashboard");
-            }
-        } catch {
-            setError(t("login_error") || "Bir hata oluştu");
-        } finally {
+        setErrorCode(null);
+        const code = await signInWithPassword(email.trim(), password, callbackPath);
+        if (code) {
+            setErrorCode(code);
             setLoading(false);
+            return;
         }
+        // Keep the button busy until the full page load replaces this screen.
+        completeSignIn(callbackPath);
     };
 
     const handleGoogleLogin = async () => {
-        // For Google login, we check ban after authentication in session callback
-        // But we can show a warning about security policy
-        signIn("google", { callbackUrl: "/dashboard" });
+        setGoogleLoading(true);
+        setErrorCode(null);
+        const code = await startGoogleSignIn(callbackPath);
+        if (code) {
+            setErrorCode(code);
+            setGoogleLoading(false);
+        }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black transition-colors px-4">
-            <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-200 dark:border-zinc-800">
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-                        {t("login") || "Giriş Yap"}
-                    </h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 mt-2">
-                        {t("welcome_back") || "Hanogt Codev'e Hoşgeldiniz"}
-                    </p>
-                </div>
+        <AuthShell
+            title={t("login") || "Giriş Yap"}
+            subtitle={t("welcome_back") || "Hanogt Codev'e Hoşgeldiniz"}
+            footer={<>{t("no_account") || "Hesabın yok mu?"} <Link href={`/signup${callbackPath !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackPath)}` : ""}`} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{t("signup_now") || "Hemen Üye Ol"}</Link></>}
+        >
+            <GoogleButton label={t("login_google") || "Google ile Oturum Aç"} onClick={() => void handleGoogleLogin()} disabled={googleLoading} />
+            <Divider label={t("or") || "veya"} />
 
-                {/* Security Badge */}
-                <div className="flex items-center justify-center gap-2 mb-6 p-2 bg-green-100 dark:bg-green-900/20 rounded-xl">
-                    <ShieldAlert className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    <span className="text-xs text-green-700 dark:text-green-400">
-                        {t("protected_by_hanogt_bot") || "Hanogt Security Bot ile korunuyor"}
+            {error && (
+                <div role="alert" className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-sm leading-5 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            <form onSubmit={handleCredentialsLogin} className="space-y-4" noValidate={false}>
+                <label className="block">
+                    <span className="mb-1.5 block text-sm font-semibold">{t("email") || "E-posta"}</span>
+                    <span className="relative block">
+                        <Mail className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" inputMode="email" className={inputClass} placeholder={tx({ TR: "ornek@eposta.com", EN: "you@example.com" })} />
                     </span>
-                </div>
-
-                {/* Google Login */}
-                <button
-                    onClick={handleGoogleLogin}
-                    className="w-full h-12 flex items-center justify-center gap-3 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-xl transition-all text-zinc-900 dark:text-white font-medium mb-4"
-                >
-                    <OptimizedImage src="/google-logo.png" alt="Google" className="w-5 h-5" />
-                    {t("login_google") || "Google ile Oturum Aç"}
+                </label>
+                <label className="block">
+                    <span className="mb-1.5 block text-sm font-semibold">{t("password") || "Şifre"}</span>
+                    <span className="relative block">
+                        <Lock className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                        <input type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" className={`${inputClass} pe-12`} placeholder="••••••••••" />
+                        <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute end-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label={showPassword ? (t("auth_hide_password") || "Şifreyi gizle") : (t("auth_show_password") || "Şifreyi göster")}>
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                    </span>
+                </label>
+                <button type="submit" disabled={loading} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60">
+                    {loading && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                    {loading ? (t("logging_in") || "Giriş Yapılıyor...") : (t("login") || "Giriş Yap")}
                 </button>
+            </form>
+            <p className="mt-6 text-center text-xs leading-5 text-zinc-400">
+                {t("auth_terms_notice") || "Devam ederek Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz."}{" "}
+                <Link href="/terms-of-use" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("terms_of_use") || "Kullanım Şartları"}</Link> · <Link href="/privacy-policy" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("privacy_policy") || "Gizlilik Politikası"}</Link>
+            </p>
+        </AuthShell>
+    );
+}
 
-                <div className="relative flex py-5 items-center">
-                    <div className="flex-grow border-t border-zinc-300 dark:border-zinc-700"></div>
-                    <span className="flex-shrink mx-4 text-zinc-400 text-sm">{t("or") || "veya"}</span>
-                    <div className="flex-grow border-t border-zinc-300 dark:border-zinc-700"></div>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm text-center">
-                        {error}
-                    </div>
-                )}
-
-                {/* Email/Password Login */}
-                <form onSubmit={handleCredentialsLogin} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                            {t("email") || "E-posta"}
-                        </label>
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                placeholder="ornek@email.com"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                            {t("password") || "Şifre"}
-                        </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                            placeholder="••••••••"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-blue-500/30 disabled:opacity-50"
-                    >
-                        {loading ? (t("logging_in") || "Giriş Yapılıyor...") : (t("login") || "Giriş Yap")}
-                    </button>
-                </form>
-
-                <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
-                    {t("no_account") || "Hesabın yok mu?"}{" "}
-                    <Link href="/signup" className="text-blue-500 hover:underline font-medium">
-                        {t("signup_now") || "Hemen Üye Ol"}
-                    </Link>
-                </p>
-            </div>
-
-        </div>
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-dvh bg-background" />}>
+            <LoginForm />
+        </Suspense>
     );
 }

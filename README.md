@@ -1,6 +1,6 @@
 # Hanogt Codev
 
-Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi kod editörü, topluluk/iletişim uygulaması ve web oyun geliştirme çalışma alanıdır.
+Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi kod editörü, tarayıcıda çalışan 2D/3D oyun motoru, canlı teknoloji haberleri ve topluluk/iletişim uygulamasıdır.
 
 ## Özellikler
 
@@ -12,9 +12,13 @@ Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi
 - Hanogt Media'da proje yayımlama, lisans seçimi, indirme, beğeni, yorum, bildirim ve popüler proje keşfi
 - Davet/rol yönetimli grup çalışma alanı, ortak dosyalar, gerçek zamanlı sohbet, bire bir WebRTC araması ve sesli mesaj
 - Tek Çalıştır komutuyla en fazla sekiz farklı dildeki dosyayı bağımsız işler olarak paralel çalıştırma
-- Hanogt Engine ile bileşen tabanlı 2D ve üç eksenli izometrik 3D Canvas sahneleri, nesne hiyerarşisi, Inspector, Transform araçları, undo/redo ve fizik önizlemesi
-- Gösterge panelinde ayrı Kod Projeleri/Oyun Projeleri; C# veya C++ script oluşturma, Monaco'da düzenleme ve aynı sahneye dönüş akışı
-- AI kod yardımcısı, geri bildirim merkezi, SSS ve 20 dil için gecikmeli yüklenen yerelleştirme paketleri
+- Hanogt Engine v2: Unity benzeri editör (hiyerarşi, Inspector, Proje paneli, Konsol), three.js tabanlı WebGL render, OBB/SAT fiziği, C#/C++ scriptleri tarayıcıda yorumlayan HanogtScript sanal makinesi, hazır şablonlar ve tek dosya HTML dışa aktarma
+- Hanogt Arcade: motorla yapılan oyunları yayınlama, tarayıcıda oynama, beğeni, oynanma sayacı ve remiks
+- Hanogt News: 20'yi aşkın kaynaktan canlı yapay zeka, yazılım, oyun ve uygulama haberleri; animasyonlu akış, yorumlar ve topluluk oylarıyla (Elo) yapay zeka arenası
+- Güvenlik Merkezi: tarayıcıda çalışan Kod Danışmanı, Parola Laboratuvarı (k-anonim sızıntı kontrolü), Bağlantı Kontrolü ve Security Bot v6
+- Minecraft kitabı tarzında etkileşimli kullanım kılavuzu (`/guide`)
+- Gösterge panelinde Kod Projeleri/Oyun Projeleri, proje arama ve sıralama
+- AI kod yardımcısı, geri bildirim merkezi, SSS ve sağdan sola Arapça dahil 30 dil için gecikmeli yüklenen yerelleştirme paketleri
 - Web, Electron ve Capacitor hedefleri
 
 ## Güvenlik modeli
@@ -25,7 +29,8 @@ Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi
 - Hanogt Security Bot bir savunma katmanıdır; antivirüs veya tam yalıtım garantisi değildir. Asıl güven sınırı; ağı kapalı, salt okunur kök dosya sistemli, kaynak/zaman limitli ve her çalıştırmadan sonra yok edilen harici runner olmalıdır.
 - Aramalar kaydedilmez. Firestore'daki WebRTC sinyal belgeleri ve ICE adayları arama kapandığında silinir.
 - Media güvenlik katkısı varsayılan olarak kapalıdır. Yalnız hesap ve proje düzeyinde ayrı ayrı izin verildiğinde inceleme adayı oluşturulur; sistem kendiliğinden model eğitmez.
-- Oyun proje belgeleri ve C#/C++ kaynakları yalnız sahiplik kontrollü sunucu API'sinden geçer; Firestore istemci kuralları bu koleksiyonları tamamen kapatır. Sahne 500 nesne/512 KB, script 160 KB ile sınırlıdır ve revizyon çakışmaları sessizce üzerine yazılmaz.
+- Oyun proje belgeleri ve C#/C++ kaynakları yalnız sahiplik kontrollü sunucu API'sinden geçer; Firestore istemci kuralları bu koleksiyonları tamamen kapatır. Sahne başına 1000 nesne, proje içeriği 900 KB ve script başına 160 KB sınırı vardır; revizyon çakışmaları sessizce üzerine yazılmaz. Arcade'de yayınlanan oyunlar derleme ve güvenlik taramasından geçer.
+- Haber yorumları giriş, hız sınırı ve küfür/spam/kişisel veri filtresinden geçer. Parola sızıntı kontrolü k-anonimlik kullanır: tarayıcıdan yalnız SHA-1 özetinin ilk 5 karakteri gönderilir.
 
 > Uyarı: Regex/statik tarama tek başına güvenli kod çalıştırma sağlamaz. `CODE_RUNNER_URL` tanımlı değilse endpoint güvenli biçimde hizmet dışı kalır; herkese açık Piston/Wandbox geri dönüşü yoktur.
 
@@ -49,11 +54,11 @@ Firebase kuralları ve indeksleri:
 firebase deploy --only firestore:rules,firestore:indexes,storage
 ```
 
-`npm run i18n:check`, arayüzde kullanılan çeviri anahtarlarının 20 dil paketinde de bulunduğunu doğrular. Kod çalıştırma API'si tek dosyayı veya en fazla sekiz dosyalık bir listeyi kabul eder; farklı diller aynı istek içinde bağımsız runner işleri olarak çalışır, diller arasında süreç içi bellek/IPC paylaşılmaz.
+`npm run i18n:check`, arayüzde kullanılan çeviri anahtarlarının 30 dil paketinin hepsinde bulunduğunu doğrular. Kod çalıştırma API'si tek dosyayı veya en fazla sekiz dosyalık bir listeyi kabul eder; farklı diller aynı istek içinde bağımsız runner işleri olarak çalışır, diller arasında süreç içi bellek/IPC paylaşılmaz.
 
 ## Hanogt Engine kapsamı
 
-Hanogt Engine bu sürümde Unity'nin yerine geçtiği iddia edilmeyen, web tabanlı bir oyun editörü MVP'sidir. Sahne modeli nesne-bileşen yaklaşımını, 2D ve üç eksenli izometrik 3D önizlemeyi, Transform düzenlemeyi, basit rigid-body/AABB fiziğini ve C#/C++ kaynak yönetimini kapsar. C# ve C++ kodu tarayıcı sayfasında `eval` edilmez. Editördeki çalıştırma/test isteği, yalnız operatörün yapılandırdığı izole runner'a bağımsız bir iş gönderir; scriptlerin canlı sahne çalışma zamanına bağlanması ve yerel/mağaza çıktısı üretmek ayrı derleme araç zinciri gerektirir.
+Hanogt Engine v2 tarayıcıda çalışan, nesne-bileşen tabanlı bir 2D/3D oyun motoru ve editörüdür; Unity'nin yerine geçtiği iddia edilmez. C# ve C++ scriptleri `eval` veya `new Function` ile çalıştırılmaz: HanogtScript sanal makinesi kaynağı ayrıştırır ve yalnız motor API'lerine erişebilen, kare başına komut bütçeli bir yorumlayıcıda çalıştırır (sonsuz döngüler durdurulur, hatalar satır numarasıyla gösterilir). Desteklenen alt küme; sınıflar, kalıtım, özellikler, lambda, LINQ, koleksiyonlar, coroutine, `ref/out`, `std::vector`/`std::cout` ve Unity benzeri yaşam döngüsü ile API'leri (Input, Physics, Time, PlayerPrefs, SceneManager vb.) kapsar. Tam .NET/STL, dosya sistemi, ağ, yansıma ve işaretçi aritmetiği desteklenmez. Oyunlar tek dosya HTML olarak dışa aktarılabilir veya Arcade'de yayınlanabilir; yerel/mağaza derlemesi ayrı araç zinciri gerektirir.
 
 WebRTC'nin kurumsal ağlarda güvenilir çalışması için `TURN_SERVER_URL` ve `TURN_SHARED_SECRET` ile coturn TURN REST kimlik bilgilerini tanımlayın. STUN tek başına her NAT yapısında yeterli değildir.
 
@@ -70,7 +75,7 @@ WebRTC'nin kurumsal ağlarda güvenilir çalışması için `TURN_SERVER_URL` ve
 
 ## Teknolojiler
 
-Next.js 16, React 19, TypeScript, Tailwind CSS 4, Monaco Editor, NextAuth 4, Firebase 12, WebRTC, Electron ve Capacitor.
+Next.js 16, React 19, TypeScript, Tailwind CSS 4, Framer Motion, three.js, Monaco Editor, NextAuth 4, Firebase 12, WebRTC, Electron ve Capacitor.
 
 ## Lisans
 

@@ -20,7 +20,13 @@ walk(sourceRoot);
 const required = new Set();
 for (const file of sourceFiles) {
     const source = fs.readFileSync(file, "utf8");
+    // Hanogt Engine UI has its own TR/EN dictionary (useEngineText / editor context); its t() keys
+    // are type-checked there and are not looked up in src/locales.
+    const usesSiteT = /const\s*\{[^}]*\bt\b[^}]*\}\s*=\s*useI18n\(\)/.test(source);
+    if (file.includes(`${path.sep}GameEngine${path.sep}`) && !usesSiteT) continue;
     for (const match of source.matchAll(/\bt\(\s*["']([a-zA-Z0-9_]+)["']/g)) required.add(match[1]);
+    // Keys stored in data tables (e.g. nav descriptions) and looked up later with t(item.descKey).
+    for (const match of source.matchAll(/\b(?:descKey|labelKey):\s*["']([a-zA-Z0-9_]+)["']/g)) required.add(match[1]);
 }
 
 const changelog = fs.readFileSync(path.join(sourceRoot, "components", "ChangelogModal.tsx"), "utf8");
