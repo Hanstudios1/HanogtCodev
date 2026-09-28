@@ -2,7 +2,7 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type Copy } from "@/lib/i18n";
 import Link from "next/link";
 import { useCallback, useState, useEffect } from "react";
 import { MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle, Search, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
@@ -38,19 +38,25 @@ interface Comment {
     createdAt: Date;
 }
 
-const FAQS = [
-    { category: "Hesap", question: "Parolam nasıl korunuyor?", answer: "Parolanın açık hâli saklanmaz. Sunucuda benzersiz tuz ve scrypt ile tek yönlü karma üretilir; kimlik bilgileri profil verilerinden ayrı tutulur." },
-    { category: "Kod", question: "Kodum nerede çalıştırılıyor?", answer: "Kod yalnızca yönetici tarafından yapılandırılan izole yürütücüye gönderilir. Herkese açık Piston/Wandbox servisleri üretim yedeği olarak kullanılmaz." },
-    { category: "Güvenlik", question: "Security Bot hesabımı otomatik olarak kalıcı engeller mi?", answer: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır." },
-    { category: "Aramalar", question: "Sesli aramalar kaydediliyor mu?", answer: "Hayır. WebRTC arama sesi kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır." },
-    { category: "Mesajlar", question: "Sesli mesajlar nasıl saklanıyor?", answer: "Sesli mesajlar Firestore içine base64 olarak yazılmaz. Yetkili sohbet katılımcılarının erişebildiği dosya depolamasında tutulur ve mesaj silinince dosyası da silinir." },
-    { category: "Gizlilik", question: "Verilerimi nasıl indirebilir veya silebilirim?", answer: "Hesap Ayarları içindeki Veri Dışa Aktarma ve Hesabı Sil seçeneklerini kullanabilir; KVKK talebinizi bu sayfadan Gizlilik/KVKK başlığıyla iletebilirsiniz." },
-    { category: "Bağlantı", question: "Arama neden bazı ağlarda bağlanmıyor?", answer: "Kurumsal ağlar ve sıkı NAT yapıları TURN sunucusu gerektirebilir. Yönetici TURN yapılandırmasını tamamlamadıysa uygulama bunu arama ekranında açıkça belirtir." },
-    { category: "Proje", question: "Çoklu dosya projeleri gerçekten ayrı mı saklanıyor?", answer: "Evet. Proje meta verisi ile her dosya ayrı Firestore alt belgesinde tutulur; düzenleyicideki sekmeler tek bir JSON alanına sıkıştırılmaz." },
+type Faq = { id: string; category: Copy; question: Copy; answer: Copy };
+
+const FAQS: Faq[] = [
+    { id: "password", category: { TR: "Hesap", EN: "Account" }, question: { TR: "Parolam nasıl korunuyor?", EN: "How is my password protected?" }, answer: { TR: "Parolanın açık hâli saklanmaz. Sunucuda benzersiz tuz ve scrypt ile tek yönlü karma üretilir; kimlik bilgileri profil verilerinden ayrı tutulur.", EN: "Your password is never stored in plain text. The server derives a one-way scrypt hash with a unique salt, and credentials are kept apart from profile data." } },
+    { id: "runner", category: { TR: "Kod", EN: "Code" }, question: { TR: "Kodum nerede çalıştırılıyor?", EN: "Where does my code run?" }, answer: { TR: "Kod yalnızca yönetici tarafından yapılandırılan izole yürütücüye gönderilir. Herkese açık Piston/Wandbox servisleri üretim yedeği olarak kullanılmaz.", EN: "Code is only sent to the isolated runner configured by the operator. Public Piston/Wandbox services are never used as a production fallback." } },
+    { id: "engine", category: { TR: "Oyun motoru", EN: "Game engine" }, question: { TR: "Oyun scriptlerim nerede çalışıyor?", EN: "Where do my game scripts run?" }, answer: { TR: "C# ve C++ scriptleri tarayıcınızdaki HanogtScript sanal makinesinde yorumlanır; eval kullanılmaz, scriptler yalnızca motor API'lerine erişebilir ve sonsuz döngüler komut bütçesiyle durdurulur.", EN: "C# and C++ scripts are interpreted by the HanogtScript virtual machine in your browser. Nothing is eval'd, scripts can only reach engine APIs, and infinite loops are stopped by an instruction budget." } },
+    { id: "arcade", category: { TR: "Arcade", EN: "Arcade" }, question: { TR: "Oyunumu Arcade'de nasıl yayınlarım?", EN: "How do I publish my game on the Arcade?" }, answer: { TR: "Motorda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar herkese açıktır ve istediğiniz zaman kaldırılabilir.", EN: "Press Publish in the engine. The game is compiled and goes through a security scan; published games are public and can be taken down any time." } },
+    { id: "news", category: { TR: "Haberler", EN: "News" }, question: { TR: "Hanogt News haberleri nereden geliyor?", EN: "Where does Hanogt News get its stories?" }, answer: { TR: "Haberler güvenilir yayıncıların herkese açık RSS/Atom akışlarından toplanır; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir. Yapay zeka sıralaması yalnızca topluluk oylarından hesaplanır.", EN: "Stories are collected from trusted publishers' public RSS/Atom feeds; only the headline, a short excerpt and a link to the source are shown. The AI leaderboard is computed from community votes only." } },
+    { id: "bot", category: { TR: "Güvenlik", EN: "Security" }, question: { TR: "Security Bot hesabımı otomatik olarak kalıcı engeller mi?", EN: "Will Security Bot ban my account automatically?" }, answer: { TR: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır.", EN: "No. A high-risk request is stopped on the spot with a minimal log entry. Permanent action is never taken from an automatic pattern match; there is a review and appeal path." } },
+    { id: "calls", category: { TR: "Aramalar", EN: "Calls" }, question: { TR: "Sesli aramalar kaydediliyor mu?", EN: "Are voice calls recorded?" }, answer: { TR: "Hayır. WebRTC arama sesi kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır.", EN: "No. WebRTC call audio is never recorded. Temporary SDP/ICE connection documents are deleted when the call ends and carry a short expiry." } },
+    { id: "voice", category: { TR: "Mesajlar", EN: "Messages" }, question: { TR: "Sesli mesajlar nasıl saklanıyor?", EN: "How are voice messages stored?" }, answer: { TR: "Sesli mesajlar Firestore içine base64 olarak yazılmaz. Yetkili sohbet katılımcılarının erişebildiği dosya depolamasında tutulur ve mesaj silinince dosyası da silinir.", EN: "Voice messages aren't written into Firestore as base64. They live in file storage that only the chat's participants can access, and the file is deleted with the message." } },
+    { id: "data", category: { TR: "Gizlilik", EN: "Privacy" }, question: { TR: "Verilerimi nasıl indirebilir veya silebilirim?", EN: "How can I download or delete my data?" }, answer: { TR: "Hesap Ayarları içindeki Veri Dışa Aktarma ve Hesabı Sil seçeneklerini kullanabilir; KVKK talebinizi bu sayfadan Gizlilik/KVKK başlığıyla iletebilirsiniz.", EN: "Use Data Export and Delete Account in Account Settings, or send a privacy (KVKK) request from this page." } },
+    { id: "turn", category: { TR: "Bağlantı", EN: "Connection" }, question: { TR: "Arama neden bazı ağlarda bağlanmıyor?", EN: "Why don't calls connect on some networks?" }, answer: { TR: "Kurumsal ağlar ve sıkı NAT yapıları TURN sunucusu gerektirebilir. Yönetici TURN yapılandırmasını tamamlamadıysa uygulama bunu arama ekranında açıkça belirtir.", EN: "Corporate networks and strict NATs may need a TURN server. If the operator hasn't configured one, the call screen says so." } },
+    { id: "files", category: { TR: "Proje", EN: "Projects" }, question: { TR: "Çoklu dosya projeleri gerçekten ayrı mı saklanıyor?", EN: "Are multi-file projects really stored as separate files?" }, answer: { TR: "Evet. Proje meta verisi ile her dosya ayrı Firestore alt belgesinde tutulur; düzenleyicideki sekmeler tek bir JSON alanına sıkıştırılmaz.", EN: "Yes. Project metadata and every file are kept in separate Firestore sub-documents; editor tabs aren't squeezed into a single JSON field." } },
+    { id: "languages", category: { TR: "Diller", EN: "Languages" }, question: { TR: "Arayüzü kendi dilimde kullanabilir miyim?", EN: "Can I use the interface in my language?" }, answer: { TR: "Evet. Üst menüdeki dil seçiciden sağdan sola Arapça dahil 30 dil arasından seçim yapabilirsiniz. Yeni bölümlerin bazı metinleri henüz yalnızca Türkçe ve İngilizcedir.", EN: "Yes. Pick one of 30 languages, including right-to-left Arabic, from the language menu at the top. Some texts in the newest sections are still Turkish and English only." } },
 ];
 
 export default function FeedbackPage() {
-    const { t } = useI18n();
+    const { t, tx, language } = useI18n();
     const { data: session } = useSession();
     const [activeTab, setActiveTab] = useState<"questions" | "feedback">("questions");
     const [message, setMessage] = useState("");
@@ -60,7 +66,7 @@ export default function FeedbackPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [faqQuery, setFaqQuery] = useState("");
-    const [openFaq, setOpenFaq] = useState<string | null>(FAQS[0].question);
+    const [openFaq, setOpenFaq] = useState<string | null>(FAQS[0].id);
     const [commentText, setCommentText] = useState<{ [key: string]: string }>({});
     const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({});
 
@@ -84,7 +90,7 @@ export default function FeedbackPage() {
             body: JSON.stringify(payload),
         });
         const result = await response.json() as { error?: string };
-        if (!response.ok) throw new Error(result.error || "İşlem tamamlanamadı.");
+        if (!response.ok) throw new Error(language === "TR" && result.error ? result.error : tx({ TR: "İşlem tamamlanamadı.", EN: "The action couldn't be completed." }));
     };
 
     const fetchItems = useCallback(async () => {
@@ -172,7 +178,7 @@ export default function FeedbackPage() {
         const item = items.find(i => i.id === itemId);
         if (!item || item.authorEmail !== session.user.email) return;
 
-        if (!confirm("Bu içeriği silmek istediğinize emin misiniz?")) return;
+        if (!confirm(tx({ TR: "Bu içeriği silmek istediğinize emin misiniz?", EN: "Are you sure you want to delete this?" }))) return;
 
         try {
             await mutateFeedback({ action: "delete", itemId });
@@ -224,7 +230,7 @@ export default function FeedbackPage() {
             await fetchItems();
         } catch (error) {
             console.error("Error adding comment:", error);
-            alert("Yorum gönderilemedi. Lütfen tekrar deneyin.");
+            alert(tx({ TR: "Yorum gönderilemedi. Lütfen tekrar deneyin.", EN: "The comment couldn't be sent. Please try again." }));
         }
     };
 
@@ -262,7 +268,8 @@ export default function FeedbackPage() {
     const filteredItems = items.filter(item =>
         activeTab === "questions" ? item.type === "question" : item.type === "feedback"
     );
-    const filteredFaqs = FAQS.filter((faq) => `${faq.category} ${faq.question} ${faq.answer}`.toLocaleLowerCase("tr-TR").includes(faqQuery.toLocaleLowerCase("tr-TR")));
+    const faqNeedle = faqQuery.trim().toLocaleLowerCase("tr-TR");
+    const filteredFaqs = FAQS.filter((faq) => `${tx(faq.category)} ${tx(faq.question)} ${tx(faq.answer)}`.toLocaleLowerCase("tr-TR").includes(faqNeedle));
 
     return (
         <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white transition-colors">
@@ -271,27 +278,27 @@ export default function FeedbackPage() {
             {/* Content */}
             <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 pb-12 pt-24">
                 <section className="mb-10 overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-950 p-7 text-white shadow-xl dark:border-zinc-800 sm:p-10">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-blue-300"><Sparkles className="h-4 w-4" /> Yardım merkezi</div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-blue-300"><Sparkles className="h-4 w-4" /> {tx({ TR: "Yardım merkezi", EN: "Help center" })}</div>
                     <h1 className="mt-3 text-3xl md:text-5xl font-bold">{t("feedback_title") || "Geri Bildirim & SSS"}</h1>
                     <p className="mt-4 max-w-2xl text-zinc-400">{t("feedback_subtitle") || "Hızlı yanıtları bulun, bir fikir paylaşın veya incelenebilir bir hata ve güvenlik bildirimi oluşturun."}</p>
                     <div className="relative mt-7 max-w-2xl">
-                        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" />
-                        <input value={faqQuery} onChange={(event) => setFaqQuery(event.target.value)} placeholder="Bir konu, özellik veya hata ara…" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                        <Search className="absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" />
+                        <input value={faqQuery} onChange={(event) => setFaqQuery(event.target.value)} placeholder={tx({ TR: "Bir konu, özellik veya hata ara…", EN: "Search a topic, feature or bug…" })} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-3.5 ps-12 pe-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
                     </div>
                 </section>
 
                 <section className="mb-10 grid gap-3 md:grid-cols-2">
                     {filteredFaqs.map((faq) => {
-                        const open = openFaq === faq.question;
-                        return <article key={faq.question} className="self-start overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
-                            <button onClick={() => setOpenFaq(open ? null : faq.question)} className="flex w-full items-start gap-3 p-5 text-left"><span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-300">{faq.category}</span><span className="flex-1 font-semibold">{faq.question}</span><ChevronDown className={`h-5 w-5 shrink-0 text-zinc-400 transition ${open ? "rotate-180" : ""}`} /></button>
-                            {open && <div className="border-t border-zinc-200 px-5 py-4 text-sm leading-6 text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">{faq.answer}</div>}
+                        const open = openFaq === faq.id;
+                        return <article key={faq.id} className="self-start overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+                            <button onClick={() => setOpenFaq(open ? null : faq.id)} aria-expanded={open} className="flex w-full items-start gap-3 p-5 text-start"><span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:bg-blue-950 dark:text-blue-300">{tx(faq.category)}</span><span className="flex-1 font-semibold">{tx(faq.question)}</span><ChevronDown className={`h-5 w-5 shrink-0 text-zinc-400 transition ${open ? "rotate-180" : ""}`} /></button>
+                            {open && <div className="border-t border-zinc-200 px-5 py-4 text-sm leading-6 text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">{tx(faq.answer)}</div>}
                         </article>;
                     })}
-                    {filteredFaqs.length === 0 && <div className="md:col-span-2 rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">Bu aramayla eşleşen hazır yanıt yok. Aşağıdan yeni bir soru gönderin.</div>}
+                    {filteredFaqs.length === 0 && <div className="md:col-span-2 rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">{tx({ TR: "Bu aramayla eşleşen hazır yanıt yok. Aşağıdan yeni bir soru gönderin.", EN: "No ready answer matches this search. Send a new question below." })}</div>}
                 </section>
 
-                <div className="mb-8 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200"><ShieldCheck className="h-5 w-5 shrink-0" />Güvenlik bildirimlerine hassas anahtar, gerçek parola veya kişisel veri eklemeyin. Kanıt için kod yerine mümkünse yeniden üretme adımlarını paylaşın.</div>
+                <div className="mb-8 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200"><ShieldCheck className="h-5 w-5 shrink-0" />{tx({ TR: "Güvenlik bildirimlerine hassas anahtar, gerçek parola veya kişisel veri eklemeyin. Kanıt için kod yerine mümkünse yeniden üretme adımlarını paylaşın.", EN: "Don't include secret keys, real passwords or personal data in security reports. Share reproduction steps instead of code where you can." })}</div>
 
                 {/* Tabs */}
                 <div className="flex justify-center gap-4 mb-8">
