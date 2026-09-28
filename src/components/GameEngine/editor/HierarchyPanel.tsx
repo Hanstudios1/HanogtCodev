@@ -123,7 +123,7 @@ export default function HierarchyPanel() {
     const create = (preset: EntityPreset, parentId: string | null = null) => {
         if (playing) return;
         let createdId = "";
-        store.update("Nesne oluştur", (draft) => {
+        store.update(t("hCreateEntity"), (draft) => {
             createdId = addEntity(draft, preset, parentId ? { x: 0, y: 0, z: 0 } : createAt(), parentId).id;
         });
         if (createdId) store.setSelection([createdId]);
@@ -136,7 +136,7 @@ export default function HierarchyPanel() {
 
     const toggleActive = (entity: GameEntity) => {
         if (playing) return;
-        store.update(entity.active ? "Nesneyi gizle" : "Nesneyi göster", (draft) => {
+        store.update(entity.active ? t("hHideEntity") : t("hShowEntity"), (draft) => {
             const target = activeScene(draft).objects.find((item) => item.id === entity.id);
             if (target) target.active = !target.active;
         });
@@ -146,7 +146,7 @@ export default function HierarchyPanel() {
         const trimmed = name.trim().slice(0, 80);
         setRenaming(null);
         if (!trimmed || playing) return;
-        store.update("Yeniden adlandır", (draft) => {
+        store.update(t("rename2"), (draft) => {
             const target = activeScene(draft).objects.find((item) => item.id === id);
             if (target) target.name = trimmed;
         });
@@ -178,7 +178,7 @@ export default function HierarchyPanel() {
         dragId.current = null;
         setDropTarget(null);
         if (!moving || !target || target.id === moving) return;
-        store.update("Hiyerarşiyi düzenle", (draft) => {
+        store.update(t("hReparent"), (draft) => {
             const sceneDraft = activeScene(draft);
             if (!target.id) {
                 reparent(draft, moving, null, null);
@@ -216,7 +216,7 @@ export default function HierarchyPanel() {
             { label: t("rename"), icon: Pencil, onSelect: () => setRenaming(entityId), disabled: playing },
             { label: t("duplicate"), icon: CopyPlus, disabled: playing, onSelect: () => {
                 let created: string[] = [];
-                store.update("Çoğalt", (draft) => { created = duplicateEntities(draft, ids); });
+                store.update(t("duplicateLabel"), (draft) => { created = duplicateEntities(draft, ids); });
                 store.setSelection(created);
             } },
             { label: t("copy"), icon: Copy, onSelect: () => copyEntitiesToClipboard(scene.objects, ids) },
@@ -225,10 +225,10 @@ export default function HierarchyPanel() {
             { label: t("focus"), icon: Crosshair, onSelect: () => focusEntity(entityId) },
             { label: t("makePrefab"), icon: Package, disabled: playing, onSelect: () => {
                 let prefabId: string | null = null;
-                store.update("Prefab oluştur", (draft) => { prefabId = createPrefabFromEntity(draft, entityId); });
+                store.update(t("makePrefab"), (draft) => { prefabId = createPrefabFromEntity(draft, entityId); });
                 if (prefabId) toast(`"${entity?.name}" prefab olarak kaydedildi.`, "success");
             } },
-            ...(entity?.parentId ? [{ label: t("unparent"), icon: Undo, disabled: playing, onSelect: () => store.update("Kök nesne yap", (draft) => reparent(draft, entityId, null, null)) }] : []),
+            ...(entity?.parentId ? [{ label: t("unparent"), icon: Undo, disabled: playing, onSelect: () => store.update(t("hUnparent"), (draft) => reparent(draft, entityId, null, null)) }] : []),
             { separator: true, label: "" },
             { label: t("delete"), icon: Trash2, danger: true, disabled: playing, onSelect: () => store.update("Sil", (draft) => deleteEntities(draft, ids), { selection: [] }) },
         ];
@@ -327,7 +327,7 @@ export default function HierarchyPanel() {
                                     });
                                 }}
                                 className={cx("grid h-4 w-4 shrink-0 place-items-center text-zinc-500 hover:text-zinc-200", !hasChildren && "invisible")}
-                                aria-label="Aç/kapat"
+                                aria-label={t("toggleExpand")}
                             >
                                 {collapsed.has(entity.id) ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                             </button>
@@ -357,7 +357,7 @@ export default function HierarchyPanel() {
                                     toggleActive(entity);
                                 }}
                                 className={cx("grid h-5 w-5 shrink-0 place-items-center rounded text-zinc-500 hover:text-zinc-100", entity.active && "opacity-0 group-hover:opacity-100")}
-                                aria-label={entity.active ? "Gizle" : "Göster"}
+                                aria-label={entity.active ? t("hide") : t("show")}
                                 title={t("active")}
                             >
                                 {entity.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}

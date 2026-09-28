@@ -197,7 +197,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             } catch (error) {
                 if (error instanceof PersistenceError && error.status === 409) {
                     setSaveStatus("conflict");
-                    toast("Proje başka bir sekmede/cihazda değişti. Sayfayı yenileyip güncel sürümü yükleyin; bu sekmedeki değişiklikleri kaybetmemek için önce JSON olarak dışa aktarabilirsiniz.", "error");
+                    toast(t("saveConflict"), "error");
                 } else {
                     setSaveStatus("error");
                     toast(error instanceof Error ? error.message : t("saveFailed"), "error");
@@ -352,7 +352,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             } else if (mod && key === "d" && selection.length) {
                 event.preventDefault();
                 let created: string[] = [];
-                store.update("Çoğalt", (draft) => { created = duplicateEntities(draft, selection); });
+                store.update(t("duplicateLabel"), (draft) => { created = duplicateEntities(draft, selection); });
                 store.setSelection(created);
             } else if (mod && key === "c" && selection.length) {
                 copyEntitiesToClipboard(activeScene(store.getState().project).objects, selection);
@@ -379,10 +379,10 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                 const groups = JSON.parse(raw) as GameEntity[][];
                 if (!Array.isArray(groups)) return;
                 let created: string[] = [];
-                store.update("Yapıştır", (draft) => { created = pasteEntities(draft, groups); });
+                store.update(t("hPaste"), (draft) => { created = pasteEntities(draft, groups); });
                 store.setSelection(created);
             } catch {
-                toast("Pano içeriği okunamadı.", "error");
+                toast(t("clipboardFailed"), "error");
             }
         };
         window.addEventListener("keydown", onKey);
@@ -391,7 +391,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             window.removeEventListener("keydown", onKey);
             window.removeEventListener("hanogt-engine:paste", onPaste);
         };
-    }, [store, playing, save, startPlay, stopPlay, toast]);
+    }, [store, playing, save, startPlay, stopPlay, t, toast]);
 
     // ------------------------------------------------------------------
     // Import / export
@@ -407,9 +407,9 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         }
         try {
             await exportStandaloneHtml(store.getState().project);
-            toast("Oynanabilir HTML dosyası indirildi.", "success");
+            toast(t("htmlExported"), "success");
         } catch (error) {
-            toast(error instanceof Error ? error.message : "Dışa aktarılamadı.", "error");
+            toast(error instanceof Error ? error.message : t("exportFailed"), "error");
         }
     };
 
@@ -417,14 +417,14 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         if (!file) return;
         try {
             const imported = await importProjectFile(file);
-            if (!window.confirm(`"${imported.name}" içe aktarılsın mı? Bu projenin içeriği değiştirilecek (geri alınabilir).`)) return;
-            store.update("Proje içe aktar", (draft) => {
+            if (!window.confirm(t("importConfirm").replace("{name}", imported.name))) return;
+            store.update(t("hImportProject"), (draft) => {
                 const keepId = draft.id;
                 Object.assign(draft, { ...imported, id: keepId, dimension: draft.dimension === imported.dimension ? draft.dimension : imported.dimension });
             }, { selection: [] });
-            toast("Proje içe aktarıldı.", "success");
+            toast(t("imported"), "success");
         } catch (error) {
-            toast(error instanceof Error ? error.message : "İçe aktarılamadı.", "error");
+            toast(error instanceof Error ? error.message : t("importFailed"), "error");
         } finally {
             if (importInput.current) importInput.current.value = "";
         }
@@ -521,7 +521,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                             </button>
                             <IconButton icon={Pause} label={playerState === "paused" ? t("resume") : t("pause")} active={playerState === "paused"} disabled={!playing} onClick={togglePause} />
                             <IconButton icon={StepForward} label={t("step")} disabled={playerState !== "paused"} onClick={() => playerRef.current?.step()} />
-                            <IconButton icon={muted ? VolumeX : Volume2} label={muted ? "Sesi aç" : "Sesi kapat"} onClick={() => setMuted(!muted)} />
+                            <IconButton icon={muted ? VolumeX : Volume2} label={muted ? t("unmute") : t("mute")} onClick={() => setMuted(!muted)} />
                         </div>
                     </div>
                     <div className="flex items-center gap-0.5">
@@ -561,7 +561,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                             {!program.ok ? <button type="button" onClick={() => setBottomTab("console")} className="flex items-center gap-1 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-red-200"><X className="h-3 w-3" />{t("compileErrors")}</button> : null}
                             {openScriptTabs.length ? (
                                 <button type="button" onClick={() => setShowScripts(!showScripts)} className={cx("ml-1 flex h-7 items-center gap-1.5 rounded-md px-2 text-[11.5px] font-semibold", showScripts ? "bg-emerald-500/15 text-emerald-200" : "text-zinc-400 hover:bg-white/5")}>
-                                    <Info className="h-3.5 w-3.5" />Kod ({openScriptTabs.length})
+                                    <Info className="h-3.5 w-3.5" />{t("codeTabs")} ({openScriptTabs.length})
                                 </button>
                             ) : null}
                         </div>
@@ -629,7 +629,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                         </div>
                     </div>
                 ) : null}
-                <nav className="grid h-14 shrink-0 grid-cols-5 border-t border-white/[0.07] bg-zinc-900 lg:hidden" aria-label="Editör panelleri">
+                <nav className="grid h-14 shrink-0 grid-cols-5 border-t border-white/[0.07] bg-zinc-900 lg:hidden" aria-label={t("editorPanels")}>
                     {([
                         ["hierarchy", FolderTree, t("hierarchy")],
                         ["inspector", SlidersHorizontal, t("inspector")],

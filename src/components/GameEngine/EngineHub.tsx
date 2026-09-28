@@ -101,12 +101,12 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
             try {
                 cloud = await listCloudProjects();
             } catch (error) {
-                toast(error instanceof Error ? error.message : "Bulut projeleri yüklenemedi.", "error");
+                toast(error instanceof Error ? error.message : t("cloudLoadFailed"), "error");
             }
         }
         setProjects([...cloud, ...local].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
         setLoading(false);
-    }, [signedIn, toast]);
+    }, [signedIn, t, toast]);
 
     useEffect(() => {
         if (status === "loading") return;
@@ -125,7 +125,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                 onOpen(project.id, "local");
             }
         } catch (error) {
-            toast(error instanceof Error ? error.message : "Proje oluşturulamadı.", "error");
+            toast(error instanceof Error ? error.message : t("createFailed"), "error");
             setCreating(false);
         }
     };
@@ -146,7 +146,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
             const project = item.source === "cloud" ? (await loadCloudProject(item.id)).project : await loadLocalProject(item.id);
             if (project) exportProjectJson(project);
         } catch (error) {
-            toast(error instanceof Error ? error.message : "İndirilemedi.", "error");
+            toast(error instanceof Error ? error.message : t("downloadFailed"), "error");
         }
     };
 
@@ -183,7 +183,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                             <Button className="h-10 px-4 text-[13px]" onClick={() => importInput.current?.click()}><Upload className="h-4 w-4" />{t("importProject")}</Button>
                             <Link href="/arcade" className="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-zinc-300 transition hover:bg-white/5"><Rocket className="h-4 w-4" />{t("arcade")}</Link>
                         </div>
-                        {!signedIn && status !== "loading" ? <p className="mt-4 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-3 py-2 text-[12.5px] leading-relaxed text-amber-100/90">{t("signInForCloud")} <Link href="/login?callbackUrl=/game-engine" className="font-semibold underline underline-offset-2">Giriş yap</Link></p> : null}
+                        {!signedIn && status !== "loading" ? <p className="mt-4 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-3 py-2 text-[12.5px] leading-relaxed text-amber-100/90">{t("signInForCloud")} <Link href="/login?callbackUrl=/game-engine" className="font-semibold underline underline-offset-2">{t("signIn")}</Link></p> : null}
                     </div>
                     <div className="relative hidden animate-fade-up lg:block" style={{ animationDelay: "120ms" }}>
                         <div className="grid grid-cols-3 gap-3 [perspective:900px]">
@@ -260,7 +260,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                     const imported = await importProjectFile(file);
                     await createFrom({ ...imported, id: createEngineId("game") });
                 } catch (error) {
-                    toast(error instanceof Error ? error.message : "İçe aktarılamadı.", "error");
+                    toast(error instanceof Error ? error.message : t("importFailed"), "error");
                 }
             }} />
 
@@ -292,7 +292,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                             </button>
                         ))}
                     </div>
-                    <p className="flex items-center gap-1.5 text-[12px] text-zinc-500">{signedIn ? <><Cloud className="h-3.5 w-3.5" />Proje hesabınıza (bulut) kaydedilecek.</> : <><HardDrive className="h-3.5 w-3.5" />Proje bu tarayıcıya kaydedilecek.</>}</p>
+                    <p className="flex items-center gap-1.5 text-[12px] text-zinc-500">{signedIn ? <><Cloud className="h-3.5 w-3.5" />{t("savesToCloud")}</> : <><HardDrive className="h-3.5 w-3.5" />{t("savesToBrowser")}</>}</p>
                 </div>
             </Modal>
             <Toasts toasts={toasts} onDismiss={dismiss} />

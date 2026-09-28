@@ -32,8 +32,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
             </div>
             {tab === "project" ? (
                 <div className="space-y-1">
-                    <FieldRow label={t("projectName")}><TextInput value={project.name} maxLength={80} disabled={disabled} onChange={(value) => value.trim() && setProject("Proje adı", (draft) => { draft.name = value.trim().slice(0, 80); }, "name")} /></FieldRow>
-                    <FieldRow label={t("description")}><TextInput multiline value={project.description} maxLength={500} disabled={disabled} onChange={(value) => setProject("Açıklama", (draft) => { draft.description = value.slice(0, 500); }, "description")} /></FieldRow>
+                    <FieldRow label={t("projectName")}><TextInput value={project.name} maxLength={80} disabled={disabled} onChange={(value) => value.trim() && setProject(t("projectName"), (draft) => { draft.name = value.trim().slice(0, 80); }, "name")} /></FieldRow>
+                    <FieldRow label={t("description")}><TextInput multiline value={project.description} maxLength={500} disabled={disabled} onChange={(value) => setProject(t("description"), (draft) => { draft.description = value.slice(0, 500); }, "description")} /></FieldRow>
                     <FieldRow label={t("startScene")}>
                         <SelectInput value={project.settings.startSceneId} disabled={disabled} onChange={(value) => setSetting("startSceneId", value)} options={project.scenes.map((item, index) => ({ value: item.id, label: `${index}: ${item.name}` }))} />
                     </FieldRow>
@@ -146,7 +146,7 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
             onPublished(result.arcadeId);
             toast(`${t("publishedAt")} 🎉`, "success");
         } catch (error) {
-            toast(error instanceof Error ? error.message : "Yayınlanamadı.", "error");
+            toast(error instanceof Error ? error.message : t("publishFailed"), "error");
         } finally {
             setBusy(false);
         }
@@ -159,7 +159,7 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
             onPublished(null);
             toast(t("unpublish"), "info");
         } catch (error) {
-            toast(error instanceof Error ? error.message : "İşlem başarısız.", "error");
+            toast(error instanceof Error ? error.message : t("actionFailed"), "error");
         } finally {
             setBusy(false);
         }
@@ -194,7 +194,7 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
                             <Button onClick={async () => setThumbnail(await captureThumbnail(snapshot))}><Camera className="h-4 w-4" />{t("captureThumbnail")}</Button>
                         </div>
                     </FieldRow>
-                    <p className="text-[11.5px] leading-relaxed text-zinc-500">{"Yayınlanan oyunlar Arcade'de herkese açık görünür; kodunuz oyunu çalıştırmak için oyuncuların tarayıcısına gönderilir. Kişisel veri, parola veya gizli anahtar paylaşmayın. Kullanım şartlarına aykırı içerik kaldırılır."}</p>
+                    <p className="text-[11.5px] leading-relaxed text-zinc-500">{t("publishNotice")}</p>
                 </div>
             )}
         </Modal>

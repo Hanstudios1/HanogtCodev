@@ -43,10 +43,16 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden }: {
 
     const playingRef = useRef(playing);
     const hiddenRef = useRef(Boolean(hidden));
+    // The renderer outlives language switches, so its callbacks read the latest strings from a ref.
+    const textRef = useRef(t);
 
     useEffect(() => {
         frameRef.current = frame;
     }, [frame]);
+
+    useEffect(() => {
+        textRef.current = t;
+    }, [t]);
 
     useEffect(() => {
         playingRef.current = playing;
@@ -74,7 +80,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden }: {
                 },
                 onGizmoChange: (id, world) => {
                     if (playingRef.current) return;
-                    store.update("Dönüşüm", (draft) => {
+                    store.update(textRef.current("hTransform"), (draft) => {
                         setWorldTransform(activeScene(draft), id, world, draft.dimension === "2d");
                         touch(draft);
                     }, { mergeKey: `gizmo:${id}` });
@@ -82,7 +88,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden }: {
                 onGizmoEnd: () => store.breakMerge(),
             });
         } catch {
-            container.textContent = "WebGL başlatılamadı. Tarayıcınızın donanım hızlandırmasını açın.";
+            container.textContent = textRef.current("webglFailed");
             return;
         }
         rendererRef.current = renderer;
@@ -172,7 +178,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden }: {
             }
             const texture = project.textures.find((item) => item.id === textureId);
             let createdId = "";
-            store.update("Sprite oluştur", (draft) => {
+            store.update(t("hCreateSprite"), (draft) => {
                 const sceneDraft = activeScene(draft);
                 const aspect = texture && texture.height > 0 ? texture.width / texture.height : 1;
                 const sprite = createSpriteRenderer({ textureId });
@@ -220,7 +226,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden }: {
                 <IconButton icon={LocateFixed} label={t("resetView")} size="sm" onClick={() => rendererRef.current?.resetView()} />
             </div>
             <div className="pointer-events-none absolute bottom-2 left-2 hidden rounded-md bg-black/45 px-2 py-1 text-[10.5px] text-zinc-400 backdrop-blur md:block">
-                {is2D ? "Sol tık: seç · Sürükle: kaydır · Tekerlek: yakınlaş · F: odakla" : "Sol tık: seç · Sol sürükle: döndür · Sağ sürükle: kaydır · Tekerlek: yakınlaş · F: odakla"}
+                {is2D ? t("sceneHelp2D") : t("sceneHelp3D")}
             </div>
             {dragOver ? <div className="pointer-events-none absolute inset-2 grid place-items-center rounded-xl border-2 border-dashed border-indigo-400/70 bg-indigo-500/10 text-sm font-semibold text-indigo-100">{t("dropHere")}</div> : null}
         </div>

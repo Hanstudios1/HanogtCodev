@@ -89,7 +89,7 @@ export default function ConsolePanel({ entries, onClear }: { entries: ConsoleEnt
                             <div className="min-w-0 flex-1">
                                 <p className={cx("whitespace-pre-wrap break-words", !isExpanded && "line-clamp-2")}>{isExpanded || !multiline ? entry.message : entry.message.split("\n")[0]}</p>
                                 <p className="mt-0.5 text-[10px] text-zinc-500">
-                                    {entry.origin === "game" ? `${entry.time.toFixed(2)}s · kare ${entry.frame}` : "Editör"}
+                                    {entry.origin === "game" ? `${entry.time.toFixed(2)}s · ${t("frame")} ${entry.frame}` : t("editorOrigin")}
                                     {entry.source?.scriptName ? (
                                         <button
                                             type="button"

@@ -132,14 +132,14 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
         delete timers.current[id];
         if (committed.current[id] === text) return;
         committed.current[id] = text;
-        store.update("Script düzenle", (draft) => {
+        store.update(t("hEditScript"), (draft) => {
             const script = draft.scripts.find((item) => item.id === id);
             if (script && script.content !== text) {
                 script.content = text.slice(0, 160 * 1024);
                 touch(draft);
             }
         }, { mergeKey: `script:${id}` });
-    }, [store]);
+    }, [store, t]);
 
     const commitRef = useRef(commit);
     useEffect(() => {
@@ -279,7 +279,7 @@ export default function ScriptEditorPanel({ tabs, activeId, onActivate, onCloseT
                         className="rounded-none border-0"
                     />
                 ) : (
-                    <div className="grid h-full place-items-center text-sm text-zinc-500">Script seçin</div>
+                    <div className="grid h-full place-items-center text-sm text-zinc-500">{t("selectScript")}</div>
                 )}
             </div>
             {diagnostics.length ? (

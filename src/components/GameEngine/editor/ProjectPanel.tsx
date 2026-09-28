@@ -100,14 +100,14 @@ export default function ProjectPanel() {
             }
             try {
                 const texture = await textureFromFile(file);
-                store.update("Doku yükle", (draft) => {
+                store.update(t("hUploadTexture"), (draft) => {
                     draft.textures.push(texture);
                     touch(draft);
                 });
                 store.selectAsset({ kind: "texture", id: texture.id });
-                toast(`"${texture.name}" yüklendi (${texture.width}×${texture.height}).`, "success");
+                toast(t("textureUploaded").replace("{name}", texture.name).replace("{size}", `${texture.width}×${texture.height}`), "success");
             } catch (error) {
-                toast(error instanceof Error ? error.message : "Görsel yüklenemedi.", "error");
+                toast(error instanceof Error ? error.message : t("imageUploadFailed"), "error");
             }
         }
         if (fileInput.current) fileInput.current.value = "";
@@ -148,7 +148,7 @@ export default function ProjectPanel() {
                             key={scene.id}
                             selected={isSelected("scene", scene.id)}
                             onClick={() => store.selectAsset({ kind: "scene", id: scene.id })}
-                            onDoubleClick={() => !playing && store.update("Sahne aç", (draft) => { draft.activeSceneId = scene.id; }, { selection: [] })}
+                            onDoubleClick={() => !playing && store.update(t("hOpenScene"), (draft) => { draft.activeSceneId = scene.id; }, { selection: [] })}
                             icon={<Clapperboard className={cx("h-4 w-4", project.activeSceneId === scene.id ? "text-amber-300" : "text-zinc-500")} />}
                             title={scene.name}
                             subtitle={`#${index} · ${scene.objects.length} ${t("objects")}`}
@@ -172,7 +172,7 @@ export default function ProjectPanel() {
                             />
                         );
                     })}
-                    {!project.scripts.length ? <p className="col-span-full px-2 py-1 text-[11.5px] text-zinc-500">Henüz script yok — C# veya C++ ile başlayın.</p> : null}
+                    {!project.scripts.length ? <p className="col-span-full px-2 py-1 text-[11.5px] text-zinc-500">{t("noScriptsYet")}</p> : null}
                 </Group>
                 <Group title={t("prefabs")} icon={Package} count={project.prefabs.length}>
                     {project.prefabs.filter((prefab) => matches(prefab.name)).map((prefab) => (
@@ -196,7 +196,7 @@ export default function ProjectPanel() {
                             subtitle={`${prefab.entities.length} ${t("objects")}`}
                         />
                     ))}
-                    {!project.prefabs.length ? <p className="col-span-full px-2 py-1 text-[11.5px] text-zinc-500">Hiyerarşide bir nesneye sağ tıklayıp “{t("makePrefab")}” seçin.</p> : null}
+                    {!project.prefabs.length ? <p className="col-span-full px-2 py-1 text-[11.5px] text-zinc-500">{t("prefabHint").replace("{action}", t("makePrefab"))}</p> : null}
                 </Group>
                 <Group title={t("textures")} icon={ImageIcon} count={project.textures.length} action={<IconButton icon={Upload} label={t("uploadTexture")} size="sm" disabled={playing} onClick={() => fileInput.current?.click()} />}>
                     {project.textures.filter((texture) => matches(texture.name)).map((texture) => (
@@ -215,7 +215,7 @@ export default function ProjectPanel() {
                             subtitle={`${texture.width}×${texture.height}`}
                         />
                     ))}
-                    {!project.textures.length ? <p className="col-span-full px-2 py-1 text-[11.5px] text-zinc-500">PNG/JPG/WEBP yükleyip sprite veya materyallerde kullanın. Sahneye sürükleyebilirsiniz.</p> : null}
+                    {!project.textures.length ? <p className="col-span-full px-2 py-1 text-[11.5px] text-zinc-500">{t("texturesHint")}</p> : null}
                 </Group>
             </div>
         </div>

@@ -8,10 +8,12 @@ import { useEffect, useState } from "react";
 import type { GameProjectDocument } from "@/lib/game-engine/types";
 import EngineHub from "./EngineHub";
 import { loadCloudProject, loadLocalProject, type ProjectSource } from "./editor/persistence";
+import { useEngineText, type TextKey } from "./editor/text";
 
 const EngineEditor = dynamic(() => import("./editor/EngineEditor"), { ssr: false, loading: () => <EngineLoading /> });
 
-export function EngineLoading({ label = "Hanogt Engine yükleniyor…" }: { label?: string }) {
+export function EngineLoading({ label }: { label?: string }) {
+    const t = useEngineText();
     return (
         <main className="grid h-dvh min-h-[480px] place-items-center bg-zinc-950 text-white">
             <div className="text-center">
@@ -20,22 +22,25 @@ export function EngineLoading({ label = "Hanogt Engine yükleniyor…" }: { labe
                     <LoaderCircle className="absolute -bottom-2 -right-2 h-6 w-6 animate-spin rounded-full bg-zinc-950 p-1 text-indigo-300" />
                 </div>
                 <h1 className="mt-5 text-sm font-black tracking-wide">Hanogt Engine</h1>
-                <p className="mt-1 text-xs text-zinc-500">{label}</p>
+                <p className="mt-1 text-xs text-zinc-500">{label ?? t("engineLoading")}</p>
             </div>
         </main>
     );
 }
 
 type Loaded = { project: GameProjectDocument; source: ProjectSource; revision: string | null; arcadeId: string | null };
+/** Either a translated engine message or a message that came back from the server. */
+type LoadError = { key: TextKey } | { message: string };
 
 export default function GameEngineApp() {
     const router = useRouter();
     const params = useSearchParams();
     const { status } = useSession();
+    const t = useEngineText();
     const projectId = params.get("project") ?? params.get("id");
     const requestedSource: ProjectSource = params.get("source") === "local" ? "local" : "cloud";
     const [loaded, setLoaded] = useState<Loaded | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<LoadError | null>(null);
     const [attempt, setAttempt] = useState(0);
 
     useEffect(() => {
@@ -47,15 +52,19 @@ export default function GameEngineApp() {
             try {
                 if (requestedSource === "local") {
                     const project = await loadLocalProject(projectId);
-                    if (!project) throw new Error("Bu proje bu tarayıcıda bulunamadı. Başka bir cihazda veya tarayıcıda oluşturulmuş olabilir.");
-                    if (!cancelled) setLoaded({ project, source: "local", revision: null, arcadeId: null });
+                    if (cancelled) return;
+                    if (project) setLoaded({ project, source: "local", revision: null, arcadeId: null });
+                    else setError({ key: "projectNotInBrowser" });
                     return;
                 }
-                if (status !== "authenticated") throw new Error("Bulut projelerini açmak için giriş yapmalısınız.");
+                if (status !== "authenticated") {
+                    if (!cancelled) setError({ key: "signInForCloudProjects" });
+                    return;
+                }
                 const result = await loadCloudProject(projectId);
                 if (!cancelled) setLoaded({ project: result.project, source: "cloud", revision: result.revision, arcadeId: result.arcadeId });
             } catch (reason) {
-                if (!cancelled) setError(reason instanceof Error ? reason.message : "Proje yüklenemedi.");
+                if (!cancelled) setError(reason instanceof Error && reason.message ? { message: reason.message } : { key: "projectLoadFailed" });
             }
         };
         void load();
@@ -76,14 +85,14 @@ export default function GameEngineApp() {
             <main className="grid min-h-dvh place-items-center bg-zinc-950 p-6 text-white">
                 <div className="max-w-md text-center">
                     <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-red-500/15 text-red-300"><AlertTriangle className="h-6 w-6" /></div>
-                    <h1 className="mt-4 text-lg font-bold">Proje açılamadı</h1>
-                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">{error}</p>
+                    <h1 className="mt-4 text-lg font-bold">{t("projectOpenFailed")}</h1>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">{"key" in error ? t(error.key) : error.message}</p>
                     <div className="mt-6 flex justify-center gap-2">
-                        <button type="button" onClick={() => router.push("/game-engine")} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/10 px-4 text-sm font-semibold hover:bg-white/5"><ArrowLeft className="h-4 w-4" />Projeler</button>
+                        <button type="button" onClick={() => router.push("/game-engine")} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/10 px-4 text-sm font-semibold hover:bg-white/5"><ArrowLeft className="h-4 w-4" />{t("hub")}</button>
                         {status !== "authenticated" && requestedSource === "cloud" ? (
-                            <button type="button" onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(`/game-engine?project=${projectId}&source=cloud`)}`)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-500 px-4 text-sm font-semibold hover:bg-indigo-400">Giriş yap</button>
+                            <button type="button" onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(`/game-engine?project=${projectId}&source=cloud`)}`)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-500 px-4 text-sm font-semibold hover:bg-indigo-400">{t("signIn")}</button>
                         ) : (
-                            <button type="button" onClick={() => setAttempt((value) => value + 1)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-500 px-4 text-sm font-semibold hover:bg-indigo-400"><RefreshCw className="h-4 w-4" />Tekrar dene</button>
+                            <button type="button" onClick={() => setAttempt((value) => value + 1)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-500 px-4 text-sm font-semibold hover:bg-indigo-400"><RefreshCw className="h-4 w-4" />{t("retry")}</button>
                         )}
                     </div>
                 </div>
@@ -91,7 +100,7 @@ export default function GameEngineApp() {
         );
     }
 
-    if (!loaded || loaded.project.id !== projectId) return <EngineLoading label="Proje yükleniyor…" />;
+    if (!loaded || loaded.project.id !== projectId) return <EngineLoading label={t("projectLoading")} />;
 
     return (
         <EngineEditor

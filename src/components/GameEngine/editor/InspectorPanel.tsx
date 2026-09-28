@@ -179,7 +179,7 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
             <div className="space-y-2 border-b border-white/[0.06] p-3">
                 <div className="flex items-center gap-2">
                     <Checkbox checked={entity.active} disabled={disabled} label={t("active")} onChange={(value) => updateEntity("Aktiflik", (target) => { target.active = value; })} />
-                    <TextInput value={entity.name} disabled={disabled} maxLength={80} onChange={(value) => updateEntity("Yeniden adlandır", (target) => { target.name = value.trim().slice(0, 80) || target.name; })} className="font-semibold" />
+                    <TextInput value={entity.name} disabled={disabled} maxLength={80} onChange={(value) => updateEntity(t("rename2"), (target) => { target.name = value.trim().slice(0, 80) || target.name; })} className="font-semibold" />
                 </div>
                 <FieldRow label={t("tag")}>
                     <div className="relative">
@@ -210,26 +210,26 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
                         icon={icon.icon}
                         iconClassName={icon.className}
                         enabled={isTransform ? undefined : component.enabled}
-                        onEnabledChange={isTransform || disabled ? undefined : (value) => store.update("Bileşen etkinliği", (draft) => {
+                        onEnabledChange={isTransform || disabled ? undefined : (value) => store.update(t("hComponentEnabled"), (draft) => {
                             const target = findEntity(draft, entity.id)?.components.find((item) => item.id === component.id);
                             if (target) target.enabled = value;
                         })}
                         actions={disabled ? null : (
                             <Dropdown
                                 align="right"
-                                trigger={({ toggle }) => <IconButton icon={MoreHorizontal} label="Bileşen menüsü" size="sm" onClick={toggle} />}
+                                trigger={({ toggle }) => <IconButton icon={MoreHorizontal} label={t("componentMenu")} size="sm" onClick={toggle} />}
                                 items={[
-                                    { label: t("resetComponent"), icon: RotateCcw, onSelect: () => store.update("Bileşeni sıfırla", (draft) => {
+                                    { label: t("resetComponent"), icon: RotateCcw, onSelect: () => store.update(t("hResetComponent"), (draft) => {
                                         const target = findEntity(draft, entity.id);
                                         if (!target) return;
                                         const position = target.components.findIndex((item) => item.id === component.id);
                                         if (position >= 0) target.components[position] = defaultComponentFor(target.components[position]);
                                     }) },
                                     ...(!isTransform ? [
-                                        { label: t("moveUp"), icon: ArrowUp, disabled: index <= 1, onSelect: () => store.update("Bileşeni taşı", (draft) => moveComponent(draft, entity.id, component.id, -1)) },
-                                        { label: t("moveDown"), icon: ArrowDown, disabled: index >= entity.components.length - 1, onSelect: () => store.update("Bileşeni taşı", (draft) => moveComponent(draft, entity.id, component.id, 1)) },
+                                        { label: t("moveUp"), icon: ArrowUp, disabled: index <= 1, onSelect: () => store.update(t("hMoveComponent"), (draft) => moveComponent(draft, entity.id, component.id, -1)) },
+                                        { label: t("moveDown"), icon: ArrowDown, disabled: index >= entity.components.length - 1, onSelect: () => store.update(t("hMoveComponent"), (draft) => moveComponent(draft, entity.id, component.id, 1)) },
                                         { separator: true, label: "" },
-                                        { label: t("removeComponent"), icon: Trash2, danger: true, onSelect: () => store.update("Bileşeni kaldır", (draft) => removeComponent(draft, entity.id, component.id)) },
+                                        { label: t("removeComponent"), icon: Trash2, danger: true, onSelect: () => store.update(t("hRemoveComponent"), (draft) => removeComponent(draft, entity.id, component.id)) },
                                     ] as MenuItem[] : []),
                                 ]}
                             />
@@ -292,7 +292,7 @@ function AssetInspector() {
                         const clean = value.trim().replace(/[^\p{L}\p{N} _.-]/gu, "");
                         if (!clean) return;
                         const extension = script.language === "cpp" ? ".cpp" : ".cs";
-                        store.update("Script adı", (draft) => {
+                        store.update(t("hScriptName"), (draft) => {
                             const target = draft.scripts.find((item) => item.id === script.id);
                             if (target) target.name = clean.endsWith(extension) ? clean : `${clean.replace(/\.[^.]*$/, "")}${extension}`;
                         });
@@ -331,7 +331,7 @@ function AssetInspector() {
             <div className="space-y-3 p-3">
                 <div className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-sky-300" />
-                    <TextInput value={prefab.name} disabled={disabled} maxLength={80} onChange={(value) => store.update("Prefab adı", (draft) => {
+                    <TextInput value={prefab.name} disabled={disabled} maxLength={80} onChange={(value) => store.update(t("hPrefabName"), (draft) => {
                         const target = draft.prefabs.find((item) => item.id === prefab.id);
                         if (target && value.trim()) target.name = value.trim().slice(0, 80);
                     })} />
@@ -342,7 +342,7 @@ function AssetInspector() {
                     store.update("Prefab ekle", (draft) => { id = instantiatePrefab(draft, prefab.id, createAt()); });
                     if (id) store.setSelection([id]);
                 }}><CopyPlus className="h-4 w-4" />{t("instantiate")}</Button>
-                <p className="rounded-lg bg-white/[0.03] p-2 text-[11px] leading-relaxed text-zinc-500">{"Script'lerde "}<code className="text-zinc-300">public GameObject prefab;</code> {" alanına bu prefab'ı atayıp "}<code className="text-zinc-300">Instantiate(prefab)</code> ile oyunda çoğaltabilirsiniz.</p>
+                <p className="rounded-lg bg-white/[0.03] p-2 text-[11px] leading-relaxed text-zinc-500">{t("prefabUsage1")}<code className="text-zinc-300">public GameObject prefab;</code>{t("prefabUsage2")}<code className="text-zinc-300">Instantiate(prefab)</code>{t("prefabUsage3")}</p>
                 <Button variant="danger" className="w-full" disabled={disabled} onClick={() => {
                     if (!window.confirm(`"${prefab.name}" ${t("confirmDelete")}`)) return;
                     store.update("Prefab sil", (draft) => deletePrefab(draft, prefab.id));
@@ -359,7 +359,7 @@ function AssetInspector() {
             <div className="space-y-3 p-3">
                 <div className="flex items-center gap-2">
                     <ImageIcon className="h-5 w-5 text-fuchsia-300" />
-                    <TextInput value={texture.name} disabled={disabled} maxLength={60} onChange={(value) => store.update("Doku adı", (draft) => {
+                    <TextInput value={texture.name} disabled={disabled} maxLength={60} onChange={(value) => store.update(t("hTextureName"), (draft) => {
                         const target = draft.textures.find((item) => item.id === texture.id);
                         if (target && value.trim()) target.name = value.trim().slice(0, 60);
                     })} />
@@ -391,16 +391,16 @@ function AssetInspector() {
         <div className="space-y-3 p-3">
             <div className="flex items-center gap-2">
                 <Clapperboard className="h-5 w-5 text-amber-300" />
-                <TextInput value={scene.name} disabled={disabled} maxLength={80} onChange={(value) => store.update("Sahne adı", (draft) => {
+                <TextInput value={scene.name} disabled={disabled} maxLength={80} onChange={(value) => store.update(t("hSceneName"), (draft) => {
                     const target = draft.scenes.find((item) => item.id === scene.id);
                     if (target && value.trim()) target.name = value.trim().slice(0, 80);
                 })} />
             </div>
             <p className="text-[11.5px] text-zinc-400">#{project.scenes.indexOf(scene)} · {scene.objects.length} {t("objects")}{isStart ? ` · ${t("startScene")}` : ""}</p>
             <div className="grid grid-cols-2 gap-2">
-                <Button variant="primary" disabled={disabled || project.activeSceneId === scene.id} onClick={() => store.update("Sahne aç", (draft) => { draft.activeSceneId = scene.id; }, { selection: [] })}><Play className="h-4 w-4" />{t("open")}</Button>
+                <Button variant="primary" disabled={disabled || project.activeSceneId === scene.id} onClick={() => store.update(t("hOpenScene"), (draft) => { draft.activeSceneId = scene.id; }, { selection: [] })}><Play className="h-4 w-4" />{t("open")}</Button>
                 <Button disabled={disabled || isStart} onClick={() => {
-                    store.update("Başlangıç sahnesi", (draft) => { draft.settings.startSceneId = scene.id; });
+                    store.update(t("hStartScene"), (draft) => { draft.settings.startSceneId = scene.id; });
                     toast(`${scene.name}: ${t("startScene")}`, "success");
                 }}>{t("setStartScene")}</Button>
             </div>
@@ -435,7 +435,7 @@ export default function InspectorPanel() {
                         <div className="grid grid-cols-2 gap-2">
                             <Button disabled={playing} onClick={() => {
                                 let created: string[] = [];
-                                store.update("Çoğalt", (draft) => { created = duplicateEntities(draft, selection); });
+                                store.update(t("duplicateLabel"), (draft) => { created = duplicateEntities(draft, selection); });
                                 store.setSelection(created);
                             }}><CopyPlus className="h-4 w-4" />{t("duplicateLabel")}</Button>
                             <Button variant="danger" disabled={playing} onClick={() => store.update("Sil", (draft) => deleteEntities(draft, selection), { selection: [] })}><Trash2 className="h-4 w-4" />{t("deleteLabel")}</Button>

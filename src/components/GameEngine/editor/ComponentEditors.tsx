@@ -36,8 +36,8 @@ type Editor<T extends GameComponent> = { entity: GameEntity; component: T; disab
 
 /** Returns an updater that writes to the component inside an undoable store update. */
 function useComponentEdit<T extends GameComponent>(entityId: string, component: T) {
-    const { store } = useEditor();
-    return (field: string, recipe: (draft: T) => void, label = "Bileşeni düzenle") => {
+    const { store, t } = useEditor();
+    return (field: string, recipe: (draft: T) => void, label = t("hEditComponent")) => {
         store.update(label, (draft) => updateComponent<T>(draft, entityId, component.id, recipe), { mergeKey: `${component.id}:${field}` });
     };
 }
@@ -166,6 +166,7 @@ export function MeshEditor({ entity, component, disabled }: Editor<MeshRendererC
 }
 
 export function CameraEditor({ entity, component, disabled }: Editor<CameraComponent>) {
+    const { t } = useEditor();
     const edit = useComponentEdit(entity.id, component);
     return (
         <div className="space-y-0.5">
@@ -190,7 +191,7 @@ export function CameraEditor({ entity, component, disabled }: Editor<CameraCompo
             <FieldRow label="Background">
                 <div className="flex items-center gap-2">
                     <Checkbox checked={component.backgroundColor !== null} disabled={disabled} onChange={(value) => edit("background", (draft) => { draft.backgroundColor = value ? "#0f172a" : null; })} label="Background override" />
-                    {component.backgroundColor !== null ? <ColorInput value={component.backgroundColor} disabled={disabled} onChange={(color) => edit("backgroundColor", (draft) => { draft.backgroundColor = color; })} /> : <span className="text-[11px] text-zinc-500">Sahne ayarı</span>}
+                    {component.backgroundColor !== null ? <ColorInput value={component.backgroundColor} disabled={disabled} onChange={(color) => edit("backgroundColor", (draft) => { draft.backgroundColor = color; })} /> : <span className="text-[11px] text-zinc-500">{t("sceneSetting")}</span>}
                 </div>
             </FieldRow>
             <FieldRow label="Main Camera">
@@ -307,7 +308,7 @@ export function ColliderEditor({ entity, component, disabled }: Editor<ColliderC
                     draft.size = { x: 1, y: 1, z: 1 };
                 }
             }
-        }, "Çarpıştırıcıyı sığdır");
+        }, t("hFitCollider"));
     };
     return (
         <div className="space-y-0.5">
@@ -577,7 +578,7 @@ export function ScriptEditor({ entity, component, disabled }: Editor<ScriptCompo
             ) : null}
             {errors.length ? (
                 <button type="button" onClick={() => openScript(component.scriptId, errors[0].line)} className="mt-1 w-full rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1.5 text-left text-[11px] leading-snug text-red-200 hover:bg-red-500/15">
-                    {errors.length} derleme hatası — ilk: satır {errors[0].line}: {errors[0].message}
+                    {t("compileErrorsFirst").replace("{count}", String(errors.length)).replace("{line}", String(errors[0].line)).replace("{message}", errors[0].message)}
                 </button>
             ) : null}
             {!className && script && !errors.length ? <p className="py-1 text-[11px] text-amber-300/90">{t("classNotFound")}</p> : null}
