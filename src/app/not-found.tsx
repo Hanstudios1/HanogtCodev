@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Compass, Gamepad2, LayoutDashboard } from "lucide-react";
+
+export const metadata: Metadata = {
+    title: "Sayfa bulunamadı",
+    robots: { index: false },
+};
 
 export default function NotFound() {
     return (
