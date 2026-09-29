@@ -62,10 +62,31 @@ export async function signInWithPassword(email: string, password: string, callba
     return result.error;
 }
 
-/** Starts the Google OAuth flow; navigates away on success, otherwise resolves with an error code. */
-export async function startGoogleSignIn(callbackUrl: string) {
+/**
+ * Starts the Google OAuth flow; navigates away on success, otherwise resolves
+ * with an error code. Google always returns to the host in NEXTAUTH_URL, so a
+ * visitor on another host (apex vs www, *.vercel.app) would come back without
+ * the state/PKCE cookies set here. In that case the flow is restarted once on
+ * the host Google returns to (`canonicalHop` stops a redirect loop).
+ */
+export async function startGoogleSignIn(callbackUrl: string, { canonicalHop = false } = {}) {
     const result = await postAuthForm("signin/google", { callbackUrl });
     if (result.error) return result.error;
+    if (!canonicalHop) {
+        try {
+            const redirectUri = new URL(result.url).searchParams.get("redirect_uri");
+            const returnOrigin = redirectUri ? new URL(redirectUri).origin : window.location.origin;
+            if (returnOrigin !== window.location.origin) {
+                const restart = new URL("/login", returnOrigin);
+                restart.searchParams.set("provider", "google");
+                restart.searchParams.set("callbackUrl", callbackUrl);
+                window.location.assign(restart.toString());
+                return null;
+            }
+        } catch {
+            // An unexpected URL shape falls through to Google as before.
+        }
+    }
     window.location.assign(result.url);
     return null;
 }

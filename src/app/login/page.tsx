@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -51,7 +51,11 @@ function LoginForm() {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     // Store the code, not the text, so the message follows language changes.
-    const [errorCode, setErrorCode] = useState<string | null>(() => searchParams.get("error"));
+    const [errorCode, setErrorCode] = useState<string | null>(() => {
+        const code = searchParams.get("error");
+        // NextAuth's bare error route forwards a missing code as the literal "undefined".
+        return code === "undefined" || code === "null" ? "Default" : code;
+    });
     const error = describeError(errorCode);
 
     const handleCredentialsLogin = async (event: React.FormEvent) => {
@@ -68,15 +72,29 @@ function LoginForm() {
         completeSignIn(callbackPath);
     };
 
-    const handleGoogleLogin = async () => {
+    const handleGoogleLogin = useCallback(async (canonicalHop = false) => {
         setGoogleLoading(true);
         setErrorCode(null);
-        const code = await startGoogleSignIn(callbackPath);
+        const code = await startGoogleSignIn(callbackPath, { canonicalHop });
         if (code) {
             setErrorCode(code);
             setGoogleLoading(false);
         }
-    };
+    }, [callbackPath]);
+
+    // `/login?provider=google` continues a Google sign-in that was moved to the
+    // host Google returns to (see startGoogleSignIn).
+    const autoGoogle = searchParams.get("provider") === "google" && !searchParams.get("error");
+    const autoStarted = useRef(false);
+    useEffect(() => {
+        if (!autoGoogle) return;
+        const timer = window.setTimeout(() => {
+            if (autoStarted.current) return;
+            autoStarted.current = true;
+            void handleGoogleLogin(true);
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [autoGoogle, handleGoogleLogin]);
 
     return (
         <AuthShell
@@ -90,7 +108,11 @@ function LoginForm() {
             {error && (
                 <div role="alert" className="mb-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-sm leading-5 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{error}</span>
+                    <span>
+                        {error}
+                        {/* The raw code makes support reports precise ("Network", "OAuthCallback"…). */}
+                        {errorCode && !/\s/.test(errorCode) ? <span className="mt-1 block font-mono text-[11px] opacity-70">{errorCode}</span> : null}
+                    </span>
                 </div>
             )}
 
