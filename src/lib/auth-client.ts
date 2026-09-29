@@ -8,6 +8,24 @@ export function safeCallbackPath(value: string | null) {
 /** Error code used when the auth endpoints cannot be reached at all. */
 export const AUTH_NETWORK_ERROR = "Network";
 
+const AUTH_ERROR_COOKIE = "hanogt.auth-error";
+
+/**
+ * Reads (and clears) the server-side reason of the last failed sign-in, set by
+ * the NextAuth route for this browser only, e.g. "OAUTH_CALLBACK_ERROR: …".
+ */
+export function consumeAuthErrorDetail() {
+    if (typeof document === "undefined") return null;
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${AUTH_ERROR_COOKIE.replace(".", "\\.")}=([^;]*)`));
+    if (!match) return null;
+    document.cookie = `${AUTH_ERROR_COOKIE}=; Max-Age=0; Path=/`;
+    try {
+        return decodeURIComponent(match[1]);
+    } catch {
+        return match[1];
+    }
+}
+
 type AuthPostResult = { url: string; error: string | null };
 
 function wait(ms: number) {
