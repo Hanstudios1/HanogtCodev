@@ -32,10 +32,22 @@ function base64Url(value: string | Buffer) {
 }
 
 function getServiceAccount(): ServiceAccount {
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    const encoded = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+    const encoded = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64?.trim();
     if (!raw && !encoded) {
-        throw new Error("Firebase sunucu kimliği yapılandırılmamış.");
+        // The three-variable layout used by most Firebase Admin guides.
+        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
+        const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
+        const projectId = (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)?.trim();
+        if (clientEmail && privateKey && projectId) {
+            return {
+                client_email: clientEmail,
+                // Vercel stores pasted keys with literal "\n" and sometimes wrapping quotes.
+                private_key: privateKey.replace(/^"|"$/g, "").replace(/\\n/g, "\n"),
+                project_id: projectId,
+            };
+        }
+        throw new Error("Firebase sunucu kimliği yapılandırılmamış: Vercel'e FIREBASE_SERVICE_ACCOUNT_JSON ekleyin.");
     }
 
     let parsed: ServiceAccount;

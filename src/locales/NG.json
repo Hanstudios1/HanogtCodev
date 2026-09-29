@@ -581,5 +581,6 @@
   "badge_artist": "Artist",
   "badge_pioneer": "Pioneer",
   "badge_community_star": "Community Star",
-  "auth_error_network": "We no fit reach di login server. Check your network, then try again."
+  "auth_error_network": "We no fit reach di login server. Check your network, then try again.",
+  "auth_error_rate_limited": "Too many login tries. Abeg try again after {minutes} minutes."
 }

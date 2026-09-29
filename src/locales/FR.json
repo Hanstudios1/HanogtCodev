@@ -581,5 +581,6 @@
   "badge_artist": "Artiste",
   "badge_pioneer": "Pionnier",
   "badge_community_star": "Star de la communauté",
-  "auth_error_network": "Impossible de joindre le serveur de connexion. Vérifie ta connexion et réessaie."
+  "auth_error_network": "Impossible de joindre le serveur de connexion. Vérifie ta connexion et réessaie.",
+  "auth_error_rate_limited": "Trop de tentatives de connexion. Réessaie dans {minutes} minutes."
 }

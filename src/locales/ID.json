@@ -567,5 +567,6 @@
   "badge_artist": "Seniman",
   "badge_pioneer": "Perintis",
   "badge_community_star": "Bintang komunitas",
-  "auth_error_network": "Tidak dapat terhubung ke server masuk. Periksa koneksi Anda lalu coba lagi."
+  "auth_error_network": "Tidak dapat terhubung ke server masuk. Periksa koneksi Anda lalu coba lagi.",
+  "auth_error_rate_limited": "Terlalu banyak percobaan masuk. Coba lagi dalam {minutes} menit."
 }

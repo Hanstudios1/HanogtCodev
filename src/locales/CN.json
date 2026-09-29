@@ -581,5 +581,6 @@
   "badge_artist": "艺术家",
   "badge_pioneer": "开拓者",
   "badge_community_star": "社区之星",
-  "auth_error_network": "无法连接登录服务器。请检查网络连接后重试。"
+  "auth_error_network": "无法连接登录服务器。请检查网络连接后重试。",
+  "auth_error_rate_limited": "登录尝试次数过多。请在 {minutes} 分钟后重试。"
 }

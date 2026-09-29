@@ -567,5 +567,6 @@
   "badge_artist": "Artista",
   "badge_pioneer": "Pioneiro",
   "badge_community_star": "Estrela da comunidade",
-  "auth_error_network": "Não foi possível acessar o servidor de login. Verifique sua conexão e tente novamente."
+  "auth_error_network": "Não foi possível acessar o servidor de login. Verifique sua conexão e tente novamente.",
+  "auth_error_rate_limited": "Muitas tentativas de login. Tente novamente em {minutes} minutos."
 }

@@ -581,5 +581,6 @@
   "badge_artist": "アーティスト",
   "badge_pioneer": "パイオニア",
   "badge_community_star": "コミュニティスター",
-  "auth_error_network": "ログインサーバーに接続できませんでした。接続を確認して、もう一度お試しください。"
+  "auth_error_network": "ログインサーバーに接続できませんでした。接続を確認して、もう一度お試しください。",
+  "auth_error_rate_limited": "ログインの試行回数が多すぎます。{minutes}分後にもう一度お試しください。"
 }

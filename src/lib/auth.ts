@@ -9,7 +9,9 @@ import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
 
-const AUTH_SERVICE_UNAVAILABLE = "Giriş hizmetine şu anda ulaşılamıyor. Lütfen biraz sonra tekrar deneyin.";
+// Codes thrown from authorize()/signIn end up in redirect URLs and HTTP
+// headers, so they must be plain ASCII; /login translates them.
+const AUTH_SERVICE_UNAVAILABLE = "ServiceUnavailable";
 
 function normalizedEmail(value: string) {
     return value.trim().toLowerCase();
@@ -19,6 +21,41 @@ function legacyPasswordMatches(supplied: string, stored: string) {
     const left = Buffer.from(supplied);
     const right = Buffer.from(stored);
     return left.length === right.length && timingSafeEqual(left, right);
+}
+
+/**
+ * Server-side part of every sign-in: blocks suspended accounts and creates or
+ * completes the Firestore profile of Google users. Throws when Firestore is
+ * unreachable or not configured; the signIn callback turns that into a code.
+ */
+async function completeSignIn(email: string, user: { name?: string | null; image?: string | null }, provider: string | undefined): Promise<true | string> {
+    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean }>(`users/${email}`);
+    if (existing?.suspended || existing?.banned) return "/login?error=AccountSuspended";
+    if (provider === "google") {
+        const existingProfile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
+        const fallbackName = user.name || email.split("@")[0];
+        // Only fill profile fields that are still empty: previously every
+        // Google sign-in overwrote the username/avatar chosen in settings.
+        const missing = (key: string) => !existingProfile || !existingProfile[key];
+        const profile = {
+            email,
+            username: missing("username") ? fallbackName : undefined,
+            avatarUrl: missing("avatarUrl") ? (user.image || "") : undefined,
+            nickname: missing("nickname") ? fallbackName : undefined,
+            nicknameTag: missing("nicknameTag") ? String(randomInt(1000, 10000)) : undefined,
+            publicProfile: existingProfile ? undefined : true,
+            publicProjects: existingProfile ? undefined : true,
+            updatedAt: new Date(),
+        };
+        await patchServerDocument(`public_profiles/${email}`, profile);
+        await patchServerDocument(`users/${email}`, {
+            ...profile,
+            provider: existing ? undefined : "google",
+            lastLoginAt: new Date(),
+            createdAt: existing ? undefined : new Date(),
+        });
+    }
+    return true;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -45,13 +82,13 @@ export const authOptions: NextAuthOptions = {
                 let rate: Awaited<ReturnType<typeof enforceRateLimit>>;
                 try {
                     rate = await enforceRateLimit(`login:${email}`, 10, 15 * 60_000);
-                } catch {
-                    // Thrown messages are forwarded to the login page as `?error=`,
-                    // so a configuration outage no longer looks like a wrong password.
+                } catch (error) {
+                    // A configuration outage must not look like a wrong password.
+                    recordAuthError("CALLBACK_CREDENTIALS_HANDLER_ERROR", error);
                     throw new Error(AUTH_SERVICE_UNAVAILABLE);
                 }
                 if (!rate.allowed) {
-                    throw new Error(`Çok fazla giriş denemesi. Lütfen ${Math.ceil(rate.retryAfterSeconds / 60)} dakika sonra tekrar deneyin.`);
+                    throw new Error(`RateLimited:${Math.ceil(rate.retryAfterSeconds / 60)}`);
                 }
 
                 let user: {
@@ -67,11 +104,12 @@ export const authOptions: NextAuthOptions = {
                         getServerDocument<NonNullable<typeof user>>(`users/${email}`),
                         getServerDocument<{ passwordHash?: string }>(`credentials/${email}`),
                     ]);
-                } catch {
+                } catch (error) {
+                    recordAuthError("CALLBACK_CREDENTIALS_HANDLER_ERROR", error);
                     throw new Error(AUTH_SERVICE_UNAVAILABLE);
                 }
                 if (!user) return null;
-                if (user.suspended || user.banned) throw new Error("Bu hesap askıya alınmış. Ayrıntılar için Geri Bildirim sayfasından itiraz edebilirsiniz.");
+                if (user.suspended || user.banned) throw new Error("AccountSuspended");
 
                 let valid = credential?.passwordHash
                     ? await verifyPassword(credentials.password, credential.passwordHash)
@@ -127,33 +165,15 @@ export const authOptions: NextAuthOptions = {
             if (!user.email) return false;
             const email = normalizedEmail(user.email);
             user.email = email;
-            const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean }>(`users/${email}`);
-            if (existing?.suspended || existing?.banned) return "/login?error=AccountSuspended";
-            if (account?.provider === "google") {
-                const existingProfile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
-                const fallbackName = user.name || email.split("@")[0];
-                // Only fill profile fields that are still empty: previously every
-                // Google sign-in overwrote the username/avatar chosen in settings.
-                const missing = (key: string) => !existingProfile || !existingProfile[key];
-                const profile = {
-                    email,
-                    username: missing("username") ? fallbackName : undefined,
-                    avatarUrl: missing("avatarUrl") ? (user.image || "") : undefined,
-                    nickname: missing("nickname") ? fallbackName : undefined,
-                    nicknameTag: missing("nicknameTag") ? String(randomInt(1000, 10000)) : undefined,
-                    publicProfile: existingProfile ? undefined : true,
-                    publicProjects: existingProfile ? undefined : true,
-                    updatedAt: new Date(),
-                };
-                await patchServerDocument(`public_profiles/${email}`, profile);
-                await patchServerDocument(`users/${email}`, {
-                    ...profile,
-                    provider: existing ? undefined : "google",
-                    lastLoginAt: new Date(),
-                    createdAt: existing ? undefined : new Date(),
-                });
+            try {
+                return await completeSignIn(email, user, account?.provider);
+            } catch (error) {
+                // NextAuth puts a thrown message into a redirect URL without
+                // encoding it; Turkish characters there crashed the request
+                // with an empty HTTP 500. Report a plain code instead.
+                recordAuthError("SIGNIN_CALLBACK_ERROR", error);
+                return `/login?error=${AUTH_SERVICE_UNAVAILABLE}`;
             }
-            return true;
         },
         async jwt({ token, user }) {
             if (user) token.id = user.id || user.email;
