@@ -12,6 +12,9 @@ function useAuthErrorMessage() {
     const { t } = useI18n();
     return (code: string | null) => {
         if (!code) return "";
+        if (code.startsWith("RateLimited:")) {
+            return t("auth_error_rate_limited").replace("{minutes}", code.slice("RateLimited:".length) || "15");
+        }
         switch (code) {
             case AUTH_NETWORK_ERROR:
                 return t("auth_error_network");
@@ -28,6 +31,7 @@ function useAuthErrorMessage() {
                 return t("auth_error_denied") || "Giriş izni verilmedi.";
             case "AccountSuspended":
                 return t("auth_error_suspended") || "Bu hesap askıya alınmış. Geri Bildirim sayfasından itiraz edebilirsiniz.";
+            case "ServiceUnavailable":
             case "Configuration":
                 return t("auth_error_config") || "Giriş hizmeti şu anda yapılandırılmamış. Lütfen daha sonra tekrar deneyin.";
             case "SessionRequired":

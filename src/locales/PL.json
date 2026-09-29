@@ -581,5 +581,6 @@
   "badge_artist": "Artysta",
   "badge_pioneer": "Pionier",
   "badge_community_star": "Gwiazda społeczności",
-  "auth_error_network": "Nie udało się połączyć z serwerem logowania. Sprawdź połączenie i spróbuj ponownie."
+  "auth_error_network": "Nie udało się połączyć z serwerem logowania. Sprawdź połączenie i spróbuj ponownie.",
+  "auth_error_rate_limited": "Zbyt wiele prób logowania. Spróbuj ponownie za {minutes} min."
 }

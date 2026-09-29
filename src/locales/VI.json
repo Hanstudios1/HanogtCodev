@@ -567,5 +567,6 @@
   "badge_artist": "Nghệ sĩ",
   "badge_pioneer": "Người tiên phong",
   "badge_community_star": "Ngôi sao cộng đồng",
-  "auth_error_network": "Không thể kết nối tới máy chủ đăng nhập. Hãy kiểm tra kết nối rồi thử lại."
+  "auth_error_network": "Không thể kết nối tới máy chủ đăng nhập. Hãy kiểm tra kết nối rồi thử lại.",
+  "auth_error_rate_limited": "Bạn đã thử đăng nhập quá nhiều lần. Hãy thử lại sau {minutes} phút."
 }

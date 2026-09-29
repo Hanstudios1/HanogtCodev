@@ -581,5 +581,6 @@
   "badge_artist": "Kunstner",
   "badge_pioneer": "Pioner",
   "badge_community_star": "Fellesskapsstjerne",
-  "auth_error_network": "Får ikke kontakt med påloggingsserveren. Sjekk tilkoblingen og prøv igjen."
+  "auth_error_network": "Får ikke kontakt med påloggingsserveren. Sjekk tilkoblingen og prøv igjen.",
+  "auth_error_rate_limited": "For mange påloggingsforsøk. Prøv igjen om {minutes} minutter."
 }

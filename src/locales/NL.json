@@ -581,5 +581,6 @@
   "badge_artist": "Kunstenaar",
   "badge_pioneer": "Pionier",
   "badge_community_star": "Communityster",
-  "auth_error_network": "De inlogserver is niet bereikbaar. Controleer je verbinding en probeer het opnieuw."
+  "auth_error_network": "De inlogserver is niet bereikbaar. Controleer je verbinding en probeer het opnieuw.",
+  "auth_error_rate_limited": "Te veel inlogpogingen. Probeer het over {minutes} minuten opnieuw."
 }

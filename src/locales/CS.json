@@ -567,5 +567,6 @@
   "badge_artist": "Umělec",
   "badge_pioneer": "Průkopník",
   "badge_community_star": "Hvězda komunity",
-  "auth_error_network": "Nepodařilo se spojit s přihlašovacím serverem. Zkontrolujte připojení a zkuste to znovu."
+  "auth_error_network": "Nepodařilo se spojit s přihlašovacím serverem. Zkontrolujte připojení a zkuste to znovu.",
+  "auth_error_rate_limited": "Příliš mnoho pokusů o přihlášení. Zkuste to znovu za {minutes} min."
 }

@@ -581,5 +581,6 @@
   "badge_artist": "Taiteilija",
   "badge_pioneer": "Edelläkävijä",
   "badge_community_star": "Yhteisön tähti",
-  "auth_error_network": "Kirjautumispalvelimeen ei saatu yhteyttä. Tarkista yhteytesi ja yritä uudelleen."
+  "auth_error_network": "Kirjautumispalvelimeen ei saatu yhteyttä. Tarkista yhteytesi ja yritä uudelleen.",
+  "auth_error_rate_limited": "Liian monta kirjautumisyritystä. Yritä uudelleen {minutes} minuutin kuluttua."
 }

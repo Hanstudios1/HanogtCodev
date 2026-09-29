@@ -567,5 +567,6 @@
   "badge_artist": "Artista",
   "badge_pioneer": "Pioniere",
   "badge_community_star": "Stella della community",
-  "auth_error_network": "Impossibile raggiungere il server di accesso. Controlla la connessione e riprova."
+  "auth_error_network": "Impossibile raggiungere il server di accesso. Controlla la connessione e riprova.",
+  "auth_error_rate_limited": "Troppi tentativi di accesso. Riprova tra {minutes} minuti."
 }

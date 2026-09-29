@@ -581,5 +581,6 @@
   "badge_artist": "Rəssam",
   "badge_pioneer": "Qabaqcıl",
   "badge_community_star": "İcma ulduzu",
-  "auth_error_network": "Giriş serverinə qoşulmaq mümkün olmadı. İnternet bağlantınızı yoxlayıb yenidən cəhd edin."
+  "auth_error_network": "Giriş serverinə qoşulmaq mümkün olmadı. İnternet bağlantınızı yoxlayıb yenidən cəhd edin.",
+  "auth_error_rate_limited": "Həddindən çox giriş cəhdi edildi. {minutes} dəqiqə sonra yenidən cəhd edin."
 }

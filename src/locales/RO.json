@@ -567,5 +567,6 @@
   "badge_artist": "Artist",
   "badge_pioneer": "Pionier",
   "badge_community_star": "Vedeta comunității",
-  "auth_error_network": "Serverul de autentificare nu poate fi contactat. Verifică conexiunea și încearcă din nou."
+  "auth_error_network": "Serverul de autentificare nu poate fi contactat. Verifică conexiunea și încearcă din nou.",
+  "auth_error_rate_limited": "Prea multe încercări de autentificare. Încearcă din nou peste {minutes} minute."
 }

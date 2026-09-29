@@ -581,5 +581,6 @@
   "badge_artist": "Artist",
   "badge_pioneer": "Pioneer",
   "badge_community_star": "Community Star",
-  "auth_error_network": "Couldn't reach the sign-in server. Check your connection and try again."
+  "auth_error_network": "Couldn't reach the sign-in server. Check your connection and try again.",
+  "auth_error_rate_limited": "Too many sign-in attempts. Please try again in {minutes} minutes."
 }

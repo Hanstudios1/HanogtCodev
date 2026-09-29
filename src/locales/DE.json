@@ -581,5 +581,6 @@
   "badge_artist": "Künstler",
   "badge_pioneer": "Pionier",
   "badge_community_star": "Community-Star",
-  "auth_error_network": "Der Anmeldeserver ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut."
+  "auth_error_network": "Der Anmeldeserver ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+  "auth_error_rate_limited": "Zu viele Anmeldeversuche. Bitte versuche es in {minutes} Minuten erneut."
 }

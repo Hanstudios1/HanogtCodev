@@ -581,5 +581,6 @@
   "badge_artist": "Kunstenaar",
   "badge_pioneer": "Pionier",
   "badge_community_star": "Communityster",
-  "auth_error_network": "De aanmeldserver is niet bereikbaar. Controleer uw verbinding en probeer het opnieuw."
+  "auth_error_network": "De aanmeldserver is niet bereikbaar. Controleer uw verbinding en probeer het opnieuw.",
+  "auth_error_rate_limited": "Te veel aanmeldpogingen. Probeer het over {minutes} minuten opnieuw."
 }

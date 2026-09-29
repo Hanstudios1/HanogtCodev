@@ -581,5 +581,6 @@
   "badge_artist": "Artista",
   "badge_pioneer": "Pionero",
   "badge_community_star": "Estrella de la comunidad",
-  "auth_error_network": "No se pudo conectar con el servidor de inicio de sesión. Revisa tu conexión e inténtalo de nuevo."
+  "auth_error_network": "No se pudo conectar con el servidor de inicio de sesión. Revisa tu conexión e inténtalo de nuevo.",
+  "auth_error_rate_limited": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {minutes} minutos."
 }
