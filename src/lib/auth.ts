@@ -4,6 +4,7 @@ import { randomInt, timingSafeEqual } from "node:crypto";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { recordAuthError } from "@/lib/server/auth-diagnostics";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
@@ -23,8 +24,14 @@ function legacyPasswordMatches(supplied: string, stored: string) {
 export const authOptions: NextAuthOptions = {
     providers: [
         GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || "",
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+            // Pasted dashboard values often carry a trailing newline, which
+            // Google rejects as invalid_client at the token exchange.
+            clientId: (process.env.GOOGLE_CLIENT_ID || "").trim(),
+            clientSecret: (process.env.GOOGLE_CLIENT_SECRET || "").trim(),
+            // The callback makes three calls to Google (discovery, token, keys).
+            // openid-client's 3.5 s default was regularly exceeded on cold
+            // serverless starts and surfaced as "OAuthCallback".
+            httpOptions: { timeout: 15_000 },
         }),
         CredentialsProvider({
             name: "E-posta ve şifre",
@@ -99,6 +106,10 @@ export const authOptions: NextAuthOptions = {
     // Errors (OAuth callback failures, suspended accounts…) are rendered by
     // the login page instead of NextAuth's unstyled default error screen.
     pages: { signIn: "/login", error: "/login" },
+    logger: {
+        error: recordAuthError,
+        warn: (code) => console.warn(`[next-auth][warn][${code}]`),
+    },
     session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60, updateAge: 24 * 60 * 60 },
     cookies: {
         sessionToken: {

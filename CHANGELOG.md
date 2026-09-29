@@ -53,6 +53,7 @@
 ### Düzeltmeler
 
 - Giriş kilidine yol açan oturum köprüsü sorunu, Google girişinde büyük harfli e-posta sorunu ve Hanogt Media yayımlama penceresi düzeltildi.
+- Google dönüşünde (`OAuthCallback`) Google'a yapılan istekler için bekleme süresi 3,5 saniyeden 15 saniyeye çıkarıldı (soğuk başlatmada zaman aşımına düşüyordu), Google anahtarlarındaki boşluklar temizleniyor ve girişin sunucudaki gerçek hata nedeni yalnızca o tarayıcıya kısa ömürlü bir çerezle giriş ekranına taşınıyor.
 - Google girişi, ziyaretçi Google'ın geri döneceği alan adından farklı bir adresteyse (www / www'suz / vercel.app) girişi önce o alan adına taşıyor; böylece dönüşte durum çerezleri kaybolmuyor. Giriş hatalarının altında teknik hata kodu gösteriliyor ve `/api/health/auth` giriş için gereken ayarları gizli bilgi göstermeden denetliyor.
 - Giriş ve kayıt artık NextAuth'un ön sağlayıcı kontrolüne bağlı değil: `/api/auth/providers` bir an bile yanıt vermediğinde kullanıcı NextAuth'un "Error" sayfasına düşüyordu. İstekler doğrudan CSRF belirteciyle gönderiliyor, geçici ağ hataları bir kez yeniden deneniyor ve her hata giriş formunda kendi dilinde gösteriliyor.
 - Monaco editörü CSP'ye takılmadan kendi alan adından yükleniyor; oturum yenilemesinde editör sekmelerinin sıfırlanması giderildi.

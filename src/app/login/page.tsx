@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
-import { AUTH_NETWORK_ERROR, completeSignIn, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
+import { AUTH_NETWORK_ERROR, completeSignIn, consumeAuthErrorDetail, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
 
 function useAuthErrorMessage() {
     const { t } = useI18n();
@@ -57,13 +57,22 @@ function LoginForm() {
         return code === "undefined" || code === "null" ? "Default" : code;
     });
     const error = describeError(errorCode);
+    // Server-side reason for this browser's last failed sign-in (e.g. why Google's callback failed).
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => setErrorDetail(consumeAuthErrorDetail()), 0);
+        return () => window.clearTimeout(timer);
+    }, []);
 
     const handleCredentialsLogin = async (event: React.FormEvent) => {
         event.preventDefault();
         setLoading(true);
         setErrorCode(null);
+        setErrorDetail(null);
         const code = await signInWithPassword(email.trim(), password, callbackPath);
         if (code) {
+            setErrorDetail(consumeAuthErrorDetail());
             setErrorCode(code);
             setLoading(false);
             return;
@@ -75,8 +84,10 @@ function LoginForm() {
     const handleGoogleLogin = useCallback(async (canonicalHop = false) => {
         setGoogleLoading(true);
         setErrorCode(null);
+        setErrorDetail(null);
         const code = await startGoogleSignIn(callbackPath, { canonicalHop });
         if (code) {
+            setErrorDetail(consumeAuthErrorDetail());
             setErrorCode(code);
             setGoogleLoading(false);
         }
@@ -112,6 +123,7 @@ function LoginForm() {
                         {error}
                         {/* The raw code makes support reports precise ("Network", "OAuthCallback"…). */}
                         {errorCode && !/\s/.test(errorCode) ? <span className="mt-1 block font-mono text-[11px] opacity-70">{errorCode}</span> : null}
+                        {errorDetail ? <span className="mt-0.5 block break-words font-mono text-[11px] opacity-70" dir="ltr">{errorDetail}</span> : null}
                     </span>
                 </div>
             )}
