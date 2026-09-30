@@ -57,3 +57,4 @@ next-env.d.ts
 # generated at build time (self-hosted editor + standalone game player)
 /public/monaco
 /public/engine
+/public/runtimes

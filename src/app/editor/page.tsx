@@ -11,6 +11,7 @@ import TestPreview from "@/components/Editor/TestPreview";
 import AIAssistant from "@/components/Editor/AIAssistant";
 import { Play, Plus, X, MoreVertical, Pencil, Clock } from "lucide-react";
 import { executeCodeSecure, executeProjectSecure } from "@/services/piston";
+import { RUNNABLE_LANGUAGE_SET } from "@/lib/runtimes/languages";
 import { useSession } from "next-auth/react";
 import { saveProject, saveProjectToCloud, getProjects, getProjectsFromCloud } from "@/lib/storage";
 import { useI18n } from "@/lib/i18n";
@@ -160,6 +161,8 @@ function EditorContent() {
     const [showHistory, setShowHistory] = useState(false);
     const [projectOutput, setProjectOutput] = useState<string[]>([]);
     const [isProjectRunning, setIsProjectRunning] = useState(false);
+    const [programInput, setProgramInput] = useState("");
+    const [runStatus, setRunStatus] = useState("");
     const shortcutActions = useRef<{ save: () => void; run: () => void | Promise<void> }>({ save: () => undefined, run: () => undefined });
 
     // Keyboard shortcuts
@@ -462,8 +465,7 @@ function EditorContent() {
     // Run code
     const handleRun = async () => {
         if (!activeTab) return;
-        const supported = new Set(["python", "javascript", "typescript", "csharp", "c", "cpp", "java", "php", "go", "swift", "ruby", "rust", "kotlin", "sql", "lua"]);
-        const runnableTabs = tabs.filter((tab) => supported.has(normalizeLang(tab.lang)) && tab.code.trim());
+        const runnableTabs = tabs.filter((tab) => RUNNABLE_LANGUAGE_SET.has(normalizeLang(tab.lang)) && tab.code.trim());
         const activeLang = normalizeLang(activeTab.lang);
 
         if (!runnableTabs.length && isWebLang(activeLang)) {
@@ -473,6 +475,7 @@ function EditorContent() {
         if (!runnableTabs.length) return;
 
         setProjectOutput([]);
+        setRunStatus("");
         setIsProjectRunning(true);
         setTabs(prevTabs => prevTabs.map(t =>
             runnableTabs.some((candidate) => candidate.id === t.id)
@@ -481,9 +484,10 @@ function EditorContent() {
         ));
 
         try {
+            const runOptions = { stdin: programInput, onStatus: setRunStatus };
             const secureResult = runnableTabs.length === 1
-                ? await executeCodeSecure(normalizeLang(runnableTabs[0].lang), runnableTabs[0].code)
-                : await executeProjectSecure(runnableTabs.map((tab) => ({ name: tab.name, language: normalizeLang(tab.lang), code: tab.code })));
+                ? await executeCodeSecure(normalizeLang(runnableTabs[0].lang), runnableTabs[0].code, runOptions)
+                : await executeProjectSecure(runnableTabs.map((tab) => ({ name: tab.name, language: normalizeLang(tab.lang), code: tab.code })), runOptions);
 
             if (secureResult.blocked && secureResult.securityCheck) {
                 const { findings, risk } = secureResult.securityCheck;
@@ -507,7 +511,7 @@ function EditorContent() {
                 const jobs = result.jobs?.length ? result.jobs : [{ name: runnableTabs[0].name, language: result.language, version: result.version, run: result.run }];
                 const outputs = jobs.map((job) => {
                     const lines = [`> ${job.name} · ${getDisplayName(job.language)} (${job.version})`];
-                    if (job.run.stdout?.trim()) lines.push(...job.run.stdout.split("\n"));
+                    if (job.run.stdout?.trim()) lines.push(...job.run.stdout.replace(/\n$/, "").split("\n"));
                     if (job.run.stderr?.trim()) lines.push(`Error: ${job.run.stderr}`);
                     if (!job.run.stdout?.trim() && !job.run.stderr?.trim()) lines.push(tx({ TR: "(Çıktı yok)", EN: "(No output)" }));
                     lines.push(tx({ TR: `> ${job.run.code} çıkış koduyla tamamlandı`, EN: `> Finished with exit code ${job.run.code}` }));
@@ -526,7 +530,13 @@ function EditorContent() {
             setOutputTab("console");
         } catch (error: unknown) {
             const errorMsg = error instanceof Error ? error.message : String(error);
-            setProjectOutput([tx({ TR: "> Proje çalıştırması", EN: "> Project run" }), "", `Error: ${errorMsg}`, "", tx({ TR: "> Çalıştırma başarısız oldu. Kodunuzu ve çalıştırıcı yapılandırmasını kontrol edin.", EN: "> The run failed. Check your code and the runner configuration." })]);
+            setProjectOutput([
+                runnableTabs.length > 1 ? tx({ TR: "> Proje çalıştırması", EN: "> Project run" }) : `> ${runnableTabs[0].name} · ${getDisplayName(runnableTabs[0].lang)}`,
+                "",
+                `Error: ${errorMsg}`,
+                "",
+                tx({ TR: "> Çalıştırma tamamlanamadı.", EN: "> The run could not be completed." }),
+            ]);
             setTabs(prevTabs => prevTabs.map(t => ({ ...t, isRunning: false })));
             setExecutionHistory(prev => [{
                 lang: runnableTabs.length > 1 ? tx({ TR: `${runnableTabs.length} dosya`, EN: `${runnableTabs.length} files` }) : getDisplayName(activeTab.lang),
@@ -536,6 +546,7 @@ function EditorContent() {
             setOutputTab("console");
         } finally {
             setIsProjectRunning(false);
+            setRunStatus("");
         }
     };
 
@@ -911,6 +922,9 @@ function EditorContent() {
                                                 output={projectOutput.length ? projectOutput : (activeTab?.output || [])}
                                                 isRunning={isProjectRunning || activeTab?.isRunning || false}
                                                 onClear={handleClearOutput}
+                                                stdin={programInput}
+                                                onStdinChange={setProgramInput}
+                                                statusText={runStatus}
                                             />
                                         </div>
                                     ) : (
@@ -928,6 +942,9 @@ function EditorContent() {
                                     output={projectOutput.length ? projectOutput : (activeTab?.output || [])}
                                     isRunning={isProjectRunning || activeTab?.isRunning || false}
                                     onClear={handleClearOutput}
+                                    stdin={programInput}
+                                    onStdinChange={setProgramInput}
+                                    statusText={runStatus}
                                 />
                             </div>
                         )}

@@ -6,7 +6,7 @@
   "main": "electron/main.js",
   "author": "HanStudios",
   "scripts": {
-    "prepare:assets": "node scripts/copy-monaco.mjs && node scripts/build-player.mjs",
+    "prepare:assets": "node scripts/copy-monaco.mjs && node scripts/build-player.mjs && node scripts/copy-runtimes.mjs",
     "predev": "npm run prepare:assets",
     "dev": "next dev",
     "prebuild": "npm run prepare:assets",
@@ -98,7 +98,11 @@
     "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.3.6",
+    "pyodide": "^314.0.7",
+    "sql.js": "^1.14.2",
+    "sucrase": "^3.35.1",
     "tailwindcss": "^4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wasmoon": "^1.16.0"
   }
 }

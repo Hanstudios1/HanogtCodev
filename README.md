@@ -32,7 +32,15 @@ Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi
 - Oyun proje belgeleri ve C#/C++ kaynakları yalnız sahiplik kontrollü sunucu API'sinden geçer; Firestore istemci kuralları bu koleksiyonları tamamen kapatır. Sahne başına 1000 nesne, proje içeriği 900 KB ve script başına 160 KB sınırı vardır; revizyon çakışmaları sessizce üzerine yazılmaz. Arcade'de yayınlanan oyunlar derleme ve güvenlik taramasından geçer.
 - Haber yorumları giriş, hız sınırı ve küfür/spam/kişisel veri filtresinden geçer. Parola sızıntı kontrolü k-anonimlik kullanır: tarayıcıdan yalnız SHA-1 özetinin ilk 5 karakteri gönderilir.
 
-> Uyarı: Regex/statik tarama tek başına güvenli kod çalıştırma sağlamaz. `CODE_RUNNER_URL` tanımlı değilse endpoint güvenli biçimde hizmet dışı kalır; herkese açık Piston/Wandbox geri dönüşü yoktur.
+### Kod çalıştırma
+
+- JavaScript, TypeScript, Python (Pyodide), SQL (sql.js) ve Lua (wasmoon) ziyaretçinin tarayıcısında, ayrı bir Web Worker içinde WebAssembly ile çalışır. Kod hiçbir sunucuya gönderilmez, giriş gerekmez; zaman aşımında worker tamamen sonlandırılır. Çalışma zamanları `npm run prepare:assets` ile `public/runtimes` altına kopyalanır (CDN kullanılmaz).
+- Derlenen diller (C, C++, C#, Java, Go, Rust, Swift, Ruby, PHP ve diğerleri) `/api/execute` üzerinden oturum, aynı kaynak, hız sınırı (dakikada 20) ve Hanogt Security Bot taramasından geçer; ardından kod **bizim sunucumuzda değil**, izole bir çalıştırıcıda yürütülür:
+  1. `CODE_RUNNER_URL` tanımlıysa kendi barındırdığınız Piston uyumlu çalıştırıcı (önerilen; `CODE_RUNNER_TOKEN` isteğe bağlı).
+  2. Tanımlı değilse anahtarsız, herkese açık [Wandbox](https://wandbox.org) derleyicisi (`WANDBOX_URL` ile kendi Wandbox kurulumunuza yönlendirilebilir). Kotlin, JetBrains'in herkese açık Kotlin Playground derleyicisiyle çalışır.
+- Program girdisi (stdin) editördeki **Girdi** sekmesinden verilir (en fazla 10.000 karakter).
+
+> Uyarı: Regex/statik tarama tek başına güvenli kod çalıştırma sağlamaz. Güvenlik sınırı, kodun Hanogt sunucularında hiç çalıştırılmamasıdır: tarayıcı dilleri ziyaretçinin kendi cihazında, derlenen diller üçüncü taraf ya da size ait izole çalıştırıcıda yürür. Herkese açık çalıştırıcılar kullanılabilirlik garantisi vermez; üretimde yoğun kullanım için kendi `CODE_RUNNER_URL` hizmetinizi kurun.
 
 ## Yerel kurulum
 

@@ -1,61 +1,95 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getActiveSession } from "@/lib/server/active-session";
-import { createServerDocument } from "@/lib/server/firebase-rest";
-import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { RunnerError, SERVER_LANGUAGES, runFiles, runnerName, type RunFile } from "@/lib/server/code-runner";
+import { createServerDocument, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
+import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
 
-const SUPPORTED_LANGUAGES = new Set([
-    "python", "javascript", "typescript", "csharp", "c", "c++", "cpp", "java",
-    "php", "go", "swift", "ruby", "rust", "kotlin", "lua", "sql", "sqlite3",
-]);
+// Compiling on the public runner can take a while (Rust, Swift, Haskell).
+export const maxDuration = 60;
+
+const LANGUAGE_ALIASES: Record<string, string> = {
+    "c++": "cpp", cs: "csharp", "c#": "csharp", sqlite3: "sql", sqlite: "sql",
+    js: "javascript", ts: "typescript", py: "python", rb: "ruby", rs: "rust", kt: "kotlin",
+    sh: "bash", shell: "bash", golang: "go", hs: "haskell", ex: "elixir", exs: "elixir", erl: "erlang",
+    ml: "ocaml", jl: "julia", pl: "perl", pas: "pascal", cr: "crystal", fs: "fsharp", "f#": "fsharp",
+    coffee: "coffeescript", cl: "lisp", scm: "lisp",
+};
 const MAX_CODE_LENGTH = 50_000;
 const MAX_PROJECT_LENGTH = 150_000;
 const MAX_RUNNABLE_FILES = 8;
-const MAX_OUTPUT_LENGTH = 64_000;
+const MAX_STDIN_LENGTH = 10_000;
 
-type RunFile = { name: string; language: string; code: string };
+function fail(error: string, status: number, extra: Record<string, unknown> = {}, headers: Record<string, string> = {}) {
+    return NextResponse.json({ error, ...extra }, { status, headers: jsonSecurityHeaders(headers) });
+}
 
-function cleanOutput(value: unknown) {
-    return typeof value === "string" ? value.slice(0, MAX_OUTPUT_LENGTH) : "";
+function normalizeLanguage(value: unknown) {
+    const language = typeof value === "string" ? value.trim().toLowerCase() : "";
+    return LANGUAGE_ALIASES[language] || language;
+}
+
+/**
+ * Who is running code. The signed NextAuth session proves the identity; when
+ * Firebase is configured the profile is also checked for bans. A database
+ * outage must not stop everyone from coding, so it only skips the ban check.
+ */
+async function resolveRunner(): Promise<{ email: string } | { error: string; status: number }> {
+    const session = await getServerSession(authOptions).catch(() => null);
+    const email = session?.user?.email?.toLowerCase();
+    if (!email) {
+        return { error: "Derlenen dilleri (C, C++, Java, Go…) çalıştırmak için giriş yapın. JavaScript, TypeScript, Python, SQL ve Lua girişsiz de çalışır.", status: 401 };
+    }
+    if (!isFirebaseServerConfigured()) return { email };
+    try {
+        const user = await getServerDocument<{ banned?: boolean; suspended?: boolean }>(`users/${email}`);
+        if (!user) return { error: "Hesap profiliniz bulunamadı. Çıkış yapıp yeniden giriş yapın.", status: 401 };
+        if (user.banned || user.suspended) return { error: "Hesabınız askıya alındığı için kod çalıştıramazsınız.", status: 403 };
+    } catch (error) {
+        console.warn("[execute] profile check skipped:", error instanceof Error ? error.message : error);
+    }
+    return { email };
 }
 
 export async function POST(request: NextRequest) {
-    if (!isSameOrigin(request)) return NextResponse.json({ error: "Geçersiz istek kaynağı." }, { status: 403 });
-    const activeSession = await getActiveSession();
-    if (!activeSession) return NextResponse.json({ error: "Kod çalıştırmak için etkin bir oturum açın." }, { status: 401 });
-    const { email } = activeSession;
+    if (!isSameOrigin(request)) return fail("Geçersiz istek kaynağı.", 403);
+    const runner = await resolveRunner();
+    if ("error" in runner) return fail(runner.error, runner.status);
+    const { email } = runner;
 
-    const rate = await enforceRateLimit(`execute:${email}`, 20, 60_000);
+    const rate = await enforceRateLimitWithFallback(`execute:${email}`, 20, 60_000);
     if (!rate.allowed) {
-        return NextResponse.json({ error: "Çalıştırma sınırına ulaştınız. Kısa süre sonra tekrar deneyin." }, {
-            status: 429,
-            headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }),
-        });
+        return fail("Çalıştırma sınırına ulaştınız (dakikada 20). Kısa süre sonra tekrar deneyin.", 429, {}, { "Retry-After": String(rate.retryAfterSeconds) });
     }
 
-    const body = await request.json() as { language?: unknown; code?: unknown; files?: unknown };
+    let body: { language?: unknown; code?: unknown; files?: unknown; stdin?: unknown };
+    try {
+        body = await request.json();
+    } catch {
+        return fail("İstek gövdesi geçerli JSON değil.", 400);
+    }
     const requestedFiles: RunFile[] = Array.isArray(body.files)
         ? body.files.slice(0, MAX_RUNNABLE_FILES + 1).map((value, index) => {
             const file = value && typeof value === "object" ? value as Record<string, unknown> : {};
-            const language = typeof file.language === "string" ? file.language.trim().toLowerCase() : "";
             return {
                 name: typeof file.name === "string" ? file.name.trim().slice(0, 120) || `file-${index + 1}` : `file-${index + 1}`,
-                language,
+                language: normalizeLanguage(file.language),
                 code: typeof file.code === "string" ? file.code : "",
             };
         })
-        : [{
-            name: "main",
-            language: typeof body.language === "string" ? body.language.trim().toLowerCase() : "",
-            code: typeof body.code === "string" ? body.code : "",
-        }];
-    if (!requestedFiles.length || requestedFiles.length > MAX_RUNNABLE_FILES) return NextResponse.json({ error: "Tek çalıştırmada 1-8 yürütülebilir dosya kullanılabilir." }, { status: 400 });
-    if (requestedFiles.some((file) => !SUPPORTED_LANGUAGES.has(file.language))) return NextResponse.json({ error: "Dosyalardan biri desteklenmeyen programlama dili kullanıyor." }, { status: 400 });
-    if (requestedFiles.some((file) => !file.code.trim())) return NextResponse.json({ error: "Çalıştırılacak dosyalar boş olamaz." }, { status: 400 });
+        : [{ name: "main", language: normalizeLanguage(body.language), code: typeof body.code === "string" ? body.code : "" }];
+    const stdin = typeof body.stdin === "string" ? body.stdin : "";
+
+    if (!requestedFiles.length || requestedFiles.length > MAX_RUNNABLE_FILES) return fail("Tek çalıştırmada 1-8 yürütülebilir dosya kullanılabilir.", 400);
+    const unsupported = requestedFiles.find((file) => !SERVER_LANGUAGES.has(file.language));
+    if (unsupported) return fail(`"${unsupported.language || "?"}" dili çalıştırılamıyor.`, 400);
+    if (requestedFiles.some((file) => !file.code.trim())) return fail("Çalıştırılacak dosyalar boş olamaz.", 400);
     if (requestedFiles.some((file) => file.code.length > MAX_CODE_LENGTH) || requestedFiles.reduce((total, file) => total + file.code.length, 0) > MAX_PROJECT_LENGTH) {
-        return NextResponse.json({ error: "Çalıştırma, dosya başına 50.000 ve toplam 150.000 karakter sınırını aşıyor." }, { status: 413 });
+        return fail("Çalıştırma, dosya başına 50.000 ve toplam 150.000 karakter sınırını aşıyor.", 413);
     }
+    if (stdin.length > MAX_STDIN_LENGTH) return fail("Program girdisi (stdin) en fazla 10.000 karakter olabilir.", 413);
     const combinedCode = requestedFiles.map((file) => `// ${file.name} (${file.language})\n${file.code}`).join("\n");
 
     const scan = scanUntrustedCode(combinedCode);
@@ -71,65 +105,18 @@ export async function POST(request: NextRequest) {
             createdAt: new Date(),
             reviewStatus: "pending",
         }).catch(() => undefined);
-        return NextResponse.json({
-            error: "Kod, çalıştırma ortamına yönelik yüksek riskli bir işlem içerdiği için engellendi.",
+        return fail("Kod, çalıştırma ortamına yönelik yüksek riskli bir işlem içerdiği için engellendi.", 422, {
             security: {
                 blocked: true,
                 risk: scan.risk,
                 findings: scan.findings.map(({ id, category, severity, message, line }) => ({ id, category, severity, message, line })),
                 appealAvailable: true,
             },
-        }, { status: 422, headers: jsonSecurityHeaders() });
+        });
     }
 
-    const runnerUrl = process.env.CODE_RUNNER_URL;
-    if (!runnerUrl) {
-        return NextResponse.json({
-            error: "Güvenli kod çalıştırma altyapısı henüz yapılandırılmadı.",
-            detail: "Yönetici, izole edilmiş CODE_RUNNER_URL hizmetini tanımlamalıdır.",
-        }, { status: 503, headers: jsonSecurityHeaders() });
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20_000);
     try {
-        const jobs = await Promise.all(requestedFiles.map(async (file) => {
-            const response = await fetch(runnerUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(process.env.CODE_RUNNER_TOKEN ? { Authorization: `Bearer ${process.env.CODE_RUNNER_TOKEN}` } : {}),
-                },
-                body: JSON.stringify({
-                    language: file.language === "sql" ? "sqlite3" : file.language,
-                    version: "*",
-                    files: [{ name: file.name, content: file.code }],
-                    limits: { wallTimeMs: 15_000, outputBytes: MAX_OUTPUT_LENGTH },
-                }),
-                signal: controller.signal,
-                cache: "no-store",
-            });
-            if (!response.ok) throw new Error("runner_unavailable");
-            const result = await response.json() as {
-                run?: { stdout?: unknown; stderr?: unknown; output?: unknown; code?: unknown };
-                language?: unknown;
-                version?: unknown;
-            };
-            if (!result.run) throw new Error("invalid_runner_response");
-            const stdout = cleanOutput(result.run.stdout);
-            const stderr = cleanOutput(result.run.stderr);
-            return {
-                name: file.name,
-                language: typeof result.language === "string" ? result.language : file.language,
-                version: typeof result.version === "string" ? result.version : "managed",
-                run: {
-                    stdout,
-                    stderr,
-                    output: cleanOutput(result.run.output) || stdout || stderr,
-                    code: Number.isInteger(result.run.code) ? result.run.code : 1,
-                },
-            };
-        }));
+        const jobs = await runFiles(requestedFiles, stdin);
         const first = jobs[0];
         return NextResponse.json({
             run: first.run,
@@ -140,12 +127,14 @@ export async function POST(request: NextRequest) {
             security: { blocked: false, risk: scan.risk },
         }, { headers: jsonSecurityHeaders({ "X-RateLimit-Remaining": String(rate.remaining) }) });
     } catch (error) {
-        const timedOut = error instanceof Error && error.name === "AbortError";
-        return NextResponse.json({ error: timedOut ? "Kod çalıştırma zaman aşımına uğradı." : "Kod çalıştırma hizmeti şu anda kullanılamıyor." }, {
-            status: timedOut ? 504 : 503,
-            headers: jsonSecurityHeaders(),
-        });
-    } finally {
-        clearTimeout(timeout);
+        if (error instanceof RunnerError) return fail(error.message, 400);
+        const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+        console.error(`[execute] ${runnerName()} runner failed:`, error);
+        return fail(
+            timedOut
+                ? "Kod çalıştırma zaman aşımına uğradı (25 sn). Sonsuz döngü olmadığından emin olup tekrar deneyin."
+                : "Kod çalıştırma hizmetine şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.",
+            timedOut ? 504 : 503,
+        );
     }
 }

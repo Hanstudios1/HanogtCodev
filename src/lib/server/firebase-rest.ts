@@ -69,6 +69,16 @@ export function getFirebaseProjectId() {
     return getServiceAccount().project_id;
 }
 
+/** True when server credentials are present; it does not prove that they work. */
+export function isFirebaseServerConfigured() {
+    try {
+        getServiceAccount();
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 async function getAccessToken() {
     if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
         return cachedToken.value;
