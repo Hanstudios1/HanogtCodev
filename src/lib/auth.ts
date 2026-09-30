@@ -6,6 +6,8 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { recordAuthError } from "@/lib/server/auth-diagnostics";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { clientIpFromHeaders } from "@/lib/server/request-security";
+import { normalizeEmail } from "@/lib/server/validate";
 import { getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
 
@@ -79,19 +81,28 @@ export const authOptions: NextAuthOptions = {
                 email: { label: "E-posta", type: "email" },
                 password: { label: "Şifre", type: "password" },
             },
-            async authorize(credentials) {
+            async authorize(credentials, req) {
                 if (!credentials?.email || !credentials.password) return null;
-                const email = normalizedEmail(credentials.email);
+                // E-mails are document ids: reject anything with path characters.
+                const email = normalizeEmail(credentials.email);
+                if (!email || credentials.password.length > 1_024) return null;
                 let rate: Awaited<ReturnType<typeof enforceRateLimit>>;
+                let ipRate: Awaited<ReturnType<typeof enforceRateLimit>>;
                 try {
-                    rate = await enforceRateLimit(`login:${email}`, 10, 15 * 60_000);
+                    // Per account (guessing one password) and per address (trying one
+                    // password against many accounts, i.e. password spraying).
+                    [rate, ipRate] = await Promise.all([
+                        enforceRateLimit(`login:${email}`, 10, 15 * 60_000),
+                        enforceRateLimit(`login-ip:${clientIpFromHeaders(req?.headers)}`, 60, 15 * 60_000),
+                    ]);
                 } catch (error) {
                     // A configuration outage must not look like a wrong password.
                     recordAuthError("CALLBACK_CREDENTIALS_HANDLER_ERROR", error);
                     throw new Error(AUTH_SERVICE_UNAVAILABLE);
                 }
-                if (!rate.allowed) {
-                    throw new Error(`RateLimited:${Math.ceil(rate.retryAfterSeconds / 60)}`);
+                if (!rate.allowed || !ipRate.allowed) {
+                    const wait = Math.max(rate.allowed ? 0 : rate.retryAfterSeconds, ipRate.allowed ? 0 : ipRate.retryAfterSeconds);
+                    throw new Error(`RateLimited:${Math.ceil(wait / 60)}`);
                 }
 
                 let user: {

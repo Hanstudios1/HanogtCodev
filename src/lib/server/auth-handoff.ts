@@ -88,7 +88,7 @@ export function verifyHandoff(token: string, audience: string, nonce: string): H
     }
     if (payload?.v !== 1 || typeof payload.exp !== "number" || payload.exp < Date.now() / 1000) return null;
     if (payload.aud !== audience || typeof payload.nonce !== "string" || !sameText(payload.nonce, nonce)) return null;
-    if (typeof payload.next !== "string" || !payload.next.startsWith("/") || payload.next.startsWith("//")) return null;
+    if (typeof payload.next !== "string" || !/^\/(?![/\\])/.test(payload.next) || /[\u0000-\u001f\u007f\\]/.test(payload.next)) return null;
     if (!payload.user || typeof payload.user.email !== "string" || !payload.user.email.includes("@")) return null;
     return payload;
 }

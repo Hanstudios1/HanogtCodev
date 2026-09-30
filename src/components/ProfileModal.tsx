@@ -8,6 +8,18 @@ import { X, Github, Linkedin, Twitter, Globe2, Download, Heart, ExternalLink } f
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
+/** Profile values are user-written: only plain https URLs reach CSS url(). */
+function safeBannerUrl(value?: string) {
+    return value && value.length <= 2048 && /^https:\/\/[^\s"'()<>\\]+$/.test(value) ? value : "";
+}
+
+/** Accepts #rgb / #rrggbb / #rrggbbaa and returns #rrggbb (alpha is appended by the gradients). */
+function safeAccent(value?: string) {
+    if (!value || !/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) return "#3B82F6";
+    if (value.length === 4) return `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`;
+    return value.slice(0, 7);
+}
+
 // 15 User Badges
 const ALL_BADGES = [
     { id: "early_adopter", labelKey: "badge_early_adopter", icon: "🌟", color: "#EAB308" },
@@ -134,7 +146,8 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
 
     const allProjects = projects.length > 0 ? projects : fetchedProjects;
 
-    const accent = user.accentColor || "#3B82F6";
+    const accent = safeAccent(user.accentColor);
+    const banner = safeBannerUrl(user.bannerUrl);
     const userBadges = ALL_BADGES.filter(b => user.badges?.includes(b.id));
 
     const handleDownload = (project: Project) => {
@@ -162,8 +175,8 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                 <div
                     className="h-28 relative"
                     style={{
-                        background: user.bannerUrl
-                            ? `url(${user.bannerUrl}) center/cover no-repeat`
+                        background: banner
+                            ? `url("${banner}") center/cover no-repeat`
                             : `linear-gradient(135deg, ${accent}, ${accent}60)`
                     }}
                 >

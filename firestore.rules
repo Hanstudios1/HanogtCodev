@@ -37,6 +37,81 @@ service cloud.firestore {
         );
     }
 
+    // Fields a user may write on their own users/{email} document. Everything
+    // else (friends, blockedUsers, role, suspension, credentials…) is server-only:
+    // the friend graph is trusted by the chat/call rules and the APIs below.
+    function userEditableKeys() {
+      return [
+        "email", "username", "avatarUrl", "bio", "emailNotifications", "newFeatureAlerts",
+        "publicProfile", "showOnlineStatus", "timezone", "nickname", "nicknameTag", "customStatus",
+        "statusEmoji", "bannerUrl", "accentColor", "favoriteLangs", "socialGithub", "socialLinkedin",
+        "socialTwitter", "socialWebsite", "socialYoutube", "socialTiktok", "socialInstagram",
+        "socialFacebook", "lastLoginDate", "updatedAt", "typingIndicator", "readReceipts",
+        "msgFontSize", "chatBackground", "voiceMsgQuality", "linkPreview", "gifAutoplay",
+        "enterToSend", "stickerSuggestions", "whoCanAdd", "hideFriendList", "showLastSeen",
+        "photoVisibility", "bioVisibility", "publicProjects", "msgNotifications", "callNotifications",
+        "friendReqNotifications", "likeNotifications", "notifSound", "dndMode", "dndSchedule",
+        "bubbleColor", "compactMode", "reduceAnimations", "highContrast", "uiFontSize", "emojiStyle",
+        "isOnline", "lastSeenAt"
+      ];
+    }
+
+    function profileEditableKeys() {
+      return [
+        "email", "username", "avatarUrl", "nickname", "nicknameTag", "bio", "bannerUrl", "accentColor",
+        "favoriteLangs", "socialGithub", "socialLinkedin", "socialTwitter", "socialWebsite",
+        "customStatus", "statusEmoji", "isOnline", "lastSeenAt", "dndMode", "publicProfile",
+        "publicProjects", "updatedAt"
+      ];
+    }
+
+    // True when the write creates the document or changes `key`; validation of
+    // untouched legacy values must not block unrelated updates.
+    function touches(key) {
+      return resource == null || request.resource.data.diff(resource.data).affectedKeys().hasAny([key]);
+    }
+
+    function textField(key, max) {
+      return !(key in request.resource.data) || !touches(key) || request.resource.data[key] == null
+        || (request.resource.data[key] is string && request.resource.data[key].size() <= max);
+    }
+
+    function urlField(key) {
+      return !(key in request.resource.data) || !touches(key) || request.resource.data[key] == null
+        || request.resource.data[key] == ""
+        || (request.resource.data[key] is string && request.resource.data[key].size() <= 2048
+          && request.resource.data[key].matches('https://[^ <>()]+'));
+    }
+
+    function colorField(key) {
+      return !(key in request.resource.data) || !touches(key) || request.resource.data[key] == null
+        || request.resource.data[key] == ""
+        || (request.resource.data[key] is string && request.resource.data[key].matches('#[0-9a-fA-F]{3,8}'));
+    }
+
+    function validProfileFields() {
+      return textField("username", 100) && textField("nickname", 100) && textField("bio", 2000)
+        && textField("customStatus", 300) && textField("statusEmoji", 32)
+        && (!("nicknameTag" in request.resource.data) || !touches("nicknameTag")
+          || (request.resource.data.nicknameTag is string && request.resource.data.nicknameTag.matches('[0-9]{4}')))
+        && urlField("avatarUrl") && urlField("bannerUrl") && colorField("accentColor");
+    }
+
+    // Voice files must live in the owning chat/group folder: `<prefix>/<id>/<file>`.
+    // The server deletes these paths when chats, groups or accounts are removed.
+    function validVoicePath(path, prefix, containerId) {
+      return path is string
+        && path.split('/').size() == 3
+        && path.split('/')[0] == prefix
+        && path.split('/')[1] == containerId
+        && path.split('/')[2].size() > 0
+        && path.split('/')[2].size() <= 200;
+    }
+
+    function voicePathOk(data, prefix, containerId) {
+      return !("voicePath" in data) || data.voicePath == null || validVoicePath(data.voicePath, prefix, containerId);
+    }
+
     match /credentials/{id} {
       allow read, write: if false;
     }
@@ -137,7 +212,8 @@ service cloud.firestore {
           && request.resource.data.type in ["text", "voice"]
           && request.resource.data.text is string
           && request.resource.data.text.size() <= 4000
-          && request.resource.data.keys().hasOnly(["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt"]);
+          && request.resource.data.keys().hasOnly(["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt"])
+          && voicePathOk(request.resource.data, "group-voice-messages", groupId);
         allow update: if false;
         allow delete: if groupMember(groupId) && resource.data.fromEmail == email();
       }
@@ -151,32 +227,26 @@ service cloud.firestore {
       allow read: if isSelf(userId);
       allow create: if isSelf(userId)
         && request.resource.data.email == email()
-        && !request.resource.data.keys().hasAny([
-          "password", "passwordHash", "role", "banned", "suspended",
-          "phoneVerified", "securityScore", "securityResearchConsent",
-          "securityResearchConsentAt", "securityResearchConsentVersion"
-        ]);
+        && request.resource.data.keys().hasOnly(userEditableKeys())
+        && validProfileFields();
       allow update: if isSelf(userId)
         && request.resource.data.email == email()
-        && request.resource.data.diff(resource.data).affectedKeys().hasNone([
-          "password", "passwordHash", "role", "banned", "suspended",
-          "phoneVerified", "securityScore", "email", "securityResearchConsent",
-          "securityResearchConsentAt", "securityResearchConsentVersion"
-        ]);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(userEditableKeys())
+        && validProfileFields();
       allow delete: if false;
     }
 
     match /public_profiles/{userId} {
       allow read: if signedIn();
-      allow create, update: if isSelf(userId)
+      // Badges are server-only (they include "verified").
+      allow create: if isSelf(userId)
         && request.resource.data.email == email()
-        && request.resource.data.keys().hasOnly([
-          "email", "username", "avatarUrl", "nickname", "nicknameTag", "bio",
-          "bannerUrl", "accentColor", "favoriteLangs", "socialGithub",
-          "socialLinkedin", "socialTwitter", "socialWebsite", "customStatus",
-          "statusEmoji", "isOnline", "lastSeenAt", "dndMode", "publicProfile",
-          "publicProjects", "badges", "updatedAt"
-        ]);
+        && request.resource.data.keys().hasOnly(profileEditableKeys())
+        && validProfileFields();
+      allow update: if isSelf(userId)
+        && request.resource.data.email == email()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileEditableKeys())
+        && validProfileFields();
       allow delete: if isSelf(userId);
     }
 
@@ -203,8 +273,12 @@ service cloud.firestore {
       allow update: if chatParticipant(chatId)
         && request.resource.data.participants == resource.data.participants
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "lastMessage", "lastMessageAt", "typingUser", "updatedAt"
+          "lastMessage", "lastMessageAt", "lastSender", "typingUser", "updatedAt"
         ])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["lastSender"])
+          || request.resource.data.lastSender == email())
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["lastMessage"])
+          || (request.resource.data.lastMessage is string && request.resource.data.lastMessage.size() <= 4100))
         && (!request.resource.data.keys().hasAny(["typingUser"])
           || request.resource.data.typingUser == null
           || request.resource.data.typingUser == email());
@@ -216,7 +290,12 @@ service cloud.firestore {
           && request.resource.data.fromEmail == email()
           && request.resource.data.type in ["text", "sticker", "voice"]
           && request.resource.data.text is string
-          && request.resource.data.text.size() <= 4000;
+          && request.resource.data.text.size() <= 4000
+          && request.resource.data.keys().hasOnly([
+            "fromEmail", "text", "type", "stickerUrl", "voicePath", "voiceDuration", "createdAt", "read", "replyTo"
+          ])
+          && (!("read" in request.resource.data) || request.resource.data.read == false)
+          && voicePathOk(request.resource.data, "voice-messages", chatId);
         allow update: if chatParticipant(chatId)
           && request.resource.data.fromEmail == resource.data.fromEmail
           && (
@@ -227,6 +306,7 @@ service cloud.firestore {
               ])
               && request.resource.data.text is string
               && request.resource.data.text.size() <= 4000
+              && voicePathOk(request.resource.data, "voice-messages", chatId)
             )
             || (
               request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read"])

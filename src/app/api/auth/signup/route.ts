@@ -4,8 +4,7 @@ import { commitServerPatches, getServerDocument } from "@/lib/server/firebase-re
 import { hashPassword, validatePassword } from "@/lib/server/password";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getClientKey, isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { normalizeEmail, readJsonBody } from "@/lib/server/validate";
 
 export async function POST(req: NextRequest) {
     try {
@@ -18,12 +17,14 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        const body = await req.json() as { email?: unknown; password?: unknown; username?: unknown };
-        const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+        const body = await readJsonBody<{ email?: unknown; password?: unknown; username?: unknown }>(req, 8_000);
+        if (!body) return NextResponse.json({ error: "Geçersiz istek gövdesi.", code: "bad_request" }, { status: 400 });
+        // The e-mail becomes a document id, so it must not contain "/" or other path characters.
+        const email = normalizeEmail(body.email);
         const password = typeof body.password === "string" ? body.password : "";
         const username = typeof body.username === "string" ? body.username.trim() : "";
         const passwordError = validatePassword(password);
-        if (!EMAIL_PATTERN.test(email) || email.length > 254) {
+        if (!email) {
             return NextResponse.json({ error: "Geçerli bir e-posta adresi girin." }, { status: 400 });
         }
         if (passwordError) return NextResponse.json({ error: passwordError }, { status: 400 });

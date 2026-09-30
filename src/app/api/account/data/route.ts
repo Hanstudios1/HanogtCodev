@@ -14,6 +14,7 @@ import { voterHash } from "@/lib/server/ai-rankings";
 import { likerHash } from "@/lib/server/arcade";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { isOwnedStoragePath } from "@/lib/server/validate";
 
 type StoredMessage = { voicePath?: string };
 type ArrayRecord = { friends?: string[]; blockedUsers?: string[]; likes?: string[]; comments?: Array<{ authorEmail?: string }> };
@@ -94,8 +95,9 @@ export async function DELETE(request: NextRequest) {
     const chats = await queryServerCollection<Record<string, unknown>>("chats", "participants", "ARRAY_CONTAINS", email);
     for (const chat of chats) {
         await deleteCollection(`chats/${chat._id}/messages`, async (message) => {
+            // voicePath is written by clients: only delete files inside this chat's folder.
             const voicePath = (message as StoredMessage).voicePath;
-            if (voicePath) await deleteServerStorageObject(voicePath);
+            if (isOwnedStoragePath(voicePath, "voice-messages", chat._id)) await deleteServerStorageObject(voicePath);
         });
         await deleteServerDocument(chat._path);
     }
@@ -182,7 +184,7 @@ export async function DELETE(request: NextRequest) {
         if (group.ownerEmail === email) {
             await deleteCollection(`groups/${group._id}/messages`, async (message) => {
                 const voicePath = (message as StoredMessage).voicePath;
-                if (voicePath) await deleteServerStorageObject(voicePath);
+                if (isOwnedStoragePath(voicePath, "group-voice-messages", group._id)) await deleteServerStorageObject(voicePath);
             });
             await deleteCollection(`groups/${group._id}/files`);
             await deleteServerDocument(group._path);
@@ -198,8 +200,9 @@ export async function DELETE(request: NextRequest) {
     const remainingGroupMessages = await queryServerCollection<Record<string, unknown>>("messages", "fromEmail", "EQUAL", email, { allDescendants: true, limit: 1000 });
     for (const message of remainingGroupMessages) {
         if (!message._path.startsWith("groups/")) continue;
+        const groupId = message._path.split("/")[1] || "";
         const voicePath = typeof message.voicePath === "string" ? message.voicePath : "";
-        if (voicePath) await deleteServerStorageObject(voicePath).catch(() => undefined);
+        if (isOwnedStoragePath(voicePath, "group-voice-messages", groupId)) await deleteServerStorageObject(voicePath).catch(() => undefined);
         await patchServerDocument(message._path, {
             fromEmail: `deleted-${Buffer.from(email).toString("base64url").slice(0, 24)}`,
             author: "Silinmiş kullanıcı",

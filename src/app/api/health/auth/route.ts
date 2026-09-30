@@ -1,3 +1,6 @@
+import { timingSafeEqual } from "node:crypto";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { createFirebaseCustomToken, getFirebaseProjectId, getServerDocument } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
@@ -8,7 +11,8 @@ export const dynamic = "force-dynamic";
 type Check = { ok: boolean; detail?: string };
 
 // Each report touches Firestore, so identical requests reuse a recent result.
-let cached: { at: number; host: string; body: Record<string, unknown> } | null = null;
+type HealthBody = Record<string, unknown> & { ok: boolean; problems: string[]; checkedAt: string };
+let cached: { at: number; host: string; body: HealthBody } | null = null;
 const CACHE_MS = 30_000;
 
 async function check(task: () => Promise<string | void>): Promise<Check> {
@@ -38,7 +42,7 @@ function hostOf(value: string | undefined) {
 export async function GET(request: NextRequest) {
     const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
     if (cached && cached.host === host && Date.now() - cached.at < CACHE_MS) {
-        return NextResponse.json(cached.body, { headers: jsonSecurityHeaders() });
+        return respond(request, cached.body);
     }
 
     const nextAuthHost = hostOf(process.env.NEXTAUTH_URL);
@@ -91,5 +95,32 @@ export async function GET(request: NextRequest) {
         firebaseClient: { configured: clientConfigured, projectId: clientProjectId },
     };
     cached = { at: Date.now(), host, body };
-    return NextResponse.json(body, { headers: jsonSecurityHeaders() });
+    return respond(request, body);
+}
+
+/**
+ * The full report maps the deployment (configured services, project ids,
+ * hosts, commit), so anonymous visitors only get the overall result. Details
+ * need `?token=` equal to HEALTH_CHECK_TOKEN or a signed-in owner listed in
+ * ADMIN_EMAILS.
+ */
+async function respond(request: NextRequest, body: HealthBody) {
+    if (await mayReadDetails(request)) return NextResponse.json(body, { headers: jsonSecurityHeaders() });
+    return NextResponse.json({
+        ok: body.ok,
+        problemCount: body.problems.length,
+        checkedAt: body.checkedAt,
+        details: "Open /api/health/auth?token=<HEALTH_CHECK_TOKEN> or sign in with an ADMIN_EMAILS account to see the full report.",
+    }, { headers: jsonSecurityHeaders() });
+}
+
+async function mayReadDetails(request: NextRequest) {
+    const expected = process.env.HEALTH_CHECK_TOKEN?.trim();
+    const supplied = request.nextUrl.searchParams.get("token") || "";
+    if (expected && expected.length >= 16 && supplied.length === expected.length && timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) return true;
+    const owners = (process.env.ADMIN_EMAILS || "").toLowerCase().split(/[\s,;]+/).filter(Boolean);
+    if (!owners.length) return false;
+    const session = await getServerSession(authOptions).catch(() => null);
+    const email = session?.user?.email?.toLowerCase();
+    return Boolean(email && owners.includes(email));
 }

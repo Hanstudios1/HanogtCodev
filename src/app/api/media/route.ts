@@ -15,6 +15,7 @@ import {
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
+import { isDocId } from "@/lib/server/validate";
 
 type MediaPost = {
     title?: string;
@@ -113,6 +114,7 @@ export async function GET(request: NextRequest) {
     try {
         const email = await optionalActiveEmail();
         if (id) {
+            if (!isDocId(id, 100)) return NextResponse.json({ error: "Proje bulunamadı.", code: "invalid_id" }, { status: 404 });
             const post = await getServerDocument<MediaPost>(`media_posts/${id}`);
             if (!post || post.status !== "published") return NextResponse.json({ error: "Proje bulunamadı." }, { status: 404 });
             const [files, comments] = await Promise.all([
@@ -236,7 +238,7 @@ export async function POST(request: NextRequest) {
         }
 
         const postId = cleanText(body.postId, 100);
-        const post = postId ? await getServerDocument<MediaPost>(`media_posts/${postId}`) : null;
+        const post = isDocId(postId, 100) ? await getServerDocument<MediaPost>(`media_posts/${postId}`) : null;
         if (!post || post.status !== "published") return NextResponse.json({ error: "Proje bulunamadı." }, { status: 404 });
 
         if (action === "like") {

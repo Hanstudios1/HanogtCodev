@@ -3,15 +3,14 @@ import { getActiveSession } from "@/lib/server/active-session";
 import { commitServerPatches, getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { isFriendRequestId, normalizeEmail, readJsonBody } from "@/lib/server/validate";
 
 type FriendAction = "accept" | "reject" | "remove" | "block" | "unblock";
 type UserRecord = { friends?: string[]; blockedUsers?: string[] };
 type RequestRecord = { fromEmail?: string; toEmail?: string; status?: string };
 
 function normalizedTarget(value: unknown) {
-    return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-        ? value.toLowerCase()
-        : "";
+    return normalizeEmail(value);
 }
 
 function without(values: string[] = [], target: string) {
@@ -30,7 +29,8 @@ export async function POST(request: NextRequest) {
     const rate = await enforceRateLimit(`friends:${email}`, 30, 60_000);
     if (!rate.allowed) return NextResponse.json({ error: "Çok fazla işlem. Biraz sonra tekrar deneyin." }, { status: 429 });
 
-    const body = await request.json() as { action?: unknown; requestId?: unknown; targetEmail?: unknown };
+    const body = await readJsonBody<{ action?: unknown; requestId?: unknown; targetEmail?: unknown }>(request, 8_000);
+    if (!body) return NextResponse.json({ error: "Geçersiz istek gövdesi.", code: "bad_request" }, { status: 400 });
     const action = body.action as FriendAction;
     if (!["accept", "reject", "remove", "block", "unblock"].includes(action)) {
         return NextResponse.json({ error: "Geçersiz işlem." }, { status: 400 });
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     try {
         if (action === "accept" || action === "reject") {
             const requestId = typeof body.requestId === "string" ? body.requestId : "";
-            if (!requestId || requestId.length > 300) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
+            if (!isFriendRequestId(requestId)) return NextResponse.json({ error: "Geçersiz istek.", code: "invalid_id" }, { status: 400 });
             const friendRequest = await getServerDocument<RequestRecord>(`friendRequests/${requestId}`);
             if (!friendRequest || friendRequest.toEmail !== email || friendRequest.status !== "pending" || !friendRequest.fromEmail) {
                 return NextResponse.json({ error: "Arkadaşlık isteği bulunamadı." }, { status: 404 });

@@ -121,7 +121,22 @@ async function getAccessToken() {
     return result.access_token;
 }
 
+/**
+ * Rejects document paths with empty, "." or ".." segments or control
+ * characters. Paths are built from ids inside API routes; `new URL` would
+ * resolve "../" and let a crafted id address another collection, so this is a
+ * last line of defense behind the per-route id validation.
+ */
+function assertSafePath(path: string) {
+    if (!path) return;
+    if (path.length > 6_000 || /[\u0000-\u001f\u007f]/.test(path)) throw new Error("Geçersiz belge yolu.");
+    for (const segment of path.split("/")) {
+        if (!segment || segment === "." || segment === ".." || segment.length > 1_500) throw new Error("Geçersiz belge yolu.");
+    }
+}
+
 function encodeDocumentPath(path: string) {
+    assertSafePath(path);
     return path.split("/").map(encodeURIComponent).join("/");
 }
 
@@ -131,6 +146,7 @@ function documentUrl(path: string) {
 }
 
 function documentName(path: string) {
+    assertSafePath(path);
     const projectId = getFirebaseProjectId();
     return `projects/${projectId}/databases/(default)/documents/${path}`;
 }
@@ -238,6 +254,7 @@ export async function queryServerCollection<T extends Record<string, unknown>>(
     options: { parentPath?: string; allDescendants?: boolean; limit?: number } = {},
 ) {
     const parentPath = options.parentPath || "";
+    if (collectionId.includes("/")) throw new Error("Geçersiz koleksiyon kimliği.");
     const url = `${databaseDocumentsUrl(parentPath)}:runQuery`;
     const response = await firestoreFetch(url, {
         method: "POST",
@@ -410,6 +427,8 @@ export async function deleteServerDocument(path: string) {
 }
 
 export async function createServerDocument(collectionPath: string, data: Record<string, unknown>, documentId?: string) {
+    assertSafePath(collectionPath);
+    if (documentId !== undefined) assertSafePath(documentId);
     const segments = collectionPath.split("/");
     const collectionId = segments.pop();
     if (!collectionId) throw new Error("Geçersiz koleksiyon yolu.");
@@ -461,6 +480,7 @@ export async function deleteFirebaseAuthUser(email: string) {
 export async function deleteServerStorageObject(objectPath: string) {
     const bucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
     if (!bucket || !objectPath) return;
+    assertSafePath(objectPath);
     const response = await firestoreFetch(
         `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(objectPath)}`,
         { method: "DELETE" },

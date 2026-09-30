@@ -1,6 +1,8 @@
 /** Only same-origin relative paths are accepted as post-login destinations. */
 export function safeCallbackPath(value: string | null) {
-    if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return "/dashboard";
+    // Browsers drop tabs/newlines and treat "\\" like "/", so "/\t//evil.com"
+    // or "/\\evil.com" would leave the site: reject them outright.
+    if (!value || !/^\/(?![/\\])/.test(value) || /[\u0000-\u001f\u007f\\]/.test(value)) return "/dashboard";
     if (value.startsWith("/login") || value.startsWith("/signup")) return "/dashboard";
     return value.slice(0, 500);
 }

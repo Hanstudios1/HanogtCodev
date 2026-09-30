@@ -4,6 +4,7 @@ import { getActiveSession } from "@/lib/server/active-session";
 import { createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { isDocId, readJsonBody } from "@/lib/server/validate";
 
 type Comment = { id: string; author: string; authorEmail: string; authorPhoto?: string | null; content: string; replyTo?: string | null; replyToContent?: string | null; createdAt: string };
 type Feedback = { type?: string; content?: string; description?: string | null; authorEmail?: string; likes?: string[]; comments?: Comment[] };
@@ -22,7 +23,8 @@ export async function POST(request: NextRequest) {
     const rate = await enforceRateLimit(`feedback:${email}`, 30, 60_000);
     if (!rate.allowed) return NextResponse.json({ error: "Çok fazla işlem. Biraz sonra tekrar deneyin." }, { status: 429 });
 
-    const body = await request.json() as Record<string, unknown>;
+    const body = await readJsonBody(request, 64_000);
+    if (!body) return NextResponse.json({ error: "Geçersiz istek gövdesi.", code: "bad_request" }, { status: 400 });
     const action = text(body.action, 30);
     const itemId = text(body.itemId, 200);
     const profile = await getServerDocument<{ username?: string; avatarUrl?: string }>(`public_profiles/${email}`);
@@ -46,7 +48,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true }, { headers: jsonSecurityHeaders() });
     }
 
-    if (!itemId) return NextResponse.json({ error: "Kayıt kimliği gerekli." }, { status: 400 });
+    // Feedback ids are Firestore auto ids; anything else (e.g. "../credentials/x")
+    // would let the path escape the collection.
+    if (!isDocId(itemId, 64)) return NextResponse.json({ error: "Kayıt kimliği gerekli.", code: "invalid_id" }, { status: 400 });
     const item = await getServerDocument<Feedback>(`feedback/${itemId}`);
     if (!item) return NextResponse.json({ error: "Kayıt bulunamadı." }, { status: 404 });
 
@@ -78,6 +82,7 @@ export async function POST(request: NextRequest) {
         await patchServerDocument(`feedback/${itemId}`, { comments }, { updateTime: item._updateTime });
     } else if (action === "edit-comment" || action === "delete-comment") {
         const commentId = text(body.commentId, 100);
+        if (!isDocId(commentId, 100)) return NextResponse.json({ error: "Yorum bulunamadı.", code: "invalid_id" }, { status: 400 });
         const comments = item.comments || [];
         const comment = comments.find((value) => value.id === commentId);
         if (!comment || comment.authorEmail !== email) return NextResponse.json({ error: "Yorum bulunamadı veya yetkiniz yok." }, { status: 403 });

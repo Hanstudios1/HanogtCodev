@@ -4,6 +4,7 @@ import { getServerDocument, patchServerDocument } from "@/lib/server/firebase-re
 import { hashPassword, validatePassword, verifyPassword } from "@/lib/server/password";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { readJsonBody } from "@/lib/server/validate";
 
 export async function POST(request: NextRequest) {
     if (!isSameOrigin(request)) return NextResponse.json({ error: "Geçersiz istek kaynağı." }, { status: 403 });
@@ -13,7 +14,8 @@ export async function POST(request: NextRequest) {
     const rate = await enforceRateLimit(`password-change:${email}`, 5, 60 * 60_000);
     if (!rate.allowed) return NextResponse.json({ error: "Çok fazla deneme. Daha sonra tekrar deneyin." }, { status: 429 });
 
-    const body = await request.json() as { currentPassword?: unknown; newPassword?: unknown };
+    const body = await readJsonBody<{ currentPassword?: unknown; newPassword?: unknown }>(request, 8_000);
+    if (!body) return NextResponse.json({ error: "Geçersiz istek gövdesi.", code: "bad_request" }, { status: 400 });
     const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
     const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
     const validationError = validatePassword(newPassword);
