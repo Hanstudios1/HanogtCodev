@@ -1,5 +1,15 @@
 # Değişiklik Günlüğü
 
+## 0.1.1 — 2026-09-30
+
+### Kod çalıştırma
+
+- Kod çalıştırma artık hiçbir sunucu ayarı gerektirmiyor. JavaScript, TypeScript, Python 3.14, SQL (SQLite) ve Lua 5.4 doğrudan tarayıcıda, ayrı bir Web Worker içinde WebAssembly ile çalışıyor; giriş gerekmiyor ve kod sunucuya gönderilmiyor. Sonsuz döngüler 15 saniyede durduruluyor.
+- C, C++, C#, Java, Kotlin, Go, Rust, Swift, Ruby, PHP, Perl, Scala, Haskell, Elixir, Erlang, Nim, D, Crystal, Bash, Pascal, OCaml, Zig, Julia, R, Groovy, Lisp, F# ve CoffeeScript, `CODE_RUNNER_URL` tanımlı değilse Hanogt Security Bot taramasından sonra herkese açık Wandbox derleyicisinde (Kotlin için JetBrains Kotlin Playground) çalışıyor. Java'da `public class Main` gibi dosya adına bağlı sınıflar da çalışıyor.
+- Editöre **Girdi** sekmesi eklendi: `input()`, `Scanner`, `cin`, `io.read()` gibi okumalar bu alandan besleniyor. Python ilk yüklenirken çıktı alanında ilerleme gösteriliyor.
+- Hata mesajları gerçek yorumlayıcılardaki gibi `main.py`, `main.js`, `main.ts`, `main.lua` dosya adı ve satır numarasıyla gösteriliyor; Python'da `if __name__ == "__main__":` bloğu çalışıyor.
+- Firebase sunucu kimliği eksik ya da veritabanına geçici olarak ulaşılamıyorsa kod çalıştırma kapanmıyor: imzalı oturum kimliği kullanılıyor ve hız sınırı sunucu belleğine düşüyor.
+
 ## 0.1.0 — 2026-09-28
 
 Şimdiye kadarki en büyük güncelleme: canlı teknoloji haberleri, topluluk Arcade'i, baştan yazılan oyun motoru, yenilenen site arayüzü ve 30 dil.

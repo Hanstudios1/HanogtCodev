@@ -174,7 +174,7 @@ const sections: LegalSection[] = [
                 ["Google / Firebase", "Hesap, proje, mesaj, yorum ve dosya verileri", "Veritabanı, dosya depolama ve altyapı"],
                 ["Google OAuth", "Google ile giriş seçerseniz kimlik bilgileri", "Kimlik doğrulama"],
                 ["Yapay zeka sağlayıcısı (ör. Groq)", "Yalnızca AI asistanına gönderdiğiniz istem ve kod", "Yanıt üretimi"],
-                ["İzole kod çalıştırıcısı", "Yalnızca çalıştırılmasını istediğiniz kaynak kod", "Kodun çalıştırılması"],
+                ["İzole kod çalıştırıcısı (Wandbox, JetBrains Kotlin Playground veya yapılandırılmış özel çalıştırıcı)", "Yalnızca derlenen dillerde çalıştırmak istediğiniz kaynak kod ve program girdisi; JavaScript, TypeScript, Python, SQL ve Lua tarayıcınızda çalışır ve gönderilmez", "Kodun çalıştırılması"],
                 ["TURN/STUN işletmecisi", "WebRTC için IP ve ağ üst verisi", "Sesli arama bağlantısı"],
                 ["Have I Been Pwned", "Parola SHA-1 özetinin ilk 5 karakteri (isteğe bağlı)", "Parola sızıntı kontrolü"],
                 ["Haber yayıncıları", "Görsel yüklenirken tarayıcınızın IP ve tarayıcı bilgisi", "Haber görsellerinin gösterimi"],

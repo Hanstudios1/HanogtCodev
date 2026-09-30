@@ -10,7 +10,7 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 - Düz metin parola saklama kaldırıldı. Yeni parolalar scrypt ile tuzlanıp hashlenir; eski kayıtlar başarılı oturum açmada güvenli biçime taşınır.
 - Yetkilendirme yalnız istemci kontrollerine bırakılmaz. Kod çalıştırma, yapay zekâ, arkadaş, grup, medya, çağrı ve oyun projesi işlemleri sunucu oturumu, aynı-origin kontrolü, giriş doğrulama, hız sınırı ve kaynak sahipliği denetimi uygular.
-- Kod çalıştırma güvenliği regex tabanlı bir tarayıcı iddiası değildir. `/api/execute`, izole çalıştırıcıya yönlendirme için `CODE_RUNNER_URL` ve sunucu tarafı politika katmanı kullanır. Üçüncü taraf çalıştırıcılar üretim güvenlik sınırı olarak tanımlanmaz.
+- Kod çalıştırma güvenliği regex tabanlı bir tarayıcı iddiası değildir. JavaScript, TypeScript, Python, SQL ve Lua ziyaretçinin tarayıcısında WebAssembly ile çalışır. Derlenen diller `/api/execute` üzerinden sunucu tarafı politika katmanından geçip `CODE_RUNNER_URL` (tanımlıysa) ya da herkese açık Wandbox / Kotlin Playground derleyicisinde yürütülür; kod hiçbir zaman Hanogt sunucularında çalıştırılmaz.
 - Firestore ve Storage kuralları repoda sürümlenir. Oyun projeleri dahil hassas koleksiyonlarda doğrudan istemci yazımı engellenir; yazma işlemleri yetkili sunucu uçlarından geçer.
 - `/api/ai` kimlik doğrulamalı ve hız sınırlıdır. Sunucu sırları istemci paketine gönderilmez.
 - Güvenlik botuna kod katkısı açık rıza/opt-in ile alınır; kod otomatik ve denetimsiz biçimde modeli “kendi kendine eğitmez”. Katkı inceleme adayı olarak kaydedilir ve silme/geri çekme süreçlerine tabidir.
@@ -81,7 +81,7 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 ## Operatör kontrol listesi
 
 1. Firestore/Storage kurallarını hedef Firebase projesine deploy et.
-2. `CODE_RUNNER_URL`, runner kimliği, TURN ve Firebase Admin sırlarını sunucu secret store'una ekle.
+2. Firebase Admin (`FIREBASE_SERVICE_ACCOUNT_JSON`) ve TURN sırlarını sunucu secret store'una ekle; yoğun kullanım için kendi `CODE_RUNNER_URL` çalıştırıcını kur (tanımlı değilse herkese açık Wandbox kullanılır).
 3. Güvenlik botu katkı saklama/silme politikasını ve moderasyon iş akışını işlet.
 4. WebRTC çağrı başlatma, reddetme, bağlantı kopması, bitirme ve eski kayıt temizliğini iki gerçek ağda test et.
 5. Yasal metinlerdeki kuruluş alanlarını doldur ve hukuk incelemesini tamamla.
