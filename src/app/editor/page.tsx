@@ -514,7 +514,7 @@ function EditorContent() {
                     if (job.run.stdout?.trim()) lines.push(...job.run.stdout.replace(/\n$/, "").split("\n"));
                     if (job.run.stderr?.trim()) lines.push(`Error: ${job.run.stderr}`);
                     if (!job.run.stdout?.trim() && !job.run.stderr?.trim()) lines.push(tx({ TR: "(Çıktı yok)", EN: "(No output)" }));
-                    lines.push(tx({ TR: `> ${job.run.code} çıkış koduyla tamamlandı`, EN: `> Finished with exit code ${job.run.code}` }));
+                    lines.push(tx({ TR: "> {code} çıkış koduyla tamamlandı", EN: "> Finished with exit code {code}" }, { code: String(job.run.code) }));
                     return lines;
                 });
                 setProjectOutput(jobs.length > 1 ? [tx({ TR: "> Proje çalıştırması · bağımsız dil işleri", EN: "> Project run · independent language jobs" }), "", ...outputs.flatMap((lines, index) => index ? ["", ...lines] : lines)] : []);
@@ -539,7 +539,7 @@ function EditorContent() {
             ]);
             setTabs(prevTabs => prevTabs.map(t => ({ ...t, isRunning: false })));
             setExecutionHistory(prev => [{
-                lang: runnableTabs.length > 1 ? tx({ TR: `${runnableTabs.length} dosya`, EN: `${runnableTabs.length} files` }) : getDisplayName(activeTab.lang),
+                lang: runnableTabs.length > 1 ? tx({ TR: "{count} dosya", EN: "{count} files" }, { count: runnableTabs.length }) : getDisplayName(activeTab.lang),
                 time: new Date().toLocaleTimeString(),
                 status: "❌"
             }, ...prev].slice(0, 50));

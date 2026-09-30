@@ -70,7 +70,7 @@ function PixelArrow({ direction }: { direction: "left" | "right" }) {
     );
 }
 
-function BlockView({ block, tx, onJump }: { block: Block; tx: (copy: Copy) => string; onJump: (chapter: ChapterId) => void }) {
+function BlockView({ block, tx, onJump }: { block: Block; tx: (copy: Copy, vars?: Record<string, string | number>) => string; onJump: (chapter: ChapterId) => void }) {
     switch (block.type) {
         case "cover":
             return (
@@ -155,7 +155,7 @@ function BlockView({ block, tx, onJump }: { block: Block; tx: (copy: Copy) => st
     }
 }
 
-function PageView({ page, index, tx, onJump, side }: { page: BookPage | undefined; index: number; tx: (copy: Copy) => string; onJump: (chapter: ChapterId) => void; side: "left" | "right" | "single" }) {
+function PageView({ page, index, tx, onJump, side }: { page: BookPage | undefined; index: number; tx: (copy: Copy, vars?: Record<string, string | number>) => string; onJump: (chapter: ChapterId) => void; side: "left" | "right" | "single" }) {
     const chapter = page ? CHAPTERS.find((entry) => entry.id === page.chapter) : null;
     return (
         <div className={`mc-page mc-font relative flex h-full w-full flex-col overflow-hidden ${side === "left" ? "rounded-s-md" : side === "right" ? "rounded-e-md" : "rounded-md"}`}>
@@ -164,7 +164,7 @@ function PageView({ page, index, tx, onJump, side }: { page: BookPage | undefine
                 <>
                     <div className="flex items-center justify-between px-6 pt-4 text-[12.5px] text-[#8a7350]">
                         <span className="truncate">{chapter ? `${chapter.icon} ${tx(chapter.title)}` : ""}</span>
-                        <span className="shrink-0">{tx({ TR: `Sayfa ${index + 1} / ${PAGES.length}`, EN: `Page ${index + 1} of ${PAGES.length}` })}</span>
+                        <span className="shrink-0">{tx({ TR: "Sayfa {page} / {total}", EN: "Page {page} of {total}" }, { page: index + 1, total: PAGES.length })}</span>
                     </div>
                     <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-6 pb-14 pt-3">
                         {page.title ? <h2 className="mb-3 text-[23px] font-semibold leading-tight text-[#3b2410]">{tx(page.title)}</h2> : null}
@@ -332,7 +332,7 @@ export default function MinecraftBook() {
                                 >
                                     <p className="text-[15px]" style={{ color: "#ffffff" }}>{tx(chapter.item)}</p>
                                     <p className="text-[13px] text-[#a8a8a8]">{tx(chapter.title)}</p>
-                                    <p className="text-[12px] text-[#5555ff]">{tx({ TR: `Sayfa ${chapterStartPage(chapter.id) + 1}`, EN: `Page ${chapterStartPage(chapter.id) + 1}` })}</p>
+                                    <p className="text-[12px] text-[#5555ff]">{tx({ TR: "Sayfa {page}", EN: "Page {page}" }, { page: chapterStartPage(chapter.id) + 1 })}</p>
                                 </motion.div>
                             ) : null}
                         </AnimatePresence>

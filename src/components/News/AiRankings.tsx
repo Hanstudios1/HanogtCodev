@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n";
 import { AnimatePresence, motion } from "framer-motion";
 import { Crown, ExternalLink, Info, LoaderCircle, RefreshCw, Scale, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
@@ -71,7 +72,7 @@ function randomPair(models: RankingsPayload["models"], previous?: [string, strin
 }
 
 export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: number }) {
-    const tr = locale === "tr";
+    const { tx, language } = useI18n();
     const [category, setCategory] = useState("code");
     const [tab, setTab] = useState<string>("arena");
     const [data, setData] = useState<RankingsPayload | null>(null);
@@ -88,7 +89,7 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
             setLoading(true);
             try {
                 const response = await fetch(`/api/news/rankings?category=${encodeURIComponent(category)}`, { signal: controller.signal, cache: "no-store" });
-                if (!response.ok) throw new Error(tr ? "Sıralamalar yüklenemedi." : "Could not load rankings.");
+                if (!response.ok) throw new Error(tx({ TR: "Sıralamalar yüklenemedi.", EN: "Could not load rankings." }));
                 const payload = await response.json() as RankingsPayload;
                 setData(payload);
                 setPair((current) => current ?? payload.pair);
@@ -101,13 +102,13 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
         };
         void load();
         return () => controller.abort();
-    }, [category, reload, tr]);
+    }, [category, reload, tx]);
 
     const modelName = (id: string) => data?.models.find((model) => model.id === id)?.name ?? id;
     const modelOrg = (id: string) => data?.models.find((model) => model.id === id)?.organization ?? "";
     const categoryLabel = (id: string) => {
         const entry = data?.categories.find((item) => item.id === id);
-        return entry ? (tr ? entry.tr : entry.en) : id;
+        return entry ? tx({ TR: entry.tr, EN: entry.en }) : id;
     };
 
     const vote = async (result: "a" | "b" | "tie") => {
@@ -122,13 +123,13 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
             });
             const payload = await response.json().catch(() => ({})) as { arena?: ArenaView; error?: string };
             if (response.status === 401) {
-                setNotice({ kind: "login", text: tr ? "Oy vermek için giriş yapmalısın." : "Sign in to vote." });
+                setNotice({ kind: "login", text: tx({ TR: "Oy vermek için giriş yapmalısın.", EN: "Sign in to vote." }) });
                 return;
             }
-            if (!response.ok || !payload.arena) throw new Error(payload.error || (tr ? "Oy kaydedilemedi." : "Vote failed."));
+            if (!response.ok || !payload.arena) throw new Error(payload.error || (tx({ TR: "Oy kaydedilemedi.", EN: "Vote failed." })));
             setData((current) => (current ? { ...current, arena: payload.arena ?? current.arena } : current));
             const winner = result === "tie" ? null : modelName(result === "a" ? pair[0] : pair[1]);
-            setNotice({ kind: "ok", text: winner ? (tr ? `Oyun kaydedildi: ${winner} kazandı 🎉` : `Vote saved: ${winner} wins 🎉`) : (tr ? "Oyun kaydedildi: berabere" : "Vote saved: tie") });
+            setNotice({ kind: "ok", text: winner ? tx({ TR: "Oyun kaydedildi: {winner} kazandı 🎉", EN: "Vote saved: {winner} wins 🎉" }, { winner }) : (tx({ TR: "Oyun kaydedildi: berabere", EN: "Vote saved: tie" })) });
             setPair((current) => (data ? randomPair(data.models, current) : current));
         } catch (reason) {
             setNotice({ kind: "error", text: reason instanceof Error ? reason.message : String(reason) });
@@ -163,16 +164,16 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
                 <div className="relative flex items-center gap-2">
                     <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-amber-400 to-pink-500 text-white shadow-lg shadow-pink-500/25"><Trophy className="h-4.5 w-4.5" /></span>
                     <div className="min-w-0 flex-1">
-                        <h2 id="ai-rankings-title" className="text-[15px] font-black text-zinc-900 dark:text-white">{tr ? "Yapay Zeka Sıralamaları" : "AI Leaderboards"}</h2>
-                        <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">{tr ? "Topluluk oyları + canlı dış kaynaklar" : "Community votes + live external sources"}</p>
+                        <h2 id="ai-rankings-title" className="text-[15px] font-black text-zinc-900 dark:text-white">{tx({ TR: "Yapay Zeka Sıralamaları", EN: "AI Leaderboards" })}</h2>
+                        <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">{tx({ TR: "Topluluk oyları + canlı dış kaynaklar", EN: "Community votes + live external sources" })}</p>
                     </div>
-                    <button type="button" onClick={() => setReload((value) => value + 1)} className="grid h-8 w-8 place-items-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-white/10 dark:hover:text-white" aria-label={tr ? "Yenile" : "Refresh"}>
+                    <button type="button" onClick={() => setReload((value) => value + 1)} className="grid h-8 w-8 place-items-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-white/10 dark:hover:text-white" aria-label={tx({ TR: "Yenile", EN: "Refresh" })}>
                         <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                     </button>
                 </div>
                 <div className="scrollbar-none relative mt-3 flex gap-1 overflow-x-auto">
-                    {tabButton("arena", tr ? "Topluluk Arenası" : "Community Arena")}
-                    {data?.external.map((entry) => tabButton(entry.id, entry.id === "openrouter-new" ? (tr ? "Yeni modeller" : "New models") : entry.title))}
+                    {tabButton("arena", tx({ TR: "Topluluk Arenası", EN: "Community Arena" }))}
+                    {data?.external.map((entry) => tabButton(entry.id, entry.id === "openrouter-new" ? (tx({ TR: "Yeni modeller", EN: "New models" })) : entry.title))}
                 </div>
             </div>
 
@@ -186,14 +187,14 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
             {data && tab === "arena" ? (
                 <div className="p-4">
                     <div className="flex items-center gap-2">
-                        <label htmlFor="arena-category" className="text-[12px] font-semibold text-zinc-500 dark:text-zinc-400">{tr ? "Kategori" : "Category"}</label>
+                        <label htmlFor="arena-category" className="text-[12px] font-semibold text-zinc-500 dark:text-zinc-400">{tx({ TR: "Kategori", EN: "Category" })}</label>
                         <select
                             id="arena-category"
                             value={category}
                             onChange={(event) => { setCategory(event.target.value); setNotice(null); }}
                             className="h-8 flex-1 rounded-lg border border-zinc-200 bg-white px-2 text-[12.5px] font-semibold text-zinc-700 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200"
                         >
-                            {data.categories.map((entry) => <option key={entry.id} value={entry.id}>{tr ? entry.tr : entry.en}</option>)}
+                            {data.categories.map((entry) => <option key={entry.id} value={entry.id}>{tx({ TR: entry.tr, EN: entry.en })}</option>)}
                         </select>
                         <span className="inline-flex items-center gap-1 rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-zinc-500 dark:bg-white/[0.06] dark:text-zinc-400"><Users className="h-3 w-3" />{arena?.votes ?? 0}</span>
                     </div>
@@ -234,13 +235,13 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
                     </ol>
                     {arena && !arena.votes ? (
                         <p className="mt-2 rounded-xl bg-amber-500/10 px-3 py-2 text-[11.5px] leading-snug text-amber-700 dark:text-amber-300">
-                            {tr ? "Bu kategoride henüz oy yok. Tüm modeller 1000 puanla başlar; sıralama sizin oylarınızla oluşur." : "No votes in this category yet. Every model starts at 1000; the ranking is built from your votes."}
+                            {tx({ TR: "Bu kategoride henüz oy yok. Tüm modeller 1000 puanla başlar; sıralama sizin oylarınızla oluşur.", EN: "No votes in this category yet. Every model starts at 1000; the ranking is built from your votes." })}
                         </p>
                     ) : null}
 
                     {pair ? (
                         <div className="mt-4 rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/[0.07] to-fuchsia-500/[0.07] p-3">
-                            <p className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-700 dark:text-indigo-300"><Swords className="h-3.5 w-3.5" />{tr ? `Kapışma: ${categoryLabel(category)} için hangisi daha iyi?` : `Face-off: which is better at ${categoryLabel(category).toLowerCase()}?`}</p>
+                            <p className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-700 dark:text-indigo-300"><Swords className="h-3.5 w-3.5" />{tx({ TR: "Kapışma: {category} için hangisi daha iyi?", EN: "Face-off: which is better at {category}?" }, { category: language === "TR" ? categoryLabel(category) : categoryLabel(category).toLocaleLowerCase(locale) })}</p>
                             <AnimatePresence mode="popLayout" initial={false}>
                                 <motion.div key={pair.join(":")} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mt-2 grid grid-cols-[1fr_auto_1fr] items-stretch gap-2">
                                     <button type="button" disabled={voting} onClick={() => void vote("a")} className="rounded-xl border border-zinc-200 bg-white px-2 py-2.5 text-center transition hover:-translate-y-0.5 hover:border-indigo-400 hover:shadow-lg disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900">
@@ -255,9 +256,9 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
                                 </motion.div>
                             </AnimatePresence>
                             <div className="mt-2 flex items-center gap-2">
-                                <button type="button" disabled={voting} onClick={() => void vote("tie")} className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg bg-white/70 text-[12px] font-semibold text-zinc-600 transition hover:bg-white disabled:opacity-50 dark:bg-white/[0.06] dark:text-zinc-300 dark:hover:bg-white/10"><Scale className="h-3.5 w-3.5" />{tr ? "Berabere" : "Tie"}</button>
+                                <button type="button" disabled={voting} onClick={() => void vote("tie")} className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg bg-white/70 text-[12px] font-semibold text-zinc-600 transition hover:bg-white disabled:opacity-50 dark:bg-white/[0.06] dark:text-zinc-300 dark:hover:bg-white/10"><Scale className="h-3.5 w-3.5" />{tx({ TR: "Berabere", EN: "Tie" })}</button>
                                 <button type="button" disabled={voting} onClick={() => { setPair((current) => randomPair(data.models, current)); setNotice(null); }} className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg bg-white/70 text-[12px] font-semibold text-zinc-600 transition hover:bg-white disabled:opacity-50 dark:bg-white/[0.06] dark:text-zinc-300 dark:hover:bg-white/10">
-                                    {voting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}{tr ? "Başka ikili" : "Another pair"}
+                                    {voting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}{tx({ TR: "Başka ikili", EN: "Another pair" })}
                                 </button>
                             </div>
                             <AnimatePresence>
@@ -270,7 +271,7 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
                                         className={`mt-2 overflow-hidden rounded-lg px-2.5 py-1.5 text-[12px] font-medium ${notice.kind === "ok" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : notice.kind === "login" ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300" : "bg-red-500/10 text-red-600 dark:text-red-300"}`}
                                     >
                                         {notice.text}
-                                        {notice.kind === "login" ? <> <Link href="/login?callbackUrl=/news" className="font-bold underline">{tr ? "Giriş yap" : "Sign in"}</Link></> : null}
+                                        {notice.kind === "login" ? <> <Link href="/login?callbackUrl=/news" className="font-bold underline">{tx({ TR: "Giriş yap", EN: "Sign in" })}</Link></> : null}
                                     </motion.p>
                                 ) : null}
                             </AnimatePresence>
@@ -278,16 +279,14 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
                     ) : null}
                     <p className="mt-3 flex gap-1.5 text-[10.5px] leading-snug text-zinc-400">
                         <Info className="mt-px h-3 w-3 shrink-0" />
-                        {tr
-                            ? "Arena puanları yalnızca Hanogt kullanıcılarının oylarından Elo yöntemiyle (K=24) hesaplanır; resmi bir benchmark değildir. Aynı ikiliye günde bir oy verilebilir."
-                            : "Arena ratings are computed only from Hanogt users' votes with Elo (K=24); this is not an official benchmark. One vote per pair per day."}
+                        {tx({ TR: "Arena puanları yalnızca Hanogt kullanıcılarının oylarından Elo yöntemiyle (K=24) hesaplanır; resmi bir benchmark değildir. Aynı ikiliye günde bir oy verilebilir.", EN: "Arena ratings are computed only from Hanogt users' votes with Elo (K=24); this is not an official benchmark. One vote per pair per day." })}
                     </p>
                 </div>
             ) : null}
 
             {data && board ? (
                 <div className="p-4">
-                    <p className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{board.id === "openrouter-new" ? (tr ? "OpenRouter kataloğuna en son eklenen yapay zeka modelleri." : "The latest AI models added to the OpenRouter catalog.") : board.description}</p>
+                    <p className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{board.id === "openrouter-new" ? (tx({ TR: "OpenRouter kataloğuna en son eklenen yapay zeka modelleri.", EN: "The latest AI models added to the OpenRouter catalog." })) : board.description}</p>
                     <ol className="mt-3 space-y-1.5">
                         {board.models.map((model, index) => (
                             <motion.li
@@ -316,7 +315,7 @@ export default function AiRankings({ locale, now }: { locale: "tr" | "en"; now: 
                         ))}
                     </ol>
                     <a href={board.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-400 hover:text-indigo-500">
-                        {tr ? "Kaynak" : "Source"}: {board.sourceName} · {timeAgo(board.fetchedAt, locale, now)}<ExternalLink className="h-3 w-3" />
+                        {tx({ TR: "Kaynak", EN: "Source" })}: {board.sourceName} · {timeAgo(board.fetchedAt, locale, now)}<ExternalLink className="h-3 w-3" />
                     </a>
                 </div>
             ) : null}

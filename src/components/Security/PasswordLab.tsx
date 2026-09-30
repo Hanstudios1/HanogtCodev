@@ -64,7 +64,7 @@ const LEVELS: Array<{ label: Copy; color: string }> = [
 type Breach = { state: "idle" | "checking" | "safe" | "pwned" | "error"; count?: number; message?: string };
 
 export default function PasswordLab() {
-    const { tx, language } = useI18n();
+    const { tx, language, locale: intlLocale } = useI18n();
     const locale = language === "TR" ? "tr" : "en";
     const [password, setPassword] = useState("");
     const [visible, setVisible] = useState(false);
@@ -164,7 +164,7 @@ export default function PasswordLab() {
                                 </button>
                                 <p className="text-[11.5px] leading-snug text-zinc-500">{tx({ TR: "Parolanın yalnızca SHA-1 özetinin ilk 5 karakteri gönderilir (k-anonimlik).", EN: "Only the first 5 characters of the SHA-1 hash are sent (k-anonymity)." })}</p>
                             </div>
-                            {breach.state === "pwned" ? <p className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] font-semibold text-red-700 dark:text-red-300">{tx({ TR: `Bu parola bilinen veri sızıntılarında ${breach.count?.toLocaleString("tr-TR")} kez görüldü. Kullanma!`, EN: `This password appeared ${breach.count?.toLocaleString("en-US")} times in known breaches. Don't use it!` })}</p> : null}
+                            {breach.state === "pwned" ? <p className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] font-semibold text-red-700 dark:text-red-300">{tx({ TR: "Bu parola bilinen veri sızıntılarında {count} kez görüldü. Kullanma!", EN: "This password appeared {count} times in known breaches. Don't use it!" }, { count: breach.count?.toLocaleString(intlLocale) ?? "?" })}</p> : null}
                             {breach.state === "safe" ? <p className="mt-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">{tx({ TR: "Bilinen sızıntılarda bulunamadı. Yine de her sitede farklı parola kullan.", EN: "Not found in known breaches. Still, use a unique password per site." })}</p> : null}
                             {breach.state === "error" ? <p className="mt-2 text-[12.5px] text-amber-600 dark:text-amber-400">{breach.message ?? tx({ TR: "Sızıntı veritabanına şu anda ulaşılamıyor.", EN: "The breach database is unreachable right now." })}</p> : null}
                         </div>

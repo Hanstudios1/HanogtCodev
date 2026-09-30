@@ -132,7 +132,7 @@ interface CardProps {
 }
 
 function NewsCard({ item, locale, now, isNew, comments, saved, featured = false, delay, onComments, onSave, onShare }: CardProps) {
-    const tr = locale === "tr";
+    const { tx } = useI18n();
     const category = NEWS_CATEGORIES.find((entry) => entry.id === item.category);
     const style = CATEGORY_STYLE[item.category] ?? CATEGORY_STYLE.apps;
     const published = new Date(item.publishedAt);
@@ -146,11 +146,11 @@ function NewsCard({ item, locale, now, isNew, comments, saved, featured = false,
             </a>
             <div className={`flex flex-1 flex-col ${featured ? "p-5 md:p-7" : "p-4"}`}>
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold ${style.chip}`}>{category?.emoji} {category ? (tr ? category.tr : category.en) : item.category}</span>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold ${style.chip}`}>{category?.emoji} {category ? tx({ TR: category.tr, EN: category.en }) : item.category}</span>
                     {isNew ? (
                         <span className="relative inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-2 py-0.5 font-black uppercase tracking-wider text-white">
                             <span className="absolute inset-0 rounded-full animate-pulse-ring" />
-                            <Sparkles className="h-3 w-3" />{tr ? "Yeni" : "New"}
+                            <Sparkles className="h-3 w-3" />{tx({ TR: "Yeni", EN: "New" })}
                         </span>
                     ) : null}
                     <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-bold text-zinc-500 dark:bg-white/[0.06] dark:text-zinc-400">{item.language.toUpperCase()}</span>
@@ -162,15 +162,15 @@ function NewsCard({ item, locale, now, isNew, comments, saved, featured = false,
                 <div className="mt-auto flex items-center gap-2 pt-4 text-[12px] text-zinc-500 dark:text-zinc-400">
                     <span className="min-w-0 truncate font-bold text-zinc-700 dark:text-zinc-300">{item.source.name}</span>
                     <span aria-hidden="true">·</span>
-                    <time dateTime={item.publishedAt} title={published.toLocaleString(tr ? "tr-TR" : "en-US")} suppressHydrationWarning className="shrink-0">{timeAgo(item.publishedAt, locale, now)}</time>
+                    <time dateTime={item.publishedAt} title={published.toLocaleString(tx({ TR: "tr-TR", EN: "en-US" }))} suppressHydrationWarning className="shrink-0">{timeAgo(item.publishedAt, locale, now)}</time>
                     <div className="relative z-10 ml-auto flex items-center gap-0.5">
-                        <button type="button" onClick={() => onComments(item)} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 font-semibold transition hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-300" aria-label={tr ? `Yorumlar (${comments})` : `Comments (${comments})`}>
+                        <button type="button" onClick={() => onComments(item)} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 font-semibold transition hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-300" aria-label={tx({ TR: "Yorumlar ({count})", EN: "Comments ({count})" }, { count: comments })}>
                             <MessageCircle className="h-4 w-4" />{comments ? <span className="tabular-nums">{comments}</span> : null}
                         </button>
-                        <button type="button" onClick={() => onSave(item)} className={`grid h-8 w-8 place-items-center rounded-lg transition hover:bg-amber-500/10 hover:text-amber-600 ${saved ? "text-amber-500" : ""}`} aria-pressed={saved} aria-label={saved ? (tr ? "Kaydedilenlerden çıkar" : "Remove from saved") : (tr ? "Sonra oku" : "Read later")}>
+                        <button type="button" onClick={() => onSave(item)} className={`grid h-8 w-8 place-items-center rounded-lg transition hover:bg-amber-500/10 hover:text-amber-600 ${saved ? "text-amber-500" : ""}`} aria-pressed={saved} aria-label={saved ? (tx({ TR: "Kaydedilenlerden çıkar", EN: "Remove from saved" })) : (tx({ TR: "Sonra oku", EN: "Read later" }))}>
                             {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
                         </button>
-                        <button type="button" onClick={() => onShare(item)} className="grid h-8 w-8 place-items-center rounded-lg transition hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/10 dark:hover:text-white" aria-label={tr ? "Paylaş" : "Share"}>
+                        <button type="button" onClick={() => onShare(item)} className="grid h-8 w-8 place-items-center rounded-lg transition hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/10 dark:hover:text-white" aria-label={tx({ TR: "Paylaş", EN: "Share" })}>
                             <Share2 className="h-4 w-4" />
                         </button>
                     </div>
@@ -180,14 +180,15 @@ function NewsCard({ item, locale, now, isNew, comments, saved, featured = false,
     );
 }
 
-function Ticker({ items, locale }: { items: NewsItemView[]; locale: "tr" | "en" }) {
+function Ticker({ items }: { items: NewsItemView[]; locale: "tr" | "en" }) {
+    const { tx } = useI18n();
     if (items.length < 3) return null;
     const loop = [...items, ...items];
     return (
         <div className="relative border-y border-zinc-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-zinc-950/60">
             <div className="mx-auto flex max-w-7xl items-center">
                 <span className="z-10 flex shrink-0 items-center gap-1.5 bg-gradient-to-r from-red-500 to-rose-500 px-3 py-2 text-[11px] font-black uppercase tracking-widest text-white">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />{locale === "tr" ? "Son dakika" : "Breaking"}
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />{tx({ TR: "Son dakika", EN: "Breaking" })}
                 </span>
                 <div className="mask-fade-x min-w-0 flex-1 overflow-hidden">
                     <div className="flex w-max animate-marquee gap-8 py-2 pl-6 hover:[animation-play-state:paused]" style={{ animationDuration: `${Math.max(40, items.length * 6)}s` }}>
@@ -210,9 +211,8 @@ function Ticker({ items, locale }: { items: NewsItemView[]; locale: "tr" | "en" 
 // ---------------------------------------------------------------------------
 
 export default function NewsPage({ initial }: { initial: NewsSnapshotView | null }) {
-    const { language, dir } = useI18n();
+    const { language, dir, tx } = useI18n();
     const locale: "tr" | "en" = language === "TR" ? "tr" : "en";
-    const tr = locale === "tr";
     // News copy exists in Turkish and English only, so right-to-left languages read it left-to-right.
     const contentDir = dir === "rtl" ? "ltr" : undefined;
     const initialItems = initial?.items ?? [];
@@ -299,12 +299,12 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                     if (window.scrollY < 520) {
                         setItems((existing) => mergeNewsItems(fresh, existing));
                         highlight(fresh.map((item) => item.id));
-                        showToast(tr ? `${fresh.length} yeni haber geldi` : `${fresh.length} new stories arrived`);
+                        showToast(tx({ TR: "{count} yeni haber geldi", EN: "{count} new stories arrived" }, { count: fresh.length }));
                     } else {
                         setPending((existing) => mergeNewsItems(fresh, existing));
                     }
                 } else if (manual) {
-                    showToast(tr ? "Akış güncel — yeni haber yok" : "Feed is up to date");
+                    showToast(tx({ TR: "Akış güncel — yeni haber yok", EN: "Feed is up to date" }));
                 }
             } catch (reason) {
                 if (!disposed && !(reason instanceof DOMException && reason.name === "AbortError")) setOffline(true);
@@ -332,7 +332,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
             document.removeEventListener("visibilitychange", onVisible);
             loadRef.current = null;
         };
-    }, [highlight, showToast, tr]);
+    }, [highlight, showToast, tx]);
 
     // "/" focuses search, Escape clears it.
     useEffect(() => {
@@ -350,8 +350,8 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
 
     useEffect(() => {
         const base = "Hanogt News";
-        document.title = pending.length ? `(${pending.length}) ${base}` : `${base} — ${tr ? "Canlı teknoloji haberleri" : "Live tech news"}`;
-    }, [pending.length, tr]);
+        document.title = pending.length ? `(${pending.length}) ${base}` : `${base} — ${tx({ TR: "Canlı teknoloji haberleri", EN: "Live tech news" })}`;
+    }, [pending.length, tx]);
 
     // Derived lists
     const needle = query.trim().toLocaleLowerCase("tr");
@@ -400,7 +400,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const toggleSave = (item: NewsItemView) => {
         const exists = saved.some((entry) => entry.id === item.id);
         writeSaved(exists ? saved.filter((entry) => entry.id !== item.id) : [item, ...saved]);
-        showToast(exists ? (tr ? "Kaydedilenlerden çıkarıldı" : "Removed from saved") : (tr ? "Sonra okumak için kaydedildi" : "Saved for later"));
+        showToast(exists ? (tx({ TR: "Kaydedilenlerden çıkarıldı", EN: "Removed from saved" })) : (tx({ TR: "Sonra okumak için kaydedildi", EN: "Saved for later" })));
     };
 
     const share = async (item: NewsItemView) => {
@@ -410,7 +410,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                 return;
             }
             await navigator.clipboard.writeText(item.link);
-            showToast(tr ? "Bağlantı kopyalandı" : "Link copied");
+            showToast(tx({ TR: "Bağlantı kopyalandı", EN: "Link copied" }));
         } catch {
             // The share sheet was dismissed.
         }
@@ -449,27 +449,25 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                         <div className="flex flex-wrap items-center gap-2 animate-fade-up">
                             <span className="inline-flex items-center gap-2 rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1 text-[12px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">
                                 <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" /></span>
-                                {tr ? "Canlı" : "Live"}
+                                {tx({ TR: "Canlı", EN: "Live" })}
                             </span>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-[12px] font-semibold text-zinc-600 backdrop-blur dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300">
                                 {offline ? <WifiOff className="h-3.5 w-3.5 text-amber-500" /> : <Wifi className="h-3.5 w-3.5 text-emerald-500" />}
-                                {fetchedAt ? <>{tr ? "Güncellendi" : "Updated"} <time dateTime={fetchedAt} suppressHydrationWarning>{timeAgo(fetchedAt, locale, now)}</time></> : (tr ? "Bağlanıyor…" : "Connecting…")}
+                                {fetchedAt ? <>{tx({ TR: "Güncellendi", EN: "Updated" })} <time dateTime={fetchedAt} suppressHydrationWarning>{timeAgo(fetchedAt, locale, now)}</time></> : (tx({ TR: "Bağlanıyor…", EN: "Connecting…" }))}
                             </span>
                         </div>
                         <h1 className="mt-4 text-5xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-6xl animate-fade-up" style={{ animationDelay: "60ms" }}>
                             Hanogt <span className="text-gradient animate-gradient">News</span>
                         </h1>
                         <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "120ms" }}>
-                            {tr
-                                ? "Yapay zeka, yazılım, oyun, uygulama ve bilim dünyasından güncel haberler tek akışta. Akış kendiliğinden yenilenir, yeni haberler canlı olarak düşer; yorum yap, kaydet, yapay zeka arenasında oy ver."
-                                : "The latest from AI, software, games, apps and science in one stream. The feed refreshes itself and new stories drop in live; comment, save and vote in the AI arena."}
+                            {tx({ TR: "Yapay zeka, yazılım, oyun, uygulama ve bilim dünyasından güncel haberler tek akışta. Akış kendiliğinden yenilenir, yeni haberler canlı olarak düşer; yorum yap, kaydet, yapay zeka arenasında oy ver.", EN: "The latest from AI, software, games, apps and science in one stream. The feed refreshes itself and new stories drop in live; comment, save and vote in the AI arena." })}
                         </p>
                         <div className="mt-6 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: "180ms" }}>
                             {[
-                                { icon: Newspaper, value: items.length, label: tr ? "haber" : "stories" },
-                                { icon: Radio, value: sources.length ? `${okSources}/${sources.length}` : "—", label: tr ? "kaynak aktif" : "sources live" },
-                                { icon: Clock, value: `${Math.round(REFRESH_MS / 1000)}${tr ? " sn" : "s"}`, label: tr ? "yenileme aralığı" : "refresh interval" },
-                                { icon: Bookmark, value: saved.length, label: tr ? "kaydedilen" : "saved" },
+                                { icon: Newspaper, value: items.length, label: tx({ TR: "haber", EN: "stories" }) },
+                                { icon: Radio, value: sources.length ? `${okSources}/${sources.length}` : "—", label: tx({ TR: "kaynak aktif", EN: "sources live" }) },
+                                { icon: Clock, value: `${Math.round(REFRESH_MS / 1000)}${tx({ TR: " sn", EN: "s" })}`, label: tx({ TR: "yenileme aralığı", EN: "refresh interval" }) },
+                                { icon: Bookmark, value: saved.length, label: tx({ TR: "kaydedilen", EN: "saved" }) },
                             ].map((stat) => (
                                 <div key={stat.label} className="flex items-center gap-2.5 rounded-2xl border border-zinc-200/80 bg-white/80 px-3.5 py-2 backdrop-blur dark:border-white/[0.08] dark:bg-white/[0.04]">
                                     <stat.icon className="h-4 w-4 text-indigo-500" />
@@ -487,15 +485,15 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                 <div className="sticky top-16 z-30 border-b border-zinc-200/70 bg-zinc-50/85 backdrop-blur-xl dark:border-white/[0.06] dark:bg-zinc-950/85">
                     <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 lg:flex-row lg:items-center">
                         <div className="scrollbar-none -mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto px-1 pr-6 [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)]">
-                            {chip("all", tr ? "Tümü" : "All", "🌐", languageFiltered.length)}
-                            {NEWS_CATEGORIES.map((entry) => chip(entry.id, tr ? entry.tr : entry.en, entry.emoji, categoryCount(entry.id)))}
-                            {chip("saved", tr ? "Kaydedilenler" : "Saved", "🔖", saved.length)}
+                            {chip("all", tx({ TR: "Tümü", EN: "All" }), "🌐", languageFiltered.length)}
+                            {NEWS_CATEGORIES.map((entry) => chip(entry.id, tx({ TR: entry.tr, EN: entry.en }), entry.emoji, categoryCount(entry.id)))}
+                            {chip("saved", tx({ TR: "Kaydedilenler", EN: "Saved" }), "🔖", saved.length)}
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="flex rounded-full border border-zinc-200 bg-white p-0.5 dark:border-white/10 dark:bg-zinc-900" role="group" aria-label={tr ? "Haber dili" : "News language"}>
+                            <div className="flex rounded-full border border-zinc-200 bg-white p-0.5 dark:border-white/10 dark:bg-zinc-900" role="group" aria-label={tx({ TR: "Haber dili", EN: "News language" })}>
                                 {(["all", "tr", "en"] as const).map((value) => (
                                     <button key={value} type="button" onClick={() => setLang(value)} aria-pressed={lang === value} className={`h-8 rounded-full px-3 text-[12px] font-bold transition ${lang === value ? "bg-indigo-500 text-white shadow" : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white"}`}>
-                                        {value === "all" ? (tr ? "Hepsi" : "All") : value.toUpperCase()}
+                                        {value === "all" ? (tx({ TR: "Hepsi", EN: "All" })) : value.toUpperCase()}
                                     </button>
                                 ))}
                             </div>
@@ -506,13 +504,13 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                                     value={query}
                                     onChange={(event) => { setQuery(event.target.value); setLimit(PAGE_SIZE); }}
                                     onKeyDown={(event) => { if (event.key === "Escape") setQuery(""); }}
-                                    placeholder={tr ? "Haberlerde ara…  ( / )" : "Search stories…  ( / )"}
-                                    aria-label={tr ? "Haberlerde ara" : "Search stories"}
+                                    placeholder={tx({ TR: "Haberlerde ara…  ( / )", EN: "Search stories…  ( / )" })}
+                                    aria-label={tx({ TR: "Haberlerde ara", EN: "Search stories" })}
                                     className="h-9 w-full rounded-full border border-zinc-200 bg-white pl-10 pr-8 text-[13px] text-zinc-800 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
                                 />
-                                {query ? <button type="button" onClick={() => setQuery("")} className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10" aria-label={tr ? "Aramayı temizle" : "Clear search"}><X className="h-3.5 w-3.5" /></button> : null}
+                                {query ? <button type="button" onClick={() => setQuery("")} className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10" aria-label={tx({ TR: "Aramayı temizle", EN: "Clear search" })}><X className="h-3.5 w-3.5" /></button> : null}
                             </div>
-                            <button type="button" onClick={() => void loadRef.current?.(true)} disabled={refreshing} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:text-indigo-600 disabled:opacity-60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300" aria-label={tr ? "Şimdi yenile" : "Refresh now"}>
+                            <button type="button" onClick={() => void loadRef.current?.(true)} disabled={refreshing} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:text-indigo-600 disabled:opacity-60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300" aria-label={tx({ TR: "Şimdi yenile", EN: "Refresh now" })}>
                                 <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
                             </button>
                         </div>
@@ -533,7 +531,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                             exit={{ y: -30, opacity: 0, scale: 0.9 }}
                             className="fixed left-1/2 top-[132px] z-40 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-4 py-2 text-[13px] font-bold text-white shadow-2xl shadow-indigo-500/40"
                         >
-                            <ArrowUp className="h-4 w-4" />{tr ? `${pending.length} yeni haber` : `${pending.length} new stories`}
+                            <ArrowUp className="h-4 w-4" />{tx({ TR: "{count} yeni haber", EN: "{count} new stories" }, { count: pending.length })}
                         </motion.button>
                     ) : null}
                 </AnimatePresence>
@@ -542,7 +540,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                     <div ref={feedRef} className="min-w-0">
                         {offline ? (
                             <p className="mb-4 flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-[13px] text-amber-700 dark:text-amber-300" role="status">
-                                <CircleAlert className="h-4 w-4 shrink-0" />{tr ? "Haber sunucusuna şu anda ulaşılamıyor; akış otomatik olarak yeniden denenecek." : "The news server is unreachable right now; the feed will retry automatically."}
+                                <CircleAlert className="h-4 w-4 shrink-0" />{tx({ TR: "Haber sunucusuna şu anda ulaşılamıyor; akış otomatik olarak yeniden denenecek.", EN: "The news server is unreachable right now; the feed will retry automatically." })}
                             </p>
                         ) : null}
 
@@ -561,13 +559,13 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                             <div className="grid place-items-center rounded-3xl border border-dashed border-zinc-300 bg-white/60 px-6 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
                                 <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-rose-500 text-3xl shadow-xl animate-float">{category === "saved" ? "🔖" : "📰"}</div>
                                 <h2 className="mt-5 text-xl font-bold text-zinc-900 dark:text-white">
-                                    {category === "saved" ? (tr ? "Kaydedilen haber yok" : "Nothing saved yet") : needle ? (tr ? "Sonuç bulunamadı" : "No results") : (tr ? "Haberler hazırlanıyor" : "Fetching stories")}
+                                    {category === "saved" ? (tx({ TR: "Kaydedilen haber yok", EN: "Nothing saved yet" })) : needle ? (tx({ TR: "Sonuç bulunamadı", EN: "No results" })) : (tx({ TR: "Haberler hazırlanıyor", EN: "Fetching stories" }))}
                                 </h2>
                                 <p className="mt-2 max-w-md text-sm text-zinc-500 dark:text-zinc-400">
                                     {category === "saved"
-                                        ? (tr ? "Kartlardaki yer imi simgesine basarak haberleri sonra okumak üzere bu cihaza kaydedebilirsin." : "Tap the bookmark icon on any card to keep it on this device for later.")
-                                        : needle ? (tr ? "Farklı bir kelime veya kategori deneyin." : "Try another keyword or category.")
-                                            : (tr ? "Kaynaklara şu anda ulaşılamıyor olabilir. Akış birkaç dakika içinde otomatik olarak yeniden denenecek." : "Sources may be unreachable right now. The feed will retry automatically.")}
+                                        ? (tx({ TR: "Kartlardaki yer imi simgesine basarak haberleri sonra okumak üzere bu cihaza kaydedebilirsin.", EN: "Tap the bookmark icon on any card to keep it on this device for later." }))
+                                        : needle ? (tx({ TR: "Farklı bir kelime veya kategori deneyin.", EN: "Try another keyword or category." }))
+                                            : (tx({ TR: "Kaynaklara şu anda ulaşılamıyor olabilir. Akış birkaç dakika içinde otomatik olarak yeniden denenecek.", EN: "Sources may be unreachable right now. The feed will retry automatically." }))}
                                 </p>
                             </div>
                         ) : null}
@@ -600,18 +598,18 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                         {!loading && rest.length > limit ? (
                             <div className="mt-6 flex justify-center">
                                 <button type="button" onClick={() => setLimit((value) => value + PAGE_SIZE)} className="inline-flex h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-bold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100">
-                                    <Newspaper className="h-4 w-4" />{tr ? `Daha fazla göster (${rest.length - limit})` : `Show more (${rest.length - limit})`}
+                                    <Newspaper className="h-4 w-4" />{tx({ TR: "Daha fazla göster ({count})", EN: "Show more ({count})" }, { count: rest.length - limit })}
                                 </button>
                             </div>
                         ) : null}
                     </div>
 
-                    <aside className="space-y-5 lg:sticky lg:top-36 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto lg:pb-6 scrollbar-thin" aria-label={tr ? "Yan panel" : "Sidebar"}>
+                    <aside className="space-y-5 lg:sticky lg:top-36 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto lg:pb-6 scrollbar-thin" aria-label={tx({ TR: "Yan panel", EN: "Sidebar" })}>
                         <AiRankings locale={locale} now={now} />
 
                         {trending.length ? (
                             <section className="rounded-3xl border border-zinc-200/80 bg-white p-4 shadow-sm dark:border-white/[0.08] dark:bg-zinc-900/70">
-                                <h2 className="flex items-center gap-2 text-[14px] font-black text-zinc-900 dark:text-white"><Flame className="h-4 w-4 text-orange-500" />{tr ? "Gündemdeki konular" : "Trending topics"}</h2>
+                                <h2 className="flex items-center gap-2 text-[14px] font-black text-zinc-900 dark:text-white"><Flame className="h-4 w-4 text-orange-500" />{tx({ TR: "Gündemdeki konular", EN: "Trending topics" })}</h2>
                                 <div className="mt-3 flex flex-wrap gap-1.5">
                                     {trending.map((topic, index) => (
                                         <motion.button
@@ -631,23 +629,23 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                         ) : null}
 
                         <section className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/[0.08] via-white to-fuchsia-500/[0.08] p-4 dark:via-zinc-900/60">
-                            <h2 className="flex items-center gap-2 text-[14px] font-black text-zinc-900 dark:text-white"><BookOpen className="h-4 w-4 text-indigo-500" />{tr ? "Hanogt News nasıl çalışır?" : "How Hanogt News works"}</h2>
+                            <h2 className="flex items-center gap-2 text-[14px] font-black text-zinc-900 dark:text-white"><BookOpen className="h-4 w-4 text-indigo-500" />{tx({ TR: "Hanogt News nasıl çalışır?", EN: "How Hanogt News works" })}</h2>
                             <ul className="mt-2 space-y-1.5 text-[12.5px] leading-snug text-zinc-600 dark:text-zinc-400">
-                                <li>📡 {tr ? `${sources.length || "20+"} güvenilir kaynağın herkese açık RSS/Atom akışları okunur; yalnızca başlık, kısa özet ve bağlantı gösterilir.` : `Public RSS/Atom feeds from ${sources.length || "20+"} trusted sources; only headlines, short excerpts and links are shown.`}</li>
-                                <li>⏱️ {tr ? "Sunucu akışları birkaç dakikada bir yeniler, bu sayfa 75 saniyede bir kontrol eder ve yeni haberleri animasyonla ekler." : "The server refreshes feeds every few minutes; this page checks every 75 seconds and animates new stories in."}</li>
-                                <li>💬 {tr ? "Yorumlar giriş yapan kullanıcılara açıktır; spam ve hakaret filtrelenir." : "Signed-in users can comment; spam and abuse are filtered."}</li>
-                                <li>🏆 {tr ? "Arena puanları yalnızca sizin oylarınızdan Elo ile hesaplanır." : "Arena ratings come only from your votes via Elo."}</li>
+                                <li>📡 {tx({ TR: "{count} güvenilir kaynağın herkese açık RSS/Atom akışları okunur; yalnızca başlık, kısa özet ve bağlantı gösterilir.", EN: "Public RSS/Atom feeds from {count} trusted sources; only headlines, short excerpts and links are shown." }, { count: sources.length || "20+" })}</li>
+                                <li>⏱️ {tx({ TR: "Sunucu akışları birkaç dakikada bir yeniler, bu sayfa 75 saniyede bir kontrol eder ve yeni haberleri animasyonla ekler.", EN: "The server refreshes feeds every few minutes; this page checks every 75 seconds and animates new stories in." })}</li>
+                                <li>💬 {tx({ TR: "Yorumlar giriş yapan kullanıcılara açıktır; spam ve hakaret filtrelenir.", EN: "Signed-in users can comment; spam and abuse are filtered." })}</li>
+                                <li>🏆 {tx({ TR: "Arena puanları yalnızca sizin oylarınızdan Elo ile hesaplanır.", EN: "Arena ratings come only from your votes via Elo." })}</li>
                             </ul>
-                            <Link href="/guide#news" className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-bold text-indigo-600 hover:underline dark:text-indigo-300">{tr ? "Kılavuzda ayrıntılar" : "Read the guide"} →</Link>
+                            <Link href="/guide#news" className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-bold text-indigo-600 hover:underline dark:text-indigo-300">{tx({ TR: "Kılavuzda ayrıntılar", EN: "Read the guide" })} →</Link>
                         </section>
 
                         {sources.length ? (
                             <section className="rounded-3xl border border-zinc-200/80 bg-white p-4 shadow-sm dark:border-white/[0.08] dark:bg-zinc-900/70">
-                                <h2 className="flex items-center gap-2 text-[14px] font-black text-zinc-900 dark:text-white"><Radio className="h-4 w-4 text-emerald-500" />{tr ? "Kaynaklar" : "Sources"}<span className="ml-auto text-[11px] font-semibold text-zinc-400">{okSources}/{sources.length}</span></h2>
+                                <h2 className="flex items-center gap-2 text-[14px] font-black text-zinc-900 dark:text-white"><Radio className="h-4 w-4 text-emerald-500" />{tx({ TR: "Kaynaklar", EN: "Sources" })}<span className="ml-auto text-[11px] font-semibold text-zinc-400">{okSources}/{sources.length}</span></h2>
                                 <ul className="mt-2 grid grid-cols-2 gap-1">
                                     {(showAllSources ? sources : sources.slice(0, 10)).map((source) => (
                                         <li key={source.id}>
-                                            <a href={source.homepage} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/[0.06]" title={source.ok ? `${source.count} ${tr ? "haber" : "stories"}` : (tr ? "Şu anda ulaşılamıyor" : "Unreachable right now")}>
+                                            <a href={source.homepage} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/[0.06]" title={source.ok ? `${source.count} ${tx({ TR: "haber", EN: "stories" })}` : (tx({ TR: "Şu anda ulaşılamıyor", EN: "Unreachable right now" }))}>
                                                 <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${source.ok ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"}`} />
                                                 <span className="truncate">{source.name}</span>
                                                 <ExternalLink className="ml-auto h-3 w-3 shrink-0 opacity-40" />
@@ -657,10 +655,10 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                                 </ul>
                                 {sources.length > 10 ? (
                                     <button type="button" onClick={() => setShowAllSources((value) => !value)} className="mt-2 text-[12px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
-                                        {showAllSources ? (tr ? "Daha az göster" : "Show less") : (tr ? `Tüm kaynaklar (${sources.length})` : `All sources (${sources.length})`)}
+                                        {showAllSources ? (tx({ TR: "Daha az göster", EN: "Show less" })) : tx({ TR: "Tüm kaynaklar ({count})", EN: "All sources ({count})" }, { count: sources.length })}
                                     </button>
                                 ) : null}
-                                <p className="mt-2 text-[10.5px] leading-snug text-zinc-400">{tr ? "Haber içerikleri ilgili yayıncılara aittir; kartlar her zaman orijinal habere bağlantı verir." : "Stories belong to their publishers; every card links to the original article."}</p>
+                                <p className="mt-2 text-[10.5px] leading-snug text-zinc-400">{tx({ TR: "Haber içerikleri ilgili yayıncılara aittir; kartlar her zaman orijinal habere bağlantı verir.", EN: "Stories belong to their publishers; every card links to the original article." })}</p>
                             </section>
                         ) : null}
                     </aside>

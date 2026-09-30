@@ -67,7 +67,7 @@ const C = {
     codeStat: { TR: "kod projesi", EN: "code projects" },
     gameStat: { TR: "oyun projesi", EN: "game projects" },
     codeCard: { TR: "Kod projesi", EN: "Code project" },
-    codeCardDesc: { TR: `${CODE_LANGUAGES.length} dil, çoklu dosya ve tek tuşla paralel çalıştırma`, EN: `${CODE_LANGUAGES.length} languages, multiple files and one-click parallel runs` },
+    codeCardDesc: { TR: "{count} dil, çoklu dosya ve tek tuşla paralel çalıştırma", EN: "{count} languages, multiple files and one-click parallel runs", vars: { count: CODE_LANGUAGES.length } },
     gameCard: { TR: "Oyun projesi", EN: "Game project" },
     gameCardDesc: { TR: "C#/C++ scriptli, nesne-bileşen tabanlı 2D/3D motor", EN: "Object-component 2D/3D engine scripted in C#/C++" },
     codeProjects: { TR: "Kod projeleri", EN: "Code projects" },
@@ -333,9 +333,9 @@ export default function DashboardPage() {
 
     const handleDeleteGameProject = async (project: GameProjectSummary) => {
         const question = tx({
-            TR: `“${project.name}” oyun projesi ve scriptleri kalıcı olarak silinsin mi?`,
-            EN: `Permanently delete the game project “${project.name}” and its scripts?`,
-        });
+            TR: "“{name}” oyun projesi ve scriptleri kalıcı olarak silinsin mi?",
+            EN: "Permanently delete the game project “{name}” and its scripts?",
+        }, { name: project.name });
         if (!window.confirm(question)) return;
         try {
             const response = await fetch(`/api/game-projects/${encodeURIComponent(project.id)}`, { method: "DELETE" });
@@ -699,14 +699,14 @@ export default function DashboardPage() {
                                     >
                                         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-blue-500 opacity-70" />
                                         <div className="mb-5 flex items-start justify-between">
-                                            <button type="button" onClick={openProject} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/15 to-violet-500/15 text-fuchsia-500" aria-label={tx({ TR: `${project.name} projesini oyun motorunda aç`, EN: `Open ${project.name} in the game engine` })}>
+                                            <button type="button" onClick={openProject} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/15 to-violet-500/15 text-fuchsia-500" aria-label={tx({ TR: "{name} projesini oyun motorunda aç", EN: "Open {name} in the game engine" }, { name: project.name })}>
                                                 {project.dimension === "2d" ? <Box className="h-6 w-6" aria-hidden /> : <Boxes className="h-6 w-6" aria-hidden />}
                                             </button>
-                                            <button type="button" onClick={() => void handleDeleteGameProject(project)} className="rounded-lg p-2 text-zinc-400 transition hover:bg-red-500/10 hover:text-red-500" aria-label={tx({ TR: `${project.name} projesini sil`, EN: `Delete ${project.name}` })}><Trash2 className="h-4 w-4" aria-hidden /></button>
+                                            <button type="button" onClick={() => void handleDeleteGameProject(project)} className="rounded-lg p-2 text-zinc-400 transition hover:bg-red-500/10 hover:text-red-500" aria-label={tx({ TR: "{name} projesini sil", EN: "Delete {name}" }, { name: project.name })}><Trash2 className="h-4 w-4" aria-hidden /></button>
                                         </div>
                                         <button type="button" onClick={openProject} className="block w-full text-start">
                                             <h3 className="truncate text-lg font-bold transition group-hover:text-fuchsia-500">{project.name}</h3>
-                                            <p className="mt-1 line-clamp-2 min-h-10 text-sm text-zinc-500 dark:text-zinc-400">{project.description || tx({ TR: `${project.dimension.toUpperCase()} Hanogt oyun sahnesi`, EN: `${project.dimension.toUpperCase()} Hanogt game scene` })}</p>
+                                            <p className="mt-1 line-clamp-2 min-h-10 text-sm text-zinc-500 dark:text-zinc-400">{project.description || tx({ TR: "{dimension} Hanogt oyun sahnesi", EN: "{dimension} Hanogt game scene" }, { dimension: project.dimension.toUpperCase() })}</p>
                                             <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
                                                 <span className="rounded-full bg-fuchsia-500/10 px-2.5 py-1 font-semibold text-fuchsia-600 dark:text-fuchsia-300">{project.dimension.toUpperCase()}</span>
                                                 <span>{project.objectCount ?? 0} {tx(C.objects)}</span>

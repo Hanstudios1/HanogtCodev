@@ -3,7 +3,7 @@
  * (link check, code scan, secret warning). No message leaves the browser.
  */
 
-import type { Copy } from "@/lib/i18n";
+import { formatCopy, type Copy } from "@/lib/i18n";
 import { analyzeCode, containsSecret } from "./advisor";
 import { checkLink, findUrl } from "./links";
 
@@ -235,8 +235,8 @@ export function botReply(message: string, lastTopic: string | null): BotReply {
                 : report.verdict === "safe"
                     ? { TR: "✅ **Belirgin bir tehlike işareti görmedim.**", EN: "✅ **I see no obvious danger signs.**" }
                     : { TR: "Bu geçerli bir bağlantı gibi görünmüyor.", EN: "This doesn't look like a valid link." };
-        const trSignals = report.signals.slice(0, 4).map((signal) => `• ${signal.text.TR}`).join("\n");
-        const enSignals = report.signals.slice(0, 4).map((signal) => `• ${signal.text.EN}`).join("\n");
+        const trSignals = report.signals.slice(0, 4).map((signal) => `• ${formatCopy(signal.text.TR, signal.text.vars)}`).join("\n");
+        const enSignals = report.signals.slice(0, 4).map((signal) => `• ${formatCopy(signal.text.EN, signal.text.vars)}`).join("\n");
         return {
             text: {
                 TR: `${verdict.TR} (${report.host ?? url})\n${trSignals}${trSignals ? "\n" : ""}Not: Adresin yalnızca yapısını inceledim, siteye bağlanmadım. Ayrıntı: [/security#links](/security#links)`,

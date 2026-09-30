@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n";
 import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, LoaderCircle, MessageCircle, Send, Trash2, X } from "lucide-react";
 import Link from "next/link";
@@ -29,7 +30,7 @@ export default function CommentsDrawer({ item, locale, onClose, onCountChange }:
     const [error, setError] = useState<string | null>(null);
     const [sending, setSending] = useState(false);
     const listRef = useRef<HTMLDivElement | null>(null);
-    const tr = locale === "tr";
+    const { tx } = useI18n();
 
     useEffect(() => {
         if (!item) return;
@@ -84,7 +85,7 @@ export default function CommentsDrawer({ item, locale, onClose, onCountChange }:
     };
 
     const remove = async (comment: CommentView) => {
-        if (!item || !window.confirm(tr ? "Yorum silinsin mi?" : "Delete this comment?")) return;
+        if (!item || !window.confirm(tx({ TR: "Yorum silinsin mi?", EN: "Delete this comment?" }))) return;
         const response = await fetch(`/api/news/comments?id=${encodeURIComponent(comment.id)}`, { method: "DELETE" });
         if (response.ok) {
             setComments((current) => current.filter((entry) => entry.id !== comment.id));
@@ -96,11 +97,11 @@ export default function CommentsDrawer({ item, locale, onClose, onCountChange }:
         <AnimatePresence>
             {item ? (
                 <motion.div className="fixed inset-0 z-[120] flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <button type="button" aria-label={tr ? "Kapat" : "Close"} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+                    <button type="button" aria-label={tx({ TR: "Kapat", EN: "Close" })} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
                     <motion.aside
                         role="dialog"
                         aria-modal="true"
-                        aria-label={tr ? "Yorumlar" : "Comments"}
+                        aria-label={tx({ TR: "Yorumlar", EN: "Comments" })}
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
@@ -112,16 +113,16 @@ export default function CommentsDrawer({ item, locale, onClose, onCountChange }:
                             <div className="min-w-0 flex-1">
                                 <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{item.source.name}</p>
                                 <h2 className="mt-0.5 line-clamp-3 text-[15px] font-bold leading-snug text-zinc-900 dark:text-white">{item.title}</h2>
-                                <a href={item.link} target="_blank" rel="noopener noreferrer nofollow" className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{tr ? "Haberi kaynağında oku" : "Read at source"}<ExternalLink className="h-3 w-3" /></a>
+                                <a href={item.link} target="_blank" rel="noopener noreferrer nofollow" className="mt-1 inline-flex items-center gap-1 text-[12px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{tx({ TR: "Haberi kaynağında oku", EN: "Read at source" })}<ExternalLink className="h-3 w-3" /></a>
                             </div>
-                            <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10" aria-label={tr ? "Kapat" : "Close"}><X className="h-4 w-4" /></button>
+                            <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/10" aria-label={tx({ TR: "Kapat", EN: "Close" })}><X className="h-4 w-4" /></button>
                         </div>
                         <div ref={listRef} className="scrollbar-thin min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
                             {loading ? <div className="grid place-items-center py-10"><LoaderCircle className="h-6 w-6 animate-spin text-zinc-400" /></div> : null}
                             {!loading && !error && !comments.length ? (
                                 <div className="py-10 text-center text-[13px] text-zinc-500">
                                     <p className="text-3xl">💬</p>
-                                    <p className="mt-2">{tr ? "Henüz yorum yok. İlk yorumu sen yap!" : "No comments yet. Be the first!"}</p>
+                                    <p className="mt-2">{tx({ TR: "Henüz yorum yok. İlk yorumu sen yap!", EN: "No comments yet. Be the first!" })}</p>
                                 </div>
                             ) : null}
                             <AnimatePresence initial={false}>
@@ -136,7 +137,7 @@ export default function CommentsDrawer({ item, locale, onClose, onCountChange }:
                                                 <span className="truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">{comment.authorName}</span>
                                                 {comment.createdAt ? <span className="text-[11px] text-zinc-400">{timeAgo(comment.createdAt, locale)}</span> : null}
                                                 {comment.mine ? (
-                                                    <button type="button" onClick={() => void remove(comment)} className="ml-auto text-zinc-400 opacity-0 transition hover:text-red-500 group-hover:opacity-100" aria-label={tr ? "Sil" : "Delete"}><Trash2 className="h-3.5 w-3.5" /></button>
+                                                    <button type="button" onClick={() => void remove(comment)} className="ml-auto text-zinc-400 opacity-0 transition hover:text-red-500 group-hover:opacity-100" aria-label={tx({ TR: "Sil", EN: "Delete" })}><Trash2 className="h-3.5 w-3.5" /></button>
                                                 ) : null}
                                             </div>
                                             <p className="mt-0.5 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-zinc-700 dark:text-zinc-300">{comment.text}</p>
@@ -155,17 +156,17 @@ export default function CommentsDrawer({ item, locale, onClose, onCountChange }:
                                         rows={2}
                                         onChange={(event) => setText(event.target.value)}
                                         onKeyDown={(event) => { if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) void send(); }}
-                                        placeholder={tr ? "Düşünceni yaz… (Ctrl+Enter)" : "Share your thoughts… (Ctrl+Enter)"}
+                                        placeholder={tx({ TR: "Düşünceni yaz… (Ctrl+Enter)", EN: "Share your thoughts… (Ctrl+Enter)" })}
                                         className="min-h-[44px] flex-1 resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[13.5px] text-zinc-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
                                     />
-                                    <button type="button" disabled={sending || text.trim().length < 2} onClick={() => void send()} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-400 disabled:opacity-40" aria-label={tr ? "Gönder" : "Send"}>
+                                    <button type="button" disabled={sending || text.trim().length < 2} onClick={() => void send()} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-400 disabled:opacity-40" aria-label={tx({ TR: "Gönder", EN: "Send" })}>
                                         {sending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                     </button>
                                 </div>
                             ) : (
-                                <Link href="/login?callbackUrl=/news" className="flex h-11 items-center justify-center rounded-xl bg-zinc-900 text-[13px] font-semibold text-white dark:bg-white dark:text-zinc-900">{tr ? "Yorum yapmak için giriş yap" : "Sign in to comment"}</Link>
+                                <Link href="/login?callbackUrl=/news" className="flex h-11 items-center justify-center rounded-xl bg-zinc-900 text-[13px] font-semibold text-white dark:bg-white dark:text-zinc-900">{tx({ TR: "Yorum yapmak için giriş yap", EN: "Sign in to comment" })}</Link>
                             )}
-                            <p className="mt-2 text-[10.5px] leading-snug text-zinc-400">{tr ? "Saygılı olun. Hakaret, spam ve kişisel veri paylaşımı kaldırılır. Yorumlar herkese açıktır." : "Be respectful. Insults, spam and personal data are removed. Comments are public."}</p>
+                            <p className="mt-2 text-[10.5px] leading-snug text-zinc-400">{tx({ TR: "Saygılı olun. Hakaret, spam ve kişisel veri paylaşımı kaldırılır. Yorumlar herkese açıktır.", EN: "Be respectful. Insults, spam and personal data are removed. Comments are public." })}</p>
                         </div>
                     </motion.aside>
                 </motion.div>

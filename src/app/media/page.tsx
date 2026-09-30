@@ -273,7 +273,7 @@ export default function MediaPage() {
     };
 
     const deletePost = async (post: Post) => {
-        if (!post.owned || !confirm(tx({ TR: `“${post.title}” yayını ve ilişkili yorum/beğeniler silinsin mi?`, EN: `Delete “${post.title}” and its comments and likes?` }))) return;
+        if (!post.owned || !confirm(tx({ TR: "“{title}” yayını ve ilişkili yorum/beğeniler silinsin mi?", EN: "Delete “{title}” and its comments and likes?" }, { title: post.title }))) return;
         setBusy(true);
         try {
             await mutate({ action: "delete", postId: post.id });

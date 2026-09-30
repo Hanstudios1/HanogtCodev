@@ -161,10 +161,10 @@ export function checkLink(input: string): LinkReport {
     if (host.split(".").some((part) => part.startsWith("xn--")) || /[^\x00-\x7F]/.test(raw.split("/")[2] ?? "")) {
         signals.push({ id: "punycode", weight: 40, text: { TR: "Uluslararası karakterli (punycode) alan adı: harfleri taklit eden sahte bir adres olabilir.", EN: "Internationalized (punycode) domain: it may imitate letters of a real brand." } });
     }
-    if (RISKY_TLDS.has(tld)) signals.push({ id: "risky-tld", weight: 20, text: { TR: `.${tld} uzantısı oltalama sitelerinde sık görülür.`, EN: `The .${tld} ending is common on phishing sites.` } });
+    if (RISKY_TLDS.has(tld)) signals.push({ id: "risky-tld", weight: 20, text: { TR: ".{tld} uzantısı oltalama sitelerinde sık görülür.", EN: "The .{tld} ending is common on phishing sites.", vars: { tld } } });
     if (SHORTENERS.has(domain) || SHORTENERS.has(host)) signals.push({ id: "shortener", weight: 20, text: { TR: "Kısaltılmış bağlantı: gerçek hedef gizleniyor.", EN: "Shortened link: the real destination is hidden." } });
     if (host.split(".").length > 4) signals.push({ id: "deep-subdomain", weight: 15, text: { TR: "Çok fazla alt alan adı var; gerçek alan adını gizlemek için kullanılabilir.", EN: "Many subdomains; often used to hide the real domain." } });
-    if (url.port && !["80", "443"].includes(url.port)) signals.push({ id: "port", weight: 10, text: { TR: `Standart dışı port (${url.port}).`, EN: `Non-standard port (${url.port}).` } });
+    if (url.port && !["80", "443"].includes(url.port)) signals.push({ id: "port", weight: 10, text: { TR: "Standart dışı port ({port}).", EN: "Non-standard port ({port}).", vars: { port: url.port } } });
     if (raw.length > 180) signals.push({ id: "long", weight: 8, text: { TR: "Alışılmadık derecede uzun adres.", EN: "Unusually long address." } });
     if ((raw.match(/%[0-9a-f]{2}/gi) ?? []).length > 6) signals.push({ id: "encoded", weight: 10, text: { TR: "Çok sayıda kodlanmış karakter içeriyor.", EN: "Contains many encoded characters." } });
     if (EXECUTABLE.test(url.pathname)) signals.push({ id: "executable", weight: 35, text: { TR: "Çalıştırılabilir bir dosya indiriyor; kaynağından emin değilsen açma.", EN: "Downloads an executable file; don't open it unless you trust the source." } });
@@ -172,7 +172,7 @@ export function checkLink(input: string): LinkReport {
 
     const official = BRANDS.find((brand) => brand.domains.some((entry) => domain === entry || host === entry || host.endsWith(`.${entry}`)));
     if (official) {
-        positives.push({ TR: `Resmî ${official.name} alan adına ait görünüyor (${domain}).`, EN: `Looks like an official ${official.name} domain (${domain}).` });
+        positives.push({ TR: "Resmî {brand} alan adına ait görünüyor ({domain}).", EN: "Looks like an official {brand} domain ({domain}).", vars: { brand: official.name, domain } });
     } else {
         const unicodeHost = host.split(".").map((part) => (part.startsWith("xn--") ? decodePunycode(part.slice(4)) ?? part : part)).join(".");
         const tokens = unicodeHost.split(/[.-]/).filter(Boolean);
@@ -188,8 +188,8 @@ export function checkLink(input: string): LinkReport {
                     id: "brand",
                     weight: lookalike ? 45 : 35,
                     text: lookalike
-                        ? { TR: `"${unicodeHost}" adresi ${brand.name} markasını taklit ediyor ama resmî alan adı değil.`, EN: `"${unicodeHost}" imitates ${brand.name} but is not its official domain.` }
-                        : { TR: `Adreste "${brand.name}" geçiyor ama site ${brand.domains[0]} değil.`, EN: `The address mentions "${brand.name}" but the site is not ${brand.domains[0]}.` },
+                        ? { TR: "\"{host}\" adresi {brand} markasını taklit ediyor ama resmî alan adı değil.", EN: "\"{host}\" imitates {brand} but is not its official domain.", vars: { host: unicodeHost, brand: brand.name } }
+                        : { TR: "Adreste \"{brand}\" geçiyor ama site {domain} değil.", EN: "The address mentions \"{brand}\" but the site is not {domain}.", vars: { brand: brand.name, domain: brand.domains[0] } },
                 });
                 break;
             }

@@ -167,7 +167,7 @@ export default function GroupWorkspacePage() {
     };
 
     const removeFile = async (file: GroupFile) => {
-        if (files.length <= 1 || !confirm(tx({ TR: `${file.name} silinsin mi?`, EN: `Delete ${file.name}?` }))) return;
+        if (files.length <= 1 || !confirm(tx({ TR: "{name} silinsin mi?", EN: "Delete {name}?" }, { name: file.name }))) return;
         await deleteDoc(doc(db, "groups", groupId, "files", file.id));
     };
 
@@ -265,10 +265,10 @@ export default function GroupWorkspacePage() {
 
     const manageMember = async (member: Member, action: "remove-member" | "set-admin", enabled?: boolean) => {
         if (!confirm(action === "remove-member"
-            ? tx({ TR: `${member.username} gruptan çıkarılsın mı?`, EN: `Remove ${member.username} from the group?` })
+            ? tx({ TR: "{name} gruptan çıkarılsın mı?", EN: "Remove {name} from the group?" }, { name: member.username })
             : enabled
-                ? tx({ TR: `${member.username} için yönetici rolü verilsin mi?`, EN: `Make ${member.username} an admin?` })
-                : tx({ TR: `${member.username} için yönetici rolü kaldırılsın mı?`, EN: `Remove admin role from ${member.username}?` }))) return;
+                ? tx({ TR: "{name} için yönetici rolü verilsin mi?", EN: "Make {name} an admin?" }, { name: member.username })
+                : tx({ TR: "{name} için yönetici rolü kaldırılsın mı?", EN: "Remove admin role from {name}?" }, { name: member.username }))) return;
         try {
             const response = await fetch("/api/groups", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, groupId, targetEmail: member.email, enabled }) });
             const data = await response.json() as { error?: string };

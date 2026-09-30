@@ -3,7 +3,10 @@
 import { useCallback } from "react";
 import { useI18n } from "@/lib/i18n";
 
-/** Engine UI strings: [Türkçe, English]. Other site languages fall back to English. */
+/**
+ * Engine UI strings: [Türkçe, English]. Other site languages are looked up in the
+ * copy packs (src/locales/copy) by the English text and fall back to English.
+ */
 const TEXT = {
     back: ["Geri", "Back"],
     hub: ["Projeler", "Projects"],
@@ -237,9 +240,11 @@ const TEXT = {
 export type TextKey = keyof typeof TEXT;
 
 export function useEngineText() {
-    const { language } = useI18n();
-    const index = language === "TR" || language === "AZ" ? 0 : 1;
-    return useCallback((key: TextKey) => TEXT[key][index], [index]);
+    const { tx } = useI18n();
+    return useCallback((key: TextKey) => {
+        const [tr, en] = TEXT[key];
+        return tx({ TR: tr, EN: en });
+    }, [tx]);
 }
 
 export function engineLocale(language: string) {
