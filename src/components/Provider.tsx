@@ -22,6 +22,20 @@ export function useFirebaseBridge() {
     return useContext(FirebaseBridgeContext);
 }
 
+type RawSession = ReturnType<typeof useSession>;
+const RawSessionContext = createContext<RawSession | null>(null);
+
+/**
+ * The NextAuth session as soon as it is known, without waiting for the
+ * Firebase bridge. Use it for "who is signed in" UI (header, login redirects);
+ * keep useSession() for anything that reads or writes Firestore.
+ */
+export function useRawSession(): RawSession {
+    const raw = useContext(RawSessionContext);
+    const gated = useSession();
+    return raw ?? gated;
+}
+
 const RETRY_DELAYS_MS = [1_500, 5_000, 15_000];
 
 async function currentFirebaseEmail() {
@@ -66,10 +80,12 @@ const PRESENCE_HEARTBEAT_MS = 45_000;
  */
 function PresenceHeartbeat() {
     const { data } = useSession();
+    const { ready } = useFirebaseBridge();
     const email = data?.user?.email?.toLowerCase() || null;
 
     useEffect(() => {
-        if (!email) return;
+        // Without a Firebase sign-in every write would be rejected by the security rules.
+        if (!email || !ready) return;
         const write = (isOnline: boolean) => {
             const presence = { isOnline, lastSeenAt: new Date().toISOString() };
             void setDoc(doc(db, "users", email), presence, { merge: true }).catch(() => undefined);
@@ -83,7 +99,7 @@ function PresenceHeartbeat() {
             window.clearInterval(heartbeat);
             window.removeEventListener("pagehide", markOffline);
         };
-    }, [email]);
+    }, [email, ready]);
 
     return null;
 }
@@ -169,6 +185,7 @@ function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
 
     return (
         <FirebaseBridgeContext.Provider value={bridgeState}>
+            <RawSessionContext.Provider value={session}>
             <SessionContext.Provider value={gatedValue}>
                 {children}
                 <PresenceHeartbeat />
@@ -181,6 +198,7 @@ function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
                     </div>
                 )}
             </SessionContext.Provider>
+            </RawSessionContext.Provider>
         </FirebaseBridgeContext.Provider>
     );
 }

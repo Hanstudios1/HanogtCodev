@@ -13,6 +13,9 @@ import { hashPassword, verifyPassword } from "@/lib/server/password";
 // headers, so they must be plain ASCII; /login translates them.
 const AUTH_SERVICE_UNAVAILABLE = "ServiceUnavailable";
 
+/** 90 days, renewed on every visit. */
+export const SESSION_MAX_AGE = 90 * 24 * 60 * 60;
+
 function normalizedEmail(value: string) {
     return value.trim().toLowerCase();
 }
@@ -148,7 +151,8 @@ export const authOptions: NextAuthOptions = {
         error: recordAuthError,
         warn: (code) => console.warn(`[next-auth][warn][${code}]`),
     },
-    session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60, updateAge: 24 * 60 * 60 },
+    // Rolling: every visit extends the session, so people stay signed in until they sign out.
+    session: { strategy: "jwt", maxAge: SESSION_MAX_AGE, updateAge: 24 * 60 * 60 },
     cookies: {
         sessionToken: {
             name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}hanogt.session-token`,
@@ -191,6 +195,11 @@ export const authOptions: NextAuthOptions = {
             return session;
         },
         async redirect({ url, baseUrl }) {
+            // The login screen sends relative paths; they used to fall back to the home page.
+            if (url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\")) {
+                if (url === "/") return baseUrl;
+                return url.startsWith("/login") || url.startsWith("/signup") ? `${baseUrl}/dashboard` : `${baseUrl}${url}`;
+            }
             if (url.includes("/login") || url.includes("/signup") || url === baseUrl) return `${baseUrl}/dashboard`;
             return url.startsWith(baseUrl) ? url : baseUrl;
         },

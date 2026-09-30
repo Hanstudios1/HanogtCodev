@@ -11,6 +11,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import OptimizedImage from "@/components/OptimizedImage";
+import { useFirebaseBridge, useRawSession } from "@/components/Provider";
 import { db } from "@/lib/firebase";
 import { useI18n } from "@/lib/i18n";
 import { isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
@@ -50,7 +51,13 @@ export default function Header() {
     const profileRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll();
     const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
-    const signedIn = Boolean(session?.user);
+    // The header reflects the NextAuth cookie right away; waiting for the Firebase
+    // bridge used to show "Sign in" for a few seconds after every refresh.
+    const auth = useRawSession();
+    const account = auth.status === "authenticated" ? auth.data?.user : undefined;
+    const signedIn = Boolean(account);
+    const sessionLoading = auth.status === "loading";
+    const firebaseReady = useFirebaseBridge().ready;
 
     // Pages can open the Security Bot (e.g. the Security Center's "Ask Security Bot" button).
     useEffect(() => {
@@ -67,12 +74,12 @@ export default function Header() {
     }, []);
 
     useEffect(() => {
-        if (!session?.user?.email) return;
+        if (!session?.user?.email || !firebaseReady) return;
         const unsubscribe = onSnapshot(doc(db, "users", session.user.email), (snapshot) => {
             if (snapshot.exists()) setUserData(snapshot.data() as UserData);
         }, () => undefined);
         return () => unsubscribe();
-    }, [session?.user?.email]);
+    }, [firebaseReady, session?.user?.email]);
 
     useEffect(() => {
         if (!profileOpen) return;
@@ -105,8 +112,8 @@ export default function Header() {
         };
     }, [menuOpen]);
 
-    const displayName = userData?.username || session?.user?.name || t("user");
-    const displayAvatar = userData?.avatarUrl || session?.user?.image;
+    const displayName = userData?.username || account?.name || t("user");
+    const displayAvatar = userData?.avatarUrl || account?.image;
     const primary = PRIMARY_NAV.filter((item) => !item.auth || signedIn);
     const secondary = SECONDARY_NAV.filter((item) => !item.auth || signedIn);
 
@@ -205,7 +212,7 @@ export default function Header() {
                                                 {avatar("h-11 w-11")}
                                                 <div className="min-w-0">
                                                     <p className="truncate font-bold text-zinc-900 dark:text-white">{displayName}</p>
-                                                    <p className="truncate text-[12.5px] text-zinc-500">{session?.user?.email}</p>
+                                                    <p className="truncate text-[12.5px] text-zinc-500">{account?.email}</p>
                                                 </div>
                                             </div>
                                             <div className="p-1.5">
@@ -229,6 +236,8 @@ export default function Header() {
                                     ) : null}
                                 </AnimatePresence>
                             </div>
+                        ) : sessionLoading ? (
+                            <div className="h-9 w-9 animate-pulse rounded-full bg-zinc-200 dark:bg-white/10" aria-hidden="true" />
                         ) : (
                             <div className="flex items-center gap-1.5">
                                 <Link href="/login" className="hidden h-9 items-center rounded-xl px-3 text-[13.5px] font-semibold text-zinc-700 transition hover:bg-zinc-900/5 sm:flex dark:text-zinc-200 dark:hover:bg-white/10">{t("login")}</Link>
@@ -305,7 +314,7 @@ export default function Header() {
                                 <span className="text-[13px] font-semibold text-zinc-500">{t("hd_lang_theme")}</span>
                                 <div className="flex items-center gap-1.5"><LangToggle /><ThemeToggle /></div>
                             </div>
-                            {!signedIn ? (
+                            {!signedIn && !sessionLoading ? (
                                 <div className="mt-4 grid grid-cols-2 gap-2">
                                     <Link href="/login" onClick={() => setMenuOpen(false)} className="flex h-11 items-center justify-center rounded-xl border border-zinc-200 text-[14px] font-bold text-zinc-800 dark:border-white/10 dark:text-zinc-100">{t("login")}</Link>
                                     <Link href="/signup" onClick={() => setMenuOpen(false)} className="flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-[14px] font-bold text-white shadow-lg shadow-indigo-500/25">{t("signup")}</Link>

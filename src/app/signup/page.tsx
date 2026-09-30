@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Check, CheckCircle2, Eye, EyeOff, LoaderCircle, Lock, Mail, User } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { AUTH_NETWORK_ERROR, completeSignIn, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
 import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
+import { useRawSession } from "@/components/Provider";
 
 function passwordStrength(password: string) {
     let score = 0;
@@ -32,6 +33,15 @@ function SignupForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    // Already signed in: there is nothing to sign up for.
+    const auth = useRawSession();
+    const continued = useRef(false);
+    useEffect(() => {
+        if (auth.status !== "authenticated" || continued.current) return;
+        continued.current = true;
+        completeSignIn(callbackPath);
+    }, [auth.status, callbackPath]);
 
     const rules = useMemo(() => [
         { ok: password.length >= 10, label: t("auth_rule_length") || "En az 10 karakter" },

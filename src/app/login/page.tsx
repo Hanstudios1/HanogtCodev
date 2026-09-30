@@ -6,7 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
-import { AUTH_NETWORK_ERROR, completeSignIn, consumeAuthErrorDetail, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
+import { useRawSession } from "@/components/Provider";
+import { AUTH_NETWORK_ERROR, completeSignIn, consumeAuthErrorDetail, handoffPath, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
 
 function useAuthErrorMessage() {
     const { t } = useI18n();
@@ -22,6 +23,7 @@ function useAuthErrorMessage() {
                 return t("auth_error_credentials") || "E-posta veya şifre hatalı. Google ile kayıt olduysanız “Google ile devam et” seçeneğini kullanın.";
             case "OAuthSignin":
             case "OAuthCallback":
+            case "HandoffFailed":
             case "OAuthCreateAccount":
             case "Callback":
                 return t("auth_error_oauth") || "Google ile giriş tamamlanamadı. Lütfen tekrar deneyin.";
@@ -49,6 +51,14 @@ function LoginForm() {
     const { t, tx } = useI18n();
     const describeError = useAuthErrorMessage();
     const callbackPath = safeCallbackPath(searchParams.get("callbackUrl") || searchParams.get("next"));
+    const auth = useRawSession();
+    const hasErrorParam = Boolean(searchParams.get("error"));
+    // During a sign-in moved here from another of our sites, finish by handing
+    // the session back to that site instead of staying on this host.
+    const destination = useCallback(
+        () => handoffPath(searchParams.get("handoff"), searchParams.get("nonce"), callbackPath) ?? callbackPath,
+        [callbackPath, searchParams],
+    );
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
     const [email, setEmail] = useState("");
@@ -82,34 +92,42 @@ function LoginForm() {
             return;
         }
         // Keep the button busy until the full page load replaces this screen.
-        completeSignIn(callbackPath);
+        completeSignIn(destination());
     };
 
     const handleGoogleLogin = useCallback(async (canonicalHop = false) => {
         setGoogleLoading(true);
         setErrorCode(null);
         setErrorDetail(null);
-        const code = await startGoogleSignIn(callbackPath, { canonicalHop });
+        const code = await startGoogleSignIn(destination(), { canonicalHop });
         if (code) {
             setErrorDetail(consumeAuthErrorDetail());
             setErrorCode(code);
             setGoogleLoading(false);
         }
-    }, [callbackPath]);
+    }, [destination]);
+
+    // Someone who is already signed in continues straight to where they were going.
+    const continued = useRef(false);
+    useEffect(() => {
+        if (auth.status !== "authenticated" || hasErrorParam || continued.current) return;
+        continued.current = true;
+        completeSignIn(destination());
+    }, [auth.status, destination, hasErrorParam]);
 
     // `/login?provider=google` continues a Google sign-in that was moved to the
     // host Google returns to (see startGoogleSignIn).
     const autoGoogle = searchParams.get("provider") === "google" && !searchParams.get("error");
     const autoStarted = useRef(false);
     useEffect(() => {
-        if (!autoGoogle) return;
+        if (!autoGoogle || auth.status !== "unauthenticated") return;
         const timer = window.setTimeout(() => {
             if (autoStarted.current) return;
             autoStarted.current = true;
             void handleGoogleLogin(true);
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [autoGoogle, handleGoogleLogin]);
+    }, [autoGoogle, auth.status, handleGoogleLogin]);
 
     return (
         <AuthShell

@@ -8,6 +8,31 @@ export function safeCallbackPath(value: string | null) {
 /** Error code used when the auth endpoints cannot be reached at all. */
 export const AUTH_NETWORK_ERROR = "Network";
 
+/** Cookie that binds a cross-domain session hand-off to the browser that started it. */
+export const AUTH_HANDOFF_COOKIE = "hanogt.handoff";
+export const AUTH_HANDOFF_NONCE = /^[A-Za-z0-9_-]{22,64}$/;
+
+function randomNonce() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/**
+ * Where to go after signing in on the auth host when the sign-in started on
+ * another of our sites: /api/auth/handoff sends the session back there.
+ */
+export function handoffPath(target: string | null, nonce: string | null, callbackPath: string) {
+    if (!target || !nonce || !AUTH_HANDOFF_NONCE.test(nonce)) return null;
+    try {
+        if (new URL(target).origin === window.location.origin) return null;
+    } catch {
+        return null;
+    }
+    const params = new URLSearchParams({ target, nonce, callbackUrl: callbackPath });
+    return `/api/auth/handoff?${params.toString()}`;
+}
+
 const AUTH_ERROR_COOKIE = "hanogt.auth-error";
 
 /**
@@ -85,7 +110,8 @@ export async function signInWithPassword(email: string, password: string, callba
  * with an error code. Google always returns to the host in NEXTAUTH_URL, so a
  * visitor on another host (apex vs www, *.vercel.app) would come back without
  * the state/PKCE cookies set here. In that case the flow is restarted once on
- * the host Google returns to (`canonicalHop` stops a redirect loop).
+ * the host Google returns to (`canonicalHop` stops a redirect loop), which then
+ * hands the finished session back to this site (see /api/auth/handoff).
  */
 export async function startGoogleSignIn(callbackUrl: string, { canonicalHop = false } = {}) {
     const result = await postAuthForm("signin/google", { callbackUrl });
@@ -95,9 +121,14 @@ export async function startGoogleSignIn(callbackUrl: string, { canonicalHop = fa
             const redirectUri = new URL(result.url).searchParams.get("redirect_uri");
             const returnOrigin = redirectUri ? new URL(redirectUri).origin : window.location.origin;
             if (returnOrigin !== window.location.origin) {
+                const nonce = randomNonce();
+                const secure = window.location.protocol === "https:" ? "; Secure" : "";
+                document.cookie = `${AUTH_HANDOFF_COOKIE}=${nonce}; Path=/api/auth/handoff; Max-Age=900; SameSite=Lax${secure}`;
                 const restart = new URL("/login", returnOrigin);
                 restart.searchParams.set("provider", "google");
                 restart.searchParams.set("callbackUrl", callbackUrl);
+                restart.searchParams.set("handoff", window.location.origin);
+                restart.searchParams.set("nonce", nonce);
                 window.location.assign(restart.toString());
                 return null;
             }
