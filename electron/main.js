@@ -3,6 +3,17 @@ const path = require('path');
 
 // Your deployed website URL
 const WEBSITE_URL = 'https://hanogtcodev.vercel.app';
+// Our own sites; sign-in may hop between them (see src/lib/auth-client.ts).
+const APP_ORIGINS = new Set([WEBSITE_URL, 'https://www.hanogtcodev.com', 'https://hanogtcodev.com']);
+const GOOGLE_SIGN_IN_ORIGIN = 'https://accounts.google.com';
+
+function originOf(url) {
+    try {
+        return new URL(url).origin;
+    } catch {
+        return '';
+    }
+}
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
@@ -24,7 +35,7 @@ function createWindow() {
 
     // Open external links in the default browser
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        if (!url.startsWith(WEBSITE_URL)) {
+        if (!APP_ORIGINS.has(originOf(url))) {
             shell.openExternal(url);
             return { action: 'deny' };
         }
@@ -34,7 +45,8 @@ function createWindow() {
     // Handle navigation
     mainWindow.webContents.on('will-navigate', (event, url) => {
         // Keep internal navigation, open external links in browser
-        if (!url.startsWith(WEBSITE_URL) && !url.startsWith('https://accounts.google.com')) {
+        const origin = originOf(url);
+        if (!APP_ORIGINS.has(origin) && origin !== GOOGLE_SIGN_IN_ORIGIN) {
             event.preventDefault();
             shell.openExternal(url);
         }

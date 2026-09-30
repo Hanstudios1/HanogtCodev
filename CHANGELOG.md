@@ -10,6 +10,13 @@
 - Hata mesajları gerçek yorumlayıcılardaki gibi `main.py`, `main.js`, `main.ts`, `main.lua` dosya adı ve satır numarasıyla gösteriliyor; Python'da `if __name__ == "__main__":` bloğu çalışıyor.
 - Firebase sunucu kimliği eksik ya da veritabanına geçici olarak ulaşılamıyorsa kod çalıştırma kapanmıyor: imzalı oturum kimliği kullanılıyor ve hız sınırı sunucu belleğine düşüyor.
 
+### Oturum
+
+- Giriş yapan kullanıcı artık çıkış yapana kadar oturumda kalıyor: oturum 90 gün geçerli ve her ziyarette yenileniyor. Sayfa yenilenince üst menü birkaç saniye "Giriş Yap" gösteriyordu, kullanıcılar da tekrar giriş yapıyordu. Artık hesap simgesi hemen görünüyor ve veri bağlantısı arka planda hazırlanıyor.
+- www.hanogtcodev.com'da Google ile giriş yapanlar Google'ın döndüğü hanogtcodev.vercel.app adresinde kalıyor ve www'ye dönünce çıkış yapmış görünüyordu. Google adımından sonra oturum, yalnızca girişi başlatan tarayıcının kullanabileceği 2 dakikalık imzalı bir anahtarla başlangıç sitesine geri taşınıyor (`/api/auth/handoff`).
+- Zaten giriş yapmış biri giriş veya kayıt sayfasını açınca form gösterilmeden gideceği sayfaya yönleniyor. Google ile girişten sonra istenen sayfa (ör. editör) açılıyor; daha önce ana sayfaya düşülüyordu.
+- Masaüstü uygulaması www.hanogtcodev.com, hanogtcodev.com ve hanogtcodev.vercel.app arasında geçişi uygulama içinde tutuyor.
+
 ## 0.1.0 — 2026-09-28
 
 Şimdiye kadarki en büyük güncelleme: canlı teknoloji haberleri, topluluk Arcade'i, baştan yazılan oyun motoru, yenilenen site arayüzü ve 30 dil.

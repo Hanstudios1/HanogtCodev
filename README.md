@@ -32,6 +32,11 @@ Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi
 - Oyun proje belgeleri ve C#/C++ kaynakları yalnız sahiplik kontrollü sunucu API'sinden geçer; Firestore istemci kuralları bu koleksiyonları tamamen kapatır. Sahne başına 1000 nesne, proje içeriği 900 KB ve script başına 160 KB sınırı vardır; revizyon çakışmaları sessizce üzerine yazılmaz. Arcade'de yayınlanan oyunlar derleme ve güvenlik taramasından geçer.
 - Haber yorumları giriş, hız sınırı ve küfür/spam/kişisel veri filtresinden geçer. Parola sızıntı kontrolü k-anonimlik kullanır: tarayıcıdan yalnız SHA-1 özetinin ilk 5 karakteri gönderilir.
 
+### Oturum ve alan adları
+
+- Oturum 90 gün geçerli, her ziyarette yenilenen bir NextAuth JWT çerezidir.
+- Google yalnızca `NEXTAUTH_URL` adresine döner. Giriş başka bir sitemizde (ör. `www` ↔ `vercel.app`) başladıysa oturum, Google adımından sonra imzalı, 2 dakikalık ve tarayıcıya bağlı bir anahtarla o siteye geri taşınır (`/api/auth/handoff`). İzin verilen siteler: `NEXTAUTH_URL`, `NEXT_PUBLIC_SITE_URL` (www'li ve www'suz) ve isteğe bağlı `AUTH_HANDOFF_ORIGINS` (virgülle ayrılmış).
+
 ### Kod çalıştırma
 
 - JavaScript, TypeScript, Python (Pyodide), SQL (sql.js) ve Lua (wasmoon) ziyaretçinin tarayıcısında, ayrı bir Web Worker içinde WebAssembly ile çalışır. Kod hiçbir sunucuya gönderilmez, giriş gerekmez; zaman aşımında worker tamamen sonlandırılır. Çalışma zamanları `npm run prepare:assets` ile `public/runtimes` altına kopyalanır (CDN kullanılmaz).
