@@ -35,7 +35,7 @@ import {
     type UserRecordSummary,
 } from "@/lib/support";
 import { firestoreStatus, httpsUrlOrNull, stringOr, toIso } from "./admin";
-import { getServerDocument, isWriteConflict, runServerQuery } from "./firebase-rest";
+import { commitServerMutations, getServerDocument, isWriteConflict, runServerQuery } from "./firebase-rest";
 import { enforceRateLimitWithFallback } from "./rate-limit";
 import { jsonSecurityHeaders } from "./request-security";
 import { isDocId } from "./validate";
@@ -197,6 +197,64 @@ export function ticketPriority(value: unknown): TicketPriority {
     return isTicketPriority(value) ? value : "normal";
 }
 
+/** Title of the appeal a suspended account files from the login page (/api/support/appeal). */
+export const APPEAL_TICKET_TITLE = "Askıya alma itirazı";
+
+/** Appeals against a suspension carry `meta.appeal: true`; staff see an "İtiraz" badge. */
+export function isAppealTicket(record: TicketRecord) {
+    const meta = record.meta && typeof record.meta === "object" && !Array.isArray(record.meta) ? record.meta as Record<string, unknown> : null;
+    return meta?.appeal === true;
+}
+
+export type NewTicketInput = {
+    category: TicketCategory;
+    title: string;
+    description: string;
+    priority: TicketPriority;
+    authorEmail: string;
+    authorName: string;
+    authorAvatar: string | null;
+    /** Undefined entries are left out of the stored map. */
+    meta?: Record<string, unknown>;
+};
+
+/**
+ * A new support_tickets document: open, unread for the team, the description
+ * as the opening text and no conversation yet. Every way of filing a ticket
+ * uses this shape, so the admin inbox and the author's "Taleplerim" list
+ * (matched by authorEmail) show them all alike.
+ */
+export function newTicketDocument(input: NewTicketInput, now = new Date()) {
+    return {
+        category: input.category,
+        title: input.title,
+        description: input.description,
+        status: "open",
+        priority: input.priority,
+        authorEmail: input.authorEmail,
+        authorName: input.authorName.slice(0, 80),
+        authorAvatar: input.authorAvatar,
+        createdAt: now,
+        updatedAt: now,
+        lastMessageAt: now,
+        lastMessageFrom: "user",
+        lastMessagePreview: messagePreview(input.description),
+        messageCount: 0,
+        messages: [],
+        unreadForUser: false,
+        unreadForStaff: true,
+        meta: input.meta ?? {},
+    };
+}
+
+/** Stores a new ticket under a fresh id; the write fails rather than overwrite an existing document. */
+export async function createSupportTicket(input: NewTicketInput, now = new Date()) {
+    const id = newTicketId();
+    const data = newTicketDocument(input, now);
+    await commitServerMutations([{ type: "create", path: `${TICKETS_COLLECTION}/${id}`, data }]);
+    return { id, data };
+}
+
 function messageFrom(value: unknown): TicketMessageFrom | null {
     return value === "user" || value === "staff" ? value : null;
 }
@@ -286,6 +344,7 @@ export function toAdminListItem(record: StoredTicket): AdminTicketListItem {
         messageCount: summary.messageCount,
         unreadForStaff: record.unreadForStaff === true,
         unreadForUser: record.unreadForUser === true,
+        appeal: isAppealTicket(record),
     };
 }
 

@@ -4,6 +4,8 @@ import { randomInt, timingSafeEqual } from "node:crypto";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { ACCOUNT_SUSPENDED } from "@/lib/auth-client";
+import { issueAppealToken } from "@/lib/server/appeal-token";
 import { recordAuthError } from "@/lib/server/auth-diagnostics";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { clientIpFromHeaders } from "@/lib/server/request-security";
@@ -23,10 +25,33 @@ function normalizedEmail(value: string) {
     return value.trim().toLowerCase();
 }
 
+let dummyHash: Promise<string> | null = null;
+
+/**
+ * Spends the same scrypt work as a real password check. Without it, unknown
+ * addresses answered noticeably faster, which told anyone timing the form
+ * whether an account exists.
+ */
+async function burnPasswordCheck(password: string) {
+    dummyHash ??= hashPassword(`unused-${randomInt(1_000_000_000)}`);
+    await verifyPassword(password, await dummyHash).catch(() => false);
+}
+
 function legacyPasswordMatches(supplied: string, stored: string) {
     const left = Buffer.from(supplied);
     const right = Buffer.from(stored);
     return left.length === right.length && timingSafeEqual(left, right);
+}
+
+/**
+ * Suspended accounts can't sign in to open a support ticket, so once the
+ * person has proven they own the account, the suspension is reported together
+ * with a short-lived token that lets /login file an appeal
+ * (/api/support/appeal). The token is base64url, so the code stays ASCII.
+ */
+function suspendedCode(email: string) {
+    const token = issueAppealToken(email);
+    return token ? `${ACCOUNT_SUSPENDED}:${token}` : ACCOUNT_SUSPENDED;
 }
 
 /**
@@ -36,7 +61,11 @@ function legacyPasswordMatches(supplied: string, stored: string) {
  */
 async function completeSignIn(email: string, user: { name?: string | null; image?: string | null }, provider: string | undefined): Promise<true | string> {
     const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown }>(`users/${email}`);
-    if (existing?.suspended || existing?.banned) return "/login?error=AccountSuspended";
+    if (existing?.suspended || existing?.banned) {
+        // The provider (Google) or authorize() has verified the address, so the person may appeal.
+        const token = issueAppealToken(email);
+        return `/login?error=${ACCOUNT_SUSPENDED}${token ? `&appeal=${encodeURIComponent(token)}` : ""}`;
+    }
     // The public profile after the Google branch below; undefined when it was not read.
     let knownProfile: Record<string, unknown> | undefined;
     if (provider === "google") {
@@ -147,12 +176,17 @@ export const authOptions: NextAuthOptions = {
                     recordAuthError("CALLBACK_CREDENTIALS_HANDLER_ERROR", error);
                     throw new Error(AUTH_SERVICE_UNAVAILABLE);
                 }
-                if (!user) return null;
-                if (user.suspended || user.banned) throw new Error("AccountSuspended");
+                if (!user) {
+                    await burnPasswordCheck(credentials.password);
+                    return null;
+                }
+                // Suspended accounts are checked only after the password and the
+                // second factor: until then they answer exactly like any other
+                // account, so the form never tells strangers which addresses are suspended.
 
                 let valid = credential?.passwordHash
                     ? await verifyPassword(credentials.password, credential.passwordHash)
-                    : false;
+                    : (await burnPasswordCheck(credentials.password), false);
 
                 // One-time migration for accounts created by the legacy
                 // plaintext implementation. The clear value is deleted as
@@ -189,6 +223,9 @@ export const authOptions: NextAuthOptions = {
                     if (!otpRate.allowed) throw new Error(`RateLimited:${Math.ceil(otpRate.retryAfterSeconds / 60)}`);
                     if (!check.ok) throw new Error("TwoFactorInvalid");
                 }
+
+                // Ownership is proven: report the suspension with an appeal token.
+                if (user.suspended || user.banned) throw new Error(suspendedCode(email));
 
                 return {
                     id: email,

@@ -44,6 +44,8 @@ export type AdminTicketListItem = {
     unreadForStaff: boolean;
     /** The team replied and the author hasn't opened it yet. */
     unreadForUser: boolean;
+    /** Appeal against a suspension, filed from the login page (meta.appeal). */
+    appeal: boolean;
 };
 
 export type AdminTicketDetail = AdminTicketListItem & {
