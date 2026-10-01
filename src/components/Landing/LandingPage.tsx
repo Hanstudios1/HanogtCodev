@@ -10,9 +10,10 @@ import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Comparison from "@/components/Comparison";
 import Header from "@/components/Header";
-import OptimizedImage from "@/components/OptimizedImage";
 import SiteFooter from "@/components/SiteFooter";
-import { LANGUAGES, useI18n } from "@/lib/i18n";
+import LanguageIcon from "@/components/Editor/LanguageIcon";
+import { LANGUAGES, formatCopy, useI18n } from "@/lib/i18n";
+import { LANGUAGE_STATS, LANGUAGES as CODE_LANGUAGE_REGISTRY } from "@/lib/runtimes/languages";
 import { NAV_LABELS } from "@/lib/nav";
 import CodeShowcase from "./CodeShowcase";
 import DownloadMenu from "./DownloadMenu";
@@ -20,7 +21,11 @@ import GuideTeaser from "./GuideTeaser";
 import LiveNewsMini from "./LiveNewsMini";
 import SpotlightCard from "./SpotlightCard";
 
-const CODE_LANGUAGES = ["python", "javascript", "typescript", "csharp", "cpp", "java", "go", "rust", "kotlin", "swift", "php", "ruby", "lua", "sql", "html", "css"];
+// Every language that can be run or previewed (the number the copy quotes), popular ones first.
+const CODE_LANGUAGES = CODE_LANGUAGE_REGISTRY
+    .filter((language) => language.engine !== "none")
+    .sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
+const EDITOR_CARD_CHIPS = 18;
 
 function RotatingWord() {
     const { t } = useI18n();
@@ -152,7 +157,7 @@ export default function LandingPage() {
                             </h1>
 
                             <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "160ms" }}>
-                                {t("lp_hero_sub")}
+                                {formatCopy(t("lp_hero_sub"), { count: LANGUAGE_STATS.usable })}
                             </p>
 
                             <div className="mt-8 flex flex-wrap items-center gap-3 animate-fade-up" style={{ animationDelay: "240ms" }}>
@@ -187,13 +192,13 @@ export default function LandingPage() {
 
                 {/* ------------------------------------------------------------ Languages marquee */}
                 <section className="border-y border-zinc-200/70 bg-zinc-50/70 py-6 dark:border-white/[0.06] dark:bg-white/[0.02]" aria-label={t("lp_supported_langs")}>
-                    <p className="mb-4 text-center text-[12px] font-bold uppercase tracking-[0.2em] text-zinc-400">{t("lp_marquee")}</p>
+                    <p className="mb-4 text-center text-[12px] font-bold uppercase tracking-[0.2em] text-zinc-400">{formatCopy(t("lp_marquee"), { count: LANGUAGE_STATS.usable })}</p>
                     <div className="mask-fade-x overflow-hidden" dir="ltr">
                         <div className="flex w-max animate-marquee gap-10 hover:[animation-play-state:paused]">
                             {[...CODE_LANGUAGES, ...CODE_LANGUAGES].map((language, index) => (
-                                <div key={`${language}-${index}`} className="flex shrink-0 items-center gap-2.5 opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0" aria-hidden={index >= CODE_LANGUAGES.length ? true : undefined}>
-                                    <OptimizedImage src={`/languages/${language}.png`} alt="" className="h-8 w-8 object-contain" />
-                                    <span className="text-[14px] font-bold capitalize text-zinc-600 dark:text-zinc-300">{language === "cpp" ? "C++" : language === "csharp" ? "C#" : language === "javascript" ? "JavaScript" : language === "typescript" ? "TypeScript" : language === "sql" || language === "css" || language === "html" || language === "php" ? language.toUpperCase() : language}</span>
+                                <div key={`${language.id}-${index}`} className="flex shrink-0 items-center gap-2.5 opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0" aria-hidden={index >= CODE_LANGUAGES.length ? true : undefined}>
+                                    <LanguageIcon language={language.id} size={32} />
+                                    <span className="text-[14px] font-bold text-zinc-600 dark:text-zinc-300">{language.name}</span>
                                 </div>
                             ))}
                         </div>
@@ -220,11 +225,16 @@ export default function LandingPage() {
                                     <Link href={signedIn ? "/dashboard" : "/signup"} className="hidden shrink-0 items-center gap-1 rounded-xl bg-zinc-900 px-3 py-2 text-[13px] font-bold text-white transition hover:gap-2 sm:inline-flex dark:bg-white dark:text-zinc-900">{t("lp_open")}<ArrowRight className="h-4 w-4 rtl:rotate-180" /></Link>
                                 </div>
                                 <div className="mt-6 flex flex-wrap gap-1.5">
-                                    {CODE_LANGUAGES.map((language) => (
-                                        <span key={language} className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11.5px] font-semibold text-zinc-600 transition hover:-translate-y-0.5 hover:border-indigo-400 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300">
-                                            <OptimizedImage src={`/languages/${language}.png`} alt="" className="h-3.5 w-3.5 object-contain" />{language === "cpp" ? "C++" : language === "csharp" ? "C#" : language}
+                                    {CODE_LANGUAGES.slice(0, EDITOR_CARD_CHIPS).map((language) => (
+                                        <span key={language.id} className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11.5px] font-semibold text-zinc-600 transition hover:-translate-y-0.5 hover:border-indigo-400 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300">
+                                            <LanguageIcon language={language.id} size={14} />{language.name}
                                         </span>
                                     ))}
+                                    {CODE_LANGUAGES.length > EDITOR_CARD_CHIPS ? (
+                                        <span className="inline-flex items-center rounded-lg border border-dashed border-indigo-300 px-2 py-1 text-[11.5px] font-bold text-indigo-600 dark:border-indigo-500/40 dark:text-indigo-300">
+                                            {tx({ TR: "+{count} dil daha", EN: "+{count} more" }, { count: CODE_LANGUAGES.length - EDITOR_CARD_CHIPS })}
+                                        </span>
+                                    ) : null}
                                 </div>
                             </SpotlightCard>
                         </Reveal>
