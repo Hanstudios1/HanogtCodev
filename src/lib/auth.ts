@@ -10,6 +10,7 @@ import { clientIpFromHeaders } from "@/lib/server/request-security";
 import { normalizeEmail } from "@/lib/server/validate";
 import { getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
+import { verifySecondFactor, type CredentialRecord, type SecondFactorResult } from "@/lib/server/two-factor";
 
 // Codes thrown from authorize()/signIn end up in redirect URLs and HTTP
 // headers, so they must be plain ASCII; /login translates them.
@@ -80,6 +81,8 @@ export const authOptions: NextAuthOptions = {
             credentials: {
                 email: { label: "E-posta", type: "email" },
                 password: { label: "Şifre", type: "password" },
+                // Authenticator or recovery code; asked for after "TwoFactorRequired".
+                otp: { label: "Doğrulama kodu", type: "text" },
             },
             async authorize(credentials, req) {
                 if (!credentials?.email || !credentials.password) return null;
@@ -112,11 +115,11 @@ export const authOptions: NextAuthOptions = {
                     banned?: boolean;
                     password?: string;
                 } | null;
-                let credential: { passwordHash?: string } | null;
+                let credential: CredentialRecord | null;
                 try {
                     [user, credential] = await Promise.all([
                         getServerDocument<NonNullable<typeof user>>(`users/${email}`),
-                        getServerDocument<{ passwordHash?: string }>(`credentials/${email}`),
+                        getServerDocument<CredentialRecord>(`credentials/${email}`),
                     ]);
                 } catch (error) {
                     recordAuthError("CALLBACK_CREDENTIALS_HANDLER_ERROR", error);
@@ -146,6 +149,25 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 if (!valid) return null;
+
+                // Two-step verification: the password was right, now the second factor.
+                // The codes below are ASCII so they survive the redirect URL (see top).
+                if (credential?.totpEnabled && credential.totpSecretEnc) {
+                    const otp = typeof credentials.otp === "string" ? credentials.otp.trim() : "";
+                    if (!otp) throw new Error("TwoFactorRequired");
+                    let otpRate: Awaited<ReturnType<typeof enforceRateLimit>>;
+                    let check: SecondFactorResult;
+                    try {
+                        otpRate = await enforceRateLimit(`login-2fa:${email}`, 6, 15 * 60_000);
+                        check = otpRate.allowed ? await verifySecondFactor(email, credential, otp) : { ok: false };
+                    } catch (error) {
+                        recordAuthError("CALLBACK_CREDENTIALS_HANDLER_ERROR", error);
+                        throw new Error(AUTH_SERVICE_UNAVAILABLE);
+                    }
+                    if (!otpRate.allowed) throw new Error(`RateLimited:${Math.ceil(otpRate.retryAfterSeconds / 60)}`);
+                    if (!check.ok) throw new Error("TwoFactorInvalid");
+                }
+
                 return {
                     id: email,
                     email,

@@ -101,9 +101,13 @@ async function postAuthForm(path: string, fields: Record<string, string>): Promi
     return { url: "", error: AUTH_NETWORK_ERROR };
 }
 
-/** Signs in with e-mail and password; resolves with an error code, or null on success. */
-export async function signInWithPassword(email: string, password: string, callbackUrl: string) {
-    const result = await postAuthForm("callback/credentials", { email, password, callbackUrl });
+/**
+ * Signs in with e-mail and password; resolves with an error code, or null on
+ * success. Accounts with two-step verification answer "TwoFactorRequired"
+ * until the authenticator (or a recovery) code is passed as `otp`.
+ */
+export async function signInWithPassword(email: string, password: string, callbackUrl: string, otp?: string) {
+    const result = await postAuthForm("callback/credentials", { email, password, callbackUrl, ...(otp ? { otp } : {}) });
     return result.error;
 }
 

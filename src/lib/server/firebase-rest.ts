@@ -373,6 +373,28 @@ export async function countServerQuery(options: { collectionId: string; where?: 
     return Number(payload[0]?.result?.aggregateFields?.total?.integerValue ?? 0);
 }
 
+type FirestoreHttpError = Error & { status?: number; reason?: string };
+
+/** Error of a failed Firestore REST call with its HTTP status and canonical code (e.g. FAILED_PRECONDITION). */
+async function firestoreHttpError(response: Response, label: string) {
+    const payload = await response.json().catch(() => null) as { error?: { status?: unknown } } | null;
+    const error = new Error(`${label} (${response.status}).`) as FirestoreHttpError;
+    error.status = response.status;
+    if (typeof payload?.error?.status === "string") error.reason = payload.error.status;
+    return error;
+}
+
+/**
+ * True when a conditional write lost a race: a stale `updateTime` (HTTP 400
+ * FAILED_PRECONDITION), a document that already exists (409) or an aborted commit.
+ */
+export function isWriteConflict(error: unknown) {
+    if (!(error instanceof Error)) return false;
+    const { status, reason } = error as FirestoreHttpError;
+    if (reason) return reason === "FAILED_PRECONDITION" || reason === "ALREADY_EXISTS" || reason === "ABORTED";
+    return status === 409 || status === 412;
+}
+
 export async function patchServerDocument(
     path: string,
     data: Record<string, unknown>,
@@ -388,11 +410,7 @@ export async function patchServerDocument(
         method: "PATCH",
         body: JSON.stringify({ fields: encodeFields(data) }),
     });
-    if (!response.ok) {
-        const error = new Error(`Firestore yazma hatası (${response.status}).`) as Error & { status?: number };
-        error.status = response.status;
-        throw error;
-    }
+    if (!response.ok) throw await firestoreHttpError(response, "Firestore yazma hatası");
     return response.json() as Promise<FirestoreDocument>;
 }
 
@@ -420,11 +438,7 @@ export async function commitServerPatches(writes: Array<{
             }),
         },
     );
-    if (!response.ok) {
-        const error = new Error(`Firestore atomik yazma hatası (${response.status}).`) as Error & { status?: number };
-        error.status = response.status;
-        throw error;
-    }
+    if (!response.ok) throw await firestoreHttpError(response, "Firestore atomik yazma hatası");
 }
 
 type ServerMutation =
@@ -465,11 +479,7 @@ export async function commitServerMutations(mutations: ServerMutation[]): Promis
         `${firestoreBase()}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:commit`,
         { method: "POST", body: JSON.stringify({ writes }) },
     );
-    if (!response.ok) {
-        const error = new Error(`Firestore atomik işlem hatası (${response.status}).`) as Error & { status?: number };
-        error.status = response.status;
-        throw error;
-    }
+    if (!response.ok) throw await firestoreHttpError(response, "Firestore atomik işlem hatası");
     const result = await response.json().catch(() => ({})) as { writeResults?: Array<{ updateTime?: string }>; commitTime?: string };
     return { writeResults: result.writeResults || [], commitTime: result.commitTime || null };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Ban, Crown, KeyRound, Lock, RefreshCw, ShieldCheck, UserCheck, UserCog, Users } from "lucide-react";
+import { Ban, Crown, KeyRound, Lock, RefreshCw, ShieldCheck, ShieldOff, UserCheck, UserCog, Users } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { adminPost, adminRequest, type ApiFailure } from "./api";
@@ -22,7 +22,7 @@ import {
 import { ROLE_TONES } from "./tones";
 
 type DialogState =
-    | { kind: "suspend" | "unsuspend"; user: AdminUser }
+    | { kind: "suspend" | "unsuspend" | "reset2fa"; user: AdminUser }
     | { kind: "role"; user: AdminUser; role: AssignableRole };
 
 /** The stored role as it appears among the assignable ones ("user" when none). */
@@ -57,6 +57,7 @@ function UserRow({ user, self, onAction }: { user: AdminUser; self: boolean; onA
             <div className="flex flex-wrap items-center gap-1.5">
                 <RoleBadge role={user.role} />
                 {user.provider ? <Badge tone={user.provider === "google" ? "sky" : "zinc"}>{user.provider === "google" ? "Google" : tx({ TR: "E-posta", EN: "E-mail" })}</Badge> : null}
+                {user.twoFactorEnabled ? <Badge tone="emerald" icon={ShieldCheck}>2FA</Badge> : null}
             </div>
             <div className="min-w-0 text-[12px] text-zinc-500">
                 {user.suspended ? (
@@ -78,6 +79,9 @@ function UserRow({ user, self, onAction }: { user: AdminUser; self: boolean; onA
                 ) : null}
                 {user.assignableRoles.length ? (
                     <Button size="sm" icon={UserCog} onClick={() => onAction({ kind: "role", user, role: assignableRole(user) })}>{tx({ TR: "Rol", EN: "Role" })}</Button>
+                ) : null}
+                {user.canSuspend && user.twoFactorEnabled ? (
+                    <Button size="sm" variant="ghost" icon={ShieldOff} onClick={() => onAction({ kind: "reset2fa", user })}>{tx({ TR: "2FA sıfırla", EN: "Reset 2FA" })}</Button>
                 ) : null}
                 {user.canSuspend ? (
                     user.suspended
@@ -154,6 +158,8 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
                 : tx({ TR: "{email} askıya alındı.", EN: "{email} was suspended." }, { email: updated.email }));
         } else if (dialog.kind === "unsuspend") {
             toast("success", tx({ TR: "{email} yeniden etkin.", EN: "{email} is active again." }, { email: updated.email }));
+        } else if (dialog.kind === "reset2fa") {
+            toast("success", tx({ TR: "{email} için iki adımlı doğrulama kapatıldı.", EN: "Two-step verification was turned off for {email}." }, { email: updated.email }));
         } else {
             toast("success", tx({ TR: "{email} artık {role} rolünde.", EN: "{email} now has the {role} role." }, { email: updated.email, role: tx(ROLE_COPY[updated.role]) }));
         }
@@ -273,6 +279,31 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
                     max={SUSPEND_REASON_MAX}
                     rows={2}
                     hint={tx({ TR: "Denetim kaydına yazılır.", EN: "Written to the audit log." })}
+                />
+            </ConfirmDialog>
+
+            <ConfirmDialog
+                open={dialog?.kind === "reset2fa"}
+                onClose={closeDialog}
+                onConfirm={() => void submit()}
+                busy={busy}
+                error={actionError}
+                icon={ShieldOff}
+                tone="danger"
+                title={tx({ TR: "İki adımlı doğrulama sıfırlansın mı?", EN: "Reset two-step verification?" })}
+                description={dialog ? tx({ TR: "{email} yalnızca şifresiyle giriş yapabilecek. Bunu yalnızca kimliğini başka bir yolla doğruladığınız, doğrulama uygulamasını ve kurtarma kodlarını kaybetmiş kişiler için yapın.", EN: "{email} will be able to sign in with just the password. Only do this for people who lost their authenticator and recovery codes and whose identity you verified another way." }, { email: dialog.user.email }) : undefined}
+                confirmLabel={tx({ TR: "Sıfırla", EN: "Reset" })}
+                confirmDisabled={!reason.trim() || reason.length > SUSPEND_REASON_MAX}
+            >
+                <TextArea
+                    label={tx({ TR: "Gerekçe", EN: "Reason" })}
+                    value={reason}
+                    onChange={setReason}
+                    max={SUSPEND_REASON_MAX}
+                    rows={2}
+                    autoFocus
+                    placeholder={tx({ TR: "Örn. destek talebi #123, kimlik e-postayla doğrulandı", EN: "e.g. support ticket #123, identity verified by e-mail" })}
+                    hint={tx({ TR: "Zorunlu; denetim kaydına yazılır.", EN: "Required; written to the audit log." })}
                 />
             </ConfirmDialog>
 

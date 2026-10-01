@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, KeyRound, LoaderCircle, Lock, Mail, ShieldCheck } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
 import { useRawSession } from "@/components/Provider";
 import { AUTH_NETWORK_ERROR, completeSignIn, consumeAuthErrorDetail, handoffPath, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
 
 function useAuthErrorMessage() {
-    const { t } = useI18n();
+    const { t, tx } = useI18n();
     return (code: string | null) => {
         if (!code) return "";
         if (code.startsWith("RateLimited:")) {
@@ -31,6 +31,10 @@ function useAuthErrorMessage() {
                 return t("auth_error_not_linked") || "Bu e-posta başka bir giriş yöntemiyle kayıtlı. O yöntemle giriş yapın.";
             case "AccessDenied":
                 return t("auth_error_denied") || "Giriş izni verilmedi.";
+            case "TwoFactorRequired":
+                return tx({ TR: "Bu hesapta iki adımlı doğrulama açık. Doğrulama uygulamanızdaki kodu girin.", EN: "This account uses two-step verification. Enter the code from your authenticator app." });
+            case "TwoFactorInvalid":
+                return tx({ TR: "Doğrulama kodu hatalı, süresi dolmuş ya da zaten kullanılmış. Uygulamadaki güncel kodu girin.", EN: "The verification code is wrong, expired or already used. Enter the current code from your app." });
             case "AccountSuspended":
                 return t("auth_error_suspended") || "Bu hesap askıya alınmış. Geri Bildirim sayfasından itiraz edebilirsiniz.";
             case "ServiceUnavailable":
@@ -64,6 +68,10 @@ function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    // Second step for accounts with two-step verification.
+    const [otpStep, setOtpStep] = useState(false);
+    const [otp, setOtp] = useState("");
+    const [useRecoveryCode, setUseRecoveryCode] = useState(false);
     // Store the code, not the text, so the message follows language changes.
     const [errorCode, setErrorCode] = useState<string | null>(() => {
         const code = searchParams.get("error");
@@ -84,10 +92,18 @@ function LoginForm() {
         setLoading(true);
         setErrorCode(null);
         setErrorDetail(null);
-        const code = await signInWithPassword(email.trim(), password, callbackPath);
+        const code = await signInWithPassword(email.trim(), password, callbackPath, otpStep ? otp.trim() : undefined);
+        if (code === "TwoFactorRequired" && !otpStep) {
+            // Password accepted: ask for the authenticator code instead of showing an error.
+            consumeAuthErrorDetail();
+            setOtpStep(true);
+            setLoading(false);
+            return;
+        }
         if (code) {
             setErrorDetail(consumeAuthErrorDetail());
             setErrorCode(code);
+            if (code === "TwoFactorInvalid") setOtp("");
             setLoading(false);
             return;
         }
@@ -150,6 +166,51 @@ function LoginForm() {
                 </div>
             )}
 
+            {otpStep ? (
+                <form onSubmit={handleCredentialsLogin} className="space-y-4">
+                    <div className="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-3.5 text-sm leading-5 text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-200">
+                        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
+                        <span>
+                            <strong className="block">{tx({ TR: "İki adımlı doğrulama", EN: "Two-step verification" })}</strong>
+                            {useRecoveryCode
+                                ? tx({ TR: "Hesabınızı kurarken kaydettiğiniz kurtarma kodlarından birini girin. Her kod yalnızca bir kez kullanılabilir.", EN: "Enter one of the recovery codes you saved during setup. Each code works only once." })
+                                : tx({ TR: "Doğrulama uygulamanızdaki (Google Authenticator, Microsoft Authenticator, 1Password…) 6 haneli kodu girin.", EN: "Enter the 6-digit code from your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…)." })}
+                        </span>
+                    </div>
+                    <label className="block">
+                        <span className="mb-1.5 block text-sm font-semibold">{useRecoveryCode ? tx({ TR: "Kurtarma kodu", EN: "Recovery code" }) : tx({ TR: "Doğrulama kodu", EN: "Verification code" })}</span>
+                        <span className="relative block">
+                            <KeyRound className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-zinc-400" />
+                            <input
+                                key={useRecoveryCode ? "recovery" : "totp"}
+                                value={otp}
+                                onChange={(event) => setOtp(useRecoveryCode ? event.target.value.toUpperCase().slice(0, 20) : event.target.value.replace(/[^\d]/g, "").slice(0, 6))}
+                                required
+                                autoFocus
+                                dir="ltr"
+                                autoComplete="one-time-code"
+                                inputMode={useRecoveryCode ? "text" : "numeric"}
+                                pattern={useRecoveryCode ? undefined : "\\d{6}"}
+                                className={`${inputClass} font-mono text-base tracking-[0.3em]`}
+                                placeholder={useRecoveryCode ? "XXXX-XXXX-XXXX" : "000000"}
+                                aria-describedby="otp-help"
+                            />
+                        </span>
+                    </label>
+                    <button type="submit" disabled={loading || (!useRecoveryCode && otp.length !== 6) || (useRecoveryCode && otp.replace(/[^A-Z0-9]/g, "").length !== 12)} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60">
+                        {loading && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                        {tx({ TR: "Doğrula ve giriş yap", EN: "Verify and sign in" })}
+                    </button>
+                    <div id="otp-help" className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <button type="button" onClick={() => { setUseRecoveryCode((value) => !value); setOtp(""); setErrorCode(null); }} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+                            {useRecoveryCode ? tx({ TR: "Doğrulama uygulamasını kullan", EN: "Use the authenticator app" }) : tx({ TR: "Telefonuma erişemiyorum: kurtarma kodu kullan", EN: "Can't reach my phone: use a recovery code" })}
+                        </button>
+                        <button type="button" onClick={() => { setOtpStep(false); setOtp(""); setPassword(""); setUseRecoveryCode(false); setErrorCode(null); }} className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
+                            <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> {tx({ TR: "Geri", EN: "Back" })}
+                        </button>
+                    </div>
+                </form>
+            ) : (
             <form onSubmit={handleCredentialsLogin} className="space-y-4" noValidate={false}>
                 <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold">{t("email") || "E-posta"}</span>
@@ -173,6 +234,7 @@ function LoginForm() {
                     {loading ? (t("logging_in") || "Giriş Yapılıyor...") : (t("login") || "Giriş Yap")}
                 </button>
             </form>
+            )}
             <p className="mt-6 text-center text-xs leading-5 text-zinc-400">
                 {t("auth_terms_notice") || "Devam ederek Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz."}{" "}
                 <Link href="/terms-of-use" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("terms_of_use") || "Kullanım Şartları"}</Link> · <Link href="/privacy-policy" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("privacy_policy") || "Gizlilik Politikası"}</Link>

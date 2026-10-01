@@ -26,6 +26,7 @@ import {
     type AdminSession,
 } from "@/lib/server/admin";
 import { commitServerPatches, deleteFirebaseAuthUser, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { TWO_FACTOR_FIELDS } from "@/lib/server/two-factor";
 import { normalizeEmail } from "@/lib/server/validate";
 
 export const runtime = "nodejs";
@@ -35,9 +36,9 @@ const ONLINE_WINDOW_MS = 2 * 60_000;
 // Never select credentials, friend lists or settings: only what the panel shows.
 const USER_FIELDS = [
     "email", "username", "nickname", "nicknameTag", "avatarUrl", "provider", "createdAt", "lastLoginAt", "lastSeenAt",
-    "isOnline", "suspended", "banned", "suspendedAt", "suspendedBy", "suspendReason", "role",
+    "isOnline", "suspended", "banned", "suspendedAt", "suspendedBy", "suspendReason", "role", "twoFactorEnabled",
 ];
-const ACTIONS = ["suspend", "unsuspend", "setRole"] as const;
+const ACTIONS = ["suspend", "unsuspend", "setRole", "reset2fa"] as const;
 const UNSAFE_QUERY = /[\u0000-\u001f\u007f]/;
 
 type UserRecord = Record<string, unknown> & { _id: string };
@@ -64,6 +65,7 @@ function toAdminUser(record: Record<string, unknown>, email: string, actor: Admi
         suspendedAt: toIso(record.suspendedAt),
         suspendedBy: typeof record.suspendedBy === "string" ? record.suspendedBy.slice(0, 254) : null,
         suspendReason: typeof record.suspendReason === "string" ? record.suspendReason.slice(0, SUSPEND_REASON_MAX) : null,
+        twoFactorEnabled: record.twoFactorEnabled === true,
         canSuspend: policy.canSuspend,
         assignableRoles: policy.assignableRoles,
     };
@@ -155,7 +157,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-/** Suspend / unsuspend an account or change its staff role. */
+/** Suspend / unsuspend an account, change its staff role or reset its two-step verification. */
 export async function POST(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "admin", mutation: true });
     if (!guard.ok) return guard.response;
@@ -216,6 +218,22 @@ export async function POST(request: NextRequest) {
             const response: AdminUserActionResponse = {
                 user: toAdminUser({ ...record, suspended: false, banned: false, suspendedAt: null, suspendedBy: null, suspendReason: null }, email, actor),
             };
+            return adminJson(response);
+        }
+
+        if (action === "reset2fa") {
+            // For people who lost both their authenticator and their recovery codes.
+            // Same authority as suspending, and the reason is mandatory.
+            if (!policy.canSuspend) throw new AdminHttpError(403, policy.denial ?? "forbidden");
+            if (record.twoFactorEnabled !== true) throw new AdminHttpError(409, "no_change");
+            if (!reason) throw new AdminHttpError(400, "text_required");
+            await commitServerPatches([
+                // Every 2FA field is in the mask and none in the data: all are removed.
+                { path: `credentials/${email}`, data: {}, updateFields: TWO_FACTOR_FIELDS },
+                { path: target, data: { twoFactorEnabled: false, twoFactorUpdatedAt: now }, updateFields: ["twoFactorEnabled", "twoFactorUpdatedAt"], exists: true },
+                auditLogPatch(actor.email, "user.reset_2fa", target, { email, reason }),
+            ]);
+            const response: AdminUserActionResponse = { user: toAdminUser({ ...record, twoFactorEnabled: false }, email, actor) };
             return adminJson(response);
         }
 

@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { User, Trash2, Camera, ArrowLeft, Save, Bell, Globe, Shield, Database, Download, Clock, Eye, EyeOff, Mail, Megaphone, LogOut, Link2, Github, Linkedin, Twitter, Globe2, Hash, Palette, Image as ImageIcon, MessageCircle, Star, Lock, Paintbrush } from "lucide-react";
 import Header from "@/components/Header";
+import TwoFactorSettings from "@/components/Account/TwoFactorSettings";
 import { LANGUAGES, useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -1131,6 +1132,9 @@ export default function AccountSettingsPage() {
                         {t("security_settings") || "Güvenlik Ayarları"}
                     </h2>
                     <div className="space-y-4">
+                        <div className="pb-4 border-b border-zinc-100 dark:border-zinc-800">
+                            <TwoFactorSettings />
+                        </div>
                         <div className="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-zinc-800">
                             <div>
                                 <span className="block">{t("last_login") || "Son giriş tarihi"}</span>

@@ -3,7 +3,7 @@ import { createEngineId } from "@/lib/game-engine/ids";
 import { normalizeProject, SchemaError } from "@/lib/game-engine/schema";
 import type { GameProjectDocument, ScriptAsset } from "@/lib/game-engine/types";
 import { getActiveSession } from "@/lib/server/active-session";
-import { getServerDocument } from "@/lib/server/firebase-rest";
+import { getServerDocument, isWriteConflict } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 
@@ -160,10 +160,7 @@ export function apiJson(payload: unknown, status = 200, headers: Record<string, 
 export function apiError(error: unknown, fallbackMessage: string, fallbackStatus = 500) {
     if (error instanceof GameApiError) return apiJson({ error: error.message }, error.status, error.headers);
     if (error instanceof SchemaError) return apiJson({ error: error.message }, 400);
-    const firestoreStatus = error instanceof Error && "status" in error
-        ? Number((error as Error & { status?: number }).status)
-        : 0;
-    if (firestoreStatus === 409 || firestoreStatus === 412) {
+    if (isWriteConflict(error)) {
         return apiJson({ error: "Proje başka bir oturumda değişti. Güncel sürümü yükleyip tekrar deneyin." }, 409);
     }
     return apiJson({ error: fallbackMessage }, fallbackStatus);

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { getServerDocument, patchServerDocument } from "./firebase-rest";
+import { getServerDocument, isWriteConflict, patchServerDocument } from "./firebase-rest";
 
 type RateLimitResult = { allowed: boolean; remaining: number; retryAfterSeconds: number };
 
@@ -29,8 +29,8 @@ export async function enforceRateLimit(key: string, limit: number, windowMs: num
             }, current?._updateTime ? { updateTime: current._updateTime } : { exists: false });
             return { allowed: true, remaining: Math.max(0, limit - count - 1), retryAfterSeconds };
         } catch (error) {
-            const status = (error as Error & { status?: number }).status;
-            if ((status === 409 || status === 412) && attempt < 2) continue;
+            // A parallel request updated the window first: read it again.
+            if (isWriteConflict(error) && attempt < 2) continue;
             throw error;
         }
     }

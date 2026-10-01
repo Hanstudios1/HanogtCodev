@@ -8,6 +8,7 @@ import {
     commitServerMutations,
     deleteServerDocument,
     getServerDocument,
+    isWriteConflict,
     listServerCollection,
     patchServerDocument,
     queryServerCollection,
@@ -289,7 +290,7 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ error: "Geçersiz işlem." }, { status: 400 });
     } catch (error) {
-        const conflict = error instanceof Error && "status" in error && (error as Error & { status?: number }).status === 409;
+        const conflict = isWriteConflict(error);
         return NextResponse.json({ error: conflict ? "İşlem başka bir güncellemeyle çakıştı; tekrar deneyin." : "Media işlemi tamamlanamadı." }, { status: conflict ? 409 : 500 });
     }
 }

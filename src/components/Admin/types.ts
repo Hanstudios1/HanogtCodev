@@ -120,6 +120,8 @@ export type AdminUser = {
     suspendedAt: string | null;
     suspendedBy: string | null;
     suspendReason: string | null;
+    /** Two-step verification is on (only staff who may suspend can reset it). */
+    twoFactorEnabled: boolean;
     /** What the requesting staff member may do with this account. */
     canSuspend: boolean;
     assignableRoles: AssignableRole[];
@@ -275,6 +277,7 @@ export type AdminAuditAction =
     | "user.suspend"
     | "user.unsuspend"
     | "user.set_role"
+    | "user.reset_2fa"
     | "report.resolve"
     | "report.dismiss"
     | "report.remove_content"
