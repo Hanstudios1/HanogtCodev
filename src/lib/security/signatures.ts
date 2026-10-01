@@ -24,7 +24,11 @@ export const SIGNATURE_RULES: SignatureRule[] = [
         category: "destructive",
         severity: "critical",
         message: "Kök veya geniş bir dizini geri döndürülemez biçimde silme girişimi algılandı.",
-        pattern: /(?:rm\s+-[^\n]*r[^\n]*f[^\n]*(?:\/|--no-preserve-root)|(?:format|mkfs(?:\.[a-z0-9]+)?)\s+(?:[a-z]:|\/dev\/)|shutil\.rmtree\s*\(\s*["']\/["']|del\s+\/[sfq]\s+[^\n]*[a-z]:\\\s*(?:\*|$)|rd\s+\/s\s+\/q\s+[a-z]:\\)/i,
+        // The delete target must be a root: "/", a bare top-level system dir,
+        // ~ or $HOME, or --no-preserve-root. An earlier version matched any "rm
+        // -rf" whose path merely contained a slash, so "rm -rf ./node_modules"
+        // and "rm -rf build/" (the most common cleanup commands) were blocked.
+        pattern: /(?:\brm\s+(?:-{1,2}[\w-]+\s+)*(?:--no-preserve-root|\/(?:\s|$|\*)|\/(?:etc|usr|bin|boot|lib|lib64|sbin|var|home|root|sys|proc|dev)(?:\s|$|\/\*|\/(?=\s|$))|~\/?(?:\s|$|\*)|\$\{?HOME\}?(?:\s|$|\/\*))|(?:format|mkfs(?:\.[a-z0-9]+)?)\s+(?:[a-z]:|\/dev\/)|shutil\.rmtree\s*\(\s*["']\/["']|del\s+\/[sfq]\s+[^\n]*[a-z]:\\\s*(?:\*|$)|rd\s+\/s\s+\/q\s+[a-z]:\\)/i,
     },
     {
         id: "disk-wipe",
@@ -159,7 +163,11 @@ export function detectSignatures(code: string): SignatureFinding[] {
     const hasProcessSpawn = /(?:child_process|subprocess\.(?:run|popen|call)|processbuilder|system\.diagnostics\.process|os\.system)/i.test(normalized);
     const hasNetworkFetch = /(?:curl|wget|invoke-webrequest|requests?\.(?:get|post)|https?\.get|fetch\s*\()/i.test(normalized);
     if (hasProcessSpawn && hasNetworkFetch) {
-        findings.push({ id: "network-process-chain", category: "remote_access", severity: "high", message: "Ağdan veri alma ile işletim sistemi süreci başlatma davranışları birlikte algılandı." });
+        // Informational only (not blocking): downloading a file and then running
+        // a tool on it — e.g. fetch a video, run ffmpeg — is an extremely common
+        // legitimate workflow. The clearly malicious forms (piping a download
+        // straight into a shell, reverse shells) are caught by their own rules.
+        findings.push({ id: "network-process-chain", category: "remote_access", severity: "medium", message: "Ağdan veri alma ile işletim sistemi süreci başlatma davranışları birlikte algılandı." });
     }
     return findings;
 }
