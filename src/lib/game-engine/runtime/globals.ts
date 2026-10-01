@@ -1,8 +1,10 @@
-/** Engine namespaces visible to scripts (Debug, Time, Input, Physics, SceneManager…). */
+/** Engine namespaces visible to scripts (Debug, Time, Input, Physics, SceneManager, Tween, Timer…). */
 import { compositeFormat } from "../script/stdlib";
-import { NOT_FOUND, StaticNamespace, VMColor, VMList, VMRef, Vec3, type VMValue } from "../script/values";
-import type { Vector3 } from "../types";
-import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, hostError, isVector, toBool, toNumber, toVector, typeNameFrom, vec } from "./handles";
+import { NOT_FOUND, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMRef, Vec3, type VMValue } from "../script/values";
+import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, type Vector3 } from "../types";
+import type { RuntimeEntity } from "./entity";
+import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toVector, typeNameFrom, vec } from "./handles";
+import { scaleTarget, TimerHandle, TweenHandle, type TweenKind } from "./tweens";
 import type { RuntimeWorld } from "./world";
 
 type Getter = () => VMValue;
@@ -41,7 +43,11 @@ export class PlayerPrefsStore {
     private data: Record<string, number | string>;
     private dirty = false;
 
-    constructor(private readonly storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null, private readonly key: string) {
+    private readonly storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
+    private readonly key: string;
+    constructor(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null, key: string) {
+        this.storage = storage;
+        this.key = key;
         this.data = {};
         try {
             const raw = storage?.getItem(key);
@@ -136,9 +142,116 @@ function colliderList(world: RuntimeWorld, ids: string[]): VMValue[] {
     const output: VMValue[] = [];
     for (const id of ids) {
         const entity = world.entities.get(id);
-        if (entity?.collider) output.push(world.componentHandle(entity, entity.collider));
+        const handle = entity ? world.colliderHandleOf(entity) : null;
+        if (handle) output.push(handle);
     }
     return output;
+}
+
+function isCallable(value: VMValue | undefined): boolean {
+    return value instanceof VMLambda || value instanceof VMBoundMethod || value instanceof VMNativeFunction || value instanceof VMList;
+}
+
+function requireCallable(value: VMValue | undefined, api: string): VMValue {
+    if (!isCallable(value)) hostError(`${api} bir fonksiyon bekliyor: () => { ... } veya bir metot adı (ör. ${api.split("(")[0]}(1f, Spawn)).`, "ArgumentException");
+    return value ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Tween & Timer
+// ---------------------------------------------------------------------------
+
+function createTweenNamespace(world: RuntimeWorld) {
+    const handle = (kind: TweenKind, target: RuntimeEntity | null, from: number | string | Vector3 | null, to: number | string | Vector3, duration: VMValue) => {
+        const tween = world.tweens.create(kind, target, world.currentBehaviour, from, to, Math.max(0, toNumber(duration ?? 0.5, "süre")));
+        return new TweenHandle(tween, world.runCallback);
+    };
+    const target = (value: VMValue, api: string): RuntimeEntity => {
+        const entity = liveEntityOf(value);
+        if (!entity) return hostError(`Tween.${api}: hedef bir Transform, GameObject veya bileşen olmalı (yok edilmiş olabilir).`, "ArgumentException");
+        return entity;
+    };
+    const flat = (v: Vector3): Vector3 => (world.is2D ? { x: v.x, y: v.y, z: 0 } : v);
+    return ns("Tween", {}, {
+        Move: (args) => {
+            const entity = target(args[0], "Move");
+            const to = toVector(args[1], "hedef konum");
+            return handle("move", entity, null, world.is2D ? { ...to, z: entity.world.position.z } : to, args[2]);
+        },
+        MoveLocal: (args) => {
+            const entity = target(args[0], "MoveLocal");
+            const to = toVector(args[1], "hedef konum");
+            return handle("moveLocal", entity, null, world.is2D ? { ...to, z: entity.localPosition.z } : to, args[2]);
+        },
+        Scale: (args) => {
+            const entity = target(args[0], "Scale");
+            const to = scaleTarget(args[1] ?? 1);
+            return handle("scale", entity, null, world.is2D ? { ...to, z: entity.localScale.z } : to, args[2]);
+        },
+        Rotate: (args) => handle("rotate", target(args[0], "Rotate"), null, toVector(args[1], "hedef açı"), args[2]),
+        Color: (args) => handle("color", target(args[0], "Color"), null, toColor(args[1] ?? "#ffffff").toHex(), args[2]),
+        Fade: (args) => handle("fade", target(args[0], "Fade"), null, Math.max(0, Math.min(1, toNumber(args[1] ?? 0, "saydamlık"))), args[2]),
+        Value: (args) => {
+            const tween = handle("value", null, toNumber(args[0] ?? 0, "başlangıç"), toNumber(args[1] ?? 1, "bitiş"), args[2]);
+            tween.tween.onUpdate = requireCallable(args[3], "Tween.Value(from, to, süre, v => ...)");
+            return tween;
+        },
+        Delay: (args) => {
+            const tween = handle("delay", null, 0, 1, args[0]);
+            tween.tween.onComplete.push(requireCallable(args[1], "Tween.Delay(süre, () => ...)"));
+            return tween;
+        },
+        PunchScale: (args) => {
+            const entity = target(args[0], "PunchScale");
+            world.tweens.settle(entity, "punchScale", world.runCallback);
+            return handle("punchScale", entity, 0, toNumber(args[1] ?? 0.2, "güç"), args[2] ?? 0.3);
+        },
+        Shake: (args) => {
+            const entity = target(args[0], "Shake");
+            world.tweens.settle(entity, "shake", world.runCallback);
+            const strength = isVector(args[1]) ? toVector(args[1]) : (() => {
+                const amount = toNumber(args[1] ?? 0.2, "güç");
+                return { x: amount, y: amount, z: world.is2D ? 0 : amount };
+            })();
+            return handle("shake", entity, 0, flat(strength), args[2] ?? 0.3);
+        },
+        Kill: (args) => {
+            const entity = liveEntityOf(args[0] ?? null);
+            return entity ? world.tweens.killTarget(entity, toBool(args[1] ?? false), world.runCallback) : 0;
+        },
+        KillAll: () => {
+            world.tweens.killAll();
+            return undefined;
+        },
+        IsTweening: (args) => {
+            const entity = liveEntityOf(args[0] ?? null);
+            return Boolean(entity && world.tweens.tweens.some((tween) => tween.target === entity && tween.alive));
+        },
+    });
+}
+
+function createTimerNamespace(world: RuntimeWorld) {
+    const timer = (args: VMValue[], repeat: boolean, api: string) => {
+        const seconds = Math.max(0, toNumber(args[0] ?? 0, "süre"));
+        const callback = requireCallable(args[1], api);
+        return new TimerHandle(world.timers.create(seconds, repeat, callback, world.currentBehaviour));
+    };
+    return ns("Timer", {
+        activeCount: () => world.timers.activeCount,
+    }, {
+        After: (args) => timer(args, false, "Timer.After(süre, () => ...)"),
+        Every: (args) => timer(args, true, "Timer.Every(süre, () => ...)"),
+        Cancel: (args) => {
+            if (args[0] instanceof TimerHandle) args[0].task.cancelled = true;
+            return undefined;
+        },
+        CancelAll: () => {
+            const owner = world.currentBehaviour;
+            if (owner) world.timers.cancelOwner(owner);
+            else world.timers.cancelAll();
+            return undefined;
+        },
+    });
 }
 
 function createPhysicsNamespace(world: RuntimeWorld, name: "Physics" | "Physics2D") {
@@ -446,6 +559,15 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             world.requestSceneLoad(args[0] ?? 0);
             return undefined;
         },
+        FadeToScene: (args) => {
+            const color = args[2] instanceof VMColor ? args[2].toHex() : "#000000";
+            world.requestSceneFade(args[0] ?? 0, typeof args[1] === "number" ? args[1] : 0.5, color);
+            return undefined;
+        },
+        ReloadScene: () => {
+            world.requestSceneLoad(world.sceneIndex());
+            return undefined;
+        },
         LoadSceneAsync: (args) => {
             world.requestSceneLoad(args[0] ?? 0);
             return null;
@@ -471,7 +593,9 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         productName: () => world.project.name,
         companyName: () => "Hanogt",
         version: () => "1.0",
-        unityVersion: () => "Hanogt Engine 2",
+        unityVersion: () => `Hanogt Engine ${ENGINE_VERSION}`,
+        engineVersion: () => `${ENGINE_VERSION}.0`,
+        engineName: () => ENGINE_VERSION_LABEL,
         targetFrameRate: () => world.targetFrameRate,
         runInBackground: () => false,
         persistentDataPath: () => "/hanogt/persistent",
@@ -589,6 +713,14 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             prefs.set(String(args[0] ?? ""), String(args[1] ?? ""));
             return undefined;
         },
+        GetBool: (args) => {
+            const value = prefs.get(String(args[0] ?? ""));
+            return typeof value === "number" ? value !== 0 : typeof args[1] === "boolean" ? args[1] : false;
+        },
+        SetBool: (args) => {
+            prefs.set(String(args[0] ?? ""), toBool(args[1] ?? false) ? 1 : 0);
+            return undefined;
+        },
         HasKey: (args) => prefs.has(String(args[0] ?? "")),
         DeleteKey: (args) => {
             prefs.delete(String(args[0] ?? ""));
@@ -641,6 +773,23 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             return undefined;
         },
     }));
+
+    globals.set("Tween", createTweenNamespace(world));
+    globals.set("Timer", createTimerNamespace(world));
+    // Ease.OutQuad → "outQuad" (the names DOTween users know).
+    globals.set("Ease", ns("Ease", Object.fromEntries(EASINGS.map((easing) => [easing.charAt(0).toUpperCase() + easing.slice(1), () => easing])), {}));
+    globals.set("LoopType", enumNamespace("LoopType", ["Restart", "Yoyo"]));
+    globals.set("UI", ns("UI", {
+        pointerOverUI: () => world.pointerOverUI,
+    }, {
+        IsPointerOverUI: () => world.pointerOverUI,
+    }));
+    const eventSystem: StaticNamespace = ns("EventSystem", {
+        current: () => eventSystem,
+    }, {
+        IsPointerOverGameObject: () => world.pointerOverUI,
+    });
+    globals.set("EventSystem", eventSystem);
 
     // Type names used as values (typeof(Rigidbody), `is Collider`…) resolve to inert namespaces.
     for (const typeName of ["Transform", "Rigidbody", "Rigidbody2D", "Collider", "Collider2D"]) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createEngineId } from "@/lib/game-engine/ids";
 import { normalizeProject, SchemaError } from "@/lib/game-engine/schema";
-import type { GameProjectDocument, ScriptAsset } from "@/lib/game-engine/types";
+import { GAME_ENGINE_SCHEMA_VERSION, type GameProjectDocument, type ScriptAsset } from "@/lib/game-engine/types";
 import { getActiveSession } from "@/lib/server/active-session";
 import { getServerDocument, isWriteConflict } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
@@ -21,7 +21,7 @@ export type GameProjectRecord = {
     description?: string;
     dimension?: "2d" | "3d";
     schemaVersion?: number;
-    /** v2: JSON of { activeSceneId, scenes, prefabs, textures, settings }. */
+    /** v2 and later: JSON of { activeSceneId, scenes, prefabs, textures, settings }. */
     content?: string;
     /** v1: single scene document. */
     scene?: unknown;
@@ -232,7 +232,7 @@ export function projectDocumentFields(project: GameProjectDocument) {
         name: project.name,
         description: project.description,
         dimension: project.dimension,
-        schemaVersion: 2,
+        schemaVersion: GAME_ENGINE_SCHEMA_VERSION,
         content,
         templateId: project.scenes[0]?.metadata.templateId ?? null,
         scriptCount: project.scripts.length,
@@ -253,7 +253,8 @@ export function assembleProject(record: GameProjectRecord, id: string, scripts: 
             content: typeof script.content === "string" ? script.content : "",
         }));
     let source: Record<string, unknown>;
-    if (record.schemaVersion === 2 && typeof record.content === "string") {
+    // v2 and v3 share the storage layout; the schema migrates the content itself.
+    if (Number(record.schemaVersion ?? 1) >= 2 && typeof record.content === "string") {
         let content: unknown = {};
         try {
             content = JSON.parse(record.content);

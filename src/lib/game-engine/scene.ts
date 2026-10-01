@@ -6,7 +6,11 @@ import {
     createMeshRenderer,
     createParticleSystem,
     createSpriteRenderer,
+    createTilemap,
     createTransform,
+    createUIButton,
+    createUIPanel,
+    createUIProgressBar,
     createUIText,
 } from "./components";
 import { createEngineId, nowIso } from "./ids";
@@ -116,6 +120,9 @@ export function cloneEntitiesWithNewIds(entities: GameEntity[], rootParentId: st
             : rootParentId;
         copy.components = copy.components.map((component) => {
             const cloned = { ...component, id: createEngineId("cmp") } as GameComponent;
+            if (cloned.type === "uiButton" && cloned.onClick.targetId && idMap.has(cloned.onClick.targetId)) {
+                cloned.onClick = { ...cloned.onClick, targetId: idMap.get(cloned.onClick.targetId) as string };
+            }
             if (cloned.type === "script") {
                 // Entity references inside the subtree follow the clone.
                 const fields = { ...cloned.fields };
@@ -164,6 +171,10 @@ export type EntityPreset =
     | "spotLight"
     | "particles"
     | "text"
+    | "button"
+    | "panel"
+    | "progressBar"
+    | "tilemap"
     | "audio";
 
 const PALETTE = ["#6366f1", "#22c55e", "#f97316", "#06b6d4", "#ec4899", "#eab308", "#8b5cf6"];
@@ -221,6 +232,15 @@ export function createEntityFromPreset(preset: EntityPreset, dimension: GameDime
             return entity("Particle System", [createParticleSystem()]);
         case "text":
             return entity("UI Text", [createUIText({ text: "Skor: 0" })]);
+        case "button":
+            return entity("Button", [createUIButton({ text: "Oyna" })]);
+        case "panel":
+            return entity("Panel", [createUIPanel()]);
+        case "progressBar":
+            return entity("Progress Bar", [createUIProgressBar()]);
+        case "tilemap":
+            // A small strip of ground so the new tilemap is visible right away.
+            return entity("Tilemap", [createTilemap({ origin: { x: -5, y: -4 }, rows: ["##########", "=========="] })], "Ground");
         case "audio":
             return entity("Audio Source", [createAudioSource()]);
     }

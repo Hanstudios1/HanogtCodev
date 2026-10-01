@@ -15,6 +15,8 @@ export type ArcadeRecord = {
     authorImage?: string | null;
     game?: string;
     templateId?: string | null;
+    /** Major Hanogt Engine version the game was published with (missing before V3). */
+    engineVersion?: number;
     languages?: string[];
     plays?: number;
     likes?: number;
@@ -25,7 +27,7 @@ export type ArcadeRecord = {
     _updateTime?: string;
 };
 
-export const ARCADE_LIST_FIELDS = ["title", "description", "dimension", "thumbnail", "authorName", "authorImage", "templateId", "languages", "plays", "likes", "createdAt", "updatedAt"];
+export const ARCADE_LIST_FIELDS = ["title", "description", "dimension", "thumbnail", "authorName", "authorImage", "templateId", "engineVersion", "languages", "plays", "likes", "createdAt", "updatedAt"];
 export const MAX_ARCADE_GAME_BYTES = 900 * 1024;
 
 export function arcadeSummary(record: ArcadeRecord, id: string) {
@@ -38,6 +40,7 @@ export function arcadeSummary(record: ArcadeRecord, id: string) {
         authorName: record.authorName || "Hanogt geliştiricisi",
         authorImage: typeof record.authorImage === "string" && /^https:\/\//.test(record.authorImage) ? record.authorImage : null,
         templateId: record.templateId ?? null,
+        engineVersion: typeof record.engineVersion === "number" && Number.isFinite(record.engineVersion) ? Math.trunc(record.engineVersion) : null,
         languages: Array.isArray(record.languages) ? record.languages.filter((item) => item === "C#" || item === "C++") : [],
         plays: Number(record.plays || 0),
         likes: Number(record.likes || 0),

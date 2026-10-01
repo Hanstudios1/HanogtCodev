@@ -51,6 +51,11 @@ export class RenderAssets {
         return asset && asset.height > 0 ? asset.width / asset.height : 1;
     }
 
+    textureSize(id: string | null | undefined): { width: number; height: number } | null {
+        const asset = id ? this.textureAssets.get(id) : undefined;
+        return asset ? { width: asset.width, height: asset.height } : null;
+    }
+
     mesh(kind: PrimitiveMesh): THREE.BufferGeometry {
         const key = `mesh:${kind}`;
         let geometry = this.geometries.get(key);
@@ -120,14 +125,14 @@ export class RenderAssets {
     }
 
     /** Editor billboard icons drawn on a canvas (no image files needed). */
-    icon(kind: "camera" | "light" | "audio" | "particles" | "empty" | "text"): THREE.Texture {
+    icon(kind: "camera" | "light" | "audio" | "particles" | "empty" | "text" | "ui"): THREE.Texture {
         const cached = this.icons.get(kind);
         if (cached) return cached;
         const canvas = document.createElement("canvas");
         canvas.width = 64;
         canvas.height = 64;
         const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-        const palette: Record<string, string> = { camera: "#60a5fa", light: "#fbbf24", audio: "#34d399", particles: "#f472b6", empty: "#a1a1aa", text: "#c084fc" };
+        const palette: Record<string, string> = { camera: "#60a5fa", light: "#fbbf24", audio: "#34d399", particles: "#f472b6", empty: "#a1a1aa", text: "#c084fc", ui: "#c084fc" };
         ctx.fillStyle = "rgba(9,9,11,0.78)";
         ctx.beginPath();
         ctx.arc(32, 32, 29, 0, Math.PI * 2);
@@ -182,6 +187,10 @@ export class RenderAssets {
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillText("T", 32, 34);
+                break;
+            case "ui":
+                ctx.strokeRect(15, 21, 34, 22);
+                ctx.fillRect(21, 29, 22, 6);
                 break;
             default:
                 ctx.beginPath();

@@ -22,6 +22,8 @@ export const GLOBAL_NAMES = new Set([
     "WaitForFixedUpdate", "WaitUntil", "WaitWhile", "ForceMode", "ForceMode2D", "Space", "Rigidbody", "Rigidbody2D", "Collider",
     "Collider2D", "HUD", "PrimitiveType", "TouchPhase", "Resources", "Gizmos", "Cursor", "CursorLockMode", "LayerMask",
     "RigidbodyType2D", "Ray", "AudioListener", "SendMessageOptions", "RuntimePlatform", "DestroyImmediate",
+    // V3: tweens, timers, UI events
+    "Tween", "Timer", "Ease", "LoopType", "UI", "EventSystem",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",
@@ -41,6 +43,7 @@ export const INT_RESULT_MEMBERS = new Set([
     "Count", "Length", "childCount", "frameCount", "size", "length", "IndexOf", "LastIndexOf", "FindIndex", "FloorToInt",
     "RoundToInt", "CeilToInt", "Parse", "ToInt32", "Next", "GetInt", "touchCount", "count", "find", "stoi", "stol", "Sign_int",
     "GetSiblingIndex", "CompareTo", "layer", "sceneCount", "buildIndex", "width", "height", "RandomRangeInt",
+    "tileCount", "CountTiles", "clipCount",
 ]);
 
 /** API members returning float. */
@@ -51,7 +54,7 @@ export const FLOAT_RESULT_MEMBERS = new Set([
     "Ceil", "Round", "PI", "Deg2Rad", "Rad2Deg", "Epsilon", "Infinity", "NegativeInfinity", "PingPong", "Repeat", "DeltaAngle",
     "Exp", "Log", "Log10", "Asin", "Acos", "Atan", "mass", "drag", "angularDrag", "gravityScale", "intensity", "range",
     "fieldOfView", "orthographicSize", "volume", "pitch", "GetFloat", "NextDouble", "stof", "stod", "SignedAngle", "distance",
-    "SmoothDamp", "PerlinNoise", "Sign",
+    "SmoothDamp", "PerlinNoise", "Sign", "fillAmount", "normalizedValue", "normalizedTime", "cellSize", "minValue", "maxValue",
 ]);
 
 /** Functions whose numeric result follows their arguments (int if all args are int). */

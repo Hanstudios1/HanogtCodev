@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { nowIso } from "@/lib/game-engine/ids";
 import { compileScripts } from "@/lib/game-engine/script/compiler";
+import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { MAX_ARCADE_GAME_BYTES, type ArcadeRecord } from "@/lib/server/arcade";
 import { commitServerMutations, getServerDocument, listServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             authorImage: typeof profile.avatarUrl === "string" && profile.avatarUrl.startsWith("https://") ? profile.avatarUrl : null,
             game,
             templateId: project.scenes[0]?.metadata.templateId ?? null,
+            engineVersion: ENGINE_VERSION,
             languages,
             plays: Number(existing?.plays || 0),
             likes: Number(existing?.likes || 0),

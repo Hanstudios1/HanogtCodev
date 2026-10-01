@@ -23,8 +23,10 @@ import {
     worldToLocalPoint,
     type Quat,
 } from "../math";
+import { countTiles, fillTiles, localPointToCell, resolveTileKey, setTileKey, tileAt, tilemapSize } from "../tilemap";
 import { VMColor, VMError, VMList, VMQuat, VMRef, Vec3, ScriptObject, type HostObject, type VMValue } from "../script/values";
 import type {
+    AnimationComponent,
     AudioSourceComponent,
     CameraComponent,
     ColliderComponent,
@@ -35,6 +37,7 @@ import type {
     PrefabAsset,
     RigidBodyComponent,
     SpriteRendererComponent,
+    TilemapComponent,
     UITextComponent,
     Vector3,
 } from "../types";
@@ -137,7 +140,12 @@ function spaceIsWorld(value: VMValue) {
 
 abstract class EntityHandle implements HostObject {
     abstract readonly hostType: string;
-    constructor(readonly world: RuntimeWorld, readonly entity: RuntimeEntity) {}
+    readonly world: RuntimeWorld;
+    readonly entity: RuntimeEntity;
+    constructor(world: RuntimeWorld, entity: RuntimeEntity) {
+        this.world = world;
+        this.entity = entity;
+    }
 
     isAlive(): boolean {
         return !this.entity.destroyed;
@@ -246,8 +254,10 @@ abstract class EntityHandle implements HostObject {
 }
 
 abstract class ComponentHandle<T extends GameComponent> extends EntityHandle {
-    constructor(world: RuntimeWorld, entity: RuntimeEntity, readonly component: T) {
+    readonly component: T;
+    constructor(world: RuntimeWorld, entity: RuntimeEntity, component: T) {
         super(world, entity);
+        this.component = component;
     }
 
     isAlive(): boolean {
@@ -324,7 +334,11 @@ export class GameObjectHandle extends EntityHandle {
 /** A prefab asset referenced from the Inspector (or loaded with Resources.Load). */
 export class PrefabHandle implements HostObject {
     readonly hostType: string;
-    constructor(readonly prefab: PrefabAsset, readonly componentType: string | null = null) {
+    readonly prefab: PrefabAsset;
+    readonly componentType: string | null;
+    constructor(prefab: PrefabAsset, componentType: string | null = null) {
+        this.prefab = prefab;
+        this.componentType = componentType;
         this.hostType = componentType ?? "GameObject";
     }
 
@@ -827,7 +841,12 @@ export class RigidbodyHandle extends ComponentHandle<RigidBodyComponent> {
 
 export class BoundsHandle implements HostObject {
     readonly hostType = "Bounds";
-    constructor(readonly center: Vector3, readonly size: Vector3) {}
+    readonly center: Vector3;
+    readonly size: Vector3;
+    constructor(center: Vector3, size: Vector3) {
+        this.center = center;
+        this.size = size;
+    }
 
     get(name: string): VMValue {
         const extents = { x: this.size.x / 2, y: this.size.y / 2, z: this.size.z / 2 };
@@ -997,7 +1016,10 @@ export class ColliderHandle extends ComponentHandle<ColliderComponent> {
 
 class PhysicsMaterialHandle implements HostObject {
     readonly hostType = "PhysicMaterial";
-    constructor(readonly collider: ColliderComponent) {}
+    readonly collider: ColliderComponent;
+    constructor(collider: ColliderComponent) {
+        this.collider = collider;
+    }
     get(name: string): VMValue {
         if (name === "bounciness") return this.collider.bounciness;
         if (name === "friction" || name === "dynamicFriction" || name === "staticFriction") return this.collider.friction;
@@ -1022,7 +1044,14 @@ class PhysicsMaterialHandle implements HostObject {
 
 class MaterialHandle implements HostObject {
     readonly hostType = "Material";
-    constructor(readonly world: RuntimeWorld, readonly entity: RuntimeEntity, readonly component: MeshRendererComponent | SpriteRendererComponent) {}
+    readonly world: RuntimeWorld;
+    readonly entity: RuntimeEntity;
+    readonly component: MeshRendererComponent | SpriteRendererComponent;
+    constructor(world: RuntimeWorld, entity: RuntimeEntity, component: MeshRendererComponent | SpriteRendererComponent) {
+        this.world = world;
+        this.entity = entity;
+        this.component = component;
+    }
 
     isAlive() {
         return !this.entity.destroyed;
@@ -1142,6 +1171,9 @@ export class SpriteRendererHandle extends ComponentHandle<SpriteRendererComponen
                 return new BoundsHandle(trs.position, { x: Math.abs(trs.scale.x), y: Math.abs(trs.scale.y), z: 0 });
             }
             case "isVisible": return c.enabled && this.entity.activeInHierarchy;
+            case "frame": return c.frame;
+            case "frameCount": return c.sheet.columns * c.sheet.rows;
+            case "sheet": return new Vec3(c.sheet.columns, c.sheet.rows, 0, true);
             default: {
                 const common = this.componentGet(name);
                 if (common !== undefined) return common;
@@ -1157,6 +1189,12 @@ export class SpriteRendererHandle extends ComponentHandle<SpriteRendererComponen
                 const color = toColor(value);
                 c.color = color.toHex();
                 c.opacity = Math.max(0, Math.min(1, color.a));
+                break;
+            }
+            case "frame": {
+                const count = Math.max(1, c.sheet.columns * c.sheet.rows);
+                const frame = Math.trunc(toNumber(value, "frame"));
+                c.frame = ((frame % count) + count) % count;
                 break;
             }
             case "flipX":
@@ -1573,9 +1611,11 @@ export class TextHandle extends ComponentHandle<UITextComponent> {
         const c = this.component;
         switch (name) {
             case "text": return c.text;
-            case "color": return colorToVM(c.color);
+            case "color": return colorToVM(c.color, this.entity.uiAlpha);
             case "fontSize": return c.fontSize;
             case "fontStyle": return c.bold ? "Bold" : "Normal";
+            case "anchoredPosition": return new Vec3(c.offset.x, c.offset.y, 0, true);
+            case "sortingOrder": return c.order;
             default: {
                 const common = this.componentGet(name);
                 if (common !== undefined) return common;
@@ -1590,14 +1630,25 @@ export class TextHandle extends ComponentHandle<UITextComponent> {
             case "text":
                 c.text = (value === null || value === undefined ? "" : typeof value === "string" ? value : this.world.display(value)).slice(0, 2000);
                 break;
-            case "color":
-                c.color = toColor(value).toHex();
+            case "color": {
+                const color = toColor(value);
+                c.color = color.toHex();
+                this.entity.uiAlpha = Math.max(0, Math.min(1, color.a));
                 break;
+            }
             case "fontSize":
                 c.fontSize = Math.max(4, Math.min(200, toNumber(value)));
                 break;
             case "fontStyle":
                 c.bold = String(value).includes("Bold");
+                break;
+            case "anchoredPosition": {
+                const v = toVector(value, "anchoredPosition");
+                c.offset = { x: v.x, y: v.y };
+                break;
+            }
+            case "sortingOrder":
+                c.order = Math.max(-1000, Math.min(1000, Math.trunc(toNumber(value))));
                 break;
             default:
                 if (this.componentSet(name, value)) return;
@@ -1616,12 +1667,253 @@ export class TextHandle extends ComponentHandle<UITextComponent> {
 }
 
 // ---------------------------------------------------------------------------
+// Tilemap & Animation
+// ---------------------------------------------------------------------------
+
+/** Cell coordinates from (x, y) numbers or a Vector3/Vector3Int; the rest of the arguments follow. */
+function cellArgs(args: VMValue[]): { x: number; y: number; rest: VMValue[] } {
+    if (isVector(args[0])) {
+        const v = toVector(args[0], "hücre");
+        return { x: Math.floor(v.x + 1e-6), y: Math.floor(v.y + 1e-6), rest: args.slice(1) };
+    }
+    return { x: Math.floor(toNumber(args[0] ?? 0, "x") + 1e-6), y: Math.floor(toNumber(args[1] ?? 0, "y") + 1e-6), rest: args.slice(2) };
+}
+
+export class TilemapHandle extends ComponentHandle<TilemapComponent> {
+    readonly hostType = "Tilemap";
+
+    protected typeNames(): string[] {
+        return ["Tilemap", "TilemapCollider2D", "TilemapRenderer", "Collider2D", "Collider", "Component", "Object", "UnityEngine.Object"];
+    }
+
+    private changedTiles() {
+        this.entity.tilemapRevision += 1;
+        this.changed();
+    }
+
+    private keyOf(value: VMValue): string | null {
+        if (value === null || value === undefined) return null;
+        const key = resolveTileKey(this.component.palette, String(value));
+        if (!key) hostError(`'${String(value)}' adında bir karo yok. Paletteki karolar: ${this.component.palette.map((tile) => tile.name).join(", ") || "(boş)"}.`, "ArgumentException");
+        return key;
+    }
+
+    get(name: string): VMValue {
+        const c = this.component;
+        switch (name) {
+            case "cellSize": return c.cellSize;
+            case "origin": return new Vec3(c.origin.x, c.origin.y, 0, true);
+            case "size": {
+                const size = tilemapSize(c);
+                return new Vec3(size.width, size.height, 0, true);
+            }
+            case "tileCount": return countTiles(c);
+            case "tileNames": return new VMList(c.palette.map((tile) => tile.name), "Array");
+            case "isTrigger": return c.isTrigger;
+            case "friction": return c.friction;
+            case "bounciness": return c.bounciness;
+            case "attachedRigidbody": return this.entity.rigidBody ? this.world.componentHandle(this.entity, this.entity.rigidBody) : null;
+            default: {
+                const common = this.componentGet(name);
+                if (common !== undefined) return common;
+                return this.unknown(name);
+            }
+        }
+    }
+
+    set(name: string, value: VMValue): void {
+        const c = this.component;
+        switch (name) {
+            case "isTrigger":
+                c.isTrigger = toBool(value);
+                break;
+            case "friction":
+                c.friction = Math.max(0, Math.min(2, toNumber(value)));
+                break;
+            case "bounciness":
+                c.bounciness = Math.max(0, Math.min(1, toNumber(value)));
+                break;
+            default:
+                if (this.componentSet(name, value)) return;
+                this.unknown(name);
+        }
+        this.changedTiles();
+    }
+
+    call(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue {
+        const c = this.component;
+        switch (name) {
+            case "GetTile": {
+                const cell = cellArgs(args);
+                return tileAt(c, cell.x, cell.y)?.name ?? null;
+            }
+            case "HasTile": {
+                const cell = cellArgs(args);
+                return tileAt(c, cell.x, cell.y) !== null;
+            }
+            case "IsSolid": {
+                const cell = cellArgs(args);
+                return tileAt(c, cell.x, cell.y)?.solid ?? false;
+            }
+            case "SetTile": {
+                const cell = cellArgs(args);
+                const key = this.keyOf(cell.rest[0] ?? null);
+                const changed = setTileKey(c, cell.x, cell.y, key);
+                if (!changed && key && tileAt(c, cell.x, cell.y)?.key !== key) {
+                    this.world.warnOnce(`tilemap-limit:${c.id}`, `'${this.entity.name}' tilemap'i boyut sınırına (512 × 256 hücre) ulaştı; karo eklenemedi.`);
+                }
+                if (changed) this.changedTiles();
+                return undefined;
+            }
+            case "FillRect":
+            case "BoxFill": {
+                const x0 = Math.floor(toNumber(args[0] ?? 0, "x0"));
+                const y0 = Math.floor(toNumber(args[1] ?? 0, "y0"));
+                const x1 = Math.floor(toNumber(args[2] ?? 0, "x1"));
+                const y1 = Math.floor(toNumber(args[3] ?? 0, "y1"));
+                if (fillTiles(c, x0, y0, x1, y1, this.keyOf(args[4] ?? null))) this.changedTiles();
+                return undefined;
+            }
+            case "ClearAllTiles":
+                if (c.rows.length) {
+                    c.rows = [];
+                    this.changedTiles();
+                }
+                return undefined;
+            case "CountTiles":
+                return countTiles(c, args.length ? this.keyOf(args[0] ?? null) ?? undefined : undefined);
+            case "WorldToCell": {
+                const local = worldToLocalPoint(this.entity.world, toVector(args[0], "dünya noktası"));
+                const cell = localPointToCell(c, local.x, local.y);
+                return new Vec3(cell.x, cell.y, 0);
+            }
+            case "CellToWorld":
+            case "GetCellCenterWorld": {
+                const cell = cellArgs(args);
+                const offset = name === "GetCellCenterWorld" ? 0.5 : 0;
+                return vec(localToWorldPoint(this.entity.world, { x: (cell.x + offset) * c.cellSize, y: (cell.y + offset) * c.cellSize, z: 0 }));
+            }
+            case "GetTileAtWorld": {
+                const local = worldToLocalPoint(this.entity.world, toVector(args[0], "dünya noktası"));
+                const cell = localPointToCell(c, local.x, local.y);
+                return tileAt(c, cell.x, cell.y)?.name ?? null;
+            }
+            case "RefreshAllTiles":
+            case "RefreshTile":
+                return undefined;
+            default:
+                return super.call(name, args, typeArgs, refs);
+        }
+    }
+}
+
+export class AnimationHandle extends ComponentHandle<AnimationComponent> {
+    readonly hostType = "Animation";
+
+    protected typeNames(): string[] {
+        return ["Animation", "Animator", "Behaviour", "Component", "Object", "UnityEngine.Object"];
+    }
+
+    private get player() {
+        return this.world.animatorOf(this.entity);
+    }
+
+    private play(name: VMValue) {
+        const clip = name === undefined || name === null ? null : String(name);
+        if (!this.world.playAnimation(this.entity, clip)) {
+            const names = this.component.clips.map((item) => item.name).join(", ");
+            hostError(clip ? `'${clip}' adında bir animasyon klibi yok. Klipler: ${names || "(boş)"}.` : "Bu Animation bileşeninde klip yok.", "ArgumentException");
+        }
+    }
+
+    get(name: string): VMValue {
+        const player = this.player;
+        switch (name) {
+            case "isPlaying": return Boolean(player?.playing);
+            case "clip": return player?.clip?.name ?? this.component.defaultClip ?? this.component.clips[0]?.name ?? null;
+            case "time": return player?.time ?? 0;
+            case "normalizedTime": return player?.clip ? (player.time / Math.max(1e-4, player.clip.duration)) : 0;
+            case "speed": return player?.speed ?? 1;
+            case "clipCount": return this.component.clips.length;
+            case "playAutomatically": return this.component.playOnStart;
+            default: {
+                const common = this.componentGet(name);
+                if (common !== undefined) return common;
+                return this.unknown(name);
+            }
+        }
+    }
+
+    set(name: string, value: VMValue): void {
+        const player = this.player;
+        switch (name) {
+            case "speed":
+                if (player) player.speed = Math.max(0, Math.min(20, toNumber(value, "speed")));
+                return;
+            case "time":
+                if (player) player.time = Math.max(0, toNumber(value, "time"));
+                return;
+            case "playAutomatically":
+                this.component.playOnStart = toBool(value);
+                return;
+            default:
+                if (this.componentSet(name, value)) return;
+                this.unknown(name);
+        }
+    }
+
+    call(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue {
+        const player = this.player;
+        switch (name) {
+            case "Play":
+            case "CrossFade":
+            case "PlayQueued":
+                this.play(args[0]);
+                return true;
+            case "SetTrigger":
+                // Animator parameters aren't simulated: a trigger plays the clip with the same name.
+                if (!player?.findClip(String(args[0] ?? ""))) {
+                    this.world.warnOnce(`trigger:${String(args[0])}`, `Animator.SetTrigger("${String(args[0] ?? "")}"): bu adda klip yok. Hanogt Engine'de tetikleyiciler aynı adlı klibi oynatır.`);
+                    return undefined;
+                }
+                this.play(args[0]);
+                return undefined;
+            case "Stop":
+                this.world.stopAnimation(this.entity);
+                return undefined;
+            case "Pause":
+                player?.pause();
+                return undefined;
+            case "Resume":
+            case "UnPause":
+                player?.resume();
+                return undefined;
+            case "Rewind":
+                if (player) player.time = 0;
+                return undefined;
+            case "IsPlaying":
+                return Boolean(player?.playing && (!args.length || player.clip?.name === String(args[0])));
+            case "HasClip":
+            case "GetClip":
+                return Boolean(player?.findClip(String(args[0] ?? "")));
+            case "GetClipNames":
+                return new VMList(this.component.clips.map((clip) => clip.name), "Array");
+            default:
+                return super.call(name, args, typeArgs, refs);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Queries: rays, hits, collisions
 // ---------------------------------------------------------------------------
 
 export class RayHandle implements HostObject {
     readonly hostType = "Ray";
-    constructor(readonly ray: WorldRay) {}
+    readonly ray: WorldRay;
+    constructor(ray: WorldRay) {
+        this.ray = ray;
+    }
 
     isType(name: string) {
         return name === "Ray" || name === "Ray2D";
@@ -1655,13 +1947,23 @@ export class RayHandle implements HostObject {
 
 export class RaycastHitHandle implements HostObject {
     readonly hostType: string;
+    readonly world: RuntimeWorld;
+    readonly entity: RuntimeEntity | null;
+    readonly point: Vector3;
+    readonly normal: Vector3;
+    readonly distance: number;
     constructor(
-        readonly world: RuntimeWorld,
-        readonly entity: RuntimeEntity | null,
-        readonly point: Vector3,
-        readonly normal: Vector3,
-        readonly distance: number,
+        world: RuntimeWorld,
+        entity: RuntimeEntity | null,
+        point: Vector3,
+        normal: Vector3,
+        distance: number,
     ) {
+        this.world = world;
+        this.entity = entity;
+        this.point = point;
+        this.normal = normal;
+        this.distance = distance;
         this.hostType = world.is2D ? "RaycastHit2D" : "RaycastHit";
     }
 
@@ -1686,7 +1988,7 @@ export class RaycastHitHandle implements HostObject {
             case "distance": return this.distance;
             case "fraction": return this.distance;
             case "centroid": return vec(this.point, is2D);
-            case "collider": return entity?.collider ? this.world.componentHandle(entity, entity.collider) : null;
+            case "collider": return entity ? this.world.colliderHandleOf(entity) : null;
             case "rigidbody": return entity?.rigidBody ? this.world.componentHandle(entity, entity.rigidBody) : null;
             case "transform": return entity ? this.world.transformHandle(entity) : null;
             case "gameObject": return entity ? this.world.gameObjectHandle(entity) : null;
@@ -1710,7 +2012,20 @@ export class RaycastHitHandle implements HostObject {
 
 class ContactPointHandle implements HostObject {
     readonly hostType = "ContactPoint";
-    constructor(readonly world: RuntimeWorld, readonly point: Vector3, readonly normal: Vector3, readonly separation: number, readonly other: RuntimeEntity, readonly self: RuntimeEntity) {}
+    readonly world: RuntimeWorld;
+    readonly point: Vector3;
+    readonly normal: Vector3;
+    readonly separation: number;
+    readonly other: RuntimeEntity;
+    readonly self: RuntimeEntity;
+    constructor(world: RuntimeWorld, point: Vector3, normal: Vector3, separation: number, other: RuntimeEntity, self: RuntimeEntity) {
+        this.world = world;
+        this.point = point;
+        this.normal = normal;
+        this.separation = separation;
+        this.other = other;
+        this.self = self;
+    }
 
     get(name: string): VMValue {
         const is2D = this.world.is2D;
@@ -1718,8 +2033,8 @@ class ContactPointHandle implements HostObject {
             case "point": return vec(this.point, is2D);
             case "normal": return vec(this.normal, is2D);
             case "separation": return -this.separation;
-            case "otherCollider": return this.other.collider && !this.other.destroyed ? this.world.componentHandle(this.other, this.other.collider) : null;
-            case "thisCollider": return this.self.collider && !this.self.destroyed ? this.world.componentHandle(this.self, this.self.collider) : null;
+            case "otherCollider": return this.other.destroyed ? null : this.world.colliderHandleOf(this.other);
+            case "thisCollider": return this.self.destroyed ? null : this.world.colliderHandleOf(this.self);
             default: return hostError(`ContactPoint.${name} yok.`, "MissingMemberException");
         }
     }
@@ -1741,19 +2056,43 @@ class ContactPointHandle implements HostObject {
 export class CollisionHandle implements HostObject {
     readonly hostType: string;
     private readonly contact: ContactPointHandle;
+    /** Every contact of the pair (a body on a tilemap can touch several tiles); the first is `contact`. */
+    private readonly allContacts: ContactPointHandle[];
 
+    readonly world: RuntimeWorld;
+    readonly self: RuntimeEntity;
+    readonly other: RuntimeEntity;
+    readonly normal: Vector3;
+    readonly penetration: number;
+    readonly relativeVelocity: Vector3;
     constructor(
-        readonly world: RuntimeWorld,
-        readonly self: RuntimeEntity,
-        readonly other: RuntimeEntity,
+        world: RuntimeWorld,
+        self: RuntimeEntity,
+        other: RuntimeEntity,
         point: Vector3,
         /** Points from the other object towards this one (Unity convention). */
-        readonly normal: Vector3,
-        readonly penetration: number,
-        readonly relativeVelocity: Vector3,
+        normal: Vector3,
+        penetration: number,
+        relativeVelocity: Vector3,
     ) {
+        this.world = world;
+        this.self = self;
+        this.other = other;
+        this.normal = normal;
+        this.penetration = penetration;
+        this.relativeVelocity = relativeVelocity;
         this.hostType = world.is2D ? "Collision2D" : "Collision";
         this.contact = new ContactPointHandle(world, point, normal, penetration, other, self);
+        this.allContacts = [this.contact];
+    }
+
+    /** Adds the other contacts of the pair (normals already point towards this object). */
+    withContacts(contacts: Array<{ point: Vector3; normal: Vector3; penetration: number }>): this {
+        if (contacts.length > 1) {
+            this.allContacts.length = 0;
+            for (const item of contacts) this.allContacts.push(new ContactPointHandle(this.world, item.point, item.normal, item.penetration, this.other, this.self));
+        }
+        return this;
     }
 
     isType(name: string) {
@@ -1766,14 +2105,14 @@ export class CollisionHandle implements HostObject {
         switch (name) {
             case "gameObject": return alive ? this.world.gameObjectHandle(other) : null;
             case "transform": return alive ? this.world.transformHandle(other) : null;
-            case "collider": return alive && other.collider ? this.world.componentHandle(other, other.collider) : null;
-            case "otherCollider": return this.self.collider && !this.self.destroyed ? this.world.componentHandle(this.self, this.self.collider) : null;
+            case "collider": return alive ? this.world.colliderHandleOf(other) : null;
+            case "otherCollider": return this.self.destroyed ? null : this.world.colliderHandleOf(this.self);
             case "rigidbody":
             case "otherRigidbody":
                 return alive && other.rigidBody ? this.world.componentHandle(other, other.rigidBody) : null;
             case "relativeVelocity": return vec(this.relativeVelocity, this.world.is2D);
-            case "contactCount": return 1;
-            case "contacts": return new VMList([this.contact], "Array");
+            case "contactCount": return this.allContacts.length;
+            case "contacts": return new VMList([...this.allContacts], "Array");
             case "impulse": {
                 const mass = this.self.rigidBody?.mass ?? 1;
                 return vec({ x: this.normal.x * lengthVec3(this.relativeVelocity) * mass, y: this.normal.y * lengthVec3(this.relativeVelocity) * mass, z: this.normal.z * lengthVec3(this.relativeVelocity) * mass }, this.world.is2D);
@@ -1788,14 +2127,18 @@ export class CollisionHandle implements HostObject {
 
     call(name: string, args: VMValue[], typeArgs: string[]): VMValue {
         switch (name) {
-            case "GetContact": return this.contact;
+            case "GetContact": {
+                const index = typeof args[0] === "number" ? Math.trunc(args[0]) : 0;
+                if (index < 0 || index >= this.allContacts.length) hostError(`GetContact(${index}): temas sayısı ${this.allContacts.length}.`, "ArgumentOutOfRangeException");
+                return this.allContacts[index];
+            }
             case "GetContacts": {
                 const target = args[0];
                 if (target instanceof VMList) {
                     target.items.length = 0;
-                    target.items.push(this.contact);
+                    target.items.push(...this.allContacts);
                 }
-                return 1;
+                return this.allContacts.length;
             }
             case "ToString": return this.toString();
             case "CompareTag": return this.other.tag === String(args[0] ?? "");
@@ -1811,7 +2154,12 @@ export class CollisionHandle implements HostObject {
 
 export class SceneHandle implements HostObject {
     readonly hostType = "Scene";
-    constructor(readonly name: string, readonly buildIndex: number) {}
+    readonly name: string;
+    readonly buildIndex: number;
+    constructor(name: string, buildIndex: number) {
+        this.name = name;
+        this.buildIndex = buildIndex;
+    }
 
     get(name: string): VMValue {
         switch (name) {
@@ -1842,7 +2190,14 @@ export class SceneHandle implements HostObject {
 
 export class TouchHandle implements HostObject {
     readonly hostType = "Touch";
-    constructor(readonly position: Vector3, readonly delta: Vector3, readonly phase: string) {}
+    readonly position: Vector3;
+    readonly delta: Vector3;
+    readonly phase: string;
+    constructor(position: Vector3, delta: Vector3, phase: string) {
+        this.position = position;
+        this.delta = delta;
+        this.phase = phase;
+    }
 
     get(name: string): VMValue {
         switch (name) {

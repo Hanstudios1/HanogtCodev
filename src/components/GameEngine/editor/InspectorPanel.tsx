@@ -11,13 +11,18 @@ import {
     CopyPlus,
     FileCode,
     FilePlus,
+    Film,
     Gauge,
+    Grid3x3,
     Image as ImageIcon,
     Info,
+    LayoutTemplate,
     Lightbulb,
+    MousePointerClick,
     Move3d,
     MoreHorizontal,
     Package,
+    PanelTop,
     Play,
     Plus,
     RotateCcw,
@@ -43,7 +48,10 @@ import {
     UITextEditor,
     defaultComponentFor,
 } from "./ComponentEditors";
+import AnimationEditor from "./AnimationEditor";
 import { useEditor } from "./context";
+import TilemapEditor from "./TilemapEditor";
+import { UIButtonEditor, UIPanelEditor, UIProgressBarEditor } from "./UIEditors";
 import {
     activeScene,
     addComponent,
@@ -76,6 +84,11 @@ const COMPONENT_ICONS: Record<ComponentType, { icon: typeof Box; className: stri
     particleSystem: { icon: Sparkles, className: "text-pink-300" },
     audioSource: { icon: AudioLines, className: "text-teal-300" },
     uiText: { icon: Type, className: "text-violet-300" },
+    uiButton: { icon: MousePointerClick, className: "text-violet-300" },
+    uiPanel: { icon: PanelTop, className: "text-violet-300" },
+    uiProgressBar: { icon: LayoutTemplate, className: "text-violet-300" },
+    tilemap: { icon: Grid3x3, className: "text-lime-300" },
+    animation: { icon: Film, className: "text-fuchsia-300" },
 };
 
 const COMMON_TAGS = ["Untagged", "Player", "Enemy", "Ground", "PickUp", "Coin", "Wall", "Bullet", "Finish", "Respawn", "MainCamera", "GameController", "EditorOnly"];
@@ -93,6 +106,11 @@ function ComponentBody({ entity, component, disabled }: { entity: GameEntity; co
         case "particleSystem": return <ParticleEditor entity={entity} component={component} disabled={disabled} />;
         case "audioSource": return <AudioEditor entity={entity} component={component} disabled={disabled} />;
         case "uiText": return <UITextEditor entity={entity} component={component} disabled={disabled} />;
+        case "uiButton": return <UIButtonEditor entity={entity} component={component} disabled={disabled} />;
+        case "uiPanel": return <UIPanelEditor entity={entity} component={component} disabled={disabled} />;
+        case "uiProgressBar": return <UIProgressBarEditor entity={entity} component={component} disabled={disabled} />;
+        case "tilemap": return <TilemapEditor entity={entity} component={component} disabled={disabled} />;
+        case "animation": return <AnimationEditor entity={entity} component={component} disabled={disabled} />;
     }
 }
 
@@ -151,11 +169,11 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
             }
         }
         return [
-            { label: "Rendering", icon: ImageIcon, items: [builtIn("spriteRenderer", "Sprite Renderer"), builtIn("meshRenderer", "Mesh Renderer"), builtIn("camera", "Camera"), builtIn("light", "Light")] },
+            { label: "Rendering", icon: ImageIcon, items: [builtIn("spriteRenderer", "Sprite Renderer"), builtIn("meshRenderer", "Mesh Renderer"), builtIn("tilemap", "Tilemap"), builtIn("camera", "Camera"), builtIn("light", "Light")] },
             { label: "Physics", icon: Gauge, items: [builtIn("rigidBody", is2D ? "Rigidbody 2D" : "Rigidbody"), builtIn("collider", is2D ? "Collider 2D" : "Collider")] },
-            { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System")] },
+            { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System"), builtIn("animation", "Animation")] },
             { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },
-            { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text")] },
+            { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar")] },
             { separator: true, label: "" },
             { label: t("scripts"), icon: FileCode, items: behaviourItems.length ? behaviourItems : [{ label: "—", disabled: true }] },
             { label: `${t("newScript")}…`, icon: FilePlus, onSelect: () => setNewScriptName("") },

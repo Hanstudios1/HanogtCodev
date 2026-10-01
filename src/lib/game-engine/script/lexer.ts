@@ -31,8 +31,12 @@ export interface Token {
 }
 
 export class ScriptSyntaxError extends Error {
-    constructor(message: string, readonly line: number, readonly col: number) {
+    readonly line: number;
+    readonly col: number;
+    constructor(message: string, line: number, col: number) {
         super(message);
+        this.line = line;
+        this.col = col;
         this.name = "ScriptSyntaxError";
     }
 }

@@ -7,8 +7,12 @@ import {
     Cone,
     Cylinder,
     Diamond,
+    Grid3x3,
     Hexagon,
+    LayoutTemplate,
     Lightbulb,
+    MousePointerClick,
+    PanelTop,
     Pill,
     Sparkles,
     Square,
@@ -28,6 +32,7 @@ import type { GameDimension, GameEntity } from "@/lib/game-engine/types";
 import type { LogEntry } from "@/lib/game-engine/runtime/world";
 import type { EditorStore } from "./store";
 import type { TextKey } from "./text";
+import type { TilePainterStore } from "./tile-painter";
 import type { MenuItem } from "./ui";
 
 export interface ConsoleEntry extends LogEntry {
@@ -45,6 +50,7 @@ export interface EditorContextValue {
     openScript: (scriptId: string, line?: number) => void;
     focusEntity: (id: string) => void;
     createAt: () => { x: number; y: number; z: number };
+    tilePainter: TilePainterStore;
 }
 
 export const EditorContext = createContext<EditorContextValue | null>(null);
@@ -61,6 +67,10 @@ export function entityIcon(entity: GameEntity): { icon: LucideIcon; className: s
     const light = entity.components.find((component) => component.type === "light");
     if (light?.type === "light") return light.lightType === "directional" ? { icon: Sun, className: "text-amber-300" } : light.lightType === "spot" ? { icon: Zap, className: "text-amber-300" } : { icon: Lightbulb, className: "text-amber-300" };
     if (types.has("particleSystem")) return { icon: Sparkles, className: "text-pink-400" };
+    if (types.has("tilemap")) return { icon: Grid3x3, className: "text-lime-300" };
+    if (types.has("uiButton")) return { icon: MousePointerClick, className: "text-violet-300" };
+    if (types.has("uiProgressBar")) return { icon: LayoutTemplate, className: "text-violet-300" };
+    if (types.has("uiPanel")) return { icon: PanelTop, className: "text-violet-300" };
     if (types.has("uiText")) return { icon: Type, className: "text-violet-300" };
     const mesh = entity.components.find((component) => component.type === "meshRenderer");
     if (mesh?.type === "meshRenderer") {
@@ -81,6 +91,7 @@ export function createMenuItems(dimension: GameDimension, t: (key: TextKey) => s
     const shapes2D: MenuItem[] = [
         item("Sprite (Kare)", "sprite", Square),
         item("Sprite (Daire)", "circleSprite", Circle),
+        item("Tilemap", "tilemap", Grid3x3),
     ];
     const shapes3D: MenuItem[] = [
         item("Cube", "cube", Box),
@@ -94,7 +105,7 @@ export function createMenuItems(dimension: GameDimension, t: (key: TextKey) => s
     return [
         item(t("emptyObject"), "empty", Box),
         { separator: true, label: "" },
-        ...(dimension === "2d" ? shapes2D : [{ label: "3D", icon: Box, items: shapes3D } as MenuItem, { label: "2D Sprite", icon: Square, items: shapes2D } as MenuItem]),
+        ...(dimension === "2d" ? shapes2D : [{ label: "3D", icon: Box, items: shapes3D } as MenuItem, { label: "2D", icon: Square, items: shapes2D } as MenuItem]),
         ...(dimension === "2d" ? [{ label: "3D", icon: Box, items: shapes3D } as MenuItem] : []),
         { separator: true, label: "" },
         item("Camera", "camera", Camera),
@@ -108,7 +119,16 @@ export function createMenuItems(dimension: GameDimension, t: (key: TextKey) => s
             ],
         },
         item("Particle System", "particles", Sparkles),
-        item("UI Text", "text", Type),
+        {
+            label: "UI",
+            icon: PanelTop,
+            items: [
+                item("Text", "text", Type),
+                item("Button", "button", MousePointerClick),
+                item("Panel / Image", "panel", PanelTop),
+                item("Progress Bar", "progressBar", LayoutTemplate),
+            ],
+        },
         item("Audio Source", "audio", Volume2),
     ];
 }

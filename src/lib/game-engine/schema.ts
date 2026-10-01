@@ -3,18 +3,31 @@
  *
  * It is used by the browser editor (imports, local drafts), by the server API
  * before anything is persisted and by the Arcade before a published game is
- * played. It accepts schema v1 documents (and the legacy API shape) and always
- * returns a complete, clamped schema v2 document. Unknown keys are dropped so
- * untrusted input cannot smuggle extra data into storage.
+ * played. It accepts schema v1 and v2 documents (and the legacy API shape) and
+ * always returns a complete, clamped schema v3 document. Migration is additive:
+ * every v2 field is kept and the V3 fields get their defaults. Unknown keys are
+ * dropped so untrusted input cannot smuggle extra data into storage.
  */
+import { defaultTilePalette } from "./components";
 import { createEngineId, isEngineId, nowIso } from "./ids";
+import { isKeyCode } from "./key-codes";
+import { isTileKey, TILEMAP_LIMITS } from "./tilemap";
 import {
+    ANIMATION_PROPERTIES,
+    ANIMATION_WRAP_MODES,
+    EASINGS,
     GAME_ENGINE_SCHEMA_VERSION,
     PRIMITIVE_MESHES,
+    PROGRESS_DIRECTIONS,
     SOUND_PRESETS,
     SPRITE_SHAPES,
     UI_ANCHORS,
     UNIQUE_COMPONENT_TYPES,
+    type AnimationClip,
+    type AnimationKey,
+    type AnimationProperty,
+    type AnimationTrack,
+    type AnimationValue,
     type ColliderComponent,
     type GameComponent,
     type GameDimension,
@@ -28,6 +41,9 @@ import {
     type ScriptFieldValue,
     type ScriptLanguage,
     type TextureAsset,
+    type TileDefinition,
+    type TilemapComponent,
+    type UIRectFields,
     type Vector2,
     type Vector3,
 } from "./types";
@@ -50,6 +66,13 @@ export const ENGINE_LIMITS = {
     maxFieldStringLength: 500,
     maxScriptFields: 64,
     maxHierarchyDepth: 64,
+    maxUiLabelLength: 200,
+    maxTilemapColumns: TILEMAP_LIMITS.maxColumns,
+    maxTilemapRows: TILEMAP_LIMITS.maxRows,
+    maxPaletteTiles: TILEMAP_LIMITS.maxPalette,
+    maxAnimationClips: 16,
+    maxAnimationTracks: 12,
+    maxAnimationKeys: 120,
 } as const;
 
 export class SchemaError extends Error {
@@ -163,6 +186,105 @@ function assertSafeTree(value: unknown) {
 }
 
 // ---------------------------------------------------------------------------
+// V3 component helpers
+// ---------------------------------------------------------------------------
+
+function uiRectFields(source: AnyRecord, defaults: UIRectFields): UIRectFields {
+    return {
+        anchor: enumOf(source.anchor, UI_ANCHORS, defaults.anchor),
+        offset: vec2(source.offset, defaults.offset),
+        width: num(source.width, defaults.width, 0, 4000),
+        height: num(source.height, defaults.height, 0, 4000),
+        order: int(source.order, defaults.order, -1000, 1000),
+    };
+}
+
+function normalizeTilemap(source: AnyRecord, id: string, enabled: boolean): TilemapComponent {
+    const palette: TileDefinition[] = [];
+    if (Array.isArray(source.palette)) {
+        const keys = new Set<string>();
+        for (const raw of source.palette.slice(0, ENGINE_LIMITS.maxPaletteTiles * 2)) {
+            const tile = rec(raw);
+            if (!isTileKey(tile.key) || keys.has(tile.key)) continue;
+            keys.add(tile.key);
+            palette.push({
+                key: tile.key,
+                name: str(tile.name, `Tile ${palette.length + 1}`, 40),
+                color: normalizeColor(tile.color, "#94a3b8"),
+                solid: bool(tile.solid, true),
+                frame: int(tile.frame, -1, -1, 4095),
+            });
+            if (palette.length >= ENGINE_LIMITS.maxPaletteTiles) break;
+        }
+    } else {
+        palette.push(...defaultTilePalette());
+    }
+    const keys = new Set(palette.map((tile) => tile.key));
+    let width = 0;
+    const cleaned = (Array.isArray(source.rows) ? source.rows.slice(0, ENGINE_LIMITS.maxTilemapRows) : []).map((row) => {
+        let output = "";
+        // Cells that are not palette keys become empty so rows and palette always agree.
+        for (const char of typeof row === "string" ? row.slice(0, ENGINE_LIMITS.maxTilemapColumns) : "") output += keys.has(char) ? char : ".";
+        width = Math.max(width, output.length);
+        return output;
+    });
+    const origin = rec(source.origin);
+    const atlas = rec(source.atlas);
+    return {
+        id,
+        type: "tilemap",
+        enabled,
+        cellSize: num(source.cellSize, 1, 0.05, 100),
+        origin: { x: int(origin.x, 0, -100_000, 100_000), y: int(origin.y, 0, -100_000, 100_000) },
+        rows: width ? cleaned.map((row) => row.padEnd(width, ".")) : [],
+        palette,
+        atlas: { textureId: refId(atlas.textureId), columns: int(atlas.columns, 1, 1, 64), rows: int(atlas.rows, 1, 1, 64) },
+        sortingLayer: int(source.sortingLayer, 0, -1000, 1000),
+        isTrigger: bool(source.isTrigger, false),
+        friction: num(source.friction, 0.4, 0, 2),
+        bounciness: num(source.bounciness, 0, 0, 1),
+    };
+}
+
+function animationValue(property: AnimationProperty, value: unknown): AnimationValue {
+    switch (property) {
+        case "position": return vec3(value, { x: 0, y: 0, z: 0 }, -100_000, 100_000);
+        case "rotation": return vec3(value, { x: 0, y: 0, z: 0 }, -360_000, 360_000);
+        case "scale": return vec3(value, { x: 1, y: 1, z: 1 }, -10_000, 10_000);
+        case "color": return normalizeColor(value, "#ffffff");
+        case "opacity": return num(value, 1, 0, 1);
+        case "frame": return int(value, 0, 0, 4095);
+    }
+}
+
+function normalizeAnimationClips(value: unknown): AnimationClip[] {
+    const clips: AnimationClip[] = [];
+    const names = new Set<string>();
+    for (const raw of Array.isArray(value) ? value.slice(0, ENGINE_LIMITS.maxAnimationClips) : []) {
+        const source = rec(raw);
+        const duration = num(source.duration, 1, 0.01, 600);
+        const base = str(source.name, "Clip", 40);
+        let name = base;
+        for (let index = 2; names.has(name); index += 1) name = `${base.slice(0, 36)} ${index}`;
+        names.add(name);
+        const tracks: AnimationTrack[] = [];
+        for (const rawTrack of Array.isArray(source.tracks) ? source.tracks.slice(0, ENGINE_LIMITS.maxAnimationTracks) : []) {
+            const track = rec(rawTrack);
+            if (typeof track.property !== "string" || !(ANIMATION_PROPERTIES as readonly string[]).includes(track.property)) continue;
+            const property = track.property as AnimationProperty;
+            const keys: AnimationKey[] = (Array.isArray(track.keys) ? track.keys.slice(0, ENGINE_LIMITS.maxAnimationKeys) : []).map((rawKey) => {
+                const key = rec(rawKey);
+                return { time: num(key.time, 0, 0, duration), value: animationValue(property, key.value), easing: enumOf(key.easing, EASINGS, "linear") };
+            });
+            keys.sort((a, b) => a.time - b.time);
+            tracks.push({ property, keys });
+        }
+        clips.push({ name, duration, wrap: enumOf(source.wrap, ANIMATION_WRAP_MODES, "once"), tracks });
+    }
+    return clips;
+}
+
+// ---------------------------------------------------------------------------
 // Components
 // ---------------------------------------------------------------------------
 
@@ -250,6 +372,8 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 sortingLayer: int(source.sortingLayer, 0, -1000, 1000),
                 flipX: bool(source.flipX, false),
                 flipY: bool(source.flipY, false),
+                sheet: { columns: int(rec(source.sheet).columns, 1, 1, 64), rows: int(rec(source.sheet).rows, 1, 1, 64) },
+                frame: int(source.frame, 0, 0, 4095),
             };
         case "meshRenderer": {
             const legacyMesh = rec(source.mesh);
@@ -399,7 +523,71 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 offset: vec2(source.offset, { x: 24, y: 24 }),
                 bold: bool(source.bold, true),
                 shadow: bool(source.shadow, true),
+                order: int(source.order, 0, -1000, 1000),
             };
+        case "uiButton": {
+            const click = rec(source.onClick);
+            return {
+                id,
+                type,
+                enabled,
+                text: text(source.text, "", ENGINE_LIMITS.maxUiLabelLength),
+                fontSize: num(source.fontSize, 22, 6, 120),
+                textColor: normalizeColor(source.textColor, "#ffffff"),
+                color: normalizeColor(source.color, "#6366f1"),
+                cornerRadius: num(source.cornerRadius, 14, 0, 200),
+                ...uiRectFields(source, { anchor: "center", offset: { x: 0, y: 0 }, width: 200, height: 56, order: 10 }),
+                interactable: bool(source.interactable, true),
+                onClick: {
+                    targetId: refId(click.targetId),
+                    method: typeof click.method === "string" && FIELD_NAME.test(click.method) ? click.method : "",
+                },
+                hotkey: isKeyCode(source.hotkey) ? source.hotkey : "None",
+            };
+        }
+        case "uiPanel":
+            return {
+                id,
+                type,
+                enabled,
+                color: normalizeColor(source.color, "#0f172a"),
+                opacity: num(source.opacity, 0.85, 0, 1),
+                textureId: refId(source.textureId),
+                cornerRadius: num(source.cornerRadius, 18, 0, 200),
+                ...uiRectFields(source, { anchor: "center", offset: { x: 0, y: 0 }, width: 360, height: 240, order: -10 }),
+                fullScreen: bool(source.fullScreen, false),
+                blocksClicks: bool(source.blocksClicks, true),
+            };
+        case "uiProgressBar":
+            return {
+                id,
+                type,
+                enabled,
+                value: num(source.value, 0.6),
+                min: num(source.min, 0),
+                max: num(source.max, 1),
+                fillColor: normalizeColor(source.fillColor, "#22c55e"),
+                backgroundColor: normalizeColor(source.backgroundColor, "#1e293b"),
+                cornerRadius: num(source.cornerRadius, 8, 0, 200),
+                direction: enumOf(source.direction, PROGRESS_DIRECTIONS, "leftToRight"),
+                showLabel: bool(source.showLabel, false),
+                ...uiRectFields(source, { anchor: "top", offset: { x: 0, y: 24 }, width: 260, height: 22, order: 0 }),
+            };
+        case "tilemap":
+            return normalizeTilemap(source, id, enabled);
+        case "animation": {
+            const clips = normalizeAnimationClips(source.clips);
+            const defaultClip = typeof source.defaultClip === "string" && clips.some((clip) => clip.name === source.defaultClip) ? source.defaultClip : null;
+            return {
+                id,
+                type,
+                enabled,
+                clips,
+                defaultClip,
+                playOnStart: bool(source.playOnStart, true),
+                speed: num(source.speed, 1, 0, 10),
+            };
+        }
         default:
             return null;
     }
@@ -487,7 +675,12 @@ export function defaultSceneSettings(dimension: GameDimension): SceneSettings {
             : { mode: "gradient", color: "#cbd5e1", topColor: "#60a5fa" },
         ambientColor: "#ffffff",
         ambientIntensity: dimension === "2d" ? 1 : 0.55,
-        fog: { enabled: false, color: "#cbd5e1", near: 30, far: 120 },
+        fog: { enabled: false, mode: "linear", color: "#cbd5e1", near: 30, far: 120, density: 0.02 },
+        postProcessing: {
+            bloom: { enabled: false, intensity: 0.8, threshold: 0.85, radius: 0.4 },
+            vignette: { enabled: false, intensity: 0.35 },
+            exposure: 1,
+        },
         physics: { gravity: { x: 0, y: -9.81, z: 0 }, fixedTimeStep: 1 / 60, maxSubSteps: 6 },
     };
 }
@@ -497,6 +690,9 @@ function normalizeSceneSettings(value: unknown, dimension: GameDimension): Scene
     const defaults = defaultSceneSettings(dimension);
     const background = rec(source.background);
     const fog = rec(source.fog);
+    const post = rec(source.postProcessing);
+    const bloom = rec(post.bloom);
+    const vignette = rec(post.vignette);
     const physics = rec(source.physics);
     const legacyBackground = typeof source.backgroundColor === "string" ? source.backgroundColor : undefined;
     return {
@@ -509,9 +705,24 @@ function normalizeSceneSettings(value: unknown, dimension: GameDimension): Scene
         ambientIntensity: num(source.ambientIntensity ?? source.ambientLight, defaults.ambientIntensity, 0, 10),
         fog: {
             enabled: bool(fog.enabled, false),
+            mode: enumOf(fog.mode, ["linear", "exponential"] as const, "linear"),
             color: normalizeColor(fog.color, defaults.fog.color),
             near: num(fog.near, defaults.fog.near, 0, 100_000),
             far: num(fog.far, defaults.fog.far, 0.1, 100_000),
+            density: num(fog.density, defaults.fog.density, 0, 1),
+        },
+        postProcessing: {
+            bloom: {
+                enabled: bool(bloom.enabled, false),
+                intensity: num(bloom.intensity, defaults.postProcessing.bloom.intensity, 0, 5),
+                threshold: num(bloom.threshold, defaults.postProcessing.bloom.threshold, 0, 2),
+                radius: num(bloom.radius, defaults.postProcessing.bloom.radius, 0, 1),
+            },
+            vignette: {
+                enabled: bool(vignette.enabled, false),
+                intensity: num(vignette.intensity, defaults.postProcessing.vignette.intensity, 0, 1),
+            },
+            exposure: num(post.exposure, defaults.postProcessing.exposure, 0.1, 4),
         },
         physics: {
             gravity: vec3(physics.gravity ?? source.gravity, defaults.physics.gravity, -1000, 1000),
@@ -608,6 +819,10 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
     const wrapped = rec(value);
     const source = isRecord(wrapped.project) ? { ...wrapped, ...wrapped.project } : wrapped;
     if (!isRecord(source)) throw new SchemaError("Oyun projesi bir JSON nesnesi olmalıdır.");
+    if (typeof source.version === "number" && source.version > GAME_ENGINE_SCHEMA_VERSION) {
+        // Saving it here would silently drop the newer engine's data.
+        throw new SchemaError(`Bu proje daha yeni bir Hanogt Engine sürümüyle (şema v${Math.trunc(source.version)}) kaydedilmiş. Sayfayı yenileyip tekrar deneyin.`);
+    }
     assertSafeTree(source);
 
     const dimension: GameDimension = options.dimension ?? (source.dimension === "2d" ? "2d" : "3d");

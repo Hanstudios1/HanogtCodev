@@ -189,6 +189,7 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                                     <div className="mt-4 flex flex-wrap gap-1.5">
                                         <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold uppercase text-zinc-600 dark:bg-white/10 dark:text-zinc-300">{game.dimension}</span>
                                         {game.languages.map((language) => <span key={language} className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-300">{language}</span>)}
+                                        {game.engineVersion ? <span className="rounded-full bg-fuchsia-500/10 px-2.5 py-1 text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-300">Hanogt Engine V{game.engineVersion}</span> : null}
                                     </div>
                                     <div className="mt-5 grid grid-cols-2 gap-2">
                                         <div className="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.04]"><p className="text-xl font-black text-zinc-900 dark:text-white">{compactNumber(game.plays, locale)}</p><p className="text-[11px] text-zinc-500">{tx({ TR: "oynanma", EN: "plays" })}</p></div>

@@ -1,9 +1,11 @@
 "use client";
 
 import {
+    Activity,
     ArrowLeft,
     BookOpen,
     Check,
+    ChevronDown,
     Cloud,
     CloudOff,
     Download,
@@ -13,6 +15,7 @@ import {
     HardDrive,
     Info,
     LoaderCircle,
+    Magnet,
     Move3d,
     Package,
     Pause,
@@ -37,10 +40,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import type { GamePlayer, PlayerState } from "@/lib/game-engine/player/game-player";
-import type { GizmoMode } from "@/lib/game-engine/render/renderer";
+import type { GizmoMode, SnapSettings } from "@/lib/game-engine/render/renderer";
 import { compileScripts } from "@/lib/game-engine/script/compiler";
 import type { LogEntry } from "@/lib/game-engine/runtime/world";
-import type { GameEntity, GameProjectDocument } from "@/lib/game-engine/types";
+import { ENGINE_VERSION, ENGINE_VERSION_LABEL, type GameEntity, type GameProjectDocument } from "@/lib/game-engine/types";
 import ConsolePanel from "./ConsolePanel";
 import { EditorContext, type ConsoleEntry, type EditorContextValue } from "./context";
 import { PublishDialog, SettingsDialog, captureThumbnail } from "./Dialogs";
@@ -54,12 +57,75 @@ import ProjectPanel from "./ProjectPanel";
 import SceneView, { type SceneViewApi } from "./SceneView";
 import ScriptEditorPanel from "./ScriptEditorPanel";
 import { EditorStore, useEditorState } from "./store";
-import { engineLocale, useEngineText } from "./text";
-import { Dropdown, IconButton, TabButton, Toasts, cx, useToasts } from "./ui";
+import { engineLocale, useEngineText, type TextKey } from "./text";
+import { TilePainterStore } from "./tile-painter";
+import { Dropdown, IconButton, NumberInput, TabButton, Toasts, Toggle, cx, useToasts } from "./ui";
 
 type SaveStatus = "idle" | "saving" | "error" | "conflict";
 
 const LAYOUT_KEY = "hanogt-engine:layout";
+const SNAP_KEY = "hanogt-engine:snap";
+
+interface SnapPreferences {
+    enabled: boolean;
+    translate: number;
+    rotate: number;
+    scale: number;
+}
+
+const DEFAULT_SNAP: SnapPreferences = { enabled: false, translate: 0.5, rotate: 15, scale: 0.1 };
+
+function readSnap(): SnapPreferences {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(SNAP_KEY) ?? "{}") as Partial<SnapPreferences>;
+        const positive = (value: unknown, fallback: number) => (typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback);
+        return {
+            enabled: parsed.enabled === true,
+            translate: positive(parsed.translate, DEFAULT_SNAP.translate),
+            rotate: positive(parsed.rotate, DEFAULT_SNAP.rotate),
+            scale: positive(parsed.scale, DEFAULT_SNAP.scale),
+        };
+    } catch {
+        return DEFAULT_SNAP;
+    }
+}
+
+/** Toolbar control: snapping on/off plus a small popover with the step sizes. */
+function SnapControl({ value, onChange, t }: { value: SnapPreferences; onChange: (value: SnapPreferences) => void; t: (key: TextKey) => string }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!open) return;
+        const onDown = (event: PointerEvent) => {
+            if (!ref.current?.contains(event.target as Node)) setOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setOpen(false);
+        };
+        window.addEventListener("pointerdown", onDown);
+        window.addEventListener("keydown", onKey);
+        return () => {
+            window.removeEventListener("pointerdown", onDown);
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [open]);
+    return (
+        <div ref={ref} className="relative flex items-center">
+            <IconButton icon={Magnet} label={t("snapToggle")} active={value.enabled} onClick={() => onChange({ ...value, enabled: !value.enabled })} />
+            <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={t("snapping")} title={t("snapping")} className="grid h-8 w-4 place-items-center rounded-md text-zinc-500 hover:bg-white/8 hover:text-zinc-200">
+                <ChevronDown className="h-3 w-3" />
+            </button>
+            {open ? (
+                <div className="absolute left-0 top-full z-50 mt-1 w-56 space-y-2 rounded-xl border border-white/10 bg-zinc-900/95 p-3 text-[11.5px] shadow-2xl backdrop-blur-xl">
+                    <label className="flex items-center justify-between gap-2 font-semibold text-zinc-200">{t("snapToggle")}<Toggle checked={value.enabled} label={t("snapToggle")} onChange={(enabled) => onChange({ ...value, enabled })} /></label>
+                    <label className="grid grid-cols-[1fr_72px] items-center gap-2 text-zinc-400">{t("snapMove")}<NumberInput value={value.translate} min={0.01} max={100} step={0.05} onChange={(translate) => onChange({ ...value, translate })} /></label>
+                    <label className="grid grid-cols-[1fr_72px] items-center gap-2 text-zinc-400">{t("snapRotate")}<NumberInput value={value.rotate} min={1} max={180} step={1} onChange={(rotate) => onChange({ ...value, rotate })} /></label>
+                    <label className="grid grid-cols-[1fr_72px] items-center gap-2 text-zinc-400">{t("snapScale")}<NumberInput value={value.scale} min={0.01} max={10} step={0.05} onChange={(scale) => onChange({ ...value, scale })} /></label>
+                </div>
+            ) : null}
+        </div>
+    );
+}
 
 function readLayout() {
     try {
@@ -111,6 +177,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     onExit: () => void;
 }) {
     const [store] = useState(() => new EditorStore(initialProject));
+    const [tilePainter] = useState(() => new TilePainterStore());
     const project = useEditorState(store, (state) => state.project);
     const revision = useEditorState(store, (state) => state.revision);
     const savedRevision = useEditorState(store, (state) => state.savedRevision);
@@ -151,15 +218,30 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const saving = useRef<Promise<boolean> | null>(null);
     const savesSinceThumb = useRef(99);
     const [layout, setLayout] = useState({ left: 260, right: 320, bottom: 230 });
+    const [snapPrefs, setSnapPrefs] = useState<SnapPreferences>(DEFAULT_SNAP);
+    const [showStats, setShowStats] = useState(false);
     const [mobilePanel, setMobilePanel] = useState<null | "hierarchy" | "inspector" | "project" | "console">(null);
     const importInput = useRef<HTMLInputElement | null>(null);
     const playing = session !== null;
     const dirty = revision !== savedRevision;
 
     useEffect(() => {
-        const frame = requestAnimationFrame(() => setLayout(readLayout()));
+        const frame = requestAnimationFrame(() => {
+            setLayout(readLayout());
+            setSnapPrefs(readSnap());
+        });
         return () => cancelAnimationFrame(frame);
     }, []);
+
+    const updateSnap = useCallback((next: SnapPreferences) => {
+        setSnapPrefs(next);
+        try {
+            localStorage.setItem(SNAP_KEY, JSON.stringify(next));
+        } catch {
+            // preferences are best-effort
+        }
+    }, []);
+    const snap = useMemo<SnapSettings | null>(() => (snapPrefs.enabled ? { translate: snapPrefs.translate, rotate: snapPrefs.rotate, scale: snapPrefs.scale } : null), [snapPrefs]);
 
     const persistLayout = useCallback(() => {
         try {
@@ -369,7 +451,10 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             } else if (!mod && key === "w") setGizmoMode("translate");
             else if (!mod && key === "e") setGizmoMode("rotate");
             else if (!mod && key === "r") setGizmoMode("scale");
-            else if (event.key === "Escape") store.setSelection([]);
+            else if (event.key === "Escape") {
+                if (tilePainter.getState().active) tilePainter.stop();
+                else store.setSelection([]);
+            }
         };
         const onPaste = () => {
             if (playing) return;
@@ -391,7 +476,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             window.removeEventListener("keydown", onKey);
             window.removeEventListener("hanogt-engine:paste", onPaste);
         };
-    }, [store, playing, save, startPlay, stopPlay, t, toast]);
+    }, [store, tilePainter, playing, save, startPlay, stopPlay, t, toast]);
 
     // ------------------------------------------------------------------
     // Import / export
@@ -447,7 +532,8 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             const point = sceneApi.current?.center() ?? { x: 0, y: 0, z: 0 };
             return project.dimension === "2d" ? { x: Math.round(point.x), y: Math.round(point.y), z: 0 } : { x: Math.round(point.x), y: Math.max(0, Math.round(point.y)), z: Math.round(point.z) };
         },
-    }), [store, t, language, toast, program, playing, openScript, project.dimension]);
+        tilePainter,
+    }), [store, t, language, toast, program, playing, openScript, project.dimension, tilePainter]);
 
     const scene = activeScene(project);
 
@@ -488,7 +574,10 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                     <div className="mr-1 flex min-w-0 items-center gap-2">
                         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-[10px] font-black">{project.dimension.toUpperCase()}</div>
                         <div className="min-w-0">
-                            <p className="max-w-[26vw] truncate text-[13px] font-bold leading-tight">{project.name}</p>
+                            <p className="flex max-w-[26vw] items-center gap-1.5 text-[13px] font-bold leading-tight">
+                                <span className="truncate">{project.name}</span>
+                                <span title={ENGINE_VERSION_LABEL} className="shrink-0 rounded bg-indigo-500/20 px-1 py-px text-[9px] font-black tracking-wide text-indigo-200">V{ENGINE_VERSION}</span>
+                            </p>
                             <p className={cx("flex items-center gap-1 text-[10.5px] leading-tight", saveIndicator.className)}>{saveIndicator.icon}<span className="truncate">{saveIndicator.text}</span></p>
                         </div>
                     </div>
@@ -507,6 +596,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                         <button type="button" onClick={() => setGizmoSpace(gizmoSpace === "world" ? "local" : "world")} className="ml-0.5 h-7 rounded-md px-2 text-[11px] font-semibold text-zinc-400 hover:bg-white/8 hover:text-zinc-100" title={gizmoSpace === "world" ? t("worldSpace") : t("localSpace")}>
                             {gizmoSpace === "world" ? "Global" : "Local"}
                         </button>
+                        <SnapControl value={snapPrefs} onChange={updateSnap} t={t} />
                     </div>
                     <div className="flex flex-1 items-center justify-center gap-1">
                         <div className="flex items-center gap-0.5 rounded-xl border border-white/[0.08] bg-black/30 p-0.5">
@@ -556,6 +646,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                         <div className="flex h-9 shrink-0 items-center gap-1 border-b border-white/[0.06] bg-zinc-900/40 px-2">
                             <TabButton active={view === "scene"} onClick={() => setView("scene")}><Move3d className="h-3.5 w-3.5" />{t("scene")}</TabButton>
                             <TabButton active={view === "game"} onClick={() => setView("game")}><Play className="h-3.5 w-3.5" />{t("game")}</TabButton>
+                            {playing ? <IconButton icon={Activity} label={t("stats")} size="sm" active={showStats} onClick={() => setShowStats(!showStats)} /> : null}
                             <div className="flex-1" />
                             {playing ? <span className="flex items-center gap-1.5 rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-100"><span className={cx("h-1.5 w-1.5 rounded-full", playerState === "paused" ? "bg-amber-300" : "animate-pulse bg-emerald-400")} />{playerState === "paused" ? t("pause") : t("playingNote")}</span> : null}
                             {!program.ok ? <button type="button" onClick={() => setBottomTab("console")} className="flex items-center gap-1 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-red-200"><X className="h-3 w-3" />{t("compileErrors")}</button> : null}
@@ -566,7 +657,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                             ) : null}
                         </div>
                         <div className="relative min-h-0 flex-1">
-                            <SceneView apiRef={sceneApi} gizmoMode={gizmoMode} gizmoSpace={gizmoSpace} hidden={view !== "scene"} />
+                            <SceneView apiRef={sceneApi} gizmoMode={gizmoMode} gizmoSpace={gizmoSpace} hidden={view !== "scene"} snap={snap} />
                             {session ? (
                                 <div className={cx("absolute inset-0", view !== "game" && "invisible")}>
                                     <GameView
@@ -578,6 +669,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                                         onLog={onLog}
                                         onState={(state) => setPlayerState(state)}
                                         muted={muted}
+                                        showStats={showStats}
                                     />
                                 </div>
                             ) : view === "game" ? <GamePreview project={project} scene={scene} /> : null}

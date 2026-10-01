@@ -5,7 +5,13 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import type { TRS } from "../math";
+import { forEachTile } from "../tilemap";
 import type {
     CameraComponent,
     ColliderComponent,
@@ -17,6 +23,7 @@ import type {
     SceneSettings,
     SpriteRendererComponent,
     TextureAsset,
+    TilemapComponent,
     Vector3,
 } from "../types";
 import type { ParticleEmitter } from "../runtime/particles";
@@ -49,6 +56,29 @@ export interface RenderFrame {
 }
 
 export type GizmoMode = "translate" | "rotate" | "scale";
+
+/** Transform gizmo snapping (null = off). Rotation is in degrees. */
+export interface SnapSettings {
+    translate: number | null;
+    rotate: number | null;
+    scale: number | null;
+}
+
+/** Cells highlighted by the tile painter, in the tilemap's cell coordinates. */
+export interface TileCursor {
+    entityId: string;
+    cellSize: number;
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+    erase: boolean;
+}
+
+export interface RenderStats {
+    drawCalls: number;
+    triangles: number;
+}
 
 export interface SceneRendererOptions {
     mode: "editor" | "game";
@@ -86,6 +116,9 @@ class EntityObject {
     gizmoKey = "";
     colliderGizmo: THREE.Object3D | null = null;
     colliderKey = "";
+    tilemap: THREE.Group | null = null;
+    tilemapKey = "";
+    tileCursor: THREE.Object3D | null = null;
     camera: CameraComponent | null = null;
     tag = "";
     constructor(readonly id: string) {
@@ -116,6 +149,31 @@ void main() {
     float alpha = smoothstep(0.5, 0.15, d);
     gl_FragColor = vec4(vColor.rgb, vColor.a * alpha);
 }`;
+
+const VIGNETTE_SHADER = {
+    uniforms: { tDiffuse: { value: null }, intensity: { value: 0.35 } },
+    vertexShader: /* glsl */ `
+varying vec2 vUv;
+void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`,
+    fragmentShader: /* glsl */ `
+uniform sampler2D tDiffuse;
+uniform float intensity;
+varying vec2 vUv;
+void main() {
+    vec4 color = texture2D(tDiffuse, vUv);
+    float edge = smoothstep(0.85, 0.25, length(vUv - 0.5) * 1.3);
+    color.rgb *= mix(1.0, edge, intensity);
+    gl_FragColor = color;
+}`,
+};
+
+/** Unlit, double-sided material shared by sprites and tilemaps. */
+function flatMaterial(parameters: THREE.MeshBasicMaterialParameters = {}) {
+    return new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false, toneMapped: false, ...parameters });
+}
 
 function disposeObject(object: THREE.Object3D) {
     object.traverse((child) => {
@@ -172,6 +230,20 @@ export class SceneRenderer {
     private debugLines: THREE.LineSegments | null = null;
     private frameNumber = 0;
 
+    // Post-processing (bloom, vignette)
+    private composer: EffectComposer | null = null;
+    private renderPass: RenderPass | null = null;
+    private bloomPass: UnrealBloomPass | null = null;
+    private vignettePass: ShaderPass | null = null;
+    private effects: SceneSettings["postProcessing"] | null = null;
+    /** Shows bloom/vignette in the editor's Scene view too. */
+    showEffects = false;
+
+    // Tile painter
+    private paintMode = false;
+    private cursorKey = "";
+    private lastStats: RenderStats = { drawCalls: 0, triangles: 0 };
+
     constructor(readonly container: HTMLElement, options: SceneRendererOptions) {
         this.options = options;
         this.renderer = new THREE.WebGLRenderer({ antialias: options.antialias ?? true, alpha: false, preserveDrawingBuffer: false, powerPreference: "high-performance" });
@@ -181,6 +253,8 @@ export class SceneRenderer {
         this.renderer.toneMappingExposure = 1;
         this.renderer.shadowMap.enabled = options.shadows ?? true;
         this.renderer.shadowMap.type = THREE.PCFShadowMap;
+        // Reset once per frame so multi-pass (post-processing) frames report their totals.
+        this.renderer.info.autoReset = false;
         this.canvas = this.renderer.domElement;
         this.canvas.style.display = "block";
         this.canvas.style.width = "100%";
@@ -269,19 +343,99 @@ export class SceneRenderer {
         const camera = this.dimension === "2d" ? this.editorCamera2D! : this.editorCamera3D!;
         this.orbit.object = camera;
         this.transform.camera = camera;
-        if (this.dimension === "2d") {
-            this.orbit.enableRotate = false;
-            this.orbit.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
-            this.orbit.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
-            this.orbit.target.set(camera.position.x, camera.position.y, 0);
-        } else {
-            this.orbit.enableRotate = true;
-            this.orbit.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
-            this.orbit.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
-        }
+        if (this.dimension === "2d") this.orbit.target.set(camera.position.x, camera.position.y, 0);
+        this.applyOrbitButtons();
         this.orbit.update();
         this.rebuildGrid();
         this.applyGizmoConstraints();
+    }
+
+    /** While painting tiles the left button / one finger paints instead of moving the view. */
+    private applyOrbitButtons() {
+        if (!this.orbit) return;
+        const is2D = this.dimension === "2d";
+        this.orbit.enableRotate = !is2D;
+        if (is2D) {
+            this.orbit.mouseButtons = { LEFT: this.paintMode ? null : THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+            this.orbit.touches = { ONE: this.paintMode ? null : THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
+        } else {
+            this.orbit.mouseButtons = { LEFT: this.paintMode ? null : THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+            this.orbit.touches = { ONE: this.paintMode ? null : THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+        }
+    }
+
+    setPaintMode(enabled: boolean) {
+        if (this.paintMode === enabled) return;
+        this.paintMode = enabled;
+        this.applyOrbitButtons();
+        this.refreshAttachment();
+        if (!enabled) this.setTileCursor(null);
+    }
+
+    setSnap(snap: SnapSettings | null) {
+        if (!this.transform) return;
+        this.transform.setTranslationSnap(snap?.translate ?? null);
+        this.transform.setRotationSnap(snap?.rotate ? THREE.MathUtils.degToRad(snap.rotate) : null);
+        this.transform.setScaleSnap(snap?.scale ?? null);
+    }
+
+    /** Point under the pointer on an entity's local XY plane (its own coordinates), or null. */
+    localPointOnEntity(clientX: number, clientY: number, entityId: string): { x: number; y: number } | null {
+        const object = this.objects.get(entityId);
+        if (!object) return null;
+        const camera = this.activeCamera();
+        const rect = this.canvas.getBoundingClientRect();
+        const pointer = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+        this.raycaster.setFromCamera(pointer, camera);
+        object.group.updateMatrixWorld(true);
+        const origin = object.group.getWorldPosition(new THREE.Vector3());
+        const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(object.group.getWorldQuaternion(new THREE.Quaternion()));
+        const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, origin);
+        const hit = this.raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+        if (!hit) return null;
+        const local = object.group.worldToLocal(hit);
+        return { x: local.x, y: local.y };
+    }
+
+    /** Highlights the painter's target cells (or clears the highlight). */
+    setTileCursor(cursor: TileCursor | null) {
+        const key = cursor ? JSON.stringify(cursor) : "";
+        if (key === this.cursorKey) return;
+        this.cursorKey = key;
+        for (const object of this.objects.values()) {
+            if (!object.tileCursor) continue;
+            object.group.remove(object.tileCursor);
+            disposeObject(object.tileCursor);
+            object.tileCursor = null;
+        }
+        const object = cursor ? this.objects.get(cursor.entityId) : undefined;
+        if (!cursor || !object) return;
+        const size = cursor.cellSize;
+        const x0 = Math.min(cursor.x0, cursor.x1) * size;
+        const y0 = Math.min(cursor.y0, cursor.y1) * size;
+        const x1 = (Math.max(cursor.x0, cursor.x1) + 1) * size;
+        const y1 = (Math.max(cursor.y0, cursor.y1) + 1) * size;
+        const group = new THREE.Group();
+        const outline = new THREE.LineLoop(
+            new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x0, y0, 0), new THREE.Vector3(x1, y0, 0), new THREE.Vector3(x1, y1, 0), new THREE.Vector3(x0, y1, 0)]),
+            new THREE.LineBasicMaterial({ color: cursor.erase ? 0xf87171 : 0xffffff, depthTest: false, transparent: true }),
+        );
+        const fill = new THREE.Mesh(
+            new THREE.PlaneGeometry(x1 - x0, y1 - y0).translate((x0 + x1) / 2, (y0 + y1) / 2, 0),
+            new THREE.MeshBasicMaterial({ color: cursor.erase ? 0xef4444 : 0x818cf8, transparent: true, opacity: 0.22, depthTest: false, depthWrite: false, side: THREE.DoubleSide }),
+        );
+        group.add(fill, outline);
+        group.renderOrder = 996;
+        group.traverse((child) => {
+            child.renderOrder = 996;
+            child.raycast = () => undefined;
+        });
+        object.group.add(group);
+        object.tileCursor = group;
+    }
+
+    get renderStats(): RenderStats {
+        return this.lastStats;
     }
 
     private rebuildGrid() {
@@ -367,6 +521,7 @@ export class SceneRenderer {
         this.width = width;
         this.height = height;
         this.renderer.setSize(width, height, false);
+        this.composer?.setSize(width, height);
         this.updateEditorProjection();
     }
 
@@ -413,7 +568,7 @@ export class SceneRenderer {
 
     private refreshAttachment() {
         if (!this.transform) return;
-        const id = this.gizmoEnabled ? this.selection[0] ?? null : null;
+        const id = this.gizmoEnabled && !this.paintMode ? this.selection[0] ?? null : null;
         const object = id ? this.objects.get(id) : undefined;
         if (object && id) {
             if (this.attachedId !== id) {
@@ -433,7 +588,7 @@ export class SceneRenderer {
     private handlePointerUp = (event: PointerEvent) => {
         const down = this.pointerDown;
         this.pointerDown = null;
-        if (!down || event.button !== 0 || this.dragging) return;
+        if (!down || event.button !== 0 || this.dragging || this.paintMode) return;
         if (Math.hypot(event.clientX - down.x, event.clientY - down.y) > 5) return;
         if ((this.transform as unknown as { axis?: string | null })?.axis) return;
         const id = this.pick(event.clientX, event.clientY);
@@ -455,6 +610,7 @@ export class SceneRenderer {
         for (const object of this.objects.values()) {
             if (!object.group.visible) continue;
             if (object.visual) candidates.push(object.visual);
+            if (object.tilemap) candidates.push(...object.tilemap.children);
             if (object.icon && object.icon.visible) candidates.push(object.icon);
         }
         const hits = this.raycaster.intersectObjects(candidates, false);
@@ -519,9 +675,12 @@ export class SceneRenderer {
     // -------------------------------------------------------------------
 
     private applySettings(settings: SceneSettings, cameraBackground: string | null) {
-        const key = JSON.stringify([settings.background, settings.ambientColor, settings.ambientIntensity, settings.fog, cameraBackground, this.dimension]);
+        const key = JSON.stringify([settings.background, settings.ambientColor, settings.ambientIntensity, settings.fog, settings.postProcessing, cameraBackground, this.dimension]);
         if (key === this.settingsKey) return;
         this.settingsKey = key;
+        this.renderer.toneMappingExposure = settings.postProcessing?.exposure ?? 1;
+        this.effects = settings.postProcessing ?? null;
+        this.configureEffects();
         if (cameraBackground) {
             this.scene.background = new THREE.Color(cameraBackground);
         } else if (settings.background.mode === "gradient") {
@@ -532,7 +691,54 @@ export class SceneRenderer {
         this.hemi.color.set(settings.ambientColor);
         this.hemi.groundColor.set(settings.ambientColor).multiplyScalar(0.35);
         this.hemi.intensity = settings.ambientIntensity * (this.dimension === "2d" ? 1.2 : 1.6);
-        this.scene.fog = settings.fog.enabled ? new THREE.Fog(settings.fog.color, settings.fog.near, Math.max(settings.fog.near + 0.1, settings.fog.far)) : null;
+        if (!settings.fog.enabled) this.scene.fog = null;
+        else if (settings.fog.mode === "exponential") this.scene.fog = new THREE.FogExp2(settings.fog.color, settings.fog.density);
+        else this.scene.fog = new THREE.Fog(settings.fog.color, settings.fog.near, Math.max(settings.fog.near + 0.1, settings.fog.far));
+    }
+
+    /** Creates, updates or drops the post-processing chain for the current settings. */
+    private configureEffects() {
+        const effects = this.effects;
+        const wanted = Boolean(effects && (effects.bloom.enabled || effects.vignette.enabled) && (this.options.mode === "game" || this.showEffects));
+        if (!wanted || !effects) {
+            if (this.composer) {
+                this.composer.dispose();
+                this.bloomPass?.dispose();
+                this.composer = null;
+                this.renderPass = null;
+                this.bloomPass = null;
+                this.vignettePass = null;
+            }
+            return;
+        }
+        if (!this.composer) {
+            this.composer = new EffectComposer(this.renderer);
+            this.composer.setPixelRatio(this.renderer.getPixelRatio());
+            this.composer.setSize(this.width, this.height);
+            this.renderPass = new RenderPass(this.scene, this.activeCamera());
+            this.bloomPass = new UnrealBloomPass(new THREE.Vector2(this.width, this.height), effects.bloom.intensity, effects.bloom.radius, effects.bloom.threshold);
+            this.vignettePass = new ShaderPass(VIGNETTE_SHADER);
+            this.composer.addPass(this.renderPass);
+            this.composer.addPass(this.bloomPass);
+            this.composer.addPass(this.vignettePass);
+            this.composer.addPass(new OutputPass());
+        }
+        if (this.bloomPass) {
+            this.bloomPass.enabled = effects.bloom.enabled;
+            this.bloomPass.strength = effects.bloom.intensity;
+            this.bloomPass.radius = effects.bloom.radius;
+            this.bloomPass.threshold = effects.bloom.threshold;
+        }
+        if (this.vignettePass) {
+            this.vignettePass.enabled = effects.vignette.enabled;
+            this.vignettePass.uniforms.intensity.value = effects.vignette.intensity;
+        }
+    }
+
+    /** Editor toggle: show bloom/vignette in the Scene view. */
+    setEffectsVisible(visible: boolean) {
+        this.showEffects = visible;
+        this.configureEffects();
     }
 
     private sync(frame: RenderFrame) {
@@ -615,6 +821,7 @@ export class SceneRenderer {
         let light: LightComponent | undefined;
         let camera: CameraComponent | undefined;
         let particles: ParticleSystemComponent | undefined;
+        let tilemap: TilemapComponent | undefined;
         for (const component of entity.components) {
             switch (component.type) {
                 case "meshRenderer": mesh ??= component; break;
@@ -622,11 +829,14 @@ export class SceneRenderer {
                 case "light": light ??= component; break;
                 case "camera": camera ??= component; break;
                 case "particleSystem": particles ??= component; break;
+                case "tilemap": tilemap ??= component; break;
             }
         }
         if (mesh?.enabled) this.ensureMesh(object, mesh);
         else if (sprite?.enabled) this.ensureSprite(object, sprite);
         else this.removeVisual(object);
+        if (tilemap?.enabled) this.ensureTilemap(object, tilemap);
+        else this.removeTilemap(object);
         this.ensureLight(object, light?.enabled ? light : undefined);
         object.camera = camera ?? null;
         if (!particles || !entity.emitter || object.particles?.emitter !== entity.emitter) this.removeParticles(object);
@@ -706,15 +916,111 @@ export class SceneRenderer {
         const material = object.visual.material as THREE.MeshBasicMaterial;
         material.color.set(component.color);
         material.opacity = component.opacity;
-        if (material.map !== texture) {
-            material.map = texture;
+        let map = texture;
+        const columns = Math.max(1, component.sheet?.columns ?? 1);
+        const rows = Math.max(1, component.sheet?.rows ?? 1);
+        if (map && columns * rows > 1) {
+            // One cell of the sprite sheet: a per-object texture view with its own UV window.
+            if (!object.mapClone || object.mapClone.source !== map.source) {
+                object.mapClone?.dispose();
+                object.mapClone = map.clone();
+                object.mapClone.needsUpdate = true;
+            }
+            const count = columns * rows;
+            const frame = (((component.frame ?? 0) % count) + count) % count;
+            object.mapClone.repeat.set(1 / columns, 1 / rows);
+            object.mapClone.offset.set((frame % columns) / columns, 1 - (Math.floor(frame / columns) + 1) / rows);
+            map = object.mapClone;
+        }
+        if (material.map !== map) {
+            material.map = map;
             material.needsUpdate = true;
         }
-        material.alphaTest = texture ? 0.02 : 0;
+        material.alphaTest = map ? 0.02 : 0;
         object.visual.scale.set(component.flipX ? -1 : 1, component.flipY ? -1 : 1, 1);
         object.visual.renderOrder = 10 + component.sortingLayer;
         object.visual.castShadow = false;
         object.visual.receiveShadow = false;
+    }
+
+    private removeTilemap(object: EntityObject) {
+        if (!object.tilemap) return;
+        object.group.remove(object.tilemap);
+        disposeObject(object.tilemap);
+        object.tilemap = null;
+        object.tilemapKey = "";
+    }
+
+    /** Builds one mesh for plain colored tiles and one for atlas tiles (rebuilt only when the grid changes). */
+    private ensureTilemap(object: EntityObject, component: TilemapComponent) {
+        const atlas = component.atlas.textureId ? this.assets.texture(component.atlas.textureId) : null;
+        const key = JSON.stringify([component.rows, component.origin, component.cellSize, component.palette, component.atlas, component.sortingLayer, atlas?.uuid ?? null]);
+        if (object.tilemap && object.tilemapKey === key) return;
+        this.removeTilemap(object);
+        const palette = new Map(component.palette.map((tile) => [tile.key, tile]));
+        const size = component.cellSize;
+        const columns = Math.max(1, component.atlas.columns);
+        const rows = Math.max(1, component.atlas.rows);
+        const texel = this.assets.textureSize(component.atlas.textureId);
+        // Half a texel inset keeps neighbouring atlas cells from bleeding in.
+        const insetU = texel ? 0.5 / texel.width : 0;
+        const insetV = texel ? 0.5 / texel.height : 0;
+        const plain = { positions: [] as number[], colors: [] as number[] };
+        const textured = { positions: [] as number[], colors: [] as number[], uvs: [] as number[] };
+        const color = new THREE.Color();
+        const light = new THREE.Color();
+        const dark = new THREE.Color();
+        forEachTile(component, (x, y, cell) => {
+            const tile = palette.get(cell);
+            if (!tile) return;
+            const x0 = x * size;
+            const y0 = y * size;
+            const x1 = x0 + size;
+            const y1 = y0 + size;
+            const corners = [x0, y0, 0, x1, y0, 0, x1, y1, 0, x0, y0, 0, x1, y1, 0, x0, y1, 0];
+            color.set(tile.color);
+            if (atlas && tile.frame >= 0) {
+                const frame = Math.min(tile.frame, columns * rows - 1);
+                const u0 = (frame % columns) / columns + insetU;
+                const u1 = ((frame % columns) + 1) / columns - insetU;
+                const v1 = 1 - Math.floor(frame / columns) / rows - insetV;
+                const v0 = 1 - (Math.floor(frame / columns) + 1) / rows + insetV;
+                textured.positions.push(...corners);
+                textured.uvs.push(u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1);
+                for (let index = 0; index < 6; index += 1) textured.colors.push(color.r, color.g, color.b);
+                return;
+            }
+            // A soft vertical gradient gives flat tiles some depth.
+            light.copy(color).multiplyScalar(1.14);
+            dark.copy(color).multiplyScalar(0.82);
+            plain.positions.push(...corners);
+            plain.colors.push(dark.r, dark.g, dark.b, dark.r, dark.g, dark.b, light.r, light.g, light.b, dark.r, dark.g, dark.b, light.r, light.g, light.b, light.r, light.g, light.b);
+        });
+        const group = new THREE.Group();
+        group.userData.entityId = object.id;
+        const order = 10 + component.sortingLayer;
+        if (plain.positions.length) {
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute("position", new THREE.Float32BufferAttribute(plain.positions, 3));
+            geometry.setAttribute("color", new THREE.Float32BufferAttribute(plain.colors, 3));
+            const mesh = new THREE.Mesh(geometry, flatMaterial({ vertexColors: true, transparent: false }));
+            mesh.renderOrder = order;
+            mesh.userData.entityId = object.id;
+            group.add(mesh);
+        }
+        if (textured.positions.length && atlas) {
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute("position", new THREE.Float32BufferAttribute(textured.positions, 3));
+            geometry.setAttribute("color", new THREE.Float32BufferAttribute(textured.colors, 3));
+            geometry.setAttribute("uv", new THREE.Float32BufferAttribute(textured.uvs, 2));
+            const mesh = new THREE.Mesh(geometry, flatMaterial({ vertexColors: true, map: atlas, alphaTest: 0.02 }));
+            mesh.renderOrder = order + 0.5;
+            mesh.userData.entityId = object.id;
+            group.add(mesh);
+        }
+        object.group.add(group);
+        object.tilemap = group;
+        object.tilemapKey = key;
     }
 
     private ensureLight(object: EntityObject, component: LightComponent | undefined) {
@@ -877,8 +1183,9 @@ export class SceneRenderer {
         else if (has("light")) iconKind = "light";
         else if (has("particleSystem")) iconKind = "particles";
         else if (has("uiText")) iconKind = "text";
+        else if (has("uiButton") || has("uiPanel") || has("uiProgressBar")) iconKind = "ui";
         else if (has("audioSource") && !object.visual) iconKind = "audio";
-        else if (!object.visual) iconKind = "empty";
+        else if (!object.visual && !object.tilemap) iconKind = "empty";
         if (!this.showIcons) iconKind = "";
         if (iconKind !== object.iconKind) {
             if (object.icon) {
@@ -948,8 +1255,8 @@ export class SceneRenderer {
                 this.selectionHelpers.set(object.id, helper);
                 this.scene.add(helper);
             }
-            helper.visible = entity.visible && Boolean(object.visual);
-            if (helper.visible) helper.setFromObject(object.visual ?? object.group);
+            helper.visible = entity.visible && Boolean(object.visual || object.tilemap?.children.length);
+            if (helper.visible) helper.setFromObject(object.visual ?? object.tilemap ?? object.group);
         }
     }
 
@@ -1126,7 +1433,14 @@ export class SceneRenderer {
         if (this.orbit) this.orbit.update();
         this.positionDirectionalLights(camera);
         this.updateParticleUniforms(camera);
-        this.renderer.render(this.scene, camera);
+        this.renderer.info.reset();
+        if (this.composer && this.renderPass) {
+            this.renderPass.camera = camera;
+            this.composer.render();
+        } else {
+            this.renderer.render(this.scene, camera);
+        }
+        this.lastStats = { drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles };
     }
 
     /** JPEG snapshot of the current view (for thumbnails). */
@@ -1153,6 +1467,8 @@ export class SceneRenderer {
         for (const helper of this.selectionHelpers.values()) helper.geometry.dispose();
         if (this.gridGroup) disposeObject(this.gridGroup);
         if (this.debugLines) disposeObject(this.debugLines);
+        this.composer?.dispose();
+        this.bloomPass?.dispose();
         this.assets.dispose();
         this.renderer.dispose();
         this.canvas.remove();

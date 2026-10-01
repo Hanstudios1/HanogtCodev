@@ -16,7 +16,9 @@ export class ParticleEmitter {
     private burstDone = false;
     private seed = Math.random() * 1000;
 
-    constructor(public component: ParticleSystemComponent) {
+    component: ParticleSystemComponent;
+    constructor(component: ParticleSystemComponent) {
+        this.component = component;
         this.capacity = Math.max(1, Math.min(4000, component.maxParticles));
         this.positions = new Float32Array(this.capacity * 3);
         this.velocities = new Float32Array(this.capacity * 3);

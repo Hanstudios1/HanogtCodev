@@ -65,6 +65,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         assertOnlyKeys(body, ["project", "revision", "thumbnail"]);
         const record = await loadOwnedProject(projectId, email);
         assertRevision(request, record, body.revision);
+        // A tab still running an older engine would silently drop newer components; make it reload instead.
+        const incoming = body.project && typeof body.project === "object" ? Number((body.project as { version?: unknown }).version) || 1 : 1;
+        if (Number(record.schemaVersion ?? 1) > incoming) throw new GameApiError(409, "Bu proje Hanogt Engine'in daha yeni bir sürümüyle kaydedilmiş. Değişikliklerin kaybolmaması için sayfayı yenileyin.");
         const project = validateProject(body.project, projectId);
         const thumbnail = readThumbnail(body.thumbnail);
         const existingScripts = await ownedScripts(projectId, email);

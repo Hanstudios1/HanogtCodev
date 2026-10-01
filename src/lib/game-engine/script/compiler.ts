@@ -139,7 +139,12 @@ class Analyzer {
     private currentStatic = false;
     private inSetter = false;
 
-    constructor(private readonly program: CompiledProgram, private readonly globalsByName: Map<string, string | null>) {}
+    private readonly program: CompiledProgram;
+    private readonly globalsByName: Map<string, string | null>;
+    constructor(program: CompiledProgram, globalsByName: Map<string, string | null>) {
+        this.program = program;
+        this.globalsByName = globalsByName;
+    }
 
     private error(message: string, node: { line: number; col: number }) {
         this.program.diagnostics.push({ scriptId: this.unit.scriptId, scriptName: this.unit.scriptName, severity: "error", message, line: node.line, col: node.col });
@@ -157,7 +162,7 @@ class Analyzer {
         this.scopes.pop();
     }
 
-    private declare(name: string, type: string | null, node: { line: number; col: number }) {
+    private declareLocal(name: string, type: string | null, node: { line: number; col: number }) {
         const scope = this.scopes[this.scopes.length - 1];
         if (!scope) return;
         if (this.scopes.some((frame) => frame.has(name)) && this.unit.dialect === "csharp" && !name.startsWith("__")) {
@@ -261,7 +266,7 @@ class Analyzer {
                         const initType = this.expr(declaration.init);
                         if (type === null) type = initType;
                     }
-                    this.declare(declaration.name, type, declaration);
+                    this.declareLocal(declaration.name, type, declaration);
                 }
                 break;
             case "ExprStmt":
@@ -292,8 +297,8 @@ class Analyzer {
                 const iterableType = this.expr(stmt.iterable);
                 this.push();
                 const elementType = stmt.typeRef && stmt.typeRef.name !== "var" ? this.typeName(stmt.typeRef) : (iterableType === "Dictionary" ? "Pair" : null);
-                if (stmt.bindings) for (const binding of stmt.bindings) this.declare(binding, null, stmt);
-                else this.declare(stmt.name, elementType, stmt);
+                if (stmt.bindings) for (const binding of stmt.bindings) this.declareLocal(binding, null, stmt);
+                else this.declareLocal(stmt.name, elementType, stmt);
                 hasYield = this.scoped(stmt.body);
                 this.pop();
                 break;
@@ -317,7 +322,7 @@ class Analyzer {
                 hasYield = this.stmt(stmt.block);
                 if (stmt.handler) {
                     this.push();
-                    if (stmt.param) this.declare(stmt.param, "Exception", stmt);
+                    if (stmt.param) this.declareLocal(stmt.param, "Exception", stmt);
                     hasYield = this.stmt(stmt.handler) || hasYield;
                     this.pop();
                 }
@@ -492,7 +497,7 @@ class Analyzer {
     private args(args: Argument[]): Array<string | null> {
         return args.map((arg) => {
             if (arg.declare) {
-                this.declare(arg.declare.name, this.typeName(arg.declare.typeRef), arg.expr);
+                this.declareLocal(arg.declare.name, this.typeName(arg.declare.typeRef), arg.expr);
                 if (arg.expr.type === "Ident") arg.expr.res = { kind: "local" };
                 return null;
             }
@@ -618,14 +623,14 @@ class Analyzer {
                 return this.typeName(expr.typeRef);
             case "Is":
                 this.expr(expr.arg);
-                if (expr.declName) this.declare(expr.declName, expr.typeRef ? this.typeName(expr.typeRef) : null, expr);
+                if (expr.declName) this.declareLocal(expr.declName, expr.typeRef ? this.typeName(expr.typeRef) : null, expr);
                 return "bool";
             case "As":
                 this.expr(expr.arg);
                 return this.typeName(expr.typeRef);
             case "Lambda": {
                 this.push();
-                for (const param of expr.params) this.declare(param, null, expr);
+                for (const param of expr.params) this.declareLocal(param, null, expr);
                 if ("type" in expr.body && expr.body.type === "Block") {
                     const wasStatic = this.currentStatic;
                     this.block(expr.body.body);

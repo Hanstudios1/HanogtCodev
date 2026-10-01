@@ -69,18 +69,41 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                             <SliderInput value={scene.settings.ambientIntensity} min={0} max={3} disabled={disabled} onChange={(value) => setScene("ambient", (settings) => { settings.ambientIntensity = value; })} />
                         </div>
                     </FieldRow>
+                    <p className="pb-0.5 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-zinc-500">{t("environment")}</p>
                     <FieldRow label={t("fog")}><Toggle checked={scene.settings.fog.enabled} disabled={disabled} onChange={(value) => setScene("fog", (settings) => { settings.fog.enabled = value; })} /></FieldRow>
                     {scene.settings.fog.enabled ? (
                         <>
-                            <FieldRow label="Fog Color"><ColorInput value={scene.settings.fog.color} disabled={disabled} onChange={(value) => setScene("fogColor", (settings) => { settings.fog.color = value; })} /></FieldRow>
-                            <FieldRow label="Fog Near / Far">
-                                <div className="grid grid-cols-2 gap-1">
-                                    <NumberInput value={scene.settings.fog.near} min={0} step={1} disabled={disabled} onChange={(value) => setScene("fogNear", (settings) => { settings.fog.near = value; })} />
-                                    <NumberInput value={scene.settings.fog.far} min={0.1} step={1} disabled={disabled} onChange={(value) => setScene("fogFar", (settings) => { settings.fog.far = value; })} />
-                                </div>
+                            <FieldRow label={t("fogMode")}>
+                                <SelectInput value={scene.settings.fog.mode} disabled={disabled} onChange={(value) => setScene("fogMode", (settings) => { settings.fog.mode = value; })} options={[{ value: "linear", label: t("fogLinear") }, { value: "exponential", label: t("fogExponential") }]} />
                             </FieldRow>
+                            <FieldRow label="Fog Color"><ColorInput value={scene.settings.fog.color} disabled={disabled} onChange={(value) => setScene("fogColor", (settings) => { settings.fog.color = value; })} /></FieldRow>
+                            {scene.settings.fog.mode === "exponential" ? (
+                                <FieldRow label={t("fogDensity")}><SliderInput value={scene.settings.fog.density} min={0} max={0.2} step={0.001} disabled={disabled} onChange={(value) => setScene("fogDensity", (settings) => { settings.fog.density = value; })} /></FieldRow>
+                            ) : (
+                                <FieldRow label="Fog Near / Far">
+                                    <div className="grid grid-cols-2 gap-1">
+                                        <NumberInput value={scene.settings.fog.near} min={0} step={1} disabled={disabled} onChange={(value) => setScene("fogNear", (settings) => { settings.fog.near = value; })} />
+                                        <NumberInput value={scene.settings.fog.far} min={0.1} step={1} disabled={disabled} onChange={(value) => setScene("fogFar", (settings) => { settings.fog.far = value; })} />
+                                    </div>
+                                </FieldRow>
+                            )}
                         </>
                     ) : null}
+                    <p className="pb-0.5 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-zinc-500">{t("screenEffects")}</p>
+                    <FieldRow label={t("bloom")}><Toggle checked={scene.settings.postProcessing.bloom.enabled} disabled={disabled} onChange={(value) => setScene("bloom", (settings) => { settings.postProcessing.bloom.enabled = value; })} /></FieldRow>
+                    {scene.settings.postProcessing.bloom.enabled ? (
+                        <>
+                            <FieldRow label={t("bloomIntensity")}><SliderInput value={scene.settings.postProcessing.bloom.intensity} min={0} max={3} disabled={disabled} onChange={(value) => setScene("bloomIntensity", (settings) => { settings.postProcessing.bloom.intensity = value; })} /></FieldRow>
+                            <FieldRow label={t("bloomThreshold")}><SliderInput value={scene.settings.postProcessing.bloom.threshold} min={0} max={1.5} disabled={disabled} onChange={(value) => setScene("bloomThreshold", (settings) => { settings.postProcessing.bloom.threshold = value; })} /></FieldRow>
+                            <FieldRow label={t("bloomRadius")}><SliderInput value={scene.settings.postProcessing.bloom.radius} min={0} max={1} disabled={disabled} onChange={(value) => setScene("bloomRadius", (settings) => { settings.postProcessing.bloom.radius = value; })} /></FieldRow>
+                        </>
+                    ) : null}
+                    <FieldRow label={t("vignette")}><Toggle checked={scene.settings.postProcessing.vignette.enabled} disabled={disabled} onChange={(value) => setScene("vignette", (settings) => { settings.postProcessing.vignette.enabled = value; })} /></FieldRow>
+                    {scene.settings.postProcessing.vignette.enabled ? (
+                        <FieldRow label={t("vignetteIntensity")}><SliderInput value={scene.settings.postProcessing.vignette.intensity} min={0} max={1} disabled={disabled} onChange={(value) => setScene("vignetteIntensity", (settings) => { settings.postProcessing.vignette.intensity = value; })} /></FieldRow>
+                    ) : null}
+                    <FieldRow label={t("exposure")}><SliderInput value={scene.settings.postProcessing.exposure} min={0.2} max={3} disabled={disabled} onChange={(value) => setScene("exposure", (settings) => { settings.postProcessing.exposure = value; })} /></FieldRow>
+                    <p className="pb-0.5 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-zinc-500">Physics</p>
                     <FieldRow label={t("gravity")}>
                         <VectorInput value={scene.settings.physics.gravity} hideZ={project.dimension === "2d"} disabled={disabled} onChange={(value) => setScene("gravity", (settings) => { settings.physics.gravity = project.dimension === "2d" ? { ...value, z: 0 } : value; })} />
                     </FieldRow>

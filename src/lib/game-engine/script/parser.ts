@@ -73,7 +73,9 @@ export class Parser {
     private yieldSeen = false;
     private readonly unit: ProgramUnit;
 
-    constructor(source: string | Token[], private readonly options: ParserOptions) {
+    private readonly options: ParserOptions;
+    constructor(source: string | Token[], options: ParserOptions) {
+        this.options = options;
         this.dialect = options.dialect;
         this.tokens = typeof source === "string" ? tokenize(source, options.dialect) : source;
         this.unit = { scriptId: options.scriptId, scriptName: options.scriptName, dialect: options.dialect, classes: [], enums: [], functions: [], globals: [] };
@@ -1055,6 +1057,24 @@ export class Parser {
         return false;
     }
 
+    /** C++ lambda: [captures](params) mutable -> Type { body }. Captures are not needed: closures see their scope. */
+    private parseCppLambda(): Expr {
+        const at = this.pos0(this.next());
+        let depth = 1;
+        while (depth > 0) {
+            const token = this.next();
+            if (token.kind === "eof") this.fail("Lambda yakalama listesi kapanmadı; ']' bekleniyordu.");
+            if (token.kind === "punct" && token.value === "[") depth += 1;
+            if (token.kind === "punct" && token.value === "]") depth -= 1;
+        }
+        const params = this.is("(") ? this.parseParams().map((param) => param.name) : [];
+        if (this.is("mutable") || this.isIdent(0, "mutable")) this.next();
+        if (this.accept("->")) this.parseType();
+        if (!this.is("{")) this.fail("C++ lambda gövdesi '{' ile başlamalı.");
+        const body = this.parseBlock();
+        return { type: "Lambda", params, body, ...at };
+    }
+
     private parseLambda(): Expr {
         const at = this.pos0();
         const params: string[] = [];
@@ -1505,6 +1525,7 @@ export class Parser {
                     return inner;
                 }
                 if (token.value === "{") return this.parseInitList();
+                if (token.value === "[" && this.dialect === "cpp") return this.parseCppLambda();
                 if (token.value === "[" && this.dialect === "csharp") {
                     // C# 12 collection expression [a, b, c]
                     this.next();

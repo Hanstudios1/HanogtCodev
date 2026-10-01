@@ -1,13 +1,14 @@
 /**
  * Hanogt Physics — impulse based "arcade" rigid-body physics.
  *
- * Supports boxes (oriented, SAT), spheres and 2D circles/boxes, triggers,
- * friction, restitution, kinematic bodies, grounded detection, raycasts and
- * overlap queries. Collisions change linear velocity only; rotation is
- * integrated from angular velocity (and spheres roll visually).
+ * Supports boxes (oriented, SAT), spheres and 2D circles/boxes, tilemaps,
+ * triggers, friction, restitution, kinematic bodies, grounded detection,
+ * raycasts and overlap queries. Collisions change linear velocity only;
+ * rotation is integrated from angular velocity (and spheres roll visually).
  */
 import { conjugateQuat, mat3FromQuat, rotateVec3, type Quat, type TRS } from "../math";
-import type { ColliderComponent, GameDimension, RigidBodyComponent, Vector3 } from "../types";
+import { solidTiles } from "../tilemap";
+import type { ColliderComponent, GameDimension, RigidBodyComponent, TilemapComponent, Vector3 } from "../types";
 
 export interface BodyRuntime {
     velocity: Vector3;
@@ -24,6 +25,10 @@ export interface PhysicsEntity {
     id: string;
     rigidBody: RigidBodyComponent | null;
     collider: ColliderComponent | null;
+    /** Solid tiles of a tilemap collide like static boxes. */
+    tilemap?: TilemapComponent | null;
+    /** Bumped whenever tiles change at runtime (invalidates cached tile shapes). */
+    tilemapRevision?: number;
     activeInHierarchy: boolean;
     body: BodyRuntime;
 }
@@ -39,6 +44,14 @@ type Shape =
     | { kind: "sphere"; center: Vector3; radius: number }
     | { kind: "box"; center: Vector3; axes: [Vector3, Vector3, Vector3]; half: [number, number, number] };
 
+/** Faces of a tile that border empty space (in the box's local axes). */
+interface OpenFaces {
+    left: boolean;
+    right: boolean;
+    bottom: boolean;
+    top: boolean;
+}
+
 interface ShapeEntry {
     entity: PhysicsEntity;
     shape: Shape;
@@ -50,6 +63,15 @@ interface ShapeEntry {
     friction: number;
     bounciness: number;
     hasBody: boolean;
+    /** Tile boxes only push bodies out through open faces (no snagging on seams between tiles). */
+    open?: OpenFaces;
+}
+
+export interface ContactPoint {
+    point: Vector3;
+    /** From entity `a` towards entity `b`. */
+    normal: Vector3;
+    penetration: number;
 }
 
 export interface ContactInfo {
@@ -60,6 +82,8 @@ export interface ContactInfo {
     penetration: number;
     point: Vector3;
     relativeVelocity: Vector3;
+    /** Every contact of the pair in this step (several when a body touches many tiles). */
+    contacts: ContactPoint[];
 }
 
 export interface PhysicsEvents {
@@ -101,12 +125,19 @@ export class PhysicsWorld {
     solverIterations = 3;
     private previousPairs = new Map<string, ContactInfo>();
     private shapes: ShapeEntry[] = [];
+    private tileCache = new WeakMap<PhysicsEntity, { key: string; tilemap: TilemapComponent; entries: ShapeEntry[] }>();
 
-    constructor(private readonly adapter: PhysicsAdapter, public dimension: GameDimension) {}
+    private readonly adapter: PhysicsAdapter;
+    dimension: GameDimension;
+    constructor(adapter: PhysicsAdapter, dimension: GameDimension) {
+        this.adapter = adapter;
+        this.dimension = dimension;
+    }
 
     reset() {
         this.previousPairs.clear();
         this.shapes = [];
+        this.tileCache = new WeakMap();
     }
 
     private bodyType(entity: PhysicsEntity): "dynamic" | "kinematic" | "static" {
@@ -158,9 +189,55 @@ export class PhysicsWorld {
         return { min: v(shape.center.x - ex, shape.center.y - ey, shape.center.z - ez), max: v(shape.center.x + ex, shape.center.y + ey, shape.center.z + ez) };
     }
 
+    /** Static boxes for the solid surface tiles of a tilemap, cached until the tiles or the transform change. */
+    private tileEntries(entity: PhysicsEntity, tilemap: TilemapComponent): ShapeEntry[] {
+        const trs = this.adapter.worldTRS(entity);
+        const bodyType = this.bodyType(entity);
+        const type = bodyType === "dynamic" ? "kinematic" : bodyType;
+        const p = trs.position;
+        const q = trs.rotation;
+        const s = trs.scale;
+        const key = `${entity.tilemapRevision ?? 0}|${tilemap.cellSize}|${tilemap.isTrigger}|${tilemap.friction}|${tilemap.bounciness}|${type}|${p.x},${p.y},${p.z}|${q.x},${q.y},${q.z},${q.w}|${s.x},${s.y},${s.z}`;
+        const cached = this.tileCache.get(entity);
+        if (cached && cached.key === key && cached.tilemap === tilemap) return cached.entries;
+        let rotation: Quat = q;
+        if (this.dimension === "2d") {
+            const angle = 2 * Math.atan2(q.z, q.w);
+            rotation = { x: 0, y: 0, z: Math.sin(angle / 2), w: Math.cos(angle / 2) };
+        }
+        const m = mat3FromQuat(rotation);
+        const axes: [Vector3, Vector3, Vector3] = [v(m[0], m[3], m[6]), v(m[1], m[4], m[7]), v(m[2], m[5], m[8])];
+        const size = tilemap.cellSize;
+        const half: [number, number, number] = [
+            Math.max(0.0005, (size * Math.abs(s.x)) / 2),
+            Math.max(0.0005, (size * Math.abs(s.y)) / 2),
+            this.dimension === "2d" ? 1_000 : Math.max(0.0005, (size * Math.abs(s.z)) / 2),
+        ];
+        const rb = entity.rigidBody;
+        const entries: ShapeEntry[] = [];
+        for (const tile of solidTiles(tilemap)) {
+            const local = rotateVec3(rotation, v((tile.x + 0.5) * size * s.x, (tile.y + 0.5) * size * s.y, 0));
+            const center = add(p, local);
+            if (this.dimension === "2d") center.z = 0;
+            // Mirrored tilemaps swap which side of a tile is open.
+            const open: OpenFaces = {
+                left: s.x < 0 ? tile.open.right : tile.open.left,
+                right: s.x < 0 ? tile.open.left : tile.open.right,
+                bottom: s.y < 0 ? tile.open.top : tile.open.bottom,
+                top: s.y < 0 ? tile.open.bottom : tile.open.top,
+            };
+            const shape: Shape = { kind: "box", center, axes, half };
+            const { min, max } = this.bounds(shape);
+            entries.push({ entity, shape, min, max, type, invMass: 0, trigger: tilemap.isTrigger, friction: tilemap.friction, bounciness: tilemap.bounciness, hasBody: Boolean(rb && rb.enabled), open });
+        }
+        this.tileCache.set(entity, { key, tilemap, entries });
+        return entries;
+    }
+
     private collectShapes() {
         const shapes: ShapeEntry[] = [];
         for (const entity of this.adapter.entities()) {
+            if (entity.activeInHierarchy && entity.tilemap?.enabled) shapes.push(...this.tileEntries(entity, entity.tilemap));
             const collider = entity.collider;
             if (!entity.activeInHierarchy || !collider || !collider.enabled) continue;
             const shape = this.buildShape(entity, collider);
@@ -205,7 +282,34 @@ export class PhysicsWorld {
         return { normal, penetration: radius - dist, point: add(a.center, scale(normal, a.radius)) };
     }
 
-    private sphereBox(sphere: Extract<Shape, { kind: "sphere" }>, box: Extract<Shape, { kind: "box" }>) {
+    /** Whether the face of `box` whose outward normal is closest to `outward` borders empty space. */
+    private faceOpen(box: Extract<Shape, { kind: "box" }>, open: OpenFaces, outward: Vector3): boolean {
+        const dx = dot(outward, box.axes[0]);
+        const dy = dot(outward, box.axes[1]);
+        if (Math.abs(dx) >= Math.abs(dy)) return Math.abs(dx) < 0.7 || (dx > 0 ? open.right : open.left);
+        return Math.abs(dy) < 0.7 || (dy > 0 ? open.top : open.bottom);
+    }
+
+    /** Removes the parts of a sphere-vs-tile normal that would push through a closed face. */
+    private clampToOpenFaces(box: Extract<Shape, { kind: "box" }>, open: OpenFaces, normalFromSphere: Vector3): Vector3 {
+        const outward = scale(normalFromSphere, -1);
+        let dx = dot(outward, box.axes[0]);
+        let dy = dot(outward, box.axes[1]);
+        const dz = this.dimension === "2d" ? 0 : dot(outward, box.axes[2]);
+        if ((dx > 0 && !open.right) || (dx < 0 && !open.left)) dx = 0;
+        if ((dy > 0 && !open.top) || (dy < 0 && !open.bottom)) dy = 0;
+        if (Math.abs(dx) < 1e-9 && Math.abs(dy) < 1e-9 && Math.abs(dz) < 1e-9) return normalFromSphere;
+        const adjusted = normalize(add(add(scale(box.axes[0], dx), scale(box.axes[1], dy)), scale(box.axes[2], dz)));
+        return scale(adjusted, -1);
+    }
+
+    private sphereBox(sphere: Extract<Shape, { kind: "sphere" }>, box: Extract<Shape, { kind: "box" }>, open?: OpenFaces) {
+        const result = this.sphereBoxRaw(sphere, box);
+        if (!result || !open) return result;
+        return { ...result, normal: this.clampToOpenFaces(box, open, result.normal) };
+    }
+
+    private sphereBoxRaw(sphere: Extract<Shape, { kind: "sphere" }>, box: Extract<Shape, { kind: "box" }>) {
         const rel = sub(sphere.center, box.center);
         const local = [dot(rel, box.axes[0]), dot(rel, box.axes[1]), this.dimension === "2d" ? 0 : dot(rel, box.axes[2])];
         const clamped = local.map((value, index) => Math.max(-box.half[index], Math.min(box.half[index], value)));
@@ -234,7 +338,7 @@ export class PhysicsWorld {
         return { normal, penetration: best + sphere.radius, point: sphere.center };
     }
 
-    private boxBox(a: Extract<Shape, { kind: "box" }>, b: Extract<Shape, { kind: "box" }>) {
+    private boxBox(a: Extract<Shape, { kind: "box" }>, b: Extract<Shape, { kind: "box" }>, openA?: OpenFaces, openB?: OpenFaces) {
         const d = sub(b.center, a.center);
         const axes: Array<{ axis: Vector3; edge: boolean }> = [];
         const faceCount = this.dimension === "2d" ? 2 : 3;
@@ -250,6 +354,8 @@ export class PhysicsWorld {
         }
         let bestOverlap = Infinity;
         let bestAxis: Vector3 | null = null;
+        let fallbackOverlap = Infinity;
+        let fallbackAxis: Vector3 | null = null;
         for (const { axis, edge } of axes) {
             const projectA = a.half[0] * Math.abs(dot(a.axes[0], axis)) + a.half[1] * Math.abs(dot(a.axes[1], axis)) + (this.dimension === "2d" ? 0 : a.half[2] * Math.abs(dot(a.axes[2], axis)));
             const projectB = b.half[0] * Math.abs(dot(b.axes[0], axis)) + b.half[1] * Math.abs(dot(b.axes[1], axis)) + (this.dimension === "2d" ? 0 : b.half[2] * Math.abs(dot(b.axes[2], axis)));
@@ -257,10 +363,24 @@ export class PhysicsWorld {
             const overlap = projectA + projectB - distance;
             if (overlap <= 0) return null;
             const weighted = edge ? overlap * 1.05 + 1e-4 : overlap;
+            const direction = dot(d, axis) >= 0 ? axis : scale(axis, -1);
+            const closed = (openA && !this.faceOpen(a, openA, direction)) || (openB && !this.faceOpen(b, openB, scale(direction, -1)));
+            if (closed) {
+                if (weighted < fallbackOverlap) {
+                    fallbackOverlap = weighted;
+                    fallbackAxis = direction;
+                }
+                continue;
+            }
             if (weighted < bestOverlap) {
                 bestOverlap = weighted;
-                bestAxis = dot(d, axis) >= 0 ? axis : scale(axis, -1);
+                bestAxis = direction;
             }
+        }
+        if (!bestAxis && fallbackAxis) {
+            // Deep inside a block of tiles: leave the shortest way even through a closed face.
+            bestAxis = fallbackAxis;
+            bestOverlap = fallbackOverlap;
         }
         if (!bestAxis) return null;
         const penetration = Math.max(0, bestOverlap);
@@ -275,12 +395,12 @@ export class PhysicsWorld {
         const sa = a.shape;
         const sb = b.shape;
         if (sa.kind === "sphere" && sb.kind === "sphere") return this.sphereSphere(sa, sb);
-        if (sa.kind === "sphere" && sb.kind === "box") return this.sphereBox(sa, sb);
+        if (sa.kind === "sphere" && sb.kind === "box") return this.sphereBox(sa, sb, b.open);
         if (sa.kind === "box" && sb.kind === "sphere") {
-            const result = this.sphereBox(sb, sa);
+            const result = this.sphereBox(sb, sa, a.open);
             return result ? { ...result, normal: scale(result.normal, -1) } : null;
         }
-        return this.boxBox(sa as Extract<Shape, { kind: "box" }>, sb as Extract<Shape, { kind: "box" }>);
+        return this.boxBox(sa as Extract<Shape, { kind: "box" }>, sb as Extract<Shape, { kind: "box" }>, a.open, b.open);
     }
 
     // ------------------------------------------------------------------
@@ -350,6 +470,7 @@ export class PhysicsWorld {
                 for (let j = i + 1; j < order.length; j += 1) {
                     const b = order[j];
                     if (b.min.x > a.max.x) break;
+                    if (a.entity === b.entity) continue;
                     if (a.type === "static" && b.type === "static" && !(a.trigger || b.trigger)) continue;
                     if (a.type === "static" && b.type === "static" && !a.hasBody && !b.hasBody) continue;
                     if (b.min.y > a.max.y || b.max.y < a.min.y) continue;
@@ -361,15 +482,22 @@ export class PhysicsWorld {
                     if (iteration === 0) {
                         const [first, second] = a.entity.id < b.entity.id ? [a, b] : [b, a];
                         const normal = first === a ? contact.normal : scale(contact.normal, -1);
-                        currentPairs.set(key, {
-                            a: first.entity.id,
-                            b: second.entity.id,
-                            trigger,
-                            normal,
-                            penetration: contact.penetration,
-                            point: contact.point,
-                            relativeVelocity: sub(second.entity.body.velocity, first.entity.body.velocity),
-                        });
+                        const point: ContactPoint = { point: contact.point, normal, penetration: contact.penetration };
+                        const existing = currentPairs.get(key);
+                        if (existing) {
+                            existing.contacts.push(point);
+                        } else {
+                            currentPairs.set(key, {
+                                a: first.entity.id,
+                                b: second.entity.id,
+                                trigger,
+                                normal,
+                                penetration: contact.penetration,
+                                point: contact.point,
+                                relativeVelocity: sub(second.entity.body.velocity, first.entity.body.velocity),
+                                contacts: [point],
+                            });
+                        }
                     }
                     if (trigger) continue;
                     this.resolve(a, b, contact.normal, contact.penetration, iteration === 0);
@@ -503,7 +631,13 @@ export class PhysicsWorld {
             if (!hit || hit.distance > maxDistance) continue;
             results.push({ entityId: entry.entity.id, ...hit });
         }
-        return results.sort((left, right) => left.distance - right.distance);
+        // One hit per object: a tilemap made of many boxes reports its nearest tile.
+        const seen = new Set<string>();
+        return results.sort((left, right) => left.distance - right.distance).filter((hit) => {
+            if (seen.has(hit.entityId)) return false;
+            seen.add(hit.entityId);
+            return true;
+        });
     }
 
     private raySphere(origin: Vector3, dir: Vector3, sphere: Extract<Shape, { kind: "sphere" }>) {
@@ -560,16 +694,17 @@ export class PhysicsWorld {
 
     overlapSphere(center: Vector3, radius: number, includeTriggers = true): string[] {
         const probe: ShapeEntry = {
-            entity: { id: "__probe__", rigidBody: null, collider: null, activeInHierarchy: true, body: { velocity: v(), angularVelocity: v(), grounded: false, groundNormal: v(0, 1, 0), force: v() } },
+            entity: { id: "__probe__", rigidBody: null, collider: null, tilemap: null, activeInHierarchy: true, body: { velocity: v(), angularVelocity: v(), grounded: false, groundNormal: v(0, 1, 0), force: v() } },
             shape: { kind: "sphere", center: this.dimension === "2d" ? v(center.x, center.y, 0) : { ...center }, radius },
             min: v(), max: v(), type: "static", invMass: 0, trigger: false, friction: 0, bounciness: 0, hasBody: false,
         };
-        const output: string[] = [];
+        const output = new Set<string>();
         for (const entry of this.queryShapes()) {
             if (entry.trigger && !includeTriggers) continue;
-            if (this.collide(probe, entry)) output.push(entry.entity.id);
+            if (output.has(entry.entity.id)) continue;
+            if (this.collide(probe, entry)) output.add(entry.entity.id);
         }
-        return output;
+        return [...output];
     }
 
     /** World-space point inside the collider closest to `point` (used by Collider.ClosestPoint). */
