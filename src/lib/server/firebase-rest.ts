@@ -344,6 +344,35 @@ export async function runServerQuery<T extends Record<string, unknown>>(options:
         .map((item) => decodeDocument<T>(item.document));
 }
 
+/**
+ * COUNT() aggregation (billed per 1000 index entries); `upTo` stops early.
+ * Used by the admin dashboard instead of reading document ids.
+ */
+export async function countServerQuery(options: { collectionId: string; where?: QueryFilter[]; upTo?: number }) {
+    const filters = (options.where || []).map((filter) => ({
+        fieldFilter: { field: { fieldPath: filter.field }, op: filter.op, value: toFirestoreValue(filter.value) },
+    }));
+    const structuredQuery: Record<string, unknown> = { from: [{ collectionId: options.collectionId }] };
+    if (filters.length === 1) structuredQuery.where = filters[0];
+    if (filters.length > 1) structuredQuery.where = { compositeFilter: { op: "AND", filters } };
+    const response = await firestoreFetch(`${databaseDocumentsUrl()}:runAggregationQuery`, {
+        method: "POST",
+        body: JSON.stringify({
+            structuredAggregationQuery: {
+                structuredQuery,
+                aggregations: [{ alias: "total", count: options.upTo ? { upTo: String(options.upTo) } : {} }],
+            },
+        }),
+    });
+    if (!response.ok) {
+        const error = new Error(`Firestore sayım hatası (${response.status}).`) as Error & { status?: number };
+        error.status = response.status;
+        throw error;
+    }
+    const payload = await response.json() as Array<{ result?: { aggregateFields?: Record<string, { integerValue?: string }> } }>;
+    return Number(payload[0]?.result?.aggregateFields?.total?.integerValue ?? 0);
+}
+
 export async function patchServerDocument(
     path: string,
     data: Record<string, unknown>,

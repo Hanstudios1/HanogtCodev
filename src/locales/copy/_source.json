@@ -626,21 +626,24 @@
     "en": "Remove {name} from the group?",
     "tr": "{name} gruptan çıkarılsın mı?",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/groups/[groupId]/page.tsx",
+      "src/components/Groups/workspace/MembersPanel.tsx"
     ]
   },
   "efgorbnxb": {
     "en": "Make {name} an admin?",
     "tr": "{name} için yönetici rolü verilsin mi?",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/groups/[groupId]/page.tsx",
+      "src/components/Groups/workspace/MembersPanel.tsx"
     ]
   },
   "33kt595z4p": {
     "en": "Remove admin role from {name}?",
     "tr": "{name} için yönetici rolü kaldırılsın mı?",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/groups/[groupId]/page.tsx",
+      "src/components/Groups/workspace/MembersPanel.tsx"
     ]
   },
   "1xgk6djjyur": {
@@ -712,7 +715,8 @@
     "en": "Members",
     "tr": "Üyeler",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/groups/[groupId]/page.tsx",
+      "src/components/Groups/workspace/MembersPanel.tsx"
     ]
   },
   "1tiareauifx": {
@@ -809,6 +813,7 @@
     "tr": "Sesli ara",
     "files": [
       "src/app/groups/[groupId]/page.tsx",
+      "src/components/Groups/workspace/MembersPanel.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -2521,6 +2526,7 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/Groups/GroupsHome.tsx",
+      "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/News/NewsPage.tsx"
     ]
   },
@@ -6407,7 +6413,9 @@
     "tr": "{count}/{max}",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx",
-      "src/components/Groups/workspace/FilesPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Groups/workspace/MembersPanel.tsx"
     ]
   },
   "1n0anpdap3b": {
@@ -6548,7 +6556,8 @@
     "en": "New messages",
     "tr": "Yeni mesaj",
     "files": [
-      "src/components/Groups/GroupsHome.tsx"
+      "src/components/Groups/GroupsHome.tsx",
+      "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
   "1il5mj5i8cf": {
@@ -6821,6 +6830,304 @@
       "src/components/HanogtAI/HanogtAIChat.tsx"
     ]
   },
+  "2cojxkpd8l9": {
+    "en": "Chat",
+    "tr": "Sohbet",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "x97l4wfezx": {
+    "en": "Search messages",
+    "tr": "Mesajlarda ara",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "2awai7by9ad": {
+    "en": "Search messages…",
+    "tr": "Mesajlarda ara…",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "10v9vnqdks6": {
+    "en": "Close search",
+    "tr": "Aramayı kapat",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "2ffed0g7hmi": {
+    "en": "{count} results",
+    "tr": "{count} sonuç",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "k3zva7ngth": {
+    "en": "Filter by topic",
+    "tr": "Konuya göre filtrele",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "26mzw7lh55m": {
+    "en": "Load older messages",
+    "tr": "Daha eski mesajları yükle",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "uc9jlhyhhz": {
+    "en": "{count} new messages",
+    "tr": "{count} yeni mesaj",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "xn5isedqi5": {
+    "en": "Jump to latest",
+    "tr": "En yeniye git",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "1swt1mcfk62": {
+    "en": "Start the conversation",
+    "tr": "Sohbeti başlat",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "18ckjua9682": {
+    "en": "Write the first message; use @ to mention someone and # to tag a topic.",
+    "tr": "İlk mesajı yaz; @ ile birinden bahset, # ile konu etiketle.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "6ku8s7lj4t": {
+    "en": "No matching messages.",
+    "tr": "Eşleşen mesaj yok.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "6rhsmjf96s": {
+    "en": "Write a message… (@ mention, # topic)",
+    "tr": "Mesaj yaz… (@ bahset, # konu)",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "1yrhclspnx4": {
+    "en": "Write in #{topic}…",
+    "tr": "#{topic} konusuna yaz…",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "13o0axjxz9y": {
+    "en": "Message",
+    "tr": "Mesaj",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx"
+    ]
+  },
+  "1qxq545wt1c": {
+    "en": "Send",
+    "tr": "Gönder",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/components/News/CommentsDrawer.tsx"
+    ]
+  },
+  "re1tt3lxma": {
+    "en": "Record a voice message",
+    "tr": "Sesli mesaj kaydet",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "21571d7bdki": {
+    "en": "Stop and send",
+    "tr": "Kaydı bitir ve gönder",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "3p32tym3f5": {
+    "en": "Recording {seconds}/{limit}s",
+    "tr": "Kaydediliyor {seconds}/{limit} sn",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "f16f8ceiio": {
+    "en": "Discard",
+    "tr": "Vazgeç",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "w8qtnkac76": {
+    "en": "Voice message ({seconds}s)",
+    "tr": "Sesli mesaj ({seconds} sn)",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "tdeatucxxc": {
+    "en": "{name} is typing…",
+    "tr": "{name} yazıyor…",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "165qfha6y6g": {
+    "en": "{first} and {second} are typing…",
+    "tr": "{first} ve {second} yazıyor…",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "16e76d53blb": {
+    "en": "{count} people are typing…",
+    "tr": "{count} kişi yazıyor…",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "20zyujmvkd1": {
+    "en": "everyone",
+    "tr": "herkes",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "1f8pn835c2h": {
+    "en": "Notify everyone in the group",
+    "tr": "Gruptaki herkese bildir",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "249e292lfkk": {
+    "en": "Member to mention",
+    "tr": "Bahsedilecek üye",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "icsop9xgmk": {
+    "en": "Pinned messages",
+    "tr": "Sabitlenen mesajlar",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "1mzeik7vesu": {
+    "en": "No pinned messages yet.",
+    "tr": "Henüz sabitlenen mesaj yok.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "hfvzvq6s2w": {
+    "en": "Admins can hover a message and use 📌 to pin it here.",
+    "tr": "Yöneticiler bir mesajın üzerine gelip 📌 simgesiyle onu buraya sabitleyebilir.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "489jlyctj4": {
+    "en": "Go to message",
+    "tr": "Mesaja git",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "rizei5ryz7": {
+    "en": "Unpin",
+    "tr": "Sabitlemeyi kaldır",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Groups/workspace/MessageItem.tsx"
+    ]
+  },
+  "htce00lorc": {
+    "en": "Message pinned.",
+    "tr": "Mesaj sabitlendi.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "1vfgusg7rrw": {
+    "en": "Message unpinned.",
+    "tr": "Sabitleme kaldırıldı.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "277cmvzlh36": {
+    "en": "Delete this message?",
+    "tr": "Mesaj silinsin mi?",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "28egqntcfq": {
+    "en": "The message is permanently deleted for everyone.",
+    "tr": "Mesaj herkes için kalıcı olarak silinir.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "2g42npbh0yk": {
+    "en": "Delete message",
+    "tr": "Mesajı sil",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "19gpkf9oms1": {
+    "en": "Message deleted.",
+    "tr": "Mesaj silindi.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "270o24wd937": {
+    "en": "Message copied to the clipboard.",
+    "tr": "Mesaj panoya kopyalandı.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "ov58x6d6c7": {
+    "en": "This message isn't loaded in the chat; you can read it in the pinned list.",
+    "tr": "Bu mesaj sohbette yüklü değil; içeriğini sabitlenenler listesinden okuyabilirsin.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "c7nldamyay": {
+    "en": "🎤 Voice message",
+    "tr": "🎤 Sesli mesaj",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "1jws8phvszk": {
+    "en": "This message was deleted.",
+    "tr": "Bu mesaj silinmiş.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
   "1lz1ra2pd4e": {
     "en": "Not saved · retry",
     "tr": "Kaydedilemedi · tekrar dene",
@@ -6991,6 +7298,167 @@
       "src/components/Groups/workspace/FilesPanel.tsx"
     ]
   },
+  "2cm4el4t8ot": {
+    "en": "Invite",
+    "tr": "Davet et",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1kddytp99dm": {
+    "en": "Rules",
+    "tr": "Kurallar",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1lt13a2x0sn": {
+    "en": "Online — {count}",
+    "tr": "Çevrimiçi — {count}",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "te0d1xqc4m": {
+    "en": "Offline — {count}",
+    "tr": "Çevrimdışı — {count}",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "o68yc61dn1": {
+    "en": "Last seen {time}",
+    "tr": "Son görülme {time}",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "6y9zo9us5e": {
+    "en": "Voice calls are available between friends only",
+    "tr": "Sesli arama yalnızca arkadaşlar arasında yapılabilir",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "17lv52ih9vi": {
+    "en": "Direct message",
+    "tr": "Özel mesaj",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1iwg29hyqxa": {
+    "en": "Add friend",
+    "tr": "Arkadaş ekle",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1p4lrim0uts": {
+    "en": "Open {name}'s profile",
+    "tr": "{name} profilini aç",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "xtdcbgy67k": {
+    "en": "Manage {name}",
+    "tr": "{name} için yönetim",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "qmw4es2qap": {
+    "en": "Make admin",
+    "tr": "Yönetici yap",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1yp838eaqoc": {
+    "en": "Remove admin role",
+    "tr": "Yöneticiliği kaldır",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "14wuhisz1n8": {
+    "en": "Transfer ownership",
+    "tr": "Sahipliği devret",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "q6aydsif33": {
+    "en": "Remove from group",
+    "tr": "Gruptan çıkar",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1agz8x1fu5n": {
+    "en": "Remove and block",
+    "tr": "Çıkar ve engelle",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1oc4u42nd0r": {
+    "en": "Admins can invite and remove members, pin messages, delete files and change group settings.",
+    "tr": "Yöneticiler üyeleri davet edebilir ve çıkarabilir, mesaj sabitleyebilir, dosya silebilir ve grup ayarlarını değiştirebilir.",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1ijnib2d2pa": {
+    "en": "Their access to files and chat ends immediately. They can rejoin if invited again.",
+    "tr": "Dosyalara ve sohbete erişimi hemen kesilir. Yeniden davet edilirse tekrar katılabilir.",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1xnukgx4n3i": {
+    "en": "Remove and block {name}?",
+    "tr": "{name} çıkarılıp engellensin mi?",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1u3xrowgz2t": {
+    "en": "Blocked people can't rejoin with invitations or links. You can lift the block in Settings → Membership.",
+    "tr": "Engellenen kişi davetlerle veya bağlantılarla yeniden katılamaz. Engeli Ayarlar → Üyelik bölümünden kaldırabilirsin.",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "cklbzlj1x5": {
+    "en": "Transfer ownership to {name}?",
+    "tr": "Sahiplik {name} kullanıcısına devredilsin mi?",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "2evxhbbrhy6": {
+    "en": "{name} becomes the new owner and you stay an admin. Only the new owner can undo this.",
+    "tr": "{name} grubun yeni sahibi olur; sen yönetici olarak kalırsın. Bu işlemi yalnızca yeni sahip geri alabilir.",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "7e1s9qn4gb": {
+    "en": "Confirm",
+    "tr": "Onayla",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "qbb05uu9qd": {
+    "en": "Done.",
+    "tr": "İşlem tamamlandı.",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
   "290a2w6bzew": {
     "en": "React",
     "tr": "Tepki ver",
@@ -7015,13 +7483,6 @@
   "1qvyn4kd7xa": {
     "en": "Pin",
     "tr": "Sabitle",
-    "files": [
-      "src/components/Groups/workspace/MessageItem.tsx"
-    ]
-  },
-  "rizei5ryz7": {
-    "en": "Unpin",
-    "tr": "Sabitlemeyi kaldır",
     "files": [
       "src/components/Groups/workspace/MessageItem.tsx"
     ]
@@ -8811,21 +9272,6 @@
     "tr": "Hanogt AI'a bir şey sor…",
     "files": [
       "src/components/HanogtAI/HanogtAIChat.tsx"
-    ]
-  },
-  "13o0axjxz9y": {
-    "en": "Message",
-    "tr": "Mesaj",
-    "files": [
-      "src/components/HanogtAI/HanogtAIChat.tsx"
-    ]
-  },
-  "1qxq545wt1c": {
-    "en": "Send",
-    "tr": "Gönder",
-    "files": [
-      "src/components/HanogtAI/HanogtAIChat.tsx",
-      "src/components/News/CommentsDrawer.tsx"
     ]
   },
   "1zfioki0n7w": {

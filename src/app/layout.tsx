@@ -7,6 +7,7 @@ import { I18nProvider } from "@/lib/i18n";
 import SkipLink from "@/components/SkipLink";
 import VoiceCallProvider from "@/components/VoiceCallProvider";
 import HanogtAIDock from "@/components/HanogtAI/HanogtAIDock";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <Provider>
                     <I18nProvider>
                         <SkipLink />
+                        <AnnouncementBanner />
                         <VoiceCallProvider>
                             {children}
                         </VoiceCallProvider>
