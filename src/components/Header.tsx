@@ -309,7 +309,7 @@ export default function Header() {
                                                     {item.live ? <span className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-red-600 dark:text-red-400">{tx(NAV_LABELS.live)}</span> : null}
                                                 </span>
                                                 <span className="text-[15px] font-bold text-zinc-900 dark:text-white">{tx(item.label)}</span>
-                                                <span className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{item.desc ? tx(item.desc) : t(item.descKey)}</span>
+                                                <span className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{item.desc ? tx(item.desc) : item.descKey ? t(item.descKey) : ""}</span>
                                             </Link>
                                         </motion.div>
                                     );

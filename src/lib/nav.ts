@@ -7,7 +7,7 @@ export interface NavItem {
     icon: NavIcon;
     label: Copy;
     /** Locale key for the one-line description shown in menus. */
-    descKey: string;
+    descKey?: string;
     /** Inline description (translated by the copy packs); used instead of descKey when set. */
     desc?: Copy;
     /** Shown only to signed-in users. */
@@ -39,7 +39,7 @@ export const NAV_LABELS = {
 
 export const PRIMARY_NAV: NavItem[] = [
     { href: "/dashboard", icon: "dashboard", label: NAV_LABELS.dashboard, auth: true, descKey: "nd_dashboard" },
-    { href: "/ai", icon: "ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" }, descKey: "nd_ai", desc: { TR: "Kod, oyun ve güvenlik için yapay zeka asistanı", EN: "AI assistant for code, games and security" } },
+    { href: "/ai", icon: "ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" }, desc: { TR: "Kod, oyun ve güvenlik için yapay zeka asistanı", EN: "AI assistant for code, games and security" } },
     { href: "/news", icon: "news", label: NAV_LABELS.news, live: true, descKey: "nd_news" },
     { href: "/arcade", icon: "arcade", label: NAV_LABELS.arcade, descKey: "nd_arcade" },
     { href: "/game-engine", icon: "engine", label: NAV_LABELS.engine, descKey: "nd_engine" },
