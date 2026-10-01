@@ -181,4 +181,12 @@ export const DETAIL_KEY_COPY: Record<string, Copy> = {
     type: { TR: "Tür", EN: "Type" },
     commentId: { TR: "Yorum", EN: "Comment" },
     clearedLegacyBan: { TR: "Eski yasak kaldırıldı", EN: "Legacy ban cleared" },
+    scope: { TR: "Kapsam", EN: "Scope" },
+    status: { TR: "Durum", EN: "Status" },
+    accountDeleted: { TR: "Hesap silindi", EN: "Account deleted" },
+    accountExists: { TR: "Hesap vardı", EN: "Account existed" },
+    total: { TR: "Toplam", EN: "Total" },
+    errors: { TR: "Hata", EN: "Errors" },
+    priority: { TR: "Öncelik", EN: "Priority" },
+    ticketId: { TR: "Talep", EN: "Ticket" },
 };
