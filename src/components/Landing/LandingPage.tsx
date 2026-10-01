@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    ArrowRight, Bot, Boxes, Check, Code2, Gamepad2, Globe2, Heart, MessageSquare, Newspaper, Play, Radio, Rocket, ShieldCheck, Sparkles,
+    ArrowRight, Bot, Boxes, Check, Code2, Gamepad2, Heart, MessageSquare, Newspaper, Play, Radio, Rocket, ShieldCheck, Sparkles,
     Trophy, UsersRound, X, Zap,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,6 +26,18 @@ const CODE_LANGUAGES = CODE_LANGUAGE_REGISTRY
     .filter((language) => language.engine !== "none")
     .sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
 const EDITOR_CARD_CHIPS = 18;
+
+type LaunchpadItem = { href: string; title: string; hint: string; color: string } & ({ language: string } | { icon: typeof Rocket });
+
+/** Quick starts in the final call to action; every one works without an account. */
+const LAUNCHPAD: LaunchpadItem[] = [
+    { href: "/editor?lang=python", title: "lp2_python", hint: "lp2_python_hint", color: "from-white to-zinc-200", language: "python" },
+    { href: "/editor?lang=html", title: "lp2_web", hint: "lp2_web_hint", color: "from-white to-zinc-200", language: "html" },
+    { href: "/game-engine", title: "lp2_game", hint: "lp2_game_hint", color: "from-violet-500 to-fuchsia-500", icon: Gamepad2 },
+    { href: "/ai", title: "lp2_ai", hint: "lp2_ai_hint", color: "from-indigo-500 to-sky-500", icon: Sparkles },
+    { href: "/groups", title: "lp2_team", hint: "lp2_team_hint", color: "from-emerald-500 to-teal-500", icon: UsersRound },
+    { href: "/arcade", title: "lp2_arcade", hint: "lp2_arcade_hint", color: "from-amber-400 to-orange-500", icon: Trophy },
+];
 
 function RotatingWord() {
     const { t } = useI18n();
@@ -316,24 +328,50 @@ export default function LandingPage() {
                     <div className="px-4"><Comparison /></div>
                 </section>
 
-                {/* ------------------------------------------------------------ Final CTA */}
+                {/* ------------------------------------------------------------ Final CTA: launchpad */}
                 <section className="px-4 py-24 sm:px-6">
                     <Reveal>
-                        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-zinc-950 px-6 py-16 text-center text-white shadow-2xl sm:px-12">
-                            <div className="absolute inset-0 bg-[linear-gradient(120deg,#6366f1,#a855f7,#ec4899,#f59e0b)] bg-[length:300%_300%] opacity-90 animate-gradient" />
+                        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-zinc-950 px-5 py-12 text-white shadow-2xl sm:px-10 sm:py-14">
+                            <div className="absolute inset-0 bg-[linear-gradient(120deg,#4f46e5,#9333ea,#db2777,#d97706)] bg-[length:300%_300%] opacity-80 animate-gradient" />
+                            <div className="absolute inset-0 bg-[radial-gradient(60rem_30rem_at_100%_0%,rgba(9,9,11,0.55),transparent)]" />
                             <div className="absolute inset-0 bg-grid opacity-20" />
-                            <div className="relative">
-                                <Globe2 className="mx-auto h-10 w-10 animate-float" />
-                                <h2 className="mx-auto mt-5 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">{t("lp_cta_title")}</h2>
-                                <p className="mx-auto mt-4 max-w-xl text-[16px] text-white/85">{t("lp_cta_sub")}</p>
-                                <div className="mt-8 flex flex-wrap justify-center gap-3">
-                                    <Link href={signedIn ? "/dashboard" : "/signup"} className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-bold text-zinc-900 shadow-xl transition hover:-translate-y-0.5">
-                                        <Rocket className="h-4.5 w-4.5" />{signedIn ? t("go_to_dashboard") : t("lp_start_free")}
-                                    </Link>
-                                    <Link href="/arcade" className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/40 bg-white/10 px-6 text-[15px] font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20">
-                                        <Gamepad2 className="h-4.5 w-4.5" />{t("lp_browse_arcade")}
+                            <div className="relative grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center">
+                                <div className="min-w-0">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[12.5px] font-bold backdrop-blur">
+                                        <Rocket className="h-3.5 w-3.5" />{t("lp_cta_title")}
+                                    </span>
+                                    <h2 className="mt-5 text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl">{t("lp2_title")}</h2>
+                                    <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/85">{t("lp2_sub")}</p>
+                                    <ul className="mt-6 flex flex-wrap gap-2 text-[13px] font-semibold">
+                                        {[
+                                            formatCopy(t("lp2_stat_langs"), { count: LANGUAGE_STATS.usable }),
+                                            formatCopy(t("lp2_stat_ui"), { count: LANGUAGES.length }),
+                                            t("lp2_stat_free"),
+                                        ].map((item) => (
+                                            <li key={item} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur"><Check className="h-3.5 w-3.5" strokeWidth={3} />{item}</li>
+                                        ))}
+                                    </ul>
+                                    <Link href={signedIn ? "/dashboard" : "/signup"} className="group mt-8 inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-bold text-zinc-900 shadow-xl transition hover:-translate-y-0.5">
+                                        {signedIn ? t("go_to_dashboard") : t("lp_start_free")}
+                                        <ArrowRight className="h-4.5 w-4.5 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                                     </Link>
                                 </div>
+                                <ul className="grid min-w-0 gap-3 sm:grid-cols-2">
+                                    {LAUNCHPAD.map((item, index) => (
+                                        <motion.li key={item.href} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.06 * index, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}>
+                                            <Link href={item.href} className="group flex h-full items-center gap-3.5 rounded-2xl border border-white/15 bg-white/[0.08] p-4 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/[0.14] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">
+                                                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${item.color} shadow-lg`}>
+                                                    {"language" in item ? <LanguageIcon language={item.language} size={24} /> : <item.icon className="h-5 w-5 text-white" />}
+                                                </span>
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block text-[15px] font-black leading-tight">{t(item.title)}</span>
+                                                    <span className="mt-0.5 block text-[12.5px] leading-snug text-white/75">{t(item.hint)}</span>
+                                                </span>
+                                                <ArrowRight className="h-4 w-4 shrink-0 text-white/60 transition group-hover:translate-x-0.5 group-hover:text-white rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+                                            </Link>
+                                        </motion.li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
                     </Reveal>

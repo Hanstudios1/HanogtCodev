@@ -13,6 +13,7 @@ import { useI18n } from "@/lib/i18n";
 import { NEWS_CATEGORIES, type NewsCategory } from "@/lib/news/sources";
 import AiRankings from "./AiRankings";
 import CommentsDrawer from "./CommentsDrawer";
+import MarketStrip from "./MarketStrip";
 import { mergeNewsItems, timeAgo, trendingTopics, type NewsItemView, type NewsSnapshotView } from "./NewsTypes";
 
 const REFRESH_MS = 75_000;
@@ -27,6 +28,7 @@ const CATEGORY_STYLE: Record<NewsCategory, { gradient: string; chip: string }> =
     games: { gradient: "from-orange-500 via-rose-500 to-pink-500", chip: "bg-rose-500/10 text-rose-700 dark:text-rose-300" },
     apps: { gradient: "from-violet-500 via-purple-500 to-sky-500", chip: "bg-violet-500/10 text-violet-700 dark:text-violet-300" },
     science: { gradient: "from-slate-700 via-indigo-700 to-sky-600", chip: "bg-slate-500/10 text-slate-700 dark:text-slate-300" },
+    finance: { gradient: "from-emerald-500 via-teal-500 to-amber-500", chip: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
 };
 
 // ---------------------------------------------------------------------------
@@ -235,6 +237,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const [cycle, setCycle] = useState(0);
     const [toast, setToast] = useState<string | null>(null);
     const [showAllSources, setShowAllSources] = useState(false);
+    const [archive, setArchive] = useState<{ loading: boolean; done: boolean; failed: boolean }>({ loading: false, done: false, failed: false });
 
     const initialRef = useRef(initial);
     const knownIds = useRef<Set<string> | null>(null);
@@ -367,6 +370,29 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const okSources = sources.filter((source) => source.ok).length;
     const countKey = [featured, ...visible.slice(0, 29)].filter((item): item is NewsItemView => Boolean(item)).map((item) => item.id).join(",");
 
+    // Older headlines from the archive (the live feed holds only the newest ones).
+    const loadOlder = async () => {
+        if (archive.loading || !items.length) return;
+        const oldest = items.reduce((min, item) => (item.publishedAt < min ? item.publishedAt : min), items[0].publishedAt);
+        setArchive((state) => ({ ...state, loading: true, failed: false }));
+        try {
+            const params = new URLSearchParams({ before: oldest, limit: "40" });
+            if (category !== "all" && category !== "saved") params.set("category", category);
+            const response = await fetch(`/api/news?${params.toString()}`, { cache: "no-store" });
+            const data = await response.json() as { items?: NewsItemView[]; done?: boolean };
+            if (!response.ok || !Array.isArray(data.items)) throw new Error("archive");
+            const known = knownIds.current ?? new Set<string>();
+            const older = data.items.filter((item) => !known.has(item.id));
+            for (const item of older) known.add(item.id);
+            knownIds.current = known;
+            setItems((existing) => [...existing, ...older]);
+            setLimit((value) => value + older.length);
+            setArchive({ loading: false, done: Boolean(data.done) || older.length === 0, failed: false });
+        } catch {
+            setArchive({ loading: false, done: false, failed: true });
+        }
+    };
+
     useEffect(() => {
         if (!countKey) return;
         const controller = new AbortController();
@@ -425,7 +451,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
         <button
             key={id}
             type="button"
-            onClick={() => { setCategory(id); setLimit(PAGE_SIZE); }}
+            onClick={() => { setCategory(id); setLimit(PAGE_SIZE); setArchive({ loading: false, done: false, failed: false }); }}
             aria-pressed={category === id}
             className={`relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition ${category === id ? "text-white dark:text-zinc-900" : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10"}`}
         >
@@ -480,6 +506,10 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                 </section>
 
                 <Ticker items={items.slice(0, 14)} locale={locale} />
+
+                <div className="mx-auto max-w-7xl px-4 pt-4">
+                    <MarketStrip />
+                </div>
 
                 {/* Filters */}
                 <div className="sticky top-16 z-30 border-b border-zinc-200/70 bg-zinc-50/85 backdrop-blur-xl dark:border-white/[0.06] dark:bg-zinc-950/85">
@@ -601,6 +631,19 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                                     <Newspaper className="h-4 w-4" />{tx({ TR: "Daha fazla göster ({count})", EN: "Show more ({count})" }, { count: rest.length - limit })}
                                 </button>
                             </div>
+                        ) : null}
+
+                        {!loading && items.length > 0 && rest.length <= limit && category !== "saved" && !needle && !archive.done ? (
+                            <div className="mt-6 flex flex-col items-center gap-2">
+                                <button type="button" onClick={() => void loadOlder()} disabled={archive.loading} className="inline-flex h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-bold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100">
+                                    <Newspaper className={`h-4 w-4 ${archive.loading ? "animate-pulse" : ""}`} />
+                                    {archive.loading ? tx({ TR: "Eski haberler yükleniyor…", EN: "Loading older stories…" }) : tx({ TR: "Daha eski haberleri yükle", EN: "Load older stories" })}
+                                </button>
+                                {archive.failed ? <p className="text-[12px] text-rose-500">{tx({ TR: "Arşive şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.", EN: "The archive can't be reached right now. Try again shortly." })}</p> : null}
+                            </div>
+                        ) : null}
+                        {!loading && archive.done && category !== "saved" && !needle ? (
+                            <p className="mt-6 text-center text-[12.5px] text-zinc-500">{tx({ TR: "Arşivin sonuna ulaştınız.", EN: "You've reached the end of the archive." })}</p>
                         ) : null}
                     </div>
 

@@ -36,8 +36,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.support,
         question: { TR: "Ekibe nasıl destek talebi gönderirim?", EN: "How do I send a support ticket to the team?" },
         answer: {
-            TR: "Bu sayfadaki Talep oluştur bölümünde bir kategori seçin (geri bildirim, hata bildirimi, güvenlik açığı, soru, Hesap / KVKK ya da diğer), başlık ve açıklama yazıp gönderin. Talepler herkese açık panoda görünmez; yalnızca siz ve Hanogt ekibi görürsünüz. Taleplerim listesinde durumu (Açık, İnceleniyor, Yanıtlandı, Çözüldü, Kapatıldı) izleyebilir, ekibin yanıtlarını okuyup ek mesaj yazabilir, talebi kapatabilir veya yeniden açabilirsiniz. Talep göndermek için giriş yapmanız gerekir.",
-            EN: "Pick a category under Create a ticket on this page (feedback, bug report, security vulnerability, question, account / KVKK or other), write a title and a description and send it. Tickets never appear on the public board: only you and the Hanogt team can see them. In My tickets you can follow the status (Open, In review, Answered, Resolved, Closed), read the team's replies, write back, and close or reopen the ticket. You need to be signed in to send one.",
+            TR: "Bu sayfadaki Talep oluştur bölümünde bir kategori seçin (şikayet, istek, güvenlik açığı, ban kaldırma isteği, soru ya da geri bildirim), başlık ve açıklama yazıp gönderin. Talepler herkese açık panoda görünmez; yalnızca siz ve Hanogt ekibi görürsünüz. Taleplerim listesinde durumu (Açık, İnceleniyor, Yanıtlandı, Çözüldü, Kapatıldı) izleyebilir, ekibin yanıtlarını okuyup ek mesaj yazabilir, talebi kapatabilir veya yeniden açabilirsiniz. Talep göndermek için giriş yapmanız gerekir.",
+            EN: "Pick a category under Create a ticket on this page (complaint, request, security vulnerability, ban appeal, question or feedback), write a title and a description and send it. Tickets never appear on the public board: only you and the Hanogt team can see them. In My tickets you can follow the status (Open, In review, Answered, Resolved, Closed), read the team's replies, write back, and close or reopen the ticket. You need to be signed in to send one.",
         },
     },
     {
@@ -63,8 +63,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.support,
         question: { TR: "İyi bir hata bildirimi nasıl yazılır?", EN: "How do I write a good bug report?" },
         answer: {
-            TR: "Hata bildirimi kategorisinde ne beklediğinizi ve ne olduğunu yazın, adımları sırayla ekleyin ve hatanın göründüğü sayfanın adresini girin. \"Teknik bilgileri ekle\" kutusunu işaretlerseniz tarayıcı bilginiz (user agent) ve bulunduğunuz sayfa da talebe eklenir; bu bilgileri yalnızca ekip görür. Ekran görüntüsü yerine hata mesajının metnini yapıştırmak çoğu zaman daha hızlı çözüm sağlar.",
-            EN: "In the Bug report category, write what you expected and what happened, list the steps in order and add the address of the page where it happens. If you tick \"Add technical details\", your browser information (user agent) and the page you are on are attached too; only the team can see them. Pasting the error message as text often gets a faster fix than a screenshot.",
+            TR: "Şikayet kategorisini seçip ne beklediğinizi ve ne olduğunu yazın, adımları sırayla ekleyin ve hatanın göründüğü sayfanın adresini girin. \"Teknik bilgileri ekle\" kutusunu işaretlerseniz tarayıcı bilginiz (user agent) ve bulunduğunuz sayfa da talebe eklenir; bu bilgileri yalnızca ekip görür. Ekran görüntüsü yerine hata mesajının metnini yapıştırmak çoğu zaman daha hızlı çözüm sağlar.",
+            EN: "Choose the Complaint category and write what you expected and what happened, list the steps in order and add the address of the page where it happens. If you tick \"Add technical details\", your browser information (user agent) and the page you are on are attached too; only the team can see them. Pasting the error message as text often gets a faster fix than a screenshot.",
         },
     },
     {
@@ -90,8 +90,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.account,
         question: { TR: "İki adımlı doğrulamayı nasıl açarım?", EN: "How do I turn on two-step verification?" },
         answer: {
-            TR: "Hesap Ayarları > Güvenlik bölümünde iki adımlı doğrulamayı açın: QR kodu bir doğrulama uygulamasıyla (Google Authenticator, Microsoft Authenticator, Authy vb.) okutun ve uygulamanın ürettiği 6 haneli kodla onaylayın. Ardından 10 tek kullanımlık kurtarma kodu verilir; bunları güvenli bir yere kaydedin. Bundan sonra e-posta ve şifreyle girişte bu kod da istenir. Google ile giriş yapan hesaplar Google'ın kendi iki adımlı doğrulamasıyla korunur. Doğrulama uygulamanızı ve kurtarma kodlarınızı kaybederseniz Hesap / KVKK kategorisinde destek talebi açın; kimliğiniz doğrulandıktan sonra ekip iki adımlı doğrulamayı sıfırlayabilir.",
-            EN: "Turn on two-step verification in Account Settings > Security: scan the QR code with an authenticator app (Google Authenticator, Microsoft Authenticator, Authy and so on) and confirm with the 6-digit code it shows. You then get 10 single-use recovery codes; keep them somewhere safe. From then on, signing in with e-mail and password also asks for the code. Accounts that sign in with Google are protected by Google's own two-step verification. If you lose both your authenticator and your recovery codes, open a support ticket in the Account / KVKK category; once your identity is verified, the team can reset two-step verification.",
+            TR: "Hesap Ayarları > Güvenlik bölümünde iki adımlı doğrulamayı açın: QR kodu bir doğrulama uygulamasıyla (Google Authenticator, Microsoft Authenticator, Authy vb.) okutun ve uygulamanın ürettiği 6 haneli kodla onaylayın. Ardından 10 tek kullanımlık kurtarma kodu verilir; bunları güvenli bir yere kaydedin. Bundan sonra e-posta ve şifreyle girişte bu kod da istenir. Google ile giriş yapan hesaplar Google'ın kendi iki adımlı doğrulamasıyla korunur. Doğrulama uygulamanızı ve kurtarma kodlarınızı kaybederseniz İstek kategorisinde destek talebi açın; kimliğiniz doğrulandıktan sonra ekip iki adımlı doğrulamayı sıfırlayabilir.",
+            EN: "Turn on two-step verification in Account Settings > Security: scan the QR code with an authenticator app (Google Authenticator, Microsoft Authenticator, Authy and so on) and confirm with the 6-digit code it shows. You then get 10 single-use recovery codes; keep them somewhere safe. From then on, signing in with e-mail and password also asks for the code. Accounts that sign in with Google are protected by Google's own two-step verification. If you lose both your authenticator and your recovery codes, open a support ticket in the Request category; once your identity is verified, the team can reset two-step verification.",
         },
     },
     {
@@ -99,8 +99,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.account,
         question: { TR: "Security Bot hesabımı otomatik olarak kalıcı engeller mi?", EN: "Will Security Bot ban my account automatically?" },
         answer: {
-            TR: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır. İtiraz için Hesap / KVKK ya da Güvenlik açığı kategorisinde destek talebi açabilirsiniz.",
-            EN: "No. A high-risk request is stopped on the spot with a minimal log entry. Permanent action is never taken from an automatic pattern match; there is a review and appeal path. To appeal, open a support ticket in the Account / KVKK or Security vulnerability category.",
+            TR: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır. İtiraz için Ban kaldırma isteği kategorisinde destek talebi açabilirsiniz.",
+            EN: "No. A high-risk request is stopped on the spot with a minimal log entry. Permanent action is never taken from an automatic pattern match; there is a review and appeal path. To appeal, open a support ticket in the Ban appeal category.",
         },
     },
     {
@@ -235,8 +235,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.privacy,
         question: { TR: "KVKK kapsamındaki haklarımı nasıl kullanırım?", EN: "How do I exercise my rights under KVKK?" },
         answer: {
-            TR: "KVKK'nın 11. maddesindeki haklarınız (bilgi alma, düzeltme, silme, itiraz vb.) için bu sayfada Hesap / KVKK kategorisinde bir destek talebi oluşturun. Başvurunuz hesabınızın e-posta adresiyle doğrulanır, yalnızca ekip tarafından görülür ve en geç 30 gün içinde ücretsiz sonuçlandırılır. Verilerinizi indirmek ya da hesabınızı silmek için Hesap Ayarları'ndaki seçenekleri hemen kullanabilirsiniz.",
-            EN: "For your rights under Article 11 of KVKK (Turkey's data protection law: access, correction, deletion, objection and so on), open a support ticket in the Account / KVKK category on this page. Your request is verified with your account's e-mail address, is seen by the team only and is concluded free of charge within 30 days at the latest. To download your data or delete your account right away, use the options in Account Settings.",
+            TR: "KVKK'nın 11. maddesindeki haklarınız (bilgi alma, düzeltme, silme, itiraz vb.) için bu sayfada İstek kategorisinde bir destek talebi oluşturun. Başvurunuz hesabınızın e-posta adresiyle doğrulanır, yalnızca ekip tarafından görülür ve en geç 30 gün içinde ücretsiz sonuçlandırılır. Verilerinizi indirmek ya da hesabınızı silmek için Hesap Ayarları'ndaki seçenekleri hemen kullanabilirsiniz.",
+            EN: "For your rights under Article 11 of KVKK (Turkey's data protection law: access, correction, deletion, objection and so on), open a support ticket in the Request category on this page. Your request is verified with your account's e-mail address, is seen by the team only and is concluded free of charge within 30 days at the latest. To download your data or delete your account right away, use the options in Account Settings.",
         },
     },
     {

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, Copy as CopyIcon, ExternalLink, Gavel, HelpCircle, Inbox, LifeBuoy, MessageCircle,
+    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, Copy as CopyIcon, ExternalLink, Gavel, HelpCircle, Inbox, LifeBuoy, Lightbulb, Megaphone, MessageCircle,
     MessageSquareText, Monitor, RefreshCw, Send, ShieldAlert, ShieldCheck, Trash2, UserCog, UserRound, type LucideIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -12,7 +12,7 @@ import {
     RECORD_REASON_COPY,
     RECORD_VERDICT_COPY,
     TEAM_NAME,
-    TICKET_CATEGORIES,
+    ALL_TICKET_CATEGORIES,
     TICKET_CATEGORY_COPY,
     TICKET_LIMITS,
     TICKET_PRIORITIES,
@@ -51,10 +51,13 @@ import {
 import { RoleBadge } from "./UsersSection";
 
 const CATEGORY_ICONS: Record<TicketCategory, LucideIcon> = {
+    complaint: Megaphone,
+    request: Lightbulb,
+    security: ShieldAlert,
+    ban_appeal: Gavel,
+    question: HelpCircle,
     feedback: MessageSquareText,
     bug: Bug,
-    security: ShieldAlert,
-    question: HelpCircle,
     account: UserCog,
     other: LifeBuoy,
 };
@@ -553,9 +556,9 @@ export default function TicketsSection() {
                 <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1.6fr)]">
                     <label className="block">
                         <span className="sr-only">{tx({ TR: "Kategori", EN: "Category" })}</span>
-                        <select value={category} onChange={(event) => setCategory(event.target.value === "all" ? "all" : TICKET_CATEGORIES.find((value) => value === event.target.value) ?? "all")} className={cx(INPUT_CLASS, "h-10")}>
+                        <select value={category} onChange={(event) => setCategory(event.target.value === "all" ? "all" : ALL_TICKET_CATEGORIES.find((value) => value === event.target.value) ?? "all")} className={cx(INPUT_CLASS, "h-10")}>
                             <option value="all">{tx({ TR: "Tüm kategoriler", EN: "All categories" })}</option>
-                            {TICKET_CATEGORIES.map((value) => <option key={value} value={value}>{tx(TICKET_CATEGORY_COPY[value].label)}</option>)}
+                            {ALL_TICKET_CATEGORIES.map((value) => <option key={value} value={value}>{tx(TICKET_CATEGORY_COPY[value].label)}</option>)}
                         </select>
                     </label>
                     <label className="block">

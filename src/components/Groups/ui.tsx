@@ -1,5 +1,7 @@
 "use client";
 
+import { PresenceDot } from "@/components/Presence";
+import type { PresenceState } from "@/lib/presence";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, CheckCircle2, Crown, Info, LoaderCircle, Shield, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -88,6 +90,8 @@ const AVATAR_SIZES = {
     lg: { box: "h-14 w-14 text-lg", dot: "h-3.5 w-3.5" },
 } as const;
 
+const PRESENCE_DOT_SIZE: Record<keyof typeof AVATAR_SIZES, number> = { xs: 10, sm: 12, md: 14, lg: 18 };
+
 const AVATAR_GRADIENTS = [
     "from-indigo-500 to-violet-600",
     "from-fuchsia-500 to-pink-600",
@@ -103,7 +107,7 @@ function gradientFor(name: string) {
     return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
 }
 
-export function UserAvatar({ name, src, size = "md", online, className }: { name: string; src?: string | null; size?: keyof typeof AVATAR_SIZES; online?: boolean; className?: string }) {
+export function UserAvatar({ name, src, size = "md", online, presence, className }: { name: string; src?: string | null; size?: keyof typeof AVATAR_SIZES; online?: boolean; presence?: PresenceState; className?: string }) {
     const style = AVATAR_SIZES[size];
     const initial = (name.trim()[0] || "?").toLocaleUpperCase();
     return (
@@ -113,7 +117,9 @@ export function UserAvatar({ name, src, size = "md", online, className }: { name
             ) : (
                 <span className={cx("flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br font-bold text-white", gradientFor(name))} aria-hidden>{initial}</span>
             )}
-            {online !== undefined && (
+            {presence ? (
+                <PresenceDot state={presence} size={PRESENCE_DOT_SIZE[size]} ringClassName="bg-white dark:bg-zinc-900" />
+            ) : online !== undefined && (
                 <span className={cx("absolute -bottom-0.5 -end-0.5 rounded-full border-2 border-white dark:border-zinc-900", style.dot, online ? "bg-emerald-500" : "bg-zinc-400 dark:bg-zinc-600")} aria-hidden />
             )}
         </span>

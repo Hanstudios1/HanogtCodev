@@ -104,7 +104,7 @@ function SignupForm() {
     return (
         <AuthShell
             title={t("signup") || "Kayıt Ol"}
-            subtitle={t("create_free_account") || "Hemen ücretsiz hesabını oluştur"}
+            subtitle={t("auth_signup_subtitle")}
             footer={<>{t("already_have_account") || "Zaten hesabın var mı?"} <Link href={`/login${callbackPath !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackPath)}` : ""}`} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{t("login") || "Giriş Yap"}</Link></>}
         >
             <GoogleButton label={t("signup_google") || "Google ile Üye Ol"} onClick={() => {

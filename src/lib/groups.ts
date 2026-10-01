@@ -489,6 +489,8 @@ export type GroupMemberInfo = {
     customStatus: string;
     statusEmoji: string;
     online: boolean;
+    /** Discord-style state ("online" | "idle" | "dnd" | "offline"). */
+    presence?: "online" | "idle" | "dnd" | "offline";
     lastSeenAt: string | null;
     role: GroupRole;
     key: string;

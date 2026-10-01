@@ -14,8 +14,14 @@ import type { Copy } from "@/lib/i18n";
 // Categories, statuses, priorities
 // ---------------------------------------------------------------------------
 
-export const TICKET_CATEGORIES = ["feedback", "bug", "security", "question", "account", "other"] as const;
-export type TicketCategory = (typeof TICKET_CATEGORIES)[number];
+/** Topics a new ticket can be filed under, in the order the form shows them. */
+export const TICKET_CATEGORIES = ["complaint", "request", "security", "ban_appeal", "question", "feedback"] as const;
+/** Topics of tickets filed before the six-topic form; still shown and filterable, never offered for new tickets. */
+export const LEGACY_TICKET_CATEGORIES = ["bug", "account", "other"] as const;
+/** Every topic the admin inbox can filter by. */
+export const ALL_TICKET_CATEGORIES = [...TICKET_CATEGORIES, ...LEGACY_TICKET_CATEGORIES] as const;
+export type NewTicketCategory = (typeof TICKET_CATEGORIES)[number];
+export type TicketCategory = (typeof ALL_TICKET_CATEGORIES)[number];
 
 export const TICKET_STATUSES = ["open", "in_progress", "answered", "resolved", "closed"] as const;
 export type TicketStatus = (typeof TICKET_STATUSES)[number];
@@ -68,8 +74,19 @@ export const BOARD_LIMITS = {
 export const TEAM_AUTHOR_NAME = "Hanogt Ekibi";
 export const TEAM_NAME: Copy = { TR: "Hanogt Ekibi", EN: "Hanogt Team" };
 
+/** Any stored topic, including the legacy ones. */
 export function isTicketCategory(value: unknown): value is TicketCategory {
+    return typeof value === "string" && (ALL_TICKET_CATEGORIES as readonly string[]).includes(value);
+}
+
+/** A topic a new ticket may use. */
+export function isNewTicketCategory(value: unknown): value is NewTicketCategory {
     return typeof value === "string" && (TICKET_CATEGORIES as readonly string[]).includes(value);
+}
+
+/** Complaints carry the reproduction details the old bug reports had. */
+export function ticketHasReportDetails(category: TicketCategory | null) {
+    return category === "complaint" || category === "bug";
 }
 
 export function isTicketStatus(value: unknown): value is TicketStatus {
@@ -94,8 +111,9 @@ export function ticketReference(id: string) {
     return id.slice(0, 8).toUpperCase();
 }
 
-/** Security reports start high (critical when the reporter says so); everything else normal. */
+/** Security reports start high (critical when the reporter says so), ban appeals high, everything else normal. */
 export function defaultTicketPriority(category: TicketCategory, severity: TicketSeverity | null = null): TicketPriority {
+    if (category === "ban_appeal") return "high";
     if (category !== "security") return "normal";
     return severity === "critical" ? "critical" : "high";
 }
@@ -124,6 +142,26 @@ export function canUserReopen(status: TicketStatus) {
 // ---------------------------------------------------------------------------
 
 export const TICKET_CATEGORY_COPY: Record<TicketCategory, { label: Copy; hint: Copy }> = {
+    complaint: {
+        label: { TR: "Şikayet", EN: "Complaint" },
+        hint: { TR: "Bir hata, kullanıcı ya da içerik hakkında", EN: "About a bug, a user or some content" },
+    },
+    request: {
+        label: { TR: "İstek", EN: "Request" },
+        hint: { TR: "Özellik isteği, hesap ve KVKK başvuruları", EN: "Feature requests, account and privacy (KVKK) requests" },
+    },
+    security: {
+        label: { TR: "Güvenlik açığı", EN: "Security vulnerability" },
+        hint: { TR: "Sorumlu açıklama, yalnızca ekip görür", EN: "Responsible disclosure, team only" },
+    },
+    ban_appeal: {
+        label: { TR: "Ban kaldırma isteği", EN: "Ban appeal" },
+        hint: { TR: "Askıya alma veya kısıtlamaya itiraz", EN: "Appeal a suspension or a restriction" },
+    },
+    question: {
+        label: { TR: "Soru", EN: "Question" },
+        hint: { TR: "Bir özelliğin nasıl çalıştığını sorun", EN: "Ask how something works" },
+    },
     feedback: {
         label: { TR: "Geri bildirim", EN: "Feedback" },
         hint: { TR: "Site hakkında görüş ve öneriler", EN: "Opinions and ideas about the site" },
@@ -131,14 +169,6 @@ export const TICKET_CATEGORY_COPY: Record<TicketCategory, { label: Copy; hint: C
     bug: {
         label: { TR: "Hata bildirimi", EN: "Bug report" },
         hint: { TR: "Bir şey beklendiği gibi çalışmıyor", EN: "Something doesn't work as expected" },
-    },
-    security: {
-        label: { TR: "Güvenlik açığı", EN: "Security vulnerability" },
-        hint: { TR: "Sorumlu açıklama, yalnızca ekip görür", EN: "Responsible disclosure, team only" },
-    },
-    question: {
-        label: { TR: "Soru", EN: "Question" },
-        hint: { TR: "Bir özelliğin nasıl çalıştığını sorun", EN: "Ask how something works" },
     },
     account: {
         label: { TR: "Hesap / KVKK", EN: "Account / KVKK" },
@@ -314,7 +344,7 @@ export type TicketDraftInput = {
 };
 
 export type TicketDraft = {
-    category: TicketCategory;
+    category: NewTicketCategory;
     title: string;
     description: string;
     /** Bug reports only. */
@@ -370,7 +400,7 @@ function optionalText(value: unknown, max: number, code: SupportErrorCode, field
  */
 export function validateTicketDraft(input: TicketDraftInput): { ok: true; draft: TicketDraft } | { ok: false; errors: TicketFieldError[] } {
     const errors: TicketFieldError[] = [];
-    const category = isTicketCategory(input.category) ? input.category : null;
+    const category = isNewTicketCategory(input.category) ? input.category : null;
     if (!category) errors.push({ field: "category", code: "invalid_category" });
 
     const title = typeof input.title === "string" ? sanitizeTicketText(input.title, false) : "";
@@ -388,7 +418,7 @@ export function validateTicketDraft(input: TicketDraftInput): { ok: true; draft:
     let steps: string | null = null;
     let pageUrl: string | null = null;
     let severity: TicketSeverity | null = null;
-    if (category === "bug") {
+    if (ticketHasReportDetails(category)) {
         steps = optionalText(input.steps, TICKET_LIMITS.steps, "steps_too_long", "steps", errors);
         const page = normalizePageUrl(input.pageUrl);
         if (page === undefined) errors.push({ field: "pageUrl", code: "invalid_page_url" });

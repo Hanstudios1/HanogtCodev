@@ -1,3 +1,4 @@
+import { effectivePresence, type PresenceState } from "@/lib/presence";
 import "server-only";
 
 import { createHash } from "node:crypto";
@@ -17,7 +18,6 @@ import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security
 import {
     GROUP_LIMITS,
     GROUP_SYSTEM_EVENT_COPY,
-    ONLINE_WINDOW_MS,
     SYSTEM_SENDER,
     fillVars,
     groupColor,
@@ -311,6 +311,10 @@ export type PublicProfile = {
     statusEmoji?: string;
     isOnline?: boolean;
     lastSeenAt?: string;
+    /** Written by /api/presence: "online" | "idle" | "dnd" | "offline" and when. */
+    presence?: string;
+    presenceAt?: string;
+    dndMode?: boolean;
     /** Written by the server only (lib/server/admin.ts syncStaffRoleBadge). */
     staffRole?: unknown;
 };
@@ -345,8 +349,12 @@ export function profileAvatar(profile: PublicProfile | null | undefined) {
     return typeof profile?.avatarUrl === "string" && profile.avatarUrl ? profile.avatarUrl : null;
 }
 
+export function profilePresence(profile: PublicProfile | null | undefined, now = Date.now()): PresenceState {
+    return effectivePresence(profile, now);
+}
+
 export function profileOnline(profile: PublicProfile | null | undefined, now = Date.now()) {
-    return Boolean(profile?.isOnline && profile.lastSeenAt && now - toMillis(profile.lastSeenAt) < ONLINE_WINDOW_MS);
+    return profilePresence(profile, now) !== "offline";
 }
 
 const STAFF_ROLES = ["owner", "admin", "moderator"] as const;

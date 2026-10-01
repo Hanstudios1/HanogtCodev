@@ -23,6 +23,21 @@ interface UpdateEntry {
 
 const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.1.3",
+        version: "v0.1.3",
+        date: "2026-10-01",
+        title: { TR: "Discord tarzı durumlar, finans haberleri ve yenilenen Hakkımızda", EN: "Discord-style statuses, finance news and a new About page" },
+        desc: { TR: "Çevrimiçi, Boşta, Rahatsız Etmeyin ve Görünmez durumları; altı konulu destek talepleri; ekonomi haberleri ve piyasa şeridi.", EN: "Online, Idle, Do Not Disturb and Invisible statuses; support tickets in six topics; economy news and a market strip." },
+        items: [
+            { TR: "Durum seçimi: yeşil nokta (Çevrimiçi), hilal (Boşta), kırmızı daire (Rahatsız Etmeyin) ve gri halka (Görünmez/Çevrimdışı); 10 dakika işlem yapılmazsa otomatik Boşta.", EN: "Pick a status: green dot (Online), crescent (Idle), red circle (Do Not Disturb) and grey ring (Invisible/Offline); automatically Idle after 10 minutes without activity." },
+            { TR: "Rahatsız Etmeyin açıkken gelen sesli aramalar çalmaz.", EN: "Incoming voice calls don't ring while Do Not Disturb is on." },
+            { TR: "Destek talepleri altı konuda: Şikayet, İstek, Güvenlik Açığı, Ban Kaldırma İsteği, Soru ve Geri Bildirim.", EN: "Support tickets now have six topics: Complaint, Request, Security Vulnerability, Ban Appeal, Question and Feedback." },
+            { TR: "Hanogt News'e Ekonomi & Finans kategorisi; döviz, altın, borsa ve Bitcoin şeridi; eski haberleri sınırsız yükleme.", EN: "Hanogt News gets an Economy & Finance category, a currency, gold, stock market and Bitcoin strip, and unlimited older stories." },
+            { TR: "Ana sayfada tek tıkla başlama paneli; Hakkımızda canlı rakamlarla yenilendi.", EN: "A one-click launchpad on the home page; the About page now shows live numbers." },
+            { TR: "Alt bilgideki dil menüsü artık kesilmiyor; ilk ziyarette dil ülkene göre seçiliyor.", EN: "The footer language menu no longer gets cut off, and your first visit picks a language for your country." },
+        ],
+    },
+    {
         id: "v0.1.2",
         version: "v0.1.2",
         date: "2026-10-01",

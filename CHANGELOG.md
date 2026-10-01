@@ -1,5 +1,54 @@
 # Değişiklik Günlüğü
 
+## 0.1.3 — 2026-10-01
+
+### Durum (Discord tarzı)
+
+- Profil menüsünden durum seçilebiliyor: **Çevrimiçi** (yeşil nokta),
+  **Boşta** (sarı hilal), **Rahatsız Etmeyin** (kırmızı daire, beyaz çizgi)
+  ve **Görünmez** (gri halka, çevrimdışı görünürsün). 10 dakika işlem
+  yapılmazsa durum kendiliğinden Boşta'ya geçiyor.
+- Durum artık tarayıcının Firebase bağlantısına bağlı değil: açık sekmeler
+  45 saniyede bir `/api/presence` ile sunucuya bildiriyor; sekme kapanınca
+  çevrimdışına düşülüyor. Başlıkta, profil kartlarında ve grup üyelerinde
+  aynı rozet görünüyor.
+- Rahatsız Etmeyin açıkken gelen sesli aramalar çalmıyor. Durum, Hesap
+  Ayarları'ndaki "Durumun" bölümünden de değiştirilebiliyor.
+
+### Destek talepleri
+
+- Talep konuları altıya indi: **Şikayet, İstek, Güvenlik Açığı, Ban Kaldırma
+  İsteği, Soru, Geri Bildirim**. Ban itirazları doğrudan "Ban Kaldırma
+  İsteği" olarak açılıyor ve yüksek öncelik alıyor; KVKK hak talepleri
+  "İstek" konusunda. Eski talepler kendi konularıyla görünmeye devam ediyor.
+  Yönetici her talebe panelden yanıt verebiliyor.
+
+### Hanogt News
+
+- Yeni **Ekonomi & Finans** kategorisi: BBC Business, CNBC, MarketWatch,
+  Yahoo Finance, The Guardian, BloombergHT, AA, NTV, Habertürk, Hürriyet ve
+  Paraanaliz kaynakları.
+- Haberlerin üstünde döviz (dolar, euro, sterlin), gram/ons altın, BIST 100,
+  S&P 500 ve Bitcoin şeridi; 5 dakikada bir yenileniyor.
+- Akış 180 haberde takılmıyor: canlı akış 240 habere çıktı, eski haberler
+  arşivleniyor ve "Daha eski haberleri yükle" ile sınırsız geriye gidilebiliyor.
+
+### Site
+
+- Ana sayfadaki "Bir sonraki projen burada başlıyor" bölümü bir başlangıç
+  paneline dönüştü: Python, web sitesi, oyun, Hanogt AI, ekip ve Arcade için
+  tek tıkla başlama kutuları.
+- Hakkımızda sayfası yenilendi: güncel ürünler (Hanogt AI ve Hanogt Social
+  dahil), canlı kullanıcı/proje/oyun/gönderi sayıları (`/api/stats/public`),
+  sürüm yolculuğu ve "Sırada ne var?".
+- Alt bilgideki dil seçici artık ekranın kenarında kesilmiyor; menü yer yoksa
+  yukarı açılıyor ve sayfa kaydırılınca kapanıyor.
+- Giriş ve kayıt sayfalarının metinleri güncellendi (Engine V3, Hanogt AI,
+  Hanogt Social, iki adımlı doğrulama).
+- İlk ziyarette arayüz dili ülkeye ve tarayıcı diline göre seçiliyor; elle
+  seçilen dil her zaman önce geliyor.
+- Yeni metinler 50 arayüz dilinin hepsine çevrildi.
+
 ## 0.1.2 — 2026-10-01
 
 Güvenlik, yapay zeka ve topluluk güncellemesi: iki adımlı doğrulama, dil
