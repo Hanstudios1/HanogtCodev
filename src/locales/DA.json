@@ -582,5 +582,13 @@
   "word_wrap": "Linjeombrydning",
   "write_comment": "Skriv en kommentar...",
   "yes_delete_project": "Ja, slet mit projekt for altid",
-  "you": "Du"
+  "you": "Du",
+  "auth_brand_title2": "Kod, lav spil, skab sammen.",
+  "auth_brand_subtitle2": "En kodeeditor til {count} sprog, Hanogt Engine V3, Hanogt AI og Hanogt Social i én konto. Ingen installation.",
+  "auth_feature_engine3": "Lav 2D/3D-spil i C# og C++ med Hanogt Engine V3",
+  "auth_feature_social": "Chat med venner på Hanogt Social og kod sammen",
+  "auth_feature_ai": "Skriv kode med Hanogt AI og få fejl forklaret med det samme",
+  "auth_protected2": "Beskyttet af Hanogt Security Bot og totrinsbekræftelse",
+  "auth_login_subtitle": "Velkommen tilbage! Fortsæt, hvor du slap.",
+  "auth_signup_subtitle": "Opret din gratis konto, og begynd at kode med det samme."
 }

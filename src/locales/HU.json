@@ -582,5 +582,13 @@
   "badge_pioneer": "Úttörő",
   "badge_community_star": "A közösség sztárja",
   "auth_error_network": "Nem sikerült elérni a bejelentkezési szervert. Ellenőrizd a kapcsolatot, és próbáld újra.",
-  "auth_error_rate_limited": "Túl sok bejelentkezési kísérlet. Próbáld újra {minutes} perc múlva."
+  "auth_error_rate_limited": "Túl sok bejelentkezési kísérlet. Próbáld újra {minutes} perc múlva.",
+  "auth_brand_title2": "Kódolj, készíts játékokat, alkossatok együtt.",
+  "auth_brand_subtitle2": "Kódszerkesztő {count} nyelvhez, Hanogt Engine V3, Hanogt AI és Hanogt Social egyetlen fiókban. Nincs szükség telepítésre.",
+  "auth_feature_engine3": "Készíts 2D/3D játékokat C#-ban és C++-ban a Hanogt Engine V3-mal",
+  "auth_feature_social": "Csevegj a barátaiddal a Hanogt Socialon, és kódoljatok együtt",
+  "auth_feature_ai": "Írj kódot a Hanogt AI-jal, és kapj azonnali magyarázatot a hibákra",
+  "auth_protected2": "Hanogt Security Bot és kétlépcsős azonosítás védi",
+  "auth_login_subtitle": "Üdv újra! Folytasd ott, ahol abbahagytad.",
+  "auth_signup_subtitle": "Hozd létre ingyenes fiókodat, és kezdj el kódolni azonnal."
 }

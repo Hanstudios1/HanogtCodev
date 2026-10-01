@@ -350,7 +350,7 @@ function LoginForm() {
     return (
         <AuthShell
             title={t("login") || "Giriş Yap"}
-            subtitle={t("welcome_back") || "Hanogt Codev'e Hoşgeldiniz"}
+            subtitle={t("auth_login_subtitle")}
             footer={<>{t("no_account") || "Hesabın yok mu?"} <Link href={`/signup${callbackPath !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackPath)}` : ""}`} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{t("signup_now") || "Hemen Üye Ol"}</Link></>}
         >
             {suspended ? (

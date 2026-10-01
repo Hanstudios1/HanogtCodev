@@ -582,5 +582,13 @@
   "badge_pioneer": "Perintis",
   "badge_community_star": "Bintang komunitas",
   "auth_error_network": "Tidak dapat terhubung ke server masuk. Periksa koneksi Anda lalu coba lagi.",
-  "auth_error_rate_limited": "Terlalu banyak percobaan masuk. Coba lagi dalam {minutes} menit."
+  "auth_error_rate_limited": "Terlalu banyak percobaan masuk. Coba lagi dalam {minutes} menit.",
+  "auth_brand_title2": "Ngoding, bikin game, berkarya bersama.",
+  "auth_brand_subtitle2": "Editor kode untuk {count} bahasa, Hanogt Engine V3, Hanogt AI, dan Hanogt Social dalam satu akun. Tanpa instalasi.",
+  "auth_feature_engine3": "Buat game 2D/3D dengan C# dan C++ di Hanogt Engine V3",
+  "auth_feature_social": "Mengobrol dengan teman di Hanogt Social dan ngoding bersama",
+  "auth_feature_ai": "Tulis kode bersama Hanogt AI dan dapatkan penjelasan error seketika",
+  "auth_protected2": "Dilindungi oleh Hanogt Security Bot dan verifikasi dua langkah",
+  "auth_login_subtitle": "Selamat datang kembali! Lanjutkan dari terakhir kali.",
+  "auth_signup_subtitle": "Buat akun gratismu dan langsung mulai ngoding."
 }

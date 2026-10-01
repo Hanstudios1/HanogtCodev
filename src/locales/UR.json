@@ -582,5 +582,13 @@
   "word_wrap": "ورڈ ریپ",
   "write_comment": "تبصرہ لکھیں...",
   "yes_delete_project": "جی ہاں، میرا پروجیکٹ ہمیشہ کے لیے حذف کریں",
-  "you": "آپ"
+  "you": "آپ",
+  "auth_brand_title2": "کوڈ لکھیں، گیمز بنائیں، مل کر تخلیق کریں۔",
+  "auth_brand_subtitle2": "{count} زبانوں کے لیے کوڈ ایڈیٹر، Hanogt Engine V3، Hanogt AI اور Hanogt Social ایک ہی اکاؤنٹ میں۔ کچھ انسٹال کرنے کی ضرورت نہیں۔",
+  "auth_feature_engine3": "Hanogt Engine V3 کے ساتھ C# اور C++ میں 2D/3D گیمز بنائیں",
+  "auth_feature_social": "Hanogt Social پر دوستوں سے بات کریں اور مل کر کوڈ لکھیں",
+  "auth_feature_ai": "Hanogt AI کے ساتھ کوڈ لکھیں اور غلطیوں کی فوری وضاحت پائیں",
+  "auth_protected2": "Hanogt Security Bot اور دو مرحلہ تصدیق سے محفوظ",
+  "auth_login_subtitle": "خوش آمدید! جہاں چھوڑا تھا وہیں سے جاری رکھیں۔",
+  "auth_signup_subtitle": "اپنا مفت اکاؤنٹ بنائیں اور ابھی کوڈنگ شروع کریں۔"
 }

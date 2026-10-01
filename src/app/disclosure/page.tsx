@@ -26,7 +26,7 @@ const highlights: LegalHighlight[] = [
     },
     {
         title: { TR: "Haklarınız", EN: "Your rights" },
-        text: { TR: "KVKK m.11 haklarınızı “Hesap / KVKK” destek talebiyle kullanabilirsiniz; en geç 30 gün içinde yanıt verilir.", EN: "Use your rights under KVKK Art. 11 with an “Account / KVKK” support ticket; you'll get a reply within 30 days at the latest." },
+        text: { TR: "KVKK m.11 haklarınızı “İstek” kategorisindeki destek talebiyle kullanabilirsiniz; en geç 30 gün içinde yanıt verilir.", EN: "Use your rights under KVKK Art. 11 with a support ticket in the “Request” category; you'll get a reply within 30 days at the latest." },
     },
 ];
 
@@ -45,7 +45,7 @@ const sections: LegalSection[] = [
                 [{ TR: "Açık adres", EN: "Address" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
                 [{ TR: "KEP adresi", EN: "Registered e-mail address (KEP)" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
                 [{ TR: "İletişim e-postası", EN: "Contact e-mail" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
-                [{ TR: "Şu an kullanılabilen başvuru kanalı", EN: "Request channel available now" }, { TR: "Giriş yapmış olarak [Geri Bildirim ve SSS](/feedback) → “Talep oluştur” → “Hesap / KVKK” kategorisi", EN: "While signed in: [Feedback & FAQ](/feedback) → “Create a ticket” → “Account / KVKK” category" }],
+                [{ TR: "Şu an kullanılabilen başvuru kanalı", EN: "Request channel available now" }, { TR: "Giriş yapmış olarak [Geri Bildirim ve SSS](/feedback) → “Talep oluştur” → “İstek” kategorisi", EN: "While signed in: [Feedback & FAQ](/feedback) → “Create a ticket” → “Request” category" }],
             ],
         },
     },
@@ -156,7 +156,7 @@ const sections: LegalSection[] = [
         },
         after: [
             { TR: "Bu aktarımlar, 7499 sayılı Kanun'la değiştirilen KVKK m.9 ve Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik çerçevesinde; KVKK m.5 veya m.6'daki bir işleme şartının yanında, varsa Kurul'un yeterlilik kararına, yoksa m.9/4'te sayılan uygun güvencelere (düzenli aktarımlarda özellikle Kurul'ca ilan edilen standart sözleşmelere) dayanılarak yapılır. m.9/6'daki arızi aktarım hâllerine yalnızca düzenli olmayan durumlarda başvurulur.", EN: "These transfers are made under KVKK Art. 9, as amended by Law No. 7499, and the Regulation on the Procedures and Principles for the Transfer of Personal Data Abroad: in addition to a processing condition in KVKK Art. 5 or 6, they rely on an adequacy decision of the Board where one exists and, where none exists, on the appropriate safeguards in Art. 9(4) (for regular transfers, in particular the standard contracts announced by the Board). The incidental transfer exceptions in Art. 9(6) are used only for transfers that are not regular." },
-            { TR: "Hangi alıcı için hangi mekanizmaya dayanıldığına ilişkin bilgiyi “Hesap / KVKK” kategorisinde destek talebiyle isteyebilirsiniz. Ayrıntılar [Gizlilik Politikası](/privacy-policy#transfers)'nda yer alır.", EN: "You can ask which mechanism is relied on for which recipient with a support ticket in the “Account / KVKK” category. Details are in the [Privacy Policy](/privacy-policy#transfers)." },
+            { TR: "Hangi alıcı için hangi mekanizmaya dayanıldığına ilişkin bilgiyi “İstek” kategorisinde destek talebiyle isteyebilirsiniz. Ayrıntılar [Gizlilik Politikası](/privacy-policy#transfers)'nda yer alır.", EN: "You can ask which mechanism is relied on for which recipient with a support ticket in the “Request” category. Details are in the [Privacy Policy](/privacy-policy#transfers)." },
         ],
     },
     {
@@ -191,7 +191,7 @@ const sections: LegalSection[] = [
             { TR: "Taleplerinizi, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak şu yollarla iletebilirsiniz:", EN: "You can send your requests, in line with the Communiqué on the Procedures and Principles of Applications to the Data Controller, in the following ways:" },
         ],
         items: [
-            { TR: "Hesabınıza giriş yaparak [Geri Bildirim ve SSS](/feedback) sayfasında “Talep oluştur” ile “Hesap / KVKK” kategorisinde destek talebi oluşturarak. Bu kanal başvuru amacıyla geliştirilmiş bir uygulamadır; kimliğiniz oturumunuzla doğrulanır, gerekirse ek doğrulama istenebilir.", EN: "By signing in and using “Create a ticket” on the [Feedback & FAQ](/feedback) page to open a support ticket in the “Account / KVKK” category. This channel is an application built for such requests; your identity is verified by your session, and additional verification may be requested if needed." },
+            { TR: "Hesabınıza giriş yaparak [Geri Bildirim ve SSS](/feedback) sayfasında “Talep oluştur” ile “İstek” kategorisinde destek talebi oluşturarak. Bu kanal başvuru amacıyla geliştirilmiş bir uygulamadır; kimliğiniz oturumunuzla doğrulanır, gerekirse ek doğrulama istenebilir.", EN: "By signing in and using “Create a ticket” on the [Feedback & FAQ](/feedback) page to open a support ticket in the “Request” category. This channel is an application built for such requests; your identity is verified by your session, and additional verification may be requested if needed." },
             { TR: "Veri sorumlusunun adresine yazılı olarak veya KEP adresine güvenli elektronik imza ya da mobil imzayla; bu bilgiler yayımlandığında [veri sorumlusu](/disclosure#controller) bölümünde yer alacaktır.", EN: "In writing to the data controller's address, or to its KEP address with a secure electronic or mobile signature; these details will appear in the [data controller](/disclosure#controller) section once published." },
             { TR: "Sistemimizde kayıtlı e-posta adresinizden, veri sorumlusunun yayımlanacak iletişim e-postasına.", EN: "From the e-mail address registered in our system to the data controller's contact e-mail address, once published." },
         ],

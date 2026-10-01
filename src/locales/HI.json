@@ -582,5 +582,13 @@
   "badge_pioneer": "अग्रणी",
   "badge_community_star": "कम्युनिटी स्टार",
   "auth_error_network": "लॉगिन सर्वर से कनेक्ट नहीं हो सका। अपना इंटरनेट कनेक्शन जाँचें और फिर से कोशिश करें।",
-  "auth_error_rate_limited": "बहुत अधिक लॉगिन प्रयास हुए। कृपया {minutes} मिनट बाद फिर से कोशिश करें।"
+  "auth_error_rate_limited": "बहुत अधिक लॉगिन प्रयास हुए। कृपया {minutes} मिनट बाद फिर से कोशिश करें।",
+  "auth_brand_title2": "कोड लिखें, गेम बनाएँ, मिलकर रचें।",
+  "auth_brand_subtitle2": "{count} भाषाओं के लिए कोड एडिटर, Hanogt Engine V3, Hanogt AI और Hanogt Social एक ही खाते में। कुछ भी इंस्टॉल करने की ज़रूरत नहीं।",
+  "auth_feature_engine3": "Hanogt Engine V3 के साथ C# और C++ में 2D/3D गेम बनाएँ",
+  "auth_feature_social": "Hanogt Social पर दोस्तों से चैट करें और मिलकर कोड लिखें",
+  "auth_feature_ai": "Hanogt AI के साथ कोड लिखें और गलतियों की तुरंत व्याख्या पाएँ",
+  "auth_protected2": "Hanogt Security Bot और दो-चरणीय सत्यापन से सुरक्षित",
+  "auth_login_subtitle": "फिर से स्वागत है! जहाँ छोड़ा था वहीं से जारी रखें।",
+  "auth_signup_subtitle": "अपना मुफ़्त खाता बनाएँ और अभी कोडिंग शुरू करें।"
 }

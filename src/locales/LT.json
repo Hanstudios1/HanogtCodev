@@ -582,5 +582,13 @@
   "badge_pioneer": "Pionierius",
   "badge_community_star": "Bendruomenės žvaigždė",
   "auth_error_network": "Nepavyko pasiekti prisijungimo serverio. Patikrinkite ryšį ir bandykite dar kartą.",
-  "auth_error_rate_limited": "Per daug prisijungimo bandymų. Bandykite dar kartą po {minutes} min."
+  "auth_error_rate_limited": "Per daug prisijungimo bandymų. Bandykite dar kartą po {minutes} min.",
+  "auth_brand_title2": "Programuok, kurk žaidimus, kurkime kartu.",
+  "auth_brand_subtitle2": "Kodo redaktorius {count} kalboms, Hanogt Engine V3, Hanogt AI ir Hanogt Social vienoje paskyroje. Nieko diegti nereikia.",
+  "auth_feature_engine3": "Kurk 2D/3D žaidimus C# ir C++ kalbomis su Hanogt Engine V3",
+  "auth_feature_social": "Bendrauk su draugais Hanogt Social ir programuokite kartu",
+  "auth_feature_ai": "Rašyk kodą su Hanogt AI ir iškart gauk klaidų paaiškinimus",
+  "auth_protected2": "Saugo Hanogt Security Bot ir dviejų veiksmų patvirtinimas",
+  "auth_login_subtitle": "Sveikas sugrįžęs! Tęsk nuo ten, kur sustojai.",
+  "auth_signup_subtitle": "Susikurk nemokamą paskyrą ir iškart pradėk programuoti."
 }

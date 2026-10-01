@@ -582,5 +582,13 @@
   "badge_pioneer": "პიონერი",
   "badge_community_star": "საზოგადოების ვარსკვლავი",
   "auth_error_network": "შესვლის სერვერს ვერ დავუკავშირდით. შეამოწმეთ ინტერნეტ-კავშირი და სცადეთ ხელახლა.",
-  "auth_error_rate_limited": "შესვლის ძალიან ბევრი მცდელობა. გთხოვთ, სცადოთ ხელახლა {minutes} წუთში."
+  "auth_error_rate_limited": "შესვლის ძალიან ბევრი მცდელობა. გთხოვთ, სცადოთ ხელახლა {minutes} წუთში.",
+  "auth_brand_title2": "წერე კოდი, შექმენი თამაშები, შექმენით ერთად.",
+  "auth_brand_subtitle2": "კოდის რედაქტორი {count} ენისთვის, Hanogt Engine V3, Hanogt AI და Hanogt Social ერთ ანგარიშში. ინსტალაცია არ არის საჭირო.",
+  "auth_feature_engine3": "შექმენი 2D/3D თამაშები C#-ით და C++-ით Hanogt Engine V3-ში",
+  "auth_feature_social": "ესაუბრე მეგობრებს Hanogt Social-ში და წერეთ კოდი ერთად",
+  "auth_feature_ai": "წერე კოდი Hanogt AI-თან ერთად და მიიღე შეცდომების მყისიერი ახსნა",
+  "auth_protected2": "დაცულია Hanogt Security Bot-ით და ორსაფეხურიანი ვერიფიკაციით",
+  "auth_login_subtitle": "კეთილი იყოს შენი დაბრუნება! გააგრძელე იქიდან, სადაც გაჩერდი.",
+  "auth_signup_subtitle": "შექმენი უფასო ანგარიში და დაიწყე კოდის წერა ახლავე."
 }

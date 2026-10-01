@@ -582,5 +582,13 @@
   "badge_pioneer": "Pioner",
   "badge_community_star": "Fellesskapsstjerne",
   "auth_error_network": "Får ikke kontakt med påloggingsserveren. Sjekk tilkoblingen og prøv igjen.",
-  "auth_error_rate_limited": "For mange påloggingsforsøk. Prøv igjen om {minutes} minutter."
+  "auth_error_rate_limited": "For mange påloggingsforsøk. Prøv igjen om {minutes} minutter.",
+  "auth_brand_title2": "Kod, lag spill, skap sammen.",
+  "auth_brand_subtitle2": "En koderedigerer for {count} språk, Hanogt Engine V3, Hanogt AI og Hanogt Social i én konto. Ingen installasjon.",
+  "auth_feature_engine3": "Lag 2D/3D-spill i C# og C++ med Hanogt Engine V3",
+  "auth_feature_social": "Chat med venner på Hanogt Social og kod sammen",
+  "auth_feature_ai": "Skriv kode med Hanogt AI og få feil forklart med en gang",
+  "auth_protected2": "Beskyttet av Hanogt Security Bot og totrinnsbekreftelse",
+  "auth_login_subtitle": "Velkommen tilbake! Fortsett der du slapp.",
+  "auth_signup_subtitle": "Opprett en gratis konto og begynn å kode med en gang."
 }

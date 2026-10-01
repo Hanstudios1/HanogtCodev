@@ -582,5 +582,13 @@
   "badge_pioneer": "Pionier",
   "badge_community_star": "Communityster",
   "auth_error_network": "De aanmeldserver is niet bereikbaar. Controleer uw verbinding en probeer het opnieuw.",
-  "auth_error_rate_limited": "Te veel aanmeldpogingen. Probeer het over {minutes} minuten opnieuw."
+  "auth_error_rate_limited": "Te veel aanmeldpogingen. Probeer het over {minutes} minuten opnieuw.",
+  "auth_brand_title2": "Programmeer, maak games, creëer samen.",
+  "auth_brand_subtitle2": "Een code-editor voor {count} talen, Hanogt Engine V3, Hanogt AI en Hanogt Social in één account. Niets te installeren.",
+  "auth_feature_engine3": "Maak 2D/3D-games in C# en C++ met Hanogt Engine V3",
+  "auth_feature_social": "Chat met vrienden op Hanogt Social en programmeer samen",
+  "auth_feature_ai": "Schrijf code met Hanogt AI en krijg fouten direct uitgelegd",
+  "auth_protected2": "Beveiligd door Hanogt Security Bot en tweestapsverificatie",
+  "auth_login_subtitle": "Welkom terug! Ga verder waar ge gebleven waart.",
+  "auth_signup_subtitle": "Maak uw gratis account aan en begin direct met programmeren."
 }

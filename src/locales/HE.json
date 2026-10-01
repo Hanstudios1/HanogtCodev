@@ -582,5 +582,13 @@
   "word_wrap": "גלישת שורות",
   "write_comment": "כתבו תגובה...",
   "yes_delete_project": "כן, למחוק את הפרויקט לצמיתות",
-  "you": "את/ה"
+  "you": "את/ה",
+  "auth_brand_title2": "כתבו קוד, בנו משחקים, צרו יחד.",
+  "auth_brand_subtitle2": "עורך קוד ל-{count} שפות, Hanogt Engine V3, Hanogt AI ו-Hanogt Social בחשבון אחד. בלי התקנה.",
+  "auth_feature_engine3": "בנו משחקי 2D/3D ב-C# וב-C++ עם Hanogt Engine V3",
+  "auth_feature_social": "שוחחו עם חברים ב-Hanogt Social וכתבו קוד יחד",
+  "auth_feature_ai": "כתבו קוד עם Hanogt AI וקבלו הסבר מיידי לשגיאות",
+  "auth_protected2": "מוגן על ידי Hanogt Security Bot ואימות דו-שלבי",
+  "auth_login_subtitle": "ברוכים השבים! המשיכו מהמקום שבו עצרתם.",
+  "auth_signup_subtitle": "צרו חשבון חינמי והתחילו לתכנת מיד."
 }

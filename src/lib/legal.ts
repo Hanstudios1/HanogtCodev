@@ -6,15 +6,23 @@ import type { Copy } from "@/lib/i18n";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.0";
+export const LEGAL_VERSION = "4.1";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "1 Ekim 2026", EN: "1 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.0-2026-10-01";
+export const LEGAL_NOTICE_ID = "4.1-2026-10-01";
 
 export type LegalChange = { version: string; date: Copy; items: Copy[] };
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.1",
+        date: { TR: "1 Ekim 2026", EN: "1 October 2026" },
+        items: [
+            { TR: "Destek talepleri altı konuya ayrıldı: Şikayet, İstek, Güvenlik açığı, Ban kaldırma isteği, Soru ve Geri bildirim. KVKK başvuruları artık “İstek”, askıya alma ve diğer moderasyon kararlarına itirazlar “Ban kaldırma isteği” kategorisinde yapılıyor; eski kategorilerle açılmış talepler aynen görüntülenmeye devam ediyor.", EN: "Support tickets now have six topics: Complaint, Request, Security vulnerability, Ban appeal, Question and Feedback. KVKK requests are now made in the “Request” category and appeals against suspensions and other moderation decisions in the “Ban appeal” category; tickets opened under the old categories are still shown as they were." },
+            { TR: "İlk ziyarette arayüz dili, henüz bir dil seçmediyseniz ülke kodunuza ve tarayıcınızın dil ayarına göre belirleniyor; ülke kodu saklanmıyor.", EN: "On your first visit, if you haven't chosen a language yet, the interface language is picked from your country code and your browser's language setting; the country code is not stored." },
+        ],
+    },
     {
         version: "4.0",
         date: { TR: "1 Ekim 2026", EN: "1 October 2026" },

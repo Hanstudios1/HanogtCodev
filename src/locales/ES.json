@@ -582,5 +582,13 @@
   "badge_pioneer": "Pionero",
   "badge_community_star": "Estrella de la comunidad",
   "auth_error_network": "No se pudo conectar con el servidor de inicio de sesión. Revisa tu conexión e inténtalo de nuevo.",
-  "auth_error_rate_limited": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {minutes} minutos."
+  "auth_error_rate_limited": "Demasiados intentos de inicio de sesión. Inténtalo de nuevo en {minutes} minutos.",
+  "auth_brand_title2": "Programa, crea juegos, crea en equipo.",
+  "auth_brand_subtitle2": "Un editor de código para {count} lenguajes, Hanogt Engine V3, Hanogt AI y Hanogt Social en una sola cuenta. Sin instalación.",
+  "auth_feature_engine3": "Crea juegos 2D/3D en C# y C++ con Hanogt Engine V3",
+  "auth_feature_social": "Chatea con tus amigos en Hanogt Social y programad juntos",
+  "auth_feature_ai": "Escribe código con Hanogt AI y obtén explicaciones de tus errores al instante",
+  "auth_protected2": "Protegido por Hanogt Security Bot y la verificación en dos pasos",
+  "auth_login_subtitle": "¡Bienvenido de nuevo! Continúa donde lo dejaste.",
+  "auth_signup_subtitle": "Crea tu cuenta gratuita y empieza a programar ahora mismo."
 }

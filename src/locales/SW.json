@@ -582,5 +582,13 @@
   "word_wrap": "Kukunja Mistari",
   "write_comment": "Andika maoni...",
   "yes_delete_project": "Ndiyo, Futa Mradi Wangu Milele",
-  "you": "Wewe"
+  "you": "Wewe",
+  "auth_brand_title2": "Andika msimbo, tengeneza michezo, buni pamoja.",
+  "auth_brand_subtitle2": "Kihariri cha msimbo kwa lugha {count}, Hanogt Engine V3, Hanogt AI na Hanogt Social katika akaunti moja. Hakuna usakinishaji.",
+  "auth_feature_engine3": "Tengeneza michezo ya 2D/3D kwa C# na C++ ukitumia Hanogt Engine V3",
+  "auth_feature_social": "Ongea na marafiki kwenye Hanogt Social na andikeni msimbo pamoja",
+  "auth_feature_ai": "Andika msimbo pamoja na Hanogt AI na upate maelezo ya makosa papo hapo",
+  "auth_protected2": "Inalindwa na Hanogt Security Bot na uthibitishaji wa hatua mbili",
+  "auth_login_subtitle": "Karibu tena! Endelea pale ulipoishia.",
+  "auth_signup_subtitle": "Fungua akaunti yako ya bure na uanze kuandika msimbo sasa hivi."
 }

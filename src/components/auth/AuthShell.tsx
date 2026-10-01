@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Code2, Gamepad2, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, Code2, Gamepad2, ShieldCheck, Sparkles, Users } from "lucide-react";
 import OptimizedImage from "@/components/OptimizedImage";
 import ThemeToggle from "@/components/ThemeToggle";
 import LangToggle from "@/components/LangToggle";
@@ -19,8 +19,9 @@ export default function AuthShell({ title, subtitle, children, footer }: Props) 
     const { t } = useI18n();
     const features = [
         { icon: Code2, title: formatCopy(t("auth_feature_code"), { count: LANGUAGE_STATS.usable }), color: "from-sky-400 to-indigo-500" },
-        { icon: Gamepad2, title: t("auth_feature_engine") || "C# ve C++ ile gerçek zamanlı 2D/3D oyunlar yap", color: "from-fuchsia-400 to-violet-500" },
-        { icon: Users, title: t("auth_feature_community") || "Arcade ve Media'da paylaş, arkadaşlarınla üret", color: "from-emerald-400 to-teal-500" },
+        { icon: Gamepad2, title: t("auth_feature_engine3"), color: "from-fuchsia-400 to-violet-500" },
+        { icon: Users, title: t("auth_feature_social"), color: "from-emerald-400 to-teal-500" },
+        { icon: Sparkles, title: t("auth_feature_ai"), color: "from-amber-400 to-orange-500" },
     ];
 
     return (
@@ -33,9 +34,9 @@ export default function AuthShell({ title, subtitle, children, footer }: Props) 
                     <span className="text-lg font-bold tracking-tight">Hanogt Codev</span>
                 </Link>
                 <div className="relative mt-auto max-w-md">
-                    <h2 className="text-4xl font-black leading-tight tracking-tight">{t("auth_brand_title") || "Kodla. Oyun yap. Paylaş."}</h2>
-                    <p className="mt-4 text-base leading-7 text-zinc-300">{t("auth_brand_subtitle") || "Kurulum gerektirmeyen editör, tarayıcıda çalışan oyun motoru ve üreten bir topluluk tek hesapta."}</p>
-                    <ul className="mt-10 space-y-4">
+                    <h2 className="text-4xl font-black leading-tight tracking-tight">{t("auth_brand_title2")}</h2>
+                    <p className="mt-4 text-base leading-7 text-zinc-300">{formatCopy(t("auth_brand_subtitle2"), { count: LANGUAGE_STATS.usable })}</p>
+                    <ul className="mt-10 space-y-3.5">
                         {features.map(({ icon: Icon, title: featureTitle, color }) => (
                             <li key={featureTitle} className="flex items-center gap-4">
                                 <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${color} shadow-lg`}><Icon className="h-5 w-5" /></span>
@@ -44,7 +45,7 @@ export default function AuthShell({ title, subtitle, children, footer }: Props) 
                         ))}
                     </ul>
                 </div>
-                <p className="relative mt-12 flex items-center gap-2 text-xs text-zinc-400"><ShieldCheck className="h-4 w-4 text-emerald-400" />{t("protected_by_hanogt_bot") || "Hanogt Security Bot ile korunuyor"}</p>
+                <p className="relative mt-12 flex items-center gap-2 text-xs text-zinc-400"><ShieldCheck className="h-4 w-4 text-emerald-400" />{t("auth_protected2")}</p>
             </aside>
 
             <main id="main-content" className="relative flex flex-col px-5 py-6 sm:px-10">

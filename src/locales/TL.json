@@ -582,5 +582,13 @@
   "word_wrap": "Pag-wrap ng Salita",
   "write_comment": "Sumulat ng komento...",
   "yes_delete_project": "Oo, I-delete Nang Tuluyan ang Aking Proyekto",
-  "you": "Ikaw"
+  "you": "Ikaw",
+  "auth_brand_title2": "Mag-code, gumawa ng laro, lumikha nang sama-sama.",
+  "auth_brand_subtitle2": "Code editor para sa {count} wika, Hanogt Engine V3, Hanogt AI at Hanogt Social sa iisang account. Walang kailangang i-install.",
+  "auth_feature_engine3": "Gumawa ng 2D/3D na laro sa C# at C++ gamit ang Hanogt Engine V3",
+  "auth_feature_social": "Makipag-chat sa mga kaibigan sa Hanogt Social at mag-code nang sabay",
+  "auth_feature_ai": "Sumulat ng code kasama ang Hanogt AI at makakuha agad ng paliwanag sa mga error",
+  "auth_protected2": "Protektado ng Hanogt Security Bot at two-step verification",
+  "auth_login_subtitle": "Maligayang pagbabalik! Ituloy kung saan ka huminto.",
+  "auth_signup_subtitle": "Gumawa ng libreng account at magsimulang mag-code ngayon din."
 }

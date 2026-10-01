@@ -582,5 +582,13 @@
   "word_wrap": "Прелом речи",
   "write_comment": "Напишите коментар...",
   "yes_delete_project": "Да, заувек обриши мој пројекат",
-  "you": "Ви"
+  "you": "Ви",
+  "auth_brand_title2": "Пишите код, правите игре, стварајте заједно.",
+  "auth_brand_subtitle2": "Уређивач кода за {count} језика, Hanogt Engine V3, Hanogt AI и Hanogt Social на једном налогу. Без инсталације.",
+  "auth_feature_engine3": "Правите 2D/3D игре у C# и C++ уз Hanogt Engine V3",
+  "auth_feature_social": "Ћаскајте са пријатељима на Hanogt Social и пишите код заједно",
+  "auth_feature_ai": "Пишите код уз Hanogt AI и одмах добијте објашњење грешака",
+  "auth_protected2": "Заштићено помоћу Hanogt Security Bot и провере у два корака",
+  "auth_login_subtitle": "Добро дошли назад! Наставите где сте стали.",
+  "auth_signup_subtitle": "Направите бесплатан налог и одмах почните да програмирате."
 }

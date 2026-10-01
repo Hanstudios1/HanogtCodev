@@ -582,5 +582,13 @@
   "badge_pioneer": "Pionier",
   "badge_community_star": "Yll i komunitetit",
   "auth_error_network": "Serveri i hyrjes nuk u arrit. Kontrolloni lidhjen tuaj dhe provoni përsëri.",
-  "auth_error_rate_limited": "Shumë përpjekje për hyrje. Ju lutemi provoni përsëri pas {minutes} minutash."
+  "auth_error_rate_limited": "Shumë përpjekje për hyrje. Ju lutemi provoni përsëri pas {minutes} minutash.",
+  "auth_brand_title2": "Programo, krijo lojëra, krijoni së bashku.",
+  "auth_brand_subtitle2": "Redaktor kodi për {count} gjuhë, Hanogt Engine V3, Hanogt AI dhe Hanogt Social në një llogari. Pa instalim.",
+  "auth_feature_engine3": "Krijo lojëra 2D/3D në C# dhe C++ me Hanogt Engine V3",
+  "auth_feature_social": "Bisedo me miqtë në Hanogt Social dhe shkruani kod së bashku",
+  "auth_feature_ai": "Shkruaj kod me Hanogt AI dhe merr menjëherë shpjegimin e gabimeve",
+  "auth_protected2": "Mbrohet nga Hanogt Security Bot dhe verifikimi me dy hapa",
+  "auth_login_subtitle": "Mirë se u ktheve! Vazhdo nga ku e le.",
+  "auth_signup_subtitle": "Krijo llogarinë tënde falas dhe fillo të programosh menjëherë."
 }

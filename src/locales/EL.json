@@ -582,5 +582,13 @@
   "badge_pioneer": "Πρωτοπόρος",
   "badge_community_star": "Αστέρι της κοινότητας",
   "auth_error_network": "Δεν ήταν δυνατή η επικοινωνία με τον διακομιστή σύνδεσης. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.",
-  "auth_error_rate_limited": "Πάρα πολλές προσπάθειες σύνδεσης. Δοκίμασε ξανά σε {minutes} λεπτά."
+  "auth_error_rate_limited": "Πάρα πολλές προσπάθειες σύνδεσης. Δοκίμασε ξανά σε {minutes} λεπτά.",
+  "auth_brand_title2": "Γράψε κώδικα, φτιάξε παιχνίδια, δημιουργήστε μαζί.",
+  "auth_brand_subtitle2": "Επεξεργαστής κώδικα για {count} γλώσσες, Hanogt Engine V3, Hanogt AI και Hanogt Social σε έναν λογαριασμό. Χωρίς εγκατάσταση.",
+  "auth_feature_engine3": "Φτιάξε παιχνίδια 2D/3D σε C# και C++ με το Hanogt Engine V3",
+  "auth_feature_social": "Συνομίλησε με φίλους στο Hanogt Social και γράψτε κώδικα μαζί",
+  "auth_feature_ai": "Γράψε κώδικα με το Hanogt AI και πάρε αμέσως εξήγηση για τα σφάλματα",
+  "auth_protected2": "Προστατεύεται από το Hanogt Security Bot και την επαλήθευση δύο βημάτων",
+  "auth_login_subtitle": "Καλώς ήρθες ξανά! Συνέχισε από εκεί που σταμάτησες.",
+  "auth_signup_subtitle": "Δημιούργησε τον δωρεάν λογαριασμό σου και ξεκίνα να γράφεις κώδικα αμέσως."
 }

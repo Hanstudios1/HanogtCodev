@@ -582,5 +582,13 @@
   "word_wrap": "ওয়ার্ড র‍্যাপ",
   "write_comment": "একটি মন্তব্য লিখুন...",
   "yes_delete_project": "হ্যাঁ, আমার প্রজেক্ট চিরতরে মুছে ফেলুন",
-  "you": "আপনি"
+  "you": "আপনি",
+  "auth_brand_title2": "কোড লিখুন, গেম বানান, একসাথে সৃষ্টি করুন।",
+  "auth_brand_subtitle2": "{count}টি ভাষার কোড এডিটর, Hanogt Engine V3, Hanogt AI ও Hanogt Social এক অ্যাকাউন্টে। কিছু ইনস্টল করতে হয় না।",
+  "auth_feature_engine3": "Hanogt Engine V3 দিয়ে C# ও C++ এ 2D/3D গেম বানান",
+  "auth_feature_social": "Hanogt Social এ বন্ধুদের সাথে চ্যাট করুন এবং একসাথে কোড লিখুন",
+  "auth_feature_ai": "Hanogt AI এর সাথে কোড লিখুন এবং ভুলের তাৎক্ষণিক ব্যাখ্যা পান",
+  "auth_protected2": "Hanogt Security Bot ও দুই-ধাপের যাচাইকরণ দিয়ে সুরক্ষিত",
+  "auth_login_subtitle": "আবার স্বাগতম! যেখানে থেমেছিলেন সেখান থেকে চালিয়ে যান।",
+  "auth_signup_subtitle": "আপনার বিনামূল্যের অ্যাকাউন্ট খুলুন এবং এখনই কোডিং শুরু করুন।"
 }

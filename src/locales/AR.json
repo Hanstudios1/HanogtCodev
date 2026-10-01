@@ -582,5 +582,13 @@
   "badge_pioneer": "رائد",
   "badge_community_star": "نجم المجتمع",
   "auth_error_network": "تعذّر الوصول إلى خادم تسجيل الدخول. تحقّق من اتصالك ثم حاول مرة أخرى.",
-  "auth_error_rate_limited": "محاولات تسجيل دخول كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة."
+  "auth_error_rate_limited": "محاولات تسجيل دخول كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة.",
+  "auth_brand_title2": "برمج، اصنع الألعاب، وأبدع مع الآخرين.",
+  "auth_brand_subtitle2": "محرر أكواد يدعم {count} لغة، وHanogt Engine V3، وHanogt AI، وHanogt Social في حساب واحد. دون أي تثبيت.",
+  "auth_feature_engine3": "اصنع ألعابًا ثنائية وثلاثية الأبعاد بلغتي C# وC++ مع Hanogt Engine V3",
+  "auth_feature_social": "تحدّث مع أصدقائك على Hanogt Social واكتبوا الكود معًا",
+  "auth_feature_ai": "اكتب الكود مع Hanogt AI واحصل على شرح فوري لأخطائك",
+  "auth_protected2": "محمي بواسطة Hanogt Security Bot والتحقق بخطوتين",
+  "auth_login_subtitle": "مرحبًا بعودتك! تابع من حيث توقفت.",
+  "auth_signup_subtitle": "أنشئ حسابك المجاني وابدأ البرمجة فورًا."
 }

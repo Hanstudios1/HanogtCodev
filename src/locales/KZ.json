@@ -582,5 +582,13 @@
   "badge_pioneer": "Бастаушы",
   "badge_community_star": "Қауымдастық жұлдызы",
   "auth_error_network": "Кіру серверіне қосылу мүмкін болмады. Интернет байланысын тексеріп, қайта көріңіз.",
-  "auth_error_rate_limited": "Кіру әрекеттері тым көп. {minutes} минуттан кейін қайта көріңіз."
+  "auth_error_rate_limited": "Кіру әрекеттері тым көп. {minutes} минуттан кейін қайта көріңіз.",
+  "auth_brand_title2": "Код жаз, ойын жаса, бірге жарат.",
+  "auth_brand_subtitle2": "{count} тілге арналған код редакторы, Hanogt Engine V3, Hanogt AI және Hanogt Social бір аккаунтта. Орнату қажет емес.",
+  "auth_feature_engine3": "Hanogt Engine V3 арқылы C# және C++ тілдерінде 2D/3D ойындар жаса",
+  "auth_feature_social": "Hanogt Social-да достарыңмен сөйлесіп, бірге код жаз",
+  "auth_feature_ai": "Hanogt AI көмегімен код жаз, қателеріңді бірден түсіндіріп ал",
+  "auth_protected2": "Hanogt Security Bot және екі қадамды растау арқылы қорғалған",
+  "auth_login_subtitle": "Қайта қош келдің! Тоқтаған жеріңнен жалғастыр.",
+  "auth_signup_subtitle": "Тегін аккаунтыңды ашып, бірден бағдарламалауды баста."
 }

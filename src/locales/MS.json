@@ -582,5 +582,13 @@
   "word_wrap": "Lilitan Perkataan",
   "write_comment": "Tulis komen...",
   "yes_delete_project": "Ya, Padam Projek Saya Selama-lamanya",
-  "you": "Anda"
+  "you": "Anda",
+  "auth_brand_title2": "Kod, bina permainan, cipta bersama.",
+  "auth_brand_subtitle2": "Editor kod untuk {count} bahasa, Hanogt Engine V3, Hanogt AI dan Hanogt Social dalam satu akaun. Tanpa pemasangan.",
+  "auth_feature_engine3": "Bina permainan 2D/3D dalam C# dan C++ dengan Hanogt Engine V3",
+  "auth_feature_social": "Berbual dengan rakan di Hanogt Social dan tulis kod bersama",
+  "auth_feature_ai": "Tulis kod bersama Hanogt AI dan dapatkan penjelasan ralat serta-merta",
+  "auth_protected2": "Dilindungi oleh Hanogt Security Bot dan pengesahan dua langkah",
+  "auth_login_subtitle": "Selamat kembali! Sambung dari tempat anda berhenti.",
+  "auth_signup_subtitle": "Cipta akaun percuma anda dan mula mengekod sekarang."
 }

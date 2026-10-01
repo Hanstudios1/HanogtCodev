@@ -582,5 +582,13 @@
   "badge_pioneer": "パイオニア",
   "badge_community_star": "コミュニティスター",
   "auth_error_network": "ログインサーバーに接続できませんでした。接続を確認して、もう一度お試しください。",
-  "auth_error_rate_limited": "ログインの試行回数が多すぎます。{minutes}分後にもう一度お試しください。"
+  "auth_error_rate_limited": "ログインの試行回数が多すぎます。{minutes}分後にもう一度お試しください。",
+  "auth_brand_title2": "コードを書き、ゲームを作り、一緒に創ろう。",
+  "auth_brand_subtitle2": "{count} 言語対応のコードエディター、Hanogt Engine V3、Hanogt AI、Hanogt Social をひとつのアカウントで。インストール不要。",
+  "auth_feature_engine3": "Hanogt Engine V3 で C# と C++ を使って 2D/3D ゲームを作ろう",
+  "auth_feature_social": "Hanogt Social で友達とチャットして、一緒にコードを書こう",
+  "auth_feature_ai": "Hanogt AI とコードを書き、エラーをすぐに解説してもらおう",
+  "auth_protected2": "Hanogt Security Bot と 2 段階認証で保護されています",
+  "auth_login_subtitle": "おかえりなさい！続きから始めましょう。",
+  "auth_signup_subtitle": "無料アカウントを作成して、今すぐコーディングを始めよう。"
 }

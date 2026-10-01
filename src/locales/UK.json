@@ -582,5 +582,13 @@
   "badge_pioneer": "Першопроходець",
   "badge_community_star": "Зірка спільноти",
   "auth_error_network": "Не вдалося з’єднатися із сервером входу. Перевірте підключення та спробуйте ще раз.",
-  "auth_error_rate_limited": "Забагато спроб входу. Спробуйте ще раз через {minutes} хв."
+  "auth_error_rate_limited": "Забагато спроб входу. Спробуйте ще раз через {minutes} хв.",
+  "auth_brand_title2": "Пишіть код, створюйте ігри, творіть разом.",
+  "auth_brand_subtitle2": "Редактор коду для {count} мов, Hanogt Engine V3, Hanogt AI і Hanogt Social в одному акаунті. Нічого не треба встановлювати.",
+  "auth_feature_engine3": "Створюйте 2D/3D-ігри на C# і C++ у Hanogt Engine V3",
+  "auth_feature_social": "Спілкуйтеся з друзями в Hanogt Social і пишіть код разом",
+  "auth_feature_ai": "Пишіть код із Hanogt AI та миттєво отримуйте пояснення помилок",
+  "auth_protected2": "Під захистом Hanogt Security Bot і двоетапної перевірки",
+  "auth_login_subtitle": "З поверненням! Продовжуйте з того місця, де зупинилися.",
+  "auth_signup_subtitle": "Створіть безкоштовний акаунт і одразу починайте програмувати."
 }

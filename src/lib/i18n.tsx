@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { detectLanguage } from "@/lib/language-detect";
 import tr from "@/locales/TR.json";
 import en from "@/locales/EN.json";
 
@@ -292,15 +293,37 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         } catch {
             stored = null;
         }
-        if (!isLanguage(stored) || stored === "TR") return;
         let active = true;
-        fetchLanguage(stored).then(({ loaded, loadedPack }) => {
-            if (!active) return;
-            setTranslations(loaded);
-            setPack(loadedPack);
-            setActiveLanguage(stored);
-            applyDocumentLanguage(stored);
-        });
+        const apply = async (next: Language, persist: boolean) => {
+            if (next !== "TR") {
+                const { loaded, loadedPack } = await fetchLanguage(next);
+                if (!active) return;
+                setTranslations(loaded);
+                setPack(loadedPack);
+                setActiveLanguage(next);
+                applyDocumentLanguage(next);
+            }
+            if (persist) {
+                try {
+                    localStorage.setItem("hanogt_lang", next);
+                } catch {
+                    // Storage can be blocked; the language is detected again next time.
+                }
+            }
+        };
+        if (isLanguage(stored)) {
+            void apply(stored, false);
+        } else {
+            // First visit: the visitor's country, then the browser's languages.
+            const browserTags = typeof navigator !== "undefined" ? (navigator.languages?.length ? navigator.languages : [navigator.language]) : [];
+            const timeout = typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(2_000) : undefined;
+            fetch("/api/geo", { cache: "no-store", signal: timeout })
+                .then((response) => (response.ok ? response.json() : null))
+                .catch(() => null)
+                .then((geo: { country?: string | null } | null) => {
+                    if (active) void apply(detectLanguage(geo?.country, browserTags), true);
+                });
+        }
         return () => { active = false; };
     }, [fetchLanguage]);
 

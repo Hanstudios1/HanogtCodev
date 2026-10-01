@@ -582,5 +582,13 @@
   "badge_pioneer": "Öňdebaryjy",
   "badge_community_star": "Jemgyýet ýyldyzy",
   "auth_error_network": "Giriş serwerine ýetip bolmady. Internet baglanyşygyňyzy barlap täzeden synanyşyň.",
-  "auth_error_rate_limited": "Örän köp giriş synanyşygy edildi. Haýyş, {minutes} minutdan soň täzeden synanyşyň."
+  "auth_error_rate_limited": "Örän köp giriş synanyşygy edildi. Haýyş, {minutes} minutdan soň täzeden synanyşyň.",
+  "auth_brand_title2": "Kod ýaz, oýun döret, bilelikde döret.",
+  "auth_brand_subtitle2": "{count} dil üçin kod redaktory, Hanogt Engine V3, Hanogt AI we Hanogt Social bir hasapda. Gurnamak gerek däl.",
+  "auth_feature_engine3": "Hanogt Engine V3 bilen C# we C++ dillerinde 2D/3D oýunlary döret",
+  "auth_feature_social": "Hanogt Social-da dostlaryň bilen gürleş we bilelikde kod ýaz",
+  "auth_feature_ai": "Hanogt AI bilen kod ýaz, ýalňyşlaryňy derrew düşündirt",
+  "auth_protected2": "Hanogt Security Bot we iki ädimli tassyklama bilen goralýar",
+  "auth_login_subtitle": "Ýene hoş geldiň! Galan ýeriňden dowam et.",
+  "auth_signup_subtitle": "Mugt hasabyňy döret we derrew kod ýazyp başla."
 }

@@ -582,5 +582,13 @@
   "word_wrap": "Zalamovanie riadkov",
   "write_comment": "Napíšte komentár...",
   "yes_delete_project": "Áno, odstrániť projekt navždy",
-  "you": "Vy"
+  "you": "Vy",
+  "auth_brand_title2": "Programujte, tvorte hry, tvorte spoločne.",
+  "auth_brand_subtitle2": "Editor kódu pre {count} jazykov, Hanogt Engine V3, Hanogt AI a Hanogt Social v jednom účte. Bez inštalácie.",
+  "auth_feature_engine3": "Tvorte 2D/3D hry v C# a C++ s Hanogt Engine V3",
+  "auth_feature_social": "Četujte s priateľmi na Hanogt Social a programujte spoločne",
+  "auth_feature_ai": "Píšte kód s Hanogt AI a nechajte si chyby okamžite vysvetliť",
+  "auth_protected2": "Chránené pomocou Hanogt Security Bot a dvojstupňového overenia",
+  "auth_login_subtitle": "Vitajte späť! Pokračujte tam, kde ste skončili.",
+  "auth_signup_subtitle": "Vytvorte si bezplatný účet a hneď začnite programovať."
 }

@@ -582,5 +582,13 @@
   "badge_pioneer": "开拓者",
   "badge_community_star": "社区之星",
   "auth_error_network": "无法连接登录服务器。请检查网络连接后重试。",
-  "auth_error_rate_limited": "登录尝试次数过多。请在 {minutes} 分钟后重试。"
+  "auth_error_rate_limited": "登录尝试次数过多。请在 {minutes} 分钟后重试。",
+  "auth_brand_title2": "写代码、做游戏、一起创作。",
+  "auth_brand_subtitle2": "支持 {count} 种语言的代码编辑器、Hanogt Engine V3、Hanogt AI 和 Hanogt Social，一个账号全部拥有。无需安装。",
+  "auth_feature_engine3": "使用 Hanogt Engine V3，用 C# 和 C++ 制作 2D/3D 游戏",
+  "auth_feature_social": "在 Hanogt Social 与好友聊天，一起写代码",
+  "auth_feature_ai": "与 Hanogt AI 一起写代码，即时获得错误解释",
+  "auth_protected2": "受 Hanogt Security Bot 和两步验证保护",
+  "auth_login_subtitle": "欢迎回来！从上次停下的地方继续。",
+  "auth_signup_subtitle": "创建免费账号，立即开始编程。"
 }

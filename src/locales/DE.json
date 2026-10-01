@@ -582,5 +582,13 @@
   "badge_pioneer": "Pionier",
   "badge_community_star": "Community-Star",
   "auth_error_network": "Der Anmeldeserver ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
-  "auth_error_rate_limited": "Zu viele Anmeldeversuche. Bitte versuche es in {minutes} Minuten erneut."
+  "auth_error_rate_limited": "Zu viele Anmeldeversuche. Bitte versuche es in {minutes} Minuten erneut.",
+  "auth_brand_title2": "Programmieren, Spiele bauen, gemeinsam erschaffen.",
+  "auth_brand_subtitle2": "Ein Code-Editor für {count} Sprachen, Hanogt Engine V3, Hanogt AI und Hanogt Social in einem Konto. Keine Installation nötig.",
+  "auth_feature_engine3": "Baue mit Hanogt Engine V3 2D/3D-Spiele in C# und C++",
+  "auth_feature_social": "Chatte auf Hanogt Social mit Freunden und programmiert gemeinsam",
+  "auth_feature_ai": "Schreibe Code mit Hanogt AI und lass dir Fehler sofort erklären",
+  "auth_protected2": "Geschützt durch Hanogt Security Bot und Zwei-Faktor-Authentifizierung",
+  "auth_login_subtitle": "Willkommen zurück! Mach dort weiter, wo du aufgehört hast.",
+  "auth_signup_subtitle": "Erstelle dein kostenloses Konto und leg sofort mit dem Programmieren los."
 }

@@ -582,5 +582,13 @@
   "word_wrap": "自動換行",
   "write_comment": "輸入留言...",
   "yes_delete_project": "是，永久刪除我的專案",
-  "you": "你"
+  "you": "你",
+  "auth_brand_title2": "寫程式、做遊戲、一起創作。",
+  "auth_brand_subtitle2": "支援 {count} 種語言的程式編輯器、Hanogt Engine V3、Hanogt AI 與 Hanogt Social，一個帳號全部擁有。無需安裝。",
+  "auth_feature_engine3": "使用 Hanogt Engine V3，以 C# 和 C++ 製作 2D/3D 遊戲",
+  "auth_feature_social": "在 Hanogt Social 與好友聊天，一起寫程式",
+  "auth_feature_ai": "與 Hanogt AI 一起寫程式，即時取得錯誤說明",
+  "auth_protected2": "受 Hanogt Security Bot 與兩步驟驗證保護",
+  "auth_login_subtitle": "歡迎回來！從上次停下的地方繼續。",
+  "auth_signup_subtitle": "建立免費帳號，立即開始寫程式。"
 }

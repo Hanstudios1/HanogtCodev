@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertTriangle, ArrowLeft, Bug, Check, CheckCircle2, ChevronDown, Edit3, HelpCircle, Inbox, LifeBuoy, LoaderCircle, Lock, LogIn,
-    MessageCircle, MessageSquareText, MessagesSquare, Monitor, Plus, RefreshCw, Reply, RotateCcw, Search, Send, ShieldAlert, ShieldCheck,
+    AlertTriangle, ArrowLeft, Bug, Check, CheckCircle2, ChevronDown, Edit3, Gavel, HelpCircle, Inbox, LifeBuoy, Lightbulb, LoaderCircle, Lock, LogIn,
+    Megaphone, MessageCircle, MessageSquareText, MessagesSquare, Monitor, Plus, RefreshCw, Reply, RotateCcw, Search, Send, ShieldAlert, ShieldCheck,
     Sparkles, ThumbsUp, Trash2, UserCog, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +33,7 @@ import {
     canUserClose,
     canUserReopen,
     isTicketId,
+    ticketHasReportDetails,
     matchesSearch,
     validateTicketDraft,
     validateTicketMessage,
@@ -46,6 +47,7 @@ import {
     type SupportTicketResponse,
     type SupportTicketSummary,
     type SupportTicketView,
+    type NewTicketCategory,
     type TicketCategory,
     type TicketField,
     type TicketSeverity,
@@ -64,10 +66,13 @@ const SECONDARY_BUTTON = "inline-flex items-center justify-center gap-2 rounded-
 const GHOST_BUTTON = "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-white";
 
 const CATEGORY_ICONS: Record<TicketCategory, LucideIcon> = {
+    complaint: Megaphone,
+    request: Lightbulb,
+    security: ShieldAlert,
+    ban_appeal: Gavel,
+    question: HelpCircle,
     feedback: MessageSquareText,
     bug: Bug,
-    security: ShieldAlert,
-    question: HelpCircle,
     account: UserCog,
     other: LifeBuoy,
 };
@@ -291,7 +296,7 @@ function FaqSection({ query, onAsk }: { query: string; onAsk: (title: string) =>
 // ---------------------------------------------------------------------------
 
 type TicketDraftState = {
-    category: TicketCategory | null;
+    category: NewTicketCategory | null;
     title: string;
     description: string;
     steps: string;
@@ -355,8 +360,8 @@ function TicketComposer({ draft, setDraft, onCreated }: {
             category: draft.category,
             title: draft.title,
             description: draft.description,
-            steps: draft.category === "bug" ? draft.steps : undefined,
-            pageUrl: draft.category === "bug" ? draft.pageUrl : undefined,
+            steps: ticketHasReportDetails(draft.category) ? draft.steps : undefined,
+            pageUrl: ticketHasReportDetails(draft.category) ? draft.pageUrl : undefined,
             severity: draft.category === "security" && draft.severity ? draft.severity : undefined,
         };
         const checked = validateTicketDraft(input);
@@ -438,11 +443,18 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                         })}
                     </p>
                 </Notice>
-            ) : category === "account" ? (
+            ) : category === "request" ? (
                 <Notice tone="info" className="mt-4">
                     {tx({
-                        TR: "KVKK başvurularında hangi hakkınızı kullanmak istediğinizi yazın. Başvurunuzu hesabınızın e-posta adresiyle doğrularız ve en geç 30 gün içinde ücretsiz yanıtlarız.",
-                        EN: "For KVKK requests, say which right you want to exercise. We verify the request with your account's e-mail address and answer free of charge within 30 days.",
+                        TR: "Özellik isteklerinde neye ihtiyaç duyduğunuzu ve neden işinize yarayacağını yazın. KVKK başvurularında hangi hakkınızı kullanmak istediğinizi belirtin; başvurunuzu hesabınızın e-posta adresiyle doğrularız ve en geç 30 gün içinde ücretsiz yanıtlarız.",
+                        EN: "For feature requests, describe what you need and why it would help you. For KVKK requests, say which right you want to exercise; we verify the request with your account's e-mail address and answer free of charge within 30 days.",
+                    })}
+                </Notice>
+            ) : category === "ban_appeal" ? (
+                <Notice tone="info" className="mt-4">
+                    {tx({
+                        TR: "Hangi karara itiraz ettiğinizi (askıya alma, kaldırılan içerik ya da kısıtlanan bir özellik) ve neden yanlış olduğunu düşündüğünüzü yazın. İtirazınızı bir ekip üyesi inceler. Hesabınız askıda olduğu için giriş yapamıyorsanız giriş ekranındaki itiraz formunu kullanın.",
+                        EN: "Say which decision you are appealing (a suspension, removed content or a restricted feature) and why you think it was wrong. A team member reviews your appeal. If you can't sign in because your account is suspended, use the appeal form on the sign-in screen.",
                     })}
                 </Notice>
             ) : null}
@@ -477,8 +489,8 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                     rows={5}
                     aria-invalid={Boolean(errors.description) || undefined}
                     aria-describedby={errors.description ? `${ids.description}-error` : undefined}
-                    placeholder={category === "bug"
-                        ? tx({ TR: "Ne bekliyordunuz, ne oldu?", EN: "What did you expect and what happened?" })
+                    placeholder={category === "complaint"
+                        ? tx({ TR: "Neyden şikayetçisiniz? Bir hataysa ne bekliyordunuz ve ne oldu; bir kullanıcı veya içerikse ne yaptı?", EN: "What is the complaint about? For a bug, what did you expect and what happened; for a user or content, what did they do?" })
                         : category === "security"
                             ? tx({ TR: "Açık nerede, etkisi ne? Kimlik bilgisi veya başkasının verisini eklemeyin.", EN: "Where is the issue and what is its impact? Don't include credentials or other people's data." })
                             : tx({ TR: "Ayrıntıları yazın…", EN: "Write the details…" })}
@@ -487,7 +499,7 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                 <FieldError id={`${ids.description}-error`} code={errors.description} />
             </div>
 
-            {category === "bug" ? (
+            {ticketHasReportDetails(category) ? (
                 <div className="mt-4 grid gap-4">
                     <div>
                         <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
@@ -577,7 +589,7 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                     <dl className="mt-3 space-y-1.5 border-t border-zinc-200 pt-3 text-[12px] dark:border-zinc-800">
                         <div className="flex flex-wrap gap-x-2">
                             <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Sayfa", EN: "Page" })}</dt>
-                            <dd className="min-w-0 break-all text-zinc-500" dir="ltr">{draft.pageUrl && category === "bug" ? draft.pageUrl : draft.technicalInfo.page}</dd>
+                            <dd className="min-w-0 break-all text-zinc-500" dir="ltr">{draft.pageUrl && ticketHasReportDetails(category) ? draft.pageUrl : draft.technicalInfo.page}</dd>
                         </div>
                         <div className="flex flex-wrap gap-x-2">
                             <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Tarayıcı", EN: "Browser" })}</dt>
@@ -1610,7 +1622,7 @@ export default function FeedbackPage() {
         if (select) selectTicket(ticket.id);
     }, [mutateTickets, selectTicket]);
 
-    const startTicket = useCallback((category: TicketCategory | null, title = "") => {
+    const startTicket = useCallback((category: NewTicketCategory | null, title = "") => {
         setDraft((current) => ({ ...current, category: category ?? current.category, title: current.title || title.slice(0, TICKET_LIMITS.title) }));
         // With a topic chosen the title comes next; otherwise the topic picker.
         scrollToId(signedIn ? "talep-olustur" : "destek", signedIn ? (category ? "input:not([type])" : "input[type=radio]") : undefined);

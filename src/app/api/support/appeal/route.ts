@@ -13,7 +13,7 @@ import { readJsonBody } from "@/lib/server/validate";
  * A suspended account can't sign in, so it can't use /api/support. After it
  * has proven ownership at sign-in, /login receives a short-lived appeal token
  * (src/lib/server/appeal-token.ts) and posts the appeal here. The appeal
- * becomes an ordinary "account" ticket of that address, so staff answer it in
+ * becomes an ordinary "ban_appeal" ticket of that address, so staff answer it in
  * the Tickets section and the person finds the reply under "Taleplerim" once
  * the account is reinstated. The only success answer is "received".
  */
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         // since the token was issued gets the same answer and no ticket.
         if (user && (user.suspended || user.banned)) {
             await createSupportTicket({
-                category: "account",
+                category: "ban_appeal",
                 title: APPEAL_TICKET_TITLE,
                 description: message.text,
                 priority: "high",

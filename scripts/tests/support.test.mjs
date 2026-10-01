@@ -5,7 +5,8 @@ import { load } from "./setup.mjs";
 
 const support = await load("lib/support.ts");
 const {
-    TICKET_LIMITS, TICKET_CATEGORIES, TICKET_STATUSES, TICKET_PRIORITIES, TICKET_SEVERITIES,
+    TICKET_LIMITS, TICKET_CATEGORIES, LEGACY_TICKET_CATEGORIES, ALL_TICKET_CATEGORIES, TICKET_STATUSES, TICKET_PRIORITIES, TICKET_SEVERITIES,
+    isTicketCategory, isNewTicketCategory, ticketHasReportDetails,
     TICKET_CATEGORY_COPY, TICKET_STATUS_COPY, TICKET_PRIORITY_COPY, TICKET_SEVERITY_COPY, SUPPORT_ERROR_COPY,
     RECORD_REASON_COPY, RECORD_VERDICT_COPY,
     sanitizeTicketText, validateTicketDraft, validateTicketMessage, normalizePageUrl, normalizeUserAgent,
@@ -28,9 +29,24 @@ test("text is normalised: unsafe characters go, line breaks are unified", () => 
     assert.equal(sanitizeTicketText("👩‍💻", false), "👩‍💻");
 });
 
-test("a valid bug report keeps its steps and page; other categories drop them", () => {
+test("the form offers exactly the six topics; old topics stay readable but can't be filed", () => {
+    assert.deepEqual([...TICKET_CATEGORIES], ["complaint", "request", "security", "ban_appeal", "question", "feedback"]);
+    assert.deepEqual([...LEGACY_TICKET_CATEGORIES], ["bug", "account", "other"]);
+    assert.deepEqual([...ALL_TICKET_CATEGORIES], [...TICKET_CATEGORIES, ...LEGACY_TICKET_CATEGORIES]);
+    for (const legacy of LEGACY_TICKET_CATEGORIES) {
+        assert.equal(isTicketCategory(legacy), true, legacy);
+        assert.equal(isNewTicketCategory(legacy), false, legacy);
+        assert.deepEqual(validateTicketDraft({ category: legacy, title: "Eski konu", description: "Eski kategoriyle yeni talep." }).errors, [{ field: "category", code: "invalid_category" }]);
+    }
+    assert.equal(isTicketCategory("hack"), false);
+    assert.equal(ticketHasReportDetails("complaint"), true);
+    assert.equal(ticketHasReportDetails("bug"), true);
+    assert.equal(ticketHasReportDetails("request"), false);
+});
+
+test("a valid complaint keeps its steps and page; other categories drop them", () => {
     const result = validateTicketDraft({
-        category: "bug",
+        category: "complaint",
         title: "  Kaydet   düğmesi çalışmıyor ",
         description: "Kaydet'e basınca sayfa donuyor.\r\n\r\n\r\n\r\nTekrar deneyince de aynı.",
         steps: "1. Editörü aç\n2. Kaydet",
@@ -39,7 +55,7 @@ test("a valid bug report keeps its steps and page; other categories drop them", 
     });
     assert.equal(result.ok, true);
     assert.deepEqual(result.draft, {
-        category: "bug",
+        category: "complaint",
         title: "Kaydet düğmesi çalışmıyor",
         description: "Kaydet'e basınca sayfa donuyor.\n\nTekrar deneyince de aynı.",
         steps: "1. Editörü aç\n2. Kaydet",
@@ -68,11 +84,11 @@ test("required fields and limits are reported per field", () => {
         { field: "title", code: "title_required" },
         { field: "description", code: "description_required" },
     ]);
-    const tooShort = validateTicketDraft({ category: "other", title: "ab", description: "kısa" });
+    const tooShort = validateTicketDraft({ category: "request", title: "ab", description: "kısa" });
     assert.deepEqual(tooShort.errors, [{ field: "title", code: "title_too_short" }, { field: "description", code: "description_too_short" }]);
-    const tooLong = validateTicketDraft({ category: "other", title: "x".repeat(TICKET_LIMITS.title + 1), description: "y".repeat(TICKET_LIMITS.description + 1) });
+    const tooLong = validateTicketDraft({ category: "request", title: "x".repeat(TICKET_LIMITS.title + 1), description: "y".repeat(TICKET_LIMITS.description + 1) });
     assert.deepEqual(tooLong.errors, [{ field: "title", code: "title_too_long" }, { field: "description", code: "description_too_long" }]);
-    const steps = validateTicketDraft({ category: "bug", title: "Hata başlığı", description: "Yeterince uzun açıklama.", steps: "z".repeat(TICKET_LIMITS.steps + 1) });
+    const steps = validateTicketDraft({ category: "complaint", title: "Hata başlığı", description: "Yeterince uzun açıklama.", steps: "z".repeat(TICKET_LIMITS.steps + 1) });
     assert.deepEqual(steps.errors, [{ field: "steps", code: "steps_too_long" }]);
     // Whitespace-only text counts as empty; wrong types are rejected outright.
     assert.deepEqual(validateTicketDraft({ category: "feedback", title: " \n\t ", description: 42 }).errors, [
@@ -92,7 +108,7 @@ test("page addresses: http(s) links and site paths only", () => {
     for (const bad of ["//evil.example", "javascript:alert(1)", "data:text/html,x", "https://user:pw@evil.example", "https://a b.com", "ftp://x.com/f", "/path\"onmouseover", 7, "/" + "a".repeat(TICKET_LIMITS.pageUrl)]) {
         assert.equal(normalizePageUrl(bad), undefined, String(bad));
     }
-    assert.deepEqual(validateTicketDraft({ category: "bug", title: "Hata başlığı", description: "Yeterince uzun açıklama.", pageUrl: "//evil.example" }).errors, [{ field: "pageUrl", code: "invalid_page_url" }]);
+    assert.deepEqual(validateTicketDraft({ category: "complaint", title: "Hata başlığı", description: "Yeterince uzun açıklama.", pageUrl: "//evil.example" }).errors, [{ field: "pageUrl", code: "invalid_page_url" }]);
 });
 
 test("messages and user agents", () => {
@@ -111,7 +127,9 @@ test("priorities and status transitions", () => {
     assert.equal(defaultTicketPriority("security"), "high");
     assert.equal(defaultTicketPriority("security", "critical"), "critical");
     assert.equal(defaultTicketPriority("security", "low"), "high");
-    assert.equal(defaultTicketPriority("bug", "critical"), "normal");
+    assert.equal(defaultTicketPriority("complaint", "critical"), "normal");
+    assert.equal(defaultTicketPriority("ban_appeal"), "high");
+    assert.equal(defaultTicketPriority("request"), "normal");
 
     assert.equal(statusAfterStaffReply("open"), "answered");
     assert.equal(statusAfterStaffReply("in_progress"), "answered");
@@ -202,7 +220,7 @@ test("every label and error code has Turkish and English text", () => {
             assert.ok(match[1] === "count" || (copy.vars && match[1] in copy.vars), `${name}: {${match[1]}}`);
         }
     };
-    for (const category of TICKET_CATEGORIES) {
+    for (const category of ALL_TICKET_CATEGORIES) {
         complete(TICKET_CATEGORY_COPY[category].label, category);
         complete(TICKET_CATEGORY_COPY[category].hint, category);
     }
