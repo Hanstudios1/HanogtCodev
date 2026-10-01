@@ -7,3 +7,19 @@ export const SITE_DESCRIPTION = "Tarayıcıda çalışan çok dilli kod editör�
 // GitHub buttons on the landing page and footer led to a 404.
 export const GITHUB_URL = "https://github.com/Hanstudios1/HanogtCodev";
 export const RELEASES_URL = `${GITHUB_URL}/releases/latest`;
+
+/** Live totals behind /api/stats/public (null when a count isn't available). */
+export type PublicStats = {
+    users: number | null;
+    projects: number | null;
+    games: number | null;
+    posts: number | null;
+    generatedAt: string;
+};
+
+/** Releases shown on the About page, newest last. */
+export const SITE_MILESTONES = [
+    { version: "0.0.5", date: "2026-09-04", key: "ab2_m1" },
+    { version: "0.1.0", date: "2026-09-28", key: "ab2_m2" },
+    { version: "0.1.2", date: "2026-10-01", key: "ab2_m3" },
+] as const;
