@@ -37,7 +37,7 @@ export default function GettingStarted({ steps, onDismiss, dismissing }: { steps
     const percent = Math.round((done / steps.length) * 100);
 
     return (
-        <motion.section initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="relative shrink-0 overflow-hidden rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-500/[0.07] via-white to-fuchsia-500/[0.07] dark:via-zinc-900" aria-labelledby="getting-started-title">
+        <motion.section initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="@container relative shrink-0 overflow-hidden rounded-2xl border border-indigo-500/25 bg-gradient-to-br from-indigo-500/[0.07] via-white to-fuchsia-500/[0.07] dark:via-zinc-900" aria-labelledby="getting-started-title">
             <div className="flex items-center gap-3 px-4 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-600 text-white shadow-lg shadow-indigo-500/25"><Rocket className="h-4.5 w-4.5" aria-hidden /></span>
                 <div className="min-w-0 flex-1">
@@ -62,7 +62,7 @@ export default function GettingStarted({ steps, onDismiss, dismissing }: { steps
                         {complete ? (
                             <p className="px-4 pb-4 text-sm text-zinc-600 dark:text-zinc-300">{tx(C.doneText)}</p>
                         ) : (
-                            <ol className="grid max-h-[40dvh] gap-2 overflow-y-auto px-3 pb-3 sm:max-h-none sm:grid-cols-2 xl:grid-cols-3">
+                            <ol className="grid max-h-[40dvh] gap-2 overflow-y-auto px-3 pb-3 @lg:grid-cols-2 @4xl:grid-cols-3">
                                 {steps.map((step) => {
                                     const copy = STEP_COPY[step.id];
                                     return (
@@ -70,11 +70,12 @@ export default function GettingStarted({ steps, onDismiss, dismissing }: { steps
                                             <span className={cx("mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full", step.done ? "bg-emerald-500 text-white" : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300")}>
                                                 {step.done ? <Check className="h-3.5 w-3.5" aria-hidden /> : copy.icon}
                                             </span>
+                                            {/* The action sits under the text: beside it, narrow panes squeezed the text to a word per line. */}
                                             <span className="min-w-0 flex-1">
                                                 <span className={cx("block text-[13px] font-bold", step.done && "text-zinc-500 line-through decoration-emerald-500/60 dark:text-zinc-400")}>{tx(copy.title)}</span>
                                                 {!step.done && <span className="mt-0.5 block text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">{tx(copy.text)}</span>}
+                                                {!step.done && <button type="button" onClick={step.onAction} className="mt-2 rounded-lg bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-indigo-500">{tx(copy.action)}</button>}
                                             </span>
-                                            {!step.done && <button type="button" onClick={step.onAction} className="shrink-0 rounded-lg bg-indigo-600 px-2 py-1 text-[11px] font-bold text-white transition hover:bg-indigo-500">{tx(copy.action)}</button>}
                                         </li>
                                     );
                                 })}
