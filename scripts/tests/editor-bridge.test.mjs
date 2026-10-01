@@ -76,3 +76,57 @@ test("entries written by hand (Hanogt AI) are accepted", () => {
     assert.deepEqual(consumeEditorImport(id), { ok: false, error: "expired" });
     assert.deepEqual(consumeEditorImport("short"), { ok: false, error: "not_found" });
 });
+
+const { openFilesInEditor, prepareEditorFilesImport, consumeEditorImportBundle, validateEditorImportBundle, EDITOR_IMPORT_MAX_FILES } = bridge;
+
+test("openFilesInEditor hands several files over in one entry", () => {
+    let href = "";
+    const result = openFilesInEditor({
+        files: [
+            { name: "index.html", language: "html", code: "<h1>Hi</h1>" },
+            { name: "style.css", language: "css", code: "" },
+            { name: "INDEX.html", language: "html", code: "<p>2</p>" },
+            { name: "notes", language: "klingon", code: "x" },
+            { name: ".env", language: "plaintext", code: "DEBUG=1" },
+            { language: "python", code: "print(1)" },
+        ],
+        title: "  Benim\nsitem ",
+        mediaPostId: "0b8f2c6e-1d2a-4c55-9f00-123456789abc",
+    }, { navigate: (target) => { href = target; } });
+    assert.equal(result.ok, true);
+    assert.equal(result.skipped, 0);
+    assert.equal(href, `/editor?import=${result.id}`);
+    const consumed = consumeEditorImportBundle(result.id);
+    assert.equal(consumed.ok, true);
+    assert.deepEqual(consumed.bundle.files.map((file) => [file.name, file.language]), [
+        ["index.html", "html"], ["style.css", "css"], ["INDEX-2.html", "html"], ["notes", "plaintext"], [".env", "plaintext"], ["main.py", "python"],
+    ], "empty files are kept, names are unique, project names stay as they are and unknown languages open as plain text");
+    assert.equal(consumed.bundle.title, "Benim sitem");
+    assert.equal(consumed.bundle.mediaPostId, "0b8f2c6e-1d2a-4c55-9f00-123456789abc");
+    assert.equal(storage.getItem(`${EDITOR_IMPORT_PREFIX}${result.id}`), null, "the entry is deleted");
+    assert.deepEqual(consumeEditorImportBundle(result.id), { ok: false, error: "not_found" });
+});
+
+test("bundles skip files that do not fit and keep the rest", () => {
+    const big = "x".repeat(EDITOR_IMPORT_MAX_BYTES + 1);
+    const files = Array.from({ length: EDITOR_IMPORT_MAX_FILES + 2 }, (_, index) => ({ name: `f${index}.py`, language: "python", code: `print(${index})` }));
+    const validated = validateEditorImportBundle({ files: [{ name: "big.txt", language: "plaintext", code: big }, { code: 5 }, ...files] });
+    assert.equal(validated.ok, true);
+    assert.equal(validated.bundle.files.length, EDITOR_IMPORT_MAX_FILES);
+    assert.equal(validated.bundle.skipped, 4, "one too large, one unreadable, two over the file limit");
+    assert.deepEqual(validateEditorImportBundle({ files: [{ name: "big.txt", code: big }] }), { ok: false, error: "too_large" });
+    assert.deepEqual(validateEditorImportBundle({ files: [] }), { ok: false, error: "empty_code" });
+    assert.deepEqual(validateEditorImportBundle({ files: "nope" }), { ok: false, error: "invalid_payload" });
+    assert.equal(validateEditorImportBundle({ files: [{ code: "1" }], mediaPostId: "../x" }).bundle.mediaPostId, null);
+    assert.deepEqual(prepareEditorFilesImport({ files: [] }), { ok: false, error: "empty_code" });
+});
+
+test("single-file and bundle entries are readable by both consumers", () => {
+    const single = prepareEditorImport({ name: "a.lua", language: "lua", code: "print(1)" });
+    assert.deepEqual(consumeEditorImportBundle(single.id), { ok: true, bundle: { files: [{ name: "a.lua", language: "lua", code: "print(1)" }], title: null, mediaPostId: null, skipped: 0 } });
+    const bundle = prepareEditorFilesImport({ files: [{ name: "b.rb", language: "ruby", code: "puts 1" }, { name: "c.rb", language: "ruby", code: "puts 2" }] });
+    assert.deepEqual(consumeEditorImport(bundle.id), { ok: true, file: { name: "b.rb", language: "ruby", code: "puts 1" } }, "older callers get the first file");
+    const expired = prepareEditorFilesImport({ files: [{ name: "d.go", language: "go", code: "package main" }] });
+    assert.deepEqual(consumeEditorImportBundle(expired.id, Date.now() + 11 * 60 * 1000), { ok: false, error: "expired" });
+    assert.deepEqual(consumeEditorImportBundle("../hack"), { ok: false, error: "not_found" });
+});

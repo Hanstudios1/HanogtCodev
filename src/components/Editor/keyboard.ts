@@ -29,3 +29,26 @@ export function isTypingTarget(target: EventTarget | null): boolean {
     if (target.closest(".monaco-editor")) return false;
     return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
+
+export interface ShortcutKeys {
+    keys: readonly string[];
+    /** Different keys on Apple platforms. */
+    mac?: readonly string[];
+}
+
+/** Monaco's default keys for the Edit menu; also shown in the palette and the shortcuts dialog. */
+export const EDIT_SHORTCUTS = {
+    undo: { keys: ["Mod", "Z"] },
+    redo: { keys: ["Mod", "Y"], mac: ["Mod", "Shift", "Z"] },
+    find: { keys: ["Mod", "F"] },
+    replace: { keys: ["Mod", "H"], mac: ["Alt", "Mod", "F"] },
+    gotoLine: { keys: ["Ctrl", "G"] },
+    comment: { keys: ["Mod", "/"] },
+    format: { keys: ["Shift", "Alt", "F"] },
+    selectAll: { keys: ["Mod", "A"] },
+} as const satisfies Record<string, ShortcutKeys>;
+
+/** The platform's text for a shortcut entry. */
+export function shortcutText(entry: ShortcutKeys, mac: boolean): string {
+    return formatShortcut(mac && entry.mac ? entry.mac : entry.keys, mac);
+}
