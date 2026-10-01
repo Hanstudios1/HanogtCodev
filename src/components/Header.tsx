@@ -10,11 +10,13 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
+import type { StaffRole } from "@/components/Admin/types";
 import OptimizedImage from "@/components/OptimizedImage";
 import { useFirebaseBridge, useRawSession } from "@/components/Provider";
+import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { db } from "@/lib/firebase";
 import { useI18n } from "@/lib/i18n";
-import { isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
+import { ADMIN_NAV, isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
 import ChangelogModal from "./ChangelogModal";
 import LangToggle from "./LangToggle";
 import ThemeToggle from "./ThemeToggle";
@@ -39,6 +41,56 @@ export const NAV_ICONS: Record<NavIcon, LucideIcon> = {
 
 type UserData = { username?: string; avatarUrl?: string; isOnline?: boolean };
 
+type StaffAccess = { email: string; role: StaffRole | null; checkedAt: number };
+
+const STAFF_ACCESS_TTL_MS = 5 * 60_000;
+// The server also answers "not staff" when it could not check (database
+// unreachable), so a negative answer is asked again sooner.
+const NO_STAFF_ACCESS_TTL_MS = 60_000;
+// Module scope: every page renders its own Header, so the answer survives
+// client-side navigation instead of being requested again on each page.
+let staffAccessCache: StaffAccess | null = null;
+
+function cachedStaffAccess(email: string | null) {
+    return email && staffAccessCache?.email === email ? staffAccessCache : null;
+}
+
+function isFresh(access: StaffAccess) {
+    return Date.now() - access.checkedAt < (access.role ? STAFF_ACCESS_TTL_MS : NO_STAFF_ACCESS_TTL_MS);
+}
+
+/**
+ * Staff role of the signed-in account ("owner" | "admin" | "moderator") or
+ * null. It only decides which links are shown: every admin API checks the
+ * role on the server. Pass the e-mail of the raw NextAuth session, so staff
+ * see their links without waiting for the Firebase bridge.
+ */
+export function useStaffRole(email: string | null): StaffRole | null {
+    const [access, setAccess] = useState<StaffAccess | null>(() => cachedStaffAccess(email));
+
+    useEffect(() => {
+        if (!email) return;
+        const cached = cachedStaffAccess(email);
+        if (cached && isFresh(cached)) return;
+        let cancelled = false;
+        fetch("/api/admin/me", { cache: "no-store", credentials: "same-origin" })
+            .then((response) => (response.ok ? response.json() as Promise<{ isAdmin?: boolean; email?: unknown; role?: unknown }> : null))
+            .then((data) => {
+                // A rate limit or network error keeps the last known answer instead of hiding the links.
+                if (!data) return;
+                const role = data.isAdmin === true && data.email === email ? parseStaffRole(data.role) : null;
+                staffAccessCache = { email, role, checkedAt: Date.now() };
+                if (!cancelled) setAccess(staffAccessCache);
+            })
+            .catch(() => undefined);
+        return () => { cancelled = true; };
+    }, [email]);
+
+    // An answer for a previous account (after switching accounts) never applies.
+    const current = access?.email === email ? access : cachedStaffAccess(email);
+    return current?.role ?? null;
+}
+
 export default function Header() {
     const { data: session } = useSession();
     const { t, tx } = useI18n();
@@ -48,7 +100,6 @@ export default function Header() {
     const [profileOpen, setProfileOpen] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
     const [aiOpen, setAiOpen] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
     const [userData, setUserData] = useState<UserData | null>(null);
     const profileRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll();
@@ -60,6 +111,9 @@ export default function Header() {
     const signedIn = Boolean(account);
     const sessionLoading = auth.status === "loading";
     const firebaseReady = useFirebaseBridge().ready;
+    // Staff see the Admin Panel in the profile menu and the mobile menu.
+    const staffRole = useStaffRole(account?.email?.toLowerCase() || null);
+    const isAdmin = signedIn && staffRole !== null;
 
     // The global Hanogt AI dock reports whether its panel is open.
     useEffect(() => {
@@ -67,17 +121,6 @@ export default function Header() {
         window.addEventListener("hanogt:ai-state", onState);
         return () => window.removeEventListener("hanogt:ai-state", onState);
     }, []);
-
-    // Staff see a link to the admin panel; the API answers isAdmin:false for everyone else.
-    useEffect(() => {
-        if (!signedIn) return;
-        let cancelled = false;
-        fetch("/api/admin/me", { cache: "no-store" })
-            .then((response) => (response.ok ? response.json() as Promise<{ isAdmin?: boolean }> : null))
-            .then((data) => { if (!cancelled) setIsAdmin(Boolean(data?.isAdmin)); })
-            .catch(() => undefined);
-        return () => { cancelled = true; };
-    }, [signedIn]);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
@@ -223,8 +266,11 @@ export default function Header() {
                                         >
                                             <div className="flex items-center gap-3 border-b border-zinc-100 bg-gradient-to-br from-indigo-500/[0.06] to-fuchsia-500/[0.06] p-4 dark:border-white/[0.06]">
                                                 {avatar("h-11 w-11")}
-                                                <div className="min-w-0">
-                                                    <p className="truncate font-bold text-zinc-900 dark:text-white">{displayName}</p>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex min-w-0 items-center gap-1.5">
+                                                        <p className="min-w-0 truncate font-bold text-zinc-900 dark:text-white">{displayName}</p>
+                                                        <StaffBadge role={staffRole} size="sm" />
+                                                    </div>
                                                     <p className="truncate text-[12.5px] text-zinc-500">{account?.email}</p>
                                                 </div>
                                             </div>
@@ -238,8 +284,8 @@ export default function Header() {
                                                     );
                                                 })}
                                                 {isAdmin ? (
-                                                    <Link role="menuitem" href="/admin" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10">
-                                                        <Gauge className="h-4.5 w-4.5" />{tx({ TR: "Yönetici Paneli", EN: "Admin Panel" })}
+                                                    <Link role="menuitem" href={ADMIN_NAV.href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10">
+                                                        <Gauge className="h-4.5 w-4.5" />{tx(ADMIN_NAV.label)}
                                                     </Link>
                                                 ) : null}
                                                 <Link role="menuitem" href="/account-settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
@@ -315,6 +361,21 @@ export default function Header() {
                                     );
                                 })}
                             </div>
+                            {isAdmin ? (
+                                <Link
+                                    href={ADMIN_NAV.href}
+                                    onClick={() => setMenuOpen(false)}
+                                    aria-current={isActivePath(pathname, ADMIN_NAV.href) ? "page" : undefined}
+                                    className="mt-4 flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5 transition hover:border-violet-300 dark:border-violet-400/25 dark:bg-violet-500/10 dark:hover:border-violet-400/40"
+                                >
+                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow"><Gauge className="h-4.5 w-4.5" /></span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block text-[15px] font-bold text-zinc-900 dark:text-white">{tx(ADMIN_NAV.label)}</span>
+                                        {ADMIN_NAV.desc ? <span className="block text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(ADMIN_NAV.desc)}</span> : null}
+                                    </span>
+                                    <StaffBadge role={staffRole} size="sm" compactOnMobile />
+                                </Link>
+                            ) : null}
                             <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/[0.08]">
                                 {secondary.map((item) => {
                                     const Icon = NAV_ICONS[item.icon];

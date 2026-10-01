@@ -35,8 +35,10 @@ function legacyPasswordMatches(supplied: string, stored: string) {
  * unreachable or not configured; the signIn callback turns that into a code.
  */
 async function completeSignIn(email: string, user: { name?: string | null; image?: string | null }, provider: string | undefined): Promise<true | string> {
-    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean }>(`users/${email}`);
+    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown }>(`users/${email}`);
     if (existing?.suspended || existing?.banned) return "/login?error=AccountSuspended";
+    // The public profile after the Google branch below; undefined when it was not read.
+    let knownProfile: Record<string, unknown> | undefined;
     if (provider === "google") {
         const existingProfile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
         const fallbackName = user.name || email.split("@")[0];
@@ -60,8 +62,28 @@ async function completeSignIn(email: string, user: { name?: string | null; image
             lastLoginAt: new Date(),
             createdAt: existing ? undefined : new Date(),
         });
+        knownProfile = existingProfile ?? {};
     }
+    await syncStaffBadge(email, existing?.role, knownProfile);
     return true;
+}
+
+/**
+ * Staff badge on the public profile (owners are configured, not stored, so
+ * a new deployment labels them at their next sign-in). Best effort: a failed
+ * write never blocks signing in. admin.ts is loaded lazily because it imports
+ * this module through active-session.ts.
+ */
+async function syncStaffBadge(email: string, storedRole: unknown, knownProfile: Record<string, unknown> | undefined) {
+    try {
+        const { staffBadgeFor, syncStaffRoleBadge } = await import("@/lib/server/admin");
+        const role = staffBadgeFor(email, storedRole);
+        // Without a staff role there is at most a stale badge to remove; only
+        // look for one when the profile has been read anyway.
+        if (role || knownProfile) await syncStaffRoleBadge(email, role, knownProfile);
+    } catch (error) {
+        console.warn("[auth] staff badge sync failed:", error instanceof Error ? error.message : error);
+    }
 }
 
 export const authOptions: NextAuthOptions = {

@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { isOwnerEmail } from "@/lib/server/admin";
 import { commitServerPatches, getServerDocument } from "@/lib/server/firebase-rest";
 import { hashPassword, validatePassword } from "@/lib/server/password";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
@@ -26,6 +27,14 @@ export async function POST(req: NextRequest) {
         const passwordError = validatePassword(password);
         if (!email) {
             return NextResponse.json({ error: "Geçerli bir e-posta adresi girin." }, { status: 400 });
+        }
+        // Owner addresses carry full admin rights. A password sign-up does not
+        // prove that the address belongs to the person, Google sign-in does.
+        if (isOwnerEmail(email)) {
+            return NextResponse.json({
+                code: "reserved_email",
+                error: "Bu e-posta adresiyle şifreli hesap oluşturulamaz. Lütfen Google ile giriş yapın.",
+            }, { status: 403, headers: jsonSecurityHeaders() });
         }
         if (passwordError) return NextResponse.json({ error: passwordError }, { status: 400 });
         if (username.length > 40) return NextResponse.json({ error: "Kullanıcı adı en fazla 40 karakter olabilir." }, { status: 400 });

@@ -10,8 +10,10 @@ import Header from "@/components/Header";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import type { StaffRole } from "@/components/Admin/types";
 import ProfileModal from "@/components/ProfileModal";
 import type { UserProfile } from "@/components/ProfileModal";
+import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { useVoiceCall } from "@/components/VoiceCallProvider";
 
 type FriendRequest = {
@@ -48,6 +50,7 @@ type Friend = {
     publicProfile?: boolean;
     publicProjects?: boolean;
     badges?: string[];
+    staffRole?: StaffRole | null;
 };
 
 type Tab = "all" | "pending" | "add" | "blocked";
@@ -110,6 +113,7 @@ export default function FriendsPage() {
                             publicProfile: userData.publicProfile,
                             publicProjects: userData.publicProjects,
                             badges: userData.badges,
+                            staffRole: parseStaffRole(userData.staffRole),
                         });
                     }
                 }
@@ -655,7 +659,10 @@ function FriendCard({ friend, onProfile, onRemove, onBlock, onMessage, onCall, t
 
             {/* Info */}
             <button onClick={() => onProfile(friend as UserProfile)} className="flex-1 min-w-0 text-left">
-                <p className="font-semibold truncate">{friend.username} {friend.nickname && <span className="text-xs text-zinc-400 font-normal">{friend.nickname}#{friend.nicknameTag}</span>}</p>
+                <p className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate font-semibold">{friend.username} {friend.nickname && <span className="text-xs text-zinc-400 font-normal">{friend.nickname}#{friend.nicknameTag}</span>}</span>
+                    <StaffBadge role={friend.staffRole} size="sm" compactOnMobile />
+                </p>
                 <p className="text-xs text-zinc-500 truncate">
                     {friend.customStatus
                         ? `${friend.statusEmoji || ""} ${friend.customStatus}`

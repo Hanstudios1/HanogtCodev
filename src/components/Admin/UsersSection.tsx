@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Ban, Crown, KeyRound, Lock, RefreshCw, ShieldCheck, ShieldOff, UserCheck, UserCog, Users } from "lucide-react";
-import { useState } from "react";
-import { useI18n } from "@/lib/i18n";
+import { Ban, Crown, History, KeyRound, Lock, RefreshCw, RotateCcw, ShieldCheck, ShieldOff, Trash2, UserCheck, UserCog, Users } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import type { AccountDeletionResult, DeletionScope } from "@/lib/server/account-deletion";
+import { useI18n, type Copy } from "@/lib/i18n";
 import { adminPost, adminRequest, type ApiFailure } from "./api";
 import { COMMON, ROLE_COPY, ROLE_DESCRIPTION_COPY } from "./copy";
-import { useAdminResource, useDebouncedValue } from "./hooks";
+import { formatNumber, useAdminResource, useDebouncedValue } from "./hooks";
 import {
     SUSPEND_REASON_MAX,
     type AdminUser,
@@ -16,8 +17,8 @@ import {
     type UserRole,
 } from "./types";
 import {
-    Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorNotice, FOCUS_RING, LoadingRows, Panel, RelativeTime, SearchInput, SectionHeader, TextArea,
-    cx, useErrorText, useToast,
+    Avatar, Badge, Button, ConfirmDialog, Dialog, EmptyState, ErrorNotice, FOCUS_RING, INPUT_CLASS, LoadingRows, Notice, Panel, RelativeTime, SearchInput,
+    SectionHeader, Spinner, TextArea, cx, useErrorText, useToast,
 } from "./ui";
 import { ROLE_TONES } from "./tones";
 
@@ -30,14 +31,21 @@ function assignableRole(user: AdminUser): AssignableRole {
     return user.role === "admin" || user.role === "moderator" ? user.role : "user";
 }
 
+/** When an earlier suspension was lifted; sent by /api/admin/users next to the AdminUser fields. */
+function liftedSuspensionAt(user: AdminUser) {
+    const value = (user as AdminUser & { unsuspendedAt?: unknown }).unsuspendedAt;
+    return typeof value === "string" && value ? value : null;
+}
+
 export function RoleBadge({ role }: { role: UserRole }) {
     const { tx } = useI18n();
     return <Badge tone={ROLE_TONES[role]} icon={role === "owner" ? Crown : role === "user" ? undefined : ShieldCheck}>{tx(ROLE_COPY[role])}</Badge>;
 }
 
-function UserRow({ user, self, onAction }: { user: AdminUser; self: boolean; onAction: (dialog: DialogState) => void }) {
+function UserRow({ user, self, onAction, onDeleteData }: { user: AdminUser; self: boolean; onAction: (dialog: DialogState) => void; onDeleteData: (user: AdminUser) => void }) {
     const { tx } = useI18n();
     const name = user.username || user.nickname || user.email.split("@")[0];
+    const liftedAt = liftedSuspensionAt(user);
     return (
         <li className="grid gap-3 px-4 py-3.5 md:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)_minmax(0,1.2fr)_auto] md:items-center">
             <div className="flex min-w-0 items-center gap-3">
@@ -68,6 +76,12 @@ function UserRow({ user, self, onAction }: { user: AdminUser; self: boolean; onA
                     </div>
                 ) : (
                     <div className="space-y-0.5">
+                        {liftedAt ? (
+                            <p className="flex flex-wrap items-center gap-1.5">
+                                <Badge tone="amber" icon={History}>{tx({ TR: "Önceden askıya alınmış", EN: "Previously suspended" })}</Badge>
+                                <span>{tx({ TR: "Kaldırıldı", EN: "Lifted" })}: <RelativeTime iso={liftedAt} /></span>
+                            </p>
+                        ) : null}
                         <p>{tx({ TR: "Katıldı", EN: "Joined" })}: <RelativeTime iso={user.createdAt} className="font-semibold text-zinc-700 dark:text-zinc-300" /></p>
                         <p>{tx({ TR: "Son görülme", EN: "Last seen" })}: <RelativeTime iso={user.lastSeenAt ?? user.lastLoginAt} className="font-semibold text-zinc-700 dark:text-zinc-300" /></p>
                     </div>
@@ -75,7 +89,7 @@ function UserRow({ user, self, onAction }: { user: AdminUser; self: boolean; onA
             </div>
             <div className="flex flex-wrap items-center gap-2 md:justify-end">
                 {user.isOwner ? (
-                    <span className="inline-flex items-center gap-1 text-[12px] text-zinc-400"><Lock className="h-3.5 w-3.5" aria-hidden="true" />{tx({ TR: "Ortam değişkeniyle korunuyor", EN: "Protected by environment" })}</span>
+                    <span className="inline-flex items-center gap-1 text-[12px] text-zinc-400"><Lock className="h-3.5 w-3.5" aria-hidden="true" />{tx({ TR: "Sahip hesabı korunuyor", EN: "Owner account is protected" })}</span>
                 ) : null}
                 {user.assignableRoles.length ? (
                     <Button size="sm" icon={UserCog} onClick={() => onAction({ kind: "role", user, role: assignableRole(user) })}>{tx({ TR: "Rol", EN: "Role" })}</Button>
@@ -88,8 +102,312 @@ function UserRow({ user, self, onAction }: { user: AdminUser; self: boolean; onA
                         ? <Button size="sm" variant="success" icon={UserCheck} onClick={() => onAction({ kind: "unsuspend", user })}>{tx({ TR: "Askıyı kaldır", EN: "Unsuspend" })}</Button>
                         : <Button size="sm" variant="ghost" icon={Ban} className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" onClick={() => onAction({ kind: "suspend", user })}>{tx({ TR: "Askıya al", EN: "Suspend" })}</Button>
                 ) : null}
+                {/* Deleting data follows the same rules as suspending (server: userManagementPolicy). */}
+                {user.canSuspend ? (
+                    <Button size="sm" variant="ghost" icon={Trash2} className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" onClick={() => onDeleteData(user)}>{tx({ TR: "Verileri sil", EN: "Delete data" })}</Button>
+                ) : null}
             </div>
         </li>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Deleting a user's data
+// ---------------------------------------------------------------------------
+
+const SCOPE_OPTIONS: Array<{ scope: DeletionScope; title: Copy; description: Copy }> = [
+    {
+        scope: "all",
+        title: { TR: "Hesabı ve tüm verileri sil", EN: "Delete the account and all data" },
+        description: { TR: "Hesap kalıcı olarak kapanır ve açık oturumları sona erer.", EN: "The account is closed for good and its open sessions end." },
+    },
+    {
+        scope: "content",
+        title: { TR: "Yalnızca herkese açık içerikleri sil", EN: "Delete only public content" },
+        description: { TR: "Hesap, arkadaşlar, özel sohbetler ve projeler kalır.", EN: "The account, friends, private chats and projects stay." },
+    },
+];
+
+const SCOPE_DETAILS: Record<DeletionScope, { deleted: Copy[]; note: Copy }> = {
+    all: {
+        deleted: [
+            { TR: "Hesap, giriş bilgileri ve herkese açık profil", EN: "The account, sign-in details and public profile" },
+            { TR: "Özel sohbetler, sesli mesajlar ve aramalar", EN: "Private chats, voice messages and calls" },
+            { TR: "Kod ve oyun projeleri, Arcade'de yayımlanan oyunlar", EN: "Code and game projects, games published on Arcade" },
+            { TR: "Media gönderileri ve bunlara ait beğeni, yorum ve bildirimler", EN: "Media posts with their likes, comments and reports" },
+            { TR: "Haber ve sürüm notu yorumları, beğeniler ve oylar", EN: "News and release note comments, likes and votes" },
+            { TR: "Sahip olduğu gruplar; diğer gruplardan çıkarılır ve oradaki mesajları anonimleştirilir", EN: "Groups they own; they leave other groups and their messages there are anonymised" },
+            { TR: "Arkadaşlıklar, istekler, geri bildirimler, destek talepleri ve bildirimler", EN: "Friendships, requests, feedback, support tickets and notifications" },
+        ],
+        note: { TR: "Bu e-posta adresiyle daha sonra yeniden kayıt olunabilir.", EN: "The e-mail address can be used to sign up again later." },
+    },
+    content: {
+        deleted: [
+            { TR: "Media gönderileri (dosyaları, beğenileri ve yorumlarıyla) ve başka gönderilere yazdığı yorumlar", EN: "Media posts (with their files, likes and comments) and comments on other posts" },
+            { TR: "Arcade'de yayımladığı oyunlar ve beğenileri", EN: "Games published on Arcade and their likes" },
+            { TR: "Haber yorumları ve sürüm notu yorumları", EN: "News comments and release note comments" },
+            { TR: "Yazdığı geri bildirimler ve başka geri bildirimlere yaptığı yorumlar", EN: "Feedback posts they wrote and their comments on other posts" },
+            { TR: "Grup mesajlarındaki adı ve sesli mesajları (mesajlar anonimleştirilir)", EN: "Their name and voice messages in groups (the messages are anonymised)" },
+        ],
+        note: { TR: "Kalanlar: hesap ve giriş bilgileri, arkadaşlar, özel sohbetler, projeler, beğeniler ve destek talepleri.", EN: "Kept: the account and sign-in, friends, private chats, projects, likes and support tickets." },
+    },
+};
+
+/** Labels of the counts in the deletion summary (lib/server/account-deletion.ts), in display order. */
+const KIND_COPY: Record<string, Copy> = {
+    account: { TR: "Hesap", EN: "Account" },
+    chats: { TR: "Sohbetler", EN: "Chats" },
+    chatMessages: { TR: "Sohbet mesajları", EN: "Chat messages" },
+    voiceFiles: { TR: "Ses kayıtları", EN: "Voice recordings" },
+    calls: { TR: "Aramalar", EN: "Calls" },
+    callCandidates: { TR: "Arama bağlantı kayıtları", EN: "Call connection records" },
+    projects: { TR: "Kod projeleri", EN: "Code projects" },
+    projectFiles: { TR: "Proje dosyaları", EN: "Project files" },
+    gameProjects: { TR: "Oyun projeleri", EN: "Game projects" },
+    gameScripts: { TR: "Oyun scriptleri", EN: "Game scripts" },
+    arcadeGames: { TR: "Arcade oyunları", EN: "Arcade games" },
+    arcadeLikes: { TR: "Arcade beğenileri", EN: "Arcade likes" },
+    arenaVotes: { TR: "Yapay zekâ arenası oyları", EN: "AI arena votes" },
+    newsComments: { TR: "Haber yorumları", EN: "News comments" },
+    mediaPosts: { TR: "Media gönderileri", EN: "Media posts" },
+    mediaFiles: { TR: "Media dosyaları", EN: "Media files" },
+    mediaLikes: { TR: "Media beğenileri", EN: "Media likes" },
+    mediaComments: { TR: "Media yorumları", EN: "Media comments" },
+    mediaReports: { TR: "Media bildirimleri", EN: "Media reports" },
+    securityContributions: { TR: "Güvenlik eğitimi katkıları", EN: "Security training contributions" },
+    groups: { TR: "Silinen gruplar", EN: "Deleted groups" },
+    groupMessages: { TR: "Grup mesajları", EN: "Group messages" },
+    groupFiles: { TR: "Grup dosyaları", EN: "Group files" },
+    groupRecords: { TR: "Grup davetleri, bağlantıları ve yasakları", EN: "Group invites, links and bans" },
+    groupMemberships: { TR: "Ayrıldığı gruplar", EN: "Groups left" },
+    groupMessagesAnonymized: { TR: "Anonimleştirilen grup mesajları", EN: "Anonymised group messages" },
+    groupBansAnonymized: { TR: "Anonimleştirilen grup yasakları", EN: "Anonymised group bans" },
+    friendRequests: { TR: "Arkadaşlık istekleri", EN: "Friend requests" },
+    groupInvites: { TR: "Grup davetleri", EN: "Group invitations" },
+    friendLinks: { TR: "Arkadaş listelerinden çıkarıldı", EN: "Removed from friend lists" },
+    blockLinks: { TR: "Engel listelerinden çıkarıldı", EN: "Removed from block lists" },
+    feedback: { TR: "Geri bildirimler", EN: "Feedback posts" },
+    feedbackLikes: { TR: "Geri bildirim beğenileri", EN: "Feedback likes" },
+    feedbackComments: { TR: "Geri bildirim yorumları", EN: "Feedback comments" },
+    changelogComments: { TR: "Sürüm notu yorumları", EN: "Release note comments" },
+    notifications: { TR: "Bildirimler", EN: "Notifications" },
+    supportTickets: { TR: "Destek talepleri", EN: "Support tickets" },
+};
+
+const KIND_ORDER = Object.keys(KIND_COPY);
+
+function kindRank(kind: string) {
+    const index = KIND_ORDER.indexOf(kind);
+    return index === -1 ? KIND_ORDER.length : index;
+}
+
+function DeletionResultView({ result }: { result: AccountDeletionResult }) {
+    const { tx, locale } = useI18n();
+    const counts = Object.entries(result.deleted)
+        .filter(([, count]) => count > 0)
+        .sort(([a], [b]) => kindRank(a) - kindRank(b));
+    const failed = result.errors.length > 0;
+    const accountKept = result.scope === "all" && !result.accountDeleted;
+    return (
+        <div className="space-y-4">
+            <Notice tone={accountKept ? "error" : failed ? "warning" : "success"}>
+                {accountKept
+                    ? tx({ TR: "Hesap silinemedi; diğer verilerin bir kısmı silinmiş olabilir. Tekrar deneyin.", EN: "The account couldn't be deleted; some of the other data may already be gone. Try again." })
+                    : failed
+                        ? tx({ TR: "Silme tamamlandı ama bazı kayıtlar silinemedi. Kalanlar için tekrar deneyebilirsiniz.", EN: "The deletion finished, but some records couldn't be deleted. You can retry for the rest." })
+                        : result.scope === "all"
+                            ? tx({ TR: "{email} hesabı ve tüm verileri silindi.", EN: "The account {email} and all its data were deleted." }, { email: result.email })
+                            : tx({ TR: "{email} kullanıcısının herkese açık içerikleri silindi.", EN: "The public content of {email} was deleted." }, { email: result.email })}
+            </Notice>
+            {counts.length ? (
+                <div>
+                    <p className="mb-2 text-[13px] font-bold text-zinc-700 dark:text-zinc-200">{tx({ TR: "Silinen ve anonimleştirilen kayıtlar", EN: "Deleted and anonymised records" })}</p>
+                    <dl className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+                        {counts.map(([kind, count]) => (
+                            <div key={kind} className="flex items-baseline justify-between gap-3 border-b border-zinc-100 pb-1 text-[12.5px] dark:border-white/[0.06]">
+                                <dt className="min-w-0 text-zinc-600 dark:text-zinc-300">{KIND_COPY[kind] ? tx(KIND_COPY[kind]) : kind}</dt>
+                                <dd className="shrink-0 font-bold tabular-nums text-zinc-900 dark:text-white">{formatNumber(count, locale)}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </div>
+            ) : (
+                <p className="text-[13px] text-zinc-500">{tx({ TR: "Silinecek veri bulunamadı.", EN: "No data to delete was found." })}</p>
+            )}
+            {failed ? (
+                <details className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3 text-[12px] text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-100">
+                    <summary className={cx("cursor-pointer rounded font-bold", FOCUS_RING)}>{tx({ TR: "Teknik ayrıntılar ({count})", EN: "Technical details ({count})" }, { count: result.errors.length })}</summary>
+                    <ul className="mt-2 space-y-1 break-words font-mono text-[11px]" dir="ltr">
+                        {result.errors.map((line, index) => <li key={index}>{line}</li>)}
+                    </ul>
+                </details>
+            ) : null}
+        </div>
+    );
+}
+
+/**
+ * Asks what to delete (the whole account or only public content), why, and
+ * for the e-mail address typed out, then shows what the server removed.
+ */
+function DeleteDataDialog({ open, user, onClose, onDeleted }: {
+    open: boolean;
+    user: AdminUser;
+    onClose: (ran: boolean) => void;
+    onDeleted: (result: AccountDeletionResult) => void;
+}) {
+    const { tx } = useI18n();
+    const confirmId = useId();
+    const confirmHintId = useId();
+    const resultRef = useRef<HTMLDivElement>(null);
+    const [scope, setScope] = useState<DeletionScope | null>(null);
+    const [reason, setReason] = useState("");
+    const [confirm, setConfirm] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<ApiFailure | null>(null);
+    const [result, setResult] = useState<AccountDeletionResult | null>(null);
+
+    // The form's buttons disappear with the result: move focus to it.
+    useEffect(() => {
+        if (result) resultRef.current?.focus();
+    }, [result]);
+
+    const confirmed = confirm.trim().toLowerCase() === user.email;
+    const ready = scope !== null && reason.trim().length > 0 && reason.length <= SUSPEND_REASON_MAX && confirmed;
+
+    const submit = async () => {
+        if (!scope || busy) return;
+        setBusy(true);
+        setError(null);
+        const response = await adminPost<AccountDeletionResult>("/api/admin/users", {
+            action: "deleteData",
+            email: user.email,
+            scope,
+            confirm: confirm.trim(),
+            reason: reason.trim(),
+        });
+        setBusy(false);
+        if (!response.ok) {
+            setError(response);
+            return;
+        }
+        setResult(response.data);
+        onDeleted(response.data);
+    };
+    const close = () => {
+        if (!busy) onClose(result !== null);
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onClose={close}
+            busy={busy}
+            icon={Trash2}
+            tone="danger"
+            title={tx({ TR: "Kullanıcı verilerini sil", EN: "Delete user data" })}
+            description={tx({ TR: "{email} için kalıcı silme. Bu işlem geri alınamaz.", EN: "Permanent deletion for {email}. This can't be undone." }, { email: user.email })}
+            footer={result ? (
+                <>
+                    {result.errors.length ? <Button variant="secondary" icon={RotateCcw} busy={busy} onClick={() => void submit()}>{tx({ TR: "Kalanları tekrar dene", EN: "Retry the rest" })}</Button> : null}
+                    <Button variant="primary" onClick={close} disabled={busy}>{tx(COMMON.close)}</Button>
+                </>
+            ) : (
+                <>
+                    {/* Destructive dialogs start on "Cancel". */}
+                    <Button variant="ghost" onClick={close} disabled={busy} data-autofocus>{tx(COMMON.cancel)}</Button>
+                    <Button variant="danger" icon={Trash2} busy={busy} disabled={!ready} onClick={() => void submit()}>{tx({ TR: "Kalıcı olarak sil", EN: "Delete permanently" })}</Button>
+                </>
+            )}
+        >
+            {result ? (
+                <div ref={resultRef} tabIndex={-1} className="outline-none">
+                    <DeletionResultView result={result} />
+                    {busy ? <Spinner className="mt-4" label={tx({ TR: "Tekrar deneniyor…", EN: "Retrying…" })} /> : null}
+                    {error ? <ErrorNotice error={error} className="mt-4" /> : null}
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    <fieldset disabled={busy}>
+                        <legend className="mb-2 text-[13px] font-bold text-zinc-700 dark:text-zinc-200">{tx({ TR: "Ne silinsin?", EN: "What should be deleted?" })}</legend>
+                        <div className="space-y-2">
+                            {SCOPE_OPTIONS.map((option) => {
+                                const checked = scope === option.scope;
+                                return (
+                                    <label
+                                        key={option.scope}
+                                        className={cx(
+                                            "flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition",
+                                            checked
+                                                ? option.scope === "all" ? "border-red-500 bg-red-50/70 dark:border-red-400/60 dark:bg-red-500/10" : "border-amber-500 bg-amber-50/70 dark:border-amber-400/60 dark:bg-amber-500/10"
+                                                : "border-zinc-200 hover:border-zinc-300 dark:border-white/10 dark:hover:border-white/20",
+                                        )}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="delete-data-scope"
+                                            value={option.scope}
+                                            checked={checked}
+                                            onChange={() => setScope(option.scope)}
+                                            className={cx("mt-1 h-4 w-4", option.scope === "all" ? "accent-red-600" : "accent-amber-600", FOCUS_RING)}
+                                        />
+                                        <span className="min-w-0">
+                                            <span className="block text-sm font-bold">{tx(option.title)}</span>
+                                            <span className="mt-0.5 block text-[12px] text-zinc-500">{tx(option.description)}</span>
+                                        </span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </fieldset>
+                    {scope ? (
+                        <div className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-[12.5px] dark:border-white/10 dark:bg-white/[0.03]">
+                            <p className="font-bold text-zinc-700 dark:text-zinc-200">{tx({ TR: "Silinecekler", EN: "What will be deleted" })}</p>
+                            <ul className="mt-1.5 list-disc space-y-1 ps-5 text-zinc-600 dark:text-zinc-300">
+                                {SCOPE_DETAILS[scope].deleted.map((line) => <li key={line.EN}>{tx(line)}</li>)}
+                            </ul>
+                            <p className="mt-2 text-zinc-500">{tx(SCOPE_DETAILS[scope].note)}</p>
+                        </div>
+                    ) : null}
+                    <TextArea
+                        label={tx({ TR: "Gerekçe", EN: "Reason" })}
+                        value={reason}
+                        onChange={setReason}
+                        max={SUSPEND_REASON_MAX}
+                        rows={2}
+                        disabled={busy}
+                        placeholder={tx({ TR: "Örn. kullanıcının e-postayla gelen silme talebi", EN: "e.g. deletion request the user sent by e-mail" })}
+                        hint={tx({ TR: "Zorunlu; denetim kaydına yazılır.", EN: "Required; written to the audit log." })}
+                    />
+                    <div>
+                        <label htmlFor={confirmId} className="mb-1.5 block text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
+                            {tx({ TR: "Onaylamak için e-posta adresini yazın", EN: "Type the e-mail address to confirm" })}
+                        </label>
+                        <input
+                            id={confirmId}
+                            type="text"
+                            inputMode="email"
+                            autoComplete="off"
+                            autoCapitalize="none"
+                            spellCheck={false}
+                            dir="ltr"
+                            value={confirm}
+                            maxLength={254}
+                            disabled={busy}
+                            onChange={(event) => setConfirm(event.target.value)}
+                            aria-describedby={confirmHintId}
+                            aria-invalid={confirm.trim() && !confirmed ? true : undefined}
+                            className={cx(INPUT_CLASS, "h-10 font-mono")}
+                        />
+                        <p id={confirmHintId} className="mt-1 break-all text-[11px] text-zinc-500">
+                            {tx({ TR: "Tam olarak şunu yazın: {email}", EN: "Type exactly: {email}" }, { email: user.email })}
+                        </p>
+                    </div>
+                    {busy ? <Spinner label={tx({ TR: "Veriler siliniyor… Bu bir dakika kadar sürebilir.", EN: "Deleting data… This can take up to a minute." })} /> : null}
+                    {error ? <ErrorNotice error={error} /> : null}
+                </div>
+            )}
+        </Dialog>
     );
 }
 
@@ -107,6 +425,10 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
     const [actionError, setActionError] = useState<ApiFailure | null>(null);
+    // `session` remounts the delete dialog (fresh form) each time it opens; the
+    // target stays set after closing so the closing animation keeps its content.
+    const [deleteTarget, setDeleteTarget] = useState<{ user: AdminUser; session: number } | null>(null);
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     const openDialog = (next: DialogState) => {
         setDialog(next);
@@ -115,6 +437,22 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
     };
     const closeDialog = () => {
         if (!busy) setDialog(null);
+    };
+    const openDeleteData = (user: AdminUser) => {
+        setDeleteTarget((current) => ({ user, session: (current?.session ?? 0) + 1 }));
+        setDeleteOpen(true);
+    };
+    const onDataDeleted = (result: AccountDeletionResult) => {
+        if (result.accountDeleted) {
+            users.mutate((current) => ({ ...current, users: current.users.filter((user) => user.email !== result.email) }));
+        }
+        toast(result.errors.length ? "error" : "success", result.errors.length
+            ? tx({ TR: "{email}: bazı veriler silinemedi.", EN: "{email}: some data couldn't be deleted." }, { email: result.email })
+            : tx({ TR: "{email}: veriler silindi.", EN: "{email}: data deleted." }, { email: result.email }));
+    };
+    const closeDeleteData = (ran: boolean) => {
+        setDeleteOpen(false);
+        if (ran) users.reload();
     };
 
     const loadMore = async () => {
@@ -173,7 +511,7 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
         <div>
             <SectionHeader
                 title={tx({ TR: "Kullanıcılar", EN: "Users" })}
-                description={tx({ TR: "Hesapları bulun, askıya alın veya ekip rollerini yönetin.", EN: "Find accounts, suspend them or manage staff roles." })}
+                description={tx({ TR: "Hesapları bulun, askıya alın, ekip rollerini yönetin veya verilerini silin.", EN: "Find accounts, suspend them, manage staff roles or delete their data." })}
                 actions={<Button size="sm" icon={RefreshCw} busy={users.loading && Boolean(users.data)} onClick={users.reload}>{tx(COMMON.refresh)}</Button>}
             />
             <Panel bodyClassName="p-0">
@@ -221,7 +559,7 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
                             className="divide-y divide-zinc-100 dark:divide-white/[0.06]"
                             aria-busy={users.loading || undefined}
                         >
-                            {list.map((user) => <UserRow key={user.email} user={user} self={user.email === selfEmail} onAction={openDialog} />)}
+                            {list.map((user) => <UserRow key={user.email} user={user} self={user.email === selfEmail} onAction={openDialog} onDeleteData={openDeleteData} />)}
                         </motion.ul>
                         {users.data?.nextCursor || moreError ? (
                             <div className="flex flex-col items-center gap-2 border-t border-zinc-100 p-4 dark:border-white/[0.06]">
@@ -232,6 +570,10 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
                     </>
                 )}
             </Panel>
+
+            {deleteTarget ? (
+                <DeleteDataDialog key={deleteTarget.session} open={deleteOpen} user={deleteTarget.user} onClose={closeDeleteData} onDeleted={onDataDeleted} />
+            ) : null}
 
             <ConfirmDialog
                 open={dialog?.kind === "suspend"}
@@ -357,7 +699,7 @@ export default function UsersSection({ selfEmail }: { selfEmail: string }) {
                         </fieldset>
                         <TextArea
                             label={tx({ TR: "Not", EN: "Note" })}
-                    optional
+                            optional
                             value={reason}
                             onChange={setReason}
                             max={SUSPEND_REASON_MAX}

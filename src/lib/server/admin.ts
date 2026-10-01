@@ -18,7 +18,7 @@ import {
     type UserRole,
 } from "@/components/Admin/types";
 import { getActiveSession } from "./active-session";
-import { commitServerMutations, countServerQuery, runServerQuery } from "./firebase-rest";
+import { commitServerMutations, countServerQuery, getServerDocument, patchServerDocument, runServerQuery } from "./firebase-rest";
 import { enforceRateLimitWithFallback } from "./rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "./request-security";
 import { isDocId, normalizeEmail } from "./validate";
@@ -112,6 +112,52 @@ export function adminPermissions(role: StaffRole): AdminPermissions {
         deleteUserData: admin,
         cloudHealth: role === "owner",
     };
+}
+
+// ---------------------------------------------------------------------------
+// Public staff badge (public_profiles/{email}.staffRole)
+// ---------------------------------------------------------------------------
+
+/** The badge other people see on a profile: the staff role, or null for everyone else. */
+export function staffBadgeFor(email: string, storedRole: unknown): StaffRole | null {
+    const role = resolveUserRole(email, storedRole);
+    return role === "user" ? null : role;
+}
+
+/**
+ * Brings public_profiles/{email}.staffRole in line with `role` (null removes
+ * it). Only the server writes the field: firestore.rules keep it out of the
+ * keys clients may change. The profile is read unless the caller passes it
+ * and written only when the value differs; accounts without a public profile
+ * are left alone (sign-up and Google sign-in create it).
+ */
+export async function syncStaffRoleBadge(email: string, role: StaffRole | null, knownProfile?: Record<string, unknown> | null) {
+    const profile = knownProfile === undefined ? await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`) : knownProfile;
+    if (!profile || (profile.staffRole ?? null) === role) return false;
+    try {
+        await patchServerDocument(`public_profiles/${email}`, role ? { staffRole: role } : {}, { updateFields: ["staffRole"], exists: true });
+    } catch (error) {
+        // The profile disappeared in the meantime: there is nothing left to label.
+        if (firestoreStatus(error) === 404) return false;
+        throw error;
+    }
+    return true;
+}
+
+const BADGE_SYNC_INTERVAL_MS = 10 * 60_000;
+const badgeSyncedAt = new Map<string, number>();
+
+/**
+ * syncStaffRoleBadge for GET /api/admin/me, which the header calls on page
+ * loads: at most once per account and role every ten minutes per instance.
+ */
+export async function syncStaffRoleBadgeThrottled(email: string, role: StaffRole | null) {
+    const key = `${email}|${role ?? ""}`;
+    const last = badgeSyncedAt.get(key);
+    if (last !== undefined && Date.now() - last < BADGE_SYNC_INTERVAL_MS) return;
+    await syncStaffRoleBadge(email, role);
+    if (badgeSyncedAt.size >= 1_000) badgeSyncedAt.clear();
+    badgeSyncedAt.set(key, Date.now());
 }
 
 export type UserPolicy = { canSuspend: boolean; assignableRoles: AssignableRole[]; denial: AdminErrorCode | null };

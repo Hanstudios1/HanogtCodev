@@ -79,9 +79,11 @@ function SignupForm() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: email.trim(), password, username: username.trim() }),
             });
-            const data = await response.json().catch(() => ({})) as { error?: string };
+            const data = await response.json().catch(() => ({})) as { error?: string; code?: string };
             if (!response.ok) {
-                setError(data.error || t("signup_error") || "Hesap oluşturulamadı. Lütfen yeniden deneyin.");
+                setError(data.code === "reserved_email"
+                    ? tx({ TR: "Bu e-posta adresiyle şifreli hesap oluşturulamaz. Lütfen Google ile giriş yapın.", EN: "An account with a password can't be created for this e-mail address. Please sign in with Google." })
+                    : data.error || t("signup_error") || "Hesap oluşturulamadı. Lütfen yeniden deneyin.");
                 return;
             }
             setSuccess(t("signup_success") || "Hesap oluşturuldu! Giriş yapılıyor...");
