@@ -2,7 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { createFirebaseCustomToken, getFirebaseProjectId, getServerDocument } from "@/lib/server/firebase-rest";
+import { isOwnerEmail } from "@/lib/server/admin";
+import { createFirebaseCustomToken, describeServerCredentials, getFirebaseProjectId, getServerDocument } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { jsonSecurityHeaders } from "@/lib/server/request-security";
 
@@ -46,6 +47,8 @@ export async function GET(request: NextRequest) {
     }
 
     const nextAuthHost = hostOf(process.env.NEXTAUTH_URL);
+    // Which variable layout is in use (never the key itself).
+    const credentialInfo = describeServerCredentials();
     const credentials = await check(async () => getFirebaseProjectId());
     const firestore = credentials.ok ? await check(async () => { await getServerDocument("security_health/ping"); }) : { ok: false, detail: "skipped" };
     const rateLimit = credentials.ok
@@ -91,7 +94,7 @@ export async function GET(request: NextRequest) {
         host,
         nextAuth: { secret, urlHost: nextAuthHost },
         google,
-        firebaseServer: { credentials: credentials.ok, projectId: serverProjectId, firestore, rateLimit, customToken },
+        firebaseServer: { credentials: credentials.ok, layout: credentialInfo.layout, variable: credentialInfo.variable, projectId: serverProjectId, firestore, rateLimit, customToken },
         firebaseClient: { configured: clientConfigured, projectId: clientProjectId },
     };
     cached = { at: Date.now(), host, body };
@@ -101,8 +104,9 @@ export async function GET(request: NextRequest) {
 /**
  * The full report maps the deployment (configured services, project ids,
  * hosts, commit), so anonymous visitors only get the overall result. Details
- * need `?token=` equal to HEALTH_CHECK_TOKEN or a signed-in owner listed in
- * ADMIN_EMAILS.
+ * need `?token=` equal to HEALTH_CHECK_TOKEN or a signed-in owner (built-in
+ * or ADMIN_EMAILS). Owners find the complete diagnosis, including security
+ * rules, in Admin Panel → Cloud Health.
  */
 async function respond(request: NextRequest, body: HealthBody) {
     if (await mayReadDetails(request)) return NextResponse.json(body, { headers: jsonSecurityHeaders() });
@@ -110,7 +114,7 @@ async function respond(request: NextRequest, body: HealthBody) {
         ok: body.ok,
         problemCount: body.problems.length,
         checkedAt: body.checkedAt,
-        details: "Open /api/health/auth?token=<HEALTH_CHECK_TOKEN> or sign in with an ADMIN_EMAILS account to see the full report.",
+        details: "Open /api/health/auth?token=<HEALTH_CHECK_TOKEN> or sign in as an owner to see the full report (Admin Panel → Cloud Health has the complete diagnosis).",
     }, { headers: jsonSecurityHeaders() });
 }
 
@@ -118,9 +122,7 @@ async function mayReadDetails(request: NextRequest) {
     const expected = process.env.HEALTH_CHECK_TOKEN?.trim();
     const supplied = request.nextUrl.searchParams.get("token") || "";
     if (expected && expected.length >= 16 && supplied.length === expected.length && timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) return true;
-    const owners = (process.env.ADMIN_EMAILS || "").toLowerCase().split(/[\s,;]+/).filter(Boolean);
-    if (!owners.length) return false;
     const session = await getServerSession(authOptions).catch(() => null);
     const email = session?.user?.email?.toLowerCase();
-    return Boolean(email && owners.includes(email));
+    return Boolean(email && isOwnerEmail(email));
 }

@@ -3,14 +3,21 @@
  * saved by older versions), a React hook that stays in sync across components
  * and browser tabs, Monaco option mapping and JSON export/import.
  *
- * Settings live in localStorage under "hanogt_editor_settings" (the key the
- * account page exports and resets), so they are per device and never sent to
- * the server.
+ * The editor reads the settings from localStorage ("hanogt_editor_settings",
+ * the key the account page exports and resets), so it works offline. The
+ * Editor Settings page saves them explicitly and, for signed-in users, also
+ * copies them to users/{email}.editorSettings (/api/account/preferences);
+ * "hanogt_editor_settings_meta" records when this device last saved them.
+ *
+ * API routes import this module for validation. They are compiled in React's
+ * server layer, where a named import of a client hook is a build error, so
+ * React is imported as a namespace; the hook only ever runs in the browser.
  */
-import { useSyncExternalStore } from "react";
+import * as React from "react";
 import type { editor } from "monaco-editor";
 
 export const EDITOR_SETTINGS_KEY = "hanogt_editor_settings";
+export const EDITOR_SETTINGS_META_KEY = "hanogt_editor_settings_meta";
 export const EDITOR_SETTINGS_VERSION = 2;
 
 type Text = { TR: string; EN: string };
@@ -242,18 +249,111 @@ export function sanitizeEditorSettings(input: unknown): EditorSettings {
     };
 }
 
+export type EditorSettingKey = Exclude<keyof EditorSettings, "version">;
+
+/** Every setting except the version marker. */
+export const EDITOR_SETTING_KEYS = Object.keys(DEFAULT_EDITOR_SETTINGS).filter((key): key is EditorSettingKey => key !== "version");
+
+/** Settings whose values differ between `a` and `b`. */
+export function changedEditorSettingKeys(a: EditorSettings, b: EditorSettings): EditorSettingKey[] {
+    return EDITOR_SETTING_KEYS.filter((key) => a[key] !== b[key]);
+}
+
+export function editorSettingsEqual(a: EditorSettings, b: EditorSettings) {
+    return changedEditorSettingKeys(a, b).length === 0;
+}
+
+/** Keys of current and older (version 1) settings; an object needs one of them to count as settings. */
+const KNOWN_SETTING_KEYS: ReadonlySet<string> = new Set(Object.keys(DEFAULT_EDITOR_SETTINGS).concat(["autoCloseBrackets", "autoCloseQuotes", "autocomplete", "hoverInfo", "renderIndentGuides"]));
+
+/** Plain object with at least one known setting (exported files, account copies, PUT bodies). */
+export function looksLikeEditorSettings(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value) && Object.keys(value as object).some((key) => KNOWN_SETTING_KEYS.has(key));
+}
+
+function isoOrNull(value: unknown): string | null {
+    if (typeof value !== "string" || value.length > 40) return null;
+    const time = Date.parse(value);
+    return Number.isFinite(time) ? new Date(time).toISOString() : null;
+}
+
+/** The copy stored in the account (GET/PUT /api/account/preferences). */
+export type AccountEditorSettings = { editorSettings: EditorSettings | null; updatedAt: string | null };
+
+/**
+ * How this device's saved settings relate to the account copy:
+ * - "in_sync": same values;
+ * - "adopt_account": nothing was ever saved here, so the account copy can be applied silently;
+ * - "account_newer" / "local_newer": both exist and one was saved later;
+ * - "account_empty": the account has no copy yet;
+ * - "conflict": they differ and this device's save time is unknown (older versions).
+ */
+export type EditorSettingsSyncState = "in_sync" | "adopt_account" | "account_newer" | "local_newer" | "account_empty" | "conflict";
+
+export function compareEditorSettingsCopies(
+    local: { settings: EditorSettings; updatedAt: string | null; stored: boolean },
+    account: AccountEditorSettings,
+): EditorSettingsSyncState {
+    if (!account.editorSettings) return "account_empty";
+    if (editorSettingsEqual(local.settings, account.editorSettings)) return "in_sync";
+    if (!local.stored && !local.updatedAt) return "adopt_account";
+    const localTime = local.updatedAt ? Date.parse(local.updatedAt) : Number.NaN;
+    const accountTime = account.updatedAt ? Date.parse(account.updatedAt) : Number.NaN;
+    if (!Number.isFinite(localTime)) return "conflict";
+    if (!Number.isFinite(accountTime)) return "local_newer";
+    return accountTime > localTime ? "account_newer" : "local_newer";
+}
+
 // ------------------------------------------------------------------ store
 const listeners = new Set<() => void>();
 let cachedRaw: string | null | undefined;
 let cachedSettings: EditorSettings = DEFAULT_EDITOR_SETTINGS;
 /** Used when storage is blocked (private mode, sandboxed frames). */
 let memorySettings: EditorSettings | null = null;
+let cachedMetaRaw: string | null | undefined;
+let cachedUpdatedAt: string | null = null;
+let memoryUpdatedAt: string | null = null;
 
-function readRaw(): string | null | undefined {
+function readStorage(key: string): string | null | undefined {
     try {
-        return window.localStorage.getItem(EDITOR_SETTINGS_KEY);
+        return window.localStorage.getItem(key);
     } catch {
         return undefined;
+    }
+}
+
+function readRaw(): string | null | undefined {
+    return readStorage(EDITOR_SETTINGS_KEY);
+}
+
+/** When this device last saved the settings (ISO), or null: never, or by a version that didn't record it. */
+export function readEditorSettingsUpdatedAt(): string | null {
+    if (typeof window === "undefined") return null;
+    const raw = readStorage(EDITOR_SETTINGS_META_KEY);
+    if (raw === undefined) return memoryUpdatedAt;
+    if (raw === cachedMetaRaw) return cachedUpdatedAt;
+    cachedMetaRaw = raw;
+    try {
+        cachedUpdatedAt = raw ? isoOrNull((JSON.parse(raw) as { updatedAt?: unknown }).updatedAt) : null;
+    } catch {
+        cachedUpdatedAt = null;
+    }
+    return cachedUpdatedAt;
+}
+
+/** True when settings were ever saved in this browser (also by older versions). */
+export function hasStoredEditorSettings(): boolean {
+    if (typeof window === "undefined") return false;
+    const raw = readRaw();
+    return raw === undefined ? memorySettings !== null : Boolean(raw);
+}
+
+function writeUpdatedAt(updatedAt: string) {
+    memoryUpdatedAt = updatedAt;
+    try {
+        window.localStorage.setItem(EDITOR_SETTINGS_META_KEY, JSON.stringify({ updatedAt }));
+    } catch {
+        // Storage is unavailable; the in-memory value applies for this page view.
     }
 }
 
@@ -280,8 +380,12 @@ function notify() {
     listeners.forEach((listener) => listener());
 }
 
-/** Saves complete settings (validated) and updates every editor on the page. */
-export function saveEditorSettings(next: EditorSettings) {
+/**
+ * Saves complete settings (validated) and updates every editor on the page.
+ * `updatedAt` keeps the time of the copy being applied (e.g. the account's);
+ * by default it is now.
+ */
+export function saveEditorSettings(next: EditorSettings, options: { updatedAt?: string | null } = {}) {
     const settings = sanitizeEditorSettings(next);
     memorySettings = settings;
     try {
@@ -289,6 +393,7 @@ export function saveEditorSettings(next: EditorSettings) {
     } catch {
         // Storage is unavailable; the in-memory copy applies for this page view.
     }
+    writeUpdatedAt(isoOrNull(options.updatedAt) ?? new Date().toISOString());
     notify();
 }
 
@@ -296,6 +401,10 @@ export function updateEditorSettings(patch: Partial<EditorSettings>) {
     saveEditorSettings({ ...readEditorSettings(), ...patch });
 }
 
+/**
+ * Back to the defaults. The reset time is recorded, so an older copy in the
+ * account is not applied over it automatically.
+ */
 export function resetEditorSettings() {
     memorySettings = null;
     try {
@@ -303,13 +412,14 @@ export function resetEditorSettings() {
     } catch {
         // Nothing stored.
     }
+    writeUpdatedAt(new Date().toISOString());
     notify();
 }
 
 function subscribe(listener: () => void) {
     listeners.add(listener);
     const onStorage = (event: StorageEvent) => {
-        if (event.key === EDITOR_SETTINGS_KEY || event.key === null) listener();
+        if (event.key === EDITOR_SETTINGS_KEY || event.key === EDITOR_SETTINGS_META_KEY || event.key === null) listener();
     };
     window.addEventListener("storage", onStorage);
     return () => {
@@ -320,7 +430,12 @@ function subscribe(listener: () => void) {
 
 /** Editor preferences, kept in sync across components and browser tabs. */
 export function useEditorSettings(): EditorSettings {
-    return useSyncExternalStore(subscribe, readEditorSettings, () => DEFAULT_EDITOR_SETTINGS);
+    return React.useSyncExternalStore(subscribe, readEditorSettings, () => DEFAULT_EDITOR_SETTINGS);
+}
+
+/** readEditorSettingsUpdatedAt as a hook (null during server rendering). */
+export function useEditorSettingsUpdatedAt(): string | null {
+    return React.useSyncExternalStore(subscribe, readEditorSettingsUpdatedAt, () => null);
 }
 
 // ------------------------------------------------------------------ Monaco
@@ -407,9 +522,11 @@ export function parseEditorSettingsFile(text: string): { ok: true; settings: Edi
     if (!data || typeof data !== "object" || Array.isArray(data)) return { ok: false, error: "invalid_format" };
     const record = data as Record<string, unknown>;
     const candidate = record.kind === SETTINGS_FILE_KIND ? record.settings : record.editorSettings ?? record;
-    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return { ok: false, error: "invalid_format" };
-    const keys = Object.keys(candidate);
-    const known = new Set(Object.keys(DEFAULT_EDITOR_SETTINGS).concat(["autoCloseBrackets", "autoCloseQuotes", "autocomplete", "hoverInfo", "renderIndentGuides"]));
-    if (!keys.some((key) => known.has(key))) return { ok: false, error: "invalid_format" };
+    if (!looksLikeEditorSettings(candidate)) return { ok: false, error: "invalid_format" };
     return { ok: true, settings: sanitizeEditorSettings(candidate) };
+}
+
+/** Settings sent to or read from the account: the import rules, null when it isn't a settings object. */
+export function parseAccountEditorSettings(value: unknown): EditorSettings | null {
+    return looksLikeEditorSettings(value) ? sanitizeEditorSettings(value) : null;
 }

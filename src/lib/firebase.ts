@@ -17,12 +17,41 @@ const firebaseConfig = {
     appId: env(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
 };
 
-export const hasFirebaseClientConfig = Boolean(
-    firebaseConfig.apiKey
-    && firebaseConfig.projectId
-    && firebaseConfig.appId
-    && /^AIza[\w-]{35}$/.test(firebaseConfig.apiKey),
-);
+// The variables are inlined at build time: a value added in Vercel only
+// reaches the browser after a redeploy.
+const missingClientVariables = [
+    ["NEXT_PUBLIC_FIREBASE_API_KEY", firebaseConfig.apiKey],
+    ["NEXT_PUBLIC_FIREBASE_PROJECT_ID", firebaseConfig.projectId],
+    ["NEXT_PUBLIC_FIREBASE_APP_ID", firebaseConfig.appId],
+].filter(([, value]) => !value).map(([name]) => name);
+const apiKeyWellFormed = /^AIza[\w-]{35}$/.test(firebaseConfig.apiKey);
+
+export const hasFirebaseClientConfig = missingClientVariables.length === 0 && apiKeyWellFormed;
+
+export type FirebaseClientConfigIssue = "missing" | "invalid_api_key" | null;
+
+/**
+ * What this browser bundle was built with, for the connection banner and the
+ * owner's Cloud Health panel. Web API keys are not secret, but only a prefix
+ * is exposed here anyway.
+ */
+export const firebaseClientDiagnostics: {
+    issue: FirebaseClientConfigIssue;
+    missing: string[];
+    projectId: string | null;
+    authDomain: string | null;
+    storageBucket: string | null;
+    apiKeyPrefix: string | null;
+    appIdPresent: boolean;
+} = {
+    issue: missingClientVariables.length ? "missing" : apiKeyWellFormed ? null : "invalid_api_key",
+    missing: missingClientVariables,
+    projectId: firebaseConfig.projectId || null,
+    authDomain: firebaseConfig.authDomain || null,
+    storageBucket: firebaseConfig.storageBucket || null,
+    apiKeyPrefix: firebaseConfig.apiKey ? firebaseConfig.apiKey.slice(0, 8) : null,
+    appIdPresent: Boolean(firebaseConfig.appId),
+};
 
 // Firestore/Storage handles are safe to construct during SSR. Firebase Auth is
 // browser-only; constructing it while prerendering also makes builds depend on
