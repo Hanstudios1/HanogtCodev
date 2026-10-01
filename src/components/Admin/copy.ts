@@ -42,6 +42,8 @@ export const ERROR_COPY: Record<string, Copy> = {
     no_change: { TR: "Değişiklik yok.", EN: "Nothing changed." },
     already_handled: { TR: "Bu kayıt başka bir ekip üyesi tarafından zaten işlendi.", EN: "Another team member already handled this." },
     conflict: { TR: "Kayıt aynı anda değişti. Listeyi yenileyip tekrar deneyin.", EN: "The record changed at the same time. Refresh and try again." },
+    confirmation_mismatch: { TR: "Onay metni eşleşmiyor. Silinecek hesabın e-posta adresini aynen yazın.", EN: "The confirmation doesn't match. Type the e-mail address of the account exactly." },
+    deploy_failed: { TR: "Kurallar yayımlanamadı. Hizmet hesabının Firebase Rules yetkisini kontrol edin.", EN: "The rules couldn't be deployed. Check that the service account may manage Firebase Rules." },
     too_many_active: {
         TR: "Aynı anda en fazla {count} etkin duyuru olabilir. Önce birini kapatın.",
         EN: "At most {count} announcements can be active at once. Turn one off first.",
@@ -82,9 +84,9 @@ export const ROLE_COPY: Record<UserRole, Copy> = {
 };
 
 export const ROLE_DESCRIPTION_COPY: Record<UserRole, Copy> = {
-    owner: { TR: "ADMIN_EMAILS ile tanımlanır; her şeye erişir ve panelden değiştirilemez.", EN: "Defined by ADMIN_EMAILS; full access and can't be changed from the panel." },
+    owner: { TR: "Sitenin kurucusu (yerleşik sahip veya ADMIN_EMAILS); her şeye erişir ve panelden değiştirilemez.", EN: "The site's founder (built-in owner or ADMIN_EMAILS); full access and can't be changed from the panel." },
     admin: { TR: "Moderasyona ek olarak kullanıcıları ve duyuruları yönetir.", EN: "Manages users and announcements in addition to moderation." },
-    moderator: { TR: "Bildirimleri, yorumları, Arcade oyunlarını ve geri bildirimleri yönetir.", EN: "Handles reports, comments, Arcade games and feedback." },
+    moderator: { TR: "Bildirimleri, yorumları, Arcade oyunlarını, geri bildirimleri ve destek taleplerini yönetir.", EN: "Handles reports, comments, Arcade games, feedback and support tickets." },
     user: { TR: "Ekip yetkisi yok.", EN: "No staff access." },
 };
 
@@ -143,6 +145,12 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "announcement.update": { TR: "Duyuru güncellendi", EN: "Announcement updated" },
     "announcement.set_active": { TR: "Duyuru açıldı veya kapatıldı", EN: "Announcement switched on or off" },
     "announcement.delete": { TR: "Duyuru silindi", EN: "Announcement deleted" },
+    "ticket.reply": { TR: "Destek talebine yanıt verildi", EN: "Support ticket answered" },
+    "ticket.set_status": { TR: "Talep durumu değişti", EN: "Ticket status changed" },
+    "ticket.set_priority": { TR: "Talep önceliği değişti", EN: "Ticket priority changed" },
+    "ticket.delete": { TR: "Destek talebi silindi", EN: "Support ticket deleted" },
+    "user.delete_data": { TR: "Kullanıcı verileri silindi", EN: "User data deleted" },
+    "cloud.deploy_rules": { TR: "Güvenlik kuralları yayımlandı", EN: "Security rules deployed" },
 };
 
 /** Labels for common audit detail keys; other keys are shown as they are. */

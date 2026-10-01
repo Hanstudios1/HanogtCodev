@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
             newsComments: () => countDocuments("news_comments"),
             gameProjects: () => countDocuments("game_projects"),
             securityEvents7d: () => countDocuments("security_events", [{ field: "createdAt", op: "GREATER_THAN_OR_EQUAL", value: since }]),
+            ticketsOpen: () => countDocuments("support_tickets", [{ field: "status", op: "IN", value: ["open", "in_progress"] }]),
         };
         const keys = Object.keys(tasks) as StatKey[];
         const [values, signups] = await Promise.all([
