@@ -3,28 +3,64 @@
 import OptimizedImage from "@/components/OptimizedImage";
 
 import { useState, useEffect } from "react";
-import { X, MessageSquare, Send, Pencil, Trash2, MoreVertical } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { Check, ChevronDown, MessageSquare, MoreVertical, Pencil, Send, Sparkles, Trash2, X } from "lucide-react";
+import { useI18n, type Copy } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, type Timestamp } from "firebase/firestore";
 
+type EntryText = Copy | { key: string };
+
 interface UpdateEntry {
     id: string;
     version: string;
+    /** ISO date (YYYY-MM-DD); shown in the reader's locale. */
     date: string;
-    titleKey: string;
-    descKey: string;
-    items: { key: string }[];
+    title: EntryText;
+    desc: EntryText;
+    items: EntryText[];
 }
 
 const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.1.2",
+        version: "v0.1.2",
+        date: "2026-10-01",
+        title: { TR: "Hanogt AI, iki adımlı doğrulama ve Yönetici Paneli", EN: "Hanogt AI, two-step verification and the Admin Panel" },
+        desc: { TR: "Güvenlik, yapay zekâ ve topluluk güncellemesi: dil modeline dönüşen Hanogt AI, iki adımlı doğrulama, yönetici paneli, yenilenen Gruplar ve 65 dilli kod editörü.", EN: "A security, AI and community update: Hanogt AI powered by a language model, two-step verification, an admin panel, redesigned Groups and a 65-language code editor." },
+        items: [
+            { TR: "Hanogt AI: Güvenlik Botu sohbeti, platformun bilgi tabanıyla zenginleştirilen ve yanıtı akışla yazan bir dil modeline dönüştü; Genel, Kod ve Güvenlik modları var.", EN: "Hanogt AI: the Security Bot chat became a language model that is grounded in the platform's knowledge base and streams its answers, with General, Code and Security modes." },
+            { TR: "Çevrimdışı Hanogt AI Çekirdeği: tarayıcıda çalışan, 41 niyet için eğitilmiş model; giriş yapılmadığında veya dil modeline ulaşılamadığında yanıt verir.", EN: "Offline Hanogt AI Core: a model trained on 41 intents that runs in your browser and answers when you're signed out or the language model can't be reached." },
+            { TR: "İki adımlı doğrulama: doğrulayıcı uygulama kodları (TOTP), QR ile kurulum ve tek kullanımlık kurtarma kodları; gizli anahtarlar şifreli saklanır.", EN: "Two-step verification: authenticator app codes (TOTP), QR setup and single-use recovery codes; secrets are stored encrypted." },
+            { TR: "Yönetici Paneli: sahip/yönetici/moderatör rolleri, istatistikler, kullanıcı yönetimi, moderasyon, güvenlik olayları, Arcade yönetimi, site duyuruları ve denetim kaydı.", EN: "Admin Panel: owner/admin/moderator roles, statistics, user management, moderation, security events, Arcade management, site announcements and an audit log." },
+            { TR: "Gruplar: 6 şablonlu oluşturma sihirbazı, süreli davet bağlantıları, başlangıç kontrol listesi; sohbette sabitleme, tepkiler, @bahsetme ve arama.", EN: "Groups: a creation wizard with 6 templates, expiring invite links and a getting-started checklist; pins, reactions, @mentions and search in chat." },
+            { TR: "Kod editörü: 65 dil tek kaynaktan; 8 dil tarayıcıda, 30 dil sunucuda çalışır, HTML/CSS/Markdown canlı önizlenir; komut paleti, şablonlar, ZIP içe/dışa aktarma.", EN: "Code editor: 65 languages from one registry; 8 run in the browser, 30 on the server, and HTML/CSS/Markdown preview live; command palette, templates, ZIP import/export." },
+            { TR: "Editör Ayarları baştan yazıldı: canlı önizleme, 10 tema, arama, sıfırlama ve JSON içe/dışa aktarma.", EN: "Editor Settings rebuilt: live preview, 10 themes, search, reset and JSON import/export." },
+            { TR: "Güvenlik: Security Bot için ölçümlü değerlendirme, yanlış engellemeler düzeltildi, açıklar kapatıldı ve Firestore kuralları testlerle sıkılaştırıldı.", EN: "Security: measured evaluation for the Security Bot, false blocks fixed, vulnerabilities closed and Firestore rules tightened with tests." },
+            { TR: "Arayüz dili sayısı 50'ye çıktı.", EN: "The interface is now available in 50 languages." },
+        ],
+    },
+    {
+        id: "v0.1.1",
+        version: "v0.1.1",
+        date: "2026-09-30",
+        title: { TR: "Ayarsız kod çalıştırma ve kalıcı oturum", EN: "Code runs with no setup, and you stay signed in" },
+        desc: { TR: "Kod çalıştırma artık sunucu ayarı gerektirmiyor; oturum siz çıkış yapana kadar korunuyor.", EN: "Running code no longer needs any server setup, and your session lasts until you sign out." },
+        items: [
+            { TR: "JavaScript, TypeScript, Python, SQL ve Lua doğrudan tarayıcıda WebAssembly ile çalışır; giriş gerekmez ve kod sunucuya gönderilmez.", EN: "JavaScript, TypeScript, Python, SQL and Lua run directly in your browser with WebAssembly; no sign-in is needed and the code isn't sent to a server." },
+            { TR: "Derlenen diller Hanogt Security Bot taramasından sonra izole uzak derleyicilerde çalışır.", EN: "Compiled languages run on isolated remote compilers after a Hanogt Security Bot scan." },
+            { TR: "Editöre Girdi sekmesi eklendi; input(), Scanner, cin gibi okumalar bu alandan beslenir.", EN: "A new Input tab feeds reads such as input(), Scanner and cin." },
+            { TR: "Hata mesajları dosya adı ve satır numarasıyla gösterilir.", EN: "Error messages show the file name and line number." },
+            { TR: "Oturum 90 gün geçerli ve her ziyarette yenilenir; sayfa yenilenince yeniden giriş istenmez.", EN: "Sessions last 90 days and renew on every visit; reloading the page no longer asks you to sign in again." },
+            { TR: "Google ile giriş www ve www'suz adresler arasında korunur; girişten sonra istenen sayfa açılır.", EN: "Google sign-in carries over between the www and non-www addresses, and you land on the page you asked for." },
+        ],
+    },
+    {
         id: "v0.1.0",
         version: "v0.1.0",
         date: "2026-09-28",
-        titleKey: "update_v006_title",
-        descKey: "update_v006_desc",
+        title: { key: "update_v006_title" },
+        desc: { key: "update_v006_desc" },
         items: [
             { key: "update_v006_item1" },
             { key: "update_v006_item2" },
@@ -41,8 +77,8 @@ const UPDATES: UpdateEntry[] = [
         id: "v0.0.5",
         version: "v0.0.5",
         date: "2026-09-04",
-        titleKey: "update_v005_title",
-        descKey: "update_v005_desc",
+        title: { key: "update_v005_title" },
+        desc: { key: "update_v005_desc" },
         items: [
             { key: "update_v005_item1" },
             { key: "update_v005_item2" },
@@ -56,8 +92,8 @@ const UPDATES: UpdateEntry[] = [
         id: "v0.0.4",
         version: "v0.0.4",
         date: "2026-09-03",
-        titleKey: "update_v004_title",
-        descKey: "update_v004_desc",
+        title: { key: "update_v004_title" },
+        desc: { key: "update_v004_desc" },
         items: [
             { key: "update_v004_item1" },
             { key: "update_v004_item2" },
@@ -74,8 +110,8 @@ const UPDATES: UpdateEntry[] = [
         id: "v0.0.3",
         version: "v0.0.3",
         date: "2026-05-19",
-        titleKey: "update_v003_title",
-        descKey: "update_v003_desc",
+        title: { key: "update_v003_title" },
+        desc: { key: "update_v003_desc" },
         items: [
             { key: "update_v003_item1" },
             { key: "update_v003_item2" },
@@ -90,8 +126,8 @@ const UPDATES: UpdateEntry[] = [
         id: "v0.0.2",
         version: "v0.0.2",
         date: "2026-03-16",
-        titleKey: "update_v002_title",
-        descKey: "update_v002_desc",
+        title: { key: "update_v002_title" },
+        desc: { key: "update_v002_desc" },
         items: [
             { key: "update_v002_item1" },
             { key: "update_v002_item2" },
@@ -105,8 +141,8 @@ const UPDATES: UpdateEntry[] = [
         id: "v0.0.1",
         version: "v0.0.1",
         date: "2026-03-09",
-        titleKey: "update_v001_title",
-        descKey: "update_v001_desc",
+        title: { key: "update_v001_title" },
+        desc: { key: "update_v001_desc" },
         items: [
             { key: "update_v001_item1" },
             { key: "update_v001_item2" },
@@ -139,52 +175,73 @@ interface Comment {
     createdAt: Timestamp | Date | string | null;
 }
 
+/** Comments predate per-version threads; every version shares this one. */
+const COMMENT_THREAD = "v0.0.5";
+const EXPANDED_BY_DEFAULT = 2;
+
 export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const { t } = useI18n();
+    const { t, tx, locale } = useI18n();
     const { data: session } = useSession();
     const [comments, setComments] = useState<Comment[]>([]);
+    const [commentsFailed, setCommentsFailed] = useState(false);
     const [newComment, setNewComment] = useState("");
     const [myUsername, setMyUsername] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editText, setEditText] = useState("");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [showOlder, setShowOlder] = useState(false);
+
+    const text = (entry: EntryText) => ("key" in entry ? t(entry.key) || entry.key : tx(entry));
+    const formatDate = (iso: string) => {
+        const date = new Date(`${iso}T12:00:00Z`);
+        return Number.isNaN(date.getTime()) ? iso : new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(date);
+    };
 
     useEffect(() => {
         if (!isOpen) return;
-        const loadUser = async () => {
-            if (!session?.user?.email) return;
-            const snap = await getDoc(doc(db, "users", session.user.email));
-            if (snap.exists()) setMyUsername(snap.data().username || session.user.name || "");
-        };
-        loadUser();
+        const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [isOpen, onClose]);
+
+    useEffect(() => {
+        if (!isOpen || !session?.user?.email) return;
+        const email = session.user.email;
+        const fallback = session.user.name || "";
+        getDoc(doc(db, "users", email))
+            .then((snap) => setMyUsername(snap.exists() ? snap.data().username || fallback : fallback))
+            .catch(() => setMyUsername(fallback));
     }, [isOpen, session]);
 
     useEffect(() => {
-        if (!isOpen || !session?.user) {
-            return;
-        }
-        const q = query(collection(db, "changelog_comments", "v0.0.5", "comments"), orderBy("createdAt", "asc"));
+        if (!isOpen || !session?.user) return;
+        const q = query(collection(db, "changelog_comments", COMMENT_THREAD, "comments"), orderBy("createdAt", "asc"));
         const unsub = onSnapshot(q, (snap) => {
-            setComments(snap.docs.map(d => ({ id: d.id, ...d.data() as Omit<Comment, "id"> })));
-        });
+            setCommentsFailed(false);
+            setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() as Omit<Comment, "id"> })));
+        }, () => setCommentsFailed(true));
         return () => unsub();
     }, [isOpen, session?.user]);
 
     const handleSendComment = async () => {
         if (!newComment.trim() || !session?.user?.email) return;
-        await addDoc(collection(db, "changelog_comments", "v0.0.5", "comments"), {
-            text: newComment.trim(),
-            email: session.user.email,
-            username: myUsername || session.user.name || "User",
-            avatarUrl: session.user.image || "",
-            createdAt: serverTimestamp(),
-        });
-        setNewComment("");
+        try {
+            await addDoc(collection(db, "changelog_comments", COMMENT_THREAD, "comments"), {
+                text: newComment.trim().slice(0, 1000),
+                email: session.user.email,
+                username: myUsername || session.user.name || "User",
+                avatarUrl: session.user.image || "",
+                createdAt: serverTimestamp(),
+            });
+            setNewComment("");
+        } catch {
+            setCommentsFailed(true);
+        }
     };
 
     const handleDeleteComment = async (commentId: string) => {
-        await deleteDoc(doc(db, "changelog_comments", "v0.0.5", "comments", commentId));
         setOpenMenuId(null);
+        await deleteDoc(doc(db, "changelog_comments", COMMENT_THREAD, "comments", commentId)).catch(() => setCommentsFailed(true));
     };
 
     const handleStartEdit = (comment: Comment) => {
@@ -195,9 +252,8 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
 
     const handleSaveEdit = async () => {
         if (!editingId || !editText.trim()) return;
-        await updateDoc(doc(db, "changelog_comments", "v0.0.5", "comments", editingId), {
-            text: editText.trim(),
-        });
+        await updateDoc(doc(db, "changelog_comments", COMMENT_THREAD, "comments", editingId), { text: editText.trim().slice(0, 1000) })
+            .catch(() => setCommentsFailed(true));
         setEditingId(null);
         setEditText("");
     };
@@ -207,68 +263,87 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
     const formatCommentTime = (ts: Comment["createdAt"]) => {
         if (!ts) return "";
         const d = typeof ts === "object" && "toDate" in ts ? ts.toDate() : new Date(ts);
-        return d.toLocaleString([], { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        return d.toLocaleString(locale, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
     };
 
+    const visible = showOlder ? UPDATES : UPDATES.slice(0, EXPANDED_BY_DEFAULT);
+
     return (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
             <div
-                className="bg-white dark:bg-zinc-900 w-full max-w-xl rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 max-h-[85vh] flex flex-col"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="changelog-title"
+                className="flex max-h-[88vh] w-full max-w-2xl flex-col rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
-                    <h2 className="font-bold text-lg text-zinc-900 dark:text-white">
-                        {t("changelog_log_title") || "Güncellemeler/İyileştirmeler Günlüğü"}
-                    </h2>
-                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                        <X className="w-5 h-5 text-zinc-500" />
+                <div className="flex items-center justify-between gap-3 border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25"><Sparkles className="h-5 w-5" aria-hidden="true" /></span>
+                        <div className="min-w-0">
+                            <h2 id="changelog-title" className="truncate text-lg font-bold text-zinc-900 dark:text-white">{t("changelog_log_title") || tx({ TR: "Güncellemeler/İyileştirmeler Günlüğü", EN: "Updates & Improvements Log" })}</h2>
+                            <p className="text-[12px] text-zinc-500">{tx({ TR: "Son sürüm: {version}", EN: "Latest version: {version}" }, { version: UPDATES[0].version })}</p>
+                        </div>
+                    </div>
+                    <button type="button" onClick={onClose} autoFocus aria-label={tx({ TR: "Kapat", EN: "Close" })} className="rounded-lg p-1.5 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800">
+                        <X className="h-5 w-5 text-zinc-500" />
                     </button>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-                    {UPDATES.map((upd) => (
-                        <div key={upd.id}>
-                            <div className="flex items-baseline justify-between mb-2">
-                                <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{upd.version}</h3>
-                                <span className="text-sm text-zinc-400">{upd.date}</span>
+                <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                    {visible.map((upd, index) => (
+                        <article key={upd.id} className={`rounded-2xl border p-4 ${index === 0 ? "border-indigo-200 bg-indigo-50/60 dark:border-indigo-500/30 dark:bg-indigo-500/[0.07]" : "border-zinc-200 dark:border-zinc-800"}`}>
+                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-mono text-lg font-black text-zinc-900 dark:text-white">{upd.version}</h3>
+                                    {index === 0 ? <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white">{tx({ TR: "En yeni", EN: "Latest" })}</span> : null}
+                                </div>
+                                <time dateTime={upd.date} className="text-[12.5px] text-zinc-500">{formatDate(upd.date)}</time>
                             </div>
-                            <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                {t(upd.titleKey) || upd.titleKey}
-                            </p>
-                            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
-                                {t(upd.descKey) || upd.descKey}
-                            </p>
+                            <p className="mb-1 text-[14.5px] font-bold text-indigo-700 dark:text-indigo-300">{text(upd.title)}</p>
+                            <p className="mb-3 text-sm text-zinc-700 dark:text-zinc-300">{text(upd.desc)}</p>
                             <ul className="space-y-1.5">
                                 {upd.items.map((item, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                                        <span className="text-zinc-400 mt-0.5 select-none">-</span>
-                                        <span>{t(item.key) || item.key}</span>
+                                    <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
+                                        <span>{text(item)}</span>
                                     </li>
                                 ))}
                             </ul>
-                        </div>
+                        </article>
                     ))}
+
+                    {UPDATES.length > EXPANDED_BY_DEFAULT ? (
+                        <button type="button" onClick={() => setShowOlder((value) => !value)} aria-expanded={showOlder} className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 py-2.5 text-[13px] font-semibold text-zinc-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-indigo-300">
+                            <ChevronDown className={`h-4 w-4 transition ${showOlder ? "rotate-180" : ""}`} aria-hidden="true" />
+                            {showOlder
+                                ? tx({ TR: "Eski sürümleri gizle", EN: "Hide older versions" })
+                                : tx({ TR: "Eski sürümleri göster ({count})", EN: "Show older versions ({count})" }, { count: UPDATES.length - EXPANDED_BY_DEFAULT })}
+                        </button>
+                    ) : null}
 
                     <div className="border-t border-zinc-200 dark:border-zinc-700" />
 
-                    {/* Comments Section */}
                     <div>
-                        <h4 className="text-sm font-bold text-zinc-600 dark:text-zinc-400 flex items-center gap-2 mb-3">
-                            <MessageSquare className="w-4 h-4" />
-                            {t("comments") || "Yorumlar"} ({comments.length})
+                        <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-600 dark:text-zinc-400">
+                            <MessageSquare className="h-4 w-4" />
+                            {tx({ TR: "Yorumlar ({count})", EN: "Comments ({count})" }, { count: comments.length })}
                         </h4>
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
-                            {comments.length === 0 && (
-                                <p className="text-xs text-zinc-400 text-center py-3">{t("no_comments") || "Henüz yorum yok."}</p>
+                        {!session?.user ? (
+                            <p className="py-3 text-center text-xs text-zinc-400">{tx({ TR: "Yorumları görmek ve yazmak için giriş yapın.", EN: "Sign in to read and write comments." })}</p>
+                        ) : commentsFailed ? (
+                            <p className="py-3 text-center text-xs text-amber-600 dark:text-amber-400">{tx({ TR: "Yorumlar şu anda yüklenemiyor. Biraz sonra tekrar deneyin.", EN: "Comments can't be loaded right now. Try again in a moment." })}</p>
+                        ) : null}
+                        <div className="max-h-64 space-y-2 overflow-y-auto">
+                            {session?.user && !commentsFailed && comments.length === 0 && (
+                                <p className="py-3 text-center text-xs text-zinc-400">{tx({ TR: "Henüz yorum yok. İlk yorumu siz yazın.", EN: "No comments yet. Be the first to write one." })}</p>
                             )}
                             {comments.map((c) => (
-                                <div key={c.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 group relative">
+                                <div key={c.id} className="group relative flex items-start gap-2 rounded-lg bg-zinc-50 p-2.5 dark:bg-zinc-800/60">
                                     {c.avatarUrl ? (
-                                        <OptimizedImage src={c.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                                        <OptimizedImage src={c.avatarUrl} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" referrerPolicy="no-referrer" />
                                     ) : (
-                                        <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">{c.username?.charAt(0)}</div>
+                                        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">{c.username?.charAt(0)}</div>
                                     )}
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
@@ -276,44 +351,41 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
                                             <span className="text-[10px] text-zinc-400">{formatCommentTime(c.createdAt)}</span>
                                         </div>
                                         {editingId === c.id ? (
-                                            <div className="flex items-center gap-1 mt-1">
+                                            <div className="mt-1 flex items-center gap-1">
                                                 <input
                                                     type="text"
                                                     value={editText}
+                                                    maxLength={1000}
                                                     onChange={(e) => setEditText(e.target.value)}
                                                     onKeyDown={(e) => e.key === "Enter" && handleSaveEdit()}
-                                                    className="flex-1 px-2 py-1 rounded text-xs bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-900 dark:text-white"
+                                                    aria-label={tx({ TR: "Yorumu düzenle", EN: "Edit comment" })}
+                                                    className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
                                                     autoFocus
                                                 />
-                                                <button onClick={handleSaveEdit} className="text-[10px] text-blue-500 font-semibold hover:text-blue-600">{t("save") || "Kaydet"}</button>
-                                                <button onClick={() => setEditingId(null)} className="text-[10px] text-zinc-400 hover:text-zinc-600">{t("cancel") || "İptal"}</button>
+                                                <button type="button" onClick={handleSaveEdit} className="text-[10px] font-semibold text-blue-500 hover:text-blue-600">{tx({ TR: "Kaydet", EN: "Save" })}</button>
+                                                <button type="button" onClick={() => setEditingId(null)} className="text-[10px] text-zinc-400 hover:text-zinc-600">{tx({ TR: "İptal", EN: "Cancel" })}</button>
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-zinc-600 dark:text-zinc-400 break-words">{c.text}</p>
+                                            <p className="break-words text-xs text-zinc-600 dark:text-zinc-400">{c.text}</p>
                                         )}
                                     </div>
-                                    {/* Actions menu for own comments */}
                                     {session?.user?.email === c.email && editingId !== c.id && (
                                         <div className="relative">
                                             <button
+                                                type="button"
                                                 onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
-                                                className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                aria-label={tx({ TR: "Yorum işlemleri", EN: "Comment actions" })}
+                                                className="rounded p-1 opacity-0 transition-opacity hover:bg-zinc-200 focus-visible:opacity-100 group-hover:opacity-100 dark:hover:bg-zinc-700"
                                             >
-                                                <MoreVertical className="w-3.5 h-3.5 text-zinc-400" />
+                                                <MoreVertical className="h-3.5 w-3.5 text-zinc-400" />
                                             </button>
                                             {openMenuId === c.id && (
-                                                <div className="absolute right-0 top-full mt-1 w-28 bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden z-10">
-                                                    <button
-                                                        onClick={() => handleStartEdit(c)}
-                                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
-                                                    >
-                                                        <Pencil className="w-3 h-3" /> {t("edit") || "Düzenle"}
+                                                <div className="absolute end-0 top-full z-10 mt-1 w-28 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-800">
+                                                    <button type="button" onClick={() => handleStartEdit(c)} className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700">
+                                                        <Pencil className="h-3 w-3" /> {tx({ TR: "Düzenle", EN: "Edit" })}
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeleteComment(c.id)}
-                                                        className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
-                                                    >
-                                                        <Trash2 className="w-3 h-3" /> {t("delete") || "Sil"}
+                                                    <button type="button" onClick={() => handleDeleteComment(c.id)} className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                        <Trash2 className="h-3 w-3" /> {tx({ TR: "Sil", EN: "Delete" })}
                                                     </button>
                                                 </div>
                                             )}
@@ -323,19 +395,20 @@ export default function ChangelogModal({ isOpen, onClose }: { isOpen: boolean; o
                             ))}
                         </div>
 
-                        {/* Comment Input */}
                         {session?.user && (
-                            <div className="flex items-center gap-2 mt-3">
+                            <div className="mt-3 flex items-center gap-2">
                                 <input
                                     type="text"
                                     value={newComment}
+                                    maxLength={1000}
                                     onChange={(e) => setNewComment(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleSendComment()}
-                                    placeholder={t("write_comment") || "Yorum yaz..."}
-                                    className="flex-1 px-3 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    placeholder={tx({ TR: "Yorum yaz…", EN: "Write a comment…" })}
+                                    aria-label={tx({ TR: "Yorum yaz", EN: "Write a comment" })}
+                                    className="flex-1 rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                 />
-                                <button onClick={handleSendComment} className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors" disabled={!newComment.trim()}>
-                                    <Send className="w-4 h-4" />
+                                <button type="button" onClick={handleSendComment} aria-label={tx({ TR: "Gönder", EN: "Send" })} className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-40" disabled={!newComment.trim()}>
+                                    <Send className="h-4 w-4" />
                                 </button>
                             </div>
                         )}
