@@ -187,6 +187,10 @@ export async function DELETE(request: NextRequest) {
                 if (isOwnedStoragePath(voicePath, "group-voice-messages", group._id)) await deleteServerStorageObject(voicePath);
             });
             await deleteCollection(`groups/${group._id}/files`);
+            for (const collectionName of ["group_invites", "group_invite_links", "group_bans"]) {
+                const related = await queryServerCollection<Record<string, unknown>>(collectionName, "groupId", "EQUAL", group._id).catch(() => []);
+                for (const item of related) await deleteServerDocument(item._path);
+            }
             await deleteServerDocument(group._path);
         } else {
             await patchServerDocument(group._path, {
@@ -196,6 +200,15 @@ export async function DELETE(request: NextRequest) {
             }, { updateFields: ["members", "admins", "updatedAt"] });
         }
     }
+
+    // Bans of this account and invite links it created in other groups; bans it
+    // issued stay in force but no longer name it.
+    for (const [collectionName, field] of [["group_bans", "email"], ["group_invite_links", "createdBy"]] as const) {
+        const records = await queryServerCollection<Record<string, unknown>>(collectionName, field, "EQUAL", email).catch(() => []);
+        for (const record of records) await deleteServerDocument(record._path);
+    }
+    const issuedBans = await queryServerCollection<Record<string, unknown>>("group_bans", "bannedBy", "EQUAL", email).catch(() => []);
+    for (const ban of issuedBans) await patchServerDocument(ban._path, { bannedBy: null }, { updateFields: ["bannedBy"] });
 
     const remainingGroupMessages = await queryServerCollection<Record<string, unknown>>("messages", "fromEmail", "EQUAL", email, { allDescendants: true, limit: 1000 });
     for (const message of remainingGroupMessages) {
