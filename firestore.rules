@@ -379,6 +379,12 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // Support tickets (Feedback/FAQ > Destek talepleri) are private between the
+    // author and the Hanogt team: served only by /api/support and /api/admin/tickets.
+    match /support_tickets/{ticketId} {
+      allow read, write: if false;
+    }
+
     match /notifications/{userId}/items/{itemId} {
       allow read, update, delete: if isSelf(userId);
       allow create: if false;

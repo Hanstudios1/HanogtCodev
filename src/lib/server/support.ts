@@ -1,0 +1,477 @@
+import "server-only";
+
+import { randomBytes, randomUUID } from "node:crypto";
+import { NextResponse } from "next/server";
+import type {
+    AdminTicketDetail,
+    AdminTicketListItem,
+} from "@/components/Admin/tickets-types";
+import {
+    RECORD_LOOKBACK_DAYS,
+    TEAM_AUTHOR_NAME,
+    TICKET_LIMITS,
+    accountAgeDays,
+    evaluateUserRecord,
+    isTicketCategory,
+    isTicketPriority,
+    isTicketSeverity,
+    isTicketStatus,
+    messagePreview,
+    normalizePageUrl,
+    normalizeUserAgent,
+    ticketReference,
+    type SupportErrorBody,
+    type SupportErrorCode,
+    type SupportTicketMessage,
+    type SupportTicketMeta,
+    type SupportTicketSummary,
+    type SupportTicketView,
+    type TicketCategory,
+    type TicketField,
+    type TicketMessageFrom,
+    type TicketPriority,
+    type TicketStatus,
+    type UserRecordFacts,
+    type UserRecordSummary,
+} from "@/lib/support";
+import { firestoreStatus, httpsUrlOrNull, stringOr, toIso } from "./admin";
+import { getServerDocument, isWriteConflict, runServerQuery } from "./firebase-rest";
+import { enforceRateLimitWithFallback } from "./rate-limit";
+import { jsonSecurityHeaders } from "./request-security";
+import { isDocId } from "./validate";
+
+export const TICKETS_COLLECTION = "support_tickets";
+
+// ---------------------------------------------------------------------------
+// Errors and responses (shared by /api/support and /api/feedback)
+// ---------------------------------------------------------------------------
+
+const ERROR_MESSAGES: Record<SupportErrorCode, string> = {
+    auth_required: "Bu işlem için giriş yapın.",
+    bad_origin: "Geçersiz istek kaynağı.",
+    rate_limited: "Çok fazla istek. Biraz sonra tekrar deneyin.",
+    invalid_body: "Geçersiz istek gövdesi.",
+    invalid_action: "Geçersiz işlem.",
+    invalid_id: "Geçersiz kayıt kimliği.",
+    not_found: "Kayıt bulunamadı.",
+    forbidden: "Bu işlem için yetkiniz yok.",
+    invalid_category: "Geçersiz kategori.",
+    title_required: "Başlık gerekli.",
+    title_too_short: "Başlık çok kısa.",
+    title_too_long: "Başlık çok uzun.",
+    description_required: "Açıklama gerekli.",
+    description_too_short: "Açıklama çok kısa.",
+    description_too_long: "Açıklama çok uzun.",
+    steps_too_long: "Adımlar çok uzun.",
+    invalid_page_url: "Sayfa adresi geçersiz.",
+    invalid_severity: "Geçersiz önem derecesi.",
+    message_required: "Mesaj boş olamaz.",
+    message_too_long: "Mesaj çok uzun.",
+    ticket_closed: "Talep kapalı; önce yeniden açın.",
+    already_closed: "Talep zaten kapalı.",
+    not_reopenable: "Bu talep yeniden açılamaz.",
+    thread_full: "Konuşma mesaj sınırına ulaştı.",
+    conflict: "Kayıt aynı anda değişti; tekrar deneyin.",
+    unavailable: "Hizmet şu anda kullanılamıyor.",
+    content_required: "İçerik boş olamaz.",
+    content_too_long: "İçerik çok uzun.",
+    comment_required: "Yorum boş olamaz.",
+    comment_too_long: "Yorum çok uzun.",
+    comment_not_found: "Yorum bulunamadı.",
+    too_many_comments: "Yorum sınırına ulaşıldı.",
+    profanity: "Metin topluluk kurallarına aykırı ifadeler içeriyor.",
+    personal_data: "Herkese açık metinlerde kişisel veri paylaşmayın.",
+    links: "Metinde çok fazla bağlantı var.",
+    spam: "Metin spam gibi görünüyor.",
+};
+
+/**
+ * Thrown inside the routes; turned into `{ error, code }` by supportFailure.
+ * The HTTP status is `httpStatus`, not `status`: the Firestore helpers read a
+ * `status` of 409 as a write conflict and would retry it.
+ */
+export class SupportError extends Error {
+    httpStatus: number;
+    code: SupportErrorCode;
+    field?: TicketField;
+    retryAfter?: number;
+
+    constructor(httpStatus: number, code: SupportErrorCode, options: { field?: TicketField; retryAfter?: number } = {}) {
+        super(ERROR_MESSAGES[code]);
+        this.name = "SupportError";
+        this.httpStatus = httpStatus;
+        this.code = code;
+        this.field = options.field;
+        this.retryAfter = options.retryAfter;
+    }
+}
+
+export function supportJson(payload: unknown, status = 200, headers: Record<string, string> = {}) {
+    return NextResponse.json(payload, { status, headers: jsonSecurityHeaders(headers) });
+}
+
+export function supportError(status: number, code: SupportErrorCode, options: { field?: TicketField; retryAfter?: number } = {}) {
+    const body: SupportErrorBody = { error: ERROR_MESSAGES[code], code };
+    if (options.field) body.field = options.field;
+    if (options.retryAfter) body.retryAfter = options.retryAfter;
+    return supportJson(body, status, options.retryAfter ? { "Retry-After": String(options.retryAfter) } : {});
+}
+
+export function supportFailure(error: unknown, context: string) {
+    if (error instanceof SupportError) return supportError(error.httpStatus, error.code, { field: error.field, retryAfter: error.retryAfter });
+    console.error(`[support:${context}]`, error instanceof Error ? error.message : error);
+    return supportError(503, "unavailable");
+}
+
+/** Throws a 429 SupportError when the window is used up (falls back to memory when Firestore is down). */
+export async function requireRateLimit(key: string, limit: number, windowMs: number) {
+    const rate = await enforceRateLimitWithFallback(key, limit, windowMs);
+    if (!rate.allowed) throw new SupportError(429, "rate_limited", { retryAfter: rate.retryAfterSeconds });
+    return rate;
+}
+
+/** Re-runs a read-check-write operation whose version precondition failed. */
+export async function withWriteRetry<T>(operation: () => Promise<T>, attempts = 3): Promise<T> {
+    for (let attempt = 1; ; attempt += 1) {
+        try {
+            return await operation();
+        } catch (error) {
+            if (error instanceof SupportError || !isWriteConflict(error)) throw error;
+            if (attempt >= attempts) throw new SupportError(409, "conflict");
+        }
+    }
+}
+
+/** A composite index that isn't deployed yet makes Firestore answer 400 FAILED_PRECONDITION. */
+export function isMissingIndex(error: unknown) {
+    return firestoreStatus(error) === 400;
+}
+
+// ---------------------------------------------------------------------------
+// Ticket documents (support_tickets/{id}, server-only)
+// ---------------------------------------------------------------------------
+
+export type TicketRecord = {
+    category?: unknown;
+    title?: unknown;
+    description?: unknown;
+    status?: unknown;
+    priority?: unknown;
+    authorEmail?: unknown;
+    authorName?: unknown;
+    authorAvatar?: unknown;
+    createdAt?: unknown;
+    updatedAt?: unknown;
+    lastMessageAt?: unknown;
+    lastMessageFrom?: unknown;
+    lastMessagePreview?: unknown;
+    messageCount?: unknown;
+    messages?: unknown;
+    unreadForUser?: unknown;
+    unreadForStaff?: unknown;
+    meta?: unknown;
+};
+
+export type StoredTicket = TicketRecord & { _id: string; _updateTime?: string };
+
+/** Fields list views read (the conversation is left out). */
+export const TICKET_LIST_FIELDS = [
+    "category", "title", "status", "priority", "authorEmail", "authorName", "authorAvatar", "createdAt", "updatedAt",
+    "lastMessageAt", "lastMessageFrom", "lastMessagePreview", "messageCount", "unreadForUser", "unreadForStaff", "meta",
+];
+
+/** 20 hex characters: unguessable, path-safe and easy to quote by its first eight. */
+export function newTicketId() {
+    return randomBytes(10).toString("hex");
+}
+
+export function ticketCategory(value: unknown): TicketCategory {
+    return isTicketCategory(value) ? value : "other";
+}
+
+export function ticketStatus(value: unknown): TicketStatus {
+    return isTicketStatus(value) ? value : "open";
+}
+
+export function ticketPriority(value: unknown): TicketPriority {
+    return isTicketPriority(value) ? value : "normal";
+}
+
+function messageFrom(value: unknown): TicketMessageFrom | null {
+    return value === "user" || value === "staff" ? value : null;
+}
+
+/** Stored messages, re-validated (oldest first, at most TICKET_LIMITS.messages). */
+export function readTicketMessages(record: TicketRecord): SupportTicketMessage[] {
+    const list = Array.isArray(record.messages) ? record.messages : [];
+    const messages: SupportTicketMessage[] = [];
+    list.forEach((value, index) => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) return;
+        const message = value as Record<string, unknown>;
+        const from = messageFrom(message.from);
+        const text = stringOr(message.text, "", TICKET_LIMITS.message);
+        if (!from || !text) return;
+        messages.push({
+            id: isDocId(message.id, 64) ? message.id : `message_${index}`,
+            from,
+            authorName: from === "staff" ? TEAM_AUTHOR_NAME : stringOr(message.authorName, "", 80),
+            text,
+            createdAt: toIso(message.createdAt),
+        });
+    });
+    return messages.slice(-TICKET_LIMITS.messages);
+}
+
+export function readTicketMeta(record: TicketRecord): SupportTicketMeta {
+    const meta = record.meta && typeof record.meta === "object" && !Array.isArray(record.meta) ? record.meta as Record<string, unknown> : {};
+    return {
+        pageUrl: normalizePageUrl(meta.pageUrl) ?? null,
+        userAgent: normalizeUserAgent(meta.userAgent),
+        severity: isTicketSeverity(meta.severity) ? meta.severity : null,
+        steps: typeof meta.steps === "string" && meta.steps ? meta.steps.slice(0, TICKET_LIMITS.steps) : null,
+    };
+}
+
+function messageCount(record: TicketRecord) {
+    const stored = Number(record.messageCount);
+    if (Number.isInteger(stored) && stored >= 0) return Math.min(stored, TICKET_LIMITS.messages);
+    return Array.isArray(record.messages) ? Math.min(record.messages.length, TICKET_LIMITS.messages) : 0;
+}
+
+export function toTicketSummary(record: StoredTicket): SupportTicketSummary {
+    const createdAt = toIso(record.createdAt);
+    return {
+        id: record._id,
+        reference: ticketReference(record._id),
+        category: ticketCategory(record.category),
+        title: stringOr(record.title, "", TICKET_LIMITS.title),
+        status: ticketStatus(record.status),
+        createdAt,
+        updatedAt: toIso(record.updatedAt) ?? createdAt,
+        lastMessageAt: toIso(record.lastMessageAt) ?? createdAt,
+        lastMessageFrom: messageFrom(record.lastMessageFrom),
+        messageCount: messageCount(record),
+        unread: record.unreadForUser === true,
+    };
+}
+
+/** What the author of the ticket may see: never the priority or staff identities. */
+export function toTicketView(record: StoredTicket): SupportTicketView {
+    return {
+        ...toTicketSummary(record),
+        description: stringOr(record.description, "", TICKET_LIMITS.description),
+        meta: readTicketMeta(record),
+        messages: readTicketMessages(record),
+    };
+}
+
+export function toAdminListItem(record: StoredTicket): AdminTicketListItem {
+    const summary = toTicketSummary(record);
+    return {
+        id: summary.id,
+        reference: summary.reference,
+        category: summary.category,
+        title: summary.title,
+        status: summary.status,
+        priority: ticketPriority(record.priority),
+        severity: readTicketMeta(record).severity,
+        authorEmail: stringOr(record.authorEmail, "", 254),
+        authorName: stringOr(record.authorName, "", 80),
+        authorAvatar: httpsUrlOrNull(record.authorAvatar),
+        createdAt: summary.createdAt,
+        updatedAt: summary.updatedAt,
+        lastMessageAt: summary.lastMessageAt,
+        lastMessageFrom: summary.lastMessageFrom,
+        lastMessagePreview: stringOr(record.lastMessagePreview, "", TICKET_LIMITS.preview + 1),
+        messageCount: summary.messageCount,
+        unreadForStaff: record.unreadForStaff === true,
+        unreadForUser: record.unreadForUser === true,
+    };
+}
+
+export function toAdminDetail(record: StoredTicket): AdminTicketDetail {
+    return {
+        ...toAdminListItem(record),
+        description: stringOr(record.description, "", TICKET_LIMITS.description),
+        meta: readTicketMeta(record),
+        messages: readTicketMessages(record),
+    };
+}
+
+/** A new conversation entry as stored (createdAt as an ISO string, like feedback comments). */
+export function newTicketMessage(from: TicketMessageFrom, authorName: string, text: string) {
+    return {
+        id: randomUUID(),
+        from,
+        authorName: from === "staff" ? TEAM_AUTHOR_NAME : authorName.slice(0, 80),
+        text,
+        createdAt: new Date().toISOString(),
+    };
+}
+
+/** Fields written together with a new message (list views read these instead of the thread). */
+export function lastMessageFields(messages: Array<{ from: TicketMessageFrom; text: string }>, now: Date) {
+    const last = messages[messages.length - 1];
+    return {
+        lastMessageAt: now,
+        lastMessageFrom: last?.from ?? null,
+        lastMessagePreview: last ? messagePreview(last.text) : "",
+        messageCount: messages.length,
+        updatedAt: now,
+    };
+}
+
+/**
+ * In-app notification for the ticket's author (NotificationCenter reads
+ * notifications/{email}/items). One item per ticket: each reply refreshes it
+ * instead of stacking up.
+ */
+export function ticketReplyNotification(email: string, ticketId: string, title: string) {
+    return {
+        type: "update" as const,
+        path: `notifications/${email}/items/ticket_${ticketId}`,
+        data: {
+            type: "ticket_reply",
+            title: "Destek talebinize yanıt geldi",
+            body: title.slice(0, 120),
+            ticketId,
+            actionUrl: `/feedback?ticket=${ticketId}`,
+            read: false,
+            createdAt: new Date(),
+        },
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Sender record ("sicil")
+// ---------------------------------------------------------------------------
+
+const RECORD_POST_LIMIT = 60;
+const REMOVAL_ACTIONS = new Set(["report.remove_content", "arcade.unpublish"]);
+const DELETION_ACTIONS = new Set(["news_comment.delete", "feedback.delete"]);
+
+type Settled<T> = { ok: true; value: T } | { ok: false };
+
+async function settle<T>(task: Promise<T>, label: string): Promise<Settled<T>> {
+    try {
+        return { ok: true, value: await task };
+    } catch (error) {
+        console.warn(`[support:record] ${label} lookup failed:`, error instanceof Error ? error.message : error);
+        return { ok: false };
+    }
+}
+
+async function securityEventsSince(email: string, since: Date) {
+    try {
+        return await runServerQuery<{ risk?: unknown; createdAt?: unknown }>({
+            collectionId: "security_events",
+            where: [
+                { field: "actor", op: "EQUAL", value: email },
+                { field: "createdAt", op: "GREATER_THAN_OR_EQUAL", value: since },
+            ],
+            // Matches the (actor ASC, createdAt DESC) index in firestore.indexes.json.
+            orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
+            select: ["risk", "createdAt"],
+            limit: 300,
+        });
+    } catch (error) {
+        if (!isMissingIndex(error)) throw error;
+        // Without the (actor, createdAt) index: equality only, filtered here.
+        const events = await runServerQuery<{ risk?: unknown; createdAt?: unknown }>({
+            collectionId: "security_events",
+            where: [{ field: "actor", op: "EQUAL", value: email }],
+            select: ["risk", "createdAt"],
+            limit: 500,
+        });
+        return events.filter((event) => (Date.parse(toIso(event.createdAt) ?? "") || 0) >= since.getTime());
+    }
+}
+
+function auditActions(field: string, value: string) {
+    return runServerQuery<{ action?: unknown }>({
+        collectionId: "admin_audit_log",
+        where: [{ field, op: "EQUAL", value }],
+        select: ["action"],
+        limit: 200,
+    }).then((entries) => entries.map((entry) => (typeof entry.action === "string" ? entry.action : "")));
+}
+
+async function reportsOnPosts(postIds: string[]) {
+    const counts = { open: 0, upheld: 0, dismissed: 0 };
+    for (let index = 0; index < postIds.length; index += 30) {
+        const reports = await runServerQuery<{ status?: unknown }>({
+            collectionId: "media_reports",
+            where: [{ field: "postId", op: "IN", value: postIds.slice(index, index + 30) }],
+            select: ["status"],
+            limit: 300,
+        });
+        for (const report of reports) {
+            if (report.status === "resolved") counts.upheld += 1;
+            else if (report.status === "dismissed") counts.dismissed += 1;
+            else counts.open += 1;
+        }
+    }
+    return counts;
+}
+
+type UserDocument = Record<string, unknown> | null;
+
+/**
+ * The sender record staff see next to a ticket: suspensions (now and
+ * before), staff removals of their content, reports against their Media
+ * posts, blocked risky code runs in the last 90 days and group bans. Every
+ * lookup is bounded; failed lookups mark the record incomplete instead of
+ * failing the request. Pass `user` when users/{email} was already read, and
+ * a `cache` to share results within one request.
+ */
+export function getUserRecord(email: string, options: { user?: UserDocument; userFailed?: boolean; cache?: Map<string, Promise<UserRecordSummary>> } = {}): Promise<UserRecordSummary> {
+    const cached = options.cache?.get(email);
+    if (cached) return cached;
+    const task = computeUserRecord(email, options.user, options.userFailed === true);
+    options.cache?.set(email, task);
+    return task;
+}
+
+async function computeUserRecord(email: string, preloaded: UserDocument | undefined, userFailed: boolean): Promise<UserRecordSummary> {
+    const since = new Date(Date.now() - RECORD_LOOKBACK_DAYS * 86_400_000);
+    const [user, posts, events, targeted, owned, authored, bans] = await Promise.all([
+        preloaded !== undefined || userFailed
+            ? Promise.resolve<Settled<UserDocument>>(userFailed ? { ok: false } : { ok: true, value: preloaded ?? null })
+            : settle(getServerDocument<Record<string, unknown>>(`users/${email}`), "user"),
+        settle(runServerQuery<{ ownerEmail?: unknown }>({
+            collectionId: "media_posts",
+            where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
+            select: ["ownerEmail"],
+            limit: RECORD_POST_LIMIT,
+        }), "media posts"),
+        settle(securityEventsSince(email, since), "security events"),
+        settle(auditActions("target", `users/${email}`), "audit (account)"),
+        settle(auditActions("details.ownerEmail", email), "audit (owned content)"),
+        settle(auditActions("details.authorEmail", email), "audit (authored content)"),
+        settle(runServerQuery({ collectionId: "group_bans", where: [{ field: "email", op: "EQUAL", value: email }], select: ["groupId"], limit: 100 }), "group bans"),
+    ]);
+    const postIds = posts.ok ? posts.value.map((post) => post._id).filter((id) => isDocId(id, 100)) : [];
+    const reports = postIds.length ? await settle(reportsOnPosts(postIds), "reports") : { ok: true as const, value: { open: 0, upheld: 0, dismissed: 0 } };
+
+    const account = user.ok ? user.value : null;
+    const suspendedNow = account?.suspended === true || account?.banned === true;
+    const suspensions = targeted.ok ? targeted.value.filter((action) => action === "user.suspend").length : 0;
+    const facts: UserRecordFacts = {
+        // An unreadable account counts as existing; `incomplete` says the rest.
+        accountExists: user.ok ? Boolean(account) : true,
+        accountAgeDays: accountAgeDays(toIso(account?.createdAt)),
+        suspendedNow,
+        previousSuspensions: Math.max(suspensions - (suspendedNow ? 1 : 0), account?.unsuspendedAt ? 1 : 0),
+        contentRemovals: owned.ok ? owned.value.filter((action) => REMOVAL_ACTIONS.has(action)).length : 0,
+        staffDeletions: authored.ok ? authored.value.filter((action) => DELETION_ACTIONS.has(action)).length : 0,
+        reportsUpheld: reports.ok ? reports.value.upheld : 0,
+        reportsOpen: reports.ok ? reports.value.open : 0,
+        reportsDismissed: reports.ok ? reports.value.dismissed : 0,
+        securityEvents: events.ok ? events.value.length : 0,
+        securityEventsCritical: events.ok ? events.value.filter((event) => event.risk === "critical").length : 0,
+        groupBans: bans.ok ? bans.value.length : 0,
+        incomplete: [user, posts, events, targeted, owned, authored, bans, reports].some((result) => !result.ok),
+    };
+    const { verdict, reasons } = evaluateUserRecord(facts);
+    return { verdict, reasons, facts, checkedAt: new Date().toISOString() };
+}

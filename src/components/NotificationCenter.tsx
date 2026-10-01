@@ -5,16 +5,18 @@ import OptimizedImage from "@/components/OptimizedImage";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Bell, BellOff, UserPlus, MessageCircle, Phone, Star, Trash2, Check, X } from "lucide-react";
+import { Bell, BellOff, UserPlus, MessageCircle, Phone, Star, Trash2, Check, X, LifeBuoy } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc, limit, type Timestamp } from "firebase/firestore";
 
 type Notification = {
     id: string;
-    type: "friend_request" | "message" | "call" | "like" | "system";
+    /** "ticket_reply": the Hanogt team answered one of the user's support tickets (written by /api/admin/tickets). */
+    type: "friend_request" | "message" | "call" | "like" | "system" | "ticket_reply";
     title: string;
     body: string;
+    ticketId?: string;
     fromEmail?: string;
     fromAvatar?: string;
     read: boolean;
@@ -25,7 +27,7 @@ type Notification = {
 export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { data: session } = useSession();
     const router = useRouter();
-    const { t } = useI18n();
+    const { t, tx } = useI18n();
     const [notifications, setNotifications] = useState<Notification[]>([]);
 
     useEffect(() => {
@@ -64,9 +66,15 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
 
     const handleClick = (notif: Notification) => {
         markAsRead(notif.id);
-        if (notif.actionUrl) router.push(notif.actionUrl);
+        // Only in-app paths: "//host" or "https://…" would leave the site.
+        if (notif.actionUrl && /^\/(?![/\\])/.test(notif.actionUrl)) router.push(notif.actionUrl);
         onClose();
     };
+
+    // Ticket replies are stored with Turkish text; the title is shown in the reader's language.
+    const titleOf = (notif: Notification) => (notif.type === "ticket_reply"
+        ? tx({ TR: "Destek talebinize yanıt geldi", EN: "The team replied to your support ticket" })
+        : notif.title);
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -74,6 +82,7 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
             case "message": return <MessageCircle className="w-4 h-4 text-green-500" />;
             case "call": return <Phone className="w-4 h-4 text-amber-500" />;
             case "like": return <Star className="w-4 h-4 text-yellow-500" />;
+            case "ticket_reply": return <LifeBuoy className="w-4 h-4 text-violet-500" />;
             default: return <Bell className="w-4 h-4 text-zinc-500" />;
         }
     };
@@ -98,13 +107,13 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
                         )}
                     </div>
                     <div className="flex items-center gap-1">
-                        <button onClick={markAllAsRead} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs text-blue-500" title={t("mark_all_read") || "Tümünü Okundu İşaretle"}>
+                        <button onClick={markAllAsRead} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs text-blue-500" title={t("mark_all_read") || "Tümünü Okundu İşaretle"} aria-label={t("mark_all_read") || "Tümünü Okundu İşaretle"}>
                             <Check className="w-4 h-4" />
                         </button>
-                        <button onClick={clearAll} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs text-red-500" title={t("clear_all") || "Tümünü Temizle"}>
+                        <button onClick={clearAll} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs text-red-500" title={t("clear_all") || "Tümünü Temizle"} aria-label={t("clear_all") || "Tümünü Temizle"}>
                             <Trash2 className="w-4 h-4" />
                         </button>
-                        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label={tx({ TR: "Kapat", EN: "Close" })}>
                             <X className="w-4 h-4" />
                         </button>
                     </div>
@@ -134,7 +143,7 @@ export default function NotificationCenter({ isOpen, onClose }: { isOpen: boolea
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <p className={`text-sm ${!notif.read ? "font-semibold" : "font-medium text-zinc-600 dark:text-zinc-400"}`}>
-                                        {notif.title}
+                                        {titleOf(notif)}
                                     </p>
                                     <p className="text-xs text-zinc-500 mt-0.5 truncate">{notif.body}</p>
                                 </div>
