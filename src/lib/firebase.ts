@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
 
 // Values pasted into hosting dashboards frequently carry trailing spaces or
 // newlines, which made the strict API-key check below fail and disabled all
@@ -33,5 +33,19 @@ const auth: Auth | null = typeof window !== "undefined" && hasFirebaseClientConf
     ? getAuth(app)
     : null;
 const storage = getStorage(app);
+
+// Local development and end-to-end tests against the Firebase Emulator Suite
+// (`firebase emulators:start`). Only loopback hosts are accepted, so a stray
+// variable can never redirect production traffic.
+const emulatorHost = env(process.env.NEXT_PUBLIC_FIREBASE_EMULATOR_HOST);
+if (emulatorHost && typeof window !== "undefined" && /^(?:127\.0\.0\.1|localhost)$/.test(emulatorHost)) {
+    const flag = window as typeof window & { __hanogtEmulators?: boolean };
+    if (!flag.__hanogtEmulators) {
+        flag.__hanogtEmulators = true;
+        connectFirestoreEmulator(db, emulatorHost, 8080);
+        connectStorageEmulator(storage, emulatorHost, 9199);
+        if (auth) connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true });
+    }
+}
 
 export { app, auth, db, storage };

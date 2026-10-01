@@ -56,7 +56,7 @@ export default function SecurityCenter() {
         };
     }, []);
 
-    const openBot = () => window.dispatchEvent(new CustomEvent("hanogt:open-security-bot"));
+    const openBot = () => window.dispatchEvent(new CustomEvent("hanogt:open-ai", { detail: { mode: "security" } }));
 
     return (
         <div className="min-h-dvh bg-zinc-50 dark:bg-zinc-950">
@@ -75,7 +75,7 @@ export default function SecurityCenter() {
                             </p>
                             <div className="mt-7 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: "180ms" }}>
                                 <a href="#tools" onClick={() => setTool("advisor")} className="inline-flex h-12 items-center gap-2 rounded-2xl bg-emerald-500 px-5 text-[15px] font-bold text-emerald-950 shadow-xl shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-400"><FlaskConical className="h-4.5 w-4.5" />{tx({ TR: "Kodumu tara", EN: "Scan my code" })}</a>
-                                <button type="button" onClick={openBot} className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-5 text-[15px] font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10"><Bot className="h-4.5 w-4.5" />{tx({ TR: "Security Bot'a sor", EN: "Ask Security Bot" })}</button>
+                                <button type="button" onClick={openBot} className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-5 text-[15px] font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10"><Bot className="h-4.5 w-4.5" />{tx({ TR: "Hanogt AI'a sor", EN: "Ask Hanogt AI" })}</button>
                             </div>
                         </div>
                         <div className="relative hidden lg:block" aria-hidden="true">
@@ -160,7 +160,7 @@ export default function SecurityCenter() {
                                 { TR: "Geri Bildirim'den \"Güvenlik\" başlığıyla bize ulaş; hesabını birlikte güvenceye alalım.", EN: "Contact us via Feedback titled \"Security\" and we'll secure the account together." },
                             ].map((step, index) => <li key={index} className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />{tx(step)}</li>)}
                         </ul>
-                        <button type="button" onClick={openBot} className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[14px] font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:-translate-y-0.5 hover:bg-emerald-500"><Bot className="h-4 w-4" />{tx({ TR: "Security Bot ile konuş", EN: "Talk to Security Bot" })}</button>
+                        <button type="button" onClick={openBot} className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[14px] font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:-translate-y-0.5 hover:bg-emerald-500"><Bot className="h-4 w-4" />{tx({ TR: "Hanogt AI ile konuş", EN: "Talk to Hanogt AI" })}</button>
                     </div>
                 </section>
             </main>

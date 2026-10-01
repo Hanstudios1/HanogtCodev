@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const highlights: LegalHighlight[] = [
     { title: "Veri satmayız", text: "Kişisel verilerinizi satmayız, kiralamayız ve reklam profili oluşturmak için kullanmayız." },
     { title: "Reklam çerezi yok", text: "Reklam veya üçüncü taraf takip çerezi kullanılmaz; yalnızca oturum için zorunlu çerezler vardır." },
-    { title: "Yerel güvenlik araçları", text: "Kod Danışmanı, parola ölçer, bağlantı kontrolü ve Security Bot analizi tarayıcınızda yapılır." },
+    { title: "Yerel güvenlik araçları", text: "Kod Danışmanı, parola ölçer, bağlantı kontrolü ve Hanogt AI Çekirdeği tarayıcınızda çalışır." },
     { title: "Kontrol sizde", text: "Hesap Ayarları'ndan verilerinizi indirebilir, hesabınızı ve ilişkili içeriklerinizi silebilirsiniz." },
 ];
 
@@ -19,7 +19,7 @@ const sections: LegalSection[] = [
         id: "scope",
         title: "Kapsam ve veri sorumlusu",
         paragraphs: [
-            "Bu politika; Hanogt Codev web sitesi, masaüstü ve mobil uygulamalarında sunulan kod editörü, Hanogt Engine oyun motoru, Hanogt Arcade, Hanogt News, Hanogt Media, gruplar ve mesajlaşma, Güvenlik Merkezi ve Security Bot hizmetlerinde kişisel verilerin nasıl işlendiğini açıklar.",
+            "Bu politika; Hanogt Codev web sitesi, masaüstü ve mobil uygulamalarında sunulan kod editörü, Hanogt Engine oyun motoru, Hanogt Arcade, Hanogt News, Hanogt Media, gruplar ve mesajlaşma, Güvenlik Merkezi, Hanogt AI ve Security Bot hizmetlerinde kişisel verilerin nasıl işlendiğini açıklar.",
             "6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında veri sorumlusu, hizmeti işleten HanStudios/Hanogt Codev işletmesidir. Ticari unvan, MERSİS/VKN, açık adres ve KEP bilgileri kesinleştirilmeden ücretli veya ticari sürüm yayımlanmaz; bu bilgiler yayımlandığında bu bölüm gecikmeksizin güncellenir.",
             "Başvurular Geri Bildirim ve SSS sayfasında \"Gizlilik/KVKK\" başlığıyla alınır. Başvuru, hesabınızla ilişkili e-posta üzerinden kimlik doğrulaması yapılarak işletilir.",
         ],
@@ -31,7 +31,7 @@ const sections: LegalSection[] = [
             "Hukuka ve dürüstlük kurallarına uygunluk: verilerinizi yalnızca açıkladığımız amaçlarla işleriz.",
             "Veri minimizasyonu: bir özellik için gerekmeyen veriyi toplamayız. Örneğin haber akışı ve yapay zeka sıralamaları giriş yapmadan kullanılabilir.",
             "Takma adlandırma: arena oylarında ve Arcade beğenilerinde e-posta adresiniz yerine tuzlanmış, geri çevrilemeyen bir kimlik saklanır.",
-            "Yerel işlem önceliği: güvenlik araçları ve Security Bot mesajları sunucuya gönderilmeden tarayıcıda işlenir.",
+            "Yerel işlem önceliği: güvenlik araçları ve Hanogt AI Çekirdeği tarayıcıda çalışır; Hanogt AI'ın dil modeline yalnızca giriş yaptığınızda ve yalnızca soru sorduğunuz anda istek gönderilir.",
             "Şeffaflık: yapılmamış bir denetimi yapılmış gibi, kurulmamış bir güvenceyi kurulmuş gibi beyan etmeyiz.",
         ],
     },
@@ -146,8 +146,23 @@ const sections: LegalSection[] = [
         title: "Güvenlik Merkezi ve Security Bot",
         paragraphs: [
             "Kod Danışmanı, Parola Laboratuvarı, Bağlantı Kontrolü ve Güvenlik Kontrol Listesi tarayıcınızda çalışır; yapıştırdığınız kod, yazdığınız parola ve kontrol ettiğiniz bağlantı sunucumuza gönderilmez. Kontrol listesi ilerlemeniz yalnızca tarayıcınızda saklanır.",
-            "Security Bot'a yazdığınız mesajlar tarayıcınızda işlenir; sohbet geçmişi yalnızca açık sekme süresince tarayıcı oturum depolamasında tutulur ve sekme kapandığında silinir. Bot, mesajınızda gizli anahtar veya jeton algılarsa sizi uyarır; bu bilgiyi hiçbir yere göndermez.",
+            "Security Bot, kod çalıştırma ve yayın isteklerini sunucuda zararlı imzalara karşı tarayan otomatik bir ön elemedir; sohbet etmez. Güvenlik soruları Hanogt AI'ın Güvenlik modunda yanıtlanır (aşağıdaki Hanogt AI bölümü).",
             "İsteğe bağlı \"Sızıntılarda ara\" özelliği k-anonimlik yöntemini kullanır: parolanızın SHA-1 özeti tarayıcınızda hesaplanır ve yalnızca ilk 5 karakteri sunucumuza, oradan da Have I Been Pwned \"Pwned Passwords\" hizmetine iletilir. Parolanız ve tam özeti hiçbir zaman ağ üzerinden gönderilmez; eşleşme tarayıcınızda yapılır. Sunucumuz bu istekler için yalnızca 10 dakikalık, bellekte tutulan bir hız sınırı sayacı kullanır.",
+        ],
+    },
+    {
+        id: "hanogt-ai",
+        title: "Hanogt AI (yapay zeka asistanı)",
+        paragraphs: [
+            "Hanogt AI iki katmanla çalışır. Hanogt AI Çekirdeği; niyet modeli, bilgi tabanı, kod örnekleri, hata açıklamaları ve hesap makinesiyle tamamen tarayıcınızda çalışır; giriş yapmadığınızda ya da dil modeline ulaşılamadığında yanıtlar buradan gelir ve mesajınız hiçbir yere gönderilmez. Model dosyası sitemizden statik olarak indirilir.",
+            "Giriş yaptığınızda sorunuz, aynı sohbetteki son en fazla 16 mesaj, seçtiğiniz mod, bulunduğunuz sayfanın yolu ve yalnızca “açık dosyayı ekle” seçeneği açıksa kod editöründe açık dosyanın içeriği (en fazla 12.000 karakter) sunucumuza gönderilir. Sunucu, Hanogt bilgi tabanından seçtiği notları ve mesajınızdaki bağlantı/kod için Hanogt güvenlik araçlarının sonuçlarını ekleyerek isteği yönetici tarafından yapılandırılan dil modeli sağlayıcısına (varsayılan olarak Groq, Inc., ABD) iletir ve yanıtı size akış hâlinde döndürür.",
+            "Sohbet içerikleri sunucularımızda saklanmaz ve model eğitmek için kullanılmaz; yalnızca kötüye kullanımı önlemek için dakikalık ve günlük istek sayaçları, e-posta adresiniz tuzlanarak özetlenmiş anahtarlarla en fazla bir gün tutulur. Dil modeli sağlayıcısının kendi saklama ve güvenlik koşulları geçerlidir. Sohbet geçmişiniz yalnızca bu tarayıcıda (yerel depolama) tutulur ve Hanogt AI sayfasından silinebilir; yanıtlara verdiğiniz beğeni/beğenmeme işaretleri de yalnızca tarayıcınızda kalır.",
+            "Hanogt AI hata yapabilir; yanıtları profesyonel, hukuki veya güvenlik danışmanlığı yerine geçmez. Mesajlarınıza parola, gizli anahtar veya başkalarına ait kişisel veri yazmayın; Hanogt AI bunları algıladığında sizi uyarır.",
+        ],
+        items: [
+            "Amaç: istediğiniz yanıtın üretilmesi (hizmetin ifası).",
+            "Hukuki sebep: sözleşmenin kurulması veya ifası (KVKK m.5/2-c); yurt dışına aktarım için aşağıdaki “Yurt dışına aktarım” bölümü.",
+            "Kapsam dışı: giriş yapmadığınızda ve Çekirdek yanıt verdiğinde hiçbir sohbet verisi aktarılmaz.",
         ],
     },
     {
@@ -173,7 +188,7 @@ const sections: LegalSection[] = [
             rows: [
                 ["Google / Firebase", "Hesap, proje, mesaj, yorum ve dosya verileri", "Veritabanı, dosya depolama ve altyapı"],
                 ["Google OAuth", "Google ile giriş seçerseniz kimlik bilgileri", "Kimlik doğrulama"],
-                ["Yapay zeka sağlayıcısı (ör. Groq)", "Yalnızca AI asistanına gönderdiğiniz istem ve kod", "Yanıt üretimi"],
+                ["Dil modeli sağlayıcısı (varsayılan: Groq, Inc.)", "Giriş yapmışken Hanogt AI'a gönderdiğiniz mesajlar, sohbet bağlamı ve isteğe bağlı olarak açık editör dosyası", "Hanogt AI yanıtlarının üretilmesi"],
                 ["İzole kod çalıştırıcısı (Wandbox, JetBrains Kotlin Playground veya yapılandırılmış özel çalıştırıcı)", "Yalnızca derlenen dillerde çalıştırmak istediğiniz kaynak kod ve program girdisi; JavaScript, TypeScript, Python, SQL ve Lua tarayıcınızda çalışır ve gönderilmez", "Kodun çalıştırılması"],
                 ["TURN/STUN işletmecisi", "WebRTC için IP ve ağ üst verisi", "Sesli arama bağlantısı"],
                 ["Have I Been Pwned", "Parola SHA-1 özetinin ilk 5 karakteri (isteğe bağlı)", "Parola sızıntı kontrolü"],
@@ -198,7 +213,7 @@ const sections: LegalSection[] = [
         table: {
             head: ["Ad", "Tür", "Amaç", "Süre"],
             rows: [
-                ["next-auth.session-token", "Zorunlu çerez", "Oturumunuzu güvenle sürdürmek", "En fazla 30 gün"],
+                ["hanogt.session-token (üretimde __Secure- önekli)", "Zorunlu çerez", "Oturumunuzu güvenle sürdürmek", "90 gün; her ziyarette yenilenir"],
                 ["next-auth.csrf-token, callback-url", "Zorunlu çerez", "Sahte istek (CSRF) koruması ve giriş sonrası yönlendirme", "Oturum"],
                 ["theme, hanogt_lang", "Yerel depolama", "Tema ve dil tercihi", "Siz silene kadar"],
                 ["hanogt_privacy_accepted, hanogt_legal_notice_version", "Yerel depolama", "Bilgilendirmenin hangi sürümünün gösterildiği", "Siz silene kadar"],
@@ -209,7 +224,8 @@ const sections: LegalSection[] = [
                 ["hanogt-engine:prefs:…", "Yerel depolama", "Oyunların PlayerPrefs kayıtları (ör. en yüksek skor)", "Siz silene kadar"],
                 ["hanogt-news:saved", "Yerel depolama", "\"Sonra oku\" listesi", "Siz silene kadar"],
                 ["hanogt-security:checklist", "Yerel depolama", "Güvenlik kontrol listesi ilerlemesi", "Siz silene kadar"],
-                ["hanogt-security-bot:chat, hanogt-engine:clipboard", "Oturum depolaması", "Bot sohbet geçmişi ve motor içi kopyala/yapıştır", "Sekme kapanınca silinir"],
+                ["hanogt-ai:conversations:v1, hanogt-ai:active:v1", "Yerel depolama", "Hanogt AI sohbet geçmişi ve açık sohbet", "Siz silene kadar (Hanogt AI sayfasından silinebilir)"],
+                ["hanogt-engine:clipboard, hanogt:editor-import:…", "Oturum depolaması", "Motor içi kopyala/yapıştır ve başka sayfadan editöre kod aktarma", "Sekme kapanınca silinir"],
             ],
         },
         note: "Firebase istemci kitaplığı gerçek zamanlı bağlantı için teknik depolama kullanabilir. Ortak kullanılan cihazlarda oturumu kapatmanızı ve yerel proje taslaklarını temizlemenizi öneririz.",

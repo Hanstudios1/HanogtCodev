@@ -58,7 +58,7 @@ const FILE_EXTENSIONS: Record<string, string> = {
     rust: "rs", kotlin: "kt", sql: "sql", lua: "lua",
 };
 
-const EXPLORE: NavItem[] = ["/news", "/arcade", "/guide", "/security"]
+const EXPLORE: NavItem[] = ["/ai", "/news", "/arcade", "/guide", "/security", "/groups"]
     .map((href) => [...PRIMARY_NAV, ...SECONDARY_NAV].find((item) => item.href === href))
     .filter((item): item is NavItem => Boolean(item));
 
@@ -498,7 +498,7 @@ export default function DashboardPage() {
                 {/* Explore */}
                 <section className="mb-10" aria-labelledby="explore-title">
                     <h2 id="explore-title" className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">{tx(NAV_LABELS.explore)}</h2>
-                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                         {EXPLORE.map((item) => {
                             const Icon = NAV_ICONS[item.icon];
                             return (
@@ -509,7 +509,7 @@ export default function DashboardPage() {
                                             {tx(item.label)}
                                             {item.live && <span className="relative flex h-2 w-2" aria-hidden><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" /></span>}
                                         </span>
-                                        <span className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{t(item.descKey)}</span>
+                                        <span className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{item.desc ? tx(item.desc) : t(item.descKey)}</span>
                                     </span>
                                 </Link>
                             );

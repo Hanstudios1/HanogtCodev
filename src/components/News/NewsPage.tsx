@@ -132,7 +132,7 @@ interface CardProps {
 }
 
 function NewsCard({ item, locale, now, isNew, comments, saved, featured = false, delay, onComments, onSave, onShare }: CardProps) {
-    const { tx } = useI18n();
+    const { tx, locale: intlLocale } = useI18n();
     const category = NEWS_CATEGORIES.find((entry) => entry.id === item.category);
     const style = CATEGORY_STYLE[item.category] ?? CATEGORY_STYLE.apps;
     const published = new Date(item.publishedAt);
@@ -162,7 +162,7 @@ function NewsCard({ item, locale, now, isNew, comments, saved, featured = false,
                 <div className="mt-auto flex items-center gap-2 pt-4 text-[12px] text-zinc-500 dark:text-zinc-400">
                     <span className="min-w-0 truncate font-bold text-zinc-700 dark:text-zinc-300">{item.source.name}</span>
                     <span aria-hidden="true">·</span>
-                    <time dateTime={item.publishedAt} title={published.toLocaleString(tx({ TR: "tr-TR", EN: "en-US" }))} suppressHydrationWarning className="shrink-0">{timeAgo(item.publishedAt, locale, now)}</time>
+                    <time dateTime={item.publishedAt} title={published.toLocaleString(intlLocale)} suppressHydrationWarning className="shrink-0">{timeAgo(item.publishedAt, locale, now)}</time>
                     <div className="relative z-10 ml-auto flex items-center gap-0.5">
                         <button type="button" onClick={() => onComments(item)} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 font-semibold transition hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-300" aria-label={tx({ TR: "Yorumlar ({count})", EN: "Comments ({count})" }, { count: comments })}>
                             <MessageCircle className="h-4 w-4" />{comments ? <span className="tabular-nums">{comments}</span> : null}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "featureVersion": 2,
+  "trainedAt": "2026-09-30",
+  "intents": 41,
+  "examples": 1528,
+  "augmentedTrainingSamples": 7640,
+  "epochs": 4,
+  "testAccuracy": 67.2,
+  "testMacroF1": 68.3,
+  "quantizedTestAccuracy": 66.4,
+  "threshold": 0.1,
+  "parameters": 78592,
+  "exportedWeights": 93542,
+  "sizeKb": 396.8
+}

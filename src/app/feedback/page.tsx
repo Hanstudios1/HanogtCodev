@@ -2,7 +2,7 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 
-import { useI18n, type Copy } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 import { useCallback, useState, useEffect } from "react";
 import { MessageSquare, HelpCircle, ThumbsUp, Send, MessageCircle, User, Edit3, Trash2, Reply, X, Check, PlusCircle, Search, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
@@ -13,6 +13,7 @@ import ProfileModal from "@/components/ProfileModal";
 import Header from "@/components/Header";
 import SiteFooter from "@/components/SiteFooter";
 import type { UserProfile } from "@/components/ProfileModal";
+import { FAQS } from "@/lib/faq";
 
 interface FeedbackItem {
     id: string;
@@ -38,22 +39,7 @@ interface Comment {
     createdAt: Date;
 }
 
-type Faq = { id: string; category: Copy; question: Copy; answer: Copy };
 
-const FAQS: Faq[] = [
-    { id: "password", category: { TR: "Hesap", EN: "Account" }, question: { TR: "Parolam nasıl korunuyor?", EN: "How is my password protected?" }, answer: { TR: "Parolanın açık hâli saklanmaz. Sunucuda benzersiz tuz ve scrypt ile tek yönlü karma üretilir; kimlik bilgileri profil verilerinden ayrı tutulur.", EN: "Your password is never stored in plain text. The server derives a one-way scrypt hash with a unique salt, and credentials are kept apart from profile data." } },
-    { id: "runner", category: { TR: "Kod", EN: "Code" }, question: { TR: "Kodum nerede çalıştırılıyor?", EN: "Where does my code run?" }, answer: { TR: "Kod yalnızca yönetici tarafından yapılandırılan izole yürütücüye gönderilir. Herkese açık Piston/Wandbox servisleri üretim yedeği olarak kullanılmaz.", EN: "Code is only sent to the isolated runner configured by the operator. Public Piston/Wandbox services are never used as a production fallback." } },
-    { id: "engine", category: { TR: "Oyun motoru", EN: "Game engine" }, question: { TR: "Oyun scriptlerim nerede çalışıyor?", EN: "Where do my game scripts run?" }, answer: { TR: "C# ve C++ scriptleri tarayıcınızdaki HanogtScript sanal makinesinde yorumlanır; eval kullanılmaz, scriptler yalnızca motor API'lerine erişebilir ve sonsuz döngüler komut bütçesiyle durdurulur.", EN: "C# and C++ scripts are interpreted by the HanogtScript virtual machine in your browser. Nothing is eval'd, scripts can only reach engine APIs, and infinite loops are stopped by an instruction budget." } },
-    { id: "arcade", category: { TR: "Arcade", EN: "Arcade" }, question: { TR: "Oyunumu Arcade'de nasıl yayınlarım?", EN: "How do I publish my game on the Arcade?" }, answer: { TR: "Motorda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar herkese açıktır ve istediğiniz zaman kaldırılabilir.", EN: "Press Publish in the engine. The game is compiled and goes through a security scan; published games are public and can be taken down any time." } },
-    { id: "news", category: { TR: "Haberler", EN: "News" }, question: { TR: "Hanogt News haberleri nereden geliyor?", EN: "Where does Hanogt News get its stories?" }, answer: { TR: "Haberler güvenilir yayıncıların herkese açık RSS/Atom akışlarından toplanır; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir. Yapay zeka sıralaması yalnızca topluluk oylarından hesaplanır.", EN: "Stories are collected from trusted publishers' public RSS/Atom feeds; only the headline, a short excerpt and a link to the source are shown. The AI leaderboard is computed from community votes only." } },
-    { id: "bot", category: { TR: "Güvenlik", EN: "Security" }, question: { TR: "Security Bot hesabımı otomatik olarak kalıcı engeller mi?", EN: "Will Security Bot ban my account automatically?" }, answer: { TR: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır.", EN: "No. A high-risk request is stopped on the spot with a minimal log entry. Permanent action is never taken from an automatic pattern match; there is a review and appeal path." } },
-    { id: "calls", category: { TR: "Aramalar", EN: "Calls" }, question: { TR: "Sesli aramalar kaydediliyor mu?", EN: "Are voice calls recorded?" }, answer: { TR: "Hayır. WebRTC arama sesi kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır.", EN: "No. WebRTC call audio is never recorded. Temporary SDP/ICE connection documents are deleted when the call ends and carry a short expiry." } },
-    { id: "voice", category: { TR: "Mesajlar", EN: "Messages" }, question: { TR: "Sesli mesajlar nasıl saklanıyor?", EN: "How are voice messages stored?" }, answer: { TR: "Sesli mesajlar Firestore içine base64 olarak yazılmaz. Yetkili sohbet katılımcılarının erişebildiği dosya depolamasında tutulur ve mesaj silinince dosyası da silinir.", EN: "Voice messages aren't written into Firestore as base64. They live in file storage that only the chat's participants can access, and the file is deleted with the message." } },
-    { id: "data", category: { TR: "Gizlilik", EN: "Privacy" }, question: { TR: "Verilerimi nasıl indirebilir veya silebilirim?", EN: "How can I download or delete my data?" }, answer: { TR: "Hesap Ayarları içindeki Veri Dışa Aktarma ve Hesabı Sil seçeneklerini kullanabilir; KVKK talebinizi bu sayfadan Gizlilik/KVKK başlığıyla iletebilirsiniz.", EN: "Use Data Export and Delete Account in Account Settings, or send a privacy (KVKK) request from this page." } },
-    { id: "turn", category: { TR: "Bağlantı", EN: "Connection" }, question: { TR: "Arama neden bazı ağlarda bağlanmıyor?", EN: "Why don't calls connect on some networks?" }, answer: { TR: "Kurumsal ağlar ve sıkı NAT yapıları TURN sunucusu gerektirebilir. Yönetici TURN yapılandırmasını tamamlamadıysa uygulama bunu arama ekranında açıkça belirtir.", EN: "Corporate networks and strict NATs may need a TURN server. If the operator hasn't configured one, the call screen says so." } },
-    { id: "files", category: { TR: "Proje", EN: "Projects" }, question: { TR: "Çoklu dosya projeleri gerçekten ayrı mı saklanıyor?", EN: "Are multi-file projects really stored as separate files?" }, answer: { TR: "Evet. Proje meta verisi ile her dosya ayrı Firestore alt belgesinde tutulur; düzenleyicideki sekmeler tek bir JSON alanına sıkıştırılmaz.", EN: "Yes. Project metadata and every file are kept in separate Firestore sub-documents; editor tabs aren't squeezed into a single JSON field." } },
-    { id: "languages", category: { TR: "Diller", EN: "Languages" }, question: { TR: "Arayüzü kendi dilimde kullanabilir miyim?", EN: "Can I use the interface in my language?" }, answer: { TR: "Evet. Üst menüdeki dil seçiciden sağdan sola Arapça dahil 30 dil arasından seçim yapabilirsiniz. Yeni bölümlerin bazı metinleri henüz yalnızca Türkçe ve İngilizcedir.", EN: "Yes. Pick one of 30 languages, including right-to-left Arabic, from the language menu at the top. Some texts in the newest sections are still Turkish and English only." } },
-];
 
 export default function FeedbackPage() {
     const { t, tx, language } = useI18n();

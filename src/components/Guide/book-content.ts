@@ -65,10 +65,10 @@ export const PAGES: BookPage[] = [
         chapter: "start",
         title: { TR: "Haritayı tanı", EN: "Know the map" },
         blocks: [
-            { type: "item", icon: "🧭", name: { TR: "Üst menü", EN: "Top menu" }, text: { TR: "Haberler, Arcade, Oyun Motoru, Media ve Kılavuz. Giriş yapınca Panel de gelir.", EN: "News, Arcade, Game Engine, Media and Guide. Dashboard appears once you sign in." } },
+            { type: "item", icon: "🧭", name: { TR: "Üst menü", EN: "Top menu" }, text: { TR: "Hanogt AI, Haberler, Arcade, Oyun Motoru, Media ve Kılavuz. Giriş yapınca Panel de gelir.", EN: "Hanogt AI, News, Arcade, Game Engine, Media and Guide. Dashboard appears once you sign in." } },
             { type: "item", icon: "✨", name: { TR: "Yenilikler", EN: "What's new" }, text: { TR: "Son güncellemelerin günlüğü.", EN: "The log of recent updates." } },
-            { type: "item", icon: "🛡️", name: { TR: "Security Bot", EN: "Security Bot" }, text: { TR: "Güvenlik ve gizlilik sorularını yanıtlayan yeşil kalkan.", EN: "The green shield that answers security and privacy questions." } },
-            { type: "item", icon: "🌐", name: { TR: "Dil ve tema", EN: "Language & theme" }, text: { TR: "Sağdan sola Arapça dahil 30 arayüz dili, açık ve koyu tema. Telefonda hepsi ☰ menüde.", EN: "30 interface languages including right-to-left Arabic, light and dark themes. On phones everything lives in the ☰ menu." } },
+            { type: "item", icon: "✨", name: { TR: "Hanogt AI", EN: "Hanogt AI" }, text: { TR: "Mor ışıltı simgesi: kod, oyun motoru, hata ayıklama, güvenlik ve site hakkında sorularını yanıtlayan yapay zeka asistanı.", EN: "The purple sparkle icon: the AI assistant that answers questions about code, the game engine, debugging, security and the site." } },
+            { type: "item", icon: "🌐", name: { TR: "Dil ve tema", EN: "Language & theme" }, text: { TR: "Sağdan sola Arapça, Farsça, İbranice ve Urduca dahil 50 arayüz dili, açık ve koyu tema. Telefonda hepsi ☰ menüde.", EN: "50 interface languages including right-to-left Arabic, Persian, Hebrew and Urdu, light and dark themes. On phones everything lives in the ☰ menu." } },
         ],
     },
 

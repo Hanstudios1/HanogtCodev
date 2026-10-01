@@ -22,6 +22,7 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
         {
             title: NAV_LABELS.explore,
             links: [
+                { href: "/ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" } },
                 { href: "/news", label: NAV_LABELS.news },
                 { href: "/arcade", label: NAV_LABELS.arcade },
                 { href: "/game-engine", label: NAV_LABELS.engine },

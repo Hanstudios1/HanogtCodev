@@ -210,7 +210,8 @@ export default function MediaPage() {
             await mutate({
                 action: "publish",
                 ...form,
-                tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+                // Latin, Arabic/Persian (،), CJK (、，) commas and semicolons all separate tags.
+                tags: form.tags.split(/[,،、，;؛]/).map((tag) => tag.trim()).filter(Boolean),
                 contribute: consent && form.contribute,
             });
             setShowPublish(false);

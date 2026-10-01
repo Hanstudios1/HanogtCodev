@@ -31,7 +31,7 @@ const sections: LegalSection[] = [
             "Google ile giriş seçildiğinde yetkilendirme sağlayıcısından.",
             "Hizmet kullanımı sırasında sunucu, güvenlik günlükleri ve hız sınırı kayıtlarından otomatik yollarla.",
             "WebRTC sesli arama sırasında geçici sinyalleşme ve ağ bağlantısı verilerinden.",
-            "Tarayıcınızda çalışan araçlar (Kod Danışmanı, parola ölçer, bağlantı kontrolü, Security Bot) verileri sunucuya göndermediğinden bu araçlar yoluyla kişisel veri toplanmaz.",
+            "Tarayıcınızda çalışan araçlar (Kod Danışmanı, parola ölçer, bağlantı kontrolü, Hanogt AI Çekirdeği) verileri sunucuya göndermediğinden bu araçlar yoluyla kişisel veri toplanmaz. Giriş yapmışken Hanogt AI'a sorduğunuz sorular ise yanıt üretilmesi amacıyla sunucumuz üzerinden dil modeli sağlayıcısına iletilir ve sunucularımızda saklanmaz (ayrıntılar Gizlilik Politikası'nın Hanogt AI bölümünde).",
         ],
     },
     {

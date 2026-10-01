@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createSign, createHash } from "node:crypto";
+import { createSign, createHash, generateKeyPairSync } from "node:crypto";
 
 type ServiceAccount = {
     client_email: string;
@@ -27,11 +27,35 @@ type FirestoreDocument = {
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
+/**
+ * Firebase Emulator Suite support for local development and end-to-end tests,
+ * following the Admin SDK's FIRESTORE_EMULATOR_HOST convention. Only loopback
+ * addresses are honored, so production can never be pointed elsewhere.
+ */
+function emulator(variable: "FIRESTORE_EMULATOR_HOST" | "FIREBASE_AUTH_EMULATOR_HOST" | "FIREBASE_STORAGE_EMULATOR_HOST") {
+    const value = process.env[variable]?.trim();
+    return value && /^(?:127\.0\.0\.1|localhost):\d{2,5}$/.test(value) ? value : null;
+}
+
+let emulatorKey: string | null = null;
+
+function emulatorServiceAccount(): ServiceAccount {
+    if (!emulatorKey) emulatorKey = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+    return {
+        client_email: "emulator@hanogt.local",
+        private_key: emulatorKey,
+        project_id: (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-hanogt").trim(),
+    };
+}
+
+const firestoreBase = () => (emulator("FIRESTORE_EMULATOR_HOST") ? `http://${emulator("FIRESTORE_EMULATOR_HOST")}/v1` : "https://firestore.googleapis.com/v1");
+
 function base64Url(value: string | Buffer) {
     return Buffer.from(value).toString("base64url");
 }
 
 function getServiceAccount(): ServiceAccount {
+    if (emulator("FIRESTORE_EMULATOR_HOST")) return emulatorServiceAccount();
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
     const encoded = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64?.trim();
     if (!raw && !encoded) {
@@ -80,6 +104,8 @@ export function isFirebaseServerConfigured() {
 }
 
 async function getAccessToken() {
+    // The emulators accept the special "owner" token, which bypasses security rules like a service account.
+    if (emulator("FIRESTORE_EMULATOR_HOST")) return "owner";
     if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
         return cachedToken.value;
     }
@@ -142,7 +168,7 @@ function encodeDocumentPath(path: string) {
 
 function documentUrl(path: string) {
     const projectId = getFirebaseProjectId();
-    return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/${encodeDocumentPath(path)}`;
+    return `${firestoreBase()}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/${encodeDocumentPath(path)}`;
 }
 
 function documentName(path: string) {
@@ -154,7 +180,7 @@ function documentName(path: string) {
 function databaseDocumentsUrl(path = "") {
     const projectId = getFirebaseProjectId();
     const suffix = path ? `/${encodeDocumentPath(path)}` : "";
-    return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents${suffix}`;
+    return `${firestoreBase()}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents${suffix}`;
 }
 
 function decodeDocument<T extends Record<string, unknown>>(document: FirestoreDocument) {
@@ -351,7 +377,7 @@ export async function commitServerPatches(writes: Array<{
     if (!writes.length) return;
     const projectId = getFirebaseProjectId();
     const response = await firestoreFetch(
-        `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:commit`,
+        `${firestoreBase()}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:commit`,
         {
             method: "POST",
             body: JSON.stringify({
@@ -407,7 +433,7 @@ export async function commitServerMutations(mutations: ServerMutation[]): Promis
         };
     });
     const response = await firestoreFetch(
-        `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:commit`,
+        `${firestoreBase()}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:commit`,
         { method: "POST", body: JSON.stringify({ writes }) },
     );
     if (!response.ok) {
@@ -434,7 +460,7 @@ export async function createServerDocument(collectionPath: string, data: Record<
     if (!collectionId) throw new Error("Geçersiz koleksiyon yolu.");
     const parent = segments.length ? `/${encodeDocumentPath(segments.join("/"))}` : "";
     const projectId = getFirebaseProjectId();
-    const url = new URL(`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents${parent}/${encodeURIComponent(collectionId)}`);
+    const url = new URL(`${firestoreBase()}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents${parent}/${encodeURIComponent(collectionId)}`);
     if (documentId) url.searchParams.set("documentId", documentId);
     const response = await firestoreFetch(url.toString(), {
         method: "POST",
@@ -468,8 +494,9 @@ export async function createFirebaseCustomToken(email: string) {
 export async function deleteFirebaseAuthUser(email: string) {
     const projectId = getFirebaseProjectId();
     const localId = createHash("sha256").update(email.toLowerCase()).digest("hex").slice(0, 64);
+    const authEmulator = emulator("FIREBASE_AUTH_EMULATOR_HOST");
     const response = await firestoreFetch(
-        `https://identitytoolkit.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/accounts:batchDelete`,
+        `${authEmulator ? `http://${authEmulator}/identitytoolkit.googleapis.com` : "https://identitytoolkit.googleapis.com"}/v1/projects/${encodeURIComponent(projectId)}/accounts:batchDelete`,
         { method: "POST", body: JSON.stringify({ localIds: [localId], force: true }) },
     );
     if (!response.ok && response.status !== 404) {
@@ -481,8 +508,9 @@ export async function deleteServerStorageObject(objectPath: string) {
     const bucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
     if (!bucket || !objectPath) return;
     assertSafePath(objectPath);
+    const storageEmulator = emulator("FIREBASE_STORAGE_EMULATOR_HOST");
     const response = await firestoreFetch(
-        `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(objectPath)}`,
+        `${storageEmulator ? `http://${storageEmulator}` : "https://storage.googleapis.com"}/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(objectPath)}`,
         { method: "DELETE" },
     );
     if (!response.ok && response.status !== 404) {

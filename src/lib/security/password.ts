@@ -48,6 +48,37 @@ function hasSequence(value: string) {
     return false;
 }
 
+/**
+ * Guesses for "word + digits + symbols" passwords (kedi123, Kedi2024!, ankara06.).
+ * Attackers try dictionary words with appended numbers long before brute force,
+ * so the character-pool estimate alone rated such passwords "very strong".
+ */
+/** "123", "987", "4567": consecutive ascending or descending digits. */
+function isDigitRun(digits: string) {
+    if (digits.length < 3) return false;
+    const steps = [...digits].slice(1).map((digit, index) => Number(digit) - Number(digits[index]));
+    return steps.every((step) => step === 1) || steps.every((step) => step === -1);
+}
+
+function patternGuessesLog10(password: string) {
+    const letters = "A-Za-zÇĞİÖŞÜçğıöşü";
+    const wordFirst = new RegExp(`^([${letters}]+)(\\d*)([^${letters}0-9]*)$`).exec(password);
+    const digitsFirst = new RegExp(`^(\\d+)([${letters}]+)([^${letters}0-9]*)$`).exec(password);
+    let word: string;
+    let digits: string;
+    let symbols: string;
+    if (wordFirst) [, word, digits, symbols] = wordFirst;
+    else if (digitsFirst) [, digits, word, symbols] = digitsFirst;
+    else return Number.POSITIVE_INFINITY;
+    // A dictionary of common words: shorter words are fewer and guessed first.
+    const dictionary = word.length <= 5 ? 4 : word.length <= 8 ? 5 : 5.7;
+    let log = Math.min(word.length * Math.log10(26), dictionary);
+    if (/[A-ZÇĞİÖŞÜ]/.test(word)) log += /^[A-ZÇĞİÖŞÜ][^A-ZÇĞİÖŞÜ]*$/.test(word) || word === word.toLocaleUpperCase("tr") ? 0.3 : 1;
+    if (digits) log += hasSequence(digits) || isDigitRun(digits) || /^(?:19|20)\d{2}$/.test(digits) || /^(\d)\1+$/.test(digits) || digits.length <= 2 ? 1.3 : digits.length;
+    if (symbols) log += symbols.length === 1 ? 1 : symbols.length * 1.5;
+    return log;
+}
+
 export function formatDuration(seconds: number, locale: "tr" | "en") {
     const tr = locale === "tr";
     if (!Number.isFinite(seconds) || seconds > 1e18) return tr ? "yüzyıllar" : "centuries";
@@ -68,7 +99,15 @@ export function checkPassword(password: string, locale: "tr" | "en" = "tr", cont
     const suggestions: Copy[] = [];
     const lower = password.toLocaleLowerCase("tr");
     const length = [...password].length;
-    let guessesLog10 = length * Math.log10(poolSize(password));
+    const bruteForceLog10 = length * Math.log10(poolSize(password));
+    // "Tr4bz0n!" is "Trabzon!" with look-alike digits; attackers try those substitutions too.
+    const unleet = password
+        .replace(/(?<=[A-Za-z])[4@](?=[A-Za-z])/g, "a").replace(/(?<=[A-Za-z])0(?=[A-Za-z])/g, "o")
+        .replace(/(?<=[A-Za-z])3(?=[A-Za-z])/g, "e").replace(/(?<=[A-Za-z])1(?=[A-Za-z])/g, "i")
+        .replace(/(?<=[A-Za-z])[5$](?=[A-Za-z])/g, "s").replace(/(?<=[A-Za-z])7(?=[A-Za-z])/g, "t");
+    const patternLog10 = Math.min(patternGuessesLog10(password), unleet !== password ? patternGuessesLog10(unleet) + 1 : Number.POSITIVE_INFINITY);
+    const patternBased = patternLog10 < bruteForceLog10;
+    let guessesLog10 = Math.min(bruteForceLog10, patternLog10);
 
     if (!password) {
         return { score: 0, guessesLog10: 0, entropyBits: 0, crackTimes: { online: formatDuration(0, locale), offlineSlow: formatDuration(0, locale), offlineFast: formatDuration(0, locale) }, warnings, suggestions };
@@ -87,11 +126,11 @@ export function checkPassword(password: string, locale: "tr" | "en" = "tr", cont
         warnings.push({ TR: "Klavye veya alfabe dizileri (qwerty, 1234, abcd) içeriyor.", EN: "Contains keyboard or alphabet sequences (qwerty, 1234, abcd)." });
     }
     if (/(19|20)\d{2}/.test(password)) {
-        guessesLog10 -= 1.5;
+        if (!patternBased) guessesLog10 -= 1.5;
         warnings.push({ TR: "Yıl gibi görünen sayılar (1998, 2024) sık tahmin edilir.", EN: "Year-like numbers (1998, 2024) are commonly guessed." });
     }
-    if (/^[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\d{1,4}[!.?]?$/.test(password)) {
-        guessesLog10 -= 2;
+    if (/^[A-Za-zÇĞİÖŞÜçğıöşü]+\d{1,4}[!.?]?$/.test(password)) {
+        if (!patternBased) guessesLog10 -= 2;
         warnings.push({ TR: "\"Kelime + sayı\" kalıbı saldırganların ilk denediği biçimdir.", EN: "The \"Word + digits\" pattern is the first one attackers try." });
     }
     for (const word of context.map((item) => item.toLocaleLowerCase("tr")).filter((item) => item.length >= 3)) {

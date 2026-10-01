@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import {
-    BookOpen, Boxes, ChevronDown, FileCode, Gamepad2, LayoutDashboard, LogOut, Menu, MessageSquare, Newspaper, Radio, Settings,
+    BookOpen, Bot, Boxes, ChevronDown, FileCode, Gamepad2, Gauge, LayoutDashboard, LogOut, Menu, MessageSquare, Newspaper, Radio, Settings,
     ShieldCheck, Sparkles, Users, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,7 +17,6 @@ import { useI18n } from "@/lib/i18n";
 import { isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
 import ChangelogModal from "./ChangelogModal";
 import LangToggle from "./LangToggle";
-import { SecurityBotChatWindow } from "./SecurityBotChat";
 import ThemeToggle from "./ThemeToggle";
 
 export const NAV_ICONS: Record<NavIcon, LucideIcon> = {
@@ -34,6 +33,8 @@ export const NAV_ICONS: Record<NavIcon, LucideIcon> = {
     about: Sparkles,
     feedback: MessageSquare,
     docs: FileCode,
+    ai: Bot,
+    admin: Gauge,
 };
 
 type UserData = { username?: string; avatarUrl?: string; isOnline?: boolean };
@@ -46,7 +47,8 @@ export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
-    const [showSecurityBot, setShowSecurityBot] = useState(false);
+    const [aiOpen, setAiOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [userData, setUserData] = useState<UserData | null>(null);
     const profileRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll();
@@ -59,12 +61,23 @@ export default function Header() {
     const sessionLoading = auth.status === "loading";
     const firebaseReady = useFirebaseBridge().ready;
 
-    // Pages can open the Security Bot (e.g. the Security Center's "Ask Security Bot" button).
+    // The global Hanogt AI dock reports whether its panel is open.
     useEffect(() => {
-        const open = () => setShowSecurityBot(true);
-        window.addEventListener("hanogt:open-security-bot", open);
-        return () => window.removeEventListener("hanogt:open-security-bot", open);
+        const onState = (event: Event) => setAiOpen(Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open));
+        window.addEventListener("hanogt:ai-state", onState);
+        return () => window.removeEventListener("hanogt:ai-state", onState);
     }, []);
+
+    // Staff see a link to the admin panel; the API answers isAdmin:false for everyone else.
+    useEffect(() => {
+        if (!signedIn) return;
+        let cancelled = false;
+        fetch("/api/admin/me", { cache: "no-store" })
+            .then((response) => (response.ok ? response.json() as Promise<{ isAdmin?: boolean }> : null))
+            .then((data) => { if (!cancelled) setIsAdmin(Boolean(data?.isAdmin)); })
+            .catch(() => undefined);
+        return () => { cancelled = true; };
+    }, [signedIn]);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
@@ -171,14 +184,14 @@ export default function Header() {
                         </button>
                         <button
                             type="button"
-                            onClick={() => setShowSecurityBot((value) => !value)}
-                            className={`relative grid h-9 w-9 place-items-center rounded-xl transition ${showSecurityBot ? "bg-emerald-500/15 ring-2 ring-emerald-500/40" : "hover:bg-zinc-900/5 dark:hover:bg-white/10"}`}
-                            title="Hanogt Security Bot"
-                            aria-label="Hanogt Security Bot"
-                            aria-pressed={showSecurityBot}
+                            onClick={() => window.dispatchEvent(new Event("hanogt:toggle-ai"))}
+                            className={`relative grid h-9 w-9 place-items-center rounded-xl transition ${aiOpen ? "bg-violet-500/15 ring-2 ring-violet-500/40" : "hover:bg-zinc-900/5 dark:hover:bg-white/10"}`}
+                            title="Hanogt AI"
+                            aria-label="Hanogt AI"
+                            aria-pressed={aiOpen}
                         >
-                            <OptimizedImage src="/hanogt-bot-logo.png" alt="" className="h-6 w-6 rounded-full object-cover" />
-                            <span className="absolute bottom-1.5 end-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-950" />
+                            <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-sm"><Sparkles className="h-3.5 w-3.5" /></span>
+                            <span className="absolute bottom-1 end-1 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-950" />
                         </button>
                         <div className="hidden sm:block"><LangToggle compact /></div>
                         <ThemeToggle />
@@ -224,6 +237,11 @@ export default function Header() {
                                                         </Link>
                                                     );
                                                 })}
+                                                {isAdmin ? (
+                                                    <Link role="menuitem" href="/admin" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10">
+                                                        <Gauge className="h-4.5 w-4.5" />{tx({ TR: "Yönetici Paneli", EN: "Admin Panel" })}
+                                                    </Link>
+                                                ) : null}
                                                 <Link role="menuitem" href="/account-settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
                                                     <Settings className="h-4.5 w-4.5 text-zinc-400" />{t("account_settings") || "Hesap Ayarları"}
                                                 </Link>
@@ -291,7 +309,7 @@ export default function Header() {
                                                     {item.live ? <span className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-red-600 dark:text-red-400">{tx(NAV_LABELS.live)}</span> : null}
                                                 </span>
                                                 <span className="text-[15px] font-bold text-zinc-900 dark:text-white">{tx(item.label)}</span>
-                                                <span className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{t(item.descKey)}</span>
+                                                <span className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{item.desc ? tx(item.desc) : t(item.descKey)}</span>
                                             </Link>
                                         </motion.div>
                                     );
@@ -326,7 +344,6 @@ export default function Header() {
             </AnimatePresence>
 
             <ChangelogModal isOpen={showChangelog} onClose={() => setShowChangelog(false)} />
-            {showSecurityBot ? <SecurityBotChatWindow onClose={() => setShowSecurityBot(false)} /> : null}
         </>
     );
 }

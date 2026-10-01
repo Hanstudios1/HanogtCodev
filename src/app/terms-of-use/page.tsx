@@ -19,7 +19,7 @@ const sections: LegalSection[] = [
         id: "contract",
         title: "Sözleşmenin kapsamı ve kabul",
         paragraphs: [
-            "Bu şartlar; Hanogt Codev web sitesi, masaüstü ve mobil uygulamaları ile kod editörü, Hanogt Engine, Hanogt Arcade, Hanogt News, Hanogt Media, gruplar, mesajlaşma, Güvenlik Merkezi ve Security Bot hizmetlerinin kullanımını düzenler. Hesap açarak veya hizmeti kullanarak şartların o tarihteki sürümünü kabul edersiniz.",
+            "Bu şartlar; Hanogt Codev web sitesi, masaüstü ve mobil uygulamaları ile kod editörü, Hanogt Engine, Hanogt Arcade, Hanogt News, Hanogt Media, gruplar, mesajlaşma, Güvenlik Merkezi, Hanogt AI ve Security Bot hizmetlerinin kullanımını düzenler. Hesap açarak veya hizmeti kullanarak şartların o tarihteki sürümünü kabul edersiniz.",
             "Hizmeti kullanmak için en az 13 yaşında olmanız gerekir. Reşit olmayan kullanıcılar için uygulanabilir hukuk uyarınca veli veya vasi onayı gerekebilir.",
             "İşletmecinin kesin ticari unvanı, adresi, MERSİS/VKN ve iletişim kanalı üretim öncesinde yayımlanır. Ücretli hizmet başlatılırsa mesafeli sözleşme ön bilgilendirmesi, fiyat, cayma hakkı ve dijital içerik istisnaları ayrıca sunulur.",
         ],
@@ -148,6 +148,7 @@ const sections: LegalSection[] = [
         paragraphs: [
             "Hizmet \"olduğu gibi\" sunulsa da 6098 sayılı Türk Borçlar Kanunu ve diğer emredici hükümler uyarınca tüketici hukuku, ayıplı hizmet, kişisel veri ve kast/ağır kusurdan doğan sorumluluk bu şartlarla kaldırılamaz. Kod çıktılarını üretim ortamında kullanmadan önce test etmek ve yedek almak sizin sorumluluğunuzdadır.",
             "Güvenlik Merkezi araçları ve Security Bot bilgilendirme amaçlıdır; bir kodun, parolanın veya bağlantının kesin olarak güvenli olduğunu garanti etmez.",
+            "Hanogt AI'ın yanıtları yapay zeka tarafından üretilir ve hatalı, eksik veya güncel olmayan bilgi içerebilir; profesyonel danışmanlık yerine geçmez. Ürettiği kodu çalıştırmadan veya yayımlamadan önce kontrol etmek sizin sorumluluğunuzdadır. Hanogt AI'ı zararlı yazılım, kimlik avı, başkalarının sistemlerine izinsiz erişim veya kişilere zarar verecek içerik üretmek için kullanamazsınız.",
             "Ücretli sürüm sunulursa 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği kapsamındaki bilgiler siparişten önce gösterilir. Ticari elektronik ileti gönderilirse 6563 sayılı Kanun kapsamındaki onay ve ret süreçleri işletilir.",
         ],
     },

@@ -1,10 +1,19 @@
 /** Version metadata shared by the legal pages and the in-app notice. */
-export const LEGAL_VERSION = "3.0";
-export const LEGAL_EFFECTIVE_DATE = "27 Eylül 2026";
+export const LEGAL_VERSION = "3.1";
+export const LEGAL_EFFECTIVE_DATE = "1 Ekim 2026";
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "3.0-2026-09-27";
+export const LEGAL_NOTICE_ID = "3.1-2026-10-01";
 
 export const LEGAL_CHANGES: Array<{ version: string; date: string; items: string[] }> = [
+    {
+        version: "3.1",
+        date: "1 Ekim 2026",
+        items: [
+            "Hanogt AI: tarayıcıda çalışan Çekirdek ile giriş yapınca kullanılan dil modelinin hangi verileri, hangi sağlayıcıya, ne amaçla ilettiği ve sohbet geçmişinin yalnızca tarayıcıda saklandığı açıklandı.",
+            "Security Bot'un sohbet etmeyen, sunucu tarafı bir ön eleme olduğu netleştirildi.",
+            "Oturum çerezinin adı ve süresi (90 gün, her ziyarette yenilenir) güncellendi; tarayıcı depolama tablosuna Hanogt AI anahtarları eklendi.",
+        ],
+    },
     {
         version: "3.0",
         date: "27 Eylül 2026",
