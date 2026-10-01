@@ -22,6 +22,11 @@ const eslintConfig = defineConfig([
     "ios/App/App/public/**",
     "dist-electron/**",
     "next-env.d.ts",
+    // Vendored bundles copied in by `prepare:assets` (gitignored, not our source):
+    // Monaco, the game player/engine and the browser code-runner runtimes.
+    "public/monaco/**",
+    "public/engine/**",
+    "public/runtimes/**",
   ]),
 ]);
 
