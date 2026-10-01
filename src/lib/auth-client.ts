@@ -1,3 +1,5 @@
+import { sanitizeTicketText } from "@/lib/support";
+
 /** Only same-origin relative paths are accepted as post-login destinations. */
 export function safeCallbackPath(value: string | null) {
     // Browsers drop tabs/newlines and treat "\\" like "/", so "/\t//evil.com"
@@ -9,6 +11,30 @@ export function safeCallbackPath(value: string | null) {
 
 /** Error code used when the auth endpoints cannot be reached at all. */
 export const AUTH_NETWORK_ERROR = "Network";
+
+/**
+ * Sign-in error of a suspended account. Only after the password (and second
+ * factor) or Google proved ownership does it carry an appeal token:
+ * "AccountSuspended:<token>" from the credentials sign-in, or
+ * "?error=AccountSuspended&appeal=<token>" after Google.
+ */
+export const ACCOUNT_SUSPENDED = "AccountSuspended";
+
+/** Loose shape check only; /api/support/appeal verifies the signature. */
+function isAppealTokenShape(value: string | null | undefined): value is string {
+    return typeof value === "string" && value.length <= 512 && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(value);
+}
+
+/** Splits a sign-in error into its code and, for a verified suspended account, the appeal token. */
+export function readAuthError(error: string | null, appeal: string | null = null): { code: string | null; appealToken: string | null } {
+    if (!error) return { code: null, appealToken: null };
+    if (error.startsWith(`${ACCOUNT_SUSPENDED}:`)) {
+        const token = error.slice(ACCOUNT_SUSPENDED.length + 1);
+        return { code: ACCOUNT_SUSPENDED, appealToken: isAppealTokenShape(token) ? token : null };
+    }
+    if (error === ACCOUNT_SUSPENDED) return { code: ACCOUNT_SUSPENDED, appealToken: isAppealTokenShape(appeal) ? appeal : null };
+    return { code: error, appealToken: null };
+}
 
 /** Cookie that binds a cross-domain session hand-off to the browser that started it. */
 export const AUTH_HANDOFF_COOKIE = "hanogt.handoff";
@@ -91,7 +117,10 @@ async function postAuthForm(path: string, fields: Record<string, string>): Promi
             const target = new URL(url, window.location.origin);
             // A stale CSRF cookie makes NextAuth bounce back to its sign-in page; a fresh token fixes it.
             if (target.searchParams.get("csrf") === "true") throw new Error("csrf rejected");
-            return { url, error: target.searchParams.get("error") };
+            const error = target.searchParams.get("error");
+            const appeal = target.searchParams.get("appeal");
+            // The sign-in callback reports a suspension as "?error=AccountSuspended&appeal=<token>".
+            return { url, error: error === ACCOUNT_SUSPENDED && appeal ? `${error}:${appeal}` : error };
         } catch (error) {
             lastError = error;
             if (attempt === 0) await wait(700);
@@ -152,4 +181,64 @@ export async function startGoogleSignIn(callbackUrl: string, { canonicalHop = fa
  */
 export function completeSignIn(callbackPath: string) {
     window.location.assign(callbackPath);
+}
+
+// ---------------------------------------------------------------------------
+// Suspension appeals (/api/support/appeal), sent from /login with the token above
+// ---------------------------------------------------------------------------
+
+/** Length of the appeal text after normalising (trimmed, as stored). */
+export const APPEAL_LIMITS = { messageMin: 20, message: 3_000 } as const;
+
+export type AppealErrorCode =
+    | "bad_origin"
+    | "rate_limited"
+    | "invalid_body"
+    | "invalid_token"
+    | "message_required"
+    | "message_too_short"
+    | "message_too_long"
+    | "unavailable";
+
+const APPEAL_ERROR_CODES: readonly AppealErrorCode[] = [
+    "bad_origin", "rate_limited", "invalid_body", "invalid_token", "message_required", "message_too_short", "message_too_long", "unavailable",
+];
+
+/** The text as it will be stored: support-ticket normalisation (NFC, unsafe characters removed, trimmed). */
+export function normalizeAppealMessage(value: string) {
+    return sanitizeTicketText(value, true);
+}
+
+/** Shared by the form (counter, submit button) and the route, so both count the same characters. */
+export function validateAppealMessage(value: unknown): { ok: true; text: string } | { ok: false; code: Extract<AppealErrorCode, "invalid_body" | "message_required" | "message_too_short" | "message_too_long"> } {
+    if (value !== undefined && value !== null && typeof value !== "string") return { ok: false, code: "invalid_body" };
+    const text = typeof value === "string" ? normalizeAppealMessage(value) : "";
+    if (!text) return { ok: false, code: "message_required" };
+    if (text.length < APPEAL_LIMITS.messageMin) return { ok: false, code: "message_too_short" };
+    if (text.length > APPEAL_LIMITS.message) return { ok: false, code: "message_too_long" };
+    return { ok: true, text };
+}
+
+export type AppealFailure = { code: AppealErrorCode | typeof AUTH_NETWORK_ERROR | "unknown"; retryAfter: number | null };
+export type AppealResult = { ok: true } | ({ ok: false } & AppealFailure);
+
+/** Files the appeal; the server only ever answers "received" or an error code. */
+export async function submitSuspensionAppeal(token: string, message: string): Promise<AppealResult> {
+    let response: Response;
+    try {
+        response = await fetch("/api/support/appeal", {
+            method: "POST",
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, message }),
+        });
+    } catch {
+        return { ok: false, code: AUTH_NETWORK_ERROR, retryAfter: null };
+    }
+    if (response.ok) return { ok: true };
+    const data = await response.json().catch(() => ({})) as { code?: unknown; retryAfter?: unknown };
+    const code = APPEAL_ERROR_CODES.find((known) => known === data.code) ?? "unknown";
+    const retryAfter = typeof data.retryAfter === "number" && data.retryAfter > 0 ? data.retryAfter : Number(response.headers.get("Retry-After")) || null;
+    return { ok: false, code, retryAfter };
 }

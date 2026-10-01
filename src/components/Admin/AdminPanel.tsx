@@ -1,18 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LayoutDashboard, Megaphone, MessageSquareText, ScrollText, ShieldAlert, ShieldCheck, Siren, Users, type LucideIcon } from "lucide-react";
+import { Cloud, LayoutDashboard, LifeBuoy, Megaphone, MessageSquareText, ScrollText, ShieldAlert, ShieldCheck, Siren, Users, type LucideIcon } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import Header from "@/components/Header";
 import { useI18n, type Copy } from "@/lib/i18n";
 import AnnouncementsSection from "./AnnouncementsSection";
 import AuditLogSection from "./AuditLogSection";
+import CloudHealthSection from "./CloudHealthSection";
 import { ROLE_DESCRIPTION_COPY } from "./copy";
 import FeedbackSection from "./FeedbackSection";
 import { formatNumber, useAdminResource } from "./hooks";
 import ModerationSection from "./ModerationSection";
 import OverviewSection from "./OverviewSection";
 import SecurityEventsSection from "./SecurityEventsSection";
+import TicketsSection from "./TicketsSection";
 import type { AdminIdentity, AdminPermissions, AdminSectionId, AdminStatsResponse, StatKey } from "./types";
 import { FOCUS_RING, ToastProvider, cx } from "./ui";
 import UsersSection, { RoleBadge } from "./UsersSection";
@@ -31,9 +33,11 @@ const SECTIONS: SectionDefinition[] = [
     { id: "overview", icon: LayoutDashboard, label: { TR: "Genel Bakış", EN: "Overview" }, hint: { TR: "Sayılar ve son hareketler", EN: "Numbers and recent activity" }, permission: "viewStats" },
     { id: "users", icon: Users, label: { TR: "Kullanıcılar", EN: "Users" }, hint: { TR: "Arama, askıya alma, roller", EN: "Search, suspensions, roles" }, permission: "manageUsers" },
     { id: "moderation", icon: ShieldAlert, label: { TR: "Moderasyon", EN: "Moderation" }, hint: { TR: "Bildirimler, yorumlar, Arcade", EN: "Reports, comments, Arcade" }, permission: "moderate", badge: "reportsOpen" },
+    { id: "tickets", icon: LifeBuoy, label: { TR: "Destek Talepleri", EN: "Support Tickets" }, hint: { TR: "Sorular, hata ve güvenlik bildirimleri", EN: "Questions, bug and security reports" }, permission: "tickets", badge: "ticketsOpen" },
     { id: "feedback", icon: MessageSquareText, label: { TR: "Geri Bildirim", EN: "Feedback" }, hint: { TR: "Gelen kutusu ve yanıtlar", EN: "Inbox and replies" }, permission: "feedback", badge: "feedbackOpen" },
     { id: "announcements", icon: Megaphone, label: { TR: "Duyurular", EN: "Announcements" }, hint: { TR: "Site geneli bildirim çubuğu", EN: "Site-wide notice bar" }, permission: "manageAnnouncements" },
     { id: "security", icon: Siren, label: { TR: "Güvenlik Olayları", EN: "Security Events" }, hint: { TR: "Engellenen riskli istekler", EN: "Blocked risky requests" }, permission: "viewSecurityEvents" },
+    { id: "cloud", icon: Cloud, label: { TR: "Bulut Sağlığı", EN: "Cloud Health" }, hint: { TR: "Firebase bağlantısı ve kurallar", EN: "Firebase connection and rules" }, permission: "cloudHealth" },
     { id: "audit", icon: ScrollText, label: { TR: "Denetim Kaydı", EN: "Audit Log" }, hint: { TR: "Ekip işlemlerinin kaydı", EN: "Record of staff actions" }, permission: "viewAuditLog" },
 ];
 
@@ -51,6 +55,16 @@ function serverHash() {
     return "";
 }
 
+/**
+ * The section id and its parameters: "users?q=a%40b.com" opens Users with
+ * that search (the ticket sender card links there).
+ */
+function parseHash(hash: string) {
+    const index = hash.indexOf("?");
+    if (index === -1) return { id: hash, params: new URLSearchParams() };
+    return { id: hash.slice(0, index), params: new URLSearchParams(hash.slice(index + 1)) };
+}
+
 /** Assigning the hash adds a history entry and notifies the subscription above. */
 function navigate(id: AdminSectionId) {
     if (window.location.hash.slice(1) !== id) window.location.hash = id;
@@ -60,8 +74,10 @@ function navigate(id: AdminSectionId) {
 export default function AdminPanel({ me }: { me: AdminIdentity }) {
     const { tx, locale } = useI18n();
     const hash = useSyncExternalStore(subscribeHash, hashSnapshot, serverHash);
+    const { id: hashSection, params: hashParams } = parseHash(hash);
     const sections = SECTIONS.filter((section) => me.permissions[section.permission]);
-    const active: AdminSectionId = sections.find((section) => section.id === hash)?.id ?? "overview";
+    const active: AdminSectionId = sections.find((section) => section.id === hashSection)?.id ?? "overview";
+    const usersQuery = active === "users" ? hashParams.get("q") ?? "" : "";
     const stats = useAdminResource<AdminStatsResponse>("/api/admin/stats");
 
     const badgeFor = (section: SectionDefinition) => {
@@ -162,15 +178,20 @@ export default function AdminPanel({ me }: { me: AdminIdentity }) {
                             {active === "overview" ? (
                                 <OverviewSection stats={stats} permissions={me.permissions} onNavigate={navigate} />
                             ) : active === "users" ? (
-                                <UsersSection selfEmail={me.email} />
+                                // A new search in the address starts the section afresh with it.
+                                <UsersSection key={usersQuery} selfEmail={me.email} initialQuery={usersQuery} />
                             ) : active === "moderation" ? (
                                 <ModerationSection />
+                            ) : active === "tickets" ? (
+                                <TicketsSection />
                             ) : active === "feedback" ? (
                                 <FeedbackSection />
                             ) : active === "announcements" ? (
                                 <AnnouncementsSection />
                             ) : active === "security" ? (
                                 <SecurityEventsSection />
+                            ) : active === "cloud" ? (
+                                <CloudHealthSection />
                             ) : (
                                 <AuditLogSection />
                             )}

@@ -1,5 +1,7 @@
 import { createEngineId } from "./ids";
 import type {
+    AnimationClip,
+    AnimationComponent,
     AudioSourceComponent,
     CameraComponent,
     ColliderComponent,
@@ -13,7 +15,12 @@ import type {
     RigidBodyComponent,
     ScriptComponent,
     SpriteRendererComponent,
+    TileDefinition,
+    TilemapComponent,
     TransformComponent,
+    UIButtonComponent,
+    UIPanelComponent,
+    UIProgressBarComponent,
     UITextComponent,
 } from "./types";
 
@@ -42,6 +49,8 @@ export function createSpriteRenderer(overrides: Overrides<SpriteRendererComponen
         sortingLayer: overrides.sortingLayer ?? 0,
         flipX: overrides.flipX ?? false,
         flipY: overrides.flipY ?? false,
+        sheet: { columns: 1, rows: 1, ...overrides.sheet },
+        frame: overrides.frame ?? 0,
     };
 }
 
@@ -193,6 +202,110 @@ export function createUIText(overrides: Overrides<UITextComponent> = {}): UIText
         offset: { x: 24, y: 24, ...overrides.offset },
         bold: overrides.bold ?? true,
         shadow: overrides.shadow ?? true,
+        order: overrides.order ?? 0,
+    };
+}
+
+export function createUIButton(overrides: Overrides<UIButtonComponent> = {}): UIButtonComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "uiButton",
+        enabled: overrides.enabled ?? true,
+        text: overrides.text ?? "Buton",
+        fontSize: overrides.fontSize ?? 22,
+        textColor: overrides.textColor ?? "#ffffff",
+        color: overrides.color ?? "#6366f1",
+        cornerRadius: overrides.cornerRadius ?? 14,
+        anchor: overrides.anchor ?? "center",
+        offset: { x: 0, y: 0, ...overrides.offset },
+        width: overrides.width ?? 200,
+        height: overrides.height ?? 56,
+        order: overrides.order ?? 10,
+        interactable: overrides.interactable ?? true,
+        onClick: { targetId: null, method: "", ...overrides.onClick },
+        hotkey: overrides.hotkey ?? "None",
+    };
+}
+
+export function createUIPanel(overrides: Overrides<UIPanelComponent> = {}): UIPanelComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "uiPanel",
+        enabled: overrides.enabled ?? true,
+        color: overrides.color ?? "#0f172a",
+        opacity: overrides.opacity ?? 0.85,
+        textureId: overrides.textureId ?? null,
+        cornerRadius: overrides.cornerRadius ?? 18,
+        anchor: overrides.anchor ?? "center",
+        offset: { x: 0, y: 0, ...overrides.offset },
+        width: overrides.width ?? 360,
+        height: overrides.height ?? 240,
+        order: overrides.order ?? -10,
+        fullScreen: overrides.fullScreen ?? false,
+        blocksClicks: overrides.blocksClicks ?? true,
+    };
+}
+
+export function createUIProgressBar(overrides: Overrides<UIProgressBarComponent> = {}): UIProgressBarComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "uiProgressBar",
+        enabled: overrides.enabled ?? true,
+        value: overrides.value ?? 0.6,
+        min: overrides.min ?? 0,
+        max: overrides.max ?? 1,
+        fillColor: overrides.fillColor ?? "#22c55e",
+        backgroundColor: overrides.backgroundColor ?? "#1e293b",
+        cornerRadius: overrides.cornerRadius ?? 8,
+        direction: overrides.direction ?? "leftToRight",
+        showLabel: overrides.showLabel ?? false,
+        anchor: overrides.anchor ?? "top",
+        offset: { x: 0, y: 24, ...overrides.offset },
+        width: overrides.width ?? 260,
+        height: overrides.height ?? 22,
+        order: overrides.order ?? 0,
+    };
+}
+
+/** Starter palette of a new tilemap. */
+export function defaultTilePalette(): TileDefinition[] {
+    return [
+        { key: "#", name: "Çimen", color: "#22c55e", solid: true, frame: -1 },
+        { key: "=", name: "Toprak", color: "#a16207", solid: true, frame: -1 },
+        { key: "@", name: "Taş", color: "#64748b", solid: true, frame: -1 },
+        { key: "B", name: "Tuğla", color: "#c2410c", solid: true, frame: -1 },
+        { key: "~", name: "Su", color: "#38bdf8", solid: false, frame: -1 },
+        { key: "*", name: "Süs", color: "#facc15", solid: false, frame: -1 },
+    ];
+}
+
+export function createTilemap(overrides: Overrides<TilemapComponent> = {}): TilemapComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "tilemap",
+        enabled: overrides.enabled ?? true,
+        cellSize: overrides.cellSize ?? 1,
+        origin: { x: 0, y: 0, ...overrides.origin },
+        rows: overrides.rows ? [...overrides.rows] : [],
+        palette: overrides.palette ? overrides.palette.map((tile) => ({ ...tile })) : defaultTilePalette(),
+        atlas: { textureId: null, columns: 1, rows: 1, ...overrides.atlas },
+        sortingLayer: overrides.sortingLayer ?? 0,
+        isTrigger: overrides.isTrigger ?? false,
+        friction: overrides.friction ?? 0.4,
+        bounciness: overrides.bounciness ?? 0,
+    };
+}
+
+export function createAnimation(overrides: Overrides<AnimationComponent> = {}): AnimationComponent {
+    const clips: AnimationClip[] = overrides.clips ? JSON.parse(JSON.stringify(overrides.clips)) as AnimationClip[] : [];
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "animation",
+        enabled: overrides.enabled ?? true,
+        clips,
+        defaultClip: overrides.defaultClip !== undefined ? overrides.defaultClip : clips[0]?.name ?? null,
+        playOnStart: overrides.playOnStart ?? true,
+        speed: overrides.speed ?? 1,
     };
 }
 
@@ -208,6 +321,11 @@ export function createComponentOfType(type: Exclude<ComponentType, "script" | "t
         case "particleSystem": return createParticleSystem();
         case "audioSource": return createAudioSource();
         case "uiText": return createUIText();
+        case "uiButton": return createUIButton();
+        case "uiPanel": return createUIPanel();
+        case "uiProgressBar": return createUIProgressBar();
+        case "tilemap": return createTilemap();
+        case "animation": return createAnimation();
     }
 }
 
@@ -223,4 +341,9 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
     particleSystem: "Particle System",
     audioSource: "Audio Source",
     uiText: "UI Text",
+    uiButton: "UI Button",
+    uiPanel: "UI Panel",
+    uiProgressBar: "UI Progress Bar",
+    tilemap: "Tilemap",
+    animation: "Animation",
 };

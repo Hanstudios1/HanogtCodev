@@ -70,7 +70,10 @@ const MAX_DEPTH = 200;
 class Scope {
     readonly vars = new Map<string, VMValue>();
     refNames: Set<string> | null = null;
-    constructor(readonly parent: Scope | null) {}
+    readonly parent: Scope | null;
+    constructor(parent: Scope | null) {
+        this.parent = parent;
+    }
 }
 
 interface Frame {
@@ -108,7 +111,11 @@ export class Interpreter {
     private readonly stdlib: Map<string, VMValue>;
     private globalsInitialised = false;
 
-    constructor(readonly program: CompiledProgram, readonly host: ScriptHost) {
+    readonly program: CompiledProgram;
+    readonly host: ScriptHost;
+    constructor(program: CompiledProgram, host: ScriptHost) {
+        this.program = program;
+        this.host = host;
         this.stdlib = createStdlib(this);
     }
 
@@ -540,7 +547,7 @@ export class Interpreter {
         }
     }
 
-    private declare(frame: Frame, name: string, value: VMValue) {
+    private declareLocal(frame: Frame, name: string, value: VMValue) {
         frame.scope.vars.set(name, value);
     }
 
@@ -562,7 +569,7 @@ export class Interpreter {
                     } else {
                         value = defaultForTypeName(typeName, frame.dialect, this.program, declaration.typeRef);
                     }
-                    this.declare(frame, declaration.name, value);
+                    this.declareLocal(frame, declaration.name, value);
                 }
                 return NORMAL;
             case "ExprStmt":
@@ -673,7 +680,7 @@ export class Interpreter {
             const saved = frame.scope;
             frame.scope = new Scope(saved);
             try {
-                if (stmt.param) this.declare(frame, stmt.param, new VMException(error.exceptionType, error.message));
+                if (stmt.param) this.declareLocal(frame, stmt.param, new VMException(error.exceptionType, error.message));
                 completion = this.execBlock(stmt.handler.body, frame, false);
             } finally {
                 frame.scope = saved;
@@ -701,13 +708,13 @@ export class Interpreter {
     private bindForEach(name: string, bindings: string[] | undefined, typeRef: TypeRef | null, item: VMValue, frame: Frame) {
         if (bindings && bindings.length >= 2) {
             if (item instanceof VMPair) {
-                this.declare(frame, bindings[0], item.key);
-                this.declare(frame, bindings[1], item.value);
+                this.declareLocal(frame, bindings[0], item.key);
+                this.declareLocal(frame, bindings[1], item.value);
                 return;
             }
         }
         const typeName = typeRef?.name ?? "var";
-        this.declare(frame, name, typeName === "var" ? copyStruct(item) : this.coerce(copyStruct(item), typeName, typeRef ?? undefined));
+        this.declareLocal(frame, name, typeName === "var" ? copyStruct(item) : this.coerce(copyStruct(item), typeName, typeRef ?? undefined));
     }
 
     iterate(value: VMValue, node: { line: number; col: number }, frame: Frame | null): VMValue[] {
@@ -929,7 +936,7 @@ export class Interpreter {
                 if (expr.nullCheck) result = value === null || value === undefined || (isHostObject(value) && value.isAlive !== undefined && !value.isAlive());
                 else result = this.isType(value, expr.typeRef!);
                 if (expr.negate) result = !result;
-                if (expr.declName && result) this.declare(frame, expr.declName, value);
+                if (expr.declName && result) this.declareLocal(frame, expr.declName, value);
                 return result;
             }
             case "As": {
@@ -1515,7 +1522,7 @@ export class Interpreter {
         const refs: Array<VMRef | null> = [];
         for (const arg of args) {
             if (arg.modifier === "ref" || arg.modifier === "out") {
-                if (arg.declare) this.declare(frame, arg.declare.name, arg.declare.typeRef ? defaultForTypeName(arg.declare.typeRef.name, frame.dialect, this.program) : null);
+                if (arg.declare) this.declareLocal(frame, arg.declare.name, arg.declare.typeRef ? defaultForTypeName(arg.declare.typeRef.name, frame.dialect, this.program) : null);
                 const target = this.lvalue(arg.expr, frame);
                 const ref = new VMRef(target.get, target.set);
                 values.push(ref);

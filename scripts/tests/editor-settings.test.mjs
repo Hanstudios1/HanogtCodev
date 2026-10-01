@@ -4,7 +4,10 @@ import test from "node:test";
 import { load } from "./setup.mjs";
 
 const settings = await load("lib/editor-settings.ts");
-const { sanitizeEditorSettings, parseEditorSettingsFile, serializeEditorSettings, DEFAULT_EDITOR_SETTINGS, toMonacoOptions, resolveEditorTheme, EDITOR_THEMES } = settings;
+const {
+    sanitizeEditorSettings, parseEditorSettingsFile, serializeEditorSettings, DEFAULT_EDITOR_SETTINGS, toMonacoOptions, resolveEditorTheme, EDITOR_THEMES,
+    EDITOR_SETTING_KEYS, changedEditorSettingKeys, editorSettingsEqual, parseAccountEditorSettings, compareEditorSettingsCopies,
+} = settings;
 
 test("defaults are already valid", () => {
     assert.deepEqual(sanitizeEditorSettings(DEFAULT_EDITOR_SETTINGS), { ...DEFAULT_EDITOR_SETTINGS });
@@ -69,4 +72,41 @@ test("Monaco options and theme resolution", () => {
     assert.equal(resolveEditorTheme("hanogt-github-light", "light", "dark"), "vs-dark");
     assert.equal(resolveEditorTheme("hanogt-dracula", "light", "dark"), "hanogt-dracula");
     assert.ok(EDITOR_THEMES.filter((theme) => theme.id.startsWith("hanogt-")).length >= 4);
+});
+
+test("draft comparison helpers", () => {
+    const base = sanitizeEditorSettings({});
+    assert.ok(!EDITOR_SETTING_KEYS.includes("version"));
+    assert.equal(EDITOR_SETTING_KEYS.length, Object.keys(DEFAULT_EDITOR_SETTINGS).length - 1);
+    assert.ok(editorSettingsEqual(base, { ...DEFAULT_EDITOR_SETTINGS }));
+    assert.deepEqual(changedEditorSettingKeys(base, { ...base, fontSize: 20, minimap: false }), ["fontSize", "minimap"]);
+});
+
+test("account copies use the import rules", () => {
+    assert.equal(parseAccountEditorSettings(null), null);
+    assert.equal(parseAccountEditorSettings([]), null);
+    assert.equal(parseAccountEditorSettings({ unrelated: true }), null);
+    const parsed = parseAccountEditorSettings({ fontSize: 99, theme: "hanogt-nord", injected: "<script>" });
+    assert.equal(parsed.fontSize, 32);
+    assert.equal(parsed.theme, "hanogt-nord");
+    assert.equal("injected" in parsed, false);
+});
+
+test("deciding between this device and the account copy", () => {
+    const defaults = sanitizeEditorSettings({});
+    const custom = sanitizeEditorSettings({ fontSize: 18 });
+    const at = (iso) => iso;
+    const local = (settings, updatedAt, stored = true) => ({ settings, updatedAt, stored });
+    const account = (editorSettings, updatedAt) => ({ editorSettings, updatedAt });
+    assert.equal(compareEditorSettingsCopies(local(custom, at("2026-01-01T00:00:00.000Z")), account(null, null)), "account_empty");
+    assert.equal(compareEditorSettingsCopies(local(custom, null), account(custom, at("2026-01-01T00:00:00.000Z"))), "in_sync");
+    // Nothing was ever saved on this device: the account copy is applied silently.
+    assert.equal(compareEditorSettingsCopies(local(defaults, null, false), account(custom, at("2026-01-01T00:00:00.000Z"))), "adopt_account");
+    // A reset is a deliberate save, even though nothing is stored afterwards.
+    assert.equal(compareEditorSettingsCopies(local(defaults, at("2026-03-01T00:00:00.000Z"), false), account(custom, at("2026-01-01T00:00:00.000Z"))), "local_newer");
+    assert.equal(compareEditorSettingsCopies(local(defaults, at("2026-01-01T00:00:00.000Z")), account(custom, at("2026-02-01T00:00:00.000Z"))), "account_newer");
+    assert.equal(compareEditorSettingsCopies(local(defaults, at("2026-02-01T00:00:00.000Z")), account(custom, at("2026-01-01T00:00:00.000Z"))), "local_newer");
+    assert.equal(compareEditorSettingsCopies(local(defaults, at("2026-02-01T00:00:00.000Z")), account(custom, null)), "local_newer");
+    // Saved by an older version (no time recorded) and different: let the user choose.
+    assert.equal(compareEditorSettingsCopies(local(defaults, null, true), account(custom, at("2026-01-01T00:00:00.000Z"))), "conflict");
 });

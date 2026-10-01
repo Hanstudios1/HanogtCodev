@@ -2,9 +2,10 @@
  * RuntimeWorld — play mode of Hanogt Engine.
  *
  * Owns the live copies of scene objects, runs the Unity-like lifecycle
- * (Awake → OnEnable → Start → FixedUpdate → physics → Update → coroutines →
- * LateUpdate), dispatches collision/trigger/mouse callbacks and exposes the
- * engine API to scripts through handles and host globals.
+ * (Awake → OnEnable → Start → FixedUpdate → physics → UI events → Update →
+ * coroutines → animations/tweens/timers → LateUpdate), dispatches
+ * collision/trigger/mouse/button callbacks and exposes the engine API to
+ * scripts through handles and host globals.
  */
 import { createComponentOfType, createScriptComponent, createTransform } from "../components";
 import { createEngineId } from "../ids";
@@ -42,14 +43,18 @@ import type {
     ScriptComponent,
     ScriptFieldValue,
     SceneDocument,
+    UIButtonComponent,
     Vector3,
 } from "../types";
+import { rectContains, scaleRect, uiRect, type ScreenRect } from "../ui-layout";
+import { AnimationPlayer } from "./animator";
 import { SoundEngine } from "./audio";
 import type { CameraView } from "./camera-math";
 import { screenRay, screenToWorld } from "./camera-math";
 import { BehaviourState, RuntimeEntity, type CoroutineState, type WaitState } from "./entity";
 import { createHostGlobals, PlayerPrefsStore } from "./globals";
 import {
+    AnimationHandle,
     AudioSourceHandle,
     CameraHandle,
     ColliderHandle,
@@ -67,6 +72,7 @@ import {
     SceneHandle,
     SpriteRendererHandle,
     TextHandle,
+    TilemapHandle,
     TransformHandle,
     hostError,
     isVector,
@@ -80,6 +86,8 @@ import {
 import { InputManager } from "./input";
 import { ParticleEmitter } from "./particles";
 import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity, type RaycastResult } from "./physics";
+import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
+import { ButtonHandle, ButtonLabelHandle, PanelHandle, ProgressBarHandle, sameCallable } from "./ui-handles";
 
 export type LogLevel = "info" | "warning" | "error";
 
@@ -124,6 +132,26 @@ type DestroyItem =
 
 type DeferredReference = { object: ScriptObject; field: string; entityId: string; typeName: string };
 
+/** Screen fade used by SceneManager.FadeToScene. */
+interface FadeState {
+    alpha: number;
+    color: string;
+    phase: "out" | "in";
+    duration: number;
+    target: SceneDocument | null;
+}
+
+export interface WorldStats {
+    entities: number;
+    behaviours: number;
+    bodies: number;
+    tweens: number;
+    timers: number;
+    particles: number;
+}
+
+const TEXT_TYPE_NAMES = new Set(["Text", "UIText", "TextMeshProUGUI", "TextMeshPro", "TMP_Text", "TextMesh"]);
+
 const MOUSE_METHODS = ["OnMouseDown", "OnMouseUp", "OnMouseUpAsButton", "OnMouseEnter", "OnMouseExit", "OnMouseOver", "OnMouseDrag"];
 
 const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "script" | "transform">; shape?: ColliderComponent["shape"] }> = {
@@ -151,6 +179,18 @@ const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "scr
     TextMeshPro: { type: "uiText" },
     TMP_Text: { type: "uiText" },
     TextMesh: { type: "uiText" },
+    Button: { type: "uiButton" },
+    Image: { type: "uiPanel" },
+    Panel: { type: "uiPanel" },
+    RawImage: { type: "uiPanel" },
+    Slider: { type: "uiProgressBar" },
+    ProgressBar: { type: "uiProgressBar" },
+    Scrollbar: { type: "uiProgressBar" },
+    Tilemap: { type: "tilemap" },
+    TilemapCollider2D: { type: "tilemap" },
+    TilemapRenderer: { type: "tilemap" },
+    Animation: { type: "animation" },
+    Animator: { type: "animation" },
 };
 
 function pairKey(a: string, b: string) {
@@ -160,7 +200,12 @@ function pairKey(a: string, b: string) {
 /** Behaviour binding: what `transform`, `gameObject`, `StartCoroutine`… mean inside a script. */
 class Binding implements BehaviourBinding {
     state: BehaviourState | null = null;
-    constructor(readonly world: RuntimeWorld, readonly entity: RuntimeEntity) {}
+    readonly world: RuntimeWorld;
+    readonly entity: RuntimeEntity;
+    constructor(world: RuntimeWorld, entity: RuntimeEntity) {
+        this.world = world;
+        this.entity = entity;
+    }
 
     get gameObject(): HostObject {
         return this.world.gameObjectHandle(this.entity);
@@ -294,7 +339,13 @@ export class RuntimeWorld implements ScriptHost {
     behaviours: BehaviourState[] = [];
     readonly logs: LogEntry[] = [];
     readonly debugLines: DebugLine[] = [];
+    readonly tweens = new TweenManager();
+    readonly timers = new TimerManager();
     hud: { text: string; until: number; color: string } | null = null;
+    /** Behaviour whose code is running (owner of timers created from scripts). */
+    currentBehaviour: BehaviourState | null = null;
+    /** True while the pointer is over a button or a click-blocking panel. */
+    pointerOverUI = false;
     status: "idle" | "running" | "paused" | "stopped" = "idle";
     /** Bumped whenever entities are created or destroyed. */
     structureVersion = 0;
@@ -335,6 +386,21 @@ export class RuntimeWorld implements ScriptHost {
     private warnedOnce = new Set<string>();
     private readonly scriptBudget: number;
     private quitRequested = false;
+    private uiHover: string | null = null;
+    private uiPressed: string | null = null;
+    private readonly buttonListeners = new Map<string, VMValue[]>();
+    private fade: FadeState | null = null;
+    /** Runs timer/tween/button callbacks with error isolation. */
+    readonly runCallback: CallbackRunner = (owner, label, callback, args) => {
+        if (owner?.destroyed || owner?.failed) return;
+        const previous = this.currentBehaviour;
+        this.currentBehaviour = owner;
+        try {
+            this.guard(owner, label, () => this.interpreter.invokeCallable(callback, args));
+        } finally {
+            this.currentBehaviour = previous;
+        }
+    };
 
     constructor(options: WorldOptions) {
         this.options = options;
@@ -400,6 +466,8 @@ export class RuntimeWorld implements ScriptHost {
         if (!wasRunning) return;
         this.broadcast("OnApplicationQuit", []);
         for (const entity of this.rootEntities()) this.destroyEntityNow(entity);
+        this.tweens.killAll();
+        this.timers.cancelAll();
         this.interpreter.flushAllStreams();
         this.prefs.flush();
     }
@@ -433,6 +501,7 @@ export class RuntimeWorld implements ScriptHost {
             if (steps >= this.maxSubSteps) this.fixedAccumulator = Math.min(this.fixedAccumulator, fixed);
         }
 
+        this.processUIEvents();
         this.processMouseEvents();
         this.flushStarts();
 
@@ -442,6 +511,9 @@ export class RuntimeWorld implements ScriptHost {
         }
         this.runInvokes();
         this.runCoroutines("frame");
+        this.updateAnimations(this.deltaTime);
+        this.tweens.update(this.deltaTime, this.runCallback);
+        this.timers.update(this.deltaTime, this.runCallback);
         this.processDestroyQueue();
 
         this.phase = "late";
@@ -459,6 +531,7 @@ export class RuntimeWorld implements ScriptHost {
             if (this.debugLines[index].until < this.time) this.debugLines.splice(index, 1);
         }
         if (this.hud && this.hud.until < this.realtime) this.hud = null;
+        this.updateFade(clamped);
         this.interpreter.flushAllStreams();
 
         if (this.pendingScene) {
@@ -534,9 +607,15 @@ export class RuntimeWorld implements ScriptHost {
     /** Calls a lifecycle/message method; coroutine results (IEnumerator Start) are scheduled. */
     callMethod(state: BehaviourState, name: string, args: VMValue[] = []): VMValue {
         if (state.destroyed || state.failed) return undefined;
-        const result = this.guard(state, name, () => this.interpreter.invoke(state.object, name, args));
-        if (result instanceof VMCoroutine && !result.started) this.startCoroutine(state, result, []);
-        return result === NOT_FOUND ? undefined : result;
+        const previous = this.currentBehaviour;
+        this.currentBehaviour = state;
+        try {
+            const result = this.guard(state, name, () => this.interpreter.invoke(state.object, name, args));
+            if (result instanceof VMCoroutine && !result.started) this.startCoroutine(state, result, []);
+            return result === NOT_FOUND ? undefined : result;
+        } finally {
+            this.currentBehaviour = previous;
+        }
     }
 
     private hasMethod(state: BehaviourState, name: string) {
@@ -666,7 +745,7 @@ export class RuntimeWorld implements ScriptHost {
     }
 
     private registerPhysics(entity: RuntimeEntity) {
-        if ((entity.rigidBody || entity.collider) && !entity.destroyed) this.physicsEntities.add(entity);
+        if ((entity.rigidBody || entity.collider || entity.tilemap) && !entity.destroyed) this.physicsEntities.add(entity);
         else this.physicsEntities.delete(entity);
     }
 
@@ -710,6 +789,9 @@ export class RuntimeWorld implements ScriptHost {
         this.touching.clear();
         this.hoverEntity = null;
         this.pressedEntity = null;
+        this.uiHover = null;
+        this.uiPressed = null;
+        this.pointerOverUI = false;
         this.scene = scene;
         const settings = scene.settings;
         this.physics.gravity = { ...settings.physics.gravity };
@@ -766,6 +848,8 @@ export class RuntimeWorld implements ScriptHost {
             this.registerPhysics(entity);
             const particles = entity.components.find((component) => component.type === "particleSystem");
             if (particles && particles.type === "particleSystem") entity.emitter = new ParticleEmitter(particles);
+            const animation = entity.components.find((component) => component.type === "animation");
+            if (animation && animation.type === "animation") entity.animator = new AnimationPlayer(animation);
         }
         // Behaviours: create every instance first so cross references resolve, then Awake/OnEnable.
         const newStates: BehaviourState[] = [];
@@ -882,6 +966,11 @@ export class RuntimeWorld implements ScriptHost {
             if (state.enabled && !state.started && !this.pendingStarts.includes(state)) this.pendingStarts.push(state);
         }
         if (entity.emitter && entity.emitter.component.playOnStart && entity.emitter.component.enabled && !entity.emitter.playing && entity.emitter.count === 0) entity.emitter.play();
+        const animator = entity.animator;
+        if (animator && !animator.autoPlayed && animator.component.enabled && animator.component.playOnStart) {
+            animator.autoPlayed = true;
+            animator.play(entity);
+        }
     }
 
     private deactivateBehaviours(entity: RuntimeEntity) {
@@ -1175,6 +1264,7 @@ export class RuntimeWorld implements ScriptHost {
         for (const coroutine of state.coroutines) coroutine.done = true;
         state.coroutines.length = 0;
         state.invokes.length = 0;
+        this.timers.cancelOwner(state);
         if (MOUSE_METHODS.some((name) => this.interpreter.hasMethod(state.object, name, false))) this.mouseListeners = Math.max(0, this.mouseListeners - 1);
         if (removeComponent) {
             const entity = state.entity;
@@ -1198,8 +1288,15 @@ export class RuntimeWorld implements ScriptHost {
             this.physicsEntities.delete(node);
             this.physics.forget(node.id);
             node.emitter = null;
+            node.animator = null;
             if (this.hoverEntity === node) this.hoverEntity = null;
             if (this.pressedEntity === node) this.pressedEntity = null;
+            for (const component of node.components) {
+                if (component.type !== "uiButton") continue;
+                this.buttonListeners.delete(component.id);
+                if (this.uiHover === component.id) this.uiHover = null;
+                if (this.uiPressed === component.id) this.uiPressed = null;
+            }
         }
         for (const key of [...this.touching]) {
             const [a, b] = key.split("|");
@@ -1225,9 +1322,11 @@ export class RuntimeWorld implements ScriptHost {
         entity.components = entity.components.filter((candidate) => candidate !== component);
         entity.handles.delete(component.id);
         if (component.type === "particleSystem") entity.emitter = null;
+        if (component.type === "animation") entity.animator = null;
+        if (component.type === "uiButton") this.buttonListeners.delete(component.id);
         entity.refreshComponentCache();
         this.registerPhysics(entity);
-        if (component.type === "collider" || component.type === "rigidBody") this.physics.forget(entity.id);
+        if (component.type === "collider" || component.type === "rigidBody" || component.type === "tilemap") this.physics.forget(entity.id);
     }
 
     // -------------------------------------------------------------------
@@ -1274,6 +1373,11 @@ export class RuntimeWorld implements ScriptHost {
                 case "particleSystem": handle = new ParticleSystemHandle(this, entity, component); break;
                 case "audioSource": handle = new AudioSourceHandle(this, entity, component); break;
                 case "uiText": handle = new TextHandle(this, entity, component); break;
+                case "uiButton": handle = new ButtonHandle(this, entity, component); break;
+                case "uiPanel": handle = new PanelHandle(this, entity, component); break;
+                case "uiProgressBar": handle = new ProgressBarHandle(this, entity, component); break;
+                case "tilemap": handle = new TilemapHandle(this, entity, component); break;
+                case "animation": handle = new AnimationHandle(this, entity, component); break;
             }
             if (handle) entity.handles.set(component.id, handle);
         }
@@ -1292,7 +1396,14 @@ export class RuntimeWorld implements ScriptHost {
             case "MonoBehaviour":
                 return component.type === "script";
             case "Renderer":
-                return component.type === "spriteRenderer" || component.type === "meshRenderer";
+                return component.type === "spriteRenderer" || component.type === "meshRenderer" || component.type === "tilemap";
+            case "Image":
+                return component.type === "uiPanel" || component.type === "uiProgressBar";
+            case "Graphic":
+            case "MaskableGraphic":
+                return component.type === "uiText" || component.type === "uiPanel" || component.type === "uiButton" || component.type === "uiProgressBar";
+            case "Selectable":
+                return component.type === "uiButton";
             default: {
                 const alias = COMPONENT_TYPE_ALIASES[typeName];
                 if (alias) {
@@ -1316,6 +1427,18 @@ export class RuntimeWorld implements ScriptHost {
             const handle = this.componentHandle(entity, component);
             if (handle !== null && handle !== undefined) output.push(handle);
         }
+        if (!output.length && TEXT_TYPE_NAMES.has(typeName)) {
+            // Unity buttons keep their label in a child Text; here the label is part of the button.
+            const button = entity.components.find((component): component is UIButtonComponent => component.type === "uiButton");
+            if (button) {
+                let label = entity.handles.get(`#label:${button.id}`);
+                if (!label) {
+                    label = new ButtonLabelHandle(this, entity, button);
+                    entity.handles.set(`#label:${button.id}`, label);
+                }
+                output.push(label);
+            }
+        }
         return output;
     }
 
@@ -1327,8 +1450,15 @@ export class RuntimeWorld implements ScriptHost {
 
     private isKnownComponentType(typeName: string) {
         return typeName in COMPONENT_TYPE_ALIASES
-            || ["Transform", "RectTransform", "Component", "Object", "Behaviour", "MonoBehaviour", "Renderer"].includes(typeName)
+            || ["Transform", "RectTransform", "Component", "Object", "Behaviour", "MonoBehaviour", "Renderer", "Graphic", "MaskableGraphic", "Selectable"].includes(typeName)
             || this.program.classes.has(typeName);
+    }
+
+    /** The collider-like handle of an entity: its Collider, else its Tilemap. */
+    colliderHandleOf(entity: RuntimeEntity): VMValue {
+        if (entity.collider) return this.componentHandle(entity, entity.collider);
+        if (entity.tilemap) return this.componentHandle(entity, entity.tilemap);
+        return null;
     }
 
     getComponentInChildren(entity: RuntimeEntity, typeName: string, includeInactive: boolean): VMValue {
@@ -1384,6 +1514,7 @@ export class RuntimeWorld implements ScriptHost {
                 entity.emitter = new ParticleEmitter(component);
                 if (entity.activeInHierarchy && component.playOnStart) entity.emitter.play();
             }
+            if (component.type === "animation") entity.animator = new AnimationPlayer(component);
             this.registerPhysics(entity);
             return this.componentHandle(entity, component);
         }
@@ -1575,22 +1706,30 @@ export class RuntimeWorld implements ScriptHost {
         const b = this.entities.get(info.b);
         if (!a || !b) return;
         const base = info.trigger ? `OnTrigger${phase}` : `OnCollision${phase}`;
-        const deliver = (self: RuntimeEntity, other: RuntimeEntity, normal: Vector3, relative: Vector3) => {
+        const deliver = (self: RuntimeEntity, other: RuntimeEntity, flip: boolean, relative: Vector3) => {
             if (self.destroyed || other.destroyed || !self.activeInHierarchy) return;
             const receivers = this.wants(self, base);
             if (!receivers.length) return;
             let payload: VMValue;
-            if (info.trigger) payload = other.collider ? this.componentHandle(other, other.collider) : this.gameObjectHandle(other);
-            else payload = new CollisionHandle(this, self, other, info.point, normal, info.penetration, relative);
+            if (info.trigger) {
+                payload = this.colliderHandleOf(other) ?? this.gameObjectHandle(other);
+            } else {
+                // Normals point towards the receiver; the most upward-facing contact comes first so
+                // "GetContact(0).normal.y > 0.5f" ground checks work on tilemaps too.
+                const contacts = (info.contacts.length ? info.contacts : [{ point: info.point, normal: info.normal, penetration: info.penetration }])
+                    .map((contact) => ({ ...contact, normal: flip ? { x: -contact.normal.x, y: -contact.normal.y, z: -contact.normal.z } : contact.normal }))
+                    .sort((left, right) => right.normal.y - left.normal.y);
+                const first = contacts[0];
+                payload = new CollisionHandle(this, self, other, first.point, first.normal, first.penetration, relative).withContacts(contacts);
+            }
             for (const { state, method } of receivers) {
                 if (state.destroyed || self.destroyed) break;
                 this.callMethod(state, method, [payload]);
             }
         };
-        const negative = { x: -info.normal.x, y: -info.normal.y, z: -info.normal.z };
         const relativeForA = { x: -info.relativeVelocity.x, y: -info.relativeVelocity.y, z: -info.relativeVelocity.z };
-        deliver(a, b, negative, relativeForA);
-        deliver(b, a, info.normal, info.relativeVelocity);
+        deliver(a, b, true, relativeForA);
+        deliver(b, a, false, info.relativeVelocity);
     }
 
     private pickAtMouse(): RuntimeEntity | null {
@@ -1630,7 +1769,7 @@ export class RuntimeWorld implements ScriptHost {
 
     private processMouseEvents() {
         if (this.mouseListeners <= 0) return;
-        const hit = this.pickAtMouse();
+        const hit = this.pointerOverUI ? null : this.pickAtMouse();
         if (hit !== this.hoverEntity) {
             this.sendMouse(this.hoverEntity, "OnMouseExit");
             this.hoverEntity = hit;
@@ -1754,12 +1893,16 @@ export class RuntimeWorld implements ScriptHost {
                 continue;
             }
             let result: IteratorResult<VMValue, void>;
+            const previous = this.currentBehaviour;
+            this.currentBehaviour = state.owner;
             try {
                 result = top.generator.next();
             } catch (error) {
                 this.reportScriptError(error, state.owner, `Coroutine ${top.methodName}`);
                 this.finishCoroutine(state);
                 return;
+            } finally {
+                this.currentBehaviour = previous;
             }
             if (result.done) {
                 top.done = true;
@@ -1815,6 +1958,178 @@ export class RuntimeWorld implements ScriptHost {
             }
             for (let index = owner.coroutines.length - 1; index >= 0; index -= 1) if (owner.coroutines[index].done) owner.coroutines.splice(index, 1);
         }
+    }
+
+    // -------------------------------------------------------------------
+    // Animation component
+    // -------------------------------------------------------------------
+
+    animatorOf(entity: RuntimeEntity): AnimationPlayer | null {
+        const component = entity.components.find((candidate) => candidate.type === "animation");
+        if (!component || component.type !== "animation") return null;
+        if (!entity.animator || entity.animator.component !== component) entity.animator = new AnimationPlayer(component);
+        return entity.animator;
+    }
+
+    playAnimation(entity: RuntimeEntity, clip: string | null): boolean {
+        const animator = this.animatorOf(entity);
+        if (!animator) return false;
+        animator.autoPlayed = true;
+        return animator.play(entity, clip);
+    }
+
+    stopAnimation(entity: RuntimeEntity) {
+        const animator = this.animatorOf(entity);
+        if (animator) animator.stop(entity);
+    }
+
+    private updateAnimations(deltaTime: number) {
+        for (const entity of this.entities.values()) {
+            const animator = entity.animator;
+            if (!animator || !animator.playing || !animator.component.enabled || !entity.activeInHierarchy) continue;
+            const finished = animator.update(entity, deltaTime);
+            if (!finished) continue;
+            // Scripts on the object can react without a warning when nobody listens.
+            for (const state of entity.behaviours.slice()) {
+                if (state.live && this.interpreter.hasMethod(state.object, "OnAnimationComplete", false)) this.callMethod(state, "OnAnimationComplete", [finished]);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // UI (buttons, panels, progress bars)
+    // -------------------------------------------------------------------
+
+    /** Screen rectangle of a UI component in CSS pixels (same math as the overlay). */
+    uiRectOf(entity: RuntimeEntity, component: GameComponent): ScreenRect | null {
+        const screen = this.screenSize();
+        if (component.type === "uiPanel" && component.fullScreen) return { left: 0, top: 0, width: screen.width, height: screen.height };
+        if (component.type !== "uiButton" && component.type !== "uiPanel" && component.type !== "uiProgressBar") return null;
+        const scale = entity.world.scale;
+        return scaleRect(uiRect(component, screen), scale.x, scale.y);
+    }
+
+    uiState(): { hover: string | null; pressed: string | null } {
+        return { hover: this.uiHover, pressed: this.uiPressed };
+    }
+
+    private processUIEvents() {
+        const screen = this.screenSize();
+        const x = this.input.mouseX;
+        const y = screen.height - this.input.mouseY;
+        let top: { component: GameComponent; entity: RuntimeEntity; order: number; index: number } | null = null;
+        let index = 0;
+        const hotkeys: Array<{ entity: RuntimeEntity; component: UIButtonComponent }> = [];
+        for (const entity of this.entities.values()) {
+            index += 1;
+            if (!entity.activeInHierarchy) continue;
+            for (const component of entity.components) {
+                if (!component.enabled) continue;
+                const interactive = component.type === "uiButton" || (component.type === "uiPanel" && component.blocksClicks);
+                if (!interactive) continue;
+                if (component.type === "uiButton" && component.interactable && component.hotkey !== "None") hotkeys.push({ entity, component });
+                const rect = this.uiRectOf(entity, component);
+                if (!rect || !rectContains(rect, x, y)) continue;
+                const order = component.type === "uiButton" || component.type === "uiPanel" ? component.order : 0;
+                if (!top || order > top.order || (order === top.order && index >= top.index)) top = { component, entity, order, index };
+            }
+        }
+        this.pointerOverUI = top !== null;
+        const hovered = top && top.component.type === "uiButton" && top.component.interactable ? top : null;
+        this.uiHover = hovered ? hovered.component.id : null;
+        if (this.input.getMouseButtonDown(0) && hovered) this.uiPressed = hovered.component.id;
+        if (this.input.getMouseButtonUp(0)) {
+            const pressed = this.uiPressed;
+            this.uiPressed = null;
+            if (pressed && hovered && pressed === hovered.component.id) this.clickButton(hovered.entity, hovered.component as UIButtonComponent);
+        }
+        for (const { entity, component } of hotkeys) {
+            if (!entity.destroyed && this.input.getKeyDown(component.hotkey)) this.clickButton(entity, component);
+        }
+    }
+
+    /** Runs a button's Inspector method and its script listeners. */
+    clickButton(entity: RuntimeEntity, component: UIButtonComponent) {
+        if (entity.destroyed || !component.enabled || !component.interactable) return;
+        const method = component.onClick.method;
+        if (method) {
+            const target = component.onClick.targetId ? this.entities.get(component.onClick.targetId) ?? null : entity;
+            if (!target) this.warnOnce(`button-target:${component.id}`, `'${entity.name}' butonunun hedef nesnesi sahnede yok.`);
+            else this.guard(null, `${entity.name} onClick`, () => this.sendMessage(target, method, undefined, "SendMessage"));
+        }
+        for (const listener of [...(this.buttonListeners.get(component.id) ?? [])]) {
+            if (entity.destroyed) break;
+            this.runCallback(this.currentBehaviour, `${entity.name} onClick`, listener, []);
+        }
+    }
+
+    addButtonListener(component: UIButtonComponent, listener: VMValue) {
+        const list = this.buttonListeners.get(component.id) ?? [];
+        if (list.length >= 64) hostError("Bir butona en fazla 64 dinleyici eklenebilir.", "InvalidOperationException");
+        list.push(listener);
+        this.buttonListeners.set(component.id, list);
+    }
+
+    /** Removes one listener, or all of them when `listener` is null. */
+    removeButtonListener(component: UIButtonComponent, listener: VMValue) {
+        if (listener === null) {
+            this.buttonListeners.delete(component.id);
+            return;
+        }
+        const list = this.buttonListeners.get(component.id);
+        if (!list) return;
+        const index = list.findIndex((item) => sameCallable(item, listener));
+        if (index >= 0) list.splice(index, 1);
+    }
+
+    // -------------------------------------------------------------------
+    // Scene fades
+    // -------------------------------------------------------------------
+
+    /** SceneManager.FadeToScene: fades out, loads the scene, fades back in. */
+    requestSceneFade(target: VMValue, seconds: number, color: string) {
+        const scene = typeof target === "number" ? this.findScene(target) : target instanceof SceneHandle ? this.findScene(target.buildIndex) : this.findScene(String(target ?? ""));
+        if (!scene) hostError(`Sahne bulunamadı: '${this.display(target)}'. Sahne adını veya sırasını (0, 1, …) kontrol edin.`, "ArgumentException");
+        if (this.fade?.phase === "out") return;
+        this.fade = { alpha: this.fade?.alpha ?? 0, color, phase: "out", duration: Math.max(0.05, Math.min(5, seconds)), target: scene };
+    }
+
+    private updateFade(deltaTime: number) {
+        const fade = this.fade;
+        if (!fade) return;
+        const step = deltaTime / fade.duration;
+        if (fade.phase === "out") {
+            fade.alpha = Math.min(1, fade.alpha + step);
+            if (fade.alpha >= 1) {
+                this.pendingScene = fade.target;
+                fade.target = null;
+                fade.phase = "in";
+            }
+        } else {
+            fade.alpha = Math.max(0, fade.alpha - step);
+            if (fade.alpha <= 0) this.fade = null;
+        }
+    }
+
+    fadeState(): { alpha: number; color: string } | null {
+        return this.fade ? { alpha: this.fade.alpha, color: this.fade.color } : null;
+    }
+
+    // -------------------------------------------------------------------
+    // Stats
+    // -------------------------------------------------------------------
+
+    stats(): WorldStats {
+        let particles = 0;
+        for (const entity of this.entities.values()) particles += entity.emitter?.count ?? 0;
+        return {
+            entities: this.entities.size,
+            behaviours: this.behaviours.length,
+            bodies: this.physicsEntities.size,
+            tweens: this.tweens.activeCount,
+            timers: this.timers.activeCount,
+            particles,
+        };
     }
 
     // -------------------------------------------------------------------

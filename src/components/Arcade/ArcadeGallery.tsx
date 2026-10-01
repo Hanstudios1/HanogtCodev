@@ -17,6 +17,8 @@ export interface ArcadeGameSummary {
     authorName: string;
     authorImage: string | null;
     templateId: string | null;
+    /** Major Hanogt Engine version the game was published with (null for games published before V3). */
+    engineVersion?: number | null;
     languages: string[];
     plays: number;
     likes: number;
@@ -56,6 +58,7 @@ export function GameCard({ game, index = 0 }: { game: ArcadeGameSummary; index?:
                     {game.dimension === "3d" ? <Box className="h-3 w-3" /> : <Square className="h-3 w-3" />}{game.dimension}
                 </span>
                 <div className="absolute right-2 top-2 flex gap-1">
+                    {game.engineVersion ? <span title={`Hanogt Engine V${game.engineVersion}`} className="rounded-md bg-indigo-500/80 px-1.5 py-0.5 text-[10px] font-black text-white backdrop-blur">V{game.engineVersion}</span> : null}
                     {game.languages.map((language) => <span key={language} className="rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-black text-white backdrop-blur">{language}</span>)}
                 </div>
                 <span className="absolute bottom-2 right-2 grid h-10 w-10 translate-y-2 place-items-center rounded-full bg-white text-zinc-900 opacity-0 shadow-xl transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">

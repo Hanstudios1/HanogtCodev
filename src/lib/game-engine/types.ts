@@ -1,12 +1,16 @@
 /**
- * Hanogt Engine data model (schema v2).
+ * Hanogt Engine data model (schema v3).
  *
  * Everything in this file is plain JSON so projects can be saved to the
  * cloud, exported, published to the Arcade and loaded by the standalone
  * player. Runtime-only state lives in `runtime/`.
  */
 
-export const GAME_ENGINE_SCHEMA_VERSION = 2 as const;
+export const GAME_ENGINE_SCHEMA_VERSION = 3 as const;
+
+/** Engine release shown in the UI, exported games and the Arcade. */
+export const ENGINE_VERSION = 3 as const;
+export const ENGINE_VERSION_LABEL = "Hanogt Engine V3";
 
 export const SUPPORTED_SCRIPT_LANGUAGES = ["csharp", "cpp"] as const;
 
@@ -49,6 +53,10 @@ export interface SpriteRendererComponent extends ComponentBase {
     sortingLayer: number;
     flipX: boolean;
     flipY: boolean;
+    /** Sprite sheet layout of the texture; 1 × 1 shows the whole image. */
+    sheet: { columns: number; rows: number };
+    /** Sheet cell that is shown, row by row from the top-left corner. */
+    frame: number;
 }
 
 export const PRIMITIVE_MESHES = ["cube", "sphere", "plane", "capsule", "cylinder", "cone", "torus"] as const;
@@ -186,6 +194,140 @@ export interface UITextComponent extends ComponentBase {
     offset: Vector2;
     bold: boolean;
     shadow: boolean;
+    /** Drawing order among UI elements (higher is on top). */
+    order: number;
+}
+
+/**
+ * Screen-space rectangle shared by the V3 UI components. Sizes and offsets are
+ * reference pixels of a 540 px tall screen; offsets point inwards from the
+ * anchored edge (like UI Text).
+ */
+export interface UIRectFields {
+    anchor: UIAnchor;
+    offset: Vector2;
+    width: number;
+    height: number;
+    order: number;
+}
+
+export interface UIButtonComponent extends ComponentBase, UIRectFields {
+    type: "uiButton";
+    text: string;
+    fontSize: number;
+    textColor: string;
+    color: string;
+    cornerRadius: number;
+    interactable: boolean;
+    /** Method called on the target object's scripts when clicked (target null = this object). */
+    onClick: { targetId: string | null; method: string };
+    /** KeyCode name that also presses the button, or "None". */
+    hotkey: string;
+}
+
+export interface UIPanelComponent extends ComponentBase, UIRectFields {
+    type: "uiPanel";
+    color: string;
+    opacity: number;
+    /** Optional image drawn inside the panel (Unity's Image). */
+    textureId: string | null;
+    cornerRadius: number;
+    /** Covers the whole screen (dim backgrounds, menus); anchor and size are ignored. */
+    fullScreen: boolean;
+    /** Clicks on the panel don't reach objects in the game world. */
+    blocksClicks: boolean;
+}
+
+export const PROGRESS_DIRECTIONS = ["leftToRight", "rightToLeft", "bottomToTop", "topToBottom"] as const;
+export type ProgressDirection = (typeof PROGRESS_DIRECTIONS)[number];
+
+export interface UIProgressBarComponent extends ComponentBase, UIRectFields {
+    type: "uiProgressBar";
+    value: number;
+    min: number;
+    max: number;
+    fillColor: string;
+    backgroundColor: string;
+    cornerRadius: number;
+    direction: ProgressDirection;
+    /** Shows the percentage on the bar. */
+    showLabel: boolean;
+}
+
+/** One kind of tile in a tilemap palette. */
+export interface TileDefinition {
+    /** Single printable character used in `rows` ("." means an empty cell). */
+    key: string;
+    name: string;
+    color: string;
+    /** Solid tiles collide with bodies (or act as triggers when the tilemap is a trigger). */
+    solid: boolean;
+    /** Cell of the tilemap atlas drawn for this tile; -1 draws a plain colored tile. */
+    frame: number;
+}
+
+export interface TilemapComponent extends ComponentBase {
+    type: "tilemap";
+    /** World units per cell. */
+    cellSize: number;
+    /** Cell coordinate of the bottom-left cell stored in `rows`. */
+    origin: { x: number; y: number };
+    /** Grid rows from top to bottom; each character is a palette key or "." for empty. */
+    rows: string[];
+    palette: TileDefinition[];
+    /** Optional sprite sheet the tiles' `frame` indices refer to. */
+    atlas: { textureId: string | null; columns: number; rows: number };
+    sortingLayer: number;
+    isTrigger: boolean;
+    friction: number;
+    bounciness: number;
+}
+
+export const EASINGS = [
+    "linear", "inQuad", "outQuad", "inOutQuad", "inCubic", "outCubic", "inOutCubic", "inSine", "outSine", "inOutSine",
+    "inBack", "outBack", "inOutBack", "inElastic", "outElastic", "inBounce", "outBounce", "step",
+] as const;
+export type Easing = (typeof EASINGS)[number];
+
+export const ANIMATION_PROPERTIES = ["position", "rotation", "scale", "color", "opacity", "frame"] as const;
+export type AnimationProperty = (typeof ANIMATION_PROPERTIES)[number];
+
+export const ANIMATION_WRAP_MODES = ["once", "loop", "pingPong"] as const;
+export type AnimationWrapMode = (typeof ANIMATION_WRAP_MODES)[number];
+
+/** Vector3 for position/rotation/scale, "#rrggbb" for color, number for opacity and frame. */
+export type AnimationValue = number | string | Vector3;
+
+export interface AnimationKey {
+    time: number;
+    value: AnimationValue;
+    /** Easing of the segment that starts at this key. */
+    easing: Easing;
+}
+
+/**
+ * Position and rotation keys are offsets added to the pose the object had when
+ * the clip started; scale keys multiply it. Color, opacity and frame are absolute.
+ */
+export interface AnimationTrack {
+    property: AnimationProperty;
+    keys: AnimationKey[];
+}
+
+export interface AnimationClip {
+    name: string;
+    duration: number;
+    wrap: AnimationWrapMode;
+    tracks: AnimationTrack[];
+}
+
+export interface AnimationComponent extends ComponentBase {
+    type: "animation";
+    clips: AnimationClip[];
+    /** Clip played automatically when `playOnStart` is set. */
+    defaultClip: string | null;
+    playOnStart: boolean;
+    speed: number;
 }
 
 export type GameComponent =
@@ -199,7 +341,12 @@ export type GameComponent =
     | ScriptComponent
     | ParticleSystemComponent
     | AudioSourceComponent
-    | UITextComponent;
+    | UITextComponent
+    | UIButtonComponent
+    | UIPanelComponent
+    | UIProgressBarComponent
+    | TilemapComponent
+    | AnimationComponent;
 
 export type ComponentType = GameComponent["type"];
 export type ComponentOfType<T extends ComponentType> = Extract<GameComponent, { type: T }>;
@@ -216,7 +363,15 @@ export const COMPONENT_TYPES: readonly ComponentType[] = [
     "particleSystem",
     "audioSource",
     "uiText",
+    "uiButton",
+    "uiPanel",
+    "uiProgressBar",
+    "tilemap",
+    "animation",
 ];
+
+/** Screen-space UI components (drawn by the overlay, not the WebGL renderer). */
+export const UI_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set(["uiText", "uiButton", "uiPanel", "uiProgressBar"]);
 
 /** Components that may appear at most once per entity. */
 export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
@@ -229,6 +384,11 @@ export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
     "collider",
     "particleSystem",
     "uiText",
+    "uiButton",
+    "uiPanel",
+    "uiProgressBar",
+    "tilemap",
+    "animation",
 ]);
 
 export interface GameEntity {
@@ -249,7 +409,14 @@ export interface SceneSettings {
     };
     ambientColor: string;
     ambientIntensity: number;
-    fog: { enabled: boolean; color: string; near: number; far: number };
+    /** Linear fog fades between `near` and `far`; exponential fog uses `density`. */
+    fog: { enabled: boolean; mode: "linear" | "exponential"; color: string; near: number; far: number; density: number };
+    /** Screen effects applied to the game view. */
+    postProcessing: {
+        bloom: { enabled: boolean; intensity: number; threshold: number; radius: number };
+        vignette: { enabled: boolean; intensity: number };
+        exposure: number;
+    };
     physics: { gravity: Vector3; fixedTimeStep: number; maxSubSteps: number };
 }
 

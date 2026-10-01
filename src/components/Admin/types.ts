@@ -20,9 +20,15 @@ export type AdminPermissions = {
     /** Suspend / unsuspend accounts and change roles. */
     manageUsers: boolean;
     manageAnnouncements: boolean;
+    /** Support tickets sent from Feedback/FAQ (questions, bug and security reports). */
+    tickets: boolean;
+    /** Permanently delete a user's account and data (admins and owners). */
+    deleteUserData: boolean;
+    /** Cloud health diagnostics and one-click security-rules deployment (owners only). */
+    cloudHealth: boolean;
 };
 
-export type AdminSectionId = "overview" | "users" | "moderation" | "feedback" | "announcements" | "security" | "audit";
+export type AdminSectionId = "overview" | "users" | "moderation" | "tickets" | "feedback" | "announcements" | "security" | "cloud" | "audit";
 
 export type AdminIdentity = { isAdmin: true; email: string; role: StaffRole; permissions: AdminPermissions };
 export type AdminMeResponse = { isAdmin: false } | AdminIdentity;
@@ -61,6 +67,8 @@ export type AdminErrorCode =
     | "already_handled"
     | "conflict"
     | "too_many_active"
+    | "confirmation_mismatch"
+    | "deploy_failed"
     | "unavailable";
 
 export type AdminErrorBody = { error: string; code: AdminErrorCode };
@@ -79,7 +87,8 @@ export type StatKey =
     | "reportsOpen"
     | "newsComments"
     | "gameProjects"
-    | "securityEvents7d";
+    | "securityEvents7d"
+    | "ticketsOpen";
 
 /** `null` when that count could not be computed. `capped` means "at least `count`". */
 export type StatCount = { count: number; capped: boolean } | null;
@@ -292,7 +301,13 @@ export type AdminAuditAction =
     | "announcement.create"
     | "announcement.update"
     | "announcement.set_active"
-    | "announcement.delete";
+    | "announcement.delete"
+    | "ticket.reply"
+    | "ticket.set_status"
+    | "ticket.set_priority"
+    | "ticket.delete"
+    | "user.delete_data"
+    | "cloud.deploy_rules";
 
 export type AuditDetailValue = string | number | boolean | null;
 

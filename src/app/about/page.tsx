@@ -5,14 +5,15 @@ import { ArrowRight, Boxes, Building2, Code, Gamepad2, Newspaper, Radio, Shield,
 import Link from "next/link";
 import Header from "@/components/Header";
 import SiteFooter from "@/components/SiteFooter";
-import { useI18n } from "@/lib/i18n";
+import { formatCopy, useI18n } from "@/lib/i18n";
 import { NAV_LABELS } from "@/lib/nav";
+import { LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
 export default function AboutPage() {
     const { t, tx } = useI18n();
 
     const products = [
-        { icon: Code, href: "/dashboard", title: tx(NAV_LABELS.editor), text: t("ab_editor_text"), color: "from-sky-500 to-indigo-500" },
+        { icon: Code, href: "/dashboard", title: tx(NAV_LABELS.editor), text: formatCopy(t("ab_editor_text"), { count: LANGUAGE_STATS.usable }), color: "from-sky-500 to-indigo-500" },
         { icon: Boxes, href: "/game-engine", title: "Hanogt Engine", text: t("ab_engine_text"), color: "from-violet-500 to-fuchsia-500" },
         { icon: Gamepad2, href: "/arcade", title: "Arcade", text: t("ab_arcade_text"), color: "from-amber-400 to-orange-500" },
         { icon: Newspaper, href: "/news", title: "Hanogt News", text: t("ab_news_text"), color: "from-rose-500 to-red-500" },
@@ -37,7 +38,7 @@ export default function AboutPage() {
                     <div className="relative mx-auto max-w-5xl px-4 pb-14 pt-32 text-center sm:px-6">
                         <p className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[12px] font-bold text-indigo-600 dark:text-indigo-300 animate-fade-up">HanStudios</p>
                         <h1 className="mt-5 text-5xl font-black tracking-tight sm:text-6xl animate-fade-up" style={{ animationDelay: "60ms" }}>{t("about_title")}</h1>
-                        <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "120ms" }}>{t("about_purpose_text")}</p>
+                        <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "120ms" }}>{formatCopy(t("about_purpose_text"), { count: LANGUAGE_STATS.usable })}</p>
                         <ul className="mx-auto mt-6 grid max-w-2xl gap-2 text-start sm:grid-cols-2 animate-fade-up" style={{ animationDelay: "180ms" }}>
                             {[t("about_feature_1"), t("about_feature_2"), t("about_feature_3"), t("about_feature_4")].map((feature) => (
                                 <li key={feature} className="flex items-start gap-2 rounded-2xl border border-zinc-200 bg-white/70 px-3.5 py-2.5 text-[14px] text-zinc-700 backdrop-blur dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-zinc-300">

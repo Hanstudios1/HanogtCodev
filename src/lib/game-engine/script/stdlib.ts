@@ -3,6 +3,7 @@
  * vectors, colours, quaternions, collections (+ LINQ helpers), string
  * formatting, System.* helpers and the C/C++ std facilities.
  */
+import { KEY_CODES } from "../key-codes";
 import type { TypeRef } from "./ast";
 import type { CompiledProgram } from "./compiler";
 import type { Frame, Interpreter } from "./interpreter";
@@ -1176,17 +1177,7 @@ function nativeFn(name: string, fn: (args: VMValue[]) => VMValue) {
     return new VMNativeFunction(name, fn);
 }
 
-export const KEY_CODES = [
-    "None", "Backspace", "Tab", "Return", "Escape", "Space", "Delete", "UpArrow", "DownArrow", "LeftArrow", "RightArrow",
-    "Insert", "Home", "End", "PageUp", "PageDown", "LeftShift", "RightShift", "LeftControl", "RightControl", "LeftAlt", "RightAlt",
-    "CapsLock", "Mouse0", "Mouse1", "Mouse2",
-    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
-    ...Array.from({ length: 10 }, (_, index) => `Alpha${index}`),
-    ...Array.from({ length: 10 }, (_, index) => `Keypad${index}`),
-    ...Array.from({ length: 12 }, (_, index) => `F${index + 1}`),
-    "Minus", "Equals", "Comma", "Period", "Slash", "Semicolon", "Quote", "LeftBracket", "RightBracket", "Backslash", "BackQuote",
-    "KeypadEnter", "KeypadPlus", "KeypadMinus", "KeypadMultiply", "KeypadDivide", "KeypadPeriod",
-];
+export { KEY_CODES };
 const KEY_CODE_SET = new Set(KEY_CODES);
 
 function currentDeltaTime(interp: Interpreter): number {

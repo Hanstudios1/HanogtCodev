@@ -5,14 +5,22 @@
  */
 import { compileScripts, type CompiledProgram } from "../script/compiler";
 import { SceneRenderer, type RenderFrame } from "../render/renderer";
-import { sceneFrame } from "../render/scene-frame";
+import { sceneFrame, sceneRenderEntities } from "../render/scene-frame";
 import { SoundEngine } from "../runtime/audio";
 import { InputManager } from "../runtime/input";
-import { RuntimeWorld, type LogEntry } from "../runtime/world";
+import { RuntimeWorld, type LogEntry, type WorldStats } from "../runtime/world";
 import type { GameProjectDocument, ProjectSettings } from "../types";
 import { GameOverlay } from "./overlay";
 
 export type PlayerState = "idle" | "running" | "paused" | "stopped";
+
+/** Play-mode statistics for the editor's stats overlay. */
+export interface PlayerStats extends WorldStats {
+    fps: number;
+    frameMs: number;
+    drawCalls: number;
+    triangles: number;
+}
 
 export interface GamePlayerOptions {
     project: GameProjectDocument;
@@ -60,6 +68,8 @@ export class GamePlayer {
     private readonly options: GamePlayerOptions;
     private disposed = false;
     private stepOnce = false;
+    private fpsSmoothed = 0;
+    private frameMsSmoothed = 0;
 
     constructor(readonly container: HTMLElement, options: GamePlayerOptions) {
         this.options = options;
@@ -82,6 +92,7 @@ export class GamePlayer {
             showFps: settings.showFps,
             touchControls: options.touchControls ?? (settings.touchControls ? "auto" : false),
             onVirtualKey: (key, down) => this.input.setVirtualKey(key, down),
+            textures: options.project.textures,
         });
         this.input.attach(this.renderer.canvas, typeof window !== "undefined" ? window : this.root);
         // Keys are only captured once the game runs (so the page can still scroll before "Play").
@@ -162,9 +173,21 @@ export class GamePlayer {
     private renderFrame(delta = 0) {
         if (this.disposed) return;
         this.renderer.render(this.frame());
-        const overlayEntities = this.world.status === "idle" ? this.world.scene.objects.filter((entity) => entity.active).map((entity) => ({ id: entity.id, visible: true, components: entity.components })) : this.world.entities.values();
-        this.overlay.update(overlayEntities, this.world.hud, delta, this.renderer.size.height);
+        const world = this.world;
+        const overlayEntities = world.status === "idle" ? sceneRenderEntities(world.scene) : world.entities.values();
+        this.overlay.update(overlayEntities, world.hud, delta, this.renderer.size, { ...world.uiState(), fade: world.fadeState() });
         this.overlay.setNotice(this.renderer.hasCamera ? null : "Sahnede aktif kamera yok — varsayılan görünüm kullanılıyor.");
+    }
+
+    /** FPS, frame time, object counts and draw calls of the running game. */
+    getStats(): PlayerStats {
+        return {
+            ...this.world.stats(),
+            fps: Math.round(this.fpsSmoothed),
+            frameMs: Math.round(this.frameMsSmoothed * 10) / 10,
+            drawCalls: this.renderer.renderStats.drawCalls,
+            triangles: this.renderer.renderStats.triangles,
+        };
     }
 
     private loop = (time: number) => {
@@ -173,6 +196,10 @@ export class GamePlayer {
         const delta = this.last ? (time - this.last) / 1000 : 1 / 60;
         this.last = time;
         if (document.hidden) return;
+        if (delta > 0) {
+            this.fpsSmoothed = this.fpsSmoothed ? this.fpsSmoothed * 0.9 + (1 / delta) * 0.1 : 1 / delta;
+            this.frameMsSmoothed = this.frameMsSmoothed ? this.frameMsSmoothed * 0.9 + delta * 1000 * 0.1 : delta * 1000;
+        }
         if (this.state === "running" || this.stepOnce) {
             if (this.stepOnce && this.world.status === "paused") {
                 this.world.resume();

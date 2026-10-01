@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
   },
   // Ensure trailing slashes for file protocol to work correctly with relative paths
   trailingSlash: isElectron,
+  // Cloud Health compares and deploys the repository's security rules, which
+  // it reads from disk at runtime (src/lib/server/cloud-health.ts).
+  outputFileTracingIncludes: {
+    "/api/admin/cloud": ["./firestore.rules", "./storage.rules"],
+  },
   async headers() {
     if (isElectron) return [];
     const contentSecurityPolicy = [

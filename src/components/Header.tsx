@@ -2,19 +2,21 @@
 
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import {
-    BookOpen, Bot, Boxes, ChevronDown, FileCode, Gamepad2, Gauge, LayoutDashboard, LogOut, Menu, MessageSquare, Newspaper, Radio, Settings,
+    Bell, BookOpen, Bot, Boxes, ChevronDown, FileCode, Gamepad2, Gauge, LayoutDashboard, LogOut, Menu, MessageSquare, Newspaper, Radio, Settings,
     ShieldCheck, Sparkles, Users, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
+import type { StaffRole } from "@/components/Admin/types";
+import NotificationCenter, { useUnreadNotifications } from "@/components/NotificationCenter";
 import OptimizedImage from "@/components/OptimizedImage";
 import { useFirebaseBridge, useRawSession } from "@/components/Provider";
-import { db } from "@/lib/firebase";
-import { useI18n } from "@/lib/i18n";
-import { isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
+import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
+import { useOwnProfile } from "@/lib/account-profile-client";
+import { useI18n, type Copy } from "@/lib/i18n";
+import { ADMIN_NAV, isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
 import ChangelogModal from "./ChangelogModal";
 import LangToggle from "./LangToggle";
 import ThemeToggle from "./ThemeToggle";
@@ -37,20 +39,73 @@ export const NAV_ICONS: Record<NavIcon, LucideIcon> = {
     admin: Gauge,
 };
 
-type UserData = { username?: string; avatarUrl?: string; isOnline?: boolean };
+const C = {
+    notificationsWithUnread: { TR: "{label} ({count} okunmamış)", EN: "{label} ({count} unread)" },
+    unread: { TR: "okunmamış", EN: "unread" },
+    accountMenu: { TR: "Hesap menüsü", EN: "Account menu" },
+} satisfies Record<string, Copy>;
+
+type StaffAccess = { email: string; role: StaffRole | null; checkedAt: number };
+
+const STAFF_ACCESS_TTL_MS = 5 * 60_000;
+// The server also answers "not staff" when it could not check (database
+// unreachable), so a negative answer is asked again sooner.
+const NO_STAFF_ACCESS_TTL_MS = 60_000;
+// Module scope: every page renders its own Header, so the answer survives
+// client-side navigation instead of being requested again on each page.
+let staffAccessCache: StaffAccess | null = null;
+
+function cachedStaffAccess(email: string | null) {
+    return email && staffAccessCache?.email === email ? staffAccessCache : null;
+}
+
+function isFresh(access: StaffAccess) {
+    return Date.now() - access.checkedAt < (access.role ? STAFF_ACCESS_TTL_MS : NO_STAFF_ACCESS_TTL_MS);
+}
+
+/**
+ * Staff role of the signed-in account ("owner" | "admin" | "moderator") or
+ * null. It only decides which links are shown: every admin API checks the
+ * role on the server. Pass the e-mail of the raw NextAuth session, so staff
+ * see their links without waiting for the Firebase bridge.
+ */
+export function useStaffRole(email: string | null): StaffRole | null {
+    const [access, setAccess] = useState<StaffAccess | null>(() => cachedStaffAccess(email));
+
+    useEffect(() => {
+        if (!email) return;
+        const cached = cachedStaffAccess(email);
+        if (cached && isFresh(cached)) return;
+        let cancelled = false;
+        fetch("/api/admin/me", { cache: "no-store", credentials: "same-origin" })
+            .then((response) => (response.ok ? response.json() as Promise<{ isAdmin?: boolean; email?: unknown; role?: unknown }> : null))
+            .then((data) => {
+                // A rate limit or network error keeps the last known answer instead of hiding the links.
+                if (!data) return;
+                const role = data.isAdmin === true && data.email === email ? parseStaffRole(data.role) : null;
+                staffAccessCache = { email, role, checkedAt: Date.now() };
+                if (!cancelled) setAccess(staffAccessCache);
+            })
+            .catch(() => undefined);
+        return () => { cancelled = true; };
+    }, [email]);
+
+    // An answer for a previous account (after switching accounts) never applies.
+    const current = access?.email === email ? access : cachedStaffAccess(email);
+    return current?.role ?? null;
+}
 
 export default function Header() {
-    const { data: session } = useSession();
     const { t, tx } = useI18n();
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
     const [aiOpen, setAiOpen] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [userData, setUserData] = useState<UserData | null>(null);
     const profileRef = useRef<HTMLDivElement>(null);
+    const bellRef = useRef<HTMLButtonElement>(null);
     const { scrollYProgress } = useScroll();
     const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
     // The header reflects the NextAuth cookie right away; waiting for the Firebase
@@ -59,7 +114,16 @@ export default function Header() {
     const account = auth.status === "authenticated" ? auth.data?.user : undefined;
     const signedIn = Boolean(account);
     const sessionLoading = auth.status === "loading";
-    const firebaseReady = useFirebaseBridge().ready;
+    const email = account?.email?.toLowerCase() || null;
+    // Online dot: the presence heartbeat (Provider) can only write once the Firebase bridge is ready.
+    const presenceActive = useFirebaseBridge().ready;
+    // Name and avatar come from /api/account/profile (cached for the session and
+    // updated by Account Settings), so they don't depend on the Firebase bridge.
+    const profile = useOwnProfile(email);
+    const unread = useUnreadNotifications(signedIn ? email : null);
+    // Staff see the Admin Panel in the profile menu and the mobile menu.
+    const staffRole = useStaffRole(email);
+    const isAdmin = signedIn && staffRole !== null;
 
     // The global Hanogt AI dock reports whether its panel is open.
     useEffect(() => {
@@ -68,31 +132,12 @@ export default function Header() {
         return () => window.removeEventListener("hanogt:ai-state", onState);
     }, []);
 
-    // Staff see a link to the admin panel; the API answers isAdmin:false for everyone else.
-    useEffect(() => {
-        if (!signedIn) return;
-        let cancelled = false;
-        fetch("/api/admin/me", { cache: "no-store" })
-            .then((response) => (response.ok ? response.json() as Promise<{ isAdmin?: boolean }> : null))
-            .then((data) => { if (!cancelled) setIsAdmin(Boolean(data?.isAdmin)); })
-            .catch(() => undefined);
-        return () => { cancelled = true; };
-    }, [signedIn]);
-
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
         onScroll();
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
-
-    useEffect(() => {
-        if (!session?.user?.email || !firebaseReady) return;
-        const unsubscribe = onSnapshot(doc(db, "users", session.user.email), (snapshot) => {
-            if (snapshot.exists()) setUserData(snapshot.data() as UserData);
-        }, () => undefined);
-        return () => unsubscribe();
-    }, [firebaseReady, session?.user?.email]);
 
     useEffect(() => {
         if (!profileOpen) return;
@@ -125,10 +170,17 @@ export default function Header() {
         };
     }, [menuOpen]);
 
-    const displayName = userData?.username || account?.name || t("user");
-    const displayAvatar = userData?.avatarUrl || account?.image;
+    const displayName = profile?.username || account?.name || t("user");
+    const displayAvatar = profile?.avatarUrl || account?.image;
     const primary = PRIMARY_NAV.filter((item) => !item.auth || signedIn);
     const secondary = SECONDARY_NAV.filter((item) => !item.auth || signedIn);
+    const notificationsLabel = t("notifications") || "Bildirimler";
+    const bellLabel = unread > 0 ? tx(C.notificationsWithUnread, { label: notificationsLabel, count: unread }) : notificationsLabel;
+    const openNotifications = () => {
+        setProfileOpen(false);
+        setMenuOpen(false);
+        setNotificationsOpen(true);
+    };
 
     const avatar = (size: string) => displayAvatar ? (
         <OptimizedImage src={displayAvatar} alt="" className={`${size} rounded-full border-2 border-white object-cover shadow-sm dark:border-zinc-800`} />
@@ -197,17 +249,38 @@ export default function Header() {
                         <ThemeToggle />
 
                         {signedIn ? (
+                            <button
+                                ref={bellRef}
+                                type="button"
+                                onClick={() => (notificationsOpen ? setNotificationsOpen(false) : openNotifications())}
+                                className={`relative grid h-9 w-9 place-items-center rounded-xl text-zinc-600 transition hover:bg-zinc-900/5 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-white ${notificationsOpen ? "bg-zinc-900/5 text-zinc-950 dark:bg-white/10 dark:text-white" : ""}`}
+                                title={bellLabel}
+                                aria-label={bellLabel}
+                                aria-haspopup="dialog"
+                                aria-expanded={notificationsOpen}
+                            >
+                                <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
+                                {unread > 0 ? (
+                                    <span aria-hidden="true" className="absolute -end-0.5 -top-0.5 min-w-[18px] rounded-full bg-red-500 px-1 text-center text-[10px] font-bold leading-[18px] tabular-nums text-white ring-2 ring-white dark:ring-zinc-950">
+                                        {unread > 9 ? "9+" : unread}
+                                    </span>
+                                ) : null}
+                            </button>
+                        ) : null}
+
+                        {signedIn ? (
                             <div className="relative" ref={profileRef}>
                                 <button
                                     type="button"
                                     onClick={() => setProfileOpen((value) => !value)}
                                     aria-haspopup="menu"
                                     aria-expanded={profileOpen}
+                                    aria-label={tx(C.accountMenu)}
                                     className="flex items-center gap-1 rounded-full p-1 transition hover:bg-zinc-900/5 dark:hover:bg-white/10"
                                 >
                                     <span className="relative">
                                         {avatar("h-8 w-8")}
-                                        <span className={`absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-950 ${userData?.isOnline ? "bg-emerald-500" : "bg-zinc-400"}`} />
+                                        <span className={`absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-950 ${presenceActive ? "bg-emerald-500" : "bg-zinc-400"}`} />
                                     </span>
                                     <ChevronDown className={`hidden h-4 w-4 text-zinc-500 transition-transform sm:block ${profileOpen ? "rotate-180" : ""}`} />
                                 </button>
@@ -223,8 +296,11 @@ export default function Header() {
                                         >
                                             <div className="flex items-center gap-3 border-b border-zinc-100 bg-gradient-to-br from-indigo-500/[0.06] to-fuchsia-500/[0.06] p-4 dark:border-white/[0.06]">
                                                 {avatar("h-11 w-11")}
-                                                <div className="min-w-0">
-                                                    <p className="truncate font-bold text-zinc-900 dark:text-white">{displayName}</p>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex min-w-0 items-center gap-1.5">
+                                                        <p className="min-w-0 truncate font-bold text-zinc-900 dark:text-white">{displayName}</p>
+                                                        <StaffBadge role={staffRole} size="sm" />
+                                                    </div>
                                                     <p className="truncate text-[12.5px] text-zinc-500">{account?.email}</p>
                                                 </div>
                                             </div>
@@ -238,8 +314,8 @@ export default function Header() {
                                                     );
                                                 })}
                                                 {isAdmin ? (
-                                                    <Link role="menuitem" href="/admin" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10">
-                                                        <Gauge className="h-4.5 w-4.5" />{tx({ TR: "Yönetici Paneli", EN: "Admin Panel" })}
+                                                    <Link role="menuitem" href={ADMIN_NAV.href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10">
+                                                        <Gauge className="h-4.5 w-4.5" />{tx(ADMIN_NAV.label)}
                                                     </Link>
                                                 ) : null}
                                                 <Link role="menuitem" href="/account-settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
@@ -315,7 +391,33 @@ export default function Header() {
                                     );
                                 })}
                             </div>
+                            {isAdmin ? (
+                                <Link
+                                    href={ADMIN_NAV.href}
+                                    onClick={() => setMenuOpen(false)}
+                                    aria-current={isActivePath(pathname, ADMIN_NAV.href) ? "page" : undefined}
+                                    className="mt-4 flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5 transition hover:border-violet-300 dark:border-violet-400/25 dark:bg-violet-500/10 dark:hover:border-violet-400/40"
+                                >
+                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow"><Gauge className="h-4.5 w-4.5" /></span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block text-[15px] font-bold text-zinc-900 dark:text-white">{tx(ADMIN_NAV.label)}</span>
+                                        {ADMIN_NAV.desc ? <span className="block text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(ADMIN_NAV.desc)}</span> : null}
+                                    </span>
+                                    <StaffBadge role={staffRole} size="sm" compactOnMobile />
+                                </Link>
+                            ) : null}
                             <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/[0.08]">
+                                {signedIn ? (
+                                    <button type="button" onClick={openNotifications} className="flex w-full items-center gap-3 border-b border-zinc-100 px-4 py-3 text-start text-[14px] font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-white/[0.05] dark:text-zinc-300 dark:hover:bg-white/[0.04]">
+                                        <Bell className="h-4.5 w-4.5 text-zinc-400" aria-hidden="true" />
+                                        <span className="min-w-0 flex-1">{notificationsLabel}</span>
+                                        {unread > 0 ? (
+                                            <span className="shrink-0 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold tabular-nums text-white">
+                                                {unread > 99 ? "99+" : unread}<span className="sr-only"> {tx(C.unread)}</span>
+                                            </span>
+                                        ) : null}
+                                    </button>
+                                ) : null}
                                 {secondary.map((item) => {
                                     const Icon = NAV_ICONS[item.icon];
                                     return (
@@ -344,6 +446,7 @@ export default function Header() {
             </AnimatePresence>
 
             <ChangelogModal isOpen={showChangelog} onClose={() => setShowChangelog(false)} />
+            <NotificationCenter isOpen={signedIn && notificationsOpen} onClose={() => setNotificationsOpen(false)} returnFocusRef={bellRef} />
         </>
     );
 }

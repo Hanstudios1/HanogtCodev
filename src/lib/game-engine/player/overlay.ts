@@ -1,15 +1,26 @@
 /**
- * DOM overlay drawn above the game canvas: UI Text components, HUD messages,
- * FPS counter and on-screen touch controls. Plain DOM (no React) so it works
- * in the editor, the Arcade and exported HTML builds alike. Text is always set
- * through textContent, never as HTML.
+ * DOM overlay drawn above the game canvas: UI components (text, panels,
+ * buttons, progress bars), HUD messages, scene fades, the FPS counter and
+ * on-screen touch controls. Plain DOM (no React) so it works in the editor,
+ * the Arcade and exported HTML builds alike. Text is always set through
+ * textContent, never as HTML.
+ *
+ * The overlay never receives pointer events: clicks reach the canvas and the
+ * runtime hit-tests buttons with the same layout math (ui-layout.ts), so what
+ * is drawn here is exactly what can be clicked.
  */
-import type { GameComponent, UIAnchor, UITextComponent } from "../types";
+import type { TRS } from "../math";
+import type { GameComponent, TextureAsset, UIAnchor, UIButtonComponent, UIPanelComponent, UIProgressBarComponent, UITextComponent } from "../types";
+import { progressFraction, scaleRect, uiRect, uiScale, type ScreenRect } from "../ui-layout";
 
 export interface OverlayEntity {
     readonly id: string;
     readonly visible: boolean;
     readonly components: readonly GameComponent[];
+    /** World transform; UI elements scale and rotate with it. */
+    readonly world?: TRS;
+    /** Runtime opacity of the object's UI (fades and tweens). */
+    readonly uiAlpha?: number;
 }
 
 export interface OverlayOptions {
@@ -17,9 +28,26 @@ export interface OverlayOptions {
     /** true = always, "auto" = only on touch devices, false = never. */
     touchControls: boolean | "auto";
     onVirtualKey?: (key: string, down: boolean) => void;
+    /** Images shown by UI panels. */
+    textures?: readonly TextureAsset[];
 }
 
-const REFERENCE_HEIGHT = 540;
+/** Runtime state of the UI (hovered/pressed button, scene fade). */
+export interface OverlayState {
+    hover?: string | null;
+    pressed?: string | null;
+    fade?: { alpha: number; color: string } | null;
+}
+
+type UIElementComponent = UITextComponent | UIButtonComponent | UIPanelComponent | UIProgressBarComponent;
+
+interface UIEntry {
+    element: HTMLDivElement;
+    key: string;
+    type: UIElementComponent["type"];
+    fill?: HTMLDivElement;
+    label?: HTMLSpanElement;
+}
 
 function anchorStyle(anchor: UIAnchor, x: number, y: number): Partial<CSSStyleDeclaration> {
     const style: Partial<CSSStyleDeclaration> = { left: "", right: "", top: "", bottom: "", transform: "", textAlign: "left" };
@@ -45,25 +73,47 @@ function anchorStyle(anchor: UIAnchor, x: number, y: number): Partial<CSSStyleDe
     return style;
 }
 
+function hexToRgba(hex: string, alpha: number) {
+    const clean = /^#?([0-9a-f]{6})$/i.exec(hex)?.[1] ?? "000000";
+    return `rgba(${parseInt(clean.slice(0, 2), 16)}, ${parseInt(clean.slice(2, 4), 16)}, ${parseInt(clean.slice(4, 6), 16)}, ${Math.max(0, Math.min(1, alpha))})`;
+}
+
+/** Z rotation (degrees, counter-clockwise) of a world transform. */
+function rotationZ(world: TRS | undefined) {
+    if (!world) return 0;
+    const q = world.rotation;
+    return (2 * Math.atan2(q.z, q.w) * 180) / Math.PI;
+}
+
 export class GameOverlay {
     readonly element: HTMLDivElement;
-    private readonly textLayer: HTMLDivElement;
-    private readonly texts = new Map<string, { element: HTMLDivElement; key: string }>();
+    private readonly uiLayer: HTMLDivElement;
+    private readonly entries = new Map<string, UIEntry>();
     private readonly hud: HTMLDivElement;
+    private readonly fade: HTMLDivElement;
     private readonly fps: HTMLDivElement;
     private readonly notice: HTMLDivElement;
+    private readonly textures = new Map<string, string>();
     private touch: HTMLDivElement | null = null;
     private fpsFrames = 0;
     private fpsTime = 0;
     private lastHud = "";
+    private lastFade = "";
+    private readonly options: OverlayOptions;
 
-    constructor(parent: HTMLElement, private readonly options: OverlayOptions) {
+    constructor(parent: HTMLElement, options: OverlayOptions) {
+        this.options = options;
+        for (const texture of options.textures ?? []) this.textures.set(texture.id, texture.dataUrl);
         const root = document.createElement("div");
         root.className = "hanogt-overlay";
         Object.assign(root.style, { position: "absolute", inset: "0", pointerEvents: "none", overflow: "hidden", fontFamily: "Inter Variable, Inter, system-ui, sans-serif", userSelect: "none" });
-        this.textLayer = document.createElement("div");
-        Object.assign(this.textLayer.style, { position: "absolute", inset: "0" });
-        root.appendChild(this.textLayer);
+        this.uiLayer = document.createElement("div");
+        Object.assign(this.uiLayer.style, { position: "absolute", inset: "0" });
+        root.appendChild(this.uiLayer);
+
+        this.fade = document.createElement("div");
+        Object.assign(this.fade.style, { position: "absolute", inset: "0", opacity: "0", display: "none" });
+        root.appendChild(this.fade);
 
         this.hud = document.createElement("div");
         Object.assign(this.hud.style, {
@@ -138,22 +188,39 @@ export class GameOverlay {
         this.notice.style.display = message ? "block" : "none";
     }
 
-    update(entities: Iterable<OverlayEntity>, hud: { text: string; color: string } | null, delta: number, height: number) {
-        const scale = Math.max(0.35, height / REFERENCE_HEIGHT);
-        const seen = new Set<string>();
+    setTextures(textures: readonly TextureAsset[]) {
+        this.textures.clear();
+        for (const texture of textures) this.textures.set(texture.id, texture.dataUrl);
+        for (const entry of this.entries.values()) entry.key = "";
+    }
+
+    update(entities: Iterable<OverlayEntity>, hud: { text: string; color: string } | null, delta: number, size: { width: number; height: number }, state: OverlayState = {}) {
+        const scale = uiScale(size.height);
+        const items: Array<{ component: UIElementComponent; entity: OverlayEntity; order: number; index: number }> = [];
+        let index = 0;
         for (const entity of entities) {
+            index += 1;
             if (!entity.visible) continue;
             for (const component of entity.components) {
-                if (component.type !== "uiText" || !component.enabled) continue;
-                seen.add(component.id);
-                this.renderText(component, scale);
+                if (!component.enabled) continue;
+                if (component.type === "uiText" || component.type === "uiButton" || component.type === "uiPanel" || component.type === "uiProgressBar") {
+                    items.push({ component, entity, order: component.order ?? 0, index });
+                }
             }
         }
-        for (const [id, entry] of this.texts) {
+        // Higher order on top; later objects in the hierarchy win ties (like Unity's sibling order).
+        items.sort((a, b) => a.order - b.order || a.index - b.index);
+        const seen = new Set<string>();
+        items.forEach((item, position) => {
+            seen.add(item.component.id);
+            this.renderItem(item.component, item.entity, scale, size, position + 1, state);
+        });
+        for (const [id, entry] of this.entries) {
             if (seen.has(id)) continue;
             entry.element.remove();
-            this.texts.delete(id);
+            this.entries.delete(id);
         }
+        this.renderFade(state.fade ?? null);
         const hudKey = hud ? `${hud.text}|${hud.color}` : "";
         if (hudKey !== this.lastHud) {
             this.lastHud = hudKey;
@@ -178,30 +245,154 @@ export class GameOverlay {
         }
     }
 
-    private renderText(component: UITextComponent, scale: number) {
-        const key = `${component.text}|${component.fontSize}|${component.color}|${component.anchor}|${component.offset.x},${component.offset.y}|${component.bold}|${component.shadow}|${scale.toFixed(3)}`;
-        let entry = this.texts.get(component.id);
-        if (!entry) {
-            const element = document.createElement("div");
-            Object.assign(element.style, { position: "absolute", whiteSpace: "pre-line", lineHeight: "1.2", maxWidth: "92%" });
-            this.textLayer.appendChild(element);
-            entry = { element, key: "" };
-            this.texts.set(component.id, entry);
+    private renderFade(fade: { alpha: number; color: string } | null) {
+        const key = fade ? `${fade.color}|${fade.alpha.toFixed(3)}` : "";
+        if (key === this.lastFade) return;
+        this.lastFade = key;
+        this.fade.style.display = fade ? "block" : "none";
+        if (!fade) return;
+        this.fade.style.background = fade.color;
+        this.fade.style.opacity = String(fade.alpha);
+    }
+
+    private entry(component: UIElementComponent): UIEntry {
+        let entry = this.entries.get(component.id);
+        if (entry && entry.type === component.type) return entry;
+        entry?.element.remove();
+        const element = document.createElement("div");
+        element.style.position = "absolute";
+        entry = { element, key: "", type: component.type };
+        if (component.type === "uiText") {
+            Object.assign(element.style, { whiteSpace: "pre-line", lineHeight: "1.2", maxWidth: "92%" });
+        } else if (component.type === "uiButton") {
+            Object.assign(element.style, { display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", fontWeight: "700", lineHeight: "1.1", overflow: "hidden", boxSizing: "border-box", padding: "0 8px", transition: "filter .08s ease, transform .08s ease" });
+            element.setAttribute("role", "button");
+            const label = document.createElement("span");
+            label.style.whiteSpace = "pre-line";
+            element.appendChild(label);
+            entry.label = label;
+        } else if (component.type === "uiPanel") {
+            Object.assign(element.style, { backgroundSize: "100% 100%", backgroundRepeat: "no-repeat" });
+        } else {
+            Object.assign(element.style, { overflow: "hidden", boxSizing: "border-box" });
+            const fill = document.createElement("div");
+            fill.style.position = "absolute";
+            element.appendChild(fill);
+            const label = document.createElement("span");
+            Object.assign(label.style, { position: "absolute", inset: "0", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,.6)" });
+            element.appendChild(label);
+            entry.fill = fill;
+            entry.label = label;
         }
+        this.uiLayer.appendChild(element);
+        this.entries.set(component.id, entry);
+        return entry;
+    }
+
+    private renderItem(component: UIElementComponent, entity: OverlayEntity, scale: number, size: { width: number; height: number }, zIndex: number, state: OverlayState) {
+        const entry = this.entry(component);
+        const world = entity.world;
+        const sx = world ? Math.abs(world.scale.x) : 1;
+        const sy = world ? Math.abs(world.scale.y) : 1;
+        const angle = rotationZ(world);
+        const alpha = entity.uiAlpha ?? 1;
+        if (component.type === "uiText") {
+            const key = `${component.text}|${component.fontSize}|${component.color}|${component.anchor}|${component.offset.x},${component.offset.y}|${component.bold}|${component.shadow}|${scale.toFixed(3)}|${zIndex}|${alpha}|${sx},${sy},${angle.toFixed(2)}`;
+            if (entry.key === key) return;
+            entry.key = key;
+            const element = entry.element;
+            element.textContent = component.text;
+            const style = anchorStyle(component.anchor, component.offset.x * scale, component.offset.y * scale);
+            const extra = `${sx !== 1 || sy !== 1 ? ` scale(${sx}, ${sy})` : ""}${Math.abs(angle) > 0.01 ? ` rotate(${-angle}deg)` : ""}`;
+            Object.assign(element.style, style, { transform: `${style.transform ?? ""}${extra}`.trim() });
+            element.style.fontSize = `${Math.max(6, component.fontSize * scale)}px`;
+            element.style.color = component.color;
+            element.style.fontWeight = component.bold ? "800" : "500";
+            element.style.textShadow = component.shadow ? "0 2px 6px rgba(0,0,0,.65)" : "none";
+            element.style.opacity = String(alpha);
+            element.style.zIndex = String(zIndex);
+            return;
+        }
+        const rect: ScreenRect = component.type === "uiPanel" && component.fullScreen
+            ? { left: 0, top: 0, width: size.width, height: size.height }
+            : scaleRect(uiRect(component, size, scale), sx, sy);
+        const hovered = state.hover === component.id;
+        const pressed = state.pressed === component.id;
+        const radius = component.type === "uiPanel" && component.fullScreen ? 0 : component.cornerRadius * scale * Math.min(sx, sy);
+        const base = `${rect.left.toFixed(1)},${rect.top.toFixed(1)},${rect.width.toFixed(1)},${rect.height.toFixed(1)}|${radius.toFixed(1)}|${zIndex}|${alpha}|${angle.toFixed(2)}`;
+        const element = entry.element;
+        if (component.type === "uiButton") {
+            const key = `${base}|${component.text}|${component.fontSize}|${component.textColor}|${component.color}|${component.interactable}|${hovered}|${pressed}|${scale.toFixed(3)}`;
+            if (entry.key === key) return;
+            entry.key = key;
+            this.place(element, rect, radius, zIndex, angle);
+            element.style.background = component.color;
+            element.style.color = component.textColor;
+            element.style.fontSize = `${Math.max(6, component.fontSize * scale * Math.min(sx, sy))}px`;
+            element.style.boxShadow = pressed ? "inset 0 2px 6px rgba(0,0,0,.35)" : "0 6px 18px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18)";
+            element.style.filter = !component.interactable ? "grayscale(.7) brightness(.8)" : pressed ? "brightness(.88)" : hovered ? "brightness(1.12)" : "none";
+            element.style.opacity = String(alpha * (component.interactable ? 1 : 0.6));
+            if (pressed) element.style.transform = `${element.style.transform} translateY(1px)`.trim();
+            element.setAttribute("aria-label", component.text);
+            element.setAttribute("aria-disabled", String(!component.interactable));
+            if (entry.label) entry.label.textContent = component.text;
+            return;
+        }
+        if (component.type === "uiPanel") {
+            const image = component.textureId ? this.textures.get(component.textureId) ?? null : null;
+            const key = `${base}|${component.color}|${component.opacity}|${image ? component.textureId : ""}`;
+            if (entry.key === key) return;
+            entry.key = key;
+            this.place(element, rect, radius, zIndex, angle);
+            element.style.backgroundColor = image ? "transparent" : hexToRgba(component.color, component.opacity);
+            element.style.backgroundImage = image ? `url("${image}")` : "none";
+            element.style.opacity = String(image ? alpha * component.opacity : alpha);
+            return;
+        }
+        const fraction = progressFraction(component);
+        const key = `${base}|${fraction.toFixed(4)}|${component.fillColor}|${component.backgroundColor}|${component.direction}|${component.showLabel}|${scale.toFixed(3)}`;
         if (entry.key === key) return;
         entry.key = key;
-        const element = entry.element;
-        element.textContent = component.text;
-        Object.assign(element.style, anchorStyle(component.anchor, component.offset.x * scale, component.offset.y * scale));
-        element.style.fontSize = `${Math.max(6, component.fontSize * scale)}px`;
-        element.style.color = component.color;
-        element.style.fontWeight = component.bold ? "800" : "500";
-        element.style.textShadow = component.shadow ? "0 2px 6px rgba(0,0,0,.65)" : "none";
+        this.place(element, rect, radius, zIndex, angle);
+        element.style.background = component.backgroundColor;
+        element.style.opacity = String(alpha);
+        element.setAttribute("role", "progressbar");
+        element.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
+        element.setAttribute("aria-valuemin", "0");
+        element.setAttribute("aria-valuemax", "100");
+        const fill = entry.fill as HTMLDivElement;
+        const percent = `${(fraction * 100).toFixed(2)}%`;
+        const horizontal = component.direction === "leftToRight" || component.direction === "rightToLeft";
+        Object.assign(fill.style, {
+            background: component.fillColor,
+            borderRadius: `${radius}px`,
+            left: component.direction === "rightToLeft" ? "auto" : "0",
+            right: component.direction === "rightToLeft" ? "0" : "auto",
+            top: component.direction === "topToBottom" ? "0" : "auto",
+            bottom: component.direction === "topToBottom" ? "auto" : "0",
+            width: horizontal ? percent : "100%",
+            height: horizontal ? "100%" : percent,
+            transition: "width .12s ease, height .12s ease",
+        });
+        if (entry.label) {
+            entry.label.textContent = component.showLabel ? `${Math.round(fraction * 100)}%` : "";
+            entry.label.style.fontSize = `${Math.max(8, rect.height * 0.62)}px`;
+        }
+    }
+
+    private place(element: HTMLDivElement, rect: ScreenRect, radius: number, zIndex: number, angle: number) {
+        element.style.left = `${rect.left}px`;
+        element.style.top = `${rect.top}px`;
+        element.style.width = `${rect.width}px`;
+        element.style.height = `${rect.height}px`;
+        element.style.borderRadius = `${radius}px`;
+        element.style.zIndex = String(zIndex);
+        element.style.transform = Math.abs(angle) > 0.01 ? `rotate(${-angle}deg)` : "";
     }
 
     dispose() {
         this.element.remove();
-        this.texts.clear();
+        this.entries.clear();
         this.touch = null;
     }
 }

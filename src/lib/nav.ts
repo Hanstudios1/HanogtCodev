@@ -54,6 +54,18 @@ export const SECONDARY_NAV: NavItem[] = [
     { href: "/game-engine/docs", icon: "docs", label: NAV_LABELS.docs, descKey: "nd_docs" },
 ];
 
+/**
+ * Shown only to staff (moderators, admins, owners), once GET /api/admin/me
+ * confirms the role; see useStaffRole in components/Header.tsx.
+ */
+export const ADMIN_NAV: NavItem = {
+    href: "/admin",
+    icon: "admin",
+    label: { TR: "Yönetici Paneli", EN: "Admin Panel" },
+    desc: { TR: "Kullanıcılar, moderasyon, destek ve duyurular", EN: "Users, moderation, support and announcements" },
+    auth: true,
+};
+
 export function isActivePath(pathname: string | null, href: string) {
     if (!pathname) return false;
     if (href === "/") return pathname === "/";

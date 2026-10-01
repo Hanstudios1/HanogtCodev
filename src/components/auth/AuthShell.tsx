@@ -5,7 +5,8 @@ import { ArrowLeft, Code2, Gamepad2, ShieldCheck, Users } from "lucide-react";
 import OptimizedImage from "@/components/OptimizedImage";
 import ThemeToggle from "@/components/ThemeToggle";
 import LangToggle from "@/components/LangToggle";
-import { useI18n } from "@/lib/i18n";
+import { formatCopy, useI18n } from "@/lib/i18n";
+import { LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
 type Props = {
     title: string;
@@ -17,7 +18,7 @@ type Props = {
 export default function AuthShell({ title, subtitle, children, footer }: Props) {
     const { t } = useI18n();
     const features = [
-        { icon: Code2, title: t("auth_feature_code") || "16 dilde kod yaz ve çalıştır", color: "from-sky-400 to-indigo-500" },
+        { icon: Code2, title: formatCopy(t("auth_feature_code"), { count: LANGUAGE_STATS.usable }), color: "from-sky-400 to-indigo-500" },
         { icon: Gamepad2, title: t("auth_feature_engine") || "C# ve C++ ile gerçek zamanlı 2D/3D oyunlar yap", color: "from-fuchsia-400 to-violet-500" },
         { icon: Users, title: t("auth_feature_community") || "Arcade ve Media'da paylaş, arkadaşlarınla üret", color: "from-emerald-400 to-teal-500" },
     ];

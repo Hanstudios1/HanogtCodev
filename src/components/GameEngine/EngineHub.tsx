@@ -2,6 +2,7 @@
 
 import {
     ArrowLeft,
+    ArrowRight,
     BookOpen,
     Cloud,
     Download,
@@ -22,7 +23,7 @@ import { useSession } from "next-auth/react";
 import { useI18n } from "@/lib/i18n";
 import { createProjectFromTemplate, PROJECT_TEMPLATES, type TemplateInfo } from "@/lib/game-engine/templates";
 import { createEngineId } from "@/lib/game-engine/ids";
-import type { GameProjectDocument } from "@/lib/game-engine/types";
+import { ENGINE_VERSION, ENGINE_VERSION_LABEL, type GameProjectDocument } from "@/lib/game-engine/types";
 import {
     createCloudProject,
     deleteCloudProject,
@@ -38,6 +39,7 @@ import {
 } from "./editor/persistence";
 import { engineLocale, useEngineText } from "./editor/text";
 import { Button, Modal, Toasts, cx, inputClass, useToasts } from "./editor/ui";
+import { V3_FEATURES } from "./whats-new";
 
 function relativeTime(iso: string, locale: "tr" | "en") {
     const time = Date.parse(iso);
@@ -63,6 +65,7 @@ function TemplateCard({ template, locale, onPick, index }: { template: TemplateI
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.35),transparent_45%)]" />
                 <span className="absolute left-4 top-3 text-5xl drop-shadow-lg transition duration-500 group-hover:scale-110 group-hover:-rotate-6">{template.emoji}</span>
                 <span className="absolute right-3 top-3 rounded-full bg-black/35 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-white backdrop-blur">{template.dimension}</span>
+                {template.since ? <span className="absolute bottom-3 left-3 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-black text-zinc-900 shadow">{locale === "tr" ? `Yeni · V${template.since}` : `New · V${template.since}`}</span> : null}
                 <div className="absolute bottom-3 right-3 flex gap-1">
                     {template.languages.map((language) => <span key={language} className="rounded-md bg-black/40 px-1.5 py-0.5 text-[10px] font-black text-white backdrop-blur">{language}</span>)}
                 </div>
@@ -75,6 +78,40 @@ function TemplateCard({ template, locale, onPick, index }: { template: TemplateI
                 </span>
             </div>
         </button>
+    );
+}
+
+/** "What's new in V3": the headline features, each linking to its docs section. */
+function WhatsNew() {
+    const t = useEngineText();
+    const { tx } = useI18n();
+    return (
+        <section className="mb-12 overflow-hidden rounded-2xl border border-indigo-400/20 bg-gradient-to-br from-indigo-500/[0.08] via-zinc-900/60 to-fuchsia-500/[0.06] p-5 animate-fade-up sm:p-6" aria-labelledby="whats-new-title">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 id="whats-new-title" className="flex items-center gap-2 text-xl font-bold">
+                    <Sparkles className="h-5 w-5 text-fuchsia-300" />{t("whatsNew")}
+                </h2>
+                <Link href="/game-engine/docs#yenilikler" className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12.5px] font-semibold text-indigo-300 transition hover:bg-white/5 hover:text-indigo-200">
+                    {t("docs")}<ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+            </div>
+            <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                {V3_FEATURES.map((feature) => {
+                    const Icon = feature.icon;
+                    return (
+                        <li key={feature.section + feature.title.EN}>
+                            <Link href={`/game-engine/docs#${feature.section}`} className="flex h-full gap-3 rounded-xl border border-white/[0.06] bg-zinc-950/40 p-3 transition hover:border-white/15 hover:bg-zinc-950/70">
+                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-indigo-500/15 text-indigo-200"><Icon className="h-4 w-4" /></span>
+                                <span className="min-w-0">
+                                    <span className="block text-[13px] font-bold text-white">{tx(feature.title)}</span>
+                                    <span className="mt-0.5 block text-[12px] leading-relaxed text-zinc-400">{tx(feature.text)}</span>
+                                </span>
+                            </Link>
+                        </li>
+                    );
+                })}
+            </ul>
+        </section>
     );
 }
 
@@ -164,7 +201,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                     <div className="flex items-center gap-2">
                         <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30"><Gamepad2 className="h-4 w-4" /></div>
                         <span className="text-[15px] font-black tracking-tight">Hanogt Engine</span>
-                        <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold text-indigo-200">v2</span>
+                        <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold text-indigo-200" title={ENGINE_VERSION_LABEL}>V{ENGINE_VERSION}</span>
                     </div>
                     <div className="flex-1" />
                     <Link href="/arcade" className="hidden items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold text-zinc-300 transition hover:bg-white/5 hover:text-white sm:inline-flex"><Globe className="h-4 w-4" />{t("arcade")}</Link>
@@ -175,7 +212,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
             <main className="relative mx-auto max-w-7xl px-4 pb-24 pt-10">
                 <section className="mb-12 grid items-center gap-8 lg:grid-cols-[1.2fr_1fr]">
                     <div className="animate-fade-up">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 text-[12px] font-semibold text-indigo-200"><Sparkles className="h-3.5 w-3.5" />C# · C++ · 2D · 3D · WebGL</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 text-[12px] font-semibold text-indigo-200"><Sparkles className="h-3.5 w-3.5" />{ENGINE_VERSION_LABEL} · C# · C++ · 2D · 3D</span>
                         <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl">{t("welcomeTitle")}</h1>
                         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-zinc-400">{t("welcomeText")}</p>
                         <div className="mt-6 flex flex-wrap gap-2">
@@ -187,12 +224,14 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                     </div>
                     <div className="relative hidden animate-fade-up lg:block" style={{ animationDelay: "120ms" }}>
                         <div className="grid grid-cols-3 gap-3 [perspective:900px]">
-                            {["🏃", "🚀", "🎱", "🧱", "🧊", "🟦"].map((emoji, index) => (
+                            {["🗺️", "🏭", "💨", "🚀", "🎱", "🧱"].map((emoji, index) => (
                                 <div key={emoji} className="grid aspect-square place-items-center rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 text-4xl shadow-2xl animate-float" style={{ animationDelay: `${index * 0.5}s`, transform: `rotateX(${index % 2 ? 8 : -6}deg) rotateY(${index % 3 ? -10 : 8}deg)` }}>{emoji}</div>
                             ))}
                         </div>
                     </div>
                 </section>
+
+                <WhatsNew />
 
                 <section className="mb-12">
                     <div className="mb-4 flex items-end justify-between gap-3">
@@ -286,7 +325,10 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         {PROJECT_TEMPLATES.map((template) => (
                             <button key={template.id} type="button" onClick={() => setPending(template)} className={cx("rounded-xl border p-2.5 text-left transition", pending?.id === template.id ? "border-indigo-400/60 bg-indigo-500/15" : "border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05]")}>
-                                <span className="text-xl">{template.emoji}</span>
+                                <span className="flex items-start justify-between gap-1">
+                                    <span className="text-xl">{template.emoji}</span>
+                                    {template.since ? <span className="rounded bg-fuchsia-500/20 px-1 text-[9.5px] font-black text-fuchsia-200">V{template.since}</span> : null}
+                                </span>
                                 <span className="mt-1 block truncate text-[12px] font-semibold text-zinc-100">{template.name[locale]}</span>
                                 <span className="text-[10.5px] uppercase text-zinc-500">{template.dimension} · {template.languages.join(" ")}</span>
                             </button>

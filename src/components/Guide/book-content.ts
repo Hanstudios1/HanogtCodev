@@ -1,4 +1,5 @@
 import type { Copy } from "@/lib/i18n";
+import { LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
 export type ChapterId = "start" | "editor" | "engine" | "arcade" | "news" | "media" | "security" | "account" | "tips";
 
@@ -81,7 +82,7 @@ export const PAGES: BookPage[] = [
                 type: "steps",
                 items: [
                     { TR: "Panel'de \"Yeni Proje Oluştur\"a bas.", EN: "Press \"Create New Project\" on the Dashboard." },
-                    { TR: "16 dilden birini seç: Python, C#, C++, Java, JavaScript, TypeScript, Go, Rust, Kotlin, Swift, PHP, Ruby, Lua, SQL, HTML veya CSS.", EN: "Pick one of 16 languages: Python, C#, C++, Java, JavaScript, TypeScript, Go, Rust, Kotlin, Swift, PHP, Ruby, Lua, SQL, HTML or CSS." },
+                    { TR: "{count} dilden birini seç: Python, C#, C++, Java, JavaScript, TypeScript, Go, Rust, Kotlin, Swift, PHP, Ruby, Lua, SQL, HTML, CSS ve daha fazlası.", EN: "Pick one of {count} languages: Python, C#, C++, Java, JavaScript, TypeScript, Go, Rust, Kotlin, Swift, PHP, Ruby, Lua, SQL, HTML, CSS and more.", vars: { count: LANGUAGE_STATS.usable } },
                     { TR: "Projene bir ad ver. Editör açılır ve ilk kodun hazırdır.", EN: "Name your project. The editor opens with your first code ready." },
                 ],
             },

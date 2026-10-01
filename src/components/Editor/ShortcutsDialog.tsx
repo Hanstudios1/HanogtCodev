@@ -2,14 +2,14 @@
 
 import { Keyboard } from "lucide-react";
 import Modal from "@/components/Editor/Modal";
-import { formatShortcut } from "@/components/Editor/keyboard";
+import { EDIT_SHORTCUTS, formatShortcut } from "@/components/Editor/keyboard";
 import { useI18n, type Copy } from "@/lib/i18n";
 
 interface Shortcut {
     label: Copy;
-    keys: string[];
+    keys: readonly string[];
     /** Different keys on Apple platforms. */
-    mac?: string[];
+    mac?: readonly string[];
     note?: Copy;
 }
 
@@ -25,11 +25,14 @@ const HANOGT: Shortcut[] = [
 
 const EDITOR: Shortcut[] = [
     { label: { TR: "Editör komut paleti", EN: "Editor command palette" }, keys: ["F1"] },
-    { label: { TR: "Bul", EN: "Find" }, keys: ["Mod", "F"] },
-    { label: { TR: "Bul ve değiştir", EN: "Find and replace" }, keys: ["Mod", "H"], mac: ["Alt", "Mod", "F"] },
-    { label: { TR: "Belgeyi biçimlendir", EN: "Format document" }, keys: ["Shift", "Alt", "F"] },
-    { label: { TR: "Satıra git", EN: "Go to line" }, keys: ["Ctrl", "G"] },
-    { label: { TR: "Yorum satırı aç/kapat", EN: "Toggle line comment" }, keys: ["Mod", "/"] },
+    { label: { TR: "Geri al", EN: "Undo" }, ...EDIT_SHORTCUTS.undo },
+    { label: { TR: "Yinele", EN: "Redo" }, ...EDIT_SHORTCUTS.redo },
+    { label: { TR: "Bul", EN: "Find" }, ...EDIT_SHORTCUTS.find },
+    { label: { TR: "Bul ve değiştir", EN: "Find and replace" }, ...EDIT_SHORTCUTS.replace },
+    { label: { TR: "Belgeyi biçimlendir", EN: "Format document" }, ...EDIT_SHORTCUTS.format },
+    { label: { TR: "Satıra git", EN: "Go to line" }, ...EDIT_SHORTCUTS.gotoLine },
+    { label: { TR: "Yorum satırı aç/kapat", EN: "Toggle line comment" }, ...EDIT_SHORTCUTS.comment },
+    { label: { TR: "Tümünü seç", EN: "Select all" }, ...EDIT_SHORTCUTS.selectAll },
     { label: { TR: "Sonraki eşleşmeyi seç", EN: "Select next occurrence" }, keys: ["Mod", "D"] },
     { label: { TR: "Yukarı/aşağı imleç ekle", EN: "Add cursor above/below" }, keys: ["Ctrl", "Alt", "↑/↓"], mac: ["Alt", "Mod", "↑/↓"] },
     { label: { TR: "Satırı taşı", EN: "Move line" }, keys: ["Alt", "↑/↓"] },

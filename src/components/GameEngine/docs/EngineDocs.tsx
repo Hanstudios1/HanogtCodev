@@ -1,14 +1,17 @@
 "use client";
 
-import { ArrowLeft, BookOpen, Gamepad2, Rocket } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Gamepad2, Rocket } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { API_MEMBERS, TYPE_MEMBERS } from "@/components/GameEngine/editor/completions";
 import { engineLocale } from "@/components/GameEngine/editor/text";
+import { V3_FEATURES } from "@/components/GameEngine/whats-new";
+import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { useI18n } from "@/lib/i18n";
 
 /** Section anchors stay the same in every language so shared links keep working. */
 const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
+    { id: "yenilikler", tr: "V3'te yenilikler", en: "What's new in V3" },
     { id: "baslarken", tr: "Başlarken", en: "Getting started" },
     { id: "editor", tr: "Editör", en: "The editor" },
     { id: "bilesenler", tr: "Nesneler ve bileşenler", en: "Objects and components" },
@@ -17,10 +20,13 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "yasam-dongusu", tr: "Yaşam döngüsü", en: "Lifecycle" },
     { id: "girdi", tr: "Girdi (Input)", en: "Input" },
     { id: "fizik", tr: "Fizik ve çarpışmalar", en: "Physics and collisions" },
+    { id: "tilemap", tr: "Tilemap ve karo boyama", en: "Tilemaps and tile painting" },
     { id: "prefab", tr: "Prefab, Instantiate, Destroy", en: "Prefabs, Instantiate, Destroy" },
     { id: "coroutine", tr: "Coroutine ve Invoke", en: "Coroutines and Invoke" },
+    { id: "animasyon", tr: "Animasyon, Tween ve Timer", en: "Animation, Tween and Timer" },
     { id: "sahneler", tr: "Sahneler", en: "Scenes" },
     { id: "ui-ses", tr: "UI, HUD ve ses", en: "UI, HUD and sound" },
+    { id: "ortam", tr: "Ortam ve ekran efektleri", en: "Environment and screen effects" },
     { id: "kayit", tr: "Kayıt (PlayerPrefs)", en: "Saving (PlayerPrefs)" },
     { id: "yayinlama", tr: "Yayınlama ve dışa aktarma", en: "Publishing and exporting" },
     { id: "api", tr: "API referansı", en: "API reference" },
@@ -29,9 +35,11 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
 ];
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+    // Numbers follow the table of contents, so adding a section never leaves stale numbering.
+    const number = SECTIONS.findIndex((section) => section.id === id) + 1;
     return (
         <section id={id} className="scroll-mt-24 border-b border-zinc-200/70 py-10 dark:border-white/[0.06]">
-            <h2 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{title}</h2>
+            <h2 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">{number ? `${number}. ` : ""}{title}</h2>
             <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-300">{children}</div>
         </section>
     );
@@ -74,6 +82,26 @@ function Tip({ children }: { children: ReactNode }) {
     return <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4 text-[14px] text-zinc-700 dark:text-zinc-300">💡 {children}</div>;
 }
 
+function WhatsNewList({ tr }: { tr: boolean }) {
+    return (
+        <ul className="grid gap-3 sm:grid-cols-2">
+            {V3_FEATURES.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                    <li key={feature.section + feature.title.EN} className="flex gap-3 rounded-xl border border-zinc-200 p-4 dark:border-white/10">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"><Icon className="h-4 w-4" /></span>
+                        <span className="min-w-0">
+                            <span className="block font-bold text-zinc-900 dark:text-white">{tr ? feature.title.TR : feature.title.EN}</span>
+                            <span className="mt-1 block text-[14px] text-zinc-600 dark:text-zinc-400">{tr ? feature.text.TR : feature.text.EN}</span>
+                            <a href={`#${feature.section}`} className="mt-1.5 inline-flex items-center gap-1 text-[13px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{tr ? "Ayrıntılar" : "Details"}<ArrowRight className="h-3.5 w-3.5" /></a>
+                        </span>
+                    </li>
+                );
+            })}
+        </ul>
+    );
+}
+
 function ApiReference() {
     return (
         <div className="grid gap-4 md:grid-cols-2" dir="ltr">
@@ -92,9 +120,14 @@ function ApiReference() {
 function DocsTR() {
     return (
         <>
-                            <Section id="baslarken" title="1. Başlarken">
+                            <Section id="yenilikler" title="V3'te yenilikler">
+                                <p>Hanogt Engine V3; karo tabanlı seviyeler, gerçek arayüz bileşenleri, anahtar kare animasyonu ve kodla hareket (tween) sistemleriyle geliyor. V1 ve V2 ile kaydedilmiş projeler açıldığında otomatik olarak V3 biçimine taşınır; verileriniz korunur. Kaydedilen projeler V3 biçiminde saklanır.</p>
+                                <WhatsNewList tr />
+                            </Section>
+
+                            <Section id="baslarken" title="Başlarken">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin (2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje).</li>
+                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
                                     <li>Giriş yaptıysanız proje hesabınıza (bulut) kaydedilir; misafir olarak oluşturulan projeler bu tarayıcıda (IndexedDB) saklanır.</li>
                                     <li>Üstteki <b>▶ Oynat</b> düğmesi (Ctrl+P) oyunu editörün içinde çalıştırır. Durdurduğunuzda sahne oynatmadan önceki haline döner.</li>
                                     <li>Scriptlere çift tıklayarak kod editörünü açın; değişiklikler otomatik derlenir, hatalar satır satır gösterilir.</li>
@@ -103,7 +136,7 @@ function DocsTR() {
                                 <Tip>Şablonlardaki her script, Unity derslerindeki gibi yazılmıştır ve yorum satırlarıyla açıklanmıştır. Öğrenmenin en hızlı yolu bir şablonu açıp değerleri değiştirmektir.</Tip>
                             </Section>
 
-                            <Section id="editor" title="2. Editör">
+                            <Section id="editor" title="Editör">
                                 <Table head={["Panel", "Ne işe yarar?"]} rows={[
                                     ["Hiyerarşi", "Sahnedeki nesnelerin ağacı. Sürükle-bırak ile ebeveyn değiştirme ve sıralama, sağ tık menüsü (oluştur, çoğalt, prefab yap, sil), arama ve göz simgesiyle aktiflik."],
                                     ["Sahne görünümü", "WebGL görünüm. Tıklayarak seçin; taşıma/döndürme/ölçekleme gizmolarıyla düzenleyin. 3D'de sol sürükle döndürür, sağ sürükle kaydırır, tekerlek yakınlaştırır. Prefab ve görselleri buraya sürükleyebilirsiniz."],
@@ -122,15 +155,17 @@ function DocsTR() {
                                     ["F2", "Yeniden adlandır"],
                                     ["Ctrl+S", "Kaydet (kapak görseliyle)"],
                                     ["Ctrl+P", "Oynat / Durdur"],
+                                    ["Esc", "Karo boyamayı bitir · seçimi kaldır"],
                                 ]} />
                                 <p>Sayı alanlarının etiketini (X, Y, Z) yatay sürükleyerek değeri kaydırabilirsiniz; Shift ile 10 kat, Alt ile 0,1 kat hızlı. Alanlara <K>2*3</K> gibi ifadeler yazılabilir.</p>
+                                <p>Üst araç çubuğundaki <b>mıknatıs</b> düğmesi gizmolarla düzenlerken ızgaraya yakalamayı açar; yanındaki ok menüsünden taşıma, döndürme ve ölçek adımları ayarlanır (varsayılan 0,5 birim, 15°, 0,1). Sahne görünümündeki ✨ düğmesi sis ve parlama gibi ekran efektlerini düzenlerken de gösterir. Oynatırken <b>İstatistikler</b> düğmesi oyun görünümünün köşesinde FPS, kare süresi, nesne, script, fizik gövdesi, tween/zamanlayıcı, parçacık, çizim çağrısı ve üçgen sayılarını gösterir.</p>
                             </Section>
 
-                            <Section id="bilesenler" title="3. Nesneler ve bileşenler">
+                            <Section id="bilesenler" title="Nesneler ve bileşenler">
                                 <p>Her nesne (GameObject) bir <b>Transform</b> ve ona eklenen bileşenlerden oluşur. Koordinat sistemi Unity ile aynıdır: X sağ, Y yukarı, Z ileri; açılar derece cinsindendir.</p>
                                 <Table head={["Bileşen", "Açıklama"]} rows={[
                                     ["Transform", "Konum, dönüş ve ölçek. Ebeveyn-çocuk ilişkisi hiyerarşiden gelir."],
-                                    ["Sprite Renderer", "2D şekil (kare, daire, üçgen, yuvarlatılmış kare, elmas, altıgen, yıldız) veya yüklenen görsel; renk, saydamlık, sıralama, çevirme."],
+                                    ["Sprite Renderer", "2D şekil (kare, daire, üçgen, yuvarlatılmış kare, elmas, altıgen, yıldız) veya yüklenen görsel; renk, saydamlık, sıralama, çevirme. Görsel bir sprite sheet ise sütun × satır sayısı ve gösterilecek kare seçilir."],
                                     ["Mesh Renderer", "3D ilkel (küp, küre, düzlem, kapsül, silindir, koni, torus) ve PBR materyal: renk, metalik, pürüzlülük, ışıma, doku ve döşeme."],
                                     ["Camera", "Perspektif veya ortografik. Main Camera işaretli ve aktif olan kamera oyunu gösterir."],
                                     ["Light", "Yönlü, nokta veya spot ışık; renk, yoğunluk, menzil ve gölgeler."],
@@ -139,11 +174,16 @@ function DocsTR() {
                                     ["Script", "C# veya C++ MonoBehaviour sınıfı. Public alanlar Inspector'da düzenlenir."],
                                     ["Particle System", "GPU'da çizilen parçacıklar: oran, patlama, ömür, hız, koni açısı, boyut ve renk geçişi, yerçekimi."],
                                     ["Audio Source", "Prosedürel ses efektleri: coin, jump, hit, explosion, laser, powerup, click, blip, lose, win, step, shoot."],
-                                    ["UI Text", "Ekrana sabitlenen metin (skor, can). 9 çapa noktası, ofset, yazı boyutu, gölge."],
+                                    ["UI Text", "Ekrana sabitlenen metin (skor, can). 9 çapa noktası, ofset, yazı boyutu, gölge ve çizim sırası."],
+                                    ["UI Button", "Tıklanabilir buton: yazı, renkler, köşe yuvarlaklığı, Tıklanınca (On Click) metodu ve kısayol tuşu."],
+                                    ["UI Panel / Image", "Renkli veya görselli dikdörtgen; arka plan, menü kutusu ya da tam ekran karartma. Altındaki tıklamaları engelleyebilir."],
+                                    ["UI Progress Bar", "Can, yükleme veya ilerleme çubuğu: değer, en küçük/en büyük, yön, renkler ve yüzde etiketi."],
+                                    ["Tilemap", "Karo ızgarası: palet, karo başına çarpışma, tetikleyici modu ve doku atlası. Sahnede fırçayla boyanır."],
+                                    ["Animation", "Anahtar kare klipleri: konum, dönüş, ölçek, renk, saydamlık ve sprite karesi; yumuşatma eğrileri ve tekrar modları."],
                                 ]} />
                             </Section>
 
-                            <Section id="csharp" title="4. C# ile script yazma">
+                            <Section id="csharp" title="C# ile script yazma">
                                 <p>Scriptler Unity&apos;deki gibi <K>MonoBehaviour</K> sınıfından türetilir. Dosyadaki ilk MonoBehaviour sınıfı bileşen olarak kullanılır. Public alanlar (ve <K>[SerializeField]</K> ile işaretlenen private alanlar) Inspector&apos;da görünür.</p>
                                 <Code>{`using UnityEngine;
 
@@ -176,7 +216,7 @@ public class PlayerMovement : MonoBehaviour
                                 <p>Desteklenen dil özellikleri: sınıflar, kalıtım, arayüzler, enum, struct, özellikler (get/set), statik üyeler, lambda, <K>List&lt;T&gt;</K>, <K>Dictionary&lt;K,V&gt;</K>, <K>foreach</K>, <K>switch</K>, <K>try/catch</K>, string interpolasyonu (<K>{`$"Skor: {score}"`}</K>), <K>ref/out</K>, varsayılan parametreler, coroutine (<K>IEnumerator</K> + <K>yield return</K>) ve LINQ benzeri temel yöntemler.</p>
                             </Section>
 
-                            <Section id="cpp" title="5. C++ ile script yazma">
+                            <Section id="cpp" title="C++ ile script yazma">
                                 <p>C++ scriptleri aynı motor API&apos;sini kullanır. Üyelere <K>-&gt;</K> veya <K>.</K> ile, statik API&apos;lere <K>::</K> ile erişilir. Nesne referansları işaretçi (<K>GameObject*</K>) olarak yazılabilir; <K>nullptr</K> desteklenir.</p>
                                 <Code language="C++">{`#include <hanogt.h>
 
@@ -200,9 +240,13 @@ public:
     }
 };`}</Code>
                                 <p><K>std::vector</K>, <K>std::map</K>, <K>std::string</K>, <K>std::cout</K>, <K>printf</K>, <K>cmath</K> fonksiyonları ve serbest fonksiyonlar kullanılabilir. C++ ve C# scriptleri aynı projede birlikte çalışır ve birbirlerinin sınıflarına erişebilir.</p>
+                                <p>Lambda&apos;lar <K>Timer</K>, <K>Tween</K> ve buton dinleyicilerine verilebilir. Yakalama listesi (<K>[this]</K>, <K>[&amp;]</K>) yazılabilir ama gerekmez; lambda tanımlandığı yerdeki değişkenleri görür.</p>
+                                <Code language="C++">{`Timer::Every(1.0f, [this]() { gold += workers; });
+Tween::Value(0.0f, 1.0f, 0.5f, [&](float v) { bar->value = v; });
+button->onClick.AddListener([this]() { Debug::Log("Tıklandı"); });`}</Code>
                             </Section>
 
-                            <Section id="yasam-dongusu" title="6. Yaşam döngüsü">
+                            <Section id="yasam-dongusu" title="Yaşam döngüsü">
                                 <Table head={["Metot", "Ne zaman çağrılır?"]} rows={[
                                     [<K key="a">Awake()</K>, "Nesne oluşturulduğunda (aktifse) bir kez, tüm nesnelerin script örnekleri hazırken."],
                                     [<K key="b">OnEnable()</K>, "Bileşen veya nesne her etkinleştirildiğinde."],
@@ -212,11 +256,12 @@ public:
                                     [<K key="f">LateUpdate()</K>, "Tüm Update'lerden sonra. Kamera takibi için idealdir."],
                                     [<K key="g">OnDisable() / OnDestroy()</K>, "Bileşen devre dışı kalınca / nesne yok edilince."],
                                     [<K key="h">OnApplicationQuit()</K>, "Oyun durdurulurken."],
+                                    [<K key="i">OnAnimationComplete(string clip)</K>, "Nesnedeki Animation bileşeninde \"Bir kez\" oynayan bir klip bittiğinde."],
                                 ]} />
                                 <p>Çarpışma ve fare olayları: <K>OnCollisionEnter/Stay/Exit</K>, <K>OnTriggerEnter/Stay/Exit</K> (2D için sonuna <K>2D</K> ekleyin), <K>OnMouseDown/Up/Enter/Exit/Over/Drag</K>.</p>
                             </Section>
 
-                            <Section id="girdi" title="7. Girdi (Input)">
+                            <Section id="girdi" title="Girdi (Input)">
                                 <Code>{`if (Input.GetKey(KeyCode.W)) { /* basılı tutuluyor */ }
 if (Input.GetKeyDown(KeyCode.Space)) { /* bu karede basıldı */ }
 float h = Input.GetAxis("Horizontal");     // A/D veya ←/→ (yumuşatılmış)
@@ -228,7 +273,7 @@ Vector3 world = Camera.main.ScreenToWorldPoint(mouse);`}</Code>
                                 <p>Mobil cihazlarda, proje ayarlarında açıksa ekranda yön tuşları ve A (Space) / B (LeftControl) düğmeleri gösterilir; bunlar normal tuşlar gibi okunur.</p>
                             </Section>
 
-                            <Section id="fizik" title="8. Fizik ve çarpışmalar">
+                            <Section id="fizik" title="Fizik ve çarpışmalar">
                                 <p>Fizik, sabit zaman adımında çalışan dürtü tabanlı bir motordur: yerçekimi, sürtünme, sekme, kinematik gövdeler, tetikleyiciler, zemin algılama ve ışın atma desteklenir. Tetikleyici olayları için çarpışan nesnelerden en az birinde Rigidbody bulunmalıdır (Unity&apos;deki gibi).</p>
                                 <Code>{`void OnCollisionEnter2D(Collision2D collision)
 {
@@ -251,9 +296,41 @@ void FixedUpdate()
     rb.AddForce(Vector3.up * 5f, ForceMode.Impulse);    // anlık itki
 }`}</Code>
                                 <p>2D&apos;de <K>Physics2D.Raycast</K> bir <K>RaycastHit2D</K> döndürür ve <K>if (hit)</K> ile kontrol edilir. <K>Physics.OverlapSphere</K>, <K>Physics2D.OverlapCircle</K>, <K>Linecast</K> ve <K>CheckSphere</K> da kullanılabilir.</p>
+                                <p><K>collision.contacts</K> (veya <K>GetContacts</K>, <K>contactCount</K>) çarpışmanın tüm temas noktalarını verir; her noktanın <K>point</K>, <K>normal</K> ve <K>separation</K> değerleri vardır. Bir nesne aynı anda birkaç karoya değdiğinde tek bir çarpışma olayı ve karo başına bir temas noktası gelir.</p>
+                                <Code>{`void OnCollisionStay2D(Collision2D collision)
+{
+    foreach (ContactPoint2D contact in collision.contacts)
+    {
+        if (contact.normal.y > 0.5f) grounded = true;   // ayağımızın altında
+    }
+}`}</Code>
                             </Section>
 
-                            <Section id="prefab" title="9. Prefab, Instantiate ve Destroy">
+                            <Section id="tilemap" title="Tilemap ve karo boyama">
+                                <p>Tilemap, seviyeyi kare hücrelerden oluşan bir ızgaraya boyamanızı sağlar. Hiyerarşide <b>Oluştur → Tilemap</b> ile ekleyin (3D projelerde <b>Oluştur → 2D → Tilemap</b>), Inspector&apos;daki <b>Sahnede boya</b> düğmesine basın ve paletten bir karo seçin.</p>
+                                <Table head={["Araç", "Kullanım"]} rows={[
+                                    ["Fırça", "Sol tık veya dokunarak boyayın; sürükleyince kesintisiz çizgi çizer."],
+                                    ["Dikdörtgen", "Sürükleyerek bir alanı doldurun."],
+                                    ["Silgi", "Karoları siler. Fırçadayken Shift + tık da siler."],
+                                    ["Damlalık", "Tıkladığınız karoyu palette seçer."],
+                                ]} />
+                                <p>Her palet karosunun bir karakteri, adı, rengi ve <b>Çarpışır / tetikler</b> ayarı vardır. Çarpışan karolar fizikte statik kutular gibi davranır; komşu karoların arasındaki iç yüzeyler yok sayıldığı için karakterler birleşim yerlerine takılmaz. Tilemap&apos;te <b>Is Trigger</b> açıksa bu karolar tetikleyici olur (diken, su, bitiş alanı). <b>Doku atlası</b> seçilirse karolar atlasın karelerinden çizilir; atlas karesi -1 olan karo düz renkte kalır.</p>
+                                <Code>{`public Tilemap ground;     // Inspector'da Tilemap nesnesini seçin
+
+void Start()
+{
+    ground.SetTile(4, 0, "Tuğla");                 // karo adı veya karakteri
+    ground.SetTile(5, 0, null);                    // sil
+    ground.FillRect(0, -2, 10, -1, "Toprak");      // dikdörtgen doldur
+    string name = ground.GetTile(4, 0);            // "Tuğla" ya da null
+    Vector3 cell = ground.WorldToCell(transform.position);
+    Vector3 center = ground.GetCellCenterWorld((int)cell.x, (int)cell.y);
+    Debug.Log(ground.CountTiles("Tuğla") + " tuğla");
+}`}</Code>
+                                <p>Hücre koordinatları Unity&apos;deki gibidir: X sağa, Y yukarı doğru artar. Bir tilemap en fazla 512 × 256 hücre ve 48 palet karosu içerebilir. Tilemap&apos;ler 2D oyunlar için tasarlanmıştır; 3D&apos;de nesnenin XY düzleminde çizilir.</p>
+                            </Section>
+
+                            <Section id="prefab" title="Prefab, Instantiate ve Destroy">
                                 <p>Hiyerarşide bir nesneye sağ tıklayıp <b>Prefab oluştur</b> deyin. Script&apos;te <K>public GameObject prefab;</K> alanına Inspector&apos;dan prefab&apos;ı seçin ve çalışma sırasında çoğaltın:</p>
                                 <Code>{`GameObject enemy = Instantiate(enemyPrefab, new Vector3(0, 5, 0), Quaternion.identity);
 enemy.GetComponent<Enemy>().speed = 4f;
@@ -262,7 +339,7 @@ Destroy(gameObject);                 // bu nesneyi yok et
 GameObject p = Resources.Load<GameObject>("Bullet"); // prefab'ı adıyla yükle`}</Code>
                             </Section>
 
-                            <Section id="coroutine" title="10. Coroutine ve Invoke">
+                            <Section id="coroutine" title="Coroutine ve Invoke">
                                 <Code>{`void Start()
 {
     StartCoroutine(SpawnWaves());
@@ -283,59 +360,132 @@ IEnumerator SpawnWaves()
                                 <p><K>yield return null</K> bir kare, <K>WaitForSeconds</K>, <K>WaitForSecondsRealtime</K>, <K>WaitForFixedUpdate</K>, <K>WaitForEndOfFrame</K>, <K>WaitUntil</K>, <K>WaitWhile</K> ve iç içe coroutine desteklenir. <K>StopCoroutine</K>, <K>StopAllCoroutines</K>, <K>CancelInvoke</K> ve <K>IsInvoking</K> de mevcuttur.</p>
                             </Section>
 
-                            <Section id="sahneler" title="11. Sahneler">
+                            <Section id="animasyon" title="Animasyon, Tween ve Timer">
+                                <p><b>Animation</b> bileşeni anahtar karelerden oluşan klipler oynatır. Inspector&apos;da hazır bir klip (süzülme, dönme, nabız, sarsıntı, solma, yanıp sönme, sprite kareleri) ekleyip düzenleyebilir ya da boş bir klibe kanal ekleyebilirsiniz. Konum ve dönüş anahtarları nesnenin o anki pozuna eklenir, ölçek anahtarları onu çarpar; renk, saydamlık ve sprite karesi doğrudan uygulanır. Her anahtar karenin kendi yumuşatma eğrisi vardır; klipler bir kez, döngüde veya git-gel oynar.</p>
+                                <Code>{`Animation anim = GetComponent<Animation>();
+anim.Play("Zıpla");                  // klibi baştan oynat
+anim.Stop();                         // durdur ve pozu geri al
+if (!anim.IsPlaying("Koş")) anim.CrossFade("Koş");
+anim.speed = 2f;
+
+// "Bir kez" oynayan klip bitince çağrılır.
+void OnAnimationComplete(string clip)
+{
+    if (clip == "Ölüm") gameObject.SetActive(false);
+}`}</Code>
+                                <p><b>Tween</b> kodla yumuşak hareket içindir. Her çağrı, ayarları zincirlenebilen bir tween döndürür:</p>
+                                <Code>{`Tween.Move(transform, new Vector3(0, 3, 0), 0.5f).SetEase(Ease.OutBack);
+Tween.Scale(transform, 1.2f, 0.3f).SetLoops(-1, LoopType.Yoyo);   // sonsuz git-gel
+Tween.Fade(gameObject, 0f, 1f).OnComplete(() => Destroy(gameObject));
+Tween.Color(sprite, Color.red, 0.2f);
+Tween.Value(0f, 100f, 2f, v => scoreText.text = Mathf.RoundToInt(v).ToString());
+Tween.PunchScale(button, 0.15f, 0.3f);                           // buton tepkisi
+Tween.Shake(Camera.main.transform, 0.3f, 0.4f);                  // kamera sarsıntısı
+yield return Tween.Rotate(transform, new Vector3(0, 0, 180), 1f).WaitForCompletion();`}</Code>
+                                <p>Yumuşatma eğrileri: <K>Linear</K>, <K>InQuad</K>, <K>OutQuad</K>, <K>InOutQuad</K>, <K>InCubic</K>, <K>OutCubic</K>, <K>InOutCubic</K>, <K>InSine</K>, <K>OutSine</K>, <K>InOutSine</K>, <K>InBack</K>, <K>OutBack</K>, <K>InOutBack</K>, <K>InElastic</K>, <K>OutElastic</K>, <K>InBounce</K>, <K>OutBounce</K> ve <K>Step</K>. <K>Tween.Kill(nesne)</K> bir nesnenin tween&apos;lerini durdurur, <K>Tween.IsTweening(nesne)</K> sorgular. <b>Timer</b> ise gecikmeli veya tekrarlı işler içindir:</p>
+                                <Code>{`Timer.After(2f, () => HUD.Show("Hazır!", 1f));
+var income = Timer.Every(1f, () => gold += workers);   // her saniye
+income.Cancel();
+Timer.CancelAll();                                     // bu script'in tüm zamanlayıcıları`}</Code>
+                                <p>Tween&apos;ler ve zamanlayıcılar oyun zamanıyla ilerler; <K>Time.timeScale = 0</K> iken dururlar. Script&apos;in nesnesi yok edilince zamanlayıcıları da iptal edilir.</p>
+                            </Section>
+
+                            <Section id="sahneler" title="Sahneler">
                                 <p>Proje panelinden yeni sahne ekleyin; <b>Başlangıç sahnesi</b> oyunun açıldığı sahnedir. Sahne değiştirmek için:</p>
                                 <Code>{`SceneManager.LoadScene("Level2");          // adıyla
 SceneManager.LoadScene(1);                 // sırasıyla
 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); // yeniden başlat
+SceneManager.ReloadScene();                // aynısı, daha kısa
+SceneManager.FadeToScene("Level2", 0.5f);  // ekranı karartarak geç
+SceneManager.FadeToScene(0, 0.8f, Color.white);
 DontDestroyOnLoad(gameObject);             // sahneler arası koru`}</Code>
-                                <p>Statik alanlar sahne değişince korunur (Unity ile aynı).</p>
+                                <p>Statik alanlar sahne değişince korunur (Unity ile aynı). <K>FadeToScene</K> geçişi oyun duraklatılmış olsa bile (<K>Time.timeScale = 0</K>) çalışır.</p>
                             </Section>
 
-                            <Section id="ui-ses" title="12. UI, HUD ve ses">
+                            <Section id="ui-ses" title="UI, HUD ve ses">
+                                <p>Arayüz öğeleri ekrana sabitlenir ve pencere boyutuyla ölçeklenir (540 piksel yükseklik için tasarlanır). Hepsinde 9 noktalı <b>çapa</b>, ofset, boyut ve <b>çizim sırası</b> vardır; sırası büyük olan üstte çizilir ve tıklamayı önce alır. Hiyerarşide <b>Oluştur → UI</b> menüsünden eklenirler.</p>
+                                <Table head={["Bileşen", "Script türü"]} rows={[
+                                    ["UI Text", <K key="t">Text</K>],
+                                    ["UI Button", <K key="b">Button</K>],
+                                    ["UI Panel / Image", <K key="p">Image</K>],
+                                    ["UI Progress Bar", <K key="s">Slider</K>],
+                                ]} />
+                                <p>Butona tıklanınca Inspector&apos;daki <b>Tıklanınca</b> alanında seçilen hedef nesnenin script&apos;lerinde, yazılan adlı metot çalışır (Unity&apos;deki On Click listesi gibi). Kodla dinleyici de eklenebilir. Butona bir <b>kısayol tuşu</b> atanırsa tuşa basmak tıklamakla aynı işi yapar.</p>
                                 <Code>{`public Text scoreText;       // Inspector'da bir UI Text nesnesi seçin
-scoreText.text = "Skor: " + score;
+public Button buyButton;
+public Slider healthBar;
 
-HUD.Show("Seviye tamamlandı!", 2f, Color.yellow);   // ekranın ortasında mesaj
+void Start()
+{
+    buyButton.onClick.AddListener(Buy);
+    buyButton.onClick.AddListener(() => Audio.Play("click"));
+    healthBar.maxValue = 100;
+    healthBar.value = 75;               // en küçük/en büyük arasında tutulur
+}
+
+void Update()
+{
+    scoreText.text = "Skor: " + score;
+    buyButton.interactable = coins >= 10;
+    buyButton.text = "Satın al (" + coins + ")";
+    if (UI.IsPointerOverUI()) return;   // fare bir arayüz öğesinin üstünde
+}`}</Code>
+                                <p>Tam ekran bir panel, altındaki butonlara ve nesnelere tıklamayı engeller (<b>Tıklamaları engeller</b>); duraklatma menüleri için idealdir. Menünün butonlarını panelin çocuğu yaparsanız <K>pauseMenu.SetActive(false)</K> hepsini birlikte gizler. Arayüz nesnelerinde Transform ölçeği ve dönüşü de uygulanır; bu sayede <K>Tween.Scale</K>, <K>Tween.PunchScale</K> ve <K>Tween.Fade</K> arayüzde de çalışır.</p>
+                                <Code>{`HUD.Show("Seviye tamamlandı!", 2f, Color.yellow);   // ekranın ortasında mesaj
 Audio.Play("coin");                                  // hazır ses efekti
 GetComponent<AudioSource>().Play();`}</Code>
                             </Section>
 
-                            <Section id="kayit" title="13. Kayıt (PlayerPrefs)">
+                            <Section id="ortam" title="Ortam ve ekran efektleri">
+                                <p><b>Ayarlar → Sahne ayarları</b> penceresinde her sahnenin arka planı (düz renk veya gökyüzü geçişi), ortam ışığı, sisi ve ekran efektleri ayarlanır.</p>
+                                <Table head={["Ayar", "Etkisi"]} rows={[
+                                    ["Sis: doğrusal", "Başlangıç ve bitiş mesafeleri arasında giderek koyulaşır."],
+                                    ["Sis: üstel", "Yoğunluğa bağlı olarak mesafeyle hızla artar; sonsuz koşu gibi açık alanlarda doğal görünür."],
+                                    ["Parlama (bloom)", "Eşiği aşan parlak pikseller (ör. ışıma değeri yüksek materyaller) çevresine ışık saçar. Güç, eşik ve yarıçap ayarlanır."],
+                                    ["Vinyet", "Ekran kenarlarını karartarak gözü ortaya çeker."],
+                                    ["Pozlama", "Tüm görüntünün parlaklığı."],
+                                ]} />
+                                <Tip>Sis rengini gökyüzü geçişinin alt rengiyle aynı yapın; uzaktaki nesneler ufka karışır. Sahne görünümündeki ✨ düğmesi efektleri düzenlerken de gösterir.</Tip>
+                            </Section>
+
+                            <Section id="kayit" title="Kayıt (PlayerPrefs)">
                                 <Code>{`int best = PlayerPrefs.GetInt("best", 0);
 if (score > best) PlayerPrefs.SetInt("best", score);
 PlayerPrefs.SetString("name", "Han");
+PlayerPrefs.SetBool("muted", true);
+bool muted = PlayerPrefs.GetBool("muted", false);
 PlayerPrefs.DeleteKey("name");`}</Code>
                                 <p>Değerler oyunu oynayan kişinin tarayıcısında, her proje için ayrı saklanır (en fazla 64 KB).</p>
                             </Section>
 
-                            <Section id="yayinlama" title="14. Yayınlama ve dışa aktarma">
+                            <Section id="yayinlama" title="Yayınlama ve dışa aktarma">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir, beğenebilir ve remiksleyebilir. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
+                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir, beğenebilir ve remiksleyebilir. Oyun kartında oyunun yapıldığı motor sürümü (ör. V3) görünür. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
                                     <li><b>Oynanabilir HTML:</b> Oyunu ve motoru tek bir .html dosyasına paketler; internet olmadan açılır, istediğiniz yerde barındırabilirsiniz.</li>
                                     <li><b>Proje dosyası (.json):</b> Yedekleme ve başka hesaba/tarayıcıya taşıma için.</li>
                                 </ul>
                             </Section>
 
-                            <Section id="api" title="15. API referansı">
+                            <Section id="api" title="API referansı">
                                 <p>Aşağıdaki üyeler kod editöründe otomatik tamamlanır.</p>
                                 <ApiReference />
                             </Section>
 
-                            <Section id="farklar" title="16. Unity'den farklar">
+                            <Section id="farklar" title="Unity'den farklar">
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>Ses efektleri dosya yerine prosedürel olarak üretilir (<K>Audio.Play(&quot;coin&quot;)</K>).</li>
                                     <li>Kapsül/mesh çarpıştırıcılar kutu olarak yaklaştırılır; açısal fizik basitleştirilmiştir (küreler görsel olarak yuvarlanır).</li>
                                     <li>Katman maskeleri (LayerMask) ve <K>IgnoreCollision</K> yok sayılır; bunun yerine etiket ve tetikleyici kullanın.</li>
-                                    <li>UI olarak UI Text ve HUD mesajları vardır; Canvas/Button sistemi yoktur (tıklanabilir nesneler için <K>OnMouseDown</K> kullanın).</li>
+                                    <li>UI olarak Text, Button, Panel/Image ve Progress Bar (Slider) vardır; Canvas düzen bileşenleri (Layout Group, Scroll View, Input Field) yoktur. Sahnedeki nesneleri tıklanabilir yapmak için <K>OnMouseDown</K> kullanın.</li>
+                                    <li>Animation bileşeni, Animator durum makinesi yerine basit bir klip oynatıcısıdır; <K>SetTrigger(&quot;Zıpla&quot;)</K> aynı adlı klibi oynatır.</li>
                                     <li>Scriptler gerçek .NET/C++ derleyicisi yerine güvenli bir yorumlayıcıda çalışır; ağ, dosya ve tarayıcı API&apos;lerine erişemez.</li>
                                 </ul>
                             </Section>
 
-                            <Section id="guvenlik" title="17. Güvenlik ve sınırlar">
+                            <Section id="guvenlik" title="Güvenlik ve sınırlar">
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>Script yorumlayıcısı DOM&apos;a, ağa, çerezlere veya dosyalara erişemez; her çağrının komut bütçesi vardır. Sonsuz döngüler oyunu dondurmaz, ilgili script devre dışı bırakılır ve konsola yazılır.</li>
-                                    <li>Proje içeriği en fazla 900 KB (dokular dahil), script başına 160 KB, 64 script, 24 sahne ve sahne başına 1000 nesne olabilir. Yüklenen görseller otomatik küçültülür.</li>
+                                    <li>Proje içeriği en fazla 900 KB (dokular dahil), script başına 160 KB, 64 script, 24 sahne ve sahne başına 1000 nesne olabilir; bir tilemap en fazla 512 × 256 hücre içerir. Yüklenen görseller otomatik küçültülür.</li>
                                     <li>Arcade&apos;e yayınlanan oyunlar herkese açıktır. Kişisel veri, parola veya gizli anahtar paylaşmayın; kurallara aykırı içerik kaldırılır.</li>
                                 </ul>
                             </Section>
@@ -346,9 +496,14 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 function DocsEN() {
     return (
         <>
-                            <Section id="baslarken" title="1. Getting started">
+                            <Section id="yenilikler" title="What's new in V3">
+                                <p>Hanogt Engine V3 brings tile-based levels, real UI components, keyframe animation and code-driven motion (tweens). Projects saved with V1 or V2 are migrated to the V3 format automatically when you open them, and none of your data is lost. Saved projects are stored in the V3 format.</p>
+                                <WhatsNewList tr={false} />
+                            </Section>
+
+                            <Section id="baslarken" title="Getting started">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template (2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project).</li>
+                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: the new V3 Tilemap Adventure, Clicker Factory and Foggy Runner, or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
                                     <li>When you are signed in, the project is saved to your account (cloud); projects created as a guest are stored in this browser (IndexedDB).</li>
                                     <li>The <b>▶ Play</b> button at the top (Ctrl+P) runs the game inside the editor. When you stop, the scene returns to how it was before you pressed Play.</li>
                                     <li>Double-click a script to open the code editor; changes are compiled automatically and errors are shown line by line.</li>
@@ -357,7 +512,7 @@ function DocsEN() {
                                 <Tip>Every template script is written like a Unity tutorial and explained with comments. The fastest way to learn is to open a template and start changing values.</Tip>
                             </Section>
 
-                            <Section id="editor" title="2. The editor">
+                            <Section id="editor" title="The editor">
                                 <Table head={["Panel", "What is it for?"]} rows={[
                                     ["Hierarchy", "The tree of objects in the scene. Drag and drop to re-parent and reorder, right-click menu (create, duplicate, make prefab, delete), search, and the eye icon to toggle active state."],
                                     ["Scene view", "The WebGL viewport. Click to select, then edit with the move/rotate/scale gizmos. In 3D, left-drag orbits, right-drag pans and the wheel zooms. You can drag prefabs and images in here."],
@@ -376,15 +531,17 @@ function DocsEN() {
                                     ["F2", "Rename"],
                                     ["Ctrl+S", "Save (with a cover image)"],
                                     ["Ctrl+P", "Play / Stop"],
+                                    ["Esc", "Stop painting tiles · clear the selection"],
                                 ]} />
                                 <p>Drag the label of a number field (X, Y, Z) sideways to scrub its value; hold Shift for 10× and Alt for 0.1× speed. Fields also accept expressions such as <K>2*3</K>.</p>
+                                <p>The <b>magnet</b> button in the top toolbar turns on grid snapping for the gizmos; the arrow next to it sets the move, rotate and scale steps (0.5 units, 15° and 0.1 by default). The ✨ button in the Scene view shows screen effects such as fog and bloom while you edit. While playing, the <b>Stats</b> button shows FPS, frame time and the number of objects, scripts, physics bodies, tweens/timers, particles, draw calls and triangles in the corner of the Game view.</p>
                             </Section>
 
-                            <Section id="bilesenler" title="3. Objects and components">
+                            <Section id="bilesenler" title="Objects and components">
                                 <p>Every object (GameObject) is made of a <b>Transform</b> plus the components attached to it. The coordinate system matches Unity: X is right, Y is up, Z is forward, and angles are in degrees.</p>
                                 <Table head={["Component", "Description"]} rows={[
                                     ["Transform", "Position, rotation and scale. Parent-child relationships come from the hierarchy."],
-                                    ["Sprite Renderer", "A 2D shape (square, circle, triangle, rounded square, diamond, hexagon, star) or an uploaded image; color, opacity, sorting order and flipping."],
+                                    ["Sprite Renderer", "A 2D shape (square, circle, triangle, rounded square, diamond, hexagon, star) or an uploaded image; color, opacity, sorting order and flipping. When the image is a sprite sheet, set its columns × rows and pick the frame to show."],
                                     ["Mesh Renderer", "A 3D primitive (cube, sphere, plane, capsule, cylinder, cone, torus) with a PBR material: color, metallic, roughness, emission, texture and tiling."],
                                     ["Camera", "Perspective or orthographic. The active camera marked Main Camera shows the game."],
                                     ["Light", "Directional, point or spot light; color, intensity, range and shadows."],
@@ -393,11 +550,16 @@ function DocsEN() {
                                     ["Script", "A C# or C++ MonoBehaviour class. Public fields are edited in the Inspector."],
                                     ["Particle System", "GPU-drawn particles: rate, bursts, lifetime, speed, cone angle, size and color over lifetime, gravity."],
                                     ["Audio Source", "Procedural sound effects: coin, jump, hit, explosion, laser, powerup, click, blip, lose, win, step, shoot."],
-                                    ["UI Text", "Text pinned to the screen (score, lives). 9 anchor points, offset, font size and shadow."],
+                                    ["UI Text", "Text pinned to the screen (score, lives). 9 anchor points, offset, font size, shadow and draw order."],
+                                    ["UI Button", "A clickable button: label, colors, corner radius, an On Click method and a hotkey."],
+                                    ["UI Panel / Image", "A colored or textured rectangle: backgrounds, menu boxes or a full-screen dim. It can block clicks to whatever is below."],
+                                    ["UI Progress Bar", "Health, loading or progress bars: value, min/max, direction, colors and a percentage label."],
+                                    ["Tilemap", "A grid of tiles: palette, per-tile collision, trigger mode and a texture atlas. Painted with a brush in the scene."],
+                                    ["Animation", "Keyframe clips for position, rotation, scale, color, opacity and sprite frame, with easing curves and wrap modes."],
                                 ]} />
                             </Section>
 
-                            <Section id="csharp" title="4. Scripting in C#">
+                            <Section id="csharp" title="Scripting in C#">
                                 <p>Scripts derive from <K>MonoBehaviour</K>, just like in Unity. The first MonoBehaviour class in a file is used as the component. Public fields (and private fields marked <K>[SerializeField]</K>) appear in the Inspector.</p>
                                 <Code>{`using UnityEngine;
 
@@ -430,7 +592,7 @@ public class PlayerMovement : MonoBehaviour
                                 <p>Supported language features: classes, inheritance, interfaces, enums, structs, properties (get/set), static members, lambdas, <K>List&lt;T&gt;</K>, <K>Dictionary&lt;K,V&gt;</K>, <K>foreach</K>, <K>switch</K>, <K>try/catch</K>, string interpolation (<K>{`$"Score: {score}"`}</K>), <K>ref/out</K>, default parameters, coroutines (<K>IEnumerator</K> + <K>yield return</K>) and basic LINQ-style methods.</p>
                             </Section>
 
-                            <Section id="cpp" title="5. Scripting in C++">
+                            <Section id="cpp" title="Scripting in C++">
                                 <p>C++ scripts use the same engine API. Members are reached with <K>-&gt;</K> or <K>.</K>, static APIs with <K>::</K>. Object references can be written as pointers (<K>GameObject*</K>), and <K>nullptr</K> is supported.</p>
                                 <Code language="C++">{`#include <hanogt.h>
 
@@ -454,9 +616,13 @@ public:
     }
 };`}</Code>
                                 <p>You can use <K>std::vector</K>, <K>std::map</K>, <K>std::string</K>, <K>std::cout</K>, <K>printf</K>, <K>cmath</K> functions and free functions. C++ and C# scripts work together in the same project and can use each other&apos;s classes.</p>
+                                <p>Lambdas can be passed to <K>Timer</K>, <K>Tween</K> and button listeners. A capture list (<K>[this]</K>, <K>[&amp;]</K>) is allowed but not needed: a lambda sees the variables of the place where it is defined.</p>
+                                <Code language="C++">{`Timer::Every(1.0f, [this]() { gold += workers; });
+Tween::Value(0.0f, 1.0f, 0.5f, [&](float v) { bar->value = v; });
+button->onClick.AddListener([this]() { Debug::Log("Clicked"); });`}</Code>
                             </Section>
 
-                            <Section id="yasam-dongusu" title="6. Lifecycle">
+                            <Section id="yasam-dongusu" title="Lifecycle">
                                 <Table head={["Method", "When is it called?"]} rows={[
                                     [<K key="a">Awake()</K>, "Once when the object is created (if active), after every object's script instances are ready."],
                                     [<K key="b">OnEnable()</K>, "Every time the component or object is enabled."],
@@ -466,11 +632,12 @@ public:
                                     [<K key="f">LateUpdate()</K>, "After all Updates. Ideal for camera follow."],
                                     [<K key="g">OnDisable() / OnDestroy()</K>, "When the component is disabled / the object is destroyed."],
                                     [<K key="h">OnApplicationQuit()</K>, "When the game is stopped."],
+                                    [<K key="i">OnAnimationComplete(string clip)</K>, "When a clip that plays \"Once\" in the object's Animation component finishes."],
                                 ]} />
                                 <p>Collision and mouse events: <K>OnCollisionEnter/Stay/Exit</K>, <K>OnTriggerEnter/Stay/Exit</K> (add <K>2D</K> at the end for 2D), <K>OnMouseDown/Up/Enter/Exit/Over/Drag</K>.</p>
                             </Section>
 
-                            <Section id="girdi" title="7. Input">
+                            <Section id="girdi" title="Input">
                                 <Code>{`if (Input.GetKey(KeyCode.W)) { /* held down */ }
 if (Input.GetKeyDown(KeyCode.Space)) { /* pressed this frame */ }
 float h = Input.GetAxis("Horizontal");     // A/D or ←/→ (smoothed)
@@ -482,7 +649,7 @@ Vector3 world = Camera.main.ScreenToWorldPoint(mouse);`}</Code>
                                 <p>On mobile devices, when enabled in the project settings, on-screen arrow keys and A (Space) / B (LeftControl) buttons are shown; they are read just like regular keys.</p>
                             </Section>
 
-                            <Section id="fizik" title="8. Physics and collisions">
+                            <Section id="fizik" title="Physics and collisions">
                                 <p>Physics is an impulse-based engine running on a fixed time step: gravity, friction, bounciness, kinematic bodies, triggers, ground detection and raycasts are supported. For trigger events, at least one of the colliding objects needs a Rigidbody (just like in Unity).</p>
                                 <Code>{`void OnCollisionEnter2D(Collision2D collision)
 {
@@ -505,9 +672,41 @@ void FixedUpdate()
     rb.AddForce(Vector3.up * 5f, ForceMode.Impulse);    // instant impulse
 }`}</Code>
                                 <p>In 2D, <K>Physics2D.Raycast</K> returns a <K>RaycastHit2D</K> that you check with <K>if (hit)</K>. <K>Physics.OverlapSphere</K>, <K>Physics2D.OverlapCircle</K>, <K>Linecast</K> and <K>CheckSphere</K> are available too.</p>
+                                <p><K>collision.contacts</K> (or <K>GetContacts</K> and <K>contactCount</K>) lists every contact point of a collision, each with a <K>point</K>, a <K>normal</K> and a <K>separation</K>. When an object touches several tiles at once you get a single collision event with one contact point per tile.</p>
+                                <Code>{`void OnCollisionStay2D(Collision2D collision)
+{
+    foreach (ContactPoint2D contact in collision.contacts)
+    {
+        if (contact.normal.y > 0.5f) grounded = true;   // under our feet
+    }
+}`}</Code>
                             </Section>
 
-                            <Section id="prefab" title="9. Prefabs, Instantiate and Destroy">
+                            <Section id="tilemap" title="Tilemaps and tile painting">
+                                <p>A tilemap lets you paint a level onto a grid of square cells. Add one with <b>Create → Tilemap</b> in the Hierarchy (<b>Create → 2D → Tilemap</b> in 3D projects), press <b>Paint in scene</b> in the Inspector and pick a tile from the palette.</p>
+                                <Table head={["Tool", "How to use it"]} rows={[
+                                    ["Brush", "Left-click or touch to paint; dragging draws a continuous line."],
+                                    ["Rectangle", "Drag to fill an area."],
+                                    ["Eraser", "Removes tiles. Shift + click erases with the brush as well."],
+                                    ["Picker", "Selects the clicked tile in the palette."],
+                                ]} />
+                                <p>Each palette tile has a key character, a name, a color and a <b>Collides / triggers</b> setting. Colliding tiles behave like static boxes in physics; the faces between neighbouring tiles are ignored, so characters never snag on the seams. When the tilemap is an <b>Is Trigger</b> tilemap, those tiles become triggers instead (spikes, water, finish zones). Pick a <b>Texture atlas</b> to draw tiles from the atlas cells; a tile with atlas cell -1 keeps its plain color.</p>
+                                <Code>{`public Tilemap ground;     // pick the Tilemap object in the Inspector
+
+void Start()
+{
+    ground.SetTile(4, 0, "Brick");                 // tile name or key
+    ground.SetTile(5, 0, null);                    // erase
+    ground.FillRect(0, -2, 10, -1, "Dirt");        // fill a rectangle
+    string name = ground.GetTile(4, 0);            // "Brick" or null
+    Vector3 cell = ground.WorldToCell(transform.position);
+    Vector3 center = ground.GetCellCenterWorld((int)cell.x, (int)cell.y);
+    Debug.Log(ground.CountTiles("Brick") + " bricks");
+}`}</Code>
+                                <p>Cell coordinates work like Unity&apos;s: X grows to the right and Y grows upwards. A tilemap can hold up to 512 × 256 cells and 48 palette tiles. Tilemaps are made for 2D games; in 3D they are drawn on the object&apos;s XY plane.</p>
+                            </Section>
+
+                            <Section id="prefab" title="Prefabs, Instantiate and Destroy">
                                 <p>Right-click an object in the Hierarchy and choose <b>Create prefab</b>. Pick the prefab in the Inspector for a <K>public GameObject prefab;</K> field of your script, then spawn it at runtime:</p>
                                 <Code>{`GameObject enemy = Instantiate(enemyPrefab, new Vector3(0, 5, 0), Quaternion.identity);
 enemy.GetComponent<Enemy>().speed = 4f;
@@ -516,7 +715,7 @@ Destroy(gameObject);                 // destroy this object
 GameObject p = Resources.Load<GameObject>("Bullet"); // load a prefab by name`}</Code>
                             </Section>
 
-                            <Section id="coroutine" title="10. Coroutines and Invoke">
+                            <Section id="coroutine" title="Coroutines and Invoke">
                                 <Code>{`void Start()
 {
     StartCoroutine(SpawnWaves());
@@ -537,59 +736,132 @@ IEnumerator SpawnWaves()
                                 <p><K>yield return null</K> (one frame), <K>WaitForSeconds</K>, <K>WaitForSecondsRealtime</K>, <K>WaitForFixedUpdate</K>, <K>WaitForEndOfFrame</K>, <K>WaitUntil</K>, <K>WaitWhile</K> and nested coroutines are supported. <K>StopCoroutine</K>, <K>StopAllCoroutines</K>, <K>CancelInvoke</K> and <K>IsInvoking</K> are available as well.</p>
                             </Section>
 
-                            <Section id="sahneler" title="11. Scenes">
+                            <Section id="animasyon" title="Animation, Tween and Timer">
+                                <p>The <b>Animation</b> component plays clips made of keyframes. In the Inspector, add a ready-made clip (bob, spin, pulse, shake, fade out, flash, sprite frames) and tweak it, or add tracks to an empty clip. Position and rotation keys are added to the object&apos;s current pose and scale keys multiply it; color, opacity and sprite frame are applied as they are. Every keyframe has its own easing curve, and clips play once, loop or ping-pong.</p>
+                                <Code>{`Animation anim = GetComponent<Animation>();
+anim.Play("Jump");                   // play a clip from the start
+anim.Stop();                         // stop and undo the pose
+if (!anim.IsPlaying("Run")) anim.CrossFade("Run");
+anim.speed = 2f;
+
+// Called when a clip that plays "Once" finishes.
+void OnAnimationComplete(string clip)
+{
+    if (clip == "Death") gameObject.SetActive(false);
+}`}</Code>
+                                <p><b>Tween</b> is for smooth motion from code. Every call returns a tween whose settings can be chained:</p>
+                                <Code>{`Tween.Move(transform, new Vector3(0, 3, 0), 0.5f).SetEase(Ease.OutBack);
+Tween.Scale(transform, 1.2f, 0.3f).SetLoops(-1, LoopType.Yoyo);   // ping-pong forever
+Tween.Fade(gameObject, 0f, 1f).OnComplete(() => Destroy(gameObject));
+Tween.Color(sprite, Color.red, 0.2f);
+Tween.Value(0f, 100f, 2f, v => scoreText.text = Mathf.RoundToInt(v).ToString());
+Tween.PunchScale(button, 0.15f, 0.3f);                           // button feedback
+Tween.Shake(Camera.main.transform, 0.3f, 0.4f);                  // camera shake
+yield return Tween.Rotate(transform, new Vector3(0, 0, 180), 1f).WaitForCompletion();`}</Code>
+                                <p>Easing curves: <K>Linear</K>, <K>InQuad</K>, <K>OutQuad</K>, <K>InOutQuad</K>, <K>InCubic</K>, <K>OutCubic</K>, <K>InOutCubic</K>, <K>InSine</K>, <K>OutSine</K>, <K>InOutSine</K>, <K>InBack</K>, <K>OutBack</K>, <K>InOutBack</K>, <K>InElastic</K>, <K>OutElastic</K>, <K>InBounce</K>, <K>OutBounce</K> and <K>Step</K>. <K>Tween.Kill(target)</K> stops the tweens of an object and <K>Tween.IsTweening(target)</K> asks about them. <b>Timer</b> handles delayed and repeating work:</p>
+                                <Code>{`Timer.After(2f, () => HUD.Show("Ready!", 1f));
+var income = Timer.Every(1f, () => gold += workers);   // every second
+income.Cancel();
+Timer.CancelAll();                                     // every timer of this script`}</Code>
+                                <p>Tweens and timers run on game time, so they pause while <K>Time.timeScale = 0</K>. A script&apos;s timers are cancelled when its object is destroyed.</p>
+                            </Section>
+
+                            <Section id="sahneler" title="Scenes">
                                 <p>Add new scenes from the Project panel; the <b>Start scene</b> is the one the game opens with. To switch scenes:</p>
                                 <Code>{`SceneManager.LoadScene("Level2");          // by name
 SceneManager.LoadScene(1);                 // by index
 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); // restart
+SceneManager.ReloadScene();                // the same, shorter
+SceneManager.FadeToScene("Level2", 0.5f);  // fade the screen out and in
+SceneManager.FadeToScene(0, 0.8f, Color.white);
 DontDestroyOnLoad(gameObject);             // keep across scenes`}</Code>
-                                <p>Static fields survive scene changes (same as Unity).</p>
+                                <p>Static fields survive scene changes (same as Unity). <K>FadeToScene</K> also works while the game is paused (<K>Time.timeScale = 0</K>).</p>
                             </Section>
 
-                            <Section id="ui-ses" title="12. UI, HUD and sound">
+                            <Section id="ui-ses" title="UI, HUD and sound">
+                                <p>UI elements are pinned to the screen and scale with the window (they are designed for a 540 px tall screen). Each one has a 9-point <b>anchor</b>, an offset, a size and a <b>draw order</b>: higher orders draw on top and get clicks first. Add them from <b>Create → UI</b> in the Hierarchy.</p>
+                                <Table head={["Component", "Script type"]} rows={[
+                                    ["UI Text", <K key="t">Text</K>],
+                                    ["UI Button", <K key="b">Button</K>],
+                                    ["UI Panel / Image", <K key="p">Image</K>],
+                                    ["UI Progress Bar", <K key="s">Slider</K>],
+                                ]} />
+                                <p>When a button is clicked, the method named in its <b>On Click</b> field runs on the scripts of the chosen target object (like Unity&apos;s On Click list). You can add listeners from code too. Give a button a <b>hotkey</b> and pressing that key does the same as clicking it.</p>
                                 <Code>{`public Text scoreText;       // pick a UI Text object in the Inspector
-scoreText.text = "Score: " + score;
+public Button buyButton;
+public Slider healthBar;
 
-HUD.Show("Level complete!", 2f, Color.yellow);   // message in the middle of the screen
+void Start()
+{
+    buyButton.onClick.AddListener(Buy);
+    buyButton.onClick.AddListener(() => Audio.Play("click"));
+    healthBar.maxValue = 100;
+    healthBar.value = 75;               // kept between min and max
+}
+
+void Update()
+{
+    scoreText.text = "Score: " + score;
+    buyButton.interactable = coins >= 10;
+    buyButton.text = "Buy (" + coins + ")";
+    if (UI.IsPointerOverUI()) return;   // the mouse is over a UI element
+}`}</Code>
+                                <p>A full-screen panel blocks clicks to the buttons and objects below it (<b>Blocks clicks</b>), which is ideal for pause menus. Make the menu buttons children of the panel and <K>pauseMenu.SetActive(false)</K> hides them all at once. The Transform scale and rotation of UI objects are applied too, so <K>Tween.Scale</K>, <K>Tween.PunchScale</K> and <K>Tween.Fade</K> work on UI as well.</p>
+                                <Code>{`HUD.Show("Level complete!", 2f, Color.yellow);   // message in the middle of the screen
 Audio.Play("coin");                               // built-in sound effect
 GetComponent<AudioSource>().Play();`}</Code>
                             </Section>
 
-                            <Section id="kayit" title="13. Saving (PlayerPrefs)">
+                            <Section id="ortam" title="Environment and screen effects">
+                                <p>Under <b>Settings → Scene settings</b> you set each scene&apos;s background (a solid color or a sky gradient), ambient light, fog and screen effects.</p>
+                                <Table head={["Setting", "Effect"]} rows={[
+                                    ["Fog: linear", "Thickens gradually between the near and far distances."],
+                                    ["Fog: exponential", "Grows quickly with distance based on its density; looks natural in open spaces such as endless runners."],
+                                    ["Bloom", "Pixels brighter than the threshold (for example strongly emissive materials) spill light around them. Intensity, threshold and radius are adjustable."],
+                                    ["Vignette", "Darkens the edges of the screen to pull the eye to the center."],
+                                    ["Exposure", "The brightness of the whole image."],
+                                ]} />
+                                <Tip>Give the fog the same color as the bottom of the sky gradient so far-away objects melt into the horizon. The ✨ button in the Scene view shows the effects while you edit.</Tip>
+                            </Section>
+
+                            <Section id="kayit" title="Saving (PlayerPrefs)">
                                 <Code>{`int best = PlayerPrefs.GetInt("best", 0);
 if (score > best) PlayerPrefs.SetInt("best", score);
 PlayerPrefs.SetString("name", "Han");
+PlayerPrefs.SetBool("muted", true);
+bool muted = PlayerPrefs.GetBool("muted", false);
 PlayerPrefs.DeleteKey("name");`}</Code>
                                 <p>Values are stored in the player&apos;s browser, separately for each project (up to 64 KB).</p>
                             </Section>
 
-                            <Section id="yayinlama" title="14. Publishing and exporting">
+                            <Section id="yayinlama" title="Publishing and exporting">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play, like and remix it. You can unpublish it any time.</li>
+                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play, like and remix it. The game card shows the engine version it was made with (for example V3). You can unpublish it any time.</li>
                                     <li><b>Playable HTML:</b> packs the game and the engine into a single .html file that opens without an internet connection; host it anywhere you like.</li>
                                     <li><b>Project file (.json):</b> for backups and for moving a project to another account or browser.</li>
                                 </ul>
                             </Section>
 
-                            <Section id="api" title="15. API reference">
+                            <Section id="api" title="API reference">
                                 <p>The members below are auto-completed in the code editor.</p>
                                 <ApiReference />
                             </Section>
 
-                            <Section id="farklar" title="16. Differences from Unity">
+                            <Section id="farklar" title="Differences from Unity">
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>Sound effects are generated procedurally instead of loaded from files (<K>Audio.Play(&quot;coin&quot;)</K>).</li>
                                     <li>Capsule/mesh colliders are approximated as boxes, and angular physics is simplified (spheres roll visually).</li>
                                     <li>Layer masks (LayerMask) and <K>IgnoreCollision</K> are ignored; use tags and triggers instead.</li>
-                                    <li>The UI consists of UI Text and HUD messages; there is no Canvas/Button system (use <K>OnMouseDown</K> for clickable objects).</li>
+                                    <li>The UI has Text, Button, Panel/Image and Progress Bar (Slider) components; there are no Canvas layout components (Layout Group, Scroll View, Input Field). Use <K>OnMouseDown</K> to make scene objects clickable.</li>
+                                    <li>The Animation component is a simple clip player rather than an Animator state machine; <K>SetTrigger(&quot;Jump&quot;)</K> plays the clip with the same name.</li>
                                     <li>Scripts run in a safe interpreter instead of a real .NET/C++ compiler; they cannot reach the network, files or browser APIs.</li>
                                 </ul>
                             </Section>
 
-                            <Section id="guvenlik" title="17. Security and limits">
+                            <Section id="guvenlik" title="Security and limits">
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>The script interpreter cannot reach the DOM, the network, cookies or files, and every call has an instruction budget. Infinite loops don&apos;t freeze the game: the script is disabled and the problem is logged to the console.</li>
-                                    <li>Project content can be up to 900 KB (including textures), 160 KB per script, 64 scripts, 24 scenes and 1000 objects per scene. Uploaded images are downscaled automatically.</li>
+                                    <li>Project content can be up to 900 KB (including textures), 160 KB per script, 64 scripts, 24 scenes and 1000 objects per scene; a tilemap holds up to 512 × 256 cells. Uploaded images are downscaled automatically.</li>
                                     <li>Games published on the Arcade are public. Don&apos;t share personal data, passwords or secret keys; content that breaks the rules is removed.</li>
                                 </ul>
                             </Section>
@@ -626,12 +898,12 @@ export default function EngineDocs() {
                 </nav>
                 <main id="main-content" className="min-w-0 pb-24">
                     <div className="border-b border-zinc-200/70 py-12 dark:border-white/[0.06]">
-                        <p className="text-[13px] font-semibold text-indigo-600 dark:text-indigo-400">{tr ? "Kılavuz · v2" : "Guide · v2"}</p>
+                        <p className="text-[13px] font-semibold text-indigo-600 dark:text-indigo-400">{tr ? `Kılavuz · V${ENGINE_VERSION}` : `Guide · V${ENGINE_VERSION}`}</p>
                         <h1 className="mt-2 text-4xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-5xl">{tr ? "Tarayıcıda gerçek bir oyun motoru" : "A real game engine in your browser"}</h1>
                         <p className="mt-4 max-w-3xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">
                             {tr
-                                ? "Hanogt Engine; Unity'ye benzeyen editörü, GameObject/Component mimarisi, C# ve C++ script desteği, fizik motoru, WebGL render'ı ve Arcade yayınlamasıyla tarayıcıda çalışan bir 2D/3D oyun motorudur. Kurulum gerekmez; projeleriniz buluta veya tarayıcınıza kaydedilir."
-                                : "Hanogt Engine is a 2D/3D game engine that runs in your browser, with a Unity-like editor, a GameObject/Component architecture, C# and C++ scripting, a physics engine, WebGL rendering and Arcade publishing. Nothing to install; your projects are saved to the cloud or to your browser."}
+                                ? "Hanogt Engine; Unity'ye benzeyen editörü, GameObject/Component mimarisi, C# ve C++ script desteği, fizik motoru, tilemap'ler, arayüz bileşenleri, animasyon sistemi, WebGL render'ı ve Arcade yayınlamasıyla tarayıcıda çalışan bir 2D/3D oyun motorudur. Kurulum gerekmez; projeleriniz buluta veya tarayıcınıza kaydedilir."
+                                : "Hanogt Engine is a 2D/3D game engine that runs in your browser, with a Unity-like editor, a GameObject/Component architecture, C# and C++ scripting, a physics engine, tilemaps, UI components, an animation system, WebGL rendering and Arcade publishing. Nothing to install; your projects are saved to the cloud or to your browser."}
                         </p>
                     </div>
                     {tr ? <DocsTR /> : <DocsEN />}

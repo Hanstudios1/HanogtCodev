@@ -1,6 +1,7 @@
 "use client";
 
 import OptimizedImage from "@/components/OptimizedImage";
+import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { useI18n, type Copy } from "@/lib/i18n";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +23,7 @@ import {
 import { Mic, MicOff, Phone, PhoneOff, ShieldCheck, Volume2, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 
-export type CallPeer = { email: string; username: string; avatarUrl?: string };
+export type CallPeer = { email: string; username: string; avatarUrl?: string; staffRole?: string | null };
 type CallStatus = "idle" | "incoming" | "calling" | "connecting" | "active";
 type CallContextValue = { startCall: (peer: CallPeer) => Promise<void>; status: CallStatus };
 
@@ -258,7 +259,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
             }
             const profile = await getDoc(doc(db, "public_profiles", data.caller));
             const profileData = profile.data() || {};
-            setPeer({ email: data.caller, username: profileData.username || data.caller, avatarUrl: profileData.avatarUrl || "" });
+            setPeer({ email: data.caller, username: profileData.username || data.caller, avatarUrl: profileData.avatarUrl || "", staffRole: typeof profileData.staffRole === "string" ? profileData.staffRole : null });
             callIdRef.current = incoming.id;
             setCallId(incoming.id);
             setStatus("incoming");
@@ -313,6 +314,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
                             {peer.avatarUrl ? <OptimizedImage src={peer.avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <div className="flex h-full w-full items-center justify-center text-3xl font-bold">{peer.username.charAt(0).toUpperCase()}</div>}
                         </div>
                         <h2 className="mt-5 truncate text-xl font-bold">{peer.username}</h2>
+                        <StaffBadge role={parseStaffRole(peer.staffRole)} size="sm" className="mx-auto mt-1" />
                         <p className="mt-1 text-sm text-zinc-400">
                             {status === "incoming" ? tx({ TR: "Gelen sesli arama", EN: "Incoming voice call" }) : status === "calling" ? tx({ TR: "Aranıyor…", EN: "Calling…" }) : status === "connecting" ? tx({ TR: "Bağlanıyor…", EN: "Connecting…" }) : duration}
                         </p>

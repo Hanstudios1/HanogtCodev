@@ -493,6 +493,8 @@ export type GroupMemberInfo = {
     role: GroupRole;
     key: string;
     isFriend: boolean;
+    /** Hanogt team badge (server-written public_profiles/{email}.staffRole), not the role in the group. */
+    staffRole?: "owner" | "admin" | "moderator" | null;
 };
 
 export type GroupDetailResponse = {

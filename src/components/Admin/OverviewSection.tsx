@@ -52,9 +52,11 @@ const SECTION_PERMISSION: Record<AdminSectionId, keyof AdminPermissions> = {
     overview: "viewStats",
     users: "manageUsers",
     moderation: "moderate",
+    tickets: "tickets",
     feedback: "feedback",
     announcements: "manageAnnouncements",
     security: "viewSecurityEvents",
+    cloud: "cloudHealth",
     audit: "viewAuditLog",
 };
 

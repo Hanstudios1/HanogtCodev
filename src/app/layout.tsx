@@ -8,6 +8,7 @@ import SkipLink from "@/components/SkipLink";
 import VoiceCallProvider from "@/components/VoiceCallProvider";
 import HanogtAIDock from "@/components/HanogtAI/HanogtAIDock";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import CloudStatusBanner from "@/components/CloudStatusBanner";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -71,6 +72,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                             {children}
                         </VoiceCallProvider>
                         <HanogtAIDock />
+                        {/* Inside the I18nProvider: Provider (bridge state) wraps it but can't translate. */}
+                        <CloudStatusBanner />
                     </I18nProvider>
                 </Provider>
             </body>

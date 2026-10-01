@@ -29,6 +29,7 @@ import {
 } from "@/lib/game-engine/scene";
 import { cloneJson } from "@/lib/game-engine/schema";
 import { newScriptSource } from "@/lib/game-engine/templates";
+import { fillTiles, setTileKey } from "@/lib/game-engine/tilemap";
 import {
     UNIQUE_COMPONENT_TYPES,
     type ComponentType,
@@ -38,6 +39,7 @@ import {
     type SceneDocument,
     type ScriptLanguage,
     type TextureAsset,
+    type TilemapComponent,
     type Vector3,
 } from "@/lib/game-engine/types";
 
@@ -193,6 +195,28 @@ export function updateComponent<T extends GameComponent>(project: GameProjectDoc
     if (!component) return;
     recipe(component);
     touch(project);
+}
+
+function findTilemap(project: GameProjectDocument, entityId: string, componentId: string): TilemapComponent | null {
+    const component = findEntity(project, entityId)?.components.find((candidate) => candidate.id === componentId);
+    return component?.type === "tilemap" ? component : null;
+}
+
+/** Paints (key) or erases (null) cells; leaves the document untouched when nothing changes. */
+export function paintTilemap(project: GameProjectDocument, entityId: string, componentId: string, cells: Array<{ x: number; y: number }>, key: string | null): boolean {
+    const tilemap = findTilemap(project, entityId, componentId);
+    if (!tilemap) return false;
+    let changed = false;
+    for (const cell of cells) changed = setTileKey(tilemap, cell.x, cell.y, key) || changed;
+    if (changed) touch(project);
+    return changed;
+}
+
+export function fillTilemapRect(project: GameProjectDocument, entityId: string, componentId: string, from: { x: number; y: number }, to: { x: number; y: number }, key: string | null): boolean {
+    const tilemap = findTilemap(project, entityId, componentId);
+    if (!tilemap || !fillTiles(tilemap, from.x, from.y, to.x, to.y, key)) return false;
+    touch(project);
+    return true;
 }
 
 export function addComponent(project: GameProjectDocument, entityId: string, type: Exclude<ComponentType, "script" | "transform">): GameComponent | null {
@@ -354,6 +378,8 @@ export function deleteTexture(project: GameProjectDocument, textureId: string) {
             for (const component of entity.components) {
                 if (component.type === "spriteRenderer" && component.textureId === textureId) component.textureId = null;
                 if (component.type === "meshRenderer" && component.material.textureId === textureId) component.material.textureId = null;
+                if (component.type === "uiPanel" && component.textureId === textureId) component.textureId = null;
+                if (component.type === "tilemap" && component.atlas.textureId === textureId) component.atlas = { ...component.atlas, textureId: null };
             }
         }
     };

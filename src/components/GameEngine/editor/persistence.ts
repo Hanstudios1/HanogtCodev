@@ -5,7 +5,7 @@
  * authenticated REST API for cloud projects.
  */
 import { normalizeProject } from "@/lib/game-engine/schema";
-import type { GameDimension, GameProjectDocument } from "@/lib/game-engine/types";
+import { GAME_ENGINE_SCHEMA_VERSION, type GameDimension, type GameProjectDocument } from "@/lib/game-engine/types";
 
 export type ProjectSource = "cloud" | "local";
 
@@ -217,7 +217,7 @@ export function safeFileName(name: string) {
 }
 
 export function exportProjectJson(project: GameProjectDocument) {
-    const blob = new Blob([JSON.stringify({ format: "hanogt-engine-project", version: 2, project }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ format: "hanogt-engine-project", version: GAME_ENGINE_SCHEMA_VERSION, project }, null, 2)], { type: "application/json" });
     downloadBlob(blob, `${safeFileName(project.name)}.hanogt.json`);
 }
 

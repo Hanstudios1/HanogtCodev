@@ -1,12 +1,15 @@
 import "server-only";
 
-import { createSign, createHash, generateKeyPairSync } from "node:crypto";
+import { createSign, createHash, createPrivateKey, generateKeyPairSync } from "node:crypto";
 
 type ServiceAccount = {
     client_email: string;
     private_key: string;
     project_id: string;
 };
+
+/** Where the service account came from (Cloud Health shows it; never the key itself). */
+export type ServerCredentialLayout = "json" | "base64" | "split" | "emulator";
 
 type FirestoreValue =
     | { nullValue: null }
@@ -25,7 +28,20 @@ type FirestoreDocument = {
     updateTime?: string;
 };
 
-let cachedToken: { value: string; expiresAt: number } | null = null;
+/**
+ * OAuth scope sets of the service-account access token. "data" covers
+ * Firestore, Firebase Auth users and Storage objects (every regular route);
+ * "admin" adds the Firebase Rules, Management and Auth-config APIs used by
+ * the owner's Cloud Health panel. Each set has its own cached token.
+ */
+const TOKEN_SCOPES = {
+    data: "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/devstorage.full_control",
+    admin: "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/firebase",
+} as const;
+
+export type GoogleTokenScope = keyof typeof TOKEN_SCOPES;
+
+const cachedTokens = new Map<GoogleTokenScope, { value: string; expiresAt: number }>();
 
 /**
  * Firebase Emulator Suite support for local development and end-to-end tests,
@@ -54,39 +70,59 @@ function base64Url(value: string | Buffer) {
     return Buffer.from(value).toString("base64url");
 }
 
-function getServiceAccount(): ServiceAccount {
-    if (emulator("FIRESTORE_EMULATOR_HOST")) return emulatorServiceAccount();
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-    const encoded = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64?.trim();
-    if (!raw && !encoded) {
-        // The three-variable layout used by most Firebase Admin guides.
-        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
-        const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
-        const projectId = (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)?.trim();
-        if (clientEmail && privateKey && projectId) {
-            return {
-                client_email: clientEmail,
-                // Vercel stores pasted keys with literal "\n" and sometimes wrapping quotes.
-                private_key: privateKey.replace(/^"|"$/g, "").replace(/\\n/g, "\n"),
-                project_id: projectId,
-            };
-        }
-        throw new Error("Firebase sunucu kimliği yapılandırılmamış: Vercel'e FIREBASE_SERVICE_ACCOUNT_JSON ekleyin.");
-    }
+// FIREBASE_SERVICE_ACCOUNT_BASE is accepted because older docs named the
+// base64 variable that way; BASE64 is the documented name.
+const BASE64_VARIABLES = ["FIREBASE_SERVICE_ACCOUNT_BASE64", "FIREBASE_SERVICE_ACCOUNT_BASE"] as const;
+const SPLIT_VARIABLES = "FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY";
 
+function credentialSources() {
+    const sources: Array<{ layout: ServerCredentialLayout; variable: string; value: string }> = [];
+    const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+    if (json) sources.push({ layout: "json", variable: "FIREBASE_SERVICE_ACCOUNT_JSON", value: json });
+    for (const variable of BASE64_VARIABLES) {
+        const value = process.env[variable]?.trim();
+        if (value) sources.push({ layout: "base64", variable, value });
+    }
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
+    if (clientEmail && privateKey) sources.push({ layout: "split", variable: SPLIT_VARIABLES, value: "" });
+    return sources;
+}
+
+function parseServiceAccountJson(text: string): ServiceAccount {
+    let json = text.trim();
+    // Dashboards sometimes keep the single quotes the JSON was pasted with.
+    if (/^'[\s\S]*'$/.test(json)) json = json.slice(1, -1).trim();
     let parsed: ServiceAccount;
     try {
-        const json = raw || Buffer.from(encoded!, "base64").toString("utf8");
         parsed = JSON.parse(json) as ServiceAccount;
     } catch {
         throw new Error("Firebase sunucu kimliği geçersiz JSON içeriyor.");
     }
-
-    if (!parsed.client_email || !parsed.private_key || !parsed.project_id) {
+    if (!parsed || typeof parsed !== "object" || !parsed.client_email || !parsed.private_key || !parsed.project_id) {
         throw new Error("Firebase sunucu kimliği gerekli alanları içermiyor.");
     }
-    parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
-    return parsed;
+    return { client_email: String(parsed.client_email).trim(), private_key: String(parsed.private_key).replace(/\\n/g, "\n"), project_id: String(parsed.project_id).trim() };
+}
+
+function getServiceAccount(): ServiceAccount {
+    if (emulator("FIRESTORE_EMULATOR_HOST")) return emulatorServiceAccount();
+    const source = credentialSources()[0];
+    if (!source) throw new Error("Firebase sunucu kimliği yapılandırılmamış: Vercel'e FIREBASE_SERVICE_ACCOUNT_JSON ekleyin.");
+    if (source.layout === "json") return parseServiceAccountJson(source.value);
+    if (source.layout === "base64") {
+        // A plain JSON pasted into the base64 variable works too.
+        return parseServiceAccountJson(source.value.startsWith("{") ? source.value : Buffer.from(source.value, "base64").toString("utf8"));
+    }
+    // The three-variable layout used by most Firebase Admin guides.
+    const projectId = (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)?.trim();
+    if (!projectId) throw new Error("Firebase sunucu kimliği eksik: FIREBASE_PROJECT_ID tanımlı değil.");
+    return {
+        client_email: process.env.FIREBASE_CLIENT_EMAIL!.trim(),
+        // Vercel stores pasted keys with literal "\n" and sometimes wrapping quotes.
+        private_key: process.env.FIREBASE_PRIVATE_KEY!.trim().replace(/^"|"$/g, "").replace(/\\n/g, "\n"),
+        project_id: projectId,
+    };
 }
 
 export function getFirebaseProjectId() {
@@ -103,11 +139,63 @@ export function isFirebaseServerConfigured() {
     }
 }
 
-async function getAccessToken() {
+/** True while the server talks to the local Firebase Emulator Suite. */
+export function isFirebaseEmulator() {
+    return Boolean(emulator("FIRESTORE_EMULATOR_HOST"));
+}
+
+export type ServerCredentialInfo = {
+    layout: ServerCredentialLayout | null;
+    /** The variable(s) the credentials were read from. */
+    variable: string | null;
+    /** Other credential variables that are set but ignored because `variable` wins. */
+    ignored: string[];
+    projectId: string | null;
+    /** Service-account e-mail (an identifier, not a secret): IAM roles are granted to it. */
+    clientEmail: string | null;
+    privateKeyValid: boolean;
+    /** Why the credentials could not be used (never contains key material). */
+    error: string | null;
+};
+
+/** Secret-free description of the configured service account for diagnostics. */
+export function describeServerCredentials(): ServerCredentialInfo {
+    if (emulator("FIRESTORE_EMULATOR_HOST")) {
+        return { layout: "emulator", variable: "FIRESTORE_EMULATOR_HOST", ignored: [], projectId: emulatorServiceAccount().project_id, clientEmail: null, privateKeyValid: true, error: null };
+    }
+    const sources = credentialSources();
+    const [source, ...rest] = sources;
+    const info: ServerCredentialInfo = {
+        layout: source?.layout ?? null,
+        variable: source?.variable ?? null,
+        ignored: rest.map((entry) => entry.variable),
+        projectId: null,
+        clientEmail: null,
+        privateKeyValid: false,
+        error: null,
+    };
+    try {
+        const account = getServiceAccount();
+        info.projectId = account.project_id;
+        info.clientEmail = account.client_email;
+        try {
+            createPrivateKey(account.private_key);
+            info.privateKeyValid = true;
+        } catch {
+            info.error = "Özel anahtar okunamadı (satır sonları \\n olarak mı kopyalandı?).";
+        }
+    } catch (error) {
+        info.error = error instanceof Error ? error.message : "Firebase sunucu kimliği okunamadı.";
+    }
+    return info;
+}
+
+async function getAccessToken(scope: GoogleTokenScope = "data") {
     // The emulators accept the special "owner" token, which bypasses security rules like a service account.
     if (emulator("FIRESTORE_EMULATOR_HOST")) return "owner";
-    if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
-        return cachedToken.value;
+    const cached = cachedTokens.get(scope);
+    if (cached && cached.expiresAt > Date.now() + 60_000) {
+        return cached.value;
     }
 
     const account = getServiceAccount();
@@ -117,7 +205,7 @@ async function getAccessToken() {
         iss: account.client_email,
         sub: account.client_email,
         aud: "https://oauth2.googleapis.com/token",
-        scope: "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/devstorage.full_control",
+        scope: TOKEN_SCOPES[scope],
         iat: now,
         exp: now + 3600,
     }));
@@ -136,15 +224,22 @@ async function getAccessToken() {
         }),
         cache: "no-store",
     });
-    const result = await response.json() as { access_token?: string; expires_in?: number; error_description?: string };
+    const result = await response.json().catch(() => ({})) as { access_token?: string; expires_in?: number; error?: string; error_description?: string };
     if (!response.ok || !result.access_token) {
-        throw new Error(result.error_description || "Firebase erişim belirteci alınamadı.");
+        // Google's code (e.g. "invalid_grant: Invalid JWT Signature.") tells a deleted key from a wrong clock.
+        const reason = [result.error, result.error_description].filter(Boolean).join(": ");
+        throw new Error(reason ? `Firebase erişim belirteci alınamadı (${reason})` : `Firebase erişim belirteci alınamadı (HTTP ${response.status}).`);
     }
-    cachedToken = {
+    cachedTokens.set(scope, {
         value: result.access_token,
         expiresAt: Date.now() + (result.expires_in || 3600) * 1000,
-    };
+    });
     return result.access_token;
+}
+
+/** Service-account OAuth token; "admin" is for the Firebase Rules/Management/Auth-config APIs. */
+export function getGoogleAccessToken(scope: GoogleTokenScope = "data") {
+    return getAccessToken(scope);
 }
 
 /**
@@ -251,6 +346,25 @@ export async function getServerDocument<T extends Record<string, unknown>>(path:
     if (!response.ok) throw new Error(`Firestore okuma hatası (${response.status}).`);
     const document = await response.json() as FirestoreDocument;
     return decodeDocument<T>(document);
+}
+
+export type FirestoreProbe = { status: number; reason: string | null; message: string | null };
+
+/**
+ * Diagnostic GET of one document that keeps Google's error status and message
+ * (getServerDocument maps 404 to null, which also hides a missing database).
+ * With `idToken` the read runs as that Firebase user, so security rules apply.
+ */
+export async function probeServerDocument(path: string, idToken?: string): Promise<FirestoreProbe> {
+    const token = idToken ?? await getAccessToken();
+    const response = await fetch(documentUrl(path), { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    if (response.ok) return { status: response.status, reason: null, message: null };
+    const payload = await response.json().catch(() => null) as { error?: { status?: unknown; message?: unknown } } | null;
+    return {
+        status: response.status,
+        reason: typeof payload?.error?.status === "string" ? payload.error.status : null,
+        message: typeof payload?.error?.message === "string" ? payload.error.message.slice(0, 400) : null,
+    };
 }
 
 export async function listServerCollection<T extends Record<string, unknown>>(collectionPath: string, pageSize = 300) {

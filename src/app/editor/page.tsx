@@ -1,8 +1,9 @@
 "use client";
 
 import {
-    ChevronDown, Command, Download, Eye, FilePlus2, FolderDown, Keyboard, Languages, LoaderCircle, MoreVertical, PanelRightClose,
-    PanelRightOpen, Pencil, Play, Save, Settings, Share2, Square, Sun, Terminal, Upload, Wand2,
+    ChevronDown, ClipboardCopy, Command, Copy as CopyIcon, Download, ExternalLink, Eye, FilePlus2, FolderDown, Keyboard, Languages, ListOrdered,
+    LoaderCircle, MessageSquareCode, MoreVertical, PanelRightClose, PanelRightOpen, Pencil, Play, Redo2, RefreshCw, Replace, Save, Search, Send,
+    Settings, Share2, Square, SquarePen, Sun, Terminal, TextSelect, Trash2, Undo2, Upload, Wand2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,22 +16,28 @@ import CommandPalette, { type PaletteCommand } from "@/components/Editor/Command
 import Console, { type ConsoleTab } from "@/components/Editor/Console";
 import EditorTabs from "@/components/Editor/EditorTabs";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
+import MediaPublishButton, { MEDIA_BUTTON_COPY } from "@/components/Editor/MediaPublishButton";
 import { useConfirm } from "@/components/Editor/Modal";
 import NewFileDialog, { EngineBadge, LanguagePickerDialog, type NewFileRequest } from "@/components/Editor/NewFileDialog";
+import PublishDialog from "@/components/Editor/PublishDialog";
 import SaveDialog from "@/components/Editor/SaveDialog";
 import ShareDialog from "@/components/Editor/ShareDialog";
 import ShortcutsDialog from "@/components/Editor/ShortcutsDialog";
 import Sidebar, { SIDEBAR_COPY } from "@/components/Editor/Sidebar";
 import StatusBar, { type SaveState } from "@/components/Editor/StatusBar";
 import { ToastViewport, useToasts } from "@/components/Editor/Toasts";
+import ToolbarMenu, { type ToolbarMenuItem, type ToolbarMenuSection } from "@/components/Editor/ToolbarMenu";
 import WebPreview from "@/components/Editor/WebPreview";
 import {
     MAX_TABS, buildProjectZip, buildSnippetFile, downloadName, readUploadedFiles, triggerDownload, uniqueFileName,
     type UploadIssue,
 } from "@/components/Editor/editor-files";
-import { formatShortcut, isTypingTarget, useIsMac } from "@/components/Editor/keyboard";
+import { EDIT_SHORTCUTS, formatShortcut, isTypingTarget, shortcutText, useIsMac } from "@/components/Editor/keyboard";
+import { MediaApiError, mediaAction, mediaErrorText } from "@/components/Editor/media-api";
+import { mediaPostPath, ownerTag, parseMediaPublication, type MediaPublication } from "@/components/Editor/media-publish";
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
-import { EDITOR_IMPORT_PARAM, consumeEditorImport, type EditorImportError } from "@/lib/editor-bridge";
+import { storedPublication, useMediaPublication } from "@/components/Editor/useMediaPublication";
+import { EDITOR_IMPORT_PARAM, consumeEditorImportBundle, type EditorImportError } from "@/lib/editor-bridge";
 import { useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type { MonacoApi } from "@/lib/monaco";
@@ -54,14 +61,19 @@ interface EditorTab {
 
 type StoredTab = { name?: unknown; lang?: unknown; code?: unknown; id?: unknown; isSaved?: unknown };
 type GameScriptResponse = { id: string; name: string; language: "csharp" | "cpp"; content: string; revision?: string | null };
-type DialogName = "new" | "palette" | "shortcuts" | "share" | "save" | "language" | null;
+type DialogName = "new" | "palette" | "shortcuts" | "share" | "save" | "language" | "publish" | null;
+/** An editor command shown in the Edit menu and the command palette. */
+type EditorCommand = { id: string; label: string; icon: ReactNode; shortcut?: string; hint?: string; keywords?: string; disabled?: boolean; danger?: boolean; run: () => void };
 
 /**
  * Unsaved work survives reloads here (only in this browser). The value stays a
  * plain array of tabs because Groups adds files to it ("Open in the Editor").
  */
 const RECOVERY_KEY = "hanogt_unsaved_tabs";
-/** The cloud project the recovered tabs belong to: { projectId, projectName, tabIds }. */
+/**
+ * The cloud project the recovered tabs belong to: { projectId, projectName, tabIds }.
+ * An unsaved draft that was published to Media also keeps its post here (`publication`).
+ */
 const RECOVERY_PROJECT_KEY = "hanogt_unsaved_project";
 const PANEL_WIDTH_KEY = "hanogt_editor_panel_width";
 const MAX_RUNNABLE_FILES = 8;
@@ -100,10 +112,11 @@ function writeStorage(key: string, value: string | null) {
 }
 
 /**
- * Reads the recovered tabs. They keep their cloud project only when they are
- * exactly the tabs that were open in it (files added by Groups start a new project).
+ * Reads the recovered tabs. They keep their cloud project (and the Media post
+ * of a published draft) only when they are exactly the tabs that were open in
+ * it (files added by Groups start a new project).
  */
-function readRecovery(): { tabs: EditorTab[]; projectId: number | null; projectName: string } | null {
+function readRecovery(email: string): { tabs: EditorTab[]; projectId: number | null; projectName: string; publication: MediaPublication | null } | null {
     const raw = readStorage(RECOVERY_KEY);
     if (!raw) return null;
     try {
@@ -113,18 +126,22 @@ function readRecovery(): { tabs: EditorTab[]; projectId: number | null; projectN
         if (!tabs.length) return null;
         let projectId: number | null = null;
         let projectName = "";
+        let publication: MediaPublication | null = null;
         try {
-            const meta = JSON.parse(readStorage(RECOVERY_PROJECT_KEY) ?? "null") as { projectId?: unknown; projectName?: unknown; tabIds?: unknown } | null;
+            const meta = JSON.parse(readStorage(RECOVERY_PROJECT_KEY) ?? "null") as { projectId?: unknown; projectName?: unknown; tabIds?: unknown; publication?: unknown } | null;
             const storedIds = list.map((item) => item.id);
             const sameTabs = Array.isArray(meta?.tabIds) && meta.tabIds.length === storedIds.length && meta.tabIds.every((id, index) => id === storedIds[index]);
             if (sameTabs && typeof meta?.projectId === "number" && Number.isFinite(meta.projectId)) {
                 projectId = meta.projectId;
                 projectName = typeof meta.projectName === "string" ? meta.projectName.slice(0, 120) : "";
             }
+            // A published draft's post, for the account that published it.
+            const owner = (meta?.publication as { owner?: unknown } | undefined)?.owner;
+            if (sameTabs && email && owner === ownerTag(email)) publication = parseMediaPublication(meta?.publication);
         } catch {
             // No usable project link; the tabs open as a new project.
         }
-        return { tabs, projectId, projectName };
+        return { tabs, projectId, projectName, publication };
     } catch {
         return null;
     }
@@ -220,6 +237,35 @@ const C = {
     monacoSave: { TR: "Hanogt: Kaydet", EN: "Hanogt: Save" },
     monacoQuickActions: { TR: "Hanogt: Hızlı işlemler", EN: "Hanogt: Quick actions" },
     panel: { TR: "Panel", EN: "Panel" },
+    editMenu: { TR: "Düzenle", EN: "Edit" },
+    editGroup: { TR: "Düzenleme", EN: "Editing" },
+    fileGroup: { TR: "Dosya", EN: "File" },
+    mediaGroup: { TR: "Hanogt Media", EN: "Hanogt Media" },
+    undo: { TR: "Geri al", EN: "Undo" },
+    redo: { TR: "Yinele", EN: "Redo" },
+    find: { TR: "Bul", EN: "Find" },
+    replace: { TR: "Bul ve değiştir", EN: "Find and replace" },
+    goToLine: { TR: "Satıra git", EN: "Go to line" },
+    toggleComment: { TR: "Yorum satırı aç/kapat", EN: "Toggle line comment" },
+    selectAll: { TR: "Tümünü seç", EN: "Select all" },
+    copyAll: { TR: "Tüm kodu kopyala", EN: "Copy all code" },
+    copiedAll: { TR: "{name} panoya kopyalandı.", EN: "{name} was copied to the clipboard." },
+    copyFailed: { TR: "Panoya kopyalanamadı; tarayıcınız pano erişimine izin vermiyor olabilir.", EN: "Couldn't copy to the clipboard; your browser may not allow clipboard access." },
+    duplicateFile: { TR: "Dosyayı çoğalt", EN: "Duplicate file" },
+    deleteFile: { TR: "Dosyayı sil", EN: "Delete file" },
+    deleteTitle: { TR: "Dosya silinsin mi?", EN: "Delete the file?" },
+    deleteMessage: { TR: "{name} bu çalışma alanından kaldırılacak ve içindeki kod silinecek.", EN: "{name} will be removed from this workspace and its code deleted." },
+    deleteMessageProject: { TR: "{name} projeden kaldırılacak. Proje kaydedildiğinde buluttaki kopyası da silinir.", EN: "{name} will be removed from the project. Its cloud copy is deleted when you save the project." },
+    deleted: { TR: "{name} silindi.", EN: "{name} was deleted." },
+    lastFile: { TR: "Son dosya silinemez; önce yeni bir dosya oluşturun.", EN: "The last file can't be deleted; create another file first." },
+    importDoneMany: { TR: "{count} dosya editörde açıldı (kaydedilmedi).", EN: "{count} files were opened in the editor (not saved yet)." },
+    importSkipped: { TR: "{count} dosya açılamadı (çok büyük veya okunamadı).", EN: "{count} files couldn't be opened (too large or unreadable)." },
+    unpublishTitle: { TR: "Yayından kaldırılsın mı?", EN: "Unpublish the post?" },
+    unpublishMessage: { TR: "“{title}” Hanogt Media'dan kaldırılacak; beğenileri ve yorumları da silinir. Editördeki kodunuz etkilenmez.", EN: "“{title}” will be removed from Hanogt Media together with its likes and comments. The code in the editor isn't affected." },
+    unpublished: { TR: "Yayın Media'dan kaldırıldı.", EN: "The post was removed from Media." },
+    alreadyUnpublished: { TR: "Yayın zaten kaldırılmış.", EN: "The post had already been removed." },
+    linkCopied: { TR: "Yayın bağlantısı kopyalandı.", EN: "The post link was copied." },
+    editorNotReady: { TR: "Editör henüz hazır değil.", EN: "The editor isn't ready yet." },
 } satisfies Record<string, Copy>;
 
 const ISSUE_LABELS: Record<UploadIssue["reason"], Copy> = {
@@ -278,10 +324,23 @@ function EditorContent() {
     const [wasOriginallyMultiTab, setWasOriginallyMultiTab] = useState<boolean | null>(null);
     const [currentGameScriptId, setCurrentGameScriptId] = useState<string | null>(requestedGameScriptId);
     const [gameScriptRevision, setGameScriptRevision] = useState<string | null>(null);
+    /** A name for an unsaved workspace opened from elsewhere (a Media post's title). */
+    const [importedTitle, setImportedTitle] = useState("");
+    /** A file was deleted; the workspace counts as changed until it is saved. */
+    const [structureDirty, setStructureDirty] = useState(false);
     const tabsRef = useRef(tabs);
     useEffect(() => {
         tabsRef.current = tabs;
     }, [tabs]);
+
+    // The workspace's Hanogt Media post: saved projects and game scripts are
+    // remembered by key, unsaved drafts with the recovered tabs.
+    const workspaceKey = isGameMode
+        ? (gameProjectId && currentGameScriptId ? `game:${gameProjectId}:${currentGameScriptId}` : null)
+        : currentProjectId !== null ? `project:${currentProjectId}` : null;
+    const { publication, setPublication, record: recordPublication, forget: forgetPublication } = useMediaPublication(sessionEmail, workspaceKey);
+    const [publishKey, setPublishKey] = useState(0);
+    const [unpublishing, setUnpublishing] = useState(false);
 
     const [stdin, setStdin] = useState("");
     const [run, setRun] = useState<RunState | null>(null);
@@ -333,7 +392,7 @@ function EditorContent() {
         loadedKeyRef.current = loadKey;
         const stillCurrent = () => loadedKeyRef.current === loadKey;
         const translate = txRef.current;
-        const open = (next: EditorTab[], project?: { id: number | null; name: string; multi: boolean | null }) => {
+        const open = (next: EditorTab[], project?: { id: number | null; name: string; multi: boolean | null }, published: MediaPublication | null = null) => {
             if (!stillCurrent()) return;
             setTabs(next);
             setActiveTabId(next[0]?.id ?? "");
@@ -342,6 +401,9 @@ function EditorContent() {
                 setCurrentProjectName(project.name);
                 setWasOriginallyMultiTab(project.multi);
             }
+            setPublication(published);
+            setImportedTitle("");
+            setStructureDirty(false);
             setReady(true);
         };
         const projectTabs = (project: { files?: Array<{ name: string; lang: string; code: string }>; isMultiTab?: boolean; lang: string; code: string; name: string }): EditorTab[] | null => {
@@ -370,7 +432,7 @@ function EditorContent() {
                         if (!stillCurrent()) return;
                         setCurrentGameScriptId(script.id);
                         setGameScriptRevision(script.revision || null);
-                        open([{ id: `game-script-${script.id}`, name: script.name, lang: script.language, code: script.content, isSaved: true }], { id: null, name: script.name, multi: false });
+                        open([{ id: `game-script-${script.id}`, name: script.name, lang: script.language, code: script.content, isSaved: true }], { id: null, name: script.name, multi: false }, storedPublication(sessionEmail, `game:${gameProjectId}:${script.id}`));
                         return;
                     }
                     const language = normalizeLanguageId(initialLang) === "cpp" ? "cpp" : "csharp";
@@ -387,7 +449,7 @@ function EditorContent() {
                     const project = (await getProjectsFromCloud(sessionEmail)).find((item) => String(item.id) === projectId);
                     const loaded = project ? projectTabs(project) : null;
                     if (project && loaded?.length) {
-                        open(loaded, { id: Number(project.id), name: project.name, multi: loaded.length > 1 });
+                        open(loaded, { id: Number(project.id), name: project.name, multi: loaded.length > 1 }, storedPublication(sessionEmail, `project:${Number(project.id)}`));
                         return;
                     }
                 } catch (error) {
@@ -396,15 +458,16 @@ function EditorContent() {
                 const local = getProjects(sessionEmail).find((item) => String(item.id) === projectId);
                 const loaded = local ? projectTabs(local) : null;
                 if (local && loaded?.length) {
-                    open(loaded, { id: local.id, name: local.name, multi: loaded.length > 1 });
+                    open(loaded, { id: local.id, name: local.name, multi: loaded.length > 1 }, storedPublication(sessionEmail, `project:${local.id}`));
                     return;
                 }
             }
 
             // Recovered tabs are restored when no specific project or language was requested.
-            const recovery = !projectId && !initialLang ? readRecovery() : null;
+            const recovery = !projectId && !initialLang ? readRecovery(sessionEmail) : null;
             if (recovery) {
-                open(recovery.tabs, { id: recovery.projectId, name: recovery.projectName, multi: recovery.projectId === null ? null : recovery.tabs.length > 1 });
+                const published = recovery.projectId === null ? recovery.publication : storedPublication(sessionEmail, `project:${recovery.projectId}`) ?? recovery.publication;
+                open(recovery.tabs, { id: recovery.projectId, name: recovery.projectName, multi: recovery.projectId === null ? null : recovery.tabs.length > 1 }, published);
                 return;
             }
             if (importId && !initialLang) {
@@ -417,17 +480,17 @@ function EditorContent() {
             if (language.engine === "preview") setPanelTab("preview");
         };
         void load();
-    }, [initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName, sessionEmail, sessionStatus, importId, toast]);
+    }, [initialLang, projectId, gameProjectId, requestedGameScriptId, requestedGameScriptName, sessionEmail, sessionStatus, importId, toast, setPublication]);
 
-    // Code opened from another page (Hanogt AI, Groups…) through src/lib/editor-bridge.ts.
+    // Code opened from another page (Hanogt AI, Groups, Media…) through src/lib/editor-bridge.ts.
     // The entry is consumed once; the result waits in a ref because removing the
     // parameter from the URL re-renders the page before the timer below fires.
-    const pendingImport = useRef<ReturnType<typeof consumeEditorImport> | "game" | null>(null);
+    const pendingImport = useRef<ReturnType<typeof consumeEditorImportBundle> | "game" | null>(null);
     useEffect(() => {
         if (!ready) return;
         if (importId && !consumedImports.current.has(importId)) {
             consumedImports.current.add(importId);
-            pendingImport.current = isGameMode ? "game" : consumeEditorImport(importId);
+            pendingImport.current = isGameMode ? "game" : consumeEditorImportBundle(importId);
             const url = new URL(window.location.href);
             url.searchParams.delete(EDITOR_IMPORT_PARAM);
             window.history.replaceState(null, "", url);
@@ -452,18 +515,33 @@ function EditorContent() {
                 }
                 return;
             }
+            const { files, title, mediaPostId, skipped } = result.bundle;
+            if (skipped) toast({ tone: "warning", message: tx(C.importSkipped, { count: skipped }) });
             if (current.length >= MAX_TABS) {
                 toast({ tone: "error", message: tx(C.tooManyTabs, { count: MAX_TABS }) });
                 return;
             }
-            const tab: EditorTab = { id: newTabId(), name: uniqueFileName(result.file.name, current.map((item) => item.name)), lang: result.file.language, code: result.file.code, isSaved: false };
-            setTabs([...current, tab]);
-            setActiveTabId(tab.id);
-            if (getLanguage(tab.lang)?.engine === "preview") setPanelTab("preview");
-            toast({ tone: "success", message: tx(C.importDone, { name: tab.name }) });
+            const names = current.map((item) => item.name);
+            const room = MAX_TABS - current.length;
+            const added: EditorTab[] = files.slice(0, room).map((file) => {
+                const name = uniqueFileName(file.name, names);
+                names.push(name);
+                return { id: newTabId(), name, lang: file.language, code: file.code, isSaved: false };
+            });
+            if (files.length > room) toast({ tone: "warning", message: tx(C.tooManyTabs, { count: MAX_TABS }) });
+            setTabs([...current, ...added]);
+            setActiveTabId(added[0].id);
+            if (!current.length) {
+                // An empty editor: the files form a new, unsaved workspace. A Media
+                // project keeps its title, and its owner can update the same post.
+                setImportedTitle(title ?? "");
+                if (mediaPostId) setPublication({ postId: mediaPostId, title: title ?? "", at: new Date().toISOString() });
+            }
+            if (added.some((tab) => getLanguage(tab.lang)?.engine === "preview")) setPanelTab("preview");
+            toast({ tone: "success", message: added.length === 1 ? tx(C.importDone, { name: added[0].name }) : tx(C.importDoneMany, { count: added.length }) });
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [ready, importId, isGameMode, toast, tx]);
+    }, [ready, importId, isGameMode, toast, tx, setPublication]);
 
     // Unsaved tabs survive a reload (not for game scripts, which have their own storage).
     useEffect(() => {
@@ -478,10 +556,15 @@ function EditorContent() {
             const serialized = JSON.stringify(tabs.map(({ id, name, lang, code, isSaved }) => ({ id, name, lang, code, output: [], isRunning: false, isSaved })));
             const fits = serialized.length <= 1_000_000;
             writeStorage(RECOVERY_KEY, fits ? serialized : null);
-            writeStorage(RECOVERY_PROJECT_KEY, fits && currentProjectId !== null ? JSON.stringify({ projectId: currentProjectId, projectName: currentProjectName, tabIds: tabs.map((tab) => tab.id) }) : null);
+            // Saved projects remember their Media post by project id; a draft keeps it here.
+            const draftPublication = publication && workspaceKey === null && sessionEmail ? { ...publication, owner: ownerTag(sessionEmail) } : null;
+            const meta = currentProjectId !== null || draftPublication
+                ? { projectId: currentProjectId, projectName: currentProjectName, tabIds: tabs.map((tab) => tab.id), ...(draftPublication ? { publication: draftPublication } : {}) }
+                : null;
+            writeStorage(RECOVERY_PROJECT_KEY, fits && meta ? JSON.stringify(meta) : null);
         }, 500);
         return () => window.clearTimeout(timer);
-    }, [tabs, ready, isGameMode, currentProjectId, currentProjectName]);
+    }, [tabs, ready, isGameMode, currentProjectId, currentProjectName, publication, workspaceKey, sessionEmail]);
 
     // ------------------------------------------------------------------ tabs
     const updateTabs = useCallback((updater: (current: EditorTab[]) => EditorTab[]) => setTabs(updater), []);
@@ -514,6 +597,21 @@ function EditorContent() {
         setTabs((current) => current.map((tab) => (tab.id === shownTabId && tab.code !== code ? { ...tab, code, isSaved: false } : tab)));
     }, [shownTabId]);
 
+    /** Removes tabs (never the last one) and activates a neighbour of the active tab when it goes. */
+    const removeTabs = useCallback((ids: string[]) => {
+        const current = tabsRef.current;
+        const remaining = current.filter((tab) => !ids.includes(tab.id));
+        if (!remaining.length || remaining.length === current.length) return false;
+        setTabs(remaining);
+        setActiveTabId((active) => {
+            if (!ids.includes(active)) return active;
+            const index = current.findIndex((tab) => tab.id === active);
+            const neighbour = current.slice(index + 1).find((tab) => !ids.includes(tab.id)) ?? [...current.slice(0, index)].reverse().find((tab) => !ids.includes(tab.id));
+            return neighbour?.id ?? remaining[0].id;
+        });
+        return true;
+    }, []);
+
     const closeTabs = useCallback(async (ids: string[]) => {
         const current = tabsRef.current;
         const closing = current.filter((tab) => ids.includes(tab.id));
@@ -528,16 +626,27 @@ function EditorContent() {
             });
             if (!accepted) return;
         }
-        const remaining = tabsRef.current.filter((tab) => !ids.includes(tab.id));
-        if (!remaining.length) return;
-        setTabs(remaining);
-        setActiveTabId((active) => {
-            if (!ids.includes(active)) return active;
-            const index = current.findIndex((tab) => tab.id === active);
-            const neighbour = current.slice(index + 1).find((tab) => !ids.includes(tab.id)) ?? [...current.slice(0, index)].reverse().find((tab) => !ids.includes(tab.id));
-            return neighbour?.id ?? remaining[0].id;
+        removeTabs(ids);
+    }, [confirm, removeTabs, tx]);
+
+    /** "Delete file": always confirmed, and the project counts as changed until it is saved. */
+    const deleteTab = useCallback(async (id: string) => {
+        const tab = tabsRef.current.find((item) => item.id === id);
+        if (!tab) return;
+        if (tabsRef.current.length < 2) {
+            toast({ tone: "info", message: tx(C.lastFile) });
+            return;
+        }
+        const accepted = await confirm({
+            title: tx(C.deleteTitle),
+            message: tx(currentProjectId !== null ? C.deleteMessageProject : C.deleteMessage, { name: tab.name }),
+            confirmLabel: tx(C.deleteFile),
+            destructive: true,
         });
-    }, [confirm, tx]);
+        if (!accepted || !removeTabs([id])) return;
+        setStructureDirty(true);
+        toast({ tone: "info", message: tx(C.deleted, { name: tab.name }) });
+    }, [confirm, currentProjectId, removeTabs, toast, tx]);
 
     const renameTab = useCallback((id: string, rawName: string): string | null => {
         const name = rawName.trim().replace(/\s+/g, " ");
@@ -749,7 +858,7 @@ function EditorContent() {
 
     // ------------------------------------------------------------------ saving
     const canAutoSave = Boolean(sessionEmail) && (isGameMode ? Boolean(currentGameScriptId) : currentProjectId !== null);
-    const hasUnsaved = tabs.some((tab) => !tab.isSaved);
+    const hasUnsaved = structureDirty || tabs.some((tab) => !tab.isSaved);
 
     const completeSave = useCallback(async (projectName: string, projectIdToUse: number | null, silent = false): Promise<boolean> => {
         if (!sessionEmail || savingRef.current) return false;
@@ -801,6 +910,7 @@ function EditorContent() {
                 setCurrentGameScriptId(payload.script.id);
                 setGameScriptRevision(payload.script.revision || null);
                 setCurrentProjectName(payload.script.name);
+                setStructureDirty(false);
                 markSaved(payload.script.name);
                 // The new id goes into the URL (reloads reopen this script) without reloading the open tab.
                 loadedKeyRef.current = loadKeyOf(sessionEmail, initialLang, projectId, gameProjectId, payload.script.id, requestedGameScriptName);
@@ -831,6 +941,7 @@ function EditorContent() {
             setWasOriginallyMultiTab(prepared.length > 1);
             setCurrentProjectId(finalProjectId);
             setCurrentProjectName(projectName);
+            setStructureDirty(false);
             markSaved();
             if (!silent) toast({ tone: "success", message: tx(C.saved), action: { label: tx(C.dashboard), href: "/dashboard" } });
             return true;
@@ -858,12 +969,13 @@ function EditorContent() {
         const convertingToMulti = wasOriginallyMultiTab === false && multi;
         if (!currentProjectId || convertingToMulti) {
             const first = tabsRef.current[0];
-            setSaveDialog((previous) => ({ key: previous.key + 1, defaultName: multi || !first ? tx(C.generalProject) : tx(C.languageProject, { language: getLanguage(first.lang)?.name ?? first.lang }) }));
+            const suggested = importedTitle || (multi || !first ? tx(C.generalProject) : tx(C.languageProject, { language: getLanguage(first.lang)?.name ?? first.lang }));
+            setSaveDialog((previous) => ({ key: previous.key + 1, defaultName: suggested }));
             setDialog("save");
             return;
         }
         void completeSave(currentProjectName, currentProjectId);
-    }, [completeSave, currentProjectId, currentProjectName, isGameMode, sessionEmail, toast, tx, wasOriginallyMultiTab]);
+    }, [completeSave, currentProjectId, currentProjectName, importedTitle, isGameMode, sessionEmail, toast, tx, wasOriginallyMultiTab]);
 
     // Auto save (settings page): after a pause or when the editor loses focus.
     // After a failed automatic save the same content is not retried until it changes.
@@ -884,7 +996,7 @@ function EditorContent() {
     useEffect(() => {
         focusSaveRef.current = () => {
             const current = tabsRef.current;
-            if (settings.autoSave === "onFocusChange" && canAutoSave && current.some((tab) => !tab.isSaved) && !savingRef.current && failedAutoSave.current !== current) autoSave();
+            if (settings.autoSave === "onFocusChange" && canAutoSave && (structureDirty || current.some((tab) => !tab.isSaved)) && !savingRef.current && failedAutoSave.current !== current) autoSave();
         };
     });
     useEffect(() => {
@@ -957,6 +1069,73 @@ function EditorContent() {
         editorInstance.focus();
         await action.run();
     }, [activeLanguage.name, editorInstance, toast, tx]);
+
+    // ------------------------------------------------------------------ editing
+    /** Runs a Monaco command (undo, actions.find…) as if its shortcut was pressed in the editor. */
+    const runEditorCommand = useCallback((command: string) => {
+        if (!editorInstance) {
+            toast({ tone: "info", message: tx(C.editorNotReady) });
+            return;
+        }
+        editorInstance.focus();
+        editorInstance.trigger("hanogt", command, null);
+    }, [editorInstance, toast, tx]);
+
+    const copyAll = useCallback(async () => {
+        const tab = tabsRef.current.find((item) => item.id === shownTabId);
+        if (!tab) return;
+        try {
+            await navigator.clipboard.writeText(tab.code);
+            toast({ tone: "success", message: tx(C.copiedAll, { name: tab.name }) });
+        } catch {
+            toast({ tone: "error", message: tx(C.copyFailed) });
+        }
+    }, [shownTabId, toast, tx]);
+
+    const startRename = useCallback((id: string) => setRenameRequest((previous) => ({ id, nonce: (previous?.nonce ?? 0) + 1 })), []);
+
+    // ------------------------------------------------------------------ media
+    const openPublish = useCallback(() => {
+        // A new key gives the dialog a fresh form and a fresh security check every time.
+        setPublishKey((key) => key + 1);
+        setDialog("publish");
+    }, []);
+
+    const copyPublicationLink = useCallback(async () => {
+        if (!publication) return;
+        try {
+            await navigator.clipboard.writeText(new URL(mediaPostPath(publication.postId), window.location.origin).href);
+            toast({ tone: "success", message: tx(C.linkCopied) });
+        } catch {
+            toast({ tone: "error", message: tx(C.copyFailed) });
+        }
+    }, [publication, toast, tx]);
+
+    const unpublish = useCallback(async () => {
+        if (!publication || unpublishing) return;
+        const accepted = await confirm({
+            title: tx(C.unpublishTitle),
+            message: tx(C.unpublishMessage, { title: publication.title || tx(C.generalProject) }),
+            confirmLabel: tx(MEDIA_BUTTON_COPY.unpublish),
+            destructive: true,
+        });
+        if (!accepted) return;
+        setUnpublishing(true);
+        try {
+            await mediaAction({ action: "delete", postId: publication.postId });
+            forgetPublication(publication.postId);
+            toast({ tone: "success", message: tx(C.unpublished) });
+        } catch (error) {
+            if (error instanceof MediaApiError && error.code === "not_found") {
+                forgetPublication(publication.postId);
+                toast({ tone: "info", message: tx(C.alreadyUnpublished) });
+            } else {
+                toast({ tone: "error", message: mediaErrorText(error, tx) });
+            }
+        } finally {
+            setUnpublishing(false);
+        }
+    }, [confirm, forgetPublication, publication, toast, tx, unpublishing]);
 
     // ------------------------------------------------------------------ keyboard
     const actionsRef = useRef({ run: handleRun, runActive: handleRunActive, save: handleSave, palette: () => setDialog("palette"), switchTab: (index: number) => void index });
@@ -1072,24 +1251,70 @@ function EditorContent() {
         window.addEventListener("pointerup", up);
     };
 
+    // ------------------------------------------------------------------ commands
+    // One list feeds the toolbar's Edit menu and the command palette.
+    const editCommands = useMemo<EditorCommand[]>(() => {
+        const noEditor = !editorInstance;
+        const icon = (Icon: typeof Undo2) => <Icon className="h-4 w-4" aria-hidden />;
+        return [
+            { id: "undo", label: tx(C.undo), icon: icon(Undo2), shortcut: shortcutText(EDIT_SHORTCUTS.undo, mac), keywords: "undo geri al", disabled: noEditor, run: () => runEditorCommand("undo") },
+            { id: "redo", label: tx(C.redo), icon: icon(Redo2), shortcut: shortcutText(EDIT_SHORTCUTS.redo, mac), keywords: "redo yinele ileri al", disabled: noEditor, run: () => runEditorCommand("redo") },
+            { id: "find", label: tx(C.find), icon: icon(Search), shortcut: shortcutText(EDIT_SHORTCUTS.find, mac), keywords: "find search ara bul", disabled: noEditor, run: () => runEditorCommand("actions.find") },
+            { id: "replace", label: tx(C.replace), icon: icon(Replace), shortcut: shortcutText(EDIT_SHORTCUTS.replace, mac), keywords: "replace değiştir", disabled: noEditor, run: () => runEditorCommand("editor.action.startFindReplaceAction") },
+            { id: "goto-line", label: tx(C.goToLine), icon: icon(ListOrdered), shortcut: shortcutText(EDIT_SHORTCUTS.gotoLine, mac), keywords: "go to line satıra git", disabled: noEditor, run: () => runEditorCommand("editor.action.gotoLine") },
+            { id: "comment", label: tx(C.toggleComment), icon: icon(MessageSquareCode), shortcut: shortcutText(EDIT_SHORTCUTS.comment, mac), keywords: "comment yorum", disabled: noEditor, run: () => runEditorCommand("editor.action.commentLine") },
+            { id: "format", label: tx(C.format), icon: icon(Wand2), shortcut: shortcutText(EDIT_SHORTCUTS.format, mac), keywords: "format prettier biçim", disabled: noEditor, run: () => void formatDocument() },
+            { id: "select-all", label: tx(C.selectAll), icon: icon(TextSelect), shortcut: shortcutText(EDIT_SHORTCUTS.selectAll, mac), keywords: "select all seç", disabled: noEditor, run: () => runEditorCommand("editor.action.selectAll") },
+            { id: "copy-all", label: tx(C.copyAll), icon: icon(ClipboardCopy), keywords: "copy clipboard kopyala pano", run: () => void copyAll() },
+        ];
+    }, [copyAll, editorInstance, formatDocument, mac, runEditorCommand, tx]);
+
+    const fileCommands = useMemo<EditorCommand[]>(() => {
+        const icon = (Icon: typeof Save) => <Icon className="h-4 w-4" aria-hidden />;
+        const id = activeTab?.id;
+        return [
+            { id: "save", label: tx(C.paletteSave), icon: icon(Save), shortcut: formatShortcut(["Mod", "S"], mac), keywords: "save kaydet", run: handleSave },
+            { id: "rename", label: tx(C.renameFile), hint: activeTab?.name, icon: icon(Pencil), keywords: "rename yeniden adlandır", disabled: !id, run: () => id && startRename(id) },
+            { id: "duplicate", label: tx(C.duplicateFile), hint: activeTab?.name, icon: icon(CopyIcon), keywords: "duplicate copy çoğalt kopya", disabled: !id || isGameMode || tabs.length >= MAX_TABS, run: () => id && duplicateTab(id) },
+            { id: "language", label: tx(C.changeLanguage), hint: activeLanguage.name, icon: icon(Languages), keywords: "language mode dil", run: () => setDialog("language") },
+            { id: "download", label: tx(C.paletteDownload), icon: icon(Download), keywords: "download indir", run: () => downloadTab() },
+            { id: "download-project", label: tx(C.paletteDownloadProject), icon: icon(FolderDown), keywords: "zip download indir", run: () => void downloadProject() },
+            { id: "share", label: tx(C.paletteShare), icon: icon(Share2), keywords: "share paylaş snippet markdown", run: () => setDialog("share") },
+            { id: "delete", label: tx(C.deleteFile), hint: activeTab?.name, icon: icon(Trash2), keywords: "delete remove sil kaldır", danger: true, disabled: !id || tabs.length < 2, run: () => id && void deleteTab(id) },
+        ];
+    }, [activeLanguage.name, activeTab?.id, activeTab?.name, deleteTab, downloadProject, downloadTab, duplicateTab, handleSave, isGameMode, mac, startRename, tabs.length, tx]);
+
+    const mediaCommands = useMemo<EditorCommand[]>(() => {
+        const icon = (Icon: typeof Send) => <Icon className="h-4 w-4" aria-hidden />;
+        if (!publication) {
+            return [{ id: "media-publish", label: tx(MEDIA_BUTTON_COPY.publish), icon: icon(Send), keywords: "media publish share yayınla paylaş topluluk", run: openPublish }];
+        }
+        return [
+            { id: "media-update", label: tx(MEDIA_BUTTON_COPY.update), hint: publication.title, icon: icon(RefreshCw), keywords: "media publish update yayını güncelle", run: openPublish },
+            { id: "media-view", label: tx(MEDIA_BUTTON_COPY.view), icon: icon(ExternalLink), keywords: "media open view görüntüle", run: () => window.open(mediaPostPath(publication.postId), "_blank", "noopener,noreferrer") },
+            { id: "media-copy-link", label: tx(MEDIA_BUTTON_COPY.copyLink), icon: icon(ClipboardCopy), keywords: "media link url bağlantı", run: () => void copyPublicationLink() },
+            { id: "media-unpublish", label: tx(MEDIA_BUTTON_COPY.unpublish), icon: icon(Trash2), keywords: "media unpublish delete yayından kaldır sil", danger: true, disabled: unpublishing, run: () => void unpublish() },
+        ];
+    }, [copyPublicationLink, openPublish, publication, tx, unpublish, unpublishing]);
+
+    const toMenuItem = ({ id, label, icon, shortcut, disabled, danger, run }: EditorCommand): ToolbarMenuItem => ({ id, label, icon, shortcut, disabled, danger, onSelect: run });
+    const editMenuSections: ToolbarMenuSection[] = [
+        { id: "edit", label: tx(C.editGroup), items: editCommands.map(toMenuItem) },
+        { id: "file", label: tx(C.fileGroup), items: fileCommands.map(toMenuItem) },
+    ];
+
     // ------------------------------------------------------------------ palette
     const paletteCommands = useMemo<PaletteCommand[]>(() => {
         const actions = tx(C.actions);
+        const toPalette = (group: string) => ({ id, label, hint, shortcut, icon, disabled, keywords, run }: EditorCommand): PaletteCommand => ({ id, group, label, hint, shortcut, icon, disabled, keywords, run });
         const commands: PaletteCommand[] = [
             {
                 id: "run", group: actions, label: runMode === "validate" ? tx(C.validate) : runMode === "preview" ? tx(C.preview) : programTabs.length > 1 ? tx(C.runAll, { count: Math.min(programTabs.length, MAX_RUNNABLE_FILES) }) : tx(C.run),
                 shortcut: modShortcut("Enter"), icon: <Play className="h-4 w-4" aria-hidden />, disabled: runMode === "none" || isRunning, hint: notRunnableReason ?? undefined, keywords: "run çalıştır execute", run: handleRun,
             },
             { id: "run-active", group: actions, label: tx(C.runActive), shortcut: modShortcut("Enter", true), icon: <Play className="h-4 w-4" aria-hidden />, disabled: isRunning || !(activeIsProgram || activeIsValidator), keywords: "run file", run: handleRunActive },
-            { id: "save", group: actions, label: tx(C.paletteSave), shortcut: modShortcut("S"), icon: <Save className="h-4 w-4" aria-hidden />, keywords: "save kaydet", run: handleSave },
             { id: "new", group: actions, label: tx(C.newIn), icon: <FilePlus2 className="h-4 w-4" aria-hidden />, disabled: isGameMode, keywords: "new file template şablon", run: () => setDialog("new") },
-            { id: "format", group: actions, label: tx(C.format), shortcut: formatShortcut(["Shift", "Alt", "F"], mac), icon: <Wand2 className="h-4 w-4" aria-hidden />, keywords: "format prettier biçim", run: () => void formatDocument() },
-            { id: "language", group: actions, label: tx(C.changeLanguage), hint: activeLanguage.name, icon: <Languages className="h-4 w-4" aria-hidden />, keywords: "language mode dil", run: () => setDialog("language") },
-            { id: "rename", group: actions, label: tx(C.renameFile), hint: activeTab?.name, shortcut: "F2", icon: <Pencil className="h-4 w-4" aria-hidden />, run: () => activeTab && setRenameRequest((previous) => ({ id: activeTab.id, nonce: (previous?.nonce ?? 0) + 1 })) },
             { id: "upload", group: actions, label: tx(C.paletteUpload), icon: <Upload className="h-4 w-4" aria-hidden />, disabled: isGameMode, keywords: "upload open yükle aç zip", run: () => fileInputRef.current?.click() },
-            { id: "download", group: actions, label: tx(C.paletteDownload), icon: <Download className="h-4 w-4" aria-hidden />, run: () => downloadTab() },
-            { id: "download-project", group: actions, label: tx(C.paletteDownloadProject), icon: <FolderDown className="h-4 w-4" aria-hidden />, keywords: "zip", run: () => void downloadProject() },
-            { id: "share", group: actions, label: tx(C.paletteShare), icon: <Share2 className="h-4 w-4" aria-hidden />, keywords: "share paylaş snippet markdown", run: () => setDialog("share") },
             { id: "panel", group: actions, label: tx(C.palettePanel), icon: <Terminal className="h-4 w-4" aria-hidden />, run: () => setPanelOpen((open) => !open) },
             { id: "input", group: actions, label: tx(C.paletteInput), icon: <Keyboard className="h-4 w-4" aria-hidden />, keywords: "stdin input girdi", run: () => { setPanelOpen(true); setPanelTab("console"); setConsoleTab("input"); } },
             ...(hasPreview ? [{ id: "preview", group: actions, label: tx(C.previewPanel), icon: <Eye className="h-4 w-4" aria-hidden />, run: showPreview }] : []),
@@ -1097,6 +1322,9 @@ function EditorContent() {
             { id: "settings", group: actions, label: tx(C.settings), icon: <Settings className="h-4 w-4" aria-hidden />, keywords: "settings ayarlar font tema", run: () => router.push("/settings") },
             { id: "shortcuts", group: actions, label: tx(C.paletteShortcuts), icon: <Keyboard className="h-4 w-4" aria-hidden />, keywords: "keyboard kısayol", run: () => setDialog("shortcuts") },
             { id: "monaco", group: actions, label: tx(C.monacoPalette), shortcut: "F1", icon: <Command className="h-4 w-4" aria-hidden />, run: () => { editorInstance?.focus(); editorInstance?.trigger("hanogt", "editor.action.quickCommand", null); } },
+            ...fileCommands.map(toPalette(tx(C.fileGroup))),
+            ...editCommands.map(toPalette(tx(C.editGroup))),
+            ...mediaCommands.map(toPalette(tx(C.mediaGroup))),
         ];
         const fileGroup = tx(C.files);
         tabs.forEach((tab, index) => {
@@ -1119,7 +1347,7 @@ function EditorContent() {
         return commands;
         // modShortcut only depends on `mac`.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tx, runMode, programTabs.length, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, handleSave, isGameMode, mac, formatDocument, activeLanguage.name, activeTab, downloadTab, downloadProject, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile]);
+    }, [tx, runMode, programTabs.length, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, isGameMode, mac, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile, fileCommands, editCommands, mediaCommands]);
 
     // ------------------------------------------------------------------ render helpers
     const saveState: SaveState = saving ? "saving" : saveError && hasUnsaved ? "error" : hasUnsaved ? "unsaved" : "saved";
@@ -1209,6 +1437,7 @@ function EditorContent() {
                         onCloseToRight={(id) => void closeTabs(tabs.slice(tabs.findIndex((tab) => tab.id === id) + 1).map((tab) => tab.id))}
                         onRename={renameTab}
                         onDuplicate={isGameMode ? undefined : duplicateTab}
+                        onDelete={(id) => void deleteTab(id)}
                         onDownload={(id) => downloadTab(id)}
                         onReorder={reorderTabs}
                         onNew={isGameMode ? undefined : () => setDialog("new")}
@@ -1226,7 +1455,7 @@ function EditorContent() {
                     {activeTab && (
                         <div className="flex min-w-0 items-center gap-2">
                             <LanguageIcon language={activeTab.lang} size={20} />
-                            <span className="truncate text-sm font-semibold">{currentProjectName && !isGameMode ? <span className="text-zinc-400">{currentProjectName} / </span> : null}{activeTab.name}</span>
+                            <span className="hidden truncate text-sm font-semibold min-[480px]:inline">{currentProjectName && !isGameMode ? <span className="text-zinc-400">{currentProjectName} / </span> : null}{activeTab.name}</span>
                             <button type="button" onClick={() => setDialog("language")} className="hidden items-center gap-1 rounded-full border border-zinc-200 px-2 py-0.5 text-[11px] text-zinc-500 transition hover:border-indigo-500/40 hover:text-zinc-800 sm:inline-flex dark:border-white/10 dark:text-zinc-400 dark:hover:text-zinc-100" title={tx(C.changeLanguage)}>
                                 {activeLanguage.name}
                             </button>
@@ -1240,11 +1469,22 @@ function EditorContent() {
                             <kbd className="font-mono text-[10px]">{modShortcut("K")}</kbd>
                         </button>
                         {hasPreview && runMode !== "preview" && (
-                            <button type="button" onClick={showPreview} className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 transition hover:border-sky-500/40 hover:text-sky-700 sm:inline-flex dark:border-white/10 dark:text-zinc-300 dark:hover:text-sky-300">
+                            <button type="button" onClick={showPreview} title={tx(C.previewPanel)} className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 transition hover:border-sky-500/40 hover:text-sky-700 sm:inline-flex dark:border-white/10 dark:text-zinc-300 dark:hover:text-sky-300">
                                 <Eye className="h-4 w-4" aria-hidden />
-                                {tx(C.previewPanel)}
+                                <span className="hidden lg:inline">{tx(C.previewPanel)}</span>
                             </button>
                         )}
+                        <ToolbarMenu
+                            label={tx(C.editMenu)}
+                            sections={editMenuSections}
+                            width={300}
+                            buttonClassName="inline-flex h-9 items-center gap-1 rounded-xl border border-zinc-200 px-2 text-xs font-semibold text-zinc-600 transition hover:border-indigo-500/40 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 aria-expanded:border-indigo-500/40 aria-expanded:text-zinc-900 dark:border-white/10 dark:text-zinc-300 dark:hover:text-white dark:aria-expanded:text-white"
+                        >
+                            <SquarePen className="h-4 w-4" aria-hidden />
+                            <span className="hidden lg:inline">{tx(C.editMenu)}</span>
+                            <ChevronDown className="hidden h-3.5 w-3.5 sm:block" aria-hidden />
+                        </ToolbarMenu>
+                        <MediaPublishButton publication={publication} onPublish={openPublish} onCopyLink={() => void copyPublicationLink()} onUnpublish={() => void unpublish()} busy={unpublishing} />
                         <div ref={runMenuRef} className="relative flex">
                             {isRunning ? (
                                 <button type="button" onClick={stopRun} className="inline-flex items-center gap-2 rounded-s-2xl rounded-e-2xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700">
@@ -1294,8 +1534,6 @@ function EditorContent() {
                                     {menuItem(tx(SIDEBAR_COPY.download), <Download className="h-4 w-4" aria-hidden />, () => downloadTab())}
                                     {menuItem(tx(SIDEBAR_COPY.downloadProject), <FolderDown className="h-4 w-4" aria-hidden />, () => void downloadProject())}
                                     {menuItem(tx(SIDEBAR_COPY.share), <Share2 className="h-4 w-4" aria-hidden />, () => setDialog("share"))}
-                                    {menuItem(tx(C.format), <Wand2 className="h-4 w-4" aria-hidden />, () => void formatDocument())}
-                                    {menuItem(tx(C.changeLanguage), <Languages className="h-4 w-4" aria-hidden />, () => setDialog("language"))}
                                     {menuItem(tx(SIDEBAR_COPY.palette), <Command className="h-4 w-4" aria-hidden />, () => setDialog("palette"))}
                                     {menuItem(tx(C.toggleTheme), <Sun className="h-4 w-4" aria-hidden />, toggleSiteTheme)}
                                     {menuItem(tx(C.settings), <Settings className="h-4 w-4" aria-hidden />, () => router.push("/settings"))}
@@ -1405,6 +1643,22 @@ function EditorContent() {
             <LanguagePickerDialog open={dialog === "language"} onClose={() => setDialog(null)} current={activeLanguage.id} onPick={changeLanguage} allowedLanguages={isGameMode ? GAME_LANGUAGES : undefined} />
             <ShortcutsDialog open={dialog === "shortcuts"} onClose={() => setDialog(null)} mac={mac} />
             <ShareDialog open={dialog === "share"} onClose={() => setDialog(null)} file={activeTab ?? null} onDownloadSnippet={downloadSnippet} onDownloadSource={() => downloadTab()} />
+            <PublishDialog
+                key={publishKey}
+                open={dialog === "publish"}
+                onClose={() => setDialog(null)}
+                signedIn={Boolean(sessionEmail)}
+                signInHref={`/login?callbackUrl=${encodeURIComponent("/editor")}`}
+                files={tabs}
+                defaultTitle={currentProjectName || importedTitle}
+                publication={publication}
+                onPublished={recordPublication}
+                onPublicationGone={forgetPublication}
+                onUnpublish={() => {
+                    setDialog(null);
+                    void unpublish();
+                }}
+            />
             <SaveDialog
                 key={saveDialog.key}
                 open={dialog === "save"}

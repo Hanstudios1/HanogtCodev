@@ -18,7 +18,7 @@ import {
     type UserRole,
 } from "@/components/Admin/types";
 import { getActiveSession } from "./active-session";
-import { commitServerMutations, countServerQuery, runServerQuery } from "./firebase-rest";
+import { commitServerMutations, countServerQuery, getServerDocument, patchServerDocument, runServerQuery } from "./firebase-rest";
 import { enforceRateLimitWithFallback } from "./rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "./request-security";
 import { isDocId, normalizeEmail } from "./validate";
@@ -26,9 +26,11 @@ import { isDocId, normalizeEmail } from "./validate";
 /*
  * Role model
  * ----------
- * - Owners come from the ADMIN_EMAILS environment variable (comma, semicolon or
- *   whitespace separated). They always have full access and can never be
- *   demoted or suspended from the panel.
+ * - Owners are the built-in founder accounts below plus the ADMIN_EMAILS
+ *   environment variable (comma, semicolon or whitespace separated). They
+ *   always have full access and can never be demoted or suspended from the
+ *   panel. Owner addresses can't be claimed with an e-mail/password sign-up
+ *   (see /api/auth/signup), only with a provider that verifies the address.
  * - Staff roles are stored in the server-only field users/{email}.role
  *   ("admin" | "moderator"). Firestore rules never let clients write it.
  * - Moderators: moderation queues, feedback, statistics, security events and
@@ -43,9 +45,15 @@ const WRITE_LIMIT_PER_MINUTE = 40;
 
 export type AdminSession = { email: string; role: StaffRole };
 
+/**
+ * The site founder. Always an owner, also on deployments where ADMIN_EMAILS
+ * was never set (the Admin Panel used to stay hidden there).
+ */
+export const BUILT_IN_OWNER_EMAILS: readonly string[] = ["oguzhanguluzade21@gmail.com"];
+
 let ownerCache: { raw: string; emails: ReadonlySet<string> } | null = null;
 
-/** Owner e-mails from ADMIN_EMAILS, lower-cased (parsed once per value). */
+/** Built-in owners plus ADMIN_EMAILS, lower-cased (parsed once per value). */
 export function getOwnerEmails(): ReadonlySet<string> {
     const raw = process.env.ADMIN_EMAILS ?? "";
     if (!ownerCache || ownerCache.raw !== raw) {
@@ -53,7 +61,7 @@ export function getOwnerEmails(): ReadonlySet<string> {
             .split(/[\s,;]+/)
             .map((entry) => normalizeEmail(entry.replace(/^["']+|["']+$/g, "")))
             .filter(Boolean);
-        ownerCache = { raw, emails: new Set(emails) };
+        ownerCache = { raw, emails: new Set([...BUILT_IN_OWNER_EMAILS, ...emails]) };
     }
     return ownerCache.emails;
 }
@@ -100,7 +108,56 @@ export function adminPermissions(role: StaffRole): AdminPermissions {
         viewAuditLog: true,
         manageUsers: admin,
         manageAnnouncements: admin,
+        tickets: true,
+        deleteUserData: admin,
+        cloudHealth: role === "owner",
     };
+}
+
+// ---------------------------------------------------------------------------
+// Public staff badge (public_profiles/{email}.staffRole)
+// ---------------------------------------------------------------------------
+
+/** The badge other people see on a profile: the staff role, or null for everyone else. */
+export function staffBadgeFor(email: string, storedRole: unknown): StaffRole | null {
+    const role = resolveUserRole(email, storedRole);
+    return role === "user" ? null : role;
+}
+
+/**
+ * Brings public_profiles/{email}.staffRole in line with `role` (null removes
+ * it). Only the server writes the field: firestore.rules keep it out of the
+ * keys clients may change. The profile is read unless the caller passes it
+ * and written only when the value differs; accounts without a public profile
+ * are left alone (sign-up and Google sign-in create it).
+ */
+export async function syncStaffRoleBadge(email: string, role: StaffRole | null, knownProfile?: Record<string, unknown> | null) {
+    const profile = knownProfile === undefined ? await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`) : knownProfile;
+    if (!profile || (profile.staffRole ?? null) === role) return false;
+    try {
+        await patchServerDocument(`public_profiles/${email}`, role ? { staffRole: role } : {}, { updateFields: ["staffRole"], exists: true });
+    } catch (error) {
+        // The profile disappeared in the meantime: there is nothing left to label.
+        if (firestoreStatus(error) === 404) return false;
+        throw error;
+    }
+    return true;
+}
+
+const BADGE_SYNC_INTERVAL_MS = 10 * 60_000;
+const badgeSyncedAt = new Map<string, number>();
+
+/**
+ * syncStaffRoleBadge for GET /api/admin/me, which the header calls on page
+ * loads: at most once per account and role every ten minutes per instance.
+ */
+export async function syncStaffRoleBadgeThrottled(email: string, role: StaffRole | null) {
+    const key = `${email}|${role ?? ""}`;
+    const last = badgeSyncedAt.get(key);
+    if (last !== undefined && Date.now() - last < BADGE_SYNC_INTERVAL_MS) return;
+    await syncStaffRoleBadge(email, role);
+    if (badgeSyncedAt.size >= 1_000) badgeSyncedAt.clear();
+    badgeSyncedAt.set(key, Date.now());
 }
 
 export type UserPolicy = { canSuspend: boolean; assignableRoles: AssignableRole[]; denial: AdminErrorCode | null };
@@ -152,6 +209,8 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
     no_change: "Değişiklik yok.",
     already_handled: "Bu kayıt başka bir yönetici tarafından zaten işlendi.",
     conflict: "Kayıt aynı anda değişti; yenileyip tekrar deneyin.",
+    confirmation_mismatch: "Onay metni eşleşmiyor.",
+    deploy_failed: "Güvenlik kuralları yayımlanamadı.",
     too_many_active: "Aynı anda en fazla 5 etkin duyuru olabilir.",
     unavailable: "Yönetim hizmeti şu anda kullanılamıyor.",
 };

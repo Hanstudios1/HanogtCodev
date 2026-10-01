@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy as CopyIcon, Download, MoreHorizontal, Pencil, Plus, X, XSquare } from "lucide-react";
+import { Copy as CopyIcon, Download, MoreHorizontal, Pencil, Plus, Trash2, X, XSquare } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -22,6 +22,8 @@ interface EditorTabsProps {
     /** Returns an error message when the name is not acceptable. */
     onRename: (id: string, name: string) => string | null;
     onDuplicate?: (id: string) => void;
+    /** Removes the file from the workspace after a confirmation (omitted where files can't be removed). */
+    onDelete?: (id: string) => void;
     onDownload: (id: string) => void;
     onReorder: (fromId: string, toId: string) => void;
     /** Omitted when new tabs are not allowed (game scripts). */
@@ -41,13 +43,14 @@ const C = {
     rename: { TR: "Yeniden adlandır", EN: "Rename" },
     duplicate: { TR: "Çoğalt", EN: "Duplicate" },
     download: { TR: "Bu dosyayı indir", EN: "Download this file" },
+    delete: { TR: "Dosyayı sil", EN: "Delete file" },
     menu: { TR: "{name} için işlemler", EN: "Actions for {name}" },
     renameLabel: { TR: "Yeni dosya adı", EN: "New file name" },
 } satisfies Record<string, Copy>;
 
 type MenuState = { id: string; x: number; y: number } | null;
 
-export default function EditorTabs({ tabs, activeId, onSelect, onClose, onCloseOthers, onCloseToRight, onRename, onDuplicate, onDownload, onReorder, onNew, renameRequest }: EditorTabsProps) {
+export default function EditorTabs({ tabs, activeId, onSelect, onClose, onCloseOthers, onCloseToRight, onRename, onDuplicate, onDelete, onDownload, onReorder, onNew, renameRequest }: EditorTabsProps) {
     const { tx, dir } = useI18n();
     const [menu, setMenu] = useState<MenuState>(null);
     const [renaming, setRenaming] = useState<{ id: string; value: string; error: string | null } | null>(null);
@@ -110,7 +113,7 @@ export default function EditorTabs({ tabs, activeId, onSelect, onClose, onCloseO
         const rect = tabRefs.current.get(id)?.getBoundingClientRect();
         const x = anchor?.x ?? (rect ? rect.left : 0);
         const y = anchor?.y ?? (rect ? rect.bottom + 4 : 0);
-        setMenu({ id, x: Math.min(x, window.innerWidth - 232), y: Math.min(y, window.innerHeight - 280) });
+        setMenu({ id, x: Math.min(x, window.innerWidth - 232), y: Math.min(y, window.innerHeight - 320) });
     };
 
     const commitRename = () => {
@@ -149,8 +152,8 @@ export default function EditorTabs({ tabs, activeId, onSelect, onClose, onCloseO
 
     const menuTab = menu ? tabs.find((tab) => tab.id === menu.id) : undefined;
     const menuIndex = menuTab ? tabs.indexOf(menuTab) : -1;
-    const menuItem = (label: string, icon: ReactNode, onClick: () => void, disabled = false) => (
-        <button type="button" role="menuitem" disabled={disabled} onClick={() => { setMenu(null); onClick(); }} className="flex w-full items-center gap-2 px-3 py-2 text-start text-sm text-zinc-700 transition hover:bg-zinc-100 focus:bg-zinc-100 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-white/10 dark:focus:bg-white/10">
+    const menuItem = (label: string, icon: ReactNode, onClick: () => void, disabled = false, danger = false) => (
+        <button type="button" role="menuitem" disabled={disabled} onClick={() => { setMenu(null); onClick(); }} className={`flex w-full items-center gap-2 px-3 py-2 text-start text-sm transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${danger ? "text-red-600 hover:bg-red-50 focus:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus:bg-red-500/10" : "text-zinc-700 hover:bg-zinc-100 focus:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/10 dark:focus:bg-white/10"}`}>
             {icon}
             {label}
         </button>
@@ -284,6 +287,7 @@ export default function EditorTabs({ tabs, activeId, onSelect, onClose, onCloseO
                     {menuItem(tx(C.rename), <Pencil className="h-4 w-4" aria-hidden />, () => startRename(menuTab.id))}
                     {onDuplicate && menuItem(tx(C.duplicate), <CopyIcon className="h-4 w-4" aria-hidden />, () => onDuplicate(menuTab.id))}
                     {menuItem(tx(C.download), <Download className="h-4 w-4" aria-hidden />, () => onDownload(menuTab.id))}
+                    {onDelete && menuItem(tx(C.delete), <Trash2 className="h-4 w-4" aria-hidden />, () => onDelete(menuTab.id), !canClose, true)}
                     <div className="my-1 border-t border-zinc-100 dark:border-white/5" />
                     {menuItem(tx(C.close), <X className="h-4 w-4" aria-hidden />, () => onClose(menuTab.id), !canClose)}
                     {menuItem(tx(C.closeOthers), <XSquare className="h-4 w-4" aria-hidden />, () => onCloseOthers(menuTab.id), tabs.length < 2)}

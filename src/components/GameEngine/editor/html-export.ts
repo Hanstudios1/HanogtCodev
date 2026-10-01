@@ -5,7 +5,7 @@
  * The player runtime (public/engine/player.js, built from
  * src/lib/game-engine/player/standalone.ts) is inlined into the page.
  */
-import type { GameProjectDocument } from "@/lib/game-engine/types";
+import { ENGINE_VERSION, ENGINE_VERSION_LABEL, GAME_ENGINE_SCHEMA_VERSION, type GameProjectDocument } from "@/lib/game-engine/types";
 import { SITE_URL } from "@/lib/site";
 import { downloadBlob, safeFileName } from "./persistence";
 
@@ -28,7 +28,7 @@ export async function buildStandaloneHtml(project: GameProjectDocument): Promise
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="generator" content="Hanogt Engine">
+<meta name="generator" content="Hanogt Engine ${ENGINE_VERSION}">
 <title>${title}</title>
 <style>
 html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
@@ -43,9 +43,9 @@ html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,
 </head>
 <body>
 <div id="game"></div>
-<div id="start"><div class="card"><h1>${title}</h1><p>Hanogt Engine ile yapıldı</p><button type="button" id="play">▶ Oyna</button></div></div>
-<a id="badge" href="${escapeHtml(SITE_URL)}/arcade" target="_blank" rel="noopener">Made with Hanogt Engine</a>
-<script type="application/json" id="hanogt-game">${embedJson({ format: "hanogt-engine-project", version: 2, project })}</script>
+<div id="start"><div class="card"><h1>${title}</h1><p>${ENGINE_VERSION_LABEL} ile yapıldı</p><button type="button" id="play">▶ Oyna</button></div></div>
+<a id="badge" href="${escapeHtml(SITE_URL)}/arcade" target="_blank" rel="noopener">Made with ${ENGINE_VERSION_LABEL}</a>
+<script type="application/json" id="hanogt-game">${embedJson({ format: "hanogt-engine-project", version: GAME_ENGINE_SCHEMA_VERSION, project })}</script>
 <script>${runtime}</script>
 </body>
 </html>`;

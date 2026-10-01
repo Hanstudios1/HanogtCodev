@@ -602,3 +602,18 @@ export const ENGINE_LABELS: Readonly<Record<LanguageEngine, { short: LanguageTex
         description: { TR: "Sözdizimi vurgulama ve düzenleme desteklenir; bu dil tarayıcıda veya sunucuda çalıştırılamaz.", EN: "Syntax highlighting and editing are supported; this language can't be run in the browser or on the server." },
     },
 };
+
+/**
+ * Counts used by marketing copy ("41 languages"), derived from the registry so
+ * they never go stale. Translations of those sentences are written for the
+ * current `usable` value; numerals ending in 1 take the singular in several
+ * languages (RU, UK, SR, HR, LT), so re-check src/locales if this number changes.
+ */
+export const LANGUAGE_STATS = {
+    /** Runs in the browser or on the server, or renders in the live preview. */
+    usable: LANGUAGES.filter((language) => language.engine !== "none").length,
+    runnable: LANGUAGES.filter((language) => language.engine === "browser" || language.engine === "server").length,
+    preview: LANGUAGES.filter((language) => language.engine === "preview").length,
+    /** Every language with syntax highlighting (plain text excluded). */
+    highlighted: LANGUAGES.filter((language) => language.id !== "plaintext").length,
+} as const;

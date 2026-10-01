@@ -10,12 +10,13 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, type ReactNode } from "react";
 import DeleteProjectModal from "@/components/DeleteProjectModal";
-import Header, { NAV_ICONS } from "@/components/Header";
+import Header, { NAV_ICONS, useStaffRole } from "@/components/Header";
 import OptimizedImage from "@/components/OptimizedImage";
 import PrivacyPolicyModal, { legalNoticePending, legalNoticeUpdated } from "@/components/PrivacyPolicyModal";
+import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "@/lib/nav";
+import { ADMIN_NAV, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "@/lib/nav";
 import { ENGINE_LABELS, LANGUAGES, fileExtensionFor, getLanguage, normalizeLanguageId } from "@/lib/runtimes/languages";
 import { getProjects, getProjectsFromCloud, deleteProjectFromCloud, deleteProject, renameProject, type LegacyProject, type Project, type ProjectFile } from "@/lib/storage";
 
@@ -155,6 +156,9 @@ function CloseButton({ label, onClick }: { label: string; onClick: () => void })
 export default function DashboardPage() {
     const router = useRouter();
     const { data: session } = useSession();
+    // Staff get the Admin Panel as the first Explore card (decided by the raw session, not the Firebase bridge).
+    const staffRole = useStaffRole(useRawSession().data?.user?.email?.toLowerCase() || null);
+    const explore = staffRole ? [ADMIN_NAV, ...EXPLORE] : EXPLORE;
     const { t, tx, language, locale } = useI18n();
 
     const [showLangModal, setShowLangModal] = useState(false);
@@ -480,7 +484,7 @@ export default function DashboardPage() {
                 <section className="mb-10" aria-labelledby="explore-title">
                     <h2 id="explore-title" className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">{tx(NAV_LABELS.explore)}</h2>
                     <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-                        {EXPLORE.map((item) => {
+                        {explore.map((item) => {
                             const Icon = NAV_ICONS[item.icon];
                             return (
                                 <Link key={item.href} href={item.href} className="group relative flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-indigo-500/40 hover:shadow-md dark:border-white/10 dark:bg-zinc-900/60 dark:hover:border-indigo-400/40">

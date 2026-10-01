@@ -8,8 +8,10 @@ import {
 } from "@/components/Admin/types";
 import {
     AdminHttpError,
+    adminError,
     adminFailure,
     adminJson,
+    adminPermissions,
     auditLogPatch,
     authorizeAdminRequest,
     httpsUrlOrNull,
@@ -19,31 +21,47 @@ import {
     requireEmail,
     requireEnum,
     resolveUserRole,
+    staffBadgeFor,
     stringOr,
+    syncStaffRoleBadge,
     toIso,
     userManagementPolicy,
+    writeAuditLog,
     type AdminQueryFilter,
     type AdminSession,
 } from "@/lib/server/admin";
+import {
+    DELETION_SCOPES,
+    deleteAccountData,
+    deletionTotal,
+    largestCounts,
+    type AccountDeletionResult,
+} from "@/lib/server/account-deletion";
 import { commitServerPatches, deleteFirebaseAuthUser, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { TWO_FACTOR_FIELDS } from "@/lib/server/two-factor";
 import { normalizeEmail } from "@/lib/server/validate";
 
 export const runtime = "nodejs";
+// Deleting a large account's data takes many Firestore round trips.
+export const maxDuration = 60;
 
 const PAGE_SIZE = 25;
 const ONLINE_WINDOW_MS = 2 * 60_000;
 // Never select credentials, friend lists or settings: only what the panel shows.
 const USER_FIELDS = [
     "email", "username", "nickname", "nicknameTag", "avatarUrl", "provider", "createdAt", "lastLoginAt", "lastSeenAt",
-    "isOnline", "suspended", "banned", "suspendedAt", "suspendedBy", "suspendReason", "role", "twoFactorEnabled",
+    "isOnline", "suspended", "banned", "suspendedAt", "suspendedBy", "suspendReason", "unsuspendedAt", "role", "twoFactorEnabled",
 ];
-const ACTIONS = ["suspend", "unsuspend", "setRole", "reset2fa"] as const;
+const ACTIONS = ["suspend", "unsuspend", "setRole", "reset2fa", "deleteData"] as const;
+const DELETE_DATA_PER_HOUR = 10;
 const UNSAFE_QUERY = /[\u0000-\u001f\u007f]/;
 
 type UserRecord = Record<string, unknown> & { _id: string };
+/** AdminUser plus when an earlier suspension was lifted (shown as "suspended before"). */
+type AdminUserRow = AdminUser & { unsuspendedAt: string | null };
 
-function toAdminUser(record: Record<string, unknown>, email: string, actor: AdminSession): AdminUser {
+function toAdminUser(record: Record<string, unknown>, email: string, actor: AdminSession): AdminUserRow {
     const role = resolveUserRole(email, record.role);
     const policy = userManagementPolicy(actor, { email, role });
     const lastSeenAt = toIso(record.lastSeenAt);
@@ -65,6 +83,7 @@ function toAdminUser(record: Record<string, unknown>, email: string, actor: Admi
         suspendedAt: toIso(record.suspendedAt),
         suspendedBy: typeof record.suspendedBy === "string" ? record.suspendedBy.slice(0, 254) : null,
         suspendReason: typeof record.suspendReason === "string" ? record.suspendReason.slice(0, SUSPEND_REASON_MAX) : null,
+        unsuspendedAt: toIso(record.unsuspendedAt),
         twoFactorEnabled: record.twoFactorEnabled === true,
         canSuspend: policy.canSuspend,
         assignableRoles: policy.assignableRoles,
@@ -157,17 +176,61 @@ export async function GET(request: NextRequest) {
     }
 }
 
-/** Suspend / unsuspend an account, change its staff role or reset its two-step verification. */
+/**
+ * Permanently deletes a user's data: "all" removes the account too, "content"
+ * only what other people can see (see lib/server/account-deletion.ts). Same
+ * targets as suspending; the reason and a typed confirmation are required.
+ */
+async function deleteUserData(actor: AdminSession, email: string, body: Record<string, unknown>, reason: string) {
+    if (!adminPermissions(actor.role).deleteUserData) throw new AdminHttpError(403, "forbidden");
+    const scope = requireEnum(body.scope, DELETION_SCOPES, "invalid_action");
+    if (typeof body.confirm !== "string" || body.confirm.trim().toLowerCase() !== email) throw new AdminHttpError(400, "confirmation_mismatch");
+    if (!reason) throw new AdminHttpError(400, "text_required");
+    // No user document is fine: an earlier run may have deleted the account but left other data behind.
+    const record = await getServerDocument<Record<string, unknown>>(`users/${email}`);
+    const role = resolveUserRole(email, record?.role);
+    const policy = userManagementPolicy(actor, { email, role });
+    if (policy.denial) throw new AdminHttpError(403, policy.denial);
+
+    const rate = await enforceRateLimitWithFallback(`admin:delete-data:${actor.email}`, DELETE_DATA_PER_HOUR, 60 * 60_000);
+    if (!rate.allowed) return adminError(429, "rate_limited", { "Retry-After": String(rate.retryAfterSeconds) });
+
+    const target = `users/${email}`;
+    // Logged before anything is deleted, so a run that is cut short still shows who started it.
+    await writeAuditLog(actor.email, "user.delete_data", target, { email, scope, role, reason, status: "started", accountExists: Boolean(record) });
+    const summary = await deleteAccountData(email, { scope });
+    try {
+        await writeAuditLog(actor.email, "user.delete_data", target, {
+            email,
+            scope,
+            reason,
+            status: summary.errors.length ? "partial" : "complete",
+            accountDeleted: summary.accountDeleted,
+            total: deletionTotal(summary.deleted),
+            errors: summary.errors.length,
+            // An audit entry keeps at most 16 fields: the largest counts fill the rest.
+            ...largestCounts(summary.deleted, 9),
+        });
+    } catch (error) {
+        console.error("[admin:users] delete_data result was not logged:", error instanceof Error ? error.message : error);
+    }
+    const response: AccountDeletionResult = { email, scope, ...summary };
+    return adminJson(response);
+}
+
+/** Suspend / unsuspend an account, change its staff role, reset its two-step verification or delete its data. */
 export async function POST(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "admin", mutation: true });
     if (!guard.ok) return guard.response;
     const actor = guard.admin;
     try {
-        const body = await readAdminBody(request, ["action", "email", "reason", "role"]);
+        const body = await readAdminBody(request, ["action", "email", "reason", "role", "scope", "confirm"]);
         const action = requireEnum(body.action, ACTIONS, "invalid_action");
         const email = requireEmail(body.email);
         if (action !== "setRole" && body.role !== undefined) throw new AdminHttpError(400, "unknown_field");
+        if (action !== "deleteData" && (body.scope !== undefined || body.confirm !== undefined)) throw new AdminHttpError(400, "unknown_field");
         const reason = readText(body.reason, { max: SUSPEND_REASON_MAX, multiline: true });
+        if (action === "deleteData") return await deleteUserData(actor, email, body, reason);
 
         const record = await getServerDocument<Record<string, unknown>>(`users/${email}`);
         if (!record) throw new AdminHttpError(404, "user_not_found");
@@ -216,7 +279,7 @@ export async function POST(request: NextRequest) {
                 auditLogPatch(actor.email, "user.unsuspend", target, { email, reason: reason || null, clearedLegacyBan: record.banned === true }),
             ]);
             const response: AdminUserActionResponse = {
-                user: toAdminUser({ ...record, suspended: false, banned: false, suspendedAt: null, suspendedBy: null, suspendReason: null }, email, actor),
+                user: toAdminUser({ ...record, suspended: false, banned: false, suspendedAt: null, suspendedBy: null, suspendReason: null, unsuspendedAt: now.toISOString() }, email, actor),
             };
             return adminJson(response);
         }
@@ -247,6 +310,11 @@ export async function POST(request: NextRequest) {
             { path: target, data: { role: stored, roleUpdatedAt: now }, updateFields: ["role", "roleUpdatedAt"], exists: true },
             auditLogPatch(actor.email, "user.set_role", target, { email, from: storedRole, to: role, reason: reason || null }),
         ]);
+        // The public staff badge follows the role. Best effort: staff get it
+        // repaired by GET /api/admin/me, everyone by their next Google sign-in.
+        await syncStaffRoleBadge(email, staffBadgeFor(email, stored)).catch((error: unknown) => {
+            console.warn("[admin:users] staff badge sync failed:", error instanceof Error ? error.message : error);
+        });
         const response: AdminUserActionResponse = { user: toAdminUser({ ...record, role: stored }, email, actor) };
         return adminJson(response);
     } catch (error) {

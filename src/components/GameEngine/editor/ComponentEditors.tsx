@@ -1,7 +1,22 @@
 "use client";
 
 import { ExternalLink, Play, RotateCcw, Scaling } from "lucide-react";
-import { createAudioSource, createCamera, createCollider, createLight, createMeshRenderer, createParticleSystem, createRigidBody, createSpriteRenderer, createUIText } from "@/lib/game-engine/components";
+import {
+    createAnimation,
+    createAudioSource,
+    createCamera,
+    createCollider,
+    createLight,
+    createMeshRenderer,
+    createParticleSystem,
+    createRigidBody,
+    createSpriteRenderer,
+    createTilemap,
+    createUIButton,
+    createUIPanel,
+    createUIProgressBar,
+    createUIText,
+} from "@/lib/game-engine/components";
 import { describeBehaviour } from "@/lib/game-engine/script/compiler";
 import { KEY_CODES } from "@/lib/game-engine/script/stdlib";
 import type { FieldInfo } from "@/lib/game-engine/script/values";
@@ -10,7 +25,6 @@ import {
     PRIMITIVE_MESHES,
     SOUND_PRESETS,
     SPRITE_SHAPES,
-    UI_ANCHORS,
     type AudioSourceComponent,
     type CameraComponent,
     type ColliderComponent,
@@ -28,19 +42,10 @@ import {
     type Vector3,
 } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
-import { activeScene, updateComponent } from "./operations";
+import { AnchorInput, TextureSelect, useComponentEdit, type Editor } from "./inspector-fields";
+import { activeScene } from "./operations";
 import { useEditorState } from "./store";
-import { Button, Checkbox, ColorInput, FieldRow, NumberInput, SelectInput, SliderInput, TextInput, Toggle, VectorInput, cx } from "./ui";
-
-type Editor<T extends GameComponent> = { entity: GameEntity; component: T; disabled: boolean };
-
-/** Returns an updater that writes to the component inside an undoable store update. */
-function useComponentEdit<T extends GameComponent>(entityId: string, component: T) {
-    const { store, t } = useEditor();
-    return (field: string, recipe: (draft: T) => void, label = t("hEditComponent")) => {
-        store.update(label, (draft) => updateComponent<T>(draft, entityId, component.id, recipe), { mergeKey: `${component.id}:${field}` });
-    };
-}
+import { Button, Checkbox, ColorInput, FieldRow, NumberInput, SelectInput, SliderInput, TextInput, Toggle, VectorInput } from "./ui";
 
 // ---------------------------------------------------------------------------
 // Transform
@@ -78,21 +83,10 @@ export function TransformEditor({ entity, component, disabled }: Editor<Transfor
 // Rendering
 // ---------------------------------------------------------------------------
 
-function TextureSelect({ value, onChange, disabled }: { value: string | null; onChange: (value: string | null) => void; disabled: boolean }) {
-    const { store, t } = useEditor();
-    const textures = useEditorState(store, (state) => state.project.textures);
-    return (
-        <SelectInput
-            value={value ?? ""}
-            disabled={disabled}
-            onChange={(next) => onChange(next || null)}
-            options={[{ value: "", label: t("none") }, ...textures.map((texture) => ({ value: texture.id, label: texture.name }))]}
-        />
-    );
-}
-
 export function SpriteEditor({ entity, component, disabled }: Editor<SpriteRendererComponent>) {
+    const { t } = useEditor();
     const edit = useComponentEdit(entity.id, component);
+    const frames = Math.max(1, component.sheet.columns * component.sheet.rows);
     return (
         <div className="space-y-0.5">
             <FieldRow label="Shape">
@@ -113,6 +107,21 @@ export function SpriteEditor({ entity, component, disabled }: Editor<SpriteRende
                     <label className="flex items-center gap-1.5"><Checkbox checked={component.flipY} disabled={disabled} onChange={(value) => edit("flipY", (draft) => { draft.flipY = value; })} />Y</label>
                 </div>
             </FieldRow>
+            {component.textureId ? (
+                <>
+                    <FieldRow label={t("spriteSheet")} title={t("atlasGrid")}>
+                        <div className="grid grid-cols-2 gap-1">
+                            <NumberInput label="↔" value={component.sheet.columns} min={1} max={64} integer step={1} disabled={disabled} onChange={(columns) => edit("sheetColumns", (draft) => { draft.sheet = { ...draft.sheet, columns }; })} />
+                            <NumberInput label="↕" value={component.sheet.rows} min={1} max={64} integer step={1} disabled={disabled} onChange={(rows) => edit("sheetRows", (draft) => { draft.sheet = { ...draft.sheet, rows }; })} />
+                        </div>
+                    </FieldRow>
+                    {frames > 1 ? (
+                        <FieldRow label={t("spriteFrame")}>
+                            <SliderInput value={Math.min(component.frame, frames - 1)} min={0} max={frames - 1} integer disabled={disabled} onChange={(frame) => edit("frame", (draft) => { draft.frame = frame; })} />
+                        </FieldRow>
+                    ) : null}
+                </>
+            ) : null}
         </div>
     );
 }
@@ -406,6 +415,7 @@ export function AudioEditor({ entity, component, disabled }: Editor<AudioSourceC
 }
 
 export function UITextEditor({ entity, component, disabled }: Editor<UITextComponent>) {
+    const { t } = useEditor();
     const edit = useComponentEdit(entity.id, component);
     return (
         <div className="space-y-0.5">
@@ -414,22 +424,11 @@ export function UITextEditor({ entity, component, disabled }: Editor<UITextCompo
             </FieldRow>
             <FieldRow label="Font Size"><NumberInput value={component.fontSize} min={4} max={200} step={1} integer disabled={disabled} onChange={(value) => edit("fontSize", (draft) => { draft.fontSize = value; })} /></FieldRow>
             <FieldRow label="Color"><ColorInput value={component.color} disabled={disabled} onChange={(color) => edit("color", (draft) => { draft.color = color; })} /></FieldRow>
-            <FieldRow label="Anchor">
-                <div className="grid w-[84px] grid-cols-3 gap-0.5">
-                    {UI_ANCHORS.map((anchor) => (
-                        <button
-                            key={anchor}
-                            type="button"
-                            disabled={disabled}
-                            title={anchor}
-                            aria-label={anchor}
-                            onClick={() => edit("anchor", (draft) => { draft.anchor = anchor; })}
-                            className={cx("h-6 rounded border transition", component.anchor === anchor ? "border-indigo-400 bg-indigo-500/40" : "border-white/10 bg-white/5 hover:bg-white/10")}
-                        />
-                    ))}
-                </div>
+            <FieldRow label={t("anchor")}>
+                <AnchorInput value={component.anchor} disabled={disabled} onChange={(anchor) => edit("anchor", (draft) => { draft.anchor = anchor; })} />
             </FieldRow>
-            <FieldRow label="Offset"><VectorInput value={component.offset} hideZ step={1} disabled={disabled} onChange={(value) => edit("offset", (draft) => { draft.offset = { x: value.x, y: value.y }; })} /></FieldRow>
+            <FieldRow label={t("offset")}><VectorInput value={component.offset} hideZ step={1} disabled={disabled} onChange={(value) => edit("offset", (draft) => { draft.offset = { x: value.x, y: value.y }; })} /></FieldRow>
+            <FieldRow label={t("drawOrder")}><NumberInput value={component.order} integer step={1} min={-1000} max={1000} disabled={disabled} onChange={(value) => edit("order", (draft) => { draft.order = value; })} /></FieldRow>
             <FieldRow label="Style">
                 <div className="flex items-center gap-3 text-[11.5px] text-zinc-400">
                     <label className="flex items-center gap-1.5"><Checkbox checked={component.bold} disabled={disabled} onChange={(value) => edit("bold", (draft) => { draft.bold = value; })} />Bold</label>
@@ -448,6 +447,8 @@ const COMPONENT_REFERENCE_TYPES: Record<string, GameComponent["type"][]> = {
     Rigidbody: ["rigidBody"], Rigidbody2D: ["rigidBody"], Collider: ["collider"], Collider2D: ["collider"], BoxCollider: ["collider"], BoxCollider2D: ["collider"],
     SphereCollider: ["collider"], CircleCollider2D: ["collider"], SpriteRenderer: ["spriteRenderer"], MeshRenderer: ["meshRenderer"], Renderer: ["spriteRenderer", "meshRenderer"],
     Camera: ["camera"], Light: ["light"], ParticleSystem: ["particleSystem"], AudioSource: ["audioSource"], Text: ["uiText"], TextMeshProUGUI: ["uiText"], TMP_Text: ["uiText"], TextMeshPro: ["uiText"],
+    Button: ["uiButton"], Image: ["uiPanel", "uiProgressBar"], Panel: ["uiPanel"], RawImage: ["uiPanel"], Slider: ["uiProgressBar"], ProgressBar: ["uiProgressBar"],
+    Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animation"],
 };
 
 function defaultFieldValue(field: FieldInfo): ScriptFieldValue {
@@ -635,6 +636,11 @@ export function defaultComponentFor(component: GameComponent): GameComponent {
         case "particleSystem": return { ...createParticleSystem(), ...base };
         case "audioSource": return { ...createAudioSource(), ...base };
         case "uiText": return { ...createUIText({ text: component.text }), ...base };
+        case "uiButton": return { ...createUIButton({ text: component.text }), ...base };
+        case "uiPanel": return { ...createUIPanel(), ...base };
+        case "uiProgressBar": return { ...createUIProgressBar(), ...base };
+        case "tilemap": return { ...createTilemap({ rows: component.rows, origin: component.origin, palette: component.palette }), ...base };
+        case "animation": return { ...createAnimation({ clips: component.clips, defaultClip: component.defaultClip }), ...base };
         case "script": return { ...component, fields: {} };
     }
 }

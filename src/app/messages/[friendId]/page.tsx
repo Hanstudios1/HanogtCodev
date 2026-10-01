@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { db, storage } from "@/lib/firebase";
 import { doc, setDoc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteField, updateDoc, type Timestamp } from "firebase/firestore";
 import ProfileModal from "@/components/ProfileModal";
+import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import type { UserProfile } from "@/components/ProfileModal";
 import { deleteObject, getBlob, ref as storageRef, uploadBytes } from "firebase/storage";
 import { useVoiceCall } from "@/components/VoiceCallProvider";
@@ -370,9 +371,10 @@ export default function ChatPage() {
                         )}
                     </div>
                     <div className="min-w-0">
-                        <h2 className="font-semibold truncate">
-                            {friendData?.username || friendEmail}
-                            {friendData?.nickname && <span className="text-xs text-zinc-400 ml-1.5">{friendData.nickname}#{friendData.nicknameTag}</span>}
+                        <h2 className="flex min-w-0 items-center gap-1.5 font-semibold">
+                            <span className="truncate">{friendData?.username || friendEmail}</span>
+                            <StaffBadge role={parseStaffRole(friendData?.staffRole)} size="sm" compactOnMobile />
+                            {friendData?.nickname && <span className="truncate text-xs font-normal text-zinc-400">{friendData.nickname}#{friendData.nicknameTag}</span>}
                         </h2>
                         <p className="text-xs text-zinc-500">
                             {friendData?.dndMode

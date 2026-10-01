@@ -42,7 +42,16 @@ export class StackOverflowVMError extends VMError {
 // ---------------------------------------------------------------------------
 
 export class Vec3 {
-    constructor(public x = 0, public y = 0, public z = 0, public is2D = false) {}
+    x: number;
+    y: number;
+    z: number;
+    is2D: boolean;
+    constructor(x = 0, y = 0, z = 0, is2D = false) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.is2D = is2D;
+    }
     clone(): Vec3 {
         return new Vec3(this.x, this.y, this.z, this.is2D);
     }
@@ -69,7 +78,16 @@ export class Vec3 {
 }
 
 export class VMColor {
-    constructor(public r = 1, public g = 1, public b = 1, public a = 1) {}
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+    constructor(r = 1, g = 1, b = 1, a = 1) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
     clone(): VMColor {
         return new VMColor(this.r, this.g, this.b, this.a);
     }
@@ -87,7 +105,16 @@ export class VMColor {
 }
 
 export class VMQuat {
-    constructor(public x = 0, public y = 0, public z = 0, public w = 1) {}
+    x: number;
+    y: number;
+    z: number;
+    w: number;
+    constructor(x = 0, y = 0, z = 0, w = 1) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
     clone(): VMQuat {
         return new VMQuat(this.x, this.y, this.z, this.w);
     }
@@ -99,12 +126,24 @@ export class VMQuat {
 export type CollectionKind = "List" | "Array" | "HashSet" | "Queue" | "Stack";
 
 export class VMList {
-    constructor(public items: VMValue[] = [], public kind: CollectionKind = "List", public elementType: string | null = null) {}
+    items: VMValue[];
+    kind: CollectionKind;
+    elementType: string | null;
+    constructor(items: VMValue[] = [], kind: CollectionKind = "List", elementType: string | null = null) {
+        this.items = items;
+        this.kind = kind;
+        this.elementType = elementType;
+    }
 }
 
 export class VMDict {
     readonly map = new Map<unknown, { key: VMValue; value: VMValue }>();
-    constructor(public keyType: string | null = null, public valueType: string | null = null) {}
+    keyType: string | null;
+    valueType: string | null;
+    constructor(keyType: string | null = null, valueType: string | null = null) {
+        this.keyType = keyType;
+        this.valueType = valueType;
+    }
     static keyOf(key: VMValue): unknown {
         if (key instanceof Vec3) return `v:${key.x},${key.y},${key.z}`;
         if (key instanceof VMColor) return `c:${key.r},${key.g},${key.b},${key.a}`;
@@ -125,18 +164,31 @@ export class VMDict {
 }
 
 export class VMPair {
-    constructor(public key: VMValue, public value: VMValue) {}
+    key: VMValue;
+    value: VMValue;
+    constructor(key: VMValue, value: VMValue) {
+        this.key = key;
+        this.value = value;
+    }
 }
 
 /** Minimal C++ iterator (`v.begin() + i`) for std algorithms and erase/insert. */
 export class VMIterator {
-    constructor(public readonly list: VMList, public readonly index: number) {}
+    readonly list: VMList;
+    readonly index: number;
+    constructor(list: VMList, index: number) {
+        this.list = list;
+        this.index = index;
+    }
 }
 
 /** `std::cout` / `std::cerr` stream objects. */
 export class CoutStream {
     buffer = "";
-    constructor(public readonly level: "info" | "error") {}
+    readonly level: "info" | "error";
+    constructor(level: "info" | "error") {
+        this.level = level;
+    }
 }
 
 export class EndlToken {}
@@ -159,7 +211,12 @@ export class VMRandom {
 }
 
 export class VMException {
-    constructor(public readonly exceptionType: string, public readonly message: string) {}
+    readonly exceptionType: string;
+    readonly message: string;
+    constructor(exceptionType: string, message: string) {
+        this.exceptionType = exceptionType;
+        this.message = message;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +242,10 @@ export interface FieldInfo {
 export class EnumInfo {
     readonly values = new Map<string, number>();
     readonly names = new Map<number, string>();
-    constructor(public readonly name: string) {}
+    readonly name: string;
+    constructor(name: string) {
+        this.name = name;
+    }
 }
 
 export class ClassInfo {
@@ -198,7 +258,14 @@ export class ClassInfo {
     private readonly lowerIndex = new Map<string, string>();
     staticsInitialised = false;
 
-    constructor(public readonly name: string, public readonly decl: ClassDecl, public readonly dialect: "csharp" | "cpp") {}
+    readonly name: string;
+    readonly decl: ClassDecl;
+    readonly dialect: "csharp" | "cpp";
+    constructor(name: string, decl: ClassDecl, dialect: "csharp" | "cpp") {
+        this.name = name;
+        this.decl = decl;
+        this.dialect = dialect;
+    }
 
     get scriptId() {
         return this.decl.scriptId;
@@ -329,7 +396,10 @@ export class ScriptObject {
     readonly fields: Record<string, VMValue> = Object.create(null);
     /** Behaviour binding (set by the runtime for components). */
     behaviour: BehaviourBinding | null = null;
-    constructor(public readonly cls: ClassInfo) {}
+    readonly cls: ClassInfo;
+    constructor(cls: ClassInfo) {
+        this.cls = cls;
+    }
     toString() {
         return this.cls.name;
     }
@@ -346,48 +416,95 @@ export interface BehaviourBinding {
 export const NOT_FOUND: unique symbol = Symbol("not-found");
 
 export class VMLambda {
+    readonly params: string[];
+    readonly body: Expr | BlockStmt;
+    readonly scope: unknown;
+    readonly self: ScriptObject | null;
+    readonly cls: ClassInfo | null;
     constructor(
-        public readonly params: string[],
-        public readonly body: Expr | BlockStmt,
-        public readonly scope: unknown,
-        public readonly self: ScriptObject | null,
-        public readonly cls: ClassInfo | null,
-    ) {}
+        params: string[],
+        body: Expr | BlockStmt,
+        scope: unknown,
+        self: ScriptObject | null,
+        cls: ClassInfo | null,
+    ) {
+        this.params = params;
+        this.body = body;
+        this.scope = scope;
+        this.self = self;
+        this.cls = cls;
+    }
 }
 
 export class VMBoundMethod {
-    constructor(public readonly self: ScriptObject | null, public readonly cls: ClassInfo, public readonly name: string) {}
+    readonly self: ScriptObject | null;
+    readonly cls: ClassInfo;
+    readonly name: string;
+    constructor(self: ScriptObject | null, cls: ClassInfo, name: string) {
+        this.self = self;
+        this.cls = cls;
+        this.name = name;
+    }
 }
 
 export class VMNativeFunction {
-    constructor(public readonly name: string, public readonly fn: (args: VMValue[]) => VMValue) {}
+    readonly name: string;
+    readonly fn: (args: VMValue[]) => VMValue;
+    constructor(name: string, fn: (args: VMValue[]) => VMValue) {
+        this.name = name;
+        this.fn = fn;
+    }
 }
 
 export class VMRef {
-    constructor(public readonly get: () => VMValue, public readonly set: (value: VMValue) => void) {}
+    readonly get: () => VMValue;
+    readonly set: (value: VMValue) => void;
+    constructor(get: () => VMValue, set: (value: VMValue) => void) {
+        this.get = get;
+        this.set = set;
+    }
 }
 
 /** Static API surface such as `Mathf`, `Input`, `Vector3` (statics) or `std`. */
 export class StaticNamespace {
+    readonly name: string;
+    readonly getMember: (name: string) => VMValue | typeof NOT_FOUND;
+    readonly callMember: (name: string, args: VMValue[], typeArgs: string[], refs: Array<VMRef | null>) => VMValue | typeof NOT_FOUND;
+    readonly setMember?: (name: string, value: VMValue) => boolean;
     constructor(
-        public readonly name: string,
-        public readonly getMember: (name: string) => VMValue | typeof NOT_FOUND,
-        public readonly callMember: (name: string, args: VMValue[], typeArgs: string[], refs: Array<VMRef | null>) => VMValue | typeof NOT_FOUND,
-        public readonly setMember?: (name: string, value: VMValue) => boolean,
-    ) {}
+        name: string,
+        getMember: (name: string) => VMValue | typeof NOT_FOUND,
+        callMember: (name: string, args: VMValue[], typeArgs: string[], refs: Array<VMRef | null>) => VMValue | typeof NOT_FOUND,
+        setMember?: (name: string, value: VMValue) => boolean,
+    ) {
+        this.name = name;
+        this.getMember = getMember;
+        this.callMember = callMember;
+        this.setMember = setMember;
+    }
 }
 
 export type YieldKind = "frame" | "seconds" | "realtime" | "until" | "while" | "coroutine" | "fixed" | "endOfFrame";
 
 export class YieldInstruction {
-    constructor(public readonly kind: YieldKind, public readonly value: VMValue = null) {}
+    readonly kind: YieldKind;
+    readonly value: VMValue;
+    constructor(kind: YieldKind, value: VMValue = null) {
+        this.kind = kind;
+        this.value = value;
+    }
 }
 
 export class VMCoroutine {
     done = false;
     /** Set once scheduled via StartCoroutine. */
     started = false;
-    constructor(public readonly methodName: string, public readonly generator: Generator<VMValue, void, void>) {}
+    readonly methodName: string;
+    readonly generator: Generator<VMValue, void, void>;
+    constructor(methodName: string, generator: Generator<VMValue, void, void>) {
+        this.methodName = methodName;
+        this.generator = generator;
+    }
 }
 
 export type VMValue =

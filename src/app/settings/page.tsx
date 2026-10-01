@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import {
-    AlertTriangle, Check, ClipboardCopy, Code2, Download, Eye, MousePointer2, Palette, RotateCcw, Save, Search, Settings2, Sparkles,
-    SquareTerminal, Type, Upload, X, type LucideIcon,
+    AlertTriangle, Check, ClipboardCopy, Cloud, CloudOff, Code2, Download, Eye, LoaderCircle, MousePointer2, Palette, RotateCcw, Save, Search,
+    Settings2, Sparkles, SquareTerminal, Type, Undo2, Upload, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import CodeEditor from "@/components/Editor/CodeEditor";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
 import { buttonClasses, useConfirm } from "@/components/Editor/Modal";
@@ -14,10 +14,13 @@ import { ToastViewport, useToasts } from "@/components/Editor/Toasts";
 import { triggerDownload } from "@/components/Editor/editor-files";
 import { searchKey } from "@/components/Editor/search";
 import Header from "@/components/Header";
+import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import {
-    DEFAULT_EDITOR_SETTINGS, EDITOR_FONTS, EDITOR_THEMES, SETTING_LIMITS, parseEditorSettingsFile, resetEditorSettings, resolveEditorTheme,
-    saveEditorSettings, serializeEditorSettings, updateEditorSettings, useEditorSettings, type EditorSettings, type SettingsImportError,
+    DEFAULT_EDITOR_SETTINGS, EDITOR_FONTS, EDITOR_THEMES, SETTING_LIMITS, changedEditorSettingKeys, compareEditorSettingsCopies, editorSettingsEqual,
+    hasStoredEditorSettings, parseEditorSettingsFile, readEditorSettings, readEditorSettingsUpdatedAt, resolveEditorTheme, saveEditorSettings,
+    serializeEditorSettings, useEditorSettings, useEditorSettingsUpdatedAt, type AccountEditorSettings, type EditorSettings,
+    type EditorSettingsSyncState, type SettingsImportError,
 } from "@/lib/editor-settings";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -251,8 +254,7 @@ const ALL_KEYS = Object.keys(DEFAULT_EDITOR_SETTINGS).filter((key): key is Setti
 const C = {
     eyebrow: { TR: "Kod editörü", EN: "Code editor" },
     title: { TR: "Editör ayarları", EN: "Editor settings" },
-    subtitle: { TR: "Kod editörünü kendinize göre ayarlayın. Her değişiklik anında kaydedilir ve açık olan tüm editörlere uygulanır.", EN: "Make the code editor your own. Every change is saved instantly and applied to all open editors." },
-    storedLocally: { TR: "Ayarlar bu cihazdaki tarayıcıda saklanır.", EN: "Settings are stored in this browser on this device." },
+    subtitle: { TR: "Kod editörünü kendinize göre ayarlayın. Değişiklikleri önizlemede deneyin, beğendiğinizde Kaydet'e basın; kayıtlı ayarlar açık olan tüm editörlere uygulanır.", EN: "Make the code editor your own. Try changes in the preview and press Save when you like them; saved settings apply to every open editor." },
     storageBlocked: { TR: "Tarayıcı depolaması kullanılamıyor (ör. gizli pencere). Ayarlar yalnızca bu sayfa açıkken geçerli olur.", EN: "Browser storage is unavailable (e.g. a private window). Settings only apply while this page is open." },
     openEditor: { TR: "Editörü aç", EN: "Open the editor" },
     search: { TR: "Ayarlarda ara…", EN: "Search settings…" },
@@ -260,16 +262,15 @@ const C = {
     clearSearch: { TR: "Aramayı temizle", EN: "Clear search" },
     noResults: { TR: "\"{query}\" ile eşleşen ayar yok.", EN: "No setting matches \"{query}\"." },
     sections: { TR: "Bölümler", EN: "Sections" },
-    saved: { TR: "Kaydedildi", EN: "Saved" },
     modified: { TR: "{count} ayar varsayılandan farklı", EN: "{count} settings differ from the defaults" },
     allDefault: { TR: "Tüm ayarlar varsayılan değerlerinde", EN: "All settings are at their defaults" },
     modifiedDot: { TR: "Varsayılandan farklı", EN: "Changed from the default" },
     resetRow: { TR: "Varsayılana döndür: {name}", EN: "Reset to default: {name}" },
     resetSection: { TR: "Bölümü sıfırla", EN: "Reset section" },
-    sectionReset: { TR: "{name} ayarları varsayılana döndü.", EN: "{name} settings were reset to their defaults." },
+    sectionReset: { TR: "{name} ayarları varsayılana döndü (henüz kaydedilmedi).", EN: "{name} settings were reset to their defaults (not saved yet)." },
     undo: { TR: "Geri al", EN: "Undo" },
     preview: { TR: "Canlı önizleme", EN: "Live preview" },
-    previewHint: { TR: "Ayarlar anında uygulanır; burada yazmayı deneyebilirsiniz. Önizlemedeki değişiklikler kaydedilmez.", EN: "Settings apply instantly and you can type here to try them. Changes in the preview aren't saved." },
+    previewHint: { TR: "Önizleme kaydedilmemiş değişikliklerinizi de gösterir; burada yazmayı deneyebilirsiniz. Önizlemedeki kod kaydedilmez.", EN: "The preview also shows your unsaved changes and you can type here to try them. Code in the preview isn't saved." },
     previewLanguage: { TR: "Önizleme dili", EN: "Preview language" },
     resetSample: { TR: "Örneği sıfırla", EN: "Reset the sample" },
     previewEditor: { TR: "Ayar önizleme düzenleyicisi", EN: "Settings preview editor" },
@@ -285,14 +286,51 @@ const C = {
     copied: { TR: "Ayarlar JSON olarak panoya kopyalandı.", EN: "The settings were copied to the clipboard as JSON." },
     copyFailed: { TR: "Panoya kopyalanamadı.", EN: "Couldn't copy to the clipboard." },
     exported: { TR: "Ayar dosyası indirildi.", EN: "The settings file was downloaded." },
-    imported: { TR: "Ayarlar içe aktarıldı.", EN: "The settings were imported." },
+    imported: { TR: "Ayarlar içe aktarıldı. Saklamak için Kaydet'e basın.", EN: "The settings were imported. Press Save to keep them." },
     importHint: { TR: "Hanogt'tan dışa aktarılan ayar dosyaları ve hesap veri dışa aktarımları kabul edilir.", EN: "Accepts settings files exported from Hanogt and account data exports." },
     resetAll: { TR: "Tümünü varsayılana döndür", EN: "Reset everything" },
     resetAllTitle: { TR: "Tüm editör ayarları sıfırlansın mı?", EN: "Reset all editor settings?" },
-    resetAllMessage: { TR: "Tema, yazı tipi ve diğer tüm editör tercihleri varsayılan değerlerine döner. Bu cihazdaki kayıtlı ayarlar silinir.", EN: "The theme, font and every other editor preference go back to their default values. The settings saved on this device are removed." },
+    resetAllMessage: { TR: "Tema, yazı tipi ve diğer tüm editör tercihleri varsayılan değerlerine döner. Kaydet'e basana kadar kayıtlı ayarlarınız değişmez.", EN: "The theme, font and every other editor preference go back to their default values. Your saved settings don't change until you press Save." },
     resetConfirm: { TR: "Sıfırla", EN: "Reset" },
-    resetDone: { TR: "Editör ayarları varsayılana döndü.", EN: "The editor settings were reset to their defaults." },
+    resetDone: { TR: "Varsayılan değerler yüklendi. Uygulamak için Kaydet'e basın.", EN: "The default values were loaded. Press Save to apply them." },
     sliderValue: { TR: "{label}: {value}", EN: "{label}: {value}" },
+    toolbar: { TR: "Kaydetme ve yedekleme", EN: "Saving and backup" },
+    unsaved: { TR: "Kaydedilmemiş değişiklikler", EN: "Unsaved changes" },
+    unsavedCount: { TR: "{count} ayar değişti", EN: "{count} settings changed" },
+    allSaved: { TR: "Tüm değişiklikler kaydedildi", EN: "All changes are saved" },
+    save: { TR: "Kaydet", EN: "Save" },
+    saveHint: { TR: "Kaydet (Ctrl/⌘+S)", EN: "Save (Ctrl/⌘+S)" },
+    discard: { TR: "Vazgeç", EN: "Discard" },
+    discardHint: { TR: "Kaydedilmemiş değişiklikleri geri al", EN: "Undo the unsaved changes" },
+    savedToast: { TR: "Editör ayarları kaydedildi.", EN: "The editor settings were saved." },
+    savedAccountToast: { TR: "Editör ayarları kaydedildi ve hesabınıza eşitlendi.", EN: "The editor settings were saved and synced to your account." },
+    accountSaveFailed: { TR: "Ayarlar bu cihaza kaydedildi ancak hesabınıza kaydedilemedi.", EN: "The settings were saved on this device but couldn't be saved to your account." },
+    discarded: { TR: "Kaydedilmemiş değişiklikler geri alındı.", EN: "The unsaved changes were discarded." },
+    nothingToSave: { TR: "Kaydedilecek değişiklik yok.", EN: "There's nothing to save." },
+    syncedAccount: { TR: "Hesabınıza kaydedildi", EN: "Saved to your account" },
+    localOnly: { TR: "Yalnızca bu cihazda", EN: "Only on this device" },
+    localOnlyHint: { TR: "Bu cihazdaki ayarlar hesabınızda yok.", EN: "Your account doesn't have this device's settings." },
+    signedOutHint: { TR: "Giriş yaparsanız ayarlarınız hesabınıza da kaydedilir ve diğer cihazlarınızda kullanılabilir.", EN: "Sign in to also save your settings to your account and use them on your other devices." },
+    signIn: { TR: "Giriş yap", EN: "Sign in" },
+    syncChecking: { TR: "Hesabınız denetleniyor…", EN: "Checking your account…" },
+    syncSaving: { TR: "Hesabınıza kaydediliyor…", EN: "Saving to your account…" },
+    syncFailed: { TR: "Hesap eşitlemesi şu anda kullanılamıyor; ayarlar bu cihazda saklanır.", EN: "Account sync is unavailable right now; your settings are kept on this device." },
+    retry: { TR: "Tekrar dene", EN: "Try again" },
+    uploadToAccount: { TR: "Hesaba kaydet", EN: "Save to account" },
+    uploadDone: { TR: "Bu cihazdaki ayarlar hesabınıza kaydedildi.", EN: "This device's settings were saved to your account." },
+    lastSaved: { TR: "Son kayıt: {time}", EN: "Last saved: {time}" },
+    accountNewerTitle: { TR: "Hesabınızda daha yeni editör ayarları var", EN: "Your account has newer editor settings" },
+    accountNewerText: { TR: "{time} tarihinde kaydedilen ayarlar bu cihazdakilerden farklı.", EN: "The settings saved on {time} differ from the ones on this device." },
+    conflictTitle: { TR: "Hesabınızdaki editör ayarları bu cihazdakilerden farklı", EN: "Your account's editor settings differ from this device's" },
+    conflictText: { TR: "Hangilerini kullanmak istediğinizi seçin.", EN: "Choose which ones to use." },
+    loadAccount: { TR: "Hesabınızdaki ayarları yükle", EN: "Load your account's settings" },
+    keepLocal: { TR: "Bu cihazdakileri hesaba kaydet", EN: "Save this device's to the account" },
+    notNow: { TR: "Şimdilik değil", EN: "Not now" },
+    accountLoaded: { TR: "Hesabınızdaki editör ayarları yüklendi.", EN: "Your account's editor settings were loaded." },
+    adopted: { TR: "Hesabınızdaki editör ayarları bu cihaza uygulandı.", EN: "Your account's editor settings were applied on this device." },
+    loseChangesTitle: { TR: "Kaydedilmemiş değişiklikler kaybolsun mu?", EN: "Discard the unsaved changes?" },
+    loseChangesMessage: { TR: "Hesabınızdaki ayarlar yüklenince bu sayfadaki kaydedilmemiş değişiklikler kaybolur.", EN: "Loading your account's settings discards the unsaved changes on this page." },
+    loadConfirm: { TR: "Yükle", EN: "Load" },
 } satisfies Record<string, Copy>;
 
 const IMPORT_ERRORS: Record<SettingsImportError, Copy> = {
@@ -736,23 +774,131 @@ function rowMatches(row: RowDef, query: string, tx: (copy: Copy) => string) {
     return query.split(/\s+/).filter(Boolean).every((part) => haystack.includes(part));
 }
 
+// ------------------------------------------------------------------ account sync
+type AccountState = { key: string; copy: AccountEditorSettings | null; failed: boolean };
+
+async function requestAccountSettings(init: RequestInit = {}): Promise<AccountEditorSettings> {
+    const response = await fetch("/api/account/preferences", { cache: "no-store", credentials: "same-origin", ...init });
+    const data = await response.json().catch(() => null) as AccountEditorSettings | null;
+    if (!response.ok || !data || typeof data !== "object" || !("editorSettings" in data)) throw new Error(`HTTP ${response.status}`);
+    return data;
+}
+
+function formatTime(iso: string | null | undefined, locale: string) {
+    if (!iso) return "";
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    try {
+        return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date);
+    } catch {
+        return date.toISOString();
+    }
+}
+
+const linkButton = "rounded-md font-semibold text-indigo-600 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50 dark:text-indigo-300";
+
+/** Where the saved settings live: this device only, or also the account. */
+function SyncLine({ signedIn, checking, saving, failed, state, savedAt, onUpload, onRetry }: {
+    signedIn: boolean;
+    checking: boolean;
+    saving: boolean;
+    failed: boolean;
+    state: EditorSettingsSyncState | null;
+    savedAt: string | null;
+    onUpload: () => void;
+    onRetry: () => void;
+}) {
+    const { tx, locale } = useI18n();
+    const time = formatTime(savedAt, locale);
+    const busy = signedIn && (saving || checking);
+    const synced = signedIn && state === "in_sync";
+    const Icon = busy ? LoaderCircle : synced ? Cloud : CloudOff;
+    const label = !signedIn ? tx(C.localOnly) : saving ? tx(C.syncSaving) : checking ? tx(C.syncChecking) : synced ? tx(C.syncedAccount) : tx(C.localOnly);
+    const offerUpload = signedIn && !busy && !failed && (state === "local_newer" || (state === "account_empty" && Boolean(savedAt)));
+    return (
+        <div className="relative mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-zinc-500 dark:text-zinc-400" aria-live="polite">
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ${synced ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300"}`}>
+                <Icon className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} aria-hidden />
+                {label}
+            </span>
+            {time && <span>{tx(C.lastSaved, { time })}</span>}
+            {!signedIn && (
+                <>
+                    <span>{tx(C.signedOutHint)}</span>
+                    <Link href="/login?callbackUrl=%2Fsettings" className={linkButton}>{tx(C.signIn)}</Link>
+                </>
+            )}
+            {signedIn && !busy && failed && (
+                <>
+                    <span>{tx(C.syncFailed)}</span>
+                    <button type="button" onClick={onRetry} className={linkButton}>{tx(C.retry)}</button>
+                </>
+            )}
+            {offerUpload && (
+                <>
+                    <span>{tx(C.localOnlyHint)}</span>
+                    <button type="button" onClick={onUpload} className={linkButton}>{tx(C.uploadToAccount)}</button>
+                </>
+            )}
+        </div>
+    );
+}
+
 // ------------------------------------------------------------------ page
 export default function EditorSettingsPage() {
-    const { tx } = useI18n();
+    const { tx, locale } = useI18n();
     const { theme: siteTheme } = useTheme();
-    const settings = useEditorSettings();
+    const saved = useEditorSettings();
+    const savedAt = useEditorSettingsUpdatedAt();
+    // Edits go to a draft (null: nothing changed) until Save; the editor keeps using the saved settings.
+    const [draft, setDraft] = useState<EditorSettings | null>(null);
+    const settings = draft ?? saved;
+    const changedKeys = useMemo(() => changedEditorSettingKeys(saved, settings), [saved, settings]);
+    const dirty = changedKeys.length > 0;
     const canStore = useSyncExternalStore(subscribeNothing, storageAvailable, () => true);
     const { toasts, push: toast, dismiss } = useToasts();
     const [confirmDialog, confirm] = useConfirm();
     const [query, setQuery] = useState("");
     const [sample, setSample] = useState<SampleId>("javascript");
     const [samples, setSamples] = useState<Record<SampleId, string>>(SAMPLES);
-    const [savedVisible, setSavedVisible] = useState(false);
-    const savedTimer = useRef<number | undefined>(undefined);
+    const [saving, setSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const previewRef = useRef<HTMLElement>(null);
 
-    useEffect(() => () => window.clearTimeout(savedTimer.current), []);
+    // Account copy (signed-in users): loaded once per account, reloaded on demand.
+    const auth = useRawSession();
+    const email = auth.status === "authenticated" ? auth.data?.user?.email?.toLowerCase() || null : null;
+    const [accountVersion, setAccountVersion] = useState(0);
+    const accountKey = email ? `${accountVersion}|${email}` : null;
+    const [accountState, setAccountState] = useState<AccountState | null>(null);
+    const [dismissedSync, setDismissedSync] = useState<string | null>(null);
+    const account = accountState && accountState.key === accountKey ? accountState : null;
+    const checking = Boolean(accountKey) && !account;
+    // "adopt_account" is handled as soon as the copy arrives, so this device counts as saved here.
+    const syncState = account?.copy ? compareEditorSettingsCopies({ settings: saved, updatedAt: savedAt, stored: true }, account.copy) : null;
+
+    const onAccountLoaded = useEffectEvent((key: string, copy: AccountEditorSettings) => {
+        const local = { settings: readEditorSettings(), updatedAt: readEditorSettingsUpdatedAt(), stored: hasStoredEditorSettings() };
+        // Nothing was ever saved on this device: use the account's settings right away.
+        if (copy.editorSettings && compareEditorSettingsCopies(local, copy) === "adopt_account") {
+            saveEditorSettings(copy.editorSettings, { updatedAt: copy.updatedAt });
+            toast({ tone: "info", message: tx(C.adopted) });
+        }
+        setAccountState({ key, copy, failed: false });
+    });
+
+    useEffect(() => {
+        if (!accountKey) return;
+        const controller = new AbortController();
+        requestAccountSettings({ signal: controller.signal })
+            .then((copy) => {
+                if (!controller.signal.aborted) onAccountLoaded(accountKey, copy);
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) setAccountState({ key: accountKey, copy: null, failed: true });
+            });
+        return () => controller.abort();
+    }, [accountKey]);
 
     // Phones show a "back to the preview" button only while the preview is off screen.
     const [previewInView, setPreviewInView] = useState(true);
@@ -764,21 +910,102 @@ export default function EditorSettingsPage() {
         return () => observer.disconnect();
     }, []);
 
-    const flashSaved = useCallback(() => {
-        setSavedVisible(true);
-        window.clearTimeout(savedTimer.current);
-        savedTimer.current = window.setTimeout(() => setSavedVisible(false), 1600);
+    // Leaving the page (reload, closing the tab) with unsaved changes asks first.
+    useEffect(() => {
+        if (!dirty) return;
+        const onBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = "";
+        };
+        window.addEventListener("beforeunload", onBeforeUnload);
+        return () => window.removeEventListener("beforeunload", onBeforeUnload);
+    }, [dirty]);
+
+    /** A draft equal to the saved settings is dropped, so "unsaved" never shows without a difference. */
+    const patchSettings = useCallback((patch: Partial<EditorSettings>) => {
+        setDraft((current) => {
+            const next = { ...(current ?? saved), ...patch };
+            return editorSettingsEqual(next, saved) ? null : next;
+        });
+    }, [saved]);
+
+    const pushToAccount = async (next: EditorSettings) => {
+        const copy = await requestAccountSettings({ method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ editorSettings: next }) });
+        if (accountKey) setAccountState({ key: accountKey, copy, failed: false });
+        return copy;
+    };
+
+    /** Copies the settings saved on this device to the account. */
+    const uploadSaved = async () => {
+        if (!email || saving) return;
+        setSaving(true);
+        try {
+            await pushToAccount(readEditorSettings());
+            toast({ tone: "success", message: tx(C.uploadDone) });
+        } catch {
+            toast({ tone: "error", message: tx(C.accountSaveFailed) });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const save = async () => {
+        if (saving) return;
+        if (!draft || !dirty) {
+            toast({ tone: "info", message: tx(C.nothingToSave) });
+            return;
+        }
+        const next = draft;
+        saveEditorSettings(next);
+        setDraft(null);
+        if (!email) {
+            toast({ tone: "success", message: tx(C.savedToast) });
+            return;
+        }
+        setSaving(true);
+        try {
+            await pushToAccount(next);
+            toast({ tone: "success", message: tx(C.savedAccountToast) });
+        } catch {
+            toast({ tone: "warning", message: tx(C.accountSaveFailed), action: { label: tx(C.retry), onClick: () => void uploadSaved() } });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const discard = () => {
+        if (!draft) return;
+        const previous = draft;
+        setDraft(null);
+        toast({ tone: "info", message: tx(C.discarded), action: { label: tx(C.undo), onClick: () => setDraft(previous) } });
+    };
+
+    // Ctrl+S / ⌘+S saves (also while typing in the preview) instead of saving the web page.
+    const onSaveShortcut = useEffectEvent(() => {
+        void save();
+    });
+    useEffect(() => {
+        const onKeyDown = (event: globalThis.KeyboardEvent) => {
+            if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.key.toLowerCase() !== "s") return;
+            event.preventDefault();
+            onSaveShortcut();
+        };
+        window.addEventListener("keydown", onKeyDown, true);
+        return () => window.removeEventListener("keydown", onKeyDown, true);
     }, []);
 
-    const patchSettings = useCallback((patch: Partial<EditorSettings>) => {
-        updateEditorSettings(patch);
-        flashSaved();
-    }, [flashSaved]);
-
-    const restore = useCallback((previous: EditorSettings) => {
-        saveEditorSettings(previous);
-        flashSaved();
-    }, [flashSaved]);
+    const loadAccountCopy = async () => {
+        const copy = account?.copy;
+        if (!copy?.editorSettings) return;
+        if (dirty) {
+            const accepted = await confirm({ title: tx(C.loseChangesTitle), message: tx(C.loseChangesMessage), confirmLabel: tx(C.loadConfirm), destructive: true });
+            if (!accepted) return;
+        }
+        const previous = saved;
+        saveEditorSettings(copy.editorSettings, { updatedAt: copy.updatedAt });
+        setDraft(null);
+        toast({ tone: "success", message: tx(C.accountLoaded), action: { label: tx(C.undo), onClick: () => saveEditorSettings(previous) } });
+    };
 
     const modifiedCount = ALL_KEYS.filter((key) => settings[key] !== DEFAULT_EDITOR_SETTINGS[key]).length;
     const normalizedQuery = searchKey(query.trim());
@@ -792,16 +1019,15 @@ export default function EditorSettingsPage() {
         const previous = settings;
         const keys = SECTION_KEYS[section.id] ?? [];
         patchSettings(Object.fromEntries(keys.map((key) => [key, DEFAULT_EDITOR_SETTINGS[key]])) as Partial<EditorSettings>);
-        toast({ tone: "info", message: tx(C.sectionReset, { name: tx(section.title) }), action: { label: tx(C.undo), onClick: () => restore(previous) } });
+        toast({ tone: "info", message: tx(C.sectionReset, { name: tx(section.title) }), action: { label: tx(C.undo), onClick: () => setDraft(previous) } });
     };
 
     const resetAll = async () => {
         const accepted = await confirm({ title: tx(C.resetAllTitle), message: tx(C.resetAllMessage), confirmLabel: tx(C.resetConfirm), destructive: true });
         if (!accepted) return;
         const previous = settings;
-        resetEditorSettings();
-        flashSaved();
-        toast({ tone: "success", message: tx(C.resetDone), action: { label: tx(C.undo), onClick: () => restore(previous) } });
+        patchSettings({ ...DEFAULT_EDITOR_SETTINGS });
+        toast({ tone: "info", message: tx(C.resetDone), action: { label: tx(C.undo), onClick: () => setDraft(previous) } });
     };
 
     const exportSettings = () => {
@@ -837,11 +1063,15 @@ export default function EditorSettingsPage() {
             return;
         }
         const previous = settings;
-        restore(result.settings);
-        toast({ tone: "success", message: tx(C.imported), action: { label: tx(C.undo), onClick: () => restore(previous) } });
+        patchSettings(result.settings);
+        toast({ tone: "success", message: tx(C.imported), action: { label: tx(C.undo), onClick: () => setDraft(previous) } });
     };
 
     const previewPath = `inmemory://hanogt-settings/preview.${SAMPLE_EXTENSIONS[sample]}`;
+    const accountCopy = account?.copy ?? null;
+    const showSyncBanner = (syncState === "account_newer" || syncState === "conflict") && dismissedSync !== accountKey;
+    const accountTime = formatTime(accountCopy?.updatedAt, locale);
+    const iconButton = `${buttonClasses.ghost} h-9 w-9 px-0`;
 
     return (
         <div className="min-h-dvh overflow-x-clip bg-zinc-50 text-zinc-900 transition-colors dark:bg-zinc-950 dark:text-white">
@@ -853,7 +1083,7 @@ export default function EditorSettingsPage() {
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative mb-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:p-8"
+                    className="relative mb-4 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:p-8"
                 >
                     <div className="pointer-events-none absolute -top-24 end-0 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl" aria-hidden />
                     <div className="pointer-events-none absolute -bottom-24 start-1/3 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-3xl" aria-hidden />
@@ -870,12 +1100,18 @@ export default function EditorSettingsPage() {
                                 {tx(C.title)}
                             </h1>
                             <p className="mt-3 max-w-2xl text-zinc-500 dark:text-zinc-400">{tx(C.subtitle)}</p>
-                            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{tx(C.storedLocally)}</p>
+                            <SyncLine
+                                signedIn={Boolean(email) || auth.status === "loading"}
+                                checking={checking || auth.status === "loading"}
+                                saving={saving}
+                                failed={Boolean(account?.failed)}
+                                state={syncState}
+                                savedAt={savedAt}
+                                onUpload={() => void uploadSaved()}
+                                onRetry={() => setAccountVersion((value) => value + 1)}
+                            />
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <span aria-live="polite" className={`inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-opacity dark:text-emerald-300 ${savedVisible ? "opacity-100" : "opacity-0"}`}>
-                                {savedVisible && <><Check className="h-3.5 w-3.5" aria-hidden />{tx(C.saved)}</>}
-                            </span>
                             <span className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400">
                                 {modifiedCount ? tx(C.modified, { count: modifiedCount }) : tx(C.allDefault)}
                             </span>
@@ -893,10 +1129,76 @@ export default function EditorSettingsPage() {
                     )}
                 </motion.section>
 
+                {showSyncBanner && accountCopy && (
+                    <div role="status" className="mb-4 flex flex-col gap-3 rounded-3xl border border-indigo-300/60 bg-indigo-50 p-4 text-sm text-indigo-950 sm:flex-row sm:items-center dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100">
+                        <Cloud className="hidden h-5 w-5 shrink-0 text-indigo-500 sm:block" aria-hidden />
+                        <div className="min-w-0 flex-1">
+                            <p className="font-semibold">{tx(syncState === "conflict" ? C.conflictTitle : C.accountNewerTitle)}</p>
+                            <p className="mt-0.5 text-xs leading-5 text-indigo-900/80 dark:text-indigo-100/80">
+                                {syncState === "account_newer" && accountTime ? tx(C.accountNewerText, { time: accountTime }) : tx(C.conflictText)}
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <button type="button" onClick={() => void loadAccountCopy()} className={buttonClasses.primary}>
+                                <Download className="h-4 w-4" aria-hidden />
+                                {tx(C.loadAccount)}
+                            </button>
+                            {syncState === "conflict" && (
+                                <button type="button" onClick={() => void uploadSaved()} disabled={saving} className={buttonClasses.secondary}>
+                                    <Upload className="h-4 w-4" aria-hidden />
+                                    {tx(C.keepLocal)}
+                                </button>
+                            )}
+                            <button type="button" onClick={() => setDismissedSync(accountKey)} className={buttonClasses.ghost}>{tx(C.notNow)}</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Save bar: stays under the header while scrolling. */}
+                <div role="region" aria-label={tx(C.toolbar)} className={`sticky top-[4.5rem] z-30 mb-6 rounded-2xl border p-2 shadow-sm backdrop-blur-xl transition-colors sm:p-2.5 ${dirty ? "border-amber-400/60 bg-amber-50/95 dark:border-amber-500/30 dark:bg-zinc-900/95" : "border-zinc-200 bg-white/90 dark:border-white/10 dark:bg-zinc-900/90"}`}>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 ps-1" aria-live="polite">
+                            {dirty ? (
+                                <>
+                                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" aria-hidden />
+                                    <span className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">{tx(C.unsaved)}</span>
+                                    <span className="hidden shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-800 sm:inline dark:text-amber-300">{tx(C.unsavedCount, { count: changedKeys.length })}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Check className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden />
+                                    <span className="truncate text-sm text-zinc-600 dark:text-zinc-300">{tx(C.allSaved)}</span>
+                                </>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                            <button type="button" onClick={exportSettings} className={iconButton} aria-label={tx(C.export)} title={tx(C.export)}>
+                                <Download className="h-4 w-4" aria-hidden />
+                            </button>
+                            <button type="button" onClick={() => fileInputRef.current?.click()} className={iconButton} aria-label={tx(C.import)} title={tx(C.import)}>
+                                <Upload className="h-4 w-4" aria-hidden />
+                            </button>
+                            <button type="button" onClick={() => void resetAll()} className={iconButton} aria-label={tx(C.resetAll)} title={tx(C.resetAll)}>
+                                <RotateCcw className="h-4 w-4" aria-hidden />
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button type="button" onClick={discard} disabled={!dirty} title={tx(C.discardHint)} className={`${buttonClasses.secondary} px-3`}>
+                                <Undo2 className="h-4 w-4" aria-hidden />
+                                {tx(C.discard)}
+                            </button>
+                            <button type="button" onClick={() => void save()} disabled={!dirty || saving} title={tx(C.saveHint)} aria-keyshortcuts="Control+S Meta+S" className={`${buttonClasses.primary} px-3`}>
+                                {saving ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Save className="h-4 w-4" aria-hidden />}
+                                {tx(C.save)}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)]">
-                    {/* Live preview: first on phones, a sticky column on large screens. */}
-                    <aside ref={previewRef} id="preview" className="scroll-mt-24 lg:order-2" aria-labelledby="preview-title">
-                        <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:p-5 lg:sticky lg:top-24">
+                    {/* Live preview of the draft: first on phones, a sticky column on large screens. */}
+                    <aside ref={previewRef} id="preview" className="scroll-mt-40 lg:order-2" aria-labelledby="preview-title">
+                        <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:p-5 lg:sticky lg:top-40">
                             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                                 <div className="min-w-0">
                                     <h2 id="preview-title" className="flex items-center gap-2 text-base font-bold"><Eye className="h-4 w-4 text-indigo-500" aria-hidden />{tx(C.preview)}</h2>
@@ -922,13 +1224,14 @@ export default function EditorSettingsPage() {
                                     </button>
                                 ))}
                             </div>
-                            <div className="h-80 sm:h-96 lg:h-[min(36rem,calc(100dvh-17rem))]">
+                            <div className="h-80 sm:h-96 lg:h-[min(36rem,calc(100dvh-21rem))]">
                                 <CodeEditor
                                     language={sample}
                                     path={previewPath}
                                     value={samples[sample]}
                                     onChange={(value) => setSamples((current) => ({ ...current, [sample]: value ?? "" }))}
                                     ariaLabel={tx(C.previewEditor)}
+                                    settingsOverride={settings}
                                 />
                             </div>
                         </div>
@@ -993,7 +1296,7 @@ export default function EditorSettingsPage() {
                                         initial={{ opacity: 0, y: 12 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.35, delay: Math.min(index, 5) * 0.04, ease: "easeOut" }}
-                                        className="scroll-mt-24 rounded-3xl border border-zinc-200 bg-white px-5 pt-5 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:px-6"
+                                        className="scroll-mt-40 rounded-3xl border border-zinc-200 bg-white px-5 pt-5 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:px-6"
                                         aria-labelledby={`${section.id}-title`}
                                     >
                                         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-100 pb-4 dark:border-white/5">
@@ -1019,7 +1322,7 @@ export default function EditorSettingsPage() {
                             })}
 
                             {!normalizedQuery && (
-                                <section id="backup" className="scroll-mt-24 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:p-6" aria-labelledby="backup-title">
+                                <section id="backup" className="scroll-mt-40 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:p-6" aria-labelledby="backup-title">
                                     <div className="flex items-start gap-3">
                                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300"><Download className="h-5 w-5" aria-hidden /></span>
                                         <div className="min-w-0">
@@ -1046,25 +1349,27 @@ export default function EditorSettingsPage() {
                                         </button>
                                     </div>
                                     <p id="import-hint" className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.importHint)}</p>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="application/json,.json"
-                                        className="hidden"
-                                        tabIndex={-1}
-                                        aria-hidden
-                                        onChange={(event) => {
-                                            const file = event.target.files?.[0];
-                                            event.target.value = "";
-                                            void importSettings(file);
-                                        }}
-                                    />
                                 </section>
                             )}
                         </div>
                     </div>
                 </div>
             </main>
+
+            {/* Outside the backup section, so importing from the save bar also works while searching. */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                tabIndex={-1}
+                aria-hidden
+                onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    void importSettings(file);
+                }}
+            />
 
             <SiteFooter />
 

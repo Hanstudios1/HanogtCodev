@@ -7,6 +7,8 @@ import { useI18n } from "@/lib/i18n";
 import { X, Github, Linkedin, Twitter, Globe2, Download, Heart, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import type { StaffRole } from "@/components/Admin/types";
+import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 
 /** Profile values are user-written: only plain https URLs reach CSS url(). */
 function safeBannerUrl(value?: string) {
@@ -60,6 +62,8 @@ interface UserProfile {
     publicProjects?: boolean;
     badges?: string[];
     email?: string;
+    /** Hanogt team role; written by the server only (public_profiles/{email}.staffRole). */
+    staffRole?: StaffRole | null;
 }
 
 interface Project {
@@ -223,7 +227,10 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
 
                 {/* User Info */}
                 <div className="px-6 pt-3 pb-4">
-                    <h3 className="text-xl font-bold">{user.username}</h3>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <h3 className="min-w-0 break-words text-xl font-bold">{user.username}</h3>
+                        <StaffBadge role={parseStaffRole(user.staffRole)} />
+                    </div>
                     {user.nickname && (
                         <p className="text-sm text-zinc-500 font-mono">
                             {user.nickname}#{user.nicknameTag || "0000"}

@@ -8,9 +8,11 @@ import type {
     GameEntity,
     RigidBodyComponent,
     ScriptComponent,
+    TilemapComponent,
     TransformComponent,
     Vector3,
 } from "../types";
+import type { AnimatedTarget, AnimationPlayer } from "./animator";
 import type { ParticleEmitter } from "./particles";
 import { createBodyRuntime, type BodyRuntime, type PhysicsEntity } from "./physics";
 
@@ -53,13 +55,21 @@ export class BehaviourState {
     readonly has: Record<"Update" | "FixedUpdate" | "LateUpdate" | "OnGUI", boolean>;
     readonly updateArity: number;
 
+    readonly entity: RuntimeEntity;
+    readonly component: ScriptComponent;
+    readonly cls: ClassInfo;
+    object: ScriptObject;
     constructor(
-        readonly entity: RuntimeEntity,
-        readonly component: ScriptComponent,
-        readonly cls: ClassInfo,
-        public object: ScriptObject,
+        entity: RuntimeEntity,
+        component: ScriptComponent,
+        cls: ClassInfo,
+        object: ScriptObject,
         methods: { has: (name: string) => boolean; arity: (name: string) => number },
     ) {
+        this.entity = entity;
+        this.component = component;
+        this.cls = cls;
+        this.object = object;
         this.has = {
             Update: methods.has("Update"),
             FixedUpdate: methods.has("FixedUpdate"),
@@ -81,7 +91,7 @@ export class BehaviourState {
 
 let instanceCounter = 1;
 
-export class RuntimeEntity implements PhysicsEntity {
+export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     readonly id: string;
     name: string;
     tag: string;
@@ -91,6 +101,12 @@ export class RuntimeEntity implements PhysicsEntity {
     components: GameComponent[];
     rigidBody: RigidBodyComponent | null = null;
     collider: ColliderComponent | null = null;
+    tilemap: TilemapComponent | null = null;
+    /** Bumped when scripts change tiles so physics rebuilds the tile shapes. */
+    tilemapRevision = 0;
+    animator: AnimationPlayer | null = null;
+    /** Runtime opacity of this object's UI components (fades, tweens). */
+    uiAlpha = 1;
     body: BodyRuntime;
     readonly behaviours: BehaviourState[] = [];
     emitter: ParticleEmitter | null = null;
@@ -128,6 +144,7 @@ export class RuntimeEntity implements PhysicsEntity {
     refreshComponentCache() {
         this.rigidBody = (this.components.find((component) => component.type === "rigidBody") as RigidBodyComponent | undefined) ?? null;
         this.collider = (this.components.find((component) => component.type === "collider") as ColliderComponent | undefined) ?? null;
+        this.tilemap = (this.components.find((component) => component.type === "tilemap") as TilemapComponent | undefined) ?? null;
         this.renderVersion += 1;
     }
 

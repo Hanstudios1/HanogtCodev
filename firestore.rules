@@ -223,12 +223,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Users documents are created by the server only (sign-up, Google sign-in).
+    // A still-open tab of a deleted account must not bring its document back
+    // through the presence heartbeat (a merge write that becomes a create).
     match /users/{userId} {
       allow read: if isSelf(userId);
-      allow create: if isSelf(userId)
-        && request.resource.data.email == email()
-        && request.resource.data.keys().hasOnly(userEditableKeys())
-        && validProfileFields();
+      allow create: if false;
       allow update: if isSelf(userId)
         && request.resource.data.email == email()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(userEditableKeys())
@@ -238,8 +238,10 @@ service cloud.firestore {
 
     match /public_profiles/{userId} {
       allow read: if signedIn();
-      // Badges are server-only (they include "verified").
+      // Badges are server-only (they include "verified"). Only an existing
+      // account gets a profile: a deleted account's open tab can't recreate it.
       allow create: if isSelf(userId)
+        && exists(/databases/$(database)/documents/users/$(userId))
         && request.resource.data.email == email()
         && request.resource.data.keys().hasOnly(profileEditableKeys())
         && validProfileFields();
@@ -374,14 +376,22 @@ service cloud.firestore {
       }
     }
 
+    // Served by /api/feedback only: the documents contain e-mail addresses.
     match /feedback/{feedbackId} {
-      allow read: if signedIn();
+      allow read: if false;
       allow create, update, delete: if false;
     }
 
+    // Support tickets (Feedback/FAQ > Destek talepleri) are private between the
+    // author and the Hanogt team: served only by /api/support and /api/admin/tickets.
+    match /support_tickets/{ticketId} {
+      allow read, write: if false;
+    }
+
+    // Served by /api/notifications (reading, marking read, deleting); the
+    // browser no longer touches these documents directly.
     match /notifications/{userId}/items/{itemId} {
-      allow read, update, delete: if isSelf(userId);
-      allow create: if false;
+      allow read, write: if false;
     }
 
     match /changelog_comments/{version}/comments/{commentId} {
