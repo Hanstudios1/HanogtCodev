@@ -1,51 +1,86 @@
 "use client";
 
-import { Save, FileText, Settings, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Command, Download, FilePlus2, FolderDown, Keyboard, Moon, Save, Settings, Share2, Sun, Upload } from "lucide-react";
 import Link from "next/link";
-import { useI18n } from "@/lib/i18n";
+import type { ReactNode } from "react";
+import { useI18n, type Copy } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 
-interface SidebarProps {
+export interface EditorActions {
+    onNewFile?: () => void;
+    onUpload?: () => void;
     onSave: () => void;
     onDownload: () => void;
-    backHref?: string;
+    onDownloadProject: () => void;
+    onShare: () => void;
+    onPalette: () => void;
+    onShortcuts: () => void;
 }
 
-export default function Sidebar({ onSave, onDownload, backHref = "/dashboard" }: SidebarProps) {
-    const { t } = useI18n();
+interface SidebarProps extends EditorActions {
+    backHref?: string;
+    saveShortcut: string;
+    paletteShortcut: string;
+}
 
+export const SIDEBAR_COPY = {
+    back: { TR: "Önceki çalışma alanına dön", EN: "Back to the previous workspace" },
+    newFile: { TR: "Yeni dosya veya şablon", EN: "New file or template" },
+    upload: { TR: "Dosya yükle (metin veya ZIP)", EN: "Upload files (text or ZIP)" },
+    save: { TR: "Kaydet", EN: "Save" },
+    download: { TR: "Bu dosyayı indir", EN: "Download this file" },
+    downloadProject: { TR: "Projeyi ZIP olarak indir", EN: "Download the project as ZIP" },
+    share: { TR: "Kod parçacığını paylaş", EN: "Share snippet" },
+    palette: { TR: "Hızlı işlemler", EN: "Quick actions" },
+    shortcuts: { TR: "Klavye kısayolları", EN: "Keyboard shortcuts" },
+    settings: { TR: "Editör ayarları", EN: "Editor settings" },
+    light: { TR: "Açık temaya geç", EN: "Switch to light theme" },
+    dark: { TR: "Koyu temaya geç", EN: "Switch to dark theme" },
+    toolbar: { TR: "Editör işlemleri", EN: "Editor actions" },
+} satisfies Record<string, Copy>;
+
+function ActionButton({ label, shortcut, onClick, children, accent = false }: { label: string; shortcut?: string; onClick: () => void; children: ReactNode; accent?: boolean }) {
     return (
-        <div className="w-16 md:w-20 lg:w-64 h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col justify-between transition-all">
-            {/* Top Section */}
-            <div>
-                <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
-                    <Link href={backHref} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors" aria-label="Önceki çalışma alanına dön">
-                        <ArrowLeft className="w-5 h-5 text-zinc-500" />
-                    </Link>
-                    <span className="font-bold text-lg hidden lg:block">Hanogt</span>
-                </div>
+        <button
+            type="button"
+            onClick={onClick}
+            title={shortcut ? `${label} (${shortcut})` : label}
+            aria-label={label}
+            className={`flex h-10 w-10 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${accent ? "text-indigo-600 hover:bg-indigo-500/10 dark:text-indigo-300" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"}`}
+        >
+            {children}
+        </button>
+    );
+}
 
-                <nav className="p-2 space-y-2 mt-4">
-                    <div className="lg:px-4 lg:py-2 text-xs font-semibold text-zinc-500 uppercase hidden lg:block">{t("my_projects")}</div>
-
-                    <button onClick={onSave} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-all font-medium group">
-                        <Save className="w-5 h-5" />
-                        <span className="hidden lg:block">{t("save")}</span>
-                    </button>
-
-                    <button onClick={onDownload} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-all font-medium group">
-                        <FileText className="w-5 h-5" />
-                        <span className="hidden lg:block">{t("download")}</span>
-                    </button>
-                </nav>
+/** The editor's vertical activity bar (tablet and desktop). */
+export default function Sidebar({ backHref = "/dashboard", saveShortcut, paletteShortcut, onNewFile, onUpload, onSave, onDownload, onDownloadProject, onShare, onPalette, onShortcuts }: SidebarProps) {
+    const { tx } = useI18n();
+    const { theme, toggle } = useTheme();
+    return (
+        <nav aria-label={tx(SIDEBAR_COPY.toolbar)} className="hidden h-full w-14 shrink-0 flex-col items-center justify-between border-e border-zinc-200 bg-white py-2 dark:border-white/10 dark:bg-zinc-950 md:flex">
+            <div className="flex flex-col items-center gap-1">
+                <Link href={backHref} title={tx(SIDEBAR_COPY.back)} aria-label={tx(SIDEBAR_COPY.back)} className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white">
+                    <ArrowLeft className="h-5 w-5 rtl:rotate-180" aria-hidden />
+                </Link>
+                {onNewFile && <ActionButton label={tx(SIDEBAR_COPY.newFile)} onClick={onNewFile} accent><FilePlus2 className="h-5 w-5" aria-hidden /></ActionButton>}
+                {onUpload && <ActionButton label={tx(SIDEBAR_COPY.upload)} onClick={onUpload}><Upload className="h-5 w-5" aria-hidden /></ActionButton>}
+                <ActionButton label={tx(SIDEBAR_COPY.save)} shortcut={saveShortcut} onClick={onSave}><Save className="h-5 w-5" aria-hidden /></ActionButton>
+                <ActionButton label={tx(SIDEBAR_COPY.download)} onClick={onDownload}><Download className="h-5 w-5" aria-hidden /></ActionButton>
+                <ActionButton label={tx(SIDEBAR_COPY.downloadProject)} onClick={onDownloadProject}><FolderDown className="h-5 w-5" aria-hidden /></ActionButton>
+                <ActionButton label={tx(SIDEBAR_COPY.share)} onClick={onShare}><Share2 className="h-5 w-5" aria-hidden /></ActionButton>
+                <div className="my-1 h-px w-6 bg-zinc-200 dark:bg-white/10" />
+                <ActionButton label={tx(SIDEBAR_COPY.palette)} shortcut={paletteShortcut} onClick={onPalette}><Command className="h-5 w-5" aria-hidden /></ActionButton>
+                <ActionButton label={tx(SIDEBAR_COPY.shortcuts)} onClick={onShortcuts}><Keyboard className="h-5 w-5" aria-hidden /></ActionButton>
             </div>
-
-            {/* Bottom Settings */}
-            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
-                <Link href="/settings" className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 transition-all">
-                    <Settings className="w-5 h-5" />
-                    <span className="hidden lg:block">{t("settings")}</span>
+            <div className="flex flex-col items-center gap-1">
+                <ActionButton label={tx(theme === "dark" ? SIDEBAR_COPY.light : SIDEBAR_COPY.dark)} onClick={toggle}>
+                    {theme === "dark" ? <Sun className="h-5 w-5" aria-hidden /> : <Moon className="h-5 w-5" aria-hidden />}
+                </ActionButton>
+                <Link href="/settings" title={tx(SIDEBAR_COPY.settings)} aria-label={tx(SIDEBAR_COPY.settings)} className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white">
+                    <Settings className="h-5 w-5" aria-hidden />
                 </Link>
             </div>
-        </div>
+        </nav>
     );
 }

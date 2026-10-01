@@ -8,15 +8,19 @@ import { useRouter } from "next/navigation";
 import { User, Trash2, Camera, ArrowLeft, Save, Bell, Globe, Shield, Database, Download, Clock, Eye, EyeOff, Mail, Megaphone, LogOut, Link2, Github, Linkedin, Twitter, Globe2, Hash, Palette, Image as ImageIcon, MessageCircle, Star, Lock, Paintbrush } from "lucide-react";
 import Header from "@/components/Header";
 import TwoFactorSettings from "@/components/Account/TwoFactorSettings";
+import { POPULAR_LANGUAGE_IDS, getLanguage } from "@/lib/runtimes/languages";
 import { LANGUAGES, useI18n } from "@/lib/i18n";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
-const PROGRAMMING_LANGUAGES = [
-    "JavaScript", "TypeScript", "Python", "Java", "C++", "C#", "Go", "Rust",
-    "Ruby", "PHP", "Swift", "Kotlin", "Dart", "Scala", "R", "SQL",
-    "HTML", "CSS", "React", "Vue", "Angular", "Node.js", "Next.js", "Flutter"
-];
+// Names people can mark as favourites. The runnable languages come from the
+// editor's single source of truth; framework/library names are kept as before
+// so previously saved favourites still match.
+const PROGRAMMING_LANGUAGES = [...new Set([
+    ...POPULAR_LANGUAGE_IDS.map((id) => (id === "sql" ? "SQL" : getLanguage(id)?.name ?? id)),
+    "Ruby", "PHP", "Swift", "Dart", "Scala", "R", "Lua", "Scheme",
+    "CSS", "React", "Vue", "Angular", "Node.js", "Next.js", "Flutter",
+])];
 
 const ACCENT_COLORS = [
     "#3B82F6", "#8B5CF6", "#EC4899", "#EF4444", "#F97316", "#EAB308",

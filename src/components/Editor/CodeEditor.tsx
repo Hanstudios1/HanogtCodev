@@ -1,169 +1,115 @@
 "use client";
 
-import Editor, { type OnMount } from "@monaco-editor/react";
+import Editor, { type BeforeMount, type OnMount } from "@monaco-editor/react";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { configureMonaco } from "@/lib/monaco";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { editor } from "monaco-editor";
+import { DEFAULT_EDITOR_SETTINGS, resolveEditorTheme, toMonacoOptions, useEditorSettings, type EditorSettings } from "@/lib/editor-settings";
+import { useI18n } from "@/lib/i18n";
+import { configureMonaco, setupMonaco, type MonacoApi } from "@/lib/monaco";
+import { monacoLanguageFor } from "@/lib/runtimes/languages";
 import { useTheme } from "@/lib/theme";
 
 configureMonaco();
 
+// Kept for existing imports of the settings API from this module.
+export { DEFAULT_EDITOR_SETTINGS, useEditorSettings };
+export type { EditorSettings };
+
 interface CodeEditorProps {
+    /** A language id from src/lib/runtimes/languages.ts (or a Monaco language id). */
     language: string;
     value: string;
     onChange: (value: string | undefined) => void;
-    /** Forces a Monaco theme; by default the saved editor setting or the site theme is used. */
+    /**
+     * Forces a light or dark editor (pages with a fixed colour scheme). The
+     * user's theme is kept when it already has that brightness.
+     */
     theme?: "light" | "dark";
+    /** An exact Monaco theme id, e.g. for the settings preview. */
+    monacoTheme?: string;
     path?: string;
     readOnly?: boolean;
-    onMount?: OnMount;
+    onMount?: (editor: editor.IStandaloneCodeEditor, monaco: MonacoApi) => void;
     className?: string;
+    /** Extra Monaco options applied after the user's settings. */
+    options?: editor.IStandaloneEditorConstructionOptions;
+    /** Uses these settings instead of the saved ones (live previews). */
+    settingsOverride?: EditorSettings;
+    ariaLabel?: string;
 }
 
-export interface EditorSettings {
-    fontSize: number;
-    fontFamily: string;
-    tabSize: number;
-    wordWrap: boolean;
-    lineNumbers: boolean;
-    minimap: boolean;
-    bracketPairColorization: boolean;
-    cursorStyle: "line" | "block" | "underline";
-    smoothScrolling: boolean;
-    autoCloseBrackets: boolean;
-    autoCloseQuotes: boolean;
-    formatOnPaste: boolean;
-    formatOnType: boolean;
-    highlightActiveLine: boolean;
-    renderIndentGuides: boolean;
-    cursorBlinking: "blink" | "smooth" | "phase" | "expand" | "solid";
-    theme: "light" | "dark" | "system";
-    lineHeight: number;
-    autocomplete: boolean;
-    snippetSuggestions: boolean;
-    parameterHints: boolean;
-    hoverInfo: boolean;
-    linkedEditing: boolean;
-    renderWhitespace: "none" | "boundary" | "all";
-    autoIndent: "none" | "keep" | "brackets" | "advanced";
-    stickyScroll: boolean;
-    codeLens: boolean;
-    inlineSuggest: boolean;
-}
+const beforeMount: BeforeMount = (monaco: MonacoApi) => setupMonaco(monaco);
 
-export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
-    fontSize: 14,
-    fontFamily: "JetBrains Mono",
-    tabSize: 4,
-    wordWrap: true,
-    lineNumbers: true,
-    minimap: true,
-    bracketPairColorization: true,
-    cursorStyle: "line",
-    smoothScrolling: true,
-    autoCloseBrackets: true,
-    autoCloseQuotes: true,
-    formatOnPaste: false,
-    formatOnType: false,
-    highlightActiveLine: true,
-    renderIndentGuides: true,
-    cursorBlinking: "blink",
-    theme: "system",
-    lineHeight: 1.6,
-    autocomplete: true,
-    snippetSuggestions: true,
-    parameterHints: true,
-    hoverInfo: true,
-    linkedEditing: true,
-    renderWhitespace: "none",
-    autoIndent: "advanced",
-    stickyScroll: true,
-    codeLens: true,
-    inlineSuggest: true,
-};
-
-const SETTINGS_KEY = "hanogt_editor_settings";
-
-function readSettings(): EditorSettings {
-    try {
-        const saved = window.localStorage.getItem(SETTINGS_KEY);
-        if (!saved) return DEFAULT_EDITOR_SETTINGS;
-        const parsed = JSON.parse(saved) as Partial<EditorSettings>;
-        return { ...DEFAULT_EDITOR_SETTINGS, ...parsed };
-    } catch {
-        return DEFAULT_EDITOR_SETTINGS;
-    }
-}
-
-/** Editor preferences saved on the settings page, kept in sync across tabs. */
-export function useEditorSettings() {
-    const [settings, setSettings] = useState<EditorSettings>(DEFAULT_EDITOR_SETTINGS);
-    useEffect(() => {
-        const load = () => setSettings(readSettings());
-        const frame = window.requestAnimationFrame(load);
-        const onStorage = (event: StorageEvent) => { if (event.key === SETTINGS_KEY) load(); };
-        window.addEventListener("storage", onStorage);
-        return () => {
-            window.cancelAnimationFrame(frame);
-            window.removeEventListener("storage", onStorage);
-        };
-    }, []);
-    return settings;
-}
-
-const MONO_FALLBACK = "'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace";
-
-export default function CodeEditor({ language, theme, value, onChange, path, readOnly = false, onMount, className = "" }: CodeEditorProps) {
-    const settings = useEditorSettings();
+export default function CodeEditor({ language, theme, monacoTheme, value, onChange, path, readOnly = false, onMount, className = "", options, settingsOverride, ariaLabel }: CodeEditorProps) {
+    const savedSettings = useEditorSettings();
+    const settings = settingsOverride ?? savedSettings;
     const { theme: siteTheme } = useTheme();
-    const resolvedTheme = theme ?? (settings.theme === "system" ? siteTheme : settings.theme);
+    const { tx } = useI18n();
+    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+    const monacoRef = useRef<MonacoApi | null>(null);
+    const [mounted, setMounted] = useState(false);
+    const resolvedTheme = monacoTheme ?? resolveEditorTheme(settings.theme, siteTheme, theme);
+    // Registry ids map to Monaco ids; anything else (a raw Monaco id) passes through.
+    const monacoLanguage = useMemo(() => {
+        const mapped = monacoLanguageFor(language);
+        return mapped === "plaintext" && language ? language : mapped;
+    }, [language]);
+
+    const mergedOptions = useMemo<editor.IStandaloneEditorConstructionOptions>(() => ({
+        ...toMonacoOptions(settings),
+        readOnly,
+        automaticLayout: true,
+        padding: { top: 14, bottom: 14 },
+        fixedOverflowWidgets: true,
+        ariaLabel: ariaLabel ?? tx({ TR: "Kod düzenleyici", EN: "Code editor" }),
+        ...options,
+    }), [settings, readOnly, options, ariaLabel, tx]);
+
+    const handleMount = useCallback<OnMount>((instance, monaco: MonacoApi) => {
+        editorRef.current = instance;
+        monacoRef.current = monaco;
+        setMounted(true);
+        // Fonts that load after Monaco measured them would misplace the cursor.
+        if (typeof document !== "undefined" && "fonts" in document) {
+            document.fonts.ready.then(() => monaco.editor.remeasureFonts()).catch(() => undefined);
+        }
+        onMount?.(instance, monaco);
+    }, [onMount]);
+
+    // Indentation is a model option: apply it to the open model too.
+    useEffect(() => {
+        const instance = editorRef.current;
+        if (!mounted || !instance) return;
+        const apply = () => {
+            const model = instance.getModel();
+            if (model && !settings.detectIndentation) model.updateOptions({ tabSize: settings.tabSize, indentSize: settings.tabSize, insertSpaces: settings.insertSpaces });
+        };
+        apply();
+        const subscription = instance.onDidChangeModel(apply);
+        return () => subscription.dispose();
+    }, [mounted, settings.tabSize, settings.insertSpaces, settings.detectIndentation]);
+
+    useEffect(() => {
+        if (!mounted || !monacoRef.current) return;
+        const monaco = monacoRef.current;
+        if (typeof document === "undefined" || !("fonts" in document)) return;
+        document.fonts.ready.then(() => monaco.editor.remeasureFonts()).catch(() => undefined);
+    }, [mounted, settings.fontFamily, settings.fontSize]);
 
     return (
         <div className={`h-full w-full overflow-hidden rounded-xl border border-zinc-200 shadow-sm dark:border-zinc-800 ${className}`}>
             <Editor
                 height="100%"
-                language={language}
+                language={monacoLanguage}
                 path={path}
                 value={value}
-                theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
+                theme={resolvedTheme}
                 onChange={onChange}
-                onMount={onMount}
-                loading={<div className="flex items-center gap-2 text-sm text-zinc-500"><LoaderCircle className="h-4 w-4 animate-spin" />Editör yükleniyor…</div>}
-                options={{
-                    readOnly,
-                    minimap: { enabled: settings.minimap },
-                    fontSize: settings.fontSize,
-                    fontFamily: settings.fontFamily ? `'${settings.fontFamily.replace(/'/g, "")}', ${MONO_FALLBACK}` : MONO_FALLBACK,
-                    fontLigatures: true,
-                    lineHeight: settings.lineHeight,
-                    tabSize: settings.tabSize,
-                    wordWrap: settings.wordWrap ? "on" : "off",
-                    lineNumbers: settings.lineNumbers ? "on" : "off",
-                    cursorStyle: settings.cursorStyle,
-                    cursorBlinking: settings.cursorBlinking,
-                    smoothScrolling: settings.smoothScrolling,
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    padding: { top: 14, bottom: 14 },
-                    bracketPairColorization: { enabled: settings.bracketPairColorization },
-                    autoClosingBrackets: settings.autoCloseBrackets ? "always" : "never",
-                    autoClosingQuotes: settings.autoCloseQuotes ? "always" : "never",
-                    formatOnPaste: settings.formatOnPaste,
-                    formatOnType: settings.formatOnType,
-                    renderLineHighlight: settings.highlightActiveLine ? "all" : "none",
-                    guides: { indentation: settings.renderIndentGuides, bracketPairs: settings.bracketPairColorization },
-                    quickSuggestions: settings.autocomplete,
-                    suggestOnTriggerCharacters: settings.autocomplete,
-                    snippetSuggestions: settings.snippetSuggestions ? "inline" : "none",
-                    parameterHints: { enabled: settings.parameterHints },
-                    hover: { enabled: settings.hoverInfo ? "on" : "off" },
-                    linkedEditing: settings.linkedEditing,
-                    renderWhitespace: settings.renderWhitespace,
-                    autoIndent: settings.autoIndent,
-                    stickyScroll: { enabled: settings.stickyScroll },
-                    codeLens: settings.codeLens,
-                    inlineSuggest: { enabled: settings.inlineSuggest },
-                }}
+                beforeMount={beforeMount}
+                onMount={handleMount}
+                loading={<div className="flex items-center gap-2 text-sm text-zinc-500"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx({ TR: "Editör yükleniyor…", EN: "Loading the editor…" })}</div>}
+                options={mergedOptions}
             />
         </div>
     );

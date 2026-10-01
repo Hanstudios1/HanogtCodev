@@ -2,7 +2,8 @@
 //  - Pyodide (CPython compiled to WebAssembly) for Python,
 //  - sql.js (SQLite) and wasmoon (Lua 5.4) WebAssembly binaries,
 //  - worker.js: the bundled Web Worker that runs JavaScript, TypeScript,
-//    Python, SQL and Lua (src/lib/runtimes/worker.ts).
+//    Python, SQL and Lua, plus Hanogt's own dependency-free Scheme and
+//    Brainfuck interpreters and the JSON validator (src/lib/runtimes/worker.ts).
 // Everything is served from our own origin so the site's CSP stays strict.
 import fs from "node:fs";
 import path from "node:path";

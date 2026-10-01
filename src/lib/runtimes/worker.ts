@@ -1,19 +1,40 @@
 /**
  * In-browser code runner (bundled to /runtimes/worker.js by scripts/copy-runtimes.mjs).
  *
- * Runs JavaScript, TypeScript, Python (Pyodide), SQL (sql.js) and Lua (wasmoon)
+ * Runs JavaScript, TypeScript (sucrase), Python (Pyodide), SQL (sql.js), Lua
+ * (wasmoon), Scheme and Brainfuck (Hanogt interpreters) and validates JSON
  * inside a dedicated module worker, so learners can execute code without any
- * server-side runner. The worker has no DOM access; the page terminates it when
- * a run exceeds its time limit.
+ * server-side runner. The worker has no DOM access; the page terminates it
+ * when a run exceeds its time limit.
  */
 import { transform } from "sucrase";
 import initSqlJs from "sql.js/dist/sql-wasm-browser.js";
 import { LuaFactory } from "wasmoon";
+import { runBrainfuck } from "./brainfuck";
+import { analyzeJson, codeFrame } from "./json-tools";
+import { runScheme } from "./scheme";
 
-type RunRequest = { id: number; type: "run"; language: string; code: string; stdin?: string };
+type Locale = "tr" | "en";
+type RunRequest = {
+    id: number;
+    type: "run";
+    language: string;
+    code: string;
+    stdin?: string;
+    /** Shown in error locations (e.g. "main.py"). */
+    fileName?: string;
+    locale?: Locale;
+    /** Milliseconds after which interpreters stop gracefully (before the page's hard timeout). */
+    softTimeoutMs?: number;
+    /** Indentation used when formatting JSON. */
+    indent?: number;
+};
+export type WorkerStatusCode = "loading_python" | "loading_sqlite" | "loading_lua";
+export type WorkerNoticeCode = "output_truncated";
 type Outgoing =
     | { id: number; type: "stdout" | "stderr"; text: string }
-    | { id: number; type: "status"; text: string }
+    | { id: number; type: "status"; code: WorkerStatusCode; text: string }
+    | { id: number; type: "notice"; code: WorkerNoticeCode }
     | { id: number; type: "done"; exitCode: number; version: string };
 
 // A minimal view of the worker global; the project compiles with DOM typings.
@@ -23,14 +44,33 @@ const BASE = "/runtimes";
 const MAX_OUTPUT = 64_000;
 
 let outputBudget = MAX_OUTPUT;
+let truncated = false;
+let locale: Locale = "en";
+
+/** Picks the Turkish or English text of a worker message (program output, not UI). */
+const say = (text: { tr: string; en: string }) => text[locale];
+
+class OutputLimitReached extends Error {}
+
 function emit(id: number, type: "stdout" | "stderr", text: string) {
-    if (!text || outputBudget <= 0) return;
-    const chunk = text.length > outputBudget ? `${text.slice(0, outputBudget)}\n… (çıktı kısaltıldı)\n` : text;
+    if (!text) return;
+    if (outputBudget <= 0) {
+        if (!truncated) {
+            truncated = true;
+            scope.postMessage({ id, type: "notice", code: "output_truncated" } satisfies Outgoing);
+        }
+        return;
+    }
+    const chunk = text.length > outputBudget ? text.slice(0, outputBudget) : text;
     outputBudget -= chunk.length;
     scope.postMessage({ id, type, text: chunk } satisfies Outgoing);
+    if (outputBudget <= 0 && !truncated) {
+        truncated = true;
+        scope.postMessage({ id, type: "notice", code: "output_truncated" } satisfies Outgoing);
+    }
 }
-function status(id: number, text: string) {
-    scope.postMessage({ id, type: "status", text } satisfies Outgoing);
+function status(id: number, code: WorkerStatusCode, text: string) {
+    scope.postMessage({ id, type: "status", code, text } satisfies Outgoing);
 }
 
 /** Line-based stdin shared by every language: input(), readline(), io.read(). */
@@ -38,6 +78,12 @@ function stdinReader(stdin: string) {
     const lines = stdin.length ? stdin.replace(/\r\n/g, "\n").split("\n") : [];
     if (lines.length && lines[lines.length - 1] === "") lines.pop();
     return () => (lines.length ? lines.shift()! : null);
+}
+
+/** A file name safe to print in error locations. */
+function displayName(fileName: string | undefined, fallback: string) {
+    const name = (fileName ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 120);
+    return name || fallback;
 }
 
 // --------------------------------------------------------------------- JS / TS
@@ -71,10 +117,10 @@ function describeJavaScriptError(error: unknown, source: string, fileName: strin
     if (error instanceof SyntaxError) {
         // V8 reports no position for code compiled by new Function; ask the parser.
         try {
-            transform(source, { transforms: fileName.endsWith(".ts") ? ["typescript"] : [] });
+            transform(source, { transforms: fileName.endsWith(".ts") || fileName.endsWith(".tsx") ? ["typescript"] : [] });
         } catch (parseError) {
             const location = (parseError as { loc?: { line: number; column: number } }).loc;
-            if (location) return `${header}\n    at ${fileName}:${location.line}:${location.column}`;
+            if (location) return `${header}\n    at ${fileName}:${location.line}:${location.column + 1}`;
         }
         return header;
     }
@@ -91,8 +137,18 @@ function describeJavaScriptError(error: unknown, source: string, fileName: strin
 }
 
 async function runJavaScript(id: number, source: string, stdin: string) {
-    const out = (...args: unknown[]) => emit(id, "stdout", `${args.map((arg) => inspect(arg)).join(" ")}\n`);
-    const err = (...args: unknown[]) => emit(id, "stderr", `${args.map((arg) => inspect(arg)).join(" ")}\n`);
+    // Once the output limit is reached, logging stops the program instead of spinning until the timeout.
+    const guard = () => {
+        if (outputBudget <= 0) throw new OutputLimitReached("Output limit reached");
+    };
+    const out = (...args: unknown[]) => {
+        guard();
+        emit(id, "stdout", `${args.map((arg) => inspect(arg)).join(" ")}\n`);
+    };
+    const err = (...args: unknown[]) => {
+        guard();
+        emit(id, "stderr", `${args.map((arg) => inspect(arg)).join(" ")}\n`);
+    };
     const fakeConsole = {
         log: out, info: out, debug: out, trace: out,
         warn: err, error: err,
@@ -134,7 +190,7 @@ let pyodidePromise: Promise<Pyodide> | null = null;
 
 async function loadPython(id: number) {
     if (!pyodidePromise) {
-        status(id, "Python çalışma zamanı yükleniyor (ilk çalıştırmada ~12 MB)…");
+        status(id, "loading_python", "Loading the Python runtime (about 12 MB on the first run)…");
         const moduleUrl = `${BASE}/pyodide/pyodide.mjs`;
         pyodidePromise = import(/* webpackIgnore: true */ moduleUrl).then((module: { loadPyodide: (options: { indexURL: string }) => Promise<Pyodide> }) =>
             module.loadPyodide({ indexURL: `${BASE}/pyodide/` }));
@@ -143,8 +199,8 @@ async function loadPython(id: number) {
     return pyodidePromise;
 }
 
-/** Drops Pyodide's internal frames and names the user's file main.py. */
-function describePythonError(message: string, source: string) {
+/** Drops Pyodide's internal frames and names the user's file. */
+function describePythonError(message: string, source: string, fileName: string) {
     const sourceLines = source.split("\n");
     const output: string[] = [];
     let skipping = false;
@@ -153,7 +209,7 @@ function describePythonError(message: string, source: string) {
         if (frame) {
             skipping = frame[1] !== "<exec>";
             if (skipping) continue;
-            output.push(`  File "main.py", line ${frame[2]}${frame[3]}`);
+            output.push(`  File "${fileName}", line ${frame[2]}${frame[3]}`);
             // Python cannot print the line itself because <exec> is not a real file.
             const text = frame[3].startsWith(", in ") ? sourceLines[Number(frame[2]) - 1]?.trim() : "";
             if (text) output.push(`    ${text}`);
@@ -164,7 +220,7 @@ function describePythonError(message: string, source: string) {
         output.push(line);
     }
     // Like CPython, a syntax error in the script itself has no traceback header.
-    if (!output.some((line) => line.startsWith('  File "main.py"') && line.includes(", in "))) {
+    if (!output.some((line) => line.startsWith(`  File "${fileName}"`) && line.includes(", in "))) {
         return output.filter((line) => line !== "Traceback (most recent call last):").join("\n");
     }
     return output.join("\n");
@@ -172,7 +228,7 @@ function describePythonError(message: string, source: string) {
 
 let pythonVersion = "";
 
-async function runPython(id: number, source: string, stdin: string) {
+async function runPython(id: number, source: string, stdin: string, fileName: string) {
     const pyodide = await loadPython(id);
     if (!pythonVersion) pythonVersion = String(await pyodide.runPythonAsync("import sys\nsys.version.split()[0]"));
     pyodide.setStdout({ batched: (text) => emit(id, "stdout", `${text}\n`) });
@@ -185,7 +241,7 @@ async function runPython(id: number, source: string, stdin: string) {
     try {
         await pyodide.runPythonAsync(source, { globals: namespace });
     } catch (error) {
-        throw new Error(describePythonError(error instanceof Error ? error.message : String(error), source));
+        throw new Error(describePythonError(error instanceof Error ? error.message : String(error), source, fileName));
     } finally {
         namespace.destroy?.();
     }
@@ -205,7 +261,7 @@ function formatTable(result: SqlResult) {
         line,
         ...rows.map((row) => `| ${row.map((cell, index) => clip(cell, widths[index])).join(" | ")} |`),
         line,
-        `(${rows.length} satır)`,
+        say({ tr: `(${rows.length} satır)`, en: `(${rows.length} ${rows.length === 1 ? "row" : "rows"})` }),
     ].join("\n");
 }
 
@@ -214,7 +270,10 @@ async function runSql(id: number, source: string) {
     const db = new SQL.Database();
     try {
         const results = db.exec(source) as SqlResult[];
-        if (!results.length) emit(id, "stdout", `Sorgular çalıştırıldı (${db.getRowsModified()} satır etkilendi).\n`);
+        if (!results.length) {
+            const changed = db.getRowsModified();
+            emit(id, "stdout", `${say({ tr: `Sorgular çalıştırıldı (${changed} satır etkilendi).`, en: `Statements executed (${changed} ${changed === 1 ? "row" : "rows"} affected).` })}\n`);
+        }
         for (const result of results) emit(id, "stdout", `${formatTable(result)}\n\n`);
     } finally {
         db.close();
@@ -223,7 +282,7 @@ async function runSql(id: number, source: string) {
 }
 
 // ------------------------------------------------------------------------- Lua
-async function runLua(id: number, source: string, stdin: string) {
+async function runLua(id: number, source: string, stdin: string, fileName: string) {
     const factory = new LuaFactory(`${BASE}/lua-glue.wasm`);
     const lua = await factory.createEngine();
     const read = stdinReader(stdin);
@@ -241,33 +300,128 @@ async function runLua(id: number, source: string, stdin: string) {
             end
             io.read = function() return __hanogt_read() end
         `);
-        await factory.mountFile("main.lua", source);
-        await lua.doFile("main.lua");
+        const mounted = fileName.endsWith(".lua") ? fileName.replace(/[^\w.-]/g, "_") : "main.lua";
+        await factory.mountFile(mounted, source);
+        await lua.doFile(mounted);
     } finally {
         lua.global.close();
     }
     return "Lua 5.4 (wasmoon)";
 }
 
+// ------------------------------------------------------------------ Brainfuck
+function runBrainfuckProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    let result: ReturnType<typeof runBrainfuck>;
+    try {
+        result = runBrainfuck(source, {
+            stdin,
+            maxCells: 1_000_000,
+            onOutput: (text) => {
+                if (outputBudget <= 0) throw new OutputLimitReached("Output limit reached");
+                emit(id, "stdout", text);
+            },
+            shouldStop: () => Date.now() > deadline,
+        });
+    } catch (error) {
+        if (error instanceof OutputLimitReached) return "Brainfuck (Hanogt, 8-bit cells)";
+        throw error;
+    }
+    if (result.error) {
+        const where = result.error.line ? `\n    at ${fileName}:${result.error.line}:${result.error.column ?? 1}` : "";
+        throw new Error(`${result.error.message}${where}`);
+    }
+    return "Brainfuck (Hanogt, 8-bit cells)";
+}
+
+// --------------------------------------------------------------------- Scheme
+function runSchemeProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    const result = runScheme(source, {
+        stdin,
+        fileName,
+        maxOutput: MAX_OUTPUT,
+        onOutput: (text) => emit(id, "stdout", text),
+        onError: (text) => emit(id, "stderr", text),
+        shouldStop: () => Date.now() > deadline,
+    });
+    if (result.error) {
+        const message = result.error.line
+            ? result.error.message.replace(/\n {4}at line (\d+), column (\d+)$/, `\n    at ${fileName}:$1:$2`).replace(/ \(line (\d+), column (\d+)\)$/, `\n    at ${fileName}:$1:$2`)
+            : result.error.message;
+        throw new SchemeExit(message, result.exitCode || 1);
+    }
+    if (result.exitCode) throw new SchemeExit("", result.exitCode);
+    return "Scheme (Hanogt R7RS subset)";
+}
+
+class SchemeExit extends Error {
+    readonly code: number;
+    constructor(message: string, code: number) {
+        super(message);
+        this.code = code;
+    }
+}
+
+// ----------------------------------------------------------------------- JSON
+function validateJson(id: number, source: string, fileName: string, indent: number) {
+    const result = analyzeJson(source, { indent, locale });
+    for (const warning of result.warnings) {
+        emit(id, "stderr", `${say({ tr: "Uyarı", en: "Warning" })}: ${warning.message}\n    at ${fileName}:${warning.line}:${warning.column}\n`);
+    }
+    if (!result.ok || !result.stats || result.formatted === undefined) {
+        const issue = result.error ?? { message: say({ tr: "Geçersiz JSON.", en: "Invalid JSON." }), line: 1, column: 1, offset: 0 };
+        throw new Error(`SyntaxError: ${issue.message}\n    at ${fileName}:${issue.line}:${issue.column}\n\n${codeFrame(source, issue.line, issue.column)}`);
+    }
+    const stats = result.stats;
+    const kinds: Record<string, { tr: string; en: string }> = {
+        object: { tr: "nesne", en: "object" },
+        array: { tr: "dizi", en: "array" },
+        string: { tr: "metin", en: "string" },
+        number: { tr: "sayı", en: "number" },
+        boolean: { tr: "mantıksal değer", en: "boolean" },
+        null: { tr: "null", en: "null" },
+    };
+    const summary = say({
+        tr: `✓ Geçerli JSON · kök: ${kinds[stats.topLevel].tr} · ${stats.keys} anahtar · ${stats.arrays} dizi · derinlik ${stats.maxDepth} · ${stats.bytes} bayt`,
+        en: `✓ Valid JSON · root: ${kinds[stats.topLevel].en} · ${stats.keys} ${stats.keys === 1 ? "key" : "keys"} · ${stats.arrays} ${stats.arrays === 1 ? "array" : "arrays"} · depth ${stats.maxDepth} · ${stats.bytes} bytes`,
+    });
+    emit(id, "stdout", `${summary}\n\n${result.formatted}\n`);
+    return say({ tr: "JSON doğrulayıcı", en: "JSON validator" });
+}
+
 // ------------------------------------------------------------------ dispatcher
+const DEFAULT_FILE_NAMES: Record<string, string> = {
+    javascript: "main.js", typescript: "main.ts", python: "main.py", sql: "query.sql", lua: "main.lua",
+    brainfuck: "main.bf", scheme: "main.scm", json: "data.json",
+};
+
 /** Version labels for runs that failed before their runner returned one. */
 const FALLBACK_VERSIONS: Record<string, () => string> = {
     python: () => (pythonVersion ? `Python ${pythonVersion} (Pyodide)` : "Python (Pyodide)"),
     sql: () => "SQLite 3 (sql.js)",
     lua: () => "Lua 5.4 (wasmoon)",
+    brainfuck: () => "Brainfuck (Hanogt, 8-bit cells)",
+    scheme: () => "Scheme (Hanogt R7RS subset)",
+    json: () => say({ tr: "JSON doğrulayıcı", en: "JSON validator" }),
 };
 
 scope.onmessage = async (event: MessageEvent<RunRequest>) => {
     const { id, language, code } = event.data;
     const stdin = event.data.stdin ?? "";
+    locale = event.data.locale === "tr" ? "tr" : "en";
+    const fileName = displayName(event.data.fileName, DEFAULT_FILE_NAMES[language] ?? "main");
+    const deadline = Date.now() + Math.max(1_000, Math.min(event.data.softTimeoutMs ?? 12_000, 120_000));
     outputBudget = MAX_OUTPUT;
+    truncated = false;
     let version = "";
     let exitCode = 0;
     try {
         switch (language) {
             case "javascript":
-                version = "JavaScript (tarayıcı)";
-                await runJavaScript(id, code, stdin).catch((error) => { throw new Error(describeJavaScriptError(error, code, "main.js")); });
+                version = "JavaScript (browser)";
+                await runJavaScript(id, code, stdin).catch((error) => {
+                    if (error instanceof OutputLimitReached) return;
+                    throw new Error(describeJavaScriptError(error, code, fileName));
+                });
                 break;
             case "typescript": {
                 version = "TypeScript (sucrase)";
@@ -276,27 +430,40 @@ scope.onmessage = async (event: MessageEvent<RunRequest>) => {
                     runnable = toRunnableTypeScript(code);
                 } catch (error) {
                     const location = (error as { loc?: { line: number; column: number } }).loc;
-                    throw new Error(`SyntaxError: ${error instanceof Error ? error.message.replace(/\s*\(\d+:\d+\)$/, "") : String(error)}${location ? `\n    at main.ts:${location.line}:${location.column}` : ""}`);
+                    throw new Error(`SyntaxError: ${error instanceof Error ? error.message.replace(/\s*\(\d+:\d+\)$/, "") : String(error)}${location ? `\n    at ${fileName}:${location.line}:${location.column + 1}` : ""}`);
                 }
-                await runJavaScript(id, runnable, stdin).catch((error) => { throw new Error(describeJavaScriptError(error, runnable, "main.ts")); });
+                await runJavaScript(id, runnable, stdin).catch((error) => {
+                    if (error instanceof OutputLimitReached) return;
+                    throw new Error(describeJavaScriptError(error, runnable, fileName));
+                });
                 break;
             }
             case "python":
-                version = await runPython(id, code, stdin);
+                version = await runPython(id, code, stdin, fileName);
                 break;
             case "sql":
                 version = await runSql(id, code);
                 break;
             case "lua":
-                version = await runLua(id, code, stdin);
+                version = await runLua(id, code, stdin, fileName);
+                break;
+            case "brainfuck":
+                version = runBrainfuckProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "scheme":
+                version = runSchemeProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "json":
+                version = validateJson(id, code, fileName, Math.max(1, Math.min(8, event.data.indent ?? 2)));
                 break;
             default:
-                throw new Error(`${language} tarayıcıda çalıştırılamıyor.`);
+                throw new Error(say({ tr: `${language} tarayıcıda çalıştırılamıyor.`, en: `${language} can't run in the browser.` }));
         }
     } catch (error) {
-        exitCode = 1;
+        exitCode = error instanceof SchemeExit ? error.code : 1;
         version ||= FALLBACK_VERSIONS[language]?.() ?? language;
-        emit(id, "stderr", `${error instanceof Error ? error.message : String(error)}\n`);
+        const message = error instanceof Error ? error.message : String(error);
+        if (message) emit(id, "stderr", `${message}\n`);
     }
     scope.postMessage({ id, type: "done", exitCode, version } satisfies Outgoing);
 };

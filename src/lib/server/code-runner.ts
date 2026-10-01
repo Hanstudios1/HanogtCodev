@@ -1,6 +1,7 @@
 import "server-only";
 
-import { RUNNABLE_LANGUAGES } from "@/lib/runtimes/languages";
+import { prepareJava, javaMainClass } from "@/lib/runtimes/java-launcher";
+import { LANGUAGES, SERVER_LANGUAGE_IDS, type WandboxMapping } from "@/lib/runtimes/languages";
 
 /**
  * Server-side code execution backends.
@@ -12,7 +13,9 @@ import { RUNNABLE_LANGUAGES } from "@/lib/runtimes/languages";
  *    because Wandbox has no Kotlin compiler.
  *
  * JavaScript, TypeScript, Python, SQL and Lua normally run in the visitor's
- * browser (src/lib/runtimes) and only reach this module as a fallback.
+ * browser (src/lib/runtimes) and only reach this module as a fallback. The
+ * language list and the Wandbox compiler mapping live in
+ * src/lib/runtimes/languages.ts (the single source of truth).
  */
 
 export type RunFile = { name: string; language: string; code: string };
@@ -21,6 +24,8 @@ export type RunJob = {
     language: string;
     version: string;
     run: { stdout: string; stderr: string; output: string; code: number };
+    /** Wall-clock time of this file's run on the remote runner, in milliseconds. */
+    durationMs?: number;
 };
 
 export const MAX_OUTPUT_LENGTH = 64_000;
@@ -40,42 +45,16 @@ function job(file: RunFile, version: string, stdout: string, stderr: string, cod
 type WandboxCompiler = { name: string; version: string; language: string; "display-name"?: string };
 
 /** Our language id -> Wandbox `language` names (lower case) and preferred compiler families. */
-const WANDBOX_LANGUAGES: Record<string, { names: string[]; prefer: string[] }> = {
-    c: { names: ["c"], prefer: ["gcc", "clang"] },
-    cpp: { names: ["c++"], prefer: ["gcc", "clang"] },
-    csharp: { names: ["c#"], prefer: ["mono", "dotnet"] },
-    java: { names: ["java"], prefer: ["openjdk"] },
-    go: { names: ["go"], prefer: ["go"] },
-    rust: { names: ["rust"], prefer: ["rust"] },
-    swift: { names: ["swift"], prefer: ["swift"] },
-    ruby: { names: ["ruby"], prefer: ["ruby"] },
-    php: { names: ["php"], prefer: ["php"] },
-    perl: { names: ["perl"], prefer: ["perl"] },
-    python: { names: ["python"], prefer: ["cpython"] },
-    javascript: { names: ["javascript"], prefer: ["nodejs"] },
-    typescript: { names: ["typescript"], prefer: ["typescript"] },
-    lua: { names: ["lua"], prefer: ["lua"] },
-    sql: { names: ["sql"], prefer: ["sqlite"] },
-    scala: { names: ["scala"], prefer: ["scala"] },
-    haskell: { names: ["haskell"], prefer: ["ghc"] },
-    elixir: { names: ["elixir"], prefer: ["elixir"] },
-    erlang: { names: ["erlang"], prefer: ["erlang"] },
-    nim: { names: ["nim"], prefer: ["nim"] },
-    d: { names: ["d"], prefer: ["dmd", "ldc", "gdc"] },
-    crystal: { names: ["crystal"], prefer: ["crystal"] },
-    bash: { names: ["bash script", "bash", "shell script"], prefer: ["bash"] },
-    pascal: { names: ["pascal"], prefer: ["fpc"] },
-    ocaml: { names: ["ocaml"], prefer: ["ocaml"] },
-    zig: { names: ["zig"], prefer: ["zig"] },
-    julia: { names: ["julia"], prefer: ["julia"] },
-    r: { names: ["r"], prefer: ["r"] },
-    groovy: { names: ["groovy"], prefer: ["groovy"] },
-    lisp: { names: ["lisp", "common lisp"], prefer: ["sbcl", "clisp"] },
-    fsharp: { names: ["f#"], prefer: ["fsharp", "dotnet"] },
-    coffeescript: { names: ["coffeescript"], prefer: ["coffeescript"] },
-};
+const WANDBOX_LANGUAGES: Readonly<Record<string, WandboxMapping>> = Object.fromEntries(
+    LANGUAGES.flatMap((language) => (language.wandbox ? [[language.id, language.wandbox]] : [])),
+);
 
-export const SERVER_LANGUAGES: ReadonlySet<string> = new Set(RUNNABLE_LANGUAGES);
+/** Names a Piston-compatible CODE_RUNNER_URL expects when they differ from our ids. */
+const PISTON_LANGUAGES: Readonly<Record<string, string>> = Object.fromEntries(
+    LANGUAGES.flatMap((language) => (language.piston ? [[language.id, language.piston]] : [])),
+);
+
+export const SERVER_LANGUAGES: ReadonlySet<string> = new Set(SERVER_LANGUAGE_IDS);
 
 /** WANDBOX_URL may point at a self-hosted Wandbox (github.com/melpon/wandbox). */
 const WANDBOX_URL = (process.env.WANDBOX_URL || "https://wandbox.org").replace(/\/+$/, "");
@@ -118,61 +97,6 @@ async function pickCompiler(language: string) {
         if (pool.length) return newest(pool);
     }
     return null;
-}
-
-/** Replaces comments and string literals with spaces, keeping every index in place. */
-function blankJavaLiterals(code: string) {
-    return code.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'/g, (match) => match.replace(/[^\n]/g, " "));
-}
-
-/** Name of the top-level type that declares `static void main(`. */
-function javaMainClass(source: string) {
-    const mainIndex = source.search(/\bstatic\s+void\s+main\s*\(/);
-    if (mainIndex < 0) return null;
-    const declaration = /^(?:class|interface|enum|record)\s+([A-Za-z_$][\w$]*)/;
-    let depth = 0;
-    let pending: string | null = null;
-    let current: string | null = null;
-    for (let index = 0; index < mainIndex; index += 1) {
-        const char = source[index];
-        if (char === "{") {
-            if (depth === 0) current = pending;
-            depth += 1;
-        } else if (char === "}") {
-            depth = Math.max(0, depth - 1);
-            if (depth === 0) current = null;
-        } else if (depth === 0 && (char === "c" || char === "i" || char === "e" || char === "r") && !/[\w$]/.test(source[index - 1] || "")) {
-            const match = declaration.exec(source.slice(index, index + 160));
-            if (match) pending = match[1];
-        }
-    }
-    return depth > 0 ? current : null;
-}
-
-/**
- * Wandbox saves Java code as prog.java, so a `public class Main` would not
- * compile there. Top-level types lose `public`, the package line is dropped and
- * a first `prog` class hands over to the user's own main method. Edits are
- * located on a copy without comments and strings, so literals stay untouched.
- */
-function prepareJava(code: string) {
-    const blanked = blankJavaLiterals(code);
-    const mainClass = javaMainClass(blanked);
-    const edits: Array<{ start: number; end: number; text: string }> = [];
-    const packageLine = /^[ \t]*package\s+[\w.]+\s*;/m.exec(blanked);
-    if (packageLine) edits.push({ start: packageLine.index, end: packageLine.index + packageLine[0].length, text: "" });
-    for (const match of blanked.matchAll(/\bpublic\s+(?=(?:(?:final|abstract|sealed|non-sealed|strictfp)\s+)*(?:class|interface|enum|record)\s)/g)) {
-        edits.push({ start: match.index, end: match.index + match[0].length, text: "" });
-    }
-    if (mainClass && mainClass !== "prog") {
-        const typeStart = /^[ \t]*(?:@\w+(?:\([^)]*\))?\s*)*(?:(?:public|final|abstract|sealed|non-sealed|strictfp)\s+)*(?:class|interface|enum|record)\s/m;
-        const at = blanked.search(typeStart);
-        const position = at >= 0 ? at : code.length;
-        edits.push({ start: position, end: position, text: `class prog { public static void main(String[] args) throws Exception { ${mainClass}.main(args); } }\n` });
-    }
-    // Apply from the end; at equal positions the removal runs before the insertion.
-    edits.sort((a, b) => b.start - a.start || b.end - a.end);
-    return edits.reduce((source, edit) => `${source.slice(0, edit.start)}${edit.text}${source.slice(edit.end)}`, code);
 }
 
 async function runWithWandbox(file: RunFile, stdin: string, signal: AbortSignal): Promise<RunJob> {
@@ -273,7 +197,7 @@ async function runWithPiston(url: string, file: RunFile, stdin: string, signal: 
             ...(process.env.CODE_RUNNER_TOKEN ? { Authorization: `Bearer ${process.env.CODE_RUNNER_TOKEN}` } : {}),
         },
         body: JSON.stringify({
-            language: file.language === "sql" ? "sqlite3" : file.language,
+            language: PISTON_LANGUAGES[file.language] ?? file.language,
             version: "*",
             files: [{ name: file.name, content: file.code }],
             stdin,
@@ -306,11 +230,14 @@ export function runnerName() {
 export async function runFiles(files: RunFile[], stdin: string, timeoutMs = 25_000) {
     const signal = AbortSignal.timeout(timeoutMs);
     const url = process.env.CODE_RUNNER_URL;
-    return Promise.all(files.map((file) => {
-        if (url) return runWithPiston(url, file, stdin, signal);
-        return file.language === "kotlin" ? runKotlin(file, stdin, signal) : runWithWandbox(file, stdin, signal);
+    return Promise.all(files.map(async (file) => {
+        const started = Date.now();
+        const result = url
+            ? await runWithPiston(url, file, stdin, signal)
+            : file.language === "kotlin" ? await runKotlin(file, stdin, signal) : await runWithWandbox(file, stdin, signal);
+        return { ...result, durationMs: Date.now() - started };
     }));
 }
 
 /** Exposed for unit tests. */
-export const __test = { prepareJava, javaMainClass: (code: string) => javaMainClass(blankJavaLiterals(code)), streams, compareVersions };
+export const __test = { prepareJava, javaMainClass, streams, compareVersions };

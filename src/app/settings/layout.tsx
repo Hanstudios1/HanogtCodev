@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Ayarlar",
+    title: "Editör Ayarları",
     // Signed-in workspace; nothing here is useful to search engines.
     robots: { index: false, follow: false },
 };

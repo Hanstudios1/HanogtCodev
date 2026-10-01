@@ -16,6 +16,7 @@ import PrivacyPolicyModal, { legalNoticePending, legalNoticeUpdated } from "@/co
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "@/lib/nav";
+import { ENGINE_LABELS, LANGUAGES, fileExtensionFor, getLanguage, normalizeLanguageId } from "@/lib/runtimes/languages";
 import { getProjects, getProjectsFromCloud, deleteProjectFromCloud, deleteProject, renameProject, type LegacyProject, type Project, type ProjectFile } from "@/lib/storage";
 
 type DashboardProject = Project | LegacyProject;
@@ -32,31 +33,12 @@ type GameProjectSummary = {
 };
 type SortMode = "recent" | "name";
 
-const CODE_LANGUAGES = [
-    { name: "Python", ext: "py", color: "bg-blue-500", version: "3.12.0", logo: "/languages/python.png" },
-    { name: "CSharp", ext: "cs", color: "bg-purple-600", version: ".NET 8.0", logo: "/languages/csharp.png" },
-    { name: "C++", ext: "cpp", color: "bg-blue-700", version: "GCC 13.2", logo: "/languages/cpp.png" },
-    { name: "Java", ext: "java", color: "bg-red-500", version: "JDK 21", logo: "/languages/java.png" },
-    { name: "Javascript", ext: "js", color: "bg-yellow-400 text-black", version: "Node 20.9", logo: "/languages/javascript.png" },
-    { name: "TypeScript", ext: "ts", color: "bg-blue-600", version: "5.3.0", logo: "/languages/typescript.png" },
-    { name: "HTML", ext: "html", color: "bg-orange-500", version: "HTML5", logo: "/languages/html.png" },
-    { name: "CSS", ext: "css", color: "bg-blue-500", version: "CSS3", logo: "/languages/css.png" },
-    { name: "PHP", ext: "php", color: "bg-indigo-500", version: "8.3.0", logo: "/languages/php.png" },
-    { name: "Go", ext: "go", color: "bg-cyan-500", version: "1.21.4", logo: "/languages/go.png" },
-    { name: "Swift", ext: "swift", color: "bg-orange-600", version: "5.9.1", logo: "/languages/swift.png" },
-    { name: "Ruby", ext: "rb", color: "bg-red-600", version: "3.2.2", logo: "/languages/ruby.png" },
-    { name: "Rust", ext: "rs", color: "bg-orange-700", version: "1.74.0", logo: "/languages/rust.png" },
-    { name: "Kotlin", ext: "kt", color: "bg-purple-500", version: "1.9.21", logo: "/languages/kotlin.png" },
-    { name: "SQL", ext: "sql", color: "bg-teal-500", version: "Postgres 16", logo: "/languages/sql.png" },
-    { name: "Lua", ext: "lua", color: "bg-blue-400", version: "5.4.6", logo: "/languages/lua.png" },
-];
-
-const FILE_EXTENSIONS: Record<string, string> = {
-    python: "py", javascript: "js", typescript: "ts", csharp: "cs",
-    cpp: "cpp", java: "java", html: "html", css: "css",
-    php: "php", go: "go", swift: "swift", ruby: "rb",
-    rust: "rs", kotlin: "kt", sql: "sql", lua: "lua",
-};
+// Single source of truth for languages lives in src/lib/runtimes/languages.ts.
+// Popular ones first, then the rest; game-only "none" engines are excluded.
+const CODE_LANGUAGES = LANGUAGES
+    .filter((language) => language.engine !== "none")
+    .slice()
+    .sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
 
 const EXPLORE: NavItem[] = ["/ai", "/news", "/arcade", "/guide", "/security", "/groups"]
     .map((href) => [...PRIMARY_NAV, ...SECONDARY_NAV].find((item) => item.href === href))
@@ -297,9 +279,8 @@ export default function DashboardPage() {
         setShowGameModal(true);
     };
 
-    const handleCreateScript = (lang: { ext: string }) => {
-        // Use the extension in the URL to avoid "+" encoding issues (C++ becomes cpp).
-        router.push(`/editor?lang=${lang.ext}`);
+    const handleCreateScript = (lang: { id: string }) => {
+        router.push(`/editor?lang=${encodeURIComponent(lang.id)}`);
     };
 
     const handleCreateGameProject = async () => {
@@ -356,7 +337,7 @@ export default function DashboardPage() {
                 const zip = new JSZip();
                 const tabs: LegacyTab[] = project.files?.length ? project.files : JSON.parse(project.code) as LegacyTab[];
                 tabs.forEach((tab, index) => {
-                    const ext = FILE_EXTENSIONS[tab.lang.toLowerCase()] || "txt";
+                    const ext = fileExtensionFor(tab.lang);
                     zip.file(`${index + 1}_${safeFileName(tab.name)}.${ext}`, tab.code);
                 });
                 saveBlob(await zip.generateAsync({ type: "blob" }), `${safeFileName(project.name)}.zip`);
@@ -366,7 +347,7 @@ export default function DashboardPage() {
             }
             return;
         }
-        const ext = FILE_EXTENSIONS[project.lang.toLowerCase()] || "txt";
+        const ext = fileExtensionFor(project.lang);
         saveBlob(new Blob([project.code || "// Empty project"], { type: "text/plain" }), `${safeFileName(project.name)}.${ext}`);
     };
 
@@ -578,7 +559,7 @@ export default function DashboardPage() {
                             {visibleProjects.map((p, index) => {
                                 const id = String(p.id);
                                 const multi = p.isMultiTab || p.lang === "multi";
-                                const logo = CODE_LANGUAGES.find((l) => l.name.toLowerCase() === p.lang.toLowerCase())?.logo || `/languages/${encodeURIComponent(p.lang.toLowerCase())}.png`;
+                                const logo = getLanguage(normalizeLanguageId(p.lang) ?? "")?.icon ?? "/languages/plaintext.svg";
                                 return (
                                     <motion.div
                                         key={id}
@@ -808,15 +789,15 @@ export default function DashboardPage() {
                             {CODE_LANGUAGES.map((lang) => (
                                 <button
                                     type="button"
-                                    key={lang.name}
+                                    key={lang.id}
                                     onClick={() => handleCreateScript(lang)}
                                     className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-transparent bg-zinc-50 p-5 transition hover:-translate-y-0.5 hover:border-blue-500 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700"
                                 >
                                     <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-md dark:bg-zinc-900">
-                                        <OptimizedImage src={lang.logo} alt="" className="h-full w-full object-contain" />
+                                        <OptimizedImage src={lang.icon} alt="" className="h-full w-full object-contain" />
                                     </div>
                                     <span className="font-semibold text-zinc-700 dark:text-zinc-200">{lang.name}</span>
-                                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-xs text-zinc-400 dark:bg-zinc-900">{lang.version}</span>
+                                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-400 dark:bg-zinc-900">{tx(ENGINE_LABELS[lang.engine].short)}</span>
                                 </button>
                             ))}
                         </div>

@@ -15,6 +15,8 @@ import {
     type AiConversation, type AiMessage,
 } from "@/lib/ai/conversations";
 import { answerLocally, CORE_INFO, type AiMode } from "@/lib/ai/local-engine";
+import { openInEditor } from "@/lib/editor-bridge";
+import { normalizeLanguageId } from "@/lib/runtimes/languages";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { useRawSession } from "@/components/Provider";
 import Markdown from "./Markdown";
@@ -75,13 +77,15 @@ function relativeDay(timestamp: number, locale: string, tx: (copy: Copy) => stri
 }
 
 function openCodeInEditor(language: string, code: string, router: ReturnType<typeof useRouter>, name?: string) {
-    const id = createId();
-    try {
-        window.sessionStorage.setItem(`hanogt:editor-import:${id}`, JSON.stringify({ name: name || `hanogt-ai.${language}`, language, code: code.slice(0, 500_000) }));
-        router.push(`/editor?import=${encodeURIComponent(id)}`);
-    } catch {
-        void navigator.clipboard?.writeText(code).catch(() => undefined);
-    }
+    // Hand the code to the editor through the shared bridge, which validates the
+    // size and language and writes the format the editor reads. An unknown fence
+    // language opens as plain text instead of failing; if the hand-off can't be
+    // made at all, the code is copied to the clipboard as a fallback.
+    const result = openInEditor(
+        { name: name || `hanogt-ai.${language}`, language: normalizeLanguageId(language) ? language : "plaintext", code },
+        { navigate: (href) => router.push(href) },
+    );
+    if (!result.ok) void navigator.clipboard?.writeText(code).catch(() => undefined);
 }
 
 function AiAvatar({ size = "h-8 w-8" }: { size?: string }) {

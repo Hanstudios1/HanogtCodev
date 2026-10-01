@@ -218,7 +218,7 @@ const sections: LegalSection[] = [
                 ["theme, hanogt_lang", "Yerel depolama", "Tema ve dil tercihi", "Siz silene kadar"],
                 ["hanogt_privacy_accepted, hanogt_legal_notice_version", "Yerel depolama", "Bilgilendirmenin hangi sürümünün gösterildiği", "Siz silene kadar"],
                 ["hanogt_banner_closed", "Yerel depolama", "Beta uyarısının kapatıldığını hatırlamak", "Siz silene kadar"],
-                ["hanogt_editor_settings, hanogt_unsaved_tabs", "Yerel depolama", "Editör ayarları ve kaydedilmemiş sekmeleri kurtarma", "Siz silene kadar"],
+                ["hanogt_editor_settings, hanogt_unsaved_tabs, hanogt_unsaved_project, hanogt_editor_panel_width", "Yerel depolama", "Editör ayarları, kaydedilmemiş sekmeleri (ve ait oldukları projeyi) kurtarma, çıktı paneli genişliği", "Siz silene kadar"],
                 ["hanogt_projects…", "Yerel depolama", "Bulut erişilemezse yerel proje yedeği", "Siz silene kadar"],
                 ["hanogt-engine (IndexedDB), hanogt-engine:layout", "Tarayıcı veritabanı", "Yerel oyun projeleri ve editör düzeni", "Siz silene kadar"],
                 ["hanogt-engine:prefs:…", "Yerel depolama", "Oyunların PlayerPrefs kayıtları (ör. en yüksek skor)", "Siz silene kadar"],
