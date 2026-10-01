@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { streamHanogtAI, type AiFailure } from "@/lib/ai/client";
 import { useAiContext } from "@/lib/ai/context-store";
@@ -17,6 +16,7 @@ import {
 } from "@/lib/ai/conversations";
 import { answerLocally, CORE_INFO, type AiMode } from "@/lib/ai/local-engine";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { useRawSession } from "@/components/Provider";
 import Markdown from "./Markdown";
 
 export interface ChatLaunch {
@@ -95,8 +95,13 @@ function AiAvatar({ size = "h-8 w-8" }: { size?: string }) {
 export default function HanogtAIChat({ variant, onClose, launch }: { variant: "panel" | "page"; onClose?: () => void; launch?: ChatLaunch }) {
     const { tx, language, locale, dir } = useI18n();
     const router = useRouter();
-    const { status } = useSession();
+    // The language model only needs the NextAuth session, not the Firebase
+    // bridge, so the raw session is used: it is known sooner after a page load.
+    const { status } = useRawSession();
     const signedIn = status === "authenticated";
+    // While the session is still loading, try the model anyway: the server
+    // knows whether this browser is signed in, and the core answers otherwise.
+    const tryModel = status !== "unauthenticated";
     const conversations = useConversations();
     const activeId = useActiveConversationId();
     const { create, update, remove, clearAll } = useConversationActions();
@@ -170,7 +175,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
         };
 
         try {
-            if (!signedIn) {
+            if (!tryModel) {
                 await new Promise((resolve) => window.setTimeout(resolve, 280));
                 await runCore();
                 return;
@@ -200,7 +205,8 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                 if (result.text) finish(conversationId, assistantId, { content: result.text, engine: "llm", notice: tx(NOTICES.aborted) });
                 else update(conversationId, (current) => ({ ...current, messages: current.messages.filter((message) => message.id !== assistantId) }));
             } else {
-                await runCore(result.failure, result.retryAfterSeconds);
+                // A signed-out visitor asking during session loading needs no "session expired" notice.
+                await runCore(result.failure === "auth_required" && !signedIn ? undefined : result.failure, result.retryAfterSeconds);
             }
         } catch {
             finish(conversationId, assistantId, { content: tx({ TR: "Bir şeyler ters gitti. Lütfen tekrar dene.", EN: "Something went wrong. Please try again." }), error: true });
@@ -208,7 +214,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [active, attachFile, create, draftMode, editorContext, finish, hasFile, language, locale, signedIn, tx, update]);
+    }, [active, attachFile, create, draftMode, editorContext, finish, hasFile, language, locale, signedIn, tryModel, tx, update]);
 
     // Launch requests (e.g. "Ask Hanogt AI" buttons elsewhere on the site).
     // Local state is adjusted while rendering; store writes and sending happen in the effect.

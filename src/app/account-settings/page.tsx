@@ -41,7 +41,7 @@ function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () =>
 export default function AccountSettingsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const { t, language, setLanguage } = useI18n();
+    const { t, tx, language, setLanguage } = useI18n();
 
     const [username, setUsername] = useState("");
     const [avatarUrl, setAvatarUrl] = useState("");
@@ -74,6 +74,9 @@ export default function AccountSettingsPage() {
     const [socialInstagram, setSocialInstagram] = useState("");
     const [socialFacebook, setSocialFacebook] = useState("");
     const [lastLoginDate, setLastLoginDate] = useState("");
+    // Saving is only allowed once the stored profile was read: saving the
+    // form defaults after a failed read would overwrite the real settings.
+    const [profileState, setProfileState] = useState<"loading" | "ready" | "failed">("loading");
 
     // §7 Password Management
     const [currentPassword, setCurrentPassword] = useState("");
@@ -200,8 +203,10 @@ export default function AccountSettingsPage() {
                     setAvatarUrl(sessionImage);
                     setNicknameTag(generateTag());
                 }
+                setProfileState("ready");
             } catch (error) {
                 console.error("Error loading user data:", error);
+                if (!cancelled) setProfileState("failed");
             }
         };
         void loadUserData();
@@ -211,6 +216,10 @@ export default function AccountSettingsPage() {
 
     const handleSaveProfile = async () => {
         if (!session?.user?.email) return;
+        if (profileState !== "ready") {
+            setMessage(tx({ TR: "Hata: Profiliniz henüz yüklenemedi; ayarların üzerine yazılmaması için kaydetme durduruldu. Sayfayı yenileyin.", EN: "Error: your profile couldn't be loaded yet, so saving was stopped to avoid overwriting your settings. Reload the page." }));
+            return;
+        }
         setIsLoading(true);
         try {
             await setDoc(doc(db, "users", session.user.email), {
@@ -444,7 +453,7 @@ export default function AccountSettingsPage() {
 
                 {/* Success/Error Message */}
                 {message && (
-                    <div className={`mb-6 p-4 rounded-xl ${message.includes("Hata") || message.includes("error") ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
+                    <div className={`mb-6 p-4 rounded-xl ${/hata|error/i.test(message) ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
                         {message}
                     </div>
                 )}
@@ -1154,27 +1163,8 @@ export default function AccountSettingsPage() {
                         {t("data_export_desc") || "Tüm hesap verilerinizi JSON formatında indirin. Projeleriniz, ayarlarınız ve profil bilgileriniz dahildir."}
                     </p>
                     <button
-                        onClick={async () => {
-                            if (!session?.user?.email) return;
-                            const userDoc = await getDoc(doc(db, "users", session.user.email));
-                            const userData = userDoc.exists() ? userDoc.data() : {};
-                            const editorSettings = localStorage.getItem("hanogt_editor_settings");
-                            const projects = localStorage.getItem(`hanogt_projects_${session.user.email}`);
-                            const exportData = {
-                                profile: userData,
-                                editorSettings: editorSettings ? JSON.parse(editorSettings) : {},
-                                projects: projects ? JSON.parse(projects) : [],
-                                exportDate: new Date().toISOString(),
-                                platform: "Hanogt Codev"
-                            };
-                            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `hanogt_data_${new Date().toISOString().split("T")[0]}.json`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                        }}
+                        onClick={handleExportData}
+                        disabled={isLoading}
                         className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all flex items-center gap-2"
                     >
                         <Download className="w-4 h-4" />

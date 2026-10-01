@@ -401,9 +401,15 @@ export async function patchServerDocument(
     options: { updateFields?: string[]; updateTime?: string; exists?: boolean } = {},
 ) {
     const fields = options.updateFields || Object.entries(data).filter(([, value]) => value !== undefined).map(([key]) => key);
+    if (options.updateTime) {
+        // Version-checked writes go through :commit. The Firestore emulator reads a
+        // `currentDocument.updateTime` query parameter as version 0 and rejects every
+        // such PATCH; in a commit body the precondition works everywhere.
+        const { writeResults } = await commitServerMutations([{ type: "update", path, data, updateFields: fields, updateTime: options.updateTime }]);
+        return { name: documentName(path), fields: encodeFields(data), updateTime: writeResults[0]?.updateTime } satisfies FirestoreDocument;
+    }
     const url = new URL(documentUrl(path));
     for (const field of fields) url.searchParams.append("updateMask.fieldPaths", field);
-    if (options.updateTime) url.searchParams.set("currentDocument.updateTime", options.updateTime);
     if (typeof options.exists === "boolean") url.searchParams.set("currentDocument.exists", String(options.exists));
 
     const response = await firestoreFetch(url.toString(), {
@@ -509,10 +515,30 @@ export async function createServerDocument(collectionPath: string, data: Record<
     return response.json() as Promise<FirestoreDocument>;
 }
 
+/**
+ * Unlike production, the Auth emulator drops an `email` developer claim from
+ * custom tokens and fills `email` from the user record instead. Giving that
+ * record the address makes its ID tokens match production, so the security
+ * rules see the same `request.auth.token.email`. Emulator only.
+ */
+async function syncEmulatorAuthEmail(uid: string, email: string) {
+    const host = emulator("FIREBASE_AUTH_EMULATOR_HOST");
+    if (!host) return;
+    const base = `http://${host}/identitytoolkit.googleapis.com/v1/projects/${encodeURIComponent(getFirebaseProjectId())}/accounts`;
+    const init = (body: Record<string, unknown>) => ({
+        method: "POST",
+        headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+    const created = await fetch(base, init({ localId: uid, email, emailVerified: true }));
+    if (!created.ok) await fetch(`${base}:update`, init({ localId: uid, email, emailVerified: true }));
+}
+
 export async function createFirebaseCustomToken(email: string) {
     const account = getServiceAccount();
     const now = Math.floor(Date.now() / 1000);
     const uid = createHash("sha256").update(email.toLowerCase()).digest("hex").slice(0, 64);
+    await syncEmulatorAuthEmail(uid, email.toLowerCase());
     const header = base64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
     const claims = base64Url(JSON.stringify({
         iss: account.client_email,
