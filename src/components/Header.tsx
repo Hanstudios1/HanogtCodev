@@ -12,7 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import type { StaffRole } from "@/components/Admin/types";
 import NotificationCenter, { useUnreadNotifications } from "@/components/NotificationCenter";
 import OptimizedImage from "@/components/OptimizedImage";
-import { useFirebaseBridge, useRawSession } from "@/components/Provider";
+import { useRawSession } from "@/components/Provider";
+import { PresenceDot, PresencePicker, usePresence } from "@/components/Presence";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { useOwnProfile } from "@/lib/account-profile-client";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -116,7 +117,7 @@ export default function Header() {
     const sessionLoading = auth.status === "loading";
     const email = account?.email?.toLowerCase() || null;
     // Online dot: the presence heartbeat (Provider) can only write once the Firebase bridge is ready.
-    const presenceActive = useFirebaseBridge().ready;
+    const presence = usePresence();
     // Name and avatar come from /api/account/profile (cached for the session and
     // updated by Account Settings), so they don't depend on the Firebase bridge.
     const profile = useOwnProfile(email);
@@ -280,7 +281,7 @@ export default function Header() {
                                 >
                                     <span className="relative">
                                         {avatar("h-8 w-8")}
-                                        <span className={`absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-950 ${presenceActive ? "bg-emerald-500" : "bg-zinc-400"}`} />
+                                        <PresenceDot state={presence.state} size={14} ringClassName="bg-white dark:bg-zinc-950" />
                                     </span>
                                     <ChevronDown className={`hidden h-4 w-4 text-zinc-500 transition-transform sm:block ${profileOpen ? "rotate-180" : ""}`} />
                                 </button>
@@ -295,7 +296,10 @@ export default function Header() {
                                             className="absolute end-0 top-full z-[70] mt-2 w-72 origin-top-right overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-black/10 dark:border-white/10 dark:bg-zinc-900"
                                         >
                                             <div className="flex items-center gap-3 border-b border-zinc-100 bg-gradient-to-br from-indigo-500/[0.06] to-fuchsia-500/[0.06] p-4 dark:border-white/[0.06]">
-                                                {avatar("h-11 w-11")}
+                                                <span className="relative">
+                                                    {avatar("h-11 w-11")}
+                                                    <PresenceDot state={presence.state} size={16} ringClassName="bg-white dark:bg-zinc-900" />
+                                                </span>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex min-w-0 items-center gap-1.5">
                                                         <p className="min-w-0 truncate font-bold text-zinc-900 dark:text-white">{displayName}</p>
@@ -303,6 +307,9 @@ export default function Header() {
                                                     </div>
                                                     <p className="truncate text-[12.5px] text-zinc-500">{account?.email}</p>
                                                 </div>
+                                            </div>
+                                            <div className="border-b border-zinc-100 p-1.5 dark:border-white/[0.06]">
+                                                <PresencePicker compact onPicked={() => setProfileOpen(false)} />
                                             </div>
                                             <div className="p-1.5">
                                                 {[...PRIMARY_NAV.filter((item) => item.auth), ...SECONDARY_NAV.filter((item) => item.auth)].map((item) => {

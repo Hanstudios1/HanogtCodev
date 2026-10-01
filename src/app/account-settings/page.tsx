@@ -15,6 +15,7 @@ import Header from "@/components/Header";
 import TwoFactorSettings from "@/components/Account/TwoFactorSettings";
 import { ToastViewport, useToasts } from "@/components/Editor/Toasts";
 import { useRawSession } from "@/components/Provider";
+import { PresencePicker, usePresence } from "@/components/Presence";
 import {
     EDITABLE_ACCOUNT_KEYS, NICKNAME_INPUT_MAX, NICKNAME_INPUT_PATTERN, PROFILE_TEXT_LIMITS, diffAccountFields, isSafeProfileUrl, sanitizeAccountPatch,
     type AccountProfileErrorBody, type AccountProfileResponse, type EditableAccountFields, type StaffRoleBadge,
@@ -289,6 +290,7 @@ function Skeleton() {
 // ------------------------------------------------------------------ page
 export default function AccountSettingsPage() {
     const auth = useRawSession();
+    const { choice: presenceChoice } = usePresence();
     const router = useRouter();
     const { t, tx, language, setLanguage, locale } = useI18n();
     const { preference: themePreference, setPreference: setThemePreference } = useTheme();
@@ -1051,8 +1053,11 @@ export default function AccountSettingsPage() {
                                 <ToggleRow label={t("friend_req_notification")} checked={form.friendReqNotifications} onChange={(value) => setField("friendReqNotifications", value)} />
                                 <ToggleRow label={t("like_notification")} checked={form.likeNotifications} onChange={(value) => setField("likeNotifications", value)} />
                                 <ToggleRow label={t("notification_sound")} checked={form.notifSound} onChange={(value) => setField("notifSound", value)} />
-                                <ToggleRow label={t("dnd_mode")} checked={form.dndMode} onChange={(value) => setField("dndMode", value)} border={form.dndMode} />
-                                {form.dndMode ? (
+                                <div className="border-b border-zinc-200 py-3.5 dark:border-zinc-800">
+                                    <p className="mb-2 font-medium">{tx({ TR: "Durumun", EN: "Your status" })}</p>
+                                    <PresencePicker />
+                                </div>
+                                {presenceChoice === "dnd" ? (
                                     <div className="flex items-center justify-between gap-4 py-3.5">
                                         <label htmlFor="field-dndSchedule">{t("dnd_schedule")}</label>
                                         <input id="field-dndSchedule" type="text" value={form.dndSchedule} maxLength={PROFILE_TEXT_LIMITS.dndSchedule} onChange={(event) => setField("dndSchedule", event.target.value)} placeholder="22:00 - 08:00" aria-invalid={fieldInvalid("dndSchedule")} className="w-36 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-center text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800" />

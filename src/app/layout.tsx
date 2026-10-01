@@ -6,6 +6,7 @@ import Provider from "@/components/Provider";
 import { I18nProvider } from "@/lib/i18n";
 import SkipLink from "@/components/SkipLink";
 import VoiceCallProvider from "@/components/VoiceCallProvider";
+import { PresenceProvider } from "@/components/Presence";
 import HanogtAIDock from "@/components/HanogtAI/HanogtAIDock";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import CloudStatusBanner from "@/components/CloudStatusBanner";
@@ -66,12 +67,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <body className="min-h-dvh antialiased">
                 <Provider>
                     <I18nProvider>
-                        <SkipLink />
-                        <AnnouncementBanner />
-                        <VoiceCallProvider>
-                            {children}
-                        </VoiceCallProvider>
-                        <HanogtAIDock />
+                        <PresenceProvider>
+                            <SkipLink />
+                            <AnnouncementBanner />
+                            <VoiceCallProvider>
+                                {children}
+                            </VoiceCallProvider>
+                            <HanogtAIDock />
+                        </PresenceProvider>
                         {/* Inside the I18nProvider: Provider (bridge state) wraps it but can't translate. */}
                         <CloudStatusBanner />
                     </I18nProvider>

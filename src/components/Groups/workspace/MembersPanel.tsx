@@ -128,7 +128,7 @@ export default function MembersPanel({ onInvite, onCall, onOpenRules }: { onInvi
         return (
             <li key={member.email} className={cx("group relative flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-800/70", busy === member.email && "opacity-60")}>
                 <button type="button" onClick={() => void openProfile(member)} className="flex min-w-0 flex-1 items-center gap-2.5 text-start" aria-label={tx(C.profile, { name: member.username })}>
-                    <UserAvatar name={member.username} src={member.avatarUrl} size="md" online={member.online} />
+                    <UserAvatar name={member.username} src={member.avatarUrl} size="md" online={member.online} presence={member.presence} />
                     <span className="min-w-0">
                         <span className="flex items-center gap-1.5">
                             <span className="min-w-0 truncate text-sm font-semibold">{member.username}</span>

@@ -1,5 +1,7 @@
 "use client";
 
+import { PresenceDot } from "@/components/Presence";
+import { effectivePresence } from "@/lib/presence";
 import OptimizedImage from "@/components/OptimizedImage";
 
 import { useState, useEffect } from "react";
@@ -58,6 +60,10 @@ interface UserProfile {
     socialWebsite?: string;
     isOnline?: boolean;
     dndMode?: boolean;
+    /** Public presence written by /api/presence ("online" | "idle" | "dnd" | "offline"). */
+    presence?: string | null;
+    presenceAt?: string | null;
+    lastSeenAt?: string | null;
     publicProfile?: boolean;
     publicProjects?: boolean;
     badges?: string[];
@@ -210,18 +216,7 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                                 {user.username?.charAt(0) || "U"}
                             </div>
                         )}
-                        {/* Online/DND indicator */}
-                        <div className="absolute bottom-0 right-0">
-                            {user.dndMode ? (
-                                <div className="w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 bg-red-500 flex items-center justify-center">
-                                    <div className="w-2.5 h-0.5 rounded bg-white" />
-                                </div>
-                            ) : (
-                                <div className={`w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 flex items-center justify-center ${user.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
-                                    <div className="w-2 h-2 rounded-full bg-black/30" />
-                                </div>
-                            )}
-                        </div>
+                        <PresenceDot state={effectivePresence(user)} size={26} className="absolute bottom-0 end-0" ringClassName="bg-white dark:bg-zinc-900" />
                     </div>
                 </div>
 

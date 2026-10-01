@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { SessionContext, SessionProvider, useSession } from "next-auth/react";
 import { signInWithCustomToken, signOut as signOutFirebase } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { auth, db, firebaseClientDiagnostics, hasFirebaseClientConfig } from "@/lib/firebase";
 import { ThemeProvider } from "@/lib/theme";
 
@@ -194,39 +194,6 @@ async function probeSecurityRules(email: string): Promise<FirebaseBridgeFailure 
     return null;
 }
 
-const PRESENCE_HEARTBEAT_MS = 45_000;
-
-/**
- * Keeps the signed-in user's presence fresh on every page, including the
- * full-screen editor, chat and game engine that do not render the header.
- * Friends lists treat a user as online while `lastSeenAt` is recent.
- */
-function PresenceHeartbeat() {
-    const { data } = useSession();
-    const { ready } = useFirebaseBridge();
-    const email = data?.user?.email?.toLowerCase() || null;
-
-    useEffect(() => {
-        // Without a Firebase sign-in every write would be rejected by the security rules.
-        if (!email || !ready) return;
-        const write = (isOnline: boolean) => {
-            const presence = { isOnline, lastSeenAt: new Date().toISOString() };
-            void setDoc(doc(db, "users", email), presence, { merge: true }).catch(() => undefined);
-            void setDoc(doc(db, "public_profiles", email), { ...presence, email }, { merge: true }).catch(() => undefined);
-        };
-        write(true);
-        const heartbeat = window.setInterval(() => write(true), PRESENCE_HEARTBEAT_MS);
-        const markOffline = () => write(false);
-        window.addEventListener("pagehide", markOffline);
-        return () => {
-            window.clearInterval(heartbeat);
-            window.removeEventListener("pagehide", markOffline);
-        };
-    }, [email, ready]);
-
-    return null;
-}
-
 /**
  * Bridges the NextAuth session to Firebase so Firestore security rules can
  * authorise client reads/writes. Children always render (so pages keep their
@@ -316,7 +283,6 @@ function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
             <RawSessionContext.Provider value={session}>
                 <SessionContext.Provider value={gatedValue}>
                     {children}
-                    <PresenceHeartbeat />
                 </SessionContext.Provider>
             </RawSessionContext.Provider>
         </FirebaseBridgeContext.Provider>
