@@ -3,124 +3,224 @@ import LegalPage, { type LegalHighlight, type LegalSection } from "@/components/
 
 export const metadata: Metadata = {
     title: "KVKK Aydınlatma Metni",
-    description: "6698 sayılı KVKK m.10 uyarınca veri sorumlusu, işleme amaçları, hukuki sebepler, aktarım alıcıları, toplama yöntemleri ve ilgili kişi hakları.",
+    description: "6698 sayılı KVKK m.10 uyarınca veri sorumlusu, işlenen veriler, amaçlar, hukuki sebepler, toplama yöntemi, yurt içi ve yurt dışı aktarımlar, saklama ve ilgili kişi hakları.",
     alternates: { canonical: "/disclosure" },
 };
 
+// Turkish is the authoritative text; keep every paragraph a separate { TR, EN }
+// pair with plain string literals so the copy packs can translate it. Texts that
+// also appear in the Privacy Policy are kept identical so they share a translation.
+
 const highlights: LegalHighlight[] = [
-    { title: "Kim?", text: "Veri sorumlusu Hanogt Codev hizmetini işleten HanStudios/Hanogt Codev işletmesidir." },
-    { title: "Neden?", text: "Hesap, projeler, topluluk özellikleri, güvenlik ve yasal yükümlülükler için; ayrıntılar aşağıdaki matriste." },
-    { title: "Kime?", text: "Altyapı, kimlik doğrulama, yapay zeka, kod çalıştırma ve iletişim sağlayıcılarına amaçla sınırlı olarak." },
-    { title: "Haklarınız", text: "Bilgi alma, düzeltme, silme, itiraz ve zararın giderilmesi haklarınızı Geri Bildirim'den kullanabilirsiniz." },
+    {
+        title: { TR: "Kim?", EN: "Who?" },
+        text: { TR: "Veri sorumlusu, Hanogt Codev'i işleten HanStudios / Hanogt Codev işletmesidir.", EN: "The data controller is HanStudios / Hanogt Codev, which operates Hanogt Codev." },
+    },
+    {
+        title: { TR: "Neden?", EN: "Why?" },
+        text: { TR: "Hesabınızı, projelerinizi, topluluk ve iletişim özelliklerini sunmak, güvenliği sağlamak ve yasal yükümlülükleri yerine getirmek için.", EN: "To provide your account, projects and the community and communication features, keep the service secure and meet legal obligations." },
+    },
+    {
+        title: { TR: "Kime?", EN: "To whom?" },
+        text: { TR: "Barındırma, veritabanı, kimlik doğrulama, yapay zekâ ve kod çalıştırma sağlayıcılarına; bunların çoğu yurt dışındadır.", EN: "To hosting, database, authentication, AI and code execution providers, most of them abroad." },
+    },
+    {
+        title: { TR: "Haklarınız", EN: "Your rights" },
+        text: { TR: "KVKK m.11 haklarınızı “Hesap / KVKK” destek talebiyle kullanabilirsiniz; en geç 30 gün içinde yanıt verilir.", EN: "Use your rights under KVKK Art. 11 with an “Account / KVKK” support ticket; you'll get a reply within 30 days at the latest." },
+    },
 ];
 
 const sections: LegalSection[] = [
     {
         id: "controller",
-        title: "Veri sorumlusu",
+        title: { TR: "Veri sorumlusu", EN: "Data controller" },
         paragraphs: [
-            "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") kapsamında veri sorumlusu, Hanogt Codev hizmetini işleten HanStudios/Hanogt Codev işletmesidir. Kesin ticari unvan, MERSİS/VKN, açık adres, KEP ve irtibat e-postası üretim öncesinde bu metne eklenecektir; eksik kimlik bilgisiyle ticari yayına geçilmez.",
-            "Bu metin, KVKK m.10 ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, kişisel verileriniz elde edilirken sizi bilgilendirmek amacıyla hazırlanmıştır.",
+            { TR: "6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında veri sorumlusu, Hanogt Codev hizmetini işleten HanStudios / Hanogt Codev işletmesidir. Aşağıdaki kimlik ve iletişim bilgileri henüz yayımlanmamıştır; yayımlandığında bu metne eklenecek ve bu bilgiler yayımlanmadan ücretli veya ticari bir sürüm sunulmayacaktır.", EN: "Under the Law No. 6698 on the Protection of Personal Data (“KVKK”), the data controller is HanStudios / Hanogt Codev, the business that operates the Hanogt Codev service. The identity and contact details below have not been published yet; they will be added to this notice when they are, and no paid or commercial version will be offered before then." },
         ],
-    },
-    {
-        id: "methods",
-        title: "Toplama yöntemleri",
-        items: [
-            "Kayıt, profil, proje, oyun motoru, yorum, oy, mesajlaşma ve geri bildirim formları üzerinden elektronik ortamda, otomatik yollarla.",
-            "Google ile giriş seçildiğinde yetkilendirme sağlayıcısından.",
-            "Hizmet kullanımı sırasında sunucu, güvenlik günlükleri ve hız sınırı kayıtlarından otomatik yollarla.",
-            "WebRTC sesli arama sırasında geçici sinyalleşme ve ağ bağlantısı verilerinden.",
-            "Tarayıcınızda çalışan araçlar (Kod Danışmanı, parola ölçer, bağlantı kontrolü, Hanogt AI Çekirdeği) verileri sunucuya göndermediğinden bu araçlar yoluyla kişisel veri toplanmaz. Giriş yapmışken Hanogt AI'a sorduğunuz sorular ise yanıt üretilmesi amacıyla sunucumuz üzerinden dil modeli sağlayıcısına iletilir ve sunucularımızda saklanmaz (ayrıntılar Gizlilik Politikası'nın Hanogt AI bölümünde).",
-        ],
-    },
-    {
-        id: "matrix",
-        title: "Veri kategorisi, amaç ve hukuki sebep",
         table: {
-            head: ["Veri kategorisi", "İşleme amacı", "Hukuki sebep"],
+            head: [{ TR: "Bilgi", EN: "Item" }, { TR: "Değer", EN: "Details" }],
             rows: [
-                ["Kimlik ve iletişim (e-posta, kullanıcı adı, profil)", "Hesap açma, oturum, iletişim", "Sözleşmenin kurulması/ifası (m.5/2-c)"],
-                ["Hesap güvenliği (parola karması, oturum)", "Kimlik doğrulama, yetkisiz erişimi önleme", "Sözleşmenin ifası; meşru menfaat (m.5/2-f)"],
-                ["Kod projeleri, oyun sahneleri, C#/C++ scriptleri", "Editör ve Hanogt Engine hizmeti, bulut saklama", "Sözleşmenin ifası"],
-                ["Arcade yayını (başlık, açıklama, kapak, görünen ad)", "Oyunu herkese açık sunma", "Sözleşmenin ifası; ilgili kişinin alenileştirmesi (m.5/2-d)"],
-                ["Haber yorumları", "Yorumun yayımlanması, moderasyon", "Sözleşmenin ifası; meşru menfaat"],
-                ["Arena oyları ve Arcade beğenileri (takma kimlik)", "Topluluk sıralaması ve sayımı, kötüye kullanım önleme", "Sözleşmenin ifası; meşru menfaat"],
-                ["Mesaj, sesli mesaj, arkadaşlık, grup üyeliği", "İletişim ve iş birliği özellikleri", "Sözleşmenin ifası"],
-                ["Media gönderisi, yorum, beğeni, rapor", "Topluluk paylaşımı ve moderasyon", "Sözleşmenin ifası; alenileştirme; meşru menfaat"],
-                ["IP türevi anahtar, güvenlik olayları", "Kötüye kullanım ve saldırıların önlenmesi, denetim izi", "Meşru menfaat; hukuki yükümlülük (m.5/2-ç)"],
-                ["Geri bildirim ve KVKK başvuruları", "Taleplerin yanıtlanması", "Hukuki yükümlülük; sözleşmenin ifası"],
-                ["Security katkı programına işaretlenen proje", "Güvenlik imzalarını insan denetimli geliştirme", "Açık rıza (m.5/1) — her zaman geri alınabilir"],
+                [{ TR: "Ticari unvan", EN: "Trade name" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
+                [{ TR: "MERSİS / VKN", EN: "MERSİS / tax number" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
+                [{ TR: "Açık adres", EN: "Address" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
+                [{ TR: "KEP adresi", EN: "Registered e-mail address (KEP)" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
+                [{ TR: "İletişim e-postası", EN: "Contact e-mail" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
+                [{ TR: "Şu an kullanılabilen başvuru kanalı", EN: "Request channel available now" }, { TR: "Giriş yapmış olarak [Geri Bildirim ve SSS](/feedback) → “Talep oluştur” → “Hesap / KVKK” kategorisi", EN: "While signed in: [Feedback & FAQ](/feedback) → “Create a ticket” → “Account / KVKK” category" }],
             ],
         },
     },
     {
-        id: "community-data",
-        title: "Topluluk özelliklerine ilişkin ek bilgiler",
+        id: "scope",
+        title: { TR: "Bu metnin kapsamı", EN: "Scope of this notice" },
+        paragraphs: [
+            { TR: "Bu metin; Hanogt Codev'in web sitesini ve uygulamalarını ziyaret eden, hesap oluşturan, içerik yayımlayan, diğer kullanıcılarla iletişim kuran, destek talebi veya KVKK başvurusu gönderen gerçek kişileri kapsar.", EN: "This notice covers the individuals who visit Hanogt Codev's website and apps, create an account, publish content, communicate with other users, or send a support ticket or a KVKK request." },
+            { TR: "Metin, KVKK m.10 ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca hazırlanmıştır. Her özelliğin ayrıntılı işleyişi [Gizlilik Politikası](/privacy-policy)'nda anlatılır.", EN: "It has been prepared under KVKK Art. 10 and the Communiqué on the Procedures and Principles for Fulfilling the Duty to Inform. How each feature works is described in detail in the [Privacy Policy](/privacy-policy)." },
+        ],
+    },
+    {
+        id: "categories",
+        title: { TR: "İşlenen kişisel veri kategorileri", EN: "Categories of personal data processed" },
+        table: {
+            head: [{ TR: "Kategori", EN: "Category" }, { TR: "Veriler", EN: "Data" }],
+            rows: [
+                [{ TR: "Kimlik", EN: "Identity" }, { TR: "Kullanıcı adı, takma ad ve etiket; KVKK başvurularında ad, soyad ve kimlik numarası", EN: "Username, nickname and tag; in KVKK requests, name, surname and ID number" }],
+                [{ TR: "İletişim", EN: "Contact" }, { TR: "E-posta adresi; KVKK başvurularında adres ve telefon numarası", EN: "E-mail address; in KVKK requests, address and phone number" }],
+                [{ TR: "Profil ve tercihler", EN: "Profile and preferences" }, { TR: "Avatar ve kapak görseli bağlantıları, biyografi, bağlantılar, durum mesajı; bildirim, gizlilik ve görünüm tercihleri", EN: "Avatar and banner links, bio, links, status message; notification, privacy and appearance preferences" }],
+                [{ TR: "İşlem güvenliği", EN: "Transaction security" }, { TR: "Parola karması, şifreli iki adımlı doğrulama kayıtları, oturum bilgileri, IP adresinden veya hesaptan türetilen hız sınırı anahtarları, güvenlik olayları, denetim kayıtları, barındırma günlükleri", EN: "Password hash, encrypted two-step verification records, session data, rate-limit keys derived from IP addresses or accounts, security events, audit records, hosting logs" }],
+                [{ TR: "Kullanıcı içeriği ve işlemleri", EN: "User content and activity" }, { TR: "Kod ve oyun projeleri, scriptler, Media yayınları, Arcade oyunları, yorumlar, beğeniler, içerik bildirimleri, arena oyları (takma kimlikle), geri bildirimler", EN: "Code and game projects, scripts, Media posts, Arcade games, comments, likes, content reports, arena votes (pseudonymous), feedback" }],
+                [{ TR: "İletişim içerikleri", EN: "Communications" }, { TR: "Birebir ve grup mesajları, sesli mesajlar, arkadaşlık ve grup kayıtları, bildirimler, çevrimiçi durum; sesli aramalarda geçici bağlantı verileri (aramalar kaydedilmez)", EN: "One-to-one and group messages, voice messages, friend and group records, notifications, online status; temporary connection data for voice calls (calls are not recorded)" }],
+                [{ TR: "Görsel ve işitsel kayıtlar", EN: "Audio-visual records" }, { TR: "Profil ve kapak görselleri, sesli mesaj dosyaları", EN: "Profile and banner images, voice message files" }],
+                [{ TR: "Yapay zekâ etkileşimleri", EN: "AI interactions" }, { TR: "Giriş yapmışken Hanogt AI'a gönderilen mesajlar ve bağlam; ajan modunda verilen izinler", EN: "Messages and context sent to Hanogt AI while signed in; permissions given in agent mode" }],
+                [{ TR: "Talep ve şikâyet yönetimi", EN: "Request and complaint management" }, { TR: "Destek talepleri, KVKK başvuruları, itirazlar ve yanıtlar; talebi değerlendirmek için hesap kaydı ve moderasyon geçmişi", EN: "Support tickets, KVKK requests, appeals and replies; the account record and moderation history used to assess them" }],
+                [{ TR: "Hukuki işlem", EN: "Legal matters" }, { TR: "Moderasyon kararları, yetkili makam talepleri ve bunlara ilişkin yazışmalar", EN: "Moderation decisions, requests from authorities and related correspondence" }],
+            ],
+        },
+        note: { TR: "Özel nitelikli kişisel veri talep etmeyiz. Lütfen bu tür verileri içeriklerinize, mesajlarınıza veya taleplerinize yazmayın.", EN: "We don't ask for special categories of personal data. Please don't include such data in your content, messages or requests." },
+    },
+    {
+        id: "purposes",
+        title: { TR: "İşleme amaçları", EN: "Purposes of processing" },
         items: [
-            "Hanogt News yorumlarında görünen adınız, avatarınız ve yorum metniniz herkese açıktır; e-posta adresiniz yayımlanmaz ve yalnızca sahiplik kontrolü için saklanır.",
-            "Yorumlar hakaret, spam ve kişisel veri (telefon, e-posta, T.C. kimlik, kart, IBAN) paylaşımına karşı otomatik olarak denetlenir; uygun olmayan yorum kaydedilmez.",
-            "Yapay zeka arenası oylarında e-posta yerine tuzlanmış, geri çevrilemeyen bir takma kimlik saklanır; sıralamalar yalnızca toplu istatistiktir.",
-            "Arcade'de yayımladığınız oyunun bilgileri ve oynanma/beğeni sayıları herkese açıktır; beğeniler takma kimlikle saklanır.",
-            "Media'da yayımlama ve grup üyeliği sizin açık eyleminizle gerçekleşir; grup üyeleri grup içeriğine erişebilir.",
+            { TR: "Üyelik işlemlerinin yürütülmesi: hesap açma, giriş, oturum ve iki adımlı doğrulama,", EN: "running membership processes: creating accounts, sign-in, sessions and two-step verification;" },
+            { TR: "Kod editörü, kod çalıştırma, Hanogt Engine, Arcade, Media, News, arena, gruplar, sohbetler ve aramalar gibi hizmetlerin sunulması,", EN: "providing services such as the code editor, code execution, Hanogt Engine, the Arcade, Media, News, the arena, groups, chats and calls;" },
+            { TR: "Hanogt AI yanıtlarının üretilmesi ve izin verdiğiniz ajan işlemlerinin yapılması,", EN: "generating Hanogt AI replies and carrying out agent actions you allow;" },
+            { TR: "Bilgi güvenliği süreçlerinin yürütülmesi: kötüye kullanımın, spam'in ve saldırıların önlenmesi, hız sınırları ve güvenlik olaylarının incelenmesi,", EN: "running information security processes: preventing abuse, spam and attacks, applying rate limits and investigating security events;" },
+            { TR: "Topluluk kurallarının uygulanması, içerik bildirimlerinin ve moderasyonun yürütülmesi, ekip işlemlerinin denetim kaydının tutulması,", EN: "enforcing community rules, handling content reports and moderation, and keeping an audit log of staff actions;" },
+            { TR: "Destek taleplerinin, itirazların ve KVKK başvurularının yanıtlanması,", EN: "answering support tickets, appeals and KVKK requests;" },
+            { TR: "Hukuki yükümlülüklerin yerine getirilmesi ve yetkili kişi, kurum ve kuruluşlara bilgi verilmesi,", EN: "complying with legal obligations and providing information to authorised persons, institutions and organisations;" },
+            { TR: "Yalnızca açık rızanızla, Security Bot imzalarının insan denetimiyle geliştirilmesi.", EN: "only with your explicit consent, improving Security Bot's signatures under human review." },
+        ],
+    },
+    {
+        id: "legal-bases",
+        title: { TR: "Hukuki sebepler", EN: "Legal bases" },
+        paragraphs: [
+            { TR: "Kişisel verileriniz KVKK m.5'te sayılan aşağıdaki hukuki sebeplere dayanılarak işlenir:", EN: "Your personal data is processed on the following legal bases set out in KVKK Art. 5:" },
+        ],
+        table: {
+            head: [{ TR: "Hukuki sebep", EN: "Legal basis" }, { TR: "Dayanılan işlemler", EN: "Processing it covers" }],
+            rows: [
+                [{ TR: "Sözleşmenin kurulması veya ifasıyla doğrudan ilgili olması (m.5/2-c)", EN: "Directly related to concluding or performing a contract (Art. 5(2)(c))" }, { TR: "Hesap ve oturum, projeler, kod çalıştırma, topluluk ve iletişim özellikleri, Hanogt AI, destek talepleri", EN: "Account and sessions, projects, code execution, community and communication features, Hanogt AI, support tickets" }],
+                [{ TR: "Veri sorumlusunun meşru menfaati (m.5/2-f)", EN: "The data controller's legitimate interests (Art. 5(2)(f))" }, { TR: "Hesap ve hizmet güvenliği, hız sınırları, güvenlik olayları, moderasyon, kötüye kullanımın ayırt edilmesi, denetim kaydı", EN: "Account and service security, rate limits, security events, moderation, telling genuine requests from abuse, the audit log" }],
+                [{ TR: "Hukuki yükümlülüğün yerine getirilmesi (m.5/2-ç)", EN: "Complying with a legal obligation (Art. 5(2)(ç))" }, { TR: "KVKK başvurularının yanıtlanması, veri ihlali bildirimleri, yetkili makam talepleri", EN: "Answering KVKK requests, data breach notifications, requests from authorities" }],
+                [{ TR: "Kanunlarda açıkça öngörülmesi (m.5/2-a)", EN: "Expressly provided for by law (Art. 5(2)(a))" }, { TR: "Mevzuatta öngörülen saklama ve bildirim yükümlülükleri", EN: "Retention and reporting obligations set by law" }],
+                [{ TR: "Bir hakkın tesisi, kullanılması veya korunması (m.5/2-e)", EN: "Establishing, exercising or protecting a right (Art. 5(2)(e))" }, { TR: "Uyuşmazlıklar, itirazlar, kötüye kullanım ve güvenlik incelemeleri", EN: "Disputes, appeals, abuse and security investigations" }],
+                [{ TR: "İlgili kişinin kendisi tarafından alenileştirilmesi (m.5/2-d)", EN: "Data made public by the data subject (Art. 5(2)(d))" }, { TR: "Media, Arcade, haber yorumları ve geri bildirim panosunda yayımlamayı seçtiğiniz içerikler, yalnızca alenileştirme amacıyla sınırlı olarak", EN: "Content you choose to publish on Media, the Arcade, news comments and the feedback board, only within the purpose of making it public" }],
+                [{ TR: "Açık rıza (m.5/1)", EN: "Explicit consent (Art. 5(1))" }, { TR: "Security Bot katkı programı; açık rıza gerektiren bir yurt dışı aktarımı olursa o aktarım", EN: "The Security Bot contribution programme, and any transfer abroad that requires explicit consent" }],
+            ],
+        },
+        after: [
+            { TR: "Özel nitelikli kişisel veri talep edilmez; içeriklerde bulunması hâlinde yalnızca KVKK m.6'da sayılan şartlar çerçevesinde işlenebilir.", EN: "Special categories of personal data are not requested; if they appear in content, they may be processed only under the conditions listed in KVKK Art. 6." },
+        ],
+    },
+    {
+        id: "methods",
+        title: { TR: "Toplama yöntemi", EN: "How data is collected" },
+        paragraphs: [
+            { TR: "Kişisel verileriniz elektronik ortamda, kısmen otomatik yollarla şu kaynaklardan toplanır:", EN: "Your personal data is collected electronically, partly by automated means, from the following sources:" },
+        ],
+        items: [
+            { TR: "Kayıt, giriş, profil, editör, oyun motoru, yayımlama, yorum, oy, mesajlaşma, destek ve başvuru formları aracılığıyla sizden,", EN: "from you, through the sign-up, sign-in, profile, editor, game engine, publishing, comment, voting, messaging, support and request forms;" },
+            { TR: "Google ile giriş seçtiğinizde Google'dan (e-posta, ad, profil fotoğrafı bağlantısı),", EN: "from Google when you choose Sign in with Google (e-mail, name, profile photo link);" },
+            { TR: "Hizmeti kullanırken sunucularımız, altyapı sağlayıcılarımız ve tarayıcınız tarafından otomatik olarak (oturum, çevrimiçi durum, hız sınırı ve güvenlik kayıtları, barındırma günlükleri),", EN: "automatically, by our servers, our infrastructure providers and your browser while you use the service (sessions, online status, rate-limit and security records, hosting logs);" },
+            { TR: "Sesli arama sırasında geçici bağlantı verilerinden,", EN: "from temporary connection data during voice calls;" },
+            { TR: "Diğer kullanıcıların sizinle ilgili yaptığı işlemlerden (ör. arkadaşlık isteği, grup daveti, içerik bildirimi).", EN: "from actions other users take that concern you (for example friend requests, group invitations or content reports)." },
+        ],
+        after: [
+            { TR: "Tarayıcınızda çalışan araçlar (tarayıcı dilleri, Kod Danışmanı, parola ölçer, bağlantı kontrolü, Hanogt AI Çekirdeği) verilerinizi sunucuya göndermez. Toplanan veriler, yukarıdaki amaçlar için ve hukuki sebepler tablosundaki sebeplere dayanılarak işlenir.", EN: "Tools that run in your browser (the browser languages, Code Advisor, password meter, link check and the Hanogt AI Core) do not send your data to a server. Collected data is processed for the purposes above, on the grounds in the legal bases table." },
+        ],
+    },
+    {
+        id: "domestic-transfers",
+        title: { TR: "Yurt içine aktarım (KVKK m.8)", EN: "Transfers within Türkiye (KVKK Art. 8)" },
+        paragraphs: [
+            { TR: "Kişisel verileriniz, KVKK m.8'deki şartlara uygun olarak ve amaçla sınırlı biçimde; hukuken yetkili kamu kurum ve kuruluşlarına ve yargı mercilerine, hukuki uyuşmazlıklarda ise sır saklama yükümlülüğü altındaki avukat ve danışmanlarımıza aktarılabilir. Verileriniz satılmaz ve reklam amacıyla paylaşılmaz.", EN: "Your personal data may be transferred, in line with the conditions of KVKK Art. 8 and only as far as the purpose requires, to legally authorised public institutions and courts and, in legal disputes, to our lawyers and advisers who are bound by confidentiality. Your data is not sold or shared for advertising." },
         ],
     },
     {
         id: "transfers",
-        title: "Aktarılan taraflar ve aktarım amaçları",
+        title: { TR: "Yurt dışına aktarım (KVKK m.9)", EN: "Transfers abroad (KVKK Art. 9)" },
         paragraphs: [
-            "Kişisel verileriniz; barındırma, veritabanı ve dosya depolama hizmeti (Google/Firebase), seçtiğiniz kimlik sağlayıcısı (Google OAuth), yalnızca kullandığınızda yapay zeka asistanı sağlayıcısı, izole kod çalıştırma altyapısı, WebRTC bağlantı (TURN/STUN) sağlayıcıları ve isteğe bağlı parola sızıntı kontrolünde yalnızca parola özetinin ilk 5 karakteri için Have I Been Pwned hizmetine, amaçla sınırlı ve ölçülü olarak aktarılabilir.",
-            "Kamu kurum ve kuruluşlarına yalnızca hukuka uygun ve bağlayıcı talep kapsamında aktarım yapılır. Verileriniz satılmaz ve reklam amacıyla üçüncü kişilerle paylaşılmaz.",
-            "Yurt dışına aktarım söz konusu olduğunda 7499 sayılı Kanun ile değişik KVKK m.9 uyarınca yeterlilik kararı, standart sözleşme gibi uygun güvenceler veya kanundaki arızi aktarım hâllerinden uygun olanı esas alınır ve belgelenir.",
+            { TR: "Hizmeti sunmak için aşağıdaki alıcılara, sunucuları Türkiye dışında olabilecek şekilde aktarım yapılır:", EN: "To provide the service, data is transferred to the following recipients, whose servers may be outside Türkiye:" },
+        ],
+        table: {
+            head: [{ TR: "Alıcı", EN: "Recipient" }, { TR: "Veriler", EN: "Data" }, { TR: "Amaç", EN: "Purpose" }],
+            rows: [
+                ["Google (Firebase)", { TR: "Hesap, profil, içerik, mesaj ve diğer hizmet verileri", EN: "Account, profile, content, message and other service data" }, { TR: "Veritabanı, dosya depolama ve kimlik doğrulama", EN: "Database, file storage and authentication" }],
+                ["Vercel Inc.", { TR: "Web istekleri, IP adresi, teknik günlükler", EN: "Web requests, IP addresses, technical logs" }, { TR: "Barındırma ve sunucu işlevleri", EN: "Hosting and server functions" }],
+                [{ TR: "Dil modeli sağlayıcısı (varsayılan: Groq, Inc.)", EN: "Language model provider (default: Groq, Inc.)" }, { TR: "Giriş yapmışken Hanogt AI'a yazılanlar ve bağlam", EN: "What you write to Hanogt AI while signed in, and its context" }, { TR: "Yanıt üretimi", EN: "Generating replies" }],
+                [{ TR: "Wandbox, JetBrains Kotlin Playground veya Hanogt adına işletilen çalıştırıcı", EN: "Wandbox, JetBrains Kotlin Playground or a runner operated for Hanogt" }, { TR: "Sunucuda çalışan dillerdeki kaynak kod ve program girdisi", EN: "Source code and program input for server-run languages" }, { TR: "Kodun çalıştırılması", EN: "Running code" }],
+                [{ TR: "Google STUN sunucuları, TURN aktarma sunucusu", EN: "Google STUN servers, TURN relay server" }, { TR: "IP adresi, ağ bilgileri; TURN için e-posta adresini içeren geçici kullanıcı adı", EN: "IP address, network details; for TURN, a temporary username containing your e-mail address" }, { TR: "Sesli arama bağlantısı", EN: "Connecting voice calls" }],
+                ["Have I Been Pwned", { TR: "Parola SHA-1 özetinin ilk 5 karakteri (isteğe bağlı kontrol)", EN: "The first 5 characters of a password's SHA-1 hash (optional check)" }, { TR: "Parola sızıntı kontrolü", EN: "Password breach check" }],
+            ],
+        },
+        after: [
+            { TR: "Bu aktarımlar, 7499 sayılı Kanun'la değiştirilen KVKK m.9 ve Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik çerçevesinde; KVKK m.5 veya m.6'daki bir işleme şartının yanında, varsa Kurul'un yeterlilik kararına, yoksa m.9/4'te sayılan uygun güvencelere (düzenli aktarımlarda özellikle Kurul'ca ilan edilen standart sözleşmelere) dayanılarak yapılır. m.9/6'daki arızi aktarım hâllerine yalnızca düzenli olmayan durumlarda başvurulur.", EN: "These transfers are made under KVKK Art. 9, as amended by Law No. 7499, and the Regulation on the Procedures and Principles for the Transfer of Personal Data Abroad: in addition to a processing condition in KVKK Art. 5 or 6, they rely on an adequacy decision of the Board where one exists and, where none exists, on the appropriate safeguards in Art. 9(4) (for regular transfers, in particular the standard contracts announced by the Board). The incidental transfer exceptions in Art. 9(6) are used only for transfers that are not regular." },
+            { TR: "Hangi alıcı için hangi mekanizmaya dayanıldığına ilişkin bilgiyi “Hesap / KVKK” kategorisinde destek talebiyle isteyebilirsiniz. Ayrıntılar [Gizlilik Politikası](/privacy-policy#transfers)'nda yer alır.", EN: "You can ask which mechanism is relied on for which recipient with a support ticket in the “Account / KVKK” category. Details are in the [Privacy Policy](/privacy-policy#transfers)." },
         ],
     },
     {
         id: "retention",
-        title: "Saklama süreleri",
-        items: [
-            "Hesap, kod projesi, oyun projesi ve grup verileri: hesap veya üyelik sürdükçe; silme talebinde sahne ve script alt kayıtları dahil, yasal istisnalar dışında imha sürecine alınır.",
-            "Haber yorumları, Arcade yayınları ve beğeniler, arena oyları: siz silene veya hesabınız silinene kadar; toplu sıralama istatistikleri anonim olarak kalabilir.",
-            "Sesli mesaj: mesaj silindiğinde depolama dosyasıyla birlikte; grup silindiğinde grup ses dosyaları da silinir.",
-            "WebRTC sinyalleşme: normal kapanışta silinir; beklenmeyen kopmada kısa son kullanım işaretinin ardından otomatik silinir.",
-            "Hız sınırı kayıtları: güvenlik penceresi sona erdiğinde otomatik silinir; güvenlik ve rapor kayıtları ise inceleme ihtiyacına göre ölçülü süre saklanır.",
-            "Süresi dolan veriler Kişisel Verilerin Silinmesi, Yok Edilmesi veya Anonim Hale Getirilmesi Hakkında Yönetmelik'e uygun olarak silinir, yok edilir veya anonimleştirilir.",
+        title: { TR: "Saklama süresi", EN: "Retention" },
+        paragraphs: [
+            { TR: "Kişisel verileriniz, işlendikleri amaç için gerekli olan süre ve mevzuatta öngörülen süreler boyunca saklanır; ardından silinir, yok edilir veya anonim hâle getirilir. Veri türlerine göre ayrıntılı saklama süreleri [Gizlilik Politikası](/privacy-policy#retention)'ndaki tabloda yer alır.", EN: "Your personal data is kept for as long as needed for the purpose it is processed for and for any period required by law, and is then deleted, destroyed or anonymised. Detailed retention periods for each type of data are in the table in the [Privacy Policy](/privacy-policy#retention)." },
         ],
     },
     {
         id: "rights",
-        title: "KVKK m.11 kapsamındaki haklarınız",
-        items: [
-            "Kişisel verilerinizin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme.",
-            "İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme.",
-            "Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme.",
-            "Eksik veya yanlış işlenmişse düzeltilmesini isteme.",
-            "KVKK m.7 şartları çerçevesinde silinmesini veya yok edilmesini isteme.",
-            "Düzeltme, silme ve yok etme işlemlerinin aktarıldığı üçüncü kişilere bildirilmesini isteme.",
-            "Münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonucun ortaya çıkmasına itiraz etme.",
-            "Kanuna aykırı işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme.",
+        title: { TR: "KVKK m.11 kapsamındaki haklarınız", EN: "Your rights under KVKK Art. 11" },
+        paragraphs: [
+            { TR: "Veri sorumlusuna başvurarak şunları yapabilirsiniz:", EN: "By applying to the data controller, you can:" },
         ],
+        items: [
+            { TR: "Kişisel verilerinizin işlenip işlenmediğini öğrenme ve işlenmişse buna ilişkin bilgi talep etme,", EN: "find out whether your personal data is processed and, if so, request information about it;" },
+            { TR: "İşlenme amacını ve verilerin amacına uygun kullanılıp kullanılmadığını öğrenme,", EN: "find out the purpose of the processing and whether the data is used in line with that purpose;" },
+            { TR: "Yurt içinde veya yurt dışında verilerin aktarıldığı üçüncü kişileri bilme,", EN: "know the third parties in Türkiye or abroad to whom your data is transferred;" },
+            { TR: "Eksik veya yanlış işlenmişse düzeltilmesini isteme,", EN: "ask for incomplete or inaccurate data to be corrected;" },
+            { TR: "KVKK m.7'deki şartlar çerçevesinde silinmesini veya yok edilmesini isteme,", EN: "ask for your data to be deleted or destroyed under the conditions of KVKK Art. 7;" },
+            { TR: "Düzeltme, silme veya yok etme işlemlerinin verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,", EN: "ask for corrections, deletions or destruction to be notified to the third parties to whom the data was transferred;" },
+            { TR: "İşlenen verilerin münhasıran otomatik sistemlerle analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,", EN: "object to an outcome against you resulting from the analysis of your data exclusively through automated systems;" },
+            { TR: "Kanuna aykırı işleme nedeniyle zarara uğramanız hâlinde zararın giderilmesini talep etme.", EN: "claim compensation if you suffer damage because of unlawful processing." },
+        ],
+        note: { TR: "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap, proje, oyun, Media, grup, yorum, beğeni ve oy kayıtlarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler.", EN: "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account, project, game, Media, group, comment, like and vote records as a JSON file, and “Delete My Account” deletes your account and the related data." },
     },
     {
         id: "application",
-        title: "Başvuru kanalı ve yanıt süresi",
+        title: { TR: "Başvuru usulü", EN: "How to apply" },
         paragraphs: [
-            "Kimliği doğrulanmış kullanıcı, Geri Bildirim ve SSS sayfasında \"Gizlilik/KVKK\" başlığıyla başvurabilir. Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'de belirtilen diğer yazılı ve elektronik yöntemler (KEP, güvenli elektronik imza vb.), kesin KEP ve adres bilgileri yayımlandığında ayrıca listelenir.",
-            "Başvurunuz talebin niteliğine göre en kısa sürede ve en geç 30 gün içinde ücretsiz sonuçlandırılır. Kimlik doğrulamak için yalnızca gerekli ek bilgi istenir; başvuru içeriği üçüncü kişilerle paylaşılmaz. Hesap Ayarları'ndaki \"Verilerimi indir\" ve \"Hesabı sil\" seçenekleri bazı haklarınızı anında kullanmanızı sağlar.",
+            { TR: "Taleplerinizi, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak şu yollarla iletebilirsiniz:", EN: "You can send your requests, in line with the Communiqué on the Procedures and Principles of Applications to the Data Controller, in the following ways:" },
+        ],
+        items: [
+            { TR: "Hesabınıza giriş yaparak [Geri Bildirim ve SSS](/feedback) sayfasında “Talep oluştur” ile “Hesap / KVKK” kategorisinde destek talebi oluşturarak. Bu kanal başvuru amacıyla geliştirilmiş bir uygulamadır; kimliğiniz oturumunuzla doğrulanır, gerekirse ek doğrulama istenebilir.", EN: "By signing in and using “Create a ticket” on the [Feedback & FAQ](/feedback) page to open a support ticket in the “Account / KVKK” category. This channel is an application built for such requests; your identity is verified by your session, and additional verification may be requested if needed." },
+            { TR: "Veri sorumlusunun adresine yazılı olarak veya KEP adresine güvenli elektronik imza ya da mobil imzayla; bu bilgiler yayımlandığında [veri sorumlusu](/disclosure#controller) bölümünde yer alacaktır.", EN: "In writing to the data controller's address, or to its KEP address with a secure electronic or mobile signature; these details will appear in the [data controller](/disclosure#controller) section once published." },
+            { TR: "Sistemimizde kayıtlı e-posta adresinizden, veri sorumlusunun yayımlanacak iletişim e-postasına.", EN: "From the e-mail address registered in our system to the data controller's contact e-mail address, once published." },
+        ],
+        after: [
+            { TR: "Başvuruda adınız ve soyadınız, yazılı başvurularda imzanız, Türkiye Cumhuriyeti vatandaşları için T.C. kimlik numaranız, yabancılar için uyruğunuz ile pasaport numaranız veya varsa kimlik numaranız, tebligata esas yerleşim yeri veya iş yeri adresiniz, varsa bildirime esas e-posta adresiniz, telefon ve faks numaranız ile talep konunuz bulunmalıdır. Uygulama içi başvurularda yalnızca talebinizi yanıtlamak için gerekli bilgiler istenir.", EN: "A request should include your name and surname, your signature for written requests, your Turkish ID number if you are a Turkish citizen or, if you are not, your nationality and passport number or ID number if any, your residential or business address for notifications, your e-mail address, phone and fax number for notifications if any, and the subject of your request. For in-app requests we only ask for the information needed to answer your request." },
+            { TR: "Başvurunuz talebin niteliğine göre en kısa sürede ve en geç 30 gün içinde ücretsiz olarak sonuçlandırılır; işlemin ayrıca bir maliyet gerektirmesi hâlinde Kurul'ca belirlenen tarifedeki ücret alınabilir. Talebinizi kabul eder veya gerekçesini açıklayarak reddeder, yanıtımızı yazılı olarak veya elektronik ortamda bildiririz.", EN: "We conclude your request free of charge as soon as possible depending on its nature, and within 30 days at the latest; if the process involves an additional cost, the fee in the tariff set by the Board may be charged. We either accept your request or reject it with reasons, and send our reply in writing or electronically." },
+            { TR: "Başvurunuzun reddedilmesi, yanıtı yetersiz bulmanız veya süresinde yanıt verilmemesi hâlinde; yanıtı öğrendiğiniz tarihten itibaren 30 gün ve her hâlde başvuru tarihinden itibaren 60 gün içinde Kişisel Verileri Koruma Kurulu'na şikâyette bulunabilirsiniz (KVKK m.14).", EN: "If your request is rejected, you find the reply insufficient or no reply is given in time, you can file a complaint with the Personal Data Protection Board within 30 days of learning of the reply, and in any case within 60 days of the request date (KVKK Art. 14)." },
         ],
     },
     {
         id: "consent",
-        title: "Aydınlatma ile açık rıza ayrımı",
+        title: { TR: "Aydınlatma ile açık rıza ayrımı", EN: "Information is not consent" },
         paragraphs: [
-            "Bu aydınlatma metninin okunması veya \"Okudum\" olarak işaretlenmesi, açık rıza gerektiren işlemlere toplu rıza anlamına gelmez. Açık rıza gerektiren işlemler (ör. Security katkı programı) için amaç bazlı, ayrı ve geri alınabilir tercih sunulur. Rızanın geri çekilmesi temel hesap işlevlerini etkilemez.",
+            { TR: "Bu aydınlatma metnini okumanız veya “Okudum” olarak işaretlemeniz, açık rıza gerektiren işlemlere toplu rıza verdiğiniz anlamına gelmez. Açık rıza gerektiren işlemler için amaca özel, ayrı ve geri alınabilir bir tercih sunulur; rıza vermemeniz veya rızanızı geri çekmeniz temel hizmetleri etkilemez.", EN: "Reading this notice or marking it as read does not mean you give blanket consent to processing that requires explicit consent. For such processing you are offered a separate, purpose-specific choice that you can withdraw; not giving or withdrawing consent does not affect the core services." },
+            { TR: "Şu anda açık rızaya dayanan tek işlem Security Bot katkı programıdır. Program iki aşamalıdır: hesap düzeyindeki tercih ve proje düzeyindeki işaret. İkisi birden açık değilse proje aday gösterilmez. Rızanızı Media sayfasından ileriye etkili olarak geri çekebilirsiniz; bekleyen katkı kayıtları silinir.", EN: "Currently the only processing based on explicit consent is the Security Bot contribution programme. It has two steps: the account-level setting and the project-level tick. Unless both are on, a project is not put forward. You can withdraw your consent with effect for the future on the Media page; pending contribution records are deleted." },
         ],
     },
     {
-        id: "security-consent",
-        title: "Security katkı tercihinin kapsamı",
+        id: "automated",
+        title: { TR: "Otomatik işleme ve itiraz", EN: "Automated processing and objections" },
         paragraphs: [
-            "Güvenlik katkı tercihi iki aşamalıdır: hesap düzeyindeki program tercihi ve proje düzeyindeki dahil etme kutusu. Her ikisi de etkin değilse proje güvenlik geliştirme veri setine aday gösterilmez. Rıza Media sayfasından ileriye etkili olarak geri çekilebilir; bekleyen aday kayıtlar silinir.",
-            "Üretimde gerçek bir model eğitimi veya üçüncü tarafa veri seti aktarımı başlatılacaksa; alıcı, ülke, saklama süresi, anonimleştirme yöntemi ve ilgili kişi hakları işlem başlamadan önce ayrı metinde açıklanır.",
+            { TR: "Security Bot taraması, yorum filtresi ve hız sınırları bazı istekleri otomatik olarak engelleyebilir. Bu sonuçlar yalnızca ilgili isteği etkiler; askıya alma veya silme gibi yaptırımlar insan incelemesiyle uygulanır. Münhasıran otomatik analiz sonucu aleyhinize ortaya çıkan bir sonuca itiraz etme hakkınızı (KVKK m.11/1-g) destek talebiyle kullanabilirsiniz.", EN: "The Security Bot scan, the comment filter and rate limits may block some requests automatically. These results only affect the request in question; sanctions such as suspension or deletion are applied after human review. You can use your right to object to an outcome against you resulting exclusively from automated analysis (KVKK Art. 11(1)(g)) with a support ticket." },
+        ],
+    },
+    {
+        id: "updates",
+        title: { TR: "Güncellemeler", EN: "Updates" },
+        paragraphs: [
+            { TR: "Bu metin, işleme faaliyetlerimiz veya mevzuat değiştiğinde güncellenir. Her sürüm, yürürlük tarihi ve değişiklik özetiyle sayfanın sonundaki sürüm geçmişinde yer alır. Bu metnin Türkçe sürümü esas alınır.", EN: "This notice is updated when our processing activities or the law change. Each version, with its effective date and a summary of changes, is listed in the version history at the end of the page. The Turkish version of this notice prevails." },
         ],
     },
 ];
@@ -129,12 +229,12 @@ export default function DisclosurePage() {
     return (
         <LegalPage
             current="/disclosure"
-            eyebrow="KVKK m.10"
-            title="Kişisel Verilerin İşlenmesine İlişkin Aydınlatma Metni"
-            summary="Veri sorumlusunun kimliği, işleme amaçları, hukuki sebepler, aktarım alıcıları, toplama yöntemleri, saklama süreleri ve başvuru haklarınız hakkında katmanlı bilgilendirme."
+            eyebrow={{ TR: "KVKK m.10", EN: "KVKK Art. 10" }}
+            title={{ TR: "Kişisel Verilerin İşlenmesine İlişkin Aydınlatma Metni", EN: "Information Notice on the Processing of Personal Data" }}
+            summary={{ TR: "6698 sayılı Kişisel Verilerin Korunması Kanunu'nun 10. maddesi ve Aydınlatma Yükümlülüğü Tebliği uyarınca; veri sorumlusunu, hangi kişisel verilerinizi hangi amaçlarla ve hangi hukuki sebeplere dayanarak işlediğimizi, verilerin nasıl toplandığını, kimlere aktarıldığını ve haklarınızı açıklar.", EN: "In line with Article 10 of the Law No. 6698 on the Protection of Personal Data (KVKK) and the Communiqué on the Duty to Inform, this notice explains who the data controller is, which of your personal data we process, for which purposes and on which legal bases, how it is collected, to whom it is transferred and what your rights are." }}
             sections={sections}
             highlights={highlights}
-            notice="Aydınlatma yükümlülüğü veriler elde edilirken yerine getirilir. Bu metin, kayıt ekranındaki kısa bilgilendirme ve amaç bazlı tercihlerle birlikte kullanılır."
+            notice={{ TR: "Bu metin, kişisel verileriniz elde edilirken sizi bilgilendirmek içindir; okumanız veya “Okudum” olarak işaretlemeniz açık rıza anlamına gelmez. Ayrıntılı açıklamalar [Gizlilik Politikası](/privacy-policy)'ndadır.", EN: "This notice informs you when your personal data is collected; reading it or marking it as read does not mean you give explicit consent. Detailed explanations are in the [Privacy Policy](/privacy-policy)." }}
         />
     );
 }
