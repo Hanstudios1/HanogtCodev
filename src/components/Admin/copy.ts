@@ -189,4 +189,5 @@ export const DETAIL_KEY_COPY: Record<string, Copy> = {
     errors: { TR: "Hata", EN: "Errors" },
     priority: { TR: "Öncelik", EN: "Priority" },
     ticketId: { TR: "Talep", EN: "Ticket" },
+    messages: { TR: "Mesaj sayısı", EN: "Messages" },
 };

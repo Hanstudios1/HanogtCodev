@@ -411,11 +411,20 @@ function DeleteDataDialog({ open, user, onClose, onDeleted }: {
     );
 }
 
-export default function UsersSection({ selfEmail }: { selfEmail: string }) {
+/** A search handed over in the address (#users?q=…): no control characters, within the API's 120 characters. */
+function prefilledQuery(value: string) {
+    return value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 120);
+}
+
+/**
+ * `initialQuery` comes from the address (/admin#users?q=<e-mail>, e.g. "Open
+ * in Users" on a support ticket) and is searched for right away.
+ */
+export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEmail: string; initialQuery?: string }) {
     const { tx } = useI18n();
     const toast = useToast();
     const errorText = useErrorText();
-    const [query, setQuery] = useState("");
+    const [query, setQuery] = useState(() => prefilledQuery(initialQuery));
     const debounced = useDebouncedValue(query.trim(), 350);
     const path = `/api/admin/users?query=${encodeURIComponent(debounced)}`;
     const users = useAdminResource<AdminUsersResponse>(path);

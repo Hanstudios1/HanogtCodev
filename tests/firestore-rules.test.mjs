@@ -2,11 +2,13 @@
 // Firestore rules regression tests for Hanogt Codev (run inside the emulator).
 import fs from "node:fs";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, deleteField } from "firebase/firestore";
 
 const rules = fs.readFileSync(process.env.RULES_FILE || new URL("../firestore.rules", import.meta.url), "utf8");
 const env = await initializeTestEnvironment({ projectId: "hanogt-rules-test", firestore: { rules, host: "127.0.0.1", port: 8080 } });
 const A = "alice@example.com", B = "bob@example.com", C = "carol@example.com";
+// Signed in, but without a users document (e.g. a tab left open after the account was deleted).
+const D = "dave@example.com";
 const as = (email) => env.authenticatedContext(email.replace(/[^a-z]/g, ""), { email, app: "hanogt-codev" }).firestore();
 const chatId = [A, B].sort().join("_");
 
@@ -36,6 +38,8 @@ await check("owner cannot unsuspend", assertFails(updateDoc(doc(as(A), "users", 
 await check("javascript: avatar rejected", assertFails(updateDoc(doc(as(A), "users", A), { avatarUrl: "javascript:alert(1)" })));
 await check("cannot read someone else's user doc", assertFails(getDoc(doc(as(C), "users", A))));
 await check("cannot write another user's doc", assertFails(setDoc(doc(as(C), "users", A), { bio: "x" }, { merge: true })));
+await check("users doc cannot be created by a client", assertFails(setDoc(doc(as(D), "users", D), { email: D, username: "dave" })));
+await check("deleted account's presence heartbeat cannot recreate users doc", assertFails(setDoc(doc(as(D), "users", D), { isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
 
 console.log("public_profiles/");
 await check("owner can update presence despite server badges", assertSucceeds(setDoc(doc(as(A), "public_profiles", A), { isOnline: true, email: A }, { merge: true })));
@@ -45,6 +49,8 @@ await check("banner must be https", assertFails(updateDoc(doc(as(A), "public_pro
 await check("valid banner accepted", assertSucceeds(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "https://x.com/a.png" })));
 await check("tag must be 4 digits", assertFails(updateDoc(doc(as(A), "public_profiles", A), { nicknameTag: "0001x" })));
 await check("new profile create by owner", assertSucceeds(setDoc(doc(as(C), "public_profiles", C), { email: C, username: "carol", nicknameTag: "4321", isOnline: true })));
+await check("profile cannot be created without a users doc", assertFails(setDoc(doc(as(D), "public_profiles", D), { email: D, isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
+await check("owner can hide presence (offline, last seen removed)", assertSucceeds(setDoc(doc(as(A), "public_profiles", A), { email: A, isOnline: false, lastSeenAt: deleteField() }, { merge: true })));
 
 console.log("chats/");
 await check("friend can open chat", assertSucceeds(setDoc(doc(as(A), "chats", chatId), { participants: [A, B].sort(), updatedAt: serverTimestamp() }, { merge: true })));
@@ -66,7 +72,7 @@ await check("voice path of another group rejected", assertFails(addDoc(collectio
 await check("non-member cannot read group", assertFails(getDoc(doc(as(C), "groups", "g1"))));
 
 console.log("server-only collections/");
-for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y"]) {
+for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x"]) {
     const [collectionName, id] = path.split("/");
     await check(`${collectionName} is closed`, assertFails(getDoc(doc(as(A), collectionName, id))));
 }

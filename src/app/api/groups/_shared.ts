@@ -31,6 +31,7 @@ import {
     toMillis,
     type GroupErrorCode,
     type GroupInfo,
+    type GroupMemberInfo,
     type GroupRole,
     type GroupSystemEvent,
 } from "@/lib/groups";
@@ -310,6 +311,8 @@ export type PublicProfile = {
     statusEmoji?: string;
     isOnline?: boolean;
     lastSeenAt?: string;
+    /** Written by the server only (lib/server/admin.ts syncStaffRoleBadge). */
+    staffRole?: unknown;
 };
 
 export async function mapLimit<T, R>(items: readonly T[], limit: number, worker: (item: T, index: number) => Promise<R>): Promise<R[]> {
@@ -344,6 +347,13 @@ export function profileAvatar(profile: PublicProfile | null | undefined) {
 
 export function profileOnline(profile: PublicProfile | null | undefined, now = Date.now()) {
     return Boolean(profile?.isOnline && profile.lastSeenAt && now - toMillis(profile.lastSeenAt) < ONLINE_WINDOW_MS);
+}
+
+const STAFF_ROLES = ["owner", "admin", "moderator"] as const;
+
+/** Hanogt team badge of a member (GroupMemberInfo.staffRole); any other stored value means none. */
+export function profileStaffRole(profile: PublicProfile | null | undefined): GroupMemberInfo["staffRole"] {
+    return STAFF_ROLES.find((role) => role === profile?.staffRole) ?? null;
 }
 
 /** Display name of the signed-in user for system messages. */

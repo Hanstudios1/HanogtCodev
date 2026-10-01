@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, Copy as CopyIcon, ExternalLink, HelpCircle, Inbox, LifeBuoy, MessageCircle,
+    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, Copy as CopyIcon, ExternalLink, Gavel, HelpCircle, Inbox, LifeBuoy, MessageCircle,
     MessageSquareText, Monitor, RefreshCw, Send, ShieldAlert, ShieldCheck, Trash2, UserCog, UserRound, type LucideIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -82,6 +82,9 @@ const TICKET_ERROR_COPY: Record<AdminTicketErrorCode, Copy> = {
     thread_full: { TR: "Bu konuşma mesaj sınırına ulaştı. Kullanıcıdan yeni bir talep açmasını isteyin veya talebi kapatın.", EN: "This conversation reached its message limit. Ask the person to open a new ticket, or close this one." },
 };
 
+/** Badge of an appeal against a suspension (filed from the login page). */
+const APPEAL_COPY: Copy = { TR: "İtiraz", EN: "Appeal" };
+
 function useTicketErrorText() {
     const { tx } = useI18n();
     const base = useErrorText();
@@ -110,6 +113,7 @@ function toListItem(ticket: AdminTicketDetail): AdminTicketListItem {
         messageCount: ticket.messageCount,
         unreadForStaff: ticket.unreadForStaff,
         unreadForUser: ticket.unreadForUser,
+        appeal: ticket.appeal,
     };
 }
 
@@ -163,16 +167,19 @@ function SenderCard({ sender, viewer, onOpenProfile }: { sender: AdminTicketSend
     const toast = useToast();
     const name = sender.username || sender.email.split("@")[0];
 
-    const copyEmail = async (then?: () => void) => {
+    const copyEmail = async () => {
         try {
             await navigator.clipboard.writeText(sender.email);
-            toast("success", then
-                ? tx({ TR: "E-posta kopyalandı; Kullanıcılar aramasına yapıştırın.", EN: "E-mail copied; paste it into the Users search." })
-                : tx({ TR: "E-posta kopyalandı.", EN: "E-mail copied." }));
+            toast("success", tx({ TR: "E-posta kopyalandı.", EN: "E-mail copied." }));
         } catch {
             toast("error", tx({ TR: "E-posta kopyalanamadı.", EN: "Couldn't copy the e-mail." }));
         }
-        then?.();
+    };
+
+    // /admin#users?q=<e-mail>: the Users section opens with this search and runs it.
+    const openInUsers = () => {
+        window.location.hash = `users?q=${encodeURIComponent(sender.email)}`;
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     return (
@@ -215,7 +222,7 @@ function SenderCard({ sender, viewer, onOpenProfile }: { sender: AdminTicketSend
             <div className="flex flex-wrap gap-2">
                 {sender.profile ? <Button size="sm" icon={UserRound} onClick={onOpenProfile}>{tx({ TR: "Profili aç", EN: "Open profile" })}</Button> : null}
                 {viewer.manageUsers && sender.exists ? (
-                    <Button size="sm" variant="ghost" icon={ExternalLink} onClick={() => void copyEmail(() => { window.location.hash = "users"; })}>
+                    <Button size="sm" variant="ghost" icon={ExternalLink} onClick={openInUsers}>
                         {tx({ TR: "Kullanıcılar bölümünde aç", EN: "Open in Users" })}
                     </Button>
                 ) : null}
@@ -277,6 +284,7 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                 </button>
                 <div className="flex flex-wrap items-center gap-2 text-[12px] text-zinc-500">
                     <Badge tone={ticket.category === "security" ? "red" : "indigo"} icon={Icon}>{tx(TICKET_CATEGORY_COPY[ticket.category].label)}</Badge>
+                    {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
                     <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                     <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge>
                     {ticket.severity ? <Badge tone={SEVERITY_TONES[ticket.severity]} icon={ShieldAlert}>{tx({ TR: "Önem: {level}", EN: "Severity: {level}" }, { level: tx(TICKET_SEVERITY_COPY[ticket.severity].label) })}</Badge> : null}
@@ -285,6 +293,11 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                 </div>
                 <h3 className="mt-3 whitespace-pre-wrap break-words text-lg font-black leading-snug text-zinc-900 dark:text-white" dir="auto">{ticket.title}</h3>
                 <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-700 dark:text-zinc-300" dir="auto">{ticket.description}</p>
+                {ticket.appeal ? (
+                    <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-[12.5px] leading-relaxed text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+                        {tx({ TR: "Bu itiraz, askıya alınmış hesaptan giriş sayfası üzerinden gönderildi. Gönderen, hesabın sahibi olduğunu şifresiyle (açıksa iki adımlı doğrulamayla birlikte) ya da Google ile kanıtladı. Hesap askıdayken yanıtları göremez; hesap yeniden açılırsa yanıtınızı Taleplerim'de bulur.", EN: "This appeal was sent from the suspended account via the login page. The sender proved they own the account with its password (plus two-step verification, if enabled) or with Google. They can't read replies while the account is suspended; if it's reinstated, they'll find your reply under My tickets." })}
+                    </p>
+                ) : null}
                 {ticket.meta.steps || ticket.meta.pageUrl || ticket.meta.userAgent ? (
                     <dl className="mt-3 space-y-2 rounded-2xl bg-zinc-50 p-3 text-[12.5px] dark:bg-white/[0.03]">
                         {ticket.meta.steps ? (
@@ -614,6 +627,7 @@ export default function TicketsSection() {
                                                     <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500">
                                                         <Icon className={cx("h-3.5 w-3.5", ticket.category === "security" ? "text-red-500" : "text-indigo-500")} role="img" aria-label={tx(TICKET_CATEGORY_COPY[ticket.category].label)} />
                                                         <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
+                                                        {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
                                                         {ticket.priority === "high" || ticket.priority === "critical" ? <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge> : null}
                                                         {ticket.unreadForStaff ? <Badge tone="violet">{tx({ TR: "Yeni", EN: "New" })}</Badge> : null}
                                                         <span className="ms-auto"><RelativeTime iso={ticket.lastMessageAt} /></span>

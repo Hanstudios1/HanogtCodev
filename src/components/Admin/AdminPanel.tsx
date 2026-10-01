@@ -55,6 +55,16 @@ function serverHash() {
     return "";
 }
 
+/**
+ * The section id and its parameters: "users?q=a%40b.com" opens Users with
+ * that search (the ticket sender card links there).
+ */
+function parseHash(hash: string) {
+    const index = hash.indexOf("?");
+    if (index === -1) return { id: hash, params: new URLSearchParams() };
+    return { id: hash.slice(0, index), params: new URLSearchParams(hash.slice(index + 1)) };
+}
+
 /** Assigning the hash adds a history entry and notifies the subscription above. */
 function navigate(id: AdminSectionId) {
     if (window.location.hash.slice(1) !== id) window.location.hash = id;
@@ -64,8 +74,10 @@ function navigate(id: AdminSectionId) {
 export default function AdminPanel({ me }: { me: AdminIdentity }) {
     const { tx, locale } = useI18n();
     const hash = useSyncExternalStore(subscribeHash, hashSnapshot, serverHash);
+    const { id: hashSection, params: hashParams } = parseHash(hash);
     const sections = SECTIONS.filter((section) => me.permissions[section.permission]);
-    const active: AdminSectionId = sections.find((section) => section.id === hash)?.id ?? "overview";
+    const active: AdminSectionId = sections.find((section) => section.id === hashSection)?.id ?? "overview";
+    const usersQuery = active === "users" ? hashParams.get("q") ?? "" : "";
     const stats = useAdminResource<AdminStatsResponse>("/api/admin/stats");
 
     const badgeFor = (section: SectionDefinition) => {
@@ -166,7 +178,8 @@ export default function AdminPanel({ me }: { me: AdminIdentity }) {
                             {active === "overview" ? (
                                 <OverviewSection stats={stats} permissions={me.permissions} onNavigate={navigate} />
                             ) : active === "users" ? (
-                                <UsersSection selfEmail={me.email} />
+                                // A new search in the address starts the section afresh with it.
+                                <UsersSection key={usersQuery} selfEmail={me.email} initialQuery={usersQuery} />
                             ) : active === "moderation" ? (
                                 <ModerationSection />
                             ) : active === "tickets" ? (

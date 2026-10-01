@@ -6,6 +6,7 @@ import { Ban, BookOpen, Crown, MessageCircle, MoreHorizontal, Phone, Shield, Shi
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import ProfileModal, { type UserProfile } from "@/components/ProfileModal";
+import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { db } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { GROUP_LIMITS, toMillis } from "@/lib/groups";
@@ -74,7 +75,7 @@ export default function MembersPanel({ onInvite, onCall, onOpenRules }: { onInvi
     const openProfile = async (member: WorkspaceMember) => {
         const snapshot = await getDoc(doc(db, "public_profiles", member.email)).catch(() => null);
         const data = snapshot?.exists() ? snapshot.data() as Partial<UserProfile> : {};
-        setProfile({ ...data, username: data.username || member.username, avatarUrl: data.avatarUrl || member.avatarUrl || undefined, email: member.email });
+        setProfile({ ...data, username: data.username || member.username, avatarUrl: data.avatarUrl || member.avatarUrl || undefined, email: member.email, staffRole: parseStaffRole(data.staffRole) ?? parseStaffRole(member.staffRole) });
     };
 
     const run = async (member: WorkspaceMember, action: MemberAction) => {
@@ -130,9 +131,10 @@ export default function MembersPanel({ onInvite, onCall, onOpenRules }: { onInvi
                     <UserAvatar name={member.username} src={member.avatarUrl} size="md" online={member.online} />
                     <span className="min-w-0">
                         <span className="flex items-center gap-1.5">
-                            <span className="truncate text-sm font-semibold">{member.username}</span>
+                            <span className="min-w-0 truncate text-sm font-semibold">{member.username}</span>
                             {self && <span className="shrink-0 text-[11px] text-zinc-400">({tx(UI_COPY.you)})</span>}
                             <RoleBadge role={member.role} compact />
+                            <StaffBadge role={parseStaffRole(member.staffRole)} size="sm" compactOnMobile />
                         </span>
                         <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">
                             {status || (member.online ? "" : member.lastSeenAt ? tx(C.lastSeen, { time: relativeTime(toMillis(member.lastSeenAt), now, locale) }) : "")}

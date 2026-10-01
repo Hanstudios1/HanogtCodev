@@ -257,7 +257,16 @@ export async function PATCH(request: NextRequest) {
                 // No public profile yet: mirror every public field, not just the changed ones.
                 profileData = { ...publicFieldsOf(withSessionFallbacks({ ...afterPatch, ...patch }, email, session)), email, updatedAt: now };
             }
-            if (profileData) writes.push({ path: `public_profiles/${email}`, data: profileData });
+            // Hiding the online status or the last-seen time takes effect at once:
+            // the public profile shows the person offline and loses the stored time
+            // (a field named in the update mask but missing from the data is deleted).
+            const hideOnline = result.patch.showOnlineStatus === false;
+            const hideLastSeen = result.patch.showLastSeen === false;
+            if (profileData || (profile && (hideOnline || hideLastSeen))) {
+                const data = { ...(profileData ?? {}), ...(hideOnline ? { isOnline: false } : {}) };
+                const mask = Object.entries(data).filter(([, value]) => value !== undefined).map(([key]) => key);
+                writes.push({ path: `public_profiles/${email}`, data, updateFields: hideLastSeen ? [...mask, "lastSeenAt"] : mask });
+            }
             // updateMask = the given fields only: friends, role, badges and presence stay untouched.
             await commitServerPatches(writes);
             nextUser = { ...user, ...userData };
