@@ -451,7 +451,7 @@
   "auth_brand_title": "Kodla. Oyun yap. Paylaş.",
   "auth_brand_subtitle": "Kurulum gerektirmeyen editör, tarayıcıda çalışan oyun motoru ve üreten bir topluluk tek hesapta.",
   "auth_error_config": "Giriş hizmeti şu anda yapılandırılmamış. Lütfen daha sonra tekrar deneyin.",
-  "auth_error_credentials": "E-posta veya şifre hatalı. Google ile kayıt olduysanız “Google ile devam et” seçeneğini kullanın.",
+  "auth_error_credentials": "E-posta veya şifre hatalı. Google ile kayıt olduysanız “Google ile Oturum Aç” düğmesini kullanın.",
   "auth_error_denied": "Giriş izni verilmedi.",
   "auth_error_generic": "Giriş sırasında bir sorun oluştu. Lütfen tekrar deneyin.",
   "auth_error_not_linked": "Bu e-posta başka bir giriş yöntemiyle kayıtlı. O yöntemle giriş yapın.",

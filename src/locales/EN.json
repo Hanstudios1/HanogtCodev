@@ -451,7 +451,7 @@
   "auth_brand_title": "Code. Build games. Share.",
   "auth_brand_subtitle": "A setup-free editor, a game engine that runs in your browser and a creative community in one account.",
   "auth_error_config": "Sign-in isn't configured right now. Please try again later.",
-  "auth_error_credentials": "Incorrect e-mail or password. If you signed up with Google, use “Continue with Google”.",
+  "auth_error_credentials": "Incorrect e-mail or password. If you signed up with Google, use “Sign in with Google”.",
   "auth_error_denied": "Sign-in permission was not granted.",
   "auth_error_generic": "Something went wrong while signing in. Please try again.",
   "auth_error_not_linked": "This e-mail is registered with another sign-in method. Please use that method.",
