@@ -1,4 +1,11 @@
 {
+  "4kiaqpdsdq": {
+    "en": "Error: your profile couldn't be loaded yet, so saving was stopped to avoid overwriting your settings. Reload the page.",
+    "tr": "Hata: Profiliniz henüz yüklenemedi; ayarların üzerine yazılmaması için kaydetme durduruldu. Sayfayı yenileyin.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
   "tihg0xlfe2": {
     "en": "Checking your access…",
     "tr": "Yetkiniz kontrol ediliyor…",
@@ -32,10 +39,12 @@
     "tr": "Giriş yap",
     "files": [
       "src/app/admin/page.tsx",
-      "src/app/groups/page.tsx",
+      "src/app/editor/page.tsx",
+      "src/components/Editor/Console.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/GroupsHome.tsx",
       "src/components/Groups/JoinGroupView.tsx",
+      "src/components/Groups/workspace/GroupWorkspace.tsx",
       "src/components/News/AiRankings.tsx"
     ]
   },
@@ -238,7 +247,10 @@
     "tr": "Kapat",
     "files": [
       "src/app/dashboard/page.tsx",
+      "src/app/editor/page.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/Editor/Modal.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/ui.tsx",
       "src/components/HanogtAI/HanogtAIChat.tsx",
@@ -278,6 +290,7 @@
     "tr": "Proje adı",
     "files": [
       "src/app/dashboard/page.tsx",
+      "src/components/Editor/SaveDialog.tsx",
       "src/components/GameEngine/editor/text.ts"
     ]
   },
@@ -300,7 +313,6 @@
     "tr": "(isteğe bağlı)",
     "files": [
       "src/app/dashboard/page.tsx",
-      "src/app/groups/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
@@ -324,8 +336,10 @@
     "tr": "Vazgeç",
     "files": [
       "src/app/dashboard/page.tsx",
-      "src/app/groups/[groupId]/page.tsx",
+      "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/Editor/Modal.tsx",
+      "src/components/Editor/SaveDialog.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/ui.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx"
@@ -386,6 +400,7 @@
     "tr": "ZIP dosyası oluşturulamadı.",
     "files": [
       "src/app/dashboard/page.tsx",
+      "src/app/editor/page.tsx",
       "src/components/Groups/api.ts"
     ]
   },
@@ -432,60 +447,243 @@
       "src/app/dashboard/page.tsx"
     ]
   },
-  "27z9svujalv": {
-    "en": "The game script couldn't be loaded.",
-    "tr": "Oyun scripti yüklenemedi.",
+  "164c9upoapg": {
+    "en": "Preparing the editor…",
+    "tr": "Editör hazırlanıyor…",
     "files": [
       "src/app/editor/page.tsx"
     ]
   },
-  "2170ot488m1": {
-    "en": "(No output)",
-    "tr": "(Çıktı yok)",
-    "files": [
-      "src/app/editor/page.tsx"
-    ]
-  },
-  "xtf59hnz0l": {
-    "en": "> Finished with exit code {code}",
-    "tr": "> {code} çıkış koduyla tamamlandı",
-    "files": [
-      "src/app/editor/page.tsx"
-    ]
-  },
-  "7y3ar7bz06": {
-    "en": "> Project run · independent language jobs",
-    "tr": "> Proje çalıştırması · bağımsız dil işleri",
-    "files": [
-      "src/app/editor/page.tsx"
-    ]
-  },
-  "1qepntc6p6b": {
-    "en": "> Project run",
-    "tr": "> Proje çalıştırması",
-    "files": [
-      "src/app/editor/page.tsx"
-    ]
-  },
-  "1ea4hvqlsmk": {
-    "en": "> The run could not be completed.",
-    "tr": "> Çalıştırma tamamlanamadı.",
-    "files": [
-      "src/app/editor/page.tsx"
-    ]
-  },
-  "2azh6425bkf": {
-    "en": "{count} files",
-    "tr": "{count} dosya",
+  "17013cyv2mu": {
+    "en": "Run",
+    "tr": "Çalıştır",
     "files": [
       "src/app/editor/page.tsx",
-      "src/components/Admin/ReportsPanel.tsx",
-      "src/components/Admin/SecurityEventsSection.tsx"
+      "src/components/Editor/Console.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
-  "1vndt6p6o37": {
-    "en": "Game scripts can only be C# or C++.",
-    "tr": "Oyun scriptleri yalnızca C# veya C++ olabilir.",
+  "1ypw6v787u8": {
+    "en": "Run all ({count})",
+    "tr": "Tümünü çalıştır ({count})",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "14huk283pv0": {
+    "en": "Run this file only",
+    "tr": "Yalnızca bu dosyayı çalıştır",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "2eecdz5ax49": {
+    "en": "Running…",
+    "tr": "Çalışıyor…",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1tgpvgsb677": {
+    "en": "Validate",
+    "tr": "Doğrula",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1deknw8bj6t": {
+    "en": "Preview",
+    "tr": "Önizle",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Admin/AnnouncementsSection.tsx",
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/lib/runtimes/languages.ts"
+    ]
+  },
+  "nnurxw805m": {
+    "en": "Stop",
+    "tr": "Durdur",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/Console.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx"
+    ]
+  },
+  "1dvric0nsgd": {
+    "en": "Run options",
+    "tr": "Çalıştırma seçenekleri",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "cx3bayifug": {
+    "en": "{language} supports editing and syntax highlighting only; it can't be run.",
+    "tr": "{language} yalnızca düzenleme ve sözdizimi vurgulama destekler; bu dil çalıştırılamaz.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "667t1e1zr5": {
+    "en": "Console",
+    "tr": "Konsol",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ag96l70zk5": {
+    "en": "Show the output panel",
+    "tr": "Çıktı panelini göster",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1eq44nxadem": {
+    "en": "Hide the output panel",
+    "tr": "Çıktı panelini gizle",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1otqsjcz2im": {
+    "en": "Resize the panel",
+    "tr": "Panel genişliğini değiştir",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "15nkvvkrd6p": {
+    "en": "Game script",
+    "tr": "Oyun scripti",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "opg16d3dqf": {
+    "en": "More actions",
+    "tr": "Diğer işlemler",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "17p1wuj4iul": {
+    "en": "Drop files to open them (text or ZIP, 500 KB per file)",
+    "tr": "Dosyaları açmak için bırakın (metin veya ZIP, dosya başına 500 KB)",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1iig5p086nm": {
+    "en": "Format document",
+    "tr": "Belgeyi biçimlendir",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1lesxme4c5b": {
+    "en": "There is no built-in formatter for {language}.",
+    "tr": "{language} için yerleşik bir biçimlendirici yok.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "16rjn391r54": {
+    "en": "Document formatted.",
+    "tr": "Belge biçimlendirildi.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1flnnkqt2a6": {
+    "en": "Change language mode",
+    "tr": "Dil modunu değiştir",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "lqgnnr17d": {
+    "en": "Rename file",
+    "tr": "Dosyayı yeniden adlandır",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "22eecgz3olu": {
+    "en": "Toggle light/dark theme",
+    "tr": "Açık/koyu temayı değiştir",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1rh7zksyean": {
+    "en": "Editor settings",
+    "tr": "Editör ayarları",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/app/settings/page.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "1dyut3ug6kb": {
+    "en": "Switch to tab",
+    "tr": "Sekmeye geç",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "t3a315u4p2": {
+    "en": "Actions",
+    "tr": "İşlemler",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "hi7hv45plm": {
+    "en": "Open files",
+    "tr": "Açık dosyalar",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/EditorTabs.tsx"
+    ]
+  },
+  "22yvox2bnu8": {
+    "en": "New file",
+    "tr": "Yeni dosya",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/components/Groups/workspace/EditorPane.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "134fwvocyb6": {
+    "en": "New {language} file",
+    "tr": "Yeni {language} dosyası",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "8kayrfrjql": {
+    "en": "Sign in to save the project to the cloud. Your unsaved tabs are kept in this browser.",
+    "tr": "Projeyi buluta kaydetmek için giriş yapın. Kaydedilmemiş sekmeleriniz bu tarayıcıda korunur.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "o5nlkpf59b": {
+    "en": "Project saved.",
+    "tr": "Proje kaydedildi.",
     "files": [
       "src/app/editor/page.tsx"
     ]
@@ -497,28 +695,423 @@
       "src/app/editor/page.tsx"
     ]
   },
-  "2eecdz5ax49": {
-    "en": "Running…",
-    "tr": "Çalışıyor…",
+  "1dhmbr2ocz5": {
+    "en": "The project couldn't be saved to the cloud. Your changes are kept in the open tabs.",
+    "tr": "Proje buluta kaydedilemedi. Değişiklikleriniz açık sekmelerde korunuyor.",
     "files": [
       "src/app/editor/page.tsx"
     ]
   },
-  "1zi7gbxyavi": {
-    "en": "RUN ALL",
-    "tr": "TÜMÜNÜ ÇALIŞTIR",
+  "dx4ul645tq": {
+    "en": "The game script couldn't be saved; your changes are kept in the open tab.",
+    "tr": "Oyun scripti kaydedilemedi; değişiklikler açık sekmede korunuyor.",
     "files": [
       "src/app/editor/page.tsx"
     ]
   },
-  "1deknw8bj6t": {
-    "en": "Preview",
-    "tr": "Önizleme",
+  "1vndt6p6o37": {
+    "en": "Game scripts can only be C# or C++.",
+    "tr": "Oyun scriptleri yalnızca C# veya C++ olabilir.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "27z9svujalv": {
+    "en": "The game script couldn't be loaded.",
+    "tr": "Oyun scripti yüklenemedi.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "131obrwkios": {
+    "en": "Open dashboard",
+    "tr": "Panele git",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1mjknzmz1qd": {
+    "en": "My project",
+    "tr": "Genel projem",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1jkgk0rjzfr": {
+    "en": "My {language} project",
+    "tr": "{language} projem",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1ce0j82vshj": {
+    "en": "Unsaved changes",
+    "tr": "Kaydedilmemiş değişiklikler",
     "files": [
       "src/app/editor/page.tsx",
-      "src/components/Admin/AnnouncementsSection.tsx",
-      "src/components/Groups/CreateGroupWizard.tsx",
-      "src/lib/runtimes/languages.ts"
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "4ztppc490v": {
+    "en": "{name} isn't saved. Closing the tab discards the changes.",
+    "tr": "{name} kaydedilmedi. Sekmeyi kapatırsanız değişiklikler kaybolur.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "29jd4rk9btw": {
+    "en": "{count} tabs have unsaved changes. Closing them discards those changes.",
+    "tr": "{count} sekmede kaydedilmemiş değişiklik var. Kapatırsanız bu değişiklikler kaybolur.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1mmkaaxmp0": {
+    "en": "The file name can't be empty.",
+    "tr": "Dosya adı boş olamaz.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "67xti69d3p": {
+    "en": "File names can't contain / or \\.",
+    "tr": "Dosya adında / veya \\ kullanılamaz.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "ttixbk69uw": {
+    "en": "A file with this name is already open.",
+    "tr": "Bu adla açık bir dosya zaten var.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "uhucmjmunh": {
+    "en": "Language changed to {language}.",
+    "tr": "Dil {language} olarak değiştirildi.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "10zwq0z7ei5": {
+    "en": "At most {count} files can be open.",
+    "tr": "En fazla {count} dosya açık olabilir.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "n2f7q7g9m5": {
+    "en": "At most 8 files run at once; the first 8 were run.",
+    "tr": "Tek seferde en fazla 8 dosya çalışır; ilk 8 dosya çalıştırıldı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1zg1pmph94i": {
+    "en": "{count} files couldn't be opened: {list}",
+    "tr": "{count} dosya açılamadı: {list}",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1gbenqmt605": {
+    "en": "{count} files opened.",
+    "tr": "{count} dosya açıldı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "lbvq4ta870": {
+    "en": "New files can't be opened while editing a game script.",
+    "tr": "Oyun scripti düzenlenirken yeni dosya açılamaz.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1nmf696ygoi": {
+    "en": "{name} was opened in the editor (not saved yet).",
+    "tr": "{name} editörde açıldı (kaydedilmedi).",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1m4opn30qnn": {
+    "en": "Auto save is off (Settings).",
+    "tr": "Otomatik kaydetme kapalı (Ayarlar).",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "20xomvq4h1c": {
+    "en": "Auto save starts after the project is saved once.",
+    "tr": "Otomatik kaydetme, proje ilk kez kaydedildikten sonra çalışır.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1nkt5nfiatp": {
+    "en": "Auto save: after {seconds} s",
+    "tr": "Otomatik kaydetme: {seconds} sn sonra",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "d003ju132": {
+    "en": "Auto save: on focus change",
+    "tr": "Otomatik kaydetme: odak değişince",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "2dyz2ngkwtj": {
+    "en": "The template's sample input was added to the Input tab.",
+    "tr": "Şablonun örnek girdisi Girdi sekmesine yazıldı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1znh3x4y1w3": {
+    "en": "This file isn't executed; it's shown in the Preview panel.",
+    "tr": "Bu dosya çalıştırılmaz; Önizleme panelinde görüntülenir.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "ilnq3m2kx7": {
+    "en": "copy",
+    "tr": "kopya",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1zsap8x3yrr": {
+    "en": "Save",
+    "tr": "Kaydet",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/Editor/SaveDialog.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/Editor/Sidebar.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "dewvprmq5k": {
+    "en": "Download this file",
+    "tr": "Bu dosyayı indir",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/Editor/Sidebar.tsx",
+      "src/components/Groups/workspace/EditorPane.tsx"
+    ]
+  },
+  "cz3jjz1mdg": {
+    "en": "Download the project as ZIP",
+    "tr": "Projeyi ZIP olarak indir",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "2cjy6vrmo0d": {
+    "en": "Upload files",
+    "tr": "Dosya yükle",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1narw1nw6nt": {
+    "en": "Share snippet",
+    "tr": "Kod parçacığını paylaş",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShareDialog.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "z8y3lw87np": {
+    "en": "Keyboard shortcuts",
+    "tr": "Klavye kısayolları",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "jxcsj400nn": {
+    "en": "Toggle the output panel",
+    "tr": "Çıktı panelini aç/kapat",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1vncdfig12f": {
+    "en": "Edit program input",
+    "tr": "Program girdisini düzenle",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "198hr6mwe44": {
+    "en": "Editor commands (F1)",
+    "tr": "Editör komutları (F1)",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "pns8zxgi2r": {
+    "en": "{label} ({shortcut})",
+    "tr": "{label} ({shortcut})",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "ka1wf2rl1b": {
+    "en": "{name} ({reason})",
+    "tr": "{name} ({reason})",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "14tx3wu5j9w": {
+    "en": "File names can be at most 120 characters long.",
+    "tr": "Dosya adı en fazla 120 karakter olabilir.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "fhjtlv593x": {
+    "en": "Quick actions",
+    "tr": "Hızlı işlemler",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/CommandPalette.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "qtyj90akt3": {
+    "en": "Hanogt: Run",
+    "tr": "Hanogt: Çalıştır",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "28cl4v9su66": {
+    "en": "Hanogt: Run this file only",
+    "tr": "Hanogt: Yalnızca bu dosyayı çalıştır",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "oa3tta2tp4": {
+    "en": "Hanogt: Save",
+    "tr": "Hanogt: Kaydet",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "fouumxvs7y": {
+    "en": "Hanogt: Quick actions",
+    "tr": "Hanogt: Hızlı işlemler",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "i3fnunx8q2": {
+    "en": "Panel",
+    "tr": "Panel",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "rdxa2w80v": {
+    "en": "larger than 500 KB",
+    "tr": "500 KB'tan büyük",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1n99eze4mga": {
+    "en": "not a text file",
+    "tr": "metin değil",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1c0gnfson3u": {
+    "en": "unreadable",
+    "tr": "okunamadı",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "20vdbytpa9b": {
+    "en": "tab limit reached",
+    "tr": "sekme sınırı doldu",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "hayr7yx9bc": {
+    "en": "invalid ZIP",
+    "tr": "ZIP açılamadı",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "p8wm44f2qy": {
+    "en": "The code to open couldn't be read.",
+    "tr": "Açılacak kod okunamadı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "ou6mwq1brs": {
+    "en": "The code to open is empty.",
+    "tr": "Açılacak kod boş.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1tni1h267ga": {
+    "en": "The code is too large to open in the editor (500 KB max).",
+    "tr": "Kod editörde açmak için çok büyük (en fazla 500 KB).",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "9rq9vm16ok": {
+    "en": "The code's language isn't supported.",
+    "tr": "Kodun dili tanınmadı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "22ilelm9020": {
+    "en": "The code couldn't be opened because browser storage is unavailable.",
+    "tr": "Tarayıcı depolaması kullanılamadığı için kod açılamadı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1j2ek1ddwfg": {
+    "en": "The code to open wasn't found; the link may have been used already.",
+    "tr": "Açılacak kod bulunamadı; bağlantı daha önce kullanılmış olabilir.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "2exw3kvynlv": {
+    "en": "The request to open the code expired; please try again.",
+    "tr": "Açma isteğinin süresi doldu; lütfen tekrar deneyin.",
+    "files": [
+      "src/app/editor/page.tsx"
     ]
   },
   "1g8eoqun7gg": {
@@ -571,464 +1164,84 @@
       "src/app/feedback/page.tsx"
     ]
   },
-  "2g2ud2yiwa1": {
-    "en": "The group couldn't be opened.",
-    "tr": "Grup açılamadı.",
+  "x2852ylgwb": {
+    "en": "This account uses two-step verification. Enter the code from your authenticator app.",
+    "tr": "Bu hesapta iki adımlı doğrulama açık. Doğrulama uygulamanızdaki kodu girin.",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/login/page.tsx"
     ]
   },
-  "15yo6xqz121": {
-    "en": "Access to the shared files was lost.",
-    "tr": "Ortak dosyalara erişim kesildi.",
+  "1160s6q16ht": {
+    "en": "The verification code is wrong, expired or already used. Enter the current code from your app.",
+    "tr": "Doğrulama kodu hatalı, süresi dolmuş ya da zaten kullanılmış. Uygulamadaki güncel kodu girin.",
     "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/api.ts"
+      "src/app/login/page.tsx"
     ]
   },
-  "1mgrmobxgyr": {
-    "en": "Access to the group chat was lost.",
-    "tr": "Grup sohbetine erişim kesildi.",
+  "bqp9acsik3": {
+    "en": "Two-step verification",
+    "tr": "İki adımlı doğrulama",
     "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/api.ts"
+      "src/app/login/page.tsx",
+      "src/components/Account/TwoFactorSettings.tsx"
     ]
   },
-  "96q87gzbpv": {
-    "en": "The file couldn't be saved. Reload to get the latest version.",
-    "tr": "Dosya kaydedilemedi. Son sürümü yenileyin.",
+  "2buctvn1p76": {
+    "en": "Enter one of the recovery codes you saved during setup. Each code works only once.",
+    "tr": "Hesabınızı kurarken kaydettiğiniz kurtarma kodlarından birini girin. Her kod yalnızca bir kez kullanılabilir.",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/login/page.tsx"
     ]
   },
-  "kdgo23zuxh": {
-    "en": "File name (e.g. app.py):",
-    "tr": "Dosya adı (ör. app.py):",
+  "ujtg9u8x2s": {
+    "en": "Enter the 6-digit code from your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…).",
+    "tr": "Doğrulama uygulamanızdaki (Google Authenticator, Microsoft Authenticator, 1Password…) 6 haneli kodu girin.",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/login/page.tsx"
     ]
   },
-  "oz1qf6iejg": {
-    "en": "Delete {name}?",
-    "tr": "{name} silinsin mi?",
+  "23rp7apg37x": {
+    "en": "Recovery code",
+    "tr": "Kurtarma kodu",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/login/page.tsx"
     ]
   },
-  "5gqf0a5o4x": {
-    "en": "The member couldn't be added.",
-    "tr": "Üye eklenemedi.",
+  "25ccfx3r1yh": {
+    "en": "Verification code",
+    "tr": "Doğrulama kodu",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
+      "src/app/login/page.tsx",
+      "src/components/Account/TwoFactorSettings.tsx"
     ]
   },
-  "1s5lms2fwd8": {
-    "en": "Remove {name} from the group?",
-    "tr": "{name} gruptan çıkarılsın mı?",
+  "vst0krstr7": {
+    "en": "Verify and sign in",
+    "tr": "Doğrula ve giriş yap",
     "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/workspace/MembersPanel.tsx"
+      "src/app/login/page.tsx"
     ]
   },
-  "efgorbnxb": {
-    "en": "Make {name} an admin?",
-    "tr": "{name} için yönetici rolü verilsin mi?",
+  "ekbbaapgrr": {
+    "en": "Use the authenticator app",
+    "tr": "Doğrulama uygulamasını kullan",
     "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/workspace/MembersPanel.tsx"
+      "src/app/login/page.tsx"
     ]
   },
-  "33kt595z4p": {
-    "en": "Remove admin role from {name}?",
-    "tr": "{name} için yönetici rolü kaldırılsın mı?",
+  "1jk3sisn6hh": {
+    "en": "Can't reach my phone: use a recovery code",
+    "tr": "Telefonuma erişemiyorum: kurtarma kodu kullan",
     "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/workspace/MembersPanel.tsx"
+      "src/app/login/page.tsx"
     ]
   },
-  "1xgk6djjyur": {
-    "en": "The member action couldn't be completed.",
-    "tr": "Üye işlemi tamamlanamadı.",
+  "21ety3yqhji": {
+    "en": "Back",
+    "tr": "Geri",
     "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "2dkap7pxma3": {
-    "en": "Couldn't open the group",
-    "tr": "Grup açılamadı",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "1lwgzhxogsj": {
-    "en": "You may not have access to this workspace.",
-    "tr": "Bu çalışma alanına erişiminiz olmayabilir.",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "b03kmsxgoh": {
-    "en": "Back to groups",
-    "tr": "Gruplara dön",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "gxcgyd34ro": {
-    "en": "members",
-    "tr": "üye",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "cqw1mnw5rt": {
-    "en": "Saving",
-    "tr": "Kaydediliyor",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "jhkvvg6qdh": {
-    "en": "Live sync",
-    "tr": "Canlı senkron",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/workspace/EditorPane.tsx"
-    ]
-  },
-  "tn3yuw3c23": {
-    "en": "Download the whole project",
-    "tr": "Tüm projeyi indir",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "wcrphk4a5j": {
-    "en": "Project chat",
-    "tr": "Proje sohbeti",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "15fre7yepuw": {
-    "en": "Members",
-    "tr": "Üyeler",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/workspace/MembersPanel.tsx"
-    ]
-  },
-  "1tiareauifx": {
-    "en": "Files",
-    "tr": "Dosyalar",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Admin/ReportsPanel.tsx",
-      "src/components/Groups/workspace/FilesPanel.tsx"
-    ]
-  },
-  "5b1s9fg4h6": {
-    "en": "Add file",
-    "tr": "Dosya ekle",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "1cen5mjir88": {
-    "en": "Delete",
-    "tr": "Sil",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Admin/copy.ts",
+      "src/app/login/page.tsx",
       "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/FilesPanel.tsx",
-      "src/components/Groups/workspace/MessageItem.tsx",
-      "src/components/HanogtAI/HanogtAIChat.tsx",
-      "src/components/News/CommentsDrawer.tsx"
-    ]
-  },
-  "13vej2mrbc3": {
-    "en": "Waiting for files…",
-    "tr": "Dosya bekleniyor…",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "13pjjsp7ddk": {
-    "en": "Last edited by",
-    "tr": "Son yazan",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "1eystbqfqpi": {
-    "en": "Member",
-    "tr": "Üye",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/GroupsHome.tsx",
-      "src/lib/groups.ts"
-    ]
-  },
-  "dewvprmq5k": {
-    "en": "Download this file",
-    "tr": "Bu dosyayı indir",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/workspace/EditorPane.tsx"
-    ]
-  },
-  "2euf44hgys": {
-    "en": "s",
-    "tr": " sn",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/News/NewsPage.tsx"
-    ]
-  },
-  "1bsp33l94wj": {
-    "en": "Recording",
-    "tr": "Kaydediliyor",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "13ainokvjdr": {
-    "en": "Write a message…",
-    "tr": "Mesaj yazın…",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "ayfbkpffhd": {
-    "en": "Friend's e-mail",
-    "tr": "Arkadaş e-postası",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "mwx41tmqgn": {
-    "en": "Voice call",
-    "tr": "Sesli ara",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/Groups/workspace/MembersPanel.tsx",
-      "src/components/VoiceCallProvider.tsx"
-    ]
-  },
-  "1u38hsqyrmt": {
-    "en": "Toggle admin role",
-    "tr": "Yönetici rolünü değiştir",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "1jdu0v69s1t": {
-    "en": "Remove member",
-    "tr": "Üyeyi çıkar",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "jq1nai05a1": {
-    "en": "Group members",
-    "tr": "Grup üyeleri",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx"
-    ]
-  },
-  "nnurxw805m": {
-    "en": "Stop",
-    "tr": "Durdur",
-    "files": [
-      "src/app/groups/[groupId]/page.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/MessageItem.tsx",
-      "src/components/HanogtAI/HanogtAIChat.tsx"
-    ]
-  },
-  "2bg84kod97w": {
-    "en": "Groups couldn't be loaded.",
-    "tr": "Gruplar yüklenemedi.",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx"
-    ]
-  },
-  "19jxx04z19e": {
-    "en": "The group couldn't be created.",
-    "tr": "Grup oluşturulamadı.",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/CreateGroupWizard.tsx"
-    ]
-  },
-  "4pjswp4ucz": {
-    "en": "The invitation couldn't be processed.",
-    "tr": "Davet işlenemedi.",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "1i9qs5gspan": {
-    "en": "Sign in to use Groups",
-    "tr": "Gruplar için giriş yapın",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx"
-    ]
-  },
-  "2fursjl0rry": {
-    "en": "Shared workspaces are open to verified group members only.",
-    "tr": "Ortak çalışma alanları yalnızca doğrulanmış grup üyelerine açıktır.",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx"
-    ]
-  },
-  "1241b929q9n": {
-    "en": "Live collaboration",
-    "tr": "Canlı ortak çalışma",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx"
-    ]
-  },
-  "2ew8s5e0b7g": {
-    "en": "Hanogt Groups",
-    "tr": "Hanogt Grupları",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "qx9kmu1kv9": {
-    "en": "Invite friends, follow the same files live, send text or voice messages in the project chat and call members over WebRTC.",
-    "tr": "Arkadaşlarınızı davet edin, aynı dosyaları canlı izleyin, proje sohbetinde yazılı veya sesli mesaj gönderin ve üyeleri WebRTC ile arayın.",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "28dc5l18zkx": {
-    "en": "New group",
-    "tr": "Yeni grup",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx"
-    ]
-  },
-  "14lmq9w3c55": {
-    "en": "Group invitations",
-    "tr": "Grup davetleri",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx"
-    ]
-  },
-  "21yn2bia4oh": {
-    "en": "Hanogt group",
-    "tr": "Hanogt grubu",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "2fhlarte473": {
-    "en": "Accept",
-    "tr": "Kabul et",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx"
-    ]
-  },
-  "sijypixa8o": {
-    "en": "Decline",
-    "tr": "Reddet",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/GroupsHome.tsx",
-      "src/components/VoiceCallProvider.tsx"
-    ]
-  },
-  "r47hhll9u8": {
-    "en": "Set up your first work group",
-    "tr": "İlk çalışma grubunuzu kurun",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "1ux3f9unl6e": {
-    "en": "Start from one of your projects or open an empty workspace.",
-    "tr": "Mevcut bir projeyi başlangıç noktası olarak seçebilir veya boş alan açabilirsiniz.",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "1fpuhbu5kd": {
-    "en": "A private workspace for building together.",
-    "tr": "Birlikte üretmek için özel çalışma alanı.",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "s1ksu275od": {
-    "en": "Shared project",
-    "tr": "Ortak proje",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "1t0tvfuufn": {
-    "en": "Create a new group",
-    "tr": "Yeni grup oluştur",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/CreateGroupWizard.tsx"
-    ]
-  },
-  "gfgo7u170y": {
-    "en": "You'll be the only member at first.",
-    "tr": "Başlangıçta yalnızca siz üye olursunuz.",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "26ofrbt231c": {
-    "en": "Group name",
-    "tr": "Grup adı",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/components/Groups/CreateGroupWizard.tsx"
-    ]
-  },
-  "1ls4al65qvg": {
-    "en": "Description",
-    "tr": "Açıklama",
-    "files": [
-      "src/app/groups/page.tsx",
-      "src/app/media/page.tsx",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/CreateGroupWizard.tsx"
-    ]
-  },
-  "o7cbuxbe6n": {
-    "en": "Starting project",
-    "tr": "Başlangıç projesi",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "276lh84fnqo": {
-    "en": "Empty JavaScript project",
-    "tr": "Boş JavaScript projesi",
-    "files": [
-      "src/app/groups/page.tsx"
-    ]
-  },
-  "1whhvosn7m8": {
-    "en": "Create group",
-    "tr": "Grubu oluştur",
-    "files": [
-      "src/app/groups/page.tsx",
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
@@ -1237,7 +1450,8 @@
     "tr": "Popüler",
     "files": [
       "src/app/media/page.tsx",
-      "src/components/Arcade/ArcadeGallery.tsx"
+      "src/components/Arcade/ArcadeGallery.tsx",
+      "src/components/Editor/NewFileDialog.tsx"
     ]
   },
   "3ht2vjm4ho": {
@@ -1379,6 +1593,16 @@
       "src/app/media/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ls4al65qvg": {
+    "en": "Description",
+    "tr": "Açıklama",
+    "files": [
+      "src/app/media/page.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "1qj3444gef9": {
@@ -1579,11 +1803,1572 @@
       "src/app/messages/[friendId]/page.tsx"
     ]
   },
+  "2algag36fqt": {
+    "en": "Language defined",
+    "tr": "Dile göre",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "xrg35s35xw": {
+    "en": "Always",
+    "tr": "Her zaman",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "27jbezla4an": {
+    "en": "Only before whitespace",
+    "tr": "Yalnızca boşluktan önce",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "221ct4go232": {
+    "en": "Never",
+    "tr": "Asla",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "2cwdszru8kc": {
+    "en": "Appearance",
+    "tr": "Görünüm",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25t29f6naxn": {
+    "en": "Colour theme, guides and the helpers around the editor.",
+    "tr": "Renk teması, kılavuzlar ve editör kenarındaki yardımcılar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "kjb0euuhpp": {
+    "en": "Colour theme",
+    "tr": "Renk teması",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "e7jj8dt8b3": {
+    "en": "\"Follow site theme\" uses VS Light or VS Dark depending on the site's light or dark mode.",
+    "tr": "\"Site temasını izle\", sitenin açık veya koyu moduna göre VS Açık ya da VS Koyu temayı kullanır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25bdx0lravw": {
+    "en": "Minimap",
+    "tr": "Mini harita",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "rmdw4o4g4k": {
+    "en": "Shows a small overview of the code on the right edge.",
+    "tr": "Sağ kenarda kodun küçük bir özetini gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "10pd937he6r": {
+    "en": "Line numbers",
+    "tr": "Satır numaraları",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1s9qyefyuqr": {
+    "en": "Relative numbers show each line's distance from the cursor.",
+    "tr": "Göreli numaralar her satırın imlece uzaklığını gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "k0jyy12s1x": {
+    "en": "On",
+    "tr": "Açık",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/Admin/AnnouncementsSection.tsx"
+    ]
+  },
+  "21c6r0rwy1r": {
+    "en": "Relative",
+    "tr": "Göreli",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "f8xmelzk4a": {
+    "en": "Off",
+    "tr": "Kapalı",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/Admin/AnnouncementsSection.tsx"
+    ]
+  },
+  "9nokzegfli": {
+    "en": "Render whitespace",
+    "tr": "Boşlukları göster",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1h8le35azpi": {
+    "en": "Draws spaces and tabs as dots and arrows.",
+    "tr": "Boşluk ve sekme karakterlerini noktalar ve oklarla gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "d5920flkwz": {
+    "en": "None",
+    "tr": "Gösterme",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "6v3iamxb09": {
+    "en": "At word boundaries",
+    "tr": "Kelime sınırlarında",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1utkch6c8b1": {
+    "en": "In the selection only",
+    "tr": "Yalnızca seçimde",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "205whiuolqx": {
+    "en": "Trailing only",
+    "tr": "Satır sonundakiler",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1s3bgxbwlkh": {
+    "en": "All",
+    "tr": "Tümü",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/Editor/Console.tsx",
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/components/Groups/GroupsHome.tsx",
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/News/NewsPage.tsx"
+    ]
+  },
+  "5ql79vq17t": {
+    "en": "Highlight the active line",
+    "tr": "Etkin satırı vurgula",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2fl50z7li0k": {
+    "en": "Bracket pair colourization",
+    "tr": "Parantez çiftlerini renklendir",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "ag52sczsgt": {
+    "en": "Shows nested brackets in different colours.",
+    "tr": "İç içe parantezleri farklı renklerle gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "ouqy0uyr82": {
+    "en": "Bracket pair guides",
+    "tr": "Parantez kılavuzları",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25nlqtbx8st": {
+    "en": "Connects matching brackets with vertical lines.",
+    "tr": "Eşleşen parantezleri dikey çizgilerle bağlar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "ozdzm6n4ai": {
+    "en": "Indentation guides",
+    "tr": "Girinti kılavuzları",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "xz5c2o7wn2": {
+    "en": "Draws thin vertical lines at each indentation level.",
+    "tr": "Her girinti düzeyinde ince dikey çizgiler çizer.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "21ezijf35ni": {
+    "en": "Vertical ruler",
+    "tr": "Dikey cetvel",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "uv91pqyn3g": {
+    "en": "Shows a line at the chosen column to help keep lines short.",
+    "tr": "Satır uzunluğunu sınırlı tutmak için seçilen sütunda bir çizgi gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "p6cj1o1z9i": {
+    "en": "Column 72",
+    "tr": "72. sütun",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1z19c8edoim": {
+    "en": "Column 80",
+    "tr": "80. sütun",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1d880b96s3w": {
+    "en": "Column 100",
+    "tr": "100. sütun",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1mecifjmklr": {
+    "en": "Column 120",
+    "tr": "120. sütun",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "28nyse7i5oc": {
+    "en": "Code folding",
+    "tr": "Kod katlama",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "17i6krsoeok": {
+    "en": "Shows arrows next to the line numbers to fold blocks.",
+    "tr": "Satır numaralarının yanında blokları katlamak için oklar gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1yt83l8faj6": {
+    "en": "Font",
+    "tr": "Yazı tipi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1e0yrdojznl": {
+    "en": "The code font, its size and the line spacing.",
+    "tr": "Kodun yazı tipi, boyutu ve satır aralığı.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "12r5g4ry80u": {
+    "en": "Font family",
+    "tr": "Yazı tipi ailesi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2lw47h072x": {
+    "en": "JetBrains Mono ships with the site. The others are used when installed on your device; otherwise JetBrains Mono is used.",
+    "tr": "JetBrains Mono siteyle birlikte gelir. Diğerleri cihazınızda yüklüyse kullanılır; yüklü değilse JetBrains Mono'ya dönülür.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1ky6ti8w89g": {
+    "en": "Font size",
+    "tr": "Yazı boyutu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "26s2igvn1xk": {
+    "en": "{value} px",
+    "tr": "{value} px",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "equmxpqqpc": {
+    "en": "Line height",
+    "tr": "Satır yüksekliği",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "23axznqe03r": {
+    "en": "Line spacing as a multiple of the font size.",
+    "tr": "Yazı boyutunun katı olarak satır aralığı.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1xvn6lddphi": {
+    "en": "{value}×",
+    "tr": "{value}×",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "nii4le5dns": {
+    "en": "Font ligatures",
+    "tr": "Bitişik harfler (ligatür)",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1vj46te70li": {
+    "en": "Draws symbols such as =>, !== and >= as single glyphs (supported by JetBrains Mono, Fira Code and Cascadia Code).",
+    "tr": "=>, !== ve >= gibi işaretleri tek simge olarak çizer (JetBrains Mono, Fira Code ve Cascadia Code destekler).",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "i3c2wzicio": {
+    "en": "Zoom with the mouse wheel",
+    "tr": "Fare tekerleğiyle yakınlaştır",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "8v82ih2bq6": {
+    "en": "With Ctrl (⌘ on Mac) held, the wheel changes the font size temporarily.",
+    "tr": "Ctrl (Mac'te ⌘) basılıyken tekerlek yazı boyutunu geçici olarak değiştirir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25218ie9nca": {
+    "en": "Cursor and scrolling",
+    "tr": "İmleç ve kaydırma",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "aanvijvsnn": {
+    "en": "How the cursor looks and how the editor scrolls.",
+    "tr": "İmlecin görünümü ve editörün kayma davranışı.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2ag1vyoqtiw": {
+    "en": "Cursor style",
+    "tr": "İmleç stili",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2epkao59myh": {
+    "en": "Line",
+    "tr": "Çizgi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "29xzldjbywo": {
+    "en": "Thin line",
+    "tr": "İnce çizgi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1jeefdevjp0": {
+    "en": "Block",
+    "tr": "Blok",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25wnrkp4qd8": {
+    "en": "Block outline",
+    "tr": "Blok çerçeve",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "z3hrju5dwu": {
+    "en": "Underline",
+    "tr": "Alt çizgi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "ccrqk24eho": {
+    "en": "Thin underline",
+    "tr": "İnce alt çizgi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "20y3gj9d9wr": {
+    "en": "Cursor blinking",
+    "tr": "İmleç animasyonu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "3myd726dm7": {
+    "en": "Blink",
+    "tr": "Yanıp sönme",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2ce54mouxfp": {
+    "en": "Smooth",
+    "tr": "Yumuşak",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "igte2148ps": {
+    "en": "Phase",
+    "tr": "Faz",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "9rjbdplz8g": {
+    "en": "Expand",
+    "tr": "Genişleme",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "23btx8uoreh": {
+    "en": "Solid (no blinking)",
+    "tr": "Sabit (yanıp sönmez)",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "yajpbevz39": {
+    "en": "Smooth caret animation",
+    "tr": "Yumuşak imleç hareketi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2369k5yo8u4": {
+    "en": "The cursor glides to its new position instead of jumping.",
+    "tr": "İmleç yeni konumuna atlamak yerine kayarak gider.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "yzwimhb3ma": {
+    "en": "Smooth scrolling",
+    "tr": "Yumuşak kaydırma",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1uoddeyid0n": {
+    "en": "Sticky scroll",
+    "tr": "Yapışkan kaydırma",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1kbdoxen03f": {
+    "en": "Keeps the headers of the class and function you are in pinned to the top while scrolling.",
+    "tr": "Kaydırırken içinde bulunduğunuz sınıf ve fonksiyon başlıklarını üstte sabit tutar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "10ozk6m7obr": {
+    "en": "Scroll beyond the last line",
+    "tr": "Son satırın ötesine kaydır",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "3tsmlm2br3": {
+    "en": "Lets you scroll the last line up to the middle of the screen.",
+    "tr": "Son satırı ekranın ortasına kadar kaydırabilmenizi sağlar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "9i8a86bqos": {
+    "en": "Editing",
+    "tr": "Düzenleme",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1h66lf9ejts": {
+    "en": "Indentation, word wrap, auto-closing and formatting.",
+    "tr": "Girinti, satır kaydırma, otomatik kapatma ve biçimlendirme.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "tf7hv43ec7": {
+    "en": "Tab size",
+    "tr": "Sekme boyutu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1kxd2ldkeig": {
+    "en": "The width of one indentation level.",
+    "tr": "Bir girinti düzeyinin genişliği.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "3g3cb2bcnb": {
+    "en": "{value} columns",
+    "tr": "{value} sütun",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "287ukhqbvof": {
+    "en": "Indent using",
+    "tr": "Girinti karakteri",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1die5lrnu70": {
+    "en": "Spaces",
+    "tr": "Boşluk",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1fypcxp1j0y": {
+    "en": "Tabs",
+    "tr": "Sekme (Tab)",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "o4mkmu0tjv": {
+    "en": "Detect indentation from the file",
+    "tr": "Girintiyi dosyadan algıla",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1icr4l9yff": {
+    "en": "An opened file's existing indentation overrides the two settings above.",
+    "tr": "Açılan dosyanın mevcut girintisi yukarıdaki iki ayarın önüne geçer.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1kjdjul618x": {
+    "en": "Word wrap",
+    "tr": "Satır kaydırma",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "15v9atnvyz4": {
+    "en": "Wraps long lines instead of scrolling horizontally.",
+    "tr": "Uzun satırları yatay kaydırma yerine alt satıra taşır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "28slv0tomxg": {
+    "en": "At the viewport",
+    "tr": "Pencere kenarında",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "7zsptbrad9": {
+    "en": "At a column",
+    "tr": "Sütunda",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "138f17o5uln": {
+    "en": "Wrap column",
+    "tr": "Kaydırma sütunu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "jfmqt8fxon": {
+    "en": "Column {value}",
+    "tr": "{value}. sütun",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1vj2189p4tq": {
+    "en": "Auto-close brackets",
+    "tr": "Parantezleri otomatik kapat",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "ls5z36bak1": {
+    "en": "Adds the closing character when you type ( [ {.",
+    "tr": "( [ { yazınca kapanış karakterini ekler.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2ea2pi9qpug": {
+    "en": "Auto-close quotes",
+    "tr": "Tırnakları otomatik kapat",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1yrb95c869h": {
+    "en": "Adds the closing quote when you type ' or \".",
+    "tr": "' ve \" yazınca kapanış tırnağını ekler.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "kmz2cqdu4x": {
+    "en": "Auto indent",
+    "tr": "Otomatik girinti",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "27dp61mtru6": {
+    "en": "Decides the indentation of a new line when you press Enter.",
+    "tr": "Enter'a basınca yeni satırın girintisini belirler.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "asvc15pq6a": {
+    "en": "Keep the previous line",
+    "tr": "Önceki satırı koru",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "zimphgaglw": {
+    "en": "Based on brackets",
+    "tr": "Parantezlere göre",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "215i0brarpg": {
+    "en": "Advanced",
+    "tr": "Gelişmiş",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "f0x31hiye": {
+    "en": "Full (language rules)",
+    "tr": "Tam (dil kuralları)",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1bsi393dwax": {
+    "en": "Format on paste",
+    "tr": "Yapıştırırken biçimlendir",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "18qfem3zwwp": {
+    "en": "Formats pasted code with the language's formatter (JavaScript, TypeScript, JSON, HTML, CSS).",
+    "tr": "Yapıştırılan kodu dilin biçimlendiricisiyle düzenler (JavaScript, TypeScript, JSON, HTML, CSS).",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2dqamgu9v29": {
+    "en": "Format on type",
+    "tr": "Yazarken biçimlendir",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "eag3uy1y0g": {
+    "en": "Formats the line when you finish it or type }.",
+    "tr": "Satır sonunda veya } yazınca satırı biçimlendirir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "57r7b8eo6n": {
+    "en": "Linked editing",
+    "tr": "Bağlantılı düzenleme",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "jq61pa3wvg": {
+    "en": "In HTML, renaming an opening tag also renames the closing tag.",
+    "tr": "HTML'de açılış etiketini değiştirince kapanış etiketi de değişir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1bpb1ys0ip4": {
+    "en": "Suggestions and hints",
+    "tr": "Öneriler ve ipuçları",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "7xd9tyhypy": {
+    "en": "Autocomplete, parameter hints and hover information.",
+    "tr": "Otomatik tamamlama, parametre ipuçları ve fareyle bilgi.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1qdfjm5z0p0": {
+    "en": "Suggest while typing",
+    "tr": "Yazarken öner",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1reo556201o": {
+    "en": "Opens the completion list as you type. When off, press Ctrl+Space to open it.",
+    "tr": "Siz yazarken tamamlama listesini açar. Kapalıyken Ctrl+Boşluk ile açabilirsiniz.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1tepeg26b72": {
+    "en": "Suggest on trigger characters",
+    "tr": "Tetikleyici karakterlerde öner",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2747gyl8o6t": {
+    "en": "Shows suggestions after characters such as a dot (.).",
+    "tr": "Nokta (.) gibi karakterlerden sonra önerileri gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "v89h9s22m4": {
+    "en": "Snippet suggestions",
+    "tr": "Kod parçacığı önerileri",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1ud2yug2ysc": {
+    "en": "Includes ready-made patterns such as for, if and class in suggestions.",
+    "tr": "for, if, class gibi hazır kalıpları önerilerde gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1lzk9gw95cx": {
+    "en": "Parameter hints",
+    "tr": "Parametre ipuçları",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "akl9hxr5lv": {
+    "en": "Shows the parameter list while you type a function call.",
+    "tr": "Fonksiyon çağrısı yazarken parametre listesini gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1f1ptxln893": {
+    "en": "Hover information",
+    "tr": "Üzerine gelince bilgi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "k0ttkh5vbx": {
+    "en": "Shows type and documentation information when the mouse is over a symbol.",
+    "tr": "Fare bir sembolün üzerindeyken tür ve belge bilgisini gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "cqw1mnw5rt": {
+    "en": "Saving",
+    "tr": "Kaydetme",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "3joal8lwyl": {
+    "en": "Auto save and the clean-ups applied when saving.",
+    "tr": "Otomatik kaydetme ve kaydederken yapılan temizlikler.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1er5tv595a3": {
+    "en": "Auto save",
+    "tr": "Otomatik kaydetme",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "6o34em6ayf": {
+    "en": "Works while signed in, for projects and game scripts that were saved to the cloud at least once.",
+    "tr": "Giriş yapmışken, buluta en az bir kez kaydedilmiş projelerde ve oyun scriptlerinde çalışır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "pgcc74cn1n": {
+    "en": "After a delay",
+    "tr": "Gecikmeyle",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1q2cdnb2mun": {
+    "en": "On focus change",
+    "tr": "Odak değişince",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1l3kj4yj4gx": {
+    "en": "Save delay",
+    "tr": "Kaydetme gecikmesi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2gezx0r84bv": {
+    "en": "Saves this long after you stop typing.",
+    "tr": "Yazmayı bıraktıktan bu kadar sonra kaydedilir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "6v7x5w8ktc": {
+    "en": "{value} s",
+    "tr": "{value} sn",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "q4x37m6z5m": {
+    "en": "Trim trailing whitespace",
+    "tr": "Satır sonu boşluklarını sil",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1kxsetmsqqy": {
+    "en": "Removes spaces at the end of lines when saving.",
+    "tr": "Kaydederken satırların sonundaki boşlukları kaldırır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "j7yupnuxt4": {
+    "en": "Insert a final newline",
+    "tr": "Sona boş satır ekle",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "14q90331744": {
+    "en": "Makes sure the file ends with a line break when saving.",
+    "tr": "Kaydederken dosyanın bir satır sonuyla bitmesini sağlar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25tzrw57p6z": {
+    "en": "Code editor",
+    "tr": "Kod editörü",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Editor/CodeEditor.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "26flrxehkcd": {
+    "en": "Make the code editor your own. Every change is saved instantly and applied to all open editors.",
+    "tr": "Kod editörünü kendinize göre ayarlayın. Her değişiklik anında kaydedilir ve açık olan tüm editörlere uygulanır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "l6mjxu03jl": {
+    "en": "Settings are stored in this browser on this device.",
+    "tr": "Ayarlar bu cihazdaki tarayıcıda saklanır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "22o7xmufb52": {
+    "en": "Browser storage is unavailable (e.g. a private window). Settings only apply while this page is open.",
+    "tr": "Tarayıcı depolaması kullanılamıyor (ör. gizli pencere). Ayarlar yalnızca bu sayfa açıkken geçerli olur.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "m7tdfhocco": {
+    "en": "Open the editor",
+    "tr": "Editörü aç",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "emgrphowgv": {
+    "en": "Search settings…",
+    "tr": "Ayarlarda ara…",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "krbjqdkkdl": {
+    "en": "Search settings",
+    "tr": "Ayarlarda ara",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "c6q0j3eiwc": {
+    "en": "Clear search",
+    "tr": "Aramayı temizle",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/News/NewsPage.tsx"
+    ]
+  },
+  "1v8nrg2rrwi": {
+    "en": "No setting matches \"{query}\".",
+    "tr": "\"{query}\" ile eşleşen ayar yok.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1c0ercd7wb1": {
+    "en": "Sections",
+    "tr": "Bölümler",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "rrusbj3fvp": {
+    "en": "Saved",
+    "tr": "Kaydedildi",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Editor/StatusBar.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/EditorPane.tsx",
+      "src/components/News/NewsPage.tsx"
+    ]
+  },
+  "budor6l0mo": {
+    "en": "{count} settings differ from the defaults",
+    "tr": "{count} ayar varsayılandan farklı",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1g1dthlb91o": {
+    "en": "All settings are at their defaults",
+    "tr": "Tüm ayarlar varsayılan değerlerinde",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1kmgynljekr": {
+    "en": "Changed from the default",
+    "tr": "Varsayılandan farklı",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "yy1djzplmp": {
+    "en": "Reset to default: {name}",
+    "tr": "Varsayılana döndür: {name}",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "14qha6xp20h": {
+    "en": "Reset section",
+    "tr": "Bölümü sıfırla",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1rlbab0v3g": {
+    "en": "{name} settings were reset to their defaults.",
+    "tr": "{name} ayarları varsayılana döndü.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1psqx18py82": {
+    "en": "Undo",
+    "tr": "Geri al",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "uvrcuvg6r7": {
+    "en": "Live preview",
+    "tr": "Canlı önizleme",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/lib/runtimes/languages.ts"
+    ]
+  },
+  "96dep7hlh5": {
+    "en": "Settings apply instantly and you can type here to try them. Changes in the preview aren't saved.",
+    "tr": "Ayarlar anında uygulanır; burada yazmayı deneyebilirsiniz. Önizlemedeki değişiklikler kaydedilmez.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "fwv031hc3": {
+    "en": "Preview language",
+    "tr": "Önizleme dili",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1gqqznrgl9g": {
+    "en": "Reset the sample",
+    "tr": "Örneği sıfırla",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "s7v4ps8l5m": {
+    "en": "Settings preview editor",
+    "tr": "Ayar önizleme düzenleyicisi",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1fldeh2l20f": {
+    "en": "Go to the preview",
+    "tr": "Önizlemeye git",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "k34yk8a92p": {
+    "en": "Currently: {name}",
+    "tr": "Şu an: {name}",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "r0qomrry6q": {
+    "en": "Built-in",
+    "tr": "Dahili",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "oupwk6przu": {
+    "en": "System",
+    "tr": "Sistem",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "y3n4zuwaez": {
+    "en": "Backup and reset",
+    "tr": "Yedekleme ve sıfırlama",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2bay783a8je": {
+    "en": "Export your settings to a JSON file, import them on another device or go back to the defaults.",
+    "tr": "Ayarlarınızı bir JSON dosyasına aktarın, başka bir cihazda içe aktarın veya varsayılanlara dönün.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "17oxye2lxfq": {
+    "en": "Export (JSON)",
+    "tr": "Dışa aktar (JSON)",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "12pkt0z0xgr": {
+    "en": "Import",
+    "tr": "İçe aktar",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1xt56zr0lou": {
+    "en": "Copy JSON",
+    "tr": "JSON'u kopyala",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "73jqit437i": {
+    "en": "The settings were copied to the clipboard as JSON.",
+    "tr": "Ayarlar JSON olarak panoya kopyalandı.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "bexkf1cr59": {
+    "en": "Couldn't copy to the clipboard.",
+    "tr": "Panoya kopyalanamadı.",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "21mbh8kk2gx": {
+    "en": "The settings file was downloaded.",
+    "tr": "Ayar dosyası indirildi.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "rcvqhixkjp": {
+    "en": "The settings were imported.",
+    "tr": "Ayarlar içe aktarıldı.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1k7cipaib9j": {
+    "en": "Accepts settings files exported from Hanogt and account data exports.",
+    "tr": "Hanogt'tan dışa aktarılan ayar dosyaları ve hesap veri dışa aktarımları kabul edilir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1qamxnkeon9": {
+    "en": "Reset everything",
+    "tr": "Tümünü varsayılana döndür",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1dqmeixsvde": {
+    "en": "Reset all editor settings?",
+    "tr": "Tüm editör ayarları sıfırlansın mı?",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1kneo6c56m7": {
+    "en": "The theme, font and every other editor preference go back to their default values. The settings saved on this device are removed.",
+    "tr": "Tema, yazı tipi ve diğer tüm editör tercihleri varsayılan değerlerine döner. Bu cihazdaki kayıtlı ayarlar silinir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2554s8khkhe": {
+    "en": "Reset",
+    "tr": "Sıfırla",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Security/SecurityChecklist.tsx"
+    ]
+  },
+  "oxbspc45xr": {
+    "en": "The editor settings were reset to their defaults.",
+    "tr": "Editör ayarları varsayılana döndü.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1ytcfhhxq2c": {
+    "en": "{label}: {value}",
+    "tr": "{label}: {value}",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25gsubgsqio": {
+    "en": "The file is too large (64 KB max).",
+    "tr": "Dosya çok büyük (en fazla 64 KB).",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2e2k9ni5rl6": {
+    "en": "The file isn't valid JSON.",
+    "tr": "Dosya geçerli bir JSON değil.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "94weh5y41s": {
+    "en": "This file doesn't contain Hanogt editor settings.",
+    "tr": "Bu dosya Hanogt editör ayarlarını içermiyor.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
   "13bakhl2g6e": {
     "en": "username",
     "tr": "kullaniciadi",
     "files": [
       "src/app/signup/page.tsx"
+    ]
+  },
+  "26t18hpvzgk": {
+    "en": "Wrong password.",
+    "tr": "Şifre yanlış.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "225o88wb6pf": {
+    "en": "The code is invalid, expired or already used. Enter the current code from your app.",
+    "tr": "Kod geçersiz, süresi dolmuş ya da zaten kullanılmış. Uygulamadaki güncel kodu girin.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1k8y9z5p8jp": {
+    "en": "Setup expired (15 minutes). Start again.",
+    "tr": "Kurulumun süresi doldu (15 dakika). Baştan başlayın.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "4zngiamvaf": {
+    "en": "Too many attempts. Try again in 15 minutes.",
+    "tr": "Çok fazla deneme yapıldı. 15 dakika sonra tekrar deneyin.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1bj0yavyz6u": {
+    "en": "Two-step verification protects e-mail and password sign-in. Create a password above first.",
+    "tr": "İki adımlı doğrulama, e-posta ve şifreyle girişi korur. Önce yukarıdan bir şifre oluşturun.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "18w1kevm11i": {
+    "en": "Two-step verification is already on.",
+    "tr": "İki adımlı doğrulama zaten açık.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1ruuosbpq1z": {
+    "en": "Two-step verification is off.",
+    "tr": "İki adımlı doğrulama kapalı.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "3mnymjne52": {
+    "en": "The setting changed in another session. Reload the page.",
+    "tr": "Ayar başka bir oturumda değişti. Sayfayı yenileyin.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "j2xq9338zp": {
+    "en": "Your session ended. Sign in again.",
+    "tr": "Oturumunuz sona erdi. Tekrar giriş yapın.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1yp24l7sjw6": {
+    "en": "Something went wrong. Please try again.",
+    "tr": "İşlem tamamlanamadı. Lütfen tekrar deneyin.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/Groups/api.ts",
+      "src/components/HanogtAI/HanogtAIChat.tsx"
+    ]
+  },
+  "244ic8nwm0v": {
+    "en": "Hanogt Codev — two-step verification recovery codes",
+    "tr": "Hanogt Codev — iki adımlı doğrulama kurtarma kodları",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "25lz46qles5": {
+    "en": "Each code can be used once. Keep this file somewhere safe.",
+    "tr": "Her kod yalnızca bir kez kullanılabilir. Bu dosyayı güvenli bir yerde saklayın.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "2643ctgnrzc": {
+    "en": "123456 or a recovery code",
+    "tr": "123456 veya kurtarma kodu",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "nq03fvtuv2": {
+    "en": "Couldn't load the two-step verification status. Reload the page.",
+    "tr": "İki adımlı doğrulama durumu yüklenemedi. Sayfayı yenileyin.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "13wd9lemm83": {
+    "en": "Loading…",
+    "tr": "Yükleniyor…",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1wd2dyx7fwq": {
+    "en": "Signing in with e-mail and password also asks for the code from your authenticator app. Recovery codes left: {count}.",
+    "tr": "E-posta ve şifreyle girişte doğrulama uygulamanızdaki kod da istenir. Kalan kurtarma kodu: {count}.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "zvx7jkynjb": {
+    "en": "Protects your account even if your password leaks: signing in also needs the 6-digit code generated by an authenticator app on your phone.",
+    "tr": "Şifreniz çalınsa bile hesabınızı korur: girişte telefonunuzdaki doğrulama uygulamasının ürettiği 6 haneli kod da istenir.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1981cot40b9": {
+    "en": "Google sign-ins are protected by your Google account's own verification.",
+    "tr": "Google ile girişler Google hesabınızın kendi doğrulamasıyla korunur.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "20u58m0yfzr": {
+    "en": "New recovery codes",
+    "tr": "Yeni kurtarma kodları",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1ahf29vuymh": {
+    "en": "Turn off",
+    "tr": "Kapat",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "4xldzoab1n": {
+    "en": "Set up",
+    "tr": "Kur",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "21heuatp9jm": {
+    "en": "You are running low on recovery codes. Generate new ones so you can still get in if you lose your phone.",
+    "tr": "Kurtarma kodlarınız azaldı. Telefonunuzu kaybederseniz hesabınıza erişebilmek için yeni kodlar oluşturun.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "2co89ue22k3": {
+    "en": "1/3 · Confirm it's you",
+    "tr": "1/3 · Kimliğinizi doğrulayın",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "28csj5z79m": {
+    "en": "Your current password",
+    "tr": "Mevcut şifreniz",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "167vf3bxief": {
+    "en": "Continue",
+    "tr": "Devam",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/Groups/CreateGroupWizard.tsx"
+    ]
+  },
+  "1972chlchry": {
+    "en": "2/3 · Scan the QR code with your authenticator app",
+    "tr": "2/3 · QR kodu doğrulama uygulamanızla tarayın",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "2d2f5zdz8mo": {
+    "en": "QR code for the authenticator app",
+    "tr": "Doğrulama uygulaması için QR kodu",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1bno94vd00f": {
+    "en": "In an app such as Google Authenticator, Microsoft Authenticator, Authy, 1Password or Bitwarden, tap “add account” and scan the code.",
+    "tr": "Google Authenticator, Microsoft Authenticator, Authy, 1Password, Bitwarden gibi bir uygulamada “hesap ekle”ye dokunup kodu tarayın.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "130yi7g5tjk": {
+    "en": "Can't scan? Enter this key manually (time-based, 6 digits):",
+    "tr": "Tarayamıyor musunuz? Bu anahtarı elle girin (zamana dayalı, 6 hane):",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "16gs1du8liq": {
+    "en": "Copy key",
+    "tr": "Anahtarı kopyala",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "czhafm7ufu": {
+    "en": "Open in an app on this device",
+    "tr": "Bu cihazdaki uygulamada aç",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "2ez8jrhp2mq": {
+    "en": "3/3 · Enter the 6-digit code shown in the app",
+    "tr": "3/3 · Uygulamanın gösterdiği 6 haneli kodu girin",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "7rh0j6bf3d": {
+    "en": "Verify and turn on",
+    "tr": "Doğrula ve aç",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "aozj6u749c": {
+    "en": "Save your recovery codes",
+    "tr": "Kurtarma kodlarınızı kaydedin",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "zpp0qxuvau": {
+    "en": "If you can't reach your phone, you can sign in with these codes. Each works once and won't be shown again.",
+    "tr": "Telefonunuza erişemezseniz bu kodlarla giriş yapabilirsiniz. Her kod bir kez çalışır ve bir daha gösterilmez.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1qji2htgowd": {
+    "en": "Download (.txt)",
+    "tr": "İndir (.txt)",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1u8fb2niukv": {
+    "en": "Copy",
+    "tr": "Kopyala",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/components/HanogtAI/Markdown.tsx",
+      "src/components/Security/PasswordLab.tsx"
+    ]
+  },
+  "ps1lskterx": {
+    "en": "I saved them, done",
+    "tr": "Kaydettim, bitir",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "1laamy43mzu": {
+    "en": "Turn off two-step verification",
+    "tr": "İki adımlı doğrulamayı kapat",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "14g6zso550w": {
+    "en": "Turning it off makes your account less secure. Confirm with your password and an authenticator code (or a recovery code).",
+    "tr": "Kapatmak hesabınızı daha az güvenli yapar. Onaylamak için şifrenizi ve doğrulama kodunu (ya da bir kurtarma kodunu) girin.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "25dhxb7g8t7": {
+    "en": "Generate new recovery codes",
+    "tr": "Yeni kurtarma kodları oluştur",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "f33qhvsakm": {
+    "en": "All old codes stop working. Confirm with the code from your authenticator app.",
+    "tr": "Eski kodların tümü geçersiz olur. Onaylamak için doğrulama uygulamanızdaki kodu girin.",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
+    ]
+  },
+  "2ael4wukxyq": {
+    "en": "Generate",
+    "tr": "Oluştur",
+    "files": [
+      "src/components/Account/TwoFactorSettings.tsx"
     ]
   },
   "18tpci2jt91": {
@@ -1735,6 +3520,7 @@
     "tr": "Yayında",
     "files": [
       "src/components/Admin/AnnouncementsSection.tsx",
+      "src/components/Editor/WebPreview.tsx",
       "src/components/News/NewsPage.tsx",
       "src/lib/nav.ts"
     ]
@@ -1749,13 +3535,6 @@
   "1jc0jxqtima": {
     "en": "Expired",
     "tr": "Süresi doldu",
-    "files": [
-      "src/components/Admin/AnnouncementsSection.tsx"
-    ]
-  },
-  "f8xmelzk4a": {
-    "en": "Off",
-    "tr": "Kapalı",
     "files": [
       "src/components/Admin/AnnouncementsSection.tsx"
     ]
@@ -1996,18 +3775,12 @@
       "src/components/Admin/AnnouncementsSection.tsx"
     ]
   },
-  "k0jyy12s1x": {
-    "en": "On",
-    "tr": "Açık",
-    "files": [
-      "src/components/Admin/AnnouncementsSection.tsx"
-    ]
-  },
   "a46vpxbw57": {
     "en": "Edit",
     "tr": "Düzenle",
     "files": [
-      "src/components/Admin/AnnouncementsSection.tsx"
+      "src/components/Admin/AnnouncementsSection.tsx",
+      "src/components/Groups/workspace/GettingStarted.tsx"
     ]
   },
   "sjtwmb15h7": {
@@ -2446,7 +4219,8 @@
     "en": "Couldn't reach the server. Check your internet connection.",
     "tr": "Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.",
     "files": [
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/Editor/Console.tsx"
     ]
   },
   "1nw0cgpgsrv": {
@@ -2469,7 +4243,8 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/GroupsHome.tsx"
+      "src/components/Groups/GroupsHome.tsx",
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
     ]
   },
   "1rl0hdug3hw": {
@@ -2477,25 +4252,20 @@
     "tr": "Yenile",
     "files": [
       "src/components/Admin/copy.ts",
+      "src/components/Editor/WebPreview.tsx",
       "src/components/News/AiRankings.tsx"
     ]
   },
-  "1zsap8x3yrr": {
-    "en": "Save",
-    "tr": "Kaydet",
+  "1cen5mjir88": {
+    "en": "Delete",
+    "tr": "Sil",
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/workspace/FilesPanel.tsx",
-      "src/components/Guide/book-content.ts"
-    ]
-  },
-  "13wd9lemm83": {
-    "en": "Loading…",
-    "tr": "Yükleniyor…",
-    "files": [
-      "src/components/Admin/copy.ts",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/components/News/CommentsDrawer.tsx"
     ]
   },
   "a3iasr3pcn": {
@@ -2518,16 +4288,6 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/Groups/ui.tsx"
-    ]
-  },
-  "1s3bgxbwlkh": {
-    "en": "All",
-    "tr": "Tümü",
-    "files": [
-      "src/components/Admin/copy.ts",
-      "src/components/Groups/GroupsHome.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/News/NewsPage.tsx"
     ]
   },
   "1jot47aloch": {
@@ -2741,6 +4501,13 @@
   "16s7c4d8lod": {
     "en": "Role changed",
     "tr": "Rol değiştirildi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "jrwdduuexj": {
+    "en": "Two-step verification reset",
+    "tr": "İki adımlı doğrulama sıfırlandı",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -3423,6 +5190,15 @@
       "src/components/Admin/ReportsPanel.tsx"
     ]
   },
+  "1tiareauifx": {
+    "en": "Files",
+    "tr": "Dosyalar",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
   "1908nr52vqa": {
     "en": "{count} reports on this post",
     "tr": "Bu gönderiye {count} bildirim",
@@ -3442,6 +5218,15 @@
     "tr": "İsimsiz proje",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "2azh6425bkf": {
+    "en": "{count} files",
+    "tr": "{count} dosya",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx",
+      "src/components/Admin/SecurityEventsSection.tsx",
+      "src/components/Editor/Console.tsx"
     ]
   },
   "2y1y6y9a3m": {
@@ -3724,6 +5509,13 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "nnny0zzcf": {
+    "en": "Reset 2FA",
+    "tr": "2FA sıfırla",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
   "2be8abpi4bj": {
     "en": "Unsuspend",
     "tr": "Askıyı kaldır",
@@ -3755,6 +5547,13 @@
   "piooqb3hf4": {
     "en": "{email} is active again.",
     "tr": "{email} yeniden etkin.",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "2frf1e1aq9p": {
+    "en": "Two-step verification was turned off for {email}.",
+    "tr": "{email} için iki adımlı doğrulama kapatıldı.",
     "files": [
       "src/components/Admin/UsersSection.tsx"
     ]
@@ -3837,13 +5636,6 @@
       "src/components/Admin/copy.ts"
     ]
   },
-  "t3a315u4p2": {
-    "en": "Actions",
-    "tr": "İşlemler",
-    "files": [
-      "src/components/Admin/UsersSection.tsx"
-    ]
-  },
   "1f8qjo3tbyn": {
     "en": "Suspend this account?",
     "tr": "Hesap askıya alınsın mı?",
@@ -3892,6 +5684,34 @@
     "files": [
       "src/components/Admin/UsersSection.tsx",
       "src/components/Admin/copy.ts"
+    ]
+  },
+  "1567ifwczq9": {
+    "en": "Reset two-step verification?",
+    "tr": "İki adımlı doğrulama sıfırlansın mı?",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "26sluxoz88i": {
+    "en": "{email} will be able to sign in with just the password. Only do this for people who lost their authenticator and recovery codes and whose identity you verified another way.",
+    "tr": "{email} yalnızca şifresiyle giriş yapabilecek. Bunu yalnızca kimliğini başka bir yolla doğruladığınız, doğrulama uygulamasını ve kurtarma kodlarını kaybetmiş kişiler için yapın.",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "riw674rpmd": {
+    "en": "e.g. support ticket #123, identity verified by e-mail",
+    "tr": "Örn. destek talebi #123, kimlik e-postayla doğrulandı",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "1dwtd4gbfup": {
+    "en": "Required; written to the audit log.",
+    "tr": "Zorunlu; denetim kaydına yazılır.",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
     ]
   },
   "yjyrnj7m5v": {
@@ -4097,7 +5917,8 @@
     "en": "Link copied.",
     "tr": "Bağlantı kopyalandı.",
     "files": [
-      "src/components/Arcade/ArcadePlayerView.tsx"
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx"
     ]
   },
   "by63y63lnb": {
@@ -4158,7 +5979,7 @@
     "tr": "Tam ekran",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
-      "src/components/Editor/TestPreview.tsx"
+      "src/components/Editor/WebPreview.tsx"
     ]
   },
   "13dr3zju3ou": {
@@ -4201,6 +6022,7 @@
     "tr": "Paylaş",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx",
       "src/components/News/NewsPage.tsx"
     ]
   },
@@ -4219,6 +6041,41 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
+  "dfwnugevd0": {
+    "en": "Loading the editor…",
+    "tr": "Editör yükleniyor…",
+    "files": [
+      "src/components/Editor/CodeEditor.tsx"
+    ]
+  },
+  "17wkad2rm3s": {
+    "en": "Search for an action, file or language…",
+    "tr": "Bir işlem, dosya veya dil arayın…",
+    "files": [
+      "src/components/Editor/CommandPalette.tsx"
+    ]
+  },
+  "p1cp1zr7us": {
+    "en": "Results",
+    "tr": "Sonuçlar",
+    "files": [
+      "src/components/Editor/CommandPalette.tsx"
+    ]
+  },
+  "z6hfqv3lt6": {
+    "en": "No matching actions.",
+    "tr": "Eşleşen işlem yok.",
+    "files": [
+      "src/components/Editor/CommandPalette.tsx"
+    ]
+  },
+  "1yhvi4i25oj": {
+    "en": "Output",
+    "tr": "Çıktı",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
   "2ajxxk08go8": {
     "en": "Input",
     "tr": "Girdi",
@@ -4227,23 +6084,104 @@
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
-  "2csnj5va3tn": {
-    "en": "Running your code…",
-    "tr": "Kod çalıştırılıyor…",
+  "22wi4adg3sl": {
+    "en": "History",
+    "tr": "Geçmiş",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
   },
-  "2andvne8lbi": {
-    "en": "Run your code (Ctrl + Enter) to see its output here.",
-    "tr": "Kodunuzu çalıştırdığınızda (Ctrl + Enter) çıktısı burada görünür.",
+  "1lubggzvnrg": {
+    "en": "Clear output",
+    "tr": "Çıktıyı temizle",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
   },
-  "2b4f7gziqte": {
-    "en": "Type the input your program reads; each line answers one input() / Scanner / cin call. Fill it in before running.",
-    "tr": "Programınızın okuyacağı girdiyi yazın; her satır bir input() / Scanner / cin okumasıdır. Çalıştırmadan önce doldurun.",
+  "a6q7xupws7": {
+    "en": "Copy output",
+    "tr": "Çıktıyı kopyala",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "vh88ypv7zp": {
+    "en": "Copied",
+    "tr": "Kopyalandı",
+    "files": [
+      "src/components/Editor/Console.tsx",
+      "src/components/HanogtAI/Markdown.tsx",
+      "src/components/Security/PasswordLab.tsx"
+    ]
+  },
+  "297ydd39zeo": {
+    "en": "Not run",
+    "tr": "Çalıştırılmadı",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1o5m45mntjx": {
+    "en": "This file wasn't executed in this run (the run was stopped, blocked or failed).",
+    "tr": "Bu dosya bu çalıştırmada yürütülmedi (çalıştırma durduruldu, engellendi veya bir hata oluştu).",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "2170ot488m1": {
+    "en": "(No output)",
+    "tr": "(Çıktı yok)",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1bg0ljy54t6": {
+    "en": "Run your code to see its output here.",
+    "tr": "Kodunuzu çalıştırdığınızda çıktısı burada görünür.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "6h7nuel3bw": {
+    "en": "Browser",
+    "tr": "Tarayıcı",
+    "files": [
+      "src/components/Editor/Console.tsx",
+      "src/lib/runtimes/languages.ts"
+    ]
+  },
+  "vbic45ph09": {
+    "en": "Server",
+    "tr": "Sunucu",
+    "files": [
+      "src/components/Editor/Console.tsx",
+      "src/lib/runtimes/languages.ts"
+    ]
+  },
+  "jjggfhwnr3": {
+    "en": "Exit {code}",
+    "tr": "Çıkış {code}",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "23diu147k2q": {
+    "en": "{value} ms",
+    "tr": "{value} ms",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "jugjp8r969": {
+    "en": "Go to line {line}",
+    "tr": "{line}. satıra git",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "17slr9fxhx4": {
+    "en": "Type the input your program reads. Each line answers one input() / Scanner / cin / read-line call; in the web preview prompt() reads these lines too.",
+    "tr": "Programınızın okuyacağı girdiyi yazın. Her satır bir input() / Scanner / cin / read-line okumasına karşılık gelir; web önizlemesinde prompt() da bu satırları okur.",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
@@ -4255,54 +6193,996 @@
       "src/components/Editor/Console.tsx"
     ]
   },
-  "kxxmpu76mc": {
-    "en": "JavaScript, TypeScript, Python, SQL and Lua run right in your browser (WebAssembly); no sign-in is needed and your code is never sent to a server. Python downloads about 12 MB on its first run.",
-    "tr": "JavaScript, TypeScript, Python, SQL ve Lua doğrudan tarayıcınızda (WebAssembly) çalışır; giriş gerekmez ve kodunuz hiçbir sunucuya gönderilmez. Python ilk çalıştırmada yaklaşık 12 MB indirir.",
+  "2gn6dmxf9jx": {
+    "en": "{count} lines · {chars}/10,000 characters",
+    "tr": "{count} satır · {chars}/10.000 karakter",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
   },
-  "1d30tb1yhco": {
-    "en": "C, C++, C#, Java, Go, Rust and other compiled languages run on an isolated remote compiler after a Hanogt Security Bot scan (sign-in required, 20 runs per minute, 25 seconds max).",
-    "tr": "C, C++, C#, Java, Go, Rust ve diğer derlenen diller Hanogt Security Bot taramasından sonra izole bir uzak derleyicide çalışır (giriş gerekir, dakikada 20 çalıştırma, en fazla 25 saniye).",
+  "1wfl222ctzr": {
+    "en": "No runs yet.",
+    "tr": "Henüz çalıştırma yok.",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
   },
-  "26ojd0i6era": {
-    "en": "In multi-file projects each file runs as an independent job and the results are combined here. There is no package installation, network access or persistent disk. Do not run code that contains secrets or personal data.",
-    "tr": "Çok dosyalı projelerde her dosya bağımsız bir iş olarak çalışır ve sonuçlar burada birleştirilir. Paket kurulumu, ağ erişimi ve kalıcı disk yoktur. Gizli anahtar veya kişisel veri içeren kodları çalıştırmayın.",
+  "6jehwoavqq": {
+    "en": "Clear history",
+    "tr": "Geçmişi temizle",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
   },
-  "uvrcuvg6r7": {
-    "en": "Live preview",
-    "tr": "Canlı Önizleme",
+  "3kal10ufl4": {
+    "en": "Hanogt Security Bot blocked this run",
+    "tr": "Hanogt Security Bot çalıştırmayı engelledi",
     "files": [
-      "src/components/Editor/TestPreview.tsx",
-      "src/lib/runtimes/languages.ts"
+      "src/components/Editor/Console.tsx"
     ]
   },
-  "13as8freurc": {
-    "en": "Mobile view",
-    "tr": "Mobil Görünüm",
+  "3ebisdi9zs": {
+    "en": "Risk level: {risk}",
+    "tr": "Risk seviyesi: {risk}",
     "files": [
-      "src/components/Editor/TestPreview.tsx"
+      "src/components/Editor/Console.tsx"
     ]
   },
-  "20n55s9srri": {
-    "en": "Desktop view",
-    "tr": "Masaüstü Görünüm",
+  "1darymjwpol": {
+    "en": "This is not an automatic malware verdict. If you think it is a mistake, you can ask for a review on the feedback page.",
+    "tr": "Bu otomatik bir kötü amaçlı yazılım hükmü değildir. Yanlış engelleme olduğunu düşünüyorsanız geri bildirim sayfasından inceleme isteyebilirsiniz.",
     "files": [
-      "src/components/Editor/TestPreview.tsx"
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "wvrx8kghq9": {
+    "en": "Request a review",
+    "tr": "İnceleme iste",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "l8w3m3gcvj": {
+    "en": "The run could not be completed: {message}",
+    "tr": "Çalıştırma tamamlanamadı: {message}",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1i5e4zu8121": {
+    "en": "Sign in to run this language. Browser languages (JavaScript, TypeScript, Python, SQL, Lua, Scheme, Brainfuck, JSON) run without signing in.",
+    "tr": "Bu dili çalıştırmak için giriş yapın. Tarayıcıda çalışan diller (JavaScript, TypeScript, Python, SQL, Lua, Scheme, Brainfuck, JSON) girişsiz de çalışır.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "224k2h7nfun": {
+    "en": "Your account is suspended, so you can't run code.",
+    "tr": "Hesabınız askıya alındığı için kod çalıştıramazsınız.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "rapm9r95mq": {
+    "en": "You reached the run limit (20 per minute). Try again shortly.",
+    "tr": "Çalıştırma sınırına ulaştınız (dakikada 20). Kısa süre sonra tekrar deneyin.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "oebpp7fi2r": {
+    "en": "The run request was invalid.",
+    "tr": "Çalıştırma isteği geçersiz.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "14ifw9y6nev": {
+    "en": "This language can't run on the server.",
+    "tr": "Bu dil sunucuda çalıştırılamıyor.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1zvz6k1cijc": {
+    "en": "The code is too large: the limits are 50,000 characters per file, 150,000 in total and 10,000 characters of input.",
+    "tr": "Kod çok büyük: dosya başına 50.000, toplamda 150.000 karakter ve 10.000 karakter girdi sınırı var.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1ipe5x010cy": {
+    "en": "Empty files can't be run.",
+    "tr": "Boş dosyalar çalıştırılamaz.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "11hmvmnlozn": {
+    "en": "The run didn't finish within 25 seconds on the server. Make sure there is no infinite loop and try again.",
+    "tr": "Sunucudaki çalıştırma 25 saniye içinde bitmedi. Sonsuz döngü olmadığından emin olup tekrar deneyin.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1cc2o46q9nc": {
+    "en": "The code runner is unreachable right now. Try again in a moment.",
+    "tr": "Kod çalıştırma hizmetine şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "as2t4rx4a9": {
+    "en": "The remote compiler for this language is unavailable right now. Try again later.",
+    "tr": "Bu dilin uzak derleyicisi şu anda kullanılamıyor. Biraz sonra tekrar deneyin.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1w8r2dijmxa": {
+    "en": "The request was rejected because it didn't come from this site. Reload the page.",
+    "tr": "İstek bu siteden gelmediği için reddedildi. Sayfayı yenileyin.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "ajpb03zyi5": {
+    "en": "The code runner returned an invalid response.",
+    "tr": "Çalıştırma hizmeti geçersiz bir yanıt döndürdü.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "oqxx34zk1a": {
+    "en": "The run was stopped.",
+    "tr": "Çalıştırma durduruldu.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "21h6twyjnm7": {
+    "en": "The run could not be completed.",
+    "tr": "Çalıştırma tamamlanamadı.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1ty1wrcu9rt": {
+    "en": "The program was stopped because it didn't finish within {seconds} seconds (it may contain an infinite loop).",
+    "tr": "Program {seconds} saniye içinde bitmediği için durduruldu (sonsuz döngü olabilir).",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "3n0ek5qsjn": {
+    "en": "The output was limited to 64,000 characters; the rest is not shown.",
+    "tr": "Çıktı 64.000 karakterle sınırlandı; fazlası gösterilmiyor.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "18kvj6uun7v": {
+    "en": "The browser runtime stopped unexpectedly.",
+    "tr": "Tarayıcı çalışma ortamı beklenmedik biçimde durdu.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1rm8phxurt9": {
+    "en": "The browser runtime couldn't be started.",
+    "tr": "Tarayıcı çalışma ortamı başlatılamadı.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "hwblgr9jth": {
+    "en": "Console sections",
+    "tr": "Konsol bölümleri",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1r3ai9l549u": {
+    "en": "File outputs",
+    "tr": "Dosya çıktıları",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "40b95b2oze": {
+    "en": "Loading the Python runtime (about 12 MB on the first run)…",
+    "tr": "Python çalışma zamanı yükleniyor (ilk çalıştırmada yaklaşık 12 MB)…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "2b89aklqkrx": {
+    "en": "Runs in your browser: {list}. Your code runs on your device in an isolated Web Worker; no sign-in is needed and nothing is sent to a server. Python downloads about 12 MB on its first run.",
+    "tr": "Tarayıcıda çalışanlar: {list}. Kodunuz cihazınızda izole bir Web Worker içinde çalışır; giriş gerekmez ve hiçbir sunucuya gönderilmez. Python ilk çalıştırmada yaklaşık 12 MB indirir.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1ewhmiavrln": {
+    "en": "Runs on the server: {list}. Runs on an isolated remote compiler after a Hanogt Security Bot scan (sign-in required, 20 runs per minute, 25 seconds max).",
+    "tr": "Sunucuda çalışanlar: {list}. Hanogt Security Bot taramasından sonra izole bir uzak derleyicide çalışır (giriş gerekir, dakikada 20 çalıştırma, en fazla 25 saniye).",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1itgym3co8x": {
+    "en": "In multi-file projects each file runs in parallel as an independent job (up to 8 files). Web projects with HTML, CSS and JavaScript files are not executed; they are shown together in the Preview panel.",
+    "tr": "Çok dosyalı projelerde her dosya bağımsız bir iş olarak paralel çalışır (en fazla 8 dosya). HTML, CSS ve JavaScript dosyaları olan web projeleri çalıştırılmaz; Önizleme panelinde birlikte görüntülenir.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1e7krh4y877": {
+    "en": "The Scheme interpreter supports a practical subset of R7RS: tail recursion is unlimited, other recursion is limited to a few thousand levels. For JSON files, Run validates and formats the file.",
+    "tr": "Scheme yorumlayıcısı R7RS'in pratik bir alt kümesini destekler: kuyruk özyinelemesi sınırsızdır, diğer özyinelemeler birkaç bin seviyeyle sınırlıdır. JSON dosyalarında Çalıştır, dosyayı doğrular ve biçimlendirir.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "231qy9lz4t0": {
+    "en": "There is no package installation, network access or persistent disk. Don't run code that contains secrets or personal data.",
+    "tr": "Paket kurulumu, ağ erişimi ve kalıcı disk yoktur. Gizli anahtar veya kişisel veri içeren kodları çalıştırmayın.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1e77mzyuvo8": {
+    "en": "Try again in {seconds} seconds.",
+    "tr": "{seconds} saniye sonra tekrar deneyin.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "2ei2mkkk2q2": {
+    "en": "Close {name}",
+    "tr": "{name} sekmesini kapat",
+    "files": [
+      "src/components/Editor/EditorTabs.tsx"
+    ]
+  },
+  "636xx7pwdd": {
+    "en": "Close others",
+    "tr": "Diğerlerini kapat",
+    "files": [
+      "src/components/Editor/EditorTabs.tsx"
+    ]
+  },
+  "1d666kq19by": {
+    "en": "Close to the right",
+    "tr": "Sağdakileri kapat",
+    "files": [
+      "src/components/Editor/EditorTabs.tsx"
+    ]
+  },
+  "1z0stx5nz0h": {
+    "en": "Rename",
+    "tr": "Yeniden adlandır",
+    "files": [
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx"
+    ]
+  },
+  "1jd7l4ijtux": {
+    "en": "Duplicate",
+    "tr": "Çoğalt",
+    "files": [
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1g6fbk8fttv": {
+    "en": "Actions for {name}",
+    "tr": "{name} için işlemler",
+    "files": [
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx"
+    ]
+  },
+  "u83mhbgf0p": {
+    "en": "New file name",
+    "tr": "Yeni dosya adı",
+    "files": [
+      "src/components/Editor/EditorTabs.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx"
+    ]
+  },
+  "4pnz9bmxmj": {
+    "en": "Pick a language or a ready-made template. Double-click creates it right away.",
+    "tr": "Bir dil veya hazır şablon seçin. Çift tıklama doğrudan oluşturur.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1rmylllbcl1": {
+    "en": "Search languages or templates…",
+    "tr": "Dil veya şablon ara…",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1mnjp79kjzx": {
+    "en": "Project templates",
+    "tr": "Proje şablonları",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1te42bvezwa": {
+    "en": "Languages",
+    "tr": "Diller",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/lib/faq.ts"
+    ]
+  },
+  "12ezesym0u4": {
+    "en": "No language matches your search.",
+    "tr": "Aramanızla eşleşen dil yok.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1b9kooz1ct": {
+    "en": "File name",
+    "tr": "Dosya adı",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx"
+    ]
+  },
+  "1hvhj8eohr8": {
+    "en": "Template",
+    "tr": "Şablon",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/components/Groups/CreateGroupWizard.tsx"
+    ]
+  },
+  "1sp1rm6w1x7": {
+    "en": "Hello World",
+    "tr": "Merhaba Dünya",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1uoo84uqne2": {
+    "en": "The shortest working example.",
+    "tr": "En kısa çalışan örnek.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "2c09bc4hp0y": {
+    "en": "Empty file",
+    "tr": "Boş dosya",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/lib/groups.ts"
+    ]
+  },
+  "lj9lr12zto": {
+    "en": "Start without any code.",
+    "tr": "Hiçbir kod olmadan başlayın.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "40lyxipgf8": {
+    "en": "Create",
+    "tr": "Oluştur",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/FilesPanel.tsx"
+    ]
+  },
+  "25ffof8cj78": {
+    "en": "Create {count} files",
+    "tr": "{count} dosya oluştur",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1wknkx0abpg": {
+    "en": "Pick a language on the left.",
+    "tr": "Soldan bir dil seçin.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "166eej4xdq3": {
+    "en": "A file with this name is open; it will be created as {name}.",
+    "tr": "Bu adla açık bir dosya var; {name} olarak oluşturulacak.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "o97xfeeql3": {
+    "en": "This template fills the Input tab with sample input.",
+    "tr": "Bu şablon Girdi sekmesine örnek girdi yazar.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "l29ck4915b": {
+    "en": "Categories",
+    "tr": "Kategoriler",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx",
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "16w86977ca7": {
+    "en": "Select language mode",
+    "tr": "Dil modunu seç",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "18wuaxqj8hu": {
+    "en": "Changes syntax highlighting and what Run does; the code stays the same.",
+    "tr": "Sözdizimi vurgulamasını ve Çalıştır davranışını değiştirir; kod aynı kalır.",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "21cfcwumxbh": {
+    "en": "Search languages…",
+    "tr": "Dil ara…",
+    "files": [
+      "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "zz5kpepdkf": {
+    "en": "Name your project",
+    "tr": "Projenize bir ad verin",
+    "files": [
+      "src/components/Editor/SaveDialog.tsx"
+    ]
+  },
+  "145pbqlm1k7": {
+    "en": "The project is saved to the cloud with your account and appears on your dashboard.",
+    "tr": "Proje, hesabınızla buluta kaydedilir ve panelinizde görünür.",
+    "files": [
+      "src/components/Editor/SaveDialog.tsx"
+    ]
+  },
+  "4dpb7erqnc": {
+    "en": "Keep the same name",
+    "tr": "Aynı adı koru",
+    "files": [
+      "src/components/Editor/SaveDialog.tsx"
+    ]
+  },
+  "dfy4pmv6jn": {
+    "en": "{name} · {language}",
+    "tr": "{name} · {language}",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "ayeghpa99m": {
+    "en": "{lines} lines · {chars} characters",
+    "tr": "{lines} satır · {chars} karakter",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "gsod8y834p": {
+    "en": "Download a Hanogt snippet file",
+    "tr": "Hanogt parçacık dosyası indir",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "1fe932iedrg": {
+    "en": "Name, language and code in one file (.hanogt.json). The recipient opens the same tab with Upload file.",
+    "tr": "Ad, dil ve kod tek dosyada (.hanogt.json). Karşı taraf Dosya yükle ile aynı sekmeyi açar.",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "4ib5vvf4ic": {
+    "en": "Download the source file",
+    "tr": "Kaynak dosyayı indir",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "239o20aq2c7": {
+    "en": "Saves the code as {name}.",
+    "tr": "Kodu {name} olarak kaydeder.",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "1mh53disb8u": {
+    "en": "Copy the code",
+    "tr": "Kodu kopyala",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "1xg9evub9qu": {
+    "en": "Copies the code as plain text.",
+    "tr": "Panoya düz metin olarak kopyalar.",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "1w235w6hp6o": {
+    "en": "Copy as Markdown",
+    "tr": "Markdown olarak kopyala",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "1pcps99cyjg": {
+    "en": "A code block for chats, READMEs or forums.",
+    "tr": "Sohbet, README veya forumlar için kod bloğu.",
+    "files": [
+      "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "1nawtb0o72j": {
+    "en": "Run all files / preview",
+    "tr": "Tüm dosyaları çalıştır / önizle",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1lu3d7isos6": {
+    "en": "Run the active file only",
+    "tr": "Yalnızca etkin dosyayı çalıştır",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "2n7ohkgioh": {
+    "en": "Go to tab N",
+    "tr": "N. sekmeye geç",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1ffagq4qqm1": {
+    "en": "Rename the tab",
+    "tr": "Sekmeyi yeniden adlandır",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "izoux4ank7": {
+    "en": "when the tab has focus",
+    "tr": "sekme seçiliyken",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1rc92nne362": {
+    "en": "Close the tab",
+    "tr": "Sekmeyi kapat",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1vfm6mlg0lq": {
+    "en": "when the tab has focus, or middle-click",
+    "tr": "sekme seçiliyken veya orta tık",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "iq571dcnki": {
+    "en": "Editor command palette",
+    "tr": "Editör komut paleti",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "xo1sjxf8px": {
+    "en": "Find",
+    "tr": "Bul",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "7ne5ydfw3z": {
+    "en": "Find and replace",
+    "tr": "Bul ve değiştir",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "mazy83o1q8": {
+    "en": "Go to line",
+    "tr": "Satıra git",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "1eokxkq8am5": {
+    "en": "Toggle line comment",
+    "tr": "Yorum satırı aç/kapat",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "2f6mqxex9q9": {
+    "en": "Select next occurrence",
+    "tr": "Sonraki eşleşmeyi seç",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "losdte1y3g": {
+    "en": "Add cursor above/below",
+    "tr": "Yukarı/aşağı imleç ekle",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1m6rvl5onv1": {
+    "en": "Move line",
+    "tr": "Satırı taşı",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "tdv25vj0ml": {
+    "en": "Copy line",
+    "tr": "Satırı kopyala",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "29n2qjhd2fn": {
+    "en": "Delete line",
+    "tr": "Satırı sil",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1t1aspfwamn": {
+    "en": "Fold / unfold block",
+    "tr": "Bloğu katla / aç",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "4idp88rj9m": {
+    "en": "Trigger suggestions",
+    "tr": "Önerileri göster",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "10pyvherinj": {
+    "en": "Rename symbol",
+    "tr": "Sembolü yeniden adlandır",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "dub8unwrbb": {
+    "en": "in the editor",
+    "tr": "editörde",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "2e3epxxpywp": {
+    "en": "Zoom the font",
+    "tr": "Yazı boyutunu büyüt/küçült",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "2f3vliz4adi": {
+    "en": "when enabled in settings",
+    "tr": "ayarlarda açıksa",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1gdmbgbespw": {
+    "en": "Hanogt shortcuts that also work outside the editor, and the most useful Monaco editor shortcuts.",
+    "tr": "Editör dışındayken de çalışan Hanogt kısayolları ve Monaco editörünün en kullanışlı kısayolları.",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "19ymajx0cie": {
+    "en": "Back to the previous workspace",
+    "tr": "Önceki çalışma alanına dön",
+    "files": [
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "34zn8yjpu1": {
+    "en": "New file or template",
+    "tr": "Yeni dosya veya şablon",
+    "files": [
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "14iyqttxnen": {
+    "en": "Upload files (text or ZIP)",
+    "tr": "Dosya yükle (metin veya ZIP)",
+    "files": [
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "1dn1vkkuvlu": {
+    "en": "Switch to light theme",
+    "tr": "Açık temaya geç",
+    "files": [
+      "src/components/Editor/Sidebar.tsx",
+      "src/components/ThemeToggle.tsx"
+    ]
+  },
+  "tcnzd309dr": {
+    "en": "Switch to dark theme",
+    "tr": "Koyu temaya geç",
+    "files": [
+      "src/components/Editor/Sidebar.tsx",
+      "src/components/ThemeToggle.tsx"
+    ]
+  },
+  "16srm99lf8j": {
+    "en": "Editor actions",
+    "tr": "Editör işlemleri",
+    "files": [
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "16p53zbqpcm": {
+    "en": "Ln {line}, Col {column}",
+    "tr": "Sat {line}, Süt {column}",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "1hgyyazwwmo": {
+    "en": "({count} selected)",
+    "tr": "({count} seçili)",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "r4552ya1m0": {
+    "en": "{count} cursors",
+    "tr": "{count} imleç",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "28m6zx198lk": {
+    "en": "Spaces: {size}",
+    "tr": "Boşluk: {size}",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "3v8g3zg862": {
+    "en": "Tab size: {size}",
+    "tr": "Sekme: {size}",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "x1af26zazs": {
+    "en": "Change indentation",
+    "tr": "Girintiyi değiştir",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "3vmrj2ezcn": {
+    "en": "Change line endings (LF/CRLF)",
+    "tr": "Satır sonunu değiştir (LF/CRLF)",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "bazfmqzfe0": {
+    "en": "Encoding",
+    "tr": "Kodlama",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "bm23zv7fe1": {
+    "en": "Problems: {errors} errors, {warnings} warnings",
+    "tr": "Sorunlar: {errors} hata, {warnings} uyarı",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "gof95m0tg8": {
+    "en": "Unsaved",
+    "tr": "Kaydedilmedi",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "19gybtkafs4": {
+    "en": "Saving…",
+    "tr": "Kaydediliyor…",
+    "files": [
+      "src/components/Editor/StatusBar.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/EditorPane.tsx"
+    ]
+  },
+  "1ytqljuvvbe": {
+    "en": "Not saved",
+    "tr": "Kaydedilemedi",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "1zx92mgpq6c": {
+    "en": "Status bar",
+    "tr": "Durum çubuğu",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "2epyckgozw2": {
+    "en": "Dismiss notification",
+    "tr": "Bildirimi kapat",
+    "files": [
+      "src/components/Editor/Toasts.tsx",
+      "src/components/Groups/ui.tsx"
+    ]
+  },
+  "9w68nk6gb6": {
+    "en": "Refresh as you type",
+    "tr": "Yazdıkça yenile",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
     ]
   },
   "1m9u4u4e3s5": {
     "en": "Exit fullscreen",
-    "tr": "Küçült",
+    "tr": "Tam ekrandan çık",
     "files": [
-      "src/components/Editor/TestPreview.tsx"
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "24z2dffbxaw": {
+    "en": "Desktop width",
+    "tr": "Masaüstü genişliği",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "13hpv17p9fo": {
+    "en": "Tablet width (768 px)",
+    "tr": "Tablet genişliği (768 px)",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "u5tbjpzedq": {
+    "en": "Phone width (375 px)",
+    "tr": "Telefon genişliği (375 px)",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1s9mhohtbpq": {
+    "en": "Clear console",
+    "tr": "Konsolu temizle",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "vupftj2ve6": {
+    "en": "console.log output appears here.",
+    "tr": "console.log çıktıları burada görünür.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "7bc6qmz4ve": {
+    "en": "Nothing to preview. Add an HTML, CSS or Markdown file, or start from the Web project template.",
+    "tr": "Önizlenecek dosya yok. HTML, CSS veya Markdown dosyası ekleyin ya da Web projesi şablonuyla başlayın.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "o3vdhnjbnp": {
+    "en": "Files not in this project: {files}",
+    "tr": "Projede bulunmayan dosyalar: {files}",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "xzl0r3ml1o": {
+    "en": "The page runs in a sandboxed frame: external scripts, styles and network requests are blocked; images can load over https.",
+    "tr": "Sayfa korumalı bir çerçevede çalışır: dış betikler, stiller ve ağ istekleri engellenir; resimler https üzerinden yüklenebilir.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "2ahftq1bw4": {
+    "en": "Preview: {name}",
+    "tr": "Önizleme: {name}",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "2119rvpndch": {
+    "en": "This Markdown file is empty.",
+    "tr": "Bu Markdown dosyası boş.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "3gjelldd5x": {
+    "en": "Heading",
+    "tr": "Başlık",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "25f1yzl0xvp": {
+    "en": "This paragraph is styled by your stylesheet.",
+    "tr": "Bu paragraf stil dosyanızla biçimlendirilir.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "126jn8g20wf": {
+    "en": "Button",
+    "tr": "Düğme",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "uhq2wcexwy": {
+    "en": "Text field",
+    "tr": "Metin kutusu",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "21npbr002v7": {
+    "en": ".box class",
+    "tr": ".box sınıfı",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "2eflv4yp2c8": {
+    "en": ".card class",
+    "tr": ".card sınıfı",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "89jij4vxze": {
+    "en": "Item",
+    "tr": "Öğe",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1djm51ofj3m": {
+    "en": "A quotation.",
+    "tr": "Bir alıntı.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
     ]
   },
   "39j8oqw3rh": {
@@ -4419,44 +7299,12 @@
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
-  "21ety3yqhji": {
-    "en": "Back",
-    "tr": "Geri",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/CreateGroupWizard.tsx"
-    ]
-  },
   "2vsqno7p6p": {
     "en": "Projects",
     "tr": "Projeler",
     "files": [
       "src/components/GameEngine/editor/text.ts",
       "src/lib/faq.ts"
-    ]
-  },
-  "19gybtkafs4": {
-    "en": "Saving…",
-    "tr": "Kaydediliyor…",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/EditorPane.tsx"
-    ]
-  },
-  "rrusbj3fvp": {
-    "en": "Saved",
-    "tr": "Kaydedildi",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/EditorPane.tsx",
-      "src/components/News/NewsPage.tsx"
-    ]
-  },
-  "1ce0j82vshj": {
-    "en": "Unsaved changes",
-    "tr": "Kaydedilmemiş değişiklikler",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "jxkgt8n66v": {
@@ -4483,13 +7331,6 @@
   "6em4pgy3as": {
     "en": "Local",
     "tr": "Yerel",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "1psqx18py82": {
-    "en": "Undo",
-    "tr": "Geri al",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -4646,26 +7487,11 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "667t1e1zr5": {
-    "en": "Console",
-    "tr": "Konsol",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
   "xf97jamydt": {
     "en": "Search…",
     "tr": "Ara…",
     "files": [
       "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "40lyxipgf8": {
-    "en": "Create",
-    "tr": "Oluştur",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/FilesPanel.tsx"
     ]
   },
   "15qwch8daog": {
@@ -4799,14 +7625,6 @@
     "tr": "Aşağı taşı",
     "files": [
       "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "2554s8khkhe": {
-    "en": "Reset",
-    "tr": "Sıfırla",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Security/SecurityChecklist.tsx"
     ]
   },
   "7gqysfvinh": {
@@ -5365,22 +8183,6 @@
       "src/lib/nav.ts"
     ]
   },
-  "1z0stx5nz0h": {
-    "en": "Rename",
-    "tr": "Yeniden adlandır",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Groups/workspace/FilesPanel.tsx",
-      "src/components/HanogtAI/HanogtAIChat.tsx"
-    ]
-  },
-  "1jd7l4ijtux": {
-    "en": "Duplicate",
-    "tr": "Çoğalt",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
   "14q5y3njpr0": {
     "en": "Thumbnail",
     "tr": "Kapak görseli",
@@ -5626,6 +8428,7 @@
     "tr": "Kod",
     "files": [
       "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/GroupWorkspace.tsx",
       "src/components/HanogtAI/HanogtAIChat.tsx",
       "src/lib/faq.ts"
     ]
@@ -5998,7 +8801,8 @@
     "en": "Only admins can send invitations in this group.",
     "tr": "Bu grupta yalnızca yöneticiler davet gönderebilir.",
     "files": [
-      "src/components/Groups/api.ts"
+      "src/components/Groups/api.ts",
+      "src/components/Groups/workspace/InviteDialog.tsx"
     ]
   },
   "117485ttjyt": {
@@ -6127,17 +8931,23 @@
       "src/components/Groups/api.ts"
     ]
   },
-  "1yp24l7sjw6": {
-    "en": "Something went wrong. Please try again.",
-    "tr": "Bir sorun oluştu. Lütfen tekrar deneyin.",
-    "files": [
-      "src/components/Groups/api.ts",
-      "src/components/HanogtAI/HanogtAIChat.tsx"
-    ]
-  },
   "ipj5r8beo0": {
     "en": "Couldn't reach the server. Check your connection.",
     "tr": "Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "15yo6xqz121": {
+    "en": "Access to the shared files was lost.",
+    "tr": "Ortak dosyalara erişim kesildi.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1mgrmobxgyr": {
+    "en": "Access to the group chat was lost.",
+    "tr": "Grup sohbetine erişim kesildi.",
     "files": [
       "src/components/Groups/api.ts"
     ]
@@ -6219,13 +9029,6 @@
       "src/components/Groups/api.ts"
     ]
   },
-  "bexkf1cr59": {
-    "en": "Couldn't copy to the clipboard.",
-    "tr": "Panoya kopyalanamadı.",
-    "files": [
-      "src/components/Groups/api.ts"
-    ]
-  },
   "2d42y2iw7th": {
     "en": "The message couldn't be sent.",
     "tr": "Mesaj gönderilemedi.",
@@ -6233,16 +9036,16 @@
       "src/components/Groups/api.ts"
     ]
   },
-  "276or9zpaa9": {
-    "en": "Set up a ready-to-use workspace in a few steps.",
-    "tr": "Birkaç adımda hazır bir çalışma alanı kur.",
+  "1t0tvfuufn": {
+    "en": "Create a new group",
+    "tr": "Yeni grup oluştur",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
-  "1hvhj8eohr8": {
-    "en": "Template",
-    "tr": "Şablon",
+  "276or9zpaa9": {
+    "en": "Set up a ready-to-use workspace in a few steps.",
+    "tr": "Birkaç adımda hazır bir çalışma alanı kur.",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
@@ -6275,6 +9078,14 @@
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
+  "26ofrbt231c": {
+    "en": "Group name",
+    "tr": "Grup adı",
+    "files": [
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
   "1wqy97uneq": {
     "en": "e.g. Algorithm Club",
     "tr": "Örn. Algoritma Kulübü",
@@ -6293,14 +9104,16 @@
     "en": "Icon",
     "tr": "Simge",
     "files": [
-      "src/components/Groups/CreateGroupWizard.tsx"
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "10o2kuwee2u": {
     "en": "Accent color",
     "tr": "Vurgu rengi",
     "files": [
-      "src/components/Groups/CreateGroupWizard.tsx"
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "2c3olef93cp": {
@@ -6370,7 +9183,8 @@
     "en": "Chat topics",
     "tr": "Sohbet konuları",
     "files": [
-      "src/components/Groups/CreateGroupWizard.tsx"
+      "src/components/Groups/CreateGroupWizard.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "4cffuntixl": {
@@ -6387,9 +9201,9 @@
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
   },
-  "167vf3bxief": {
-    "en": "Continue",
-    "tr": "Devam",
+  "1whhvosn7m8": {
+    "en": "Create group",
+    "tr": "Grubu oluştur",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
@@ -6397,6 +9211,13 @@
   "octln8v7zd": {
     "en": "Enter at least 2 characters.",
     "tr": "En az 2 karakter girin.",
+    "files": [
+      "src/components/Groups/CreateGroupWizard.tsx"
+    ]
+  },
+  "19jxx04z19e": {
+    "en": "The group couldn't be created.",
+    "tr": "Grup oluşturulamadı.",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx"
     ]
@@ -6415,12 +9236,27 @@
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx",
-      "src/components/Groups/workspace/MembersPanel.tsx"
+      "src/components/Groups/workspace/MembersPanel.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1241b929q9n": {
+    "en": "Live collaboration",
+    "tr": "Canlı ortak çalışma",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
     ]
   },
   "1n0anpdap3b": {
     "en": "Code live in the same files with your friends, talk in the project chat by text or voice, pin what matters and grow your team with invite links.",
     "tr": "Arkadaşlarınla aynı dosyalarda canlı kod yaz, proje sohbetinde yazılı ya da sesli konuş, önemli mesajları sabitle ve ekibini davet bağlantılarıyla büyüt.",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "28dc5l18zkx": {
+    "en": "New group",
+    "tr": "Yeni grup",
     "files": [
       "src/components/Groups/GroupsHome.tsx"
     ]
@@ -6474,6 +9310,13 @@
       "src/components/Groups/GroupsHome.tsx"
     ]
   },
+  "14lmq9w3c55": {
+    "en": "Group invitations",
+    "tr": "Grup davetleri",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
   "un0tiwdknj": {
     "en": "{name} invited you",
     "tr": "{name} seni davet etti",
@@ -6487,6 +9330,21 @@
     "tr": "Son geçerlilik: {time}",
     "files": [
       "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "2fhlarte473": {
+    "en": "Accept",
+    "tr": "Kabul et",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "sijypixa8o": {
+    "en": "Decline",
+    "tr": "Reddet",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx",
+      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "22tohyp1hcq": {
@@ -6529,6 +9387,15 @@
     "tr": "Sahibi olduklarım",
     "files": [
       "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "1eystbqfqpi": {
+    "en": "Member",
+    "tr": "Üye olduklarım",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/lib/groups.ts"
     ]
   },
   "27nxsynl10g": {
@@ -6577,6 +9444,13 @@
   "f5cipig5zr": {
     "en": "Loading groups",
     "tr": "Gruplar yükleniyor",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "2bg84kod97w": {
+    "en": "Groups couldn't be loaded.",
+    "tr": "Gruplar yüklenemedi.",
     "files": [
       "src/components/Groups/GroupsHome.tsx"
     ]
@@ -6645,23 +9519,53 @@
       "src/components/HanogtAI/HanogtAIChat.tsx"
     ]
   },
+  "1i9qs5gspan": {
+    "en": "Sign in to use Groups",
+    "tr": "Gruplar için giriş yapın",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "2fursjl0rry": {
+    "en": "Shared workspaces are open to verified group members only.",
+    "tr": "Ortak çalışma alanları yalnızca doğrulanmış grup üyelerine açıktır.",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
   "1a95sf0eshr": {
     "en": "{count} members",
     "tr": "{count} üye",
     "files": [
-      "src/components/Groups/GroupsHome.tsx"
+      "src/components/Groups/GroupsHome.tsx",
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
     ]
   },
   "18pzhxkoy4z": {
     "en": "1 member",
     "tr": "1 üye",
     "files": [
-      "src/components/Groups/GroupsHome.tsx"
+      "src/components/Groups/GroupsHome.tsx",
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
     ]
   },
   "13c039qnmwu": {
     "en": "Open {name}",
     "tr": "{name} grubunu aç",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "3aobztrmw2": {
+    "en": "You left the group.",
+    "tr": "Gruptan ayrıldın.",
+    "files": [
+      "src/components/Groups/GroupsHome.tsx"
+    ]
+  },
+  "14g63azwqh5": {
+    "en": "The group and all of its content were deleted.",
+    "tr": "Grup ve tüm içeriği silindi.",
     "files": [
       "src/components/Groups/GroupsHome.tsx"
     ]
@@ -6807,13 +9711,6 @@
       "src/components/Groups/JoinGroupView.tsx"
     ]
   },
-  "2epyckgozw2": {
-    "en": "Dismiss notification",
-    "tr": "Bildirimi kapat",
-    "files": [
-      "src/components/Groups/ui.tsx"
-    ]
-  },
   "2g3t8xud3ef": {
     "en": "Today",
     "tr": "Bugün",
@@ -6834,7 +9731,8 @@
     "en": "Chat",
     "tr": "Sohbet",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
     ]
   },
   "x97l4wfezx": {
@@ -7001,13 +9899,6 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
-  "20zyujmvkd1": {
-    "en": "everyone",
-    "tr": "herkes",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
-    ]
-  },
   "1f8pn835c2h": {
     "en": "Notify everyone in the group",
     "tr": "Gruptaki herkese bildir",
@@ -7128,6 +10019,13 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
+  "jhkvvg6qdh": {
+    "en": "Live sync",
+    "tr": "Canlı senkron",
+    "files": [
+      "src/components/Groups/workspace/EditorPane.tsx"
+    ]
+  },
   "1lz1ra2pd4e": {
     "en": "Not saved · retry",
     "tr": "Kaydedilemedi · tekrar dene",
@@ -7178,14 +10076,6 @@
       "src/components/Groups/workspace/EditorPane.tsx"
     ]
   },
-  "22yvox2bnu8": {
-    "en": "New file",
-    "tr": "Yeni dosya",
-    "files": [
-      "src/components/Groups/workspace/EditorPane.tsx",
-      "src/components/Groups/workspace/FilesPanel.tsx"
-    ]
-  },
   "2taz3py34m": {
     "en": "Loading files",
     "tr": "Dosyalar yükleniyor",
@@ -7221,13 +10111,6 @@
       "src/components/Groups/workspace/FilesPanel.tsx"
     ]
   },
-  "1g6fbk8fttv": {
-    "en": "Actions for {name}",
-    "tr": "{name} için işlemler",
-    "files": [
-      "src/components/Groups/workspace/FilesPanel.tsx"
-    ]
-  },
   "ppkmjhy533": {
     "en": "Download all as ZIP",
     "tr": "Tümünü ZIP olarak indir",
@@ -7238,13 +10121,6 @@
   "1x81hd6y5r8": {
     "en": "Open all in the Editor",
     "tr": "Tümünü Düzenleyici'de aç",
-    "files": [
-      "src/components/Groups/workspace/FilesPanel.tsx"
-    ]
-  },
-  "u83mhbgf0p": {
-    "en": "New file name",
-    "tr": "Yeni dosya adı",
     "files": [
       "src/components/Groups/workspace/FilesPanel.tsx"
     ]
@@ -7277,13 +10153,6 @@
       "src/components/Groups/workspace/FilesPanel.tsx"
     ]
   },
-  "1b9kooz1ct": {
-    "en": "File name",
-    "tr": "Dosya adı",
-    "files": [
-      "src/components/Groups/workspace/FilesPanel.tsx"
-    ]
-  },
   "1oaqnzptddn": {
     "en": "Use \"/\" for folders (e.g. src/app.js); folders are kept in the ZIP download.",
     "tr": "Klasör için \"/\" kullanabilirsin (ör. src/app.js); ZIP indirirken klasörler korunur.",
@@ -7298,11 +10167,630 @@
       "src/components/Groups/workspace/FilesPanel.tsx"
     ]
   },
+  "r16pvwzdvk": {
+    "en": "Invite a friend",
+    "tr": "Bir arkadaşını davet et",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "vdt5edy6cz": {
+    "en": "Send invitations to friends or share an invite link that expires.",
+    "tr": "Arkadaşlarına davet gönder ya da süreli bir davet bağlantısı paylaş.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
   "2cm4el4t8ot": {
     "en": "Invite",
     "tr": "Davet et",
     "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx",
+      "src/components/Groups/workspace/GroupWorkspace.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx",
       "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "189n8j1q6fy": {
+    "en": "Set the description and rules",
+    "tr": "Açıklamayı ve kuralları belirle",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1iwgt3surp8": {
+    "en": "Describe what the group is for and how you work together.",
+    "tr": "Grubun amacını ve birlikte çalışma kurallarını yaz.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "3fq3q4jl8v": {
+    "en": "Create or edit your first file",
+    "tr": "İlk dosyanı oluştur veya düzenle",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "zebe2i05v3": {
+    "en": "Add a file or edit one of the starter files; everyone sees it live.",
+    "tr": "Yeni bir dosya ekle ya da hazır dosyalardan birini düzenle; herkes canlı görür.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1helhou5x9c": {
+    "en": "Send your first message",
+    "tr": "İlk mesajını gönder",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1l47l2cv8la": {
+    "en": "Say hello in the chat; use @ to mention someone.",
+    "tr": "Sohbette ekibini selamla; @ ile birinden bahsedebilirsin.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1b4fz2tk6xn": {
+    "en": "Write",
+    "tr": "Yaz",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "38ku6bfdtq": {
+    "en": "Start a voice call",
+    "tr": "Sesli arama başlat",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1508dmauqa2": {
+    "en": "Call a member who is also your friend from the member list.",
+    "tr": "Üyeler listesinden arkadaşın olan bir üyeyi tek tıkla ara.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "27f0tx8bjuu": {
+    "en": "Open members",
+    "tr": "Üyeleri aç",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1osjy2kfx3f": {
+    "en": "Pin an important message",
+    "tr": "Önemli bir mesajı sabitle",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "vq3q78thi4": {
+    "en": "Hover a message and press 📌 so everyone can find it.",
+    "tr": "Bir mesajın üzerine gel ve 📌 simgesine bas; herkes kolayca bulur.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1q4ia92hd1v": {
+    "en": "Go to chat",
+    "tr": "Sohbete git",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "i0uh7r9alw": {
+    "en": "Let's get your group ready",
+    "tr": "Grubunu hazırlayalım",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "ttr6gv9g3j": {
+    "en": "{done} of {total} done",
+    "tr": "{done}/{total} tamamlandı",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1awv3d9j1mw": {
+    "en": "You're all set! 🎉",
+    "tr": "Her şey hazır! 🎉",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "a2n5wbuogq": {
+    "en": "Your group is ready. You can close this guide; it can be reopened from Settings → Membership.",
+    "tr": "Grubun kullanıma hazır. Bu rehberi kapatabilirsin; Ayarlar → Üyelik bölümünden tekrar açılır.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "oopf0ceufq": {
+    "en": "Dismiss the guide",
+    "tr": "Rehberi kapat",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "o1wt9q6p25": {
+    "en": "Collapse the guide",
+    "tr": "Rehberi daralt",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "1rd16deh4si": {
+    "en": "Expand the guide",
+    "tr": "Rehberi genişlet",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "22tixxd70fw": {
+    "en": "Visible to the owner and admins only.",
+    "tr": "Yalnızca sahip ve yöneticiler görür.",
+    "files": [
+      "src/components/Groups/workspace/GettingStarted.tsx"
+    ]
+  },
+  "b03kmsxgoh": {
+    "en": "Back to groups",
+    "tr": "Gruplara dön",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "gdcfteklaq": {
+    "en": "Opening the group",
+    "tr": "Grup açılıyor",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "11j4kfzcoam": {
+    "en": "{count} online",
+    "tr": "{count} çevrimiçi",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "1fd2cjlih0i": {
+    "en": "Group settings",
+    "tr": "Grup ayarları",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "idl2lklyms": {
+    "en": "Group info",
+    "tr": "Grup bilgileri",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1iz7nsfjlgb": {
+    "en": "Pinned",
+    "tr": "Sabitlenenler",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx",
+      "src/components/Groups/workspace/MessageItem.tsx"
+    ]
+  },
+  "15fre7yepuw": {
+    "en": "Members",
+    "tr": "Üyeler",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx",
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1wxthn27bwf": {
+    "en": "Side panel",
+    "tr": "Yan panel",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "1zr74yz65p9": {
+    "en": "Workspace sections",
+    "tr": "Çalışma alanı bölümleri",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "6y3pelg7h2": {
+    "en": "You don't have access to this group",
+    "tr": "Bu gruba erişimin yok",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "2447p5991xd": {
+    "en": "The group may have been deleted, or you may have been removed from it.",
+    "tr": "Grup silinmiş olabilir ya da gruptan çıkarılmış olabilirsin.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "2dkap7pxma3": {
+    "en": "Couldn't open the group",
+    "tr": "Grup açılamadı",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "262o1lwjgmp": {
+    "en": "Sign in to see this group",
+    "tr": "Grubu görmek için giriş yap",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "tbb3cwprl8": {
+    "en": "{name} was created.",
+    "tr": "{name} oluşturuldu.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "5h7t41ccsj": {
+    "en": "The file was renamed.",
+    "tr": "Dosya yeniden adlandırıldı.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "oz1qf6iejg": {
+    "en": "Delete {name}?",
+    "tr": "{name} silinsin mi?",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "2ffj55u7bii": {
+    "en": "The file is deleted permanently for all members.",
+    "tr": "Dosya tüm üyeler için kalıcı olarak silinir.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "y0zcp4vu5z": {
+    "en": "Delete file",
+    "tr": "Dosyayı sil",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "oy502qj3s9": {
+    "en": "The file was deleted.",
+    "tr": "Dosya silindi.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "64ehwf9hbj": {
+    "en": "Saving all changes.",
+    "tr": "Tüm değişiklikler kaydediliyor.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "se3itfmxc4": {
+    "en": "A copy was opened in the Editor; changes there don't sync back to the group.",
+    "tr": "Düzenleyici'de bir kopya açıldı; oradaki değişiklikler gruba yansımaz.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "1knjyfu81ae": {
+    "en": "Hover the message you want to pin and press 📌.",
+    "tr": "Sabitlemek istediğin mesajın üzerine gel ve 📌 simgesine bas.",
+    "files": [
+      "src/components/Groups/workspace/GroupWorkspace.tsx"
+    ]
+  },
+  "1gijwqg96t5": {
+    "en": "Invite to the group",
+    "tr": "Gruba davet et",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "75robh80c8": {
+    "en": "Invite friends directly or create a shareable link.",
+    "tr": "Arkadaşlarını doğrudan davet et veya paylaşılabilir bir bağlantı oluştur.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1fo1ckfw7ju": {
+    "en": "Friends",
+    "tr": "Arkadaşlar",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/components/Guide/book-content.ts",
+      "src/lib/ai/knowledge.ts",
+      "src/lib/nav.ts"
+    ]
+  },
+  "244hxm44h15": {
+    "en": "Invite links",
+    "tr": "Davet bağlantıları",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "2dx23b8fquq": {
+    "en": "Search your friends…",
+    "tr": "Arkadaşlarında ara…",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "wm5axe12lm": {
+    "en": "Search your friends",
+    "tr": "Arkadaşlarında ara",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "278n82dbbx8": {
+    "en": "Invited",
+    "tr": "Davet edildi",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1daloh81cpw": {
+    "en": "Blocked",
+    "tr": "Engelli",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1kx6cp9shd8": {
+    "en": "Cancel invitation",
+    "tr": "Daveti iptal et",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1jbpc1xq9qa": {
+    "en": "{name} was invited.",
+    "tr": "{name} davet edildi.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "12wgann05id": {
+    "en": "Invitation cancelled.",
+    "tr": "Davet iptal edildi.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "21czcz6z3m7": {
+    "en": "You don't have any friends yet. Add some and invite them to the group.",
+    "tr": "Henüz arkadaşın yok. Arkadaş ekleyip onları gruba davet edebilirsin.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "18k4lb3bgda": {
+    "en": "Find friends",
+    "tr": "Arkadaş bul",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1vv0mc3mebd": {
+    "en": "No matching friends.",
+    "tr": "Eşleşen arkadaş yok.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1z00jqntmhr": {
+    "en": "Pending invitations",
+    "tr": "Bekleyen davetler",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "ni4tvlqvrv": {
+    "en": "Invited by {name} · expires {time}",
+    "tr": "{name} davet etti · {time} sona eriyor",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "10qk37l64lx": {
+    "en": "Expires after",
+    "tr": "Geçerlilik süresi",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1ldloj4qrge": {
+    "en": "Use limit",
+    "tr": "Kullanım sınırı",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "l2io7k4my8": {
+    "en": "Only the group owner can create links that never expire.",
+    "tr": "Süresiz bağlantıları yalnızca grup sahibi oluşturabilir.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1xs15l5ekgz": {
+    "en": "Create link",
+    "tr": "Bağlantı oluştur",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "da59zadf1": {
+    "en": "Link created and copied to the clipboard.",
+    "tr": "Bağlantı oluşturuldu ve panoya kopyalandı.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "26e259luizw": {
+    "en": "Link created.",
+    "tr": "Bağlantı oluşturuldu.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1yzjnx38kep": {
+    "en": "Active links",
+    "tr": "Etkin bağlantılar",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "fidsxo8c9k": {
+    "en": "No active links. Create one above.",
+    "tr": "Etkin bağlantı yok. Yukarıdan bir tane oluştur.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1ug1apvcdf1": {
+    "en": "Join {group}!",
+    "tr": "{group} grubuna katıl!",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1vqugrvir99": {
+    "en": "Revoke",
+    "tr": "İptal et",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "it72vlx6p9": {
+    "en": "Revoke this link?",
+    "tr": "Bağlantı iptal edilsin mi?",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "14j6ebr9mv9": {
+    "en": "Nobody can join with this link anymore. Members who already joined are not affected.",
+    "tr": "Bu bağlantıyla artık kimse katılamaz. Zaten katılmış üyeler etkilenmez.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1lw8x9o7mdc": {
+    "en": "Link revoked.",
+    "tr": "Bağlantı iptal edildi.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1asatwe9l4k": {
+    "en": "Created by {name}",
+    "tr": "{name} oluşturdu",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1rnzobtr24j": {
+    "en": "{uses}/{max} uses",
+    "tr": "{uses}/{max} kullanım",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "wr2omj2bjt": {
+    "en": "{uses} uses",
+    "tr": "{uses} kullanım",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1uhmujxhbco": {
+    "en": "expires {time}",
+    "tr": "{time} sona eriyor",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "17lsk6zqr68": {
+    "en": "never expires",
+    "tr": "süresiz",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "ftrgddag1r": {
+    "en": "No limit",
+    "tr": "Sınırsız",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "ounf0xpd1h": {
+    "en": "{count} people",
+    "tr": "{count} kişi",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "94ut6bnq2n": {
+    "en": "1 person",
+    "tr": "1 kişi",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1mr0qlkj9m2": {
+    "en": "Anyone with the link and a Hanogt account can join; revoke it when needed.",
+    "tr": "Bağlantıya sahip olan ve Hanogt hesabı bulunan herkes katılabilir; gerektiğinde iptal et.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1fzlimi9i7r": {
+    "en": "Invitation details couldn't be loaded.",
+    "tr": "Davet bilgileri yüklenemedi.",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "1ezi1ktle2b": {
+    "en": "1 hour",
+    "tr": "1 saat",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "fw5lbl8cby": {
+    "en": "24 hours",
+    "tr": "24 saat",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
+    ]
+  },
+  "28goc6uj507": {
+    "en": "7 days",
+    "tr": "7 gün",
+    "files": [
+      "src/components/Groups/workspace/InviteDialog.tsx"
     ]
   },
   "1kddytp99dm": {
@@ -7331,6 +10819,14 @@
     "tr": "Son görülme {time}",
     "files": [
       "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "mwx41tmqgn": {
+    "en": "Voice call",
+    "tr": "Sesli ara",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx",
+      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "6y9zo9us5e": {
@@ -7386,7 +10882,8 @@
     "en": "Transfer ownership",
     "tr": "Sahipliği devret",
     "files": [
-      "src/components/Groups/workspace/MembersPanel.tsx"
+      "src/components/Groups/workspace/MembersPanel.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "q6aydsif33": {
@@ -7403,9 +10900,30 @@
       "src/components/Groups/workspace/MembersPanel.tsx"
     ]
   },
+  "efgorbnxb": {
+    "en": "Make {name} an admin?",
+    "tr": "{name} yönetici olsun mu?",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
   "1oc4u42nd0r": {
     "en": "Admins can invite and remove members, pin messages, delete files and change group settings.",
     "tr": "Yöneticiler üyeleri davet edebilir ve çıkarabilir, mesaj sabitleyebilir, dosya silebilir ve grup ayarlarını değiştirebilir.",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "33kt595z4p": {
+    "en": "Remove admin role from {name}?",
+    "tr": "{name} için yöneticilik kaldırılsın mı?",
+    "files": [
+      "src/components/Groups/workspace/MembersPanel.tsx"
+    ]
+  },
+  "1s5lms2fwd8": {
+    "en": "Remove {name} from the group?",
+    "tr": "{name} gruptan çıkarılsın mı?",
     "files": [
       "src/components/Groups/workspace/MembersPanel.tsx"
     ]
@@ -7435,7 +10953,8 @@
     "en": "Transfer ownership to {name}?",
     "tr": "Sahiplik {name} kullanıcısına devredilsin mi?",
     "files": [
-      "src/components/Groups/workspace/MembersPanel.tsx"
+      "src/components/Groups/workspace/MembersPanel.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "2evxhbbrhy6": {
@@ -7487,13 +11006,6 @@
       "src/components/Groups/workspace/MessageItem.tsx"
     ]
   },
-  "1iz7nsfjlgb": {
-    "en": "Pinned",
-    "tr": "Sabitlendi",
-    "files": [
-      "src/components/Groups/workspace/MessageItem.tsx"
-    ]
-  },
   "1lhdgbwjayy": {
     "en": "Sending",
     "tr": "Gönderiliyor",
@@ -7541,6 +11053,294 @@
     "tr": "Senden bahsedildi",
     "files": [
       "src/components/Groups/workspace/MessageItem.tsx"
+    ]
+  },
+  "19sr3wbk9yi": {
+    "en": "General",
+    "tr": "Genel",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx"
+    ]
+  },
+  "6ncr4z9dl3": {
+    "en": "Rules & topics",
+    "tr": "Kurallar ve konular",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "fg5r2256fc": {
+    "en": "Membership",
+    "tr": "Üyelik",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "2228t2v0m0s": {
+    "en": "Save changes",
+    "tr": "Değişiklikleri kaydet",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "49k5vgg2yp": {
+    "en": "Settings saved.",
+    "tr": "Ayarlar kaydedildi.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "o6df94c26z": {
+    "en": "Only the owner and admins can change these settings.",
+    "tr": "Bu ayarları yalnızca grup sahibi ve yöneticiler değiştirebilir.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1m156stevor": {
+    "en": "Group rules",
+    "tr": "Grup kuralları",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1ndjgba1bk0": {
+    "en": "Rules are shown to every member from the Members panel. You can also keep detailed rules in a RULES.md file.",
+    "tr": "Kurallar her üyeye Üyeler panelinden gösterilir. Ayrıntılı kurallar için KURALLAR.md dosyasını da kullanabilirsin.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "4hibg1x2h8": {
+    "en": "No rules have been written for this group yet.",
+    "tr": "Bu grup için henüz kural yazılmadı.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1i1diez8bbj": {
+    "en": "Topics appear as filters above the chat; messages are tagged by writing #topic.",
+    "tr": "Konular sohbetin üstünde filtre olarak görünür; mesajlarda #konu yazarak etiketlenir.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "zyuzfwcmdy": {
+    "en": "Add topic",
+    "tr": "Konu ekle",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "bh78ik2jw5": {
+    "en": "e.g. questions",
+    "tr": "örn. sorular",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1r2inqvs73u": {
+    "en": "Remove #{topic}",
+    "tr": "#{topic} konusunu kaldır",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "81xpzzkmsm": {
+    "en": "A topic may only contain letters, digits, - and _ (max 24 characters).",
+    "tr": "Konu yalnızca harf, rakam, - ve _ içerebilir (en fazla 24 karakter).",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1bld4gaq27i": {
+    "en": "You can add at most 12 topics.",
+    "tr": "En fazla 12 konu eklenebilir.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1rbkt8er0wm": {
+    "en": "Members can invite their friends",
+    "tr": "Üyeler arkadaşlarını davet edebilir",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "a5zyg4hljn": {
+    "en": "When off, only the owner and admins can send invitations. Invite links are always created by admins only.",
+    "tr": "Kapalıyken yalnızca sahip ve yöneticiler davet gönderebilir. Davet bağlantılarını her zaman yalnızca yöneticiler oluşturur.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "211aiq8ftpw": {
+    "en": "Blocked people",
+    "tr": "Engellenen kişiler",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1b1upcnonid": {
+    "en": "Nobody is blocked.",
+    "tr": "Engellenen kimse yok.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1pz8n14nrn2": {
+    "en": "Unblock",
+    "tr": "Engeli kaldır",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1tokq5gpwdk": {
+    "en": "Block lifted.",
+    "tr": "Engel kaldırıldı.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1bl7ly5djkc": {
+    "en": "Getting-started guide",
+    "tr": "Başlangıç rehberi",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "23mrqs0sv3q": {
+    "en": "Show the getting-started checklist for your group again.",
+    "tr": "Yeni grubun için hazırlanan kontrol listesini tekrar göster.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "12edi08b5e1": {
+    "en": "Show the guide",
+    "tr": "Rehberi göster",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "25hswd6bcok": {
+    "en": "The getting-started guide is back.",
+    "tr": "Başlangıç rehberi yeniden açıldı.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "aczqoujvbb": {
+    "en": "Hand the group over to another member. You stay an admin.",
+    "tr": "Grubu başka bir üyeye devret. Sen yönetici olarak kalırsın.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "8wxb3xoina": {
+    "en": "New owner",
+    "tr": "Yeni sahip",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "213ok9uoqvm": {
+    "en": "Choose a member…",
+    "tr": "Üye seç…",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1po0nrfnx93": {
+    "en": "Transfer",
+    "tr": "Devret",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "8zuqr7t6rm": {
+    "en": "Only the new owner can undo this.",
+    "tr": "Bu işlemi yalnızca yeni sahip geri alabilir.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "2f6b278asmt": {
+    "en": "Ownership transferred.",
+    "tr": "Sahiplik devredildi.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1rc31ki8xo0": {
+    "en": "There must be another member to transfer the group to.",
+    "tr": "Devredebilmek için grupta başka bir üye olmalı.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "13u2340l1m2": {
+    "en": "Delete the group",
+    "tr": "Grubu sil",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "h2jxhsoi3l": {
+    "en": "All files, messages, voice messages, invitations and links are deleted permanently. This can't be undone.",
+    "tr": "Tüm dosyalar, mesajlar, sesli mesajlar, davetler ve bağlantılar kalıcı olarak silinir. Bu işlem geri alınamaz.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "10i6too972w": {
+    "en": "Type the group name to confirm: {name}",
+    "tr": "Onaylamak için grup adını yaz: {name}",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "263o6kklgvz": {
+    "en": "Delete the group permanently",
+    "tr": "Grubu kalıcı olarak sil",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "132xs3uijxs": {
+    "en": "Deleting…",
+    "tr": "Siliniyor…",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "ixvn9s9ngr": {
+    "en": "Leave the group",
+    "tr": "Gruptan ayrıl",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "16o6v1gswxn": {
+    "en": "You lose access to the files and chat. You'll need an invitation to rejoin.",
+    "tr": "Dosyalara ve sohbete erişimini kaybedersin. Yeniden katılmak için davet gerekir.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "15phhpwvoyz": {
+    "en": "Are you sure you want to leave {name}?",
+    "tr": "{name} grubundan ayrılmak istediğine emin misin?",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "h3nldptdch": {
+    "en": "As the owner, transfer ownership or delete the group before leaving.",
+    "tr": "Grup sahibi olarak ayrılmadan önce sahipliği devretmeli veya grubu silmelisin.",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
   "f2rpl437vo": {
@@ -7886,13 +11686,6 @@
   "1wbq9fdyfw8": {
     "en": "Settings: font, size, minimap, theme and more.",
     "tr": "Ayarlar: yazı tipi, boyut, mini harita, tema ve daha fazlası.",
-    "files": [
-      "src/components/Guide/book-content.ts"
-    ]
-  },
-  "17013cyv2mu": {
-    "en": "Run",
-    "tr": "Çalıştır",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -8292,13 +12085,6 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "l29ck4915b": {
-    "en": "Categories",
-    "tr": "Kategoriler",
-    "files": [
-      "src/components/Guide/book-content.ts"
-    ]
-  },
   "165cc40hyh3": {
     "en": "AI, Software, Games, Apps & Tech, Science & Space.",
     "tr": "Yapay Zeka, Yazılım, Oyun, Uygulama & Teknoloji, Bilim & Uzay.",
@@ -8476,15 +12262,6 @@
     "tr": "Süreli davet bağlantıları, roller ve grup sohbeti.",
     "files": [
       "src/components/Guide/book-content.ts"
-    ]
-  },
-  "1fo1ckfw7ju": {
-    "en": "Friends",
-    "tr": "Arkadaşlar",
-    "files": [
-      "src/components/Guide/book-content.ts",
-      "src/lib/ai/knowledge.ts",
-      "src/lib/nav.ts"
     ]
   },
   "298kbhigrub": {
@@ -8884,13 +12661,6 @@
       "src/components/Guide/MinecraftBook.tsx"
     ]
   },
-  "19sr3wbk9yi": {
-    "en": "General",
-    "tr": "Genel",
-    "files": [
-      "src/components/HanogtAI/HanogtAIChat.tsx"
-    ]
-  },
   "1uq1yis4zkf": {
     "en": "What can you do?",
     "tr": "Neler yapabilirsin?",
@@ -9209,15 +12979,6 @@
       "src/components/HanogtAI/Markdown.tsx"
     ]
   },
-  "1u8fb2niukv": {
-    "en": "Copy",
-    "tr": "Kopyala",
-    "files": [
-      "src/components/HanogtAI/HanogtAIChat.tsx",
-      "src/components/HanogtAI/Markdown.tsx",
-      "src/components/Security/PasswordLab.tsx"
-    ]
-  },
   "291gs71x2k5": {
     "en": "Helpful",
     "tr": "Faydalı",
@@ -9356,14 +13117,6 @@
     "tr": "Tüm sohbetleri sil",
     "files": [
       "src/components/HanogtAI/HanogtAIChat.tsx"
-    ]
-  },
-  "vh88ypv7zp": {
-    "en": "Copied",
-    "tr": "Kopyalandı",
-    "files": [
-      "src/components/HanogtAI/Markdown.tsx",
-      "src/components/Security/PasswordLab.tsx"
     ]
   },
   "25jfad5y3lw": {
@@ -9584,6 +13337,13 @@
       "src/components/News/NewsPage.tsx"
     ]
   },
+  "2euf44hgys": {
+    "en": "s",
+    "tr": " sn",
+    "files": [
+      "src/components/News/NewsPage.tsx"
+    ]
+  },
   "12kdwspx5i4": {
     "en": "refresh interval",
     "tr": "yenileme aralığı",
@@ -9615,13 +13375,6 @@
   "1z44o73y2bi": {
     "en": "Search stories",
     "tr": "Haberlerde ara",
-    "files": [
-      "src/components/News/NewsPage.tsx"
-    ]
-  },
-  "c6q0j3eiwc": {
-    "en": "Clear search",
-    "tr": "Aramayı temizle",
     "files": [
       "src/components/News/NewsPage.tsx"
     ]
@@ -10661,20 +14414,6 @@
     "tr": "İçeriğe geç",
     "files": [
       "src/components/SkipLink.tsx"
-    ]
-  },
-  "1dn1vkkuvlu": {
-    "en": "Switch to light theme",
-    "tr": "Açık temaya geç",
-    "files": [
-      "src/components/ThemeToggle.tsx"
-    ]
-  },
-  "tcnzd309dr": {
-    "en": "Switch to dark theme",
-    "tr": "Koyu temaya geç",
-    "files": [
-      "src/components/ThemeToggle.tsx"
     ]
   },
   "278t9zenmhq": {
@@ -13285,13 +17024,6 @@
       "src/lib/faq.ts"
     ]
   },
-  "1te42bvezwa": {
-    "en": "Languages",
-    "tr": "Diller",
-    "files": [
-      "src/lib/faq.ts"
-    ]
-  },
   "ynqb466f6q": {
     "en": "Can I use the interface in my language?",
     "tr": "Arayüzü kendi dilimde kullanabilir miyim?",
@@ -13463,13 +17195,6 @@
   "1w4e37d9vjy": {
     "en": "Looking",
     "tr": "Bakıyorum",
-    "files": [
-      "src/lib/groups.ts"
-    ]
-  },
-  "2c09bc4hp0y": {
-    "en": "Empty file",
-    "tr": "Boş dosya",
     "files": [
       "src/lib/groups.ts"
     ]
@@ -13775,6 +17500,167 @@
       "src/lib/news/sources.ts"
     ]
   },
+  "1kbged7seao": {
+    "en": "Unexpected end of the input; the object opened here is not closed.",
+    "tr": "Girdi beklenmedik şekilde bitti; burada açılan nesne kapatılmamış.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "cpep13v67b": {
+    "en": "Unexpected end of the input; the array opened here is not closed.",
+    "tr": "Girdi beklenmedik şekilde bitti; burada açılan dizi kapatılmamış.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "fq7ji2c4c8": {
+    "en": "The file starts with a byte order mark (BOM); JSON should not contain one.",
+    "tr": "Dosya bir bayt sırası işaretiyle (BOM) başlıyor; JSON dosyaları BOM içermemeli.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "29xi56nfdgr": {
+    "en": "The document is empty; expected a JSON value.",
+    "tr": "Belge boş; bir JSON değeri bekleniyordu.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "bpvzgj6ya": {
+    "en": "Comments are not allowed in JSON.",
+    "tr": "JSON'da yorum satırlarına izin verilmez.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "lyn0xl1l1z": {
+    "en": "Strings must use double quotes (\"), not single quotes.",
+    "tr": "Metinler tek tırnak yerine çift tırnak (\") kullanmalıdır.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "20cb7v9v47x": {
+    "en": "Numbers cannot start with '+'.",
+    "tr": "Sayılar '+' ile başlayamaz.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1bz2cdckuqa": {
+    "en": "Numbers need a digit before the decimal point (write 0.5, not .5).",
+    "tr": "Ondalık noktadan önce bir rakam gerekir (.5 yerine 0.5 yazın).",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "2fn33fy8q10": {
+    "en": "Unexpected end of the input; expected a value.",
+    "tr": "Girdi beklenmedik şekilde bitti; bir değer bekleniyordu.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1j7fz5jw403": {
+    "en": "Trailing commas are not allowed in JSON objects.",
+    "tr": "JSON nesnelerinde sondaki virgüle izin verilmez.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1knexd7jpyh": {
+    "en": "Property names must use double quotes (\"), not single quotes.",
+    "tr": "Özellik adları tek tırnak yerine çift tırnak (\") kullanmalıdır.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1k94sb89k8j": {
+    "en": "Expected ',' between properties.",
+    "tr": "Özellikler arasında ',' bekleniyordu.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1kzueyegums": {
+    "en": "Trailing commas are not allowed in JSON arrays.",
+    "tr": "JSON dizilerinde sondaki virgüle izin verilmez.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1edl8k9swb4": {
+    "en": "Unterminated string; add the closing double quote.",
+    "tr": "Metin kapatılmamış; kapanış çift tırnağını ekleyin.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1t454p2tzys": {
+    "en": "Strings cannot contain line breaks; use \\n instead.",
+    "tr": "Metinler satır sonu içeremez; bunun yerine \\n kullanın.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1ojsd7wqw0p": {
+    "en": "Strings cannot contain control characters; escape them (for example \\t).",
+    "tr": "Metinler kontrol karakteri içeremez; kaçış dizisiyle yazın (örneğin \\t).",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1v39oshag1w": {
+    "en": "Invalid unicode escape; \\u must be followed by four hex digits.",
+    "tr": "Geçersiz unicode kaçışı; \\u ardından dört onaltılık rakam gelmelidir.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "1rd1dfkdqq0": {
+    "en": "Numbers need a digit before the decimal point.",
+    "tr": "Ondalık noktadan önce bir rakam gerekir.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "a4ogplbgzy": {
+    "en": "Infinity and NaN are not valid JSON numbers.",
+    "tr": "Infinity ve NaN geçerli JSON sayıları değildir.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "215152inkx0": {
+    "en": "Invalid number.",
+    "tr": "Geçersiz sayı.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "13imyrojcml": {
+    "en": "Numbers cannot have leading zeros.",
+    "tr": "Sayılar başında sıfır ile yazılamaz.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "qovf3ajwyu": {
+    "en": "A decimal point must be followed by digits.",
+    "tr": "Ondalık noktadan sonra rakam gelmelidir.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
+  "bda1gqtzrw": {
+    "en": "An exponent must have digits.",
+    "tr": "Üs kısmında rakam olmalıdır.",
+    "files": [
+      "src/lib/runtimes/json-tools.ts"
+    ]
+  },
   "uxdtnyonur": {
     "en": "General purpose",
     "tr": "Genel amaçlı",
@@ -13845,13 +17731,6 @@
       "src/lib/runtimes/languages.ts"
     ]
   },
-  "6h7nuel3bw": {
-    "en": "Browser",
-    "tr": "Tarayıcı",
-    "files": [
-      "src/lib/runtimes/languages.ts"
-    ]
-  },
   "2dawdsa73gd": {
     "en": "Runs in your browser",
     "tr": "Tarayıcıda çalışır",
@@ -13862,13 +17741,6 @@
   "1bskc8a2s3a": {
     "en": "Code runs on your device in an isolated Web Worker; no sign-in is needed and nothing is sent to a server.",
     "tr": "Kod cihazınızda, izole bir Web Worker içinde çalışır; giriş gerekmez ve hiçbir sunucuya gönderilmez.",
-    "files": [
-      "src/lib/runtimes/languages.ts"
-    ]
-  },
-  "vbic45ph09": {
-    "en": "Server",
-    "tr": "Sunucu",
     "files": [
       "src/lib/runtimes/languages.ts"
     ]
@@ -14186,6 +18058,13 @@
     "tr": "Python, JavaScript, Scheme ve Lua dosyaları tek tıkla paralel çalışır.",
     "files": [
       "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "1obpa4kfv4t": {
+    "en": "Invalid JSON.",
+    "tr": "Geçersiz JSON.",
+    "files": [
+      "src/lib/runtimes/worker.ts"
     ]
   },
   "22cgndj55f4": {

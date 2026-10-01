@@ -1,5 +1,88 @@
 # Değişiklik Günlüğü
 
+## 0.1.2 — 2026-10-01
+
+Güvenlik, yapay zeka ve topluluk güncellemesi: iki adımlı doğrulama, dil
+modeline dönüşen Hanogt AI, yönetici paneli, yenilenen Gruplar ve 65 dilli
+kod editörü.
+
+### Hanogt AI (eski Güvenlik Botu sohbeti)
+
+- Kural tabanlı sohbet yerine gerçek bir dil modeli: `/api/ai` üzerinden
+  OpenAI uyumlu herhangi bir modele bağlanır (varsayılan Groq), yanıtı
+  platformun kendi bilgi tabanından RAG ile zenginleştirir ve akışla
+  iletir. Genel, Kod ve Güvenlik modları var.
+- Çevrimdışı "Hanogt AI Çekirdeği": tarayıcıda çalışan, 41 niyet için
+  eğitilmiş bir model (hash'lenmiş n-gram, softmaks). Giriş yapılmamışsa ya
+  da dil modeline ulaşılamıyorsa (sınır, yapılandırma, ağ) yanıtı çekirdek
+  verir; her yanıt "LLM" veya "Çekirdek" olarak etiketlenir.
+- Bağlantı oltalama denetimi, çalıştırma hatası açıklayıcı ve statik kod
+  danışmanı yanıtlara araç notu olarak eklenir. Belgeler: `docs/HANOGT_AI.md`.
+- Eğitim çevrimdışı ve depoda: `npm run ai:train`.
+
+### İki adımlı doğrulama (2FA)
+
+- E-posta/şifre girişine zaman tabanlı tek kullanımlık kod (TOTP, RFC 6238)
+  ve tek kullanımlık kurtarma kodları eklendi. Giriş sayfasında ikinci adım,
+  Hesap Ayarları > Güvenlik'te QR kodla kurulum, kurtarma kodu indirme ve
+  kapatma akışı var.
+- Gizli anahtarlar AES-256-GCM ile şifreli, kurtarma kodları HMAC özetiyle
+  yalnızca sunucudaki `credentials` belgesinde saklanır; aynı kod iki kez
+  kullanılamaz.
+- Yönetici Paneli'nde kilitlenen kullanıcı için gerekçeli "2FA sıfırla".
+
+### Yönetici Paneli (/admin)
+
+- Owner/admin/moderator rolleri (owner'lar `ADMIN_EMAILS` ile), sunucu
+  tarafında korunan API'ler ve denetim kaydı.
+- Genel bakış istatistikleri, kullanıcı arama/askıya alma/rol yönetimi,
+  bildirim ve içerik moderasyonu, güvenlik olayları, Arcade yönetimi ve
+  site duyuruları (başlıkta duyuru bandı).
+
+### Gruplar
+
+- 3 adımlı oluşturma sihirbazı ve 6 şablon (Boş, Çalışma grubu, Oyun
+  geliştirme, Açık kaynak, Sınıf, Hackathon): başlangıç dosyaları, kurallar,
+  konular ve sabitlenmiş hoş geldin mesajı sunucuda hazırlanır.
+- Süreli/kullanım sınırlı, iptal edilebilir davet bağlantıları
+  (`/groups/join/<token>`), sahip/yöneticiler için başlangıç kontrol listesi.
+- Sohbet: sabitleme, tepkiler, @bahsetme, arama, #konu filtreleri, eski
+  mesajları yükleme (uzun sohbetlerde yeni mesajların görünmemesi düzeltildi).
+- Dosyalar: yeniden adlandırma, şablonlar, ZIP indirme, editörde açma;
+  kaydedilmemiş yazı gelen değişikliklerle ezilmiyor.
+
+### Kod editörü ve diller
+
+- 65 dil tek kaynaktan yönetiliyor. Tarayıcıda çalışan 8 dil (JavaScript,
+  TypeScript, Python, SQL, Lua ve yeni Scheme, Brainfuck, JSON); HTML/CSS/JS,
+  CSS ve Markdown için güvenli önizleme; 30 dil sunucuda, 24 dil yalnızca
+  düzenleme.
+- Ctrl/⌘+K komut paleti, kısayol yardımı, sekme yönetimi, durum çubuğu,
+  şablon galerisi, ZIP yükleme/indirme, parçacık paylaşımı; dosya başına
+  çıktı ve tıklanabilir `dosya:satır` bağlantılı konsol, stdin ve geçmiş.
+- Editör Ayarları (/settings) baştan yazıldı: canlı önizleme, 10 tema,
+  arama, sıfırlama ve JSON dışa/içe aktarma.
+
+### Güvenlik
+
+- Hanogt Security Bot imzaları için etiketli değerlendirme aracı
+  (`npm run security:eval`): `rm -rf ./node_modules`, `rm -rf build/` gibi
+  en sık temizlik komutlarını yanlışlıkla engelleyen "kök silme" imzası
+  düzeltildi; ağdan indirip süreç başlatma artık engellemiyor, yalnızca
+  bilgilendiriyor.
+- Kendine arkadaş ekleme, depolama yolu aşımı ve dosya silme açıkları
+  kapatıldı; Firestore kuralları sıkılaştırıldı ve gerileme testleriyle
+  (emülatör) doğrulandı.
+- Sürüm koşullu belge yazmaları artık `:commit` ile yapılıyor; eşzamanlı
+  isteklerde çakışmalar hata yerine yeniden deneniyor/409 dönüyor.
+
+### Çeviriler
+
+- 50 arayüz dili. Arapça, Çekçe, Macarca, Endonezce, İtalyanca, Portekizce,
+  Romence, Ukraynaca, Özbekçe ve Vietnamca ana sözlükleri tamamlandı;
+  Gürcüce, Kırgızca, Litvanca, Tamilce, Türkmence ve Arnavutça ana
+  sözlükleri eklendi. Çevrilmemiş metinler İngilizceye düşerek çalışır.
+
 ## 0.1.1 — 2026-09-30
 
 ### Kod çalıştırma
