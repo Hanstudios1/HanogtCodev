@@ -80,8 +80,19 @@ await check("member posts voice in own group folder", assertSucceeds(addDoc(coll
 await check("voice path of another group rejected", assertFails(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "voice", text: "", voicePath: "group-voice-messages/g2/v.webm", createdAt: serverTimestamp() })));
 await check("non-member cannot read group", assertFails(getDoc(doc(as(C), "groups", "g1"))));
 
+console.log("projects/");
+await env.withSecurityRulesDisabled(async (ctx) => {
+    // As POST /api/projects creates it (after checking the plan's project limit).
+    await setDoc(doc(ctx.firestore(), "projects", "p1"), { id: "p1", name: "Alice's", email: A, schemaVersion: 2, fileCount: 0 });
+});
+await check("a browser can't create a project (the server applies the plan limit)", assertFails(setDoc(doc(as(A), "projects", "new1"), { id: "new1", name: "x", email: A })));
+await check("owner saves an existing project", assertSucceeds(setDoc(doc(as(A), "projects", "p1"), { id: "p1", name: "Alice's v2", email: A, fileCount: 1, updatedAt: serverTimestamp() }, { merge: true })));
+await check("owner writes the project's files", assertSucceeds(setDoc(doc(as(A), "projects", "p1", "files", "000-main.js"), { name: "main.js", lang: "javascript", code: "console.log(1)", order: 0, updatedAt: serverTimestamp() })));
+await check("someone else can't change it", assertFails(setDoc(doc(as(B), "projects", "p1"), { name: "mine", email: B }, { merge: true })));
+await check("owner can't hand it to someone else", assertFails(updateDoc(doc(as(A), "projects", "p1"), { email: B })));
+
 console.log("server-only collections/");
-for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x"]) {
+for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "ai_connections/" + A]) {
     const [collectionName, id] = path.split("/");
     await check(`${collectionName} is closed`, assertFails(getDoc(doc(as(A), collectionName, id))));
 }

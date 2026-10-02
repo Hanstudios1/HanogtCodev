@@ -401,7 +401,8 @@ service cloud.firestore {
       allow update, delete: if signedIn()
         && resource.data.email == email()
         && request.resource.data.email == email()
-        && request.resource.data.diff(resource.data).affectedKeys().hasNone(["email"]);
+        // (Sets have no hasNone(): it failed every update, so saving never worked.)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(["email"]);
 
       match /files/{fileId} {
         allow read: if signedIn()
