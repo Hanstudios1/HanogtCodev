@@ -6,15 +6,24 @@ import type { Copy } from "@/lib/i18n";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.0";
-export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "1 Ekim 2026", EN: "1 October 2026" };
+export const LEGAL_VERSION = "4.1";
+export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "2 Ekim 2026", EN: "2 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.0-2026-10-01";
+export const LEGAL_NOTICE_ID = "4.1-2026-10-02";
 
 export type LegalChange = { version: string; date: Copy; items: Copy[] };
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.1",
+        date: { TR: "2 Ekim 2026", EN: "2 October 2026" },
+        items: [
+            { TR: "Destek talebi kategorileri altıya indi: Şikayet, İstek, Güvenlik Açığı, Ban Kaldırma İsteği, Soru ve Geri Bildirim. KVKK başvuruları artık “İstek” kategorisinden yapılıyor.", EN: "Support tickets now have six categories: Complaint, Request, Security vulnerability, Unban request, Question and Feedback. KVKK requests are now made in the “Request” category." },
+            { TR: "Askıya alınan hesaplar, şifre veya Google ile kimliklerini doğruladıktan sonra giriş sayfasındaki formdan itiraz edebiliyor; itiraz “Ban Kaldırma İsteği” talebi olarak ekibe iletiliyor.", EN: "Suspended accounts can appeal from the form on the sign-in page after verifying themselves with their password or Google; the appeal reaches the team as an “Unban request” ticket." },
+            { TR: "Yeni destek taleplerinde ekip üyelerine bildirim gönderildiği ve talep türüne göre toplanan ek alanlar (ör. şikayet konusu, yasaklanan hesap veya grup) açıklandı.", EN: "Explained that staff are notified about new support tickets and which extra fields are collected per ticket type (e.g. the subject of a complaint, the banned account or group)." },
+        ],
+    },
     {
         version: "4.0",
         date: { TR: "1 Ekim 2026", EN: "1 October 2026" },

@@ -38,6 +38,7 @@ import {
     lastMessageFields,
     newTicketMessage,
     readTicketMessages,
+    removeStaffTicketNotifications,
     ticketPriority,
     ticketReplyNotification,
     ticketStatus,
@@ -54,7 +55,7 @@ import {
     TICKET_STATUSES,
     accountAgeDays,
     evaluateUserRecord,
-    isTicketCategory,
+    isStoredTicketCategory,
     isTicketPriority,
     matchesSearch,
     statusAfterStaffReply,
@@ -159,8 +160,9 @@ async function queryInbox(filters: AdminQueryFilter[], cursor: Cursor | null, li
 function inboxFilters(params: URLSearchParams) {
     const status = (params.get("status") || "active") as TicketStatusFilter;
     if (!TICKET_STATUS_FILTERS.includes(status)) throw new AdminHttpError(400, "invalid_status");
+    // Legacy categories (bug, account, other) stay filterable; "all" includes them.
     const category = params.get("category") || "all";
-    if (category !== "all" && !isTicketCategory(category)) throw new TicketRouteError(400, "invalid_category");
+    if (category !== "all" && !isStoredTicketCategory(category)) throw new TicketRouteError(400, "invalid_category");
     const priority = params.get("priority") || "all";
     if (priority !== "all" && !isTicketPriority(priority)) throw new TicketRouteError(400, "invalid_priority");
 
@@ -444,6 +446,7 @@ export async function POST(request: NextRequest) {
                 messages: Array.isArray(record.messages) ? record.messages.length : 0,
             }),
         ]);
+        await removeStaffTicketNotifications([id]);
         const response: AdminTicketActionResponse = { id, deleted: true, changed: true };
         return adminJson(response);
     } catch (error) {

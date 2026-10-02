@@ -36,8 +36,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.support,
         question: { TR: "Ekibe nasıl destek talebi gönderirim?", EN: "How do I send a support ticket to the team?" },
         answer: {
-            TR: "Bu sayfadaki Talep oluştur bölümünde bir kategori seçin (geri bildirim, hata bildirimi, güvenlik açığı, soru, Hesap / KVKK ya da diğer), başlık ve açıklama yazıp gönderin. Talepler herkese açık panoda görünmez; yalnızca siz ve Hanogt ekibi görürsünüz. Taleplerim listesinde durumu (Açık, İnceleniyor, Yanıtlandı, Çözüldü, Kapatıldı) izleyebilir, ekibin yanıtlarını okuyup ek mesaj yazabilir, talebi kapatabilir veya yeniden açabilirsiniz. Talep göndermek için giriş yapmanız gerekir.",
-            EN: "Pick a category under Create a ticket on this page (feedback, bug report, security vulnerability, question, account / KVKK or other), write a title and a description and send it. Tickets never appear on the public board: only you and the Hanogt team can see them. In My tickets you can follow the status (Open, In review, Answered, Resolved, Closed), read the team's replies, write back, and close or reopen the ticket. You need to be signed in to send one.",
+            TR: "Bu sayfadaki Talep oluştur bölümünde altı kategoriden birini seçin: Şikayet, İstek (KVKK başvuruları dahil), Güvenlik Açığı, Ban Kaldırma İsteği, Soru ya da Geri Bildirim. Ardından başlık ve açıklama yazıp gönderin. Talepler herkese açık panoda görünmez; yalnızca siz ve Hanogt ekibi görürsünüz. Taleplerim listesinde durumu (Açık, İnceleniyor, Yanıtlandı, Çözüldü, Kapatıldı) izleyebilir, ekibin yanıtlarını okuyup ek mesaj yazabilir, talebi kapatabilir veya yeniden açabilirsiniz. Talep göndermek için giriş yapmanız gerekir.",
+            EN: "Pick one of the six categories under Create a ticket on this page: Complaint, Request (including KVKK requests), Security vulnerability, Unban request, Question or Feedback. Then write a title and a description and send it. Tickets never appear on the public board: only you and the Hanogt team can see them. In My tickets you can follow the status (Open, In review, Answered, Resolved, Closed), read the team's replies, write back, and close or reopen the ticket. You need to be signed in to send one.",
         },
     },
     {
@@ -54,8 +54,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.support,
         question: { TR: "Bir güvenlik açığını nasıl bildiririm?", EN: "How do I report a security vulnerability?" },
         answer: {
-            TR: "Talep oluştur bölümünde Güvenlik açığı kategorisini seçin, önem derecesini ve yeniden üretme adımlarını yazın. Bu talepler yalnızca ekibe gider, yüksek öncelikle incelenir ve size özel olarak yanıt verilir. Sorumlu açıklama için: açığı herkese açık panoda ya da başka bir yerde yayımlamayın, yalnızca kendi hesabınızla test edin, başkalarının verilerine erişmeyin ve hizmeti aksatacak denemeler (DoS, spam) yapmayın. Gerçek parola, API anahtarı ya da kişisel veri eklemeyin.",
-            EN: "Choose the Security vulnerability category under Create a ticket and describe the severity and the steps to reproduce it. These tickets go to the team only, are reviewed with high priority and are answered privately. For responsible disclosure: don't publish the issue on the public board or anywhere else, test only with your own account, don't access other people's data and don't run tests that disrupt the service (DoS, spam). Don't include real passwords, API keys or personal data.",
+            TR: "Talep oluştur bölümünde Güvenlik Açığı kategorisini seçin, isterseniz önem derecesini belirtin ve yeniden üretme adımlarını yazın. Bu talepler yalnızca ekibe gider, yüksek öncelikle incelenir ve size özel olarak yanıt verilir. Sorumlu açıklama için: açığı herkese açık panoda ya da başka bir yerde yayımlamayın, yalnızca kendi hesabınızla test edin, başkalarının verilerine erişmeyin ve hizmeti aksatacak denemeler (DoS, spam) yapmayın. Gerçek parola, API anahtarı ya da kişisel veri eklemeyin.",
+            EN: "Choose the Security vulnerability category under Create a ticket, optionally set the severity, and write the steps to reproduce it. These tickets go to the team only, are reviewed with high priority and are answered privately. For responsible disclosure: don't publish the issue on the public board or anywhere else, test only with your own account, don't access other people's data and don't run tests that disrupt the service (DoS, spam). Don't include real passwords, API keys or personal data.",
         },
     },
     {
@@ -63,8 +63,26 @@ export const FAQS: Faq[] = [
         category: CATEGORY.support,
         question: { TR: "İyi bir hata bildirimi nasıl yazılır?", EN: "How do I write a good bug report?" },
         answer: {
-            TR: "Hata bildirimi kategorisinde ne beklediğinizi ve ne olduğunu yazın, adımları sırayla ekleyin ve hatanın göründüğü sayfanın adresini girin. \"Teknik bilgileri ekle\" kutusunu işaretlerseniz tarayıcı bilginiz (user agent) ve bulunduğunuz sayfa da talebe eklenir; bu bilgileri yalnızca ekip görür. Ekran görüntüsü yerine hata mesajının metnini yapıştırmak çoğu zaman daha hızlı çözüm sağlar.",
-            EN: "In the Bug report category, write what you expected and what happened, list the steps in order and add the address of the page where it happens. If you tick \"Add technical details\", your browser information (user agent) and the page you are on are attached too; only the team can see them. Pasting the error message as text often gets a faster fix than a screenshot.",
+            TR: "Şikayet kategorisini seçip konu olarak \"Hizmet / site\" seçeneğini işaretleyin. Açıklamaya ne beklediğinizi, ne olduğunu ve hatayı yeniden üretme adımlarını sırayla yazın; hatanın göründüğü sayfanın adresini İçerik bağlantısı alanına ekleyebilirsiniz. \"Teknik bilgileri ekle\" kutusunu işaretlerseniz tarayıcı bilginiz (user agent) ve geldiğiniz sayfa da talebe eklenir; bu bilgileri yalnızca ekip görür. Ekran görüntüsü yerine hata mesajının metnini yapıştırmak çoğu zaman daha hızlı çözüm sağlar.",
+            EN: "Choose the Complaint category and pick \"Service / site\" as the subject. In the description, write what you expected, what happened and the steps to reproduce it in order; you can put the address of the page where it happens in the Link to the content field. If you tick \"Add technical details\", your browser information (user agent) and the page you came from are attached too; only the team can see them. Pasting the error message as text often gets a faster fix than a screenshot.",
+        },
+    },
+    {
+        id: "complaint",
+        category: CATEGORY.support,
+        question: { TR: "Bir kullanıcıyı ya da içeriği nasıl şikayet ederim?", EN: "How do I complain about a user or content?" },
+        answer: {
+            TR: "Talep oluştur bölümünde Şikayet kategorisini seçin. İsterseniz şikayetin konusunu (kullanıcı, içerik, grup, hizmet / site ya da diğer), şikayet ettiğiniz kullanıcının adını ve içeriğin bağlantısını ekleyin; ne olduğunu ve ne zaman olduğunu açıklamaya yazın. Şikayetler herkese açık panoda görünmez; talebi yalnızca siz ve ekip görürsünüz. Ekip şikayeti inceler ve yanıtını Taleplerim'de bulursunuz.",
+            EN: "Choose the Complaint category under Create a ticket. If you like, add what it's about (a user, content, a group, the service / site or something else), the name of the user you're complaining about and a link to the content; describe what happened and when. Complaints never appear on the public board: only you and the team can see the ticket. The team reviews it, and you'll find the reply under My tickets.",
+        },
+    },
+    {
+        id: "unban",
+        category: CATEGORY.support,
+        question: { TR: "Bir yasağın kaldırılmasını nasıl isterim?", EN: "How do I ask for a ban to be lifted?" },
+        answer: {
+            TR: "Talep oluştur bölümünde Ban Kaldırma İsteği kategorisini seçin, neyden yasaklandığınızı (hesap, grup ya da diğer) işaretleyin, grup yasağında grubun adını yazın ve yasağın neden kaldırılması gerektiğini açıklayın. Bu talepler yüksek öncelikle incelenir. Hesabınız askıya alındıysa giriş yapamazsınız: giriş sayfasında hesabınızla giriş yapmayı denediğinizde itiraz formu açılır. Hesabın size ait olduğunu şifrenizle (açıksa iki adımlı doğrulamayla birlikte) ya da Google ile kanıtladıktan sonra itirazınız aynı kategoride ekibe ulaşır; hesabınız yeniden açılırsa yanıtı Taleplerim'de görürsünüz.",
+            EN: "Choose the Unban request category under Create a ticket, mark what you were banned from (account, group or other), give the group's name for a group ban and explain why the ban should be lifted. These tickets are reviewed with high priority. If your account is suspended you can't sign in: the appeal form opens on the sign-in page when you try to sign in with your account. Once you prove the account is yours with its password (plus two-step verification, if enabled) or with Google, your appeal reaches the team in the same category; if the account is reinstated, you'll find the reply under My tickets.",
         },
     },
     {
@@ -72,8 +90,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.support,
         question: { TR: "Topluluk panosu ile destek talebi arasındaki fark nedir?", EN: "What's the difference between the community board and a support ticket?" },
         answer: {
-            TR: "Topluluk panosundaki sorular ve geri bildirimler herkese açıktır: herkes okuyabilir, giriş yapan kullanıcılar beğenip yorum yazabilir ve ekip resmî yanıt verebilir. Hesap sorunları, kişisel bilgiler, KVKK başvuruları ve güvenlik açıkları içinse yalnızca sizin ve ekibin gördüğü destek talebini kullanın.",
-            EN: "Questions and feedback on the community board are public: anyone can read them, signed-in users can like and comment, and the team can reply officially. For account problems, personal information, KVKK requests and security vulnerabilities, use a support ticket, which only you and the team can see.",
+            TR: "Topluluk panosundaki sorular ve geri bildirimler herkese açıktır: herkes okuyabilir, giriş yapan kullanıcılar beğenip yorum yazabilir ve ekip resmî yanıt verebilir. Hesap sorunları, şikayetler, ban kaldırma istekleri, kişisel bilgiler, KVKK başvuruları ve güvenlik açıkları içinse yalnızca sizin ve ekibin gördüğü destek talebini kullanın.",
+            EN: "Questions and feedback on the community board are public: anyone can read them, signed-in users can like and comment, and the team can reply officially. For account problems, complaints, unban requests, personal information, KVKK requests and security vulnerabilities, use a support ticket, which only you and the team can see.",
         },
     },
     {
@@ -90,8 +108,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.account,
         question: { TR: "İki adımlı doğrulamayı nasıl açarım?", EN: "How do I turn on two-step verification?" },
         answer: {
-            TR: "Hesap Ayarları > Güvenlik bölümünde iki adımlı doğrulamayı açın: QR kodu bir doğrulama uygulamasıyla (Google Authenticator, Microsoft Authenticator, Authy vb.) okutun ve uygulamanın ürettiği 6 haneli kodla onaylayın. Ardından 10 tek kullanımlık kurtarma kodu verilir; bunları güvenli bir yere kaydedin. Bundan sonra e-posta ve şifreyle girişte bu kod da istenir. Google ile giriş yapan hesaplar Google'ın kendi iki adımlı doğrulamasıyla korunur. Doğrulama uygulamanızı ve kurtarma kodlarınızı kaybederseniz Hesap / KVKK kategorisinde destek talebi açın; kimliğiniz doğrulandıktan sonra ekip iki adımlı doğrulamayı sıfırlayabilir.",
-            EN: "Turn on two-step verification in Account Settings > Security: scan the QR code with an authenticator app (Google Authenticator, Microsoft Authenticator, Authy and so on) and confirm with the 6-digit code it shows. You then get 10 single-use recovery codes; keep them somewhere safe. From then on, signing in with e-mail and password also asks for the code. Accounts that sign in with Google are protected by Google's own two-step verification. If you lose both your authenticator and your recovery codes, open a support ticket in the Account / KVKK category; once your identity is verified, the team can reset two-step verification.",
+            TR: "Hesap Ayarları > Güvenlik bölümünde iki adımlı doğrulamayı açın: QR kodu bir doğrulama uygulamasıyla (Google Authenticator, Microsoft Authenticator, Authy vb.) okutun ve uygulamanın ürettiği 6 haneli kodla onaylayın. Ardından 10 tek kullanımlık kurtarma kodu verilir; bunları güvenli bir yere kaydedin. Bundan sonra e-posta ve şifreyle girişte bu kod da istenir. Google ile giriş yapan hesaplar Google'ın kendi iki adımlı doğrulamasıyla korunur. Doğrulama uygulamanızı ve kurtarma kodlarınızı kaybederseniz, oturumunuzun hâlâ açık olduğu bir cihazdan İstek kategorisinde destek talebi açın; kimliğiniz doğrulandıktan sonra ekip iki adımlı doğrulamayı sıfırlayabilir.",
+            EN: "Turn on two-step verification in Account Settings > Security: scan the QR code with an authenticator app (Google Authenticator, Microsoft Authenticator, Authy and so on) and confirm with the 6-digit code it shows. You then get 10 single-use recovery codes; keep them somewhere safe. From then on, signing in with e-mail and password also asks for the code. Accounts that sign in with Google are protected by Google's own two-step verification. If you lose both your authenticator and your recovery codes, open a support ticket in the Request category from a device where you're still signed in; once your identity is verified, the team can reset two-step verification.",
         },
     },
     {
@@ -99,8 +117,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.account,
         question: { TR: "Security Bot hesabımı otomatik olarak kalıcı engeller mi?", EN: "Will Security Bot ban my account automatically?" },
         answer: {
-            TR: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır. İtiraz için Hesap / KVKK ya da Güvenlik açığı kategorisinde destek talebi açabilirsiniz.",
-            EN: "No. A high-risk request is stopped on the spot with a minimal log entry. Permanent action is never taken from an automatic pattern match; there is a review and appeal path. To appeal, open a support ticket in the Account / KVKK or Security vulnerability category.",
+            TR: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır. Otomatik bir karara itiraz etmek için İstek kategorisinde, size bir yasak uygulandıysa Ban Kaldırma İsteği kategorisinde destek talebi açabilirsiniz; hesabınız askıya alındıysa giriş sayfasındaki itiraz formunu kullanın.",
+            EN: "No. A high-risk request is stopped on the spot with a minimal log entry. Permanent action is never taken from an automatic pattern match; there is a review and appeal path. To object to an automated decision, open a support ticket in the Request category; if you were banned, use the Unban request category, and if your account is suspended, use the appeal form on the sign-in page.",
         },
     },
     {
@@ -235,8 +253,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.privacy,
         question: { TR: "KVKK kapsamındaki haklarımı nasıl kullanırım?", EN: "How do I exercise my rights under KVKK?" },
         answer: {
-            TR: "KVKK'nın 11. maddesindeki haklarınız (bilgi alma, düzeltme, silme, itiraz vb.) için bu sayfada Hesap / KVKK kategorisinde bir destek talebi oluşturun. Başvurunuz hesabınızın e-posta adresiyle doğrulanır, yalnızca ekip tarafından görülür ve en geç 30 gün içinde ücretsiz sonuçlandırılır. Verilerinizi indirmek ya da hesabınızı silmek için Hesap Ayarları'ndaki seçenekleri hemen kullanabilirsiniz.",
-            EN: "For your rights under Article 11 of KVKK (Turkey's data protection law: access, correction, deletion, objection and so on), open a support ticket in the Account / KVKK category on this page. Your request is verified with your account's e-mail address, is seen by the team only and is concluded free of charge within 30 days at the latest. To download your data or delete your account right away, use the options in Account Settings.",
+            TR: "KVKK'nın 11. maddesindeki haklarınız (bilgi alma, düzeltme, silme, itiraz vb.) için bu sayfada İstek kategorisinde bir destek talebi oluşturun ve hangi hakkınızı kullanmak istediğinizi yazın. Başvurunuz hesabınızın e-posta adresiyle doğrulanır, yalnızca ekip tarafından görülür ve en geç 30 gün içinde ücretsiz sonuçlandırılır. Verilerinizi indirmek ya da hesabınızı silmek için Hesap Ayarları'ndaki seçenekleri hemen kullanabilirsiniz.",
+            EN: "For your rights under Article 11 of KVKK (Turkey's data protection law: access, correction, deletion, objection and so on), open a support ticket in the Request category on this page and say which right you want to exercise. Your request is verified with your account's e-mail address, is seen by the team only and is concluded free of charge within 30 days at the latest. To download your data or delete your account right away, use the options in Account Settings.",
         },
     },
     {

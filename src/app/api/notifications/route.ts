@@ -22,7 +22,8 @@ export const dynamic = "force-dynamic";
  * read and changed with the service account. NotificationCenter and the
  * header bell use this instead of the Firestore client SDK, so they keep
  * working when the browser's Firebase connection is unavailable. Items are
- * written by the server only (e.g. ticket replies from /api/admin/tickets).
+ * written by the server only (e.g. ticket replies from /api/admin/tickets and,
+ * for staff, new tickets and messages from /api/support).
  */
 
 const LIST_LIMIT = 50;
@@ -36,7 +37,7 @@ const READS_PER_MINUTE = 120;
 const WRITES_PER_MINUTE = 60;
 const ID_MAX = 128;
 
-const TYPES: readonly NotificationType[] = ["friend_request", "message", "call", "like", "system", "ticket_reply"];
+const TYPES: readonly NotificationType[] = ["friend_request", "message", "call", "like", "system", "ticket_reply", "ticket_new"];
 const ACTIONS = ["markRead", "delete", "clear"] as const;
 
 const MESSAGES: Record<NotificationsErrorCode, string> = {

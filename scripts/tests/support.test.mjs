@@ -5,9 +5,13 @@ import { load } from "./setup.mjs";
 
 const support = await load("lib/support.ts");
 const {
-    TICKET_LIMITS, TICKET_CATEGORIES, TICKET_STATUSES, TICKET_PRIORITIES, TICKET_SEVERITIES,
-    TICKET_CATEGORY_COPY, TICKET_STATUS_COPY, TICKET_PRIORITY_COPY, TICKET_SEVERITY_COPY, SUPPORT_ERROR_COPY,
+    TICKET_LIMITS, TICKET_CATEGORIES, LEGACY_TICKET_CATEGORIES, STORED_TICKET_CATEGORIES, COMPLAINT_SUBJECTS, BAN_SCOPES,
+    TICKET_STATUSES, TICKET_PRIORITIES, TICKET_SEVERITIES,
+    TICKET_CATEGORY_COPY, COMPLAINT_SUBJECT_COPY, BAN_SCOPE_COPY, KVKK_REQUEST_HINT,
+    TICKET_STATUS_COPY, TICKET_PRIORITY_COPY, TICKET_SEVERITY_COPY, SUPPORT_ERROR_COPY,
     RECORD_REASON_COPY, RECORD_VERDICT_COPY,
+    STAFF_TICKET_NOTIFICATION_TITLES, STAFF_TICKET_NOTIFICATION_COPY, staffTicketNotificationId, staffTicketLink, staffTicketEventOf,
+    isTicketCategory, isLegacyTicketCategory, isStoredTicketCategory,
     sanitizeTicketText, validateTicketDraft, validateTicketMessage, normalizePageUrl, normalizeUserAgent,
     defaultTicketPriority, statusAfterStaffReply, statusAfterUserReply, canUserClose, canUserReopen,
     ticketReference, isTicketId, messagePreview, foldSearchText, matchesSearch,
@@ -20,38 +24,111 @@ const CLEAN_FACTS = {
 };
 
 test("text is normalised: unsafe characters go, line breaks are unified", () => {
-    assert.equal(sanitizeTicketText("  Editör\u0000 ‮kapanıyor\t\n ", false), "Editör kapanıyor");
+    assert.equal(sanitizeTicketText("  Editör\u0000 \u202ekapanıyor\t\n ", false), "Editör kapanıyor");
     assert.equal(sanitizeTicketText("a\r\nb\rc\n\n\n\n\nd  \n", true), "a\nb\nc\n\nd");
     // Decomposed "ö" (o + combining diaeresis) becomes the single code point.
-    assert.equal(sanitizeTicketText("ö", false), "ö");
+    assert.equal(sanitizeTicketText("o\u0308", false), "ö");
     // Zero-width joiners stay so emoji sequences survive.
-    assert.equal(sanitizeTicketText("👩‍💻", false), "👩‍💻");
+    assert.equal(sanitizeTicketText("👩\u200d💻", false), "👩\u200d💻");
 });
 
-test("a valid bug report keeps its steps and page; other categories drop them", () => {
+test("new tickets use the six categories; old ones stay readable only", () => {
+    assert.deepEqual([...TICKET_CATEGORIES], ["complaint", "request", "security", "unban", "question", "feedback"]);
+    assert.deepEqual([...LEGACY_TICKET_CATEGORIES], ["bug", "account", "other"]);
+    assert.deepEqual([...STORED_TICKET_CATEGORIES], [...TICKET_CATEGORIES, ...LEGACY_TICKET_CATEGORIES]);
+    for (const category of TICKET_CATEGORIES) {
+        assert.equal(isTicketCategory(category), true, category);
+        assert.equal(isLegacyTicketCategory(category), false, category);
+        assert.equal(isStoredTicketCategory(category), true, category);
+    }
+    for (const category of LEGACY_TICKET_CATEGORIES) {
+        assert.equal(isTicketCategory(category), false, category);
+        assert.equal(isLegacyTicketCategory(category), true, category);
+        assert.equal(isStoredTicketCategory(category), true, category);
+        // Filed before the change: shown with an "(old)" label, never accepted again.
+        assert.match(TICKET_CATEGORY_COPY[category].label.TR, /\(eski\)$/);
+        assert.match(TICKET_CATEGORY_COPY[category].label.EN, /\(old\)$/);
+        assert.deepEqual(validateTicketDraft({ category, title: "Eski kategori", description: "Bu kategori artık seçilemez." }).errors, [{ field: "category", code: "invalid_category" }]);
+    }
+    for (const bad of ["all", "Şikayet", "", null, 3, "__proto__"]) assert.equal(isStoredTicketCategory(bad), false, String(bad));
+    assert.deepEqual(
+        TICKET_CATEGORIES.map((category) => TICKET_CATEGORY_COPY[category].label.TR),
+        ["Şikayet", "İstek", "Güvenlik Açığı", "Ban Kaldırma İsteği", "Soru", "Geri Bildirim"],
+    );
+    assert.equal(KVKK_REQUEST_HINT.TR, "KVKK başvuruları için bu kategoriyi seçin.");
+});
+
+test("a complaint keeps its optional subject, user and link; other categories drop them", () => {
     const result = validateTicketDraft({
-        category: "bug",
-        title: "  Kaydet   düğmesi çalışmıyor ",
-        description: "Kaydet'e basınca sayfa donuyor.\r\n\r\n\r\n\r\nTekrar deneyince de aynı.",
-        steps: "1. Editörü aç\n2. Kaydet",
-        pageUrl: "/editor?lang=python",
+        category: "complaint",
+        title: "  Hakaret   içeren yorum ",
+        description: "Yorumda bana hakaret edildi.\r\n\r\n\r\n\r\nEkran adı aşağıda.",
+        complaintSubject: "user",
+        reportedUser: "  kod\u202eKral#1234  ",
+        contentUrl: "/media/abc?x=1",
         severity: "critical",
+        banScope: "group",
+        banReference: "Grup",
     });
     assert.equal(result.ok, true);
     assert.deepEqual(result.draft, {
-        category: "bug",
-        title: "Kaydet düğmesi çalışmıyor",
-        description: "Kaydet'e basınca sayfa donuyor.\n\nTekrar deneyince de aynı.",
-        steps: "1. Editörü aç\n2. Kaydet",
-        pageUrl: "/editor?lang=python",
+        category: "complaint",
+        title: "Hakaret içeren yorum",
+        description: "Yorumda bana hakaret edildi.\n\nEkran adı aşağıda.",
         severity: null,
+        complaintSubject: "user",
+        reportedUser: "kodKral#1234",
+        contentUrl: "/media/abc?x=1",
+        banScope: null,
+        banReference: null,
     });
+    // Everything except the description is optional; "" counts as not given.
+    const bare = validateTicketDraft({ category: "complaint", title: "Yavaş site", description: "Sayfalar çok geç açılıyor.", complaintSubject: "", reportedUser: " ", contentUrl: "" });
+    assert.equal(bare.ok, true);
+    assert.deepEqual([bare.draft.complaintSubject, bare.draft.reportedUser, bare.draft.contentUrl], [null, null, null]);
+    for (const subject of COMPLAINT_SUBJECTS) {
+        assert.equal(validateTicketDraft({ category: "complaint", title: "Konu", description: "Yeterince uzun açıklama.", complaintSubject: subject }).draft.complaintSubject, subject);
+    }
+    assert.deepEqual(validateTicketDraft({
+        category: "complaint", title: "Konu", description: "Yeterince uzun açıklama.",
+        complaintSubject: "everyone", reportedUser: "u".repeat(TICKET_LIMITS.reportedUser + 1), contentUrl: "javascript:alert(1)",
+    }).errors, [
+        { field: "complaintSubject", code: "invalid_complaint_subject" },
+        { field: "reportedUser", code: "reported_user_too_long" },
+        { field: "contentUrl", code: "invalid_content_url" },
+    ]);
 
-    const question = validateTicketDraft({ category: "question", title: "Nasıl yapılır?", description: "Grup davet bağlantısı nasıl oluşturulur?", steps: "x", pageUrl: "javascript:alert(1)", severity: "high" });
+    // Other categories ignore the complaint, ban and severity fields instead of failing.
+    const question = validateTicketDraft({
+        category: "question", title: "Nasıl yapılır?", description: "Grup davet bağlantısı nasıl oluşturulur?",
+        complaintSubject: "nope", reportedUser: 42, contentUrl: "javascript:alert(1)", banScope: "moon", banReference: "x", severity: "high", steps: "x", pageUrl: "//evil",
+    });
     assert.equal(question.ok, true);
-    assert.equal(question.draft.steps, null);
-    assert.equal(question.draft.pageUrl, null);
-    assert.equal(question.draft.severity, null);
+    assert.deepEqual(question.draft, {
+        category: "question", title: "Nasıl yapılır?", description: "Grup davet bağlantısı nasıl oluşturulur?",
+        severity: null, complaintSubject: null, reportedUser: null, contentUrl: null, banScope: null, banReference: null,
+    });
+    // Old bug-report fields are no longer part of a draft.
+    assert.equal("steps" in question.draft || "pageUrl" in question.draft, false);
+});
+
+test("an unban request names what was banned; a group needs its name", () => {
+    const base = { category: "unban", title: "Yasağımın kaldırılmasını istiyorum", description: "Yanlışlıkla yasaklandığımı düşünüyorum." };
+    assert.deepEqual(validateTicketDraft(base).errors, [{ field: "banScope", code: "invalid_ban_scope" }]);
+    assert.deepEqual(validateTicketDraft({ ...base, banScope: "planet" }).errors, [{ field: "banScope", code: "invalid_ban_scope" }]);
+    assert.deepEqual(validateTicketDraft({ ...base, banScope: "group" }).errors, [{ field: "banReference", code: "ban_reference_required" }]);
+    assert.deepEqual(validateTicketDraft({ ...base, banScope: "group", banReference: "   " }).errors, [{ field: "banReference", code: "ban_reference_required" }]);
+    assert.deepEqual(validateTicketDraft({ ...base, banScope: "group", banReference: "g".repeat(TICKET_LIMITS.banReference + 1) }).errors, [{ field: "banReference", code: "ban_reference_too_long" }]);
+
+    const group = validateTicketDraft({ ...base, banScope: "group", banReference: "  Python   Severler ", severity: "high", reportedUser: "x" });
+    assert.equal(group.ok, true);
+    assert.deepEqual([group.draft.banScope, group.draft.banReference, group.draft.severity, group.draft.reportedUser], ["group", "Python Severler", null, null]);
+    // The account itself needs no reference, so one sent anyway is dropped.
+    const account = validateTicketDraft({ ...base, banScope: "account", banReference: "hesabım" });
+    assert.deepEqual([account.ok, account.draft.banScope, account.draft.banReference], [true, "account", null]);
+    const other = validateTicketDraft({ ...base, banScope: "other" });
+    assert.deepEqual([other.ok, other.draft.banScope, other.draft.banReference], [true, "other", null]);
+    for (const scope of BAN_SCOPES) assert.equal(validateTicketDraft({ ...base, banScope: scope, banReference: "Ad" }).ok, true, scope);
 });
 
 test("security reports accept a known severity only", () => {
@@ -68,12 +145,15 @@ test("required fields and limits are reported per field", () => {
         { field: "title", code: "title_required" },
         { field: "description", code: "description_required" },
     ]);
-    const tooShort = validateTicketDraft({ category: "other", title: "ab", description: "kısa" });
+    const tooShort = validateTicketDraft({ category: "question", title: "ab", description: "kısa" });
     assert.deepEqual(tooShort.errors, [{ field: "title", code: "title_too_short" }, { field: "description", code: "description_too_short" }]);
-    const tooLong = validateTicketDraft({ category: "other", title: "x".repeat(TICKET_LIMITS.title + 1), description: "y".repeat(TICKET_LIMITS.description + 1) });
+    const tooLong = validateTicketDraft({ category: "request", title: "x".repeat(TICKET_LIMITS.title + 1), description: "y".repeat(TICKET_LIMITS.description + 1) });
     assert.deepEqual(tooLong.errors, [{ field: "title", code: "title_too_long" }, { field: "description", code: "description_too_long" }]);
-    const steps = validateTicketDraft({ category: "bug", title: "Hata başlığı", description: "Yeterince uzun açıklama.", steps: "z".repeat(TICKET_LIMITS.steps + 1) });
-    assert.deepEqual(steps.errors, [{ field: "steps", code: "steps_too_long" }]);
+    // Category errors come with the text errors, so the form can mark every field at once.
+    assert.deepEqual(validateTicketDraft({ category: "unban", title: "ab", description: "Yeterince uzun açıklama." }).errors, [
+        { field: "title", code: "title_too_short" },
+        { field: "banScope", code: "invalid_ban_scope" },
+    ]);
     // Whitespace-only text counts as empty; wrong types are rejected outright.
     assert.deepEqual(validateTicketDraft({ category: "feedback", title: " \n\t ", description: 42 }).errors, [
         { field: "title", code: "title_required" },
@@ -92,7 +172,9 @@ test("page addresses: http(s) links and site paths only", () => {
     for (const bad of ["//evil.example", "javascript:alert(1)", "data:text/html,x", "https://user:pw@evil.example", "https://a b.com", "ftp://x.com/f", "/path\"onmouseover", 7, "/" + "a".repeat(TICKET_LIMITS.pageUrl)]) {
         assert.equal(normalizePageUrl(bad), undefined, String(bad));
     }
-    assert.deepEqual(validateTicketDraft({ category: "bug", title: "Hata başlığı", description: "Yeterince uzun açıklama.", pageUrl: "//evil.example" }).errors, [{ field: "pageUrl", code: "invalid_page_url" }]);
+    // A complaint's content link follows the same rules.
+    assert.deepEqual(validateTicketDraft({ category: "complaint", title: "Şikayet", description: "Yeterince uzun açıklama.", contentUrl: "//evil.example" }).errors, [{ field: "contentUrl", code: "invalid_content_url" }]);
+    assert.equal(validateTicketDraft({ category: "complaint", title: "Şikayet", description: "Yeterince uzun açıklama.", contentUrl: "https://hanogtcodev.com/media/x" }).draft.contentUrl, "https://hanogtcodev.com/media/x");
 });
 
 test("messages and user agents", () => {
@@ -111,7 +193,10 @@ test("priorities and status transitions", () => {
     assert.equal(defaultTicketPriority("security"), "high");
     assert.equal(defaultTicketPriority("security", "critical"), "critical");
     assert.equal(defaultTicketPriority("security", "low"), "high");
-    assert.equal(defaultTicketPriority("bug", "critical"), "normal");
+    assert.equal(defaultTicketPriority("unban"), "high");
+    for (const category of ["complaint", "request", "question", "feedback"]) assert.equal(defaultTicketPriority(category), "normal", category);
+    // Only a security report's severity counts.
+    assert.equal(defaultTicketPriority("question", "critical"), "normal");
 
     assert.equal(statusAfterStaffReply("open"), "answered");
     assert.equal(statusAfterStaffReply("in_progress"), "answered");
@@ -202,10 +287,19 @@ test("every label and error code has Turkish and English text", () => {
             assert.ok(match[1] === "count" || (copy.vars && match[1] in copy.vars), `${name}: {${match[1]}}`);
         }
     };
-    for (const category of TICKET_CATEGORIES) {
+    for (const category of STORED_TICKET_CATEGORIES) {
         complete(TICKET_CATEGORY_COPY[category].label, category);
         complete(TICKET_CATEGORY_COPY[category].hint, category);
+        assert.match(TICKET_CATEGORY_COPY[category].icon, /^[A-Z][A-Za-z]+$/, category);
     }
+    assert.equal(Object.keys(TICKET_CATEGORY_COPY).length, STORED_TICKET_CATEGORIES.length);
+    for (const subject of COMPLAINT_SUBJECTS) complete(COMPLAINT_SUBJECT_COPY[subject], subject);
+    for (const scope of BAN_SCOPES) {
+        complete(BAN_SCOPE_COPY[scope].label, scope);
+        complete(BAN_SCOPE_COPY[scope].hint, scope);
+    }
+    complete(KVKK_REQUEST_HINT, "kvkk hint");
+    for (const [event, copy] of Object.entries(STAFF_TICKET_NOTIFICATION_COPY)) complete(copy, event);
     for (const status of TICKET_STATUSES) complete(TICKET_STATUS_COPY[status].label, status);
     for (const priority of TICKET_PRIORITIES) complete(TICKET_PRIORITY_COPY[priority], priority);
     for (const severity of TICKET_SEVERITIES) complete(TICKET_SEVERITY_COPY[severity].label, severity);
@@ -213,7 +307,11 @@ test("every label and error code has Turkish and English text", () => {
     for (const [code, copy] of Object.entries(RECORD_REASON_COPY)) complete(copy, code);
     for (const [code, entry] of Object.entries(RECORD_VERDICT_COPY)) complete(entry.label, code);
     // Every code a validator can return has a message.
-    for (const code of ["invalid_category", "title_required", "title_too_short", "title_too_long", "description_required", "description_too_short", "description_too_long", "steps_too_long", "invalid_page_url", "invalid_severity", "message_required", "message_too_long", "invalid_body"]) {
+    for (const code of [
+        "invalid_category", "title_required", "title_too_short", "title_too_long", "description_required", "description_too_short", "description_too_long",
+        "invalid_severity", "invalid_complaint_subject", "reported_user_too_long", "invalid_content_url", "invalid_ban_scope", "ban_reference_required",
+        "ban_reference_too_long", "message_required", "message_too_long", "invalid_body",
+    ]) {
         assert.ok(SUPPORT_ERROR_COPY[code], code);
     }
 });
@@ -232,4 +330,17 @@ test("FAQ entries are unique, bilingual and fill their placeholders", async () =
     }
     const languages = FAQS.find((faq) => faq.id === "code-languages");
     assert.equal(languages.answer.vars.usable, languages.answer.vars.runnable + languages.answer.vars.preview);
+});
+
+test("staff notifications: one item per ticket, linked to the admin inbox", () => {
+    const id = "3fa9c2d1e4b5a6978877";
+    assert.equal(staffTicketNotificationId(id), `ticket_new_${id}`);
+    assert.equal(staffTicketLink(id), `/admin#tickets?id=${id}`);
+    // The stored (Turkish) title tells the two events apart; anything else reads as a new ticket.
+    assert.notEqual(STAFF_TICKET_NOTIFICATION_TITLES.created, STAFF_TICKET_NOTIFICATION_TITLES.reply);
+    assert.equal(staffTicketEventOf(STAFF_TICKET_NOTIFICATION_TITLES.created), "created");
+    assert.equal(staffTicketEventOf(STAFF_TICKET_NOTIFICATION_TITLES.reply), "reply");
+    assert.equal(staffTicketEventOf("something else"), "created");
+    assert.equal(STAFF_TICKET_NOTIFICATION_COPY.created.TR, STAFF_TICKET_NOTIFICATION_TITLES.created);
+    assert.equal(STAFF_TICKET_NOTIFICATION_COPY.reply.TR, STAFF_TICKET_NOTIFICATION_TITLES.reply);
 });

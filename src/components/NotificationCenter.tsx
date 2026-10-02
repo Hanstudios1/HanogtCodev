@@ -2,16 +2,20 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 
-import { Bell, BellOff, Check, LifeBuoy, MessageCircle, Phone, RefreshCw, Star, Trash2, UserPlus, X, type LucideIcon } from "lucide-react";
+import { Bell, BellOff, Check, Inbox, LifeBuoy, MessageCircle, Phone, RefreshCw, Star, Trash2, UserPlus, X, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import { adminPost, adminRequest } from "@/components/Admin/api";
 import { formatRelativeTime } from "@/components/Admin/hooks";
 import { useRawSession } from "@/components/Provider";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { STAFF_TICKET_NOTIFICATION_COPY, staffTicketEventOf } from "@/lib/support";
 
-/** "ticket_reply": the Hanogt team answered one of the user's support tickets (written by /api/admin/tickets). */
-export type NotificationType = "friend_request" | "message" | "call" | "like" | "system" | "ticket_reply";
+/**
+ * "ticket_reply": the Hanogt team answered one of the user's support tickets (written by /api/admin/tickets).
+ * "ticket_new": for staff, a new support ticket or a new message from its author (written by /api/support).
+ */
+export type NotificationType = "friend_request" | "message" | "call" | "like" | "system" | "ticket_reply" | "ticket_new";
 
 /** One notification as GET /api/notifications returns it (validated on the server). */
 export type NotificationItem = {
@@ -155,6 +159,7 @@ const TYPE_ICONS: Record<NotificationType, { icon: LucideIcon; className: string
     like: { icon: Star, className: "text-yellow-500" },
     system: { icon: Bell, className: "text-zinc-500" },
     ticket_reply: { icon: LifeBuoy, className: "text-violet-500" },
+    ticket_new: { icon: Inbox, className: "text-amber-500" },
 };
 
 /** The API only returns in-site paths; checked again because the panel navigates with it. */
@@ -262,7 +267,14 @@ export default function NotificationCenter({ isOpen, onClose, returnFocusRef }: 
     const activate = (item: NotificationItem) => {
         markRead(item);
         if (!isInSitePath(item.actionUrl)) return;
-        router.push(item.actionUrl);
+        const target = new URL(item.actionUrl, window.location.href);
+        // The router fires no "hashchange" when only the hash changes (/admin#tickets?id=… while on
+        // /admin), and the admin panel follows the hash through that event.
+        if (target.hash && target.pathname === window.location.pathname && target.search === window.location.search) {
+            window.location.assign(target.href);
+        } else {
+            router.push(item.actionUrl);
+        }
         close();
     };
 
@@ -292,8 +304,10 @@ export default function NotificationCenter({ isOpen, onClose, returnFocusRef }: 
         }
     };
 
-    // Ticket replies are stored with Turkish text; the title is shown in the reader's language.
-    const titleOf = (item: NotificationItem) => (item.type === "ticket_reply" ? tx(C.ticketReply) : item.title);
+    // Ticket notifications are stored with Turkish text; the title is shown in the reader's language.
+    const titleOf = (item: NotificationItem) => (item.type === "ticket_reply"
+        ? tx(C.ticketReply)
+        : item.type === "ticket_new" ? tx(STAFF_TICKET_NOTIFICATION_COPY[staffTicketEventOf(item.title)]) : item.title);
     const hasRead = Boolean(items?.some((item) => item.read));
     const loading = items === null && !loadFailure;
     const iconButton = "grid h-8 w-8 place-items-center rounded-lg transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.08]";

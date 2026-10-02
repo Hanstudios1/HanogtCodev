@@ -7,10 +7,11 @@ import {
     SupportError,
     TICKETS_COLLECTION,
     TICKET_LIST_FIELDS,
+    createSupportTicket,
     isMissingIndex,
     lastMessageFields,
-    newTicketId,
     newTicketMessage,
+    notifyStaffAboutTicket,
     readTicketMessages,
     requireRateLimit,
     supportError,
@@ -31,7 +32,6 @@ import {
     canUserReopen,
     defaultTicketPriority,
     isTicketId,
-    messagePreview,
     normalizePageUrl,
     normalizeUserAgent,
     statusAfterUserReply,
@@ -136,39 +136,31 @@ async function createTicket(request: NextRequest, active: ActiveUser, body: Reco
 
     // "Add technical details": the browser sent by the request itself and the page the form was opened from.
     const technical = body.technical === true;
-    const pageUrl = draft.pageUrl ?? (technical ? normalizePageUrl(body.technicalPage) ?? null : null);
+    const pageUrl = technical ? normalizePageUrl(body.technicalPage) ?? null : null;
     const userAgent = technical ? normalizeUserAgent(request.headers.get("user-agent")) : null;
 
     const profile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`).catch(() => null);
     const user = active.user as Record<string, unknown>;
-    const now = new Date();
-    const id = newTicketId();
-    const data = {
+    const { id, data } = await createSupportTicket({
         category: draft.category,
         title: draft.title,
         description: draft.description,
-        status: "open",
         priority: defaultTicketPriority(draft.category, draft.severity),
         authorEmail: email,
         authorName: displayName(active, profile),
         authorAvatar: httpsUrlOrNull(profile?.avatarUrl) ?? httpsUrlOrNull(user.avatarUrl) ?? httpsUrlOrNull(active.session?.user?.image),
-        createdAt: now,
-        updatedAt: now,
-        lastMessageAt: now,
-        lastMessageFrom: "user",
-        lastMessagePreview: messagePreview(draft.description),
-        messageCount: 0,
-        messages: [],
-        unreadForUser: false,
-        unreadForStaff: true,
         meta: {
             pageUrl: pageUrl ?? undefined,
             userAgent: userAgent ?? undefined,
             severity: draft.severity ?? undefined,
-            steps: draft.steps ?? undefined,
+            complaintSubject: draft.complaintSubject ?? undefined,
+            reportedUser: draft.reportedUser ?? undefined,
+            contentUrl: draft.contentUrl ?? undefined,
+            banScope: draft.banScope ?? undefined,
+            banReference: draft.banReference ?? undefined,
         },
-    };
-    await commitServerMutations([{ type: "create", path: `${TICKETS_COLLECTION}/${id}`, data }]);
+    });
+    await notifyStaffAboutTicket({ ticketId: id, title: draft.title, authorEmail: email, event: "created" });
     const payload: SupportTicketResponse = { ticket: toTicketView({ ...data, _id: id }) };
     return supportJson(payload, 201);
 }
@@ -177,7 +169,7 @@ async function reply(active: ActiveUser, id: string, text: unknown): Promise<Sup
     const message = validateTicketMessage(text);
     if (!message.ok) throw new SupportError(400, message.code);
     await requireRateLimit(`support:reply:${active.email}`, TICKET_RATE_LIMITS.repliesPerHour, HOUR);
-    return withWriteRetry(async () => {
+    const ticket = await withWriteRetry(async () => {
         const record = await loadOwnTicket(id, active.email);
         const status = ticketStatus(record.status);
         const next = statusAfterUserReply(status);
@@ -196,6 +188,8 @@ async function reply(active: ActiveUser, id: string, text: unknown): Promise<Sup
             unreadForUser: false,
         });
     });
+    await notifyStaffAboutTicket({ ticketId: id, title: ticket.title, authorEmail: active.email, event: "reply" });
+    return ticket;
 }
 
 export async function POST(request: NextRequest) {

@@ -8,18 +8,25 @@ import type {
 } from "@/components/Admin/tickets-types";
 import {
     RECORD_LOOKBACK_DAYS,
+    STAFF_TICKET_NOTIFICATION_TITLES,
     TEAM_AUTHOR_NAME,
     TICKET_LIMITS,
     accountAgeDays,
     evaluateUserRecord,
-    isTicketCategory,
+    isBanScope,
+    isComplaintSubject,
+    isStoredTicketCategory,
     isTicketPriority,
     isTicketSeverity,
     isTicketStatus,
     messagePreview,
     normalizePageUrl,
     normalizeUserAgent,
+    staffTicketLink,
+    staffTicketNotificationId,
     ticketReference,
+    type StaffTicketEvent,
+    type StoredTicketCategory,
     type SupportErrorBody,
     type SupportErrorCode,
     type SupportTicketMessage,
@@ -34,11 +41,11 @@ import {
     type UserRecordFacts,
     type UserRecordSummary,
 } from "@/lib/support";
-import { firestoreStatus, httpsUrlOrNull, stringOr, toIso } from "./admin";
+import { firestoreStatus, getOwnerEmails, httpsUrlOrNull, stringOr, toIso } from "./admin";
 import { commitServerMutations, getServerDocument, isWriteConflict, runServerQuery } from "./firebase-rest";
 import { enforceRateLimitWithFallback } from "./rate-limit";
 import { jsonSecurityHeaders } from "./request-security";
-import { isDocId } from "./validate";
+import { isDocId, normalizeEmail } from "./validate";
 
 export const TICKETS_COLLECTION = "support_tickets";
 
@@ -62,9 +69,13 @@ const ERROR_MESSAGES: Record<SupportErrorCode, string> = {
     description_required: "Açıklama gerekli.",
     description_too_short: "Açıklama çok kısa.",
     description_too_long: "Açıklama çok uzun.",
-    steps_too_long: "Adımlar çok uzun.",
-    invalid_page_url: "Sayfa adresi geçersiz.",
     invalid_severity: "Geçersiz önem derecesi.",
+    invalid_complaint_subject: "Geçersiz şikayet konusu.",
+    reported_user_too_long: "Kullanıcı adı çok uzun.",
+    invalid_content_url: "İçerik bağlantısı geçersiz.",
+    invalid_ban_scope: "Neyden yasaklandığı seçilmeli.",
+    ban_reference_required: "Grup adı gerekli.",
+    ban_reference_too_long: "Bu alan çok uzun.",
     message_required: "Mesaj boş olamaz.",
     message_too_long: "Mesaj çok uzun.",
     ticket_closed: "Talep kapalı; önce yeniden açın.",
@@ -185,8 +196,9 @@ export function newTicketId() {
     return randomBytes(10).toString("hex");
 }
 
-export function ticketCategory(value: unknown): TicketCategory {
-    return isTicketCategory(value) ? value : "other";
+/** Stored category; tickets from before the current categories keep theirs, anything unknown counts as legacy "other". */
+export function ticketCategory(value: unknown): StoredTicketCategory {
+    return isStoredTicketCategory(value) ? value : "other";
 }
 
 export function ticketStatus(value: unknown): TicketStatus {
@@ -199,6 +211,9 @@ export function ticketPriority(value: unknown): TicketPriority {
 
 /** Title of the appeal a suspended account files from the login page (/api/support/appeal). */
 export const APPEAL_TICKET_TITLE = "Askıya alma itirazı";
+
+/** Appeals are unban requests about the account itself. */
+export const APPEAL_TICKET_META = { appeal: true, banScope: "account" } as const;
 
 /** Appeals against a suspension carry `meta.appeal: true`; staff see an "İtiraz" badge. */
 export function isAppealTicket(record: TicketRecord) {
@@ -287,6 +302,12 @@ export function readTicketMeta(record: TicketRecord): SupportTicketMeta {
         userAgent: normalizeUserAgent(meta.userAgent),
         severity: isTicketSeverity(meta.severity) ? meta.severity : null,
         steps: typeof meta.steps === "string" && meta.steps ? meta.steps.slice(0, TICKET_LIMITS.steps) : null,
+        complaintSubject: isComplaintSubject(meta.complaintSubject) ? meta.complaintSubject : null,
+        reportedUser: typeof meta.reportedUser === "string" && meta.reportedUser ? meta.reportedUser.slice(0, TICKET_LIMITS.reportedUser) : null,
+        contentUrl: normalizePageUrl(meta.contentUrl) ?? null,
+        banScope: isBanScope(meta.banScope) ? meta.banScope : null,
+        banReference: typeof meta.banReference === "string" && meta.banReference ? meta.banReference.slice(0, TICKET_LIMITS.banReference) : null,
+        appeal: meta.appeal === true,
     };
 }
 
@@ -399,6 +420,99 @@ export function ticketReplyNotification(email: string, ticketId: string, title: 
             createdAt: new Date(),
         },
     };
+}
+
+// ---------------------------------------------------------------------------
+// Staff notifications: new tickets and new messages from their authors
+// ---------------------------------------------------------------------------
+
+const STAFF_CACHE_MS = 60_000;
+/** Admins and moderators read per lookup (owners come from configuration). */
+const STAFF_QUERY_LIMIT = 100;
+const NOTIFICATION_COMMIT_CHUNK = 400;
+let staffCache: { at: number; emails: string[] } | null = null;
+
+/**
+ * Who hears about ticket activity: every owner (built-in and ADMIN_EMAILS)
+ * and every admin or moderator whose account isn't suspended. Cached for a
+ * minute per server instance; if the users query fails, owners still hear.
+ */
+export async function staffNotificationRecipients(): Promise<string[]> {
+    if (staffCache && Date.now() - staffCache.at < STAFF_CACHE_MS) return staffCache.emails;
+    const emails = new Set(getOwnerEmails());
+    try {
+        const staff = await runServerQuery<{ role?: unknown; suspended?: unknown; banned?: unknown }>({
+            collectionId: "users",
+            where: [{ field: "role", op: "IN", value: ["admin", "moderator"] }],
+            select: ["role", "suspended", "banned"],
+            limit: STAFF_QUERY_LIMIT,
+        });
+        for (const record of staff) {
+            const email = normalizeEmail(record._id);
+            if (email && record.suspended !== true && record.banned !== true) emails.add(email);
+        }
+    } catch (error) {
+        console.warn("[support:staff] staff lookup failed, notifying owners only:", error instanceof Error ? error.message : error);
+        return [...emails];
+    }
+    staffCache = { at: Date.now(), emails: [...emails] };
+    return staffCache.emails;
+}
+
+/** notifications/{staffEmail}/items/ticket_new_<ticketId>: one per ticket, refreshed (and unread again) on every event. */
+export function staffTicketNotification(staffEmail: string, ticketId: string, title: string, event: StaffTicketEvent, now = new Date()) {
+    return {
+        type: "update" as const,
+        path: `notifications/${staffEmail}/items/${staffTicketNotificationId(ticketId)}`,
+        data: {
+            type: "ticket_new",
+            title: STAFF_TICKET_NOTIFICATION_TITLES[event],
+            body: title.slice(0, 120),
+            ticketId,
+            actionUrl: staffTicketLink(ticketId),
+            read: false,
+            createdAt: now,
+        },
+    };
+}
+
+/**
+ * Tells the team about a new ticket or a new message from its author (the
+ * author is left out when they are staff themselves). Best effort: a failure
+ * is logged and never fails the request, so a ticket is never lost over a
+ * notification. Returns the number of people notified.
+ */
+export async function notifyStaffAboutTicket(input: { ticketId: string; title: string; authorEmail: string; event: StaffTicketEvent }) {
+    try {
+        const recipients = (await staffNotificationRecipients()).filter((email) => email !== input.authorEmail);
+        const now = new Date();
+        const writes = recipients.map((email) => staffTicketNotification(email, input.ticketId, input.title, input.event, now));
+        for (let index = 0; index < writes.length; index += NOTIFICATION_COMMIT_CHUNK) {
+            await commitServerMutations(writes.slice(index, index + NOTIFICATION_COMMIT_CHUNK));
+        }
+        return recipients.length;
+    } catch (error) {
+        console.warn("[support:notify-staff]", error instanceof Error ? error.message : error);
+        return 0;
+    }
+}
+
+/**
+ * Removes the team's notifications about deleted tickets, so nobody opens a
+ * link to a ticket that is gone. Best effort, like the notifications
+ * themselves; a missing item is no error.
+ */
+export async function removeStaffTicketNotifications(ticketIds: string[]) {
+    if (!ticketIds.length) return;
+    try {
+        const recipients = await staffNotificationRecipients();
+        const deletes = recipients.flatMap((email) => ticketIds.map((id) => ({ type: "delete" as const, path: `notifications/${email}/items/${staffTicketNotificationId(id)}` })));
+        for (let index = 0; index < deletes.length; index += NOTIFICATION_COMMIT_CHUNK) {
+            await commitServerMutations(deletes.slice(index, index + NOTIFICATION_COMMIT_CHUNK));
+        }
+    } catch (error) {
+        console.warn("[support:notify-staff] cleanup failed:", error instanceof Error ? error.message : error);
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -14,8 +14,28 @@ import type { Copy } from "@/lib/i18n";
 // Categories, statuses, priorities
 // ---------------------------------------------------------------------------
 
-export const TICKET_CATEGORIES = ["feedback", "bug", "security", "question", "account", "other"] as const;
+/** Categories new tickets can use, in the order the form offers them. */
+export const TICKET_CATEGORIES = ["complaint", "request", "security", "unban", "question", "feedback"] as const;
 export type TicketCategory = (typeof TICKET_CATEGORIES)[number];
+
+/**
+ * Categories of tickets filed before the six above. They are still shown
+ * (with an "(eski)" label) and can be filtered in the admin inbox, but new
+ * tickets can't use them.
+ */
+export const LEGACY_TICKET_CATEGORIES = ["bug", "account", "other"] as const;
+export type LegacyTicketCategory = (typeof LEGACY_TICKET_CATEGORIES)[number];
+/** Any category a stored ticket can have. */
+export type StoredTicketCategory = TicketCategory | LegacyTicketCategory;
+export const STORED_TICKET_CATEGORIES: readonly StoredTicketCategory[] = [...TICKET_CATEGORIES, ...LEGACY_TICKET_CATEGORIES];
+
+/** What a complaint is about (optional). */
+export const COMPLAINT_SUBJECTS = ["user", "content", "group", "service", "other"] as const;
+export type ComplaintSubject = (typeof COMPLAINT_SUBJECTS)[number];
+
+/** What an unban request is about. */
+export const BAN_SCOPES = ["account", "group", "other"] as const;
+export type BanScope = (typeof BAN_SCOPES)[number];
 
 export const TICKET_STATUSES = ["open", "in_progress", "answered", "resolved", "closed"] as const;
 export type TicketStatus = (typeof TICKET_STATUSES)[number];
@@ -37,9 +57,14 @@ export const TICKET_LIMITS = {
     title: 120,
     descriptionMin: 10,
     description: 5_000,
+    /** Steps of legacy bug reports (read only). */
     steps: 2_000,
     pageUrl: 500,
     userAgent: 400,
+    /** Complaints: the person complained about (name or nickname#tag). */
+    reportedUser: 100,
+    /** Unban requests: the group's name or what else was banned. */
+    banReference: 120,
     message: 3_000,
     /** Messages one thread keeps (staff replies and follow-ups). */
     messages: 100,
@@ -68,8 +93,26 @@ export const BOARD_LIMITS = {
 export const TEAM_AUTHOR_NAME = "Hanogt Ekibi";
 export const TEAM_NAME: Copy = { TR: "Hanogt Ekibi", EN: "Hanogt Team" };
 
+/** One of the six categories new tickets may use. */
 export function isTicketCategory(value: unknown): value is TicketCategory {
     return typeof value === "string" && (TICKET_CATEGORIES as readonly string[]).includes(value);
+}
+
+export function isLegacyTicketCategory(value: unknown): value is LegacyTicketCategory {
+    return typeof value === "string" && (LEGACY_TICKET_CATEGORIES as readonly string[]).includes(value);
+}
+
+/** A category a stored ticket may have (current or legacy). */
+export function isStoredTicketCategory(value: unknown): value is StoredTicketCategory {
+    return isTicketCategory(value) || isLegacyTicketCategory(value);
+}
+
+export function isComplaintSubject(value: unknown): value is ComplaintSubject {
+    return typeof value === "string" && (COMPLAINT_SUBJECTS as readonly string[]).includes(value);
+}
+
+export function isBanScope(value: unknown): value is BanScope {
+    return typeof value === "string" && (BAN_SCOPES as readonly string[]).includes(value);
 }
 
 export function isTicketStatus(value: unknown): value is TicketStatus {
@@ -94,10 +137,13 @@ export function ticketReference(id: string) {
     return id.slice(0, 8).toUpperCase();
 }
 
-/** Security reports start high (critical when the reporter says so); everything else normal. */
+/**
+ * Security reports and unban requests start high (a security report the
+ * reporter calls critical starts critical); everything else normal.
+ */
 export function defaultTicketPriority(category: TicketCategory, severity: TicketSeverity | null = null): TicketPriority {
-    if (category !== "security") return "normal";
-    return severity === "critical" ? "critical" : "high";
+    if (category === "security") return severity === "critical" ? "critical" : "high";
+    return category === "unban" ? "high" : "normal";
 }
 
 /** A staff reply answers the ticket unless it was already resolved or closed. */
@@ -123,30 +169,83 @@ export function canUserReopen(status: TicketStatus) {
 // Labels
 // ---------------------------------------------------------------------------
 
-export const TICKET_CATEGORY_COPY: Record<TicketCategory, { label: Copy; hint: Copy }> = {
-    feedback: {
-        label: { TR: "Geri bildirim", EN: "Feedback" },
-        hint: { TR: "Site hakkında görüş ve öneriler", EN: "Opinions and ideas about the site" },
+/**
+ * lucide-react icon of a category. Kept as a name so this module stays free
+ * of UI dependencies; the page and the admin panel map names to components.
+ */
+export type TicketCategoryIcon = "MessageSquareWarning" | "ClipboardList" | "ShieldAlert" | "Gavel" | "HelpCircle" | "MessageSquareText" | "Bug" | "UserCog" | "LifeBuoy";
+
+export const TICKET_CATEGORY_COPY: Record<StoredTicketCategory, { label: Copy; hint: Copy; icon: TicketCategoryIcon }> = {
+    complaint: {
+        label: { TR: "Şikayet", EN: "Complaint" },
+        hint: { TR: "Bir kullanıcı, içerik, grup ya da hizmetle ilgili sorun", EN: "A problem with a user, content, a group or the service" },
+        icon: "MessageSquareWarning",
     },
-    bug: {
-        label: { TR: "Hata bildirimi", EN: "Bug report" },
-        hint: { TR: "Bir şey beklendiği gibi çalışmıyor", EN: "Something doesn't work as expected" },
+    request: {
+        label: { TR: "İstek", EN: "Request" },
+        hint: { TR: "Yeni özellik ya da değişiklik isteği", EN: "A new feature or a change you'd like" },
+        icon: "ClipboardList",
     },
     security: {
-        label: { TR: "Güvenlik açığı", EN: "Security vulnerability" },
+        label: { TR: "Güvenlik Açığı", EN: "Security vulnerability" },
         hint: { TR: "Sorumlu açıklama, yalnızca ekip görür", EN: "Responsible disclosure, team only" },
+        icon: "ShieldAlert",
+    },
+    unban: {
+        label: { TR: "Ban Kaldırma İsteği", EN: "Unban request" },
+        hint: { TR: "Hesap, grup ya da başka bir yasağa itiraz", EN: "Appeal an account, group or other ban" },
+        icon: "Gavel",
     },
     question: {
         label: { TR: "Soru", EN: "Question" },
         hint: { TR: "Bir özelliğin nasıl çalıştığını sorun", EN: "Ask how something works" },
+        icon: "HelpCircle",
+    },
+    feedback: {
+        label: { TR: "Geri Bildirim", EN: "Feedback" },
+        hint: { TR: "Site hakkında görüş ve öneriler", EN: "Opinions and ideas about the site" },
+        icon: "MessageSquareText",
+    },
+    bug: {
+        label: { TR: "Hata bildirimi (eski)", EN: "Bug report (old)" },
+        hint: { TR: "Önceki kategori; yeni talepler için kullanılmıyor", EN: "Former category; not used for new tickets" },
+        icon: "Bug",
     },
     account: {
-        label: { TR: "Hesap / KVKK", EN: "Account / KVKK" },
-        hint: { TR: "Hesap erişimi, veri ve KVKK başvuruları", EN: "Account access, data and privacy (KVKK) requests" },
+        label: { TR: "Hesap / KVKK (eski)", EN: "Account / KVKK (old)" },
+        hint: { TR: "Önceki kategori; yeni talepler için kullanılmıyor", EN: "Former category; not used for new tickets" },
+        icon: "UserCog",
+    },
+    other: {
+        label: { TR: "Diğer (eski)", EN: "Other (old)" },
+        hint: { TR: "Önceki kategori; yeni talepler için kullanılmıyor", EN: "Former category; not used for new tickets" },
+        icon: "LifeBuoy",
+    },
+};
+
+/** Shown on the "İstek" category: KVKK requests go there. */
+export const KVKK_REQUEST_HINT: Copy = { TR: "KVKK başvuruları için bu kategoriyi seçin.", EN: "Choose this category for KVKK requests." };
+
+export const COMPLAINT_SUBJECT_COPY: Record<ComplaintSubject, Copy> = {
+    user: { TR: "Kullanıcı", EN: "User" },
+    content: { TR: "İçerik", EN: "Content" },
+    group: { TR: "Grup", EN: "Group" },
+    service: { TR: "Hizmet / site", EN: "Service / site" },
+    other: { TR: "Diğer", EN: "Other" },
+};
+
+export const BAN_SCOPE_COPY: Record<BanScope, { label: Copy; hint: Copy }> = {
+    account: {
+        label: { TR: "Hesap", EN: "Account" },
+        hint: { TR: "Hesabınıza uygulanan bir yasak ya da kısıtlama", EN: "A ban or restriction on your account" },
+    },
+    group: {
+        label: { TR: "Grup", EN: "Group" },
+        hint: { TR: "Bir gruptan yasaklandınız", EN: "You were banned from a group" },
     },
     other: {
         label: { TR: "Diğer", EN: "Other" },
-        hint: { TR: "Başka bir konu", EN: "Anything else" },
+        hint: { TR: "Sitedeki başka bir yasak ya da kısıtlama", EN: "Another ban or restriction on the site" },
     },
 };
 
@@ -215,9 +314,13 @@ export type SupportErrorCode =
     | "description_required"
     | "description_too_short"
     | "description_too_long"
-    | "steps_too_long"
-    | "invalid_page_url"
     | "invalid_severity"
+    | "invalid_complaint_subject"
+    | "reported_user_too_long"
+    | "invalid_content_url"
+    | "invalid_ban_scope"
+    | "ban_reference_required"
+    | "ban_reference_too_long"
     | "message_required"
     | "message_too_long"
     | "ticket_closed"
@@ -255,9 +358,13 @@ export const SUPPORT_ERROR_COPY: Record<SupportErrorCode | "network" | "unknown"
     description_required: { TR: "Açıklama yazın.", EN: "Write a description." },
     description_too_short: { TR: "Açıklama en az {min} karakter olmalı.", EN: "The description needs at least {min} characters.", vars: { min: TICKET_LIMITS.descriptionMin } },
     description_too_long: { TR: "Açıklama en fazla {max} karakter olabilir.", EN: "The description can have at most {max} characters.", vars: { max: TICKET_LIMITS.description } },
-    steps_too_long: { TR: "Adımlar en fazla {max} karakter olabilir.", EN: "The steps can have at most {max} characters.", vars: { max: TICKET_LIMITS.steps } },
-    invalid_page_url: { TR: "Sayfa adresi https:// ile başlayan bir bağlantı ya da / ile başlayan bir yol olmalı.", EN: "The page must be a link starting with https:// or a path starting with /." },
     invalid_severity: { TR: "Geçerli bir önem derecesi seçin.", EN: "Choose a valid severity." },
+    invalid_complaint_subject: { TR: "Geçerli bir şikayet konusu seçin.", EN: "Choose a valid complaint subject." },
+    reported_user_too_long: { TR: "Kullanıcı adı en fazla {max} karakter olabilir.", EN: "The user name can have at most {max} characters.", vars: { max: TICKET_LIMITS.reportedUser } },
+    invalid_content_url: { TR: "İçerik bağlantısı https:// ile başlayan bir adres ya da / ile başlayan bir yol olmalı.", EN: "The content link must be an address starting with https:// or a path starting with /." },
+    invalid_ban_scope: { TR: "Neyden yasaklandığınızı seçin: hesap, grup ya da diğer.", EN: "Choose what you were banned from: account, group or other." },
+    ban_reference_required: { TR: "Yasaklandığınız grubun adını yazın.", EN: "Write the name of the group that banned you." },
+    ban_reference_too_long: { TR: "Bu alan en fazla {max} karakter olabilir.", EN: "This field can have at most {max} characters.", vars: { max: TICKET_LIMITS.banReference } },
     message_required: { TR: "Mesaj boş olamaz.", EN: "The message can't be empty." },
     message_too_long: { TR: "Mesaj en fazla {max} karakter olabilir.", EN: "The message can have at most {max} characters.", vars: { max: TICKET_LIMITS.message } },
     ticket_closed: { TR: "Talep kapatıldı. Yazmak için önce yeniden açın.", EN: "The ticket is closed. Reopen it to write again." },
@@ -288,7 +395,7 @@ export const RATE_LIMIT_MINUTES: Copy = { TR: "Çok fazla istek gönderildi. {mi
 
 // C0 controls (except tab and newline), DEL, BOM and bidi overrides/isolates,
 // which can disguise text. Zero-width joiners stay: emoji sequences need them.
-const UNSAFE_TEXT = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f‪-‮⁦-⁩﻿]/g;
+const UNSAFE_TEXT = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u202a-\u202e\u2066-\u2069\ufeff]/g;
 
 /** NFC, unsafe characters removed, newlines unified; single-line text is collapsed to one line. */
 export function sanitizeTicketText(value: string, multiline: boolean) {
@@ -296,33 +403,39 @@ export function sanitizeTicketText(value: string, multiline: boolean) {
     if (!multiline) return text.replace(/\s+/g, " ").trim();
     return text
         .replace(/\t/g, "    ")
-        .replace(/[  ]+\n/g, "\n")
+        .replace(/[ \u00a0]+\n/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
 }
 
-export type TicketField = "category" | "title" | "description" | "steps" | "pageUrl" | "severity";
+export type TicketField = "category" | "title" | "description" | "severity" | "complaintSubject" | "reportedUser" | "contentUrl" | "banScope" | "banReference";
 export type TicketFieldError = { field: TicketField; code: SupportErrorCode };
 
 export type TicketDraftInput = {
     category?: unknown;
     title?: unknown;
     description?: unknown;
-    steps?: unknown;
-    pageUrl?: unknown;
     severity?: unknown;
+    complaintSubject?: unknown;
+    reportedUser?: unknown;
+    contentUrl?: unknown;
+    banScope?: unknown;
+    banReference?: unknown;
 };
 
 export type TicketDraft = {
     category: TicketCategory;
     title: string;
     description: string;
-    /** Bug reports only. */
-    steps: string | null;
-    /** Bug reports only (the page where it happens). */
-    pageUrl: string | null;
     /** Security reports only. */
     severity: TicketSeverity | null;
+    /** Complaints only (all optional): what it's about, who, and a link to the content. */
+    complaintSubject: ComplaintSubject | null;
+    reportedUser: string | null;
+    contentUrl: string | null;
+    /** Unban requests only: what was banned (required) and the group's name or other reference. */
+    banScope: BanScope | null;
+    banReference: string | null;
 };
 
 /**
@@ -352,21 +465,31 @@ export function normalizeUserAgent(value: unknown): string | null {
     return text || null;
 }
 
-function optionalText(value: unknown, max: number, code: SupportErrorCode, field: TicketField, errors: TicketFieldError[]) {
+/** Optional one-line text; too long or not a string records an error. */
+function optionalLine(value: unknown, max: number, code: SupportErrorCode, field: TicketField, errors: TicketFieldError[]) {
     if (value === undefined || value === null) return null;
     if (typeof value !== "string") {
         errors.push({ field, code: "invalid_body" });
         return null;
     }
-    const text = sanitizeTicketText(value, true);
+    const text = sanitizeTicketText(value, false);
     if (text.length > max) errors.push({ field, code });
     return text || null;
 }
 
+/** Optional enum value; "" counts as absent. */
+function optionalChoice<T extends string>(value: unknown, isValid: (value: unknown) => value is T, code: SupportErrorCode, field: TicketField, errors: TicketFieldError[]): T | null {
+    if (value === undefined || value === null || value === "") return null;
+    if (isValid(value)) return value;
+    errors.push({ field, code });
+    return null;
+}
+
 /**
- * Validates and normalises a new ticket. Fields that don't belong to the
- * category (steps, page or severity) are dropped instead of rejected, so a
- * form that kept them after a category change still submits.
+ * Validates and normalises a new ticket. Only the six current categories are
+ * accepted. Fields that don't belong to the category (severity, complaint or
+ * ban details) are dropped instead of rejected, so a form that kept them
+ * after a category change still submits.
  */
 export function validateTicketDraft(input: TicketDraftInput): { ok: true; draft: TicketDraft } | { ok: false; errors: TicketFieldError[] } {
     const errors: TicketFieldError[] = [];
@@ -385,22 +508,31 @@ export function validateTicketDraft(input: TicketDraftInput): { ok: true; draft:
     else if (description.length < TICKET_LIMITS.descriptionMin) errors.push({ field: "description", code: "description_too_short" });
     else if (description.length > TICKET_LIMITS.description) errors.push({ field: "description", code: "description_too_long" });
 
-    let steps: string | null = null;
-    let pageUrl: string | null = null;
-    let severity: TicketSeverity | null = null;
-    if (category === "bug") {
-        steps = optionalText(input.steps, TICKET_LIMITS.steps, "steps_too_long", "steps", errors);
-        const page = normalizePageUrl(input.pageUrl);
-        if (page === undefined) errors.push({ field: "pageUrl", code: "invalid_page_url" });
-        else pageUrl = page;
-    }
-    if (category === "security" && input.severity !== undefined && input.severity !== null && input.severity !== "") {
-        if (isTicketSeverity(input.severity)) severity = input.severity;
-        else errors.push({ field: "severity", code: "invalid_severity" });
+    const draft: Omit<TicketDraft, "category" | "title" | "description"> = {
+        severity: null, complaintSubject: null, reportedUser: null, contentUrl: null, banScope: null, banReference: null,
+    };
+    if (category === "security") {
+        draft.severity = optionalChoice(input.severity, isTicketSeverity, "invalid_severity", "severity", errors);
+    } else if (category === "complaint") {
+        draft.complaintSubject = optionalChoice(input.complaintSubject, isComplaintSubject, "invalid_complaint_subject", "complaintSubject", errors);
+        draft.reportedUser = optionalLine(input.reportedUser, TICKET_LIMITS.reportedUser, "reported_user_too_long", "reportedUser", errors);
+        const link = normalizePageUrl(input.contentUrl);
+        if (link === undefined) errors.push({ field: "contentUrl", code: "invalid_content_url" });
+        else draft.contentUrl = link;
+    } else if (category === "unban") {
+        draft.banScope = isBanScope(input.banScope) ? input.banScope : null;
+        if (!draft.banScope) errors.push({ field: "banScope", code: "invalid_ban_scope" });
+        // The account itself needs no reference; for a group its name is required.
+        if (draft.banScope !== "account") {
+            draft.banReference = optionalLine(input.banReference, TICKET_LIMITS.banReference, "ban_reference_too_long", "banReference", errors);
+            if (draft.banScope === "group" && !draft.banReference && !errors.some((error) => error.field === "banReference")) {
+                errors.push({ field: "banReference", code: "ban_reference_required" });
+            }
+        }
     }
 
     if (errors.length || !category) return { ok: false, errors };
-    return { ok: true, draft: { category, title, description, steps, pageUrl, severity } };
+    return { ok: true, draft: { category, title, description, ...draft } };
 }
 
 /** A staff reply or a follow-up message. */
@@ -432,7 +564,7 @@ export function foldSearchText(value: string) {
     return value
         .replace(/[ıİşŞğĞüÜöÖçÇ]/g, (char) => TURKISH_FOLD[char] ?? char)
         .normalize("NFKD")
-        .replace(/[̀-ͯ]/g, "")
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .replace(/\s+/g, " ")
         .trim();
@@ -460,17 +592,27 @@ export type SupportTicketMessage = {
 };
 
 export type SupportTicketMeta = {
+    /** Page from the technical details (legacy bug reports: the page of the bug). */
     pageUrl: string | null;
     userAgent: string | null;
     severity: TicketSeverity | null;
+    /** Legacy bug reports only. */
     steps: string | null;
+    complaintSubject: ComplaintSubject | null;
+    reportedUser: string | null;
+    contentUrl: string | null;
+    banScope: BanScope | null;
+    banReference: string | null;
+    /** Appeal against a suspension, filed from the sign-in page. */
+    appeal: boolean;
 };
 
 /** A ticket as its author sees it: no internal priority and no staff identities. */
 export type SupportTicketSummary = {
     id: string;
     reference: string;
-    category: TicketCategory;
+    /** Tickets filed before the current six categories keep their old one. */
+    category: StoredTicketCategory;
     title: string;
     status: TicketStatus;
     createdAt: string | null;
@@ -491,6 +633,38 @@ export type SupportTicketView = SupportTicketSummary & {
 export type SupportListResponse = { tickets: SupportTicketSummary[] };
 export type SupportTicketResponse = { ticket: SupportTicketView };
 export type SupportErrorBody = { error: string; code: SupportErrorCode; field?: TicketField; retryAfter?: number };
+
+// ---------------------------------------------------------------------------
+// Staff notifications (notifications/{staffEmail}/items/ticket_new_<ticketId>)
+// ---------------------------------------------------------------------------
+
+export type StaffTicketEvent = "created" | "reply";
+
+/** Stored (Turkish) titles; NotificationCenter shows STAFF_TICKET_NOTIFICATION_COPY instead. */
+export const STAFF_TICKET_NOTIFICATION_TITLES: Record<StaffTicketEvent, string> = {
+    created: "Yeni destek talebi",
+    reply: "Destek talebine yeni mesaj",
+};
+
+export const STAFF_TICKET_NOTIFICATION_COPY: Record<StaffTicketEvent, Copy> = {
+    created: { TR: "Yeni destek talebi", EN: "New support ticket" },
+    reply: { TR: "Destek talebine yeni mesaj", EN: "New message on a support ticket" },
+};
+
+/** One notification per ticket and staff member: new activity refreshes it instead of stacking up. */
+export function staffTicketNotificationId(ticketId: string) {
+    return `ticket_new_${ticketId}`;
+}
+
+/** The admin inbox with that ticket opened. */
+export function staffTicketLink(ticketId: string) {
+    return `/admin#tickets?id=${ticketId}`;
+}
+
+/** Which staff event a stored notification title stands for (unknown titles count as a new ticket). */
+export function staffTicketEventOf(title: string): StaffTicketEvent {
+    return title === STAFF_TICKET_NOTIFICATION_TITLES.reply ? "reply" : "created";
+}
 
 // ---------------------------------------------------------------------------
 // Public feedback board (/api/feedback)

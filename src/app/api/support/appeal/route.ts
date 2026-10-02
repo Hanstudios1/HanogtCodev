@@ -4,8 +4,17 @@ import { httpsUrlOrNull } from "@/lib/server/admin";
 import { readAppealToken } from "@/lib/server/appeal-token";
 import { getServerDocument } from "@/lib/server/firebase-rest";
 import { getClientKey, isSameOrigin } from "@/lib/server/request-security";
-import { APPEAL_TICKET_TITLE, createSupportTicket, requireRateLimit, supportFailure, supportJson } from "@/lib/server/support";
+import {
+    APPEAL_TICKET_META,
+    APPEAL_TICKET_TITLE,
+    createSupportTicket,
+    notifyStaffAboutTicket,
+    requireRateLimit,
+    supportFailure,
+    supportJson,
+} from "@/lib/server/support";
 import { readJsonBody } from "@/lib/server/validate";
+import { defaultTicketPriority } from "@/lib/support";
 
 /**
  * Appeal against a suspension (POST { token, message }).
@@ -13,9 +22,10 @@ import { readJsonBody } from "@/lib/server/validate";
  * A suspended account can't sign in, so it can't use /api/support. After it
  * has proven ownership at sign-in, /login receives a short-lived appeal token
  * (src/lib/server/appeal-token.ts) and posts the appeal here. The appeal
- * becomes an ordinary "account" ticket of that address, so staff answer it in
- * the Tickets section and the person finds the reply under "Taleplerim" once
- * the account is reinstated. The only success answer is "received".
+ * becomes an ordinary "unban" ticket ("Ban Kaldırma İsteği") of that address
+ * with `meta.appeal`, so staff answer it in the Tickets section and the
+ * person finds the reply under "Taleplerim" once the account is reinstated.
+ * The only success answer is "received".
  */
 
 export const runtime = "nodejs";
@@ -67,16 +77,17 @@ export async function POST(request: NextRequest) {
         // Only a suspended account files an appeal. One reinstated (or deleted)
         // since the token was issued gets the same answer and no ticket.
         if (user && (user.suspended || user.banned)) {
-            await createSupportTicket({
-                category: "account",
+            const { id } = await createSupportTicket({
+                category: "unban",
                 title: APPEAL_TICKET_TITLE,
                 description: message.text,
-                priority: "high",
+                priority: defaultTicketPriority("unban"),
                 authorEmail: email,
                 authorName: displayName(email, profile, user),
                 authorAvatar: httpsUrlOrNull(profile?.avatarUrl) ?? httpsUrlOrNull(user.avatarUrl),
-                meta: { appeal: true },
+                meta: { ...APPEAL_TICKET_META },
             });
+            await notifyStaffAboutTicket({ ticketId: id, title: APPEAL_TICKET_TITLE, authorEmail: email, event: "created" });
         }
         return supportJson({ status: "received" }, 201);
     } catch (error) {

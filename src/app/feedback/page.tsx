@@ -2,9 +2,9 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertTriangle, ArrowLeft, Bug, Check, CheckCircle2, ChevronDown, Edit3, HelpCircle, Inbox, LifeBuoy, LoaderCircle, Lock, LogIn,
-    MessageCircle, MessageSquareText, MessagesSquare, Monitor, Plus, RefreshCw, Reply, RotateCcw, Search, Send, ShieldAlert, ShieldCheck,
-    Sparkles, ThumbsUp, Trash2, UserCog, X, type LucideIcon,
+    AlertTriangle, ArrowLeft, Bug, Check, CheckCircle2, ChevronDown, ClipboardList, Edit3, Gavel, HelpCircle, Inbox, LifeBuoy, LoaderCircle, Lock, LogIn,
+    MessageCircle, MessageSquareText, MessageSquareWarning, MessagesSquare, Monitor, Plus, RefreshCw, Reply, RotateCcw, Search, Send, ShieldAlert,
+    ShieldCheck, Sparkles, ThumbsUp, Trash2, UserCog, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
@@ -20,7 +20,12 @@ import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { FAQS, FAQ_CATEGORIES } from "@/lib/faq";
 import { useI18n, type Copy } from "@/lib/i18n";
 import {
+    BAN_SCOPES,
+    BAN_SCOPE_COPY,
     BOARD_LIMITS,
+    COMPLAINT_SUBJECTS,
+    COMPLAINT_SUBJECT_COPY,
+    KVKK_REQUEST_HINT,
     RATE_LIMIT_MINUTES,
     SUPPORT_ERROR_COPY,
     TEAM_NAME,
@@ -36,10 +41,12 @@ import {
     matchesSearch,
     validateTicketDraft,
     validateTicketMessage,
+    type BanScope,
     type BoardAuthor,
     type BoardComment,
     type BoardItem,
     type BoardResponse,
+    type ComplaintSubject,
     type SupportErrorCode,
     type SupportListResponse,
     type SupportTicketMessage,
@@ -47,6 +54,7 @@ import {
     type SupportTicketSummary,
     type SupportTicketView,
     type TicketCategory,
+    type TicketCategoryIcon,
     type TicketField,
     type TicketSeverity,
     type TicketStatus,
@@ -63,14 +71,8 @@ const PRIMARY_BUTTON = "inline-flex items-center justify-center gap-2 rounded-xl
 const SECONDARY_BUTTON = "inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800";
 const GHOST_BUTTON = "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-white";
 
-const CATEGORY_ICONS: Record<TicketCategory, LucideIcon> = {
-    feedback: MessageSquareText,
-    bug: Bug,
-    security: ShieldAlert,
-    question: HelpCircle,
-    account: UserCog,
-    other: LifeBuoy,
-};
+/** Components for the icon names in TICKET_CATEGORY_COPY. */
+const CATEGORY_ICONS: Record<TicketCategoryIcon, LucideIcon> = { MessageSquareWarning, ClipboardList, ShieldAlert, Gavel, HelpCircle, MessageSquareText, Bug, UserCog, LifeBuoy };
 
 const STATUS_TONES: Record<TicketStatus, Tone> = { open: "sky", in_progress: "amber", answered: "violet", resolved: "emerald", closed: "zinc" };
 
@@ -294,14 +296,40 @@ type TicketDraftState = {
     category: TicketCategory | null;
     title: string;
     description: string;
-    steps: string;
-    pageUrl: string;
     severity: TicketSeverity | "";
+    complaintSubject: ComplaintSubject | "";
+    reportedUser: string;
+    contentUrl: string;
+    banScope: BanScope | "";
+    banReference: string;
     technical: boolean;
     technicalInfo: { userAgent: string; page: string } | null;
 };
 
-const EMPTY_DRAFT: TicketDraftState = { category: null, title: "", description: "", steps: "", pageUrl: "", severity: "", technical: false, technicalInfo: null };
+const EMPTY_DRAFT: TicketDraftState = {
+    category: null,
+    title: "",
+    description: "",
+    severity: "",
+    complaintSubject: "",
+    reportedUser: "",
+    contentUrl: "",
+    banScope: "",
+    banReference: "",
+    technical: false,
+    technicalInfo: null,
+};
+
+const DESCRIPTION_PLACEHOLDERS: Record<TicketCategory, Copy> = {
+    complaint: { TR: "Neyi şikayet ediyorsunuz? Ne zaman ve nerede oldu?", EN: "What is the complaint about? When and where did it happen?" },
+    request: { TR: "Ne istiyorsunuz ve neden? KVKK başvurularında hangi hakkınızı kullanmak istediğinizi yazın.", EN: "What would you like and why? For KVKK requests, say which right you want to exercise." },
+    security: { TR: "Açık nerede, etkisi ne? Kimlik bilgisi veya başkasının verisini eklemeyin.", EN: "Where is the issue and what is its impact? Don't include credentials or other people's data." },
+    unban: { TR: "Yasağın neden kaldırılması gerektiğini düşündüğünüzü açıklayın.", EN: "Explain why you think the ban should be lifted." },
+    question: { TR: "Sorunuzu ayrıntılarıyla yazın…", EN: "Write your question in detail…" },
+    feedback: { TR: "Görüşünüzü ya da önerinizi yazın…", EN: "Share your opinion or idea…" },
+};
+
+const OPTIONAL: Copy = { TR: "(isteğe bağlı)", EN: "(optional)" };
 
 /** Browser and the page the visitor came from (same site only), shown before it is sent. */
 function readTechnicalInfo() {
@@ -321,6 +349,91 @@ function FieldError({ id, code }: { id: string; code: SupportErrorCode | undefin
     return <p id={id} className="mt-1.5 text-[12px] font-semibold text-red-600 dark:text-red-400">{tx(errorCopy(code))}</p>;
 }
 
+/** Radio cards of a category-specific choice; the legend takes focus when the choice is missing. */
+function ChoiceField<T extends string>({ id, legend, optional = false, options, value, onChange, error, columns = 2 }: {
+    id: string;
+    legend: string;
+    optional?: boolean;
+    options: readonly { value: T; label: string; hint?: string }[];
+    value: T | "";
+    onChange: (value: T) => void;
+    error: SupportErrorCode | undefined;
+    columns?: 2 | 3;
+}) {
+    const { tx } = useI18n();
+    // Short options sit two to a row on phones; ones with a hint get the full width.
+    const compact = options.every((option) => !option.hint);
+    return (
+        <fieldset className="mt-4" aria-describedby={error ? `${id}-error` : undefined}>
+            <legend id={id} tabIndex={-1} className="mb-2 text-[13px] font-bold text-zinc-700 outline-none dark:text-zinc-200">
+                {legend}{optional ? <span className="ms-1 font-normal text-zinc-400">{tx(OPTIONAL)}</span> : null}
+            </legend>
+            <div className={cx("grid gap-2", compact && "grid-cols-2", columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+                {options.map((option) => {
+                    const checked = value === option.value;
+                    return (
+                        <label
+                            key={option.value}
+                            className={cx(
+                                "flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500",
+                                checked ? "border-blue-500 bg-blue-50 dark:border-blue-400/60 dark:bg-blue-500/10" : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
+                            )}
+                        >
+                            <input type="radio" name={`${id}-input`} value={option.value} checked={checked} onChange={() => onChange(option.value)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
+                            <span className="min-w-0">
+                                <span className="block text-sm font-bold">{option.label}</span>
+                                {option.hint ? <span className="block text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">{option.hint}</span> : null}
+                            </span>
+                        </label>
+                    );
+                })}
+            </div>
+            <FieldError id={`${id}-error`} code={error} />
+        </fieldset>
+    );
+}
+
+/** One-line category-specific text with a counter. */
+function LineField({ id, label, optional = false, value, max, onChange, error, placeholder, url = false }: {
+    id: string;
+    label: string;
+    optional?: boolean;
+    value: string;
+    max: number;
+    onChange: (value: string) => void;
+    error: SupportErrorCode | undefined;
+    placeholder: string;
+    /** Addresses are typed left to right and get the URL keyboard. */
+    url?: boolean;
+}) {
+    const { tx } = useI18n();
+    return (
+        <div className="mt-4">
+            <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
+                <label htmlFor={id} className="font-bold text-zinc-700 dark:text-zinc-200">
+                    {label}{optional ? <span className="ms-1 font-normal text-zinc-400">{tx(OPTIONAL)}</span> : null}
+                </label>
+                <span className="text-[11px] text-zinc-500"><Counter value={value.length} max={max} /></span>
+            </div>
+            <input
+                id={id}
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                maxLength={max + 20}
+                autoComplete="off"
+                inputMode={url ? "url" : undefined}
+                dir={url ? "ltr" : "auto"}
+                aria-required={!optional || undefined}
+                aria-invalid={Boolean(error) || undefined}
+                aria-describedby={error ? `${id}-error` : undefined}
+                placeholder={placeholder}
+                className={INPUT}
+            />
+            <FieldError id={`${id}-error`} code={error} />
+        </div>
+    );
+}
+
 function TicketComposer({ draft, setDraft, onCreated }: {
     draft: TicketDraftState;
     setDraft: (update: (draft: TicketDraftState) => TicketDraftState) => void;
@@ -333,37 +446,41 @@ function TicketComposer({ draft, setDraft, onCreated }: {
     const [failure, setFailure] = useState<ApiFailure | null>(null);
     const [sending, setSending] = useState(false);
     const [created, setCreated] = useState<SupportTicketView | null>(null);
-    const ids = {
-        title: `${uid}-title`,
-        description: `${uid}-description`,
-        steps: `${uid}-steps`,
-        pageUrl: `${uid}-page`,
-        technical: `${uid}-technical`,
-    };
+    // Every field's element id is `${uid}-<field>`, so a validation error can focus it.
+    const fieldId = (field: TicketField) => `${uid}-${field}`;
+    const technicalId = `${uid}-technical`;
 
     const update = (patch: Partial<TicketDraftState>) => {
         setDraft((current) => ({ ...current, ...patch }));
         setCreated(null);
         if (failure) setFailure(null);
         const touched = Object.keys(patch) as TicketField[];
+        // Fields that disappear with the change take their errors with them.
+        if ("category" in patch) touched.push("severity", "complaintSubject", "reportedUser", "contentUrl", "banScope", "banReference");
+        if ("banScope" in patch) touched.push("banReference");
         if (touched.some((field) => errors[field])) setErrors((current) => Object.fromEntries(Object.entries(current).filter(([field]) => !touched.includes(field as TicketField))));
     };
 
     const submit = async (event: FormEvent) => {
         event.preventDefault();
+        // Only the fields of the chosen category are sent.
+        const category = draft.category;
         const input = {
-            category: draft.category,
+            category,
             title: draft.title,
             description: draft.description,
-            steps: draft.category === "bug" ? draft.steps : undefined,
-            pageUrl: draft.category === "bug" ? draft.pageUrl : undefined,
-            severity: draft.category === "security" && draft.severity ? draft.severity : undefined,
+            severity: category === "security" && draft.severity ? draft.severity : undefined,
+            complaintSubject: category === "complaint" && draft.complaintSubject ? draft.complaintSubject : undefined,
+            reportedUser: category === "complaint" ? draft.reportedUser : undefined,
+            contentUrl: category === "complaint" ? draft.contentUrl : undefined,
+            banScope: category === "unban" && draft.banScope ? draft.banScope : undefined,
+            banReference: category === "unban" && draft.banScope !== "account" ? draft.banReference : undefined,
         };
         const checked = validateTicketDraft(input);
         if (!checked.ok) {
             setErrors(Object.fromEntries(checked.errors.map((error) => [error.field, error.code])));
             const first = checked.errors[0]?.field;
-            if (first) document.getElementById(first === "category" ? `${uid}-category` : `${uid}-${first === "pageUrl" ? "page" : first}`)?.focus();
+            if (first) document.getElementById(fieldId(first))?.focus();
             return;
         }
         setSending(true);
@@ -399,10 +516,10 @@ function TicketComposer({ draft, setDraft, onCreated }: {
             </div>
 
             <fieldset className="mt-5">
-                <legend id={`${uid}-category`} tabIndex={-1} className="mb-2 text-[13px] font-bold text-zinc-700 outline-none dark:text-zinc-200">{tx({ TR: "Konu", EN: "Topic" })}</legend>
+                <legend id={fieldId("category")} tabIndex={-1} className="mb-2 text-[13px] font-bold text-zinc-700 outline-none dark:text-zinc-200">{tx({ TR: "Kategori", EN: "Category" })}</legend>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-describedby={errors.category ? `${uid}-category-error` : undefined}>
                     {TICKET_CATEGORIES.map((value) => {
-                        const Icon = CATEGORY_ICONS[value];
+                        const Icon = CATEGORY_ICONS[TICKET_CATEGORY_COPY[value].icon];
                         const checked = category === value;
                         return (
                             <label
@@ -415,11 +532,12 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                                 )}
                             >
                                 <input type="radio" name={`${uid}-category-input`} value={value} checked={checked} onChange={() => update({ category: value })} className="sr-only" />
-                                <span className="flex items-center gap-2 text-sm font-bold">
+                                <span className="flex items-center gap-2 pe-5 text-sm font-bold">
                                     <Icon className={cx("h-4 w-4 shrink-0", value === "security" ? "text-red-500" : "text-blue-600 dark:text-blue-300")} aria-hidden="true" />
                                     <span className="min-w-0">{tx(TICKET_CATEGORY_COPY[value].label)}</span>
                                 </span>
                                 <span className="text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(TICKET_CATEGORY_COPY[value].hint)}</span>
+                                {value === "request" ? <span className="text-[11.5px] font-semibold leading-snug text-blue-700 dark:text-blue-300">{tx(KVKK_REQUEST_HINT)}</span> : null}
                                 {checked ? <Check className="absolute end-2.5 top-2.5 h-4 w-4 text-blue-600 dark:text-blue-300" aria-hidden="true" /> : null}
                             </label>
                         );
@@ -438,131 +556,141 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                         })}
                     </p>
                 </Notice>
-            ) : category === "account" ? (
+            ) : category === "request" ? (
                 <Notice tone="info" className="mt-4">
                     {tx({
-                        TR: "KVKK başvurularında hangi hakkınızı kullanmak istediğinizi yazın. Başvurunuzu hesabınızın e-posta adresiyle doğrularız ve en geç 30 gün içinde ücretsiz yanıtlarız.",
+                        TR: "KVKK başvurularında hangi hakkınızı kullanmak istediğinizi yazın. Başvurunuzu hesabınızın e-posta adresiyle doğrular, en geç 30 gün içinde ücretsiz yanıtlarız.",
                         EN: "For KVKK requests, say which right you want to exercise. We verify the request with your account's e-mail address and answer free of charge within 30 days.",
+                    })}
+                </Notice>
+            ) : category === "unban" ? (
+                <Notice tone="info" className="mt-4">
+                    {tx({
+                        TR: "Hesabınız askıya alındıysa itirazınızı giriş sayfasından gönderin: hesabınızla giriş yapmayı denediğinizde itiraz formu açılır. Bu form, giriş yapabildiğiniz hâlde uygulanan yasaklar (ör. bir gruptan yasaklanma) içindir.",
+                        EN: "If your account is suspended, send your appeal from the sign-in page: the appeal form opens when you try to sign in with your account. This form is for bans that still let you sign in (e.g. a ban from a group).",
                     })}
                 </Notice>
             ) : null}
 
+            {category === "complaint" ? (
+                <>
+                    <ChoiceField
+                        id={fieldId("complaintSubject")}
+                        legend={tx({ TR: "Şikayet konusu", EN: "What is it about?" })}
+                        optional
+                        columns={3}
+                        options={COMPLAINT_SUBJECTS.map((value) => ({ value, label: tx(COMPLAINT_SUBJECT_COPY[value]) }))}
+                        value={draft.complaintSubject}
+                        onChange={(value) => update({ complaintSubject: value })}
+                        error={errors.complaintSubject}
+                    />
+                    <LineField
+                        id={fieldId("reportedUser")}
+                        label={tx({ TR: "Şikayet ettiğiniz kullanıcı", EN: "User you're complaining about" })}
+                        optional
+                        value={draft.reportedUser}
+                        max={TICKET_LIMITS.reportedUser}
+                        onChange={(value) => update({ reportedUser: value })}
+                        error={errors.reportedUser}
+                        placeholder={tx({ TR: "Kullanıcı adı ya da takmaad#etiket", EN: "User name or nickname#tag" })}
+                    />
+                    <LineField
+                        id={fieldId("contentUrl")}
+                        label={tx({ TR: "İçerik bağlantısı", EN: "Link to the content" })}
+                        optional
+                        url
+                        value={draft.contentUrl}
+                        max={TICKET_LIMITS.pageUrl}
+                        onChange={(value) => update({ contentUrl: value })}
+                        error={errors.contentUrl}
+                        placeholder="https://hanogtcodev.com/…"
+                    />
+                </>
+            ) : null}
+
+            {category === "unban" ? (
+                <>
+                    <ChoiceField
+                        id={fieldId("banScope")}
+                        legend={tx({ TR: "Neyden yasaklandınız?", EN: "What were you banned from?" })}
+                        columns={3}
+                        options={BAN_SCOPES.map((value) => ({ value, label: tx(BAN_SCOPE_COPY[value].label), hint: tx(BAN_SCOPE_COPY[value].hint) }))}
+                        value={draft.banScope}
+                        onChange={(value) => update({ banScope: value })}
+                        error={errors.banScope}
+                    />
+                    {draft.banScope === "group" || draft.banScope === "other" ? (
+                        <LineField
+                            id={fieldId("banReference")}
+                            label={draft.banScope === "group" ? tx({ TR: "Grup adı", EN: "Group name" }) : tx({ TR: "Yasağın olduğu yer", EN: "Where the ban applies" })}
+                            optional={draft.banScope !== "group"}
+                            value={draft.banReference}
+                            max={TICKET_LIMITS.banReference}
+                            onChange={(value) => update({ banReference: value })}
+                            error={errors.banReference}
+                            placeholder={draft.banScope === "group" ? tx({ TR: "Yasaklandığınız grubun adı", EN: "Name of the group that banned you" }) : tx({ TR: "Ör. bir özellik ya da sayfa", EN: "E.g. a feature or a page" })}
+                        />
+                    ) : null}
+                </>
+            ) : null}
+
             <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
-                    <label htmlFor={ids.title} className="font-bold text-zinc-700 dark:text-zinc-200">{tx({ TR: "Başlık", EN: "Title" })}</label>
+                    <label htmlFor={fieldId("title")} className="font-bold text-zinc-700 dark:text-zinc-200">{tx({ TR: "Başlık", EN: "Title" })}</label>
                     <span className="text-[11px] text-zinc-500"><Counter value={draft.title.length} max={TICKET_LIMITS.title} /></span>
                 </div>
                 <input
-                    id={ids.title}
+                    id={fieldId("title")}
+                    name="title"
                     value={draft.title}
                     onChange={(event) => update({ title: event.target.value })}
                     maxLength={TICKET_LIMITS.title + 20}
+                    aria-required="true"
                     aria-invalid={Boolean(errors.title) || undefined}
-                    aria-describedby={errors.title ? `${ids.title}-error` : undefined}
+                    aria-describedby={errors.title ? `${fieldId("title")}-error` : undefined}
                     placeholder={tx({ TR: "Kısaca konu, ör. \"Editörde kaydet düğmesi çalışmıyor\"", EN: "The topic in a few words, e.g. \"Save button doesn't work in the editor\"" })}
                     className={INPUT}
                 />
-                <FieldError id={`${ids.title}-error`} code={errors.title} />
+                <FieldError id={`${fieldId("title")}-error`} code={errors.title} />
             </div>
 
             <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
-                    <label htmlFor={ids.description} className="font-bold text-zinc-700 dark:text-zinc-200">{tx({ TR: "Açıklama", EN: "Description" })}</label>
+                    <label htmlFor={fieldId("description")} className="font-bold text-zinc-700 dark:text-zinc-200">
+                        {category === "unban" ? tx({ TR: "Açıklamanız", EN: "Your explanation" }) : tx({ TR: "Açıklama", EN: "Description" })}
+                    </label>
                     <span className="text-[11px] text-zinc-500"><Counter value={draft.description.length} max={TICKET_LIMITS.description} /></span>
                 </div>
                 <textarea
-                    id={ids.description}
+                    id={fieldId("description")}
                     value={draft.description}
                     onChange={(event) => update({ description: event.target.value })}
                     rows={5}
+                    aria-required="true"
                     aria-invalid={Boolean(errors.description) || undefined}
-                    aria-describedby={errors.description ? `${ids.description}-error` : undefined}
-                    placeholder={category === "bug"
-                        ? tx({ TR: "Ne bekliyordunuz, ne oldu?", EN: "What did you expect and what happened?" })
-                        : category === "security"
-                            ? tx({ TR: "Açık nerede, etkisi ne? Kimlik bilgisi veya başkasının verisini eklemeyin.", EN: "Where is the issue and what is its impact? Don't include credentials or other people's data." })
-                            : tx({ TR: "Ayrıntıları yazın…", EN: "Write the details…" })}
+                    aria-describedby={errors.description ? `${fieldId("description")}-error` : undefined}
+                    placeholder={category ? tx(DESCRIPTION_PLACEHOLDERS[category]) : tx({ TR: "Ayrıntıları yazın…", EN: "Write the details…" })}
                     className={cx(INPUT, "resize-y leading-relaxed")}
                 />
-                <FieldError id={`${ids.description}-error`} code={errors.description} />
+                <FieldError id={`${fieldId("description")}-error`} code={errors.description} />
             </div>
 
-            {category === "bug" ? (
-                <div className="mt-4 grid gap-4">
-                    <div>
-                        <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
-                            <label htmlFor={ids.steps} className="font-bold text-zinc-700 dark:text-zinc-200">
-                                {tx({ TR: "Adımlar", EN: "Steps" })} <span className="font-normal text-zinc-400">{tx({ TR: "(isteğe bağlı)", EN: "(optional)" })}</span>
-                            </label>
-                            <span className="text-[11px] text-zinc-500"><Counter value={draft.steps.length} max={TICKET_LIMITS.steps} /></span>
-                        </div>
-                        <textarea
-                            id={ids.steps}
-                            value={draft.steps}
-                            onChange={(event) => update({ steps: event.target.value })}
-                            rows={3}
-                            aria-invalid={Boolean(errors.steps) || undefined}
-                            aria-describedby={errors.steps ? `${ids.steps}-error` : undefined}
-                            placeholder={tx({ TR: "1. Kod editörünü açın\n2. …", EN: "1. Open the code editor\n2. …" })}
-                            className={cx(INPUT, "resize-y leading-relaxed")}
-                        />
-                        <FieldError id={`${ids.steps}-error`} code={errors.steps} />
-                    </div>
-                    <div>
-                        <label htmlFor={ids.pageUrl} className="mb-1.5 block text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
-                            {tx({ TR: "Sayfa adresi", EN: "Page address" })} <span className="font-normal text-zinc-400">{tx({ TR: "(isteğe bağlı)", EN: "(optional)" })}</span>
-                        </label>
-                        <input
-                            id={ids.pageUrl}
-                            value={draft.pageUrl}
-                            onChange={(event) => update({ pageUrl: event.target.value })}
-                            inputMode="url"
-                            autoComplete="off"
-                            maxLength={TICKET_LIMITS.pageUrl + 20}
-                            dir="ltr"
-                            aria-invalid={Boolean(errors.pageUrl) || undefined}
-                            aria-describedby={errors.pageUrl ? `${ids.pageUrl}-error` : undefined}
-                            placeholder="https://hanogtcodev.com/editor"
-                            className={INPUT}
-                        />
-                        <FieldError id={`${ids.pageUrl}-error`} code={errors.pageUrl} />
-                    </div>
-                </div>
-            ) : null}
-
             {category === "security" ? (
-                <fieldset className="mt-4">
-                    <legend className="mb-2 text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
-                        {tx({ TR: "Önem derecesi", EN: "Severity" })} <span className="font-normal text-zinc-400">{tx({ TR: "(isteğe bağlı)", EN: "(optional)" })}</span>
-                    </legend>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        {TICKET_SEVERITIES.map((value) => {
-                            const checked = draft.severity === value;
-                            return (
-                                <label
-                                    key={value}
-                                    className={cx(
-                                        "flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500",
-                                        checked ? "border-blue-500 bg-blue-50 dark:border-blue-400/60 dark:bg-blue-500/10" : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50",
-                                    )}
-                                >
-                                    <input type="radio" name={`${uid}-severity`} value={value} checked={checked} onChange={() => update({ severity: value })} className="mt-1 h-4 w-4 accent-blue-600" />
-                                    <span className="min-w-0">
-                                        <span className="block text-sm font-bold">{tx(TICKET_SEVERITY_COPY[value].label)}</span>
-                                        <span className="block text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(TICKET_SEVERITY_COPY[value].hint)}</span>
-                                    </span>
-                                </label>
-                            );
-                        })}
-                    </div>
-                    <FieldError id={`${uid}-severity-error`} code={errors.severity} />
-                </fieldset>
+                <ChoiceField
+                    id={fieldId("severity")}
+                    legend={tx({ TR: "Önem derecesi", EN: "Severity" })}
+                    optional
+                    options={TICKET_SEVERITIES.map((value) => ({ value, label: tx(TICKET_SEVERITY_COPY[value].label), hint: tx(TICKET_SEVERITY_COPY[value].hint) }))}
+                    value={draft.severity}
+                    onChange={(value) => update({ severity: value })}
+                    error={errors.severity}
+                />
             ) : null}
 
             <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-3.5 dark:border-zinc-800 dark:bg-zinc-950/40">
-                <label htmlFor={ids.technical} className="flex cursor-pointer items-start gap-3">
+                <label htmlFor={technicalId} className="flex cursor-pointer items-start gap-3">
                     <input
-                        id={ids.technical}
+                        id={technicalId}
                         type="checkbox"
                         checked={draft.technical}
                         onChange={(event) => update({ technical: event.target.checked, technicalInfo: event.target.checked ? readTechnicalInfo() : null })}
@@ -570,14 +698,14 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                     />
                     <span className="min-w-0 text-sm">
                         <span className="flex items-center gap-1.5 font-bold"><Monitor className="h-4 w-4 text-zinc-500" aria-hidden="true" />{tx({ TR: "Teknik bilgileri ekle", EN: "Add technical details" })}</span>
-                        <span className="mt-0.5 block text-[12px] text-zinc-500 dark:text-zinc-400">{tx({ TR: "Tarayıcı bilginiz ve geldiğiniz sayfa talebe eklenir; yalnızca ekip görür.", EN: "Your browser information and the page you came from are attached; only the team sees them." })}</span>
+                        <span className="mt-0.5 block text-[12px] text-zinc-500 dark:text-zinc-400">{tx({ TR: "Tarayıcı bilginiz ve geldiğiniz sayfa talebe eklenir; yalnızca ekip görür. Bir hatayı bildirirken işe yarar.", EN: "Your browser information and the page you came from are attached; only the team sees them. Useful when you report a bug." })}</span>
                     </span>
                 </label>
                 {draft.technical && draft.technicalInfo ? (
                     <dl className="mt-3 space-y-1.5 border-t border-zinc-200 pt-3 text-[12px] dark:border-zinc-800">
                         <div className="flex flex-wrap gap-x-2">
                             <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Sayfa", EN: "Page" })}</dt>
-                            <dd className="min-w-0 break-all text-zinc-500" dir="ltr">{draft.pageUrl && category === "bug" ? draft.pageUrl : draft.technicalInfo.page}</dd>
+                            <dd className="min-w-0 break-all text-zinc-500" dir="ltr">{draft.technicalInfo.page}</dd>
                         </div>
                         <div className="flex flex-wrap gap-x-2">
                             <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Tarayıcı", EN: "Browser" })}</dt>
@@ -647,7 +775,7 @@ function TicketList({ resource, onSelect }: { resource: AdminResource<SupportLis
             ) : (
                 <ul className="space-y-2" aria-label={tx({ TR: "Taleplerim", EN: "My tickets" })}>
                     {tickets.map((ticket) => {
-                        const Icon = CATEGORY_ICONS[ticket.category];
+                        const Icon = CATEGORY_ICONS[TICKET_CATEGORY_COPY[ticket.category].icon];
                         return (
                             <li key={ticket.id}>
                                 <button
@@ -789,10 +917,11 @@ function TicketThread({ id, onBack, onChange }: { id: string; onBack: () => void
         );
     }
 
-    const Icon = CATEGORY_ICONS[ticket.category];
+    const Icon = CATEGORY_ICONS[TICKET_CATEGORY_COPY[ticket.category].icon];
     const closed = ticket.status === "closed";
     const meta = ticket.meta;
-    const hasMeta = Boolean(meta.severity || meta.steps || meta.pageUrl || meta.userAgent);
+    const hasMeta = Boolean(meta.appeal || meta.severity || meta.complaintSubject || meta.reportedUser || meta.contentUrl || meta.banScope || meta.banReference
+        || meta.steps || meta.pageUrl || meta.userAgent);
     return (
         <article aria-labelledby={`${uid}-title`} className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -824,6 +953,42 @@ function TicketThread({ id, onBack, onChange }: { id: string; onBack: () => void
                         <ChevronDown className="h-4 w-4 text-zinc-400 transition group-open:rotate-180" aria-hidden="true" />
                     </summary>
                     <dl className="mt-3 space-y-2 text-[13px]">
+                        {meta.appeal ? (
+                            <div>
+                                <dt className="font-semibold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Gönderildiği yer", EN: "Sent from" })}</dt>
+                                <dd className="mt-0.5 text-zinc-700 dark:text-zinc-300">{tx({ TR: "Giriş sayfasındaki askıya alma itirazı formu", EN: "The suspension appeal form on the sign-in page" })}</dd>
+                            </div>
+                        ) : null}
+                        {meta.complaintSubject ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <dt className="font-semibold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Şikayet konusu", EN: "Complaint about" })}</dt>
+                                <dd><Badge tone="fuchsia">{tx(COMPLAINT_SUBJECT_COPY[meta.complaintSubject])}</Badge></dd>
+                            </div>
+                        ) : null}
+                        {meta.reportedUser ? (
+                            <div>
+                                <dt className="font-semibold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Şikayet ettiğiniz kullanıcı", EN: "User you complained about" })}</dt>
+                                <dd className="mt-0.5 break-words text-zinc-700 dark:text-zinc-300" dir="auto">{meta.reportedUser}</dd>
+                            </div>
+                        ) : null}
+                        {meta.contentUrl ? (
+                            <div>
+                                <dt className="font-semibold text-zinc-600 dark:text-zinc-300">{tx({ TR: "İçerik bağlantısı", EN: "Link to the content" })}</dt>
+                                <dd className="mt-0.5 break-all text-zinc-600 dark:text-zinc-400" dir="ltr">{meta.contentUrl}</dd>
+                            </div>
+                        ) : null}
+                        {meta.banScope ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <dt className="font-semibold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Yasak türü", EN: "Type of ban" })}</dt>
+                                <dd><Badge tone="amber">{tx(BAN_SCOPE_COPY[meta.banScope].label)}</Badge></dd>
+                            </div>
+                        ) : null}
+                        {meta.banReference ? (
+                            <div>
+                                <dt className="font-semibold text-zinc-600 dark:text-zinc-300">{meta.banScope === "group" ? tx({ TR: "Grup adı", EN: "Group name" }) : tx({ TR: "Yasağın olduğu yer", EN: "Where the ban applies" })}</dt>
+                                <dd className="mt-0.5 break-words text-zinc-700 dark:text-zinc-300" dir="auto">{meta.banReference}</dd>
+                            </div>
+                        ) : null}
                         {meta.severity ? (
                             <div className="flex flex-wrap items-center gap-2">
                                 <dt className="font-semibold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Önem derecesi", EN: "Severity" })}</dt>
@@ -934,7 +1099,7 @@ function SupportSection({ signedIn, authPending, tickets, activeTicket, linkedTi
                 icon={LifeBuoy}
                 eyebrow={tx({ TR: "Özel kanal", EN: "Private channel" })}
                 title={tx({ TR: "Destek talepleri", EN: "Support tickets" })}
-                description={tx({ TR: "Site hakkında geri bildirim, hata ve güvenlik açığı bildirimleri, sorular ve KVKK başvuruları doğrudan Hanogt ekibine gider. Talepleriniz herkese açık panoda görünmez.", EN: "Feedback about the site, bug and security reports, questions and KVKK requests go straight to the Hanogt team. Your tickets never appear on the public board." })}
+                description={tx({ TR: "Şikayetler, istekler (KVKK başvuruları dahil), güvenlik açıkları, ban kaldırma istekleri, sorular ve geri bildirimler doğrudan Hanogt ekibine gider. Talepleriniz herkese açık panoda görünmez.", EN: "Complaints, requests (including KVKK requests), security reports, unban requests, questions and feedback go straight to the Hanogt team. Your tickets never appear on the public board." })}
             />
             {authPending ? (
                 <div role="status" className="grid gap-6 lg:grid-cols-2">
@@ -1612,8 +1777,8 @@ export default function FeedbackPage() {
 
     const startTicket = useCallback((category: TicketCategory | null, title = "") => {
         setDraft((current) => ({ ...current, category: category ?? current.category, title: current.title || title.slice(0, TICKET_LIMITS.title) }));
-        // With a topic chosen the title comes next; otherwise the topic picker.
-        scrollToId(signedIn ? "talep-olustur" : "destek", signedIn ? (category ? "input:not([type])" : "input[type=radio]") : undefined);
+        // With a category chosen the title comes next; otherwise the category picker.
+        scrollToId(signedIn ? "talep-olustur" : "destek", signedIn ? (category ? "input[name=title]" : "input[type=radio]") : undefined);
     }, [signedIn]);
 
     const openAuthor = useCallback((author: BoardAuthor) => {
@@ -1675,7 +1840,7 @@ export default function FeedbackPage() {
                 <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
                     <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
                     <p>
-                        {tx({ TR: "Güvenlik açıklarını herkese açık panoya yazmayın: Talep oluştur > Güvenlik açığı ile yalnızca ekibe bildirin. Hassas anahtar, gerçek parola veya kişisel veri eklemeyin; mümkünse yeniden üretme adımlarını paylaşın.", EN: "Don't post security issues on the public board: report them to the team only via Create a ticket > Security vulnerability. Don't include secret keys, real passwords or personal data; share steps to reproduce where you can." })}
+                        {tx({ TR: "Güvenlik açıklarını herkese açık panoya yazmayın: Talep oluştur > Güvenlik Açığı ile yalnızca ekibe bildirin. Hassas anahtar, gerçek parola veya kişisel veri eklemeyin; mümkünse yeniden üretme adımlarını paylaşın.", EN: "Don't post security issues on the public board: report them to the team only via Create a ticket > Security vulnerability. Don't include secret keys, real passwords or personal data; share steps to reproduce where you can." })}
                         {" "}
                         <button type="button" onClick={() => startTicket("security")} className="font-bold underline underline-offset-2 hover:no-underline">{tx({ TR: "Güvenlik bildirimi yap", EN: "Report a security issue" })}</button>
                     </p>

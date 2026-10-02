@@ -7,7 +7,7 @@
 import type {
     SupportTicketMessage,
     SupportTicketMeta,
-    TicketCategory,
+    StoredTicketCategory,
     TicketMessageFrom,
     TicketPriority,
     TicketSeverity,
@@ -26,7 +26,8 @@ export const ADMIN_TICKET_QUERY_MAX = 80;
 export type AdminTicketListItem = {
     id: string;
     reference: string;
-    category: TicketCategory;
+    /** Current category, or a legacy one (bug, account, other) for older tickets. */
+    category: StoredTicketCategory;
     title: string;
     status: TicketStatus;
     priority: TicketPriority;

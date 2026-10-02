@@ -2,15 +2,20 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, Copy as CopyIcon, ExternalLink, Gavel, HelpCircle, Inbox, LifeBuoy, MessageCircle,
-    MessageSquareText, Monitor, RefreshCw, Send, ShieldAlert, ShieldCheck, Trash2, UserCog, UserRound, type LucideIcon,
+    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, ClipboardList, Copy as CopyIcon, ExternalLink, Gavel, HelpCircle, Inbox, LifeBuoy,
+    MessageCircle, MessageSquareText, MessageSquareWarning, Monitor, RefreshCw, Send, ShieldAlert, ShieldCheck, Trash2, UserCog, UserRound,
+    type LucideIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import ProfileModal, { type UserProfile } from "@/components/ProfileModal";
 import { useI18n, type Copy } from "@/lib/i18n";
 import {
+    BAN_SCOPE_COPY,
+    COMPLAINT_SUBJECT_COPY,
+    LEGACY_TICKET_CATEGORIES,
     RECORD_REASON_COPY,
     RECORD_VERDICT_COPY,
+    STORED_TICKET_CATEGORIES,
     TEAM_NAME,
     TICKET_CATEGORIES,
     TICKET_CATEGORY_COPY,
@@ -20,9 +25,11 @@ import {
     TICKET_SEVERITY_COPY,
     TICKET_STATUSES,
     TICKET_STATUS_COPY,
+    isTicketId,
     type RecordSeverity,
     type RecordVerdict,
-    type TicketCategory,
+    type StoredTicketCategory,
+    type TicketCategoryIcon,
     type TicketPriority,
     type TicketSeverity,
     type TicketStatus,
@@ -50,14 +57,56 @@ import {
 } from "./ui";
 import { RoleBadge } from "./UsersSection";
 
-const CATEGORY_ICONS: Record<TicketCategory, LucideIcon> = {
-    feedback: MessageSquareText,
-    bug: Bug,
-    security: ShieldAlert,
-    question: HelpCircle,
-    account: UserCog,
-    other: LifeBuoy,
+/** Components for the icon names in TICKET_CATEGORY_COPY. */
+const CATEGORY_ICONS: Record<TicketCategoryIcon, LucideIcon> = { MessageSquareWarning, ClipboardList, ShieldAlert, Gavel, HelpCircle, MessageSquareText, Bug, UserCog, LifeBuoy };
+
+/** Badge tone and list icon color per category; the old categories stay grey. */
+const CATEGORY_STYLES: Record<StoredTicketCategory, { tone: Tone; icon: string }> = {
+    complaint: { tone: "fuchsia", icon: "text-fuchsia-500" },
+    request: { tone: "sky", icon: "text-sky-500" },
+    security: { tone: "red", icon: "text-red-500" },
+    unban: { tone: "amber", icon: "text-amber-500" },
+    question: { tone: "indigo", icon: "text-indigo-500" },
+    feedback: { tone: "violet", icon: "text-violet-500" },
+    bug: { tone: "zinc", icon: "text-zinc-400" },
+    account: { tone: "zinc", icon: "text-zinc-400" },
+    other: { tone: "zinc", icon: "text-zinc-400" },
 };
+
+/*
+ * The opened ticket lives in the address (#tickets?id=<id>): reloads keep it and
+ * staff notifications link straight to it. Choosing a ticket replaces the
+ * address rather than adding a history entry per ticket; replaceState fires no
+ * event, so the listeners are told directly.
+ */
+const hashListeners = new Set<() => void>();
+
+function subscribeHash(callback: () => void) {
+    hashListeners.add(callback);
+    window.addEventListener("hashchange", callback);
+    return () => {
+        hashListeners.delete(callback);
+        window.removeEventListener("hashchange", callback);
+    };
+}
+
+function ticketFromHash() {
+    const hash = window.location.hash.slice(1);
+    const index = hash.indexOf("?");
+    if (index === -1 || hash.slice(0, index) !== "tickets") return null;
+    const id = new URLSearchParams(hash.slice(index + 1)).get("id");
+    return id && isTicketId(id) ? id : null;
+}
+
+function noTicket() {
+    return null;
+}
+
+function showTicket(id: string | null) {
+    if (ticketFromHash() === id) return;
+    window.history.replaceState(null, "", id ? `#tickets?id=${id}` : "#tickets");
+    hashListeners.forEach((listener) => listener());
+}
 
 const STATUS_TONES: Record<TicketStatus, Tone> = { open: "sky", in_progress: "amber", answered: "violet", resolved: "emerald", closed: "zinc" };
 const PRIORITY_TONES: Record<TicketPriority, Tone> = { low: "zinc", normal: "sky", high: "amber", critical: "red" };
@@ -245,7 +294,8 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
     const [busy, setBusy] = useState<"reply" | "resolve" | "status" | "priority" | null>(null);
     const [error, setError] = useState<ApiFailure | null>(null);
     const [profileOpen, setProfileOpen] = useState(false);
-    const Icon = CATEGORY_ICONS[ticket.category];
+    const Icon = CATEGORY_ICONS[TICKET_CATEGORY_COPY[ticket.category].icon];
+    const meta = ticket.meta;
     const tooLong = reply.length > TICKET_LIMITS.message;
 
     const run = async (kind: "reply" | "resolve" | "status" | "priority", body: Record<string, unknown>, success: string) => {
@@ -283,7 +333,7 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                     <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />{tx({ TR: "Listeye dön", EN: "Back to list" })}
                 </button>
                 <div className="flex flex-wrap items-center gap-2 text-[12px] text-zinc-500">
-                    <Badge tone={ticket.category === "security" ? "red" : "indigo"} icon={Icon}>{tx(TICKET_CATEGORY_COPY[ticket.category].label)}</Badge>
+                    <Badge tone={CATEGORY_STYLES[ticket.category].tone} icon={Icon}>{tx(TICKET_CATEGORY_COPY[ticket.category].label)}</Badge>
                     {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
                     <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                     <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge>
@@ -298,24 +348,59 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                         {tx({ TR: "Bu itiraz, askıya alınmış hesaptan giriş sayfası üzerinden gönderildi. Gönderen, hesabın sahibi olduğunu şifresiyle (açıksa iki adımlı doğrulamayla birlikte) ya da Google ile kanıtladı. Hesap askıdayken yanıtları göremez; hesap yeniden açılırsa yanıtınızı Taleplerim'de bulur.", EN: "This appeal was sent from the suspended account via the login page. The sender proved they own the account with its password (plus two-step verification, if enabled) or with Google. They can't read replies while the account is suspended; if it's reinstated, they'll find your reply under My tickets." })}
                     </p>
                 ) : null}
-                {ticket.meta.steps || ticket.meta.pageUrl || ticket.meta.userAgent ? (
+                {meta.complaintSubject || meta.reportedUser || meta.contentUrl || meta.banScope || meta.banReference || meta.steps || meta.pageUrl || meta.userAgent ? (
                     <dl className="mt-3 space-y-2 rounded-2xl bg-zinc-50 p-3 text-[12.5px] dark:bg-white/[0.03]">
-                        {ticket.meta.steps ? (
+                        {meta.complaintSubject ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Şikayet konusu", EN: "Complaint about" })}</dt>
+                                <dd><Badge tone="fuchsia">{tx(COMPLAINT_SUBJECT_COPY[meta.complaintSubject])}</Badge></dd>
+                            </div>
+                        ) : null}
+                        {meta.reportedUser ? (
+                            <div>
+                                <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Şikayet edilen kullanıcı", EN: "User complained about" })}</dt>
+                                <dd className="mt-0.5 break-words text-zinc-700 dark:text-zinc-300" dir="auto">{meta.reportedUser}</dd>
+                            </div>
+                        ) : null}
+                        {meta.contentUrl ? (
+                            <div>
+                                <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "İçerik bağlantısı", EN: "Content link" })}</dt>
+                                <dd className="mt-0.5 break-all text-zinc-600 dark:text-zinc-400" dir="ltr">
+                                    {/* Site paths open here; outside addresses stay plain text so nobody opens them by accident. */}
+                                    {meta.contentUrl.startsWith("/")
+                                        ? <a href={meta.contentUrl} target="_blank" rel="noopener noreferrer" className={cx("text-indigo-600 underline underline-offset-2 dark:text-indigo-300", FOCUS_RING)}>{meta.contentUrl}</a>
+                                        : meta.contentUrl}
+                                </dd>
+                            </div>
+                        ) : null}
+                        {meta.banScope ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Yasak türü", EN: "Type of ban" })}</dt>
+                                <dd><Badge tone="amber">{tx(BAN_SCOPE_COPY[meta.banScope].label)}</Badge></dd>
+                            </div>
+                        ) : null}
+                        {meta.banReference ? (
+                            <div>
+                                <dt className="font-bold text-zinc-600 dark:text-zinc-300">{meta.banScope === "group" ? tx({ TR: "Grup adı", EN: "Group name" }) : tx({ TR: "Ayrıntı", EN: "Reference" })}</dt>
+                                <dd className="mt-0.5 break-words text-zinc-700 dark:text-zinc-300" dir="auto">{meta.banReference}</dd>
+                            </div>
+                        ) : null}
+                        {meta.steps ? (
                             <div>
                                 <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Adımlar", EN: "Steps" })}</dt>
-                                <dd className="mt-0.5 whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300" dir="auto">{ticket.meta.steps}</dd>
+                                <dd className="mt-0.5 whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300" dir="auto">{meta.steps}</dd>
                             </div>
                         ) : null}
-                        {ticket.meta.pageUrl ? (
+                        {meta.pageUrl ? (
                             <div>
                                 <dt className="font-bold text-zinc-600 dark:text-zinc-300">{tx({ TR: "Sayfa", EN: "Page" })}</dt>
-                                <dd className="mt-0.5 break-all text-zinc-600 dark:text-zinc-400" dir="ltr">{ticket.meta.pageUrl}</dd>
+                                <dd className="mt-0.5 break-all text-zinc-600 dark:text-zinc-400" dir="ltr">{meta.pageUrl}</dd>
                             </div>
                         ) : null}
-                        {ticket.meta.userAgent ? (
+                        {meta.userAgent ? (
                             <div>
                                 <dt className="flex items-center gap-1 font-bold text-zinc-600 dark:text-zinc-300"><Monitor className="h-3.5 w-3.5" aria-hidden="true" />{tx({ TR: "Tarayıcı", EN: "Browser" })}</dt>
-                                <dd className="mt-0.5 break-all text-zinc-600 dark:text-zinc-400" dir="ltr">{ticket.meta.userAgent}</dd>
+                                <dd className="mt-0.5 break-all text-zinc-600 dark:text-zinc-400" dir="ltr">{meta.userAgent}</dd>
                             </div>
                         ) : null}
                     </dl>
@@ -446,7 +531,7 @@ export default function TicketsSection() {
     const toast = useToast();
     const errorText = useTicketErrorText();
     const [status, setStatus] = useState<TicketStatusFilter>("active");
-    const [category, setCategory] = useState<"all" | TicketCategory>("all");
+    const [category, setCategory] = useState<"all" | StoredTicketCategory>("all");
     const [priority, setPriority] = useState<"all" | TicketPriority>("all");
     const [unreadOnly, setUnreadOnly] = useState(false);
     const [query, setQuery] = useState("");
@@ -456,7 +541,7 @@ export default function TicketsSection() {
     if (debounced) params.set("q", debounced);
     const path = `/api/admin/tickets?${params.toString()}`;
     const inbox = useAdminResource<AdminTicketsResponse>(path);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const selectedId = useSyncExternalStore(subscribeHash, ticketFromHash, noTicket);
     const detail = useAdminResource<AdminTicketDetailResponse>(selectedId ? `/api/admin/tickets?id=${selectedId}` : null);
     const [loadingMore, setLoadingMore] = useState(false);
     const [moreError, setMoreError] = useState<ApiFailure | null>(null);
@@ -517,7 +602,7 @@ export default function TicketsSection() {
         }
         const removedId = deleteTarget.id;
         mutateInbox((current) => ({ ...current, tickets: current.tickets.filter((ticket) => ticket.id !== removedId) }));
-        setSelectedId(null);
+        showTicket(null);
         setDeleteTarget(null);
         toast("success", tx({ TR: "Talep silindi.", EN: "Ticket deleted." }));
     };
@@ -539,7 +624,7 @@ export default function TicketsSection() {
         <div>
             <SectionHeader
                 title={tx({ TR: "Destek Talepleri", EN: "Support Tickets" })}
-                description={tx({ TR: "Geri Bildirim/SSS sayfasından gelen özel talepler: geri bildirim, hata ve güvenlik bildirimleri, sorular ve KVKK başvuruları.", EN: "Private tickets from the Feedback/FAQ page: feedback, bug and security reports, questions and KVKK requests." })}
+                description={tx({ TR: "Geri Bildirim/SSS sayfasından ve giriş sayfasındaki itiraz formundan gelen özel talepler: şikayetler, istekler (KVKK başvuruları dahil), güvenlik açıkları, ban kaldırma istekleri, sorular ve geri bildirimler.", EN: "Private tickets from the Feedback/FAQ page and the appeal form on the sign-in page: complaints, requests (including KVKK requests), security reports, unban requests, questions and feedback." })}
                 actions={<Button size="sm" icon={RefreshCw} busy={inbox.loading && Boolean(inbox.data)} onClick={refresh}>{tx(COMMON.refresh)}</Button>}
             />
 
@@ -547,15 +632,19 @@ export default function TicketsSection() {
                 <FilterChips
                     label={tx({ TR: "Durum filtresi", EN: "Status filter" })}
                     value={status}
-                    onChange={(value) => { setStatus(value); setSelectedId(null); }}
+                    onChange={(value) => { setStatus(value); showTicket(null); }}
                     options={TICKET_STATUS_FILTERS.map((value) => ({ value, label: tx(FILTER_COPY[value]) }))}
                 />
                 <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1.6fr)]">
                     <label className="block">
                         <span className="sr-only">{tx({ TR: "Kategori", EN: "Category" })}</span>
-                        <select value={category} onChange={(event) => setCategory(event.target.value === "all" ? "all" : TICKET_CATEGORIES.find((value) => value === event.target.value) ?? "all")} className={cx(INPUT_CLASS, "h-10")}>
+                        <select value={category} onChange={(event) => setCategory(event.target.value === "all" ? "all" : STORED_TICKET_CATEGORIES.find((value) => value === event.target.value) ?? "all")} className={cx(INPUT_CLASS, "h-10")}>
                             <option value="all">{tx({ TR: "Tüm kategoriler", EN: "All categories" })}</option>
                             {TICKET_CATEGORIES.map((value) => <option key={value} value={value}>{tx(TICKET_CATEGORY_COPY[value].label)}</option>)}
+                            {/* Tickets filed before the categories changed keep their old category. */}
+                            <optgroup label={tx({ TR: "Eski kategoriler", EN: "Old categories" })}>
+                                {LEGACY_TICKET_CATEGORIES.map((value) => <option key={value} value={value}>{tx(TICKET_CATEGORY_COPY[value].label)}</option>)}
+                            </optgroup>
                         </select>
                     </label>
                     <label className="block">
@@ -607,13 +696,13 @@ export default function TicketsSection() {
                                 <AnimatePresence initial={false}>
                                     {tickets.map((ticket) => {
                                         const active = ticket.id === selectedId;
-                                        const Icon = CATEGORY_ICONS[ticket.category];
+                                        const Icon = CATEGORY_ICONS[TICKET_CATEGORY_COPY[ticket.category].icon];
                                         return (
                                             <motion.li key={ticket.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                                                 <button
                                                     type="button"
                                                     aria-current={active || undefined}
-                                                    onClick={() => setSelectedId(ticket.id)}
+                                                    onClick={() => showTicket(ticket.id)}
                                                     className={cx(
                                                         "w-full rounded-2xl border p-3.5 text-start transition",
                                                         active
@@ -625,7 +714,7 @@ export default function TicketsSection() {
                                                     )}
                                                 >
                                                     <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500">
-                                                        <Icon className={cx("h-3.5 w-3.5", ticket.category === "security" ? "text-red-500" : "text-indigo-500")} role="img" aria-label={tx(TICKET_CATEGORY_COPY[ticket.category].label)} />
+                                                        <Icon className={cx("h-3.5 w-3.5", CATEGORY_STYLES[ticket.category].icon)} role="img" aria-label={tx(TICKET_CATEGORY_COPY[ticket.category].label)} />
                                                         <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                                                         {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
                                                         {ticket.priority === "high" || ticket.priority === "critical" ? <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge> : null}
@@ -665,12 +754,12 @@ export default function TicketsSection() {
                                     data={selected}
                                     onUpdated={applyTicket}
                                     onDelete={() => { setDeleteTarget(toListItem(selected.ticket)); setDeleteError(null); }}
-                                    onBack={() => setSelectedId(null)}
+                                    onBack={() => showTicket(null)}
                                 />
                             </div>
                         ) : selectedId && detail.error ? (
                             <div className="space-y-3">
-                                <button type="button" onClick={() => setSelectedId(null)} className={cx("inline-flex items-center gap-1.5 rounded-lg text-[13px] font-semibold text-zinc-500 hover:text-zinc-900 lg:hidden dark:hover:text-white", FOCUS_RING)}>
+                                <button type="button" onClick={() => showTicket(null)} className={cx("inline-flex items-center gap-1.5 rounded-lg text-[13px] font-semibold text-zinc-500 hover:text-zinc-900 lg:hidden dark:hover:text-white", FOCUS_RING)}>
                                     <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />{tx({ TR: "Listeye dön", EN: "Back to list" })}
                                 </button>
                                 <ErrorNotice error={detail.error} onRetry={detail.reload} />

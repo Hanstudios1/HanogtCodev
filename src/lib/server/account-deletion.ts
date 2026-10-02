@@ -573,9 +573,26 @@ async function deleteNotifications(ctx: Context) {
     await deleteSubcollection(ctx, "notifications", "notifications", `notifications/${ctx.email}/items`);
 }
 
-/** Support tickets keep their conversation inside the ticket document. */
+/**
+ * Support tickets keep their conversation inside the ticket document. The
+ * "new ticket" notifications staff received show the ticket title, so they go
+ * with the tickets.
+ */
 async function deleteSupportTickets(ctx: Context) {
-    await drain(ctx, "supportTickets", query("support_tickets", "authorEmail", "EQUAL", ctx.email), deleting(ctx, "supportTickets", "supportTickets"));
+    const ticketIds: string[] = [];
+    const remove = deleting(ctx, "supportTickets", "supportTickets");
+    await drain(ctx, "supportTickets", query("support_tickets", "authorEmail", "EQUAL", ctx.email), async (documents) => {
+        ticketIds.push(...documents.map((document) => document._id));
+        return remove(documents);
+    });
+    if (!ticketIds.length) return;
+    // Loaded lazily: the support module pulls in the admin/Next.js helpers,
+    // which the plain-Node deletion tests can't load.
+    const support = await import("./support").catch(() => null);
+    if (!support) return;
+    await support.removeStaffTicketNotifications(ticketIds).catch((error: unknown) => {
+        ctx.tally.fail("staffTicketNotifications", error instanceof Error ? error.message : "failed");
+    });
 }
 
 /**
