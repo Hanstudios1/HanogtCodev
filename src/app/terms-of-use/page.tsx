@@ -181,6 +181,7 @@ const sections: LegalSection[] = [
         title: { TR: "Hanogt News, yorumlar ve arena", EN: "Hanogt News, comments and the arena" },
         paragraphs: [
             { TR: "Hanogt News, yayıncıların herkese açık akışlarından derlenen başlıkları, kısa özetleri ve orijinal habere bağlantıları gösterir. Haberlerin içeriği, doğruluğu ve hakları ilgili yayıncılara aittir; Hanogt haberleri düzenlemez veya onaylamaz. İçeriğinin gösterilmesini istemeyen yayıncılar destek talebiyle bize ulaşabilir; içerikleri akıştan çıkarılır.", EN: "Hanogt News shows headlines, short summaries and links to original articles gathered from publishers' public feeds. The content, accuracy and rights of the news belong to the publishers; Hanogt does not edit or endorse it. Publishers who don't want their content shown can contact us with a support ticket and it will be removed from the feed." },
+            { TR: "Finans & Ekonomi kategorisindeki piyasa şeridi (döviz kurları, altın, BIST 100, Bitcoin) üçüncü taraf kaynaklardan alınır; veriler gecikmeli veya eksik olabilir, yalnızca bilgi amaçlıdır ve yatırım tavsiyesi değildir. Bu verilere dayanarak verdiğiniz kararlardan Hanogt sorumlu tutulamaz; emredici tüketici hakları saklıdır.", EN: "The market strip in the Finance & Economy category (exchange rates, gold, BIST 100, Bitcoin) comes from third-party sources; the data may be delayed or incomplete, is for information only and is not investment advice. Hanogt can't be held responsible for decisions you make based on it; mandatory consumer rights remain unaffected." },
             { TR: "Yapay zekâ arenasındaki topluluk puanları yalnızca Hanogt kullanıcılarının oylarından hesaplanır ve resmî bir değerlendirme (benchmark) değildir. Dış kaynaklı sıralamalar ilgili kaynağa atfedilerek gösterilir.", EN: "Community scores in the AI arena are calculated only from Hanogt users' votes and are not an official benchmark. External rankings are shown with credit to their source." },
         ],
         items: [
@@ -191,8 +192,9 @@ const sections: LegalSection[] = [
     },
     {
         id: "groups",
-        title: { TR: "Gruplar, sohbetler ve aramalar", EN: "Groups, chats and calls" },
+        title: { TR: "Hanogt Social: gruplar, sohbetler ve aramalar", EN: "Hanogt Social: groups, chats and calls" },
         items: [
+            { TR: "Hanogt Social'daki adınızı, durumunuzu ve özel durum metninizi başkalarını taklit etmek, yanıltmak veya taciz etmek için kullanamazsınız.", EN: "You may not use your name, status or custom status text in Hanogt Social to impersonate, mislead or harass others." },
             { TR: "Grup üyeleri, grupta gördükleri profil, kod, mesaj ve sesli mesajları grup amacı dışında kullanamaz veya izinsiz yayımlayamaz.", EN: "Group members may not use profiles, code, messages or voice messages they see in a group outside the group's purpose, or publish them without permission." },
             { TR: "Grup sahipleri ve yöneticileri grubun kurallarını belirleyebilir, üyeleri çıkarabilir veya engelleyebilir; bu yetkileri bu Şartlara uygun kullanmalıdırlar.", EN: "Group owners and admins may set group rules and remove or ban members; they must use these powers in line with these Terms." },
             { TR: "Ortak editör gerçek zamanlı eşitleme sunar, ancak tam bir sürüm kontrol sistemi değildir; aynı anda yapılan düzenlemelerde son kayıt geçerli olabilir. Önemli projeler için sürüm kontrolü ve yedek kullanın.", EN: "The shared editor syncs in real time but is not a full version control system; when people edit at the same time, the last save may win. Use version control and backups for important projects." },
