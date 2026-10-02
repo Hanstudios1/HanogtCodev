@@ -152,10 +152,6 @@ async function withPaddle(seed, paddleSeed, run) {
     return withBackend(seed, { route: api.route }, (db) => run(db, api));
 }
 
-function signed(body, secret = process.env.PADDLE_WEBHOOK_SECRET, ts = Math.floor(Date.now() / 1000)) {
-    return `ts=${ts};h1=${createHmac("sha256", secret).update(`${ts}:${body}`).digest("hex")}`;
-}
-
 const baseSeed = () => ({
     [`users/${ALI}`]: { email: ALI, username: "ali" },
     "site_config/paddle": SETTINGS,
