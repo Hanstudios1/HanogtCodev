@@ -57,7 +57,8 @@ import {
     profileAvatar,
     profileStaffRole,
     profileName,
-    profileOnline,
+    profileStatus,
+    profileTag,
     publicGroup,
     readEmail,
     readId,
@@ -196,14 +197,17 @@ async function groupDetail(groupId: string, user: GroupUser): Promise<GroupDetai
         group: publicGroup(groupId, group),
         members: memberEmails.map((memberEmail) => {
             const profile = profiles.get(memberEmail);
+            const status = profileStatus(profile, now);
             return {
                 email: memberEmail,
                 username: profileName(memberEmail, profile),
                 avatarUrl: profileAvatar(profile),
+                ...profileTag(profile),
                 staffRole: profileStaffRole(profile),
                 customStatus: typeof profile?.customStatus === "string" ? profile.customStatus.slice(0, 120) : "",
                 statusEmoji: typeof profile?.statusEmoji === "string" ? profile.statusEmoji.slice(0, 16) : "",
-                online: memberEmail === email || profileOnline(profile, now),
+                status,
+                online: status !== "offline",
                 lastSeenAt: profile?.lastSeenAt || null,
                 role: roleOf(group, memberEmail) || "member",
                 key: memberKey(groupId, memberEmail),

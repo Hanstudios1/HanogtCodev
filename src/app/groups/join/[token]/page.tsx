@@ -1,10 +1,7 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useParams } from "next/navigation";
-import JoinGroupView from "@/components/Groups/JoinGroupView";
-
-export default function JoinGroupPage() {
-    const params = useParams<{ token: string }>();
-    const token = typeof params?.token === "string" ? params.token : "";
-    return <JoinGroupView token={token} />;
+// Invite links shared before Hanogt Social (/groups/join/<token>) keep working; the join page validates the token.
+export default async function LegacyJoinPage({ params }: { params: Promise<{ token: string }> }) {
+    const { token } = await params;
+    redirect(`/social/join/${encodeURIComponent(token)}`);
 }

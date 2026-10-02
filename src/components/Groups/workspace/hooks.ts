@@ -206,17 +206,54 @@ export function useGroupFiles({ groupId, email, enabled, onError }: { groupId: s
 
 const MESSAGE_PAGE = 120;
 const MESSAGE_MAX = 1000;
+const POLL_MS = 4_000;
+const FULL_POLL_MS = 30_000;
 
-/** Newest messages first from Firestore, shown oldest → newest; "load older" grows the window. */
-export function useGroupMessages({ groupId, enabled, onError }: { groupId: string; enabled: boolean; onError: ErrorSink }) {
+type ServerMessages = {
+    messages?: unknown;
+    hasMore?: unknown;
+    typing?: unknown;
+    pinnedMessageIds?: unknown;
+};
+
+/** What GET /api/groups/chat answered, in the same shape as the live snapshot. */
+function parseServerMessages(data: ServerMessages, received: number) {
+    const messages = Array.isArray(data.messages)
+        ? data.messages.flatMap((entry) => (entry && typeof entry === "object" && typeof (entry as { id?: unknown }).id === "string"
+            ? [messageFromData((entry as { id: string }).id, entry as Record<string, unknown>, false, received)]
+            : []))
+        : [];
+    const typing = data.typing && typeof data.typing === "object" ? Object.fromEntries(Object.entries(data.typing as Record<string, unknown>).filter((entry): entry is [string, number] => typeof entry[1] === "number")) : {};
+    const pinned = Array.isArray(data.pinnedMessageIds) ? data.pinnedMessageIds.filter((id): id is string => typeof id === "string") : null;
+    return { messages, hasMore: data.hasMore === true, typing, pinned };
+}
+
+function mergeById(current: GroupChatMessage[], incoming: GroupChatMessage[]) {
+    const byId = new Map(current.map((message) => [message.id, message]));
+    for (const message of incoming) byId.set(message.id, message);
+    const merged = [...byId.values()].sort((a, b) => a.createdAt - b.createdAt);
+    return merged.length > MESSAGE_MAX ? merged.slice(merged.length - MESSAGE_MAX) : merged;
+}
+
+/**
+ * Newest messages first, shown oldest → newest; "load older" grows the
+ * window. `live`: a Firestore listener. Otherwise GET /api/groups/chat is
+ * polled every few seconds while the tab is visible (with the typing state
+ * and pins, which the live view reads from the group document).
+ */
+export function useGroupMessages({ groupId, enabled, live = true, onError }: { groupId: string; enabled: boolean; live?: boolean; onError: ErrorSink }) {
     const [messages, setMessages] = useState<GroupChatMessage[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [windowSize, setWindowSize] = useState(MESSAGE_PAGE);
     const [hasMore, setHasMore] = useState(false);
+    const [serverTyping, setServerTyping] = useState<Record<string, number>>({});
+    const [serverPins, setServerPins] = useState<string[] | null>(null);
     const onErrorRef = useLatest(onError);
+    const messagesRef = useLatest(messages);
+    const fullAtRef = useRef(0);
 
     useEffect(() => {
-        if (!enabled) return;
+        if (!enabled || !live) return;
         const messagesQuery = query(collection(db, "groups", groupId, "messages"), orderBy("createdAt", "desc"), limit(windowSize));
         return onSnapshot(messagesQuery, (snapshot) => {
             const received = Date.now();
@@ -227,10 +264,86 @@ export function useGroupMessages({ groupId, enabled, onError }: { groupId: strin
             setHasMore(snapshot.size >= windowSize);
             setLoaded(true);
         }, () => onErrorRef.current("chat"));
-    }, [enabled, groupId, onErrorRef, windowSize]);
+    }, [enabled, groupId, live, onErrorRef, windowSize]);
 
-    const loadOlder = useCallback(() => setWindowSize((value) => Math.min(value + MESSAGE_PAGE, MESSAGE_MAX)), []);
-    return { messages, loaded, hasMore: hasMore && windowSize < MESSAGE_MAX, loadOlder };
+    /** One server read: the newest page ("full"), or what arrived since the newest message shown. */
+    const fetchServer = useCallback(async (kind: "full" | "since") => {
+        const newest = messagesRef.current[messagesRef.current.length - 1]?.createdAt ?? 0;
+        const params = new URLSearchParams({ groupId });
+        // A small overlap catches messages committed with a slightly older server time.
+        if (kind === "since" && newest) params.set("since", String(Math.max(1, newest - 2_000)));
+        else params.set("limit", String(MESSAGE_PAGE));
+        const response = await fetch(`/api/groups/chat?${params.toString()}`, { cache: "no-store", credentials: "same-origin" });
+        if (!response.ok) {
+            if (response.status === 404 || response.status === 401) onErrorRef.current("chat");
+            return;
+        }
+        const parsed = parseServerMessages(await response.json() as ServerMessages, Date.now());
+        // A full read replaces what it covers, so messages deleted meanwhile disappear.
+        setMessages((current) => (kind === "full"
+            ? mergeById(current.filter((message) => message.createdAt < (parsed.messages[0]?.createdAt ?? Infinity)), parsed.messages)
+            : mergeById(current, parsed.messages)));
+        if (kind === "full") setHasMore((value) => value || parsed.hasMore);
+        setServerTyping(parsed.typing);
+        if (parsed.pinned) setServerPins(parsed.pinned);
+        setLoaded(true);
+    }, [groupId, messagesRef, onErrorRef]);
+
+    useEffect(() => {
+        if (!enabled || live) return;
+        let stopped = false;
+        let timer = 0;
+        const tick = async () => {
+            if (stopped) return;
+            if (document.visibilityState === "visible") {
+                const full = Date.now() - fullAtRef.current > FULL_POLL_MS;
+                if (full) fullAtRef.current = Date.now();
+                await fetchServer(full ? "full" : "since").catch(() => undefined);
+            }
+            if (!stopped) timer = window.setTimeout(() => void tick(), POLL_MS);
+        };
+        fullAtRef.current = 0;
+        timer = window.setTimeout(() => void tick(), 0);
+        return () => {
+            stopped = true;
+            window.clearTimeout(timer);
+        };
+    }, [enabled, fetchServer, live]);
+
+    const loadOlder = useCallback(() => {
+        if (live) {
+            setWindowSize((value) => Math.min(value + MESSAGE_PAGE, MESSAGE_MAX));
+            return;
+        }
+        const oldest = messagesRef.current[0]?.createdAt;
+        if (!oldest) return;
+        void fetch(`/api/groups/chat?${new URLSearchParams({ groupId, before: String(oldest), limit: String(MESSAGE_PAGE) }).toString()}`, { cache: "no-store", credentials: "same-origin" })
+            .then(async (response) => {
+                if (!response.ok) return;
+                const parsed = parseServerMessages(await response.json() as ServerMessages, Date.now());
+                setMessages((current) => mergeById(current, parsed.messages));
+                setHasMore(parsed.hasMore);
+            })
+            .catch(() => undefined);
+    }, [groupId, live, messagesRef]);
+
+    /** Re-reads the newest page right away (after a send, reaction or deletion through the server). */
+    const refresh = useCallback(() => {
+        if (live) return;
+        fullAtRef.current = Date.now();
+        void fetchServer("full").catch(() => undefined);
+    }, [fetchServer, live]);
+
+    return {
+        messages,
+        loaded,
+        hasMore: hasMore && (live ? windowSize < MESSAGE_MAX : messages.length < MESSAGE_MAX),
+        loadOlder,
+        refresh,
+        /** Fallback only: typing entries (member key → server time) and pins from the last poll. */
+        serverTyping,
+        serverPins,
+    };
 }
 
 const VOICE_LIMIT_SECONDS = 60;

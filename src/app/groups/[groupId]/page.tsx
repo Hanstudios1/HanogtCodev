@@ -1,11 +1,9 @@
-"use client";
+import { redirect } from "next/navigation";
+import { isGroupId } from "@/lib/groups";
+import { groupHref } from "@/lib/social/model";
 
-import { useParams } from "next/navigation";
-import GroupWorkspace from "@/components/Groups/workspace/GroupWorkspace";
-
-export default function GroupWorkspacePage() {
-    const params = useParams<{ groupId: string }>();
-    const groupId = typeof params?.groupId === "string" ? params.groupId : "";
-    // Keyed by id so switching groups starts with a clean workspace state.
-    return <GroupWorkspace key={groupId} groupId={groupId} />;
+// Group workspaces open inside Hanogt Social.
+export default async function GroupRedirectPage({ params }: { params: Promise<{ groupId: string }> }) {
+    const { groupId } = await params;
+    redirect(isGroupId(groupId) ? groupHref(groupId) : "/social");
 }

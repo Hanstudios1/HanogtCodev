@@ -17,7 +17,7 @@ import { useI18n } from "@/lib/i18n";
 const STORAGE_KEY = "hanogt_dismissed_announcements";
 const MAX_REMEMBERED = 50;
 /** Full-screen workspaces where a floating bar would cover tools or a chat input. */
-const DEFAULT_HIDDEN_ON: readonly string[] = ["/editor", "/game-engine", "/messages", "/groups/"];
+const DEFAULT_HIDDEN_ON: readonly string[] = ["/editor", "/game-engine", "/messages", "/groups/", "/social"];
 
 const LEVEL_STYLES: Record<AnnouncementLevel, { icon: LucideIcon; bar: string; badge: string; action: string }> = {
     info: {

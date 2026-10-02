@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
         rules: [{
             userAgent: "*",
             allow: ["/", "/arcade", "/media", "/game-engine", "/game-engine/docs", "/about"],
-            disallow: ["/api/", "/dashboard", "/editor", "/account-settings", "/settings", "/messages/", "/friends", "/groups/", "/login", "/signup"],
+            disallow: ["/api/", "/dashboard", "/editor", "/account-settings", "/settings", "/messages/", "/friends", "/groups/", "/social", "/login", "/signup"],
         }],
         sitemap: `${SITE_URL}/sitemap.xml`,
     };

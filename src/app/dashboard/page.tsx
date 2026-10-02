@@ -41,7 +41,7 @@ const CODE_LANGUAGES = LANGUAGES
     .slice()
     .sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
 
-const EXPLORE: NavItem[] = ["/ai", "/news", "/arcade", "/guide", "/security", "/groups"]
+const EXPLORE: NavItem[] = ["/ai", "/news", "/arcade", "/guide", "/security", "/social"]
     .map((href) => [...PRIMARY_NAV, ...SECONDARY_NAV].find((item) => item.href === href))
     .filter((item): item is NavItem => Boolean(item));
 

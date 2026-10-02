@@ -1,13 +1,16 @@
 import { NextRequest } from "next/server";
-import { deleteServerDocument, deleteServerStorageObject, getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
-import { GROUP_LIMITS, SYSTEM_SENDER, isGroupId, isManagerRole, isMemberKey, isReactionKey, safeGroupVoicePath } from "@/lib/groups";
+import { createServerDocument, deleteServerDocument, deleteServerStorageObject, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { GROUP_LIMITS, SYSTEM_SENDER, cleanMultiLine, isGroupId, isManagerRole, isMemberKey, isReactionKey, safeGroupVoicePath } from "@/lib/groups";
 import {
     GroupApiError,
     assertRateLimit,
     assertSameOrigin,
     groupErrorResponse,
     groupJson,
+    loadProfiles,
     memberKey,
+    ownDisplayName,
+    profileAvatar,
     readId,
     readJsonBody,
     requireGroupMember,
@@ -21,6 +24,13 @@ import {
 type StoredMessage = { fromEmail?: string; type?: string; voicePath?: unknown; reactions?: Record<string, unknown> };
 
 const messagePath = (groupId: string, messageId: string) => `groups/${groupId}/messages/${messageId}`;
+
+/** Message fields a member may read; everything else on the document stays on the server. */
+const WIRE_FIELDS = ["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt", "event", "vars", "template", "reactions"] as const;
+const PAGE_DEFAULT = 120;
+const PAGE_MAX = 200;
+/** Typing entries older than this are not reported (the live view uses 7 s as well). */
+const TYPING_FRESH_MS = 7_000;
 
 /** Pins live on the group document (`pinnedMessageIds`, newest first); owners and admins only. */
 async function setPinned(groupId: string, messageId: string, email: string, pinned: boolean) {
@@ -96,11 +106,88 @@ async function setTyping(groupId: string, email: string, active: boolean) {
     return { success: true };
 }
 
+function wireMessage(record: Record<string, unknown> & { _id: string }) {
+    const data: Record<string, unknown> = { id: record._id };
+    for (const field of WIRE_FIELDS) if (record[field] !== undefined) data[field] = record[field];
+    return data;
+}
+
+/**
+ * Text messages written through the server, for browsers whose Firebase
+ * connection is unavailable (Hanogt Social falls back to polling). The
+ * document has exactly the fields a direct client write may have.
+ */
+async function sendMessage(groupId: string, text: unknown, user: Awaited<ReturnType<typeof requireGroupUser>>) {
+    const body = cleanMultiLine(text, GROUP_LIMITS.messageMax * 2);
+    if (!body) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
+    if (body.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
+    await requireGroupMember(groupId, user.email);
+    const [author, profiles] = await Promise.all([ownDisplayName(user), loadProfiles([user.email])]);
+    const createdAt = new Date();
+    const data = {
+        fromEmail: user.email,
+        author: author.slice(0, 80),
+        authorAvatar: profileAvatar(profiles.get(user.email)),
+        type: "text",
+        text: body,
+        createdAt,
+    };
+    const created = await createServerDocument(`groups/${groupId}/messages`, data);
+    const id = created.name.split("/").pop() || "";
+    return { success: true, message: { ...data, id, createdAt: createdAt.toISOString() } };
+}
+
+/** Milliseconds from a query parameter; anything else (or a time far in the future) is ignored. */
+function readCursor(value: string | null) {
+    if (!value || !/^[0-9]{1,15}$/.test(value)) return 0;
+    const time = Number(value);
+    return time > 0 && time < Date.now() + 86_400_000 ? time : 0;
+}
+
+/**
+ * Members-only message list: the newest page (`before` for older pages) or
+ * everything from `since` on, with the typing state and pins. Hanogt Social
+ * polls this while the browser cannot use Firestore directly.
+ */
+export async function GET(request: NextRequest) {
+    try {
+        const user = await requireGroupUser();
+        await assertRateLimit(`groups:chat-read:${user.email}`, 240, 60_000);
+        const params = request.nextUrl.searchParams;
+        const groupId = readId(params.get("groupId"), "Grup kimliği");
+        const { group } = await requireGroupMember(groupId, user.email);
+        const since = readCursor(params.get("since"));
+        const before = since ? 0 : readCursor(params.get("before"));
+        const limit = Math.min(Math.max(Math.floor(Number(params.get("limit"))) || PAGE_DEFAULT, 1), PAGE_MAX);
+        const records = await runServerQuery<Record<string, unknown>>({
+            collectionId: "messages",
+            parentPath: `groups/${groupId}`,
+            where: since
+                ? [{ field: "createdAt", op: "GREATER_THAN_OR_EQUAL", value: new Date(since) }]
+                : before ? [{ field: "createdAt", op: "LESS_THAN", value: new Date(before) }] : [],
+            orderBy: [{ field: "createdAt", direction: since ? "ASCENDING" : "DESCENDING" }],
+            limit,
+        });
+        const now = Date.now();
+        const typingMap = group.typing && typeof group.typing === "object" ? group.typing : {};
+        const typing = Object.fromEntries(Object.entries(typingMap).filter((entry): entry is [string, number] => isMemberKey(entry[0]) && typeof entry[1] === "number" && now - entry[1] < TYPING_FRESH_MS));
+        return groupJson({
+            messages: records.map(wireMessage),
+            hasMore: !since && records.length >= limit,
+            typing,
+            pinnedMessageIds: strings(group.pinnedMessageIds).filter(isGroupId).slice(0, GROUP_LIMITS.pinnedMax),
+            now,
+        });
+    } catch (error) {
+        return groupErrorResponse(error);
+    }
+}
+
 export async function POST(request: NextRequest) {
     try {
         assertSameOrigin(request);
         const user = await requireGroupUser();
-        const body = await readJsonBody(request, 4096);
+        const body = await readJsonBody(request, 24_576);
         const action = typeof body.action === "string" ? body.action : "";
         const groupId = readId(body.groupId, "Grup kimliği");
         if (action === "typing") {
@@ -111,6 +198,10 @@ export async function POST(request: NextRequest) {
             await assertRateLimit(`groups:react:${user.email}`, 90, 60_000);
             if (!isReactionKey(body.reaction)) throw new GroupApiError(400, "invalid_reaction", "Geçersiz tepki.");
             return groupJson(await toggleReaction(groupId, readId(body.messageId, "Mesaj kimliği"), body.reaction, user.email));
+        }
+        if (action === "send") {
+            await assertRateLimit(`groups:send:${user.email}`, 40, 60_000);
+            return groupJson(await sendMessage(groupId, body.text, user), 201);
         }
         await assertRateLimit(`groups:${user.email}`, 40, 60_000);
         if (action === "pin" || action === "unpin") return groupJson(await setPinned(groupId, readId(body.messageId, "Mesaj kimliği"), user.email, action === "pin"));

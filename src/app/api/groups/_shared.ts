@@ -14,10 +14,10 @@ import {
 } from "@/lib/server/firebase-rest";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { effectiveStatus, type PresenceStatus } from "@/lib/presence";
 import {
     GROUP_LIMITS,
     GROUP_SYSTEM_EVENT_COPY,
-    ONLINE_WINDOW_MS,
     SYSTEM_SENDER,
     fillVars,
     groupColor,
@@ -307,10 +307,15 @@ export function isLinkActive(link: InviteLinkRecord, now = Date.now()) {
 export type PublicProfile = {
     username?: string;
     avatarUrl?: string;
+    nickname?: string;
+    nicknameTag?: string;
     customStatus?: string;
     statusEmoji?: string;
+    /** Written by POST /api/presence (lib/presence.ts); read with effectiveStatus(). */
+    presence?: unknown;
     isOnline?: boolean;
     lastSeenAt?: string;
+    dndMode?: boolean;
     /** Written by the server only (lib/server/admin.ts syncStaffRoleBadge). */
     staffRole?: unknown;
 };
@@ -345,8 +350,20 @@ export function profileAvatar(profile: PublicProfile | null | undefined) {
     return typeof profile?.avatarUrl === "string" && profile.avatarUrl ? profile.avatarUrl : null;
 }
 
+/** Online, idle or do-not-disturb: anything but offline (Discord-style presence, lib/presence.ts). */
 export function profileOnline(profile: PublicProfile | null | undefined, now = Date.now()) {
-    return Boolean(profile?.isOnline && profile.lastSeenAt && now - toMillis(profile.lastSeenAt) < ONLINE_WINDOW_MS);
+    return profileStatus(profile, now) !== "offline";
+}
+
+export function profileStatus(profile: PublicProfile | null | undefined, now = Date.now()): PresenceStatus {
+    return effectiveStatus(profile, now);
+}
+
+/** `nickname#tag` parts of a profile ("" when the profile has none). */
+export function profileTag(profile: PublicProfile | null | undefined) {
+    const nickname = typeof profile?.nickname === "string" ? profile.nickname.trim().slice(0, 100) : "";
+    const nicknameTag = typeof profile?.nicknameTag === "string" && /^[0-9]{4}$/.test(profile.nicknameTag) ? profile.nicknameTag : "";
+    return nickname && nicknameTag ? { nickname, nicknameTag } : { nickname: "", nicknameTag: "" };
 }
 
 const STAFF_ROLES = ["owner", "admin", "moderator"] as const;

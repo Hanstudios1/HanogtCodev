@@ -26,6 +26,7 @@ export const NAV_LABELS = {
     groups: { TR: "Gruplar", EN: "Groups", RU: "Группы", AZ: "Qruplar", ES: "Grupos", KZ: "Топтар", JP: "グループ", CN: "群组", KR: "그룹", HI: "समूह", DE: "Gruppen", NG: "Groups", FR: "Groupes", BE: "Groepen", NL: "Groepen", PL: "Grupy", NO: "Grupper", FI: "Ryhmät", SV: "Grupper", EL: "Ομάδες", AR: "المجموعات", PT: "Grupos", IT: "Gruppi", UK: "Групи", ID: "Grup", VI: "Nhóm", CS: "Skupiny", RO: "Grupuri", HU: "Csoportok", UZ: "Guruhlar" },
     friends: { TR: "Arkadaşlar", EN: "Friends", RU: "Друзья", AZ: "Dostlar", ES: "Amigos", KZ: "Достар", JP: "フレンド", CN: "好友", KR: "친구", HI: "मित्र", DE: "Freunde", NG: "Padi dem", FR: "Amis", BE: "Vrienden", NL: "Vrienden", PL: "Znajomi", NO: "Venner", FI: "Ystävät", SV: "Vänner", EL: "Φίλοι", AR: "الأصدقاء", PT: "Amigos", IT: "Amici", UK: "Друзі", ID: "Teman", VI: "Bạn bè", CS: "Přátelé", RO: "Prieteni", HU: "Ismerősök", UZ: "Doʻstlar" },
     messages: { TR: "Mesajlar", EN: "Messages", RU: "Сообщения", AZ: "Mesajlar", ES: "Mensajes", KZ: "Хабарламалар", JP: "メッセージ", CN: "消息", KR: "메시지", HI: "संदेश", DE: "Nachrichten", NG: "Messages", FR: "Messages", BE: "Berichten", NL: "Berichten", PL: "Wiadomości", NO: "Meldinger", FI: "Viestit", SV: "Meddelanden", EL: "Μηνύματα", AR: "الرسائل", PT: "Mensagens", IT: "Messaggi", UK: "Повідомлення", ID: "Pesan", VI: "Tin nhắn", CS: "Zprávy", RO: "Mesaje", HU: "Üzenetek", UZ: "Xabarlar" },
+    social: { TR: "Hanogt Social", EN: "Hanogt Social" },
     docs: { TR: "Motor Belgeleri", EN: "Engine Docs", RU: "Документация движка", AZ: "Mühərrik sənədləri", ES: "Documentación del motor", KZ: "Қозғалтқыш құжаттары", JP: "エンジンドキュメント", CN: "引擎文档", KR: "엔진 문서", HI: "इंजन दस्तावेज़", DE: "Engine-Doku", NG: "Engine Docs", FR: "Docs du moteur", BE: "Engine-docs", NL: "Engine-docs", PL: "Dokumentacja silnika", NO: "Motordokumentasjon", FI: "Moottorin ohjeet", SV: "Motordokumentation", EL: "Τεκμηρίωση μηχανής", AR: "وثائق المحرك", PT: "Documentação do motor", IT: "Documentazione del motore", UK: "Документація рушія", ID: "Dokumentasi mesin", VI: "Tài liệu công cụ", CS: "Dokumentace enginu", RO: "Documentația motorului", HU: "Motordokumentáció", UZ: "Dvigatel hujjatlari" },
     whatsNew: { TR: "Yenilikler", EN: "What's new", RU: "Что нового", AZ: "Yeniliklər", ES: "Novedades", KZ: "Жаңалықтар", JP: "新機能", CN: "更新内容", KR: "새로운 기능", HI: "नया क्या है", DE: "Neuigkeiten", NG: "Wetin new", FR: "Nouveautés", BE: "Wat is er nieuw", NL: "Wat is er nieuw", PL: "Co nowego", NO: "Nyheter i appen", FI: "Uutta", SV: "Nyheter i appen", EL: "Τι νέο υπάρχει", AR: "ما الجديد", PT: "Novidades", IT: "Novità", UK: "Що нового", ID: "Yang baru", VI: "Có gì mới", CS: "Co je nového", RO: "Noutăți", HU: "Újdonságok", UZ: "Nima yangi" },
     menu: { TR: "Menü", EN: "Menu", RU: "Меню", AZ: "Menyu", ES: "Menú", KZ: "Мәзір", JP: "メニュー", CN: "菜单", KR: "메뉴", HI: "मेनू", DE: "Menü", NG: "Menu", FR: "Menu", BE: "Menu", NL: "Menu", PL: "Menu", NO: "Meny", FI: "Valikko", SV: "Meny", EL: "Μενού", AR: "القائمة", PT: "Menu", IT: "Menu", UK: "Меню", ID: "Menu", VI: "Menu", CS: "Nabídka", RO: "Meniu", HU: "Menü", UZ: "Menyu" },
@@ -48,8 +49,13 @@ export const PRIMARY_NAV: NavItem[] = [
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
-    { href: "/groups", icon: "groups", label: NAV_LABELS.groups, auth: true, descKey: "nd_groups" },
-    { href: "/friends", icon: "friends", label: NAV_LABELS.friends, auth: true, descKey: "nd_friends" },
+    {
+        href: "/social",
+        icon: "messages",
+        label: NAV_LABELS.social,
+        auth: true,
+        desc: { TR: "Arkadaşlar, direkt mesajlar ve gruplar tek yerde", EN: "Friends, direct messages and groups in one place" },
+    },
     { href: "/security", icon: "security", label: NAV_LABELS.security, descKey: "nd_security" },
     { href: "/game-engine/docs", icon: "docs", label: NAV_LABELS.docs, descKey: "nd_docs" },
 ];

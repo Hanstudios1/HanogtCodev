@@ -8,6 +8,7 @@
  * group (README, rules, task list, template files and the welcome message).
  */
 import type { Copy } from "@/lib/i18n";
+import type { PresenceStatus } from "@/lib/presence";
 
 /* -------------------------------------------------------------------------- */
 /* Limits and validation                                                      */
@@ -248,9 +249,17 @@ export function isInviteLinkMaxUses(value: unknown): value is InviteLinkMaxUses 
     return typeof value === "number" && (INVITE_LINK_MAX_USES as readonly number[]).includes(value);
 }
 
-/** Canonical share URL of an invite link. */
+/** Canonical share URL of an invite link (older /groups/join/<token> links redirect here). */
 export function inviteLinkPath(token: string) {
-    return `/groups/join/${token}`;
+    return `/social/join/${token}`;
+}
+
+/** Accepts a full invite URL (new or old path), a `?join=` URL or the bare 22-character code. */
+export function extractInviteToken(value: string) {
+    const trimmed = value.trim();
+    const match = /(?:\/(?:social|groups)\/join\/|[?&]join=)([A-Za-z0-9_-]{22})(?![A-Za-z0-9_-])/.exec(trimmed);
+    if (match) return match[1];
+    return INVITE_TOKEN_PATTERN.test(trimmed) ? trimmed : null;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -486,8 +495,14 @@ export type GroupMemberInfo = {
     email: string;
     username: string;
     avatarUrl: string | null;
+    /** `nickname#tag` lets members send each other friend requests. */
+    nickname: string;
+    nicknameTag: string;
     customStatus: string;
     statusEmoji: string;
+    /** effectiveStatus() of the public profile when the detail was read. */
+    status: PresenceStatus;
+    /** status !== "offline" (kept for older readers). */
     online: boolean;
     lastSeenAt: string | null;
     role: GroupRole;

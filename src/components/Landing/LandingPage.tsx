@@ -109,8 +109,7 @@ const QUICK_START: Array<{ href: string; icon: LucideIcon; gradient: string; tit
         text: { TR: "Hanogt Engine V3: tilemap, arayüz ve animasyon.", EN: "Hanogt Engine V3: tilemaps, UI and animation." },
     },
     {
-        // Becomes /social once Hanogt Social replaces the separate Groups and Friends pages.
-        href: "/groups",
+        href: "/social",
         icon: UsersRound,
         gradient: "from-emerald-400 to-teal-500",
         title: { TR: "Topluluğa katıl", EN: "Join the community" },

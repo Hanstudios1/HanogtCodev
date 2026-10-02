@@ -33,8 +33,7 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
         {
             title: NAV_LABELS.community,
             links: [
-                { href: "/groups", label: NAV_LABELS.groups },
-                { href: "/friends", label: NAV_LABELS.friends },
+                { href: "/social", label: NAV_LABELS.social },
                 { href: "/feedback", label: t("feedback_link") },
                 { href: "/about", label: t("about_link") },
             ],

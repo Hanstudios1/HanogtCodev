@@ -23,6 +23,12 @@ export type WorkspaceContextValue = {
     banned: GroupDetailResponse["banned"];
     /** Wall clock that ticks every 30 s for relative times. */
     now: number;
+    /**
+     * The browser can use Firestore/Storage directly (Firebase bridge ready).
+     * Otherwise chat goes through /api/groups/chat and files and voice
+     * messages are unavailable.
+     */
+    live: boolean;
     notify: (text: string, tone?: ToastTone) => void;
     confirm: (options: ConfirmOptions) => Promise<boolean>;
     errorText: (error: unknown, fallback?: Copy) => string;

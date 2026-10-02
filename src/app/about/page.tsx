@@ -132,12 +132,11 @@ const PRODUCTS: Product[] = [
     },
     {
         icon: MessagesSquare,
-        // Becomes /social once Hanogt Social replaces the separate Groups and Friends pages.
-        href: "/groups",
+        href: "/social",
         title: { TR: "Hanogt Social", EN: "Hanogt Social" },
         text: {
-            TR: "Arkadaşlar, gruplar ve mesajlar tek yerde. Şu anda yayına alınıyor.",
-            EN: "Friends, groups and messages in one place. It's launching right now.",
+            TR: "Arkadaşlar, gruplar ve mesajlar Discord benzeri tek bir yerde; durumunuz herkese canlı görünür.",
+            EN: "Friends, groups and messages together in one Discord-like place, with live status for everyone.",
         },
         gradient: "from-emerald-500 to-teal-500",
         badge: { TR: "Yeni", EN: "New" },

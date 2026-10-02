@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import { useRawSession } from "@/components/Provider";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { GROUP_COLORS, getGroupTemplate, inviteLinkPath, isInviteToken, toMillis, type GroupJoinPreview } from "@/lib/groups";
+import { groupHref } from "@/lib/social/model";
 import { GroupRequestError, groupsApi, useGroupErrorText } from "./api";
 import { Spinner, UserAvatar, cx, relativeTime } from "./ui";
 
@@ -31,7 +32,7 @@ const C = {
     signUp: { TR: "Hesap oluştur", EN: "Create an account" },
     invalidTitle: { TR: "Davet bağlantısı geçersiz", EN: "Invalid invite link" },
     unavailableTitle: { TR: "Bu davet kullanılamıyor", EN: "This invitation can't be used" },
-    backToGroups: { TR: "Gruplarıma dön", EN: "Back to my groups" },
+    backToGroups: { TR: "Hanogt Social'a dön", EN: "Back to Hanogt Social" },
     loading: { TR: "Davet yükleniyor", EN: "Loading the invitation" },
     joinFailed: { TR: "Gruba katılınamadı.", EN: "Couldn't join the group." },
 } satisfies Record<string, Copy>;
@@ -66,7 +67,7 @@ export default function JoinGroupView({ token }: { token: string }) {
         setJoinError("");
         try {
             const result = await groupsApi.join(token);
-            router.push(`/groups/${result.groupId}`);
+            router.push(groupHref(result.groupId));
         } catch (error) {
             setJoinError(errorText(error, C.joinFailed));
             setBusy(false);
@@ -121,7 +122,7 @@ export default function JoinGroupView({ token }: { token: string }) {
                     {!preview.banned && preview.full && !preview.alreadyMember && <p className="flex items-center justify-center gap-2 rounded-2xl bg-amber-500/10 px-4 py-3 text-center text-sm font-semibold text-amber-800 dark:text-amber-300"><AlertTriangle className="h-4 w-4" aria-hidden />{tx(C.full)}</p>}
                     {joinError && <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-center text-sm text-red-700 dark:text-red-300" role="alert">{joinError}</p>}
                     {preview.alreadyMember ? (
-                        <Link href={`/groups/${preview.groupId}`} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-5 py-3.5 font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">{tx(C.open)}<ArrowRight className="h-5 w-5 rtl:rotate-180" aria-hidden /></Link>
+                        <Link href={groupHref(preview.groupId)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-5 py-3.5 font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">{tx(C.open)}<ArrowRight className="h-5 w-5 rtl:rotate-180" aria-hidden /></Link>
                     ) : (
                         <button type="button" onClick={() => void join()} disabled={busy || blocked} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3.5 font-bold text-white shadow-lg shadow-indigo-600/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
                             {busy ? <Spinner className="h-5 w-5" /> : <UserPlus className="h-5 w-5" aria-hidden />}{busy ? tx(C.joining) : tx(C.join)}
@@ -142,7 +143,7 @@ export default function JoinGroupView({ token }: { token: string }) {
                 <motion.div initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.35, ease: "easeOut" }} className="relative w-full max-w-md overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-white/10 dark:bg-zinc-900">
                     {body}
                 </motion.div>
-                <Link href="/groups" className="absolute bottom-6 text-sm font-semibold text-zinc-500 underline-offset-4 hover:text-indigo-600 hover:underline dark:text-zinc-400 dark:hover:text-indigo-300">{tx(C.backToGroups)}</Link>
+                <Link href="/social" className="absolute bottom-6 text-sm font-semibold text-zinc-500 underline-offset-4 hover:text-indigo-600 hover:underline dark:text-zinc-400 dark:hover:text-indigo-300">{tx(C.backToGroups)}</Link>
             </main>
         </div>
     );

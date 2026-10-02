@@ -223,7 +223,7 @@ export default function InviteDialog({ open, onClose, onChanged }: { open: boole
                             <div className="flex flex-col items-center rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center dark:border-zinc-700">
                                 <UsersRound className="h-8 w-8 text-zinc-400" aria-hidden />
                                 <p className="mt-3 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">{tx(C.noFriends)}</p>
-                                <Link href="/friends" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white"><UserPlus className="h-4 w-4" aria-hidden />{tx(C.findFriends)}</Link>
+                                <Link href="/social" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white"><UserPlus className="h-4 w-4" aria-hidden />{tx(C.findFriends)}</Link>
                             </div>
                         ) : friends.length === 0 ? (
                             <p className="py-6 text-center text-sm text-zinc-500">{tx(C.noMatch)}</p>

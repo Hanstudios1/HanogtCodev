@@ -7,6 +7,7 @@ import { ArrowDown, AtSign, ChevronUp, Hash, MessageSquare, Mic, MicOff, Pin, Pi
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { db, storage } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { markGroupRead } from "@/lib/social/local-state";
 import {
     GROUP_LIMITS,
     GROUP_SYSTEM_EVENT_COPY,
@@ -17,7 +18,7 @@ import {
     type GroupReactionKey,
 } from "@/lib/groups";
 import { groupsApi } from "../api";
-import { Spinner, UI_COPY, UserAvatar, clockTime, copyText, cx, dayKey, lastReadKey, storageSet } from "../ui";
+import { Spinner, UI_COPY, UserAvatar, clockTime, copyText, cx, dayKey } from "../ui";
 import { useWorkspace } from "./context";
 import { useVoicePlayer, useVoiceRecorder } from "./hooks";
 import MessageItem, { RichText, type ReactionOverrides } from "./MessageItem";
@@ -40,6 +41,8 @@ const C = {
     noResults: { TR: "Eşleşen mesaj yok.", EN: "No matching messages." },
     placeholder: { TR: "Mesaj yaz… (@ bahset, # konu)", EN: "Write a message… (@ mention, # topic)" },
     placeholderTopic: { TR: "#{topic} konusuna yaz…", EN: "Write in #{topic}…" },
+    placeholderChannel: { TR: "#{channel} kanalına mesaj gönder", EN: "Message #{channel}" },
+    micOff: { TR: "Mikrofonun kapalı (sol alttaki panelden açabilirsin)", EN: "Your microphone is off (turn it on in the panel at the bottom left)" },
     composerLabel: { TR: "Mesaj", EN: "Message" },
     send: { TR: "Gönder", EN: "Send" },
     record: { TR: "Sesli mesaj kaydet", EN: "Record a voice message" },
@@ -67,6 +70,7 @@ const C = {
     notLoaded: { TR: "Bu mesaj sohbette yüklü değil; içeriğini sabitlenenler listesinden okuyabilirsin.", EN: "This message isn't loaded in the chat; you can read it in the pinned list." },
     voiceMessage: { TR: "🎤 Sesli mesaj", EN: "🎤 Voice message" },
     missing: { TR: "Bu mesaj silinmiş.", EN: "This message was deleted." },
+    unavailable: { TR: "Bu mesaj şu anda yüklenemiyor.", EN: "This message can't be loaded right now." },
     chars: { TR: "{count}/{max}", EN: "{count}/{max}" },
 } satisfies Record<string, Copy>;
 
@@ -117,16 +121,39 @@ type ChatPanelProps = {
     focusNonce: number;
     jumpTarget: { id: string; nonce: number } | null;
     onShowPinned: () => void;
+    /**
+     * false: embedded as a Hanogt Social channel; the screen around it shows
+     * the title, search and channels, and passes `topic` and `search` in.
+     */
+    chrome?: boolean;
+    /** Controlled topic filter (the selected #channel); the panel keeps its own when omitted. */
+    topic?: string;
+    onTopicChange?: (topic: string) => void;
+    /** Controlled search text (with chrome = false). */
+    search?: string;
+    /** Name of the main channel for the composer placeholder (e.g. "genel"). */
+    channelName?: string;
+    /** Called after a message, reaction or deletion went through the server (the list then re-reads at once). */
+    onServerChange?: () => void;
+    /** The microphone is switched off in Hanogt Social. */
+    micOff?: boolean;
 };
 
-export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, onShowPinned }: ChatPanelProps) {
+export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, onShowPinned, chrome = true, topic: topicProp, onTopicChange, search: searchProp, channelName, onServerChange, micOff = false }: ChatPanelProps) {
     const { tx, locale, language } = useI18n();
-    const { groupId, group, me, members, usernames, now, notify, confirm, errorText } = useWorkspace();
+    const { groupId, group, me, members, usernames, now, notify, confirm, errorText, live } = useWorkspace();
     const [draft, setDraft] = useState("");
     const [sending, setSending] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const [topic, setTopic] = useState("");
+    const [ownSearch, setSearch] = useState("");
+    const [ownTopic, setOwnTopic] = useState("");
+    const topic = topicProp ?? ownTopic;
+    const search = searchProp ?? ownSearch;
+    const setTopic = useCallback((value: string | ((current: string) => string)) => {
+        const next = typeof value === "function" ? value(topicProp ?? ownTopic) : value;
+        if (onTopicChange) onTopicChange(next);
+        else setOwnTopic(next);
+    }, [onTopicChange, ownTopic, topicProp]);
     const [activeMessage, setActiveMessage] = useState("");
     const [overrides, setOverrides] = useState<Record<string, boolean>>({});
     const [mention, setMention] = useState<{ query: string; start: number; index: number } | null>(null);
@@ -207,10 +234,19 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         }
     }, [dividerId, loaded, me.email, messages, scrollToBottom, visible]);
 
-    // Having the group open counts as reading it (unread badges on the groups page use this).
+    // Having the chat on screen counts as reading it (the unread badges in Hanogt Social use this).
     useEffect(() => {
-        if (latestTime) storageSet(lastReadKey(groupId), String(latestTime));
-    }, [groupId, latestTime]);
+        if (!latestTime || !visible) return;
+        if (document.visibilityState === "visible") {
+            markGroupRead(groupId, latestTime);
+            return;
+        }
+        const onVisible = () => {
+            if (document.visibilityState === "visible") markGroupRead(groupId, latestTime);
+        };
+        document.addEventListener("visibilitychange", onVisible);
+        return () => document.removeEventListener("visibilitychange", onVisible);
+    }, [groupId, latestTime, visible]);
 
     useEffect(() => {
         if (focusNonce) textareaRef.current?.focus();
@@ -281,14 +317,19 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         setMention(null);
         onStopTyping();
         try {
-            await addDoc(collection(db, "groups", groupId, "messages"), {
-                fromEmail: me.email,
-                author: me.username,
-                authorAvatar: me.avatarUrl || null,
-                type: "text",
-                text,
-                createdAt: serverTimestamp(),
-            });
+            if (live) {
+                await addDoc(collection(db, "groups", groupId, "messages"), {
+                    fromEmail: me.email,
+                    author: me.username,
+                    authorAvatar: me.avatarUrl || null,
+                    type: "text",
+                    text,
+                    createdAt: serverTimestamp(),
+                });
+            } else {
+                await groupsApi.chat({ action: "send", groupId, text });
+                onServerChange?.();
+            }
             atBottomRef.current = true;
         } catch {
             setDraft(text);
@@ -329,6 +370,19 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         onError: (code) => notify(errorText(code), "error"),
     });
 
+    const startRecording = () => {
+        // Voice messages live in Firebase Storage: without the browser's connection they can't be sent.
+        if (!live) {
+            notify(errorText("offline"), "error");
+            return;
+        }
+        if (micOff) {
+            notify(tx(C.micOff), "info");
+            return;
+        }
+        void recorder.start();
+    };
+
     const onKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
         if (mention && mentionOptions.length) {
             if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -362,6 +416,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         setOverrides((current) => ({ ...current, [key]: !(current[key] ?? actual) }));
         try {
             await groupsApi.chat({ action: "react", groupId, messageId: message.id, reaction });
+            if (!live) onServerChange?.();
             window.setTimeout(() => setOverrides((current) => {
                 const next = { ...current };
                 delete next[key];
@@ -375,18 +430,19 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             });
             notify(errorText(error), "error");
         }
-    }, [errorText, groupId, me.key, notify]);
+    }, [errorText, groupId, live, me.key, notify, onServerChange]);
 
     const removeMessage = useCallback(async (message: GroupChatMessage) => {
         const approved = await confirm({ title: tx(C.deleteTitle), body: tx(C.deleteBody), confirmLabel: tx(C.deleteConfirm), tone: "danger" });
         if (!approved) return;
         try {
             await groupsApi.chat({ action: "delete-message", groupId, messageId: message.id });
+            if (!live) onServerChange?.();
             notify(tx(C.deleted), "success");
         } catch (error) {
             notify(errorText(error), "error");
         }
-    }, [confirm, errorText, groupId, notify, tx]);
+    }, [confirm, errorText, groupId, live, notify, onServerChange, tx]);
 
     const quote = useCallback((message: GroupChatMessage) => {
         const excerpt = message.text.replace(/\s+/g, " ").trim().slice(0, 140);
@@ -401,11 +457,17 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
 
     const activate = useCallback((messageId: string) => setActiveMessage((current) => (current === messageId ? "" : messageId)), []);
     const togglePin = useCallback((message: GroupChatMessage) => void pinToggle(message.id), [pinToggle]);
-    const toggleVoice = useCallback((message: GroupChatMessage) => void toggleVoicePlayback(message), [toggleVoicePlayback]);
+    const toggleVoice = useCallback((message: GroupChatMessage) => {
+        if (!live) {
+            notify(errorText("offline"), "error");
+            return;
+        }
+        void toggleVoicePlayback(message);
+    }, [errorText, live, notify, toggleVoicePlayback]);
     const onReact = useCallback((message: GroupChatMessage, reaction: GroupReactionKey) => void react(message, reaction), [react]);
     const onDelete = useCallback((message: GroupChatMessage) => void removeMessage(message), [removeMessage]);
     const onCopy = useCallback((message: GroupChatMessage) => void copyMessage(message), [copyMessage]);
-    const onTopic = useCallback((value: string) => setTopic((current) => (current === value ? "" : value)), []);
+    const onTopic = useCallback((value: string) => setTopic((current) => (current === value ? "" : value)), [setTopic]);
 
     const loadOlder = () => {
         const element = containerRef.current;
@@ -466,7 +528,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
 
     return (
         <div className="flex h-full min-h-0 w-full flex-col" onKeyDown={(event) => { if (event.key === "Escape") setActiveMessage(""); }}>
-            <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 dark:border-white/10">
+            {chrome && <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 dark:border-white/10">
                 {searchOpen ? (
                     <label className="relative flex flex-1 items-center">
                         <span className="sr-only">{tx(C.search)}</span>
@@ -482,8 +544,8 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                         <button type="button" onClick={onShowPinned} className="inline-flex items-center gap-1 rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label={tx(C.pinnedTitle)} title={tx(C.pinnedTitle)}><Pin className="h-4 w-4" aria-hidden />{pinnedIds.length > 0 && <span className="text-xs font-bold tabular-nums">{pinnedIds.length}</span>}</button>
                     </>
                 )}
-            </div>
-            {group.topics.length > 0 && (
+            </div>}
+            {chrome && group.topics.length > 0 && (
                 <div className="flex gap-1.5 overflow-x-auto border-b border-zinc-200 px-3 py-2 dark:border-white/10" role="group" aria-label={tx(C.topicFilter)}>
                     <button type="button" onClick={() => setTopic("")} aria-pressed={!topic} className={cx("shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold transition", !topic ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300")}>{tx(C.allTopics)}</button>
                     {group.topics.map((entry) => (
@@ -546,7 +608,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                                 </motion.ul>
                             )}
                         </AnimatePresence>
-                        {topic && (
+                        {topic && chrome && (
                             <div className="mb-2 flex items-center gap-1.5">
                                 <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-600 px-2.5 py-0.5 text-xs font-semibold text-white"><Hash className="h-3 w-3" aria-hidden />{topic}<button type="button" onClick={() => setTopic("")} className="ms-0.5 rounded-full hover:bg-white/20" aria-label={tx(C.allTopics)}><X className="h-3 w-3" aria-hidden /></button></span>
                             </div>
@@ -565,7 +627,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                                 onKeyDown={onKeyDown}
                                 onClick={(event) => updateMention(event.currentTarget.value, event.currentTarget.selectionStart ?? 0)}
                                 onBlur={() => window.setTimeout(() => setMention(null), 120)}
-                                placeholder={topic ? tx(C.placeholderTopic, { topic }) : tx(C.placeholder)}
+                                placeholder={topic ? (chrome ? tx(C.placeholderTopic, { topic }) : tx(C.placeholderChannel, { channel: topic })) : channelName ? tx(C.placeholderChannel, { channel: channelName }) : tx(C.placeholder)}
                                 aria-label={tx(C.composerLabel)}
                                 className="max-h-[168px] min-h-11 min-w-0 flex-1 resize-none rounded-2xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm leading-6 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-zinc-950 dark:focus:bg-zinc-950"
                             />
@@ -574,8 +636,8 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                                     {sending ? <Spinner className="h-5 w-5" /> : <Send className="h-5 w-5 rtl:-scale-x-100" aria-hidden />}
                                 </button>
                             ) : (
-                                <button type="button" onClick={() => void recorder.start()} className="rounded-2xl bg-zinc-100 p-3 text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white" aria-label={tx(C.record)} title={tx(C.record)}>
-                                    <Mic className="h-5 w-5" aria-hidden />
+                                <button type="button" onClick={startRecording} aria-disabled={!live || micOff || undefined} className={cx("rounded-2xl bg-zinc-100 p-3 text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white", (!live || micOff) && "opacity-50")} aria-label={micOff ? tx(C.micOff) : tx(C.record)} title={micOff ? tx(C.micOff) : tx(C.record)}>
+                                    {micOff ? <MicOff className="h-5 w-5" aria-hidden /> : <Mic className="h-5 w-5" aria-hidden />}
                                 </button>
                             )}
                         </div>
@@ -588,16 +650,16 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
 }
 
 /** Pinned messages (newest pin first); messages outside the loaded window are fetched one by one. */
-export function PinnedPanel({ messages, onJump }: { messages: GroupChatMessage[]; onJump: (messageId: string) => void }) {
+export function PinnedPanel({ messages, onJump, onClose }: { messages: GroupChatMessage[]; onJump: (messageId: string) => void; onClose?: () => void }) {
     const { tx, locale } = useI18n();
-    const { groupId, group, isManager, memberByEmail, now } = useWorkspace();
+    const { groupId, group, isManager, memberByEmail, now, live } = useWorkspace();
     const pinToggle = usePinToggle();
     const [extra, setExtra] = useState<Record<string, GroupChatMessage | null>>({});
     const byId = useMemo(() => new Map(messages.map((message) => [message.id, message])), [messages]);
     const missingKey = group.pinnedMessageIds.filter((id) => !byId.has(id) && !(id in extra)).join(",");
 
     useEffect(() => {
-        if (!missingKey) return;
+        if (!missingKey || !live) return;
         let active = true;
         Promise.all(missingKey.split(",").map(async (id) => {
             const snapshot = await getDoc(doc(db, "groups", groupId, "messages", id)).catch(() => null);
@@ -606,14 +668,16 @@ export function PinnedPanel({ messages, onJump }: { messages: GroupChatMessage[]
             if (active) setExtra((current) => ({ ...current, ...Object.fromEntries(entries) }));
         });
         return () => { active = false; };
-    }, [groupId, missingKey]);
+    }, [groupId, live, missingKey]);
 
     const pinned = group.pinnedMessageIds.map((id) => ({ id, message: byId.get(id) ?? extra[id] ?? null, loaded: byId.has(id) }));
 
     return (
         <div className="flex h-full min-h-0 w-full flex-col">
             <div className="border-b border-zinc-200 px-4 py-3 dark:border-white/10">
-                <h2 className="flex items-center gap-2 text-sm font-black"><Pin className="h-4 w-4 text-amber-500" aria-hidden />{tx(C.pinnedTitle)}<span className="text-xs font-semibold text-zinc-400">{pinned.length}/{GROUP_LIMITS.pinnedMax}</span></h2>
+                <h2 className="flex items-center gap-2 text-sm font-black"><Pin className="h-4 w-4 text-amber-500" aria-hidden />{tx(C.pinnedTitle)}<span className="text-xs font-semibold text-zinc-400">{pinned.length}/{GROUP_LIMITS.pinnedMax}</span>
+                    {onClose && <button type="button" onClick={onClose} className="ms-auto rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label={tx(UI_COPY.close)}><X className="h-4 w-4" aria-hidden /></button>}
+                </h2>
             </div>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
                 {!pinned.length && (
@@ -639,7 +703,7 @@ export function PinnedPanel({ messages, onJump }: { messages: GroupChatMessage[]
                                     {message.type === "voice" ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{tx(C.voiceMessage)}</p> : <RichText className="mt-1.5 line-clamp-6 text-zinc-700 dark:text-zinc-200" text={welcome || message.text} needle="" onTopic={() => undefined} />}
                                 </>
                             ) : (
-                                <p className="text-sm italic text-zinc-500">{id in extra ? tx(C.missing) : <Spinner className="h-4 w-4" />}</p>
+                                <p className="text-sm italic text-zinc-500">{id in extra ? tx(C.missing) : !live ? tx(C.unavailable) : <Spinner className="h-4 w-4" />}</p>
                             )}
                             <div className="mt-2 flex items-center justify-end gap-1">
                                 {message && inChat && <button type="button" onClick={() => onJump(id)} className="rounded-lg px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-500/10 dark:text-indigo-300">{tx(C.jumpTo)}</button>}

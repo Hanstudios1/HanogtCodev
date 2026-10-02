@@ -363,4 +363,4 @@ export function storageSet(key: string, value: string) {
     }
 }
 
-export const lastReadKey = (groupId: string) => `hanogt_group_read_${groupId}`;
+export { groupReadKey as lastReadKey } from "@/lib/social/local-state";

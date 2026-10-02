@@ -16,7 +16,7 @@ export type GroupClientErrorCode =
     | GroupErrorCode
     | "network" | "files" | "chat" | "save_failed" | "file_deleted" | "file_too_large" | "file_exists" | "file_name"
     | "files_limit" | "voice_too_large" | "voice_failed" | "voice_unavailable" | "mic_denied" | "zip_failed"
-    | "editor_too_large" | "clipboard_failed" | "message_failed";
+    | "editor_too_large" | "clipboard_failed" | "message_failed" | "offline";
 
 export class GroupRequestError extends Error {
     constructor(
@@ -90,6 +90,7 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     editor_too_large: { TR: "Dosyalar Düzenleyici'ye aktarmak için çok büyük. Tek bir dosya açmayı deneyin.", EN: "The files are too large to open in the Editor. Try opening a single file." },
     clipboard_failed: { TR: "Panoya kopyalanamadı.", EN: "Couldn't copy to the clipboard." },
     message_failed: { TR: "Mesaj gönderilemedi.", EN: "The message couldn't be sent." },
+    offline: { TR: "Bu özellik için bulut bağlantısı gerekiyor; bağlantı kurulunca tekrar dene.", EN: "This needs the cloud connection; try again once it's back." },
 };
 
 function isClientCode(value: unknown): value is GroupClientErrorCode {
