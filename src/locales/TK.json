@@ -531,7 +531,7 @@
   "gt_open": "Kitaby aç",
   "gt_news": "Habarlar nädip işleýär?",
   "gt_preview": "Gollanma kitabyny öňünden gör",
-  "gt_page": "24-den 1-nji sahypa",
+  "gt_page": "{total}-den 1-nji sahypa",
   "gt_welcome": "Hoş geldiň, maceraperest!",
   "gt_intro": "Bu kitap Hanogt Codev dünýäsiniň kartasydyr. Kod ýaz, oýun gur, habarlary yzarla. Her bölüm bir ýumuşdyr.",
   "gt_ch1": "1-nji bölüm: Agza bol",

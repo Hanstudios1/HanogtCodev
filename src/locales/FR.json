@@ -531,7 +531,7 @@
   "gt_open": "Ouvrir le livre",
   "gt_news": "Comment fonctionne l'actu",
   "gt_preview": "Aperçu du livre-guide",
-  "gt_page": "Page 1 sur 24",
+  "gt_page": "Page 1 sur {total}",
   "gt_welcome": "Bienvenue, aventurier !",
   "gt_intro": "Ce livre est la carte du monde de Hanogt Codev. Code, crée des jeux, suis l'actu. Chaque chapitre est une quête.",
   "gt_ch1": "Chapitre 1 : Inscription",

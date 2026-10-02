@@ -203,9 +203,9 @@
       "src/app/about/page.tsx"
     ]
   },
-  "zyl8plldm7": {
-    "en": "Publish the games you make with the engine; play, like and remix the community's games.",
-    "tr": "Motorla yaptığın oyunları yayınla; topluluğun oyunlarını oyna, beğen ve remiksle.",
+  "120hhbyvgbt": {
+    "en": "Publish the games you make with the engine; play and like the community's games and remix those that allow it.",
+    "tr": "Motorla yaptığın oyunları yayınla; topluluğun oyunlarını oyna, beğen ve izin verilenleri remiksle.",
     "files": [
       "src/app/about/page.tsx"
     ]
@@ -278,6 +278,7 @@
     "tr": "Ajan modu",
     "files": [
       "src/app/about/page.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx"
     ]
   },
@@ -286,6 +287,7 @@
     "tr": "Hanogt Social",
     "files": [
       "src/app/about/page.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/auth/AuthShell.tsx",
       "src/lib/ai/knowledge.ts",
       "src/lib/nav.ts"
@@ -411,6 +413,7 @@
       "src/app/dashboard/page.tsx",
       "src/components/Admin/OverviewSection.tsx",
       "src/components/Admin/UsersSection.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/Landing/LandingPage.tsx"
     ]
   },
@@ -423,6 +426,7 @@
       "src/app/dashboard/page.tsx",
       "src/components/Admin/OverviewSection.tsx",
       "src/components/Admin/UsersSection.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/Landing/LandingPage.tsx"
     ]
   },
@@ -995,7 +999,8 @@
     "files": [
       "src/app/account-settings/page.tsx",
       "src/app/login/page.tsx",
-      "src/components/Account/TwoFactorSettings.tsx"
+      "src/components/Account/TwoFactorSettings.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1n7j2pocv27": {
@@ -1449,6 +1454,7 @@
     "files": [
       "src/app/account-settings/page.tsx",
       "src/components/Admin/UsersSection.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/Social/GroupSidebar.tsx"
     ]
   },
@@ -3594,6 +3600,7 @@
     "tr": "Bul",
     "files": [
       "src/app/editor/page.tsx",
+      "src/components/Admin/PlansSection.tsx",
       "src/components/Editor/ShortcutsDialog.tsx"
     ]
   },
@@ -4405,6 +4412,7 @@
       "src/components/ChangelogModal.tsx",
       "src/components/Editor/CollabChat.tsx",
       "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/News/CommentsDrawer.tsx",
@@ -4747,7 +4755,8 @@
     "en": "Questions",
     "tr": "Sorular",
     "files": [
-      "src/app/feedback/page.tsx"
+      "src/app/feedback/page.tsx",
+      "src/app/plans/page.tsx"
     ]
   },
   "2l0hx5jwy5": {
@@ -5987,6 +5996,239 @@
       "src/app/media/page.tsx"
     ]
   },
+  "l7ctvsopzx": {
+    "en": "Coming soon",
+    "tr": "Yakında",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "rt9jhdcvnb": {
+    "en": "Hanogt Codev Plans",
+    "tr": "Hanogt Codev Planları",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1li0gj6yfvr": {
+    "en": "Hanogt Codev stays free. Plus and Pro are being prepared for people who want more; no payments are taken right now and no card details are asked for.",
+    "tr": "Hanogt Codev ücretsiz kalacak. Daha fazlasını isteyenler için Plus ve Pro hazırlanıyor; şu anda ödeme alınmıyor ve hiçbir kart bilgisi istenmiyor.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "23dpfwxhous": {
+    "en": "Your plan: {plan}",
+    "tr": "Planın: {plan}",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "emtd6qb77p": {
+    "en": "Assigned by the Hanogt team",
+    "tr": "Hanogt ekibi tarafından tanımlandı",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "2gan3i8dpmm": {
+    "en": "until {date}",
+    "tr": "{date} tarihine kadar",
+    "files": [
+      "src/app/plans/page.tsx",
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1vwwq7ctbcs": {
+    "en": "Your plan benefits are switched off right now. If you think that's a mistake, open a support ticket.",
+    "tr": "Plan avantajların şu anda kullanıma kapalı. Bir sorun olduğunu düşünüyorsan destek talebi aç.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "25qelegorko": {
+    "en": "Hanogt AI today: {used} / {limit} messages",
+    "tr": "Bugün Hanogt AI: {used} / {limit} mesaj",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1t0nz3q3tp3": {
+    "en": "/month",
+    "tr": "/ay",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "pn8bi1ofx9": {
+    "en": "{price} per year",
+    "tr": "Yıllık {price}",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "v4w992l7bo": {
+    "en": "Price to be announced",
+    "tr": "Fiyat yakında açıklanacak",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "11u4qt13n0s": {
+    "en": "₺0",
+    "tr": "0 ₺",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "23jpjtpxbdh": {
+    "en": "forever",
+    "tr": "her zaman",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "11lpc6560pm": {
+    "en": "Your current plan",
+    "tr": "Şu anki planın",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "bup4p65h09": {
+    "en": "Start for free",
+    "tr": "Ücretsiz başla",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "24cuxfo6rju": {
+    "en": "Notify me when it opens",
+    "tr": "Açılınca haber ver",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1eym5z4j155": {
+    "en": "We'll let you know",
+    "tr": "Haber vereceğiz",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "yp3zaid381": {
+    "en": "Press again to stop the notification.",
+    "tr": "Bildirimden çıkmak için tekrar bas.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "26rql89fuzo": {
+    "en": "Sign in to get notified",
+    "tr": "Haber almak için giriş yap",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "11gk4l406wg": {
+    "en": "Planned",
+    "tr": "Planlanıyor",
+    "files": [
+      "src/app/plans/page.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "8fiv05hk7o": {
+    "en": "Most complete",
+    "tr": "En kapsamlı",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1inmuxo99hi": {
+    "en": "{percent}% off",
+    "tr": "%{percent} indirim",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1taj3enp7sm": {
+    "en": "That didn't work. Try again in a moment.",
+    "tr": "İşlem tamamlanamadı. Biraz sonra tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "70mbu265j2": {
+    "en": "Plan details can't be loaded right now; the prices below aren't final yet.",
+    "tr": "Plan bilgileri şu anda alınamıyor; aşağıdaki fiyatlar henüz kesinleşmedi.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1qt1o18noqb": {
+    "en": "When will payments start?",
+    "tr": "Ödeme ne zaman başlayacak?",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1qsnt64mnj7": {
+    "en": "There's no date yet. When plans open we'll announce it on this page, in the changelog and, if you pressed \"Notify me\", in your notifications. Until then nothing is charged.",
+    "tr": "Henüz bir tarih yok. Planlar açıldığında bu sayfada, güncelleme günlüğünde ve \"Açılınca haber ver\" dediysen bildirimlerinde duyuracağız. O güne kadar hiçbir ücret alınmaz.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1l18rarqm7l": {
+    "en": "Will the free plan go away?",
+    "tr": "Ücretsiz plan kalkacak mı?",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1lvionxet54": {
+    "en": "No. The code editor, the game engine, the Arcade, Media, Hanogt Social and Hanogt AI stay in the free plan.",
+    "tr": "Hayır. Kod editörü, oyun motoru, Arcade, Media, Hanogt Social ve Hanogt AI ücretsiz planda kalmaya devam edecek.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "gdun22bdld": {
+    "en": "I have a coupon code. What do I do?",
+    "tr": "Kupon kodum var, ne yapmalıyım?",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "819d2bih3m": {
+    "en": "Keep it; you'll be able to use it at checkout once plans open. A coupon's expiry date is given with the coupon.",
+    "tr": "Kodunu sakla; planlar açıldığında satın alma sırasında kullanabileceksin. Kuponların bitiş tarihi kupon verilirken belirtilir.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "15zkffi8c31": {
+    "en": "How did I get a plan?",
+    "tr": "Planım nasıl tanımlandı?",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "28fxgj119cn": {
+    "en": "The team can assign a plan by hand to testers, contributors and contest winners. Today, a plan's live benefits are a higher Hanogt AI limit and priority on support tickets.",
+    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Bugün planın canlı avantajı daha yüksek Hanogt AI sınırı ve destek taleplerinde önceliktir.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "20gumqiitck": {
+    "en": "Hanogt AI limits: Free {free}, Plus {plus}, Pro {pro} messages/day.",
+    "tr": "Hanogt AI sınırları: Ücretsiz {free}, Plus {plus}, Pro {pro} mesaj/gün.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
   "2ohz5hq33b": {
     "en": "We don't sell your data",
     "tr": "Verilerinizi satmayız",
@@ -6715,9 +6957,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "jnoatvp9cx": {
-    "en": "Publishing on the Arcade is a separate, explicit action of yours. A published game's title, description, cover image, displayed author name and avatar, the languages used, and its play and like counts are public; others can play and remix the game. Your e-mail address is not published.",
-    "tr": "Arcade'de yayımlamak sizin açık ve ayrı eyleminizle olur. Yayımlanan oyunun başlığı, açıklaması, kapak görseli, görünen yazar adı ve avatarı, kullanılan diller, oynanma ve beğeni sayıları herkese açıktır; oyun başkaları tarafından oynanabilir ve remikslenebilir. E-posta adresiniz yayımlanmaz.",
+  "1glu68s5plp": {
+    "en": "Publishing on the Arcade is a separate, explicit action of yours. A published game's title, description, cover image, displayed author name and avatar, the languages used, and its play and like counts are public; others can play the game and, if you turned on “Allow remixes”, remix it; a remix carries the original game's title and your displayed author name as attribution. Your e-mail address is not published.",
+    "tr": "Arcade'de yayımlamak sizin açık ve ayrı eyleminizle olur. Yayımlanan oyunun başlığı, açıklaması, kapak görseli, görünen yazar adı ve avatarı, kullanılan diller, oynanma ve beğeni sayıları herkese açıktır; oyun başkaları tarafından oynanabilir; “Remikslemelere izin ver” seçeneğini açtıysanız remikslenebilir ve remiks, orijinal oyunun adını ve görünen yazar adınızı atıf olarak taşır. E-posta adresiniz yayımlanmaz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6942,6 +7184,34 @@
   "x9g3qizyhq": {
     "en": "The feedback board, by contrast, is a public space: suggestions and questions you post there, with their comments and likes, are visible to all signed-in users. Your display name and profile photo are shown on your posts, and the records are linked to your e-mail address for ownership checks. Hanogt staff can update the status of board posts, reply as “Hanogt Team” and delete posts that break the rules.",
     "tr": "Geri bildirim panosu ise herkese açık bir alandır: buraya yazdığınız öneri ve sorular, yorumlar ve beğenilerle birlikte giriş yapmış tüm kullanıcılara görünür. Gönderilerde görünen adınız ve profil fotoğrafınız gösterilir; kayıtlar, sahiplik kontrolü için e-posta adresinizle ilişkilendirilir. Hanogt ekibi panodaki gönderilerin durumunu güncelleyebilir, “Hanogt Ekibi” adıyla yanıt verebilir ve kurallara aykırı gönderileri silebilir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "222i3m3ims1": {
+    "en": "Plans and Hanogt AI limits",
+    "tr": "Planlar ve Hanogt AI sınırları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "xo573xr3iq": {
+    "en": "Plans are “Coming soon”; we take no payments and process no card details right now. If the Hanogt team assigns you a plan by hand, the plan's name, its status (active or blocked), its end date, the team's internal note, the staff member who assigned it and any extra Hanogt AI quota you were given are kept in your subscription record on our server. The record is processed to provide the plan's benefits (a higher Hanogt AI limit and priority on support tickets) on the legal basis of performing the contract.",
+    "tr": "Planlar “Yakında” durumundadır; şu anda ödeme almıyor ve kart bilgisi işlemiyoruz. Hanogt ekibi size elle bir plan tanımlarsa planın adı, durumu (etkin veya engelli), bitiş tarihi, ekibin iç notu, tanımlayan ekip üyesi ve varsa size verilen ek Hanogt AI hakkı sunucudaki abonelik kaydınızda tutulur. Bu kayıt; planın avantajlarını (daha yüksek Hanogt AI sınırı ve destek taleplerinde öncelik) uygulamak için sözleşmenin ifası hukuki sebebine dayanılarak işlenir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "wssztorikw": {
+    "en": "If you press “Notify me when it opens” on the Plans page, which plan you're waiting for (Plus and/or Pro) and the date are recorded and used only to send you an in-app notification about it when plans open. You can withdraw with the same button at any time; this doesn't count as consent to commercial electronic messages.",
+    "tr": "Planlar sayfasında “Açılınca haber ver”e basarsanız hangi planı (Plus ve/veya Pro) beklediğiniz ve tarih kaydedilir; planlar açıldığında yalnızca bu konuda uygulama içi bildirim göndermek için kullanılır. Kaydı aynı düğmeyle istediğiniz zaman geri alabilirsiniz; bu, ticari elektronik ileti onayı yerine geçmez.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1ftu9w2mvx9": {
+    "en": "Hanogt AI's per-minute and daily message counters are kept as rate-limit records. Staff may reset your counter after a support ticket or a mistaken block; this is written to the audit log. Your subscription and waitlist records are included in your account data export and deleted when you delete your account.",
+    "tr": "Hanogt AI'ın dakikalık ve günlük mesaj sayaçları hız sınırı kaydı olarak tutulur. Ekip, bir destek talebi veya hatalı bir engelleme üzerine sayacınızı sıfırlayabilir; bu işlem denetim kaydına yazılır. Abonelik ve bekleme kayıtlarınız hesap verilerinizin dışa aktarımında yer alır ve hesabınızı sildiğinizde silinir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7727,6 +7997,20 @@
   "2beophwl5s7": {
     "en": "Until the call ends; deleted automatically shortly after a disconnect",
     "tr": "Arama bitene kadar; kopmalarda kısa süre sonra otomatik silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "dg90zf9t2x": {
+    "en": "Plan (subscription) record and “Notify me” record",
+    "tr": "Plan (abonelik) kaydı ve “Açılınca haber ver” kaydı",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "28ww3c8l5q2": {
+    "en": "Until the plan is removed, you withdraw, or your account is deleted",
+    "tr": "Plan kaldırılana, kaydı geri alana veya hesabınız silinene kadar",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -10358,9 +10642,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "263xqrkr4jd": {
-    "en": "When you publish a game on the Arcade, you allow it to be played and viewed publicly, and allow other users to copy it into their own projects in the Service and modify it (remix). A user who publishes a remix must credit the original author. You can unpublish at any time, but remixes and exported copies made earlier can't be deleted remotely.",
-    "tr": "Bir oyunu Arcade'de yayımladığınızda, oyunun herkese açık olarak oynanmasına ve görüntülenmesine, diğer kullanıcıların da onu Hizmet içinde kendi projelerine kopyalayıp değiştirmesine (remiks) izin verirsiniz. Remiksini yayımlayan kullanıcı orijinal yazara atıf yapmalıdır. Yayını istediğiniz zaman kaldırabilirsiniz; ancak daha önce oluşturulmuş remiksler ve dışa aktarılmış kopyalar uzaktan silinemez.",
+  "11k3yuq3w33": {
+    "en": "When you publish a game on the Arcade, you allow it to be played and viewed publicly. If you turn on “Allow remixes” when publishing, other users can copy the game into their own projects in the Service and modify it (remix); while it's off, the Remix button isn't shown and the server refuses copies. A remix carries the original game's title and author as attribution, and a user who publishes a remix must credit the original author. Because the game is sent to players' browsers so it can run, we can't technically prevent all copying when you don't allow it; you can report unauthorised copies with a Complaint ticket. You can change publication and the remix setting at any time, but remixes and exported copies made earlier can't be deleted remotely.",
+    "tr": "Bir oyunu Arcade'de yayımladığınızda, oyunun herkese açık olarak oynanmasına ve görüntülenmesine izin verirsiniz. Yayımlarken “Remikslemelere izin ver” seçeneğini açarsanız diğer kullanıcılar oyunu Hizmet içinde kendi projelerine kopyalayıp değiştirebilir (remiks); seçenek kapalıyken Remix düğmesi gösterilmez ve sunucu kopyalamayı reddeder. Remiks, orijinal oyunun adını ve yazarını atıf olarak taşır ve remiksini yayımlayan kullanıcı orijinal yazara atıf yapmalıdır. Oyun, oynanabilmesi için oyuncuların tarayıcısına gönderildiğinden izin vermediğiniz hâlde kopyalanmasını teknik olarak tamamen engelleyemeyiz; izinsiz kopyaları Şikayet talebiyle bildirebilirsiniz. Yayını ve remiks iznini istediğiniz zaman değiştirebilirsiniz; ancak daha önce oluşturulmuş remiksler ve dışa aktarılmış kopyalar uzaktan silinemez.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -10753,6 +11037,13 @@
   "b9rtikso34": {
     "en": "The Service is currently free. If a paid feature is offered in the future, the price, the right of withdrawal, the exceptions for digital content and the pre-contractual information for distance contracts will be provided separately before purchase under Law No. 6502 and the Distance Contracts Regulation, and those documents will take precedence for paid features.",
     "tr": "Hizmet şu anda ücretsizdir. İleride ücretli bir özellik sunulursa fiyat, cayma hakkı, dijital içeriğe ilişkin istisnalar ve mesafeli sözleşme ön bilgilendirmesi, 6502 sayılı Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca satın almadan önce ayrıca sunulur; ücretli özellikler bakımından o belgeler öncelikli olarak uygulanır.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "10v3rxkjb96": {
+    "en": "The Plus and Pro plans on the [Plans](/plans) page are “Coming soon” and can't be bought; no payments are taken and no card details are asked for right now. The Hanogt team may assign these plans free of charge for testing, contributions or rewards, set their duration, block their use and take them back. An assigned plan's benefits are limited to those marked as live on the Plans page (for example a higher Hanogt AI limit and priority on support tickets); those shown as “planned” aren't offered yet. Coupon codes can only be used once plans go on sale and under the terms in force at that time.",
+    "tr": "[Planlar](/plans) sayfasındaki Plus ve Pro planları “Yakında” durumundadır ve satın alınamaz; şu anda hiçbir ödeme alınmaz ve kart bilgisi istenmez. Hanogt ekibi bu planları test, katkı veya ödül amacıyla ücretsiz tanımlayabilir, süresini belirleyebilir, kullanımını engelleyebilir ve geri alabilir. Tanımlanan bir planın avantajları Planlar sayfasında canlı olarak belirtilenlerle (ör. daha yüksek Hanogt AI sınırı ve destek taleplerinde öncelik) sınırlıdır; “planlanıyor” olarak gösterilenler henüz sunulmaz. Kupon kodları ancak planlar satışa açıldığında ve o günkü koşullarla kullanılabilir.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -11267,6 +11558,21 @@
   "1yfgwau5xsa": {
     "en": "Site-wide notice bar",
     "tr": "Site geneli bildirim çubuğu",
+    "files": [
+      "src/components/Admin/AdminPanel.tsx"
+    ]
+  },
+  "x4pvit479m": {
+    "en": "Subscriptions",
+    "tr": "Abonelikler",
+    "files": [
+      "src/components/Admin/AdminPanel.tsx",
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "193hn9tlr7d": {
+    "en": "Prices, coupons, plans, AI limits",
+    "tr": "Fiyat, kupon, plan ve AI sınırı",
     "files": [
       "src/components/Admin/AdminPanel.tsx"
     ]
@@ -13672,6 +13978,41 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "1f2occyu186": {
+    "en": "Invalid plan.",
+    "tr": "Geçersiz plan.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "xtv5dm59oc": {
+    "en": "The price must be between 0 and 100,000 TRY.",
+    "tr": "Fiyat 0 ile 100.000 ₺ arasında olmalı.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "89wtqz5131": {
+    "en": "The number is invalid or out of range.",
+    "tr": "Sayı geçersiz ya da izin verilen aralığın dışında.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "qaz94nowiy": {
+    "en": "Coupon codes are 3-24 characters: capital letters, digits, - and _ only.",
+    "tr": "Kupon kodu 3-24 karakter olmalı; yalnızca büyük harf, rakam, - ve _ kullanın.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "27421xzqu1j": {
+    "en": "That coupon code already exists.",
+    "tr": "Bu kupon kodu zaten var.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "3zgg5tlt00": {
     "en": "The admin service is unavailable right now.",
     "tr": "Yönetim hizmetine şu anda ulaşılamıyor.",
@@ -13798,13 +14139,6 @@
   "bhy5u70427": {
     "en": "No staff access.",
     "tr": "Ekip yetkisi yok.",
-    "files": [
-      "src/components/Admin/copy.ts"
-    ]
-  },
-  "11gk4l406wg": {
-    "en": "Planned",
-    "tr": "Planlandı",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -14073,6 +14407,104 @@
   "17moc810zn5": {
     "en": "Security rules deployed",
     "tr": "Güvenlik kuralları yayımlandı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1y3t1rxaqs5": {
+    "en": "Plan price changed",
+    "tr": "Plan fiyatı değişti",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "moglrm3h3c": {
+    "en": "Coupon created",
+    "tr": "Kupon oluşturuldu",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "v194g98oal": {
+    "en": "Coupon switched on or off",
+    "tr": "Kupon açıldı veya kapatıldı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1etkwvft1lw": {
+    "en": "Coupon deleted",
+    "tr": "Kupon silindi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "y9lrcio947": {
+    "en": "User's plan changed",
+    "tr": "Kullanıcının planı değişti",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "zu2g8bbmc9": {
+    "en": "Plan use blocked",
+    "tr": "Plan kullanımı engellendi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "263e06d4pyd": {
+    "en": "Plan block lifted",
+    "tr": "Plan engeli kaldırıldı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "2g9h4vxb385": {
+    "en": "Plan removed",
+    "tr": "Plan kaldırıldı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "25azbr73vhq": {
+    "en": "Hanogt AI limit reset",
+    "tr": "Hanogt AI sınırı sıfırlandı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "vwdvhucv3n": {
+    "en": "Extra Hanogt AI quota granted",
+    "tr": "Ek Hanogt AI hakkı verildi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "aodpagaxob": {
+    "en": "Monthly",
+    "tr": "Aylık",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1kw5y95h7pc": {
+    "en": "Yearly",
+    "tr": "Yıllık",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "dzcw0i4oxx": {
+    "en": "Days",
+    "tr": "Gün",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "woxfzt9lye": {
+    "en": "Extra daily messages",
+    "tr": "Günlük ek mesaj",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -14571,6 +15003,440 @@
     "tr": "Güvenlik taraması bir isteği engellediğinde burada görünür.",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "1y7wbj7g7qh": {
+    "en": "Plans show as \"Coming soon\" and no payments are taken. Prepare prices, discounts and coupons, assign plans to people by hand and manage Hanogt AI limits.",
+    "tr": "Planlar \"Yakında\" olarak görünüyor; ödeme alınmıyor. Fiyatları, indirimleri ve kuponları hazırla, kişilere elle plan tanımla ve Hanogt AI sınırlarını yönet.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1efqoovkit0": {
+    "en": "Plans and prices",
+    "tr": "Planlar ve fiyatlar",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "zoluarzkus": {
+    "en": "Prices appear on the Plans page only while \"Visible\" is on.",
+    "tr": "Fiyatlar Planlar sayfasında yalnızca \"Görünür\" açıkken gösterilir.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1g6nwd4gig5": {
+    "en": "Monthly (TRY)",
+    "tr": "Aylık (₺)",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1m6n8nch07n": {
+    "en": "Yearly (TRY)",
+    "tr": "Yıllık (₺)",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1jbfmysymes": {
+    "en": "Discount (%)",
+    "tr": "İndirim (%)",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "orbwo2rq97": {
+    "en": "Visible",
+    "tr": "Görünür",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1tbdssrmbr7": {
+    "en": "Empty = not announced",
+    "tr": "Boş = açıklanmadı",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "2544bibzajv": {
+    "en": "Save {plan} price",
+    "tr": "{plan} fiyatını kaydet",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "7qa0thwyu": {
+    "en": "Price saved.",
+    "tr": "Fiyat kaydedildi.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "kwj8o5ckdx": {
+    "en": "Price history",
+    "tr": "Fiyat geçmişi",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "ehrx3yd88d": {
+    "en": "No price changes yet.",
+    "tr": "Henüz fiyat değişikliği yok.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "3pk58kjqbq": {
+    "en": "not announced",
+    "tr": "açıklanmadı",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "kb4d936ttv": {
+    "en": "Waiting to hear: Plus {plus} · Pro {pro}",
+    "tr": "Haber bekleyenler: Plus {plus} · Pro {pro}",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "iw6nto8oct": {
+    "en": "Coupons",
+    "tr": "Kuponlar",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "davvqmlsck": {
+    "en": "Discount codes to be used at checkout once plans open.",
+    "tr": "Planlar açıldığında satın almada kullanılacak indirim kodları.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "f2v9rtmf85": {
+    "en": "Code",
+    "tr": "Kod",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/HanogtAI/ArtifactPanel.tsx",
+      "src/components/HanogtAI/chat-copy.ts"
+    ]
+  },
+  "vctgr5r3d9": {
+    "en": "Plan",
+    "tr": "Plan",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1f3zbvnjb0h": {
+    "en": "All plans",
+    "tr": "Tüm planlar",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1158omxnea3": {
+    "en": "Max uses",
+    "tr": "En çok kullanım",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "21l5rpcq28w": {
+    "en": "Unlimited",
+    "tr": "Sınırsız",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1m2eha4xvpy": {
+    "en": "Expires",
+    "tr": "Bitiş",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "24vaf7le2sn": {
+    "en": "No expiry",
+    "tr": "Süresiz",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1r8zizzfdmj": {
+    "en": "Note",
+    "tr": "Not",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "ydz5xtw126": {
+    "en": "Create coupon",
+    "tr": "Kupon oluştur",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "luf5v49uaz": {
+    "en": "Coupon created.",
+    "tr": "Kupon oluşturuldu.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "7b3bfz0fea": {
+    "en": "No coupons yet.",
+    "tr": "Henüz kupon yok.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "ftr5hkc31c": {
+    "en": "{used}/{max} used",
+    "tr": "{used}/{max} kullanıldı",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1xsjv5neqns": {
+    "en": "Delete coupon",
+    "tr": "Kuponu sil",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "12wnpopt2s2": {
+    "en": "Delete coupon {code}?",
+    "tr": "{code} kuponu silinsin mi?",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "23d5id9cddh": {
+    "en": "The code can no longer be used. This can't be undone.",
+    "tr": "Kod artık kullanılamaz. Bu işlem geri alınamaz.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "gonsjm0pp0": {
+    "en": "Coupon active",
+    "tr": "Kupon etkin",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "eizg27kg7d": {
+    "en": "A person's plan",
+    "tr": "Kişinin planı",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "2bqju3gegyg": {
+    "en": "Find by e-mail; assign a plan, block it, reset the Hanogt AI limit or grant extra quota.",
+    "tr": "E-posta ile bul; plan tanımla, engelle, Hanogt AI sınırını sıfırla veya ek hak ver.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1a2ckgc66pk": {
+    "en": "user@example.com",
+    "tr": "kullanici@ornek.com",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1gqf340kiq9": {
+    "en": "There's no account with this e-mail.",
+    "tr": "Bu e-postayla bir hesap yok.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "20l80lacuct": {
+    "en": "Plan in effect: {plan}",
+    "tr": "Geçerli plan: {plan}",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "29n7mg5m372": {
+    "en": "Assigned plan: {plan}",
+    "tr": "Tanımlı plan: {plan}",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1daloh81cpw": {
+    "en": "Blocked",
+    "tr": "Engelli",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/components/Social/FriendsView.tsx"
+    ]
+  },
+  "31tllty7xn": {
+    "en": "Hanogt AI: {minute} a minute, {day} a day",
+    "tr": "Hanogt AI: dakikada {minute}, günde {day} mesaj",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "clmuxn4lcs": {
+    "en": "Used today: {used} / {day}",
+    "tr": "Bugün kullanılan: {used} / {day}",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "ti15mpmsq2": {
+    "en": "Extra quota: +{extra} a day until {date}",
+    "tr": "Ek hak: günde +{extra}, {date} tarihine kadar",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "7i0oftor5l": {
+    "en": "Apply plan",
+    "tr": "Planı uygula",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1dz6lhvzenp": {
+    "en": "Duration (days, 0 = no expiry)",
+    "tr": "Süre (gün, 0 = süresiz)",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1irdid0o2ij": {
+    "en": "Plan updated.",
+    "tr": "Plan güncellendi.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1i5mlopkmim": {
+    "en": "Block plan use",
+    "tr": "Plan kullanımını engelle",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "jncwmvegoe": {
+    "en": "Lift the block",
+    "tr": "Engeli kaldır",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "8u5648u8po": {
+    "en": "Plan use blocked.",
+    "tr": "Plan kullanımı engellendi.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1tokq5gpwdk": {
+    "en": "Block lifted.",
+    "tr": "Engel kaldırıldı.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "1bdtqkwew7n": {
+    "en": "Remove plan",
+    "tr": "Planı kaldır",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "21lw5ifk89k": {
+    "en": "Remove the plan for {email}?",
+    "tr": "{email} için plan kaldırılsın mı?",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1bcqjx2rzgv": {
+    "en": "They go back to Free; extra Hanogt AI quota is removed too.",
+    "tr": "Kişi Ücretsiz plana döner; ek Hanogt AI hakları da silinir.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1ji29ld0g9t": {
+    "en": "Plan removed.",
+    "tr": "Plan kaldırıldı.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "5idbuaw4z9": {
+    "en": "Reset the Hanogt AI limit",
+    "tr": "Hanogt AI sınırını sıfırla",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "16g6vsbivky": {
+    "en": "Hanogt AI counters reset.",
+    "tr": "Hanogt AI sayaçları sıfırlandı.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "19kgoe037dc": {
+    "en": "Extra Hanogt AI quota",
+    "tr": "Ek Hanogt AI hakkı",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "pxhu4naxz2": {
+    "en": "Extra messages a day",
+    "tr": "Günlük ek mesaj",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1sotbe0b53b": {
+    "en": "For how many days",
+    "tr": "Kaç gün",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1x0nu35r42d": {
+    "en": "Grant",
+    "tr": "Hakkı ver",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "13kxy1lxnvp": {
+    "en": "Extra quota saved.",
+    "tr": "Ek hak kaydedildi.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
     ]
   },
   "3ir6oens1": {
@@ -15927,14 +16793,6 @@
       "src/components/Admin/UsersSection.tsx"
     ]
   },
-  "1r8zizzfdmj": {
-    "en": "Note",
-    "tr": "Not",
-    "files": [
-      "src/components/Admin/UsersSection.tsx",
-      "src/components/Admin/copy.ts"
-    ]
-  },
   "1567ifwczq9": {
     "en": "Reset two-step verification?",
     "tr": "İki adımlı doğrulama sıfırlansın mı?",
@@ -16004,6 +16862,13 @@
     "tr": "Site duyurusu",
     "files": [
       "src/components/AnnouncementBanner.tsx"
+    ]
+  },
+  "uo5d5l03ae": {
+    "en": "Remixable",
+    "tr": "Remikslenebilir",
+    "files": [
+      "src/components/Arcade/ArcadeGallery.tsx"
     ]
   },
   "1awtccs0ko": {
@@ -16148,6 +17013,27 @@
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
+  "195u470jxrq": {
+    "en": "The author doesn't allow remixes of this game.",
+    "tr": "Yapımcı bu oyunun remikslenmesine izin vermiyor.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "88efr0r5jh": {
+    "en": "A remix of {title} by {author}",
+    "tr": "{author} tarafından yapılan {title} oyununun remiksi",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "1s8mzipofyy": {
+    "en": "The author allows remixes; if you publish yours, they're credited.",
+    "tr": "Yapımcı remikslemeye izin veriyor; remiksini yayımlarsan ona atıf yapılır.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
   "by63y63lnb": {
     "en": "Couldn't open the game",
     "tr": "Oyun açılamadı",
@@ -16250,6 +17136,7 @@
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
       "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/components/Guide/book-content.ts",
       "src/components/News/NewsPage.tsx"
     ]
   },
@@ -16321,6 +17208,97 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "e4sjgnc8d6": {
+    "en": "A renewed Minecraft guide and engine docs",
+    "tr": "Yenilenen Minecraft kılavuzu ve motor belgeleri",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1kw1lffl6nn": {
+    "en": "The guide book grew to 43 pages covering today's features, with search, resume reading and an exploration level. The engine docs gained a step-by-step first game and troubleshooting.",
+    "tr": "Kılavuz kitabı bugünkü özelliklerle 43 sayfaya çıktı; arama, kaldığın yerden devam ve keşif seviyesi geldi. Motor belgelerine adım adım ilk oyun ve sorun giderme eklendi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1gz5en7x5r7": {
+    "en": "10 chapters in the guide, with new pages on Hanogt AI, Hanogt Social, team editing, remix rules, the market strip, two-step verification, support tickets and Plans (coming soon).",
+    "tr": "Kılavuzda 10 bölüm: Hanogt AI, Hanogt Social, ekiple düzenleme, remiks kuralları, piyasa bandı, iki adımlı doğrulama, destek talepleri ve Planlar (yakında) için yeni sayfalar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "3ke0xs58mv": {
+    "en": "Search the book in Turkish or English and click a result; its page opens with a glow.",
+    "tr": "Kitapta arama: Türkçe ya da İngilizce yaz, sonuca tıkla; sayfa parlayarak açılır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "12l4v5tmb83": {
+    "en": "The page you were on and the chapters you opened are remembered in this browser; the XP bar shows your exploration level and the hotbar marks chapters you haven't opened. Open them all for the Explorer advancement.",
+    "tr": "Kaldığın sayfa ve açtığın bölümler bu tarayıcıda hatırlanır; XP çubuğu keşif seviyeni, hotbar henüz açılmamış bölümleri gösterir. Hepsini açana Kâşif başarımı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1p9mvn5t3q1": {
+    "en": "Engine docs: a coin-collecting platformer in 10 minutes (its code is checked by an automated test), a troubleshooting table, a copy button on code, search in the docs and a contents menu on phones.",
+    "tr": "Motor belgeleri: 10 dakikada coin toplanan bir platform oyunu (kodu otomatik testle doğrulanır), sık karşılaşılan sorunlar tablosu, kod kopyalama düğmesi, belgelerde arama ve telefonda içindekiler.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "27irsbhszpe": {
+    "en": "The engine's Create menu now says Sprite (Square) and Sprite (Circle) in English.",
+    "tr": "Motorun Oluştur menüsü İngilizcede artık Sprite (Square) ve Sprite (Circle) yazıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "ge6xanx2so": {
+    "en": "Remix permission and Plans (coming soon)",
+    "tr": "Remiks izni ve Planlar (Yakında)",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2g12wg1c29f": {
+    "en": "Arcade games can now be remixed only if the author allows it; the Plans page and plan-based Hanogt AI limits arrived.",
+    "tr": "Arcade oyunları artık yalnızca yapımcı izin verirse remikslenebiliyor; Planlar sayfası ve plana göre Hanogt AI sınırları geldi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1d2zuy68ueu": {
+    "en": "An \"Allow remixes\" option when publishing; without it the Remix button is hidden and the server refuses copies.",
+    "tr": "Yayınlarken \"Remikslemelere izin ver\" seçeneği; izin yoksa Remix düğmesi görünmez ve sunucu kopyalamayı reddeder.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1ib6tcgx25q": {
+    "en": "Remixes show the original game's title and author as attribution.",
+    "tr": "Remiksler orijinal oyunun adını ve yapımcısını atıf olarak gösterir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "ogzo629o9z": {
+    "en": "The Plans page: Free, Plus and Pro coming soon; no payments, and we can notify you when they open.",
+    "tr": "Planlar sayfası: Ücretsiz, Plus ve Pro yakında; ödeme alınmıyor, açılınca haber verebiliriz.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1r9y5p6swf5": {
+    "en": "Hanogt AI's daily limit depends on the plan: Free 250, Plus 750, Pro 2,000 messages.",
+    "tr": "Hanogt AI günlük sınırı plana göre: Ücretsiz 250, Plus 750, Pro 2.000 mesaj.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "1kgncq4yl5m": {
@@ -18591,7 +19569,8 @@
     "en": "Security pre-check",
     "tr": "Güvenlik ön kontrolü",
     "files": [
-      "src/components/Editor/PublishDialog.tsx"
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1pgfscm72gf": {
@@ -19399,7 +20378,8 @@
     "tr": "V3'te yenilikler",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "39j8oqw3rh": {
@@ -19409,6 +20389,13 @@
       "src/components/GameEngine/docs/EngineDocs.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/Social/GroupSidebar.tsx"
+    ]
+  },
+  "zhlk484je2": {
+    "en": "Your first game, step by step",
+    "tr": "İlk oyunun: adım adım",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
   "p1554gf4xf": {
@@ -19538,6 +20525,27 @@
     "tr": "Güvenlik ve sınırlar",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "pmc0d7rd1k": {
+    "en": "Troubleshooting",
+    "tr": "Sık karşılaşılan sorunlar",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "vsm8b190w3": {
+    "en": "Player",
+    "tr": "Oyuncu",
+    "files": [
+      "src/components/GameEngine/docs/first-game.ts"
+    ]
+  },
+  "1knpt4y4z2i": {
+    "en": "using UnityEngine;\nusing UnityEngine.SceneManagement;\n\n// Walks with the arrow keys (or A/D), jumps with Space and collects coins.\npublic class Player : MonoBehaviour\n{\n    public float speed = 6f;\n    public float jumpForce = 7f;\n\n    private Rigidbody2D rb;\n    private bool grounded;\n    private int score;\n\n    void Start()\n    {\n        rb = GetComponent<Rigidbody2D>();\n        HUD.Show(\"Collect the coins!\", 2f);\n    }\n\n    void Update()\n    {\n        float h = Input.GetAxisRaw(\"Horizontal\");\n        rb.velocity = new Vector2(h * speed, rb.velocity.y);\n\n        if (Input.GetButtonDown(\"Jump\") && grounded)\n        {\n            rb.velocity = new Vector2(rb.velocity.x, jumpForce);\n            grounded = false;\n            Audio.Play(\"jump\");\n        }\n\n        // Fell off the world? Start again.\n        if (transform.position.y < -10f) SceneManager.ReloadScene();\n    }\n\n    void OnCollisionStay2D(Collision2D collision)\n    {\n        // The ground's normal points up when it is under our feet.\n        if (collision.GetContact(0).normal.y > 0.5f) grounded = true;\n    }\n\n    void OnTriggerEnter2D(Collider2D other)\n    {\n        if (!other.CompareTag(\"Coin\")) return;\n        score++;\n        Audio.Play(\"coin\");\n        HUD.Show(\"Score: \" + score, 1f);\n        Destroy(other.gameObject);\n    }\n}",
+    "tr": "using UnityEngine;\nusing UnityEngine.SceneManagement;\n\n// Ok tuşları (ya da A/D) ile yürür, Space ile zıplar ve coinleri toplar.\npublic class Oyuncu : MonoBehaviour\n{\n    public float hiz = 6f;\n    public float ziplamaGucu = 7f;\n\n    private Rigidbody2D rb;\n    private bool yerde;\n    private int skor;\n\n    void Start()\n    {\n        rb = GetComponent<Rigidbody2D>();\n        HUD.Show(\"Coinleri topla!\", 2f);\n    }\n\n    void Update()\n    {\n        float yatay = Input.GetAxisRaw(\"Horizontal\");\n        rb.velocity = new Vector2(yatay * hiz, rb.velocity.y);\n\n        if (Input.GetButtonDown(\"Jump\") && yerde)\n        {\n            rb.velocity = new Vector2(rb.velocity.x, ziplamaGucu);\n            yerde = false;\n            Audio.Play(\"jump\");\n        }\n\n        // Dünyadan düştüysek baştan başla.\n        if (transform.position.y < -10f) SceneManager.ReloadScene();\n    }\n\n    void OnCollisionStay2D(Collision2D carpisma)\n    {\n        // Zeminin normali yukarı bakıyorsa ayağımız yerde.\n        if (carpisma.GetContact(0).normal.y > 0.5f) yerde = true;\n    }\n\n    void OnTriggerEnter2D(Collider2D diger)\n    {\n        if (!diger.CompareTag(\"Coin\")) return;\n        skor++;\n        Audio.Play(\"coin\");\n        HUD.Show(\"Skor: \" + skor, 1f);\n        Destroy(diger.gameObject);\n    }\n}",
+    "files": [
+      "src/components/GameEngine/docs/first-game.ts"
     ]
   },
   "jxkgt8n66v": {
@@ -19785,6 +20793,20 @@
   "19ag2542sw7": {
     "en": "Empty Object",
     "tr": "Boş Nesne",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "52ki3748im": {
+    "en": "Sprite (Square)",
+    "tr": "Sprite (Kare)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "221dfrjbcd5": {
+    "en": "Sprite (Circle)",
+    "tr": "Sprite (Daire)",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -20604,15 +21626,6 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
-  "f2v9rtmf85": {
-    "en": "Code",
-    "tr": "Kod",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/HanogtAI/ArtifactPanel.tsx",
-      "src/components/HanogtAI/chat-copy.ts"
-    ]
-  },
   "25w4x4f5k25": {
     "en": "\"{name}\" uploaded ({size}).",
     "tr": "\"{name}\" yüklendi ({size}).",
@@ -20714,6 +21727,20 @@
   "23mbfzrybta": {
     "en": "Publishing failed.",
     "tr": "Yayınlanamadı.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "w66dilqjq9": {
+    "en": "Allow remixes",
+    "tr": "Remikslemelere izin ver",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "12dz670kya3": {
+    "en": "If it's on, other players can copy your game into their own projects with Remix and change it; when they publish, you're credited. While it's off, the Remix button doesn't appear and the server refuses copies.",
+    "tr": "Açarsan diğer oyuncular oyununu Remix ile kendi projelerine kopyalayıp değiştirebilir; yayımladıklarında sana atıf yapılır. Kapalıyken Remix düğmesi görünmez ve sunucu kopyalamayı reddeder.",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -21500,7 +22527,8 @@
     "en": "Screen effects",
     "tr": "Ekran efektleri",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1xz29lyxpqf": {
@@ -23119,14 +24147,6 @@
       "src/lib/groups.ts"
     ]
   },
-  "1daloh81cpw": {
-    "en": "Blocked",
-    "tr": "Engelli",
-    "files": [
-      "src/components/Groups/workspace/InviteDialog.tsx",
-      "src/components/Social/FriendsView.tsx"
-    ]
-  },
   "1kx6cp9shd8": {
     "en": "Cancel invitation",
     "tr": "Daveti iptal et",
@@ -23584,13 +24604,6 @@
       "src/components/Social/dm/DmView.tsx"
     ]
   },
-  "1tokq5gpwdk": {
-    "en": "Block lifted.",
-    "tr": "Engel kaldırıldı.",
-    "files": [
-      "src/components/Groups/workspace/SettingsDialog.tsx"
-    ]
-  },
   "1bl7ly5djkc": {
     "en": "Getting-started guide",
     "tr": "Başlangıç rehberi",
@@ -23802,9 +24815,16 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "22hg4xb6dbn": {
-    "en": "Media & Groups",
-    "tr": "Media ve Gruplar",
+  "28mxuw2rkaa": {
+    "en": "Enchanting Table",
+    "tr": "Büyü Masası",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "20x42j7aq3s": {
+    "en": "Hanogt Social & Media",
+    "tr": "Hanogt Social ve Media",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -23917,9 +24937,23 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "9bieo21ett": {
-    "en": "Hanogt AI, News, Arcade, Game Engine, Media and Guide. Dashboard appears once you sign in.",
-    "tr": "Hanogt AI, Haberler, Arcade, Oyun Motoru, Media ve Kılavuz. Giriş yapınca Panel de gelir.",
+  "wg3f7jy5l3": {
+    "en": "Hanogt AI, News, Arcade, Game Engine, Media and Guide. Once you sign in, the Dashboard and Hanogt Social live in your profile menu; on phones everything is in the ☰ menu.",
+    "tr": "Hanogt AI, Haberler, Arcade, Oyun Motoru, Media ve Kılavuz. Giriş yapınca Panel ve Hanogt Social profil menünde; telefonda hepsi ☰ menüde.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "5ue90jxvq1": {
+    "en": "The purple sparkle icon: the AI assistant that answers questions about code, the game engine, debugging, security and the site.",
+    "tr": "Mor ışıltı simgesi: kod, oyun motoru, hata ayıklama, güvenlik ve site hakkında sorularını yanıtlayan yapay zeka asistanı.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1ry287ptp7f": {
+    "en": "The bell: friend requests, team editing invites and support replies gather here.",
+    "tr": "Zil simgesi: arkadaşlık istekleri, ekiple düzenleme davetleri ve destek yanıtları burada toplanır.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -23939,13 +24973,6 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "5ue90jxvq1": {
-    "en": "The purple sparkle icon: the AI assistant that answers questions about code, the game engine, debugging, security and the site.",
-    "tr": "Mor ışıltı simgesi: kod, oyun motoru, hata ayıklama, güvenlik ve site hakkında sorularını yanıtlayan yapay zeka asistanı.",
-    "files": [
-      "src/components/Guide/book-content.ts"
-    ]
-  },
   "2bme7k4uat6": {
     "en": "Language & theme",
     "tr": "Dil ve tema",
@@ -23960,6 +24987,48 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "2cy3z3a87xo": {
+    "en": "The Dashboard: your base",
+    "tr": "Panel: üssün",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1027gj87ovn": {
+    "en": "The Dashboard is the base you return to after signing in. All your work is kept here in two chests:",
+    "tr": "Panel, giriş yaptıktan sonra döndüğün üstür. Tüm çalışmaların burada iki sandıkta durur:",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "r68amqfs5r": {
+    "en": "Projects you write in the Code Editor, saved to the cloud.",
+    "tr": "Kod Editörü'nde yazdığın, buluta kaydedilen projeler.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "194bywi2rqv": {
+    "en": "The 2D and 3D games you build with Hanogt Engine.",
+    "tr": "Hanogt Engine ile yaptığın 2D ve 3D oyunlar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "c1vr3g3zrs": {
+    "en": "Search your projects; sort by last edited or by name.",
+    "tr": "Projelerde ara; son düzenlenene ya da ada göre sırala.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "xdvzkn1mnq": {
+    "en": "Start a code or game project with \"Create New Project\".",
+    "tr": "\"Yeni Proje Oluştur\" ile kod ya da oyun projesi başlat.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "vk4qftprsq": {
     "en": "Your first project",
     "tr": "İlk projen",
@@ -23970,6 +25039,13 @@
   "jb42i0tiy5": {
     "en": "Press \"Create New Project\" on the Dashboard.",
     "tr": "Panel'de \"Yeni Proje Oluştur\"a bas.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1i73ut0yjqc": {
+    "en": "Choose \"Code project\" in the window that opens.",
+    "tr": "Açılan pencerede \"Kod projesi\"ni seç.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24002,30 +25078,65 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1vpgyvwydtk": {
-    "en": "Press the green ▶ RUN button or use Ctrl+Enter. Output and errors appear in the panel below.",
-    "tr": "Yeşil ▶ RUN düğmesine bas ya da Ctrl+Enter kullan. Çıktı ve hatalar alttaki panelde görünür.",
+  "1k84s34nn5h": {
+    "en": "Press the green ▶ Run button or use Ctrl+Enter. Output and errors appear in the console below; file:line links take you to the faulty line.",
+    "tr": "Yeşil ▶ Çalıştır düğmesine bas ya da Ctrl+Enter kullan. Çıktı ve hatalar alttaki konsolda görünür; dosya:satır bağlantıları seni hatalı satıra götürür.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "13vl8cid5at": {
-    "en": "How it works",
-    "tr": "Nasıl çalışır?",
+  "ikrwdqjsha": {
+    "en": "In your browser: {count} languages",
+    "tr": "Tarayıcıda: {count} dil",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "11iifmt9f4u": {
-    "en": "Code runs in an administrator-configured isolated runner with time, memory and network limits. With no runner the feature stays safely off; it never falls back to public services.",
-    "tr": "Kodun, yöneticinin yapılandırdığı izole bir çalıştırıcıda süre, bellek ve ağ sınırlarıyla çalışır. Çalıştırıcı yoksa özellik güvenli biçimde kapalı kalır; herkese açık yedek servislere düşülmez.",
+  "29tpwgf0i1y": {
+    "en": "JavaScript, TypeScript, Python, SQL, Lua and more run on your device in a separate Web Worker. No sign-in needed, and the code never leaves your device.",
+    "tr": "JavaScript, TypeScript, Python, SQL, Lua ve daha fazlası cihazında, ayrı bir Web Worker içinde çalışır. Giriş gerekmez, kod sunucuya gitmez.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "cmwmftlopw": {
-    "en": "Every request passes a Hanogt Security check on the server.",
-    "tr": "Her istek sunucuda Hanogt Security denetiminden geçer.",
+  "dk5z2k5vjy": {
+    "en": "On the compiler service: {count} languages",
+    "tr": "Derleyici hizmetinde: {count} dil",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1m6t36a6xkx": {
+    "en": "C, C++, C#, Java, Go, Rust, Kotlin and others need a sign-in. Code is scanned by Hanogt Security first, then runs on an isolated compiler service; 20 runs a minute.",
+    "tr": "C, C++, C#, Java, Go, Rust, Kotlin ve diğerleri giriş gerektirir. Kod önce Hanogt Security ile taranır, sonra izole bir derleyici hizmetinde çalışır; dakikada 20 çalıştırma.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "zlnbc6thmr": {
+    "en": "Preview: {count} languages",
+    "tr": "Önizleme: {count} dil",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "agcdzs90kt": {
+    "en": "HTML, CSS, Markdown, SVG, Mermaid and LaTeX show up live in a safe preview panel.",
+    "tr": "HTML, CSS, Markdown, SVG, Mermaid ve LaTeX güvenli önizleme panelinde canlı görünür.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1ub0vvxpf2o": {
+    "en": "Input enchantment",
+    "tr": "Girdi büyüsü",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "uu08xf6axh": {
+    "en": "input(), Scanner, cin and io.read() read the text you type in the Input tab.",
+    "tr": "input(), Scanner, cin ve io.read() okumaları Girdi sekmesine yazdığın metinden gelir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24044,23 +25155,23 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "p3lc01ihjv": {
-    "en": "Multiple tabs and file naming.",
-    "tr": "Çoklu sekme ve dosya adlandırma.",
+  "1taltu3hjyp": {
+    "en": "Multiple tabs: run files in different languages together with \"Run all\".",
+    "tr": "Çoklu sekme: farklı dillerdeki dosyaları \"Tümünü çalıştır\" ile birlikte çalıştır.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "22famzdmk2f": {
-    "en": "AI assistant panel: ask, explain, fix.",
-    "tr": "Yapay zeka asistanı paneli: sor, açıklat, düzelt.",
+  "15lnsfdh7v7": {
+    "en": "Ctrl/⌘+K command palette; ask, explain and fix with the AI panel.",
+    "tr": "Ctrl/⌘+K komut paleti; yapay zeka paneliyle sor, açıklat, düzelt.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1a6t82tym66": {
-    "en": "Download: a single file, or a ZIP for multiple tabs.",
-    "tr": "İndir: tek dosya ya da çok sekmede ZIP.",
+  "1y105efuv3j": {
+    "en": "Template gallery, ZIP import and export, publishing to Media.",
+    "tr": "Şablon galerisi, ZIP içe ve dışa aktarma, Media'da yayınlama.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24072,6 +25183,62 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "2eg28yfndkj": {
+    "en": "Command palette",
+    "tr": "Komut paleti",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1fhx8m87iv2": {
+    "en": "Edit as a team",
+    "tr": "Ekiple düzenle",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1qt7ktgho0d": {
+    "en": "Press \"Edit with your team\" in the editor toolbar (sign-in required).",
+    "tr": "Editörün araç çubuğunda \"Ekiple düzenle\"ye bas (giriş gerekir).",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "mm01jnasw1": {
+    "en": "Name the session and pick the files to share (up to {files} files).",
+    "tr": "Oturuma ad ver ve paylaşılacak dosyaları seç (en fazla {files} dosya).",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "15up5it8fdw": {
+    "en": "Invite your friends: they get a notification and can also join with the invite link. A session holds up to {people} people.",
+    "tr": "Arkadaşlarını davet et: bildirim alırlar, davet bağlantısıyla da katılabilirler. Bir oturumda en fazla {people} kişi olur.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1162kh7xbuk": {
+    "en": "You see everyone's cursor live; chat and join the voice chat from the Team panel.",
+    "tr": "Herkesin imlecini canlı görürsün; Ekip panelinden yazışır, sesli sohbete katılırsın.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1wv35ncak9h": {
+    "en": "Shared chest",
+    "tr": "Ortak sandık",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "105gs1rpwq7": {
+    "en": "The code is saved to the session owner's project. Voice is never recorded; chat and live data are deleted when the session ends.",
+    "tr": "Kod, oturum sahibinin projesine kaydedilir. Ses kaydedilmez; oturum bitince sohbet ve canlı veriler silinir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "nkb4qznuxk": {
     "en": "The game engine",
     "tr": "Oyun motoru",
@@ -24079,9 +25246,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "7r6y4bhr19": {
-    "en": "Hanogt Engine is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
-    "tr": "Hanogt Engine, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
+  "15rkdhtqdzj": {
+    "en": "Hanogt Engine V3 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
+    "tr": "Hanogt Engine V3, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24089,6 +25256,13 @@
   "gdc2lf1344": {
     "en": "Start from a template on the Game Engine page:",
     "tr": "Oyun Motoru sayfasında bir şablonla başla:",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "6e9dtzp2j0": {
+    "en": "Tilemap Adventure, Clicker Factory and Foggy Runner (new in V3)",
+    "tr": "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile yeni)",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24243,6 +25417,118 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "29uve2r7opj": {
+    "en": "The new blocks of V3",
+    "tr": "V3'ün yeni blokları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1isavhoy91p": {
+    "en": "Tilemap",
+    "tr": "Tilemap",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "r0az5cljhy": {
+    "en": "Pick a tile from the palette and paint the grid with a brush. Solid tiles collide; trigger tiles become spikes or finish lines.",
+    "tr": "Paletten karo seç ve ızgaraya fırçayla boya. Katı karolar çarpışır; tetikleyici karolar diken ya da bitiş çizgisi olur.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2dsw4h91rem": {
+    "en": "Animation",
+    "tr": "Animasyon",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "ep080ctj8j": {
+    "en": "Keyframed clips and 18 easing curves; Tween and Timer from scripts.",
+    "tr": "Anahtar kareli klipler ve 18 yumuşatma eğrisi; scriptten Tween ve Timer.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "7319jtrt7d": {
+    "en": "UI",
+    "tr": "Arayüz",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1n9ncgkvag5": {
+    "en": "Menus, health bars and scoreboards with UI Button, Panel, Progress Bar and Text.",
+    "tr": "UI Button, Panel, Progress Bar ve Text ile menüler, can barları ve skor tabelaları.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1o28hl0sria": {
+    "en": "Fog, bloom, vignette and exposure.",
+    "tr": "Sis, parlama (bloom), vinyet ve pozlama.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "14r6cyp20io": {
+    "en": "Build your first game",
+    "tr": "İlk oyununu yap",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "htuauhap5w": {
+    "en": "Create an \"Empty 2D Project\" in the Game Engine.",
+    "tr": "Oyun Motoru'nda \"Boş 2D Proje\" oluştur.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1f3sk45751a": {
+    "en": "Add a player with Hierarchy → Create → Sprite (Square) and give it a Rigidbody 2D.",
+    "tr": "Hiyerarşi → Oluştur → Sprite (Kare) ile bir oyuncu ekle ve ona Rigidbody 2D ver.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "cajk5dlwta": {
+    "en": "Put a wide Sprite (Square) below it: that's your ground.",
+    "tr": "Altına geniş bir Sprite (Kare) koy: bu senin zeminin.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1ljeqq67t94": {
+    "en": "Write a walk-and-jump script for the player.",
+    "tr": "Oyuncuya yürüme ve zıplama scripti yaz.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1j6rufu4j69": {
+    "en": "Add a coin with Sprite (Circle): turn on Is Trigger and tag it Coin.",
+    "tr": "Sprite (Daire) ile coin ekle: Is Trigger aç, etiketini Coin yap.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1evqpn8r3rq": {
+    "en": "Press ▶ Play and collect the coins!",
+    "tr": "▶ Oynat'a bas ve coinleri topla!",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "gez6s3fgbf": {
+    "en": "Step-by-step walkthrough with ready code",
+    "tr": "Adım adım anlatım ve hazır kod",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "1h0q85da0mu": {
     "en": "Save & publish",
     "tr": "Kaydet ve yayınla",
@@ -24278,9 +25564,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "oeqze3617h": {
-    "en": "Add a title and description; after a security check everyone can play.",
-    "tr": "Başlık ve açıklama yaz; güvenlik kontrolünden sonra herkes oynayabilir.",
+  "22e2cohe9r0": {
+    "en": "Add a title and description; after a security scan everyone can play. Turn on \"Allow remixes\" and others can copy it and build on it too.",
+    "tr": "Başlık ve açıklama yaz; güvenlik taramasından sonra herkes oynayabilir. \"Remikslemelere izin ver\"i açarsan başkaları da kopyasını alıp geliştirebilir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24320,9 +25606,72 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "27mflfda343": {
-    "en": "Remix: copy a game into your projects, change it, republish.",
-    "tr": "Remiksle: oyunun kopyasını kendi projene al, değiştir, yeniden yayınla.",
+  "xb12tk3i3g": {
+    "en": "Play full screen; on phones, touch controls appear when the game supports them.",
+    "tr": "Tam ekran oyna; oyun destekliyorsa telefonda dokunmatik kontroller çıkar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1leb73is8li": {
+    "en": "Remix: copy games with the \"Remixable\" badge into your projects, change them, republish.",
+    "tr": "Remiksle: \"Remikslenebilir\" rozetli oyunların kopyasını kendi projene al, değiştir, yeniden yayınla.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1dexiscmqs4": {
+    "en": "Remix rules",
+    "tr": "Remiks kuralları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "21ww7sbcpl4": {
+    "en": "You choose the \"Allow remixes\" switch when publishing; it is off by default.",
+    "tr": "Yayınlarken \"Remikslemelere izin ver\" anahtarını sen seçersin; varsayılan olarak kapalıdır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2d0vexgmhn4": {
+    "en": "Without permission a game can only be played, not copied.",
+    "tr": "İzin yoksa oyun yalnızca oynanır, kopyalanamaz.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1xy02a3cpoe": {
+    "en": "A remix's page links back to the original game and its maker.",
+    "tr": "Remiksin sayfasında asıl oyuna ve yapımcısına bağlantı görünür.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1o2hbsjvez7": {
+    "en": "You can always remix your own game. Turning permission off later doesn't delete remixes made before.",
+    "tr": "Kendi oyununu her zaman remiksleyebilirsin. İzni sonradan kapatırsan önceden yapılmış remiksler silinmez.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "23mxrujqiw9": {
+    "en": "Crafter's honour",
+    "tr": "Zanaatkâr onuru",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2apac2kd9f9": {
+    "en": "When you remix, credit the original maker and improve the game with your own ideas.",
+    "tr": "Remiks yaparken asıl yapımcıyı an ve oyunu kendi fikirlerinle geliştir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "x6jopcwwuu": {
+    "en": "Open the Arcade",
+    "tr": "Arcade'i aç",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24334,9 +25683,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "16p32gs7gqr": {
-    "en": "A live section gathering the latest from AI, software, games, apps and science in one stream.",
-    "tr": "Yapay zeka, yazılım, oyun, uygulama ve bilim dünyasından güncel haberlerin tek akışta toplandığı canlı bir bölüm.",
+  "10do911tydd": {
+    "en": "A live section gathering the latest from AI, software, games, apps, science and finance in one stream.",
+    "tr": "Yapay zeka, yazılım, oyun, uygulama, bilim ve finans dünyasından güncel haberlerin tek akışta toplandığı canlı bir bölüm.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24376,9 +25725,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "7mn8oten55": {
-    "en": "Our server reads the public RSS/Atom feeds of 20+ publishers: OpenAI, Google AI, Hugging Face, TechCrunch, The Verge, GitHub Blog, Hacker News, IGN, PC Gamer, NASA, Webtekno, ShiftDelete.Net, DonanımHaber and more.",
-    "tr": "Sunucumuz 20'yi aşkın yayıncının herkese açık RSS/Atom akışlarını okur: OpenAI, Google AI, Hugging Face, TechCrunch, The Verge, GitHub Blog, Hacker News, IGN, PC Gamer, NASA, Webtekno, ShiftDelete.Net, DonanımHaber ve dahası.",
+  "bprz0gomva": {
+    "en": "Our server reads the public RSS/Atom feeds of 40+ publishers: OpenAI, Google AI, Hugging Face, TechCrunch, The Verge, GitHub Blog, IGN, NASA, Webtekno, AA, Bloomberg HT, CNBC and more.",
+    "tr": "Sunucumuz 40'ı aşkın yayıncının herkese açık RSS/Atom akışlarını okur: OpenAI, Google AI, Hugging Face, TechCrunch, The Verge, GitHub Blog, IGN, NASA, Webtekno, AA, Bloomberg HT, CNBC ve dahası.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24404,9 +25753,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1kzhos8hn55": {
-    "en": "The newest 180 stories of the last 21 days are kept.",
-    "tr": "Son 21 günün en yeni 180 haberi tutulur.",
+  "27hpyteyllk": {
+    "en": "The live feed holds the newest 240 stories of the last 21 days; older ones are kept in the archive and read with \"Load older stories\".",
+    "tr": "Canlı akışta son 21 günün en yeni 240 haberi durur; daha eskileri arşivde saklanır ve \"Daha eski haberleri yükle\" ile okunur.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24467,9 +25816,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "165cc40hyh3": {
-    "en": "AI, Software, Games, Apps & Tech, Science & Space.",
-    "tr": "Yapay Zeka, Yazılım, Oyun, Uygulama & Teknoloji, Bilim & Uzay.",
+  "5q1rr98l7a": {
+    "en": "AI, Software, Games, Apps & Tech, Science & Space, Finance & Economy.",
+    "tr": "Yapay Zeka, Yazılım, Oyun, Uygulama & Teknoloji, Bilim & Uzay, Finans & Ekonomi.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24528,6 +25877,48 @@
   "26h5mrh4hr9": {
     "en": "Green dot: the source is reachable right now.",
     "tr": "Yeşil nokta: kaynağa şu an ulaşılabiliyor.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "10jhiz5wgtg": {
+    "en": "The market strip",
+    "tr": "Piyasa bandı",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "124b5yxuskv": {
+    "en": "The strip above the \"All\" and Finance categories shows the dollar, euro and pound rates, gram and ounce gold, BIST 100, S&P 500 and Bitcoin. In the Finance category it opens in its large form.",
+    "tr": "\"Tümü\" ve Finans kategorilerinin üstündeki bant dolar, euro ve sterlin kurlarını, gram ve ons altını, BIST 100, S&P 500 ve Bitcoin'i gösterir. Finans kategorisinde büyük hâliyle açılır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1yhfg8cdp2d": {
+    "en": "Figures are only read from data providers; nothing is estimated, and missing data is left out.",
+    "tr": "Rakamlar yalnızca veri sağlayıcılarından okunur; hiçbir değer tahmin edilmez, eksik veri gösterilmez.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "6wwi3ytvxs": {
+    "en": "Every value shows its source and time; the strip refreshes every 5 minutes.",
+    "tr": "Her değerin kaynağı ve saati yazılır; bant 5 dakikada bir yenilenir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1xnlxdcknec": {
+    "en": "Trader's warning",
+    "tr": "Tüccar uyarısı",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2f1p2s25djw": {
+    "en": "The strip is for information only; it is not investment advice.",
+    "tr": "Bant bilgi amaçlıdır, yatırım tavsiyesi değildir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24617,30 +26008,300 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "nylll7i720": {
-    "en": "Media, groups, messages",
-    "tr": "Media, gruplar, mesajlar",
+  "1orbcjqcdl5": {
+    "en": "Meet Hanogt AI",
+    "tr": "Hanogt AI ile tanış",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "12w0b4dvz6h": {
-    "en": "Share code and projects; like, comment, report. Posts pass a security pre-check.",
-    "tr": "Kodunu ve projelerini paylaş; beğen, yorum yap, bildir. Paylaşımlar güvenlik ön elemesinden geçer.",
+  "1i087fzkz3y": {
+    "en": "Hanogt AI answers your questions about code, game development, security and the site. Chat full screen on the /ai page or open the side panel with the purple sparkle on any page; both share the same conversations.",
+    "tr": "Hanogt AI; kod, oyun geliştirme, güvenlik ve site hakkındaki sorularını yanıtlar. /ai sayfasında tam ekran sohbet eder ya da her sayfadaki mor ışıltı simgesiyle yan panelde açarsın; ikisi aynı sohbetleri paylaşır.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "lfl2ks85r": {
-    "en": "Expiring invite links, roles and group chat.",
-    "tr": "Süreli davet bağlantıları, roller ve grup sohbeti.",
+  "16fq390ioog": {
+    "en": "Two layers",
+    "tr": "İki katman",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "298kbhigrub": {
-    "en": "Send and accept requests, see who is online.",
-    "tr": "İstek gönder, kabul et, çevrimiçi olanları gör.",
+  "2f3easrliz9": {
+    "en": "When you're signed in, the large language model on the server answers. Without it, or once a limit is reached, the Hanogt AI Core on your device takes over.",
+    "tr": "Giriş yaptığında sunucudaki büyük dil modeli yanıtlar. Model yoksa ya da sınır dolarsa cihazında çalışan Hanogt AI Çekirdeği devreye girer.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "28nhsbdrrdy": {
+    "en": "Answer modes",
+    "tr": "Yanıt modları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "18vuveomzv9": {
+    "en": "General, Code and Security. Each mode comes with its own sample questions.",
+    "tr": "Genel, Kod ve Güvenlik. Her mod kendi örnek sorularıyla gelir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1aunzh5d5qc": {
+    "en": "Conversations",
+    "tr": "Sohbetler",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "21yaa7e3vtf": {
+    "en": "Search, rename and delete them in the sidebar. Your conversations are stored in this browser only.",
+    "tr": "Kenar çubuğunda ara, yeniden adlandır, sil. Sohbetlerin yalnızca bu tarayıcıda saklanır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "16ppeljzln": {
+    "en": "Open Hanogt AI",
+    "tr": "Hanogt AI'ı aç",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "fl0kib8cx": {
+    "en": "Code & preview",
+    "tr": "Kod ve önizleme",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2fto5ckx7b8": {
+    "en": "The code it writes opens in the panel on the right: copy it or send it to the Code Editor with \"Open in editor\".",
+    "tr": "Yazdığı kod sağdaki panelde açılır: kopyala ya da \"Editörde aç\" ile Kod Editörü'ne gönder.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "chp6zwq11r": {
+    "en": "Try web pages in the Preview tab; the page runs in a protected frame without network access.",
+    "tr": "Web sayfalarını Önizleme sekmesinde dene; sayfa ağ erişimi olmayan korumalı bir çerçevede çalışır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "dbqsgqp2i3": {
+    "en": "Attach a code file (up to 200 KB) or add the file open in the editor to your question.",
+    "tr": "Kod dosyası ekle (en fazla 200 KB) ya da editörde açık dosyayı soruna ekle.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "35gyr0zhki": {
+    "en": "New line",
+    "tr": "Yeni satır",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "849mi7mr5": {
+    "en": "In Agent mode Hanogt AI does the things you allow for you: it creates groups, summarises your profile, opens code in the editor, creates game projects from templates and opens pages.",
+    "tr": "Ajan modunda Hanogt AI izin verdiğin işleri senin yerine yapar: grup kurar, profilini özetler, kodu editörde açar, şablondan oyun projesi oluşturur, sayfa açar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2bwr9rjl289": {
+    "en": "Off: it only explains how to do it.",
+    "tr": "Kapalı: yalnızca nasıl yapacağını anlatır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2c48fa1vh2g": {
+    "en": "Ask every time (default): it shows a confirmation card before every action.",
+    "tr": "Her seferinde sor (varsayılan): her işlemden önce bir onay kartı gösterir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "3zgetsuex": {
+    "en": "Automatic for safe actions: it opens pages and the editor without asking, and still asks before creating anything.",
+    "tr": "Güvenli işlemlerde otomatik: sayfa ve editör açmayı sormadan yapar, oluşturmadan önce yine sorar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "z8h290ub8": {
+    "en": "Things it never touches",
+    "tr": "Asla dokunmadıkları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1rbco2pxlt": {
+    "en": "Deleting, passwords, two-step verification, admin actions and messaging other people are never done in any mode.",
+    "tr": "Silme, parola, iki adımlı doğrulama, yönetici işlemleri ve başkalarına mesaj göndermek hiçbir modda yapılmaz.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "h9yprr9ls1": {
+    "en": "Limits",
+    "tr": "Sınırlar",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "r1z7fxagqh": {
+    "en": "{day} messages a day and {minute} a minute on the Free plan.",
+    "tr": "Ücretsiz planda günde {day}, dakikada {minute} mesaj.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1k6y6rtst1y": {
+    "en": "Once you hit the limit, the Hanogt AI Core on your device answers.",
+    "tr": "Sınır dolunca yanıtı cihazındaki Hanogt AI Çekirdeği verir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "p8iuap5bne": {
+    "en": "You can see what's left on the Plans page.",
+    "tr": "Kalan hakkını Planlar sayfasında görürsün.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1oz7gm8lpei": {
+    "en": "Words of the wise",
+    "tr": "Bilge sözü",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "epcinv61ed": {
+    "en": "Hanogt AI can make mistakes; double-check important facts and never share secrets.",
+    "tr": "Hanogt AI hata yapabilir; önemli bilgileri doğrula ve gizli bilgi paylaşma.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "16i8j2l945t": {
+    "en": "Plans (coming soon)",
+    "tr": "Planlar (yakında)",
+    "files": [
+      "src/components/Guide/book-content.ts",
+      "src/components/SiteFooter.tsx"
+    ]
+  },
+  "nh9t08ngv": {
+    "en": "Friends, direct messages and groups in one Discord-like place: the group rail on the left, chats next to it and the member list on the right.",
+    "tr": "Arkadaşlar, direkt mesajlar ve gruplar Discord benzeri tek bir yerde: solda grup rayı, yanında sohbetler, sağda üye listesi.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "7zcx18hz6o": {
+    "en": "Add people as Nickname#1234; Online, All, Pending and Blocked tabs.",
+    "tr": "TakmaAd#1234 biçiminde ekle; Çevrimiçi, Tümü, Bekleyen ve Engellenen sekmeleri.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "27jrwitn1xw": {
+    "en": "Direct messages",
+    "tr": "Direkt mesajlar",
+    "files": [
+      "src/components/Guide/book-content.ts",
+      "src/components/Social/HomeSidebar.tsx",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "g0jw28vgy": {
+    "en": "Text, stickers and 60-second voice messages; reply, edit, delete. You only chat with your friends.",
+    "tr": "Metin, çıkartma ve 60 saniyelik sesli mesaj; yanıtla, düzenle, sil. Yalnızca arkadaşlarınla yazışırsın.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "191x9jt88q2": {
+    "en": "Quick switcher",
+    "tr": "Hızlı geçiş",
+    "files": [
+      "src/components/Guide/book-content.ts",
+      "src/components/Social/QuickSwitcher.tsx"
+    ]
+  },
+  "lver6dv8rz": {
+    "en": "Jump to a chat or group with Ctrl/⌘+K.",
+    "tr": "Ctrl/⌘+K ile bir sohbete ya da gruba atla.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1rrs9db935f": {
+    "en": "Open Hanogt Social",
+    "tr": "Hanogt Social'ı aç",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1ynyf8grtz0": {
+    "en": "Press \"Create group\" on the left rail and pick a template: Blank group, Study group, Game jam, Open-source project, Classroom or Hackathon team.",
+    "tr": "Soldaki rayda \"Grup oluştur\"a bas ve bir şablon seç: Boş grup, Çalışma grubu, Game jam, Açık kaynak proje, Sınıf ya da Hackathon takımı.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "fn7ij4u74z": {
+    "en": "Invite your friends or share an expiring, use-limited invite link.",
+    "tr": "Arkadaşlarını davet et ya da süreli, kullanım sınırlı bir davet bağlantısı paylaş.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2gihyvc3m45": {
+    "en": "Chat in channels; edit shared files together under Files and open them in the editor.",
+    "tr": "Kanallarda yazış; Dosyalar'da ortak dosyaları birlikte düzenle ve editörde aç.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "11xx5s1qtra": {
+    "en": "Roles: owner, admin and member. {members} members and {files} files per group.",
+    "tr": "Roller: sahip, yönetici ve üye. Grup başına {members} üye ve {files} dosya.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2eynge882r3": {
+    "en": "Status dots",
+    "tr": "Durum noktaları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "s5gmqwg5jc": {
+    "en": "Change your status and custom status message from the profile menu, the user panel in Social or Account Settings → Status.",
+    "tr": "Durumunu ve özel durum mesajını profil menünden, Social'daki kullanıcı panelinden ya da Hesap Ayarları → Durum'dan değiştir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2133tpwkyvn": {
+    "en": "Call a friend from the direct message screen and group members from the group chat.",
+    "tr": "Arkadaşını direkt mesaj ekranından, grup üyelerini grup sohbetinden ara.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "23dcmg6pe6g": {
+    "en": "The browser asks for microphone access; you can check it from the lock icon in the address bar.",
+    "tr": "Tarayıcı mikrofon izni ister; adres çubuğundaki kilit simgesinden kontrol edebilirsin.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24648,6 +26309,34 @@
   "1qiaaqq7shg": {
     "en": "Peer-to-peer via WebRTC; never recorded by Hanogt.",
     "tr": "WebRTC ile eşten eşe; Hanogt tarafından kaydedilmez.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "bnkffvogvb": {
+    "en": "Publish code projects with a title, up to 6 tags and a license (MIT, Apache-2.0, GPL-3.0 or All rights reserved).",
+    "tr": "Kod projelerini başlık, en fazla 6 etiket ve lisansla (MIT, Apache-2.0, GPL-3.0 ya da Tüm hakları saklı) yayınla.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2706iotw85c": {
+    "en": "Posts are scanned first; code containing secret keys is not published.",
+    "tr": "Yayınlar taramadan geçer; gizli anahtar içeren kod yayınlanmaz.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2c15kviw9iv": {
+    "en": "Discover",
+    "tr": "Keşfet",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "mzygg96r76": {
+    "en": "Like, comment, download as ZIP, open in the editor; report inappropriate content.",
+    "tr": "Beğen, yorumla, ZIP olarak indir, editörde aç; uygunsuz içeriği bildir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24683,16 +26372,17 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1ui70lg4oc3": {
-    "en": "Password Meter",
-    "tr": "Parola Ölçer",
+  "grltynzmor": {
+    "en": "Password Lab",
+    "tr": "Parola Laboratuvarı",
     "files": [
-      "src/components/Guide/book-content.ts"
+      "src/components/Guide/book-content.ts",
+      "src/components/Security/SecurityCenter.tsx"
     ]
   },
-  "2eetp1168ol": {
-    "en": "Estimates how long a password would resist cracking.",
-    "tr": "Parolanın kırılma süresini tahmin eder.",
+  "z2t3longet": {
+    "en": "Estimates cracking time, checks breaches with k-anonymity and generates strong passwords.",
+    "tr": "Kırılma süresini tahmin eder, k-anonimlikle sızıntılarda arar, güçlü parola üretir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24740,9 +26430,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "v1bpxec9l1": {
-    "en": "Found a flaw? Report it responsibly via Feedback; never include real passwords or keys.",
-    "tr": "Açık bulursan Geri Bildirim'den sorumlu biçimde bildir; gerçek parola ya da anahtar ekleme.",
+  "mxlukj1gfh": {
+    "en": "Found a flaw? Choose the \"Security vulnerability\" category in a support ticket; never include real passwords or keys.",
+    "tr": "Açık bulursan destek talebinde \"Güvenlik Açığı\" kategorisini seç; gerçek parola ya da anahtar ekleme.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24754,6 +26444,48 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "26u95nahk8m": {
+    "en": "Account Settings → Privacy & Security → Two-step verification.",
+    "tr": "Hesap Ayarları → Gizlilik ve Güvenlik → İki adımlı doğrulama.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2dvgzbrvvfn": {
+    "en": "Scan the QR code with Google Authenticator, Microsoft Authenticator, Aegis or 1Password.",
+    "tr": "QR kodu Google Authenticator, Microsoft Authenticator, Aegis ya da 1Password ile tara.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "11te6sens4j": {
+    "en": "Enter the 6-digit code from the app.",
+    "tr": "Uygulamadaki 6 haneli kodu gir.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "3un7bzl7uc": {
+    "en": "Download the recovery codes and keep them somewhere safe; each one works only once.",
+    "tr": "Kurtarma kodlarını indir ve güvenli bir yere sakla; her biri yalnızca bir kez çalışır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "ozj8jnxsn5": {
+    "en": "Double lock",
+    "tr": "Çift kilit",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1kwrbs62w84": {
+    "en": "This is for accounts that sign in with an e-mail and password. If you sign in with Google, turn on two-step verification for your Google account.",
+    "tr": "E-posta ve parolayla giriş yapan hesaplar içindir. Google ile giriyorsan Google hesabının iki adımlı doğrulamasını aç.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "21ae1un7enr": {
     "en": "Your account is yours",
     "tr": "Hesabın senin",
@@ -24761,9 +26493,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1gm5407nlid": {
-    "en": "Profile, avatar, nickname, notifications, privacy and editor settings.",
-    "tr": "Profil, avatar, takma ad, bildirimler, gizlilik ve editör ayarları.",
+  "sqxbhbrm9": {
+    "en": "My Account, Profile, Status, Privacy & Security, Notifications, Messaging, Appearance, Editor and Data sections.",
+    "tr": "Hesabım, Profil, Durum, Gizlilik ve Güvenlik, Bildirimler, Mesajlaşma, Görünüm, Editör ve Veri bölümleri.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24803,6 +26535,90 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "p2dwr8ji9i": {
+    "en": "Support & feedback",
+    "tr": "Destek ve geri bildirim",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2f2uvyw5xsh": {
+    "en": "Public board",
+    "tr": "Herkese açık pano",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "x0inqh0zqk": {
+    "en": "Share ideas and questions, like and comment on other people's ideas.",
+    "tr": "Öneri ve soru paylaş, diğerlerinin önerilerini beğen ve yorumla.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "lzup6zlx86": {
+    "en": "Support ticket",
+    "tr": "Destek talebi",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "m2r7i0ldf2": {
+    "en": "Complaint, Request, Security vulnerability, Unban request, Question or Feedback. Only the Hanogt team sees your ticket.",
+    "tr": "Şikayet, İstek, Güvenlik Açığı, Ban Kaldırma İsteği, Soru ya da Geri Bildirim. Talebini yalnızca Hanogt ekibi görür.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "uudngrvql1": {
+    "en": "Ticket status",
+    "tr": "Talep durumu",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "20i4zxd5jwh": {
+    "en": "Open → In review → Answered → Resolved or Closed. A notification lands on the bell when the team replies.",
+    "tr": "Açık → İnceleniyor → Yanıtlandı → Çözüldü ya da Kapatıldı. Yanıt gelince zil simgesine bildirim düşer.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "cnfwo6jqsp": {
+    "en": "Hanogt Codev is free. Plus and Pro plans are on the way; nothing is sold yet.",
+    "tr": "Hanogt Codev ücretsizdir. Plus ve Pro planlar hazırlanıyor; şimdilik hiçbir şey satılmıyor.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "zcsltkimdp": {
+    "en": "Free: everything, plus {count} Hanogt AI messages a day.",
+    "tr": "Ücretsiz: her şey ve günde {count} Hanogt AI mesajı.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2cyu53jshmm": {
+    "en": "Plus: {count} messages a day and support priority.",
+    "tr": "Plus: günde {count} mesaj ve destek önceliği.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "l9q65566kg": {
+    "en": "Pro: {count} messages a day and support priority.",
+    "tr": "Pro: günde {count} mesaj ve destek önceliği.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "zyxzd5jb6o": {
+    "en": "Join the waitlist with \"Notify me when it opens\" on the Plans page.",
+    "tr": "Planlar sayfasında \"Açılınca haber ver\" ile bekleme listesine katılabilirsin.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "1vk1j1p0lf4": {
     "en": "Shortcut spells",
     "tr": "Kısayol büyüleri",
@@ -24831,9 +26647,37 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "1oud8li8mow": {
+    "en": "Command palette in the editor, quick switcher in Social",
+    "tr": "Editörde komut paleti, Social'da hızlı geçiş",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "1lin3787jwj": {
     "en": "Run code",
     "tr": "Kodu çalıştır",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "25uecfx9l2o": {
+    "en": "Find in the editor",
+    "tr": "Editörde bul",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "132oskvpc39": {
+    "en": "On a Mac, use ⌘ instead of Ctrl.",
+    "tr": "Mac'te Ctrl yerine ⌘ kullan.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2c6xbrfqrxy": {
+    "en": "Engine shortcuts",
+    "tr": "Motor kısayolları",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24859,6 +26703,13 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "1d58lom9iko": {
+    "en": "Copy / paste",
+    "tr": "Kopyala / yapıştır",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "19vj7g80ae2": {
     "en": "Focus / rename",
     "tr": "Odakla / yeniden adlandır",
@@ -24869,6 +26720,13 @@
   "22akbrdt2nt": {
     "en": "Undo / redo",
     "tr": "Geri al / yinele",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1qt9w5ibl06": {
+    "en": "Stop tile painting, clear the selection",
+    "tr": "Karo boyamayı bitir, seçimi kaldır",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -24922,9 +26780,23 @@
       "src/components/Guide/MinecraftBook.tsx"
     ]
   },
-  "rmcqh280p3": {
-    "en": "Chapters",
-    "tr": "Bölümler",
+  "2bq8fhpfytq": {
+    "en": "Search the guide",
+    "tr": "Kılavuzda ara",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "3dux9wgr5p": {
+    "en": "Search the guide: 2FA, remix, tilemap…",
+    "tr": "Kılavuzda ara: 2FA, remiks, tilemap…",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "1hqybpui0at": {
+    "en": "Search results",
+    "tr": "Arama sonuçları",
     "files": [
       "src/components/Guide/MinecraftBook.tsx"
     ]
@@ -24932,6 +26804,41 @@
   "2gmgiwu5gqv": {
     "en": "Page {page}",
     "tr": "Sayfa {page}",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "2y1rhsl026": {
+    "en": "No page in this book matches. Try another word.",
+    "tr": "Bu kitapta böyle bir sayfa yok. Başka bir kelime dene.",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "hm65gqoodw": {
+    "en": "Guide Master",
+    "tr": "Kılavuz Ustası",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "1ipcl6vwqei": {
+    "en": "Explorer: every chapter opened",
+    "tr": "Kâşif: tüm bölümleri açtın",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "rmcqh280p3": {
+    "en": "Chapters",
+    "tr": "Bölümler",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "26pk51382k3": {
+    "en": "Not opened yet",
+    "tr": "Henüz açılmadı",
     "files": [
       "src/components/Guide/MinecraftBook.tsx"
     ]
@@ -24950,6 +26857,13 @@
       "src/components/Guide/MinecraftBook.tsx"
     ]
   },
+  "8pph9c79nu": {
+    "en": "Continue where you left off: page {page}",
+    "tr": "Kaldığın yerden devam et: Sayfa {page}",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
   "21mts3rwdir": {
     "en": "Previous page",
     "tr": "Önceki sayfa",
@@ -24960,6 +26874,20 @@
   "om1j2abj9r": {
     "en": "Next page",
     "tr": "Sonraki sayfa",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "hwlz59ar1n": {
+    "en": "Pages read",
+    "tr": "Okunan sayfalar",
+    "files": [
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "1b045rixt2a": {
+    "en": "Level {level} · {visited}/{total} chapters explored",
+    "tr": "Seviye {level} · {visited}/{total} bölüm keşfedildi",
     "files": [
       "src/components/Guide/MinecraftBook.tsx"
     ]
@@ -24992,9 +26920,9 @@
       "src/components/Guide/MinecraftBook.tsx"
     ]
   },
-  "pz1v69mtb": {
-    "en": "← → turn pages · 1–9 chapters",
-    "tr": "← → sayfa çevir · 1–9 bölüm",
+  "25nmej5a00p": {
+    "en": "← → turn pages · 1–9, 0 chapters",
+    "tr": "← → sayfa çevir · 1–9, 0 bölüm",
     "files": [
       "src/components/Guide/MinecraftBook.tsx"
     ]
@@ -25002,13 +26930,6 @@
   "1vv4oby916u": {
     "en": "Advancement made!",
     "tr": "Başarım kazanıldı!",
-    "files": [
-      "src/components/Guide/MinecraftBook.tsx"
-    ]
-  },
-  "hm65gqoodw": {
-    "en": "Guide Master",
-    "tr": "Kılavuz Ustası",
     "files": [
       "src/components/Guide/MinecraftBook.tsx"
     ]
@@ -27505,13 +29426,6 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
-  "grltynzmor": {
-    "en": "Password Lab",
-    "tr": "Parola Laboratuvarı",
-    "files": [
-      "src/components/Security/SecurityCenter.tsx"
-    ]
-  },
   "1a2x6trcdfh": {
     "en": "Measure, check, generate",
     "tr": "Ölç, sızıntı ara, üret",
@@ -28890,14 +30804,6 @@
       "src/components/Social/HomeSidebar.tsx"
     ]
   },
-  "27jrwitn1xw": {
-    "en": "Direct messages",
-    "tr": "Direkt mesajlar",
-    "files": [
-      "src/components/Social/HomeSidebar.tsx",
-      "src/lib/ai/knowledge.ts"
-    ]
-  },
   "mdx29rfjqb": {
     "en": "Start a direct message",
     "tr": "Direkt mesaj başlat",
@@ -28994,13 +30900,6 @@
     "tr": "Daveti aç",
     "files": [
       "src/components/Social/JoinInviteDialog.tsx"
-    ]
-  },
-  "191x9jt88q2": {
-    "en": "Quick switcher",
-    "tr": "Hızlı geçiş",
-    "files": [
-      "src/components/Social/QuickSwitcher.tsx"
     ]
   },
   "u0f91tr68o": {
@@ -30802,9 +32701,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "z90nu6c6ou": {
-    "en": "[Game Engine](/game-engine) (Hanogt Engine V3) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Camera, Light, Tilemap, Animation, UI and Script components in the **Inspector**.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. Test with **Play** and read errors with line numbers in the console.\n5. **Publish to the Arcade** or export a single-file HTML game.\nDetails: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
-    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V3) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Kamera, Işık, Tilemap, Animasyon, UI ve Script bileşenlerini düzenle.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör.\n5. **Arcade'de yayınla** ya da tek dosya HTML olarak dışa aktar.\nAyrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
+  "14erbjufaxe": {
+    "en": "[Game Engine](/game-engine) (Hanogt Engine V3) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Camera, Light, Tilemap, Animation, UI and Script components in the **Inspector**.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. Test with **Play** and read errors with line numbers in the console.\n5. **Publish to the Arcade** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
+    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V3) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Kamera, Işık, Tilemap, Animasyon, UI ve Script bileşenlerini düzenle.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör.\n5. **Arcade'de yayınla** ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -30824,9 +32723,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "20qmris7119": {
-    "en": "The [Arcade](/arcade) showcases games made with Hanogt Engine:\n• **To publish**, press **Publish** in the engine; the game is compiled and screened by Hanogt Security.\n• Players play in the browser, fullscreen and with touch controls, like games and see play counts.\n• **Remix** copies a game into your own project so you can build on it.\n• You can unpublish your game any time; inappropriate games are reviewed by staff.",
-    "tr": "[Arcade](/arcade), Hanogt Engine ile yapılan oyunların vitrinidir:\n• **Yayınlamak için** motorda **Yayınla**'ya bas; oyun derlenir ve Hanogt Security taramasından geçer.\n• Oyuncular tarayıcıda, tam ekranda ve dokunmatik kontrollerle oynar; beğenir, oynanma sayısını görür.\n• **Remiks** ile bir oyunun kopyasını kendi projene alıp geliştirebilirsin.\n• Yayınladığın oyunu istediğin an yayından kaldırabilirsin; uygunsuz oyunlar yetkili ekip tarafından incelenir.",
+  "1sqh9uayfr4": {
+    "en": "The [Arcade](/arcade) showcases games made with Hanogt Engine:\n• **To publish**, press **Publish** in the engine; the game is compiled and screened by Hanogt Security.\n• Players play in the browser, fullscreen and with touch controls, like games and see play counts.\n• **Remix:** if the maker turned on **Allow remixes** when publishing (the card shows a \"Remixable\" icon), you can copy the game into your own project and build on it; the remix's page links back to the original. Without permission a game can only be played.\n• You can unpublish your game any time; inappropriate games are reviewed by staff.",
+    "tr": "[Arcade](/arcade), Hanogt Engine ile yapılan oyunların vitrinidir:\n• **Yayınlamak için** motorda **Yayınla**'ya bas; oyun derlenir ve Hanogt Security taramasından geçer.\n• Oyuncular tarayıcıda, tam ekranda ve dokunmatik kontrollerle oynar; beğenir, oynanma sayısını görür.\n• **Remiks:** yapımcı yayınlarken **Remikslemelere izin ver**'i açtıysa (kartta \"Remikslenebilir\" simgesi) oyunun kopyasını kendi projene alıp geliştirebilirsin; remiksin sayfası asıl oyuna bağlantı verir. İzin yoksa oyun yalnızca oynanır.\n• Yayınladığın oyunu istediğin an yayından kaldırabilirsin; uygunsuz oyunlar yetkili ekip tarafından incelenir.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -30978,9 +32877,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "189v4808h5h": {
-    "en": "Hanogt Codev is **free** and shows no ads. The code editor, game engine, Arcade, Media, News, Friends, Groups and Hanogt AI are all available; rate limits keep heavy use fair.",
-    "tr": "Hanogt Codev **ücretsizdir** ve reklam göstermez. Kod editörü, oyun motoru, Arcade, Media, Haberler, Arkadaşlar, Gruplar ve Hanogt AI kullanılabilir; yoğun kullanımı korumak için hız sınırları vardır.",
+  "1dlo33kh4y5": {
+    "en": "Hanogt Codev is **free** and shows no ads. The code editor, game engine, Arcade, Media, News, Friends, Groups and Hanogt AI are all available; rate limits keep heavy use fair.\n• **Plus and Pro plans are coming soon:** nothing is sold and no payments are taken yet. The plans will bring a higher daily Hanogt AI message limit and support priority; on the [Plans](/plans) page you can join the waitlist with \"Notify me when it opens\" and see your daily Hanogt AI usage.",
+    "tr": "Hanogt Codev **ücretsizdir** ve reklam göstermez. Kod editörü, oyun motoru, Arcade, Media, Haberler, Arkadaşlar, Gruplar ve Hanogt AI kullanılabilir; yoğun kullanımı korumak için hız sınırları vardır.\n• **Plus ve Pro planlar yakında:** şimdilik hiçbir şey satılmıyor ve ödeme alınmıyor. Planlar Hanogt AI için daha yüksek günlük mesaj sınırı ve destek önceliği getirecek; [Planlar](/plans) sayfasında \"Açılınca haber ver\" ile bekleme listesine katılabilir, günlük Hanogt AI kullanımını görebilirsin.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -32796,9 +34695,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "246bdcvru3l": {
-    "en": "Press Publish in the game engine. The game is compiled and goes through a security scan; published games are public on the Arcade, where people can play, like and remix them. You can take your game down any time.",
-    "tr": "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar Arcade'de herkese açıktır, oynanabilir, beğenilebilir ve remikslenebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
+  "v0y1ef0uav": {
+    "en": "Press Publish in the game engine. The game is compiled and goes through a security scan; published games are public on the Arcade, where people can play and like them; if you turn on “Allow remixes” when publishing, others can edit a copy too. You can take your game down any time.",
+    "tr": "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar Arcade'de herkese açıktır, oynanabilir ve beğenilebilir; yayınlarken “Remikslemelere izin ver” seçeneğini açarsanız başkaları da kopyasını düzenleyebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -33335,6 +35234,20 @@
       "src/lib/legal.ts"
     ]
   },
+  "7t2wizk3xp": {
+    "en": "Hanogt Arcade: games can now be remixed only if the author turned on “Allow remixes”; remixes carry the original game's title and author as attribution, and unauthorised copies can be reported with a Complaint ticket.",
+    "tr": "Hanogt Arcade: oyunlar artık yalnızca yapımcı “Remikslemelere izin ver” seçeneğini açtıysa remikslenebiliyor; remiksler orijinal oyunun adını ve yazarını atıf olarak taşıyor ve izinsiz kopyalar Şikayet talebiyle bildirilebiliyor.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "4jfav21tq9": {
+    "en": "Plans (Coming soon): explained that no payments are taken, that staff can assign and take back plans by hand, a plan's live benefits (Hanogt AI limit, support priority), the “Notify me” record and how these records are kept.",
+    "tr": "Planlar (Yakında): ödeme alınmadığı, ekibin planları elle tanımlayıp geri alabildiği, planın canlı avantajları (Hanogt AI sınırı, destek önceliği), “Açılınca haber ver” kaydı ve bu kayıtların saklanması açıklandı.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
   "6ymcivrwwl": {
     "en": "Hanogt Social: explained that friends, direct messages and groups now share one screen, that chats work through our server under the same access rules when the real-time connection can't be set up, and which preferences stay only in your browser.",
     "tr": "Hanogt Social: arkadaşlar, direkt mesajlar ve grupların tek ekranda birleştiği; gerçek zamanlı bağlantı kurulamadığında sohbetlerin aynı erişim kurallarıyla sunucu üzerinden çalıştığı ve hangi tercihlerin yalnızca tarayıcıda tutulduğu açıklandı.",
@@ -33655,6 +35568,118 @@
     "tr": "Finans & Ekonomi",
     "files": [
       "src/lib/news/sources.ts"
+    ]
+  },
+  "223uphejabz": {
+    "en": "Free",
+    "tr": "Ücretsiz",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "20z6bma8uyt": {
+    "en": "All of Hanogt Codev, free forever.",
+    "tr": "Hanogt Codev'in tamamı, her zaman ücretsiz.",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "jbcqfhzg08": {
+    "en": "The code editor, Hanogt Engine V3, the Arcade, Media and Hanogt Social",
+    "tr": "Kod editörü, Hanogt Engine V3, Arcade, Media ve Hanogt Social",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "vag0805ayq": {
+    "en": "250 Hanogt AI messages a day",
+    "tr": "Hanogt AI ile günde 250 mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "15ufjikgibe": {
+    "en": "Team editing and voice calls",
+    "tr": "Ekiple düzenleme ve sesli görüşme",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1iz6qm1wzqj": {
+    "en": "Plus",
+    "tr": "Plus",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "12n340zvevw": {
+    "en": "For people who want more AI and priority.",
+    "tr": "Daha çok yapay zekâ ve öncelik isteyenler için.",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "13skqwa4vio": {
+    "en": "Everything in Free",
+    "tr": "Ücretsiz plandaki her şey",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1oj2g8syy67": {
+    "en": "750 Hanogt AI messages a day",
+    "tr": "Hanogt AI ile günde 750 mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "164jvtofycu": {
+    "en": "Priority on support tickets",
+    "tr": "Destek taleplerinde öncelik",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "lii2tymfcr": {
+    "en": "A Plus badge on your profile",
+    "tr": "Profilinde Plus rozeti",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "jbd3t30gtm": {
+    "en": "Pro",
+    "tr": "Pro",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "20wsa2aqeq4": {
+    "en": "For developers and teams who work hard every day.",
+    "tr": "Her gün yoğun çalışan geliştiriciler ve ekipler için.",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "pxme9b2wsu": {
+    "en": "Everything in Plus",
+    "tr": "Plus plandaki her şey",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1vobray5psd": {
+    "en": "2,000 Hanogt AI messages a day",
+    "tr": "Hanogt AI ile günde 2.000 mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "d5p7k1pa3d": {
+    "en": "Early access to new features",
+    "tr": "Yeni özelliklere erken erişim",
+    "files": [
+      "src/lib/plans.ts"
     ]
   },
   "13krlb40uvf": {

@@ -531,7 +531,7 @@
   "gt_open": "打开书本",
   "gt_news": "新闻如何运作",
   "gt_preview": "预览指南书",
-  "gt_page": "第 1 / 24 页",
+  "gt_page": "第 1 / {total} 页",
   "gt_welcome": "欢迎你，冒险者！",
   "gt_intro": "这本书是 Hanogt Codev 世界的地图。写代码、做游戏、追新闻。每一章都是一个任务。",
   "gt_ch1": "第 1 章：注册账号",

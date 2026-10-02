@@ -1,5 +1,39 @@
 # Değişiklik Günlüğü
 
+## 0.2.2 — 2026-10-02
+
+### Kılavuz (Minecraft kitabı)
+
+- Kitap bugünkü siteyi anlatıyor: 10 bölüm ve 43 sayfa. Yeni bölümler
+  **Hanogt AI** (modlar, kod paneli, ajan modu, sınırlar) ve **Hanogt Social
+  ve Media** (arkadaşlar, direkt mesajlar, gruplar, durum noktaları, sesli
+  arama); yeni sayfalar Panel, ekiple düzenleme, V3 blokları, ilk oyun, remiks
+  kuralları, piyasa bandı, iki adımlı doğrulama, destek ve Planlar (yakında).
+  Eskimiş bilgiler (180 haber sınırı, kod çalıştırma, şablonlar, Parola
+  Ölçer) düzeltildi; sayılar ilgili modüllerden okunuyor.
+- Kitapta arama (Türkçe, İngilizce ya da arayüz dilinde); sonuç sayfası
+  parlayarak açılıyor. Kaldığın sayfa ve açtığın bölümler bu tarayıcıda
+  hatırlanıyor: "Kaldığın yerden devam et" düğmesi, XP çubuğu (seviye = açılan
+  bölüm sayısı), hotbar'da açılmamış bölüm işareti ve **Kâşif** başarımı.
+- Hotbar 10 yuvalı ve telefona sığıyor (1–9 ve 0 tuşları); düz metin
+  görünümünde hotbar ilgili bölüme kaydırıyor. Eski `#media` bağlantısı
+  Social bölümünü açıyor. Ana sayfadaki kitap önizlemesi sayfa sayısını
+  kitaptan alıyor.
+
+### Motor belgeleri
+
+- **İlk oyunun: adım adım**: motorun gerçek menüleriyle 10 dakikada coin
+  toplanan bir platform oyunu. Adımlar ve kod
+  `scripts/tests/engine-docs.test.mjs` ile editör işlemleri kullanılarak
+  kurulup oynatılıyor; motor değişirse test bozulur.
+- **Sık karşılaşılan sorunlar** tablosu (derleme hataları, tetikleyiciler,
+  NullReference, sonsuz döngü, tuşlar, yayınlama, kayıt çakışması).
+- Kod bloklarında Kopyala düğmesi, içindekilerde metin araması, okunan
+  bölümün vurgulanması ve telefonda açılır içindekiler. Türkçe yayınlama
+  bölümü remiks iznini anlatıyor.
+- Oluştur menüsündeki Sprite (Kare/Daire) İngilizce arayüzde Sprite
+  (Square/Circle) olarak görünüyor.
+
 ## 0.2.1 — 2026-10-02
 
 ### Arcade: remiks izni

@@ -237,7 +237,7 @@
   "gt_kicker": "Paano ito gumagana?",
   "gt_news": "Paano gumagana ang balita",
   "gt_open": "Buksan ang libro",
-  "gt_page": "Pahina 1 ng 24",
+  "gt_page": "Pahina 1 ng {total}",
   "gt_preview": "I-preview ang libro ng gabay",
   "gt_tap": "I-tap para buksan",
   "gt_text": "Mula sa paggawa ng account hanggang sa pag-publish ng laro, mula sa kung paano kinokolekta ng Hanogt News ang mga balita hanggang sa AI arena, ipinapaliwanag ang lahat sa isang pixel na libro na binubuklat mo pahina kada pahina.",

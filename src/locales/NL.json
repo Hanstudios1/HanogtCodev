@@ -531,7 +531,7 @@
   "gt_open": "Open het boek",
   "gt_news": "Hoe het nieuws werkt",
   "gt_preview": "Voorbeeld van het handleidingboek",
-  "gt_page": "Pagina 1 van 24",
+  "gt_page": "Pagina 1 van {total}",
   "gt_welcome": "Welkom, avonturier!",
   "gt_intro": "Dit boek is de kaart van de wereld van Hanogt Codev. Programmeer, maak games, volg het nieuws. Elk hoofdstuk is een quest.",
   "gt_ch1": "Hoofdstuk 1: Aanmelden",

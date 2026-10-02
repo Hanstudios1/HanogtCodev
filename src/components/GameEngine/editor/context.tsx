@@ -89,8 +89,8 @@ export function entityIcon(entity: GameEntity): { icon: LucideIcon; className: s
 export function createMenuItems(dimension: GameDimension, t: (key: TextKey) => string, onCreate: (preset: EntityPreset) => void): MenuItem[] {
     const item = (label: string, preset: EntityPreset, icon: LucideIcon): MenuItem => ({ label, icon, onSelect: () => onCreate(preset) });
     const shapes2D: MenuItem[] = [
-        item("Sprite (Kare)", "sprite", Square),
-        item("Sprite (Daire)", "circleSprite", Circle),
+        item(t("spriteSquare"), "sprite", Square),
+        item(t("spriteCircle"), "circleSprite", Circle),
         item("Tilemap", "tilemap", Grid3x3),
     ];
     const shapes3D: MenuItem[] = [

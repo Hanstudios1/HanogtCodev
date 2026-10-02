@@ -531,7 +531,7 @@
   "gt_open": "Könyv megnyitása",
   "gt_news": "Hogyan működnek a hírek",
   "gt_preview": "Az útmutatókönyv előnézete",
-  "gt_page": "1. oldal / 24",
+  "gt_page": "1. oldal / {total}",
   "gt_welcome": "Üdv, kalandor!",
   "gt_intro": "Ez a könyv a Hanogt Codev világának térképe. Kódolj, készíts játékokat, kövesd a híreket. Minden fejezet egy küldetés.",
   "gt_ch1": "1. fejezet: Regisztráció",

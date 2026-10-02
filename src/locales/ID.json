@@ -531,7 +531,7 @@
   "gt_open": "Buka buku",
   "gt_news": "Cara kerja berita",
   "gt_preview": "Pratinjau buku panduan",
-  "gt_page": "Halaman 1 dari 24",
+  "gt_page": "Halaman 1 dari {total}",
   "gt_welcome": "Selamat datang, petualang!",
   "gt_intro": "Buku ini adalah peta dunia Hanogt Codev. Tulis kode, buat game, ikuti berita. Setiap bab adalah sebuah misi.",
   "gt_ch1": "Bab 1: Daftar",

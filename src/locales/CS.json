@@ -531,7 +531,7 @@
   "gt_open": "Otevřít knihu",
   "gt_news": "Jak fungují zprávy",
   "gt_preview": "Náhled knihy průvodce",
-  "gt_page": "Strana 1 z 24",
+  "gt_page": "Strana 1 z {total}",
   "gt_welcome": "Vítej, dobrodruhu!",
   "gt_intro": "Tato kniha je mapou světa Hanogt Codev. Programuj, tvoř hry, sleduj novinky. Každá kapitola je výprava.",
   "gt_ch1": "Kapitola 1: Registrace",

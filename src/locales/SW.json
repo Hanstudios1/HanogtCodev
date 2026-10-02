@@ -237,7 +237,7 @@
   "gt_kicker": "Inafanyaje kazi?",
   "gt_news": "Jinsi habari zinavyofanya kazi",
   "gt_open": "Fungua kitabu",
-  "gt_page": "Ukurasa 1 kati ya 24",
+  "gt_page": "Ukurasa 1 kati ya {total}",
   "gt_preview": "Hakiki kitabu cha mwongozo",
   "gt_tap": "Gusa ili kufungua",
   "gt_text": "Kuanzia kufungua akaunti hadi kuchapisha mchezo, kuanzia jinsi Hanogt News inavyokusanya habari hadi uwanja wa akili bandia, kila kitu kimeelezwa katika kitabu cha pikseli unachokigeuza ukurasa kwa ukurasa.",

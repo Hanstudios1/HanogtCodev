@@ -531,7 +531,7 @@
   "gt_open": "Mở sách",
   "gt_news": "Tin tức hoạt động thế nào",
   "gt_preview": "Xem trước sách hướng dẫn",
-  "gt_page": "Trang 1 / 24",
+  "gt_page": "Trang 1 / {total}",
   "gt_welcome": "Chào mừng, nhà thám hiểm!",
   "gt_intro": "Cuốn sách này là bản đồ thế giới Hanogt Codev. Viết code, làm game, theo dõi tin tức. Mỗi chương là một nhiệm vụ.",
   "gt_ch1": "Chương 1: Đăng ký",

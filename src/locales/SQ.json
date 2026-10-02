@@ -531,7 +531,7 @@
   "gt_open": "Hap librin",
   "gt_news": "Si funksionojnë lajmet",
   "gt_preview": "Shiko paraprakisht librin udhëzues",
-  "gt_page": "Faqja 1 nga 24",
+  "gt_page": "Faqja 1 nga {total}",
   "gt_welcome": "Mirë se erdhe, aventurier!",
   "gt_intro": "Ky libër përshkruan botën e Hanogt Codev. Shkruaj kod, ndërto lojëra, ndiq lajmet. Çdo kapitull është një mision.",
   "gt_ch1": "Kapitulli 1: Regjistrohu",

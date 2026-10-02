@@ -531,7 +531,7 @@
   "gt_open": "Kitabı aç",
   "gt_news": "Haberler nasıl çalışır?",
   "gt_preview": "Kılavuz kitabını önizle",
-  "gt_page": "Sayfa 1 / 24",
+  "gt_page": "Sayfa 1 / {total}",
   "gt_welcome": "Hoş geldin, maceracı!",
   "gt_intro": "Bu kitap Hanogt Codev dünyasının haritasıdır. Kod yaz, oyun inşa et, haberleri takip et. Her bölüm bir görevdir.",
   "gt_ch1": "1. Bölüm: Hesap aç",

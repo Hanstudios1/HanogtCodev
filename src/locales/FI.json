@@ -531,7 +531,7 @@
   "gt_open": "Avaa kirja",
   "gt_news": "Näin uutiset toimivat",
   "gt_preview": "Esikatsele opaskirjaa",
-  "gt_page": "Sivu 1/24",
+  "gt_page": "Sivu 1/{total}",
   "gt_welcome": "Tervetuloa, seikkailija!",
   "gt_intro": "Tämä kirja on Hanogt Codevin maailman kartta. Koodaa, tee pelejä, seuraa uutisia. Jokainen luku on tehtävä.",
   "gt_ch1": "Luku 1: Rekisteröidy",

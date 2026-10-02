@@ -5,6 +5,7 @@ import "@fontsource/pixelify-sans/600.css";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { GUIDE_PAGE_COUNT } from "@/components/Guide/book-meta";
 import { useI18n } from "@/lib/i18n";
 
 /** A closed Minecraft-style "Book and Quill" that opens on hover/tap and links to /guide. */
@@ -46,7 +47,7 @@ export default function GuideTeaser() {
                 >
                     {/* First page (visible when the cover opens) */}
                     <div className="absolute inset-0 rounded-e-lg border-4 border-[#6b4a2b] bg-[#f4e9c8] p-6 text-start shadow-2xl" style={{ fontFamily: "'Pixelify Sans', monospace", imageRendering: "pixelated" }}>
-                        <p className="text-[11px] text-[#7a6a4f]">{t("gt_page")}</p>
+                        <p className="text-[11px] text-[#7a6a4f]">{t("gt_page").replace("{total}", String(GUIDE_PAGE_COUNT))}</p>
                         <p className="mt-3 text-[20px] font-semibold leading-tight text-[#3b2a1a]">{t("gt_welcome")}</p>
                         <p className="mt-3 text-[15px] leading-snug text-[#3b2a1a]">
                             {t("gt_intro")}

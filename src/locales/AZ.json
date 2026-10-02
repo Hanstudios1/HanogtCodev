@@ -531,7 +531,7 @@
   "gt_open": "Kitabı aç",
   "gt_news": "Xəbərlər necə işləyir?",
   "gt_preview": "Təlimat kitabına baxış",
-  "gt_page": "Səhifə 1 / 24",
+  "gt_page": "Səhifə 1 / {total}",
   "gt_welcome": "Xoş gəldin, səyyah!",
   "gt_intro": "Bu kitab Hanogt Codev dünyasının xəritəsidir. Kod yaz, oyun yarat, xəbərləri izlə. Hər fəsil bir tapşırıqdır.",
   "gt_ch1": "1-ci fəsil: Qeydiyyat",

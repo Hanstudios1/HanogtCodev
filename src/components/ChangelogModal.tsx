@@ -24,6 +24,20 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.2.2",
+        version: "v0.2.2",
+        date: "2026-10-02",
+        title: { TR: "Yenilenen Minecraft kılavuzu ve motor belgeleri", EN: "A renewed Minecraft guide and engine docs" },
+        desc: { TR: "Kılavuz kitabı bugünkü özelliklerle 43 sayfaya çıktı; arama, kaldığın yerden devam ve keşif seviyesi geldi. Motor belgelerine adım adım ilk oyun ve sorun giderme eklendi.", EN: "The guide book grew to 43 pages covering today's features, with search, resume reading and an exploration level. The engine docs gained a step-by-step first game and troubleshooting." },
+        items: [
+            { TR: "Kılavuzda 10 bölüm: Hanogt AI, Hanogt Social, ekiple düzenleme, remiks kuralları, piyasa bandı, iki adımlı doğrulama, destek talepleri ve Planlar (yakında) için yeni sayfalar.", EN: "10 chapters in the guide, with new pages on Hanogt AI, Hanogt Social, team editing, remix rules, the market strip, two-step verification, support tickets and Plans (coming soon)." },
+            { TR: "Kitapta arama: Türkçe ya da İngilizce yaz, sonuca tıkla; sayfa parlayarak açılır.", EN: "Search the book in Turkish or English and click a result; its page opens with a glow." },
+            { TR: "Kaldığın sayfa ve açtığın bölümler bu tarayıcıda hatırlanır; XP çubuğu keşif seviyeni, hotbar henüz açılmamış bölümleri gösterir. Hepsini açana Kâşif başarımı.", EN: "The page you were on and the chapters you opened are remembered in this browser; the XP bar shows your exploration level and the hotbar marks chapters you haven't opened. Open them all for the Explorer advancement." },
+            { TR: "Motor belgeleri: 10 dakikada coin toplanan bir platform oyunu (kodu otomatik testle doğrulanır), sık karşılaşılan sorunlar tablosu, kod kopyalama düğmesi, belgelerde arama ve telefonda içindekiler.", EN: "Engine docs: a coin-collecting platformer in 10 minutes (its code is checked by an automated test), a troubleshooting table, a copy button on code, search in the docs and a contents menu on phones." },
+            { TR: "Motorun Oluştur menüsü İngilizcede artık Sprite (Square) ve Sprite (Circle) yazıyor.", EN: "The engine's Create menu now says Sprite (Square) and Sprite (Circle) in English." },
+        ],
+    },
+    {
         id: "v0.2.1",
         version: "v0.2.1",
         date: "2026-10-02",

@@ -237,7 +237,7 @@
   "gt_kicker": "Hvordan fungerer det?",
   "gt_news": "Sådan fungerer nyheder",
   "gt_open": "Åbn bogen",
-  "gt_page": "Side 1 af 24",
+  "gt_page": "Side 1 af {total}",
   "gt_preview": "Forhåndsvis vejledningsbogen",
   "gt_tap": "Tryk for at åbne",
   "gt_text": "Fra oprettelse af en konto til udgivelse af et spil, fra hvordan Hanogt News indsamler nyheder, til AI-arenaen: alt forklares i en pixelbog, som du blader igennem side for side.",

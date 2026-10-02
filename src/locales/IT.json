@@ -531,7 +531,7 @@
   "gt_open": "Apri il libro",
   "gt_news": "Come funzionano le notizie",
   "gt_preview": "Anteprima del libro guida",
-  "gt_page": "Pagina 1 di 24",
+  "gt_page": "Pagina 1 di {total}",
   "gt_welcome": "Benvenuto, avventuriero!",
   "gt_intro": "Questo libro è la mappa del mondo di Hanogt Codev. Programma, crea giochi, segui le notizie. Ogni capitolo è una missione.",
   "gt_ch1": "Capitolo 1: Registrati",

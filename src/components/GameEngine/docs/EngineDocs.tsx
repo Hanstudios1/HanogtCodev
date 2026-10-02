@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, BookOpen, Gamepad2, Rocket } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Check, Copy, Gamepad2, ListTree, Rocket, Search } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { API_MEMBERS, TYPE_MEMBERS } from "@/components/GameEngine/editor/completions";
 import { engineLocale } from "@/components/GameEngine/editor/text";
 import { V3_FEATURES } from "@/components/GameEngine/whats-new";
+import { FIRST_GAME } from "./first-game";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { useI18n } from "@/lib/i18n";
 
@@ -13,6 +14,7 @@ import { useI18n } from "@/lib/i18n";
 const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "yenilikler", tr: "V3'te yenilikler", en: "What's new in V3" },
     { id: "baslarken", tr: "Başlarken", en: "Getting started" },
+    { id: "ilk-oyun", tr: "İlk oyunun: adım adım", en: "Your first game, step by step" },
     { id: "editor", tr: "Editör", en: "The editor" },
     { id: "bilesenler", tr: "Nesneler ve bileşenler", en: "Objects and components" },
     { id: "csharp", tr: "C# ile script", en: "Scripting in C#" },
@@ -32,7 +34,16 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "api", tr: "API referansı", en: "API reference" },
     { id: "farklar", tr: "Unity'den farklar", en: "Differences from Unity" },
     { id: "guvenlik", tr: "Güvenlik ve sınırlar", en: "Security and limits" },
+    { id: "sorunlar", tr: "Sık karşılaşılan sorunlar", en: "Troubleshooting" },
 ];
+
+/** Whether the guide is shown in Turkish (code blocks label their buttons with it). */
+const TurkishDocs = createContext(true);
+
+/** Lower case without accents, with Turkish dotless i folded, for searching. */
+function fold(text: string) {
+    return text.toLocaleLowerCase("tr").normalize("NFD").replace(/\p{M}+/gu, "").replace(/ı/g, "i");
+}
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
     // Numbers follow the table of contents, so adding a section never leaves stale numbering.
@@ -46,9 +57,26 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 function Code({ children, language = "C#" }: { children: string; language?: string }) {
+    const tr = useContext(TurkishDocs);
+    const [copied, setCopied] = useState(false);
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(children.trim());
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1500);
+        } catch {
+            // Clipboard access can be refused; the code can still be selected by hand.
+        }
+    };
     return (
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-950 dark:border-white/10" dir="ltr">
-            <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5 text-[11px] font-semibold text-zinc-400"><span>{language}</span></div>
+            <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5 text-[11px] font-semibold text-zinc-400">
+                <span>{language}</span>
+                <button type="button" onClick={() => void copy()} className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-zinc-400 transition hover:bg-white/10 hover:text-white" aria-live="polite">
+                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? (tr ? "Kopyalandı" : "Copied") : (tr ? "Kopyala" : "Copy")}
+                </button>
+            </div>
             <pre className="scrollbar-thin overflow-x-auto p-4 text-[12.5px] leading-relaxed text-zinc-200"><code>{children.trim()}</code></pre>
         </div>
     );
@@ -134,6 +162,28 @@ function DocsTR() {
                                     <li>Hazır olduğunuzda <b>Yayınla</b> ile Arcade&apos;e gönderin veya <b>Dışa aktar → Oynanabilir HTML</b> ile tek dosyalık oyun indirin.</li>
                                 </ol>
                                 <Tip>Şablonlardaki her script, Unity derslerindeki gibi yazılmıştır ve yorum satırlarıyla açıklanmıştır. Öğrenmenin en hızlı yolu bir şablonu açıp değerleri değiştirmektir.</Tip>
+                                <Tip>Takıldığınızda <Link href="/ai" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Hanogt AI</Link>&apos;a sorun: Hanogt Engine için C# veya C++ script yazar, hata mesajlarını açıklar; Ajan modunda izninizle şablondan oyun projesi de oluşturur.</Tip>
+                            </Section>
+
+                            <Section id="ilk-oyun" title="İlk oyunun: adım adım">
+                                <p>Bu bölümde yaklaşık 10 dakikada küçük bir platform oyunu yapacaksınız: ok tuşlarıyla yürüyen, Space ile zıplayan ve coin toplayan bir karakter. Adımlar motorun gerçek menülerini kullanır.</p>
+                                <ol className="list-decimal space-y-3 ps-5">
+                                    <li><b>Projeyi oluşturun.</b> <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasında <b>Boş 2D Proje</b> şablonunu seçip <b>Projeyi oluştur</b>&apos;a basın. Sahnede yalnızca Main Camera vardır.</li>
+                                    <li><b>Oyuncuyu ekleyin.</b> Hiyerarşide <b>Oluştur → Sprite (Kare)</b>. Inspector&apos;da adını <K>{FIRST_GAME.scriptName.tr}</K>, konumunu <K>({FIRST_GAME.player.x}, {FIRST_GAME.player.y})</K> yapın ve <b>Bileşen ekle → Physics → Rigidbody 2D</b> ekleyin. Kare, <b>Box Collider 2D</b> ile birlikte gelir.</li>
+                                    <li><b>Zemini ekleyin.</b> Yine <b>Oluştur → Sprite (Kare)</b>: adı <K>Zemin</K>, konumu <K>({FIRST_GAME.ground.x}, {FIRST_GAME.ground.y})</K>, ölçeğin X değeri <K>{FIRST_GAME.ground.scaleX}</K>. Zemine Rigidbody eklemeyin; Rigidbody&apos;si olmayan çarpıştırıcılar yerinde durur.</li>
+                                    <li><b>Script&apos;i yazın.</b> Oyuncu seçiliyken <b>Bileşen ekle → Yeni script…</b>, ad olarak <K>{FIRST_GAME.scriptName.tr}</K> yazıp <b>C#</b>&apos;ı seçin. Açılan kod editöründeki her şeyi aşağıdaki kodla değiştirin; script otomatik derlenir.</li>
+                                    <li><b>Coinleri dağıtın.</b> <b>Oluştur → Sprite (Daire)</b>: adı <K>Coin</K>, <b>Etiket</b> alanına <K>Coin</K> yazın ve <b>Circle Collider 2D</b>&apos;de <b>Is Trigger</b>&apos;ı açın. Konumu <K>({FIRST_GAME.coins[0].x}, {FIRST_GAME.coins[0].y})</K> olsun; Ctrl+D ile iki kopya alıp <K>({FIRST_GAME.coins[1].x}, {FIRST_GAME.coins[1].y})</K> ve <K>({FIRST_GAME.coins[2].x}, {FIRST_GAME.coins[2].y})</K> konumlarına taşıyın.</li>
+                                    <li><b>Oynayın.</b> <b>▶ Oynat</b>&apos;a (Ctrl+P) basın: ← → ile yürüyün, Space ile zıplayın. Havadaki coin için zıplarken sağa gidin.</li>
+                                </ol>
+                                <Code>{FIRST_GAME.script.tr}</Code>
+                                <Table head={["Parça", "Ne yapar?"]} rows={[
+                                    [<K key="a">GetComponent&lt;Rigidbody2D&gt;()</K>, "Fizik gövdesini bir kez bulur; hız her karede bu gövdeye yazılır."],
+                                    [<K key="b">Input.GetAxisRaw(&quot;Horizontal&quot;)</K>, "← → ya da A/D basılıyken -1, 0 veya 1 verir."],
+                                    [<K key="c">OnCollisionStay2D</K>, "Zemine değdiği sürece çağrılır; çarpışmanın normali yukarı bakıyorsa oyuncu yerdedir ve zıplayabilir."],
+                                    [<K key="d">OnTriggerEnter2D</K>, "Is Trigger açık bir çarpıştırıcıya girince çağrılır; Coin etiketli nesne yok edilir, skor artar."],
+                                    [<K key="e">SceneManager.ReloadScene()</K>, "Oyuncu dünyadan düşerse sahneyi baştan başlatır."],
+                                ]} />
+                                <Tip>Şimdi kendi fikirlerinizi ekleyin: skoru ekranda göstermek için <b>Oluştur → UI → Text</b> ekleyin, script&apos;in başına <K>using UnityEngine.UI;</K> ve sınıfa <K>public Text skorYazisi;</K> yazıp alanı Inspector&apos;dan atayın; coin alınca <K>skorYazisi.text = &quot;Skor: &quot; + skor;</K>. Düşmanlar için <a href="#fizik" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Fizik</a>, seviyeler için <a href="#tilemap" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Tilemap</a> bölümüne bakın; hazır olunca Ctrl+S ile kaydedip <a href="#yayinlama" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Arcade&apos;de yayınlayın</a>.</Tip>
                             </Section>
 
                             <Section id="editor" title="Editör">
@@ -460,7 +510,7 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 
                             <Section id="yayinlama" title="Yayınlama ve dışa aktarma">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir, beğenebilir ve remiksleyebilir. Oyun kartında oyunun yapıldığı motor sürümü (ör. V3) görünür. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
+                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir ve beğenebilir; <b>Remikslemelere izin ver</b>&apos;i açarsanız kopyasını alıp kendi sürümlerini de yapabilirler (remiksin sayfasında oyununuza bağlantı görünür). Oyun kartında oyunun yapıldığı motor sürümü (ör. V3) görünür. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
                                     <li><b>Oynanabilir HTML:</b> Oyunu ve motoru tek bir .html dosyasına paketler; internet olmadan açılır, istediğiniz yerde barındırabilirsiniz.</li>
                                     <li><b>Proje dosyası (.json):</b> Yedekleme ve başka hesaba/tarayıcıya taşıma için.</li>
                                 </ul>
@@ -489,6 +539,21 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     <li>Arcade&apos;e yayınlanan oyunlar herkese açıktır. Kişisel veri, parola veya gizli anahtar paylaşmayın; kurallara aykırı içerik kaldırılır.</li>
                                 </ul>
                             </Section>
+
+                            <Section id="sorunlar" title="Sık karşılaşılan sorunlar">
+                                <Table head={["Belirti", "Çözüm"]} rows={[
+                                    ["Oynat'a basınca “Oyunu başlatmadan önce derleme hatalarını düzeltin.” yazıyor.", "Konsol'da Hatalar'ı açın; bir hataya tıklayınca script ilgili satırda açılır. Çoğu zaman eksik noktalı virgül, kapanmamış süslü parantez ya da yanlış yazılmış bir addır."],
+                                    ["Script, Bileşen ekle menüsünde gri görünüyor.", "Dosyada MonoBehaviour'dan türeyen bir sınıf yok. Sınıf tanımı public class Ad : MonoBehaviour biçiminde olmalı."],
+                                    ["OnTriggerEnter hiç çağrılmıyor.", "Çarpıştırıcıda Is Trigger açık olmalı ve iki nesneden en az birinde Rigidbody bulunmalı. Script, tetikleyiciye giren nesnede ya da tetikleyicinin kendisinde olabilir."],
+                                    ["Karakter zeminin içinden düşüyor.", "Zeminde etkin bir çarpıştırıcı (ör. Box Collider 2D) olmalı. Zemine dinamik Rigidbody eklemeyin; eklerseniz o da düşer."],
+                                    ["Konsolda “NullReferenceException: … null veya yok edilmiş bir nesneye erişildi.”", "Inspector'daki bir public alan boş kalmış ya da nesne Destroy ile silinmiş. Alanı Inspector'dan atayın veya kullanmadan önce if (hedef != null) ile kontrol edin."],
+                                    ["“Script komut bütçesini aştı (olası sonsuz döngü).”", "Bir while ya da for döngüsü bitmiyor. Oyun donmaz, yalnızca o script devre dışı kalır. Döngünün çıkış koşulunu düzeltin; beklemek için coroutine (yield return) kullanın."],
+                                    ["Tuşlar oyunda çalışmıyor.", "Odak bir yazı alanında (ör. script editöründe) olabilir. Oyun görünümüne bir kez tıklayın."],
+                                    ["Arcade'de yayınla düğmesi kullanılamıyor.", "Yayınlamak için giriş yapıp projeyi buluta kaydetmeniz gerekir; misafir projeleri yalnızca bu tarayıcıda durur."],
+                                    ["“Proje başka bir sekmede/cihazda değişti” uyarısı.", "Sayfayı yenileyip güncel sürümü yükleyin. Bu sekmedeki değişiklikleri kaybetmemek için önce Dışa aktar → Proje dosyası (.json) ile yedek alın."],
+                                ]} />
+                                <Tip>Çözüm bulamadınız mı? Hata mesajını <Link href="/ai" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Hanogt AI</Link>&apos;a yapıştırın ya da <Link href="/feedback" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Geri Bildirim ve Destek</Link> sayfasından bize yazın.</Tip>
+                            </Section>
         </>
     );
 }
@@ -510,6 +575,28 @@ function DocsEN() {
                                     <li>When you are ready, send it to the Arcade with <b>Publish</b>, or download a single-file game with <b>Export → Playable HTML</b>.</li>
                                 </ol>
                                 <Tip>Every template script is written like a Unity tutorial and explained with comments. The fastest way to learn is to open a template and start changing values.</Tip>
+                                <Tip>Stuck? Ask <Link href="/ai" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Hanogt AI</Link>: it writes C# or C++ scripts for Hanogt Engine and explains error messages, and in Agent mode it can even create a game project from a template with your permission.</Tip>
+                            </Section>
+
+                            <Section id="ilk-oyun" title="Your first game, step by step">
+                                <p>In about 10 minutes you will build a small platformer: a character that walks with the arrow keys, jumps with Space and collects coins. Every step uses the engine&apos;s real menus.</p>
+                                <ol className="list-decimal space-y-3 ps-5">
+                                    <li><b>Create the project.</b> On the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page pick the <b>Empty 2D Project</b> template and press <b>Create project</b>. The scene only has a Main Camera.</li>
+                                    <li><b>Add the player.</b> In the Hierarchy choose <b>Create → Sprite (Square)</b>. In the Inspector name it <K>{FIRST_GAME.scriptName.en}</K>, set its position to <K>({FIRST_GAME.player.x}, {FIRST_GAME.player.y})</K> and add <b>Add component → Physics → Rigidbody 2D</b>. The square comes with a <b>Box Collider 2D</b>.</li>
+                                    <li><b>Add the ground.</b> <b>Create → Sprite (Square)</b> again: name it <K>Ground</K>, position <K>({FIRST_GAME.ground.x}, {FIRST_GAME.ground.y})</K>, scale X <K>{FIRST_GAME.ground.scaleX}</K>. Don&apos;t give the ground a Rigidbody; colliders without one stay where they are.</li>
+                                    <li><b>Write the script.</b> With the player selected choose <b>Add component → New script…</b>, type <K>{FIRST_GAME.scriptName.en}</K> as the name and pick <b>C#</b>. Replace everything in the code editor that opens with the code below; the script compiles automatically.</li>
+                                    <li><b>Place the coins.</b> <b>Create → Sprite (Circle)</b>: name it <K>Coin</K>, type <K>Coin</K> in the <b>Tag</b> field and turn on <b>Is Trigger</b> in its <b>Circle Collider 2D</b>. Put it at <K>({FIRST_GAME.coins[0].x}, {FIRST_GAME.coins[0].y})</K>, then press Ctrl+D twice and move the copies to <K>({FIRST_GAME.coins[1].x}, {FIRST_GAME.coins[1].y})</K> and <K>({FIRST_GAME.coins[2].x}, {FIRST_GAME.coins[2].y})</K>.</li>
+                                    <li><b>Play.</b> Press <b>▶ Play</b> (Ctrl+P): walk with ← →, jump with Space. For the coin in the air, jump and move right.</li>
+                                </ol>
+                                <Code>{FIRST_GAME.script.en}</Code>
+                                <Table head={["Part", "What it does"]} rows={[
+                                    [<K key="a">GetComponent&lt;Rigidbody2D&gt;()</K>, "Finds the physics body once; the velocity is written to it every frame."],
+                                    [<K key="b">Input.GetAxisRaw(&quot;Horizontal&quot;)</K>, "Gives -1, 0 or 1 while ← → or A/D are held."],
+                                    [<K key="c">OnCollisionStay2D</K>, "Called while touching the ground; when the collision normal points up, the player is grounded and may jump."],
+                                    [<K key="d">OnTriggerEnter2D</K>, "Called when entering a collider with Is Trigger on; the object tagged Coin is destroyed and the score goes up."],
+                                    [<K key="e">SceneManager.ReloadScene()</K>, "Restarts the scene when the player falls off the world."],
+                                ]} />
+                                <Tip>Now add your own ideas: to show the score, add <b>Create → UI → Text</b>, put <K>using UnityEngine.UI;</K> at the top of the script and <K>public Text scoreText;</K> in the class, assign the field in the Inspector and write <K>scoreText.text = &quot;Score: &quot; + score;</K> when a coin is collected. See <a href="#fizik" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Physics</a> for enemies and <a href="#tilemap" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Tilemaps</a> for levels; when you are ready, save with Ctrl+S and <a href="#yayinlama" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">publish it on the Arcade</a>.</Tip>
                             </Section>
 
                             <Section id="editor" title="The editor">
@@ -865,7 +952,80 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     <li>Games published on the Arcade are public. Don&apos;t share personal data, passwords or secret keys; content that breaks the rules is removed.</li>
                                 </ul>
                             </Section>
+
+                            <Section id="sorunlar" title="Troubleshooting">
+                                <Table head={["Symptom", "Fix"]} rows={[
+                                    ["Pressing Play says “Fix compile errors before playing.”", "Open Errors in the Console; clicking an error opens the script at that line. It is usually a missing semicolon, an unclosed brace or a misspelt name."],
+                                    ["A script is greyed out in the Add component menu.", "The file has no class deriving from MonoBehaviour. Declare it as public class Name : MonoBehaviour."],
+                                    ["OnTriggerEnter is never called.", "The collider needs Is Trigger turned on, and at least one of the two objects needs a Rigidbody. The script can be on the object entering the trigger or on the trigger itself."],
+                                    ["The character falls through the ground.", "The ground needs an enabled collider (for example a Box Collider 2D). Don't give the ground a dynamic Rigidbody, or it falls too."],
+                                    ["The Console shows a NullReferenceException.", "A public field in the Inspector is empty, or the object was removed with Destroy. Assign the field in the Inspector or check it with if (target != null) before using it."],
+                                    ["The Console says the script exceeded its instruction budget (possible infinite loop).", "A while or for loop never ends. The game doesn't freeze; only that script is disabled. Fix the loop's exit condition, and use a coroutine (yield return) to wait."],
+                                    ["Keys don't work in the game.", "The focus may be in a text field (such as the script editor). Click the game view once."],
+                                    ["Publish to Arcade is unavailable.", "Sign in and save the project to the cloud to publish it; guest projects only live in this browser."],
+                                    ["“This project changed in another tab or on another device.”", "Reload to get the latest version. To keep the changes made in this tab, first back them up with Export → Project file (.json)."],
+                                ]} />
+                                <Tip>Still stuck? Paste the error into <Link href="/ai" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Hanogt AI</Link> or write to us from the <Link href="/feedback" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Feedback and Support</Link> page.</Tip>
+                            </Section>
         </>
+    );
+}
+
+/** The table of contents with a filter that searches the section texts too. */
+function Contents({ tr, active, onNavigate }: { tr: boolean; active: string; onNavigate?: () => void }) {
+    const [query, setQuery] = useState("");
+    const [matches, setMatches] = useState<string[] | null>(null);
+    // Reads the rendered sections when the query changes, so it searches exactly what is on the page.
+    const search = (value: string) => {
+        setQuery(value);
+        const words = fold(value).split(/\s+/).filter(Boolean);
+        if (!words.length) {
+            setMatches(null);
+            return;
+        }
+        setMatches(SECTIONS.filter((section) => {
+            const text = fold(`${section.tr} ${section.en} ${document.getElementById(section.id)?.textContent ?? ""}`);
+            return words.every((word) => text.includes(word));
+        }).map((section) => section.id));
+    };
+    const shown = matches ? SECTIONS.filter((section) => matches.includes(section.id)) : SECTIONS;
+    return (
+        <div>
+            <label className="relative block">
+                <span className="sr-only">{tr ? "Belgelerde ara" : "Search the docs"}</span>
+                <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => search(event.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === "Escape") search("");
+                    }}
+                    placeholder={tr ? "Ara: Rigidbody, Tween…" : "Search: Rigidbody, Tween…"}
+                    maxLength={60}
+                    className="h-9 w-full rounded-lg border border-zinc-200 bg-white ps-9 pe-3 text-[13.5px] text-zinc-800 outline-none transition placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+                />
+            </label>
+            {matches ? <p className="mt-2 px-1 text-[12px] text-zinc-500 dark:text-zinc-400" aria-live="polite">{tr ? `${matches.length} bölüm bulundu` : `${matches.length} ${matches.length === 1 ? "section" : "sections"} found`}</p> : null}
+            <ol className="mt-3 space-y-0.5">
+                {shown.map((section) => {
+                    const index = SECTIONS.indexOf(section);
+                    const current = section.id === active;
+                    return (
+                        <li key={section.id}>
+                            <a
+                                href={`#${section.id}`}
+                                onClick={onNavigate}
+                                aria-current={current ? "location" : undefined}
+                                className={`block rounded-lg px-3 py-1.5 text-[13.5px] transition ${current ? "bg-indigo-500/10 font-semibold text-indigo-700 dark:text-indigo-300" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white"}`}
+                            >
+                                <span className="me-2 text-zinc-400">{index + 1}.</span>{tr ? section.tr : section.en}
+                            </a>
+                        </li>
+                    );
+                })}
+            </ol>
+        </div>
     );
 }
 
@@ -873,28 +1033,53 @@ export default function EngineDocs() {
     const { language, dir } = useI18n();
     // Same rule as the engine UI: Turkish (and Azerbaijani) readers get the Turkish guide, everyone else English.
     const tr = engineLocale(language) === "tr";
+    const [active, setActive] = useState(SECTIONS[0].id);
+    const mobileContents = useRef<HTMLDetailsElement>(null);
+
+    // Highlights the section being read: the last one whose heading passed the sticky header.
+    useEffect(() => {
+        let frame = 0;
+        const update = () => {
+            frame = 0;
+            let current = SECTIONS[0].id;
+            for (const section of SECTIONS) {
+                const element = document.getElementById(section.id);
+                if (element && element.getBoundingClientRect().top <= 120) current = section.id;
+            }
+            setActive(current);
+        };
+        const onScroll = () => {
+            if (!frame) frame = window.requestAnimationFrame(update);
+        };
+        frame = window.requestAnimationFrame(update);
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        return () => {
+            if (frame) window.cancelAnimationFrame(frame);
+            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener("resize", onScroll);
+        };
+    }, [tr]);
+
     return (
+        <TurkishDocs.Provider value={tr}>
         <div className="min-h-dvh bg-white dark:bg-zinc-950" dir={dir === "rtl" ? "ltr" : undefined} lang={tr ? "tr" : "en"}>
             <header className="sticky top-0 z-30 border-b border-zinc-200/70 bg-white/80 backdrop-blur-xl dark:border-white/[0.06] dark:bg-zinc-950/80">
                 <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
                     <Link href="/game-engine" className="grid h-9 w-9 place-items-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5" aria-label={tr ? "Motora dön" : "Back to the engine"}><ArrowLeft className="h-4 w-4" /></Link>
-                    <div className="flex items-center gap-2">
-                        <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white"><BookOpen className="h-4 w-4" /></div>
-                        <span className="font-black text-zinc-900 dark:text-white">{tr ? "Hanogt Engine Belgeleri" : "Hanogt Engine Docs"}</span>
+                    <div className="flex min-w-0 items-center gap-2">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white"><BookOpen className="h-4 w-4" /></div>
+                        <span className="truncate font-black text-zinc-900 dark:text-white">{tr ? "Hanogt Engine Belgeleri" : "Hanogt Engine Docs"}</span>
                     </div>
                     <div className="flex-1" />
                     <Link href="/arcade" className="hidden items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/5 sm:inline-flex"><Rocket className="h-4 w-4" />Arcade</Link>
-                    <Link href="/game-engine" className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-[13px] font-semibold text-white dark:bg-white dark:text-zinc-900"><Gamepad2 className="h-4 w-4" />{tr ? "Motoru aç" : "Open the engine"}</Link>
+                    <Link href="/game-engine" className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-[13px] font-semibold text-white dark:bg-white dark:text-zinc-900"><Gamepad2 className="h-4 w-4" />{tr ? "Motoru aç" : "Open the engine"}</Link>
                 </div>
             </header>
-            <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[240px_1fr]">
+            <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[260px_1fr]">
                 <nav className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] overflow-y-auto py-8 lg:block" aria-label={tr ? "İçindekiler" : "Contents"}>
                     <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-zinc-400">{tr ? "İçindekiler" : "Contents"}</p>
-                    <ol className="space-y-0.5">
-                        {SECTIONS.map((section, index) => (
-                            <li key={section.id}><a href={`#${section.id}`} className="block rounded-lg px-3 py-1.5 text-[13.5px] text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white"><span className="me-2 text-zinc-400">{index + 1}.</span>{tr ? section.tr : section.en}</a></li>
-                        ))}
-                    </ol>
+                    <Contents tr={tr} active={active} />
                 </nav>
                 <main id="main-content" className="min-w-0 pb-24">
                     <div className="border-b border-zinc-200/70 py-12 dark:border-white/[0.06]">
@@ -905,10 +1090,25 @@ export default function EngineDocs() {
                                 ? "Hanogt Engine; Unity'ye benzeyen editörü, GameObject/Component mimarisi, C# ve C++ script desteği, fizik motoru, tilemap'ler, arayüz bileşenleri, animasyon sistemi, WebGL render'ı ve Arcade yayınlamasıyla tarayıcıda çalışan bir 2D/3D oyun motorudur. Kurulum gerekmez; projeleriniz buluta veya tarayıcınıza kaydedilir."
                                 : "Hanogt Engine is a 2D/3D game engine that runs in your browser, with a Unity-like editor, a GameObject/Component architecture, C# and C++ scripting, a physics engine, tilemaps, UI components, an animation system, WebGL rendering and Arcade publishing. Nothing to install; your projects are saved to the cloud or to your browser."}
                         </p>
+                        <div className="mt-6 flex flex-wrap gap-2">
+                            <a href="#ilk-oyun" className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-[14px] font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5 hover:bg-indigo-500"><Rocket className="h-4 w-4" />{tr ? "İlk oyununu 10 dakikada yap" : "Build your first game in 10 minutes"}</a>
+                            <a href="#api" className="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 px-4 text-[14px] font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5">{tr ? "API referansı" : "API reference"}<ArrowRight className="h-4 w-4" /></a>
+                        </div>
                     </div>
+                    <details ref={mobileContents} className="group mt-6 rounded-xl border border-zinc-200 dark:border-white/10 lg:hidden">
+                        <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[14px] font-bold text-zinc-800 dark:text-zinc-100 [&::-webkit-details-marker]:hidden">
+                            <ListTree className="h-4 w-4 text-indigo-500" />
+                            {tr ? "İçindekiler ve arama" : "Contents and search"}
+                            <span className="ms-auto text-[12px] font-semibold text-zinc-400 transition group-open:rotate-180">▾</span>
+                        </summary>
+                        <div className="border-t border-zinc-200 p-3 dark:border-white/10">
+                            <Contents tr={tr} active={active} onNavigate={() => { if (mobileContents.current) mobileContents.current.open = false; }} />
+                        </div>
+                    </details>
                     {tr ? <DocsTR /> : <DocsEN />}
                 </main>
             </div>
         </div>
+        </TurkishDocs.Provider>
     );
 }

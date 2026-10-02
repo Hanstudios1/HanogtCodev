@@ -262,6 +262,38 @@ code, kbd, pre, samp {
   box-shadow: inset 0 0 0 2px #555555;
 }
 
+/* The creative-inventory search box of the guide. */
+.mc-field {
+  background: #000;
+  border: 2px solid #a0a0a0;
+  color: #fff;
+  box-shadow: 0 0 0 2px #000;
+}
+
+.mc-field:focus-within {
+  border-color: #fff;
+}
+
+/* The white field border is the focus indicator here. */
+.mc-field input:focus-visible {
+  outline: none;
+}
+
+/* The experience bar under the guide book: 18 notches like the game's. */
+.mc-xp {
+  background: #1b1b1b;
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 1px #3b3b3b;
+}
+
+.mc-xp-fill {
+  background: linear-gradient(180deg, #c6ff7a, #80ff20 45%, #4fae10);
+}
+
+.mc-xp-notches {
+  background-image: repeating-linear-gradient(90deg, transparent 0 calc(100% / 18 - 2px), rgba(0, 0, 0, 0.6) calc(100% / 18 - 2px) calc(100% / 18));
+}
+
 @keyframes mc-glyph {
   0% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0; }
   15% { opacity: 0.9; }

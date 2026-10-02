@@ -237,7 +237,7 @@
   "gt_kicker": "Ako to funguje?",
   "gt_news": "Ako fungujú správy",
   "gt_open": "Otvoriť knihu",
-  "gt_page": "Strana 1 z 24",
+  "gt_page": "Strana 1 z {total}",
   "gt_preview": "Zobraziť ukážku príručky",
   "gt_tap": "Klepnutím otvoríte",
   "gt_text": "Od vytvorenia účtu až po publikovanie hry, od toho, ako Hanogt News zbiera správy, až po AI arénu, všetko je vysvetlené v pixelovej knihe, ktorú listujete stranu po strane.",

@@ -531,7 +531,7 @@
   "gt_open": "Öppna boken",
   "gt_news": "Så fungerar nyheterna",
   "gt_preview": "Förhandsgranska guideboken",
-  "gt_page": "Sida 1 av 24",
+  "gt_page": "Sida 1 av {total}",
   "gt_welcome": "Välkommen, äventyrare!",
   "gt_intro": "Den här boken är kartan över Hanogt Codevs värld. Skriv kod, bygg spel, följ nyheterna. Varje kapitel är ett uppdrag.",
   "gt_ch1": "Kapitel 1: Registrera dig",

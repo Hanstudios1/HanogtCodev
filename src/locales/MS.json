@@ -237,7 +237,7 @@
   "gt_kicker": "Bagaimana ia berfungsi?",
   "gt_news": "Cara berita berfungsi",
   "gt_open": "Buka buku",
-  "gt_page": "Halaman 1 daripada 24",
+  "gt_page": "Halaman 1 daripada {total}",
   "gt_preview": "Pratonton buku panduan",
   "gt_tap": "Ketik untuk membuka",
   "gt_text": "Daripada mencipta akaun hingga menerbitkan permainan, daripada cara Hanogt News mengumpul berita hingga arena AI, semuanya dijelaskan dalam sebuah buku piksel yang anda selak halaman demi halaman.",

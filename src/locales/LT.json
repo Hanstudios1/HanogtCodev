@@ -531,7 +531,7 @@
   "gt_open": "Atverti knygą",
   "gt_news": "Kaip veikia naujienos",
   "gt_preview": "Peržiūrėti vadovo knygą",
-  "gt_page": "1 puslapis iš 24",
+  "gt_page": "1 puslapis iš {total}",
   "gt_welcome": "Sveikas atvykęs, nuotykių ieškotojau!",
   "gt_intro": "Ši knyga – Hanogt Codev pasaulio žemėlapis. Rašyk kodą, kurk žaidimus, sek naujienas. Kiekvienas skyrius – tai užduotis.",
   "gt_ch1": "1 skyrius: registracija",

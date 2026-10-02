@@ -237,7 +237,7 @@
   "gt_kicker": "Kako funkcionira?",
   "gt_news": "Kako rade vijesti",
   "gt_open": "Otvorite knjigu",
-  "gt_page": "Stranica 1 od 24",
+  "gt_page": "Stranica 1 od {total}",
   "gt_preview": "Pregled knjige vodiča",
   "gt_tap": "Dodirnite za otvaranje",
   "gt_text": "Od izrade računa do objave igre, od načina na koji Hanogt News prikuplja vijesti do AI arene – sve je objašnjeno u pikselskoj knjizi koju listate stranicu po stranicu.",

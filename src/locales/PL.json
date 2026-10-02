@@ -531,7 +531,7 @@
   "gt_open": "Otwórz książkę",
   "gt_news": "Jak działają wiadomości",
   "gt_preview": "Podgląd książki-przewodnika",
-  "gt_page": "Strona 1 z 24",
+  "gt_page": "Strona 1 z {total}",
   "gt_welcome": "Witaj, poszukiwaczu przygód!",
   "gt_intro": "Ta książka to mapa świata Hanogt Codev. Programuj, twórz gry, śledź wiadomości. Każdy rozdział to misja.",
   "gt_ch1": "Rozdział 1: Rejestracja",

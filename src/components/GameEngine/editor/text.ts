@@ -60,6 +60,8 @@ const TEXT = {
     focus: ["Odakla (F)", "Focus (F)"],
     unparent: ["Kök nesne yap", "Move to root"],
     emptyObject: ["Boş Nesne", "Empty Object"],
+    spriteSquare: ["Sprite (Kare)", "Sprite (Square)"],
+    spriteCircle: ["Sprite (Daire)", "Sprite (Circle)"],
     noSelection: ["Düzenlemek için sahneden veya hiyerarşiden bir nesne seçin.", "Select an object in the scene or hierarchy to edit it."],
     multiSelection: ["nesne seçildi", "objects selected"],
     addComponent: ["Bileşen ekle", "Add component"],

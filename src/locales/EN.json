@@ -531,7 +531,7 @@
   "gt_open": "Open the book",
   "gt_news": "How news works",
   "gt_preview": "Preview the guide book",
-  "gt_page": "Page 1 of 24",
+  "gt_page": "Page 1 of {total}",
   "gt_welcome": "Welcome, adventurer!",
   "gt_intro": "This book maps the world of Hanogt Codev. Write code, build games, follow the news. Every chapter is a quest.",
   "gt_ch1": "Chapter 1: Sign up",

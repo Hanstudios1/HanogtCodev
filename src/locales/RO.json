@@ -531,7 +531,7 @@
   "gt_open": "Deschide cartea",
   "gt_news": "Cum funcționează știrile",
   "gt_preview": "Previzualizează cartea-ghid",
-  "gt_page": "Pagina 1 din 24",
+  "gt_page": "Pagina 1 din {total}",
   "gt_welcome": "Bun venit, aventurierule!",
   "gt_intro": "Această carte este harta lumii Hanogt Codev. Scrie cod, creează jocuri, urmărește știrile. Fiecare capitol este o misiune.",
   "gt_ch1": "Capitolul 1: Înregistrare",
