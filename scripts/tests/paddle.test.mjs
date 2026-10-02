@@ -566,5 +566,9 @@ test("project limits: Free 10, Plus 40, Pro unlimited, from either plan source",
         assert.deepEqual(await serverPlans.projectLimitFor("plus@example.com", "game"), { plan: "plus", limit: 40 });
         assert.deepEqual(await serverPlans.projectLimitFor("pro@example.com", "code"), { plan: "pro", limit: null });
         assert.deepEqual(await serverPlans.projectLimitFor("blocked@example.com", "game"), { plan: "free", limit: 10 });
+        assert.deepEqual(await serverPlans.groupLimitFor("nobody@example.com"), { plan: "free", limit: 3 });
+        assert.deepEqual(await serverPlans.groupLimitFor("plus@example.com"), { plan: "plus", limit: 10 });
+        assert.deepEqual(await serverPlans.groupLimitFor("pro@example.com"), { plan: "pro", limit: null });
     });
+    assert.deepEqual(plans.PLAN_GROUP_LIMITS, { free: 3, plus: 10, pro: null });
 });

@@ -1,7 +1,7 @@
 import type { Copy } from "@/lib/i18n";
 import { COLLAB_LIMITS } from "@/lib/collab/protocol";
 import { GROUP_LIMITS } from "@/lib/groups";
-import { PLAN_AI_LIMITS } from "@/lib/plans";
+import { LIST_PRICES, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { STATUS_PREFERENCE_COPY } from "@/lib/presence";
 import { BROWSER_LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
@@ -450,7 +450,7 @@ export const PAGES: BookPage[] = [
                 ],
             },
             { type: "tip", title: { TR: "Bilge sözü", EN: "Words of the wise" }, text: { TR: "Hanogt AI hata yapabilir; önemli bilgileri doğrula ve gizli bilgi paylaşma.", EN: "Hanogt AI can make mistakes; double-check important facts and never share secrets." } },
-            { type: "link", href: "/plans", label: { TR: "Planlar (yakında)", EN: "Plans (coming soon)" } },
+            { type: "link", href: "/plans", label: { TR: "Planlar", EN: "Plans" } },
         ],
     },
 
@@ -584,19 +584,20 @@ export const PAGES: BookPage[] = [
     },
     {
         chapter: "account",
-        title: { TR: "Planlar (yakında)", EN: "Plans (coming soon)" },
+        title: { TR: "Planlar", EN: "Plans" },
         blocks: [
-            { type: "p", text: { TR: "Hanogt Codev ücretsizdir. Plus ve Pro planlar hazırlanıyor; şimdilik hiçbir şey satılmıyor.", EN: "Hanogt Codev is free. Plus and Pro plans are on the way; nothing is sold yet." } },
+            { type: "p", text: { TR: "Hanogt Codev ücretsizdir. Daha fazlasını isteyenler için Plus ve Pro var; ödemeleri Kayıtlı Satıcımız Paddle alır, kart bilgin bize ulaşmaz.", EN: "Hanogt Codev is free. Plus and Pro are there for people who want more; Paddle, our Merchant of Record, takes the payments and your card details never reach us." } },
             {
                 type: "list",
                 items: [
-                    { TR: "Ücretsiz: her şey ve günde {count} Hanogt AI mesajı.", EN: "Free: everything, plus {count} Hanogt AI messages a day.", vars: { count: PLAN_AI_LIMITS.free.perDay } },
-                    { TR: "Plus: günde {count} mesaj ve destek önceliği.", EN: "Plus: {count} messages a day and support priority.", vars: { count: PLAN_AI_LIMITS.plus.perDay } },
-                    { TR: "Pro: günde {count} mesaj ve destek önceliği.", EN: "Pro: {count} messages a day and support priority.", vars: { count: PLAN_AI_LIMITS.pro.perDay } },
+                    { TR: "Ücretsiz: günde {ai} Hanogt AI mesajı, {code} kod ve {game} oyun projesi, {groups} grup.", EN: "Free: {ai} Hanogt AI messages a day, {code} code and {game} game projects, {groups} groups.", vars: { ai: PLAN_AI_LIMITS.free.perDay, code: PLAN_PROJECT_LIMITS.free.code ?? 0, game: PLAN_PROJECT_LIMITS.free.game ?? 0, groups: PLAN_GROUP_LIMITS.free ?? 0 } },
+                    { TR: "Plus (aylık {price} $): günde {ai} mesaj, {code} + {game} proje, {groups} grup, kendi API anahtarınla {connections} yapay zekâ bağlantısı, destekte öncelik.", EN: "Plus (${price} a month): {ai} messages a day, {code} + {game} projects, {groups} groups, {connections} AI connections with your own API keys, priority support.", vars: { price: LIST_PRICES.plus.monthly, ai: PLAN_AI_LIMITS.plus.perDay, code: PLAN_PROJECT_LIMITS.plus.code ?? 0, game: PLAN_PROJECT_LIMITS.plus.game ?? 0, groups: PLAN_GROUP_LIMITS.plus ?? 0, connections: PLAN_AI_CONNECTIONS.plus } },
+                    { TR: "Pro (aylık {price} $): günde {ai} mesaj, sınırsız proje ve grup, {connections} yapay zekâ bağlantısı, destekte öncelik.", EN: "Pro (${price} a month): {ai} messages a day, unlimited projects and groups, {connections} AI connections, priority support.", vars: { price: LIST_PRICES.pro.monthly, ai: PLAN_AI_LIMITS.pro.perDay, connections: PLAN_AI_CONNECTIONS.pro } },
                 ],
             },
-            { type: "p", text: { TR: "Planlar sayfasında \"Açılınca haber ver\" ile bekleme listesine katılabilirsin.", EN: "Join the waitlist with \"Notify me when it opens\" on the Plans page." } },
-            { type: "link", href: "/plans", label: { TR: "Planlar (yakında)", EN: "Plans (coming soon)" } },
+            { type: "p", text: { TR: "Yıllık ödemede 10 ayın ücreti alınır. Aboneliğini Planlar sayfasındaki \"Aboneliği yönet\"ten değiştirebilir ya da iptal edebilirsin; ilk ödemeden sonraki 14 gün içinde iade isteyebilirsin.", EN: "Yearly billing costs 10 months. Change or cancel your subscription with \"Manage subscription\" on the Plans page; you can ask for a refund within 14 days of the first payment." } },
+            { type: "link", href: "/plans", label: { TR: "Planlar", EN: "Plans" } },
+            { type: "link", href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
         ],
     },
 

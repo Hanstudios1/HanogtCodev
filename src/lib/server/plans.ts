@@ -6,6 +6,7 @@ import {
     DEFAULT_PLAN_PRICE,
     FREE_SUBSCRIPTION,
     PAID_PLAN_IDS,
+    PLAN_GROUP_LIMITS,
     PLAN_PROJECT_LIMITS,
     PRICE_MAX,
     aiLimitsFor,
@@ -131,4 +132,11 @@ export async function projectLimitFor(email: string, kind: "code" | "game"): Pro
     const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
     const plan = effectivePlan(subscription);
     return { plan, limit: PLAN_PROJECT_LIMITS[plan][kind] };
+}
+
+/** How many Hanogt Social groups the account may own (create); null is unlimited. */
+export async function groupLimitFor(email: string): Promise<{ plan: PlanId; limit: number | null }> {
+    const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
+    const plan = effectivePlan(subscription);
+    return { plan, limit: PLAN_GROUP_LIMITS[plan] };
 }

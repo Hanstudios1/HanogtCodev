@@ -28,7 +28,6 @@ export const GROUP_LIMITS = {
     topicsMax: 12,
     topicMax: 24,
     activeLinksMax: 20,
-    ownedGroupsMax: 30,
 } as const;
 
 /** Every id that ends up in a Firestore document path (groups, messages, files, projects). */

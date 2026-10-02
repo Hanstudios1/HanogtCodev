@@ -9,6 +9,7 @@ import {
     queryServerCollection,
     runServerQuery,
 } from "@/lib/server/firebase-rest";
+import { groupLimitFor } from "@/lib/server/plans";
 import {
     GROUP_LIMITS,
     SYSTEM_SENDER,
@@ -299,9 +300,13 @@ async function createGroup(body: Record<string, unknown>, user: GroupUser) {
     const lang = seedLanguageFor(body.language);
     const projectId = body.projectId === undefined || body.projectId === null || body.projectId === "" ? "" : readId(body.projectId, "Proje kimliği");
 
-    const owned = await queryServerCollection<StoredGroup>("groups", "ownerEmail", "EQUAL", email, { limit: GROUP_LIMITS.ownedGroupsMax + 1 });
-    if (owned.length >= GROUP_LIMITS.ownedGroupsMax) {
-        throw new GroupApiError(409, "group_limit", "En fazla 30 grubun sahibi olabilirsiniz.");
+    // Free 3, Plus 10, Pro unlimited (src/lib/plans.ts PLAN_GROUP_LIMITS).
+    const { limit } = await groupLimitFor(email);
+    if (limit !== null) {
+        const owned = await queryServerCollection<StoredGroup>("groups", "ownerEmail", "EQUAL", email, { limit: limit + 1 });
+        if (owned.length >= limit) {
+            throw new GroupApiError(409, "group_limit", `Planınla en fazla ${limit} grup açabilirsin. Yeni grup için bir grubu silebilir, sahipliğini devredebilir ya da planını yükseltebilirsin (/plans).`);
+        }
     }
 
     const now = new Date();

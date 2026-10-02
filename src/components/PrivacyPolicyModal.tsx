@@ -33,6 +33,7 @@ const DOCUMENTS: ReadonlyArray<{ href: string; title: Copy; text: Copy }> = [
     { href: "/privacy-policy", title: { TR: "Gizlilik Politikası", EN: "Privacy Policy" }, text: { TR: "Veri, paylaşım, saklama ve güvenlik", EN: "Data, sharing, retention and security" } },
     { href: "/disclosure", title: { TR: "Aydınlatma Metni", EN: "KVKK Notice" }, text: { TR: "KVKK m.10 bilgilendirmesi", EN: "Information under KVKK Art. 10" } },
     { href: "/terms-of-use", title: { TR: "Kullanım Şartları", EN: "Terms of Use" }, text: { TR: "Hesap, içerik ve güvenlik kuralları", EN: "Account, content and security rules" } },
+    { href: "/refund-policy", title: { TR: "İade Politikası", EN: "Refund Policy" }, text: { TR: "Abonelik iadeleri ve iptal", EN: "Subscription refunds and cancellation" } },
 ];
 
 export default function PrivacyPolicyModal({ onAccept, updated = false }: PrivacyPolicyModalProps) {

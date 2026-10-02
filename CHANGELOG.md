@@ -38,7 +38,8 @@
   OpenRouter, DeepSeek, xAI ve Together. Anahtarlar AES-256-GCM ile şifreli
   saklanıyor ve bir daha gösterilmiyor.
 - Proje hakları: Ücretsiz 10 kod + 10 oyun projesi, Plus 40 + 40, Pro
-  sınırsız. Yeni kod projelerini artık sunucu oluşturuyor (`/api/projects`);
+  sınırsız. Hanogt Social'da grup açma: Ücretsiz 3, Plus 10, Pro sınırsız
+  (`PLAN_GROUP_LIMITS`, `/api/groups`). Yeni kod projelerini artık sunucu oluşturuyor (`/api/projects`);
   bu, yeni projelerin buluta kaydedilememesine yol açan kural sorununu da
   gideriyor. Güvenlik kurallarının yeniden yayımlanması gerekiyor (Bulut
   Sağlığı).

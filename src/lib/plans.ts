@@ -58,6 +58,9 @@ export const PLAN_PROJECT_LIMITS: Record<PlanId, { code: number | null; game: nu
     pro: { code: null, game: null },
 };
 
+/** Hanogt Social groups a person can create and own; null means unlimited. */
+export const PLAN_GROUP_LIMITS: Record<PlanId, number | null> = { free: 3, plus: 10, pro: null };
+
 /**
  * How many AI providers a person can connect to Hanogt AI with their own API
  * keys (src/lib/ai/connections.ts). Connections above the limit are kept but
@@ -196,6 +199,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Kod editörü, Hanogt Engine V3, Arcade, Media ve Hanogt Social", EN: "The code editor, Hanogt Engine V3, the Arcade, Media and Hanogt Social" } },
             { text: { TR: "Hanogt AI ile günde 250 mesaj", EN: "250 Hanogt AI messages a day" } },
             { text: { TR: "10 kod projesi ve 10 oyun projesi", EN: "10 code projects and 10 game projects" } },
+            { text: { TR: "3 Hanogt Social grubu açma", EN: "Create up to 3 Hanogt Social groups" } },
             { text: { TR: "Ekiple düzenleme ve sesli görüşme", EN: "Team editing and voice calls" } },
         ],
     },
@@ -206,6 +210,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Ücretsiz plandaki her şey", EN: "Everything in Free" } },
             { text: { TR: "Hanogt AI ile günde 750 mesaj", EN: "750 Hanogt AI messages a day" } },
             { text: { TR: "40 kod projesi ve 40 oyun projesi", EN: "40 code projects and 40 game projects" } },
+            { text: { TR: "10 Hanogt Social grubu açma", EN: "Create up to 10 Hanogt Social groups" } },
             { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası)", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more)" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Profilinde Plus rozeti", EN: "A Plus badge on your profile" }, planned: true },
@@ -218,6 +223,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Plus plandaki her şey", EN: "Everything in Plus" } },
             { text: { TR: "Hanogt AI ile günde 2.000 mesaj", EN: "2,000 Hanogt AI messages a day" } },
             { text: { TR: "Sınırsız kod ve oyun projesi", EN: "Unlimited code and game projects" } },
+            { text: { TR: "Sınırsız Hanogt Social grubu", EN: "Unlimited Hanogt Social groups" } },
             { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı", EN: "Connect 5 AI providers with your own API keys" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Yeni özelliklere erken erişim", EN: "Early access to new features" }, planned: true },
