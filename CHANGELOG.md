@@ -1,5 +1,100 @@
 # Değişiklik Günlüğü
 
+## 0.2.0 — 2026-10-02
+
+Topluluk, yapay zekâ ve editör güncellemesi: arkadaşlar, mesajlar ve gruplar
+Hanogt Social'da birleşti; Hanogt AI izinle işlem yapan bir ajana dönüştü;
+kod editörü 122 dile ulaştı ve ekiple canlı düzenlemeyi öğrendi. Bu sürüm,
+main'deki 0.1.3 çalışmasını da içerir.
+
+### Hanogt Social
+
+- `/social`: solda grup rayı, ikinci sütunda direkt mesajlar ya da grubun
+  kanalları, ortada sohbet, sağda rol ve duruma göre üye listesi; telefonda
+  çekmeceler, Ctrl/⌘+K hızlı geçiş. Eski `/friends`, `/messages` ve
+  `/groups` adresleri yönlendiriliyor.
+- Firebase tarayıcı bağlantısı kurulamazsa arkadaşlar, direkt mesajlar ve
+  grup sohbeti sunucu API'leriyle çalışmayı sürdürüyor.
+
+### Durum ve Hesap Ayarları
+
+- Discord tarzı durum (Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez) ve özel
+  durum; 5 dakika etkileşimsizlikte otomatik Boşta, birden çok sekme ya da
+  cihazda en etkin olanı geçerli. Durum sunucudan yazılıyor (`/api/presence`);
+  0.1.3'te seçilen durum (`presenceChoice`) okunmaya devam ediyor.
+  Rahatsız Etmeyin'de gelen sesli aramalar çalmıyor.
+- Hesap Ayarları kategori menüsü ve canlı profil kartıyla yeniden
+  tasarlandı; profil sunucudan okunup yazılıyor. Editör Ayarları'na
+  Kaydet/Vazgeç ve hesaba kaydetme eklendi.
+
+### Hanogt AI
+
+- Claude benzeri arayüz: geçmiş kenar çubuğu, büyüyen yazma alanı,
+  kopyala/yeniden üret/düzenle, kod blokları için "Editörde aç" ve web
+  önizlemeli yan panel; yüzen panel aynı sohbeti tam ekranda açabiliyor.
+- İzinli ajan modu: profilimi oku, grup oluştur, kodu editörde aç, oyun
+  oluştur, sayfaya git, sitede ara. Her işlem izin kartıyla onaylanır;
+  silme, şifre, 2FA, yönetim ve başkalarına mesaj hiçbir zaman yapılmaz.
+  Araç adları ve argümanları sunucuda yeniden denetlenir.
+- Çevrimdışı çekirdek yeniden eğitildi: 52 niyet, 10.135 örnek; test
+  doğruluğu %67,2 → %89,9 (makro-F1 %90,6), kör testte %95,9. Model artık
+  ikili dosya (`public/ai/hanogt-intent-model.bin`). Ayrıntılar:
+  `docs/HANOGT_AI.md`, `ai/reports/intent-training-report.md`.
+
+### Kod editörü
+
+- 122 dil, 57'si çalışıyor ya da önizleniyor. Tarayıcıda yeni: Prolog,
+  Forth, BASIC, Befunge-93, Whitespace ve MIPS. Doğrulayıcılar: YAML, TOML,
+  XML, INI, .env, .properties, CSV/TSV. Önizleme: SVG, Mermaid, LaTeX
+  (KaTeX). 46 yeni düzenleme dili ve sözdizimi grameri, 57 yeni simge.
+- "Ekiple düzenle": arkadaşlarla en fazla 5 kişilik canlı oturum (Yjs),
+  renkli imleçler, ekip paneli ve takip, sohbet, herkesin katıldığı sesli
+  görüşme, salt okunur mod, bitişte kopyayı saklama. Yazmalar yalnızca
+  `/api/collab` üzerinden; süresi dolan oturumlar kendiliğinden siliniyor.
+- Editörden doğrudan Media'da yayınlama ve Düzenle menüsü; web önizlemesinde
+  localStorage kullanan sayfalar artık çalışıyor.
+
+### Hanogt Engine V3
+
+- Tilemap boyama ve karo çarpışmaları, UI Button/Panel/Progress Bar,
+  Animation, Tween ve Timer, sis/bloom/vinyet, üç yeni şablon; şema v3 ve
+  eski projelerin kayıpsız taşınması.
+
+### Destek, yönetim ve bulut
+
+- Destek talepleri altı kategoride (Şikayet, İstek, Güvenlik Açığı, Ban
+  Kaldırma İsteği, Soru, Geri Bildirim) ve kategoriye özel alanlarla; yeni
+  talep ve yanıtlarda ekibe bildirim, gönderen sicili. Ban itirazı kimliği
+  canlıdaki verilerle uyumlu olarak `ban_appeal`.
+- Askıya alınan hesaplar için doğrulanmış itiraz ve iki adımlı doğrulamayı
+  kaybedenler için kurtarma talebi.
+- Yönetici Paneli: kurucu rozeti, kullanıcı verisi silme, Bulut Sağlığı ve
+  tek tıkla kural yayımlama. Bildirim zili ve KVKK dışa aktarımı.
+- Firebase web yapılandırması çalışma anında `/api/firebase/config`'ten
+  okunuyor; bağlantı kurulamazsa kopyalanabilir hata kodu gösteriliyor.
+
+### Hanogt News
+
+- Finans & Ekonomi kategorisi; piyasa şeridinde TCMB kurları (önceki güne
+  göre değişim), gram ve ons altın, BIST 100, S&P 500 ve Bitcoin. Haber
+  arşivi ve "Daha eski haberleri yükle".
+
+### Yasal metinler
+
+- Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 4.2:
+  Hanogt Social, durumlar, ekiple düzenleme, piyasa verisi kaynakları,
+  2FA kurtarma talebi ve yeni tarayıcı depolama anahtarları; TURN kullanıcı
+  adının tuzlu takma kimlik taşıdığı düzeltildi.
+
+### Operatör notları
+
+- `firestore.rules` yeniden yayımlanmalı (Yönetici Paneli > Bulut Sağlığı >
+  "Güvenlik kurallarını yayımla"): durum alanları yalnızca sunucudan
+  yazılıyor, `collab_sessions` yalnızca katılımcılara okunur.
+- İsteğe bağlı: `collab_sessions`, `live`, `snapshots`, `updates`,
+  `presence`, `chat`, `signals` koleksiyon grupları için `purgeAt` alanında
+  Firestore TTL kuralı.
+
 ## 0.1.3 — 2026-10-01
 
 ### Durum (Discord tarzı)

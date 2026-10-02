@@ -23,14 +23,15 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 - Hesap verisi dışa aktarma ve silme uçları arkadaşlıklar, mesajlar, çağrı verileri, medya ve oyun projeleri gibi ilişkili kayıtları kapsar.
 - Gerçek üretim ortamında Firebase Admin kimlik bilgileri, runner adresi, TURN bilgileri ve diğer sırlar yalnız sunucu ortam değişkenlerinde tutulmalıdır.
 
-## Arkadaşlar, gruplar ve WebRTC
+## Hanogt Social, durum ve WebRTC
 
-- Arkadaş listesi çevrimiçi durumu, konuşma erişimi, çağrı ve sesli mesaj eylemlerini Discord benzeri fakat mevcut temayla uyumlu bir düzende sunar.
+- Arkadaşlar, direkt mesajlar ve gruplar `/social` altında Discord benzeri tek ekranda birleşti (grup rayı, kanallar, üye listesi). Firebase tarayıcı köprüsü kurulamazsa sohbetler `/api/social/*` ile sunucu üzerinden okunup gönderilir.
+- Durum (Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez + özel durum) `/api/presence` ile yalnız sunucudan yazılır; sekme başına rastgele kimlik, 5 dakikada otomatik Boşta, birden çok sekmede en etkin olanı geçerli. Rahatsız Etmeyin'de gelen aramalar çalmaz.
 - Çağrılarda yalnız katılımcılar çağrı/sinyal verisini okuyabilir ve değiştirebilir.
 - STUN/TURN yapılandırması desteklenir; güvenilir NAT geçişi için üretimde `TURN_SERVER_URL` ve `TURN_SHARED_SECRET` zorunludur.
 - Çağrı bittiğinde sinyalleşme/ICE belgeleri ve geçici çağrı kayıtları temizlenir. Yarım kalan kayıtlar için sunucu temizleme ucu vardır.
 - Sesli mesajlar boyut ve süre sınırlarına tabidir; sahiplik/katılımcı kontrolüyle saklanır ve silinebilir.
-- Mevcut sürüm bire bir WebRTC çağrısını kapsar. Gerçek grup konferansı/SFU altyapısı henüz tamamlanmış sayılmamalıdır.
+- Bire bir aramaların yanında, kod editöründeki "Ekiple düzenle" oturumlarında en fazla 5 kişilik mesh sesli görüşme vardır. Büyük gruplar için SFU altyapısı yoktur.
 
 ## Hanogt Media
 
@@ -41,13 +42,23 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 ## Kod editörü
 
+- Dil kaydı (`src/lib/runtimes/languages.ts`) 122 dil içerir; 57'si çalışır ya da önizlenir. Tarayıcıda (Web Worker/WebAssembly): JavaScript, TypeScript, Python (Pyodide), SQL (sql.js), Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace, MIPS; YAML, TOML, XML, INI, .env, .properties, CSV ve JSON doğrulayıcıları; SVG, Mermaid ve LaTeX önizlemesi.
+- "Ekiple düzenle": Yjs tabanlı canlı ortak düzenleme (en fazla 5 arkadaş), renkli imleçler, sohbet ve ses; tüm yazmalar `/api/collab` üzerinden, Firestore kuralları yalnızca katılımcılara okuma verir, süresi dolan oturumlar silinir.
+- Editörden doğrudan Hanogt Media'da yayınlama, Düzenle menüsü ve komut paleti.
 - Monaco tabanlı editör çoklu dosya/sekmeyi ve birden fazla desteklenen dilin tek çalıştırma eyleminde paralel yürütülmesini destekler.
 - Her dilin çıktısı ayrı gösterilir; indirme sırasında oluşturulan geçici Blob URL'leri serbest bırakılır.
 - Oyun projesi scriptleri C# veya C++ olarak oluşturulur. Editör güvenli `returnTo` parametresiyle oyun motoruna geri döner.
 - C#/C++ derleme/çalıştırma izole harici toolchain gerektirir; tarayıcı içinde yerel ikili derleme yaptığı iddia edilmez.
 
-## Tarayıcı tabanlı oyun motoru MVP'si
+## Hanogt AI
 
+- `/api/ai`, OpenAI uyumlu bir dil modeline (varsayılan Groq) platform bilgi tabanıyla RAG yapar ve akışla yanıtlar; giriş gerekir ve hız sınırlıdır.
+- Çevrimdışı Hanogt AI Çekirdeği tarayıcıda çalışan, 52 niyet ve 10.135 örnekle eğitilmiş bir sınıflandırıcıdır (test doğruluğu %89,9, kör test %95,9).
+- Ajan modu: profil okuma, grup oluşturma, kodu editörde açma, oyun oluşturma, gezinme ve arama. Her işlem kullanıcının izin kartıyla ve kendi oturumuyla mevcut API'lerden yapılır; araç adları/argümanları sunucuda yeniden denetlenir. Silme, şifre, 2FA, yönetim ve başkalarına mesaj yapılmaz.
+
+## Tarayıcı tabanlı oyun motoru (Hanogt Engine V3)
+
+- V3: tilemap boyama ve karo çarpışmaları, UI bileşenleri, Animation/Tween/Timer, sis/bloom/vinyet ve yeni şablonlar; şema v3 ve eski projelerin kayıpsız taşınması.
 - Gösterge paneli Kod Projeleri ve Oyun Projeleri olarak ayrılmıştır.
 - Oyun projesi oluştururken 2D/3D türü seçilir ve şimdilik yalnız C# ile C++ script desteği açıkça bildirilir.
 - Nesne/bileşen tabanlı sahne modeli; Transform, Sprite/Mesh, Camera, Light, Collider, Rigidbody ve Script bileşenlerini destekler.
@@ -61,7 +72,7 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 - Mevcut tema ve fontlar korunarak kartlar, paneller, boş durumlar, geri bildirim/SSS ve yasal sayfalar modernleştirildi.
 - Yerel görseller Next Image üzerinden; kullanıcı kaynaklı dış görseller güvenli lazy-loading ile gösterilir. Geniş ve kontrolsüz uzak görsel allowlist'i açılmaz.
-- Kullanılan 449 çeviri anahtarı 20 dil dosyasında tamamlandı ve otomatik denetim scripti eklendi.
+- Arayüz 50 dilde. Ana sözlük anahtarları (`src/locales/<LANG>.json`) tüm dillerde tamamdır ve `npm run i18n:check` ile denetlenir. Satır içi TR/EN metinler (`{ TR, EN }`) İngilizce metnin özetiyle anahtarlanan çeviri paketlerinden (`src/locales/copy/<LANG>.json`, kaynak `npm run i18n:extract`) gelir; paketi eksik dillerde İngilizce gösterilir.
 - Büyük i18n gövdesi dil bazlı JSON dosyalarına ayrıldı.
 
 ## Hukuki metin durumu
@@ -72,15 +83,14 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 ## Doğrulamalar
 
-- `npm run lint`: geçti, uyarı yok.
-- `npm run i18n:check`: 20 dilde kullanılan 449 anahtarın tamamı geçti.
-- `npx tsc --noEmit`: geçti.
-- `npm run build`: Next.js production build geçti; 32 sayfa/API rotası üretildi.
+- `npx eslint` (değişen dosyalar) ve `npx tsc --noEmit`: geçti.
+- `npm test`: 353 birim testi geçti (diller, Hanogt AI, ekiple düzenleme, destek, durum, haberler ve piyasalar dahil).
+- `npm run build`: Next.js production build geçti (71 sayfa); yerel sunucuda başlıca sayfalar tarayıcıda hatasız açıldı.
 - Dağıtım öncesinde ayrıca Firebase rules emulator testleri, gerçek mikrofon/WebRTC/TURN akışları, Storage silme akışı ve izole runner entegrasyonu canlı ortamda test edilmelidir.
 
 ## Operatör kontrol listesi
 
-1. Firestore/Storage kurallarını hedef Firebase projesine deploy et.
+1. Firestore/Storage kurallarını hedef Firebase projesine deploy et (Yönetici Paneli > Bulut Sağlığı > "Güvenlik kurallarını yayımla" ya da Firebase CLI). İsteğe bağlı: ekiple düzenleme koleksiyonları için `purgeAt` alanında Firestore TTL kuralı.
 2. Firebase Admin (`FIREBASE_SERVICE_ACCOUNT_JSON`) ve TURN sırlarını sunucu secret store'una ekle; yoğun kullanım için kendi `CODE_RUNNER_URL` çalıştırıcını kur (tanımlı değilse herkese açık Wandbox kullanılır).
 3. Güvenlik botu katkı saklama/silme politikasını ve moderasyon iş akışını işlet.
 4. WebRTC çağrı başlatma, reddetme, bağlantı kopması, bitirme ve eski kayıt temizliğini iki gerçek ağda test et.
