@@ -1,15 +1,10 @@
 import "server-only";
 
-import { createSign, createHash, createPrivateKey, generateKeyPairSync } from "node:crypto";
-
-type ServiceAccount = {
-    client_email: string;
-    private_key: string;
-    project_id: string;
-};
+import { createSign, createHash, generateKeyPairSync } from "node:crypto";
+import { CREDENTIAL_VARIABLES, credentialSources, MISSING_CREDENTIALS_MESSAGE, resolveServiceAccount, type CredentialResolution, type ServerCredentialLayout, type ServiceAccount } from "./service-account";
 
 /** Where the service account came from (Cloud Health shows it; never the key itself). */
-export type ServerCredentialLayout = "json" | "base64" | "split" | "emulator";
+export type { ServerCredentialLayout };
 
 type FirestoreValue =
     | { nullValue: null }
@@ -70,59 +65,23 @@ function base64Url(value: string | Buffer) {
     return Buffer.from(value).toString("base64url");
 }
 
-// FIREBASE_SERVICE_ACCOUNT_BASE is accepted because older docs named the
-// base64 variable that way; BASE64 is the documented name.
-const BASE64_VARIABLES = ["FIREBASE_SERVICE_ACCOUNT_BASE64", "FIREBASE_SERVICE_ACCOUNT_BASE"] as const;
-const SPLIT_VARIABLES = "FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY";
+// The service account read from the environment (src/lib/server/service-account.ts
+// accepts every common way of pasting it). Environment values don't change while
+// the process runs, but tests and dev reloads set them, so the cache follows them.
+let resolvedCredentials: { key: string; result: CredentialResolution } | null = null;
 
-function credentialSources() {
-    const sources: Array<{ layout: ServerCredentialLayout; variable: string; value: string }> = [];
-    const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-    if (json) sources.push({ layout: "json", variable: "FIREBASE_SERVICE_ACCOUNT_JSON", value: json });
-    for (const variable of BASE64_VARIABLES) {
-        const value = process.env[variable]?.trim();
-        if (value) sources.push({ layout: "base64", variable, value });
-    }
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
-    if (clientEmail && privateKey) sources.push({ layout: "split", variable: SPLIT_VARIABLES, value: "" });
-    return sources;
-}
-
-function parseServiceAccountJson(text: string): ServiceAccount {
-    let json = text.trim();
-    // Dashboards sometimes keep the single quotes the JSON was pasted with.
-    if (/^'[\s\S]*'$/.test(json)) json = json.slice(1, -1).trim();
-    let parsed: ServiceAccount;
-    try {
-        parsed = JSON.parse(json) as ServiceAccount;
-    } catch {
-        throw new Error("Firebase sunucu kimliği geçersiz JSON içeriyor.");
-    }
-    if (!parsed || typeof parsed !== "object" || !parsed.client_email || !parsed.private_key || !parsed.project_id) {
-        throw new Error("Firebase sunucu kimliği gerekli alanları içermiyor.");
-    }
-    return { client_email: String(parsed.client_email).trim(), private_key: String(parsed.private_key).replace(/\\n/g, "\n"), project_id: String(parsed.project_id).trim() };
+function credentialResolution(): CredentialResolution {
+    const key = CREDENTIAL_VARIABLES.map((name) => process.env[name] ?? "").join("\u0000");
+    if (resolvedCredentials?.key !== key) resolvedCredentials = { key, result: resolveServiceAccount() };
+    return resolvedCredentials.result;
 }
 
 function getServiceAccount(): ServiceAccount {
     if (emulator("FIRESTORE_EMULATOR_HOST")) return emulatorServiceAccount();
-    const source = credentialSources()[0];
-    if (!source) throw new Error("Firebase sunucu kimliği yapılandırılmamış: Vercel'e FIREBASE_SERVICE_ACCOUNT_JSON ekleyin.");
-    if (source.layout === "json") return parseServiceAccountJson(source.value);
-    if (source.layout === "base64") {
-        // A plain JSON pasted into the base64 variable works too.
-        return parseServiceAccountJson(source.value.startsWith("{") ? source.value : Buffer.from(source.value, "base64").toString("utf8"));
-    }
-    // The three-variable layout used by most Firebase Admin guides.
-    const projectId = (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)?.trim();
-    if (!projectId) throw new Error("Firebase sunucu kimliği eksik: FIREBASE_PROJECT_ID tanımlı değil.");
-    return {
-        client_email: process.env.FIREBASE_CLIENT_EMAIL!.trim(),
-        // Vercel stores pasted keys with literal "\n" and sometimes wrapping quotes.
-        private_key: process.env.FIREBASE_PRIVATE_KEY!.trim().replace(/^"|"$/g, "").replace(/\\n/g, "\n"),
-        project_id: projectId,
-    };
+    const result = credentialResolution();
+    if (result.account) return result.account;
+    // The first variable that is set is the one the owner meant; its problem is the useful one.
+    throw new Error(result.tried[0]?.error ?? MISSING_CREDENTIALS_MESSAGE);
 }
 
 export function getFirebaseProjectId() {
@@ -163,29 +122,23 @@ export function describeServerCredentials(): ServerCredentialInfo {
     if (emulator("FIRESTORE_EMULATOR_HOST")) {
         return { layout: "emulator", variable: "FIRESTORE_EMULATOR_HOST", ignored: [], projectId: emulatorServiceAccount().project_id, clientEmail: null, privateKeyValid: true, error: null };
     }
-    const sources = credentialSources();
-    const [source, ...rest] = sources;
+    const result = credentialResolution();
+    const used = result.source ?? result.tried[0] ?? null;
+    const variable = used?.variable ?? null;
     const info: ServerCredentialInfo = {
-        layout: source?.layout ?? null,
-        variable: source?.variable ?? null,
-        ignored: rest.map((entry) => entry.variable),
-        projectId: null,
-        clientEmail: null,
-        privateKeyValid: false,
+        layout: used?.layout ?? null,
+        variable,
+        ignored: credentialSources().map((entry) => entry.variable).filter((name) => name !== variable),
+        projectId: result.account?.project_id ?? null,
+        clientEmail: result.account?.client_email ?? null,
+        // resolveServiceAccount only accepts keys that Node can load.
+        privateKeyValid: Boolean(result.account),
         error: null,
     };
-    try {
-        const account = getServiceAccount();
-        info.projectId = account.project_id;
-        info.clientEmail = account.client_email;
-        try {
-            createPrivateKey(account.private_key);
-            info.privateKeyValid = true;
-        } catch {
-            info.error = "Özel anahtar okunamadı (satır sonları \\n olarak mı kopyalandı?).";
-        }
-    } catch (error) {
-        info.error = error instanceof Error ? error.message : "Firebase sunucu kimliği okunamadı.";
+    if (!result.account) {
+        const message = result.tried[0]?.error ?? MISSING_CREDENTIALS_MESSAGE;
+        // Cloud Health prints the variable itself, so it isn't repeated here.
+        info.error = variable && message.startsWith(`${variable}: `) ? message.slice(variable.length + 2) : message;
     }
     return info;
 }

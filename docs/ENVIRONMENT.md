@@ -94,10 +94,24 @@ a NextAuth session to Firebase. Provide the service account in any one form:
 
 | Variable | Meaning |
 | --- | --- |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Full service-account JSON (string). Wins when several forms are set. |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Full service-account JSON (string). Tried first. |
 | `FIREBASE_SERVICE_ACCOUNT_BASE64` | The same JSON, base64-encoded on one line (`base64 -w0 service-account.json`). The older name `FIREBASE_SERVICE_ACCOUNT_BASE` is still accepted. |
-| `FIREBASE_PROJECT_ID` + `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY` | The three fields individually (`\n` escapes in the key are handled). |
+| `FIREBASE_PROJECT_ID` + `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY` | The three fields individually (`\n` escapes in the key are handled; the project id can also come from the service-account e-mail). `FIREBASE_ADMIN_*` names work too. |
 | `FIREBASE_STORAGE_BUCKET` | Storage bucket for voice messages and uploads (falls back to `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`). |
+
+Every variable that is set is tried in order and the first usable key wins,
+so a broken variable doesn't hide a working one. Pasting is forgiving
+(`src/lib/server/service-account.ts`): the JSON may be wrapped in quotes,
+encoded twice, base64-encoded, nested (`{"serviceAccount": {…}}`), use
+camelCase names (`projectId`, `clientEmail`, `privateKey`) or come from a
+`.env` line; the key's PEM is rebuilt, so lost line breaks don't matter. The
+names `FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_SERVICE_ACCOUNT_KEY`,
+`FIREBASE_ADMIN_CREDENTIALS`, `GOOGLE_APPLICATION_CREDENTIALS_JSON`,
+`GOOGLE_CREDENTIALS` and pasted JSON in `GOOGLE_APPLICATION_CREDENTIALS` are
+read as well. When nothing works, the sign-in page and Cloud Health say what
+the variable holds instead: a web-app config (`apiKey`), Android
+`google-services.json`, an OAuth client file, user credentials or which
+fields are missing.
 
 Create the key in Firebase Console → Project settings → Service accounts →
 Generate new private key. The default `firebase-adminsdk-…` account already has
