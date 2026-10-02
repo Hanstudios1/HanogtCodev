@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, animate, motion, useInView, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     ArrowRight, Bot, Boxes, Check, Code2, Gamepad2, Heart, LogIn, MessageSquare, Newspaper, Play, Radio, Rocket, ShieldCheck, Sparkles,
     Trophy, UsersRound, X, Zap, type LucideIcon,
@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Comparison from "@/components/Comparison";
 import Header from "@/components/Header";
+import { CountUp, formatCount, usePublicStats, type PublicStatKey } from "@/components/PublicStats";
 import SiteFooter from "@/components/SiteFooter";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
 import { LANGUAGES, formatCopy, useI18n, type Copy } from "@/lib/i18n";
@@ -71,13 +72,9 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
 
 // ---------------------------------------------------------------- Final call to action
 
-type StatKey = "users" | "projects" | "gameProjects" | "arcadeGames";
-type PublicStats = Record<StatKey, number | null>;
+type StatKey = Extract<PublicStatKey, "users" | "projects" | "gameProjects" | "arcadeGames">;
 
 const STAT_KEYS: StatKey[] = ["users", "projects", "gameProjects", "arcadeGames"];
-const STATS_TTL_MS = 10 * 60_000;
-// Module scope: the numbers survive client-side navigation between pages.
-let statsMemo: { at: number; stats: PublicStats } | null = null;
 
 const CTA = {
     kicker: { TR: "Ücretsiz başla, kurulum yok", EN: "Free to start, nothing to install" },
@@ -123,79 +120,6 @@ const STAT_LABELS: Record<StatKey, Copy> = {
     gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
     arcadeGames: { TR: "Arcade oyunu", EN: "Arcade games" },
 };
-
-function parsePublicStats(value: unknown): PublicStats | null {
-    if (!value || typeof value !== "object") return null;
-    const source = value as Record<string, unknown>;
-    const stats = Object.fromEntries(STAT_KEYS.map((key) => {
-        const count = source[key];
-        return [key, typeof count === "number" && Number.isFinite(count) && count >= 0 ? Math.trunc(count) : null];
-    })) as PublicStats;
-    return STAT_KEYS.some((key) => stats[key] !== null) ? stats : null;
-}
-
-/** undefined while loading; null when there are no numbers (offline, desktop app, server error). */
-function usePublicStats() {
-    const [stats, setStats] = useState<PublicStats | null | undefined>(() => (statsMemo && Date.now() - statsMemo.at < STATS_TTL_MS ? statsMemo.stats : undefined));
-    useEffect(() => {
-        if (statsMemo && Date.now() - statsMemo.at < STATS_TTL_MS) return;
-        const controller = new AbortController();
-        fetch("/api/stats/public", { signal: controller.signal, headers: { Accept: "application/json" } })
-            .then((response) => (response.ok ? response.json() as Promise<unknown> : null))
-            .then((data) => {
-                const parsed = parsePublicStats(data);
-                if (parsed) statsMemo = { at: Date.now(), stats: parsed };
-                setStats(parsed);
-            })
-            .catch(() => {
-                if (!controller.signal.aborted) setStats(null);
-            });
-        return () => controller.abort();
-    }, []);
-    return stats;
-}
-
-const numberFormats = new Map<string, Intl.NumberFormat>();
-
-function formatCount(value: number, locale: string, compact: boolean) {
-    const id = `${locale}|${compact}`;
-    let format = numberFormats.get(id);
-    if (!format) {
-        try {
-            format = new Intl.NumberFormat(locale, compact ? { notation: "compact", maximumFractionDigits: 1 } : undefined);
-        } catch {
-            format = new Intl.NumberFormat("en-US");
-        }
-        numberFormats.set(id, format);
-    }
-    return format.format(value);
-}
-
-/** Counts up to `value` the first time it scrolls into view (instantly with reduced motion). */
-function CountUp({ value, locale }: { value: number; locale: string }) {
-    const ref = useRef<HTMLSpanElement | null>(null);
-    const inView = useInView(ref, { once: true, margin: "-40px" });
-    const reduceMotion = useReducedMotion();
-    const progress = useMotionValue(0);
-    const compact = value >= 10_000;
-    const text = useTransform(progress, (latest) => formatCount(Math.round(latest), locale, compact));
-    useEffect(() => {
-        if (!inView) return;
-        if (reduceMotion) {
-            progress.set(value);
-            return;
-        }
-        const controls = animate(progress, value, { duration: 1.4, ease: [0.22, 1, 0.36, 1] });
-        return () => controls.stop();
-    }, [inView, reduceMotion, value, progress]);
-    // The digits run from zero while they animate, so assistive technology reads the final number instead.
-    return (
-        <>
-            <motion.span ref={ref} aria-hidden="true" className="tabular-nums">{text}</motion.span>
-            <span className="sr-only">{formatCount(value, locale, compact)}</span>
-        </>
-    );
-}
 
 function FinalCta({ signedIn }: { signedIn: boolean }) {
     const { t, tx, locale } = useI18n();

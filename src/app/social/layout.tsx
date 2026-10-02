@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
     title: "Hanogt Social",
-    description: "Arkadaşların, direkt mesajların ve grupların tek yerde.",
+    description: "Hanogt Social: arkadaşların, direkt mesajların, grupların ve çevrimiçi durumların tek yerde.",
     // Signed-in space; nothing here is useful to search engines.
     robots: { index: false, follow: false },
 };
