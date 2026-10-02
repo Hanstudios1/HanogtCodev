@@ -24,6 +24,28 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.2.0",
+        version: "v0.2.0",
+        date: "2026-10-02",
+        title: { TR: "Hanogt Social, Engine V3 ve destek talepleri", EN: "Hanogt Social, Engine V3 and support tickets" },
+        desc: { TR: "Topluluk, oyun motoru ve destek güncellemesi: arkadaşlar, mesajlar ve gruplar Hanogt Social'da birleşti; Discord tarzı durumlar, Hanogt Engine V3, 6 kategorili destek talepleri, finans haberleri ve bulut bağlantısı onarımları.", EN: "A community, engine and support update: friends, messages and groups come together in Hanogt Social, with Discord-style statuses, Hanogt Engine V3, support tickets in six categories, finance news and cloud connection fixes." },
+        items: [
+            { TR: "Hanogt Social: arkadaşlar, direkt mesajlar ve gruplar Discord benzeri tek ekranda; grup rayı, kanallar, rol ve duruma göre üye listesi, telefonda çekmeceler ve Ctrl/⌘+K hızlı geçiş.", EN: "Hanogt Social: friends, direct messages and groups on one Discord-like screen, with a group rail, channels, a member list grouped by role and status, drawers on phones and Ctrl/⌘+K quick switching." },
+            { TR: "Durum işareti avatarın sağ altında: çevrimiçi (yeşil), boşta (sarı hilal), Rahatsız Etmeyin (kırmızı) ve çevrimdışı (gri); özel durum ve 5 dakika etkileşimsizlikte otomatik Boşta.", EN: "A status indicator on the bottom-right of avatars: online (green), idle (yellow crescent), Do Not Disturb (red) and offline (grey), plus a custom status and automatic Idle after 5 minutes without activity." },
+            { TR: "Hesap Ayarları yeniden tasarlandı: kategori menüsü ve canlı profil kartı; ad, takma ad ve #etiket artık her zaman görünüyor ve Kaydet çalışıyor. Editör Ayarları'na Kaydet/Vazgeç eklendi.", EN: "Account Settings redesigned with a category menu and a live profile card; your name, nickname and #tag always show and Save works. Editor Settings gained Save and Discard." },
+            { TR: "Hanogt Engine V3: tilemap boyama ve karo çarpışmaları, arayüz bileşenleri (Button, Panel, Progress Bar), animasyon, Tween ve Timer, sis/bloom/vinyet efektleri ve üç yeni şablon.", EN: "Hanogt Engine V3: tilemap painting and tile collisions, UI components (Button, Panel, Progress Bar), animation, Tween and Timer, fog/bloom/vignette effects and three new templates." },
+            { TR: "Destek talepleri 6 kategoride: Şikayet, İstek, Güvenlik Açığı, Ban Kaldırma İsteği, Soru ve Geri Bildirim. Ekip yanıtlar, siz Taleplerim'den takip edersiniz; yeni talepler ekibe bildirim olarak düşer.", EN: "Support tickets in six categories: Complaint, Request, Security Vulnerability, Ban Appeal, Question and Feedback. The team replies, you follow along in My tickets, and new tickets notify the team." },
+            { TR: "Askıya alınan hesaplar giriş ekranından doğrulanmış itiraz gönderebilir; doğrulayıcısını ve kurtarma kodlarını kaybedenler kurtarma talebi açabilir.", EN: "Suspended accounts can send a verified appeal from the sign-in screen, and people who lost their authenticator and recovery codes can open a recovery request." },
+            { TR: "Kod editöründen doğrudan Media'da yayınla, yayını güncelle veya kaldır; yeni Düzenle menüsü (geri al, bul/değiştir, biçimlendir, yeniden adlandır, ZIP indir).", EN: "Publish to Media straight from the code editor, then update or unpublish it; a new Edit menu (undo, find and replace, format, rename, ZIP download)." },
+            { TR: "Hanogt News: Finans & Ekonomi kategorisi ve piyasa şeridi (TCMB döviz kurları, gram altın, BIST 100, Bitcoin).", EN: "Hanogt News: a Finance & Economy category and a market strip (CBRT exchange rates, gram gold, BIST 100, Bitcoin)." },
+            { TR: "Yönetici Paneli: kurucu rozeti, kullanıcı verisi silme, gönderen siciliyle destek talepleri ve bulut bağlantısını denetleyip güvenlik kurallarını tek tıkla yayımlayan Bulut Sağlığı.", EN: "Admin Panel: a founder badge, user data deletion, support tickets with the sender's record, and Cloud Health, which checks the cloud connection and publishes the security rules in one click." },
+            { TR: "Bulut bağlantısı: Firebase ayarları artık çalışma anında okunuyor; bağlantı kurulamazsa kopyalanabilir bir hata kodu çıkıyor, profil, bildirimler ve sohbet sunucu üzerinden çalışmayı sürdürüyor.", EN: "Cloud connection: Firebase settings are now read at runtime; if the connection fails a copyable error code appears, and profile, notifications and chat keep working through the server." },
+            { TR: "Okunmamış sayısını gösteren bildirim zili; veri dışa aktarımına destek talepleri, bildirimler ve kendi mesajlarınız eklendi.", EN: "A notification bell with an unread count; data export now includes support tickets, notifications and your own messages." },
+            { TR: "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları ayrıntılı olarak baştan yazıldı; bölüm içi arama ve içindekiler eklendi.", EN: "The Privacy Policy, KVKK Disclosure and Terms of Use were rewritten in detail, with in-page search and a table of contents." },
+            { TR: "Geri Bildirim/SSS onarıldı ve 24 soruya genişledi; Hakkımızda canlı rakamlarla yenilendi, alt bilgideki dil seçicisi artık ekrana sığıyor ve ana sayfadaki dil sayısı gerçek kayıttan geliyor.", EN: "Feedback and FAQ were fixed and grew to 24 questions; About shows live numbers, the footer language picker fits the screen and the home page language count comes from the real registry." },
+        ],
+    },
+    {
         id: "v0.1.2",
         version: "v0.1.2",
         date: "2026-10-01",
