@@ -3,20 +3,25 @@
  * language model isn't available (signed out, not configured, rate-limited,
  * offline). It combines deterministic tools (secret detection, password
  * strength, link check, error explainer, code scan, calculator) with the trained
- * intent model (public/ai/hanogt-intent-model.json) and BM25 retrieval over the
- * knowledge base and code examples. Answers are built from static { TR, EN }
- * copy, so they are translated by the copy packs like the rest of the UI.
+ * intent model (public/ai/hanogt-intent-model.bin) and BM25 retrieval over the
+ * knowledge base and code examples. Action intents ("React çalışma grubu kur")
+ * become the same agent tool calls the language model makes (agent-intents.ts),
+ * and requests Hanogt AI must never carry out are refused with an explanation.
+ * Answers are built from static { TR, EN } copy, so they are translated by the
+ * copy packs like the rest of the UI.
  */
 import type { Copy } from "@/lib/i18n";
 import { analyzeCode, containsSecret } from "@/lib/security/advisor";
 import { checkLink, findUrl } from "@/lib/security/links";
 import { checkPassword } from "@/lib/security/password";
+import { isCoreActionIntent, proposeCoreAction, routeLabel, type CoreProgram, type CoreProposal, type ProgramLibrary } from "./agent-intents";
+import { agentGameTemplates, AGENT_TOOL_REQUIRES_AUTH, detectSensitiveRequest, isHowToQuestion, type AgentCallInput, type AgentMode, type SensitiveRequest } from "./agent-tools";
 import { calculate, formatNumber } from "./calc";
 import { explainError, looksLikeError } from "./errors";
 import { allKnowledge, type KnowledgeEntry } from "./knowledge";
 import { knowledgeById, searchKnowledge } from "./retrieval";
 import modelMeta from "./model-meta.json";
-import { Bm25Index, classify } from "./nlp.mjs";
+import { Bm25Index, classify, decodeModelBinary } from "./nlp.mjs";
 import { detectSnippetLanguage, ENGINE_SNIPPETS, SNIPPET_LANGUAGES, SNIPPETS, snippetLanguageFromEditor, type SnippetLanguage } from "./snippets";
 
 export type AiMode = "general" | "code" | "security";
@@ -39,6 +44,8 @@ export interface LocalReply {
     sources: Array<{ title: string; href: string }>;
     /** Runnable example that the UI can open in the editor. */
     code?: { language: string; code: string };
+    /** Agent actions to propose (shown as permission cards). */
+    actions?: AgentCallInput[];
 }
 
 export interface LocalOptions {
@@ -50,6 +57,8 @@ export interface LocalOptions {
     context?: AiContext;
     /** Previously detected intent, for "more" follow-ups. */
     lastIntent?: string | null;
+    /** The chat's agent mode: "off" explains how to do things instead of proposing actions. */
+    agentMode?: AgentMode;
 }
 
 type IntentModel = Parameters<typeof classify>[0] & { threshold?: number };
@@ -59,9 +68,13 @@ let modelPromise: Promise<IntentModel | null> | null = null;
 /** Loads the trained intent model once; null if it can't be fetched. */
 export function loadIntentModel(): Promise<IntentModel | null> {
     if (!modelPromise) {
-        modelPromise = fetch("/ai/hanogt-intent-model.json", { cache: "force-cache" })
-            .then((response) => (response.ok ? response.json() as Promise<IntentModel> : null))
-            .then((model) => (model && model.featureVersion === modelMeta.featureVersion ? model : null))
+        modelPromise = fetch(`/ai/${modelMeta.file}?v=${modelMeta.hash}`, { cache: "force-cache" })
+            .then((response) => (response.ok ? response.arrayBuffer() : null))
+            .then((buffer) => {
+                if (!buffer) return null;
+                const model = decodeModelBinary(buffer) as IntentModel;
+                return model.featureVersion === modelMeta.featureVersion ? model : null;
+            })
             .catch(() => null);
     }
     return modelPromise;
@@ -145,6 +158,31 @@ const C = {
     snippetMissing: { TR: "Bu konuda hazır bir örneğim yok. Ne yapmak istediğini biraz daha ayrıntılı anlatır mısın? Örneğin: \"Python'da listeyi sırala\" ya da \"C# ile zıplama kodu\".", EN: "I don't have a ready example for that. Could you describe it in more detail? For example: \"sort a list in Python\" or \"jump code in C#\"." },
     unknownSignedOut: { TR: "Bu soru Hanogt AI Çekirdeği'nin çevrimdışı bilgisinin dışında. **Giriş yaparsan** sorularını büyük dil modeli yanıtlar. Bu arada kod, oyun motoru, güvenlik ve site kullanımı hakkında yardımcı olabilirim.", EN: "This question is outside Hanogt AI Core's offline knowledge. **Sign in** and the large language model will answer it. Meanwhile I can help with code, the game engine, security and using the site." },
     unknownSignedIn: { TR: "Şu anda büyük dil modeline ulaşamıyorum, bu yüzden Hanogt AI Çekirdeği yanıtlıyor ve bu soru onun bilgisinin dışında. Biraz sonra tekrar dene ya da kod, oyun motoru, güvenlik veya site kullanımı hakkında sor.", EN: "I can't reach the large language model right now, so Hanogt AI Core is answering and this question is outside its knowledge. Try again in a moment, or ask about code, the game engine, security or using the site." },
+    programHead: { TR: "**{title}** — {language}:", EN: "**{title}** — {language}:" },
+    programMissingLanguage: { TR: "{requested} için hazır bir örneğim yok, aynı programı {language} ile yazdım. Giriş yaptığında dil modeli {requested} ile de yazabilir.", EN: "I don't have a ready example in {requested}, so I wrote the same program in {language}. When you're signed in, the language model can write it in {requested} too." },
+    programOpenHint: { TR: "Editörde açmamı istersen \"editörde aç\" yaz ya da aşağıdaki **Editörde aç** düğmesini kullan.", EN: "To open it in the editor, say \"open it in the editor\" or use the **Open in editor** button below." },
+    programNeedTopic: { TR: "Ne yazmamı istersin? Örneğin: \"Python ile hesap makinesi yaz ve editörde aç\", \"HTML ile yılan oyunu yap\" ya da \"JavaScript ile yapılacaklar listesi\". Hazır programlarım: {programs}.", EN: "What should I write? For example: \"Write a calculator in Python and open it in the editor\", \"Make a snake game in HTML\" or \"A to-do list in JavaScript\". Ready programs: {programs}." },
+    actionGroup: { TR: "**{name}** adında yeni bir grup oluşturabilirim. Ayrıntıları kartta düzenleyebilirsin; izin verdiğinde oluşturacağım.", EN: "I can create a new group called **{name}**. You can edit the details on the card; I'll create it when you allow it." },
+    actionGroupUnnamed: { TR: "Senin için yeni bir grup oluşturabilirim. Karta bir ad yaz, istersen şablonu değiştir; izin verdiğinde oluşturacağım.", EN: "I can create a new group for you. Enter a name on the card and change the template if you like; I'll create it when you allow it." },
+    actionProfile: { TR: "Profil bilgilerine bakmam için izin vermen gerekiyor. Yalnızca görünen adını, takma adını, biyografini, favori dillerini ve sayılarını okurum; e-posta gibi özel bilgileri okumam.", EN: "I need your permission to look at your profile. I only read your display name, nickname, bio, favourite languages and counts, never private data such as your e-mail." },
+    actionGame: { TR: "**{template}** şablonuyla **{name}** adında yeni bir oyun projesi oluşturup Oyun Motoru'nda açabilirim. Şablonu ve adı kartta değiştirebilirsin.", EN: "I can create a new game project called **{name}** from the **{template}** template and open it in the Game Engine. You can change the template and the name on the card." },
+    actionNavigate: { TR: "**{page}** sayfasını açayım mı?", EN: "Shall I open **{page}**?" },
+    actionEditor: { TR: "Kodu Kod Editörü'nde yeni bir sekmede açabilirim (hiçbir şey kaydedilmez ya da çalıştırılmaz).", EN: "I can open the code in a new Code Editor tab (nothing is saved or run)." },
+    agentOff: { TR: "**Ajan modu kapalı** olduğu için bunu senin yerine yapmıyorum. Mesaj kutusunun yanındaki **Ajan** menüsünden açarsan, her adımda iznini alarak yapabilirim.", EN: "**Agent mode is off**, so I won't do this for you. Turn it on from the **Agent** menu next to the message box and I can do it, asking for your permission at every step." },
+    manualGroup: { TR: "Kendin oluşturmak için [Hanogt Social](/social?create=1)'de grup rayındaki **Grup oluştur** düğmesini kullan.", EN: "To create it yourself, use **Create a group** in the group rail of [Hanogt Social](/social?create=1)." },
+    manualProfile: { TR: "Profilini [Hesap Ayarları](/account-settings) sayfasında görebilirsin.", EN: "You can see your profile on the [Account Settings](/account-settings) page." },
+    manualEditor: { TR: "Kodu **Editörde aç** düğmesiyle kendin açabilirsin.", EN: "You can open the code yourself with the **Open in editor** button." },
+    manualGame: { TR: "[Oyun Motoru](/game-engine) sayfasında **Yeni proje** ile bir şablon seçebilirsin.", EN: "On the [Game Engine](/game-engine) page, pick a template with **New project**." },
+    manualNavigate: { TR: "Sayfaya buradan gidebilirsin: [{page}]({route})", EN: "You can go there from here: [{page}]({route})" },
+    signInForAction: { TR: "Bunu yapabilmem için **giriş yapman** gerekiyor; işlemler senin hesabınla, senin izninle yapılır. [Giriş yap](/login)", EN: "I need you to **sign in** first; actions run with your own account and your permission. [Sign in](/login)" },
+    refused: {
+        delete: { TR: "🔒 Silme işlemlerini (hesap, grup, proje, mesaj…) senin yerine yapmam; geri alınamayan işlemleri yalnızca sen yapabilirsin. Hesabınla ilgili ayarlar [Hesap Ayarları](/account-settings) sayfasında; grup ve projeleri kendi sayfalarındaki menüden silebilirsin.", EN: "🔒 I don't delete things (accounts, groups, projects, messages…) for you; only you can do something that can't be undone. Account options are on [Account Settings](/account-settings); groups and projects can be deleted from the menu on their own pages." },
+        password: { TR: "🔒 Parolanı göremem, değiştiremem ya da sıfırlayamam; bunu yalnızca sen yapabilirsin. Parolanı [Hesap Ayarları](/account-settings) sayfasından değiştirebilir, giriş sayfasındaki **Parolamı unuttum** ile sıfırlayabilirsin. Parolanı kimseyle, benimle bile paylaşma.", EN: "🔒 I can't see, change or reset your password; only you can. Change it on [Account Settings](/account-settings) or reset it with **Forgot password** on the sign-in page. Never share your password with anyone, me included." },
+        two_factor: { TR: "🔒 İki adımlı doğrulamayı (2FA) senin yerine açıp kapatamam ya da sıfırlayamam; hesabının güvenliği için bu ayarı yalnızca sen değiştirebilirsin: [Hesap Ayarları](/account-settings).", EN: "🔒 I can't turn two-factor authentication (2FA) on or off or reset it for you; for your account's safety only you can change it: [Account Settings](/account-settings)." },
+        admin: { TR: "🔒 Yetki ya da rol veremem ve yönetici işlemleri yapamam. Admin Paneli yalnızca yetkili ekip üyelerine açıktır ve oradaki her işlem denetim kaydına yazılır.", EN: "🔒 I can't grant permissions or roles or do admin work. The Admin Panel is only open to authorised staff, and every action there is written to the audit log." },
+        moderation: { TR: "🔒 Kimseyi yasaklayamam, susturamam ya da gruptan çıkaramam. Bir sorunu [Geri Bildirim ve Destek](/feedback) sayfasından bildirebilirsin; grup yöneticisiysen bu işlemleri grup ayarlarından kendin yapabilirsin.", EN: "🔒 I can't ban, mute or remove anyone. Report a problem on [Feedback and Support](/feedback); if you manage a group, you can do this yourself in the group settings." },
+        message_others: { TR: "🔒 Başkalarına senin adına mesaj, davet ya da yorum göndermem. Metni yazmana yardım edebilirim; göndermeyi [Hanogt Social](/social)'deki direkt mesajlardan kendin yaparsın.", EN: "🔒 I don't send messages, invites or comments to other people on your behalf. I can help you write the text; you send it yourself from your direct messages in [Hanogt Social](/social)." },
+    } satisfies Record<SensitiveRequest, Copy>,
     relatedTitle: { TR: "İlgili:", EN: "Related:" },
     coreNote: { TR: "Hanogt AI Çekirdeği · çevrimdışı", EN: "Hanogt AI Core · offline" },
 };
@@ -218,6 +256,80 @@ const GENERIC_WORDS = /(?<![\p{L}\p{N}])(?:kod(?:u|lar[ıi])?|code|script(?:i)?|
 function snippetQuery(text: string) {
     const stripped = text.toLocaleLowerCase("tr").replace(LANGUAGE_WORDS, " ").replace(GENERIC_WORDS, " ").replace(/\s+/g, " ").trim();
     return stripped || text;
+}
+
+// ------------------------------------------------------------------ agent actions
+const PROGRAM_INTENTS = new Set(["write_code", "open_editor", "make_game"]);
+
+type ProgramsModule = typeof import("./programs");
+
+/** The program library is a separate chunk: only code requests download it. */
+async function programLibrary(): Promise<ProgramsModule | null> {
+    try {
+        return await import("./programs");
+    } catch {
+        return null;
+    }
+}
+
+function programParts(found: CoreProgram, library: ProgramLibrary, tx: LocalOptions["tx"]) {
+    const info = library.PROGRAM_LANGUAGES[found.language];
+    return [
+        tx(C.programHead, { title: tx(found.program.title), language: info.name }),
+        [`\`\`\`${found.language}`, (found.program.code[found.language] ?? "").trimEnd(), "```"].join("\n"),
+        found.missingLanguage ? tx(C.programMissingLanguage, { requested: found.missingLanguage, language: info.name }) : "",
+        found.program.note ? tx(found.program.note) : "",
+    ].filter(Boolean);
+}
+
+/** What the card will do, in one sentence. */
+function describeCall(call: AgentCallInput, tx: LocalOptions["tx"]) {
+    switch (call.name) {
+        case "create_group":
+            return call.args.name ? tx(C.actionGroup, { name: call.args.name }) : tx(C.actionGroupUnnamed);
+        case "get_my_profile":
+            return tx(C.actionProfile);
+        case "create_game": {
+            const template = agentGameTemplates().find((entry) => entry.id === call.args.template);
+            return tx(C.actionGame, { name: call.args.name, template: template ? tx(template.name) : call.args.template });
+        }
+        case "navigate":
+            return tx(C.actionNavigate, { page: tx(routeLabel(call.args.route)) });
+        case "open_editor_with_code":
+            return tx(C.actionEditor);
+        default:
+            return "";
+    }
+}
+
+/** How to do it by hand when Hanogt AI may not. */
+function manualSteps(call: AgentCallInput, tx: LocalOptions["tx"]) {
+    switch (call.name) {
+        case "create_group":
+            return tx(C.manualGroup);
+        case "get_my_profile":
+            return tx(C.manualProfile);
+        case "create_game":
+            return tx(C.manualGame);
+        case "navigate":
+            return tx(C.manualNavigate, { page: tx(routeLabel(call.args.route)), route: call.args.route });
+        case "open_editor_with_code":
+            return tx(C.manualEditor);
+        default:
+            return "";
+    }
+}
+
+/** Core's action for a message, used when the language model can't call tools. */
+export async function proposeActionsLocally(message: string, options: Pick<LocalOptions, "tx" | "context">): Promise<AgentCallInput[]> {
+    const text = message.trim().slice(0, 8_000);
+    if (!text || detectSensitiveRequest(text)) return [];
+    const model = await loadIntentModel();
+    const top = model ? classify(model, text)[0] : null;
+    if (!top || top.probability < 0.5 || !isCoreActionIntent(top.label)) return [];
+    const library = PROGRAM_INTENTS.has(top.label) ? await programLibrary() : null;
+    const proposal = proposeCoreAction(top.label, text, { tx: options.tx, programs: library, editorLanguage: options.context?.language });
+    return proposal?.kind === "call" ? [proposal.call] : [];
 }
 
 function entryText(entry: KnowledgeEntry, tx: LocalOptions["tx"]) {
@@ -322,7 +434,13 @@ export async function answerLocally(message: string, options: LocalOptions): Pro
         });
     }
 
-    // 7. Intent model + retrieval.
+    // 7. Requests Hanogt AI never carries out ("hesabımı sil", "beni admin yap"); how-to questions are answered below.
+    const sensitive = detectSensitiveRequest(text);
+    if (sensitive && !isHowToQuestion(text)) {
+        return reply({ text: tx(C.refused[sensitive]), intent: "refused", suggestions: [] });
+    }
+
+    // 8. Intent model + retrieval.
     const model = await loadIntentModel();
     const ranked = model ? classify(model, text) : [];
     const top = ranked[0] ?? null;
@@ -360,6 +478,34 @@ export async function answerLocally(message: string, options: LocalOptions): Pro
             code: { language: editorLanguage, code },
         });
     };
+
+    // 9. Agent actions: the same tool calls the language model would make, shown as permission cards.
+    const actionReply = (proposal: CoreProposal, library: ProgramsModule | null): LocalReply | null => {
+        if (proposal.kind === "need_topic") {
+            const programs = library ? library.PROGRAM_SNIPPETS.map((program) => tx(program.title)).join(", ") : "";
+            return reply({ text: tx(C.programNeedTopic, { programs }), intent, confidence, suggestions: [] });
+        }
+        const found = proposal.program ?? null;
+        const parts = found && library ? programParts(found, library, tx) : [];
+        const code = found && library ? { language: library.PROGRAM_LANGUAGES[found.language].id, code: found.program.code[found.language] ?? "" } : undefined;
+        if (proposal.kind === "code") {
+            return reply({ text: [...parts, tx(C.programOpenHint)].join("\n\n"), intent, confidence, code });
+        }
+        const { call } = proposal;
+        if (options.agentMode === "off") {
+            return reply({ text: [...parts, tx(C.agentOff), manualSteps(call, tx)].filter(Boolean).join("\n\n"), intent, confidence, code });
+        }
+        if (AGENT_TOOL_REQUIRES_AUTH[call.name] && !options.signedIn) {
+            return reply({ text: [...parts, tx(C.signInForAction), manualSteps(call, tx)].filter(Boolean).join("\n\n"), intent, confidence, code });
+        }
+        return reply({ text: [...parts, describeCall(call, tx)].filter(Boolean).join("\n\n"), intent, confidence, code, actions: [call] });
+    };
+    if (intent && isCoreActionIntent(intent)) {
+        const library = PROGRAM_INTENTS.has(intent) ? await programLibrary() : null;
+        const proposal = proposeCoreAction(intent, text, { tx, programs: library, editorLanguage: context?.language });
+        const answer = proposal ? actionReply(proposal, library) : null;
+        if (answer) return answer;
+    }
 
     switch (intent) {
         case "greeting":
@@ -412,7 +558,7 @@ export async function answerLocally(message: string, options: LocalOptions): Pro
         }
     }
 
-    // 8. Low confidence: programming how-to, then knowledge retrieval, then fallback.
+    // 10. Low confidence: programming how-to, then knowledge retrieval, then fallback.
     if (HOWTO_WORDS.test(text) || detectSnippetLanguage(text)) {
         const answer = answerSnippet();
         if (answer) return answer;

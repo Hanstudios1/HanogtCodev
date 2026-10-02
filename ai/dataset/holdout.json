@@ -1,0 +1,428 @@
+{
+ "version": 1,
+ "description": "Blind holdout for Hanogt AI Core. Written after the training set and never used for training, tuning or error analysis; the trainer reports accuracy on it as an independent check. Texts must not appear in intents.json.",
+ "intents": {
+  "greeting": [
+   "selamlar hanogt nasılsın",
+   "hey hanogt günaydın",
+   "merhabalar kolay gelsin",
+   "hi there, anyone home?",
+   "selam dostum nasıl gidiyor",
+   "hola amigo qué tal"
+  ],
+  "thanks": [
+   "bu cevap tam aradığım şeydi teşekkürler",
+   "eline sağlık harika oldu",
+   "thanks a ton, that fixed it",
+   "teşekkürler gerçekten",
+   "awesome thank you so much",
+   "eyw çok sağol kanka"
+  ],
+  "goodbye": [
+   "şimdilik bu kadar görüşürüz",
+   "hadi bana eyvallah",
+   "ok bye for now",
+   "kapatıyorum iyi akşamlar",
+   "see ya later hanogt",
+   "iyi geceler görüşmek üzere"
+  ],
+  "identity": [
+   "sen yapay zeka botu musun yoksa insan mı",
+   "seni hangi ekip yaptı",
+   "are you a real person or a bot",
+   "adın neden hanogt",
+   "which model are you based on",
+   "gerçek bir asistan mısın yoksa program mı"
+  ],
+  "capabilities": [
+   "bana neler konusunda yardım edebilirsin",
+   "neler yapabiliyorsun kısaca anlat",
+   "what kind of stuff can you help with",
+   "benim için hangi işleri halledebilirsin",
+   "senin özelliklerin neler",
+   "can you do more than chat"
+  ],
+  "joke": [
+   "moralim bozuk biraz güldürsene",
+   "programcı şakası yap",
+   "tell me a funny one",
+   "bir fıkra anlatsana",
+   "make me laugh with a coding joke",
+   "yazılımcılarla ilgili komik bir şey anlat"
+  ],
+  "password": [
+   "iyi bir şifre nasıl oluşturulur",
+   "parolam yeterince güçlü mü nasıl anlarım",
+   "what's the minimum safe password length",
+   "aynı şifreyi her yerde kullanmak kötü mü",
+   "password manager önerir misin",
+   "güçlü parola örneği"
+  ],
+  "twofa": [
+   "iki adımlı doğrulamayı nasıl aktif ederim",
+   "authenticator kodu kabul edilmiyor",
+   "how do i set up an authenticator app",
+   "doğrulama uygulaması kaybettim 2fa",
+   "kurtarma kodları nerede",
+   "how do i enable 2fa on my hanogt account"
+  ],
+  "hacked": [
+   "hesabıma başkası girmiş galiba",
+   "şifrem değişmiş ben değiştirmedim",
+   "someone else logged into my account and changed things",
+   "hesabım ele geçirildi yardım",
+   "my account got hacked what do i do",
+   "profilimde tanımadığım paylaşımlar var"
+  ],
+  "phishing": [
+   "bu bağlantı güvenli mi bilmiyorum",
+   "biri bana bedava nitro linki attı",
+   "is this a scam message",
+   "sahte giriş sayfası nasıl anlaşılır",
+   "dm'den şüpheli link geldi",
+   "how to spot phishing emails"
+  ],
+  "code_scan": [
+   "kodumda güvenlik açığı var mı bakar mısın",
+   "kodumu güvenlik açısından tara",
+   "scan my code for vulnerabilities",
+   "sql injection riski var mı kodumda",
+   "kod danışmanı nasıl kullanılır",
+   "check my script for security issues"
+  ],
+  "secrets": [
+   "github'a yanlışlıkla api key yükledim",
+   "token'ım sızdı ne yapmalıyım",
+   "i accidentally pushed my .env with keys to github",
+   "gizli anahtarı koddan nasıl çıkarırım",
+   "where should i keep api keys",
+   "şifreyi koda gömmek kötü mü"
+  ],
+  "ban_appeal": [
+   "hesabımı neden askıya aldınız anlamadım",
+   "yasaklandım itiraz etmek istiyorum",
+   "how do i appeal a ban",
+   "haksız yere banlandım",
+   "my account was suspended for no reason",
+   "uzaklaştırma ne zaman biter"
+  ],
+  "privacy": [
+   "verilerimi kimlerle paylaşıyorsunuz",
+   "gizlilik politikasını okumak istiyorum",
+   "do you share my data with advertisers",
+   "mesajlarım şifreli mi",
+   "kişisel verilerim nasıl korunuyor",
+   "what personal info do you store"
+  ],
+  "cookies": [
+   "çerezleri nasıl reddederim",
+   "sitenizde hangi tür çerezler var",
+   "cookie banner'ı tekrar açmak",
+   "can i disable analytics cookies",
+   "çerez tercihlerimi değiştir",
+   "do you use tracking cookies"
+  ],
+  "calls": [
+   "arkadaşımla görüntülü nasıl konuşurum",
+   "sesli arama başlatma",
+   "my mic isn't working in calls",
+   "görüntülü aramada karşı tarafın sesini duyamıyorum",
+   "how do i start a video call",
+   "kamera izni vermedim aramada görünmüyorum"
+  ],
+  "report_vuln": [
+   "sitede güvenlik açığı buldum",
+   "bir xss açığı bildirmek istiyorum",
+   "how do i responsibly disclose a bug",
+   "güvenlik açığı bildirimi nereye yapılır",
+   "i found a vulnerability in your api",
+   "hata ödül programı var mı"
+  ],
+  "account_delete": [
+   "hesabımı tamamen silmek istiyorum",
+   "üyeliğimi nasıl iptal ederim",
+   "how do i delete my hanogt account",
+   "hesabımı kalıcı olarak kapat",
+   "remove my account permanently",
+   "hesabımı silme seçeneği nerede bulunuyor"
+  ],
+  "account_export": [
+   "tüm verilerimi indirmek istiyorum",
+   "hesap verilerimin kopyasını al",
+   "how can i export my data",
+   "verilerimi json olarak indir",
+   "download everything you have about me",
+   "veri dışa aktarma nasıl yapılır"
+  ],
+  "account_profile": [
+   "profil resmimi nasıl değiştiririm",
+   "biyografime ne yazabilirim nasıl eklenir",
+   "how do i change my display name",
+   "profil banner'ını güncelle",
+   "takma adımı nereden değiştiririm",
+   "profile color change"
+  ],
+  "login_help": [
+   "giriş yapamıyorum hata veriyor",
+   "google hesabımla giriş yapmaya çalışınca hata alıyorum",
+   "i can't log in to hanogt",
+   "parolamı hatırlamıyorum hesabıma nasıl girerim",
+   "oturum açma sayfası açılmıyor",
+   "login keeps failing"
+  ],
+  "editor_help": [
+   "editörde yeni dosya nasıl açılır",
+   "kod editöründe yazı boyutunu büyüt",
+   "how do i rename a file in the editor",
+   "editörde otomatik kaydetme var mı",
+   "kodumu nasıl kaydederim",
+   "editörde birden fazla dosya açabilir miyim"
+  ],
+  "run_code": [
+   "yazdığım programı nasıl çalıştırabilirim",
+   "çalıştır butonu çalışmıyor",
+   "how do i run my python file",
+   "çıktı ekranında bir şey görünmüyor",
+   "program input istiyor nereye yazarım",
+   "run button does nothing"
+  ],
+  "languages_supported": [
+   "hangi programlama dilleri destekleniyor",
+   "editörde go kullanabilir miyim",
+   "does the editor support rust",
+   "kaç dil destekliyorsunuz",
+   "editörde kotlin kodu çalıştırılabiliyor mu",
+   "which languages can i code in"
+  ],
+  "ui_language": [
+   "siteyi ingilizce yapmak istiyorum",
+   "sitenin dilini türkçeden ingilizceye nasıl alırım",
+   "how do i switch the site to turkish",
+   "dil seçeneği nerede",
+   "can i use the site in german",
+   "menü dilini değiştir"
+  ],
+  "engine_help": [
+   "oyun motorunda sahne nasıl eklenir",
+   "karaktere fizik nasıl veririm",
+   "how do i add a sprite in the engine",
+   "motor da prefab ne işe yarar",
+   "engine'de kamera takibi",
+   "collider nasıl eklenir oyunda"
+  ],
+  "arcade_help": [
+   "arcade bölümünde oyunları nasıl oynarım",
+   "arcade skor tablosu nerede",
+   "how do i remix a game in arcade",
+   "arcade'e oyunumu nasıl koyarım",
+   "arcade sayfası tam olarak ne",
+   "where can i play games others made"
+  ],
+  "media_help": [
+   "media sayfası ne işe yarıyor",
+   "media'da başkalarının projelerine nasıl bakarım",
+   "how do i like a post on media",
+   "media'da arama yapma",
+   "what is the media section",
+   "media gönderisine yorum yazmak"
+  ],
+  "news_help": [
+   "haberler sayfasında ne var",
+   "son duyurular nerede",
+   "where can i read hanogt news",
+   "yeni özellik duyuruları",
+   "haber akışı nasıl çalışır",
+   "news page"
+  ],
+  "friends_help": [
+   "birini arkadaş olarak nasıl eklerim",
+   "gelen arkadaşlık isteğini nereden kabul ederim",
+   "how do i remove a friend",
+   "birini nasıl engellerim",
+   "arkadaş isteklerim nerede",
+   "find friends by nickname"
+  ],
+  "groups_help": [
+   "davet linkiyle bir gruba nasıl girerim",
+   "grup davet linki oluşturma",
+   "how can i exit a group i joined",
+   "gruptan birini nasıl atarım",
+   "grubun ayarlarını nereden değiştiririm",
+   "what are group roles"
+  ],
+  "messages_help": [
+   "birine özelden nasıl mesaj yazarım",
+   "mesajlarımı nasıl silerim",
+   "how do i send a dm",
+   "mesajlara dosya ekleyebilir miyim",
+   "okundu bilgisi nasıl kapatılır",
+   "message requests where"
+  ],
+  "security_center": [
+   "güvenlik merkezi sayfasında hangi araçlar bulunuyor",
+   "güvenlik merkezi ne işe yarıyor",
+   "what tools are in the security center",
+   "sitedeki güvenlik araçlarını nerede bulurum",
+   "what does the security center offer",
+   "hanogt güvenlik merkezi nedir"
+  ],
+  "feedback_help": [
+   "geri bildirim nasıl gönderirim",
+   "bir özellik önermek istiyorum",
+   "how do i send feedback",
+   "öneri formu nerede",
+   "i have a suggestion for the site",
+   "fikrimi iletmek istiyorum"
+  ],
+  "theme": [
+   "karanlık temaya nasıl geçerim",
+   "açık mod yap",
+   "how do i switch to light mode",
+   "temayı değiştirme ayarı nerede",
+   "gece modu var mı",
+   "dark theme please"
+  ],
+  "pricing": [
+   "hanogt'u kullanmak için para vermem gerekiyor mu",
+   "ücretli premium paket sunuyor musunuz",
+   "is hanogt free to use",
+   "siteyi kullanmak bedava mı",
+   "how much do i have to pay for hanogt",
+   "abonelik ücreti ne kadar"
+  ],
+  "apps": [
+   "mobil uygulamanız var mı",
+   "telefona indirebilir miyim",
+   "can i get hanogt on my android phone",
+   "bilgisayara kurulabilen bir sürümü var mı",
+   "ios app download",
+   "uygulamayı ana ekrana ekleme"
+  ],
+  "code_howto": [
+   "python'da iki liste nasıl birleştirilir",
+   "javascript ile dizi nasıl filtrelenir",
+   "how to read a csv file line by line in python",
+   "c#'ta string nasıl birleştirilir",
+   "java'da for döngüsü örneği",
+   "how do i sort a dictionary by value in python"
+  ],
+  "error_help": [
+   "indentationerror ne demek",
+   "kodum syntax error veriyor",
+   "what does undefined is not a function mean",
+   "nullreferenceexception hatası alıyorum",
+   "uncaught typeerror x is not iterable ne demek",
+   "c++ programım segmentation fault verdi"
+  ],
+  "math": [
+   "25 çarpı 4 kaç eder",
+   "144'ün karekökü",
+   "what is 15% of 200",
+   "2 üzeri 10",
+   "1250 bölü 5",
+   "hesapla 7*8"
+  ],
+  "unknown": [
+   "bugün hava nasıl olacak",
+   "en sevdiğin film ne",
+   "pizza siparişi ver",
+   "bana bir tatil yeri öner",
+   "who won the last olympics",
+   "how tall is mount everest",
+   "kediler neden mırlar",
+   "bugünün tarihi ne",
+   "bana bir şiir oku",
+   "dünyanın en büyük okyanusu",
+   "recommend me a book",
+   "futbol maçı kaç kaç bitti"
+  ],
+  "create_group": [
+   "python öğrenenler için bir grup aç",
+   "yeni bir grup kur adı oyun ekibi",
+   "create a group called night coders",
+   "arkadaşlarla bir çalışma grubu oluştur",
+   "make a study group for javascript",
+   "bana bir ekip kur"
+  ],
+  "my_profile": [
+   "profilimde ne yazıyor",
+   "listemde toplam kaç arkadaş görünüyor",
+   "what's my nickname",
+   "hesabım ne zaman oluşturuldu",
+   "show me my profile info",
+   "profil bilgilerimi bana özetle"
+  ],
+  "write_code": [
+   "python ile basit bir hesap makinesi yaz",
+   "bana sayı tahmin oyunu kodla",
+   "write a to-do app in javascript",
+   "c++ ile fibonacci dizisini yazdıran bir program yaz",
+   "write a python script that renames files",
+   "html ile bir giriş sayfası yaz"
+  ],
+  "open_editor": [
+   "hadi kod editörüne geçiş yapalım",
+   "editör sayfasını açar mısın",
+   "open up the code editor for me",
+   "şimdi editöre gitmem lazım",
+   "kod yazmak için editörü aç",
+   "take me to the code editor"
+  ],
+  "make_game": [
+   "benim için zıplamalı bir platform oyunu oluştur",
+   "basit bir yılan oyunu oluştur",
+   "make me a space shooter game",
+   "oyun motorunda yeni bir oyun başlat",
+   "bir yarış oyunu yapalım",
+   "create a puzzle game for me"
+  ],
+  "navigate": [
+   "beni mesajlarıma götür",
+   "beni ayarlara götür",
+   "take me to the dashboard",
+   "arkadaşlar sayfasını aç",
+   "go to the news page",
+   "media akışını açar mısın"
+  ],
+  "publish_media": [
+   "projemi media'da nasıl yayınlarım",
+   "editörden media'ya paylaşma",
+   "how do i publish my project to media",
+   "kodumu herkesle paylaşmak istiyorum",
+   "media'ya gönderim nasıl yapılır",
+   "publish my game on media"
+  ],
+  "support_ticket": [
+   "destek bileti oluşturmak istiyorum",
+   "hanogt destek ekibiyle nasıl iletişime geçerim",
+   "how can i file a support request",
+   "talebime cevap gelmedi",
+   "canlı destek hattınız var mı",
+   "i need to contact hanogt support"
+  ],
+  "engine_v3": [
+   "engine v3'te neler yeni",
+   "motorun yeni sürümü ne getirdi",
+   "what changed in engine version 3",
+   "v3 güncellemesi neler içeriyor",
+   "list the new engine v3 features",
+   "yeni motor sürümü çıktı mı"
+  ],
+  "admin_panel": [
+   "admin paneli nedir",
+   "moderatörler ne yapabilir",
+   "how does the admin panel work",
+   "yetkili rolleri nelerdir",
+   "moderatör nasıl olunur",
+   "what can admins see"
+  ],
+  "agent_mode": [
+   "ajan modu tam olarak ne işe yarıyor",
+   "senin benim yerime işlem yapmana nasıl izin veririm",
+   "how does agent mode work",
+   "ajan modunu kapat",
+   "benden izin almadan işlem yapabilir misin",
+   "what is ask every time mode"
+  ]
+ }
+}

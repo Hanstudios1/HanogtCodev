@@ -5,6 +5,8 @@
  * between the floating panel and the /ai page. Nothing is stored on the server.
  */
 import { useCallback, useSyncExternalStore } from "react";
+import type { AgentCallRecord, AgentMessageState } from "./agent-protocol";
+import { isAgentToolName } from "./agent-tools";
 import type { AiMode } from "./local-engine";
 
 export interface AiMessage {
@@ -20,6 +22,10 @@ export interface AiMessage {
     error?: boolean;
     /** Why the offline core answered instead of the language model (already localized). */
     notice?: string;
+    /** Agent actions proposed in this answer and what became of them. */
+    agent?: AgentMessageState;
+    /** A code file sent with this question (only its name and language are kept). */
+    attachment?: { name: string; language: string };
 }
 
 export interface AiConversation {
@@ -50,6 +56,19 @@ function isMessage(value: unknown): value is AiMessage {
     return Boolean(message && typeof message.id === "string" && (message.role === "user" || message.role === "assistant") && typeof message.content === "string");
 }
 
+const CALL_STATUSES = new Set(["pending", "running", "done", "error", "denied", "dismissed"]);
+
+/** Stored agent state is re-checked: a call that was running when the page closed didn't finish. */
+function readAgentState(value: unknown): AgentMessageState | undefined {
+    const state = value as AgentMessageState | undefined;
+    if (!state || (state.source !== "llm" && state.source !== "core") || !Array.isArray(state.calls)) return undefined;
+    const calls = state.calls
+        .filter((call): call is AgentCallRecord => Boolean(call && typeof call.id === "string" && isAgentToolName(call.name) && call.args && typeof call.args === "object" && CALL_STATUSES.has(call.status)))
+        .map((call) => (call.status === "running" ? { ...call, status: "error" as const, error: "interrupted" } : call));
+    if (!calls.length) return undefined;
+    return { source: state.source, calls, followUp: state.followUp === "waiting" || state.followUp === "sent" ? state.followUp : undefined, round: typeof state.round === "number" ? state.round : 0 };
+}
+
 function read(): AiConversation[] {
     if (cache) return cache;
     try {
@@ -57,7 +76,11 @@ function read(): AiConversation[] {
         cache = Array.isArray(parsed)
             ? parsed
                 .filter((entry): entry is AiConversation => Boolean(entry && typeof entry.id === "string" && Array.isArray(entry.messages)))
-                .map((entry) => ({ ...entry, mode: entry.mode === "code" || entry.mode === "security" ? entry.mode : "general", messages: entry.messages.filter(isMessage) }))
+                .map((entry) => ({
+                    ...entry,
+                    mode: entry.mode === "code" || entry.mode === "security" ? entry.mode : "general",
+                    messages: entry.messages.filter(isMessage).map((message) => (message.agent ? { ...message, agent: readAgentState(message.agent) } : message)),
+                }))
             : [];
     } catch {
         cache = [];
