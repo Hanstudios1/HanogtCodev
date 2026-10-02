@@ -21,12 +21,22 @@ export function isPaidPlanId(value: unknown): value is PaidPlanId {
     return typeof value === "string" && (PAID_PLAN_IDS as readonly string[]).includes(value);
 }
 
-/** Prices are in Turkish lira; null means "not announced yet". */
+/** Prices are in US dollars; null means "not announced yet". */
 export type PlanPrice = { monthly: number | null; yearly: number | null; discountPercent: number; visible: boolean };
-export type PlanCatalog = { currency: "TRY"; plans: Record<PaidPlanId, PlanPrice>; updatedAt: string | null };
+export type PlanCatalog = { currency: "USD"; plans: Record<PaidPlanId, PlanPrice>; updatedAt: string | null };
+
+/** The list prices (USD): a year costs ten months. Paddle's catalog must carry the same amounts. */
+export const LIST_PRICES: Record<PaidPlanId, { monthly: number; yearly: number }> = {
+    plus: { monthly: 20, yearly: 200 },
+    pro: { monthly: 100, yearly: 1000 },
+};
 
 export const DEFAULT_PLAN_PRICE: PlanPrice = { monthly: null, yearly: null, discountPercent: 0, visible: false };
-export const DEFAULT_PLAN_CATALOG: PlanCatalog = { currency: "TRY", plans: { plus: DEFAULT_PLAN_PRICE, pro: DEFAULT_PLAN_PRICE }, updatedAt: null };
+export const DEFAULT_PLAN_CATALOG: PlanCatalog = {
+    currency: "USD",
+    plans: { plus: { ...DEFAULT_PLAN_PRICE, ...LIST_PRICES.plus }, pro: { ...DEFAULT_PLAN_PRICE, ...LIST_PRICES.pro } },
+    updatedAt: null,
+};
 
 export const PRICE_MAX = 100_000;
 
@@ -36,6 +46,24 @@ export const PLAN_AI_LIMITS: Record<PlanId, { perMinute: number; perDay: number 
     plus: { perMinute: 20, perDay: 750 },
     pro: { perMinute: 30, perDay: 2000 },
 };
+
+/**
+ * Cloud code projects (editor) and game projects (Hanogt Engine) a person
+ * can create; null means unlimited. Nothing is deleted when someone is over
+ * the limit (e.g. after leaving Pro): they just can't create new ones.
+ */
+export const PLAN_PROJECT_LIMITS: Record<PlanId, { code: number | null; game: number | null }> = {
+    free: { code: 10, game: 10 },
+    plus: { code: 40, game: 40 },
+    pro: { code: null, game: null },
+};
+
+/**
+ * How many AI providers a person can connect to Hanogt AI with their own API
+ * keys (src/lib/ai/connections.ts). Connections above the limit are kept but
+ * switched off, e.g. after moving from Pro to Plus.
+ */
+export const PLAN_AI_CONNECTIONS: Record<PlanId, number> = { free: 0, plus: 2, pro: 5 };
 
 /** Extra daily Hanogt AI messages staff can grant on top of the plan. */
 export const AI_BONUS_MAX = 5000;
@@ -135,13 +163,15 @@ export type PlansResponse = {
         billing: BillingView | null;
         /** A Paddle customer exists, so the billing portal can be opened. */
         canManageBilling: boolean;
+        /** The person's own Paddle customer id (Paddle Retain's pwCustomer), or null. */
+        paddleCustomerId: string | null;
         aiLimits: { perMinute: number; perDay: number };
         aiUsedToday: number;
         waitlist: PaidPlanId[];
     } | null;
 };
 
-/** Price after the discount, rounded to kuruş. */
+/** Price after the discount, rounded to cents. */
 export function discountedPrice(price: number | null, discountPercent: number) {
     if (price === null) return null;
     const percent = Math.min(100, Math.max(0, discountPercent));
@@ -165,6 +195,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
         features: [
             { text: { TR: "Kod editörü, Hanogt Engine V3, Arcade, Media ve Hanogt Social", EN: "The code editor, Hanogt Engine V3, the Arcade, Media and Hanogt Social" } },
             { text: { TR: "Hanogt AI ile günde 250 mesaj", EN: "250 Hanogt AI messages a day" } },
+            { text: { TR: "10 kod projesi ve 10 oyun projesi", EN: "10 code projects and 10 game projects" } },
             { text: { TR: "Ekiple düzenleme ve sesli görüşme", EN: "Team editing and voice calls" } },
         ],
     },
@@ -174,6 +205,8 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
         features: [
             { text: { TR: "Ücretsiz plandaki her şey", EN: "Everything in Free" } },
             { text: { TR: "Hanogt AI ile günde 750 mesaj", EN: "750 Hanogt AI messages a day" } },
+            { text: { TR: "40 kod projesi ve 40 oyun projesi", EN: "40 code projects and 40 game projects" } },
+            { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası)", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more)" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Profilinde Plus rozeti", EN: "A Plus badge on your profile" }, planned: true },
         ],
@@ -184,6 +217,8 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
         features: [
             { text: { TR: "Plus plandaki her şey", EN: "Everything in Plus" } },
             { text: { TR: "Hanogt AI ile günde 2.000 mesaj", EN: "2,000 Hanogt AI messages a day" } },
+            { text: { TR: "Sınırsız kod ve oyun projesi", EN: "Unlimited code and game projects" } },
+            { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı", EN: "Connect 5 AI providers with your own API keys" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Yeni özelliklere erken erişim", EN: "Early access to new features" }, planned: true },
         ],

@@ -393,13 +393,11 @@ service cloud.firestore {
       }
     }
 
+    // New code projects are created by POST /api/projects, which applies the
+    // plan's project limit; owners then write the files and update the project.
     match /projects/{projectId} {
       allow read: if signedIn() && (resource.data.email == email() || resource.data.visibility == "public");
-      allow create: if signedIn()
-        && request.resource.data.email == email()
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 120;
+      allow create: if false;
       allow update, delete: if signedIn()
         && resource.data.email == email()
         && request.resource.data.email == email()

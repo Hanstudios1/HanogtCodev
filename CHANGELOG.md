@@ -1,5 +1,54 @@
 # Değişiklik Günlüğü
 
+## 0.3.0 — 2026-10-02
+
+### Planlar: Paddle ile abonelik
+
+- Plus (aylık 20 $, yıllık 200 $) ve Pro (aylık 100 $, yıllık 1.000 $) Paddle
+  üzerinden satılıyor; Paddle.com Kayıtlı Satıcı (Merchant of Record). Kart
+  bilgisi Hanogt Codev'e ulaşmıyor.
+- Sunucu: `src/lib/server/paddle.ts` (API istemcisi, imzalı webhook, eşitleme),
+  `src/lib/server/paddle-config.ts` (değişkenler; sandbox/canlı anahtar
+  öneklerinden), `/api/paddle/{webhook,checkout,subscription}`. Ödeme ekranı
+  sunucuda hesabın kendi Paddle müşterisi ve imzalı custom data ile açılıyor;
+  webhook yalnızca Paddle'ın `/ips` adreslerinden gelen ve imzası doğru
+  bildirimleri işliyor, aboneliği API'den tazeleyerek okuyor.
+- Kişinin planı, ekip tarafından tanımlanan plan ile ödenen plandan yüksek
+  olanı; `past_due` sırasında avantajlar sürüyor; sandbox ve canlı verisi
+  birbirine karışmıyor.
+- Planlar sayfası: aylık/yıllık, ülkeye göre fiyat (pricing-preview), Paddle.js
+  overlay ödeme, plan değişikliği önizlemesi, müşteri portalı, planlanmış
+  iptalden vazgeçme, Retain için `pwCustomer`. Satışlar sahibi açana kadar
+  yalnızca ekip ve `PADDLE_TESTER_EMAILS` için açık.
+- Yönetici Paneli > Abonelikler > Paddle: bağlantı durumu, kopyalanabilir
+  adresler, tek tıkla katalog oluşturma (yalnızca eksikleri ekler), fiyat
+  eşleme ve fiyat kontrolü, satışları açma, eşleşmeyen abonelikler, işletme
+  bilgileri, kuponların Paddle indirimlerine aktarılması.
+- Hesap silme aboneliği hemen iptal ediyor ve müşteri kaydını e-postasız bir
+  iz olarak bırakıyor. Bildirimler: plan etkin, değişti, iptal planlandı,
+  ödeme alınamadı, sona erdi.
+- CSP ve Permissions-Policy Paddle ödeme penceresine ve Apple Pay/Google
+  Pay'e izin veriyor. `.env.example` eklendi; `docs/ENVIRONMENT.md` kurulum ve
+  canlıya geçiş adımlarını anlatıyor.
+
+### Abonelere yeni özellikler
+
+- Hanogt AI'ya kendi API anahtarınla yapay zekâ bağlama (Plus 2, Pro 5
+  bağlantı): OpenAI, Anthropic Claude, Google Gemini, Groq, Mistral,
+  OpenRouter, DeepSeek, xAI ve Together. Anahtarlar AES-256-GCM ile şifreli
+  saklanıyor ve bir daha gösterilmiyor.
+- Proje hakları: Ücretsiz 10 kod + 10 oyun projesi, Plus 40 + 40, Pro
+  sınırsız. Yeni kod projelerini artık sunucu oluşturuyor (`/api/projects`);
+  bu, yeni projelerin buluta kaydedilememesine yol açan kural sorununu da
+  gideriyor. Güvenlik kurallarının yeniden yayımlanması gerekiyor (Bulut
+  Sağlığı).
+
+### Yasal
+
+- Yasal metinler 4.4: İade Politikası sayfası, ödemeler ve Paddle,
+  yapay zekâ bağlantıları; işletme bilgileri Yönetici Paneli'nden girilince
+  metinlerde görünüyor. Yeni İletişim sayfası.
+
 ## 0.2.2 — 2026-10-02
 
 ### Kılavuz (Minecraft kitabı)

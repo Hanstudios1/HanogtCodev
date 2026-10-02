@@ -7,6 +7,7 @@ import type {
     NotificationsErrorCode,
     NotificationsResponse,
 } from "@/components/NotificationCenter";
+import { BILLING_NOTIFICATION_KINDS } from "@/lib/paddle";
 import { getActiveSession } from "@/lib/server/active-session";
 import { firestoreStatus, httpsUrlOrNull, toIso } from "@/lib/server/admin";
 import { commitServerMutations, commitServerPatches, deleteServerDocument, isWriteConflict, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
@@ -38,7 +39,7 @@ const READS_PER_MINUTE = 120;
 const WRITES_PER_MINUTE = 60;
 const ID_MAX = 128;
 
-const TYPES: readonly NotificationType[] = ["friend_request", "message", "call", "like", "system", "ticket_reply", "ticket_new", "collab_invite"];
+const TYPES: readonly NotificationType[] = ["friend_request", "message", "call", "like", "system", "ticket_reply", "ticket_new", "collab_invite", "billing"];
 const ACTIONS = ["markRead", "delete", "clear"] as const;
 
 const MESSAGES: Record<NotificationsErrorCode, string> = {
@@ -60,6 +61,10 @@ type StoredNotification = {
     createdAt?: unknown;
     actionUrl?: unknown;
     fromAvatar?: unknown;
+    /** Subscription notifications only. */
+    kind?: unknown;
+    plan?: unknown;
+    date?: unknown;
 };
 
 function json(payload: NotificationsResponse | NotificationCountResponse | NotificationActionResponse) {
@@ -99,7 +104,15 @@ function toItem(record: StoredNotification & { _id: string }): NotificationItem 
         createdAt: toIso(record.createdAt),
         actionUrl: inSitePath(record.actionUrl),
         fromAvatar: httpsUrlOrNull(record.fromAvatar),
+        billing: record.type === "billing" ? billingDetails(record) : null,
     };
+}
+
+/** Subscription notifications (src/lib/server/paddle.ts) carry what the reader's language needs. */
+function billingDetails(record: StoredNotification): NotificationItem["billing"] {
+    const kind = BILLING_NOTIFICATION_KINDS.find((value) => value === record.kind);
+    if (!kind) return null;
+    return { kind, plan: record.plan === "plus" || record.plan === "pro" ? record.plan : null, date: toIso(record.date) };
 }
 
 async function newestItems(email: string) {

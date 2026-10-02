@@ -9,6 +9,7 @@ import {
     normalizePaddleState,
     paddleEntitles,
     type BillingInterval,
+    type BillingNotificationKind,
     type PaddleCheckoutConfig,
     type PaddleEnvironment,
     type PaddlePriceView,
@@ -18,8 +19,11 @@ import {
 } from "@/lib/paddle";
 import { PAID_PLAN_IDS, type PaidPlanId, type PlanCatalog } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, isWriteConflict } from "./firebase-rest";
+import { cleanValue, getPaddleConfig, isPaddleConfigured, type Env, type PaddleConfig } from "./paddle-config";
 import { subscriptionPath } from "./plans";
 import { normalizeEmail } from "./validate";
+
+export { currentPaddleEnvironment, getPaddleConfig, isPaddleConfigured, paddleDashboardUrl, type PaddleConfig, type PaddleConfigWarning } from "./paddle-config";
 
 /*
  * Paddle Billing for Hanogt Codev (see docs/ENVIRONMENT.md, "Payments").
@@ -34,126 +38,20 @@ import { normalizeEmail } from "./validate";
  */
 
 // ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
-const API_BASES: Record<PaddleEnvironment, string> = {
-    sandbox: "https://sandbox-api.paddle.com",
-    production: "https://api.paddle.com",
-};
-
-export type PaddleConfigWarning =
-    /** The API key and the client-side token belong to different environments. */
-    | "key_token_mismatch"
-    /** NEXT_PUBLIC_PADDLE_ENV disagrees with the keys (the keys win). */
-    | "environment_override_ignored"
-    /** A secret was put in a NEXT_PUBLIC_ variable, which ships it to every browser. */
-    | "public_secret"
-    /** The client-side token looks like an API key. */
-    | "token_is_api_key"
-    | "api_key_format"
-    | "client_token_format"
-    | "webhook_secret_format";
-
-export type PaddleConfig = {
-    apiKey: string | null;
-    clientToken: string | null;
-    webhookSecret: string | null;
-    environment: PaddleEnvironment;
-    apiBase: string;
-    warnings: PaddleConfigWarning[];
-};
-
-type Env = Record<string, string | undefined>;
-
-/** Trims whitespace and the quotes people paste around values in dashboards. */
-function cleanValue(value: string | undefined | null) {
-    if (typeof value !== "string") return null;
-    const trimmed = value.trim().replace(/^(['"])([\s\S]*)\1$/, "$2").trim();
-    return trimmed || null;
-}
-
-function firstOf(env: Env, names: readonly string[]) {
-    for (const name of names) {
-        const value = cleanValue(env[name]);
-        if (value) return value;
-    }
-    return null;
-}
-
-function keyEnvironment(apiKey: string | null): PaddleEnvironment | null {
-    if (!apiKey) return null;
-    if (apiKey.startsWith("pdl_sdbx_")) return "sandbox";
-    if (apiKey.startsWith("pdl_live_")) return "production";
-    return null;
-}
-
-function tokenEnvironment(token: string | null): PaddleEnvironment | null {
-    if (!token) return null;
-    if (token.startsWith("test_")) return "sandbox";
-    if (token.startsWith("live_")) return "production";
-    return null;
-}
-
-function explicitEnvironment(env: Env): PaddleEnvironment | null {
-    const value = firstOf(env, ["NEXT_PUBLIC_PADDLE_ENV", "PADDLE_ENVIRONMENT", "PADDLE_ENV"])?.toLowerCase();
-    if (value === "sandbox" || value === "test") return "sandbox";
-    if (value === "production" || value === "live" || value === "prod") return "production";
-    return null;
-}
-
-/** Loopback-only override of the API address, for tests and local end-to-end runs. */
-function apiBaseOverride(env: Env) {
-    const value = cleanValue(env.PADDLE_API_BASE_URL);
-    if (!value) return null;
-    try {
-        const url = new URL(value);
-        const loopback = ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
-        return loopback && (url.protocol === "http:" || url.protocol === "https:") ? url.origin : null;
-    } catch {
-        return null;
-    }
-}
-
-export function getPaddleConfig(env: Env = process.env): PaddleConfig {
-    const apiKey = firstOf(env, ["PADDLE_API_KEY", "PADDLE_SECRET_KEY"]);
-    const clientToken = firstOf(env, ["NEXT_PUBLIC_PADDLE_CLIENT_TOKEN", "PADDLE_CLIENT_TOKEN", "NEXT_PUBLIC_PADDLE_TOKEN"]);
-    const webhookSecret = firstOf(env, ["PADDLE_WEBHOOK_SECRET", "PADDLE_NOTIFICATION_WEBHOOK_SECRET", "PADDLE_WEBHOOK_SECRET_KEY"]);
-    const fromKey = keyEnvironment(apiKey);
-    const fromToken = tokenEnvironment(clientToken);
-    const explicit = explicitEnvironment(env);
-    const environment = fromKey ?? fromToken ?? explicit ?? "production";
-
-    const warnings: PaddleConfigWarning[] = [];
-    if (fromKey && fromToken && fromKey !== fromToken) warnings.push("key_token_mismatch");
-    if (explicit && (fromKey ?? fromToken) && explicit !== (fromKey ?? fromToken)) warnings.push("environment_override_ignored");
-    if (cleanValue(env.NEXT_PUBLIC_PADDLE_API_KEY) || cleanValue(env.NEXT_PUBLIC_PADDLE_WEBHOOK_SECRET)) warnings.push("public_secret");
-    if (clientToken?.startsWith("pdl_")) warnings.push("token_is_api_key");
-    if (apiKey && !/^pdl_(sdbx|live)_apikey_[A-Za-z0-9_]{20,}$/.test(apiKey) && !/^[a-z0-9]{50}$/.test(apiKey)) warnings.push("api_key_format");
-    if (clientToken && !clientToken.startsWith("pdl_") && !/^(test|live)_[A-Za-z0-9]{10,}$/.test(clientToken)) warnings.push("client_token_format");
-    if (webhookSecret && !webhookSecret.startsWith("pdl_ntfset_")) warnings.push("webhook_secret_format");
-
-    return { apiKey, clientToken, webhookSecret, environment, apiBase: apiBaseOverride(env) ?? API_BASES[environment], warnings };
-}
-
-/** Checkouts need the server key and the browser token. */
-export function isPaddleConfigured(config: PaddleConfig = getPaddleConfig()) {
-    return Boolean(config.apiKey && config.clientToken && !config.clientToken.startsWith("pdl_"));
-}
-
-/** Paddle's own dashboard, for links in the Admin Panel. */
-export function paddleDashboardUrl(environment: PaddleEnvironment, path: string) {
-    return `${environment === "sandbox" ? "https://sandbox-vendors.paddle.com" : "https://vendors.paddle.com"}${path}`;
-}
-
-// ---------------------------------------------------------------------------
 // API client
 // ---------------------------------------------------------------------------
 
 export class PaddleApiError extends Error {
-    constructor(public readonly status: number, public readonly code: string, public readonly detail = "") {
+    readonly status: number;
+    readonly code: string;
+    readonly detail: string;
+    // No parameter properties: the plain-Node tests strip types and can't run them.
+    constructor(status: number, code: string, detail = "") {
         super(`Paddle API ${status || "network"} ${code}`);
         this.name = "PaddleApiError";
+        this.status = status;
+        this.code = code;
+        this.detail = detail;
     }
 }
 
@@ -253,6 +151,81 @@ export function verifyPaddleSignature(rawBody: string, header: string | null, se
 }
 
 // ---------------------------------------------------------------------------
+// Webhook source addresses
+// ---------------------------------------------------------------------------
+
+const IPS_TTL_MS = 60 * 60_000;
+const IPS_FAILURE_TTL_MS = 60_000;
+let ipsCache: { base: string; at: number; ttl: number; value: Promise<string[]> } | null = null;
+
+function ipv4ToInt(ip: string): number | null {
+    const parts = ip.split(".");
+    if (parts.length !== 4) return null;
+    let value = 0;
+    for (const part of parts) {
+        if (!/^\d{1,3}$/.test(part) || Number(part) > 255) return null;
+        value = value * 256 + Number(part);
+    }
+    return value >>> 0;
+}
+
+function parseCidr(cidr: string): { base: number; mask: number } | null {
+    const [address, bits = "32"] = cidr.trim().split("/");
+    const base = ipv4ToInt(address ?? "");
+    if (base === null || !/^\d{1,2}$/.test(bits) || Number(bits) > 32) return null;
+    const size = Number(bits);
+    return { base, mask: size === 0 ? 0 : (0xffffffff << (32 - size)) >>> 0 };
+}
+
+/** True when the IPv4 address (or an IPv4-mapped IPv6 one) is inside one of the CIDR blocks. */
+export function ipInCidrs(ip: string | null | undefined, cidrs: readonly string[]) {
+    if (!ip) return false;
+    const value = ipv4ToInt(ip.toLowerCase().startsWith("::ffff:") ? ip.slice(7) : ip);
+    if (value === null) return false;
+    return cidrs.some((cidr) => {
+        const block = parseCidr(cidr);
+        return Boolean(block) && ((value & block!.mask) >>> 0) === ((block!.base & block!.mask) >>> 0);
+    });
+}
+
+/**
+ * The addresses Paddle sends webhooks from, read from {api}/ips
+ * (data.ipv4_cidrs) and cached for an hour. Not hard-coded: Paddle's endpoint
+ * is the source of truth and the list can change.
+ */
+export async function paddleWebhookCidrs(config: PaddleConfig = getPaddleConfig()): Promise<string[]> {
+    if (ipsCache && ipsCache.base === config.apiBase && Date.now() - ipsCache.at < ipsCache.ttl) return ipsCache.value;
+    const value = (async () => {
+        let response: Response;
+        try {
+            response = await fetch(`${config.apiBase}/ips`, { headers: { Accept: "application/json" }, cache: "no-store", signal: AbortSignal.timeout(5_000) });
+        } catch {
+            throw new PaddleApiError(0, "ips_unreachable");
+        }
+        if (!response.ok) throw new PaddleApiError(response.status, "ips_unavailable");
+        const payload = await response.json().catch(() => null) as { data?: { ipv4_cidrs?: unknown } } | null;
+        const cidrs = Array.isArray(payload?.data?.ipv4_cidrs) ? payload.data.ipv4_cidrs.filter((cidr): cidr is string => typeof cidr === "string" && parseCidr(cidr) !== null) : [];
+        if (!cidrs.length) throw new PaddleApiError(0, "ips_empty");
+        return cidrs;
+    })();
+    const entry = { base: config.apiBase, at: Date.now(), ttl: IPS_TTL_MS, value };
+    ipsCache = entry;
+    value.catch(() => {
+        entry.ttl = IPS_FAILURE_TTL_MS;
+    });
+    return value;
+}
+
+/** Notes a refused delivery for the Admin Panel (best effort, no request data). */
+export async function recordWebhookRejection(reason: string) {
+    await commitServerMutations([{
+        type: "update",
+        path: PADDLE_STATUS_PATH,
+        data: { lastRejectedAt: new Date(), lastRejectedReason: reason.slice(0, 40) },
+    }]).catch(() => undefined);
+}
+
+// ---------------------------------------------------------------------------
 // Signed custom data: which account a checkout was opened for
 // ---------------------------------------------------------------------------
 
@@ -295,9 +268,19 @@ export const unlinkedPath = (subscriptionId: string) => `paddle_unlinked/${subsc
 export const cleanupPath = (subscriptionId: string) => `paddle_cleanup/${subscriptionId}`;
 
 export type PaddlePlanPrices = Record<PaidPlanId, Record<BillingInterval, string | null>>;
+/**
+ * One environment's part of site_config/paddle, which is laid out as
+ * { sandbox: { prices, products }, production: { prices, products }, updatedAt, updatedBy }:
+ * sandbox and live are separate Paddle accounts with different ids.
+ */
 export type PaddleSettings = {
     /** The prices the Plans page sells. */
     prices: PaddlePlanPrices;
+    /**
+     * Off by default: only staff and PADDLE_TESTER_EMAILS can buy, so the keys
+     * can be tested on the real site before the owner opens sales to everyone.
+     */
+    salesOpen: boolean;
     /**
      * Products whose subscriptions unlock each plan. Prices the owner replaces
      * keep their product here, so people already subscribed keep their plan.
@@ -309,9 +292,10 @@ export type PaddleSettings = {
 
 export const EMPTY_PLAN_PRICES: PaddlePlanPrices = { plus: { month: null, year: null }, pro: { month: null, year: null } };
 
-export function normalizePaddleSettings(record: Record<string, unknown> | null): PaddleSettings {
-    const prices = record?.prices && typeof record.prices === "object" ? record.prices as Record<string, unknown> : {};
-    const products = record?.products && typeof record.products === "object" ? record.products as Record<string, unknown> : {};
+export function normalizePaddleSettings(record: Record<string, unknown> | null, environment: PaddleEnvironment): PaddleSettings {
+    const scoped = record?.[environment] && typeof record[environment] === "object" ? record[environment] as Record<string, unknown> : {};
+    const prices = scoped.prices && typeof scoped.prices === "object" ? scoped.prices as Record<string, unknown> : {};
+    const products = scoped.products && typeof scoped.products === "object" ? scoped.products as Record<string, unknown> : {};
     const priceOf = (plan: PaidPlanId, interval: BillingInterval) => {
         const entry = prices[plan] && typeof prices[plan] === "object" ? (prices[plan] as Record<string, unknown>)[interval] : null;
         return isPaddleId("price", entry) ? entry : null;
@@ -323,22 +307,48 @@ export function normalizePaddleSettings(record: Record<string, unknown> | null):
             pro: { month: priceOf("pro", "month"), year: priceOf("pro", "year") },
         },
         products: { plus: productsOf("plus"), pro: productsOf("pro") },
+        salesOpen: scoped.salesOpen === true,
         updatedAt: typeof record?.updatedAt === "string" ? record.updatedAt : null,
         updatedBy: typeof record?.updatedBy === "string" ? record.updatedBy : null,
     };
 }
 
-let settingsCache: { at: number; settings: PaddleSettings } | null = null;
+let settingsCache: { at: number; environment: PaddleEnvironment; settings: PaddleSettings } | null = null;
 
+/** The price mapping of the environment the keys belong to. */
 export async function getPaddleSettings(fresh = false): Promise<PaddleSettings> {
-    if (!fresh && settingsCache && Date.now() - settingsCache.at < 60_000) return settingsCache.settings;
-    const settings = normalizePaddleSettings(await getServerDocument<Record<string, unknown>>(PADDLE_SETTINGS_PATH));
-    settingsCache = { at: Date.now(), settings };
+    const environment = getPaddleConfig().environment;
+    if (!fresh && settingsCache?.environment === environment && Date.now() - settingsCache.at < 60_000) return settingsCache.settings;
+    const settings = normalizePaddleSettings(await getServerDocument<Record<string, unknown>>(PADDLE_SETTINGS_PATH), environment);
+    settingsCache = { at: Date.now(), environment, settings };
     return settings;
+}
+
+/**
+ * Write for one environment's settings (the other environment is left as it
+ * is). Pass the complete settings: the environment's part is replaced whole.
+ */
+export function paddleSettingsMutation(environment: PaddleEnvironment, settings: Pick<PaddleSettings, "prices" | "products" | "salesOpen">, actor: string) {
+    return {
+        type: "update" as const,
+        path: PADDLE_SETTINGS_PATH,
+        data: { [environment]: { prices: settings.prices, products: settings.products, salesOpen: settings.salesOpen === true }, updatedAt: new Date(), updatedBy: actor },
+        updateFields: [environment, "updatedAt", "updatedBy"],
+    };
+}
+
+/** People who may buy while sales are closed: staff, plus PADDLE_TESTER_EMAILS (comma-separated). */
+export function isBillingTester(email: string | null | undefined, isStaff: boolean, env: Env = process.env) {
+    if (isStaff) return true;
+    const normalized = normalizeEmail(email);
+    if (!normalized) return false;
+    const testers = (cleanValue(env.PADDLE_TESTER_EMAILS) ?? "").split(/[\s,;]+/).map((entry) => entry.trim().toLowerCase()).filter(Boolean);
+    return testers.includes(normalized);
 }
 
 export function forgetPaddleCaches() {
     settingsCache = null;
+    ipsCache = null;
     pricingCache.clear();
 }
 
@@ -378,7 +388,7 @@ function isoOrNull(value: unknown) {
 }
 
 /** The state we store for a Paddle subscription. */
-export function subscriptionStateOf(entity: PaddleSubscriptionEntity, settings: PaddleSettings, signedPlan: PaidPlanId | null = null, now = new Date()): PaddleSubscriptionState {
+export function subscriptionStateOf(entity: PaddleSubscriptionEntity, settings: PaddleSettings, signedPlan: PaidPlanId | null = null, now = new Date(), environment: PaddleEnvironment = getPaddleConfig().environment): PaddleSubscriptionState {
     const items = Array.isArray(entity.items) ? entity.items : [];
     const priced = items.map((item) => ({ item, plan: planOfPrice(item.price ? { ...item.price, product: item.price.product ?? item.product } : undefined, settings) }));
     const chosen = priced.find((entry) => entry.plan) ?? priced[0];
@@ -387,6 +397,7 @@ export function subscriptionStateOf(entity: PaddleSubscriptionEntity, settings: 
     const changeAction = change?.action === "cancel" || change?.action === "pause" || change?.action === "resume" ? change.action : null;
     const changeAt = isoOrNull(change?.effective_at);
     return {
+        environment,
         subscriptionId: entity.id,
         customerId: entity.customer_id,
         status: normalizeStatus(entity.status),
@@ -429,8 +440,6 @@ export function shouldReplaceState(current: PaddleSubscriptionState | null, next
 // ---------------------------------------------------------------------------
 // Notifications
 // ---------------------------------------------------------------------------
-
-export type BillingNotificationKind = "active" | "changed" | "cancel" | "pastdue" | "ended";
 
 const PLAN_NAMES: Record<PaidPlanId, string> = { plus: "Plus", pro: "Pro" };
 
@@ -493,21 +502,22 @@ export async function storeSubscriptionState(email: string, state: PaddleSubscri
     const path = subscriptionPath(email);
     for (let attempt = 1; ; attempt += 1) {
         const record = await getServerDocument<Record<string, unknown>>(path);
-        const current = normalizePaddleState(record?.paddle);
+        const stored = normalizePaddleState(record?.paddle);
+        const current = stored?.environment === state.environment ? stored : null;
         if (!shouldReplaceState(current, state, options.fresh)) return "kept";
         const now = new Date();
         const write = record
             ? {
                 type: "update" as const,
                 path,
-                data: { paddle: storedState(state), paddleCustomerId: state.customerId, updatedAt: now },
-                updateFields: ["paddle", "paddleCustomerId", "updatedAt"],
+                data: { paddle: storedState(state), paddleCustomerId: state.customerId, paddleEnvironment: state.environment, updatedAt: now },
+                updateFields: ["paddle", "paddleCustomerId", "paddleEnvironment", "updatedAt"],
                 ...(record._updateTime ? { updateTime: record._updateTime } : {}),
             }
             : {
                 type: "create" as const,
                 path,
-                data: { plan: "free", status: "active", aiBonusDaily: 0, aiBonusUntil: null, email, createdAt: now, paddle: storedState(state), paddleCustomerId: state.customerId, updatedAt: now },
+                data: { plan: "free", status: "active", aiBonusDaily: 0, aiBonusUntil: null, email, createdAt: now, paddle: storedState(state), paddleCustomerId: state.customerId, paddleEnvironment: state.environment, updatedAt: now },
             };
         try {
             await commitServerMutations([write, ...billingNotifications(email, current, state, now)]);
@@ -555,9 +565,10 @@ export async function accountForSubscription(entity: Pick<PaddleSubscriptionEnti
 /** Links a Paddle customer to an account both ways. */
 export async function rememberCustomer(customerId: string, email: string, via: "checkout" | "staff") {
     const now = new Date();
+    const environment = getPaddleConfig().environment;
     await commitServerMutations([
-        { type: "update", path: customerPath(customerId), data: { email, deleted: false, linkedAt: now, via }, updateFields: ["email", "deleted", "deletedAt", "linkedAt", "via"] },
-        { type: "update", path: subscriptionPath(email), data: { paddleCustomerId: customerId, updatedAt: now }, updateFields: ["paddleCustomerId", "updatedAt"] },
+        { type: "update", path: customerPath(customerId), data: { email, environment, deleted: false, linkedAt: now, via }, updateFields: ["email", "environment", "deleted", "deletedAt", "linkedAt", "via"] },
+        { type: "update", path: subscriptionPath(email), data: { paddleCustomerId: customerId, paddleEnvironment: environment, updatedAt: now }, updateFields: ["paddleCustomerId", "paddleEnvironment", "updatedAt"] },
     ]);
 }
 
@@ -607,7 +618,7 @@ export async function syncSubscription(subscriptionId: string, options: { entity
         await commitServerMutations([{
             type: "update",
             path: unlinkedPath(subscriptionId),
-            data: { subscriptionId, customerId: state.customerId, status: state.status, plan: state.plan, priceId: state.priceId, productId: state.productId, seenAt: new Date() },
+            data: { subscriptionId, environment: state.environment, customerId: state.customerId, status: state.status, plan: state.plan, priceId: state.priceId, productId: state.productId, seenAt: new Date() },
         }]);
         return { status: "unlinked" };
     }
@@ -811,28 +822,39 @@ export async function pricingFor(priceIds: string[], country: string | null) {
 }
 
 /**
- * What the Plans page needs to sell: null until Paddle is set up and at
- * least one visible plan has a price (then the page shows "coming soon").
+ * What the Plans page needs: null until Paddle is set up. Plans that aren't
+ * "Visible" or have no Paddle price stay "coming soon"; if Paddle can't be
+ * asked for prices the plans remain buyable and the checkout shows the amount.
  */
-export async function checkoutConfigFor(catalog: PlanCatalog, country: string | null): Promise<PaddleCheckoutConfig | null> {
+export async function checkoutConfigFor(catalog: PlanCatalog, country: string | null, viewer: { tester: boolean } = { tester: false }): Promise<PaddleCheckoutConfig | null> {
     const config = getPaddleConfig();
     if (!isPaddleConfigured(config) || !config.clientToken) return null;
     const settings = await getPaddleSettings();
-    const wanted = PAID_PLAN_IDS.flatMap((plan) => (catalog.plans[plan].visible
+    // Closed sales: everyone else sees "coming soon" (subscribers can still manage theirs).
+    const selling = settings.salesOpen || viewer.tester;
+    const wanted = PAID_PLAN_IDS.flatMap((plan) => (selling && catalog.plans[plan].visible
         ? BILLING_INTERVALS.flatMap((interval) => {
             const priceId = settings.prices[plan][interval];
             return priceId ? [{ plan, interval, priceId }] : [];
         })
         : []));
-    if (!wanted.length) return null;
-    const pricing = await pricingFor(wanted.map((entry) => entry.priceId), country);
+    const onSale: PaddleCheckoutConfig["onSale"] = { plus: [], pro: [] };
+    for (const entry of wanted) onSale[entry.plan].push(entry.interval);
     const prices: PaddleCheckoutConfig["prices"] = { plus: {}, pro: {} };
-    for (const entry of wanted) {
-        const price = pricing.get(entry.priceId);
-        if (price) prices[entry.plan][entry.interval] = { ...price, interval: entry.interval };
+    let pricesUnavailable = false;
+    if (wanted.length) {
+        try {
+            const pricing = await pricingFor(wanted.map((entry) => entry.priceId), country);
+            for (const entry of wanted) {
+                const price = pricing.get(entry.priceId);
+                if (price) prices[entry.plan][entry.interval] = { ...price, interval: entry.interval };
+            }
+        } catch (error) {
+            pricesUnavailable = true;
+            console.error("[paddle:pricing]", error instanceof PaddleApiError ? `${error.status || "network"} ${error.code}` : error);
+        }
     }
-    if (!Object.keys(prices.plus).length && !Object.keys(prices.pro).length) return null;
-    return { environment: config.environment, clientToken: config.clientToken, prices };
+    return { environment: config.environment, clientToken: config.clientToken, onSale, prices, pricesUnavailable, salesOpen: settings.salesOpen, testMode: !settings.salesOpen && viewer.tester };
 }
 
 // ---------------------------------------------------------------------------
@@ -847,8 +869,10 @@ export async function checkoutConfigFor(catalog: PlanCatalog, country: string | 
  * subscription in paddle_cleanup.
  */
 export async function releaseBillingForDeletion(record: Record<string, unknown> | null): Promise<{ canceled: boolean; error: string | null }> {
-    const state = normalizePaddleState(record?.paddle);
-    const customerId = isPaddleId("customer", record?.paddleCustomerId) ? record.paddleCustomerId : state?.customerId ?? null;
+    const stored = normalizePaddleState(record?.paddle);
+    // A subscription of the other environment (e.g. a sandbox test) can't be reached with these keys; nothing is billed there.
+    const state = stored?.environment === getPaddleConfig().environment ? stored : null;
+    const customerId = isPaddleId("customer", record?.paddleCustomerId) ? record.paddleCustomerId : stored?.customerId ?? null;
     let canceled = false;
     let error: string | null = null;
     if (state && state.status !== "canceled") {

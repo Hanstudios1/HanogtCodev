@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { billingView, paddleNeedsResync, type PaddleCheckoutConfig } from "@/lib/paddle";
 import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse, type UserSubscription } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
+import { getStaffSession } from "@/lib/server/admin";
 import { commitServerMutations, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
-import { checkoutConfigFor, getPaddleConfig, syncSubscription } from "@/lib/server/paddle";
+import { checkoutConfigFor, getPaddleConfig, isBillingTester, syncSubscription } from "@/lib/server/paddle";
 import { AI_DAY_MS, AI_LIMIT_KEYS, getPlanCatalog, getSubscription } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback, readRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
@@ -32,9 +33,10 @@ async function waitlistOf(email: string): Promise<PaidPlanId[]> {
 }
 
 /** Paddle prices for the visitor's country; null keeps the "coming soon" page. */
-async function checkoutOf(catalog: PlanCatalog, request: NextRequest): Promise<PaddleCheckoutConfig | null> {
+async function checkoutOf(catalog: PlanCatalog, request: NextRequest, email: string | null): Promise<PaddleCheckoutConfig | null> {
     try {
-        return await checkoutConfigFor(catalog, request.headers.get("x-vercel-ip-country")?.toUpperCase() ?? null);
+        const staff = email ? await getStaffSession().catch(() => null) : null;
+        return await checkoutConfigFor(catalog, request.headers.get("x-vercel-ip-country")?.toUpperCase() ?? null, { tester: isBillingTester(email, Boolean(staff)) });
     } catch (error) {
         console.error("[plans:paddle]", error instanceof Error ? error.message : error);
         return null;
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
     if (!isFirebaseServerConfigured()) return json({ error: "unavailable" }, 503);
     try {
         const [catalog, active] = await Promise.all([getPlanCatalog(), getActiveSession()]);
-        const checkout = await checkoutOf(catalog, request);
+        const checkout = await checkoutOf(catalog, request, active?.email ?? null);
         if (!active) return json({ catalog: publicCatalog(catalog), checkout, me: null } satisfies PlansResponse);
         const [stored, used, waitlist] = await Promise.all([
             getSubscription(active.email),
@@ -81,6 +83,7 @@ export async function GET(request: NextRequest) {
                 expiresAt: subscription.expiresAt,
                 billing: billingView(subscription.paddle),
                 canManageBilling: Boolean(subscription.paddleCustomerId ?? subscription.paddle?.customerId),
+                paddleCustomerId: subscription.paddleCustomerId ?? subscription.paddle?.customerId ?? null,
                 aiLimits: aiLimitsFor(subscription),
                 aiUsedToday: used?.count ?? 0,
                 waitlist,

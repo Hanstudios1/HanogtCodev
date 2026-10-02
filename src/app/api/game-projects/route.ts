@@ -8,7 +8,6 @@ import {
     assertOnlyKeys,
     authorizeGameRequest,
     GameApiError,
-    MAX_PROJECTS_PER_USER,
     projectDocumentFields,
     rateHeaders,
     readDimension,
@@ -21,6 +20,7 @@ import {
     validateProject,
     type GameProjectRecord,
 } from "./_shared";
+import { projectLimitFor } from "@/lib/server/plans";
 
 export const runtime = "nodejs";
 
@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
                 collectionId: "game_projects",
                 where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
                 select: SUMMARY_FIELDS,
-                limit: 100,
+                // Pro has no project limit; this only bounds one response.
+                limit: 1000,
             }),
             runServerQuery<{ ownerEmail?: string }>({
                 collectionId: "arcade_games",
@@ -58,14 +59,18 @@ export async function POST(request: NextRequest) {
         const body = await readJsonBody(request);
         assertOnlyKeys(body, ["project", "thumbnail", "name", "description", "dimension", "templateId"]);
 
-        const existing = await runServerQuery<GameProjectRecord>({
-            collectionId: "game_projects",
-            where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
-            select: ["ownerEmail"],
-            limit: MAX_PROJECTS_PER_USER + 1,
-        });
-        if (existing.length >= MAX_PROJECTS_PER_USER) {
-            throw new GameApiError(409, `Bir hesap en fazla ${MAX_PROJECTS_PER_USER} oyun projesi oluşturabilir. Eski projeleri silerek yer açın.`);
+        // Free 10, Plus 40, Pro unlimited (src/lib/plans.ts PLAN_PROJECT_LIMITS).
+        const { limit } = await projectLimitFor(email, "game");
+        if (limit !== null) {
+            const existing = await runServerQuery<GameProjectRecord>({
+                collectionId: "game_projects",
+                where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
+                select: ["ownerEmail"],
+                limit: limit + 1,
+            });
+            if (existing.length >= limit) {
+                throw new GameApiError(409, `Planının oyun projesi sınırına ulaştın (${limit}). Yer açmak için eski bir projeyi sil ya da planını yükselt: /plans`);
+            }
         }
 
         const projectId = createEngineId("game").replace(/[^A-Za-z0-9_-]/g, "_");

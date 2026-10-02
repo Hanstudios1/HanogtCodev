@@ -44,6 +44,8 @@ export function isPaddleId(kind: PaddleIdKind, value: unknown): value is string 
 
 /** What subscriptions/{email}.paddle holds. */
 export type PaddleSubscriptionState = {
+    /** Sandbox and live are separate Paddle accounts; only the configured one counts. */
+    environment: PaddleEnvironment;
     subscriptionId: string;
     customerId: string;
     status: PaddleStatus;
@@ -75,12 +77,15 @@ export function normalizePaddleState(value: unknown): PaddleSubscriptionState | 
     if (!value || typeof value !== "object") return null;
     const record = value as Record<string, unknown>;
     if (!isPaddleId("subscription", record.subscriptionId) || !isPaddleId("customer", record.customerId)) return null;
+    const environment = record.environment === "sandbox" || record.environment === "production" ? record.environment : null;
+    if (!environment) return null;
     const status = (PADDLE_STATUSES as readonly unknown[]).includes(record.status) ? record.status as PaddleStatus : null;
     if (!status) return null;
     const change = record.scheduledChange && typeof record.scheduledChange === "object" ? record.scheduledChange as Record<string, unknown> : null;
     const changeAction = change && (change.action === "cancel" || change.action === "pause" || change.action === "resume") ? change.action : null;
     const changeAt = change ? isoOrNull(change.effectiveAt) : null;
     return {
+        environment,
         subscriptionId: record.subscriptionId,
         customerId: record.customerId,
         status,
@@ -153,11 +158,19 @@ export type PaddlePriceView = {
     trialDays: number | null;
 };
 
-/** Present on the Plans catalog when Paddle is set up. */
+/** Present on GET /api/plans whenever Paddle is set up (also when nothing is on sale yet). */
 export type PaddleCheckoutConfig = {
     environment: PaddleEnvironment;
     clientToken: string;
+    /** Billing periods each plan can be bought for: published ("Visible") and priced in Paddle. */
+    onSale: { plus: BillingInterval[]; pro: BillingInterval[] };
+    /** Localised prices; may miss entries when Paddle couldn't be asked (checkout still works). */
     prices: { plus: Partial<Record<BillingInterval, PaddlePriceView>>; pro: Partial<Record<BillingInterval, PaddlePriceView>> };
+    pricesUnavailable: boolean;
+    /** The owner opened sales to everyone (Admin Panel > Subscriptions > Paddle). */
+    salesOpen: boolean;
+    /** Sales are closed but this viewer is staff or a listed tester. */
+    testMode: boolean;
 };
 
 /** Languages Paddle Checkout is translated into; others use the browser's language. */
@@ -213,6 +226,10 @@ export type PlanChangePreview = {
     nextBilledAt: string | null;
     nextAmount: string | null;
 };
+
+/** In-app notifications about a subscription (NotificationCenter shows them translated). */
+export const BILLING_NOTIFICATION_KINDS = ["active", "changed", "cancel", "pastdue", "ended"] as const;
+export type BillingNotificationKind = (typeof BILLING_NOTIFICATION_KINDS)[number];
 
 /** Error codes of the /api/paddle routes. */
 export type BillingErrorCode =

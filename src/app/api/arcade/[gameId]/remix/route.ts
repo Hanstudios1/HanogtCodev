@@ -7,13 +7,13 @@ import {
     apiJson,
     authorizeGameRequest,
     GameApiError,
-    MAX_PROJECTS_PER_USER,
     projectDocumentFields,
     rateHeaders,
     scriptRecord,
     validateProject,
     type GameProjectRecord,
 } from "../../../game-projects/_shared";
+import { projectLimitFor } from "@/lib/server/plans";
 
 export const runtime = "nodejs";
 
@@ -35,14 +35,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const own = record.ownerEmail === email;
         if (!own && record.allowRemix !== true) throw new GameApiError(403, "Bu oyunun yapımcısı remikslemeye izin vermiyor.");
 
-        const existing = await runServerQuery<GameProjectRecord>({
-            collectionId: "game_projects",
-            where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
-            select: ["ownerEmail"],
-            limit: MAX_PROJECTS_PER_USER + 1,
-        });
-        if (existing.length >= MAX_PROJECTS_PER_USER) {
-            throw new GameApiError(409, `Bir hesap en fazla ${MAX_PROJECTS_PER_USER} oyun projesi oluşturabilir. Eski projeleri silerek yer açın.`);
+        // Free 10, Plus 40, Pro unlimited (src/lib/plans.ts PLAN_PROJECT_LIMITS).
+        const { limit } = await projectLimitFor(email, "game");
+        if (limit !== null) {
+            const existing = await runServerQuery<GameProjectRecord>({
+                collectionId: "game_projects",
+                where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
+                select: ["ownerEmail"],
+                limit: limit + 1,
+            });
+            if (existing.length >= limit) {
+                throw new GameApiError(409, `Planının oyun projesi sınırına ulaştın (${limit}). Yer açmak için eski bir projeyi sil ya da planını yükselt: /plans`);
+            }
         }
 
         const source = arcadeProject(record, gameId);

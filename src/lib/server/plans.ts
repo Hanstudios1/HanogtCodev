@@ -6,17 +6,20 @@ import {
     DEFAULT_PLAN_PRICE,
     FREE_SUBSCRIPTION,
     PAID_PLAN_IDS,
+    PLAN_PROJECT_LIMITS,
     PRICE_MAX,
     aiLimitsFor,
     effectivePlan,
     isPlanId,
     type PaidPlanId,
     type PlanCatalog,
+    type PlanId,
     type PlanPrice,
     type UserSubscription,
 } from "@/lib/plans";
 import { isPaddleId, normalizePaddleState } from "@/lib/paddle";
 import { getServerDocument } from "./firebase-rest";
+import { currentPaddleEnvironment } from "./paddle-config";
 import { readRateLimit, resetRateLimit } from "./rate-limit";
 
 export const CATALOG_PATH = "site_config/plans";
@@ -49,9 +52,14 @@ export function normalizePlanPrice(value: unknown): PlanPrice {
 export function normalizeCatalog(record: Record<string, unknown> | null): PlanCatalog {
     if (!record) return DEFAULT_PLAN_CATALOG;
     const plans = record.plans && typeof record.plans === "object" ? record.plans as Record<string, unknown> : {};
+    // Prices saved before the move to US dollars were Turkish lira: only "Visible" carries over.
+    const dollars = record.currency === "USD";
     return {
-        currency: "TRY",
-        plans: Object.fromEntries(PAID_PLAN_IDS.map((id) => [id, normalizePlanPrice(plans[id])])) as Record<PaidPlanId, PlanPrice>,
+        currency: "USD",
+        plans: Object.fromEntries(PAID_PLAN_IDS.map((id) => {
+            const stored = normalizePlanPrice(plans[id]);
+            return [id, dollars ? stored : { ...DEFAULT_PLAN_CATALOG.plans[id], visible: stored.visible }];
+        })) as Record<PaidPlanId, PlanPrice>,
         updatedAt: isoOf(record.updatedAt),
     };
 }
@@ -70,8 +78,14 @@ export function forgetCatalogCache() {
     catalogCache = null;
 }
 
-export function normalizeSubscription(record: Record<string, unknown> | null): UserSubscription {
+/**
+ * Paddle data from the other environment is ignored: after moving from the
+ * sandbox to live keys, test purchases unlock nothing and live checkouts get
+ * a live customer.
+ */
+export function normalizeSubscription(record: Record<string, unknown> | null, environment = currentPaddleEnvironment()): UserSubscription {
     if (!record) return FREE_SUBSCRIPTION;
+    const paddle = normalizePaddleState(record.paddle);
     const bonus = typeof record.aiBonusDaily === "number" && Number.isFinite(record.aiBonusDaily) ? Math.min(AI_BONUS_MAX, Math.max(0, Math.round(record.aiBonusDaily))) : 0;
     return {
         plan: isPlanId(record.plan) ? record.plan : "free",
@@ -82,8 +96,8 @@ export function normalizeSubscription(record: Record<string, unknown> | null): U
         grantedAt: isoOf(record.grantedAt),
         aiBonusDaily: bonus,
         aiBonusUntil: isoOf(record.aiBonusUntil),
-        paddle: normalizePaddleState(record.paddle),
-        paddleCustomerId: isPaddleId("customer", record.paddleCustomerId) ? record.paddleCustomerId : null,
+        paddle: paddle?.environment === environment ? paddle : null,
+        paddleCustomerId: isPaddleId("customer", record.paddleCustomerId) && record.paddleEnvironment === environment ? record.paddleCustomerId : null,
     };
 }
 
@@ -107,4 +121,14 @@ export async function aiUsage(email: string) {
 export async function resetAiLimits(email: string) {
     const keys = AI_LIMIT_KEYS(email);
     await Promise.all([resetRateLimit(keys.minute), resetRateLimit(keys.day)]);
+}
+
+/**
+ * How many code ("code") or game ("game") projects the account may own;
+ * null is unlimited. Free limits when the plan can't be read.
+ */
+export async function projectLimitFor(email: string, kind: "code" | "game"): Promise<{ plan: PlanId; limit: number | null }> {
+    const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
+    const plan = effectivePlan(subscription);
+    return { plan, limit: PLAN_PROJECT_LIMITS[plan][kind] };
 }

@@ -2,13 +2,14 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 
-import { Bell, BellOff, Check, Inbox, LifeBuoy, MessageCircle, Phone, RefreshCw, Star, Trash2, UserPlus, UsersRound, X, type LucideIcon } from "lucide-react";
+import { Bell, BellOff, Check, CreditCard, Inbox, LifeBuoy, MessageCircle, Phone, RefreshCw, Star, Trash2, UserPlus, UsersRound, X, type LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import { adminPost, adminRequest } from "@/components/Admin/api";
 import { formatRelativeTime } from "@/components/Admin/hooks";
 import { useRawSession } from "@/components/Provider";
 import { useI18n, type Copy } from "@/lib/i18n";
+import type { BillingNotificationKind } from "@/lib/paddle";
 import { STAFF_TICKET_NOTIFICATION_COPY, staffTicketEventOf } from "@/lib/support";
 
 /**
@@ -16,8 +17,10 @@ import { STAFF_TICKET_NOTIFICATION_COPY, staffTicketEventOf } from "@/lib/suppor
  * "ticket_new": for staff, a new support ticket or a new message from its author (written by /api/support).
  * "collab_invite": a friend invited the user to edit code together in the editor (written by /api/collab;
  * the link is /editor?collab=<session id>, the body "<owner> · <project>").
+ * "billing": a Paddle subscription became active, changed, will end, failed to renew or ended
+ * (written by src/lib/server/paddle.ts; `billing` says which, for the reader's language).
  */
-export type NotificationType = "friend_request" | "message" | "call" | "like" | "system" | "ticket_reply" | "ticket_new" | "collab_invite";
+export type NotificationType = "friend_request" | "message" | "call" | "like" | "system" | "ticket_reply" | "ticket_new" | "collab_invite" | "billing";
 
 /** One notification as GET /api/notifications returns it (validated on the server). */
 export type NotificationItem = {
@@ -30,6 +33,8 @@ export type NotificationItem = {
     /** In-site path ("/…", never "//…"), or null. */
     actionUrl: string | null;
     fromAvatar: string | null;
+    /** Only for "billing". */
+    billing: { kind: BillingNotificationKind; plan: "plus" | "pro" | null; date: string | null } | null;
 };
 
 export type NotificationsResponse = { items: NotificationItem[]; unread: number };
@@ -57,6 +62,29 @@ const C = {
     ticketReply: { TR: "Destek talebinize yanıt geldi", EN: "The team replied to your support ticket" },
     collabInvite: { TR: "Birlikte kod düzenlemeye davet edildiniz", EN: "You're invited to edit code together" },
 } satisfies Record<string, Copy>;
+
+const BILLING_COPY: Record<BillingNotificationKind, { title: Copy; body: Copy }> = {
+    active: {
+        title: { TR: "Planın etkin: {plan}", EN: "Your plan is active: {plan}" },
+        body: { TR: "Teşekkürler! Plan avantajların açıldı.", EN: "Thank you! Your plan's benefits are unlocked." },
+    },
+    changed: {
+        title: { TR: "Planın değişti: {plan}", EN: "Your plan changed: {plan}" },
+        body: { TR: "Yeni planının avantajları hemen geçerli.", EN: "Your new plan's benefits apply right away." },
+    },
+    cancel: {
+        title: { TR: "Aboneliğin {date} tarihinde sona erecek", EN: "Your subscription ends on {date}" },
+        body: { TR: "Plan avantajların o güne kadar sürer. Fikrini değiştirirsen Planlar sayfasından vazgeçebilirsin.", EN: "Your benefits last until then. If you change your mind, you can undo it on the Plans page." },
+    },
+    pastdue: {
+        title: { TR: "Ödeme alınamadı", EN: "Your payment didn't go through" },
+        body: { TR: "Ödeme yöntemini Planlar sayfasından güncelleyebilirsin; avantajların bu sürede devam eder.", EN: "You can update your payment method on the Plans page; your benefits continue meanwhile." },
+    },
+    ended: {
+        title: { TR: "Aboneliğin sona erdi", EN: "Your subscription has ended" },
+        body: { TR: "Ücretsiz plana geçtin. İstediğin zaman yeniden abone olabilirsin.", EN: "You're on the Free plan now. You can subscribe again any time." },
+    },
+};
 
 // ---------------------------------------------------------------------------
 // Unread count shared by the header bell and the panel
@@ -164,6 +192,7 @@ const TYPE_ICONS: Record<NotificationType, { icon: LucideIcon; className: string
     ticket_reply: { icon: LifeBuoy, className: "text-violet-500" },
     ticket_new: { icon: Inbox, className: "text-amber-500" },
     collab_invite: { icon: UsersRound, className: "text-indigo-500" },
+    billing: { icon: CreditCard, className: "text-emerald-500" },
 };
 
 /** The API only returns in-site paths; checked again because the panel navigates with it. */
@@ -309,11 +338,23 @@ export default function NotificationCenter({ isOpen, onClose, returnFocusRef }: 
     };
 
     // Ticket and live-session notifications are stored with Turkish text; the title is shown in the reader's language.
-    const titleOf = (item: NotificationItem) => (item.type === "ticket_reply"
-        ? tx(C.ticketReply)
-        : item.type === "ticket_new"
-            ? tx(STAFF_TICKET_NOTIFICATION_COPY[staffTicketEventOf(item.title)])
-            : item.type === "collab_invite" ? tx(C.collabInvite) : item.title);
+    const billingVars = (billing: NonNullable<NotificationItem["billing"]>) => {
+        let date = "";
+        try {
+            date = billing.date ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(billing.date)) : "";
+        } catch {
+            date = billing.date?.slice(0, 10) ?? "";
+        }
+        return { plan: billing.plan === "pro" ? "Pro" : billing.plan === "plus" ? "Plus" : "", date };
+    };
+    const titleOf = (item: NotificationItem) => (item.billing
+        ? tx(BILLING_COPY[item.billing.kind].title, billingVars(item.billing))
+        : item.type === "ticket_reply"
+            ? tx(C.ticketReply)
+            : item.type === "ticket_new"
+                ? tx(STAFF_TICKET_NOTIFICATION_COPY[staffTicketEventOf(item.title)])
+                : item.type === "collab_invite" ? tx(C.collabInvite) : item.title);
+    const bodyOf = (item: NotificationItem) => (item.billing ? tx(BILLING_COPY[item.billing.kind].body, billingVars(item.billing)) : item.body);
     const hasRead = Boolean(items?.some((item) => item.read));
     const loading = items === null && !loadFailure;
     const iconButton = "grid h-8 w-8 place-items-center rounded-lg transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.08]";
@@ -394,7 +435,7 @@ export default function NotificationCenter({ isOpen, onClose, returnFocusRef }: 
                                             )}
                                             <span className="min-w-0 flex-1">
                                                 <span className={`block text-sm ${item.read ? "font-medium text-zinc-600 dark:text-zinc-400" : "font-semibold"}`}>{titleOf(item)}</span>
-                                                {item.body ? <span className="mt-0.5 block truncate text-xs text-zinc-500" dir="auto">{item.body}</span> : null}
+                                                {bodyOf(item) ? <span className="mt-0.5 block truncate text-xs text-zinc-500" dir="auto">{bodyOf(item)}</span> : null}
                                                 {time && item.createdAt ? <time dateTime={item.createdAt} className="mt-1 block text-[11px] text-zinc-400">{time}</time> : null}
                                             </span>
                                             {item.read ? null : (

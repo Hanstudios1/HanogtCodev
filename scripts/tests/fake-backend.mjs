@@ -1,0 +1,213 @@
+// In-memory stand-ins for the Firestore, Auth and Storage REST APIs used by
+// the server helpers in tests: point them at "emulators" on loopback
+// addresses (see setFakeEmulatorEnv) and replace fetch with backend.fetch.
+// Requests to other hosts go to options.route(url, init) when given.
+import assert from "node:assert/strict";
+
+/** The environment the fake backend answers to. */
+export function setFakeEmulatorEnv() {
+    process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+    process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+    process.env.FIREBASE_STORAGE_EMULATOR_HOST = "127.0.0.1:9199";
+    process.env.FIREBASE_STORAGE_BUCKET = "demo-hanogt.appspot.com";
+    process.env.FIREBASE_PROJECT_ID = "demo-hanogt";
+    process.env.RATE_LIMIT_SALT = "test-salt";
+}
+
+// ---------------------------------------------------------------------------
+
+const DOCUMENTS_PREFIX = "/v1/projects/demo-hanogt/databases/(default)/documents";
+const NAME_PREFIX = "projects/demo-hanogt/databases/(default)/documents/";
+
+export function encode(value) {
+    if (value === null || value === undefined) return { nullValue: null };
+    if (typeof value === "boolean") return { booleanValue: value };
+    if (typeof value === "number") return Number.isInteger(value) ? { integerValue: String(value) } : { doubleValue: value };
+    if (typeof value === "string") return { stringValue: value };
+    if (value instanceof Date) return { timestampValue: value.toISOString() };
+    if (Array.isArray(value)) return { arrayValue: { values: value.map(encode) } };
+    return { mapValue: { fields: encodeFields(value) } };
+}
+
+export function encodeFields(data) {
+    return Object.fromEntries(Object.entries(data).map(([key, value]) => [key, encode(value)]));
+}
+
+export function decode(value) {
+    if ("nullValue" in value) return null;
+    if ("booleanValue" in value) return value.booleanValue;
+    if ("integerValue" in value) return Number(value.integerValue);
+    if ("doubleValue" in value) return value.doubleValue;
+    if ("timestampValue" in value) return value.timestampValue;
+    if ("stringValue" in value) return value.stringValue;
+    if ("arrayValue" in value) return (value.arrayValue.values || []).map(decode);
+    if ("mapValue" in value) return decodeFields(value.mapValue.fields || {});
+    throw new Error(`Unknown Firestore value ${JSON.stringify(value)}`);
+}
+
+export function decodeFields(fields) {
+    return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, decode(value)]));
+}
+
+export const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+export function json(status, payload) {
+    return new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
+}
+
+export function failure(status, reason) {
+    return json(status, { error: { code: status, status: reason, message: reason } });
+}
+
+class Precondition extends Error {
+    constructor(status, reason) {
+        super(reason);
+        this.status = status;
+        this.reason = reason;
+    }
+}
+
+export function createBackend(seed, options = {}) {
+    const docs = new Map();
+    let clock = 0;
+    const stamp = () => `2026-10-01T00:00:00.${String(++clock).padStart(6, "0")}Z`;
+    for (const [path, data] of Object.entries(seed)) docs.set(path, { data: structuredClone(data), updateTime: stamp() });
+    const authDeleted = [];
+    const storageDeleted = [];
+
+    const documentJson = (path) => ({ name: NAME_PREFIX + path, fields: encodeFields(docs.get(path).data), updateTime: docs.get(path).updateTime });
+    const pathOf = (name) => name.slice(NAME_PREFIX.length);
+
+    function check(path, precondition) {
+        if (!precondition) return;
+        const current = docs.get(path);
+        if (precondition.exists === true && !current) throw new Precondition(404, "NOT_FOUND");
+        if (precondition.exists === false && current) throw new Precondition(409, "ALREADY_EXISTS");
+        if (precondition.updateTime && (!current || current.updateTime !== precondition.updateTime)) throw new Precondition(400, "FAILED_PRECONDITION");
+    }
+
+    function applyUpdate(path, fields, mask) {
+        const next = mask ? { ...(docs.get(path)?.data ?? {}) } : {};
+        const values = decodeFields(fields || {});
+        for (const key of mask ?? Object.keys(values)) {
+            if (key in values) next[key] = values[key];
+            else delete next[key];
+        }
+        docs.set(path, { data: next, updateTime: stamp() });
+    }
+
+    function commit(writes) {
+        options.onCommit?.(writes);
+        // Atomic: every precondition is checked before anything changes.
+        for (const write of writes) {
+            if (write.delete) check(pathOf(write.delete), write.currentDocument);
+            if (write.update) check(pathOf(write.update.name), write.currentDocument);
+        }
+        for (const write of writes) {
+            if (write.delete) docs.delete(pathOf(write.delete));
+            else if (write.update) applyUpdate(pathOf(write.update.name), write.update.fields, write.updateMask?.fieldPaths);
+            else if (write.transform) {
+                const path = pathOf(write.transform.document);
+                const data = { ...(docs.get(path)?.data ?? {}) };
+                for (const transform of write.transform.fieldTransforms) data[transform.fieldPath] = Number(data[transform.fieldPath] || 0) + decode(transform.increment);
+                docs.set(path, { data, updateTime: stamp() });
+            }
+        }
+        return { writeResults: writes.map(() => ({ updateTime: stamp() })), commitTime: stamp() };
+    }
+
+    function matches(data, where) {
+        if (!where) return true;
+        if (where.compositeFilter) return where.compositeFilter.filters.every((filter) => matches(data, filter));
+        const { field, op, value } = where.fieldFilter;
+        const actual = data[field.fieldPath];
+        const expected = decode(value);
+        if (op === "EQUAL") return actual !== undefined && same(actual, expected);
+        if (op === "ARRAY_CONTAINS") return Array.isArray(actual) && actual.some((entry) => same(entry, expected));
+        throw new Error(`Unsupported operator ${op}`);
+    }
+
+    function runQuery(parent, query) {
+        const { collectionId, allDescendants } = query.from[0];
+        const status = options.failQuery?.({ collectionId, allDescendants: Boolean(allDescendants), parent });
+        if (status) return failure(status, "FAILED_PRECONDITION");
+        const prefix = parent ? `${parent}/` : "";
+        const found = [...docs.keys()].filter((path) => {
+            if (!path.startsWith(prefix)) return false;
+            const segments = path.slice(prefix.length).split("/");
+            return allDescendants ? segments.length >= 2 && segments.length % 2 === 0 && segments[segments.length - 2] === collectionId : segments.length === 2 && segments[0] === collectionId;
+        }).filter((path) => matches(docs.get(path).data, query.where)).sort();
+        return json(200, found.slice(0, query.limit ?? found.length).map((path) => ({ document: documentJson(path) })));
+    }
+
+    async function fetchStub(input, init = {}) {
+        const url = new URL(typeof input === "string" ? input : input.url);
+        const method = (init.method || "GET").toUpperCase();
+        const body = init.body ? JSON.parse(init.body) : null;
+        if (url.host === "127.0.0.1:9099") {
+            authDeleted.push(...body.localIds);
+            return json(200, {});
+        }
+        if (url.host === "127.0.0.1:9199") {
+            const object = decodeURIComponent(url.pathname.split("/o/")[1]);
+            const status = options.failStorage?.(object);
+            if (status) return failure(status, "UNAVAILABLE");
+            storageDeleted.push(object);
+            return new Response(null, { status: 204 });
+        }
+        if (url.host !== "127.0.0.1:8080" && options.route) return options.route(url, init);
+        assert.equal(url.host, "127.0.0.1:8080", `unexpected request to ${url.href}`);
+        assert.ok(url.pathname.startsWith(DOCUMENTS_PREFIX), url.pathname);
+        const rest = url.pathname.slice(DOCUMENTS_PREFIX.length);
+        try {
+            if (rest === ":commit") return json(200, commit(body.writes));
+            if (rest.endsWith(":runQuery")) {
+                const parent = rest.slice(0, -":runQuery".length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
+                return runQuery(parent, body.structuredQuery);
+            }
+        } catch (error) {
+            if (error instanceof Precondition) return failure(error.status, error.reason);
+            throw error;
+        }
+        const path = rest.split("/").filter(Boolean).map(decodeURIComponent).join("/");
+        const isCollection = path.split("/").length % 2 === 1;
+        if (method === "GET" && isCollection) {
+            const children = [...docs.keys()].filter((key) => key.startsWith(`${path}/`) && key.split("/").length === path.split("/").length + 1).sort();
+            return json(200, { documents: children.map(documentJson) });
+        }
+        if (method === "GET") return docs.has(path) ? json(200, documentJson(path)) : failure(404, "NOT_FOUND");
+        if (method === "DELETE") {
+            docs.delete(path);
+            return json(200, {});
+        }
+        if (method === "PATCH") {
+            const exists = url.searchParams.get("currentDocument.exists");
+            if (exists === "true" && !docs.has(path)) return failure(404, "NOT_FOUND");
+            const mask = url.searchParams.getAll("updateMask.fieldPaths");
+            applyUpdate(path, body.fields, mask.length ? mask : null);
+            return json(200, documentJson(path));
+        }
+        throw new Error(`Unsupported request ${method} ${url.href}`);
+    }
+
+    return {
+        fetch: fetchStub,
+        get: (path) => docs.get(path)?.data ?? null,
+        has: (path) => docs.has(path),
+        paths: () => [...docs.keys()],
+        authDeleted,
+        storageDeleted,
+    };
+}
+
+export async function withBackend(seed, options, run) {
+    const backend = createBackend(seed, options);
+    const original = globalThis.fetch;
+    globalThis.fetch = backend.fetch;
+    try {
+        return await run(backend);
+    } finally {
+        globalThis.fetch = original;
+    }
+}
+

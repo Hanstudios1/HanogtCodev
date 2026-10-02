@@ -166,6 +166,81 @@ See [docs/HANOGT_AI.md](./HANOGT_AI.md) for the full picture.
 | `HANOGT_AI_BASE_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible endpoint. http allowed only to loopback. |
 | `HANOGT_AI_MODEL` | `llama-3.3-70b-versatile` | Model id (falls back to `GROQ_MODEL`). |
 
+## Payments (Paddle Billing)
+
+Plus ($20/month, $200/year) and Pro ($100/month, $1,000/year) are sold through
+[Paddle](https://www.paddle.com/), the Merchant of Record: Paddle runs the
+checkout, takes the payment, issues invoices, handles taxes and refunds. Card
+details never reach Hanogt Codev. Code: `src/lib/paddle.ts` (shared),
+`src/lib/server/paddle.ts` (API client, webhook, sync), `src/lib/server/paddle-config.ts`
+(variables), `/api/paddle/*` routes, the Plans page (`src/app/plans`) and
+Admin Panel > Subscriptions > Paddle.
+
+| Variable | Secret | Meaning |
+| --- | --- | --- |
+| `PADDLE_API_KEY` | **yes** | Server API key (`pdl_sdbx_apikey_…` sandbox, `pdl_live_apikey_…` live). Paddle > Developer tools > Authentication > API keys. Permissions: write for Customers, Transactions, Subscriptions, Discounts, Customer portal sessions and Products/Prices (only needed for the "create catalog" button); read for the rest. Never put it in a `NEXT_PUBLIC_` variable. |
+| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | no | Client-side token for Paddle.js (`test_…` sandbox, `live_…` live). Developer tools > Authentication > Client-side tokens. `PADDLE_CLIENT_TOKEN` works too. |
+| `PADDLE_WEBHOOK_SECRET` | **yes** | Secret key (`pdl_ntfset_…`) of the notification destination below. `PADDLE_NOTIFICATION_WEBHOOK_SECRET` works too. |
+| `NEXT_PUBLIC_PADDLE_ENV` | no | Only for keys created before May 2025 (no prefix): `sandbox` or `production`. Otherwise the environment follows the key prefixes and a conflicting value is reported in the Admin Panel. |
+| `PADDLE_TESTER_EMAILS` | no | Comma-separated accounts that may buy while sales are closed (staff always can). |
+| `PADDLE_LINK_SECRET` | yes | Optional key for signing checkout custom data (defaults to `NEXTAUTH_SECRET`). |
+| `PADDLE_API_BASE_URL` | no | Tests only: a loopback address of a fake Paddle API. Anything else is ignored. |
+
+Sandbox and live are separate Paddle accounts with different ids. The price
+mapping, Paddle customers and subscriptions are stored per environment, so
+switching the three variables from sandbox to live values never lets a sandbox
+test purchase unlock anything in live.
+
+### Setting it up (sandbox first, then live)
+
+1. **Vercel** > Project > Settings > Environment Variables: add the variables
+   above (Production; Preview too if you test there) and redeploy.
+2. **Notifications**: Paddle > Developer tools > Notifications > New destination,
+   URL `https://<your domain>/api/paddle/webhook`, events `subscription.*` and
+   `transaction.completed`. Copy its secret key into `PADDLE_WEBHOOK_SECRET`.
+   Reuse an existing destination; recreating one rotates the secret.
+3. **Default payment link**: Paddle > Checkout > Checkout settings >
+   `https://<your domain>/plans` (must be an approved domain, not localhost).
+4. **Catalog**: Admin Panel > Subscriptions > Paddle > "Paddle kataloğunu oluştur"
+   creates the Plus/Pro products and the four USD prices in the configured
+   environment (only what is missing; it never changes or archives anything)
+   and maps them. Or create them in Paddle > Catalog and pick them in the card.
+5. **Test**: sales are closed by default, so only staff and
+   `PADDLE_TESTER_EMAILS` can buy. In sandbox use a Paddle test card
+   (4242 4242 4242 4242, any future date, CVC 100). Within seconds the plan is
+   active on the Plans page, "Aboneliği yönet" opens Paddle's portal and the
+   card shows the last webhook.
+6. **Go live**: create the live API key, client-side token and notification
+   destination in the live account, replace the three variables, redeploy,
+   create/map the live catalog in the card, request domain approval
+   (Paddle > Checkout > Request domain approval), add payment methods
+   (Checkout > Checkout settings > Payment methods) and payout details
+   (Business account > Payouts), then open sales in the card once verification
+   is approved.
+
+### Webhook security
+
+`/api/paddle/webhook` accepts a delivery only if it comes from one of
+Paddle's published addresses (`GET https://api.paddle.com/ips`, or the sandbox
+API, `data.ipv4_cidrs`, cached for an hour; requests are refused while the list
+can't be fetched) **and** carries a valid `Paddle-Signature`
+(HMAC-SHA256 of `ts:raw body`, ±5 minutes). Subscriptions are then re-read
+from the API, so the order of deliveries doesn't matter. Paddle retries on any
+non-2xx answer. If Paddle's dashboard shows failed deliveries with 403, check
+that nothing (a proxy, Vercel's firewall) replaces the client address.
+
+### Troubleshooting
+
+- Admin Panel > Subscriptions > Paddle lists missing variables, wrong formats,
+  a sandbox key with a live token (or the other way round), secrets in
+  `NEXT_PUBLIC_` variables, API errors with Paddle's error code and the last
+  accepted/refused webhook.
+- A subscription Paddle reports for a customer we don't know appears under
+  "Eşleşmeyen abonelikler" and can be linked to an account there.
+- Deleting an account cancels its subscription immediately; if Paddle can't be
+  reached the deletion report says so and the subscription is listed in
+  `paddle_cleanup`.
+
 ## Administration
 
 | Variable | Meaning |

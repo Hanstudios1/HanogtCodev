@@ -608,8 +608,22 @@ async function deleteCollabSessions(ctx: Context) {
     if (purged) ctx.tally.count("collabSessions", purged);
 }
 
-/** A plan staff assigned (with any Hanogt AI grant) and "notify me" sign-ups on the Plans page. */
+/**
+ * A plan staff assigned (with any Hanogt AI grant), "notify me" sign-ups on
+ * the Plans page and the Paddle subscription: an active one is cancelled at
+ * once and the Paddle customer is kept only as a tombstone (no e-mail), so a
+ * renewal that slips through later is cancelled by the webhook. If Paddle
+ * can't be reached the failure is reported and staff find the subscription in
+ * paddle_cleanup; the records are deleted either way.
+ */
 async function deletePlanRecords(ctx: Context) {
+    const record = await getServerDocument<Record<string, unknown>>(`subscriptions/${ctx.email}`);
+    if (record?.paddle || record?.paddleCustomerId) {
+        const { releaseBillingForDeletion } = await import("./paddle");
+        const billing = await releaseBillingForDeletion(record);
+        if (billing.canceled) ctx.tally.count("paddleSubscriptionsCanceled");
+        if (billing.error) ctx.tally.fail("billing", billing.error);
+    }
     await commitServerMutations([
         { type: "delete", path: `subscriptions/${ctx.email}` },
         { type: "delete", path: `plan_waitlist/${ctx.email}` },

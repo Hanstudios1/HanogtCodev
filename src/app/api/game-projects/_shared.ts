@@ -7,7 +7,6 @@ import { getServerDocument, isWriteConflict } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 
-export const MAX_PROJECTS_PER_USER = 50;
 export const MAX_SCRIPT_BYTES = 160 * 1024;
 /** A full project (content ≤ 900 KB + scripts + thumbnail) in one request. */
 export const MAX_REQUEST_BYTES = 3 * 1024 * 1024;

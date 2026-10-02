@@ -36,8 +36,27 @@ export interface Project {
 
 const COLLECTION_NAME = "projects";
 
+/** Result of saving to the cloud: "limit" when the plan's project limit (Free 10, Plus 40) is reached. */
+export type CloudSaveResult = { ok: true } | { ok: false; reason: "limit"; limit: number; plan: string } | { ok: false; reason: "error" };
+
+/**
+ * New projects are created by the server (POST /api/projects), which applies
+ * the plan's project limit; the files are then written here directly.
+ */
+async function createCloudProject(id: string, name: string): Promise<CloudSaveResult> {
+    const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ id, name }),
+    });
+    const payload = await response.json().catch(() => ({})) as { error?: string; limit?: number; plan?: string };
+    if (response.status === 403 && payload.error === "project_limit") return { ok: false, reason: "limit", limit: Number(payload.limit) || 0, plan: payload.plan ?? "free" };
+    return response.ok ? { ok: true } : { ok: false, reason: "error" };
+}
+
 // Save project to Firestore
-export const saveProjectToCloud = async (rawEmail: string, project: Omit<Project, "email" | "createdAt">) => {
+export const saveProjectToCloud = async (rawEmail: string, project: Omit<Project, "email" | "createdAt">): Promise<CloudSaveResult> => {
     const email = rawEmail.toLowerCase();
     try {
         const projectRef = doc(db, COLLECTION_NAME, project.id);
@@ -47,10 +66,13 @@ export const saveProjectToCloud = async (rawEmail: string, project: Omit<Project
         if (files.length > 50 || files.some((file) => file.code.length > 500_000)) {
             throw new Error("Proje, 50 dosya veya dosya başına 500.000 karakter sınırını aşıyor.");
         }
-        const [oldFiles, existingProject] = await Promise.all([
-            getDocs(collection(projectRef, "files")),
-            getDoc(projectRef),
-        ]);
+        // Reading a project that doesn't exist yet is refused by the rules: treat it as new.
+        const current = await getDoc(projectRef).catch(() => null);
+        if (!current?.exists()) {
+            const created = await createCloudProject(project.id, project.name);
+            if (!created.ok) return created;
+        }
+        const oldFiles = await getDocs(collection(projectRef, "files"));
         const batch = writeBatch(db);
         batch.set(projectRef, {
             id: project.id,
@@ -63,7 +85,6 @@ export const saveProjectToCloud = async (rawEmail: string, project: Omit<Project
             entryFile: files[0]?.name || project.name,
             code: files.length === 1 ? files[0].code : deleteField(),
             email,
-            ...(!existingProject.exists() ? { createdAt: serverTimestamp() } : {}),
             updatedAt: serverTimestamp(),
         }, { merge: true });
         oldFiles.docs.forEach((file) => batch.delete(file.ref));
@@ -78,10 +99,10 @@ export const saveProjectToCloud = async (rawEmail: string, project: Omit<Project
             });
         });
         await batch.commit();
-        return true;
+        return { ok: true };
     } catch (error) {
         console.error("Error saving project:", error);
-        return false;
+        return { ok: false, reason: "error" };
     }
 };
 

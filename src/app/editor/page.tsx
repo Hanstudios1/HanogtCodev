@@ -201,6 +201,8 @@ const C = {
     saved: { TR: "Proje kaydedildi.", EN: "Project saved." },
     savedGame: { TR: "Oyun scripti güvenli proje alanına kaydedildi.", EN: "The game script was saved to the secure project storage." },
     saveFailed: { TR: "Proje buluta kaydedilemedi. Değişiklikleriniz açık sekmelerde korunuyor.", EN: "The project couldn't be saved to the cloud. Your changes are kept in the open tabs." },
+    projectLimit: { TR: "Planının kod projesi sınırına ulaştın ({limit}). Eski bir projeyi silerek yer açabilir ya da planını yükseltebilirsin; değişiklikler açık sekmelerde korunuyor.", EN: "You've reached your plan's limit of {limit} code projects. Delete an old project or upgrade your plan; your changes are kept in the open tabs." },
+    seePlans: { TR: "Planlar", EN: "Plans" },
     gameSaveFailed: { TR: "Oyun scripti kaydedilemedi; değişiklikler açık sekmede korunuyor.", EN: "The game script couldn't be saved; your changes are kept in the open tab." },
     gameLanguages: { TR: "Oyun scriptleri yalnızca C# veya C++ olabilir.", EN: "Game scripts can only be C# or C++." },
     gameLoadFailed: { TR: "Oyun scripti yüklenemedi.", EN: "The game script couldn't be loaded." },
@@ -999,8 +1001,9 @@ function EditorContent() {
                 files: prepared.map((tab, order) => ({ name: tab.name, lang: tab.lang, code: tab.code, order })),
             };
             const cloudSaved = await saveProjectToCloud(sessionEmail, { ...projectData, id: String(projectData.id) });
-            if (!cloudSaved) {
-                toast({ tone: "error", message: tx(C.saveFailed) });
+            if (!cloudSaved.ok) {
+                if (cloudSaved.reason === "limit") toast({ tone: "warning", message: tx(C.projectLimit, { limit: cloudSaved.limit }), action: { label: tx(C.seePlans), href: "/plans" } });
+                else toast({ tone: "error", message: tx(C.saveFailed) });
                 setSaveError(true);
                 return false;
             }
