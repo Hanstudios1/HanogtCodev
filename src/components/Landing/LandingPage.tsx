@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, animate, motion, useInView, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
 import {
-    ArrowRight, Bot, Boxes, Check, Code2, Gamepad2, Globe2, Heart, MessageSquare, Newspaper, Play, Radio, Rocket, ShieldCheck, Sparkles,
-    Trophy, UsersRound, X, Zap,
+    ArrowRight, Bot, Boxes, Check, Code2, Gamepad2, Heart, LogIn, MessageSquare, Newspaper, Play, Radio, Rocket, ShieldCheck, Sparkles,
+    Trophy, UsersRound, X, Zap, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -12,7 +12,7 @@ import Comparison from "@/components/Comparison";
 import Header from "@/components/Header";
 import SiteFooter from "@/components/SiteFooter";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
-import { LANGUAGES, formatCopy, useI18n } from "@/lib/i18n";
+import { LANGUAGES, formatCopy, useI18n, type Copy } from "@/lib/i18n";
 import { LANGUAGE_STATS, LANGUAGES as CODE_LANGUAGE_REGISTRY } from "@/lib/runtimes/languages";
 import { NAV_LABELS } from "@/lib/nav";
 import CodeShowcase from "./CodeShowcase";
@@ -66,6 +66,250 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
         >
             {children}
         </motion.div>
+    );
+}
+
+// ---------------------------------------------------------------- Final call to action
+
+type StatKey = "users" | "projects" | "gameProjects" | "arcadeGames";
+type PublicStats = Record<StatKey, number | null>;
+
+const STAT_KEYS: StatKey[] = ["users", "projects", "gameProjects", "arcadeGames"];
+const STATS_TTL_MS = 10 * 60_000;
+// Module scope: the numbers survive client-side navigation between pages.
+let statsMemo: { at: number; stats: PublicStats } | null = null;
+
+const CTA = {
+    kicker: { TR: "Ücretsiz başla, kurulum yok", EN: "Free to start, nothing to install" },
+    title: { TR: "Fikrinden yayına, hepsi tek sekmede", EN: "From idea to launch, all in one tab" },
+    sub: {
+        TR: "{count} dilde kod yaz, Hanogt Engine V3 ile oyun yap, Arcade'de yayınla ve toplulukla paylaş. Hepsi tek hesapta.",
+        EN: "Write code in {count} languages, build games with Hanogt Engine V3, publish them to Arcade and share with the community. All in one account.",
+    },
+    live: { TR: "Canlı topluluk rakamları", EN: "Live community numbers" },
+    quickStart: { TR: "Hızlı başlangıç", EN: "Quick start" },
+    factLanguages: { TR: "Programlama dili", EN: "Programming languages" },
+    factInterface: { TR: "Arayüz dili", EN: "Interface languages" },
+    factEngine: { TR: "Hanogt Engine sürümü", EN: "Hanogt Engine version" },
+} satisfies Record<string, Copy>;
+
+const QUICK_START: Array<{ href: string; icon: LucideIcon; gradient: string; title: Copy; text: Copy }> = [
+    {
+        href: "/editor",
+        icon: Code2,
+        gradient: "from-sky-400 to-indigo-500",
+        title: { TR: "Kod yaz", EN: "Write code" },
+        text: { TR: "{count} dilde, kurulum olmadan çalıştır.", EN: "Run {count} languages with nothing to install." },
+    },
+    {
+        href: "/game-engine",
+        icon: Boxes,
+        gradient: "from-fuchsia-400 to-violet-500",
+        title: { TR: "Oyun yap", EN: "Build a game" },
+        text: { TR: "Hanogt Engine V3: tilemap, arayüz ve animasyon.", EN: "Hanogt Engine V3: tilemaps, UI and animation." },
+    },
+    {
+        // Becomes /social once Hanogt Social replaces the separate Groups and Friends pages.
+        href: "/groups",
+        icon: UsersRound,
+        gradient: "from-emerald-400 to-teal-500",
+        title: { TR: "Topluluğa katıl", EN: "Join the community" },
+        text: { TR: "Arkadaşlar, gruplar ve mesajlar tek yerde.", EN: "Friends, groups and messages in one place." },
+    },
+];
+
+const STAT_LABELS: Record<StatKey, Copy> = {
+    users: { TR: "Üye", EN: "Members" },
+    projects: { TR: "Kod projesi", EN: "Code projects" },
+    gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
+    arcadeGames: { TR: "Arcade oyunu", EN: "Arcade games" },
+};
+
+function parsePublicStats(value: unknown): PublicStats | null {
+    if (!value || typeof value !== "object") return null;
+    const source = value as Record<string, unknown>;
+    const stats = Object.fromEntries(STAT_KEYS.map((key) => {
+        const count = source[key];
+        return [key, typeof count === "number" && Number.isFinite(count) && count >= 0 ? Math.trunc(count) : null];
+    })) as PublicStats;
+    return STAT_KEYS.some((key) => stats[key] !== null) ? stats : null;
+}
+
+/** undefined while loading; null when there are no numbers (offline, desktop app, server error). */
+function usePublicStats() {
+    const [stats, setStats] = useState<PublicStats | null | undefined>(() => (statsMemo && Date.now() - statsMemo.at < STATS_TTL_MS ? statsMemo.stats : undefined));
+    useEffect(() => {
+        if (statsMemo && Date.now() - statsMemo.at < STATS_TTL_MS) return;
+        const controller = new AbortController();
+        fetch("/api/stats/public", { signal: controller.signal, headers: { Accept: "application/json" } })
+            .then((response) => (response.ok ? response.json() as Promise<unknown> : null))
+            .then((data) => {
+                const parsed = parsePublicStats(data);
+                if (parsed) statsMemo = { at: Date.now(), stats: parsed };
+                setStats(parsed);
+            })
+            .catch(() => {
+                if (!controller.signal.aborted) setStats(null);
+            });
+        return () => controller.abort();
+    }, []);
+    return stats;
+}
+
+const numberFormats = new Map<string, Intl.NumberFormat>();
+
+function formatCount(value: number, locale: string, compact: boolean) {
+    const id = `${locale}|${compact}`;
+    let format = numberFormats.get(id);
+    if (!format) {
+        try {
+            format = new Intl.NumberFormat(locale, compact ? { notation: "compact", maximumFractionDigits: 1 } : undefined);
+        } catch {
+            format = new Intl.NumberFormat("en-US");
+        }
+        numberFormats.set(id, format);
+    }
+    return format.format(value);
+}
+
+/** Counts up to `value` the first time it scrolls into view (instantly with reduced motion). */
+function CountUp({ value, locale }: { value: number; locale: string }) {
+    const ref = useRef<HTMLSpanElement | null>(null);
+    const inView = useInView(ref, { once: true, margin: "-40px" });
+    const reduceMotion = useReducedMotion();
+    const progress = useMotionValue(0);
+    const compact = value >= 10_000;
+    const text = useTransform(progress, (latest) => formatCount(Math.round(latest), locale, compact));
+    useEffect(() => {
+        if (!inView) return;
+        if (reduceMotion) {
+            progress.set(value);
+            return;
+        }
+        const controls = animate(progress, value, { duration: 1.4, ease: [0.22, 1, 0.36, 1] });
+        return () => controls.stop();
+    }, [inView, reduceMotion, value, progress]);
+    // The digits run from zero while they animate, so assistive technology reads the final number instead.
+    return (
+        <>
+            <motion.span ref={ref} aria-hidden="true" className="tabular-nums">{text}</motion.span>
+            <span className="sr-only">{formatCount(value, locale, compact)}</span>
+        </>
+    );
+}
+
+function FinalCta({ signedIn }: { signedIn: boolean }) {
+    const { t, tx, locale } = useI18n();
+    const stats = usePublicStats();
+    const languageCount = LANGUAGE_STATS.usable;
+
+    // A zero says nothing good about the site, so only real, positive numbers are shown.
+    const liveTiles = stats ? STAT_KEYS.filter((key) => (stats[key] ?? 0) > 0) : [];
+    const showLive = stats !== undefined && stats !== null && liveTiles.length >= 2;
+    const facts: Array<{ label: Copy; value: number | string }> = [
+        { label: CTA.factLanguages, value: languageCount },
+        { label: CTA.factInterface, value: LANGUAGES.length },
+        { label: CTA.factEngine, value: "V3" },
+    ];
+
+    const tileClass = "flex flex-col rounded-2xl border border-white/15 bg-black/25 px-4 py-3.5 text-center backdrop-blur";
+    const labelClass = "order-2 mt-1 text-[11.5px] font-semibold uppercase tracking-wider text-white/80";
+    const valueClass = "order-1 text-3xl font-black leading-none";
+
+    return (
+        <section aria-labelledby="final-cta-title" className="px-4 py-24 sm:px-6">
+            <Reveal>
+                <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-zinc-950 px-5 py-14 text-white shadow-2xl sm:px-10 lg:px-14 lg:py-16">
+                    <div className="absolute inset-0 bg-[linear-gradient(120deg,#6366f1,#a855f7,#ec4899,#f59e0b)] bg-[length:300%_300%] opacity-90 animate-gradient" aria-hidden="true" />
+                    {/* Keeps white text readable over the amber end of the moving gradient. */}
+                    <div className="absolute inset-0 bg-zinc-950/40" aria-hidden="true" />
+                    <div className="absolute inset-0 bg-grid opacity-20" aria-hidden="true" />
+                    <div className="pointer-events-none absolute -start-24 -top-24 h-72 w-72 rounded-full bg-white/20 blur-3xl animate-float" aria-hidden="true" />
+                    <div className="pointer-events-none absolute -bottom-28 -end-20 h-80 w-80 rounded-full bg-fuchsia-300/20 blur-3xl animate-float" style={{ animationDelay: "-3s" }} aria-hidden="true" />
+
+                    <div className="relative">
+                        <div className="mx-auto max-w-3xl text-center">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3.5 py-1.5 text-[12.5px] font-bold backdrop-blur">
+                                <Rocket className="h-3.5 w-3.5" aria-hidden="true" />{tx(CTA.kicker)}
+                            </span>
+                            <h2 id="final-cta-title" className="mt-5 text-balance text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl">{tx(CTA.title)}</h2>
+                            <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-white/90">{tx(CTA.sub, { count: languageCount })}</p>
+                        </div>
+
+                        <ul className="mt-10 grid gap-3 md:grid-cols-3" aria-label={tx(CTA.quickStart)}>
+                            {QUICK_START.map(({ href, icon: Icon, gradient, title, text }, index) => (
+                                <motion.li
+                                    key={href}
+                                    initial={{ opacity: 0, y: 22 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, margin: "-40px" }}
+                                    transition={{ duration: 0.5, delay: 0.1 + index * 0.09, ease: [0.22, 1, 0.36, 1] }}
+                                >
+                                    <Link href={href} className="group flex h-full items-center gap-4 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md transition hover:-translate-y-1 hover:border-white/40 hover:bg-white/[0.17] focus-visible:ring-2 focus-visible:ring-white md:flex-col md:items-start md:gap-3 md:p-5">
+                                        <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${gradient} shadow-lg transition group-hover:scale-110 group-hover:-rotate-3`}><Icon className="h-6 w-6" aria-hidden="true" /></span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block text-lg font-black leading-tight">{tx(title)}</span>
+                                            <span className="mt-1 block text-[13.5px] leading-snug text-white/85">{tx(text, { count: languageCount })}</span>
+                                        </span>
+                                        <ArrowRight className="h-5 w-5 shrink-0 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 md:hidden" aria-hidden="true" />
+                                        <span className="hidden items-center gap-1 text-[13px] font-bold md:inline-flex">
+                                            {t("lp_open")}<ArrowRight className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" aria-hidden="true" />
+                                        </span>
+                                    </Link>
+                                </motion.li>
+                            ))}
+                        </ul>
+
+                        <div className="mt-8">
+                            {showLive ? (
+                                <p className="mb-3 flex items-center justify-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em] text-white/85">
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" aria-hidden="true" />{tx(CTA.live)}
+                                </p>
+                            ) : null}
+                            {stats === undefined ? (
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-hidden="true">
+                                    {STAT_KEYS.map((key) => (
+                                        <div key={key} className={tileClass}>
+                                            <div className="mx-auto h-8 w-16 animate-pulse rounded-lg bg-white/20" />
+                                            <div className="mx-auto mt-2 h-3 w-20 animate-pulse rounded bg-white/15" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : showLive ? (
+                                <dl className={`grid grid-cols-2 gap-3 ${liveTiles.length >= 4 ? "sm:grid-cols-4" : liveTiles.length === 3 ? "sm:grid-cols-3" : ""}`}>
+                                    {liveTiles.map((key) => (
+                                        <div key={key} className={tileClass}>
+                                            <dt className={labelClass}>{tx(STAT_LABELS[key])}</dt>
+                                            <dd className={valueClass}><CountUp value={stats?.[key] ?? 0} locale={locale} /></dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            ) : (
+                                <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                    {facts.map(({ label, value }, index) => (
+                                        <div key={label.EN} className={`${tileClass} ${index === facts.length - 1 ? "col-span-2 sm:col-span-1" : ""}`}>
+                                            <dt className={labelClass}>{tx(label)}</dt>
+                                            <dd className={valueClass}>{typeof value === "number" ? formatCount(value, locale, false) : value}</dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            )}
+                        </div>
+
+                        <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+                            <Link href={signedIn ? "/dashboard" : "/signup"} className="group relative inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-2xl bg-white px-6 text-[15px] font-bold text-zinc-900 shadow-xl transition hover:-translate-y-0.5">
+                                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-indigo-500/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" aria-hidden="true" />
+                                <Rocket className="relative h-4.5 w-4.5" aria-hidden="true" /><span className="relative">{signedIn ? t("go_to_dashboard") : t("lp_start_free")}</span>
+                            </Link>
+                            <Link href={signedIn ? "/arcade" : "/login"} className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/40 bg-white/10 px-6 text-[15px] font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20">
+                                {signedIn ? <Gamepad2 className="h-4.5 w-4.5" aria-hidden="true" /> : <LogIn className="h-4.5 w-4.5" aria-hidden="true" />}
+                                {signedIn ? t("lp_browse_arcade") : t("login")}
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </Reveal>
+        </section>
     );
 }
 
@@ -317,27 +561,7 @@ export default function LandingPage() {
                 </section>
 
                 {/* ------------------------------------------------------------ Final CTA */}
-                <section className="px-4 py-24 sm:px-6">
-                    <Reveal>
-                        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-zinc-950 px-6 py-16 text-center text-white shadow-2xl sm:px-12">
-                            <div className="absolute inset-0 bg-[linear-gradient(120deg,#6366f1,#a855f7,#ec4899,#f59e0b)] bg-[length:300%_300%] opacity-90 animate-gradient" />
-                            <div className="absolute inset-0 bg-grid opacity-20" />
-                            <div className="relative">
-                                <Globe2 className="mx-auto h-10 w-10 animate-float" />
-                                <h2 className="mx-auto mt-5 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">{t("lp_cta_title")}</h2>
-                                <p className="mx-auto mt-4 max-w-xl text-[16px] text-white/85">{t("lp_cta_sub")}</p>
-                                <div className="mt-8 flex flex-wrap justify-center gap-3">
-                                    <Link href={signedIn ? "/dashboard" : "/signup"} className="inline-flex h-12 items-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-bold text-zinc-900 shadow-xl transition hover:-translate-y-0.5">
-                                        <Rocket className="h-4.5 w-4.5" />{signedIn ? t("go_to_dashboard") : t("lp_start_free")}
-                                    </Link>
-                                    <Link href="/arcade" className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/40 bg-white/10 px-6 text-[15px] font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20">
-                                        <Gamepad2 className="h-4.5 w-4.5" />{t("lp_browse_arcade")}
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    </Reveal>
-                </section>
+                <FinalCta signedIn={signedIn} />
             </main>
 
             <SiteFooter />

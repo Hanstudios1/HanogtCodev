@@ -9,9 +9,9 @@ import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, type Timestamp } from "firebase/firestore";
 
-type EntryText = Copy | { key: string };
+export type EntryText = Copy | { key: string };
 
-interface UpdateEntry {
+export interface UpdateEntry {
     id: string;
     version: string;
     /** ISO date (YYYY-MM-DD); shown in the reader's locale. */
@@ -21,7 +21,8 @@ interface UpdateEntry {
     items: EntryText[];
 }
 
-const UPDATES: UpdateEntry[] = [
+/** Newest first; the About page builds its release timeline from the same list. */
+export const UPDATES: UpdateEntry[] = [
     {
         id: "v0.1.2",
         version: "v0.1.2",

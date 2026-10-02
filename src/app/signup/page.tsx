@@ -3,11 +3,27 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Check, CheckCircle2, Eye, EyeOff, LoaderCircle, Lock, Mail, User } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { AlertCircle, Check, CheckCircle2, Eye, EyeOff, LoaderCircle, Lock, Mail, ShieldCheck, User } from "lucide-react";
+import { useI18n, type Copy } from "@/lib/i18n";
 import { AUTH_NETWORK_ERROR, completeSignIn, safeCallbackPath, signInWithPassword, startGoogleSignIn } from "@/lib/auth-client";
-import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
+import AuthShell, { Divider, GoogleButton, LegalNotice, inputClass } from "@/components/auth/AuthShell";
 import { useRawSession } from "@/components/Provider";
+import { LANGUAGE_STATS } from "@/lib/runtimes/languages";
+
+const PAGE_COPY = {
+    subtitle: {
+        TR: "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V3 ile oyun yap, Hanogt AI ve toplulukla üret.",
+        EN: "With a free account you can write code in {count} languages, build games with Hanogt Engine V3 and create with Hanogt AI and the community.",
+    },
+    passwordRules: {
+        TR: "Şifre en az 10 karakter olmalı ve en az bir harf ile bir rakam içermelidir.",
+        EN: "Your password needs at least 10 characters, including a letter and a digit.",
+    },
+    twoStep: {
+        TR: "Hesabını daha sonra Hesap Ayarları'ndan iki adımlı doğrulamayla güçlendirebilirsin.",
+        EN: "You can strengthen your account later with two-step verification in Account Settings.",
+    },
+} satisfies Record<string, Copy>;
 
 function passwordStrength(password: string) {
     let score = 0;
@@ -69,7 +85,7 @@ function SignupForm() {
             return;
         }
         if (!rulesPassed) {
-            setError(t("password_too_short") || "Şifre en az 10 karakter, bir harf ve bir rakam içermelidir.");
+            setError(tx(PAGE_COPY.passwordRules));
             return;
         }
         setLoading(true);
@@ -104,7 +120,7 @@ function SignupForm() {
     return (
         <AuthShell
             title={t("signup") || "Kayıt Ol"}
-            subtitle={t("create_free_account") || "Hemen ücretsiz hesabını oluştur"}
+            subtitle={tx(PAGE_COPY.subtitle, { count: LANGUAGE_STATS.usable })}
             footer={<>{t("already_have_account") || "Zaten hesabın var mı?"} <Link href={`/login${callbackPath !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackPath)}` : ""}`} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{t("login") || "Giriş Yap"}</Link></>}
         >
             <GoogleButton label={t("signup_google") || "Google ile Üye Ol"} onClick={() => {
@@ -159,10 +175,11 @@ function SignupForm() {
                     {loading ? (t("creating_account") || "Hesap Oluşturuluyor...") : (t("signup") || "Kayıt Ol")}
                 </button>
             </form>
-            <p className="mt-6 text-center text-xs leading-5 text-zinc-400">
-                {t("auth_terms_notice") || "Devam ederek Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz."}{" "}
-                <Link href="/terms-of-use" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("terms_of_use") || "Kullanım Şartları"}</Link> · <Link href="/privacy-policy" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("privacy_policy") || "Gizlilik Politikası"}</Link>
+            <p className="mt-5 flex items-start gap-2 rounded-2xl bg-zinc-100 px-3.5 py-3 text-xs leading-5 text-zinc-600 dark:bg-white/[0.04] dark:text-zinc-400">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <span>{tx(PAGE_COPY.twoStep)}</span>
             </p>
+            <LegalNotice />
         </AuthShell>
     );
 }

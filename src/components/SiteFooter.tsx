@@ -77,7 +77,7 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
                             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-200 text-zinc-600 transition hover:-translate-y-0.5 hover:text-zinc-950 dark:border-white/10 dark:text-zinc-300 dark:hover:text-white" aria-label="GitHub">
                                 <Github className="h-4 w-4" />
                             </a>
-                            <LangToggle />
+                            <LangToggle placement="up-start" />
                             <ThemeToggle />
                         </div>
                     </div>
