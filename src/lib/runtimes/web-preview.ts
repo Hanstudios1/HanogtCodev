@@ -156,6 +156,10 @@ function bridgeScript(token: string, stdin: string[], map: Array<{ s: number; e:
         + "window.open=function(u){send('console','warn',['window.open is disabled in the preview: '+u]);return null};"
         + "window.addEventListener('submit',function(e){if(!e.defaultPrevented){e.preventDefault();send('console','info',['[form] submit was prevented; the preview has no server to send it to'])}});"
         + "window.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(!a||e.defaultPrevented)return;var h=a.getAttribute('href')||'';if(h.charAt(0)==='#')return;e.preventDefault();send('console','info',['[link] '+h+' (links do not navigate inside the preview)'])});"
+        // A sandboxed frame has no storage of its own (reading localStorage throws), so pages get an in-memory
+        // stand-in that lasts until the preview reloads.
+        + "function mem(){var d=Object.create(null);return{getItem:function(k){k=String(k);return k in d?d[k]:null},setItem:function(k,v){d[String(k)]=String(v)},removeItem:function(k){delete d[String(k)]},clear:function(){d=Object.create(null)},key:function(i){var k=Object.keys(d);return i>=0&&i<k.length?k[i]:null},get length(){return Object.keys(d).length}}}"
+        + "['localStorage','sessionStorage'].forEach(function(name){var ok=false;try{var st=window[name];st.setItem('__hanogt','1');st.removeItem('__hanogt');ok=true}catch(e){}if(!ok){try{Object.defineProperty(window,name,{value:mem(),configurable:true})}catch(e){}}});"
         + "send('ready','info',[]);})();</script>";
 }
 
