@@ -1,4 +1,5 @@
 import type { Copy } from "@/lib/i18n";
+import type { PaddleEnvironment, PaddleStatus } from "@/lib/paddle";
 import {
     MAX_ACTIVE_ANNOUNCEMENTS,
     type AdminAuditAction,
@@ -50,10 +51,16 @@ export const ERROR_COPY: Record<string, Copy> = {
         vars: { count: MAX_ACTIVE_ANNOUNCEMENTS },
     },
     invalid_plan: { TR: "Geçersiz plan.", EN: "Invalid plan." },
-    invalid_price: { TR: "Fiyat 0 ile 100.000 ₺ arasında olmalı.", EN: "The price must be between 0 and 100,000 TRY." },
+    invalid_price: { TR: "Fiyat 0 ile 100.000 arasında olmalı.", EN: "The price must be between 0 and 100,000." },
     invalid_number: { TR: "Sayı geçersiz ya da izin verilen aralığın dışında.", EN: "The number is invalid or out of range." },
     invalid_coupon: { TR: "Kupon kodu 3-24 karakter olmalı; yalnızca büyük harf, rakam, - ve _ kullanın.", EN: "Coupon codes are 3-24 characters: capital letters, digits, - and _ only." },
     coupon_exists: { TR: "Bu kupon kodu zaten var.", EN: "That coupon code already exists." },
+    paddle_unconfigured: { TR: "Paddle bağlı değil. Önce Paddle anahtarlarını Vercel'e girip yeniden dağıtın.", EN: "Paddle isn't connected. Add the Paddle keys in Vercel and redeploy first." },
+    paddle_error: { TR: "Paddle isteği tamamlanamadı. Biraz sonra tekrar deneyin; sürerse Paddle bağlantısının durumuna bakın.", EN: "The Paddle request failed. Try again shortly; if it keeps failing, check the Paddle connection status." },
+    paddle_coupon_code: { TR: "Paddle'a aktarılan kupon kodları yalnızca harf ve rakamdan oluşabilir; - ve _ kullanmayın.", EN: "Coupon codes sent to Paddle may only contain letters and digits; don't use - or _." },
+    invalid_price_id: { TR: "Fiyat kimliği geçersiz. Paddle'daki pri_ ile başlayan kimliği girin.", EN: "Invalid price ID. Enter the ID starting with pri_ from Paddle." },
+    price_mismatch: { TR: "Seçilen fiyat bu alana uymuyor: Paddle'da etkin değil, faturalama aralığı farklı ya da aynı fiyat iki kez seçilmiş.", EN: "The chosen price doesn't fit: it isn't active in Paddle, its billing period differs or the same price was chosen twice." },
+    already_linked: { TR: "Bu Paddle müşterisi başka bir hesaba bağlı.", EN: "This Paddle customer is linked to another account." },
     unavailable: { TR: "Yönetim hizmetine şu anda ulaşılamıyor.", EN: "The admin service is unavailable right now." },
     network: { TR: "Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edin.", EN: "Couldn't reach the server. Check your internet connection." },
     unknown: { TR: "Beklenmeyen bir hata oluştu.", EN: "Something unexpected went wrong." },
@@ -126,6 +133,19 @@ export const RISK_COPY: Record<SecurityRisk, Copy> = {
     unknown: { TR: "Bilinmiyor", EN: "Unknown" },
 };
 
+export const PADDLE_ENVIRONMENT_COPY: Record<PaddleEnvironment, Copy> = {
+    sandbox: { TR: "Sandbox", EN: "Sandbox" },
+    production: { TR: "Canlı", EN: "Live" },
+};
+
+export const PADDLE_STATUS_COPY: Record<PaddleStatus, Copy> = {
+    active: { TR: "Etkin", EN: "Active" },
+    trialing: { TR: "Deneme süresinde", EN: "Trialing" },
+    past_due: { TR: "Ödeme bekleniyor", EN: "Payment overdue" },
+    paused: { TR: "Duraklatıldı", EN: "Paused" },
+    canceled: { TR: "İptal edildi", EN: "Canceled" },
+};
+
 export const SECURITY_ACTION_COPY: Record<string, Copy> = {
     execution_blocked: { TR: "Kod çalıştırma engellendi", EN: "Code run blocked" },
 };
@@ -160,6 +180,14 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "coupon.create": { TR: "Kupon oluşturuldu", EN: "Coupon created" },
     "coupon.set_active": { TR: "Kupon açıldı veya kapatıldı", EN: "Coupon switched on or off" },
     "coupon.delete": { TR: "Kupon silindi", EN: "Coupon deleted" },
+    "coupon.sync": { TR: "Kupon Paddle'a aktarıldı", EN: "Coupon sent to Paddle" },
+    "paddle.set_prices": { TR: "Paddle fiyat eşlemesi değişti", EN: "Paddle price mapping changed" },
+    "paddle.set_sales_open": { TR: "Satışlar açıldı veya kapatıldı", EN: "Sales opened or closed" },
+    "paddle.create_catalog": { TR: "Paddle kataloğu oluşturuldu", EN: "Paddle catalog created" },
+    "paddle.link": { TR: "Paddle aboneliği hesaba bağlandı", EN: "Paddle subscription linked to an account" },
+    "paddle.dismiss": { TR: "Eşleşmeyen Paddle aboneliği yoksayıldı", EN: "Unlinked Paddle subscription dismissed" },
+    "paddle.resync": { TR: "Abonelik Paddle'dan yeniden eşitlendi", EN: "Subscription re-synced from Paddle" },
+    "legal.set_info": { TR: "İşletme bilgileri güncellendi", EN: "Business details updated" },
     "subscription.set_plan": { TR: "Kullanıcının planı değişti", EN: "User's plan changed" },
     "subscription.block": { TR: "Plan kullanımı engellendi", EN: "Plan use blocked" },
     "subscription.unblock": { TR: "Plan engeli kaldırıldı", EN: "Plan block lifted" },
@@ -216,4 +244,27 @@ export const DETAIL_KEY_COPY: Record<string, Copy> = {
     priority: { TR: "Öncelik", EN: "Priority" },
     ticketId: { TR: "Talep", EN: "Ticket" },
     messages: { TR: "Mesaj sayısı", EN: "Messages" },
+    subscriptionId: { TR: "Paddle aboneliği", EN: "Paddle subscription" },
+    customerId: { TR: "Paddle müşterisi", EN: "Paddle customer" },
+    paddleDiscountId: { TR: "Paddle indirimi", EN: "Paddle discount" },
+    environment: { TR: "Ortam", EN: "Environment" },
+    plusMonth: { TR: "Plus aylık", EN: "Plus monthly" },
+    plusYear: { TR: "Plus yıllık", EN: "Plus yearly" },
+    proMonth: { TR: "Pro aylık", EN: "Pro monthly" },
+    proYear: { TR: "Pro yıllık", EN: "Pro yearly" },
+    checked: { TR: "Paddle'da doğrulandı", EN: "Checked with Paddle" },
+    found: { TR: "Bulunan abonelik", EN: "Subscriptions found" },
+    result: { TR: "Sonuç", EN: "Result" },
+    legalName: { TR: "Yasal ad", EN: "Legal name" },
+    brand: { TR: "Marka", EN: "Brand" },
+    contactEmail: { TR: "İletişim e-postası", EN: "Contact e-mail" },
+    address: { TR: "Adres", EN: "Address" },
+    taxId: { TR: "VKN / MERSİS", EN: "Tax ID / MERSIS" },
+    kep: { TR: "KEP", EN: "KEP" },
+    keptBilling: { TR: "Paddle bilgisi korundu", EN: "Paddle details kept" },
+    open: { TR: "Satışa açık", EN: "On sale" },
+    created: { TR: "Oluşturulan", EN: "Created" },
+    reused: { TR: "Var olan", EN: "Already there" },
+    conflicts: { TR: "Çakışma", EN: "Conflicts" },
+    currency: { TR: "Para birimi", EN: "Currency" },
 };

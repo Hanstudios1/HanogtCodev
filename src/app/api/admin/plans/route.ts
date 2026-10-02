@@ -1,19 +1,20 @@
 import type { NextRequest } from "next/server";
-import type { AdminCoupon, AdminPlansResponse, AdminPriceChange, AdminUserPlanResponse } from "@/components/Admin/types";
+import type { AdminCoupon, AdminPlansResponse, AdminPriceChange } from "@/components/Admin/types";
+import type { PaddleEnvironment } from "@/lib/paddle";
 import {
     AI_BONUS_MAX,
+    DEFAULT_PLAN_CATALOG,
     GRANT_DAYS_MAX,
     PAID_PLAN_IDS,
     PLAN_IDS,
     PRICE_MAX,
-    aiLimitsFor,
-    effectivePlan,
     normalizeCouponCode,
     type PaidPlanId,
     type PlanPrice,
 } from "@/lib/plans";
 import {
     AdminHttpError,
+    adminError,
     adminFailure,
     adminJson,
     auditLogMutation,
@@ -28,9 +29,18 @@ import {
     writeAuditLog,
 } from "@/lib/server/admin";
 import { commitServerMutations, countServerQuery, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { PaddleApiError, getPaddleConfig, isPaddleConfigured } from "@/lib/server/paddle";
+import {
+    adminPersonPlan,
+    couponDiscountId,
+    createPaddleDiscount,
+    isPaddleDiscountCode,
+    paddleAdminFailure,
+    paddleDiscountUsage,
+    setPaddleDiscountActive,
+} from "@/lib/server/paddle-admin";
 import {
     CATALOG_PATH,
-    aiUsage,
     forgetCatalogCache,
     normalizeCatalog,
     normalizePlanPrice,
@@ -67,7 +77,7 @@ function readFutureDate(value: unknown): Date | null {
     return new Date(time);
 }
 
-function couponOf(record: Record<string, unknown> & { _id: string }): AdminCoupon {
+function couponOf(record: Record<string, unknown> & { _id: string }, environment: PaddleEnvironment): AdminCoupon {
     const plan = record.plan === "plus" || record.plan === "pro" ? record.plan : "any";
     return {
         code: record._id,
@@ -80,6 +90,8 @@ function couponOf(record: Record<string, unknown> & { _id: string }): AdminCoupo
         note: typeof record.note === "string" ? record.note.slice(0, 300) : "",
         createdBy: typeof record.createdBy === "string" ? record.createdBy : "",
         createdAt: toIso(record.createdAt),
+        paddleDiscountId: couponDiscountId(record, environment),
+        paddleTimesUsed: null,
     };
 }
 
@@ -89,7 +101,9 @@ function historyOf(value: unknown): AdminPriceChange[] {
         if (!entry || typeof entry !== "object") return [];
         const record = entry as Record<string, unknown>;
         if (record.plan !== "plus" && record.plan !== "pro") return [];
-        return [{ plan: record.plan, by: typeof record.by === "string" ? record.by : "", at: toIso(record.at), from: normalizePlanPrice(record.from), to: normalizePlanPrice(record.to) }];
+        // Entries from before prices moved to US dollars carry no currency: they were Turkish lira.
+        const currency = typeof record.currency === "string" && /^[A-Z]{3}$/.test(record.currency) ? record.currency : "TRY";
+        return [{ plan: record.plan, currency, by: typeof record.by === "string" ? record.by : "", at: toIso(record.at), from: normalizePlanPrice(record.from), to: normalizePlanPrice(record.to) }];
     });
 }
 
@@ -100,22 +114,28 @@ async function overview(): Promise<AdminPlansResponse> {
         countServerQuery({ collectionId: "plan_waitlist", where: [{ field: "plans", op: "ARRAY_CONTAINS", value: "plus" }], upTo: 100_000 }).catch(() => null),
         countServerQuery({ collectionId: "plan_waitlist", where: [{ field: "plans", op: "ARRAY_CONTAINS", value: "pro" }], upTo: 100_000 }).catch(() => null),
     ]);
+    const config = getPaddleConfig();
+    const list = coupons.map((record) => couponOf(record as Record<string, unknown> & { _id: string }, config.environment));
+    const discounts = list.flatMap((coupon) => (coupon.paddleDiscountId ? [coupon.paddleDiscountId] : []));
+    if (discounts.length && config.apiKey) {
+        // Redemptions happen at Paddle's checkout; the panel shows Paddle's count when it can get it.
+        const usage = await paddleDiscountUsage(discounts).catch(() => null);
+        for (const coupon of list) coupon.paddleTimesUsed = coupon.paddleDiscountId ? usage?.get(coupon.paddleDiscountId) ?? null : null;
+    }
     return {
         catalog: normalizeCatalog(catalogRecord),
         history: historyOf(catalogRecord?.history).slice(0, HISTORY_MAX),
-        coupons: coupons.map((record) => couponOf(record as Record<string, unknown> & { _id: string })),
+        coupons: list,
         waitlist: { plus, pro },
     };
 }
 
-async function userPlan(email: string): Promise<AdminUserPlanResponse> {
-    const [user, record, usage] = await Promise.all([
-        getServerDocument<Record<string, unknown>>(`users/${email}`),
-        getServerDocument<Record<string, unknown>>(subscriptionPath(email)),
-        aiUsage(email),
-    ]);
-    const subscription = normalizeSubscription(record);
-    return { email, exists: Boolean(user), subscription, effectivePlan: effectivePlan(subscription), aiLimits: aiLimitsFor(subscription), aiUsage: usage };
+/** Paddle refused or couldn't be reached: the action fails as a whole (its own `status` isn't a Firestore one). */
+function paddleFailure(error: unknown) {
+    const paddle = paddleAdminFailure(error);
+    if (!paddle) return null;
+    if (error instanceof PaddleApiError) console.error("[admin:plans:paddle]", error.status || "network", error.code);
+    return adminError(paddle.status, paddle.code);
 }
 
 /**
@@ -127,7 +147,7 @@ export async function GET(request: NextRequest) {
     if (!guard.ok) return guard.response;
     try {
         const emailParam = request.nextUrl.searchParams.get("email");
-        if (emailParam !== null) return adminJson(await userPlan(requireEmail(emailParam)));
+        if (emailParam !== null) return adminJson(await adminPersonPlan(requireEmail(emailParam)));
         return adminJson(await overview());
     } catch (error) {
         return adminFailure(error, "plans:get");
@@ -156,10 +176,12 @@ export async function POST(request: NextRequest) {
             const previous = catalog.plans[plan];
             if (JSON.stringify(previous) === JSON.stringify(next)) throw new AdminHttpError(409, "no_change");
             const plans = { ...catalog.plans, [plan]: next } as Record<PaidPlanId, PlanPrice>;
-            const history = [{ plan, by: actor, at: now, from: previous, to: next }, ...(Array.isArray(record?.history) ? record.history : [])].slice(0, HISTORY_MAX);
+            // The catalog only counts prices stored with the current currency, so it is written with them.
+            const currency = DEFAULT_PLAN_CATALOG.currency;
+            const history = [{ plan, currency, by: actor, at: now, from: previous, to: next }, ...(Array.isArray(record?.history) ? record.history : [])].slice(0, HISTORY_MAX);
             await commitServerMutations([
-                { type: "update", path: CATALOG_PATH, data: { plans, history, updatedAt: now, updatedBy: actor }, updateFields: ["plans", "history", "updatedAt", "updatedBy"], ...(record?._updateTime ? { updateTime: record._updateTime } : {}) },
-                auditLogMutation(actor, "plan.set_price", CATALOG_PATH, { plan, monthly: next.monthly, yearly: next.yearly, discountPercent: next.discountPercent, visible: next.visible }),
+                { type: "update", path: CATALOG_PATH, data: { currency, plans, history, updatedAt: now, updatedBy: actor }, updateFields: ["currency", "plans", "history", "updatedAt", "updatedBy"], ...(record?._updateTime ? { updateTime: record._updateTime } : {}) },
+                auditLogMutation(actor, "plan.set_price", CATALOG_PATH, { plan, currency, monthly: next.monthly, yearly: next.yearly, discountPercent: next.discountPercent, visible: next.visible }),
             ]);
             forgetCatalogCache();
             return adminJson(await overview());
@@ -169,6 +191,7 @@ export async function POST(request: NextRequest) {
             const code = normalizeCouponCode(body.code);
             if (!code) throw new AdminHttpError(400, "invalid_coupon");
             const path = `plan_coupons/${code}`;
+            const config = getPaddleConfig();
             if (action === "createCoupon") {
                 const data = {
                     code,
@@ -183,26 +206,67 @@ export async function POST(request: NextRequest) {
                     createdAt: now,
                 };
                 if (await getServerDocument(path)) throw new AdminHttpError(409, "coupon_exists");
-                await commitServerMutations([
-                    { type: "create", path, data },
-                    auditLogMutation(actor, "coupon.create", path, { code, percentOff: data.percentOff, plan: data.plan, maxUses: data.maxUses, expiresAt: data.expiresAt?.toISOString() ?? null }),
-                ]);
+                // With Paddle connected the code must work at checkout: no Paddle discount, no coupon.
+                let paddle: { paddleDiscountId: string; paddleEnvironment: PaddleEnvironment } | null = null;
+                if (isPaddleConfigured(config)) {
+                    if (!isPaddleDiscountCode(code)) throw new AdminHttpError(400, "paddle_coupon_code");
+                    paddle = { paddleDiscountId: await createPaddleDiscount(data), paddleEnvironment: config.environment };
+                }
+                try {
+                    await commitServerMutations([
+                        { type: "create", path, data: { ...data, paddleDiscountId: null, ...paddle } },
+                        auditLogMutation(actor, "coupon.create", path, {
+                            code,
+                            percentOff: data.percentOff,
+                            plan: data.plan,
+                            maxUses: data.maxUses,
+                            expiresAt: data.expiresAt?.toISOString() ?? null,
+                            paddleDiscountId: paddle?.paddleDiscountId ?? null,
+                        }),
+                    ]);
+                } catch (error) {
+                    // No live discount the panel doesn't know about.
+                    if (paddle) await setPaddleDiscountActive(paddle.paddleDiscountId, false).catch(() => undefined);
+                    throw error;
+                }
                 return adminJson(await overview(), 201);
             }
             const record = await getServerDocument<Record<string, unknown>>(path);
             if (!record) throw new AdminHttpError(404, "not_found");
+            // Mirrored to Paddle first: if Paddle refuses, nothing changes here either.
+            const discount = couponDiscountId(record, config.environment);
             if (action === "setCouponActive") {
                 const active = requireBoolean(body.active);
                 if ((record.active === true) === active) throw new AdminHttpError(409, "no_change");
-                await commitServerMutations([
-                    { type: "update", path, data: { active, updatedAt: now, updatedBy: actor }, updateFields: ["active", "updatedAt", "updatedBy"], ...(record._updateTime ? { updateTime: record._updateTime } : {}) },
-                    auditLogMutation(actor, "coupon.set_active", path, { code, active }),
-                ]);
+                if (discount) await setPaddleDiscountActive(discount, active);
+                try {
+                    await commitServerMutations([
+                        { type: "update", path, data: { active, updatedAt: now, updatedBy: actor }, updateFields: ["active", "updatedAt", "updatedBy"], ...(record._updateTime ? { updateTime: record._updateTime } : {}) },
+                        auditLogMutation(actor, "coupon.set_active", path, { code, active, paddleDiscountId: discount }),
+                    ]);
+                } catch (error) {
+                    if (discount) await setPaddleDiscountActive(discount, !active).catch(() => undefined);
+                    throw error;
+                }
             } else {
-                await commitServerMutations([
-                    { type: "delete", path },
-                    auditLogMutation(actor, "coupon.delete", path, { code }),
-                ]);
+                if (discount) {
+                    try {
+                        await setPaddleDiscountActive(discount, false);
+                    } catch (error) {
+                        // Gone at Paddle, or already off there: nothing left to archive.
+                        const gone = error instanceof PaddleApiError && error.status === 404;
+                        if (!gone && record.active === true) throw error;
+                    }
+                }
+                try {
+                    await commitServerMutations([
+                        { type: "delete", path, ...(record._updateTime ? { updateTime: record._updateTime } : {}) },
+                        auditLogMutation(actor, "coupon.delete", path, { code, paddleDiscountId: discount }),
+                    ]);
+                } catch (error) {
+                    if (discount && record.active === true) await setPaddleDiscountActive(discount, true).catch(() => undefined);
+                    throw error;
+                }
             }
             return adminJson(await overview());
         }
@@ -218,16 +282,28 @@ export async function POST(request: NextRequest) {
         if (action === "resetAi") {
             await resetAiLimits(email);
             await writeAuditLog(actor, "subscription.reset_ai", `users/${email}`, { email });
-            return adminJson(await userPlan(email));
+            return adminJson(await adminPersonPlan(email));
         }
 
         if (action === "removePlan") {
             if (!record) throw new AdminHttpError(409, "no_change");
-            await commitServerMutations([
-                { type: "delete", path, ...precondition },
-                auditLogMutation(actor, "subscription.remove", path, { email, plan: current.plan }),
-            ]);
-            return adminJson(await userPlan(email));
+            // The record also links the Paddle customer and subscription (of either environment): keep those.
+            const keptBilling = (record.paddle !== undefined && record.paddle !== null) || (record.paddleCustomerId !== undefined && record.paddleCustomerId !== null);
+            if (keptBilling) {
+                const staffDefaults = current.plan === "free" && !current.expiresAt && !current.note && !current.grantedBy && !current.grantedAt && current.aiBonusDaily === 0 && !current.aiBonusUntil;
+                if (staffDefaults) throw new AdminHttpError(409, "no_change");
+                const staff = { plan: "free", expiresAt: null, note: "", grantedBy: null, grantedAt: null, aiBonusDaily: 0, aiBonusUntil: null, updatedAt: now };
+                await commitServerMutations([
+                    { type: "update", path, data: staff, updateFields: Object.keys(staff), ...precondition },
+                    auditLogMutation(actor, "subscription.remove", path, { email, plan: current.plan, keptBilling }),
+                ]);
+            } else {
+                await commitServerMutations([
+                    { type: "delete", path, ...precondition },
+                    auditLogMutation(actor, "subscription.remove", path, { email, plan: current.plan }),
+                ]);
+            }
+            return adminJson(await adminPersonPlan(email));
         }
 
         let data: Record<string, unknown>;
@@ -261,8 +337,10 @@ export async function POST(request: NextRequest) {
                 : { type: "create", path, data: { plan: "free", status: "active", aiBonusDaily: 0, aiBonusUntil: null, ...data, email, createdAt: now } },
             auditLogMutation(actor, audit, path, details),
         ]);
-        return adminJson(await userPlan(email));
+        return adminJson(await adminPersonPlan(email));
     } catch (error) {
+        const paddle = paddleFailure(error);
+        if (paddle) return paddle;
         if (isFirestoreConflict(error)) return adminFailure(new AdminHttpError(409, "conflict"), "plans:post");
         return adminFailure(error, "plans:post");
     }

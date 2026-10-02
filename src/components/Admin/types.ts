@@ -76,6 +76,12 @@ export type AdminErrorCode =
     | "invalid_number"
     | "invalid_coupon"
     | "coupon_exists"
+    | "paddle_unconfigured"
+    | "paddle_error"
+    | "paddle_coupon_code"
+    | "invalid_price_id"
+    | "price_mismatch"
+    | "already_linked"
     | "unavailable";
 
 export type AdminErrorBody = { error: string; code: AdminErrorCode };
@@ -319,6 +325,14 @@ export type AdminAuditAction =
     | "coupon.create"
     | "coupon.set_active"
     | "coupon.delete"
+    | "coupon.sync"
+    | "paddle.set_prices"
+    | "paddle.set_sales_open"
+    | "paddle.create_catalog"
+    | "paddle.link"
+    | "paddle.dismiss"
+    | "paddle.resync"
+    | "legal.set_info"
     | "subscription.set_plan"
     | "subscription.block"
     | "subscription.unblock"
@@ -382,11 +396,13 @@ export function isSafeAnnouncementLink(value: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Plans ("coming soon"): prices, coupons, people's plans and Hanogt AI limits
+// Plans: prices, coupons, people's plans and Hanogt AI limits
 // ---------------------------------------------------------------------------
 
 export type AdminPriceChange = {
     plan: "plus" | "pro";
+    /** Currency of the prices in this change (older entries were in TRY). */
+    currency: string;
     by: string;
     at: string | null;
     from: { monthly: number | null; yearly: number | null; discountPercent: number; visible: boolean };
@@ -404,6 +420,10 @@ export type AdminCoupon = {
     note: string;
     createdBy: string;
     createdAt: string | null;
+    /** The Paddle discount (dsc_…) checkout uses for this code, in the environment Paddle is set up for. */
+    paddleDiscountId: string | null;
+    /** Redemptions Paddle counted; null when unknown. */
+    paddleTimesUsed: number | null;
 };
 
 export type AdminPlansResponse = {
@@ -418,6 +438,126 @@ export type AdminUserPlanResponse = {
     exists: boolean;
     subscription: import("@/lib/plans").UserSubscription;
     effectivePlan: import("@/lib/plans").PlanId;
+    /** Where the plan in effect comes from: the Paddle subscription or a staff assignment (null for Free). */
+    planSource: "paddle" | "staff" | null;
     aiLimits: { perMinute: number; perDay: number };
     aiUsage: { minute: { count: number; resetsAt: string } | null; day: { count: number; resetsAt: string } | null };
+    /** The environment Paddle is set up for; `subscription` only holds Paddle data from it. */
+    paddleEnvironment: import("@/lib/paddle").PaddleEnvironment;
+    /** Paddle's dashboard for that environment (links to the customer and subscription). */
+    paddleDashboard: string;
 };
+
+// ---------------------------------------------------------------------------
+// Paddle Billing (Admin › Subscriptions)
+// ---------------------------------------------------------------------------
+
+/** Which Paddle price (pri_…) sells each plan and billing period. */
+export type AdminPaddlePlanPrices = Record<"plus" | "pro", Record<"month" | "year", string | null>>;
+
+/** An active recurring price in Paddle, for the price mapping. */
+export type AdminPaddlePrice = {
+    id: string;
+    productId: string;
+    productName: string;
+    description: string;
+    interval: "month" | "year" | null;
+    /** Paddle's billing cycle, e.g. "1 month" or "3 month". */
+    cycle: string;
+    /** Lowest currency unit, as Paddle sends it ("19900"). */
+    amount: string;
+    currency: string;
+    trialDays: number | null;
+    /** The plan the price seems to sell (hanogt_plan custom data, then the names). */
+    suggestedPlan: "plus" | "pro" | null;
+};
+
+/** Configuration problems src/lib/server/paddle.ts detects (PaddleConfigWarning). */
+export type AdminPaddleWarning =
+    | "key_token_mismatch"
+    | "environment_override_ignored"
+    | "public_secret"
+    | "token_is_api_key"
+    | "api_key_format"
+    | "client_token_format"
+    | "webhook_secret_format";
+
+/** A Paddle subscription no account could be found for (paddle_unlinked). */
+export type AdminPaddleUnlinked = {
+    subscriptionId: string;
+    customerId: string | null;
+    /** The customer's e-mail at Paddle, when it could be read. */
+    customerEmail: string | null;
+    status: string;
+    plan: "plus" | "pro" | null;
+    priceId: string | null;
+    seenAt: string | null;
+};
+
+/** GET /api/admin/paddle (and the answer to its POST actions, except resync and syncCoupon). */
+export type AdminPaddleResponse = {
+    /** Which variables are set (never their values). */
+    config: {
+        apiKey: boolean;
+        clientToken: boolean;
+        webhookSecret: boolean;
+        environment: import("@/lib/paddle").PaddleEnvironment;
+        warnings: AdminPaddleWarning[];
+        /** API key and client-side token present: checkouts can be opened. */
+        ready: boolean;
+    };
+    /** Result of listing the prices (the API check); error.code is Paddle's or "not_configured". */
+    api: { ok: boolean; error: { status: number; code: string } | null };
+    /** Prices, mapping and products below all belong to config.environment. */
+    prices: AdminPaddlePrice[];
+    mapping: AdminPaddlePlanPrices;
+    suggestions: AdminPaddlePlanPrices;
+    /** Products whose subscriptions unlock each plan (prices replaced earlier included). */
+    products: Record<"plus" | "pro", string[]>;
+    /** Both environments' settings, read-only (to carry the sandbox mapping over to live). */
+    environments: Record<import("@/lib/paddle").PaddleEnvironment, AdminPaddleEnvironmentSettings>;
+    /** Last change of either environment's mapping. */
+    mappingUpdatedAt: string | null;
+    mappingUpdatedBy: string | null;
+    /** The webhook: last accepted notification and last refused delivery (with the reason). */
+    status: { lastEventAt: string | null; lastEventType: string | null; lastRejectedAt: string | null; lastRejectedReason: string | null };
+    /** Addresses to enter in Paddle. */
+    urls: { webhook: string; paymentLink: string };
+    unlinked: AdminPaddleUnlinked[];
+    legal: import("@/lib/legal-info").OperatorInfo;
+    /** Owners may change the business details, open sales and create the catalog in Paddle. */
+    owner: boolean;
+    /** Plans are on sale to everyone in this environment; closed, only staff and PADDLE_TESTER_EMAILS see them. */
+    salesOpen: boolean;
+    /** What "create the catalog" sets up: amounts in the currency's smallest unit ("2000" = $20.00). */
+    expectedPrices: { currency: string } & AdminPaddleAmounts;
+    dashboard: { base: string };
+};
+
+export type AdminPaddleAmounts = Record<"plus" | "pro", Record<"month" | "year", string>>;
+
+export type AdminPaddleEnvironmentSettings = { prices: AdminPaddlePlanPrices; products: Record<"plus" | "pro", string[]>; salesOpen: boolean };
+
+/** What POST { action: "createCatalog" } found, created and left alone in Paddle. */
+export type AdminPaddleCatalogReport = {
+    environment: import("@/lib/paddle").PaddleEnvironment;
+    products: Array<{ plan: "plus" | "pro"; productId: string; created: boolean }>;
+    prices: Array<{
+        plan: "plus" | "pro";
+        interval: "month" | "year";
+        /** conflict: a price for this period exists with another amount or currency; nothing was created. */
+        outcome: "created" | "reused" | "conflict";
+        /** The price now mapped to the slot (null on a conflict). */
+        priceId: string | null;
+        expected: { amount: string; currency: string };
+        found: Array<{ id: string; amount: string; currency: string }>;
+    }>;
+};
+
+export type AdminPaddleCatalogResponse = AdminPaddleResponse & { report: AdminPaddleCatalogReport };
+
+/** POST /api/admin/paddle { action: "resync" }: the person's plan and how many Paddle subscriptions were found. */
+export type AdminPaddleResyncResponse = AdminUserPlanResponse & { found: number };
+
+/** POST /api/admin/paddle { action: "syncCoupon" }. */
+export type AdminPaddleCouponResponse = { code: string; paddleDiscountId: string };
