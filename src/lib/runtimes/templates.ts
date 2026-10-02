@@ -20,7 +20,12 @@ export interface ProjectTemplate {
     id: string;
     title: LanguageText;
     description: LanguageText;
-    kind: "web" | "polyglot";
+    /**
+     * "web": an HTML page with its stylesheet and script (opens the preview);
+     * "docs": Markdown, Mermaid and LaTeX files, each previewed on its own;
+     * "polyglot": programs in several languages (opens the console).
+     */
+    kind: "web" | "docs" | "polyglot";
     files: ReadonlyArray<{ name: string; language: string; code: string }>;
 }
 
@@ -146,6 +151,137 @@ export const FILE_TEMPLATES: readonly FileTemplate[] = [
         code: "Copies every byte of the Input tab to the output\n,[.,]\n",
     },
     {
+        id: "prolog-family",
+        language: "prolog",
+        title: { TR: "Aile ağacı ve sorgular", EN: "Family tree and queries" },
+        description: { TR: "Olgular, kurallar ve ?- sorgularıyla geri izleme.", EN: "Facts, rules and backtracking with ?- queries." },
+        code: "% Facts\nparent(tom, bob).\nparent(tom, liz).\nparent(bob, ann).\nparent(bob, pat).\nparent(pat, jim).\n\n% Rules\ngrandparent(X, Z) :- parent(X, Y), parent(Y, Z).\nancestor(X, Y) :- parent(X, Y).\nancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).\nsibling(X, Y) :- parent(P, X), parent(P, Y), X \\= Y.\n\n% Each query prints all of its answers, like the Prolog top level.\n?- grandparent(tom, Who).\n?- ancestor(tom, jim).\n?- sibling(ann, S).\n?- findall(D, ancestor(bob, D), Descendants).\n",
+    },
+    {
+        id: "prolog-lists",
+        language: "prolog",
+        title: { TR: "Listeler ve özyineleme", EN: "Lists and recursion" },
+        description: { TR: "Kendi length/sum/reverse yüklemleriniz ve read/1 ile girdi.", EN: "Your own length/sum/reverse predicates and input with read/1." },
+        stdin: "[3, 1, 4, 1, 5, 9].\n",
+        code: ":- initialization(main).\n\nmy_length([], 0).\nmy_length([_|T], N) :- my_length(T, M), N is M + 1.\n\nmy_sum([], 0).\nmy_sum([H|T], S) :- my_sum(T, R), S is H + R.\n\nmy_reverse(L, R) :- my_reverse(L, [], R).\nmy_reverse([], Acc, Acc).\nmy_reverse([H|T], Acc, R) :- my_reverse(T, [H|Acc], R).\n\nmain :-\n    read(List),\n    my_length(List, N),\n    my_sum(List, S),\n    my_reverse(List, R),\n    msort(List, Sorted),\n    format(\"length: ~w, sum: ~w~n\", [N, S]),\n    format(\"reversed: ~w~nsorted: ~w~n\", [R, Sorted]).\n",
+    },
+    {
+        id: "forth-fizzbuzz",
+        language: "forth",
+        title: { TR: "FizzBuzz ve özyineleme", EN: "FizzBuzz and recursion" },
+        description: { TR: "IF/ELSE, DO döngüsü ve RECURSE ile faktöriyel.", EN: "IF/ELSE, a DO loop and a factorial with RECURSE." },
+        code: "\\ FizzBuzz from 1 to 15\n: fizzbuzz ( n -- )\n  dup 15 mod 0= if drop .\" FizzBuzz \" exit then\n  dup 3 mod 0= if drop .\" Fizz \" exit then\n  dup 5 mod 0= if drop .\" Buzz \" exit then\n  . ;\n: run ( -- ) 16 1 do i fizzbuzz loop cr ;\nrun\n\n\\ Factorial with RECURSE\n: fact ( n -- n! ) dup 1 > if dup 1- recurse * else drop 1 then ;\n10 fact . cr\n",
+    },
+    {
+        id: "forth-input",
+        language: "forth",
+        title: { TR: "Girdi okuma", EN: "Reading input" },
+        description: { TR: "ACCEPT ile bir satır okur, EVALUATE ile sayıya çevirir.", EN: "Reads a line with ACCEPT and turns it into numbers with EVALUATE." },
+        stdin: "7 6\n",
+        code: "\\ Reads \"a b\" from the Input tab and prints their product.\ncreate line 80 allot\nline 80 accept   ( -- length )\nline swap evaluate  ( -- a b )\n.\" Product: \" * . cr\n",
+    },
+    {
+        id: "basic-guess",
+        language: "basic",
+        title: { TR: "Sayı tahmin oyunu", EN: "Number guessing game" },
+        description: { TR: "INPUT, DO … LOOP ve IF … ELSEIF bloğu.", EN: "INPUT, DO … LOOP and an IF … ELSEIF block." },
+        stdin: "50\n25\n37\n42\n",
+        code: "secret = 42\ntries = 0\nPRINT \"Guess the number between 1 and 100.\"\nDO\n    INPUT \"Your guess\"; guess\n    tries = tries + 1\n    IF guess < secret THEN\n        PRINT \"Too small!\"\n    ELSEIF guess > secret THEN\n        PRINT \"Too big!\"\n    ELSE\n        PRINT \"Correct in\"; tries; \"tries.\"\n    END IF\nLOOP UNTIL guess = secret\n",
+    },
+    {
+        id: "basic-classic",
+        language: "basic",
+        title: { TR: "Klasik satır numaralı BASIC", EN: "Classic line-numbered BASIC" },
+        description: { TR: "GOSUB/RETURN, DATA/READ ve GOTO.", EN: "GOSUB/RETURN, DATA/READ and GOTO." },
+        code: "10 REM Average of the numbers in the DATA lines\n20 TOTAL = 0\n30 FOR I = 1 TO 5\n40 READ N\n50 GOSUB 200\n60 NEXT I\n70 PRINT \"Average:\"; TOTAL / 5\n80 END\n200 REM Add N to the total\n210 TOTAL = TOTAL + N\n220 PRINT \"Read\"; N\n230 RETURN\n300 DATA 12, 7, 30, 18, 3\n",
+    },
+    {
+        id: "basic-functions",
+        language: "basic",
+        title: { TR: "SUB ve FUNCTION", EN: "SUB and FUNCTION" },
+        description: { TR: "QBasic tarzı alt programlar, diziler ve SELECT CASE.", EN: "QBasic-style procedures, arrays and SELECT CASE." },
+        code: "DECLARE FUNCTION Grade$ (score)\nDECLARE SUB ShowLine (n)\n\nDIM scores(1 TO 4)\nscores(1) = 95: scores(2) = 72: scores(3) = 58: scores(4) = 85\nFOR i = 1 TO 4\n    PRINT \"Student\"; i; \"->\"; scores(i); Grade$(scores(i))\nNEXT i\nCALL ShowLine(20)\nEND\n\nFUNCTION Grade$ (score)\n    SELECT CASE score\n        CASE IS >= 90: Grade$ = \"A\"\n        CASE 75 TO 89: Grade$ = \"B\"\n        CASE 60 TO 74: Grade$ = \"C\"\n        CASE ELSE: Grade$ = \"F\"\n    END SELECT\nEND FUNCTION\n\nSUB ShowLine (n)\n    PRINT STRING$(n, \"-\")\nEND SUB\n",
+    },
+    {
+        id: "befunge-sum",
+        language: "befunge",
+        title: { TR: "İki sayıyı topla", EN: "Add two numbers" },
+        description: { TR: "& ile Girdi sekmesinden iki sayı okur.", EN: "Reads two numbers from the Input tab with &." },
+        stdin: "19 23\n",
+        code: "&&+.55+,@\nReads two integers (&&), adds them (+), prints the result (.) and a newline (55+,).\n",
+    },
+    {
+        id: "mips-sum",
+        language: "mips",
+        title: { TR: "Girdi ve döngü", EN: "Input and a loop" },
+        description: { TR: "read_int ile n'yi okur ve 1..n toplamını yazdırır.", EN: "Reads n with read_int and prints the sum of 1..n." },
+        stdin: "10\n",
+        code: "        .data\nprompt: .asciiz \"n = \"\nresult: .asciiz \"Sum of 1..n = \"\n\n        .text\nmain:   li   $v0, 4          # print the prompt\n        la   $a0, prompt\n        syscall\n        li   $v0, 5          # read_int -> $v0\n        syscall\n        move $t0, $v0        # $t0 = n\n        li   $t1, 0          # $t1 = sum\nloop:   blez $t0, done\n        add  $t1, $t1, $t0\n        addi $t0, $t0, -1\n        j    loop\ndone:   li   $v0, 4\n        la   $a0, result\n        syscall\n        li   $v0, 1          # print_int\n        move $a0, $t1\n        syscall\n        li   $v0, 11         # print_char '\\n'\n        li   $a0, 10\n        syscall\n        li   $v0, 10         # exit\n        syscall\n",
+    },
+    {
+        id: "mips-functions",
+        language: "mips",
+        title: { TR: "Fonksiyon ve yığın", EN: "Functions and the stack" },
+        description: { TR: "jal/jr ile özyinelemeli faktöriyel; $ra yığında saklanır.", EN: "A recursive factorial with jal/jr; $ra is saved on the stack." },
+        code: "        .text\nmain:   li   $a0, 10\n        jal  fact\n        move $a0, $v0\n        li   $v0, 1\n        syscall\n        li   $v0, 10\n        syscall\n\n# fact(n): returns n! in $v0\nfact:   addi $sp, $sp, -8\n        sw   $ra, 4($sp)\n        sw   $a0, 0($sp)\n        li   $v0, 1\n        ble  $a0, 1, return\n        addi $a0, $a0, -1\n        jal  fact\n        lw   $a0, 0($sp)\n        mul  $v0, $v0, $a0\nreturn: lw   $ra, 4($sp)\n        addi $sp, $sp, 8\n        jr   $ra\n",
+    },
+    {
+        id: "yaml-workflow",
+        language: "yaml",
+        title: { TR: "GitHub Actions iş akışı", EN: "GitHub Actions workflow" },
+        description: { TR: "Doğrulanıp biçimlendirilen gerçekçi bir CI dosyası.", EN: "A realistic CI file to validate and format." },
+        code: "name: CI\non:\n  push:\n    branches: [main]\n  pull_request:\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        node: [20, 22]\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: ${{ matrix.node }}\n      - run: npm ci\n      - run: npm test\n",
+    },
+    {
+        id: "toml-cargo",
+        language: "toml",
+        title: { TR: "Cargo.toml", EN: "Cargo.toml" },
+        description: { TR: "Rust paket tanımı: tablolar, diziler ve satır içi tablolar.", EN: "A Rust package manifest: tables, arrays and inline tables." },
+        code: "[package]\nname = \"hanogt-demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\nauthors = [\"Hanogt <hello@example.com>\"]\n\n[dependencies]\nserde = { version = \"1.0\", features = [\"derive\"] }\nrand = \"0.8\"\n\n[profile.release]\nlto = true\nopt-level = 3\n",
+    },
+    {
+        id: "csv-grades",
+        language: "csv",
+        title: { TR: "Not tablosu", EN: "Grade sheet" },
+        description: { TR: "Tırnaklı alanlar ve tablo görünümü.", EN: "Quoted fields and a table view." },
+        code: "student,math,physics,comment\nAda,95,88,\"Great work, keep it up\"\nLinus,72,91,\"Strong in \"\"physics\"\"\"\nGrace,85,79,\n",
+    },
+    {
+        id: "xml-rss",
+        language: "xml",
+        title: { TR: "RSS beslemesi", EN: "RSS feed" },
+        description: { TR: "Ad alanları, CDATA ve varlıklar.", EN: "Namespaces, CDATA and entities." },
+        code: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n  <channel>\n    <title>Hanogt News</title>\n    <link>https://example.com/</link>\n    <atom:link href=\"https://example.com/rss.xml\" rel=\"self\" type=\"application/rss+xml\"/>\n    <item>\n      <title>Tom &amp; Jerry learn Prolog</title>\n      <description><![CDATA[<p>New languages in <b>Hanogt Codev</b>.</p>]]></description>\n    </item>\n  </channel>\n</rss>\n",
+    },
+    {
+        id: "mermaid-sequence",
+        language: "mermaid",
+        title: { TR: "Sıralama diyagramı", EN: "Sequence diagram" },
+        description: { TR: "Tarayıcı, sunucu ve veritabanı arasındaki mesajlar.", EN: "Messages between a browser, a server and a database." },
+        code: "sequenceDiagram\n    autonumber\n    actor User\n    participant Browser\n    participant Server\n    participant DB as Database\n    User->>Browser: Press Run\n    Browser->>Server: POST /api/execute\n    Server->>DB: Save run\n    DB-->>Server: OK\n    Server-->>Browser: Output\n    Browser-->>User: Show console\n",
+    },
+    {
+        id: "mermaid-charts",
+        language: "mermaid",
+        title: { TR: "Pasta grafiği ve Gantt", EN: "Pie chart and Gantt" },
+        description: { TR: "Mermaid ile veri grafiği.", EN: "A data chart drawn with Mermaid." },
+        code: "pie showData\n    title Languages in a class project\n    \"Python\" : 45\n    \"JavaScript\" : 30\n    \"Prolog\" : 10\n    \"Other\" : 15\n",
+    },
+    {
+        id: "latex-math",
+        language: "latex",
+        title: { TR: "Matematik formülleri", EN: "Math formulas" },
+        description: { TR: "Matris, durumlar, hizalı denklemler ve teorem.", EN: "Matrices, cases, aligned equations and a theorem." },
+        code: "\\documentclass{article}\n\\newcommand{\\R}{\\mathbb{R}}\n\\begin{document}\n\\section{Linear algebra}\nFor $A \\in \\R^{2 \\times 2}$:\n\\[\n  A = \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}, \\qquad \\det A = -2.\n\\]\n\n\\section{Functions}\n\\[\n  |x| = \\begin{cases} x & x \\ge 0 \\\\ -x & x < 0 \\end{cases}\n\\]\n\\begin{align*}\n  (a + b)^2 &= a^2 + 2ab + b^2 \\\\\n  \\int_0^1 x^n \\, dx &= \\frac{1}{n + 1}\n\\end{align*}\n\n\\begin{theorem}[Pythagoras]\nIn a right triangle, $a^2 + b^2 = c^2$.\n\\end{theorem}\n\\end{document}\n",
+    },
+    {
+        id: "svg-animated",
+        language: "svg",
+        title: { TR: "Hareketli rozet", EN: "Animated badge" },
+        description: { TR: "CSS animasyonlu SVG (önizlemede oynar).", EN: "An SVG with a CSS animation (plays in the preview)." },
+        code: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\">\n  <style>\n    .ring { transform-origin: 100px 100px; animation: spin 4s linear infinite; }\n    @keyframes spin { to { transform: rotate(360deg); } }\n  </style>\n  <circle cx=\"100\" cy=\"100\" r=\"90\" fill=\"#312e81\"/>\n  <circle class=\"ring\" cx=\"100\" cy=\"100\" r=\"70\" fill=\"none\" stroke=\"#a5b4fc\" stroke-width=\"10\" stroke-dasharray=\"110 40\"/>\n  <text x=\"100\" y=\"108\" text-anchor=\"middle\" font-family=\"system-ui, sans-serif\" font-size=\"22\" fill=\"#fff\">Hanogt</text>\n</svg>\n",
+    },
+    {
         id: "markdown-readme",
         language: "markdown",
         title: { TR: "Proje README'si", EN: "Project README" },
@@ -165,6 +301,12 @@ const TODO_INDEX = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset
 const TODO_STYLE = "body {\n  font-family: system-ui, sans-serif;\n  background: #f4f4f5;\n  color: #18181b;\n  display: flex;\n  justify-content: center;\n  padding: 2rem 1rem;\n}\n\nmain {\n  width: min(28rem, 100%);\n}\n\nform {\n  display: flex;\n  gap: 0.5rem;\n}\n\ninput {\n  flex: 1;\n  padding: 0.6rem 0.8rem;\n  border: 1px solid #d4d4d8;\n  border-radius: 0.75rem;\n  font: inherit;\n}\n\nbutton {\n  border: 0;\n  border-radius: 0.75rem;\n  padding: 0.6rem 1rem;\n  background: #4f46e5;\n  color: white;\n  font: inherit;\n  cursor: pointer;\n}\n\nli {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  padding: 0.5rem 0;\n  border-bottom: 1px solid #e4e4e7;\n}\n\nli.done span {\n  text-decoration: line-through;\n  color: #a1a1aa;\n}\n";
 
 const TODO_SCRIPT = "const form = document.getElementById(\"form\");\nconst input = document.getElementById(\"task\");\nconst list = document.getElementById(\"list\");\nconst summary = document.getElementById(\"summary\");\nconst tasks = [];\n\nfunction render() {\n  list.replaceChildren(...tasks.map((task, index) => {\n    const item = document.createElement(\"li\");\n    item.className = task.done ? \"done\" : \"\";\n    const checkbox = document.createElement(\"input\");\n    checkbox.type = \"checkbox\";\n    checkbox.checked = task.done;\n    checkbox.addEventListener(\"change\", () => {\n      tasks[index].done = checkbox.checked;\n      render();\n    });\n    const text = document.createElement(\"span\");\n    text.textContent = task.text;\n    item.append(checkbox, text);\n    return item;\n  }));\n  const left = tasks.filter((task) => !task.done).length;\n  summary.textContent = `${left} of ${tasks.length} left`;\n}\n\nform.addEventListener(\"submit\", (event) => {\n  event.preventDefault();\n  const text = input.value.trim();\n  if (!text) return;\n  tasks.push({ text, done: false });\n  console.log(\"Added:\", text);\n  input.value = \"\";\n  render();\n});\n\nrender();\n";
+
+const DOCS_README = "# Project notes\n\nSwitch between the tabs: the preview follows the active file.\n\n- `flow.mmd` is a **Mermaid** flowchart.\n- `formulas.tex` is a **LaTeX** page rendered with KaTeX.\n";
+
+const DOCS_FLOW = "flowchart TD\n    Idea([Idea]) --> Write[Write the code]\n    Write --> Run{Run it}\n    Run -->|Error| Fix[Read the error and fix it]\n    Fix --> Run\n    Run -->|Works| Share[Share on Hanogt Media]\n";
+
+const DOCS_FORMULAS = "\\section*{Formulas}\nThe area of a circle is $A = \\pi r^2$ and\n\\[\n  \\sum_{k=1}^{n} k^2 = \\frac{n(n+1)(2n+1)}{6}.\n\\]\n";
 
 export const PROJECT_TEMPLATES: readonly ProjectTemplate[] = [
     {
@@ -190,6 +332,17 @@ export const PROJECT_TEMPLATES: readonly ProjectTemplate[] = [
         ],
     },
     {
+        id: "docs-project",
+        kind: "docs",
+        title: { TR: "Doküman projesi (Markdown + Mermaid + LaTeX)", EN: "Docs project (Markdown + Mermaid + LaTeX)" },
+        description: { TR: "README, akış diyagramı ve formül sayfası; etkin dosya canlı önizlenir.", EN: "A README, a flowchart and a formula sheet; the active file is previewed live." },
+        files: [
+            { name: "README.md", language: "markdown", code: DOCS_README },
+            { name: "flow.mmd", language: "mermaid", code: DOCS_FLOW },
+            { name: "formulas.tex", language: "latex", code: DOCS_FORMULAS },
+        ],
+    },
+    {
         id: "polyglot",
         kind: "polyglot",
         title: { TR: "Çok dilli proje", EN: "Polyglot project" },
@@ -199,6 +352,18 @@ export const PROJECT_TEMPLATES: readonly ProjectTemplate[] = [
             { name: "main.js", language: "javascript", code: "console.log(\"Hello from JavaScript!\");\n" },
             { name: "main.scm", language: "scheme", code: "(display \"Hello from Scheme!\")\n(newline)\n" },
             { name: "main.lua", language: "lua", code: "print(\"Hello from Lua!\")\n" },
+        ],
+    },
+    {
+        id: "classics",
+        kind: "polyglot",
+        title: { TR: "Klasik diller turu", EN: "Tour of classic languages" },
+        description: { TR: "BASIC, Forth, Prolog ve MIPS assembly tarayıcıda birlikte çalışır.", EN: "BASIC, Forth, Prolog and MIPS assembly run together in the browser." },
+        files: [
+            { name: "main.bas", language: "basic", code: "PRINT \"Hello from BASIC!\"\n" },
+            { name: "main.fth", language: "forth", code: ".\" Hello from Forth!\" cr\n" },
+            { name: "main.pro", language: "prolog", code: ":- initialization(main).\nmain :- writeln('Hello from Prolog!').\n" },
+            { name: "main.asm", language: "mips", code: "        .data\nmsg:    .asciiz \"Hello from MIPS!\\n\"\n        .text\nmain:   li $v0, 4\n        la $a0, msg\n        syscall\n" },
         ],
     },
 ];

@@ -115,3 +115,37 @@ test("static documents carry a script-free policy and escape their input", () =>
     assert.match(showcase, /<\\\/style><script>x<\/script>/);
     assert.match(showcase, /<h1>&lt;T><\/h1>/);
 });
+
+test("pages in the sandboxed preview get in-memory storage when the real one is blocked", () => {
+    const result = buildWebPreview(files, files[0], { token: "tok" });
+    const makeWindow = () => {
+        const window = { parent: { postMessage() {} }, addEventListener() {} };
+        window.window = window;
+        return window;
+    };
+    const quiet = { log() {}, info() {}, warn() {}, error() {}, debug() {}, table() {}, dir() {}, trace() {} };
+    const documentStub = { body: null, createElement: () => ({ style: {}, setAttribute() {}, remove() {} }), documentElement: { appendChild() {} } };
+
+    // An opaque-origin frame throws a SecurityError on any access to localStorage/sessionStorage.
+    const blocked = makeWindow();
+    for (const name of ["localStorage", "sessionStorage"]) {
+        Object.defineProperty(blocked, name, { configurable: true, get() { throw new Error("SecurityError: the document is sandboxed"); } });
+    }
+    const context = vm.createContext({ window: blocked, console: quiet, setTimeout, JSON, Object, String, document: documentStub });
+    vm.runInContext(bridgeOf(result.html), context);
+    vm.runInContext("window.localStorage.setItem('score', 42); var score = window.localStorage.getItem('score'); var missing = window.localStorage.getItem('nope'); var size = window.localStorage.length; window.sessionStorage.setItem('a', 'b'); window.localStorage.clear(); var afterClear = window.localStorage.length;", context);
+    assert.equal(context.score, "42");
+    assert.equal(context.missing, null);
+    assert.equal(context.size, 1);
+    assert.equal(context.afterClear, 0);
+
+    // Working storage is left untouched.
+    const store = new Map();
+    const real = { setItem: (k, v) => store.set(k, v), getItem: (k) => store.get(k) ?? null, removeItem: (k) => store.delete(k) };
+    const open = makeWindow();
+    open.localStorage = real;
+    open.sessionStorage = real;
+    vm.runInContext(bridgeOf(result.html), vm.createContext({ window: open, console: quiet, setTimeout, JSON, Object, String, document: documentStub }));
+    assert.equal(open.localStorage, real);
+    assert.equal(store.size, 0, "the probe key is removed again");
+});

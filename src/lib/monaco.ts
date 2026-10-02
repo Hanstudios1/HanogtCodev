@@ -171,6 +171,8 @@ type LanguageDefinition = {
     id: string;
     aliases: string[];
     extensions: string[];
+    /** Exact file names (e.g. "Makefile"). */
+    filenames?: string[];
     tokens: languages.IMonarchLanguage;
     configuration: languages.LanguageConfiguration;
 };
@@ -190,7 +192,7 @@ function cLikeConfiguration(lineComment = "//", block: languages.CharacterPair |
     };
 }
 
-/** A Monarch grammar for brace languages (D, Zig, Groovy, Pony). */
+/** A Monarch grammar for brace languages (D, Zig, Groovy, Pony, Odin, V, Gleam). */
 function cLikeTokens(options: {
     keywords: string[];
     types?: string[];
@@ -246,6 +248,9 @@ const NUMBER_RULES: languages.IMonarchLanguageRule[] = [
     [/0[xX][0-9a-fA-F_]+/, "number.hex"],
     [/\d[\d_]*/, "number"],
 ];
+
+/** Token types the CSV grammar cycles through, one per column. */
+const CSV_COLUMN_TOKENS = ["identifier", "string", "number", "type", "keyword", "predefined"];
 
 const EXTRA_LANGUAGES: LanguageDefinition[] = [
     {
@@ -468,10 +473,699 @@ const EXTRA_LANGUAGES: LanguageDefinition[] = [
         },
         configuration: { comments: { lineComment: "\"" }, brackets: BRACKETS, autoClosingPairs: [{ open: "(", close: ")" }, { open: "[", close: "]" }, { open: "{", close: "}" }, { open: "'", close: "'", notIn: ["string"] }] },
     },
+    // ------------------------------------------------------------ browser runtimes
+    {
+        id: "prolog",
+        aliases: ["Prolog", "pro"],
+        extensions: [".pro", ".prolog"],
+        tokens: {
+            defaultToken: "",
+            keywords: ["is", "mod", "rem", "div", "xor", "rdiv"],
+            builtins: [
+                "write", "writeln", "print", "nl", "tab", "format", "read", "read_term", "get_char", "put_char", "halt", "atom", "number", "integer",
+                "float", "var", "nonvar", "compound", "atomic", "callable", "is_list", "functor", "arg", "copy_term", "findall", "bagof", "setof",
+                "forall", "between", "succ", "plus", "length", "append", "member", "memberchk", "reverse", "nth0", "nth1", "msort", "sort", "last",
+                "sum_list", "max_list", "min_list", "numlist", "maplist", "foldl", "include", "exclude", "assert", "asserta", "assertz", "retract",
+                "retractall", "abolish", "atom_codes", "atom_chars", "char_code", "atom_length", "atom_concat", "sub_atom", "number_codes",
+                "atom_number", "atomic_list_concat", "upcase_atom", "downcase_atom", "catch", "throw", "call", "once", "ignore", "not", "true",
+                "fail", "false", "repeat", "phrase", "initialization", "dynamic", "discontiguous", "use_module", "op", "string_concat", "term_to_atom",
+            ],
+            tokenizer: {
+                root: [
+                    [/%.*$/, "comment"],
+                    [/\/\*/, "comment", "@comment"],
+                    [/0'(?:\\.|.)/, "string"],
+                    [/"/, "string", "@dstring"],
+                    [/'/, "string", "@qatom"],
+                    [/`/, "string", "@bstring"],
+                    [/[A-Z_][A-Za-z0-9_]*/, "variable"],
+                    [/[a-z][A-Za-z0-9_]*(?=\()/, { cases: { "@builtins": "predefined", "@default": "function" } }],
+                    [/[a-z][A-Za-z0-9_]*/, { cases: { "@keywords": "keyword", "@builtins": "predefined", "@default": "identifier" } }],
+                    [/\d+\.\d+(?:[eE][-+]?\d+)?/, "number.float"],
+                    [/0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|\d+/, "number"],
+                    [/:-|-->|\?-/, "keyword"],
+                    [/!/, "keyword"],
+                    [/[+\-*/\\^<>=~:.?@#&$]+/, "operator"],
+                    [/[()[\]{}|,;]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+                comment: [[/[^*/]+/, "comment"], [/\*\//, "comment", "@pop"], [/[*/]/, "comment"]],
+                dstring: [[/[^"\\]+/, "string"], [/\\./, "string.escape"], [/""/, "string"], [/"/, "string", "@pop"]],
+                qatom: [[/[^'\\]+/, "string"], [/\\./, "string.escape"], [/''/, "string"], [/'/, "string", "@pop"]],
+                bstring: [[/[^`\\]+/, "string"], [/\\./, "string.escape"], [/`/, "string", "@pop"]],
+            },
+        },
+        configuration: {
+            comments: { lineComment: "%", blockComment: ["/*", "*/"] },
+            brackets: BRACKETS,
+            autoClosingPairs: [...PAIRS, { open: "'", close: "'", notIn: ["string", "comment"] }],
+        },
+    },
+    {
+        id: "forth",
+        aliases: ["Forth", "gforth"],
+        extensions: [".fth", ".4th", ".forth", ".frt"],
+        tokens: {
+            defaultToken: "identifier",
+            ignoreCase: true,
+            keywords: [
+                ":", ";", "if", "else", "then", "begin", "until", "again", "while", "repeat", "do", "?do", "loop", "+loop", "leave", "unloop", "exit",
+                "recurse", "case", "of", "endof", "endcase", "immediate", "does>", "postpone", "literal", "[", "]", "'", "[']", "[char]", "char",
+                "variable", "2variable", "constant", "value", "to", "create", "allot", ",", "c,", "defer", "is", ":noname", "buffer:",
+            ],
+            builtins: [
+                "dup", "drop", "swap", "over", "rot", "-rot", "nip", "tuck", "pick", "roll", "2dup", "2drop", "2swap", "2over", "?dup", "depth", ">r",
+                "r>", "r@", "i", "j", "k", "@", "!", "+!", "c@", "c!", "cells", "cell+", "chars", "char+", "here", "emit", "cr", "space", "spaces",
+                "type", ".", ".s", "u.", ".r", "u.r", "key", "accept", "evaluate", "base", "decimal", "hex", "binary", "and", "or", "xor", "invert",
+                "lshift", "rshift", "negate", "abs", "min", "max", "mod", "/mod", "*/", "*/mod", "+", "-", "*", "/", "1+", "1-", "2*", "2/", "=",
+                "<>", "<", ">", "<=", ">=", "0=", "0<>", "0<", "0>", "u<", "within", "true", "false", "bye", "words", "count", "fill", "move",
+                "erase", "pad", "random", "execute", "abort", "bl",
+            ],
+            tokenizer: {
+                root: [
+                    [/\\(?:\s.*)?$/, "comment"],
+                    [/\((?=\s)/, "comment", "@paren"],
+                    [/(?:\.|s|c|abort)"(?=\s)/, { token: "keyword", next: "@dstring" }],
+                    [/\.\((?=\s)/, { token: "keyword", next: "@pstring" }],
+                    [/(:)(\s+)(\S+)/, ["keyword", "", "function"]],
+                    [/'.'(?=\s|$)/, "string"],
+                    [/-?(?:\$[0-9a-f]+|%[01]+|#?\d+)(?=\s|$)/, "number"],
+                    [/\S+/, { cases: { "@keywords": "keyword", "@builtins": "predefined", "@default": "identifier" } }],
+                    [/\s+/, ""],
+                ],
+                paren: [[/[^)]+/, "comment"], [/\)/, "comment", "@pop"]],
+                dstring: [[/[^"]+/, "string"], [/"/, "keyword", "@pop"]],
+                pstring: [[/[^)]+/, "string"], [/\)/, "keyword", "@pop"]],
+            },
+        },
+        configuration: { comments: { lineComment: "\\", blockComment: ["( ", ")"] }, brackets: [["(", ")"]], autoClosingPairs: [{ open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "basic",
+        aliases: ["BASIC", "QBasic", "bas"],
+        extensions: [".bas", ".basic", ".qb"],
+        tokens: {
+            defaultToken: "",
+            ignoreCase: true,
+            keywords: [
+                "print", "lprint", "input", "let", "if", "then", "else", "elseif", "end", "endif", "for", "to", "step", "next", "while", "wend", "do",
+                "loop", "until", "exit", "goto", "gosub", "return", "on", "dim", "redim", "as", "shared", "const", "data", "read", "restore", "swap",
+                "randomize", "sub", "function", "call", "declare", "def", "select", "case", "is", "stop", "system", "write", "cls", "color", "locate",
+                "screen", "line", "option", "base", "erase", "defint", "defstr", "deflng", "defsng", "defdbl", "common", "static", "integer", "long",
+                "single", "double", "string", "beep", "sleep", "width", "using", "preserve", "byval",
+            ],
+            operators: ["and", "or", "not", "xor", "mod", "eqv", "imp"],
+            builtins: [
+                "abs", "asc", "atn", "cdbl", "chr$", "cint", "clng", "cos", "csng", "exp", "fix", "hex$", "instr", "int", "lcase$", "left$", "len",
+                "log", "ltrim$", "mid$", "oct$", "right$", "rnd", "rtrim$", "sgn", "sin", "space$", "sqr", "str$", "string$", "tan", "timer", "trim$",
+                "ucase$", "val", "tab", "spc", "date$", "time$", "inkey$",
+            ],
+            tokenizer: {
+                root: [
+                    [/^\s*\d+/, "number.linenumber"],
+                    [/rem\b.*$/, "comment"],
+                    [/'.*$/, "comment"],
+                    [/"[^"]*"?/, "string"],
+                    [/&[hH][0-9a-fA-F]+|&[oO][0-7]+|&[bB][01]+/, "number.hex"],
+                    [/(?:\d+\.?\d*|\.\d+)(?:[eEdD][-+]?\d+)?[#!%&]?/, "number"],
+                    [/[A-Za-z_][\w.]*[$%!#&]?/, { cases: { "@keywords": "keyword", "@operators": "keyword", "@builtins": "predefined", "@default": "identifier" } }],
+                    [/<>|<=|>=|[<>=+\-*/\\^]/, "operator"],
+                    [/[(),;:?]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+            },
+        },
+        configuration: { comments: { lineComment: "'" }, brackets: [["(", ")"]], autoClosingPairs: [{ open: "(", close: ")" }, { open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "befunge",
+        aliases: ["Befunge-93", "befunge"],
+        extensions: [".b93", ".befunge", ".bf93"],
+        tokens: {
+            defaultToken: "comment",
+            tokenizer: {
+                root: [
+                    [/"[^"]*"?/, "string"],
+                    [/[0-9]/, "number"],
+                    [/[><^v?_|#@]/, "keyword"],
+                    [/[+\-*/%!`]/, "operator"],
+                    [/[:\\$]/, "type"],
+                    [/[.,&~]/, "predefined"],
+                    [/[gp]/, "variable"],
+                    [/\s+/, ""],
+                    [/[^\s"]/, "comment"],
+                ],
+            },
+        },
+        configuration: { autoClosingPairs: [{ open: "\"", close: "\"" }] },
+    },
+    {
+        id: "whitespace",
+        aliases: ["Whitespace", "ws"],
+        extensions: [".ws"],
+        tokens: {
+            defaultToken: "comment",
+            tokenizer: { root: [[/[ \t]+/, ""], [/[^ \t]+/, "comment"]] },
+        },
+        configuration: {},
+    },
+    {
+        id: "mermaid",
+        aliases: ["Mermaid", "mmd"],
+        extensions: [".mmd", ".mermaid"],
+        tokens: {
+            defaultToken: "",
+            keywords: [
+                "graph", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2", "erDiagram", "journey", "gantt", "pie",
+                "quadrantChart", "requirementDiagram", "gitGraph", "mindmap", "timeline", "sankey-beta", "xychart-beta", "block-beta", "packet-beta",
+                "architecture-beta", "kanban", "C4Context", "subgraph", "end", "participant", "actor", "note", "Note", "loop", "alt", "else", "opt",
+                "par", "and", "rect", "critical", "break", "activate", "deactivate", "title", "section", "dateFormat", "axisFormat", "class", "state",
+                "direction", "click", "style", "classDef", "linkStyle", "as", "over", "of", "left", "right", "autonumber", "commit", "branch",
+                "checkout", "merge", "TB", "TD", "BT", "RL", "LR", "showData", "accTitle", "accDescr", "excludes", "todayMarker",
+            ],
+            tokenizer: {
+                root: [
+                    [/%%.*$/, "comment"],
+                    [/"[^"]*"/, "string"],
+                    [/\|[^|]*\|/, "string"],
+                    [/[A-Za-z][\w-]*/, { cases: { "@keywords": "keyword", "@default": "identifier" } }],
+                    [/<-->|<--|-->>|->>|-->|---|-\.->|-\.-|==>|===|--[ox]|-[x)]|\.\.>|<\|--|\*--|o--|--|==|->|\.\./, "operator"],
+                    [/[[\](){}]/, "@brackets"],
+                    [/\d+(?:\.\d+)?/, "number"],
+                    [/[:;,&<>]/, "delimiter"],
+                    [/\s+/, ""],
+                    [/./, ""],
+                ],
+            },
+        },
+        configuration: { comments: { lineComment: "%%" }, brackets: BRACKETS, autoClosingPairs: PAIRS },
+    },
+    {
+        id: "latex",
+        aliases: ["LaTeX", "TeX", "tex"],
+        extensions: [".tex", ".latex", ".ltx"],
+        tokens: {
+            defaultToken: "",
+            tokenizer: {
+                root: [
+                    [/%.*$/, "comment"],
+                    [/(\\(?:begin|end))(\s*)(\{)([^}]*)(\})/, ["keyword", "", "delimiter.curly", "type", "delimiter.curly"]],
+                    [/\\(?:part|chapter|section|subsection|subsubsection|paragraph|subparagraph)\*?/, "keyword.flow"],
+                    [/\$\$/, "string", "@displayMath"],
+                    [/\$/, "string", "@inlineMath"],
+                    [/\\\[/, "string", "@bracketMath"],
+                    [/\\\(/, "string", "@parenMath"],
+                    [/\\[A-Za-z@]+\*?/, "keyword"],
+                    [/\\./, "string.escape"],
+                    [/[{}]/, "delimiter.curly"],
+                    [/[[\]]/, "delimiter.square"],
+                    [/[&~^_]/, "operator"],
+                    [/[^\\%$&~^_{}[\]]+/, ""],
+                ],
+                inlineMath: [[/[^$\\]+/, "string"], [/\\[A-Za-z]+/, "predefined"], [/\\./, "string"], [/\$/, "string", "@pop"]],
+                displayMath: [[/[^$\\]+/, "string"], [/\\[A-Za-z]+/, "predefined"], [/\\./, "string"], [/\$\$/, "string", "@pop"], [/\$/, "string"]],
+                bracketMath: [[/[^\\]+/, "string"], [/\\\]/, "string", "@pop"], [/\\[A-Za-z]+/, "predefined"], [/\\./, "string"]],
+                parenMath: [[/[^\\]+/, "string"], [/\\\)/, "string", "@pop"], [/\\[A-Za-z]+/, "predefined"], [/\\./, "string"]],
+            },
+        },
+        configuration: {
+            comments: { lineComment: "%" },
+            brackets: BRACKETS,
+            autoClosingPairs: [{ open: "{", close: "}" }, { open: "[", close: "]" }, { open: "(", close: ")" }, { open: "$", close: "$", notIn: ["string", "comment"] }],
+        },
+    },
+    // ------------------------------------------------------------ data and configuration
+    {
+        id: "toml",
+        aliases: ["TOML"],
+        extensions: [".toml"],
+        tokens: {
+            defaultToken: "",
+            tokenizer: {
+                root: [
+                    [/#.*$/, "comment"],
+                    [/^\s*\[\[?[^\]#]*\]\]?/, "type"],
+                    [/([A-Za-z0-9_\-.]+|"[^"]*"|'[^']*')(\s*)(=)/, ["key", "", "delimiter"]],
+                    [/"""/, "string", "@multiString"],
+                    [/'''/, "string", "@multiLiteral"],
+                    [/"/, "string", "@string"],
+                    [/'[^']*'/, "string"],
+                    [/\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?/, "number"],
+                    [/[+-]?(?:inf|nan)\b/, "number"],
+                    [/[+-]?(?:0x[0-9a-fA-F_]+|0o[0-7_]+|0b[01_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?)/, "number"],
+                    [/\b(?:true|false)\b/, "constant"],
+                    [/[[\]{},=.]/, "delimiter"],
+                    [/\s+/, ""],
+                    [/[^\s#"'[\]{},=]+/, ""],
+                ],
+                string: [[/[^"\\]+/, "string"], [/\\./, "string.escape"], [/"/, "string", "@pop"]],
+                multiString: [[/"""/, "string", "@pop"], [/[^"\\]+/, "string"], [/\\./, "string.escape"], [/"/, "string"]],
+                multiLiteral: [[/'''/, "string", "@pop"], [/[^']+/, "string"], [/'/, "string"]],
+            },
+        },
+        configuration: { comments: { lineComment: "#" }, brackets: [["{", "}"], ["[", "]"]], autoClosingPairs: PAIRS },
+    },
+    {
+        id: "dotenv",
+        aliases: ["Dotenv", ".env"],
+        extensions: [".env"],
+        tokens: {
+            defaultToken: "",
+            tokenizer: {
+                root: [
+                    [/^\s*#.*$/, "comment"],
+                    [/(export)(\s+)/, ["keyword", ""]],
+                    [/([A-Za-z_][A-Za-z0-9_.-]*)(\s*)(=)/, ["key", "", "delimiter"]],
+                    [/"/, "string", "@doubleQuoted"],
+                    [/'[^']*'?/, "string"],
+                    [/\$\{[^}]*\}|\$[A-Za-z_]\w*/, "variable"],
+                    [/\s+#.*$/, "comment"],
+                    [/[^\s#$"']+/, "string"],
+                    [/\s+/, ""],
+                    [/./, "string"],
+                ],
+                doubleQuoted: [[/[^"\\$]+/, "string"], [/\$\{[^}]*\}/, "variable"], [/\\./, "string.escape"], [/\$/, "string"], [/"/, "string", "@pop"]],
+            },
+        },
+        configuration: { comments: { lineComment: "#" }, autoClosingPairs: [{ open: "\"", close: "\"", notIn: ["string"] }, { open: "'", close: "'", notIn: ["string"] }] },
+    },
+    {
+        id: "csv",
+        aliases: ["CSV", "TSV"],
+        extensions: [".csv", ".tsv"],
+        // Columns cycle through six colours ("rainbow CSV"); every line starts again at the first one.
+        tokens: {
+            defaultToken: "",
+            tokenizer: Object.fromEntries(CSV_COLUMN_TOKENS.map((token, index) => {
+                const next = index + 1 < CSV_COLUMN_TOKENS.length ? `@column${index + 1}` : "@root";
+                const rules: languages.IMonarchLanguageRule[] = [
+                    [/"(?:[^"]|"")*"$/, { token, next: "@root" }],
+                    [/[^,;\t|"]+$/, { token, next: "@root" }],
+                    [/"(?:[^"]|"")*"/, token],
+                    [/[^,;\t|"]+/, token],
+                    [/[,;\t|]$/, { token: "delimiter", next: "@root" }],
+                    [/[,;\t|]/, { token: "delimiter", next }],
+                    [/"/, token],
+                ];
+                return [index === 0 ? "root" : `column${index}`, rules];
+            })),
+        },
+        configuration: { autoClosingPairs: [{ open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "makefile",
+        aliases: ["Makefile", "make"],
+        extensions: [".mk", ".mak", ".make"],
+        filenames: ["Makefile", "makefile", "GNUmakefile"],
+        tokens: {
+            defaultToken: "",
+            tokenizer: {
+                root: [
+                    [/#.*$/, "comment"],
+                    [/^\s*(?:-?include|sinclude|ifeq|ifneq|ifdef|ifndef|else|endif|define|endef|export|unexport|override|vpath)\b/, "keyword"],
+                    [/^\.[A-Z_]+(?=\s*:)/, "keyword"],
+                    [/^[^\s:#=]+(?=\s*::?(?!=))/, "type"],
+                    [/^\s*[A-Za-z_][\w.]*(?=\s*(?::|::|\?|\+|!)?=)/, "variable"],
+                    [/\$\((?:wildcard|patsubst|subst|filter|filter-out|foreach|shell|addprefix|addsuffix|notdir|dir|basename|suffix|sort|strip|findstring|if|or|and|call|eval|origin|value|info|warning|error|abspath|realpath|word|words|wordlist|firstword|lastword|join|file|flavor)\b/, "predefined"],
+                    [/\$\([^)\s]*\)|\$\{[^}\s]*\}|\$[@<^?*%+|]|\$\$/, "variable"],
+                    [/[:=?+!]+/, "operator"],
+                    [/"[^"]*"|'[^']*'/, "string"],
+                    [/[()]/, "delimiter"],
+                    [/[^\s$#:=()"']+/, ""],
+                    [/\s+/, ""],
+                    [/./, ""],
+                ],
+            },
+        },
+        configuration: { comments: { lineComment: "#" }, brackets: [["(", ")"], ["{", "}"]], autoClosingPairs: [{ open: "(", close: ")" }, { open: "{", close: "}" }, { open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "cmake",
+        aliases: ["CMake"],
+        extensions: [".cmake"],
+        filenames: ["CMakeLists.txt"],
+        tokens: {
+            defaultToken: "",
+            commands: [
+                "cmake_minimum_required", "project", "set", "unset", "add_executable", "add_library", "target_link_libraries", "target_include_directories",
+                "target_compile_options", "target_compile_definitions", "target_compile_features", "target_sources", "find_package", "include",
+                "include_directories", "link_directories", "add_subdirectory", "if", "elseif", "else", "endif", "foreach", "endforeach", "while",
+                "endwhile", "function", "endfunction", "macro", "endmacro", "message", "option", "install", "configure_file", "file", "list", "string",
+                "math", "return", "add_custom_command", "add_custom_target", "add_definitions", "add_compile_options", "set_target_properties",
+                "set_property", "get_property", "get_filename_component", "enable_testing", "add_test", "fetchcontent_declare",
+                "fetchcontent_makeavailable", "include_guard", "cmake_parse_arguments", "execute_process", "break", "continue",
+            ],
+            tokenizer: {
+                root: [
+                    [/#\[\[/, "comment", "@bracketComment"],
+                    [/#.*$/, "comment"],
+                    [/[A-Za-z_]\w*(?=\s*\()/, { cases: { "@commands": "keyword", "@default": "function" } }],
+                    [/\$\{[^}]*\}|\$ENV\{[^}]*\}|\$<[^>]*>/, "variable"],
+                    [/"/, "string", "@string"],
+                    [/\[\[/, "string", "@bracketString"],
+                    [/\b(?:ON|OFF|TRUE|FALSE|YES|NO|IGNORE|NOTFOUND)\b/, "constant"],
+                    [/\b[A-Z_][A-Z0-9_]+\b/, "type"],
+                    [/\d+(?:\.\d+)*/, "number"],
+                    [/[()]/, "@brackets"],
+                    [/\s+/, ""],
+                    [/[^\s()#"$]+/, ""],
+                    [/./, ""],
+                ],
+                string: [[/[^"\\$]+/, "string"], [/\$\{[^}]*\}/, "variable"], [/\\./, "string.escape"], [/\$/, "string"], [/"/, "string", "@pop"]],
+                bracketString: [[/\]\]/, "string", "@pop"], [/[^\]]+/, "string"], [/\]/, "string"]],
+                bracketComment: [[/\]\]/, "comment", "@pop"], [/[^\]]+/, "comment"], [/\]/, "comment"]],
+            },
+        },
+        configuration: { comments: { lineComment: "#" }, brackets: [["(", ")"]], autoClosingPairs: [{ open: "(", close: ")" }, { open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "nginx",
+        aliases: ["Nginx", "nginx.conf"],
+        extensions: [".nginx"],
+        filenames: ["nginx.conf"],
+        tokens: {
+            defaultToken: "",
+            blocks: ["server", "location", "http", "events", "upstream", "map", "if", "types", "stream", "geo", "limit_except", "split_clients", "mail"],
+            tokenizer: {
+                root: [
+                    [/#.*$/, "comment"],
+                    [/^(\s*)([a-z_]\w*)/, ["", { cases: { "@blocks": "keyword", "@default": "predefined" } }]],
+                    [/\$\w+|\$\{\w+\}/, "variable"],
+                    [/"/, "string", "@doubleQuoted"],
+                    [/'[^']*'?/, "string"],
+                    [/~\*?|\^~|=/, "operator"],
+                    [/\b\d+(?:\.\d+)?[kmgsdhwyKMG]?\b/, "number"],
+                    [/\b(?:on|off)\b/, "constant"],
+                    [/[{};]/, "delimiter"],
+                    [/[^\s{};#"'$]+/, ""],
+                    [/\s+/, ""],
+                ],
+                doubleQuoted: [[/[^"\\$]+/, "string"], [/\$\w+|\$\{\w+\}/, "variable"], [/\\./, "string.escape"], [/\$/, "string"], [/"/, "string", "@pop"]],
+            },
+        },
+        configuration: { comments: { lineComment: "#" }, brackets: [["{", "}"]], autoClosingPairs: [{ open: "{", close: "}" }, { open: "\"", close: "\"", notIn: ["string"] }, { open: "'", close: "'", notIn: ["string"] }] },
+    },
+    {
+        id: "prisma",
+        aliases: ["Prisma"],
+        extensions: [".prisma"],
+        tokens: {
+            defaultToken: "",
+            keywords: ["model", "enum", "datasource", "generator", "type", "view"],
+            types: ["String", "Int", "BigInt", "Float", "Decimal", "Boolean", "DateTime", "Json", "Bytes", "Unsupported"],
+            constants: ["true", "false", "null"],
+            tokenizer: {
+                root: [
+                    [/\/\/.*$/, "comment"],
+                    [/@@?[\w.]+/, "annotation"],
+                    [/[A-Za-z_]\w*/, { cases: { "@keywords": "keyword", "@types": "type", "@constants": "constant", "@default": "identifier" } }],
+                    [/"/, "string", "@string"],
+                    [/\d+(?:\.\d+)?/, "number"],
+                    [/[?!]|\[\]/, "operator"],
+                    [/[{}()[\],=:]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+                string: [[/[^"\\]+/, "string"], [/\\./, "string.escape"], [/"/, "string", "@pop"]],
+            },
+        },
+        configuration: cLikeConfiguration("//", null),
+    },
+    // ------------------------------------------------------------ systems and hardware
+    {
+        id: "nasm",
+        aliases: ["x86 Assembly (NASM)", "nasm", "x86"],
+        extensions: [".nasm"],
+        tokens: {
+            defaultToken: "",
+            ignoreCase: true,
+            registers: [
+                "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "eax", "ebx", "ecx", "edx",
+                "esi", "edi", "ebp", "esp", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d", "ax", "bx", "cx", "dx", "si", "di", "bp", "sp",
+                "al", "bl", "cl", "dl", "ah", "bh", "ch", "dh", "sil", "dil", "bpl", "spl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b",
+                "cs", "ds", "ss", "es", "fs", "gs", "rip", "eip", "ip", "cr0", "cr2", "cr3", "cr4",
+                "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15",
+                "ymm0", "ymm1", "ymm2", "ymm3", "ymm4", "ymm5", "ymm6", "ymm7", "st0", "st1", "st2", "st3", "st4", "st5", "st6", "st7",
+            ],
+            directives: [
+                "section", "segment", "global", "extern", "bits", "org", "align", "alignb", "db", "dw", "dd", "dq", "dt", "do", "dy", "resb", "resw",
+                "resd", "resq", "rest", "reso", "resy", "equ", "times", "incbin", "default", "rel", "abs", "struc", "endstruc", "istruc", "iend", "at",
+                "byte", "word", "dword", "qword", "tword", "oword", "yword", "ptr", "short", "near", "far", "cpu", "common", "static",
+            ],
+            instructions: [
+                "mov", "movzx", "movsx", "movsxd", "lea", "push", "pop", "add", "sub", "inc", "dec", "mul", "imul", "div", "idiv", "neg", "and", "or",
+                "xor", "not", "shl", "shr", "sal", "sar", "rol", "ror", "rcl", "rcr", "cmp", "test", "jmp", "je", "jne", "jz", "jnz", "jg", "jge", "jl",
+                "jle", "ja", "jae", "jb", "jbe", "js", "jns", "jo", "jno", "jc", "jnc", "jp", "jnp", "jcxz", "jecxz", "jrcxz", "call", "ret", "leave",
+                "enter", "nop", "int", "syscall", "sysenter", "sysret", "hlt", "loop", "loope", "loopne", "rep", "repe", "repne", "movsb", "movsw",
+                "movsd", "movsq", "stosb", "stosw", "stosd", "stosq", "lodsb", "lodsw", "lodsd", "lodsq", "scasb", "cmpsb", "cld", "std", "cli", "sti",
+                "xchg", "cmpxchg", "xadd", "lock", "cpuid", "rdtsc", "cqo", "cdq", "cwd", "cbw", "cwde", "cdqe", "bt", "bts", "btr", "btc", "bsf",
+                "bsr", "popcnt", "lzcnt", "tzcnt", "adc", "sbb", "cmove", "cmovne", "cmovz", "cmovnz", "cmovg", "cmovge", "cmovl", "cmovle",
+                "cmova", "cmovae", "cmovb", "cmovbe", "sete", "setne", "setz", "setnz", "setg", "setge", "setl", "setle", "seta", "setae", "setb",
+                "setbe", "movss", "movaps", "movups", "movdqa", "movdqu", "movq", "movd", "addss", "addsd", "subss", "subsd", "mulss", "mulsd",
+                "divss", "divsd", "sqrtss", "sqrtsd", "cvtsi2sd", "cvtsi2ss", "cvttsd2si", "cvttss2si", "pxor", "paddd", "psubd", "pushf", "popf",
+                "pusha", "popa", "iret", "iretq", "ud2", "pause",
+            ],
+            tokenizer: {
+                root: [
+                    [/;.*$/, "comment"],
+                    [/%[a-z_]+/, "annotation"],
+                    [/^\s*[A-Za-z_.$?][\w.$?@#~]*:/, "type.identifier"],
+                    [/"[^"]*"?|'[^']*'?|`[^`]*`?/, "string"],
+                    [/0x[0-9a-f_]+|[0-9][0-9a-f_]*h\b|0b[01_]+|0o[0-7_]+|\d[\d_]*(?:\.\d+)?/, "number"],
+                    [/[A-Za-z_.$?][\w.$?@#~]*/, { cases: { "@registers": "variable.predefined", "@directives": "keyword", "@instructions": "keyword.flow", "@default": "identifier" } }],
+                    [/[[\]]/, "@brackets"],
+                    [/[+\-*/%<>|&^~:,()]/, "operator"],
+                    [/\s+/, ""],
+                ],
+            },
+        },
+        configuration: { comments: { lineComment: ";" }, brackets: [["[", "]"], ["(", ")"]], autoClosingPairs: [{ open: "[", close: "]" }, { open: "(", close: ")" }, { open: "\"", close: "\"", notIn: ["string"] }, { open: "'", close: "'", notIn: ["string"] }] },
+    },
+    {
+        id: "fortran",
+        aliases: ["Fortran", "f90"],
+        extensions: [".f90", ".f95", ".f03", ".f08", ".f", ".for", ".f77"],
+        tokens: {
+            defaultToken: "",
+            ignoreCase: true,
+            keywords: [
+                "program", "end", "implicit", "none", "integer", "real", "double", "precision", "complex", "logical", "character", "parameter",
+                "dimension", "allocatable", "intent", "in", "out", "inout", "if", "then", "else", "elseif", "endif", "do", "enddo", "while", "select",
+                "case", "default", "call", "subroutine", "function", "return", "module", "use", "contains", "type", "interface", "print", "write",
+                "read", "open", "close", "format", "stop", "allocate", "deallocate", "cycle", "exit", "go", "to", "goto", "continue", "data", "common",
+                "save", "external", "intrinsic", "pure", "elemental", "recursive", "result", "only", "public", "private", "pointer", "target", "kind",
+                "associate", "block", "where", "forall", "procedure", "class", "extends", "abstract", "sequence", "namelist", "include", "optional",
+                "concurrent", "endprogram", "endmodule", "endsubroutine", "endfunction",
+            ],
+            builtins: [
+                "abs", "sqrt", "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "exp", "log", "log10", "mod", "modulo", "max", "min", "size",
+                "sum", "product", "int", "nint", "floor", "ceiling", "len", "len_trim", "trim", "adjustl", "adjustr", "allocated", "present", "huge",
+                "tiny", "epsilon", "maxval", "minval", "maxloc", "minloc", "matmul", "transpose", "dot_product", "reshape", "merge", "any", "all",
+                "count", "shape", "lbound", "ubound", "char", "ichar", "achar", "iachar", "index", "scan", "repeat", "random_number", "cpu_time",
+            ],
+            tokenizer: {
+                root: [
+                    [/!.*$/, "comment"],
+                    [/^\*.*$/, "comment"],
+                    [/\.(?:true|false)\.(?:_\w+)?/, "constant"],
+                    [/\.(?:and|or|not|eqv|neqv|eq|ne|lt|le|gt|ge)\./, "operator"],
+                    [/"/, "string", "@doubleQuoted"],
+                    [/'/, "string", "@singleQuoted"],
+                    [/(?:\d+\.\d*|\.\d+|\d+)(?:[eEdD][-+]?\d+)?(?:_\w+)?/, "number"],
+                    [/[A-Za-z_]\w*/, { cases: { "@keywords": "keyword", "@builtins": "predefined", "@default": "identifier" } }],
+                    [/\*\*|\/\/|==|\/=|<=|>=|=>|::|[+\-*/=<>%]/, "operator"],
+                    [/[(),:]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+                doubleQuoted: [[/[^"]+/, "string"], [/""/, "string"], [/"/, "string", "@pop"]],
+                singleQuoted: [[/[^']+/, "string"], [/''/, "string"], [/'/, "string", "@pop"]],
+            },
+        },
+        configuration: { comments: { lineComment: "!" }, brackets: [["(", ")"], ["[", "]"]], autoClosingPairs: [{ open: "(", close: ")" }, { open: "[", close: "]" }, { open: "\"", close: "\"", notIn: ["string"] }, { open: "'", close: "'", notIn: ["string", "comment"] }] },
+    },
+    {
+        id: "cobol",
+        aliases: ["COBOL", "cbl"],
+        extensions: [".cob", ".cbl", ".cpy"],
+        tokens: {
+            defaultToken: "",
+            ignoreCase: true,
+            keywords: [
+                "identification", "division", "program-id", "author", "environment", "configuration", "input-output", "file-control", "data",
+                "working-storage", "local-storage", "linkage", "file", "section", "procedure", "display", "accept", "move", "to", "add", "subtract",
+                "multiply", "divide", "compute", "giving", "remainder", "if", "else", "end-if", "perform", "end-perform", "until", "varying", "from",
+                "by", "times", "thru", "through", "stop", "run", "pic", "picture", "value", "values", "evaluate", "when", "end-evaluate", "other",
+                "go", "goback", "call", "using", "returning", "fd", "select", "assign", "open", "close", "read", "write", "rewrite", "delete", "input",
+                "output", "extend", "at", "end", "not", "and", "or", "zero", "zeros", "zeroes", "space", "spaces", "occurs", "indexed", "redefines",
+                "copy", "function", "continue", "exit", "initialize", "string", "unstring", "delimited", "into", "with", "no", "advancing", "upon",
+                "is", "greater", "less", "than", "equal", "true", "false", "set", "up", "down", "of", "in", "comp", "comp-3", "binary", "sign",
+                "leading", "trailing", "separate", "inspect", "tallying", "replacing", "all", "corresponding", "high-values", "low-values", "quote",
+                "quotes", "null", "nulls", "next", "sentence", "on", "size", "error", "end-read", "end-write", "end-call", "end-compute",
+            ],
+            tokenizer: {
+                root: [
+                    [/^.{6}[*/].*$/, "comment"],
+                    [/\*>.*$/, "comment"],
+                    [/"[^"]*"?|'[^']*'?/, "string"],
+                    [/\b\d{2}(?=\s)/, "number"],
+                    [/[+-]?\d+(?:\.\d+)?/, "number"],
+                    [/[A-Za-z][\w-]*/, { cases: { "@keywords": "keyword", "@default": "identifier" } }],
+                    [/[+\-*/=<>]/, "operator"],
+                    [/[().,]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+            },
+        },
+        configuration: { comments: { lineComment: "*>" }, brackets: [["(", ")"]], autoClosingPairs: [{ open: "(", close: ")" }, { open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "ada",
+        aliases: ["Ada"],
+        extensions: [".adb", ".ads", ".ada"],
+        tokens: {
+            defaultToken: "",
+            ignoreCase: true,
+            keywords: [
+                "abort", "abs", "abstract", "accept", "access", "aliased", "all", "and", "array", "at", "begin", "body", "case", "constant", "declare",
+                "delay", "delta", "digits", "do", "else", "elsif", "end", "entry", "exception", "exit", "for", "function", "generic", "goto", "if", "in",
+                "interface", "is", "limited", "loop", "mod", "new", "not", "null", "of", "or", "others", "out", "overriding", "package", "pragma",
+                "private", "procedure", "protected", "raise", "range", "record", "rem", "renames", "requeue", "return", "reverse", "select",
+                "separate", "some", "subtype", "synchronized", "tagged", "task", "terminate", "then", "type", "until", "use", "when", "while", "with", "xor",
+            ],
+            types: ["integer", "natural", "positive", "float", "long_float", "boolean", "character", "string", "duration", "wide_string", "unbounded_string"],
+            constants: ["true", "false"],
+            tokenizer: {
+                root: [
+                    [/--.*$/, "comment"],
+                    [/"/, "string", "@string"],
+                    [/'.'/, "string"],
+                    [/'[A-Za-z_]\w*/, "annotation"],
+                    [/\d[\d_]*#[0-9A-Fa-f_.]+#(?:[eE][-+]?\d+)?/, "number"],
+                    [/\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][-+]?\d+)?/, "number"],
+                    [/[A-Za-z]\w*/, { cases: { "@keywords": "keyword", "@types": "type", "@constants": "constant", "@default": "identifier" } }],
+                    [/:=|=>|\.\.|\*\*|\/=|<=|>=|<>|[+\-*/&=<>|]/, "operator"],
+                    [/[();,.:]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+                string: [[/[^"]+/, "string"], [/""/, "string"], [/"/, "string", "@pop"]],
+            },
+        },
+        configuration: { comments: { lineComment: "--" }, brackets: [["(", ")"]], autoClosingPairs: [{ open: "(", close: ")" }, { open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "vhdl",
+        aliases: ["VHDL"],
+        extensions: [".vhd", ".vhdl"],
+        tokens: {
+            defaultToken: "",
+            ignoreCase: true,
+            keywords: [
+                "abs", "access", "after", "alias", "all", "and", "architecture", "array", "assert", "attribute", "begin", "block", "body", "buffer",
+                "bus", "case", "component", "configuration", "constant", "disconnect", "downto", "else", "elsif", "end", "entity", "exit", "file", "for",
+                "function", "generate", "generic", "group", "guarded", "if", "impure", "in", "inertial", "inout", "is", "label", "library", "linkage",
+                "literal", "loop", "map", "mod", "nand", "new", "next", "nor", "not", "null", "of", "on", "open", "or", "others", "out", "package",
+                "port", "postponed", "procedure", "process", "pure", "range", "record", "register", "reject", "rem", "report", "return", "rol", "ror",
+                "select", "severity", "signal", "shared", "sla", "sll", "sra", "srl", "subtype", "then", "to", "transport", "type", "unaffected",
+                "units", "until", "use", "variable", "wait", "when", "while", "with", "xnor", "xor", "rising_edge", "falling_edge",
+            ],
+            types: ["std_logic", "std_logic_vector", "std_ulogic", "std_ulogic_vector", "integer", "natural", "positive", "boolean", "bit", "bit_vector", "signed", "unsigned", "real", "time", "string", "character"],
+            constants: ["true", "false", "note", "warning", "error", "failure"],
+            tokenizer: {
+                root: [
+                    [/--.*$/, "comment"],
+                    [/[xXbBoO]"[0-9A-Fa-f_]*"/, "number"],
+                    [/"/, "string", "@string"],
+                    [/'[01UXZWLH-]'/, "number"],
+                    [/'[A-Za-z_]\w*/, "annotation"],
+                    [/\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][-+]?\d+)?/, "number"],
+                    [/[A-Za-z]\w*/, { cases: { "@keywords": "keyword", "@types": "type", "@constants": "constant", "@default": "identifier" } }],
+                    [/<=|:=|=>|\/=|>=|\*\*|[+\-*/&=<>]/, "operator"],
+                    [/[();,.:]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+                string: [[/[^"]+/, "string"], [/""/, "string"], [/"/, "string", "@pop"]],
+            },
+        },
+        configuration: { comments: { lineComment: "--" }, brackets: [["(", ")"]], autoClosingPairs: [{ open: "(", close: ")" }, { open: "\"", close: "\"", notIn: ["string"] }] },
+    },
+    {
+        id: "odin",
+        aliases: ["Odin"],
+        extensions: [".odin"],
+        tokens: cLikeTokens({
+            keywords: [
+                "package", "import", "proc", "struct", "enum", "union", "bit_set", "map", "dynamic", "distinct", "using", "defer", "when", "where", "if",
+                "else", "for", "in", "not_in", "switch", "case", "fallthrough", "break", "continue", "return", "or_else", "or_return", "context",
+                "auto_cast", "cast", "transmute", "foreign", "do", "matrix",
+            ],
+            types: ["int", "uint", "i8", "i16", "i32", "i64", "i128", "u8", "u16", "u32", "u64", "u128", "f16", "f32", "f64", "bool", "b8", "b16", "b32", "b64", "rune", "string", "cstring", "rawptr", "uintptr", "typeid", "any", "byte"],
+            constants: ["true", "false", "nil"],
+            extraRoot: [[/#[A-Za-z_]\w*/, "annotation"], [/`[^`]*`/, "string"]],
+        }),
+        configuration: cLikeConfiguration(),
+    },
+    {
+        id: "vlang",
+        aliases: ["V (Vlang)", "vlang"],
+        extensions: [".vsh", ".vv"],
+        tokens: cLikeTokens({
+            keywords: [
+                "fn", "mut", "pub", "struct", "enum", "interface", "module", "import", "const", "return", "if", "else", "for", "in", "match", "or",
+                "defer", "go", "spawn", "unsafe", "as", "is", "type", "assert", "sizeof", "typeof", "isreftype", "lock", "rlock", "shared", "atomic",
+                "union", "static", "volatile", "break", "continue", "goto", "select", "__global",
+            ],
+            types: ["int", "i8", "i16", "i64", "u8", "u16", "u32", "u64", "f32", "f64", "bool", "string", "rune", "voidptr", "byte", "usize", "isize", "map", "chan", "any", "thread"],
+            constants: ["true", "false", "none", "nil"],
+            extraRoot: [[/'(?:[^'\\]|\\.)*'/, "string"]],
+        }),
+        configuration: cLikeConfiguration(),
+    },
+    {
+        id: "gleam",
+        aliases: ["Gleam"],
+        extensions: [".gleam"],
+        tokens: cLikeTokens({
+            keywords: ["pub", "fn", "let", "assert", "case", "use", "import", "type", "opaque", "const", "external", "todo", "panic", "as", "if", "echo"],
+            types: ["Int", "Float", "String", "Bool", "List", "Nil", "Result", "Option", "BitArray", "Dict"],
+            constants: ["True", "False", "Nil", "Ok", "Error"],
+            blockComments: false,
+        }),
+        configuration: cLikeConfiguration("//", null),
+    },
+    {
+        id: "elm",
+        aliases: ["Elm"],
+        extensions: [".elm"],
+        tokens: {
+            defaultToken: "",
+            keywords: ["module", "exposing", "import", "as", "type", "alias", "port", "case", "of", "let", "in", "if", "then", "else", "where"],
+            tokenizer: {
+                root: [
+                    [/\{-/, "comment", "@comment"],
+                    [/--.*$/, "comment"],
+                    [/"""/, "string", "@tripleString"],
+                    [/"/, "string", "@string"],
+                    [/'(?:[^'\\]|\\.)'/, "string"],
+                    [/[A-Z][\w']*(?:\.[A-Z][\w']*)*/, "type.identifier"],
+                    [/[a-z_][\w']*/, { cases: { "@keywords": "keyword", "@default": "identifier" } }],
+                    ...NUMBER_RULES,
+                    [/[!#$%&*+./<=>?@\\^|~:-]+/, "operator"],
+                    [/[()[\]{},]/, "delimiter"],
+                    [/\s+/, ""],
+                ],
+                comment: [[/[^{-]+/, "comment"], [/\{-/, "comment", "@push"], [/-\}/, "comment", "@pop"], [/[{-]/, "comment"]],
+                string: [[/[^\\"]+/, "string"], [/\\./, "string.escape"], [/"/, "string", "@pop"]],
+                tripleString: [[/"""/, "string", "@pop"], [/[^"]+/, "string"], [/"/, "string"]],
+            },
+        },
+        configuration: { comments: { lineComment: "--", blockComment: ["{-", "-}"] }, brackets: BRACKETS, autoClosingPairs: PAIRS },
+    },
 ];
 
 /** Monaco language ids registered by Hanogt in addition to Monaco's own. */
 export const EXTRA_MONACO_LANGUAGE_IDS: readonly string[] = EXTRA_LANGUAGES.map((language) => language.id);
+
+/** The grammars themselves (scripts/tests/monaco-grammars.test.mjs compiles and runs every one). */
+export const EXTRA_MONACO_LANGUAGES: ReadonlyArray<Readonly<LanguageDefinition>> = EXTRA_LANGUAGES;
 
 type CompilerDefaults = { getCompilerOptions(): Record<string, unknown>; setCompilerOptions(options: Record<string, unknown>): void };
 
@@ -488,7 +1182,7 @@ export function setupMonaco(monaco: MonacoApi) {
     const known = new Set(monaco.languages.getLanguages().map((language: { id: string }) => language.id));
     for (const language of EXTRA_LANGUAGES) {
         if (known.has(language.id)) continue;
-        monaco.languages.register({ id: language.id, aliases: language.aliases, extensions: language.extensions });
+        monaco.languages.register({ id: language.id, aliases: language.aliases, extensions: language.extensions, filenames: language.filenames });
         monaco.languages.setMonarchTokensProvider(language.id, language.tokens);
         monaco.languages.setLanguageConfiguration(language.id, language.configuration);
     }

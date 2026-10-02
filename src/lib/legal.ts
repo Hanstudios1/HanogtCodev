@@ -6,15 +6,26 @@ import type { Copy } from "@/lib/i18n";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.1";
+export const LEGAL_VERSION = "4.2";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "2 Ekim 2026", EN: "2 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.1-2026-10-02";
+export const LEGAL_NOTICE_ID = "4.2-2026-10-02";
 
 export type LegalChange = { version: string; date: Copy; items: Copy[] };
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.2",
+        date: { TR: "2 Ekim 2026", EN: "2 October 2026" },
+        items: [
+            { TR: "Hanogt Social: arkadaşlar, direkt mesajlar ve grupların tek ekranda birleştiği; gerçek zamanlı bağlantı kurulamadığında sohbetlerin aynı erişim kurallarıyla sunucu üzerinden çalıştığı ve hangi tercihlerin yalnızca tarayıcıda tutulduğu açıklandı.", EN: "Hanogt Social: explained that friends, direct messages and groups now share one screen, that chats work through our server under the same access rules when the real-time connection can't be set up, and which preferences stay only in your browser." },
+            { TR: "Durum (Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez): seçtiğiniz durumun gizli tutulduğu, başkalarının yalnızca ortaya çıkan durumu gördüğü, sekmelerin rastgele kimlikle bildirim gönderdiği ve Rahatsız Etmeyin'de aramaların çalmadığı açıklandı.", EN: "Status (Online, Idle, Do Not Disturb, Invisible): explained that the status you choose stays private, that others see only the resulting status, that tabs report under random IDs and that calls don't ring during Do Not Disturb." },
+            { TR: "Hanogt News piyasa şeridinin veri kaynakları (TCMB, gold-api.com, Yahoo Finance, CoinGecko) eklendi; verilerin gecikmeli olabileceği ve yatırım tavsiyesi olmadığı belirtildi. Topluluk rakamlarının yalnızca toplam sayılar olduğu açıklandı.", EN: "Added the data sources of the Hanogt News market strip (TCMB, gold-api.com, Yahoo Finance, CoinGecko) and stated that the data may be delayed and is not investment advice. Explained that the community numbers are totals only." },
+            { TR: "İki adımlı doğrulamaya erişimini kaybedenler için giriş ekranındaki kurtarma talebi açıklandı; TURN aktarma sunucusunun gördüğü geçici kullanıcı adının e-posta adresinizi değil, ondan tuzla türetilen bir takma kimliği içerdiği düzeltildi.", EN: "Explained the recovery request on the sign-in screen for people who lost access to two-step verification, and corrected that the temporary username the TURN relay sees contains a salted pseudonymous ID, not your e-mail address." },
+            { TR: "Tarayıcıda çalışan diller (Prolog, Forth, BASIC, Befunge, Whitespace, MIPS), dosya doğrulayıcıları ve SVG, Mermaid ve LaTeX önizlemeleri kod çalıştırma bölümüne eklendi; tarayıcı depolama tablosuna Social ve durum anahtarları eklendi.", EN: "Added the in-browser languages (Prolog, Forth, BASIC, Befunge, Whitespace, MIPS), the file validators and the SVG, Mermaid and LaTeX previews to the code execution section, and the Social and status keys to the browser storage table." },
+        ],
+    },
     {
         version: "4.1",
         date: { TR: "2 Ekim 2026", EN: "2 October 2026" },

@@ -1,13 +1,13 @@
 "use client";
 
-import { Boxes, Check, Cpu, Eye, FileCode2, FilePlus2, Globe, Languages, Search, Server, Sparkles } from "lucide-react";
+import { Boxes, Check, Cpu, Eye, FileCheck2, FileCode2, FilePlus2, FileText, Globe, Languages, Search, Server, Sparkles, Star } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { matchScore } from "@/components/Editor/search";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
 import Modal, { buttonClasses } from "@/components/Editor/Modal";
 import { uniqueFileName } from "@/components/Editor/editor-files";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { ENGINE_LABELS, LANGUAGE_CATEGORIES, LANGUAGES, ensureFileExtension, getLanguage, type LanguageCategory, type LanguageEngine, type LanguageInfo } from "@/lib/runtimes/languages";
+import { ENGINE_LABELS, LANGUAGE_CATEGORIES, LANGUAGES, TOOL_LABELS, ensureFileExtension, getLanguage, type LanguageCategory, type LanguageEngine, type LanguageInfo } from "@/lib/runtimes/languages";
 import { PROJECT_TEMPLATES, templatesForLanguage, type ProjectTemplate } from "@/lib/runtimes/templates";
 
 export interface NewFileRequest {
@@ -47,6 +47,7 @@ const C = {
     pick: { TR: "Soldan bir dil seçin.", EN: "Pick a language on the left." },
     nameTaken: { TR: "Bu adla açık bir dosya var; {name} olarak oluşturulacak.", EN: "A file with this name is open; it will be created as {name}." },
     inputNote: { TR: "Bu şablon Girdi sekmesine örnek girdi yazar.", EN: "This template fills the Input tab with sample input." },
+    fileTypes: { TR: "Tanınan dosyalar", EN: "Recognized files" },
 } satisfies Record<string, Copy>;
 
 const ENGINE_ICONS: Record<LanguageEngine, typeof Cpu> = { browser: Cpu, server: Server, preview: Eye, none: FileCode2 };
@@ -57,18 +58,32 @@ const ENGINE_BADGES: Record<LanguageEngine, string> = {
     none: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
 };
 
-export function EngineBadge({ engine, compact = false }: { engine: LanguageEngine; compact?: boolean }) {
+const VALIDATOR_BADGE = "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+
+/** How a language runs; validators (YAML, TOML, XML…) get their own badge. */
+export function EngineBadge({ engine, tool, compact = false }: { engine: LanguageEngine; tool?: LanguageInfo["tool"]; compact?: boolean }) {
     const { tx } = useI18n();
-    const Icon = ENGINE_ICONS[engine];
+    const label = tool ? TOOL_LABELS[tool] : ENGINE_LABELS[engine];
+    const Icon = tool ? FileCheck2 : ENGINE_ICONS[engine];
     return (
-        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${ENGINE_BADGES[engine]}`} title={tx(ENGINE_LABELS[engine].description)}>
+        <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${tool ? VALIDATOR_BADGE : ENGINE_BADGES[engine]}`} title={tx(label.description)}>
             <Icon className="h-3 w-3" aria-hidden />
-            {!compact && tx(ENGINE_LABELS[engine].short)}
+            {!compact && tx(label.short)}
         </span>
     );
 }
 
 type Filter = "all" | "popular" | LanguageCategory;
+
+const CATEGORY_TEXT = new Map(LANGUAGE_CATEGORIES.map((category) => [category.id, `${category.label.TR} ${category.label.EN}`]));
+
+/** Searchable text besides the name: ids, aliases, extensions, file names, category and tool (both languages). */
+function searchText(language: LanguageInfo) {
+    return {
+        names: [language.id, ...(language.aliases ?? []), ...language.extensions, ...(language.fileNames ?? [])].join(" "),
+        topics: `${CATEGORY_TEXT.get(language.category) ?? ""} ${language.tool ? `${TOOL_LABELS[language.tool].short.TR} ${TOOL_LABELS[language.tool].short.EN}` : ""}`,
+    };
+}
 
 function useLanguageSearch(query: string, filter: Filter, allowed?: readonly string[]) {
     return useMemo(() => {
@@ -78,11 +93,33 @@ function useLanguageSearch(query: string, filter: Filter, allowed?: readonly str
             return [...filtered].sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
         }
         return filtered
-            .map((language) => ({ language, score: Math.max(matchScore(query, language.name), matchScore(query, [language.id, ...(language.aliases ?? []), ...language.extensions].join(" ")) * 0.8) }))
+            .map((language) => {
+                const text = searchText(language);
+                return { language, score: Math.max(matchScore(query, language.name), matchScore(query, text.names) * 0.8, matchScore(query, text.topics) * 0.5) };
+            })
             .filter((entry) => entry.score > 0)
             .sort((a, b) => b.score - a.score)
             .map((entry) => entry.language);
     }, [query, filter, allowed]);
+}
+
+type LanguageSection = { id: string; label: string | null; languages: LanguageInfo[] };
+
+/** "All" without a search: popular languages first, then the rest by category. */
+function groupLanguages(languages: readonly LanguageInfo[], grouped: boolean, popularLabel: string, categoryLabel: (id: LanguageCategory) => string): LanguageSection[] {
+    if (!grouped) return [{ id: "results", label: null, languages: [...languages] }];
+    const popular = languages.filter((language) => language.popular);
+    const sections: LanguageSection[] = popular.length > 0 ? [{ id: "popular", label: popularLabel, languages: popular }] : [];
+    for (const category of LANGUAGE_CATEGORIES) {
+        const members = languages.filter((language) => !language.popular && language.category === category.id);
+        if (members.length > 0) sections.push({ id: category.id, label: categoryLabel(category.id), languages: members });
+    }
+    return sections;
+}
+
+/** ".yaml, .yml, .env" or "Makefile" for the details panel. */
+function recognizedFiles(language: LanguageInfo) {
+    return [...language.extensions.map((extension) => `.${extension}`), ...(language.fileNames ?? [])].slice(0, 12).join(", ");
 }
 
 export default function NewFileDialog({ open, onClose, existingNames, onCreateFile, onCreateProject, allowedLanguages }: NewFileDialogProps) {
@@ -94,7 +131,13 @@ export default function NewFileDialog({ open, onClose, existingNames, onCreateFi
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [templateId, setTemplateId] = useState("hello");
     const [nameDraft, setNameDraft] = useState<{ language: string; value: string } | null>(null);
-    const languages = useLanguageSearch(query, filter, allowedLanguages);
+    const matches = useLanguageSearch(query, filter, allowedLanguages);
+    const sections = useMemo(
+        () => groupLanguages(matches, filter === "all" && !query.trim(), tx(C.popular), (id) => tx(LANGUAGE_CATEGORIES.find((category) => category.id === id)?.label ?? C.all)),
+        [matches, filter, query, tx],
+    );
+    // Enter picks the first language in the order shown.
+    const languages = useMemo(() => sections.flatMap((section) => section.languages), [sections]);
     const projects = allowedLanguages ? [] : PROJECT_TEMPLATES.filter((project) => !query.trim() || matchScore(query, `${tx(project.title)} ${project.files.map((file) => file.name).join(" ")}`) > 0);
     const selected = selectedId ? getLanguage(selectedId) : undefined;
     const templates = selected ? templatesForLanguage(selected.id) : [];
@@ -171,7 +214,7 @@ export default function NewFileDialog({ open, onClose, existingNames, onCreateFi
                                 {projects.map((project) => (
                                     <button key={project.id} type="button" onClick={() => { onCreateProject(project); reset(); }} className="group flex flex-col gap-2 rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-fuchsia-500/5 p-3 text-start transition hover:-translate-y-0.5 hover:border-indigo-500/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                                         <span className="flex items-center gap-2">
-                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">{project.kind === "web" ? <Globe className="h-4 w-4" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}</span>
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">{project.kind === "web" ? <Globe className="h-4 w-4" aria-hidden /> : project.kind === "docs" ? <FileText className="h-4 w-4" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}</span>
                                             <span className="text-sm font-semibold">{tx(project.title)}</span>
                                         </span>
                                         <span className="text-xs text-zinc-500 dark:text-zinc-400">{tx(project.description)}</span>
@@ -191,22 +234,34 @@ export default function NewFileDialog({ open, onClose, existingNames, onCreateFi
                         {languages.length === 0 ? (
                             <p className="rounded-2xl border border-dashed border-zinc-200 p-6 text-center text-sm text-zinc-500 dark:border-white/10">{tx(C.noResults)}</p>
                         ) : (
-                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-                                {languages.map((language) => (
-                                    <button
-                                        key={language.id}
-                                        type="button"
-                                        aria-pressed={selectedId === language.id}
-                                        onClick={() => select(language)}
-                                        onDoubleClick={() => create(language, true)}
-                                        className={`flex items-center gap-2.5 rounded-2xl border p-2.5 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${selectedId === language.id ? "border-indigo-500 bg-indigo-500/10" : "border-zinc-200 hover:border-indigo-500/40 hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/5"}`}
-                                    >
-                                        <LanguageIcon language={language.id} size={28} />
-                                        <span className="min-w-0">
-                                            <span className="block truncate text-sm font-semibold">{language.name}</span>
-                                            <EngineBadge engine={language.engine} />
-                                        </span>
-                                    </button>
+                            <div className="space-y-4">
+                                {sections.map((section) => (
+                                    <div key={section.id} role="group" aria-label={section.label ?? undefined}>
+                                        {section.label && (
+                                            <h4 className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                                                {section.id === "popular" && <Star className="h-3.5 w-3.5 text-amber-500" aria-hidden />}
+                                                {section.label} <span className="font-normal tabular-nums">· {section.languages.length}</span>
+                                            </h4>
+                                        )}
+                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+                                            {section.languages.map((language) => (
+                                                <button
+                                                    key={language.id}
+                                                    type="button"
+                                                    aria-pressed={selectedId === language.id}
+                                                    onClick={() => select(language)}
+                                                    onDoubleClick={() => create(language, true)}
+                                                    className={`flex items-center gap-2.5 rounded-2xl border p-2.5 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${selectedId === language.id ? "border-indigo-500 bg-indigo-500/10" : "border-zinc-200 hover:border-indigo-500/40 hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/5"}`}
+                                                >
+                                                    <LanguageIcon language={language.id} size={28} />
+                                                    <span className="min-w-0">
+                                                        <span className="block truncate text-sm font-semibold">{language.name}</span>
+                                                        <EngineBadge engine={language.engine} tool={language.tool} />
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -225,10 +280,15 @@ export default function NewFileDialog({ open, onClose, existingNames, onCreateFi
                                 <LanguageIcon language={selected.id} size={36} />
                                 <div className="min-w-0">
                                     <p className="font-bold">{selected.name}</p>
-                                    <EngineBadge engine={selected.engine} />
+                                    <EngineBadge engine={selected.engine} tool={selected.tool} />
                                 </div>
                             </div>
-                            <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">{tx(ENGINE_LABELS[selected.engine].description)}</p>
+                            <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">{tx(selected.tool ? TOOL_LABELS[selected.tool].description : ENGINE_LABELS[selected.engine].description)}</p>
+                            {recognizedFiles(selected) && (
+                                <p className="text-[11px] leading-5 text-zinc-500 dark:text-zinc-400">
+                                    <span className="font-semibold text-zinc-600 dark:text-zinc-300">{tx(C.fileTypes)}:</span> <span className="font-mono">{recognizedFiles(selected)}</span>
+                                </p>
+                            )}
                             <label className="block">
                                 <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">{tx(C.fileName)}</span>
                                 <input
@@ -307,8 +367,8 @@ export function LanguagePickerDialog({ open, onClose, current, onPick, allowedLa
                     <button key={language.id} type="button" onClick={() => { onPick(language.id); close(); }} className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-sm transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-white/5 ${language.id === current ? "bg-indigo-500/10" : ""}`}>
                         <LanguageIcon language={language.id} size={18} />
                         <span className="min-w-0 flex-1 truncate font-medium">{language.name}</span>
-                        <span className="font-mono text-[10px] text-zinc-400">.{language.extensions[0] ?? language.fileNames?.[0]}</span>
-                        <EngineBadge engine={language.engine} compact />
+                        <span className="font-mono text-[10px] text-zinc-400">{language.extensions[0] ? `.${language.extensions[0]}` : language.fileNames?.[0]}</span>
+                        <EngineBadge engine={language.engine} tool={language.tool} compact />
                         {language.id === current && <Check className="h-4 w-4 text-indigo-500" aria-hidden />}
                     </button>
                 ))}

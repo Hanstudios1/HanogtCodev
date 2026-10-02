@@ -33,7 +33,9 @@ const PROVIDERS = [
 ];
 
 function shortLabel(item: MarketItem, tx: Tx) {
-    return item.id === "gram-gold" ? tx({ TR: "Gram altın", EN: "Gold / gram" }) : item.label;
+    if (item.id === "gram-gold") return tx({ TR: "Gram altın", EN: "Gold / gram" });
+    if (item.id === "ounce-gold") return tx({ TR: "Ons altın", EN: "Gold / oz" });
+    return item.label;
 }
 
 function longName(item: MarketItem, tx: Tx) {
@@ -42,7 +44,9 @@ function longName(item: MarketItem, tx: Tx) {
         case "eur-try": return tx({ TR: "Euro", EN: "Euro" });
         case "gbp-try": return tx({ TR: "İngiliz Sterlini", EN: "British pound" });
         case "gram-gold": return tx({ TR: "Gram altın (24 ayar, hesaplanan)", EN: "Gold per gram (24k, calculated)" });
+        case "ounce-gold": return tx({ TR: "Ons altın (ABD doları)", EN: "Gold per troy ounce (US dollars)" });
         case "bist-100": return tx({ TR: "Borsa İstanbul", EN: "Borsa Istanbul" });
+        case "sp-500": return tx({ TR: "S&P 500 endeksi (ABD)", EN: "S&P 500 index (US)" });
         default: return item.label;
     }
 }

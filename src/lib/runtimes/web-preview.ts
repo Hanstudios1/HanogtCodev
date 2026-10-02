@@ -8,7 +8,14 @@
  * network access except images, and a small bridge script forwards console
  * output to the editor with postMessage (the parent checks the message source
  * and a per-render token).
+ *
+ * SVG files are shown as an image (scripts inside them never run). Mermaid
+ * diagrams and LaTeX math use "live" frames: the page fetches the library
+ * once from /runtimes (same origin), inlines it into a frame that has no
+ * network access, and then sends each new version of the file to that frame
+ * with postMessage, so editing does not reload the library.
  */
+import { analyzeXml } from "./xml-tools";
 
 export interface PreviewSourceFile {
     name: string;
@@ -16,11 +23,21 @@ export interface PreviewSourceFile {
     code: string;
 }
 
-export type PreviewKind = "web" | "css" | "markdown";
+export type PreviewKind = "web" | "css" | "markdown" | "svg" | "mermaid" | "latex";
+
+/** Kinds rendered by a library inside a long-lived frame that receives updates by postMessage. */
+export type LivePreviewKind = "mermaid" | "latex";
+
+export function isLivePreviewKind(kind: PreviewKind | null | undefined): kind is LivePreviewKind {
+    return kind === "mermaid" || kind === "latex";
+}
+
+/** Files of these languages preview themselves when they are the active tab. */
+const SELF_PREVIEW: ReadonlySet<string> = new Set(["markdown", "svg", "mermaid", "latex"]);
 
 export interface PreviewTarget {
     kind: PreviewKind;
-    /** The file that is rendered (entry HTML, stylesheet or Markdown file). */
+    /** The file that is rendered (entry HTML, a stylesheet, or a Markdown, SVG, Mermaid or LaTeX file). */
     file: PreviewSourceFile;
 }
 
@@ -48,7 +65,7 @@ export const PREVIEW_CSP = [
     "manifest-src 'none'",
 ].join("; ");
 
-/** No scripts at all: used for Markdown and CSS showcase documents. */
+/** No scripts at all: used for Markdown, SVG and CSS showcase documents. */
 export const STATIC_PREVIEW_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data: https:; base-uri 'none'; form-action 'none'";
 
 export const PREVIEW_MESSAGE_SOURCE = "hanogt-preview";
@@ -86,7 +103,7 @@ function protect(code: string, tag: "style" | "script") {
 
 /** Chooses what the preview panel shows for the active file. */
 export function resolvePreviewTarget(files: PreviewSourceFile[], active: PreviewSourceFile | undefined): PreviewTarget | null {
-    if (active?.language === "markdown") return { kind: "markdown", file: active };
+    if (active && SELF_PREVIEW.has(active.language)) return { kind: active.language as PreviewKind, file: active };
     const htmlFiles = files.filter((file) => file.language === "html");
     if (htmlFiles.length) {
         const entry = active?.language === "html"
@@ -95,8 +112,10 @@ export function resolvePreviewTarget(files: PreviewSourceFile[], active: Preview
         return { kind: "web", file: entry };
     }
     if (active?.language === "css") return { kind: "css", file: active };
-    const markdown = files.find((file) => file.language === "markdown");
-    if (markdown) return { kind: "markdown", file: markdown };
+    for (const language of ["markdown", "latex", "mermaid", "svg"] as const) {
+        const file = files.find((item) => item.language === language);
+        if (file) return { kind: language, file };
+    }
     const css = files.find((file) => file.language === "css");
     return css ? { kind: "css", file: css } : null;
 }
@@ -137,6 +156,10 @@ function bridgeScript(token: string, stdin: string[], map: Array<{ s: number; e:
         + "window.open=function(u){send('console','warn',['window.open is disabled in the preview: '+u]);return null};"
         + "window.addEventListener('submit',function(e){if(!e.defaultPrevented){e.preventDefault();send('console','info',['[form] submit was prevented; the preview has no server to send it to'])}});"
         + "window.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(!a||e.defaultPrevented)return;var h=a.getAttribute('href')||'';if(h.charAt(0)==='#')return;e.preventDefault();send('console','info',['[link] '+h+' (links do not navigate inside the preview)'])});"
+        // A sandboxed frame has no storage of its own (reading localStorage throws), so pages get an in-memory
+        // stand-in that lasts until the preview reloads.
+        + "function mem(){var d=Object.create(null);return{getItem:function(k){k=String(k);return k in d?d[k]:null},setItem:function(k,v){d[String(k)]=String(v)},removeItem:function(k){delete d[String(k)]},clear:function(){d=Object.create(null)},key:function(i){var k=Object.keys(d);return i>=0&&i<k.length?k[i]:null},get length(){return Object.keys(d).length}}}"
+        + "['localStorage','sessionStorage'].forEach(function(name){var ok=false;try{var st=window[name];st.setItem('__hanogt','1');st.removeItem('__hanogt');ok=true}catch(e){}if(!ok){try{Object.defineProperty(window,name,{value:mem(),configurable:true})}catch(e){}}});"
         + "send('ready','info',[]);})();</script>";
 }
 
@@ -363,4 +386,183 @@ export function parsePreviewMessage(data: unknown, token: string): PreviewMessag
     if (!Array.isArray(message.args)) return null;
     const args = message.args.slice(0, 50).map((arg) => (typeof arg === "string" ? arg.slice(0, 10_000) : String(arg).slice(0, 10_000)));
     return { type: "console", level, args };
+}
+
+// ------------------------------------------------------------------ SVG
+const SVG_STYLE = `
+:root { color-scheme: light; --fg: #27272a; --muted: #71717a; --bg: #ffffff; --check: #f4f4f5; --border: #e4e4e7; --error: #b91c1c; }
+:root[data-theme="dark"] { color-scheme: dark; --fg: #e4e4e7; --muted: #a1a1aa; --bg: #18181b; --check: #27272a; --border: #3f3f46; --error: #f87171; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { min-height: calc(100vh - 48px); display: grid; place-items: center; padding: 16px; box-sizing: border-box;
+  background-color: var(--bg); background-image: linear-gradient(45deg, var(--check) 25%, transparent 25%), linear-gradient(-45deg, var(--check) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--check) 75%), linear-gradient(-45deg, transparent 75%, var(--check) 75%);
+  background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0; }
+img { max-width: 100%; height: auto; }
+footer { padding: 8px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.error { max-width: 720px; margin: 24px auto; padding: 16px; border: 1px solid var(--error); border-radius: 12px; color: var(--error); }
+.error pre { margin: 12px 0 0; overflow: auto; color: var(--fg); font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+`;
+
+export interface SvgPreviewLabels {
+    /** "This SVG is not well-formed" */
+    invalid: string;
+    /** "The root element must be <svg>" */
+    notSvg: string;
+    /** "line {line}, column {column}" */
+    location: string;
+    /** "xmlns was added for the preview" */
+    namespaceAdded: string;
+    /** "Scripts inside SVG files do not run in the preview." */
+    note: string;
+}
+
+function escapeText(text: string) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** A static (script-free) page that shows an SVG file as an image, or why it cannot be shown. */
+export function buildSvgDocument(svg: string, options: { dark?: boolean; labels: SvgPreviewLabels }): string {
+    const { labels } = options;
+    const head = `<!DOCTYPE html><html${options.dark ? " data-theme=\"dark\"" : ""}><head><meta http-equiv="Content-Security-Policy" content="${STATIC_PREVIEW_CSP}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${SVG_STYLE}</style></head><body>`;
+    const analysis = analyzeXml(svg);
+    if (!analysis.ok || !analysis.stats) {
+        const issue = analysis.error ?? { message: labels.invalid, line: 1, column: 1 };
+        const sourceLine = svg.split("\n")[issue.line - 1] ?? "";
+        const caret = `${" ".repeat(Math.max(0, issue.column - 1))}^`;
+        const where = labels.location.replace("{line}", String(issue.line)).replace("{column}", String(issue.column));
+        return `${head}<div class="error" role="alert"><strong>${escapeText(labels.invalid)}</strong> (${escapeText(where)})<br>${escapeText(issue.message)}<pre>${escapeText(sourceLine)}\n${caret}</pre></div></body></html>`;
+    }
+    const root = analysis.stats.root;
+    if (root !== "svg" && !root.endsWith(":svg")) {
+        return `${head}<div class="error" role="alert"><strong>${escapeText(labels.notSvg)}</strong></div></body></html>`;
+    }
+    // A standalone SVG needs the SVG namespace (inline <svg> in HTML does not), so add it when missing.
+    let fixed = svg;
+    let namespaceAdded = false;
+    const start = /<svg\b[^>]*>/.exec(svg);
+    if (start && !/\sxmlns\s*=/.test(start[0])) {
+        fixed = svg.slice(0, start.index + 4) + " xmlns=\"http://www.w3.org/2000/svg\"" + svg.slice(start.index + 4);
+        namespaceAdded = true;
+    }
+    const attribute = (name: string) => (start ? new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`).exec(start[0])?.[1] : undefined);
+    const size = [attribute("width") && attribute("height") ? `${attribute("width")} × ${attribute("height")}` : "", attribute("viewBox") ? `viewBox ${attribute("viewBox")}` : ""].filter(Boolean).join(" · ");
+    const details = [size, namespaceAdded ? labels.namespaceAdded : "", labels.note].filter(Boolean).map(escapeText).join(" · ");
+    return `${head}<main><img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(fixed)}"></main><footer>${details}</footer></body></html>`;
+}
+
+// ------------------------------------------------------------------ live frames (Mermaid, LaTeX)
+/** Policy of live frames: inline library code may run; nothing can be loaded from the network. */
+export const LIVE_PREVIEW_CSP = [
+    "default-src 'none'",
+    "script-src 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'unsafe-inline'",
+    "img-src data: blob:",
+    "font-src data:",
+    "connect-src 'none'",
+    "form-action 'none'",
+    "base-uri 'none'",
+    "frame-src 'none'",
+    "worker-src 'none'",
+    "manifest-src 'none'",
+].join("; ");
+
+/** Source of messages the editor sends to live frames. */
+export const PREVIEW_HOST_SOURCE = "hanogt-preview-host";
+
+export interface LivePreviewLabels {
+    /** "The diagram could not be drawn" / "The formula could not be rendered" */
+    error: string;
+    /** "line {line}" */
+    line: string;
+    /** "Nothing to show yet." */
+    empty: string;
+    /** "Not supported in the preview: {list}" */
+    unsupported: string;
+}
+
+export type LivePreviewPayload =
+    | { kind: "mermaid"; code: string }
+    | { kind: "latex"; html: string; macros: Record<string, string>; warnings: string[] };
+
+const LIVE_STYLE = `
+:root { color-scheme: light; --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --soft: #f6f8fa; --border: #d1d9e0; --error: #b91c1c; --error-bg: #fef2f2; --link: #0969da; }
+:root[data-theme="dark"] { color-scheme: dark; --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --soft: #151b23; --border: #3d444d; --error: #f87171; --error-bg: #2a1215; --link: #4493f8; }
+html { background: var(--bg); }
+body { margin: 0; color: var(--fg); background: var(--bg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; overflow-wrap: break-word; counter-reset: katexEqnNo mmlEqnNo; }
+.hanogt-error { margin: 16px; padding: 12px 14px; border: 1px solid var(--error); border-radius: 10px; background: var(--error-bg); color: var(--error); white-space: pre-wrap; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.hanogt-empty { margin: 24px; color: var(--muted); font-style: italic; }
+.hanogt-note { margin: 24px 0 0; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+`;
+
+const MERMAID_STYLE = `
+#out { display: flex; justify-content: center; padding: 16px; }
+#out svg { max-width: 100%; height: auto; }
+`;
+
+const LATEX_STYLE = `
+#out { max-width: 860px; margin: 0 auto; padding: 24px 28px 48px; }
+h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 24px 0 12px; font-weight: 600; }
+h1 { font-size: 1.9em; } h2 { font-size: 1.5em; } h3 { font-size: 1.25em; } h4 { font-size: 1.05em; }
+.secnum { color: var(--muted); margin-right: .35em; }
+.title-block { text-align: center; margin: 8px 0 32px; } .title-block .title { font-size: 2em; margin: 0 0 8px; } .author, .date { margin: 4px 0; color: var(--muted); }
+p { margin: 0 0 14px; } .math-block { margin: 14px 0; overflow-x: auto; overflow-y: hidden; }
+.hanogt-math.math-error { color: var(--error); background: var(--error-bg); border-radius: 4px; padding: 0 3px; font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; }
+.math-block .math-error { display: block; padding: 8px 10px; }
+blockquote { margin: 0 0 14px; padding: 0 1em; color: var(--muted); border-left: .25em solid var(--border); }
+pre { background: var(--soft); border-radius: 8px; padding: 12px 14px; overflow: auto; } code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+table.tabular { border-collapse: collapse; margin: 0 auto 14px; } table.tabular td { padding: 4px 10px; } table.ruled td { border: 1px solid var(--border); }
+.center { text-align: center; } .flushright { text-align: right; }
+.abstract { margin: 0 auto 24px; max-width: 640px; font-size: .95em; } .abstract h3 { text-align: center; font-size: 1em; }
+.theorem, .proof { margin: 0 0 14px; } .theorem > p:first-of-type, .proof > p:first-of-type { display: inline; } .qed { float: right; }
+.toc ul { list-style: none; padding-left: 0; } .toc .toc-3 { padding-left: 1.5em; } .toc a, .fn a, .footnotes a { color: var(--link); text-decoration: none; }
+.footnotes { margin-top: 32px; padding-top: 8px; border-top: 1px solid var(--border); font-size: .9em; }
+.sc { font-variant: small-caps; } .sf { font-family: system-ui, sans-serif; } .fbox { border: 1px solid currentColor; padding: 0 3px; }
+.size-large { font-size: 1.2em; } .size-Large { font-size: 1.44em; } .size-LARGE { font-size: 1.73em; } .size-huge { font-size: 2.07em; } .size-small { font-size: .9em; } .size-tiny { font-size: .7em; }
+.link { color: var(--link); text-decoration: underline dotted; cursor: help; } .ref { color: var(--link); }
+.image-placeholder { display: inline-block; padding: 24px; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); }
+figure { margin: 0 0 14px; text-align: center; } figcaption { color: var(--muted); font-size: .9em; }
+.latex-a { font-size: .75em; vertical-align: .25em; margin-left: -.36em; margin-right: -.15em; } .latex-e { vertical-align: -.5ex; margin-left: -.1667em; margin-right: -.125em; text-transform: uppercase; }
+dt { font-weight: 600; } dd { margin: 0 0 8px 1.5em; } li.custom-label { list-style: none; } li.custom-label .item-label { margin-left: -1.2em; margin-right: .3em; font-weight: 600; }
+`;
+
+/**
+ * The bootstrap of a live frame: it waits for {source: PREVIEW_HOST_SOURCE, token,
+ * type: "render", payload} messages from the parent window and renders them.
+ * Kept free of template literals and line breaks so it can be embedded as-is.
+ */
+function liveBootstrap(kind: LivePreviewKind, token: string, dark: boolean, labels: LivePreviewLabels) {
+    const json = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+    const common = `var T=${json(token)},S=${json(PREVIEW_MESSAGE_SOURCE)},H=${json(PREVIEW_HOST_SOURCE)},L=${json(labels)},P=window.parent,out=document.getElementById('out'),seq=0;`
+        + "function post(type){try{P.postMessage({source:S,token:T,type:type},'*')}catch(e){}}"
+        + "function box(text,cls){var d=document.createElement('div');d.className=cls;d.textContent=text;return d}"
+        + "function lineOf(message){var m=/line (\\d+)/i.exec(String(message||''));return m?Number(m[1]):0}";
+    const render = kind === "mermaid"
+        ? `mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:${json(dark ? "dark" : "default")},suppressErrorRendering:true,fontFamily:'system-ui, -apple-system, "Segoe UI", sans-serif'});`
+            + "function render(p){var id=++seq,code=String(p&&p.code||'');if(!code.trim()){out.replaceChildren(box(L.empty,'hanogt-empty'));return}"
+            + "mermaid.render('hanogt-diagram-'+id,code).then(function(r){if(id!==seq)return;out.innerHTML=r.svg;if(r.bindFunctions)r.bindFunctions(out)},"
+            + "function(e){if(id!==seq)return;var stray=document.getElementById('dhanogt-diagram-'+id);if(stray)stray.remove();var msg=(e&&e.message)?e.message:String(e),n=Math.min(lineOf(msg),code.split('\\n').length);"
+            + "out.replaceChildren(box(L.error+(n?' ('+L.line.replace('{line}',n)+')':'')+'\\n\\n'+msg,'hanogt-error'))})}"
+        : "var macros={};"
+            + "function render(p){seq++;out.innerHTML=String(p&&p.html||'');macros={};var m=p&&p.macros||{};for(var k in m)if(Object.prototype.hasOwnProperty.call(m,k))macros[k]=m[k];"
+            + "if(!out.textContent.trim()&&!out.querySelector('.hanogt-math')){out.replaceChildren(box(L.empty,'hanogt-empty'));return}"
+            + "var nodes=out.querySelectorAll('.hanogt-math');for(var i=0;i<nodes.length;i++){var el=nodes[i],tex=el.textContent,display=el.getAttribute('data-display')==='1',start=Number(el.getAttribute('data-line'))||0;"
+            + "try{katex.render(tex,el,{displayMode:display,throwOnError:true,trust:false,strict:'ignore',macros:macros,globalGroup:true,output:'htmlAndMathml'})}"
+            + "catch(e){var msg=(e&&e.message)?e.message:String(e),pos=typeof e.position==='number'?e.position:-1,n=start+(pos>0?tex.slice(0,pos).split('\\n').length-1:0);"
+            + "el.className='hanogt-math math-error';el.textContent=tex+'  \\u26a0 '+msg.replace(/^KaTeX parse error: /,'');el.title=L.error+' ('+L.line.replace('{line}',n)+')'}}"
+            + "if(p&&p.warnings&&p.warnings.length)out.appendChild(box(L.unsupported.replace('{list}',p.warnings.slice(0,12).join(', ')),'hanogt-note'))}";
+    return `<script>(function(){${common}${render}`
+        + "window.addEventListener('message',function(e){if(e.source!==P)return;var d=e.data;if(!d||d.source!==H||d.token!==T||d.type!=='render')return;try{render(d.payload)}catch(err){out.replaceChildren(box(L.error+'\\n\\n'+(err&&err.message||err),'hanogt-error'))}});"
+        + "post('ready')})();</script>";
+}
+
+/**
+ * A long-lived preview frame for Mermaid or LaTeX. `library` is the library's
+ * JavaScript (mermaid.min.js or katex.min.js) and `css` extra CSS (KaTeX's,
+ * with embedded fonts); both are inlined because the frame cannot fetch.
+ */
+export function buildLiveShell(kind: LivePreviewKind, options: { token: string; dark?: boolean; library: string; css?: string; labels: LivePreviewLabels }): string {
+    const dark = Boolean(options.dark);
+    const style = `${LIVE_STYLE}${kind === "mermaid" ? MERMAID_STYLE : LATEX_STYLE}`;
+    return `<!DOCTYPE html><html${dark ? " data-theme=\"dark\"" : ""}><head><meta http-equiv="Content-Security-Policy" content="${LIVE_PREVIEW_CSP}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">`
+        + `${options.css ? `<style>${protect(options.css, "style")}</style>` : ""}<style>${style}</style></head><body><main id="out" aria-live="polite"></main>`
+        + `<script>${protect(options.library, "script")}</script>${liveBootstrap(kind, options.token, dark, options.labels)}</body></html>`;
 }

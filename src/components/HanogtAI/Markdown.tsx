@@ -1,14 +1,16 @@
 "use client";
 
-import { Check, Copy, ExternalLink, SquareArrowOutUpRight } from "lucide-react";
+import { Check, ChevronRight, Copy, ExternalLink, FileCode2, Globe, SquareArrowOutUpRight } from "lucide-react";
 import Link from "next/link";
 import { Fragment, memo, useState, type ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
+import { artifactId, artifactLanguageName, isArtifactCode, isWebPage, webPageTitle, type ChatArtifact } from "./artifacts";
 
 /**
  * Safe Markdown for Hanogt AI answers: React elements only (no HTML injection),
  * internal links through next/link, external links only for http(s) with
- * noopener, and fenced code blocks with copy / open-in-editor actions.
+ * noopener, and fenced code blocks with copy / open-in-editor actions. Long
+ * code and whole web pages become artifact cards that open the side panel.
  */
 
 type Block =
@@ -146,7 +148,7 @@ function keywordSet(language: string) {
 
 const TOKEN = /(\/\*[\s\S]*?\*\/|\/\/[^\n]*|#(?![\w]*\s*(?:include|define|if|endif|pragma))[^\n]*|--[^\n]*|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`|\b\d+(?:\.\d+)?[fFdDlL]?\b|[A-Za-z_][\w]*)/g;
 
-function highlight(code: string, language: string): ReactNode[] {
+export function highlight(code: string, language: string): ReactNode[] {
     const { family, words } = keywordSet(language);
     const out: ReactNode[] = [];
     let last = 0;
@@ -180,7 +182,33 @@ export function editorLanguageFor(fence: string) {
     return RUNNABLE[fence.toLowerCase()] ?? null;
 }
 
-function CodeBlock({ language, code, open, onOpenInEditor }: { language: string; code: string; open: boolean; onOpenInEditor?: (language: string, code: string) => void }) {
+function ArtifactCard({ language, code, onOpen }: { language: string; code: string; onOpen: (artifact: ChatArtifact) => void }) {
+    const { tx } = useI18n();
+    const web = isWebPage(language, code);
+    const lines = code.split("\n").length;
+    const title = web ? webPageTitle(code) ?? tx({ TR: "Web sayfası", EN: "Web page" }) : tx({ TR: "{language} kodu", EN: "{language} code" }, { language: artifactLanguageName(language) });
+    const Icon = web ? Globe : FileCode2;
+    return (
+        <button
+            type="button"
+            onClick={() => onOpen({ id: artifactId(language, code), language, code })}
+            className="group my-2 flex w-full items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 text-start shadow-sm transition hover:border-violet-400/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-violet-400/40"
+        >
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300"><Icon className="h-5 w-5" aria-hidden /></span>
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13.5px] font-semibold text-zinc-900 dark:text-white">{title}</span>
+                <span className="block truncate text-[12px] text-zinc-500 dark:text-zinc-400">
+                    {web
+                        ? tx({ TR: "{lines} satır · önizlemek için tıkla", EN: "{lines} lines · click to preview" }, { lines })
+                        : tx({ TR: "{language} · {lines} satır · açmak için tıkla", EN: "{language} · {lines} lines · click to open" }, { language: artifactLanguageName(language), lines })}
+                </span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400 transition group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden />
+        </button>
+    );
+}
+
+function CodeBlock({ language, code, open, onOpenInEditor, onOpenArtifact }: { language: string; code: string; open: boolean; onOpenInEditor?: (language: string, code: string) => void; onOpenArtifact?: (artifact: ChatArtifact) => void }) {
     const { tx } = useI18n();
     const [copied, setCopied] = useState(false);
     const editorLanguage = editorLanguageFor(language);
@@ -193,6 +221,7 @@ function CodeBlock({ language, code, open, onOpenInEditor }: { language: string;
             setCopied(false);
         }
     };
+    if (onOpenArtifact && !open && isArtifactCode(language, code)) return <ArtifactCard language={language} code={code} onOpen={onOpenArtifact} />;
     return (
         <div className="my-2 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-inner" dir="ltr">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px]">
@@ -214,14 +243,14 @@ function CodeBlock({ language, code, open, onOpenInEditor }: { language: string;
     );
 }
 
-function MarkdownImpl({ text, onNavigate, onOpenInEditor }: { text: string; onNavigate?: () => void; onOpenInEditor?: (language: string, code: string) => void }) {
+function MarkdownImpl({ text, onNavigate, onOpenInEditor, onOpenArtifact }: { text: string; onNavigate?: () => void; onOpenInEditor?: (language: string, code: string) => void; onOpenArtifact?: (artifact: ChatArtifact) => void }) {
     const blocks = parseBlocks(text);
     return (
         <div className="space-y-2 break-words">
             {blocks.map((block, index) => {
                 switch (block.type) {
                     case "code":
-                        return <CodeBlock key={index} language={block.language} code={block.code} open={block.open} onOpenInEditor={onOpenInEditor} />;
+                        return <CodeBlock key={index} language={block.language} code={block.code} open={block.open} onOpenInEditor={onOpenInEditor} onOpenArtifact={onOpenArtifact} />;
                     case "heading": {
                         const size = block.level === 1 ? "text-[17px]" : block.level === 2 ? "text-[15.5px]" : "text-[14.5px]";
                         return <p key={index} className={`${size} pt-1 font-black tracking-tight text-zinc-900 dark:text-white`}><Inline text={block.text} onNavigate={onNavigate} /></p>;

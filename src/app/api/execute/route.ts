@@ -40,7 +40,7 @@ async function resolveRunner(): Promise<{ email: string } | { error: string; sta
     const session = await getServerSession(authOptions).catch(() => null);
     const email = session?.user?.email?.toLowerCase();
     if (!email) {
-        return { error: "Derlenen dilleri (C, C++, Java, Go…) çalıştırmak için giriş yapın. JavaScript, TypeScript, Python, SQL, Lua, Scheme, Brainfuck ve JSON girişsiz de çalışır.", status: 401, code: "auth_required" };
+        return { error: "Derlenen dilleri (C, C++, Java, Go…) çalıştırmak için giriş yapın. JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS gibi tarayıcı dilleri ve dosya doğrulayıcıları girişsiz de çalışır.", status: 401, code: "auth_required" };
     }
     if (!isFirebaseServerConfigured()) return { email };
     try {

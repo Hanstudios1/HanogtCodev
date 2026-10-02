@@ -10,9 +10,9 @@ import { load } from "./setup.mjs";
 
 const markets = await load("lib/news/markets.ts");
 const {
-    buildBistItem, buildFxItems, buildGramGoldItem, collectMarkets, computeChange, createMarketsMemo, deriveGramGold,
-    failedMarketIds, parseBistQuote, parseBitcoinQuote, parseGoldQuote, parseTcmbBulletin, previousWeekdays, tcmbArchiveUrl,
-    tcmbPublishedAt, COINGECKO_URL, GOLD_API_URL, TCMB_TODAY_URL, YAHOO_BIST_URL, MARKET_ORDER,
+    buildBistItem, buildFxItems, buildGramGoldItem, buildOunceGoldItem, buildSp500Item, collectMarkets, computeChange, createMarketsMemo, deriveGramGold,
+    failedMarketIds, parseBistQuote, parseBitcoinQuote, parseGoldQuote, parseSp500Quote, parseTcmbBulletin, previousWeekdays, tcmbArchiveUrl,
+    tcmbPublishedAt, COINGECKO_URL, GOLD_API_URL, TCMB_TODAY_URL, YAHOO_BIST_URL, YAHOO_SP500_URL, MARKET_ORDER,
 } = markets;
 
 const NOW = new Date("2026-10-02T11:00:00Z");
@@ -115,6 +115,26 @@ const YAHOO_JSON = yahooChart({
     marketTime: DAY("2026-10-02T10:40:00Z"),
 });
 
+/** Yahoo daily bars for the S&P 500 sit at the 09:30 New York open (13:30 UTC in summer time). */
+function sp500Chart({ closes, days, marketTime, price = closes.at(-1), symbol = "^GSPC", gmtoffset = -14400 }) {
+    return JSON.stringify({
+        chart: {
+            result: [{
+                meta: { currency: "USD", symbol, exchangeName: "SNP", instrumentType: "INDEX", regularMarketTime: marketTime, regularMarketPrice: price, chartPreviousClose: 6500, gmtoffset, dataGranularity: "1d", range: "5d" },
+                timestamp: days.map((day) => DAY(`${day}T13:30:00Z`)),
+                indicators: { quote: [{ close: closes }] },
+            }],
+            error: null,
+        },
+    });
+}
+const SP500_JSON = sp500Chart({
+    days: ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"],
+    closes: [6610.25, 6625.5, 6640, 6655.75, 6688.5],
+    // 10:00 in New York: today's session is open, so yesterday is the 1 October bar.
+    marketTime: DAY("2026-10-02T14:00:00Z"),
+});
+
 /** A fetchText that serves `routes` (url → body | Error) and answers 404 (null) for everything else. */
 function fakeFetch(routes) {
     const calls = [];
@@ -134,6 +154,7 @@ const GOOD_ROUTES = {
     [GOLD_API_URL]: GOLD_JSON,
     [COINGECKO_URL]: COINGECKO_JSON,
     [YAHOO_BIST_URL]: YAHOO_JSON,
+    [YAHOO_SP500_URL]: SP500_JSON,
 };
 
 // ---------------------------------------------------------------------------
@@ -341,7 +362,7 @@ test("BIST 100: without bars the provider's own previous close is used, and bad 
 // Orchestration
 // ---------------------------------------------------------------------------
 
-test("every provider answering gives the six items in display order", async () => {
+test("every provider answering gives the eight items in display order", async () => {
     const { fetchText } = fakeFetch(GOOD_ROUTES);
     const result = await collectMarkets({ fetchText, now: NOW, memo: createMarketsMemo() });
     assert.deepEqual(result.items.map((item) => item.id), [...MARKET_ORDER]);
@@ -352,7 +373,9 @@ test("every provider answering gives the six items in display order", async () =
     // The lira price of gold is built from the same dollar rate the strip shows.
     assert.equal(byId["gram-gold"].value, 4471.4);
     assert.equal(byId["gram-gold"].details.usdTry, byId["usd-try"].value);
+    assert.equal(byId["ounce-gold"].value, 3345.1);
     assert.equal(byId["bist-100"].value, 10250.5);
+    assert.equal(byId["sp-500"].value, 6688.5);
     assert.equal(byId.bitcoin.value, 67234);
     // The payload is plain JSON.
     assert.deepEqual(JSON.parse(JSON.stringify(result.items)), result.items);
@@ -362,25 +385,30 @@ test("a failing provider removes only its own items", async () => {
     const run = async (broken) => collectMarkets({ fetchText: fakeFetch({ ...GOOD_ROUTES, ...broken }).fetchText, now: NOW, memo: createMarketsMemo() });
 
     const noBitcoin = await run({ [COINGECKO_URL]: new Error("HTTP 429") });
-    assert.deepEqual(noBitcoin.items.map((item) => item.id), ["usd-try", "eur-try", "gbp-try", "gram-gold", "bist-100"]);
+    assert.deepEqual(noBitcoin.items.map((item) => item.id), ["usd-try", "eur-try", "gbp-try", "gram-gold", "ounce-gold", "bist-100", "sp-500"]);
     assert.deepEqual(noBitcoin.failures, [{ provider: "bitcoin", reason: "HTTP 429", ids: ["bitcoin"] }]);
 
     const noBist = await run({ [YAHOO_BIST_URL]: "<html>Edge: Too Many Requests</html>" });
-    assert.deepEqual(noBist.items.map((item) => item.id), ["usd-try", "eur-try", "gbp-try", "gram-gold", "bitcoin"]);
+    assert.deepEqual(noBist.items.map((item) => item.id), ["usd-try", "eur-try", "gbp-try", "gram-gold", "ounce-gold", "sp-500", "bitcoin"]);
     assert.deepEqual(failedMarketIds(noBist), ["bist-100"]);
 
     const noGold = await run({ [GOLD_API_URL]: new Error("HTTP 503") });
-    assert.deepEqual(noGold.items.map((item) => item.id), ["usd-try", "eur-try", "gbp-try", "bist-100", "bitcoin"]);
-    assert.deepEqual(failedMarketIds(noGold), ["gram-gold"]);
+    assert.deepEqual(noGold.items.map((item) => item.id), ["usd-try", "eur-try", "gbp-try", "bist-100", "sp-500", "bitcoin"]);
+    assert.deepEqual(failedMarketIds(noGold), ["gram-gold", "ounce-gold"]);
 
-    // Without the TCMB bulletin there are no lira rates, and gold cannot be priced in lira either.
+    const noSp500 = await run({ [YAHOO_SP500_URL]: new Error("HTTP 429") });
+    assert.deepEqual(failedMarketIds(noSp500), ["sp-500"]);
+    assert.equal(noSp500.items.length, MARKET_ORDER.length - 1);
+
+    // Without the TCMB bulletin there are no lira rates, and gold cannot be priced in lira either
+    // (the dollar price per ounce still shows).
     const noTcmb = await run({ [TCMB_TODAY_URL]: new Error("HTTP 500") });
-    assert.deepEqual(noTcmb.items.map((item) => item.id), ["bist-100", "bitcoin"]);
+    assert.deepEqual(noTcmb.items.map((item) => item.id), ["ounce-gold", "bist-100", "sp-500", "bitcoin"]);
     assert.deepEqual(failedMarketIds(noTcmb).sort(), ["eur-try", "gbp-try", "gram-gold", "usd-try"]);
 
     // A bulletin that lacks the pound still yields the other pairs.
     const noPound = await run({ [TCMB_TODAY_URL]: bulletinXml("02.10.2026", "10/02/2026", [["USD", "41.5012", "41.5761"], ["EUR", "48.2100", "48.2966"]]) });
-    assert.deepEqual(noPound.items.map((item) => item.id), ["usd-try", "eur-try", "gram-gold", "bist-100", "bitcoin"]);
+    assert.deepEqual(noPound.items.map((item) => item.id), ["usd-try", "eur-try", "gram-gold", "ounce-gold", "bist-100", "sp-500", "bitcoin"]);
     assert.deepEqual(failedMarketIds(noPound), ["gbp-try"]);
 });
 
@@ -400,7 +428,7 @@ test("a missing previous bulletin only costs the change arrow", async () => {
     assert.equal(usd.value, 41.5761);
     assert.equal(usd.change, null);
     assert.equal(usd.changeBasis, null);
-    assert.equal(result.items.length, 6);
+    assert.equal(result.items.length, MARKET_ORDER.length);
 
     // An archive file that is not the bulletin of the requested day is not trusted.
     const wrongDay = fakeFetch({ ...GOOD_ROUTES, [tcmbArchiveUrl("2026-10-01")]: bulletinXml("29.09.2026", "09/29/2026", [["USD", "40", "40.1"]]) });
@@ -435,4 +463,36 @@ test("a long break reaches further back, nearest bulletin first", async () => {
     const result = await collectMarkets({ fetchText, now: NOW, memo: createMarketsMemo() });
     assert.equal(result.items.find((item) => item.id === "usd-try").change, 0.5, "Friday, not Thursday");
     assert.ok(calls.includes(tcmbArchiveUrl("2026-10-09")), "the first two weekdays are tried first");
+});
+
+test("S&P 500: yesterday's close comes from the bars, in New York's calendar", () => {
+    const quote = parseSp500Quote(SP500_JSON, NOW);
+    assert.equal(quote.value, 6688.5);
+    assert.equal(quote.previousClose, 6655.75);
+    const item = buildSp500Item(quote);
+    assert.equal(item.id, "sp-500");
+    assert.equal(item.label, "S&P 500");
+    assert.equal(item.unit, "pts");
+    assert.equal(item.source, "Yahoo Finance");
+    assert.equal(item.change, 32.75);
+    assert.equal(item.changeBasis, "previous-close");
+
+    // Before the open the newest bar is still yesterday's session, so it is the reference itself.
+    const preOpen = sp500Chart({ days: ["2026-09-30", "2026-10-01"], closes: [6640, 6655.75], marketTime: DAY("2026-10-02T12:00:00Z"), price: 6660 });
+    assert.equal(parseSp500Quote(preOpen, NOW).previousClose, 6655.75);
+    // Late in the evening UTC is already the next day, but New York is not.
+    const evening = sp500Chart({ days: ["2026-10-01", "2026-10-02"], closes: [6655.75, 6688.5], marketTime: DAY("2026-10-03T00:30:00Z") });
+    assert.equal(parseSp500Quote(evening, NOW).previousClose, 6655.75);
+
+    assert.equal(parseSp500Quote(YAHOO_JSON, NOW), null, "a BIST response is not the S&P 500");
+    assert.equal(parseBistQuote(SP500_JSON, NOW), null, "and the other way round");
+});
+
+test("ounce gold is the provider's dollar price per troy ounce", () => {
+    const item = buildOunceGoldItem(parseGoldQuote(GOLD_JSON, NOW));
+    assert.equal(item.id, "ounce-gold");
+    assert.equal(item.value, 3345.1);
+    assert.equal(item.unit, "USD");
+    assert.equal(item.source, "gold-api.com");
+    assert.equal(item.change, null);
 });

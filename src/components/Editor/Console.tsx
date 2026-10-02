@@ -70,7 +70,7 @@ const C = {
 } satisfies Record<string, CopyText>;
 
 const FAILURES: Record<RunFailure["code"], CopyText> = {
-    auth_required: { TR: "Bu dili çalıştırmak için giriş yapın. Tarayıcıda çalışan diller (JavaScript, TypeScript, Python, SQL, Lua, Scheme, Brainfuck, JSON) girişsiz de çalışır.", EN: "Sign in to run this language. Browser languages (JavaScript, TypeScript, Python, SQL, Lua, Scheme, Brainfuck, JSON) run without signing in." },
+    auth_required: { TR: "Bu dili çalıştırmak için giriş yapın. Tarayıcıda çalışan diller (JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS ve diğerleri) ile YAML, TOML, XML ve JSON doğrulayıcıları girişsiz de çalışır.", EN: "Sign in to run this language. Browser languages (JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS and more) and the YAML, TOML, XML and JSON validators run without signing in." },
     suspended: { TR: "Hesabınız askıya alındığı için kod çalıştıramazsınız.", EN: "Your account is suspended, so you can't run code." },
     rate_limited: { TR: "Çalıştırma sınırına ulaştınız (dakikada 20). Kısa süre sonra tekrar deneyin.", EN: "You reached the run limit (20 per minute). Try again shortly." },
     invalid_request: { TR: "Çalıştırma isteği geçersiz.", EN: "The run request was invalid." },
@@ -235,7 +235,9 @@ export default function Console({ run, history, onClearHistory, stdin, onStdinCh
                                     <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
                                     {run.loading?.code === "loading_python"
                                         ? tx({ TR: "Python çalışma zamanı yükleniyor (ilk çalıştırmada yaklaşık 12 MB)…", EN: "Loading the Python runtime (about 12 MB on the first run)…" })
-                                        : tx(C.running)}
+                                        : run.loading?.code === "loading_prolog"
+                                            ? tx({ TR: "Prolog çalışma zamanı yükleniyor…", EN: "Loading the Prolog runtime…" })
+                                            : tx(C.running)}
                                 </div>
                             )}
                             {run.security && <SecurityPanel risk={run.security.risk} findings={run.security.findings} />}
