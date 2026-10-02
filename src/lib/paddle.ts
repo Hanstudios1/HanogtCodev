@@ -1,0 +1,230 @@
+/**
+ * Paddle Billing: what the server and the Plans page share. Paddle.com is the
+ * merchant of record; Hanogt Codev only keeps the state of a person's
+ * subscription (subscriptions/{email}.paddle) and never sees card details.
+ * Client-safe; the API client lives in src/lib/server/paddle.ts.
+ */
+import type { Language } from "@/lib/i18n";
+
+export const BILLING_INTERVALS = ["month", "year"] as const;
+export type BillingInterval = (typeof BILLING_INTERVALS)[number];
+
+export function isBillingInterval(value: unknown): value is BillingInterval {
+    return value === "month" || value === "year";
+}
+
+export type PaddleEnvironment = "sandbox" | "production";
+
+export const PADDLE_STATUSES = ["active", "trialing", "past_due", "paused", "canceled"] as const;
+export type PaddleStatus = (typeof PADDLE_STATUSES)[number];
+
+/** Statuses that keep the plan's benefits; past_due while Paddle retries the payment. */
+export const ENTITLED_STATUSES: readonly PaddleStatus[] = ["active", "trialing", "past_due"];
+
+/**
+ * If a renewal is never reported (a lost webhook), benefits end this long
+ * after the paid period; the Plans page re-syncs with Paddle before that.
+ */
+export const PERIOD_GRACE_MS = 3 * 24 * 60 * 60_000;
+
+/** Paddle ids: a prefix and lowercase letters/digits (ctm_01h…, sub_01h…). */
+const ID_PATTERNS = {
+    customer: /^ctm_[a-z0-9]{10,64}$/,
+    subscription: /^sub_[a-z0-9]{10,64}$/,
+    price: /^pri_[a-z0-9]{10,64}$/,
+    product: /^pro_[a-z0-9]{10,64}$/,
+    transaction: /^txn_[a-z0-9]{10,64}$/,
+    discount: /^dsc_[a-z0-9]{10,64}$/,
+} as const;
+export type PaddleIdKind = keyof typeof ID_PATTERNS;
+
+export function isPaddleId(kind: PaddleIdKind, value: unknown): value is string {
+    return typeof value === "string" && ID_PATTERNS[kind].test(value);
+}
+
+/** What subscriptions/{email}.paddle holds. */
+export type PaddleSubscriptionState = {
+    subscriptionId: string;
+    customerId: string;
+    status: PaddleStatus;
+    /** null when the price belongs to no plan (then nothing is unlocked). */
+    plan: "plus" | "pro" | null;
+    interval: BillingInterval | null;
+    priceId: string;
+    productId: string;
+    currentPeriodEnd: string | null;
+    nextBilledAt: string | null;
+    scheduledChange: { action: "cancel" | "pause" | "resume"; effectiveAt: string } | null;
+    canceledAt: string | null;
+    /** Paddle's updated_at: orders the copies we receive. */
+    paddleUpdatedAt: string | null;
+    syncedAt: string | null;
+};
+
+function isoOrNull(value: unknown): string | null {
+    if (typeof value === "string") {
+        const time = Date.parse(value);
+        return Number.isFinite(time) ? new Date(time).toISOString() : null;
+    }
+    if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString();
+    return null;
+}
+
+/** Reads a stored state back; anything malformed counts as "no subscription". */
+export function normalizePaddleState(value: unknown): PaddleSubscriptionState | null {
+    if (!value || typeof value !== "object") return null;
+    const record = value as Record<string, unknown>;
+    if (!isPaddleId("subscription", record.subscriptionId) || !isPaddleId("customer", record.customerId)) return null;
+    const status = (PADDLE_STATUSES as readonly unknown[]).includes(record.status) ? record.status as PaddleStatus : null;
+    if (!status) return null;
+    const change = record.scheduledChange && typeof record.scheduledChange === "object" ? record.scheduledChange as Record<string, unknown> : null;
+    const changeAction = change && (change.action === "cancel" || change.action === "pause" || change.action === "resume") ? change.action : null;
+    const changeAt = change ? isoOrNull(change.effectiveAt) : null;
+    return {
+        subscriptionId: record.subscriptionId,
+        customerId: record.customerId,
+        status,
+        plan: record.plan === "plus" || record.plan === "pro" ? record.plan : null,
+        interval: isBillingInterval(record.interval) ? record.interval : null,
+        priceId: typeof record.priceId === "string" ? record.priceId.slice(0, 80) : "",
+        productId: typeof record.productId === "string" ? record.productId.slice(0, 80) : "",
+        currentPeriodEnd: isoOrNull(record.currentPeriodEnd),
+        nextBilledAt: isoOrNull(record.nextBilledAt),
+        scheduledChange: changeAction && changeAt ? { action: changeAction, effectiveAt: changeAt } : null,
+        canceledAt: isoOrNull(record.canceledAt),
+        paddleUpdatedAt: isoOrNull(record.paddleUpdatedAt),
+        syncedAt: isoOrNull(record.syncedAt),
+    };
+}
+
+/** True while the subscription unlocks its plan. */
+export function paddleEntitles(state: PaddleSubscriptionState | null | undefined, now = Date.now()): state is PaddleSubscriptionState & { plan: "plus" | "pro" } {
+    if (!state || !state.plan || !ENTITLED_STATUSES.includes(state.status)) return false;
+    if (!state.currentPeriodEnd) return true;
+    const end = Date.parse(state.currentPeriodEnd);
+    return !Number.isFinite(end) || now <= end + PERIOD_GRACE_MS;
+}
+
+/** The paid period is over but no renewal has been seen: worth asking Paddle. */
+export function paddleNeedsResync(state: PaddleSubscriptionState | null | undefined, now = Date.now()) {
+    if (!state || !ENTITLED_STATUSES.includes(state.status) || !state.currentPeriodEnd) return false;
+    const end = Date.parse(state.currentPeriodEnd);
+    return Number.isFinite(end) && now > end;
+}
+
+/** Subscription details the Plans page shows (no Paddle ids). */
+export type BillingView = {
+    status: PaddleStatus;
+    plan: "plus" | "pro" | null;
+    interval: BillingInterval | null;
+    /** Next charge, when the subscription renews. */
+    renewsAt: string | null;
+    /** A cancellation the person scheduled; benefits last until then. */
+    endsAt: string | null;
+    pastDue: boolean;
+    paused: boolean;
+    canceled: boolean;
+};
+
+export function billingView(state: PaddleSubscriptionState | null): BillingView | null {
+    if (!state) return null;
+    const endsAt = state.scheduledChange?.action === "cancel" ? state.scheduledChange.effectiveAt : null;
+    return {
+        status: state.status,
+        plan: state.plan,
+        interval: state.interval,
+        renewsAt: endsAt || state.status === "canceled" || state.status === "paused" ? null : state.nextBilledAt,
+        endsAt,
+        pastDue: state.status === "past_due",
+        paused: state.status === "paused",
+        canceled: state.status === "canceled",
+    };
+}
+
+/** A price as the Plans page shows it, localised by Paddle for the visitor's country. */
+export type PaddlePriceView = {
+    priceId: string;
+    /** Formatted by Paddle, taxes included where they apply (e.g. "₺199,00"). */
+    total: string;
+    /** Lowest currency unit, as Paddle sends it (e.g. "19900"). */
+    amount: string;
+    currency: string;
+    interval: BillingInterval;
+    trialDays: number | null;
+};
+
+/** Present on the Plans catalog when Paddle is set up. */
+export type PaddleCheckoutConfig = {
+    environment: PaddleEnvironment;
+    clientToken: string;
+    prices: { plus: Partial<Record<BillingInterval, PaddlePriceView>>; pro: Partial<Record<BillingInterval, PaddlePriceView>> };
+};
+
+/** Languages Paddle Checkout is translated into; others use the browser's language. */
+const CHECKOUT_LOCALES: Partial<Record<Language, string>> = {
+    TR: "tr", EN: "en", DE: "de", FR: "fr", ES: "es", IT: "it", PT: "pt", RU: "ru", AR: "ar",
+    JP: "ja", KR: "ko", CN: "zh-Hans", NL: "nl", PL: "pl", SV: "sv", DA: "da", NO: "no",
+};
+
+export function checkoutLocale(language: Language): string | undefined {
+    return CHECKOUT_LOCALES[language];
+}
+
+/** Digits after the decimal point for a currency (JPY 0, TRY 2…). */
+export function currencyDigits(currency: string) {
+    try {
+        return new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
+    } catch {
+        return 2;
+    }
+}
+
+/** Paddle amounts are strings in the lowest unit ("19900" → 199). */
+export function minorToMajor(amount: string | number, currency: string) {
+    const value = typeof amount === "number" ? amount : Number(amount);
+    if (!Number.isFinite(value)) return 0;
+    return value / 10 ** currencyDigits(currency);
+}
+
+export function formatMoney(amount: string | number, currency: string, locale: string) {
+    const value = minorToMajor(amount, currency);
+    try {
+        return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
+    } catch {
+        return `${value} ${currency}`;
+    }
+}
+
+/** Yearly price compared with twelve months, as a whole percentage (0 when not cheaper). */
+export function yearlySavingsPercent(monthly: PaddlePriceView | undefined, yearly: PaddlePriceView | undefined) {
+    if (!monthly || !yearly || monthly.currency !== yearly.currency) return 0;
+    const twelve = Number(monthly.amount) * 12;
+    const year = Number(yearly.amount);
+    if (!Number.isFinite(twelve) || !Number.isFinite(year) || twelve <= 0 || year >= twelve) return 0;
+    return Math.floor(((twelve - year) / twelve) * 100);
+}
+
+/** POST /api/paddle/subscription { action: "preview" } answer. */
+export type PlanChangePreview = {
+    /** What is charged (or credited) right away, in the lowest currency unit. */
+    amount: string;
+    currency: string;
+    result: "charge" | "credit" | "none";
+    nextBilledAt: string | null;
+    nextAmount: string | null;
+};
+
+/** Error codes of the /api/paddle routes. */
+export type BillingErrorCode =
+    | "unauthorized"
+    | "forbidden_origin"
+    | "rate_limited"
+    | "invalid_request"
+    | "billing_unavailable"
+    | "plan_unavailable"
+    | "plan_blocked"
+    | "already_subscribed"
+    | "no_subscription"
+    | "no_change"
+    | "paddle_error"
+    | "unavailable";

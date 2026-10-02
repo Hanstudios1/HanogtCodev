@@ -1,10 +1,12 @@
 /**
- * Hanogt Codev plans ("Yakında"). Nothing is sold yet: the catalog only shows
- * what is being prepared, and staff can assign plans by hand (gifts, testers).
- * A plan's one live benefit today is a higher Hanogt AI message limit.
+ * Hanogt Codev plans. Plus and Pro are sold through Paddle (src/lib/paddle.ts)
+ * once the owner connects it; until then the catalog shows "coming soon".
+ * Staff can also assign plans by hand (gifts, testers). A person gets the
+ * higher of the two: the staff-assigned plan or the paid one.
  * Client-safe; the server copies live in src/lib/server/plans.ts.
  */
 import type { Copy } from "@/lib/i18n";
+import { paddleEntitles, type BillingView, type PaddleCheckoutConfig, type PaddleSubscriptionState } from "@/lib/paddle";
 
 export const PLAN_IDS = ["free", "plus", "pro"] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
@@ -43,7 +45,9 @@ export type SubscriptionStatus = "active" | "blocked";
 
 /** What the server keeps in subscriptions/{email}. */
 export type UserSubscription = {
+    /** Staff-assigned plan (gifts, testers); a paid plan lives in `paddle`. */
     plan: PlanId;
+    /** "blocked" switches off every plan benefit, paid ones included. */
     status: SubscriptionStatus;
     expiresAt: string | null;
     note: string;
@@ -51,6 +55,10 @@ export type UserSubscription = {
     grantedAt: string | null;
     aiBonusDaily: number;
     aiBonusUntil: string | null;
+    /** The person's Paddle subscription, kept in sync by the webhook. */
+    paddle: PaddleSubscriptionState | null;
+    /** Their Paddle customer (exists from the first checkout on). */
+    paddleCustomerId: string | null;
 };
 
 export const FREE_SUBSCRIPTION: UserSubscription = {
@@ -62,6 +70,8 @@ export const FREE_SUBSCRIPTION: UserSubscription = {
     grantedAt: null,
     aiBonusDaily: 0,
     aiBonusUntil: null,
+    paddle: null,
+    paddleCustomerId: null,
 };
 
 function future(iso: string | null, now: number) {
@@ -70,10 +80,34 @@ function future(iso: string | null, now: number) {
     return Number.isFinite(time) && time > now;
 }
 
-/** The plan whose benefits apply now: blocked or expired plans fall back to Free. */
-export function effectivePlan(subscription: Pick<UserSubscription, "plan" | "status" | "expiresAt">, now = Date.now()): PlanId {
-    if (subscription.status === "blocked" || subscription.plan === "free") return "free";
+const PLAN_RANK: Record<PlanId, number> = { free: 0, plus: 1, pro: 2 };
+
+type PlanSources = Pick<UserSubscription, "plan" | "status" | "expiresAt"> & { paddle?: PaddleSubscriptionState | null };
+
+/** The staff-assigned plan while it hasn't expired. */
+export function staffPlan(subscription: Pick<UserSubscription, "plan" | "expiresAt">, now = Date.now()): PlanId {
+    if (subscription.plan === "free") return "free";
     return future(subscription.expiresAt, now) ? subscription.plan : "free";
+}
+
+/** The plan a Paddle subscription pays for while it is active (or retrying a payment). */
+export function paidPlan(subscription: { paddle?: PaddleSubscriptionState | null }, now = Date.now()): PlanId {
+    return paddleEntitles(subscription.paddle, now) ? subscription.paddle.plan : "free";
+}
+
+/** The plan whose benefits apply now: the higher of the staff and paid plans; Free when blocked. */
+export function effectivePlan(subscription: PlanSources, now = Date.now()): PlanId {
+    if (subscription.status === "blocked") return "free";
+    const staff = staffPlan(subscription, now);
+    const paid = paidPlan(subscription, now);
+    return PLAN_RANK[paid] > PLAN_RANK[staff] ? paid : staff;
+}
+
+/** Where the effective plan comes from (null for Free). */
+export function planSource(subscription: PlanSources, now = Date.now()): "paddle" | "staff" | null {
+    const plan = effectivePlan(subscription, now);
+    if (plan === "free") return null;
+    return paidPlan(subscription, now) === plan ? "paddle" : "staff";
 }
 
 /** Hanogt AI limits including a staff grant that hasn't run out. */
@@ -86,12 +120,21 @@ export function aiLimitsFor(subscription: UserSubscription, now = Date.now()) {
 /** GET /api/plans. */
 export type PlansResponse = {
     catalog: PlanCatalog;
+    /** Set when plans can be bought (Paddle connected and prices published). */
+    checkout: PaddleCheckoutConfig | null;
     me: {
         /** The plan whose benefits apply now. */
         plan: PlanId;
+        /** Where `plan` comes from: a Paddle subscription or the Hanogt team. */
+        source: "paddle" | "staff" | null;
         assignedPlan: PlanId;
         blocked: boolean;
+        /** End of the staff-assigned plan. */
         expiresAt: string | null;
+        /** The Paddle subscription, if there is one (also when it has ended). */
+        billing: BillingView | null;
+        /** A Paddle customer exists, so the billing portal can be opened. */
+        canManageBilling: boolean;
         aiLimits: { perMinute: number; perDay: number };
         aiUsedToday: number;
         waitlist: PaidPlanId[];

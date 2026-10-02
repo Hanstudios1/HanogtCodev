@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, type PaidPlanId, type PlanCatalog, type PlansResponse } from "@/lib/plans";
+import { billingView, paddleNeedsResync, type PaddleCheckoutConfig } from "@/lib/paddle";
+import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse, type UserSubscription } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { commitServerMutations, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
+import { checkoutConfigFor, getPaddleConfig, syncSubscription } from "@/lib/server/paddle";
 import { AI_DAY_MS, AI_LIMIT_KEYS, getPlanCatalog, getSubscription } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback, readRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
@@ -29,24 +31,56 @@ async function waitlistOf(email: string): Promise<PaidPlanId[]> {
     return Array.isArray(record?.plans) ? record.plans.filter(isPaidPlanId) : [];
 }
 
-/** GET /api/plans: the "coming soon" catalog and, when signed in, your plan and Hanogt AI usage. */
-export async function GET() {
+/** Paddle prices for the visitor's country; null keeps the "coming soon" page. */
+async function checkoutOf(catalog: PlanCatalog, request: NextRequest): Promise<PaddleCheckoutConfig | null> {
+    try {
+        return await checkoutConfigFor(catalog, request.headers.get("x-vercel-ip-country")?.toUpperCase() ?? null);
+    } catch (error) {
+        console.error("[plans:paddle]", error instanceof Error ? error.message : error);
+        return null;
+    }
+}
+
+/**
+ * The paid period has ended but no renewal arrived (a lost webhook): ask
+ * Paddle once every ten minutes at most, then answer with what it says.
+ */
+async function refreshedSubscription(email: string, subscription: UserSubscription): Promise<UserSubscription> {
+    if (!subscription.paddle || !paddleNeedsResync(subscription.paddle) || !getPaddleConfig().apiKey) return subscription;
+    const rate = await enforceRateLimitWithFallback(`paddle-resync:${email}`, 1, 10 * 60_000).catch(() => ({ allowed: false }));
+    if (!rate.allowed) return subscription;
+    try {
+        const result = await syncSubscription(subscription.paddle.subscriptionId);
+        return result.status === "stored" ? await getSubscription(email) : subscription;
+    } catch {
+        return subscription;
+    }
+}
+
+/** GET /api/plans: the catalog (with Paddle prices once plans are on sale) and, when signed in, your plan and Hanogt AI usage. */
+export async function GET(request: NextRequest) {
     if (!isFirebaseServerConfigured()) return json({ error: "unavailable" }, 503);
     try {
         const [catalog, active] = await Promise.all([getPlanCatalog(), getActiveSession()]);
-        if (!active) return json({ catalog: publicCatalog(catalog), me: null } satisfies PlansResponse);
-        const [subscription, used, waitlist] = await Promise.all([
+        const checkout = await checkoutOf(catalog, request);
+        if (!active) return json({ catalog: publicCatalog(catalog), checkout, me: null } satisfies PlansResponse);
+        const [stored, used, waitlist] = await Promise.all([
             getSubscription(active.email),
             readRateLimit(AI_LIMIT_KEYS(active.email).day, AI_DAY_MS).catch(() => null),
             waitlistOf(active.email),
         ]);
+        const subscription = await refreshedSubscription(active.email, stored);
         return json({
             catalog: publicCatalog(catalog),
+            checkout,
             me: {
                 plan: effectivePlan(subscription),
+                source: planSource(subscription),
                 assignedPlan: subscription.plan,
                 blocked: subscription.status === "blocked",
                 expiresAt: subscription.expiresAt,
+                billing: billingView(subscription.paddle),
+                canManageBilling: Boolean(subscription.paddleCustomerId ?? subscription.paddle?.customerId),
                 aiLimits: aiLimitsFor(subscription),
                 aiUsedToday: used?.count ?? 0,
                 waitlist,

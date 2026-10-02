@@ -15,6 +15,7 @@ import {
     type PlanPrice,
     type UserSubscription,
 } from "@/lib/plans";
+import { isPaddleId, normalizePaddleState } from "@/lib/paddle";
 import { getServerDocument } from "./firebase-rest";
 import { readRateLimit, resetRateLimit } from "./rate-limit";
 
@@ -81,6 +82,8 @@ export function normalizeSubscription(record: Record<string, unknown> | null): U
         grantedAt: isoOf(record.grantedAt),
         aiBonusDaily: bonus,
         aiBonusUntil: isoOf(record.aiBonusUntil),
+        paddle: normalizePaddleState(record.paddle),
+        paddleCustomerId: isPaddleId("customer", record.paddleCustomerId) ? record.paddleCustomerId : null,
     };
 }
 
