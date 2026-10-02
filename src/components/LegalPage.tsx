@@ -1,21 +1,23 @@
 "use client";
 
 import { MotionConfig, motion } from "framer-motion";
-import { Check, ChevronDown, Clock, ExternalLink, FileText, History, Languages, Link2, ListOrdered, Printer, Scale, Search, ShieldCheck, X } from "lucide-react";
+import { Building2, Check, ChevronDown, Clock, ExternalLink, FileText, History, Languages, Link2, ListOrdered, Printer, Scale, Search, ShieldCheck, X } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import Header from "@/components/Header";
 import SiteFooter from "@/components/SiteFooter";
 import { formatCopy, useI18n, type Copy } from "@/lib/i18n";
-import { LEGAL_CHANGES, LEGAL_EFFECTIVE_DATE, LEGAL_VERSION } from "@/lib/legal";
+import { LEGAL_CHANGES, LEGAL_EFFECTIVE_DATE, LEGAL_VERSION, OPERATOR_LABELS } from "@/lib/legal";
+import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
 
 /**
  * Text of a legal document: { TR, EN } copy (the Turkish text prevails; other
  * languages come from the copy packs). Table cells may also be plain strings,
  * shown verbatim, for names and identifiers such as cookie keys.
  *
- * Copy may contain internal links written as [label](/path#anchor).
+ * Copy may contain internal links written as [label](/path#anchor) and links
+ * to other sites written as [label](https://…), which open in a new tab.
  */
 export type LegalCell = Copy | string;
 
@@ -33,9 +35,11 @@ export type LegalSection = {
 
 export type LegalHighlight = { title: Copy; text: Copy };
 
-export type LegalDocumentPath = "/privacy-policy" | "/disclosure" | "/terms-of-use";
+export type LegalDocumentPath = "/privacy-policy" | "/disclosure" | "/terms-of-use" | "/refund-policy";
 
 const HISTORY_ID = "version-history";
+/** Anchor of the operator card; the texts link to it only once the details are published. */
+const OPERATOR_ID = "operator";
 
 const UI = {
     contents: { TR: "İçindekiler", EN: "Contents" },
@@ -65,12 +69,16 @@ const UI = {
     showingOriginal: { TR: "Şu anda bağlayıcı Türkçe metni okuyorsunuz.", EN: "You are now reading the binding Turkish text." },
     showOriginal: { TR: "Türkçe aslını göster", EN: "Show the Turkish original" },
     showTranslation: { TR: "Çeviriye dön", EN: "Back to the translation" },
+    newTab: { TR: "(yeni sekmede açılır)", EN: "(opens in a new tab)" },
+    operator: { TR: "İşletmeci", EN: "Operator" },
+    operatorText: { TR: "Hanogt Codev'i işleten ve bu metinlerde “Hanogt” veya “biz” olarak anılan taraf.", EN: "The party that operates Hanogt Codev, called “Hanogt” or “we” in these texts." },
 } satisfies Record<string, Copy>;
 
 const RELATED: ReadonlyArray<{ href: LegalDocumentPath; label: Copy; hint: Copy }> = [
     { href: "/privacy-policy", label: { TR: "Gizlilik Politikası", EN: "Privacy Policy" }, hint: { TR: "Veriler, aktarımlar, saklama ve haklarınız", EN: "Data, transfers, retention and your rights" } },
     { href: "/disclosure", label: { TR: "KVKK Aydınlatma Metni", EN: "KVKK Information Notice" }, hint: { TR: "KVKK m.10 kapsamında bilgilendirme", EN: "Information under KVKK Art. 10" } },
     { href: "/terms-of-use", label: { TR: "Kullanım Şartları", EN: "Terms of Use" }, hint: { TR: "Hesap, içerik ve kullanım kuralları", EN: "Account, content and rules of use" } },
+    { href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" }, hint: { TR: "Abonelik iadeleri, iptal ve Paddle", EN: "Subscription refunds, cancellation and Paddle" } },
 ];
 
 const SOURCES: ReadonlyArray<{ href: string; label: Copy }> = [
@@ -78,6 +86,7 @@ const SOURCES: ReadonlyArray<{ href: string; label: Copy }> = [
     { href: "https://www.resmigazete.gov.tr/eskiler/2018/03/20180310-5.htm", label: { TR: "Aydınlatma Yükümlülüğü Tebliği", EN: "Communiqué on the Duty to Inform" } },
     { href: "https://www.kvkk.gov.tr/", label: { TR: "Kişisel Verileri Koruma Kurumu", EN: "Personal Data Protection Authority (KVKK)" } },
     { href: "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.6502.pdf", label: { TR: "6502 sayılı Tüketicinin Korunması Hakkında Kanun", EN: "Consumer Protection Law No. 6502" } },
+    { href: "https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=20237&MevzuatTur=7&MevzuatTertip=5", label: { TR: "Mesafeli Sözleşmeler Yönetmeliği", EN: "Distance Contracts Regulation" } },
     { href: "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.6563.pdf", label: { TR: "6563 sayılı Elektronik Ticaretin Düzenlenmesi Hakkında Kanun", EN: "Law No. 6563 on the Regulation of Electronic Commerce" } },
     { href: "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.6098.pdf", label: { TR: "6098 sayılı Türk Borçlar Kanunu", EN: "Turkish Code of Obligations No. 6098" } },
     { href: "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.5846.pdf", label: { TR: "5846 sayılı Fikir ve Sanat Eserleri Kanunu", EN: "Law No. 5846 on Intellectual and Artistic Works" } },
@@ -99,8 +108,8 @@ const PRINT_CSS = `@media print {
 // Text helpers: internal links and accent-insensitive search
 // ---------------------------------------------------------------------------
 
-/** [label](/path) — only same-site paths are turned into links. */
-const LINK_PATTERN = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+/** [label](/path) for pages of this site and [label](https://…) for other sites; nothing else becomes a link. */
+const LINK_PATTERN = /\[([^\]]+)\]\((\/[^)\s]*|https:\/\/[^)\s]+)\)/g;
 
 function stripLinks(text: string) {
     return text.replace(LINK_PATTERN, "$1");
@@ -168,18 +177,27 @@ function Marked({ text, needle }: { text: string; needle: string }) {
     return <>{parts}</>;
 }
 
-/** Plain text with [label](/path) links and search highlights. */
+const LINK_CLASS = "font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-2 transition hover:decoration-indigo-600 dark:text-indigo-300 dark:decoration-indigo-500/50 dark:hover:decoration-indigo-300";
+
+/** Plain text with [label](/path) and [label](https://…) links and search highlights. */
 function RichText({ text, needle }: { text: string; needle: string }) {
+    const { tx } = useI18n();
     const parts: ReactNode[] = [];
     let cursor = 0;
     for (const match of text.matchAll(LINK_PATTERN)) {
         const index = match.index ?? 0;
         if (index > cursor) parts.push(<Marked key={`t${cursor}`} text={text.slice(cursor, index)} needle={needle} />);
-        parts.push(
-            <Link key={`l${index}`} href={match[2]} className="font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-2 transition hover:decoration-indigo-600 dark:text-indigo-300 dark:decoration-indigo-500/50 dark:hover:decoration-indigo-300">
+        parts.push(match[2].startsWith("/") ? (
+            <Link key={`l${index}`} href={match[2]} className={LINK_CLASS}>
                 <Marked text={match[1]} needle={needle} />
-            </Link>,
-        );
+            </Link>
+        ) : (
+            <a key={`l${index}`} href={match[2]} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
+                <Marked text={match[1]} needle={needle} />
+                <ExternalLink className="ms-0.5 inline h-3 w-3 align-[-0.1em]" aria-hidden />
+                <span className="sr-only"> {tx(UI.newTab)}</span>
+            </a>
+        ));
         cursor = index + match[0].length;
     }
     if (!parts.length) return <Marked text={text} needle={needle} />;
@@ -222,6 +240,7 @@ export default function LegalPage({
     notice,
     highlights = [],
     current,
+    operator,
 }: {
     eyebrow: Copy;
     title: Copy;
@@ -230,6 +249,8 @@ export default function LegalPage({
     notice?: Copy;
     highlights?: LegalHighlight[];
     current: LegalDocumentPath;
+    /** Who operates the service (Admin Panel); shown as a card once published. */
+    operator?: OperatorInfo;
 }) {
     const { language, tx } = useI18n();
     const [originalRequested, setOriginalRequested] = useState(false);
@@ -354,6 +375,18 @@ export default function LegalPage({
     const sectionCountText = matched.length === 1 ? tx(UI.oneSection) : tx(UI.sectionCount, { count: matched.length });
     const statusText = needle ? (matched.length === 0 ? tx(UI.noMatch) : matched.length === 1 ? tx(UI.oneMatch) : tx(UI.manyMatches, { count: matched.length })) : "";
 
+    // Until the owner publishes the operator's details, the texts' own "not published yet" notice applies.
+    const operatorFields: Array<{ key: string; label: Copy; value: string; href?: string }> = operator && isOperatorPublished(operator)
+        ? [
+            { key: "name", label: OPERATOR_LABELS.legalName, value: operator.legalName },
+            { key: "brand", label: OPERATOR_LABELS.brand, value: operator.brand },
+            { key: "email", label: OPERATOR_LABELS.contactEmail, value: operator.contactEmail, href: `mailto:${operator.contactEmail}` },
+            { key: "address", label: OPERATOR_LABELS.address, value: operator.address },
+            { key: "tax", label: OPERATOR_LABELS.taxId, value: operator.taxId },
+            { key: "kep", label: OPERATOR_LABELS.kep, value: operator.kep },
+        ].filter((field) => field.value)
+        : [];
+
     return (
         <MotionConfig reducedMotion="user">
             <div className="hanogt-legal min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
@@ -409,6 +442,37 @@ export default function LegalPage({
                                 </div>
                             ) : null}
                         </motion.header>
+
+                        {operatorFields.length ? (
+                            <motion.section
+                                {...contentLanguage}
+                                id={OPERATOR_ID}
+                                tabIndex={-1}
+                                aria-labelledby="legal-operator-title"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                data-legal-card
+                                className="mt-6 scroll-mt-24 rounded-2xl border border-zinc-200 bg-white p-5 outline-none dark:border-white/[0.08] dark:bg-zinc-900 sm:p-6"
+                            >
+                                <div className="flex items-start gap-3">
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"><Building2 className="h-4 w-4" aria-hidden /></span>
+                                    <div className="min-w-0">
+                                        <h2 id="legal-operator-title" className="text-[15px] font-bold text-zinc-900 dark:text-white">{format(UI.operator)}</h2>
+                                        <p className="text-[12.5px] leading-snug text-zinc-500 dark:text-zinc-400">{format(UI.operatorText)}</p>
+                                    </div>
+                                </div>
+                                <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {operatorFields.map((field) => (
+                                        <div key={field.key} className="min-w-0">
+                                            <dt className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{format(field.label)}</dt>
+                                            <dd className="mt-0.5 break-words text-[13.5px] leading-6 text-zinc-800 dark:text-zinc-100">
+                                                {field.href ? <a href={field.href} className={LINK_CLASS}>{field.value}</a> : field.value}
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            </motion.section>
+                        ) : null}
 
                         {highlights.length ? (
                             <section {...contentLanguage} className="mt-6" aria-labelledby="legal-highlights-title">

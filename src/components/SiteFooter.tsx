@@ -35,7 +35,7 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
             links: [
                 { href: "/social", label: NAV_LABELS.social },
                 { href: "/feedback", label: t("feedback_link") },
-                { href: "/plans", label: { TR: "Planlar (yakında)", EN: "Plans (coming soon)" } },
+                { href: "/plans", label: { TR: "Planlar", EN: "Plans" } },
                 { href: "/about", label: t("about_link") },
             ],
         },
@@ -54,6 +54,8 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
                 { href: "/terms-of-use", label: t("terms_of_use") },
                 { href: "/privacy-policy", label: t("privacy_policy") },
                 { href: "/disclosure", label: t("disclosure_text") },
+                { href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
+                { href: "/contact", label: { TR: "İletişim", EN: "Contact" } },
             ],
         },
     ];

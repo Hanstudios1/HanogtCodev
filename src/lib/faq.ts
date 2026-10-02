@@ -1,4 +1,5 @@
 import type { Copy } from "@/lib/i18n";
+import { PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
 export type Faq = { id: string; category: Copy; question: Copy; answer: Copy };
@@ -7,6 +8,7 @@ export type Faq = { id: string; category: Copy; question: Copy; answer: Copy };
 const CATEGORY = {
     support: { TR: "Destek", EN: "Support" },
     account: { TR: "Hesap ve güvenlik", EN: "Account & security" },
+    billing: { TR: "Planlar ve ödemeler", EN: "Plans & billing" },
     code: { TR: "Kod editörü", EN: "Code editor" },
     ai: { TR: "Hanogt AI", EN: "Hanogt AI" },
     engine: { TR: "Oyun motoru", EN: "Game engine" },
@@ -27,6 +29,20 @@ const LANGUAGE_COUNTS = {
     preview: LANGUAGE_STATS.preview,
     browser: LANGUAGES.filter((language) => language.engine === "browser").length,
     server: LANGUAGES.filter((language) => language.engine === "server").length,
+};
+
+// Plan limits come from src/lib/plans.ts too; null means unlimited.
+const limit = (value: number | null) => value ?? "∞";
+const PLAN_NUMBERS = {
+    aiFree: PLAN_AI_LIMITS.free.perDay,
+    aiPlus: PLAN_AI_LIMITS.plus.perDay,
+    aiPro: PLAN_AI_LIMITS.pro.perDay,
+    codeFree: limit(PLAN_PROJECT_LIMITS.free.code),
+    gameFree: limit(PLAN_PROJECT_LIMITS.free.game),
+    codePlus: limit(PLAN_PROJECT_LIMITS.plus.code),
+    gamePlus: limit(PLAN_PROJECT_LIMITS.plus.game),
+    connectionsPlus: PLAN_AI_CONNECTIONS.plus,
+    connectionsPro: PLAN_AI_CONNECTIONS.pro,
 };
 
 /** Frequently asked questions: shown on /feedback and used by Hanogt AI's knowledge base. */
@@ -119,6 +135,97 @@ export const FAQS: Faq[] = [
         answer: {
             TR: "Hayır. Yüksek riskli istek anlık olarak durdurulur ve asgari kayıt oluşturulur. Kalıcı yaptırım otomatik regex sonucuyla verilmez; inceleme ve itiraz yolu vardır. Otomatik bir karara itiraz etmek için İstek kategorisinde, size bir yasak uygulandıysa Ban Kaldırma İsteği kategorisinde destek talebi açabilirsiniz; hesabınız askıya alındıysa giriş sayfasındaki itiraz formunu kullanın.",
             EN: "No. A high-risk request is stopped on the spot with a minimal log entry. Permanent action is never taken from an automatic pattern match; there is a review and appeal path. To object to an automated decision, open a support ticket in the Request category; if you were banned, use the Unban request category, and if your account is suspended, use the appeal form on the sign-in page.",
+        },
+    },
+    {
+        id: "plans-included",
+        category: CATEGORY.billing,
+        question: { TR: "Plus ve Pro planlarında neler var?", EN: "What do the Plus and Pro plans include?" },
+        answer: {
+            TR: "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile günde {aiFree} yerine Plus'ta {aiPlus}, Pro'da {aiPro} mesaj; Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama ve destek taleplerinde öncelik. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
+            EN: "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} (Plus) or {aiPro} (Pro) Hanogt AI messages a day instead of {aiFree}; {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; and priority on support tickets. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
+            vars: PLAN_NUMBERS,
+        },
+    },
+    {
+        id: "plans-buy",
+        category: CATEGORY.billing,
+        question: { TR: "Bir planı nasıl satın alırım?", EN: "How do I buy a plan?" },
+        answer: {
+            TR: "Giriş yapın, Planlar sayfasında (/plans) aylık veya yıllık ödemeyi seçin ve planın satın alma düğmesine basın. Ödeme ekranı Paddle'ın güvenli penceresinde açılır. Ödeme tamamlanınca planınız genellikle birkaç saniye içinde etkinleşir ve uygulama içi bir bildirim alırsınız. Bir planda fiyat ya da satın alma düğmesi görünmüyorsa o plan henüz satışta değildir; “Açılınca haber ver” ile haber alabilirsiniz.",
+            EN: "Sign in, choose monthly or yearly billing on the Plans page (/plans) and press the plan's buy button. The checkout opens in Paddle's secure window. Once the payment is complete, your plan is usually active within seconds and you get an in-app notification. If a plan shows no price or buy button, it isn't on sale yet; press “Notify me when it opens” to hear when it is.",
+        },
+    },
+    {
+        id: "plans-payment",
+        category: CATEGORY.billing,
+        question: { TR: "Ödemeyi kim alıyor, hangi ödeme yöntemlerini kullanabilirim?", EN: "Who takes the payment, and which payment methods can I use?" },
+        answer: {
+            TR: "Ödemeleri Kayıtlı Satıcımız (Merchant of Record) Paddle.com alır; kart bilgileriniz Hanogt Codev'e hiç ulaşmaz. Kullanabileceğiniz yöntemler ödeme ekranında listelenir ve ülkenize göre değişir (ör. banka ve kredi kartları, PayPal, Apple Pay veya Google Pay). KDV gibi vergiler bulunduğunuz ülkeye göre Paddle tarafından hesaplanır ve ödemeden önce toplam tutarla birlikte gösterilir. Ödemeler ABD doları (USD) cinsinden alınır; kartınız başka bir para birimindeyse bankanız tutarı çevirir ve kur farkı ya da masraf yansıtabilir.",
+            EN: "Payments are taken by Paddle.com, our Merchant of Record; your card details never reach Hanogt Codev. The methods available to you are listed at checkout and depend on your country (for example debit and credit cards, PayPal, Apple Pay or Google Pay). Taxes such as VAT are calculated by Paddle for your country and shown with the total before you pay. Payments are taken in US dollars (USD); if your card is in another currency, your bank converts the amount and may pass on exchange-rate differences or fees.",
+        },
+    },
+    {
+        id: "plans-invoice",
+        category: CATEGORY.billing,
+        question: { TR: "Faturamı veya makbuzumu nereden alırım?", EN: "Where do I get my invoice or receipt?" },
+        answer: {
+            TR: "Her ödemeden sonra Paddle, satın alırken kullandığınız e-posta adresine bir makbuz gönderir. Faturalarınızı ve ödeme geçmişinizi Planlar sayfasındaki “Aboneliği yönet” düğmesiyle açılan Paddle müşteri portalından indirebilirsiniz; şirket adı veya vergi numarası gibi fatura bilgilerini ödeme ekranında ekleyebilirsiniz. Satıcı Paddle olduğu için faturayı Paddle düzenler; banka ekstrenizde ödeme genellikle “PADDLE.NET” ile başlayan bir açıklamayla görünür.",
+            EN: "After every payment, Paddle e-mails a receipt to the address you used for the purchase. You can download your invoices and payment history in Paddle's customer portal, which opens with the “Manage subscription” button on the Plans page; invoice details such as a company name or tax number can be added at checkout. Because Paddle is the seller, Paddle issues the invoice; on your bank statement the payment usually appears with a description starting with “PADDLE.NET”.",
+        },
+    },
+    {
+        id: "plans-cancel",
+        category: CATEGORY.billing,
+        question: { TR: "Aboneliğimi nasıl iptal ederim?", EN: "How do I cancel my subscription?" },
+        answer: {
+            TR: "Planlar sayfasında “Aboneliği yönet”e basın ve Paddle'ın müşteri portalında aboneliğinizi iptal edin; isterseniz paddle.net üzerinden de iptal edebilirsiniz. İptal, ödediğiniz dönemin sonunda geçerli olur: o güne kadar avantajlarınız sürer, sonra Ücretsiz plana geçersiniz ve yeniden ücret alınmaz. Dönem bitmeden fikrinizi değiştirirseniz iptali Planlar sayfasından geri alabilirsiniz. Projeleriniz ve verileriniz silinmez.",
+            EN: "Press “Manage subscription” on the Plans page and cancel your subscription in Paddle's customer portal; you can also cancel at paddle.net. Cancellation takes effect at the end of the period you paid for: your benefits last until then, after which you move to the Free plan and aren't charged again. If you change your mind before the period ends, you can undo the cancellation on the Plans page. Your projects and data aren't deleted.",
+        },
+    },
+    {
+        id: "plans-refund",
+        category: CATEGORY.billing,
+        question: { TR: "İade alabilir miyim?", EN: "Can I get a refund?" },
+        answer: {
+            TR: "Evet. Bir aboneliğin ilk ödemesinden sonraki 14 gün içinde, gerekçe göstermeden tam iade isteyebilirsiniz. Yenileme ödemeleri; iptaliniz işlenmediği hâlde ya da hatayla alındıysa veya bizden kaynaklanan bir sorun yüzünden planı kullanamadıysanız, ödemeden sonraki 14 gün içinde iade edilir. İadeyi paddle.net üzerinden veya İstek kategorisinde destek talebiyle isteyebilirsiniz; Paddle tutarı ödemenin yapıldığı yönteme iade eder ve tutar genellikle 5–10 iş günü içinde hesabınıza geçer. Ayrıntılar İade Politikası'ndadır (/refund-policy).",
+            EN: "Yes. Within 14 days of a subscription's first payment you can ask for a full refund without giving a reason. Renewal payments are refunded if you ask within 14 days of the payment and it was charged even though your cancellation wasn't processed, was charged by mistake, or you couldn't use the plan because of a problem caused by us. Ask at paddle.net or with a support ticket in the Request category; Paddle refunds the original payment method and the money usually reaches you within 5–10 business days. The details are in the Refund Policy (/refund-policy).",
+        },
+    },
+    {
+        id: "plans-change",
+        category: CATEGORY.billing,
+        question: { TR: "Planımı veya ödeme dönemimi değiştirebilir miyim?", EN: "Can I change my plan or billing period?" },
+        answer: {
+            TR: "Evet. Planlar sayfasından Plus ile Pro arasında ya da aylık ile yıllık ödeme arasında geçebilirsiniz. Ücret, dönemin kalan süresi için orantılı hesaplanır: değişiklik ek ödeme gerektiriyorsa fark hemen tahsil edilir, lehinize bir tutar kalırsa Paddle'da kredi olarak sonraki ödemelerinizden düşülür. Onaylamadan önce tutar gösterilir ve yeni planın avantajları hemen başlar.",
+            EN: "Yes. On the Plans page you can switch between Plus and Pro, or between monthly and yearly billing. The fee is prorated for the rest of the period: if the change costs more, the difference is charged right away; if an amount is left in your favour, it becomes a credit at Paddle that is taken off your next payments. The amount is shown before you confirm, and the new plan's benefits start immediately.",
+        },
+    },
+    {
+        id: "plans-coupon",
+        category: CATEGORY.billing,
+        question: { TR: "Kupon (indirim) kodumu nerede kullanırım?", EN: "Where do I use a coupon (discount) code?" },
+        answer: {
+            TR: "Ödeme ekranında “İndirim kodu ekle”ye basıp kodunuzu yazın; indirimli tutar ödemeden önce gösterilir. Kodun hangi planlarda, ne kadar süre ve kaç ödeme için geçerli olduğu kod verilirken belirtilir. Kod, ödeme tamamlanmadan önce girilmelidir.",
+            EN: "On the checkout screen, press “Add discount code” and enter your code; the discounted amount is shown before you pay. Which plans the code works for, how long it is valid and for how many payments are stated when the code is given. The code must be entered before the payment is completed.",
+        },
+    },
+    {
+        id: "plans-failed-payment",
+        category: CATEGORY.billing,
+        question: { TR: "Ödemem alınamazsa ne olur?", EN: "What happens if a payment fails?" },
+        answer: {
+            TR: "Paddle ödemeyi bir süre boyunca yeniden dener ve size e-posta gönderir; biz de uygulama içinde bildiririz. Bu sürede plan avantajlarınız devam eder. Planlar sayfasındaki “Ödeme yöntemini güncelle” ya da “Aboneliği yönet” ile kartınızı güncelleyebilirsiniz. Denemelerin hiçbiri başarılı olmazsa abonelik sona erer ve Ücretsiz plana geçersiniz; verileriniz silinmez.",
+            EN: "Paddle retries the payment for a while and e-mails you, and we notify you in the app. Your plan benefits continue meanwhile. You can update your card with “Update payment method” or “Manage subscription” on the Plans page. If none of the retries succeeds, the subscription ends and you move to the Free plan; your data isn't deleted.",
+        },
+    },
+    {
+        id: "plans-account-deletion",
+        category: CATEGORY.billing,
+        question: { TR: "Hesabımı silersem aboneliğime ne olur?", EN: "What happens to my subscription if I delete my account?" },
+        answer: {
+            TR: "Etkin aboneliğiniz hemen iptal edilir ve kalan süre için kendiliğinden iade yapılmaz. İlk ödemeden sonraki 14 gün içindeyseniz önce iade isteyin; hesap silindikten sonra da paddle.net üzerinden, satın alırken kullandığınız e-posta adresiyle başvurabilirsiniz.",
+            EN: "Your active subscription is cancelled immediately and no refund is made automatically for the remaining time. If you are within 14 days of the first payment, ask for a refund first; after the account is deleted, you can still apply at paddle.net with the e-mail address you used for the purchase.",
         },
     },
     {

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import LegalPage, { type LegalHighlight, type LegalSection } from "@/components/LegalPage";
+import { controllerTableRows } from "@/lib/legal";
+import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
+import { getOperatorInfo } from "@/lib/server/legal-info";
 
 export const metadata: Metadata = {
     title: "KVKK Aydınlatma Metni",
@@ -7,14 +10,21 @@ export const metadata: Metadata = {
     alternates: { canonical: "/disclosure" },
 };
 
+// The operator's details come from the Admin Panel; re-read them every few minutes.
+export const revalidate = 300;
+
 // Turkish is the authoritative text; keep every paragraph a separate { TR, EN }
 // pair with plain string literals so the copy packs can translate it. Texts that
 // also appear in the Privacy Policy are kept identical so they share a translation.
+// Where a text depends on whether the operator's details are published, both
+// versions are written out in full.
 
-const highlights: LegalHighlight[] = [
+const highlights = (published: boolean): LegalHighlight[] => [
     {
         title: { TR: "Kim?", EN: "Who?" },
-        text: { TR: "Veri sorumlusu, Hanogt Codev'i işleten HanStudios / Hanogt Codev işletmesidir.", EN: "The data controller is HanStudios / Hanogt Codev, which operates Hanogt Codev." },
+        text: published
+            ? { TR: "Veri sorumlusu, Hanogt Codev'i işleten ve kimlik ve iletişim bilgileri bu sayfada yer alan işletmecidir.", EN: "The data controller is the operator of Hanogt Codev, whose identity and contact details are on this page." }
+            : { TR: "Veri sorumlusu, Hanogt Codev'i işleten HanStudios / Hanogt Codev işletmesidir.", EN: "The data controller is HanStudios / Hanogt Codev, which operates Hanogt Codev." },
     },
     {
         title: { TR: "Neden?", EN: "Why?" },
@@ -22,7 +32,7 @@ const highlights: LegalHighlight[] = [
     },
     {
         title: { TR: "Kime?", EN: "To whom?" },
-        text: { TR: "Barındırma, veritabanı, kimlik doğrulama, yapay zekâ ve kod çalıştırma sağlayıcılarına; bunların çoğu yurt dışındadır.", EN: "To hosting, database, authentication, AI and code execution providers, most of them abroad." },
+        text: { TR: "Barındırma, veritabanı, kimlik doğrulama, ödeme (Paddle), yapay zekâ ve kod çalıştırma sağlayıcılarına; bunların çoğu yurt dışındadır.", EN: "To hosting, database, authentication, payment (Paddle), AI and code execution providers, most of them abroad." },
     },
     {
         title: { TR: "Haklarınız", EN: "Your rights" },
@@ -30,30 +40,25 @@ const highlights: LegalHighlight[] = [
     },
 ];
 
-const sections: LegalSection[] = [
+const sections = (operator: OperatorInfo): LegalSection[] => [
     {
         id: "controller",
         title: { TR: "Veri sorumlusu", EN: "Data controller" },
         paragraphs: [
-            { TR: "6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında veri sorumlusu, Hanogt Codev hizmetini işleten HanStudios / Hanogt Codev işletmesidir. Aşağıdaki kimlik ve iletişim bilgileri henüz yayımlanmamıştır; yayımlandığında bu metne eklenecek ve bu bilgiler yayımlanmadan ücretli veya ticari bir sürüm sunulmayacaktır.", EN: "Under the Law No. 6698 on the Protection of Personal Data (“KVKK”), the data controller is HanStudios / Hanogt Codev, the business that operates the Hanogt Codev service. The identity and contact details below have not been published yet; they will be added to this notice when they are, and no paid or commercial version will be offered before then." },
+            isOperatorPublished(operator)
+                ? { TR: "6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında veri sorumlusu, Hanogt Codev hizmetini işleten ve kimlik ve iletişim bilgileri aşağıdaki tabloda yer alan işletmecidir.", EN: "Under the Law No. 6698 on the Protection of Personal Data (“KVKK”), the data controller is the operator of the Hanogt Codev service, whose identity and contact details are in the table below." }
+                : { TR: "6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında veri sorumlusu, Hanogt Codev hizmetini işleten HanStudios / Hanogt Codev işletmesidir. Aşağıdaki kimlik ve iletişim bilgileri henüz yayımlanmamıştır; yayımlandığında bu metne eklenecektir. O zamana kadar başvurular uygulama içindeki destek talebi kanalından alınır.", EN: "Under the Law No. 6698 on the Protection of Personal Data (“KVKK”), the data controller is HanStudios / Hanogt Codev, the business that operates the Hanogt Codev service. The identity and contact details below have not been published yet; they will be added to this notice when they are. Until then, requests are received through the in-app support ticket channel." },
         ],
         table: {
             head: [{ TR: "Bilgi", EN: "Item" }, { TR: "Değer", EN: "Details" }],
-            rows: [
-                [{ TR: "Ticari unvan", EN: "Trade name" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
-                [{ TR: "MERSİS / VKN", EN: "MERSİS / tax number" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
-                [{ TR: "Açık adres", EN: "Address" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
-                [{ TR: "KEP adresi", EN: "Registered e-mail address (KEP)" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
-                [{ TR: "İletişim e-postası", EN: "Contact e-mail" }, { TR: "[Yayımlanacak]", EN: "[To be published]" }],
-                [{ TR: "Şu an kullanılabilen başvuru kanalı", EN: "Request channel available now" }, { TR: "Giriş yapmış olarak [Geri Bildirim ve SSS](/feedback) → “Talep oluştur” → “İstek” kategorisi", EN: "While signed in: [Feedback & FAQ](/feedback) → “Create a ticket” → “Request” category" }],
-            ],
+            rows: controllerTableRows(operator),
         },
     },
     {
         id: "scope",
         title: { TR: "Bu metnin kapsamı", EN: "Scope of this notice" },
         paragraphs: [
-            { TR: "Bu metin; Hanogt Codev'in web sitesini ve uygulamalarını ziyaret eden, hesap oluşturan, içerik yayımlayan, diğer kullanıcılarla iletişim kuran, destek talebi veya KVKK başvurusu gönderen gerçek kişileri kapsar.", EN: "This notice covers the individuals who visit Hanogt Codev's website and apps, create an account, publish content, communicate with other users, or send a support ticket or a KVKK request." },
+            { TR: "Bu metin; Hanogt Codev'in web sitesini ve uygulamalarını ziyaret eden, hesap oluşturan, içerik yayımlayan, diğer kullanıcılarla iletişim kuran, ücretli bir plan satın alan, destek talebi veya KVKK başvurusu gönderen gerçek kişileri kapsar.", EN: "This notice covers the individuals who visit Hanogt Codev's website and apps, create an account, publish content, communicate with other users, buy a paid plan, or send a support ticket or a KVKK request." },
             { TR: "Metin, KVKK m.10 ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca hazırlanmıştır. Her özelliğin ayrıntılı işleyişi [Gizlilik Politikası](/privacy-policy)'nda anlatılır.", EN: "It has been prepared under KVKK Art. 10 and the Communiqué on the Procedures and Principles for Fulfilling the Duty to Inform. How each feature works is described in detail in the [Privacy Policy](/privacy-policy)." },
         ],
     },
@@ -70,7 +75,8 @@ const sections: LegalSection[] = [
                 [{ TR: "Kullanıcı içeriği ve işlemleri", EN: "User content and activity" }, { TR: "Kod ve oyun projeleri, scriptler, Media yayınları, Arcade oyunları, yorumlar, beğeniler, içerik bildirimleri, arena oyları (takma kimlikle), geri bildirimler", EN: "Code and game projects, scripts, Media posts, Arcade games, comments, likes, content reports, arena votes (pseudonymous), feedback" }],
                 [{ TR: "İletişim içerikleri", EN: "Communications" }, { TR: "Birebir ve grup mesajları, sesli mesajlar, arkadaşlık ve grup kayıtları, bildirimler, çevrimiçi durum; sesli aramalarda geçici bağlantı verileri (aramalar kaydedilmez)", EN: "One-to-one and group messages, voice messages, friend and group records, notifications, online status; temporary connection data for voice calls (calls are not recorded)" }],
                 [{ TR: "Görsel ve işitsel kayıtlar", EN: "Audio-visual records" }, { TR: "Profil ve kapak görselleri, sesli mesaj dosyaları", EN: "Profile and banner images, voice message files" }],
-                [{ TR: "Yapay zekâ etkileşimleri", EN: "AI interactions" }, { TR: "Giriş yapmışken Hanogt AI'a gönderilen mesajlar ve bağlam; ajan modunda verilen izinler", EN: "Messages and context sent to Hanogt AI while signed in; permissions given in agent mode" }],
+                [{ TR: "Yapay zekâ etkileşimleri", EN: "AI interactions" }, { TR: "Giriş yapmışken Hanogt AI'a gönderilen mesajlar ve bağlam; ajan modunda verilen izinler; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri)", EN: "Messages and context sent to Hanogt AI while signed in; permissions given in agent mode; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters)" }],
+                [{ TR: "Müşteri işlem", EN: "Customer transactions" }, { TR: "Plan, abonelik durumu, fatura dönemi, dönem sonu ve sonraki ödeme tarihi, planlanmış iptal veya değişiklik; Paddle müşteri ve abonelik kimlikleri. Kart ve diğer ödeme bilgileri tarafımızca işlenmez; bunları Paddle toplar.", EN: "Plan, subscription status, billing period, period end and next payment date, any scheduled cancellation or change; Paddle customer and subscription IDs. Card and other payment details are not processed by us; Paddle collects them." }],
                 [{ TR: "Talep ve şikâyet yönetimi", EN: "Request and complaint management" }, { TR: "Destek talepleri, KVKK başvuruları, itirazlar ve yanıtlar; talebi değerlendirmek için hesap kaydı ve moderasyon geçmişi", EN: "Support tickets, KVKK requests, appeals and replies; the account record and moderation history used to assess them" }],
                 [{ TR: "Hukuki işlem", EN: "Legal matters" }, { TR: "Moderasyon kararları, yetkili makam talepleri ve bunlara ilişkin yazışmalar", EN: "Moderation decisions, requests from authorities and related correspondence" }],
             ],
@@ -84,6 +90,8 @@ const sections: LegalSection[] = [
             { TR: "Üyelik işlemlerinin yürütülmesi: hesap açma, giriş, oturum ve iki adımlı doğrulama,", EN: "running membership processes: creating accounts, sign-in, sessions and two-step verification;" },
             { TR: "Kod editörü, kod çalıştırma, Hanogt Engine, Arcade, Media, News, arena, gruplar, sohbetler ve aramalar gibi hizmetlerin sunulması,", EN: "providing services such as the code editor, code execution, Hanogt Engine, the Arcade, Media, News, the arena, groups, chats and calls;" },
             { TR: "Hanogt AI yanıtlarının üretilmesi ve izin verdiğiniz ajan işlemlerinin yapılması,", EN: "generating Hanogt AI replies and carrying out agent actions you allow;" },
+            { TR: "Ücretli planların satışına ilişkin sözleşmenin kurulması ve ifası: aboneliğin Paddle üzerinden başlatılması ve hesabınıza bağlanması, plan avantajlarının ve sınırlarının uygulanması, plan değişikliği ve iptal işlemleri,", EN: "concluding and performing the contract for the sale of paid plans: starting the subscription through Paddle and linking it to your account, applying the plan's benefits and limits, and handling plan changes and cancellations;" },
+            { TR: "Ödeme ve faturalandırma süreçlerinin Kayıtlı Satıcı Paddle aracılığıyla yürütülmesi, abonelikle ilgili uygulama içi bildirimlerin gönderilmesi, ödeme ve iade taleplerinin yanıtlanması,", EN: "running payment and invoicing processes through Paddle, the Merchant of Record, sending in-app notices about your subscription and answering payment and refund requests;" },
             { TR: "Bilgi güvenliği süreçlerinin yürütülmesi: kötüye kullanımın, spam'in ve saldırıların önlenmesi, hız sınırları ve güvenlik olaylarının incelenmesi,", EN: "running information security processes: preventing abuse, spam and attacks, applying rate limits and investigating security events;" },
             { TR: "Topluluk kurallarının uygulanması, içerik bildirimlerinin ve moderasyonun yürütülmesi, ekip işlemlerinin denetim kaydının tutulması,", EN: "enforcing community rules, handling content reports and moderation, and keeping an audit log of staff actions;" },
             { TR: "Destek taleplerinin, itirazların ve KVKK başvurularının yanıtlanması,", EN: "answering support tickets, appeals and KVKK requests;" },
@@ -100,9 +108,9 @@ const sections: LegalSection[] = [
         table: {
             head: [{ TR: "Hukuki sebep", EN: "Legal basis" }, { TR: "Dayanılan işlemler", EN: "Processing it covers" }],
             rows: [
-                [{ TR: "Sözleşmenin kurulması veya ifasıyla doğrudan ilgili olması (m.5/2-c)", EN: "Directly related to concluding or performing a contract (Art. 5(2)(c))" }, { TR: "Hesap ve oturum, projeler, kod çalıştırma, topluluk ve iletişim özellikleri, Hanogt AI, destek talepleri", EN: "Account and sessions, projects, code execution, community and communication features, Hanogt AI, support tickets" }],
-                [{ TR: "Veri sorumlusunun meşru menfaati (m.5/2-f)", EN: "The data controller's legitimate interests (Art. 5(2)(f))" }, { TR: "Hesap ve hizmet güvenliği, hız sınırları, güvenlik olayları, moderasyon, kötüye kullanımın ayırt edilmesi, denetim kaydı", EN: "Account and service security, rate limits, security events, moderation, telling genuine requests from abuse, the audit log" }],
-                [{ TR: "Hukuki yükümlülüğün yerine getirilmesi (m.5/2-ç)", EN: "Complying with a legal obligation (Art. 5(2)(ç))" }, { TR: "KVKK başvurularının yanıtlanması, veri ihlali bildirimleri, yetkili makam talepleri", EN: "Answering KVKK requests, data breach notifications, requests from authorities" }],
+                [{ TR: "Sözleşmenin kurulması veya ifasıyla doğrudan ilgili olması (m.5/2-c)", EN: "Directly related to concluding or performing a contract (Art. 5(2)(c))" }, { TR: "Hesap ve oturum, projeler, kod çalıştırma, topluluk ve iletişim özellikleri, Hanogt AI, destek talepleri; ücretli planların satışı, abonelik yönetimi ve bunun için Paddle'a yapılan aktarım", EN: "Account and sessions, projects, code execution, community and communication features, Hanogt AI, support tickets; selling paid plans, managing subscriptions and the transfer to Paddle this requires" }],
+                [{ TR: "Veri sorumlusunun meşru menfaati (m.5/2-f)", EN: "The data controller's legitimate interests (Art. 5(2)(f))" }, { TR: "Hesap ve hizmet güvenliği, hız sınırları, güvenlik olayları, moderasyon, kötüye kullanımın ayırt edilmesi, denetim kaydı; satın almaların doğru hesaba bağlanması ve plan avantajlarının kötüye kullanılmasının önlenmesi", EN: "Account and service security, rate limits, security events, moderation, telling genuine requests from abuse, the audit log; linking purchases to the right account and preventing abuse of plan benefits" }],
+                [{ TR: "Hukuki yükümlülüğün yerine getirilmesi (m.5/2-ç)", EN: "Complying with a legal obligation (Art. 5(2)(ç))" }, { TR: "KVKK başvurularının yanıtlanması, veri ihlali bildirimleri, yetkili makam talepleri; ödeme ve faturalandırmaya ilişkin vergi ve muhasebe yükümlülükleri (satıcı sıfatıyla Paddle tarafından yerine getirilir)", EN: "Answering KVKK requests, data breach notifications, requests from authorities; tax and accounting obligations relating to payments and invoicing (met by Paddle as the seller)" }],
                 [{ TR: "Kanunlarda açıkça öngörülmesi (m.5/2-a)", EN: "Expressly provided for by law (Art. 5(2)(a))" }, { TR: "Mevzuatta öngörülen saklama ve bildirim yükümlülükleri", EN: "Retention and reporting obligations set by law" }],
                 [{ TR: "Bir hakkın tesisi, kullanılması veya korunması (m.5/2-e)", EN: "Establishing, exercising or protecting a right (Art. 5(2)(e))" }, { TR: "Uyuşmazlıklar, itirazlar, kötüye kullanım ve güvenlik incelemeleri", EN: "Disputes, appeals, abuse and security investigations" }],
                 [{ TR: "İlgili kişinin kendisi tarafından alenileştirilmesi (m.5/2-d)", EN: "Data made public by the data subject (Art. 5(2)(d))" }, { TR: "Media, Arcade, haber yorumları ve geri bildirim panosunda yayımlamayı seçtiğiniz içerikler, yalnızca alenileştirme amacıyla sınırlı olarak", EN: "Content you choose to publish on Media, the Arcade, news comments and the feedback board, only within the purpose of making it public" }],
@@ -122,12 +130,14 @@ const sections: LegalSection[] = [
         items: [
             { TR: "Kayıt, giriş, profil, editör, oyun motoru, yayımlama, yorum, oy, mesajlaşma, destek ve başvuru formları aracılığıyla sizden,", EN: "from you, through the sign-up, sign-in, profile, editor, game engine, publishing, comment, voting, messaging, support and request forms;" },
             { TR: "Google ile giriş seçtiğinizde Google'dan (e-posta, ad, profil fotoğrafı bağlantısı),", EN: "from Google when you choose Sign in with Google (e-mail, name, profile photo link);" },
+            { TR: "Ücretli bir plan satın aldığınızda ve aboneliğinizi yönettiğinizde Kayıtlı Satıcı Paddle'dan (abonelik durumu ve Paddle kimlikleri, imzalı bildirimlerle),", EN: "from Paddle, the Merchant of Record, when you buy a paid plan or manage your subscription (subscription status and Paddle IDs, through signed notifications);" },
             { TR: "Hizmeti kullanırken sunucularımız, altyapı sağlayıcılarımız ve tarayıcınız tarafından otomatik olarak (oturum, çevrimiçi durum, hız sınırı ve güvenlik kayıtları, barındırma günlükleri),", EN: "automatically, by our servers, our infrastructure providers and your browser while you use the service (sessions, online status, rate-limit and security records, hosting logs);" },
             { TR: "Sesli arama sırasında geçici bağlantı verilerinden,", EN: "from temporary connection data during voice calls;" },
             { TR: "Diğer kullanıcıların sizinle ilgili yaptığı işlemlerden (ör. arkadaşlık isteği, grup daveti, içerik bildirimi).", EN: "from actions other users take that concern you (for example friend requests, group invitations or content reports)." },
         ],
         after: [
             { TR: "Tarayıcınızda çalışan araçlar (tarayıcı dilleri, Kod Danışmanı, parola ölçer, bağlantı kontrolü, Hanogt AI Çekirdeği) verilerinizi sunucuya göndermez. Toplanan veriler, yukarıdaki amaçlar için ve hukuki sebepler tablosundaki sebeplere dayanılarak işlenir.", EN: "Tools that run in your browser (the browser languages, Code Advisor, password meter, link check and the Hanogt AI Core) do not send your data to a server. Collected data is processed for the purposes above, on the grounds in the legal bases table." },
+            { TR: "Ödeme ekranına girdiğiniz bilgiler (ör. kart bilgileri, fatura adresi ve vergi numarası) tarafımızca toplanmaz; bunları Paddle doğrudan sizden, bağımsız veri sorumlusu olarak kendi [Gizlilik Bildirimi](https://www.paddle.com/legal/privacy) kapsamında toplar.", EN: "The details you enter at checkout (for example card details, billing address and tax number) are not collected by us; Paddle collects them directly from you as an independent data controller under its own [Privacy Notice](https://www.paddle.com/legal/privacy)." },
         ],
     },
     {
@@ -148,7 +158,9 @@ const sections: LegalSection[] = [
             rows: [
                 ["Google (Firebase)", { TR: "Hesap, profil, içerik, mesaj ve diğer hizmet verileri", EN: "Account, profile, content, message and other service data" }, { TR: "Veritabanı, dosya depolama ve kimlik doğrulama", EN: "Database, file storage and authentication" }],
                 ["Vercel Inc.", { TR: "Web istekleri, IP adresi, teknik günlükler", EN: "Web requests, IP addresses, technical logs" }, { TR: "Barındırma ve sunucu işlevleri", EN: "Hosting and server functions" }],
+                [{ TR: "Paddle.com Market Limited (Birleşik Krallık)", EN: "Paddle.com Market Limited (United Kingdom)" }, { TR: "Hesap e-posta adresi, seçilen plan ve dönem, satın almayı hesaba bağlayan imzalı özel veri, Paddle müşteri ve abonelik kimlikleri", EN: "Account e-mail address, the plan and billing period chosen, signed custom data linking the purchase to the account, Paddle customer and subscription IDs" }, { TR: "Kayıtlı Satıcı olarak ödeme, faturalama, vergi, iade ve abonelik yönetimi", EN: "Payment, invoicing, tax, refunds and subscription management as the Merchant of Record" }],
                 [{ TR: "Dil modeli sağlayıcısı (varsayılan: Groq, Inc.)", EN: "Language model provider (default: Groq, Inc.)" }, { TR: "Giriş yapmışken Hanogt AI'a yazılanlar ve bağlam", EN: "What you write to Hanogt AI while signed in, and its context" }, { TR: "Yanıt üretimi", EN: "Generating replies" }],
+                [{ TR: "Kendi API anahtarınızla bağladığınız yapay zekâ sağlayıcısı (ör. OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, DeepSeek, xAI, Together)", EN: "An AI provider you connected with your own API key (for example OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, DeepSeek, xAI, Together)" }, { TR: "Bu bağlantıyla Hanogt AI'a yazılanlar ve bağlam", EN: "What you write to Hanogt AI with that connection, and its context" }, { TR: "Seçtiğiniz sağlayıcıyla yanıt üretimi", EN: "Generating replies with the provider you chose" }],
                 [{ TR: "Wandbox, JetBrains Kotlin Playground veya Hanogt adına işletilen çalıştırıcı", EN: "Wandbox, JetBrains Kotlin Playground or a runner operated for Hanogt" }, { TR: "Sunucuda çalışan dillerdeki kaynak kod ve program girdisi", EN: "Source code and program input for server-run languages" }, { TR: "Kodun çalıştırılması", EN: "Running code" }],
                 [{ TR: "Google STUN sunucuları, TURN aktarma sunucusu", EN: "Google STUN servers, TURN relay server" }, { TR: "IP adresi, ağ bilgileri; TURN için e-posta adresinden tuzla türetilen takma kimliği içeren geçici kullanıcı adı", EN: "IP address, network details; for TURN, a temporary username containing a salted pseudonymous ID derived from your e-mail address" }, { TR: "Sesli arama bağlantısı", EN: "Connecting voice calls" }],
                 ["Have I Been Pwned", { TR: "Parola SHA-1 özetinin ilk 5 karakteri (isteğe bağlı kontrol)", EN: "The first 5 characters of a password's SHA-1 hash (optional check)" }, { TR: "Parola sızıntı kontrolü", EN: "Password breach check" }],
@@ -156,6 +168,8 @@ const sections: LegalSection[] = [
         },
         after: [
             { TR: "Bu aktarımlar, 7499 sayılı Kanun'la değiştirilen KVKK m.9 ve Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik çerçevesinde; KVKK m.5 veya m.6'daki bir işleme şartının yanında, varsa Kurul'un yeterlilik kararına, yoksa m.9/4'te sayılan uygun güvencelere (düzenli aktarımlarda özellikle Kurul'ca ilan edilen standart sözleşmelere) dayanılarak yapılır. m.9/6'daki arızi aktarım hâllerine yalnızca düzenli olmayan durumlarda başvurulur.", EN: "These transfers are made under KVKK Art. 9, as amended by Law No. 7499, and the Regulation on the Procedures and Principles for the Transfer of Personal Data Abroad: in addition to a processing condition in KVKK Art. 5 or 6, they rely on an adequacy decision of the Board where one exists and, where none exists, on the appropriate safeguards in Art. 9(4) (for regular transfers, in particular the standard contracts announced by the Board). The incidental transfer exceptions in Art. 9(6) are used only for transfers that are not regular." },
+            { TR: "Ücretli bir plan satın aldığınızda ve aboneliğinizi yönettiğinizde Paddle'a (Birleşik Krallık) yapılan aktarım, sizin başlattığınız bu işlemlerle sınırlı ve düzenli olmayan (arızi) bir aktarımdır. Bu aktarım, talebiniz üzerine alınan sözleşme öncesi tedbirlerin uygulanması ve sizinle aramızdaki sözleşmenin ifası için zorunlu olduğundan KVKK m.9/6-b'ye dayanır. Ödeme ekranına girdiğiniz bilgiler ise tarafımızdan aktarılmaz; doğrudan Paddle tarafından, kendi [Gizlilik Bildirimi](https://www.paddle.com/legal/privacy) kapsamında toplanır.", EN: "When you buy a paid plan or manage your subscription, the transfer to Paddle (United Kingdom) is an incidental transfer, limited to these actions that you start and not regular. It relies on KVKK Art. 9(6)(b), because it is necessary to carry out pre-contractual steps you asked for and to perform the contract between you and us. The details you enter at checkout are not transferred by us: Paddle collects them directly under its own [Privacy Notice](https://www.paddle.com/legal/privacy)." },
+            { TR: "Kendi API anahtarınızla bağladığınız bir yapay zekâ sağlayıcısına yapılan aktarım, yalnızca sizin seçtiğiniz sağlayıcıya ve sizin talebinizle, o bağlantıyı kullandığınız mesajlar için yapılır; sağlayıcının hangi ülkelerde veri işlediği ve hangi güvenceleri sunduğu, o sağlayıcının koşullarında yer alır.", EN: "A transfer to an AI provider you connected with your own API key is made only to the provider you chose, at your request, for the messages in which you use that connection; the countries where the provider processes data and the safeguards it offers are set out in that provider's terms." },
             { TR: "Hangi alıcı için hangi mekanizmaya dayanıldığına ilişkin bilgiyi “İstek” kategorisinde destek talebiyle isteyebilirsiniz. Ayrıntılar [Gizlilik Politikası](/privacy-policy#transfers)'nda yer alır.", EN: "You can ask which mechanism is relied on for which recipient with a support ticket in the “Request” category. Details are in the [Privacy Policy](/privacy-policy#transfers)." },
         ],
     },
@@ -192,8 +206,15 @@ const sections: LegalSection[] = [
         ],
         items: [
             { TR: "Hesabınıza giriş yaparak [Geri Bildirim ve SSS](/feedback) sayfasında “Talep oluştur” ile “İstek” kategorisinde destek talebi oluşturarak. Bu kanal başvuru amacıyla geliştirilmiş bir uygulamadır; kimliğiniz oturumunuzla doğrulanır, gerekirse ek doğrulama istenebilir.", EN: "By signing in and using “Create a ticket” on the [Feedback & FAQ](/feedback) page to open a support ticket in the “Request” category. This channel is an application built for such requests; your identity is verified by your session, and additional verification may be requested if needed." },
-            { TR: "Veri sorumlusunun adresine yazılı olarak veya KEP adresine güvenli elektronik imza ya da mobil imzayla; bu bilgiler yayımlandığında [veri sorumlusu](/disclosure#controller) bölümünde yer alacaktır.", EN: "In writing to the data controller's address, or to its KEP address with a secure electronic or mobile signature; these details will appear in the [data controller](/disclosure#controller) section once published." },
-            { TR: "Sistemimizde kayıtlı e-posta adresinizden, veri sorumlusunun yayımlanacak iletişim e-postasına.", EN: "From the e-mail address registered in our system to the data controller's contact e-mail address, once published." },
+            ...(isOperatorPublished(operator)
+                ? [
+                    { TR: "Veri sorumlusunun [veri sorumlusu](/disclosure#controller) bölümünde yer alan adresine yazılı olarak veya, varsa, KEP adresine güvenli elektronik imza ya da mobil imzayla.", EN: "In writing to the data controller's address in the [data controller](/disclosure#controller) section or, if it has one, to its KEP address with a secure electronic or mobile signature." },
+                    { TR: "Sistemimizde kayıtlı e-posta adresinizden, [veri sorumlusu](/disclosure#controller) bölümünde ve [İletişim](/contact) sayfasında yer alan iletişim e-postasına.", EN: "From the e-mail address registered in our system to the contact e-mail address in the [data controller](/disclosure#controller) section and on the [Contact](/contact) page." },
+                ]
+                : [
+                    { TR: "Veri sorumlusunun adresine yazılı olarak veya KEP adresine güvenli elektronik imza ya da mobil imzayla; bu bilgiler yayımlandığında [veri sorumlusu](/disclosure#controller) bölümünde yer alacaktır.", EN: "In writing to the data controller's address, or to its KEP address with a secure electronic or mobile signature; these details will appear in the [data controller](/disclosure#controller) section once published." },
+                    { TR: "Sistemimizde kayıtlı e-posta adresinizden, veri sorumlusunun yayımlanacak iletişim e-postasına.", EN: "From the e-mail address registered in our system to the data controller's contact e-mail address, once published." },
+                ]),
         ],
         after: [
             { TR: "Başvuruda adınız ve soyadınız, yazılı başvurularda imzanız, Türkiye Cumhuriyeti vatandaşları için T.C. kimlik numaranız, yabancılar için uyruğunuz ile pasaport numaranız veya varsa kimlik numaranız, tebligata esas yerleşim yeri veya iş yeri adresiniz, varsa bildirime esas e-posta adresiniz, telefon ve faks numaranız ile talep konunuz bulunmalıdır. Uygulama içi başvurularda yalnızca talebinizi yanıtlamak için gerekli bilgiler istenir.", EN: "A request should include your name and surname, your signature for written requests, your Turkish ID number if you are a Turkish citizen or, if you are not, your nationality and passport number or ID number if any, your residential or business address for notifications, your e-mail address, phone and fax number for notifications if any, and the subject of your request. For in-app requests we only ask for the information needed to answer your request." },
@@ -225,15 +246,17 @@ const sections: LegalSection[] = [
     },
 ];
 
-export default function DisclosurePage() {
+export default async function DisclosurePage() {
+    const operator = await getOperatorInfo();
     return (
         <LegalPage
             current="/disclosure"
             eyebrow={{ TR: "KVKK m.10", EN: "KVKK Art. 10" }}
             title={{ TR: "Kişisel Verilerin İşlenmesine İlişkin Aydınlatma Metni", EN: "Information Notice on the Processing of Personal Data" }}
             summary={{ TR: "6698 sayılı Kişisel Verilerin Korunması Kanunu'nun 10. maddesi ve Aydınlatma Yükümlülüğü Tebliği uyarınca; veri sorumlusunu, hangi kişisel verilerinizi hangi amaçlarla ve hangi hukuki sebeplere dayanarak işlediğimizi, verilerin nasıl toplandığını, kimlere aktarıldığını ve haklarınızı açıklar.", EN: "In line with Article 10 of the Law No. 6698 on the Protection of Personal Data (KVKK) and the Communiqué on the Duty to Inform, this notice explains who the data controller is, which of your personal data we process, for which purposes and on which legal bases, how it is collected, to whom it is transferred and what your rights are." }}
-            sections={sections}
-            highlights={highlights}
+            sections={sections(operator)}
+            highlights={highlights(isOperatorPublished(operator))}
+            operator={operator}
             notice={{ TR: "Bu metin, kişisel verileriniz elde edilirken sizi bilgilendirmek içindir; okumanız veya “Okudum” olarak işaretlemeniz açık rıza anlamına gelmez. Ayrıntılı açıklamalar [Gizlilik Politikası](/privacy-policy)'ndadır.", EN: "This notice informs you when your personal data is collected; reading it or marking it as read does not mean you give explicit consent. Detailed explanations are in the [Privacy Policy](/privacy-policy)." }}
         />
     );

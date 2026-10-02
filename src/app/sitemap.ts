@@ -13,9 +13,11 @@ const PUBLIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: Me
     { path: "/about", priority: 0.5, changeFrequency: "monthly" },
     { path: "/plans", priority: 0.5, changeFrequency: "monthly" },
     { path: "/feedback", priority: 0.4, changeFrequency: "monthly" },
+    { path: "/contact", priority: 0.4, changeFrequency: "monthly" },
     { path: "/privacy-policy", priority: 0.2, changeFrequency: "yearly" },
     { path: "/terms-of-use", priority: 0.2, changeFrequency: "yearly" },
     { path: "/disclosure", priority: 0.2, changeFrequency: "yearly" },
+    { path: "/refund-policy", priority: 0.2, changeFrequency: "yearly" },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

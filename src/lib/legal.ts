@@ -1,4 +1,5 @@
 import type { Copy } from "@/lib/i18n";
+import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
 
 /**
  * Version metadata shared by the legal pages (src/components/LegalPage.tsx) and
@@ -6,15 +7,66 @@ import type { Copy } from "@/lib/i18n";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.3";
+export const LEGAL_VERSION = "4.4";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "2 Ekim 2026", EN: "2 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.3-2026-10-02";
+export const LEGAL_NOTICE_ID = "4.4-2026-10-02";
+
+/** Labels of the operator's details: the card on every legal page and the data controller tables. */
+export const OPERATOR_LABELS = {
+    legalName: { TR: "Ticari unvan / ad soyad", EN: "Trade name / full name" },
+    brand: { TR: "Marka", EN: "Brand" },
+    taxId: { TR: "MERSİS / VKN", EN: "MERSİS / tax number" },
+    address: { TR: "Açık adres", EN: "Address" },
+    kep: { TR: "KEP adresi", EN: "Registered e-mail address (KEP)" },
+    contactEmail: { TR: "İletişim e-postası", EN: "Contact e-mail" },
+} satisfies Record<string, Copy>;
+
+const TO_BE_PUBLISHED: Copy = { TR: "[Yayımlanacak]", EN: "[To be published]" };
+const REQUEST_CHANNEL: Copy = { TR: "Giriş yapmış olarak [Geri Bildirim ve SSS](/feedback) → “Talep oluştur” → “İstek” kategorisi", EN: "While signed in: [Feedback & FAQ](/feedback) → “Create a ticket” → “Request” category" };
+
+/**
+ * Rows of the data controller table in the Privacy Policy and the KVKK notice.
+ * Until the owner publishes the operator's details (Admin Panel), every value
+ * reads "[To be published]"; afterwards the published values are shown verbatim
+ * and optional details that were left empty (MERSİS/VKN, KEP) are omitted.
+ */
+export function controllerTableRows(operator: OperatorInfo): Array<Array<Copy | string>> {
+    if (!isOperatorPublished(operator)) {
+        return [
+            [OPERATOR_LABELS.legalName, TO_BE_PUBLISHED],
+            [OPERATOR_LABELS.taxId, TO_BE_PUBLISHED],
+            [OPERATOR_LABELS.address, TO_BE_PUBLISHED],
+            [OPERATOR_LABELS.kep, TO_BE_PUBLISHED],
+            [OPERATOR_LABELS.contactEmail, TO_BE_PUBLISHED],
+            [{ TR: "Şu an kullanılabilen başvuru kanalı", EN: "Request channel available now" }, REQUEST_CHANNEL],
+        ];
+    }
+    return [
+        [OPERATOR_LABELS.legalName, operator.legalName],
+        ...(operator.taxId ? [[OPERATOR_LABELS.taxId, operator.taxId]] : []),
+        [OPERATOR_LABELS.address, operator.address || TO_BE_PUBLISHED],
+        ...(operator.kep ? [[OPERATOR_LABELS.kep, operator.kep]] : []),
+        [OPERATOR_LABELS.contactEmail, operator.contactEmail],
+        [{ TR: "Uygulama içi başvuru kanalı", EN: "In-app request channel" }, REQUEST_CHANNEL],
+    ];
+}
 
 export type LegalChange = { version: string; date: Copy; items: Copy[] };
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.4",
+        date: { TR: "2 Ekim 2026", EN: "2 October 2026" },
+        items: [
+            { TR: "Ücretli planlar: Plus ve Pro, Paddle üzerinden aylık veya yıllık abonelik olarak satılıyor. Paddle.com siparişlerin Kayıtlı Satıcısıdır (Merchant of Record); ödemeyi, faturayı, vergileri ve iadeleri o yürütür. Kullanım Şartları'na planların avantajları ve sınırları (Hanogt AI mesajları, proje sayısı, kendi yapay zekâ bağlantıları), otomatik yenileme, fiyat ve plan değişikliği, iptal ve başarısız ödeme kuralları eklendi.", EN: "Paid plans: Plus and Pro are sold through Paddle as monthly or yearly subscriptions. Paddle.com is the Merchant of Record for our orders and handles payment, invoices, taxes and refunds. The Terms of Use now cover the plans' benefits and limits (Hanogt AI messages, number of projects, your own AI connections), automatic renewal, price and plan changes, cancellation and failed payments." },
+            { TR: "Yeni İade Politikası: bir aboneliğin ilk ödemesinden sonraki 14 gün içinde para iade güvencesi, yenileme ödemelerinin hangi durumlarda iade edildiği, iadenin nasıl isteneceği ve ne kadar sürdüğü açıklandı.", EN: "New Refund Policy: explained the 14-day money-back guarantee on a subscription's first payment, when renewal payments are refunded, how to ask for a refund and how long it takes." },
+            { TR: "Gizlilik Politikası ve KVKK Aydınlatma Metni: Paddle'a hangi verilerin neden iletildiği, ödeme ekranına girilen bilgilerin doğrudan Paddle tarafından toplandığı, Birleşik Krallık'a aktarım ve abonelik kayıtlarının saklanması (hesap silindikten sonra e-posta adresi olmadan tutulan Paddle müşteri kimliği dahil) eklendi.", EN: "Privacy Policy and KVKK Information Notice: added which data is passed to Paddle and why, that the details entered at checkout are collected by Paddle directly, the transfer to the United Kingdom and how subscription records are kept (including the Paddle customer ID kept without an e-mail address after an account is deleted)." },
+            { TR: "Kendi yapay zekâ bağlantıları: Plus ve Pro'da Hanogt AI'a kendi API anahtarıyla bağlanan bir sağlayıcı kullanıldığında mesajların doğrudan o sağlayıcıya iletildiği, anahtarın AES-256-GCM ile şifrelenerek saklandığı, bir daha gösterilmediği ve bağlantı kaldırıldığında ya da hesap silindiğinde silindiği açıklandı.", EN: "Your own AI connections: explained that on Plus and Pro, messages sent through an AI provider connected with your own API key go directly to that provider, and that the key is stored encrypted with AES-256-GCM, never shown again and deleted when the connection is removed or the account is deleted." },
+            { TR: "İşletmecinin unvanı, adresi ve iletişim bilgileri yayımlandığında tüm yasal metinlerin başında gösteriliyor ve metinler yeni İletişim sayfasına bağlanıyor. Hanogt AI kullanım sınırları planlara göre güncellendi.", EN: "Once published, the operator's legal name, address and contact details are shown at the top of every legal text, and the texts link to the new Contact page. Hanogt AI usage limits were updated for each plan." },
+        ],
+    },
     {
         version: "4.3",
         date: { TR: "2 Ekim 2026", EN: "2 October 2026" },

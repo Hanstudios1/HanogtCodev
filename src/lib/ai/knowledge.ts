@@ -9,6 +9,7 @@
  */
 import type { Copy } from "@/lib/i18n";
 import { FAQS } from "@/lib/faq";
+import { PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { BROWSER_LANGUAGES, LANGUAGE_STATS, LANGUAGES } from "@/lib/runtimes/languages";
 import { CHAPTERS, PAGES, type Block } from "@/components/Guide/book-content";
 
@@ -50,6 +51,8 @@ const L = {
     privacy: { href: "/privacy-policy", label: { TR: "Gizlilik Politikası", EN: "Privacy Policy" } },
     dashboard: { href: "/dashboard", label: { TR: "Panel", EN: "Dashboard" } },
     ai: { href: "/ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" } },
+    plans: { href: "/plans", label: { TR: "Planlar", EN: "Plans" } },
+    refunds: { href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
 } satisfies Record<string, KnowledgeLink>;
 
 // Counts and names come from the language registry, so new languages show up here by themselves.
@@ -66,6 +69,20 @@ const languageCounts = {
     serverList: namesOf("server").join(", "),
     previewList: namesOf("preview").join(", "),
     editOnlyList: namesOf("none").slice(0, 10).join(", "),
+};
+
+// Plan limits come from src/lib/plans.ts, so the plan answers follow the plans; null means unlimited.
+const planLimit = (value: number | null) => value ?? "∞";
+const planNumbers = {
+    aiFree: PLAN_AI_LIMITS.free.perDay,
+    aiPlus: PLAN_AI_LIMITS.plus.perDay,
+    aiPro: PLAN_AI_LIMITS.pro.perDay,
+    codeFree: planLimit(PLAN_PROJECT_LIMITS.free.code),
+    gameFree: planLimit(PLAN_PROJECT_LIMITS.free.game),
+    codePlus: planLimit(PLAN_PROJECT_LIMITS.plus.code),
+    gamePlus: planLimit(PLAN_PROJECT_LIMITS.plus.game),
+    connectionsPlus: PLAN_AI_CONNECTIONS.plus,
+    connectionsPro: PLAN_AI_CONNECTIONS.pro,
 };
 
 export const CURATED_KNOWLEDGE: KnowledgeEntry[] = [
@@ -478,12 +495,25 @@ export const CURATED_KNOWLEDGE: KnowledgeEntry[] = [
     {
         id: "pricing",
         intents: ["pricing"],
-        title: { TR: "Ücret", EN: "Pricing" },
+        title: { TR: "Ücret ve planlar", EN: "Pricing and plans" },
         body: {
-            TR: "Hanogt Codev **ücretsizdir** ve reklam göstermez. Kod editörü, oyun motoru, Arcade, Media, Haberler, Arkadaşlar, Gruplar ve Hanogt AI kullanılabilir; yoğun kullanımı korumak için hız sınırları vardır.\n• **Plus ve Pro planlar yakında:** şimdilik hiçbir şey satılmıyor ve ödeme alınmıyor. Planlar Hanogt AI için daha yüksek günlük mesaj sınırı ve destek önceliği getirecek; [Planlar](/plans) sayfasında \"Açılınca haber ver\" ile bekleme listesine katılabilir, günlük Hanogt AI kullanımını görebilirsin.",
-            EN: "Hanogt Codev is **free** and shows no ads. The code editor, game engine, Arcade, Media, News, Friends, Groups and Hanogt AI are all available; rate limits keep heavy use fair.\n• **Plus and Pro plans are coming soon:** nothing is sold and no payments are taken yet. The plans will bring a higher daily Hanogt AI message limit and support priority; on the [Plans](/plans) page you can join the waitlist with \"Notify me when it opens\" and see your daily Hanogt AI usage.",
+            TR: "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin öncelikle sıraya alınır.\nFiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+            EN: "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued first.\nPrices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+            vars: planNumbers,
         },
-        keywords: "ücret fiyat free bedava price premium abonelik subscription reklam ads plan plus pro yakında coming soon bekleme listesi waitlist",
+        keywords: "ücret fiyat free bedava ücretsiz price premium abonelik subscription reklam ads plan plus pro satın al buy paddle ödeme payment proje project api anahtarı api key bağlantı connection yakında coming soon bekleme listesi waitlist",
+        links: [L.plans, L.refunds],
+    },
+    {
+        id: "billing",
+        intents: [],
+        title: { TR: "Abonelik: yönetme, iptal ve iade", EN: "Your subscription: managing, cancelling and refunds" },
+        body: {
+            TR: "Aboneliğini [Planlar](/plans) sayfasından yönetirsin:\n• **Aboneliği yönet:** Paddle'ın müşteri portalını açar; ödeme yöntemini güncelleyebilir, faturalarını indirebilir ve aboneliği iptal edebilirsin. paddle.net üzerinden de iptal edebilirsin.\n• **İptal:** ödediğin dönemin sonunda geçerli olur; o güne kadar avantajların sürer, sonra Ücretsiz plana geçersin. Dönem bitmeden iptali geri alabilirsin; projelerin silinmez.\n• **Plan değişikliği:** Plus ile Pro ya da aylık ile yıllık arasında geçebilirsin; fark orantılı hesaplanır ve onaylamadan önce gösterilir.\n• **İade:** ilk ödemeden sonraki 14 gün içinde gerekçesiz tam iade. Yenileme ödemeleri; iptalin işlenmediyse, hatayla alındıysa ya da bizden kaynaklanan bir sorun yüzünden planı kullanamadıysan 14 gün içinde iade edilir. İadeyi paddle.net üzerinden veya İstek kategorisinde [destek talebiyle](/feedback) isteyebilirsin; tutar ödeme yöntemine genellikle 5–10 iş gününde döner.\n• **Ödeme alınamazsa:** Paddle birkaç kez yeniden dener, bu sürede avantajların sürer; ödeme yöntemini güncellemeyi unutma.\n• **Kupon:** ödeme ekranında \"İndirim kodu ekle\" ile girilir.\n• **Hesabı silmek** aboneliği hemen iptal eder; iade hakkın varsa önce iade iste.\nAyrıntılar: [İade Politikası](/refund-policy) ve [Kullanım Şartları](/terms-of-use#paid-services).",
+            EN: "You manage your subscription on the [Plans](/plans) page:\n• **Manage subscription:** opens Paddle's customer portal, where you can update your payment method, download invoices and cancel. You can also cancel at paddle.net.\n• **Cancelling:** takes effect at the end of the period you paid for; your benefits last until then, after which you move to the Free plan. You can undo it before the period ends, and your projects aren't deleted.\n• **Changing plans:** switch between Plus and Pro or between monthly and yearly billing; the difference is prorated and shown before you confirm.\n• **Refunds:** a full refund without giving a reason within 14 days of the first payment. Renewal payments are refunded within 14 days if your cancellation wasn't processed, the charge was a mistake, or you couldn't use the plan because of a problem caused by us. Ask at paddle.net or with a [support ticket](/feedback) in the Request category; the money usually returns to your payment method within 5–10 business days.\n• **Failed payments:** Paddle retries a few times and your benefits continue meanwhile; remember to update your payment method.\n• **Coupons:** enter them at checkout with \"Add discount code\".\n• **Deleting your account** cancels the subscription at once; if you are entitled to a refund, ask for it first.\nDetails: [Refund Policy](/refund-policy) and [Terms of Use](/terms-of-use#paid-services).",
+        },
+        keywords: "abonelik subscription yönet manage iptal cancel iade refund para iadesi money back fatura invoice makbuz receipt paddle paddle.net ödeme payment kart card yenileme renewal kupon coupon indirim discount plan değiştir change plan yükselt upgrade düşür downgrade ödeme alınamadı failed payment",
+        links: [L.plans, L.refunds],
     },
     {
         id: "apps",
