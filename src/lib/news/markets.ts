@@ -9,7 +9,7 @@
  * being guessed.
  */
 
-export const MARKET_ORDER = ["usd-try", "eur-try", "gbp-try", "gram-gold", "bist-100", "bitcoin"] as const;
+export const MARKET_ORDER = ["usd-try", "eur-try", "gbp-try", "gram-gold", "ounce-gold", "bist-100", "sp-500", "bitcoin"] as const;
 export type MarketId = (typeof MARKET_ORDER)[number];
 export type MarketUnit = "TRY" | "USD" | "pts";
 /** What `change` is measured against. */
@@ -54,6 +54,7 @@ export const TCMB_TODAY_URL = "https://www.tcmb.gov.tr/kurlar/today.xml";
 export const GOLD_API_URL = "https://api.gold-api.com/price/XAU";
 export const COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,try&include_24hr_change=true&include_last_updated_at=true";
 export const YAHOO_BIST_URL = "https://query1.finance.yahoo.com/v8/finance/chart/XU100.IS?range=5d&interval=1d";
+export const YAHOO_SP500_URL = "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?range=5d&interval=1d";
 /** Grams in one troy ounce (the price of gold is quoted per troy ounce). */
 export const GRAMS_PER_TROY_OUNCE = 31.1034768;
 
@@ -278,6 +279,21 @@ export function buildGramGoldItem(quote: GoldQuote, usdTry: number): MarketItem 
     };
 }
 
+/** The spot price itself, in dollars per troy ounce. */
+export function buildOunceGoldItem(quote: GoldQuote): MarketItem {
+    return {
+        id: "ounce-gold",
+        label: "Gold (oz)",
+        value: round(quote.ounceUsd, 2),
+        change: null,
+        changePercent: null,
+        unit: "USD",
+        source: "gold-api.com",
+        updatedAt: quote.updatedAt,
+        changeBasis: null,
+    };
+}
+
 // ---------------------------------------------------------------------------
 // Bitcoin (CoinGecko simple price)
 // ---------------------------------------------------------------------------
@@ -323,31 +339,34 @@ export function buildBitcoinItem(quote: BitcoinQuote): MarketItem {
 }
 
 // ---------------------------------------------------------------------------
-// BIST 100 (Yahoo Finance chart endpoint, symbol XU100.IS)
+// Stock indices (Yahoo Finance chart endpoint): BIST 100 (XU100.IS) and the S&P 500 (^GSPC)
 // ---------------------------------------------------------------------------
 
-export interface BistQuote {
+export interface IndexQuote {
     value: number;
     /** Close of the session before the one `value` belongs to. */
     previousClose: number | null;
     updatedAt: string;
 }
+export type BistQuote = IndexQuote;
 
-/** Calendar day in Turkey for a Unix timestamp in seconds (UTC+3, no daylight saving). */
-function istanbulDay(seconds: number) {
-    return new Date((seconds + 3 * 3600) * 1000).toISOString().slice(0, 10);
+/** Calendar day at the exchange for a Unix timestamp in seconds. */
+function exchangeDay(seconds: number, offsetSeconds: number) {
+    return new Date((seconds + offsetSeconds) * 1000).toISOString().slice(0, 10);
 }
 
 /**
- * Yahoo Finance `v8/finance/chart/XU100.IS?range=5d&interval=1d`. The previous close is read from the
- * daily bars (`chartPreviousClose` of a 5-day range is the close *before the whole range*, which is
- * not yesterday).
+ * Yahoo Finance `v8/finance/chart/<symbol>?range=5d&interval=1d` for one index. The previous close is
+ * read from the daily bars (`chartPreviousClose` of a 5-day range is the close *before the whole
+ * range*, which is not yesterday). Sessions are told apart by the exchange's own calendar day: the
+ * response's `gmtoffset`, or `defaultOffsetSeconds` when it is missing.
  */
-export function parseBistQuote(text: string | null, now: Date): BistQuote | null {
+export function parseIndexQuote(text: string | null, now: Date, symbol: string, defaultOffsetSeconds: number): IndexQuote | null {
     const result = asRecord((asRecord(asRecord(parseJson(text))?.chart)?.result as unknown[] | undefined)?.[0]);
     const meta = asRecord(result?.meta);
     if (!result || !meta) return null;
-    if (typeof meta.symbol === "string" && meta.symbol.toUpperCase() !== "XU100.IS") return null;
+    if (typeof meta.symbol === "string" && meta.symbol.toUpperCase() !== symbol.toUpperCase()) return null;
+    const offset = finiteNumber(meta.gmtoffset) ?? defaultOffsetSeconds;
 
     const times = result.timestamp;
     const quote = asRecord((asRecord(result.indicators)?.quote as unknown[] | undefined)?.[0]);
@@ -370,7 +389,7 @@ export function parseBistQuote(text: string | null, now: Date): BistQuote | null
     if (last) {
         // When the newest bar is the session of the quote, yesterday is the bar before it; when the
         // daily bar for the quote's session is missing, the newest bar already is yesterday.
-        const sameSession = marketTime === null || istanbulDay(last.time) === istanbulDay(marketTime);
+        const sameSession = marketTime === null || exchangeDay(last.time, offset) === exchangeDay(marketTime, offset);
         previousClose = sameSession ? (bars[bars.length - 2]?.close ?? null) : last.close;
     } else {
         previousClose = positiveNumber(meta.previousClose);
@@ -378,11 +397,21 @@ export function parseBistQuote(text: string | null, now: Date): BistQuote | null
     return { value, previousClose, updatedAt: marketTime !== null ? isoOr(marketTime, now) : now.toISOString() };
 }
 
-export function buildBistItem(quote: BistQuote): MarketItem {
+/** BIST 100: Borsa Istanbul, UTC+3 all year. */
+export function parseBistQuote(text: string | null, now: Date): IndexQuote | null {
+    return parseIndexQuote(text, now, "XU100.IS", 3 * 3600);
+}
+
+/** S&P 500: New York; the response's gmtoffset follows daylight saving, UTC-5 is the fallback. */
+export function parseSp500Quote(text: string | null, now: Date): IndexQuote | null {
+    return parseIndexQuote(text, now, "^GSPC", -5 * 3600);
+}
+
+function buildIndexItem(id: "bist-100" | "sp-500", label: string, quote: IndexQuote): MarketItem {
     const { change, changePercent } = computeChange(quote.value, quote.previousClose);
     return {
-        id: "bist-100",
-        label: "BIST 100",
+        id,
+        label,
         value: quote.value,
         change: change === null ? null : round(change, 2),
         changePercent: changePercent === null ? null : round(changePercent, 2),
@@ -393,11 +422,19 @@ export function buildBistItem(quote: BistQuote): MarketItem {
     };
 }
 
+export function buildBistItem(quote: IndexQuote): MarketItem {
+    return buildIndexItem("bist-100", "BIST 100", quote);
+}
+
+export function buildSp500Item(quote: IndexQuote): MarketItem {
+    return buildIndexItem("sp-500", "S&P 500", quote);
+}
+
 // ---------------------------------------------------------------------------
 // Orchestration
 // ---------------------------------------------------------------------------
 
-export type MarketProvider = "tcmb" | "gold" | "bitcoin" | "bist";
+export type MarketProvider = "tcmb" | "gold" | "bitcoin" | "bist" | "sp500";
 
 export interface MarketFailure {
     provider: MarketProvider;
@@ -473,7 +510,7 @@ function reasonOf(error: unknown) {
 
 /**
  * Fetches and parses every provider independently: a failing provider only removes its own items.
- * Gram gold needs both the gold quote and the TCMB dollar rate.
+ * Gram gold needs both the gold quote and the TCMB dollar rate; ounce gold only the gold quote.
  */
 export async function collectMarkets(options: CollectOptions): Promise<CollectResult> {
     const { fetchText } = options;
@@ -502,8 +539,13 @@ export async function collectMarkets(options: CollectOptions): Promise<CollectRe
         if (!quote) throw new Error("unreadable quote");
         return buildBistItem(quote);
     };
+    const sp500 = async () => {
+        const quote = parseSp500Quote(await requireText(fetchText, YAHOO_SP500_URL), now);
+        if (!quote) throw new Error("unreadable quote");
+        return buildSp500Item(quote);
+    };
 
-    const [fxResult, goldResult, bitcoinResult, bistResult] = await Promise.allSettled([tcmb(), gold(), bitcoin(), bist()]);
+    const [fxResult, goldResult, bitcoinResult, bistResult, sp500Result] = await Promise.allSettled([tcmb(), gold(), bitcoin(), bist(), sp500()]);
     const items: MarketItem[] = [];
     const failures: MarketFailure[] = [];
 
@@ -518,15 +560,18 @@ export async function collectMarkets(options: CollectOptions): Promise<CollectRe
     }
 
     if (goldResult.status === "rejected") {
-        failures.push({ provider: "gold", reason: reasonOf(goldResult.reason), ids: ["gram-gold"] });
-    } else if (usdTry !== null) {
-        items.push(buildGramGoldItem(goldResult.value, usdTry));
-    } else if (fxResult.status === "fulfilled") {
-        failures.push({ provider: "tcmb", reason: "no USD rate to price gold in lira", ids: ["gram-gold"] });
+        failures.push({ provider: "gold", reason: reasonOf(goldResult.reason), ids: ["gram-gold", "ounce-gold"] });
+    } else {
+        items.push(buildOunceGoldItem(goldResult.value));
+        if (usdTry !== null) items.push(buildGramGoldItem(goldResult.value, usdTry));
+        else if (fxResult.status === "fulfilled") failures.push({ provider: "tcmb", reason: "no USD rate to price gold in lira", ids: ["gram-gold"] });
     }
 
     if (bistResult.status === "fulfilled") items.push(bistResult.value);
     else failures.push({ provider: "bist", reason: reasonOf(bistResult.reason), ids: ["bist-100"] });
+
+    if (sp500Result.status === "fulfilled") items.push(sp500Result.value);
+    else failures.push({ provider: "sp500", reason: reasonOf(sp500Result.reason), ids: ["sp-500"] });
 
     if (bitcoinResult.status === "fulfilled") items.push(bitcoinResult.value);
     else failures.push({ provider: "bitcoin", reason: reasonOf(bitcoinResult.reason), ids: ["bitcoin"] });

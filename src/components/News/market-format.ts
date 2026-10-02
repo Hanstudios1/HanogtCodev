@@ -9,6 +9,7 @@ type Formattable = Pick<MarketItem, "id" | "value" | "unit">;
 /** Exchange rates are quoted to four decimals, gold and indices to two, bitcoin to whole dollars. */
 function fractionDigits(item: Formattable) {
     if (item.id === "usd-try" || item.id === "eur-try" || item.id === "gbp-try") return 4;
+    if (item.id === "ounce-gold") return 2;
     if (item.unit === "USD") return item.value >= 1000 ? 0 : 2;
     return 2;
 }
