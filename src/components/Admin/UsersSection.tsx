@@ -192,6 +192,7 @@ const KIND_COPY: Record<string, Copy> = {
     changelogComments: { TR: "Sürüm notu yorumları", EN: "Release note comments" },
     notifications: { TR: "Bildirimler", EN: "Notifications" },
     supportTickets: { TR: "Destek talepleri", EN: "Support tickets" },
+    collabSessions: { TR: "Ekiple düzenleme oturumları", EN: "Team editing sessions" },
 };
 
 const KIND_ORDER = Object.keys(KIND_COPY);

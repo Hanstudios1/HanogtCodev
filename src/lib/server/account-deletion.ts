@@ -596,6 +596,19 @@ async function deleteSupportTickets(ctx: Context) {
 }
 
 /**
+ * Live editing sessions the user owns, with their updates, chat and
+ * signalling (sessions they only joined end within a day and are purged
+ * with them). Loaded lazily like the support module: it needs Yjs and the
+ * Next.js helpers, which the plain-Node deletion tests can't load.
+ */
+async function deleteCollabSessions(ctx: Context) {
+    const collab = await import("../collab/server").catch(() => null);
+    if (!collab) return;
+    const purged = await collab.purgeOwnedSessions(ctx.email);
+    if (purged) ctx.tally.count("collabSessions", purged);
+}
+
+/**
  * The account itself, in one commit: without the user document every
  * session ends (getActiveSession requires it). Then the Firebase Auth record,
  * which stops client-side Firestore access once the current token expires.
@@ -634,6 +647,7 @@ const STEPS: readonly Step[] = [
     { id: "friendLists", scopes: ALL, run: cleanFriendLists },
     { id: "feedback", scopes: BOTH, run: cleanFeedback },
     { id: "changelogComments", scopes: BOTH, run: deleteChangelogComments },
+    { id: "collabSessions", scopes: ALL, run: deleteCollabSessions },
     { id: "notifications", scopes: ALL, run: deleteNotifications },
     { id: "supportTickets", scopes: ALL, run: deleteSupportTickets },
     { id: "account", scopes: ALL, run: deleteAccount },

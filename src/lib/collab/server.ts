@@ -505,6 +505,7 @@ export async function createSession(user: CollabUser, input: CreateInput): Promi
     if (requested.length > COLLAB_LIMITS.maxInvites) throw new CollabApiError(400, "invalid_request");
     if (requested.some((email) => email === user.email || !user.friends.includes(email))) throw new CollabApiError(403, "not_friend");
 
+    void sweepExpiredSessions().catch(() => undefined);
     // One active session per owner.
     const previous = await runServerQuery<{ status?: unknown; endedAt?: unknown }>({
         collectionId: "collab_sessions",
@@ -610,6 +611,40 @@ export async function finalizeSession(id: string, reason: CollabEndReason): Prom
     return ended;
 }
 
+const SWEEP_INTERVAL_MS = 10 * 60_000;
+let lastSweep = 0;
+
+/**
+ * Deletes sessions whose `purgeAt` has passed, a few at a time and at most
+ * every ten minutes per server instance, so leftovers of sessions nobody
+ * reopened disappear even without a Firestore TTL policy (with one, this
+ * usually finds nothing).
+ */
+export async function sweepExpiredSessions(now = Date.now()) {
+    if (now - lastSweep < SWEEP_INTERVAL_MS) return 0;
+    lastSweep = now;
+    const stale = await runServerQuery<{ purgeAt?: unknown }>({
+        collectionId: "collab_sessions",
+        where: [{ field: "purgeAt", op: "LESS_THAN", value: new Date(now) }],
+        select: ["purgeAt"],
+        limit: 10,
+    }).catch(() => []);
+    for (const record of stale) await purgeSession(record._id).catch(() => undefined);
+    return stale.length;
+}
+
+/** Account deletion: every session the person owns, whatever its state. Returns how many were removed. */
+export async function purgeOwnedSessions(email: string) {
+    const owned = await runServerQuery<{ owner?: unknown }>({
+        collectionId: "collab_sessions",
+        where: [{ field: "owner", op: "EQUAL", value: email }],
+        select: ["owner"],
+        limit: 100,
+    });
+    for (const record of owned) await purgeSession(record._id);
+    return owned.length;
+}
+
 /** Deletes everything of a session (after the 24 hours an ended session stays readable). */
 export async function purgeSession(id: string) {
     const loaded = await loadSession(id);
@@ -630,6 +665,7 @@ export async function purgeSession(id: string) {
  * reported missing) when an ended session's 24 hours are over.
  */
 export async function loadLiveSession(id: string): Promise<LoadedSession> {
+    void sweepExpiredSessions().catch(() => undefined);
     const loaded = await loadSession(id);
     if (!loaded) throw new CollabApiError(404, "not_found");
     if (isExpired(loaded.view)) {
