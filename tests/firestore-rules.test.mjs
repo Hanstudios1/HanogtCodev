@@ -2,7 +2,7 @@
 // Firestore rules regression tests for Hanogt Codev (run inside the emulator).
 import fs from "node:fs";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, deleteField } from "firebase/firestore";
+import { doc, getDoc, getDocs, setDoc, updateDoc, addDoc, collection, query, where, serverTimestamp, deleteField } from "firebase/firestore";
 
 const rules = fs.readFileSync(process.env.RULES_FILE || new URL("../firestore.rules", import.meta.url), "utf8");
 const env = await initializeTestEnvironment({ projectId: "hanogt-rules-test", firestore: { rules, host: "127.0.0.1", port: 8080 } });
@@ -79,6 +79,19 @@ await check("member posts text", assertSucceeds(addDoc(collection(as(B), "groups
 await check("member posts voice in own group folder", assertSucceeds(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "voice", text: "", voicePath: "group-voice-messages/g1/v.webm", voiceDuration: 2, createdAt: serverTimestamp() })));
 await check("voice path of another group rejected", assertFails(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "voice", text: "", voicePath: "group-voice-messages/g2/v.webm", createdAt: serverTimestamp() })));
 await check("non-member cannot read group", assertFails(getDoc(doc(as(C), "groups", "g1"))));
+
+console.log("calls/");
+// /api/calls writes calls with the service account; browsers with the Firebase bridge only listen.
+const callId = "0b9a7c1e-3f2d-4a8b-9c6d-5e4f3a2b1c0d";
+await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "calls", callId), { caller: A, callee: B, participants: [A, B], status: "ringing", offer: { type: "offer", sdp: "v=0\r\n" }, callerCandidates: [], calleeCandidates: [], createdAt: new Date() });
+});
+await check("incoming-call listener (participants contains me) is allowed", assertSucceeds(getDocs(query(collection(as(B), "calls"), where("participants", "array-contains", B)))));
+await check("callee/status query is refused (rules are not filters)", assertFails(getDocs(query(collection(as(B), "calls"), where("callee", "==", B), where("status", "==", "ringing")))));
+await check("participants can follow the call", assertSucceeds(getDoc(doc(as(A), "calls", callId))));
+await check("others can't read a call", assertFails(getDoc(doc(as(C), "calls", callId))));
+await check("others can't list someone's calls", assertFails(getDocs(query(collection(as(C), "calls"), where("participants", "array-contains", B)))));
+await check("a non-friend can't start a call from the browser", assertFails(setDoc(doc(as(C), "calls", "1b9a7c1e-3f2d-4a8b-9c6d-5e4f3a2b1c0d"), { caller: C, callee: A, participants: [C, A], status: "ringing" })));
 
 console.log("projects/");
 await env.withSecurityRulesDisabled(async (ctx) => {

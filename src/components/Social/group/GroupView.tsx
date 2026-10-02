@@ -14,7 +14,7 @@ import { groupHref } from "@/lib/social/model";
 import { useSocial } from "../context";
 import { EmptyState, IconButton, MainHeader, SocialAside } from "../ui";
 import { useGroupSession } from "./GroupSession";
-import MemberList from "./MemberList";
+import MemberList, { GroupUserCard } from "./MemberList";
 
 const C = {
     loading: { TR: "Grup açılıyor", EN: "Opening the group" },
@@ -35,7 +35,7 @@ const C = {
     filesOfflineTitle: { TR: "Dosyalar şu anda kullanılamıyor", EN: "Files are unavailable right now" },
     filesOfflineText: { TR: "Ortak dosyalar için tarayıcının bulut bağlantısı gerekiyor. Sohbet bu sırada sunucu üzerinden çalışmaya devam ediyor.", EN: "Shared files need the browser's cloud connection. Meanwhile the chat keeps working through the server." },
     backToFiles: { TR: "Dosya listesi", EN: "File list" },
-    offline: { TR: "Canlı bağlantı yok: mesajlar birkaç saniyede bir yenileniyor, sesli mesajlar ve dosyalar bekliyor.", EN: "No live connection: messages refresh every few seconds; voice messages and files are on hold." },
+    offline: { TR: "Canlı bağlantı yok: mesajlar birkaç saniyede bir yenileniyor; ortak dosyalar bağlantı gelince açılır.", EN: "No live connection: messages refresh every few seconds; shared files open once it's back." },
 } satisfies Record<string, Copy>;
 
 /** The open group's main area: a channel (all messages or one #topic) or the shared files. */
@@ -76,6 +76,7 @@ export default function GroupView() {
                     ? <PinnedPanel messages={session.messages.messages} onJump={(id) => { session.setPanel("members"); session.jumpTo(id); }} onClose={() => session.setPanel("members")} />
                     : <MemberList />}
             </SocialAside>
+            <GroupUserCard />
         </>
     );
 }
@@ -113,6 +114,24 @@ function ChannelScreen() {
         setSearch("");
         setSearchOpen(false);
     }
+
+    // The open channel counts as read (the channel list's unread markers), once the tab is visible.
+    const list = session.messages.messages;
+    const latest = list.length ? list[list.length - 1].createdAt : 0;
+    const markChannelRead = session.markChannelRead;
+    const channelKey = topic.toLocaleLowerCase();
+    useEffect(() => {
+        if (!latest) return;
+        if (document.visibilityState === "visible") {
+            markChannelRead(channelKey, latest);
+            return;
+        }
+        const onVisible = () => {
+            if (document.visibilityState === "visible") markChannelRead(channelKey, latest);
+        };
+        document.addEventListener("visibilitychange", onVisible);
+        return () => document.removeEventListener("visibilitychange", onVisible);
+    }, [channelKey, latest, markChannelRead]);
 
     const showPanel = (panel: "members" | "pinned") => {
         if (session.panel === panel && asideShown) {
@@ -185,6 +204,7 @@ function ChannelScreen() {
                     onShowPinned={() => showPanel("pinned")}
                     onServerChange={session.messages.refresh}
                     micOff={social.audio.micOff}
+                    onOpenUser={session.openUserCard}
                 />
             </div>
         </main>

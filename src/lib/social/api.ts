@@ -17,7 +17,7 @@ export type SocialErrorCode =
     | "invalid_email" | "invalid_id" | "not_found" | "not_friend" | "blocked" | "forbidden"
     | "message_not_found" | "empty_message" | "message_too_long" | "invalid_tag" | "user_not_found"
     | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error"
-    | "network" | "send_failed" | "voice_failed" | "voice_too_large" | "voice_unavailable" | "mic_denied" | "offline_voice";
+    | "network" | "send_failed" | "voice_failed" | "voice_too_large" | "voice_unavailable" | "voice_format" | "voice_storage" | "mic_denied";
 
 export class SocialRequestError extends Error {
     readonly code: SocialErrorCode;
@@ -59,8 +59,9 @@ export const SOCIAL_ERROR_COPY: Record<SocialErrorCode, Copy> = {
     voice_failed: { TR: "Sesli mesaj gönderilemedi.", EN: "The voice message couldn't be sent." },
     voice_too_large: { TR: "Sesli mesaj 3 MB sınırını aşıyor.", EN: "The voice message exceeds the 3 MB limit." },
     voice_unavailable: { TR: "Sesli mesaj açılamadı veya silinmiş.", EN: "The voice message couldn't be opened or was deleted." },
-    mic_denied: { TR: "Mikrofon izni verilmedi.", EN: "Microphone permission was denied." },
-    offline_voice: { TR: "Sesli mesajlar için bulut bağlantısı gerekiyor; bağlantı kurulunca tekrar dene.", EN: "Voice messages need the cloud connection; try again once it's back." },
+    voice_format: { TR: "Bu ses biçimi desteklenmiyor. Tarayıcını güncelleyip tekrar dene.", EN: "This audio format isn't supported. Update your browser and try again." },
+    voice_storage: { TR: "Sesli mesajlar şu anda kullanılamıyor (depolama yapılandırılmamış).", EN: "Voice messages are unavailable right now (storage isn't configured)." },
+    mic_denied: { TR: "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin verip tekrar dene.", EN: "Microphone access was denied. Allow the microphone from the lock icon in the address bar and try again." },
 };
 
 function isCode(value: unknown): value is SocialErrorCode {
@@ -94,6 +95,43 @@ function messages(value: unknown): DmMessage[] {
 
 export type DmCursor = { since?: number; before?: number; limit?: number };
 
+/** Where a voice message belongs: a direct conversation (the partner's address) or a group. */
+export type VoiceTarget = { with: string } | { group: string };
+
+function voiceParams(target: VoiceTarget) {
+    return new URLSearchParams("with" in target ? { with: target.with } : { group: target.group });
+}
+
+/**
+ * Sends a recording to POST /api/social/voice, which stores it and writes the
+ * message (no Firebase connection needed). Returns the message as stored.
+ */
+async function uploadVoice(target: VoiceTarget, blob: Blob, options: { seconds: number; label: string; type?: string }): Promise<Record<string, unknown> | null> {
+    if (blob.size > 3 * 1024 * 1024) throw new SocialRequestError("voice_too_large");
+    const params = voiceParams(target);
+    params.set("duration", String(Math.max(1, Math.round(options.seconds) || 1)));
+    if (options.label) params.set("label", options.label.slice(0, 120));
+    const type = (options.type || blob.type || "").split(";")[0].trim().toLowerCase();
+    let response: Response;
+    try {
+        response = await fetch(`/api/social/voice?${params.toString()}`, {
+            method: "POST",
+            headers: { "Content-Type": type.startsWith("audio/") ? type : "audio/webm" },
+            body: blob,
+            cache: "no-store",
+            credentials: "same-origin",
+        });
+    } catch {
+        throw new SocialRequestError("network");
+    }
+    const data = await response.json().catch(() => ({})) as { message?: unknown; code?: unknown; error?: unknown };
+    if (!response.ok) {
+        const fallback: SocialErrorCode = response.status === 413 ? "voice_too_large" : response.status === 429 ? "rate_limited" : response.status === 401 ? "unauthorized" : "voice_failed";
+        throw new SocialRequestError(isCode(data.code) ? data.code : fallback, typeof data.error === "string" ? data.error : "", response.status);
+    }
+    return data.message && typeof data.message === "object" ? data.message as Record<string, unknown> : null;
+}
+
 export const socialApi = {
     friends: () => request<FriendsOverview>("/api/social/friends"),
     dms: () => request<DmListResponse>("/api/social/dms"),
@@ -112,6 +150,24 @@ export const socialApi = {
     },
     dmAction: (body: Record<string, unknown>, keepalive = false) => request<{ success: true }>("/api/social/dm", body, { keepalive }),
     friendAction: (body: Record<string, unknown>) => request<{ success: true; accepted?: boolean; sent?: boolean }>("/api/friends", body),
+    sendDmVoice: async (email: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => messages([await uploadVoice({ with: email }, blob, options)])[0] ?? null,
+    sendGroupVoice: (groupId: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => uploadVoice({ group: groupId }, blob, options),
+    /** The recording of a voice message (GET /api/social/voice, checked like the conversation itself). */
+    voiceBlob: async (target: VoiceTarget, messageId: string) => {
+        const params = voiceParams(target);
+        params.set("message", messageId);
+        let response: Response;
+        try {
+            response = await fetch(`/api/social/voice?${params.toString()}`, { credentials: "same-origin" });
+        } catch {
+            throw new SocialRequestError("network");
+        }
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({})) as { code?: unknown };
+            throw new SocialRequestError(isCode(data.code) ? data.code : response.status === 429 ? "rate_limited" : "voice_unavailable", "", response.status);
+        }
+        return response.blob();
+    },
 };
 
 /** Localized text for any thrown value (API codes and client codes alike). */

@@ -1,21 +1,19 @@
 "use client";
 
-import { Ban, Crown, MessageCircle, Phone, Shield, ShieldOff, UserMinus, UserPlus, UserRound, UsersRound } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Ban, Crown, Shield, ShieldOff, UserMinus, UserPlus, UsersRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { groupsApi } from "@/components/Groups/api";
-import { Modal, RoleBadge, Spinner, UI_COPY, cx, relativeTime } from "@/components/Groups/ui";
+import { RoleBadge, Spinner, UI_COPY, cx } from "@/components/Groups/ui";
 import { useWorkspace } from "@/components/Groups/workspace/context";
 import type { WorkspaceMember } from "@/components/Groups/workspace/model";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge from "@/components/StaffBadge";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { GROUP_COLORS, GROUP_LIMITS, toMillis } from "@/lib/groups";
-import { LAST_SEEN_COPY, PRESENCE_STATUS_COPY } from "@/lib/presence";
-import { socialApi } from "@/lib/social/api";
-import { dmHref, formatFriendTag, sectionMembers, type MemberSectionId } from "@/lib/social/model";
-import { useSocial } from "../context";
+import { GROUP_LIMITS } from "@/lib/groups";
+import { LAST_SEEN_COPY } from "@/lib/presence";
+import { sectionMembers, type MemberSectionId } from "@/lib/social/model";
 import { useProfileViewer } from "../profile";
+import UserPopout from "../UserPopout";
 import { useGroupSession } from "./GroupSession";
 
 const C = {
@@ -27,14 +25,6 @@ const C = {
     member: { TR: "Üyeler — {count}", EN: "Members — {count}" },
     offline: { TR: "Çevrimdışı — {count}", EN: "Offline — {count}" },
     open: { TR: "{name} üye kartını aç", EN: "Open {name}'s member card" },
-    message: { TR: "Mesaj gönder", EN: "Message" },
-    call: { TR: "Sesli ara", EN: "Voice call" },
-    callOffline: { TR: "Sesli arama için bulut bağlantısı gerekiyor", EN: "Voice calls need the cloud connection" },
-    addFriend: { TR: "Arkadaş ekle", EN: "Add friend" },
-    requestSent: { TR: "{name} kişisine arkadaşlık isteği gönderildi.", EN: "Friend request sent to {name}." },
-    nowFriends: { TR: "{name} ile artık arkadaşsınız!", EN: "You and {name} are friends now!" },
-    noTag: { TR: "Bu üyenin takma adı yok; arkadaş eklemek için takma adını ve etiketini sor.", EN: "This member has no nickname; ask for their nickname and tag to add them." },
-    profile: { TR: "Profili görüntüle", EN: "View profile" },
     manage: { TR: "Yönetim", EN: "Management" },
     makeAdmin: { TR: "Yönetici yap", EN: "Make admin" },
     removeAdmin: { TR: "Yöneticiliği kaldır", EN: "Remove admin role" },
@@ -66,9 +56,8 @@ export default function MemberList() {
     const { tx, locale } = useI18n();
     const { members, me, canInvite } = useWorkspace();
     const session = useGroupSession();
-    const [selected, setSelected] = useState("");
     const sections = sectionMembers(members, locale);
-    const member = members.find((entry) => entry.email === selected) ?? null;
+    const openEmail = session.userCard?.person.email ?? "";
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
@@ -88,9 +77,10 @@ export default function MemberList() {
                                     <li key={entry.email}>
                                         <button
                                             type="button"
-                                            onClick={() => setSelected(entry.email)}
+                                            onClick={(event) => session.openUserCard(entry.email, event.currentTarget)}
                                             aria-label={tx(C.open, { name: entry.username })}
-                                            className={cx("group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-start transition hover:bg-zinc-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-white/[0.06]", entry.status === "offline" && "opacity-50 hover:opacity-100")}
+                                            aria-expanded={openEmail === entry.email}
+                                            className={cx("group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-start transition hover:bg-zinc-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-white/[0.06]", openEmail === entry.email && "bg-zinc-200/70 dark:bg-white/[0.06]", entry.status === "offline" && openEmail !== entry.email && "opacity-50 hover:opacity-100")}
                                         >
                                             <PresenceAvatar src={entry.avatarUrl} name={entry.username} status={entry.status} size="sm" ring="bg-zinc-50 group-hover:bg-zinc-200 dark:bg-zinc-950 dark:group-hover:bg-zinc-800" />
                                             <span className="min-w-0 flex-1">
@@ -110,26 +100,44 @@ export default function MemberList() {
                     </section>
                 ))}
             </div>
-            <MemberCard member={member} onClose={() => setSelected("")} />
         </div>
     );
 }
 
-function MemberCard({ member, onClose }: { member: WorkspaceMember | null; onClose: () => void }) {
-    const { tx, locale } = useI18n();
-    const router = useRouter();
-    const { groupId, group, me, role, isOwner, now, notify, confirm, errorText, refresh } = useWorkspace();
+/**
+ * The profile card of a group member (or of someone who left), opened from
+ * the member list or a message: Discord's popout with the member's role and,
+ * for owners and admins, the management actions.
+ */
+export function GroupUserCard() {
+    const { members } = useWorkspace();
     const session = useGroupSession();
-    const social = useSocial();
     const viewer = useProfileViewer();
+    const card = session.userCard;
+    const member = card ? members.find((entry) => entry.email === card.person.email) ?? null : null;
+    return (
+        <>
+            {card && (
+                <UserPopout
+                    key={`${card.person.email}:${card.anchor.top}`}
+                    popout={card}
+                    onClose={session.closeUserCard}
+                    onViewProfile={(email) => void viewer.show(email)}
+                    badges={member ? <RoleBadge role={member.role} showMember /> : null}
+                    footer={member ? <MemberManage member={member} onDone={session.closeUserCard} /> : null}
+                />
+            )}
+            {viewer.element}
+        </>
+    );
+}
+
+/** Owner and admin actions on a member (shown inside the member's card). */
+function MemberManage({ member, onDone }: { member: WorkspaceMember; onDone: () => void }) {
+    const { tx } = useI18n();
+    const { groupId, me, role, isOwner, notify, confirm, errorText, refresh } = useWorkspace();
     const [busy, setBusy] = useState("");
-    const palette = GROUP_COLORS[group.color] ?? GROUP_COLORS.indigo;
-
-    if (!member) return viewer.element;
-
     const self = member.email === me.email;
-    const friend = social.isFriend(member.email);
-    const tag = formatFriendTag(member.nickname ?? "", member.nicknameTag ?? "");
     const canRemove = !self && member.role !== "owner" && (role === "owner" || (role === "admin" && member.role === "member"));
     const actions: Array<{ id: MemberAction; label: Copy; icon: ReactNode; danger?: boolean }> = [];
     if (isOwner && !self) {
@@ -142,6 +150,7 @@ function MemberCard({ member, onClose }: { member: WorkspaceMember | null; onClo
         actions.push({ id: "remove", label: C.remove, icon: <UserMinus className="h-4 w-4" aria-hidden />, danger: true });
         actions.push({ id: "ban", label: C.ban, icon: <Ban className="h-4 w-4" aria-hidden />, danger: true });
     }
+    if (!actions.length) return null;
 
     const run = async (action: MemberAction) => {
         const name = member.username;
@@ -153,6 +162,8 @@ function MemberCard({ member, onClose }: { member: WorkspaceMember | null; onClo
             ban: { title: C.banTitle, body: C.banBody, tone: "danger", confirm: C.ban },
         };
         const entry = copy[action];
+        // The confirmation is a dialog of its own: the card closes first.
+        onDone();
         if (!await confirm({ title: tx(entry.title, { name }), body: entry.body ? tx(entry.body, { name }) : undefined, confirmLabel: tx(entry.confirm), tone: entry.tone })) return;
         setBusy(action);
         try {
@@ -161,7 +172,6 @@ function MemberCard({ member, onClose }: { member: WorkspaceMember | null; onClo
             else await groupsApi.action({ action: "remove-member", groupId, targetEmail: member.email, ban: action === "ban" });
             notify(tx(C.done), "success");
             await refresh();
-            if (action === "remove" || action === "ban") onClose();
         } catch (error) {
             notify(errorText(error), "error");
         } finally {
@@ -169,70 +179,14 @@ function MemberCard({ member, onClose }: { member: WorkspaceMember | null; onClo
         }
     };
 
-    const addFriend = async () => {
-        if (!tag) {
-            notify(tx(C.noTag), "info");
-            return;
-        }
-        setBusy("friend");
-        try {
-            const result = await socialApi.friendAction({ action: "request", tag });
-            notify(tx(result.accepted ? C.nowFriends : C.requestSent, { name: member.username }), "success");
-            await social.friends.refresh();
-        } catch (error) {
-            notify(social.errorText(error), "error");
-        } finally {
-            setBusy("");
-        }
-    };
-
-    const statusLine = member.customStatus
-        ? `${member.statusEmoji ? `${member.statusEmoji} ` : ""}${member.customStatus}`
-        : member.status === "offline" && member.lastSeenAt ? tx(C.lastSeen, { time: relativeTime(toMillis(member.lastSeenAt), now, locale) }) : tx(PRESENCE_STATUS_COPY[member.status]);
-
     return (
-        <>
-            <Modal open onClose={onClose} labelledBy="member-card-title" size="sm">
-                <div className={cx("h-20 shrink-0 bg-gradient-to-br", palette.gradient)} aria-hidden />
-                <div className="-mt-10 px-5">
-                    <PresenceAvatar src={member.avatarUrl} name={member.username} status={member.status} size="xl" ring="bg-white dark:bg-zinc-900" className="rounded-full ring-[6px] ring-white dark:ring-zinc-900" />
-                </div>
-                <div className="space-y-4 overflow-y-auto px-5 pb-5 pt-2">
-                    <div>
-                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                            <h2 id="member-card-title" className="min-w-0 break-words text-xl font-black">{member.username}</h2>
-                            <RoleBadge role={member.role} showMember />
-                            <StaffBadge role={member.staffRole} size="sm" />
-                        </div>
-                        {tag && <p className="font-mono text-sm text-zinc-500 dark:text-zinc-400">{tag}</p>}
-                        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{statusLine}</p>
-                    </div>
-                    {!self && (
-                        <div className="flex flex-wrap gap-2">
-                            {friend ? (
-                                <>
-                                    <button type="button" onClick={() => { onClose(); router.push(dmHref(member.email)); }} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-indigo-500"><MessageCircle className="h-4 w-4" aria-hidden />{tx(C.message)}</button>
-                                    <button type="button" disabled={!social.live} onClick={() => { onClose(); session.callMember(member); }} title={social.live ? tx(C.call) : tx(C.callOffline)} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50"><Phone className="h-4 w-4" aria-hidden />{tx(C.call)}</button>
-                                </>
-                            ) : (
-                                <button type="button" disabled={busy === "friend"} onClick={() => void addFriend()} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50">{busy === "friend" ? <Spinner className="h-4 w-4" /> : <UserPlus className="h-4 w-4" aria-hidden />}{tx(C.addFriend)}</button>
-                            )}
-                            <button type="button" onClick={() => void viewer.show(member.email)} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"><UserRound className="h-4 w-4" aria-hidden />{tx(C.profile)}</button>
-                        </div>
-                    )}
-                    {actions.length > 0 && (
-                        <section aria-labelledby="member-card-manage" className="rounded-2xl border border-zinc-200 p-2 dark:border-white/10">
-                            <h3 id="member-card-manage" className="px-2 pb-1 pt-1 text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{tx(C.manage)}</h3>
-                            {actions.map((action) => (
-                                <button key={action.id} type="button" disabled={Boolean(busy)} onClick={() => void run(action.id)} className={cx("flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-start text-sm font-medium transition disabled:opacity-50", action.danger ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/[0.06]")}>
-                                    {busy === action.id ? <Spinner className="h-4 w-4" /> : action.icon}{tx(action.label)}
-                                </button>
-                            ))}
-                        </section>
-                    )}
-                </div>
-            </Modal>
-            {viewer.element}
-        </>
+        <section aria-label={tx(C.manage)} className="mt-3 border-t border-zinc-200 pt-2 dark:border-white/10">
+            <h3 className="px-1 pb-1 text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{tx(C.manage)}</h3>
+            {actions.map((action) => (
+                <button key={action.id} type="button" disabled={Boolean(busy)} onClick={() => void run(action.id)} className={cx("flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-start text-sm font-medium transition disabled:opacity-50", action.danger ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/[0.06]")}>
+                    {busy === action.id ? <Spinner className="h-4 w-4" /> : action.icon}{tx(action.label)}
+                </button>
+            ))}
+        </section>
     );
 }

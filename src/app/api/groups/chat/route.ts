@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createServerDocument, deleteServerDocument, deleteServerStorageObject, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { previewText } from "@/lib/social/model";
 import { GROUP_LIMITS, SYSTEM_SENDER, cleanMultiLine, isGroupId, isManagerRole, isMemberKey, isReactionKey, safeGroupVoicePath } from "@/lib/groups";
 import {
     GroupApiError,
@@ -21,12 +22,12 @@ import {
     strings,
 } from "../_shared";
 
-type StoredMessage = { fromEmail?: string; type?: string; voicePath?: unknown; reactions?: Record<string, unknown> };
+type StoredMessage = { fromEmail?: string; type?: string; text?: unknown; voicePath?: unknown; reactions?: Record<string, unknown> };
 
 const messagePath = (groupId: string, messageId: string) => `groups/${groupId}/messages/${messageId}`;
 
 /** Message fields a member may read; everything else on the document stays on the server. */
-const WIRE_FIELDS = ["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt", "event", "vars", "template", "reactions"] as const;
+const WIRE_FIELDS = ["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt", "event", "vars", "template", "reactions", "replyTo", "edited"] as const;
 const PAGE_DEFAULT = 120;
 const PAGE_MAX = 200;
 /** Typing entries older than this are not reported (the live view uses 7 s as well). */
@@ -113,18 +114,33 @@ function wireMessage(record: Record<string, unknown> & { _id: string }) {
 }
 
 /**
- * Text messages written through the server, for browsers whose Firebase
- * connection is unavailable (Hanogt Social falls back to polling). The
- * document has exactly the fields a direct client write may have.
+ * The message a reply points to, read from the group itself (so a reply can't
+ * put words in someone's mouth); null for anything that can't be replied to.
+ * Only the id and an excerpt are copied, never who wrote it: deleting an
+ * account anonymises that person's messages, and a copy must not undo that.
  */
-async function sendMessage(groupId: string, text: unknown, user: Awaited<ReturnType<typeof requireGroupUser>>) {
+async function readReply(groupId: string, value: unknown) {
+    const id = value && typeof value === "object" ? (value as { id?: unknown }).id : null;
+    if (!isGroupId(id)) return null;
+    const quoted = await getServerDocument<StoredMessage>(messagePath(groupId, id));
+    if (!quoted || quoted.type === "system" || typeof quoted.fromEmail !== "string" || quoted.fromEmail === SYSTEM_SENDER) return null;
+    return { id, text: quoted.type === "voice" ? "🎤" : previewText(quoted.text, 100) };
+}
+
+/**
+ * Text messages written through the server: replies (browsers may not write
+ * that field themselves) and everything sent by browsers whose Firebase
+ * connection is unavailable (Hanogt Social falls back to polling). Without a
+ * reply the document has exactly the fields a direct client write may have.
+ */
+async function sendMessage(groupId: string, text: unknown, replyTo: unknown, user: Awaited<ReturnType<typeof requireGroupUser>>) {
     const body = cleanMultiLine(text, GROUP_LIMITS.messageMax * 2);
     if (!body) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
     if (body.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
     await requireGroupMember(groupId, user.email);
-    const [author, profiles] = await Promise.all([ownDisplayName(user), loadProfiles([user.email])]);
+    const [author, profiles, reply] = await Promise.all([ownDisplayName(user), loadProfiles([user.email]), readReply(groupId, replyTo)]);
     const createdAt = new Date();
-    const data = {
+    const data: Record<string, unknown> = {
         fromEmail: user.email,
         author: author.slice(0, 80),
         authorAvatar: profileAvatar(profiles.get(user.email)),
@@ -132,9 +148,27 @@ async function sendMessage(groupId: string, text: unknown, user: Awaited<ReturnT
         text: body,
         createdAt,
     };
+    if (reply) data.replyTo = reply;
     const created = await createServerDocument(`groups/${groupId}/messages`, data);
     const id = created.name.split("/").pop() || "";
     return { success: true, message: { ...data, id, createdAt: createdAt.toISOString() } };
+}
+
+/** Authors edit their own text messages (messages are read-only for browsers). */
+async function editMessage(groupId: string, messageId: string, text: unknown, email: string) {
+    const body = cleanMultiLine(text, GROUP_LIMITS.messageMax * 2);
+    if (!body) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
+    if (body.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
+    await requireGroupMember(groupId, email);
+    const path = messagePath(groupId, messageId);
+    await retryOnConflict(async () => {
+        const message = await getServerDocument<StoredMessage>(path);
+        if (!message) throw new GroupApiError(404, "message_not_found", "Mesaj bulunamadı.");
+        if (message.fromEmail !== email || message.type !== "text") throw new GroupApiError(403, "forbidden", "Yalnızca kendi metin mesajlarınızı düzenleyebilirsiniz.");
+        if (message.text === body) return;
+        await patchServerDocument(path, { text: body, edited: true, editedAt: new Date() }, { updateFields: ["text", "edited", "editedAt"], updateTime: message._updateTime });
+    });
+    return { success: true };
 }
 
 /** Milliseconds from a query parameter; anything else (or a time far in the future) is ignored. */
@@ -201,7 +235,11 @@ export async function POST(request: NextRequest) {
         }
         if (action === "send") {
             await assertRateLimit(`groups:send:${user.email}`, 40, 60_000);
-            return groupJson(await sendMessage(groupId, body.text, user), 201);
+            return groupJson(await sendMessage(groupId, body.text, body.replyTo, user), 201);
+        }
+        if (action === "edit") {
+            await assertRateLimit(`groups:edit:${user.email}`, 40, 60_000);
+            return groupJson(await editMessage(groupId, readId(body.messageId, "Mesaj kimliği"), body.text, user.email));
         }
         await assertRateLimit(`groups:${user.email}`, 40, 60_000);
         if (action === "pin" || action === "unpin") return groupJson(await setPinned(groupId, readId(body.messageId, "Mesaj kimliği"), user.email, action === "pin"));

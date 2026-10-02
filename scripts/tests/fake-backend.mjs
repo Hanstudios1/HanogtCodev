@@ -67,6 +67,25 @@ class Precondition extends Error {
     }
 }
 
+/** The parts of a multipart/related upload (Cloud Storage JSON API): [{ headers, data }]. */
+function multipartParts(body, contentType) {
+    const boundary = /boundary=([^;]+)/.exec(contentType || "")?.[1];
+    assert.ok(boundary, "multipart upload without a boundary");
+    const buffer = Buffer.from(body);
+    const delimiter = Buffer.from(`--${boundary}`);
+    const parts = [];
+    let start = buffer.indexOf(delimiter);
+    while (start >= 0) {
+        const next = buffer.indexOf(delimiter, start + delimiter.length);
+        if (next < 0) break;
+        const part = buffer.subarray(start + delimiter.length + 2, next - 2);
+        const split = part.indexOf("\r\n\r\n");
+        parts.push({ headers: part.subarray(0, split).toString("utf8"), data: part.subarray(split + 4) });
+        start = next;
+    }
+    return parts;
+}
+
 export function createBackend(seed, options = {}) {
     const docs = new Map();
     let clock = 0;
@@ -74,6 +93,9 @@ export function createBackend(seed, options = {}) {
     for (const [path, data] of Object.entries(seed)) docs.set(path, { data: structuredClone(data), updateTime: stamp() });
     const authDeleted = [];
     const storageDeleted = [];
+    /** Storage objects: path → { contentType, data (Buffer), metadata }; seeded from options.storage. */
+    const objects = new Map(Object.entries(options.storage || {}).map(([path, object]) => [path, { contentType: object.contentType, data: Buffer.from(object.data), metadata: object.metadata || {} }]));
+    const storageUploads = [];
 
     const documentJson = (path) => ({ name: NAME_PREFIX + path, fields: encodeFields(docs.get(path).data), updateTime: docs.get(path).updateTime });
     const pathOf = (name) => name.slice(NAME_PREFIX.length);
@@ -102,6 +124,7 @@ export function createBackend(seed, options = {}) {
         for (const write of writes) {
             if (write.delete) check(pathOf(write.delete), write.currentDocument);
             if (write.update) check(pathOf(write.update.name), write.currentDocument);
+            if (write.transform) check(pathOf(write.transform.document), write.currentDocument);
         }
         for (const write of writes) {
             if (write.delete) docs.delete(pathOf(write.delete));
@@ -109,7 +132,16 @@ export function createBackend(seed, options = {}) {
             else if (write.transform) {
                 const path = pathOf(write.transform.document);
                 const data = { ...(docs.get(path)?.data ?? {}) };
-                for (const transform of write.transform.fieldTransforms) data[transform.fieldPath] = Number(data[transform.fieldPath] || 0) + decode(transform.increment);
+                for (const transform of write.transform.fieldTransforms) {
+                    if (transform.appendMissingElements) {
+                        // arrayUnion: values the array doesn't hold yet are appended.
+                        const list = Array.isArray(data[transform.fieldPath]) ? [...data[transform.fieldPath]] : [];
+                        for (const value of (transform.appendMissingElements.values || []).map(decode)) if (!list.some((entry) => same(entry, value))) list.push(value);
+                        data[transform.fieldPath] = list;
+                    } else {
+                        data[transform.fieldPath] = Number(data[transform.fieldPath] || 0) + decode(transform.increment);
+                    }
+                }
                 docs.set(path, { data, updateTime: stamp() });
             }
         }
@@ -140,20 +172,54 @@ export function createBackend(seed, options = {}) {
         return json(200, found.slice(0, query.limit ?? found.length).map((path) => ({ document: documentJson(path) })));
     }
 
+    function headerOf(init, name) {
+        const headers = init.headers || {};
+        if (typeof headers.get === "function") return headers.get(name) || "";
+        const key = Object.keys(headers).find((entry) => entry.toLowerCase() === name.toLowerCase());
+        return key ? String(headers[key]) : "";
+    }
+
+    function storageRequest(url, method, init) {
+        if (method === "POST" && url.pathname.startsWith("/upload/storage/v1/b/")) {
+            assert.equal(url.searchParams.get("uploadType"), "multipart");
+            const [meta, media] = multipartParts(init.body, headerOf(init, "content-type"));
+            const metadata = JSON.parse(meta.data.toString("utf8"));
+            const status = options.failUpload?.(metadata.name);
+            if (status) return failure(status, "UNAVAILABLE");
+            objects.set(metadata.name, { contentType: metadata.contentType, data: Buffer.from(media.data), metadata: metadata.metadata || {} });
+            storageUploads.push(metadata.name);
+            return json(200, { name: metadata.name, contentType: metadata.contentType, size: String(media.data.length) });
+        }
+        const object = decodeURIComponent(url.pathname.split("/o/")[1]);
+        if (method === "GET" && url.searchParams.get("alt") === "media") {
+            const stored = objects.get(object);
+            if (!stored) return failure(404, "NOT_FOUND");
+            const range = /^bytes=(\d+)-(\d*)$/.exec(headerOf(init, "range"));
+            if (range) {
+                const from = Number(range[1]);
+                const to = range[2] ? Math.min(Number(range[2]), stored.data.length - 1) : stored.data.length - 1;
+                return new Response(stored.data.subarray(from, to + 1), {
+                    status: 206,
+                    headers: { "Content-Type": stored.contentType, "Content-Length": String(to - from + 1), "Content-Range": `bytes ${from}-${to}/${stored.data.length}` },
+                });
+            }
+            return new Response(stored.data, { status: 200, headers: { "Content-Type": stored.contentType, "Content-Length": String(stored.data.length) } });
+        }
+        const status = options.failStorage?.(object);
+        if (status) return failure(status, "UNAVAILABLE");
+        storageDeleted.push(object);
+        objects.delete(object);
+        return new Response(null, { status: 204 });
+    }
+
     async function fetchStub(input, init = {}) {
         const url = new URL(typeof input === "string" ? input : input.url);
         const method = (init.method || "GET").toUpperCase();
+        if (url.host === "127.0.0.1:9199") return storageRequest(url, method, init);
         const body = init.body ? JSON.parse(init.body) : null;
         if (url.host === "127.0.0.1:9099") {
             authDeleted.push(...body.localIds);
             return json(200, {});
-        }
-        if (url.host === "127.0.0.1:9199") {
-            const object = decodeURIComponent(url.pathname.split("/o/")[1]);
-            const status = options.failStorage?.(object);
-            if (status) return failure(status, "UNAVAILABLE");
-            storageDeleted.push(object);
-            return new Response(null, { status: 204 });
         }
         if (url.host !== "127.0.0.1:8080" && options.route) return options.route(url, init);
         assert.equal(url.host, "127.0.0.1:8080", `unexpected request to ${url.href}`);
@@ -197,6 +263,10 @@ export function createBackend(seed, options = {}) {
         paths: () => [...docs.keys()],
         authDeleted,
         storageDeleted,
+        storageUploads,
+        /** A stored object ({ contentType, data, metadata }) or null. */
+        object: (path) => objects.get(path) ?? null,
+        objectPaths: () => [...objects.keys()],
     };
 }
 

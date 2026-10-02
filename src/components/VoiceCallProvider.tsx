@@ -1,350 +1,395 @@
 "use client";
 
-import OptimizedImage from "@/components/OptimizedImage";
+import { doc, getDoc } from "firebase/firestore";
+import { HeadphoneOff, Headphones, Mic, MicOff, Phone, PhoneOff, ShieldCheck, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import PresenceAvatar from "@/components/PresenceAvatar";
+import { useFirebaseBridge } from "@/components/Provider";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { useOwnProfile } from "@/lib/account-profile-client";
-import { useI18n, type Copy } from "@/lib/i18n";
-
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
-import {
-    arrayUnion,
-    collection,
-    doc,
-    getDoc,
-    limit,
-    onSnapshot,
-    orderBy,
-    query,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-    where,
-} from "firebase/firestore";
-import { Mic, MicOff, Phone, PhoneOff, ShieldCheck, Volume2, X } from "lucide-react";
+import { callsApi, watchIncoming } from "@/lib/calls/client";
+import type { IncomingCall } from "@/lib/calls/model";
+import { CallSession, type CallNotice, type CallSessionState } from "@/lib/calls/session";
+import { startTone } from "@/lib/calls/sounds";
 import { db } from "@/lib/firebase";
+import { useI18n, type Copy } from "@/lib/i18n";
+import { setSocialAudio, useSocialAudio } from "@/lib/social/local-state";
 
 export type CallPeer = { email: string; username: string; avatarUrl?: string; staffRole?: string | null };
-type CallStatus = "idle" | "incoming" | "calling" | "connecting" | "active";
-type CallContextValue = { startCall: (peer: CallPeer) => Promise<void>; status: CallStatus };
+export type VoiceCallStatus = "idle" | "incoming" | "calling" | "connecting" | "active";
 
-const VoiceCallContext = createContext<CallContextValue>({ startCall: async () => undefined, status: "idle" });
+type CallContextValue = {
+    startCall: (peer: CallPeer) => Promise<void>;
+    hangUp: () => void;
+    status: VoiceCallStatus;
+    /** The other person while a call rings or runs. */
+    peer: CallPeer | null;
+    /** When the audio connection came up (0 before). */
+    connectedAt: number;
+};
+
+const VoiceCallContext = createContext<CallContextValue>({ startCall: async () => undefined, hangUp: () => undefined, status: "idle", peer: null, connectedAt: 0 });
 
 export function useVoiceCall() {
     return useContext(VoiceCallContext);
 }
 
-/** Error codes raised inside call callbacks; they are translated while rendering. */
-const CALL_ERRORS: Record<string, Copy> = {
-    "call:ice": { TR: "Arama bağlantısı hazırlanamadı.", EN: "The call connection couldn't be prepared." },
-    "call:start": { TR: "Arama başlatılamadı.", EN: "The call couldn't be started." },
-    "call:inactive": { TR: "Arama artık etkin değil.", EN: "This call is no longer active." },
-    "call:answer": { TR: "Arama yanıtlanamadı.", EN: "The call couldn't be answered." },
+const C = {
+    region: { TR: "Sesli arama", EN: "Voice call" },
+    incoming: { TR: "Gelen sesli arama…", EN: "Incoming voice call…" },
+    preparing: { TR: "Arama hazırlanıyor…", EN: "Setting up the call…" },
+    ringing: { TR: "Çalıyor…", EN: "Ringing…" },
+    connecting: { TR: "Bağlanıyor…", EN: "Connecting…" },
+    connected: { TR: "Sesli bağlantı · {time}", EN: "Voice connected · {time}" },
+    accept: { TR: "Yanıtla", EN: "Accept" },
+    decline: { TR: "Reddet", EN: "Decline" },
+    hangUp: { TR: "Aramayı bitir", EN: "End call" },
+    cancel: { TR: "Aramayı iptal et", EN: "Cancel call" },
+    mute: { TR: "Mikrofonu sessize al", EN: "Mute" },
+    unmute: { TR: "Mikrofonu aç", EN: "Unmute" },
+    deafen: { TR: "Sesi kapat", EN: "Deafen" },
+    undeafen: { TR: "Sesi aç", EN: "Undeafen" },
+    close: { TR: "Kapat", EN: "Close" },
+    privacy: { TR: "Ses kaydedilmez; geçici bağlantı verisi arama bitince silinir.", EN: "Audio is never recorded; temporary connection data is deleted when the call ends." },
+    slow: { TR: "Bağlantı uzun sürüyor. Bazı ağlar (mobil veri, kurumsal veya okul ağları) doğrudan bağlantıyı engeller; bu ağlarda aramanın kurulması için sitenin bir TURN sunucusu kullanması gerekir.", EN: "Connecting is taking a while. Some networks (mobile data, company or school networks) block direct connections; on them the site needs a TURN server for calls to connect." },
+    slowTurn: { TR: "Bağlantı uzun sürüyor; ağ bağlantını kontrol et.", EN: "Connecting is taking a while; check your network connection." },
+    youMuted: { TR: "Mikrofonun kapalı", EN: "You're muted" },
+} satisfies Record<string, Copy>;
+
+const NOTICES: Record<CallNotice, Copy> = {
+    declined: { TR: "{name} aramayı reddetti.", EN: "{name} declined the call." },
+    busy: { TR: "{name} şu anda başka bir görüşmede.", EN: "{name} is in another call." },
+    unavailable: { TR: "{name} şu anda müsait değil.", EN: "{name} isn't available right now." },
+    no_answer: { TR: "{name} yanıt vermedi.", EN: "{name} didn't answer." },
+    missed: { TR: "Cevapsız arama: {name}", EN: "Missed call from {name}" },
+    ended: { TR: "Arama sona erdi.", EN: "The call ended." },
+    failed: { TR: "Bağlantı kurulamadı veya koptu. İnternet bağlantını kontrol edip tekrar dene.", EN: "The connection failed or dropped. Check your internet connection and try again." },
+    failed_turn: {
+        TR: "Bağlantı kurulamadı: ağın (ör. mobil veri, kurumsal veya okul ağı) doğrudan bağlantıya izin vermiyor olabilir. Bu ağlarda aramaların çalışması için site yönetiminin bir TURN sunucusu yapılandırması gerekir; şimdilik başka bir ağla (ör. ev Wi-Fi'ı) dene.",
+        EN: "Couldn't connect: your network (e.g. mobile data, a company or school network) may block direct connections. For calls to work on such networks the site needs a TURN server; for now, try another network (e.g. home Wi-Fi).",
+    },
+    mic_denied: { TR: "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin verip tekrar dene.", EN: "Microphone access was denied. Allow the microphone from the lock icon in the address bar and try again." },
+    mic_missing: { TR: "Mikrofon bulunamadı. Bir mikrofon bağlayıp tekrar dene.", EN: "No microphone was found. Connect one and try again." },
+    mic_busy: { TR: "Mikrofona erişilemedi; başka bir uygulama kullanıyor olabilir.", EN: "The microphone couldn't be opened; another app may be using it." },
+    unsupported: { TR: "Bu tarayıcı sesli aramayı desteklemiyor (güvenli bağlantı ve güncel bir tarayıcı gerekir).", EN: "This browser doesn't support voice calls (a secure connection and an up-to-date browser are needed)." },
+    ice: { TR: "Arama bağlantısı hazırlanamadı. Biraz sonra tekrar dene.", EN: "The call connection couldn't be prepared. Try again in a moment." },
+    start_failed: { TR: "Arama başlatılamadı. Biraz sonra tekrar dene.", EN: "The call couldn't be started. Try again in a moment." },
+    inactive: { TR: "Bu arama artık etkin değil.", EN: "This call is no longer active." },
+    not_friend: { TR: "Yalnızca arkadaşlarını arayabilirsin.", EN: "You can only call your friends." },
+    blocked: { TR: "Bu kişiyi engelledin; aramak için önce engeli kaldır.", EN: "You blocked this person; unblock them to call." },
+    rate_limited: { TR: "Çok sık arama yapıyorsun. Biraz bekleyip tekrar dene.", EN: "You're calling too often. Wait a bit and try again." },
+    network: { TR: "Sunucuya ulaşılamadı. Bağlantını kontrol et.", EN: "Couldn't reach the server. Check your connection." },
 };
 
+/** Notices that explain a problem stay a little longer than "call ended". */
+const LONG_NOTICES = new Set<CallNotice>(["failed", "failed_turn", "mic_denied", "mic_missing", "mic_busy", "unsupported", "ice", "start_failed", "not_friend", "blocked", "rate_limited", "network"]);
+
+type ActiveCall = { key: number; session: CallSession; peer: CallPeer; state: CallSessionState };
+
+function publicStatus(call: ActiveCall | null): VoiceCallStatus {
+    switch (call?.state.phase) {
+        case "incoming": return "incoming";
+        case "preparing":
+        case "ringing": return "calling";
+        case "connecting": return "connecting";
+        case "active": return "active";
+        default: return "idle";
+    }
+}
+
+function duration(ms: number) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(total / 3600);
+    const clock = `${String(Math.floor((total % 3600) / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+    return hours ? `${hours}:${clock}` : clock;
+}
+
+/**
+ * 1:1 voice calls on every page: ringing (a Firestore listener with the
+ * Firebase bridge, polling /api/calls/incoming without it), the incoming-call
+ * dialog and a Discord-style call bar that doesn't block the page, so people
+ * keep chatting while they talk. Signalling always goes through the server
+ * (/api/calls), so calls work whether or not the bridge is up.
+ */
 export default function VoiceCallProvider({ children }: { children: React.ReactNode }) {
     const { data: session } = useSession();
-    const { tx } = useI18n();
+    const bridge = useFirebaseBridge();
     const email = session?.user?.email?.toLowerCase() || "";
-    const [status, setStatus] = useState<CallStatus>("idle");
-    const [peer, setPeer] = useState<CallPeer | null>(null);
-    const [callId, setCallId] = useState<string | null>(null);
-    const [muted, setMuted] = useState(false);
-    const [elapsed, setElapsed] = useState(0);
-    const [error, setError] = useState("");
-    const [turnConfigured, setTurnConfigured] = useState(true);
-    const callIdRef = useRef<string | null>(null);
-    const connectionRef = useRef<RTCPeerConnection | null>(null);
-    const localStreamRef = useRef<MediaStream | null>(null);
-    const remoteStreamRef = useRef<MediaStream | null>(null);
-    const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
-    const unsubscribersRef = useRef<Array<() => void>>([]);
-    const endingRef = useRef(false);
-    // Do Not Disturb declines incoming calls without ringing; the caller sees the call end.
+    const live = bridge.ready;
+    const audio = useSocialAudio();
+    // Do Not Disturb declines incoming calls without ringing; the caller sees "unavailable".
     const doNotDisturb = useOwnProfile(email || null)?.statusPreference === "dnd";
-    const dndRef = useRef(doNotDisturb);
+    const [call, setCall] = useState<ActiveCall | null>(null);
+    const sessionRef = useRef<CallSession | null>(null);
+    const keyRef = useRef(0);
+    const handledRef = useRef(new Set<string>());
+    const audioElementRef = useRef<HTMLAudioElement | null>(null);
+    const settingsRef = useRef({ live, audio, doNotDisturb });
     useEffect(() => {
-        dndRef.current = doNotDisturb;
-    }, [doNotDisturb]);
+        settingsRef.current = { live, audio, doNotDisturb };
+    });
 
-    const clearSubscriptions = () => {
-        unsubscribersRef.current.forEach((unsubscribe) => unsubscribe());
-        unsubscribersRef.current = [];
-    };
-
-    const deleteCallArtifacts = useCallback(async (id: string) => {
-        await fetch("/api/calls/cleanup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ callId: id }),
-            keepalive: true,
-        }).catch(() => undefined);
+    const begin = useCallback((role: "caller" | "callee", peer: CallPeer, callId: string | null) => {
+        keyRef.current += 1;
+        const key = keyRef.current;
+        const settings = settingsRef.current;
+        const created = new CallSession({
+            role,
+            peer: peer.email,
+            callId,
+            live: settings.live,
+            muted: settings.audio.micOff,
+            deafened: settings.audio.deafened,
+            audio: audioElementRef.current,
+            onChange: (state) => setCall((current) => (current && current.key === key ? { ...current, state } : current)),
+        });
+        sessionRef.current = created;
+        setCall({ key, session: created, peer, state: created.current });
+        return created;
     }, []);
-
-    const resetLocalCall = useCallback(() => {
-        clearSubscriptions();
-        localStreamRef.current?.getTracks().forEach((track) => track.stop());
-        remoteStreamRef.current?.getTracks().forEach((track) => track.stop());
-        connectionRef.current?.close();
-        connectionRef.current = null;
-        localStreamRef.current = null;
-        remoteStreamRef.current = null;
-        if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
-        setStatus("idle");
-        callIdRef.current = null;
-        setCallId(null);
-        setPeer(null);
-        setMuted(false);
-        setElapsed(0);
-    }, []);
-
-    const endCall = useCallback(async () => {
-        if (endingRef.current) return;
-        endingRef.current = true;
-        const id = callIdRef.current;
-        resetLocalCall();
-        if (id) await deleteCallArtifacts(id);
-        endingRef.current = false;
-    }, [deleteCallArtifacts, resetLocalCall]);
-
-    const getIceServers = async () => {
-        const response = await fetch("/api/calls/ice", { method: "POST", headers: { "Content-Type": "application/json" } });
-        if (!response.ok) throw new Error("call:ice");
-        const data = await response.json() as { iceServers: RTCIceServer[]; turnConfigured: boolean };
-        setTurnConfigured(data.turnConfigured);
-        return data.iceServers;
-    };
-
-    const attachConnection = useCallback(async (id: string, role: "caller" | "callee", iceServers: RTCIceServer[]) => {
-        const connection = new RTCPeerConnection({ iceServers, iceCandidatePoolSize: 8 });
-        connectionRef.current = connection;
-        const localStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-            video: false,
-        });
-        localStreamRef.current = localStream;
-        localStream.getTracks().forEach((track) => connection.addTrack(track, localStream));
-        const remoteStream = new MediaStream();
-        remoteStreamRef.current = remoteStream;
-        connection.ontrack = (event) => {
-            event.streams[0]?.getTracks().forEach((track) => remoteStream.addTrack(track));
-            if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
-        };
-        connection.onicecandidate = (event) => {
-            if (event.candidate) {
-                updateDoc(doc(db, "calls", id), {
-                    [`${role}Candidates`]: arrayUnion(event.candidate.toJSON()),
-                }).catch(() => undefined);
-            }
-        };
-        connection.onconnectionstatechange = () => {
-            if (connection.connectionState === "connected") setStatus("active");
-            if (["failed", "closed"].includes(connection.connectionState)) void endCall();
-        };
-        const remoteRole = role === "caller" ? "callee" : "caller";
-        const processedCandidates = new Set<string>();
-        const pendingCandidates = new Map<string, RTCIceCandidateInit>();
-        const flushCandidates = () => {
-            if (!connection.remoteDescription) return;
-            pendingCandidates.forEach((candidate, key) => {
-                connection.addIceCandidate(new RTCIceCandidate(candidate))
-                    .then(() => {
-                        processedCandidates.add(key);
-                        pendingCandidates.delete(key);
-                    })
-                    .catch(() => undefined);
-            });
-        };
-        connection.addEventListener("signalingstatechange", flushCandidates);
-        const candidateUnsubscribe = onSnapshot(doc(db, "calls", id), (snapshot) => {
-            const candidates = snapshot.data()?.[`${remoteRole}Candidates`] as RTCIceCandidateInit[] | undefined;
-            (candidates || []).forEach((candidate) => {
-                const key = JSON.stringify(candidate);
-                if (processedCandidates.has(key)) return;
-                pendingCandidates.set(key, candidate);
-            });
-            flushCandidates();
-        });
-        unsubscribersRef.current.push(candidateUnsubscribe);
-        return connection;
-    }, [endCall]);
-
-    const watchCall = useCallback((id: string, connection: RTCPeerConnection, role: "caller" | "callee") => {
-        let answerApplied = false;
-        const unsubscribe = onSnapshot(doc(db, "calls", id), (snapshot) => {
-            if (!snapshot.exists()) {
-                if (!endingRef.current) resetLocalCall();
-                return;
-            }
-            const data = snapshot.data();
-            if (role === "caller" && data.answer && !answerApplied && !connection.currentRemoteDescription) {
-                answerApplied = true;
-                connection.setRemoteDescription(new RTCSessionDescription(data.answer)).catch(() => void endCall());
-                setStatus("connecting");
-            }
-            if (data.status === "declined" || data.status === "ended") void endCall();
-        });
-        unsubscribersRef.current.push(unsubscribe);
-    }, [endCall, resetLocalCall]);
 
     const startCall = useCallback(async (target: CallPeer) => {
-        if (!email || status !== "idle" || target.email === email) return;
-        setError("");
-        setPeer(target);
-        setStatus("calling");
-        const id = crypto.randomUUID();
-        callIdRef.current = id;
-        setCallId(id);
-        try {
-            await setDoc(doc(db, "calls", id), {
-                caller: email,
-                callee: target.email.toLowerCase(),
-                participants: [email, target.email.toLowerCase()],
-                status: "preparing",
-                callerCandidates: [],
-                calleeCandidates: [],
-                createdAt: serverTimestamp(),
-                expiresAt: new Date(Date.now() + 2 * 60_000),
-            });
-            const iceServers = await getIceServers();
-            const connection = await attachConnection(id, "caller", iceServers);
-            const offer = await connection.createOffer({ offerToReceiveAudio: true });
-            await connection.setLocalDescription(offer);
-            await updateDoc(doc(db, "calls", id), {
-                status: "ringing",
-                offer: { type: offer.type, sdp: offer.sdp },
-            });
-            watchCall(id, connection, "caller");
-        } catch (callError) {
-            setError(callError instanceof Error && callError.message ? callError.message : "call:start");
-            await deleteCallArtifacts(id);
-            resetLocalCall();
-        }
-    }, [email, status, attachConnection, watchCall, deleteCallArtifacts, resetLocalCall]);
+        const peerEmail = target.email.trim().toLowerCase();
+        if (!email || !peerEmail || peerEmail === email || sessionRef.current?.busy) return;
+        await begin("caller", { ...target, email: peerEmail }, null).startOutgoing();
+    }, [begin, email]);
 
-    const acceptCall = async () => {
-        if (!callId) return;
-        setError("");
-        setStatus("connecting");
-        try {
-            const snapshot = await getDoc(doc(db, "calls", callId));
-            if (!snapshot.exists() || !snapshot.data().offer) throw new Error("call:inactive");
-            const iceServers = await getIceServers();
-            const connection = await attachConnection(callId, "callee", iceServers);
-            await connection.setRemoteDescription(new RTCSessionDescription(snapshot.data().offer));
-            const answer = await connection.createAnswer();
-            await connection.setLocalDescription(answer);
-            await updateDoc(doc(db, "calls", callId), {
-                answer: { type: answer.type, sdp: answer.sdp },
-                status: "active",
-                answeredAt: serverTimestamp(),
-            });
-            watchCall(callId, connection, "callee");
-        } catch (callError) {
-            setError(callError instanceof Error && callError.message ? callError.message : "call:answer");
-            await endCall();
-        }
-    };
+    const hangUp = useCallback(() => sessionRef.current?.hangUp(), []);
 
-    useEffect(() => {
-        if (!email || status !== "idle") return;
-        const incomingQuery = query(
-            collection(db, "calls"),
-            where("callee", "==", email),
-            where("status", "==", "ringing"),
-            orderBy("createdAt", "desc"),
-            limit(1),
-        );
-        return onSnapshot(incomingQuery, async (snapshot) => {
-            const incoming = snapshot.docs[0];
-            if (!incoming) return;
-            const data = incoming.data();
-            const createdAt = data.createdAt?.toMillis?.() || Date.now();
-            if (Date.now() - createdAt > 90_000 || dndRef.current) {
-                await deleteCallArtifacts(incoming.id);
-                return;
+    /* -------------------------------- ringing -------------------------------- */
+
+    const onIncoming = useCallback((list: IncomingCall[]) => {
+        const handled = handledRef.current;
+        if (handled.size > 200) handled.clear();
+        for (const incoming of list) {
+            if (handled.has(incoming.id)) continue;
+            handled.add(incoming.id);
+            if (sessionRef.current?.busy) {
+                void callsApi.decline(incoming.id, "busy").catch(() => undefined);
+                continue;
             }
-            const profile = await getDoc(doc(db, "public_profiles", data.caller));
-            const profileData = profile.data() || {};
-            setPeer({ email: data.caller, username: profileData.username || data.caller, avatarUrl: profileData.avatarUrl || "", staffRole: typeof profileData.staffRole === "string" ? profileData.staffRole : null });
-            callIdRef.current = incoming.id;
-            setCallId(incoming.id);
-            setStatus("incoming");
-        }, () => undefined);
-    }, [email, status, deleteCallArtifacts]);
+            if (settingsRef.current.doNotDisturb) {
+                void callsApi.decline(incoming.id, "unavailable").catch(() => undefined);
+                continue;
+            }
+            const person = incoming.person;
+            const peer: CallPeer = { email: incoming.caller, username: person?.username || incoming.caller.split("@")[0], avatarUrl: person?.avatarUrl ?? undefined, staffRole: person?.staffRole ?? null };
+            const created = begin("callee", peer, incoming.id);
+            created.startIncoming();
+            if (!person && settingsRef.current.live) {
+                // The realtime listener only has the address: the name card comes from the public profile.
+                void getDoc(doc(db, "public_profiles", incoming.caller)).then((snapshot) => {
+                    const data = snapshot.data() ?? {};
+                    setCall((current) => (current && current.session === created ? {
+                        ...current,
+                        peer: {
+                            ...current.peer,
+                            username: typeof data.username === "string" && data.username.trim() ? data.username.trim().slice(0, 60) : current.peer.username,
+                            avatarUrl: typeof data.avatarUrl === "string" && /^https:\/\//.test(data.avatarUrl) ? data.avatarUrl : current.peer.avatarUrl,
+                            staffRole: typeof data.staffRole === "string" ? data.staffRole : null,
+                        },
+                    } : current));
+                }).catch(() => undefined);
+            }
+        }
+    }, [begin]);
+
+    const onIncomingRef = useRef(onIncoming);
+    useEffect(() => {
+        onIncomingRef.current = onIncoming;
+    });
 
     useEffect(() => {
-        if (status !== "active") return;
-        const timer = window.setInterval(() => setElapsed((value) => value + 1), 1000);
-        return () => window.clearInterval(timer);
-    }, [status]);
+        if (!email) return;
+        return watchIncoming({ email, live, onCalls: (list) => onIncomingRef.current(list) });
+    }, [email, live]);
+
+    // Signing out ends whatever is going on.
+    useEffect(() => {
+        if (!email) sessionRef.current?.hangUp();
+    }, [email]);
+
+    /* ------------------------------ side effects ----------------------------- */
+
+    const phase = call?.state.phase ?? null;
+    const notice = call?.state.notice ?? null;
+    const callKey = call?.key ?? 0;
+
+    // A finished call stays on screen briefly with its reason, then the bar goes away.
+    useEffect(() => {
+        if (phase !== "ended") return;
+        const timer = window.setTimeout(() => setCall((current) => (current?.key === callKey ? null : current)), notice ? (LONG_NOTICES.has(notice) ? 12_000 : 5_000) : 0);
+        return () => window.clearTimeout(timer);
+    }, [callKey, notice, phase]);
+
+    // Ring tones (not while deafened).
+    useEffect(() => {
+        if (audio.deafened) return;
+        if (phase === "incoming") return startTone("incoming");
+        if (phase === "ringing") return startTone("outgoing");
+    }, [audio.deafened, phase]);
+
+    // The microphone and headphone toggles of Hanogt Social apply to calls too (like Discord's).
+    const activeSession = call?.session ?? null;
+    useEffect(() => {
+        activeSession?.setMuted(audio.micOff);
+        activeSession?.setDeafened(audio.deafened);
+    }, [activeSession, audio.deafened, audio.micOff]);
 
     useEffect(() => {
-        if (status !== "calling") return;
-        const timeout = window.setTimeout(() => void endCall(), 45_000);
-        return () => window.clearTimeout(timeout);
-    }, [status, endCall]);
-
-    useEffect(() => () => {
-        clearSubscriptions();
-        localStreamRef.current?.getTracks().forEach((track) => track.stop());
-        connectionRef.current?.close();
-    }, []);
-
-    useEffect(() => {
-        const cleanupOnPageExit = () => {
-            const id = callIdRef.current;
-            if (!id) return;
-            navigator.sendBeacon("/api/calls/cleanup", JSON.stringify({ callId: id }));
+        const onExit = () => sessionRef.current?.dispose();
+        window.addEventListener("pagehide", onExit);
+        return () => {
+            window.removeEventListener("pagehide", onExit);
+            onExit();
         };
-        window.addEventListener("pagehide", cleanupOnPageExit);
-        return () => window.removeEventListener("pagehide", cleanupOnPageExit);
     }, []);
 
-    const toggleMute = () => {
-        const next = !muted;
-        localStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = !next; });
-        setMuted(next);
-    };
-    const duration = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
-    const value = useMemo(() => ({ startCall, status }), [startCall, status]);
+    const status = publicStatus(call);
+    const value = useMemo<CallContextValue>(() => ({
+        startCall,
+        hangUp,
+        status,
+        peer: status === "idle" ? null : call?.peer ?? null,
+        connectedAt: call?.state.connectedAt ?? 0,
+    }), [call?.peer, call?.state.connectedAt, hangUp, startCall, status]);
 
     return (
         <VoiceCallContext.Provider value={value}>
             {children}
-            <audio ref={remoteAudioRef} autoPlay playsInline />
-            {status !== "idle" && peer && (
-                <div className="fixed inset-0 z-[140] flex items-center justify-center bg-zinc-950/75 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-label={tx({ TR: "Sesli arama", EN: "Voice call" })}>
-                    <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-zinc-900 p-7 text-center text-white shadow-2xl">
-                        <button onClick={() => void endCall()} className="float-right rounded-full p-2 text-zinc-400 hover:bg-white/10 hover:text-white" aria-label={tx({ TR: "Aramayı kapat", EN: "Close call" })}><X className="h-5 w-5" /></button>
-                        <div className="mx-auto mt-7 h-24 w-24 overflow-hidden rounded-full border-4 border-blue-500/30 bg-gradient-to-br from-blue-500 to-violet-600 shadow-xl shadow-blue-500/20">
-                            {peer.avatarUrl ? <OptimizedImage src={peer.avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <div className="flex h-full w-full items-center justify-center text-3xl font-bold">{peer.username.charAt(0).toUpperCase()}</div>}
-                        </div>
-                        <h2 className="mt-5 truncate text-xl font-bold">{peer.username}</h2>
-                        <StaffBadge role={parseStaffRole(peer.staffRole)} size="sm" className="mx-auto mt-1" />
-                        <p className="mt-1 text-sm text-zinc-400">
-                            {status === "incoming" ? tx({ TR: "Gelen sesli arama", EN: "Incoming voice call" }) : status === "calling" ? tx({ TR: "Aranıyor…", EN: "Calling…" }) : status === "connecting" ? tx({ TR: "Bağlanıyor…", EN: "Connecting…" }) : duration}
-                        </p>
-                        {error && <p className="mt-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{CALL_ERRORS[error] ? tx(CALL_ERRORS[error]) : error}</p>}
-                        {!turnConfigured && <p className="mt-3 text-xs text-amber-300">{tx({ TR: "Bazı ağlarda bağlantı için TURN sunucusu gerekebilir.", EN: "Some networks may need a TURN server to connect." })}</p>}
-                        <div className="mt-7 flex items-center justify-center gap-4">
-                            {status === "incoming" ? (
-                                <>
-                                    <button onClick={() => void endCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 hover:bg-red-600" aria-label={tx({ TR: "Reddet", EN: "Decline" })}><PhoneOff className="h-6 w-6" /></button>
-                                    <button onClick={() => void acceptCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500 hover:bg-green-600" aria-label={tx({ TR: "Yanıtla", EN: "Answer" })}><Phone className="h-6 w-6" /></button>
-                                </>
-                            ) : (
-                                <>
-                                    <button onClick={toggleMute} className={`flex h-12 w-12 items-center justify-center rounded-full ${muted ? "bg-amber-500" : "bg-white/10 hover:bg-white/20"}`} aria-label={muted ? tx({ TR: "Mikrofonu aç", EN: "Unmute microphone" }) : tx({ TR: "Mikrofonu kapat", EN: "Mute microphone" })}>{muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}</button>
-                                    <button onClick={() => void endCall()} className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 hover:bg-red-600" aria-label={tx({ TR: "Aramayı bitir", EN: "End call" })}><PhoneOff className="h-6 w-6" /></button>
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10"><Volume2 className="h-5 w-5" /></div>
-                                </>
-                            )}
-                        </div>
-                        <div className="mt-7 flex items-center justify-center gap-1.5 text-xs text-zinc-500"><ShieldCheck className="h-3.5 w-3.5" />{tx({ TR: "Ses kaydedilmez; geçici bağlantı verisi arama bitince silinir.", EN: "Audio is never recorded; temporary connection data is deleted when the call ends." })}</div>
-                    </div>
-                </div>
+            <audio ref={audioElementRef} autoPlay playsInline className="hidden" />
+            {call && call.state.phase === "incoming" && (
+                <IncomingCallDialog
+                    peer={call.peer}
+                    onAccept={() => void call.session.accept()}
+                    onDecline={() => void call.session.decline("declined")}
+                />
+            )}
+            {call && call.state.phase !== "incoming" && (
+                <CallBar
+                    call={call}
+                    micOff={audio.micOff}
+                    deafened={audio.deafened}
+                    onHangUp={() => call.session.hangUp()}
+                    onClose={() => setCall((current) => (current?.key === call.key ? null : current))}
+                />
             )}
         </VoiceCallContext.Provider>
+    );
+}
+
+function toggleMic(micOff: boolean) {
+    setSocialAudio(micOff ? { micOff: false, deafened: false } : { micOff: true, deafened: false });
+}
+
+function toggleDeafen(deafened: boolean) {
+    setSocialAudio(deafened ? { micOff: false, deafened: false } : { micOff: true, deafened: true });
+}
+
+function IncomingCallDialog({ peer, onAccept, onDecline }: { peer: CallPeer; onAccept: () => void; onDecline: () => void }) {
+    const { tx } = useI18n();
+    const ref = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        ref.current?.focus();
+    }, []);
+    return (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+            <div ref={ref} tabIndex={-1} role="alertdialog" aria-modal="true" aria-labelledby="incoming-call-name" aria-describedby="incoming-call-text" className="w-full max-w-[20rem] rounded-2xl bg-zinc-900 p-6 text-center text-white shadow-2xl outline-none ring-1 ring-white/10">
+                <div className="relative mx-auto h-24 w-24">
+                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500/25" aria-hidden />
+                    <PresenceAvatar src={peer.avatarUrl ?? null} name={peer.username} size="xl" className="relative" />
+                </div>
+                <h2 id="incoming-call-name" className="mt-5 truncate text-xl font-bold">{peer.username}</h2>
+                <StaffBadge role={parseStaffRole(peer.staffRole)} size="sm" className="mx-auto mt-1" />
+                <p id="incoming-call-text" className="mt-1 text-sm text-zinc-400">{tx(C.incoming)}</p>
+                <div className="mt-7 flex items-center justify-center gap-10">
+                    <button type="button" onClick={onDecline} className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/50" aria-label={tx(C.decline)} title={tx(C.decline)}><PhoneOff className="h-6 w-6" aria-hidden /></button>
+                    <button type="button" onClick={onAccept} className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 transition hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400/50" aria-label={tx(C.accept)} title={tx(C.accept)}><Phone className="h-6 w-6" aria-hidden /></button>
+                </div>
+                <p className="mt-6 flex items-start justify-center gap-1.5 text-start text-[11px] leading-4 text-zinc-500"><ShieldCheck className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />{tx(C.privacy)}</p>
+            </div>
+        </div>
+    );
+}
+
+function useClock(active: boolean) {
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        if (!active) return;
+        const timer = window.setInterval(() => setNow(Date.now()), 1000);
+        return () => window.clearInterval(timer);
+    }, [active]);
+    return now;
+}
+
+/** The running call: a floating bar at the top that leaves the page usable. */
+function CallBar({ call, micOff, deafened, onHangUp, onClose }: { call: ActiveCall; micOff: boolean; deafened: boolean; onHangUp: () => void; onClose: () => void }) {
+    const { tx } = useI18n();
+    const { state, peer } = call;
+    const now = useClock(state.phase === "active");
+    const ended = state.phase === "ended";
+    const statusText = state.phase === "active"
+        ? tx(C.connected, { time: duration(now - state.connectedAt) })
+        : state.phase === "connecting" ? tx(C.connecting)
+            : state.phase === "ringing" ? tx(C.ringing)
+                : state.phase === "preparing" ? tx(C.preparing)
+                    : state.notice ? tx(NOTICES[state.notice], { name: peer.username }) : tx(NOTICES.ended);
+    const hint = !ended && state.slow ? tx(state.turnConfigured ? C.slowTurn : C.slow) : "";
+    const longNotice = ended && state.notice && LONG_NOTICES.has(state.notice);
+
+    return (
+        // Below the site header (64 px) and Social's channel header (48 px), clear of the composer and the AI dock.
+        <div className="pointer-events-none fixed inset-x-0 top-[4.25rem] z-[140] flex justify-center px-2">
+            <section aria-label={tx(C.region)} className="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/95 text-white shadow-2xl shadow-black/30 backdrop-blur">
+                <div className="flex items-center gap-3 px-3 py-2">
+                    <span className={`relative shrink-0 rounded-full transition-shadow ${state.remoteSpeaking ? "shadow-[0_0_0_3px_rgb(16,185,129)]" : ""}`}>
+                        <PresenceAvatar src={peer.avatarUrl ?? null} name={peer.username} size="sm" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{peer.username}</p>
+                        <p aria-live="polite" className={`truncate text-xs ${state.phase === "active" ? "font-semibold text-emerald-400" : ended && longNotice ? "text-amber-300" : "text-zinc-400"}`}>
+                            {longNotice ? tx(NOTICES.ended) : statusText}
+                            {!ended && micOff ? <span className="ms-1.5 text-red-400">· {tx(C.youMuted)}</span> : null}
+                        </p>
+                    </div>
+                    {ended ? (
+                        <button type="button" onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/10 hover:text-white" aria-label={tx(C.close)} title={tx(C.close)}><X className="h-5 w-5" aria-hidden /></button>
+                    ) : (
+                        <div className="flex shrink-0 items-center gap-1.5">
+                            <BarButton label={tx(micOff ? C.unmute : C.mute)} pressed={micOff} danger={micOff} onClick={() => toggleMic(micOff)}>
+                                {micOff ? <MicOff className="h-[18px] w-[18px]" aria-hidden /> : <Mic className={`h-[18px] w-[18px] ${state.localSpeaking ? "text-emerald-400" : ""}`} aria-hidden />}
+                            </BarButton>
+                            <BarButton label={tx(deafened ? C.undeafen : C.deafen)} pressed={deafened} danger={deafened} onClick={() => toggleDeafen(deafened)}>
+                                {deafened ? <HeadphoneOff className="h-[18px] w-[18px]" aria-hidden /> : <Headphones className="h-[18px] w-[18px]" aria-hidden />}
+                            </BarButton>
+                            <button type="button" onClick={onHangUp} className="flex h-9 w-11 items-center justify-center rounded-full bg-red-500 transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/50" aria-label={tx(state.phase === "active" || state.phase === "connecting" ? C.hangUp : C.cancel)} title={tx(state.phase === "active" || state.phase === "connecting" ? C.hangUp : C.cancel)}>
+                                <PhoneOff className="h-[18px] w-[18px]" aria-hidden />
+                            </button>
+                        </div>
+                    )}
+                </div>
+                {(hint || longNotice) && (
+                    <p role={longNotice ? "alert" : "status"} className="border-t border-white/10 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-200">
+                        {longNotice && state.notice ? tx(NOTICES[state.notice], { name: peer.username }) : hint}
+                    </p>
+                )}
+            </section>
+        </div>
+    );
+}
+
+function BarButton({ label, pressed, danger, onClick, children }: { label: string; pressed: boolean; danger: boolean; onClick: () => void; children: React.ReactNode }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-label={label}
+            title={label}
+            aria-pressed={pressed}
+            className={`flex h-9 w-9 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${danger ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-white/10 text-zinc-200 hover:bg-white/20"}`}
+        >
+            {children}
+        </button>
     );
 }

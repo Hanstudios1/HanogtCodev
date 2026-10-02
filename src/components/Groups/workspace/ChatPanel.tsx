@@ -1,12 +1,12 @@
 "use client";
 
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
-import { deleteObject, ref as storageRef, uploadBytes } from "firebase/storage";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, AtSign, ChevronUp, Hash, MessageSquare, Mic, MicOff, Pin, PinOff, Search, Send, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { SocialRequestError, socialApi } from "@/lib/social/api";
 import { markGroupRead } from "@/lib/social/local-state";
 import {
     GROUP_LIMITS,
@@ -50,9 +50,12 @@ const C = {
     recording: { TR: "Kaydediliyor {seconds}/{limit} sn", EN: "Recording {seconds}/{limit}s" },
     discard: { TR: "Vazgeç", EN: "Discard" },
     voiceText: { TR: "Sesli mesaj ({seconds} sn)", EN: "Voice message ({seconds}s)" },
-    typingOne: { TR: "{name} yazıyor…", EN: "{name} is typing…" },
-    typingTwo: { TR: "{first} ve {second} yazıyor…", EN: "{first} and {second} are typing…" },
-    typingMany: { TR: "{count} kişi yazıyor…", EN: "{count} people are typing…" },
+    typingOne: { TR: "yazıyor…", EN: "is typing…" },
+    typingAnd: { TR: "ve", EN: "and" },
+    typingTwo: { TR: "yazıyor…", EN: "are typing…" },
+    typingMany: { TR: "Birkaç kişi yazıyor…", EN: "Several people are typing…" },
+    replying: { TR: "{name} kişisine yanıt veriliyor", EN: "Replying to {name}" },
+    cancelReply: { TR: "Yanıtı iptal et", EN: "Cancel reply" },
     everyoneHint: { TR: "Gruptaki herkese bildir", EN: "Notify everyone in the group" },
     mentionList: { TR: "Bahsedilecek üye", EN: "Member to mention" },
     pinnedTitle: { TR: "Sabitlenen mesajlar", EN: "Pinned messages" },
@@ -137,9 +140,11 @@ type ChatPanelProps = {
     onServerChange?: () => void;
     /** The microphone is switched off in Hanogt Social. */
     micOff?: boolean;
+    /** Clicking an avatar or a name opens the person's profile card. */
+    onOpenUser?: (email: string, trigger: HTMLElement) => void;
 };
 
-export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, onShowPinned, chrome = true, topic: topicProp, onTopicChange, search: searchProp, channelName, onServerChange, micOff = false }: ChatPanelProps) {
+export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, onShowPinned, chrome = true, topic: topicProp, onTopicChange, search: searchProp, channelName, onServerChange, micOff = false, onOpenUser }: ChatPanelProps) {
     const { tx, locale, language } = useI18n();
     const { groupId, group, me, members, usernames, now, notify, confirm, errorText, live } = useWorkspace();
     const [draft, setDraft] = useState("");
@@ -155,6 +160,8 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         else setOwnTopic(next);
     }, [onTopicChange, ownTopic, topicProp]);
     const [activeMessage, setActiveMessage] = useState("");
+    const [replyTo, setReplyTo] = useState<GroupChatMessage | null>(null);
+    const [editingId, setEditingId] = useState("");
     const [overrides, setOverrides] = useState<Record<string, boolean>>({});
     const [mention, setMention] = useState<{ query: string; start: number; index: number } | null>(null);
     const [seenUntil, setSeenUntil] = useState(lastReadAt);
@@ -316,8 +323,14 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         setDraft("");
         setMention(null);
         onStopTyping();
+        const reply = replyTo;
+        setReplyTo(null);
         try {
-            if (live) {
+            if (reply) {
+                // Replies are written by the server (it copies the quoted message; browsers may not write that field).
+                await groupsApi.chat({ action: "send", groupId, text, replyTo: { id: reply.id } });
+                if (!live) onServerChange?.();
+            } else if (live) {
                 await addDoc(collection(db, "groups", groupId, "messages"), {
                     fromEmail: me.email,
                     author: me.username,
@@ -333,35 +346,23 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             atBottomRef.current = true;
         } catch {
             setDraft(text);
+            setReplyTo(reply);
             notify(errorText("message_failed"), "error");
         } finally {
             setSending(false);
         }
     };
 
+    // Through POST /api/social/voice: the server stores the recording and writes the message,
+    // so voice messages work without the Firebase bridge and whatever the Storage rules allow.
     const sendVoice = async (blob: Blob, mimeType: string, seconds: number) => {
-        if (blob.size > 3 * 1024 * 1024) {
-            notify(errorText("voice_too_large"), "error");
-            return;
-        }
-        const extension = mimeType.includes("mp4") ? "m4a" : "webm";
-        const path = `group-voice-messages/${groupId}/${crypto.randomUUID()}.${extension}`;
         try {
-            await uploadBytes(storageRef(storage, path), blob, { contentType: mimeType.split(";")[0] || "audio/webm", customMetadata: { sender: me.email, groupId } });
-            await addDoc(collection(db, "groups", groupId, "messages"), {
-                fromEmail: me.email,
-                author: me.username,
-                authorAvatar: me.avatarUrl || null,
-                type: "voice",
-                text: tx(C.voiceText, { seconds }),
-                voicePath: path,
-                voiceDuration: seconds,
-                createdAt: serverTimestamp(),
-            });
+            await socialApi.sendGroupVoice(groupId, blob, { seconds, label: tx(C.voiceText, { seconds }), type: mimeType });
             atBottomRef.current = true;
-        } catch {
-            await deleteObject(storageRef(storage, path)).catch(() => undefined);
-            notify(errorText("voice_failed"), "error");
+            if (!live) onServerChange?.();
+        } catch (error) {
+            const code = error instanceof SocialRequestError ? error.code : "";
+            notify(errorText(code === "voice_too_large" || code === "rate_limited" || code === "network" || code === "not_found" || code === "unauthorized" ? code : "voice_failed"), "error");
         }
     };
 
@@ -371,11 +372,6 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
     });
 
     const startRecording = () => {
-        // Voice messages live in Firebase Storage: without the browser's connection they can't be sent.
-        if (!live) {
-            notify(errorText("offline"), "error");
-            return;
-        }
         if (micOff) {
             notify(tx(C.micOff), "info");
             return;
@@ -401,6 +397,21 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                 setMention(null);
                 return;
             }
+        }
+        if (event.key === "Escape" && replyTo) {
+            event.preventDefault();
+            event.stopPropagation();
+            setReplyTo(null);
+            return;
+        }
+        if (event.key === "ArrowUp" && !draft) {
+            // Like Discord: ArrowUp in an empty box edits your last message.
+            const last = [...messages].reverse().find((message) => message.fromEmail === me.email && message.type === "text" && !message.pending);
+            if (last) {
+                event.preventDefault();
+                setEditingId(last.id);
+            }
+            return;
         }
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
             // On touch keyboards Enter inserts a new line; the send button sends.
@@ -444,12 +455,39 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         }
     }, [confirm, errorText, groupId, live, notify, onServerChange, tx]);
 
-    const quote = useCallback((message: GroupChatMessage) => {
-        const excerpt = message.text.replace(/\s+/g, " ").trim().slice(0, 140);
-        const author = message.fromEmail === SYSTEM_SENDER ? "" : `@${message.author} `;
-        setDraft((current) => `> ${excerpt}\n${author}${current}`);
+    const reply = useCallback((message: GroupChatMessage) => {
+        if (message.fromEmail === SYSTEM_SENDER) return;
+        setReplyTo(message);
+        setEditingId("");
         window.requestAnimationFrame(() => textareaRef.current?.focus());
     }, []);
+
+    const startEdit = useCallback((message: GroupChatMessage) => setEditingId(message.id), []);
+    const cancelEdit = useCallback(() => {
+        setEditingId("");
+        window.requestAnimationFrame(() => textareaRef.current?.focus());
+    }, []);
+    const saveEdit = useCallback(async (message: GroupChatMessage, text: string) => {
+        try {
+            await groupsApi.chat({ action: "edit", groupId, messageId: message.id, text: text.slice(0, GROUP_LIMITS.messageMax) });
+            if (!live) onServerChange?.();
+            setEditingId("");
+            window.requestAnimationFrame(() => textareaRef.current?.focus());
+        } catch (error) {
+            notify(errorText(error), "error");
+        }
+    }, [errorText, groupId, live, notify, onServerChange]);
+
+    const jumpToMessage = useCallback((messageId: string) => {
+        const element = document.getElementById(`msg-${messageId}`);
+        if (!element) {
+            notify(tx(C.notLoaded), "info");
+            return;
+        }
+        element.scrollIntoView({ block: "center", behavior: "smooth" });
+        element.classList.add(...FLASH_CLASSES);
+        window.setTimeout(() => element.classList.remove(...FLASH_CLASSES), 1600);
+    }, [notify, tx]);
 
     const copyMessage = useCallback(async (message: GroupChatMessage) => {
         notify(await copyText(message.text) ? tx(C.copied) : errorText("clipboard_failed"), "info");
@@ -457,13 +495,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
 
     const activate = useCallback((messageId: string) => setActiveMessage((current) => (current === messageId ? "" : messageId)), []);
     const togglePin = useCallback((message: GroupChatMessage) => void pinToggle(message.id), [pinToggle]);
-    const toggleVoice = useCallback((message: GroupChatMessage) => {
-        if (!live) {
-            notify(errorText("offline"), "error");
-            return;
-        }
-        void toggleVoicePlayback(message);
-    }, [errorText, live, notify, toggleVoicePlayback]);
+    const toggleVoice = useCallback((message: GroupChatMessage) => void toggleVoicePlayback(message), [toggleVoicePlayback]);
     const onReact = useCallback((message: GroupChatMessage, reaction: GroupReactionKey) => void react(message, reaction), [react]);
     const onDelete = useCallback((message: GroupChatMessage) => void removeMessage(message), [removeMessage]);
     const onCopy = useCallback((message: GroupChatMessage) => void copyMessage(message), [copyMessage]);
@@ -475,11 +507,16 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         onLoadOlder();
     };
 
-    const typingText = typingNames.length === 0 ? "" : typingNames.length === 1
-        ? tx(C.typingOne, { name: typingNames[0] })
-        : typingNames.length === 2 ? tx(C.typingTwo, { first: typingNames[0], second: typingNames[1] }) : tx(C.typingMany, { count: typingNames.length });
+    // Discord's typing line: bouncing dots, names in bold.
+    const typingLine: ReactNode = typingNames.length === 0 ? null : typingNames.length === 1
+        ? <><b className="font-bold text-zinc-700 dark:text-zinc-200">{typingNames[0]}</b> {tx(C.typingOne)}</>
+        : typingNames.length === 2
+            ? <><b className="font-bold text-zinc-700 dark:text-zinc-200">{typingNames[0]}</b> {tx(C.typingAnd)} <b className="font-bold text-zinc-700 dark:text-zinc-200">{typingNames[1]}</b> {tx(C.typingTwo)}</>
+            : tx(C.typingMany);
 
     const usernamesForMentions = usernames;
+    const byId = new Map(messages.map((message) => [message.id, message]));
+    const authorName = (message: GroupChatMessage) => (message.fromEmail === SYSTEM_SENDER ? "Hanogt" : members.find((member) => member.email === message.fromEmail)?.username ?? message.author);
     const rows: ReactNode[] = [];
     let previous: GroupChatMessage | null = null;
     for (const message of visibleMessages) {
@@ -499,8 +536,9 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                 </div>,
             );
         }
-        const compact = Boolean(previous && previous.fromEmail === message.fromEmail && previous.type !== "system" && message.type !== "system"
+        const compact = Boolean(previous && previous.fromEmail === message.fromEmail && previous.type !== "system" && message.type !== "system" && !message.replyTo
             && message.createdAt - previous.createdAt < GROUPING_WINDOW_MS && dayKey(previous.createdAt) === dayKey(message.createdAt) && message.id !== dividerId);
+        const replied = message.replyTo ? byId.get(message.replyTo.id) : undefined;
         rows.push(
             <MessageItem
                 key={message.id}
@@ -518,9 +556,16 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                 onReact={onReact}
                 onTogglePin={togglePin}
                 onDelete={onDelete}
-                onQuote={quote}
+                onReply={reply}
                 onCopy={onCopy}
                 onTopic={onTopic}
+                editing={editingId === message.id}
+                onStartEdit={startEdit}
+                onCancelEdit={cancelEdit}
+                onSaveEdit={saveEdit}
+                onJump={jumpToMessage}
+                replyAuthor={replied ? authorName(replied) : ""}
+                onOpenUser={onOpenUser}
             />,
         );
         previous = message;
@@ -583,7 +628,9 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             </div>
 
             <div className="border-t border-zinc-200 p-3 dark:border-white/10">
-                <p className="mb-1 h-4 truncate px-1 text-[11px] font-medium italic text-zinc-500 dark:text-zinc-400" aria-live="polite">{typingText}</p>
+                <p className="mb-1 h-4 truncate px-1 text-[12px] font-medium text-zinc-500 dark:text-zinc-400" aria-live="polite">
+                    {typingLine && <><span className="me-1 inline-flex gap-0.5 align-middle" aria-hidden>{[0, 150, 300].map((delay) => <span key={delay} className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: `${delay}ms` }} />)}</span>{typingLine}</>}
+                </p>
                 {recorder.recording ? (
                     <div className="flex items-center gap-2 rounded-2xl bg-red-500/10 px-3 py-2">
                         <span className="relative flex h-3 w-3"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60" /><span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" /></span>
@@ -613,6 +660,12 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                                 <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-600 px-2.5 py-0.5 text-xs font-semibold text-white"><Hash className="h-3 w-3" aria-hidden />{topic}<button type="button" onClick={() => setTopic("")} className="ms-0.5 rounded-full hover:bg-white/20" aria-label={tx(C.allTopics)}><X className="h-3 w-3" aria-hidden /></button></span>
                             </div>
                         )}
+                        {replyTo && (
+                            <div className="mb-2 flex items-center gap-2 rounded-xl bg-zinc-100 px-3 py-1.5 text-[13px] text-zinc-600 dark:bg-zinc-950 dark:text-zinc-300">
+                                <span className="min-w-0 flex-1 truncate">{tx(C.replying, { name: authorName(replyTo) })} <span className="text-zinc-400">— {replyTo.type === "voice" ? "🎤" : replyTo.text.slice(0, 80)}</span></span>
+                                <button type="button" onClick={() => setReplyTo(null)} className="rounded-full p-0.5 text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label={tx(C.cancelReply)}><X className="h-4 w-4" aria-hidden /></button>
+                            </div>
+                        )}
                         <div className="flex items-end gap-2">
                             <textarea
                                 ref={textareaRef}
@@ -636,7 +689,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                                     {sending ? <Spinner className="h-5 w-5" /> : <Send className="h-5 w-5 rtl:-scale-x-100" aria-hidden />}
                                 </button>
                             ) : (
-                                <button type="button" onClick={startRecording} aria-disabled={!live || micOff || undefined} className={cx("rounded-2xl bg-zinc-100 p-3 text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white", (!live || micOff) && "opacity-50")} aria-label={micOff ? tx(C.micOff) : tx(C.record)} title={micOff ? tx(C.micOff) : tx(C.record)}>
+                                <button type="button" onClick={startRecording} aria-disabled={micOff || undefined} className={cx("rounded-2xl bg-zinc-100 p-3 text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white", micOff && "opacity-50")} aria-label={micOff ? tx(C.micOff) : tx(C.record)} title={micOff ? tx(C.micOff) : tx(C.record)}>
                                     {micOff ? <MicOff className="h-5 w-5" aria-hidden /> : <Mic className="h-5 w-5" aria-hidden />}
                                 </button>
                             )}

@@ -14,7 +14,6 @@ import {
     Timestamp,
     addDoc,
     collection,
-    deleteField,
     doc,
     documentId,
     limit,
@@ -29,12 +28,11 @@ import {
     type DocumentData,
     type FirestoreError,
 } from "firebase/firestore";
-import { deleteObject, getBlob, ref as storageRef, uploadBytes } from "firebase/storage";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { mentionsUser, type GroupInvitationItem, type GroupListItem, type GroupListResponse } from "@/lib/groups";
 import { effectiveStatus, lastSeenTime } from "@/lib/presence";
-import { SocialRequestError, socialApi } from "./api";
+import { SocialRequestError, socialApi, type VoiceTarget } from "./api";
 import {
     SOCIAL_LIMITS,
     SOCIAL_POLL,
@@ -42,7 +40,6 @@ import {
     dmChatId,
     dmMessageFromData,
     groupUnreadState,
-    isDmVoicePath,
     mergeMessages,
     previewText,
     timeOf,
@@ -493,6 +490,8 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
     const [optimistic, setOptimistic] = useState<DmMessage[]>([]);
     const [server, setServer] = useState<{ messages: DmMessage[]; hasMore: boolean; loaded: boolean; typing: boolean; canSend: boolean | null; exists: boolean }>({ messages: [], hasMore: false, loaded: false, typing: false, canSend: null, exists: false });
     const [typingSeen, setTypingSeen] = useState(0);
+    /** Deleted here, until the listener reports it (deleting goes through the server). */
+    const [removed, setRemoved] = useState<Record<string, true>>({});
     const onErrorRef = useLatest(onError);
     const visible = usePageVisible();
 
@@ -570,7 +569,11 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
     /* ---- combined view ---- */
 
     const baseMessages = live ? liveMessages : server.messages;
-    const messages = useMemo(() => (optimistic.length ? mergeMessages(baseMessages, optimistic) : baseMessages), [baseMessages, optimistic]);
+    const messages = useMemo(() => {
+        const merged = optimistic.length ? mergeMessages(baseMessages, optimistic) : baseMessages;
+        if (!Object.keys(removed).length) return merged;
+        return merged.map((message) => (removed[message.id] && !message.deleted ? { ...message, deleted: true, text: "", voicePath: null, replyTo: null } : message));
+    }, [baseMessages, optimistic, removed]);
     const loaded = live ? (!chatExists || liveLoaded) : server.loaded;
     const hasMore = live ? liveHasMore : server.hasMore;
     const clock = useExpiryClock([typingSeen], TYPING_SHOW_MS);
@@ -674,22 +677,19 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
         await updateDoc(doc(db, "chats", chatId), { lastMessage: previewText(body.text), lastMessageAt: serverTimestamp(), lastSender: me, typingUser: null, updatedAt: serverTimestamp() }).catch(() => undefined);
     }, [addOptimistic, chatId, ensureChat, live, me, partner, stopTyping]);
 
+    /**
+     * Voice messages always go through POST /api/social/voice (the server
+     * stores the recording and writes the message), with or without the
+     * Firebase bridge and whatever the Storage rules allow.
+     */
     const sendVoice = useCallback(async (blob: Blob, mimeType: string, seconds: number, label: string) => {
-        if (!live) throw new SocialRequestError("offline_voice");
-        if (blob.size > 3 * 1024 * 1024) throw new SocialRequestError("voice_too_large");
-        await ensureChat();
-        const extension = mimeType.includes("mp4") ? "m4a" : "webm";
-        const path = `voice-messages/${chatId}/${crypto.randomUUID()}.${extension}`;
-        try {
-            await uploadBytes(storageRef(storage, path), blob, { contentType: mimeType.split(";")[0] || "audio/webm", customMetadata: { sender: me, recipient: partner } });
-            const created = await addDoc(collection(db, "chats", chatId, "messages"), { fromEmail: me, text: label, type: "voice", voicePath: path, voiceDuration: seconds, createdAt: serverTimestamp(), read: false });
-            addOptimistic(created.id, { text: label, type: "voice", voicePath: path, voiceDuration: seconds });
-            await updateDoc(doc(db, "chats", chatId), { lastMessage: previewText(label), lastMessageAt: serverTimestamp(), lastSender: me, typingUser: null, updatedAt: serverTimestamp() }).catch(() => undefined);
-        } catch {
-            await deleteObject(storageRef(storage, path)).catch(() => undefined);
-            throw new SocialRequestError("voice_failed");
-        }
-    }, [addOptimistic, chatId, ensureChat, live, me, partner]);
+        stopTyping();
+        const message = await socialApi.sendDmVoice(partner, blob, { seconds, label, type: mimeType });
+        if (!message) return;
+        // Shown at once; the listener (live) or the next poll confirms it.
+        if (live) setOptimistic((current) => [...current.filter((entry) => entry.id !== message.id), message]);
+        else setServer((state) => ({ ...state, exists: true, messages: mergeMessages(state.messages, [message]) }));
+    }, [live, partner, stopTyping]);
 
     const isNewest = useCallback((message: DmMessage) => {
         const newest = messages[messages.length - 1];
@@ -706,16 +706,12 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
         if (isNewest(message)) await updateDoc(doc(db, "chats", chatId), { lastMessage: previewText(nextText) }).catch(() => undefined);
     }, [chatId, isNewest, live, partner]);
 
+    // Deleting goes through the server, which also removes a voice recording from Storage.
     const deleteMessage = useCallback(async (message: DmMessage) => {
-        if (!live) {
-            await socialApi.dmAction({ action: "delete", with: partner, messageId: message.id });
-            setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, deleted: true, text: "", voicePath: null } : entry)) }));
-            return;
-        }
-        if (message.voicePath && isDmVoicePath(message.voicePath, chatId)) await deleteObject(storageRef(storage, message.voicePath)).catch(() => undefined);
-        await updateDoc(doc(db, "chats", chatId, "messages", message.id), { deleted: true, text: "", voicePath: deleteField(), voiceDuration: deleteField() });
-        if (isNewest(message)) await updateDoc(doc(db, "chats", chatId), { lastMessage: "" }).catch(() => undefined);
-    }, [chatId, isNewest, live, partner]);
+        await socialApi.dmAction({ action: "delete", with: partner, messageId: message.id });
+        setRemoved((current) => ({ ...current, [message.id]: true }));
+        if (!live) setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, deleted: true, text: "", voicePath: null } : entry)) }));
+    }, [live, partner]);
 
     return {
         chatId,
@@ -736,52 +732,68 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
     };
 }
 
-/** Plays one voice message at a time from the conversation's Storage folder (live mode only). */
-export function useDmVoicePlayer(chatId: string, onError: (error: unknown) => void) {
+/**
+ * Plays one voice message at a time. The recording comes from GET
+ * /api/social/voice (checked like the conversation itself), so it plays with
+ * or without the Firebase bridge.
+ */
+export function useVoiceMessagePlayer(target: VoiceTarget, onError: (error: unknown) => void) {
     const [playingId, setPlayingId] = useState("");
     const [loadingId, setLoadingId] = useState("");
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const urlRef = useRef("");
+    const requestRef = useRef(0);
     const onErrorRef = useLatest(onError);
+    // Plain strings, so a new target object each render doesn't restart anything.
+    const partner = "with" in target ? target.with : "";
+    const group = "group" in target ? target.group : "";
 
-    const release = () => {
+    const release = useCallback(() => {
         audioRef.current?.pause();
         audioRef.current = null;
         if (urlRef.current) URL.revokeObjectURL(urlRef.current);
         urlRef.current = "";
-    };
-
-    const stop = useCallback(() => {
-        release();
-        setPlayingId("");
     }, []);
 
-    const toggle = useCallback(async (message: DmMessage) => {
+    const stop = useCallback(() => {
+        requestRef.current += 1;
+        release();
+        setPlayingId("");
+        setLoadingId("");
+    }, [release]);
+
+    const toggle = useCallback(async (message: { id: string; voicePath: string | null }) => {
         if (playingId === message.id) {
             stop();
             return;
         }
-        if (!message.voicePath || !isDmVoicePath(message.voicePath, chatId)) {
+        if (!message.voicePath) {
             onErrorRef.current(new SocialRequestError("voice_unavailable"));
             return;
         }
         release();
+        setPlayingId("");
+        const request = ++requestRef.current;
         setLoadingId(message.id);
         try {
-            const blob = await getBlob(storageRef(storage, message.voicePath), 3 * 1024 * 1024);
+            const blob = await socialApi.voiceBlob(group ? { group } : { with: partner }, message.id);
+            // Another message was started (or the player stopped) meanwhile.
+            if (request !== requestRef.current) return;
             urlRef.current = URL.createObjectURL(blob);
             const audio = new Audio(urlRef.current);
             audioRef.current = audio;
-            audio.onended = () => setPlayingId("");
+            audio.onended = () => setPlayingId((current) => (current === message.id ? "" : current));
             setPlayingId(message.id);
             await audio.play();
-        } catch {
+        } catch (error) {
+            if (request !== requestRef.current) return;
+            release();
             setPlayingId("");
-            onErrorRef.current(new SocialRequestError("voice_unavailable"));
+            onErrorRef.current(error instanceof SocialRequestError ? error : new SocialRequestError("voice_unavailable"));
         } finally {
-            setLoadingId("");
+            if (request === requestRef.current) setLoadingId("");
         }
-    }, [chatId, onErrorRef, playingId, stop]);
+    }, [group, onErrorRef, partner, playingId, release, stop]);
 
     useEffect(() => () => {
         audioRef.current?.pause();

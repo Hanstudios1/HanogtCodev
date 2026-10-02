@@ -151,10 +151,27 @@ after every change, either
   *Firebase Rules Admin* role), or
 - from a computer: `firebase deploy --only firestore:rules,storage`.
 
-`storage.rules` reads chat/group membership from Firestore. If voice-message
-uploads fail with permission errors after an API deployment, accept the
-cross-service permission prompt in Firebase Console → Storage → Rules (or run
-`firebase deploy --only storage` once).
+Voice messages no longer depend on `storage.rules`: browsers upload and play
+them through `/api/social/voice`, which checks the friendship or group
+membership and uses the service account (the cross-service Storage → Firestore
+permission that `storage.rules` needs only matters for tabs still running
+older code).
+
+## Hanogt Social: voice calls and voice messages
+
+| Variable | Meaning |
+| --- | --- |
+| `TURN_SERVER_URL` | TURN relay URL(s), comma separated (e.g. `turn:turn.example.com:3478,turns:turn.example.com:5349?transport=tcp`). |
+| `TURN_SHARED_SECRET` | **Secret.** Shared secret of the TURN REST API (coturn `use-auth-secret` + `static-auth-secret`). `/api/calls/ice` hands out credentials valid for an hour; the username is an opaque hash, never the e-mail address. |
+| `FIREBASE_STORAGE_BUCKET` | Required for voice messages (see above; falls back to `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`). |
+
+Call signalling goes through `/api/calls` (the server writes `calls/{id}` after
+checking the friendship), so calls work even when the browser's Firebase
+bridge fails; with the bridge, browsers only add realtime listeners (ringing
+and call updates), otherwise they poll. Audio is peer to peer. Without TURN
+only Google's public STUN servers are used: calls connect on most home
+networks but fail between symmetric NATs (many mobile carriers, company and
+school networks), and the call bar says so.
 
 ## Hanogt AI
 

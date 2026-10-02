@@ -25,6 +25,7 @@ import {
 } from "@/lib/social/local-state";
 import {
     dmChatId,
+    dmHref,
     dmUnreadTotal,
     groupHref,
     homeBadgeCount,
@@ -239,8 +240,41 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
     }, [asideCollapsed, pathname, wide]);
     const closeAside = useCallback(() => setAsidePath(null), []);
 
+    // Discord's navigation keys: Alt+↑/↓ moves between conversations (or a group's channels),
+    // Ctrl+Alt+↑/↓ between Home and the groups.
+    const navigationRef = useRef({ conversations: [] as string[], servers: [] as string[], current: "", server: "" });
+    useEffect(() => {
+        const groupChannels = groupNav?.group && route.kind === "group" && groupNav.groupId === route.groupId
+            ? [groupHref(route.groupId), ...groupNav.group.topics.filter((topic) => topic !== "genel" && topic !== "general").map((topic) => groupHref(route.groupId, { topic }))]
+            : [];
+        navigationRef.current = {
+            conversations: route.kind === "group" ? groupChannels : ["/social", ...visibleDmList.map((dm) => dmHref(dm.partner.email))],
+            servers: ["/social", ...groupsList.groups.map((group) => groupHref(group.id))],
+            current: route.kind === "dm" ? dmHref(route.email) : route.kind === "group" ? groupHref(route.groupId) : "/social",
+            server: route.kind === "group" ? groupHref(route.groupId) : "/social",
+        };
+    });
+
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
+            if (event.altKey && !event.shiftKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+                if (event.target instanceof Element && event.target.closest(".monaco-editor")) return;
+                const navigation = navigationRef.current;
+                const servers = event.ctrlKey || event.metaKey;
+                const list = servers ? navigation.servers : navigation.conversations;
+                if (list.length < 2) return;
+                let current = servers ? navigation.server : navigation.current;
+                // Inside a group the open #topic is part of the address.
+                if (!servers && route.kind === "group") {
+                    const topic = new URLSearchParams(window.location.search).get("topic");
+                    if (topic) current = groupHref(route.groupId, { topic });
+                }
+                event.preventDefault();
+                const index = list.indexOf(current);
+                const step = event.key === "ArrowDown" ? 1 : -1;
+                router.push(list[index < 0 ? 0 : (index + step + list.length) % list.length]);
+                return;
+            }
             if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "k") {
                 // Ctrl+K starts Monaco's chords (e.g. Ctrl+K Ctrl+C) inside the code editor.
                 if (event.target instanceof Element && event.target.closest(".monaco-editor")) return;
@@ -256,7 +290,7 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-    }, [asidePath, navPath, openSwitcher]);
+    }, [asidePath, navPath, openSwitcher, route, router]);
 
     // "(3) Hanogt Social" like Discord: unread direct messages, requests and mentions.
     useEffect(() => {

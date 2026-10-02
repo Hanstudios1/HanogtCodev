@@ -6,6 +6,7 @@
  * data hooks and components (client) and the plain-Node tests, so it must stay
  * free of React, Firebase and Node imports (type-only imports are fine).
  */
+import { mentionsUser, tokenizeMessage } from "@/lib/groups";
 import type { PresenceStatus } from "@/lib/presence";
 
 /* -------------------------------------------------------------------------- */
@@ -367,6 +368,42 @@ export function groupUnreadState(recent: readonly RecentGroupMessage[], lastRead
 export function railBadge(state: GroupUnread | undefined, level: GroupNotifyLevel = "all") {
     if (!state || level === "none") return { dot: false, count: 0 };
     return { dot: level === "all" && state.unread > 0, count: state.mentions };
+}
+
+export type ChannelMessage = { createdAt: number; fromEmail: string; type: string; text: string; pending?: boolean };
+export type ChannelUnread = { unread: boolean; mentions: number };
+
+/**
+ * Unread state of a group's channels for the channel list (Discord's bold
+ * name with a pill, and a red mention count). "" is the main channel, which
+ * shows every message; the others are #topics. A topic counts as read up to
+ * the later of its own read time and the main channel's; `lastReadAt` (when
+ * the group was last read) stands in for channels not opened yet.
+ */
+export function channelUnreadState(
+    messages: readonly ChannelMessage[],
+    options: { me: string; myName: string; usernames: readonly string[]; lastReadAt: number; readAt: Readonly<Record<string, number>> },
+): Record<string, ChannelUnread> {
+    const own = options.me.toLowerCase();
+    const mainRead = options.readAt[""] ?? options.lastReadAt;
+    const result: Record<string, ChannelUnread> = {};
+    const bump = (channel: string, mention: boolean) => {
+        const entry = result[channel] ?? { unread: false, mentions: 0 };
+        entry.unread = true;
+        if (mention) entry.mentions += 1;
+        result[channel] = entry;
+    };
+    for (const message of messages) {
+        if (message.type === "system" || message.pending || message.fromEmail.toLowerCase() === own) continue;
+        const mention = message.type === "text" && Boolean(options.myName) && mentionsUser(message.text, options.myName, options.usernames);
+        if (message.createdAt > mainRead) bump("", mention);
+        if (!message.text.includes("#")) continue;
+        const topics = new Set(tokenizeMessage(message.text, []).flatMap((segment) => (segment.kind === "topic" ? [segment.topic] : [])));
+        for (const topic of topics) {
+            if (message.createdAt > Math.max(options.readAt[topic] ?? options.lastReadAt, mainRead)) bump(topic, mention);
+        }
+    }
+    return result;
 }
 
 export type MemberLike = { email: string; username: string; role: "owner" | "admin" | "member"; status: PresenceStatus };

@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock3, Copy as CopyIcon, CornerUpLeft, LoaderCircle, Mic, Pause, Pin, PinOff, Smile, Sparkles, Trash2 } from "lucide-react";
-import { memo, useMemo, useState, type ReactNode } from "react";
+import { Clock3, Copy as CopyIcon, CornerUpLeft, LoaderCircle, Mic, Pause, Pencil, Pin, PinOff, Smile, Sparkles, Trash2 } from "lucide-react";
+import { memo, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
 import {
     GROUP_REACTIONS,
@@ -12,13 +12,21 @@ import {
     tokenizeMessage,
     type GroupReactionKey,
 } from "@/lib/groups";
-import { GroupTile, RoleBadge, UserAvatar, clockTime, cx, fullDateTime } from "../ui";
+import { GroupTile, RoleBadge, Spinner, UserAvatar, clockTime, cx, fullDateTime } from "../ui";
 import { useWorkspace } from "./context";
 import type { GroupChatMessage } from "./model";
 
 const C = {
     react: { TR: "Tepki ver", EN: "React" },
-    quote: { TR: "Alıntıla", EN: "Quote" },
+    reply: { TR: "Yanıtla", EN: "Reply" },
+    edit: { TR: "Düzenle", EN: "Edit" },
+    edited: { TR: "(düzenlendi)", EN: "(edited)" },
+    editLabel: { TR: "Mesajı düzenle", EN: "Edit message" },
+    editHint: { TR: "Kaydetmek için Enter, vazgeçmek için Esc", EN: "Enter to save, Esc to cancel" },
+    save: { TR: "Kaydet", EN: "Save" },
+    cancel: { TR: "Vazgeç", EN: "Cancel" },
+    original: { TR: "Yanıtlanan mesaja git", EN: "Go to the replied message" },
+    openProfile: { TR: "{name} profil kartını aç", EN: "Open {name}'s profile card" },
     copy: { TR: "Metni kopyala", EN: "Copy text" },
     pin: { TR: "Sabitle", EN: "Pin" },
     unpin: { TR: "Sabitlemeyi kaldır", EN: "Unpin" },
@@ -104,13 +112,26 @@ type MessageItemProps = {
     onReact: (message: GroupChatMessage, reaction: GroupReactionKey) => void;
     onTogglePin: (message: GroupChatMessage) => void;
     onDelete: (message: GroupChatMessage) => void;
-    onQuote: (message: GroupChatMessage) => void;
+    onReply: (message: GroupChatMessage) => void;
     onCopy: (message: GroupChatMessage) => void;
     onTopic: (topic: string) => void;
+    /** Inline editing of an own text message. */
+    editing: boolean;
+    onStartEdit: (message: GroupChatMessage) => void;
+    onCancelEdit: () => void;
+    onSaveEdit: (message: GroupChatMessage, text: string) => Promise<void>;
+    /** Scrolls to the message a reply points to. */
+    onJump: (messageId: string) => void;
+    /** Who wrote the message this one replies to ("" when it isn't loaded). */
+    replyAuthor: string;
+    /** Clicking an avatar or a name opens the person's profile card. */
+    onOpenUser?: (email: string, trigger: HTMLElement) => void;
 };
 
+const ROLE_NAME = { owner: "text-amber-600 dark:text-amber-400", admin: "text-indigo-600 dark:text-indigo-300", member: "text-zinc-900 dark:text-white" } as const;
+
 function MessageItemView(props: MessageItemProps) {
-    const { message, compact, pinned, mentionsMe, needle, active, playing, loadingVoice, reactionOverrides, onActivate, onToggleVoice, onReact, onTogglePin, onDelete, onQuote, onCopy, onTopic } = props;
+    const { message, compact, pinned, mentionsMe, needle, active, playing, loadingVoice, reactionOverrides, onActivate, onToggleVoice, onReact, onTogglePin, onDelete, onReply, onCopy, onTopic, editing, onOpenUser } = props;
     const { tx, locale } = useI18n();
     const { me, isManager, memberByKey, memberByEmail, group } = useWorkspace();
     const [picker, setPicker] = useState(false);
@@ -118,7 +139,10 @@ function MessageItemView(props: MessageItemProps) {
     const mine = message.fromEmail === me.email;
     const author = memberByEmail.get(message.fromEmail);
     const canDelete = mine || isManager;
+    const canEdit = mine && message.type === "text" && !message.pending;
     const closePicker = () => setPicker(false);
+    const reply = message.replyTo;
+    const replyName = props.replyAuthor;
 
     const reactions = GROUP_REACTIONS.map((reaction) => {
         const keys = (message.reactions[reaction.key] ?? []).filter((key) => memberByKey.has(key));
@@ -138,7 +162,8 @@ function MessageItemView(props: MessageItemProps) {
             onBlur={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setPicker(false); }}
         >
             <ToolButton label={tx(C.react)} onClick={() => setPicker((value) => !value)}><Smile className="h-4 w-4" aria-hidden /></ToolButton>
-            {!system && <ToolButton label={tx(C.quote)} onClick={() => onQuote(message)}><CornerUpLeft className="h-4 w-4" aria-hidden /></ToolButton>}
+            {!system && <ToolButton label={tx(C.reply)} onClick={() => onReply(message)}><CornerUpLeft className="h-4 w-4" aria-hidden /></ToolButton>}
+            {canEdit && <ToolButton label={tx(C.edit)} onClick={() => props.onStartEdit(message)}><Pencil className="h-4 w-4" aria-hidden /></ToolButton>}
             {message.type !== "voice" && <ToolButton label={tx(C.copy)} onClick={() => onCopy(message)}><CopyIcon className="h-4 w-4" aria-hidden /></ToolButton>}
             {isManager && <ToolButton label={tx(pinned ? C.unpin : C.pin)} onClick={() => onTogglePin(message)}>{pinned ? <PinOff className="h-4 w-4" aria-hidden /> : <Pin className="h-4 w-4" aria-hidden />}</ToolButton>}
             {canDelete && (!system || isManager) && <ToolButton danger label={tx(C.delete)} onClick={() => onDelete(message)}><Trash2 className="h-4 w-4" aria-hidden /></ToolButton>}
@@ -198,53 +223,147 @@ function MessageItemView(props: MessageItemProps) {
         );
     }
 
+    const openUser = (event: { currentTarget: HTMLElement }) => onOpenUser?.(message.fromEmail, event.currentTarget);
+    const name = author?.username ?? message.author;
+
     return (
         <div
             id={`msg-${message.id}`}
             className={cx(
-                "group relative flex gap-3 px-3 scroll-mt-24 transition-colors",
+                "group relative px-3 scroll-mt-24 transition-colors",
                 compact ? "py-0.5" : "pt-2.5 pb-0.5",
-                mentionsMe ? "border-s-2 border-amber-500 bg-amber-500/[0.07]" : mine ? "bg-indigo-500/[0.035]" : "",
-                active ? "bg-zinc-100/80 dark:bg-white/[0.04]" : "hover:bg-zinc-50 dark:hover:bg-white/[0.025]",
+                mentionsMe ? "border-s-2 border-amber-500 bg-amber-500/[0.07]" : "",
+                active || editing ? "bg-zinc-100/80 dark:bg-white/[0.04]" : "hover:bg-zinc-50 dark:hover:bg-white/[0.025]",
                 message.pending && "opacity-70",
             )}
             onClick={(event) => {
-                if (!(event.target instanceof Element) || !event.target.closest("a,button")) onActivate(message.id);
+                if (!(event.target instanceof Element) || !event.target.closest("a,button,textarea")) onActivate(message.id);
             }}
             onMouseLeave={closePicker}
         >
-            {toolbar}
-            <div className="w-9 shrink-0">
-                {!compact && <UserAvatar name={message.author} src={author?.avatarUrl ?? message.authorAvatar} size="sm" className="mt-0.5" />}
+            {!editing && toolbar}
+            {reply && (
+                <button type="button" onClick={() => props.onJump(reply.id)} className="relative mb-0.5 ms-12 flex max-w-[calc(100%-3rem)] items-center gap-1.5 text-start text-[13px] text-zinc-500 before:absolute before:-start-7 before:top-1/2 before:h-3 before:w-6 before:rounded-ss-md before:border-s-2 before:border-t-2 before:border-zinc-300 hover:text-zinc-800 dark:text-zinc-400 dark:before:border-zinc-600 dark:hover:text-zinc-200" aria-label={tx(C.original)}>
+                    {replyName && <span className="shrink-0 font-semibold">@{replyName}</span>}
+                    <span className="truncate">{reply.text}</span>
+                </button>
+            )}
+            <div className="flex gap-3">
+                <div className="w-9 shrink-0">
+                    {!compact ? (
+                        onOpenUser ? (
+                            <button type="button" onClick={openUser} className="mt-0.5 rounded-full transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" aria-label={tx(C.openProfile, { name })}>
+                                <UserAvatar name={message.author} src={author?.avatarUrl ?? message.authorAvatar} size="sm" />
+                            </button>
+                        ) : <UserAvatar name={message.author} src={author?.avatarUrl ?? message.authorAvatar} size="sm" className="mt-0.5" />
+                    ) : (
+                        <time dateTime={new Date(message.createdAt).toISOString()} title={fullDateTime(message.createdAt, locale)} className="hidden pt-0.5 text-end text-[10px] leading-5 text-zinc-400 group-hover:block">{clockTime(message.createdAt, locale)}</time>
+                    )}
+                </div>
+                <div className="min-w-0 flex-1">
+                    {!compact && (
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                            {onOpenUser
+                                ? <button type="button" onClick={openUser} className={cx("truncate text-sm font-bold hover:underline focus-visible:underline focus-visible:outline-none", ROLE_NAME[author?.role ?? "member"])}>{name}</button>
+                                : <span className={cx("truncate text-sm font-bold", ROLE_NAME[author?.role ?? "member"])}>{name}</span>}
+                            {author && <RoleBadge role={author.role} compact />}
+                            <time className="text-[11px] text-zinc-400" dateTime={new Date(message.createdAt).toISOString()} title={fullDateTime(message.createdAt, locale)}>{clockTime(message.createdAt, locale)}</time>
+                            {pinned && <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Pin className="h-3 w-3" aria-hidden />{tx(C.pinned)}</span>}
+                            {mentionsMe && <span className="sr-only">{tx(C.mentionedYou)}</span>}
+                            {message.pending && <Clock3 className="h-3 w-3 text-zinc-400" aria-label={tx(C.sending)} />}
+                        </div>
+                    )}
+                    {editing ? (
+                        <EditBox message={message} onCancel={props.onCancelEdit} onSave={props.onSaveEdit} />
+                    ) : message.type === "voice" ? (
+                        <button type="button" onClick={() => onToggleVoice(message)} className={cx("mt-1 inline-flex items-center gap-2.5 rounded-2xl border px-3 py-2 text-sm transition", playing ? "border-indigo-500/50 bg-indigo-500/10" : "border-zinc-200 bg-white hover:border-indigo-500/40 dark:border-white/10 dark:bg-zinc-900")} aria-label={playing ? tx(C.stop) : tx(C.play)}>
+                            <span className={cx("flex h-8 w-8 items-center justify-center rounded-full text-white", playing ? "bg-indigo-600" : "bg-zinc-900 dark:bg-zinc-700")}>
+                                {loadingVoice ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : playing ? <Pause className="h-4 w-4" aria-hidden /> : <Mic className="h-4 w-4" aria-hidden />}
+                            </span>
+                            <span className="flex h-6 items-end gap-0.5" aria-hidden>
+                                {[0.5, 0.9, 0.6, 1, 0.7, 0.4, 0.8, 0.55, 0.95, 0.5].map((height, index) => (
+                                    <span key={index} className={cx("w-1 rounded-full bg-indigo-500/70", playing && "animate-pulse")} style={{ height: `${Math.round(height * 100)}%`, animationDelay: `${index * 80}ms` }} />
+                                ))}
+                            </span>
+                            <span className="tabular-nums text-xs font-semibold text-zinc-500 dark:text-zinc-400">{tx(C.voice, { seconds: message.voiceDuration || 0 })}</span>
+                        </button>
+                    ) : (
+                        <>
+                            <RichText text={message.text} needle={needle} onTopic={onTopic} className="text-zinc-800 dark:text-zinc-100" />
+                            {message.edited && <span className="text-[11px] text-zinc-400">{tx(C.edited)}</span>}
+                        </>
+                    )}
+                    {reactionRow}
+                </div>
             </div>
-            <div className="min-w-0 flex-1">
-                {!compact && (
-                    <div className="flex flex-wrap items-baseline gap-x-2">
-                        <span className="truncate text-sm font-bold">{author?.username ?? message.author}</span>
-                        {author && <RoleBadge role={author.role} compact />}
-                        <time className="text-[11px] text-zinc-400" dateTime={new Date(message.createdAt).toISOString()} title={fullDateTime(message.createdAt, locale)}>{clockTime(message.createdAt, locale)}</time>
-                        {pinned && <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Pin className="h-3 w-3" aria-hidden />{tx(C.pinned)}</span>}
-                        {mentionsMe && <span className="sr-only">{tx(C.mentionedYou)}</span>}
-                        {message.pending && <Clock3 className="h-3 w-3 text-zinc-400" aria-label={tx(C.sending)} />}
-                    </div>
-                )}
-                {message.type === "voice" ? (
-                    <button type="button" onClick={() => onToggleVoice(message)} className={cx("mt-1 inline-flex items-center gap-2.5 rounded-2xl border px-3 py-2 text-sm transition", playing ? "border-indigo-500/50 bg-indigo-500/10" : "border-zinc-200 bg-white hover:border-indigo-500/40 dark:border-white/10 dark:bg-zinc-900")} aria-label={playing ? tx(C.stop) : tx(C.play)}>
-                        <span className={cx("flex h-8 w-8 items-center justify-center rounded-full text-white", playing ? "bg-indigo-600" : "bg-zinc-900 dark:bg-zinc-700")}>
-                            {loadingVoice ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : playing ? <Pause className="h-4 w-4" aria-hidden /> : <Mic className="h-4 w-4" aria-hidden />}
-                        </span>
-                        <span className="flex h-6 items-end gap-0.5" aria-hidden>
-                            {[0.5, 0.9, 0.6, 1, 0.7, 0.4, 0.8, 0.55, 0.95, 0.5].map((height, index) => (
-                                <span key={index} className={cx("w-1 rounded-full bg-indigo-500/70", playing && "animate-pulse")} style={{ height: `${Math.round(height * 100)}%`, animationDelay: `${index * 80}ms` }} />
-                            ))}
-                        </span>
-                        <span className="tabular-nums text-xs font-semibold text-zinc-500 dark:text-zinc-400">{tx(C.voice, { seconds: message.voiceDuration || 0 })}</span>
-                    </button>
-                ) : (
-                    <RichText text={message.text} needle={needle} onTopic={onTopic} className="text-zinc-800 dark:text-zinc-100" />
-                )}
-                {reactionRow}
-            </div>
+        </div>
+    );
+}
+
+/** Inline editor of an own message (Enter saves, Escape cancels; like Discord). */
+function EditBox({ message, onCancel, onSave }: { message: GroupChatMessage; onCancel: () => void; onSave: (message: GroupChatMessage, text: string) => Promise<void> }) {
+    const { tx } = useI18n();
+    const [value, setValue] = useState(message.text);
+    const [busy, setBusy] = useState(false);
+    const ref = useRef<HTMLTextAreaElement | null>(null);
+
+    useEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        element.focus();
+        element.setSelectionRange(element.value.length, element.value.length);
+    }, []);
+
+    useEffect(() => {
+        const element = ref.current;
+        if (!element) return;
+        element.style.height = "auto";
+        element.style.height = `${Math.min(element.scrollHeight, 240)}px`;
+    }, [value]);
+
+    const save = async () => {
+        const text = value.trim();
+        if (!text || busy) return;
+        if (text === message.text) {
+            onCancel();
+            return;
+        }
+        setBusy(true);
+        try {
+            await onSave(message, text);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            onCancel();
+        } else if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            void save();
+        }
+    };
+
+    return (
+        <div className="mt-1">
+            <textarea
+                ref={ref}
+                value={value}
+                rows={1}
+                maxLength={4000}
+                onChange={(event) => setValue(event.target.value)}
+                onKeyDown={onKeyDown}
+                aria-label={tx(C.editLabel)}
+                className="w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm leading-6 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-zinc-950"
+            />
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+                <span>{tx(C.editHint)}</span>
+                <button type="button" onClick={onCancel} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.cancel)}</button>
+                <button type="button" onClick={() => void save()} disabled={busy} className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline disabled:opacity-50 dark:text-indigo-300">{busy && <Spinner className="h-3 w-3" />}{tx(C.save)}</button>
+            </p>
         </div>
     );
 }

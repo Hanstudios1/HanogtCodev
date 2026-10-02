@@ -34,6 +34,7 @@ const C = {
     save: { TR: "Kaydet", EN: "Save" },
     cancel: { TR: "Vazgeç", EN: "Cancel" },
     empty: { TR: "Henüz mesaj yok. İlk mesajı gönder!", EN: "No messages yet. Send the first one!" },
+    openProfile: { TR: "{name} profil kartını aç", EN: "Open {name}'s profile card" },
 } satisfies Record<string, Copy>;
 
 const GROUPING_WINDOW_MS = 7 * 60_000;
@@ -97,6 +98,8 @@ export type DmMessagesProps = {
     playingId: string;
     loadingVoiceId: string;
     onToggleVoice: (message: DmMessage) => void;
+    /** Clicking an avatar or a name opens the person's profile card. */
+    onOpenProfile: (email: string, trigger: HTMLElement) => void;
     /** Shown above the conversation start (Discord's "This is the beginning…" card). */
     intro: ReactNode;
 };
@@ -230,6 +233,7 @@ export default function DmMessages(props: DmMessagesProps) {
                 onDelete={props.onDelete}
                 onCopy={props.onCopy}
                 onToggleVoice={props.onToggleVoice}
+                onOpenProfile={props.onOpenProfile}
             />,
         );
         previous = message;
@@ -280,6 +284,7 @@ type RowProps = {
     onDelete: (message: DmMessage) => void;
     onCopy: (message: DmMessage) => void;
     onToggleVoice: (message: DmMessage) => void;
+    onOpenProfile: (email: string, trigger: HTMLElement) => void;
 };
 
 function RowView(props: RowProps) {
@@ -352,7 +357,9 @@ function RowView(props: RowProps) {
             <div className="flex gap-4">
                 <div className="w-10 shrink-0">
                     {!compact ? (
-                        <PresenceAvatar src={author.avatarUrl} name={author.username} size="md" className="mt-0.5" />
+                        <button type="button" onClick={(event) => props.onOpenProfile(author.email, event.currentTarget)} className="mt-0.5 rounded-full transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" aria-label={tx(C.openProfile, { name: author.username })}>
+                            <PresenceAvatar src={author.avatarUrl} name={author.username} size="md" />
+                        </button>
                     ) : (
                         <time dateTime={iso} title={fullDateTime(message.createdAt, locale)} className="hidden pt-1 text-end text-[10px] leading-5 text-zinc-400 group-hover:block">{time}</time>
                     )}
@@ -360,7 +367,7 @@ function RowView(props: RowProps) {
                 <div className="min-w-0 flex-1">
                     {!compact && (
                         <div className="flex flex-wrap items-baseline gap-x-2">
-                            <span className="font-semibold text-zinc-900 dark:text-white">{author.username}</span>
+                            <button type="button" onClick={(event) => props.onOpenProfile(author.email, event.currentTarget)} className="font-semibold text-zinc-900 hover:underline focus-visible:underline focus-visible:outline-none dark:text-white">{author.username}</button>
                             <StaffBadge role={author.staffRole} size="sm" compactOnMobile />
                             <time dateTime={iso} title={fullDateTime(message.createdAt, locale)} className="text-xs text-zinc-400">{time}</time>
                         </div>

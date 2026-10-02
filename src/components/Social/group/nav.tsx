@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { SettingsTab } from "@/components/Groups/workspace/SettingsDialog";
 import type { GroupInfo, GroupRole } from "@/lib/groups";
+import type { ChannelUnread } from "@/lib/social/model";
 
 /**
  * What the group sidebar (owned by the shell) needs from the open group
@@ -20,6 +21,8 @@ export type GroupNavState = {
     filesAvailable: boolean;
     pinnedCount: number;
     guide: { show: boolean; done: number; total: number; open: boolean };
+    /** Unread messages and mentions per channel ("" = the main channel, else a #topic). */
+    channelUnread: Record<string, ChannelUnread>;
     openInvite: () => void;
     openSettings: (tab: SettingsTab) => void;
     leave: () => void;

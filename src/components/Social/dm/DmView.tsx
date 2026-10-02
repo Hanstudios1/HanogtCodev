@@ -1,6 +1,6 @@
 "use client";
 
-import { AtSign, Ban, MoreVertical, Phone, UserMinus, UserPlus, UserRound, X } from "lucide-react";
+import { AtSign, Ban, MoreVertical, Phone, PhoneOff, UserMinus, UserPlus, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,11 +10,12 @@ import { useVoiceCall } from "@/components/VoiceCallProvider";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PRESENCE_STATUS_COPY } from "@/lib/presence";
 import { SocialRequestError } from "@/lib/social/api";
-import { useConversation, useDmVoicePlayer } from "@/lib/social/hooks";
+import { useConversation, useVoiceMessagePlayer } from "@/lib/social/hooks";
 import { dmChatId, previewText, type DmMessage, type SocialPerson, type SocialProfileResponse } from "@/lib/social/model";
 import { useSocial } from "../context";
 import { loadSocialProfile, useProfileViewer } from "../profile";
 import { DropdownMenu, EmptyState, IconButton, MainHeader, SocialAside } from "../ui";
+import UserPopout, { nextPopout, type PopoutState } from "../UserPopout";
 import DmComposer from "./DmComposer";
 import DmMessages, { ConversationIntro, formatDuration } from "./DmMessages";
 import DmProfileAside from "./DmProfileAside";
@@ -22,7 +23,8 @@ import DmProfileAside from "./DmProfileAside";
 const C = {
     profile: { TR: "Profil", EN: "Profile" },
     call: { TR: "Sesli arama başlat", EN: "Start a voice call" },
-    callOffline: { TR: "Sesli arama için bulut bağlantısı gerekiyor", EN: "Voice calls need the cloud connection" },
+    hangUp: { TR: "Aramayı bitir", EN: "End call" },
+    callBusy: { TR: "Başka bir aramadasın", EN: "You're in another call" },
     more: { TR: "Sohbet seçenekleri", EN: "Conversation options" },
     viewProfile: { TR: "Profili görüntüle", EN: "View profile" },
     remove: { TR: "Arkadaşlıktan çıkar", EN: "Remove friend" },
@@ -81,7 +83,9 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
     const router = useRouter();
     const social = useSocial();
     const { me: meState, mode, live, dms, isFriend, isBlocked, person, notify, errorText, confirm, friendAction, audio, now, markBroken } = social;
-    const { startCall } = useVoiceCall();
+    const call = useVoiceCall();
+    const inCallHere = call.status !== "idle" && call.peer?.email === partnerEmail;
+    const busyElsewhere = call.status !== "idle" && !inCallHere;
     const chatId = dmChatId(meState.email, partnerEmail);
     const summary = dms.list.find((dm) => dm.chatId === chatId) ?? null;
     const friend = isFriend(partnerEmail);
@@ -92,6 +96,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
     const [replyTo, setReplyTo] = useState<DmMessage | null>(null);
     const [editingId, setEditingId] = useState("");
     const [focusNonce, setFocusNonce] = useState(0);
+    const [popout, setPopout] = useState<PopoutState | null>(null);
     const viewer = useProfileViewer();
 
     useEffect(() => {
@@ -112,6 +117,11 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
 
     const me: SocialPerson = useMemo(() => ({ ...meState, lastSeenAt: null, staffRole: null }), [meState]);
 
+    const openProfile = useCallback((target: string, trigger: HTMLElement) => {
+        const known = target === me.email ? me : partner;
+        setPopout((current) => nextPopout(current, { ...known, status: target === me.email || friend ? known.status : null }, trigger));
+    }, [friend, me, partner]);
+
     const onError = useCallback((error: unknown) => {
         // The rules refused a read that should work: use the server instead.
         if ((error as { code?: unknown } | null)?.code === "permission-denied") {
@@ -122,7 +132,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
     }, [errorText, markBroken, notify]);
 
     const conversation = useConversation({ me: meState.email, partner: partnerEmail, mode, chatExists: Boolean(summary), active: true, onError });
-    const player = useDmVoicePlayer(chatId, (error) => notify(errorText(error), "error"));
+    const player = useVoiceMessagePlayer({ with: partnerEmail }, (error) => notify(errorText(error), "error"));
     const canSend = !blocked && (conversation.canSend ?? friend);
     const notFound = profileMissing && !summary && !friend && !conversation.messages.length && conversation.loaded;
 
@@ -169,10 +179,6 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
     };
 
     const toggleVoice = (message: DmMessage) => {
-        if (!live) {
-            notify(errorText("offline_voice"), "error");
-            return;
-        }
         if (audio.deafened) {
             notify(tx(C.deafened), "info");
             return;
@@ -237,7 +243,9 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
             <main id="main-content" className="flex min-w-0 flex-1 flex-col bg-white dark:bg-zinc-900">
                 <MainHeader actions={(
                     <>
-                        {friend && <IconButton label={live ? tx(C.call) : tx(C.callOffline)} disabled={!live} onClick={() => void startCall({ email: partnerEmail, username: partner.username, avatarUrl: partner.avatarUrl ?? undefined, staffRole: partner.staffRole })}><Phone className="h-5 w-5" aria-hidden /></IconButton>}
+                        {friend && (inCallHere
+                            ? <IconButton label={tx(C.hangUp)} onClick={call.hangUp} active><PhoneOff className="h-5 w-5 text-red-500" aria-hidden /></IconButton>
+                            : <IconButton label={busyElsewhere ? tx(C.callBusy) : tx(C.call)} disabled={busyElsewhere} onClick={() => void call.startCall({ email: partnerEmail, username: partner.username, avatarUrl: partner.avatarUrl ?? undefined, staffRole: partner.staffRole })}><Phone className="h-5 w-5" aria-hidden /></IconButton>)}
                         <DropdownMenu label={tx(C.more)} trigger={<MoreVertical className="h-5 w-5" aria-hidden />} items={menuItems} />
                     </>
                 )}>
@@ -265,6 +273,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
                     playingId={player.playingId}
                     loadingVoiceId={player.loadingId}
                     onToggleVoice={toggleVoice}
+                    onOpenProfile={openProfile}
                     intro={<ConversationIntro partner={partner} />}
                 />
                 <DmComposer
@@ -277,10 +286,9 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
                     onSend={send}
                     onSticker={sendSticker}
                     onVoice={sendVoice}
-                    onVoiceError={(code) => notify(code === "mic_denied" ? errorText("mic_denied") : errorText("offline_voice"), "error")}
+                    onVoiceError={() => notify(errorText("mic_denied"), "error")}
                     onTyping={conversation.notifyTyping}
                     onEditLast={editLast}
-                    voiceAvailable={live}
                     micOff={audio.micOff}
                     focusNonce={focusNonce}
                 />
@@ -288,6 +296,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
             <SocialAside label={tx(C.profile)}>
                 <DmProfileAside person={partner} isFriend={friend} profile={profile} loading={profileLoading} now={now} onViewProfile={() => void viewer.show(partnerEmail)} />
             </SocialAside>
+            {popout && <UserPopout key={`${popout.person.email}:${popout.anchor.top}`} popout={popout} onClose={() => setPopout(null)} onViewProfile={(target) => void viewer.show(target)} />}
             {viewer.element}
         </>
     );

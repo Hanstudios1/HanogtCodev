@@ -3,10 +3,11 @@
 import {
     collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc,
 } from "firebase/firestore";
-import { getBlob, ref as storageRef } from "firebase/storage";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { GROUP_LIMITS, languageFromFileName, safeGroupVoicePath } from "@/lib/groups";
+import { SocialRequestError } from "@/lib/social/api";
+import { useVoiceMessagePlayer } from "@/lib/social/hooks";
 import type { GroupClientErrorCode } from "../api";
 import { fileFromData, messageFromData, type GroupChatMessage, type GroupFileItem, type MonacoEditor, type SaveState } from "./model";
 
@@ -426,54 +427,24 @@ export function useVoiceRecorder({ onRecorded, onError }: { onRecorded: (blob: B
     return { recording, seconds, start, stop, limit: VOICE_LIMIT_SECONDS };
 }
 
-/** Plays one voice message at a time from the group's Storage folder. */
+/**
+ * Plays one voice message of the group at a time. The recording comes from
+ * GET /api/social/voice (members only), with or without the Firebase bridge.
+ */
 export function useVoicePlayer({ groupId, onError }: { groupId: string; onError: ErrorSink }) {
-    const [playingId, setPlayingId] = useState("");
-    const [loadingId, setLoadingId] = useState("");
-    const audioRef = useRef<HTMLAudioElement | null>(null);
-    const urlRef = useRef("");
     const onErrorRef = useLatest(onError);
-
-    const release = () => {
-        audioRef.current?.pause();
-        audioRef.current = null;
-        if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-        urlRef.current = "";
-    };
-
-    const toggle = useCallback(async (message: GroupChatMessage) => {
-        if (playingId === message.id) {
-            release();
-            setPlayingId("");
-            return;
-        }
-        const path = safeGroupVoicePath(message.voicePath, groupId);
-        if (!path) {
+    const player = useVoiceMessagePlayer({ group: groupId }, (error) => {
+        const code = error instanceof SocialRequestError ? error.code : "";
+        onErrorRef.current(code === "rate_limited" || code === "network" || code === "unauthorized" ? code : "voice_unavailable");
+    });
+    const { toggle: play } = player;
+    const toggle = useCallback((message: GroupChatMessage) => {
+        // Only recordings inside the group's own folder are ever requested.
+        if (!safeGroupVoicePath(message.voicePath, groupId)) {
             onErrorRef.current("voice_unavailable");
-            return;
+            return Promise.resolve();
         }
-        release();
-        setLoadingId(message.id);
-        try {
-            const blob = await getBlob(storageRef(storage, path), 3 * 1024 * 1024);
-            urlRef.current = URL.createObjectURL(blob);
-            const audio = new Audio(urlRef.current);
-            audioRef.current = audio;
-            audio.onended = () => setPlayingId("");
-            setPlayingId(message.id);
-            await audio.play();
-        } catch {
-            setPlayingId("");
-            onErrorRef.current("voice_unavailable");
-        } finally {
-            setLoadingId("");
-        }
-    }, [groupId, onErrorRef, playingId]);
-
-    useEffect(() => () => {
-        audioRef.current?.pause();
-        if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-    }, []);
-
-    return { playingId, loadingId, toggle };
+        return play(message);
+    }, [groupId, onErrorRef, play]);
+    return { playingId: player.playingId, loadingId: player.loadingId, toggle };
 }

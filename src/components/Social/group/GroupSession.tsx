@@ -38,8 +38,9 @@ import {
 } from "@/lib/groups";
 import { useLiveProfiles, usePoll } from "@/lib/social/hooks";
 import { getGroupReadAt } from "@/lib/social/local-state";
-import { SOCIAL_POLL, groupHref } from "@/lib/social/model";
+import { SOCIAL_POLL, channelUnreadState, groupHref } from "@/lib/social/model";
 import { useSocial } from "../context";
+import { nextPopout, type PopoutState } from "../UserPopout";
 import { useGroupNav, type GroupNavState } from "./nav";
 
 const C = {
@@ -101,6 +102,12 @@ export type GroupSession = {
     jumpTarget: { id: string; nonce: number } | null;
     jumpTo: (messageId: string) => void;
     leave: () => Promise<void>;
+    /** The profile card opened from the chat or the member list. */
+    userCard: PopoutState | null;
+    openUserCard: (email: string, trigger: HTMLElement) => void;
+    closeUserCard: () => void;
+    /** The channel ("" = the main one, else a #topic) is on screen up to `time`. */
+    markChannelRead: (topic: string, time: number) => void;
 };
 
 const GroupSessionContext = createContext<GroupSession | null>(null);
@@ -157,6 +164,9 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     const [dismissing, setDismissing] = useState(false);
     const [guideOpen, setGuideOpen] = useState(true);
     const [panel, setPanel] = useState<GroupPanel>("members");
+    const [userCard, setUserCard] = useState<PopoutState | null>(null);
+    // When each channel was last on screen in this visit (the channel list's unread markers).
+    const [channelReadAt, setChannelReadAt] = useState<Record<string, number>>({});
     const typingRef = useRef<Record<string, number>>({});
     const typingPrimedRef = useRef(false);
     const typingSentRef = useRef(0);
@@ -318,6 +328,25 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
             })
             .sort((a, b) => rank[a.role] - rank[b.role]);
     }, [detail, email, group, liveProfiles, socialMe.status]);
+
+    // Kept in a ref so the chat rows (memoized) get a stable callback.
+    const membersRef = useRef(members);
+    useEffect(() => {
+        membersRef.current = members;
+    });
+    const openUserCard = useCallback((target: string, trigger: HTMLElement) => {
+        const member = membersRef.current.find((entry) => entry.email === target);
+        const person = member
+            ? { email: member.email, username: member.username, avatarUrl: member.avatarUrl, status: member.status, nickname: member.nickname, nicknameTag: member.nicknameTag, staffRole: member.staffRole ?? null, customStatus: member.customStatus, statusEmoji: member.statusEmoji }
+            // Someone who left the group: the card loads what it may show.
+            : { email: target, username: target.split("@")[0] || "Hanogt", avatarUrl: null, status: null };
+        setUserCard((current) => nextPopout(current, person, trigger));
+    }, []);
+    const closeUserCard = useCallback(() => setUserCard(null), []);
+    const markChannelRead = useCallback((topic: string, time: number) => {
+        if (!time) return;
+        setChannelReadAt((current) => ((current[topic] ?? 0) >= time ? current : { ...current, [topic]: time }));
+    }, []);
 
     const me: WorkspaceMember | null = useMemo(() => {
         if (!detail) return null;
@@ -598,6 +627,10 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         jumpTarget,
         jumpTo,
         leave,
+        userCard,
+        openUserCard,
+        closeUserCard,
+        markChannelRead,
     };
 
     /* ------------------------------ sidebar ------------------------------ */
@@ -608,6 +641,14 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     const fileCount = files.length;
     const pinnedCount = group?.pinnedMessageIds.length ?? 0;
     const guideDone = checklist.filter((step) => step.done).length;
+    const myName = socialMe.username;
+    const channelUnread = useMemo(() => channelUnreadState(messagesApi.messages, {
+        me: email,
+        myName,
+        usernames: members.map((member) => member.username),
+        lastReadAt,
+        readAt: channelReadAt,
+    }), [channelReadAt, email, lastReadAt, members, messagesApi.messages, myName]);
     const guideTotal = checklist.length;
     const toggleGuide = useCallback(() => setGuideOpen((value) => !value), []);
     const showPinned = useCallback(() => {
@@ -625,12 +666,13 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         filesAvailable: live,
         pinnedCount,
         guide: { show: showGuide, done: guideDone, total: guideTotal, open: guideOpen },
+        channelUnread,
         openInvite,
         openSettings,
         leave: () => void leave(),
         toggleGuide,
         showPinned,
-    }), [context?.canInvite, context?.isManager, context?.role, fileCount, group, groupId, guideDone, guideOpen, guideTotal, leave, live, openInvite, openSettings, pinnedCount, sessionPhase, showGuide, showPinned, toggleGuide]);
+    }), [channelUnread, context?.canInvite, context?.isManager, context?.role, fileCount, group, groupId, guideDone, guideOpen, guideTotal, leave, live, openInvite, openSettings, pinnedCount, sessionPhase, showGuide, showPinned, toggleGuide]);
     useEffect(() => {
         publish(nav);
     }, [nav, publish]);

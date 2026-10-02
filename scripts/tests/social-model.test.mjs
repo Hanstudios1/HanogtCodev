@@ -247,3 +247,27 @@ test("invite links are recognised in every shape people paste", () => {
         assert.equal(extractInviteToken(value), null, value);
     }
 });
+
+test("channel list markers: unread per channel and mentions, like Discord", () => {
+    const { channelUnreadState } = model;
+    const me = "ali@example.com";
+    const message = (createdAt, text, extra = {}) => ({ createdAt, fromEmail: "berk@example.com", type: "text", text, ...extra });
+    const messages = [
+        message(100, "eski"),
+        message(200, "#oyun yeni tur"),
+        message(300, "@Ali #Oyun bak"),
+        message(400, "genel sohbet"),
+        message(500, "kendi mesajım #oyun", { fromEmail: me }),
+        message(600, "sistem", { type: "system" }),
+        message(700, "#müzik bekliyor", { pending: true }),
+    ];
+    const options = { me, myName: "Ali", usernames: ["Ali", "Berk"], lastReadAt: 150, readAt: {} };
+    assert.deepEqual(channelUnreadState(messages, options), {
+        "": { unread: true, mentions: 1 },
+        oyun: { unread: true, mentions: 1 },
+    });
+    // Reading the topic clears it but not the main channel; the main channel covers every topic.
+    assert.deepEqual(channelUnreadState(messages, { ...options, readAt: { oyun: 300 } }), { "": { unread: true, mentions: 1 } });
+    assert.deepEqual(channelUnreadState(messages, { ...options, readAt: { "": 400 } }), {});
+    assert.deepEqual(channelUnreadState(messages, { ...options, myName: "" }), { "": { unread: true, mentions: 0 }, oyun: { unread: true, mentions: 0 } });
+});

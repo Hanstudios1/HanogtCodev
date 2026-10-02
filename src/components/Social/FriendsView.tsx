@@ -38,7 +38,7 @@ const C = {
     blockedCount: { TR: "Engellenenler — {count}", EN: "Blocked — {count}" },
     message: { TR: "Mesaj gönder", EN: "Message" },
     call: { TR: "Sesli ara", EN: "Voice call" },
-    callOffline: { TR: "Sesli arama için bulut bağlantısı gerekiyor", EN: "Voice calls need the cloud connection" },
+    callBusy: { TR: "Başka bir aramadasın", EN: "You're in another call" },
     more: { TR: "{name} için diğer işlemler", EN: "More actions for {name}" },
     profile: { TR: "Profili görüntüle", EN: "View profile" },
     remove: { TR: "Arkadaşlıktan çıkar", EN: "Remove friend" },
@@ -232,8 +232,9 @@ function ActionButton({ label, onClick, children, tone = "default", disabled = f
 function FriendList({ tab, search, onSearch, onProfile, onAdd }: { tab: "online" | "all"; search: string; onSearch: (value: string) => void; onProfile: (email: string) => void; onAdd: () => void }) {
     const { tx, locale } = useI18n();
     const router = useRouter();
-    const { friends, live, now, friendAction, confirm } = useSocial();
-    const { startCall } = useVoiceCall();
+    const { friends, now, friendAction, confirm } = useSocial();
+    const { startCall, status: callStatus } = useVoiceCall();
+    const inCall = callStatus !== "idle";
     const list = useMemo(() => filterFriends(friends.list, tab, search, locale), [friends.list, locale, search, tab]);
     const total = tab === "online" ? friends.list.filter((friend) => friend.status !== "offline").length : friends.list.length;
 
@@ -283,7 +284,7 @@ function FriendList({ tab, search, onSearch, onProfile, onAdd }: { tab: "online"
                                 </span>
                                 <span className="relative z-10 flex shrink-0 items-center gap-2">
                                     <ActionButton label={tx(C.message)} onClick={() => router.push(dmHref(friend.email))}><MessageCircle className="h-[18px] w-[18px]" aria-hidden /></ActionButton>
-                                    <ActionButton label={live ? tx(C.call) : tx(C.callOffline)} disabled={!live} onClick={() => void startCall({ email: friend.email, username: friend.username, avatarUrl: friend.avatarUrl ?? undefined, staffRole: friend.staffRole })}><Phone className="h-[18px] w-[18px]" aria-hidden /></ActionButton>
+                                    <ActionButton label={inCall ? tx(C.callBusy) : tx(C.call)} disabled={inCall} onClick={() => void startCall({ email: friend.email, username: friend.username, avatarUrl: friend.avatarUrl ?? undefined, staffRole: friend.staffRole })}><Phone className="h-[18px] w-[18px]" aria-hidden /></ActionButton>
                                     <DropdownMenu
                                             label={tx(C.more, { name: friend.username })}
                                             trigger={<MoreVertical className="h-[18px] w-[18px]" aria-hidden />}

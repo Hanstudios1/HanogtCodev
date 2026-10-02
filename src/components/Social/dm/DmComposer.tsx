@@ -15,7 +15,6 @@ const C = {
     stickerList: { TR: "Çıkartmalar", EN: "Stickers" },
     record: { TR: "Sesli mesaj kaydet", EN: "Record a voice message" },
     micOff: { TR: "Mikrofonun kapalı (sol alttaki panelden açabilirsin)", EN: "Your microphone is off (turn it on in the panel at the bottom left)" },
-    voiceOffline: { TR: "Sesli mesajlar için bulut bağlantısı gerekiyor", EN: "Voice messages need the cloud connection" },
     stopRecord: { TR: "Kaydı bitir ve gönder", EN: "Stop and send" },
     recording: { TR: "Kaydediliyor {seconds}/{limit} sn", EN: "Recording {seconds}/{limit}s" },
     discard: { TR: "Vazgeç", EN: "Discard" },
@@ -36,17 +35,16 @@ type ComposerProps = {
     onSend: (text: string) => Promise<boolean>;
     onSticker: (emoji: string) => void;
     onVoice: (blob: Blob, mimeType: string, seconds: number) => void;
-    onVoiceError: (code: "mic_denied" | "offline_voice") => void;
+    onVoiceError: (code: "mic_denied") => void;
     onTyping: (text: string) => void;
     /** ArrowUp in an empty box edits the last own message (like Discord). */
     onEditLast: () => void;
-    voiceAvailable: boolean;
     micOff: boolean;
     focusNonce: number;
 };
 
 export default function DmComposer(props: ComposerProps) {
-    const { partnerName, disabled, typing, replyTo, replyAuthor, onCancelReply, onSend, onSticker, onVoice, onVoiceError, onTyping, onEditLast, voiceAvailable, micOff, focusNonce } = props;
+    const { partnerName, disabled, typing, replyTo, replyAuthor, onCancelReply, onSend, onSticker, onVoice, onVoiceError, onTyping, onEditLast, micOff, focusNonce } = props;
     const { tx } = useI18n();
     const [draft, setDraft] = useState("");
     const [sending, setSending] = useState(false);
@@ -111,10 +109,6 @@ export default function DmComposer(props: ComposerProps) {
     };
 
     const startRecording = () => {
-        if (!voiceAvailable) {
-            onVoiceError("offline_voice");
-            return;
-        }
         if (micOff) return;
         void recorder.start();
     };
@@ -123,7 +117,7 @@ export default function DmComposer(props: ComposerProps) {
         return <div className="shrink-0 px-4 pb-4 pt-1"><div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-300">{disabled}</div></div>;
     }
 
-    const micLabel = !voiceAvailable ? tx(C.voiceOffline) : micOff ? tx(C.micOff) : tx(C.record);
+    const micLabel = micOff ? tx(C.micOff) : tx(C.record);
 
     return (
         <div className="shrink-0 px-3 pb-3 pt-1 sm:px-4 sm:pb-4">
@@ -173,7 +167,7 @@ export default function DmComposer(props: ComposerProps) {
                             {sending ? <Spinner className="h-5 w-5" /> : <Send className="h-5 w-5 rtl:-scale-x-100" aria-hidden />}
                         </button>
                     ) : (
-                        <button type="button" onClick={startRecording} aria-disabled={!voiceAvailable || micOff || undefined} className={cx("rounded-lg p-2 transition", !voiceAvailable || micOff ? "text-zinc-400 opacity-60" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white")} aria-label={micLabel} title={micLabel}>
+                        <button type="button" onClick={startRecording} aria-disabled={micOff || undefined} className={cx("rounded-lg p-2 transition", micOff ? "text-zinc-400 opacity-60" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white")} aria-label={micLabel} title={micLabel}>
                             {micOff ? <MicOff className="h-5 w-5" aria-hidden /> : <Mic className="h-5 w-5" aria-hidden />}
                         </button>
                     )}

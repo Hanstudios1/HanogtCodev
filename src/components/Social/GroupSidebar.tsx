@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { cx } from "@/components/Groups/ui";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { setGroupNotifyLevel } from "@/lib/social/local-state";
-import { groupHref, type GroupNotifyLevel } from "@/lib/social/model";
+import { badgeLabel, groupHref, type ChannelUnread, type GroupNotifyLevel } from "@/lib/social/model";
 import { useSocial } from "./context";
 import { useGroupNav } from "./group/nav";
 import { DropdownMenu, SectionLabel } from "./ui";
@@ -33,6 +33,8 @@ const C = {
     guide: { TR: "Başlangıç rehberi", EN: "Getting started" },
     guideProgress: { TR: "{done}/{total} tamamlandı", EN: "{done} of {total} done" },
     loading: { TR: "Grup yükleniyor", EN: "Loading the group" },
+    unreadChannel: { TR: "{name}, okunmamış mesajlar var", EN: "{name}, unread messages" },
+    mentionChannel: { TR: "{name}, {count} bahsetme", EN: "{name}, {count} mentions" },
     gone: { TR: "Bu gruba artık erişimin yok.", EN: "You no longer have access to this group." },
 } satisfies Record<string, Copy>;
 
@@ -59,6 +61,12 @@ export default function GroupSidebar() {
     const mainChannel = group?.contentLanguage === "en" ? "general" : "genel";
     const topics = (group?.topics ?? []).filter((entry) => entry !== "genel" && entry !== "general");
     const close = () => ui.setNavOpen(false);
+    // Muted groups show no channel markers; "mentions only" shows just the red counts.
+    const markers = (channel: string, active: boolean): ChannelUnread | null => {
+        const state = current?.channelUnread[channel];
+        if (!state || active || level === "none") return null;
+        return level === "mentions" ? (state.mentions ? { unread: false, mentions: state.mentions } : null) : state;
+    };
 
     const menuItems = current?.group ? [
         ...(current.canInvite ? [{ id: "invite", label: tx(C.invite), icon: <UserPlus className="h-4 w-4" aria-hidden />, onSelect: current.openInvite }] : []),
@@ -128,9 +136,9 @@ export default function GroupSidebar() {
                         )}
                         <SectionLabel id="group-channels">{tx(C.textChannels)}</SectionLabel>
                         <ul aria-labelledby="group-channels" className="space-y-0.5">
-                            <li><ChannelLink href={groupHref(groupId)} active={view === "chat" && !topic} label={mainChannel} onClick={close} /></li>
+                            <li><ChannelLink href={groupHref(groupId)} active={view === "chat" && !topic} label={mainChannel} onClick={close} state={markers("", view === "chat" && !topic)} /></li>
                             {topics.map((entry) => (
-                                <li key={entry}><ChannelLink href={groupHref(groupId, { topic: entry })} active={view === "chat" && topic === entry} label={entry} onClick={close} /></li>
+                                <li key={entry}><ChannelLink href={groupHref(groupId, { topic: entry })} active={view === "chat" && topic === entry} label={entry} onClick={close} state={markers(entry.toLocaleLowerCase(), view === "chat" && topic === entry)} /></li>
                             ))}
                         </ul>
                         <SectionLabel>{tx(C.more)}</SectionLabel>
@@ -162,19 +170,28 @@ export default function GroupSidebar() {
     );
 }
 
-function ChannelLink({ href, active, label, onClick }: { href: string; active: boolean; label: string; onClick: () => void }) {
+/** A text channel; unread ones are bold with a pill on the left, mentions add a red count (like Discord). */
+function ChannelLink({ href, active, label, onClick, state }: { href: string; active: boolean; label: string; onClick: () => void; state: ChannelUnread | null }) {
+    const { tx } = useI18n();
+    const unread = Boolean(state?.unread);
+    const mentions = state?.mentions ?? 0;
     return (
         <Link
             href={href}
             onClick={onClick}
             aria-current={active ? "page" : undefined}
+            aria-label={mentions ? tx(C.mentionChannel, { name: label, count: mentions }) : unread ? tx(C.unreadChannel, { name: label }) : undefined}
             className={cx(
-                "flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[15px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
-                active ? "bg-zinc-300/60 text-zinc-900 dark:bg-white/10 dark:text-white" : "text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
+                "relative flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[15px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                active ? "bg-zinc-300/60 font-medium text-zinc-900 dark:bg-white/10 dark:text-white"
+                    : unread || mentions ? "font-semibold text-zinc-900 hover:bg-zinc-200/70 dark:text-white dark:hover:bg-white/[0.05]"
+                        : "font-medium text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
             )}
         >
+            {(unread || mentions > 0) && !active && <span aria-hidden className="absolute -start-2 top-1/2 h-2 w-1 -translate-y-1/2 rounded-e-full bg-zinc-900 dark:bg-white" />}
             <Hash className="h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
-            <span className="min-w-0 truncate">{label}</span>
+            <span className="min-w-0 flex-1 truncate">{label}</span>
+            {mentions > 0 && <span className="inline-flex min-w-[18px] shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold leading-[18px] tabular-nums text-white">{badgeLabel(mentions)}</span>}
         </Link>
     );
 }

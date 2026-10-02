@@ -517,7 +517,9 @@ export async function commitServerPatches(writes: Array<{
 type ServerMutation =
     | { type: "create" | "update"; path: string; data: Record<string, unknown>; updateFields?: string[]; updateTime?: string }
     | { type: "delete"; path: string; updateTime?: string }
-    | { type: "increment"; path: string; fields: Record<string, number> };
+    | { type: "increment"; path: string; fields: Record<string, number> }
+    /** arrayUnion: appends the values a field doesn't hold yet (the document must exist). */
+    | { type: "append"; path: string; fields: Record<string, unknown[]> };
 
 export async function commitServerMutations(mutations: ServerMutation[]): Promise<{ writeResults: Array<{ updateTime?: string }>; commitTime: string | null }> {
     if (!mutations.length) return { writeResults: [], commitTime: null };
@@ -538,6 +540,19 @@ export async function commitServerMutations(mutations: ServerMutation[]): Promis
                         increment: toFirestoreValue(amount),
                     })),
                 },
+            };
+        }
+        if (mutation.type === "append") {
+            return {
+                transform: {
+                    document: documentName(mutation.path),
+                    fieldTransforms: Object.entries(mutation.fields).map(([fieldPath, values]) => ({
+                        fieldPath,
+                        appendMissingElements: { values: values.map(toFirestoreValue) },
+                    })),
+                },
+                // A deleted document must not come back as a stub holding only these values.
+                currentDocument: { exists: true },
             };
         }
         return {
@@ -636,16 +651,74 @@ export async function deleteFirebaseAuthUser(email: string) {
     }
 }
 
+/**
+ * The Storage bucket of voice messages (server variable first), without a
+ * pasted "gs://" prefix or trailing slash; "" when none is configured.
+ */
+export function serverStorageBucket() {
+    return (process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim().replace(/^gs:\/\//, "").replace(/\/+$/, "");
+}
+
+function storageBase() {
+    const storageEmulator = emulator("FIREBASE_STORAGE_EMULATOR_HOST");
+    return storageEmulator ? `http://${storageEmulator}` : "https://storage.googleapis.com";
+}
+
+function storageObjectUrl(bucket: string, objectPath: string) {
+    return `${storageBase()}/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(objectPath)}`;
+}
+
 export async function deleteServerStorageObject(objectPath: string) {
-    const bucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    const bucket = serverStorageBucket();
     if (!bucket || !objectPath) return;
     assertSafePath(objectPath);
-    const storageEmulator = emulator("FIREBASE_STORAGE_EMULATOR_HOST");
-    const response = await firestoreFetch(
-        `${storageEmulator ? `http://${storageEmulator}` : "https://storage.googleapis.com"}/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(objectPath)}`,
-        { method: "DELETE" },
-    );
+    const response = await firestoreFetch(storageObjectUrl(bucket, objectPath), { method: "DELETE" });
     if (!response.ok && response.status !== 404) {
         throw new Error(`Depolama nesnesi silme hatası (${response.status}).`);
     }
+}
+
+/**
+ * Uploads one object with the service account (Cloud Storage JSON API,
+ * multipart: metadata and data in one request). Storage security rules don't
+ * apply; callers check access themselves.
+ */
+export async function uploadServerStorageObject(objectPath: string, data: Uint8Array, contentType: string, metadata: Record<string, string> = {}) {
+    const bucket = serverStorageBucket();
+    if (!bucket) throw new Error("Depolama kovası yapılandırılmamış (FIREBASE_STORAGE_BUCKET).");
+    assertSafePath(objectPath);
+    if (!/^[a-z]+\/[a-z0-9.+-]+$/i.test(contentType)) throw new Error("Geçersiz içerik türü.");
+    const boundary = `hanogt-${createHash("sha256").update(`${objectPath}:${Date.now()}:${Math.random()}`).digest("hex").slice(0, 32)}`;
+    const head = Buffer.from(
+        `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: objectPath, contentType, metadata })}\r\n`
+        + `--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n`,
+        "utf8",
+    );
+    const tail = Buffer.from(`\r\n--${boundary}--\r\n`, "utf8");
+    const token = await getAccessToken();
+    const response = await fetch(`${storageBase()}/upload/storage/v1/b/${encodeURIComponent(bucket)}/o?uploadType=multipart`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+        body: Buffer.concat([head, Buffer.from(data.buffer, data.byteOffset, data.byteLength), tail]),
+        cache: "no-store",
+    });
+    if (!response.ok) throw new Error(`Depolama yükleme hatası (${response.status}).`);
+    return response.json().catch(() => ({})) as Promise<{ name?: string; size?: string; contentType?: string }>;
+}
+
+/**
+ * Downloads one object (optionally a byte range) with the service account;
+ * null when it doesn't exist. The caller streams the response body on.
+ */
+export async function downloadServerStorageObject(objectPath: string, range?: string | null) {
+    const bucket = serverStorageBucket();
+    if (!bucket) throw new Error("Depolama kovası yapılandırılmamış (FIREBASE_STORAGE_BUCKET).");
+    assertSafePath(objectPath);
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    if (range && /^bytes=\d{0,12}-\d{0,12}$/.test(range)) headers.Range = range;
+    const response = await fetch(`${storageObjectUrl(bucket, objectPath)}?alt=media`, { headers, cache: "no-store" });
+    if (response.status === 404) return null;
+    if (!response.ok && response.status !== 206) throw new Error(`Depolama okuma hatası (${response.status}).`);
+    return response;
 }

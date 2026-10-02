@@ -2,6 +2,7 @@ import type { OnMount } from "@monaco-editor/react";
 import type { DocumentData } from "firebase/firestore";
 import {
     GROUP_REACTIONS,
+    isGroupId,
     isGroupTemplateId,
     isMemberKey,
     isSystemEvent,
@@ -27,6 +28,12 @@ export type GroupFileItem = {
     updatedAt: number;
 };
 
+/**
+ * The message a reply points to: its id and an excerpt copied when the reply
+ * was sent (the author is looked up from the message itself when it's loaded).
+ */
+export type GroupReply = { id: string; text: string };
+
 export type GroupChatMessage = {
     id: string;
     fromEmail: string;
@@ -42,6 +49,8 @@ export type GroupChatMessage = {
     vars: Record<string, string>;
     template: GroupTemplateId | null;
     reactions: Partial<Record<GroupReactionKey, string[]>>;
+    replyTo: GroupReply | null;
+    edited: boolean;
 };
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
@@ -81,6 +90,7 @@ export function messageFromData(id: string, data: DocumentData, pending: boolean
         ? Object.fromEntries(Object.entries(data.vars as Record<string, unknown>).filter((entry): entry is [string, string] => typeof entry[1] === "string").map(([key, value]) => [key, value.slice(0, 80)]))
         : {};
     const type = data.type === "voice" || data.type === "system" ? data.type : "text";
+    const reply = data.replyTo && typeof data.replyTo === "object" ? data.replyTo as Record<string, unknown> : null;
     return {
         id,
         fromEmail: text(data.fromEmail),
@@ -96,6 +106,8 @@ export function messageFromData(id: string, data: DocumentData, pending: boolean
         vars,
         template: isGroupTemplateId(data.template) ? data.template : null,
         reactions,
+        replyTo: reply && isGroupId(reply.id) ? { id: reply.id, text: text(reply.text).slice(0, 120) } : null,
+        edited: data.edited === true,
     };
 }
 
