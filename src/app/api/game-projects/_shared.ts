@@ -30,6 +30,8 @@ export type GameProjectRecord = {
     scriptCount?: number;
     objectCount?: number;
     sceneCount?: number;
+    /** Attribution when the project was created with Remix from an Arcade game. */
+    remixOf?: unknown;
     createdAt?: string;
     updatedAt?: string;
     _id?: string;

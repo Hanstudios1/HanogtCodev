@@ -94,8 +94,8 @@ const PRODUCTS: Product[] = [
         href: "/arcade",
         title: NAV_LABELS.arcade,
         text: {
-            TR: "Motorla yaptığın oyunları yayınla; topluluğun oyunlarını oyna, beğen ve remiksle.",
-            EN: "Publish the games you make with the engine; play, like and remix the community's games.",
+            TR: "Motorla yaptığın oyunları yayınla; topluluğun oyunlarını oyna, beğen ve izin verilenleri remiksle.",
+            EN: "Publish the games you make with the engine; play and like the community's games and remix those that allow it.",
         },
         gradient: "from-amber-400 to-orange-500",
     },

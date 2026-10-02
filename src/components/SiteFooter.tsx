@@ -35,6 +35,7 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
             links: [
                 { href: "/social", label: NAV_LABELS.social },
                 { href: "/feedback", label: t("feedback_link") },
+                { href: "/plans", label: { TR: "Planlar (yakında)", EN: "Plans (coming soon)" } },
                 { href: "/about", label: t("about_link") },
             ],
         },

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Copy, ExternalLink, Heart, Keyboard, LoaderCircle, Maximize2, Pencil, Play, RotateCcw, Share2, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, GitFork, Heart, Keyboard, LoaderCircle, Lock, Maximize2, Pencil, Play, RotateCcw, Share2, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -10,7 +10,7 @@ import { useI18n, type Copy as CopyText } from "@/lib/i18n";
 import { createEngineId } from "@/lib/game-engine/ids";
 import type { GamePlayer } from "@/lib/game-engine/player/game-player";
 import type { GameProjectDocument } from "@/lib/game-engine/types";
-import { createCloudProject, saveLocalProject } from "@/components/GameEngine/editor/persistence";
+import { saveLocalProject } from "@/components/GameEngine/editor/persistence";
 import { compactNumber, type ArcadeGameSummary } from "./ArcadeGallery";
 
 type GameInfo = ArcadeGameSummary & { isOwner: boolean; liked: boolean };
@@ -19,6 +19,9 @@ const C = {
     loadFailed: { TR: "Oyun yüklenemedi.", EN: "The game couldn't be loaded." },
     likeFailed: { TR: "Beğeni kaydedilemedi.", EN: "Your like couldn't be saved." },
     remixFailed: { TR: "Remix oluşturulamadı.", EN: "The remix couldn't be created." },
+    remixLocked: { TR: "Yapımcı bu oyunun remikslenmesine izin vermiyor.", EN: "The author doesn't allow remixes of this game." },
+    remixOf: { TR: "{author} tarafından yapılan {title} oyununun remiksi", EN: "A remix of {title} by {author}" },
+    remixAllowed: { TR: "Yapımcı remikslemeye izin veriyor; remiksini yayımlarsan ona atıf yapılır.", EN: "The author allows remixes; if you publish yours, they're credited." },
     linkCopied: { TR: "Bağlantı kopyalandı.", EN: "Link copied." },
 } satisfies Record<string, CopyText>;
 
@@ -99,15 +102,20 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
         }
     };
 
+    const canRemix = Boolean(game && (game.allowRemix || game.isOwner));
+
     const remix = async () => {
-        if (!project) return;
+        if (!project || !game || !canRemix) return;
         setBusy(true);
         try {
-            const copy: GameProjectDocument = { ...project, id: createEngineId("game"), name: `${project.name} (Remix)` };
             if (session?.user) {
-                const created = await createCloudProject(copy);
-                router.push(`/game-engine?project=${encodeURIComponent(created.id)}&source=cloud`);
+                // The server checks the author's permission and records the attribution.
+                const response = await fetch(`/api/arcade/${encodeURIComponent(gameId)}/remix`, { method: "POST" });
+                const payload = await response.json().catch(() => ({})) as { projectId?: string; error?: string };
+                if (!response.ok || !payload.projectId) throw new Error(payload.error || "");
+                router.push(`/game-engine?project=${encodeURIComponent(payload.projectId)}&source=cloud`);
             } else {
+                const copy: GameProjectDocument = { ...project, id: createEngineId("game"), name: `${project.name} (Remix)` };
                 await saveLocalProject(copy);
                 router.push(`/game-engine?project=${encodeURIComponent(copy.id)}&source=local`);
             }
@@ -185,6 +193,11 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                                         <span className="font-semibold text-zinc-700 dark:text-zinc-300">{game.authorName}</span>
                                         {game.updatedAt ? <span>· {new Date(game.updatedAt).toLocaleDateString(locale)}</span> : null}
                                     </div>
+                                    {game.remixOf ? (
+                                        <Link href={`/arcade/${encodeURIComponent(game.remixOf.gameId)}`} className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-2 py-1 text-[12px] font-semibold text-emerald-700 hover:underline dark:text-emerald-300">
+                                            <GitFork className="h-3.5 w-3.5" aria-hidden />{tx(C.remixOf, { title: game.remixOf.title, author: game.remixOf.authorName })}
+                                        </Link>
+                                    ) : null}
                                     {game.description ? <p className="mt-3 whitespace-pre-line text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">{game.description}</p> : null}
                                     <div className="mt-4 flex flex-wrap gap-1.5">
                                         <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold uppercase text-zinc-600 dark:bg-white/10 dark:text-zinc-300">{game.dimension}</span>
@@ -207,9 +220,16 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                             {game?.isOwner ? (
                                 <Link href={`/game-engine?project=${encodeURIComponent(gameId)}&source=cloud`} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 text-[13px] font-bold text-white dark:bg-white dark:text-zinc-900"><Pencil className="h-4 w-4" />{tx({ TR: "Motorda düzenle", EN: "Edit in the engine" })}</Link>
                             ) : null}
-                            <button type="button" disabled={!project || busy} onClick={() => void remix()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:brightness-110 disabled:opacity-50">
-                                {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}{tx({ TR: "Remiksle (kopyasını düzenle)", EN: "Remix (edit a copy)" })}
-                            </button>
+                            {game && !canRemix ? (
+                                <p className="flex items-start gap-2 rounded-xl bg-zinc-100 px-3 py-2.5 text-[12.5px] leading-snug text-zinc-600 dark:bg-white/5 dark:text-zinc-300"><Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />{tx(C.remixLocked)}</p>
+                            ) : (
+                                <>
+                                    <button type="button" disabled={!project || busy} onClick={() => void remix()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-[13px] font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:brightness-110 disabled:opacity-50">
+                                        {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}{tx({ TR: "Remiksle (kopyasını düzenle)", EN: "Remix (edit a copy)" })}
+                                    </button>
+                                    {game && !game.isOwner ? <p className="px-1 text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(C.remixAllowed)}</p> : null}
+                                </>
+                            )}
                             <button type="button" onClick={() => void share()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 text-[13px] font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/10"><Share2 className="h-4 w-4" />{tx({ TR: "Paylaş", EN: "Share" })}</button>
                             <Link href="/game-engine/docs" className="flex h-9 w-full items-center justify-center gap-1.5 text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white">{tx({ TR: "Bu oyun nasıl yapıldı? Belgeler", EN: "How was this made? Docs" })}<ExternalLink className="h-3.5 w-3.5" /></Link>
                             {notice ? <p className="rounded-lg bg-zinc-100 px-3 py-2 text-[12px] text-zinc-600 dark:bg-white/5 dark:text-zinc-300" role="status">{notice}</p> : null}

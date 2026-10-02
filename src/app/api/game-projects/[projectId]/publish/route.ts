@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { nowIso } from "@/lib/game-engine/ids";
 import { compileScripts } from "@/lib/game-engine/script/compiler";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
-import { MAX_ARCADE_GAME_BYTES, type ArcadeRecord } from "@/lib/server/arcade";
+import { MAX_ARCADE_GAME_BYTES, remixSourceOf, type ArcadeRecord } from "@/lib/server/arcade";
 import { commitServerMutations, getServerDocument, listServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
 import {
@@ -30,7 +30,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const { email, session, user, rate } = await authorizeGameRequest(request, { mutation: true, bucket: "write" });
         const projectId = assertProjectId((await context.params).projectId);
         const body = await readJsonBody(request, 200 * 1024);
-        assertOnlyKeys(body, ["title", "description", "thumbnail"]);
+        assertOnlyKeys(body, ["title", "description", "thumbnail", "allowRemix"]);
+        if (body.allowRemix !== undefined && typeof body.allowRemix !== "boolean") throw new GameApiError(400, "Geçersiz remiks ayarı.");
         const record = await loadOwnedProject(projectId, email);
         const scripts = (await listServerCollection<GameScriptRecord>(`game_projects/${projectId}/scripts`, 200)).filter((script) => script.ownerEmail === email);
         const project = assembleProject(record, projectId, scripts);
@@ -76,6 +77,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
             languages,
             plays: Number(existing?.plays || 0),
             likes: Number(existing?.likes || 0),
+            // Remixing stays off unless the author turns it on; republishing keeps the last choice.
+            allowRemix: typeof body.allowRemix === "boolean" ? body.allowRemix : existing?.allowRemix === true,
+            remixOf: remixSourceOf(record.remixOf),
             createdAt: existing?.createdAt || now,
             updatedAt: now,
         };

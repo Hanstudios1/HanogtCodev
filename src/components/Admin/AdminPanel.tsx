@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Cloud, LayoutDashboard, LifeBuoy, Megaphone, MessageSquareText, ScrollText, ShieldAlert, ShieldCheck, Siren, Users, type LucideIcon } from "lucide-react";
+import { Cloud, Crown, LayoutDashboard, LifeBuoy, Megaphone, MessageSquareText, ScrollText, ShieldAlert, ShieldCheck, Siren, Users, type LucideIcon } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import Header from "@/components/Header";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -13,6 +13,7 @@ import FeedbackSection from "./FeedbackSection";
 import { formatNumber, useAdminResource } from "./hooks";
 import ModerationSection from "./ModerationSection";
 import OverviewSection from "./OverviewSection";
+import PlansSection from "./PlansSection";
 import SecurityEventsSection from "./SecurityEventsSection";
 import TicketsSection from "./TicketsSection";
 import type { AdminIdentity, AdminPermissions, AdminSectionId, AdminStatsResponse, StatKey } from "./types";
@@ -36,6 +37,7 @@ const SECTIONS: SectionDefinition[] = [
     { id: "tickets", icon: LifeBuoy, label: { TR: "Destek Talepleri", EN: "Support Tickets" }, hint: { TR: "Sorular, hata ve güvenlik bildirimleri", EN: "Questions, bug and security reports" }, permission: "tickets", badge: "ticketsOpen" },
     { id: "feedback", icon: MessageSquareText, label: { TR: "Geri Bildirim", EN: "Feedback" }, hint: { TR: "Gelen kutusu ve yanıtlar", EN: "Inbox and replies" }, permission: "feedback", badge: "feedbackOpen" },
     { id: "announcements", icon: Megaphone, label: { TR: "Duyurular", EN: "Announcements" }, hint: { TR: "Site geneli bildirim çubuğu", EN: "Site-wide notice bar" }, permission: "manageAnnouncements" },
+    { id: "plans", icon: Crown, label: { TR: "Abonelikler", EN: "Subscriptions" }, hint: { TR: "Fiyat, kupon, plan ve AI sınırı", EN: "Prices, coupons, plans, AI limits" }, permission: "managePlans" },
     { id: "security", icon: Siren, label: { TR: "Güvenlik Olayları", EN: "Security Events" }, hint: { TR: "Engellenen riskli istekler", EN: "Blocked risky requests" }, permission: "viewSecurityEvents" },
     { id: "cloud", icon: Cloud, label: { TR: "Bulut Sağlığı", EN: "Cloud Health" }, hint: { TR: "Firebase bağlantısı ve kurallar", EN: "Firebase connection and rules" }, permission: "cloudHealth" },
     { id: "audit", icon: ScrollText, label: { TR: "Denetim Kaydı", EN: "Audit Log" }, hint: { TR: "Ekip işlemlerinin kaydı", EN: "Record of staff actions" }, permission: "viewAuditLog" },
@@ -188,6 +190,8 @@ export default function AdminPanel({ me }: { me: AdminIdentity }) {
                                 <FeedbackSection />
                             ) : active === "announcements" ? (
                                 <AnnouncementsSection />
+                            ) : active === "plans" ? (
+                                <PlansSection />
                             ) : active === "security" ? (
                                 <SecurityEventsSection />
                             ) : active === "cloud" ? (

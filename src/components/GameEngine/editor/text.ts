@@ -218,6 +218,8 @@ const TEXT = {
     sceneSetting: ["Sahne ayarı", "Scene setting"],
     compileErrorsFirst: ["{count} derleme hatası — ilk: satır {line}: {message}", "{count} compile errors — first: line {line}: {message}"],
     publishFailed: ["Yayınlanamadı.", "Publishing failed."],
+    allowRemix: ["Remikslemelere izin ver", "Allow remixes"],
+    allowRemixHint: ["Açarsan diğer oyuncular oyununu Remix ile kendi projelerine kopyalayıp değiştirebilir; yayımladıklarında sana atıf yapılır. Kapalıyken Remix düğmesi görünmez ve sunucu kopyalamayı reddeder.", "If it's on, other players can copy your game into their own projects with Remix and change it; when they publish, you're credited. While it's off, the Remix button doesn't appear and the server refuses copies."],
     actionFailed: ["İşlem başarısız.", "Action failed."],
     publishNotice: ["Yayınlanan oyunlar Arcade'de herkese açık görünür; kodunuz oyunu çalıştırmak için oyuncuların tarayıcısına gönderilir. Kişisel veri, parola veya gizli anahtar paylaşmayın. Kullanım şartlarına aykırı içerik kaldırılır.", "Published games are public on the Arcade, and your code is sent to players' browsers to run the game. Don't share personal data, passwords or secret keys. Content that breaks the Terms of Use is removed."],
     editorOrigin: ["Editör", "Editor"],

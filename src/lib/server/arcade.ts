@@ -20,6 +20,10 @@ export type ArcadeRecord = {
     languages?: string[];
     plays?: number;
     likes?: number;
+    /** The author lets others copy the game with Remix (off unless they turn it on). */
+    allowRemix?: boolean;
+    /** Set when the game was made from someone else's remix; shown as attribution. */
+    remixOf?: unknown;
     createdAt?: string;
     updatedAt?: string;
     _id?: string;
@@ -27,7 +31,21 @@ export type ArcadeRecord = {
     _updateTime?: string;
 };
 
-export const ARCADE_LIST_FIELDS = ["title", "description", "dimension", "thumbnail", "authorName", "authorImage", "templateId", "engineVersion", "languages", "plays", "likes", "createdAt", "updatedAt"];
+export const ARCADE_LIST_FIELDS = ["title", "description", "dimension", "thumbnail", "authorName", "authorImage", "templateId", "engineVersion", "languages", "plays", "likes", "allowRemix", "remixOf", "createdAt", "updatedAt"];
+
+export type RemixSource = { gameId: string; title: string; authorName: string };
+
+/** Attribution of a remix as stored on game projects and Arcade games; anything malformed is dropped. */
+export function remixSourceOf(value: unknown): RemixSource | null {
+    if (!value || typeof value !== "object") return null;
+    const source = value as Record<string, unknown>;
+    const gameId = assertGameId(source.gameId);
+    if (!gameId) return null;
+    const title = typeof source.title === "string" ? source.title.slice(0, 80) : "";
+    const authorName = typeof source.authorName === "string" ? source.authorName.slice(0, 40) : "";
+    return { gameId, title: title || "Adsız oyun", authorName: authorName || "Hanogt geliştiricisi" };
+}
+
 export const MAX_ARCADE_GAME_BYTES = 900 * 1024;
 
 export function arcadeSummary(record: ArcadeRecord, id: string) {
@@ -44,6 +62,8 @@ export function arcadeSummary(record: ArcadeRecord, id: string) {
         languages: Array.isArray(record.languages) ? record.languages.filter((item) => item === "C#" || item === "C++") : [],
         plays: Number(record.plays || 0),
         likes: Number(record.likes || 0),
+        allowRemix: record.allowRemix === true,
+        remixOf: remixSourceOf(record.remixOf),
         createdAt: record.createdAt || null,
         updatedAt: record.updatedAt || null,
     };

@@ -186,7 +186,7 @@ export async function deleteCloudProject(id: string): Promise<void> {
     await request(`/api/game-projects/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
-export async function publishProject(id: string, details: { title: string; description: string; thumbnail: string | null }): Promise<{ arcadeId: string }> {
+export async function publishProject(id: string, details: { title: string; description: string; thumbnail: string | null; allowRemix: boolean }): Promise<{ arcadeId: string }> {
     return request<{ arcadeId: string }>(`/api/game-projects/${encodeURIComponent(id)}/publish`, {
         method: "POST",
         body: JSON.stringify(details),

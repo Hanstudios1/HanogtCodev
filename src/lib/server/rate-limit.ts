@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { getServerDocument, isWriteConflict, patchServerDocument } from "./firebase-rest";
+import { deleteServerDocument, getServerDocument, isWriteConflict, patchServerDocument } from "./firebase-rest";
 
 type RateLimitResult = { allowed: boolean; remaining: number; retryAfterSeconds: number };
 
@@ -61,4 +61,24 @@ export async function enforceRateLimitWithFallback(key: string, limit: number, w
     window.count += 1;
     memoryWindows.set(key, window);
     return { allowed: true, remaining: Math.max(0, limit - window.count), retryAfterSeconds };
+}
+
+/** Document of one rate-limit window (keys are hashed so the stored ids reveal nothing). */
+function rateLimitPath(key: string) {
+    const salt = process.env.RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET;
+    if (!salt) throw new Error("Rate-limit anahtarı yapılandırılmamış.");
+    return `security_rate_limits/${createHash("sha256").update(`${salt}:${key}`).digest("hex")}`;
+}
+
+/** How much of a window is used right now (staff screens); null when no window is open. */
+export async function readRateLimit(key: string, windowMs: number): Promise<{ count: number; resetsAt: string } | null> {
+    const current = await getServerDocument<{ count?: number; windowStartedAt?: number }>(rateLimitPath(key));
+    if (!current?.windowStartedAt || Date.now() - current.windowStartedAt >= windowMs) return null;
+    return { count: Number(current.count || 0), resetsAt: new Date(current.windowStartedAt + windowMs).toISOString() };
+}
+
+/** Starts a key's window afresh (e.g. staff resetting someone's Hanogt AI limit). */
+export async function resetRateLimit(key: string) {
+    memoryWindows.delete(key);
+    await deleteServerDocument(rateLimitPath(key));
 }

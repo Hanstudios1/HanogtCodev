@@ -8,6 +8,7 @@ import { BROWSER_LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 import { analyzeCode } from "@/lib/security/advisor";
 import { checkLink, findUrl } from "@/lib/security/links";
 import { getActiveSession } from "@/lib/server/active-session";
+import { AI_DAY_MS, AI_LIMIT_KEYS, aiLimitsForEmail } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
@@ -202,9 +203,12 @@ export async function POST(request: NextRequest) {
     const config = providerConfig();
     if (!config) return errorResponse(503, "not_configured", "Hanogt AI dil modeli bu sunucuda yapılandırılmamış.");
 
+    // Plans (assigned by staff while sales are "coming soon") and staff grants raise the limits.
+    const limits = await aiLimitsForEmail(email);
+    const keys = AI_LIMIT_KEYS(email);
     const [minute, day] = await Promise.all([
-        enforceRateLimitWithFallback(`ai:${email}`, 12, 60_000),
-        enforceRateLimitWithFallback(`ai-day:${email}`, 250, 24 * 60 * 60_000),
+        enforceRateLimitWithFallback(keys.minute, limits.perMinute, 60_000),
+        enforceRateLimitWithFallback(keys.day, limits.perDay, AI_DAY_MS),
     ]);
     const limited = !minute.allowed ? minute : !day.allowed ? day : null;
     if (limited) {

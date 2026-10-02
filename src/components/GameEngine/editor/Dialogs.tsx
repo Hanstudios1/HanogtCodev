@@ -2,7 +2,7 @@
 
 import { Camera, CheckCircle2, ExternalLink, Globe, LoaderCircle, Rocket, Settings2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { GameProjectDocument, ProjectSettings } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { activeScene, touch } from "./operations";
@@ -159,13 +159,27 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
     const [description, setDescription] = useState(project.description);
     const [thumbnail, setThumbnail] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    const [allowRemix, setAllowRemix] = useState(false);
+
+    // A published game keeps its remix setting; read it so republishing doesn't change it by accident.
+    useEffect(() => {
+        if (!open || !arcadeId) return;
+        const controller = new AbortController();
+        fetch(`/api/arcade/${encodeURIComponent(arcadeId)}`, { signal: controller.signal, cache: "no-store" })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((payload: { game?: { allowRemix?: unknown } } | null) => {
+                if (payload?.game) setAllowRemix(payload.game.allowRemix === true);
+            })
+            .catch(() => undefined);
+        return () => controller.abort();
+    }, [arcadeId, open]);
 
     const publish = async () => {
         setBusy(true);
         try {
             if (!(await onSaveFirst())) throw new Error(t("saveFailed"));
             const image = thumbnail ?? await captureThumbnail(snapshot);
-            const result = await publishProject(project.id, { title: title.trim() || project.name, description: description.trim(), thumbnail: image });
+            const result = await publishProject(project.id, { title: title.trim() || project.name, description: description.trim(), thumbnail: image, allowRemix });
             onPublished(result.arcadeId);
             toast(`${t("publishedAt")} 🎉`, "success");
         } catch (error) {
@@ -217,6 +231,13 @@ export function PublishDialog({ open, onClose, source, arcadeId, onPublished, on
                             <Button onClick={async () => setThumbnail(await captureThumbnail(snapshot))}><Camera className="h-4 w-4" />{t("captureThumbnail")}</Button>
                         </div>
                     </FieldRow>
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <label className="flex cursor-pointer items-center justify-between gap-3">
+                            <span className="text-[13px] font-semibold text-zinc-200">{t("allowRemix")}</span>
+                            <Toggle checked={allowRemix} onChange={setAllowRemix} disabled={busy} label={t("allowRemix")} />
+                        </label>
+                        <p className="mt-1.5 text-[11.5px] leading-relaxed text-zinc-500">{t("allowRemixHint")}</p>
+                    </div>
                     <p className="text-[11.5px] leading-relaxed text-zinc-500">{t("publishNotice")}</p>
                 </div>
             )}

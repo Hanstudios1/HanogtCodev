@@ -169,7 +169,7 @@ export async function GET() {
             return NextResponse.json({ error: "Çok fazla dışa aktarma isteği. Biraz sonra tekrar deneyin." }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }) });
         }
 
-        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats] = await Promise.all([
+        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats, subscription, waitlist] = await Promise.all([
             getServerDocument<Record<string, unknown>>(`users/${email}`),
             queryServerCollection<Record<string, unknown>>("projects", "email", "EQUAL", email),
             queryServerCollection<Record<string, unknown>>("game_projects", "ownerEmail", "EQUAL", email),
@@ -182,6 +182,8 @@ export async function GET() {
             queryServerCollection<TicketRecord>(TICKETS_COLLECTION, "authorEmail", "EQUAL", email),
             listServerCollection<Record<string, unknown>>(`notifications/${email}/items`),
             queryServerCollection<Record<string, unknown>>("chats", "participants", "ARRAY_CONTAINS", email, { limit: CHAT_LIMIT }),
+            getServerDocument<Record<string, unknown>>(`subscriptions/${email}`).catch(() => null),
+            getServerDocument<Record<string, unknown>>(`plan_waitlist/${email}`).catch(() => null),
         ]);
         const exportedProjects = await Promise.all(projects.map(async (project) => ({
             ...publicAccountData(project),
@@ -219,6 +221,9 @@ export async function GET() {
             }),
             supportTickets: exportSupportTickets(supportTickets),
             notifications: exportNotifications(notifications),
+            // The staff member who assigned the plan is their personal data, so only the plan itself is exported.
+            plan: subscription ? withoutKeys(publicAccountData(subscription) as Record<string, unknown>, ["grantedBy", "blockedBy"]) : null,
+            planWaitlist: waitlist ? publicAccountData(waitlist) : null,
             privateChats,
             exportedAt: new Date().toISOString(),
             note: "Kimlik bilgileri ve parola özetleri bu dosyaya dahil edilmez. Özel sohbetlerde yalnızca sizin yazdığınız mesajlar yer alır; diğer katılımcılar görünen adlarıyla gösterilir.",
@@ -227,6 +232,10 @@ export async function GET() {
         console.error("[account:export]", error instanceof Error ? error.message : error);
         return NextResponse.json({ error: "Veriler şu anda dışa aktarılamadı. Lütfen biraz sonra tekrar deneyin." }, { status: 503, headers: jsonSecurityHeaders() });
     }
+}
+
+function withoutKeys(record: Record<string, unknown>, keys: readonly string[]) {
+    return Object.fromEntries(Object.entries(record).filter(([key]) => !keys.includes(key)));
 }
 
 export async function DELETE(request: NextRequest) {

@@ -1,5 +1,30 @@
 # Değişiklik Günlüğü
 
+## 0.2.1 — 2026-10-02
+
+### Arcade: remiks izni
+
+- Yayınlama penceresine **Remikslemelere izin ver** anahtarı eklendi; açık
+  değilse Remix düğmesi görünmüyor ve sunucu kopyalamayı reddediyor
+  (`POST /api/arcade/{id}/remix`). Yeniden yayınlarken son seçim korunuyor.
+- Remikslenen oyunlar orijinal oyunun adını ve yapımcısını atıf olarak
+  taşıyor; oyun sayfasında "… tarafından yapılan … oyununun remiksi"
+  bağlantısı, Arcade kartlarında "remikslenebilir" rozeti var.
+
+### Planlar (Yakında)
+
+- Yeni **Planlar** sayfası (`/plans`): Ücretsiz, Plus ve Pro. Ödeme alınmıyor;
+  "Açılınca haber ver" ile bekleme listesine katılınabiliyor. Giriş yapanlar
+  planını ve günlük Hanogt AI kullanımını görüyor.
+- Hanogt AI sınırları plana göre: Ücretsiz günde 250, Plus 750, Pro 2.000
+  mesaj. Plus ve Pro'nun yeni destek talepleri yüksek öncelikle açılıyor.
+- Yönetici Paneli > **Abonelikler**: plan fiyatları ve indirimleri (fiyat
+  geçmişiyle), kuponlar, kişiye elle plan tanımlama, süre, engelleme ve
+  kaldırma, Hanogt AI sayacını sıfırlama ve ek günlük mesaj hakkı. Her işlem
+  denetim kaydına yazılıyor.
+- Abonelik ve bekleme kayıtları hesap dışa aktarımına dahil, hesap
+  silindiğinde siliniyor. Yasal metinler 4.3.
+
 ## 0.2.0 — 2026-10-02
 
 Topluluk, yapay zekâ ve editör güncellemesi: arkadaşlar, mesajlar ve gruplar

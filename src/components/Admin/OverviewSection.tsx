@@ -55,6 +55,7 @@ const SECTION_PERMISSION: Record<AdminSectionId, keyof AdminPermissions> = {
     tickets: "tickets",
     feedback: "feedback",
     announcements: "manageAnnouncements",
+    plans: "managePlans",
     security: "viewSecurityEvents",
     cloud: "cloudHealth",
     audit: "viewAuditLog",

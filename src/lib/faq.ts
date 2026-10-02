@@ -199,8 +199,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.engine,
         question: { TR: "Oyunumu Arcade'de nasıl yayınlarım?", EN: "How do I publish my game on the Arcade?" },
         answer: {
-            TR: "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar Arcade'de herkese açıktır, oynanabilir, beğenilebilir ve remikslenebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
-            EN: "Press Publish in the game engine. The game is compiled and goes through a security scan; published games are public on the Arcade, where people can play, like and remix them. You can take your game down any time.",
+            TR: "Oyun motorunda Yayınla düğmesine basın. Oyun derlenir ve güvenlik taramasından geçer; yayınlanan oyunlar Arcade'de herkese açıktır, oynanabilir ve beğenilebilir; yayınlarken “Remikslemelere izin ver” seçeneğini açarsanız başkaları da kopyasını düzenleyebilir. Oyununuzu istediğiniz zaman yayından kaldırabilirsiniz.",
+            EN: "Press Publish in the game engine. The game is compiled and goes through a security scan; published games are public on the Arcade, where people can play and like them; if you turn on “Allow remixes” when publishing, others can edit a copy too. You can take your game down any time.",
         },
     },
     {

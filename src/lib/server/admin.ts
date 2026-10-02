@@ -111,6 +111,7 @@ export function adminPermissions(role: StaffRole): AdminPermissions {
         tickets: true,
         deleteUserData: admin,
         cloudHealth: role === "owner",
+        managePlans: admin,
     };
 }
 
@@ -211,6 +212,11 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
     conflict: "Kayıt aynı anda değişti; yenileyip tekrar deneyin.",
     confirmation_mismatch: "Onay metni eşleşmiyor.",
     deploy_failed: "Güvenlik kuralları yayımlanamadı.",
+    invalid_plan: "Geçersiz plan.",
+    invalid_price: "Fiyat 0 ile 100.000 ₺ arasında olmalıdır.",
+    invalid_number: "Sayı geçersiz ya da izin verilen aralığın dışında.",
+    invalid_coupon: "Kupon kodu 3-24 karakter olmalı; yalnızca büyük harf, rakam, - ve _ içerebilir.",
+    coupon_exists: "Bu kupon kodu zaten var.",
     too_many_active: "Aynı anda en fazla 5 etkin duyuru olabilir.",
     unavailable: "Yönetim hizmeti şu anda kullanılamıyor.",
 };

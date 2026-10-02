@@ -608,6 +608,15 @@ async function deleteCollabSessions(ctx: Context) {
     if (purged) ctx.tally.count("collabSessions", purged);
 }
 
+/** A plan staff assigned (with any Hanogt AI grant) and "notify me" sign-ups on the Plans page. */
+async function deletePlanRecords(ctx: Context) {
+    await commitServerMutations([
+        { type: "delete", path: `subscriptions/${ctx.email}` },
+        { type: "delete", path: `plan_waitlist/${ctx.email}` },
+    ]);
+    ctx.tally.count("planRecords");
+}
+
 /**
  * The account itself, in one commit: without the user document every
  * session ends (getActiveSession requires it). Then the Firebase Auth record,
@@ -650,6 +659,7 @@ const STEPS: readonly Step[] = [
     { id: "collabSessions", scopes: ALL, run: deleteCollabSessions },
     { id: "notifications", scopes: ALL, run: deleteNotifications },
     { id: "supportTickets", scopes: ALL, run: deleteSupportTickets },
+    { id: "plans", scopes: ALL, run: deletePlanRecords },
     { id: "account", scopes: ALL, run: deleteAccount },
 ];
 

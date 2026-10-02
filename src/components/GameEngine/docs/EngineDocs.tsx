@@ -836,7 +836,7 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 
                             <Section id="yayinlama" title="Publishing and exporting">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play, like and remix it. The game card shows the engine version it was made with (for example V3). You can unpublish it any time.</li>
+                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play and like it, and remix it if you turn on <b>Allow remixes</b>. The game card shows the engine version it was made with (for example V3). You can unpublish it any time.</li>
                                     <li><b>Playable HTML:</b> packs the game and the engine into a single .html file that opens without an internet connection; host it anywhere you like.</li>
                                     <li><b>Project file (.json):</b> for backups and for moving a project to another account or browser.</li>
                                 </ul>

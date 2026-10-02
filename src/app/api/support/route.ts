@@ -1,4 +1,6 @@
 import type { NextRequest } from "next/server";
+import { FREE_SUBSCRIPTION, effectivePlan } from "@/lib/plans";
+import { getSubscription } from "@/lib/server/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { httpsUrlOrNull, stringOr } from "@/lib/server/admin";
 import { commitServerMutations, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
@@ -122,6 +124,13 @@ export async function GET(request: NextRequest) {
     }
 }
 
+/** Plus and Pro accounts' new tickets start one step higher than "normal". */
+async function planPriority(email: string, priority: ReturnType<typeof defaultTicketPriority>) {
+    if (priority !== "low" && priority !== "normal") return priority;
+    const plan = effectivePlan(await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
+    return plan === "free" ? priority : "high";
+}
+
 async function createTicket(request: NextRequest, active: ActiveUser, body: Record<string, unknown>) {
     const result = validateTicketDraft(body);
     if (!result.ok) {
@@ -145,7 +154,7 @@ async function createTicket(request: NextRequest, active: ActiveUser, body: Reco
         category: draft.category,
         title: draft.title,
         description: draft.description,
-        priority: defaultTicketPriority(draft.category, draft.severity),
+        priority: await planPriority(email, defaultTicketPriority(draft.category, draft.severity)),
         authorEmail: email,
         authorName: displayName(active, profile),
         authorAvatar: httpsUrlOrNull(profile?.avatarUrl) ?? httpsUrlOrNull(user.avatarUrl) ?? httpsUrlOrNull(active.session?.user?.image),

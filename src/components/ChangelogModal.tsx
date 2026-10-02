@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.2.1",
+        version: "v0.2.1",
+        date: "2026-10-02",
+        title: { TR: "Remiks izni ve Planlar (Yakında)", EN: "Remix permission and Plans (coming soon)" },
+        desc: { TR: "Arcade oyunları artık yalnızca yapımcı izin verirse remikslenebiliyor; Planlar sayfası ve plana göre Hanogt AI sınırları geldi.", EN: "Arcade games can now be remixed only if the author allows it; the Plans page and plan-based Hanogt AI limits arrived." },
+        items: [
+            { TR: "Yayınlarken \"Remikslemelere izin ver\" seçeneği; izin yoksa Remix düğmesi görünmez ve sunucu kopyalamayı reddeder.", EN: "An \"Allow remixes\" option when publishing; without it the Remix button is hidden and the server refuses copies." },
+            { TR: "Remiksler orijinal oyunun adını ve yapımcısını atıf olarak gösterir.", EN: "Remixes show the original game's title and author as attribution." },
+            { TR: "Planlar sayfası: Ücretsiz, Plus ve Pro yakında; ödeme alınmıyor, açılınca haber verebiliriz.", EN: "The Plans page: Free, Plus and Pro coming soon; no payments, and we can notify you when they open." },
+            { TR: "Hanogt AI günlük sınırı plana göre: Ücretsiz 250, Plus 750, Pro 2.000 mesaj.", EN: "Hanogt AI's daily limit depends on the plan: Free 250, Plus 750, Pro 2,000 messages." },
+        ],
+    },
+    {
         id: "v0.2.0",
         version: "v0.2.0",
         date: "2026-10-02",

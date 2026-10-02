@@ -6,15 +6,23 @@ import type { Copy } from "@/lib/i18n";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.2";
+export const LEGAL_VERSION = "4.3";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "2 Ekim 2026", EN: "2 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.2-2026-10-02";
+export const LEGAL_NOTICE_ID = "4.3-2026-10-02";
 
 export type LegalChange = { version: string; date: Copy; items: Copy[] };
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.3",
+        date: { TR: "2 Ekim 2026", EN: "2 October 2026" },
+        items: [
+            { TR: "Hanogt Arcade: oyunlar artık yalnızca yapımcı “Remikslemelere izin ver” seçeneğini açtıysa remikslenebiliyor; remiksler orijinal oyunun adını ve yazarını atıf olarak taşıyor ve izinsiz kopyalar Şikayet talebiyle bildirilebiliyor.", EN: "Hanogt Arcade: games can now be remixed only if the author turned on “Allow remixes”; remixes carry the original game's title and author as attribution, and unauthorised copies can be reported with a Complaint ticket." },
+            { TR: "Planlar (Yakında): ödeme alınmadığı, ekibin planları elle tanımlayıp geri alabildiği, planın canlı avantajları (Hanogt AI sınırı, destek önceliği), “Açılınca haber ver” kaydı ve bu kayıtların saklanması açıklandı.", EN: "Plans (Coming soon): explained that no payments are taken, that staff can assign and take back plans by hand, a plan's live benefits (Hanogt AI limit, support priority), the “Notify me” record and how these records are kept." },
+        ],
+    },
     {
         version: "4.2",
         date: { TR: "2 Ekim 2026", EN: "2 October 2026" },

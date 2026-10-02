@@ -26,9 +26,11 @@ export type AdminPermissions = {
     deleteUserData: boolean;
     /** Cloud health diagnostics and one-click security-rules deployment (owners only). */
     cloudHealth: boolean;
+    /** Plan prices, coupons and people's plans / Hanogt AI limits (admins and owners). */
+    managePlans: boolean;
 };
 
-export type AdminSectionId = "overview" | "users" | "moderation" | "tickets" | "feedback" | "announcements" | "security" | "cloud" | "audit";
+export type AdminSectionId = "overview" | "users" | "moderation" | "tickets" | "feedback" | "announcements" | "plans" | "security" | "cloud" | "audit";
 
 export type AdminIdentity = { isAdmin: true; email: string; role: StaffRole; permissions: AdminPermissions };
 export type AdminMeResponse = { isAdmin: false } | AdminIdentity;
@@ -69,6 +71,11 @@ export type AdminErrorCode =
     | "too_many_active"
     | "confirmation_mismatch"
     | "deploy_failed"
+    | "invalid_plan"
+    | "invalid_price"
+    | "invalid_number"
+    | "invalid_coupon"
+    | "coupon_exists"
     | "unavailable";
 
 export type AdminErrorBody = { error: string; code: AdminErrorCode };
@@ -307,7 +314,17 @@ export type AdminAuditAction =
     | "ticket.set_priority"
     | "ticket.delete"
     | "user.delete_data"
-    | "cloud.deploy_rules";
+    | "cloud.deploy_rules"
+    | "plan.set_price"
+    | "coupon.create"
+    | "coupon.set_active"
+    | "coupon.delete"
+    | "subscription.set_plan"
+    | "subscription.block"
+    | "subscription.unblock"
+    | "subscription.remove"
+    | "subscription.reset_ai"
+    | "subscription.grant_ai";
 
 export type AuditDetailValue = string | number | boolean | null;
 
@@ -363,3 +380,44 @@ export function isSafeAnnouncementLink(value: string) {
         return false;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Plans ("coming soon"): prices, coupons, people's plans and Hanogt AI limits
+// ---------------------------------------------------------------------------
+
+export type AdminPriceChange = {
+    plan: "plus" | "pro";
+    by: string;
+    at: string | null;
+    from: { monthly: number | null; yearly: number | null; discountPercent: number; visible: boolean };
+    to: { monthly: number | null; yearly: number | null; discountPercent: number; visible: boolean };
+};
+
+export type AdminCoupon = {
+    code: string;
+    percentOff: number;
+    plan: "plus" | "pro" | "any";
+    maxUses: number | null;
+    used: number;
+    expiresAt: string | null;
+    active: boolean;
+    note: string;
+    createdBy: string;
+    createdAt: string | null;
+};
+
+export type AdminPlansResponse = {
+    catalog: import("@/lib/plans").PlanCatalog;
+    history: AdminPriceChange[];
+    coupons: AdminCoupon[];
+    waitlist: { plus: number | null; pro: number | null };
+};
+
+export type AdminUserPlanResponse = {
+    email: string;
+    exists: boolean;
+    subscription: import("@/lib/plans").UserSubscription;
+    effectivePlan: import("@/lib/plans").PlanId;
+    aiLimits: { perMinute: number; perDay: number };
+    aiUsage: { minute: { count: number; resetsAt: string } | null; day: { count: number; resetsAt: string } | null };
+};

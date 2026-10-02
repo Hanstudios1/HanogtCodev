@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Flame, Gamepad2, Heart, LoaderCircle, Play, Plus, Search, Sparkles, Square, Trophy } from "lucide-react";
+import { Box, Flame, Gamepad2, GitFork, Heart, LoaderCircle, Play, Plus, Search, Sparkles, Square, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/Header";
@@ -22,6 +22,10 @@ export interface ArcadeGameSummary {
     languages: string[];
     plays: number;
     likes: number;
+    /** The author lets others copy the game with Remix. */
+    allowRemix?: boolean;
+    /** The game was made from a remix of this one. */
+    remixOf?: { gameId: string; title: string; authorName: string } | null;
     createdAt: string | null;
     updatedAt: string | null;
 }
@@ -58,6 +62,7 @@ export function GameCard({ game, index = 0 }: { game: ArcadeGameSummary; index?:
                     {game.dimension === "3d" ? <Box className="h-3 w-3" /> : <Square className="h-3 w-3" />}{game.dimension}
                 </span>
                 <div className="absolute right-2 top-2 flex gap-1">
+                    {game.allowRemix ? <span title={tx({ TR: "Remikslenebilir", EN: "Remixable" })} className="inline-flex items-center rounded-md bg-emerald-500/85 px-1.5 py-0.5 text-white backdrop-blur"><GitFork className="h-3 w-3" aria-label={tx({ TR: "Remikslenebilir", EN: "Remixable" })} /></span> : null}
                     {game.engineVersion ? <span title={`Hanogt Engine V${game.engineVersion}`} className="rounded-md bg-indigo-500/80 px-1.5 py-0.5 text-[10px] font-black text-white backdrop-blur">V{game.engineVersion}</span> : null}
                     {game.languages.map((language) => <span key={language} className="rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-black text-white backdrop-blur">{language}</span>)}
                 </div>
