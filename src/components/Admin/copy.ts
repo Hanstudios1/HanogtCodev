@@ -56,6 +56,7 @@ export const ERROR_COPY: Record<string, Copy> = {
     invalid_coupon: { TR: "Kupon kodu 3-24 karakter olmalı; yalnızca büyük harf, rakam, - ve _ kullanın.", EN: "Coupon codes are 3-24 characters: capital letters, digits, - and _ only." },
     coupon_exists: { TR: "Bu kupon kodu zaten var.", EN: "That coupon code already exists." },
     paddle_unconfigured: { TR: "Paddle bağlı değil. Önce Paddle anahtarlarını Vercel'e girip yeniden dağıtın.", EN: "Paddle isn't connected. Add the Paddle keys in Vercel and redeploy first." },
+    operator_required: { TR: "Satışları herkese açmadan önce İşletme bilgilerini (yasal ad ve iletişim e-postası) doldur; Paddle'ın site incelemesi ve yasal metinler bunu istiyor.", EN: "Fill in the business details (legal name and contact e-mail) before opening sales to everyone; Paddle's website review and the legal texts need them." },
     paddle_error: { TR: "Paddle isteği tamamlanamadı. Biraz sonra tekrar deneyin; sürerse Paddle bağlantısının durumuna bakın.", EN: "The Paddle request failed. Try again shortly; if it keeps failing, check the Paddle connection status." },
     paddle_coupon_code: { TR: "Paddle'a aktarılan kupon kodları yalnızca harf ve rakamdan oluşabilir; - ve _ kullanmayın.", EN: "Coupon codes sent to Paddle may only contain letters and digits; don't use - or _." },
     invalid_price_id: { TR: "Fiyat kimliği geçersiz. Paddle'daki pri_ ile başlayan kimliği girin.", EN: "Invalid price ID. Enter the ID starting with pri_ from Paddle." },

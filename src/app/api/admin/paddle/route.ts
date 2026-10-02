@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import type { AdminPaddleCatalogResponse, AdminPaddleCouponResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPaddleWarning } from "@/components/Admin/types";
-import { OPERATOR_LIMITS, operatorInfoErrors } from "@/lib/legal-info";
+import { OPERATOR_LIMITS, isOperatorPublished, operatorInfoErrors } from "@/lib/legal-info";
 import { isPaddleId, type PaddleEnvironment } from "@/lib/paddle";
 import { normalizeCouponCode } from "@/lib/plans";
 import {
@@ -200,6 +200,8 @@ export async function POST(request: NextRequest) {
         if (action === "setSalesOpen") {
             if (!owner) throw new AdminHttpError(403, "forbidden");
             const open = requireBoolean(body.open);
+            // Paddle's review and the legal texts need the operator's legal name and contact address.
+            if (open && !isOperatorPublished(await getOperatorInfo(true))) throw new AdminHttpError(409, "operator_required");
             const changed = await setSalesOpen(open, actor, [auditLogMutation(actor, "paddle.set_sales_open", PADDLE_SETTINGS_PATH, { environment: config.environment, open })], config.environment);
             if (!changed) throw new AdminHttpError(409, "no_change");
             return adminJson(await overview(origin, owner));

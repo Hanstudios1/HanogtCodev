@@ -77,6 +77,7 @@ export type AdminErrorCode =
     | "invalid_coupon"
     | "coupon_exists"
     | "paddle_unconfigured"
+    | "operator_required"
     | "paddle_error"
     | "paddle_coupon_code"
     | "invalid_price_id"

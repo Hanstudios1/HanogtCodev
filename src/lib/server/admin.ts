@@ -218,6 +218,7 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
     invalid_coupon: "Kupon kodu 3-24 karakter olmalı; yalnızca büyük harf, rakam, - ve _ içerebilir.",
     coupon_exists: "Bu kupon kodu zaten var.",
     paddle_unconfigured: "Paddle yapılandırılmamış.",
+    operator_required: "Satışları herkese açmadan önce İşletme bilgilerini (yasal ad ve iletişim e-postası) doldurun; Paddle'ın site incelemesi ve yasal metinler bunu istiyor.",
     paddle_error: "Paddle isteği tamamlanamadı.",
     paddle_coupon_code: "Paddle'a aktarılan kupon kodları yalnızca harf ve rakam içerebilir.",
     invalid_price_id: "Geçersiz Paddle fiyat kimliği.",
