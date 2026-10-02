@@ -92,6 +92,14 @@ test("legacy values and file names resolve", () => {
     assert.equal(languageFromFileName("Dockerfile")?.id, "dockerfile");
     assert.equal(languageFromFileName("src/App.TSX")?.id, "typescript");
     assert.equal(languageFromFileName(".vimrc")?.id, "vim");
+    // The editor names copies of special files "Makefile-2", ".env-2", "CMakeLists-2.txt"; they keep their language.
+    assert.equal(languageFromFileName("Makefile-2")?.id, languageFromFileName("Makefile")?.id);
+    assert.equal(languageFromFileName(".env-2")?.id, languageFromFileName(".env")?.id);
+    assert.equal(languageFromFileName(".env-3.local")?.id, languageFromFileName(".env.local")?.id);
+    assert.equal(languageFromFileName("CMakeLists-2.txt")?.id, languageFromFileName("CMakeLists.txt")?.id);
+    assert.equal(languageFromFileName("Dockerfile-12")?.id, "dockerfile");
+    assert.equal(languageFromFileName("app-2.js")?.id, "javascript");
+    assert.equal(languageFromFileName("notes-2"), undefined);
     assert.equal(languageFromFileName("README"), undefined);
     assert.equal(ensureFileExtension("Python Projesi", "python"), "Python Projesi.py");
     assert.equal(ensureFileExtension("notes.md", "python"), "notes.md");

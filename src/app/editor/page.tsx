@@ -793,7 +793,7 @@ function EditorContent() {
         setDialog(null);
         if (!added.length) return;
         setPanelOpen(true);
-        setPanelTab(template.kind === "web" ? "preview" : "console");
+        setPanelTab(template.kind === "web" || template.kind === "docs" ? "preview" : "console");
     }, [addTabs]);
 
     // ------------------------------------------------------------------ running

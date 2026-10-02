@@ -805,6 +805,11 @@ export function languageFromFileName(fileName: string | null | undefined): Langu
     if (!base) return undefined;
     const exact = BY_FILE_NAME.get(base.toLowerCase());
     if (exact) return exact;
+    // Copies of special files keep their language: the editor names a second
+    // ".env" ".env-2", "Makefile" "Makefile-2" and "CMakeLists.txt" "CMakeLists-2.txt".
+    const copy = /^(.+?)-\d{1,3}(\.[^.]+)?$/.exec(base);
+    const original = copy ? BY_FILE_NAME.get(`${copy[1]}${copy[2] ?? ""}`.toLowerCase()) : undefined;
+    if (original) return original;
     const dot = base.lastIndexOf(".");
     if (dot <= 0 || dot === base.length - 1) return undefined;
     return BY_EXTENSION.get(base.slice(dot + 1).toLowerCase());
