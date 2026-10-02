@@ -165,6 +165,7 @@ See [docs/HANOGT_AI.md](./HANOGT_AI.md) for the full picture.
 | `HANOGT_AI_API_KEY` | – | API key (falls back to `GROQ_API_KEY`). |
 | `HANOGT_AI_BASE_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible endpoint. http allowed only to loopback. |
 | `HANOGT_AI_MODEL` | `llama-3.3-70b-versatile` | Model id (falls back to `GROQ_MODEL`). |
+| `AI_KEYS_ENCRYPTION_KEY` | – | **Secret.** Encrypts (AES-256-GCM) the API keys Plus/Pro members connect in Hanogt AI (`ai_connections/{email}`; Plus 2, Pro 5 connections). Falls back to `TOTP_ENCRYPTION_KEY`, then `NEXTAUTH_SECRET`/`AUTH_SECRET`. Set a dedicated value before launch and don't change it: stored keys become unreadable and people have to add their connections again. |
 
 ## Payments (Paddle Billing)
 

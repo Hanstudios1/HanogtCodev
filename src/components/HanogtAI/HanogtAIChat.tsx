@@ -12,6 +12,7 @@ import { artifactFileName, type ChatArtifact } from "./artifacts";
 import ChatComposer from "./ChatComposer";
 import ChatMessage from "./ChatMessage";
 import ChatSidebar from "./ChatSidebar";
+import ConnectionsDialog from "./ConnectionsDialog";
 import { useHanogtChat, type ChatLaunch } from "./useHanogtChat";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
 import WelcomeScreen from "./WelcomeScreen";
@@ -63,6 +64,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
     const { messages, streaming, busy, active } = chat;
     const [artifact, setArtifact] = useState<ChatArtifact | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [connectionsOpen, setConnectionsOpen] = useState(false);
     const sidebarHidden = useSyncExternalStore(subscribeSidebar, readSidebarHidden, () => false);
     const listRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -124,6 +126,11 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
         window.setTimeout(() => inputRef.current?.focus(), 30);
     };
 
+    const closeConnections = useCallback(() => {
+        setConnectionsOpen(false);
+        window.setTimeout(() => inputRef.current?.focus(), 0);
+    }, []);
+
     const lastAssistantId = [...messages].reverse().find((message) => message.role === "assistant")?.id;
     const lastUserId = [...messages].reverse().find((message) => message.role === "user")?.id;
     const engineLabel = tx(chat.signedIn ? C.engineSignedIn : C.engineSignedOut);
@@ -153,8 +160,19 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
             hasEditorFile={chat.hasEditorFile}
             attachEditorFile={chat.attachEditorFile}
             onToggleEditorFile={() => chat.setAttachEditorFile(!chat.attachEditorFile)}
+            connections={chat.connections.available ? {
+                items: chat.connections.items,
+                selectedId: chat.connections.selectedId,
+                onSelect: chat.connections.select,
+                onManage: () => setConnectionsOpen(true),
+            } : null}
         />
     );
+
+    // Own provider connections (Plus/Pro); a portal, so it covers the page from the panel too.
+    const connectionsDialog = connectionsOpen && chat.connections.available
+        ? <ConnectionsDialog connections={chat.connections} onClose={closeConnections} onNavigate={closePanelOnNavigate} />
+        : null;
 
     const messageList = (
         <div
@@ -239,6 +257,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         {artifact ? <ArtifactPanel key={artifact.id} artifact={artifact} variant="panel" onClose={() => setArtifact(null)} onOpenInEditor={openCodeInEditor} /> : null}
                     </AnimatePresence>
                 </div>
+                {connectionsDialog}
             </motion.div>
         );
     }
@@ -305,6 +324,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
             <AnimatePresence>
                 {artifact ? <ArtifactPanel key={artifact.id} artifact={artifact} variant="page" onClose={() => setArtifact(null)} onOpenInEditor={openCodeInEditor} /> : null}
             </AnimatePresence>
+            {connectionsDialog}
         </div>
     );
 }

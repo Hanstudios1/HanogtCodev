@@ -120,7 +120,7 @@ const BYSTANDER_DATA = [
 test("the content scope never touches the account, private data or other people's lists", () => {
     const content = deletionSteps("content");
     const all = deletionSteps("all");
-    for (const step of ["account", "chats", "calls", "projects", "gameProjects", "friendLists", "requests", "notifications", "supportTickets", "plans", "arcadeLikes", "groupRecords"]) {
+    for (const step of ["account", "chats", "calls", "projects", "gameProjects", "friendLists", "requests", "notifications", "supportTickets", "plans", "aiConnections", "arcadeLikes", "groupRecords"]) {
         assert.ok(!content.includes(step), `"content" must not run ${step}`);
         assert.ok(all.includes(step), `"all" must run ${step}`);
     }

@@ -26,6 +26,12 @@ export interface AiMessage {
     agent?: AgentMessageState;
     /** A code file sent with this question (only its name and language are kept). */
     attachment?: { name: string; language: string };
+    /** The language model that wrote an "llm" answer. */
+    model?: string;
+    /** The person's own provider connection that answered (src/lib/ai/connections.ts), when it wasn't Hanogt AI's model. */
+    connectionId?: string;
+    /** That connection's label at the time. */
+    connectionLabel?: string;
 }
 
 export interface AiConversation {

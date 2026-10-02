@@ -70,7 +70,16 @@ export const NOTICES: Record<AiFailure, Copy> = {
     timeout: { TR: "Dil modeli zamanında yanıt vermedi; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model timed out; Hanogt AI Core answered." },
     upstream: { TR: "Dil modeli hizmeti hata verdi; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model service failed; Hanogt AI Core answered." },
     aborted: { TR: "Durduruldu.", EN: "Stopped." },
+    connection_invalid: { TR: "Sağlayıcı bağlantının API anahtarını kabul etmedi; anahtarını bağlantı ayarlarından kontrol et. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "The provider didn't accept your connection's API key; check your key in the connection settings. Hanogt AI Core answered." },
+    connection_unavailable: { TR: "Seçtiğin bağlantı artık kullanılamıyor (silinmiş ya da planın kapsamıyor), bu yüzden Hanogt AI'a dönüldü. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "The connection you chose can't be used any more (deleted or not in your plan), so Hanogt AI is selected again. Hanogt AI Core answered." },
+    connection_quota: { TR: "Sağlayıcı hesabının kotası ya da kredisi bitmiş; sağlayıcının panelinden kontrol et. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "Your provider account is out of quota or credit; check the provider's dashboard. Hanogt AI Core answered." },
+    connection_model: { TR: "Seçtiğin model sağlayıcıda bulunamadı; modeli bağlantı ayarlarından değiştir. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "The provider couldn't find the model you chose; change it in the connection settings. Hanogt AI Core answered." },
+    connection_rate_limited: { TR: "Sağlayıcının istek sınırına takıldın; yanıtı Hanogt AI Çekirdeği verdi.", EN: "You hit the provider's rate limit; Hanogt AI Core answered." },
+    connection_daily_limit: { TR: "Kendi bağlantılarınla bugünkü mesaj sınırına ulaştın; yarına kadar Hanogt AI Çekirdeği yanıt verecek.", EN: "You've used today's messages for your own connections; Hanogt AI Core answers until tomorrow." },
 };
+
+/** Failures caused by the person's own connection: the connection list is refreshed afterwards. */
+export const CONNECTION_FAILURES: ReadonlySet<AiFailure> = new Set<AiFailure>(["connection_invalid", "connection_unavailable", "connection_quota", "connection_model"]);
 
 export const CHAT_COPY = {
     somethingWrong: { TR: "Bir şeyler ters gitti. Lütfen tekrar dene.", EN: "Something went wrong. Please try again." },

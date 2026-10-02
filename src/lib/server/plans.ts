@@ -119,9 +119,14 @@ export async function aiUsage(email: string) {
     return { minute, day };
 }
 
+/** Rate-limit keys of messages sent through the person's own AI connections (src/app/api/ai/route.ts). */
+export const OWN_KEY_LIMIT_KEYS = (email: string) => ({ minute: `ai-own:${email}`, day: `ai-own-day:${email}` });
+
+/** Staff "reset Hanogt AI limit": Hanogt AI's counters and the own-key ones. */
 export async function resetAiLimits(email: string) {
     const keys = AI_LIMIT_KEYS(email);
-    await Promise.all([resetRateLimit(keys.minute), resetRateLimit(keys.day)]);
+    const own = OWN_KEY_LIMIT_KEYS(email);
+    await Promise.all([resetRateLimit(keys.minute), resetRateLimit(keys.day), resetRateLimit(own.minute), resetRateLimit(own.day)]);
 }
 
 /**

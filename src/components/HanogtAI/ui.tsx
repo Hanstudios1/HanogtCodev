@@ -22,13 +22,16 @@ export interface MenuOption<T extends string> {
     label: string;
     description?: string;
     icon?: ReactNode;
+    /** Listed but can't be chosen (e.g. a connection the plan doesn't cover). */
+    disabled?: boolean;
 }
 
 /**
- * A small pill button with a popover of single-choice options (mode and agent
- * mode selectors in the composer). Closes on Escape, outside clicks and choice.
+ * A small pill button with a popover of single-choice options (answer mode,
+ * agent mode and model selectors in the composer). Closes on Escape, outside
+ * clicks and choice.
  */
-export function PillMenu<T extends string>({ label, icon, value, options, onChange, disabled, title, footer, align = "start", compact }: {
+export function PillMenu<T extends string>({ label, icon, value, options, onChange, disabled, title, footer, align = "start", compact, maxWidth = "max-w-[11rem]" }: {
     label: string;
     icon?: ReactNode;
     value: T;
@@ -36,10 +39,13 @@ export function PillMenu<T extends string>({ label, icon, value, options, onChan
     onChange: (value: T) => void;
     disabled?: boolean;
     title: string;
-    footer?: ReactNode;
+    /** Shown under the options; as a function it gets `close` for actions that leave the menu. */
+    footer?: ReactNode | ((close: () => void) => ReactNode);
     align?: "start" | "end";
     /** Hide the text label on narrow screens. */
     compact?: boolean;
+    /** Width limit of the pill. */
+    maxWidth?: string;
 }) {
     const [open, setOpen] = useState(false);
     const root = useRef<HTMLDivElement>(null);
@@ -64,8 +70,12 @@ export function PillMenu<T extends string>({ label, icon, value, options, onChan
         };
     }, [open]);
 
+    const close = () => setOpen(false);
+    const footerContent = typeof footer === "function" ? footer(close) : footer;
+
     return (
-        <div ref={root} className="relative">
+        // min-w-0: in a tight composer row the pills shrink (their labels truncate) before anything is pushed out.
+        <div ref={root} className="relative flex min-w-0">
             <button
                 ref={button}
                 type="button"
@@ -74,7 +84,10 @@ export function PillMenu<T extends string>({ label, icon, value, options, onChan
                 aria-haspopup="true"
                 aria-expanded={open}
                 title={title}
-                className="inline-flex h-8 max-w-[11rem] items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 text-[12.5px] font-semibold text-zinc-600 transition hover:bg-zinc-900/[0.04] hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
+                className={cx(
+                    "inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 text-[12.5px] font-semibold text-zinc-600 transition hover:bg-zinc-900/[0.04] hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/[0.06] dark:hover:text-white",
+                    maxWidth,
+                )}
             >
                 {icon}
                 <span className={cx("truncate", compact && "hidden sm:inline")}>{label}</span>
@@ -91,7 +104,7 @@ export function PillMenu<T extends string>({ label, icon, value, options, onChan
                     )}
                 >
                     <p className="px-2.5 pb-1 pt-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">{title}</p>
-                    <div role="radiogroup" aria-label={title}>
+                    <div role="radiogroup" aria-label={title} className="scrollbar-thin max-h-[min(22rem,50dvh)] overflow-y-auto">
                         {options.map((option) => {
                             const selected = option.id === value;
                             return (
@@ -100,14 +113,16 @@ export function PillMenu<T extends string>({ label, icon, value, options, onChan
                                     type="button"
                                     role="radio"
                                     aria-checked={selected}
+                                    disabled={option.disabled}
                                     onClick={() => {
+                                        if (option.disabled) return;
                                         onChange(option.id);
                                         setOpen(false);
                                         button.current?.focus();
                                     }}
                                     className={cx(
-                                        "flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
-                                        selected ? "bg-violet-500/10" : "hover:bg-zinc-900/[0.04] dark:hover:bg-white/[0.05]",
+                                        "flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:cursor-not-allowed disabled:opacity-55",
+                                        selected ? "bg-violet-500/10" : "enabled:hover:bg-zinc-900/[0.04] dark:enabled:hover:bg-white/[0.05]",
                                     )}
                                 >
                                     {option.icon ? <span className="mt-0.5 shrink-0 text-violet-500">{option.icon}</span> : null}
@@ -120,7 +135,7 @@ export function PillMenu<T extends string>({ label, icon, value, options, onChan
                             );
                         })}
                     </div>
-                    {footer ? <div className="mt-1 border-t border-zinc-100 px-2.5 pb-1 pt-2 dark:border-white/[0.06]">{footer}</div> : null}
+                    {footerContent ? <div className="mt-1 border-t border-zinc-100 px-2.5 pb-1 pt-2 dark:border-white/[0.06]">{footerContent}</div> : null}
                 </div>
             ) : null}
         </div>

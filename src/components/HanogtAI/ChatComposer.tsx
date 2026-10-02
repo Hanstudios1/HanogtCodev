@@ -1,14 +1,15 @@
 "use client";
 
-import { ArrowUp, FileCode2, Paperclip, Square, X } from "lucide-react";
+import { ArrowUp, FileCode2, KeyRound, Paperclip, Settings2, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
+import { aiProvider, DEFAULT_CONNECTION, type AiConnectionView } from "@/lib/ai/connections";
 import type { AiContext, AiMode } from "@/lib/ai/local-engine";
 import { useI18n } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/runtimes/languages";
 import { AGENT_MODE_OPTIONS, AGENT_NEVER, MAX_INPUT, MODES } from "./chat-copy";
 import type { FileAttachment } from "./useHanogtChat";
-import { cx, ICON_BUTTON, PillMenu } from "./ui";
+import { cx, ICON_BUTTON, PillMenu, type MenuOption } from "./ui";
 
 const C = {
     message: { TR: "Mesaj", EN: "Message" },
@@ -25,6 +26,14 @@ const C = {
     agent: { TR: "Ajan modu", EN: "Agent mode" },
     resetGrants: { TR: "Bu oturumdaki izinleri sıfırla ({count})", EN: "Reset this session's permissions ({count})" },
     disclaimer: { TR: "Hanogt AI hata yapabilir; önemli bilgileri doğrula. Gizli bilgi paylaşma.", EN: "Hanogt AI can make mistakes; verify important information. Don't share secrets." },
+    model: { TR: "Model", EN: "Model" },
+    hanogt: { TR: "Hanogt AI (varsayılan)", EN: "Hanogt AI (default)" },
+    hanogtShort: { TR: "Hanogt AI", EN: "Hanogt AI" },
+    hanogtDescription: { TR: "Hanogt'un kendi dil modeli; günlük mesaj hakkını kullanır.", EN: "Hanogt's own language model; uses your daily messages." },
+    ownConnection: { TR: "Kendi bağlantın", EN: "Your connection" },
+    notInPlan: { TR: "Planın kapsamıyor", EN: "Not in your plan" },
+    manage: { TR: "Bağlantıları yönet…", EN: "Manage connections…" },
+    connectHint: { TR: "Plus ve Pro'da kendi API anahtarınla OpenAI, Claude, Gemini ve daha fazlasını bağlayabilirsin.", EN: "On Plus and Pro you can connect OpenAI, Claude, Gemini and more with your own API key." },
     keys: { TR: "Enter: gönder · Shift+Enter: yeni satır", EN: "Enter: send · Shift+Enter: new line" },
     chars: { TR: "{count}/{max}", EN: "{count}/{max}" },
 };
@@ -55,8 +64,67 @@ export interface ChatComposerProps {
     hasEditorFile: boolean;
     attachEditorFile: boolean;
     onToggleEditorFile: () => void;
+    /** The model picker (signed in only): Hanogt AI or one of the person's own connections. */
+    connections?: ComposerConnections | null;
     /** Bigger box for the empty conversation on the full page. */
     hero?: boolean;
+}
+
+export interface ComposerConnections {
+    items: AiConnectionView[];
+    /** Where new messages go: a connection id, or null for Hanogt AI. */
+    selectedId: string | null;
+    onSelect: (id: string | null) => void;
+    onManage: () => void;
+}
+
+/** Hanogt AI or one of the person's own connections; connections outside the plan are listed but can't be chosen. */
+function ModelPicker({ connections, variant }: { connections: ComposerConnections; variant: "panel" | "page" }) {
+    const { tx } = useI18n();
+    const { items, selectedId } = connections;
+    const selected = selectedId ? items.find((item) => item.id === selectedId) ?? null : null;
+    const options: Array<MenuOption<string>> = [
+        { id: DEFAULT_CONNECTION, label: tx(C.hanogt), description: tx(C.hanogtDescription), icon: <Sparkles className="h-4 w-4" aria-hidden /> },
+        ...items.map((item) => {
+            const provider = aiProvider(item.provider).name;
+            return {
+                id: item.id,
+                label: `${item.label} · ${item.model}`,
+                description: item.active ? provider : `${provider} · ${tx(C.notInPlan)}`,
+                icon: <KeyRound className="h-4 w-4" aria-hidden />,
+                disabled: !item.active,
+            };
+        }),
+    ];
+    return (
+        <PillMenu
+            title={tx(C.model)}
+            label={selectedId ? selected?.label ?? tx(C.ownConnection) : tx(C.hanogtShort)}
+            icon={selectedId ? <KeyRound className="h-3.5 w-3.5 shrink-0 text-sky-500" aria-hidden /> : <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden />}
+            value={selectedId ?? DEFAULT_CONNECTION}
+            compact
+            align="end"
+            maxWidth={variant === "panel" ? "max-w-[7.5rem]" : "max-w-[11rem]"}
+            onChange={(id) => connections.onSelect(id === DEFAULT_CONNECTION ? null : id)}
+            options={options}
+            footer={(close) => (
+                <div className="space-y-1.5">
+                    {!items.length ? <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(C.connectHint)}</p> : null}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            close();
+                            connections.onManage();
+                        }}
+                        className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-violet-600 hover:underline dark:text-violet-300"
+                    >
+                        <Settings2 className="h-3.5 w-3.5" aria-hidden />
+                        {tx(C.manage)}
+                    </button>
+                </div>
+            )}
+        />
+    );
 }
 
 /** The large rounded composer: text, attachments, answer mode and agent mode, send / stop. */
@@ -183,6 +251,7 @@ export default function ChatComposer(props: ChatComposerProps) {
                             </div>
                         )}
                     />
+                    {props.connections ? <ModelPicker connections={props.connections} variant={variant} /> : null}
                     <span className="ms-auto flex items-center gap-2">
                         {input.length > MAX_INPUT * 0.8 ? <span className="text-[11px] tabular-nums text-zinc-400">{tx(C.chars, { count: input.length, max: MAX_INPUT })}</span> : null}
                         {busy ? (

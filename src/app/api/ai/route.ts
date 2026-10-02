@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { encodeAgentTrailer, normalizeChatMessages, stripTrailerMark, type AgentTrailerCall, type WireMessage } from "@/lib/ai/agent-protocol";
 import { AGENT_CALL_ID_PATTERN, AGENT_MAX_CALLS, agentToolSchemas, detectSensitiveRequest, isHowToQuestion, sanitizeAgentCall, type SensitiveRequest } from "@/lib/ai/agent-tools";
+import { DEFAULT_CONNECTION, OWN_KEY_LIMITS, isConnectionId, ownKeyRequestParams, type AiConnectionError } from "@/lib/ai/connections";
 import { explainError, looksLikeError } from "@/lib/ai/errors";
 import { knowledgeText } from "@/lib/ai/knowledge";
 import { searchKnowledge } from "@/lib/ai/retrieval";
@@ -8,11 +9,13 @@ import { BROWSER_LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 import { analyzeCode } from "@/lib/security/advisor";
 import { checkLink, findUrl } from "@/lib/security/links";
 import { getActiveSession } from "@/lib/server/active-session";
+import { OWN_KEY_LIMIT_KEYS, classifyProviderFailure, markUsed, resolveConnectionForChat, shouldRecordUse, type ResolvedConnection } from "@/lib/server/ai-connections";
 import { AI_DAY_MS, AI_LIMIT_KEYS, aiLimitsForEmail } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
@@ -76,6 +79,23 @@ function providerConfig() {
 
 function errorResponse(status: number, code: string, error: string, extra: Record<string, string> = {}) {
     return NextResponse.json({ error, code }, { status, headers: jsonSecurityHeaders(extra) });
+}
+
+/** How a failed request through the person's own connection is reported (never with the provider's text). */
+const CONNECTION_FAILURES: Record<AiConnectionError, { status: number; code: string; error: string }> = {
+    invalid_key: { status: 502, code: "connection_invalid", error: "Sağlayıcı bağlantınızın API anahtarını kabul etmedi. Bağlantı ayarlarından anahtarınızı kontrol edin." },
+    quota: { status: 402, code: "connection_quota", error: "Sağlayıcı hesabınızın kotası ya da kredisi doldu." },
+    model_not_found: { status: 502, code: "connection_model", error: "Seçilen model sağlayıcıda bulunamadı. Bağlantı ayarlarından modeli değiştirin." },
+    rate_limited: { status: 429, code: "upstream_rate_limited", error: "Sağlayıcının istek sınırına ulaşıldı. Biraz sonra tekrar deneyin." },
+    provider_error: { status: 502, code: "upstream_error", error: "Dil modeli isteği tamamlayamadı." },
+    unreachable: { status: 503, code: "upstream_unreachable", error: "Dil modeli hizmetine bağlanılamadı." },
+    key_unreadable: { status: 409, code: "connection_unavailable", error: "Bu bağlantı kullanılamıyor." },
+};
+
+/** A provider's Retry-After in seconds, when it sent a sensible one. */
+function retryAfterOf(response: Response): Record<string, string> {
+    const seconds = Number(response.headers.get("retry-after"));
+    return Number.isFinite(seconds) && seconds > 0 && seconds <= 3_600 ? { "Retry-After": String(Math.ceil(seconds)) } : {};
 }
 
 function clip(text: string, max: number) {
@@ -200,23 +220,58 @@ export async function POST(request: NextRequest) {
     if (!activeSession) return errorResponse(401, "auth_required", "Hanogt AI'ın büyük dil modeli için giriş yapın.");
     const { email } = activeSession;
 
-    const config = providerConfig();
-    if (!config) return errorResponse(503, "not_configured", "Hanogt AI dil modeli bu sunucuda yapılandırılmamış.");
-
-    // Plans (assigned by staff while sales are "coming soon") and staff grants raise the limits.
-    const limits = await aiLimitsForEmail(email);
-    const keys = AI_LIMIT_KEYS(email);
-    const [minute, day] = await Promise.all([
-        enforceRateLimitWithFallback(keys.minute, limits.perMinute, 60_000),
-        enforceRateLimitWithFallback(keys.day, limits.perDay, AI_DAY_MS),
-    ]);
-    const limited = !minute.allowed ? minute : !day.allowed ? day : null;
-    if (limited) {
-        return errorResponse(429, !day.allowed ? "daily_limit" : "rate_limited", "Hanogt AI istek sınırına ulaştınız. Biraz sonra tekrar deneyin.", { "Retry-After": String(limited.retryAfterSeconds) });
-    }
-
     const body = await readJsonBody(request, 300_000);
     if (!body) return errorResponse(400, "bad_request", "Geçersiz istek gövdesi.");
+    // The person's own provider connection (Plus/Pro); absent or empty means Hanogt AI's model.
+    const connectionId = body.connectionId === undefined || body.connectionId === null || body.connectionId === "" ? null : body.connectionId;
+    if (connectionId !== null && !isConnectionId(connectionId)) return errorResponse(400, "bad_request", "Geçersiz bağlantı.");
+
+    let target: { apiKey: string; baseUrl: string; model: string; connection: ResolvedConnection | null };
+    let remaining: number;
+    if (connectionId) {
+        // Own keys have their own allowance and never use the Hanogt AI daily quota.
+        const keys = OWN_KEY_LIMIT_KEYS(email);
+        const [minute, day] = await Promise.all([
+            enforceRateLimitWithFallback(keys.minute, OWN_KEY_LIMITS.perMinute, 60_000),
+            enforceRateLimitWithFallback(keys.day, OWN_KEY_LIMITS.perDay, AI_DAY_MS),
+        ]);
+        const limited = !minute.allowed ? minute : !day.allowed ? day : null;
+        if (limited) {
+            return errorResponse(429, !day.allowed ? "connection_daily_limit" : "rate_limited", "Kendi bağlantılarınızla istek sınırına ulaştınız. Biraz sonra tekrar deneyin.", { "Retry-After": String(limited.retryAfterSeconds) });
+        }
+        let connection: ResolvedConnection | null;
+        try {
+            connection = await resolveConnectionForChat(email, connectionId);
+        } catch {
+            return errorResponse(503, "unavailable", "Bağlantı bilgileri şu anda okunamadı. Biraz sonra tekrar deneyin.");
+        }
+        if (!connection) return errorResponse(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.");
+        target = { apiKey: connection.apiKey, baseUrl: connection.baseUrl, model: connection.model, connection };
+        remaining = Math.min(minute.remaining, day.remaining);
+    } else {
+        const config = providerConfig();
+        if (!config) return errorResponse(503, "not_configured", "Hanogt AI dil modeli bu sunucuda yapılandırılmamış.");
+
+        // Plans (assigned by staff while sales are "coming soon") and staff grants raise the limits.
+        const limits = await aiLimitsForEmail(email);
+        const keys = AI_LIMIT_KEYS(email);
+        const [minute, day] = await Promise.all([
+            enforceRateLimitWithFallback(keys.minute, limits.perMinute, 60_000),
+            enforceRateLimitWithFallback(keys.day, limits.perDay, AI_DAY_MS),
+        ]);
+        const limited = !minute.allowed ? minute : !day.allowed ? day : null;
+        if (limited) {
+            return errorResponse(429, !day.allowed ? "daily_limit" : "rate_limited", "Hanogt AI istek sınırına ulaştınız. Biraz sonra tekrar deneyin.", { "Retry-After": String(limited.retryAfterSeconds) });
+        }
+        target = { ...config, connection: null };
+        remaining = Math.min(minute.remaining, day.remaining);
+    }
+    const ownConnection = target.connection;
+    /** Notes the outcome on the connection after the response (best effort, at most once a minute per outcome). */
+    const recordUse = (error: AiConnectionError | null) => {
+        if (ownConnection && shouldRecordUse(ownConnection, error)) after(() => markUsed(email, ownConnection.id, error));
+    };
+
     const agentRequested = body.agent === true;
     const messages = normalizeChatMessages(body.messages, { tools: agentRequested });
     if (!messages) return errorResponse(400, "bad_request", "Mesajlar geçersiz.");
@@ -249,18 +304,21 @@ export async function POST(request: NextRequest) {
     const timeout = setTimeout(() => upstreamAbort.abort(), 55_000);
     request.signal.addEventListener("abort", () => upstreamAbort.abort(), { once: true });
 
-    const send = (payload: Record<string, unknown>) => fetch(`${config.baseUrl}/chat/completions`, {
+    const temperature = agentRequested ? 0.3 : mode === "code" ? 0.25 : 0.45;
+    const sampling = ownConnection ? ownKeyRequestParams(ownConnection.provider, target.model, temperature) : { temperature, max_tokens: 1_800 };
+    const send = (payload: Record<string, unknown>) => fetch(`${target.baseUrl}/chat/completions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.apiKey}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${target.apiKey}` },
         body: JSON.stringify({
-            model: config.model,
-            temperature: agentRequested ? 0.3 : mode === "code" ? 0.25 : 0.45,
-            max_tokens: 1_800,
+            model: target.model,
+            ...sampling,
             stream,
             ...payload,
         }),
         signal: upstreamAbort.signal,
         cache: "no-store",
+        // Own keys only go to the provider's fixed address, never where a redirect points.
+        ...(ownConnection ? { redirect: "error" as const } : {}),
     });
 
     let agentStatus: AgentStatus = agentRequested ? "tools" : "off";
@@ -282,23 +340,36 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         clearTimeout(timeout);
         const aborted = error instanceof Error && error.name === "AbortError";
+        // A stop in the browser is not the connection's fault.
+        if (!request.signal.aborted) recordUse("unreachable");
         return errorResponse(aborted ? 504 : 503, aborted ? "timeout" : "upstream_unreachable", aborted ? "Yanıt zaman aşımına uğradı." : "Dil modeli hizmetine bağlanılamadı.");
     }
 
     if (!upstream.ok || !upstream.body) {
         clearTimeout(timeout);
         // Never forward the provider's error body (it can echo request details).
-        console.warn(`[hanogt-ai] provider status ${upstream.status}`);
+        console.warn(`[hanogt-ai] provider status ${upstream.status}${ownConnection ? ` (own connection, ${ownConnection.provider})` : ""}`);
+        if (ownConnection) {
+            const failure = upstream.ok ? "provider_error" : await classifyProviderFailure(upstream);
+            if (upstream.ok) await upstream.body?.cancel().catch(() => undefined);
+            recordUse(failure);
+            const reply = CONNECTION_FAILURES[failure];
+            return errorResponse(reply.status, reply.code, reply.error, failure === "rate_limited" ? retryAfterOf(upstream) : {});
+        }
         await upstream.body?.cancel().catch(() => undefined);
         const code = upstream.status === 429 ? "upstream_rate_limited" : upstream.status === 401 || upstream.status === 403 ? "not_configured" : "upstream_error";
         return errorResponse(upstream.status === 429 ? 429 : 502, code, "Dil modeli isteği tamamlayamadı.");
     }
+    recordUse(null);
 
-    const meta = {
-        "X-Hanogt-AI-Model": encodeURIComponent(config.model),
+    const meta: Record<string, string> = {
+        "X-Hanogt-AI-Model": encodeURIComponent(target.model),
         "X-Hanogt-AI-Sources": encodeURIComponent(JSON.stringify(sources)),
         "X-Hanogt-AI-Agent": agentStatus,
-        "X-RateLimit-Remaining": String(Math.min(minute.remaining, day.remaining)),
+        // Which connection answered: its id, or "hanogt" for Hanogt AI's own model.
+        "X-Hanogt-AI-Connection": ownConnection ? ownConnection.id : DEFAULT_CONNECTION,
+        ...(ownConnection ? { "X-Hanogt-AI-Provider": ownConnection.provider } : {}),
+        "X-RateLimit-Remaining": String(remaining),
     };
 
     if (!stream) {
@@ -311,7 +382,7 @@ export async function POST(request: NextRequest) {
         if (agentStatus === "tools") collectToolCalls(calls, choice?.tool_calls?.map((call, index) => ({ ...call, index })));
         const toolCalls = trailerCalls(calls);
         if (!message && !toolCalls.length) return errorResponse(502, "upstream_error", "Dil modeli boş yanıt verdi.");
-        return NextResponse.json({ message, toolCalls, sources, model: config.model, agent: agentStatus }, { headers: jsonSecurityHeaders(meta) });
+        return NextResponse.json({ message, toolCalls, sources, model: target.model, connection: ownConnection ? ownConnection.id : DEFAULT_CONNECTION, agent: agentStatus }, { headers: jsonSecurityHeaders(meta) });
     }
 
     // Server-sent events from the provider → plain UTF-8 text chunks for the browser,

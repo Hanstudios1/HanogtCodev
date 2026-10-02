@@ -631,6 +631,13 @@ async function deletePlanRecords(ctx: Context) {
     ctx.tally.count("planRecords");
 }
 
+/** Hanogt AI connections with the person's own (encrypted) provider keys. */
+async function deleteAiConnections(ctx: Context) {
+    const { deleteAllConnections } = await import("./ai-connections");
+    const removed = await deleteAllConnections(ctx.email);
+    if (removed) ctx.tally.count("aiConnections", removed);
+}
+
 /**
  * The account itself, in one commit: without the user document every
  * session ends (getActiveSession requires it). Then the Firebase Auth record,
@@ -674,6 +681,7 @@ const STEPS: readonly Step[] = [
     { id: "notifications", scopes: ALL, run: deleteNotifications },
     { id: "supportTickets", scopes: ALL, run: deleteSupportTickets },
     { id: "plans", scopes: ALL, run: deletePlanRecords },
+    { id: "aiConnections", scopes: ALL, run: deleteAiConnections },
     { id: "account", scopes: ALL, run: deleteAccount },
 ];
 

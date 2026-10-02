@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Copy as CopyIcon, Cpu, FileCode2, Pencil, RotateCcw, Sparkles, SquareArrowOutUpRight, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Check, Copy as CopyIcon, Cpu, FileCode2, KeyRound, Pencil, RotateCcw, Sparkles, SquareArrowOutUpRight, ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
@@ -28,6 +28,9 @@ const C = {
     llm: { TR: "LLM", EN: "LLM" },
     core: { TR: "Çekirdek", EN: "Core" },
     llmTitle: { TR: "Sunucudaki büyük dil modeli", EN: "Large language model on the server" },
+    llmModelTitle: { TR: "Sunucudaki büyük dil modeli: {model}", EN: "Large language model on the server: {model}" },
+    own: { TR: "Bağlantın", EN: "Your connection" },
+    ownTitle: { TR: "Kendi bağlantınla yanıtlandı: {name}", EN: "Answered through your own connection: {name}" },
     coreTitle: { TR: "Cihazında çalışan eğitilmiş Hanogt AI Çekirdeği", EN: "Trained Hanogt AI Core running on your device" },
     attached: { TR: "Ekli dosya: {name} ({language})", EN: "Attached file: {name} ({language})" },
 };
@@ -128,6 +131,13 @@ export default function ChatMessage(props: ChatMessageProps) {
 
     const isStreaming = streamingText !== null;
     const content = isStreaming ? streamingText : message.content;
+    // Which model answered (stored values are re-checked: they come from localStorage).
+    const model = typeof message.model === "string" ? message.model : "";
+    const viaConnection = message.engine === "llm" && typeof message.connectionId === "string";
+    const connectionName = [typeof message.connectionLabel === "string" ? message.connectionLabel : "", model].filter(Boolean).join(" · ");
+    const badgeTitle = viaConnection
+        ? tx(C.ownTitle, { name: connectionName || tx(C.own) })
+        : message.engine === "llm" ? (model ? tx(C.llmModelTitle, { model }) : tx(C.llmTitle)) : tx(C.coreTitle);
     const copy = async () => {
         try {
             await navigator.clipboard.writeText(message.content);
@@ -170,9 +180,9 @@ export default function ChatMessage(props: ChatMessageProps) {
                 ) : null}
                 {!isStreaming && message.content ? (
                     <div className="flex flex-wrap items-center gap-1 text-[11px] text-zinc-400">
-                        <span className={cx("me-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold", message.engine === "llm" ? "bg-violet-500/10 text-violet-600 dark:text-violet-300" : "bg-zinc-500/10 text-zinc-500")} title={tx(message.engine === "llm" ? C.llmTitle : C.coreTitle)}>
-                            {message.engine === "llm" ? <Sparkles className="h-3 w-3" aria-hidden /> : <Cpu className="h-3 w-3" aria-hidden />}
-                            {tx(message.engine === "llm" ? C.llm : C.core)}
+                        <span className={cx("me-1 inline-flex max-w-[14rem] items-center gap-1 rounded-full px-2 py-0.5 font-bold", viaConnection ? "bg-sky-500/10 text-sky-700 dark:text-sky-300" : message.engine === "llm" ? "bg-violet-500/10 text-violet-600 dark:text-violet-300" : "bg-zinc-500/10 text-zinc-500")} title={badgeTitle}>
+                            {viaConnection ? <KeyRound className="h-3 w-3 shrink-0" aria-hidden /> : message.engine === "llm" ? <Sparkles className="h-3 w-3 shrink-0" aria-hidden /> : <Cpu className="h-3 w-3 shrink-0" aria-hidden />}
+                            <span className="truncate">{viaConnection ? model || tx(C.own) : tx(message.engine === "llm" ? C.llm : C.core)}</span>
                         </span>
                         {message.sources?.map((source) => (
                             <Link key={source.href} href={source.href} onClick={props.onNavigate} className="rounded-full border border-zinc-200 px-2 py-0.5 font-semibold text-zinc-500 transition hover:border-violet-400 hover:text-violet-600 dark:border-white/10 dark:hover:text-violet-300">{source.title}</Link>

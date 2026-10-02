@@ -5,9 +5,25 @@
  * agent-protocol.ts); it is cut off before the text reaches the UI.
  */
 import { splitAgentStream, type AgentTrailerCall, type WireMessage } from "./agent-protocol";
+import { DEFAULT_CONNECTION, isConnectionId } from "./connections";
 import type { AiContext, AiMode } from "./local-engine";
 
-export type AiFailure = "auth_required" | "not_configured" | "rate_limited" | "daily_limit" | "network" | "timeout" | "upstream" | "aborted";
+export type AiFailure =
+    | "auth_required" | "not_configured" | "rate_limited" | "daily_limit" | "network" | "timeout" | "upstream" | "aborted"
+    // The person's own provider connection (src/lib/ai/connections.ts):
+    | "connection_invalid" | "connection_unavailable" | "connection_quota" | "connection_model" | "connection_rate_limited" | "connection_daily_limit";
+
+/** Error codes of /api/ai that name their failure directly. */
+const CODE_FAILURES = new Map<string, AiFailure>([
+    ["auth_required", "auth_required"],
+    ["not_configured", "not_configured"],
+    ["daily_limit", "daily_limit"],
+    ["connection_invalid", "connection_invalid"],
+    ["connection_unavailable", "connection_unavailable"],
+    ["connection_quota", "connection_quota"],
+    ["connection_model", "connection_model"],
+    ["connection_daily_limit", "connection_daily_limit"],
+]);
 
 /** "tools": the model may call tools · "unsupported": the provider rejected tools (the Core proposes actions instead) · "off": not requested. */
 export type AiAgentStatus = "tools" | "unsupported" | "off";
@@ -24,6 +40,8 @@ export interface AiStreamResult {
     retryAfterSeconds?: number;
     sources: Array<{ title: string; href: string }>;
     model?: string;
+    /** The person's connection that answered; undefined when Hanogt AI's own model did. */
+    connectionId?: string;
     /** Tool calls the model asked for (agent mode only). */
     toolCalls: AgentTrailerCall[];
     agent: AiAgentStatus;
@@ -55,6 +73,8 @@ export async function streamHanogtAI(options: {
     agent?: boolean;
     /** Last tool round: the model must answer in text. */
     agentFinal?: boolean;
+    /** Answer with the person's own provider connection instead of Hanogt AI's model. */
+    connectionId?: string | null;
     onToken: (textSoFar: string) => void;
 }): Promise<AiStreamResult> {
     const empty = { sources: [], toolCalls: [], agent: "off" as const };
@@ -69,6 +89,7 @@ export async function streamHanogtAI(options: {
                 language: options.language,
                 stream: true,
                 ...(options.agent ? { agent: true, agentFinal: options.agentFinal === true } : {}),
+                ...(options.connectionId ? { connectionId: options.connectionId } : {}),
                 context: options.context ? { ...options.context, code: options.context.code?.slice(0, 12_000) } : undefined,
             }),
             signal: options.signal,
@@ -81,19 +102,19 @@ export async function streamHanogtAI(options: {
     if (!response.ok || !response.body) {
         const payload = await response.json().catch(() => ({})) as { code?: string };
         const retryAfter = Number(response.headers.get("Retry-After")) || undefined;
-        const code = payload.code;
-        const failure: AiFailure = code === "auth_required" ? "auth_required"
-            : code === "not_configured" ? "not_configured"
-                : code === "daily_limit" ? "daily_limit"
-                    : response.status === 429 ? "rate_limited"
-                        : response.status === 504 || code === "timeout" ? "timeout"
-                            : response.status === 401 ? "auth_required" : "upstream";
+        const code = typeof payload.code === "string" ? payload.code : "";
+        const failure: AiFailure = CODE_FAILURES.get(code)
+            ?? (response.status === 429 ? (options.connectionId && code === "upstream_rate_limited" ? "connection_rate_limited" : "rate_limited")
+                : response.status === 504 || code === "timeout" ? "timeout"
+                    : response.status === 401 ? "auth_required" : "upstream");
         return { ok: false, text: "", failure, retryAfterSeconds: retryAfter, ...empty };
     }
 
     const sources = parseSources(response.headers.get("X-Hanogt-AI-Sources"));
     const model = decodeURIComponent(response.headers.get("X-Hanogt-AI-Model") || "") || undefined;
     const agent = agentStatus(response.headers.get("X-Hanogt-AI-Agent"));
+    const answeredBy = response.headers.get("X-Hanogt-AI-Connection");
+    const connectionId = answeredBy && answeredBy !== DEFAULT_CONNECTION && isConnectionId(answeredBy) ? answeredBy : undefined;
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let raw = "";
@@ -108,10 +129,10 @@ export async function streamHanogtAI(options: {
     } catch (error) {
         const aborted = error instanceof DOMException && error.name === "AbortError";
         const partial = splitAgentStream(raw).text;
-        return { ok: partial.length > 0, text: partial, failure: aborted ? "aborted" : "network", sources, model, toolCalls: [], agent };
+        return { ok: partial.length > 0, text: partial, failure: aborted ? "aborted" : "network", sources, model, connectionId, toolCalls: [], agent };
     }
     const { text, trailer } = splitAgentStream(raw);
     const toolCalls = trailer?.toolCalls ?? [];
-    if (!text.trim() && !toolCalls.length) return { ok: false, text: "", failure: "upstream", sources, model, toolCalls: [], agent };
-    return { ok: true, text, sources, model, toolCalls, agent };
+    if (!text.trim() && !toolCalls.length) return { ok: false, text: "", failure: "upstream", sources, model, connectionId, toolCalls: [], agent };
+    return { ok: true, text, sources, model, connectionId, toolCalls, agent };
 }
