@@ -86,6 +86,16 @@ export function safeUrl(value: string | null | undefined, allowHttp = true): str
     }
 }
 
+/** Images must be https; "//cdn.example/x.jpg" (protocol-relative) is common in Turkish feeds. */
+function imageUrl(value: string | null | undefined): string | null {
+    const trimmed = value?.trim();
+    return safeUrl(trimmed?.startsWith("//") ? `https:${trimmed}` : trimmed, false);
+}
+
+/** Non-standard item-level image elements some publishers use instead of media:* / enclosure. */
+const IMAGE_ELEMENTS = ["image", "imageurl", "image_url", "thumbnail", "thumb", "picture", "photo", "resim", "ipimage"];
+const IMAGE_EXTENSION = /\.(?:jpe?g|png|webp|gif|avif)(?:\?|#|$)/i;
+
 function findImage(block: string): string | null {
     const tagPatterns = [
         /<media:thumbnail\b[^>]*>/i,
@@ -97,25 +107,91 @@ function findImage(block: string): string | null {
     for (const pattern of tagPatterns) {
         const match = pattern.exec(block);
         if (!match) continue;
-        const url = safeUrl(attribute(match[0], "url") ?? attribute(match[0], "href"), false);
+        const url = imageUrl(attribute(match[0], "url") ?? attribute(match[0], "href"));
         if (url && !/\.(mp4|mp3|webm|m4a)(\?|$)/i.test(url)) return url;
+    }
+    // Enclosures without a MIME type: trust the file extension.
+    for (const tag of block.match(/<enclosure\b[^>]*>/gi) ?? []) {
+        if (/\stype\s*=/i.test(tag)) continue;
+        const url = imageUrl(attribute(tag, "url"));
+        if (url && IMAGE_EXTENSION.test(url)) return url;
+    }
+    for (const name of IMAGE_ELEMENTS) {
+        const match = new RegExp(`<${name}\\b[^>]*>([^<]*)</${name}>`, "i").exec(block);
+        const url = match ? imageUrl(decodeEntities(unwrapCdata(match[1]))) : null;
+        if (url) return url;
     }
     const html = decodeEntities(unwrapCdata(tagContent(block, ["content:encoded", "description", "content", "summary"]) ?? ""));
     const img = /<img\b[^>]*\ssrc\s*=\s*("([^"]+)"|'([^']+)')/i.exec(html);
-    if (img) return safeUrl(img[2] ?? img[3], false);
+    if (img) return imageUrl(img[2] ?? img[3]);
     return null;
 }
 
-function parseDate(value: string | null): string | null {
+// Timestamps without a zone ("2026-10-02 15:30:00", "02.10.2026 15:30") are common in Turkish feeds.
+// Left to Date.parse they would be read in the server's zone (UTC), shifting stories by three hours
+// and, for "dd.MM.yyyy", swapping day and month.
+const LOCAL_ISO = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/;
+const LOCAL_DMY = /^(\d{1,2})[./](\d{1,2})[./](\d{4})[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
+const LOCAL_RFC = /^[A-Za-z]{3},?\s+\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?$/;
+
+function parseLocalTime(text: string, offset: string): number {
+    const pad = (value: string) => value.padStart(2, "0");
+    const iso = LOCAL_ISO.exec(text);
+    if (iso) return Date.parse(`${iso[1]}-${iso[2]}-${iso[3]}T${iso[4]}:${iso[5]}:${iso[6] ?? "00"}${offset}`);
+    const dmy = LOCAL_DMY.exec(text);
+    if (dmy) return Date.parse(`${dmy[3]}-${pad(dmy[2])}-${pad(dmy[1])}T${pad(dmy[4])}:${dmy[5]}:${dmy[6] ?? "00"}${offset}`);
+    if (LOCAL_RFC.test(text)) return Date.parse(`${text} ${offset.replace(":", "")}`);
+    return Number.NaN;
+}
+
+function parseDate(value: string | null, assumeOffset?: string): string | null {
     if (!value) return null;
-    const time = Date.parse(toPlainText(value, 100));
+    const text = toPlainText(value, 100);
+    let time = assumeOffset ? parseLocalTime(text, assumeOffset) : Number.NaN;
+    if (!Number.isFinite(time)) time = Date.parse(text);
     if (!Number.isFinite(time)) return null;
     // Ignore dates far in the future (broken feeds).
     if (time > Date.now() + 36 * 3600 * 1000) return null;
     return new Date(time).toISOString();
 }
 
-export function parseFeed(xml: string, limit = 25): ParsedFeedItem[] {
+/**
+ * Feed bytes → text. Valid UTF-8 always wins (some Turkish feeds declare windows-1254 but ship
+ * UTF-8). Otherwise the XML declaration, the HTTP charset and finally `fallbackCharset` pick a
+ * legacy decoder, so ISO-8859-9 / windows-1254 feeds do not turn "ş", "ğ" and "ı" into mojibake.
+ */
+export function decodeFeedBytes(bytes: Uint8Array, contentType?: string | null, fallbackCharset = "windows-1252"): string {
+    try {
+        return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {
+        // Not valid UTF-8: look for a legacy charset below.
+    }
+    const head = new TextDecoder("latin1").decode(bytes.subarray(0, 300));
+    const declared = /<\?xml[^>]*\sencoding\s*=\s*["']([\w.:-]+)["']/i.exec(head)?.[1];
+    const header = /charset\s*=\s*["']?([\w.:-]+)/i.exec(contentType ?? "")?.[1];
+    const claimed = (declared ?? header ?? "").toLowerCase();
+    // A UTF-8 feed with a few bad bytes is still UTF-8; replacement characters beat shifted letters.
+    if (/^utf-?8$/.test(claimed)) return new TextDecoder("utf-8").decode(bytes);
+    for (const label of [claimed, fallbackCharset]) {
+        if (!label) continue;
+        try {
+            return new TextDecoder(label).decode(bytes);
+        } catch {
+            // Unknown charset label: try the next candidate.
+        }
+    }
+    return new TextDecoder("utf-8").decode(bytes);
+}
+
+export interface ParseFeedOptions {
+    /**
+     * UTC offset ("+03:00") to assume for timestamps that carry no zone of their own; leave unset
+     * for feeds that publish proper RFC 822 / ISO 8601 dates.
+     */
+    assumeOffset?: string;
+}
+
+export function parseFeed(xml: string, limit = 25, options: ParseFeedOptions = {}): ParsedFeedItem[] {
     const source = xml.length > 3_000_000 ? xml.slice(0, 3_000_000) : xml;
     const isAtom = /<feed[\s>]/i.test(source) && !/<rss[\s>]/i.test(source);
     const blocks = source.match(isAtom ? /<entry[\s>][\s\S]*?<\/entry>/gi : /<item[\s>][\s\S]*?<\/item>/gi) ?? [];
@@ -139,7 +215,7 @@ export function parseFeed(xml: string, limit = 25): ParsedFeedItem[] {
         items.push({
             title,
             link,
-            publishedAt: parseDate(tagContent(block, ["pubDate", "published", "updated", "dc:date", "a10:updated"])),
+            publishedAt: parseDate(tagContent(block, ["pubDate", "published", "updated", "dc:date", "a10:updated"]), options.assumeOffset),
             summary: summary === title ? "" : summary,
             image: findImage(block),
         });

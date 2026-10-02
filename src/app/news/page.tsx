@@ -6,12 +6,12 @@ import { getNewsSnapshot } from "@/lib/server/news";
 export const revalidate = 180;
 
 export const metadata: Metadata = {
-    title: "Hanogt News — Yapay zeka, yazılım ve oyun haberleri",
-    description: "Yapay zeka, yazılım, oyun, uygulama ve bilim dünyasından canlı güncellenen haberler; yorumlar, gündem konuları ve topluluk oylarıyla yapay zeka sıralamaları.",
+    title: "Hanogt News — Yapay zeka, yazılım, oyun ve finans haberleri",
+    description: "Yapay zeka, yazılım, oyun, uygulama, bilim ve ekonomi (döviz, altın, borsa, bankacılık) dünyasından canlı güncellenen haberler; piyasa şeridi, yorumlar, gündem konuları ve topluluk oylarıyla yapay zeka sıralamaları.",
     alternates: { canonical: "/news" },
     openGraph: {
         title: "Hanogt News",
-        description: "Canlı teknoloji haberleri ve yapay zeka sıralamaları.",
+        description: "Canlı teknoloji ve finans haberleri, piyasa şeridi ve yapay zeka sıralamaları.",
         type: "website",
     },
 };

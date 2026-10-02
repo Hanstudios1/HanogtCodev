@@ -6,14 +6,16 @@ import {
     Radio, RefreshCw, Search, Share2, Sparkles, Wifi, WifiOff, X,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Header from "@/components/Header";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n } from "@/lib/i18n";
 import { NEWS_CATEGORIES, type NewsCategory } from "@/lib/news/sources";
 import AiRankings from "./AiRankings";
 import CommentsDrawer from "./CommentsDrawer";
-import { mergeNewsItems, timeAgo, trendingTopics, type NewsItemView, type NewsSnapshotView } from "./NewsTypes";
+import MarketsStrip from "./MarketsStrip";
+import { balanceFeed, mergeNewsItems, timeAgo, trendingTopics, type NewsItemView, type NewsSnapshotView } from "./NewsTypes";
+import { useMarkets } from "./useMarkets";
 
 const REFRESH_MS = 75_000;
 const PAGE_SIZE = 24;
@@ -27,6 +29,7 @@ const CATEGORY_STYLE: Record<NewsCategory, { gradient: string; chip: string }> =
     games: { gradient: "from-orange-500 via-rose-500 to-pink-500", chip: "bg-rose-500/10 text-rose-700 dark:text-rose-300" },
     apps: { gradient: "from-violet-500 via-purple-500 to-sky-500", chip: "bg-violet-500/10 text-violet-700 dark:text-violet-300" },
     science: { gradient: "from-slate-700 via-indigo-700 to-sky-600", chip: "bg-slate-500/10 text-slate-700 dark:text-slate-300" },
+    finance: { gradient: "from-emerald-600 via-teal-600 to-cyan-700", chip: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
 };
 
 // ---------------------------------------------------------------------------
@@ -246,6 +249,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const now = useSyncExternalStore(subscribeClock, clockSnapshot, () => serverNow);
     const saved = useSyncExternalStore(subscribeSaved, readSaved, () => EMPTY_SAVED);
     const savedIds = new Set(saved.map((item) => item.id));
+    const markets = useMarkets();
 
     const showToast = useCallback((message: string) => {
         setToast(message);
@@ -350,20 +354,23 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
 
     useEffect(() => {
         const base = "Hanogt News";
-        document.title = pending.length ? `(${pending.length}) ${base}` : `${base} — ${tx({ TR: "Canlı teknoloji haberleri", EN: "Live tech news" })}`;
+        document.title = pending.length ? `(${pending.length}) ${base}` : `${base} — ${tx({ TR: "Canlı teknoloji ve finans haberleri", EN: "Live tech and finance news" })}`;
     }, [pending.length, tx]);
 
     // Derived lists
     const needle = query.trim().toLocaleLowerCase("tr");
-    const languageFiltered = items.filter((item) => lang === "all" || item.language === lang);
-    const pool = category === "saved" ? saved.filter((item) => lang === "all" || item.language === lang) : languageFiltered;
+    const languageFiltered = useMemo(() => items.filter((item) => lang === "all" || item.language === lang), [items, lang]);
+    // The mixed views (All, the ticker, trending topics) interleave categories so a busy one cannot bury the rest.
+    const balanced = useMemo(() => balanceFeed(languageFiltered), [languageFiltered]);
+    const tickerItems = useMemo(() => balanceFeed(items).slice(0, 14), [items]);
+    const pool = category === "saved" ? saved.filter((item) => lang === "all" || item.language === lang) : category === "all" && !needle ? balanced : languageFiltered;
     const filtered = pool.filter((item) => (category === "all" || category === "saved" || item.category === category || item.tags.includes(category))
         && (!needle || `${item.title} ${item.summary} ${item.source.name}`.toLocaleLowerCase("tr").includes(needle)));
     const featured = category !== "saved" && !needle ? (filtered.slice(0, 6).find((item) => item.image) ?? filtered[0] ?? null) : null;
     const rest = featured ? filtered.filter((item) => item.id !== featured.id) : filtered;
     const visible = rest.slice(0, limit);
     const categoryCount = (id: NewsCategory) => languageFiltered.filter((item) => item.category === id || item.tags.includes(id)).length;
-    const trending = trendingTopics(languageFiltered, 14);
+    const trending = trendingTopics(balanced, 14);
     const okSources = sources.filter((source) => source.ok).length;
     const countKey = [featured, ...visible.slice(0, 29)].filter((item): item is NewsItemView => Boolean(item)).map((item) => item.id).join(",");
 
@@ -421,6 +428,13 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     }, []);
     const closeComments = useCallback(() => setActive(null), []);
 
+    const openFinance = () => {
+        setCategory("finance");
+        setLimit(PAGE_SIZE);
+    };
+    // The strip belongs to the general stream and to the Finance view; topic views stay uncluttered.
+    const showMarkets = category === "all" || category === "finance";
+
     const chip = (id: CategoryFilter, label: string, emoji: string, count?: number) => (
         <button
             key={id}
@@ -460,7 +474,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                             Hanogt <span className="text-gradient animate-gradient">News</span>
                         </h1>
                         <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "120ms" }}>
-                            {tx({ TR: "Yapay zeka, yazılım, oyun, uygulama ve bilim dünyasından güncel haberler tek akışta. Akış kendiliğinden yenilenir, yeni haberler canlı olarak düşer; yorum yap, kaydet, yapay zeka arenasında oy ver.", EN: "The latest from AI, software, games, apps and science in one stream. The feed refreshes itself and new stories drop in live; comment, save and vote in the AI arena." })}
+                            {tx({ TR: "Yapay zeka, yazılım, oyun, uygulama, bilim ve ekonomi dünyasından güncel haberler tek akışta. Akış kendiliğinden yenilenir, yeni haberler canlı olarak düşer; döviz, altın ve borsa için piyasa şeridi var; yorum yap, kaydet, yapay zeka arenasında oy ver.", EN: "The latest from AI, software, games, apps, science and finance in one stream. The feed refreshes itself and new stories drop in live; a markets strip tracks currencies, gold and stocks; comment, save and vote in the AI arena." })}
                         </p>
                         <div className="mt-6 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: "180ms" }}>
                             {[
@@ -479,7 +493,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                     </div>
                 </section>
 
-                <Ticker items={items.slice(0, 14)} locale={locale} />
+                <Ticker items={tickerItems} locale={locale} />
 
                 {/* Filters */}
                 <div className="sticky top-16 z-30 border-b border-zinc-200/70 bg-zinc-50/85 backdrop-blur-xl dark:border-white/[0.06] dark:bg-zinc-950/85">
@@ -538,6 +552,10 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
 
                 <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_360px]">
                     <div ref={feedRef} className="min-w-0">
+                        {showMarkets ? (
+                            <MarketsStrip variant={category === "finance" ? "prominent" : "compact"} markets={markets} now={now} onOpenFinance={category === "finance" ? undefined : openFinance} />
+                        ) : null}
+
                         {offline ? (
                             <p className="mb-4 flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-[13px] text-amber-700 dark:text-amber-300" role="status">
                                 <CircleAlert className="h-4 w-4 shrink-0" />{tx({ TR: "Haber sunucusuna şu anda ulaşılamıyor; akış otomatik olarak yeniden denenecek.", EN: "The news server is unreachable right now; the feed will retry automatically." })}
@@ -633,6 +651,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                             <ul className="mt-2 space-y-1.5 text-[12.5px] leading-snug text-zinc-600 dark:text-zinc-400">
                                 <li>📡 {tx({ TR: "{count} güvenilir kaynağın herkese açık RSS/Atom akışları okunur; yalnızca başlık, kısa özet ve bağlantı gösterilir.", EN: "Public RSS/Atom feeds from {count} trusted sources; only headlines, short excerpts and links are shown." }, { count: sources.length || "20+" })}</li>
                                 <li>⏱️ {tx({ TR: "Sunucu akışları birkaç dakikada bir yeniler, bu sayfa 75 saniyede bir kontrol eder ve yeni haberleri animasyonla ekler.", EN: "The server refreshes feeds every few minutes; this page checks every 75 seconds and animates new stories in." })}</li>
+                                <li>📈 {tx({ TR: "Piyasa şeridinde döviz kurları TCMB'den; altın, BIST 100 ve Bitcoin ücretsiz kamu veri kaynaklarından 5 dakikada bir alınır. Gecikmeli veriler, yatırım tavsiyesi değildir.", EN: "In the markets strip, exchange rates come from the Central Bank of Türkiye (TCMB); gold, BIST 100 and Bitcoin from free public data sources, refreshed every 5 minutes. Delayed data; not investment advice." })}</li>
                                 <li>💬 {tx({ TR: "Yorumlar giriş yapan kullanıcılara açıktır; spam ve hakaret filtrelenir.", EN: "Signed-in users can comment; spam and abuse are filtered." })}</li>
                                 <li>🏆 {tx({ TR: "Arena puanları yalnızca sizin oylarınızdan Elo ile hesaplanır.", EN: "Arena ratings come only from your votes via Elo." })}</li>
                             </ul>

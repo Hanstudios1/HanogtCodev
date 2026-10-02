@@ -34,7 +34,8 @@ export function timeAgo(iso: string, locale: "tr" | "en", now = Date.now()) {
 }
 
 const STOP_WORDS = new Set(("the a an and or of to in on for with from by at is are was were be been it its this that as how why what new now more your you our we they their has have had will can could just after over about into than out up not no yes all but his her its via vs " +
-    "ve ile bir bu da de için ne mi mı mu mü olarak daha en çok gibi kadar sonra yeni ilk son var yok olan oldu olduğu diye ama ise hem şu o bunu buna ile göre karşı yeni nasıl neden hangi tüm bütün her yüzde milyon bin").split(" "));
+    "ve ile bir bu da de için ne mi mı mu mü olarak daha en çok gibi kadar sonra yeni ilk son var yok olan oldu olduğu diye ama ise hem şu o bunu buna ile göre karşı yeni nasıl neden hangi tüm bütün her yüzde milyon bin " +
+    "milyar lira bugün güne başladı açıldı kapandı").split(" "));
 
 /** Most frequent meaningful words in recent headlines (computed from the live feed). */
 export function trendingTopics(items: NewsItemView[], limit = 12) {
@@ -58,6 +59,25 @@ export interface NewsSnapshotView {
     items: NewsItemView[];
     fetchedAt: string;
     sources: NewsSourceStatus[];
+}
+
+/**
+ * Newest-first order, except that no category may fill more than `maxPerWindow` of any `window`
+ * consecutive cards. When one beat floods the feed (a wire service posting dozens of stories an
+ * hour), its surplus waits behind older stories of the other categories instead of burying them.
+ * Order inside a category never changes, and a feed that is already mixed comes out unchanged.
+ */
+export function balanceFeed<T extends { category: string }>(items: readonly T[], window = 8, maxPerWindow = 3): T[] {
+    const pending = [...items];
+    const balanced: T[] = [];
+    while (pending.length) {
+        const recent = balanced.slice(-(window - 1));
+        let pick = pending.findIndex((item) => recent.filter((entry) => entry.category === item.category).length < maxPerWindow);
+        // Everything left belongs to categories with no room: take the newest rather than stall.
+        if (pick < 0) pick = 0;
+        balanced.push(pending.splice(pick, 1)[0]);
+    }
+    return balanced;
 }
 
 /** Newest first, unique by id, capped. */
