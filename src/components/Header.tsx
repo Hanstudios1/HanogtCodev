@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import {
-    Bell, BookOpen, Bot, Boxes, ChevronDown, FileCode, Gamepad2, Gauge, LayoutDashboard, LogOut, Menu, MessageSquare, Newspaper, Radio, Settings,
-    ShieldCheck, Sparkles, Users, UsersRound, X, type LucideIcon,
+    Bell, BookOpen, Bot, Boxes, ChevronDown, ChevronLeft, ChevronRight, FileCode, Gamepad2, Gauge, LayoutDashboard, LogOut, Menu, MessageSquare, Newspaper, Radio,
+    Settings, ShieldCheck, Sparkles, Users, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,10 +12,13 @@ import { useEffect, useRef, useState } from "react";
 import type { StaffRole } from "@/components/Admin/types";
 import NotificationCenter, { useUnreadNotifications } from "@/components/NotificationCenter";
 import OptimizedImage from "@/components/OptimizedImage";
-import { useFirebaseBridge, useRawSession } from "@/components/Provider";
+import PresenceAvatar, { PresenceMark } from "@/components/PresenceAvatar";
+import { useRawSession } from "@/components/Provider";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
-import { useOwnProfile } from "@/lib/account-profile-client";
+import StatusMenu from "@/components/StatusMenu";
+import { reportPresenceOffline, useOwnProfile, useOwnStatus } from "@/lib/account-profile-client";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { PRESENCE_STATUS_COPY, STATUS_PREFERENCE_COPY, resolvePresence } from "@/lib/presence";
 import { ADMIN_NAV, isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
 import ChangelogModal from "./ChangelogModal";
 import LangToggle from "./LangToggle";
@@ -43,6 +46,9 @@ const C = {
     notificationsWithUnread: { TR: "{label} ({count} okunmamış)", EN: "{label} ({count} unread)" },
     unread: { TR: "okunmamış", EN: "unread" },
     accountMenu: { TR: "Hesap menüsü", EN: "Account menu" },
+    accountMenuStatus: { TR: "Hesap menüsü ({status})", EN: "Account menu ({status})" },
+    setStatus: { TR: "Durumu ayarla", EN: "Set status" },
+    back: { TR: "Geri", EN: "Back" },
 } satisfies Record<string, Copy>;
 
 type StaffAccess = { email: string; role: StaffRole | null; checkedAt: number };
@@ -101,10 +107,14 @@ export default function Header() {
     const [scrolled, setScrolled] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [profileView, setProfileView] = useState<"menu" | "status">("menu");
+    const [mobileStatusOpen, setMobileStatusOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
     const [aiOpen, setAiOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+    const statusViewRef = useRef<HTMLDivElement>(null);
+    const statusRowRef = useRef<HTMLButtonElement>(null);
     const bellRef = useRef<HTMLButtonElement>(null);
     const { scrollYProgress } = useScroll();
     const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
@@ -115,11 +125,15 @@ export default function Header() {
     const signedIn = Boolean(account);
     const sessionLoading = auth.status === "loading";
     const email = account?.email?.toLowerCase() || null;
-    // Online dot: the presence heartbeat (Provider) can only write once the Firebase bridge is ready.
-    const presenceActive = useFirebaseBridge().ready;
-    // Name and avatar come from /api/account/profile (cached for the session and
-    // updated by Account Settings), so they don't depend on the Firebase bridge.
+    // Name, avatar and status come from /api/account/profile and /api/presence
+    // (cached for the session, updated by Account Settings and the status menu).
     const profile = useOwnProfile(email);
+    const reportedStatus = useOwnStatus(email);
+    const ownStatus = reportedStatus ?? (profile ? resolvePresence(profile.statusPreference, "active", profile.showOnlineStatus) : null);
+    const statusLabel = profile?.statusPreference === "invisible"
+        ? tx(STATUS_PREFERENCE_COPY.invisible.label)
+        : ownStatus ? tx(PRESENCE_STATUS_COPY[ownStatus]) : "";
+    const customStatus = profile ? [profile.statusEmoji, profile.customStatus].filter(Boolean).join(" ") : "";
     const unread = useUnreadNotifications(signedIn ? email : null);
     // Staff see the Admin Panel in the profile menu and the mobile menu.
     const staffRole = useStaffRole(email);
@@ -138,6 +152,13 @@ export default function Header() {
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
+
+    // The status view gets focus on its current choice; going back returns it to the status row.
+    useEffect(() => {
+        if (!profileOpen) return;
+        if (profileView === "status") statusViewRef.current?.querySelector<HTMLElement>("[role='menuitemradio'][tabindex='0']")?.focus();
+        else statusRowRef.current?.focus({ preventScroll: true });
+    }, [profileOpen, profileView]);
 
     useEffect(() => {
         if (!profileOpen) return;
@@ -182,11 +203,15 @@ export default function Header() {
         setNotificationsOpen(true);
     };
 
-    const avatar = (size: string) => displayAvatar ? (
-        <OptimizedImage src={displayAvatar} alt="" className={`${size} rounded-full border-2 border-white object-cover shadow-sm dark:border-zinc-800`} />
-    ) : (
-        <span className={`${size} grid place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-sm font-bold text-white`}>{displayName?.charAt(0)?.toUpperCase() || "U"}</span>
-    );
+    const toggleProfile = () => {
+        setProfileView("menu");
+        setProfileOpen((value) => !value);
+    };
+
+    const signOutNow = () => {
+        reportPresenceOffline();
+        void signOut({ callbackUrl: "/" });
+    };
 
     return (
         <>
@@ -272,30 +297,28 @@ export default function Header() {
                             <div className="relative" ref={profileRef}>
                                 <button
                                     type="button"
-                                    onClick={() => setProfileOpen((value) => !value)}
+                                    onClick={toggleProfile}
                                     aria-haspopup="menu"
                                     aria-expanded={profileOpen}
-                                    aria-label={tx(C.accountMenu)}
+                                    aria-label={statusLabel ? tx(C.accountMenuStatus, { status: statusLabel }) : tx(C.accountMenu)}
                                     className="flex items-center gap-1 rounded-full p-1 transition hover:bg-zinc-900/5 dark:hover:bg-white/10"
                                 >
-                                    <span className="relative">
-                                        {avatar("h-8 w-8")}
-                                        <span className={`absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-950 ${presenceActive ? "bg-emerald-500" : "bg-zinc-400"}`} />
-                                    </span>
+                                    <PresenceAvatar src={displayAvatar} name={displayName} status={ownStatus} size="sm" ring="bg-white dark:bg-zinc-950" />
                                     <ChevronDown className={`hidden h-4 w-4 text-zinc-500 transition-transform sm:block ${profileOpen ? "rotate-180" : ""}`} />
                                 </button>
                                 <AnimatePresence>
                                     {profileOpen ? (
                                         <motion.div
-                                            role="menu"
+                                            role={profileView === "menu" ? "menu" : "dialog"}
+                                            aria-label={profileView === "menu" ? tx(C.accountMenu) : tx(C.setStatus)}
                                             initial={{ opacity: 0, y: -6, scale: 0.97 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -6, scale: 0.97 }}
                                             transition={{ duration: 0.16 }}
-                                            className="absolute end-0 top-full z-[70] mt-2 w-72 origin-top-right overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-black/10 dark:border-white/10 dark:bg-zinc-900"
+                                            className="absolute end-0 top-full z-[70] mt-2 max-h-[calc(100dvh-5rem)] w-72 max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-black/10 dark:border-white/10 dark:bg-zinc-900"
                                         >
                                             <div className="flex items-center gap-3 border-b border-zinc-100 bg-gradient-to-br from-indigo-500/[0.06] to-fuchsia-500/[0.06] p-4 dark:border-white/[0.06]">
-                                                {avatar("h-11 w-11")}
+                                                <PresenceAvatar src={displayAvatar} name={displayName} status={ownStatus} size="md" ring="bg-white dark:bg-zinc-900" />
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex min-w-0 items-center gap-1.5">
                                                         <p className="min-w-0 truncate font-bold text-zinc-900 dark:text-white">{displayName}</p>
@@ -304,28 +327,46 @@ export default function Header() {
                                                     <p className="truncate text-[12.5px] text-zinc-500">{account?.email}</p>
                                                 </div>
                                             </div>
-                                            <div className="p-1.5">
-                                                {[...PRIMARY_NAV.filter((item) => item.auth), ...SECONDARY_NAV.filter((item) => item.auth)].map((item) => {
-                                                    const Icon = NAV_ICONS[item.icon];
-                                                    return (
-                                                        <Link key={item.href} role="menuitem" href={item.href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
-                                                            <Icon className="h-4.5 w-4.5 text-zinc-400" />{tx(item.label)}
+                                            {profileView === "status" && email ? (
+                                                <div ref={statusViewRef} className="p-3">
+                                                    <button type="button" onClick={() => setProfileView("menu")} className="mb-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[13px] font-semibold text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
+                                                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />{tx(C.back)}
+                                                    </button>
+                                                    <StatusMenu email={email} />
+                                                </div>
+                                            ) : (
+                                                <div className="p-1.5">
+                                                    <button ref={statusRowRef} role="menuitem" type="button" onClick={() => setProfileView("status")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
+                                                        <span className="grid h-4.5 w-4.5 shrink-0 place-items-center">{ownStatus ? <PresenceMark status={ownStatus} className="h-3 w-3" /> : null}</span>
+                                                        <span className="min-w-0 flex-1">
+                                                            <span className="block font-semibold text-zinc-900 dark:text-white">{statusLabel || tx(C.setStatus)}</span>
+                                                            {customStatus ? <span className="block truncate text-[12px] text-zinc-500" dir="auto">{customStatus}</span> : null}
+                                                        </span>
+                                                        <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400 rtl:rotate-180" aria-hidden="true" />
+                                                    </button>
+                                                    <div className="my-1 h-px bg-zinc-100 dark:bg-white/[0.06]" />
+                                                    {[...PRIMARY_NAV.filter((item) => item.auth), ...SECONDARY_NAV.filter((item) => item.auth)].map((item) => {
+                                                        const Icon = NAV_ICONS[item.icon];
+                                                        return (
+                                                            <Link key={item.href} role="menuitem" href={item.href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
+                                                                <Icon className="h-4.5 w-4.5 text-zinc-400" />{tx(item.label)}
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                    {isAdmin ? (
+                                                        <Link role="menuitem" href={ADMIN_NAV.href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10">
+                                                            <Gauge className="h-4.5 w-4.5" />{tx(ADMIN_NAV.label)}
                                                         </Link>
-                                                    );
-                                                })}
-                                                {isAdmin ? (
-                                                    <Link role="menuitem" href={ADMIN_NAV.href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10">
-                                                        <Gauge className="h-4.5 w-4.5" />{tx(ADMIN_NAV.label)}
+                                                    ) : null}
+                                                    <Link role="menuitem" href="/account-settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
+                                                        <Settings className="h-4.5 w-4.5 text-zinc-400" />{t("account_settings") || "Hesap Ayarları"}
                                                     </Link>
-                                                ) : null}
-                                                <Link role="menuitem" href="/account-settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/[0.06]">
-                                                    <Settings className="h-4.5 w-4.5 text-zinc-400" />{t("account_settings") || "Hesap Ayarları"}
-                                                </Link>
-                                                <div className="my-1 h-px bg-zinc-100 dark:bg-white/[0.06]" />
-                                                <button role="menuitem" type="button" onClick={() => void signOut({ callbackUrl: "/" })} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-red-600 transition hover:bg-red-50 dark:hover:bg-red-500/10">
-                                                    <LogOut className="h-4.5 w-4.5" />{t("sign_out")}
-                                                </button>
-                                            </div>
+                                                    <div className="my-1 h-px bg-zinc-100 dark:bg-white/[0.06]" />
+                                                    <button role="menuitem" type="button" onClick={signOutNow} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] text-red-600 transition hover:bg-red-50 dark:hover:bg-red-500/10">
+                                                        <LogOut className="h-4.5 w-4.5" />{t("sign_out")}
+                                                    </button>
+                                                </div>
+                                            )}
                                         </motion.div>
                                     ) : null}
                                 </AnimatePresence>
@@ -368,6 +409,23 @@ export default function Header() {
                         exit={{ opacity: 0 }}
                     >
                         <nav className="mx-auto max-w-2xl px-4 pb-10 pt-4" aria-label={tx(NAV_LABELS.menu)}>
+                            {signedIn && email ? (
+                                <div className="mb-4 rounded-2xl border border-zinc-200 bg-white p-3.5 dark:border-white/[0.08] dark:bg-zinc-950">
+                                    <button type="button" onClick={() => setMobileStatusOpen((value) => !value)} aria-expanded={mobileStatusOpen} className="flex w-full items-center gap-3 text-start">
+                                        <PresenceAvatar src={displayAvatar} name={displayName} status={ownStatus} size="md" ring="bg-white dark:bg-zinc-950" />
+                                        <span className="min-w-0 flex-1">
+                                            <span className="flex min-w-0 items-center gap-1.5">
+                                                <span className="truncate text-[15px] font-bold text-zinc-900 dark:text-white">{displayName}</span>
+                                                <StaffBadge role={staffRole} size="sm" compactOnMobile />
+                                            </span>
+                                            <span className="block truncate text-[12.5px] text-zinc-500" dir="auto">{customStatus || statusLabel || tx(C.setStatus)}</span>
+                                        </span>
+                                        <span className="shrink-0 text-[12px] font-semibold text-indigo-600 dark:text-indigo-300">{tx(C.setStatus)}</span>
+                                        <ChevronDown className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${mobileStatusOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+                                    </button>
+                                    {mobileStatusOpen ? <StatusMenu email={email} className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.08]" /> : null}
+                                </div>
+                            ) : null}
                             <div className="grid grid-cols-2 gap-2">
                                 {primary.map((item, index) => {
                                     const Icon = NAV_ICONS[item.icon];

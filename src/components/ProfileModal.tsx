@@ -1,14 +1,15 @@
 "use client";
 
-import OptimizedImage from "@/components/OptimizedImage";
-
 import { useState, useEffect } from "react";
 import { useI18n } from "@/lib/i18n";
 import { X, Github, Linkedin, Twitter, Globe2, Download, Heart, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { formatRelativeTime, useNow } from "@/components/Admin/hooks";
 import type { StaffRole } from "@/components/Admin/types";
+import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
+import { LAST_SEEN_COPY, PRESENCE_STATUS_COPY, effectiveStatus, lastSeenTime } from "@/lib/presence";
 
 /** Profile values are user-written: only plain https URLs reach CSS url(). */
 function safeBannerUrl(value?: string) {
@@ -56,6 +57,9 @@ interface UserProfile {
     socialLinkedin?: string;
     socialTwitter?: string;
     socialWebsite?: string;
+    /** Presence as public_profiles stores it (lib/presence.ts); without any of these no status is shown. */
+    presence?: unknown;
+    lastSeenAt?: unknown;
     isOnline?: boolean;
     dndMode?: boolean;
     publicProfile?: boolean;
@@ -123,7 +127,8 @@ const getFileExtension = (lang: string): string => {
 };
 
 export default function ProfileModal({ user, projects = [], isOpen, onClose, onLikeProject, onDownloadProject }: ProfileModalProps) {
-    const { t } = useI18n();
+    const { t, tx, locale } = useI18n();
+    const now = useNow();
     const [activeTab, setActiveTab] = useState<"about" | "projects">("about");
     const [fetchedProjects, setFetchedProjects] = useState<Project[]>([]);
     const [loadingProjects, setLoadingProjects] = useState(false);
@@ -153,6 +158,10 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
     const accent = safeAccent(user.accentColor);
     const banner = safeBannerUrl(user.bannerUrl);
     const userBadges = ALL_BADGES.filter(b => user.badges?.includes(b.id));
+    // Profiles handed over without presence fields (e.g. from the admin panel) show no status at all.
+    const status = now && ("presence" in user || "isOnline" in user || "lastSeenAt" in user) ? effectiveStatus(user, now) : null;
+    const lastSeen = status === "offline" ? lastSeenTime(user) : 0;
+    const lastSeenText = lastSeen ? formatRelativeTime(new Date(lastSeen).toISOString(), now, locale) : "";
 
     const handleDownload = (project: Project) => {
         if (onDownloadProject) {
@@ -192,37 +201,11 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                     </button>
                 </div>
 
-                {/* Avatar + Online Status */}
-                <div className="px-6 -mt-10 relative">
-                    <div className="relative inline-block">
-                        {user.avatarUrl ? (
-                            <OptimizedImage
-                                src={user.avatarUrl}
-                                alt={user.username}
-                                className="w-20 h-20 rounded-full object-cover border-4 border-white dark:border-zinc-900"
-                                referrerPolicy="no-referrer"
-                            />
-                        ) : (
-                            <div
-                                className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white dark:border-zinc-900"
-                                style={{ background: `linear-gradient(135deg, ${accent}, ${accent}80)` }}
-                            >
-                                {user.username?.charAt(0) || "U"}
-                            </div>
-                        )}
-                        {/* Online/DND indicator */}
-                        <div className="absolute bottom-0 right-0">
-                            {user.dndMode ? (
-                                <div className="w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 bg-red-500 flex items-center justify-center">
-                                    <div className="w-2.5 h-0.5 rounded bg-white" />
-                                </div>
-                            ) : (
-                                <div className={`w-6 h-6 rounded-full border-[3px] border-white dark:border-zinc-900 flex items-center justify-center ${user.isOnline ? "bg-green-500" : "bg-zinc-400"}`}>
-                                    <div className="w-2 h-2 rounded-full bg-black/30" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                {/* Avatar with the Discord-style status mark */}
+                <div className="px-6 -mt-12 relative">
+                    <span className="inline-block rounded-full border-4 border-white bg-white dark:border-zinc-900 dark:bg-zinc-900">
+                        <PresenceAvatar src={user.avatarUrl} name={user.username || "U"} status={status} size="xl" ring="bg-white dark:bg-zinc-900" />
+                    </span>
                 </div>
 
                 {/* User Info */}
@@ -236,6 +219,12 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                             {user.nickname}#{user.nicknameTag || "0000"}
                         </p>
                     )}
+                    {status ? (
+                        <p className="mt-1 text-[12.5px] text-zinc-500 dark:text-zinc-400">
+                            {tx(PRESENCE_STATUS_COPY[status])}
+                            {lastSeenText ? <> · {tx(LAST_SEEN_COPY, { time: lastSeenText })}</> : null}
+                        </p>
+                    ) : null}
 
                     {/* Custom Status */}
                     {user.customStatus && (

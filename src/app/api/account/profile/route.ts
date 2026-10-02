@@ -17,6 +17,7 @@ import {
     type AccountProfileResponse,
     type EditableAccountFields,
 } from "@/lib/account-profile";
+import { effectiveStatus, presenceWrites, readPresenceReport, resolvePresence, type PresenceStatus } from "@/lib/presence";
 import { getActiveSession } from "@/lib/server/active-session";
 import { resolveUserRole, toIso } from "@/lib/server/admin";
 import { commitServerPatches, countServerQuery, getServerDocument, isWriteConflict, runServerQuery } from "@/lib/server/firebase-rest";
@@ -113,6 +114,11 @@ async function planRepair(email: string, stored: EditableAccountFields, shown: E
     return Object.keys(repair).length ? repair : null;
 }
 
+/** Update mask: the defined fields of `data` plus `extra` (fields to delete). */
+function maskOf(data: Record<string, unknown>, extra: string[] = []) {
+    return [...new Set([...Object.entries(data).filter(([, value]) => value !== undefined).map(([key]) => key), ...extra])];
+}
+
 function publicFieldsOf(fields: EditableAccountFields) {
     return Object.fromEntries(PUBLIC_PROFILE_KEYS.map((key) => [key, fields[key]]));
 }
@@ -193,7 +199,7 @@ export async function GET() {
         const user = active.user as StoredDoc;
         const profile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
         const [fields, stats] = await Promise.all([loadFields(email, session, user, profile), loadStats(email, user)]);
-        return json({ account: accountFacts(email, user), fields, stats });
+        return json({ account: accountFacts(email, user), fields, presence: effectiveStatus(profile), stats });
     } catch (error) {
         console.error("[account-profile:get]", error instanceof Error ? error.message : error);
         return errorResponse(503, "unavailable");
@@ -227,10 +233,17 @@ export async function PATCH(request: NextRequest) {
         const user = active.user as StoredDoc;
         const profile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
         const stored = mergeStoredAccount(user, profile);
-        const afterPatch = { ...stored, ...result.patch };
+        const requested: AccountProfilePatch = { ...result.patch };
+        // "Do Not Disturb" from an older client: the status preference holds it now,
+        // and the presence write below keeps the public dndMode in step.
+        if (typeof requested.dndMode === "boolean" && requested.statusPreference === undefined) {
+            requested.statusPreference = requested.dndMode ? "dnd" : stored.statusPreference === "dnd" ? "auto" : stored.statusPreference;
+        }
+        delete requested.dndMode;
+        const afterPatch = { ...stored, ...requested };
         // Missing identity fields are repaired in the same commit as the change.
         const repair = await planRepair(email, afterPatch, withSessionFallbacks(afterPatch, email, session));
-        const patch: AccountProfilePatch = { ...repair, ...result.patch };
+        const patch: AccountProfilePatch = { ...repair, ...requested };
 
         if ("nickname" in result.patch || "nicknameTag" in result.patch) {
             const nickname = patch.nickname ?? stored.nickname;
@@ -245,36 +258,48 @@ export async function PATCH(request: NextRequest) {
         const statsPromise = loadStats(email, user);
         let nextUser = user;
         let nextProfile = profile;
+        let presenceStatus: PresenceStatus | null = null;
         if (Object.keys(patch).length) {
             const now = new Date();
             const { publicPatch } = splitAccountPatch(patch);
-            const userData = { ...patch, email, updatedAt: now };
-            const writes: Parameters<typeof commitServerPatches>[0] = [{ path: `users/${email}`, data: userData }];
+            const final = { ...stored, ...patch };
+            // The status preference and the privacy settings apply at once: the
+            // status is published again (saving a setting means the person is here).
+            let presence: ReturnType<typeof presenceWrites> | null = null;
+            if (["statusPreference", "showOnlineStatus", "showLastSeen"].some((key) => key in patch)) {
+                const previous = readPresenceReport(user.presenceState);
+                presenceStatus = resolvePresence(final.statusPreference, "active", final.showOnlineStatus);
+                presence = presenceWrites({
+                    report: { activity: "active", tab: previous?.tab ?? "", at: now.getTime(), status: presenceStatus },
+                    invisible: final.statusPreference === "invisible" || !final.showOnlineStatus,
+                    showLastSeen: final.showLastSeen,
+                    previousStatus: previous?.status ?? null,
+                    force: true,
+                });
+            }
+            const userData = { ...patch, email, updatedAt: now, ...presence?.user.data };
+            const writes: Parameters<typeof commitServerPatches>[0] = [{ path: `users/${email}`, data: userData, updateFields: maskOf(userData, presence?.user.mask) }];
             let profileData: Record<string, unknown> | null = null;
             if (profile) {
                 if (Object.keys(publicPatch).length) profileData = { ...publicPatch, email, updatedAt: now };
             } else {
                 // No public profile yet: mirror every public field, not just the changed ones.
-                profileData = { ...publicFieldsOf(withSessionFallbacks({ ...afterPatch, ...patch }, email, session)), email, updatedAt: now };
+                profileData = { ...publicFieldsOf(withSessionFallbacks(final, email, session)), email, updatedAt: now };
             }
-            // Hiding the online status or the last-seen time takes effect at once:
-            // the public profile shows the person offline and loses the stored time
-            // (a field named in the update mask but missing from the data is deleted).
-            const hideOnline = result.patch.showOnlineStatus === false;
-            const hideLastSeen = result.patch.showLastSeen === false;
-            if (profileData || (profile && (hideOnline || hideLastSeen))) {
-                const data = { ...(profileData ?? {}), ...(hideOnline ? { isOnline: false } : {}) };
-                const mask = Object.entries(data).filter(([, value]) => value !== undefined).map(([key]) => key);
-                writes.push({ path: `public_profiles/${email}`, data, updateFields: hideLastSeen ? [...mask, "lastSeenAt"] : mask });
+            if (profileData || presence?.profile) {
+                const data = { ...profileData, ...presence?.profile?.data };
+                // A field in the mask without a value is deleted (lastSeenAt while "show last seen" is off).
+                writes.push({ path: `public_profiles/${email}`, data, updateFields: maskOf(data, presence?.profile?.mask) });
+                profileData = data;
             }
-            // updateMask = the given fields only: friends, role, badges and presence stay untouched.
+            // updateMask = the given fields only: friends, role and badges stay untouched.
             await commitServerPatches(writes);
             nextUser = { ...user, ...userData };
             nextProfile = profileData ? { ...(profile ?? {}), ...profileData } : profile;
         }
 
         const fields = withSessionFallbacks(mergeStoredAccount(nextUser, nextProfile), email, session);
-        return json({ account: accountFacts(email, nextUser), fields, stats: await statsPromise });
+        return json({ account: accountFacts(email, nextUser), fields, presence: presenceStatus ?? effectiveStatus(nextProfile), stats: await statsPromise });
     } catch (error) {
         console.error("[account-profile:patch]", error instanceof Error ? error.message : error);
         return errorResponse(503, "unavailable");

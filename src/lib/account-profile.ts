@@ -8,6 +8,8 @@
  * firestore.rules so a value accepted here is also valid for direct writes.
  */
 
+import { STATUS_PREFERENCES, isStatusPreference, type PresenceStatus, type StatusPreference } from "@/lib/presence";
+
 export type StaffRoleBadge = "owner" | "admin" | "moderator";
 
 export const PROFILE_TEXT_LIMITS = {
@@ -45,6 +47,10 @@ export interface PublicProfileFields {
     socialFacebook: string;
     publicProfile: boolean;
     publicProjects: boolean;
+    /**
+     * Mirrors "Do Not Disturb" for older readers. The status preference
+     * decides it: a PATCH with dndMode alone sets statusPreference.
+     */
     dndMode: boolean;
 }
 
@@ -80,6 +86,8 @@ export interface PrivateSettingsFields {
     highContrast: boolean;
     uiFontSize: "small" | "medium" | "large";
     emojiStyle: "native" | "twemoji" | "noto";
+    /** Online (with auto idle), Idle, Do Not Disturb or Invisible (lib/presence.ts). */
+    statusPreference: StatusPreference;
 }
 
 export type EditableAccountFields = PublicProfileFields & PrivateSettingsFields;
@@ -109,6 +117,8 @@ export interface AccountFacts {
 export interface AccountProfileResponse {
     account: AccountFacts;
     fields: EditableAccountFields;
+    /** The status others see right now (effectiveStatus of the public profile). */
+    presence: PresenceStatus;
     /** Small counters for the profile header and Hanogt AI ("how many projects do I have?"). */
     stats: { projects: number | null; gameProjects: number | null; groups: number | null; friends: number | null; mediaPosts: number | null };
 }
@@ -177,6 +187,7 @@ export const DEFAULT_ACCOUNT_FIELDS: EditableAccountFields = {
     highContrast: false,
     uiFontSize: "medium",
     emojiStyle: "native",
+    statusPreference: "auto",
 };
 
 export const PUBLIC_PROFILE_KEYS: ReadonlyArray<keyof PublicProfileFields> = [
@@ -209,6 +220,7 @@ const ENUMS: Partial<Record<keyof EditableAccountFields, readonly string[]>> = {
     bioVisibility: ["everyone", "friends", "nobody"],
     uiFontSize: ["small", "medium", "large"],
     emojiStyle: ["native", "twemoji", "noto"],
+    statusPreference: STATUS_PREFERENCES,
 };
 
 const TEXT_LIMITS: Partial<Record<keyof EditableAccountFields, number>> = {
@@ -385,6 +397,9 @@ export function normalizeStoredAccount(raw: Record<string, unknown> | null | und
         const value = readStoredAccountValue(key, storedValue(raw, key));
         if (value !== undefined) result[key] = value;
     }
+    // Accounts from before the status menu kept "Do Not Disturb" in dndMode.
+    if (!isStatusPreference(storedValue(raw, "statusPreference")) && result.dndMode === true) result.statusPreference = "dnd";
+    result.dndMode = result.statusPreference === "dnd";
     return result as unknown as EditableAccountFields;
 }
 
@@ -403,6 +418,9 @@ export function mergeStoredAccount(user: Record<string, unknown> | null | undefi
         const fromProfile = readStoredAccountValue(key, storedValue(publicProfile, key));
         if (filled(fromProfile)) result[key] = fromProfile;
     }
+    // A legacy dndMode (public profile only) counts while no preference is stored.
+    if (!isStatusPreference(storedValue(user, "statusPreference")) && result.dndMode === true) result.statusPreference = "dnd";
+    result.dndMode = result.statusPreference === "dnd";
     return result as unknown as EditableAccountFields;
 }
 

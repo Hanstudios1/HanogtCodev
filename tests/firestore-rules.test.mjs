@@ -17,7 +17,11 @@ await env.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(db, "users", A), { email: A, username: "alice", friends: [B], blockedUsers: [], role: "user" });
     await setDoc(doc(db, "users", B), { email: B, username: "bob", friends: [A] });
     await setDoc(doc(db, "users", C), { email: C, username: "carol", friends: [] });
-    await setDoc(doc(db, "public_profiles", A), { email: A, username: "alice", badges: ["verified"], nicknameTag: "1234" });
+    await setDoc(doc(db, "public_profiles", A), {
+        email: A, username: "alice", badges: ["verified"], nicknameTag: "1234",
+        // Presence as /api/presence writes it.
+        isOnline: true, lastSeenAt: new Date().toISOString(), dndMode: false, presence: { status: "online", updatedAt: new Date().toISOString() },
+    });
     await setDoc(doc(db, "groups", "g1"), { name: "G1", ownerEmail: A, members: [A, B], admins: [] });
     await setDoc(doc(db, "groups", "g2"), { name: "G2", ownerEmail: C, members: [C], admins: [] });
 });
@@ -29,7 +33,8 @@ async function check(name, promise) {
 }
 
 console.log("users/");
-await check("owner can write presence", assertSucceeds(setDoc(doc(as(A), "users", A), { isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
+await check("presence is server-only (users)", assertFails(setDoc(doc(as(A), "users", A), { isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
+await check("status preference is server-only", assertFails(updateDoc(doc(as(A), "users", A), { statusPreference: "invisible" })));
 await check("owner can edit profile fields (account settings)", assertSucceeds(setDoc(doc(as(A), "users", A), { email: A, username: "Alice", bio: "hi", avatarUrl: "https://example.com/a.png", accentColor: "#10b981", nicknameTag: "1234", typingIndicator: true, whoCanAdd: "everyone" }, { merge: true })));
 await check("owner cannot self-grant friends", assertFails(setDoc(doc(as(C), "users", C), { friends: [A] }, { merge: true })));
 await check("owner cannot edit blockedUsers", assertFails(updateDoc(doc(as(A), "users", A), { blockedUsers: [C] })));
@@ -42,15 +47,19 @@ await check("users doc cannot be created by a client", assertFails(setDoc(doc(as
 await check("deleted account's presence heartbeat cannot recreate users doc", assertFails(setDoc(doc(as(D), "users", D), { isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
 
 console.log("public_profiles/");
-await check("owner can update presence despite server badges", assertSucceeds(setDoc(doc(as(A), "public_profiles", A), { isOnline: true, email: A }, { merge: true })));
+await check("owner can edit own profile despite server badges and presence", assertSucceeds(setDoc(doc(as(A), "public_profiles", A), { customStatus: "coding", email: A }, { merge: true })));
+await check("presence is server-only (public profile)", assertFails(setDoc(doc(as(A), "public_profiles", A), { isOnline: false, email: A }, { merge: true })));
+await check("status can't be set from the browser", assertFails(setDoc(doc(as(A), "public_profiles", A), { presence: { status: "dnd", updatedAt: new Date().toISOString() }, email: A }, { merge: true })));
+await check("Do Not Disturb can't be set from the browser", assertFails(setDoc(doc(as(A), "public_profiles", A), { dndMode: true, email: A }, { merge: true })));
+await check("last-seen time can't be removed from the browser", assertFails(setDoc(doc(as(A), "public_profiles", A), { email: A, lastSeenAt: deleteField() }, { merge: true })));
 await check("owner cannot grant badges", assertFails(setDoc(doc(as(A), "public_profiles", A), { badges: ["verified", "developer"] }, { merge: true })));
 await check("CSS injection accent rejected", assertFails(updateDoc(doc(as(A), "public_profiles", A), { accentColor: "red;background:url(//x)" })));
 await check("banner must be https", assertFails(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "http://x.com/a.png" })));
 await check("valid banner accepted", assertSucceeds(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "https://x.com/a.png" })));
 await check("tag must be 4 digits", assertFails(updateDoc(doc(as(A), "public_profiles", A), { nicknameTag: "0001x" })));
-await check("new profile create by owner", assertSucceeds(setDoc(doc(as(C), "public_profiles", C), { email: C, username: "carol", nicknameTag: "4321", isOnline: true })));
-await check("profile cannot be created without a users doc", assertFails(setDoc(doc(as(D), "public_profiles", D), { email: D, isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
-await check("owner can hide presence (offline, last seen removed)", assertSucceeds(setDoc(doc(as(A), "public_profiles", A), { email: A, isOnline: false, lastSeenAt: deleteField() }, { merge: true })));
+await check("new profile create by owner", assertSucceeds(setDoc(doc(as(C), "public_profiles", C), { email: C, username: "carol", nicknameTag: "4321" })));
+await check("new profile can't carry presence", assertFails(setDoc(doc(as(B), "public_profiles", B), { email: B, username: "bob", isOnline: true })));
+await check("profile cannot be created without a users doc", assertFails(setDoc(doc(as(D), "public_profiles", D), { email: D, username: "dave" }, { merge: true })));
 
 console.log("chats/");
 await check("friend can open chat", assertSucceeds(setDoc(doc(as(A), "chats", chatId), { participants: [A, B].sort(), updatedAt: serverTimestamp() }, { merge: true })));

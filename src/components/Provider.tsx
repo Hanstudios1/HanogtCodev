@@ -3,7 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { SessionContext, SessionProvider, useSession } from "next-auth/react";
 import { signInWithCustomToken, signOut as signOutFirebase } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { startPresenceReports, useOwnProfile } from "@/lib/account-profile-client";
 import { auth, db, firebaseClientDiagnostics, hasFirebaseClientConfig } from "@/lib/firebase";
 import { ThemeProvider } from "@/lib/theme";
 
@@ -46,7 +47,9 @@ export type FirebaseBridgeFailureCode =
 
 export type FirebaseBridgeFailure = {
     code: FirebaseBridgeFailureCode;
-    /** Technical detail (Firebase error code / server message), shown to staff only. */
+    /** Short code anyone may copy and send to the team, e.g. auth/configuration-not-found, config-missing or token-503. */
+    errorCode: string;
+    /** Technical detail (Firebase error message / server message). */
     message: string;
     /** HTTP status of the token endpoint, when it was the cause. */
     status?: number;
@@ -101,7 +104,7 @@ function classifyAuthError(error: unknown): FirebaseBridgeFailure {
     const code = typeof (error as { code?: unknown } | null)?.code === "string" ? (error as { code: string }).code : "";
     const message = (error instanceof Error ? error.message : String(error)).slice(0, 300);
     const text = `${code} ${message}`.toLowerCase();
-    const failure = (kind: FirebaseBridgeFailureCode): FirebaseBridgeFailure => ({ code: kind, message: code && !message.includes(code) ? `${code}: ${message}` : message });
+    const failure = (kind: FirebaseBridgeFailureCode): FirebaseBridgeFailure => ({ code: kind, errorCode: code || "unknown", message: code && !message.includes(code) ? `${code}: ${message}` : message });
     if (code === "auth/invalid-custom-token" || text.includes("invalid_custom_token")) return failure("invalid_custom_token");
     if (code === "auth/custom-token-mismatch" || text.includes("credential_mismatch")) return failure("custom_token_mismatch");
     if (code === "auth/configuration-not-found" || text.includes("configuration_not_found")) return failure("configuration_not_found");
@@ -140,7 +143,7 @@ async function fetchCustomToken() {
             credentials: "same-origin",
         });
     } catch (error) {
-        throw new BridgeError({ code: "token_network", message: error instanceof Error ? error.message : "fetch failed" });
+        throw new BridgeError({ code: "token_network", errorCode: "token-network", message: error instanceof Error ? error.message : "fetch failed" });
     }
     const data = await response.json().catch(() => ({})) as { token?: string; error?: string };
     if (response.ok && data.token) return data.token;
@@ -148,15 +151,15 @@ async function fetchCustomToken() {
         : response.status === 403 ? "bad_origin"
             : response.status === 429 ? "rate_limited"
                 : "token_unavailable";
-    throw new BridgeError({ code, message: typeof data.error === "string" ? data.error.slice(0, 300) : "", status: response.status });
+    throw new BridgeError({ code, errorCode: `token-${response.status}`, message: typeof data.error === "string" ? data.error.slice(0, 300) : "", status: response.status });
 }
 
 async function signInFirebase(email: string) {
     if (!hasFirebaseClientConfig || !auth) {
         const missing = firebaseClientDiagnostics.missing.join(", ");
         throw new BridgeError(firebaseClientDiagnostics.issue === "invalid_api_key"
-            ? { code: "config_invalid", message: "NEXT_PUBLIC_FIREBASE_API_KEY" }
-            : { code: "config_missing", message: missing || "NEXT_PUBLIC_FIREBASE_*" });
+            ? { code: "config_invalid", errorCode: "config-invalid", message: "NEXT_PUBLIC_FIREBASE_API_KEY" }
+            : { code: "config_missing", errorCode: "config-missing", message: missing || "NEXT_PUBLIC_FIREBASE_*" });
     }
     if (await currentFirebaseEmail() === email) return;
     const token = await fetchCustomToken();
@@ -182,7 +185,7 @@ async function probeSecurityRules(email: string): Promise<FirebaseBridgeFailure 
         await getDoc(doc(db, "users", email));
     } catch (error) {
         const code = (error as { code?: unknown } | null)?.code;
-        if (code === "permission-denied") return { code: "permission_denied", message: error instanceof Error ? error.message.slice(0, 300) : "permission-denied" };
+        if (code === "permission-denied") return { code: "permission_denied", errorCode: "firestore/permission-denied", message: error instanceof Error ? error.message.slice(0, 300) : "permission-denied" };
         // Offline or unavailable: nothing to report here.
         return null;
     }
@@ -194,35 +197,24 @@ async function probeSecurityRules(email: string): Promise<FirebaseBridgeFailure 
     return null;
 }
 
-const PRESENCE_HEARTBEAT_MS = 45_000;
-
 /**
- * Keeps the signed-in user's presence fresh on every page, including the
- * full-screen editor, chat and game engine that do not render the header.
- * Friends lists treat a user as online while `lastSeenAt` is recent.
+ * Discord-style presence (online, idle, do not disturb, invisible) on every
+ * page, including the full-screen editor, chat and game engine that do not
+ * render the header. Reports go to POST /api/presence, which uses the
+ * service account, so this works without the Firebase bridge (see
+ * startPresenceReports in lib/account-profile-client.ts).
  */
 function PresenceHeartbeat() {
-    const { data } = useSession();
-    const { ready } = useFirebaseBridge();
-    const email = data?.user?.email?.toLowerCase() || null;
+    const session = useRawSession();
+    const email = session.status === "authenticated" ? session.data?.user?.email?.toLowerCase() || null : null;
+    const profile = useOwnProfile(email);
+    // Invisible (or "show online status" off): the server shows offline anyway, so nothing is reported.
+    const quiet = profile ? profile.statusPreference === "invisible" || !profile.showOnlineStatus : false;
 
     useEffect(() => {
-        // Without a Firebase sign-in every write would be rejected by the security rules.
-        if (!email || !ready) return;
-        const write = (isOnline: boolean) => {
-            const presence = { isOnline, lastSeenAt: new Date().toISOString() };
-            void setDoc(doc(db, "users", email), presence, { merge: true }).catch(() => undefined);
-            void setDoc(doc(db, "public_profiles", email), { ...presence, email }, { merge: true }).catch(() => undefined);
-        };
-        write(true);
-        const heartbeat = window.setInterval(() => write(true), PRESENCE_HEARTBEAT_MS);
-        const markOffline = () => write(false);
-        window.addEventListener("pagehide", markOffline);
-        return () => {
-            window.clearInterval(heartbeat);
-            window.removeEventListener("pagehide", markOffline);
-        };
-    }, [email, ready]);
+        if (!email || quiet) return;
+        return startPresenceReports(email);
+    }, [email, quiet]);
 
     return null;
 }

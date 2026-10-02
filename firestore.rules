@@ -40,6 +40,9 @@ service cloud.firestore {
     // Fields a user may write on their own users/{email} document. Everything
     // else (friends, blockedUsers, role, suspension, credentials…) is server-only:
     // the friend graph is trusted by the chat/call rules and the APIs below.
+    // Presence (isOnline, lastSeenAt, dndMode, presence, presenceState,
+    // statusPreference) is written by /api/presence and /api/account/profile only,
+    // so the privacy settings can't be bypassed from the browser.
     function userEditableKeys() {
       return [
         "email", "username", "avatarUrl", "bio", "emailNotifications", "newFeatureAlerts",
@@ -50,9 +53,8 @@ service cloud.firestore {
         "msgFontSize", "chatBackground", "voiceMsgQuality", "linkPreview", "gifAutoplay",
         "enterToSend", "stickerSuggestions", "whoCanAdd", "hideFriendList", "showLastSeen",
         "photoVisibility", "bioVisibility", "publicProjects", "msgNotifications", "callNotifications",
-        "friendReqNotifications", "likeNotifications", "notifSound", "dndMode", "dndSchedule",
-        "bubbleColor", "compactMode", "reduceAnimations", "highContrast", "uiFontSize", "emojiStyle",
-        "isOnline", "lastSeenAt"
+        "friendReqNotifications", "likeNotifications", "notifSound", "dndSchedule",
+        "bubbleColor", "compactMode", "reduceAnimations", "highContrast", "uiFontSize", "emojiStyle"
       ];
     }
 
@@ -60,8 +62,7 @@ service cloud.firestore {
       return [
         "email", "username", "avatarUrl", "nickname", "nicknameTag", "bio", "bannerUrl", "accentColor",
         "favoriteLangs", "socialGithub", "socialLinkedin", "socialTwitter", "socialWebsite",
-        "customStatus", "statusEmoji", "isOnline", "lastSeenAt", "dndMode", "publicProfile",
-        "publicProjects", "updatedAt"
+        "customStatus", "statusEmoji", "publicProfile", "publicProjects", "updatedAt"
       ];
     }
 
