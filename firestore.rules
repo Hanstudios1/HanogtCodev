@@ -346,6 +346,53 @@ service cloud.firestore {
       }
     }
 
+    // Live coding sessions in the editor ("Ekiple düzenle"), written only by
+    // /api/collab with the service account. Participants (the e-mails in the
+    // session document) read the live documents with the client SDK: the
+    // public meta (no e-mail addresses), the Yjs update log, presence, chat
+    // and their own signalling inbox. The session document (participant
+    // addresses, invitees) and the snapshots stay server-only.
+    match /collab_sessions/{sessionId} {
+      function collabSession() {
+        return get(/databases/$(database)/documents/collab_sessions/$(sessionId)).data;
+      }
+
+      function collabMember() {
+        return signedIn() && email() in collabSession().participants;
+      }
+
+      allow read, write: if false;
+
+      match /live/{docId} {
+        allow read: if collabMember();
+        allow write: if false;
+      }
+
+      match /updates/{updateId} {
+        allow read: if collabMember();
+        allow write: if false;
+      }
+
+      match /presence/{presenceId} {
+        allow read: if collabMember();
+        allow write: if false;
+      }
+
+      match /chat/{messageId} {
+        allow read: if collabMember();
+        allow write: if false;
+      }
+
+      match /inbox/{participantKey}/signals/{signalId} {
+        allow read: if collabMember() && collabSession().keys[email()] == participantKey;
+        allow write: if false;
+      }
+
+      match /snapshots/{partId} {
+        allow read, write: if false;
+      }
+    }
+
     match /projects/{projectId} {
       allow read: if signedIn() && (resource.data.email == email() || resource.data.visibility == "public");
       allow create: if signedIn()

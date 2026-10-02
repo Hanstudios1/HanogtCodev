@@ -1,17 +1,22 @@
 "use client";
 
 import {
-    ChevronDown, ClipboardCopy, Command, Copy as CopyIcon, Download, ExternalLink, Eye, FilePlus2, FolderDown, Keyboard, Languages, ListOrdered,
+    ChevronDown, ClipboardCopy, Command, Copy as CopyIcon, Download, ExternalLink, Eye, FilePlus2, FolderDown, Keyboard, Languages, Link2, ListOrdered,
     LoaderCircle, MessageSquareCode, MoreVertical, PanelRightClose, PanelRightOpen, Pencil, Play, Redo2, RefreshCw, Replace, Save, Search, Send,
-    Settings, Share2, Square, SquarePen, Sun, Terminal, TextSelect, Trash2, Undo2, Upload, Wand2,
+    Settings, Share2, Square, SquarePen, Sun, Terminal, TextSelect, Trash2, Undo2, Upload, UsersRound, Wand2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction } from "react";
 import type { editor } from "monaco-editor";
 import AIAssistant from "@/components/Editor/AIAssistant";
 import CodeEditor from "@/components/Editor/CodeEditor";
+import CollabButton from "@/components/Editor/CollabButton";
+import CollabCodeEditor from "@/components/Editor/CollabCodeEditor";
+import CollabDialogs from "@/components/Editor/CollabDialogs";
+import CollabPanel from "@/components/Editor/CollabPanel";
+import CollabStartDialog from "@/components/Editor/CollabStartDialog";
 import CommandPalette, { type PaletteCommand } from "@/components/Editor/CommandPalette";
 import Console, { type ConsoleTab } from "@/components/Editor/Console";
 import EditorTabs from "@/components/Editor/EditorTabs";
@@ -37,6 +42,11 @@ import { MediaApiError, mediaAction, mediaErrorText } from "@/components/Editor/
 import { mediaPostPath, ownerTag, parseMediaPublication, type MediaPublication } from "@/components/Editor/media-publish";
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
 import { storedPublication, useMediaPublication } from "@/components/Editor/useMediaPublication";
+import { useFirebaseBridge, useRawSession } from "@/components/Provider";
+import { COLLAB_COPY, COLLAB_ERROR_COPY, COLLAB_NOTICE_COPY, collabNoticeToast } from "@/lib/collab/copy";
+import type { CollabFileContent } from "@/lib/collab/doc";
+import type { CollabClosed } from "@/lib/collab/session-client";
+import { COLLAB_PARAM, sharedFileIds, useEditorCollab } from "@/lib/collab/use-editor-collab";
 import { EDITOR_IMPORT_PARAM, consumeEditorImportBundle, type EditorImportError } from "@/lib/editor-bridge";
 import { useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -61,7 +71,7 @@ interface EditorTab {
 
 type StoredTab = { name?: unknown; lang?: unknown; code?: unknown; id?: unknown; isSaved?: unknown };
 type GameScriptResponse = { id: string; name: string; language: "csharp" | "cpp"; content: string; revision?: string | null };
-type DialogName = "new" | "palette" | "shortcuts" | "share" | "save" | "language" | "publish" | null;
+type DialogName = "new" | "palette" | "shortcuts" | "share" | "save" | "language" | "publish" | "collab" | null;
 /** An editor command shown in the Edit menu and the command palette. */
 type EditorCommand = { id: string; label: string; icon: ReactNode; shortcut?: string; hint?: string; keywords?: string; disabled?: boolean; danger?: boolean; run: () => void };
 
@@ -266,6 +276,15 @@ const C = {
     alreadyUnpublished: { TR: "Yayın zaten kaldırılmış.", EN: "The post had already been removed." },
     linkCopied: { TR: "Yayın bağlantısı kopyalandı.", EN: "The post link was copied." },
     editorNotReady: { TR: "Editör henüz hazır değil.", EN: "The editor isn't ready yet." },
+    collabRemoveTitle: { TR: "Dosya herkes için kaldırılsın mı?", EN: "Remove the file for everyone?" },
+    collabRemoveMessage: { TR: "{name} canlı oturumdaki herkes için kaldırılacak.", EN: "{name} will be removed for everyone in the live session." },
+    collabRemoveMany: { TR: "{count} dosya canlı oturumdaki herkes için kaldırılacak.", EN: "{count} files will be removed for everyone in the live session." },
+    collabRemove: { TR: "Kaldır", EN: "Remove" },
+    collabFinalSaved: { TR: "Canlı oturum bitti; kodun son hâli projene kaydedildi.", EN: "The live session ended; the final code was saved to your project." },
+    collabFinalLocal: { TR: "Canlı oturum bitti; kodun son hâli editörde. Projene kaydetmeyi unutma.", EN: "The live session ended; the final code is in the editor. Remember to save it." },
+    collabKept: { TR: "{count} dosya editörüne eklendi (kaydedilmedi).", EN: "{count} files were added to your editor (not saved yet)." },
+    collabPublishOwner: { TR: "Oturumdaki kodu yalnızca oturum sahibi yayınlayabilir.", EN: "Only the session's owner can publish its code." },
+    collabAutoSave: { TR: "Canlı oturum: değişiklikler anında paylaşılır", EN: "Live session: changes are shared instantly" },
 } satisfies Record<string, Copy>;
 
 const ISSUE_LABELS: Record<UploadIssue["reason"], Copy> = {
@@ -316,7 +335,8 @@ function EditorContent() {
     // refresh does not wipe the open tabs and the user's unsaved code.
     const loadedKeyRef = useRef<string | null>(null);
 
-    const [tabs, setTabs] = useState<EditorTab[]>([]);
+    /** The page's own tabs. During a live session the editor shows the session's files instead (`tabs` below). */
+    const [localTabs, setLocalTabs] = useState<EditorTab[]>([]);
     const [activeTabId, setActiveTabId] = useState("");
     const [ready, setReady] = useState(false);
     const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
@@ -328,10 +348,44 @@ function EditorContent() {
     const [importedTitle, setImportedTitle] = useState("");
     /** A file was deleted; the workspace counts as changed until it is saved. */
     const [structureDirty, setStructureDirty] = useState(false);
+
+    // Live session ("Ekiple düzenle", src/lib/collab): while one is shown, the
+    // tabs are the session's files and tab changes go to the shared document.
+    // Collaboration goes through /api/collab, so it follows the NextAuth session itself, not the Firebase bridge.
+    const bridge = useFirebaseBridge();
+    const rawSession = useRawSession();
+    const finishCollabRef = useRef<(closed: CollabClosed) => void>(() => undefined);
+    const startedCollabRef = useRef<() => void>(() => undefined);
+    const collab = useEditorCollab({
+        enabled: rawSession.status === "authenticated" && !isGameMode,
+        realtime: bridge.ready,
+        requestedId: searchParams.get(COLLAB_PARAM),
+        onActivateFile: setActiveTabId,
+        onNotice: (notice) => toast(collabNoticeToast(notice, txRef.current)),
+        onError: (code) => toast({ tone: code === "not_found" || code === "ended" ? "warning" : "error", message: txRef.current(COLLAB_ERROR_COPY[code]) }),
+        onStarted: () => startedCollabRef.current(),
+        onClosed: (closed) => finishCollabRef.current(closed),
+    });
+    const collabFiles = collab.files;
+    const collabTabs = useMemo<EditorTab[] | null>(() => (collab.active && collabFiles
+        ? collabFiles.map((file) => ({ id: file.id, name: file.name, lang: file.lang, code: file.code, isSaved: true }))
+        : null), [collab.active, collabFiles]);
+    const tabs = collabTabs ?? localTabs;
     const tabsRef = useRef(tabs);
     useEffect(() => {
         tabsRef.current = tabs;
     }, [tabs]);
+    const collabSessionRef = collab.sessionRef;
+    /** Changes the tabs: the live session's files while one is shown (only the intended change is applied), else the page's own. */
+    const setTabs = useCallback((value: SetStateAction<EditorTab[]>) => {
+        const live = collabSessionRef.current;
+        if (live && !live.isClosed && live.getState().files) {
+            const base = tabsRef.current;
+            live.applyTabChanges(base, typeof value === "function" ? value(base) : value);
+            return;
+        }
+        setLocalTabs(value);
+    }, [collabSessionRef]);
 
     // The workspace's Hanogt Media post: saved projects and game scripts are
     // remembered by key, unsaved drafts with the recovered tabs.
@@ -348,7 +402,7 @@ function EditorContent() {
     const runCounter = useRef(0);
     const abortRef = useRef<AbortController | null>(null);
 
-    const [panelTab, setPanelTab] = useState<"console" | "preview">("console");
+    const [panelTab, setPanelTab] = useState<"console" | "preview" | "team">("console");
     const [consoleTab, setConsoleTab] = useState<ConsoleTab>("output");
     const [panelOpen, setPanelOpen] = useState(true);
     const [panelWidth, setPanelWidth] = useState(440);
@@ -394,7 +448,7 @@ function EditorContent() {
         const translate = txRef.current;
         const open = (next: EditorTab[], project?: { id: number | null; name: string; multi: boolean | null }, published: MediaPublication | null = null) => {
             if (!stillCurrent()) return;
-            setTabs(next);
+            setLocalTabs(next);
             setActiveTabId(next[0]?.id ?? "");
             if (project) {
                 setCurrentProjectId(project.id);
@@ -541,11 +595,12 @@ function EditorContent() {
             toast({ tone: "success", message: added.length === 1 ? tx(C.importDone, { name: added[0].name }) : tx(C.importDoneMany, { count: added.length }) });
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [ready, importId, isGameMode, toast, tx, setPublication]);
+    }, [ready, importId, isGameMode, toast, tx, setPublication, setTabs]);
 
-    // Unsaved tabs survive a reload (not for game scripts, which have their own storage).
+    // Unsaved tabs survive a reload (not for game scripts, which have their own storage,
+    // nor a live session's files, which belong to the session).
     useEffect(() => {
-        if (!ready || isGameMode) return;
+        if (!ready || isGameMode || collabTabs) return;
         const timer = window.setTimeout(() => {
             if (!tabs.length || tabs.every((tab) => tab.isSaved)) {
                 writeStorage(RECOVERY_KEY, null);
@@ -564,10 +619,10 @@ function EditorContent() {
             writeStorage(RECOVERY_PROJECT_KEY, fits && meta ? JSON.stringify(meta) : null);
         }, 500);
         return () => window.clearTimeout(timer);
-    }, [tabs, ready, isGameMode, currentProjectId, currentProjectName, publication, workspaceKey, sessionEmail]);
+    }, [tabs, ready, isGameMode, collabTabs, currentProjectId, currentProjectName, publication, workspaceKey, sessionEmail]);
 
     // ------------------------------------------------------------------ tabs
-    const updateTabs = useCallback((updater: (current: EditorTab[]) => EditorTab[]) => setTabs(updater), []);
+    const updateTabs = useCallback((updater: (current: EditorTab[]) => EditorTab[]) => setTabs(updater), [setTabs]);
 
     const addTabs = useCallback((files: Array<{ name: string; lang: string; code: string }>, activate = true) => {
         const current = tabsRef.current;
@@ -590,12 +645,12 @@ function EditorContent() {
         setTabs([...current, ...added]);
         if (activate && added[0]) setActiveTabId(added[0].id);
         return added;
-    }, [isGameMode, toast, tx]);
+    }, [isGameMode, setTabs, toast, tx]);
 
     const handleCodeChange = useCallback((value: string | undefined) => {
         const code = value ?? "";
         setTabs((current) => current.map((tab) => (tab.id === shownTabId && tab.code !== code ? { ...tab, code, isSaved: false } : tab)));
-    }, [shownTabId]);
+    }, [setTabs, shownTabId]);
 
     /** Removes tabs (never the last one) and activates a neighbour of the active tab when it goes. */
     const removeTabs = useCallback((ids: string[]) => {
@@ -610,12 +665,23 @@ function EditorContent() {
             return neighbour?.id ?? remaining[0].id;
         });
         return true;
-    }, []);
+    }, [setTabs]);
 
     const closeTabs = useCallback(async (ids: string[]) => {
         const current = tabsRef.current;
         const closing = current.filter((tab) => ids.includes(tab.id));
         if (!closing.length || closing.length >= current.length) return;
+        if (collabTabs) {
+            // In a live session a closed tab is a file removed for everyone.
+            const accepted = await confirm({
+                title: tx(C.collabRemoveTitle),
+                message: closing.length === 1 ? tx(C.collabRemoveMessage, { name: closing[0].name }) : tx(C.collabRemoveMany, { count: closing.length }),
+                confirmLabel: tx(C.collabRemove),
+                destructive: true,
+            });
+            if (accepted) removeTabs(ids);
+            return;
+        }
         const unsaved = closing.filter((tab) => !tab.isSaved);
         if (unsaved.length) {
             const accepted = await confirm({
@@ -627,7 +693,7 @@ function EditorContent() {
             if (!accepted) return;
         }
         removeTabs(ids);
-    }, [confirm, removeTabs, tx]);
+    }, [collabTabs, confirm, removeTabs, tx]);
 
     /** "Delete file": always confirmed, and the project counts as changed until it is saved. */
     const deleteTab = useCallback(async (id: string) => {
@@ -662,7 +728,7 @@ function EditorContent() {
         setTabs(current.map((tab) => (tab.id === id ? { ...tab, name, lang: switchLanguage && detected ? detected.id : tab.lang, isSaved: false } : tab)));
         if (switchLanguage && detected) toast({ tone: "info", message: tx(C.languageChanged, { language: detected.name }) });
         return null;
-    }, [isGameMode, toast, tx]);
+    }, [isGameMode, setTabs, toast, tx]);
 
     const duplicateTab = useCallback((id: string) => {
         const current = tabsRef.current;
@@ -678,7 +744,7 @@ function EditorContent() {
         const copy: EditorTab = { ...source, id: newTabId(), name: uniqueFileName(base, current.map((tab) => tab.name)), isSaved: false };
         setTabs([...current.slice(0, index + 1), copy, ...current.slice(index + 1)]);
         setActiveTabId(copy.id);
-    }, [isGameMode, toast, tx]);
+    }, [isGameMode, setTabs, toast, tx]);
 
     const reorderTabs = useCallback((fromId: string, toId: string) => {
         updateTabs((current) => {
@@ -706,7 +772,7 @@ function EditorContent() {
         }
         setTabs(current.map((tab) => (tab.id === target.id ? { ...tab, lang: info.id, name, isSaved: false } : tab)));
         toast({ tone: "info", message: tx(C.languageChanged, { language: info.name }) });
-    }, [shownTabId, isGameMode, toast, tx]);
+    }, [shownTabId, isGameMode, setTabs, toast, tx]);
 
     const createFile = useCallback((request: NewFileRequest) => {
         const added = addTabs([{ name: request.name, lang: request.language, code: request.code }]);
@@ -857,7 +923,8 @@ function EditorContent() {
     }, [shownTabId, editorInstance, revealLine]);
 
     // ------------------------------------------------------------------ saving
-    const canAutoSave = Boolean(sessionEmail) && (isGameMode ? Boolean(currentGameScriptId) : currentProjectId !== null);
+    // A live session's changes are shared at once; its final content is saved when it ends.
+    const canAutoSave = Boolean(sessionEmail) && !collabTabs && (isGameMode ? Boolean(currentGameScriptId) : currentProjectId !== null);
     const hasUnsaved = structureDirty || tabs.some((tab) => !tab.isSaved);
 
     const completeSave = useCallback(async (projectName: string, projectIdToUse: number | null, silent = false): Promise<boolean> => {
@@ -954,11 +1021,16 @@ function EditorContent() {
             savingRef.current = false;
             setSaving(false);
         }
-    }, [currentGameScriptId, gameProjectId, gameScriptRevision, initialLang, isGameMode, projectId, requestedGameScriptName, sessionEmail, settings.insertFinalNewline, settings.trimTrailingWhitespace, toast, tx]);
+    }, [currentGameScriptId, gameProjectId, gameScriptRevision, initialLang, isGameMode, projectId, requestedGameScriptName, sessionEmail, setTabs, settings.insertFinalNewline, settings.trimTrailingWhitespace, toast, tx]);
 
     const handleSave = useCallback(() => {
         if (!sessionEmail) {
             toast({ tone: "warning", message: tx(C.signInToSave), action: { label: tx(C.signIn), href: `/login?callbackUrl=${encodeURIComponent("/editor")}` } });
+            return;
+        }
+        // A participant's own project must not receive the session's files.
+        if (collabTabs && collab.role !== "owner") {
+            toast({ tone: "info", message: tx(COLLAB_NOTICE_COPY.saveParticipant) });
             return;
         }
         if (isGameMode) {
@@ -975,7 +1047,7 @@ function EditorContent() {
             return;
         }
         void completeSave(currentProjectName, currentProjectId);
-    }, [completeSave, currentProjectId, currentProjectName, importedTitle, isGameMode, sessionEmail, toast, tx, wasOriginallyMultiTab]);
+    }, [collab.role, collabTabs, completeSave, currentProjectId, currentProjectName, importedTitle, isGameMode, sessionEmail, toast, tx, wasOriginallyMultiTab]);
 
     // Auto save (settings page): after a pause or when the editor loses focus.
     // After a failed automatic save the same content is not retried until it changes.
@@ -1078,6 +1150,12 @@ function EditorContent() {
             return;
         }
         editorInstance.focus();
+        // A live session's editor undoes only this browser's own changes (CollabCodeEditor).
+        const collabAction = command === "undo" || command === "redo" ? editorInstance.getAction(`hanogt.collab.${command}`) : null;
+        if (collabAction) {
+            void collabAction.run();
+            return;
+        }
         editorInstance.trigger("hanogt", command, null);
     }, [editorInstance, toast, tx]);
 
@@ -1096,10 +1174,15 @@ function EditorContent() {
 
     // ------------------------------------------------------------------ media
     const openPublish = useCallback(() => {
+        // The code of someone else's live session isn't the participant's to publish.
+        if (collabTabs && collab.role !== "owner") {
+            toast({ tone: "info", message: tx(C.collabPublishOwner) });
+            return;
+        }
         // A new key gives the dialog a fresh form and a fresh security check every time.
         setPublishKey((key) => key + 1);
         setDialog("publish");
-    }, []);
+    }, [collab.role, collabTabs, toast, tx]);
 
     const copyPublicationLink = useCallback(async () => {
         if (!publication) return;
@@ -1136,6 +1219,94 @@ function EditorContent() {
             setUnpublishing(false);
         }
     }, [confirm, forgetPublication, publication, toast, tx, unpublishing]);
+
+    // ------------------------------------------------------------------ live session
+    const collabSignedIn = rawSession.status === "authenticated";
+    const openCollab = useCallback(() => {
+        if (!collabSignedIn) {
+            toast({ tone: "warning", message: tx(COLLAB_COPY.signInRequired), action: { label: tx(C.signIn), href: `/login?callbackUrl=${encodeURIComponent("/editor")}` } });
+            return;
+        }
+        if (isGameMode) {
+            toast({ tone: "info", message: tx(COLLAB_COPY.gameMode) });
+            return;
+        }
+        setDialog("collab");
+    }, [collabSignedIn, isGameMode, toast, tx]);
+
+    const openTeamPanel = useCallback(() => {
+        setPanelOpen(true);
+        setPanelTab("team");
+    }, []);
+
+    const copyCollabLink = useCallback(async () => {
+        const id = collabSessionRef.current?.id;
+        if (!id) return;
+        try {
+            await navigator.clipboard.writeText(new URL(`/editor?${COLLAB_PARAM}=${encodeURIComponent(id)}`, window.location.origin).href);
+            toast({ tone: "success", message: tx(COLLAB_COPY.linkCopied) });
+        } catch {
+            toast({ tone: "error", message: tx(COLLAB_COPY.copyFailed) });
+        }
+    }, [collabSessionRef, toast, tx]);
+
+    /** "Kopyayı sakla": a participant keeps the session's final files as unsaved tabs. */
+    const keepCollabCopy = useCallback((files: CollabFileContent[]) => {
+        const added = addTabs(files.map((file) => ({ name: file.name, lang: file.lang, code: file.code })));
+        if (added.length) toast({ tone: "success", message: tx(C.collabKept, { count: added.length }) });
+    }, [addTabs, toast, tx]);
+
+    /** The tab that was open before a live session; it comes back afterwards. */
+    const localActiveRef = useRef("");
+    useEffect(() => {
+        if (!collabTabs) localActiveRef.current = activeTabId;
+    }, [collabTabs, activeTabId]);
+
+    useEffect(() => {
+        startedCollabRef.current = () => {
+            setPanelOpen(true);
+            setPanelTab("team");
+        };
+        finishCollabRef.current = (closed) => {
+            const restore = localActiveRef.current;
+            if (closed.role !== "owner" || closed.reason !== "ended") {
+                if (restore) setActiveTabId(restore);
+                setPanelTab((current) => (current === "team" ? "console" : current));
+                return;
+            }
+            // The owner's tabs that went into the session get the final content; the others stay as they were.
+            const shared = new Set(sharedFileIds(closed.id) ?? closed.files.map((file) => file.id));
+            const finals = new Map(closed.files.map((file) => [file.id, file]));
+            const merged: EditorTab[] = [];
+            for (const tab of localTabs) {
+                if (!shared.has(tab.id)) {
+                    merged.push(tab);
+                    continue;
+                }
+                const file = finals.get(tab.id);
+                if (!file) continue;
+                finals.delete(tab.id);
+                merged.push(file.code === tab.code && file.name === tab.name && file.lang === tab.lang ? tab : { ...tab, name: file.name, lang: file.lang, code: file.code, isSaved: false });
+            }
+            for (const file of finals.values()) merged.push({ id: file.id, name: file.name, lang: file.lang, code: file.code, isSaved: false });
+            const next = merged.slice(0, MAX_TABS);
+            setPanelTab((current) => (current === "team" ? "console" : current));
+            if (!next.length) return;
+            const changed = next.length !== localTabs.length || next.some((tab, index) => tab !== localTabs[index]);
+            setLocalTabs(next);
+            tabsRef.current = next;
+            if (!next.some((tab) => tab.id === activeTabId)) setActiveTabId(next.find((tab) => tab.id === restore)?.id ?? next[0].id);
+            if (!changed) return;
+            setStructureDirty(true);
+            if (sessionEmail && currentProjectId !== null) {
+                void completeSave(currentProjectName, currentProjectId, true).then((ok) => {
+                    if (ok) toast({ tone: "success", message: tx(C.collabFinalSaved) });
+                });
+            } else {
+                toast({ tone: "info", message: tx(C.collabFinalLocal), action: { label: tx(C.paletteSave), onClick: () => actionsRef.current.save() } });
+            }
+        };
+    });
 
     // ------------------------------------------------------------------ keyboard
     const actionsRef = useRef({ run: handleRun, runActive: handleRunActive, save: handleSave, palette: () => setDialog("palette"), switchTab: (index: number) => void index });
@@ -1297,10 +1468,23 @@ function EditorContent() {
         ];
     }, [copyPublicationLink, openPublish, publication, tx, unpublish, unpublishing]);
 
+    const teamCommands = useMemo<EditorCommand[]>(() => {
+        const icon = (Icon: typeof UsersRound) => <Icon className="h-4 w-4" aria-hidden />;
+        if (isGameMode) return [];
+        if (!collab.session) {
+            return [{ id: "collab-start", label: tx(COLLAB_COPY.button), hint: tx(COLLAB_COPY.buttonHint), icon: icon(UsersRound), keywords: "collaborate live share pair team ekip birlikte canlı ortak eşli", disabled: collab.busy !== null, run: openCollab }];
+        }
+        return [
+            { id: "collab-panel", label: tx(COLLAB_COPY.openPanel), hint: collab.title, icon: icon(UsersRound), keywords: "team chat voice ekip sohbet sesli canlı", run: openTeamPanel },
+            { id: "collab-link", label: tx(COLLAB_COPY.copyLink), icon: icon(Link2), keywords: "invite link davet bağlantı", run: () => void copyCollabLink() },
+        ];
+    }, [collab.busy, collab.session, collab.title, copyCollabLink, isGameMode, openCollab, openTeamPanel, tx]);
+
     const toMenuItem = ({ id, label, icon, shortcut, disabled, danger, run }: EditorCommand): ToolbarMenuItem => ({ id, label, icon, shortcut, disabled, danger, onSelect: run });
     const editMenuSections: ToolbarMenuSection[] = [
         { id: "edit", label: tx(C.editGroup), items: editCommands.map(toMenuItem) },
         { id: "file", label: tx(C.fileGroup), items: fileCommands.map(toMenuItem) },
+        { id: "team", label: tx(COLLAB_COPY.group), items: teamCommands.map(toMenuItem) },
     ];
 
     // ------------------------------------------------------------------ palette
@@ -1324,6 +1508,7 @@ function EditorContent() {
             { id: "monaco", group: actions, label: tx(C.monacoPalette), shortcut: "F1", icon: <Command className="h-4 w-4" aria-hidden />, run: () => { editorInstance?.focus(); editorInstance?.trigger("hanogt", "editor.action.quickCommand", null); } },
             ...fileCommands.map(toPalette(tx(C.fileGroup))),
             ...editCommands.map(toPalette(tx(C.editGroup))),
+            ...teamCommands.map(toPalette(tx(COLLAB_COPY.group))),
             ...mediaCommands.map(toPalette(tx(C.mediaGroup))),
         ];
         const fileGroup = tx(C.files);
@@ -1347,15 +1532,20 @@ function EditorContent() {
         return commands;
         // modShortcut only depends on `mac`.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tx, runMode, programTabs.length, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, isGameMode, mac, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile, fileCommands, editCommands, mediaCommands]);
+    }, [tx, runMode, programTabs.length, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, isGameMode, mac, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile, fileCommands, editCommands, teamCommands, mediaCommands]);
 
     // ------------------------------------------------------------------ render helpers
-    const saveState: SaveState = saving ? "saving" : saveError && hasUnsaved ? "error" : hasUnsaved ? "unsaved" : "saved";
-    const autoSaveNote = settings.autoSave === "off"
-        ? tx(C.autoSaveOff)
-        : !canAutoSave
-            ? tx(C.autoSaveLater)
-            : settings.autoSave === "afterDelay" ? tx(C.autoSaveDelay, { seconds: settings.autoSaveDelay / 1000 }) : tx(C.autoSaveFocus);
+    // In a live session "saved" means the server has every local change.
+    const saveState: SaveState = collabTabs
+        ? (collab.unsynced ? "saving" : "saved")
+        : saving ? "saving" : saveError && hasUnsaved ? "error" : hasUnsaved ? "unsaved" : "saved";
+    const autoSaveNote = collabTabs
+        ? tx(C.collabAutoSave)
+        : settings.autoSave === "off"
+            ? tx(C.autoSaveOff)
+            : !canAutoSave
+                ? tx(C.autoSaveLater)
+                : settings.autoSave === "afterDelay" ? tx(C.autoSaveDelay, { seconds: settings.autoSaveDelay / 1000 }) : tx(C.autoSaveFocus);
     const runLabel = isRunning
         ? tx(C.running)
         : runMode === "validate" ? tx(C.validate)
@@ -1455,7 +1645,7 @@ function EditorContent() {
                     {activeTab && (
                         <div className="flex min-w-0 items-center gap-2">
                             <LanguageIcon language={activeTab.lang} size={20} />
-                            <span className="hidden truncate text-sm font-semibold min-[480px]:inline">{currentProjectName && !isGameMode ? <span className="text-zinc-400">{currentProjectName} / </span> : null}{activeTab.name}</span>
+                            <span className="hidden truncate text-sm font-semibold min-[480px]:inline">{collabTabs ? <span className="text-emerald-600 dark:text-emerald-400">{collab.title} / </span> : currentProjectName && !isGameMode ? <span className="text-zinc-400">{currentProjectName} / </span> : null}{activeTab.name}</span>
                             <button type="button" onClick={() => setDialog("language")} className="hidden items-center gap-1 rounded-full border border-zinc-200 px-2 py-0.5 text-[11px] text-zinc-500 transition hover:border-indigo-500/40 hover:text-zinc-800 sm:inline-flex dark:border-white/10 dark:text-zinc-400 dark:hover:text-zinc-100" title={tx(C.changeLanguage)}>
                                 {activeLanguage.name}
                             </button>
@@ -1474,6 +1664,7 @@ function EditorContent() {
                                 <span className="hidden lg:inline">{tx(C.previewPanel)}</span>
                             </button>
                         )}
+                        <CollabButton collab={collab} onStart={openCollab} onOpenPanel={openTeamPanel} hidden={isGameMode} />
                         <ToolbarMenu
                             label={tx(C.editMenu)}
                             sections={editMenuSections}
@@ -1546,7 +1737,16 @@ function EditorContent() {
                 {/* Editor and output */}
                 <div ref={splitRef} className="flex min-h-0 flex-1 flex-col lg:flex-row">
                     <section className={`relative min-h-0 min-w-0 flex-1 p-1.5 sm:p-2 ${panelOpen ? "basis-[55%] lg:basis-auto" : ""}`} aria-label={activeTab?.name}>
-                        {activeTab ? (
+                        {activeTab && collabTabs && collab.session ? (
+                            <CollabCodeEditor
+                                key={`collab-${collab.session.id}`}
+                                session={collab.session}
+                                fileId={activeTab.id}
+                                language={activeTab.lang}
+                                onMount={handleEditorMount}
+                                ariaLabel={activeTab.name}
+                            />
+                        ) : activeTab ? (
                             <CodeEditor
                                 language={activeTab.lang}
                                 path={modelPath(activeTab)}
@@ -1591,16 +1791,21 @@ function EditorContent() {
                             <aside className="flex min-h-0 shrink-0 basis-[45%] flex-col border-t border-zinc-200 bg-white lg:basis-auto lg:border-s lg:border-t-0 dark:border-white/10 dark:bg-zinc-950" style={{ ["--panel-width" as string]: `${panelWidth}px` }}>
                                 <div className="flex h-full min-h-0 flex-col lg:w-[var(--panel-width)] lg:max-w-[70vw]">
                                     <div className="flex shrink-0 items-center gap-1 border-b border-zinc-200 px-2 py-1 dark:border-white/10" role="tablist" aria-label={tx(C.panel)}>
-                                        {(["console", "preview"] as const).filter((name) => name === "console" || hasPreview).map((name) => (
+                                        {(["console", "preview", "team"] as const).filter((name) => name === "console" || (name === "preview" ? hasPreview : Boolean(collab.session))).map((name) => (
                                             <button key={name} type="button" role="tab" aria-selected={panelTab === name} onClick={() => setPanelTab(name)} className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${panelTab === name ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"}`}>
-                                                {name === "console" ? <Terminal className="h-3.5 w-3.5" aria-hidden /> : <Eye className="h-3.5 w-3.5" aria-hidden />}
-                                                {tx(name === "console" ? C.console : C.previewPanel)}
+                                                {name === "console" ? <Terminal className="h-3.5 w-3.5" aria-hidden /> : name === "preview" ? <Eye className="h-3.5 w-3.5" aria-hidden /> : <UsersRound className="h-3.5 w-3.5" aria-hidden />}
+                                                {tx(name === "console" ? C.console : name === "preview" ? C.previewPanel : COLLAB_COPY.team)}
                                                 {name === "console" && isRunning && <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden />}
+                                                {name === "team" && collab.chatUnread > 0 && panelTab !== "team" && (
+                                                    <span className="rounded-full bg-red-500 px-1.5 text-[10px] font-bold tabular-nums text-white">{collab.chatUnread > 9 ? "9+" : collab.chatUnread}</span>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
                                     <div className="min-h-0 flex-1">
-                                        {panelTab === "preview" && hasPreview ? (
+                                        {panelTab === "team" && collab.session ? (
+                                            <CollabPanel session={collab.session} visible={panelOpen} onCopyLink={() => void copyCollabLink()} />
+                                        ) : panelTab === "preview" && hasPreview ? (
                                             <WebPreview files={previewFiles} activeFile={previewActive} stdin={stdin} dark={dark} reloadKey={previewKey} />
                                         ) : (
                                             <Console
@@ -1639,6 +1844,15 @@ function EditorContent() {
             </div>
 
             <CommandPalette open={dialog === "palette"} onClose={() => setDialog(null)} commands={paletteCommands} />
+            <CollabStartDialog
+                open={dialog === "collab"}
+                onClose={() => setDialog(null)}
+                files={tabs}
+                defaultTitle={currentProjectName || importedTitle || tx(C.generalProject)}
+                busy={collab.busy === "start"}
+                onStart={collab.start}
+            />
+            <CollabDialogs collab={collab} onKeepCopy={keepCollabCopy} />
             <NewFileDialog open={dialog === "new"} onClose={() => setDialog(null)} existingNames={existingNames} onCreateFile={createFile} onCreateProject={createProject} />
             <LanguagePickerDialog open={dialog === "language"} onClose={() => setDialog(null)} current={activeLanguage.id} onPick={changeLanguage} allowedLanguages={isGameMode ? GAME_LANGUAGES : undefined} />
             <ShortcutsDialog open={dialog === "shortcuts"} onClose={() => setDialog(null)} mac={mac} />
