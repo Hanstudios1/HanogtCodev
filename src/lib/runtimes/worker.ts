@@ -2,10 +2,13 @@
  * In-browser code runner (bundled to /runtimes/worker.js by scripts/copy-runtimes.mjs).
  *
  * Runs JavaScript, TypeScript (sucrase), Python (Pyodide), SQL (sql.js), Lua
- * (wasmoon), Scheme and Brainfuck (Hanogt interpreters) and validates JSON
+ * (wasmoon), Prolog (Tau Prolog) and Hanogt's own interpreters for Scheme,
+ * Brainfuck, Forth, BASIC, Befunge-93, Whitespace and MIPS assembly, and
+ * validates and formats JSON, YAML, TOML, XML, INI, .env, .properties and CSV
  * inside a dedicated module worker, so learners can execute code without any
- * server-side runner. The worker has no DOM access; the page terminates it
- * when a run exceeds its time limit.
+ * server-side runner. Runtimes other than the original ones are separate
+ * chunks loaded on first use. The worker has no DOM access; the page
+ * terminates it when a run exceeds its time limit.
  */
 import { transform } from "sucrase";
 import initSqlJs from "sql.js/dist/sql-wasm-browser.js";
@@ -13,6 +16,7 @@ import { LuaFactory } from "wasmoon";
 import { runBrainfuck } from "./brainfuck";
 import { analyzeJson, codeFrame } from "./json-tools";
 import { runScheme } from "./scheme";
+import type { ValidationResult } from "./validation";
 
 type Locale = "tr" | "en";
 type RunRequest = {
@@ -29,7 +33,7 @@ type RunRequest = {
     /** Indentation used when formatting JSON. */
     indent?: number;
 };
-export type WorkerStatusCode = "loading_python" | "loading_sqlite" | "loading_lua";
+export type WorkerStatusCode = "loading_python" | "loading_sqlite" | "loading_lua" | "loading_prolog";
 export type WorkerNoticeCode = "output_truncated";
 type Outgoing =
     | { id: number; type: "stdout" | "stderr"; text: string }
@@ -388,11 +392,154 @@ function validateJson(id: number, source: string, fileName: string, indent: numb
     return say({ tr: "JSON doğrulayıcı", en: "JSON validator" });
 }
 
+// ------------------------------------------------- Hanogt interpreters (lazy chunks)
+/** Thrown by output callbacks once the output budget is spent, to stop an interpreter early. */
+function guardedOutput(id: number) {
+    return (text: string) => {
+        if (outputBudget <= 0) throw new OutputLimitReached("Output limit reached");
+        emit(id, "stdout", text);
+    };
+}
+
+function located(message: string, fileName: string, line?: number, column?: number) {
+    return line ? `${message}\n    at ${fileName}:${line}:${column ?? 1}` : message;
+}
+
+/** Runs a synchronous interpreter; reaching the output limit ends the run quietly. */
+function runInterpreter<T extends { error?: { message: string; line?: number; column?: number }; exitCode: number }>(run: () => T, fileName: string): T | null {
+    let result: T;
+    try {
+        result = run();
+    } catch (error) {
+        if (error instanceof OutputLimitReached) return null;
+        throw error;
+    }
+    if (result.error) throw new InterpreterExit(located(result.error.message, fileName, result.error.line, result.error.column), result.exitCode || 1);
+    if (result.exitCode) throw new InterpreterExit("", result.exitCode);
+    return result;
+}
+
+class InterpreterExit extends Error {
+    readonly code: number;
+    constructor(message: string, code: number) {
+        super(message);
+        this.code = code;
+    }
+}
+
+const VERSIONS = {
+    forth: "Forth (Hanogt)",
+    basic: "BASIC (Hanogt, QBasic dialect)",
+    befunge: "Befunge-93 (Hanogt)",
+    whitespace: "Whitespace (Hanogt)",
+    mips: "MIPS32 (Hanogt, MARS syscalls)",
+    prolog: "Prolog (Tau Prolog 0.3)",
+} as const;
+
+async function runForthProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    const { runForth } = await import("./forth");
+    const result = runInterpreter(() => runForth(source, { stdin, locale, onOutput: guardedOutput(id), shouldStop: () => Date.now() > deadline }), fileName);
+    if (result && result.stack.length) {
+        const ending = result.output && !result.output.endsWith("\n") ? "\n" : "";
+        emit(id, "stdout", `${ending}${say({ tr: "Yığında kalanlar", en: "Left on the stack" })}: <${result.stack.length}> ${result.stack.slice(-20).join(" ")}\n`);
+    }
+    return VERSIONS.forth;
+}
+
+async function runBasicProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    const { runBasic } = await import("./basic");
+    runInterpreter(() => runBasic(source, { stdin, locale, onOutput: guardedOutput(id), shouldStop: () => Date.now() > deadline, seed: Date.now() }), fileName);
+    return VERSIONS.basic;
+}
+
+async function runBefungeProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    const { runBefunge } = await import("./befunge");
+    runInterpreter(() => runBefunge(source, { stdin, locale, onOutput: guardedOutput(id), shouldStop: () => Date.now() > deadline }), fileName);
+    return VERSIONS.befunge;
+}
+
+async function runWhitespaceProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    const { runWhitespace } = await import("./whitespace");
+    runInterpreter(() => runWhitespace(source, { stdin, locale, onOutput: guardedOutput(id), shouldStop: () => Date.now() > deadline }), fileName);
+    return VERSIONS.whitespace;
+}
+
+async function runMipsProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    const { runMips } = await import("./mips");
+    runInterpreter(() => runMips(source, { stdin, locale, onOutput: guardedOutput(id), shouldStop: () => Date.now() > deadline, seed: Date.now() }), fileName);
+    return VERSIONS.mips;
+}
+
+let prologLoaded = false;
+
+async function runPrologProgram(id: number, source: string, stdin: string, fileName: string, deadline: number) {
+    if (!prologLoaded) status(id, "loading_prolog", "Loading the Prolog runtime…");
+    const { runProlog } = await import("./prolog");
+    prologLoaded = true;
+    // Output beyond the budget is dropped by emit(); stopping at the next inference slice ends the run.
+    const result = await runProlog(source, {
+        stdin,
+        fileName,
+        locale,
+        onOutput: (text) => emit(id, "stdout", text),
+        onError: (text) => emit(id, "stderr", text),
+        shouldStop: () => outputBudget <= 0 || Date.now() > deadline,
+    });
+    if (result.exitCode) throw new InterpreterExit("", result.timedOut ? 124 : result.exitCode);
+    return VERSIONS.prolog;
+}
+
+// ------------------------------------------------------------------ validators
+type ValidatorId = "yaml" | "toml" | "xml" | "ini" | "dotenv" | "properties" | "csv";
+
+const VALIDATOR_LABELS: Record<ValidatorId, { tr: string; en: string }> = {
+    yaml: { tr: "YAML doğrulayıcı (js-yaml)", en: "YAML validator (js-yaml)" },
+    toml: { tr: "TOML doğrulayıcı (smol-toml)", en: "TOML validator (smol-toml)" },
+    xml: { tr: "XML doğrulayıcı", en: "XML validator" },
+    ini: { tr: "INI doğrulayıcı", en: "INI validator" },
+    dotenv: { tr: ".env doğrulayıcı", en: ".env validator" },
+    properties: { tr: ".properties doğrulayıcı", en: ".properties validator" },
+    csv: { tr: "CSV doğrulayıcı", en: "CSV validator" },
+};
+
+async function analyze(language: ValidatorId, source: string, fileName: string, indent: number): Promise<ValidationResult> {
+    const options = { locale, indent };
+    switch (language) {
+        case "yaml": return (await import("./yaml-tools")).analyzeYaml(source, options);
+        case "toml": return (await import("./toml-tools")).analyzeToml(source, options);
+        case "xml": return (await import("./xml-tools")).analyzeXml(source, options);
+        case "ini": return (await import("./config-tools")).analyzeIni(source, options);
+        case "dotenv": return (await import("./config-tools")).analyzeDotenv(source, options);
+        case "properties": return (await import("./config-tools")).analyzeProperties(source, options);
+        case "csv": return (await import("./config-tools")).analyzeCsv(source, { ...options, fileName });
+    }
+}
+
+/** Prints warnings, then the summary and formatted document, or throws the error with a code frame. */
+async function validate(id: number, language: ValidatorId, source: string, fileName: string, indent: number) {
+    const result = await analyze(language, source, fileName, indent);
+    for (const warning of result.warnings) {
+        emit(id, "stderr", `${say({ tr: "Uyarı", en: "Warning" })}: ${warning.message}\n    at ${fileName}:${warning.line}:${warning.column}\n`);
+    }
+    if (!result.ok) {
+        const issue = result.error ?? { message: say({ tr: "Geçersiz belge.", en: "Invalid document." }), line: 1, column: 1 };
+        throw new Error(`SyntaxError: ${issue.message}\n    at ${fileName}:${issue.line}:${issue.column}\n\n${codeFrame(source, issue.line, issue.column)}`);
+    }
+    const formatted = result.formatted ? `\n\n${result.formatted}` : "";
+    const notes = result.notes?.length ? `\n\n${result.notes.join("\n")}` : "";
+    emit(id, "stdout", `${result.summary ?? ""}${formatted}${notes}\n`);
+    return say(VALIDATOR_LABELS[language]);
+}
+
 // ------------------------------------------------------------------ dispatcher
 const DEFAULT_FILE_NAMES: Record<string, string> = {
     javascript: "main.js", typescript: "main.ts", python: "main.py", sql: "query.sql", lua: "main.lua",
-    brainfuck: "main.bf", scheme: "main.scm", json: "data.json",
+    brainfuck: "main.bf", scheme: "main.scm", json: "data.json", prolog: "main.pro", forth: "main.fth", basic: "main.bas",
+    befunge: "main.b93", whitespace: "main.ws", mips: "main.asm", yaml: "config.yaml", toml: "config.toml", xml: "data.xml",
+    ini: "settings.ini", dotenv: ".env", properties: "app.properties", csv: "data.csv",
 };
+
+const VERSIONS_AS_FALLBACKS: Record<string, () => string> = Object.fromEntries(Object.entries(VERSIONS).map(([language, version]) => [language, () => version]));
 
 /** Version labels for runs that failed before their runner returned one. */
 const FALLBACK_VERSIONS: Record<string, () => string> = {
@@ -402,6 +549,8 @@ const FALLBACK_VERSIONS: Record<string, () => string> = {
     brainfuck: () => "Brainfuck (Hanogt, 8-bit cells)",
     scheme: () => "Scheme (Hanogt R7RS subset)",
     json: () => say({ tr: "JSON doğrulayıcı", en: "JSON validator" }),
+    ...VERSIONS_AS_FALLBACKS,
+    ...Object.fromEntries(Object.entries(VALIDATOR_LABELS).map(([language, label]) => [language, () => say(label)])),
 };
 
 scope.onmessage = async (event: MessageEvent<RunRequest>) => {
@@ -456,11 +605,38 @@ scope.onmessage = async (event: MessageEvent<RunRequest>) => {
             case "json":
                 version = validateJson(id, code, fileName, Math.max(1, Math.min(8, event.data.indent ?? 2)));
                 break;
+            case "prolog":
+                version = await runPrologProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "forth":
+                version = await runForthProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "basic":
+                version = await runBasicProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "befunge":
+                version = await runBefungeProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "whitespace":
+                version = await runWhitespaceProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "mips":
+                version = await runMipsProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "yaml":
+            case "toml":
+            case "xml":
+            case "ini":
+            case "dotenv":
+            case "properties":
+            case "csv":
+                version = await validate(id, language, code, fileName, Math.max(1, Math.min(8, event.data.indent ?? 2)));
+                break;
             default:
                 throw new Error(say({ tr: `${language} tarayıcıda çalıştırılamıyor.`, en: `${language} can't run in the browser.` }));
         }
     } catch (error) {
-        exitCode = error instanceof SchemeExit ? error.code : 1;
+        exitCode = error instanceof SchemeExit || error instanceof InterpreterExit ? error.code : 1;
         version ||= FALLBACK_VERSIONS[language]?.() ?? language;
         const message = error instanceof Error ? error.message : String(error);
         if (message) emit(id, "stderr", `${message}\n`);

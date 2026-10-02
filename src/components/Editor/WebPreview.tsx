@@ -1,12 +1,14 @@
 "use client";
 
-import { AlertTriangle, ChevronDown, ChevronUp, Eye, Maximize2, Minimize2, Monitor, RefreshCw, Smartphone, Tablet, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, ChevronDown, ChevronUp, Eye, LoaderCircle, Maximize2, Minimize2, Monitor, RefreshCw, Smartphone, Tablet, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { renderLatex } from "@/lib/runtimes/latex";
 import { renderMarkdown } from "@/lib/runtimes/markdown";
 import {
-    buildCssShowcase, buildMarkdownDocument, buildWebPreview, createPreviewToken, parsePreviewMessage, resolvePreviewTarget,
-    type PreviewKind, type PreviewLogLevel, type PreviewSourceFile,
+    PREVIEW_HOST_SOURCE, buildCssShowcase, buildLiveShell, buildMarkdownDocument, buildSvgDocument, buildWebPreview, createPreviewToken,
+    isLivePreviewKind, parsePreviewMessage, resolvePreviewTarget,
+    type LivePreviewKind, type LivePreviewPayload, type PreviewKind, type PreviewLogLevel, type PreviewSourceFile,
 } from "@/lib/runtimes/web-preview";
 
 interface WebPreviewProps {
@@ -19,7 +21,10 @@ interface WebPreviewProps {
     reloadKey: number;
 }
 
-type BuiltDocument = { html: string; token: string; kind: PreviewKind; name: string; missing: string[] } | null;
+type BuiltDocument =
+    | { kind: Exclude<PreviewKind, LivePreviewKind>; html: string; token: string; name: string; missing: string[]; payload?: undefined }
+    | { kind: LivePreviewKind; html: string; token: string; name: string; missing: string[]; payload: LivePreviewPayload }
+    | null;
 type LogEntry = { id: number; level: PreviewLogLevel; text: string };
 
 const DEVICES = { desktop: "100%", tablet: "768px", mobile: "375px" } as const;
@@ -38,11 +43,26 @@ const C = {
     console: { TR: "Konsol", EN: "Console" },
     clearConsole: { TR: "Konsolu temizle", EN: "Clear console" },
     noLogs: { TR: "console.log çıktıları burada görünür.", EN: "console.log output appears here." },
-    nothing: { TR: "Önizlenecek dosya yok. HTML, CSS veya Markdown dosyası ekleyin ya da Web projesi şablonuyla başlayın.", EN: "Nothing to preview. Add an HTML, CSS or Markdown file, or start from the Web project template." },
+    nothing: { TR: "Önizlenecek dosya yok. HTML, CSS, Markdown, SVG, Mermaid veya LaTeX dosyası ekleyin ya da Web projesi şablonuyla başlayın.", EN: "Nothing to preview. Add an HTML, CSS, Markdown, SVG, Mermaid or LaTeX file, or start from the Web project template." },
     missing: { TR: "Projede bulunmayan dosyalar: {files}", EN: "Files not in this project: {files}" },
     sandboxNote: { TR: "Sayfa korumalı bir çerçevede çalışır: dış betikler, stiller ve ağ istekleri engellenir; resimler https üzerinden yüklenebilir.", EN: "The page runs in a sandboxed frame: external scripts, styles and network requests are blocked; images can load over https." },
     frameTitle: { TR: "Önizleme: {name}", EN: "Preview: {name}" },
     emptyMarkdown: { TR: "Bu Markdown dosyası boş.", EN: "This Markdown file is empty." },
+    loadingMermaid: { TR: "Mermaid diyagram motoru yükleniyor…", EN: "Loading the Mermaid diagram engine…" },
+    loadingLatex: { TR: "KaTeX matematik motoru yükleniyor…", EN: "Loading the KaTeX math engine…" },
+    loadFailed: { TR: "Önizleme motoru yüklenemedi ({message}).", EN: "The preview engine could not be loaded ({message})." },
+    retry: { TR: "Tekrar dene", EN: "Try again" },
+    mermaidError: { TR: "Diyagram çizilemedi", EN: "The diagram could not be drawn" },
+    latexError: { TR: "Formül işlenemedi", EN: "The formula could not be rendered" },
+    errorLine: { TR: "{line}. satır", EN: "line {line}" },
+    emptyDiagram: { TR: "Henüz gösterilecek bir şey yok; diyagramınızı yazmaya başlayın.", EN: "Nothing to show yet; start writing your diagram." },
+    emptyDocument: { TR: "Bu belge boş.", EN: "This document is empty." },
+    unsupported: { TR: "Önizlemede desteklenmeyenler: {list}", EN: "Not supported in the preview: {list}" },
+    svgInvalid: { TR: "Bu SVG iyi biçimli değil", EN: "This SVG is not well-formed" },
+    svgNotSvg: { TR: "Kök öğe <svg> olmalıdır.", EN: "The root element must be <svg>." },
+    svgLocation: { TR: "{line}. satır, {column}. sütun", EN: "line {line}, column {column}" },
+    svgNamespace: { TR: "önizleme için xmlns eklendi", EN: "xmlns was added for the preview" },
+    svgNote: { TR: "SVG içindeki betikler önizlemede çalışmaz.", EN: "Scripts inside the SVG do not run in the preview." },
 } satisfies Record<string, Copy>;
 
 const SANDBOX: Record<PreviewKind, string> = {
@@ -51,6 +71,10 @@ const SANDBOX: Record<PreviewKind, string> = {
     // Static documents: links may open in a new tab, nothing else.
     markdown: "allow-popups allow-popups-to-escape-sandbox",
     css: "",
+    svg: "",
+    // Library frames run their own inline script (Mermaid / KaTeX) and nothing else.
+    mermaid: "allow-scripts",
+    latex: "allow-scripts",
 };
 
 const LOG_STYLES: Record<PreviewLogLevel, string> = {
@@ -61,8 +85,73 @@ const LOG_STYLES: Record<PreviewLogLevel, string> = {
     error: "text-red-600 dark:text-red-400 bg-red-500/5",
 };
 
+// ------------------------------------------------------------ library assets
+/** Same-origin files copied to /public/runtimes by scripts/copy-runtimes.mjs. */
+const LIVE_ASSETS: Record<LivePreviewKind, { script: string; css?: string }> = {
+    mermaid: { script: "/runtimes/mermaid/mermaid.min.js" },
+    latex: { script: "/runtimes/katex/katex.min.js", css: "/runtimes/katex/katex.css" },
+};
+
+const assetCache = new Map<string, Promise<string>>();
+
+/** Downloads a library once per page; failed downloads can be retried. */
+function loadAsset(url: string): Promise<string> {
+    let promise = assetCache.get(url);
+    if (!promise) {
+        promise = fetch(url, { credentials: "same-origin" }).then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.text();
+        });
+        promise.catch(() => assetCache.delete(url));
+        assetCache.set(url, promise);
+    }
+    return promise;
+}
+
+type LiveAssets = { kind: LivePreviewKind; script: string; css: string };
+type Shown = { doc: BuiltDocument; version: number };
+
+/** Which file a document shows ("" for none). */
+function identityOf(doc: BuiltDocument) {
+    return doc ? `${doc.kind}:${doc.name}` : "";
+}
+
+/** Same frame (only the Mermaid/LaTeX source changed) keeps the version, so the iframe is not recreated. */
+function advance(current: Shown, next: BuiltDocument): Shown {
+    const sameFrame = Boolean(current.doc && next && current.doc.payload && next.payload && current.doc.html === next.html);
+    return { doc: next, version: sameFrame ? current.version : current.version + 1 };
+}
+
+/** Loads the library of a Mermaid or LaTeX preview only when such a file is previewed. */
+function useLiveAssets(kind: PreviewKind | null) {
+    const [state, setState] = useState<{ kind: LivePreviewKind | null; assets: LiveAssets | null; error: string | null }>({ kind: null, assets: null, error: null });
+    const [attempt, setAttempt] = useState(0);
+    useEffect(() => {
+        if (!isLivePreviewKind(kind)) return;
+        let cancelled = false;
+        const urls = LIVE_ASSETS[kind];
+        Promise.all([loadAsset(urls.script), urls.css ? loadAsset(urls.css) : Promise.resolve("")]).then(
+            ([script, css]) => {
+                if (!cancelled) setState({ kind, assets: { kind, script, css }, error: null });
+            },
+            (error: unknown) => {
+                if (!cancelled) setState({ kind, assets: null, error: error instanceof Error ? error.message : String(error) });
+            },
+        );
+        return () => {
+            cancelled = true;
+        };
+    }, [kind, attempt]);
+    const current = isLivePreviewKind(kind) && state.kind === kind ? state : null;
+    const retry = useCallback(() => {
+        setState({ kind: null, assets: null, error: null });
+        setAttempt((value) => value + 1);
+    }, []);
+    return { assets: current?.assets ?? null, error: current?.error ?? null, retry };
+}
+
 export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }: WebPreviewProps) {
-    const { tx } = useI18n();
+    const { tx, language } = useI18n();
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [device, setDevice] = useState<Device>("desktop");
     const [fullscreen, setFullscreen] = useState(false);
@@ -81,12 +170,46 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
         listItem: tx({ TR: "Öğe", EN: "Item" }),
         quote: tx({ TR: "Bir alıntı.", EN: "A quotation." }),
     }), [tx]);
+    const svgLabels = useMemo(() => ({
+        invalid: tx(C.svgInvalid),
+        notSvg: tx(C.svgNotSvg),
+        location: tx(C.svgLocation),
+        namespaceAdded: tx(C.svgNamespace),
+        note: tx(C.svgNote),
+    }), [tx]);
     const emptyMarkdown = tx(C.emptyMarkdown);
+
+    const target = useMemo(() => resolvePreviewTarget(files, activeFile), [files, activeFile]);
+    const liveKind: LivePreviewKind | null = target && isLivePreviewKind(target.kind) ? target.kind : null;
+    const { assets, error: assetError, retry } = useLiveAssets(target?.kind ?? null);
+    const liveLabels = useMemo(() => ({
+        error: tx(liveKind === "latex" ? C.latexError : C.mermaidError),
+        line: tx(C.errorLine),
+        empty: tx(liveKind === "latex" ? C.emptyDocument : C.emptyDiagram),
+        unsupported: tx(C.unsupported),
+    }), [tx, liveKind]);
+    // The frame of a Mermaid/LaTeX preview is rebuilt only when the library, theme or labels change;
+    // edits to the file are sent to the running frame instead.
+    const shell = useMemo(() => {
+        if (!liveKind || !assets || assets.kind !== liveKind) return null;
+        const token = createPreviewToken();
+        return { token, html: buildLiveShell(liveKind, { token, dark, library: assets.script, css: assets.css, labels: liveLabels }) };
+    }, [liveKind, assets, dark, liveLabels]);
+    const latexLocale = language === "TR" ? "tr" : "en";
 
     // Rebuilding is cheap string work; applying it to the frame is debounced.
     const live = useMemo<BuiltDocument>(() => {
-        const target = resolvePreviewTarget(files, activeFile);
         if (!target) return null;
+        if (target.kind === "mermaid" || target.kind === "latex") {
+            if (!shell) return null;
+            const payload: LivePreviewPayload = target.kind === "mermaid"
+                ? { kind: "mermaid", code: target.file.code }
+                : (() => {
+                    const rendered = renderLatex(target.file.code, { locale: latexLocale });
+                    return { kind: "latex", html: rendered.html, macros: rendered.macros, warnings: rendered.warnings };
+                })();
+            return { kind: target.kind, html: shell.html, token: shell.token, name: target.file.name, missing: [], payload };
+        }
         const token = createPreviewToken();
         if (target.kind === "web") {
             const result = buildWebPreview(files, target.file, { token, stdin, dark });
@@ -95,17 +218,23 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
         if (target.kind === "markdown") {
             return { html: buildMarkdownDocument(renderMarkdown(target.file.code), { dark, emptyText: emptyMarkdown }), token, kind: "markdown", name: target.file.name, missing: [] };
         }
+        if (target.kind === "svg") {
+            return { html: buildSvgDocument(target.file.code, { dark, labels: svgLabels }), token, kind: "svg", name: target.file.name, missing: [] };
+        }
         return { html: buildCssShowcase(target.file.code, { dark, labels }), token, kind: "css", name: target.file.name, missing: [] };
-    }, [files, activeFile, stdin, dark, labels, emptyMarkdown]);
+    }, [target, shell, files, stdin, dark, labels, svgLabels, emptyMarkdown, latexLocale]);
 
-    const [shown, setShown] = useState<{ doc: BuiltDocument; version: number }>(() => ({ doc: live, version: 0 }));
+    const [shown, setShown] = useState<Shown>(() => ({ doc: live, version: 0 }));
     const liveRef = useRef(live);
     useEffect(() => {
         liveRef.current = live;
-        if (!autoRefresh) return;
-        const timer = window.setTimeout(() => setShown((current) => (current.doc === live ? current : { doc: live, version: current.version + 1 })), 350);
+        // Edits are debounced; another file (or the first document once a library has loaded)
+        // is shown at once. Without auto refresh the page only changes on Refresh, unless
+        // nothing is shown yet.
+        const delay = identityOf(live) === identityOf(shown.doc) ? 350 : 0;
+        const timer = window.setTimeout(() => setShown((current) => (current.doc === live || (!autoRefresh && current.doc) ? current : advance(current, live))), delay);
         return () => window.clearTimeout(timer);
-    }, [live, autoRefresh]);
+    }, [live, autoRefresh, shown.doc]);
 
     // Run / Preview from the page always renders the latest code.
     const lastReloadKey = useRef(reloadKey);
@@ -119,9 +248,37 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
     const refresh = () => setShown((current) => ({ doc: liveRef.current, version: current.version + 1 }));
     const doc = shown.doc;
     const tokenRef = useRef<string | null>(null);
+    const shownRef = useRef(shown);
+    /** The live frame window that is listening (it said "ready" or finished loading). */
+    const readyFrame = useRef<Window | null>(null);
+    /** What was last sent, so "ready" and the load event do not render the same source twice. */
+    const lastPosted = useRef<{ frame: Window; payload: LivePreviewPayload } | null>(null);
     useEffect(() => {
         tokenRef.current = doc?.token ?? null;
-    }, [doc]);
+        shownRef.current = shown;
+    }, [doc, shown]);
+
+    /** Sends the current Mermaid/LaTeX source to the live frame once it is listening. */
+    const postPayload = useCallback(() => {
+        const current = shownRef.current.doc;
+        const frame = iframeRef.current?.contentWindow;
+        if (!frame || !current?.payload || readyFrame.current !== frame) return;
+        if (lastPosted.current?.frame === frame && lastPosted.current.payload === current.payload) return;
+        lastPosted.current = { frame, payload: current.payload };
+        frame.postMessage({ source: PREVIEW_HOST_SOURCE, token: current.token, type: "render", payload: current.payload }, "*");
+    }, []);
+
+    useEffect(() => {
+        if (doc?.payload) postPayload();
+    }, [doc, postPayload]);
+
+    /** Inline scripts have run once a srcdoc frame has loaded, so its listener is in place. */
+    const onFrameLoad = useCallback(() => {
+        const frame = iframeRef.current?.contentWindow;
+        if (!frame || !shownRef.current.doc?.payload) return;
+        readyFrame.current = frame;
+        postPayload();
+    }, [postPayload]);
 
     useEffect(() => {
         const onMessage = (event: MessageEvent) => {
@@ -131,6 +288,11 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
             if (!message) return;
             if (message.type === "ready" || message.type === "clear") {
                 setLogs([]);
+                if (message.type === "ready") {
+                    // Whichever comes first, "ready" or the load event, sends the source once.
+                    readyFrame.current = iframeRef.current.contentWindow;
+                    postPayload();
+                }
                 return;
             }
             const entry: LogEntry = { id: nextLogId.current++, level: message.level, text: message.args.join(" ") };
@@ -138,9 +300,10 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
         };
         window.addEventListener("message", onMessage);
         return () => window.removeEventListener("message", onMessage);
-    }, []);
+    }, [postPayload]);
 
     const errorCount = logs.filter((log) => log.level === "error").length;
+    const loadingLive = Boolean(liveKind && !shell);
     const deviceButton = (id: Device, label: Copy, Icon: typeof Monitor) => (
         <button type="button" onClick={() => setDevice(id)} aria-pressed={device === id} className={`rounded-lg p-1.5 transition ${device === id ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"}`} title={tx(label)} aria-label={tx(label)}>
             <Icon className="h-4 w-4" aria-hidden />
@@ -180,7 +343,22 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
             ) : null}
 
             <div className="flex min-h-0 flex-1 justify-center overflow-auto bg-zinc-100 p-2 dark:bg-zinc-900">
-                {doc ? (
+                {loadingLive ? (
+                    <div className="flex max-w-sm flex-col items-center justify-center gap-3 px-4 text-center text-sm text-zinc-500 dark:text-zinc-400" role="status">
+                        {assetError ? (
+                            <>
+                                <AlertTriangle className="h-8 w-8 text-amber-500" aria-hidden />
+                                <p>{tx(C.loadFailed, { message: assetError })}</p>
+                                <button type="button" onClick={retry} className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500">{tx(C.retry)}</button>
+                            </>
+                        ) : (
+                            <>
+                                <LoaderCircle className="h-8 w-8 animate-spin" aria-hidden />
+                                <p>{tx(liveKind === "latex" ? C.loadingLatex : C.loadingMermaid)}</p>
+                            </>
+                        )}
+                    </div>
+                ) : doc ? (
                     <iframe
                         key={`${shown.version}-${doc.kind}`}
                         ref={iframeRef}
@@ -188,6 +366,7 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
                         srcDoc={doc.html}
                         sandbox={SANDBOX[doc.kind]}
                         referrerPolicy="no-referrer"
+                        onLoad={onFrameLoad}
                         style={{ width: DEVICES[device], maxWidth: "100%" }}
                         className="h-full min-h-64 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-white/10"
                     />

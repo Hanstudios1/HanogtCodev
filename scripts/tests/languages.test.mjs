@@ -114,3 +114,73 @@ test("templates reference known languages", () => {
         for (const file of project.files) assert.equal(languageFromFileName(file.name)?.id, file.language, `${project.id}/${file.name}`);
     }
 });
+
+test("Hanogt offers at least 55 usable and 100 languages in total", () => {
+    const { LANGUAGE_STATS } = registry;
+    assert.ok(LANGUAGE_STATS.usable >= 55, `usable: ${LANGUAGE_STATS.usable}`);
+    assert.ok(LANGUAGES.length >= 100, `total: ${LANGUAGES.length}`);
+    assert.equal(LANGUAGE_STATS.usable, LANGUAGE_STATS.runnable + LANGUAGE_STATS.preview);
+    assert.equal(LANGUAGE_STATS.highlighted, LANGUAGES.length - 1);
+});
+
+test("validators check files instead of running programs", () => {
+    const worker = read("src/lib/runtimes/worker.ts");
+    const validators = LANGUAGES.filter((language) => language.tool === "validator");
+    assert.deepEqual(validators.map((language) => language.id).sort(), ["csv", "dotenv", "ini", "json", "properties", "toml", "xml", "yaml"]);
+    for (const language of validators) {
+        assert.equal(language.engine, "browser", language.id);
+        assert.equal(isProgramLanguage(language.id), false, `${language.id} must not join Run all`);
+        assert.ok(!SERVER_LANGUAGE_IDS.includes(language.id), `${language.id} never reaches the server`);
+        assert.match(worker, new RegExp(`case "${language.id}":`), `the worker has no validator for ${language.id}`);
+    }
+    for (const id of ["prolog", "forth", "basic", "befunge", "whitespace", "mips"]) {
+        assert.ok(BROWSER_LANGUAGES.has(id), id);
+        assert.equal(isProgramLanguage(id), true, id);
+        assert.ok(!SERVER_LANGUAGE_IDS.includes(id), `${id} runs in the browser only`);
+    }
+    for (const id of ["svg", "mermaid", "latex"]) assert.equal(registry.getLanguage(id).engine, "preview", id);
+});
+
+test("new extensions and well-known file names resolve", () => {
+    const names = {
+        "Makefile": "makefile", "GNUmakefile": "makefile", "rules.mk": "makefile", "CMakeLists.txt": "cmake", "nginx.conf": "nginx",
+        ".env": "dotenv", ".env.local": "dotenv", "config/.env.production": "dotenv", ".editorconfig": "ini", "settings.ini": "ini",
+        "app.properties": "properties", "Cargo.toml": "toml", "ci.yml": "yaml", "feed.rss": "xml", "data.tsv": "csv",
+        "logo.svg": "svg", "flow.mmd": "mermaid", "paper.tex": "latex", "family.prolog": "prolog", "main.pro": "prolog", "script.pl": "perl",
+        "words.fth": "forth", "GAME.BAS": "basic", "maze.b93": "befunge", "hello.ws": "whitespace", "sum.asm": "mips", "boot.nasm": "nasm",
+        "solver.f90": "fortran", "PAYROLL.cbl": "cobol", "main.adb": "ada", "counter.vhd": "vhdl", "alu.v": "verilog", "top.sv": "systemverilog",
+        "schema.prisma": "prisma", "Main.elm": "elm", "app.gleam": "gleam", "main.odin": "odin", "page.twig": "twig", "index.pug": "pug",
+    };
+    for (const [name, expected] of Object.entries(names)) assert.equal(languageFromFileName(name)?.id, expected, name);
+    assert.equal(ensureFileExtension("Makefile", "makefile"), "Makefile");
+    assert.equal(ensureFileExtension(".env", "dotenv"), ".env");
+    assert.equal(normalizeLanguageId("asm"), "mips");
+    assert.equal(normalizeLanguageId("Vlang"), "vlang");
+});
+
+test("monaco.ts registers a grammar for every custom Monaco id", () => {
+    const builtin = new Set();
+    const definitions = path.join(root, "node_modules/monaco-editor/esm/vs/languages/definitions");
+    for (const folder of fs.readdirSync(definitions)) {
+        const file = path.join(definitions, folder, "register.js");
+        if (fs.existsSync(file)) for (const match of fs.readFileSync(file, "utf8").matchAll(/id:\s*["']([^"']+)["']/g)) builtin.add(match[1]);
+    }
+    const monaco = read("src/lib/monaco.ts");
+    for (const id of ["prolog", "forth", "basic", "befunge", "whitespace", "mermaid", "latex", "toml", "dotenv", "csv", "makefile", "cmake", "nginx", "prisma", "nasm", "fortran", "cobol", "ada", "vhdl", "odin", "vlang", "gleam", "elm"]) {
+        assert.ok(!builtin.has(id), `${id} is a Monaco built-in`);
+        assert.match(monaco, new RegExp(`\\bid: "${id}"`), `${id} grammar`);
+    }
+});
+
+test("language-count sentences match the plural form of the current number", () => {
+    // Written for LANGUAGE_STATS.usable (see the comment above it in languages.ts). When the
+    // number moves to another plural category, rewrite these keys in the listed locales.
+    const writtenFor = { RU: "many", UK: "many", SR: "other", HR: "other", LT: "few", RO: "other" };
+    const keys = ["about_purpose_text", "auth_feature_code", "lp_hero_sub", "lp_marquee", "ab_editor_text"];
+    for (const [locale, category] of Object.entries(writtenFor)) {
+        const actual = new Intl.PluralRules(locale.toLowerCase()).select(registry.LANGUAGE_STATS.usable);
+        assert.equal(actual, category, `${locale}: ${registry.LANGUAGE_STATS.usable} is "${actual}" now; update ${keys.join(", ")} in src/locales/${locale}.json`);
+        const messages = JSON.parse(read(`src/locales/${locale}.json`));
+        for (const key of keys) assert.match(messages[key], /\{count\}/, `${locale}.${key}`);
+    }
+});

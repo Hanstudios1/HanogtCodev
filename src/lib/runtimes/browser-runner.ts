@@ -8,7 +8,7 @@ import { BROWSER_LANGUAGES } from "./languages";
 
 export { BROWSER_LANGUAGES };
 
-export type BrowserStatusCode = "loading_python" | "loading_sqlite" | "loading_lua";
+export type BrowserStatusCode = "loading_python" | "loading_sqlite" | "loading_lua" | "loading_prolog";
 
 export type BrowserRunNotice =
     | { code: "timeout"; seconds: number }
