@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, ArrowLeft, Ban, CheckCircle2, Eye, EyeOff, KeyRound, LoaderCircle, Lock, Mail, Send, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowLeft, Ban, CheckCircle2, Eye, EyeOff, KeyRound, LifeBuoy, LoaderCircle, Lock, Mail, Send, ShieldCheck } from "lucide-react";
 import { useI18n, type Copy } from "@/lib/i18n";
-import AuthShell, { Divider, GoogleButton, inputClass } from "@/components/auth/AuthShell";
+import AuthShell, { Divider, GoogleButton, LegalNotice, inputClass } from "@/components/auth/AuthShell";
 import { useRawSession } from "@/components/Provider";
 import {
     ACCOUNT_SUSPENDED,
@@ -15,12 +15,18 @@ import {
     consumeAuthErrorDetail,
     handoffPath,
     normalizeAppealMessage,
+    normalizeSignInRequestMessage,
     readAuthError,
+    requestTwoFactorRecovery,
     safeCallbackPath,
     signInWithPassword,
+    SIGN_IN_REQUEST_LIMITS,
     startGoogleSignIn,
     submitSuspensionAppeal,
+    submitTwoFactorRecovery,
+    TWO_FACTOR_RECOVERY,
     type AppealFailure,
+    type SignInRequestFailure,
 } from "@/lib/auth-client";
 
 const SUSPENDED_COPY = {
@@ -68,6 +74,55 @@ const APPEAL_ERROR_COPY: Record<AppealFailure["code"], Copy> = {
     unknown: { TR: "İtiraz gönderilemedi. Lütfen tekrar deneyin.", EN: "The appeal couldn't be sent. Please try again." },
 };
 
+/** Two-step verification step: authenticator and recovery codes both lost. */
+const RECOVERY_COPY = {
+    open: { TR: "Doğrulayıcıma ve kurtarma kodlarıma erişemiyorum", EN: "I can't access my authenticator or my recovery codes" },
+    title: { TR: "İki adımlı doğrulamayı sıfırlama talebi", EN: "Request a two-step verification reset" },
+    body: {
+        TR: "Şifreniz doğrulandı. Doğrulama uygulamanıza ve kurtarma kodlarınıza erişemiyorsanız ekipten iki adımlı doğrulamayı sıfırlamasını isteyebilirsiniz. Ekip, hesabın size ait olduğundan emin olduktan sonra sıfırlar; ardından yalnızca şifrenizle giriş yapıp iki adımlı doğrulamayı yeniden kurabilirsiniz.",
+        EN: "Your password was verified. If you can't access your authenticator app or your recovery codes, you can ask the team to reset two-step verification. They reset it once they're sure the account is yours; you can then sign in with just your password and set up two-step verification again.",
+    },
+    label: { TR: "Talebiniz", EN: "Your request" },
+    placeholder: {
+        TR: "Doğrulayıcınıza neden erişemediğinizi, hesabı en son ne zaman kullandığınızı ve hesabın size ait olduğunu gösterecek ayrıntıları yazın…",
+        EN: "Explain why you can't access your authenticator, when you last used the account and any details that show the account is yours…",
+    },
+    hint: {
+        TR: "En az {min} karakter. Şifrenizi ya da kodlarınızı asla yazmayın. Güvenliğiniz için bu form 30 dakika açık kalır ve her hesap günde bir talep gönderebilir.",
+        EN: "At least {min} characters. Never include your password or codes. For your security, this form stays open for 30 minutes, and each account can send one request a day.",
+    },
+    submit: { TR: "Talebi gönder", EN: "Send request" },
+    sent: {
+        TR: "Talebiniz alındı. Ekip iki adımlı doğrulamanızı sıfırlarsa yalnızca şifrenizle giriş yapabilir, ekibin yanıtını da Geri Bildirim sayfasındaki “Taleplerim” bölümünde görebilirsiniz.",
+        EN: "Your request was received. If the team resets your two-step verification, you can sign in with just your password and find their reply under “My tickets” on the Feedback page.",
+    },
+    expired: {
+        TR: "Doğrulamanın süresi doldu. Talebinizi göndermek için aşağıdaki seçeneğe yeniden tıklayın; yazdıklarınız korunur.",
+        EN: "Your verification has expired. To send your request, choose the option below again; what you wrote is kept.",
+    },
+    back: { TR: "Doğrulama koduna dön", EN: "Back to the verification code" },
+} satisfies Record<string, Copy>;
+
+const RECOVERY_ERROR_COPY: Record<SignInRequestFailure["code"], Copy> = {
+    invalid_token: RECOVERY_COPY.expired,
+    bad_origin: { TR: "Talep güvenlik denetiminden geçemedi. Lütfen tekrar deneyin.", EN: "The request failed a security check. Please try again." },
+    rate_limited: { TR: "Bu hesap için bugün zaten bir talep gönderildi ya da çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.", EN: "A request was already sent for this account today, or there were too many attempts. Please try again later." },
+    invalid_body: { TR: "Talep okunamadı. Lütfen tekrar deneyin.", EN: "The request couldn't be read. Please try again." },
+    message_required: { TR: "Talebinizi yazın.", EN: "Write your request." },
+    message_too_short: { TR: "Talep en az {min} karakter olmalı.", EN: "The request needs at least {min} characters.", vars: { min: SIGN_IN_REQUEST_LIMITS.messageMin } },
+    message_too_long: { TR: "Talep en fazla {max} karakter olabilir.", EN: "The request can have at most {max} characters.", vars: { max: SIGN_IN_REQUEST_LIMITS.message } },
+    unavailable: { TR: "Hizmete şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.", EN: "The service is unavailable right now. Please try again shortly." },
+    [AUTH_NETWORK_ERROR]: { TR: "Sunucuya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.", EN: "Couldn't reach the server. Check your internet connection and try again." },
+    unknown: { TR: "Talep gönderilemedi. Lütfen tekrar deneyin.", EN: "The request couldn't be sent. Please try again." },
+};
+
+const PAGE_COPY = {
+    subtitle: {
+        TR: "Kaldığın yerden devam et: projelerin, oyunların ve mesajların seni bekliyor.",
+        EN: "Pick up where you left off: your projects, games and messages are waiting.",
+    },
+} satisfies Record<string, Copy>;
+
 const textareaClass = "block w-full resize-y rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm leading-6 text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white";
 
 function useAuthErrorMessage() {
@@ -81,7 +136,7 @@ function useAuthErrorMessage() {
             case AUTH_NETWORK_ERROR:
                 return t("auth_error_network");
             case "CredentialsSignin":
-                return t("auth_error_credentials") || "E-posta veya şifre hatalı. Google ile kayıt olduysanız “Google ile devam et” seçeneğini kullanın.";
+                return t("auth_error_credentials") || "E-posta veya şifre hatalı. Google ile kayıt olduysanız “Google ile Oturum Aç” düğmesini kullanın.";
             case "OAuthSignin":
             case "OAuthCallback":
             case "HandoffFailed":
@@ -218,6 +273,105 @@ function SuspendedAccount({ token, expired, message, onMessageChange, onExpired,
     );
 }
 
+/**
+ * Two-step verification step, with the authenticator and the recovery codes
+ * both lost: after a fresh password check (`token`), asks the team to reset
+ * two-step verification. The draft lives in LoginForm, so it survives asking
+ * for a new token after this one expired.
+ */
+function TwoFactorRecoveryRequest({ token, message, onMessageChange, onExpired, onClose }: {
+    token: string;
+    message: string;
+    onMessageChange: (value: string) => void;
+    onExpired: () => void;
+    onClose: () => void;
+}) {
+    const { tx } = useI18n();
+    const uid = useId();
+    const [sending, setSending] = useState(false);
+    const [sent, setSent] = useState(false);
+    const [failure, setFailure] = useState<SignInRequestFailure | null>(null);
+    const length = normalizeSignInRequestMessage(message).length;
+    const tooLong = length > SIGN_IN_REQUEST_LIMITS.message;
+    const ready = length >= SIGN_IN_REQUEST_LIMITS.messageMin && !tooLong;
+
+    const submit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!ready || sending) return;
+        setSending(true);
+        setFailure(null);
+        const result = await submitTwoFactorRecovery(token, message);
+        setSending(false);
+        if (result.ok) {
+            setSent(true);
+            onMessageChange("");
+        } else if (result.code === "invalid_token") {
+            onExpired();
+        } else {
+            setFailure(result);
+        }
+    };
+
+    return (
+        <section aria-labelledby={`${uid}-title`} className="space-y-4">
+            <div className="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-3.5 text-sm leading-5 text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-200">
+                <LifeBuoy className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                <span>
+                    <strong id={`${uid}-title`} className="block">{tx(RECOVERY_COPY.title)}</strong>
+                    {tx(RECOVERY_COPY.body)}
+                </span>
+            </div>
+
+            {sent ? (
+                <div role="status" className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5 text-sm leading-5 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span>{tx(RECOVERY_COPY.sent)}</span>
+                </div>
+            ) : (
+                <form onSubmit={submit} className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <label htmlFor={`${uid}-message`} className="text-sm font-semibold">{tx(RECOVERY_COPY.label)}</label>
+                        <span
+                            className={`shrink-0 text-xs tabular-nums ${tooLong ? "font-bold text-red-600 dark:text-red-400" : ready ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-500"}`}
+                            dir="ltr"
+                        >
+                            {length}/{SIGN_IN_REQUEST_LIMITS.message}
+                        </span>
+                    </div>
+                    <textarea
+                        id={`${uid}-message`}
+                        value={message}
+                        onChange={(event) => { onMessageChange(event.target.value); if (failure) setFailure(null); }}
+                        rows={6}
+                        required
+                        maxLength={SIGN_IN_REQUEST_LIMITS.message + 500}
+                        dir="auto"
+                        aria-invalid={tooLong || undefined}
+                        aria-describedby={`${uid}-hint`}
+                        placeholder={tx(RECOVERY_COPY.placeholder)}
+                        className={textareaClass}
+                    />
+                    <p id={`${uid}-hint`} className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">{tx(RECOVERY_COPY.hint, { min: SIGN_IN_REQUEST_LIMITS.messageMin })}</p>
+                    {failure ? (
+                        <p role="alert" className="flex items-start gap-2 text-sm font-medium text-red-600 dark:text-red-400">
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                            {tx(RECOVERY_ERROR_COPY[failure.code])}
+                        </p>
+                    ) : null}
+                    <button type="submit" disabled={!ready || sending} aria-busy={sending || undefined} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60">
+                        {sending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+                        {tx(RECOVERY_COPY.submit)}
+                    </button>
+                </form>
+            )}
+
+            <button type="button" onClick={onClose} className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
+                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /> {tx(RECOVERY_COPY.back)}
+            </button>
+        </section>
+    );
+}
+
 function LoginForm() {
     const searchParams = useSearchParams();
     const { t, tx } = useI18n();
@@ -240,6 +394,12 @@ function LoginForm() {
     const [otpStep, setOtpStep] = useState(false);
     const [otp, setOtp] = useState("");
     const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+    // Neither the authenticator nor a recovery code at hand: a request to the team. The token
+    // comes from a fresh password check; the draft is kept when the token expires.
+    const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
+    const [recoveryExpired, setRecoveryExpired] = useState(false);
+    const [recoveryMessage, setRecoveryMessage] = useState("");
+    const [recoveryLoading, setRecoveryLoading] = useState(false);
     // Store the code, not the text, so the message follows language changes. A suspended
     // account's code may carry an appeal token, which is kept apart and never displayed.
     const [initialError] = useState(() => {
@@ -313,6 +473,39 @@ function LoginForm() {
         completeSignIn(destination());
     };
 
+    // "I can't access my authenticator or recovery codes": the password is checked again and,
+    // if right, answered with a token for a recovery request. It never signs anyone in while
+    // two-step verification is on.
+    const handleRecoveryRequest = async () => {
+        setRecoveryLoading(true);
+        showError(null);
+        setErrorDetail(null);
+        const code = await requestTwoFactorRecovery(email.trim(), password, callbackPath);
+        const parsed = readAuthError(code);
+        if (parsed.code === TWO_FACTOR_RECOVERY && parsed.recoveryToken) {
+            consumeAuthErrorDetail();
+            setRecoveryToken(parsed.recoveryToken);
+            setRecoveryExpired(false);
+            setRecoveryLoading(false);
+            return;
+        }
+        if (!code) {
+            // Two-step verification was switched off in the meantime, so that was a normal sign-in.
+            completeSignIn(destination());
+            return;
+        }
+        setErrorDetail(consumeAuthErrorDetail());
+        showError(code);
+        if (parsed.code === ACCOUNT_SUSPENDED) {
+            // Without a second factor any more, the account turned out to be suspended: the appeal takes over.
+            setOtpStep(false);
+            setOtp("");
+            setUseRecoveryCode(false);
+            setPassword("");
+        }
+        setRecoveryLoading(false);
+    };
+
     const handleGoogleLogin = useCallback(async (canonicalHop = false) => {
         setGoogleLoading(true);
         showError(null);
@@ -350,7 +543,7 @@ function LoginForm() {
     return (
         <AuthShell
             title={t("login") || "Giriş Yap"}
-            subtitle={t("welcome_back") || "Hanogt Codev'e Hoşgeldiniz"}
+            subtitle={tx(PAGE_COPY.subtitle)}
             footer={<>{t("no_account") || "Hesabın yok mu?"} <Link href={`/signup${callbackPath !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackPath)}` : ""}`} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">{t("signup_now") || "Hemen Üye Ol"}</Link></>}
         >
             {suspended ? (
@@ -385,7 +578,17 @@ function LoginForm() {
                 </div>
             )}
 
-            {appealOpen ? null : otpStep ? (
+            {appealOpen ? null : otpStep && recoveryToken ? (
+                <TwoFactorRecoveryRequest
+                    // A new token starts a fresh form; the draft is kept here.
+                    key={recoveryToken}
+                    token={recoveryToken}
+                    message={recoveryMessage}
+                    onMessageChange={setRecoveryMessage}
+                    onExpired={() => { setRecoveryToken(null); setRecoveryExpired(true); }}
+                    onClose={() => { setRecoveryToken(null); setRecoveryExpired(false); }}
+                />
+            ) : otpStep ? (
                 <form onSubmit={handleCredentialsLogin} className="space-y-4">
                     <div className="flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-3.5 text-sm leading-5 text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-200">
                         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
@@ -424,8 +627,15 @@ function LoginForm() {
                         <button type="button" onClick={() => { setUseRecoveryCode((value) => !value); setOtp(""); showError(null); }} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
                             {useRecoveryCode ? tx({ TR: "Doğrulama uygulamasını kullan", EN: "Use the authenticator app" }) : tx({ TR: "Telefonuma erişemiyorum: kurtarma kodu kullan", EN: "Can't reach my phone: use a recovery code" })}
                         </button>
-                        <button type="button" onClick={() => { setOtpStep(false); setOtp(""); setPassword(""); setUseRecoveryCode(false); showError(null); }} className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
+                        <button type="button" onClick={() => { setOtpStep(false); setOtp(""); setPassword(""); setUseRecoveryCode(false); setRecoveryExpired(false); setRecoveryMessage(""); showError(null); }} className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
                             <ArrowLeft className="h-4 w-4 rtl:rotate-180" /> {tx({ TR: "Geri", EN: "Back" })}
+                        </button>
+                    </div>
+                    <div className="space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                        {recoveryExpired ? <p role="status" className="text-xs leading-5 text-amber-700 dark:text-amber-300">{tx(RECOVERY_COPY.expired)}</p> : null}
+                        <button type="button" onClick={() => void handleRecoveryRequest()} disabled={recoveryLoading || loading} aria-busy={recoveryLoading || undefined} className="inline-flex items-start gap-1.5 text-start text-sm font-semibold text-zinc-600 hover:text-zinc-900 hover:underline disabled:opacity-60 dark:text-zinc-300 dark:hover:text-white">
+                            {recoveryLoading ? <LoaderCircle className="mt-0.5 h-4 w-4 shrink-0 animate-spin" aria-hidden="true" /> : <LifeBuoy className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
+                            {tx(RECOVERY_COPY.open)}
                         </button>
                     </div>
                 </form>
@@ -454,10 +664,7 @@ function LoginForm() {
                 </button>
             </form>
             )}
-            <p className="mt-6 text-center text-xs leading-5 text-zinc-400">
-                {t("auth_terms_notice") || "Devam ederek Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz."}{" "}
-                <Link href="/terms-of-use" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("terms_of_use") || "Kullanım Şartları"}</Link> · <Link href="/privacy-policy" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">{t("privacy_policy") || "Gizlilik Politikası"}</Link>
-            </p>
+            <LegalNotice />
         </AuthShell>
     );
 }

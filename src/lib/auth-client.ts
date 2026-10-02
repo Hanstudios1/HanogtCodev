@@ -20,20 +20,37 @@ export const AUTH_NETWORK_ERROR = "Network";
  */
 export const ACCOUNT_SUSPENDED = "AccountSuspended";
 
-/** Loose shape check only; /api/support/appeal verifies the signature. */
-function isAppealTokenShape(value: string | null | undefined): value is string {
+/**
+ * Answer to a 2FA recovery request (requestTwoFactorRecovery): the password
+ * was right, and the code carries a token for a recovery request to the team,
+ * "TwoFactorRecovery:<token>". It only ever arrives in that fetch response.
+ */
+export const TWO_FACTOR_RECOVERY = "TwoFactorRecovery";
+
+/** Loose shape check only; the /api/support routes verify the signature and purpose. */
+function isSignInTokenShape(value: string | null | undefined): value is string {
     return typeof value === "string" && value.length <= 512 && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(value);
 }
 
-/** Splits a sign-in error into its code and, for a verified suspended account, the appeal token. */
-export function readAuthError(error: string | null, appeal: string | null = null): { code: string | null; appealToken: string | null } {
-    if (!error) return { code: null, appealToken: null };
+export type AuthErrorParts = { code: string | null; appealToken: string | null; recoveryToken: string | null };
+
+/**
+ * Splits a sign-in error into its code and the token some codes carry: the
+ * appeal token of a verified suspended account, or a 2FA recovery token.
+ * Tokens never stay inside the code, so they are never displayed.
+ */
+export function readAuthError(error: string | null, appeal: string | null = null): AuthErrorParts {
+    if (!error) return { code: null, appealToken: null, recoveryToken: null };
     if (error.startsWith(`${ACCOUNT_SUSPENDED}:`)) {
         const token = error.slice(ACCOUNT_SUSPENDED.length + 1);
-        return { code: ACCOUNT_SUSPENDED, appealToken: isAppealTokenShape(token) ? token : null };
+        return { code: ACCOUNT_SUSPENDED, appealToken: isSignInTokenShape(token) ? token : null, recoveryToken: null };
     }
-    if (error === ACCOUNT_SUSPENDED) return { code: ACCOUNT_SUSPENDED, appealToken: isAppealTokenShape(appeal) ? appeal : null };
-    return { code: error, appealToken: null };
+    if (error === ACCOUNT_SUSPENDED) return { code: ACCOUNT_SUSPENDED, appealToken: isSignInTokenShape(appeal) ? appeal : null, recoveryToken: null };
+    if (error.startsWith(`${TWO_FACTOR_RECOVERY}:`)) {
+        const token = error.slice(TWO_FACTOR_RECOVERY.length + 1);
+        return { code: TWO_FACTOR_RECOVERY, appealToken: null, recoveryToken: isSignInTokenShape(token) ? token : null };
+    }
+    return { code: error, appealToken: null, recoveryToken: null };
 }
 
 /** Cookie that binds a cross-domain session hand-off to the browser that started it. */
@@ -141,6 +158,18 @@ export async function signInWithPassword(email: string, password: string, callba
 }
 
 /**
+ * For someone who lost both their authenticator and their recovery codes: the
+ * password is checked again (with the sign-in rate limits) and, if right, the
+ * answer is "TwoFactorRecovery:<token>" for submitTwoFactorRecovery. Resolves
+ * with that code, another error code, or null when the account no longer asks
+ * for a second factor and is now signed in.
+ */
+export async function requestTwoFactorRecovery(email: string, password: string, callbackUrl: string) {
+    const result = await postAuthForm("callback/credentials", { email, password, callbackUrl, twoFactorRecovery: "1" });
+    return result.error;
+}
+
+/**
  * Starts the Google OAuth flow; navigates away on success, otherwise resolves
  * with an error code. Google always returns to the host in NEXTAUTH_URL, so a
  * visitor on another host (apex vs www, *.vercel.app) would come back without
@@ -184,13 +213,14 @@ export function completeSignIn(callbackPath: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Suspension appeals (/api/support/appeal), sent from /login with the token above
+// Requests sent from /login with a token from sign-in: suspension appeals
+// (/api/support/appeal) and 2FA recovery requests (/api/support/two-factor-recovery)
 // ---------------------------------------------------------------------------
 
-/** Length of the appeal text after normalising (trimmed, as stored). */
-export const APPEAL_LIMITS = { messageMin: 20, message: 3_000 } as const;
+/** Length of the request text after normalising (trimmed, as stored). */
+export const SIGN_IN_REQUEST_LIMITS = { messageMin: 20, message: 3_000 } as const;
 
-export type AppealErrorCode =
+export type SignInRequestErrorCode =
     | "bad_origin"
     | "rate_limited"
     | "invalid_body"
@@ -200,33 +230,33 @@ export type AppealErrorCode =
     | "message_too_long"
     | "unavailable";
 
-const APPEAL_ERROR_CODES: readonly AppealErrorCode[] = [
+const SIGN_IN_REQUEST_ERROR_CODES: readonly SignInRequestErrorCode[] = [
     "bad_origin", "rate_limited", "invalid_body", "invalid_token", "message_required", "message_too_short", "message_too_long", "unavailable",
 ];
 
 /** The text as it will be stored: support-ticket normalisation (NFC, unsafe characters removed, trimmed). */
-export function normalizeAppealMessage(value: string) {
+export function normalizeSignInRequestMessage(value: string) {
     return sanitizeTicketText(value, true);
 }
 
-/** Shared by the form (counter, submit button) and the route, so both count the same characters. */
-export function validateAppealMessage(value: unknown): { ok: true; text: string } | { ok: false; code: Extract<AppealErrorCode, "invalid_body" | "message_required" | "message_too_short" | "message_too_long"> } {
+/** Shared by the forms (counter, submit button) and the routes, so both count the same characters. */
+export function validateSignInRequestMessage(value: unknown): { ok: true; text: string } | { ok: false; code: Extract<SignInRequestErrorCode, "invalid_body" | "message_required" | "message_too_short" | "message_too_long"> } {
     if (value !== undefined && value !== null && typeof value !== "string") return { ok: false, code: "invalid_body" };
-    const text = typeof value === "string" ? normalizeAppealMessage(value) : "";
+    const text = typeof value === "string" ? normalizeSignInRequestMessage(value) : "";
     if (!text) return { ok: false, code: "message_required" };
-    if (text.length < APPEAL_LIMITS.messageMin) return { ok: false, code: "message_too_short" };
-    if (text.length > APPEAL_LIMITS.message) return { ok: false, code: "message_too_long" };
+    if (text.length < SIGN_IN_REQUEST_LIMITS.messageMin) return { ok: false, code: "message_too_short" };
+    if (text.length > SIGN_IN_REQUEST_LIMITS.message) return { ok: false, code: "message_too_long" };
     return { ok: true, text };
 }
 
-export type AppealFailure = { code: AppealErrorCode | typeof AUTH_NETWORK_ERROR | "unknown"; retryAfter: number | null };
-export type AppealResult = { ok: true } | ({ ok: false } & AppealFailure);
+export type SignInRequestFailure = { code: SignInRequestErrorCode | typeof AUTH_NETWORK_ERROR | "unknown"; retryAfter: number | null };
+export type SignInRequestResult = { ok: true } | ({ ok: false } & SignInRequestFailure);
 
-/** Files the appeal; the server only ever answers "received" or an error code. */
-export async function submitSuspensionAppeal(token: string, message: string): Promise<AppealResult> {
+/** The server only ever answers "received" or an error code. */
+async function submitSignInRequest(path: string, token: string, message: string): Promise<SignInRequestResult> {
     let response: Response;
     try {
-        response = await fetch("/api/support/appeal", {
+        response = await fetch(path, {
             method: "POST",
             credentials: "same-origin",
             cache: "no-store",
@@ -238,7 +268,22 @@ export async function submitSuspensionAppeal(token: string, message: string): Pr
     }
     if (response.ok) return { ok: true };
     const data = await response.json().catch(() => ({})) as { code?: unknown; retryAfter?: unknown };
-    const code = APPEAL_ERROR_CODES.find((known) => known === data.code) ?? "unknown";
+    const code = SIGN_IN_REQUEST_ERROR_CODES.find((known) => known === data.code) ?? "unknown";
     const retryAfter = typeof data.retryAfter === "number" && data.retryAfter > 0 ? data.retryAfter : Number(response.headers.get("Retry-After")) || null;
     return { ok: false, code, retryAfter };
 }
+
+/** Files an appeal against a suspension with the token from "AccountSuspended:<token>". */
+export function submitSuspensionAppeal(token: string, message: string) {
+    return submitSignInRequest("/api/support/appeal", token, message);
+}
+
+/** Asks the team to reset two-step verification, with the token from "TwoFactorRecovery:<token>". */
+export function submitTwoFactorRecovery(token: string, message: string) {
+    return submitSignInRequest("/api/support/two-factor-recovery", token, message);
+}
+
+/** Names the suspension appeal form uses (same rules as every sign-in request). */
+export const APPEAL_LIMITS = SIGN_IN_REQUEST_LIMITS;
+export const normalizeAppealMessage = normalizeSignInRequestMessage;
+export type AppealFailure = SignInRequestFailure;

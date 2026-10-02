@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, ClipboardList, Copy as CopyIcon, ExternalLink, Gavel, HelpCircle, Inbox, LifeBuoy,
+    AlertTriangle, ArrowLeft, Ban, Bug, CheckCircle2, ClipboardList, Copy as CopyIcon, ExternalLink, Gavel, HelpCircle, Inbox, KeyRound, LifeBuoy,
     MessageCircle, MessageSquareText, MessageSquareWarning, Monitor, RefreshCw, Send, ShieldAlert, ShieldCheck, Trash2, UserCog, UserRound,
     type LucideIcon,
 } from "lucide-react";
@@ -134,6 +134,15 @@ const TICKET_ERROR_COPY: Record<AdminTicketErrorCode, Copy> = {
 /** Badge of an appeal against a suspension (filed from the login page). */
 const APPEAL_COPY: Copy = { TR: "İtiraz", EN: "Appeal" };
 
+/** Badge of a 2FA recovery request (filed from the login page's two-step verification step). */
+const TWO_FACTOR_RECOVERY_COPY: Copy = { TR: "2FA kurtarma", EN: "2FA recovery" };
+
+/** /admin#users?q=<e-mail>: the Users section opens with this search, where "2FA sıfırla" is. */
+function openUserInUsers(email: string) {
+    window.location.hash = `users?q=${encodeURIComponent(email)}`;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function useTicketErrorText() {
     const { tx } = useI18n();
     const base = useErrorText();
@@ -163,6 +172,7 @@ function toListItem(ticket: AdminTicketDetail): AdminTicketListItem {
         unreadForStaff: ticket.unreadForStaff,
         unreadForUser: ticket.unreadForUser,
         appeal: ticket.appeal,
+        twoFactorRecovery: ticket.twoFactorRecovery,
     };
 }
 
@@ -335,6 +345,7 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                 <div className="flex flex-wrap items-center gap-2 text-[12px] text-zinc-500">
                     <Badge tone={CATEGORY_STYLES[ticket.category].tone} icon={Icon}>{tx(TICKET_CATEGORY_COPY[ticket.category].label)}</Badge>
                     {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
+                    {ticket.twoFactorRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(TWO_FACTOR_RECOVERY_COPY)}</Badge> : null}
                     <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                     <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge>
                     {ticket.severity ? <Badge tone={SEVERITY_TONES[ticket.severity]} icon={ShieldAlert}>{tx({ TR: "Önem: {level}", EN: "Severity: {level}" }, { level: tx(TICKET_SEVERITY_COPY[ticket.severity].label) })}</Badge> : null}
@@ -347,6 +358,23 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                     <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-[12.5px] leading-relaxed text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
                         {tx({ TR: "Bu itiraz, askıya alınmış hesaptan giriş sayfası üzerinden gönderildi. Gönderen, hesabın sahibi olduğunu şifresiyle (açıksa iki adımlı doğrulamayla birlikte) ya da Google ile kanıtladı. Hesap askıdayken yanıtları göremez; hesap yeniden açılırsa yanıtınızı Taleplerim'de bulur.", EN: "This appeal was sent from the suspended account via the login page. The sender proved they own the account with its password (plus two-step verification, if enabled) or with Google. They can't read replies while the account is suspended; if it's reinstated, they'll find your reply under My tickets." })}
                     </p>
+                ) : null}
+                {ticket.twoFactorRecovery ? (
+                    <div className="mt-3 space-y-2 rounded-2xl bg-indigo-50 px-3 py-2.5 text-[12.5px] leading-relaxed text-indigo-900 dark:bg-indigo-500/10 dark:text-indigo-200">
+                        <p>
+                            {tx({ TR: "Bu talep giriş sayfasından, iki adımlı doğrulamayı tamamlayamayan biri tarafından gönderildi. Yalnızca hesabın şifresi doğrulandı, ikinci adım doğrulanmadı: 2FA'yı sıfırlamadan önce hesabın gerçekten gönderene ait olduğundan emin olun. Kullanıcı, 2FA sıfırlanana kadar yanıtları göremez; sıfırlandıktan sonra yalnızca şifresiyle giriş yapıp yanıtınızı Taleplerim'de bulur.", EN: "This request was sent from the login page by someone who couldn't complete two-step verification. Only the account's password was verified, not the second factor: make sure the account really belongs to the sender before resetting 2FA. The person can't read replies until 2FA is reset; afterwards they sign in with just their password and find your reply under My tickets." })}
+                        </p>
+                        {sender.exists && !sender.twoFactorEnabled ? (
+                            <p className="font-semibold">{tx({ TR: "Bu hesapta iki adımlı doğrulama artık kapalı.", EN: "Two-step verification is already off for this account." })}</p>
+                        ) : null}
+                        {viewer.manageUsers && sender.exists && sender.email ? (
+                            <Button size="sm" icon={ExternalLink} onClick={() => openUserInUsers(sender.email)}>
+                                {tx({ TR: "2FA'yı sıfırlamak için kullanıcıyı aç", EN: "Open the user to reset 2FA" })}
+                            </Button>
+                        ) : !viewer.manageUsers ? (
+                            <p>{tx({ TR: "2FA'yı yöneticiler ve sahipler, Kullanıcılar bölümünden sıfırlayabilir.", EN: "Admins and owners can reset 2FA from the Users section." })}</p>
+                        ) : null}
+                    </div>
                 ) : null}
                 {meta.complaintSubject || meta.reportedUser || meta.contentUrl || meta.banScope || meta.banReference || meta.steps || meta.pageUrl || meta.userAgent ? (
                     <dl className="mt-3 space-y-2 rounded-2xl bg-zinc-50 p-3 text-[12.5px] dark:bg-white/[0.03]">
@@ -717,6 +745,7 @@ export default function TicketsSection() {
                                                         <Icon className={cx("h-3.5 w-3.5", CATEGORY_STYLES[ticket.category].icon)} role="img" aria-label={tx(TICKET_CATEGORY_COPY[ticket.category].label)} />
                                                         <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                                                         {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
+                                                        {ticket.twoFactorRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(TWO_FACTOR_RECOVERY_COPY)}</Badge> : null}
                                                         {ticket.priority === "high" || ticket.priority === "critical" ? <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge> : null}
                                                         {ticket.unreadForStaff ? <Badge tone="violet">{tx({ TR: "Yeni", EN: "New" })}</Badge> : null}
                                                         <span className="ms-auto"><RelativeTime iso={ticket.lastMessageAt} /></span>

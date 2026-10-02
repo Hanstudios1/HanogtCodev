@@ -4,8 +4,8 @@ import { randomInt, timingSafeEqual } from "node:crypto";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { ACCOUNT_SUSPENDED } from "@/lib/auth-client";
-import { issueAppealToken } from "@/lib/server/appeal-token";
+import { ACCOUNT_SUSPENDED, TWO_FACTOR_RECOVERY } from "@/lib/auth-client";
+import { issueAppealToken, issueTwoFactorRecoveryToken } from "@/lib/server/appeal-token";
 import { recordAuthError } from "@/lib/server/auth-diagnostics";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { clientIpFromHeaders } from "@/lib/server/request-security";
@@ -52,6 +52,16 @@ function legacyPasswordMatches(supplied: string, stored: string) {
 function suspendedCode(email: string) {
     const token = issueAppealToken(email);
     return token ? `${ACCOUNT_SUSPENDED}:${token}` : ACCOUNT_SUSPENDED;
+}
+
+/**
+ * The password was right, but the authenticator and the recovery codes are
+ * both lost: a short-lived token lets /login ask the team to reset two-step
+ * verification (/api/support/two-factor-recovery). It never signs anyone in.
+ */
+function twoFactorRecoveryCode(email: string) {
+    const token = issueTwoFactorRecoveryToken(email);
+    return token ? `${TWO_FACTOR_RECOVERY}:${token}` : AUTH_SERVICE_UNAVAILABLE;
 }
 
 /**
@@ -134,6 +144,8 @@ export const authOptions: NextAuthOptions = {
                 password: { label: "Şifre", type: "password" },
                 // Authenticator or recovery code; asked for after "TwoFactorRequired".
                 otp: { label: "Doğrulama kodu", type: "text" },
+                // "1" when both are lost: ask for a 2FA recovery token instead of checking a code.
+                twoFactorRecovery: { label: "2FA kurtarma", type: "text" },
             },
             async authorize(credentials, req) {
                 if (!credentials?.email || !credentials.password) return null;
@@ -209,6 +221,10 @@ export const authOptions: NextAuthOptions = {
                 // Two-step verification: the password was right, now the second factor.
                 // The codes below are ASCII so they survive the redirect URL (see top).
                 if (credential?.totpEnabled && credential.totpSecretEnc) {
+                    // No second factor at hand at all: the password alone earns a recovery
+                    // token, never a session. Like every answer before the second factor,
+                    // it says nothing about a suspension.
+                    if (credentials.twoFactorRecovery === "1") throw new Error(twoFactorRecoveryCode(email));
                     const otp = typeof credentials.otp === "string" ? credentials.otp.trim() : "";
                     if (!otp) throw new Error("TwoFactorRequired");
                     let otpRate: Awaited<ReturnType<typeof enforceRateLimit>>;

@@ -47,6 +47,11 @@ export type AdminTicketListItem = {
     unreadForUser: boolean;
     /** Appeal against a suspension, filed from the login page (meta.appeal). */
     appeal: boolean;
+    /**
+     * 2FA recovery request filed from the login page (meta.twoFactorRecovery):
+     * the password was verified, the second factor wasn't. Set by /api/admin/tickets.
+     */
+    twoFactorRecovery?: boolean;
 };
 
 export type AdminTicketDetail = AdminTicketListItem & {

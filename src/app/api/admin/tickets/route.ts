@@ -4,8 +4,10 @@ import {
     ADMIN_TICKET_QUERY_MAX,
     TICKET_STATUS_FILTERS,
     type AdminTicketActionResponse,
+    type AdminTicketDetail,
     type AdminTicketDetailResponse,
     type AdminTicketErrorCode,
+    type AdminTicketListItem,
     type AdminTicketSender,
     type AdminTicketViewer,
     type AdminTicketsResponse,
@@ -42,8 +44,8 @@ import {
     ticketPriority,
     ticketReplyNotification,
     ticketStatus,
-    toAdminDetail,
-    toAdminListItem,
+    toAdminDetail as baseAdminDetail,
+    toAdminListItem as baseAdminListItem,
     type StoredTicket,
     type TicketRecord,
 } from "@/lib/server/support";
@@ -101,6 +103,21 @@ function failure(error: unknown, context: string) {
 
 function viewerFor(admin: AdminSession): AdminTicketViewer {
     return { manageUsers: adminPermissions(admin.role).manageUsers };
+}
+
+/** 2FA recovery requests from the login page (/api/support/two-factor-recovery) carry meta.twoFactorRecovery. */
+function isTwoFactorRecovery(record: TicketRecord) {
+    const meta = record.meta && typeof record.meta === "object" && !Array.isArray(record.meta) ? record.meta as Record<string, unknown> : null;
+    return meta?.twoFactorRecovery === true;
+}
+
+// Every list item and detail this route returns carries the 2FA recovery flag for the badge.
+function toAdminListItem(record: StoredTicket): AdminTicketListItem {
+    return { ...baseAdminListItem(record), twoFactorRecovery: isTwoFactorRecovery(record) };
+}
+
+function toAdminDetail(record: StoredTicket): AdminTicketDetail {
+    return { ...baseAdminDetail(record), twoFactorRecovery: isTwoFactorRecovery(record) };
 }
 
 // ---------------------------------------------------------------------------
