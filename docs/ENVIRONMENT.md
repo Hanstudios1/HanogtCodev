@@ -41,15 +41,51 @@ Cloud Health panel also shows them (see below).
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Bucket name without `gs://`. |
 | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Optional; the project number. |
 
-`NEXT_PUBLIC_*` values are inlined into the browser bundle **at build time**:
-after adding or changing one in Vercel, redeploy (Deployments → … → Redeploy),
-otherwise the browser keeps the old values.
+### Build time vs. runtime
+
+`NEXT_PUBLIC_*` values are inlined into the browser bundle **at build time**.
+Vercel also keeps a separate set of variables per environment
+(**Production**, **Preview**, **Development**): a value set only for
+Production is missing in Preview deployments, and a value added or changed
+later is not in any deployment built before. After every change, redeploy
+(Deployments → … → Redeploy) and make sure the variable is ticked for the
+environment you open.
+
+To keep the site working until then, the root layout loads
+`/api/firebase/config` before the app starts (`next/script`,
+`beforeInteractive`; not in the Electron static export). The route returns
+`window.__HANOGT_FIREBASE__ = {…}` with only the six public fields above and a
+`source`:
+
+- `env`: the `NEXT_PUBLIC_FIREBASE_*` values read **at request time** (by name,
+  so the build-time inlining doesn't apply);
+- `management-api`: used when those values are missing, invalid or belong to
+  another project than the server service account; the project's web-app
+  config is then read from the Firebase Management API with the service
+  account (cached per server instance for an hour, failures for five minutes);
+- `null` when neither is available.
+
+The response is cacheable (`public, max-age=300, s-maxage=300`) and never
+contains secrets. `src/lib/firebase.ts` prefers a usable runtime config over
+the build-time values and exposes which one it used (`firebaseConfigSource`).
+The fallback needs the service account to read the project's web apps; if
+Cloud Health reports a permission error for this step, grant the service
+account *Firebase Viewer* (or *Firebase Admin*) in Google Cloud IAM. It is a
+safety net: still fix the Vercel values and redeploy, because server rendering
+and the Electron build use the build-time values.
+
+### When the browser can't connect
 
 The browser signs in to Firebase with a custom token from
 `/api/auth/firebase-token` (minted with the server service account). Account
 Settings, Editor Settings sync and Hanogt AI's account answers go through API
-routes instead, so they keep working when that browser connection fails; the
-banner shown in that case tells staff the exact cause.
+routes instead, so they keep working when that browser connection fails. The
+warning shown in that case gives everyone a short **error code** with a copy
+button (for example `config-missing`, `token-503`,
+`auth/configuration-not-found`, `auth/invalid-custom-token`,
+`firestore/permission-denied`) plus details (the technical message, the
+configuration source and project); staff also see the exact cause and owners a
+link to Cloud Health.
 
 ## Firebase — server (Admin REST)
 
@@ -77,13 +113,14 @@ step, what to change and where:
 1. client config (`NEXT_PUBLIC_FIREBASE_*` present and well formed; only a key prefix is shown),
 2. server credentials (which variable layout is used, project id, service-account e-mail),
 3. client project = service-account project,
-4. Google OAuth token,
-5. Firestore REST read (also detects a missing database or disabled API),
-6. Firebase Authentication initialised (`CONFIGURATION_NOT_FOUND` → Firebase Console → Authentication → Get started),
-7. an end-to-end copy of the browser's `signInWithCustomToken` request with the site's `Referer`, so Google's own error (`INVALID_CUSTOM_TOKEN`, `CREDENTIAL_MISMATCH`, `API_KEY_HTTP_REFERRER_BLOCKED`, …) is visible,
-8. the deployed security rules letting a user read `users/{email}`,
-9. deployed vs. repository `firestore.rules` / `storage.rules` (SHA-256),
-10. the storage bucket.
+4. the configuration the browser will use (what `/api/firebase/config` serves: the deployment's variables or the config read from Firebase), and whether the `NEXT_PUBLIC_*` values changed after the build,
+5. Google OAuth token,
+6. Firestore REST read (also detects a missing database or disabled API),
+7. Firebase Authentication initialised (`CONFIGURATION_NOT_FOUND` → Firebase Console → Authentication → Get started),
+8. an end-to-end copy of the browser's `signInWithCustomToken` request with the site's `Referer` and the configuration from step 4, so Google's own error (`INVALID_CUSTOM_TOKEN`, `CREDENTIAL_MISMATCH`, `API_KEY_HTTP_REFERRER_BLOCKED`, …) is visible,
+9. the deployed security rules letting a user read `users/{email}`,
+10. deployed vs. repository `firestore.rules` / `storage.rules` (SHA-256),
+11. the storage bucket.
 
 When the client config is missing or wrong it also lists the correct values
 from the Firebase Management API, ready to paste into Vercel. `/api/health/auth`

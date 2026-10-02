@@ -28,6 +28,7 @@ export type CloudCheckId =
     | "clientConfig"
     | "serverCredentials"
     | "projectMatch"
+    | "browserConfig"
     | "accessToken"
     | "firestoreRead"
     | "authConfig"
@@ -61,6 +62,7 @@ export type CloudFixId =
     | "enableRulesApi"
     | "initStorage"
     | "redeploy"
+    | "redeployClientConfig"
     | "checkNetwork";
 
 /** Machine-readable outcome of a check; the UI shows a translated sentence for each. */
@@ -84,6 +86,11 @@ export type CloudReason =
     | "projects_match"
     | "projects_differ"
     | "projects_unknown"
+    | "browser_config_env"
+    | "browser_config_stale"
+    | "browser_config_firebase"
+    | "browser_config_mismatch"
+    | "browser_config_none"
     | "token_ok"
     | "token_admin_failed"
     | "token_rejected"
@@ -165,6 +172,8 @@ export type CloudHealthReport = {
     origin: string;
     deployment: { env: string | null; commit: string | null };
     projectIds: { client: string | null; server: string | null };
+    /** What /api/firebase/config gives the browser (see the browserConfig check). */
+    browserConfigSource: PublicConfigSource | null;
     serviceAccount: string | null;
     checks: CloudCheck[];
     suggestedClientConfig: SuggestedClientConfig | null;
@@ -199,7 +208,7 @@ type GoogleError = { status: number; code: string; reason: string; message: stri
 
 type GoogleResult<T> = { ok: true; data: T } | { ok: false; error: GoogleError };
 
-async function googleRequest<T>(url: string, options: { token?: string; method?: string; body?: unknown; headers?: Record<string, string> } = {}): Promise<GoogleResult<T>> {
+async function googleRequest<T>(url: string, options: { token?: string; method?: string; body?: unknown; headers?: Record<string, string>; timeoutMs?: number } = {}): Promise<GoogleResult<T>> {
     let response: Response;
     try {
         response = await fetch(url, {
@@ -211,7 +220,7 @@ async function googleRequest<T>(url: string, options: { token?: string; method?:
             },
             body: options.body === undefined ? undefined : JSON.stringify(options.body),
             cache: "no-store",
-            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+            signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS),
         });
     } catch (error) {
         return { ok: false, error: { status: 0, code: "NETWORK", reason: "", message: error instanceof Error ? error.message.slice(0, 200) : "fetch failed" } };
@@ -313,6 +322,133 @@ function rulesetSource(ruleset: { source?: { files?: Array<{ content?: unknown }
 const shortName = (name: string) => name.split("/").pop() || name;
 
 // ---------------------------------------------------------------------------
+// Public web config for the browser (/api/firebase/config)
+// ---------------------------------------------------------------------------
+
+/** The Firebase web config the browser initialises with. Every value is public. */
+export type PublicFirebaseConfig = Record<"apiKey" | "authDomain" | "projectId" | "storageBucket" | "messagingSenderId" | "appId", string>;
+
+export const PUBLIC_CONFIG_FIELDS = ["apiKey", "authDomain", "projectId", "storageBucket", "messagingSenderId", "appId"] as const;
+
+/** Where the served config comes from; "none" when nothing usable exists. */
+export type PublicConfigSource = "env" | "management-api" | "none";
+
+/** Why the deployment's own NEXT_PUBLIC_FIREBASE_* values were not used as they are. */
+export type PublicConfigIssue = "missing" | "invalid" | "project_mismatch";
+
+/** The six public fields as trimmed strings; anything else is dropped. */
+export function sanitizePublicConfig(input: unknown): PublicFirebaseConfig {
+    const record = input && typeof input === "object" && !Array.isArray(input) ? input as Record<string, unknown> : {};
+    const text = (value: unknown) => (typeof value === "string" ? value.trim().slice(0, 300) : "");
+    return {
+        apiKey: text(record.apiKey),
+        authDomain: text(record.authDomain),
+        projectId: text(record.projectId),
+        storageBucket: text(record.storageBucket),
+        messagingSenderId: text(record.messagingSenderId),
+        appId: text(record.appId),
+    };
+}
+
+/** Mirrors hasFirebaseClientConfig in src/lib/firebase.ts (a test keeps the two in step). */
+export function isUsablePublicConfig(config: PublicFirebaseConfig | null | undefined): config is PublicFirebaseConfig {
+    return Boolean(config && config.projectId && config.appId && /^AIza[\w-]{35}$/.test(config.apiKey));
+}
+
+export function publicConfigIssue(env: PublicFirebaseConfig, serverProjectId: string | null): PublicConfigIssue | null {
+    if (!env.apiKey || !env.projectId || !env.appId) return "missing";
+    if (!isUsablePublicConfig(env)) return "invalid";
+    if (serverProjectId && env.projectId !== serverProjectId) return "project_mismatch";
+    return null;
+}
+
+/**
+ * The config to give the browser: the deployment's own values when they are
+ * complete and belong to the service account's project, otherwise the
+ * project's web-app config read from Firebase. Values of another project are
+ * still served when Firebase can't be asked: the bundle has them anyway.
+ */
+export function selectPublicFirebaseConfig(input: { env: PublicFirebaseConfig; serverProjectId: string | null; fromFirebase: PublicFirebaseConfig | null }): { source: PublicConfigSource; config: PublicFirebaseConfig | null; issue: PublicConfigIssue | null } {
+    const issue = publicConfigIssue(input.env, input.serverProjectId);
+    if (!issue) return { source: "env", config: input.env, issue };
+    const { fromFirebase, serverProjectId } = input;
+    if (isUsablePublicConfig(fromFirebase) && (!serverProjectId || fromFirebase.projectId === serverProjectId)) return { source: "management-api", config: fromFirebase, issue };
+    if (issue === "project_mismatch") return { source: "env", config: input.env, issue };
+    return { source: "none", config: null, issue };
+}
+
+/**
+ * NEXT_PUBLIC_FIREBASE_* as configured right now. Looked up by a computed
+ * name on purpose: a literal `process.env.NEXT_PUBLIC_…` is replaced with its
+ * build-time value in server bundles as well.
+ */
+export function readRuntimePublicEnv(): PublicFirebaseConfig {
+    const read = (name: string) => (process.env[name] || "").trim();
+    return sanitizePublicConfig(Object.fromEntries(PUBLIC_CONFIG_FIELDS.map((field) => [field, read(ENV_NAMES[field])])));
+}
+
+type WebAppLookup = { at: number; project: string; preferredAppId: string; config: PublicFirebaseConfig | null; error: string | null };
+
+// Per server instance; the route's CDN cache keeps lookups rarer still.
+let webAppLookup: WebAppLookup | null = null;
+const LOOKUP_TTL_MS = 60 * 60_000;
+const LOOKUP_FAILURE_TTL_MS = 5 * 60_000;
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`timed out after ${ms} ms`)), ms);
+    });
+    return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function lookupWebAppConfig(project: string, preferredAppId: string, options: { fresh?: boolean; budgetMs?: number }): Promise<WebAppLookup> {
+    const cached = webAppLookup;
+    if (!options.fresh && cached && cached.project === project && cached.preferredAppId === preferredAppId
+        && Date.now() - cached.at < (cached.config ? LOOKUP_TTL_MS : LOOKUP_FAILURE_TTL_MS)) {
+        return cached;
+    }
+    const budgetMs = options.budgetMs ?? REQUEST_TIMEOUT_MS;
+    let lookup: WebAppLookup;
+    try {
+        const fetched = await withTimeout((async () => fetchWebAppConfig(project, await getGoogleAccessToken("admin"), preferredAppId, budgetMs))(), budgetMs);
+        const config = fetched.app && isUsablePublicConfig(fetched.app.config) ? fetched.app.config : null;
+        lookup = { at: Date.now(), project, preferredAppId, config, error: config ? null : fetched.error ?? "incomplete_web_app_config" };
+    } catch (error) {
+        lookup = { at: Date.now(), project, preferredAppId, config: null, error: errorText(error) };
+    }
+    webAppLookup = lookup;
+    return lookup;
+}
+
+export type ResolvedPublicConfig = {
+    source: PublicConfigSource;
+    config: PublicFirebaseConfig | null;
+    issue: PublicConfigIssue | null;
+    serverProjectId: string | null;
+    /** Why the Firebase lookup failed, when one was needed (Google's error or a short code). */
+    lookupError: string | null;
+};
+
+/**
+ * What /api/firebase/config serves: the request-time NEXT_PUBLIC_FIREBASE_*
+ * values, or, when they are missing, invalid or belong to another project
+ * than the service account, the web-app config read from Firebase (cached
+ * for an hour, failures for five minutes). `budgetMs` caps the lookup.
+ */
+export async function resolvePublicFirebaseConfig(options: { fresh?: boolean; budgetMs?: number } = {}): Promise<ResolvedPublicConfig> {
+    const env = readRuntimePublicEnv();
+    const credentials = describeServerCredentials();
+    const serverProjectId = credentials.projectId;
+    if (!publicConfigIssue(env, serverProjectId)) return { source: "env", config: env, issue: null, serverProjectId, lookupError: null };
+    if (!serverProjectId || !credentials.privateKeyValid || isFirebaseEmulator()) {
+        return { ...selectPublicFirebaseConfig({ env, serverProjectId, fromFirebase: null }), serverProjectId, lookupError: "no_server_credentials" };
+    }
+    const lookup = await lookupWebAppConfig(serverProjectId, env.appId, options);
+    return { ...selectPublicFirebaseConfig({ env, serverProjectId, fromFirebase: lookup.config }), serverProjectId, lookupError: lookup.error };
+}
+
+// ---------------------------------------------------------------------------
 // Checks
 // ---------------------------------------------------------------------------
 
@@ -360,6 +496,33 @@ function checkProjectMatch(client: string, server: string | null): CloudCheck {
     if (!client || !server) return check("projectMatch", "skip", "projects_unknown", "", null, { client: client || "—", server: server ?? "—" });
     if (client === server) return check("projectMatch", "ok", "projects_match", client, null, { projectId: client });
     return check("projectMatch", "fail", "projects_differ", `${client} ≠ ${server}`, "alignProjects", { client, server });
+}
+
+/**
+ * Which config /api/firebase/config hands the browser (it overrides the
+ * bundle's build-time values before the app starts), and whether the
+ * NEXT_PUBLIC_* values changed after this deployment was built.
+ */
+async function checkBrowserConfig(buildEnv: ClientEnv): Promise<{ result: CloudCheck; resolved: ResolvedPublicConfig }> {
+    const resolved = await resolvePublicFirebaseConfig({ fresh: true });
+    const runtimeEnv = readRuntimePublicEnv();
+    const stale = PUBLIC_CONFIG_FIELDS.some((field) => runtimeEnv[field] !== buildEnv[field]);
+    const facts: Record<string, string> = {
+        source: resolved.source,
+        projectId: resolved.config?.projectId || "—",
+        apiKey: maskKey(resolved.config?.apiKey ?? "") || "—",
+        buildProjectId: buildEnv.projectId || "—",
+        runtimeProjectId: runtimeEnv.projectId || "—",
+        issue: resolved.issue ?? "",
+    };
+    const detail = [`/api/firebase/config → ${resolved.source}`, resolved.issue ? `NEXT_PUBLIC_FIREBASE_*: ${resolved.issue}` : "", resolved.lookupError ? `Firebase: ${resolved.lookupError}` : ""].filter(Boolean).join(" · ");
+    const result = (status: CloudCheckStatus, reason: CloudReason, fix: CloudFixId | null) => ({ result: check("browserConfig", status, reason, detail, fix, facts), resolved });
+    if (resolved.source === "env" && !resolved.issue) return stale ? result("warn", "browser_config_stale", "redeployClientConfig") : result("ok", "browser_config_env", null);
+    if (resolved.source === "management-api") {
+        return result("warn", "browser_config_firebase", resolved.issue === "project_mismatch" ? "alignProjects" : resolved.issue === "missing" ? "addClientConfig" : "fixClientConfig");
+    }
+    if (resolved.source === "env") return result("fail", "browser_config_mismatch", "alignProjects");
+    return result("fail", "browser_config_none", resolved.issue === "invalid" ? "fixClientConfig" : "addClientConfig");
 }
 
 async function checkAccessToken() {
@@ -524,25 +687,38 @@ async function checkStorageBucket(bucket: { name: string | null; raw: string }, 
     return check("storageBucket", "warn", "bucket_failed", describeError(result.error), result.error.status === 0 ? "checkNetwork" : null, facts);
 }
 
-/** Best effort: the web app's real config from the Firebase Management API. */
-async function suggestClientConfig(project: string, token: string, env: ClientEnv): Promise<{ config: SuggestedClientConfig | null; error: string | null }> {
+type WebApp = { appId: string; displayName: string | null; config: PublicFirebaseConfig };
+
+/**
+ * The project's web app (the one with `preferredAppId` when it exists, else
+ * the first active one) and its public config, from the Firebase Management
+ * API. Needs a token with the firebase or cloud-platform scope.
+ */
+async function fetchWebAppConfig(project: string, token: string, preferredAppId: string, timeoutMs?: number): Promise<{ app: WebApp | null; error: string | null }> {
     const base = `https://firebase.googleapis.com/v1beta1/projects/${encodeURIComponent(project)}/webApps`;
-    const apps = await googleRequest<{ apps?: Array<{ appId?: unknown; displayName?: unknown; state?: unknown }> }>(`${base}?pageSize=100`, { token });
-    if (!apps.ok) return { config: null, error: describeError(apps.error) };
+    const apps = await googleRequest<{ apps?: Array<{ appId?: unknown; displayName?: unknown; state?: unknown }> }>(`${base}?pageSize=100`, { token, timeoutMs });
+    if (!apps.ok) return { app: null, error: describeError(apps.error) };
     const list = (apps.data.apps ?? []).filter((app): app is { appId: string; displayName?: unknown; state?: unknown } => typeof app.appId === "string");
-    if (!list.length) return { config: null, error: "no_web_app" };
-    const chosen = list.find((app) => app.appId === env.appId) ?? list.find((app) => app.state === "ACTIVE") ?? list[0];
-    const config = await googleRequest<Record<string, unknown>>(`${base}/${encodeURIComponent(chosen.appId)}/config`, { token });
-    if (!config.ok) return { config: null, error: describeError(config.error) };
-    const text = (value: unknown, fallback = "") => (typeof value === "string" ? value : fallback);
-    const values: Record<ClientConfigVariable, string> = {
-        NEXT_PUBLIC_FIREBASE_API_KEY: text(config.data.apiKey),
-        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: text(config.data.authDomain),
-        NEXT_PUBLIC_FIREBASE_PROJECT_ID: text(config.data.projectId, project),
-        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: text(config.data.storageBucket),
-        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: text(config.data.messagingSenderId),
-        NEXT_PUBLIC_FIREBASE_APP_ID: text(config.data.appId, chosen.appId),
+    if (!list.length) return { app: null, error: "no_web_app" };
+    const chosen = list.find((app) => app.appId === preferredAppId) ?? list.find((app) => app.state === "ACTIVE") ?? list[0];
+    const config = await googleRequest<Record<string, unknown>>(`${base}/${encodeURIComponent(chosen.appId)}/config`, { token, timeoutMs });
+    if (!config.ok) return { app: null, error: describeError(config.error) };
+    const values = sanitizePublicConfig(config.data);
+    return {
+        app: {
+            appId: chosen.appId,
+            displayName: typeof chosen.displayName === "string" ? chosen.displayName : null,
+            config: { ...values, projectId: values.projectId || project, appId: values.appId || chosen.appId },
+        },
+        error: null,
     };
+}
+
+/** Best effort: the web app's real config from the Firebase Management API, by variable name. */
+async function suggestClientConfig(project: string, token: string, env: ClientEnv): Promise<{ config: SuggestedClientConfig | null; error: string | null }> {
+    const { app, error } = await fetchWebAppConfig(project, token, env.appId);
+    if (!app) return { config: null, error };
+    const values = Object.fromEntries(PUBLIC_CONFIG_FIELDS.map((field) => [ENV_NAMES[field], app.config[field]])) as Record<ClientConfigVariable, string>;
     const current: Record<ClientConfigVariable, string> = {
         NEXT_PUBLIC_FIREBASE_API_KEY: env.apiKey,
         NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: env.authDomain,
@@ -552,7 +728,7 @@ async function suggestClientConfig(project: string, token: string, env: ClientEn
         NEXT_PUBLIC_FIREBASE_APP_ID: env.appId,
     };
     const differs = CLIENT_CONFIG_VARIABLES.filter((variable) => values[variable] && values[variable] !== current[variable]);
-    return { config: { appId: chosen.appId, displayName: typeof chosen.displayName === "string" ? chosen.displayName : null, values, differs }, error: null };
+    return { config: { appId: app.appId, displayName: app.displayName, values, differs }, error: null };
 }
 
 /** Runs every check; `ownerEmail` is the signed-in owner, `origin` the site address the browser uses. */
@@ -570,23 +746,29 @@ export async function runCloudHealthChecks(options: { ownerEmail: string; origin
         siteHost = "";
     }
 
-    const clientConfig = checkClientConfig(env);
+    const browser = await checkBrowserConfig(env);
+    // Build-time values the runtime config already replaces still need fixing,
+    // but they no longer break the browser: report them as warnings.
+    const coveredAtRuntime = (item: CloudCheck): CloudCheck => (browser.resolved.source === "management-api" && item.status === "fail" ? { ...item, status: "warn" } : item);
+    const clientConfig = coveredAtRuntime(checkClientConfig(env));
     const serverCredentials = checkServerCredentials(credentials);
-    const projectMatch = checkProjectMatch(env.projectId, serverProject);
+    const projectMatch = coveredAtRuntime(checkProjectMatch(env.projectId, serverProject));
+    // The sign-in simulation uses the config the browser will really have.
+    const browserEnv: ClientEnv = browser.resolved.config ?? env;
 
     let checks: CloudCheck[];
     let suggestion: { config: SuggestedClientConfig | null; error: string | null } = { config: null, error: null };
     if (emulator || !usable || !serverProject) {
         const reason: CloudReason = emulator ? "emulator" : "skipped";
         const rest: CloudCheckId[] = ["accessToken", "firestoreRead", "authConfig", "browserSignIn", "rulesSelfRead", "firestoreRules", "storageRules", "storageBucket"];
-        checks = [clientConfig, serverCredentials, projectMatch, ...rest.map((id) => skipped(id, reason))];
-        if (emulator) checks[4] = await checkFirestoreRead();
+        const firestoreRead = emulator ? await checkFirestoreRead() : null;
+        checks = [clientConfig, serverCredentials, projectMatch, browser.result, ...rest.map((id) => (id === "firestoreRead" && firestoreRead ? firestoreRead : skipped(id, reason)))];
     } else {
         const token = await checkAccessToken();
         const { dataToken, adminToken } = token;
         const browserChain = async (): Promise<[CloudCheck, CloudCheck]> => {
             if (!dataToken) return [skipped("browserSignIn"), skipped("rulesSelfRead")];
-            const signIn = await checkBrowserSignIn(env, options.ownerEmail, options.origin, projectMatch.status === "fail");
+            const signIn = await checkBrowserSignIn(browserEnv, options.ownerEmail, options.origin, browserEnv.projectId !== serverProject);
             return [signIn.result, signIn.idToken ? await checkRulesSelfRead(options.ownerEmail, signIn.idToken) : skipped("rulesSelfRead")];
         };
         const [firestoreRead, authConfig, [browserSignIn, rulesSelfRead], firestoreRules, storageRules, storageBucketCheck, suggested] = await Promise.all([
@@ -599,7 +781,7 @@ export async function runCloudHealthChecks(options: { ownerEmail: string; origin
             adminToken ? suggestClientConfig(serverProject, adminToken, env) : Promise.resolve({ config: null, error: null }),
         ]);
         suggestion = suggested;
-        checks = [clientConfig, serverCredentials, projectMatch, token.result, firestoreRead, authConfig, browserSignIn, rulesSelfRead, firestoreRules, storageRules, storageBucketCheck];
+        checks = [clientConfig, serverCredentials, projectMatch, browser.result, token.result, firestoreRead, authConfig, browserSignIn, rulesSelfRead, firestoreRules, storageRules, storageBucketCheck];
     }
 
     const summary: Record<CloudCheckStatus, number> = { ok: 0, warn: 0, fail: 0, skip: 0 };
@@ -612,6 +794,7 @@ export async function runCloudHealthChecks(options: { ownerEmail: string; origin
             commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
         },
         projectIds: { client: env.projectId || null, server: serverProject },
+        browserConfigSource: browser.resolved.source,
         serviceAccount: credentials.clientEmail,
         checks,
         suggestedClientConfig: suggestion.config,

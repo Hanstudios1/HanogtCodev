@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
@@ -56,6 +57,9 @@ export const viewport: Viewport = {
     colorScheme: "dark light",
 };
 
+// The Electron app is a static export without API routes.
+const RUNTIME_FIREBASE_CONFIG = process.env.ELECTRON_BUILD !== "true";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         // The theme class is decided by the inline script before hydration.
@@ -64,6 +68,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
             </head>
             <body className="min-h-dvh antialiased">
+                {/*
+                  * Public Firebase web config read at request time (window.__HANOGT_FIREBASE__),
+                  * loaded before the app starts so src/lib/firebase.ts can prefer it over
+                  * the build-time NEXT_PUBLIC_FIREBASE_* values.
+                  */}
+                {RUNTIME_FIREBASE_CONFIG ? <Script id="hanogt-firebase-config" src="/api/firebase/config" strategy="beforeInteractive" /> : null}
                 <Provider>
                     <I18nProvider>
                         <SkipLink />

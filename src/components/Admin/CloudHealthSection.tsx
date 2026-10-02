@@ -2,7 +2,7 @@
 
 import { AlertTriangle, CheckCircle2, ChevronDown, ClipboardCopy, Cloud, CloudUpload, Globe, MinusCircle, MonitorSmartphone, RefreshCw, ShieldCheck, XCircle, type LucideIcon } from "lucide-react";
 import { useState } from "react";
-import { firebaseClientDiagnostics } from "@/lib/firebase";
+import { firebaseClientDiagnostics, type FirebaseConfigSource } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type {
     CloudCheck,
@@ -12,6 +12,7 @@ import type {
     CloudFixId,
     CloudHealthReport,
     CloudReason,
+    PublicConfigSource,
     RulesDeployReason,
     RulesDeployResult,
 } from "@/lib/server/cloud-health";
@@ -42,6 +43,10 @@ const CHECKS: Record<CloudCheckId, { title: Copy; description: Copy }> = {
     projectMatch: {
         title: { TR: "Proje eşleşmesi", EN: "Project match" },
         description: { TR: "İstemci ayarları ile hizmet hesabı aynı Firebase projesine ait olmalı.", EN: "The client settings and the service account must belong to the same Firebase project." },
+    },
+    browserConfig: {
+        title: { TR: "Tarayıcının kullanacağı yapılandırma", EN: "Configuration the browser will use" },
+        description: { TR: "/api/firebase/config, sayfa açılmadan önce tarayıcıya Firebase ayarlarını verir; dağıtımdaki değerler eksik, hatalı ya da başka projeye aitse doğru değerler Firebase'den okunur.", EN: "/api/firebase/config hands the browser its Firebase settings before the page starts; when the deployment's values are missing, invalid or belong to another project, the correct values are read from Firebase." },
     },
     accessToken: {
         title: { TR: "Google erişim belirteci", EN: "Google access token" },
@@ -81,7 +86,7 @@ const REASONS: Record<CloudReason, Copy> = {
     skipped: { TR: "Önceki bir adım başarısız olduğu için denetlenmedi.", EN: "Not checked because an earlier step failed." },
     emulator: { TR: "Yerel Firebase emülatöründe bu denetim yapılmaz.", EN: "This check doesn't apply to the local Firebase emulator." },
     client_ok: { TR: "Gerekli değerlerin hepsi var ve biçimleri doğru (proje: {projectId}).", EN: "All required values are present and well formed (project: {projectId})." },
-    client_missing: { TR: "Bu derlemede eksik değişkenler var: {missing}. Tarayıcı Firebase'e hiç bağlanamaz.", EN: "This build is missing variables: {missing}. The browser can't connect to Firebase at all." },
+    client_missing: { TR: "Bu derlemede eksik değişkenler var: {missing}. Pakete derlenen değerlerle tarayıcı Firebase'e bağlanamaz.", EN: "This build is missing variables: {missing}. With the values built into the bundle, the browser can't connect to Firebase." },
     client_api_key_format: { TR: "NEXT_PUBLIC_FIREBASE_API_KEY bir Firebase web API anahtarı biçiminde değil (AIza… ile başlayan 39 karakter).", EN: "NEXT_PUBLIC_FIREBASE_API_KEY isn't in the Firebase web API key format (39 characters starting with AIza…)." },
     client_project_id_format: { TR: "NEXT_PUBLIC_FIREBASE_PROJECT_ID geçerli bir proje kimliğine benzemiyor.", EN: "NEXT_PUBLIC_FIREBASE_PROJECT_ID doesn't look like a valid project ID." },
     client_app_id: { TR: "NEXT_PUBLIC_FIREBASE_APP_ID bir web uygulaması kimliği değil (1:…:web:… biçiminde olmalı).", EN: "NEXT_PUBLIC_FIREBASE_APP_ID isn't a web app ID (it should look like 1:…:web:…)." },
@@ -95,8 +100,13 @@ const REASONS: Record<CloudReason, Copy> = {
     creds_key_invalid: { TR: "{variable} içindeki özel anahtar okunamadı (satır sonları bozulmuş olabilir).", EN: "The private key in {variable} couldn't be parsed (its line breaks may be broken)." },
     creds_multiple: { TR: "Birden fazla kimlik değişkeni tanımlı; {variable} kullanılıyor, şunlar yok sayılıyor: {ignored}.", EN: "Several credential variables are set; {variable} is used and these are ignored: {ignored}." },
     projects_match: { TR: "İstemci ve sunucu aynı projeyi kullanıyor: {projectId}.", EN: "Client and server use the same project: {projectId}." },
-    projects_differ: { TR: "İstemci {client}, hizmet hesabı ise {server} projesini kullanıyor; tarayıcı bağlantısı bu yüzden reddedilir (INVALID_CUSTOM_TOKEN / CREDENTIAL_MISMATCH).", EN: "The client uses {client} while the service account belongs to {server}, so the browser connection is rejected (INVALID_CUSTOM_TOKEN / CREDENTIAL_MISMATCH)." },
+    projects_differ: { TR: "İstemci {client}, hizmet hesabı ise {server} projesini kullanıyor; pakete derlenen bu değerlerle tarayıcı bağlantısı reddedilir (INVALID_CUSTOM_TOKEN / CREDENTIAL_MISMATCH).", EN: "The client uses {client} while the service account belongs to {server}; with these values built into the bundle, the browser connection is rejected (INVALID_CUSTOM_TOKEN / CREDENTIAL_MISMATCH)." },
     projects_unknown: { TR: "Proje kimliklerinden biri bilinmediği için karşılaştırılamadı.", EN: "Couldn't compare because one of the project IDs is unknown." },
+    browser_config_env: { TR: "Tarayıcı bu dağıtımın NEXT_PUBLIC_FIREBASE_* değerlerini kullanıyor (proje: {projectId}).", EN: "The browser uses this deployment's NEXT_PUBLIC_FIREBASE_* values (project: {projectId})." },
+    browser_config_stale: { TR: "NEXT_PUBLIC_FIREBASE_* değerleri bu derlemeden sonra değişmiş (derlemede {buildProjectId}, şimdi {runtimeProjectId}). Tarayıcı güncel değerleri çalışma anında alıyor; paketin de güncellenmesi için yeniden dağıtın.", EN: "The NEXT_PUBLIC_FIREBASE_* values changed after this build (built with {buildProjectId}, now {runtimeProjectId}). The browser gets the current values at runtime; redeploy so the bundle has them too." },
+    browser_config_firebase: { TR: "Dağıtımdaki değerler kullanılamadığı için tarayıcı doğru yapılandırmayı çalışma anında Firebase'den alıyor (proje: {projectId}). Bağlantı çalışır; kalıcı çözüm için Vercel değerlerini düzeltip yeniden dağıtın.", EN: "The deployment's values can't be used, so the browser gets the correct configuration from Firebase at runtime (project: {projectId}). The connection works; for a lasting fix, correct the Vercel values and redeploy." },
+    browser_config_mismatch: { TR: "Dağıtımdaki değerler başka bir Firebase projesine ait ve doğru yapılandırma Firebase'den okunamadı; tarayıcı bağlantısı reddedilir.", EN: "The deployment's values belong to another Firebase project and the correct configuration couldn't be read from Firebase, so the browser connection is rejected." },
+    browser_config_none: { TR: "Tarayıcı için kullanılabilir bir Firebase yapılandırması yok: dağıtımdaki değerler eksik veya hatalı ve doğru değerler Firebase'den okunamadı.", EN: "There's no usable Firebase configuration for the browser: the deployment's values are missing or invalid and the correct ones couldn't be read from Firebase." },
     token_ok: { TR: "Hizmet hesabıyla Google erişim belirteci alındı.", EN: "A Google access token was obtained with the service account." },
     token_admin_failed: { TR: "Veri belirteci alındı, ancak yönetim kapsamlı (cloud-platform) belirteç alınamadı; kural ve Authentication denetimleri yapılamadı.", EN: "The data token was obtained but the admin-scoped (cloud-platform) token wasn't, so the rules and Authentication checks couldn't run." },
     token_rejected: { TR: "Google hizmet hesabı anahtarını reddetti: anahtar silinmiş ya da devre dışı bırakılmış veya sunucu saati yanlış.", EN: "Google rejected the service-account key: it was deleted or disabled, or the server clock is wrong." },
@@ -314,6 +324,13 @@ const FIXES: Record<CloudFixId, { title: Copy; steps: Copy[] }> = {
             CLI_DEPLOY,
         ],
     },
+    redeployClientConfig: {
+        title: { TR: "Yeniden dağıtın", EN: "Redeploy" },
+        steps: [
+            REDEPLOY,
+            { TR: "Değişkenin, açtığınız ortam için (Production veya Preview) tanımlı olduğunu Vercel → Settings → Environment Variables bölümünde kontrol edin.", EN: "Check in Vercel → Settings → Environment Variables that the variable is set for the environment you open (Production or Preview)." },
+        ],
+    },
     checkNetwork: {
         title: { TR: "Biraz sonra yeniden deneyin", EN: "Try again shortly" },
         steps: [
@@ -321,6 +338,19 @@ const FIXES: Record<CloudFixId, { title: Copy; steps: Copy[] }> = {
             { TR: "Birkaç dakika sonra “Yeniden denetle”ye basın.", EN: "Press “Check again” in a few minutes." },
         ],
     },
+};
+
+const SERVER_SOURCES: Record<PublicConfigSource, Copy> = {
+    env: { TR: "Dağıtım değişkenleri (NEXT_PUBLIC_FIREBASE_*)", EN: "Deployment variables (NEXT_PUBLIC_FIREBASE_*)" },
+    "management-api": { TR: "Firebase'den okunan web uygulaması yapılandırması", EN: "Web app configuration read from Firebase" },
+    none: { TR: "Yok", EN: "None" },
+};
+
+const PAGE_SOURCES: Record<FirebaseConfigSource, Copy> = {
+    "runtime-env": { TR: "Çalışma anında sunucudan (dağıtım değişkenleri)", EN: "From the server at runtime (deployment variables)" },
+    "runtime-management-api": { TR: "Çalışma anında sunucudan (Firebase'den okundu)", EN: "From the server at runtime (read from Firebase)" },
+    build: { TR: "Pakete derlenmiş değerler", EN: "Values built into the bundle" },
+    none: { TR: "Yok", EN: "None" },
 };
 
 const DEPLOY_REASONS: Record<RulesDeployReason, Copy> = {
@@ -362,12 +392,15 @@ const T = {
     technical: { TR: "Teknik ayrıntı", EN: "Technical detail" },
     deployedAt: { TR: "Yayımlanma", EN: "Deployed" },
     bundleTitle: { TR: "Bu tarayıcıdaki paket", EN: "This browser's bundle" },
-    bundleDescription: { TR: "Şu an açık olan sayfanın derlendiği Firebase istemci ayarları.", EN: "The Firebase client settings this page was built with." },
+    bundleDescription: { TR: "Şu an açık olan sayfanın Firebase'i başlattığı ayarlar ve nereden geldikleri.", EN: "The settings this open page started Firebase with, and where they came from." },
     bundleProject: { TR: "Proje", EN: "Project" },
     bundleKey: { TR: "API anahtarı", EN: "API key" },
     bundleMissing: { TR: "Bu pakette eksik: {missing}", EN: "Missing in this bundle: {missing}" },
-    bundleMismatch: { TR: "Bu tarayıcıdaki paket ({browser}) sunucunun gördüğünden ({server}) farklı bir projeye bağlı. Sayfa eski bir dağıtımdan yüklenmiş olabilir; sayfayı yenileyin.", EN: "This browser's bundle ({browser}) points to a different project than the server sees ({server}). The page may come from an older deployment; reload it." },
     notSet: { TR: "tanımlı değil", EN: "not set" },
+    browserConfig: { TR: "Tarayıcı yapılandırması", EN: "Browser configuration" },
+    pageSource: { TR: "Bu sayfanın yapılandırması", EN: "This page's configuration" },
+    bundleBuildProject: { TR: "Bu paket {project} projesiyle derlenmiş; sayfa çalışma anında gelen güncel yapılandırmayı kullanıyor.", EN: "This bundle was built with {project}; the page uses the current configuration it got at runtime." },
+    bundleServerMismatch: { TR: "Bu sayfa {browser} projesine, sunucu ise {server} projesine bağlı; tarayıcı bağlantısı reddedilir. Sayfayı yenileyin; sürerse yukarıdaki adımları izleyin.", EN: "This page uses the {browser} project while the server uses {server}, so the browser connection is rejected. Reload the page; if it persists, follow the steps above." },
     suggestedTitle: { TR: "Doğru istemci ayarları", EN: "Correct client settings" },
     suggestedDescription: { TR: "Firebase'in bu proje için bildirdiği web uygulaması yapılandırması ({app}). Web API anahtarları gizli değildir.", EN: "The web app config Firebase reports for this project ({app}). Web API keys aren't secret." },
     suggestedDiffers: { TR: "İşaretli değerler bu dağıtımdakinden farklı. Vercel → Settings → Environment Variables bölümüne girip yeniden dağıtın.", EN: "The marked values differ from this deployment. Enter them in Vercel → Settings → Environment Variables and redeploy." },
@@ -524,16 +557,19 @@ function SuggestedConfig({ report, onCopy }: { report: CloudHealthReport; onCopy
 function BrowserBundle({ report }: { report: CloudHealthReport }) {
     const { tx } = useI18n();
     const bundle = firebaseClientDiagnostics;
-    const server = report.projectIds.client;
+    const server = report.projectIds.server;
     const mismatch = Boolean(bundle.projectId && server && bundle.projectId !== server);
+    const runtime = bundle.source === "runtime-env" || bundle.source === "runtime-management-api";
     return (
         <Panel title={tx(T.bundleTitle)} description={tx(T.bundleDescription)} icon={MonitorSmartphone}>
-            <dl className="grid gap-2 sm:grid-cols-2">
+            <dl className="grid gap-2 sm:grid-cols-3">
+                <Fact label={tx(T.pageSource)}>{tx(PAGE_SOURCES[bundle.source])}</Fact>
                 <Fact label={tx(T.bundleProject)}>{bundle.projectId ?? tx(T.notSet)}</Fact>
                 <Fact label={tx(T.bundleKey)}>{bundle.apiKeyPrefix ? <>{bundle.apiKeyPrefix}…</> : tx(T.notSet)}</Fact>
             </dl>
             {bundle.missing.length ? <Notice tone="error" className="mt-3">{tx(T.bundleMissing, { missing: bundle.missing.join(", ") })}</Notice> : null}
-            {mismatch ? <Notice tone="warning" className="mt-3">{tx(T.bundleMismatch, { browser: bundle.projectId ?? "—", server: server ?? "—" })}</Notice> : null}
+            {runtime && bundle.buildProjectId !== bundle.projectId ? <Notice tone="info" className="mt-3">{tx(T.bundleBuildProject, { project: bundle.buildProjectId ?? tx(T.notSet) })}</Notice> : null}
+            {mismatch ? <Notice tone="warning" className="mt-3">{tx(T.bundleServerMismatch, { browser: bundle.projectId ?? "—", server: server ?? "—" })}</Notice> : null}
         </Panel>
     );
 }
@@ -624,6 +660,7 @@ export default function CloudHealthSection() {
                         <dl className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             <Fact label={tx(T.clientProject)}>{data.projectIds.client ?? tx(T.notSet)}</Fact>
                             <Fact label={tx(T.serverProject)}>{data.projectIds.server ?? tx(T.notSet)}</Fact>
+                            <Fact label={tx(T.browserConfig)}>{data.browserConfigSource ? tx(SERVER_SOURCES[data.browserConfigSource]) : "—"}</Fact>
                             <Fact label={tx(T.serviceAccount)}>{data.serviceAccount ?? tx(T.notSet)}</Fact>
                             <Fact label={tx(T.siteAddress)}>{data.origin}</Fact>
                             <Fact label={tx(T.deployment)}>{[data.deployment.env, data.deployment.commit].filter(Boolean).join(" · ") || "—"}</Fact>

@@ -1,9 +1,10 @@
 "use client";
 
-import { AlertTriangle, RefreshCw, Stethoscope, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Copy as CopyIcon, RefreshCw, Stethoscope, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useFirebaseBridge, useRawSession, type FirebaseBridgeFailureCode } from "@/components/Provider";
+import { firebaseClientDiagnostics, type FirebaseConfigSource } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
 
 /** sessionStorage: the failure code the user closed the banner for in this tab session. */
@@ -30,12 +31,12 @@ const USER_DEFAULT: Copy = { TR: "Bu bir yapılandırma sorunu; site ekibinin m�
 /** Precise causes and fixes for the Hanogt team. */
 const STAFF_COPY: Record<FirebaseBridgeFailureCode, Copy> = {
     config_missing: {
-        TR: "Bu sürüm Firebase istemci ayarları (NEXT_PUBLIC_FIREBASE_*) olmadan derlenmiş. Değerleri Vercel'e ekleyip yeniden dağıtın; NEXT_PUBLIC_ değişkenleri derleme sırasında pakete yazılır.",
-        EN: "This build was made without the Firebase client settings (NEXT_PUBLIC_FIREBASE_*). Add them in Vercel and redeploy; NEXT_PUBLIC_ variables are baked in at build time.",
+        TR: "Tarayıcı kullanılabilir bir Firebase yapılandırması alamadı: bu sürüm NEXT_PUBLIC_FIREBASE_* değerleri olmadan derlenmiş ve /api/firebase/config de doğru değerleri sağlayamadı. Değerleri Vercel'e açtığınız ortam (Production/Preview) için ekleyip yeniden dağıtın; Bulut Sağlığı nedenini gösterir.",
+        EN: "The browser got no usable Firebase configuration: this build has no NEXT_PUBLIC_FIREBASE_* values and /api/firebase/config couldn't provide the correct ones either. Add the values in Vercel for the environment you open (Production/Preview) and redeploy; Cloud Health shows why.",
     },
     config_invalid: {
-        TR: "NEXT_PUBLIC_FIREBASE_API_KEY bir Firebase web API anahtarı gibi görünmüyor (AIza… ile başlamalı). Firebase Console → Proje ayarları → Web uygulaması yapılandırmasındaki değeri kullanıp yeniden dağıtın.",
-        EN: "NEXT_PUBLIC_FIREBASE_API_KEY doesn't look like a Firebase web API key (it should start with AIza…). Use the value from Firebase Console → Project settings → Web app config and redeploy.",
+        TR: "NEXT_PUBLIC_FIREBASE_API_KEY bir Firebase web API anahtarı gibi görünmüyor (AIza… ile başlamalı) ve /api/firebase/config de doğru değerleri sağlayamadı. Firebase Console → Proje ayarları → Web uygulaması yapılandırmasındaki değeri kullanıp yeniden dağıtın.",
+        EN: "NEXT_PUBLIC_FIREBASE_API_KEY doesn't look like a Firebase web API key (it should start with AIza…) and /api/firebase/config couldn't provide the correct values either. Use the value from Firebase Console → Project settings → Web app config and redeploy.",
     },
     session_expired: { TR: "Belirteç uç noktası oturumu doğrulayamadı (401). Çıkış yapıp yeniden giriş yapın; sürerse NEXTAUTH_SECRET değişmiş olabilir.", EN: "The token endpoint couldn't verify the session (401). Sign out and in again; if it persists, NEXTAUTH_SECRET may have changed." },
     bad_origin: { TR: "Belirteç isteği köken denetiminden geçemedi (403). Site farklı bir alan adından mı açıldı? NEXTAUTH_URL ve alan adı ayarlarını kontrol edin.", EN: "The token request failed the origin check (403). Is the site opened from a different domain? Check NEXTAUTH_URL and the domain settings." },
@@ -86,6 +87,19 @@ const STAFF_COPY: Record<FirebaseBridgeFailureCode, Copy> = {
 const OPEN_DIAGNOSTICS: Copy = { TR: "Tanılamayı aç", EN: "Open diagnostics" };
 const OWNER_CAN_DIAGNOSE: Copy = { TR: "Site sahibi Yönetici Paneli → Bulut Sağlığı'ndan ayrıntılı tanılama yapabilir.", EN: "The site owner can run detailed diagnostics in Admin Panel → Cloud Health." };
 const TECHNICAL: Copy = { TR: "Teknik ayrıntı", EN: "Technical detail" };
+const ERROR_CODE: Copy = { TR: "Hata kodu", EN: "Error code" };
+const COPY_CODE: Copy = { TR: "Hata kodunu kopyala", EN: "Copy the error code" };
+const COPIED: Copy = { TR: "Kopyalandı", EN: "Copied" };
+const DETAILS: Copy = { TR: "Ayrıntılar", EN: "Details" };
+const SEND_CODE: Copy = { TR: "Sorun sürerse bu kodu site ekibine iletin.", EN: "If it persists, send this code to the site team." };
+const CONFIGURATION: Copy = { TR: "Yapılandırma", EN: "Configuration" };
+const PROJECT: Copy = { TR: "Proje", EN: "Project" };
+const SOURCE_COPY: Record<FirebaseConfigSource, Copy> = {
+    "runtime-env": { TR: "sunucudan (dağıtım değişkenleri)", EN: "from the server (deployment variables)" },
+    "runtime-management-api": { TR: "sunucudan (Firebase'den okundu)", EN: "from the server (read from Firebase)" },
+    build: { TR: "derlemedeki değerler", EN: "build-time values" },
+    none: { TR: "yok", EN: "none" },
+};
 const RETRY: Copy = { TR: "Tekrar dene", EN: "Try again" };
 const CLOSE: Copy = { TR: "Uyarıyı kapat", EN: "Dismiss the warning" };
 
@@ -122,6 +136,9 @@ export default function CloudStatusBanner() {
     const email = auth.status === "authenticated" ? auth.data?.user?.email?.toLowerCase() || null : null;
     const [dismissed, setDismissed] = useState<string | null>(readDismissed);
     const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
+    // null: not toggled yet (staff start with the details open).
+    const [detailsOpen, setDetailsOpen] = useState<boolean | null>(null);
+    const [copied, setCopied] = useState(false);
     const hasFailure = Boolean(failure);
 
     // Only asked when there is something to explain; everyone else gets isAdmin:false.
@@ -142,6 +159,19 @@ export default function CloudStatusBanner() {
     if (!failure || !email || dismissed === failure.code) return null;
     const staff = staffInfo?.email === email ? staffInfo : null;
     const message = staff?.staff ? STAFF_COPY[failure.code] : USER_COPY[failure.code] ?? USER_DEFAULT;
+    const open = detailsOpen ?? Boolean(staff?.staff);
+    const detailsId = "cloud-status-details";
+
+    // The code isn't secret: anyone can send it to the team.
+    const copyCode = async () => {
+        try {
+            await navigator.clipboard.writeText(failure.errorCode);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 2_000);
+        } catch {
+            // Clipboard blocked: the code stays selectable on screen.
+        }
+    };
 
     return (
         <div role="status" className="fixed inset-x-3 bottom-3 z-[200] mx-auto max-w-xl rounded-2xl border border-amber-300/60 bg-amber-50/95 p-3 text-sm text-amber-950 shadow-2xl backdrop-blur dark:border-amber-500/30 dark:bg-zinc-900/95 dark:text-amber-100">
@@ -151,18 +181,49 @@ export default function CloudStatusBanner() {
                     <p>
                         <strong className="font-semibold">{tx(TITLE)}</strong> {tx(message)}
                     </p>
-                    {!staff?.staff && <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-100/70">{tx(LOCAL_STILL_WORKS)}</p>}
-                    {staff?.staff && (
-                        <>
-                            <p className="mt-1 break-words font-mono text-[11px] text-amber-900/80 dark:text-amber-100/70">
+                    {!staff?.staff && <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-100/70">{tx(LOCAL_STILL_WORKS)} {tx(SEND_CODE)}</p>}
+
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                        <span className="font-semibold">{tx(ERROR_CODE)}:</span>
+                        <code className="max-w-full select-all break-all rounded-md bg-amber-100/80 px-1.5 py-0.5 font-mono text-[11px] text-amber-950 dark:bg-zinc-800 dark:text-amber-100">{failure.errorCode}</code>
+                        <button
+                            type="button"
+                            onClick={() => void copyCode()}
+                            aria-label={tx(COPY_CODE)}
+                            title={tx(COPY_CODE)}
+                            className="rounded-md p-1 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:hover:bg-zinc-800"
+                        >
+                            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> : <CopyIcon className="h-3.5 w-3.5" aria-hidden="true" />}
+                        </button>
+                        <span aria-live="polite" className={copied ? "font-semibold text-emerald-700 dark:text-emerald-400" : "sr-only"}>{copied ? tx(COPIED) : ""}</span>
+                        <button
+                            type="button"
+                            aria-expanded={open}
+                            aria-controls={detailsId}
+                            onClick={() => setDetailsOpen(!open)}
+                            className="inline-flex items-center gap-1 rounded-md px-1 font-semibold underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                        >
+                            {tx(DETAILS)}
+                            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+                        </button>
+                    </div>
+
+                    {open ? (
+                        <div id={detailsId} className="mt-1.5 space-y-1 break-words text-[11px] text-amber-900/80 dark:text-amber-100/70">
+                            <p className="font-mono">
                                 <span className="font-sans font-semibold">{tx(TECHNICAL)}:</span>{" "}
                                 {failure.status ? <>HTTP {failure.status} · </> : null}
-                                {failure.code}
-                                {failure.message ? <> · {failure.message}</> : null}
+                                {failure.message || failure.code}
                             </p>
-                            {!staff.cloudHealth && <p className="mt-1 text-xs text-amber-900/80 dark:text-amber-100/70">{tx(OWNER_CAN_DIAGNOSE)}</p>}
-                        </>
-                    )}
+                            <p>
+                                <span className="font-semibold">{tx(CONFIGURATION)}:</span> {tx(SOURCE_COPY[firebaseClientDiagnostics.source])}
+                                {" · "}
+                                <span className="font-semibold">{tx(PROJECT)}:</span> <span className="font-mono">{firebaseClientDiagnostics.projectId ?? "—"}</span>
+                            </p>
+                            {staff?.staff && !staff.cloudHealth ? <p>{tx(OWNER_CAN_DIAGNOSE)}</p> : null}
+                        </div>
+                    ) : null}
+
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                         <button
                             type="button"
