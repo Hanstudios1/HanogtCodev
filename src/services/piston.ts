@@ -144,8 +144,9 @@ async function executeOnServer(files: RunFile[], stdin: string, signal?: AbortSi
 }
 
 /**
- * Runs one or more files. Browser languages (JavaScript, TypeScript, Python,
- * SQL, Lua, Scheme, Brainfuck, JSON) execute in the visitor's browser; every
+ * Runs one or more files. Browser languages (engine "browser" in
+ * lib/runtimes/languages.ts: JavaScript, TypeScript, Python, SQL, Lua, Prolog,
+ * BASIC, Forth, MIPS, the validators…) execute in the visitor's browser; every
  * other language goes to /api/execute (security scan + sandboxed runner).
  * Both start at once; results keep the order of `files`.
  */
