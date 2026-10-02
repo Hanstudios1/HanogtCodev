@@ -108,9 +108,15 @@ export function lastSeenTime(source: PresenceLike) {
     return source && typeof source === "object" ? presenceTime((source as PresenceFields).lastSeenAt) : 0;
 }
 
-/** The stored preference; the older "Do not disturb" switch (dndMode) counts when none is stored. */
-export function readStatusPreference(value: unknown, legacyDnd?: unknown): StatusPreference {
+/**
+ * The stored preference. When none is stored, an earlier presenceChoice
+ * ("online" | "idle" | "dnd" | "invisible", written by the first status
+ * picker) and then the older "Do not disturb" switch (dndMode) count.
+ */
+export function readStatusPreference(value: unknown, legacyDnd?: unknown, legacyChoice?: unknown): StatusPreference {
     if (isStatusPreference(value)) return value;
+    if (legacyChoice === "idle" || legacyChoice === "dnd" || legacyChoice === "invisible") return legacyChoice;
+    if (legacyChoice === "online") return "auto";
     return legacyDnd === true ? "dnd" : "auto";
 }
 
@@ -248,7 +254,7 @@ export const STATUS_PREFERENCE_COPY: Record<StatusPreference, { label: Copy; hin
     },
     dnd: {
         label: { TR: "Rahatsız Etmeyin", EN: "Do Not Disturb" },
-        hint: { TR: "Meşgul olduğunuzu gösterir.", EN: "Shows that you're busy." },
+        hint: { TR: "Meşgul olduğunuzu gösterir; gelen sesli aramalar çalmaz.", EN: "Shows that you're busy; incoming voice calls don't ring." },
     },
     invisible: {
         label: { TR: "Görünmez", EN: "Invisible" },

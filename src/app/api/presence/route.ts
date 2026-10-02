@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         }
 
         const user = active.user as Record<string, unknown>;
-        const preference = readStatusPreference(user.statusPreference, user.dndMode);
+        const preference = readStatusPreference(user.statusPreference, user.dndMode, user.presenceChoice);
         const showOnlineStatus = user.showOnlineStatus !== false;
         const previous = readPresenceReport(user.presenceState);
         const now = Date.now();

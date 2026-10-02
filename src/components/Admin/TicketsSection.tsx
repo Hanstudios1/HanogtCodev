@@ -65,7 +65,7 @@ const CATEGORY_STYLES: Record<StoredTicketCategory, { tone: Tone; icon: string }
     complaint: { tone: "fuchsia", icon: "text-fuchsia-500" },
     request: { tone: "sky", icon: "text-sky-500" },
     security: { tone: "red", icon: "text-red-500" },
-    unban: { tone: "amber", icon: "text-amber-500" },
+    ban_appeal: { tone: "amber", icon: "text-amber-500" },
     question: { tone: "indigo", icon: "text-indigo-500" },
     feedback: { tone: "violet", icon: "text-violet-500" },
     bug: { tone: "zinc", icon: "text-zinc-400" },

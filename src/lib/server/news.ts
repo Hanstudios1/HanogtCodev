@@ -9,7 +9,7 @@ import {
 import { selectItems } from "@/lib/news/select";
 import { inferTags, NEWS_SOURCES, type NewsCategory, type NewsSource } from "@/lib/news/sources";
 import { SITE_URL } from "@/lib/site";
-import { getServerDocument, patchServerDocument } from "./firebase-rest";
+import { commitServerPatches, getServerDocument, patchServerDocument, runServerQuery } from "./firebase-rest";
 
 export interface NewsItem {
     id: string;
@@ -32,6 +32,7 @@ export interface NewsSnapshot {
 
 const CACHE_TTL_MS = 3 * 60_000;
 const FETCH_TIMEOUT_MS = 7_000;
+/** Live feed size; older headlines stay readable through the archive (news_items). */
 const MAX_ITEMS = 240;
 const PER_SOURCE = 14;
 /** Busy wire services must not push the slower feeds out of the snapshot. */
@@ -135,6 +136,7 @@ export async function getNewsSnapshot(): Promise<NewsSnapshot> {
             if (fresh.items.length) {
                 memoryCache = { at: Date.now(), snapshot: fresh };
                 void storeSnapshot(fresh);
+                void archiveItems(fresh.items);
                 return fresh;
             }
             const stored = await readStoredSnapshot();
@@ -229,4 +231,81 @@ export async function getMarketsSnapshot(): Promise<MarketsSnapshot> {
         }
     })();
     return marketsInflight;
+}
+
+// ---------------------------------------------------------------------------
+// Archive: every headline is kept in news_items, so the feed is never capped
+// at a fixed number of stories; the News page pages through older ones.
+// ---------------------------------------------------------------------------
+
+const ARCHIVE_STATE = "news_cache/archive_state";
+const ARCHIVE_PAGE = 100;
+let archivedUpTo: string | null = null;
+
+async function archiveItems(items: NewsItem[]) {
+    try {
+        if (archivedUpTo === null) {
+            const state = await getServerDocument<{ upTo?: string }>(ARCHIVE_STATE);
+            archivedUpTo = typeof state?.upTo === "string" ? state.upTo : "";
+        }
+        const since = archivedUpTo;
+        const fresh = items.filter((item) => item.publishedAt > since).slice(0, 200);
+        if (!fresh.length) return;
+        await commitServerPatches(fresh.map((item) => ({
+            path: `news_items/${item.id}`,
+            data: { ...item, archivedAt: new Date() },
+        })));
+        const newest = fresh.reduce((max, item) => (item.publishedAt > max ? item.publishedAt : max), since);
+        archivedUpTo = newest;
+        await patchServerDocument(ARCHIVE_STATE, { upTo: newest, updatedAt: new Date() });
+    } catch {
+        // Best effort, like the shared snapshot (e.g. no credentials in local development).
+        archivedUpTo = null;
+    }
+}
+
+function archivedItem(record: Record<string, unknown>): NewsItem | null {
+    const source = record.source as NewsItem["source"] | undefined;
+    if (typeof record.id !== "string" || typeof record.title !== "string" || typeof record.link !== "string" || typeof record.publishedAt !== "string" || !source?.id) return null;
+    return {
+        id: record.id,
+        title: record.title,
+        link: record.link,
+        summary: typeof record.summary === "string" ? record.summary : "",
+        image: typeof record.image === "string" ? record.image : null,
+        publishedAt: record.publishedAt,
+        source: { id: String(source.id), name: String(source.name ?? ""), homepage: String(source.homepage ?? "") },
+        category: record.category as NewsCategory,
+        tags: Array.isArray(record.tags) ? record.tags as NewsCategory[] : [record.category as NewsCategory],
+        language: record.language === "tr" ? "tr" : "en",
+    };
+}
+
+/**
+ * Headlines published before `before` (ISO time), newest first. Filtering by
+ * category happens here so the query needs only the automatic single-field
+ * index on publishedAt.
+ */
+export async function getArchivedNews(before: string, limit: number, category: NewsCategory | null): Promise<{ items: NewsItem[]; done: boolean }> {
+    const items: NewsItem[] = [];
+    let cursor = before;
+    let done = false;
+    for (let round = 0; round < 4 && items.length < limit; round += 1) {
+        const page = await runServerQuery<Record<string, unknown>>({
+            collectionId: "news_items",
+            where: [{ field: "publishedAt", op: "LESS_THAN", value: cursor }],
+            orderBy: [{ field: "publishedAt", direction: "DESCENDING" }],
+            limit: ARCHIVE_PAGE,
+        });
+        for (const record of page) {
+            const item = archivedItem(record);
+            if (item && (!category || item.category === category || item.tags.includes(category))) items.push(item);
+        }
+        if (page.length < ARCHIVE_PAGE) {
+            done = true;
+            break;
+        }
+        cursor = String(page[page.length - 1].publishedAt);
+    }
+    return { items: items.slice(0, limit), done: done && items.length <= limit };
 }

@@ -8,7 +8,7 @@
  * firestore.rules so a value accepted here is also valid for direct writes.
  */
 
-import { STATUS_PREFERENCES, isStatusPreference, type PresenceStatus, type StatusPreference } from "@/lib/presence";
+import { STATUS_PREFERENCES, isStatusPreference, readStatusPreference, type PresenceStatus, type StatusPreference } from "@/lib/presence";
 
 export type StaffRoleBadge = "owner" | "admin" | "moderator";
 
@@ -397,8 +397,8 @@ export function normalizeStoredAccount(raw: Record<string, unknown> | null | und
         const value = readStoredAccountValue(key, storedValue(raw, key));
         if (value !== undefined) result[key] = value;
     }
-    // Accounts from before the status menu kept "Do Not Disturb" in dndMode.
-    if (!isStatusPreference(storedValue(raw, "statusPreference")) && result.dndMode === true) result.statusPreference = "dnd";
+    // Accounts from before the status menu kept their status in presenceChoice or "Do Not Disturb" in dndMode.
+    if (!isStatusPreference(storedValue(raw, "statusPreference"))) result.statusPreference = readStatusPreference(undefined, result.dndMode, storedValue(raw, "presenceChoice"));
     result.dndMode = result.statusPreference === "dnd";
     return result as unknown as EditableAccountFields;
 }
@@ -418,8 +418,8 @@ export function mergeStoredAccount(user: Record<string, unknown> | null | undefi
         const fromProfile = readStoredAccountValue(key, storedValue(publicProfile, key));
         if (filled(fromProfile)) result[key] = fromProfile;
     }
-    // A legacy dndMode (public profile only) counts while no preference is stored.
-    if (!isStatusPreference(storedValue(user, "statusPreference")) && result.dndMode === true) result.statusPreference = "dnd";
+    // A legacy presenceChoice or dndMode (public profile only) counts while no preference is stored.
+    if (!isStatusPreference(storedValue(user, "statusPreference"))) result.statusPreference = readStatusPreference(undefined, result.dndMode, storedValue(user, "presenceChoice"));
     result.dndMode = result.statusPreference === "dnd";
     return result as unknown as EditableAccountFields;
 }

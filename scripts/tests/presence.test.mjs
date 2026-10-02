@@ -71,6 +71,11 @@ test("the published status follows the preference, activity and privacy setting"
     assert.equal(readStatusPreference(undefined, true), "dnd");
     assert.equal(readStatusPreference("invisible", true), "invisible");
     assert.equal(readStatusPreference("busy"), "auto");
+    // The first status picker stored presenceChoice; it counts until a preference is saved.
+    assert.equal(readStatusPreference(undefined, false, "invisible"), "invisible");
+    assert.equal(readStatusPreference(undefined, false, "online"), "auto");
+    assert.equal(readStatusPreference(undefined, true, "dnd"), "dnd");
+    assert.equal(readStatusPreference("idle", false, "dnd"), "idle");
 });
 
 test("the most present tab or device keeps the status while its report is fresh", () => {

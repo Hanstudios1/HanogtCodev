@@ -2,6 +2,7 @@
 
 import OptimizedImage from "@/components/OptimizedImage";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
+import { useOwnProfile } from "@/lib/account-profile-client";
 import { useI18n, type Copy } from "@/lib/i18n";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -59,6 +60,12 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
     const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
     const unsubscribersRef = useRef<Array<() => void>>([]);
     const endingRef = useRef(false);
+    // Do Not Disturb declines incoming calls without ringing; the caller sees the call end.
+    const doNotDisturb = useOwnProfile(email || null)?.statusPreference === "dnd";
+    const dndRef = useRef(doNotDisturb);
+    useEffect(() => {
+        dndRef.current = doNotDisturb;
+    }, [doNotDisturb]);
 
     const clearSubscriptions = () => {
         unsubscribersRef.current.forEach((unsubscribe) => unsubscribe());
@@ -253,7 +260,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
             if (!incoming) return;
             const data = incoming.data();
             const createdAt = data.createdAt?.toMillis?.() || Date.now();
-            if (Date.now() - createdAt > 90_000) {
+            if (Date.now() - createdAt > 90_000 || dndRef.current) {
                 await deleteCallArtifacts(incoming.id);
                 return;
             }

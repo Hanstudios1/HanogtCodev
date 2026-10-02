@@ -33,7 +33,7 @@ test("text is normalised: unsafe characters go, line breaks are unified", () => 
 });
 
 test("new tickets use the six categories; old ones stay readable only", () => {
-    assert.deepEqual([...TICKET_CATEGORIES], ["complaint", "request", "security", "unban", "question", "feedback"]);
+    assert.deepEqual([...TICKET_CATEGORIES], ["complaint", "request", "security", "ban_appeal", "question", "feedback"]);
     assert.deepEqual([...LEGACY_TICKET_CATEGORIES], ["bug", "account", "other"]);
     assert.deepEqual([...STORED_TICKET_CATEGORIES], [...TICKET_CATEGORIES, ...LEGACY_TICKET_CATEGORIES]);
     for (const category of TICKET_CATEGORIES) {
@@ -113,7 +113,7 @@ test("a complaint keeps its optional subject, user and link; other categories dr
 });
 
 test("an unban request names what was banned; a group needs its name", () => {
-    const base = { category: "unban", title: "Yasağımın kaldırılmasını istiyorum", description: "Yanlışlıkla yasaklandığımı düşünüyorum." };
+    const base = { category: "ban_appeal", title: "Yasağımın kaldırılmasını istiyorum", description: "Yanlışlıkla yasaklandığımı düşünüyorum." };
     assert.deepEqual(validateTicketDraft(base).errors, [{ field: "banScope", code: "invalid_ban_scope" }]);
     assert.deepEqual(validateTicketDraft({ ...base, banScope: "planet" }).errors, [{ field: "banScope", code: "invalid_ban_scope" }]);
     assert.deepEqual(validateTicketDraft({ ...base, banScope: "group" }).errors, [{ field: "banReference", code: "ban_reference_required" }]);
@@ -150,7 +150,7 @@ test("required fields and limits are reported per field", () => {
     const tooLong = validateTicketDraft({ category: "request", title: "x".repeat(TICKET_LIMITS.title + 1), description: "y".repeat(TICKET_LIMITS.description + 1) });
     assert.deepEqual(tooLong.errors, [{ field: "title", code: "title_too_long" }, { field: "description", code: "description_too_long" }]);
     // Category errors come with the text errors, so the form can mark every field at once.
-    assert.deepEqual(validateTicketDraft({ category: "unban", title: "ab", description: "Yeterince uzun açıklama." }).errors, [
+    assert.deepEqual(validateTicketDraft({ category: "ban_appeal", title: "ab", description: "Yeterince uzun açıklama." }).errors, [
         { field: "title", code: "title_too_short" },
         { field: "banScope", code: "invalid_ban_scope" },
     ]);
@@ -193,7 +193,7 @@ test("priorities and status transitions", () => {
     assert.equal(defaultTicketPriority("security"), "high");
     assert.equal(defaultTicketPriority("security", "critical"), "critical");
     assert.equal(defaultTicketPriority("security", "low"), "high");
-    assert.equal(defaultTicketPriority("unban"), "high");
+    assert.equal(defaultTicketPriority("ban_appeal"), "high");
     for (const category of ["complaint", "request", "question", "feedback"]) assert.equal(defaultTicketPriority(category), "normal", category);
     // Only a security report's severity counts.
     assert.equal(defaultTicketPriority("question", "critical"), "normal");

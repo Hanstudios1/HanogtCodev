@@ -87,7 +87,7 @@ const FINANCE_PATTERN = new RegExp(
     [
         "\\b(?:borsa|hisse(?!t)|doviz|faiz|enflasyon|kripto(?!graf)|bitcoin|ethereum|merkez bankas|halka arz|gram altin|ons altin|ceyrek altin|altin fiyat)[a-z]*",
         "\\bbist(?![a-z])",
-        "\\b(?:stock market|stock exchange|wall street|nasdaq|nyse|dow jones|s&p 500|ipo|bitcoin|ethereum|crypto(?:currenc(?:y|ies))?|interest rates?|rate (?:cut|hike)s?|inflation|central bank|federal reserve|earnings (?:report|call|results)|market cap(?:italization)?|share price|shares (?:rose|fell|jumped|slid|surged|plunged|tumbled|soared))\\b",
+        "\\b(?:stock market|stock exchange|wall street|nasdaq|nyse|dow jones|s&p 500|ipo|bitcoin|ethereum|crypto(?:currenc(?:y|ies))?|interest rates?|rate (?:cut|hike)s?|inflation|central bank|federal reserve|earnings (?:report|call|results|beat|miss(?:es|ed)?)|market cap(?:italization)?|share price|shares (?:rose|fell|slid|sank|rise[sn]?|falls?|slides?|sinks?|jump(?:s|ed)?|surge[sd]?|plunge[sd]?|tumble[sd]?|soar(?:s|ed)?|drop(?:s|ped)?|climb(?:s|ed)?|rall(?:y|ies|ied)))\\b",
     ].join("|"),
 );
 

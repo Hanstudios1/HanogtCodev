@@ -10,7 +10,7 @@ import { handleSignInRequest } from "../_sign-in-request";
  * A suspended account can't sign in, so it can't use /api/support. After it
  * has proven ownership at sign-in, /login receives a short-lived appeal token
  * and posts the appeal here (checks and answers: ../_sign-in-request.ts). The
- * appeal becomes an ordinary "unban" ticket ("Ban Kaldırma İsteği") of that
+ * appeal becomes an ordinary "ban_appeal" ticket ("Ban Kaldırma İsteği") of that
  * address with `meta.appeal`, so staff answer it in the Tickets section and
  * the person finds the reply under "Taleplerim" once the account is reinstated.
  */
@@ -24,6 +24,6 @@ export function POST(request: NextRequest) {
         perAccountPerDay: 2,
         // Only a suspended account files an appeal (one reinstated since the token was issued doesn't).
         applies: (_email, user) => Boolean(user.suspended || user.banned),
-        ticket: { category: "unban", title: APPEAL_TICKET_TITLE, priority: defaultTicketPriority("unban"), meta: { ...APPEAL_TICKET_META } },
+        ticket: { category: "ban_appeal", title: APPEAL_TICKET_TITLE, priority: defaultTicketPriority("ban_appeal"), meta: { ...APPEAL_TICKET_META } },
     });
 }

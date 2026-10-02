@@ -15,7 +15,7 @@ import type { Copy } from "@/lib/i18n";
 // ---------------------------------------------------------------------------
 
 /** Categories new tickets can use, in the order the form offers them. */
-export const TICKET_CATEGORIES = ["complaint", "request", "security", "unban", "question", "feedback"] as const;
+export const TICKET_CATEGORIES = ["complaint", "request", "security", "ban_appeal", "question", "feedback"] as const;
 export type TicketCategory = (typeof TICKET_CATEGORIES)[number];
 
 /**
@@ -143,7 +143,7 @@ export function ticketReference(id: string) {
  */
 export function defaultTicketPriority(category: TicketCategory, severity: TicketSeverity | null = null): TicketPriority {
     if (category === "security") return severity === "critical" ? "critical" : "high";
-    return category === "unban" ? "high" : "normal";
+    return category === "ban_appeal" ? "high" : "normal";
 }
 
 /** A staff reply answers the ticket unless it was already resolved or closed. */
@@ -191,7 +191,7 @@ export const TICKET_CATEGORY_COPY: Record<StoredTicketCategory, { label: Copy; h
         hint: { TR: "Sorumlu açıklama, yalnızca ekip görür", EN: "Responsible disclosure, team only" },
         icon: "ShieldAlert",
     },
-    unban: {
+    ban_appeal: {
         label: { TR: "Ban Kaldırma İsteği", EN: "Unban request" },
         hint: { TR: "Hesap, grup ya da başka bir yasağa itiraz", EN: "Appeal an account, group or other ban" },
         icon: "Gavel",
@@ -519,7 +519,7 @@ export function validateTicketDraft(input: TicketDraftInput): { ok: true; draft:
         const link = normalizePageUrl(input.contentUrl);
         if (link === undefined) errors.push({ field: "contentUrl", code: "invalid_content_url" });
         else draft.contentUrl = link;
-    } else if (category === "unban") {
+    } else if (category === "ban_appeal") {
         draft.banScope = isBanScope(input.banScope) ? input.banScope : null;
         if (!draft.banScope) errors.push({ field: "banScope", code: "invalid_ban_scope" });
         // The account itself needs no reference; for a group its name is required.

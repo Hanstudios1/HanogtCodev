@@ -324,7 +324,7 @@ const DESCRIPTION_PLACEHOLDERS: Record<TicketCategory, Copy> = {
     complaint: { TR: "Neyi şikayet ediyorsunuz? Ne zaman ve nerede oldu?", EN: "What is the complaint about? When and where did it happen?" },
     request: { TR: "Ne istiyorsunuz ve neden? KVKK başvurularında hangi hakkınızı kullanmak istediğinizi yazın.", EN: "What would you like and why? For KVKK requests, say which right you want to exercise." },
     security: { TR: "Açık nerede, etkisi ne? Kimlik bilgisi veya başkasının verisini eklemeyin.", EN: "Where is the issue and what is its impact? Don't include credentials or other people's data." },
-    unban: { TR: "Yasağın neden kaldırılması gerektiğini düşündüğünüzü açıklayın.", EN: "Explain why you think the ban should be lifted." },
+    ban_appeal: { TR: "Yasağın neden kaldırılması gerektiğini düşündüğünüzü açıklayın.", EN: "Explain why you think the ban should be lifted." },
     question: { TR: "Sorunuzu ayrıntılarıyla yazın…", EN: "Write your question in detail…" },
     feedback: { TR: "Görüşünüzü ya da önerinizi yazın…", EN: "Share your opinion or idea…" },
 };
@@ -473,8 +473,8 @@ function TicketComposer({ draft, setDraft, onCreated }: {
             complaintSubject: category === "complaint" && draft.complaintSubject ? draft.complaintSubject : undefined,
             reportedUser: category === "complaint" ? draft.reportedUser : undefined,
             contentUrl: category === "complaint" ? draft.contentUrl : undefined,
-            banScope: category === "unban" && draft.banScope ? draft.banScope : undefined,
-            banReference: category === "unban" && draft.banScope !== "account" ? draft.banReference : undefined,
+            banScope: category === "ban_appeal" && draft.banScope ? draft.banScope : undefined,
+            banReference: category === "ban_appeal" && draft.banScope !== "account" ? draft.banReference : undefined,
         };
         const checked = validateTicketDraft(input);
         if (!checked.ok) {
@@ -563,7 +563,7 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                         EN: "For KVKK requests, say which right you want to exercise. We verify the request with your account's e-mail address and answer free of charge within 30 days.",
                     })}
                 </Notice>
-            ) : category === "unban" ? (
+            ) : category === "ban_appeal" ? (
                 <Notice tone="info" className="mt-4">
                     {tx({
                         TR: "Hesabınız askıya alındıysa itirazınızı giriş sayfasından gönderin: hesabınızla giriş yapmayı denediğinizde itiraz formu açılır. Bu form, giriş yapabildiğiniz hâlde uygulanan yasaklar (ör. bir gruptan yasaklanma) içindir.",
@@ -608,7 +608,7 @@ function TicketComposer({ draft, setDraft, onCreated }: {
                 </>
             ) : null}
 
-            {category === "unban" ? (
+            {category === "ban_appeal" ? (
                 <>
                     <ChoiceField
                         id={fieldId("banScope")}
@@ -657,7 +657,7 @@ function TicketComposer({ draft, setDraft, onCreated }: {
             <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px]">
                     <label htmlFor={fieldId("description")} className="font-bold text-zinc-700 dark:text-zinc-200">
-                        {category === "unban" ? tx({ TR: "Açıklamanız", EN: "Your explanation" }) : tx({ TR: "Açıklama", EN: "Description" })}
+                        {category === "ban_appeal" ? tx({ TR: "Açıklamanız", EN: "Your explanation" }) : tx({ TR: "Açıklama", EN: "Description" })}
                     </label>
                     <span className="text-[11px] text-zinc-500"><Counter value={draft.description.length} max={TICKET_LIMITS.description} /></span>
                 </div>
