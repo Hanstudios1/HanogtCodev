@@ -342,8 +342,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.community,
         question: { TR: "Sesli mesajlar nasıl saklanıyor?", EN: "How are voice messages stored?" },
         answer: {
-            TR: "Sesli mesajlar Firestore içine base64 olarak yazılmaz. Yetkili sohbet katılımcılarının erişebildiği dosya depolamasında tutulur ve mesaj silinince dosyası da silinir.",
-            EN: "Voice messages aren't written into Firestore as base64. They live in file storage that only the chat's participants can access, and the file is deleted with the message.",
+            TR: "Kayıt, mesajla birlikte yalnızca sunucunun erişebildiği ayrı bir veritabanı koleksiyonunda saklanır; tarayıcılar ona doğrudan ulaşamaz. Sunucu her dinlemede sohbetin ya da grubun üyesi olduğunu kontrol eder. Mesaj, sohbet, grup ya da hesap silinince kayıt da silinir.",
+            EN: "The recording is kept with its message in a separate database collection only the server can reach; browsers can't read it directly. Every time it's played, the server checks that you belong to the chat or group. Deleting the message, chat, group or account deletes the recording too.",
         },
     },
     {

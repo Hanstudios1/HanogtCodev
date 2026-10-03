@@ -1776,6 +1776,7 @@
       "src/components/News/CommentsDrawer.tsx",
       "src/components/NotificationCenter.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
+      "src/components/Social/AudioSettings.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -6589,9 +6590,58 @@
       "src/app/plans/page.tsx"
     ]
   },
-  "1x456c1j9rb": {
-    "en": "The checkout couldn't load. An ad blocker or network setting may be blocking cdn.paddle.com.",
-    "tr": "Ödeme ekranı yüklenemedi. Reklam engelleyici ya da ağ ayarları cdn.paddle.com adresini engelliyor olabilir.",
+  "9vn3d3xcig": {
+    "en": "The checkout couldn't load: Paddle's checkout script didn't reach your browser. An ad blocker, your browser's tracking protection or your network (e.g. a work network, VPN or DNS filter) may be blocking cdn.paddle.com. Allow it for this site and try again.",
+    "tr": "Ödeme ekranı yüklenemedi: Paddle'ın ödeme betiği tarayıcına ulaşmadı. Reklam engelleyici, tarayıcının izleme koruması ya da ağ ayarların (ör. kurum ağı, VPN, DNS filtresi) cdn.paddle.com adresini engelliyor olabilir. Bu site için izin verip tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1w5vopkfpt7": {
+    "en": "The checkout couldn't load: your browser blocked {url}. Turn off your ad or script blocker or your browser's tracking protection for this site and try again; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranı yüklenemedi: tarayıcın {url} adresini engelledi. Reklam ya da betik engelleyiciyi veya tarayıcının izleme korumasını bu site için kapatıp tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "29c0f7k667l": {
+    "en": "The checkout couldn't start: Paddle loaded but couldn't be started. Try again in a moment; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranı başlatılamadı: Paddle yüklendi ama çalıştırılamadı. Biraz sonra tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "ruq8t6357b": {
+    "en": "For the team: the client-side token in Vercel (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) may belong to another Paddle account or to the other environment (sandbox/live). See the token check under Admin Panel › Subscriptions › Paddle.",
+    "tr": "Ekip için: Vercel'deki istemci tarafı jeton (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) başka bir Paddle hesabına ya da öbür ortama (Sandbox/Canlı) ait olabilir. Yönetici Paneli › Abonelikler › Paddle bölümündeki jeton denetimine bakın.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1qxauuptzu4": {
+    "en": "The checkout couldn't open. Refresh the page and try again; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranı açılamadı. Sayfayı yenileyip tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "25rcjpixktv": {
+    "en": "The checkout reported an error: {detail}",
+    "tr": "Ödeme ekranı bir hata bildirdi: {detail}",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "26l2geju4c6": {
+    "en": "Something went wrong in the checkout. Try again; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranında bir hata oluştu. Tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1hbmxqsqeat": {
+    "en": "Technical detail: {stage}: {message}",
+    "tr": "Teknik ayrıntı: {stage}: {message}",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -13826,16 +13876,30 @@
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
-  "1zh4w81a3cq": {
-    "en": "Storage bucket",
-    "tr": "Depolama kovası",
+  "5xk2sbq8yg": {
+    "en": "Storage bucket (optional)",
+    "tr": "Depolama kovası (isteğe bağlı)",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
-  "2bp2baecoe3": {
-    "en": "The Cloud Storage bucket that holds voice messages.",
-    "tr": "Sesli mesajların saklandığı Cloud Storage kovası.",
+  "87nykyimti": {
+    "en": "New voice messages are kept in Firestore; the Cloud Storage bucket is only used for older voice messages.",
+    "tr": "Yeni sesli mesajlar Firestore'da saklanır; Cloud Storage kovası yalnızca eski sesli mesajlar için kullanılır.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "1iltrvik2p": {
+    "en": "Voice call relay (TURN)",
+    "tr": "Sesli arama aktarım sunucusu (TURN)",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "1ix6uvh3ni4": {
+    "en": "Mobile data, company and school networks block direct connections; on them voice calls need a TURN relay to connect.",
+    "tr": "Mobil veri, şirket ve okul ağları doğrudan bağlantıya izin vermez; bu ağlarda sesli aramaların bağlanması için TURN gerekir.",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
@@ -14281,16 +14345,16 @@
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
-  "id486fagn5": {
-    "en": "No valid storage bucket is configured; voice messages won't work.",
-    "tr": "Geçerli bir depolama kovası tanımlı değil; sesli mesajlar çalışmaz.",
+  "1yqvhtcj7o7": {
+    "en": "No storage bucket is configured. That's fine: voice messages are kept in Firestore; only older voice messages saved to Storage can't be played.",
+    "tr": "Depolama kovası tanımlı değil. Sorun değil: sesli mesajlar Firestore'da saklanıyor; yalnızca Storage'a kaydedilmiş eski sesli mesajlar dinlenemez.",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
-  "1f6esks8gy7": {
-    "en": "The {bucket} bucket wasn't found; Storage may not be set up.",
-    "tr": "{bucket} kovası bulunamadı; Storage başlatılmamış olabilir.",
+  "20ivitpdkps": {
+    "en": "The {bucket} bucket can't be reached (Storage needs Firebase's Blaze plan). New voice messages are kept in Firestore, so only older voice messages are affected.",
+    "tr": "{bucket} kovasına ulaşılamadı (Storage, Firebase'in Blaze planını gerektirir). Yeni sesli mesajlar Firestore'da saklandığı için yalnızca eski sesli mesajlar etkilenir.",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
@@ -14305,6 +14369,34 @@
   "8x938e7uoa": {
     "en": "Couldn't check the storage bucket.",
     "tr": "Depolama kovası denetlenemedi.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "19hfl5lyq4j": {
+    "en": "TURN is ready; calls can connect on restrictive networks too.",
+    "tr": "TURN hazır; aramalar zor ağlarda da bağlanabilir.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "22j6hm12vze": {
+    "en": "No TURN is configured. Calls work on most home networks but may not connect on mobile data or company networks.",
+    "tr": "TURN tanımlı değil. Aramalar ev ağlarının çoğunda çalışır, ama mobil veride ve kurumsal ağlarda bağlanamayabilir.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "274v7cf2oly": {
+    "en": "TURN_SERVER_URL is set but there are no credentials (TURN_SHARED_SECRET, or TURN_USERNAME with TURN_CREDENTIAL).",
+    "tr": "TURN_SERVER_URL tanımlı ama kimlik bilgisi yok (TURN_SHARED_SECRET ya da TURN_USERNAME ile TURN_CREDENTIAL).",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "pf1e5afd3b": {
+    "en": "Couldn't get TURN credentials ({problem}); check the key. Meanwhile calls only try direct connections.",
+    "tr": "TURN kimlik bilgileri alınamadı ({problem}); anahtarı kontrol edin. Bu sırada aramalar yalnızca doğrudan bağlantıyı dener.",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
@@ -14743,16 +14835,44 @@
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
-  "1b91mzpc65u": {
-    "en": "Set up Cloud Storage",
-    "tr": "Cloud Storage'ı başlatın",
+  "pi914tv3lb": {
+    "en": "Set up free TURN (Cloudflare)",
+    "tr": "Ücretsiz TURN kurun (Cloudflare)",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
-  "maa0slp6of": {
-    "en": "Create the default bucket with Firebase Console → Build → Storage → Get started.",
-    "tr": "Firebase Console → Build → Storage → Başlayın ile varsayılan kovayı oluşturun.",
+  "1d6akerssu1": {
+    "en": "Create a free account at dash.cloudflare.com, then a TURN key under Realtime → TURN Server → Create (1,000 GB free every month).",
+    "tr": "dash.cloudflare.com'da ücretsiz bir hesap açın; Realtime → TURN Server → Create ile bir TURN anahtarı oluşturun (her ay 1.000 GB ücretsiz).",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "23kh76etlp": {
+    "en": "Add the “Turn Token ID” and “API Token” it shows in Vercel → Settings → Environment Variables as CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN (both secret; no NEXT_PUBLIC_ prefix).",
+    "tr": "Gösterilen “Turn Token ID” ve “API Token” değerlerini Vercel → Settings → Environment Variables bölümüne CLOUDFLARE_TURN_KEY_ID ve CLOUDFLARE_TURN_KEY_API_TOKEN olarak ekleyin (ikisi de gizli; NEXT_PUBLIC_ ile başlamasın).",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "6b21tx8lrz": {
+    "en": "With your own coturn server use TURN_SERVER_URL and TURN_SHARED_SECRET instead; with a service that gives a fixed username use TURN_SERVER_URL, TURN_USERNAME and TURN_CREDENTIAL.",
+    "tr": "Kendi coturn sunucunuz varsa bunun yerine TURN_SERVER_URL ve TURN_SHARED_SECRET; sabit kullanıcı adı veren bir hizmette TURN_SERVER_URL, TURN_USERNAME ve TURN_CREDENTIAL girin.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "wabnyvow9i": {
+    "en": "Set up Cloud Storage (optional)",
+    "tr": "Cloud Storage'ı başlatın (isteğe bağlı)",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "fvypir87pt": {
+    "en": "Only needed for older voice messages. Move the Firebase project to the Blaze plan, then create the default bucket with Firebase Console → Build → Storage → Get started.",
+    "tr": "Yalnızca eski sesli mesajlar için gerekir. Firebase projesini Blaze planına geçirip Firebase Console → Build → Storage → Başlayın ile varsayılan kovayı oluşturun.",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
@@ -15270,6 +15390,48 @@
   "rs1mnwifcq": {
     "en": "unknown",
     "tr": "bilinmiyor",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "34llmigxfw": {
+    "en": "Test TURN from this browser",
+    "tr": "Bu tarayıcıdan TURN testi yap",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "18dkbtelp48": {
+    "en": "Testing…",
+    "tr": "Deneniyor…",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "i5x7cjvtvy": {
+    "en": "TURN works: this browser reached the relay.",
+    "tr": "TURN çalışıyor: bu tarayıcı aktarım sunucusuna bağlanabildi.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "2b6yqs4skqq": {
+    "en": "The relay couldn't be reached. Check the key and that this network allows ports 3478/443.",
+    "tr": "Aktarım sunucusuna ulaşılamadı. Anahtarı ve bu ağın 3478/443 portlarına izin verdiğini kontrol edin.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "f157gckvuv": {
+    "en": "The site doesn't hand out a TURN server yet (do the setup above first).",
+    "tr": "Site henüz TURN sunucusu vermiyor (önce yukarıdaki kurulumu yapın).",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "1lpd1v7k0ah": {
+    "en": "The test couldn't start (session or browser support).",
+    "tr": "Test başlatılamadı (oturum veya tarayıcı desteği).",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
@@ -16903,6 +17065,55 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "1rg6ambgbd8": {
+    "en": "The client-side token is active in this Paddle account; Paddle.js can start with it.",
+    "tr": "İstemci tarafı jeton bu Paddle hesabında etkin; Paddle.js onunla başlayabilir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "2833855myz6": {
+    "en": "The client-side token is active in this Paddle account ({name}); Paddle.js can start with it.",
+    "tr": "İstemci tarafı jeton bu Paddle hesabında etkin ({name}); Paddle.js onunla başlayabilir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1bd6ie3xdhv": {
+    "en": "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN in Vercel has been revoked in Paddle; the checkout won't open with it. Create a new client-side token under Developer tools > Authentication in the {env} account, enter it in Vercel and redeploy.",
+    "tr": "Vercel'deki NEXT_PUBLIC_PADDLE_CLIENT_TOKEN Paddle'da iptal edilmiş; ödeme ekranı bu jetonla açılmaz. {env} hesabının Developer tools > Authentication sayfasından yeni bir istemci tarafı jeton (client-side token) oluşturup Vercel'e girin ve yeniden dağıtın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "cruwqfy6vu": {
+    "en": "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN in Vercel isn't in this Paddle account: it most likely belongs to another Paddle account or to the other environment, so the checkout can't open. Create a client-side token under Developer tools > Authentication in the same {env} account as the API key, enter it in Vercel and redeploy.",
+    "tr": "Vercel'deki NEXT_PUBLIC_PADDLE_CLIENT_TOKEN bu Paddle hesabında yok: büyük olasılıkla başka bir Paddle hesabına ya da öbür ortama ait, bu yüzden ödeme ekranı açılamaz. API anahtarıyla aynı {env} hesabının Developer tools > Authentication sayfasından istemci tarafı jeton (client-side token) oluşturup Vercel'e girin ve yeniden dağıtın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "fcwat5c7w0": {
+    "en": "The client-side token couldn't be checked: the API key doesn't have the client_token.read permission. Add client_token.read to the API key under Developer tools > Authentication in Paddle.",
+    "tr": "İstemci tarafı jeton denetlenemedi: API anahtarının client_token.read izni yok. Paddle'da Developer tools > Authentication bölümünde API anahtarına client_token.read iznini ekleyin.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1jqa8068bs5": {
+    "en": "The client-side token couldn't be checked; Paddle returned an error. Refresh in a moment.",
+    "tr": "İstemci tarafı jeton denetlenemedi; Paddle bir hata döndürdü. Biraz sonra yenileyin.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "2e02b1f2gh1": {
+    "en": "Checked {time}",
+    "tr": "Denetim: {time}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "4u9pe5wbr0": {
     "en": "The last notification arrived {time} ({type}).",
     "tr": "Son bildirim {time} geldi ({type}).",
@@ -17554,6 +17765,62 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "1eaqm8u86js": {
+    "en": "Recent checkout errors",
+    "tr": "Son ödeme ekranı hataları",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1u9insi7gmm": {
+    "en": "What browsers reported when the checkout couldn't open on the Plans page",
+    "tr": "Planlar sayfasında ödeme ekranı açılamadığında tarayıcıların bildirdikleri",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "8n1l6c43mu": {
+    "en": "The newest 10 are kept. Who reported them isn't stored; only the stage, the error text, the blocked address, the browser and the environment.",
+    "tr": "En yeni 10 kayıt tutulur. Kimin bildirdiği saklanmaz; yalnızca aşama, hata metni, engellenen adres, tarayıcı ve ortam.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "12hile64sws": {
+    "en": "No errors have been reported yet.",
+    "tr": "Henüz bildirilen bir hata yok.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "8z91g79dly": {
+    "en": "If the checkout can't open on the Plans page, the reason shows up here.",
+    "tr": "Planlar sayfasında ödeme ekranı açılamazsa nedeni burada görünür.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "16fff5c5o7s": {
+    "en": "Open the Plans page in a new tab",
+    "tr": "Planlar sayfasını yeni sekmede aç",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1qafyztlmqn": {
+    "en": "Blocked address: {url}",
+    "tr": "Engellenen adres: {url}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "2cd7asfhcoq": {
+    "en": "Paddle code: {code}",
+    "tr": "Paddle kodu: {code}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "wwqirzt4e1": {
     "en": "Business details",
     "tr": "İşletme bilgileri",
@@ -17783,6 +18050,83 @@
   "1t32up9mvsu": {
     "en": "The signature didn't match: PADDLE_WEBHOOK_SECRET isn't the secret of the notification destination in Paddle (or it's the other environment's).",
     "tr": "İmza tutmadı: PADDLE_WEBHOOK_SECRET, Paddle'daki bildirim hedefinin gizli anahtarıyla aynı değil (ya da öbür ortamın anahtarı).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "4smbez30h5": {
+    "en": "Script blocked",
+    "tr": "Betik engellendi",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "9xrsdtnkbd": {
+    "en": "Paddle.js didn't reach the browser: an ad blocker, browser protection or the network. If the blocked address is on paddle.com, it may also be the site's security policy (CSP).",
+    "tr": "Paddle.js tarayıcıya ulaşmadı: reklam engelleyici, tarayıcı koruması ya da ağ. Engellenen adres paddle.com'daysa sitenin güvenlik politikası (CSP) da olabilir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "x32fpz95ju": {
+    "en": "Paddle.js missing",
+    "tr": "Paddle.js eksik",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "6vh2mar1kq": {
+    "en": "The script loaded but Paddle's object wasn't created; a browser extension may have broken the script.",
+    "tr": "Betik yüklendi ama Paddle'ın nesnesi oluşmadı; tarayıcı eklentisi betiği bozmuş olabilir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "t0fl6rja8h": {
+    "en": "Couldn't start",
+    "tr": "Başlatılamadı",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "kdsi8ujcxu": {
+    "en": "Paddle.js failed while starting; usually the client-side token belongs to another Paddle account or to the other environment (see the token check above).",
+    "tr": "Paddle.js başlatılırken hata verdi; çoğunlukla istemci tarafı jeton başka bir Paddle hesabına ya da öbür ortama aittir (yukarıdaki jeton denetimine bakın).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1oic18j68gv": {
+    "en": "Couldn't open",
+    "tr": "Açılamadı",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1125wu189xo": {
+    "en": "Paddle.js started but failed while opening the checkout.",
+    "tr": "Paddle.js başladı ama ödeme ekranını açarken hata verdi.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "wn1vqulm0d": {
+    "en": "Checkout error",
+    "tr": "Ödeme ekranı hatası",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1qj5elr9q39": {
+    "en": "Checkout failed",
+    "tr": "Ödeme ekranı başarısız",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "ffqdzjvzm5": {
+    "en": "Payment error",
+    "tr": "Ödeme hatası",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -20240,6 +20584,62 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "22d6sd6pvm3": {
+    "en": "Call audio, voice messages and the checkout fixed",
+    "tr": "Sesli aramada ses, sesli mesajlar ve ödeme ekranı düzeltildi",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1d7habwnboq": {
+    "en": "Voice calls now carry audio both ways, voice messages can be sent and played, and the Plus/Pro checkout opens.",
+    "tr": "Sesli aramalarda ses artık iki yönde de gidiyor, sesli mesajlar gönderilip dinlenebiliyor ve Plus/Pro ödeme ekranı açılıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1msmm5gcw0l": {
+    "en": "Every call starts with the microphone and sound on: a microphone or headphones switched off earlier in Hanogt Social no longer start the call silent.",
+    "tr": "Her arama mikrofon ve ses açık başlar: Hanogt Social'da daha önce kapatılan mikrofon ya da kulaklık artık aramayı sessiz başlatmaz.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "jo7z7lkf88": {
+    "en": "The call bar names the reason for silence: your microphone is off, the other person muted, no audio is arriving or your microphone is silent. If the browser blocks the sound, a “Start audio” button appears.",
+    "tr": "Arama çubuğu sessizliğin nedenini söyler: mikrofonun kapalı, karşı taraf mikrofonunu kapattı, ses verisi gelmiyor ya da mikrofonundan ses gelmiyor. Tarayıcı sesi engellerse “Sesi başlat” düğmesi çıkar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "29ng5moowg7": {
+    "en": "Voice settings: pick your microphone and speaker and test your microphone. Open them from the settings button in the Social panel or the call bar.",
+    "tr": "Ses ayarları: mikrofonunu ve hoparlörünü seç, mikrofonunu test et. Sosyal paneldeki ayar düğmesinden ve arama çubuğundan açılır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "hyt8vj7cql": {
+    "en": "TURN support for calls on mobile data and company networks (set up by the site team).",
+    "tr": "Mobil veri ve kurum ağlarında aramalar için TURN desteği (site yönetimi ayarlar).",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "20ifkkrsr3v": {
+    "en": "Voice messages are sent and played again; microphone problems are explained one by one.",
+    "tr": "Sesli mesajlar artık gönderiliyor ve dinlenebiliyor; mikrofon hataları ayrı ayrı açıklanıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "27njz3m0nf9": {
+    "en": "The Plus and Pro checkout opens; if it can't, the reason is shown and reported to the team.",
+    "tr": "Plus ve Pro ödeme ekranı açılıyor; açılamazsa nedeni ekranda yazıyor ve ekibe bildiriliyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "1zpcki5mix5": {
@@ -26273,6 +26673,23 @@
       "src/components/Groups/api.ts"
     ]
   },
+  "16l0zz52zxp": {
+    "en": "No microphone was found. Connect one and try again.",
+    "tr": "Mikrofon bulunamadı. Bir mikrofon bağlayıp tekrar deneyin.",
+    "files": [
+      "src/components/Groups/api.ts",
+      "src/components/VoiceCallProvider.tsx",
+      "src/lib/social/api.ts"
+    ]
+  },
+  "2cvbarjxnki": {
+    "en": "The microphone couldn't be started; another app may be using it. Close it and try again.",
+    "tr": "Mikrofon başlatılamadı; başka bir uygulama kullanıyor olabilir. Onu kapatıp tekrar deneyin.",
+    "files": [
+      "src/components/Groups/api.ts",
+      "src/lib/social/api.ts"
+    ]
+  },
   "qjx0xylo08": {
     "en": "The files are too large to open in the Editor. Try opening a single file.",
     "tr": "Dosyalar Düzenleyici'ye aktarmak için çok büyük. Tek bir dosya açmayı deneyin.",
@@ -26771,14 +27188,6 @@
     "tr": "#{channel} kanalına mesaj gönder",
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx"
-    ]
-  },
-  "qgp1jho687": {
-    "en": "Your microphone is off (turn it on in the panel at the bottom left)",
-    "tr": "Mikrofonun kapalı (sol alttaki panelden açabilirsin)",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/dm/DmComposer.tsx"
     ]
   },
   "re1tt3lxma": {
@@ -33650,6 +34059,148 @@
       "src/components/SkipLink.tsx"
     ]
   },
+  "26q67d6sy0u": {
+    "en": "Voice settings",
+    "tr": "Ses ayarları",
+    "files": [
+      "src/components/Social/AudioSettings.tsx",
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1efxpe1gtc5": {
+    "en": "Microphone",
+    "tr": "Mikrofon",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "1ygcn15mnvf": {
+    "en": "Speaker / headphones",
+    "tr": "Hoparlör / kulaklık",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "w26oo9654d": {
+    "en": "System default",
+    "tr": "Sistem varsayılanı",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "lpb8bx2r6d": {
+    "en": "Microphone {n}",
+    "tr": "Mikrofon {n}",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "c3uzruxkp2": {
+    "en": "Speaker {n}",
+    "tr": "Hoparlör {n}",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "ztc4e5rnou": {
+    "en": "Allow the microphone to see device names",
+    "tr": "Aygıt adlarını görmek için mikrofon izni ver",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "1tc026jje9g": {
+    "en": "This browser doesn't let sites pick the output device; the system's default speaker is used.",
+    "tr": "Bu tarayıcı çıkış aygıtı seçmeye izin vermiyor; sistemin varsayılan hoparlörü kullanılır.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "172vyprhz1l": {
+    "en": "Microphone test",
+    "tr": "Mikrofon testi",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "1p9zvshxmry": {
+    "en": "Start test",
+    "tr": "Testi başlat",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "eajkfdxx4p": {
+    "en": "Stop test",
+    "tr": "Testi durdur",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "13mcgw9b4df": {
+    "en": "Say something: if the bar moves, your microphone works.",
+    "tr": "Konuş: çubuk hareket ediyorsa mikrofonun çalışıyor.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "1zeytvipmxr": {
+    "en": "No sound is coming from the microphone. Pick another one or check that it isn't muted in your system settings.",
+    "tr": "Mikrofondan ses gelmiyor. Başka bir mikrofon seç ya da sistem ayarlarında mikrofonun kapalı olmadığını kontrol et.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "9dib3pm4nw": {
+    "en": "Microphone level",
+    "tr": "Mikrofon seviyesi",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "20shjf1coto": {
+    "en": "Play a test sound",
+    "tr": "Test sesi çal",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "1g5ngvbxjvu": {
+    "en": "If you can't hear it, pick another speaker above.",
+    "tr": "Sesi duyamıyorsan yukarıdan başka bir hoparlör seç.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "1ffvu1fwaos": {
+    "en": "Microphone access was denied. Allow it from the lock icon in the address bar and try again.",
+    "tr": "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin verip tekrar dene.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "1dny8qqh91q": {
+    "en": "No microphone was found.",
+    "tr": "Mikrofon bulunamadı.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
+  "knpigauoeh": {
+    "en": "The microphone couldn't be opened; another app may be using it.",
+    "tr": "Mikrofon açılamadı; başka bir uygulama kullanıyor olabilir.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx",
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "b3n41jym8g": {
+    "en": "Your choices are kept in this browser and used for calls and voice messages.",
+    "tr": "Seçimlerin bu tarayıcıda saklanır; aramalarda ve sesli mesajlarda kullanılır.",
+    "files": [
+      "src/components/Social/AudioSettings.tsx"
+    ]
+  },
   "1nsqu9y9u5l": {
     "en": "Message @{name}",
     "tr": "@{name} kişisine mesaj gönder",
@@ -34933,9 +35484,16 @@
       "src/components/Social/UserPanel.tsx"
     ]
   },
-  "27hj511gqef": {
-    "en": "With the microphone off you aren't heard in calls and no voice messages are recorded; with sound off you don't hear calls or voice messages.",
-    "tr": "Mikrofon kapalıyken aramalarda sesin gitmez ve sesli mesaj kaydedilmez; ses kapalıyken aramaları ve sesli mesajları duymazsın.",
+  "2es3vorscy1": {
+    "en": "With the microphone off you aren't heard in a call; with sound off you don't hear the other person. Both turn back on when you start or answer a call.",
+    "tr": "Mikrofon kapalıyken görüşmede sesin gitmez; ses kapalıyken karşı tarafı duymazsın. Yeni bir arama başlatınca ya da yanıtlayınca ikisi de açılır.",
+    "files": [
+      "src/components/Social/UserPanel.tsx"
+    ]
+  },
+  "zoch49f8yd": {
+    "en": "Voice settings (microphone and speaker)",
+    "tr": "Ses ayarları (mikrofon ve hoparlör)",
     "files": [
       "src/components/Social/UserPanel.tsx"
     ]
@@ -35173,9 +35731,72 @@
       "src/components/VoiceCallProvider.tsx"
     ]
   },
-  "1h9j1cpgmsz": {
-    "en": "You're muted",
-    "tr": "Mikrofonun kapalı",
+  "1zv7ejymm92": {
+    "en": "Direct connection",
+    "tr": "Doğrudan bağlantı",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "2dh2ryd13b8": {
+    "en": "Via TURN relay",
+    "tr": "TURN üzerinden",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "26xxc7f6jf5": {
+    "en": "Your microphone is off: the other person can't hear you.",
+    "tr": "Mikrofonun kapalı: karşı taraf seni duymuyor.",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "15ky1s8pmex": {
+    "en": "Your sound is off: you can't hear the other person.",
+    "tr": "Sesin kapalı: karşı tarafı duymuyorsun.",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1szo4wvkawl": {
+    "en": "Turn on",
+    "tr": "Aç",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "2doueq4o4rt": {
+    "en": "{name} has muted their microphone.",
+    "tr": "{name} mikrofonunu kapattı.",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "15t3mo46djy": {
+    "en": "Your browser didn't start the audio by itself.",
+    "tr": "Tarayıcın sesi otomatik başlatmadı.",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1cxnwf2h2ut": {
+    "en": "Start audio",
+    "tr": "Sesi başlat",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "fe0a70q4yv": {
+    "en": "No audio data is arriving from the other person; the connection may have dropped. If it continues, end the call and try again.",
+    "tr": "Karşı taraftan ses verisi gelmiyor; bağlantı kopmuş olabilir. Sorun sürerse aramayı bitirip yeniden dene.",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "bybzk6sejy": {
+    "en": "No sound seems to be coming from your microphone. Is the right one selected?",
+    "tr": "Mikrofonundan hiç ses gelmiyor gibi görünüyor. Doğru mikrofon seçili mi?",
     "files": [
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -35242,20 +35863,6 @@
     "files": [
       "src/components/VoiceCallProvider.tsx",
       "src/lib/social/api.ts"
-    ]
-  },
-  "16l0zz52zxp": {
-    "en": "No microphone was found. Connect one and try again.",
-    "tr": "Mikrofon bulunamadı. Bir mikrofon bağlayıp tekrar dene.",
-    "files": [
-      "src/components/VoiceCallProvider.tsx"
-    ]
-  },
-  "knpigauoeh": {
-    "en": "The microphone couldn't be opened; another app may be using it.",
-    "tr": "Mikrofona erişilemedi; başka bir uygulama kullanıyor olabilir.",
-    "files": [
-      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "2ceh49hbm7c": {
@@ -36629,9 +37236,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1huqmav8o72": {
-    "en": "In [Hanogt Social](/social), call friends from their direct message and group members from the group chat. Calls are **peer-to-peer via WebRTC** and are **never recorded** by Hanogt; temporary signaling documents are deleted when the call ends.\n• Allow microphone access; check it via the lock icon in the address bar.\n• Some corporate networks need a TURN server to connect; the call screen tells you if it's missing.\n• Voice messages are limited to 60 seconds and 3 MB.",
-    "tr": "[Hanogt Social](/social)'de arkadaşlarını direkt mesaj ekranından, grup üyelerini grup sohbetinden arayabilirsin. Aramalar **WebRTC ile eşten eşe** kurulur ve Hanogt tarafından **kaydedilmez**; geçici bağlantı belgeleri görüşme bitince silinir.\n• Mikrofon izni ver; tarayıcı adres çubuğundaki kilit simgesinden kontrol edebilirsin.\n• Bazı kurumsal ağlarda bağlantı için TURN sunucusu gerekir; yoksa arama ekranı bunu belirtir.\n• Sesli mesajlar en fazla 60 saniye ve 3 MB'tır.",
+  "2731mvtk3ux": {
+    "en": "In [Hanogt Social](/social), call friends from their direct message and group members from the group chat. Calls are **peer-to-peer via WebRTC** and are **never recorded** by Hanogt; temporary signaling documents are deleted when the call ends.\n• Allow microphone access; check it via the lock icon in the address bar.\n• Every call starts with the microphone and sound on; if no sound gets through, the call bar says why (your microphone is off, the other person muted, no audio is arriving…).\n• **Voice settings** (the sliders icon in the Social panel or the settings button in the call bar): pick your microphone and speaker and test the microphone.\n• Some mobile and corporate networks need a TURN server to connect; the call screen tells you if it's missing.\n• Voice messages are limited to 60 seconds and 3 MB.",
+    "tr": "[Hanogt Social](/social)'de arkadaşlarını direkt mesaj ekranından, grup üyelerini grup sohbetinden arayabilirsin. Aramalar **WebRTC ile eşten eşe** kurulur ve Hanogt tarafından **kaydedilmez**; geçici bağlantı belgeleri görüşme bitince silinir.\n• Mikrofon izni ver; tarayıcı adres çubuğundaki kilit simgesinden kontrol edebilirsin.\n• Her arama mikrofon ve ses açık başlar; ses gitmiyorsa arama çubuğu nedenini yazar (mikrofonun kapalı, karşı taraf mikrofonunu kapattı, ses verisi gelmiyor…).\n• **Ses ayarları** (Sosyal paneldeki kaydırıcı simgesi ya da arama çubuğundaki ayar düğmesi): mikrofon ve hoparlör seçimi, mikrofon testi.\n• Bazı mobil ve kurumsal ağlarda bağlantı için TURN sunucusu gerekir; yoksa arama ekranı bunu belirtir.\n• Sesli mesajlar en fazla 60 saniye ve 3 MB'tır.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -38966,9 +39573,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "mbfev4mjkj": {
-    "en": "Voice messages aren't written into Firestore as base64. They live in file storage that only the chat's participants can access, and the file is deleted with the message.",
-    "tr": "Sesli mesajlar Firestore içine base64 olarak yazılmaz. Yetkili sohbet katılımcılarının erişebildiği dosya depolamasında tutulur ve mesaj silinince dosyası da silinir.",
+  "hg6id5l658": {
+    "en": "The recording is kept with its message in a separate database collection only the server can reach; browsers can't read it directly. Every time it's played, the server checks that you belong to the chat or group. Deleting the message, chat, group or account deletes the recording too.",
+    "tr": "Kayıt, mesajla birlikte yalnızca sunucunun erişebildiği ayrı bir veritabanı koleksiyonunda saklanır; tarayıcılar ona doğrudan ulaşamaz. Sunucu her dinlemede sohbetin ya da grubun üyesi olduğunu kontrol eder. Mesaj, sohbet, grup ya da hesap silinince kayıt da silinir.",
     "files": [
       "src/lib/faq.ts"
     ]

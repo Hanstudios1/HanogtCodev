@@ -7,7 +7,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { db } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { SocialRequestError, socialApi } from "@/lib/social/api";
-import { markGroupRead } from "@/lib/social/local-state";
+import { markGroupRead, useAudioDevices } from "@/lib/social/local-state";
 import {
     GROUP_LIMITS,
     GROUP_SYSTEM_EVENT_COPY,
@@ -363,9 +363,11 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         }
     };
 
+    const devices = useAudioDevices();
     const recorder = useVoiceRecorder({
         onRecorded: (blob, mimeType, seconds) => void sendVoice(blob, mimeType, seconds),
         onError: (code) => notify(errorText(code), "error"),
+        deviceId: devices.input,
     });
 
     const onKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {

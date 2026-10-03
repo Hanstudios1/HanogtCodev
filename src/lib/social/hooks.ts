@@ -33,6 +33,7 @@ import { db } from "@/lib/firebase";
 import { mentionsUser, type GroupInvitationItem, type GroupListItem, type GroupListResponse } from "@/lib/groups";
 import { effectiveStatus, lastSeenTime } from "@/lib/presence";
 import { SocialRequestError, socialApi, type VoiceTarget } from "./api";
+import { readAudioDevices } from "./local-state";
 import {
     SOCIAL_LIMITS,
     SOCIAL_POLL,
@@ -780,9 +781,12 @@ export function useVoiceMessagePlayer(target: VoiceTarget, onError: (error: unkn
             // Another message was started (or the player stopped) meanwhile.
             if (request !== requestRef.current) return;
             urlRef.current = URL.createObjectURL(blob);
-            const audio = new Audio(urlRef.current);
+            const audio = new Audio(urlRef.current) as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
             audioRef.current = audio;
             audio.onended = () => setPlayingId((current) => (current === message.id ? "" : current));
+            // The speaker chosen in the voice settings; a speaker that is gone keeps the default.
+            const speaker = readAudioDevices().output;
+            if (speaker && typeof audio.setSinkId === "function") await audio.setSinkId(speaker).catch(() => undefined);
             setPlayingId(message.id);
             await audio.play();
         } catch (error) {

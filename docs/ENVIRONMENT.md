@@ -208,7 +208,7 @@ Admin Panel > Subscriptions > Paddle.
 
 | Variable | Secret | Meaning |
 | --- | --- | --- |
-| `PADDLE_API_KEY` | **yes** | Server API key (`pdl_sdbx_apikey_…` sandbox, `pdl_live_apikey_…` live). Paddle > Developer tools > Authentication > API keys. Permissions: write for Customers, Transactions, Subscriptions, Discounts, Customer portal sessions and Products/Prices (only needed for the "create catalog" button); read for the rest. Never put it in a `NEXT_PUBLIC_` variable. |
+| `PADDLE_API_KEY` | **yes** | Server API key (`pdl_sdbx_apikey_…` sandbox, `pdl_live_apikey_…` live). Paddle > Developer tools > Authentication > API keys. Permissions: write for Customers, Transactions, Subscriptions, Discounts, Customer portal sessions and Products/Prices (only needed for the "create catalog" button); read for the rest, including Client-side tokens (`client_token.read`), which lets the Paddle card check that `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` belongs to the same account. Never put it in a `NEXT_PUBLIC_` variable. |
 | `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | no | Client-side token for Paddle.js (`test_…` sandbox, `live_…` live). Developer tools > Authentication > Client-side tokens. `PADDLE_CLIENT_TOKEN` works too. |
 | `PADDLE_WEBHOOK_SECRET` | **yes** | Secret key (`pdl_ntfset_…`) of the notification destination below. `PADDLE_NOTIFICATION_WEBHOOK_SECRET` works too. |
 | `NEXT_PUBLIC_PADDLE_ENV` | no | Only for keys created before May 2025 (no prefix): `sandbox` or `production`. Otherwise the environment follows the key prefixes and a conflicting value is reported in the Admin Panel. |
@@ -270,6 +270,16 @@ that nothing (a proxy, Vercel's firewall) replaces the client address.
 - Deleting an account cancels its subscription immediately; if Paddle can't be
   reached the deletion report says so and the subscription is listed in
   `paddle_cleanup`.
+- If the Plans page says the checkout couldn't load, start or open, the browser
+  reports why (`POST /api/paddle/client-error`: blocked, missing, init, open,
+  or Paddle's `checkout.error`/`checkout.failed`/`checkout.payment.error`, with
+  the refused address, the browser and the environment, never the account).
+  The Paddle card lists the newest ten under "Son ödeme ekranı hataları" and
+  checks that the client-side token exists in the API key's account
+  (`missing` = another Paddle account or the other environment). The team,
+  testers and sandbox visitors also see the technical detail on the page. The
+  CSP allows `https://*.paddle.com` and Paddle Retain (`public.profitwell.com`,
+  `*.profitwell.com`).
 
 ## Administration
 

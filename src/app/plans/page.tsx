@@ -268,7 +268,7 @@ export default function PlansPage() {
     const anyOnSale = onSale("plus").length > 0 || onSale("pro").length > 0;
 
     // The team and testers (and anyone in the sandbox, where nothing is charged) also see why Paddle failed.
-    const diagnostics = Boolean(checkout && (checkout.testMode || checkout.environment === "sandbox"));
+    const diagnostics = Boolean(checkout && (checkout.testMode || checkout.environment === "sandbox" || me?.isStaff));
     const reported = useRef(new Set<string>());
 
     /** Tells the team about a failure, once per page view and kind (the route keeps no names). */

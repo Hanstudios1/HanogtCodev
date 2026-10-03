@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 
 import { useVoiceRecorder, type MicErrorCode } from "@/components/Groups/workspace/hooks";
 import { Spinner, cx } from "@/components/Groups/ui";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { useAudioDevices } from "@/lib/social/local-state";
 import { DM_STICKERS, SOCIAL_LIMITS, type DmMessage } from "@/lib/social/model";
 
 const C = {
@@ -51,9 +52,11 @@ export default function DmComposer(props: ComposerProps) {
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
     const stickerRef = useRef<HTMLDivElement | null>(null);
 
+    const devices = useAudioDevices();
     const recorder = useVoiceRecorder({
         onRecorded: (blob, mimeType, seconds) => onVoice(blob, mimeType, seconds),
         onError: (code) => onVoiceError(code),
+        deviceId: devices.input,
     });
 
     useEffect(() => {

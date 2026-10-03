@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.1",
+        version: "v0.3.1",
+        date: "2026-10-03",
+        title: { TR: "Sesli aramada ses, sesli mesajlar ve ödeme ekranı düzeltildi", EN: "Call audio, voice messages and the checkout fixed" },
+        desc: { TR: "Sesli aramalarda ses artık iki yönde de gidiyor, sesli mesajlar gönderilip dinlenebiliyor ve Plus/Pro ödeme ekranı açılıyor.", EN: "Voice calls now carry audio both ways, voice messages can be sent and played, and the Plus/Pro checkout opens." },
+        items: [
+            { TR: "Her arama mikrofon ve ses açık başlar: Hanogt Social'da daha önce kapatılan mikrofon ya da kulaklık artık aramayı sessiz başlatmaz.", EN: "Every call starts with the microphone and sound on: a microphone or headphones switched off earlier in Hanogt Social no longer start the call silent." },
+            { TR: "Arama çubuğu sessizliğin nedenini söyler: mikrofonun kapalı, karşı taraf mikrofonunu kapattı, ses verisi gelmiyor ya da mikrofonundan ses gelmiyor. Tarayıcı sesi engellerse “Sesi başlat” düğmesi çıkar.", EN: "The call bar names the reason for silence: your microphone is off, the other person muted, no audio is arriving or your microphone is silent. If the browser blocks the sound, a “Start audio” button appears." },
+            { TR: "Ses ayarları: mikrofonunu ve hoparlörünü seç, mikrofonunu test et. Sosyal paneldeki ayar düğmesinden ve arama çubuğundan açılır.", EN: "Voice settings: pick your microphone and speaker and test your microphone. Open them from the settings button in the Social panel or the call bar." },
+            { TR: "Mobil veri ve kurum ağlarında aramalar için TURN desteği (site yönetimi ayarlar).", EN: "TURN support for calls on mobile data and company networks (set up by the site team)." },
+            { TR: "Sesli mesajlar artık gönderiliyor ve dinlenebiliyor; mikrofon hataları ayrı ayrı açıklanıyor.", EN: "Voice messages are sent and played again; microphone problems are explained one by one." },
+            { TR: "Plus ve Pro ödeme ekranı açılıyor; açılamazsa nedeni ekranda yazıyor ve ekibe bildiriliyor.", EN: "The Plus and Pro checkout opens; if it can't, the reason is shown and reported to the team." },
+        ],
+    },
+    {
         id: "v0.3.0",
         version: "v0.3.0",
         date: "2026-10-02",

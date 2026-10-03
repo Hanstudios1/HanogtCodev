@@ -33,10 +33,9 @@ async function waitlistOf(email: string): Promise<PaidPlanId[]> {
 }
 
 /** Paddle prices for the visitor's country; null keeps the "coming soon" page. */
-async function checkoutOf(catalog: PlanCatalog, request: NextRequest, email: string | null): Promise<PaddleCheckoutConfig | null> {
+async function checkoutOf(catalog: PlanCatalog, request: NextRequest, email: string | null, staff: boolean): Promise<PaddleCheckoutConfig | null> {
     try {
-        const staff = email ? await getStaffSession().catch(() => null) : null;
-        return await checkoutConfigFor(catalog, request.headers.get("x-vercel-ip-country")?.toUpperCase() ?? null, { tester: isBillingTester(email, Boolean(staff)) });
+        return await checkoutConfigFor(catalog, request.headers.get("x-vercel-ip-country")?.toUpperCase() ?? null, { tester: isBillingTester(email, staff) });
     } catch (error) {
         console.error("[plans:paddle]", error instanceof Error ? error.message : error);
         return null;
@@ -64,7 +63,8 @@ export async function GET(request: NextRequest) {
     if (!isFirebaseServerConfigured()) return json({ error: "unavailable" }, 503);
     try {
         const [catalog, active] = await Promise.all([getPlanCatalog(), getActiveSession()]);
-        const checkout = await checkoutOf(catalog, request, active?.email ?? null);
+        const staff = active ? Boolean(await getStaffSession().catch(() => null)) : false;
+        const checkout = await checkoutOf(catalog, request, active?.email ?? null, staff);
         if (!active) return json({ catalog: publicCatalog(catalog), checkout, me: null } satisfies PlansResponse);
         const [stored, used, waitlist] = await Promise.all([
             getSubscription(active.email),
@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
                 aiLimits: aiLimitsFor(subscription),
                 aiUsedToday: used?.count ?? 0,
                 waitlist,
+                isStaff: staff,
             },
         } satisfies PlansResponse);
     } catch {

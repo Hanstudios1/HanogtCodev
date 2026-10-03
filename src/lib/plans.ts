@@ -171,6 +171,8 @@ export type PlansResponse = {
         aiLimits: { perMinute: number; perDay: number };
         aiUsedToday: number;
         waitlist: PaidPlanId[];
+        /** Hanogt team (any role): the Plans page also shows them why a checkout failed. */
+        isStaff: boolean;
     } | null;
 };
 

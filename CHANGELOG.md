@@ -1,5 +1,51 @@
 # Değişiklik Günlüğü
 
+## 0.3.1 — 2026-10-03
+
+### Sesli arama: ses iki yönde de gidiyor
+
+- Arama her zaman mikrofon ve ses açık başlıyor. Hanogt Social'da daha önce
+  kapatılıp unutulan mikrofon/kulaklık düğmesi aramaları sessiz başlatıyordu
+  (kulaklık düğmesi mikrofonu da kapatır).
+- Karşı tarafın sesi, ses izi akışa eklendikten sonra bağlanıyor ve "Ara" /
+  "Yanıtla" tıklamasında ses kilidi açılıyor; tarayıcı yine de engellerse
+  arama çubuğunda "Sesi başlat" çıkıyor.
+- Bağlantı ancak şifreleme el sıkışması (DTLS) da bitince "bağlandı" sayılıyor
+  (`connectionState`); önceden yalnızca ICE'a bakılıyordu.
+- Arama çubuğu sessizliğin nedenini söylüyor: mikrofonun ya da sesin kapalı,
+  karşı taraf mikrofonunu kapattı (sessize alma artık karşıya iletiliyor),
+  ses verisi gelmiyor, mikrofondan hiç ses gelmiyor; bağlantı türü (doğrudan /
+  TURN) `getStats` ile gösteriliyor.
+- Ses ayarları: mikrofon ve hoparlör seçimi, mikrofon testi, test sesi;
+  aramalarda ve sesli mesajlarda kullanılıyor, görüşme sırasında da
+  değiştirilebiliyor.
+- TURN: Cloudflare Realtime TURN (`CLOUDFLARE_TURN_KEY_ID`,
+  `CLOUDFLARE_TURN_KEY_API_TOKEN`; ayda 1.000 GB ücretsiz), coturn REST ya da
+  sabit kimlik bilgileri (`src/lib/server/turn.ts`). Bulut Sağlığı TURN'ü
+  denetliyor ve tarayıcıdan aktarım testi yapıyor.
+
+### Sesli mesajlar Firestore'da
+
+- Kayıtlar mesajla aynı commit'te sunucuya özel `voice_clips` koleksiyonuna
+  yazılıyor (700 KB üstü parçalara bölünüyor). Cloud Storage Blaze planı
+  istediği için Spark projelerinde sesli mesaj gönderilemiyordu.
+- Dinleme Firestore'dan (eski kayıtlar Storage'dan), bayt aralığı destekli;
+  silme akışları kaydı da siliyor. Kayıt mono 32 kbit/s.
+- Sosyal paneldeki sessize alma artık sesli mesaj kaydını engellemiyor;
+  mikrofon hataları ayrı ayrı açıklanıyor.
+
+### Paddle ödeme ekranı
+
+- Paddle.js güncel sürümün adıyla (`window.PaddleBillingV1`) bulunuyor ve
+  Paddle'ın kendi yükleyicisi gibi başlatılıyor; önceden yalnızca
+  `window.Paddle` arandığı ve her hata tek mesaja düştüğü için ödeme ekranı
+  "yüklenemedi" diyordu.
+- Hata aşamasıyla gösteriliyor (yüklenemedi, başlatılamadı, açılamadı,
+  Paddle'ın `checkout.error` ayrıntısı) ve kimliksiz olarak ekibe
+  bildiriliyor; Yönetici Paneli › Abonelikler › Paddle son 10 hatayı ve
+  istemci tarafı jetonun Paddle hesabındaki durumunu gösteriyor.
+- CSP Paddle'ın tüm alt alan adlarına ve Retain'e izin veriyor.
+
 ## 0.3.0 — 2026-10-02
 
 ### Planlar: Paddle ile abonelik
