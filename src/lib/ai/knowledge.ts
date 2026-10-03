@@ -51,7 +51,7 @@ const L = {
     privacy: { href: "/privacy-policy", label: { TR: "Gizlilik Politikası", EN: "Privacy Policy" } },
     dashboard: { href: "/dashboard", label: { TR: "Panel", EN: "Dashboard" } },
     ai: { href: "/ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" } },
-    plans: { href: "/plans", label: { TR: "Planlar", EN: "Plans" } },
+    plans: { href: "/plans", label: { TR: "Fiyatlandırma", EN: "Pricing" } },
     refunds: { href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
 } satisfies Record<string, KnowledgeLink>;
 

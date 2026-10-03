@@ -3311,14 +3311,14 @@
       "src/app/editor/page.tsx"
     ]
   },
-  "ucoh26yn64": {
-    "en": "Plans",
-    "tr": "Planlar",
+  "2edyy0a3du6": {
+    "en": "Pricing",
+    "tr": "Fiyatlandırma",
     "files": [
       "src/app/editor/page.tsx",
       "src/components/Guide/book-content.ts",
-      "src/components/SiteFooter.tsx",
-      "src/lib/ai/knowledge.ts"
+      "src/lib/ai/knowledge.ts",
+      "src/lib/nav.ts"
     ]
   },
   "dx4ul645tq": {
@@ -6534,6 +6534,69 @@
       "src/app/plans/page.tsx"
     ]
   },
+  "2be87kk1eto": {
+    "en": "The first try didn't work; trying once more…",
+    "tr": "İlk deneme olmadı, bir kez daha deneniyor…",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "cijmw5bz3z": {
+    "en": "Couldn't reach the server. Check your connection; if you use an ad blocker, browser protection or a VPN, turn it off for this site and try again.",
+    "tr": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et; reklam engelleyici, tarayıcı koruması ya da VPN kullanıyorsan bu site için kapatıp tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1llt6qbmzj1": {
+    "en": "The server didn't answer in time; the payment provider or the database is slow right now. Try again in a moment.",
+    "tr": "Sunucu zamanında yanıt vermedi; ödeme sağlayıcısı ya da veritabanı şu an yavaş. Biraz sonra tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "j0y622jrcw": {
+    "en": "Your account details can't be reached right now (the database didn't answer). Try again in a moment.",
+    "tr": "Hesap bilgilerine şu an ulaşılamıyor (veritabanı yanıt vermedi). Biraz sonra tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1lx09mm1h2j": {
+    "en": "The request couldn't be verified from this page. Refresh the page and try again.",
+    "tr": "İstek bu sayfadan doğrulanamadı. Sayfayı yenileyip tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "tbtxnzf9zh": {
+    "en": "No active subscription was found on this account. Refresh the page.",
+    "tr": "Bu hesapta etkin bir abonelik bulunamadı. Sayfayı yenile.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "cw6ertfiep": {
+    "en": "There's nothing to change; refresh the page.",
+    "tr": "Değiştirilecek bir şey yok; sayfayı yenile.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "u745ja2zyx": {
+    "en": "Error code: {ref}",
+    "tr": "Hata kodu: {ref}",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "16qg15s7dsv": {
+    "en": "For the team: the details of this request are under Admin Panel › Subscriptions › Paddle in \"Recent server errors\" (or, when no answer came at all, in \"Recent checkout errors\") and in the Vercel logs.",
+    "tr": "Ekip için: bu isteğin ayrıntısı Yönetici Paneli › Abonelikler › Paddle bölümündeki \"Son sunucu hataları\" listesinde (yanıt hiç gelmediyse \"Son ödeme ekranı hataları\"nda) ve Vercel günlüklerinde.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
   "29pcbyt8qil": {
     "en": "Test mode: sales aren't open to everyone yet; only the Hanogt team and testers see these plans as buyable.",
     "tr": "Test modu: satışlar henüz herkese açık değil; bu sayfayı yalnızca Hanogt ekibi ve test kullanıcıları satın alınabilir görüyor.",
@@ -6586,6 +6649,13 @@
   "29r4c049gm8": {
     "en": "Paddle isn't responding right now ({code}). Try again in a moment.",
     "tr": "Paddle şu anda yanıt vermiyor ({code}). Biraz sonra tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1hvzshua7af": {
+    "en": "Paddle didn't accept the request ({code}). Try again in a moment; if it keeps happening, open a support ticket.",
+    "tr": "Paddle isteği kabul etmedi ({code}). Biraz sonra tekrar dene; sorun sürerse destek talebi aç.",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -17821,6 +17891,83 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "1pl1teaga2f": {
+    "en": "Recent server errors",
+    "tr": "Son sunucu hataları",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1uamkp1p4ic": {
+    "en": "When checkout and subscription requests failed on the server",
+    "tr": "Ödeme ve abonelik isteklerinin sunucuda başarısız olduğu anlar",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "9vx4aed1sn": {
+    "en": "The newest 10 are kept. Whose request it was isn't stored; only the request, step, HTTP status, code, duration and detail. The \"Error code\" line on the Plans page shows the same.",
+    "tr": "En yeni 10 kayıt tutulur. Kimin isteği olduğu saklanmaz; yalnızca istek, adım, HTTP durumu, kod, süre ve ayrıntı. Planlar sayfasındaki \"Hata kodu\" satırı da aynı bilgiyi gösterir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1excs3lky29": {
+    "en": "No billing request has failed on the server.",
+    "tr": "Sunucuda başarısız olan bir ödeme isteği yok.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "78m14y0cyf": {
+    "en": "If a billing request fails on the server, the step and the reason show up here.",
+    "tr": "Bir ödeme isteği sunucuda başarısız olursa hangi adımda ve neden olduğu burada görünür.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1bbw8nor2l8": {
+    "en": "HTTP {status} · {code} · {seconds} s",
+    "tr": "HTTP {status} · {code} · {seconds} sn",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "24ic321g5t2": {
+    "en": "Paddle answered: HTTP {status}",
+    "tr": "Paddle'ın yanıtı: HTTP {status}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "utv38o4edy": {
+    "en": "Paddle wasn't reached",
+    "tr": "Paddle'a ulaşılamadı",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "sfmzmbffir": {
+    "en": "Starting a checkout",
+    "tr": "Ödeme başlatma",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1uuil4lagg8": {
+    "en": "Subscription action: {action}",
+    "tr": "Abonelik işlemi: {action}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "l5z7ao9z16": {
+    "en": "Unknown step",
+    "tr": "Adım bilinmiyor",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "wwqirzt4e1": {
     "en": "Business details",
     "tr": "İşletme bilgileri",
@@ -18127,6 +18274,132 @@
   "ffqdzjvzm5": {
     "en": "Payment error",
     "tr": "Ödeme hatası",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1ry1b0tge2y": {
+    "en": "Request got no answer",
+    "tr": "İstek yanıtsız kaldı",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1d5me2gxa15": {
+    "en": "Our code couldn't answer the browser's billing request. http_504: Vercel cut the request at its time limit (with nothing under \"Recent server errors\" at that moment, the server was waiting on Paddle or the database). network: the request never reached the server (connection, ad blocker, VPN).",
+    "tr": "Tarayıcının ödeme isteğine kodumuz yanıt veremedi. http_504: Vercel isteği süre sınırında kesti (aynı anda \"Son sunucu hataları\"nda kayıt yoksa sunucu Paddle'ı ya da veritabanını beklerken kesilmiştir). network: istek sunucuya ulaşmadı (bağlantı, reklam engelleyici, VPN).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "kxrhrxu184": {
+    "en": "Reading the plan catalog",
+    "tr": "Plan kataloğu okunurken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1vd5zra0rgt": {
+    "en": "Reading the Paddle settings",
+    "tr": "Paddle ayarları okunurken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "25eamu886mc": {
+    "en": "Reading the subscription record",
+    "tr": "Abonelik kaydı okunurken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "mlaxb3vc1h": {
+    "en": "Finding the Paddle customer",
+    "tr": "Paddle müşterisi bulunurken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "10igw90fdri": {
+    "en": "Creating the checkout transaction",
+    "tr": "Ödeme işlemi oluşturulurken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "nrkl8s2kit": {
+    "en": "Opening the customer portal",
+    "tr": "Müşteri portalı açılırken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "swlrskef6y": {
+    "en": "Previewing the plan change",
+    "tr": "Plan değişikliği hesaplanırken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "6j847u1qdg": {
+    "en": "Changing the plan",
+    "tr": "Plan değiştirilirken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "4d8cb0o9xr": {
+    "en": "Undoing the cancellation",
+    "tr": "İptal geri alınırken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1dqdjwafba5": {
+    "en": "Paddle didn't answer within 8 seconds. Check Paddle's status page; the Plans page retries once by itself.",
+    "tr": "Paddle 8 saniye içinde yanıt vermedi. Paddle'ın durum sayfasına bakın; Planlar sayfası bir kez kendiliğinden yeniden dener.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "26rpdhnlj2z": {
+    "en": "The server couldn't connect to Paddle (DNS or network).",
+    "tr": "Sunucu Paddle'a bağlanamadı (DNS ya da ağ).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1c2lj26bglo": {
+    "en": "Paddle gave an unexpected answer (not JSON).",
+    "tr": "Paddle beklenmedik bir yanıt verdi (JSON değil).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "mbov2afh1m": {
+    "en": "A Firestore request failed: the daily quota may be used up, the service account may lack permission, or there may be a brief outage. See the Cloud Health tab.",
+    "tr": "Firestore isteği başarısız oldu: günlük kota dolmuş, hizmet hesabının yetkisi eksik ya da kısa bir kesinti olabilir. Bulut Sağlığı sekmesine bakın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "lertvre8jc": {
+    "en": "An unexpected error in the server code. Search the Vercel logs with the detail and the time.",
+    "tr": "Sunucu kodunda beklenmedik bir hata. Ayrıntı ve saatle Vercel günlüklerinde arayın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1eqf5l11r60": {
+    "en": "The Paddle customer of this e-mail is linked to another account.",
+    "tr": "Bu e-postanın Paddle müşterisi başka bir hesaba bağlı.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "wgq5pnvgi5": {
+    "en": "The API key isn't allowed to do this; check the key's permissions in Paddle.",
+    "tr": "API anahtarının bu işlem için izni yok; Paddle'da anahtarın izinlerine bakın.",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -20584,6 +20857,48 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "mvmnvc2bph": {
+    "en": "Pricing in the top menu; when a checkout can't start, the reason",
+    "tr": "Fiyatlandırma üst menüde; ödeme başlatılamazsa nedeni",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "zmsdga3uwt": {
+    "en": "The Plans page no longer just says \"That didn't work\": it tries once more by itself after a passing problem and otherwise shows the reason with an error code.",
+    "tr": "Planlar sayfası artık \"İşlem tamamlanamadı\" demekle kalmıyor: geçici sorunlarda kendiliğinden bir kez daha deniyor, olmazsa nedenini ve bir hata kodunu gösteriyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "56sj7lfxe4": {
+    "en": "The Plans page is now in the top menu, named Pricing. Where the top menu doesn't fit, it turns into the menu button instead of breaking labels onto two lines.",
+    "tr": "Planlar sayfası artık üst menüde ve adı Fiyatlandırma. Üst menü sığmadığı pencerelerde yazıları iki satıra kaydırmak yerine menü düğmesine geçiyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "uulnavfzih": {
+    "en": "After a passing problem such as a dropped connection or a slow server or Paddle, the checkout is tried once more and opens.",
+    "tr": "Bağlantı kopması, sunucunun ya da Paddle'ın geç yanıt vermesi gibi geçici sorunlarda ödeme ekranı bir kez daha denenerek açılıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "37kxxt6wyv": {
+    "en": "Error messages name the cause: the server couldn't be reached (connection, ad blocker, VPN), the server didn't answer in time, Paddle isn't responding or the database couldn't be reached.",
+    "tr": "Hata mesajları nedeni söylüyor: sunucuya ulaşılamadı (bağlantı, reklam engelleyici, VPN), sunucu zamanında yanıt vermedi, Paddle yanıt vermiyor ya da veritabanına ulaşılamadı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "t5egwdnmnx": {
+    "en": "Every error ends with an \"Error code\" line; add it to a support ticket and we'll find the problem right away.",
+    "tr": "Her hatanın altında bir \"Hata kodu\" satırı var; destek talebine eklersen sorunu hemen buluruz.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "22d6sd6pvm3": {
@@ -30208,6 +30523,13 @@
   "20i4zxd5jwh": {
     "en": "Open → In review → Answered → Resolved or Closed. A notification lands on the bell when the team replies.",
     "tr": "Açık → İnceleniyor → Yanıtlandı → Çözüldü ya da Kapatıldı. Yanıt gelince zil simgesine bildirim düşer.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "ucoh26yn64": {
+    "en": "Plans",
+    "tr": "Planlar",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -40424,6 +40746,13 @@
   "22cpgzj43s8": {
     "en": "AI assistant for code, games and security",
     "tr": "Kod, oyun ve güvenlik için yapay zeka asistanı",
+    "files": [
+      "src/lib/nav.ts"
+    ]
+  },
+  "2ashuujttls": {
+    "en": "Free, Plus and Pro: features and prices",
+    "tr": "Ücretsiz, Plus ve Pro: özellikler ve fiyatlar",
     "files": [
       "src/lib/nav.ts"
     ]

@@ -91,6 +91,15 @@ const C = {
     changed: { TR: "Planın değişti: {plan}.", EN: "Your plan changed: {plan}." },
     kept: { TR: "Aboneliğin devam ediyor.", EN: "Your subscription will continue." },
     failed: { TR: "İşlem tamamlanamadı. Biraz sonra tekrar dene.", EN: "That didn't work. Try again in a moment." },
+    retrying: { TR: "İlk deneme olmadı, bir kez daha deneniyor…", EN: "The first try didn't work; trying once more…" },
+    networkFailed: { TR: "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et; reklam engelleyici, tarayıcı koruması ya da VPN kullanıyorsan bu site için kapatıp tekrar dene.", EN: "Couldn't reach the server. Check your connection; if you use an ad blocker, browser protection or a VPN, turn it off for this site and try again." },
+    serverTimeout: { TR: "Sunucu zamanında yanıt vermedi; ödeme sağlayıcısı ya da veritabanı şu an yavaş. Biraz sonra tekrar dene.", EN: "The server didn't answer in time; the payment provider or the database is slow right now. Try again in a moment." },
+    databaseFailed: { TR: "Hesap bilgilerine şu an ulaşılamıyor (veritabanı yanıt vermedi). Biraz sonra tekrar dene.", EN: "Your account details can't be reached right now (the database didn't answer). Try again in a moment." },
+    reloadPage: { TR: "İstek bu sayfadan doğrulanamadı. Sayfayı yenileyip tekrar dene.", EN: "The request couldn't be verified from this page. Refresh the page and try again." },
+    noSubscription: { TR: "Bu hesapta etkin bir abonelik bulunamadı. Sayfayı yenile.", EN: "No active subscription was found on this account. Refresh the page." },
+    noChange: { TR: "Değiştirilecek bir şey yok; sayfayı yenile.", EN: "There's nothing to change; refresh the page." },
+    reference: { TR: "Hata kodu: {ref}", EN: "Error code: {ref}" },
+    failureTeam: { TR: "Ekip için: bu isteğin ayrıntısı Yönetici Paneli › Abonelikler › Paddle bölümündeki \"Son sunucu hataları\" listesinde (yanıt hiç gelmediyse \"Son ödeme ekranı hataları\"nda) ve Vercel günlüklerinde.", EN: "For the team: the details of this request are under Admin Panel › Subscriptions › Paddle in \"Recent server errors\" (or, when no answer came at all, in \"Recent checkout errors\") and in the Vercel logs." },
     testMode: { TR: "Test modu: satışlar henüz herkese açık değil; bu sayfayı yalnızca Hanogt ekibi ve test kullanıcıları satın alınabilir görüyor.", EN: "Test mode: sales aren't open to everyone yet; only the Hanogt team and testers see these plans as buyable." },
     sandbox: { TR: "Paddle sandbox: gerçek ödeme alınmaz, test kartıyla dene (4242 4242 4242 4242).", EN: "Paddle sandbox: no real payments; use a test card (4242 4242 4242 4242)." },
     alreadySubscribed: { TR: "Zaten bir aboneliğin var; planını bu sayfadan değiştirebilirsin.", EN: "You already have a subscription; you can change your plan on this page." },
@@ -99,6 +108,7 @@ const C = {
     rateLimited: { TR: "Çok fazla deneme oldu. Bir dakika sonra tekrar dene.", EN: "Too many attempts. Try again in a minute." },
     signedOut: { TR: "Oturumun sona ermiş; yeniden giriş yap.", EN: "Your session has ended; please sign in again." },
     paddleError: { TR: "Paddle şu anda yanıt vermiyor ({code}). Biraz sonra tekrar dene.", EN: "Paddle isn't responding right now ({code}). Try again in a moment." },
+    paddleRefused: { TR: "Paddle isteği kabul etmedi ({code}). Biraz sonra tekrar dene; sorun sürerse destek talebi aç.", EN: "Paddle didn't accept the request ({code}). Try again in a moment; if it keeps happening, open a support ticket." },
     paddleBlocked: { TR: "Ödeme ekranı yüklenemedi: Paddle'ın ödeme betiği tarayıcına ulaşmadı. Reklam engelleyici, tarayıcının izleme koruması ya da ağ ayarların (ör. kurum ağı, VPN, DNS filtresi) cdn.paddle.com adresini engelliyor olabilir. Bu site için izin verip tekrar dene.", EN: "The checkout couldn't load: Paddle's checkout script didn't reach your browser. An ad blocker, your browser's tracking protection or your network (e.g. a work network, VPN or DNS filter) may be blocking cdn.paddle.com. Allow it for this site and try again." },
     paddleBlockedUrl: { TR: "Ödeme ekranı yüklenemedi: tarayıcın {url} adresini engelledi. Reklam ya da betik engelleyiciyi veya tarayıcının izleme korumasını bu site için kapatıp tekrar dene; sorun sürerse destek talebi aç.", EN: "The checkout couldn't load: your browser blocked {url}. Turn off your ad or script blocker or your browser's tracking protection for this site and try again; if it keeps happening, open a support ticket." },
     paddleStart: { TR: "Ödeme ekranı başlatılamadı: Paddle yüklendi ama çalıştırılamadı. Biraz sonra tekrar dene; sorun sürerse destek talebi aç.", EN: "The checkout couldn't start: Paddle loaded but couldn't be started. Try again in a moment; if it keeps happening, open a support ticket." },
@@ -148,6 +158,8 @@ type Notice = {
     hint?: Copy;
     /** For the team and testers only: the stage that failed and Paddle's own words. */
     technical?: { stage: string; message: string };
+    /** Under every failed request: what failed, how and where ("unavailable/database_error · HTTP 503 · subscription · 2.1 s"). */
+    reference?: string;
 } | null;
 
 /** Paddle checkout events the page reports, as stages of POST /api/paddle/client-error. */
@@ -200,6 +212,10 @@ const ERROR_COPY: Partial<Record<BillingErrorCode, Copy>> = {
     billing_unavailable: C.billingUnavailable,
     rate_limited: C.rateLimited,
     unauthorized: C.signedOut,
+    forbidden_origin: C.reloadPage,
+    invalid_request: C.reloadPage,
+    no_subscription: C.noSubscription,
+    no_change: C.noChange,
 };
 
 async function fetchPlans(): Promise<PlansResponse | null> {
@@ -211,25 +227,109 @@ async function fetchPlans(): Promise<PlansResponse | null> {
     }
 }
 
-async function postJson<T>(url: string, body: unknown): Promise<{ ok: true; data: T } | { ok: false; error: BillingErrorCode | "network"; code?: string }> {
+/** A billing request that failed, with everything the page and the team need to tell why. */
+type RequestFailure = {
+    ok: false;
+    /** Our error code; "network": no answer at all; "timeout": the server (504) or the page gave up waiting. */
+    error: BillingErrorCode | "network" | "timeout";
+    /** HTTP status; null when no answer came. */
+    status: number | null;
+    /** False when the answer wasn't ours (no answer, or an error page such as Vercel's 504). */
+    json: boolean;
+    /** The route's code: Paddle's error code, "database_error" or "internal_error". */
+    code?: string;
+    /** What the route was doing (catalog, subscription, customer, transaction…). */
+    step?: string;
+    /** Paddle's HTTP status (0: Paddle wasn't reached). */
+    paddleStatus?: number;
+    /** Only for the team, testers and the sandbox. */
+    detail?: string;
+    /** How long the request took. */
+    ms: number;
+};
+
+type RequestResult<T> = { ok: true; data: T } | RequestFailure;
+
+/** Longer than the billing routes may run (60 s), so the server's own answer comes first. */
+const REQUEST_TIMEOUT_MS = 70_000;
+const RETRY_DELAY_MS = 1_500;
+
+async function postJson<T>(url: string, body: unknown): Promise<RequestResult<T>> {
+    const started = Date.now();
+    let response: Response;
     try {
-        const response = await fetch(url, {
+        response = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "same-origin",
             body: JSON.stringify(body),
+            signal: typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(REQUEST_TIMEOUT_MS) : undefined,
         });
-        const payload = await response.json().catch(() => ({})) as T & { error?: BillingErrorCode; code?: string };
-        if (!response.ok) return { ok: false, error: payload.error ?? "unavailable", code: payload.code };
-        return { ok: true, data: payload };
-    } catch {
-        return { ok: false, error: "network" };
+    } catch (error) {
+        const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+        return { ok: false, error: timedOut ? "timeout" : "network", status: null, json: false, ms: Date.now() - started };
     }
+    const isJson = (response.headers.get("content-type") ?? "").includes("application/json");
+    const payload = isJson ? await response.json().catch(() => null) as unknown : null;
+    const fields = payload && typeof payload === "object" && !Array.isArray(payload) ? payload as Record<string, unknown> : null;
+    if (response.ok && fields) return { ok: true, data: fields as T };
+    const text = (value: unknown, max: number) => (typeof value === "string" && value ? value.slice(0, max) : undefined);
+    return {
+        ok: false,
+        error: (text(fields?.error, 40) as BillingErrorCode | undefined) ?? (response.status === 504 ? "timeout" : "unavailable"),
+        status: response.status,
+        json: Boolean(fields),
+        code: text(fields?.code, 80),
+        step: text(fields?.step, 40),
+        paddleStatus: typeof fields?.paddleStatus === "number" ? fields.paddleStatus : undefined,
+        detail: text(fields?.detail, 300),
+        ms: Date.now() - started,
+    };
 }
 
-function failureNotice(result: { error: BillingErrorCode | "network"; code?: string }): Notice {
-    if (result.error === "paddle_error") return { tone: "error", copy: C.paddleError, vars: { code: result.code ?? "?" } };
-    return { tone: "error", copy: (result.error !== "network" && ERROR_COPY[result.error]) || C.failed };
+/** Worth one more try: no answer, a timeout, or a failure on the way (ours or Paddle's) rather than a refusal. */
+function retryable(result: RequestFailure) {
+    if (result.error === "network") return true;
+    // The server's 504, not the page's own 70 seconds.
+    if (result.error === "timeout") return result.status !== null;
+    if (!result.json) return (result.status ?? 0) >= 500;
+    if (result.error === "unavailable") return true;
+    if (result.error === "paddle_error") return result.paddleStatus === undefined || result.paddleStatus === 0 || result.paddleStatus === 429 || result.paddleStatus >= 500;
+    return false;
+}
+
+/** One line that tells the team what failed: "unavailable/database_error · HTTP 503 · subscription · 2.1 s". */
+function failureReference(result: RequestFailure) {
+    return [
+        result.code && result.code !== result.error ? `${result.error}/${result.code}` : result.error,
+        result.status ? `HTTP ${result.status}` : null,
+        result.paddleStatus !== undefined ? `Paddle ${result.paddleStatus || "-"}` : null,
+        result.step ?? null,
+        `${(result.ms / 1000).toFixed(1)} s`,
+    ].filter(Boolean).join(" · ");
+}
+
+/** Answers that explain themselves; everything else also shows its error code. */
+const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change"]);
+
+/** The notice for a failed request; `team` (staff, testers, the sandbox) also get the detail and where to look. */
+function failureNotice(result: RequestFailure, team: boolean): NonNullable<Notice> {
+    const paddleDown = result.paddleStatus === undefined || result.paddleStatus === 0 || result.paddleStatus === 429 || result.paddleStatus >= 500;
+    const copy =
+        result.error === "network" ? C.networkFailed
+            : result.error === "timeout" ? C.serverTimeout
+                : result.error === "paddle_error" ? (paddleDown ? C.paddleError : C.paddleRefused)
+                    : result.code === "database_error" ? C.databaseFailed
+                        : ERROR_COPY[result.error] ?? C.failed;
+    const ours = result.error === "network" || result.error === "timeout" || result.error === "unavailable" || result.error === "paddle_error";
+    return {
+        tone: "error",
+        copy,
+        vars: result.error === "paddle_error" ? { code: result.code ?? "?" } : undefined,
+        hint: team && ours ? C.failureTeam : undefined,
+        technical: team && result.detail ? { stage: result.step ?? "server", message: result.detail } : undefined,
+        reference: EXPECTED_ERRORS.has(result.error) ? undefined : failureReference(result),
+    };
 }
 
 export default function PlansPage() {
@@ -240,6 +340,7 @@ export default function PlansPage() {
     const [failed, setFailed] = useState(false);
     const [busy, setBusy] = useState<string | null>(null);
     const [notice, setNotice] = useState<Notice>(null);
+    const noticeRef = useRef<HTMLDivElement>(null);
     const [period, setPeriod] = useState<BillingInterval>("month");
     const [change, setChange] = useState<{ plan: PaidPlanId; interval: BillingInterval; preview: PlanChangePreview | null; error: string } | null>(null);
     const [activating, setActivating] = useState<PaidPlanId | null>(null);
@@ -294,6 +395,25 @@ export default function PlansPage() {
         report({ stage: failure.stage, message: failure.message, blockedUrl: failure.blockedUrl });
     }, [diagnostics, report]);
 
+    /** Shows why a billing request failed; when our code never answered, the team hears about it from here. */
+    const showRequestFailure = useCallback((route: string, result: RequestFailure) => {
+        setNotice(failureNotice(result, diagnostics));
+        if (result.json) return; // The route logged and kept it itself.
+        const code = result.error === "network" ? "network" : result.status ? `http_${result.status}` : "timeout";
+        report({ stage: "request", code, message: `POST /api/paddle/${route}: ${result.status ? `HTTP ${result.status}` : result.error}, ${(result.ms / 1000).toFixed(1)} s` });
+    }, [diagnostics, report]);
+
+    /** A request that may simply be tried again (opening a checkout or the portal): once, after a short pause. */
+    const postWithRetry = async <T,>(url: string, body: unknown): Promise<RequestResult<T>> => {
+        const first = await postJson<T>(url, body);
+        if (first.ok || !retryable(first)) return first;
+        setNotice({ tone: "info", copy: C.retrying });
+        await new Promise((resolve) => window.setTimeout(resolve, RETRY_DELAY_MS));
+        const second = await postJson<T>(url, body);
+        if (second.ok) setNotice(null);
+        return second;
+    };
+
     // Paddle sends payment links (the default payment link, /plans?_ptxn=…); Paddle.js opens them itself.
     // Customers get Paddle.js right away too, so Paddle Retain can reach them (pwCustomer).
     const customerId = me?.paddleCustomerId ?? null;
@@ -328,6 +448,11 @@ export default function PlansPage() {
         });
         return () => onPaddleEvent(null);
     }, [diagnostics, report]);
+
+    // The notice sits above the plans; after a click lower down it may be out of sight.
+    useEffect(() => {
+        if (notice?.tone === "error") noticeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, [notice]);
 
     // After a checkout the webhook activates the plan within seconds: wait for it.
     useEffect(() => {
@@ -385,7 +510,7 @@ export default function PlansPage() {
             const waitlist = result.data.waitlist;
             setData((current) => (current?.me ? { ...current, me: { ...current.me, waitlist } } : current));
         } else {
-            setNotice({ tone: "error", copy: C.failed });
+            setNotice(result.ok ? { tone: "error", copy: C.failed } : failureNotice(result, diagnostics));
         }
         setBusy(null);
     };
@@ -394,9 +519,9 @@ export default function PlansPage() {
         if (!checkout) return;
         setBusy(`checkout:${plan}`);
         setNotice(null);
-        const result = await postJson<{ transactionId: string }>("/api/paddle/checkout", { plan, interval: intervalFor(plan) });
+        const result = await postWithRetry<{ transactionId: string }>("/api/paddle/checkout", { plan, interval: intervalFor(plan) });
         if (!result.ok) {
-            setNotice(failureNotice(result));
+            showRequestFailure("checkout", result);
             if (result.error === "already_subscribed") setReload((value) => value + 1);
             setBusy(null);
             return;
@@ -415,12 +540,12 @@ export default function PlansPage() {
     const openPortal = async (target: "overview" | "updatePayment" | "cancel") => {
         setBusy("portal");
         setNotice(null);
-        const result = await postJson<{ overview: string; updatePayment: string | null; cancel: string | null }>("/api/paddle/subscription", { action: "portal" });
+        const result = await postWithRetry<{ overview: string; updatePayment: string | null; cancel: string | null }>("/api/paddle/subscription", { action: "portal" });
         if (result.ok) {
             window.location.assign(result.data[target] ?? result.data.overview);
             return;
         }
-        setNotice(failureNotice(result));
+        showRequestFailure("subscription", result);
         setBusy(null);
     };
 
@@ -428,9 +553,19 @@ export default function PlansPage() {
         setBusy("keep");
         setNotice(null);
         const result = await postJson("/api/paddle/subscription", { action: "keep" });
-        setNotice(result.ok ? { tone: "success", copy: C.kept } : failureNotice(result));
-        if (result.ok) setReload((value) => value + 1);
+        if (result.ok) {
+            setNotice({ tone: "success", copy: C.kept });
+            setReload((value) => value + 1);
+        } else {
+            showRequestFailure("subscription", result);
+        }
         setBusy(null);
+    };
+
+    /** A failure as one sentence for the plan change dialog, with its error code. */
+    const failureText = (result: RequestFailure) => {
+        const failure = failureNotice(result, diagnostics);
+        return [tx(failure.copy, failure.vars), failure.reference ? tx(C.reference, { ref: failure.reference }) : ""].filter(Boolean).join(" ");
     };
 
     const openChange = async (plan: PaidPlanId) => {
@@ -441,8 +576,7 @@ export default function PlansPage() {
         setChange((current) => {
             if (!current || current.plan !== plan || current.interval !== interval) return current;
             if (result.ok) return { ...current, preview: result.data.preview };
-            const failure = failureNotice(result);
-            return { ...current, error: failure ? tx(failure.copy, failure.vars) : tx(C.failed) };
+            return { ...current, error: failureText(result) };
         });
     };
 
@@ -455,8 +589,7 @@ export default function PlansPage() {
             setChange(null);
             setReload((value) => value + 1);
         } else {
-            const failure = failureNotice(result);
-            setChange((current) => (current ? { ...current, error: failure ? tx(failure.copy, failure.vars) : tx(C.failed) } : current));
+            setChange((current) => (current ? { ...current, error: failureText(result) } : current));
         }
         setBusy(null);
     };
@@ -615,12 +748,13 @@ export default function PlansPage() {
                         </div>
                     ) : null}
                     {notice ? (
-                        <div role={notice.tone === "error" ? "alert" : "status"} className={`mx-auto mb-5 max-w-2xl rounded-2xl px-4 py-3 text-center text-[13.5px] font-semibold ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"}`}>
+                        <div ref={noticeRef} role={notice.tone === "error" ? "alert" : "status"} className={`mx-auto mb-5 max-w-2xl rounded-2xl px-4 py-3 text-center text-[13.5px] font-semibold ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"}`}>
                             <p className="flex items-center justify-center gap-2">
                                 {notice.tone === "success" ? <PartyPopper className="h-4 w-4 shrink-0" aria-hidden /> : null}{tx(notice.copy, notice.vars)}
                             </p>
                             {notice.hint ? <p className="mt-2 text-[12.5px] font-medium opacity-90">{tx(notice.hint)}</p> : null}
                             {notice.technical ? <p className="mt-2 break-all font-mono text-[11.5px] font-medium opacity-80">{tx(C.technical, notice.technical)}</p> : null}
+                            {notice.reference ? <p className="mt-1.5 break-all font-mono text-[11.5px] font-medium opacity-75" data-error-reference>{tx(C.reference, { ref: notice.reference })}</p> : null}
                         </div>
                     ) : null}
                     <div className="grid gap-5 md:grid-cols-3 md:items-stretch">

@@ -202,7 +202,7 @@ const C = {
     savedGame: { TR: "Oyun scripti güvenli proje alanına kaydedildi.", EN: "The game script was saved to the secure project storage." },
     saveFailed: { TR: "Proje buluta kaydedilemedi. Değişiklikleriniz açık sekmelerde korunuyor.", EN: "The project couldn't be saved to the cloud. Your changes are kept in the open tabs." },
     projectLimit: { TR: "Planının kod projesi sınırına ulaştın ({limit}). Eski bir projeyi silerek yer açabilir ya da planını yükseltebilirsin; değişiklikler açık sekmelerde korunuyor.", EN: "You've reached your plan's limit of {limit} code projects. Delete an old project or upgrade your plan; your changes are kept in the open tabs." },
-    seePlans: { TR: "Planlar", EN: "Plans" },
+    seePlans: { TR: "Fiyatlandırma", EN: "Pricing" },
     gameSaveFailed: { TR: "Oyun scripti kaydedilemedi; değişiklikler açık sekmede korunuyor.", EN: "The game script couldn't be saved; your changes are kept in the open tab." },
     gameLanguages: { TR: "Oyun scriptleri yalnızca C# veya C++ olabilir.", EN: "Game scripts can only be C# or C++." },
     gameLoadFailed: { TR: "Oyun scripti yüklenemedi.", EN: "The game script couldn't be loaded." },

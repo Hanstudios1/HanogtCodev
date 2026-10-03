@@ -450,7 +450,7 @@ export const PAGES: BookPage[] = [
                 ],
             },
             { type: "tip", title: { TR: "Bilge sözü", EN: "Words of the wise" }, text: { TR: "Hanogt AI hata yapabilir; önemli bilgileri doğrula ve gizli bilgi paylaşma.", EN: "Hanogt AI can make mistakes; double-check important facts and never share secrets." } },
-            { type: "link", href: "/plans", label: { TR: "Planlar", EN: "Plans" } },
+            { type: "link", href: "/plans", label: { TR: "Fiyatlandırma", EN: "Pricing" } },
         ],
     },
 
@@ -596,7 +596,7 @@ export const PAGES: BookPage[] = [
                 ],
             },
             { type: "p", text: { TR: "Yıllık ödemede 10 ayın ücreti alınır. Aboneliğini Planlar sayfasındaki \"Aboneliği yönet\"ten değiştirebilir ya da iptal edebilirsin; ilk ödemeden sonraki 14 gün içinde iade isteyebilirsin.", EN: "Yearly billing costs 10 months. Change or cancel your subscription with \"Manage subscription\" on the Plans page; you can ask for a refund within 14 days of the first payment." } },
-            { type: "link", href: "/plans", label: { TR: "Planlar", EN: "Plans" } },
+            { type: "link", href: "/plans", label: { TR: "Fiyatlandırma", EN: "Pricing" } },
             { type: "link", href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
         ],
     },

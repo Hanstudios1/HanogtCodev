@@ -11,6 +11,8 @@ import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security
 import { readJsonBody } from "@/lib/server/validate";
 
 export const runtime = "nodejs";
+// Paddle's localized prices (and, now and then, a subscription re-sync) on top of the database.
+export const maxDuration = 60;
 
 function json(payload: unknown, status = 200) {
     return NextResponse.json(payload, { status, headers: jsonSecurityHeaders({ "Cache-Control": "no-store" }) });

@@ -5,7 +5,9 @@ import {
     BILLING_INTERVALS,
     ENTITLED_STATUSES,
     PADDLE_CLIENT_ERRORS_MAX,
+    PADDLE_SERVER_ERRORS_MAX,
     PADDLE_STATUSES,
+    isBillingStep,
     isPaddleClientErrorStage,
     isPaddleId,
     normalizePaddleState,
@@ -15,6 +17,8 @@ import {
     type PaddleCheckoutConfig,
     type PaddleClientError,
     type PaddleEnvironment,
+    type BillingStep,
+    type PaddleServerError,
     type PaddlePriceView,
     type PaddleStatus,
     type PaddleSubscriptionState,
@@ -58,7 +62,8 @@ export class PaddleApiError extends Error {
     }
 }
 
-const REQUEST_TIMEOUT_MS = 10_000;
+/** Per request: a checkout makes up to three in a row and has to answer well within its time limit. */
+const REQUEST_TIMEOUT_MS = 8_000;
 
 export async function paddleRequest<T>(method: "GET" | "POST" | "PATCH", path: string, body?: unknown, config: PaddleConfig = getPaddleConfig()): Promise<T> {
     if (!config.apiKey) throw new PaddleApiError(0, "not_configured");
@@ -85,6 +90,9 @@ export async function paddleRequest<T>(method: "GET" | "POST" | "PATCH", path: s
         const detail = typeof payload?.error?.detail === "string" ? payload.error.detail.slice(0, 300) : "";
         throw new PaddleApiError(response.status, code, detail);
     }
+    // Every Paddle answer we use is a JSON object; anything else (an HTML error
+    // page from a proxy, an empty body) must not turn into a TypeError later.
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new PaddleApiError(response.status, "unexpected_response");
     return payload as T;
 }
 
@@ -316,12 +324,7 @@ export function normalizePaddleClientErrors(value: unknown): PaddleClientError[]
     }).slice(0, PADDLE_CLIENT_ERRORS_MAX);
 }
 
-/**
- * Puts a report first in site_config/paddle_status.clientErrors (the newest
- * ten are kept). Who sent it isn't stored. The list is read and written with
- * the document's update time as precondition, so concurrent reports and the
- * webhook's notes can't undo each other; a conflict means reading again.
- */
+/** Puts a report first in site_config/paddle_status.clientErrors (the newest ten are kept). Who sent it isn't stored. */
 export async function recordPaddleClientError(report: PaddleClientErrorReport & { browser: string }, now = new Date()): Promise<PaddleClientError> {
     const entry: PaddleClientError = {
         at: now.toISOString(),
@@ -332,19 +335,123 @@ export async function recordPaddleClientError(report: PaddleClientErrorReport & 
         browser: reportText(report.browser, 40) || "Other",
         environment: currentPaddleEnvironment(),
     };
+    await prependStatusEntry("clientErrors", entry, normalizePaddleClientErrors, PADDLE_CLIENT_ERRORS_MAX);
+    return entry;
+}
+
+/**
+ * Puts `entry` first in one list of site_config/paddle_status, keeping the
+ * newest `max`. Read and written with the document's update time as
+ * precondition, so concurrent reports and the webhook's notes can't undo each
+ * other; a conflict means reading again.
+ */
+async function prependStatusEntry<T>(field: "clientErrors" | "serverErrors", entry: T, normalize: (value: unknown) => T[], max: number) {
     for (let attempt = 1; ; attempt += 1) {
         const record = await getServerDocument<Record<string, unknown>>(PADDLE_STATUS_PATH);
-        const clientErrors = [entry, ...normalizePaddleClientErrors(record?.clientErrors)].slice(0, PADDLE_CLIENT_ERRORS_MAX);
+        const list = [entry, ...normalize(record?.[field])].slice(0, max);
         const write = record
-            ? { type: "update" as const, path: PADDLE_STATUS_PATH, data: { clientErrors }, updateFields: ["clientErrors"], ...(record._updateTime ? { updateTime: record._updateTime } : {}) }
-            : { type: "create" as const, path: PADDLE_STATUS_PATH, data: { clientErrors } };
+            ? { type: "update" as const, path: PADDLE_STATUS_PATH, data: { [field]: list }, updateFields: [field], ...(record._updateTime ? { updateTime: record._updateTime } : {}) }
+            : { type: "create" as const, path: PADDLE_STATUS_PATH, data: { [field]: list } };
         try {
             await commitServerMutations([write]);
-            return entry;
+            return;
         } catch (error) {
             if (!isWriteConflict(error) || attempt >= 4) throw error;
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Billing requests that failed on the server (checkout, subscription actions)
+// ---------------------------------------------------------------------------
+
+const ROUTE_NAME = /^[a-z][a-z:_]{0,39}$/;
+
+/** Paddle's explanation or an error message, fit for the panel: one line, no e-mail addresses, 200 characters. */
+export function failureDetail(value: unknown) {
+    return reportText(value, 200);
+}
+
+/** Stored failures read back, newest first; malformed entries are left out. */
+export function normalizePaddleServerErrors(value: unknown): PaddleServerError[] {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item): PaddleServerError[] => {
+        if (!item || typeof item !== "object") return [];
+        const entry = item as Record<string, unknown>;
+        const at = isoOrNull(entry.at);
+        const environment = entry.environment === "sandbox" || entry.environment === "production" ? entry.environment : null;
+        const status = Number(entry.status);
+        const code = typeof entry.code === "string" ? entry.code : "";
+        if (!at || !environment || !Number.isInteger(status) || status < 400 || status > 599 || !REPORT_CODE.test(code)) return [];
+        const paddleStatus = entry.paddleStatus === null || entry.paddleStatus === undefined ? null : Number(entry.paddleStatus);
+        const ms = Number(entry.ms);
+        return [{
+            at,
+            route: typeof entry.route === "string" && ROUTE_NAME.test(entry.route) ? entry.route : "checkout",
+            step: isBillingStep(entry.step) ? entry.step : null,
+            status,
+            paddleStatus: paddleStatus !== null && Number.isInteger(paddleStatus) && paddleStatus >= 0 && paddleStatus <= 599 ? paddleStatus : null,
+            code,
+            detail: failureDetail(entry.detail),
+            ms: Number.isFinite(ms) && ms >= 0 ? Math.min(Math.round(ms), 3_600_000) : 0,
+            environment,
+        }];
+    }).slice(0, PADDLE_SERVER_ERRORS_MAX);
+}
+
+/** A failure inside a billing route, with the step it happened in. */
+export class BillingStepError extends Error {
+    readonly step: BillingStep;
+    readonly original: unknown;
+    // No parameter properties: the plain-Node tests strip types and can't run them.
+    constructor(step: BillingStep, original: unknown) {
+        super(original instanceof Error ? original.message : String(original));
+        this.name = "BillingStepError";
+        this.step = step;
+        this.original = original;
+    }
+}
+
+/** Runs one step of a billing route; if it fails, the error names the step. */
+export async function billingStep<T>(step: BillingStep, run: () => Promise<T>): Promise<T> {
+    try {
+        return await run();
+    } catch (error) {
+        throw error instanceof BillingStepError ? error : new BillingStepError(step, error);
+    }
+}
+
+/** Steps that only read our database. */
+const DATABASE_STEPS: ReadonlySet<BillingStep> = new Set(["catalog", "settings", "subscription"]);
+
+export type BillingFailure = {
+    /** 502 when Paddle refused or couldn't be reached, 503 when our side failed. */
+    status: 502 | 503;
+    error: "paddle_error" | "unavailable";
+    step: BillingStep | null;
+    code: string;
+    paddleStatus: number | null;
+    detail: string;
+};
+
+/** What went wrong in a billing route, in the terms the Plans page and Admin › Subscriptions use. */
+export function describeBillingFailure(error: unknown): BillingFailure {
+    const step = error instanceof BillingStepError ? error.step : null;
+    const cause = error instanceof BillingStepError ? error.original : error;
+    if (cause instanceof PaddleApiError) {
+        return { status: 502, error: "paddle_error", step, code: cause.code, paddleStatus: cause.status, detail: failureDetail(cause.detail || cause.message) };
+    }
+    const message = cause instanceof Error ? cause.message : String(cause);
+    const database = (step !== null && DATABASE_STEPS.has(step)) || /^(?:Firestore|Firebase)\b/.test(message);
+    return { status: 503, error: "unavailable", step, code: database ? "database_error" : "internal_error", paddleStatus: null, detail: failureDetail(message) };
+}
+
+/** Puts a failure first in site_config/paddle_status.serverErrors (the newest ten are kept); whose request it was isn't stored. */
+export async function recordPaddleServerError(failure: Omit<PaddleServerError, "at" | "environment">, now = new Date()): Promise<PaddleServerError> {
+    const [entry] = normalizePaddleServerErrors([{ ...failure, at: now.toISOString(), environment: currentPaddleEnvironment() }]);
+    if (!entry) throw new Error("Invalid billing failure.");
+    await prependStatusEntry("serverErrors", entry, normalizePaddleServerErrors, PADDLE_SERVER_ERRORS_MAX);
+    return entry;
 }
 
 // ---------------------------------------------------------------------------

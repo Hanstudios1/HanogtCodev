@@ -232,9 +232,11 @@ export type PlanChangePreview = {
  * report it (POST /api/paddle/client-error): Paddle.js never arrived
  * (blocked), ran without its instance (missing), failed to start (init) or to
  * open the checkout (open), or Paddle's checkout itself reported an error
- * (checkout.error, checkout.failed, checkout.payment.error).
+ * (checkout.error, checkout.failed, checkout.payment.error). "request": the
+ * page's own call to a billing route got no answer from our code (the network
+ * or an extension stopped it, or Vercel answered instead, e.g. a 504 timeout).
  */
-export const PADDLE_CLIENT_ERROR_STAGES = ["blocked", "missing", "init", "open", "checkout_error", "checkout_failed", "payment_error"] as const;
+export const PADDLE_CLIENT_ERROR_STAGES = ["blocked", "missing", "init", "open", "checkout_error", "checkout_failed", "payment_error", "request"] as const;
 export type PaddleClientErrorStage = (typeof PADDLE_CLIENT_ERROR_STAGES)[number];
 
 export function isPaddleClientErrorStage(value: unknown): value is PaddleClientErrorStage {
@@ -255,6 +257,41 @@ export type PaddleClientError = {
     code: string | null;
     /** Browser and major version from the User-Agent, e.g. "Chrome 141". */
     browser: string;
+    environment: PaddleEnvironment;
+};
+
+/**
+ * What a billing route (POST /api/paddle/checkout, /api/paddle/subscription)
+ * was doing when it failed: reading the plan catalog, the Paddle settings or
+ * the account's subscription record, finding the Paddle customer, creating
+ * the checkout's transaction, or one of the subscription actions.
+ */
+export const BILLING_STEPS = ["catalog", "settings", "subscription", "customer", "transaction", "portal", "preview", "change", "keep"] as const;
+export type BillingStep = (typeof BILLING_STEPS)[number];
+
+export function isBillingStep(value: unknown): value is BillingStep {
+    return typeof value === "string" && (BILLING_STEPS as readonly string[]).includes(value);
+}
+
+/** The newest failures kept in site_config/paddle_status.serverErrors. */
+export const PADDLE_SERVER_ERRORS_MAX = 10;
+
+/** One failed billing request as the server saw it (nothing in it says whose it was). */
+export type PaddleServerError = {
+    at: string;
+    /** "checkout" or "subscription:<action>". */
+    route: string;
+    step: BillingStep | null;
+    /** What the route answered: 502 when Paddle failed, 503 for our side. */
+    status: number;
+    /** Paddle's HTTP status (0: Paddle wasn't reached); null when Paddle wasn't the problem. */
+    paddleStatus: number | null;
+    /** Paddle's error code ("timeout", "network_error" and "unexpected_response" included), "database_error" or "internal_error". */
+    code: string;
+    /** Paddle's explanation or our error message, on one line without e-mail addresses. */
+    detail: string;
+    /** How long the request had been running. */
+    ms: number;
     environment: PaddleEnvironment;
 };
 

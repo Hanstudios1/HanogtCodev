@@ -1,6 +1,6 @@
 import type { Copy } from "@/lib/i18n";
 
-export type NavIcon = "news" | "arcade" | "engine" | "media" | "guide" | "dashboard" | "security" | "groups" | "friends" | "messages" | "about" | "feedback" | "docs" | "ai" | "admin";
+export type NavIcon = "news" | "arcade" | "engine" | "media" | "guide" | "dashboard" | "security" | "groups" | "friends" | "messages" | "about" | "feedback" | "docs" | "ai" | "admin" | "pricing";
 
 export interface NavItem {
     href: string;
@@ -27,6 +27,7 @@ export const NAV_LABELS = {
     friends: { TR: "Arkadaşlar", EN: "Friends", RU: "Друзья", AZ: "Dostlar", ES: "Amigos", KZ: "Достар", JP: "フレンド", CN: "好友", KR: "친구", HI: "मित्र", DE: "Freunde", NG: "Padi dem", FR: "Amis", BE: "Vrienden", NL: "Vrienden", PL: "Znajomi", NO: "Venner", FI: "Ystävät", SV: "Vänner", EL: "Φίλοι", AR: "الأصدقاء", PT: "Amigos", IT: "Amici", UK: "Друзі", ID: "Teman", VI: "Bạn bè", CS: "Přátelé", RO: "Prieteni", HU: "Ismerősök", UZ: "Doʻstlar" },
     messages: { TR: "Mesajlar", EN: "Messages", RU: "Сообщения", AZ: "Mesajlar", ES: "Mensajes", KZ: "Хабарламалар", JP: "メッセージ", CN: "消息", KR: "메시지", HI: "संदेश", DE: "Nachrichten", NG: "Messages", FR: "Messages", BE: "Berichten", NL: "Berichten", PL: "Wiadomości", NO: "Meldinger", FI: "Viestit", SV: "Meddelanden", EL: "Μηνύματα", AR: "الرسائل", PT: "Mensagens", IT: "Messaggi", UK: "Повідомлення", ID: "Pesan", VI: "Tin nhắn", CS: "Zprávy", RO: "Mesaje", HU: "Üzenetek", UZ: "Xabarlar" },
     social: { TR: "Hanogt Social", EN: "Hanogt Social" },
+    pricing: { TR: "Fiyatlandırma", EN: "Pricing", RU: "Цены", AZ: "Qiymətlər", ES: "Precios", KZ: "Бағалар", JP: "料金", CN: "价格", KR: "요금", HI: "मूल्य", DE: "Preise", NG: "Pricing", FR: "Tarifs", BE: "Prijzen", NL: "Prijzen", PL: "Cennik", NO: "Priser", FI: "Hinnat", SV: "Priser", EL: "Τιμές", AR: "الأسعار", PT: "Preços", IT: "Prezzi", UK: "Ціни", ID: "Harga", VI: "Bảng giá", CS: "Ceník", RO: "Prețuri", HU: "Árak", UZ: "Narxlar" },
     docs: { TR: "Motor Belgeleri", EN: "Engine Docs", RU: "Документация движка", AZ: "Mühərrik sənədləri", ES: "Documentación del motor", KZ: "Қозғалтқыш құжаттары", JP: "エンジンドキュメント", CN: "引擎文档", KR: "엔진 문서", HI: "इंजन दस्तावेज़", DE: "Engine-Doku", NG: "Engine Docs", FR: "Docs du moteur", BE: "Engine-docs", NL: "Engine-docs", PL: "Dokumentacja silnika", NO: "Motordokumentasjon", FI: "Moottorin ohjeet", SV: "Motordokumentation", EL: "Τεκμηρίωση μηχανής", AR: "وثائق المحرك", PT: "Documentação do motor", IT: "Documentazione del motore", UK: "Документація рушія", ID: "Dokumentasi mesin", VI: "Tài liệu công cụ", CS: "Dokumentace enginu", RO: "Documentația motorului", HU: "Motordokumentáció", UZ: "Dvigatel hujjatlari" },
     whatsNew: { TR: "Yenilikler", EN: "What's new", RU: "Что нового", AZ: "Yeniliklər", ES: "Novedades", KZ: "Жаңалықтар", JP: "新機能", CN: "更新内容", KR: "새로운 기능", HI: "नया क्या है", DE: "Neuigkeiten", NG: "Wetin new", FR: "Nouveautés", BE: "Wat is er nieuw", NL: "Wat is er nieuw", PL: "Co nowego", NO: "Nyheter i appen", FI: "Uutta", SV: "Nyheter i appen", EL: "Τι νέο υπάρχει", AR: "ما الجديد", PT: "Novidades", IT: "Novità", UK: "Що нового", ID: "Yang baru", VI: "Có gì mới", CS: "Co je nového", RO: "Noutăți", HU: "Újdonságok", UZ: "Nima yangi" },
     menu: { TR: "Menü", EN: "Menu", RU: "Меню", AZ: "Menyu", ES: "Menú", KZ: "Мәзір", JP: "メニュー", CN: "菜单", KR: "메뉴", HI: "मेनू", DE: "Menü", NG: "Menu", FR: "Menu", BE: "Menu", NL: "Menu", PL: "Menu", NO: "Meny", FI: "Valikko", SV: "Meny", EL: "Μενού", AR: "القائمة", PT: "Menu", IT: "Menu", UK: "Меню", ID: "Menu", VI: "Menu", CS: "Nabídka", RO: "Meniu", HU: "Menü", UZ: "Menyu" },
@@ -46,6 +47,7 @@ export const PRIMARY_NAV: NavItem[] = [
     { href: "/game-engine", icon: "engine", label: NAV_LABELS.engine, descKey: "nd_engine" },
     { href: "/media", icon: "media", label: NAV_LABELS.media, descKey: "nd_media" },
     { href: "/guide", icon: "guide", label: NAV_LABELS.guide, descKey: "nd_guide" },
+    { href: "/plans", icon: "pricing", label: NAV_LABELS.pricing, desc: { TR: "Ücretsiz, Plus ve Pro: özellikler ve fiyatlar", EN: "Free, Plus and Pro: features and prices" } },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [

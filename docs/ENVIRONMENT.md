@@ -280,6 +280,27 @@ that nothing (a proxy, Vercel's firewall) replaces the client address.
   testers and sandbox visitors also see the technical detail on the page. The
   CSP allows `https://*.paddle.com` and Paddle Retain (`public.profitwell.com`,
   `*.profitwell.com`).
+- If the Plans page says a checkout (or another subscription action) failed,
+  the notice ends with an error code line, e.g.
+  `Hata kodu: unavailable/database_error · HTTP 503 · subscription · 2.1 s`:
+  the route's error and code, the HTTP status, Paddle's status when Paddle was
+  called, the step (`catalog`, `settings`, `subscription`, `customer`,
+  `transaction`, `portal`, `preview`, `change`, `keep`) and how long it took.
+  The routes log the same line (`[paddle:checkout]` in the Vercel logs) and
+  keep the newest ten under "Son sunucu hataları" in the Paddle card, with
+  Paddle's explanation or our error message (never the account). Codes:
+  `timeout`/`network_error` (Paddle didn't answer in 8 s / couldn't be
+  reached), `unexpected_response` (Paddle's answer wasn't JSON), Paddle's own
+  codes (e.g. `forbidden`: the API key lacks a permission),
+  `database_error` (a Firestore read or write failed: quota, permissions or an
+  outage; see Cloud Health) and `internal_error` (look the time up in the
+  Vercel logs). When no answer from our code arrives at all (`timeout · HTTP
+  504` is Vercel's time limit, `network` a dropped connection or a browser
+  extension), the browser reports it as stage `request` under "Son ödeme
+  ekranı hataları". Failures on the way (no answer, 5xx, a Paddle timeout) are
+  retried once by the page before anything is shown; the checkout route allows
+  10 attempts a minute per account and the billing routes may run 60 seconds
+  (`maxDuration`).
 
 ## Administration
 

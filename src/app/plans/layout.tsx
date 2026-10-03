@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Planlar",
+    title: "Fiyatlandırma",
     description: "Hanogt Codev planları: Ücretsiz, Plus ve Pro. Daha yüksek Hanogt AI sınırları ve destek taleplerinde öncelik; ödemeler Paddle.com üzerinden güvenle alınır.",
     alternates: { canonical: "/plans" },
 };

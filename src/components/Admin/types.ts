@@ -513,6 +513,9 @@ export type AdminPaddleClientTokenCheck = {
 /** A checkout failure a browser reported (site_config/paddle_status.clientErrors); nothing about who reported it. */
 export type AdminPaddleClientError = import("@/lib/paddle").PaddleClientError;
 
+/** A billing request that failed on the server (site_config/paddle_status.serverErrors); nothing about whose it was. */
+export type AdminPaddleServerError = import("@/lib/paddle").PaddleServerError;
+
 /** GET /api/admin/paddle (and the answer to its POST actions, except resync and syncCoupon). */
 export type AdminPaddleResponse = {
     /** Which variables are set (never their values). */
@@ -544,6 +547,8 @@ export type AdminPaddleResponse = {
     clientTokenCheck: AdminPaddleClientTokenCheck | null;
     /** The newest checkout failures browsers reported (at most ten), newest first. */
     clientErrors: AdminPaddleClientError[];
+    /** The newest billing requests that failed on the server (at most ten), newest first. */
+    serverErrors: AdminPaddleServerError[];
     /** Addresses to enter in Paddle. */
     urls: { webhook: string; paymentLink: string };
     unlinked: AdminPaddleUnlinked[];

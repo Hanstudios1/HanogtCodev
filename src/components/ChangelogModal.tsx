@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.2",
+        version: "v0.3.2",
+        date: "2026-10-03",
+        title: { TR: "Fiyatlandırma üst menüde; ödeme başlatılamazsa nedeni", EN: "Pricing in the top menu; when a checkout can't start, the reason" },
+        desc: { TR: "Planlar sayfası artık \"İşlem tamamlanamadı\" demekle kalmıyor: geçici sorunlarda kendiliğinden bir kez daha deniyor, olmazsa nedenini ve bir hata kodunu gösteriyor.", EN: "The Plans page no longer just says \"That didn't work\": it tries once more by itself after a passing problem and otherwise shows the reason with an error code." },
+        items: [
+            { TR: "Planlar sayfası artık üst menüde ve adı Fiyatlandırma. Üst menü sığmadığı pencerelerde yazıları iki satıra kaydırmak yerine menü düğmesine geçiyor.", EN: "The Plans page is now in the top menu, named Pricing. Where the top menu doesn't fit, it turns into the menu button instead of breaking labels onto two lines." },
+            { TR: "Bağlantı kopması, sunucunun ya da Paddle'ın geç yanıt vermesi gibi geçici sorunlarda ödeme ekranı bir kez daha denenerek açılıyor.", EN: "After a passing problem such as a dropped connection or a slow server or Paddle, the checkout is tried once more and opens." },
+            { TR: "Hata mesajları nedeni söylüyor: sunucuya ulaşılamadı (bağlantı, reklam engelleyici, VPN), sunucu zamanında yanıt vermedi, Paddle yanıt vermiyor ya da veritabanına ulaşılamadı.", EN: "Error messages name the cause: the server couldn't be reached (connection, ad blocker, VPN), the server didn't answer in time, Paddle isn't responding or the database couldn't be reached." },
+            { TR: "Her hatanın altında bir \"Hata kodu\" satırı var; destek talebine eklersen sorunu hemen buluruz.", EN: "Every error ends with an \"Error code\" line; add it to a support ticket and we'll find the problem right away." },
+        ],
+    },
+    {
         id: "v0.3.1",
         version: "v0.3.1",
         date: "2026-10-03",

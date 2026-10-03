@@ -607,7 +607,8 @@ test("client error reports: known stages, one clean line, https addresses and Pa
     assert.equal(report({ stage: "blocked", blockedUrl: "https://user:secret@cdn.paddle.com/x" }).blockedUrl, "https://cdn.paddle.com/x", "credentials in an address are dropped");
     assert.equal(report({ stage: "checkout_error", code: "transaction_not_found" }).code, "transaction_not_found");
     for (const code of ["bad-code", "a b", "x".repeat(81), "", 7]) assert.equal(report({ stage: "checkout_error", code }).code, null, String(code));
-    for (const stage of ["blocked", "missing", "init", "open", "checkout_error", "checkout_failed", "payment_error"]) assert.equal(report({ stage }).stage, stage);
+    for (const stage of ["blocked", "missing", "init", "open", "checkout_error", "checkout_failed", "payment_error", "request"]) assert.equal(report({ stage }).stage, stage);
+    assert.deepEqual(report({ stage: "request", code: "http_504", message: "POST /api/paddle/checkout: HTTP 504, 10.0 s" }), { stage: "request", message: "POST /api/paddle/checkout: HTTP 504, 10.0 s", blockedUrl: null, code: "http_504" }, "a request the server never answered");
 });
 
 test("browser labels: family and major version from the User-Agent", () => {
@@ -690,5 +691,103 @@ test("client errors: a concurrent write means reading again, and junk entries ar
         assert.equal(stored.lastEventType, "transaction.completed", "the other write survives");
         assert.deepEqual(stored.clientErrors.map((entry) => entry.message), ["no instance", "kept"]);
         assert.deepEqual(stored.clientErrors[1], { at: new Date(NOW).toISOString(), stage: "open", message: "kept", blockedUrl: null, code: null, browser: "Other", environment: "production" });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Failed billing requests: what went wrong, where, and the list for the team
+// ---------------------------------------------------------------------------
+
+test("Paddle answers that aren't JSON and timeouts become Paddle errors, not crashes", async () => {
+    const answers = [
+        () => new Response("<html><body>Bad gateway</body></html>", { status: 200, headers: { "Content-Type": "text/html" } }),
+        () => new Response("", { status: 201 }),
+        () => json(200, ["not", "an", "object"]),
+        () => { throw Object.assign(new Error("The operation was aborted due to timeout"), { name: "TimeoutError" }); },
+        () => { throw new TypeError("fetch failed"); },
+        () => new Response("<html>502</html>", { status: 502, headers: { "Content-Type": "text/html" } }),
+    ];
+    const expected = [[200, "unexpected_response"], [201, "unexpected_response"], [200, "unexpected_response"], [0, "timeout"], [0, "network_error"], [502, "http_error"]];
+    for (const [index, answer] of answers.entries()) {
+        await withBackend(baseSeed(), { route: async () => answer() }, async () => {
+            await assert.rejects(
+                paddle.createCheckoutTransaction({ email: ALI, plan: "plus", priceId: PRICES.plusMonth, customerId: CUSTOMER }),
+                (error) => error instanceof paddle.PaddleApiError && error.status === expected[index][0] && error.code === expected[index][1],
+                `answer ${index}`,
+            );
+        });
+    }
+});
+
+test("billing failures name the step: Paddle, the database or our own code", async () => {
+    const failed = async (step, error) => {
+        let caught = null;
+        await paddle.billingStep(step, async () => { throw error; }).catch((wrapped) => { caught = wrapped; });
+        assert.ok(caught instanceof paddle.BillingStepError, "the error names its step");
+        return paddle.describeBillingFailure(caught);
+    };
+    assert.deepEqual(await failed("transaction", new paddle.PaddleApiError(503, "internal_error", `Paddle had a hiccup creating a transaction for ${ALI}`)), {
+        status: 502, error: "paddle_error", step: "transaction", code: "internal_error", paddleStatus: 503, detail: "Paddle had a hiccup creating a transaction for [e-mail]",
+    });
+    assert.deepEqual(await failed("transaction", new paddle.PaddleApiError(0, "timeout")), {
+        status: 502, error: "paddle_error", step: "transaction", code: "timeout", paddleStatus: 0, detail: "Paddle API network timeout",
+    }, "without Paddle's words the message says what happened");
+    assert.deepEqual(await failed("subscription", new Error("Firestore okuma hatası (429).")), {
+        status: 503, error: "unavailable", step: "subscription", code: "database_error", paddleStatus: null, detail: "Firestore okuma hatası (429).",
+    });
+    assert.equal((await failed("catalog", new TypeError("fetch failed"))).code, "database_error", "the catalog only lives in the database");
+    assert.equal((await failed("customer", new Error("Firebase erişim belirteci alınamadı (HTTP 400)."))).code, "database_error");
+    assert.equal((await failed("customer", new TypeError("Cannot read properties of null (reading 'data')"))).code, "internal_error");
+    const long = await failed("transaction", new Error(`${"x".repeat(300)}\nsecond line`));
+    assert.equal(long.detail.length, 200, "one line of 200 characters at most");
+    assert.equal((await failed("transaction", "plain text")).detail, "plain text");
+
+    // The innermost step wins; errors outside any step have none.
+    const nested = await paddle.billingStep("customer", () => paddle.billingStep("transaction", async () => { throw new paddle.PaddleApiError(400, "invalid_field"); })).catch((error) => error);
+    assert.equal(paddle.describeBillingFailure(nested).step, "transaction");
+    assert.deepEqual(paddle.describeBillingFailure(new Error("boom")), { status: 503, error: "unavailable", step: null, code: "internal_error", paddleStatus: null, detail: "boom" });
+    assert.equal(await paddle.billingStep("settings", async () => 42), 42, "a step that works returns its value");
+});
+
+test("server errors: newest first, ten at most, nothing about the account, the other lists kept", async () => {
+    const commits = [];
+    const browserReport = { at: new Date(NOW).toISOString(), stage: "blocked", message: "kept", blockedUrl: null, code: null, browser: "Chrome 141", environment: "sandbox" };
+    const seed = { [STATUS_PATH]: { lastEventType: "subscription.created", clientErrors: [browserReport] } };
+    await withBackend(seed, { onCommit: (writes) => commits.push(writes) }, async (db) => {
+        for (let index = 1; index <= 12; index += 1) {
+            await paddle.recordPaddleServerError({ route: "checkout", step: "transaction", status: 502, paddleStatus: 0, code: "timeout", detail: `attempt ${index} for ${ALI}`, ms: 8_000 + index }, new Date(NOW + index * 1_000));
+        }
+        const stored = db.get(STATUS_PATH);
+        assert.equal(stored.lastEventType, "subscription.created");
+        assert.deepEqual(stored.clientErrors, [browserReport], "the browsers' list is untouched");
+        assert.equal(stored.serverErrors.length, 10);
+        assert.deepEqual(stored.serverErrors.map((entry) => entry.ms), [8012, 8011, 8010, 8009, 8008, 8007, 8006, 8005, 8004, 8003], "newest first; the two oldest dropped");
+        assert.deepEqual(stored.serverErrors[0], {
+            at: new Date(NOW + 12_000).toISOString(), route: "checkout", step: "transaction", status: 502, paddleStatus: 0, code: "timeout", detail: "attempt 12 for [e-mail]", ms: 8012, environment: "sandbox",
+        });
+        assert.equal(JSON.stringify(stored.serverErrors).includes("ali"), false, "nothing about whose request it was");
+        for (const writes of commits) {
+            assert.deepEqual(writes[0].updateMask.fieldPaths, ["serverErrors"]);
+            assert.ok(writes[0].currentDocument?.updateTime, "written against the version that was read");
+        }
+        const read = await (await load("lib/server/paddle-admin.ts")).readPaddleStatus();
+        assert.equal(read.serverErrors.length, 10);
+        assert.equal(read.clientErrors.length, 1);
+    });
+
+    const junk = [
+        { at: "yesterday", route: "checkout", step: "customer", status: 503, code: "database_error", environment: "sandbox" },
+        { at: new Date(NOW).toISOString(), route: "checkout", step: "customer", status: 200, code: "database_error", environment: "sandbox" },
+        { at: new Date(NOW).toISOString(), route: "checkout", step: "customer", status: 503, code: "Bad Code", environment: "sandbox" },
+        { at: new Date(NOW).toISOString(), route: "checkout", step: "customer", status: 503, code: "database_error", environment: "mars" },
+        "not an entry",
+        { at: new Date(NOW).toISOString(), route: "<script>", step: "exploded", status: 503, paddleStatus: "x", code: "database_error", detail: 42, ms: -5, environment: "production" },
+    ];
+    await withBackend({ [STATUS_PATH]: { serverErrors: junk } }, {}, async (db) => {
+        await paddle.recordPaddleServerError({ route: "subscription:portal", step: "portal", status: 502, paddleStatus: 403, code: "forbidden", detail: "", ms: 321 }, new Date(NOW + 60_000));
+        const stored = db.get(STATUS_PATH).serverErrors;
+        assert.deepEqual(stored.map((entry) => entry.route), ["subscription:portal", "checkout"], "junk entries are dropped");
+        assert.deepEqual(stored[1], { at: new Date(NOW).toISOString(), route: "checkout", step: null, status: 503, paddleStatus: null, code: "database_error", detail: "", ms: 0, environment: "production" });
+        await assert.rejects(paddle.recordPaddleServerError({ route: "checkout", step: null, status: 200, paddleStatus: null, code: "ok", detail: "", ms: 1 }), /Invalid billing failure/);
     });
 });

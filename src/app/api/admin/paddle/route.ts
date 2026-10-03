@@ -89,7 +89,7 @@ async function overview(origin: string, owner: boolean): Promise<AdminPaddleResp
         // Whether Paddle.js can start with the client-side token at all (cached for ten minutes).
         checkClientToken(config).catch(() => null),
     ]);
-    const { clientErrors, ...status } = statusRecord;
+    const { clientErrors, serverErrors, ...status } = statusRecord;
     const settings = normalizePaddleSettings(settingsRecord, config.environment);
     const environmentSettings = (environment: PaddleEnvironment) => {
         const scoped = normalizePaddleSettings(settingsRecord, environment);
@@ -121,6 +121,7 @@ async function overview(origin: string, owner: boolean): Promise<AdminPaddleResp
         status,
         clientTokenCheck,
         clientErrors,
+        serverErrors,
         urls: { webhook: `${origin}/api/paddle/webhook`, paymentLink: `${origin}/plans` },
         unlinked,
         legal,

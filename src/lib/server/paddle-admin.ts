@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import type { AdminErrorCode, AdminPaddleCatalogReport, AdminPaddleClientTokenCheck, AdminPaddlePrice, AdminPaddleUnlinked, AdminUserPlanResponse } from "@/components/Admin/types";
-import { BILLING_INTERVALS, isPaddleId, type BillingInterval, type PaddleClientError, type PaddleEnvironment } from "@/lib/paddle";
+import { BILLING_INTERVALS, isPaddleId, type BillingInterval, type PaddleClientError, type PaddleEnvironment, type PaddleServerError } from "@/lib/paddle";
 import { PAID_PLAN_IDS, PLAN_COPY, aiLimitsFor, effectivePlan, planSource, type PaidPlanId } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, runServerQuery } from "./firebase-rest";
 import {
@@ -17,6 +17,7 @@ import {
     getPaddleSettings,
     intervalOf,
     normalizePaddleClientErrors,
+    normalizePaddleServerErrors,
     normalizePaddleSettings,
     paddleDashboardUrl,
     paddleRequest,
@@ -322,10 +323,13 @@ export type PaddleWebhookStatus = {
     lastRejectedReason: string | null;
 };
 
-/** site_config/paddle_status: the webhook's notes and the checkout failures browsers reported (newest first). */
-export type PaddleStatusRecord = PaddleWebhookStatus & { clientErrors: PaddleClientError[] };
+/**
+ * site_config/paddle_status: the webhook's notes, the checkout failures
+ * browsers reported and the billing requests that failed on the server (newest first).
+ */
+export type PaddleStatusRecord = PaddleWebhookStatus & { clientErrors: PaddleClientError[]; serverErrors: PaddleServerError[] };
 
-export const EMPTY_WEBHOOK_STATUS: PaddleStatusRecord = { lastEventAt: null, lastEventType: null, lastRejectedAt: null, lastRejectedReason: null, clientErrors: [] };
+export const EMPTY_WEBHOOK_STATUS: PaddleStatusRecord = { lastEventAt: null, lastEventType: null, lastRejectedAt: null, lastRejectedReason: null, clientErrors: [], serverErrors: [] };
 
 export async function readPaddleStatus(): Promise<PaddleStatusRecord> {
     const record = await getServerDocument<Record<string, unknown>>(PADDLE_STATUS_PATH);
@@ -335,6 +339,7 @@ export async function readPaddleStatus(): Promise<PaddleStatusRecord> {
         lastRejectedAt: isoOrNull(record?.lastRejectedAt),
         lastRejectedReason: text(record?.lastRejectedReason, 40) || null,
         clientErrors: normalizePaddleClientErrors(record?.clientErrors),
+        serverErrors: normalizePaddleServerErrors(record?.serverErrors),
     };
 }
 

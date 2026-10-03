@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import {
     Bell, BookOpen, Bot, Boxes, ChevronDown, ChevronLeft, ChevronRight, FileCode, Gamepad2, Gauge, LayoutDashboard, LogOut, Menu, MessageSquare, Newspaper, Radio,
-    Settings, ShieldCheck, Sparkles, Users, UsersRound, X, type LucideIcon,
+    Settings, ShieldCheck, Sparkles, Tag, Users, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -40,6 +40,7 @@ export const NAV_ICONS: Record<NavIcon, LucideIcon> = {
     docs: FileCode,
     ai: Bot,
     admin: Gauge,
+    pricing: Tag,
 };
 
 const C = {
@@ -116,6 +117,13 @@ export default function Header() {
     const statusViewRef = useRef<HTMLDivElement>(null);
     const statusRowRef = useRef<HTMLButtonElement>(null);
     const bellRef = useRef<HTMLButtonElement>(null);
+    const navRef = useRef<HTMLElement>(null);
+    const navListRef = useRef<HTMLDivElement>(null);
+    const menuButtonRef = useRef<HTMLButtonElement>(null);
+    // The menu bar shows when all of it fits on one line between the logo and
+    // the controls; how wide it is depends on the language. Otherwise the menu
+    // button takes over, as on phones.
+    const [navFits, setNavFits] = useState(true);
     const { scrollYProgress } = useScroll();
     const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
     // The header reflects the NextAuth cookie right away; waiting for the Firebase
@@ -144,6 +152,26 @@ export default function Header() {
         const onState = (event: Event) => setAiOpen(Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open));
         window.addEventListener("hanogt:ai-state", onState);
         return () => window.removeEventListener("hanogt:ai-state", onState);
+    }, []);
+
+    useEffect(() => {
+        const nav = navRef.current;
+        const list = navListRef.current;
+        if (!nav || !list || typeof ResizeObserver === "undefined") return;
+        // Observing reports the sizes right away, and again whenever the space or the labels change.
+        const observer = new ResizeObserver(() => {
+            if (getComputedStyle(nav).display === "none") return; // Below lg the menu button shows anyway.
+            // While the menu button shows, the bar would also get its place.
+            const button = menuButtonRef.current;
+            const buttonSpace = button && getComputedStyle(button).display !== "none" ? button.offsetWidth + (parseFloat(getComputedStyle(button.parentElement ?? button).columnGap) || 0) : 0;
+            // offsetWidth: the list's own width (w-max), not the active pill's animation.
+            const fits = list.offsetWidth <= nav.clientWidth + buttonSpace + 1;
+            setNavFits(fits);
+            if (fits) setMenuOpen(false);
+        });
+        observer.observe(nav);
+        observer.observe(list);
+        return () => observer.disconnect();
     }, []);
 
     useEffect(() => {
@@ -228,24 +256,24 @@ export default function Header() {
                         </span>
                     </Link>
 
-                    <nav className="mx-auto hidden items-center gap-0.5 lg:flex" aria-label={t("hd_main_nav")}>
-                        {primary.map((item) => {
-                            const Icon = NAV_ICONS[item.icon];
-                            const active = isActivePath(pathname, item.href);
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    aria-current={active ? "page" : undefined}
-                                    className={`relative flex h-9 items-center gap-1.5 rounded-xl px-3 text-[13.5px] font-semibold transition-colors ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
-                                >
-                                    {active ? <motion.span layoutId="nav-active" className="absolute inset-0 rounded-xl bg-zinc-900/[0.06] ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.08] dark:ring-white/10" transition={{ type: "spring", stiffness: 420, damping: 36 }} /> : null}
-                                    <Icon className="relative hidden h-4 w-4 xl:block" />
-                                    <span className="relative">{tx(item.label)}</span>
-                                    {item.live ? <span className="relative ms-0.5 flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" /></span> : null}
-                                </Link>
-                            );
-                        })}
+                    <nav ref={navRef} className={`hidden min-w-0 flex-1 justify-center overflow-hidden lg:flex ${navFits ? "" : "invisible"}`} aria-label={t("hd_main_nav")}>
+                        <div ref={navListRef} className="flex w-max items-center gap-0.5">
+                            {primary.map((item) => {
+                                const active = isActivePath(pathname, item.href);
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        aria-current={active ? "page" : undefined}
+                                        className={`relative flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13.5px] font-semibold transition-colors ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
+                                    >
+                                        {active ? <motion.span layoutId="nav-active" className="absolute inset-0 rounded-xl bg-zinc-900/[0.06] ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.08] dark:ring-white/10" transition={{ type: "spring", stiffness: 420, damping: 36 }} /> : null}
+                                        <span className="relative">{tx(item.label)}</span>
+                                        {item.live ? <span className="relative ms-0.5 flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" /></span> : null}
+                                    </Link>
+                                );
+                            })}
+                        </div>
                     </nav>
 
                     <div className="ms-auto flex items-center gap-1 sm:gap-1.5 lg:ms-0">
@@ -381,9 +409,10 @@ export default function Header() {
                         )}
 
                         <button
+                            ref={menuButtonRef}
                             type="button"
                             onClick={() => setMenuOpen((value) => !value)}
-                            className="grid h-9 w-9 place-items-center rounded-xl text-zinc-700 transition hover:bg-zinc-900/5 lg:hidden dark:text-zinc-200 dark:hover:bg-white/10"
+                            className={`grid h-9 w-9 place-items-center rounded-xl text-zinc-700 transition hover:bg-zinc-900/5 dark:text-zinc-200 dark:hover:bg-white/10 ${navFits ? "lg:hidden" : ""}`}
                             aria-expanded={menuOpen}
                             aria-controls="mobile-menu"
                             aria-label={tx(NAV_LABELS.menu)}
@@ -403,7 +432,7 @@ export default function Header() {
                 {menuOpen ? (
                     <motion.div
                         id="mobile-menu"
-                        className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-white/95 backdrop-blur-xl lg:hidden dark:bg-zinc-950/95"
+                        className={`fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-white/95 backdrop-blur-xl dark:bg-zinc-950/95 ${navFits ? "lg:hidden" : ""}`}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}

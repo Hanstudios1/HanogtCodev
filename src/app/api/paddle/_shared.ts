@@ -1,8 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import type { BillingErrorCode } from "@/lib/paddle";
 import { getActiveSession } from "@/lib/server/active-session";
+import { getStaffSession } from "@/lib/server/admin";
 import { isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
-import { PaddleApiError, getPaddleConfig, isPaddleConfigured } from "@/lib/server/paddle";
+import { describeBillingFailure, getPaddleConfig, isBillingTester, isPaddleConfigured, recordPaddleServerError } from "@/lib/server/paddle";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 
@@ -14,14 +15,28 @@ export function billingError(status: number, error: BillingErrorCode, extra: Rec
     return billingJson({ error, ...extra }, status);
 }
 
-/** Paddle refused or couldn't be reached; the code helps support without exposing anything secret. */
-export function paddleFailure(error: unknown, context: string) {
-    if (error instanceof PaddleApiError) {
-        console.error(`[paddle:${context}]`, error.status || "network", error.code);
-        return billingError(502, "paddle_error", { code: error.code });
-    }
-    console.error(`[paddle:${context}]`, error instanceof Error ? error.message : error);
-    return billingError(503, "unavailable");
+/**
+ * The answer of a billing route that failed: Paddle refused or couldn't be
+ * reached (502 paddle_error), or our side failed (503 unavailable, code
+ * database_error or internal_error). It names the step (billingStep) and how
+ * long the request ran, so the Plans page can tell people more than "try
+ * again"; the team (staff, testers, anyone in the sandbox) also gets the
+ * detail. The failure is logged and kept for Admin › Subscriptions.
+ */
+export async function billingFailure(error: unknown, context: { route: string; email: string; startedAt: number }) {
+    const failure = describeBillingFailure(error);
+    const ms = Date.now() - context.startedAt;
+    console.error(`[paddle:${context.route}]`, failure.step ?? "-", failure.paddleStatus ?? failure.status, failure.code, `${ms}ms`, failure.detail);
+    after(() => recordPaddleServerError({ route: context.route, step: failure.step, status: failure.status, paddleStatus: failure.paddleStatus, code: failure.code, detail: failure.detail, ms })
+        .catch((recordError: unknown) => console.error("[paddle:server-error]", recordError instanceof Error ? recordError.message : recordError)));
+    const reveal = getPaddleConfig().environment === "sandbox" || isBillingTester(context.email, Boolean(await getStaffSession().catch(() => null)));
+    return billingError(failure.status, failure.error, {
+        code: failure.code,
+        step: failure.step,
+        ...(failure.paddleStatus === null ? {} : { paddleStatus: failure.paddleStatus }),
+        ms,
+        ...(reveal && failure.detail ? { detail: failure.detail } : {}),
+    });
 }
 
 /**

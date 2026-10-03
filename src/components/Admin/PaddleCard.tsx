@@ -28,7 +28,7 @@ import {
 import { useState, type FormEvent } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { DEFAULT_BRAND, OPERATOR_LIMITS, isOperatorPublished } from "@/lib/legal-info";
-import { BILLING_INTERVALS, PADDLE_STATUSES, currencyDigits, formatMoney, type BillingInterval, type PaddleClientErrorStage, type PaddleEnvironment, type PaddleStatus } from "@/lib/paddle";
+import { BILLING_INTERVALS, PADDLE_STATUSES, currencyDigits, formatMoney, type BillingInterval, type BillingStep, type PaddleClientErrorStage, type PaddleEnvironment, type PaddleStatus } from "@/lib/paddle";
 import { PAID_PLAN_IDS, PLAN_COPY, type PaidPlanId, type PlanCatalog } from "@/lib/plans";
 import { adminPost, type ApiFailure } from "./api";
 import { COMMON, PADDLE_ENVIRONMENT_COPY, PADDLE_STATUS_COPY } from "./copy";
@@ -40,6 +40,7 @@ import type {
     AdminPaddleClientTokenCheck,
     AdminPaddlePrice,
     AdminPaddleResponse,
+    AdminPaddleServerError,
     AdminPaddleUnlinked,
     AdminPaddleWarning,
 } from "./types";
@@ -181,6 +182,18 @@ const C = {
     openPlans: { TR: "Planlar sayfasını yeni sekmede aç", EN: "Open the Plans page in a new tab" },
     blockedAddress: { TR: "Engellenen adres: {url}", EN: "Blocked address: {url}" },
     errorCode: { TR: "Paddle kodu: {code}", EN: "Paddle code: {code}" },
+    // Billing requests that failed on the server
+    serverTitle: { TR: "Son sunucu hataları", EN: "Recent server errors" },
+    serverDescription: { TR: "Ödeme ve abonelik isteklerinin sunucuda başarısız olduğu anlar", EN: "When checkout and subscription requests failed on the server" },
+    serverHint: { TR: "En yeni 10 kayıt tutulur. Kimin isteği olduğu saklanmaz; yalnızca istek, adım, HTTP durumu, kod, süre ve ayrıntı. Planlar sayfasındaki \"Hata kodu\" satırı da aynı bilgiyi gösterir.", EN: "The newest 10 are kept. Whose request it was isn't stored; only the request, step, HTTP status, code, duration and detail. The \"Error code\" line on the Plans page shows the same." },
+    serverEmpty: { TR: "Sunucuda başarısız olan bir ödeme isteği yok.", EN: "No billing request has failed on the server." },
+    serverEmptyHint: { TR: "Bir ödeme isteği sunucuda başarısız olursa hangi adımda ve neden olduğu burada görünür.", EN: "If a billing request fails on the server, the step and the reason show up here." },
+    serverLine: { TR: "HTTP {status} · {code} · {seconds} sn", EN: "HTTP {status} · {code} · {seconds} s" },
+    paddleAnswered: { TR: "Paddle'ın yanıtı: HTTP {status}", EN: "Paddle answered: HTTP {status}" },
+    paddleUnreached: { TR: "Paddle'a ulaşılamadı", EN: "Paddle wasn't reached" },
+    routeCheckout: { TR: "Ödeme başlatma", EN: "Starting a checkout" },
+    routeSubscription: { TR: "Abonelik işlemi: {action}", EN: "Subscription action: {action}" },
+    stepUnknown: { TR: "Adım bilinmiyor", EN: "Unknown step" },
 
     // Business details
     legalTitle: { TR: "İşletme bilgileri", EN: "Business details" },
@@ -255,6 +268,35 @@ const CLIENT_ERROR_STAGES: Record<PaddleClientErrorStage, { label: Copy; tone: T
     checkout_error: { label: { TR: "Ödeme ekranı hatası", EN: "Checkout error" }, tone: "red" },
     checkout_failed: { label: { TR: "Ödeme ekranı başarısız", EN: "Checkout failed" }, tone: "red" },
     payment_error: { label: { TR: "Ödeme hatası", EN: "Payment error" }, tone: "zinc" },
+    request: {
+        label: { TR: "İstek yanıtsız kaldı", EN: "Request got no answer" },
+        tone: "amber",
+        hint: { TR: "Tarayıcının ödeme isteğine kodumuz yanıt veremedi. http_504: Vercel isteği süre sınırında kesti (aynı anda \"Son sunucu hataları\"nda kayıt yoksa sunucu Paddle'ı ya da veritabanını beklerken kesilmiştir). network: istek sunucuya ulaşmadı (bağlantı, reklam engelleyici, VPN).", EN: "Our code couldn't answer the browser's billing request. http_504: Vercel cut the request at its time limit (with nothing under \"Recent server errors\" at that moment, the server was waiting on Paddle or the database). network: the request never reached the server (connection, ad blocker, VPN)." },
+    },
+};
+
+/** What a failed billing route was doing (site_config/paddle_status.serverErrors). */
+const SERVER_STEPS: Record<BillingStep, Copy> = {
+    catalog: { TR: "Plan kataloğu okunurken", EN: "Reading the plan catalog" },
+    settings: { TR: "Paddle ayarları okunurken", EN: "Reading the Paddle settings" },
+    subscription: { TR: "Abonelik kaydı okunurken", EN: "Reading the subscription record" },
+    customer: { TR: "Paddle müşterisi bulunurken", EN: "Finding the Paddle customer" },
+    transaction: { TR: "Ödeme işlemi oluşturulurken", EN: "Creating the checkout transaction" },
+    portal: { TR: "Müşteri portalı açılırken", EN: "Opening the customer portal" },
+    preview: { TR: "Plan değişikliği hesaplanırken", EN: "Previewing the plan change" },
+    change: { TR: "Plan değiştirilirken", EN: "Changing the plan" },
+    keep: { TR: "İptal geri alınırken", EN: "Undoing the cancellation" },
+};
+
+/** What the usual codes of a failed billing request mean. */
+const SERVER_CODE_HINTS: Record<string, Copy> = {
+    timeout: { TR: "Paddle 8 saniye içinde yanıt vermedi. Paddle'ın durum sayfasına bakın; Planlar sayfası bir kez kendiliğinden yeniden dener.", EN: "Paddle didn't answer within 8 seconds. Check Paddle's status page; the Plans page retries once by itself." },
+    network_error: { TR: "Sunucu Paddle'a bağlanamadı (DNS ya da ağ).", EN: "The server couldn't connect to Paddle (DNS or network)." },
+    unexpected_response: { TR: "Paddle beklenmedik bir yanıt verdi (JSON değil).", EN: "Paddle gave an unexpected answer (not JSON)." },
+    database_error: { TR: "Firestore isteği başarısız oldu: günlük kota dolmuş, hizmet hesabının yetkisi eksik ya da kısa bir kesinti olabilir. Bulut Sağlığı sekmesine bakın.", EN: "A Firestore request failed: the daily quota may be used up, the service account may lack permission, or there may be a brief outage. See the Cloud Health tab." },
+    internal_error: { TR: "Sunucu kodunda beklenmedik bir hata. Ayrıntı ve saatle Vercel günlüklerinde arayın.", EN: "An unexpected error in the server code. Search the Vercel logs with the detail and the time." },
+    customer_linked_elsewhere: { TR: "Bu e-postanın Paddle müşterisi başka bir hesaba bağlı.", EN: "The Paddle customer of this e-mail is linked to another account." },
+    forbidden: { TR: "API anahtarının bu işlem için izni yok; Paddle'da anahtarın izinlerine bakın.", EN: "The API key isn't allowed to do this; check the key's permissions in Paddle." },
 };
 
 const ENV_VARIABLES: Array<{ name: string; note: Copy }> = [
@@ -498,6 +540,52 @@ function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleRespons
                     <li>{tx(C.step5)}</li>
                 </ol>
             </details>
+        </Panel>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Billing requests that failed on the server
+// ---------------------------------------------------------------------------
+
+function ServerErrorRow({ entry }: { entry: AdminPaddleServerError }) {
+    const { tx, locale } = useI18n();
+    const when = useWhen();
+    const [route, action] = entry.route.split(":");
+    const seconds = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(entry.ms / 1000);
+    const hint = SERVER_CODE_HINTS[entry.code];
+    return (
+        <li className="py-3">
+            <div className="flex flex-wrap items-center gap-2">
+                <Badge tone={entry.status === 502 ? "amber" : "red"}>{entry.step ? tx(SERVER_STEPS[entry.step]) : tx(C.stepUnknown)}</Badge>
+                <PaddleEnvironmentBadge environment={entry.environment} />
+                <time dateTime={entry.at} title={formatDateTime(entry.at, locale)} className="text-[12px] text-zinc-500">{when(entry.at)}</time>
+                <span className="text-[12px] text-zinc-500">{route === "subscription" && action ? tx(C.routeSubscription, { action }) : tx(C.routeCheckout)}</span>
+            </div>
+            <p className="mt-1.5 font-mono text-[12px] font-semibold text-zinc-800 dark:text-zinc-100" dir="ltr">{tx(C.serverLine, { status: entry.status, code: entry.code, seconds })}</p>
+            {entry.paddleStatus !== null ? <p className="mt-0.5 text-[12px] text-zinc-500">{entry.paddleStatus ? tx(C.paddleAnswered, { status: entry.paddleStatus }) : tx(C.paddleUnreached)}</p> : null}
+            {entry.detail ? <p className="mt-1 break-all font-mono text-[12px] text-zinc-700 dark:text-zinc-200" dir="ltr">{entry.detail}</p> : null}
+            {hint ? <p className="mt-1 text-[12px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(hint)}</p> : null}
+        </li>
+    );
+}
+
+function ServerErrorsPanel({ errors }: { errors: AdminPaddleServerError[] }) {
+    const { tx } = useI18n();
+    return (
+        <Panel title={tx(C.serverTitle)} description={tx(C.serverDescription)} icon={AlertTriangle} actions={errors.length ? <Badge tone="red">{errors.length}</Badge> : undefined}>
+            <p className="text-[12.5px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(C.serverHint)}</p>
+            {errors.length === 0 ? (
+                <div className="mt-3 flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-zinc-200 px-4 py-6 text-center dark:border-white/10">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-500" aria-hidden="true" />
+                    <p className="text-[13px] font-bold text-zinc-800 dark:text-zinc-100">{tx(C.serverEmpty)}</p>
+                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.serverEmptyHint)}</p>
+                </div>
+            ) : (
+                <ul className="mt-2 divide-y divide-zinc-100 dark:divide-white/[0.06]">
+                    {errors.map((entry, index) => <ServerErrorRow key={`${entry.at}-${index}`} entry={entry} />)}
+                </ul>
+            )}
         </Panel>
     );
 }
@@ -1142,6 +1230,7 @@ export default function PaddleCard({ resource, catalog }: { resource: AdminResou
         <div className="space-y-6">
             {resource.error ? <ErrorNotice error={resource.error} onRetry={resource.reload} /> : null}
             <ConnectionPanel data={data} loading={resource.loading} onReload={resource.reload} />
+            <ServerErrorsPanel errors={data.serverErrors ?? []} />
             <ClientErrorsPanel errors={data.clientErrors ?? []} />
             <SalesPanel data={data} catalog={catalog} onChanged={replace} />
             <LegalPanel key={data.legal.updatedAt ?? "new"} data={data} onSaved={replace} />

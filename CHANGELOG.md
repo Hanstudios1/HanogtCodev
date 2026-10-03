@@ -1,5 +1,41 @@
 # Değişiklik Günlüğü
 
+## 0.3.2 — 2026-10-03
+
+### Fiyatlandırma üst menüde
+
+- Planlar sayfası artık üst menüde (masaüstü çubuğu ve mobil menü) ve adı
+  "Fiyatlandırma" (EN "Pricing"); alt bilgi, kılavuz ve Hanogt AI'nın
+  bağlantıları da bu adla gösteriyor. Adres aynı: `/plans`.
+- Üst menü çubuğu tek satıra sığmadığında (dar pencere ya da uzun etiketli
+  bir dil) yazıları iki satıra kaydırmak yerine menü düğmesine geçiyor
+  (ResizeObserver); çubuktaki simgeler kaldırıldı, mobil menüde duruyor.
+
+### Planlar: "İşlem tamamlanamadı" yerine nedeni ve bir yeniden deneme
+
+- Ödeme başlatma isteği yolda başarısız olursa (yanıt gelmedi, 5xx, Paddle 8
+  saniyede yanıt vermedi) Planlar sayfası kullanıcıya bir şey göstermeden önce
+  bir kez daha deniyor. Ödeme isteği sınırı dakikada 6'dan 10'a çıktı (bu
+  yeniden denemeyle 5 tıklama ediyor).
+- Hata mesajları ayrıldı: sunucuya ulaşılamadı (bağlantı, reklam engelleyici,
+  VPN), sunucu zamanında yanıt vermedi (Vercel 504), Paddle yanıt vermiyor /
+  isteği kabul etmedi, veritabanına ulaşılamadı, sayfayı yenile. Her hatanın
+  altında bir "Hata kodu" satırı var (ör. `unavailable/database_error · HTTP
+  503 · subscription · 2.1 s`); ekip, test kullanıcıları ve sandbox teknik
+  ayrıntıyı da görüyor. Bant görünür alana kaydırılıyor.
+- `/api/paddle/checkout` ve `/api/paddle/subscription` hatayı adımıyla
+  (`catalog`, `settings`, `subscription`, `customer`, `transaction`, `portal`,
+  `preview`, `change`, `keep`), HTTP durumuyla, Paddle'ın durumuyla ve
+  süresiyle yanıtlıyor, günlüğe yazıyor ve son 10 hatayı
+  `site_config/paddle_status.serverErrors`'a kimliksiz kaydediyor; Yönetici
+  Paneli › Abonelikler › Paddle "Son sunucu hataları"nı gösteriyor. Sunucu
+  kodumuza hiç ulaşmayan istekleri (Vercel 504, ağ) tarayıcı `request`
+  aşamasıyla bildiriyor.
+- Paddle'ın JSON olmayan başarılı yanıtı artık `unexpected_response` Paddle
+  hatası (önceden TypeError'a ve genel mesaja düşüyordu); Paddle istek zaman
+  aşımı 8 saniye; ödeme, abonelik ve plan rotaları 60 saniyeye kadar
+  çalışabiliyor (`maxDuration`).
+
 ## 0.3.1 — 2026-10-03
 
 ### Sesli arama: ses iki yönde de gidiyor
