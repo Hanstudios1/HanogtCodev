@@ -325,11 +325,13 @@ const SERVER_STEPS: Record<BillingStep, Copy> = {
     coupon: { TR: "Kupon okunurken", EN: "Reading the coupon" },
     discount: { TR: "Kuponun Paddle indirimi hazırlanırken", EN: "Preparing the coupon's Paddle discount" },
     customer: { TR: "Paddle müşterisi bulunurken", EN: "Finding the Paddle customer" },
+    check: { TR: "Müşterinin mevcut abonelikleri denetlenirken", EN: "Checking the customer's existing subscriptions" },
     transaction: { TR: "Ödeme işlemi oluşturulurken", EN: "Creating the checkout transaction" },
     portal: { TR: "Müşteri portalı açılırken", EN: "Opening the customer portal" },
     preview: { TR: "Plan değişikliği hesaplanırken", EN: "Previewing the plan change" },
     change: { TR: "Plan değiştirilirken", EN: "Changing the plan" },
     keep: { TR: "İptal geri alınırken", EN: "Undoing the cancellation" },
+    resume: { TR: "Duraklatılmış abonelik sürdürülürken", EN: "Resuming the paused subscription" },
     sync: { TR: "Ödeme Paddle'a sorulurken", EN: "Asking Paddle about the payment" },
 };
 
@@ -341,6 +343,9 @@ const SERVER_CODE_HINTS: Record<string, Copy> = {
     database_error: { TR: "Firestore isteği başarısız oldu: günlük kota dolmuş, hizmet hesabının yetkisi eksik ya da kısa bir kesinti olabilir. Bulut Sağlığı sekmesine bakın.", EN: "A Firestore request failed: the daily quota may be used up, the service account may lack permission, or there may be a brief outage. See the Cloud Health tab." },
     internal_error: { TR: "Sunucu kodunda beklenmedik bir hata. Ayrıntı ve saatle Vercel günlüklerinde arayın.", EN: "An unexpected error in the server code. Search the Vercel logs with the detail and the time." },
     customer_linked_elsewhere: { TR: "Bu e-postanın Paddle müşterisi başka bir hesaba bağlı.", EN: "The Paddle customer of this e-mail is linked to another account." },
+    customer_unverified: { TR: "Paddle'da bu e-postayla eşlenmemiş bir müşteri var ve hesabın e-postası doğrulanmamış (şifreyle kayıt). Kişi bir kez Google ile giriş yapınca bağlanır; ya da \"Eşleşmeyen abonelikler\"den elle bağlayın.", EN: "Paddle has an unlinked customer with this e-mail and the account's address isn't verified (password sign-up). It links once the person signs in with Google; or link it by hand under \"Unlinked subscriptions\"." },
+    subscription_payment_declined: { TR: "Paddle kayıtlı ödeme yöntemiyle ücreti alamadı (kart reddedildi).", EN: "Paddle couldn't charge the saved payment method (card declined)." },
+    subscription_trialing_items_update_invalid_options: { TR: "Deneme süresindeki abonelik yalnızca ücretsiz (do_not_bill) değiştirilebilir; bu sürümle düzeltildi.", EN: "A subscription in its trial can only be changed without billing (do_not_bill); fixed in this version." },
     transaction_default_checkout_url_not_set: { TR: "Paddle'da varsayılan ödeme bağlantısı tanımlı değil: Paddle › Checkout › Checkout settings › Default payment link alanına Planlar sayfasının adresini (yukarıda) girin; sandbox ve canlı hesapta ayrı ayrı.", EN: "No default payment link is set in Paddle: enter the Plans page address (above) under Paddle › Checkout › Checkout settings › Default payment link, separately for sandbox and live." },
     transaction_checkout_url_domain_is_not_approved: { TR: "Ödeme bağlantısının alan adı Paddle'da onaylı değil: Paddle › Checkout › Request domain approval.", EN: "The payment link's domain isn't approved in Paddle: Paddle › Checkout › Request domain approval." },
     transaction_checkout_not_enabled: { TR: "Bu Paddle hesabında ödeme ekranı henüz açılmamış; Paddle'daki hesap doğrulamasını (onboarding) tamamlayın.", EN: "Checkout isn't enabled on this Paddle account yet; finish Paddle's account verification (onboarding)." },

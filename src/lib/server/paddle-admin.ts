@@ -587,8 +587,11 @@ export async function linkSubscription(subscriptionId: string, email: string): P
 }
 
 /**
- * Asks Paddle for the subscriptions of the account's customer and stores the
- * most relevant one (active before paused before ended). Returns how many
+ * Asks Paddle for the subscriptions of the account's customer and brings the
+ * record up to date: the stored subscription is always re-read (it may have
+ * ended or changed), then the most relevant one (rankCandidates: one that
+ * unlocks a plan, the higher plan, then by status) is offered too, and
+ * storeSubscriptionState keeps whichever unlocks a plan. Returns how many
  * Paddle has; 0 when the account has no Paddle customer in this environment.
  */
 export async function resyncAccount(email: string): Promise<number> {
@@ -598,10 +601,13 @@ export async function resyncAccount(email: string): Promise<number> {
     if (!customerId) return 0;
     if (!(await accountExists(email))) throw new PaddleAdminError("user_not_found");
     const found = await customerSubscriptions(customerId);
-    if (!found.length) return 0;
+    const storedId = subscription.paddle?.customerId === customerId ? subscription.paddle.subscriptionId : null;
+    if (!found.length && !storedId) return 0;
     // Records from before the customer link existed: without it the subscription would count as unknown.
     if (!(await getServerDocument(customerPath(customerId)))) await rememberCustomer(customerId, email, "staff");
-    await syncSubscription(found[0].id, { entity: found[0] });
+    if (storedId) await syncSubscription(storedId, { entity: found.find((entity) => entity.id === storedId) });
+    const [best] = found;
+    if (best && best.id !== storedId) await syncSubscription(best.id, { entity: best });
     return found.length;
 }
 

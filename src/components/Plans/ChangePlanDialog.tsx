@@ -13,6 +13,9 @@ const C = {
     year: { TR: "Yıllık", EN: "Yearly" },
     loading: { TR: "Tutar hesaplanıyor…", EN: "Working out the amount…" },
     charge: { TR: "Bugün {amount} tahsil edilecek. Bu, mevcut dönemin kalan günleri için iki plan arasındaki farktır.", EN: "{amount} will be charged today: the difference between the two plans for the rest of the current period." },
+    chargePeriod: { TR: "Bugün {amount} tahsil edilecek: yeni ödeme dönemi bugün başlar ve mevcut dönemin kullanılmamış kısmı bu tutardan düşülür.", EN: "{amount} will be charged today: the new billing period starts today and the unused part of your current period is taken off." },
+    trial: { TR: "Deneme süren devam ediyor; şimdi ücret alınmaz. İlk ödeme yeni plan üzerinden alınır.", EN: "Your free trial continues and nothing is charged now. The first payment is for the new plan." },
+    scheduledEnd: { TR: "Planlanmış iptalin geçerli kalır: aboneliğin {date} tarihinde sona erer. Devam etmesini istersen önce \"Vazgeç, aboneliğim devam etsin\"e bas.", EN: "Your scheduled cancellation stays: your subscription ends on {date}. To keep it going, first press \"Undo, keep my subscription\"." },
     credit: { TR: "Hesabına {amount} alacak eklenecek ve sonraki ödemelerinden düşülecek.", EN: "{amount} will be credited to your account and taken off your next payments." },
     none: { TR: "Şimdi ek bir ödeme yok.", EN: "There's nothing to pay now." },
     next: { TR: "Sonraki ödeme: {date} · {amount}", EN: "Next payment: {date} · {amount}" },
@@ -25,12 +28,14 @@ const C = {
 export type PlanChoice = { name: string; interval: BillingInterval };
 
 /** Shows what switching plans costs now (Paddle's prorated preview) before the person confirms. */
-export default function ChangePlanDialog({ from, to, preview, error, busy, onConfirm, onClose }: {
+export default function ChangePlanDialog({ from, to, preview, error, busy, endsAt = null, onConfirm, onClose }: {
     from: PlanChoice;
     to: PlanChoice;
     preview: PlanChangePreview | null;
     error: string;
     busy: boolean;
+    /** A cancellation the person scheduled: it stays in place after the change. */
+    endsAt?: string | null;
     onConfirm: () => void;
     onClose: () => void;
 }) {
@@ -38,15 +43,20 @@ export default function ChangePlanDialog({ from, to, preview, error, busy, onCon
     const titleId = useId();
     const confirmRef = useRef<HTMLButtonElement>(null);
     const closeRef = useRef<HTMLButtonElement>(null);
+    // The page passes a new onClose on every render; reading it through a ref keeps focus where it is.
+    const latest = useRef({ busy, onClose });
+    useEffect(() => {
+        latest.current = { busy, onClose };
+    });
 
     useEffect(() => {
         closeRef.current?.focus();
         const onKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape" && !busy) onClose();
+            if (event.key === "Escape" && !latest.current.busy) latest.current.onClose();
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-    }, [busy, onClose]);
+    }, []);
 
     useEffect(() => {
         if (preview) confirmRef.current?.focus();
@@ -86,14 +96,17 @@ export default function ChangePlanDialog({ from, to, preview, error, busy, onCon
                     {preview ? (
                         <>
                             <p>
-                                {preview.result === "charge"
-                                    ? tx(C.charge, { amount: money(preview.amount, preview.currency) })
-                                    : preview.result === "credit"
-                                        ? tx(C.credit, { amount: money(preview.amount, preview.currency) })
-                                        : tx(C.none)}
+                                {preview.trialing
+                                    ? tx(C.trial)
+                                    : preview.result === "charge"
+                                        ? tx(from.interval === to.interval ? C.charge : C.chargePeriod, { amount: money(preview.amount, preview.currency) })
+                                        : preview.result === "credit"
+                                            ? tx(C.credit, { amount: money(preview.amount, preview.currency) })
+                                            : tx(C.none)}
                             </p>
                             {preview.nextBilledAt && preview.nextAmount ? <p className="mt-2 text-[13px] text-zinc-500">{tx(C.next, { date: date(preview.nextBilledAt), amount: money(preview.nextAmount, preview.currency) })}</p> : null}
                             <p className="mt-2 text-[13px] text-zinc-500">{tx(C.immediate)}</p>
+                            {endsAt ? <p className="mt-2 text-[13px] font-semibold text-amber-700 dark:text-amber-300">{tx(C.scheduledEnd, { date: date(endsAt) })}</p> : null}
                         </>
                     ) : error ? null : (
                         <p className="flex items-center gap-2 text-zinc-500"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx(C.loading)}</p>

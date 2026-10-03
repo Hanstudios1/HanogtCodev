@@ -100,8 +100,20 @@ function createPaddle({ subscriptions = [], customers = [], down = false, ips } 
                 Object.assign(entry, { status: "canceled", canceled_at: iso(0), scheduled_change: null, updated_at: iso(60_000) });
                 return json(200, { data: entry });
             }
+            if (parts[2] === "resume" && method === "POST") {
+                if (entry.status !== "paused") return error(400, "subscription_not_paused");
+                if (body?.on_resume === "continue_existing_billing_period" && Date.parse(entry.current_billing_period?.ends_at ?? "") <= NOW) return error(400, "subscription_resume_period_ended");
+                Object.assign(entry, { status: "active", paused_at: null, updated_at: iso(90_000) });
+                if (body?.on_resume !== "continue_existing_billing_period") entry.current_billing_period = { starts_at: iso(0), ends_at: iso(30 * DAY) };
+                return json(200, { data: entry });
+            }
+            // Paddle refuses anything but do_not_bill for a subscription in its trial.
+            if (method === "PATCH" && body?.items && entry.status === "trialing" && body.proration_billing_mode !== "do_not_bill") {
+                return error(400, "subscription_trialing_items_update_invalid_options");
+            }
             if (parts[2] === "preview" && method === "PATCH") {
-                return json(200, { data: { ...entry, next_billed_at: iso(30 * DAY), update_summary: { result: { action: "charge", amount: "12345", currency_code: "TRY" } }, next_transaction: { details: { totals: { grand_total: "49900" } } } } });
+                const trial = body.proration_billing_mode === "do_not_bill";
+                return json(200, { data: { ...entry, next_billed_at: iso(30 * DAY), update_summary: { result: { action: "charge", amount: trial ? "0" : "12345", currency_code: "TRY" } }, next_transaction: { details: { totals: { grand_total: "49900" } } } } });
             }
             if (method === "PATCH") {
                 if ("scheduled_change" in body) entry.scheduled_change = body.scheduled_change;
@@ -117,9 +129,14 @@ function createPaddle({ subscriptions = [], customers = [], down = false, ips } 
             }
             return json(200, { data: entry });
         }
+        if (parts[0] === "customers" && parts.length === 2 && method === "GET") {
+            const entry = state.customers.find((customer) => customer.id === parts[1]);
+            return entry ? json(200, { data: entry }) : error(404, "entity_not_found");
+        }
         if (parts[0] === "customers" && parts.length === 1 && method === "GET") {
             const email = url.searchParams.get("email");
-            return json(200, { data: state.customers.filter((entry) => entry.email === email) });
+            // `hidden`: created by another request a moment ago, not in the search results yet.
+            return json(200, { data: state.customers.filter((entry) => entry.email === email && !entry.hidden) });
         }
         if (parts[0] === "customers" && parts.length === 1 && method === "POST") {
             const existing = state.customers.find((entry) => entry.email === body.email);
@@ -372,9 +389,14 @@ test("unrelated events are ignored", async () => {
 // ---------------------------------------------------------------------------
 
 test("checkout: the account's own customer and signed custom data", async () => {
+    // Paddle already has a customer with Ali's address that no account is linked to: only a verified address may claim it.
     await withPaddle(baseSeed(), { customers: [{ id: CUSTOMER, email: ALI }] }, async (db, api) => {
-        const customerId = await paddle.ensureCustomer(ALI, null);
-        assert.equal(customerId, CUSTOMER, "an existing Paddle customer is reused");
+        await assert.rejects(paddle.ensureCustomer(ALI, null, { verified: false }), (error) => error.code === "customer_unverified");
+        assert.equal(db.get(`paddle_customers/${CUSTOMER}`) ?? null, null, "nothing linked");
+        assert.equal(paddle.billingAnswer(new paddle.PaddleApiError(409, "customer_unverified")).error, "customer_unverified");
+        const { customerId, created } = await paddle.ensureCustomer(ALI, null, { verified: true });
+        assert.equal(customerId, CUSTOMER, "an existing Paddle customer is reused once the address is verified");
+        assert.equal(created, false);
         assert.equal(db.get(`paddle_customers/${CUSTOMER}`).email, ALI);
         assert.equal(db.get(`subscriptions/${ALI}`).paddleCustomerId, CUSTOMER);
         const { transactionId } = await paddle.createCheckoutTransaction({ email: ALI, plan: "pro", priceId: PRICES.proYear, customerId });
@@ -383,20 +405,77 @@ test("checkout: the account's own customer and signed custom data", async () => 
         assert.deepEqual(call.body.items, [{ price_id: PRICES.proYear, quantity: 1 }]);
         assert.equal(call.body.customer_id, CUSTOMER);
         assert.deepEqual(paddle.verifyAccountLink(call.body.custom_data), { email: ALI, plan: "pro" });
+        // Linked now: an unverified sign-in of the same account keeps using it.
+        assert.deepEqual(await paddle.ensureCustomer(ALI, CUSTOMER, { verified: false }), { customerId: CUSTOMER, created: false });
     });
 
     await withPaddle(baseSeed(), {}, async (db, api) => {
-        const created = await paddle.ensureCustomer(ALI, null);
-        assert.match(created, /^ctm_01new/);
+        const fresh = await paddle.ensureCustomer(ALI, null, { verified: false });
+        assert.match(fresh.customerId, /^ctm_01new/);
+        assert.equal(fresh.created, true, "a customer we create needs no verified address");
         assert.equal(api.calls.filter((call) => call.method === "POST" && call.path === "/customers").length, 1);
-        assert.equal(await paddle.ensureCustomer(ALI, created), created, "a known customer needs no API call");
+        assert.deepEqual(await paddle.ensureCustomer(ALI, fresh.customerId, { verified: false }), { customerId: fresh.customerId, created: false }, "a known customer needs no API call");
         assert.equal(api.calls.length, 2);
     });
 
     const taken = { ...baseSeed(), [`paddle_customers/${CUSTOMER}`]: { email: "eve@example.com" } };
     await withPaddle(taken, { customers: [{ id: CUSTOMER, email: ALI }] }, async () => {
-        await assert.rejects(paddle.ensureCustomer(ALI, null), (error) => error.code === "customer_linked_elsewhere");
+        await assert.rejects(paddle.ensureCustomer(ALI, null, { verified: true }), (error) => error.code === "customer_linked_elsewhere");
+        assert.deepEqual(paddle.billingAnswer(new paddle.PaddleApiError(409, "customer_linked_elsewhere")), { status: 409, error: "customer_conflict" });
+        // The account still names it (staff linked it to Eve since): it isn't used for Ali.
+        await assert.rejects(paddle.ensureCustomer(ALI, CUSTOMER, { verified: true }), (error) => error.code === "customer_linked_elsewhere");
     });
+
+    // A deleted account's customer (a tombstone) isn't taken over by a new password sign-up with the same address.
+    const tombstone = { ...baseSeed(), [`paddle_customers/${CUSTOMER}`]: { deleted: true, deletedAt: new Date(NOW) } };
+    await withPaddle(tombstone, { customers: [{ id: CUSTOMER, email: ALI }] }, async (db) => {
+        await assert.rejects(paddle.ensureCustomer(ALI, CUSTOMER, { verified: false }), (error) => error.code === "customer_unverified");
+        assert.equal((await paddle.ensureCustomer(ALI, CUSTOMER, { verified: true })).customerId, CUSTOMER);
+        assert.equal(db.get(`paddle_customers/${CUSTOMER}`).deleted, false);
+    });
+
+    // Our record names the customer but its link was never written: the link is restored, no Paddle call.
+    await withPaddle(baseSeed(), {}, async (db, api) => {
+        assert.deepEqual(await paddle.ensureCustomer(ALI, CUSTOMER, { verified: false }), { customerId: CUSTOMER, created: false });
+        assert.equal(db.get(`paddle_customers/${CUSTOMER}`).email, ALI);
+        assert.equal(api.calls.length, 0);
+    });
+
+    // Two tabs at once: the search finds nothing, then Paddle says the customer exists, created moments ago by the other tab.
+    const realNow = Date.now();
+    await withPaddle(baseSeed(), { customers: [{ id: CUSTOMER, email: ALI, created_at: new Date(realNow - 30_000).toISOString(), hidden: true }] }, async () => {
+        assert.deepEqual(await paddle.ensureCustomer(ALI, null, { verified: false }), { customerId: CUSTOMER, created: true });
+    });
+    // An old one that the search missed is no race: it needs a verified address like any other.
+    await withPaddle(baseSeed(), { customers: [{ id: CUSTOMER, email: ALI, created_at: new Date(realNow - 30 * DAY).toISOString(), hidden: true }] }, async () => {
+        await assert.rejects(paddle.ensureCustomer(ALI, null, { verified: false }), (error) => error.code === "customer_unverified");
+    });
+});
+
+test("Paddle's own refusals people can act on are answers, not failures", () => {
+    assert.deepEqual(paddle.billingAnswer(new paddle.BillingStepError("change", new paddle.PaddleApiError(400, "subscription_payment_declined"))), { status: 402, error: "payment_declined" });
+    assert.equal(paddle.billingAnswer(new paddle.PaddleApiError(400, "invalid_field")), null);
+    assert.equal(paddle.billingAnswer(new Error("Firestore down")), null);
+});
+
+test("prices: our mapping first, then the price's own custom data, and a product in both plans decides nothing", () => {
+    const shared = paddle.normalizePaddleSettings({ sandbox: { prices: { plus: { month: PRICES.plusMonth, year: null }, pro: { month: PRICES.proMonth, year: null } }, products: { plus: [PRODUCTS.plus], pro: [PRODUCTS.plus] } } }, "sandbox");
+    const oldPro = { id: "pri_01oldproxxxxxxxxxxxxxxxxxx", product_id: PRODUCTS.plus, custom_data: { hanogt_plan: "pro" } };
+    assert.equal(paddle.planOfPrice(oldPro, shared), "pro", "a replaced Pro price in a shared product stays Pro");
+    assert.equal(paddle.planOfPrice({ id: "pri_01oldunknownxxxxxxxxxxxxxx", product_id: PRODUCTS.plus }, shared), null, "ambiguous product, no custom data: no plan");
+    assert.equal(paddle.planOfPrice({ id: PRICES.proMonth, product_id: PRODUCTS.plus, custom_data: { hanogt_plan: "plus" } }, shared), "pro", "a price on sale is decided by the mapping");
+    assert.equal(paddle.planOfPrice({ id: "pri_01oldplusxxxxxxxxxxxxxxxxx", product_id: PRODUCTS.plus }, sandboxSettings()), "plus", "a product in one plan still counts");
+});
+
+test("subscriptions are tried in a useful order: unlocking a plan, the higher plan, status, newest", () => {
+    const settings = sandboxSettings();
+    const unmapped = subscription({ id: "sub_01unmappedxxxxxxxxxxxxxxx", items: [{ status: "active", price: price("pri_01unknownxxxxxxxxxxxxxxxxx", "pro_01unknownxxxxxxxxxxxxxxxx") }] });
+    const plus = subscription({ id: "sub_01plusxxxxxxxxxxxxxxxxxxx" });
+    const pro = subscription({ id: "sub_01proxxxxxxxxxxxxxxxxxxxx", items: [{ status: "active", price: price(PRICES.proMonth, PRODUCTS.pro) }] });
+    const paused = subscription({ id: "sub_01pausedxxxxxxxxxxxxxxxxx", status: "paused" });
+    const canceledNew = subscription({ id: "sub_01cancelednewxxxxxxxxxxxx", status: "canceled", updated_at: iso(DAY) });
+    const ranked = paddle.rankCandidates([canceledNew, paused, unmapped, plus, pro], settings, NOW).map((entry) => entry.id);
+    assert.deepEqual(ranked, [pro.id, plus.id, unmapped.id, paused.id, canceledNew.id]);
 });
 
 test("plan changes, undoing a cancellation and the portal", async () => {
@@ -404,7 +483,7 @@ test("plan changes, undoing a cancellation and the portal", async () => {
     const scheduled = subscription({ scheduled_change: { action: "cancel", effective_at: iso(29 * DAY) } });
     await withPaddle(seed, { subscriptions: [scheduled] }, async (db, api) => {
         const preview = await paddle.previewPlanChange(SUB, PRICES.proMonth);
-        assert.deepEqual(preview, { amount: "12345", currency: "TRY", result: "charge", nextBilledAt: iso(30 * DAY), nextAmount: "49900" });
+        assert.deepEqual(preview, { amount: "12345", currency: "TRY", result: "charge", nextBilledAt: iso(30 * DAY), nextAmount: "49900", trialing: false });
         assert.equal(api.calls.at(-1).body.proration_billing_mode, "prorated_immediately");
 
         const changed = await paddle.applyPlanChange(SUB, PRICES.proMonth);
@@ -482,6 +561,60 @@ test("deleting an account cancels its subscription and leaves a tombstone", asyn
         assert.equal(db.get(`paddle_cleanup/${SUB}`).reason, "account_deleted");
         assert.equal(db.has(`subscriptions/${ALI}`), false, "the records go even when Paddle is unreachable");
         assert.equal(db.get(`paddle_customers/${CUSTOMER}`).deleted, true);
+    });
+});
+
+test("deleting an account cancels every subscription its customer still has, not only the stored one", async () => {
+    const settings = sandboxSettings();
+    const unrecorded = subscription({ id: "sub_01unrecordedxxxxxxxxxxxxx", items: [{ status: "active", price: price(PRICES.proMonth, PRODUCTS.pro) }] });
+    const paused = subscription({ id: "sub_01pausedxxxxxxxxxxxxxxxxx", status: "paused" });
+    const ended = subscription({ id: "sub_01endedxxxxxxxxxxxxxxxxxx", status: "canceled" });
+    const seed = {
+        ...baseSeed(),
+        [`paddle_customers/${CUSTOMER}`]: { email: ALI },
+        [`subscriptions/${ALI}`]: { plan: "free", status: "active", paddleCustomerId: CUSTOMER, paddleEnvironment: "sandbox", paddle: paddle.subscriptionStateOf(subscription(), settings) },
+    };
+    await withPaddle(seed, { subscriptions: [subscription(), unrecorded, paused, ended] }, async (db, api) => {
+        const summary = await deleteAccountData(ALI, { scope: "all" });
+        assert.deepEqual(summary.errors, []);
+        assert.equal(summary.deleted.paddleSubscriptionsCanceled, 3);
+        const cancelled = api.calls.filter((call) => call.path.endsWith("/cancel")).map((call) => call.path.split("/")[2]).sort();
+        assert.deepEqual(cancelled, [SUB, unrecorded.id, paused.id].sort());
+        assert.equal(db.get(`paddle_customers/${CUSTOMER}`).deleted, true);
+    });
+});
+
+test("a plan change in a free trial isn't billed (do_not_bill) and says so", async () => {
+    const seed = { ...baseSeed(), [`paddle_customers/${CUSTOMER}`]: { email: ALI } };
+    await withPaddle(seed, { subscriptions: [subscription({ status: "trialing" })] }, async (db, api) => {
+        // What the old code sent: Paddle refuses it for a trialing subscription.
+        await assert.rejects(paddle.previewPlanChange(SUB, PRICES.proMonth, false), (error) => error.code === "subscription_trialing_items_update_invalid_options");
+        const preview = await paddle.previewPlanChange(SUB, PRICES.proMonth, true);
+        assert.equal(api.calls.at(-1).body.proration_billing_mode, "do_not_bill");
+        assert.equal(preview.trialing, true);
+        assert.equal(preview.result, "none", "nothing is charged now");
+        const changed = await paddle.applyPlanChange(SUB, PRICES.proMonth, true);
+        assert.equal(changed.status, "stored");
+        assert.equal(api.calls.at(-1).body.proration_billing_mode, "do_not_bill");
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.plan, "pro");
+    });
+});
+
+test("resuming a paused subscription: within the paid period without a charge, after it with a new period", async () => {
+    const seed = { ...baseSeed(), [`paddle_customers/${CUSTOMER}`]: { email: ALI } };
+    await withPaddle(seed, { subscriptions: [subscription({ status: "paused" })] }, async (db, api) => {
+        const result = await paddle.resumeSubscription(SUB, true);
+        assert.equal(result.status, "stored");
+        assert.deepEqual(api.calls.find((call) => call.path === `/subscriptions/${SUB}/resume`).body, { effective_from: "immediately", on_resume: "continue_existing_billing_period" });
+        assert.equal(api.calls.length, 1, "the answer is stored as it is, without asking again");
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.status, "active");
+    });
+    const ended = subscription({ status: "paused", current_billing_period: { starts_at: iso(-40 * DAY), ends_at: iso(-10 * DAY) } });
+    await withPaddle(seed, { subscriptions: [ended] }, async (db, api) => {
+        await paddle.resumeSubscription(SUB, false);
+        const call = api.calls.find((entry) => entry.path === `/subscriptions/${SUB}/resume`);
+        assert.equal(call.body.on_resume, "start_new_billing_period");
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.status, "active");
     });
 });
 

@@ -1,16 +1,17 @@
 import type { NextRequest } from "next/server";
 import { isBillingInterval, paddleEntitles } from "@/lib/paddle";
-import { isPaidPlanId, isRecentCheckout } from "@/lib/plans";
+import { isPaidPlanId } from "@/lib/plans";
+import { hasVerifiedEmail } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
 import { CouponError, couponDiscount, findCoupon } from "@/lib/server/coupons";
 import { BillingStepError, billingStep, createCheckoutTransaction, ensureCustomer, getPaddleSettings, isBillingTester } from "@/lib/server/paddle";
-import { rememberCheckout, syncAccountFromPaddle, withDeadline } from "@/lib/server/paddle-sync";
+import { purchaseCheck, rememberCheckout } from "@/lib/server/paddle-sync";
 import { getPlanCatalog, getSubscription } from "@/lib/server/plans";
 import { readJsonBody } from "@/lib/server/validate";
 import { billingError, billingFailure, billingGuard, billingJson } from "../_shared";
 
 export const runtime = "nodejs";
-// Up to three Paddle calls in a row (8 s each at most) plus the database:
+// Up to five Paddle calls in a row (8 s each at most) plus the database:
 // more than the platform's default limit when Paddle is slow.
 export const maxDuration = 60;
 
@@ -40,22 +41,19 @@ export async function POST(request: NextRequest) {
         if (subscription.status === "blocked") return billingError(403, "plan_blocked");
         // A second subscription would bill twice; changing plans goes through /api/paddle/subscription.
         if (paddleEntitles(subscription.paddle)) return billingError(409, "already_subscribed");
-        // A purchase Paddle hasn't reported to us (yet): ask Paddle before selling the same person a second one.
-        if (subscription.paddleCustomerId && (!subscription.paddle || isRecentCheckout(subscription.paddleCheckout))) {
-            const check = syncAccountFromPaddle(guard.email).catch((error: unknown) => {
-                console.warn("[paddle:checkout] sync", error instanceof Error ? error.message : error);
-                return null;
-            });
-            const state = await withDeadline(check, 6_000, null);
-            if (state === "active") return billingError(409, "already_subscribed");
-            if (state === "pending") return billingError(409, "payment_pending");
+        // The customer first: a customer Paddle already had may pay for a subscription we never heard of.
+        const { customerId, created } = await billingStep("customer", () => ensureCustomer(guard.email, subscription.paddleCustomerId, { verified: hasVerifiedEmail(guard.user) }));
+        if (!created) {
+            // Whatever we have stored: a lost notification must not lead to a second subscription.
+            // If Paddle can't be asked, nothing is sold (the page retries).
+            const block = await billingStep("check", () => purchaseCheck(guard.email, customerId, subscription));
+            if (block) return billingError(409, block);
         }
         let discountId: string | null = null;
         if (body.coupon !== undefined && body.coupon !== null && body.coupon !== "") {
             const coupon = await billingStep("coupon", () => findCoupon(body.coupon, plan));
             discountId = await billingStep("discount", () => couponDiscount(coupon.view, coupon.record, priceId));
         }
-        const customerId = await billingStep("customer", () => ensureCustomer(guard.email, subscription.paddleCustomerId));
         const { transactionId } = await billingStep("transaction", () => createCheckoutTransaction({ email: guard.email, plan, priceId, customerId, discountId }));
         // So /api/paddle/sync can follow this checkout up with Paddle (best effort: the checkout works without it).
         await rememberCheckout(guard.email, transactionId).catch((error: unknown) => console.warn("[paddle:checkout] remember", error instanceof Error ? error.message : error));

@@ -249,3 +249,91 @@ test("the webhook records how a delivery was processed, after processing; refusa
         assert.deepEqual(commits[0][0].updateMask.fieldPaths, ["lastRejectedAt", "lastRejectedReason"]);
     });
 });
+
+test("before a checkout: a live, paused or still-paying purchase of the customer blocks a second one, whatever is stored", async () => {
+    const legacy = (overrides = {}) => seed({ [`subscriptions/${ALI}`]: { plan: "free", status: "active", paddleCustomerId: CUSTOMER, paddleEnvironment: "sandbox", ...overrides } });
+    const record = (db) => serverPlans.normalizeSubscription(db.get(`subscriptions/${ALI}`), "sandbox");
+    // Paid elsewhere and never reported: it's found, stored, and nothing is sold.
+    await withPaddle(legacy(), { subscriptions: [subscription()] }, async (db) => {
+        assert.equal(await sync.purchaseCheck(ALI, CUSTOMER, record(db), NOW), "already_subscribed");
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.subscriptionId, SUB, "stored on the way");
+    });
+    // Live but sold through a price no plan claims: still one too many to sell another.
+    const unmapped = subscription({ items: [{ status: "active", price: { id: "pri_01unknownxxxxxxxxxxxxxxxxx", product_id: "pro_01unknownxxxxxxxxxxxxxxx" } }] });
+    await withPaddle(legacy(), { subscriptions: [unmapped] }, async (db) => {
+        assert.equal(await sync.purchaseCheck(ALI, CUSTOMER, record(db), NOW), "already_subscribed");
+    });
+    // Paused (merchant pause, dunning, an unknown status): resume it instead; it's stored so the page offers that.
+    await withPaddle(legacy(), { subscriptions: [subscription({ status: "paused" })] }, async (db) => {
+        assert.equal(await sync.purchaseCheck(ALI, CUSTOMER, record(db), NOW), "subscription_paused");
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.status, "paused");
+    });
+    await withPaddle(legacy(), { subscriptions: [subscription({ status: "some_future_status" })] }, async (db) => {
+        assert.equal(await sync.purchaseCheck(ALI, CUSTOMER, record(db), NOW), "subscription_paused", "unknown statuses count as paused");
+    });
+    // A checkout paid a moment ago, subscription not created yet.
+    const paying = seed();
+    await withPaddle(paying, { transactions: [{ id: TXN, status: "paid", customer_id: CUSTOMER, subscription_id: null, updated_at: iso(-30_000) }] }, async (db) => {
+        assert.equal(await sync.purchaseCheck(ALI, CUSTOMER, record(db), NOW), "payment_pending");
+    });
+    // Only ended subscriptions: buying again is fine.
+    await withPaddle(legacy(), { subscriptions: [subscription({ status: "canceled", canceled_at: iso(-DAY) })] }, async (db) => {
+        assert.equal(await sync.purchaseCheck(ALI, CUSTOMER, record(db), NOW), null);
+    });
+    // Paddle can't be asked: the check fails, so the route sells nothing.
+    await withPaddle(legacy(), { subscriptions: [subscription()], forbid: ["subscriptions"] }, async (db) => {
+        await assert.rejects(sync.purchaseCheck(ALI, CUSTOMER, record(db), NOW), (error) => error.status === 403);
+    });
+});
+
+test("the sync tries every subscription that could unlock a plan, the higher plan first", async () => {
+    const legacy = seed({ [`subscriptions/${ALI}`]: { plan: "free", status: "active", paddleCustomerId: CUSTOMER, paddleEnvironment: "sandbox" } });
+    const proSettings = { ...SETTINGS, sandbox: { ...SETTINGS.sandbox, prices: { plus: { month: PRICE, year: null }, pro: { month: "pri_01promonthxxxxxxxxxxxxxxxx", year: null } }, products: { plus: [PRODUCT], pro: ["pro_01proproductxxxxxxxxxxxxx"] } } };
+    const plus = subscription({ updated_at: iso(DAY) });
+    const pro = subscription({ id: OTHER_SUB, items: [{ status: "active", price: { id: "pri_01promonthxxxxxxxxxxxxxxxx", product_id: "pro_01proproductxxxxxxxxxxxxx", billing_cycle: { interval: "month", frequency: 1 } } }] });
+    await withPaddle({ ...legacy, "site_config/paddle": proSettings }, { subscriptions: [plus, pro] }, async (db) => {
+        assert.equal(await sync.syncAccountFromPaddle(ALI, NOW), "active");
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.plan, "pro", "the Pro subscription, though Plus was updated later");
+    });
+    // The stored one ended and its notification was lost, while another one is live.
+    const ended = { environment: "sandbox", subscriptionId: SUB, customerId: CUSTOMER, status: "active", plan: "plus", interval: "month", priceId: PRICE, productId: PRODUCT, currentPeriodEnd: iso(-10 * DAY), nextBilledAt: iso(-10 * DAY), scheduledChange: null, canceledAt: null, paddleUpdatedAt: iso(-40 * DAY), syncedAt: iso(-40 * DAY) };
+    const data = seed({ [`subscriptions/${ALI}`]: { plan: "free", status: "active", paddleCustomerId: CUSTOMER, paddleEnvironment: "sandbox", paddle: ended } });
+    await withPaddle(data, { subscriptions: [subscription({ status: "canceled", canceled_at: iso(-10 * DAY) }), subscription({ id: OTHER_SUB })] }, async (db) => {
+        assert.equal(await sync.syncAccountFromPaddle(ALI, NOW), "active");
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.subscriptionId, OTHER_SUB);
+    });
+});
+
+test("the shared self-heal: only when worth it, once every ten minutes, and a slow Paddle finishes later", async () => {
+    const legacy = seed({ [`subscriptions/${ALI}`]: { plan: "free", status: "active", paddleCustomerId: CUSTOMER, paddleEnvironment: "sandbox" } });
+    const record = (db) => serverPlans.normalizeSubscription(db.get(`subscriptions/${ALI}`), "sandbox");
+    await withPaddle(legacy, { subscriptions: [subscription()] }, async (db, api) => {
+        const refreshed = await sync.refreshSubscriptionFromPaddle(ALI, record(db), { now: NOW });
+        assert.equal(refreshed.paddle?.subscriptionId, SUB, "the purchase no notification reported is found");
+        api.calls.length = 0;
+        // Asked again within ten minutes (as if the record were still empty): Paddle isn't asked.
+        const again = await sync.refreshSubscriptionFromPaddle(ALI, { ...record(db), paddle: null }, { now: NOW });
+        assert.equal(again.paddle, null);
+        assert.deepEqual(api.calls, []);
+    });
+    // Nothing worth asking: no customer.
+    await withPaddle(seed({ [`subscriptions/${ALI}`]: { plan: "free", status: "active" } }), { subscriptions: [subscription()] }, async (db, api) => {
+        await sync.refreshSubscriptionFromPaddle(ALI, record(db), { now: NOW });
+        assert.deepEqual(api.calls, []);
+    });
+    // A slow Paddle: the caller answers without it and gets the work to keep running.
+    paddle.forgetPaddleCaches();
+    const api = createPaddle({ subscriptions: [subscription()] });
+    const slow = async (url, init) => {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        return api.route(url, init);
+    };
+    await withBackend(legacy, { route: slow }, async (db) => {
+        let late = null;
+        const answer = await sync.refreshSubscriptionFromPaddle(ALI, record(db), { now: NOW, deadlineMs: 20, onLate: (work) => { late = work; } });
+        assert.equal(answer.paddle, null, "answered before Paddle did");
+        assert.ok(late, "the unfinished work is handed over");
+        await late;
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.subscriptionId, SUB, "and it still stores the purchase");
+    });
+});

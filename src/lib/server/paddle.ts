@@ -3,7 +3,6 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
     BILLING_INTERVALS,
-    ENTITLED_STATUSES,
     PADDLE_CLIENT_ERRORS_MAX,
     PADDLE_SERVER_ERRORS_MAX,
     PADDLE_STATUSES,
@@ -426,6 +425,22 @@ export type BillingFailure = {
     detail: string;
 };
 
+/**
+ * Refusals people can act on (a declined card, a customer that can't be
+ * linked): answered with their own code and status instead of "Paddle
+ * refused, try again", and not kept as server errors.
+ */
+const BILLING_ANSWERS: Readonly<Record<string, { status: 402 | 409; error: "payment_declined" | "customer_conflict" | "customer_unverified" }>> = {
+    subscription_payment_declined: { status: 402, error: "payment_declined" },
+    customer_linked_elsewhere: { status: 409, error: "customer_conflict" },
+    customer_unverified: { status: 409, error: "customer_unverified" },
+};
+
+export function billingAnswer(error: unknown) {
+    const cause = error instanceof BillingStepError ? error.original : error;
+    return cause instanceof PaddleApiError ? BILLING_ANSWERS[cause.code] ?? null : null;
+}
+
 /** What went wrong in a billing route, in the terms the Plans page and Admin › Subscriptions use. */
 export function describeBillingFailure(error: unknown): BillingFailure {
     const step = error instanceof BillingStepError ? error.step : null;
@@ -591,22 +606,32 @@ function customPlan(data: Record<string, unknown> | null | undefined): PaidPlanI
     return value === "plus" || value === "pro" ? value : null;
 }
 
-/** The plan a Paddle price unlocks, from our settings or the custom data the owner set in Paddle. */
+/**
+ * The plan a Paddle price unlocks: a price on sale in our settings, then the
+ * price's own custom data, then its product. A product listed under both plans
+ * (one Paddle product holding the Plus and the Pro prices) says nothing about
+ * a price that has been replaced since: only the price's custom data or the
+ * product's own can tell then. Otherwise a grandfathered Pro subscriber on an
+ * old price would be stored as Plus.
+ */
 export function planOfPrice(price: PaddlePriceEntity | undefined, settings: PaddleSettings): PaidPlanId | null {
     if (!price) return null;
     for (const plan of PAID_PLAN_IDS) {
         if (BILLING_INTERVALS.some((interval) => settings.prices[plan][interval] === price.id)) return plan;
     }
-    for (const plan of PAID_PLAN_IDS) {
-        if (settings.products[plan].includes(price.product_id)) return plan;
-    }
-    return customPlan(price.custom_data) ?? customPlan(price.product?.custom_data);
+    const own = customPlan(price.custom_data);
+    if (own) return own;
+    const listed = PAID_PLAN_IDS.filter((plan) => settings.products[plan].includes(price.product_id));
+    if (listed.length === 1) return listed[0];
+    return customPlan(price.product?.custom_data);
 }
 
-function normalizeStatus(status: unknown): PaddleStatus {
-    // An unknown future status unlocks nothing until we learn what it means.
+/** Paddle's status as we store it; an unknown future status unlocks nothing until we learn what it means. */
+export function paddleStatusOf(status: unknown): PaddleStatus {
     return (PADDLE_STATUSES as readonly unknown[]).includes(status) ? status as PaddleStatus : "paused";
 }
+
+const normalizeStatus = paddleStatusOf;
 
 function isoOrNull(value: unknown) {
     if (typeof value !== "string") return null;
@@ -907,27 +932,62 @@ async function processPaddleEvent(type: string, payload: unknown): Promise<strin
 // Customers, checkouts and changes
 // ---------------------------------------------------------------------------
 
-/** The person's Paddle customer: ours if we know it, Paddle's by e-mail, or a new one. */
-export async function ensureCustomer(email: string, known: string | null): Promise<string> {
-    if (known && isPaddleId("customer", known)) return known;
+/** A customer Paddle says already exists was created this recently by the account's other tab (a double click). */
+const RACE_WINDOW_MS = 5 * 60_000;
+
+async function createdMomentsAgo(customerId: string, now = Date.now()) {
+    const { data } = await paddleRequest<{ data?: { id?: string; created_at?: string } }>("GET", `/customers/${customerId}`).catch(() => ({ data: undefined }));
+    const created = Date.parse(data?.id === customerId ? data.created_at ?? "" : "");
+    return Number.isFinite(created) && now - created >= 0 && now - created <= RACE_WINDOW_MS;
+}
+
+/**
+ * The person's Paddle customer: the account's own, Paddle's by e-mail, or a new one.
+ * - A known customer id is used only while paddle_customers links it to this
+ *   account: after staff linked it to someone else, the old account must not
+ *   buy for them, and a deleted account's customer isn't reused silently.
+ * - A customer Paddle finds by the e-mail address that no account (or a deleted
+ *   one) is linked to is linked only when the account's address is verified
+ *   (`verified`: signed in with Google). A password sign-up proves nothing about
+ *   the address, and the link would open that customer's invoices, address,
+ *   payment method and subscriptions to the account.
+ * `created`: the customer is new, so it can't have a subscription yet.
+ */
+export async function ensureCustomer(email: string, known: string | null, options: { verified: boolean }): Promise<{ customerId: string; created: boolean }> {
+    if (known && isPaddleId("customer", known)) {
+        const mapping = await getServerDocument<Record<string, unknown>>(customerPath(known));
+        if (mapping?.deleted !== true && normalizeEmail(mapping?.email) === email) return { customerId: known, created: false };
+        if (!mapping) {
+            // Our own record names it but its link was never written: restore the link.
+            await rememberCustomer(known, email, "checkout");
+            return { customerId: known, created: false };
+        }
+        // Linked to another account, or left by a deleted one: look the address up like for a new buyer.
+    }
     const found = await paddleRequest<{ data?: Array<{ id?: string; email?: string }> }>("GET", `/customers?email=${encodeURIComponent(email)}`);
     let customerId = (found.data ?? []).find((customer) => customer.email?.toLowerCase() === email && isPaddleId("customer", customer.id))?.id ?? null;
+    let created = false;
     if (!customerId) {
         try {
             customerId = (await paddleRequest<{ data: { id: string } }>("POST", "/customers", { email })).data.id;
+            created = true;
         } catch (error) {
-            // Created meanwhile (another tab): Paddle names the existing customer.
+            // Created meanwhile: Paddle names the existing customer.
             const existing = error instanceof PaddleApiError && error.status === 409 ? /ctm_[a-z0-9]{10,64}/.exec(error.detail)?.[0] : null;
             if (!existing) throw error;
             customerId = existing;
+            created = await createdMomentsAgo(existing);
         }
     }
     if (!isPaddleId("customer", customerId)) throw new PaddleApiError(0, "unexpected_response");
     const mapping = await getServerDocument<Record<string, unknown>>(customerPath(customerId));
     const mapped = normalizeEmail(mapping?.email);
-    if (mapped && mapped !== email && mapping?.deleted !== true) throw new PaddleApiError(409, "customer_linked_elsewhere");
-    await rememberCustomer(customerId, email, "checkout");
-    return customerId;
+    const live = mapping?.deleted !== true;
+    if (mapped && mapped !== email && live) throw new PaddleApiError(409, "customer_linked_elsewhere");
+    const ours = live && mapped === email;
+    if (!ours && !created && !options.verified) throw new PaddleApiError(409, "customer_unverified");
+    if (!ours) await rememberCustomer(customerId, email, "checkout");
+    return { customerId, created };
 }
 
 /** A checkout for one plan, opened in the browser with Paddle.js. */
@@ -945,7 +1005,15 @@ export async function createCheckoutTransaction(input: { email: string; plan: Pa
     return { transactionId: response.data.id };
 }
 
-const CHANGE_BODY = (priceId: string) => ({ items: [{ price_id: priceId, quantity: 1 }], proration_billing_mode: "prorated_immediately" });
+/**
+ * A plan change takes effect now with the difference prorated. In a free
+ * trial nothing can be billed yet: Paddle accepts only do_not_bill then, and
+ * the first payment is the trial's end at the new price.
+ */
+const changeBody = (priceId: string, trialing: boolean) => ({
+    items: [{ price_id: priceId, quantity: 1 }],
+    proration_billing_mode: trialing ? "do_not_bill" : "prorated_immediately",
+});
 
 type Money = { amount?: string; currency_code?: string } | null | undefined;
 type PreviewEntity = PaddleSubscriptionEntity & {
@@ -956,8 +1024,8 @@ type PreviewEntity = PaddleSubscriptionEntity & {
 };
 
 /** What a plan change would cost now (prorated), before the person confirms it. */
-export async function previewPlanChange(subscriptionId: string, priceId: string): Promise<PlanChangePreview> {
-    const { data } = await paddleRequest<{ data: PreviewEntity }>("PATCH", `/subscriptions/${subscriptionId}/preview`, CHANGE_BODY(priceId));
+export async function previewPlanChange(subscriptionId: string, priceId: string, trialing = false): Promise<PlanChangePreview> {
+    const { data } = await paddleRequest<{ data: PreviewEntity }>("PATCH", `/subscriptions/${subscriptionId}/preview`, changeBody(priceId, trialing));
     const result = data.update_summary?.result;
     const currency = result?.currency_code ?? data.immediate_transaction?.details?.totals?.currency_code ?? data.currency_code ?? "USD";
     const immediate = data.immediate_transaction?.details?.totals;
@@ -971,11 +1039,25 @@ export async function previewPlanChange(subscriptionId: string, priceId: string)
         result: Number(amount) <= 0 ? "none" : result?.action === "credit" ? "credit" : "charge",
         nextBilledAt: isoOrNull(data.next_billed_at),
         nextAmount: nextAmount && /^\d+$/.test(nextAmount) ? nextAmount : null,
+        trialing,
     };
 }
 
-export async function applyPlanChange(subscriptionId: string, priceId: string) {
-    const { data } = await paddleRequest<{ data: PaddleSubscriptionEntity }>("PATCH", `/subscriptions/${subscriptionId}`, CHANGE_BODY(priceId));
+export async function applyPlanChange(subscriptionId: string, priceId: string, trialing = false) {
+    const { data } = await paddleRequest<{ data: PaddleSubscriptionEntity }>("PATCH", `/subscriptions/${subscriptionId}`, changeBody(priceId, trialing));
+    return syncSubscription(subscriptionId, { entity: data });
+}
+
+/**
+ * Resumes a paused subscription now. `continuePeriod`: the paid period hasn't
+ * ended, so it simply carries on and nothing is charged; otherwise Paddle
+ * starts a new period today and bills it at once (Paddle's default).
+ */
+export async function resumeSubscription(subscriptionId: string, continuePeriod: boolean) {
+    const { data } = await paddleRequest<{ data: PaddleSubscriptionEntity }>("POST", `/subscriptions/${subscriptionId}/resume`, {
+        effective_from: "immediately",
+        on_resume: continuePeriod ? "continue_existing_billing_period" : "start_new_billing_period",
+    });
     return syncSubscription(subscriptionId, { entity: data });
 }
 
@@ -1003,11 +1085,36 @@ export async function portalLinks(customerId: string, subscriptionId: string | n
     return { overview, cancel: https(deep?.cancel_subscription), updatePayment: https(deep?.update_subscription_payment_method) };
 }
 
-/** The person's subscriptions at Paddle, most useful first. */
-export async function customerSubscriptions(customerId: string) {
+const STATUS_RANK: Record<PaddleStatus, number> = { active: 0, trialing: 1, past_due: 2, paused: 3, canceled: 4 };
+
+/**
+ * Subscriptions in the order a sync should try them: those that unlock a plan
+ * first (the higher plan first), then by status (active, trialing, past due,
+ * paused, ended), then the most recently updated. One that is active but sold
+ * through a price no plan claims comes after one that unlocks a plan.
+ */
+export function rankCandidates(entities: readonly PaddleSubscriptionEntity[], settings: PaddleSettings, now = Date.now()) {
+    return entities
+        .map((entity) => {
+            const state = subscriptionStateOf(entity, settings, verifyAccountLink(entity.custom_data)?.plan ?? null, new Date(now));
+            return {
+                entity,
+                unlocks: paddleEntitles(state, now) ? 1 : 0,
+                plan: PLAN_RANK[state.plan ?? ""] ?? 0,
+                status: STATUS_RANK[state.status],
+                updated: Date.parse(entity.updated_at ?? "") || 0,
+            };
+        })
+        // Among those that unlock a plan the higher plan wins; among the rest a live one (still billing) comes first.
+        .sort((a, b) => b.unlocks - a.unlocks || (a.unlocks ? b.plan - a.plan || a.status - b.status : a.status - b.status || b.plan - a.plan) || b.updated - a.updated)
+        .map((entry) => entry.entity);
+}
+
+/** The person's subscriptions at Paddle, most useful first (rankCandidates). */
+export async function customerSubscriptions(customerId: string, now = Date.now()) {
     const { data } = await paddleRequest<{ data?: PaddleSubscriptionEntity[] }>("GET", `/subscriptions?customer_id=${customerId}&per_page=50`);
-    const rank = (entity: PaddleSubscriptionEntity) => (ENTITLED_STATUSES.includes(normalizeStatus(entity.status)) ? 0 : entity.status === "paused" ? 1 : 2);
-    return (data ?? []).filter((entity) => isPaddleId("subscription", entity.id)).sort((a, b) => rank(a) - rank(b));
+    const entities = (data ?? []).filter((entity) => isPaddleId("subscription", entity.id) && entity.customer_id === customerId);
+    return rankCandidates(entities, await getPaddleSettings(), now);
 }
 
 // ---------------------------------------------------------------------------
@@ -1110,36 +1217,50 @@ export async function checkoutConfigFor(catalog: PlanCatalog, country: string | 
 // ---------------------------------------------------------------------------
 
 /**
- * Ends billing for an account being deleted: the subscription is cancelled
- * at once and the customer link becomes a tombstone, so anything Paddle sends
- * later for that customer is cancelled too. Returns an error message (never
- * containing the e-mail) when Paddle couldn't be reached; staff then find the
- * subscription in paddle_cleanup.
+ * Ends billing for an account being deleted: every subscription of its Paddle
+ * customer that isn't over yet is cancelled at once (the stored one, and any
+ * other the customer has: an unrecorded purchase or a second subscription),
+ * and the customer link becomes a tombstone, so anything Paddle sends later
+ * for that customer is cancelled too. Returns how many were cancelled and an
+ * error message (never containing the e-mail) when Paddle couldn't be reached
+ * for some; staff then find them in paddle_cleanup.
  */
-export async function releaseBillingForDeletion(record: Record<string, unknown> | null): Promise<{ canceled: boolean; error: string | null }> {
+export async function releaseBillingForDeletion(record: Record<string, unknown> | null): Promise<{ canceled: number; error: string | null }> {
+    const environment = getPaddleConfig().environment;
     const stored = normalizePaddleState(record?.paddle);
     // A subscription of the other environment (e.g. a sandbox test) can't be reached with these keys; nothing is billed there.
-    const state = stored?.environment === getPaddleConfig().environment ? stored : null;
-    const customerId = isPaddleId("customer", record?.paddleCustomerId) ? record.paddleCustomerId : stored?.customerId ?? null;
-    let canceled = false;
+    const state = stored?.environment === environment ? stored : null;
+    const linked = isPaddleId("customer", record?.paddleCustomerId) ? record.paddleCustomerId : null;
+    const customerHere = (linked && record?.paddleEnvironment === environment ? linked : null) ?? state?.customerId ?? null;
+    const customerId = linked ?? stored?.customerId ?? null;
+    const describe = (failure: unknown) => (failure instanceof PaddleApiError ? `${failure.status || "network"} ${failure.code}` : "failed");
+    const targets = new Map<string, string>();
+    if (state && state.status !== "canceled") targets.set(state.subscriptionId, state.customerId);
+    let canceled = 0;
     let error: string | null = null;
-    if (state && state.status !== "canceled") {
+    if (getPaddleConfig().apiKey && customerHere) {
+        try {
+            for (const entity of await customerSubscriptions(customerHere)) {
+                if (normalizeStatus(entity.status) !== "canceled") targets.set(entity.id, entity.customer_id);
+            }
+        } catch (failure) {
+            // The stored one is still cancelled below; the tombstone catches the rest when Paddle next reports them.
+            error = `Paddle abonelikleri listelenemedi (${describe(failure)})`;
+        }
+    }
+    for (const [subscriptionId, owner] of targets) {
         try {
             if (!getPaddleConfig().apiKey) throw new PaddleApiError(0, "not_configured");
-            await cancelSubscriptionNow(state.subscriptionId);
-            canceled = true;
+            await cancelSubscriptionNow(subscriptionId);
+            canceled += 1;
         } catch (failure) {
             // Paddle refuses to cancel what is already cancelled; check before reporting it.
             const current = failure instanceof PaddleApiError && failure.status >= 400 && failure.status < 500
-                ? await paddleRequest<{ data: PaddleSubscriptionEntity }>("GET", `/subscriptions/${state.subscriptionId}`).catch(() => null)
+                ? await paddleRequest<{ data: PaddleSubscriptionEntity }>("GET", `/subscriptions/${subscriptionId}`).catch(() => null)
                 : null;
-            if (current?.data?.status === "canceled") {
-                canceled = true;
-            } else {
-                const code = failure instanceof PaddleApiError ? `${failure.status || "network"} ${failure.code}` : "failed";
-                error = `Paddle aboneliği iptal edilemedi (${code})`;
-                await recordCleanup(state.subscriptionId, state.customerId, "account_deleted");
-            }
+            if (current?.data?.status === "canceled") continue;
+            error = `Paddle aboneliği iptal edilemedi (${describe(failure)})`;
+            await recordCleanup(subscriptionId, owner, "account_deleted");
         }
     }
     if (customerId) {

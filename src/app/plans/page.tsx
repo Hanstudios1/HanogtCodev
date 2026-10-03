@@ -11,7 +11,6 @@ import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n, type Copy } from "@/lib/i18n";
 import {
-    ENTITLED_STATUSES,
     checkoutLocale,
     formatMoney,
     yearlySavingsPercent,
@@ -42,17 +41,25 @@ const C = {
     title: { TR: "Hanogt Codev Planları", EN: "Hanogt Codev Plans" },
     subtitle: { TR: "Hanogt Codev ücretsiz kalacak. Daha fazlasını isteyenler için Plus ve Pro hazırlanıyor; şu anda ödeme alınmıyor ve hiçbir kart bilgisi istenmiyor.", EN: "Hanogt Codev stays free. Plus and Pro are being prepared for people who want more; no payments are taken right now and no card details are asked for." },
     subtitleOpen: { TR: "Hanogt Codev ücretsiz kalacak. Daha çok Hanogt AI ve destekte öncelik isteyenler için Plus ve Pro. Ödemeler Paddle üzerinden güvenle alınır; kart bilgilerin bize ulaşmaz.", EN: "Hanogt Codev stays free. Plus and Pro are for people who want more Hanogt AI and priority support. Payments are handled securely by Paddle; your card details never reach us." },
+    subtitleSubscriber: { TR: "Aboneliğin Paddle üzerinden yönetilir. Yeni satışlar şu anda kapalı; mevcut aboneliğin bundan etkilenmez.", EN: "Your subscription is managed through Paddle. New sales are closed right now; your subscription isn't affected." },
     yourPlan: { TR: "Planın: {plan}", EN: "Your plan: {plan}" },
     assigned: { TR: "Hanogt ekibi tarafından tanımlandı", EN: "Assigned by the Hanogt team" },
     paidMonthly: { TR: "Aylık abonelik", EN: "Monthly subscription" },
     paidYearly: { TR: "Yıllık abonelik", EN: "Yearly subscription" },
+    paidOther: { TR: "Abonelik", EN: "Subscription" },
     until: { TR: "{date} tarihine kadar", EN: "until {date}" },
     renews: { TR: "Sonraki ödeme: {date}", EN: "Next payment: {date}" },
     endsAt: { TR: "Aboneliğin {date} tarihinde sona erecek; avantajların o güne kadar sürer.", EN: "Your subscription ends on {date}; your benefits last until then." },
     keep: { TR: "Vazgeç, aboneliğim devam etsin", EN: "Undo, keep my subscription" },
     pastDue: { TR: "Son ödemen alınamadı. Paddle ödemeyi birkaç kez daha deneyecek; avantajların bu sürede devam eder.", EN: "Your last payment didn't go through. Paddle will try again a few times; your benefits continue meanwhile." },
     updatePayment: { TR: "Ödeme yöntemini güncelle", EN: "Update payment method" },
-    paused: { TR: "Aboneliğin duraklatıldı.", EN: "Your subscription is paused." },
+    paused: { TR: "Aboneliğin duraklatıldı; avantajların sürdürünce geri gelir.", EN: "Your subscription is paused; your benefits come back when you resume it." },
+    resume: { TR: "Aboneliği sürdür", EN: "Resume subscription" },
+    resumeCharge: { TR: "Sürdürünce yeni ödeme dönemi bugün başlar ve Paddle {plan} planının ücretini kayıtlı ödeme yönteminden hemen alır.", EN: "When you resume, a new billing period starts today and Paddle charges the {plan} plan to your saved payment method right away." },
+    resumeFree: { TR: "Ödediğin dönem {date} tarihine kadar sürüyor; şimdi sürdürürsen ücret alınmaz.", EN: "Your paid period runs until {date}; resuming now costs nothing." },
+    resumeConfirm: { TR: "Onayla ve sürdür", EN: "Confirm and resume" },
+    resumeCancel: { TR: "Vazgeç", EN: "Cancel" },
+    resumed: { TR: "Aboneliğin sürdürüldü; {plan} planın yeniden etkin.", EN: "Your subscription is resumed; your {plan} plan is active again." },
     ended: { TR: "Önceki aboneliğin sona erdi.", EN: "Your previous subscription has ended." },
     manage: { TR: "Aboneliği yönet", EN: "Manage subscription" },
     manageHint: { TR: "Fatura, ödeme yöntemi ve iptal Paddle'ın güvenli müşteri portalında.", EN: "Invoices, payment method and cancellation are in Paddle's secure customer portal." },
@@ -129,6 +136,16 @@ const C = {
     testMode: { TR: "Test modu: satışlar henüz herkese açık değil; bu sayfayı yalnızca Hanogt ekibi ve test kullanıcıları satın alınabilir görüyor.", EN: "Test mode: sales aren't open to everyone yet; only the Hanogt team and testers see these plans as buyable." },
     sandbox: { TR: "Paddle sandbox: gerçek ödeme alınmaz, test kartıyla dene (4242 4242 4242 4242).", EN: "Paddle sandbox: no real payments; use a test card (4242 4242 4242 4242)." },
     alreadySubscribed: { TR: "Zaten bir aboneliğin var; planını bu sayfadan değiştirebilirsin.", EN: "You already have a subscription; you can change your plan on this page." },
+    subscriptionPaused: { TR: "Duraklatılmış bir aboneliğin var; yenisini almak yerine onu sürdürebilirsin.", EN: "You have a paused subscription; resume it instead of buying a new one." },
+    customerUnverified: { TR: "Bu e-posta adresiyle Paddle'da daha önce açılmış bir müşteri kaydı var. Güvenliğin için hesabının e-postasını doğrulamamız gerekiyor: bir kez Google ile giriş yap ya da destek talebi aç, ekibimiz kaydı hesabına bağlasın.", EN: "Paddle already has a customer record with this e-mail address. For your security we need to verify your account's address: sign in with Google once, or open a support ticket so our team can link the record to your account." },
+    customerConflict: { TR: "Bu hesabın Paddle müşteri kaydı başka bir hesaba bağlı. Destek talebi aç; ekibimiz düzeltsin.", EN: "This account's Paddle customer record is linked to another account. Open a support ticket so our team can sort it out." },
+    paymentDeclined: { TR: "Paddle kayıtlı ödeme yönteminden ücreti alamadı (kart reddedildi). Ödeme yöntemini güncelleyip tekrar dene.", EN: "Paddle couldn't charge your saved payment method (card declined). Update it and try again." },
+    reload: { TR: "Sayfayı yenile", EN: "Refresh the page" },
+    paymentLinkSignedOut: { TR: "Ödemen alındı, teşekkürler. Plan, ödemeyi yaptığın e-postayla açılmış Hanogt hesabında etkinleşir; görmek için giriş yap.", EN: "Payment received, thank you. The plan becomes active on the Hanogt account with the e-mail you paid with; sign in to see it." },
+    paymentLinkDone: { TR: "Ödemen alındı, teşekkürler.", EN: "Payment received, thank you." },
+    paymentMethodError: { TR: "Seçilen ödeme yöntemi kullanılamadı. Başka bir yöntem dene; sorun sürerse destek talebi aç.", EN: "The chosen payment method can't be used. Try another one; if it keeps happening, open a support ticket." },
+    staffPlanHigher: { TR: "Daha yüksek bir plan ekip tarafından tanımlandı", EN: "A higher plan was assigned by the team" },
+    changeInPortal: { TR: "Bu abonelik bu sayfadan değiştirilemiyor; \"Aboneliği yönet\"i kullan.", EN: "This subscription can't be changed on this page; use \"Manage subscription\"." },
     planUnavailable: { TR: "Bu plan şu anda satışta değil.", EN: "This plan isn't on sale right now." },
     billingUnavailable: { TR: "Ödemeler şu anda kapalı. Biraz sonra tekrar dene.", EN: "Payments are switched off right now. Try again later." },
     rateLimited: { TR: "Çok fazla deneme oldu. Bir dakika sonra tekrar dene.", EN: "Too many attempts. Try again in a minute." },
@@ -187,14 +204,17 @@ type Notice = {
     technical?: { stage: string; message: string };
     /** Under every failed request: what failed, how and where ("unavailable/database_error · HTTP 500 · subscription · 2.1 s"). */
     reference?: string;
-    /** A button under the message: ask Paddle about the payment now. */
-    action?: "checkPayment";
+    /** A button under the message: ask Paddle about the payment now, resume a paused subscription, update the payment method or reload. */
+    action?: "checkPayment" | "resume" | "updatePayment" | "reload";
 } | null;
 
 /** Paddle checkout events the page reports, as stages of POST /api/paddle/client-error. */
 const EVENT_STAGES: Partial<Record<string, PaddleClientErrorStage>> = {
     "checkout.error": "checkout_error",
     "checkout.failed": "checkout_failed",
+    // A declined card: Paddle explains it inside its own frame and lets the person try again.
+    "checkout.payment.failed": "payment_error",
+    // No usable payment method (e.g. none offered for the country): the page says so too.
     "checkout.payment.error": "payment_error",
 };
 
@@ -213,6 +233,10 @@ function postClientError(report: ClientErrorReport) {
 
 const ERROR_COPY: Partial<Record<BillingErrorCode, Copy>> = {
     already_subscribed: C.alreadySubscribed,
+    subscription_paused: C.subscriptionPaused,
+    customer_unverified: C.customerUnverified,
+    customer_conflict: C.customerConflict,
+    payment_declined: C.paymentDeclined,
     payment_pending: C.paymentPending,
     plan_unavailable: C.planUnavailable,
     plan_blocked: C.blocked,
@@ -334,7 +358,18 @@ const PADDLE_SETUP_HINTS: Record<string, Copy> = {
 };
 
 /** Answers that explain themselves; everything else also shows its error code. */
-const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "payment_pending", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change", "coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
+const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "payment_pending", "subscription_paused", "customer_unverified", "customer_conflict", "payment_declined", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change", "coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
+/** Answers whose notice offers a button. */
+const ERROR_ACTIONS: Partial<Record<RequestFailure["error"], NonNullable<Notice>["action"]>> = {
+    subscription_paused: "resume",
+    payment_declined: "updatePayment",
+    forbidden_origin: "reload",
+    invalid_request: "reload",
+    no_subscription: "reload",
+    no_change: "reload",
+};
+/** sessionStorage: the customer portal was opened; back on this page the subscription is re-read from Paddle. */
+const PORTAL_VISIT_KEY = "hanogt:paddle-portal-visit";
 const COUPON_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
 
 /** The code of a /plans?coupon=CODE link (from a campaign); "" without one. Read on the client only. */
@@ -369,6 +404,7 @@ function failureNotice(result: RequestFailure, team: boolean): NonNullable<Notic
         hint: team ? (result.error === "paddle_error" && result.code ? PADDLE_SETUP_HINTS[result.code] : undefined) ?? (ours ? C.failureTeam : undefined) : undefined,
         technical: team && result.detail ? { stage: result.step ?? "server", message: result.detail } : undefined,
         reference: EXPECTED_ERRORS.has(result.error) ? undefined : failureReference(result),
+        action: ERROR_ACTIONS[result.error],
     };
 }
 
@@ -394,6 +430,9 @@ export default function PlansPage() {
     const linkCoupon = useSyncExternalStore(noSubscription, readLinkCoupon, () => "");
     const signInHref = loginHref(linkCoupon);
     const purchased = useRef<PaidPlanId | null>(null);
+    // The person picked Monthly or Yearly themselves; until then a subscriber sees their own billing period.
+    const periodTouched = useRef(false);
+    const [resumeOpen, setResumeOpen] = useState(false);
 
     useEffect(() => {
         if (auth.status === "loading") return;
@@ -402,6 +441,8 @@ export default function PlansPage() {
             if (!active) return;
             setData(payload);
             setFailed(!payload);
+            const own = payload?.me?.billing;
+            if (own?.entitled && own.interval && !periodTouched.current) setPeriod(own.interval);
         });
         return () => {
             active = false;
@@ -412,7 +453,13 @@ export default function PlansPage() {
     const checkout = data?.checkout ?? null;
     const me = data?.me ?? null;
     const billing = me?.billing ?? null;
-    const liveSubscription = Boolean(billing?.plan && ENTITLED_STATUSES.includes(billing.status));
+    // The server decides (the grace after a period end included), so the page never offers changes Paddle would refuse.
+    const liveSubscription = Boolean(billing?.plan && billing.entitled);
+    // What the Paddle event handlers read: they're registered once.
+    const pageState = useRef({ signedIn, liveSubscription });
+    useEffect(() => {
+        pageState.current = { signedIn, liveSubscription };
+    }, [signedIn, liveSubscription]);
     const onSale = (plan: PaidPlanId) => checkout?.onSale[plan] ?? [];
     const anyOnSale = onSale("plus").length > 0 || onSale("pro").length > 0;
 
@@ -476,8 +523,32 @@ export default function PlansPage() {
     }, [checkout, customerId, showPaddleFailure]);
 
     useEffect(() => {
+        /** A payment link (?_ptxn=…) is done with: a refresh mustn't open the same transaction again. */
+        const forgetPaymentLink = () => {
+            const url = new URL(window.location.href);
+            if (!url.searchParams.has("_ptxn")) return;
+            url.searchParams.delete("_ptxn");
+            window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+        };
         onPaddleEvent((event) => {
+            if (event.name === "checkout.closed") {
+                forgetPaymentLink();
+                return;
+            }
             if (event.name === "checkout.completed") {
+                forgetPaymentLink();
+                const { signedIn: isSignedIn, liveSubscription: subscribed } = pageState.current;
+                // A payment link paid without signing in: there's no account here to follow up.
+                if (!isSignedIn) {
+                    setNotice({ tone: "success", copy: C.paymentLinkSignedOut });
+                    return;
+                }
+                // A payment link for a subscription that already runs (e.g. a past-due invoice): no "welcome".
+                if (!purchased.current && subscribed) {
+                    setNotice({ tone: "success", copy: C.paymentLinkDone });
+                    setReload((value) => value + 1);
+                    return;
+                }
                 setActivating(purchased.current ?? "plus");
                 return;
             }
@@ -485,8 +556,13 @@ export default function PlansPage() {
             if (!stage) return;
             const error = checkoutEventError(event);
             report({ stage, message: error.message, code: error.code || null });
-            // Declined cards and other payment problems are explained by Paddle inside its own frame.
-            if (stage === "payment_error") return;
+            // A declined card is explained by Paddle inside its own frame, where another card can be tried.
+            if (event.name === "checkout.payment.failed") return;
+            // No usable payment method: Paddle's frame may say little, so the page says it too.
+            if (event.name === "checkout.payment.error") {
+                setNotice({ tone: "error", copy: C.paymentMethodError, technical: diagnostics ? { stage, message: error.message } : undefined });
+                return;
+            }
             // A checkout that can't start leaves only Paddle's "Something went wrong" over the page.
             if (stage === "checkout_error") closeCheckout();
             setNotice({
@@ -504,6 +580,42 @@ export default function PlansPage() {
     useEffect(() => {
         if (notice?.tone === "error") noticeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }, [notice]);
+
+    // Back from the portal with the browser's back button, the page comes from its cache with the
+    // portal button still busy: free the buttons and read the plan again.
+    useEffect(() => {
+        const onShow = (event: PageTransitionEvent) => {
+            if (!event.persisted) return;
+            setBusy(null);
+            setReload((value) => value + 1);
+        };
+        window.addEventListener("pageshow", onShow);
+        return () => window.removeEventListener("pageshow", onShow);
+    }, []);
+
+    // Back from Paddle's customer portal (a cancellation, a new card): ask Paddle about the subscription now
+    // instead of waiting for its notification.
+    const hasAccount = Boolean(data?.me);
+    useEffect(() => {
+        if (!hasAccount) return;
+        let visited = 0;
+        try {
+            visited = Number(window.sessionStorage.getItem(PORTAL_VISIT_KEY) || 0);
+            window.sessionStorage.removeItem(PORTAL_VISIT_KEY);
+        } catch {
+            // Storage blocked: Paddle's notification updates the page later.
+        }
+        if (!visited || Date.now() - visited > 60 * 60_000) return;
+        let active = true;
+        void postJson<PaddleSyncResponse>("/api/paddle/sync", { refresh: true }).then(async (result) => {
+            if (!active || !result.ok) return;
+            const payload = await fetchPlans();
+            if (active && payload) setData(payload);
+        });
+        return () => {
+            active = false;
+        };
+    }, [hasAccount]);
 
     // After a checkout: ask the server to check the payment with Paddle until the plan is active.
     // Paddle's notification usually gets there first; this also works when it's late or never arrives.
@@ -529,9 +641,12 @@ export default function PlansPage() {
                 welcome(result.data.billing?.plan ?? activating);
                 return;
             }
-            if (!result.ok && (result.error === "unauthorized" || result.error === "forbidden_origin")) {
+            // Signed out for real, or a page the server can't verify: stop. A 401 while this page still has its
+            // session (or a 503 when the database didn't answer) is a hiccup: keep following the payment.
+            const signedOut = !result.ok && result.error === "unauthorized" && !pageState.current.signedIn;
+            if (!result.ok && (signedOut || result.error === "forbidden_origin")) {
                 setActivating(null);
-                setNotice({ tone: "error", copy: result.error === "unauthorized" ? C.signedOut : C.reloadPage });
+                setNotice({ tone: "error", copy: signedOut ? C.signedOut : C.reloadPage, action: signedOut ? undefined : "reload" });
                 return;
             }
             if (Date.now() - started >= SYNC_WINDOW_MS) {
@@ -539,7 +654,7 @@ export default function PlansPage() {
                 const payload = await fetchPlans();
                 if (stopped) return;
                 if (payload) setData(payload);
-                const live = payload?.me?.billing?.plan && ENTITLED_STATUSES.includes(payload.me.billing.status) ? payload.me.billing.plan : null;
+                const live = payload?.me?.billing?.plan && payload.me.billing.entitled ? payload.me.billing.plan : null;
                 if (live) welcome(live);
                 else {
                     setActivating(null);
@@ -633,7 +748,8 @@ export default function PlansPage() {
         const result = await postWithRetry<{ transactionId: string }>("/api/paddle/checkout", { plan, interval: intervalFor(plan), ...(applied ? { coupon: applied.code } : {}) });
         if (!result.ok) {
             showRequestFailure("checkout", result);
-            if (result.error === "already_subscribed") setReload((value) => value + 1);
+            // A subscription the page didn't know about (or a paused one) is stored now: show it.
+            if (result.error === "already_subscribed" || result.error === "subscription_paused") setReload((value) => value + 1);
             // Paid already, Paddle is still creating the subscription: follow it up like a completed checkout.
             if (result.error === "payment_pending") setActivating(plan);
             // A coupon that stopped working meanwhile (expired, used up) is taken off; the plan can still be bought.
@@ -657,6 +773,11 @@ export default function PlansPage() {
         setNotice(null);
         const result = await postWithRetry<{ overview: string; updatePayment: string | null; cancel: string | null }>("/api/paddle/subscription", { action: "portal" });
         if (result.ok) {
+            try {
+                window.sessionStorage.setItem(PORTAL_VISIT_KEY, String(Date.now()));
+            } catch {
+                // Storage blocked: Paddle's notification updates the page later.
+            }
             window.location.assign(result.data[target] ?? result.data.overview);
             return;
         }
@@ -700,6 +821,33 @@ export default function PlansPage() {
         setBusy(null);
     };
 
+    /** Resumes the paused subscription (the server finds it; nothing is taken from the page). */
+    const resumeSubscription = async () => {
+        setBusy("resume");
+        setNotice(null);
+        const result = await postJson<{ plan?: PlanId; billing?: { plan?: PaidPlanId | null } | null }>("/api/paddle/subscription", { action: "resume" });
+        setBusy(null);
+        if (result.ok) {
+            setResumeOpen(false);
+            const plan = result.data.billing?.plan ?? billing?.plan ?? "plus";
+            setNotice({ tone: "success", copy: C.resumed, vars: { plan: PLAN_COPY[plan].name.EN } });
+            setReload((value) => value + 1);
+            return;
+        }
+        showRequestFailure("subscription", result);
+    };
+
+    /** The button of a notice. */
+    const noticeAction = (action: NonNullable<Notice>["action"]) => {
+        if (action === "checkPayment") return void checkPayment();
+        if (action === "updatePayment") return void openPortal("updatePayment");
+        if (action === "reload") return window.location.reload();
+        if (action === "resume") {
+            setResumeOpen(true);
+            setReload((value) => value + 1);
+        }
+    };
+
     /** A failure as one sentence for the plan change dialog, with its error code. */
     const failureText = (result: RequestFailure) => {
         const failure = failureNotice(result, diagnostics);
@@ -734,7 +882,8 @@ export default function PlansPage() {
 
     const savings = checkout ? Math.max(yearlySavingsPercent(checkout.prices.plus.month, checkout.prices.plus.year), yearlySavingsPercent(checkout.prices.pro.month, checkout.prices.pro.year)) : 0;
     const showPeriodToggle = anyOnSale && (onSale("plus").length > 1 || onSale("pro").length > 1);
-    const faq = anyOnSale ? [[C.bq1, C.ba1], [C.bq2, C.ba2], [C.bq3, C.ba3], [C.bq4, C.ba4], [C.bq5, C.ba5], [C.q2, C.a2]] : [[C.q1, C.a1], [C.q2, C.a2], [C.q3, C.a3], [C.q4, C.a4]];
+    // A subscriber gets the answers about billing even while sales are closed ("nothing is charged" isn't true for them).
+    const faq = anyOnSale || liveSubscription ? [[C.bq1, C.ba1], [C.bq2, C.ba2], [C.bq3, C.ba3], [C.bq4, C.ba4], [C.bq5, C.ba5], [C.q2, C.a2]] : [[C.q1, C.a1], [C.q2, C.a2], [C.q3, C.a3], [C.q4, C.a4]];
     const primaryButton = (gradient: string) => `flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r text-[14px] font-bold text-white shadow-lg transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60 ${gradient}`;
     const quietButton = "inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3.5 py-2 text-[13px] font-bold transition hover:bg-zinc-50 disabled:opacity-60 dark:border-white/10 dark:hover:bg-white/5";
 
@@ -745,9 +894,12 @@ export default function PlansPage() {
             return <Link href={signInHref} className={primaryButton(gradient)}><CreditCard className="h-4 w-4" aria-hidden />{tx(C.signInToBuy)}</Link>;
         }
         if (me.blocked) return <p className="flex h-11 items-center justify-center rounded-xl border border-zinc-200 text-[14px] font-bold text-zinc-500 dark:border-white/10">{tx(C.unavailableBlocked)}</p>;
+        const muted = (text: Copy) => <p className="flex min-h-11 items-center justify-center rounded-xl border border-zinc-200 px-3 text-center text-[13px] font-bold text-zinc-500 dark:border-white/10">{tx(text)}</p>;
         if (liveSubscription && billing?.plan) {
+            // A period other than monthly or yearly (e.g. a quarterly price set up in Paddle): only the portal changes it.
+            if (!billing.interval) return billing.plan === plan ? <p className="flex h-11 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-[14px] font-bold text-emerald-700 dark:text-emerald-300">{tx(C.current)}</p> : muted(C.changeInPortal);
             if (billing.plan === plan && billing.interval === interval) return <p className="flex h-11 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-[14px] font-bold text-emerald-700 dark:text-emerald-300">{tx(C.current)}</p>;
-            if (billing.pastDue) return <p className="flex h-11 items-center justify-center rounded-xl border border-zinc-200 text-center text-[13px] font-bold text-zinc-500 dark:border-white/10">{tx(C.payFirst)}</p>;
+            if (billing.pastDue) return muted(C.payFirst);
             const label = billing.plan === plan ? (interval === "year" ? C.switchYearly : C.switchMonthly) : PLAN_RANK[plan] > PLAN_RANK[billing.plan] ? C.upgradePro : C.switchPlus;
             return (
                 <button type="button" onClick={() => void openChange(plan)} disabled={busy !== null || change !== null} className={primaryButton(gradient)}>
@@ -755,8 +907,12 @@ export default function PlansPage() {
                 </button>
             );
         }
+        // A paused subscription is resumed, not bought again (the server refuses a second one anyway).
+        if (billing?.paused) return muted(C.subscriptionPaused);
+        // A lasting plan from the team that is higher already: buying this one would change nothing.
+        if (me.source === "staff" && !me.expiresAt && PLAN_RANK[me.plan] > PLAN_RANK[plan]) return muted(C.staffPlanHigher);
         const buy = (
-            <button type="button" onClick={() => void startCheckout(plan)} disabled={busy !== null} className={primaryButton(gradient)}>
+            <button type="button" onClick={() => void startCheckout(plan)} disabled={busy !== null || activating !== null} className={primaryButton(gradient)}>
                 {loading ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <CreditCard className="h-4 w-4" aria-hidden />}
                 {tx(plan === "pro" ? C.buyPro : C.buyPlus)}
             </button>
@@ -765,7 +921,7 @@ export default function PlansPage() {
             return (
                 <>
                     <p className="flex h-11 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-[14px] font-bold text-emerald-700 dark:text-emerald-300">{tx(C.current)}</p>
-                    <button type="button" onClick={() => void startCheckout(plan)} disabled={busy !== null} className="mt-2 w-full text-center text-[12.5px] font-semibold text-indigo-600 underline-offset-2 hover:underline disabled:opacity-60 dark:text-indigo-300">
+                    <button type="button" onClick={() => void startCheckout(plan)} disabled={busy !== null || activating !== null} className="mt-2 w-full text-center text-[12.5px] font-semibold text-indigo-600 underline-offset-2 hover:underline disabled:opacity-60 dark:text-indigo-300">
                         {loading ? <LoaderCircle className="me-1 inline h-3.5 w-3.5 animate-spin" aria-hidden /> : null}{tx(C.ownSubscription)}
                     </button>
                 </>
@@ -796,7 +952,7 @@ export default function PlansPage() {
 
     const sourceDetail = () => {
         if (!me || me.plan === "free") return null;
-        if (me.source === "paddle" && billing) return <span className="font-medium text-zinc-500 dark:text-zinc-400"> · {tx(billing.interval === "year" ? C.paidYearly : C.paidMonthly)}</span>;
+        if (me.source === "paddle" && billing) return <span className="font-medium text-zinc-500 dark:text-zinc-400"> · {tx(billing.interval === "year" ? C.paidYearly : billing.interval === "month" ? C.paidMonthly : C.paidOther)}</span>;
         return <span className="font-medium text-zinc-500 dark:text-zinc-400"> · {tx(C.assigned)}{me.expiresAt ? ` · ${tx(C.until, { date: date(me.expiresAt) })}` : ""}</span>;
     };
 
@@ -825,7 +981,7 @@ export default function PlansPage() {
                             </div>
                         ) : null}
                         <h1 className="mt-5 text-5xl font-black tracking-tight sm:text-6xl">{tx(C.title)}</h1>
-                        <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(anyOnSale ? C.subtitleOpen : C.subtitle)}</p>
+                        <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(anyOnSale ? C.subtitleOpen : liveSubscription ? C.subtitleSubscriber : C.subtitle)}</p>
                         {me ? (
                             <div className="mx-auto mt-7 inline-flex max-w-full flex-col items-center gap-2 rounded-2xl border border-zinc-200 bg-white/80 px-5 py-3.5 text-[14px] backdrop-blur dark:border-white/10 dark:bg-white/[0.04]">
                                 <p className="font-bold">{tx(C.yourPlan, { plan: tx(PLAN_COPY[me.plan].name) })}{sourceDetail()}</p>
@@ -853,10 +1009,27 @@ export default function PlansPage() {
                                         <button type="button" onClick={() => void openPortal("updatePayment")} disabled={busy !== null} className="font-bold underline underline-offset-2 disabled:opacity-60">{tx(C.updatePayment)}</button>
                                     </div>
                                 ) : null}
-                                {billing?.paused ? <p className="text-[13px] text-zinc-500">{tx(C.paused)}</p> : null}
+                                {billing?.paused ? (
+                                    <div className="flex max-w-md flex-col items-center gap-2 rounded-xl bg-zinc-500/10 px-3 py-2 text-[13px] text-zinc-700 dark:text-zinc-300" data-paused>
+                                        <p>{tx(C.paused)}</p>
+                                        {resumeOpen ? (
+                                            <>
+                                                <p className="text-[12.5px]">{billing.periodEndsAt ? tx(C.resumeFree, { date: date(billing.periodEndsAt) }) : tx(C.resumeCharge, { plan: tx(PLAN_COPY[billing.plan ?? "plus"].name) })}</p>
+                                                <div className="flex flex-wrap items-center justify-center gap-3">
+                                                    <button type="button" onClick={() => void resumeSubscription()} disabled={busy !== null} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-2 disabled:opacity-60" data-resume-confirm>
+                                                        {busy === "resume" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : null}{tx(C.resumeConfirm)}
+                                                    </button>
+                                                    <button type="button" onClick={() => setResumeOpen(false)} disabled={busy !== null} className="font-semibold opacity-80 hover:opacity-100 disabled:opacity-50">{tx(C.resumeCancel)}</button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <button type="button" onClick={() => setResumeOpen(true)} disabled={busy !== null} className="font-bold underline underline-offset-2 disabled:opacity-60" data-resume>{tx(C.resume)}</button>
+                                        )}
+                                    </div>
+                                ) : null}
                                 {billing?.canceled && me.source !== "paddle" ? <p className="text-[12.5px] text-zinc-500">{tx(C.ended)}</p> : null}
                                 {billing?.renewsAt && !billing.pastDue ? <p className="text-[12.5px] text-zinc-500">{tx(C.renews, { date: date(billing.renewsAt) })}</p> : null}
-                                {me.canManageBilling && checkout ? (
+                                {me.canManageBilling ? (
                                     <button type="button" onClick={() => void openPortal("overview")} disabled={busy !== null} className={quietButton} title={tx(C.manageHint)}>
                                         {busy === "portal" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <CreditCard className="h-3.5 w-3.5" aria-hidden />}{tx(C.manage)}
                                     </button>
@@ -883,7 +1056,10 @@ export default function PlansPage() {
                                         type="button"
                                         role="radio"
                                         aria-checked={period === value}
-                                        onClick={() => setPeriod(value)}
+                                        onClick={() => {
+                                            periodTouched.current = true;
+                                            setPeriod(value);
+                                        }}
                                         className={`flex items-center gap-2 rounded-xl px-4 py-2 text-[14px] font-bold transition ${period === value ? "bg-white text-zinc-900 shadow dark:bg-zinc-800 dark:text-white" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
                                     >
                                         {tx(value === "month" ? C.monthly : C.yearly)}
@@ -945,9 +1121,10 @@ export default function PlansPage() {
                             {notice.hint ? <p className="mt-2 text-[12.5px] font-medium opacity-90">{tx(notice.hint)}</p> : null}
                             {notice.technical ? <p className="mt-2 break-all font-mono text-[11.5px] font-medium opacity-80">{tx(C.technical, notice.technical)}</p> : null}
                             {notice.reference ? <p className="mt-1.5 break-all font-mono text-[11.5px] font-medium opacity-75" data-error-reference>{tx(C.reference, { ref: notice.reference })}</p> : null}
-                            {notice.action === "checkPayment" ? (
-                                <button type="button" onClick={() => void checkPayment()} disabled={busy !== null} className="mt-2 inline-flex items-center gap-1.5 font-bold underline underline-offset-2 disabled:opacity-60" data-check-payment>
-                                    {busy === "sync" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <RefreshCw className="h-3.5 w-3.5" aria-hidden />}{tx(C.checkPayment)}
+                            {notice.action ? (
+                                <button type="button" onClick={() => noticeAction(notice.action)} disabled={busy !== null} className="mt-2 inline-flex items-center gap-1.5 font-bold underline underline-offset-2 disabled:opacity-60" data-check-payment={notice.action === "checkPayment" ? "" : undefined} data-notice-action={notice.action}>
+                                    {busy === "sync" || (busy === "portal" && notice.action === "updatePayment") ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <RefreshCw className="h-3.5 w-3.5" aria-hidden />}
+                                    {tx(notice.action === "checkPayment" ? C.checkPayment : notice.action === "resume" ? C.resume : notice.action === "updatePayment" ? C.updatePayment : C.reload)}
                                 </button>
                             ) : null}
                         </div>
@@ -993,7 +1170,7 @@ export default function PlansPage() {
                                                     {paid && couponFor(paid) ? (
                                                         <p className="mt-1 text-[12.5px] font-bold text-emerald-700 dark:text-emerald-300">{tx(C.couponOnCard, { code: couponFor(paid)!.code, payments: tx(couponPayments(couponFor(paid)!.recur).copy, couponPayments(couponFor(paid)!.recur).vars) })}</p>
                                                     ) : null}
-                                                    {interval === "year" ? <p className="mt-1 text-[12.5px] text-zinc-500">{tx(C.monthlyEquivalent, { price: formatMoney(Number(live.amount) / 12, live.currency, locale) })}</p> : null}
+                                                    {interval === "year" ? <p className="mt-1 text-[12.5px] text-zinc-500">{tx(C.monthlyEquivalent, { price: formatMoney(Number(paid && couponFor(paid) ? couponAmount(live.amount, couponFor(paid)!.percentOff) : live.amount) / 12, live.currency, locale) })}</p> : null}
                                                     {interval !== period ? <p className="mt-1 text-[12px] text-zinc-500">{tx(C.onlyInterval, { interval: tx(interval === "year" ? C.yearly : C.monthly).toLocaleLowerCase(locale) })}</p> : null}
                                                 </>
                                             ) : (
@@ -1089,6 +1266,7 @@ export default function PlansPage() {
                     preview={change.preview}
                     error={change.error}
                     busy={busy === "change"}
+                    endsAt={billing.endsAt}
                     onConfirm={() => void confirmChange()}
                     onClose={() => setChange(null)}
                 />

@@ -1,14 +1,14 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { billingView, paddleEntitles, type PaddleCheckoutConfig } from "@/lib/paddle";
-import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, isRecentCheckout, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse, type UserSubscription } from "@/lib/plans";
+import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, isRecentCheckout, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
 import { commitServerMutations, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
-import { checkoutConfigFor, getPaddleConfig, isBillingTester, syncSubscription } from "@/lib/server/paddle";
-import { selfHealReason, syncAccountFromPaddle, withDeadline } from "@/lib/server/paddle-sync";
+import { checkoutConfigFor, getPaddleConfig, isBillingTester, isPaddleConfigured } from "@/lib/server/paddle";
+import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
 import { AI_DAY_MS, AI_LIMIT_KEYS, getPlanCatalog, getSubscription } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback, readRateLimit } from "@/lib/server/rate-limit";
-import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { isSameOrigin, jsonSecurityHeaders, visitorCountryFromHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
 
 export const runtime = "nodejs";
@@ -38,34 +38,10 @@ async function waitlistOf(email: string): Promise<PaidPlanId[]> {
 /** Paddle prices for the visitor's country; null keeps the "coming soon" page. */
 async function checkoutOf(catalog: PlanCatalog, request: NextRequest, email: string | null, staff: boolean): Promise<PaddleCheckoutConfig | null> {
     try {
-        return await checkoutConfigFor(catalog, request.headers.get("x-vercel-ip-country")?.toUpperCase() ?? null, { tester: isBillingTester(email, staff) });
+        return await checkoutConfigFor(catalog, visitorCountryFromHeaders(request.headers), { tester: isBillingTester(email, staff) });
     } catch (error) {
         console.error("[plans:paddle]", error instanceof Error ? error.message : error);
         return null;
-    }
-}
-
-/**
- * What Paddle knows but no notification told us, asked once every ten
- * minutes at most (selfHealReason): a paid period that ended without a
- * renewal, or a Paddle customer without a subscription that unlocks a plan
- * (a purchase whose notification never arrived). Answers with what Paddle says.
- */
-async function refreshedSubscription(email: string, subscription: UserSubscription): Promise<UserSubscription> {
-    const reason = selfHealReason(subscription);
-    if (!reason || !getPaddleConfig().apiKey) return subscription;
-    const rate = await enforceRateLimitWithFallback(`paddle-resync:${email}`, 1, 10 * 60_000).catch(() => ({ allowed: false }));
-    if (!rate.allowed) return subscription;
-    try {
-        if (reason === "lapsed" && subscription.paddle) {
-            const result = await syncSubscription(subscription.paddle.subscriptionId);
-            return result.status === "stored" ? await getSubscription(email) : subscription;
-        }
-        // At most a few seconds on top of the page load; a slow Paddle finishes in the background.
-        return (await withDeadline(syncAccountFromPaddle(email), 6_000, "none")) === "active" ? await getSubscription(email) : subscription;
-    } catch (error) {
-        console.warn("[plans:paddle-sync]", reason, error instanceof Error ? error.message : error);
-        return subscription;
     }
 }
 
@@ -82,7 +58,9 @@ export async function GET(request: NextRequest) {
             readRateLimit(AI_LIMIT_KEYS(active.email).day, AI_DAY_MS).catch(() => null),
             waitlistOf(active.email),
         ]);
-        const subscription = await refreshedSubscription(active.email, stored);
+        // What Paddle knows but no notification told us (selfHealReason), asked once every ten minutes at most;
+        // a slow Paddle finishes after the answer and counts next time.
+        const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
         return json({
             catalog: publicCatalog(catalog),
             checkout,
@@ -93,7 +71,8 @@ export async function GET(request: NextRequest) {
                 blocked: subscription.status === "blocked",
                 expiresAt: subscription.expiresAt,
                 billing: billingView(subscription.paddle),
-                canManageBilling: Boolean(subscription.paddleCustomerId ?? subscription.paddle?.customerId),
+                // The portal is for someone with a subscription (any status), whenever the server can reach Paddle.
+                canManageBilling: Boolean(subscription.paddle && (subscription.paddleCustomerId ?? subscription.paddle.customerId) && isPaddleConfigured(getPaddleConfig())),
                 paddleCustomerId: subscription.paddleCustomerId ?? subscription.paddle?.customerId ?? null,
                 checkoutPending: Boolean(subscription.paddleCustomerId) && !paddleEntitles(subscription.paddle) && isRecentCheckout(subscription.paddleCheckout),
                 aiLimits: aiLimitsFor(subscription),

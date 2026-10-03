@@ -69,8 +69,8 @@ function twoFactorRecoveryCode(email: string) {
  * completes the Firestore profile of Google users. Throws when Firestore is
  * unreachable or not configured; the signIn callback turns that into a code.
  */
-async function completeSignIn(email: string, user: { name?: string | null; image?: string | null }, provider: string | undefined): Promise<true | string> {
-    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown }>(`users/${email}`);
+async function completeSignIn(email: string, user: { name?: string | null; image?: string | null }, provider: string | undefined, emailVerified = false): Promise<true | string> {
+    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown; emailVerifiedAt?: unknown }>(`users/${email}`);
     if (existing?.suspended || existing?.banned) {
         // The provider (Google) or authorize() has verified the address, so the person may appeal.
         const token = issueAppealToken(email);
@@ -98,6 +98,8 @@ async function completeSignIn(email: string, user: { name?: string | null; image
         await patchServerDocument(`users/${email}`, {
             ...profile,
             provider: existing ? undefined : "google",
+            // Google confirmed the address: billing may link a Paddle customer that already has it (ensureCustomer).
+            emailVerifiedAt: emailVerified && !existing?.emailVerifiedAt ? new Date() : undefined,
             lastLoginAt: new Date(),
             createdAt: existing ? undefined : new Date(),
         });
@@ -273,12 +275,14 @@ export const authOptions: NextAuthOptions = {
         },
     },
     callbacks: {
-        async signIn({ user, account }) {
+        async signIn({ user, account, profile }) {
             if (!user.email) return false;
             const email = normalizedEmail(user.email);
             user.email = email;
+            // Google's ID token says whether it has verified the address (the email_verified claim).
+            const emailVerified = account?.provider === "google" && (profile as { email_verified?: unknown } | undefined)?.email_verified === true;
             try {
-                return await completeSignIn(email, user, account?.provider);
+                return await completeSignIn(email, user, account?.provider, emailVerified);
             } catch (error) {
                 // NextAuth puts a thrown message into a redirect URL without
                 // encoding it; Turkish characters there crashed the request

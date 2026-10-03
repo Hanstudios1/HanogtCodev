@@ -49,3 +49,17 @@ test("visitor address: CF-Connecting-IP only when Vercel saw a Cloudflare addres
     assert.equal(clientIpFromHeaders({ "x-vercel-forwarded-for": "104.23.0.1", "cf-connecting-ip": "5.6.7.8" }), "5.6.7.8");
     assert.equal(clientIpFromHeaders({ "x-forwarded-for": ["9.9.9.9"] }), "9.9.9.9");
 });
+
+test("visitor country for prices: Cloudflare's header only through Cloudflare, Vercel's otherwise", () => {
+    const headers = (entries) => new Headers(entries);
+    // Through Cloudflare: Vercel locates Cloudflare's server (US); the visitor is in Türkiye.
+    assert.equal(security.visitorCountryFromHeaders(headers({ "x-vercel-forwarded-for": "172.70.10.20", "x-vercel-ip-country": "US", "cf-ipcountry": "tr" })), "TR");
+    // Straight to the deployment: a CF-IPCountry anyone can send is ignored.
+    assert.equal(security.visitorCountryFromHeaders(headers({ "x-vercel-forwarded-for": "198.51.100.7", "x-vercel-ip-country": "DE", "cf-ipcountry": "TR" })), "DE");
+    // Unknown and Tor count as unknown; no headers at all too.
+    assert.equal(security.visitorCountryFromHeaders(headers({ "x-vercel-forwarded-for": "172.70.10.20", "cf-ipcountry": "XX" })), null);
+    assert.equal(security.visitorCountryFromHeaders(headers({ "x-vercel-forwarded-for": "172.70.10.20", "cf-ipcountry": "T1" })), null);
+    assert.equal(security.visitorCountryFromHeaders(headers({ "x-vercel-forwarded-for": "172.70.10.20", "x-vercel-ip-country": "US" })), null, "through Cloudflare without its header: not Cloudflare's server country");
+    assert.equal(security.visitorCountryFromHeaders(headers({})), null);
+    assert.equal(security.visitorCountryFromHeaders(headers({ "x-vercel-ip-country": "<script>" })), null);
+});

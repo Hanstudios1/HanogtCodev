@@ -1863,6 +1863,7 @@
       "src/app/dashboard/page.tsx",
       "src/app/feedback/page.tsx",
       "src/app/media/page.tsx",
+      "src/app/plans/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
@@ -6147,6 +6148,13 @@
       "src/app/plans/page.tsx"
     ]
   },
+  "28rnkkq8lse": {
+    "en": "Your subscription is managed through Paddle. New sales are closed right now; your subscription isn't affected.",
+    "tr": "Aboneliğin Paddle üzerinden yönetilir. Yeni satışlar şu anda kapalı; mevcut aboneliğin bundan etkilenmez.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
   "23dpfwxhous": {
     "en": "Your plan: {plan}",
     "tr": "Planın: {plan}",
@@ -6173,6 +6181,14 @@
     "tr": "Yıllık abonelik",
     "files": [
       "src/app/plans/page.tsx"
+    ]
+  },
+  "2boxyf77635": {
+    "en": "Subscription",
+    "tr": "Abonelik",
+    "files": [
+      "src/app/plans/page.tsx",
+      "src/components/Admin/PlansSection.tsx"
     ]
   },
   "2gan3i8dpmm": {
@@ -6218,9 +6234,44 @@
       "src/app/plans/page.tsx"
     ]
   },
-  "w8rdix4xax": {
-    "en": "Your subscription is paused.",
-    "tr": "Aboneliğin duraklatıldı.",
+  "kilyvth8n1": {
+    "en": "Your subscription is paused; your benefits come back when you resume it.",
+    "tr": "Aboneliğin duraklatıldı; avantajların sürdürünce geri gelir.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "26iiappdtgy": {
+    "en": "Resume subscription",
+    "tr": "Aboneliği sürdür",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1vc5f31xh45": {
+    "en": "When you resume, a new billing period starts today and Paddle charges the {plan} plan to your saved payment method right away.",
+    "tr": "Sürdürünce yeni ödeme dönemi bugün başlar ve Paddle {plan} planının ücretini kayıtlı ödeme yönteminden hemen alır.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "16iwugwusqa": {
+    "en": "Your paid period runs until {date}; resuming now costs nothing.",
+    "tr": "Ödediğin dönem {date} tarihine kadar sürüyor; şimdi sürdürürsen ücret alınmaz.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "u9yjw5mfjw": {
+    "en": "Confirm and resume",
+    "tr": "Onayla ve sürdür",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "10yef2ogu8o": {
+    "en": "Your subscription is resumed; your {plan} plan is active again.",
+    "tr": "Aboneliğin sürdürüldü; {plan} planın yeniden etkin.",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -6756,6 +6807,76 @@
   "5h5pbsp1im": {
     "en": "You already have a subscription; you can change your plan on this page.",
     "tr": "Zaten bir aboneliğin var; planını bu sayfadan değiştirebilirsin.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "s5bgfgrup7": {
+    "en": "You have a paused subscription; resume it instead of buying a new one.",
+    "tr": "Duraklatılmış bir aboneliğin var; yenisini almak yerine onu sürdürebilirsin.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "3kd21h4myo": {
+    "en": "Paddle already has a customer record with this e-mail address. For your security we need to verify your account's address: sign in with Google once, or open a support ticket so our team can link the record to your account.",
+    "tr": "Bu e-posta adresiyle Paddle'da daha önce açılmış bir müşteri kaydı var. Güvenliğin için hesabının e-postasını doğrulamamız gerekiyor: bir kez Google ile giriş yap ya da destek talebi aç, ekibimiz kaydı hesabına bağlasın.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "ek90fbfo94": {
+    "en": "This account's Paddle customer record is linked to another account. Open a support ticket so our team can sort it out.",
+    "tr": "Bu hesabın Paddle müşteri kaydı başka bir hesaba bağlı. Destek talebi aç; ekibimiz düzeltsin.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1h40i9isrw5": {
+    "en": "Paddle couldn't charge your saved payment method (card declined). Update it and try again.",
+    "tr": "Paddle kayıtlı ödeme yönteminden ücreti alamadı (kart reddedildi). Ödeme yöntemini güncelleyip tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "13sz7bfruxt": {
+    "en": "Refresh the page",
+    "tr": "Sayfayı yenile",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "12y74p7n9r6": {
+    "en": "Payment received, thank you. The plan becomes active on the Hanogt account with the e-mail you paid with; sign in to see it.",
+    "tr": "Ödemen alındı, teşekkürler. Plan, ödemeyi yaptığın e-postayla açılmış Hanogt hesabında etkinleşir; görmek için giriş yap.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1klvo4bz7za": {
+    "en": "Payment received, thank you.",
+    "tr": "Ödemen alındı, teşekkürler.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "28qax9ne7fz": {
+    "en": "The chosen payment method can't be used. Try another one; if it keeps happening, open a support ticket.",
+    "tr": "Seçilen ödeme yöntemi kullanılamadı. Başka bir yöntem dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "275rqam8ws": {
+    "en": "A higher plan was assigned by the team",
+    "tr": "Daha yüksek bir plan ekip tarafından tanımlandı",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "cmm9u3hunb": {
+    "en": "This subscription can't be changed on this page; use \"Manage subscription\".",
+    "tr": "Bu abonelik bu sayfadan değiştirilemiyor; \"Aboneliği yönet\"i kullan.",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -18778,6 +18899,13 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "1m8rpxy5qoz": {
+    "en": "Checking the customer's existing subscriptions",
+    "tr": "Müşterinin mevcut abonelikleri denetlenirken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "10igw90fdri": {
     "en": "Creating the checkout transaction",
     "tr": "Ödeme işlemi oluşturulurken",
@@ -18809,6 +18937,13 @@
   "4d8cb0o9xr": {
     "en": "Undoing the cancellation",
     "tr": "İptal geri alınırken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "ktgdh5cjix": {
+    "en": "Resuming the paused subscription",
+    "tr": "Duraklatılmış abonelik sürdürülürken",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -18858,6 +18993,27 @@
   "1eqf5l11r60": {
     "en": "The Paddle customer of this e-mail is linked to another account.",
     "tr": "Bu e-postanın Paddle müşterisi başka bir hesaba bağlı.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "r4cm427xy1": {
+    "en": "Paddle has an unlinked customer with this e-mail and the account's address isn't verified (password sign-up). It links once the person signs in with Google; or link it by hand under \"Unlinked subscriptions\".",
+    "tr": "Paddle'da bu e-postayla eşlenmemiş bir müşteri var ve hesabın e-postası doğrulanmamış (şifreyle kayıt). Kişi bir kez Google ile giriş yapınca bağlanır; ya da \"Eşleşmeyen abonelikler\"den elle bağlayın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "29exbpkvku9": {
+    "en": "Paddle couldn't charge the saved payment method (card declined).",
+    "tr": "Paddle kayıtlı ödeme yöntemiyle ücreti alamadı (kart reddedildi).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "26jkjg2pp8g": {
+    "en": "A subscription in its trial can only be changed without billing (do_not_bill); fixed in this version.",
+    "tr": "Deneme süresindeki abonelik yalnızca ücretsiz (do_not_bill) değiştirilebilir; bu sürümle düzeltildi.",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -19887,13 +20043,6 @@
   "12j6x45bj53": {
     "en": "Customer",
     "tr": "Müşteri",
-    "files": [
-      "src/components/Admin/PlansSection.tsx"
-    ]
-  },
-  "2boxyf77635": {
-    "en": "Subscription",
-    "tr": "Abonelik",
     "files": [
       "src/components/Admin/PlansSection.tsx"
     ]
@@ -21806,6 +21955,55 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "dh2zyoajzj": {
+    "en": "Safer, more accurate payments",
+    "tr": "Ödemelerde daha fazla güvenlik ve doğruluk",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "112ddguatw1": {
+    "en": "Subscriptions can no longer be linked to someone else's billing record, nobody is charged twice, and a paused subscription resumes with one click.",
+    "tr": "Abonelikler artık başkasının ödeme kaydına bağlanamıyor, iki kez ödeme alınmıyor ve duraklatılmış abonelik tek tuşla sürdürülüyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "i48ytlg2v7": {
+    "en": "An older Paddle record with the same e-mail is linked only to an account whose address is verified (signed in with Google).",
+    "tr": "Paddle'da aynı e-postayla eski bir kayıt varsa, yalnızca e-postası doğrulanmış (Google ile giriş yapmış) hesaba bağlanır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "szagvwtymx": {
+    "en": "Resume a paused subscription from Pricing; you're never charged twice.",
+    "tr": "Duraklatılmış aboneliğini Fiyatlandırma'dan sürdürebilirsin; ikinci kez ödeme alınmaz.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2cy2lu7g901": {
+    "en": "Changing plans during a free trial now works and costs nothing.",
+    "tr": "Deneme süresinde plan değiştirmek artık çalışıyor ve ücret alınmıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1cw8olihgo0": {
+    "en": "Prices show in the right currency and with the right taxes for your country.",
+    "tr": "Fiyatlar bulunduğun ülkeye göre doğru para birimi ve vergiyle gösteriliyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "rkia5cmr15": {
+    "en": "Clearer messages for yearly subscriptions, declined cards and payment links.",
+    "tr": "Yıllık abonelikler, reddedilen kartlar ve ödeme bağlantıları için daha açık mesajlar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "28z92kqb7od": {
@@ -34613,6 +34811,27 @@
   "vr5vs8oh89": {
     "en": "{amount} will be charged today: the difference between the two plans for the rest of the current period.",
     "tr": "Bugün {amount} tahsil edilecek. Bu, mevcut dönemin kalan günleri için iki plan arasındaki farktır.",
+    "files": [
+      "src/components/Plans/ChangePlanDialog.tsx"
+    ]
+  },
+  "16zkx04fk8u": {
+    "en": "{amount} will be charged today: the new billing period starts today and the unused part of your current period is taken off.",
+    "tr": "Bugün {amount} tahsil edilecek: yeni ödeme dönemi bugün başlar ve mevcut dönemin kullanılmamış kısmı bu tutardan düşülür.",
+    "files": [
+      "src/components/Plans/ChangePlanDialog.tsx"
+    ]
+  },
+  "14ghgbfhlnl": {
+    "en": "Your free trial continues and nothing is charged now. The first payment is for the new plan.",
+    "tr": "Deneme süren devam ediyor; şimdi ücret alınmaz. İlk ödeme yeni plan üzerinden alınır.",
+    "files": [
+      "src/components/Plans/ChangePlanDialog.tsx"
+    ]
+  },
+  "w7v8ndawhb": {
+    "en": "Your scheduled cancellation stays: your subscription ends on {date}. To keep it going, first press \"Undo, keep my subscription\".",
+    "tr": "Planlanmış iptalin geçerli kalır: aboneliğin {date} tarihinde sona erer. Devam etmesini istersen önce \"Vazgeç, aboneliğim devam etsin\"e bas.",
     "files": [
       "src/components/Plans/ChangePlanDialog.tsx"
     ]

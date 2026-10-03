@@ -139,6 +139,26 @@ export function getClientKey(request: NextRequest) {
     return clientIpFromHeaders(request.headers);
 }
 
+/**
+ * The visitor's country (ISO 3166 alpha-2) for localized prices. Behind
+ * Cloudflare, Vercel locates Cloudflare's own address, so its
+ * x-vercel-ip-country names the country of a Cloudflare server (often the US,
+ * which priced a Turkish visitor in dollars without VAT); Cloudflare's
+ * CF-IPCountry names the visitor's. That header is believed only when the
+ * request really came through Cloudflare (as in clientIpFromHeaders). XX
+ * (unknown) and T1 (Tor) count as unknown.
+ */
+export function visitorCountryFromHeaders(headers: HeaderSource): string | null {
+    const platform = [
+        header(headers, "x-vercel-forwarded-for").split(",")[0],
+        header(headers, "x-real-ip"),
+        header(headers, "x-forwarded-for").split(",")[0],
+    ].map(validIp).find(Boolean);
+    const viaCloudflare = Boolean(platform && ipInCidrs(platform, CLOUDFLARE_CIDRS));
+    const raw = (viaCloudflare ? header(headers, "cf-ipcountry") : header(headers, "x-vercel-ip-country")).trim().toUpperCase();
+    return /^[A-Z]{2}$/.test(raw) && raw !== "XX" && raw !== "T1" ? raw : null;
+}
+
 export function isSameOrigin(request: NextRequest) {
     const origin = request.headers.get("origin");
     const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");

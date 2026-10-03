@@ -291,9 +291,47 @@ the sandbox Paddle retries a failed delivery only a few times). So:
   (never stored, or a checkout in the last seven days): someone who closed the
   page right after paying sees the plan the next time, and so do purchases
   from before this existed. The page also offers "Ödememi kontrol et".
-- A second checkout first asks Paddle the same way: an active plan answers
-  `already_subscribed`, a payment still being processed `payment_pending`, so
-  nobody pays twice while a notification is missing.
+- Every checkout first lists the customer's subscriptions at Paddle,
+  whatever is stored (step `check`): a live one (active, trialing, past due)
+  answers `already_subscribed`, a paused one `subscription_paused` (the Plans
+  page offers "Aboneliği sürdür", `POST /api/paddle/subscription
+  { action: "resume" }`: within a paid period nothing is charged, otherwise
+  Paddle starts a new period and bills it at once), a payment still being
+  processed `payment_pending`. If Paddle can't be asked, nothing is sold
+  (424, the page retries once), so nobody pays twice while a notification is
+  missing. The sync and the admin "Paddle'dan yeniden eşitle" try every
+  subscription that could unlock a plan, the higher plan first, and always
+  re-read the stored one.
+
+### Linking a Paddle customer that already exists
+
+Paddle keeps one customer per e-mail address. When an account checks out and
+Paddle already has a customer with its address that no account is linked to
+(a payment link, a subscription made in Paddle's dashboard, or the customer
+left by a deleted account), the customer is linked only if the account's
+address is verified: it signed in with Google (`users/{email}.emailVerifiedAt`
+is written at a Google sign-in whose ID token says `email_verified`). A
+password sign-up proves nothing about the address, so it gets
+`customer_unverified` ("sign in with Google once, or open a support ticket");
+staff can link the subscription by hand under "Eşleşmeyen abonelikler". A
+customer linked to another account answers `customer_conflict`; a known
+customer id is used only while `paddle_customers` links it to the account.
+
+### Other billing answers
+
+- A plan change while the subscription is in its free trial is sent with
+  `proration_billing_mode: "do_not_bill"` (Paddle refuses anything else then);
+  the first payment is at the trial's end, at the new price.
+- A declined card on an upgrade answers 402 `payment_declined` with an
+  "Ödeme yöntemini güncelle" button; a database that doesn't answer during a
+  billing request answers 503 (`database_error`), not "signed out".
+- Account deletion cancels every subscription of the customer that isn't
+  over yet (not only the stored one) before the customer becomes a tombstone.
+- Prices for the Plans page use the visitor's country from Cloudflare
+  (`CF-IPCountry`, believed only when the request came from a Cloudflare
+  address); behind Cloudflare, Vercel's `x-vercel-ip-country` is the country
+  of Cloudflare's server. Keep Cloudflare › Network › IP Geolocation on (the
+  default).
 
 Renewals, cancellations, failed payments and plan changes made in Paddle
 still come through the webhook, so it still has to work: see "Bildirimleri

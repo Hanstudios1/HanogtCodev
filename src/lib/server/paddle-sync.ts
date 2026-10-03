@@ -1,10 +1,11 @@
 import "server-only";
 
-import { ENTITLED_STATUSES, isPaddleId, paddleEntitles, paddleNeedsResync, type PaddleStatus } from "@/lib/paddle";
+import { ENTITLED_STATUSES, isPaddleId, paddleEntitles, paddleNeedsResync } from "@/lib/paddle";
 import { isRecentCheckout, type PaddleSyncState, type UserSubscription } from "@/lib/plans";
 import { commitServerMutations, getServerDocument } from "./firebase-rest";
-import { PaddleApiError, customerPath, customerSubscriptions, getPaddleConfig, paddleRequest, rememberCustomer, syncSubscription, type PaddleSubscriptionEntity } from "./paddle";
+import { PaddleApiError, customerPath, customerSubscriptions, getPaddleConfig, paddleRequest, paddleStatusOf, rememberCustomer, syncSubscription, type PaddleSubscriptionEntity } from "./paddle";
 import { getSubscription, subscriptionPath } from "./plans";
+import { enforceRateLimitWithFallback } from "./rate-limit";
 import { normalizeEmail } from "./validate";
 
 /*
@@ -67,7 +68,7 @@ async function transactionOf(transactionId: string): Promise<TransactionEntity |
 }
 
 function isEntitledStatus(status: unknown) {
-    return ENTITLED_STATUSES.includes(status as PaddleStatus);
+    return ENTITLED_STATUSES.includes(paddleStatusOf(status));
 }
 
 /** Paid, with its subscription still on the way (Paddle adds subscription_id when the transaction completes). */
@@ -107,7 +108,7 @@ export async function syncAccountFromPaddle(email: string, now = Date.now()): Pr
     if (mapping && (mapping.deleted === true || normalizeEmail(mapping.email) !== account)) return "none";
     if (!mapping) await rememberCustomer(customerId, account, "checkout");
 
-    let synced: string | null = null;
+    const tried = new Set<string>();
     const checkout = subscription.paddleCheckout;
     if (checkout && isRecentCheckout(checkout, now)) {
         const transaction = await transactionOf(checkout.transactionId);
@@ -115,18 +116,101 @@ export async function syncAccountFromPaddle(email: string, now = Date.now()): Pr
             const subscriptionId = transaction.subscription_id;
             if (isPaddleId("subscription", subscriptionId)) {
                 const { data } = await paddleRequest<{ data?: PaddleSubscriptionEntity }>("GET", `/subscriptions/${subscriptionId}`);
+                tried.add(subscriptionId);
                 if (await storeOwnSubscription(account, customerId, data, subscriptionId)) return "active";
-                synced = subscriptionId;
             } else if (isPendingPayment(transaction, now)) {
                 return "pending";
             }
         }
     }
 
-    // Any subscription of the customer: purchases from before checkouts were remembered, or paid elsewhere (a payment link).
-    const [first] = await customerSubscriptions(customerId);
-    if (first && first.id !== synced && isEntitledStatus(first.status) && (await storeOwnSubscription(account, customerId, first, first.id))) return "active";
+    // Every subscription of the customer that could unlock a plan, best first: purchases from before
+    // checkouts were remembered, ones paid elsewhere (a payment link), or another one when the stored one ended.
+    for (const candidate of await customerSubscriptions(customerId, now)) {
+        if (tried.has(candidate.id) || !isEntitledStatus(candidate.status)) continue;
+        tried.add(candidate.id);
+        if (await storeOwnSubscription(account, customerId, candidate, candidate.id)) return "active";
+    }
+    // The stored one, brought up to date (e.g. it ended and the notification was lost).
+    const storedId = subscription.paddle?.subscriptionId;
+    if (storedId && !tried.has(storedId) && subscription.paddle?.customerId === customerId) {
+        const result = await syncSubscription(storedId).catch(() => null);
+        if (result?.status === "stored" && paddleEntitles((await getSubscription(account)).paddle, now)) return "active";
+    }
     return "none";
+}
+
+export type PurchaseBlock = "already_subscribed" | "subscription_paused" | "payment_pending" | null;
+
+/**
+ * Before a checkout opens: does the account's Paddle customer already pay for
+ * a subscription, have a paused one, or a payment for one still going through?
+ * Lists the customer's subscriptions every time (whatever we have stored), so
+ * a lost notification can't lead to a second subscription that bills twice.
+ * A live or paused one is stored on the way, so the Plans page shows it. Throws
+ * when Paddle can't be asked: the caller must not sell then.
+ */
+export async function purchaseCheck(email: string, customerId: string, subscription: UserSubscription, now = Date.now()): Promise<PurchaseBlock> {
+    const account = normalizeEmail(email);
+    if (!account) return null;
+    const candidates = await customerSubscriptions(customerId, now);
+    const live = candidates.filter((entity) => isEntitledStatus(entity.status));
+    for (const entity of live) {
+        if (await storeOwnSubscription(account, customerId, entity, entity.id)) return "already_subscribed";
+    }
+    // Live but sold through a price no plan claims: still one subscription too many to sell another.
+    if (live.length) return "already_subscribed";
+    const paused = candidates.find((entity) => paddleStatusOf(entity.status) === "paused");
+    if (paused) {
+        await syncSubscription(paused.id, { entity: paused }).catch((error: unknown) => console.warn("[paddle:check] paused", error instanceof Error ? error.message : error));
+        return "subscription_paused";
+    }
+    const checkout = subscription.paddleCheckout;
+    if (checkout && isRecentCheckout(checkout, now)) {
+        const transaction = await transactionOf(checkout.transactionId);
+        if (transaction && transaction.customer_id === customerId && !isPaddleId("subscription", transaction.subscription_id) && isPendingPayment(transaction, now)) return "payment_pending";
+    }
+    return null;
+}
+
+/**
+ * Asks Paddle about the account when selfHealReason says it's worth it, at
+ * most once every ten minutes: a paid period that ended without a renewal, or
+ * a Paddle customer without a subscription that unlocks a plan (a purchase
+ * whose notification never arrived). Waits at most `deadlineMs`; a slower
+ * Paddle answer is handed to `onLate`, so a route can keep it running after
+ * its response (Next's after()) and it counts next time. Returns the
+ * subscription as it is afterwards.
+ */
+export async function refreshSubscriptionFromPaddle(
+    email: string,
+    subscription: UserSubscription,
+    options: { deadlineMs?: number; onLate?: (work: Promise<unknown>) => void; now?: number } = {},
+): Promise<UserSubscription> {
+    const now = options.now ?? Date.now();
+    const reason = selfHealReason(subscription, now);
+    if (!reason || !getPaddleConfig().apiKey) return subscription;
+    const rate = await enforceRateLimitWithFallback(`paddle-resync:${email}`, 1, 10 * 60_000).catch(() => ({ allowed: false }));
+    if (!rate.allowed) return subscription;
+    const work: Promise<boolean> = (async () => {
+        if (reason === "lapsed" && subscription.paddle) {
+            const result = await syncSubscription(subscription.paddle.subscriptionId);
+            if (result.status === "stored" && paddleEntitles((await getSubscription(email)).paddle, now)) return true;
+            // Ended for good: maybe the customer pays for another subscription.
+            return (await syncAccountFromPaddle(email, now)) === "active";
+        }
+        return (await syncAccountFromPaddle(email, now)) === "active";
+    })().catch((error: unknown) => {
+        console.warn("[paddle:refresh]", reason, error instanceof Error ? error.message : error);
+        return false;
+    });
+    const late = Symbol("late");
+    const answer = await withDeadline<boolean | typeof late>(work, options.deadlineMs ?? 6_000, late);
+    if (answer === late) {
+        options.onLate?.(work);
+        return subscription;
+    }
+    return answer ? await getSubscription(email) : subscription;
 }
 
 /**

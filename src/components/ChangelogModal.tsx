@@ -24,6 +24,20 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.7",
+        version: "v0.3.7",
+        date: "2026-10-03",
+        title: { TR: "Ödemelerde daha fazla güvenlik ve doğruluk", EN: "Safer, more accurate payments" },
+        desc: { TR: "Abonelikler artık başkasının ödeme kaydına bağlanamıyor, iki kez ödeme alınmıyor ve duraklatılmış abonelik tek tuşla sürdürülüyor.", EN: "Subscriptions can no longer be linked to someone else's billing record, nobody is charged twice, and a paused subscription resumes with one click." },
+        items: [
+            { TR: "Paddle'da aynı e-postayla eski bir kayıt varsa, yalnızca e-postası doğrulanmış (Google ile giriş yapmış) hesaba bağlanır.", EN: "An older Paddle record with the same e-mail is linked only to an account whose address is verified (signed in with Google)." },
+            { TR: "Duraklatılmış aboneliğini Fiyatlandırma'dan sürdürebilirsin; ikinci kez ödeme alınmaz.", EN: "Resume a paused subscription from Pricing; you're never charged twice." },
+            { TR: "Deneme süresinde plan değiştirmek artık çalışıyor ve ücret alınmıyor.", EN: "Changing plans during a free trial now works and costs nothing." },
+            { TR: "Fiyatlar bulunduğun ülkeye göre doğru para birimi ve vergiyle gösteriliyor.", EN: "Prices show in the right currency and with the right taxes for your country." },
+            { TR: "Yıllık abonelikler, reddedilen kartlar ve ödeme bağlantıları için daha açık mesajlar.", EN: "Clearer messages for yearly subscriptions, declined cards and payment links." },
+        ],
+    },
+    {
         id: "v0.3.6",
         version: "v0.3.6",
         date: "2026-10-03",

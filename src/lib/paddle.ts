@@ -126,23 +126,30 @@ export type BillingView = {
     renewsAt: string | null;
     /** A cancellation the person scheduled; benefits last until then. */
     endsAt: string | null;
+    /** The paid period, while it hasn't ended (a paused subscription can continue it without a new charge). */
+    periodEndsAt: string | null;
     pastDue: boolean;
     paused: boolean;
     canceled: boolean;
+    /** The subscription unlocks its plan now, as the server decides it (the grace after a period end included). */
+    entitled: boolean;
 };
 
-export function billingView(state: PaddleSubscriptionState | null): BillingView | null {
+export function billingView(state: PaddleSubscriptionState | null, now = Date.now()): BillingView | null {
     if (!state) return null;
     const endsAt = state.scheduledChange?.action === "cancel" ? state.scheduledChange.effectiveAt : null;
+    const periodEnd = state.currentPeriodEnd ? Date.parse(state.currentPeriodEnd) : Number.NaN;
     return {
         status: state.status,
         plan: state.plan,
         interval: state.interval,
         renewsAt: endsAt || state.status === "canceled" || state.status === "paused" ? null : state.nextBilledAt,
         endsAt,
+        periodEndsAt: Number.isFinite(periodEnd) && periodEnd > now ? state.currentPeriodEnd : null,
         pastDue: state.status === "past_due",
         paused: state.status === "paused",
         canceled: state.status === "canceled",
+        entitled: paddleEntitles(state, now),
     };
 }
 
@@ -225,6 +232,8 @@ export type PlanChangePreview = {
     result: "charge" | "credit" | "none";
     nextBilledAt: string | null;
     nextAmount: string | null;
+    /** In a free trial: nothing is billed now, the first payment is the next one. */
+    trialing: boolean;
 };
 
 /**
@@ -264,10 +273,11 @@ export type PaddleClientError = {
  * What a billing route (POST /api/paddle/checkout, /api/paddle/subscription,
  * /api/paddle/sync) was doing when it failed: reading the plan catalog, the
  * Paddle settings or the account's subscription record, finding the Paddle
- * customer, creating the checkout's transaction, one of the subscription
- * actions, or asking Paddle about the account's purchase (sync).
+ * customer, checking that it doesn't pay for a subscription already (check),
+ * creating the checkout's transaction, one of the subscription actions, or
+ * asking Paddle about the account's purchase (sync).
  */
-export const BILLING_STEPS = ["catalog", "settings", "subscription", "coupon", "discount", "customer", "transaction", "portal", "preview", "change", "keep", "sync"] as const;
+export const BILLING_STEPS = ["catalog", "settings", "subscription", "coupon", "discount", "customer", "check", "transaction", "portal", "preview", "change", "keep", "resume", "sync"] as const;
 export type BillingStep = (typeof BILLING_STEPS)[number];
 
 export function isBillingStep(value: unknown): value is BillingStep {
@@ -312,6 +322,16 @@ export type BillingErrorCode =
     | "already_subscribed"
     // A payment went through and Paddle is still creating its subscription: a second checkout would charge twice.
     | "payment_pending"
+    // The account's Paddle customer has a paused subscription: resume it instead of buying a second one.
+    | "subscription_paused"
+    // Paddle already has a customer with this e-mail that isn't linked to the account, and the account's
+    // e-mail address isn't verified (signed up with a password, never with Google): linking it could hand
+    // someone else's billing to this account.
+    | "customer_unverified"
+    // The account's Paddle customer is linked to another account.
+    | "customer_conflict"
+    // Paddle couldn't charge the saved payment method (e.g. for an upgrade): update it and try again.
+    | "payment_declined"
     | "no_subscription"
     | "no_change"
     | "paddle_error"

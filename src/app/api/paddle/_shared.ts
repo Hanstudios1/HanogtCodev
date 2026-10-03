@@ -1,9 +1,9 @@
 import { NextResponse, after, type NextRequest } from "next/server";
 import type { BillingErrorCode } from "@/lib/paddle";
-import { getActiveSession } from "@/lib/server/active-session";
+import { getActiveSessionState } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
 import { isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
-import { describeBillingFailure, getPaddleConfig, isBillingTester, isPaddleConfigured, recordPaddleServerError } from "@/lib/server/paddle";
+import { billingAnswer, describeBillingFailure, getPaddleConfig, isBillingTester, isPaddleConfigured, recordPaddleServerError } from "@/lib/server/paddle";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 
@@ -25,6 +25,9 @@ export function billingError(status: number, error: BillingErrorCode, extra: Rec
  * detail. The failure is logged and kept for Admin › Subscriptions.
  */
 export async function billingFailure(error: unknown, context: { route: string; email: string; startedAt: number }) {
+    // A declined card or a customer that can't be linked is an answer for the person, not a failure.
+    const answer = billingAnswer(error);
+    if (answer) return billingError(answer.status, answer.error);
     const failure = describeBillingFailure(error);
     const ms = Date.now() - context.startedAt;
     console.error(`[paddle:${context.route}]`, failure.step ?? "-", failure.paddleStatus ?? failure.status, failure.code, `${ms}ms`, failure.detail);
@@ -42,14 +45,18 @@ export async function billingFailure(error: unknown, context: { route: string; e
 
 /**
  * Common checks for the signed-in billing routes: same origin, Paddle and
- * the database configured, an active account and a per-account rate limit.
+ * the database configured, an active account (503 when the database can't
+ * tell) and a per-account rate limit.
  */
 export async function billingGuard(request: NextRequest, bucket: string, limit: number) {
     if (!isSameOrigin(request)) return { ok: false as const, response: billingError(403, "forbidden_origin") };
     if (!isFirebaseServerConfigured() || !isPaddleConfigured(getPaddleConfig())) return { ok: false as const, response: billingError(503, "billing_unavailable") };
-    const active = await getActiveSession();
-    if (!active) return { ok: false as const, response: billingError(401, "unauthorized") };
+    const session = await getActiveSessionState();
+    // The database didn't answer: not a sign-out (the Plans page keeps following a payment on 503).
+    if (session.state === "error") return { ok: false as const, response: billingError(503, "unavailable", { code: "database_error" }) };
+    if (session.state === "none") return { ok: false as const, response: billingError(401, "unauthorized") };
+    const { active } = session;
     const rate = await enforceRateLimitWithFallback(`paddle-${bucket}:${active.email}`, limit, 60_000);
     if (!rate.allowed) return { ok: false as const, response: billingError(429, "rate_limited") };
-    return { ok: true as const, email: active.email };
+    return { ok: true as const, email: active.email, user: active.user };
 }

@@ -1,5 +1,40 @@
 # Değişiklik Günlüğü
 
+## 0.3.7 — 2026-10-03
+
+### Ödeme güvenliği ve doğruluğu
+
+- Hesap ele geçirme kapatıldı: e-postasını doğrulamadan şifreyle kayıt olan
+  biri, Paddle'da aynı e-postayla duran (ödeme bağlantısıyla ya da silinmiş
+  bir hesaptan kalmış) bir müşteriyi kendine bağlayıp onun aboneliğine ve
+  müşteri portalına erişebiliyordu. Artık böyle bir müşteri yalnızca e-postası
+  doğrulanmış hesaba bağlanıyor (Google ile giriş `emailVerifiedAt` yazıyor);
+  aksi hâlde `customer_unverified`. Kayıtlı müşteri kimliği de eşlemesi bu
+  hesaba aitken kullanılıyor.
+- Çift ödeme koruması sıkılaştı: her ödemeden önce müşterinin Paddle'daki
+  bütün abonelikleri okunuyor; etkin olan `already_subscribed`, duraklatılmış
+  olan `subscription_paused`, işlenen ödeme `payment_pending` veriyor. Paddle
+  yanıt vermezse satış yapılmıyor (önce yavaşlıkta geçiyordu).
+- Duraklatılmış abonelik Fiyatlandırma'da "Aboneliği sürdür" ile sürdürülüyor
+  (ödenmiş dönem bitmediyse ücret alınmıyor).
+- Deneme süresindeki aboneliklerde plan değişikliği artık çalışıyor
+  (`do_not_bill`); pencere "şimdi ücret alınmaz" diyor.
+- Fiyatlar ziyaretçinin ülkesine göre: Cloudflare arkasında Vercel'in ülke
+  başlığı Cloudflare sunucusunun ülkesiydi; artık `CF-IPCountry`.
+- Hesap silme müşterinin iptal edilmemiş bütün aboneliklerini iptal ediyor.
+- Eşitleme ve yöneticideki yeniden eşitleme, plan açan bütün abonelikleri
+  sırayla deniyor (yüksek plan önce) ve kayıtlı aboneliği her zaman yeniden
+  okuyor. Ortak üründe eski Pro fiyatı Plus sayılmıyor.
+- Veritabanı aksaması "oturumun sona ermiş" değil 503; ödeme sonrası takip
+  sürüyor. Reddedilen kart `payment_declined` ve "Ödeme yöntemini güncelle".
+- Sayfa: yıllık abone Yıllık ile açılıyor; etkinleşme sürerken satın alma
+  düğmeleri kapalı; aylık/yıllık olmayan fiyatlarda düğmeler kilitlenmiyor;
+  satış kapalıyken abonelere doğru metin; "Aboneliği yönet" yalnızca aboneye;
+  oturum kapalı ödenen ödeme bağlantısına doğru mesaj ve `_ptxn` adresten
+  siliniyor; `checkout.payment.error` için mesaj; portaldan ve geri tuşuyla
+  dönünce yeniden okuma; plan değişikliği penceresinde planlanmış iptal ve
+  aylık↔yıllık metni; kuponlu yıllık fiyatın aylık karşılığı.
+
 ## 0.3.6 — 2026-10-03
 
 ### Ödeme sonrası plan, bildirim beklemeden açılıyor
