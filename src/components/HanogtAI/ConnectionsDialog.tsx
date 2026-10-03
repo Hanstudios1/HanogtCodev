@@ -8,7 +8,6 @@ import {
     API_KEY_MAX,
     CONNECTION_LABEL_MAX,
     CONNECTION_MODEL_MAX,
-    OWN_KEY_LIMITS,
     PLAN_AI_CONNECTIONS,
     aiProvider,
     isConnectionsState,
@@ -20,7 +19,7 @@ import {
     type AiProviderInfo,
 } from "@/lib/ai/connections";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { PLAN_COPY } from "@/lib/plans";
+import { PLAN_AI_FEATURES, PLAN_COPY } from "@/lib/plans";
 import { connectionsRequest, type AiConnectionsHandle } from "./connections-store";
 import { cx, ICON_BUTTON } from "./ui";
 
@@ -569,6 +568,8 @@ export default function ConnectionsDialog({ connections, onClose, onNavigate }: 
     } else {
         const count = state.items.length;
         const planName = PLAN_COPY[state.plan] ? tx(PLAN_COPY[state.plan].name) : state.plan;
+        // Messages a day through own connections (Plus 3,000, Pro 10,000).
+        const ownKey = PLAN_AI_FEATURES[state.plan]?.ownKey ?? null;
         const full = state.limit > 0 && count >= state.limit;
         const canAdd = state.canStore && state.limit > 0 && !full;
         const showPlans = state.limit === 0 || (full && state.plan !== "pro");
@@ -582,7 +583,7 @@ export default function ConnectionsDialog({ connections, onClose, onNavigate }: 
                         <span>{tx(C.planLimits, { plus: PLAN_AI_CONNECTIONS.plus, pro: PLAN_AI_CONNECTIONS.pro })}</span>
                         {showPlans ? plansLink : null}
                     </p>
-                    {state.limit > 0 ? <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.ownLimit, { perDay: new Intl.NumberFormat(locale).format(OWN_KEY_LIMITS.perDay) })}</p> : null}
+                    {state.limit > 0 && ownKey ? <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.ownLimit, { perDay: new Intl.NumberFormat(locale).format(ownKey.perDay) })}</p> : null}
                     {full ? <p className="mt-1.5 font-semibold text-amber-700 dark:text-amber-300">{tx(C.limitReached)}</p> : null}
                     {count > state.limit ? <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.inactiveNote)}</p> : null}
                     {!state.canStore && state.limit > 0 ? <p className="mt-1.5 font-semibold text-amber-700 dark:text-amber-300">{tx(C.encryptionOff)}</p> : null}

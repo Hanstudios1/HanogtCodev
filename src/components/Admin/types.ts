@@ -332,6 +332,7 @@ export type AdminAuditAction =
     | "coupon.delete"
     | "coupon.sync"
     | "coupon.restore"
+    | "feature.set"
     | "paddle.set_prices"
     | "paddle.set_sales_open"
     | "paddle.create_catalog"
@@ -462,6 +463,8 @@ export type AdminPlansResponse = {
     /** Newest first, at most fifty; codes in use again are left out. */
     deletedCoupons: AdminDeletedCoupon[];
     waitlist: { plus: number | null; pro: number | null };
+    /** Who sees each feature that is opened step by step (src/lib/features.ts). */
+    features: { audiences: import("@/lib/features").FeatureFlags; updatedAt: string | null; updatedBy: string | null };
 };
 
 /** POST /api/admin/plans { action: "restoreCoupon" }: the overview plus what happened in Paddle. */

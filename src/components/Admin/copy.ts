@@ -186,6 +186,7 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "coupon.delete": { TR: "Kupon silindi", EN: "Coupon deleted" },
     "coupon.sync": { TR: "Kupon Paddle'a aktarıldı", EN: "Coupon sent to Paddle" },
     "coupon.restore": { TR: "Silinen kupon geri yüklendi", EN: "Deleted coupon restored" },
+    "feature.set": { TR: "Özelliğin kitlesi değişti", EN: "Feature audience changed" },
     "paddle.set_prices": { TR: "Paddle fiyat eşlemesi değişti", EN: "Paddle price mapping changed" },
     "paddle.set_sales_open": { TR: "Satışlar açıldı veya kapatıldı", EN: "Sales opened or closed" },
     "paddle.create_catalog": { TR: "Paddle kataloğu oluşturuldu", EN: "Paddle catalog created" },

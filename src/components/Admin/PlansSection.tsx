@@ -8,6 +8,7 @@ import { AI_BONUS_MAX, COUPON_RECUR_MAX, GRANT_DAYS_MAX, PAID_PLAN_IDS, PLAN_COP
 import { adminPost, adminRequest, type ApiFailure } from "./api";
 import { COMMON } from "./copy";
 import { formatDateTime, formatNumber, useAdminResource, useNow } from "./hooks";
+import FeaturesCard from "./FeaturesCard";
 import PaddleCard, { PaddleEnvironmentBadge, PaddleStatusBadge } from "./PaddleCard";
 import type { AdminCoupon, AdminCouponRestoreResponse, AdminDeletedCoupon, AdminPaddleCouponResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPlansResponse, AdminUserPlanResponse } from "./types";
 import { Badge, Button, ConfirmDialog, ErrorNotice, IconButton, INPUT_CLASS, LoadingRows, Notice, Panel, SectionHeader, Switch, cx, useErrorText, useToast } from "./ui";
@@ -712,6 +713,7 @@ export default function PlansSection() {
                             </details>
                         ) : null}
                     </Panel>
+                    {data.features ? <FeaturesCard features={data.features} onChanged={replace} /> : null}
                 </>
             )}
             <PersonPlan />

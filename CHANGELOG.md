@@ -1,5 +1,27 @@
 # Değişiklik Günlüğü
 
+## 0.3.10 — 2026-10-03
+
+### Plana göre Hanogt AI ve adım adım açılan özellikler
+
+- Hanogt AI'ın yanıt uzunluğu plana göre: Ücretsiz 1.800, Plus 3.000, Pro
+  4.000 token. Açık editör dosyasından okunan kısım Ücretsiz 12.000, Plus
+  24.000, Pro 40.000 karakter (tarayıcı da sunucu da plana göre kesiyor).
+- Kendi API anahtarınla mesaj hakkı plana göre: Plus günde 3.000 / dakikada
+  30, Pro günde 10.000 / dakikada 60. Fiyatlandırma kartları yeni hakları
+  gösteriyor.
+- Tek tablo: `PLAN_AI_FEATURES` (yanıt, dosya, kişisel talimat, kendi anahtar,
+  geliştirici API'si).
+- AI çekirdeği `src/lib/server/hanogt-ai.ts`'e taşındı: sohbet ve gelecek
+  geliştirici API'si aynı istemi kullanıyor (`audience: "chat" | "api"`);
+  kişinin tercihleri ve geliştiricinin sistem metni kurallardan sonra,
+  etiketli veri olarak ve kırpılarak ekleniyor, kuralları değiştiremiyor.
+- Özellik bayrakları: `ai_api`, `plan_badge`, `ai_voice` (şimdilik yalnızca
+  ekip). Yönetici › Abonelikler › "Özellikler ve erken erişim" kartından
+  kapalı / yalnızca ekip / erken erişim (Pro ve ekip) / herkes seçiliyor;
+  değişiklik denetim kaydına yazılıyor ve bir dakika içinde her yerde
+  geçerli. Yeni `GET /api/features`.
+
 ## 0.3.9 — 2026-10-03
 
 ### Hanogt AI sekmesinde kullanım sayacı

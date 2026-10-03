@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.10",
+        version: "v0.3.10",
+        date: "2026-10-03",
+        title: { TR: "Plus ve Pro'da daha güçlü Hanogt AI", EN: "A stronger Hanogt AI on Plus and Pro" },
+        desc: { TR: "Plus ve Pro'da Hanogt AI daha uzun yanıt veriyor ve açık dosyanın daha büyük kısmını okuyor.", EN: "On Plus and Pro, Hanogt AI writes longer answers and reads more of your open file." },
+        items: [
+            { TR: "Daha uzun yanıtlar: Plus'ta 3.000, Pro'da 4.000 token'a kadar.", EN: "Longer answers: up to 3,000 tokens on Plus and 4,000 on Pro." },
+            { TR: "Açık dosyanın Plus'ta 24.000, Pro'da 40.000 karakteri okunur.", EN: "24,000 characters of your open file are read on Plus, 40,000 on Pro." },
+            { TR: "Pro'da kendi API anahtarınla günde 10.000 mesaj.", EN: "10,000 messages a day with your own API keys on Pro." },
+            { TR: "Yeni özellikler önce erken erişimle (Pro) açılabilecek.", EN: "New features can open first in early access (Pro)." },
+        ],
+    },
+    {
         id: "v0.3.9",
         version: "v0.3.9",
         date: "2026-10-03",

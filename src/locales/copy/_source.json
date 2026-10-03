@@ -1587,14 +1587,6 @@
       "src/app/admin/page.tsx"
     ]
   },
-  "2aztfk35c0t": {
-    "en": "English",
-    "tr": "Turkish",
-    "files": [
-      "src/app/api/ai/route.ts",
-      "src/components/Admin/AnnouncementsSection.tsx"
-    ]
-  },
   "1rox5idbngm": {
     "en": "Welcome back",
     "tr": "Tekrar hoş geldin",
@@ -10431,7 +10423,8 @@
       "src/app/settings/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/AnnouncementsSection.tsx",
-      "src/components/HanogtAI/chat-copy.ts"
+      "src/components/HanogtAI/chat-copy.ts",
+      "src/lib/features.ts"
     ]
   },
   "9nokzegfli": {
@@ -13779,6 +13772,14 @@
       "src/lib/server/ai-rankings.ts"
     ]
   },
+  "2aztfk35c0t": {
+    "en": "English",
+    "tr": "İngilizce",
+    "files": [
+      "src/components/Admin/AnnouncementsSection.tsx",
+      "src/lib/server/hanogt-ai.ts"
+    ]
+  },
   "1qvrxwopmbv": {
     "en": "Announcement switched on.",
     "tr": "Duyuru açıldı.",
@@ -16642,6 +16643,13 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "25d88bp0pd7": {
+    "en": "Feature audience changed",
+    "tr": "Özelliğin kitlesi değişti",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "rri7v0odim": {
     "en": "Paddle price mapping changed",
     "tr": "Paddle fiyat eşlemesi değişti",
@@ -17015,6 +17023,48 @@
     "tr": "Para birimi",
     "files": [
       "src/components/Admin/copy.ts"
+    ]
+  },
+  "1dss933ab3i": {
+    "en": "Features and early access",
+    "tr": "Özellikler ve erken erişim",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "1w7e5dfsteo": {
+    "en": "Open new features step by step: first staff only, then early access (Pro subscribers and staff), finally everyone. A change applies everywhere within a minute and is written to the audit log.",
+    "tr": "Yeni özellikleri adım adım aç: önce yalnızca ekip, sonra erken erişim (Pro aboneleri ve ekip), en son herkes. Değişiklik bir dakika içinde her yerde geçerli olur ve denetim kaydına yazılır.",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "1l351wgp2e6": {
+    "en": "Who sees {feature}",
+    "tr": "{feature} kimlere açık",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "tyqz0dop39": {
+    "en": "{feature}: {audience}",
+    "tr": "{feature}: {audience}",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "i1g2qlljkb": {
+    "en": "Last change: {by} · {at}",
+    "tr": "Son değişiklik: {by} · {at}",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "1t5eheg4pyb": {
+    "en": "Not changed yet; the defaults apply.",
+    "tr": "Henüz değiştirilmedi; varsayılanlar geçerli.",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
     ]
   },
   "1f54l1xukqa": {
@@ -21968,6 +22018,48 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "hrwa2wvv25": {
+    "en": "A stronger Hanogt AI on Plus and Pro",
+    "tr": "Plus ve Pro'da daha güçlü Hanogt AI",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "273wx960lrc": {
+    "en": "On Plus and Pro, Hanogt AI writes longer answers and reads more of your open file.",
+    "tr": "Plus ve Pro'da Hanogt AI daha uzun yanıt veriyor ve açık dosyanın daha büyük kısmını okuyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1rmi8u8esgk": {
+    "en": "Longer answers: up to 3,000 tokens on Plus and 4,000 on Pro.",
+    "tr": "Daha uzun yanıtlar: Plus'ta 3.000, Pro'da 4.000 token'a kadar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1fexuk0le7o": {
+    "en": "24,000 characters of your open file are read on Plus, 40,000 on Pro.",
+    "tr": "Açık dosyanın Plus'ta 24.000, Pro'da 40.000 karakteri okunur.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2c9y4dkpuuy": {
+    "en": "10,000 messages a day with your own API keys on Pro.",
+    "tr": "Pro'da kendi API anahtarınla günde 10.000 mesaj.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "ggazxgc2ku": {
+    "en": "New features can open first in early access (Pro).",
+    "tr": "Yeni özellikler önce erken erişimle (Pro) açılabilecek.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "1mj75cnkdcu": {
@@ -41646,6 +41738,69 @@
       "src/lib/faq.ts"
     ]
   },
+  "ibc3r1zkin": {
+    "en": "Hanogt AI API",
+    "tr": "Hanogt AI API",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "1avi11d0nm2": {
+    "en": "Developer API keys and the /api/v1 endpoints on Plus and Pro.",
+    "tr": "Plus ve Pro'da geliştirici API anahtarları ve /api/v1 uç noktaları.",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "1en195gmcxx": {
+    "en": "Plan badge",
+    "tr": "Plan rozeti",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "w6rcfgtpnc": {
+    "en": "A badge on Plus and Pro subscribers' profiles.",
+    "tr": "Plus ve Pro abonelerinin profilinde rozet.",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "7efe3a7rp5": {
+    "en": "Voice for Hanogt AI",
+    "tr": "Hanogt AI ile sesli konuşma",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "e3nd0vxpsh": {
+    "en": "Dictation and reading answers aloud (the browser's speech features).",
+    "tr": "Sesle yazma ve yanıtı sesli okuma (tarayıcının konuşma özelliği).",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "26h6e0ogp5o": {
+    "en": "Staff only",
+    "tr": "Yalnızca ekip",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "2a3ahs5u75r": {
+    "en": "Early access (Pro and staff)",
+    "tr": "Erken erişim (Pro ve ekip)",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
+  "1z5qcscc4pb": {
+    "en": "Everyone",
+    "tr": "Herkes",
+    "files": [
+      "src/lib/features.ts"
+    ]
+  },
   "cgatfys38w": {
     "en": "Tilemap Adventure",
     "tr": "Tilemap Macerası",
@@ -42598,9 +42753,16 @@
       "src/lib/plans.ts"
     ]
   },
-  "1j91n2f3s8d": {
-    "en": "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more)",
-    "tr": "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası)",
+  "1okx23tc683": {
+    "en": "Longer AI answers; 24,000 characters of your open file are read",
+    "tr": "Daha uzun yapay zekâ yanıtları; açık dosyanın 24.000 karakteri okunur",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "3pjn4mhavs": {
+    "en": "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more), 3,000 messages a day",
+    "tr": "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası), günde 3.000 mesaj",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -42668,9 +42830,16 @@
       "src/lib/plans.ts"
     ]
   },
-  "23w7z0jmtnj": {
-    "en": "Connect 5 AI providers with your own API keys",
-    "tr": "Kendi API anahtarınla 5 yapay zekâ bağlantısı",
+  "ddfymle7p2": {
+    "en": "The longest AI answers; 40,000 characters of your open file are read",
+    "tr": "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "2aarv22a2xb": {
+    "en": "Connect 5 AI providers with your own API keys, 10,000 messages a day",
+    "tr": "Kendi API anahtarınla 5 yapay zekâ bağlantısı, günde 10.000 mesaj",
     "files": [
       "src/lib/plans.ts"
     ]

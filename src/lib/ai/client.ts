@@ -80,6 +80,8 @@ export async function streamHanogtAI(options: {
     agentFinal?: boolean;
     /** Answer with the person's own provider connection instead of Hanogt AI's model. */
     connectionId?: string | null;
+    /** Characters of the attached file to send: the plan's allowance (the server clips to it too). */
+    contextChars?: number;
     onToken: (textSoFar: string) => void;
 }): Promise<AiStreamResult> {
     const empty = { sources: [], toolCalls: [], agent: "off" as const };
@@ -95,7 +97,7 @@ export async function streamHanogtAI(options: {
                 stream: true,
                 ...(options.agent ? { agent: true, agentFinal: options.agentFinal === true } : {}),
                 ...(options.connectionId ? { connectionId: options.connectionId } : {}),
-                context: options.context ? { ...options.context, code: options.context.code?.slice(0, 12_000) } : undefined,
+                context: options.context ? { ...options.context, code: options.context.code?.slice(0, options.contextChars ?? 12_000) } : undefined,
             }),
             signal: options.signal,
         });

@@ -1,8 +1,7 @@
 import "server-only";
 
-import { OWN_KEY_LIMITS } from "@/lib/ai/connections";
 import { QUOTA_HEADERS, type AiUsage, type CountedLimit, type DayQuota, type PlanUsage, type QuotaKind, type UsageWindow } from "@/lib/ai/usage";
-import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, aiLimitsFor, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
+import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, aiLimitsFor, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
 import { healBeforeRefusing, type HealOptions } from "./entitlements";
 import { countServerQuery, getServerDocument } from "./firebase-rest";
 import { AI_DAY_MS, AI_LIMIT_KEYS, OWN_KEY_LIMIT_KEYS, getSubscription } from "./plans";
@@ -20,9 +19,10 @@ const MINUTE_MS = 60_000;
 
 type Limits = { perMinute: number; perDay: number };
 
-/** Messages a plan allows through the person's own connections; null when the plan has none. */
+/** Messages a plan allows through the person's own connections (Plus 3,000, Pro 10,000 a day); null when the plan has none. */
 export function ownKeyLimitsFor(plan: PlanId): Limits | null {
-    return PLAN_AI_CONNECTIONS[plan] > 0 ? { perMinute: OWN_KEY_LIMITS.perMinute, perDay: OWN_KEY_LIMITS.perDay } : null;
+    const own = PLAN_AI_FEATURES[plan].ownKey;
+    return own && PLAN_AI_CONNECTIONS[plan] > 0 ? { perMinute: own.perMinute, perDay: own.perDay } : null;
 }
 
 /** A stored window as the meter shows it; no open window is an unused one. */

@@ -175,8 +175,7 @@ export type ConnectionAllowance = { plan: PlanId; limit: number };
 /** Connections the person's plan allows; none (Free) when the subscription can't be read. */
 export async function connectionAllowance(email: string): Promise<ConnectionAllowance> {
     const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
-    const plan = effectivePlan(subscription);
-    return { plan, limit: Math.max(0, Math.min(PLAN_AI_CONNECTIONS[plan] ?? 0, MAX_STORED_AI_CONNECTIONS)) };
+    return allowanceOf(effectivePlan(subscription));
 }
 
 function viewOf(item: StoredConnection, active: boolean): AiConnectionView {
@@ -462,10 +461,18 @@ export type ResolvedConnection = {
     lastError: AiConnectionError | null;
 };
 
-/** The connection with its key, only while the person's plan covers it; null otherwise. */
-export async function resolveConnectionForChat(email: string, id: unknown): Promise<ResolvedConnection | null> {
+/** Connections a plan allows (PLAN_AI_CONNECTIONS, never more than are ever stored). */
+function allowanceOf(plan: PlanId): ConnectionAllowance {
+    return { plan, limit: Math.max(0, Math.min(PLAN_AI_CONNECTIONS[plan] ?? 0, MAX_STORED_AI_CONNECTIONS)) };
+}
+
+/**
+ * The connection with its key, only while the person's plan covers it; null
+ * otherwise. `plan`: the plan the chat route already read (no second read).
+ */
+export async function resolveConnectionForChat(email: string, id: unknown, plan?: PlanId): Promise<ResolvedConnection | null> {
     if (!isConnectionId(id)) return null;
-    const [record, allowance] = await Promise.all([readRecord(email), connectionAllowance(email)]);
+    const [record, allowance] = await Promise.all([readRecord(email), plan ? allowanceOf(plan) : connectionAllowance(email)]);
     const position = record.items.findIndex((item) => item.id === id);
     if (position < 0 || position >= allowance.limit) return null;
     const item = record.items[position];

@@ -4,7 +4,7 @@ import test from "node:test";
 import { load } from "./setup.mjs";
 
 const plans = await load("lib/plans.ts");
-const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, aiLimitsFor, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
+const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, aiLimitsFor, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
 
 const NOW = Date.UTC(2026, 9, 2, 12);
 const DAY = 24 * 60 * 60_000;
@@ -102,7 +102,14 @@ test("the numbers on the Plans page are the limits the server enforces", () => {
             else {
                 assert.equal(keys.length, 1);
                 assert.ok(keys[0].includes(lang === "TR" ? `${PLAN_AI_CONNECTIONS[plan]} yapay zekâ bağlantısı` : `Connect ${PLAN_AI_CONNECTIONS[plan]} AI providers`), `${plan}/${lang}: "${keys[0]}"`);
+                const perDay = number(PLAN_AI_FEATURES[plan].ownKey.perDay, lang);
+                assert.ok(keys[0].includes(lang === "TR" ? `günde ${perDay} mesaj` : `${perDay} messages a day`), `${plan}/${lang}: "${keys[0]}" shows ${perDay} a day`);
             }
+
+            // Paid plans name how much of the open file the AI reads.
+            const reading = lines.filter((text) => (lang === "TR" ? /açık dosyanın/ : /open file/).test(text));
+            if (plan === "free") assert.deepEqual(reading, []);
+            else assert.ok(reading.length === 1 && reading[0].includes(number(PLAN_AI_FEATURES[plan].contextChars, lang)), `${plan}/${lang}: ${reading}`);
         }
     }
 });

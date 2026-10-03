@@ -234,6 +234,43 @@ follow-up round is one request. On a limit the Core answers with a notice; a
 purchase Paddle hasn't reported yet is looked up first
 (`src/lib/server/entitlements.ts`).
 
+### What grows with the plan
+
+`src/lib/plans.ts` `PLAN_AI_FEATURES` (one table, used by the chat route, the
+browser, the settings and the API):
+
+| | Free | Plus | Pro |
+| --- | --- | --- | --- |
+| Longest answer of Hanogt AI's model (`max_tokens`) | 1,800 | 3,000 | 4,000 |
+| Open editor file read (characters) | 12,000 | 24,000 | 40,000 |
+| Each personal instruction (Hanogt AI settings) | 500 | 1,500 | 3,000 |
+| Messages through own connections (day / minute) | – | 3,000 / 30 | 10,000 / 60 |
+| Developer API keys / requests (day / minute) | – | 2 / 250 / 10 | 5 / 1,000 / 30 |
+
+The browser sends at most the plan's share of the file and the server clips it
+again once the message is counted under the plan. Answers through the person's
+own connection use their own token budget (`ownKeyRequestParams`).
+
+The prompt lives in `src/lib/server/hanogt-ai.ts` (`systemPrompt`): the rules
+first, then the agent's rules (chat), then the person's own preferences or a
+developer's system text (API) as tagged data that can't change the rules, and
+last the knowledge notes, analyzer results and the open file.
+
+### Features opened step by step
+
+`src/lib/features.ts` lists features with an audience: `off`, `staff`,
+`early` (early access: Pro subscribers and staff) or `all`. The defaults are
+`staff`; the team changes them in Admin › Subscriptions › Features and early
+access (`site_config/features`, audit entry `feature.set`, applies within a
+minute). `GET /api/features` tells the browser which are open to the signed-in
+person; the routes behind a feature check again themselves.
+
+| Feature | What it opens |
+| --- | --- |
+| `ai_api` | Developer API keys and `/api/v1` |
+| `plan_badge` | Plus and Pro badges on profiles |
+| `ai_voice` | Dictation and reading answers aloud |
+
 ### Usage meter
 
 `src/lib/server/ai-usage.ts` counts every message: the minute window first,
@@ -274,6 +311,8 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | --- | --- |
 | Server route | `src/app/api/ai/route.ts`, `src/app/api/ai/usage/route.ts` |
 | Limits and usage | `src/lib/server/ai-usage.ts`, `src/lib/ai/usage.ts` |
+| Prompt, provider, knowledge notes | `src/lib/server/hanogt-ai.ts` |
+| Feature audiences | `src/lib/features.ts`, `src/lib/server/features.ts`, `src/app/api/features/route.ts`, `src/components/Admin/FeaturesCard.tsx` |
 | Agent registry, validation, permissions, refusals | `src/lib/ai/agent-tools.ts` |
 | Wire protocol (trailer, history) | `src/lib/ai/agent-protocol.ts` |
 | Core intent → action mapping | `src/lib/ai/agent-intents.ts`, `src/lib/ai/programs.ts` |
@@ -283,4 +322,4 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Client streaming, conversations | `src/lib/ai/client.ts`, `src/lib/ai/conversations.ts` |
 | UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`, `UsageMeter`, `usage-store`), `src/app/ai/*` |
 | Training | `ai/dataset/*`, `scripts/train-hanogt-ai.mjs`, `ai/reports/intent-training-report.md` |
-| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs` (`npm test`) |
+| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs` (`npm test`) |

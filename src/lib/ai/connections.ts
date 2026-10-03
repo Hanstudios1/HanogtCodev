@@ -151,9 +151,6 @@ export function aiProvider(id: AiProviderId): AiProvider {
 /** At most this many connections are ever stored for one account (the largest plan allowance). */
 export const MAX_STORED_AI_CONNECTIONS = Math.max(...Object.values(PLAN_AI_CONNECTIONS));
 
-/** Messages a person can send through their own connections (separate from the Hanogt AI daily quota). */
-export const OWN_KEY_LIMITS = { perMinute: 30, perDay: 3_000 } as const;
-
 export const CONNECTION_LABEL_MAX = 60;
 export const CONNECTION_MODEL_MAX = 200;
 export const API_KEY_MIN = 8;

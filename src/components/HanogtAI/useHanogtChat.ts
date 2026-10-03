@@ -16,6 +16,7 @@ import {
 } from "@/lib/ai/conversations";
 import { answerLocally, proposeActionsLocally, type AiContext, type AiMode } from "@/lib/ai/local-engine";
 import { formatResetTime, type LimitDetails } from "@/lib/ai/usage";
+import { PLAN_AI_FEATURES } from "@/lib/plans";
 import { languageFromFileName } from "@/lib/runtimes/languages";
 import { useI18n } from "@/lib/i18n";
 import { CHAT_COPY, CONNECTION_FAILURES, MAX_ATTACHMENT_BYTES, MAX_INPUT, NOTICES } from "./chat-copy";
@@ -83,6 +84,8 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     // Messages used today (the usage meter); every answer updates it from its headers.
     const usage = useAiUsage(signedIn ? session?.user?.email ?? null : null);
     const { applyQuota, applyLimit } = usage;
+    // How much of the open file goes with a question: the plan's allowance (Free until the plan is known).
+    const contextChars = PLAN_AI_FEATURES[usage.usage?.plan ?? "free"].contextChars;
 
     const conversations = useConversations();
     const activeId = useActiveConversationId();
@@ -242,6 +245,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 context,
                 agent: agentOn,
                 connectionId,
+                contextChars,
                 signal: controller.signal,
                 onToken: (soFar) => {
                     cancelAnimationFrame(frame);
@@ -274,7 +278,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [active, answeredBy, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, create, draftMode, finish, language, locale, selectedConnection, signedIn, tryModel, tx, update]);
+    }, [active, answeredBy, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, contextChars, create, draftMode, finish, language, locale, selectedConnection, signedIn, tryModel, tx, update]);
 
     /** Sends the tool results back to the model once every card of its message is settled. */
     const continueAfterTools = useCallback(async (conversation: AiConversation, source: AiMessage) => {

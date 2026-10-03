@@ -80,6 +80,26 @@ export const PLAN_COLLAB_LIMITS: Record<PlanId, { people: number; invites: numbe
  */
 export const PLAN_AI_CONNECTIONS: Record<PlanId, number> = { free: 0, plus: 2, pro: 5 };
 
+export type PlanAiFeatures = {
+    /** The longest answer of Hanogt AI's own model (max_tokens). */
+    maxTokens: number;
+    /** Characters of the open editor file (or attached file) the model reads. */
+    contextChars: number;
+    /** Characters of each personal instruction in the Hanogt AI settings. */
+    instructionsChars: number;
+    /** Messages through the person's own connections; null when the plan has none. */
+    ownKey: { perMinute: number; perDay: number } | null;
+    /** The developer Hanogt AI API: keys and requests; null when the plan has none. */
+    api: { keys: number; perMinute: number; perDay: number } | null;
+};
+
+/** Hanogt AI features that grow with the plan (the chat route, the settings, own connections and the API). */
+export const PLAN_AI_FEATURES: Record<PlanId, PlanAiFeatures> = {
+    free: { maxTokens: 1_800, contextChars: 12_000, instructionsChars: 500, ownKey: null, api: null },
+    plus: { maxTokens: 3_000, contextChars: 24_000, instructionsChars: 1_500, ownKey: { perMinute: 30, perDay: 3_000 }, api: { keys: 2, perMinute: 10, perDay: 250 } },
+    pro: { maxTokens: 4_000, contextChars: 40_000, instructionsChars: 3_000, ownKey: { perMinute: 60, perDay: 10_000 }, api: { keys: 5, perMinute: 30, perDay: 1_000 } },
+};
+
 /** Extra daily Hanogt AI messages staff can grant on top of the plan. */
 export const AI_BONUS_MAX = 5000;
 export const GRANT_DAYS_MAX = 365;
@@ -292,7 +312,8 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "40 kod projesi ve 40 oyun projesi", EN: "40 code projects and 40 game projects" } },
             { text: { TR: "10 Hanogt Social grubu açma", EN: "Create up to 10 Hanogt Social groups" } },
             { text: { TR: "5 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 5 people" } },
-            { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası)", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more)" } },
+            { text: { TR: "Daha uzun yapay zekâ yanıtları; açık dosyanın 24.000 karakteri okunur", EN: "Longer AI answers; 24,000 characters of your open file are read" } },
+            { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası), günde 3.000 mesaj", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more), 3,000 messages a day" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Profilinde Plus rozeti", EN: "A Plus badge on your profile" }, planned: true },
         ],
@@ -306,7 +327,8 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Sınırsız kod ve oyun projesi", EN: "Unlimited code and game projects" } },
             { text: { TR: "Sınırsız Hanogt Social grubu", EN: "Unlimited Hanogt Social groups" } },
             { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
-            { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı", EN: "Connect 5 AI providers with your own API keys" } },
+            { text: { TR: "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur", EN: "The longest AI answers; 40,000 characters of your open file are read" } },
+            { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı, günde 10.000 mesaj", EN: "Connect 5 AI providers with your own API keys, 10,000 messages a day" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Yeni özelliklere erken erişim", EN: "Early access to new features" }, planned: true },
         ],

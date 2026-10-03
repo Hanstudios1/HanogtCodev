@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import type { AdminCoupon, AdminCouponRestoreResponse, AdminPlansResponse, AdminPriceChange } from "@/components/Admin/types";
+import { FEATURE_AUDIENCES, FEATURE_IDS, normalizeFeatureFlags } from "@/lib/features";
 import type { PaddleEnvironment } from "@/lib/paddle";
 import {
     AI_BONUS_MAX,
@@ -30,6 +31,7 @@ import {
     writeAuditLog,
 } from "@/lib/server/admin";
 import { couponDeletionDetails, listDeletedCoupons, restoreCoupon } from "@/lib/server/coupon-admin";
+import { FEATURES_PATH, featureAudienceWrite, forgetFeatureCache } from "@/lib/server/features";
 import { commitServerMutations, countServerQuery, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 import { PaddleApiError, getPaddleConfig, isPaddleConfigured } from "@/lib/server/paddle";
 import {
@@ -53,8 +55,8 @@ import {
 
 export const runtime = "nodejs";
 
-const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "restoreCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi"] as const;
-const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "recur", "note", "active", "email", "days", "blocked", "extraDaily"];
+const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "restoreCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi", "setFeature"] as const;
+const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "recur", "note", "active", "email", "days", "blocked", "extraDaily", "feature", "audience"];
 const HISTORY_MAX = 30;
 const COUPONS_MAX = 200;
 const DAY_MS = 24 * 60 * 60_000;
@@ -111,11 +113,12 @@ function historyOf(value: unknown): AdminPriceChange[] {
 }
 
 async function overview(): Promise<AdminPlansResponse> {
-    const [catalogRecord, coupons, plus, pro] = await Promise.all([
+    const [catalogRecord, coupons, plus, pro, featureRecord] = await Promise.all([
         getServerDocument<Record<string, unknown>>(CATALOG_PATH),
         runServerQuery<Record<string, unknown>>({ collectionId: "plan_coupons", orderBy: [{ field: "createdAt", direction: "DESCENDING" }], limit: COUPONS_MAX }).catch(() => []),
         countServerQuery({ collectionId: "plan_waitlist", where: [{ field: "plans", op: "ARRAY_CONTAINS", value: "plus" }], upTo: 100_000 }).catch(() => null),
         countServerQuery({ collectionId: "plan_waitlist", where: [{ field: "plans", op: "ARRAY_CONTAINS", value: "pro" }], upTo: 100_000 }).catch(() => null),
+        getServerDocument<{ audiences?: unknown; updatedAt?: unknown; updatedBy?: unknown }>(FEATURES_PATH),
     ]);
     const config = getPaddleConfig();
     const list = coupons.map((record) => couponOf(record as Record<string, unknown> & { _id: string }, config.environment));
@@ -136,6 +139,11 @@ async function overview(): Promise<AdminPlansResponse> {
         coupons: list,
         deletedCoupons: deleted,
         waitlist: { plus, pro },
+        features: {
+            audiences: normalizeFeatureFlags(featureRecord?.audiences),
+            updatedAt: toIso(featureRecord?.updatedAt),
+            updatedBy: typeof featureRecord?.updatedBy === "string" ? featureRecord.updatedBy : null,
+        },
     };
 }
 
@@ -171,6 +179,18 @@ export async function POST(request: NextRequest) {
         const body = await readAdminBody(request, BODY_KEYS, 4_096);
         const action = requireEnum(body.action, ACTIONS, "invalid_action");
         const now = new Date();
+
+        if (action === "setFeature") {
+            // Who sees a feature that is opened step by step: off, staff, early access (Pro and staff) or everyone.
+            const feature = requireEnum(body.feature, FEATURE_IDS, "invalid_action");
+            const audience = requireEnum(body.audience, FEATURE_AUDIENCES, "invalid_action");
+            await commitServerMutations([
+                featureAudienceWrite(feature, audience, actor, now),
+                auditLogMutation(actor, "feature.set", FEATURES_PATH, { feature, audience }),
+            ]);
+            forgetFeatureCache();
+            return adminJson(await overview());
+        }
 
         if (action === "setPrice") {
             const plan = requireEnum(body.plan, PAID_PLAN_IDS, "invalid_plan");

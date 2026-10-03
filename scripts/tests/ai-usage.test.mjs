@@ -23,7 +23,6 @@ const usage = await load("lib/server/ai-usage.ts");
 const shared = await load("lib/ai/usage.ts");
 const paddle = await load("lib/server/paddle.ts");
 const plans = await load("lib/plans.ts");
-const connections = await load("lib/ai/connections.ts");
 
 const NOW = Date.now();
 const HOUR = 60 * 60_000;
@@ -39,6 +38,8 @@ const SETTINGS = {
     production: { prices: {}, products: {} },
 };
 const FREE = plans.PLAN_AI_LIMITS.free;
+const OWN_PLUS = plans.PLAN_AI_FEATURES.plus.ownKey;
+const OWN_PRO = plans.PLAN_AI_FEATURES.pro.ownKey;
 const PLUS = plans.PLAN_AI_LIMITS.plus;
 
 /** Where a rate-limit window lives (src/lib/server/rate-limit.ts). */
@@ -116,7 +117,7 @@ test("a staff grant is part of the day's limit and shown as the bonus; own conne
         assert.equal(read.plan, "plus");
         assert.equal(read.hanogt.day.limit, PLUS.perDay + 100);
         assert.equal(read.hanogt.bonus, 100);
-        assert.deepEqual([read.own.day.used, read.own.day.limit, read.own.minute.limit], [7, connections.OWN_KEY_LIMITS.perDay, connections.OWN_KEY_LIMITS.perMinute]);
+        assert.deepEqual([read.own.day.used, read.own.day.limit, read.own.minute.limit], [7, OWN_PLUS.perDay, OWN_PLUS.perMinute]);
     });
 });
 
@@ -182,7 +183,7 @@ test("own connections: Free has none (connection_unavailable, nothing counted); 
         assert.deepEqual(refused, { ok: false, code: "connection_unavailable", plan: "free" });
         assert.equal(db.get(windowPath(KEYS.ownMinute)), null);
     });
-    await withPaddle(seed({ plan: "plus", status: "active" }, { [windowPath(KEYS.ownDay)]: windowDoc(connections.OWN_KEY_LIMITS.perDay) }), [], async (db) => {
+    await withPaddle(seed({ plan: "plus", status: "active" }, { [windowPath(KEYS.ownDay)]: windowDoc(OWN_PLUS.perDay) }), [], async (db) => {
         const refused = await usage.enforceOwnKeys(ALI);
         assert.equal(refused.code, "connection_daily_limit");
         assert.equal(refused.quota, "own");
@@ -191,7 +192,7 @@ test("own connections: Free has none (connection_unavailable, nothing counted); 
     });
     await withPaddle(seed({ plan: "pro", status: "active" }), [], async () => {
         const counted = await usage.enforceOwnKeys(ALI);
-        assert.deepEqual([counted.ok, counted.quota.quota, counted.quota.limit], [true, "own", connections.OWN_KEY_LIMITS.perDay]);
+        assert.deepEqual([counted.ok, counted.quota.quota, counted.quota.limit], [true, "own", OWN_PRO.perDay]);
     });
 });
 

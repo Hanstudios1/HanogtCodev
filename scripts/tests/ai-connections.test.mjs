@@ -229,7 +229,14 @@ test("provider catalog: fixed https endpoints, model ids and request settings", 
     assert.deepEqual(shared.ownKeyRequestParams("openai", "gpt-5-mini", 0.3), { max_completion_tokens: 8000 });
     assert.deepEqual(shared.ownKeyRequestParams("openai", "gpt-4o", 0.3), { max_completion_tokens: 4000, temperature: 0.3 });
     assert.deepEqual(shared.ownKeyRequestParams("anthropic", "claude-sonnet-4-5", 0.45), { max_tokens: 4000, temperature: 0.45 });
-    assert.deepEqual(shared.OWN_KEY_LIMITS, { perMinute: 30, perDay: 3000 });
+});
+
+test("own-connection messages grow with the plan: none on Free, Plus 3,000 and Pro 10,000 a day", () => {
+    const { PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES } = plans;
+    assert.deepEqual(PLAN_AI_FEATURES.free.ownKey, null);
+    assert.deepEqual(PLAN_AI_FEATURES.plus.ownKey, { perMinute: 30, perDay: 3000 });
+    assert.deepEqual(PLAN_AI_FEATURES.pro.ownKey, { perMinute: 60, perDay: 10000 });
+    for (const plan of ["free", "plus", "pro"]) assert.equal(PLAN_AI_FEATURES[plan].ownKey !== null, PLAN_AI_CONNECTIONS[plan] > 0, `${plan}: a message allowance exactly when connections are allowed`);
 });
 
 // ---------------------------------------------------------------------------
