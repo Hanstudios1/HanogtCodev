@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { billingView, paddleNeedsResync, type PaddleCheckoutConfig } from "@/lib/paddle";
-import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse, type UserSubscription } from "@/lib/plans";
+import { billingView, paddleEntitles, type PaddleCheckoutConfig } from "@/lib/paddle";
+import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, isRecentCheckout, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse, type UserSubscription } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
 import { commitServerMutations, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
 import { checkoutConfigFor, getPaddleConfig, isBillingTester, syncSubscription } from "@/lib/server/paddle";
+import { selfHealReason, syncAccountFromPaddle, withDeadline } from "@/lib/server/paddle-sync";
 import { AI_DAY_MS, AI_LIMIT_KEYS, getPlanCatalog, getSubscription } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback, readRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
@@ -45,17 +46,25 @@ async function checkoutOf(catalog: PlanCatalog, request: NextRequest, email: str
 }
 
 /**
- * The paid period has ended but no renewal arrived (a lost webhook): ask
- * Paddle once every ten minutes at most, then answer with what it says.
+ * What Paddle knows but no notification told us, asked once every ten
+ * minutes at most (selfHealReason): a paid period that ended without a
+ * renewal, or a Paddle customer without a subscription that unlocks a plan
+ * (a purchase whose notification never arrived). Answers with what Paddle says.
  */
 async function refreshedSubscription(email: string, subscription: UserSubscription): Promise<UserSubscription> {
-    if (!subscription.paddle || !paddleNeedsResync(subscription.paddle) || !getPaddleConfig().apiKey) return subscription;
+    const reason = selfHealReason(subscription);
+    if (!reason || !getPaddleConfig().apiKey) return subscription;
     const rate = await enforceRateLimitWithFallback(`paddle-resync:${email}`, 1, 10 * 60_000).catch(() => ({ allowed: false }));
     if (!rate.allowed) return subscription;
     try {
-        const result = await syncSubscription(subscription.paddle.subscriptionId);
-        return result.status === "stored" ? await getSubscription(email) : subscription;
-    } catch {
+        if (reason === "lapsed" && subscription.paddle) {
+            const result = await syncSubscription(subscription.paddle.subscriptionId);
+            return result.status === "stored" ? await getSubscription(email) : subscription;
+        }
+        // At most a few seconds on top of the page load; a slow Paddle finishes in the background.
+        return (await withDeadline(syncAccountFromPaddle(email), 6_000, "none")) === "active" ? await getSubscription(email) : subscription;
+    } catch (error) {
+        console.warn("[plans:paddle-sync]", reason, error instanceof Error ? error.message : error);
         return subscription;
     }
 }
@@ -86,6 +95,7 @@ export async function GET(request: NextRequest) {
                 billing: billingView(subscription.paddle),
                 canManageBilling: Boolean(subscription.paddleCustomerId ?? subscription.paddle?.customerId),
                 paddleCustomerId: subscription.paddleCustomerId ?? subscription.paddle?.customerId ?? null,
+                checkoutPending: Boolean(subscription.paddleCustomerId) && !paddleEntitles(subscription.paddle) && isRecentCheckout(subscription.paddleCheckout),
                 aiLimits: aiLimitsFor(subscription),
                 aiUsedToday: used?.count ?? 0,
                 waitlist,

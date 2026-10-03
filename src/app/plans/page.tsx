@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, BellRing, Check, Clock, CreditCard, Crown, LoaderCircle, PartyPopper, ShieldCheck, Sparkles, Ticket, Zap } from "lucide-react";
+import { Bell, BellRing, Check, Clock, CreditCard, Crown, LoaderCircle, PartyPopper, RefreshCw, ShieldCheck, Sparkles, Ticket, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Header from "@/components/Header";
@@ -31,6 +31,7 @@ import {
     type CouponRecur,
     type CouponView,
     type PaidPlanId,
+    type PaddleSyncResponse,
     type PlanId,
     type PlansResponse,
 } from "@/lib/plans";
@@ -91,7 +92,11 @@ const C = {
     discount: { TR: "%{percent} indirim", EN: "{percent}% off" },
     activating: { TR: "Ödemen alındı, planın etkinleştiriliyor…", EN: "Payment received, activating your plan…" },
     welcome: { TR: "Hoş geldin! {plan} planın etkin.", EN: "Welcome! Your {plan} plan is active." },
-    activationSlow: { TR: "Ödemen alındı; planın birkaç dakika içinde etkinleşecek. Bu sayfayı sonra yenileyebilirsin.", EN: "Payment received; your plan will be active within a few minutes. You can refresh this page later." },
+    activationSlow: { TR: "Ödemen alındı; planın birkaç dakika içinde etkinleşecek. Hemen denemek için \"Ödememi kontrol et\"e bas.", EN: "Payment received; your plan will be active within a few minutes. To try right away, press \"Check my payment\"." },
+    checkPayment: { TR: "Ödememi kontrol et", EN: "Check my payment" },
+    checkPaymentHint: { TR: "Ödeme yaptın ama planın değişmedi mi?", EN: "Paid, but your plan didn't change?" },
+    paymentNotFound: { TR: "Paddle'da bu hesaba ait tamamlanmış bir ödeme bulunamadı. Ödeme ekranını tamamladıysan birkaç dakika sonra tekrar dene; sürerse destek talebi oluştur.", EN: "Paddle has no completed payment for this account. If you finished the checkout, try again in a few minutes; if it persists, open a support ticket." },
+    paymentPending: { TR: "Ödemen alındı, Paddle aboneliğini oluşturuyor. Planın birkaç saniye içinde açılacak; yeniden ödeme yapmana gerek yok.", EN: "Your payment went through and Paddle is creating your subscription. Your plan will be active in a few seconds; there's no need to pay again." },
     changed: { TR: "Planın değişti: {plan}.", EN: "Your plan changed: {plan}." },
     kept: { TR: "Aboneliğin devam ediyor.", EN: "Your subscription will continue." },
     failed: { TR: "İşlem tamamlanamadı. Biraz sonra tekrar dene.", EN: "That didn't work. Try again in a moment." },
@@ -182,6 +187,8 @@ type Notice = {
     technical?: { stage: string; message: string };
     /** Under every failed request: what failed, how and where ("unavailable/database_error · HTTP 500 · subscription · 2.1 s"). */
     reference?: string;
+    /** A button under the message: ask Paddle about the payment now. */
+    action?: "checkPayment";
 } | null;
 
 /** Paddle checkout events the page reports, as stages of POST /api/paddle/client-error. */
@@ -206,6 +213,7 @@ function postClientError(report: ClientErrorReport) {
 
 const ERROR_COPY: Partial<Record<BillingErrorCode, Copy>> = {
     already_subscribed: C.alreadySubscribed,
+    payment_pending: C.paymentPending,
     plan_unavailable: C.planUnavailable,
     plan_blocked: C.blocked,
     billing_unavailable: C.billingUnavailable,
@@ -256,6 +264,9 @@ type RequestResult<T> = { ok: true; data: T } | RequestFailure;
 /** Longer than the billing routes may run (60 s), so the server's own answer comes first. */
 const REQUEST_TIMEOUT_MS = 70_000;
 const RETRY_DELAY_MS = 1_500;
+/** After a checkout: how long and how often the page asks the server to check the payment with Paddle. */
+const SYNC_WINDOW_MS = 120_000;
+const SYNC_DELAYS_MS = [1_500, 2_500, 4_000, 6_000] as const;
 
 async function postJson<T>(url: string, body: unknown): Promise<RequestResult<T>> {
     const started = Date.now();
@@ -323,7 +334,7 @@ const PADDLE_SETUP_HINTS: Record<string, Copy> = {
 };
 
 /** Answers that explain themselves; everything else also shows its error code. */
-const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change", "coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
+const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "payment_pending", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change", "coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
 const COUPON_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
 
 /** The code of a /plans?coupon=CODE link (from a campaign); "" without one. Read on the client only. */
@@ -494,26 +505,52 @@ export default function PlansPage() {
         if (notice?.tone === "error") noticeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }, [notice]);
 
-    // After a checkout the webhook activates the plan within seconds: wait for it.
+    // After a checkout: ask the server to check the payment with Paddle until the plan is active.
+    // Paddle's notification usually gets there first; this also works when it's late or never arrives.
     useEffect(() => {
         if (!activating) return;
         let stopped = false;
-        let tries = 0;
         let timer = 0;
+        let attempt = 0;
+        let delay: number = SYNC_DELAYS_MS[0];
+        const started = Date.now();
+        const welcome = (plan: PaidPlanId) => {
+            setActivating(null);
+            setNotice({ tone: "success", copy: C.welcome, vars: { plan: PLAN_COPY[plan].name.EN } });
+        };
         const tick = async () => {
-            tries += 1;
-            const payload = await fetchPlans();
+            attempt += 1;
+            const result = await postJson<PaddleSyncResponse>("/api/paddle/sync", {});
             if (stopped) return;
-            if (payload) setData(payload);
-            const live = Boolean(payload?.me?.billing?.plan && ENTITLED_STATUSES.includes(payload.me.billing.status));
-            if (live || tries >= 24) {
-                setActivating(null);
-                setNotice(live ? { tone: "success", copy: C.welcome, vars: { plan: PLAN_COPY[payload!.me!.billing!.plan!].name.EN } } : { tone: "info", copy: C.activationSlow });
+            if (result.ok && result.data.state === "active") {
+                const payload = await fetchPlans();
+                if (stopped) return;
+                if (payload) setData(payload);
+                welcome(result.data.billing?.plan ?? activating);
                 return;
             }
-            timer = window.setTimeout(() => void tick(), 2500);
+            if (!result.ok && (result.error === "unauthorized" || result.error === "forbidden_origin")) {
+                setActivating(null);
+                setNotice({ tone: "error", copy: result.error === "unauthorized" ? C.signedOut : C.reloadPage });
+                return;
+            }
+            if (Date.now() - started >= SYNC_WINDOW_MS) {
+                // The notification may have got there meanwhile.
+                const payload = await fetchPlans();
+                if (stopped) return;
+                if (payload) setData(payload);
+                const live = payload?.me?.billing?.plan && ENTITLED_STATUSES.includes(payload.me.billing.status) ? payload.me.billing.plan : null;
+                if (live) welcome(live);
+                else {
+                    setActivating(null);
+                    setNotice({ tone: "info", copy: C.activationSlow, action: "checkPayment" });
+                }
+                return;
+            }
+            delay = !result.ok && result.error === "rate_limited" ? Math.min(delay * 2, 20_000) : SYNC_DELAYS_MS[Math.min(attempt, SYNC_DELAYS_MS.length - 1)];
+            timer = window.setTimeout(() => void tick(), delay);
         };
-        timer = window.setTimeout(() => void tick(), 1500);
+        timer = window.setTimeout(() => void tick(), delay);
         return () => {
             stopped = true;
             window.clearTimeout(timer);
@@ -597,6 +634,8 @@ export default function PlansPage() {
         if (!result.ok) {
             showRequestFailure("checkout", result);
             if (result.error === "already_subscribed") setReload((value) => value + 1);
+            // Paid already, Paddle is still creating the subscription: follow it up like a completed checkout.
+            if (result.error === "payment_pending") setActivating(plan);
             // A coupon that stopped working meanwhile (expired, used up) is taken off; the plan can still be bought.
             if (COUPON_ERRORS.has(result.error)) setCoupon(null);
             setBusy(null);
@@ -623,6 +662,29 @@ export default function PlansPage() {
         }
         showRequestFailure("subscription", result);
         setBusy(null);
+    };
+
+    /** "Check my payment": the server asks Paddle about the account's purchase now. */
+    const checkPayment = async () => {
+        setBusy("sync");
+        setNotice(null);
+        const result = await postJson<PaddleSyncResponse>("/api/paddle/sync", {});
+        setBusy(null);
+        if (!result.ok) {
+            showRequestFailure("sync", result);
+            return;
+        }
+        if (result.data.state === "active") {
+            const payload = await fetchPlans();
+            if (payload) setData(payload);
+            setNotice({ tone: "success", copy: C.welcome, vars: { plan: PLAN_COPY[result.data.billing?.plan ?? "plus"].name.EN } });
+            return;
+        }
+        if (result.data.state === "pending") {
+            setActivating(result.data.billing?.plan ?? purchased.current ?? "plus");
+            return;
+        }
+        setNotice({ tone: "info", copy: C.paymentNotFound, action: "checkPayment" });
     };
 
     const keepSubscription = async () => {
@@ -769,6 +831,14 @@ export default function PlansPage() {
                                 <p className="font-bold">{tx(C.yourPlan, { plan: tx(PLAN_COPY[me.plan].name) })}{sourceDetail()}</p>
                                 {me.blocked ? <p className="text-[13px] text-rose-600 dark:text-rose-400">{tx(C.blocked)}</p> : null}
                                 {activating ? <p className="flex items-center gap-2 text-[13px] font-semibold text-indigo-600 dark:text-indigo-300" role="status"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx(C.activating)}</p> : null}
+                                {me.checkoutPending && !liveSubscription && !activating && notice?.action !== "checkPayment" ? (
+                                    <p className="flex flex-wrap items-center justify-center gap-x-2 text-[12.5px] text-zinc-500 dark:text-zinc-400" data-checkout-pending>
+                                        {tx(C.checkPaymentHint)}
+                                        <button type="button" onClick={() => void checkPayment()} disabled={busy !== null} className="inline-flex items-center gap-1 font-bold text-indigo-600 underline-offset-2 hover:underline disabled:opacity-60 dark:text-indigo-300">
+                                            {busy === "sync" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <RefreshCw className="h-3.5 w-3.5" aria-hidden />}{tx(C.checkPayment)}
+                                        </button>
+                                    </p>
+                                ) : null}
                                 {billing?.endsAt ? (
                                     <div className="flex max-w-md flex-col items-center gap-2 rounded-xl bg-amber-500/10 px-3 py-2 text-[13px] text-amber-800 dark:text-amber-200">
                                         <p>{tx(C.endsAt, { date: date(billing.endsAt) })}</p>
@@ -875,6 +945,11 @@ export default function PlansPage() {
                             {notice.hint ? <p className="mt-2 text-[12.5px] font-medium opacity-90">{tx(notice.hint)}</p> : null}
                             {notice.technical ? <p className="mt-2 break-all font-mono text-[11.5px] font-medium opacity-80">{tx(C.technical, notice.technical)}</p> : null}
                             {notice.reference ? <p className="mt-1.5 break-all font-mono text-[11.5px] font-medium opacity-75" data-error-reference>{tx(C.reference, { ref: notice.reference })}</p> : null}
+                            {notice.action === "checkPayment" ? (
+                                <button type="button" onClick={() => void checkPayment()} disabled={busy !== null} className="mt-2 inline-flex items-center gap-1.5 font-bold underline underline-offset-2 disabled:opacity-60" data-check-payment>
+                                    {busy === "sync" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <RefreshCw className="h-3.5 w-3.5" aria-hidden />}{tx(C.checkPayment)}
+                                </button>
+                            ) : null}
                         </div>
                     ) : null}
                     <div className="grid gap-5 md:grid-cols-3 md:items-stretch">

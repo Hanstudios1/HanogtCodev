@@ -38,6 +38,11 @@ import type {
     AdminPaddleCatalogResponse,
     AdminPaddleClientError,
     AdminPaddleClientTokenCheck,
+    AdminPaddleDelivery,
+    AdminPaddleDeliveryCause,
+    AdminPaddleNotificationCheck,
+    AdminPaddleNotificationProblem,
+    AdminPaddleNotificationsResponse,
     AdminPaddlePrice,
     AdminPaddleResponse,
     AdminPaddleServerError,
@@ -78,6 +83,25 @@ const C = {
     webhookNone: { TR: "Henüz bildirim gelmedi.", EN: "No notification has arrived yet." },
     webhookNoSecret: { TR: "Webhook gizli anahtarı tanımlı olmadığı için bildirimler kabul edilmiyor.", EN: "Notifications are refused because the webhook secret isn't set." },
     webhookRejected: { TR: "Son reddedilen bildirim {time}: {reason}", EN: "Last refused delivery {time}: {reason}" },
+    webhookResult: { TR: "Sonuç: {result}", EN: "Result: {result}" },
+    notifyTitle: { TR: "Bildirimler neden gelmiyor?", EN: "Why don't notifications arrive?" },
+    notifyHint: { TR: "Paddle'daki bildirim hedefini (adres, açık mı, olaylar, gizli anahtar) ve son teslimlerde Paddle'ın aldığı yanıtı okur. Paddle'da hiçbir şeyi değiştirmez.", EN: "Reads the notification destination in Paddle (address, active, events, secret key) and the answer Paddle got for recent deliveries. Changes nothing in Paddle." },
+    notifyButton: { TR: "Bildirimleri kontrol et", EN: "Check notifications" },
+    notifyAgain: { TR: "Yeniden kontrol et", EN: "Check again" },
+    notifyAllGood: { TR: "Bildirim hedefi doğru ayarlı ve son bildirim teslim edildi.", EN: "The notification destination is set up correctly and the latest notification was delivered." },
+    notifyDestinations: { TR: "Webhook adresine giden hedefler", EN: "Destinations for the webhook address" },
+    notifyActive: { TR: "açık", EN: "active" },
+    notifyInactive: { TR: "kapalı", EN: "inactive" },
+    notifySecretOk: { TR: "anahtar eşleşiyor", EN: "secret matches" },
+    notifySecretBad: { TR: "anahtar farklı", EN: "secret differs" },
+    notifyMissing: { TR: "{count} olay eksik", EN: "{count} events missing" },
+    notifyLastFailure: { TR: "Teslim edilemeyen son bildirim: {type} · {code}", EN: "Latest undelivered notification: {type} · {code}" },
+    notifyNoAnswer: { TR: "yanıt yok", EN: "no answer" },
+    notifyRecent: { TR: "Son teslimler", EN: "Recent deliveries" },
+    notifyNoDeliveries: { TR: "Bu hedefe henüz bildirim gönderilmemiş.", EN: "No notification has been sent to this destination yet." },
+    notifyAttempts: { TR: "{count} deneme", EN: "{count} attempts" },
+    notifyChecked: { TR: "Kontrol: {time}", EN: "Checked {time}" },
+    webhookFailed: { TR: "Son bildirim işlenemedi ({code}); Paddle yeniden deneyecek. Vercel günlüklerinde [paddle:webhook] arayın. Plan, Fiyatlandırma sayfasının ödeme eşitlemesiyle yine de açılır.", EN: "The last notification couldn't be processed ({code}); Paddle will retry. Search the Vercel logs for [paddle:webhook]. The plan still unlocks through the Pricing page's payment sync." },
     addresses: { TR: "Paddle'a verilecek adresler", EN: "Addresses to give Paddle" },
     webhookUrl: { TR: "Webhook adresi", EN: "Webhook URL" },
     webhookUrlHint: { TR: "Developer tools > Notifications > New destination: bu adresi girin, subscription.* olaylarının hepsini ve transaction.completed'ı seçin. Paddle'ın verdiği gizli anahtarı PADDLE_WEBHOOK_SECRET olarak kaydedin.", EN: "Developer tools > Notifications > New destination: enter this URL and select all subscription.* events and transaction.completed. Save the secret Paddle shows as PADDLE_WEBHOOK_SECRET." },
@@ -199,6 +223,7 @@ const C = {
     paddleAnswered: { TR: "Paddle'ın yanıtı: HTTP {status}", EN: "Paddle answered: HTTP {status}" },
     paddleUnreached: { TR: "Paddle'a ulaşılamadı", EN: "Paddle wasn't reached" },
     routeCheckout: { TR: "Ödeme başlatma", EN: "Starting a checkout" },
+    routeSync: { TR: "Ödemeden sonra plan eşitleme", EN: "Syncing the plan after a payment" },
     routeSubscription: { TR: "Abonelik işlemi: {action}", EN: "Subscription action: {action}" },
     stepUnknown: { TR: "Adım bilinmiyor", EN: "Unknown step" },
 
@@ -248,6 +273,16 @@ const REJECTIONS: Record<string, Copy> = {
     signature_malformed: { TR: "Paddle imzası okunamadı.", EN: "Its Paddle signature couldn't be read." },
     signature_expired: { TR: "İmza beş dakikadan eskiydi; sunucu saati kaymış ya da bildirim yeniden gönderilmiş olabilir.", EN: "The signature was more than five minutes old; the server clock may be off or the delivery was replayed." },
     signature_mismatch: { TR: "İmza tutmadı: PADDLE_WEBHOOK_SECRET, Paddle'daki bildirim hedefinin gizli anahtarıyla aynı değil (ya da öbür ortamın anahtarı).", EN: "The signature didn't match: PADDLE_WEBHOOK_SECRET isn't the secret of the notification destination in Paddle (or it's the other environment's)." },
+    ip_list_unavailable: { TR: "Paddle'ın bildirim adresleri listesi alınamadığı için gönderen doğrulanamadı; Paddle yeniden deneyecek.", EN: "Paddle's list of notification addresses couldn't be fetched, so the sender couldn't be checked; Paddle will retry." },
+};
+
+/** What processing a delivery gave (site_config/paddle_status.lastEventResult). */
+const EVENT_RESULTS: Record<string, { copy: Copy; tone: "ok" | "warn" | "error" }> = {
+    stored: { copy: { TR: "kaydedildi", EN: "stored" }, tone: "ok" },
+    kept: { copy: { TR: "değişiklik yok (kayıtlı bilgi daha güncel)", EN: "no change (the stored copy is newer)" }, tone: "ok" },
+    ignored: { copy: { TR: "ilgisiz olay, yok sayıldı", EN: "unrelated event, ignored" }, tone: "ok" },
+    unlinked: { copy: { TR: "abonelik bir hesapla eşleşmedi; \"Eşleşmeyen abonelikler\"e bakın", EN: "the subscription matched no account; see \"Unlinked subscriptions\"" }, tone: "warn" },
+    canceled_for_deleted_account: { copy: { TR: "hesap silinmiş olduğu için abonelik iptal edildi", EN: "canceled because the account was deleted" }, tone: "warn" },
 };
 
 /** The stages of a reported checkout failure (site_config/paddle_status.clientErrors), with what they usually mean. */
@@ -295,6 +330,7 @@ const SERVER_STEPS: Record<BillingStep, Copy> = {
     preview: { TR: "Plan değişikliği hesaplanırken", EN: "Previewing the plan change" },
     change: { TR: "Plan değiştirilirken", EN: "Changing the plan" },
     keep: { TR: "İptal geri alınırken", EN: "Undoing the cancellation" },
+    sync: { TR: "Ödeme Paddle'a sorulurken", EN: "Asking Paddle about the payment" },
 };
 
 /** What the usual codes of a failed billing request mean. */
@@ -465,6 +501,200 @@ function ClientTokenCheck({ check, environment }: { check: AdminPaddleClientToke
     );
 }
 
+/** What each finding of "Bildirimleri kontrol et" means and how to fix it. */
+const NOTIFICATION_PROBLEMS: Record<AdminPaddleNotificationProblem, { title: Copy; fix: Copy; blocking: boolean }> = {
+    no_permission_settings: {
+        title: { TR: "Bildirim hedefleri okunamadı: API anahtarının izni yok.", EN: "The notification destinations couldn't be read: the API key isn't allowed to." },
+        fix: { TR: "Paddle › Developer tools › Authentication bölümünde API anahtarına notification_setting.read (ve notification.read) okuma izni ver, sonra tekrar kontrol et.", EN: "Give the API key read access to notification_setting.read (and notification.read) under Paddle › Developer tools › Authentication, then check again." },
+        blocking: true,
+    },
+    no_permission_notifications: {
+        title: { TR: "Son teslimler okunamadı: API anahtarının notification.read izni yok.", EN: "Recent deliveries couldn't be read: the API key lacks notification.read." },
+        fix: { TR: "Teslim kayıtlarını (Paddle'ın aldığı yanıt) görmek için anahtara notification.read izni ver.", EN: "Give the key notification.read to see the delivery log (the answer Paddle got)." },
+        blocking: false,
+    },
+    no_destination: {
+        title: { TR: "Bu Paddle hesabında sitenin webhook adresine giden bir bildirim hedefi yok.", EN: "This Paddle account has no notification destination for the site's webhook address." },
+        fix: { TR: "Paddle › Developer tools › Notifications › New destination: adres {url}, tür URL, olaylar subscription.* ve transaction.completed. Hedefin gizli anahtarını Vercel'de PADDLE_WEBHOOK_SECRET olarak kaydedip yeniden dağıt.", EN: "Paddle › Developer tools › Notifications › New destination: URL {url}, events subscription.* and transaction.completed. Save its secret key as PADDLE_WEBHOOK_SECRET in Vercel and redeploy." },
+        blocking: true,
+    },
+    inactive: {
+        title: { TR: "Bildirim hedefi kapalı (inactive).", EN: "The notification destination is switched off (inactive)." },
+        fix: { TR: "Paddle › Developer tools › Notifications bölümünde hedefi yeniden etkinleştir.", EN: "Switch the destination back on under Paddle › Developer tools › Notifications." },
+        blocking: true,
+    },
+    simulation_only: {
+        title: { TR: "Hedef yalnızca simülasyon olaylarını alıyor; gerçek ödemelerin bildirimleri gönderilmiyor.", EN: "The destination only receives simulated events; real payments aren't notified." },
+        fix: { TR: "Hedefin trafik kaynağını \"Platform\" ya da \"All\" yap (Notifications › hedef › Edit).", EN: "Set the destination's traffic source to \"Platform\" or \"All\" (Notifications › destination › Edit)." },
+        blocking: true,
+    },
+    insecure_url: {
+        title: { TR: "Hedef adresi https değil.", EN: "The destination address isn't https." },
+        fix: { TR: "Adresi {url} olarak düzelt.", EN: "Change the address to {url}." },
+        blocking: true,
+    },
+    other_host: {
+        title: { TR: "Hedef adresi sitenin adresi değil (www, vercel.app ya da başka bir alan adı).", EN: "The destination isn't the site's address (www, vercel.app or another domain)." },
+        fix: { TR: "Paddle yönlendirmeleri izlemez ve Vercel koruması bildirimi durdurabilir: adresi tam olarak {url} yap.", EN: "Paddle doesn't follow redirects and Vercel protection may stop deliveries: use exactly {url}." },
+        blocking: false,
+    },
+    missing_events: {
+        title: { TR: "Hedef bazı gerekli olayları göndermiyor: {events}", EN: "The destination doesn't send some events the site needs: {events}" },
+        fix: { TR: "Hedefi düzenleyip tüm subscription.* olaylarını ve transaction.completed'ı seç.", EN: "Edit the destination and select every subscription.* event and transaction.completed." },
+        blocking: true,
+    },
+    secret_unset: {
+        title: { TR: "Vercel'de PADDLE_WEBHOOK_SECRET tanımlı değil; bildirimler reddediliyor.", EN: "PADDLE_WEBHOOK_SECRET isn't set in Vercel; notifications are refused." },
+        fix: { TR: "Hedefin gizli anahtarını (pdl_ntfset_…) Vercel › Settings › Environment Variables'a PADDLE_WEBHOOK_SECRET olarak ekleyip yeniden dağıt.", EN: "Add the destination's secret key (pdl_ntfset_…) as PADDLE_WEBHOOK_SECRET in Vercel › Settings › Environment Variables and redeploy." },
+        blocking: true,
+    },
+    secret_mismatch: {
+        title: { TR: "PADDLE_WEBHOOK_SECRET bu hedefin gizli anahtarıyla aynı değil; imzalar tutmuyor.", EN: "PADDLE_WEBHOOK_SECRET isn't this destination's secret key; signatures don't match." },
+        fix: { TR: "Paddle'da hedefin gizli anahtarını kopyalayıp Vercel'deki PADDLE_WEBHOOK_SECRET'ı onunla değiştir ve yeniden dağıt (öbür ortamın ya da yeniden oluşturulmuş eski hedefin anahtarı olabilir).", EN: "Copy the destination's secret key in Paddle, replace PADDLE_WEBHOOK_SECRET in Vercel with it and redeploy (it may be the other environment's, or an older destination's)." },
+        blocking: true,
+    },
+    several_destinations: {
+        title: { TR: "Aynı adrese giden birden fazla etkin hedef var.", EN: "Several active destinations point at the same address." },
+        fix: { TR: "Her bildirim birden çok kez gelir; yalnızca anahtarı PADDLE_WEBHOOK_SECRET olanı bırakıp diğerlerini kapatabilirsin.", EN: "Every notification arrives more than once; you can keep only the one whose secret is PADDLE_WEBHOOK_SECRET and switch the others off." },
+        blocking: false,
+    },
+    deliveries_failing: {
+        title: { TR: "Son bildirim teslim edilemedi.", EN: "The latest notification couldn't be delivered." },
+        fix: { TR: "Aşağıda Paddle'ın aldığı yanıt ve nedeni var. Düzelttikten sonra Paddle › Notifications'tan bildirimi yeniden gönderebilirsin (Replay); planı açılmayan kişiler Fiyatlandırma sayfasında \"Ödememi kontrol et\"i de kullanabilir.", EN: "Paddle's answer and its cause are below. Once fixed you can resend it from Paddle › Notifications (Replay); people whose plan didn't switch can also use \"Check my payment\" on the Pricing page." },
+        blocking: true,
+    },
+};
+
+/** Why a delivery failed, from the answer Paddle got. */
+const DELIVERY_CAUSES: Record<AdminPaddleDeliveryCause, Copy> = {
+    signature: { TR: "İmza tutmadı: PADDLE_WEBHOOK_SECRET bu hedefin anahtarı değil.", EN: "Bad signature: PADDLE_WEBHOOK_SECRET isn't this destination's secret." },
+    signature_expired: { TR: "İmza süresi geçmiş: sunucu saati kaymış ya da bildirim geç teslim edilmiş.", EN: "Expired signature: the server clock is off or the delivery was late." },
+    ip_allowlist: { TR: "Gönderen adres doğrulanamadı (IP izin listesi): Cloudflare ya da başka bir vekil Paddle'ın adresini gizliyor olabilir.", EN: "The sender's address couldn't be verified (IP allowlist): Cloudflare or another proxy may hide Paddle's address." },
+    not_configured: { TR: "Sunucuda PADDLE_WEBHOOK_SECRET, API anahtarı ya da veritabanı ayarı eksik.", EN: "PADDLE_WEBHOOK_SECRET, the API key or the database settings are missing on the server." },
+    ip_list: { TR: "Paddle'ın adres listesi alınamadı; geçici olabilir, Paddle yeniden dener.", EN: "Paddle's address list couldn't be fetched; possibly temporary, Paddle retries." },
+    processing: { TR: "Bildirim alındı ama işlenirken hata oluştu; Vercel günlüklerinde [paddle:webhook] arayın.", EN: "The notification arrived but processing failed; search the Vercel logs for [paddle:webhook]." },
+    cloudflare: { TR: "Cloudflare bildirimi engelledi (bot koruması / güvenlik kuralı). Cloudflare'de /api/paddle/webhook için bir atlama (skip) kuralı ekle ya da kaydı \"DNS only\" yap.", EN: "Cloudflare blocked the notification (bot protection / a security rule). Add a skip rule for /api/paddle/webhook in Cloudflare or set the record to \"DNS only\"." },
+    vercel_protection: { TR: "Vercel'in dağıtım koruması bildirimi engelledi; hedef adresi korumasız ana alan adı ({url}) olmalı.", EN: "Vercel's deployment protection blocked the notification; the destination must be the unprotected main domain ({url})." },
+    redirect: { TR: "Adres başka bir adrese yönleniyor; Paddle yönlendirmeyi izlemez. Hedefi tam olarak {url} yap.", EN: "The address redirects; Paddle doesn't follow redirects. Use exactly {url}." },
+    not_found: { TR: "Adres bulunamadı (404): hedefin adresi yanlış.", EN: "Not found (404): the destination's address is wrong." },
+    rate_limited: { TR: "Sunucu çok fazla istek dedi (429); bir güvenlik kuralı hız sınırı uyguluyor olabilir.", EN: "The server answered too many requests (429); a security rule may be rate limiting." },
+    server_error: { TR: "Sunucu hata döndürdü (5xx); Vercel günlüklerine bakın.", EN: "The server returned an error (5xx); check the Vercel logs." },
+    no_response: { TR: "Yanıt gelmedi (zaman aşımı ya da bağlantı hatası).", EN: "No answer came (timeout or connection error)." },
+    other: { TR: "Beklenmeyen bir yanıt.", EN: "An unexpected answer." },
+};
+
+const DELIVERY_STATUS: Record<AdminPaddleDelivery["status"], { label: Copy; tone: Tone }> = {
+    delivered: { label: { TR: "teslim edildi", EN: "delivered" }, tone: "emerald" },
+    needs_retry: { label: { TR: "yeniden denenecek", EN: "will be retried" }, tone: "amber" },
+    failed: { label: { TR: "teslim edilemedi", EN: "failed" }, tone: "red" },
+    not_attempted: { label: { TR: "henüz denenmedi", EN: "not attempted yet" }, tone: "zinc" },
+};
+
+/** "Bildirimleri kontrol et": reads Paddle's notification destinations and delivery log (read-only). */
+function NotificationCheck() {
+    const { tx } = useI18n();
+    const when = useWhen();
+    const [busy, setBusy] = useState(false);
+    const [check, setCheck] = useState<AdminPaddleNotificationCheck | null>(null);
+    const [error, setError] = useState<ApiFailure | null>(null);
+
+    const run = async () => {
+        setBusy(true);
+        setError(null);
+        const result = await adminPost<AdminPaddleNotificationsResponse>("/api/admin/paddle", { action: "checkNotifications" });
+        setBusy(false);
+        if (!result.ok) {
+            setError(result);
+            return;
+        }
+        setCheck(result.data.check);
+    };
+
+    const vars = (problem: AdminPaddleNotificationProblem) => ({
+        url: check?.expectedUrl ?? "",
+        events: problem === "missing_events" ? [...new Set(check?.destinations.flatMap((entry) => entry.missingEvents) ?? [])].join(", ") : "",
+    });
+
+    return (
+        <div className="mt-4 rounded-2xl border border-zinc-100 p-4 dark:border-white/[0.06]" data-notification-check>
+            <div className="flex flex-wrap items-center gap-3">
+                <Radio className="h-5 w-5 shrink-0 text-indigo-500" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-black text-zinc-900 dark:text-white">{tx(C.notifyTitle)}</p>
+                    <p className="mt-0.5 text-[12.5px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.notifyHint)}</p>
+                </div>
+                <Button size="sm" icon={ListChecks} busy={busy} onClick={() => void run()}>{tx(check ? C.notifyAgain : C.notifyButton)}</Button>
+            </div>
+            {error ? <ErrorNotice className="mt-3" error={error} /> : null}
+            {check ? (
+                <div className="mt-3 space-y-3 text-[13px] leading-relaxed">
+                    {check.problems.length === 0 ? (
+                        <p className="flex items-start gap-2 font-semibold text-emerald-700 dark:text-emerald-300" data-notification-ok>
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />{tx(C.notifyAllGood)}
+                        </p>
+                    ) : (
+                        <ul className="space-y-2" data-notification-problems>
+                            {check.problems.map((problem) => {
+                                const entry = NOTIFICATION_PROBLEMS[problem];
+                                const Icon = entry.blocking ? XCircle : AlertTriangle;
+                                return (
+                                    <li key={problem} className="flex items-start gap-2" data-problem={problem}>
+                                        <Icon className={cx("mt-0.5 h-4 w-4 shrink-0", entry.blocking ? "text-red-500" : "text-amber-500")} aria-hidden="true" />
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-zinc-800 dark:text-zinc-100">{tx(entry.title, vars(problem))}</p>
+                                            <p className="text-[12.5px] text-zinc-600 dark:text-zinc-300">{tx(entry.fix, vars(problem))}</p>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                    {check.destinations.length ? (
+                        <div>
+                            <p className="text-[12px] font-black uppercase tracking-wide text-zinc-500">{tx(C.notifyDestinations)}</p>
+                            <ul className="mt-1.5 space-y-1.5">
+                                {check.destinations.map((destination) => (
+                                    <li key={destination.id} className="flex flex-wrap items-center gap-1.5" data-destination={destination.id}>
+                                        <span className="break-all font-mono text-[12px]" dir="ltr">{destination.url}</span>
+                                        <Badge tone={destination.active ? "emerald" : "red"}>{tx(destination.active ? C.notifyActive : C.notifyInactive)}</Badge>
+                                        {destination.trafficSource ? <Badge tone={destination.trafficSource === "simulation" ? "red" : "zinc"}>{destination.trafficSource}</Badge> : null}
+                                        {destination.secretMatches === null ? null : <Badge tone={destination.secretMatches ? "emerald" : "red"}>{tx(destination.secretMatches ? C.notifySecretOk : C.notifySecretBad)}</Badge>}
+                                        {destination.missingEvents.length ? <Badge tone="amber">{tx(C.notifyMissing, { count: destination.missingEvents.length })}</Badge> : null}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : null}
+                    {check.lastFailure ? (
+                        <div className="rounded-xl bg-red-50 px-3 py-2 dark:bg-red-500/10" data-delivery-failure={check.lastFailure.cause}>
+                            <p className="font-semibold text-red-800 dark:text-red-200">{tx(C.notifyLastFailure, { type: check.lastFailure.type || "—", code: check.lastFailure.responseCode ? `HTTP ${check.lastFailure.responseCode}` : tx(C.notifyNoAnswer) })}</p>
+                            <p className="mt-0.5 text-[12.5px] text-red-800 dark:text-red-200">{tx(DELIVERY_CAUSES[check.lastFailure.cause], { url: check.expectedUrl })}</p>
+                            {check.lastFailure.body ? <p className="mt-1 break-all font-mono text-[11.5px] text-red-700/80 dark:text-red-200/80" dir="ltr">{check.lastFailure.body}</p> : null}
+                        </div>
+                    ) : null}
+                    {check.deliveries.length ? (
+                        <div>
+                            <p className="text-[12px] font-black uppercase tracking-wide text-zinc-500">{tx(C.notifyRecent)}</p>
+                            <ul className="mt-1.5 divide-y divide-zinc-100 dark:divide-white/[0.06]">
+                                {check.deliveries.map((delivery) => (
+                                    <li key={delivery.id} className="flex flex-wrap items-center gap-2 py-1.5 text-[12.5px]">
+                                        <Badge tone={DELIVERY_STATUS[delivery.status].tone}>{tx(DELIVERY_STATUS[delivery.status].label)}</Badge>
+                                        <span className="font-mono" dir="ltr">{delivery.type}</span>
+                                        {delivery.occurredAt ? <span className="text-zinc-500">{when(delivery.occurredAt)}</span> : null}
+                                        {delivery.attempts > 1 ? <span className="text-zinc-500">{tx(C.notifyAttempts, { count: delivery.attempts })}</span> : null}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : check.access.notifications === "ok" ? <p className="text-[12.5px] text-zinc-500">{tx(C.notifyNoDeliveries)}</p> : null}
+                    {check.errorCode ? <p className="font-mono text-[11.5px] text-zinc-500" dir="ltr">{tx(C.apiCode, { code: check.errorCode })}</p> : null}
+                    <p className="text-[11.5px] text-zinc-400">{tx(C.notifyChecked, { time: when(check.checkedAt) })}</p>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
 function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleResponse; loading: boolean; onReload: () => void }) {
     const { tx } = useI18n();
     const when = useWhen();
@@ -472,6 +702,8 @@ function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleRespons
     const sandbox = config.environment === "sandbox";
     const rejectedLater = Boolean(status.lastRejectedAt && (!status.lastEventAt || Date.parse(status.lastRejectedAt) > Date.parse(status.lastEventAt)));
     const rejection = status.lastRejectedReason ? REJECTIONS[status.lastRejectedReason] : undefined;
+    const eventResult = status.lastEventResult ? EVENT_RESULTS[status.lastEventResult] : undefined;
+    const eventFailed = status.lastEventResult?.startsWith("failed") ? status.lastEventResult.slice(7) || "error" : null;
     const tokenBroken = clientTokenCheck?.result === "missing" || clientTokenCheck?.result === "revoked";
     const ready = config.apiKey && config.clientToken && config.webhookSecret && api.ok && !tokenBroken;
 
@@ -517,9 +749,16 @@ function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleRespons
                     <Webhook className={cx("mt-0.5 h-4 w-4 shrink-0", status.lastEventAt ? "text-emerald-500" : "text-zinc-400")} aria-hidden="true" />
                     <span>
                         {status.lastEventAt ? tx(C.webhookLast, { time: when(status.lastEventAt), type: status.lastEventType ?? "—" }) : tx(C.webhookNone)}
+                        {eventResult ? <span className={cx("ms-1", eventResult.tone === "warn" ? "font-semibold text-amber-700 dark:text-amber-300" : "text-zinc-500")} data-webhook-result>{tx(C.webhookResult, { result: tx(eventResult.copy) })}</span> : null}
                         {!config.webhookSecret ? <span className="ms-1 font-semibold text-red-600 dark:text-red-400">{tx(C.webhookNoSecret)}</span> : null}
                     </span>
                 </p>
+                {eventFailed ? (
+                    <p className="flex items-start gap-2 font-semibold text-red-700 dark:text-red-300" data-webhook-result="failed">
+                        <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" aria-hidden="true" />
+                        <span>{tx(C.webhookFailed, { code: eventFailed })}</span>
+                    </p>
+                ) : null}
                 {status.lastRejectedAt ? (
                     <p className={cx("flex items-start gap-2", rejectedLater ? "font-semibold text-amber-800 dark:text-amber-200" : "text-zinc-500")}>
                         <AlertTriangle className={cx("mt-0.5 h-4 w-4 shrink-0", rejectedLater ? "text-amber-500" : "text-zinc-400")} aria-hidden="true" />
@@ -527,6 +766,7 @@ function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleRespons
                     </p>
                 ) : null}
             </div>
+            {config.apiKey ? <NotificationCheck /> : null}
             <h3 className="mt-5 text-[13px] font-black uppercase tracking-wide text-zinc-500">{tx(C.addresses)}</h3>
             <ul className="mt-2 grid gap-2 lg:grid-cols-2">
                 <AddressRow label={tx(C.webhookUrl)} value={data.urls.webhook} hint={tx(C.webhookUrlHint)} />
@@ -574,7 +814,7 @@ function ServerErrorRow({ entry }: { entry: AdminPaddleServerError }) {
                 <Badge tone={entry.paddleStatus !== null ? "amber" : "red"}>{entry.step ? tx(SERVER_STEPS[entry.step]) : tx(C.stepUnknown)}</Badge>
                 <PaddleEnvironmentBadge environment={entry.environment} />
                 <time dateTime={entry.at} title={formatDateTime(entry.at, locale)} className="text-[12px] text-zinc-500">{when(entry.at)}</time>
-                <span className="text-[12px] text-zinc-500">{route === "subscription" && action ? tx(C.routeSubscription, { action }) : tx(C.routeCheckout)}</span>
+                <span className="text-[12px] text-zinc-500">{route === "subscription" && action ? tx(C.routeSubscription, { action }) : route === "sync" ? tx(C.routeSync) : tx(C.routeCheckout)}</span>
             </div>
             <p className="mt-1.5 font-mono text-[12px] font-semibold text-zinc-800 dark:text-zinc-100" dir="ltr">{tx(C.serverLine, { status: entry.status, code: entry.code, seconds })}</p>
             {entry.paddleStatus !== null ? <p className="mt-0.5 text-[12px] text-zinc-500">{entry.paddleStatus ? tx(C.paddleAnswered, { status: entry.paddleStatus }) : tx(C.paddleUnreached)}</p> : null}

@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.6",
+        version: "v0.3.6",
+        date: "2026-10-03",
+        title: { TR: "Ödemeden sonra planın hemen açılıyor; silinen kuponlar geri geliyor", EN: "Your plan unlocks right after paying; deleted coupons come back" },
+        desc: { TR: "Ödeme tamamlanınca planın, ödeme sağlayıcısının bildirimini beklemeden saniyeler içinde açılıyor. Silinen kuponlar yönetici panelinden geri yüklenebiliyor.", EN: "Once the payment completes, your plan unlocks within seconds without waiting for the payment provider's notification. Deleted coupons can be restored from the admin panel." },
+        items: [
+            { TR: "Ödemeden sonra plan saniyeler içinde açılır; açılmazsa \"Ödememi kontrol et\" düğmesi var.", EN: "The plan unlocks within seconds after paying; if it doesn't, there's a \"Check my payment\" button." },
+            { TR: "Ödeme işlenirken ikinci kez ödeme alınmaz.", EN: "You can't be charged twice while a payment is being processed." },
+            { TR: "Ekip için: bildirimlerin neden gelmediği Paddle kartında tek tuşla görülür.", EN: "For the team: why notifications don't arrive is shown in the Paddle card with one click." },
+            { TR: "Silinen kuponlar \"Silinen kuponlar\" listesinden geri yüklenebilir.", EN: "Deleted coupons can be restored from the \"Deleted coupons\" list." },
+        ],
+    },
+    {
         id: "v0.3.5",
         version: "v0.3.5",
         date: "2026-10-03",

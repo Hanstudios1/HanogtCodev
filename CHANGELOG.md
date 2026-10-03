@@ -1,5 +1,46 @@
 # Değişiklik Günlüğü
 
+## 0.3.6 — 2026-10-03
+
+### Ödeme sonrası plan, bildirim beklemeden açılıyor
+
+- Ödeme tamamlanıp plan Plus'a/Pro'ya geçmiyordu: planı açan tek yol Paddle'ın
+  bildirimiydi (webhook); bildirim gelmezse ya da reddedilirse (sandbox'ta
+  Paddle yalnızca birkaç kez yeniden dener) hesap Ücretsiz'de kalıyordu.
+- Ödeme rotası açtığı işlemi hesaba kaydediyor (`paddleCheckout`);
+  `checkout.completed`'dan sonra Fiyatlandırma sayfası `POST /api/paddle/sync`
+  ile birkaç saniyede bir soruyor, sunucu işlemi ve aboneliği Paddle'dan
+  okuyup webhook'la aynı şekilde kaydediyor. Yalnızca hesabın kendi Paddle
+  müşterisi; tarayıcıdan hiçbir bilgi alınmıyor; Paddle'da hiçbir şey
+  değişmiyor.
+- `GET /api/plans` kendiliğinden düzeltiyor: Paddle müşterisi olup planı
+  açılmamış hesaplar için (bu değişiklikten önceki takılı satın almalar dahil)
+  10 dakikada bir Paddle'a soruluyor; sayfada "Ödememi kontrol et" düğmesi.
+- Çift ödeme önlendi: ödeme işlenirken yeni ödeme `payment_pending` ile
+  reddediliyor, etkin abonelik varsa `already_subscribed`.
+- Webhook kaydı: son bildirimin sonucu (`lastEventResult`, işlemeden sonra
+  yazılıyor; "işlenemedi" kartta görünüyor), retler neden başına dakikada bir
+  kaydediliyor, adres listesi alınamazsa `ip_list_unavailable`. Aynı sunucu
+  hatası bir dakika içinde tekrar listelenmiyor.
+
+### Paddle kartında "Bildirimleri kontrol et"
+
+- Paddle'daki bildirim hedefi (adres, açık mı, gerçek/simülasyon trafiği,
+  eksik olaylar, gizli anahtarın `PADDLE_WEBHOOK_SECRET` ile eşleşip
+  eşleşmediği) ve son teslimlerde Paddle'ın aldığı yanıt okunuyor; neden
+  (imza, adres, Cloudflare sayfası, Vercel koruması, yönlenme, 404, 5xx) ve
+  ne yapılacağı yazılıyor. Yalnızca okuma; gizli anahtar ve müşteri bilgisi
+  tarayıcıya gitmiyor.
+
+### Silinen kuponlar geri yüklenebiliyor
+
+- Silme kaydı (`coupon.delete`) kuponun tam kopyasını tutuyor; daha önce
+  silinenlerin koşulları oluşturma kaydından alınıyor. Kupon kartında
+  "Silinen kuponlar" ve "Geri yükle": Paddle indirimi yeniden açılıyor (ya da
+  yenisi oluşturuluyor); süresi geçmiş ya da hakkı dolmuş kupon için yeni
+  tarih/hak isteniyor.
+- Kapalı kuponların Paddle kullanım sayısı da görünüyor (`status=active,archived`).
+
 ## 0.3.5 — 2026-10-03
 
 ### Kuponlar: kampanya bağlantısı, eski kodlar, aboneler

@@ -6507,9 +6507,37 @@
       "src/app/plans/page.tsx"
     ]
   },
-  "332ed022aw": {
-    "en": "Payment received; your plan will be active within a few minutes. You can refresh this page later.",
-    "tr": "Ödemen alındı; planın birkaç dakika içinde etkinleşecek. Bu sayfayı sonra yenileyebilirsin.",
+  "kqzdqqj3yv": {
+    "en": "Payment received; your plan will be active within a few minutes. To try right away, press \"Check my payment\".",
+    "tr": "Ödemen alındı; planın birkaç dakika içinde etkinleşecek. Hemen denemek için \"Ödememi kontrol et\"e bas.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "ry5m84ldsi": {
+    "en": "Check my payment",
+    "tr": "Ödememi kontrol et",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "11ulgqbpqdw": {
+    "en": "Paid, but your plan didn't change?",
+    "tr": "Ödeme yaptın ama planın değişmedi mi?",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "tah4ox1wyq": {
+    "en": "Paddle has no completed payment for this account. If you finished the checkout, try again in a few minutes; if it persists, open a support ticket.",
+    "tr": "Paddle'da bu hesaba ait tamamlanmış bir ödeme bulunamadı. Ödeme ekranını tamamladıysan birkaç dakika sonra tekrar dene; sürerse destek talebi oluştur.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "2ewwl3199d": {
+    "en": "Your payment went through and Paddle is creating your subscription. Your plan will be active in a few seconds; there's no need to pay again.",
+    "tr": "Ödemen alındı, Paddle aboneliğini oluşturuyor. Planın birkaç saniye içinde açılacak; yeniden ödeme yapmana gerek yok.",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -15282,7 +15310,8 @@
     "en": "Check again",
     "tr": "Yeniden denetle",
     "files": [
-      "src/components/Admin/CloudHealthSection.tsx"
+      "src/components/Admin/CloudHealthSection.tsx",
+      "src/components/Admin/PaddleCard.tsx"
     ]
   },
   "7bco0ivt4x": {
@@ -15969,9 +15998,23 @@
       "src/components/Admin/copy.ts"
     ]
   },
-  "my440cb3u1": {
-    "en": "This code belongs to another discount in Paddle (a deleted coupon's, or one made in Paddle by hand; archived ones count too). Pick another code.",
-    "tr": "Bu kod Paddle'da başka bir indirime ait (silinmiş eski bir kuponun ya da Paddle'da elle oluşturulmuş bir indirimin; arşivlenmiş olsa da). Başka bir kod seç.",
+  "j6pyv25gyg": {
+    "en": "This code belongs to another discount in Paddle (a deleted coupon's, or one made in Paddle by hand; archived ones count too). If it was a deleted coupon, restore it from \"Deleted coupons\" below; otherwise pick another code.",
+    "tr": "Bu kod Paddle'da başka bir indirime ait (silinmiş eski bir kuponun ya da Paddle'da elle oluşturulmuş bir indirimin; arşivlenmiş olsa da). Silinmiş bir kuponunsa aşağıdaki \"Silinen kuponlar\"dan geri yükle; değilse başka bir kod seç.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "4incoouvda": {
+    "en": "This coupon's end date has passed; pick a later date to restore it, or leave it empty (no end date).",
+    "tr": "Bu kuponun bitiş tarihi geçmiş; geri yüklemek için ileri bir tarih seç ya da tarihi boş bırak (süresiz).",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "27ti1gc18rc": {
+    "en": "This coupon's uses are spent; enter a higher limit to restore it, or leave it empty (unlimited).",
+    "tr": "Bu kuponun kullanım hakkı dolmuş; geri yüklemek için daha yüksek bir kullanım sayısı gir ya da boş bırak (sınırsız).",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -16465,6 +16508,13 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "tw8slcimhv": {
+    "en": "Deleted coupon restored",
+    "tr": "Silinen kupon geri yüklendi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "rri7v0odim": {
     "en": "Paddle price mapping changed",
     "tr": "Paddle fiyat eşlemesi değişti",
@@ -16733,6 +16783,20 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1772h4vh687": {
+    "en": "Created by",
+    "tr": "Oluşturan",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "u5ze1lqdc6": {
+    "en": "Paddle",
+    "tr": "Paddle",
+    "files": [
+      "src/components/Admin/copy.ts"
     ]
   },
   "2ah1rcd5f1e": {
@@ -17389,6 +17453,125 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "1mzj5p4uqxs": {
+    "en": "Result: {result}",
+    "tr": "Sonuç: {result}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1u0zrh1vr9b": {
+    "en": "Why don't notifications arrive?",
+    "tr": "Bildirimler neden gelmiyor?",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "lq3uduti0f": {
+    "en": "Reads the notification destination in Paddle (address, active, events, secret key) and the answer Paddle got for recent deliveries. Changes nothing in Paddle.",
+    "tr": "Paddle'daki bildirim hedefini (adres, açık mı, olaylar, gizli anahtar) ve son teslimlerde Paddle'ın aldığı yanıtı okur. Paddle'da hiçbir şeyi değiştirmez.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1c9tm2im4q2": {
+    "en": "Check notifications",
+    "tr": "Bildirimleri kontrol et",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "7ftlwply81": {
+    "en": "The notification destination is set up correctly and the latest notification was delivered.",
+    "tr": "Bildirim hedefi doğru ayarlı ve son bildirim teslim edildi.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "itgkfss5zj": {
+    "en": "Destinations for the webhook address",
+    "tr": "Webhook adresine giden hedefler",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "udqnkoemyo": {
+    "en": "active",
+    "tr": "açık",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "kjd7tgqgks": {
+    "en": "inactive",
+    "tr": "kapalı",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "178qwz43m8e": {
+    "en": "secret matches",
+    "tr": "anahtar eşleşiyor",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "yraljb9fg8": {
+    "en": "secret differs",
+    "tr": "anahtar farklı",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "d3r6g6uusg": {
+    "en": "{count} events missing",
+    "tr": "{count} olay eksik",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1jlfbmik9jb": {
+    "en": "Latest undelivered notification: {type} · {code}",
+    "tr": "Teslim edilemeyen son bildirim: {type} · {code}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "uequ7kwkpw": {
+    "en": "no answer",
+    "tr": "yanıt yok",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1g1kqno9orr": {
+    "en": "Recent deliveries",
+    "tr": "Son teslimler",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "rfoo51w62r": {
+    "en": "No notification has been sent to this destination yet.",
+    "tr": "Bu hedefe henüz bildirim gönderilmemiş.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "18mhauqlh5k": {
+    "en": "{count} attempts",
+    "tr": "{count} deneme",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "ajo7f174o3": {
+    "en": "The last notification couldn't be processed ({code}); Paddle will retry. Search the Vercel logs for [paddle:webhook]. The plan still unlocks through the Pricing page's payment sync.",
+    "tr": "Son bildirim işlenemedi ({code}); Paddle yeniden deneyecek. Vercel günlüklerinde [paddle:webhook] arayın. Plan, Fiyatlandırma sayfasının ödeme eşitlemesiyle yine de açılır.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "1ep012wkl79": {
     "en": "Addresses to give Paddle",
     "tr": "Paddle'a verilecek adresler",
@@ -17555,13 +17738,6 @@
   "1x7ciqoejyj": {
     "en": "State",
     "tr": "Durum",
-    "files": [
-      "src/components/Admin/PaddleCard.tsx"
-    ]
-  },
-  "udqnkoemyo": {
-    "en": "active",
-    "tr": "etkin",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -18173,6 +18349,13 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "1elztnwy3ae": {
+    "en": "Syncing the plan after a payment",
+    "tr": "Ödemeden sonra plan eşitleme",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "1uuil4lagg8": {
     "en": "Subscription action: {action}",
     "tr": "Abonelik işlemi: {action}",
@@ -18420,6 +18603,48 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "cfghwp4qxz": {
+    "en": "Paddle's list of notification addresses couldn't be fetched, so the sender couldn't be checked; Paddle will retry.",
+    "tr": "Paddle'ın bildirim adresleri listesi alınamadığı için gönderen doğrulanamadı; Paddle yeniden deneyecek.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1whyfrlx4l": {
+    "en": "stored",
+    "tr": "kaydedildi",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "uh7tgehid5": {
+    "en": "no change (the stored copy is newer)",
+    "tr": "değişiklik yok (kayıtlı bilgi daha güncel)",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "6sjbb0ky2b": {
+    "en": "unrelated event, ignored",
+    "tr": "ilgisiz olay, yok sayıldı",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1wc77u54rst": {
+    "en": "the subscription matched no account; see \"Unlinked subscriptions\"",
+    "tr": "abonelik bir hesapla eşleşmedi; \"Eşleşmeyen abonelikler\"e bakın",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "5rvxcnh3oa": {
+    "en": "canceled because the account was deleted",
+    "tr": "hesap silinmiş olduğu için abonelik iptal edildi",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "4smbez30h5": {
     "en": "Script blocked",
     "tr": "Betik engellendi",
@@ -18588,6 +18813,13 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "fs8w9r0zx": {
+    "en": "Asking Paddle about the payment",
+    "tr": "Ödeme Paddle'a sorulurken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "1dqdjwafba5": {
     "en": "Paddle didn't answer within 8 seconds. Check Paddle's status page; the Plans page retries once by itself.",
     "tr": "Paddle 8 saniye içinde yanıt vermedi. Paddle'ın durum sayfasına bakın; Planlar sayfası bir kez kendiliğinden yeniden dener.",
@@ -18668,6 +18900,300 @@
   "wgq5pnvgi5": {
     "en": "The API key isn't allowed to do this; check the key's permissions in Paddle.",
     "tr": "API anahtarının bu işlem için izni yok; Paddle'da anahtarın izinlerine bakın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "8x0yc2m59d": {
+    "en": "The notification destinations couldn't be read: the API key isn't allowed to.",
+    "tr": "Bildirim hedefleri okunamadı: API anahtarının izni yok.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1m4nrilp5d3": {
+    "en": "Give the API key read access to notification_setting.read (and notification.read) under Paddle › Developer tools › Authentication, then check again.",
+    "tr": "Paddle › Developer tools › Authentication bölümünde API anahtarına notification_setting.read (ve notification.read) okuma izni ver, sonra tekrar kontrol et.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1z27nefa6fe": {
+    "en": "Recent deliveries couldn't be read: the API key lacks notification.read.",
+    "tr": "Son teslimler okunamadı: API anahtarının notification.read izni yok.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1ss2oyaq5d9": {
+    "en": "Give the key notification.read to see the delivery log (the answer Paddle got).",
+    "tr": "Teslim kayıtlarını (Paddle'ın aldığı yanıt) görmek için anahtara notification.read izni ver.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "17ne28sulg5": {
+    "en": "This Paddle account has no notification destination for the site's webhook address.",
+    "tr": "Bu Paddle hesabında sitenin webhook adresine giden bir bildirim hedefi yok.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "13a3077ckqh": {
+    "en": "Paddle › Developer tools › Notifications › New destination: URL {url}, events subscription.* and transaction.completed. Save its secret key as PADDLE_WEBHOOK_SECRET in Vercel and redeploy.",
+    "tr": "Paddle › Developer tools › Notifications › New destination: adres {url}, tür URL, olaylar subscription.* ve transaction.completed. Hedefin gizli anahtarını Vercel'de PADDLE_WEBHOOK_SECRET olarak kaydedip yeniden dağıt.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "16t1g2013fa": {
+    "en": "The notification destination is switched off (inactive).",
+    "tr": "Bildirim hedefi kapalı (inactive).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "15p3v8xusn7": {
+    "en": "Switch the destination back on under Paddle › Developer tools › Notifications.",
+    "tr": "Paddle › Developer tools › Notifications bölümünde hedefi yeniden etkinleştir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "wiemxu5i88": {
+    "en": "The destination only receives simulated events; real payments aren't notified.",
+    "tr": "Hedef yalnızca simülasyon olaylarını alıyor; gerçek ödemelerin bildirimleri gönderilmiyor.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1g19jv6gk3a": {
+    "en": "Set the destination's traffic source to \"Platform\" or \"All\" (Notifications › destination › Edit).",
+    "tr": "Hedefin trafik kaynağını \"Platform\" ya da \"All\" yap (Notifications › hedef › Edit).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "15yf2189pf8": {
+    "en": "The destination address isn't https.",
+    "tr": "Hedef adresi https değil.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "10igz6ymi4y": {
+    "en": "Change the address to {url}.",
+    "tr": "Adresi {url} olarak düzelt.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1ljlsw0025p": {
+    "en": "The destination isn't the site's address (www, vercel.app or another domain).",
+    "tr": "Hedef adresi sitenin adresi değil (www, vercel.app ya da başka bir alan adı).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "ieskho3c4e": {
+    "en": "Paddle doesn't follow redirects and Vercel protection may stop deliveries: use exactly {url}.",
+    "tr": "Paddle yönlendirmeleri izlemez ve Vercel koruması bildirimi durdurabilir: adresi tam olarak {url} yap.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "7rtmchfq3j": {
+    "en": "The destination doesn't send some events the site needs: {events}",
+    "tr": "Hedef bazı gerekli olayları göndermiyor: {events}",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1e0c6ze7x4h": {
+    "en": "Edit the destination and select every subscription.* event and transaction.completed.",
+    "tr": "Hedefi düzenleyip tüm subscription.* olaylarını ve transaction.completed'ı seç.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "qfxygu2jkc": {
+    "en": "PADDLE_WEBHOOK_SECRET isn't set in Vercel; notifications are refused.",
+    "tr": "Vercel'de PADDLE_WEBHOOK_SECRET tanımlı değil; bildirimler reddediliyor.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "r8uohhq27o": {
+    "en": "Add the destination's secret key (pdl_ntfset_…) as PADDLE_WEBHOOK_SECRET in Vercel › Settings › Environment Variables and redeploy.",
+    "tr": "Hedefin gizli anahtarını (pdl_ntfset_…) Vercel › Settings › Environment Variables'a PADDLE_WEBHOOK_SECRET olarak ekleyip yeniden dağıt.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1c9a6w0a21u": {
+    "en": "PADDLE_WEBHOOK_SECRET isn't this destination's secret key; signatures don't match.",
+    "tr": "PADDLE_WEBHOOK_SECRET bu hedefin gizli anahtarıyla aynı değil; imzalar tutmuyor.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "20is1m73i1e": {
+    "en": "Copy the destination's secret key in Paddle, replace PADDLE_WEBHOOK_SECRET in Vercel with it and redeploy (it may be the other environment's, or an older destination's).",
+    "tr": "Paddle'da hedefin gizli anahtarını kopyalayıp Vercel'deki PADDLE_WEBHOOK_SECRET'ı onunla değiştir ve yeniden dağıt (öbür ortamın ya da yeniden oluşturulmuş eski hedefin anahtarı olabilir).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1fwc78cnse2": {
+    "en": "Several active destinations point at the same address.",
+    "tr": "Aynı adrese giden birden fazla etkin hedef var.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1go9zuepfhx": {
+    "en": "Every notification arrives more than once; you can keep only the one whose secret is PADDLE_WEBHOOK_SECRET and switch the others off.",
+    "tr": "Her bildirim birden çok kez gelir; yalnızca anahtarı PADDLE_WEBHOOK_SECRET olanı bırakıp diğerlerini kapatabilirsin.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "12ylotgqwk8": {
+    "en": "The latest notification couldn't be delivered.",
+    "tr": "Son bildirim teslim edilemedi.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "26e9sawwjr": {
+    "en": "Paddle's answer and its cause are below. Once fixed you can resend it from Paddle › Notifications (Replay); people whose plan didn't switch can also use \"Check my payment\" on the Pricing page.",
+    "tr": "Aşağıda Paddle'ın aldığı yanıt ve nedeni var. Düzelttikten sonra Paddle › Notifications'tan bildirimi yeniden gönderebilirsin (Replay); planı açılmayan kişiler Fiyatlandırma sayfasında \"Ödememi kontrol et\"i de kullanabilir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1diffmk2ev4": {
+    "en": "Bad signature: PADDLE_WEBHOOK_SECRET isn't this destination's secret.",
+    "tr": "İmza tutmadı: PADDLE_WEBHOOK_SECRET bu hedefin anahtarı değil.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1larbrco2mv": {
+    "en": "Expired signature: the server clock is off or the delivery was late.",
+    "tr": "İmza süresi geçmiş: sunucu saati kaymış ya da bildirim geç teslim edilmiş.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "24vtkwteutr": {
+    "en": "The sender's address couldn't be verified (IP allowlist): Cloudflare or another proxy may hide Paddle's address.",
+    "tr": "Gönderen adres doğrulanamadı (IP izin listesi): Cloudflare ya da başka bir vekil Paddle'ın adresini gizliyor olabilir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "6qpvor0s66": {
+    "en": "PADDLE_WEBHOOK_SECRET, the API key or the database settings are missing on the server.",
+    "tr": "Sunucuda PADDLE_WEBHOOK_SECRET, API anahtarı ya da veritabanı ayarı eksik.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "nqju1b5ezz": {
+    "en": "Paddle's address list couldn't be fetched; possibly temporary, Paddle retries.",
+    "tr": "Paddle'ın adres listesi alınamadı; geçici olabilir, Paddle yeniden dener.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1e2atbng4d2": {
+    "en": "The notification arrived but processing failed; search the Vercel logs for [paddle:webhook].",
+    "tr": "Bildirim alındı ama işlenirken hata oluştu; Vercel günlüklerinde [paddle:webhook] arayın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1m4l0wc4w8m": {
+    "en": "Cloudflare blocked the notification (bot protection / a security rule). Add a skip rule for /api/paddle/webhook in Cloudflare or set the record to \"DNS only\".",
+    "tr": "Cloudflare bildirimi engelledi (bot koruması / güvenlik kuralı). Cloudflare'de /api/paddle/webhook için bir atlama (skip) kuralı ekle ya da kaydı \"DNS only\" yap.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1nahe2tl0zm": {
+    "en": "Vercel's deployment protection blocked the notification; the destination must be the unprotected main domain ({url}).",
+    "tr": "Vercel'in dağıtım koruması bildirimi engelledi; hedef adresi korumasız ana alan adı ({url}) olmalı.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "4hhag09b45": {
+    "en": "The address redirects; Paddle doesn't follow redirects. Use exactly {url}.",
+    "tr": "Adres başka bir adrese yönleniyor; Paddle yönlendirmeyi izlemez. Hedefi tam olarak {url} yap.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "oz4jeyn6h4": {
+    "en": "Not found (404): the destination's address is wrong.",
+    "tr": "Adres bulunamadı (404): hedefin adresi yanlış.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "7xozisdu1l": {
+    "en": "The server answered too many requests (429); a security rule may be rate limiting.",
+    "tr": "Sunucu çok fazla istek dedi (429); bir güvenlik kuralı hız sınırı uyguluyor olabilir.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "rf89wo6pnz": {
+    "en": "The server returned an error (5xx); check the Vercel logs.",
+    "tr": "Sunucu hata döndürdü (5xx); Vercel günlüklerine bakın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "10iuhoweweb": {
+    "en": "No answer came (timeout or connection error).",
+    "tr": "Yanıt gelmedi (zaman aşımı ya da bağlantı hatası).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "2a369syc9mo": {
+    "en": "An unexpected answer.",
+    "tr": "Beklenmeyen bir yanıt.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "15snk1qfzag": {
+    "en": "delivered",
+    "tr": "teslim edildi",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1676sf3diml": {
+    "en": "will be retried",
+    "tr": "yeniden denenecek",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "nf72vd5d84": {
+    "en": "failed",
+    "tr": "teslim edilemedi",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "etyuij2hbc": {
+    "en": "not attempted yet",
+    "tr": "henüz denenmedi",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -18902,7 +19428,8 @@
     "en": "Payments",
     "tr": "Geçerli ödemeler",
     "files": [
-      "src/components/Admin/PlansSection.tsx"
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts"
     ]
   },
   "194nwz0268e": {
@@ -19088,16 +19615,114 @@
       "src/components/Admin/PlansSection.tsx"
     ]
   },
-  "23d5id9cddh": {
-    "en": "The code can no longer be used. This can't be undone.",
-    "tr": "Kod artık kullanılamaz. Bu işlem geri alınamaz.",
+  "1g38tpu7qn2": {
+    "en": "The code can no longer be used. If needed, you can restore it from \"Deleted coupons\" below.",
+    "tr": "Kod artık kullanılamaz. Gerekirse aşağıdaki \"Silinen kuponlar\"dan geri yükleyebilirsin.",
     "files": [
       "src/components/Admin/PlansSection.tsx"
     ]
   },
-  "1qxaqsk1nz6": {
-    "en": "The code can no longer be used, and its Paddle discount is archived. This can't be undone.",
-    "tr": "Kod artık kullanılamaz; Paddle'daki indirimi de arşivlenir. Bu işlem geri alınamaz.",
+  "1s6jgf46t3p": {
+    "en": "The code can no longer be used, and its Paddle discount is archived. If needed, you can restore it from \"Deleted coupons\" below.",
+    "tr": "Kod artık kullanılamaz; Paddle'daki indirimi de arşivlenir. Gerekirse aşağıdaki \"Silinen kuponlar\"dan geri yükleyebilirsin.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "y30oqxe989": {
+    "en": "Deleted coupons ({count})",
+    "tr": "Silinen kuponlar ({count})",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "24vur5azwfp": {
+    "en": "Deleted coupons stay here. A restored coupon works again with its old terms; its Paddle discount is reopened, or a new one is made if it can't be.",
+    "tr": "Silinen kuponlar burada kalır. Geri yüklenen kupon eski koşullarıyla yeniden çalışır; Paddle'daki indirimi yeniden açılır, açılamazsa yenisi oluşturulur.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1y5kcaue9ax": {
+    "en": "Restore",
+    "tr": "Geri yükle",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "hxs6kud5ad": {
+    "en": "Restore coupon {code}?",
+    "tr": "{code} kuponu geri yüklensin mi?",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "20br77dj4j0": {
+    "en": "The coupon becomes active again with its old terms (discount, plan, payments). You can change its end date and usage limit below.",
+    "tr": "Kupon eski koşullarıyla (indirim, plan, geçerli ödemeler) yeniden etkin olur. Bitiş tarihini ve kullanım hakkını aşağıda değiştirebilirsin.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "2geybq7jxrv": {
+    "en": "The old end date has passed ({date}); pick a new date or leave it empty.",
+    "tr": "Eski bitiş tarihi geçmiş ({date}); yeni bir tarih seç ya da boş bırak.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1b089o5e75i": {
+    "en": "Used {used} times in Paddle with a limit of {max}; enter a higher number or leave it empty.",
+    "tr": "Paddle'da {used} kez kullanılmış, sınır {max}; daha yüksek bir sayı gir ya da boş bırak.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "2bv02t73ym4": {
+    "en": "An empty field means no end date / unlimited.",
+    "tr": "Boş bırakılan alan: süresiz / sınırsız.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1lvffy0nhan": {
+    "en": "Coupon {code} restored.",
+    "tr": "{code} kuponu geri yüklendi.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1manv5465xo": {
+    "en": "Coupon {code} restored; a new discount was created in Paddle.",
+    "tr": "{code} kuponu geri yüklendi; Paddle'da yeni bir indirim oluşturuldu.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "mh41htx7bb": {
+    "en": "terms unknown",
+    "tr": "koşulları bilinmiyor",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "16l93vo8jfa": {
+    "en": "expired",
+    "tr": "süresi geçmiş",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "28wqeesvbe9": {
+    "en": "used up",
+    "tr": "hakkı dolmuş",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1rr20eb9jew": {
+    "en": "Deleted {time} · {who}",
+    "tr": "Silindi: {time} · {who}",
     "files": [
       "src/components/Admin/PlansSection.tsx"
     ]
@@ -21181,6 +21806,48 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "28z92kqb7od": {
+    "en": "Your plan unlocks right after paying; deleted coupons come back",
+    "tr": "Ödemeden sonra planın hemen açılıyor; silinen kuponlar geri geliyor",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1mf8uioei3j": {
+    "en": "Once the payment completes, your plan unlocks within seconds without waiting for the payment provider's notification. Deleted coupons can be restored from the admin panel.",
+    "tr": "Ödeme tamamlanınca planın, ödeme sağlayıcısının bildirimini beklemeden saniyeler içinde açılıyor. Silinen kuponlar yönetici panelinden geri yüklenebiliyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1ry5dolkip5": {
+    "en": "The plan unlocks within seconds after paying; if it doesn't, there's a \"Check my payment\" button.",
+    "tr": "Ödemeden sonra plan saniyeler içinde açılır; açılmazsa \"Ödememi kontrol et\" düğmesi var.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "5sp2wm946i": {
+    "en": "You can't be charged twice while a payment is being processed.",
+    "tr": "Ödeme işlenirken ikinci kez ödeme alınmaz.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1fn3ofy636v": {
+    "en": "For the team: why notifications don't arrive is shown in the Paddle card with one click.",
+    "tr": "Ekip için: bildirimlerin neden gelmediği Paddle kartında tek tuşla görülür.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "9jc8stptsc": {
+    "en": "Deleted coupons can be restored from the \"Deleted coupons\" list.",
+    "tr": "Silinen kuponlar \"Silinen kuponlar\" listesinden geri yüklenebilir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "24i3zu57q3s": {
@@ -38311,9 +38978,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1srklc5e7ax": {
-    "en": "You manage your subscription on the [Plans](/plans) page:\n• **Manage subscription:** opens Paddle's customer portal, where you can update your payment method, download invoices and cancel. You can also cancel at paddle.net.\n• **Cancelling:** takes effect at the end of the period you paid for; your benefits last until then, after which you move to the Free plan. You can undo it before the period ends, and your projects aren't deleted.\n• **Changing plans:** switch between Plus and Pro or between monthly and yearly billing; the difference is prorated and shown before you confirm.\n• **Refunds:** a full refund without giving a reason within 14 days of the first payment. Renewal payments are refunded within 14 days if your cancellation wasn't processed, the charge was a mistake, or you couldn't use the plan because of a problem caused by us. Ask at paddle.net or with a [support ticket](/feedback) in the Request category; the money usually returns to your payment method within 5–10 business days.\n• **Failed payments:** Paddle retries a few times and your benefits continue meanwhile; remember to update your payment method.\n• **Coupons:** on the [Pricing](/plans) page press \"Have a coupon code?\", enter it and press Apply (it also works with \"Add discount\" at checkout); which plan and how many payments it covers is shown once it's applied. Coupons apply to new subscriptions, not to an existing one or to plan changes.\n• **Deleting your account** cancels the subscription at once; if you are entitled to a refund, ask for it first.\nDetails: [Refund Policy](/refund-policy) and [Terms of Use](/terms-of-use#paid-services).",
-    "tr": "Aboneliğini [Planlar](/plans) sayfasından yönetirsin:\n• **Aboneliği yönet:** Paddle'ın müşteri portalını açar; ödeme yöntemini güncelleyebilir, faturalarını indirebilir ve aboneliği iptal edebilirsin. paddle.net üzerinden de iptal edebilirsin.\n• **İptal:** ödediğin dönemin sonunda geçerli olur; o güne kadar avantajların sürer, sonra Ücretsiz plana geçersin. Dönem bitmeden iptali geri alabilirsin; projelerin silinmez.\n• **Plan değişikliği:** Plus ile Pro ya da aylık ile yıllık arasında geçebilirsin; fark orantılı hesaplanır ve onaylamadan önce gösterilir.\n• **İade:** ilk ödemeden sonraki 14 gün içinde gerekçesiz tam iade. Yenileme ödemeleri; iptalin işlenmediyse, hatayla alındıysa ya da bizden kaynaklanan bir sorun yüzünden planı kullanamadıysan 14 gün içinde iade edilir. İadeyi paddle.net üzerinden veya İstek kategorisinde [destek talebiyle](/feedback) isteyebilirsin; tutar ödeme yöntemine genellikle 5–10 iş gününde döner.\n• **Ödeme alınamazsa:** Paddle birkaç kez yeniden dener, bu sürede avantajların sürer; ödeme yöntemini güncellemeyi unutma.\n• **Kupon:** [Fiyatlandırma](/plans) sayfasında \"Kupon kodun var mı?\" alanına yazılıp Uygula'ya basılır (ödeme ekranındaki \"İndirim ekle\" ile de girilebilir); kuponun hangi planda ve kaç ödemede geçerli olduğu uygulanınca yazılır. Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğe ya da plan değişikliğine uygulanmaz.\n• **Hesabı silmek** aboneliği hemen iptal eder; iade hakkın varsa önce iade iste.\nAyrıntılar: [İade Politikası](/refund-policy) ve [Kullanım Şartları](/terms-of-use#paid-services).",
+  "2binxvzdr7u": {
+    "en": "You manage your subscription on the [Plans](/plans) page:\n• **Manage subscription:** opens Paddle's customer portal, where you can update your payment method, download invoices and cancel. You can also cancel at paddle.net.\n• **Cancelling:** takes effect at the end of the period you paid for; your benefits last until then, after which you move to the Free plan. You can undo it before the period ends, and your projects aren't deleted.\n• **Changing plans:** switch between Plus and Pro or between monthly and yearly billing; the difference is prorated and shown before you confirm.\n• **Refunds:** a full refund without giving a reason within 14 days of the first payment. Renewal payments are refunded within 14 days if your cancellation wasn't processed, the charge was a mistake, or you couldn't use the plan because of a problem caused by us. Ask at paddle.net or with a [support ticket](/feedback) in the Request category; the money usually returns to your payment method within 5–10 business days.\n• **Failed payments:** Paddle retries a few times and your benefits continue meanwhile; remember to update your payment method.\n• **Paid but the plan didn't switch:** press \"Check my payment\" on the [Pricing](/plans) page; the payment is confirmed with Paddle and the plan unlocks. Don't pay again: a second purchase is blocked while a payment is being processed.\n• **Coupons:** on the [Pricing](/plans) page press \"Have a coupon code?\", enter it and press Apply (it also works with \"Add discount\" at checkout); which plan and how many payments it covers is shown once it's applied. Coupons apply to new subscriptions, not to an existing one or to plan changes.\n• **Deleting your account** cancels the subscription at once; if you are entitled to a refund, ask for it first.\nDetails: [Refund Policy](/refund-policy) and [Terms of Use](/terms-of-use#paid-services).",
+    "tr": "Aboneliğini [Planlar](/plans) sayfasından yönetirsin:\n• **Aboneliği yönet:** Paddle'ın müşteri portalını açar; ödeme yöntemini güncelleyebilir, faturalarını indirebilir ve aboneliği iptal edebilirsin. paddle.net üzerinden de iptal edebilirsin.\n• **İptal:** ödediğin dönemin sonunda geçerli olur; o güne kadar avantajların sürer, sonra Ücretsiz plana geçersin. Dönem bitmeden iptali geri alabilirsin; projelerin silinmez.\n• **Plan değişikliği:** Plus ile Pro ya da aylık ile yıllık arasında geçebilirsin; fark orantılı hesaplanır ve onaylamadan önce gösterilir.\n• **İade:** ilk ödemeden sonraki 14 gün içinde gerekçesiz tam iade. Yenileme ödemeleri; iptalin işlenmediyse, hatayla alındıysa ya da bizden kaynaklanan bir sorun yüzünden planı kullanamadıysan 14 gün içinde iade edilir. İadeyi paddle.net üzerinden veya İstek kategorisinde [destek talebiyle](/feedback) isteyebilirsin; tutar ödeme yöntemine genellikle 5–10 iş gününde döner.\n• **Ödeme alınamazsa:** Paddle birkaç kez yeniden dener, bu sürede avantajların sürer; ödeme yöntemini güncellemeyi unutma.\n• **Ödedim ama planım açılmadı:** [Fiyatlandırma](/plans) sayfasında \"Ödememi kontrol et\"e bas; ödeme Paddle'dan doğrulanır ve plan açılır. Yeniden ödeme yapma: ödeme işlenirken ikinci bir satın alma zaten engellenir.\n• **Kupon:** [Fiyatlandırma](/plans) sayfasında \"Kupon kodun var mı?\" alanına yazılıp Uygula'ya basılır (ödeme ekranındaki \"İndirim ekle\" ile de girilebilir); kuponun hangi planda ve kaç ödemede geçerli olduğu uygulanınca yazılır. Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğe ya da plan değişikliğine uygulanmaz.\n• **Hesabı silmek** aboneliği hemen iptal eder; iade hakkın varsa önce iade iste.\nAyrıntılar: [İade Politikası](/refund-policy) ve [Kullanım Şartları](/terms-of-use#paid-services).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -40045,9 +40712,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "16wgc3br4pi": {
-    "en": "Sign in, choose monthly or yearly billing on the Plans page (/plans) and press the plan's buy button. The checkout opens in Paddle's secure window. Once the payment is complete, your plan is usually active within seconds and you get an in-app notification. If a plan shows no price or buy button, it isn't on sale yet; press “Notify me when it opens” to hear when it is.",
-    "tr": "Giriş yapın, Planlar sayfasında (/plans) aylık veya yıllık ödemeyi seçin ve planın satın alma düğmesine basın. Ödeme ekranı Paddle'ın güvenli penceresinde açılır. Ödeme tamamlanınca planınız genellikle birkaç saniye içinde etkinleşir ve uygulama içi bir bildirim alırsınız. Bir planda fiyat ya da satın alma düğmesi görünmüyorsa o plan henüz satışta değildir; “Açılınca haber ver” ile haber alabilirsiniz.",
+  "239zschnjsn": {
+    "en": "Sign in, choose monthly or yearly billing on the Plans page (/plans) and press the plan's buy button. The checkout opens in Paddle's secure window. Once the payment is complete, your plan is usually active within seconds and you get an in-app notification; if it isn't, press “Check my payment” on the Pricing page and your payment is confirmed with Paddle and the plan unlocked (don't pay again). If a plan shows no price or buy button, it isn't on sale yet; press “Notify me when it opens” to hear when it is.",
+    "tr": "Giriş yapın, Planlar sayfasında (/plans) aylık veya yıllık ödemeyi seçin ve planın satın alma düğmesine basın. Ödeme ekranı Paddle'ın güvenli penceresinde açılır. Ödeme tamamlanınca planınız genellikle birkaç saniye içinde etkinleşir ve uygulama içi bir bildirim alırsınız; açılmazsa Fiyatlandırma sayfasındaki “Ödememi kontrol et”e basın, ödemeniz Paddle'dan doğrulanıp planınız açılır (yeniden ödeme yapmayın). Bir planda fiyat ya da satın alma düğmesi görünmüyorsa o plan henüz satışta değildir; “Açılınca haber ver” ile haber alabilirsiniz.",
     "files": [
       "src/lib/faq.ts"
     ]

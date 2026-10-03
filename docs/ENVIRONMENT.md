@@ -208,7 +208,7 @@ Admin Panel > Subscriptions > Paddle.
 
 | Variable | Secret | Meaning |
 | --- | --- | --- |
-| `PADDLE_API_KEY` | **yes** | Server API key (`pdl_sdbx_apikey_…` sandbox, `pdl_live_apikey_…` live). Paddle > Developer tools > Authentication > API keys. Permissions: write for Customers, Transactions, Subscriptions, Discounts, Customer portal sessions and Products/Prices (only needed for the "create catalog" button); read for the rest, including Client-side tokens (`client_token.read`), which lets the Paddle card check that `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` belongs to the same account. Never put it in a `NEXT_PUBLIC_` variable. |
+| `PADDLE_API_KEY` | **yes** | Server API key (`pdl_sdbx_apikey_…` sandbox, `pdl_live_apikey_…` live). Paddle > Developer tools > Authentication > API keys. Permissions: write for Customers, Transactions, Subscriptions, Discounts, Customer portal sessions and Products/Prices (only needed for the "create catalog" button); read for the rest, including Client-side tokens (`client_token.read`), which lets the Paddle card check that `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` belongs to the same account, and Notification settings / Notifications (`notification_setting.read`, `notification.read`) for the card's "Bildirimleri kontrol et". Transactions and Subscriptions must be readable (`transaction.read`, `subscription.read`): a completed checkout is confirmed with them. Never put it in a `NEXT_PUBLIC_` variable. |
 | `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | no | Client-side token for Paddle.js (`test_…` sandbox, `live_…` live). Developer tools > Authentication > Client-side tokens. `PADDLE_CLIENT_TOKEN` works too. |
 | `PADDLE_WEBHOOK_SECRET` | **yes** | Secret key (`pdl_ntfset_…`) of the notification destination below. `PADDLE_NOTIFICATION_WEBHOOK_SECRET` works too. |
 | `NEXT_PUBLIC_PADDLE_ENV` | no | Only for keys created before May 2025 (no prefix): `sandbox` or `production`. Otherwise the environment follows the key prefixes and a conflicting value is reported in the Admin Panel. |
@@ -268,6 +268,37 @@ https://www.cloudflare.com/ips/), `CF-Connecting-IP` names the visitor (here:
 Paddle). From anywhere else `CF-Connecting-IP` is ignored. If Cloudflare ever
 publishes new ranges, add them there.
 
+### A paid plan without waiting for the webhook
+
+The webhook is the normal path, but a completed checkout must not depend on
+it (a missing or misconfigured destination, a refused or late delivery; in
+the sandbox Paddle retries a failed delivery only a few times). So:
+
+- The checkout route remembers the transaction it opened
+  (`subscriptions/{email}.paddleCheckout`: transaction, environment, time).
+- After Paddle.js reports `checkout.completed`, the Plans page asks
+  `POST /api/paddle/sync` (no body; 20 a minute per account) every few seconds
+  for up to two minutes. The server reads that transaction
+  (`GET /transactions/{id}`) and, once it has its subscription, the
+  subscription, and stores it exactly as the webhook would; without a
+  remembered checkout it reads the customer's subscriptions. Only the
+  account's own Paddle customer counts (one linked to another or a deleted
+  account is never touched), and only copies Paddle's API just returned are
+  stored. `pending`: paid within the last hour, subscription still being
+  made.
+- `GET /api/plans` does the same once every ten minutes at most when the
+  account has a Paddle customer but no subscription that unlocks a plan
+  (never stored, or a checkout in the last seven days): someone who closed the
+  page right after paying sees the plan the next time, and so do purchases
+  from before this existed. The page also offers "Ödememi kontrol et".
+- A second checkout first asks Paddle the same way: an active plan answers
+  `already_subscribed`, a payment still being processed `payment_pending`, so
+  nobody pays twice while a notification is missing.
+
+Renewals, cancellations, failed payments and plan changes made in Paddle
+still come through the webhook, so it still has to work: see "Bildirimleri
+kontrol et" below.
+
 ### Prices: one per checkout
 
 Paddle's default price quantity lets one checkout buy up to 100, which shows a
@@ -295,6 +326,17 @@ coupon's discount to the newly mapped prices, so codes typed in Paddle's
 checkout keep working too. A link to `/plans?coupon=CODE` applies the code
 once the visitor is signed in (the sign-in links carry it back to the page).
 
+Deleting a coupon removes it and archives its Paddle discount, but the
+`coupon.delete` audit entry keeps the whole coupon (terms, note, discount,
+environment, creator); for coupons deleted before that, the terms come from
+their `coupon.create` entry. They are listed under "Silinen kuponlar" (newest
+fifty, codes in use again left out) and "Geri yükle" writes the coupon again
+(`restoreCoupon`, audit `coupon.restore`): its discount is reopened with the
+coupon's limit, end date and the prices mapped now, or, when it's gone, in
+the other environment or Paddle won't reopen it, a new one is made. An end
+date that has passed or a limit Paddle has used up has to be replaced in the
+restore dialog (`coupon_restore_expired`, `coupon_restore_used_up`).
+
 Paddle takes letters and digits only and gives each code to one discount,
 archived ones included. A coupon from before Paddle with `-` or `_`, or one
 whose code another Paddle discount already has (made in Paddle by hand, or a
@@ -310,7 +352,22 @@ so subscribers see a note instead of coupon prices.
 - Admin Panel > Subscriptions > Paddle lists missing variables, wrong formats,
   a sandbox key with a live token (or the other way round), secrets in
   `NEXT_PUBLIC_` variables, API errors with Paddle's error code and the last
-  accepted/refused webhook.
+  accepted/refused webhook. The last accepted one shows how it was processed
+  (`lastEventResult`: stored, kept, unlinked, ignored or `failed:<code>`;
+  written after processing, so a delivery that arrived but failed doesn't look
+  fine). Refusals are noted once a minute per reason (anyone can post to the
+  webhook); `ip_list_unavailable` means Paddle's address list couldn't be read.
+- "Bildirimleri kontrol et" (same card) reads, without changing anything, the
+  environment's notification destinations (`GET /notification-settings`) and
+  recent deliveries (`GET /notifications`, then the newest failed one's
+  `/logs`) and says what to fix: no destination for `/api/paddle/webhook`,
+  switched off, simulation-only traffic, missing events, another host (www or
+  vercel.app: Paddle doesn't follow redirects), a secret that isn't
+  `PADDLE_WEBHOOK_SECRET` (compared on the server, never sent to the browser),
+  and why the last delivery failed from the answer Paddle got: our signature,
+  address or configuration refusals, a Cloudflare page (allow
+  `/api/paddle/webhook` or use DNS only), Vercel protection, a redirect, 404 or
+  5xx. Notification payloads (customer details) are never read into it.
 - A subscription Paddle reports for a customer we don't know appears under
   "Eşleşmeyen abonelikler" and can be linked to an account there.
 - Deleting an account cancels its subscription immediately; if Paddle can't be

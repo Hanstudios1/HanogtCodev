@@ -152,8 +152,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.billing,
         question: { TR: "Bir planı nasıl satın alırım?", EN: "How do I buy a plan?" },
         answer: {
-            TR: "Giriş yapın, Planlar sayfasında (/plans) aylık veya yıllık ödemeyi seçin ve planın satın alma düğmesine basın. Ödeme ekranı Paddle'ın güvenli penceresinde açılır. Ödeme tamamlanınca planınız genellikle birkaç saniye içinde etkinleşir ve uygulama içi bir bildirim alırsınız. Bir planda fiyat ya da satın alma düğmesi görünmüyorsa o plan henüz satışta değildir; “Açılınca haber ver” ile haber alabilirsiniz.",
-            EN: "Sign in, choose monthly or yearly billing on the Plans page (/plans) and press the plan's buy button. The checkout opens in Paddle's secure window. Once the payment is complete, your plan is usually active within seconds and you get an in-app notification. If a plan shows no price or buy button, it isn't on sale yet; press “Notify me when it opens” to hear when it is.",
+            TR: "Giriş yapın, Planlar sayfasında (/plans) aylık veya yıllık ödemeyi seçin ve planın satın alma düğmesine basın. Ödeme ekranı Paddle'ın güvenli penceresinde açılır. Ödeme tamamlanınca planınız genellikle birkaç saniye içinde etkinleşir ve uygulama içi bir bildirim alırsınız; açılmazsa Fiyatlandırma sayfasındaki “Ödememi kontrol et”e basın, ödemeniz Paddle'dan doğrulanıp planınız açılır (yeniden ödeme yapmayın). Bir planda fiyat ya da satın alma düğmesi görünmüyorsa o plan henüz satışta değildir; “Açılınca haber ver” ile haber alabilirsiniz.",
+            EN: "Sign in, choose monthly or yearly billing on the Plans page (/plans) and press the plan's buy button. The checkout opens in Paddle's secure window. Once the payment is complete, your plan is usually active within seconds and you get an in-app notification; if it isn't, press “Check my payment” on the Pricing page and your payment is confirmed with Paddle and the plan unlocked (don't pay again). If a plan shows no price or buy button, it isn't on sale yet; press “Notify me when it opens” to hear when it is.",
         },
     },
     {

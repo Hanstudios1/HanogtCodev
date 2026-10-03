@@ -7,9 +7,9 @@ import { billingView, paddleEntitles } from "@/lib/paddle";
 import { AI_BONUS_MAX, COUPON_RECUR_MAX, GRANT_DAYS_MAX, PAID_PLAN_IDS, PLAN_COPY, PLAN_IDS, PRICE_MAX, type CouponRecur, type PaidPlanId, type PlanId, type PlanPrice } from "@/lib/plans";
 import { adminPost, adminRequest, type ApiFailure } from "./api";
 import { COMMON } from "./copy";
-import { formatDateTime, formatNumber, useAdminResource } from "./hooks";
+import { formatDateTime, formatNumber, useAdminResource, useNow } from "./hooks";
 import PaddleCard, { PaddleEnvironmentBadge, PaddleStatusBadge } from "./PaddleCard";
-import type { AdminCoupon, AdminPaddleCouponResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPlansResponse, AdminUserPlanResponse } from "./types";
+import type { AdminCoupon, AdminCouponRestoreResponse, AdminDeletedCoupon, AdminPaddleCouponResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPlansResponse, AdminUserPlanResponse } from "./types";
 import { Badge, Button, ConfirmDialog, ErrorNotice, IconButton, INPUT_CLASS, LoadingRows, Notice, Panel, SectionHeader, Switch, cx, useErrorText, useToast } from "./ui";
 
 const C = {
@@ -61,8 +61,22 @@ const C = {
     couponSynced: { TR: "Kupon Paddle'a aktarıldı.", EN: "Coupon sent to Paddle." },
     deleteCoupon: { TR: "Kuponu sil", EN: "Delete coupon" },
     deleteCouponTitle: { TR: "{code} kuponu silinsin mi?", EN: "Delete coupon {code}?" },
-    deleteCouponBody: { TR: "Kod artık kullanılamaz. Bu işlem geri alınamaz.", EN: "The code can no longer be used. This can't be undone." },
-    deleteCouponPaddle: { TR: "Kod artık kullanılamaz; Paddle'daki indirimi de arşivlenir. Bu işlem geri alınamaz.", EN: "The code can no longer be used, and its Paddle discount is archived. This can't be undone." },
+    deleteCouponBody: { TR: "Kod artık kullanılamaz. Gerekirse aşağıdaki \"Silinen kuponlar\"dan geri yükleyebilirsin.", EN: "The code can no longer be used. If needed, you can restore it from \"Deleted coupons\" below." },
+    deleteCouponPaddle: { TR: "Kod artık kullanılamaz; Paddle'daki indirimi de arşivlenir. Gerekirse aşağıdaki \"Silinen kuponlar\"dan geri yükleyebilirsin.", EN: "The code can no longer be used, and its Paddle discount is archived. If needed, you can restore it from \"Deleted coupons\" below." },
+    deletedCoupons: { TR: "Silinen kuponlar ({count})", EN: "Deleted coupons ({count})" },
+    deletedCouponsHint: { TR: "Silinen kuponlar burada kalır. Geri yüklenen kupon eski koşullarıyla yeniden çalışır; Paddle'daki indirimi yeniden açılır, açılamazsa yenisi oluşturulur.", EN: "Deleted coupons stay here. A restored coupon works again with its old terms; its Paddle discount is reopened, or a new one is made if it can't be." },
+    restore: { TR: "Geri yükle", EN: "Restore" },
+    restoreTitle: { TR: "{code} kuponu geri yüklensin mi?", EN: "Restore coupon {code}?" },
+    restoreBody: { TR: "Kupon eski koşullarıyla (indirim, plan, geçerli ödemeler) yeniden etkin olur. Bitiş tarihini ve kullanım hakkını aşağıda değiştirebilirsin.", EN: "The coupon becomes active again with its old terms (discount, plan, payments). You can change its end date and usage limit below." },
+    restoreExpiredNote: { TR: "Eski bitiş tarihi geçmiş ({date}); yeni bir tarih seç ya da boş bırak.", EN: "The old end date has passed ({date}); pick a new date or leave it empty." },
+    restoreUsedUpNote: { TR: "Paddle'da {used} kez kullanılmış, sınır {max}; daha yüksek bir sayı gir ya da boş bırak.", EN: "Used {used} times in Paddle with a limit of {max}; enter a higher number or leave it empty." },
+    restoreEmptyHint: { TR: "Boş bırakılan alan: süresiz / sınırsız.", EN: "An empty field means no end date / unlimited." },
+    restored: { TR: "{code} kuponu geri yüklendi.", EN: "Coupon {code} restored." },
+    restoredNewDiscount: { TR: "{code} kuponu geri yüklendi; Paddle'da yeni bir indirim oluşturuldu.", EN: "Coupon {code} restored; a new discount was created in Paddle." },
+    termsUnknown: { TR: "koşulları bilinmiyor", EN: "terms unknown" },
+    expiredBadge: { TR: "süresi geçmiş", EN: "expired" },
+    usedUpBadge: { TR: "hakkı dolmuş", EN: "used up" },
+    deletedBy: { TR: "Silindi: {time} · {who}", EN: "Deleted {time} · {who}" },
     couponActive: { TR: "Kupon etkin", EN: "Coupon active" },
     people: { TR: "Kişinin planı", EN: "A person's plan" },
     peopleHint: { TR: "E-posta ile bul; plan tanımla, engelle, Hanogt AI sınırını sıfırla veya ek hak ver.", EN: "Find by e-mail; assign a plan, block it, reset the Hanogt AI limit or grant extra quota." },
@@ -270,6 +284,83 @@ function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => vo
                 <Button type="submit" variant="primary" size="sm" icon={Plus} busy={busy}>{tx(C.createCoupon)}</Button>
             </div>
         </form>
+    );
+}
+
+/** A local yyyy-mm-dd for a date input. */
+function dateInputValue(iso: string) {
+    const date = new Date(iso);
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** A coupon deleted in the panel (from the audit log), with "Restore". */
+function DeletedCouponRow({ coupon, onRestored }: { coupon: AdminDeletedCoupon; onRestored: (data: AdminPlansResponse) => void }) {
+    const { tx, locale } = useI18n();
+    const toast = useToast();
+    const now = useNow();
+    const expired = Boolean(coupon.expiresAt && Date.parse(coupon.expiresAt) <= now);
+    const usedUp = coupon.maxUses !== null && coupon.paddleTimesUsed !== null && coupon.paddleTimesUsed >= coupon.maxUses;
+    const [open, setOpen] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<ApiFailure | null>(null);
+    const [expiresAt, setExpiresAt] = useState(coupon.expiresAt && !expired ? dateInputValue(coupon.expiresAt) : "");
+    const [maxUses, setMaxUses] = useState(coupon.maxUses === null ? "" : String(coupon.maxUses));
+
+    const restore = async () => {
+        setBusy(true);
+        setError(null);
+        const result = await adminPost<AdminCouponRestoreResponse>("/api/admin/plans", {
+            action: "restoreCoupon",
+            code: coupon.code,
+            expiresAt: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : null,
+            maxUses: maxUses.trim() ? Number(maxUses) : null,
+        });
+        setBusy(false);
+        if (!result.ok) {
+            setError(result);
+            return;
+        }
+        setOpen(false);
+        toast("success", tx(result.data.restored.paddle === "created" ? C.restoredNewDiscount : C.restored, { code: coupon.code }));
+        onRestored(result.data);
+    };
+
+    const field = "block text-[12px] font-semibold text-zinc-500 dark:text-zinc-400";
+    return (
+        <li className="flex flex-wrap items-center gap-3 py-3" data-deleted-coupon={coupon.code}>
+            <span className="font-mono text-[14px] font-black text-zinc-500 dark:text-zinc-400">{coupon.code}</span>
+            {coupon.percentOff !== null ? <Badge tone="zinc" icon={BadgePercent}>%{coupon.percentOff}</Badge> : <Badge tone="amber">{tx(C.termsUnknown)}</Badge>}
+            <Badge tone="zinc">{coupon.plan === "any" ? tx(C.anyPlan) : tx(PLAN_COPY[coupon.plan].name)}</Badge>
+            <Badge tone="zinc">{recurLabel(coupon.recur, tx)}</Badge>
+            {expired ? <Badge tone="amber">{tx(C.expiredBadge)}</Badge> : null}
+            {usedUp ? <Badge tone="amber">{tx(C.usedUpBadge)}</Badge> : null}
+            <span className="text-[12.5px] text-zinc-500">{tx(C.deletedBy, { time: coupon.deletedAt ? formatDateTime(coupon.deletedAt, locale) : "—", who: coupon.deletedBy || "—" })}</span>
+            <span className="flex-1" />
+            <Button size="sm" variant="ghost" icon={RotateCcw} disabled={coupon.percentOff === null} onClick={() => { setError(null); setOpen(true); }}>{tx(C.restore)}</Button>
+            <ConfirmDialog
+                open={open}
+                onClose={() => {
+                    if (!busy) setOpen(false);
+                }}
+                onConfirm={() => void restore()}
+                title={tx(C.restoreTitle, { code: coupon.code })}
+                description={tx(C.restoreBody)}
+                confirmLabel={tx(C.restore)}
+                icon={RotateCcw}
+                tone="success"
+                busy={busy}
+                error={error}
+            >
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <label className={field}>{tx(C.expires)}<input type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className={cx(INPUT_CLASS, "mt-1")} data-restore-expires /></label>
+                    <label className={field}>{tx(C.maxUses)}<input type="number" min={1} value={maxUses} onChange={(event) => setMaxUses(event.target.value)} placeholder={tx(C.unlimited)} className={cx(INPUT_CLASS, "mt-1")} data-restore-uses /></label>
+                </div>
+                {expired && coupon.expiresAt ? <p className="text-[12.5px] font-semibold text-amber-700 dark:text-amber-300">{tx(C.restoreExpiredNote, { date: formatDateTime(coupon.expiresAt, locale) })}</p> : null}
+                {usedUp ? <p className="text-[12.5px] font-semibold text-amber-700 dark:text-amber-300">{tx(C.restoreUsedUpNote, { used: coupon.paddleTimesUsed ?? 0, max: coupon.maxUses ?? 0 })}</p> : null}
+                <p className="text-[12px] text-zinc-500">{tx(C.restoreEmptyHint)}</p>
+            </ConfirmDialog>
+        </li>
     );
 }
 
@@ -609,6 +700,17 @@ export default function PlansSection() {
                                 {data.coupons.map((coupon) => <CouponRow key={coupon.code} coupon={coupon} paddleReady={paddleReady} onChanged={replace} onSynced={resource.reload} />)}
                             </ul>
                         )}
+                        {data.deletedCoupons?.length ? (
+                            <details className="mt-4 rounded-2xl border border-zinc-100 px-4 py-3 dark:border-white/[0.06]" data-deleted-coupons>
+                                <summary className="flex cursor-pointer list-none items-center gap-2 text-[13px] font-bold text-zinc-800 dark:text-zinc-100">
+                                    <History className="h-4 w-4 text-zinc-400" aria-hidden="true" />{tx(C.deletedCoupons, { count: data.deletedCoupons.length })}
+                                </summary>
+                                <p className="mt-2 text-[12.5px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(C.deletedCouponsHint)}</p>
+                                <ul className="mt-1 divide-y divide-zinc-100 dark:divide-white/[0.06]">
+                                    {data.deletedCoupons.map((coupon) => <DeletedCouponRow key={coupon.code} coupon={coupon} onRestored={replace} />)}
+                                </ul>
+                            </details>
+                        ) : null}
                     </Panel>
                 </>
             )}

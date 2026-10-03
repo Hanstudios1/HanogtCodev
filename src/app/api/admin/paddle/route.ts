@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import type { AdminPaddleCatalogResponse, AdminPaddleCouponResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPaddleWarning } from "@/components/Admin/types";
+import type { AdminPaddleCatalogResponse, AdminPaddleCouponResponse, AdminPaddleNotificationsResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPaddleWarning } from "@/components/Admin/types";
 import { OPERATOR_LIMITS, isOperatorPublished, operatorInfoErrors } from "@/lib/legal-info";
 import { BILLING_INTERVALS, isPaddleId, type PaddleEnvironment } from "@/lib/paddle";
 import { PAID_PLAN_IDS, normalizeCouponCode, normalizeCouponRecur } from "@/lib/plans";
@@ -20,6 +20,9 @@ import {
     writeAuditLog,
 } from "@/lib/server/admin";
 import { commitServerMutations, getServerDocument } from "@/lib/server/firebase-rest";
+import { checkPaddleNotifications } from "@/lib/server/paddle-notifications";
+import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
+import { SITE_URL } from "@/lib/site";
 import { LEGAL_INFO_PATH, getOperatorInfo, saveOperatorInfo } from "@/lib/server/legal-info";
 import {
     PADDLE_SETTINGS_PATH,
@@ -58,7 +61,7 @@ import {
 
 export const runtime = "nodejs";
 
-const ACTIONS = ["setPrices", "setSalesOpen", "createCatalog", "fixQuantity", "link", "dismissUnlinked", "resync", "setLegal", "syncCoupon"] as const;
+const ACTIONS = ["setPrices", "setSalesOpen", "createCatalog", "fixQuantity", "link", "dismissUnlinked", "resync", "setLegal", "syncCoupon", "checkNotifications"] as const;
 const LEGAL_FIELDS = ["legalName", "brand", "contactEmail", "address", "taxId", "kep"] as const;
 const BODY_KEYS = ["action", "prices", "open", "subscriptionId", "email", "code", ...LEGAL_FIELDS];
 
@@ -179,6 +182,7 @@ export async function GET(request: NextRequest) {
  *   { action: "resync", email }                   → the person's plan (AdminPaddleResyncResponse)
  *   { action: "setLegal", legalName, brand, contactEmail, address, taxId, kep }   owners only
  *   { action: "syncCoupon", code }                creates the coupon's Paddle discount
+ *   { action: "checkNotifications" }              read-only: why Paddle's notifications don't arrive (AdminPaddleNotificationsResponse)
  * The others answer with the fresh GET payload.
  */
 export async function POST(request: NextRequest) {
@@ -244,6 +248,13 @@ export async function POST(request: NextRequest) {
 
         // The remaining actions talk to Paddle.
         if (!config.apiKey) throw new AdminHttpError(409, "paddle_unconfigured");
+
+        if (action === "checkNotifications") {
+            // Only reads Paddle (no audit entry); a few times a minute is plenty.
+            const rate = await enforceRateLimitWithFallback(`admin:paddle-notifications:${actor}`, 6, 60_000);
+            if (!rate.allowed) throw new AdminHttpError(429, "rate_limited");
+            return adminJson({ check: await checkPaddleNotifications({ siteUrl: SITE_URL, config }) } satisfies AdminPaddleNotificationsResponse);
+        }
 
         if (action === "createCatalog") {
             if (!owner) throw new AdminHttpError(403, "forbidden");

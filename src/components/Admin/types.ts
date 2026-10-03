@@ -81,6 +81,9 @@ export type AdminErrorCode =
     | "paddle_error"
     | "paddle_coupon_code"
     | "paddle_coupon_taken"
+    // Restoring a deleted coupon whose end date has passed or whose uses are spent needs new values.
+    | "coupon_restore_expired"
+    | "coupon_restore_used_up"
     | "invalid_price_id"
     | "price_mismatch"
     | "already_linked"
@@ -328,6 +331,7 @@ export type AdminAuditAction =
     | "coupon.set_active"
     | "coupon.delete"
     | "coupon.sync"
+    | "coupon.restore"
     | "paddle.set_prices"
     | "paddle.set_sales_open"
     | "paddle.create_catalog"
@@ -431,12 +435,37 @@ export type AdminCoupon = {
     recur: import("@/lib/plans").CouponRecur;
 };
 
+/** A coupon deleted in the panel, from the audit log; it can be restored. */
+export type AdminDeletedCoupon = {
+    code: string;
+    /** null: its terms weren't recorded (created outside the panel), so it can't be restored. */
+    percentOff: number | null;
+    plan: "plus" | "pro" | "any";
+    recur: import("@/lib/plans").CouponRecur;
+    maxUses: number | null;
+    expiresAt: string | null;
+    note: string;
+    deletedAt: string | null;
+    deletedBy: string;
+    /** Its Paddle discount when deleted (archived then). */
+    paddleDiscountId: string | null;
+    /** Redemptions Paddle counted for that discount; null when unknown. */
+    paddleTimesUsed: number | null;
+    /** "snapshot": recorded whole when deleted; "created": from its creation entry (deleted before snapshots). */
+    source: "snapshot" | "created" | "unknown";
+};
+
 export type AdminPlansResponse = {
     catalog: import("@/lib/plans").PlanCatalog;
     history: AdminPriceChange[];
     coupons: AdminCoupon[];
+    /** Newest first, at most fifty; codes in use again are left out. */
+    deletedCoupons: AdminDeletedCoupon[];
     waitlist: { plus: number | null; pro: number | null };
 };
+
+/** POST /api/admin/plans { action: "restoreCoupon" }: the overview plus what happened in Paddle. */
+export type AdminCouponRestoreResponse = AdminPlansResponse & { restored: { code: string; paddle: "reactivated" | "created" | "none"; paddleDiscountId: string | null } };
 
 export type AdminUserPlanResponse = {
     email: string;
@@ -548,7 +577,7 @@ export type AdminPaddleResponse = {
     mappingUpdatedAt: string | null;
     mappingUpdatedBy: string | null;
     /** The webhook: last accepted notification and last refused delivery (with the reason). */
-    status: { lastEventAt: string | null; lastEventType: string | null; lastRejectedAt: string | null; lastRejectedReason: string | null };
+    status: { lastEventAt: string | null; lastEventType: string | null; lastEventResult: string | null; lastRejectedAt: string | null; lastRejectedReason: string | null };
     /** Null without an API key or a client-side token. */
     clientTokenCheck: AdminPaddleClientTokenCheck | null;
     /** The newest checkout failures browsers reported (at most ten), newest first. */
@@ -595,3 +624,94 @@ export type AdminPaddleResyncResponse = AdminUserPlanResponse & { found: number 
 
 /** POST /api/admin/paddle { action: "syncCoupon" }. */
 export type AdminPaddleCouponResponse = { code: string; paddleDiscountId: string };
+
+/** Why Paddle couldn't deliver a notification, read from its delivery log (response code and body). */
+export type AdminPaddleDeliveryCause =
+    | "signature"
+    | "signature_expired"
+    | "ip_allowlist"
+    | "not_configured"
+    | "ip_list"
+    | "processing"
+    | "cloudflare"
+    | "vercel_protection"
+    | "redirect"
+    | "not_found"
+    | "rate_limited"
+    | "server_error"
+    | "no_response"
+    | "other";
+
+/** Something to fix so Paddle's notifications reach the site. */
+export type AdminPaddleNotificationProblem =
+    | "no_permission_settings"
+    | "no_permission_notifications"
+    | "no_destination"
+    | "inactive"
+    | "simulation_only"
+    | "insecure_url"
+    | "other_host"
+    | "missing_events"
+    | "secret_unset"
+    | "secret_mismatch"
+    | "several_destinations"
+    | "deliveries_failing";
+
+/** A notification destination in Paddle whose address ends in /api/paddle/webhook. */
+export type AdminPaddleDestination = {
+    id: string;
+    description: string;
+    /** Origin and path only. */
+    url: string;
+    /** Same address as the site's (SITE_URL). */
+    canonicalHost: boolean;
+    active: boolean;
+    trafficSource: "platform" | "simulation" | "all" | null;
+    /** Events the webhook needs that this destination doesn't send. */
+    missingEvents: string[];
+    /** Whether its secret is PADDLE_WEBHOOK_SECRET; null when that isn't set. The secret itself never leaves the server. */
+    secretMatches: boolean | null;
+};
+
+/** One recent notification (nothing from its payload). */
+export type AdminPaddleDelivery = {
+    id: string;
+    type: string;
+    status: "delivered" | "failed" | "needs_retry" | "not_attempted";
+    occurredAt: string | null;
+    lastAttemptAt: string | null;
+    retryAt: string | null;
+    attempts: number;
+    destinationId: string | null;
+};
+
+/** The newest delivery attempt of the newest notification that didn't arrive. */
+export type AdminPaddleDeliveryAttempt = {
+    notificationId: string;
+    type: string;
+    attemptedAt: string | null;
+    /** 0 or null: no answer. */
+    responseCode: number | null;
+    contentType: string | null;
+    /** The answer, cleaned and cut to 160 characters (HTML reduced to its title and text). */
+    body: string;
+    cause: AdminPaddleDeliveryCause;
+};
+
+/** POST /api/admin/paddle { action: "checkNotifications" }: read-only, nothing in Paddle changes. */
+export type AdminPaddleNotificationCheck = {
+    checkedAt: string;
+    environment: import("@/lib/paddle").PaddleEnvironment;
+    expectedUrl: string;
+    access: { settings: "ok" | "no_permission" | "error"; notifications: "ok" | "no_permission" | "error" | "skipped" };
+    /** Paddle's error code when a request failed for another reason than permissions. */
+    errorCode: string | null;
+    destinations: AdminPaddleDestination[];
+    deliveries: AdminPaddleDelivery[];
+    lastFailure: AdminPaddleDeliveryAttempt | null;
+    problems: AdminPaddleNotificationProblem[];
+    /** A working destination and no failing deliveries. */
+    ok: boolean;
+};
+
+export type AdminPaddleNotificationsResponse = { check: AdminPaddleNotificationCheck };

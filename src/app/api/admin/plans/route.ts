@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import type { AdminCoupon, AdminPlansResponse, AdminPriceChange } from "@/components/Admin/types";
+import type { AdminCoupon, AdminCouponRestoreResponse, AdminPlansResponse, AdminPriceChange } from "@/components/Admin/types";
 import type { PaddleEnvironment } from "@/lib/paddle";
 import {
     AI_BONUS_MAX,
@@ -29,6 +29,7 @@ import {
     toIso,
     writeAuditLog,
 } from "@/lib/server/admin";
+import { couponDeletionDetails, listDeletedCoupons, restoreCoupon } from "@/lib/server/coupon-admin";
 import { commitServerMutations, countServerQuery, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 import { PaddleApiError, getPaddleConfig, isPaddleConfigured } from "@/lib/server/paddle";
 import {
@@ -52,7 +53,7 @@ import {
 
 export const runtime = "nodejs";
 
-const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi"] as const;
+const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "restoreCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi"] as const;
 const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "recur", "note", "active", "email", "days", "blocked", "extraDaily"];
 const HISTORY_MAX = 30;
 const COUPONS_MAX = 200;
@@ -118,16 +119,22 @@ async function overview(): Promise<AdminPlansResponse> {
     ]);
     const config = getPaddleConfig();
     const list = coupons.map((record) => couponOf(record as Record<string, unknown> & { _id: string }, config.environment));
-    const discounts = list.flatMap((coupon) => (coupon.paddleDiscountId ? [coupon.paddleDiscountId] : []));
+    // Deleted coupons come from the audit log; one that failed to load leaves the list empty, not the page.
+    const deleted = await listDeletedCoupons(new Set(list.map((coupon) => coupon.code))).catch((error: unknown) => {
+        console.warn("[admin:plans] deleted coupons", error instanceof Error ? error.message : error);
+        return [];
+    });
+    const discounts = [...list, ...deleted].flatMap((coupon) => (coupon.paddleDiscountId ? [coupon.paddleDiscountId] : []));
     if (discounts.length && config.apiKey) {
         // Redemptions happen at Paddle's checkout; the panel shows Paddle's count when it can get it.
         const usage = await paddleDiscountUsage(discounts).catch(() => null);
-        for (const coupon of list) coupon.paddleTimesUsed = coupon.paddleDiscountId ? usage?.get(coupon.paddleDiscountId) ?? null : null;
+        for (const coupon of [...list, ...deleted]) coupon.paddleTimesUsed = coupon.paddleDiscountId ? usage?.get(coupon.paddleDiscountId) ?? null : null;
     }
     return {
         catalog: normalizeCatalog(catalogRecord),
         history: historyOf(catalogRecord?.history).slice(0, HISTORY_MAX),
         coupons: list,
+        deletedCoupons: deleted,
         waitlist: { plus, pro },
     };
 }
@@ -187,6 +194,23 @@ export async function POST(request: NextRequest) {
             ]);
             forgetCatalogCache();
             return adminJson(await overview());
+        }
+
+        if (action === "restoreCoupon") {
+            // A deleted coupon again, with a new end date or usage limit when the old ones are spent.
+            const code = normalizeCouponCode(body.code);
+            if (!code) throw new AdminHttpError(400, "invalid_coupon");
+            const restored = await restoreCoupon(
+                {
+                    code,
+                    expiresAt: body.expiresAt === undefined ? undefined : readFutureDate(body.expiresAt),
+                    maxUses: body.maxUses === undefined ? undefined : readInteger(body.maxUses, 1, 100_000, true),
+                },
+                actor,
+                (details) => auditLogMutation(actor, "coupon.restore", `plan_coupons/${code}`, details),
+                now,
+            );
+            return adminJson({ ...(await overview()), restored } satisfies AdminCouponRestoreResponse);
         }
 
         if (action === "createCoupon" || action === "setCouponActive" || action === "deleteCoupon") {
@@ -266,7 +290,8 @@ export async function POST(request: NextRequest) {
                 try {
                     await commitServerMutations([
                         { type: "delete", path, ...(record._updateTime ? { updateTime: record._updateTime } : {}) },
-                        auditLogMutation(actor, "coupon.delete", path, { code, paddleDiscountId: discount }),
+                        // The whole coupon, so it can be restored from "Silinen kuponlar".
+                        auditLogMutation(actor, "coupon.delete", path, couponDeletionDetails(record, code, config.environment)),
                     ]);
                 } catch (error) {
                     if (discount && record.active === true) await setPaddleDiscountActive(discount, true).catch(() => undefined);

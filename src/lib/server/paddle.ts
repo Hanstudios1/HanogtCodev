@@ -203,12 +203,21 @@ export async function paddleWebhookCidrs(config: PaddleConfig = getPaddleConfig(
     return value;
 }
 
+/** When each refusal reason was last written (per instance): anyone can post to the webhook, so it's noted once a minute at most. */
+const rejectionsNoted = new Map<string, number>();
+const REJECTION_NOTE_MS = 60_000;
+
 /** Notes a refused delivery for the Admin Panel (best effort, no request data). */
-export async function recordWebhookRejection(reason: string) {
+export async function recordWebhookRejection(reason: string, now = Date.now()) {
+    const key = reason.slice(0, 40);
+    const last = rejectionsNoted.get(key);
+    if (last !== undefined && now - last < REJECTION_NOTE_MS) return;
+    rejectionsNoted.set(key, now);
     await commitServerMutations([{
         type: "update",
         path: PADDLE_STATUS_PATH,
-        data: { lastRejectedAt: new Date(), lastRejectedReason: reason.slice(0, 40) },
+        data: { lastRejectedAt: new Date(now), lastRejectedReason: key },
+        updateFields: ["lastRejectedAt", "lastRejectedReason"],
     }]).catch(() => undefined);
 }
 
@@ -222,7 +231,7 @@ const EMAIL_LIKE = /[^\s@<>()[\]"',;:]+@[^\s@<>()[\]"',;:]+\.[a-z]{2,}/gi;
 const REPORT_CODE = /^[a-z0-9_]{1,80}$/;
 
 /** One line of plain text without control characters or e-mail addresses, at most `max` characters. */
-function reportText(value: unknown, max: number) {
+export function reportText(value: unknown, max: number) {
     if (typeof value !== "string") return "";
     return value.replace(UNSAFE_CHARACTERS, " ").replace(EMAIL_LIKE, "[e-mail]").replace(/\s+/g, " ").trim().slice(0, max);
 }
@@ -321,10 +330,13 @@ export async function recordPaddleClientError(report: PaddleClientErrorReport & 
  * precondition, so concurrent reports and the webhook's notes can't undo each
  * other; a conflict means reading again.
  */
-async function prependStatusEntry<T>(field: "clientErrors" | "serverErrors", entry: T, normalize: (value: unknown) => T[], max: number) {
+async function prependStatusEntry<T>(field: "clientErrors" | "serverErrors", entry: T, normalize: (value: unknown) => T[], max: number, repeats?: (newest: T) => boolean) {
     for (let attempt = 1; ; attempt += 1) {
         const record = await getServerDocument<Record<string, unknown>>(PADDLE_STATUS_PATH);
-        const list = [entry, ...normalize(record?.[field])].slice(0, max);
+        const current = normalize(record?.[field]);
+        // The same failure again a moment later (a page asking every few seconds) adds nothing.
+        if (repeats && current[0] && repeats(current[0])) return;
+        const list = [entry, ...current].slice(0, max);
         const write = record
             ? { type: "update" as const, path: PADDLE_STATUS_PATH, data: { [field]: list }, updateFields: [field], ...(record._updateTime ? { updateTime: record._updateTime } : {}) }
             : { type: "create" as const, path: PADDLE_STATUS_PATH, data: { [field]: list } };
@@ -430,9 +442,14 @@ export function describeBillingFailure(error: unknown): BillingFailure {
 export async function recordPaddleServerError(failure: Omit<PaddleServerError, "at" | "environment">, now = new Date()): Promise<PaddleServerError> {
     const [entry] = normalizePaddleServerErrors([{ ...failure, at: now.toISOString(), environment: currentPaddleEnvironment() }]);
     if (!entry) throw new Error("Invalid billing failure.");
-    await prependStatusEntry("serverErrors", entry, normalizePaddleServerErrors, PADDLE_SERVER_ERRORS_MAX);
+    const repeats = (newest: PaddleServerError) => newest.route === entry.route && newest.step === entry.step && newest.code === entry.code
+        && newest.environment === entry.environment && now.getTime() - Date.parse(newest.at) < SERVER_ERROR_REPEAT_MS;
+    await prependStatusEntry("serverErrors", entry, normalizePaddleServerErrors, PADDLE_SERVER_ERRORS_MAX, repeats);
     return entry;
 }
+
+/** A failure identical to the newest one within this long isn't listed again. */
+const SERVER_ERROR_REPEAT_MS = 60_000;
 
 // ---------------------------------------------------------------------------
 // Signed custom data: which account a checkout was opened for
@@ -559,6 +576,7 @@ export function forgetPaddleCaches() {
     settingsCache = null;
     ipsCache = null;
     pricingCache.clear();
+    rejectionsNoted.clear();
 }
 
 export function intervalOf(cycle: BillingCycle): BillingInterval | null {
@@ -849,12 +867,31 @@ export type PaddleEvent = { event_id?: unknown; event_type?: unknown; occurred_a
 /** Webhook entry point (after the signature check). Throws when Paddle should retry. */
 export async function handlePaddleEvent(event: PaddleEvent): Promise<string> {
     const type = typeof event.event_type === "string" ? event.event_type : "";
-    await commitServerMutations([{
-        type: "update",
-        path: PADDLE_STATUS_PATH,
-        data: { lastEventAt: new Date(), lastEventType: type.slice(0, 60), lastEventId: typeof event.event_id === "string" ? event.event_id.slice(0, 80) : null },
-    }]).catch(() => undefined);
-    const data = event.data && typeof event.data === "object" ? event.data as Record<string, unknown> : null;
+    let result = "failed";
+    try {
+        result = await processPaddleEvent(type, event.data);
+        return result;
+    } catch (error) {
+        result = `failed:${error instanceof PaddleApiError ? error.code : error instanceof Error && isWriteConflict(error) ? "conflict" : "error"}`;
+        throw error;
+    } finally {
+        // Written after processing, with its outcome: a delivery that arrived but couldn't be processed must not look fine in the panel.
+        await commitServerMutations([{
+            type: "update",
+            path: PADDLE_STATUS_PATH,
+            data: {
+                lastEventAt: new Date(),
+                lastEventType: type.slice(0, 60),
+                lastEventId: typeof event.event_id === "string" ? event.event_id.slice(0, 80) : null,
+                lastEventResult: result.slice(0, 60),
+            },
+            updateFields: ["lastEventAt", "lastEventType", "lastEventId", "lastEventResult"],
+        }]).catch(() => undefined);
+    }
+}
+
+async function processPaddleEvent(type: string, payload: unknown): Promise<string> {
+    const data = payload && typeof payload === "object" ? payload as Record<string, unknown> : null;
     if (type.startsWith("subscription.")) {
         if (!data || !isPaddleId("subscription", data.id) || !isPaddleId("customer", data.customer_id)) return "ignored";
         return (await syncSubscription(data.id, { fallback: data as unknown as PaddleSubscriptionEntity })).status;

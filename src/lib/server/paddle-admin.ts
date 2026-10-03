@@ -60,14 +60,22 @@ const IDS_PER_REQUEST = 50;
 // Errors
 // ---------------------------------------------------------------------------
 
-export type PaddleAdminErrorCode = Extract<AdminErrorCode, "invalid_price_id" | "price_mismatch" | "already_linked" | "user_not_found" | "invalid_id">;
+export type PaddleAdminErrorCode = Extract<
+    AdminErrorCode,
+    "invalid_price_id" | "price_mismatch" | "already_linked" | "user_not_found" | "invalid_id" | "invalid_coupon" | "not_found" | "coupon_exists" | "coupon_restore_expired" | "coupon_restore_used_up"
+>;
 
 const ERROR_STATUS: Record<PaddleAdminErrorCode, number> = {
     invalid_price_id: 400,
     price_mismatch: 400,
     invalid_id: 400,
+    invalid_coupon: 400,
     user_not_found: 404,
+    not_found: 404,
     already_linked: 409,
+    coupon_exists: 409,
+    coupon_restore_expired: 409,
+    coupon_restore_used_up: 409,
 };
 
 export class PaddleAdminError extends Error {
@@ -321,6 +329,8 @@ export type PaddleWebhookStatus = {
     /** The last signed notification the webhook accepted. */
     lastEventAt: string | null;
     lastEventType: string | null;
+    /** What processing it gave: stored, kept, unlinked, ignored, canceled_for_deleted_account or failed:<code>. */
+    lastEventResult: string | null;
     /** The last delivery it refused (e.g. "ip_not_allowed", "signature_mismatch"). */
     lastRejectedAt: string | null;
     lastRejectedReason: string | null;
@@ -332,13 +342,14 @@ export type PaddleWebhookStatus = {
  */
 export type PaddleStatusRecord = PaddleWebhookStatus & { clientErrors: PaddleClientError[]; serverErrors: PaddleServerError[] };
 
-export const EMPTY_WEBHOOK_STATUS: PaddleStatusRecord = { lastEventAt: null, lastEventType: null, lastRejectedAt: null, lastRejectedReason: null, clientErrors: [], serverErrors: [] };
+export const EMPTY_WEBHOOK_STATUS: PaddleStatusRecord = { lastEventAt: null, lastEventType: null, lastEventResult: null, lastRejectedAt: null, lastRejectedReason: null, clientErrors: [], serverErrors: [] };
 
 export async function readPaddleStatus(): Promise<PaddleStatusRecord> {
     const record = await getServerDocument<Record<string, unknown>>(PADDLE_STATUS_PATH);
     return {
         lastEventAt: isoOrNull(record?.lastEventAt),
         lastEventType: text(record?.lastEventType, 60) || null,
+        lastEventResult: text(record?.lastEventResult, 60) || null,
         lastRejectedAt: isoOrNull(record?.lastRejectedAt),
         lastRejectedReason: text(record?.lastRejectedReason, 40) || null,
         clientErrors: normalizePaddleClientErrors(record?.clientErrors),
@@ -760,6 +771,25 @@ export async function refreshCouponDiscounts(prices: PaddlePlanPrices): Promise<
     return { updated, failed };
 }
 
+/**
+ * Opens an archived discount again for a restored coupon, with the coupon's
+ * usage limit and end date and the prices now mapped for its plan. Throws
+ * PaddleApiError when Paddle refuses or leaves it closed (an expired or used
+ * one may not reopen); the caller then makes a new discount.
+ */
+export async function reopenPaddleDiscount(discountId: string, terms: { plan: PaidPlanId | "any"; maxUses: number | null; expiresAt: Date | string | null }) {
+    if (!isPaddleId("discount", discountId)) throw new PaddleApiError(0, "invalid_id");
+    const settings = await getPaddleSettings(true);
+    const { data } = await paddleRequest<{ data?: PaddleDiscountEntity }>("PATCH", `/discounts/${discountId}`, {
+        status: "active",
+        usage_limit: terms.maxUses,
+        expires_at: rfc3339(terms.expiresAt),
+        restrict_to: discountRestriction(terms.plan, settings.prices),
+    });
+    if (!data || data.id !== discountId) throw new PaddleApiError(0, "unexpected_response");
+    if (data.status && data.status !== "active") throw new PaddleApiError(409, "discount_not_reopened");
+}
+
 /** Turns a discount on or off at checkout (archived discounts can't be redeemed). */
 export async function setPaddleDiscountActive(discountId: string, active: boolean) {
     if (!isPaddleId("discount", discountId)) throw new PaddleApiError(0, "invalid_id");
@@ -771,7 +801,7 @@ export async function paddleDiscountUsage(discountIds: readonly string[]): Promi
     const ids = [...new Set(discountIds.filter((id) => isPaddleId("discount", id)))];
     const usage = new Map<string, number>();
     for (const chunk of chunks(ids, IDS_PER_REQUEST)) {
-        const { data } = await paddleRequest<ListResponse<{ id?: string; times_used?: unknown }>>("GET", `/discounts?id=${chunk.join(",")}&per_page=200`);
+        const { data } = await paddleRequest<ListResponse<{ id?: string; times_used?: unknown }>>("GET", `/discounts?id=${chunk.join(",")}&status=active,archived&per_page=200`);
         for (const discount of data ?? []) {
             if (isPaddleId("discount", discount?.id) && typeof discount.times_used === "number" && Number.isFinite(discount.times_used)) usage.set(discount.id, discount.times_used);
         }

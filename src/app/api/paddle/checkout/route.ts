@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server";
 import { isBillingInterval, paddleEntitles } from "@/lib/paddle";
-import { isPaidPlanId } from "@/lib/plans";
+import { isPaidPlanId, isRecentCheckout } from "@/lib/plans";
 import { getStaffSession } from "@/lib/server/admin";
 import { CouponError, couponDiscount, findCoupon } from "@/lib/server/coupons";
 import { BillingStepError, billingStep, createCheckoutTransaction, ensureCustomer, getPaddleSettings, isBillingTester } from "@/lib/server/paddle";
+import { rememberCheckout, syncAccountFromPaddle, withDeadline } from "@/lib/server/paddle-sync";
 import { getPlanCatalog, getSubscription } from "@/lib/server/plans";
 import { readJsonBody } from "@/lib/server/validate";
 import { billingError, billingFailure, billingGuard, billingJson } from "../_shared";
@@ -39,6 +40,16 @@ export async function POST(request: NextRequest) {
         if (subscription.status === "blocked") return billingError(403, "plan_blocked");
         // A second subscription would bill twice; changing plans goes through /api/paddle/subscription.
         if (paddleEntitles(subscription.paddle)) return billingError(409, "already_subscribed");
+        // A purchase Paddle hasn't reported to us (yet): ask Paddle before selling the same person a second one.
+        if (subscription.paddleCustomerId && (!subscription.paddle || isRecentCheckout(subscription.paddleCheckout))) {
+            const check = syncAccountFromPaddle(guard.email).catch((error: unknown) => {
+                console.warn("[paddle:checkout] sync", error instanceof Error ? error.message : error);
+                return null;
+            });
+            const state = await withDeadline(check, 6_000, null);
+            if (state === "active") return billingError(409, "already_subscribed");
+            if (state === "pending") return billingError(409, "payment_pending");
+        }
         let discountId: string | null = null;
         if (body.coupon !== undefined && body.coupon !== null && body.coupon !== "") {
             const coupon = await billingStep("coupon", () => findCoupon(body.coupon, plan));
@@ -46,6 +57,8 @@ export async function POST(request: NextRequest) {
         }
         const customerId = await billingStep("customer", () => ensureCustomer(guard.email, subscription.paddleCustomerId));
         const { transactionId } = await billingStep("transaction", () => createCheckoutTransaction({ email: guard.email, plan, priceId, customerId, discountId }));
+        // So /api/paddle/sync can follow this checkout up with Paddle (best effort: the checkout works without it).
+        await rememberCheckout(guard.email, transactionId).catch((error: unknown) => console.warn("[paddle:checkout] remember", error instanceof Error ? error.message : error));
         return billingJson({ transactionId });
     } catch (error) {
         // A code that can't be used is an answer, not a failure.

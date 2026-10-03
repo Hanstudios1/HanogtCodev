@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         // Without the list nothing can be checked: refuse, Paddle retries later.
         console.error("[paddle:webhook] ip list", error instanceof PaddleApiError ? `${error.status || "network"} ${error.code}` : error);
+        await recordWebhookRejection("ip_list_unavailable");
         return json({ error: "retry_later" }, 503);
     }
     if (!ipInCidrs(clientIpFromHeaders(request.headers), cidrs)) {

@@ -99,7 +99,16 @@ export function normalizeSubscription(record: Record<string, unknown> | null, en
         aiBonusUntil: isoOf(record.aiBonusUntil),
         paddle: paddle?.environment === environment ? paddle : null,
         paddleCustomerId: isPaddleId("customer", record.paddleCustomerId) && record.paddleEnvironment === environment ? record.paddleCustomerId : null,
+        paddleCheckout: checkoutOf(record.paddleCheckout, environment),
     };
+}
+
+/** subscriptions/{email}.paddleCheckout of this environment ({ transactionId, environment, at }). */
+function checkoutOf(value: unknown, environment: string): UserSubscription["paddleCheckout"] {
+    if (!value || typeof value !== "object") return null;
+    const record = value as Record<string, unknown>;
+    const at = isoOf(record.at);
+    return isPaddleId("transaction", record.transactionId) && record.environment === environment && at ? { transactionId: record.transactionId, at } : null;
 }
 
 export async function getSubscription(email: string): Promise<UserSubscription> {

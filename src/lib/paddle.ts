@@ -261,12 +261,13 @@ export type PaddleClientError = {
 };
 
 /**
- * What a billing route (POST /api/paddle/checkout, /api/paddle/subscription)
- * was doing when it failed: reading the plan catalog, the Paddle settings or
- * the account's subscription record, finding the Paddle customer, creating
- * the checkout's transaction, or one of the subscription actions.
+ * What a billing route (POST /api/paddle/checkout, /api/paddle/subscription,
+ * /api/paddle/sync) was doing when it failed: reading the plan catalog, the
+ * Paddle settings or the account's subscription record, finding the Paddle
+ * customer, creating the checkout's transaction, one of the subscription
+ * actions, or asking Paddle about the account's purchase (sync).
  */
-export const BILLING_STEPS = ["catalog", "settings", "subscription", "coupon", "discount", "customer", "transaction", "portal", "preview", "change", "keep"] as const;
+export const BILLING_STEPS = ["catalog", "settings", "subscription", "coupon", "discount", "customer", "transaction", "portal", "preview", "change", "keep", "sync"] as const;
 export type BillingStep = (typeof BILLING_STEPS)[number];
 
 export function isBillingStep(value: unknown): value is BillingStep {
@@ -309,6 +310,8 @@ export type BillingErrorCode =
     | "plan_unavailable"
     | "plan_blocked"
     | "already_subscribed"
+    // A payment went through and Paddle is still creating its subscription: a second checkout would charge twice.
+    | "payment_pending"
     | "no_subscription"
     | "no_change"
     | "paddle_error"

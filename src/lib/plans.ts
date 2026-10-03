@@ -90,6 +90,8 @@ export type UserSubscription = {
     paddle: PaddleSubscriptionState | null;
     /** Their Paddle customer (exists from the first checkout on). */
     paddleCustomerId: string | null;
+    /** The last checkout the Plans page opened for them in this environment (its transaction and when). */
+    paddleCheckout: { transactionId: string; at: string } | null;
 };
 
 export const FREE_SUBSCRIPTION: UserSubscription = {
@@ -103,7 +105,22 @@ export const FREE_SUBSCRIPTION: UserSubscription = {
     aiBonusUntil: null,
     paddle: null,
     paddleCustomerId: null,
+    paddleCheckout: null,
 };
+
+/**
+ * How long after opening a checkout the account is followed up with Paddle
+ * (Plans page, GET /api/plans, a second checkout): long enough for a slow
+ * payment method, short enough not to ask Paddle about abandoned ones forever.
+ */
+export const CHECKOUT_FOLLOW_UP_MS = 7 * 24 * 60 * 60_000;
+
+/** A checkout opened within CHECKOUT_FOLLOW_UP_MS. */
+export function isRecentCheckout(checkout: UserSubscription["paddleCheckout"], now = Date.now()) {
+    if (!checkout) return false;
+    const at = Date.parse(checkout.at);
+    return Number.isFinite(at) && at <= now + 60_000 && now - at <= CHECKOUT_FOLLOW_UP_MS;
+}
 
 function future(iso: string | null, now: number) {
     if (!iso) return true;
@@ -168,6 +185,8 @@ export type PlansResponse = {
         canManageBilling: boolean;
         /** The person's own Paddle customer id (Paddle Retain's pwCustomer), or null. */
         paddleCustomerId: string | null;
+        /** A checkout was opened lately and no subscription unlocks a plan yet: the page offers "check my payment". */
+        checkoutPending: boolean;
         aiLimits: { perMinute: number; perDay: number };
         aiUsedToday: number;
         waitlist: PaidPlanId[];
@@ -175,6 +194,14 @@ export type PlansResponse = {
         isStaff: boolean;
     } | null;
 };
+
+/**
+ * POST /api/paddle/sync: what Paddle says about the account's purchase.
+ * "active": a subscription unlocks a plan; "pending": the payment went
+ * through and Paddle is still creating the subscription; "none": nothing paid.
+ */
+export type PaddleSyncState = "active" | "pending" | "none";
+export type PaddleSyncResponse = { state: PaddleSyncState; plan: PlanId; billing: BillingView | null };
 
 /** Price after the discount, rounded to cents. */
 export function discountedPrice(price: number | null, discountPercent: number) {

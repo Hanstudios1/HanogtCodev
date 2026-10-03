@@ -754,8 +754,9 @@ test("server errors: newest first, ten at most, nothing about the account, the o
     const browserReport = { at: new Date(NOW).toISOString(), stage: "blocked", message: "kept", blockedUrl: null, code: null, browser: "Chrome 141", environment: "sandbox" };
     const seed = { [STATUS_PATH]: { lastEventType: "subscription.created", clientErrors: [browserReport] } };
     await withBackend(seed, { onCommit: (writes) => commits.push(writes) }, async (db) => {
+        // A minute apart: the same failure again within a minute isn't listed twice (see below).
         for (let index = 1; index <= 12; index += 1) {
-            await paddle.recordPaddleServerError({ route: "checkout", step: "transaction", status: 502, paddleStatus: 0, code: "timeout", detail: `attempt ${index} for ${ALI}`, ms: 8_000 + index }, new Date(NOW + index * 1_000));
+            await paddle.recordPaddleServerError({ route: "checkout", step: "transaction", status: 502, paddleStatus: 0, code: "timeout", detail: `attempt ${index} for ${ALI}`, ms: 8_000 + index }, new Date(NOW + index * 61_000));
         }
         const stored = db.get(STATUS_PATH);
         assert.equal(stored.lastEventType, "subscription.created");
@@ -763,7 +764,7 @@ test("server errors: newest first, ten at most, nothing about the account, the o
         assert.equal(stored.serverErrors.length, 10);
         assert.deepEqual(stored.serverErrors.map((entry) => entry.ms), [8012, 8011, 8010, 8009, 8008, 8007, 8006, 8005, 8004, 8003], "newest first; the two oldest dropped");
         assert.deepEqual(stored.serverErrors[0], {
-            at: new Date(NOW + 12_000).toISOString(), route: "checkout", step: "transaction", status: 502, paddleStatus: 0, code: "timeout", detail: "attempt 12 for [e-mail]", ms: 8012, environment: "sandbox",
+            at: new Date(NOW + 12 * 61_000).toISOString(), route: "checkout", step: "transaction", status: 502, paddleStatus: 0, code: "timeout", detail: "attempt 12 for [e-mail]", ms: 8012, environment: "sandbox",
         });
         assert.equal(JSON.stringify(stored.serverErrors).includes("ali"), false, "nothing about whose request it was");
         for (const writes of commits) {
@@ -773,6 +774,20 @@ test("server errors: newest first, ten at most, nothing about the account, the o
         const read = await (await load("lib/server/paddle-admin.ts")).readPaddleStatus();
         assert.equal(read.serverErrors.length, 10);
         assert.equal(read.clientErrors.length, 1);
+    });
+
+    // A page asking every few seconds: the same failure within a minute is listed once; another step or code is new.
+    await withBackend({}, {}, async (db) => {
+        const failure = { route: "sync", step: "sync", status: 424, paddleStatus: 403, code: "forbidden", detail: "", ms: 300 };
+        await paddle.recordPaddleServerError(failure, new Date(NOW));
+        await paddle.recordPaddleServerError(failure, new Date(NOW + 5_000));
+        await paddle.recordPaddleServerError(failure, new Date(NOW + 30_000));
+        assert.equal(db.get(STATUS_PATH).serverErrors.length, 1);
+        await paddle.recordPaddleServerError({ ...failure, code: "timeout", paddleStatus: 0 }, new Date(NOW + 31_000));
+        await paddle.recordPaddleServerError(failure, new Date(NOW + 32_000));
+        assert.deepEqual(db.get(STATUS_PATH).serverErrors.map((entry) => entry.code), ["forbidden", "timeout", "forbidden"], "a different failure in between lists it again");
+        await paddle.recordPaddleServerError(failure, new Date(NOW + 93_000));
+        assert.equal(db.get(STATUS_PATH).serverErrors.length, 4, "and again after a minute");
     });
 
     const junk = [
