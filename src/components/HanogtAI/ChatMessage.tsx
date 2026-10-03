@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Copy as CopyIcon, Cpu, FileCode2, KeyRound, Pencil, RotateCcw, Sparkles, SquareArrowOutUpRight, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Check, Copy as CopyIcon, Cpu, FileCode2, KeyRound, Pencil, RotateCcw, Sparkles, Square, SquareArrowOutUpRight, ThumbsDown, ThumbsUp, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
@@ -13,6 +13,7 @@ import type { ChatArtifact } from "./artifacts";
 import { CHAT_COPY } from "./chat-copy";
 import Markdown from "./Markdown";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
+import { useSpeech, useVoice } from "./voice";
 
 const C = {
     typing: { TR: "Yazıyor", EN: "Typing" },
@@ -21,6 +22,9 @@ const C = {
     helpful: { TR: "Faydalı", EN: "Helpful" },
     notHelpful: { TR: "Faydalı değil", EN: "Not helpful" },
     regenerate: { TR: "Yeniden oluştur", EN: "Regenerate" },
+    readAloud: { TR: "Sesli oku (erken erişim)", EN: "Read aloud (early access)" },
+    stopReading: { TR: "Okumayı durdur", EN: "Stop reading" },
+    codeBlock: { TR: "Kod bloğu.", EN: "Code block." },
     openInEditor: { TR: "Editörde aç", EN: "Open in editor" },
     edit: { TR: "Mesajı düzenle", EN: "Edit message" },
     editLabel: { TR: "Mesajını düzenle", EN: "Edit your message" },
@@ -119,8 +123,10 @@ function UserMessage({ message, editable, onEdit }: { message: AiMessage; editab
 /** One message of the conversation, Claude-style: questions in a soft bubble, answers as plain text with a quiet action row. */
 export default function ChatMessage(props: ChatMessageProps) {
     const { message, streamingText, variant, busy, isLastAssistant, isLastUser, agentMode, signedIn } = props;
-    const { tx } = useI18n();
+    const { tx, language } = useI18n();
     const [copied, setCopied] = useState(false);
+    const voice = useVoice();
+    const speech = useSpeech();
 
     if (message.role === "user") {
         return (
@@ -199,6 +205,19 @@ export default function ChatMessage(props: ChatMessageProps) {
                                 <button type="button" onClick={() => props.onOpenInEditor(message.code!.language, message.code!.code)} className={ICON_BUTTON} title={tx(C.openInEditor)} aria-label={tx(C.openInEditor)}><SquareArrowOutUpRight className="h-3.5 w-3.5" /></button>
                             ) : null}
                             <button type="button" onClick={() => void copy()} className={ICON_BUTTON} title={tx(copied ? C.copied : C.copy)} aria-label={tx(copied ? C.copied : C.copy)}>{copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <CopyIcon className="h-3.5 w-3.5" />}</button>
+                            {voice.speech ? (
+                                <button
+                                    type="button"
+                                    onClick={() => (speech.speakingId === message.id ? speech.stop() : speech.speak(message.id, message.content, language, tx(C.codeBlock)))}
+                                    className={cx(ICON_BUTTON, speech.speakingId === message.id && "text-violet-600 dark:text-violet-300")}
+                                    title={tx(speech.speakingId === message.id ? C.stopReading : C.readAloud)}
+                                    aria-label={tx(speech.speakingId === message.id ? C.stopReading : C.readAloud)}
+                                    aria-pressed={speech.speakingId === message.id}
+                                    data-ai-read-aloud={speech.speakingId === message.id ? "speaking" : "idle"}
+                                >
+                                    {speech.speakingId === message.id ? <Square className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                                </button>
+                            ) : null}
                             <button type="button" onClick={() => props.onFeedback("up")} className={cx(ICON_BUTTON, message.feedback === "up" && "text-emerald-500 dark:text-emerald-400")} title={tx(C.helpful)} aria-label={tx(C.helpful)} aria-pressed={message.feedback === "up"}><ThumbsUp className="h-3.5 w-3.5" /></button>
                             <button type="button" onClick={() => props.onFeedback("down")} className={cx(ICON_BUTTON, message.feedback === "down" && "text-red-500 dark:text-red-400")} title={tx(C.notHelpful)} aria-label={tx(C.notHelpful)} aria-pressed={message.feedback === "down"}><ThumbsDown className="h-3.5 w-3.5" /></button>
                             {isLastAssistant ? (

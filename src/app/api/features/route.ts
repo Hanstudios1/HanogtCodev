@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { allowedFeatures, type FeaturesResponse } from "@/lib/features";
+import { allowedFeatures, rolloutFeatures, type FeaturesResponse } from "@/lib/features";
 import { FREE_SUBSCRIPTION, effectivePlan } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
@@ -16,10 +16,12 @@ function json(payload: unknown, status = 200) {
 }
 
 /**
- * GET /api/features → { features: { ai_api, plan_badge, ai_voice } } (true when
- * open to the caller): the team's audiences (off, staff, early access for Pro
- * and staff, everyone) applied to the signed-in person's role and plan. The
- * routes behind a feature check it again themselves.
+ * GET /api/features → { features: { ai_api, plan_badge, ai_voice }, rollout }:
+ * `features` is true when open to the caller (the team's audiences: off,
+ * staff, early access for Pro and staff, everyone, applied to the signed-in
+ * person's role and plan); `rollout` lists the features still opened step by
+ * step (staff or early access), for the early access list. The routes behind
+ * a feature check it again themselves.
  */
 export async function GET() {
     const active = await getActiveSession();
@@ -30,5 +32,5 @@ export async function GET() {
         active ? getSubscription(active.email).catch(() => FREE_SUBSCRIPTION) : Promise.resolve(null),
     ]);
     const viewer = active && subscription ? { staff, plan: effectivePlan(subscription) } : null;
-    return json({ features: allowedFeatures(flags, viewer) } satisfies FeaturesResponse);
+    return json({ features: allowedFeatures(flags, viewer), rollout: rolloutFeatures(flags) } satisfies FeaturesResponse);
 }

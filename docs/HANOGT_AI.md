@@ -284,17 +284,17 @@ plan's usage (`GET /api/ai/usage?full=1`) and the features open to the person.
 ### Features opened step by step
 
 `src/lib/features.ts` lists features with an audience: `off`, `staff`,
-`early` (early access: Pro subscribers and staff) or `all`. The defaults are
-`staff`; the team changes them in Admin › Subscriptions › Features and early
-access (`site_config/features`, audit entry `feature.set`, applies within a
-minute). `GET /api/features` tells the browser which are open to the signed-in
+`early` (early access: Pro subscribers and staff) or `all`. With no
+`site_config/features` document the defaults below apply; the team changes
+them in Admin › Subscriptions › Features and early access (audit entry
+`feature.set`, applies within a minute). `GET /api/features` tells the browser which are open to the signed-in
 person; the routes behind a feature check again themselves.
 
-| Feature | What it opens |
-| --- | --- |
-| `ai_api` | Developer API keys and `/api/v1` |
-| `plan_badge` | Plus and Pro badges on profiles |
-| `ai_voice` | Dictation and reading answers aloud |
+| Feature | Default | What it opens |
+| --- | --- | --- |
+| `ai_api` | `all` (Plus and Pro, by plan) | Developer API keys and `/api/v1` |
+| `plan_badge` | `all` (Plus and Pro, by plan) | Plus and Pro badges on profiles |
+| `ai_voice` | `early` | Dictation and reading answers aloud |
 
 `plan_badge` is decided by the profile's owner: only the server writes
 `public_profiles/{email}.planBadge = { plan, until }` (firestore.rules keep
@@ -304,6 +304,31 @@ Profile; `subscriptions/{email}.planBadgeHidden`) and, at most every ten
 minutes, when they open Pricing or Account Settings. Readers ignore a badge
 whose `until` has passed (the paid period plus the payment grace, or the end
 of a staff grant), so an ended plan loses its badge without a write.
+
+### Voice (`ai_voice`, early access)
+
+Dictation and reading answers aloud use the browser's Web Speech API; nothing
+goes to Hanogt's servers and nothing costs anything on the server.
+`src/components/HanogtAI/voice.ts` has the hooks: `useVoice()` says which of
+the two the person may use (the `ai_voice` audience from `/api/features`,
+through `features-store.ts`) and the browser supports; each button is hidden
+on its own when unsupported (Firefox has speech synthesis but no
+recognition).
+
+- **Dictation** (the microphone button in the composer, `useDictation`):
+  `SpeechRecognition` in the site's language (`speechLangOf`, e.g. TR →
+  `tr-TR`), one phrase at a time (`continuous: false`, final results only);
+  the text is appended to the message box (`appendDictation`) and sent only
+  when the person sends it. A refused microphone shows its own message;
+  silence and aborts are ignored.
+- **Read aloud** (the speaker button under an answer, `useSpeech`):
+  `speechSynthesis` reads `speechTextOf(answer)`: code blocks are announced
+  ("Kod bloğu.") rather than read, links keep their text, Markdown marks go
+  and answers over 4,000 characters are cut at a sentence. One answer is read
+  at a time; a new chat or leaving the chat stops it (`stopSpeaking`).
+
+Browsers may use their vendor's speech service for this (Chrome: Google,
+Safari: Apple); the Privacy Policy says so (legal 4.5).
 
 ### Usage meter
 
@@ -348,7 +373,8 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Prompt, provider, knowledge notes | `src/lib/server/hanogt-ai.ts` |
 | Settings | `src/lib/ai/ai-settings.ts`, `src/app/api/ai/settings/route.ts`, `src/components/HanogtAI/AiSettingsPage.tsx`, `ai-settings-store.ts`, `src/lib/ai/sign-out.ts`, `src/app/ai/settings/*` |
 | Developer API, own connections page | `src/lib/ai/api-keys.ts`, `src/lib/server/ai-api-keys.ts`, `src/lib/server/hanogt-ai-api.ts`, `src/app/api/v1/**`, `src/app/api/ai/keys/route.ts`, `src/components/HanogtAI/AiApiPage.tsx`, `ApiKeysPanel.tsx`, `ApiDocs.tsx`, `ConnectionsManager.tsx`, `src/app/ai/api/*` (see [HANOGT_AI_API.md](HANOGT_AI_API.md)) |
-| Feature audiences | `src/lib/features.ts`, `src/lib/server/features.ts`, `src/app/api/features/route.ts`, `src/components/Admin/FeaturesCard.tsx` |
+| Feature audiences | `src/lib/features.ts`, `src/lib/server/features.ts`, `src/app/api/features/route.ts`, `src/components/Admin/FeaturesCard.tsx`, `src/components/HanogtAI/features-store.ts` |
+| Voice | `src/lib/ai/voice.ts`, `src/components/HanogtAI/voice.ts` |
 | Agent registry, validation, permissions, refusals | `src/lib/ai/agent-tools.ts` |
 | Wire protocol (trailer, history) | `src/lib/ai/agent-protocol.ts` |
 | Core intent → action mapping | `src/lib/ai/agent-intents.ts`, `src/lib/ai/programs.ts` |
@@ -358,4 +384,4 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Client streaming, conversations | `src/lib/ai/client.ts`, `src/lib/ai/conversations.ts` |
 | UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`, `UsageMeter`, `usage-store`), `src/app/ai/*` |
 | Training | `ai/dataset/*`, `scripts/train-hanogt-ai.mjs`, `ai/reports/intent-training-report.md` |
-| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs`, `scripts/tests/ai-api.test.mjs` (`npm test`) |
+| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs`, `scripts/tests/ai-api.test.mjs`, `scripts/tests/voice.test.mjs` (`npm test`) |

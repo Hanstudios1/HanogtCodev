@@ -80,6 +80,10 @@ const CHECKS: Record<CloudCheckId, { title: Copy; description: Copy }> = {
         title: { TR: "Depolama kovası (isteğe bağlı)", EN: "Storage bucket (optional)" },
         description: { TR: "Yeni sesli mesajlar Firestore'da saklanır; Cloud Storage kovası yalnızca eski sesli mesajlar için kullanılır.", EN: "New voice messages are kept in Firestore; the Cloud Storage bucket is only used for older voice messages." },
     },
+    publicApi: {
+        title: { TR: "Hanogt AI API'sine dışarıdan erişim", EN: "Outside access to the Hanogt AI API" },
+        description: { TR: "Uygulamalar, botlar ve betikler /api/v1'e tarayıcı olmadan bağlanır; Cloudflare bu istekleri doğrulama sayfasıyla durdurmamalı.", EN: "Apps, bots and scripts call /api/v1 without a browser; Cloudflare mustn't stop them with a challenge page." },
+    },
     turnServer: {
         title: { TR: "Sesli arama aktarım sunucusu (TURN)", EN: "Voice call relay (TURN)" },
         description: { TR: "Mobil veri, şirket ve okul ağları doğrudan bağlantıya izin vermez; bu ağlarda sesli aramaların bağlanması için TURN gerekir.", EN: "Mobile data, company and school networks block direct connections; on them voice calls need a TURN relay to connect." },
@@ -158,6 +162,11 @@ const REASONS: Record<CloudReason, Copy> = {
     turn_missing: { TR: "TURN tanımlı değil. Aramalar ev ağlarının çoğunda çalışır, ama mobil veride ve kurumsal ağlarda bağlanamayabilir.", EN: "No TURN is configured. Calls work on most home networks but may not connect on mobile data or company networks." },
     turn_credentials_missing: { TR: "TURN_SERVER_URL tanımlı ama kimlik bilgisi yok (TURN_SHARED_SECRET ya da TURN_USERNAME ile TURN_CREDENTIAL).", EN: "TURN_SERVER_URL is set but there are no credentials (TURN_SHARED_SECRET, or TURN_USERNAME with TURN_CREDENTIAL)." },
     turn_failed: { TR: "TURN kimlik bilgileri alınamadı ({problem}); anahtarı kontrol edin. Bu sırada aramalar yalnızca doğrudan bağlantıyı dener.", EN: "Couldn't get TURN credentials ({problem}); check the key. Meanwhile calls only try direct connections." },
+    api_ok: { TR: "API dışarıdan erişilebilir: anahtarsız bir istek, beklendiği gibi sitenin kendi 401 yanıtını aldı.", EN: "The API can be reached from outside: a request without a key got the site's own 401 answer, as expected." },
+    api_challenged: { TR: "Cloudflare, tarayıcı olmayan istemcilere doğrulama ya da engelleme sayfası gösteriyor (HTTP {status}); API istekleri uygulamalara ulaşmıyor.", EN: "Cloudflare shows clients without a browser a challenge or block page (HTTP {status}); API requests don't get through to apps." },
+    api_unexpected: { TR: "API isteği sitenin yanıtı yerine başka bir yanıt aldı (HTTP {status}); bir yönlendirme ya da güvenlik kuralı araya giriyor olabilir.", EN: "The API request got another answer instead of the site's (HTTP {status}); a redirect or a security rule may be in the way." },
+    api_unreachable: { TR: "Sunucu sitenin kendi adresine ulaşamadı; birkaç dakika sonra yeniden denetleyin.", EN: "The server couldn't reach the site's own address; check again in a few minutes." },
+    api_local: { TR: "Yerel ya da HTTPS olmayan bir adreste bu denetim yapılmaz.", EN: "This check doesn't apply to a local or non-HTTPS address." },
 };
 
 const REDEPLOY: Copy = { TR: "NEXT_PUBLIC_ değişkenleri derleme sırasında pakete yazılır: Vercel → Deployments → son dağıtım → Redeploy ile yeniden dağıtın.", EN: "NEXT_PUBLIC_ variables are baked in at build time: redeploy via Vercel → Deployments → latest deployment → Redeploy." };
@@ -325,6 +334,15 @@ const FIXES: Record<CloudFixId, { title: Copy; steps: Copy[] }> = {
             { TR: "Gösterilen “Turn Token ID” ve “API Token” değerlerini Vercel → Settings → Environment Variables bölümüne CLOUDFLARE_TURN_KEY_ID ve CLOUDFLARE_TURN_KEY_API_TOKEN olarak ekleyin (ikisi de gizli; NEXT_PUBLIC_ ile başlamasın).", EN: "Add the “Turn Token ID” and “API Token” it shows in Vercel → Settings → Environment Variables as CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN (both secret; no NEXT_PUBLIC_ prefix)." },
             REDEPLOY_SERVER,
             { TR: "Kendi coturn sunucunuz varsa bunun yerine TURN_SERVER_URL ve TURN_SHARED_SECRET; sabit kullanıcı adı veren bir hizmette TURN_SERVER_URL, TURN_USERNAME ve TURN_CREDENTIAL girin.", EN: "With your own coturn server use TURN_SERVER_URL and TURN_SHARED_SECRET instead; with a service that gives a fixed username use TURN_SERVER_URL, TURN_USERNAME and TURN_CREDENTIAL." },
+        ],
+    },
+    cloudflareApiRule: {
+        title: { TR: "Cloudflare'de API isteklerini serbest bırakın", EN: "Let API requests through Cloudflare" },
+        steps: [
+            { TR: "dash.cloudflare.com → alan adınız → Security → Bots: ücretsiz plandaki “Bot Fight Mode” belirli bir yol için atlanamaz; açıksa kapatın. Ücretli planlardaki “Super Bot Fight Mode” açık kalabilir.", EN: "dash.cloudflare.com → your domain → Security → Bots: the free plan's “Bot Fight Mode” can't be skipped for one path; if it is on, turn it off. “Super Bot Fight Mode” on paid plans can stay on." },
+            { TR: "Security → WAF → Custom rules → Create rule: alan “URI Path”, işleç “starts with”, değer /api/v1/; eylem “Skip”. Atlanacaklar: tüm kalan özel kurallar, hız sınırı kuralları, yönetilen kurallar, Super Bot Fight Mode kuralları ve Browser Integrity Check. Kuralı listenin en üstüne taşıyın.", EN: "Security → WAF → Custom rules → Create rule: field “URI Path”, operator “starts with”, value /api/v1/; action “Skip”. Skip: all remaining custom rules, rate limiting rules, managed rules, Super Bot Fight Mode rules and Browser Integrity Check. Move the rule to the top of the list." },
+            { TR: "Ödeme bildirimleri için /api/paddle/webhook'a aynı kural gerekiyorsa ikisini tek kuralda birleştirebilirsiniz (“starts with /api/v1/” veya “equals /api/paddle/webhook”). API kendi anahtar doğrulamasını ve hız sınırlarını uygular.", EN: "If /api/paddle/webhook needs the same rule for payment notifications, both can share one rule (“starts with /api/v1/” or “equals /api/paddle/webhook”). The API applies its own key checks and rate limits." },
+            { TR: "Kaydedip “Yeniden denetle”ye basın.", EN: "Save, then press “Check again”." },
         ],
     },
     initStorage: {

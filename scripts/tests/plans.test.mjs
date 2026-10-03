@@ -106,6 +106,18 @@ test("the numbers on the Plans page are the limits the server enforces", () => {
                 assert.ok(keys[0].includes(lang === "TR" ? `günde ${perDay} mesaj` : `${perDay} messages a day`), `${plan}/${lang}: "${keys[0]}" shows ${perDay} a day`);
             }
 
+            // The developer API: keys, a minute and a day, as the API counts them.
+            const api = lines.filter((text) => (lang === "TR" ? /Geliştirici API/ : /Developer API/).test(text));
+            const apiLimits = PLAN_AI_FEATURES[plan].api;
+            if (!apiLimits) assert.deepEqual(api, [], `${plan}/${lang}: no API line`);
+            else {
+                assert.equal(api.length, 1);
+                const expected = lang === "TR"
+                    ? `${apiLimits.keys} anahtar, dakikada ${number(apiLimits.perMinute, lang)} ve günde ${number(apiLimits.perDay, lang)} istek`
+                    : `${apiLimits.keys} keys, ${number(apiLimits.perMinute, lang)} requests a minute and ${number(apiLimits.perDay, lang)} a day`;
+                assert.ok(api[0].includes(expected), `${plan}/${lang}: "${api[0]}"`);
+            }
+
             // Paid plans name how much of the open file the AI reads.
             const reading = lines.filter((text) => (lang === "TR" ? /açık dosyanın/ : /open file/).test(text));
             if (plan === "free") assert.deepEqual(reading, []);

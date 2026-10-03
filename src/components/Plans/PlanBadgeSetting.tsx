@@ -9,7 +9,7 @@ import type { PlanBadgeState } from "@/lib/plan-badge";
 const C = {
     label: { TR: "Profilimde {plan} rozetini göster", EN: "Show the {plan} badge on my profile" },
     hint: { TR: "Rozet; profilinde, kullanıcı kartında ve mesajlarda adının yanında görünür.", EN: "The badge appears next to your name on your profile, your user card and in messages." },
-    notOpen: { TR: "Profil rozetleri kademeli olarak açılıyor; hesabında henüz açık değil.", EN: "Profile badges are opening gradually; they aren't on for your account yet." },
+    notOpen: { TR: "Profil rozetleri şu an hesabında açık değil; ekip açtığında rozetin burada görünür.", EN: "Profile badges aren't on for your account right now; your badge shows up here once the team turns them on." },
     shown: { TR: "Rozetin artık profilinde görünüyor.", EN: "Your badge now shows on your profile." },
     hidden: { TR: "Rozetin gizlendi.", EN: "Your badge is hidden." },
     failed: { TR: "Kaydedilemedi. Biraz sonra tekrar dene.", EN: "Couldn't save. Try again in a moment." },

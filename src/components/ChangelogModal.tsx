@@ -24,6 +24,20 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.14",
+        version: "v0.3.14",
+        date: "2026-10-03",
+        title: { TR: "Sesle yaz, yanıtları dinle (erken erişim)", EN: "Dictate, and listen to answers (early access)" },
+        desc: { TR: "Pro'da Hanogt AI'a sesle yaz ve yanıtları sesli dinle; geliştirici API'si ve plan rozetleri artık herkese açık.", EN: "On Pro, dictate to Hanogt AI and listen to its answers; the developer API and plan badges are now open to everyone." },
+        items: [
+            { TR: "Mesaj kutusundaki mikrofona konuş, sözlerin kutuya yazılsın; göndermeden önce düzeltebilirsin.", EN: "Speak into the microphone in the message box and your words are typed for you; fix them before sending." },
+            { TR: "Bir yanıtın altındaki hoparlöre bas, Hanogt AI yanıtı okusun; kod blokları satır satır okunmaz.", EN: "Press the speaker under an answer to hear it; code blocks aren't read line by line." },
+            { TR: "Ses tarayıcının konuşma hizmetiyle çalışır; sesin Hanogt'a gönderilmez.", EN: "Voice runs on your browser's speech service; your voice isn't sent to Hanogt." },
+            { TR: "Hanogt AI API'si ve profil rozeti Plus ve Pro'da herkese açıldı.", EN: "The Hanogt AI API and profile badges are now open to everyone on Plus and Pro." },
+            { TR: "Kullanım Şartları ve Gizlilik Politikası 4.5: plan hakları, API kuralları ve erken erişim.", EN: "Terms of Use and Privacy Policy 4.5: plan benefits, API rules and early access." },
+        ],
+    },
+    {
         id: "v0.3.13",
         version: "v0.3.13",
         date: "2026-10-03",

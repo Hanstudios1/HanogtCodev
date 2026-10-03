@@ -99,11 +99,12 @@ function seed({ plan = "plus", role = "user", audience, profile = {} } = {}) {
     };
 }
 
-test("badges exist only where the team opened them: staff, early access (Pro and staff) or everyone", async () => {
+test("badges exist only where the team opened them: staff, early access (Pro and staff) or everyone (the default)", async () => {
     const cases = [
         // [audience, plan, role, badge written]
-        [undefined, "plus", "user", null],
-        [undefined, "plus", "moderator", "plus"],
+        [undefined, "plus", "user", "plus"],
+        ["staff", "plus", "user", null],
+        ["staff", "plus", "moderator", "plus"],
         ["early", "plus", "user", null],
         ["early", "pro", "user", "pro"],
         ["all", "plus", "user", "plus"],

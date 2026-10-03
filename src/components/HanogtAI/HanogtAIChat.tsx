@@ -17,6 +17,7 @@ import ConnectionsDialog from "./ConnectionsDialog";
 import { useHanogtChat, type ChatLaunch } from "./useHanogtChat";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
 import UsageMeter from "./UsageMeter";
+import { stopSpeaking } from "./voice";
 import WelcomeScreen from "./WelcomeScreen";
 
 export type { ChatLaunch };
@@ -124,11 +125,15 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
     };
 
     const newChat = () => {
+        stopSpeaking();
         chat.newChat();
         setDrawerOpen(false);
         setArtifact(null);
         window.setTimeout(() => inputRef.current?.focus(), 30);
     };
+
+    // An answer being read aloud stops when the chat goes away.
+    useEffect(() => () => stopSpeaking(), []);
 
     const closeConnections = useCallback(() => {
         setConnectionsOpen(false);

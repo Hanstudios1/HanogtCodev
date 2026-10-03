@@ -7,7 +7,11 @@ connections ("Your own keys"), which are a different thing: those send chat
 messages to OpenAI, Claude, Gemini… with the person's key.
 
 The API is behind the `ai_api` feature (Admin › Subscriptions › Features and
-early access). Until it is opened to everyone, staff accounts can use it.
+early access), open to everyone by default: every Plus and Pro account can
+make keys. The team can narrow it to early access or staff, or switch it off;
+then `/api/v1` answers 403 `feature_unavailable` and the page says the API
+isn't on for the account. The rules for using it are in the Terms of Use
+(`/terms-of-use#ai-api`, legal 4.5).
 
 ## Plans
 
@@ -127,10 +131,29 @@ A stream that fails midway ends with an error event and `data: [DONE]`.
 | `src/app/api/v1/**` | The routes (thin). |
 | `src/app/api/ai/keys/route.ts` | Key management for the signed-in account. |
 | `src/components/HanogtAI/AiApiPage.tsx`, `ApiKeysPanel.tsx`, `ApiDocs.tsx`, `ConnectionsManager.tsx` | The /ai/api page. |
-| `scripts/tests/ai-api.test.mjs` | Unit tests. |
+| `src/lib/server/api-reachability.ts` | Cloud Health's outside check through Cloudflare. |
+| `scripts/tests/ai-api.test.mjs`, `scripts/tests/api-reachability.test.mjs` | Unit tests. |
 
-## Before opening it to everyone
+## Cloudflare
 
-Cloudflare's WAF and Bot Fight Mode challenge requests without a browser:
-add a rule that skips them for `/api/v1/*` (as for the Paddle webhook),
-otherwise API clients get a challenge page instead of an answer.
+Cloudflare's WAF and bot protection can answer requests that don't come from
+a browser with a challenge page; API clients then never reach `/api/v1`, even
+though the site works in a browser. Admin › Cloud Health checks this ("Outside
+access to the Hanogt AI API", `src/lib/server/api-reachability.ts`): the
+server asks its own public `/api/v1/models` without a key, like an API client
+(no redirects followed), and expects our 401 `missing_api_key`. A
+`cf-mitigated` header or a Cloudflare HTML page is a failure; a redirect or
+another page is a warning.
+
+The fix, in the Cloudflare dashboard:
+
+- The free plan's **Bot Fight Mode** can't be skipped for a path (it doesn't
+  run on the Ruleset Engine); if it is on, turn it off (Security › Bots).
+  **Super Bot Fight Mode** on paid plans can stay on and be skipped.
+- Security › WAF › Custom rules: `URI Path` starts with `/api/v1/` → **Skip**
+  the remaining custom rules, rate limiting rules, managed rules, Super Bot
+  Fight Mode rules and Browser Integrity Check; put it at the top. The same
+  rule can cover `/api/paddle/webhook`.
+
+The API keeps its own checks either way (key, plan, per-address and
+per-account limits).

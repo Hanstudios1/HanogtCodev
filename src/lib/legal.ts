@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.4";
-export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "2 Ekim 2026", EN: "2 October 2026" };
+export const LEGAL_VERSION = "4.5";
+export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "3 Ekim 2026", EN: "3 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.4-2026-10-02";
+export const LEGAL_NOTICE_ID = "4.5-2026-10-03";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -56,6 +56,17 @@ export type LegalChange = { version: string; date: Copy; items: Copy[] };
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.5",
+        date: { TR: "3 Ekim 2026", EN: "3 October 2026" },
+        items: [
+            { TR: "Plan avantajları güncellendi: Kullanım Şartları'ndaki liste artık Hanogt AI'ın en uzun yanıtını, okuduğu dosya uzunluğunu ve kişisel talimat sınırını, Hanogt Social grup sayısını, ekiple düzenlemedeki kişi sınırını (Ücretsiz 2, Plus 5, Pro 30), kendi anahtarınızla mesaj sınırlarını, geliştirici API'sini, profil rozetini, Pro'da destek önceliğini ve yeni özelliklere erken erişimi kapsıyor; daha düşük bir plana geçildiğinde bunlara ne olduğu açıklandı.", EN: "Plan benefits updated: the list in the Terms of Use now covers Hanogt AI's longest answer, how much of a file it reads and the personal instruction limit, the number of Hanogt Social groups, the team editing limit (Free 2, Plus 5, Pro 30), the message limits for your own keys, the developer API, the profile badge, Pro's support priority and early access to new features, and explains what happens to them when you move to a lower plan." },
+            { TR: "Yeni “Hanogt AI API” bölümü: Plus ve Pro'da anahtarla kullanılan geliştirici API'si için anahtarın gizli tutulması, kotalar, yeniden satış yasağı ve kötüye kullanımda anahtarların iptal edilmesi kuralları eklendi. Gizlilik Politikası'na anahtarların yalnızca SHA-256 özetiyle saklandığı ve API isteklerinin yanıt üretmek için dil modeli sağlayıcısına iletilip sunucularımızda saklanmadığı eklendi.", EN: "New “Hanogt AI API” section: added the rules for the developer API used with keys on Plus and Pro: keeping keys secret, quotas, no reselling, and keys being revoked for abuse. The Privacy Policy now says that keys are stored only as SHA-256 digests and that API requests are passed to the language model provider to generate answers and not stored on our servers." },
+            { TR: "Plan rozeti ve destek önceliği: Plus ve Pro abonelerinin herkese açık profilinde plan rozeti gösterildiği ve rozetin Planlar sayfasından veya Hesap Ayarları'ndan gizlenebildiği; destek taleplerine talep anındaki planın kaydedildiği ve talebin önceliğini belirlediği açıklandı.", EN: "Plan badge and support priority: explained that Plus and Pro subscribers' public profiles show a plan badge, which can be hidden on the Plans page or in Account Settings, and that a support ticket records the plan at the time and that this sets the ticket's priority." },
+            { TR: "Hanogt AI ayarları ve ses: kişisel talimatlarınızın ve tercihlerinizin (üslup, yanıt uzunluğu, dil, sohbet varsayılanları) hesabınızda saklandığı ve her mesajla dil modeli sağlayıcısına iletildiği; erken erişimdeki sesle yazma ve sesli dinlemenin tarayıcınızın konuşma hizmetini kullandığı ve sesinizin Hanogt'a gönderilmediği açıklandı.", EN: "Hanogt AI settings and voice: explained that your personal instructions and preferences (tone, answer length, language, chat defaults) are stored in your account and passed to the language model provider with every message, and that dictation and answers read aloud, in early access, use your browser's speech service and your voice is not sent to Hanogt." },
+            { TR: "Yeni “Erken erişim ve beta” bölümü: Pro'da ve ekipte önce açılan özelliklerin deneme niteliğinde olduğu, değişebileceği, herkese açılabileceği veya kaldırılabileceği açıklandı. Çerez ve tarayıcı depolama tablosuna Hanogt AI ve plan değişikliği anahtarları eklendi.", EN: "New “Early access and beta” section: explained that features opened first on Pro and for staff are trials and may change, open to everyone or be removed. Added the Hanogt AI and plan change keys to the cookie and browser storage table." },
+        ],
+    },
     {
         version: "4.4",
         date: { TR: "2 Ekim 2026", EN: "2 October 2026" },

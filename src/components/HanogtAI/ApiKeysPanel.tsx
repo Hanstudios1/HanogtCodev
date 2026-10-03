@@ -6,6 +6,7 @@ import { useEffect, useId, useState } from "react";
 import { API_KEY_NAME_MAX, isApiKeysState, type ApiKeyCreated, type ApiKeyView, type ApiKeysState } from "@/lib/ai/api-keys";
 import { currentWindow, formatResetTime, usageLevel, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { onPlanChange } from "@/lib/plan-signal";
 import { PLAN_AI_FEATURES, PLAN_COPY } from "@/lib/plans";
 import { cx } from "./ui";
 
@@ -18,7 +19,7 @@ const C = {
     limits: { TR: "Dakikada {perMinute}, 24 saatte {perDay} istek", EN: "{perMinute} requests a minute, {perDay} in 24 hours" },
     planRequired: { TR: "Hanogt AI API'si Plus ve Pro planlarında: Plus'ta {plus} anahtar ve günde {plusDay} istek, Pro'da {pro} anahtar ve günde {proDay} istek.", EN: "The Hanogt AI API comes with Plus and Pro: {plus} keys and {plusDay} requests a day on Plus, {pro} keys and {proDay} on Pro." },
     seePlans: { TR: "Planları gör", EN: "See plans" },
-    notOpen: { TR: "Hanogt AI API'si kademeli olarak açılıyor; hesabında henüz açık değil. Belgeleri şimdiden inceleyebilirsin.", EN: "The Hanogt AI API is opening gradually and isn't on for your account yet. You can read the docs already." },
+    notOpen: { TR: "Hanogt AI API'si şu an hesabında açık değil. Belgeleri yine de inceleyebilirsin.", EN: "The Hanogt AI API isn't on for your account right now. You can still read the docs." },
     today: { TR: "Son 24 saat", EN: "Last 24 hours" },
     renews: { TR: "Yenilenme: {time}", EN: "Renews: {time}" },
     none: { TR: "Henüz anahtarın yok.", EN: "You don't have any keys yet." },
@@ -217,6 +218,9 @@ export default function ApiKeysPanel() {
             active = false;
         };
     }, [reloads]);
+
+    // A plan bought or changed in another tab opens (or narrows) the keys without a reload.
+    useEffect(() => onPlanChange(() => setReloads((count) => count + 1)), []);
 
     const create = async () => {
         setWorking(true);

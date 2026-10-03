@@ -10,7 +10,7 @@ import { DEFAULT_CONNECTION } from "@/lib/ai/connections";
 import { clearAllConversations, exportConversationsJson, useConversations } from "@/lib/ai/conversations";
 import { setClearChatsOnSignOut, useClearChatsOnSignOut } from "@/lib/ai/sign-out";
 import type { PlanUsage } from "@/lib/ai/usage";
-import { FEATURE_IDS, FEATURES, type FeatureId } from "@/lib/features";
+import { FEATURES, isFeatureId, type FeatureId, type FeaturesResponse } from "@/lib/features";
 import { LANGUAGES, useI18n, type Copy } from "@/lib/i18n";
 import { PLAN_COPY } from "@/lib/plans";
 import { useAiSettings } from "./ai-settings-store";
@@ -69,6 +69,7 @@ const C = {
     earlyHint: { TR: "Yeni özellikler önce Hanogt ekibine, sonra erken erişimle Pro abonelerine, en son herkese açılır.", EN: "New features open to the Hanogt team first, then to Pro subscribers in early access, and finally to everyone." },
     open: { TR: "Sana açık", EN: "Open to you" },
     notYet: { TR: "Henüz açık değil", EN: "Not open yet" },
+    noneEarly: { TR: "Şu an erken erişimde bir özellik yok; yeni bir özellik denemeye açıldığında burada görünür.", EN: "Nothing is in early access right now; when a new feature opens for trying, it shows up here." },
     earlyPro: { TR: "Erken erişim Pro planına dahil.", EN: "Early access comes with Pro." },
     seePlans: { TR: "Planları gör", EN: "See plans" },
     managePlan: { TR: "Tüm hakların", EN: "All your benefits" },
@@ -136,7 +137,7 @@ export default function AiSettingsPage() {
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
     const [usage, setUsage] = useState<PlanUsage | null | "failed">(null);
-    const [features, setFeatures] = useState<Record<FeatureId, boolean> | null>(null);
+    const [features, setFeatures] = useState<{ open: Record<FeatureId, boolean>; rollout: FeatureId[] } | null>(null);
 
     // The draft follows what the server has until it is edited (adjusted while rendering).
     const server = settings.data;
@@ -158,9 +159,9 @@ export default function AiSettingsPage() {
                 if (active) setUsage("failed");
             });
         void fetch("/api/features", { cache: "no-store" })
-            .then((response) => (response.ok ? response.json() as Promise<{ features: Record<FeatureId, boolean> }> : null))
+            .then((response) => (response.ok ? response.json() as Promise<Partial<FeaturesResponse>> : null))
             .then((data) => {
-                if (active && data?.features) setFeatures(data.features);
+                if (active && data?.features) setFeatures({ open: data.features, rollout: Array.isArray(data.rollout) ? data.rollout.filter(isFeatureId) : [] });
             }, () => undefined);
         return () => {
             active = false;
@@ -330,9 +331,10 @@ export default function AiSettingsPage() {
                     </Section>
 
                     <Section id="early-access" icon={<FlaskConical className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.early)} hint={tx(C.earlyHint)}>
+                        {features && !features.rollout.length ? <p className="text-[13px] text-zinc-500 dark:text-zinc-400" data-early-access-empty>{tx(C.noneEarly)}</p> : null}
                         <ul className="divide-y divide-zinc-100 dark:divide-white/[0.06]" data-early-access>
-                            {FEATURE_IDS.map((id) => {
-                                const open = features?.[id] ?? false;
+                            {(features?.rollout ?? []).map((id) => {
+                                const open = features?.open[id] ?? false;
                                 return (
                                     <li key={id} className="flex items-start justify-between gap-3 py-2.5">
                                         <span>

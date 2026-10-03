@@ -33,10 +33,10 @@ test("who each audience includes", () => {
     }
 });
 
-test("stored flags: unknown features and audiences are ignored; everything new starts with the team", () => {
-    assert.deepEqual(shared.DEFAULT_FEATURE_FLAGS, { ai_api: "staff", plan_badge: "staff", ai_voice: "staff" });
+test("stored flags: unknown features and audiences are ignored; the defaults are the launch's", () => {
+    assert.deepEqual(shared.DEFAULT_FEATURE_FLAGS, { ai_api: "all", plan_badge: "all", ai_voice: "early" });
     assert.deepEqual(shared.normalizeFeatureFlags(null), shared.DEFAULT_FEATURE_FLAGS);
-    assert.deepEqual(shared.normalizeFeatureFlags({ ai_api: "all", ai_voice: "everyone", unknown: "all" }), { ai_api: "all", plan_badge: "staff", ai_voice: "staff" });
+    assert.deepEqual(shared.normalizeFeatureFlags({ ai_api: "staff", ai_voice: "everyone", unknown: "all" }), { ai_api: "staff", plan_badge: "all", ai_voice: "early" });
     const allowed = shared.allowedFeatures({ ai_api: "all", plan_badge: "early", ai_voice: "off" }, VIEWERS.pro);
     assert.deepEqual(allowed, { ai_api: true, plan_badge: true, ai_voice: false });
 });
@@ -85,4 +85,10 @@ test("the admin's write changes one audience and records who did it", () => {
         data: { audiences: { plan_badge: "all" }, updatedAt: at, updatedBy: "owner@example.com" },
         updateFields: ["audiences.plan_badge", "updatedAt", "updatedBy"],
     });
+});
+
+test("the early access list: only features still opened step by step", () => {
+    assert.deepEqual(shared.rolloutFeatures(shared.DEFAULT_FEATURE_FLAGS), ["ai_voice"], "at launch: voice, not the API or badges");
+    assert.deepEqual(shared.rolloutFeatures({ ai_api: "staff", plan_badge: "off", ai_voice: "all" }), ["ai_api"], "switched-off and released features aren't listed");
+    assert.deepEqual(shared.rolloutFeatures({ ai_api: "early", plan_badge: "staff", ai_voice: "early" }), ["ai_api", "plan_badge", "ai_voice"]);
 });

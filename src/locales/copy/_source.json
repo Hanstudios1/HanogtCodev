@@ -1157,6 +1157,7 @@
     "tr": "Plan rozeti",
     "files": [
       "src/app/account-settings/page.tsx",
+      "src/app/privacy-policy/page.tsx",
       "src/lib/features.ts"
     ]
   },
@@ -2297,9 +2298,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1ms1zk2ylx9": {
-    "en": "Messages and context sent to Hanogt AI while signed in; permissions given in agent mode; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters)",
-    "tr": "Giriş yapmışken Hanogt AI'a gönderilen mesajlar ve bağlam; ajan modunda verilen izinler; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri)",
+  "1ksho7b0ffz": {
+    "en": "Messages and context sent to Hanogt AI while signed in; personal instructions and preferences in the Hanogt AI settings; permissions given in agent mode; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters); if you created them, your Hanogt AI API key records (only the key's SHA-256 digest, its name, first and last characters and dates) and requests sent to the API",
+    "tr": "Giriş yapmışken Hanogt AI'a gönderilen mesajlar ve bağlam; Hanogt AI ayarlarındaki kişisel talimatlar ve tercihler; ajan modunda verilen izinler; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri); oluşturduysanız Hanogt AI API anahtar kayıtlarınız (anahtarın yalnızca SHA-256 özeti, adı, ilk ve son karakterleri, tarihleri) ve API'ye gönderilen istekler",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2311,9 +2312,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1bziaejzc0n": {
-    "en": "Plan, subscription status, billing period, period end and next payment date, any scheduled cancellation or change; Paddle customer and subscription IDs. Card and other payment details are not processed by us; Paddle collects them.",
-    "tr": "Plan, abonelik durumu, fatura dönemi, dönem sonu ve sonraki ödeme tarihi, planlanmış iptal veya değişiklik; Paddle müşteri ve abonelik kimlikleri. Kart ve diğer ödeme bilgileri tarafımızca işlenmez; bunları Paddle toplar.",
+  "u4g2b2ers4": {
+    "en": "Plan, subscription status, billing period, period end and next payment date, any scheduled cancellation or change; Paddle customer and subscription IDs; the plan badge on your public profile and your choice to hide it; the plan added to support tickets. Card and other payment details are not processed by us; Paddle collects them.",
+    "tr": "Plan, abonelik durumu, fatura dönemi, dönem sonu ve sonraki ödeme tarihi, planlanmış iptal veya değişiklik; Paddle müşteri ve abonelik kimlikleri; herkese açık profildeki plan rozeti ve gizleme tercihi; destek taleplerine eklenen plan. Kart ve diğer ödeme bilgileri tarafımızca işlenmez; bunları Paddle toplar.",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2374,9 +2375,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1pmwc25r0or": {
-    "en": "generating Hanogt AI replies and carrying out agent actions you allow;",
-    "tr": "Hanogt AI yanıtlarının üretilmesi ve izin verdiğiniz ajan işlemlerinin yapılması,",
+  "ikv63ju3o7": {
+    "en": "generating Hanogt AI replies, applying your Hanogt AI settings and carrying out agent actions you allow; managing Hanogt AI API keys and answering API requests;",
+    "tr": "Hanogt AI yanıtlarının üretilmesi, Hanogt AI ayarlarınızın uygulanması ve izin verdiğiniz ajan işlemlerinin yapılması; Hanogt AI API anahtarlarının yönetilmesi ve API isteklerinin yanıtlanması,",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2737,9 +2738,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "26gow3exmf": {
-    "en": "What you write to Hanogt AI while signed in, and its context",
-    "tr": "Giriş yapmışken Hanogt AI'a yazılanlar ve bağlam",
+  "2c34ef6zke1": {
+    "en": "What you write to Hanogt AI while signed in, its context and your personal instructions; requests sent to the Hanogt AI API",
+    "tr": "Giriş yapmışken Hanogt AI'a yazılanlar, bağlam ve kişisel talimatlar; Hanogt AI API'sine gönderilen istekler",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -7145,9 +7146,9 @@
       "src/app/plans/page.tsx"
     ]
   },
-  "1nv9iuzc96c": {
-    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit, more projects and groups, bigger team sessions, your own API key connections and priority support.",
-    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı, daha fazla proje ve grup, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar ve destekte öncelik.",
+  "hnyl1nou3f": {
+    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit and longer answers, more projects and groups, bigger team sessions, your own API key connections, the developer API, a profile badge, priority support and, on Pro, early access.",
+    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı ve daha uzun yanıtlar, daha fazla proje ve grup, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar, geliştirici API'si, profil rozeti, destekte öncelik ve Pro'da erken erişim.",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -7777,16 +7778,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1c53ciqvhc3": {
-    "en": "With “Edit as a team” you can edit the open files you choose together with your friends only, in a live session of up to 5 people. Invitees get a notification; participants see the shared files and edits, your name and avatar, where your cursor is and which file you have open, the session chat and your state in the voice call (muted, speaking). Other participants don't see your e-mail address; the session owner sees the addresses of their own friends. Session data is written only by our server and can't be read by anyone except the participants.",
-    "tr": "“Ekiple düzenle” ile seçtiğiniz açık dosyaları yalnızca arkadaşlarınızla, en fazla 5 kişilik canlı bir oturumda birlikte düzenleyebilirsiniz. Davet edilenlere bildirim gider; katılımcılar paylaşılan dosyaları ve düzenlemeleri, adınızı ve avatarınızı, imlecinizin yerini ve açık dosyanızı, oturum sohbetini ve sesli görüşmedeki durumunuzu (sessiz, konuşuyor) görür. Diğer katılımcılar e-posta adresinizi görmez; oturum sahibi kendi arkadaşlarının adreslerini görür. Oturum verileri yalnızca sunucumuz tarafından yazılır ve katılımcılar dışında kimse okuyamaz.",
+  "6o1c3m6aqd": {
+    "en": "With “Edit as a team” you can edit the open files you choose together with your friends only, in a live session; depending on the plan of the person who starts it, a session can have up to 2 (Free), 5 (Plus) or 30 (Pro) people, that person included. Invitees get a notification; participants see the shared files and edits, your name and avatar, where your cursor is and which file you have open, the session chat and your state in the voice call (muted, speaking). Other participants don't see your e-mail address; the session owner sees the addresses of their own friends. Session data is written only by our server and can't be read by anyone except the participants.",
+    "tr": "“Ekiple düzenle” ile seçtiğiniz açık dosyaları yalnızca arkadaşlarınızla, canlı bir oturumda birlikte düzenleyebilirsiniz; oturumu başlatan kişinin planına göre bir oturumda o kişi dahil en fazla 2 (Ücretsiz), 5 (Plus) veya 30 (Pro) kişi bulunabilir. Davet edilenlere bildirim gider; katılımcılar paylaşılan dosyaları ve düzenlemeleri, adınızı ve avatarınızı, imlecinizin yerini ve açık dosyanızı, oturum sohbetini ve sesli görüşmedeki durumunuzu (sessiz, konuşuyor) görür. Diğer katılımcılar e-posta adresinizi görmez; oturum sahibi kendi arkadaşlarının adreslerini görür. Oturum verileri yalnızca sunucumuz tarafından yazılır ve katılımcılar dışında kimse okuyamaz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1k5sg8epsum": {
-    "en": "The voice call in a session is set up with WebRTC, as in one-to-one calls: audio travels directly between devices where possible, or encrypted through the TURN relay server if needed, and is not recorded. A session lasts at most 12 hours; when it ends, the chat, status and connection data are deleted, and the final state of the files is kept for another 24 hours so participants can save a copy, then deleted. Only the final state of the files the owner shared is saved to the owner's project. When you delete your account, the sessions you own are deleted immediately.",
-    "tr": "Oturumdaki sesli görüşme, birebir aramalardaki gibi WebRTC ile kurulur: ses mümkünse doğrudan cihazlar arasında, gerekirse TURN aktarma sunucusu üzerinden şifreli olarak taşınır ve kaydedilmez. Bir oturum en fazla 12 saat sürer; sona erdiğinde sohbet, durum ve bağlantı verileri silinir, dosyaların son hâli katılımcıların kopya alabilmesi için 24 saat daha saklanır, sonra silinir. Oturum sahibinin projesine yalnızca kendi paylaştığı dosyaların son hâli kaydedilir. Hesabınızı sildiğinizde sahibi olduğunuz oturumlar hemen silinir.",
+  "2a5otxx0b0m": {
+    "en": "Up to 5 people at a time can join the voice call in a session. The call is set up with WebRTC, as in one-to-one calls: audio travels directly between devices where possible, or encrypted through the TURN relay server if needed, and is not recorded. A session lasts at most 12 hours; when it ends, the chat, status and connection data are deleted, and the final state of the files is kept for another 24 hours so participants can save a copy, then deleted. Only the final state of the files the owner shared is saved to the owner's project. When you delete your account, the sessions you own are deleted immediately.",
+    "tr": "Oturumdaki sesli görüşmeye aynı anda en fazla 5 kişi katılabilir. Görüşme, birebir aramalardaki gibi WebRTC ile kurulur: ses mümkünse doğrudan cihazlar arasında, gerekirse TURN aktarma sunucusu üzerinden şifreli olarak taşınır ve kaydedilmez. Bir oturum en fazla 12 saat sürer; sona erdiğinde sohbet, durum ve bağlantı verileri silinir, dosyaların son hâli katılımcıların kopya alabilmesi için 24 saat daha saklanır, sonra silinir. Oturum sahibinin projesine yalnızca kendi paylaştığı dosyaların son hâli kaydedilir. Hesabınızı sildiğinizde sahibi olduğunuz oturumlar hemen silinir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7882,9 +7883,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "11q6ie7g423": {
-    "en": "The provider receives: your question and the most recent messages of the same chat (up to about 28,000 characters in total, including actions proposed in agent mode and their results); the mode you chose (General, Code or Security) and your interface language; the path of the page you are on; notes selected from the Hanogt knowledge base; and the results of Hanogt's analysis tools for any link or code in your message. In the code editor, while the option to attach the open file is on (it is on by default and can be switched off with one tap), the open file's name, language and up to 12,000 characters of its content are also sent.",
-    "tr": "Sağlayıcıya şunlar gönderilir: sorunuz ve aynı sohbetteki son mesajlar (toplam en fazla yaklaşık 28.000 karakter; ajan modunda önerilen işlemler ve sonuçları dahil); seçtiğiniz mod (Genel, Kod veya Güvenlik) ve arayüz diliniz; bulunduğunuz sayfanın yolu; Hanogt bilgi tabanından seçilen notlar ve mesajınızdaki bağlantı veya kod için Hanogt analiz araçlarının sonuçları. Kod editöründeyken, açık dosyayı ekleme seçeneği açık kaldıkça (varsayılan olarak açıktır ve tek dokunuşla kapatılabilir) açık dosyanın adı, dili ve en fazla 12.000 karakterlik içeriği de gönderilir.",
+  "jueuy0osts": {
+    "en": "The provider receives: your question and the most recent messages of the same chat (up to about 28,000 characters in total, including actions proposed in agent mode and their results); the mode you chose (General, Code or Security) and your interface language; the personal instructions and preferences in your Hanogt AI settings (tone, answer length, answer language); the path of the page you are on; notes selected from the Hanogt knowledge base; and the results of Hanogt's analysis tools for any link or code in your message. In the code editor, while the option to attach the open file is on (it is on by default and can be switched off with one tap), the open file's name, language and, depending on your plan, up to 12,000 (Free), 24,000 (Plus) or 40,000 (Pro) characters of its content are also sent.",
+    "tr": "Sağlayıcıya şunlar gönderilir: sorunuz ve aynı sohbetteki son mesajlar (toplam en fazla yaklaşık 28.000 karakter; ajan modunda önerilen işlemler ve sonuçları dahil); seçtiğiniz mod (Genel, Kod veya Güvenlik) ve arayüz diliniz; Hanogt AI ayarlarınızdaki kişisel talimatlar ve tercihler (üslup, yanıt uzunluğu, yanıt dili); bulunduğunuz sayfanın yolu; Hanogt bilgi tabanından seçilen notlar ve mesajınızdaki bağlantı veya kod için Hanogt analiz araçlarının sonuçları. Kod editöründeyken, açık dosyayı ekleme seçeneği açık kaldıkça (varsayılan olarak açıktır ve tek dokunuşla kapatılabilir) açık dosyanın adı, dili ve planınıza göre en fazla 12.000 (Ücretsiz), 24.000 (Plus) veya 40.000 (Pro) karakterlik içeriği de gönderilir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7906,6 +7907,27 @@
   "eq3z1c7gfo": {
     "en": "For each connection, the provider, the name you gave the connection, the model you chose, the last four characters of the key, when it was created and last used, and the last error code if any are kept in a record on our server that browsers can't read. Your API key is stored encrypted with AES-256-GCM and is never shown to you again; only its last four characters are visible, and only those four characters are included when you download your data. When you remove the connection or delete your account, the key and the connection record are deleted. If your plan allows fewer connections than you have, the extra ones are switched off, not deleted.",
     "tr": "Her bağlantı için sağlayıcı, bağlantıya verdiğiniz ad, seçtiğiniz model, anahtarın son dört karakteri, oluşturulma ve son kullanım zamanı ile varsa son hata kodu sunucumuzdaki, tarayıcıların okuyamadığı bir kayıtta tutulur. API anahtarınız AES-256-GCM ile şifrelenerek saklanır ve size bir daha gösterilmez; yalnızca son dört karakteri görünür ve verilerinizi indirdiğinizde de yalnızca bu dört karakter yer alır. Bağlantıyı kaldırdığınızda ya da hesabınızı sildiğinizde anahtar ve bağlantı kaydı silinir. Planınızın izin verdiği bağlantı sayısı mevcut bağlantılarınızdan azsa fazla bağlantılar silinmez, kapatılır.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1hotlmtu3gf": {
+    "en": "Hanogt AI settings: the personal instructions (about you and about the style of answers), tone, answer length, answer language and chat defaults (default mode and model, attaching the open file, agent mode) you save on the [Hanogt AI settings](/ai/settings) page are stored in your account record, so the same settings apply on every device. Your instructions and preferences are passed to the language model provider with every message you send while signed in; they are not added to Hanogt AI API requests. You can change or delete your settings at any time; they are included in your account data export and deleted when you delete your account. The “Delete chats when I sign out” setting and the choices you make on this device (for example the selected model) are kept only in your browser.",
+    "tr": "Hanogt AI ayarları: [Hanogt AI ayarları](/ai/settings) sayfasında kaydettiğiniz kişisel talimatlar (kendiniz hakkında ve yanıtların tarzı için), üslup, yanıt uzunluğu, yanıt dili ve sohbet varsayılanları (varsayılan mod ve model, açık dosyanın eklenmesi, ajan modu) hesap kaydınızda saklanır; böylece her cihazda aynı ayarlar kullanılır. Talimatlarınız ve tercihleriniz, giriş yapmışken gönderdiğiniz her mesajla birlikte dil modeli sağlayıcısına iletilir; Hanogt AI API isteklerine eklenmez. Ayarlarınızı istediğiniz zaman değiştirebilir veya silebilirsiniz; hesap verilerinizin dışa aktarımında yer alırlar ve hesabınızı sildiğinizde silinirler. “Çıkışta sohbetleri sil” ayarı ve bu cihazdaki seçimleriniz (ör. seçili model) yalnızca tarayıcınızda tutulur.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "jz94dmm1r1": {
+    "en": "Hanogt AI API: the API keys you create on the Plus and Pro plans are not stored themselves; a key is shown to you only once, when it is created. On our server, in records browsers can't read, we keep the key's SHA-256 digest, the name you gave it, its first and last few characters, when it was created and when it was last used (updated at most every ten minutes). Requests made with a key are passed to the language model provider, as in the chat, to generate answers; your e-mail address is not passed on, and the content of requests and answers is not stored on our servers or used to train models. To apply your quota we keep per-minute and 24-hour request counters linked to your account, and to prevent abuse a counter derived from the IP address the request came from. When you revoke a key or delete your account, the key records are deleted; in case of abuse, staff can see how many keys you have and revoke all of them. When you download your data, it includes the keys' names, first and last characters and dates, never a key or its digest.",
+    "tr": "Hanogt AI API: Plus ve Pro planlarında oluşturduğunuz API anahtarlarının kendisi saklanmaz; anahtar yalnızca oluşturulduğunda size bir kez gösterilir. Sunucumuzda, tarayıcıların okuyamadığı kayıtlarda anahtarın SHA-256 özeti, ona verdiğiniz ad, ilk ve son birkaç karakteri, oluşturulma zamanı ve en fazla on dakikada bir güncellenen son kullanım zamanı tutulur. Anahtarla gelen istekler, yanıt üretmek için sohbetteki gibi dil modeli sağlayıcısına iletilir; e-posta adresiniz iletilmez, istek ve yanıt içerikleri sunucularımızda saklanmaz ve model eğitmek için kullanılmaz. Kotanızı uygulamak için hesabınıza bağlı dakikalık ve 24 saatlik istek sayaçları, kötüye kullanımı önlemek için de isteğin geldiği IP adresinden türetilen bir sayaç tutulur. Anahtarı iptal ettiğinizde veya hesabınızı sildiğinizde anahtar kayıtları silinir; ekip, kötüye kullanım hâlinde anahtarlarınızın sayısını görebilir ve hepsini iptal edebilir. Verilerinizi indirdiğinizde anahtarların adları, ilk ve son karakterleri ve tarihleri yer alır, anahtarın kendisi veya özeti yer almaz.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2ch1mazc97w": {
+    "en": "Dictation and answers read aloud (early access): these features use your browser's speech recognition and speech synthesis services; your voice and the text read aloud are not sent to Hanogt. When you dictate, the browser writes the recognised text into the message box; the text is processed like any other message only when you send it. Your browser may send your voice, for speech recognition, and for some voices the text to be read, to its own service provider's servers (for example Google in Chrome, Apple in Safari); this processing is governed by the terms of your browser and that provider. Microphone permission is requested by your browser and can be withdrawn at any time in its settings.",
+    "tr": "Sesle yazma ve sesli dinleme (erken erişim): bu özellikler tarayıcınızın konuşma tanıma ve konuşma sentezi hizmetlerini kullanır; sesiniz ve okunan metin Hanogt'a gönderilmez. Sesle yazdığınızda tarayıcı, tanınan metni mesaj kutusuna yazar; metin ancak siz gönderdiğinizde diğer mesajlar gibi işlenir. Kullandığınız tarayıcı konuşma tanıma için sesinizi, bazı seslerde okunacak metni kendi hizmet sağlayıcısının (ör. Chrome'da Google, Safari'de Apple) sunucularına gönderebilir; bu işleme, tarayıcınızın ve o sağlayıcının koşullarına tabidir. Mikrofon izni tarayıcınız tarafından istenir ve istediğiniz zaman tarayıcı ayarlarından geri alınabilir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8247,9 +8269,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "bca4i7xwkx": {
-    "en": "When you create a support ticket on the [Feedback & FAQ](/feedback) page, we save with your account, together with your display name and avatar: the ticket's category (“Complaint”, “Request”, “Security vulnerability”, “Unban request”, “Question” or “Feedback”), title and description; for complaints, the subject, user name and content link you optionally give; for unban requests, what you were banned from and the group's name; for security reports, the severity you choose; and, if you tick “add technical details”, the identification string your browser sends (user agent) and the page you opened the form from. The conversation and the ticket's status are stored too; replies from staff are shown to you under the name “Hanogt Team”. An appeal sent for a suspended account with the appeal form on the sign-in page is saved the same way, as a ticket in the “Unban request” category linked to the account. Tickets opened before these categories are kept as they are, with their old category and the steps and page address written in earlier bug reports.",
-    "tr": "[Geri Bildirim ve SSS](/feedback) sayfasından destek talebi oluşturduğunuzda talebin kategorisi (“Şikayet”, “İstek”, “Güvenlik Açığı”, “Ban Kaldırma İsteği”, “Soru” veya “Geri Bildirim”), başlığı ve açıklaması; şikayetlerde isteğe bağlı olarak belirttiğiniz konu, kullanıcı adı ve içerik bağlantısı, ban kaldırma isteklerinde neyden yasaklandığınız ve grubun adı, güvenlik bildirimlerinde seçtiğiniz önem derecesi; “teknik bilgileri ekle” seçeneğini işaretlerseniz tarayıcınızın kendini tanıttığı bilgi (user-agent) ve formu açtığınız sayfa, görünen adınız ve avatarınızla birlikte hesabınıza bağlı olarak kaydedilir. Yazışmalar ve talebin durumu da saklanır; ekibin yanıtları size “Hanogt Ekibi” adıyla gösterilir. Askıya alınmış bir hesap için giriş sayfasındaki itiraz formuyla gönderilen itiraz da aynı şekilde, hesaba bağlı ve “Ban Kaldırma İsteği” kategorisinde bir talep olarak kaydedilir. Bu kategorilerden önce açılan talepler eski kategorileriyle, önceki hata bildirimlerinde yazılan adımlar ve sayfa adresiyle birlikte olduğu gibi saklanır.",
+  "jye6wxrdlr": {
+    "en": "When you create a support ticket on the [Feedback & FAQ](/feedback) page, we save with your account, together with your display name and avatar: the ticket's category (“Complaint”, “Request”, “Security vulnerability”, “Unban request”, “Question” or “Feedback”), title and description; for complaints, the subject, user name and content link you optionally give; for unban requests, what you were banned from and the group's name; for security reports, the severity you choose; and, if you tick “add technical details”, the identification string your browser sends (user agent) and the page you opened the form from. Your plan at the time (Free, Plus or Pro) is added to the ticket too: Plus and Pro tickets open with high priority and Pro tickets are listed before Plus tickets in the team's inbox; if you reply to the ticket after upgrading, the recorded plan is updated. The conversation and the ticket's status are stored too; replies from staff are shown to you under the name “Hanogt Team”. An appeal sent for a suspended account with the appeal form on the sign-in page is saved the same way, as a ticket in the “Unban request” category linked to the account. Tickets opened before these categories are kept as they are, with their old category and the steps and page address written in earlier bug reports.",
+    "tr": "[Geri Bildirim ve SSS](/feedback) sayfasından destek talebi oluşturduğunuzda talebin kategorisi (“Şikayet”, “İstek”, “Güvenlik Açığı”, “Ban Kaldırma İsteği”, “Soru” veya “Geri Bildirim”), başlığı ve açıklaması; şikayetlerde isteğe bağlı olarak belirttiğiniz konu, kullanıcı adı ve içerik bağlantısı, ban kaldırma isteklerinde neyden yasaklandığınız ve grubun adı, güvenlik bildirimlerinde seçtiğiniz önem derecesi; “teknik bilgileri ekle” seçeneğini işaretlerseniz tarayıcınızın kendini tanıttığı bilgi (user-agent) ve formu açtığınız sayfa, görünen adınız ve avatarınızla birlikte hesabınıza bağlı olarak kaydedilir. Talebe o andaki planınız (Ücretsiz, Plus veya Pro) da eklenir: Plus ve Pro talepleri yüksek öncelikle açılır ve ekip kutusunda Pro talepleri Plus taleplerinden önce sıralanır; planınızı yükselttikten sonra talebe yanıt yazarsanız kayıtlı plan güncellenir. Yazışmalar ve talebin durumu da saklanır; ekibin yanıtları size “Hanogt Ekibi” adıyla gösterilir. Askıya alınmış bir hesap için giriş sayfasındaki itiraz formuyla gönderilen itiraz da aynı şekilde, hesaba bağlı ve “Ban Kaldırma İsteği” kategorisinde bir talep olarak kaydedilir. Bu kategorilerden önce açılan talepler eski kategorileriyle, önceki hata bildirimlerinde yazılan adımlar ve sayfa adresiyle birlikte olduğu gibi saklanır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8282,9 +8304,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1mh1x7dgk9d": {
-    "en": "Your plan (Free, Plus or Pro) sets your Hanogt AI message limits, how many cloud projects you can create, how many AI connections of your own you can add and the priority of your support tickets. If the Hanogt team assigns you a plan by hand, the plan's name, its status (active or blocked), its end date, the team's internal note, the staff member who assigned it and any extra Hanogt AI quota you were given are kept in your subscription record on our server. The record is processed to provide the plan's benefits on the legal basis of performing the contract. For paid subscriptions and payments, see [Payments and subscriptions](/privacy-policy#payments).",
-    "tr": "Planınız (Ücretsiz, Plus veya Pro), Hanogt AI mesaj sınırlarını, oluşturabileceğiniz bulut proje sayısını, kendi yapay zekâ bağlantılarınızın sayısını ve destek taleplerinizin önceliğini belirler. Hanogt ekibi size elle bir plan tanımlarsa planın adı, durumu (etkin veya engelli), bitiş tarihi, ekibin iç notu, tanımlayan ekip üyesi ve varsa size verilen ek Hanogt AI hakkı sunucudaki abonelik kaydınızda tutulur. Bu kayıt, planın avantajlarını uygulamak için sözleşmenin ifası hukuki sebebine dayanılarak işlenir. Ücretli abonelikler ve ödemeler için [Ödemeler ve abonelikler](/privacy-policy#payments) bölümüne bakın.",
+  "nraup0qyg9": {
+    "en": "Your plan (Free, Plus or Pro) sets your Hanogt AI message limits and answer length, how many cloud projects and groups you can create, how many people can join your team editing sessions, how many AI connections of your own and Hanogt AI API keys you can have, the priority of your support tickets and early access. If the Hanogt team assigns you a plan by hand, the plan's name, its status (active or blocked), its end date, the team's internal note, the staff member who assigned it and any extra Hanogt AI quota you were given are kept in your subscription record on our server. The record is processed to provide the plan's benefits on the legal basis of performing the contract. For paid subscriptions and payments, see [Payments and subscriptions](/privacy-policy#payments).",
+    "tr": "Planınız (Ücretsiz, Plus veya Pro); Hanogt AI mesaj sınırlarını ve yanıt uzunluğunu, oluşturabileceğiniz bulut proje ve grup sayısını, ekiple düzenleme oturumlarınızın kişi sınırını, kendi yapay zekâ bağlantılarınızın ve Hanogt AI API anahtarlarınızın sayısını, destek taleplerinizin önceliğini ve erken erişimi belirler. Hanogt ekibi size elle bir plan tanımlarsa planın adı, durumu (etkin veya engelli), bitiş tarihi, ekibin iç notu, tanımlayan ekip üyesi ve varsa size verilen ek Hanogt AI hakkı sunucudaki abonelik kaydınızda tutulur. Bu kayıt, planın avantajlarını uygulamak için sözleşmenin ifası hukuki sebebine dayanılarak işlenir. Ücretli abonelikler ve ödemeler için [Ödemeler ve abonelikler](/privacy-policy#payments) bölümüne bakın.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1iidel51lzn": {
+    "en": "Plan badge: while you have Plus or Pro, your plan's badge is shown on your public profile and can be seen by signed-in users who open your profile (the profile card, the pop-out card and the direct message side panel). The badge is written to your public profile record only by our server, with your plan and until when at the latest it is shown, and it isn't shown once your plan ends. You can hide the badge, and show it again, at any time on the Plans page or in Account Settings › Profile; your choice is kept in your subscription record. If staff switch off your plan benefits, the badge isn't shown either.",
+    "tr": "Plan rozeti: Plus veya Pro planınız varken herkese açık profilinizde planınızın rozeti gösterilir ve profilinizi açan giriş yapmış kullanıcılar (profil kartı, açılır kart, direkt mesaj yan paneli) tarafından görülebilir. Rozet, planınız ve en geç ne zamana kadar gösterileceğiyle birlikte herkese açık profil kaydınıza yalnızca sunucumuz tarafından yazılır; planınız sona erdiğinde gösterilmez. Rozeti Planlar sayfasından veya Hesap Ayarları › Profil'den istediğiniz zaman gizleyebilir ve yeniden gösterebilirsiniz; tercihiniz abonelik kaydınızda tutulur. Ekip plan avantajlarınızı kapatırsa rozet de gösterilmez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8576,16 +8605,37 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "12uykxckzth": {
-    "en": "Providing plans: plan benefits and limits, plans assigned by staff, waitlist notifications",
-    "tr": "Planların sunulması: plan avantajları ve sınırları, ekibin tanımladığı planlar, bekleme listesi bildirimi",
+  "1z7s5bxpif8": {
+    "en": "Providing plans: plan benefits and limits, the plan badge, plans assigned by staff, waitlist notifications",
+    "tr": "Planların sunulması: plan avantajları ve sınırları, plan rozeti, ekibin tanımladığı planlar, bekleme listesi bildirimi",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1dc8yz67rop": {
-    "en": "Subscription and waitlist records",
-    "tr": "Abonelik ve bekleme kayıtları",
+  "i7slk2c79x": {
+    "en": "Subscription and waitlist records, the plan badge on your public profile",
+    "tr": "Abonelik ve bekleme kayıtları, herkese açık profildeki plan rozeti",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "7nzs9tuo9v": {
+    "en": "The Hanogt AI API: managing keys, answering requests and applying quotas",
+    "tr": "Hanogt AI API'si: anahtarların yönetimi, isteklerin yanıtlanması ve kotaların uygulanması",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "21igd1an98v": {
+    "en": "API key records (the key's digest), API requests, request counters",
+    "tr": "API anahtar kayıtları (anahtarın özeti), API istekleri, istek sayaçları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2txca8mq65": {
+    "en": "Performing the contract (Art. 5(2)(c)); legitimate interest in preventing abuse (Art. 5(2)(f)); KVKK Art. 9 also applies to the transfer abroad",
+    "tr": "Sözleşmenin ifası (m.5/2-c); kötüye kullanımın önlenmesi için meşru menfaat (m.5/2-f); yurt dışına aktarım için ayrıca KVKK m.9",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8836,16 +8886,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "2by9el05c59": {
-    "en": "Hanogt AI messages and context, results of agent actions you allow",
-    "tr": "Hanogt AI mesajları ve bağlamı, izin verdiğiniz ajan işlemlerinin sonuçları",
+  "polxdo9f1w": {
+    "en": "Hanogt AI messages and context, your personal instructions and preferences, results of agent actions you allow; requests sent to the Hanogt AI API",
+    "tr": "Hanogt AI mesajları ve bağlamı, kişisel talimatlarınız ve tercihleriniz, izin verdiğiniz ajan işlemlerinin sonuçları; Hanogt AI API'sine gönderilen istekler",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1vjsgou4xfm": {
-    "en": "When you write to Hanogt AI while signed in",
-    "tr": "Giriş yapmışken Hanogt AI'a yazdığınızda",
+  "1jvx7nadk7f": {
+    "en": "When you write to Hanogt AI while signed in, or a request is sent to the Hanogt AI API with your key",
+    "tr": "Giriş yapmışken Hanogt AI'a yazdığınızda veya anahtarınızla Hanogt AI API'sine istek gönderildiğinde",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9299,6 +9349,34 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "1ss9oibz2cw": {
+    "en": "Hanogt AI settings (personal instructions and preferences)",
+    "tr": "Hanogt AI ayarları (kişisel talimatlar ve tercihler)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "69eg04bfob": {
+    "en": "Hanogt AI API key records (the key's digest, name, first and last characters and dates)",
+    "tr": "Hanogt AI API anahtar kayıtları (anahtarın özeti, adı, ilk ve son karakterleri, tarihleri)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "288emdus1o7": {
+    "en": "Until you revoke the key or delete your account",
+    "tr": "Anahtarı iptal edene veya hesabınızı silene kadar",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "12jok59ec9r": {
+    "en": "While your plan lasts; once the plan ends it isn't shown and is removed from the profile record at the next update. Deleted with the profile record when you delete your account",
+    "tr": "Planınız sürdükçe; plan sona erince gösterilmez ve ilk güncellemede profil kaydından silinir. Hesabınızı sildiğinizde profil kaydıyla birlikte silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "1ten3i3rjkg": {
     "en": "“Notify me” record",
     "tr": "“Açılınca haber ver” kaydı",
@@ -9728,6 +9806,55 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "4p5kmf8lfn": {
+    "en": "Hanogt AI choices on this device: agent mode, the selected model or connection, whether the sidebar is hidden and the “Delete chats when I sign out” setting",
+    "tr": "Bu cihazdaki Hanogt AI seçimleri: ajan modu, seçili model veya bağlantı, kenar çubuğunun gizli olması ve “Çıkışta sohbetleri sil” ayarı",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "27lf2e9795x": {
+    "en": "Permissions you gave agent actions for the rest of the session",
+    "tr": "Ajan işlemlerine oturumun geri kalanı için verdiğiniz izinler",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1kaardzdcs8": {
+    "en": "Telling your open tabs to refresh your limits when your plan changes; holds only a timestamp",
+    "tr": "Planınız değiştiğinde açık sekmelerinize sınırlarınızı yenilemelerini bildirmek; yalnızca bir zaman damgası içerir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "181trcj7yzl": {
+    "en": "Until you delete it; overwritten on every change",
+    "tr": "Siz silene kadar; her değişiklikte üzerine yazılır",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "cv7zyxuo45": {
+    "en": "Reading your subscription again when you come back from the Paddle customer portal; holds only a timestamp",
+    "tr": "Paddle müşteri portalından döndüğünüzde aboneliğinizi yeniden okumak; yalnızca bir zaman damgası içerir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "91uk4zm1ws": {
+    "en": "Not showing a cloud connection warning you dismissed again in this tab, and remembering that the database access rules were checked for your account in this session (contains your e-mail address)",
+    "tr": "Kapattığınız bulut bağlantısı uyarısını bu sekmede yeniden göstermemek ve veritabanı erişim kurallarının bu oturumda hesabınız için denetlendiğini hatırlamak (e-posta adresinizi içerir)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "wf2ufsuh3l": {
+    "en": "Your reading progress in the guide",
+    "tr": "Rehberdeki okuma ilerlemeniz",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "18iyrhm9ehg": {
     "en": "Your “Read later” list",
     "tr": "“Sonra oku” listesi",
@@ -9749,9 +9876,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "26gg4vsifyg": {
-    "en": "Game projects created without signing in, and the engine layout",
-    "tr": "Giriş yapmadan oluşturulan oyun projeleri ve motor düzeni",
+  "a4uw0m4lmw": {
+    "en": "Game projects created without signing in, the engine layout and snapping settings",
+    "tr": "Giriş yapmadan oluşturulan oyun projeleri, motor düzeni ve yakalama (snap) ayarları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -12568,6 +12695,13 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "1ln1cls9kal": {
+    "en": "The personal instructions you write and the preferences you choose in the [Hanogt AI settings](/ai/settings) (for example tone, answer length and answer language) are passed to the language model with every message you send while signed in. Instructions can't change Hanogt AI's rules, identity or safety limits; don't put passwords, secret keys or other people's personal data in them.",
+    "tr": "[Hanogt AI ayarlarında](/ai/settings) yazdığınız kişisel talimatlar ve seçtiğiniz tercihler (ör. üslup, yanıt uzunluğu ve yanıt dili) giriş yapmışken her mesajınızla birlikte dil modeline iletilir. Talimatlar Hanogt AI'ın kurallarını, kimliğini ve güvenlik sınırlarını değiştiremez; talimatlarınıza parola, gizli anahtar veya başkalarına ait kişisel veri yazmayın.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
   "26dqb3aqslo": {
     "en": "Usage limits depend on your plan: 12 messages a minute and 250 a day on Free, 20 a minute and 750 a day on Plus, and 30 a minute and 2,000 a day on Pro (see [Paid plans](/terms-of-use#paid-services)). When you reach a limit, the Core answers instead.",
     "tr": "Kullanım sınırları planınıza göre uygulanır: Ücretsiz planda dakikada 12 ve günde 250, Plus'ta dakikada 20 ve günde 750, Pro'da dakikada 30 ve günde 2.000 mesaj (bkz. [Ücretli planlar](/terms-of-use#paid-services)). Sınıra ulaştığınızda yanıtları Çekirdek verir.",
@@ -12578,6 +12712,64 @@
   "1bhr1la9m37": {
     "en": "Hanogt claims no rights in the replies Hanogt AI gives you that conflict with yours. However, similar replies may be generated for others, and whether AI output is protected by intellectual property law may be uncertain under the applicable law.",
     "tr": "Hanogt, Hanogt AI'ın size verdiği yanıtlar üzerinde sizinle çelişen bir hak iddia etmez. Ancak benzer yanıtlar başkalarına da üretilebilir ve yapay zekâ çıktılarının fikrî mülkiyet korumasından yararlanıp yararlanmadığı uygulanacak hukuka göre belirsiz olabilir.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "ibc3r1zkin": {
+    "en": "Hanogt AI API",
+    "tr": "Hanogt AI API",
+    "files": [
+      "src/app/terms-of-use/page.tsx",
+      "src/components/HanogtAI/AiApiPage.tsx",
+      "src/lib/features.ts"
+    ]
+  },
+  "iu3tgehhf5": {
+    "en": "On the Plus and Pro plans you can call Hanogt AI from your own apps, bots and scripts through an OpenAI-compatible API, with keys you create on the [API and connections](/ai/api) page. The rules in [Hanogt AI and AI output](/terms-of-use#hanogt-ai) apply to the API together with this section.",
+    "tr": "Plus ve Pro planlarında, [API ve bağlantılar](/ai/api) sayfasında oluşturduğunuz anahtarlarla Hanogt AI'ı kendi uygulamalarınızdan, botlarınızdan ve betiklerinizden OpenAI uyumlu bir API üzerinden çağırabilirsiniz. API'ye bu bölümle birlikte [Hanogt AI ve yapay zekâ çıktıları](/terms-of-use#hanogt-ai) bölümündeki kurallar da uygulanır.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "8ewwbrh82x": {
+    "en": "A key is shown only once, when it is created, and keeping it secret is your responsibility: don't put it in code that runs in a browser, in a mobile app or in a public repository, and don't share it. Every request made with a key counts as your request and comes out of your account's quota; if you think a key has leaked, revoke it at once.",
+    "tr": "Anahtar yalnızca oluşturulduğunda bir kez gösterilir ve onu gizli tutmak sizin sorumluluğunuzdadır: tarayıcıda çalışan koda, mobil uygulamaya veya herkese açık bir depoya koymayın ve başkalarıyla paylaşmayın. Bir anahtarla yapılan her istek sizin isteğiniz sayılır ve hesabınızın kotasından düşer; anahtarın sızdığını düşünüyorsanız onu hemen iptal edin.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "hty7xesiad": {
+    "en": "Requests are limited by your plan: 2 keys, 10 requests a minute and 250 in 24 hours on Plus; 5 keys, 30 requests a minute and 1,000 in 24 hours on Pro; answers can't be longer than your plan allows either. Requests over a limit are refused. You may not use more than one account, or share your key with others, to get around the limits.",
+    "tr": "İstekler planınızın sınırlarıyla kısıtlıdır: Plus'ta 2 anahtar, dakikada 10 ve 24 saatte 250 istek; Pro'da 5 anahtar, dakikada 30 ve 24 saatte 1.000 istek; yanıt uzunluğu da planınızın sınırını aşamaz. Sınıra ulaşıldığında istekler reddedilir. Sınırları aşmak için birden fazla hesap kullanamaz veya anahtarınızı başkalarıyla paylaşamazsınız.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "153ln6rxdsn": {
+    "en": "You may not resell or rent out access to the API or Hanogt AI's answers as a service, or offer them to others as your own API. You may publish your own app that uses Hanogt AI, but you are responsible for everything your app's users do with your key and for compliance with these Terms.",
+    "tr": "API'ye erişimi veya Hanogt AI'ın yanıtlarını bir hizmet olarak yeniden satamaz, kiralayamaz ya da kendi API'niz gibi başkalarına sunamazsınız. Hanogt AI'ı kullanan kendi uygulamanızı yayımlayabilirsiniz; ancak uygulamanızın kullanıcılarının bu anahtarla yaptırdığı her şeyden ve bu Şartlara uyulmasından siz sorumlusunuz.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1ds8u2fx6gv": {
+    "en": "System instructions you add to a request rank below Hanogt AI's rules; they can't change the rules, the identity or the safety limits.",
+    "tr": "İsteğe eklediğiniz sistem talimatları Hanogt AI'ın kurallarının altında kalır; kuralları, kimliği veya güvenlik sınırlarını değiştiremez.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "vnj54s80yi": {
+    "en": "In case of abuse, a security risk or a breach of these Terms, staff may revoke your keys or switch off your API access; we then tell you why and keep the appeal route open. We may change the API to improve it; if a change significantly reduces your plan's live benefits during a period you have paid for, the rule in [Subscriptions, renewal and prices](/terms-of-use#subscriptions) applies.",
+    "tr": "Kötüye kullanım, güvenlik riski veya bu Şartların ihlali hâlinde ekip anahtarlarınızı iptal edebilir veya API erişiminizi kapatabilir; bu durumda size gerekçesini bildirir ve itiraz yolunu açık tutarız. API'yi geliştirmek için değiştirebiliriz; bir değişiklik, ödediğiniz dönemde planınızın canlı avantajlarını önemli ölçüde azaltırsa [Abonelik, yenileme ve fiyatlar](/terms-of-use#subscriptions) bölümündeki kural uygulanır.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1ojeby1rlg3": {
+    "en": "API requests are passed to the language model provider to generate answers; the content of requests and answers is not stored on our servers. The details are in the [Privacy Policy](/privacy-policy#hanogt-ai).",
+    "tr": "API istekleri yanıt üretmek için dil modeli sağlayıcısına iletilir; istek ve yanıt içerikleri sunucularımızda saklanmaz. Ayrıntılar [Gizlilik Politikası](/privacy-policy#hanogt-ai)'ndadır.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12666,6 +12858,13 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "1d19frf5dre": {
+    "en": "longer Hanogt AI answers and more context: on Free, Plus and Pro respectively, up to 1,800, 3,000 and 4,000 tokens per answer; 12,000, 24,000 and 40,000 characters of the file open in the code editor; and personal instructions of up to 500, 1,500 and 3,000 characters each in the Hanogt AI settings;",
+    "tr": "Hanogt AI'da daha uzun yanıtlar ve daha fazla bağlam: Ücretsiz, Plus ve Pro planlarında sırasıyla yanıt başına en fazla 1.800, 3.000 ve 4.000 token; kod editöründe açık dosyanın 12.000, 24.000 ve 40.000 karakteri; Hanogt AI ayarlarında her biri 500, 1.500 ve 3.000 karakterlik kişisel talimatlar;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
   "16kjowm8qzj": {
     "en": "more cloud projects: 10 code and 10 game projects on Free, 40 code and 40 game projects on Plus, and no limit on the number on Pro (general technical limits such as file sizes still apply);",
     "tr": "daha fazla bulut projesi: Ücretsiz planda 10 kod ve 10 oyun projesi, Plus'ta 40 kod ve 40 oyun projesi, Pro'da sayı sınırı olmadan (dosya boyutu gibi genel teknik sınırlar saklıdır);",
@@ -12673,30 +12872,65 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "28g9cix78qh": {
-    "en": "connecting AI providers to Hanogt AI with your own API keys: 2 connections on Plus, 5 on Pro;",
-    "tr": "Hanogt AI'a kendi API anahtarınızla yapay zekâ sağlayıcısı bağlama: Plus'ta 2, Pro'da 5 bağlantı;",
+  "1h5swqr0hbq": {
+    "en": "creating and owning more Hanogt Social groups: 3 on Free, 10 on Plus and no limit on the number on Pro;",
+    "tr": "daha fazla Hanogt Social grubu açma ve yönetme: Ücretsiz planda 3, Plus'ta 10, Pro'da sayı sınırı olmadan;",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "150v8t2qv3i": {
-    "en": "your support tickets being queued with high priority; this is not a commitment to a specific response time.",
-    "tr": "destek taleplerinizin yüksek öncelikle sıraya alınması; bu, belirli bir yanıt süresi taahhüdü değildir.",
+  "v9umg5f7vw": {
+    "en": "team editing with more people: depending on the plan of the person who starts it, a session can have up to 2 (Free), 5 (Plus) or 30 (Pro) people, that person included; whatever the plan, up to 5 people at a time can join the session's voice call;",
+    "tr": "daha kalabalık ekiple düzenleme: bir oturuma, oturumu başlatan kişinin planına göre o kişi dahil en fazla 2 (Ücretsiz), 5 (Plus) veya 30 (Pro) kişi katılabilir; oturumdaki sesli görüşmeye plan ne olursa olsun aynı anda en fazla 5 kişi katılabilir;",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "2857vck4cmi": {
-    "en": "Features shown as “Planned” on the Plans page (for example a profile badge or early access to new features) are not offered yet and are not part of the benefits you buy; they will be announced when they are.",
-    "tr": "Planlar sayfasında “Planlanıyor” olarak gösterilen özellikler (ör. profil rozeti veya yeni özelliklere erken erişim) henüz sunulmaz ve satın aldığınız avantajlara dahil değildir; sunulduklarında duyurulur.",
+  "1te9kgbf5al": {
+    "en": "connecting AI providers to Hanogt AI with your own API keys: 2 connections with 30 messages a minute and 3,000 a day on Plus, and 5 connections with 60 messages a minute and 10,000 a day on Pro (the provider's charges are yours);",
+    "tr": "Hanogt AI'a kendi API anahtarınızla yapay zekâ sağlayıcısı bağlama: Plus'ta 2 bağlantı ile dakikada 30 ve günde 3.000 mesaj, Pro'da 5 bağlantı ile dakikada 60 ve günde 10.000 mesaj (sağlayıcının ücretleri size aittir);",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "1t9hjls6ae4": {
-    "en": "When you move to a lower plan or your subscription ends, your existing projects and connections aren't deleted: if you have more projects than the new plan allows, you can't create new ones, and AI connections over the limit are switched off.",
-    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz ve bağlantılarınız silinmez: yeni planın sınırından fazla projeniz varsa yeni proje oluşturamazsınız, sınırı aşan yapay zekâ bağlantılarınız ise kapatılır.",
+  "1io4yiycg7t": {
+    "en": "the [Hanogt AI API](/terms-of-use#ai-api): 2 keys with 10 requests a minute and 250 in 24 hours on Plus, and 5 keys with 30 requests a minute and 1,000 in 24 hours on Pro;",
+    "tr": "[Hanogt AI API](/terms-of-use#ai-api): Plus'ta 2 anahtar ile dakikada 10 ve 24 saatte 250 istek, Pro'da 5 anahtar ile dakikada 30 ve 24 saatte 1.000 istek;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "13owpovi4v8": {
+    "en": "a Plus or Pro badge on your public profile, which you can hide at any time;",
+    "tr": "herkese açık profilinizde Plus veya Pro rozeti; rozeti istediğiniz zaman gizleyebilirsiniz;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "13y4bsq6xgq": {
+    "en": "your support tickets being queued with high priority, with Pro tickets handled before Plus tickets; this is not a commitment to a specific response time;",
+    "tr": "destek taleplerinizin yüksek öncelikle sıraya alınması; Pro talepleri Plus taleplerinden önce ele alınır. Bu, belirli bir yanıt süresi taahhüdü değildir;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "292k02epdir": {
+    "en": "on Pro, [early access](/terms-of-use#early-access) to new features.",
+    "tr": "Pro'da yeni özelliklere [erken erişim](/terms-of-use#early-access).",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "f121rnnpxy": {
+    "en": "Daily limits are counted over 24 hours starting with your first message or request; you can see what is left and when the limit resets in the Hanogt AI tab and on the Plans page. A feature shown as “Planned” on the Plans page is not offered yet and is not part of the benefits you buy.",
+    "tr": "Günlük sınırlar, ilk mesajınızla veya isteğinizle başlayan 24 saatlik süre içinde sayılır; kalan hakkınızı ve sınırın ne zaman yenileneceğini Hanogt AI sekmesinde ve Planlar sayfasında görebilirsiniz. Planlar sayfasında “Planlanıyor” olarak gösterilen bir özellik henüz sunulmaz ve satın aldığınız avantajlara dahil değildir.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "191vf5d707a": {
+    "en": "When you move to a lower plan or your subscription ends, your existing projects, groups, connections, keys and settings aren't deleted: if you have more projects or groups than the new plan allows, you can't create new ones; AI connections over the limit are switched off; only as many of your Hanogt AI API keys as the new plan allows, the oldest ones, keep working (none on Free); only the part of your personal instructions within the new plan's limit is used; and the plan badge and early access end.",
+    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz, gruplarınız, bağlantılarınız, anahtarlarınız ve ayarlarınız silinmez: yeni planın sınırından fazla projeniz veya grubunuz varsa yenisini oluşturamazsınız; sınırı aşan yapay zekâ bağlantılarınız kapatılır; Hanogt AI API anahtarlarınızdan yalnızca yeni planın izin verdiği sayıda, en eski olanlar çalışmaya devam eder (Ücretsiz planda hiçbiri çalışmaz); kişisel talimatlarınızın yalnızca yeni planın sınırına kadar olan kısmı kullanılır; plan rozeti ve erken erişim sona erer.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12718,6 +12952,34 @@
   "1ubznu3bv1i": {
     "en": "If a plan is abused (for example by sharing the account with others or using automation to get around limits) or these Terms are seriously breached, staff may switch off plan benefits, paid ones included, and block new purchases. We then tell you why and keep the appeal route open; if the block turns out to be a mistake, the benefits are switched back on. While the benefits are switched off you can cancel your subscription; refund requests are assessed under the [Refund Policy](/refund-policy) and the law, and refunds are made through Paddle.",
     "tr": "Planın kötüye kullanılması (ör. hesabın başkalarıyla paylaşılması veya sınırları aşmak için otomasyon kullanılması) ya da bu Şartların ağır ihlali hâlinde ekip, ücretli olanlar dahil plan avantajlarını kullanıma kapatabilir ve yeni satın almaları engelleyebilir. Bu durumda size gerekçesini bildirir ve itiraz yolunu açık tutarız; kapatmanın hatalı olduğu anlaşılırsa avantajlar yeniden açılır. Avantajlar kapalıyken aboneliğinizi iptal edebilirsiniz; iade talepleri [İade Politikası](/refund-policy) ve kanun çerçevesinde değerlendirilir ve Paddle üzerinden yapılır.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "rvsa4k4cia": {
+    "en": "Early access and beta features",
+    "tr": "Erken erişim ve beta özellikleri",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "jl1y5tqa5b": {
+    "en": "We may offer some new features to Pro subscribers and the Hanogt team as early access before opening them to everyone. The feature in early access today is dictation and answers read aloud in Hanogt AI.",
+    "tr": "Bazı yeni özellikleri herkese açmadan önce Pro abonelerine ve Hanogt ekibine erken erişim olarak sunabiliriz. Bugün erken erişimdeki özellik, Hanogt AI'da sesle yazma ve yanıtları sesli dinlemedir.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "2e8mg5m1r6n": {
+    "en": "Features in early access are trials (beta): they may work incorrectly or incompletely, and they may change, open to everyone or be removed. Early access is not a promise of permanent access to a particular feature but a chance to try new features before everyone else; a feature opening to everyone or being removed doesn't change Pro's other benefits.",
+    "tr": "Erken erişimdeki özellikler deneme (beta) niteliğindedir: hatalı veya eksik çalışabilir, değiştirilebilir, herkese açılabilir veya kaldırılabilir. Erken erişim, belirli bir özelliğe süresiz erişim taahhüdü değil, yeni özellikleri herkesten önce deneme imkânıdır; bir özelliğin herkese açılması veya kaldırılması Pro planının diğer avantajlarını değiştirmez.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1xka1h7dfrl": {
+    "en": "Dictation and read-aloud use your browser's speech recognition and speech synthesis; if your browser doesn't support them, the buttons aren't shown. Dictated text stays only in the message box until you send it; check the recognised text before sending. The details are in the [Privacy Policy](/privacy-policy#hanogt-ai).",
+    "tr": "Sesle yazma ve sesli dinleme, tarayıcınızın konuşma tanıma ve konuşma sentezi özelliklerini kullanır; tarayıcınız bunları desteklemiyorsa düğmeler gösterilmez. Sesle yazdığınız metin siz gönderene kadar yalnızca mesaj kutusunda kalır; tanınan metni göndermeden önce kontrol edin. Ayrıntılar [Gizlilik Politikası](/privacy-policy#hanogt-ai)'ndadır.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -14361,6 +14623,20 @@
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
+  "1zcm9iifwvq": {
+    "en": "Outside access to the Hanogt AI API",
+    "tr": "Hanogt AI API'sine dışarıdan erişim",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "1w8cjsd85de": {
+    "en": "Apps, bots and scripts call /api/v1 without a browser; Cloudflare mustn't stop them with a challenge page.",
+    "tr": "Uygulamalar, botlar ve betikler /api/v1'e tarayıcı olmadan bağlanır; Cloudflare bu istekleri doğrulama sayfasıyla durdurmamalı.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
   "1iltrvik2p": {
     "en": "Voice call relay (TURN)",
     "tr": "Sesli arama aktarım sunucusu (TURN)",
@@ -14872,6 +15148,41 @@
       "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
+  "1g1bc9cfeu6": {
+    "en": "The API can be reached from outside: a request without a key got the site's own 401 answer, as expected.",
+    "tr": "API dışarıdan erişilebilir: anahtarsız bir istek, beklendiği gibi sitenin kendi 401 yanıtını aldı.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "1oesrvu807r": {
+    "en": "Cloudflare shows clients without a browser a challenge or block page (HTTP {status}); API requests don't get through to apps.",
+    "tr": "Cloudflare, tarayıcı olmayan istemcilere doğrulama ya da engelleme sayfası gösteriyor (HTTP {status}); API istekleri uygulamalara ulaşmıyor.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "143a4duplcj": {
+    "en": "The API request got another answer instead of the site's (HTTP {status}); a redirect or a security rule may be in the way.",
+    "tr": "API isteği sitenin yanıtı yerine başka bir yanıt aldı (HTTP {status}); bir yönlendirme ya da güvenlik kuralı araya giriyor olabilir.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "mk3m6xu9v1": {
+    "en": "The server couldn't reach the site's own address; check again in a few minutes.",
+    "tr": "Sunucu sitenin kendi adresine ulaşamadı; birkaç dakika sonra yeniden denetleyin.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "7vol1mru1g": {
+    "en": "This check doesn't apply to a local or non-HTTPS address.",
+    "tr": "Yerel ya da HTTPS olmayan bir adreste bu denetim yapılmaz.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
   "xmf85xougd": {
     "en": "NEXT_PUBLIC_ variables are baked in at build time: redeploy via Vercel → Deployments → latest deployment → Redeploy.",
     "tr": "NEXT_PUBLIC_ değişkenleri derleme sırasında pakete yazılır: Vercel → Deployments → son dağıtım → Redeploy ile yeniden dağıtın.",
@@ -15330,6 +15641,41 @@
   "6b21tx8lrz": {
     "en": "With your own coturn server use TURN_SERVER_URL and TURN_SHARED_SECRET instead; with a service that gives a fixed username use TURN_SERVER_URL, TURN_USERNAME and TURN_CREDENTIAL.",
     "tr": "Kendi coturn sunucunuz varsa bunun yerine TURN_SERVER_URL ve TURN_SHARED_SECRET; sabit kullanıcı adı veren bir hizmette TURN_SERVER_URL, TURN_USERNAME ve TURN_CREDENTIAL girin.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "1r5anjkdaf2": {
+    "en": "Let API requests through Cloudflare",
+    "tr": "Cloudflare'de API isteklerini serbest bırakın",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "gms6zrsb0d": {
+    "en": "dash.cloudflare.com → your domain → Security → Bots: the free plan's “Bot Fight Mode” can't be skipped for one path; if it is on, turn it off. “Super Bot Fight Mode” on paid plans can stay on.",
+    "tr": "dash.cloudflare.com → alan adınız → Security → Bots: ücretsiz plandaki “Bot Fight Mode” belirli bir yol için atlanamaz; açıksa kapatın. Ücretli planlardaki “Super Bot Fight Mode” açık kalabilir.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "1qpk6pzkobv": {
+    "en": "Security → WAF → Custom rules → Create rule: field “URI Path”, operator “starts with”, value /api/v1/; action “Skip”. Skip: all remaining custom rules, rate limiting rules, managed rules, Super Bot Fight Mode rules and Browser Integrity Check. Move the rule to the top of the list.",
+    "tr": "Security → WAF → Custom rules → Create rule: alan “URI Path”, işleç “starts with”, değer /api/v1/; eylem “Skip”. Atlanacaklar: tüm kalan özel kurallar, hız sınırı kuralları, yönetilen kurallar, Super Bot Fight Mode kuralları ve Browser Integrity Check. Kuralı listenin en üstüne taşıyın.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "bfmh8gnsdv": {
+    "en": "If /api/paddle/webhook needs the same rule for payment notifications, both can share one rule (“starts with /api/v1/” or “equals /api/paddle/webhook”). The API applies its own key checks and rate limits.",
+    "tr": "Ödeme bildirimleri için /api/paddle/webhook'a aynı kural gerekiyorsa ikisini tek kuralda birleştirebilirsiniz (“starts with /api/v1/” veya “equals /api/paddle/webhook”). API kendi anahtar doğrulamasını ve hız sınırlarını uygular.",
+    "files": [
+      "src/components/Admin/CloudHealthSection.tsx"
+    ]
+  },
+  "9wet99z6d4": {
+    "en": "Save, then press “Check again”.",
+    "tr": "Kaydedip “Yeniden denetle”ye basın.",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx"
     ]
@@ -22151,6 +22497,55 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "27i2r3etzg8": {
+    "en": "Dictate, and listen to answers (early access)",
+    "tr": "Sesle yaz, yanıtları dinle (erken erişim)",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1z294z5b0p4": {
+    "en": "On Pro, dictate to Hanogt AI and listen to its answers; the developer API and plan badges are now open to everyone.",
+    "tr": "Pro'da Hanogt AI'a sesle yaz ve yanıtları sesli dinle; geliştirici API'si ve plan rozetleri artık herkese açık.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2080a6mexie": {
+    "en": "Speak into the microphone in the message box and your words are typed for you; fix them before sending.",
+    "tr": "Mesaj kutusundaki mikrofona konuş, sözlerin kutuya yazılsın; göndermeden önce düzeltebilirsin.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "hgpo6jbd8a": {
+    "en": "Press the speaker under an answer to hear it; code blocks aren't read line by line.",
+    "tr": "Bir yanıtın altındaki hoparlöre bas, Hanogt AI yanıtı okusun; kod blokları satır satır okunmaz.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1ngyg7537k": {
+    "en": "Voice runs on your browser's speech service; your voice isn't sent to Hanogt.",
+    "tr": "Ses tarayıcının konuşma hizmetiyle çalışır; sesin Hanogt'a gönderilmez.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "151f4bmysra": {
+    "en": "The Hanogt AI API and profile badges are now open to everyone on Plus and Pro.",
+    "tr": "Hanogt AI API'si ve profil rozeti Plus ve Pro'da herkese açıldı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "9q3nm6j9cg": {
+    "en": "Terms of Use and Privacy Policy 4.5: plan benefits, API rules and early access.",
+    "tr": "Kullanım Şartları ve Gizlilik Politikası 4.5: plan hakları, API kuralları ve erken erişim.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "266pe2sxky2": {
@@ -32889,14 +33284,6 @@
       "src/components/HanogtAI/AiApiPage.tsx"
     ]
   },
-  "ibc3r1zkin": {
-    "en": "Hanogt AI API",
-    "tr": "Hanogt AI API",
-    "files": [
-      "src/components/HanogtAI/AiApiPage.tsx",
-      "src/lib/features.ts"
-    ]
-  },
   "ndpdhasmyv": {
     "en": "Your own keys",
     "tr": "Kendi anahtarların",
@@ -33576,9 +33963,9 @@
       "src/components/HanogtAI/ApiKeysPanel.tsx"
     ]
   },
-  "1dwzlle9ktc": {
-    "en": "The Hanogt AI API is opening gradually and isn't on for your account yet. You can read the docs already.",
-    "tr": "Hanogt AI API'si kademeli olarak açılıyor; hesabında henüz açık değil. Belgeleri şimdiden inceleyebilirsin.",
+  "1gtd6cvvy57": {
+    "en": "The Hanogt AI API isn't on for your account right now. You can still read the docs.",
+    "tr": "Hanogt AI API'si şu an hesabında açık değil. Belgeleri yine de inceleyebilirsin.",
     "files": [
       "src/components/HanogtAI/ApiKeysPanel.tsx"
     ]
@@ -34329,6 +34716,48 @@
       "src/components/HanogtAI/ChatComposer.tsx"
     ]
   },
+  "ylq328hxx7": {
+    "en": "Dictate (early access)",
+    "tr": "Sesle yaz (erken erişim)",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "1ty4rz6fc2h": {
+    "en": "Stop listening",
+    "tr": "Dinlemeyi bitir",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "1vh8xd6w8va": {
+    "en": "Dictation uses your browser's speech recognition; the audio isn't sent to Hanogt.",
+    "tr": "Sesle yazma tarayıcının konuşma tanıma özelliğini kullanır; ses Hanogt'a gönderilmez.",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "1y0c030z2fq": {
+    "en": "Listening… speak; it stops by itself when you finish.",
+    "tr": "Dinliyorum… konuş, bitince kendiliğinden durur.",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "8cyd1q0ynf": {
+    "en": "Microphone access was denied. You can allow it from the browser's address bar.",
+    "tr": "Mikrofon izni verilmedi. Tarayıcının adres çubuğundan izin verebilirsin.",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "1hoalidyffy": {
+    "en": "Dictation didn't work just now. Try again in a moment.",
+    "tr": "Sesle yazma şu an çalışmadı. Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
   "ggqcyz9fk7": {
     "en": "Typing",
     "tr": "Yazıyor",
@@ -34353,6 +34782,27 @@
   "12mw325soxq": {
     "en": "Regenerate",
     "tr": "Yeniden oluştur",
+    "files": [
+      "src/components/HanogtAI/ChatMessage.tsx"
+    ]
+  },
+  "1wr9gmjpdmh": {
+    "en": "Read aloud (early access)",
+    "tr": "Sesli oku (erken erişim)",
+    "files": [
+      "src/components/HanogtAI/ChatMessage.tsx"
+    ]
+  },
+  "1chuoqz7b0o": {
+    "en": "Stop reading",
+    "tr": "Okumayı durdur",
+    "files": [
+      "src/components/HanogtAI/ChatMessage.tsx"
+    ]
+  },
+  "khevrgidt0": {
+    "en": "Code block.",
+    "tr": "Kod bloğu.",
     "files": [
       "src/components/HanogtAI/ChatMessage.tsx"
     ]
@@ -36359,9 +36809,9 @@
       "src/components/Plans/PlanBadgeSetting.tsx"
     ]
   },
-  "1clhlxnqis1": {
-    "en": "Profile badges are opening gradually; they aren't on for your account yet.",
-    "tr": "Profil rozetleri kademeli olarak açılıyor; hesabında henüz açık değil.",
+  "2bw5dpfamj6": {
+    "en": "Profile badges aren't on for your account right now; your badge shows up here once the team turns them on.",
+    "tr": "Profil rozetleri şu an hesabında açık değil; ekip açtığında rozetin burada görünür.",
     "files": [
       "src/components/Plans/PlanBadgeSetting.tsx"
     ]
@@ -40390,9 +40840,23 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "v22d1s1k2i": {
-    "en": "You can call Hanogt AI from your own app (a bot, a site, a script) through an **OpenAI-compatible** API. Create a key on the [API and connections](/ai/api) page (the 🔑 button above the chat); keys start with `hnk_` and are shown **only once**, and we keep only a hash.\n• **Address:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI's official libraries work by changing the base URL. Streaming is supported; tool calls and images aren't.\n• **Plans:** {plusKeys} keys on Plus with {plusMinute} requests a minute and {plusDay} in 24 hours; {proKeys} keys on Pro with {proMinute} a minute and {proDay} in 24 hours. API requests are counted separately from chat messages.\n• **Safety:** don't use your key in a browser, a mobile app or a public repository; if it leaks, revoke it on the page at once. Other sites can't call the API from a browser.\n• On the same page's **Your own keys** tab you connect providers such as OpenAI, Claude or Gemini to the Hanogt AI chat with your own key.\nThe team is opening the API gradually; if it isn't on for your account yet, the page says so.",
-    "tr": "Hanogt AI'ı kendi uygulamandan (bot, site, betik) **OpenAI uyumlu** bir API ile çağırabilirsin. [API ve bağlantılar](/ai/api) sayfasından (sohbetin üstündeki 🔑 düğmesi) anahtar oluşturursun; anahtar `hnk_` ile başlar ve **yalnızca bir kez** gösterilir, biz yalnızca özetini saklarız.\n• **Adres:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI'ın resmî kütüphaneleri temel adresi değiştirerek çalışır. Akışlı yanıt (stream) desteklenir; araç çağrısı (tools) ve görseller desteklenmez.\n• **Planlar:** Plus'ta {plusKeys} anahtar, dakikada {plusMinute} ve 24 saatte {plusDay} istek; Pro'da {proKeys} anahtar, dakikada {proMinute} ve 24 saatte {proDay} istek. API istekleri sohbet mesajlarından ayrı sayılır.\n• **Güvenlik:** anahtarını tarayıcıda, mobil uygulamada ya da herkese açık depoda kullanma; sızdıysa sayfadan hemen iptal et. Başka sitelerin tarayıcıdan çağırmasına izin verilmez.\n• Aynı sayfanın **Kendi anahtarların** sekmesinde OpenAI, Claude, Gemini gibi sağlayıcıları kendi anahtarınla Hanogt AI sohbetine bağlarsın.\nAPI, ekip tarafından kademeli olarak açılıyor; hesabında henüz açık değilse sayfa bunu söyler.",
+  "j3ic9072x3": {
+    "en": "You can call Hanogt AI from your own app (a bot, a site, a script) through an **OpenAI-compatible** API. Create a key on the [API and connections](/ai/api) page (the 🔑 button above the chat); keys start with `hnk_` and are shown **only once**, and we keep only a hash.\n• **Address:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI's official libraries work by changing the base URL. Streaming is supported; tool calls and images aren't.\n• **Plans:** {plusKeys} keys on Plus with {plusMinute} requests a minute and {plusDay} in 24 hours; {proKeys} keys on Pro with {proMinute} a minute and {proDay} in 24 hours. API requests are counted separately from chat messages.\n• **Safety:** don't use your key in a browser, a mobile app or a public repository; if it leaks, revoke it on the page at once. Other sites can't call the API from a browser.\n• On the same page's **Your own keys** tab you connect providers such as OpenAI, Claude or Gemini to the Hanogt AI chat with your own key.\nThe API is open on the Plus and Pro plans; if the team switches it off for an account or for everyone, the page says so.",
+    "tr": "Hanogt AI'ı kendi uygulamandan (bot, site, betik) **OpenAI uyumlu** bir API ile çağırabilirsin. [API ve bağlantılar](/ai/api) sayfasından (sohbetin üstündeki 🔑 düğmesi) anahtar oluşturursun; anahtar `hnk_` ile başlar ve **yalnızca bir kez** gösterilir, biz yalnızca özetini saklarız.\n• **Adres:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI'ın resmî kütüphaneleri temel adresi değiştirerek çalışır. Akışlı yanıt (stream) desteklenir; araç çağrısı (tools) ve görseller desteklenmez.\n• **Planlar:** Plus'ta {plusKeys} anahtar, dakikada {plusMinute} ve 24 saatte {plusDay} istek; Pro'da {proKeys} anahtar, dakikada {proMinute} ve 24 saatte {proDay} istek. API istekleri sohbet mesajlarından ayrı sayılır.\n• **Güvenlik:** anahtarını tarayıcıda, mobil uygulamada ya da herkese açık depoda kullanma; sızdıysa sayfadan hemen iptal et. Başka sitelerin tarayıcıdan çağırmasına izin verilmez.\n• Aynı sayfanın **Kendi anahtarların** sekmesinde OpenAI, Claude, Gemini gibi sağlayıcıları kendi anahtarınla Hanogt AI sohbetine bağlarsın.\nAPI, Plus ve Pro planlarında açık; ekip bir hesabın ya da herkesin erişimini kapatırsa sayfa bunu söyler.",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "1o9l4nu5ujz": {
+    "en": "Dictation and answers read aloud",
+    "tr": "Sesle yazma ve sesli dinleme",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "7cxixslc9n": {
+    "en": "**Dictation** and **answers read aloud** in Hanogt AI are in **early access** (beta) on Pro and for staff:\n• **Dictation:** press the 🎤 button in the message box and speak; the recognised text is added to the box and goes nowhere until you send it. The browser asks for microphone permission the first time.\n• **Read aloud:** the 🔊 button under an answer reads it, and ■ stops it. Code blocks aren't read line by line; they're announced as \"Code block\".\n• The language follows the site's language.\n• These features use your **browser's** speech service; your voice isn't sent to Hanogt. Chrome may send your voice to Google to recognise it, Safari to Apple. If your browser doesn't support one of them, that button doesn't appear (Firefox, for example, has no dictation).\nEarly access features may change or open to everyone: [Terms of Use](/terms-of-use#early-access).",
+    "tr": "Hanogt AI'da **sesle yazma** ve **yanıtları sesli dinleme**, Pro'da ve ekipte **erken erişimde** (beta):\n• **Sesle yazma:** mesaj kutusundaki 🎤 düğmesine bas ve konuş; tanınan metin kutuya eklenir, sen gönderene kadar hiçbir yere gitmez. Tarayıcı ilk seferde mikrofon izni ister.\n• **Sesli dinleme:** bir yanıtın altındaki 🔊 düğmesi yanıtı okur, ■ ile durdurursun. Kod blokları satır satır okunmaz, \"Kod bloğu\" diye geçilir.\n• Dil, sitenin diline göre seçilir.\n• Bu özellikler **tarayıcının** konuşma hizmetini kullanır; sesin Hanogt'a gönderilmez. Chrome sesini tanımak için Google'a, Safari Apple'a gönderebilir. Tarayıcın bunlardan birini desteklemiyorsa o düğme görünmez (ör. Firefox sesle yazmayı desteklemez).\nErken erişim özellikleri değişebilir ya da herkese açılabilir: [Kullanım Şartları](/terms-of-use#early-access).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -40832,9 +41296,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1szh61vhbl3": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}. The day is counted for 24 hours from your first message; the meter at the top of Hanogt AI shows how many you've used today and when they renew.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}. Gün, ilk mesajından itibaren 24 saat sayılır; Hanogt AI sekmesinin üstündeki sayaç bugün kaç mesaj kullandığını ve ne zaman yenileneceğini gösterir.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "20lj3cn1s5t": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}. The day is counted for 24 hours from your first message; the meter at the top of Hanogt AI shows how many you've used today and when they renew.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys and send {ownDayPlus} messages a day on Plus, or {connectionsPro} providers and {ownDayPro} messages a day on Pro.\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys and {apiDayPlus} requests in 24 hours on Plus, {apiKeysPro} keys and {apiDayPro} requests on Pro: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}. Gün, ilk mesajından itibaren 24 saat sayılır; Hanogt AI sekmesinin üstündeki sayaç bugün kaç mesaj kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus} sağlayıcı bağlayıp günde {ownDayPlus}, Pro'da {connectionsPro} sağlayıcı bağlayıp günde {ownDayPro} mesaj gönderebilirsin.\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus} anahtar ve 24 saatte {apiDayPlus} istek, Pro'da {apiKeysPro} anahtar ve {apiDayPro} istek: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -42003,6 +42467,13 @@
       "src/lib/ai/snippets.ts"
     ]
   },
+  "2cgf2a0ikiq": {
+    "en": "en-US",
+    "tr": "tr-TR",
+    "files": [
+      "src/lib/ai/voice.ts"
+    ]
+  },
   "1w97u4x17m9": {
     "en": "Edit with your team",
     "tr": "Ekiple düzenle",
@@ -42573,9 +43044,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "j2oh73kldx": {
-    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} (Plus) or {aiPro} (Pro) Hanogt AI messages a day instead of {aiFree}; {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; and priority on support tickets. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
-    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile günde {aiFree} yerine Plus'ta {aiPlus}, Pro'da {aiPro} mesaj; Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama ve destek taleplerinde öncelik. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
+  "156izzc2j5q": {
+    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} (Plus) or {aiPro} (Pro) Hanogt AI messages a day instead of {aiFree}; {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; longer Hanogt AI answers and more of the file open in the editor read; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; {apiKeysPlus} (Plus) or {apiKeysPro} (Pro) API keys to call Hanogt AI from your own app; a Plus or Pro badge on your profile, which you can hide; priority on support tickets (Pro before Plus); and, on Pro, early access to new features. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
+    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile günde {aiFree} yerine Plus'ta {aiPlus}, Pro'da {aiPro} mesaj; Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; daha uzun Hanogt AI yanıtları ve editörde açık dosyanın daha fazlasının okunması; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama; Hanogt AI'ı kendi uygulamanızdan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} API anahtarı; profilinizde gizlenebilir bir Plus veya Pro rozeti; destek taleplerinde öncelik (Pro talepleri Plus'tan önce) ve Pro'da yeni özelliklere erken erişim. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -43392,9 +43863,9 @@
       "src/lib/language-detect.ts"
     ]
   },
-  "z4vh2mylu9": {
-    "en": "2 October 2026",
-    "tr": "2 Ekim 2026",
+  "hzw2bsdpao": {
+    "en": "3 October 2026",
+    "tr": "3 Ekim 2026",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -43444,6 +43915,48 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1x335mzynw2": {
+    "en": "Plan benefits updated: the list in the Terms of Use now covers Hanogt AI's longest answer, how much of a file it reads and the personal instruction limit, the number of Hanogt Social groups, the team editing limit (Free 2, Plus 5, Pro 30), the message limits for your own keys, the developer API, the profile badge, Pro's support priority and early access to new features, and explains what happens to them when you move to a lower plan.",
+    "tr": "Plan avantajları güncellendi: Kullanım Şartları'ndaki liste artık Hanogt AI'ın en uzun yanıtını, okuduğu dosya uzunluğunu ve kişisel talimat sınırını, Hanogt Social grup sayısını, ekiple düzenlemedeki kişi sınırını (Ücretsiz 2, Plus 5, Pro 30), kendi anahtarınızla mesaj sınırlarını, geliştirici API'sini, profil rozetini, Pro'da destek önceliğini ve yeni özelliklere erken erişimi kapsıyor; daha düşük bir plana geçildiğinde bunlara ne olduğu açıklandı.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1i2czge3mi2": {
+    "en": "New “Hanogt AI API” section: added the rules for the developer API used with keys on Plus and Pro: keeping keys secret, quotas, no reselling, and keys being revoked for abuse. The Privacy Policy now says that keys are stored only as SHA-256 digests and that API requests are passed to the language model provider to generate answers and not stored on our servers.",
+    "tr": "Yeni “Hanogt AI API” bölümü: Plus ve Pro'da anahtarla kullanılan geliştirici API'si için anahtarın gizli tutulması, kotalar, yeniden satış yasağı ve kötüye kullanımda anahtarların iptal edilmesi kuralları eklendi. Gizlilik Politikası'na anahtarların yalnızca SHA-256 özetiyle saklandığı ve API isteklerinin yanıt üretmek için dil modeli sağlayıcısına iletilip sunucularımızda saklanmadığı eklendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1e5fohjlqho": {
+    "en": "Plan badge and support priority: explained that Plus and Pro subscribers' public profiles show a plan badge, which can be hidden on the Plans page or in Account Settings, and that a support ticket records the plan at the time and that this sets the ticket's priority.",
+    "tr": "Plan rozeti ve destek önceliği: Plus ve Pro abonelerinin herkese açık profilinde plan rozeti gösterildiği ve rozetin Planlar sayfasından veya Hesap Ayarları'ndan gizlenebildiği; destek taleplerine talep anındaki planın kaydedildiği ve talebin önceliğini belirlediği açıklandı.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "i7d062i7d": {
+    "en": "Hanogt AI settings and voice: explained that your personal instructions and preferences (tone, answer length, language, chat defaults) are stored in your account and passed to the language model provider with every message, and that dictation and answers read aloud, in early access, use your browser's speech service and your voice is not sent to Hanogt.",
+    "tr": "Hanogt AI ayarları ve ses: kişisel talimatlarınızın ve tercihlerinizin (üslup, yanıt uzunluğu, dil, sohbet varsayılanları) hesabınızda saklandığı ve her mesajla dil modeli sağlayıcısına iletildiği; erken erişimdeki sesle yazma ve sesli dinlemenin tarayıcınızın konuşma hizmetini kullandığı ve sesinizin Hanogt'a gönderilmediği açıklandı.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "tu7x0gy98w": {
+    "en": "New “Early access and beta” section: explained that features opened first on Pro and for staff are trials and may change, open to everyone or be removed. Added the Hanogt AI and plan change keys to the cookie and browser storage table.",
+    "tr": "Yeni “Erken erişim ve beta” bölümü: Pro'da ve ekipte önce açılan özelliklerin deneme niteliğinde olduğu, değişebileceği, herkese açılabileceği veya kaldırılabileceği açıklandı. Çerez ve tarayıcı depolama tablosuna Hanogt AI ve plan değişikliği anahtarları eklendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "z4vh2mylu9": {
+    "en": "2 October 2026",
+    "tr": "2 Ekim 2026",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -43945,6 +44458,13 @@
       "src/lib/plans.ts"
     ]
   },
+  "mlqj3moscc": {
+    "en": "Developer API: 2 keys, 10 requests a minute and 250 a day",
+    "tr": "Geliştirici API'si: 2 anahtar, dakikada 10 ve günde 250 istek",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
   "164jvtofycu": {
     "en": "Priority on support tickets",
     "tr": "Destek taleplerinde öncelik",
@@ -44022,6 +44542,13 @@
       "src/lib/plans.ts"
     ]
   },
+  "m32cgqu8pi": {
+    "en": "Developer API: 5 keys, 30 requests a minute and 1,000 a day",
+    "tr": "Geliştirici API'si: 5 anahtar, dakikada 30 ve günde 1.000 istek",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
   "1r6tj06s3f2": {
     "en": "Top priority on support tickets: yours are handled before Plus tickets",
     "tr": "Destek taleplerinde en yüksek öncelik: talebin Plus taleplerinden önce ele alınır",
@@ -44036,9 +44563,9 @@
       "src/lib/plans.ts"
     ]
   },
-  "d5p7k1pa3d": {
-    "en": "Early access to new features",
-    "tr": "Yeni özelliklere erken erişim",
+  "odeqtnpbpk": {
+    "en": "Early access to new features, starting with dictation and answers read aloud",
+    "tr": "Yeni özelliklere erken erişim: ilk olarak sesle yazma ve yanıtları sesli dinleme",
     "files": [
       "src/lib/plans.ts"
     ]

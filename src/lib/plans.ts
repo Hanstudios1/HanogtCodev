@@ -320,8 +320,9 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "5 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 5 people" } },
             { text: { TR: "Daha uzun yapay zekâ yanıtları; açık dosyanın 24.000 karakteri okunur", EN: "Longer AI answers; 24,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası), günde 3.000 mesaj", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more), 3,000 messages a day" } },
+            { text: { TR: "Geliştirici API'si: 2 anahtar, dakikada 10 ve günde 250 istek", EN: "Developer API: 2 keys, 10 requests a minute and 250 a day" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
-            { text: { TR: "Profilinde Plus rozeti", EN: "A Plus badge on your profile" }, planned: true },
+            { text: { TR: "Profilinde Plus rozeti", EN: "A Plus badge on your profile" } },
         ],
     },
     pro: {
@@ -335,9 +336,10 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
             { text: { TR: "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur", EN: "The longest AI answers; 40,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı, günde 10.000 mesaj", EN: "Connect 5 AI providers with your own API keys, 10,000 messages a day" } },
+            { text: { TR: "Geliştirici API'si: 5 anahtar, dakikada 30 ve günde 1.000 istek", EN: "Developer API: 5 keys, 30 requests a minute and 1,000 a day" } },
             { text: { TR: "Destek taleplerinde en yüksek öncelik: talebin Plus taleplerinden önce ele alınır", EN: "Top priority on support tickets: yours are handled before Plus tickets" } },
-            { text: { TR: "Profilinde Pro rozeti", EN: "A Pro badge on your profile" }, planned: true },
-            { text: { TR: "Yeni özelliklere erken erişim", EN: "Early access to new features" }, planned: true },
+            { text: { TR: "Profilinde Pro rozeti", EN: "A Pro badge on your profile" } },
+            { text: { TR: "Yeni özelliklere erken erişim: ilk olarak sesle yazma ve yanıtları sesli dinleme", EN: "Early access to new features, starting with dictation and answers read aloud" } },
         ],
     },
 };

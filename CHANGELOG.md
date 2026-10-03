@@ -1,5 +1,72 @@
 # Değişiklik Günlüğü
 
+## 0.3.14 — 2026-10-03
+
+### Yayın: API ve rozet herkese açık, ses erken erişimde, yasal metinler 4.5
+
+- Özellik varsayılanları: `ai_api` ve `plan_badge` artık `all` (Plus ve
+  Pro'da, plana göre), `ai_voice` `early` (Pro ve ekip). Ekibin
+  `site_config/features` seçimi varsa o geçerli.
+- Erken erişimin ilk özelliği **sesle yazma ve yanıtları sesli dinleme**.
+  Tarayıcının Web Speech API'siyle çalışır; ses sunucuya gitmez ve sunucuda
+  maliyeti yoktur.
+  - Mesaj kutusunda mikrofon düğmesi: sitenin dilinde bir cümle dinler ve
+    metni kutuya ekler; metin gönderilene kadar hiçbir yere gitmez. Mikrofon
+    izni reddedilince ayrı bir uyarı çıkar.
+  - Yanıtların altında hoparlör düğmesi: Markdown temizlenmiş metni okur.
+    Kod blokları "Kod bloğu." diye geçilir. 4.000 karakterden uzun yanıtlar
+    bir cümle sonunda kesilir.
+  - Metin 160 karakterlik parçalar hâlinde sıraya verilir. Chrome'un çevrim
+    içi sesleri tek uzun parçada yaklaşık 15 saniye sonra susuyor.
+  - Her okumanın kendi sırası var: durdurup aynı yanıtı yeniden başlatınca
+    eski okumanın geç gelen olayları yenisini bitirmez.
+  - Yeni sohbet ve sohbetten çıkış okumayı durdurur. Tarayıcı bir özelliği
+    desteklemiyorsa yalnızca o düğme gizlenir.
+- `useFeature(id)`: `/api/features`'ı kişi başına bir kez yükleyen ve plan
+  değişince yenileyen istemci deposu.
+- `/ai/api`: başka bir sekmede plan alınınca ya da değişince anahtar paneli
+  sayfa yenilenmeden güncelleniyor.
+- Bulut Sağlığı'na yeni denetim: **"Hanogt AI API'sine dışarıdan erişim"**.
+  - Sunucu kendi `/api/v1/models` adresine anahtarsız ve tarayıcı olmadan
+    sorar; sitenin kendi 401 `missing_api_key` yanıtını bekler.
+  - Cloudflare doğrulama ya da engelleme sayfası hata sayılır; yönlendirme
+    ya da başka bir sayfa uyarı olur.
+  - Düzeltme adımları da verilir. Ücretsiz plandaki Bot Fight Mode belirli
+    bir yol için atlanamadığından kapatılmalıdır; WAF'ta `/api/v1/` için bir
+    Skip kuralı eklenir.
+- Yasal metinler 4.5 (3 Ekim 2026):
+  - **Kullanım Şartları:**
+    - Ücretli planlar listesi bütün hakları içeriyor: yanıt uzunluğu, dosya
+      ve talimat sınırı, gruplar, ekiple düzenleme (2/5/30), kendi anahtarla
+      mesaj, API, rozet, Pro'da destek önceliği ve erken erişim.
+    - Günlük pencerenin 24 saat olduğu ve plan düşünce projelere, gruplara,
+      anahtarlara, talimatlara ve rozete ne olduğu yazıldı.
+    - Yeni "Hanogt AI API" bölümü: anahtar gizliliği, kota, yeniden satış
+      yasağı, iptal.
+    - Yeni "Erken erişim ve beta" bölümü ve Hanogt AI ayarlarındaki
+      talimatlarla ilgili bir madde.
+  - **Gizlilik Politikası:**
+    - Ekiple düzenlemede plana göre kişi sınırı; sesli görüşme 5 kişiyle
+      sınırlı.
+    - Sağlayıcıya giden kişisel talimatlar ve plana göre dosya uzunluğu.
+    - Hanogt AI ayarları, API (yalnızca SHA-256 özeti saklanır, içerik
+      saklanmaz, sayaçlar) ve ses (tarayıcının konuşma hizmeti).
+    - Destek taleplerine eklenen plan, plan rozeti ve gizleme.
+    - Amaçlar, alıcılar, saklama ve tarayıcı depolama tabloları. Eksik
+      anahtarlar eklendi: `hanogt-ai:*`, `hanogt:plan-changed`,
+      `hanogt:paddle-portal-visit`, `hanogt_cloud_banner_dismissed`,
+      `hanogt_rules_probe_ok`, `hanogt-guide-progress`, `hanogt-engine:snap`.
+  - **KVKK Aydınlatma Metni:** veri kategorileri, amaçlar ve yurt dışına
+    aktarım tablosu aynı biçimde güncellendi.
+- Metinler:
+  - Fiyatlandırma'daki "planlanıyor" işaretleri kalktı. Plus ve Pro
+    listelerine geliştirici API'si, Pro'ya erken erişim satırı eklendi.
+  - SSS, Fiyatlandırma SSS'si ve Hanogt AI bilgi tabanı güncellendi:
+    fiyatlar, API ve yeni "Sesle yazma ve sesli dinleme" maddesi.
+  - "Kademeli olarak açılıyor" metinleri "hesabında açık değil" oldu.
+- Belgeler: `docs/HANOGT_AI.md` (varsayılanlar, ses) ve
+  `docs/HANOGT_AI_API.md`.
+
 ## 0.3.13 — 2026-10-03
 
 ### Hanogt AI API'si ve "API ve bağlantılar" sayfası

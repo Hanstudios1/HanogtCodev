@@ -23,7 +23,7 @@ export async function getFeatureFlags(fresh = false): Promise<FeatureFlags> {
         cache = { flags, at: Date.now() };
         return flags;
     } catch (error) {
-        // Unreadable: the last flags known, else the defaults (new features stay with the team).
+        // Unreadable: the last flags known, else the defaults.
         console.warn("[features]", error instanceof Error ? error.message : error);
         return cache?.flags ?? DEFAULT_FEATURE_FLAGS;
     }

@@ -11,6 +11,7 @@ import {
     probeServerDocument,
     type ServerCredentialInfo,
 } from "./firebase-rest";
+import { probePublicApi } from "./api-reachability";
 import { checkTurn } from "./turn";
 
 /*
@@ -38,7 +39,8 @@ export type CloudCheckId =
     | "firestoreRules"
     | "storageRules"
     | "storageBucket"
-    | "turnServer";
+    | "turnServer"
+    | "publicApi";
 
 /** Remedies the UI renders as translated steps. */
 export type CloudFixId =
@@ -66,7 +68,8 @@ export type CloudFixId =
     | "redeploy"
     | "redeployClientConfig"
     | "checkNetwork"
-    | "setupTurn";
+    | "setupTurn"
+    | "cloudflareApiRule";
 
 /** Machine-readable outcome of a check; the UI shows a translated sentence for each. */
 export type CloudReason =
@@ -140,7 +143,12 @@ export type CloudReason =
     | "turn_ok"
     | "turn_missing"
     | "turn_credentials_missing"
-    | "turn_failed";
+    | "turn_failed"
+    | "api_ok"
+    | "api_challenged"
+    | "api_unexpected"
+    | "api_unreachable"
+    | "api_local";
 
 export type CloudCheck = {
     id: CloudCheckId;
@@ -708,6 +716,23 @@ async function checkTurnServer(): Promise<CloudCheck> {
     return check("turnServer", "fail", "turn_failed", result.problem ?? "", "setupTurn", facts);
 }
 
+/** The developer API as an app or a bot sees it: does Cloudflare let clients without a browser through to /api/v1? */
+async function checkPublicApi(origin: string): Promise<CloudCheck> {
+    const result = await probePublicApi(origin);
+    switch (result.outcome) {
+        case "ok":
+            return check("publicApi", "ok", "api_ok", `HTTP ${result.status} · missing_api_key`);
+        case "challenged":
+            return check("publicApi", "fail", "api_challenged", result.detail, "cloudflareApiRule", { status: String(result.status) });
+        case "unexpected":
+            return check("publicApi", "warn", "api_unexpected", result.detail, "cloudflareApiRule", { status: String(result.status) });
+        case "unreachable":
+            return check("publicApi", "warn", "api_unreachable", result.detail);
+        default:
+            return check("publicApi", "skip", "api_local", result.detail);
+    }
+}
+
 type WebApp = { appId: string; displayName: string | null; config: PublicFirebaseConfig };
 
 /**
@@ -769,6 +794,7 @@ export async function runCloudHealthChecks(options: { ownerEmail: string; origin
 
     // Independent of Firebase: runs alongside everything else.
     const turnServer = checkTurnServer();
+    const publicApi = checkPublicApi(options.origin);
     const browser = await checkBrowserConfig(env);
     // Build-time values the runtime config already replaces still need fixing,
     // but they no longer break the browser: report them as warnings.
@@ -806,7 +832,7 @@ export async function runCloudHealthChecks(options: { ownerEmail: string; origin
         suggestion = suggested;
         checks = [clientConfig, serverCredentials, projectMatch, browser.result, token.result, firestoreRead, authConfig, browserSignIn, rulesSelfRead, firestoreRules, storageRules, storageBucketCheck];
     }
-    checks.push(await turnServer);
+    checks.push(await turnServer, await publicApi);
 
     const summary: Record<CloudCheckStatus, number> = { ok: 0, warn: 0, fail: 0, skip: 0 };
     for (const item of checks) summary[item.status] += 1;

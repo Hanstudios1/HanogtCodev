@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, FileCode2, KeyRound, Paperclip, Settings2, Sparkles, Square, X } from "lucide-react";
+import { ArrowUp, FileCode2, KeyRound, Mic, MicOff, Paperclip, Settings2, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
 import { aiProvider, DEFAULT_CONNECTION, type AiConnectionView } from "@/lib/ai/connections";
@@ -10,6 +10,7 @@ import { languageDisplayName } from "@/lib/runtimes/languages";
 import { AGENT_MODE_OPTIONS, AGENT_NEVER, MAX_INPUT, MODES } from "./chat-copy";
 import type { FileAttachment } from "./useHanogtChat";
 import { cx, ICON_BUTTON, PillMenu, type MenuOption } from "./ui";
+import { useDictation, useVoice } from "./voice";
 
 const C = {
     message: { TR: "Mesaj", EN: "Message" },
@@ -37,6 +38,12 @@ const C = {
     manage: { TR: "Bağlantıları yönet…", EN: "Manage connections…" },
     connectHint: { TR: "Plus ve Pro'da kendi API anahtarınla OpenAI, Claude, Gemini ve daha fazlasını bağlayabilirsin.", EN: "On Plus and Pro you can connect OpenAI, Claude, Gemini and more with your own API key." },
     keys: { TR: "Enter: gönder · Shift+Enter: yeni satır", EN: "Enter: send · Shift+Enter: new line" },
+    dictate: { TR: "Sesle yaz (erken erişim)", EN: "Dictate (early access)" },
+    dictateStop: { TR: "Dinlemeyi bitir", EN: "Stop listening" },
+    dictateHint: { TR: "Sesle yazma tarayıcının konuşma tanıma özelliğini kullanır; ses Hanogt'a gönderilmez.", EN: "Dictation uses your browser's speech recognition; the audio isn't sent to Hanogt." },
+    listening: { TR: "Dinliyorum… konuş, bitince kendiliğinden durur.", EN: "Listening… speak; it stops by itself when you finish." },
+    dictateDenied: { TR: "Mikrofon izni verilmedi. Tarayıcının adres çubuğundan izin verebilirsin.", EN: "Microphone access was denied. You can allow it from the browser's address bar." },
+    dictateFailed: { TR: "Sesle yazma şu an çalışmadı. Biraz sonra tekrar dene.", EN: "Dictation didn't work just now. Try again in a moment." },
     chars: { TR: "{count}/{max}", EN: "{count}/{max}" },
 };
 
@@ -140,9 +147,14 @@ function ModelPicker({ connections, variant }: { connections: ComposerConnection
 
 /** The large rounded composer: text, attachments, answer mode and agent mode, send / stop. */
 export default function ChatComposer(props: ChatComposerProps) {
-    const { tx } = useI18n();
+    const { tx, language } = useI18n();
     const { inputRef, input, setInput, busy, variant, hero } = props;
     const fileInput = useRef<HTMLInputElement>(null);
+    const voice = useVoice();
+    const dictation = useDictation(language, input, (next) => {
+        setInput(next.slice(0, MAX_INPUT));
+        inputRef.current?.focus();
+    });
     const maxHeight = variant === "page" ? 280 : 160;
 
     // Auto-grow up to a limit, then scroll.
@@ -227,6 +239,20 @@ export default function ChatComposer(props: ChatComposerProps) {
                     <button type="button" onClick={() => fileInput.current?.click()} className={cx(ICON_BUTTON, "h-8 w-8 rounded-full border border-zinc-200 dark:border-white/10")} title={tx(C.attach)} aria-label={tx(C.attach)}>
                         <Paperclip className="h-4 w-4" />
                     </button>
+                    {voice.dictation ? (
+                        <button
+                            type="button"
+                            onClick={dictation.listening ? dictation.stop : dictation.start}
+                            disabled={busy && !dictation.listening}
+                            className={cx(ICON_BUTTON, "h-8 w-8 rounded-full border border-zinc-200 dark:border-white/10", dictation.listening && "border-rose-300 bg-rose-500/10 text-rose-600 dark:border-rose-400/40 dark:text-rose-300")}
+                            title={`${tx(dictation.listening ? C.dictateStop : C.dictate)} · ${tx(C.dictateHint)}`}
+                            aria-label={tx(dictation.listening ? C.dictateStop : C.dictate)}
+                            aria-pressed={dictation.listening}
+                            data-ai-dictation={dictation.listening ? "listening" : "idle"}
+                        >
+                            {dictation.listening ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+                        </button>
+                    ) : null}
                     <PillMenu
                         title={tx(C.mode)}
                         label={tx(modeOption.label)}
@@ -278,6 +304,8 @@ export default function ChatComposer(props: ChatComposerProps) {
                 </div>
             </div>
             {props.attachError ? <p className="mt-1.5 px-2 text-[12px] font-semibold text-red-600 dark:text-red-400" role="alert">{props.attachError}</p> : null}
+            {dictation.listening ? <p className="mt-1.5 px-2 text-[12px] font-semibold text-rose-600 dark:text-rose-300" role="status" data-ai-dictation-status>{tx(C.listening)}</p> : null}
+            {dictation.error ? <p className="mt-1.5 px-2 text-[12px] font-semibold text-red-600 dark:text-red-400" role="alert">{tx(dictation.error === "denied" ? C.dictateDenied : C.dictateFailed)}</p> : null}
             <div className="mt-1.5 flex items-center justify-center gap-2 px-2 text-center text-[10.5px] text-zinc-400">
                 <span className="truncate">{tx(C.disclaimer)}</span>
                 {variant === "page" ? <span className="hidden shrink-0 md:inline">· {tx(C.keys)}</span> : null}
