@@ -280,10 +280,18 @@ that nothing (a proxy, Vercel's firewall) replaces the client address.
   testers and sandbox visitors also see the technical detail on the page. The
   CSP allows `https://*.paddle.com` and Paddle Retain (`public.profitwell.com`,
   `*.profitwell.com`).
+- The site is served through Cloudflare, which replaces 502 and 504 answers
+  from Vercel with its own error page (the JSON with the reason is lost). The
+  API routes therefore never send 502/504: a failure of a service we depend on
+  (Paddle, an AI provider, the Vercel deploy hook) is 424, our own failure
+  500, a timeout 503 with `code: "timeout"`. A non-JSON 502/504 on the page
+  (`Hata kodu: unavailable · HTTP 502`) now means the function itself crashed
+  or timed out on Vercel; look it up in the Vercel logs.
 - If the Plans page says a checkout (or another subscription action) failed,
   the notice ends with an error code line, e.g.
-  `Hata kodu: unavailable/database_error · HTTP 503 · subscription · 2.1 s`:
-  the route's error and code, the HTTP status, Paddle's status when Paddle was
+  `Hata kodu: unavailable/database_error · HTTP 500 · subscription · 2.1 s`:
+  the route's error and code, the HTTP status (424: Paddle refused, 500: our
+  side), Paddle's status when Paddle was
   called, the step (`catalog`, `settings`, `subscription`, `customer`,
   `transaction`, `portal`, `preview`, `change`, `keep`) and how long it took.
   The routes log the same line (`[paddle:checkout]` in the Vercel logs) and
@@ -291,7 +299,10 @@ that nothing (a proxy, Vercel's firewall) replaces the client address.
   Paddle's explanation or our error message (never the account). Codes:
   `timeout`/`network_error` (Paddle didn't answer in 8 s / couldn't be
   reached), `unexpected_response` (Paddle's answer wasn't JSON), Paddle's own
-  codes (e.g. `forbidden`: the API key lacks a permission),
+  codes (e.g. `forbidden`: the API key lacks a permission;
+  `transaction_default_checkout_url_not_set`: set Paddle › Checkout › Checkout
+  settings › Default payment link to the Plans page address, in sandbox and
+  live separately; the Plans page tells the team what to fix for these),
   `database_error` (a Firestore read or write failed: quota, permissions or an
   outage; see Cloud Health) and `internal_error` (look the time up in the
   Vercel logs). When no answer from our code arrives at all (`timeout · HTTP

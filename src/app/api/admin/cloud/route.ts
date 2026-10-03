@@ -60,7 +60,8 @@ export async function POST(request: NextRequest) {
             deployment = await deployBundledRules();
         } catch (error) {
             console.error("[admin:cloud:deploy]", error instanceof Error ? error.message : error);
-            return adminError(502, "deploy_failed");
+            // 424, not 502: Cloudflare replaces 502 answers with its own page.
+            return adminError(424, "deploy_failed");
         }
         const [firestore, storage] = deployment.results;
         // Every attempt is recorded, including failed ones.

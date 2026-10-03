@@ -425,8 +425,12 @@ export async function billingStep<T>(step: BillingStep, run: () => Promise<T>): 
 const DATABASE_STEPS: ReadonlySet<BillingStep> = new Set(["catalog", "settings", "subscription"]);
 
 export type BillingFailure = {
-    /** 502 when Paddle refused or couldn't be reached, 503 when our side failed. */
-    status: 502 | 503;
+    /**
+     * 424 when Paddle refused or couldn't be reached, 500 when our side failed.
+     * Never 502 or 504: Cloudflare, in front of the site, replaces those
+     * answers with its own error page and the JSON with the reason is lost.
+     */
+    status: 424 | 500;
     error: "paddle_error" | "unavailable";
     step: BillingStep | null;
     code: string;
@@ -439,11 +443,11 @@ export function describeBillingFailure(error: unknown): BillingFailure {
     const step = error instanceof BillingStepError ? error.step : null;
     const cause = error instanceof BillingStepError ? error.original : error;
     if (cause instanceof PaddleApiError) {
-        return { status: 502, error: "paddle_error", step, code: cause.code, paddleStatus: cause.status, detail: failureDetail(cause.detail || cause.message) };
+        return { status: 424, error: "paddle_error", step, code: cause.code, paddleStatus: cause.status, detail: failureDetail(cause.detail || cause.message) };
     }
     const message = cause instanceof Error ? cause.message : String(cause);
     const database = (step !== null && DATABASE_STEPS.has(step)) || /^(?:Firestore|Firebase)\b/.test(message);
-    return { status: 503, error: "unavailable", step, code: database ? "database_error" : "internal_error", paddleStatus: null, detail: failureDetail(message) };
+    return { status: 500, error: "unavailable", step, code: database ? "database_error" : "internal_error", paddleStatus: null, detail: failureDetail(message) };
 }
 
 /** Puts a failure first in site_config/paddle_status.serverErrors (the newest ten are kept); whose request it was isn't stored. */

@@ -182,7 +182,7 @@ test("failures become admin API answers", () => {
     assert.deepEqual(admin.paddleAdminFailure(new admin.PaddleAdminError("already_linked")), { status: 409, code: "already_linked" });
     assert.deepEqual(admin.paddleAdminFailure(new admin.PaddleAdminError("user_not_found")), { status: 404, code: "user_not_found" });
     assert.deepEqual(admin.paddleAdminFailure(new paddle.PaddleApiError(0, "not_configured")), { status: 409, code: "paddle_unconfigured" });
-    assert.deepEqual(admin.paddleAdminFailure(new paddle.PaddleApiError(403, "forbidden")), { status: 502, code: "paddle_error" });
+    assert.deepEqual(admin.paddleAdminFailure(new paddle.PaddleApiError(403, "forbidden")), { status: 424, code: "paddle_error" });
     assert.equal(admin.paddleAdminFailure(new Error("Firestore")), null);
 });
 

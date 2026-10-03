@@ -83,11 +83,12 @@ export class PaddleAdminError extends Error {
 /**
  * The admin API answer for a failure of this module or of the Paddle API
  * (null for anything else): a missing API key is a setup problem (409), any
- * other Paddle failure a bad gateway (502).
+ * other Paddle failure a failed dependency (424; Cloudflare would replace a
+ * 502 with its own page).
  */
 export function paddleAdminFailure(error: unknown): { status: number; code: AdminErrorCode } | null {
     if (error instanceof PaddleAdminError) return { status: ERROR_STATUS[error.code], code: error.code };
-    if (error instanceof PaddleApiError) return error.code === "not_configured" ? { status: 409, code: "paddle_unconfigured" } : { status: 502, code: "paddle_error" };
+    if (error instanceof PaddleApiError) return error.code === "not_configured" ? { status: 409, code: "paddle_unconfigured" } : { status: 424, code: "paddle_error" };
     return null;
 }
 

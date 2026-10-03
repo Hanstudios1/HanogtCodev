@@ -6881,6 +6881,48 @@
       "src/app/plans/page.tsx"
     ]
   },
+  "wxqsu87wuq": {
+    "en": "For the team: no default payment link is set in Paddle. Enter https://hanogtcodev.com/plans under Paddle › Checkout › Checkout settings › Default payment link and save (separately for sandbox and live).",
+    "tr": "Ekip için: Paddle'da varsayılan ödeme bağlantısı tanımlı değil. Paddle › Checkout › Checkout settings › Default payment link alanına https://hanogtcodev.com/plans yazıp kaydet (sandbox ve canlı hesapta ayrı ayrı).",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "cy407wzmbw": {
+    "en": "For the team: the payment link's domain isn't approved in Paddle. Request approval for hanogtcodev.com under Paddle › Checkout › Request domain approval.",
+    "tr": "Ekip için: ödeme bağlantısının alan adı Paddle'da onaylı değil. Paddle › Checkout › Request domain approval bölümünden hanogtcodev.com için onay iste.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "y91yl4yrat": {
+    "en": "For the team: checkout isn't enabled on this Paddle account yet; finish Paddle's account verification (onboarding).",
+    "tr": "Ekip için: bu Paddle hesabında ödeme ekranı henüz açılmamış; Paddle'daki hesap doğrulama (onboarding) adımlarını tamamla.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "ifi0cmttvv": {
+    "en": "For the team: Paddle Billing isn't enabled on this Paddle account (a Classic account). Use a Billing account's keys.",
+    "tr": "Ekip için: bu Paddle hesabında Paddle Billing açık değil (Classic hesap). Billing hesabının anahtarlarını kullan.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "2fowvtpbynz": {
+    "en": "For the team: the Paddle API key isn't allowed to do this. Give the key write access to Transactions and Customers under Paddle › Developer tools › Authentication.",
+    "tr": "Ekip için: Paddle API anahtarının bu işlem için izni yok. Paddle › Developer tools › Authentication bölümünde anahtara Transactions ve Customers yazma izni ver.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "2e4i65znsfe": {
+    "en": "For the team: the price or customer wasn't found in this Paddle account (it may be the other environment's id). Check the price mapping under Admin Panel › Subscriptions › Paddle.",
+    "tr": "Ekip için: fiyat ya da müşteri bu Paddle hesabında bulunamadı (öbür ortamın kimliği olabilir). Yönetici Paneli › Abonelikler › Paddle bölümünde fiyat eşleştirmesini kontrol et.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
   "20gumqiitck": {
     "en": "Hanogt AI limits: Free {free}, Plus {plus}, Pro {pro} messages/day.",
     "tr": "Hanogt AI sınırları: Ücretsiz {free}, Plus {plus}, Pro {pro} mesaj/gün.",
@@ -18285,9 +18327,9 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
-  "1d5me2gxa15": {
-    "en": "Our code couldn't answer the browser's billing request. http_504: Vercel cut the request at its time limit (with nothing under \"Recent server errors\" at that moment, the server was waiting on Paddle or the database). network: the request never reached the server (connection, ad blocker, VPN).",
-    "tr": "Tarayıcının ödeme isteğine kodumuz yanıt veremedi. http_504: Vercel isteği süre sınırında kesti (aynı anda \"Son sunucu hataları\"nda kayıt yoksa sunucu Paddle'ı ya da veritabanını beklerken kesilmiştir). network: istek sunucuya ulaşmadı (bağlantı, reklam engelleyici, VPN).",
+  "22nd4grwo08": {
+    "en": "An error page reached the browser instead of our code's answer, or no answer came at all. http_502 / http_504: Cloudflare replaces a 502/504 from Vercel with its own page; as our routes no longer send 502/504, it means the function crashed or hit its time limit on Vercel (check \"Recent server errors\" at that moment and the Vercel logs). network: the request never reached the server (connection, ad blocker, VPN).",
+    "tr": "Tarayıcıya kodumuzun yanıtı yerine bir hata sayfası ulaştı ya da hiç yanıt gelmedi. http_502 / http_504: Cloudflare, Vercel'den gelen 502/504'ü kendi sayfasıyla değiştirir; rotalarımız artık 502/504 göndermediği için bu, fonksiyonun Vercel'de çöktüğü ya da süre sınırına takıldığı anlamına gelir (aynı anda \"Son sunucu hataları\"na bakın, Vercel günlüklerinde arayın). network: istek sunucuya ulaşmadı (bağlantı, reklam engelleyici, VPN).",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -18393,6 +18435,41 @@
   "1eqf5l11r60": {
     "en": "The Paddle customer of this e-mail is linked to another account.",
     "tr": "Bu e-postanın Paddle müşterisi başka bir hesaba bağlı.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1toxxyn9nca": {
+    "en": "No default payment link is set in Paddle: enter the Plans page address (above) under Paddle › Checkout › Checkout settings › Default payment link, separately for sandbox and live.",
+    "tr": "Paddle'da varsayılan ödeme bağlantısı tanımlı değil: Paddle › Checkout › Checkout settings › Default payment link alanına Planlar sayfasının adresini (yukarıda) girin; sandbox ve canlı hesapta ayrı ayrı.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1hljod3xgkx": {
+    "en": "The payment link's domain isn't approved in Paddle: Paddle › Checkout › Request domain approval.",
+    "tr": "Ödeme bağlantısının alan adı Paddle'da onaylı değil: Paddle › Checkout › Request domain approval.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "mf79r1wyp9": {
+    "en": "Checkout isn't enabled on this Paddle account yet; finish Paddle's account verification (onboarding).",
+    "tr": "Bu Paddle hesabında ödeme ekranı henüz açılmamış; Paddle'daki hesap doğrulamasını (onboarding) tamamlayın.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1qb1a5airlz": {
+    "en": "Paddle Billing isn't enabled on this Paddle account (a Classic account).",
+    "tr": "Bu Paddle hesabında Paddle Billing açık değil (Classic hesap).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "d3fknsjp75": {
+    "en": "The price or customer isn't in this Paddle account (it may be the other environment's id); check the price mapping below.",
+    "tr": "Fiyat ya da müşteri bu Paddle hesabında yok (öbür ortamın kimliği olabilir); aşağıdaki fiyat eşleştirmesine bakın.",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -20857,6 +20934,34 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "1yyprzgbano": {
+    "en": "Error messages now tell the real reason",
+    "tr": "Hata mesajları artık gerçek nedeni söylüyor",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "17oo77mn57e": {
+    "en": "Some errors in the checkout, Hanogt AI and code runs turned into a generic error page on the way; now the actual reason reaches the screen.",
+    "tr": "Ödeme ekranı, Hanogt AI ve kod çalıştırmadaki bazı hatalar yolda genel bir hata sayfasına dönüşüyordu; artık asıl neden ekrana geliyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1fa3dry1ntc": {
+    "en": "If a Plus/Pro checkout can't start, the reason Paddle gave is shown (before, only \"That didn't work\" appeared).",
+    "tr": "Plus/Pro ödemesi başlamazsa Paddle'ın bildirdiği neden gösteriliyor (önceden yalnızca \"İşlem tamamlanamadı\" çıkıyordu).",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "23hzta9zb3x": {
+    "en": "Hanogt AI errors with your own API key (invalid key, model not found) and timeouts show the right message again; so do code run timeouts.",
+    "tr": "Hanogt AI'da kendi API anahtarınla bağlantı hataları (geçersiz anahtar, model bulunamadı) ve zaman aşımları doğru mesajla gösteriliyor; kod çalıştırma zaman aşımı da öyle.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "mvmnvc2bph": {

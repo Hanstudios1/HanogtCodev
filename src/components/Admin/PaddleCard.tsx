@@ -271,7 +271,7 @@ const CLIENT_ERROR_STAGES: Record<PaddleClientErrorStage, { label: Copy; tone: T
     request: {
         label: { TR: "İstek yanıtsız kaldı", EN: "Request got no answer" },
         tone: "amber",
-        hint: { TR: "Tarayıcının ödeme isteğine kodumuz yanıt veremedi. http_504: Vercel isteği süre sınırında kesti (aynı anda \"Son sunucu hataları\"nda kayıt yoksa sunucu Paddle'ı ya da veritabanını beklerken kesilmiştir). network: istek sunucuya ulaşmadı (bağlantı, reklam engelleyici, VPN).", EN: "Our code couldn't answer the browser's billing request. http_504: Vercel cut the request at its time limit (with nothing under \"Recent server errors\" at that moment, the server was waiting on Paddle or the database). network: the request never reached the server (connection, ad blocker, VPN)." },
+        hint: { TR: "Tarayıcıya kodumuzun yanıtı yerine bir hata sayfası ulaştı ya da hiç yanıt gelmedi. http_502 / http_504: Cloudflare, Vercel'den gelen 502/504'ü kendi sayfasıyla değiştirir; rotalarımız artık 502/504 göndermediği için bu, fonksiyonun Vercel'de çöktüğü ya da süre sınırına takıldığı anlamına gelir (aynı anda \"Son sunucu hataları\"na bakın, Vercel günlüklerinde arayın). network: istek sunucuya ulaşmadı (bağlantı, reklam engelleyici, VPN).", EN: "An error page reached the browser instead of our code's answer, or no answer came at all. http_502 / http_504: Cloudflare replaces a 502/504 from Vercel with its own page; as our routes no longer send 502/504, it means the function crashed or hit its time limit on Vercel (check \"Recent server errors\" at that moment and the Vercel logs). network: the request never reached the server (connection, ad blocker, VPN)." },
     },
 };
 
@@ -296,6 +296,11 @@ const SERVER_CODE_HINTS: Record<string, Copy> = {
     database_error: { TR: "Firestore isteği başarısız oldu: günlük kota dolmuş, hizmet hesabının yetkisi eksik ya da kısa bir kesinti olabilir. Bulut Sağlığı sekmesine bakın.", EN: "A Firestore request failed: the daily quota may be used up, the service account may lack permission, or there may be a brief outage. See the Cloud Health tab." },
     internal_error: { TR: "Sunucu kodunda beklenmedik bir hata. Ayrıntı ve saatle Vercel günlüklerinde arayın.", EN: "An unexpected error in the server code. Search the Vercel logs with the detail and the time." },
     customer_linked_elsewhere: { TR: "Bu e-postanın Paddle müşterisi başka bir hesaba bağlı.", EN: "The Paddle customer of this e-mail is linked to another account." },
+    transaction_default_checkout_url_not_set: { TR: "Paddle'da varsayılan ödeme bağlantısı tanımlı değil: Paddle › Checkout › Checkout settings › Default payment link alanına Planlar sayfasının adresini (yukarıda) girin; sandbox ve canlı hesapta ayrı ayrı.", EN: "No default payment link is set in Paddle: enter the Plans page address (above) under Paddle › Checkout › Checkout settings › Default payment link, separately for sandbox and live." },
+    transaction_checkout_url_domain_is_not_approved: { TR: "Ödeme bağlantısının alan adı Paddle'da onaylı değil: Paddle › Checkout › Request domain approval.", EN: "The payment link's domain isn't approved in Paddle: Paddle › Checkout › Request domain approval." },
+    transaction_checkout_not_enabled: { TR: "Bu Paddle hesabında ödeme ekranı henüz açılmamış; Paddle'daki hesap doğrulamasını (onboarding) tamamlayın.", EN: "Checkout isn't enabled on this Paddle account yet; finish Paddle's account verification (onboarding)." },
+    paddle_billing_not_enabled: { TR: "Bu Paddle hesabında Paddle Billing açık değil (Classic hesap).", EN: "Paddle Billing isn't enabled on this Paddle account (a Classic account)." },
+    entity_not_found: { TR: "Fiyat ya da müşteri bu Paddle hesabında yok (öbür ortamın kimliği olabilir); aşağıdaki fiyat eşleştirmesine bakın.", EN: "The price or customer isn't in this Paddle account (it may be the other environment's id); check the price mapping below." },
     forbidden: { TR: "API anahtarının bu işlem için izni yok; Paddle'da anahtarın izinlerine bakın.", EN: "The API key isn't allowed to do this; check the key's permissions in Paddle." },
 };
 
@@ -557,7 +562,7 @@ function ServerErrorRow({ entry }: { entry: AdminPaddleServerError }) {
     return (
         <li className="py-3">
             <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={entry.status === 502 ? "amber" : "red"}>{entry.step ? tx(SERVER_STEPS[entry.step]) : tx(C.stepUnknown)}</Badge>
+                <Badge tone={entry.paddleStatus !== null ? "amber" : "red"}>{entry.step ? tx(SERVER_STEPS[entry.step]) : tx(C.stepUnknown)}</Badge>
                 <PaddleEnvironmentBadge environment={entry.environment} />
                 <time dateTime={entry.at} title={formatDateTime(entry.at, locale)} className="text-[12px] text-zinc-500">{when(entry.at)}</time>
                 <span className="text-[12px] text-zinc-500">{route === "subscription" && action ? tx(C.routeSubscription, { action }) : tx(C.routeCheckout)}</span>

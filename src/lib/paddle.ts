@@ -282,7 +282,7 @@ export type PaddleServerError = {
     /** "checkout" or "subscription:<action>". */
     route: string;
     step: BillingStep | null;
-    /** What the route answered: 502 when Paddle failed, 503 for our side. */
+    /** What the route answered: 424 when Paddle failed, 500 for our side (502/503 in older entries). */
     status: number;
     /** Paddle's HTTP status (0: Paddle wasn't reached); null when Paddle wasn't the problem. */
     paddleStatus: number | null;

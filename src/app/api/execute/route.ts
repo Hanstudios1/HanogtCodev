@@ -134,7 +134,8 @@ export async function POST(request: NextRequest) {
             timedOut
                 ? "Kod çalıştırma zaman aşımına uğradı (25 sn). Sonsuz döngü olmadığından emin olup tekrar deneyin."
                 : "Kod çalıştırma hizmetine şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.",
-            timedOut ? 504 : 503,
+            // 503 for both (the code tells them apart): Cloudflare replaces 504 answers with its own page.
+            503,
             timedOut ? "timeout" : "unavailable",
         );
     }

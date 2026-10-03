@@ -17,8 +17,9 @@ export function billingError(status: number, error: BillingErrorCode, extra: Rec
 
 /**
  * The answer of a billing route that failed: Paddle refused or couldn't be
- * reached (502 paddle_error), or our side failed (503 unavailable, code
- * database_error or internal_error). It names the step (billingStep) and how
+ * reached (424 paddle_error), or our side failed (500 unavailable, code
+ * database_error or internal_error). Not 502/504: Cloudflare replaces those
+ * with its own page, and the reason with them. It names the step (billingStep) and how
  * long the request ran, so the Plans page can tell people more than "try
  * again"; the team (staff, testers, anyone in the sandbox) also gets the
  * detail. The failure is logged and kept for Admin › Subscriptions.

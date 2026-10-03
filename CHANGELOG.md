@@ -1,5 +1,26 @@
 # Değişiklik Günlüğü
 
+## 0.3.3 — 2026-10-03
+
+### Hata mesajları Cloudflare'den geçiyor
+
+- hanogtcodev.com Cloudflare üzerinden yayında. Cloudflare, sunucudan gelen 502
+  ve 504 yanıtlarının yerine kendi "Bad gateway" sayfasını koyuyor; Paddle
+  hatası olunca 502 dönen ödeme rotası yüzünden Planlar sayfası gerçek nedeni
+  hiç göremiyor, yalnızca "İşlem tamamlanamadı" diyordu (hata kodu satırı:
+  `unavailable · HTTP 502`, adımsız).
+- Rotalar artık 502/504 göndermiyor: dış hizmet (Paddle, dil modeli
+  sağlayıcısı, Vercel dağıtım kancası) hatası 424, kendi hatamız 500, zaman
+  aşımı 503 (`code: "timeout"`). Etkilenenler: `/api/paddle/checkout` ve
+  `/subscription`, Yönetici Paneli'nin Paddle ve dağıtım uçları,
+  `/api/ai` (kendi anahtarınla bağlantı hataları, zaman aşımı),
+  `/api/ai/connections`, `/api/execute` (zaman aşımı).
+- Paddle'ın kurulum hataları (`transaction_default_checkout_url_not_set`,
+  `transaction_checkout_url_domain_is_not_approved`,
+  `transaction_checkout_not_enabled`, `paddle_billing_not_enabled`,
+  `forbidden`, `entity_not_found`) Planlar sayfasında ekibe ne yapılacağını,
+  Paddle kartında açıklamasını gösteriyor.
+
 ## 0.3.2 — 2026-10-03
 
 ### Fiyatlandırma üst menüde

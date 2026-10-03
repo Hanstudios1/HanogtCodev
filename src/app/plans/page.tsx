@@ -158,7 +158,7 @@ type Notice = {
     hint?: Copy;
     /** For the team and testers only: the stage that failed and Paddle's own words. */
     technical?: { stage: string; message: string };
-    /** Under every failed request: what failed, how and where ("unavailable/database_error · HTTP 503 · subscription · 2.1 s"). */
+    /** Under every failed request: what failed, how and where ("unavailable/database_error · HTTP 500 · subscription · 2.1 s"). */
     reference?: string;
 } | null;
 
@@ -298,7 +298,7 @@ function retryable(result: RequestFailure) {
     return false;
 }
 
-/** One line that tells the team what failed: "unavailable/database_error · HTTP 503 · subscription · 2.1 s". */
+/** One line that tells the team what failed: "unavailable/database_error · HTTP 500 · subscription · 2.1 s". */
 function failureReference(result: RequestFailure) {
     return [
         result.code && result.code !== result.error ? `${result.error}/${result.code}` : result.error,
@@ -308,6 +308,16 @@ function failureReference(result: RequestFailure) {
         `${(result.ms / 1000).toFixed(1)} s`,
     ].filter(Boolean).join(" · ");
 }
+
+/** For the team: what to fix in Paddle when it names a setup problem. */
+const PADDLE_SETUP_HINTS: Record<string, Copy> = {
+    transaction_default_checkout_url_not_set: { TR: "Ekip için: Paddle'da varsayılan ödeme bağlantısı tanımlı değil. Paddle › Checkout › Checkout settings › Default payment link alanına https://hanogtcodev.com/plans yazıp kaydet (sandbox ve canlı hesapta ayrı ayrı).", EN: "For the team: no default payment link is set in Paddle. Enter https://hanogtcodev.com/plans under Paddle › Checkout › Checkout settings › Default payment link and save (separately for sandbox and live)." },
+    transaction_checkout_url_domain_is_not_approved: { TR: "Ekip için: ödeme bağlantısının alan adı Paddle'da onaylı değil. Paddle › Checkout › Request domain approval bölümünden hanogtcodev.com için onay iste.", EN: "For the team: the payment link's domain isn't approved in Paddle. Request approval for hanogtcodev.com under Paddle › Checkout › Request domain approval." },
+    transaction_checkout_not_enabled: { TR: "Ekip için: bu Paddle hesabında ödeme ekranı henüz açılmamış; Paddle'daki hesap doğrulama (onboarding) adımlarını tamamla.", EN: "For the team: checkout isn't enabled on this Paddle account yet; finish Paddle's account verification (onboarding)." },
+    paddle_billing_not_enabled: { TR: "Ekip için: bu Paddle hesabında Paddle Billing açık değil (Classic hesap). Billing hesabının anahtarlarını kullan.", EN: "For the team: Paddle Billing isn't enabled on this Paddle account (a Classic account). Use a Billing account's keys." },
+    forbidden: { TR: "Ekip için: Paddle API anahtarının bu işlem için izni yok. Paddle › Developer tools › Authentication bölümünde anahtara Transactions ve Customers yazma izni ver.", EN: "For the team: the Paddle API key isn't allowed to do this. Give the key write access to Transactions and Customers under Paddle › Developer tools › Authentication." },
+    entity_not_found: { TR: "Ekip için: fiyat ya da müşteri bu Paddle hesabında bulunamadı (öbür ortamın kimliği olabilir). Yönetici Paneli › Abonelikler › Paddle bölümünde fiyat eşleştirmesini kontrol et.", EN: "For the team: the price or customer wasn't found in this Paddle account (it may be the other environment's id). Check the price mapping under Admin Panel › Subscriptions › Paddle." },
+};
 
 /** Answers that explain themselves; everything else also shows its error code. */
 const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change"]);
@@ -326,7 +336,7 @@ function failureNotice(result: RequestFailure, team: boolean): NonNullable<Notic
         tone: "error",
         copy,
         vars: result.error === "paddle_error" ? { code: result.code ?? "?" } : undefined,
-        hint: team && ours ? C.failureTeam : undefined,
+        hint: team ? (result.error === "paddle_error" && result.code ? PADDLE_SETUP_HINTS[result.code] : undefined) ?? (ours ? C.failureTeam : undefined) : undefined,
         technical: team && result.detail ? { stage: result.step ?? "server", message: result.detail } : undefined,
         reference: EXPECTED_ERRORS.has(result.error) ? undefined : failureReference(result),
     };

@@ -727,13 +727,13 @@ test("billing failures name the step: Paddle, the database or our own code", asy
         return paddle.describeBillingFailure(caught);
     };
     assert.deepEqual(await failed("transaction", new paddle.PaddleApiError(503, "internal_error", `Paddle had a hiccup creating a transaction for ${ALI}`)), {
-        status: 502, error: "paddle_error", step: "transaction", code: "internal_error", paddleStatus: 503, detail: "Paddle had a hiccup creating a transaction for [e-mail]",
+        status: 424, error: "paddle_error", step: "transaction", code: "internal_error", paddleStatus: 503, detail: "Paddle had a hiccup creating a transaction for [e-mail]",
     });
     assert.deepEqual(await failed("transaction", new paddle.PaddleApiError(0, "timeout")), {
-        status: 502, error: "paddle_error", step: "transaction", code: "timeout", paddleStatus: 0, detail: "Paddle API network timeout",
+        status: 424, error: "paddle_error", step: "transaction", code: "timeout", paddleStatus: 0, detail: "Paddle API network timeout",
     }, "without Paddle's words the message says what happened");
     assert.deepEqual(await failed("subscription", new Error("Firestore okuma hatası (429).")), {
-        status: 503, error: "unavailable", step: "subscription", code: "database_error", paddleStatus: null, detail: "Firestore okuma hatası (429).",
+        status: 500, error: "unavailable", step: "subscription", code: "database_error", paddleStatus: null, detail: "Firestore okuma hatası (429).",
     });
     assert.equal((await failed("catalog", new TypeError("fetch failed"))).code, "database_error", "the catalog only lives in the database");
     assert.equal((await failed("customer", new Error("Firebase erişim belirteci alınamadı (HTTP 400)."))).code, "database_error");
@@ -745,7 +745,7 @@ test("billing failures name the step: Paddle, the database or our own code", asy
     // The innermost step wins; errors outside any step have none.
     const nested = await paddle.billingStep("customer", () => paddle.billingStep("transaction", async () => { throw new paddle.PaddleApiError(400, "invalid_field"); })).catch((error) => error);
     assert.equal(paddle.describeBillingFailure(nested).step, "transaction");
-    assert.deepEqual(paddle.describeBillingFailure(new Error("boom")), { status: 503, error: "unavailable", step: null, code: "internal_error", paddleStatus: null, detail: "boom" });
+    assert.deepEqual(paddle.describeBillingFailure(new Error("boom")), { status: 500, error: "unavailable", step: null, code: "internal_error", paddleStatus: null, detail: "boom" });
     assert.equal(await paddle.billingStep("settings", async () => 42), 42, "a step that works returns its value");
 });
 

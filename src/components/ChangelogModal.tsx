@@ -24,6 +24,17 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.3",
+        version: "v0.3.3",
+        date: "2026-10-03",
+        title: { TR: "Hata mesajları artık gerçek nedeni söylüyor", EN: "Error messages now tell the real reason" },
+        desc: { TR: "Ödeme ekranı, Hanogt AI ve kod çalıştırmadaki bazı hatalar yolda genel bir hata sayfasına dönüşüyordu; artık asıl neden ekrana geliyor.", EN: "Some errors in the checkout, Hanogt AI and code runs turned into a generic error page on the way; now the actual reason reaches the screen." },
+        items: [
+            { TR: "Plus/Pro ödemesi başlamazsa Paddle'ın bildirdiği neden gösteriliyor (önceden yalnızca \"İşlem tamamlanamadı\" çıkıyordu).", EN: "If a Plus/Pro checkout can't start, the reason Paddle gave is shown (before, only \"That didn't work\" appeared)." },
+            { TR: "Hanogt AI'da kendi API anahtarınla bağlantı hataları (geçersiz anahtar, model bulunamadı) ve zaman aşımları doğru mesajla gösteriliyor; kod çalıştırma zaman aşımı da öyle.", EN: "Hanogt AI errors with your own API key (invalid key, model not found) and timeouts show the right message again; so do code run timeouts." },
+        ],
+    },
+    {
         id: "v0.3.2",
         version: "v0.3.2",
         date: "2026-10-03",

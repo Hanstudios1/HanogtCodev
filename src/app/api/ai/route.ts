@@ -81,13 +81,17 @@ function errorResponse(status: number, code: string, error: string, extra: Recor
     return NextResponse.json({ error, code }, { status, headers: jsonSecurityHeaders(extra) });
 }
 
-/** How a failed request through the person's own connection is reported (never with the provider's text). */
+/**
+ * How a failed request through the person's own connection is reported (never
+ * with the provider's text). A provider's failure is 424, never 502/504:
+ * Cloudflare replaces those answers with its own page and the code is lost.
+ */
 const CONNECTION_FAILURES: Record<AiConnectionError, { status: number; code: string; error: string }> = {
-    invalid_key: { status: 502, code: "connection_invalid", error: "Sağlayıcı bağlantınızın API anahtarını kabul etmedi. Bağlantı ayarlarından anahtarınızı kontrol edin." },
+    invalid_key: { status: 424, code: "connection_invalid", error: "Sağlayıcı bağlantınızın API anahtarını kabul etmedi. Bağlantı ayarlarından anahtarınızı kontrol edin." },
     quota: { status: 402, code: "connection_quota", error: "Sağlayıcı hesabınızın kotası ya da kredisi doldu." },
-    model_not_found: { status: 502, code: "connection_model", error: "Seçilen model sağlayıcıda bulunamadı. Bağlantı ayarlarından modeli değiştirin." },
+    model_not_found: { status: 424, code: "connection_model", error: "Seçilen model sağlayıcıda bulunamadı. Bağlantı ayarlarından modeli değiştirin." },
     rate_limited: { status: 429, code: "upstream_rate_limited", error: "Sağlayıcının istek sınırına ulaşıldı. Biraz sonra tekrar deneyin." },
-    provider_error: { status: 502, code: "upstream_error", error: "Dil modeli isteği tamamlayamadı." },
+    provider_error: { status: 424, code: "upstream_error", error: "Dil modeli isteği tamamlayamadı." },
     unreachable: { status: 503, code: "upstream_unreachable", error: "Dil modeli hizmetine bağlanılamadı." },
     key_unreadable: { status: 409, code: "connection_unavailable", error: "Bu bağlantı kullanılamıyor." },
 };
@@ -342,7 +346,7 @@ export async function POST(request: NextRequest) {
         const aborted = error instanceof Error && error.name === "AbortError";
         // A stop in the browser is not the connection's fault.
         if (!request.signal.aborted) recordUse("unreachable");
-        return errorResponse(aborted ? 504 : 503, aborted ? "timeout" : "upstream_unreachable", aborted ? "Yanıt zaman aşımına uğradı." : "Dil modeli hizmetine bağlanılamadı.");
+        return errorResponse(503, aborted ? "timeout" : "upstream_unreachable", aborted ? "Yanıt zaman aşımına uğradı." : "Dil modeli hizmetine bağlanılamadı.");
     }
 
     if (!upstream.ok || !upstream.body) {
@@ -358,7 +362,7 @@ export async function POST(request: NextRequest) {
         }
         await upstream.body?.cancel().catch(() => undefined);
         const code = upstream.status === 429 ? "upstream_rate_limited" : upstream.status === 401 || upstream.status === 403 ? "not_configured" : "upstream_error";
-        return errorResponse(upstream.status === 429 ? 429 : 502, code, "Dil modeli isteği tamamlayamadı.");
+        return errorResponse(upstream.status === 429 ? 429 : 424, code, "Dil modeli isteği tamamlayamadı.");
     }
     recordUse(null);
 
@@ -381,7 +385,7 @@ export async function POST(request: NextRequest) {
         const calls: CallAccumulator = new Map();
         if (agentStatus === "tools") collectToolCalls(calls, choice?.tool_calls?.map((call, index) => ({ ...call, index })));
         const toolCalls = trailerCalls(calls);
-        if (!message && !toolCalls.length) return errorResponse(502, "upstream_error", "Dil modeli boş yanıt verdi.");
+        if (!message && !toolCalls.length) return errorResponse(424, "upstream_error", "Dil modeli boş yanıt verdi.");
         return NextResponse.json({ message, toolCalls, sources, model: target.model, connection: ownConnection ? ownConnection.id : DEFAULT_CONNECTION, agent: agentStatus }, { headers: jsonSecurityHeaders(meta) });
     }
 

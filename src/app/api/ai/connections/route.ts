@@ -42,8 +42,9 @@ const STATUS: Record<AiConnectionsErrorCode, number> = {
     plan_required: 403,
     limit_reached: 409,
     invalid_key: 422,
-    provider_error: 502,
-    unreachable: 504,
+    // Not 502/504: Cloudflare replaces those answers with its own page (and the code with them).
+    provider_error: 424,
+    unreachable: 503,
     not_found: 404,
     invalid_request: 400,
     encryption_unavailable: 503,
