@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.5";
+export const LEGAL_VERSION = "4.6";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "3 Ekim 2026", EN: "3 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.5-2026-10-03";
+export const LEGAL_NOTICE_ID = "4.6-2026-10-03";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -54,8 +54,38 @@ export function controllerTableRows(operator: OperatorInfo): Array<Array<Copy | 
 
 export type LegalChange = { version: string; date: Copy; items: Copy[] };
 
+/** Dotted version numbers compared part by part ("4.10" comes after "4.9"). */
+function compareVersions(a: string, b: string) {
+    const left = a.split(".").map(Number);
+    const right = b.split(".").map(Number);
+    for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+        const difference = (left[index] ?? 0) - (right[index] ?? 0);
+        if (difference) return difference;
+    }
+    return 0;
+}
+
+/**
+ * What the notice lists for a browser that acknowledged `noticeId` (the
+ * LEGAL_NOTICE_ID of that time, e.g. "4.4-2026-10-02"): every version
+ * published since, newest first and at most `max`, so a visitor who missed one
+ * still sees its changes. The latest alone when the stored id says nothing usable.
+ */
+export function legalChangesSince(noticeId: string | null, max = 3): LegalChange[] {
+    const seen = /^(\d+(?:\.\d+)*)-/.exec(noticeId ?? "")?.[1];
+    const newer = seen ? LEGAL_CHANGES.filter((change) => compareVersions(change.version, seen) > 0) : [];
+    return (newer.length ? newer : LEGAL_CHANGES.slice(0, 1)).slice(0, Math.max(1, max));
+}
+
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.6",
+        date: { TR: "3 Ekim 2026", EN: "3 October 2026" },
+        items: [
+            { TR: "Gelişmiş kod motoru: yönetici açtıysa kod ve güvenlik soruları, planınızın günlük hakkı kadar Anthropic, PBC'nin (ABD) Claude modeline iletiliyor; sağlayıcıya standart motorla aynı veriler gidiyor, e-posta adresiniz ve hesap kimliğiniz gitmiyor. Hak dolduğunda ya da motor yanıt veremediğinde yanıtı standart motor veriyor. Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları buna göre güncellendi.", EN: "Advanced code engine: if the administrator has switched it on, code and security questions go, up to your plan's daily allowance, to the Claude model of Anthropic, PBC (USA); the provider receives the same data as the standard engine, not your e-mail address or account ID. When the allowance runs out or the engine can't answer, the standard engine answers. The Privacy Policy, the KVKK Information Notice and the Terms of Use were updated accordingly." },
+        ],
+    },
     {
         version: "4.5",
         date: { TR: "3 Ekim 2026", EN: "3 October 2026" },

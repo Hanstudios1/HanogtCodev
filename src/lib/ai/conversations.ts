@@ -34,6 +34,10 @@ export interface AiMessage {
     connectionId?: string;
     /** That connection's label at the time. */
     connectionLabel?: string;
+    /** The advanced code engine wrote this answer (src/lib/ai/engine.ts). */
+    advanced?: boolean;
+    /** Why the standard engine answered although the advanced one was wanted. */
+    engineNote?: "quota" | "unavailable";
 }
 
 export interface AiConversation {

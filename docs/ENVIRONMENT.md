@@ -194,6 +194,10 @@ See [docs/HANOGT_AI.md](./HANOGT_AI.md) for the full picture.
 | `HANOGT_AI_API_KEY` | – | API key (falls back to `GROQ_API_KEY`). |
 | `HANOGT_AI_BASE_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible endpoint. http allowed only to loopback. |
 | `HANOGT_AI_MODEL` | `llama-3.3-70b-versatile` | Model id (falls back to `GROQ_MODEL`). |
+| `ANTHROPIC_API_KEY` | – | **Secret.** Turns on the advanced code engine (Claude): code and security questions in the chat go to it, up to each plan's daily allowance (Admin › Subscriptions › Hanogt AI engine). Without it the standard engine answers everything. |
+| `HANOGT_AI_CLAUDE_MODEL` | `DEFAULT_ENGINE_MODEL` in `src/lib/ai/engine.ts` | The advanced engine's default model, an Anthropic model ID (the admin card overrides it). |
+| `HANOGT_AI_CLAUDE_EFFORT` | `medium` | Its default effort: `low`, `medium`, `high`, `xhigh` or `max`. Higher thinks deeper, answers slower and costs more; the chat stops answers after 55 seconds. |
+| `ANTHROPIC_BASE_URL` | – | Only for tests or a proxy: another address for the Anthropic API (https, or http to this machine). |
 | `AI_KEYS_ENCRYPTION_KEY` | – | **Secret.** Encrypts (AES-256-GCM) the API keys Plus/Pro members connect in Hanogt AI (`ai_connections/{email}`; Plus 2, Pro 5 connections). Falls back to `TOTP_ENCRYPTION_KEY`, then `NEXTAUTH_SECRET`/`AUTH_SECRET`. Set a dedicated value before launch and don't change it: stored keys become unreadable and people have to add their connections again. |
 
 ## Payments (Paddle Billing)

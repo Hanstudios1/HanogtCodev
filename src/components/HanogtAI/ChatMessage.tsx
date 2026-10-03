@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Copy as CopyIcon, Cpu, FileCode2, KeyRound, Pencil, RotateCcw, Sparkles, Square, SquareArrowOutUpRight, ThumbsDown, ThumbsUp, Volume2 } from "lucide-react";
+import { Check, Copy as CopyIcon, Cpu, FileCode2, Gauge, KeyRound, Pencil, RotateCcw, Sparkles, Square, SquareArrowOutUpRight, ThumbsDown, ThumbsUp, Volume2, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
@@ -37,6 +37,10 @@ const C = {
     own: { TR: "Bağlantın", EN: "Your connection" },
     ownTitle: { TR: "Kendi bağlantınla yanıtlandı: {name}", EN: "Answered through your own connection: {name}" },
     coreTitle: { TR: "Cihazında çalışan eğitilmiş Hanogt AI Çekirdeği", EN: "Trained Hanogt AI Core running on your device" },
+    advanced: { TR: "Gelişmiş kod motoru", EN: "Advanced code engine" },
+    advancedTitle: { TR: "Bu yanıtı gelişmiş kod motoru yazdı: {model}", EN: "Written by the advanced code engine: {model}" },
+    engineQuota: { TR: "Bugünkü gelişmiş kod motoru hakkın doldu; bu yanıtı standart motor verdi.", EN: "You've used today's advanced code engine answers; the standard engine wrote this one." },
+    engineUnavailable: { TR: "Gelişmiş kod motoru şu an yanıt veremedi; bu yanıtı standart motor verdi.", EN: "The advanced code engine couldn't answer just now; the standard engine wrote this one." },
     attached: { TR: "Ekli dosya: {name} ({language})", EN: "Attached file: {name} ({language})" },
 };
 
@@ -142,9 +146,12 @@ export default function ChatMessage(props: ChatMessageProps) {
     const model = typeof message.model === "string" ? message.model : "";
     const viaConnection = message.engine === "llm" && typeof message.connectionId === "string";
     const connectionName = [typeof message.connectionLabel === "string" ? message.connectionLabel : "", model].filter(Boolean).join(" · ");
+    const advanced = message.engine === "llm" && !viaConnection && message.advanced === true;
+    const engineNote = message.engine === "llm" && !advanced && (message.engineNote === "quota" || message.engineNote === "unavailable") ? message.engineNote : null;
     const badgeTitle = viaConnection
         ? tx(C.ownTitle, { name: connectionName || tx(C.own) })
-        : message.engine === "llm" ? (model ? tx(C.llmModelTitle, { model }) : tx(C.llmTitle)) : tx(C.coreTitle);
+        : advanced ? tx(C.advancedTitle, { model: model || "Claude" })
+            : message.engine === "llm" ? (model ? tx(C.llmModelTitle, { model }) : tx(C.llmTitle)) : tx(C.coreTitle);
     const copy = async () => {
         try {
             await navigator.clipboard.writeText(message.content);
@@ -164,6 +171,13 @@ export default function ChatMessage(props: ChatMessageProps) {
                         <Cpu className="me-1.5 inline h-3 w-3 align-[-1px]" aria-hidden />
                         {message.notice}
                         {message.noticeAction === "plans" ? <> <Link href="/plans" onClick={props.onNavigate} className="whitespace-nowrap font-bold text-violet-700 underline underline-offset-2 dark:text-violet-300" data-notice-plans>{tx(CHAT_COPY.upgrade)}</Link></> : null}
+                    </p>
+                ) : null}
+                {engineNote && !isStreaming ? (
+                    <p className="w-fit max-w-full rounded-lg bg-zinc-500/10 px-2 py-1 text-[11.5px] font-semibold leading-relaxed text-zinc-600 dark:text-zinc-300" data-ai-engine-note={engineNote}>
+                        <Gauge className="me-1.5 inline h-3 w-3 align-[-1px]" aria-hidden />
+                        {tx(engineNote === "quota" ? C.engineQuota : C.engineUnavailable)}
+                        {engineNote === "quota" ? <> <Link href="/plans" onClick={props.onNavigate} className="whitespace-nowrap font-bold text-violet-700 underline underline-offset-2 dark:text-violet-300">{tx(CHAT_COPY.upgrade)}</Link></> : null}
                     </p>
                 ) : null}
                 {content || !isStreaming ? (
@@ -193,9 +207,9 @@ export default function ChatMessage(props: ChatMessageProps) {
                 ) : null}
                 {!isStreaming && message.content ? (
                     <div className="flex flex-wrap items-center gap-1 text-[11px] text-zinc-400">
-                        <span className={cx("me-1 inline-flex max-w-[14rem] items-center gap-1 rounded-full px-2 py-0.5 font-bold", viaConnection ? "bg-sky-500/10 text-sky-700 dark:text-sky-300" : message.engine === "llm" ? "bg-violet-500/10 text-violet-600 dark:text-violet-300" : "bg-zinc-500/10 text-zinc-500")} title={badgeTitle}>
-                            {viaConnection ? <KeyRound className="h-3 w-3 shrink-0" aria-hidden /> : message.engine === "llm" ? <Sparkles className="h-3 w-3 shrink-0" aria-hidden /> : <Cpu className="h-3 w-3 shrink-0" aria-hidden />}
-                            <span className="truncate">{viaConnection ? model || tx(C.own) : tx(message.engine === "llm" ? C.llm : C.core)}</span>
+                        <span className={cx("me-1 inline-flex max-w-[14rem] items-center gap-1 rounded-full px-2 py-0.5 font-bold", viaConnection ? "bg-sky-500/10 text-sky-700 dark:text-sky-300" : advanced ? "bg-gradient-to-r from-amber-500/15 to-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300" : message.engine === "llm" ? "bg-violet-500/10 text-violet-600 dark:text-violet-300" : "bg-zinc-500/10 text-zinc-500")} title={badgeTitle} data-ai-engine={advanced ? "advanced" : message.engine === "llm" && !viaConnection ? "standard" : undefined}>
+                            {viaConnection ? <KeyRound className="h-3 w-3 shrink-0" aria-hidden /> : advanced ? <Zap className="h-3 w-3 shrink-0" aria-hidden /> : message.engine === "llm" ? <Sparkles className="h-3 w-3 shrink-0" aria-hidden /> : <Cpu className="h-3 w-3 shrink-0" aria-hidden />}
+                            <span className="truncate">{viaConnection ? model || tx(C.own) : advanced ? tx(C.advanced) : tx(message.engine === "llm" ? C.llm : C.core)}</span>
                         </span>
                         {message.sources?.map((source) => (
                             <Link key={source.href} href={source.href} onClick={props.onNavigate} className="rounded-full border border-zinc-200 px-2 py-0.5 font-semibold text-zinc-500 transition hover:border-violet-400 hover:text-violet-600 dark:border-white/10 dark:hover:text-violet-300">{source.title}</Link>

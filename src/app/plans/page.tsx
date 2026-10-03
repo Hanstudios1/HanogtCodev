@@ -98,6 +98,7 @@ const C = {
     notifyHint: { TR: "Bildirimden çıkmak için tekrar bas.", EN: "Press again to stop the notification." },
     signInToNotify: { TR: "Haber almak için giriş yap", EN: "Sign in to get notified" },
     planned: { TR: "Planlanıyor", EN: "Planned" },
+    engineDaily: { TR: "Gelişmiş kod motoruyla (Claude) günde {count} kod yanıtı", EN: "{count} answers a day from the advanced code engine (Claude)" },
     popular: { TR: "En kapsamlı", EN: "Most complete" },
     discount: { TR: "%{percent} indirim", EN: "{percent}% off" },
     activating: { TR: "Ödemen alındı, planın etkinleştiriliyor…", EN: "Payment received, activating your plan…" },
@@ -1215,6 +1216,12 @@ export default function PlansPage() {
                                                 </span>
                                             </li>
                                         ))}
+                                        {data?.engine && data.engine.daily[plan] > 0 ? (
+                                            <li className="flex items-start gap-2.5" data-plan-engine={plan}>
+                                                <span className="mt-0.5 grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"><Check className="h-3 w-3" strokeWidth={3} aria-hidden /></span>
+                                                <span className="leading-snug text-zinc-700 dark:text-zinc-300">{tx(C.engineDaily, { count: data.engine.daily[plan].toLocaleString(locale) })}</span>
+                                            </li>
+                                        ) : null}
                                     </ul>
                                     <div className="mt-6">
                                         {plan === "free" ? (

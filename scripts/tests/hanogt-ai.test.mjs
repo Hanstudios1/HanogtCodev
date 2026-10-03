@@ -17,7 +17,8 @@ test("the chat prompt carries the rules, the language, the mode and the agent's 
     assert.match(prompt, /^You are Hanogt AI, the assistant built into Hanogt Codev/);
     assert.ok(prompt.includes("Rules:"));
     assert.ok(prompt.includes("Answer in Turkish unless"));
-    assert.ok(prompt.includes("Coding mode: focus on code."));
+    assert.ok(prompt.includes("Coding mode: work like a senior software engineer"));
+    for (const rule of ["root cause", "edge cases", "Never invent APIs", "complete, runnable code"]) assert.ok(prompt.includes(rule), rule);
     assert.ok(prompt.includes("The user is on the page /editor."));
     assert.ok(prompt.includes("Agent mode is ON."));
     assert.ok(prompt.includes("Refuse to write malware"), "safety rules");
@@ -107,4 +108,19 @@ test("knowledge notes and analyzer notes ground the answer", () => {
     assert.ok(sources.length <= 4 && sources.every((source) => source.href.startsWith("/")));
     const tools = core.toolNotes("Bu bağlantı güvenli mi? http://paypa1-login.example-secure.top/verify");
     assert.ok(tools.some((note) => note.startsWith("Hanogt Link Check")));
+});
+
+test("the prompt in two parts: the stable rules (cached by the advanced engine) and what changes with each message", () => {
+    const options = { ...base, mode: "code", path: "/editor", agent: "requested", knowledge: ["### Kod editörü\nNotlar"], tools: ["Hanogt error explainer: ..."], file: { name: "main.py", language: "python", code: "print(1)" }, personal: PERSONAL, personalMax: 500 };
+    const { stable, dynamic } = core.systemPromptParts(options);
+    assert.equal(core.systemPrompt(options), `${stable}\n${dynamic}`, "the standard engine gets the same text in one piece");
+    for (const part of ["The user is on the page /editor.", "Hanogt knowledge:", "Hanogt error explainer", "main.py", "<user_preferences>"]) {
+        assert.ok(dynamic.includes(part) && !stable.includes(part), part);
+    }
+    assert.ok(stable.includes("Agent mode is ON.") && stable.includes("Coding mode"), "rules, mode and agent state are stable");
+    const again = core.systemPromptParts({ ...options, path: "/ai", knowledge: [], tools: [], file: null });
+    assert.equal(again.stable, stable, "another page or question doesn't change the stable part");
+    const general = core.systemPrompt({ ...base, agent: "off" });
+    assert.ok(general.includes("Never invent APIs") && general.includes("complete, runnable code"), "code practice in every mode");
+    assert.ok(core.systemPrompt({ ...base, mode: "security", agent: "off" }).includes("Never invent APIs"));
 });

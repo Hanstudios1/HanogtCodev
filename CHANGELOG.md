@@ -1,5 +1,54 @@
 # Değişiklik Günlüğü
 
+## 0.3.15 — 2026-10-03
+
+### Gelişmiş kod motoru (Claude) ve daha güçlü kod yanıtları
+
+- İsteğe bağlı **gelişmiş kod motoru**: sunucuda `ANTHROPIC_API_KEY` varsa
+  sohbetteki kod soruları resmî `@anthropic-ai/sdk` ile Claude'a gider
+  (varsayılan model: `src/lib/ai/engine.ts` › `DEFAULT_ENGINE_MODEL`).
+  Anahtar yoksa hiçbir şey değişmez; kendi bağlantılar ve geliştirici
+  API'si her zaman standart motorda kalır.
+  - **Hangi mesajlar:** Kod ve Güvenlik modu, ekli ya da açık editör dosyası,
+    mesajda kod bloğu, hata kaydı, kod satırları ya da programlama sözcükleri
+    (Türkçe ve İngilizce; "dizi", "sınıf", "program" gibi gündelik anlamı
+    olanlar sayılmaz). İstenirse bütün mesajlar.
+  - **Günlük hak:** hesap başına 24 saatlik pencere; varsayılan Ücretsiz 3,
+    Plus 25, Pro 100. Mesaj ayrıca Hanogt AI günlük hakkından da düşer. Hak
+    dolunca ya da Claude isteği yanıtlamadan reddedince (anahtar, hız sınırı,
+    kesinti) standart motor yanıtlar ve yanıt nedenini söyler.
+  - **İstek:** akışlı; düşünme uyarlamalı (varsayılan modelde hep açık),
+    derinliği `output_config.effort` ile ayarlanır. Güvenlik nedeniyle
+    reddedilen istek Anthropic'in önerdiği modelde sunucu tarafında yeniden
+    denenir (`fallbacks: "default"`). Bütün zincir reddederse yanıt bunu
+    söyler ve hiçbir araç çalışmaz.
+  - **Önbellek:** sistem isteminin sabit kısmı araçlarla birlikte
+    önbelleğe alınır. Ajan araçları Claude araçları olarak verilir ve yanıt
+    normal biterse doğrulanıp tarayıcıya geçer. Önceki araç turları metin
+    olarak gider; Claude'un düşünme blokları hiç geri gönderilmez.
+  - **Yönetici:** Abonelikler › Hanogt AI motoru kartından açma/kapama,
+    model, efor, kapsam ve plan başına günlük hak (`site_config/ai_engine`,
+    denetim kaydı `ai_engine.set`). Kart sunucuda anahtar olup olmadığını da
+    gösterir; "Hanogt AI sınırını sıfırla" bu pencereyi de sıfırlar.
+  - **Arayüz:** gelişmiş yanıtlarda "Gelişmiş kod motoru" etiketi; standart
+    motor devreye girince bir not. Hanogt AI sayacı, kullanım listesi ve
+    Fiyatlandırma kartları günlük hakkı gösterir. Yanıtlar
+    `X-Hanogt-AI-Engine` başlıklarını taşır.
+- İki motor için güçlendirilmiş kod yönergeleri:
+  - eksiksiz ve çalışır kod; yer tutucu yok, uydurma API yok;
+  - hata ayıklamada kök neden ve tam satır;
+  - uç durumlar ve karmaşıklık;
+  - dile özgü, okunur kod; varsayılan olarak güvenli kod;
+  - kısa açıklama ve gerektiğinde test.
+- Sistem istemi iki parçaya ayrıldı (`systemPromptParts`): sabit kurallar ve
+  her mesajda değişenler. Standart motor ikisini tek metin olarak alır.
+- Yasal metinler 4.6: gelişmiş kod motoru açıksa Anthropic, PBC (ABD) yeni
+  alıcı olarak Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım
+  Şartları'nda yer alıyor.
+- Belgeler: `docs/HANOGT_AI.md` (Advanced code engine) ve
+  `docs/ENVIRONMENT.md` (`ANTHROPIC_API_KEY`, `HANOGT_AI_CLAUDE_MODEL`,
+  `HANOGT_AI_CLAUDE_EFFORT`, `ANTHROPIC_BASE_URL`).
+
 ## 0.3.14 — 2026-10-03
 
 ### Yayın: API ve rozet herkese açık, ses erken erişimde, yasal metinler 4.5

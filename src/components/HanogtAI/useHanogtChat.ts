@@ -87,7 +87,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     const { items: connectionItems, refresh: refreshConnections, select: selectConnection, selectedId: selectedConnection } = connections;
     // Messages used today (the usage meter); every answer updates it from its headers.
     const usage = useAiUsage(signedIn ? session?.user?.email ?? null : null);
-    const { applyQuota, applyLimit } = usage;
+    const { applyQuota, applyLimit, applyEngine } = usage;
     // How much of the open file goes with a question: the plan's allowance (Free until the plan is known).
     const contextChars = PLAN_AI_FEATURES[usage.usage?.plan ?? "free"].contextChars;
 
@@ -174,7 +174,8 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     /** What an answer records about the model that wrote it. */
     const answeredBy = useCallback((result: AiStreamResult): Partial<AiMessage> => {
         const model = result.model?.slice(0, 200);
-        if (!result.connectionId) return model ? { model } : {};
+        const engine: Partial<AiMessage> = { ...(result.engine === "advanced" ? { advanced: true } : {}), ...(result.engineNote ? { engineNote: result.engineNote } : {}) };
+        if (!result.connectionId) return { ...(model ? { model } : {}), ...engine };
         const label = connectionItems.find((item) => item.id === result.connectionId)?.label;
         return { ...(model ? { model } : {}), connectionId: result.connectionId, ...(label ? { connectionLabel: label } : {}) };
     }, [connectionItems]);
@@ -262,6 +263,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             cancelAnimationFrame(frame);
             applyQuota(result.quota);
             applyLimit(result.limit);
+            applyEngine(result.engineWindow, result.engineNote);
             if (result.ok) {
                 let agent = llmAgentState(result, 0);
                 // The provider can't call tools: the Core proposes the same actions.
@@ -285,7 +287,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [active, answeredBy, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, contextChars, create, draftMode, finish, language, locale, selectedConnection, signedIn, tryModel, tx, update]);
+    }, [active, answeredBy, applyEngine, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, contextChars, create, draftMode, finish, language, locale, selectedConnection, signedIn, tryModel, tx, update]);
 
     /** Sends the tool results back to the model once every card of its message is settled. */
     const continueAfterTools = useCallback(async (conversation: AiConversation, source: AiMessage) => {
@@ -323,6 +325,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             cancelAnimationFrame(frame);
             applyQuota(result.quota);
             applyLimit(result.limit);
+            applyEngine(result.engineWindow, result.engineNote);
             if (result.ok) {
                 const agent = final ? undefined : llmAgentState(result, round);
                 finish(conversationId, assistantId, { content: result.text, engine: "llm", sources: result.sources, agent, ...answeredBy(result) });
@@ -340,7 +343,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [answeredBy, applyLimit, applyQuota, autoRun, connectionFailed, finish, language, tx, update]);
+    }, [answeredBy, applyEngine, applyLimit, applyQuota, autoRun, connectionFailed, finish, language, tx, update]);
 
     // The follow-up starts when the last message's cards are all settled.
     useEffect(() => {

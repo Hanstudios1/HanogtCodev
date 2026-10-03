@@ -216,6 +216,8 @@ export type PlansResponse = {
     catalog: PlanCatalog;
     /** Set when plans can be bought (Paddle connected and prices published). */
     checkout: PaddleCheckoutConfig | null;
+    /** Each plan's advanced code engine answers a day, when the server has the engine and it is on (src/lib/ai/engine.ts). */
+    engine?: { daily: Record<PlanId, number> } | null;
     me: {
         /** The plan whose benefits apply now. */
         plan: PlanId;

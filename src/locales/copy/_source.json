@@ -2753,6 +2753,29 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "14fj6ht7khh": {
+    "en": "Anthropic, PBC (USA; if the advanced code engine is on)",
+    "tr": "Anthropic, PBC (ABD; gelişmiş kod motoru açıksa)",
+    "files": [
+      "src/app/disclosure/page.tsx",
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "3pkgzfxm85": {
+    "en": "Code and security questions, their context and personal instructions (up to the plan's daily allowance)",
+    "tr": "Kod ve güvenlik soruları, bağlam ve kişisel talimatlar (planın günlük hakkı kadar)",
+    "files": [
+      "src/app/disclosure/page.tsx"
+    ]
+  },
+  "1tp0gxvfbuh": {
+    "en": "Generating replies with the advanced code engine",
+    "tr": "Gelişmiş kod motoruyla yanıt üretimi",
+    "files": [
+      "src/app/disclosure/page.tsx",
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "1boahu1m4m8": {
     "en": "An AI provider you connected with your own API key (for example OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, DeepSeek, xAI, Together)",
     "tr": "Kendi API anahtarınızla bağladığınız yapay zekâ sağlayıcısı (ör. OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, DeepSeek, xAI, Together)",
@@ -3585,6 +3608,7 @@
       "src/app/editor/page.tsx",
       "src/app/feedback/page.tsx",
       "src/app/settings/page.tsx",
+      "src/components/Admin/AiEngineCard.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
       "src/components/Editor/SaveDialog.tsx",
@@ -6603,6 +6627,13 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "tbo7kerdy6": {
+    "en": "{count} answers a day from the advanced code engine (Claude)",
+    "tr": "Gelişmiş kod motoruyla (Claude) günde {count} kod yanıtı",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
   "8fiv05hk7o": {
     "en": "Most complete",
     "tr": "En kapsamlı",
@@ -7911,6 +7942,13 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "jwy1wshrh7": {
+    "en": "Advanced code engine: if the administrator has switched it on, code and security questions (Code or Security mode, an attached or open editor file, code, an error log or a programming question in the message) go, up to your plan's daily allowance, to the Claude model of Anthropic, PBC (USA). This provider receives the same data as the standard engine (your question and the most recent messages of the chat, your personal instructions and preferences, knowledge notes, analysis results, the open file and the results of agent actions you allow); not your e-mail address or account ID. Anthropic may use another Claude model it recommends in place of a model that declined a request for safety reasons. A 24-hour counter linked to your account applies your allowance; when it runs out or the advanced engine can't answer, the standard engine answers, and every answer shows which engine wrote it. How Anthropic processes data and how long it keeps it are governed by its own terms.",
+    "tr": "Gelişmiş kod motoru: yönetici açtıysa kod ve güvenlik soruları (Kod veya Güvenlik modu, ekli ya da açık editör dosyası, mesajda kod, hata kaydı veya programlama sorusu), planınızın günlük hakkı kadar Anthropic, PBC'nin (ABD) Claude modeline iletilir. Bu sağlayıcıya standart motorla aynı veriler gider (sorunuz ve sohbetin son mesajları, kişisel talimatlarınız ve tercihleriniz, bilgi notları, analiz sonuçları, açık dosya ve izin verdiğiniz ajan işlemlerinin sonuçları); e-posta adresiniz ve hesap kimliğiniz gitmez. Anthropic, bir isteği güvenlik nedeniyle reddeden modelin yerine kendi önerdiği başka bir Claude modelini kullanabilir. Hakkınızı uygulamak için hesabınıza bağlı 24 saatlik bir sayaç tutulur; hak dolduğunda ya da gelişmiş motor yanıt veremediğinde yanıtı standart motor verir ve her yanıtta hangi motorun yanıt verdiği gösterilir. Anthropic'in verileri nasıl işlediği ve ne kadar sakladığı kendi koşullarına tabidir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "1hotlmtu3gf": {
     "en": "Hanogt AI settings: the personal instructions (about you and about the style of answers), tone, answer length, answer language and chat defaults (default mode and model, attaching the open file, agent mode) you save on the [Hanogt AI settings](/ai/settings) page are stored in your account record, so the same settings apply on every device. Your instructions and preferences are passed to the language model provider with every message you send while signed in; they are not added to Hanogt AI API requests. You can change or delete your settings at any time; they are included in your account data export and deleted when you delete your account. The “Delete chats when I sign out” setting and the choices you make on this device (for example the selected model) are kept only in your browser.",
     "tr": "Hanogt AI ayarları: [Hanogt AI ayarları](/ai/settings) sayfasında kaydettiğiniz kişisel talimatlar (kendiniz hakkında ve yanıtların tarzı için), üslup, yanıt uzunluğu, yanıt dili ve sohbet varsayılanları (varsayılan mod ve model, açık dosyanın eklenmesi, ajan modu) hesap kaydınızda saklanır; böylece her cihazda aynı ayarlar kullanılır. Talimatlarınız ve tercihleriniz, giriş yapmışken gönderdiğiniz her mesajla birlikte dil modeli sağlayıcısına iletilir; Hanogt AI API isteklerine eklenmez. Ayarlarınızı istediğiniz zaman değiştirebilir veya silebilirsiniz; hesap verilerinizin dışa aktarımında yer alırlar ve hesabınızı sildiğinizde silinirler. “Çıkışta sohbetleri sil” ayarı ve bu cihazdaki seçimleriniz (ör. seçili model) yalnızca tarayıcınızda tutulur.",
@@ -8900,6 +8938,20 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "uqpurvthhg": {
+    "en": "Your code and security questions, the chat's recent messages and context, your personal instructions and preferences, results of agent actions you allow",
+    "tr": "Kod ve güvenlik sorularınız, sohbetin son mesajları ve bağlamı, kişisel talimatlarınız ve tercihleriniz, izin verdiğiniz ajan işlemlerinin sonuçları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "ne64xpwd0y": {
+    "en": "When you ask a code or security question while the advanced code engine is on, up to your plan's daily allowance",
+    "tr": "Gelişmiş kod motoru açıkken kod veya güvenlik sorusu sorduğunuzda, planınızın günlük hakkı kadar",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "8rk8r5wdb": {
     "en": "The Hanogt AI messages and context you send with that connection, with your API key",
     "tr": "Bu bağlantıyla gönderdiğiniz Hanogt AI mesajları ve bağlamı, sizin API anahtarınızla",
@@ -9061,9 +9113,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "pwsc68copg": {
-    "en": "Hosting (Vercel), the database and storage (Google Firebase), payments (Paddle, United Kingdom), the language model provider and any AI providers you connect with your own API key, the public compilers and the voice call servers may process data on servers outside Türkiye. This means your personal data is transferred abroad when you use the service.",
-    "tr": "Barındırma (Vercel), veritabanı ve depolama (Google Firebase), ödemeler (Paddle, Birleşik Krallık), dil modeli sağlayıcısı ve kendi API anahtarınızla bağladığınız yapay zekâ sağlayıcıları, herkese açık derleyiciler ve sesli arama sunucuları verileri Türkiye dışındaki sunucularda işleyebilir. Bu nedenle hizmeti kullandığınızda kişisel verileriniz yurt dışına aktarılır.",
+  "ess86fta57": {
+    "en": "Hosting (Vercel), the database and storage (Google Firebase), payments (Paddle, United Kingdom), the language model provider, the advanced code engine if it is on (Anthropic, USA) and any AI providers you connect with your own API key, the public compilers and the voice call servers may process data on servers outside Türkiye. This means your personal data is transferred abroad when you use the service.",
+    "tr": "Barındırma (Vercel), veritabanı ve depolama (Google Firebase), ödemeler (Paddle, Birleşik Krallık), dil modeli sağlayıcısı, açıksa gelişmiş kod motoru (Anthropic, ABD) ve kendi API anahtarınızla bağladığınız yapay zekâ sağlayıcıları, herkese açık derleyiciler ve sesli arama sunucuları verileri Türkiye dışındaki sunucularda işleyebilir. Bu nedenle hizmeti kullandığınızda kişisel verileriniz yurt dışına aktarılır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -12702,6 +12754,13 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "1zaittgblxn": {
+    "en": "If the administrator has switched on the advanced code engine, code and security questions are answered by it (Anthropic's Claude model) up to your plan's daily allowance; when the allowance runs out or the engine can't answer, the standard engine answers, and every answer shows which engine wrote it. The advanced engine's answers can be wrong too, and the rules in this section apply to them as well. Whether the engine is on, and the daily allowances, can be changed by the administrator and are not a fixed benefit of the plan you buy.",
+    "tr": "Yönetici gelişmiş kod motorunu açtıysa kod ve güvenlik soruları, planınızın günlük hakkı kadar bu motor (Anthropic'in Claude modeli) tarafından yanıtlanır; hak dolduğunda ya da motor yanıt veremediğinde yanıtı standart motor verir ve her yanıtta hangi motorun yanıt verdiği gösterilir. Gelişmiş motorun yanıtları da hatalı olabilir; bu bölümdeki kurallar onlar için de geçerlidir. Motorun açık olması ve günlük haklar, yönetici tarafından değiştirilebilir ve satın aldığınız planın sabit bir avantajı değildir.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
   "26dqb3aqslo": {
     "en": "Usage limits depend on your plan: 12 messages a minute and 250 a day on Free, 20 a minute and 750 a day on Plus, and 30 a minute and 2,000 a day on Pro (see [Paid plans](/terms-of-use#paid-services)). When you reach a limit, the Core answers instead.",
     "tr": "Kullanım sınırları planınıza göre uygulanır: Ücretsiz planda dakikada 12 ve günde 250, Plus'ta dakikada 20 ve günde 750, Pro'da dakikada 30 ve günde 2.000 mesaj (bkz. [Ücretli planlar](/terms-of-use#paid-services)). Sınıra ulaştığınızda yanıtları Çekirdek verir.",
@@ -13959,6 +14018,175 @@
     "tr": "Panelden yapılan her değişiklik denetim kaydına yazılır.",
     "files": [
       "src/components/Admin/AdminPanel.tsx"
+    ]
+  },
+  "gy5grp7t5u": {
+    "en": "Hanogt AI engine",
+    "tr": "Hanogt AI motoru",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "l6m169e49e": {
+    "en": "Code and security questions go to the advanced code engine (Claude); when a plan's daily answers run out or the engine can't answer, the standard engine does. A change applies within a minute and is written to the audit log.",
+    "tr": "Kod ve güvenlik soruları gelişmiş kod motoruna (Claude) gider; her planın günlük hakkı dolunca ya da motor yanıt veremezse standart motor yanıtlar. Değişiklik bir dakika içinde geçerli olur ve denetim kaydına yazılır.",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "agybkafgv8": {
+    "en": "ANTHROPIC_API_KEY is set",
+    "tr": "ANTHROPIC_API_KEY tanımlı",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "5jtns77us1": {
+    "en": "No ANTHROPIC_API_KEY",
+    "tr": "ANTHROPIC_API_KEY yok",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "1jeipiybn35": {
+    "en": "The server has no Anthropic key, so the standard engine answers everything. Add ANTHROPIC_API_KEY in Vercel → Settings → Environment Variables and redeploy (it's secret; no NEXT_PUBLIC_ prefix).",
+    "tr": "Sunucuda Anthropic anahtarı olmadığı için bütün yanıtları standart motor veriyor. Vercel → Settings → Environment Variables bölümüne ANTHROPIC_API_KEY ekleyip yeniden dağıtın (gizli bir değişkendir; NEXT_PUBLIC_ ile başlamasın).",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "5ztojnnk52": {
+    "en": "Advanced code engine on",
+    "tr": "Gelişmiş kod motoru açık",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "ki5bhylf5o": {
+    "en": "Model",
+    "tr": "Model",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx",
+      "src/components/HanogtAI/ChatComposer.tsx",
+      "src/components/HanogtAI/ConnectionsManager.tsx"
+    ]
+  },
+  "28tpupez0bq": {
+    "en": "An Anthropic model ID, e.g. {model}.",
+    "tr": "Anthropic model kimliği, ör. {model}.",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "zc29qpe5ef": {
+    "en": "Effort",
+    "tr": "Efor",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "t4z61axro0": {
+    "en": "Higher effort thinks deeper but is slower and costs more; medium suits the chat's 55-second limit.",
+    "tr": "Yüksek efor daha derin düşünür ama daha yavaş ve pahalıdır; sohbetin 55 saniyelik sınırı için orta önerilir.",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "11yeq13glno": {
+    "en": "Which messages",
+    "tr": "Hangi mesajlar",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "24zou90e4le": {
+    "en": "Advanced answers a day (24 hours)",
+    "tr": "Günlük gelişmiş yanıt (24 saat)",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "rojn6lj41c": {
+    "en": "Hanogt AI engine saved.",
+    "tr": "Hanogt AI motoru kaydedildi.",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "38yqpy4v5g": {
+    "en": "The model ID or a daily allowance is invalid (0–{max}).",
+    "tr": "Model kimliği ya da günlük haklar geçersiz (0–{max}).",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "i1g2qlljkb": {
+    "en": "Last change: {by} · {at}",
+    "tr": "Son değişiklik: {by} · {at}",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx",
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "1t5eheg4pyb": {
+    "en": "Not changed yet; the defaults apply.",
+    "tr": "Henüz değiştirilmedi; varsayılanlar geçerli.",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx",
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "1u7z29157oi": {
+    "en": "Low (fastest)",
+    "tr": "Düşük (en hızlı)",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "pb3fvyfras": {
+    "en": "Medium (recommended)",
+    "tr": "Orta (önerilen)",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "om1cpgg7ds": {
+    "en": "High",
+    "tr": "Yüksek",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Security/CodeAdvisor.tsx",
+      "src/lib/support.ts"
+    ]
+  },
+  "1gc72rj002q": {
+    "en": "Extra high",
+    "tr": "Çok yüksek",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "1xqotek8g3n": {
+    "en": "Max",
+    "tr": "En yüksek",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "1ppzcw5wtn4": {
+    "en": "Code and security (Code/Security mode, an attached file, code, an error or a programming question)",
+    "tr": "Kod ve güvenlik (Kod/Güvenlik modu, ekli dosya, kod, hata ya da programlama sorusu)",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
+    ]
+  },
+  "24pppz45bt4": {
+    "en": "Every message",
+    "tr": "Bütün mesajlar",
+    "files": [
+      "src/components/Admin/AiEngineCard.tsx"
     ]
   },
   "1lb17duvreh": {
@@ -16782,16 +17010,6 @@
       "src/components/Admin/copy.ts"
     ]
   },
-  "om1cpgg7ds": {
-    "en": "High",
-    "tr": "Yüksek",
-    "files": [
-      "src/components/Admin/copy.ts",
-      "src/components/Editor/PublishDialog.tsx",
-      "src/components/Security/CodeAdvisor.tsx",
-      "src/lib/support.ts"
-    ]
-  },
   "25dyckone7a": {
     "en": "Medium",
     "tr": "Orta",
@@ -17074,6 +17292,13 @@
   "25d88bp0pd7": {
     "en": "Feature audience changed",
     "tr": "Özelliğin kitlesi değişti",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "ajqg205sl5": {
+    "en": "Hanogt AI engine settings changed",
+    "tr": "Hanogt AI motoru ayarları değişti",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -17485,20 +17710,6 @@
   "tyqz0dop39": {
     "en": "{feature}: {audience}",
     "tr": "{feature}: {audience}",
-    "files": [
-      "src/components/Admin/FeaturesCard.tsx"
-    ]
-  },
-  "i1g2qlljkb": {
-    "en": "Last change: {by} · {at}",
-    "tr": "Son değişiklik: {by} · {at}",
-    "files": [
-      "src/components/Admin/FeaturesCard.tsx"
-    ]
-  },
-  "1t5eheg4pyb": {
-    "en": "Not changed yet; the defaults apply.",
-    "tr": "Henüz değiştirilmedi; varsayılanlar geçerli.",
     "files": [
       "src/components/Admin/FeaturesCard.tsx"
     ]
@@ -22497,6 +22708,49 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "kuffyeh79u": {
+    "en": "The advanced code engine",
+    "tr": "Gelişmiş kod motoru",
+    "files": [
+      "src/components/ChangelogModal.tsx",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "15waptvp3in": {
+    "en": "If the team has switched it on, your code and security questions are answered with Claude; every plan gets advanced answers each day.",
+    "tr": "Ekip açtıysa kod ve güvenlik soruların Claude ile yanıtlanıyor; her plan günlük gelişmiş yanıt hakkı alıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "md3690u34m": {
+    "en": "In Code or Security mode, with a file attached or a question about code, the advanced code engine writes the answer.",
+    "tr": "Kod ya da Güvenlik modunda, dosya eklediğinde ya da kodla ilgili sorduğunda yanıtı gelişmiş kod motoru yazar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "3rczuv8yqe": {
+    "en": "More advanced answers on Plus and Pro; what's left shows in the Hanogt AI meter.",
+    "tr": "Plus ve Pro'da daha fazla gelişmiş yanıt; kalan hakkın Hanogt AI sayacında görünür.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1yn5oxc3u9m": {
+    "en": "When they run out, the standard engine answers and says so above the answer.",
+    "tr": "Hak dolunca standart motor yanıtlar ve bunu yanıtın üstünde söyler.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1hloxd9ymc9": {
+    "en": "Code answers are more complete on both engines: full runnable code, edge cases, root causes and no invented APIs.",
+    "tr": "Kod yanıtları iki motorda da daha eksiksiz: çalışır tam kod, uç durumlar, kök neden ve uydurma API yok.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "27i2r3etzg8": {
@@ -33610,6 +33864,13 @@
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
+  "no3lw22k1c": {
+    "en": "Nothing is in early access right now; when a new feature opens for trying, it shows up here.",
+    "tr": "Şu an erken erişimde bir özellik yok; yeni bir özellik denemeye açıldığında burada görünür.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
   "tbp1gunicu": {
     "en": "Early access comes with Pro.",
     "tr": "Erken erişim Pro planına dahil.",
@@ -34658,14 +34919,6 @@
       "src/components/HanogtAI/ChatComposer.tsx"
     ]
   },
-  "ki5bhylf5o": {
-    "en": "Model",
-    "tr": "Model",
-    "files": [
-      "src/components/HanogtAI/ChatComposer.tsx",
-      "src/components/HanogtAI/ConnectionsManager.tsx"
-    ]
-  },
   "285fmi10j7x": {
     "en": "Hanogt's own language model; uses your daily messages.",
     "tr": "Hanogt'un kendi dil modeli; günlük mesaj hakkını kullanır.",
@@ -34852,6 +35105,34 @@
   "1w5ded0d9ft": {
     "en": "Trained Hanogt AI Core running on your device",
     "tr": "Cihazında çalışan eğitilmiş Hanogt AI Çekirdeği",
+    "files": [
+      "src/components/HanogtAI/ChatMessage.tsx"
+    ]
+  },
+  "1nww15rnb5h": {
+    "en": "Advanced code engine",
+    "tr": "Gelişmiş kod motoru",
+    "files": [
+      "src/components/HanogtAI/ChatMessage.tsx"
+    ]
+  },
+  "jzglv1q6ak": {
+    "en": "Written by the advanced code engine: {model}",
+    "tr": "Bu yanıtı gelişmiş kod motoru yazdı: {model}",
+    "files": [
+      "src/components/HanogtAI/ChatMessage.tsx"
+    ]
+  },
+  "111r5wwthge": {
+    "en": "You've used today's advanced code engine answers; the standard engine wrote this one.",
+    "tr": "Bugünkü gelişmiş kod motoru hakkın doldu; bu yanıtı standart motor verdi.",
+    "files": [
+      "src/components/HanogtAI/ChatMessage.tsx"
+    ]
+  },
+  "5fxplsgzmy": {
+    "en": "The advanced code engine couldn't answer just now; the standard engine wrote this one.",
+    "tr": "Gelişmiş kod motoru şu an yanıt veremedi; bu yanıtı standart motor verdi.",
     "files": [
       "src/components/HanogtAI/ChatMessage.tsx"
     ]
@@ -35420,6 +35701,20 @@
   "1yt5vnlq2wd": {
     "en": "Messages sent with your own API key don't use your Hanogt AI messages.",
     "tr": "Kendi API anahtarınla gönderdiklerin Hanogt AI hakkından düşmez.",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "aqoo0jj0se": {
+    "en": "Advanced code engine (24 hours)",
+    "tr": "Gelişmiş kod motoru (24 saat)",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "2a0wyyfu3e6": {
+    "en": "Code and security questions go to the advanced engine first; when these run out, the standard engine answers.",
+    "tr": "Kod ve güvenlik soruları önce gelişmiş motora gider; hak dolunca standart motor yanıtlar.",
     "files": [
       "src/components/HanogtAI/UsageMeter.tsx"
     ]
@@ -36858,6 +37153,13 @@
       "src/components/Plans/UsageList.tsx"
     ]
   },
+  "39f5m1i9uu": {
+    "en": "Advanced code engine answers (24 hours)",
+    "tr": "Gelişmiş kod motoru yanıtı (24 saat)",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
   "sme7a582ft": {
     "en": "Hanogt Social groups you own",
     "tr": "Sahibi olduğun Hanogt Social grubu",
@@ -36973,6 +37275,13 @@
   "1fkns19bycx": {
     "en": "Before you continue, review which data is processed, which service providers are involved and the rules of use.",
     "tr": "Devam etmeden önce hangi verilerin işlendiğini, hizmet sağlayıcılarını ve kullanım kurallarını açık biçimde inceleyin.",
+    "files": [
+      "src/components/PrivacyPolicyModal.tsx"
+    ]
+  },
+  "6qqi1qigyp": {
+    "en": "What changed since you last read them?",
+    "tr": "Son okuduğundan bu yana neler değişti?",
     "files": [
       "src/components/PrivacyPolicyModal.tsx"
     ]
@@ -40847,6 +41156,13 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
+  "1x7buh5jaqg": {
+    "en": "If the team has switched it on, code and security questions in Hanogt AI go to the **advanced code engine** (Anthropic's Claude model): Code or Security mode, an attached or open editor file, code, an error log or a programming question in the message. Other questions stay with the standard engine.\n• Each plan's advanced answers a day are listed on the cards of the [Pricing](/plans) page; the meter at the top of Hanogt AI shows what's left.\n• When they run out or the engine can't answer, the standard engine answers and says so above the answer. The ⚡ **Advanced code engine** label under an answer shows this engine wrote it.\n• Messages sent through your own connection and the developer API don't use the advanced engine.\n• The advanced engine can be wrong too: check code before you run it.",
+    "tr": "Ekip açtıysa Hanogt AI'da kod ve güvenlik soruları **gelişmiş kod motoruna** (Anthropic'in Claude modeli) gider: Kod ya da Güvenlik modu, ekli veya açık editör dosyası, mesajda kod, hata kaydı ya da programlama sorusu. Diğer sorular standart motorda kalır.\n• Her planın günlük gelişmiş yanıt hakkı [Fiyatlandırma](/plans) sayfasındaki kartlarda yazar; kalanını Hanogt AI'ın üstündeki sayaçta görürsün.\n• Hak dolunca ya da motor yanıt veremezse yanıtı standart motor verir ve yanıtın üstünde bunu söyler. Yanıtın altındaki ⚡ **Gelişmiş kod motoru** etiketi, yanıtı bu motorun yazdığını gösterir.\n• Kendi bağlantınla gönderdiğin mesajlar ve geliştirici API'si gelişmiş motoru kullanmaz.\n• Gelişmiş motor da hata yapabilir: kodu çalıştırmadan önce kontrol et.",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
   "1o9l4nu5ujz": {
     "en": "Dictation and answers read aloud",
     "tr": "Sesle yazma ve sesli dinleme",
@@ -43415,9 +43731,9 @@
       "src/lib/features.ts"
     ]
   },
-  "7efe3a7rp5": {
-    "en": "Voice for Hanogt AI",
-    "tr": "Hanogt AI ile sesli konuşma",
+  "1v3xpxhsrdq": {
+    "en": "Dictation and read-aloud in Hanogt AI",
+    "tr": "Hanogt AI'da sesle yazma ve sesli dinleme",
     "files": [
       "src/lib/features.ts"
     ]
@@ -43915,6 +44231,13 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1qm2lm33shh": {
+    "en": "Advanced code engine: if the administrator has switched it on, code and security questions go, up to your plan's daily allowance, to the Claude model of Anthropic, PBC (USA); the provider receives the same data as the standard engine, not your e-mail address or account ID. When the allowance runs out or the engine can't answer, the standard engine answers. The Privacy Policy, the KVKK Information Notice and the Terms of Use were updated accordingly.",
+    "tr": "Gelişmiş kod motoru: yönetici açtıysa kod ve güvenlik soruları, planınızın günlük hakkı kadar Anthropic, PBC'nin (ABD) Claude modeline iletiliyor; sağlayıcıya standart motorla aynı veriler gidiyor, e-posta adresiniz ve hesap kimliğiniz gitmiyor. Hak dolduğunda ya da motor yanıt veremediğinde yanıtı standart motor veriyor. Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları buna göre güncellendi.",
     "files": [
       "src/lib/legal.ts"
     ]

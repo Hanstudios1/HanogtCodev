@@ -305,6 +305,55 @@ minutes, when they open Pricing or Account Settings. Readers ignore a badge
 whose `until` has passed (the paid period plus the payment grace, or the end
 of a staff grant), so an ended plan loses its badge without a write.
 
+### Advanced code engine (Claude)
+
+Optional: with `ANTHROPIC_API_KEY` on the server, chat messages about code go
+to Claude through the official SDK (`@anthropic-ai/sdk`,
+`src/lib/server/claude-engine.ts`); everything else, own connections and the
+developer API stay on the standard engine. Without the key nothing changes.
+
+- **Which messages** (`wantsAdvancedEngine`, `src/lib/ai/engine.ts`): with the
+  default `code` scope, Code and Security mode, an attached or open editor
+  file, and a message with a code block, an error trace, several lines of code
+  or programming words (Turkish and English; words with an everyday meaning
+  such as "dizi", "sınıf" or "program" don't count). The `all` scope sends
+  every message.
+- **Allowance**: answers in a 24-hour window per account
+  (`ai-engine-day:{email}`), by plan (default Free 3, Plus 25, Pro 100;
+  `enforceEngineQuota`). The message still counts toward the plan's daily
+  Hanogt AI messages. Past the allowance, or when Claude refuses the request
+  before answering (key, rate limit, outage), the standard engine answers and
+  the answer says why (`X-Hanogt-AI-Engine-Note: quota | unavailable`).
+  Staff "reset Hanogt AI limit" resets this window too.
+- **Settings**: Admin › Subscriptions › Hanogt AI engine
+  (`site_config/ai_engine`, audit `ai_engine.set`, cached a minute): on/off,
+  model (default `HANOGT_AI_CLAUDE_MODEL` or `DEFAULT_ENGINE_MODEL`), effort
+  (default `HANOGT_AI_CLAUDE_EFFORT` or `medium`), scope and each plan's
+  allowance. The card says whether the server has a key.
+- **The request**: streamed; thinking is adaptive (always on for the default
+  model, so no `thinking` field and no sampling parameters) and its depth
+  follows `output_config.effort`; `max_tokens` is four times the plan's answer
+  length (thinking counts toward it), at least 4,096. A safety decline is
+  retried server-side on the model Anthropic recommends for its category
+  (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`); if the
+  whole chain declines, the answer says so and no tool runs. The system
+  prompt is two blocks: the stable rules (`systemPromptParts().stable`, with
+  `cache_control`, cached together with the tools) and what changes with each
+  message (the page, knowledge notes, analyses, the open file, preferences).
+- **Agent tools** are Claude tools (`eager_input_streaming`), held back until
+  the answer ends with `tool_use` or `end_turn` (never after a refusal or
+  `max_tokens`), then validated by the registry like the standard engine's.
+  The browser runs them and sends the results back; earlier tool rounds reach
+  Claude as text notes (`<hanogt_action_result>`) and no thinking block is
+  ever sent back, so the conversation never depends on replaying Claude's own
+  blocks. `agentFinal` sends `tool_choice: none`.
+- **Answers** carry `X-Hanogt-AI-Engine: advanced | standard` and, after an
+  advanced answer, `X-Hanogt-AI-Engine-Limit / -Remaining / -Reset`. The chat
+  marks them with an "Advanced code engine" label; the usage meter, the usage
+  list and the Pricing page cards show the allowance while the engine is on.
+- Claude's failures are logged without request content; the route's deadline
+  (55 seconds) ends a long answer where it is, as with the standard engine.
+
 ### Voice (`ai_voice`, early access)
 
 Dictation and reading answers aloud use the browser's Web Speech API; nothing
@@ -375,6 +424,7 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Developer API, own connections page | `src/lib/ai/api-keys.ts`, `src/lib/server/ai-api-keys.ts`, `src/lib/server/hanogt-ai-api.ts`, `src/app/api/v1/**`, `src/app/api/ai/keys/route.ts`, `src/components/HanogtAI/AiApiPage.tsx`, `ApiKeysPanel.tsx`, `ApiDocs.tsx`, `ConnectionsManager.tsx`, `src/app/ai/api/*` (see [HANOGT_AI_API.md](HANOGT_AI_API.md)) |
 | Feature audiences | `src/lib/features.ts`, `src/lib/server/features.ts`, `src/app/api/features/route.ts`, `src/components/Admin/FeaturesCard.tsx`, `src/components/HanogtAI/features-store.ts` |
 | Voice | `src/lib/ai/voice.ts`, `src/components/HanogtAI/voice.ts` |
+| Advanced code engine | `src/lib/ai/engine.ts`, `src/lib/server/ai-engine.ts`, `src/lib/server/claude-engine.ts`, `src/components/Admin/AiEngineCard.tsx` |
 | Agent registry, validation, permissions, refusals | `src/lib/ai/agent-tools.ts` |
 | Wire protocol (trailer, history) | `src/lib/ai/agent-protocol.ts` |
 | Core intent → action mapping | `src/lib/ai/agent-intents.ts`, `src/lib/ai/programs.ts` |
@@ -384,4 +434,4 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Client streaming, conversations | `src/lib/ai/client.ts`, `src/lib/ai/conversations.ts` |
 | UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`, `UsageMeter`, `usage-store`), `src/app/ai/*` |
 | Training | `ai/dataset/*`, `scripts/train-hanogt-ai.mjs`, `ai/reports/intent-training-report.md` |
-| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs`, `scripts/tests/ai-api.test.mjs`, `scripts/tests/voice.test.mjs` (`npm test`) |
+| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs`, `scripts/tests/ai-api.test.mjs`, `scripts/tests/voice.test.mjs`, `scripts/tests/ai-engine.test.mjs` (`npm test`) |

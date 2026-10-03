@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileCheck2, ShieldCheck, Sparkles } from "lucide-react";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { LEGAL_CHANGES, LEGAL_EFFECTIVE_DATE, LEGAL_NOTICE_ID, LEGAL_VERSION } from "@/lib/legal";
+import { LEGAL_EFFECTIVE_DATE, LEGAL_NOTICE_ID, LEGAL_VERSION, legalChangesSince } from "@/lib/legal";
 
 interface PrivacyPolicyModalProps {
     onAccept: () => void;
@@ -18,6 +18,15 @@ export function legalNoticePending() {
         return localStorage.getItem("hanogt_privacy_accepted") !== "true" || localStorage.getItem("hanogt_legal_notice_version") !== LEGAL_NOTICE_ID;
     } catch {
         return false;
+    }
+}
+
+/** The notice id this browser acknowledged last, or null. */
+function acknowledgedNotice() {
+    try {
+        return localStorage.getItem("hanogt_legal_notice_version");
+    } catch {
+        return null;
     }
 }
 
@@ -39,6 +48,8 @@ const DOCUMENTS: ReadonlyArray<{ href: string; title: Copy; text: Copy }> = [
 export default function PrivacyPolicyModal({ onAccept, updated = false }: PrivacyPolicyModalProps) {
     const { tx } = useI18n();
     const dialogRef = useRef<HTMLDivElement>(null);
+    // Every version since the one this browser acknowledged, so a missed update is listed too.
+    const [changes] = useState(() => legalChangesSince(updated ? acknowledgedNotice() : null));
 
     // Move focus into the dialog so keyboard and screen reader users start there.
     useEffect(() => {
@@ -84,10 +95,15 @@ export default function PrivacyPolicyModal({ onAccept, updated = false }: Privac
                     </div>
                     {updated ? (
                         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
-                            <p className="flex items-center gap-2 font-semibold text-blue-950 dark:text-white"><Sparkles className="h-4 w-4 text-blue-500 dark:text-blue-300" aria-hidden />{tx({ TR: "Bu sürümde neler değişti?", EN: "What changed in this version?" })}</p>
-                            <ul className="mt-2 space-y-1.5 text-xs leading-5 text-blue-900/90 dark:text-blue-100/90">
-                                {LEGAL_CHANGES[0].items.map((item) => <li key={item.EN} className="flex gap-2"><span aria-hidden>•</span><span>{tx(item)}</span></li>)}
-                            </ul>
+                            <p className="flex items-center gap-2 font-semibold text-blue-950 dark:text-white"><Sparkles className="h-4 w-4 text-blue-500 dark:text-blue-300" aria-hidden />{changes.length > 1 ? tx({ TR: "Son okuduğundan bu yana neler değişti?", EN: "What changed since you last read them?" }) : tx({ TR: "Bu sürümde neler değişti?", EN: "What changed in this version?" })}</p>
+                            {changes.map((change) => (
+                                <div key={change.version} className="mt-2">
+                                    {changes.length > 1 ? <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700/80 dark:text-blue-300/80">{tx({ TR: "Sürüm", EN: "Version" })} {change.version} · {tx(change.date)}</p> : null}
+                                    <ul className="mt-1 space-y-1.5 text-xs leading-5 text-blue-900/90 dark:text-blue-100/90">
+                                        {change.items.map((item) => <li key={item.EN} className="flex gap-2"><span aria-hidden>•</span><span>{tx(item)}</span></li>)}
+                                    </ul>
+                                </div>
+                            ))}
                         </div>
                     ) : null}
                     <div className="flex gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">

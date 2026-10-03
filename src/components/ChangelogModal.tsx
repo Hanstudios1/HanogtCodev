@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.15",
+        version: "v0.3.15",
+        date: "2026-10-03",
+        title: { TR: "Gelişmiş kod motoru", EN: "The advanced code engine" },
+        desc: { TR: "Ekip açtıysa kod ve güvenlik soruların Claude ile yanıtlanıyor; her plan günlük gelişmiş yanıt hakkı alıyor.", EN: "If the team has switched it on, your code and security questions are answered with Claude; every plan gets advanced answers each day." },
+        items: [
+            { TR: "Kod ya da Güvenlik modunda, dosya eklediğinde ya da kodla ilgili sorduğunda yanıtı gelişmiş kod motoru yazar.", EN: "In Code or Security mode, with a file attached or a question about code, the advanced code engine writes the answer." },
+            { TR: "Plus ve Pro'da daha fazla gelişmiş yanıt; kalan hakkın Hanogt AI sayacında görünür.", EN: "More advanced answers on Plus and Pro; what's left shows in the Hanogt AI meter." },
+            { TR: "Hak dolunca standart motor yanıtlar ve bunu yanıtın üstünde söyler.", EN: "When they run out, the standard engine answers and says so above the answer." },
+            { TR: "Kod yanıtları iki motorda da daha eksiksiz: çalışır tam kod, uç durumlar, kök neden ve uydurma API yok.", EN: "Code answers are more complete on both engines: full runnable code, edge cases, root causes and no invented APIs." },
+        ],
+    },
+    {
         id: "v0.3.14",
         version: "v0.3.14",
         date: "2026-10-03",

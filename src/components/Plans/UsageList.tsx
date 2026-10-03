@@ -1,6 +1,6 @@
 "use client";
 
-import { Code2, FolderCode, Gamepad2, KeyRound, Sparkles, UsersRound } from "lucide-react";
+import { Code2, FolderCode, Gamepad2, KeyRound, Sparkles, UsersRound, Zap } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { currentWindow, formatResetTime, usageLevel, type CountedLimit, type PlanUsage, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -9,6 +9,7 @@ const C = {
     title: { TR: "Planının kullanımı", EN: "Your plan's usage" },
     aiToday: { TR: "Hanogt AI mesajı (bugün)", EN: "Hanogt AI messages (today)" },
     ownToday: { TR: "Kendi bağlantılarınla mesaj (bugün)", EN: "Messages through your own connections (today)" },
+    engineToday: { TR: "Gelişmiş kod motoru yanıtı (24 saat)", EN: "Advanced code engine answers (24 hours)" },
     codeProjects: { TR: "Kod projesi", EN: "Code projects" },
     gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
     groups: { TR: "Sahibi olduğun Hanogt Social grubu", EN: "Hanogt Social groups you own" },
@@ -67,6 +68,7 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
     const day = currentWindow(usage.hanogt.day);
     const ownDay = usage.own ? currentWindow(usage.own.day) : null;
     const apiDay = usage.api ? currentWindow(usage.api.day) : null;
+    const engineDay = usage.engine ? currentWindow(usage.engine) : null;
     const icon = "h-3.5 w-3.5 shrink-0";
 
     return (
@@ -80,6 +82,11 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
                         {usage.hanogt.bonus > 0 ? ` · ${tx(C.bonus, { count: number(usage.hanogt.bonus) })}` : ""}
                     </p>
                 </Row>
+                {engineDay ? (
+                    <Row icon={<Zap className={`${icon} text-fuchsia-500`} aria-hidden />} label={tx(C.engineToday)} value={engineDay.limit > 0 ? `${number(engineDay.used)} / ${number(engineDay.limit)}` : tx(C.notInPlan)}>
+                        {engineDay.limit > 0 ? <WindowBar window={engineDay} label={tx(C.engineToday)} /> : null}
+                    </Row>
+                ) : null}
                 {ownDay ? (
                     <Row icon={<KeyRound className={`${icon} text-sky-500`} aria-hidden />} label={tx(C.ownToday)} value={`${number(ownDay.used)} / ${number(ownDay.limit)}`}>
                         <WindowBar window={ownDay} label={tx(C.ownToday)} />

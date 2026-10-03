@@ -1,14 +1,17 @@
 import { after, NextRequest, NextResponse } from "next/server";
-import { encodeAgentTrailer, normalizeChatMessages, stripTrailerMark, type AgentTrailerCall, type WireMessage } from "@/lib/ai/agent-protocol";
+import { encodeAgentTrailer, normalizeChatMessages, splitAgentStream, stripTrailerMark, type AgentTrailerCall, type WireMessage } from "@/lib/ai/agent-protocol";
 import { AGENT_CALL_ID_PATTERN, AGENT_MAX_CALLS, agentToolSchemas, detectSensitiveRequest, isHowToQuestion, sanitizeAgentCall } from "@/lib/ai/agent-tools";
 import { normalizeAiSettings } from "@/lib/ai/ai-settings";
 import { DEFAULT_CONNECTION, isConnectionId, ownKeyRequestParams, type AiConnectionError } from "@/lib/ai/connections";
-import type { DayQuota } from "@/lib/ai/usage";
+import { ENGINE_HEADERS, engineWindowHeaders, wantsAdvancedEngine, type AiEngineNote } from "@/lib/ai/engine";
+import type { DayQuota, UsageWindow } from "@/lib/ai/usage";
 import { PLAN_AI_FEATURES, type PlanId } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { classifyProviderFailure, markUsed, resolveConnectionForChat, shouldRecordUse, type ResolvedConnection } from "@/lib/server/ai-connections";
-import { enforceHanogtAi, enforceOwnKeys, quotaHeaders, refusalDetails, type QuotaRefusal } from "@/lib/server/ai-usage";
-import { clip, knowledgeNotes, providerConfig, systemPrompt, toolNotes, type AgentStatus, type AiAnswerMode } from "@/lib/server/hanogt-ai";
+import { claudeConfig, getEngineSettings } from "@/lib/server/ai-engine";
+import { enforceEngineQuota, enforceHanogtAi, enforceOwnKeys, quotaHeaders, refusalDetails, type QuotaRefusal } from "@/lib/server/ai-usage";
+import { claudeClient, claudeMaxTokens, openClaudeStream, type ClaudeEvent } from "@/lib/server/claude-engine";
+import { clip, knowledgeNotes, providerConfig, systemPrompt, systemPromptParts, toolNotes, type AgentStatus, type AiAnswerMode, type PromptOptions } from "@/lib/server/hanogt-ai";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
 
@@ -70,6 +73,51 @@ function collectToolCalls(target: CallAccumulator, parts: ToolCallDelta[] | unde
         if (typeof args === "string" && entry.args.length + args.length <= MAX_TOOL_ARGUMENT_CHARS) entry.args += args;
         target.set(index, entry);
     }
+}
+
+/** Said when the advanced engine (and its fallback) declined: in the answer's language, Turkish or English. */
+const REFUSAL_NOTES = {
+    TR: { empty: "Gelişmiş kod motoru bu isteğe güvenlik kuralları nedeniyle yanıt vermedi. İsteği farklı biçimde sorabilir ya da ne yapmak istediğini biraz daha anlatabilirsin.", cut: "\n\n_(Gelişmiş kod motoru yanıtı güvenlik kuralları nedeniyle burada kesti.)_" },
+    EN: { empty: "The advanced code engine declined this request for safety reasons. You can ask in a different way or say a little more about what you're trying to do.", cut: "\n\n_(The advanced code engine stopped this answer here for safety reasons.)_" },
+};
+
+/** The advanced engine's answer in the chat's format: text, then the agent trailer when it asked for tools. */
+function advancedOutput(events: AsyncGenerator<ClaudeEvent>, options: { tools: boolean; language: string; onDone: () => void; onCancel: () => void }) {
+    const encoder = new TextEncoder();
+    const notes = options.language === "TR" ? REFUSAL_NOTES.TR : REFUSAL_NOTES.EN;
+    return new ReadableStream<Uint8Array>({
+        async pull(controller) {
+            const calls: CallAccumulator = new Map();
+            let wrote = false;
+            try {
+                for await (const event of events) {
+                    if (event.type === "text") {
+                        const text = stripTrailerMark(event.text);
+                        if (text) {
+                            controller.enqueue(encoder.encode(text));
+                            wrote = true;
+                        }
+                    } else if (event.type === "tool") {
+                        if (options.tools && calls.size < AGENT_MAX_CALLS) calls.set(calls.size, { id: event.id, name: event.name, args: event.args });
+                    } else if (event.stopReason === "refusal") {
+                        controller.enqueue(encoder.encode(wrote ? notes.cut : notes.empty));
+                    }
+                }
+                const toolCalls = trailerCalls(calls);
+                if (toolCalls.length) controller.enqueue(encoder.encode(encodeAgentTrailer({ toolCalls })));
+                controller.close();
+            } catch (error) {
+                console.warn("[hanogt-ai] advanced engine stream failed:", error instanceof Error ? error.name : "error");
+                if (wrote) controller.close();
+                else controller.error(error);
+            } finally {
+                options.onDone();
+            }
+        },
+        cancel() {
+            options.onCancel();
+        },
+    });
 }
 
 /** Validates the model's calls against the registry before the browser sees them. */
@@ -167,11 +215,72 @@ export async function POST(request: NextRequest) {
     const { notes, sources } = knowledgeNotes(`${latest} ${previousUser.slice(0, 300)}`, answerLanguage === "TR");
     const sensitiveRequest = detectSensitiveRequest(latest);
     const sensitive = sensitiveRequest && !isHowToQuestion(latest) ? sensitiveRequest : null;
-    const promptFor = (agent: AgentStatus | "requested") => systemPrompt({ language: answerLanguage, mode, path, knowledge: notes, tools: toolNotes(latest), file, agent, sensitive, personal, personalMax: features.instructionsChars });
+    const analyses = toolNotes(latest);
+    const promptOptions = (agent: AgentStatus | "requested"): PromptOptions => ({ language: answerLanguage, mode, path, knowledge: notes, tools: analyses, file, agent, sensitive, personal, personalMax: features.instructionsChars });
+    const promptFor = (agent: AgentStatus | "requested") => systemPrompt(promptOptions(agent));
 
     const upstreamAbort = new AbortController();
     const timeout = setTimeout(() => upstreamAbort.abort(), 55_000);
     request.signal.addEventListener("abort", () => upstreamAbort.abort(), { once: true });
+
+    // The advanced code engine (Claude): Hanogt AI's own model only (never an own connection), for code work,
+    // within the plan's daily allowance. If it can't be used, the standard engine answers and says why.
+    let engineNote: AiEngineNote | null = null;
+    const claude = ownConnection ? null : claudeConfig();
+    const engine = claude ? await getEngineSettings().catch(() => null) : null;
+    if (claude && engine?.enabled && wantsAdvancedEngine({ scope: engine.scope, mode, hasFile: Boolean(file), message: latest })) {
+        const allowance = await enforceEngineQuota(email, engine.daily[plan]).catch(() => null);
+        if (allowance?.ok) {
+            const opened = await openClaudeStream(claudeClient(claude), {
+                model: engine.model,
+                effort: engine.effort,
+                system: systemPromptParts(promptOptions(agentRequested ? "requested" : "off")),
+                messages,
+                tools: agentRequested ? agentToolSchemas() : null,
+                toolChoice,
+                maxTokens: claudeMaxTokens(features.maxTokens),
+            }, upstreamAbort.signal);
+            if (opened.ok) return advancedResponse(opened.model, opened.events, allowance.window);
+            console.warn(`[hanogt-ai] advanced engine refused the request (${opened.status} ${opened.reason}); the standard engine answers`);
+            engineNote = "unavailable";
+        } else {
+            engineNote = allowance ? "quota" : "unavailable";
+        }
+    }
+
+    function advancedResponse(model: string, events: AsyncGenerator<ClaudeEvent>, window: UsageWindow) {
+        const headers: Record<string, string> = {
+            "X-Hanogt-AI-Model": encodeURIComponent(model),
+            "X-Hanogt-AI-Sources": encodeURIComponent(JSON.stringify(sources)),
+            "X-Hanogt-AI-Agent": agentRequested ? "tools" : "off",
+            "X-Hanogt-AI-Connection": DEFAULT_CONNECTION,
+            [ENGINE_HEADERS.engine]: "advanced",
+            ...engineWindowHeaders(window),
+            ...counted,
+        };
+        const output = advancedOutput(events, {
+            tools: agentRequested,
+            language: answerLanguage,
+            onDone: () => clearTimeout(timeout),
+            onCancel: () => {
+                upstreamAbort.abort();
+                clearTimeout(timeout);
+            },
+        });
+        if (stream) {
+            return new Response(output, {
+                headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store, no-transform", "X-Content-Type-Options": "nosniff", "X-Accel-Buffering": "no", ...headers },
+            });
+        }
+        // Without streaming: the same answer collected (the trailer split off again).
+        return new Response(output).text().then((raw) => {
+            const { text, trailer } = splitAgentStream(raw);
+            const message = text.trim();
+            const toolCalls: AgentTrailerCall[] = trailer?.toolCalls ?? [];
+            if (!message && !toolCalls.length) return errorResponse(424, "upstream_error", "Dil modeli boş yanıt verdi.", counted);
+            return NextResponse.json({ message, toolCalls, sources, model, connection: DEFAULT_CONNECTION, agent: agentRequested ? "tools" : "off", engine: "advanced" }, { headers: jsonSecurityHeaders(headers) });
+        }, () => errorResponse(424, "upstream_error", "Dil modeli isteği tamamlayamadı.", counted));
+    }
 
     const temperature = agentRequested ? 0.3 : mode === "code" ? 0.25 : 0.45;
     // Hanogt AI's own model answers at most the plan's length (Free 1,800, Plus 3,000, Pro 4,000 tokens); own keys are the person's own.
@@ -239,6 +348,9 @@ export async function POST(request: NextRequest) {
         // Which connection answered: its id, or "hanogt" for Hanogt AI's own model.
         "X-Hanogt-AI-Connection": ownConnection ? ownConnection.id : DEFAULT_CONNECTION,
         ...(ownConnection ? { "X-Hanogt-AI-Provider": ownConnection.provider } : {}),
+        // The standard engine answered; the note says why when the advanced one was wanted.
+        [ENGINE_HEADERS.engine]: "standard",
+        ...(engineNote ? { [ENGINE_HEADERS.note]: engineNote } : {}),
         // The day window this message counted in (usage meter); see src/lib/ai/usage.ts.
         ...counted,
     };

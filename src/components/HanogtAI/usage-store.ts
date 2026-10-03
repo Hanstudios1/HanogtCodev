@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { agentUserKey } from "@/lib/ai/agent-settings";
+import type { AiEngineNote } from "@/lib/ai/engine";
 import { readAiUsage, windowAfter, type AiUsage, type DayQuota, type LimitDetails, type QuotaKind, type UsageWindow } from "@/lib/ai/usage";
 import { onPlanChange } from "@/lib/plan-signal";
 
@@ -66,6 +67,8 @@ export type AiUsageHandle = {
     applyQuota: (quota: DayQuota | undefined) => void;
     /** A daily limit refused a message: that window is full until it resets. */
     applyLimit: (limit: LimitDetails | undefined) => void;
+    /** The advanced engine's window after an answer, or its allowance ran out (the standard engine answered). */
+    applyEngine: (window: UsageWindow | undefined, note: AiEngineNote | undefined) => void;
 };
 
 export function useAiUsage(email: string | null): AiUsageHandle {
@@ -119,9 +122,23 @@ export function useAiUsage(email: string | null): AiUsageHandle {
         setSnapshot({ ...snapshot, usage: withDay(snapshot.usage, limit.quota, full) });
     }, [owner]);
 
+    const applyEngine = useCallback((window: UsageWindow | undefined, note: AiEngineNote | undefined) => {
+        if (!owner || (!window && note !== "quota")) return;
+        if (snapshot.owner !== owner || !snapshot.usage) {
+            void loadUsage(owner, true);
+            return;
+        }
+        const engine = window ?? (snapshot.usage.engine ? { ...snapshot.usage.engine, used: Math.max(snapshot.usage.engine.used, snapshot.usage.engine.limit), remaining: 0 } : null);
+        if (!engine) {
+            void loadUsage(owner, true);
+            return;
+        }
+        setSnapshot({ ...snapshot, usage: { ...snapshot.usage, engine } });
+    }, [owner]);
+
     const mine = Boolean(owner) && current.owner === owner;
     const usage = mine ? current.usage : null;
     const loading = mine ? current.status === "loading" : Boolean(owner);
     const failed = mine && current.status === "error";
-    return useMemo(() => ({ available: Boolean(owner), usage, loading, failed, refresh, applyQuota, applyLimit }), [owner, usage, loading, failed, refresh, applyQuota, applyLimit]);
+    return useMemo(() => ({ available: Boolean(owner), usage, loading, failed, refresh, applyQuota, applyLimit, applyEngine }), [owner, usage, loading, failed, refresh, applyQuota, applyLimit, applyEngine]);
 }

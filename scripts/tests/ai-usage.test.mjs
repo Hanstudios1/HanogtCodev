@@ -224,8 +224,11 @@ test("planUsageFor counts projects, games, groups and connections against the pl
 test("the browser side: usage answers and headers are checked, windows move on", () => {
     assert.equal(shared.readAiUsage({ plan: "gold", hanogt: {} }), null);
     assert.equal(shared.readAiUsage({ plan: "free", hanogt: { day: { limit: -1, used: 0, remaining: 0 }, minute: { limit: 1, used: 0, remaining: 1 } } }), null);
-    const valid = { plan: "plus", hanogt: { day: { limit: 750, used: 10, remaining: 740, resetsAt: iso(HOUR) }, minute: { limit: 20, used: 1, remaining: 19, resetsAt: null }, bonus: 0 }, own: null, api: null };
+    const valid = { plan: "plus", hanogt: { day: { limit: 750, used: 10, remaining: 740, resetsAt: iso(HOUR) }, minute: { limit: 20, used: 1, remaining: 19, resetsAt: null }, bonus: 0 }, own: null, api: null, engine: null };
     assert.deepEqual(shared.readAiUsage(valid), valid);
+    const withEngine = { ...valid, engine: { limit: 25, used: 4, remaining: 21, resetsAt: iso(HOUR) } };
+    assert.deepEqual(shared.readAiUsage(withEngine), withEngine, "the advanced engine's window when the server has the engine");
+    assert.equal(shared.readAiUsage({ ...valid, engine: { limit: "x" } }).engine, null);
     const withApi = { ...valid, api: { day: { limit: 250, used: 3, remaining: 247, resetsAt: iso(HOUR) }, minute: { limit: 10, used: 1, remaining: 9, resetsAt: null } } };
     assert.deepEqual(shared.readAiUsage(withApi), withApi);
     assert.equal(shared.readAiUsage({ ...valid, api: { day: { limit: 1 } } }).api, null, "a broken API part is dropped, the rest stays");

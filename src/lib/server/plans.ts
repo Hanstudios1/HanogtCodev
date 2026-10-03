@@ -129,10 +129,13 @@ export const OWN_KEY_LIMIT_KEYS = (email: string) => ({ minute: `ai-own:${email}
 /** Rate-limit keys of developer API requests (/api/v1), per account whatever key sent them. */
 export const AI_API_LIMIT_KEYS = (email: string) => ({ minute: `ai-api:${email}`, day: `ai-api-day:${email}` });
 
-/** Staff "reset Hanogt AI limit": Hanogt AI's counters, the own-key ones and the developer API's. */
+/** Rate-limit key of the advanced code engine's answers (24 hours, per account). */
+export const AI_ENGINE_LIMIT_KEY = (email: string) => `ai-engine-day:${email}`;
+
+/** Staff "reset Hanogt AI limit": Hanogt AI's counters, the own-key ones, the developer API's and the advanced engine's. */
 export async function resetAiLimits(email: string) {
     const keys = [AI_LIMIT_KEYS(email), OWN_KEY_LIMIT_KEYS(email), AI_API_LIMIT_KEYS(email)];
-    await Promise.all(keys.flatMap((pair) => [resetRateLimit(pair.minute), resetRateLimit(pair.day)]));
+    await Promise.all([...keys.flatMap((pair) => [resetRateLimit(pair.minute), resetRateLimit(pair.day)]), resetRateLimit(AI_ENGINE_LIMIT_KEY(email))]);
 }
 
 /**

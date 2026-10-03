@@ -165,6 +165,17 @@ export const CURATED_KNOWLEDGE: KnowledgeEntry[] = [
         links: [L.aiApi, L.plans],
     },
     {
+        id: "ai-engine",
+        intents: [],
+        title: { TR: "Gelişmiş kod motoru", EN: "The advanced code engine" },
+        body: {
+            TR: "Ekip açtıysa Hanogt AI'da kod ve güvenlik soruları **gelişmiş kod motoruna** (Anthropic'in Claude modeli) gider: Kod ya da Güvenlik modu, ekli veya açık editör dosyası, mesajda kod, hata kaydı ya da programlama sorusu. Diğer sorular standart motorda kalır.\n• Her planın günlük gelişmiş yanıt hakkı [Fiyatlandırma](/plans) sayfasındaki kartlarda yazar; kalanını Hanogt AI'ın üstündeki sayaçta görürsün.\n• Hak dolunca ya da motor yanıt veremezse yanıtı standart motor verir ve yanıtın üstünde bunu söyler. Yanıtın altındaki ⚡ **Gelişmiş kod motoru** etiketi, yanıtı bu motorun yazdığını gösterir.\n• Kendi bağlantınla gönderdiğin mesajlar ve geliştirici API'si gelişmiş motoru kullanmaz.\n• Gelişmiş motor da hata yapabilir: kodu çalıştırmadan önce kontrol et.",
+            EN: "If the team has switched it on, code and security questions in Hanogt AI go to the **advanced code engine** (Anthropic's Claude model): Code or Security mode, an attached or open editor file, code, an error log or a programming question in the message. Other questions stay with the standard engine.\n• Each plan's advanced answers a day are listed on the cards of the [Pricing](/plans) page; the meter at the top of Hanogt AI shows what's left.\n• When they run out or the engine can't answer, the standard engine answers and says so above the answer. The ⚡ **Advanced code engine** label under an answer shows this engine wrote it.\n• Messages sent through your own connection and the developer API don't use the advanced engine.\n• The advanced engine can be wrong too: check code before you run it.",
+        },
+        keywords: "gelişmiş kod motoru advanced code engine claude anthropic kod kalitesi code quality daha iyi kod better code model motor engine",
+        links: [L.ai, L.plans],
+    },
+    {
         id: "ai-voice",
         intents: [],
         title: { TR: "Sesle yazma ve sesli dinleme", EN: "Dictation and answers read aloud" },

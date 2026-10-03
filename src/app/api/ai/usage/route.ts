@@ -1,6 +1,7 @@
 import { NextResponse, after, type NextRequest } from "next/server";
 import { effectivePlan } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
+import { engineAllowances } from "@/lib/server/ai-engine";
 import { aiUsageFor, planUsageFor } from "@/lib/server/ai-usage";
 import { featureAllowed } from "@/lib/server/features";
 import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
@@ -40,7 +41,9 @@ export async function GET(request: NextRequest) {
         const full = request.nextUrl.searchParams.get("full") === "1";
         // The developer API's requests and keys, once the team opened it for the account.
         const staff = resolveUserRole(active.email, active.user.role) !== "user";
-        const options = { api: await featureAllowed("ai_api", { staff, plan: effectivePlan(subscription) }).catch(() => false) };
+        // The advanced code engine's answers, when the server has it and the team keeps it on.
+        const [api, engine] = await Promise.all([featureAllowed("ai_api", { staff, plan: effectivePlan(subscription) }).catch(() => false), engineAllowances()]);
+        const options = { api, engine };
         return json(full ? await planUsageFor(active.email, subscription, options) : await aiUsageFor(active.email, subscription, options));
     } catch {
         return json({ error: "Kullanım bilgisi şu anda okunamadı.", code: "unavailable" }, 503);

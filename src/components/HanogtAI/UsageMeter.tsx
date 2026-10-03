@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Code2, Gauge, KeyRound, Sparkles } from "lucide-react";
+import { ArrowUpRight, Code2, Gauge, KeyRound, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { currentWindow, formatResetTime, usageLevel, type UsageWindow } from "@/lib/ai/usage";
@@ -22,6 +22,8 @@ const C = {
     bonus: { TR: "Hanogt ekibinden +{count} ek mesaj dahil", EN: "Includes +{count} extra messages from the Hanogt team" },
     own: { TR: "Kendi bağlantıların (bugün)", EN: "Your own connections (today)" },
     ownHint: { TR: "Kendi API anahtarınla gönderdiklerin Hanogt AI hakkından düşmez.", EN: "Messages sent with your own API key don't use your Hanogt AI messages." },
+    engine: { TR: "Gelişmiş kod motoru (24 saat)", EN: "Advanced code engine (24 hours)" },
+    engineHint: { TR: "Kod ve güvenlik soruları önce gelişmiş motora gider; hak dolunca standart motor yanıtlar.", EN: "Code and security questions go to the advanced engine first; when these run out, the standard engine answers." },
     api: { TR: "Hanogt AI API (24 saat)", EN: "Hanogt AI API (24 hours)" },
     apiHint: { TR: "Kendi uygulamalarından gelen istekler; ayrı sayılır.", EN: "Requests from your own apps; counted separately." },
     upgrade: { TR: "Planını yükselt", EN: "Upgrade your plan" },
@@ -106,6 +108,7 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
     const level = usageLevel(day);
     const ownDay = usage.own ? currentWindow(usage.own.day, now) : null;
     const apiDay = usage.api ? currentWindow(usage.api.day, now) : null;
+    const engineDay = usage.engine && usage.engine.limit > 0 ? currentWindow(usage.engine, now) : null;
     const nextPlan = nextPlanUp(usage.plan);
     const pillText = tx(C.pill, { used: day.used.toLocaleString(locale), limit: day.limit.toLocaleString(locale) });
 
@@ -151,6 +154,17 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                         <p className="mt-1 text-[11px] leading-snug text-zinc-400">{tx(C.window)} {tx(C.perMinute, { count: usage.hanogt.minute.limit })}.</p>
                         {usage.hanogt.bonus > 0 ? <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{tx(C.bonus, { count: usage.hanogt.bonus.toLocaleString(locale) })}</p> : null}
                     </div>
+
+                    {engineDay ? (
+                        <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.06]" data-usage-engine>
+                            <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><Zap className="h-3.5 w-3.5 text-fuchsia-500" aria-hidden />{tx(C.engine)}</span>
+                                <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{engineDay.used.toLocaleString(locale)} / {engineDay.limit.toLocaleString(locale)}</span>
+                            </div>
+                            <Bar window={engineDay} label={tx(C.engine)} />
+                            <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">{tx(C.engineHint)}</p>
+                        </div>
+                    ) : null}
 
                     {ownDay ? (
                         <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.06]">

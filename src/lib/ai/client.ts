@@ -6,8 +6,9 @@
  */
 import { splitAgentStream, type AgentTrailerCall, type WireMessage } from "./agent-protocol";
 import { DEFAULT_CONNECTION, isConnectionId } from "./connections";
+import { readEngineHeaders, type AiEngineId, type AiEngineNote } from "./engine";
 import type { AiContext, AiMode } from "./local-engine";
-import { limitDetailsOf, quotaFromHeaders, type DayQuota, type LimitDetails } from "./usage";
+import { limitDetailsOf, quotaFromHeaders, type DayQuota, type LimitDetails, type UsageWindow } from "./usage";
 
 export type AiFailure =
     | "auth_required" | "not_configured" | "rate_limited" | "daily_limit" | "network" | "timeout" | "upstream" | "aborted"
@@ -50,6 +51,12 @@ export interface AiStreamResult {
     quota?: DayQuota;
     /** A daily limit refused the message: the limit, when it resets and which plan raises it. */
     limit?: LimitDetails;
+    /** Which engine wrote the answer (src/lib/ai/engine.ts). */
+    engine?: AiEngineId;
+    /** Why the standard engine answered although the advanced one was wanted. */
+    engineNote?: AiEngineNote;
+    /** The advanced engine's 24-hour window after this answer, for the usage meter. */
+    engineWindow?: UsageWindow;
 }
 
 function parseSources(header: string | null) {
@@ -124,6 +131,8 @@ export async function streamHanogtAI(options: {
     const agent = agentStatus(response.headers.get("X-Hanogt-AI-Agent"));
     const answeredBy = response.headers.get("X-Hanogt-AI-Connection");
     const connectionId = answeredBy && answeredBy !== DEFAULT_CONNECTION && isConnectionId(answeredBy) ? answeredBy : undefined;
+    const engineInfo = readEngineHeaders(response.headers);
+    const engine = { engine: engineInfo.engine, ...(engineInfo.note ? { engineNote: engineInfo.note } : {}), ...(engineInfo.window ? { engineWindow: engineInfo.window } : {}) };
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let raw = "";
@@ -138,10 +147,10 @@ export async function streamHanogtAI(options: {
     } catch (error) {
         const aborted = error instanceof DOMException && error.name === "AbortError";
         const partial = splitAgentStream(raw).text;
-        return { ok: partial.length > 0, text: partial, failure: aborted ? "aborted" : "network", sources, model, connectionId, toolCalls: [], agent, quota };
+        return { ok: partial.length > 0, text: partial, failure: aborted ? "aborted" : "network", sources, model, connectionId, toolCalls: [], agent, quota, ...engine };
     }
     const { text, trailer } = splitAgentStream(raw);
     const toolCalls = trailer?.toolCalls ?? [];
-    if (!text.trim() && !toolCalls.length) return { ok: false, text: "", failure: "upstream", sources, model, connectionId, toolCalls: [], agent, quota };
-    return { ok: true, text, sources, model, connectionId, toolCalls, agent, quota };
+    if (!text.trim() && !toolCalls.length) return { ok: false, text: "", failure: "upstream", sources, model, connectionId, toolCalls: [], agent, quota, ...engine };
+    return { ok: true, text, sources, model, connectionId, toolCalls, agent, quota, ...engine };
 }

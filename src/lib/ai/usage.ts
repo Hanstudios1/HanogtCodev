@@ -22,6 +22,8 @@ export type AiUsage = {
     own: { day: UsageWindow; minute: UsageWindow } | null;
     /** Requests through the developer API (/api/v1); null when the plan has none or the API isn't open to the account. */
     api: { day: UsageWindow; minute: UsageWindow } | null;
+    /** Answers of the advanced code engine in 24 hours; null when the server has no advanced engine or the team switched it off. */
+    engine: UsageWindow | null;
 };
 
 /** Something the plan counts: how many there are (null: couldn't be counted) out of the limit (null: unlimited). */
@@ -87,7 +89,7 @@ export function readAiUsage(value: unknown): AiUsage | null {
     const day = readWindow(hanogt.day);
     const minute = readWindow(hanogt.minute);
     if (!day || !minute) return null;
-    return { plan: record.plan, hanogt: { day, minute, bonus: count(hanogt.bonus) ?? 0 }, own: readPair(record.own), api: readPair(record.api) };
+    return { plan: record.plan, hanogt: { day, minute, bonus: count(hanogt.bonus) ?? 0 }, own: readPair(record.own), api: readPair(record.api), engine: readWindow(record.engine) };
 }
 
 /** The day window an /api/ai answer reports in its headers; null when it sent none. */

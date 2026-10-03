@@ -4,7 +4,7 @@ import { QUOTA_HEADERS, type AiUsage, type CountedLimit, type DayQuota, type Pla
 import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, aiLimitsFor, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
 import { healBeforeRefusing, type HealOptions } from "./entitlements";
 import { countServerQuery, getServerDocument } from "./firebase-rest";
-import { AI_API_LIMIT_KEYS, AI_DAY_MS, AI_LIMIT_KEYS, OWN_KEY_LIMIT_KEYS, getSubscription } from "./plans";
+import { AI_API_LIMIT_KEYS, AI_DAY_MS, AI_ENGINE_LIMIT_KEY, AI_LIMIT_KEYS, OWN_KEY_LIMIT_KEYS, getSubscription } from "./plans";
 import { enforceRateLimitWithFallback, readRateLimit, type RateLimitResult } from "./rate-limit";
 
 /*
@@ -50,6 +50,8 @@ const readWindow = (key: string, windowMs: number) => readRateLimit(key, windowM
 export type UsageOptions = {
     /** The developer API is open to the account (the ai_api feature): its windows are read too. */
     api?: boolean;
+    /** Each plan's advanced engine answers a day, when the server has the engine and it is on (src/lib/server/ai-engine.ts). */
+    engine?: Record<PlanId, number> | null;
 };
 
 /** A kind's minute and day windows as the meter shows them; null when the plan has none of it. */
@@ -69,10 +71,12 @@ export function apiUsageFor(email: string, subscription: UserSubscription) {
 export async function aiUsageFor(email: string, subscription: UserSubscription | null = null, options: UsageOptions = {}): Promise<AiUsage> {
     const record = subscription ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
     const plan = effectivePlan(record);
-    const [hanogt, own, api] = await Promise.all([
+    const engineLimit = options.engine ? options.engine[plan] : null;
+    const [hanogt, own, api, engine] = await Promise.all([
         windowsOf("hanogt", email, record),
         windowsOf("own", email, record),
         options.api ? windowsOf("api", email, record) : null,
+        engineLimit === null ? null : readWindow(AI_ENGINE_LIMIT_KEY(email), AI_DAY_MS).then((state) => usageWindow(state, engineLimit)),
     ]);
     const limits = aiLimitsFor(record);
     return {
@@ -81,6 +85,22 @@ export async function aiUsageFor(email: string, subscription: UserSubscription |
         hanogt: { ...hanogt!, bonus: Math.max(0, limits.perDay - PLAN_AI_LIMITS[plan].perDay) },
         own,
         api,
+        engine,
+    };
+}
+
+/**
+ * Counts an advanced engine answer in the account's 24-hour window. Refused
+ * when the plan's allowance is used up (or is 0); the standard engine answers
+ * then.
+ */
+export async function enforceEngineQuota(email: string, limit: number): Promise<{ ok: true; window: UsageWindow } | { ok: false; reason: "quota" }> {
+    if (limit <= 0) return { ok: false, reason: "quota" };
+    const result = await enforceRateLimitWithFallback(AI_ENGINE_LIMIT_KEY(email), limit, AI_DAY_MS);
+    if (!result.allowed) return { ok: false, reason: "quota" };
+    return {
+        ok: true,
+        window: { limit, used: limit - result.remaining, remaining: result.remaining, resetsAt: new Date(Date.now() + result.retryAfterSeconds * 1000).toISOString() },
     };
 }
 

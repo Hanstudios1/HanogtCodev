@@ -333,6 +333,7 @@ export type AdminAuditAction =
     | "coupon.sync"
     | "coupon.restore"
     | "feature.set"
+    | "ai_engine.set"
     | "paddle.set_prices"
     | "paddle.set_sales_open"
     | "paddle.create_catalog"
@@ -466,6 +467,8 @@ export type AdminPlansResponse = {
     waitlist: { plus: number | null; pro: number | null };
     /** Who sees each feature that is opened step by step (src/lib/features.ts). */
     features: { audiences: import("@/lib/features").FeatureFlags; updatedAt: string | null; updatedBy: string | null };
+    /** The advanced code engine (src/lib/ai/engine.ts): its settings, whether the server has ANTHROPIC_API_KEY, the last change. */
+    engine: { settings: import("@/lib/ai/engine").AiEngineSettings; configured: boolean; updatedAt: string | null; updatedBy: string | null };
 };
 
 /** POST /api/admin/plans { action: "restoreCoupon" }: the overview plus what happened in Paddle. */
