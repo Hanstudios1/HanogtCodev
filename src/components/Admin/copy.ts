@@ -185,6 +185,7 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "paddle.set_prices": { TR: "Paddle fiyat eşlemesi değişti", EN: "Paddle price mapping changed" },
     "paddle.set_sales_open": { TR: "Satışlar açıldı veya kapatıldı", EN: "Sales opened or closed" },
     "paddle.create_catalog": { TR: "Paddle kataloğu oluşturuldu", EN: "Paddle catalog created" },
+    "paddle.fix_quantity": { TR: "Paddle fiyatlarının adedi 1'e sabitlendi", EN: "Paddle prices fixed to a quantity of 1" },
     "paddle.link": { TR: "Paddle aboneliği hesaba bağlandı", EN: "Paddle subscription linked to an account" },
     "paddle.dismiss": { TR: "Eşleşmeyen Paddle aboneliği yoksayıldı", EN: "Unlinked Paddle subscription dismissed" },
     "paddle.resync": { TR: "Abonelik Paddle'dan yeniden eşitlendi", EN: "Subscription re-synced from Paddle" },

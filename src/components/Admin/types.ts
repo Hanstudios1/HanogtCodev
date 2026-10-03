@@ -330,6 +330,7 @@ export type AdminAuditAction =
     | "paddle.set_prices"
     | "paddle.set_sales_open"
     | "paddle.create_catalog"
+    | "paddle.fix_quantity"
     | "paddle.link"
     | "paddle.dismiss"
     | "paddle.resync"
@@ -425,6 +426,8 @@ export type AdminCoupon = {
     paddleDiscountId: string | null;
     /** Redemptions Paddle counted; null when unknown. */
     paddleTimesUsed: number | null;
+    /** Payments it discounts: the first, every one, or the first 2–24. */
+    recur: import("@/lib/plans").CouponRecur;
 };
 
 export type AdminPlansResponse = {
@@ -471,6 +474,8 @@ export type AdminPaddlePrice = {
     trialDays: number | null;
     /** The plan the price seems to sell (hanogt_plan custom data, then the names). */
     suggestedPlan: "plus" | "pro" | null;
+    /** The most one checkout may buy (Paddle's default is 100); null when Paddle didn't say. */
+    quantityMax: number | null;
 };
 
 /** Configuration problems src/lib/server/paddle.ts detects (PaddleConfigWarning). */

@@ -266,7 +266,7 @@ export type PaddleClientError = {
  * the account's subscription record, finding the Paddle customer, creating
  * the checkout's transaction, or one of the subscription actions.
  */
-export const BILLING_STEPS = ["catalog", "settings", "subscription", "customer", "transaction", "portal", "preview", "change", "keep"] as const;
+export const BILLING_STEPS = ["catalog", "settings", "subscription", "coupon", "discount", "customer", "transaction", "portal", "preview", "change", "keep"] as const;
 export type BillingStep = (typeof BILLING_STEPS)[number];
 
 export function isBillingStep(value: unknown): value is BillingStep {
@@ -312,4 +312,9 @@ export type BillingErrorCode =
     | "no_subscription"
     | "no_change"
     | "paddle_error"
-    | "unavailable";
+    | "unavailable"
+    // A coupon code the Plans page sent: unknown or switched off, expired, used up, or for the other plan.
+    | "coupon_invalid"
+    | "coupon_expired"
+    | "coupon_used_up"
+    | "coupon_plan";

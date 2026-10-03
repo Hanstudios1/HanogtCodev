@@ -26,6 +26,7 @@ import {
 } from "@/lib/paddle";
 import { PAID_PLAN_IDS, type PaidPlanId, type PlanCatalog } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, isWriteConflict } from "./firebase-rest";
+import { isCidr } from "./request-security";
 import { cleanValue, currentPaddleEnvironment, getPaddleConfig, isPaddleConfigured, type Env, type PaddleConfig } from "./paddle-config";
 import { subscriptionPath } from "./plans";
 import { normalizeEmail } from "./validate";
@@ -111,6 +112,8 @@ export type PaddlePriceEntity = {
     billing_cycle?: BillingCycle;
     trial_period?: BillingCycle;
     unit_price?: { amount?: string; currency_code?: string };
+    /** How many a checkout may buy; anything above 1 shows a quantity stepper in the checkout. */
+    quantity?: { minimum?: number; maximum?: number } | null;
     custom_data?: Record<string, unknown> | null;
     product?: { id?: string; name?: string; status?: string; custom_data?: Record<string, unknown> | null } | null;
 };
@@ -169,35 +172,8 @@ const IPS_TTL_MS = 60 * 60_000;
 const IPS_FAILURE_TTL_MS = 60_000;
 let ipsCache: { base: string; at: number; ttl: number; value: Promise<string[]> } | null = null;
 
-function ipv4ToInt(ip: string): number | null {
-    const parts = ip.split(".");
-    if (parts.length !== 4) return null;
-    let value = 0;
-    for (const part of parts) {
-        if (!/^\d{1,3}$/.test(part) || Number(part) > 255) return null;
-        value = value * 256 + Number(part);
-    }
-    return value >>> 0;
-}
-
-function parseCidr(cidr: string): { base: number; mask: number } | null {
-    const [address, bits = "32"] = cidr.trim().split("/");
-    const base = ipv4ToInt(address ?? "");
-    if (base === null || !/^\d{1,2}$/.test(bits) || Number(bits) > 32) return null;
-    const size = Number(bits);
-    return { base, mask: size === 0 ? 0 : (0xffffffff << (32 - size)) >>> 0 };
-}
-
-/** True when the IPv4 address (or an IPv4-mapped IPv6 one) is inside one of the CIDR blocks. */
-export function ipInCidrs(ip: string | null | undefined, cidrs: readonly string[]) {
-    if (!ip) return false;
-    const value = ipv4ToInt(ip.toLowerCase().startsWith("::ffff:") ? ip.slice(7) : ip);
-    if (value === null) return false;
-    return cidrs.some((cidr) => {
-        const block = parseCidr(cidr);
-        return Boolean(block) && ((value & block!.mask) >>> 0) === ((block!.base & block!.mask) >>> 0);
-    });
-}
+/** True when the address is inside one of the CIDR blocks (shared with the rate limits' client address). */
+export { ipInCidrs } from "./request-security";
 
 /**
  * The addresses Paddle sends webhooks from, read from {api}/ips
@@ -215,7 +191,7 @@ export async function paddleWebhookCidrs(config: PaddleConfig = getPaddleConfig(
         }
         if (!response.ok) throw new PaddleApiError(response.status, "ips_unavailable");
         const payload = await response.json().catch(() => null) as { data?: { ipv4_cidrs?: unknown } } | null;
-        const cidrs = Array.isArray(payload?.data?.ipv4_cidrs) ? payload.data.ipv4_cidrs.filter((cidr): cidr is string => typeof cidr === "string" && parseCidr(cidr) !== null) : [];
+        const cidrs = Array.isArray(payload?.data?.ipv4_cidrs) ? payload.data.ipv4_cidrs.filter((cidr): cidr is string => isCidr(cidr)) : [];
         if (!cidrs.length) throw new PaddleApiError(0, "ips_empty");
         return cidrs;
     })();
@@ -918,12 +894,14 @@ export async function ensureCustomer(email: string, known: string | null): Promi
 }
 
 /** A checkout for one plan, opened in the browser with Paddle.js. */
-export async function createCheckoutTransaction(input: { email: string; plan: PaidPlanId; priceId: string; customerId: string }) {
+export async function createCheckoutTransaction(input: { email: string; plan: PaidPlanId; priceId: string; customerId: string; discountId?: string | null }) {
     const link = accountLinkData(input.email, input.plan);
     const response = await paddleRequest<{ data: { id: string } }>("POST", "/transactions", {
         items: [{ price_id: input.priceId, quantity: 1 }],
         customer_id: input.customerId,
         collection_mode: "automatic",
+        // A coupon the Plans page accepted: Paddle shows it applied in the checkout.
+        ...(input.discountId && isPaddleId("discount", input.discountId) ? { discount_id: input.discountId } : {}),
         ...(link ? { custom_data: link } : {}),
     });
     if (!isPaddleId("transaction", response.data?.id)) throw new PaddleApiError(0, "unexpected_response");

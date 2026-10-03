@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import type { AdminPaddleCatalogResponse, AdminPaddleCouponResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPaddleWarning } from "@/components/Admin/types";
 import { OPERATOR_LIMITS, isOperatorPublished, operatorInfoErrors } from "@/lib/legal-info";
-import { isPaddleId, type PaddleEnvironment } from "@/lib/paddle";
-import { normalizeCouponCode } from "@/lib/plans";
+import { BILLING_INTERVALS, isPaddleId, type PaddleEnvironment } from "@/lib/paddle";
+import { PAID_PLAN_IDS, normalizeCouponCode, normalizeCouponRecur } from "@/lib/plans";
 import {
     AdminHttpError,
     adminError,
@@ -38,6 +38,7 @@ import {
     couponDiscountId,
     createPaddleDiscount,
     ensurePaddleCatalog,
+    fixPriceQuantities,
     isPaddleDiscountCode,
     linkSubscription,
     listPaddlePrices,
@@ -45,6 +46,7 @@ import {
     paddleAdminFailure,
     paddleCustomerEmails,
     readPaddleStatus,
+    refreshCouponDiscounts,
     resyncAccount,
     savePaddlePrices,
     setPaddleDiscountActive,
@@ -56,7 +58,7 @@ import {
 
 export const runtime = "nodejs";
 
-const ACTIONS = ["setPrices", "setSalesOpen", "createCatalog", "link", "dismissUnlinked", "resync", "setLegal", "syncCoupon"] as const;
+const ACTIONS = ["setPrices", "setSalesOpen", "createCatalog", "fixQuantity", "link", "dismissUnlinked", "resync", "setLegal", "syncCoupon"] as const;
 const LEGAL_FIELDS = ["legalName", "brand", "contactEmail", "address", "taxId", "kep"] as const;
 const BODY_KEYS = ["action", "prices", "open", "subscriptionId", "email", "code", ...LEGAL_FIELDS];
 
@@ -171,6 +173,7 @@ export async function GET(request: NextRequest) {
  *   { action: "setPrices", prices: { plus: { month, year }, pro: { month, year } } }
  *   { action: "setSalesOpen", open }              owners only; closed = staff and testers only
  *   { action: "createCatalog" }                   owners only; adds what's missing in Paddle (+ report)
+ *   { action: "fixQuantity" }                     owners only; mapped prices get quantity 1–1 (no stepper)
  *   { action: "link", subscriptionId, email }     an unlinked subscription → that account
  *   { action: "dismissUnlinked", subscriptionId }
  *   { action: "resync", email }                   → the person's plan (AdminPaddleResyncResponse)
@@ -203,6 +206,8 @@ export async function POST(request: NextRequest) {
                     checked: known !== null,
                 }),
             ], { environment: config.environment });
+            // Codes typed at checkout keep working for the newly mapped prices.
+            if (config.apiKey) await refreshCouponDiscounts(prices).catch(() => undefined);
             return adminJson(await overview(origin, owner));
         }
 
@@ -243,6 +248,7 @@ export async function POST(request: NextRequest) {
         if (action === "createCatalog") {
             if (!owner) throw new AdminHttpError(403, "forbidden");
             const report = await ensurePaddleCatalog(actor);
+            await refreshCouponDiscounts(normalizePaddleSettings(await getServerDocument<Record<string, unknown>>(PADDLE_SETTINGS_PATH), config.environment).prices).catch(() => undefined);
             const count = (outcome: string) => report.prices.filter((entry) => entry.outcome === outcome).length;
             // Its own entry once the report is known, since the counts go into it.
             await writeAuditLog(actor, "paddle.create_catalog", PADDLE_SETTINGS_PATH, {
@@ -252,6 +258,19 @@ export async function POST(request: NextRequest) {
                 conflicts: count("conflict"),
             });
             return adminJson({ ...(await overview(origin, owner)), report } satisfies AdminPaddleCatalogResponse);
+        }
+
+        if (action === "fixQuantity") {
+            // The mapped prices of the environment the keys belong to that still allow more than one.
+            if (!owner) throw new AdminHttpError(403, "forbidden");
+            const settings = normalizePaddleSettings(await getServerDocument<Record<string, unknown>>(PADDLE_SETTINGS_PATH), config.environment);
+            const mapped = new Set(PAID_PLAN_IDS.flatMap((plan) => BILLING_INTERVALS.flatMap((interval) => settings.prices[plan][interval] ?? [])));
+            const listing = await listPaddlePrices();
+            const loose = listing.filter((price) => mapped.has(price.id) && price.quantityMax !== null && price.quantityMax !== 1).map((price) => price.id);
+            if (!loose.length) throw new AdminHttpError(409, "no_change");
+            const fixed = await fixPriceQuantities(loose);
+            await writeAuditLog(actor, "paddle.fix_quantity", PADDLE_SETTINGS_PATH, { environment: config.environment, prices: fixed.join(","), count: fixed.length });
+            return adminJson(await overview(origin, owner));
         }
 
         if (action === "link") {
@@ -290,6 +309,7 @@ export async function POST(request: NextRequest) {
             plan: record.plan === "plus" || record.plan === "pro" ? record.plan : "any",
             maxUses: typeof record.maxUses === "number" && Number.isInteger(record.maxUses) && record.maxUses > 0 ? record.maxUses : null,
             expiresAt,
+            recur: normalizeCouponRecur(record.recur),
         });
         try {
             await commitServerMutations([

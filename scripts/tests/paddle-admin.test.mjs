@@ -94,7 +94,10 @@ test("only recurring prices are listed, with their billing period", () => {
         currency: "USD",
         trialDays: null,
         suggestedPlan: "plus",
+        quantityMax: null,
     });
+    assert.equal(admin.adminPriceOf(listed({ ...paddlePrice(PRICE.plusMonth, PRODUCT.plus), quantity: { minimum: 1, maximum: 100 } }, product)).quantityMax, 100, "Paddle's default lets a checkout buy 100");
+    assert.equal(admin.adminPriceOf(listed({ ...paddlePrice(PRICE.plusMonth, PRODUCT.plus), quantity: { minimum: 1, maximum: 1 } }, product)).quantityMax, 1);
     assert.equal(admin.adminPriceOf(listed(paddlePrice(PRICE.plusYear, PRODUCT.plus, { interval: "year" }), product)).interval, "year");
     const twelve = admin.adminPriceOf(listed(paddlePrice(PRICE.plusYear, PRODUCT.plus, { frequency: 12 }), product));
     assert.equal(twelve.interval, "year", "every 12 months is yearly");
@@ -236,6 +239,13 @@ function createPaddle({ products = [], prices = [], subscriptions = [], pageSize
             state.prices.push(price);
             return json(201, { data: price });
         }
+        const price = /^\/prices\/(pri_[a-z0-9]+)$/.exec(url.pathname);
+        if (method === "PATCH" && price) {
+            const found = state.prices.find((entry) => entry.id === price[1]);
+            if (!found) return json(404, { error: { code: "entity_not_found", detail: "Not found" } });
+            Object.assign(found, body);
+            return json(200, { data: found });
+        }
         const one = /^\/subscriptions\/(sub_[a-z0-9]+)$/.exec(url.pathname);
         if (method === "GET" && one) {
             const found = state.subscriptions.find((entry) => entry.id === one[1]);
@@ -310,6 +320,7 @@ test("an empty Paddle account gets both products and all four prices, mapped for
         const products = writes.filter((call) => call.path === "/products").map((call) => call.body);
         assert.deepEqual(products.map((body) => [body.name, body.tax_category, body.custom_data.hanogt_plan]), [["Hanogt Codev Plus", "standard", "plus"], ["Hanogt Codev Pro", "standard", "pro"]]);
         const prices = writes.filter((call) => call.path === "/prices").map((call) => call.body);
+        assert.ok(prices.every((body) => body.quantity?.minimum === 1 && body.quantity?.maximum === 1), "one subscription per checkout: no quantity stepper");
         assert.deepEqual(prices.map((body) => [body.unit_price.amount, body.unit_price.currency_code, body.billing_cycle.interval, body.billing_cycle.frequency, body.tax_mode, body.custom_data.hanogt_interval]), [
             ["2000", "USD", "month", 1, "account_setting", "month"],
             ["20000", "USD", "year", 1, "account_setting", "year"],
@@ -582,4 +593,17 @@ test("the status record carries the reported checkout errors, malformed ones lef
     });
     await withBackend({}, {}, async () => assert.deepEqual((await admin.readPaddleStatus()).clientErrors, []));
     assert.deepEqual(admin.EMPTY_WEBHOOK_STATUS.clientErrors, []);
+});
+
+test("quantity: only the given prices are set to exactly one, nothing else changes", async () => {
+    paddle.forgetPaddleCaches();
+    const loose = { ...paddlePrice(PRICE.plusMonth, PRODUCT.plus), quantity: { minimum: 1, maximum: 100 } };
+    const other = { ...paddlePrice(PRICE.proMonth, PRODUCT.pro), quantity: { minimum: 1, maximum: 100 } };
+    const api = createPaddle({ products: [paddleProduct(PRODUCT.plus, "Hanogt Codev Plus"), paddleProduct(PRODUCT.pro, "Hanogt Codev Pro")], prices: [loose, other] });
+    await withBackend({}, { route: api.route }, async () => {
+        const fixed = await admin.fixPriceQuantities([PRICE.plusMonth, PRICE.plusMonth, "pri_short"]);
+        assert.deepEqual(fixed, [PRICE.plusMonth], "each valid id once");
+        assert.deepEqual(api.writes().map((call) => [call.method, call.path, call.body]), [["PATCH", `/prices/${PRICE.plusMonth}`, { quantity: { minimum: 1, maximum: 1 } }]]);
+        assert.deepEqual(api.state.prices.find((entry) => entry.id === PRICE.proMonth).quantity, { minimum: 1, maximum: 100 }, "prices not asked for stay as they are");
+    });
 });

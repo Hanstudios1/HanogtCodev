@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Bell, BellRing, Check, Clock, CreditCard, Crown, LoaderCircle, PartyPopper, ShieldCheck, Sparkles, Ticket, Zap } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Header from "@/components/Header";
 import ChangePlanDialog from "@/components/Plans/ChangePlanDialog";
 import { PaddleLoadError, checkoutEventError, closeCheckout, failureMessage, getPaddle, onPaddleEvent, openCheckout } from "@/components/Plans/paddle-js";
@@ -25,7 +25,10 @@ import {
     PLAN_AI_LIMITS,
     PLAN_COPY,
     PLAN_IDS,
+    couponAmount,
     discountedPrice,
+    type CouponRecur,
+    type CouponView,
     type PaidPlanId,
     type PlanId,
     type PlansResponse,
@@ -99,6 +102,21 @@ const C = {
     noSubscription: { TR: "Bu hesapta etkin bir abonelik bulunamadı. Sayfayı yenile.", EN: "No active subscription was found on this account. Refresh the page." },
     noChange: { TR: "Değiştirilecek bir şey yok; sayfayı yenile.", EN: "There's nothing to change; refresh the page." },
     reference: { TR: "Hata kodu: {ref}", EN: "Error code: {ref}" },
+    couponQuestion: { TR: "Kupon kodun var mı?", EN: "Have a coupon code?" },
+    couponLabel: { TR: "Kupon kodu", EN: "Coupon code" },
+    couponApply: { TR: "Uygula", EN: "Apply" },
+    couponSignIn: { TR: "Kupon kullanmak için giriş yap", EN: "Sign in to use a coupon" },
+    couponApplied: { TR: "{code} uygulandı: %{percent} indirim · {plans} · {payments}", EN: "{code} applied: {percent}% off · {plans} · {payments}" },
+    couponRemove: { TR: "Kaldır", EN: "Remove" },
+    couponAllPlans: { TR: "Plus ve Pro", EN: "Plus and Pro" },
+    couponFirst: { TR: "ilk ödemede", EN: "on the first payment" },
+    couponAll: { TR: "her ödemede", EN: "on every payment" },
+    couponCount: { TR: "ilk {count} ödemede", EN: "on the first {count} payments" },
+    couponOnCard: { TR: "{code} kuponuyla, {payments}", EN: "With {code}, {payments}" },
+    couponInvalid: { TR: "Bu kupon kodu geçerli değil. Kodu kontrol edip tekrar dene.", EN: "This coupon code isn't valid. Check the code and try again." },
+    couponExpired: { TR: "Bu kuponun süresi dolmuş.", EN: "This coupon has expired." },
+    couponUsedUp: { TR: "Bu kuponun kullanım hakkı dolmuş.", EN: "This coupon has no uses left." },
+    couponPlan: { TR: "Bu kupon seçtiğin planda geçerli değil.", EN: "This coupon isn't valid for the plan you picked." },
     failureTeam: { TR: "Ekip için: bu isteğin ayrıntısı Yönetici Paneli › Abonelikler › Paddle bölümündeki \"Son sunucu hataları\" listesinde (yanıt hiç gelmediyse \"Son ödeme ekranı hataları\"nda) ve Vercel günlüklerinde.", EN: "For the team: the details of this request are under Admin Panel › Subscriptions › Paddle in \"Recent server errors\" (or, when no answer came at all, in \"Recent checkout errors\") and in the Vercel logs." },
     testMode: { TR: "Test modu: satışlar henüz herkese açık değil; bu sayfayı yalnızca Hanogt ekibi ve test kullanıcıları satın alınabilir görüyor.", EN: "Test mode: sales aren't open to everyone yet; only the Hanogt team and testers see these plans as buyable." },
     sandbox: { TR: "Paddle sandbox: gerçek ödeme alınmaz, test kartıyla dene (4242 4242 4242 4242).", EN: "Paddle sandbox: no real payments; use a test card (4242 4242 4242 4242)." },
@@ -140,7 +158,7 @@ const C = {
     bq4: { TR: "Planımı değiştirebilir miyim?", EN: "Can I change my plan?" },
     ba4: { TR: "Evet. Plus ile Pro arasında ya da aylık ile yıllık ödeme arasında geçebilirsin. Kalan süren için fark orantılı hesaplanır ve onaylamadan önce gösterilir.", EN: "Yes. You can move between Plus and Pro, or between monthly and yearly billing. The difference for the rest of your period is prorated and shown before you confirm." },
     bq5: { TR: "Kupon kodumu nerede kullanırım?", EN: "Where do I use a coupon code?" },
-    ba5: { TR: "Ödeme ekranında \"İndirim kodu ekle\"ye bas ve kodunu yaz.", EN: "On the checkout screen, press \"Add discount code\" and enter your code." },
+    ba5: { TR: "Bu sayfada \"Kupon kodun var mı?\"ya bas, kodunu yazıp Uygula'ya bas: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. İstersen kodu ödeme ekranındaki \"İndirim ekle\"ye de yazabilirsin. Kuponun hangi planda ve kaç ödemede geçerli olduğu kod uygulanınca yazılır.", EN: "On this page press \"Have a coupon code?\", enter it and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter it with \"Add discount\" at checkout. Which plan and how many payments it covers is shown once it's applied." },
 } satisfies Record<string, Copy>;
 
 const ACCENT: Record<PlanId, { ring: string; icon: typeof Zap; gradient: string }> = {
@@ -194,6 +212,10 @@ const ERROR_COPY: Partial<Record<BillingErrorCode, Copy>> = {
     invalid_request: C.reloadPage,
     no_subscription: C.noSubscription,
     no_change: C.noChange,
+    coupon_invalid: C.couponInvalid,
+    coupon_expired: C.couponExpired,
+    coupon_used_up: C.couponUsedUp,
+    coupon_plan: C.couponPlan,
 };
 
 async function fetchPlans(): Promise<PlansResponse | null> {
@@ -298,7 +320,13 @@ const PADDLE_SETUP_HINTS: Record<string, Copy> = {
 };
 
 /** Answers that explain themselves; everything else also shows its error code. */
-const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change"]);
+const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change", "coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
+const COUPON_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
+
+/** How many payments a coupon covers, in words ("on the first payment"). */
+function couponPayments(recur: CouponRecur): { copy: Copy; vars?: Record<string, number> } {
+    return recur === "first" ? { copy: C.couponFirst } : recur === "all" ? { copy: C.couponAll } : { copy: C.couponCount, vars: { count: recur } };
+}
 
 /** The notice for a failed request; `team` (staff, testers, the sandbox) also get the detail and where to look. */
 function failureNotice(result: RequestFailure, team: boolean): NonNullable<Notice> {
@@ -333,6 +361,12 @@ export default function PlansPage() {
     const [change, setChange] = useState<{ plan: PaidPlanId; interval: BillingInterval; preview: PlanChangePreview | null; error: string } | null>(null);
     const [activating, setActivating] = useState<PaidPlanId | null>(null);
     const [reload, setReload] = useState(0);
+    // A coupon the server accepted; the checkout of a plan it covers carries it.
+    const [coupon, setCoupon] = useState<CouponView | null>(null);
+    const [couponOpen, setCouponOpen] = useState(false);
+    const [couponInput, setCouponInput] = useState("");
+    const [couponError, setCouponError] = useState<Copy | null>(null);
+    const couponFromLink = useRef(false);
     const purchased = useRef<PaidPlanId | null>(null);
 
     useEffect(() => {
@@ -506,14 +540,51 @@ export default function PlansPage() {
         setBusy(null);
     };
 
+    const couponFor = (plan: PaidPlanId) => (coupon && (coupon.plan === "any" || coupon.plan === plan) ? coupon : null);
+
+    const applyCoupon = async (value: string) => {
+        const code = value.trim().toUpperCase();
+        if (!code) return;
+        setBusy("coupon");
+        setCouponError(null);
+        const result = await postJson<{ coupon: CouponView }>("/api/paddle/coupon", { code });
+        setBusy(null);
+        if (result.ok) {
+            setCoupon(result.data.coupon);
+            setCouponInput("");
+            setCouponOpen(false);
+            return;
+        }
+        setCouponOpen(true);
+        setCouponInput(code);
+        setCouponError(failureNotice(result, diagnostics).copy);
+    };
+
+    const submitCoupon = (event: FormEvent) => {
+        event.preventDefault();
+        void applyCoupon(couponInput);
+    };
+
+    // A link with ?coupon=CODE (e.g. from a campaign) applies the code once the visitor is signed in.
+    useEffect(() => {
+        if (!signedIn || !checkout || couponFromLink.current) return;
+        const code = new URLSearchParams(window.location.search).get("coupon");
+        if (!code) return;
+        couponFromLink.current = true;
+        void Promise.resolve().then(() => applyCoupon(code));
+    });
+
     const startCheckout = async (plan: PaidPlanId) => {
         if (!checkout) return;
         setBusy(`checkout:${plan}`);
         setNotice(null);
-        const result = await postWithRetry<{ transactionId: string }>("/api/paddle/checkout", { plan, interval: intervalFor(plan) });
+        const applied = couponFor(plan);
+        const result = await postWithRetry<{ transactionId: string }>("/api/paddle/checkout", { plan, interval: intervalFor(plan), ...(applied ? { coupon: applied.code } : {}) });
         if (!result.ok) {
             showRequestFailure("checkout", result);
             if (result.error === "already_subscribed") setReload((value) => value + 1);
+            // A coupon that stopped working meanwhile (expired, used up) is taken off; the plan can still be bought.
+            if (COUPON_ERRORS.has(result.error)) setCoupon(null);
             setBusy(null);
             return;
         }
@@ -738,6 +809,46 @@ export default function PlansPage() {
                             </div>
                         </div>
                     ) : null}
+                    {anyOnSale ? (
+                        <div className="mx-auto mb-5 flex max-w-2xl flex-col items-center gap-2" data-coupon>
+                            {!me ? (
+                                <Link href="/login?callbackUrl=%2Fplans" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
+                                    <Ticket className="h-4 w-4" aria-hidden />{tx(C.couponSignIn)}
+                                </Link>
+                            ) : coupon ? (
+                                <p className="flex flex-wrap items-center justify-center gap-2 rounded-2xl bg-emerald-500/10 px-4 py-2 text-center text-[13.5px] font-semibold text-emerald-700 dark:text-emerald-300" data-coupon-applied>
+                                    <Ticket className="h-4 w-4 shrink-0" aria-hidden />
+                                    <span>{tx(C.couponApplied, { code: coupon.code, percent: coupon.percentOff, plans: coupon.plan === "any" ? tx(C.couponAllPlans) : tx(PLAN_COPY[coupon.plan].name), payments: tx(couponPayments(coupon.recur).copy, couponPayments(coupon.recur).vars) })}</span>
+                                    <button type="button" onClick={() => setCoupon(null)} disabled={busy !== null} className="font-bold underline underline-offset-2 hover:no-underline">{tx(C.couponRemove)}</button>
+                                </p>
+                            ) : couponOpen ? (
+                                <form onSubmit={submitCoupon} className="flex w-full max-w-sm gap-2">
+                                    <input
+                                        value={couponInput}
+                                        onChange={(event) => {
+                                            setCouponInput(event.target.value.toUpperCase());
+                                            setCouponError(null);
+                                        }}
+                                        maxLength={24}
+                                        placeholder="HANOGT20"
+                                        aria-label={tx(C.couponLabel)}
+                                        autoComplete="off"
+                                        spellCheck={false}
+                                        autoFocus
+                                        className="h-10 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 font-mono text-[14px] font-bold uppercase tracking-wide outline-none transition focus:border-indigo-400 dark:border-white/10 dark:bg-zinc-900"
+                                    />
+                                    <button type="submit" disabled={busy !== null || !couponInput.trim()} className={quietButton}>
+                                        {busy === "coupon" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Ticket className="h-3.5 w-3.5" aria-hidden />}{tx(C.couponApply)}
+                                    </button>
+                                </form>
+                            ) : (
+                                <button type="button" onClick={() => setCouponOpen(true)} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
+                                    <Ticket className="h-4 w-4" aria-hidden />{tx(C.couponQuestion)}
+                                </button>
+                            )}
+                            {couponError ? <p role="alert" className="text-center text-[12.5px] font-semibold text-rose-600 dark:text-rose-300">{tx(couponError)}</p> : null}
+                        </div>
+                    ) : null}
                     {notice ? (
                         <div ref={noticeRef} role={notice.tone === "error" ? "alert" : "status"} className={`mx-auto mb-5 max-w-2xl scroll-mt-24 rounded-2xl px-4 py-3 text-center text-[13.5px] font-semibold ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"}`}>
                             <p className="flex items-center justify-center gap-2">
@@ -778,9 +889,17 @@ export default function PlansPage() {
                                             live ? (
                                                 <>
                                                     <p className="flex flex-wrap items-baseline gap-x-2">
-                                                        <span className="text-4xl font-black tabular-nums">{live.total}</span>
+                                                        {paid && couponFor(paid) ? (
+                                                            <span className="text-4xl font-black tabular-nums" data-coupon-price>{formatMoney(couponAmount(live.amount, couponFor(paid)!.percentOff), live.currency, locale)}</span>
+                                                        ) : (
+                                                            <span className="text-4xl font-black tabular-nums">{live.total}</span>
+                                                        )}
                                                         <span className="text-[13px] text-zinc-500">{tx(interval === "year" ? C.perYearShort : C.perMonth)}</span>
+                                                        {paid && couponFor(paid) ? <span className="text-[15px] text-zinc-400 line-through tabular-nums">{formatMoney(live.amount, live.currency, locale)}</span> : null}
                                                     </p>
+                                                    {paid && couponFor(paid) ? (
+                                                        <p className="mt-1 text-[12.5px] font-bold text-emerald-700 dark:text-emerald-300">{tx(C.couponOnCard, { code: couponFor(paid)!.code, payments: tx(couponPayments(couponFor(paid)!.recur).copy, couponPayments(couponFor(paid)!.recur).vars) })}</p>
+                                                    ) : null}
                                                     {interval === "year" ? <p className="mt-1 text-[12.5px] text-zinc-500">{tx(C.monthlyEquivalent, { price: formatMoney(Number(live.amount) / 12, live.currency, locale) })}</p> : null}
                                                     {interval !== period ? <p className="mt-1 text-[12px] text-zinc-500">{tx(C.onlyInterval, { interval: tx(interval === "year" ? C.yearly : C.monthly).toLocaleLowerCase(locale) })}</p> : null}
                                                 </>

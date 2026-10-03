@@ -1,5 +1,39 @@
 # Değişiklik Günlüğü
 
+## 0.3.4 — 2026-10-03
+
+### Kuponlar abonelikte çalışıyor; Fiyatlandırma'da kupon bölümü
+
+- Fiyatlandırma sayfasında "Kupon kodun var mı?": kod sunucuda doğrulanıyor
+  (`POST /api/paddle/coupon`; geçersiz, süresi dolmuş, kullanım hakkı bitmiş,
+  başka plan için), uygulanınca kartlarda indirimli fiyat ve kaç ödemede
+  geçerli olduğu görünüyor; ödeme işlemi indirimle (`discount_id`) açılıyor.
+  `/plans?coupon=KOD` bağlantısı kodu kendiliğinden uyguluyor.
+- Kuponun bu ortamda Paddle indirimi yoksa (Paddle'dan önce ya da öbür ortamda
+  oluşturulduysa) ilk kullanımda oluşturuluyor; arşivlenmişse açılıyor;
+  fiyat eşleştirmesi değiştiyse indirimin kapsamı güncelleniyor. Eşleştirme
+  kaydedilince ya da katalog oluşturulunca tüm etkin kuponların kapsamı yeni
+  fiyatlara genişletiliyor (Paddle ödeme ekranındaki "İndirim ekle" de çalışır).
+- Yönetici kupon formunda "Geçerli ödemeler": yalnızca ilk ödeme, her ödeme
+  (abonelik boyunca) ya da ilk 2–24 ödeme (Paddle `recur`,
+  `maximum_recurring_intervals`).
+
+### Cloudflare arkasında gerçek ziyaretçi adresi
+
+- Vercel, Cloudflare'in adresini görüyordu: Paddle bildirimi `ip_not_allowed`
+  ile reddedilecek (ödeme alınsa da plan etkinleşmeyecekti), adrese bağlı tüm
+  hız sınırları (kayıt, giriş, destek…) aynı Cloudflare sunucusundaki herkesçe
+  paylaşılıyordu. Platform adresi Cloudflare'in yayımladığı aralıklardaysa
+  `CF-Connecting-IP` ziyaretçi sayılıyor; başka yerden gelen başlık yok
+  sayılıyor. CIDR eşleştirme IPv6'yı da destekliyor.
+
+### Bir ödeme = bir abonelik
+
+- Paddle fiyatlarının varsayılan adedi 1–100 olduğundan ödeme ekranında adet
+  seçici çıkıyordu. Yeni fiyatlar adet 1'e sabit oluşturuluyor; Paddle kartı
+  eşlenmiş fiyatlarda adet seçilebiliyorsa uyarıyor ve "Adedi 1'e sabitle"
+  ile (yalnızca sahip, onaylı) düzeltiyor.
+
 ## 0.3.3 — 2026-10-03
 
 ### Hata mesajları Cloudflare'den geçiyor

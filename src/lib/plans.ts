@@ -190,6 +190,33 @@ export function normalizeCouponCode(value: unknown) {
     return /^[A-Z0-9][A-Z0-9_-]{2,23}$/.test(code) ? code : "";
 }
 
+/** How many payments of a subscription a coupon discounts: the first, every one, or the first 2–24. */
+export type CouponRecur = "first" | "all" | number;
+export const COUPON_RECUR_MAX = 24;
+
+/** A stored or submitted recur setting; anything unknown is "first" (what coupons did before the setting existed). */
+export function normalizeCouponRecur(value: unknown): CouponRecur {
+    if (value === "all") return "all";
+    const count = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value;
+    return typeof count === "number" && Number.isInteger(count) && count >= 2 && count <= COUPON_RECUR_MAX ? count : "first";
+}
+
+/** A coupon as the Plans page shows it once its code is accepted. */
+export type CouponView = {
+    code: string;
+    percentOff: number;
+    plan: PaidPlanId | "any";
+    recur: CouponRecur;
+    expiresAt: string | null;
+};
+
+/** A plan's price with a coupon's percentage off, in the price's lowest currency unit. */
+export function couponAmount(amount: string, percentOff: number) {
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value < 0) return "0";
+    return String(Math.round((value * (100 - Math.min(100, Math.max(0, percentOff)))) / 100));
+}
+
 export type PlanFeature = { text: Copy; /** Not live yet; shown as "planned". */ planned?: boolean };
 export type PlanCopy = { name: Copy; tagline: Copy; features: PlanFeature[] };
 

@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.4",
+        version: "v0.3.4",
+        date: "2026-10-03",
+        title: { TR: "Kupon kodları Fiyatlandırma'da; ödeme sonrası plan anında etkin", EN: "Coupon codes on Pricing; your plan is active right after paying" },
+        desc: { TR: "Kupon kodunu artık Fiyatlandırma sayfasında girebilir, indirimli fiyatı hemen görebilirsin. Ödeme sonrası planın etkinleşmesi ve kayıt sınırları da düzeltildi.", EN: "You can now enter a coupon code on the Pricing page and see the discounted price right away. Plan activation after paying and sign-up limits were fixed too." },
+        items: [
+            { TR: "Fiyatlandırma'da \"Kupon kodun var mı?\": kod uygulanınca indirimli fiyat ve kaç ödemede geçerli olduğu görünür, ödeme ekranı indirimle açılır.", EN: "\"Have a coupon code?\" on Pricing: once applied, the discounted price and how many payments it covers are shown, and the checkout opens with the discount." },
+            { TR: "Kuponlar her ödemede ya da ilk birkaç ödemede de geçerli olabilir.", EN: "Coupons can also cover every payment or the first few." },
+            { TR: "Ödeme ekranında artık adet seçici yok: her ödeme tek bir abonelik.", EN: "No more quantity picker at checkout: every payment is one subscription." },
+            { TR: "Ödemeden sonra planın birkaç saniyede etkinleşir; kayıt ve giriş sınırları artık kişi başına işler.", EN: "Your plan is active within seconds after paying; sign-up and sign-in limits now count per person." },
+        ],
+    },
+    {
         id: "v0.3.3",
         version: "v0.3.3",
         date: "2026-10-03",

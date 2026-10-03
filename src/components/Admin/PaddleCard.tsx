@@ -182,6 +182,13 @@ const C = {
     openPlans: { TR: "Planlar sayfasını yeni sekmede aç", EN: "Open the Plans page in a new tab" },
     blockedAddress: { TR: "Engellenen adres: {url}", EN: "Blocked address: {url}" },
     errorCode: { TR: "Paddle kodu: {code}", EN: "Paddle code: {code}" },
+    // Quantity stepper in the checkout
+    quantityTitle: { TR: "Ödeme ekranında adet seçilebiliyor", EN: "The checkout lets people pick a quantity" },
+    quantityHint: { TR: "Eşlenmiş {count} fiyat bir ödemede {max} adede kadar izin veriyor; ödeme ekranında − 1 + seçicisi çıkar ve bir müşteri yanlışlıkla birkaç adet alıp birkaç kat ödeyebilir (hesap yine tek plan alır).", EN: "{count} mapped prices allow up to {max} per checkout; the checkout shows a − 1 + stepper and someone could buy several by mistake and pay several times (the account still gets one plan)." },
+    quantityButton: { TR: "Adedi 1'e sabitle", EN: "Fix the quantity to 1" },
+    quantityConfirmTitle: { TR: "{env} fiyatlarının adedi 1'e sabitlensin mi?", EN: "Fix the {env} prices to a quantity of 1?" },
+    quantityConfirmBody: { TR: "Paddle'da {count} fiyatın adet sınırı en az 1, en çok 1 olarak değiştirilir. Fiyat, ürün ve mevcut abonelikler değişmez; hiçbir şey silinmez ya da arşivlenmez.", EN: "In Paddle, the quantity of {count} prices becomes at least 1 and at most 1. The prices, products and existing subscriptions stay as they are; nothing is deleted or archived." },
+    quantityFixed: { TR: "Fiyatların adedi 1'e sabitlendi; ödeme ekranında adet seçici çıkmayacak.", EN: "The prices are fixed to a quantity of 1; the checkout won't show a quantity stepper." },
     // Billing requests that failed on the server
     serverTitle: { TR: "Son sunucu hataları", EN: "Recent server errors" },
     serverDescription: { TR: "Ödeme ve abonelik isteklerinin sunucuda başarısız olduğu anlar", EN: "When checkout and subscription requests failed on the server" },
@@ -280,6 +287,8 @@ const SERVER_STEPS: Record<BillingStep, Copy> = {
     catalog: { TR: "Plan kataloğu okunurken", EN: "Reading the plan catalog" },
     settings: { TR: "Paddle ayarları okunurken", EN: "Reading the Paddle settings" },
     subscription: { TR: "Abonelik kaydı okunurken", EN: "Reading the subscription record" },
+    coupon: { TR: "Kupon okunurken", EN: "Reading the coupon" },
+    discount: { TR: "Kuponun Paddle indirimi hazırlanırken", EN: "Preparing the coupon's Paddle discount" },
     customer: { TR: "Paddle müşterisi bulunurken", EN: "Finding the Paddle customer" },
     transaction: { TR: "Ödeme işlemi oluşturulurken", EN: "Creating the checkout transaction" },
     portal: { TR: "Müşteri portalı açılırken", EN: "Opening the customer portal" },
@@ -832,6 +841,61 @@ function CatalogCreator({ data, onChanged }: { data: AdminPaddleResponse; onChan
     );
 }
 
+/** Mapped prices that let a checkout buy more than one (Paddle shows a quantity stepper), with a fix on the owner's word. */
+function QuantityFix({ data, onChanged }: { data: AdminPaddleResponse; onChanged: (next: AdminPaddleResponse) => void }) {
+    const { tx } = useI18n();
+    const toast = useToast();
+    const [confirming, setConfirming] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<ApiFailure | null>(null);
+    const mapped = new Set(SLOTS.flatMap(({ plan, interval }) => data.mapping[plan][interval] ?? []));
+    const loose = data.prices.filter((price) => mapped.has(price.id) && price.quantityMax !== null && price.quantityMax !== 1);
+    if (!loose.length) return null;
+    const env = tx(PADDLE_ENVIRONMENT_COPY[data.config.environment]);
+    const max = Math.max(...loose.map((price) => price.quantityMax ?? 1));
+
+    const fix = async () => {
+        setBusy(true);
+        setError(null);
+        const result = await adminPost<AdminPaddleResponse>("/api/admin/paddle", { action: "fixQuantity" });
+        setBusy(false);
+        if (!result.ok) {
+            setError(result);
+            return;
+        }
+        setConfirming(false);
+        onChanged(result.data);
+        toast("success", tx(C.quantityFixed));
+    };
+
+    return (
+        <div className="rounded-2xl border border-amber-300/70 bg-amber-50/60 p-4 dark:border-amber-400/30 dark:bg-amber-500/[0.06]" data-quantity-warning>
+            <div className="flex flex-wrap items-center gap-3">
+                <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-black text-zinc-900 dark:text-white">{tx(C.quantityTitle)}</p>
+                    <p className="mt-0.5 text-[12.5px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.quantityHint, { count: loose.length, max })}</p>
+                </div>
+                <Button icon={ListChecks} size="sm" onClick={() => { setError(null); setConfirming(true); }}>{tx(C.quantityButton)}</Button>
+            </div>
+            <ConfirmDialog
+                open={confirming}
+                onClose={() => {
+                    if (!busy) setConfirming(false);
+                }}
+                onConfirm={() => void fix()}
+                title={tx(C.quantityConfirmTitle, { env })}
+                description={tx(C.quantityConfirmBody, { count: loose.length })}
+                confirmLabel={tx(C.quantityButton)}
+                icon={ListChecks}
+                tone="default"
+                busy={busy}
+                error={error}
+            />
+        </div>
+    );
+}
+
 type Draft = Record<PaidPlanId, Record<BillingInterval, string>>;
 type Mapping = AdminPaddleResponse["mapping"];
 
@@ -1053,6 +1117,7 @@ function SalesPanel({ data, catalog, onChanged }: { data: AdminPaddleResponse; c
             <div className="mt-4 space-y-4">
                 <SalesGate data={data} onChanged={onChanged} />
                 {data.owner ? <CatalogCreator data={data} onChanged={onChanged} /> : null}
+                {data.owner ? <QuantityFix data={data} onChanged={onChanged} /> : null}
                 <PriceMapping key={mappingKey} data={data} catalog={catalog} onSaved={onChanged} />
                 <EnvironmentTable data={data} />
             </div>

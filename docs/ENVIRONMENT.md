@@ -259,6 +259,42 @@ from the API, so the order of deliveries doesn't matter. Paddle retries on any
 non-2xx answer. If Paddle's dashboard shows failed deliveries with 403, check
 that nothing (a proxy, Vercel's firewall) replaces the client address.
 
+The sender's address (also used by every per-address rate limit) comes from
+Vercel's `x-vercel-forwarded-for` (then `x-real-ip`, then the first hop of
+`x-forwarded-for`). hanogtcodev.com is served through Cloudflare, so that
+address is one of Cloudflare's edges; when it is inside Cloudflare's published
+ranges (`CLOUDFLARE_CIDRS` in `src/lib/server/request-security.ts`, from
+https://www.cloudflare.com/ips/), `CF-Connecting-IP` names the visitor (here:
+Paddle). From anywhere else `CF-Connecting-IP` is ignored. If Cloudflare ever
+publishes new ranges, add them there.
+
+### Prices: one per checkout
+
+Paddle's default price quantity lets one checkout buy up to 100, which shows a
+quantity stepper in the checkout. "Paddle kataloğunu oluştur" creates prices
+with `quantity: { minimum: 1, maximum: 1 }`; for prices made earlier (or in
+Paddle's dashboard), the Paddle card shows "Ödeme ekranında adet
+seçilebiliyor" with "Adedi 1'e sabitle" (owners only), which sets only the
+quantity of the mapped prices of the configured environment.
+
+### Coupons
+
+Coupons are made under Admin Panel > Subscriptions > Coupons (code, percent,
+plan, uses, expiry and "Geçerli ödemeler": the first payment, every payment or
+the first 2–24). With Paddle connected each coupon is also a Paddle discount
+with the same code (letters and digits only; `recur` /
+`maximum_recurring_intervals` from "Geçerli ödemeler"). People enter the code
+on the Pricing page ("Kupon kodun var mı?", checked by
+`POST /api/paddle/coupon`, ten checks a minute per account) or with "Add
+discount" in Paddle's checkout. With a code applied on the page, the checkout's
+transaction carries the discount (`discount_id`): a coupon without a discount
+in the configured environment gets one then, an archived one is switched back
+on, and one that doesn't cover the price yet is widened to the mapped prices.
+Saving the price mapping (or creating the catalog) widens every active
+coupon's discount to the newly mapped prices, so codes typed in Paddle's
+checkout keep working too. A link to `/plans?coupon=CODE` applies the code
+once the visitor is signed in.
+
 ### Troubleshooting
 
 - Admin Panel > Subscriptions > Paddle lists missing variables, wrong formats,

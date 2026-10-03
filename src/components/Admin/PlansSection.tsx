@@ -4,7 +4,7 @@ import { Ban, BadgePercent, Bot, CreditCard, Crown, ExternalLink, History, Plus,
 import { useState, type FormEvent } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { billingView, paddleEntitles } from "@/lib/paddle";
-import { AI_BONUS_MAX, GRANT_DAYS_MAX, PAID_PLAN_IDS, PLAN_COPY, PLAN_IDS, PRICE_MAX, type PaidPlanId, type PlanId, type PlanPrice } from "@/lib/plans";
+import { AI_BONUS_MAX, COUPON_RECUR_MAX, GRANT_DAYS_MAX, PAID_PLAN_IDS, PLAN_COPY, PLAN_IDS, PRICE_MAX, type CouponRecur, type PaidPlanId, type PlanId, type PlanPrice } from "@/lib/plans";
 import { adminPost, adminRequest, type ApiFailure } from "./api";
 import { COMMON } from "./copy";
 import { formatDateTime, formatNumber, useAdminResource } from "./hooks";
@@ -32,7 +32,15 @@ const C = {
     waitlist: { TR: "Haber bekleyenler: Plus {plus} · Pro {pro}", EN: "Waiting to hear: Plus {plus} · Pro {pro}" },
     coupons: { TR: "Kuponlar", EN: "Coupons" },
     couponsHint: { TR: "Ödeme ekranında kullanılacak indirim kodları.", EN: "Discount codes for checkout." },
-    couponsPaddle: { TR: "Paddle bağlıyken her yeni kupon Paddle'da da indirim kodu olarak oluşturulur (yalnızca harf ve rakam). Müşteriler kodu ödeme ekranında girer; indirim yalnızca ilk ödemeye uygulanır.", EN: "While Paddle is connected, every new coupon is also created in Paddle as a discount code (letters and digits only). Customers enter the code at checkout; the discount applies to the first payment only." },
+    couponsPaddle: { TR: "Paddle bağlıyken her yeni kupon Paddle'da da indirim kodu olarak oluşturulur (yalnızca harf ve rakam). Müşteriler kodu Fiyatlandırma sayfasındaki \"Kupon kodun var mı?\" alanına ya da Paddle ödeme ekranındaki \"İndirim ekle\"ye yazar. İndirimin kaç ödemeye uygulanacağını \"Geçerli ödemeler\" belirler.", EN: "While Paddle is connected, every new coupon is also created in Paddle as a discount code (letters and digits only). Customers enter the code under \"Have a coupon?\" on the Pricing page or with \"Add discount\" in Paddle's checkout. \"Payments\" decides how many payments the discount applies to." },
+    recur: { TR: "Geçerli ödemeler", EN: "Payments" },
+    recurFirst: { TR: "Yalnızca ilk ödeme", EN: "First payment only" },
+    recurAll: { TR: "Her ödeme (abonelik boyunca)", EN: "Every payment (for the whole subscription)" },
+    recurCount: { TR: "İlk {count} ödeme", EN: "First {count} payments" },
+    recurCountShort: { TR: "İlk N ödeme", EN: "First N payments" },
+    recurBadgeFirst: { TR: "ilk ödeme", EN: "first payment" },
+    recurBadgeAll: { TR: "her ödeme", EN: "every payment" },
+    recurBadgeCount: { TR: "ilk {count} ödeme", EN: "first {count} payments" },
     couponsNoPaddle: { TR: "Paddle bağlanınca kuponlar \"Paddle'a aktar\" ile ödeme ekranında kullanılabilir hâle getirilir.", EN: "Once Paddle is connected, \"Send to Paddle\" makes coupons usable at checkout." },
     code: { TR: "Kod", EN: "Code" },
     percentOff: { TR: "İndirim (%)", EN: "Discount (%)" },
@@ -197,11 +205,15 @@ function PriceEditor({ plan, price, currency, paddleMapped, onSaved }: { plan: P
     );
 }
 
+function recurLabel(recur: CouponRecur, tx: (copy: Copy, vars?: Record<string, string | number>) => string) {
+    return recur === "first" ? tx(C.recurBadgeFirst) : recur === "all" ? tx(C.recurBadgeAll) : tx(C.recurBadgeCount, { count: recur });
+}
+
 function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => void }) {
     const { tx } = useI18n();
     const toast = useToast();
     const errorText = useErrorText();
-    const [draft, setDraft] = useState({ code: "", percentOff: "10", plan: "any", maxUses: "", expiresAt: "", note: "" });
+    const [draft, setDraft] = useState({ code: "", percentOff: "10", plan: "any", maxUses: "", expiresAt: "", note: "", recur: "first", recurCount: "3" });
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<ApiFailure | null>(null);
 
@@ -216,6 +228,7 @@ function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => vo
             plan: draft.plan,
             maxUses: draft.maxUses.trim() ? Number(draft.maxUses) : null,
             expiresAt: draft.expiresAt ? new Date(`${draft.expiresAt}T23:59:59`).toISOString() : null,
+            recur: draft.recur === "count" ? Number(draft.recurCount) : draft.recur,
             note: draft.note,
         });
         setBusy(false);
@@ -224,7 +237,7 @@ function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => vo
             return;
         }
         toast("success", tx(C.couponCreated));
-        setDraft({ code: "", percentOff: "10", plan: "any", maxUses: "", expiresAt: "", note: "" });
+        setDraft({ code: "", percentOff: "10", plan: "any", maxUses: "", expiresAt: "", note: "", recur: "first", recurCount: "3" });
         onCreated(result.data);
     };
 
@@ -241,6 +254,16 @@ function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => vo
             </label>
             <label className={field}>{tx(C.maxUses)}<input type="number" min={1} value={draft.maxUses} onChange={(event) => setDraft({ ...draft, maxUses: event.target.value })} placeholder={tx(C.unlimited)} className={cx(INPUT_CLASS, "mt-1")} /></label>
             <label className={field}>{tx(C.expires)}<input type="date" value={draft.expiresAt} onChange={(event) => setDraft({ ...draft, expiresAt: event.target.value })} className={cx(INPUT_CLASS, "mt-1")} /></label>
+            <label className={field}>{tx(C.recur)}
+                <span className="mt-1 flex gap-2">
+                    <select value={draft.recur} onChange={(event) => setDraft({ ...draft, recur: event.target.value })} className={cx(INPUT_CLASS, "min-w-0 flex-1")} data-coupon-recur>
+                        <option value="first">{tx(C.recurFirst)}</option>
+                        <option value="all">{tx(C.recurAll)}</option>
+                        <option value="count">{tx(C.recurCountShort)}</option>
+                    </select>
+                    {draft.recur === "count" ? <input type="number" min={2} max={COUPON_RECUR_MAX} value={draft.recurCount} onChange={(event) => setDraft({ ...draft, recurCount: event.target.value })} aria-label={tx(C.recurCountShort)} className={cx(INPUT_CLASS, "w-20")} required /> : null}
+                </span>
+            </label>
             <label className={field}>{tx(C.note)}<input value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} maxLength={300} placeholder={tx(COMMON.optional)} className={cx(INPUT_CLASS, "mt-1")} /></label>
             {error ? <p role="alert" className="text-[12.5px] font-semibold text-red-600 sm:col-span-2 lg:col-span-3 dark:text-red-400">{errorText(error)}</p> : null}
             <div className="flex justify-end sm:col-span-2 lg:col-span-3">
@@ -290,6 +313,7 @@ function CouponRow({ coupon, paddleReady, onChanged, onSynced }: { coupon: Admin
             <span className="font-mono text-[14px] font-black">{coupon.code}</span>
             <Badge tone="emerald" icon={BadgePercent}>%{coupon.percentOff}</Badge>
             <Badge tone="indigo">{coupon.plan === "any" ? tx(C.anyPlan) : tx(PLAN_COPY[coupon.plan].name)}</Badge>
+            <Badge tone="zinc">{recurLabel(coupon.recur, tx)}</Badge>
             {coupon.paddleDiscountId ? (
                 <span title={tx(C.inPaddleTitle, { id: coupon.paddleDiscountId })}><Badge tone="sky" icon={CreditCard}>{tx(C.inPaddle)}</Badge></span>
             ) : null}

@@ -9,6 +9,7 @@ import {
     PLAN_IDS,
     PRICE_MAX,
     normalizeCouponCode,
+    normalizeCouponRecur,
     type PaidPlanId,
     type PlanPrice,
 } from "@/lib/plans";
@@ -52,7 +53,7 @@ import {
 export const runtime = "nodejs";
 
 const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi"] as const;
-const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "note", "active", "email", "days", "blocked", "extraDaily"];
+const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "recur", "note", "active", "email", "days", "blocked", "extraDaily"];
 const HISTORY_MAX = 30;
 const COUPONS_MAX = 200;
 const DAY_MS = 24 * 60 * 60_000;
@@ -92,6 +93,7 @@ function couponOf(record: Record<string, unknown> & { _id: string }, environment
         createdAt: toIso(record.createdAt),
         paddleDiscountId: couponDiscountId(record, environment),
         paddleTimesUsed: null,
+        recur: normalizeCouponRecur(record.recur),
     };
 }
 
@@ -200,6 +202,8 @@ export async function POST(request: NextRequest) {
                     maxUses: readInteger(body.maxUses, 1, 100_000, true),
                     used: 0,
                     expiresAt: readFutureDate(body.expiresAt),
+                    // How many payments it discounts: the first, every one, or the first 2–24.
+                    recur: normalizeCouponRecur(body.recur),
                     active: true,
                     note: readText(body.note, { max: 300 }),
                     createdBy: actor,
@@ -221,6 +225,7 @@ export async function POST(request: NextRequest) {
                             plan: data.plan,
                             maxUses: data.maxUses,
                             expiresAt: data.expiresAt?.toISOString() ?? null,
+                            recur: String(data.recur),
                             paddleDiscountId: paddle?.paddleDiscountId ?? null,
                         }),
                     ]);

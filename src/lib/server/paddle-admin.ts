@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { AdminErrorCode, AdminPaddleCatalogReport, AdminPaddleClientTokenCheck, AdminPaddlePrice, AdminPaddleUnlinked, AdminUserPlanResponse } from "@/components/Admin/types";
 import { BILLING_INTERVALS, isPaddleId, type BillingInterval, type PaddleClientError, type PaddleEnvironment, type PaddleServerError } from "@/lib/paddle";
-import { PAID_PLAN_IDS, PLAN_COPY, aiLimitsFor, effectivePlan, planSource, type PaidPlanId } from "@/lib/plans";
+import { PAID_PLAN_IDS, PLAN_COPY, aiLimitsFor, effectivePlan, normalizeCouponRecur, planSource, type CouponRecur, type PaidPlanId } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, runServerQuery } from "./firebase-rest";
 import {
     EMPTY_PLAN_PRICES,
@@ -205,6 +205,7 @@ export function adminPriceOf(price: PaddlePriceEntity): AdminPaddlePrice | null 
         currency: typeof currency === "string" && /^[A-Z]{3}$/.test(currency) ? currency : "",
         trialDays: trialDaysOf(price.trial_period),
         suggestedPlan: suggestedPlanOf(price),
+        quantityMax: typeof price.quantity?.maximum === "number" && Number.isInteger(price.quantity.maximum) && price.quantity.maximum > 0 ? price.quantity.maximum : null,
     };
 }
 
@@ -488,12 +489,14 @@ export async function ensurePaddleCatalog(actor: string, extraMutations: Mutatio
                 name: PRICE_NAMES[interval].name,
                 unit_price: { amount: expected.amount, currency_code: expected.currency },
                 billing_cycle: { interval, frequency: 1 },
+                // One subscription per checkout: no quantity stepper (Paddle's default allows 100).
+                quantity: { minimum: 1, maximum: 1 },
                 tax_mode: "account_setting",
                 custom_data: { hanogt_plan: plan, hanogt_interval: interval },
             });
             const priceId = created.data?.id;
             if (!isPaddleId("price", priceId)) throw new PaddleApiError(0, "unexpected_response");
-            known.push({ id: priceId, productId, productName: PRODUCT_NAMES[plan], description, interval, cycle: `1 ${interval}`, amount: expected.amount, currency: expected.currency, trialDays: null, suggestedPlan: plan });
+            known.push({ id: priceId, productId, productName: PRODUCT_NAMES[plan], description, interval, cycle: `1 ${interval}`, amount: expected.amount, currency: expected.currency, trialDays: null, suggestedPlan: plan, quantityMax: 1 });
             mapping[plan][interval] = priceId;
             report.prices.push({ plan, interval, outcome: "created", priceId, expected, found: [] });
         }
@@ -612,6 +615,21 @@ export async function adminPersonPlan(email: string): Promise<AdminUserPlanRespo
     };
 }
 
+/**
+ * Sets the quantity of the given prices to exactly one (minimum and maximum),
+ * so Paddle's checkout shows no quantity stepper. Only the quantity changes;
+ * the price, its product and existing subscriptions stay as they are.
+ */
+export async function fixPriceQuantities(priceIds: readonly string[]): Promise<string[]> {
+    const fixed: string[] = [];
+    for (const id of [...new Set(priceIds)]) {
+        if (!isPaddleId("price", id)) continue;
+        await paddleRequest("PATCH", `/prices/${id}`, { quantity: { minimum: 1, maximum: 1 } });
+        fixed.push(id);
+    }
+    return fixed;
+}
+
 // ---------------------------------------------------------------------------
 // Coupons as Paddle discounts
 // ---------------------------------------------------------------------------
@@ -648,9 +666,23 @@ function rfc3339(value: Date | string | null) {
     return Number.isFinite(time) ? new Date(time).toISOString().replace(/\.\d{3}Z$/, "Z") : null;
 }
 
-export type PaddleDiscountInput = { code: string; percentOff: number; plan: PaidPlanId | "any"; maxUses: number | null; expiresAt: Date | string | null };
+export type PaddleDiscountInput = {
+    code: string;
+    percentOff: number;
+    plan: PaidPlanId | "any";
+    maxUses: number | null;
+    expiresAt: Date | string | null;
+    /** The first payment only (the default), every payment, or the first 2–24 billing periods. */
+    recur?: CouponRecur;
+};
 
-/** Creates the discount Paddle checkout accepts for a coupon code (first payment only); returns its dsc_… id. */
+/** Paddle's recur fields for a coupon's setting. */
+export function discountRecurrence(recur: CouponRecur | undefined) {
+    const value = normalizeCouponRecur(recur);
+    return { recur: value !== "first", maximum_recurring_intervals: typeof value === "number" ? value : null };
+}
+
+/** Creates the discount Paddle checkout accepts for a coupon code; returns its dsc_… id. */
 export async function createPaddleDiscount(input: PaddleDiscountInput): Promise<string> {
     const settings = await getPaddleSettings(true);
     const response = await paddleRequest<{ data?: { id?: string } }>("POST", "/discounts", {
@@ -659,7 +691,7 @@ export async function createPaddleDiscount(input: PaddleDiscountInput): Promise<
         type: "percentage",
         enabled_for_checkout: true,
         code: input.code,
-        recur: false,
+        ...discountRecurrence(input.recur),
         usage_limit: input.maxUses,
         expires_at: rfc3339(input.expiresAt),
         restrict_to: discountRestriction(input.plan, settings.prices),
@@ -667,6 +699,57 @@ export async function createPaddleDiscount(input: PaddleDiscountInput): Promise<
     const id = response.data?.id;
     if (!isPaddleId("discount", id)) throw new PaddleApiError(0, "unexpected_response");
     return id;
+}
+
+/** What we read of a Paddle discount. */
+export type PaddleDiscountEntity = {
+    id: string;
+    status?: string;
+    code?: string | null;
+    usage_limit?: number | null;
+    times_used?: number | null;
+    expires_at?: string | null;
+    restrict_to?: string[] | null;
+};
+
+/** One discount as Paddle has it now. */
+export async function getPaddleDiscount(discountId: string): Promise<PaddleDiscountEntity> {
+    if (!isPaddleId("discount", discountId)) throw new PaddleApiError(0, "invalid_id");
+    const { data } = await paddleRequest<{ data?: PaddleDiscountEntity }>("GET", `/discounts/${discountId}`);
+    if (!data || data.id !== discountId) throw new PaddleApiError(0, "unexpected_response");
+    return data;
+}
+
+/** The prices a discount applies to (null: every price). */
+export async function setPaddleDiscountPrices(discountId: string, prices: string[] | null) {
+    if (!isPaddleId("discount", discountId)) throw new PaddleApiError(0, "invalid_id");
+    await paddleRequest("PATCH", `/discounts/${discountId}`, { restrict_to: prices });
+}
+
+/**
+ * After the price mapping changed: every active coupon's Paddle discount (in
+ * the configured environment) applies to the prices now mapped for its plan,
+ * so codes typed at checkout keep working. Best effort; returns how many were
+ * updated and how many couldn't be.
+ */
+export async function refreshCouponDiscounts(prices: PaddlePlanPrices): Promise<{ updated: number; failed: number }> {
+    const environment = getPaddleConfig().environment;
+    const coupons = await runServerQuery<Record<string, unknown>>({ collectionId: "plan_coupons", limit: 200 }).catch(() => []);
+    let updated = 0;
+    let failed = 0;
+    for (const record of coupons) {
+        const discount = couponDiscountId(record, environment);
+        if (!discount || record.active !== true) continue;
+        const plan = record.plan === "plus" || record.plan === "pro" ? record.plan : "any";
+        try {
+            await setPaddleDiscountPrices(discount, discountRestriction(plan, prices));
+            updated += 1;
+        } catch (error) {
+            failed += 1;
+            console.warn("[paddle:coupons] restrict_to", discount, error instanceof PaddleApiError ? `${error.status} ${error.code}` : error);
+        }
+    }
+    return { updated, failed };
 }
 
 /** Turns a discount on or off at checkout (archived discounts can't be redeemed). */

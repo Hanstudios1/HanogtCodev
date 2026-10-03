@@ -3903,6 +3903,7 @@
     "tr": "Kaldır",
     "files": [
       "src/app/editor/page.tsx",
+      "src/app/plans/page.tsx",
       "src/components/Editor/CollabPanel.tsx"
     ]
   },
@@ -6590,6 +6591,105 @@
       "src/app/plans/page.tsx"
     ]
   },
+  "s2xmlv1g25": {
+    "en": "Have a coupon code?",
+    "tr": "Kupon kodun var mı?",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "2g7n01iw64d": {
+    "en": "Coupon code",
+    "tr": "Kupon kodu",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "319pnaoaed": {
+    "en": "Apply",
+    "tr": "Uygula",
+    "files": [
+      "src/app/plans/page.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1pbkl1x0r47": {
+    "en": "Sign in to use a coupon",
+    "tr": "Kupon kullanmak için giriş yap",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1wt85jknw4e": {
+    "en": "{code} applied: {percent}% off · {plans} · {payments}",
+    "tr": "{code} uygulandı: %{percent} indirim · {plans} · {payments}",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "28v1beqst2d": {
+    "en": "Plus and Pro",
+    "tr": "Plus ve Pro",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "dqqr792egn": {
+    "en": "on the first payment",
+    "tr": "ilk ödemede",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1xsj0x31kxr": {
+    "en": "on every payment",
+    "tr": "her ödemede",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "zj118ftzua": {
+    "en": "on the first {count} payments",
+    "tr": "ilk {count} ödemede",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "o4nz1el42n": {
+    "en": "With {code}, {payments}",
+    "tr": "{code} kuponuyla, {payments}",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "79cbngcmbq": {
+    "en": "This coupon code isn't valid. Check the code and try again.",
+    "tr": "Bu kupon kodu geçerli değil. Kodu kontrol edip tekrar dene.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "372g8zzr4x": {
+    "en": "This coupon has expired.",
+    "tr": "Bu kuponun süresi dolmuş.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "1musp2jq94v": {
+    "en": "This coupon has no uses left.",
+    "tr": "Bu kuponun kullanım hakkı dolmuş.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
+  "ua6frj0phf": {
+    "en": "This coupon isn't valid for the plan you picked.",
+    "tr": "Bu kupon seçtiğin planda geçerli değil.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
   "16qg15s7dsv": {
     "en": "For the team: the details of this request are under Admin Panel › Subscriptions › Paddle in \"Recent server errors\" (or, when no answer came at all, in \"Recent checkout errors\") and in the Vercel logs.",
     "tr": "Ekip için: bu isteğin ayrıntısı Yönetici Paneli › Abonelikler › Paddle bölümündeki \"Son sunucu hataları\" listesinde (yanıt hiç gelmediyse \"Son ödeme ekranı hataları\"nda) ve Vercel günlüklerinde.",
@@ -6881,9 +6981,9 @@
       "src/app/plans/page.tsx"
     ]
   },
-  "rl0fovlma7": {
-    "en": "On the checkout screen, press \"Add discount code\" and enter your code.",
-    "tr": "Ödeme ekranında \"İndirim kodu ekle\"ye bas ve kodunu yaz.",
+  "inilivzfwr": {
+    "en": "On this page press \"Have a coupon code?\", enter it and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter it with \"Add discount\" at checkout. Which plan and how many payments it covers is shown once it's applied.",
+    "tr": "Bu sayfada \"Kupon kodun var mı?\"ya bas, kodunu yazıp Uygula'ya bas: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. İstersen kodu ödeme ekranındaki \"İndirim ekle\"ye de yazabilirsin. Kuponun hangi planda ve kaç ödemede geçerli olduğu kod uygulanınca yazılır.",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -16365,6 +16465,13 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "1i9khlv3qg5": {
+    "en": "Paddle prices fixed to a quantity of 1",
+    "tr": "Paddle fiyatlarının adedi 1'e sabitlendi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "24jjbc03o6p": {
     "en": "Paddle subscription linked to an account",
     "tr": "Paddle aboneliği hesaba bağlandı",
@@ -17940,6 +18047,48 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "eddapalj2h": {
+    "en": "The checkout lets people pick a quantity",
+    "tr": "Ödeme ekranında adet seçilebiliyor",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "24umv2wthe4": {
+    "en": "{count} mapped prices allow up to {max} per checkout; the checkout shows a − 1 + stepper and someone could buy several by mistake and pay several times (the account still gets one plan).",
+    "tr": "Eşlenmiş {count} fiyat bir ödemede {max} adede kadar izin veriyor; ödeme ekranında − 1 + seçicisi çıkar ve bir müşteri yanlışlıkla birkaç adet alıp birkaç kat ödeyebilir (hesap yine tek plan alır).",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "eqijtgabah": {
+    "en": "Fix the quantity to 1",
+    "tr": "Adedi 1'e sabitle",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "ui4hmm7r68": {
+    "en": "Fix the {env} prices to a quantity of 1?",
+    "tr": "{env} fiyatlarının adedi 1'e sabitlensin mi?",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1aodxmguj4g": {
+    "en": "In Paddle, the quantity of {count} prices becomes at least 1 and at most 1. The prices, products and existing subscriptions stay as they are; nothing is deleted or archived.",
+    "tr": "Paddle'da {count} fiyatın adet sınırı en az 1, en çok 1 olarak değiştirilir. Fiyat, ürün ve mevcut abonelikler değişmez; hiçbir şey silinmez ya da arşivlenmez.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "1bqp1hobon4": {
+    "en": "The prices are fixed to a quantity of 1; the checkout won't show a quantity stepper.",
+    "tr": "Fiyatların adedi 1'e sabitlendi; ödeme ekranında adet seçici çıkmayacak.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "1pl1teaga2f": {
     "en": "Recent server errors",
     "tr": "Son sunucu hataları",
@@ -18362,6 +18511,20 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "1hhxj4537wu": {
+    "en": "Reading the coupon",
+    "tr": "Kupon okunurken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "16dj93vm3xu": {
+    "en": "Preparing the coupon's Paddle discount",
+    "tr": "Kuponun Paddle indirimi hazırlanırken",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "mlaxb3vc1h": {
     "en": "Finding the Paddle customer",
     "tr": "Paddle müşterisi bulunurken",
@@ -18707,9 +18870,65 @@
       "src/components/Admin/PlansSection.tsx"
     ]
   },
-  "c81seha1cv": {
-    "en": "While Paddle is connected, every new coupon is also created in Paddle as a discount code (letters and digits only). Customers enter the code at checkout; the discount applies to the first payment only.",
-    "tr": "Paddle bağlıyken her yeni kupon Paddle'da da indirim kodu olarak oluşturulur (yalnızca harf ve rakam). Müşteriler kodu ödeme ekranında girer; indirim yalnızca ilk ödemeye uygulanır.",
+  "2fymmgoqs56": {
+    "en": "While Paddle is connected, every new coupon is also created in Paddle as a discount code (letters and digits only). Customers enter the code under \"Have a coupon?\" on the Pricing page or with \"Add discount\" in Paddle's checkout. \"Payments\" decides how many payments the discount applies to.",
+    "tr": "Paddle bağlıyken her yeni kupon Paddle'da da indirim kodu olarak oluşturulur (yalnızca harf ve rakam). Müşteriler kodu Fiyatlandırma sayfasındaki \"Kupon kodun var mı?\" alanına ya da Paddle ödeme ekranındaki \"İndirim ekle\"ye yazar. İndirimin kaç ödemeye uygulanacağını \"Geçerli ödemeler\" belirler.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1gzrgrto7yb": {
+    "en": "Payments",
+    "tr": "Geçerli ödemeler",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "194nwz0268e": {
+    "en": "First payment only",
+    "tr": "Yalnızca ilk ödeme",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "25oghynecro": {
+    "en": "Every payment (for the whole subscription)",
+    "tr": "Her ödeme (abonelik boyunca)",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "gv70cebrew": {
+    "en": "First {count} payments",
+    "tr": "İlk {count} ödeme",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "5hmtegjqlh": {
+    "en": "First N payments",
+    "tr": "İlk N ödeme",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "t031004n5t": {
+    "en": "first payment",
+    "tr": "ilk ödeme",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "11jicvvur68": {
+    "en": "every payment",
+    "tr": "her ödeme",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "qvluvdhak1": {
+    "en": "first {count} payments",
+    "tr": "ilk {count} ödeme",
     "files": [
       "src/components/Admin/PlansSection.tsx"
     ]
@@ -20941,6 +21160,48 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "26e69rb1n5h": {
+    "en": "Coupon codes on Pricing; your plan is active right after paying",
+    "tr": "Kupon kodları Fiyatlandırma'da; ödeme sonrası plan anında etkin",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "zwvvhxhvzp": {
+    "en": "You can now enter a coupon code on the Pricing page and see the discounted price right away. Plan activation after paying and sign-up limits were fixed too.",
+    "tr": "Kupon kodunu artık Fiyatlandırma sayfasında girebilir, indirimli fiyatı hemen görebilirsin. Ödeme sonrası planın etkinleşmesi ve kayıt sınırları da düzeltildi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "18ulmw85s9b": {
+    "en": "\"Have a coupon code?\" on Pricing: once applied, the discounted price and how many payments it covers are shown, and the checkout opens with the discount.",
+    "tr": "Fiyatlandırma'da \"Kupon kodun var mı?\": kod uygulanınca indirimli fiyat ve kaç ödemede geçerli olduğu görünür, ödeme ekranı indirimle açılır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "l5eb3mb7qh": {
+    "en": "Coupons can also cover every payment or the first few.",
+    "tr": "Kuponlar her ödemede ya da ilk birkaç ödemede de geçerli olabilir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "a1dz1p7g1w": {
+    "en": "No more quantity picker at checkout: every payment is one subscription.",
+    "tr": "Ödeme ekranında artık adet seçici yok: her ödeme tek bir abonelik.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "u8ztidr7fm": {
+    "en": "Your plan is active within seconds after paying; sign-up and sign-in limits now count per person.",
+    "tr": "Ödemeden sonra planın birkaç saniyede etkinleşir; kayıt ve giriş sınırları artık kişi başına işler.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "1yyprzgbano": {
@@ -25297,13 +25558,6 @@
   "18ghbzcrzxy": {
     "en": "Shortcuts",
     "tr": "Kısayollar",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "319pnaoaed": {
-    "en": "Apply",
-    "tr": "Uygula",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -38001,9 +38255,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "24zqp8pch96": {
-    "en": "You manage your subscription on the [Plans](/plans) page:\n• **Manage subscription:** opens Paddle's customer portal, where you can update your payment method, download invoices and cancel. You can also cancel at paddle.net.\n• **Cancelling:** takes effect at the end of the period you paid for; your benefits last until then, after which you move to the Free plan. You can undo it before the period ends, and your projects aren't deleted.\n• **Changing plans:** switch between Plus and Pro or between monthly and yearly billing; the difference is prorated and shown before you confirm.\n• **Refunds:** a full refund without giving a reason within 14 days of the first payment. Renewal payments are refunded within 14 days if your cancellation wasn't processed, the charge was a mistake, or you couldn't use the plan because of a problem caused by us. Ask at paddle.net or with a [support ticket](/feedback) in the Request category; the money usually returns to your payment method within 5–10 business days.\n• **Failed payments:** Paddle retries a few times and your benefits continue meanwhile; remember to update your payment method.\n• **Coupons:** enter them at checkout with \"Add discount code\".\n• **Deleting your account** cancels the subscription at once; if you are entitled to a refund, ask for it first.\nDetails: [Refund Policy](/refund-policy) and [Terms of Use](/terms-of-use#paid-services).",
-    "tr": "Aboneliğini [Planlar](/plans) sayfasından yönetirsin:\n• **Aboneliği yönet:** Paddle'ın müşteri portalını açar; ödeme yöntemini güncelleyebilir, faturalarını indirebilir ve aboneliği iptal edebilirsin. paddle.net üzerinden de iptal edebilirsin.\n• **İptal:** ödediğin dönemin sonunda geçerli olur; o güne kadar avantajların sürer, sonra Ücretsiz plana geçersin. Dönem bitmeden iptali geri alabilirsin; projelerin silinmez.\n• **Plan değişikliği:** Plus ile Pro ya da aylık ile yıllık arasında geçebilirsin; fark orantılı hesaplanır ve onaylamadan önce gösterilir.\n• **İade:** ilk ödemeden sonraki 14 gün içinde gerekçesiz tam iade. Yenileme ödemeleri; iptalin işlenmediyse, hatayla alındıysa ya da bizden kaynaklanan bir sorun yüzünden planı kullanamadıysan 14 gün içinde iade edilir. İadeyi paddle.net üzerinden veya İstek kategorisinde [destek talebiyle](/feedback) isteyebilirsin; tutar ödeme yöntemine genellikle 5–10 iş gününde döner.\n• **Ödeme alınamazsa:** Paddle birkaç kez yeniden dener, bu sürede avantajların sürer; ödeme yöntemini güncellemeyi unutma.\n• **Kupon:** ödeme ekranında \"İndirim kodu ekle\" ile girilir.\n• **Hesabı silmek** aboneliği hemen iptal eder; iade hakkın varsa önce iade iste.\nAyrıntılar: [İade Politikası](/refund-policy) ve [Kullanım Şartları](/terms-of-use#paid-services).",
+  "1eml7v1ysht": {
+    "en": "You manage your subscription on the [Plans](/plans) page:\n• **Manage subscription:** opens Paddle's customer portal, where you can update your payment method, download invoices and cancel. You can also cancel at paddle.net.\n• **Cancelling:** takes effect at the end of the period you paid for; your benefits last until then, after which you move to the Free plan. You can undo it before the period ends, and your projects aren't deleted.\n• **Changing plans:** switch between Plus and Pro or between monthly and yearly billing; the difference is prorated and shown before you confirm.\n• **Refunds:** a full refund without giving a reason within 14 days of the first payment. Renewal payments are refunded within 14 days if your cancellation wasn't processed, the charge was a mistake, or you couldn't use the plan because of a problem caused by us. Ask at paddle.net or with a [support ticket](/feedback) in the Request category; the money usually returns to your payment method within 5–10 business days.\n• **Failed payments:** Paddle retries a few times and your benefits continue meanwhile; remember to update your payment method.\n• **Coupons:** on the [Pricing](/plans) page press \"Have a coupon code?\", enter it and press Apply (it also works with \"Add discount\" at checkout); which plan and how many payments it covers is shown once it's applied.\n• **Deleting your account** cancels the subscription at once; if you are entitled to a refund, ask for it first.\nDetails: [Refund Policy](/refund-policy) and [Terms of Use](/terms-of-use#paid-services).",
+    "tr": "Aboneliğini [Planlar](/plans) sayfasından yönetirsin:\n• **Aboneliği yönet:** Paddle'ın müşteri portalını açar; ödeme yöntemini güncelleyebilir, faturalarını indirebilir ve aboneliği iptal edebilirsin. paddle.net üzerinden de iptal edebilirsin.\n• **İptal:** ödediğin dönemin sonunda geçerli olur; o güne kadar avantajların sürer, sonra Ücretsiz plana geçersin. Dönem bitmeden iptali geri alabilirsin; projelerin silinmez.\n• **Plan değişikliği:** Plus ile Pro ya da aylık ile yıllık arasında geçebilirsin; fark orantılı hesaplanır ve onaylamadan önce gösterilir.\n• **İade:** ilk ödemeden sonraki 14 gün içinde gerekçesiz tam iade. Yenileme ödemeleri; iptalin işlenmediyse, hatayla alındıysa ya da bizden kaynaklanan bir sorun yüzünden planı kullanamadıysan 14 gün içinde iade edilir. İadeyi paddle.net üzerinden veya İstek kategorisinde [destek talebiyle](/feedback) isteyebilirsin; tutar ödeme yöntemine genellikle 5–10 iş gününde döner.\n• **Ödeme alınamazsa:** Paddle birkaç kez yeniden dener, bu sürede avantajların sürer; ödeme yöntemini güncellemeyi unutma.\n• **Kupon:** [Fiyatlandırma](/plans) sayfasında \"Kupon kodun var mı?\" alanına yazılıp Uygula'ya basılır (ödeme ekranındaki \"İndirim ekle\" ile de girilebilir); kuponun hangi planda ve kaç ödemede geçerli olduğu uygulanınca yazılır.\n• **Hesabı silmek** aboneliği hemen iptal eder; iade hakkın varsa önce iade iste.\nAyrıntılar: [İade Politikası](/refund-policy) ve [Kullanım Şartları](/terms-of-use#paid-services).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -39812,9 +40066,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "1a28m7doj5n": {
-    "en": "On the checkout screen, press “Add discount code” and enter your code; the discounted amount is shown before you pay. Which plans the code works for, how long it is valid and for how many payments are stated when the code is given. The code must be entered before the payment is completed.",
-    "tr": "Ödeme ekranında “İndirim kodu ekle”ye basıp kodunuzu yazın; indirimli tutar ödemeden önce gösterilir. Kodun hangi planlarda, ne kadar süre ve kaç ödeme için geçerli olduğu kod verilirken belirtilir. Kod, ödeme tamamlanmadan önce girilmelidir.",
+  "86dy9zgabi": {
+    "en": "On the Pricing page, press “Have a coupon code?”, enter your code and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter the code with “Add discount” at checkout. Which plans the code works for and for how many payments (the first only, every payment or the first few) is shown once it's applied. The code must be entered before the payment is completed.",
+    "tr": "Fiyatlandırma sayfasında “Kupon kodun var mı?”ya basıp kodunuzu yazın ve Uygula'ya basın: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. Kodu ödeme ekranındaki “İndirim ekle” ile de girebilirsiniz. Kodun hangi planlarda ve kaç ödeme için (yalnızca ilk ödeme, her ödeme ya da ilk birkaç ödeme) geçerli olduğu kod uygulanınca yazılır. Kod, ödeme tamamlanmadan önce girilmelidir.",
     "files": [
       "src/lib/faq.ts"
     ]
