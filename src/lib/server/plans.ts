@@ -6,6 +6,7 @@ import {
     DEFAULT_PLAN_PRICE,
     FREE_SUBSCRIPTION,
     PAID_PLAN_IDS,
+    PLAN_COLLAB_LIMITS,
     PLAN_GROUP_LIMITS,
     PLAN_PROJECT_LIMITS,
     PRICE_MAX,
@@ -153,4 +154,20 @@ export async function groupLimitFor(email: string): Promise<{ plan: PlanId; limi
     const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
     const plan = effectivePlan(subscription);
     return { plan, limit: PLAN_GROUP_LIMITS[plan] };
+}
+
+/**
+ * Team editing for sessions the account starts: people (owner included) and
+ * invitations (src/lib/plans.ts PLAN_COLLAB_LIMITS). Throws when the plan
+ * can't be read, so a running session keeps the limits it has instead of
+ * dropping to Free over a database hiccup.
+ */
+export async function collabLimitsFor(email: string): Promise<{ plan: PlanId; people: number; invites: number }> {
+    const plan = effectivePlan(await getSubscription(email));
+    return { plan, ...PLAN_COLLAB_LIMITS[plan] };
+}
+
+/** Free's team-editing limits: what a new session gets when the plan can't be read. */
+export function freeCollabLimits(): { plan: PlanId; people: number; invites: number } {
+    return { plan: "free", ...PLAN_COLLAB_LIMITS.free };
 }

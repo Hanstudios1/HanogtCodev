@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { agentUserKey } from "@/lib/ai/agent-settings";
 import { isConnectionId, isConnectionsState, type AiConnectionView, type AiConnectionsState } from "@/lib/ai/connections";
+import { onPlanChange } from "@/lib/plan-signal";
 
 const SELECTED_KEY = "hanogt-ai:connection:v1";
 const EVENT = "hanogt-ai:connections";
@@ -147,6 +148,12 @@ export function useAiConnections(email: string | null): AiConnectionsHandle {
 
     useEffect(() => {
         if (owner) void loadList(owner);
+    }, [owner]);
+
+    // A new plan changes how many connections are on: read the list again at once.
+    useEffect(() => {
+        if (!owner) return;
+        return onPlanChange(() => void loadList(owner, true));
     }, [owner]);
 
     const state = owner && snapshot.owner === owner ? snapshot.state : null;

@@ -700,3 +700,23 @@ test("the exported-HTML player bundle builds with the V3 runtime", async () => {
     const bundle = result.outputFiles[0].text;
     for (const marker of ["Hanogt Engine V3", "FadeToScene", "uiButton", "tilemap", "PunchScale"]) assert.ok(bundle.includes(marker), marker);
 });
+
+test("cloud project errors carry the server's code, plan and limit (game_limit)", async () => {
+    const persistence = await load("components/GameEngine/editor/persistence.ts");
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ error: "Planının oyun projesi sınırına ulaştın (10).", code: "game_limit", plan: "free", limit: 10 }), { status: 409, headers: { "content-type": "application/json" } });
+    try {
+        await assert.rejects(persistence.listCloudProjects(), (error) => {
+            assert.ok(error instanceof persistence.PersistenceError);
+            assert.deepEqual([error.status, error.code, error.plan, error.limit], [409, "game_limit", "free", 10]);
+            return true;
+        });
+        globalThis.fetch = async () => new Response(JSON.stringify({ error: "x", code: 7, limit: "10" }), { status: 400 });
+        await assert.rejects(persistence.listCloudProjects(), (error) => {
+            assert.deepEqual([error.code, error.plan, error.limit], [null, null, null], "junk fields are dropped");
+            return true;
+        });
+    } finally {
+        globalThis.fetch = realFetch;
+    }
+});

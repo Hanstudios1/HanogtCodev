@@ -3317,6 +3317,9 @@
     "tr": "Fiyatlandırma",
     "files": [
       "src/app/editor/page.tsx",
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Editor/CollabStartDialog.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
       "src/components/Guide/book-content.ts",
       "src/lib/ai/knowledge.ts",
       "src/lib/nav.ts"
@@ -7073,9 +7076,9 @@
       "src/app/plans/page.tsx"
     ]
   },
-  "28fxgj119cn": {
-    "en": "The team can assign a plan by hand to testers, contributors and contest winners. Today, a plan's live benefits are a higher Hanogt AI limit and priority on support tickets.",
-    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Bugün planın canlı avantajı daha yüksek Hanogt AI sınırı ve destek taleplerinde önceliktir.",
+  "1nv9iuzc96c": {
+    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit, more projects and groups, bigger team sessions, your own API key connections and priority support.",
+    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı, daha fazla proje ve grup, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar ve destekte öncelik.",
     "files": [
       "src/app/plans/page.tsx"
     ]
@@ -21758,6 +21761,13 @@
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
+  "bp04kdev4g": {
+    "en": "You've reached your plan's game project limit ({limit} projects). Delete an old project or upgrade your plan on Pricing.",
+    "tr": "Planının oyun projesi sınırına ulaştın ({limit} proje). Eski bir projeyi sil ya da Fiyatlandırma'dan planını yükselt.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
   "195u470jxrq": {
     "en": "The author doesn't allow remixes of this game.",
     "tr": "Yapımcı bu oyunun remikslenmesine izin vermiyor.",
@@ -21955,6 +21965,48 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "13wzv7i8f5p": {
+    "en": "Your plan's benefits everywhere, right away",
+    "tr": "Plan hakların her yerde, hemen",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1x40182hpdg": {
+    "en": "After paying, your plan applies at once in the editor, the game engine, groups and team editing. Team editing now holds more people on higher plans.",
+    "tr": "Ödedikten sonra planın editörde, oyun motorunda, gruplarda ve ekiple düzenlemede hemen geçerli. Ekiple düzenlemede kişi sınırı artık plana göre.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1l1z4i9i8oe": {
+    "en": "Plus and Pro limits unlock right away, even when the payment notification is late.",
+    "tr": "Ödeme bildirimi gecikse bile Plus ve Pro sınırları hemen açılır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1pdwmkwtoyi": {
+    "en": "Team editing: Free 2, Plus 5, Pro 30 people.",
+    "tr": "Ekiple düzenleme: Ücretsiz 2, Plus 5, Pro 30 kişi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "e98eq683f9": {
+    "en": "At the group or game project limit you see your plan's number and a link to Pricing.",
+    "tr": "Grup ve oyun projesi sınırına gelince planının sayısı ve Fiyatlandırma bağlantısı görünür.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "180j24eza6o": {
+    "en": "Handing over a group checks the new owner's plan limit.",
+    "tr": "Grup sahipliği devredilirken yeni sahibin plan sınırına bakılır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "dh2zyoajzj": {
@@ -23302,9 +23354,9 @@
       "src/components/Editor/CollabPanel.tsx"
     ]
   },
-  "cy8sv6kwad": {
-    "en": "The session is full (5 people at most). You can join when someone leaves.",
-    "tr": "Oturum dolu (en fazla 5 kişi). Biri ayrılınca katılabilirsin.",
+  "1bqw08np03t": {
+    "en": "The session is full: its owner's plan allows {count} people at most. You can join when someone leaves.",
+    "tr": "Oturum dolu: başlatanın planı en fazla {count} kişiye izin veriyor. Biri ayrılınca katılabilirsin.",
     "files": [
       "src/components/Editor/CollabDialogs.tsx"
     ]
@@ -23735,9 +23787,23 @@
       "src/lib/collab/copy.ts"
     ]
   },
-  "xffbwpb5rg": {
-    "en": "Only your friends can be invited. They get a notification and can also join with the invite link. Up to 5 people can be in a session.",
-    "tr": "Yalnızca arkadaşların davet edilebilir. Davet edilenlere bildirim gider; davet bağlantısıyla da katılabilirler. Oturuma en fazla 5 kişi katılabilir.",
+  "1nubwdxcxq": {
+    "en": "Only your friends can be invited. They get a notification and can also join with the invite link.",
+    "tr": "Yalnızca arkadaşların davet edilebilir. Davet edilenlere bildirim gider; davet bağlantısıyla da katılabilirler.",
+    "files": [
+      "src/components/Editor/CollabStartDialog.tsx"
+    ]
+  },
+  "2ehr6y1rjo9": {
+    "en": "With your {plan} plan, a session holds up to {people} people, you included.",
+    "tr": "{plan} planınla oturumda sen dahil en fazla {people} kişi olabilir.",
+    "files": [
+      "src/components/Editor/CollabStartDialog.tsx"
+    ]
+  },
+  "1o2790v612r": {
+    "en": "Plus allows {plus}, Pro {pro} people.",
+    "tr": "Plus ile {plus}, Pro ile {pro} kişi.",
     "files": [
       "src/components/Editor/CollabStartDialog.tsx"
     ]
@@ -23889,6 +23955,13 @@
   "2b8ooxe2cys": {
     "en": "Audio goes directly between participants and is never recorded.",
     "tr": "Ses doğrudan katılımcılar arasında iletilir, kaydedilmez.",
+    "files": [
+      "src/components/Editor/CollabVoice.tsx"
+    ]
+  },
+  "1gr2s9itc8p": {
+    "en": "Voice is full: up to {count} people can talk at once. Chat and editing stay open to everyone.",
+    "tr": "Sesli görüşme dolu: sesli konuşmaya aynı anda en fazla {count} kişi katılabilir. Yazılı sohbet ve düzenleme herkese açık.",
     "files": [
       "src/components/Editor/CollabVoice.tsx"
     ]
@@ -27774,6 +27847,13 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "1f4i7c729jg": {
+    "en": "You've reached your plan's game project limit ({limit} projects). Delete an old project to make room, or upgrade your plan.",
+    "tr": "Planının oyun projesi sınırına ulaştın ({limit} proje). Yer açmak için eski bir projeyi sil ya da planını yükselt.",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
   "q397uz0abf": {
     "en": "Paint 2D levels right in the scene with brush, rectangle, eraser and picker tools. Per-tile collision, atlas images and Tilemap.SetTile from scripts.",
     "tr": "2D seviyeleri sahnede fırça, dikdörtgen, silgi ve damlalıkla boya. Karo başına çarpışma, atlas görselleri ve script'ten Tilemap.SetTile.",
@@ -28030,9 +28110,16 @@
       "src/components/Groups/api.ts"
     ]
   },
-  "17x201pxjho": {
-    "en": "You can own at most 30 groups.",
-    "tr": "En fazla 30 grubun sahibi olabilirsiniz.",
+  "1qad1hyf85m": {
+    "en": "Your plan lets you own up to {limit} groups. To create another, delete one, hand one over or upgrade your plan (Pricing).",
+    "tr": "Planınla en fazla {limit} grubun sahibi olabilirsin. Yeni grup için bir grubu sil, sahipliğini devret ya da planını yükselt (Fiyatlandırma).",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1ne3ntrd3bo": {
+    "en": "This member's plan lets them own up to {limit} groups, so ownership couldn't be handed over.",
+    "tr": "Bu üyenin planı en fazla {limit} grubun sahibi olmasına izin veriyor; sahiplik devredilemedi.",
     "files": [
       "src/components/Groups/api.ts"
     ]
@@ -30463,9 +30550,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "15up5it8fdw": {
-    "en": "Invite your friends: they get a notification and can also join with the invite link. A session holds up to {people} people.",
-    "tr": "Arkadaşlarını davet et: bildirim alırlar, davet bağlantısıyla da katılabilirler. Bir oturumda en fazla {people} kişi olur.",
+  "22q2m46mirp": {
+    "en": "Invite your friends: they get a notification and can also join with the invite link. How many people a session holds depends on the plan of whoever starts it (you included): Free {free}, Plus {plus}, Pro {pro}. Up to 5 people can talk in voice at once.",
+    "tr": "Arkadaşlarını davet et: bildirim alırlar, davet bağlantısıyla da katılabilirler. Bir oturumda kaç kişi olabileceği oturumu başlatanın planına bağlı (sen dahil): Ücretsiz {free}, Plus {plus}, Pro {pro} kişi. Sesli sohbete aynı anda en fazla 5 kişi katılır.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -37650,6 +37737,20 @@
       "src/lib/ai/agent-client.ts"
     ]
   },
+  "1gvz9syp99r": {
+    "en": "You've reached your plan's group limit. Delete a group or upgrade your plan on Pricing to create a new one.",
+    "tr": "Planının grup sınırına ulaştın. Yeni grup için bir grubu silebilir ya da Fiyatlandırma'dan planını yükseltebilirsin.",
+    "files": [
+      "src/lib/ai/agent-client.ts"
+    ]
+  },
+  "18q7eaoesj8": {
+    "en": "You've reached your plan's game project limit. Delete an old project or upgrade your plan on Pricing.",
+    "tr": "Planının oyun projesi sınırına ulaştın. Eski bir projeyi silebilir ya da Fiyatlandırma'dan planını yükseltebilirsin.",
+    "files": [
+      "src/lib/ai/agent-client.ts"
+    ]
+  },
   "1d1r0vkly9r": {
     "en": "Read your profile",
     "tr": "Profil bilgilerini okumak",
@@ -39085,9 +39186,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "eme7ftdfod": {
-    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, search, voice messages and voice calls. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin and member; owners and admins manage members and settings.\nLimits: 25 members and 50 files per group; you can own up to 30 groups. Groups are private; only invited people can join. In Agent mode I can create a group for you.",
-    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, arama, sesli mesaj ve sesli arama var. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici ve üye; sahip ve yöneticiler üyeleri ve ayarları yönetir.\nSınırlar: grup başına 25 üye ve 50 dosya, en fazla 30 grubun sahibi olabilirsin. Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
+  "aamys4thwd": {
+    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, search, voice messages and voice calls. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin and member; owners and admins manage members and settings.\nLimits: 25 members and 50 files per group. How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
+    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, arama, sesli mesaj ve sesli arama var. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici ve üye; sahip ve yöneticiler üyeleri ve ayarları yönetir.\nSınırlar: grup başına 25 üye ve 50 dosya. Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -39183,9 +39284,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "2b5ou99t52v": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued first.\nPrices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin öncelikle sıraya alınır.\nFiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "sr4yvgpscf": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued with high priority (not a promise of a response time).\nPrices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır (belirli bir yanıt süresi taahhüdü değildir).\nFiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -40593,9 +40694,16 @@
       "src/lib/collab/copy.ts"
     ]
   },
-  "rwg85hdgl8": {
-    "en": "The session is full (5 people at most).",
-    "tr": "Oturum dolu (en fazla 5 kişi).",
+  "14k80w64m4b": {
+    "en": "The session is full: it has reached its owner's plan limit (Free 2, Plus 5, Pro 30).",
+    "tr": "Oturum dolu: oturum sahibinin planındaki kişi sınırına ulaşıldı (Ücretsiz 2, Plus 5, Pro 30).",
+    "files": [
+      "src/lib/collab/copy.ts"
+    ]
+  },
+  "zonmx9lhvi": {
+    "en": "Your plan doesn't allow that many invitations. Upgrade on Pricing for bigger sessions.",
+    "tr": "Planın bu kadar davete izin vermiyor. Daha kalabalık oturumlar için Fiyatlandırma'dan planını yükseltebilirsin.",
     "files": [
       "src/lib/collab/copy.ts"
     ]
@@ -40917,9 +41025,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "h1g9b91rib": {
-    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} (Plus) or {aiPro} (Pro) Hanogt AI messages a day instead of {aiFree}; {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; and priority on support tickets. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
-    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile günde {aiFree} yerine Plus'ta {aiPlus}, Pro'da {aiPro} mesaj; Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama ve destek taleplerinde öncelik. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
+  "j2oh73kldx": {
+    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} (Plus) or {aiPro} (Pro) Hanogt AI messages a day instead of {aiFree}; {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; and priority on support tickets. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
+    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile günde {aiFree} yerine Plus'ta {aiPlus}, Pro'da {aiPro} mesaj; Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama ve destek taleplerinde öncelik. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -42170,9 +42278,9 @@
       "src/lib/plans.ts"
     ]
   },
-  "15ufjikgibe": {
-    "en": "Team editing and voice calls",
-    "tr": "Ekiple düzenleme ve sesli görüşme",
+  "19qwv1hpvh1": {
+    "en": "Team editing for 2 people, with voice calls",
+    "tr": "2 kişiyle ekiple düzenleme ve sesli görüşme",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -42215,6 +42323,13 @@
   "9zy9i7cmco": {
     "en": "Create up to 10 Hanogt Social groups",
     "tr": "10 Hanogt Social grubu açma",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "27ike0d2ut9": {
+    "en": "Team editing with up to 5 people",
+    "tr": "5 kişiye kadar ekiple düzenleme",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -42278,6 +42393,13 @@
   "29srxodtl72": {
     "en": "Unlimited Hanogt Social groups",
     "tr": "Sınırsız Hanogt Social grubu",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "khluy6lncy": {
+    "en": "Team editing with up to 30 people",
+    "tr": "30 kişiye kadar ekiple düzenleme",
     "files": [
       "src/lib/plans.ts"
     ]

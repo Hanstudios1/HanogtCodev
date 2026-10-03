@@ -10,6 +10,7 @@ import { PaddleLoadError, checkoutEventError, closeCheckout, failureMessage, get
 import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { announcePlanChange } from "@/lib/plan-signal";
 import {
     checkoutLocale,
     formatMoney,
@@ -173,7 +174,7 @@ const C = {
     q3: { TR: "Kupon kodum var, ne yapmalıyım?", EN: "I have a coupon code. What do I do?" },
     a3: { TR: "Kodunu sakla; planlar açıldığında satın alma sırasında kullanabileceksin. Kuponların bitiş tarihi kupon verilirken belirtilir.", EN: "Keep it; you'll be able to use it at checkout once plans open. A coupon's expiry date is given with the coupon." },
     q4: { TR: "Planım nasıl tanımlandı?", EN: "How did I get a plan?" },
-    a4: { TR: "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Bugün planın canlı avantajı daha yüksek Hanogt AI sınırı ve destek taleplerinde önceliktir.", EN: "The team can assign a plan by hand to testers, contributors and contest winners. Today, a plan's live benefits are a higher Hanogt AI limit and priority on support tickets." },
+    a4: { TR: "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı, daha fazla proje ve grup, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar ve destekte öncelik.", EN: "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit, more projects and groups, bigger team sessions, your own API key connections and priority support." },
     bq1: { TR: "Ödemeyi kim alıyor?", EN: "Who takes the payment?" },
     ba1: { TR: "Ödemeler Paddle üzerinden alınır. Paddle.com, Hanogt Codev siparişlerinin Kayıtlı Satıcısıdır (Merchant of Record): ödemeyi alır, faturayı keser ve vergileri hesaplar. Kart bilgilerin Hanogt Codev'e hiç ulaşmaz.", EN: "Payments go through Paddle. Paddle.com is the Merchant of Record for Hanogt Codev orders: it takes the payment, issues the invoice and handles taxes. Your card details never reach Hanogt Codev." },
     bq2: { TR: "Aboneliğimi nasıl iptal ederim?", EN: "How do I cancel?" },
@@ -629,6 +630,7 @@ export default function PlansPage() {
         const welcome = (plan: PaidPlanId) => {
             setActivating(null);
             setNotice({ tone: "success", copy: C.welcome, vars: { plan: PLAN_COPY[plan].name.EN } });
+            announcePlanChange();
         };
         const tick = async () => {
             attempt += 1;
@@ -799,6 +801,7 @@ export default function PlansPage() {
             const payload = await fetchPlans();
             if (payload) setData(payload);
             setNotice({ tone: "success", copy: C.welcome, vars: { plan: PLAN_COPY[result.data.billing?.plan ?? "plus"].name.EN } });
+            announcePlanChange();
             return;
         }
         if (result.data.state === "pending") {
@@ -832,6 +835,7 @@ export default function PlansPage() {
             const plan = result.data.billing?.plan ?? billing?.plan ?? "plus";
             setNotice({ tone: "success", copy: C.resumed, vars: { plan: PLAN_COPY[plan].name.EN } });
             setReload((value) => value + 1);
+            announcePlanChange();
             return;
         }
         showRequestFailure("subscription", result);
@@ -874,6 +878,7 @@ export default function PlansPage() {
             setNotice({ tone: "success", copy: C.changed, vars: { plan: PLAN_COPY[change.plan].name.EN } });
             setChange(null);
             setReload((value) => value + 1);
+            announcePlanChange();
         } else {
             setChange((current) => (current ? { ...current, error: failureText(result) } : current));
         }

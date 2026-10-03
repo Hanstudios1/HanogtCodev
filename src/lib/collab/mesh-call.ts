@@ -52,6 +52,8 @@ type Peer = {
 const SPEAKING_LEVEL = 0.035;
 const SPEAKING_HOLD_MS = 450;
 const MAX_PEERS = 4;
+/** People in one voice call, yourself included: every one connects to every other, whatever the plan. */
+export const MESH_MAX_PEOPLE = MAX_PEERS + 1;
 
 function parseDescription(data: string): RTCSessionDescriptionInit | null {
     try {

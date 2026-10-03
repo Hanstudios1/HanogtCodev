@@ -227,8 +227,12 @@ language counts from `LANGUAGE_STATS` (`src/lib/runtimes/languages.ts`).
 | `HANOGT_AI_MODEL` | `llama-3.3-70b-versatile` | Model id (falls back to `GROQ_MODEL`); agent mode needs a model with function calling, otherwise the Core proposes actions |
 
 Without an API key the route reports `not_configured` and the Core answers.
-Per signed-in user: **12 requests/minute** and **250 requests/day**; each tool
-follow-up round is one request. On a limit the Core answers with a notice.
+Per signed-in user, by plan (`src/lib/plans.ts` `PLAN_AI_LIMITS`): Free **12
+requests/minute and 250/day**, Plus 20 and 750, Pro 30 and 2,000, plus any
+staff grant; the day is a rolling 24 hours from the first message. Each tool
+follow-up round is one request. On a limit the Core answers with a notice; a
+purchase Paddle hasn't reported yet is looked up first
+(`src/lib/server/entitlements.ts`).
 
 ## File map
 

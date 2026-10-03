@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.8",
+        version: "v0.3.8",
+        date: "2026-10-03",
+        title: { TR: "Plan hakların her yerde, hemen", EN: "Your plan's benefits everywhere, right away" },
+        desc: { TR: "Ödedikten sonra planın editörde, oyun motorunda, gruplarda ve ekiple düzenlemede hemen geçerli. Ekiple düzenlemede kişi sınırı artık plana göre.", EN: "After paying, your plan applies at once in the editor, the game engine, groups and team editing. Team editing now holds more people on higher plans." },
+        items: [
+            { TR: "Ödeme bildirimi gecikse bile Plus ve Pro sınırları hemen açılır.", EN: "Plus and Pro limits unlock right away, even when the payment notification is late." },
+            { TR: "Ekiple düzenleme: Ücretsiz 2, Plus 5, Pro 30 kişi.", EN: "Team editing: Free 2, Plus 5, Pro 30 people." },
+            { TR: "Grup ve oyun projesi sınırına gelince planının sayısı ve Fiyatlandırma bağlantısı görünür.", EN: "At the group or game project limit you see your plan's number and a link to Pricing." },
+            { TR: "Grup sahipliği devredilirken yeni sahibin plan sınırına bakılır.", EN: "Handing over a group checks the new owner's plan limit." },
+        ],
+    },
+    {
         id: "v0.3.7",
         version: "v0.3.7",
         date: "2026-10-03",

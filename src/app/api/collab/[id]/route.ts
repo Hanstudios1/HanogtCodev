@@ -21,6 +21,7 @@ import {
     setReadOnly,
     sharedLimit,
 } from "@/lib/collab/server";
+import { collabLimitsFor } from "@/lib/server/plans";
 import { normalizeEmail } from "@/lib/server/validate";
 
 export const runtime = "nodejs";
@@ -32,7 +33,7 @@ export const dynamic = "force-dynamic";
  * GET ?after=<seq>&chat=<ms>&signals=0|1&client=<id>
  *                                         participants: what changed since the last poll (browsers without
  *                                         the Firebase connection poll this about every 700 ms)
- * POST { action: "join" }                 invited friends of the owner (5 people at most)
+ * POST { action: "join" }                 invited friends of the owner (the owner's plan: Free 2, Plus 5, Pro 30 people)
  * POST { action: "leave" }                participants (the owner ends the session instead)
  * POST { action: "invite", emails }       owner: invite friends (a notification each)
  * POST { action: "remove", email }        owner: withdraw an invitation or remove a participant
@@ -62,7 +63,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
         if (params.get("view") === "info") {
             await sharedLimit(`collab:info:${user.email}`, 60, 600_000);
             const loaded = await loadLiveSession(id);
-            return collabJson(sessionInfo(id, loaded.view, user.email));
+            const ownerLimits = await collabLimitsFor(loaded.view.owner).catch(() => null);
+            return collabJson(sessionInfo(id, loaded.view, user.email, ownerLimits));
         }
         await hotLimit(`collab:poll:${user.email}`, 4, 12, 2_000);
         const clientParam = params.get("client");

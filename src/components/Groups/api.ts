@@ -23,10 +23,17 @@ export class GroupRequestError extends Error {
         public readonly code: GroupClientErrorCode,
         message = "",
         public readonly status = 0,
+        /** Numbers the server sent with the code (e.g. the plan's group limit), for the translated text. */
+        public readonly vars: Record<string, string | number> = {},
     ) {
         super(message || code);
         this.name = "GroupRequestError";
     }
+}
+
+/** The plan limit an answer carried ("∞" never comes: unlimited plans aren't refused). */
+function limitVars(data: { limit?: unknown; plan?: unknown }): Record<string, string | number> {
+    return typeof data.limit === "number" ? { limit: data.limit, ...(typeof data.plan === "string" ? { plan: data.plan } : {}) } : {};
 }
 
 export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
@@ -49,7 +56,8 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     invalid_emoji: { TR: "Geçersiz simge.", EN: "Invalid icon." },
     invalid_topics: { TR: "Konular yalnızca harf, rakam, - ve _ içerebilir (en fazla 12 konu, her biri en fazla 24 karakter).", EN: "Topics may only contain letters, digits, - and _ (up to 12 topics, 24 characters each)." },
     project_not_found: { TR: "Başlangıç projesi bulunamadı.", EN: "The starting project wasn't found." },
-    group_limit: { TR: "En fazla 30 grubun sahibi olabilirsiniz.", EN: "You can own at most 30 groups." },
+    group_limit: { TR: "Planınla en fazla {limit} grubun sahibi olabilirsin. Yeni grup için bir grubu sil, sahipliğini devret ya da planını yükselt (Fiyatlandırma).", EN: "Your plan lets you own up to {limit} groups. To create another, delete one, hand one over or upgrade your plan (Pricing)." },
+    target_group_limit: { TR: "Bu üyenin planı en fazla {limit} grubun sahibi olmasına izin veriyor; sahiplik devredilemedi.", EN: "This member's plan lets them own up to {limit} groups, so ownership couldn't be handed over." },
     group_full: { TR: "Grup 25 üye sınırına ulaştı.", EN: "The group has reached its 25-member limit." },
     not_friend: { TR: "Yalnızca arkadaşlarınızı davet edebilirsiniz.", EN: "You can only invite your friends." },
     user_not_found: { TR: "Kullanıcı bulunamadı.", EN: "User not found." },
@@ -109,10 +117,10 @@ async function request<T>(url: string, options: { body?: Record<string, unknown>
     } catch {
         throw new GroupRequestError("network");
     }
-    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown };
+    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown; limit?: unknown; plan?: unknown };
     if (!response.ok) {
         const fallback: GroupClientErrorCode = response.status === 429 ? "rate_limited" : response.status === 401 ? "unauthorized" : "server_error";
-        throw new GroupRequestError(isClientCode(data.code) ? data.code : fallback, typeof data.error === "string" ? data.error : "", response.status);
+        throw new GroupRequestError(isClientCode(data.code) ? data.code : fallback, typeof data.error === "string" ? data.error : "", response.status, limitVars(data));
     }
     return data;
 }
@@ -135,7 +143,11 @@ export const groupsApi = {
 export function useGroupErrorText() {
     const { tx } = useI18n();
     return useCallback((error: unknown, fallback: Copy = GROUP_ERROR_COPY.server_error) => {
-        if (error instanceof GroupRequestError) return tx(GROUP_ERROR_COPY[error.code] ?? fallback);
+        if (error instanceof GroupRequestError) {
+            // A limit message without its number (an older server) falls back to the generic text.
+            if ((error.code === "group_limit" || error.code === "target_group_limit") && error.vars.limit === undefined) return tx(GROUP_ERROR_COPY.server_error);
+            return tx(GROUP_ERROR_COPY[error.code] ?? fallback, error.vars);
+        }
         if (isClientCode(error)) return tx(GROUP_ERROR_COPY[error]);
         return tx(fallback);
     }, [tx]);

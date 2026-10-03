@@ -2,7 +2,7 @@
 
 import { AlertTriangle, Headphones, HeadphoneOff, LoaderCircle, Mic, MicOff, PhoneCall, PhoneOff, ShieldCheck } from "lucide-react";
 import { COLLAB_COPY } from "@/lib/collab/copy";
-import { IDLE_CALL, SELF_PEER, type MeshCallState } from "@/lib/collab/mesh-call";
+import { IDLE_CALL, MESH_MAX_PEOPLE, SELF_PEER, type MeshCallState } from "@/lib/collab/mesh-call";
 import type { CollabPeer, CollabSession } from "@/lib/collab/session-client";
 import { useCollabValue } from "@/lib/collab/use-editor-collab";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -24,6 +24,7 @@ const C = {
     noTurn: { TR: "Bazı ağlarda bağlantı için TURN sunucusu gerekebilir.", EN: "Some networks may need a TURN server to connect." },
     failed: { TR: "{name} ile ses bağlantısı kurulamadı; yeniden deneniyor.", EN: "Couldn't connect audio with {name}; retrying." },
     privacy: { TR: "Ses doğrudan katılımcılar arasında iletilir, kaydedilmez.", EN: "Audio goes directly between participants and is never recorded." },
+    full: { TR: "Sesli görüşme dolu: sesli konuşmaya aynı anda en fazla {count} kişi katılabilir. Yazılı sohbet ve düzenleme herkese açık.", EN: "Voice is full: up to {count} people can talk at once. Chat and editing stay open to everyone." },
 } satisfies Record<string, Copy>;
 
 const NO_PEERS: CollabPeer[] = [];
@@ -36,6 +37,8 @@ export default function CollabVoice({ session }: { session: CollabSession }) {
     const active = useCollabValue(session, (state) => state.meta?.status === "active", false);
     const inVoice = peers.filter((peer) => peer.call?.on);
     const names = [...new Set(inVoice.map((peer) => peer.name))];
+    // Every voice participant connects to every other one: a five-person mesh, whatever the session's size.
+    const voiceFull = call.status !== "active" && new Set(inVoice.map((peer) => peer.key)).size >= MESH_MAX_PEOPLE;
     const failed = inVoice.filter((peer) => call.connections[`${peer.key}:${peer.clientID}`] === "failed");
     const iconButton = (pressed: boolean) => `grid h-9 w-9 place-items-center rounded-xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${pressed ? "border-amber-500/50 bg-amber-500/15 text-amber-700 dark:text-amber-300" : "border-zinc-200 text-zinc-600 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/10"}`;
     const error = call.error === "mic_denied" ? C.micDenied : call.error === "mic_unavailable" ? C.micUnavailable : call.error === "ice" ? C.ice : call.error === "unsupported" ? C.unsupported : null;
@@ -65,7 +68,8 @@ export default function CollabVoice({ session }: { session: CollabSession }) {
                     <button
                         type="button"
                         onClick={() => void session.joinCall()}
-                        disabled={call.status === "joining" || !active}
+                        disabled={call.status === "joining" || !active || voiceFull}
+                        title={voiceFull ? tx(C.full, { count: MESH_MAX_PEOPLE }) : undefined}
                         className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-60 dark:focus-visible:ring-offset-zinc-950"
                     >
                         {call.status === "joining" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <PhoneCall className="h-4 w-4" aria-hidden />}
@@ -73,6 +77,7 @@ export default function CollabVoice({ session }: { session: CollabSession }) {
                     </button>
                 )}
             </div>
+            {voiceFull ? <p role="status" className="mt-2 text-xs text-amber-700 dark:text-amber-300" data-voice-full>{tx(C.full, { count: MESH_MAX_PEOPLE })}</p> : null}
             {error && (
                 <p role="alert" className="mt-2 flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400">
                     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />{tx(error)}

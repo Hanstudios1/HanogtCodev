@@ -62,6 +62,17 @@ export const PLAN_PROJECT_LIMITS: Record<PlanId, { code: number | null; game: nu
 export const PLAN_GROUP_LIMITS: Record<PlanId, number | null> = { free: 3, plus: 10, pro: null };
 
 /**
+ * Team editing ("Ekiple düzenle"): people in one session, the owner included,
+ * and the invitations it may hold, by the session owner's plan. Voice in a
+ * session stays a five-person mesh whatever the plan (src/lib/collab/mesh-call.ts).
+ */
+export const PLAN_COLLAB_LIMITS: Record<PlanId, { people: number; invites: number }> = {
+    free: { people: 2, invites: 4 },
+    plus: { people: 5, invites: 12 },
+    pro: { people: 30, invites: 60 },
+};
+
+/**
  * How many AI providers a person can connect to Hanogt AI with their own API
  * keys (src/lib/ai/connections.ts). Connections above the limit are kept but
  * switched off, e.g. after moving from Pro to Plus.
@@ -129,6 +140,11 @@ function future(iso: string | null, now: number) {
 }
 
 const PLAN_RANK: Record<PlanId, number> = { free: 0, plus: 1, pro: 2 };
+
+/** Free 0, Plus 1, Pro 2: whether one plan is higher than another. */
+export function planRank(plan: PlanId) {
+    return PLAN_RANK[plan];
+}
 
 type PlanSources = Pick<UserSubscription, "plan" | "status" | "expiresAt"> & { paddle?: PaddleSubscriptionState | null };
 
@@ -256,7 +272,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Hanogt AI ile günde 250 mesaj", EN: "250 Hanogt AI messages a day" } },
             { text: { TR: "10 kod projesi ve 10 oyun projesi", EN: "10 code projects and 10 game projects" } },
             { text: { TR: "3 Hanogt Social grubu açma", EN: "Create up to 3 Hanogt Social groups" } },
-            { text: { TR: "Ekiple düzenleme ve sesli görüşme", EN: "Team editing and voice calls" } },
+            { text: { TR: "2 kişiyle ekiple düzenleme ve sesli görüşme", EN: "Team editing for 2 people, with voice calls" } },
         ],
     },
     plus: {
@@ -267,6 +283,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Hanogt AI ile günde 750 mesaj", EN: "750 Hanogt AI messages a day" } },
             { text: { TR: "40 kod projesi ve 40 oyun projesi", EN: "40 code projects and 40 game projects" } },
             { text: { TR: "10 Hanogt Social grubu açma", EN: "Create up to 10 Hanogt Social groups" } },
+            { text: { TR: "5 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 5 people" } },
             { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası)", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more)" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Profilinde Plus rozeti", EN: "A Plus badge on your profile" }, planned: true },
@@ -280,6 +297,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Hanogt AI ile günde 2.000 mesaj", EN: "2,000 Hanogt AI messages a day" } },
             { text: { TR: "Sınırsız kod ve oyun projesi", EN: "Unlimited code and game projects" } },
             { text: { TR: "Sınırsız Hanogt Social grubu", EN: "Unlimited Hanogt Social groups" } },
+            { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
             { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı", EN: "Connect 5 AI providers with your own API keys" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Yeni özelliklere erken erişim", EN: "Early access to new features" }, planned: true },

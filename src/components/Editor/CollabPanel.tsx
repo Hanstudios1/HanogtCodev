@@ -10,7 +10,7 @@ import PresenceAvatar from "@/components/PresenceAvatar";
 import { collabErrorCode } from "@/lib/collab/api";
 import { COLLAB_COPY, COLLAB_ERROR_COPY } from "@/lib/collab/copy";
 import { IDLE_CALL, SELF_PEER } from "@/lib/collab/mesh-call";
-import { COLLAB_LIMITS, collabColor, type CollabErrorCode, type CollabInvitee, type CollabMeta } from "@/lib/collab/protocol";
+import { collabColor, type CollabErrorCode, type CollabInvitee, type CollabMeta } from "@/lib/collab/protocol";
 import type { CollabFileView, CollabPeer, CollabSession } from "@/lib/collab/session-client";
 import { useCollabValue } from "@/lib/collab/use-editor-collab";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -115,7 +115,8 @@ export default function CollabPanel({ session, visible, onCopyLink }: {
     const people = [...meta.participants].sort((a, b) => (a.role === "owner" ? -1 : b.role === "owner" ? 1 : a.joinedAt - b.joinedAt));
     const pending = invited.filter((invitee) => !invitee.joined);
     const unavailable = new Map<string, Copy>(invited.map((invitee) => [invitee.email, invitee.joined ? C.alreadyIn : C.alreadyInvited]));
-    const roomForInvites = Math.max(0, COLLAB_LIMITS.maxInvites - invited.length);
+    // The owner's plan decides both (meta.maxPeople / maxInvites).
+    const roomForInvites = Math.max(0, meta.maxInvites - invited.length);
     const statusOf = (key: string): PresenceStatus => {
         if (key === me.key) return "online";
         const tabs = byKey.get(key) ?? [];
@@ -204,7 +205,7 @@ export default function CollabPanel({ session, visible, onCopyLink }: {
             {/* People */}
             <section className="border-b border-zinc-200 px-3 py-2.5 dark:border-white/10" aria-labelledby="collab-people">
                 <div className="mb-1.5 flex items-center gap-2">
-                    <h3 id="collab-people" className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{tx(C.people, { count: people.length, max: COLLAB_LIMITS.maxParticipants })}</h3>
+                    <h3 id="collab-people" className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{tx(C.people, { count: people.length, max: meta.maxPeople })}</h3>
                     {isOwner && (
                         <button
                             type="button"

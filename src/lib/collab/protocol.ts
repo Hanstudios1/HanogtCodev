@@ -22,10 +22,16 @@
 import { normalizeLanguageId } from "@/lib/runtimes/languages";
 
 export const COLLAB_LIMITS = {
-    /** People in one session, the owner included. */
-    maxParticipants: 5,
-    /** Pending and accepted invitations of one session. */
-    maxInvites: 12,
+    /**
+     * People in one session, the owner included, on any plan (Pro's 30); the
+     * session itself holds its owner's plan limit (maxPeople, PLAN_COLLAB_LIMITS).
+     */
+    maxParticipants: 30,
+    /** Pending and accepted invitations of one session, on any plan (Pro's 60). */
+    maxInvites: 60,
+    /** What sessions from before per-plan limits allowed (Plus). */
+    legacyPeople: 5,
+    legacyInvites: 12,
     maxFiles: 20,
     /** Same limits as the editor and the cloud projects. */
     maxFileChars: 500_000,
@@ -480,9 +486,18 @@ export type CollabSessionView = {
     expiresAt: number;
     endedAt: number;
     endReason: CollabEndReason | null;
+    /** People the session may hold, the owner included: the owner's plan (PLAN_COLLAB_LIMITS). */
+    maxPeople: number;
+    /** Invitations it may hold. */
+    maxInvites: number;
 };
 
 export type CollabFileMeta = { id: string; name: string; lang: string; chars: number };
+
+/** A stored or sent limit within 1 and `max`; `fallback` when missing or junk. */
+function limitOf(value: unknown, max: number, fallback: number) {
+    return typeof value === "number" && Number.isInteger(value) && value >= 1 ? Math.min(value, max) : fallback;
+}
 
 const emailLike = (value: unknown): value is string => typeof value === "string" && value.length <= 254 && /^[^\s@/]+@[^\s@/]+$/.test(value);
 
@@ -553,6 +568,8 @@ export function readSessionRecord(raw: Record<string, unknown>): CollabSessionVi
         expiresAt: timeOf(raw.expiresAt),
         endedAt: timeOf(raw.endedAt),
         endReason,
+        maxPeople: limitOf(raw.maxPeople, COLLAB_LIMITS.maxParticipants, COLLAB_LIMITS.legacyPeople),
+        maxInvites: limitOf(raw.maxInvites, COLLAB_LIMITS.maxInvites, COLLAB_LIMITS.legacyInvites),
     };
 }
 
@@ -596,13 +613,14 @@ export function joinDecision(session: CollabSessionView, email: string, ownerFri
     if (!email || email === session.owner || !session.invited.includes(email)) return "not_found";
     if (session.status !== "active" || isExpired(session, now)) return "ended";
     if (!ownerFriends.includes(email)) return "not_friend";
-    if (session.participants.length >= COLLAB_LIMITS.maxParticipants) return "full";
+    // The owner's plan: Free 2, Plus 5, Pro 30 (people already in stay when it shrinks).
+    if (session.participants.length >= session.maxPeople) return "full";
     return "ok";
 }
 
-/** Invitees the owner may add: friends only, not themselves, not already invited, within the limit. */
+/** Invitees the owner may add: friends only, not themselves, not already invited, within the plan's limit. */
 export function invitableEmails(session: CollabSessionView, requested: readonly string[], ownerFriends: readonly string[]) {
-    const room = Math.max(0, COLLAB_LIMITS.maxInvites - session.invited.length);
+    const room = Math.max(0, session.maxInvites - session.invited.length);
     const accepted: string[] = [];
     const rejected: string[] = [];
     for (const email of new Set(requested)) {
@@ -632,6 +650,9 @@ export type CollabMeta = {
     expiresAt: number;
     endedAt: number;
     endReason: CollabEndReason | null;
+    /** People the session may hold (the owner's plan). */
+    maxPeople: number;
+    maxInvites: number;
 };
 
 export function publicMeta(id: string, session: CollabSessionView): CollabMeta {
@@ -654,6 +675,8 @@ export function publicMeta(id: string, session: CollabSessionView): CollabMeta {
         expiresAt: session.expiresAt,
         endedAt: session.endedAt,
         endReason: session.endReason,
+        maxPeople: session.maxPeople,
+        maxInvites: session.maxInvites,
     };
 }
 
@@ -687,6 +710,8 @@ export function readMeta(value: unknown): CollabMeta | null {
         expiresAt: timeOf(record.expiresAt),
         endedAt: timeOf(record.endedAt),
         endReason: record.endReason === "owner" || record.endReason === "expired" || record.endReason === "replaced" ? record.endReason : null,
+        maxPeople: limitOf(record.maxPeople, COLLAB_LIMITS.maxParticipants, COLLAB_LIMITS.legacyPeople),
+        maxInvites: limitOf(record.maxInvites, COLLAB_LIMITS.maxInvites, COLLAB_LIMITS.legacyInvites),
     };
 }
 
@@ -760,20 +785,25 @@ export type CollabInfoResponse = {
     joined: boolean;
     role: CollabRole | null;
     full: boolean;
+    /** People the session may hold (the owner's plan). */
+    maxPeople: number;
     readOnly: boolean;
 };
 
 export type CollabFriend = { email: string; name: string; avatar: string | null; status: "online" | "idle" | "dnd" | "offline" };
 
+/** The signed-in person's team-editing limits (their plan), with GET /api/collab?view=friends. */
+export type CollabPlanLimits = { plan: "free" | "plus" | "pro"; people: number; invites: number };
+
 export type CollabErrorCode =
     | "unauthorized" | "bad_origin" | "rate_limited" | "invalid_request" | "payload_too_large"
-    | "not_found" | "not_friend" | "full" | "ended" | "read_only" | "frozen" | "forbidden"
+    | "not_found" | "not_friend" | "full" | "invite_limit" | "ended" | "read_only" | "frozen" | "forbidden"
     | "invalid_file" | "too_many_files" | "file_too_large" | "content_too_large" | "invalid_update"
     | "conflict" | "unavailable" | "network";
 
 export const COLLAB_ERROR_CODES: readonly CollabErrorCode[] = [
     "unauthorized", "bad_origin", "rate_limited", "invalid_request", "payload_too_large",
-    "not_found", "not_friend", "full", "ended", "read_only", "frozen", "forbidden",
+    "not_found", "not_friend", "full", "invite_limit", "ended", "read_only", "frozen", "forbidden",
     "invalid_file", "too_many_files", "file_too_large", "content_too_large", "invalid_update",
     "conflict", "unavailable", "network",
 ];

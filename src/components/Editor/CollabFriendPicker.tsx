@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import { collabApi } from "@/lib/collab/api";
-import type { CollabFriend } from "@/lib/collab/protocol";
+import type { CollabFriend, CollabPlanLimits } from "@/lib/collab/protocol";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PRESENCE_STATUS_COPY } from "@/lib/presence";
 
@@ -25,6 +25,7 @@ const C = {
 /** The signed-in user's friends with presence (GET /api/collab?view=friends), loaded while `open`. */
 export function useCollabFriends(open: boolean) {
     const [friends, setFriends] = useState<CollabFriend[] | null>(null);
+    const [limits, setLimits] = useState<CollabPlanLimits | null>(null);
     const [failed, setFailed] = useState(false);
     const [version, setVersion] = useState(0);
     useEffect(() => {
@@ -34,6 +35,7 @@ export function useCollabFriends(open: boolean) {
             .then((result) => {
                 if (cancelled) return;
                 setFriends(Array.isArray(result.friends) ? result.friends : []);
+                setLimits(result.limits && typeof result.limits.people === "number" ? result.limits : null);
                 setFailed(false);
             })
             .catch(() => {
@@ -47,7 +49,7 @@ export function useCollabFriends(open: boolean) {
         setFailed(false);
         setVersion((value) => value + 1);
     }, []);
-    return { friends, failed: failed && friends === null, retry };
+    return { friends, limits, failed: failed && friends === null, retry };
 }
 
 /**

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import {
     commitServerPatches,
     deleteServerDocument,
@@ -9,7 +9,7 @@ import {
     queryServerCollection,
     runServerQuery,
 } from "@/lib/server/firebase-rest";
-import { groupLimitFor } from "@/lib/server/plans";
+import { planQuota } from "@/lib/server/entitlements";
 import {
     GROUP_LIMITS,
     SYSTEM_SENDER,
@@ -300,13 +300,11 @@ async function createGroup(body: Record<string, unknown>, user: GroupUser) {
     const lang = seedLanguageFor(body.language);
     const projectId = body.projectId === undefined || body.projectId === null || body.projectId === "" ? "" : readId(body.projectId, "Proje kimliği");
 
-    // Free 3, Plus 10, Pro unlimited (src/lib/plans.ts PLAN_GROUP_LIMITS).
-    const { limit } = await groupLimitFor(email);
-    if (limit !== null) {
-        const owned = await queryServerCollection<StoredGroup>("groups", "ownerEmail", "EQUAL", email, { limit: limit + 1 });
-        if (owned.length >= limit) {
-            throw new GroupApiError(409, "group_limit", `Planınla en fazla ${limit} grup açabilirsin. Yeni grup için bir grubu silebilir, sahipliğini devredebilir ya da planını yükseltebilirsin (/plans).`);
-        }
+    // Free 3, Plus 10, Pro unlimited (src/lib/plans.ts PLAN_GROUP_LIMITS); a purchase Paddle hasn't
+    // reported yet is looked up before refusing (entitlements.ts).
+    const quota = await planQuota(email, "group", ownedGroupCount(email), { onLate: keepRunning });
+    if (!quota.allowed) {
+        throw new GroupApiError(409, "group_limit", `Planınla en fazla ${quota.limit} grup açabilirsin. Yeni grup için bir grubu silebilir, sahipliğini devredebilir ya da planını yükseltebilirsin (/plans).`, { plan: quota.plan, limit: quota.limit });
     }
 
     const now = new Date();
@@ -529,10 +527,25 @@ async function setAdmin(body: Record<string, unknown>, user: GroupUser) {
     return { success: true };
 }
 
+/** Groups `email` owns, counted up to `upTo` (the plan's limit and one more). */
+function ownedGroupCount(email: string) {
+    return async (upTo: number) => (await queryServerCollection<StoredGroup>("groups", "ownerEmail", "EQUAL", email, { limit: upTo })).length;
+}
+
+/** A Paddle check that outlives the request keeps running after the answer. */
+function keepRunning(work: Promise<unknown>) {
+    after(() => work.then(() => undefined, () => undefined));
+}
+
 async function transferOwnership(body: Record<string, unknown>, user: GroupUser) {
     const groupId = readId(body.groupId, "Grup kimliği");
     const targetEmail = readEmail(body.targetEmail);
     if (targetEmail === user.email) throw new GroupApiError(400, "self_action", "Grup zaten sizin.");
+    // The new owner's plan decides how many groups they may own, like when they create one.
+    const quota = await planQuota(targetEmail, "group", ownedGroupCount(targetEmail), { onLate: keepRunning });
+    if (!quota.allowed) {
+        throw new GroupApiError(409, "target_group_limit", `Bu üye planıyla en fazla ${quota.limit} grubun sahibi olabilir; sahiplik devredilemedi.`, { plan: quota.plan, limit: quota.limit });
+    }
     const group = await retryOnConflict(async () => {
         const { group: current, role } = await requireGroupMember(groupId, user.email);
         requireOwner(role);

@@ -42,14 +42,18 @@ import {
 
 /** Expected failures: the message is Turkish (primary language), the code is translated by the UI. */
 export class GroupApiError extends Error {
-    constructor(
-        public readonly status: number,
-        public readonly code: GroupErrorCode,
-        message: string,
-        public readonly headers: Record<string, string> = {},
-    ) {
+    readonly status: number;
+    readonly code: GroupErrorCode;
+    /** Machine-readable fields next to the code (e.g. the plan and limit of group_limit). */
+    readonly extra: Record<string, unknown>;
+    readonly headers: Record<string, string>;
+    constructor(status: number, code: GroupErrorCode, message: string, extra: Record<string, unknown> = {}, headers: Record<string, string> = {}) {
         super(message);
         this.name = "GroupApiError";
+        this.status = status;
+        this.code = code;
+        this.extra = extra;
+        this.headers = headers;
     }
 }
 
@@ -68,7 +72,7 @@ function isPreconditionFailure(error: unknown) {
 
 export function groupErrorResponse(error: unknown) {
     if (error instanceof GroupApiError) {
-        return NextResponse.json({ error: error.message, code: error.code }, { status: error.status, headers: jsonSecurityHeaders(error.headers) });
+        return NextResponse.json({ ...error.extra, error: error.message, code: error.code }, { status: error.status, headers: jsonSecurityHeaders(error.headers) });
     }
     if (errorStatus(error) === 409 || errorStatus(error) === 412) {
         return NextResponse.json({ error: "Grup başka bir cihazda güncellendi; tekrar deneyin.", code: "conflict" }, { status: 409, headers: jsonSecurityHeaders() });
@@ -112,7 +116,7 @@ export function assertSameOrigin(request: NextRequest) {
 export async function assertRateLimit(key: string, limit: number, windowMs: number) {
     const result = await enforceRateLimitWithFallback(key, limit, windowMs);
     if (!result.allowed) {
-        throw new GroupApiError(429, "rate_limited", "Çok fazla grup işlemi. Biraz sonra tekrar deneyin.", { "Retry-After": String(result.retryAfterSeconds) });
+        throw new GroupApiError(429, "rate_limited", "Çok fazla grup işlemi. Biraz sonra tekrar deneyin.", {}, { "Retry-After": String(result.retryAfterSeconds) });
     }
 }
 

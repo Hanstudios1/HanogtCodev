@@ -14,6 +14,7 @@ import {
     patchServerDocument,
     runServerQuery,
 } from "@/lib/server/firebase-rest";
+import { collabLimitsFor, freeCollabLimits } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { normalizeEmail } from "@/lib/server/validate";
@@ -76,7 +77,8 @@ const MESSAGES: Record<CollabErrorCode, string> = {
     payload_too_large: "İstek çok büyük.",
     not_found: "Canlı oturum bulunamadı.",
     not_friend: "Yalnızca oturum sahibinin arkadaşları davet edilebilir.",
-    full: "Oturum dolu (en fazla 5 kişi).",
+    full: "Oturum dolu: oturum sahibinin planındaki kişi sınırına ulaşıldı.",
+    invite_limit: "Planınız bu kadar davete izin vermiyor.",
     ended: "Canlı oturum sona erdi.",
     read_only: "Oturum sahibi düzenlemeyi kapattı.",
     frozen: "Oturum boyut sınırını aştı; yeni değişiklikler kaydedilemiyor.",
@@ -248,6 +250,8 @@ function sessionData(view: CollabSessionView): Record<string, unknown> {
         expiresAt: new Date(view.expiresAt),
         endedAt: view.endedAt,
         endReason: view.endReason,
+        maxPeople: view.maxPeople,
+        maxInvites: view.maxInvites,
         purgeAt: purgeAt(view),
     };
 }
@@ -503,6 +507,9 @@ export async function createSession(user: CollabUser, input: CreateInput): Promi
     if (!validated.ok) throw new CollabApiError(validated.code === "invalid_file" ? 400 : 413, validated.code);
     const requested = Array.isArray(input.invite) ? input.invite.map(normalizeEmail).filter(Boolean) : [];
     if (requested.length > COLLAB_LIMITS.maxInvites) throw new CollabApiError(400, "invalid_request");
+    // The owner's plan: Free 2 people (4 invitations), Plus 5 (12), Pro 30 (60).
+    const limits = await collabLimitsFor(user.email).catch(freeCollabLimits);
+    if (requested.length > limits.invites) throw new CollabApiError(409, "invite_limit");
     if (requested.some((email) => email === user.email || !user.friends.includes(email))) throw new CollabApiError(403, "not_friend");
 
     void sweepExpiredSessions().catch(() => undefined);
@@ -548,6 +555,8 @@ export async function createSession(user: CollabUser, input: CreateInput): Promi
         expiresAt: now + COLLAB_LIMITS.sessionMs,
         endedAt: 0,
         endReason: null,
+        maxPeople: limits.people,
+        maxInvites: limits.invites,
     };
     await commitServerMutations([
         { type: "create", path: sessionPath(id), data: sessionData(view) },
@@ -685,10 +694,14 @@ export async function loadLiveSession(id: string): Promise<LoadedSession> {
 // Reading
 // ---------------------------------------------------------------------------
 
-/** What an invitee sees before joining; people who aren't invited get "not_found". */
-export function sessionInfo(id: string, view: CollabSessionView, email: string): CollabInfoResponse {
+/**
+ * What an invitee sees before joining; people who aren't invited get "not_found".
+ * `ownerLimits`: the owner's plan as it is now (joining applies it too), else the session's stored limit.
+ */
+export function sessionInfo(id: string, view: CollabSessionView, email: string, ownerLimits: { people: number } | null = null): CollabInfoResponse {
     const role = roleOf(view, email);
     if (!role && !view.invited.includes(email)) throw new CollabApiError(404, "not_found");
+    const maxPeople = ownerLimits?.people ?? view.maxPeople;
     const ownerKey = view.keys[view.owner];
     const owner = ownerKey ? view.people[ownerKey] : undefined;
     return {
@@ -702,7 +715,8 @@ export function sessionInfo(id: string, view: CollabSessionView, email: string):
         }),
         joined: Boolean(role),
         role,
-        full: view.participants.length >= COLLAB_LIMITS.maxParticipants,
+        full: view.participants.length >= maxPeople,
+        maxPeople,
         readOnly: view.readOnly,
     };
 }
@@ -796,10 +810,15 @@ export async function pruneStalePresence(id: string) {
 
 export async function joinSession(id: string, user: CollabUser): Promise<CollabSessionView> {
     const loaded = await loadLiveSession(id);
-    const friends = await ownerFriends(loaded.view.owner);
-    const card = await personCard(user.email);
+    // The owner's plan as it is now: an upgrade during the session makes room at once
+    // (unreadable: the session keeps the limits it has).
+    const [friends, card, limits] = await Promise.all([ownerFriends(loaded.view.owner), personCard(user.email), collabLimitsFor(loaded.view.owner).catch(() => null)]);
     let decision: ReturnType<typeof joinDecision> = "not_found";
     const view = await mutateSession(id, (current) => {
+        if (limits) {
+            current.maxPeople = limits.people;
+            current.maxInvites = limits.invites;
+        }
         decision = joinDecision(current, user.email, friends);
         if (decision !== "ok") return null;
         const key = current.keys[user.email] ?? newParticipantKey();
@@ -833,12 +852,19 @@ export async function leaveSession(id: string, email: string) {
 export async function inviteToSession(id: string, user: CollabUser, emails: readonly string[]) {
     const cards = new Map<string, { name: string; avatar: string | null }>();
     await Promise.all(emails.map(async (email) => cards.set(email, await personCard(email))));
+    const limits = await collabLimitsFor(user.email).catch(() => null);
     const result: { added: string[] } = { added: [] };
     const view = await mutateSession(id, (current) => {
         if (current.owner !== user.email) throw new CollabApiError(403, "forbidden");
         if (current.status !== "active") throw new CollabApiError(410, "ended");
+        if (limits) {
+            current.maxPeople = limits.people;
+            current.maxInvites = limits.invites;
+        }
         const { accepted, rejected } = invitableEmails(current, emails, user.friends);
         if (rejected.length) throw new CollabApiError(403, "not_friend");
+        // Every requested invitation is new and none fits: the plan's invitation limit.
+        if (!accepted.length && emails.some((email) => !current.invited.includes(email))) throw new CollabApiError(409, "invite_limit");
         result.added = accepted;
         if (!accepted.length) return null;
         current.invited = [...current.invited, ...accepted];

@@ -45,6 +45,8 @@ export const AGENT_ERROR_COPY: Record<string, Copy> = {
     empty_query: { TR: "Aranacak bir şey yazılmadı.", EN: "There's nothing to search for." },
     unknown_tool: { TR: "Hanogt AI bu işlemi yapamaz.", EN: "Hanogt AI can't perform this action." },
     interrupted: { TR: "Sayfa kapandığı için işlem yarıda kaldı; sonucu ilgili sayfadan kontrol et.", EN: "The page closed before the action finished; check the result on the related page." },
+    plan_group_limit: { TR: "Planının grup sınırına ulaştın. Yeni grup için bir grubu silebilir ya da Fiyatlandırma'dan planını yükseltebilirsin.", EN: "You've reached your plan's group limit. Delete a group or upgrade your plan on Pricing to create a new one." },
+    plan_game_limit: { TR: "Planının oyun projesi sınırına ulaştın. Eski bir projeyi silebilir ya da Fiyatlandırma'dan planını yükseltebilirsin.", EN: "You've reached your plan's game project limit. Delete an old project or upgrade your plan on Pricing." },
 };
 
 /** Localized text for an AgentArgError, an execution error or a group API code ("group_rate_limited"). */
@@ -100,7 +102,7 @@ async function createGroup(call: Extract<AgentCallInput, { name: "create_group" 
             view: { href, title: call.args.name.trim() },
         };
     } catch (error) {
-        if (error instanceof GroupRequestError) return fail(error.code === "unauthorized" ? "sign_in" : `group_${error.code}`);
+        if (error instanceof GroupRequestError) return fail(error.code === "unauthorized" ? "sign_in" : error.code === "group_limit" ? "plan_group_limit" : `group_${error.code}`);
         return fail("network");
     }
 }
@@ -126,6 +128,7 @@ async function createGame(call: Extract<AgentCallInput, { name: "create_game" }>
                 view: { href, title: call.args.name.trim() },
             };
         } catch (error) {
+            if (error instanceof PersistenceError && error.code === "game_limit") return fail("plan_game_limit");
             return fail(error instanceof PersistenceError ? statusError(error.status) : "server_error");
         }
     } catch {

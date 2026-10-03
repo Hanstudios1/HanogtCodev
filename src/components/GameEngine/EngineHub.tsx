@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type Copy } from "@/lib/i18n";
 import { createProjectFromTemplate, PROJECT_TEMPLATES, type TemplateInfo } from "@/lib/game-engine/templates";
 import { createEngineId } from "@/lib/game-engine/ids";
 import { ENGINE_VERSION, ENGINE_VERSION_LABEL, type GameProjectDocument } from "@/lib/game-engine/types";
@@ -34,6 +34,7 @@ import {
     listLocalProjects,
     loadCloudProject,
     loadLocalProject,
+    PersistenceError,
     saveLocalProject,
     type ProjectSummary,
 } from "./editor/persistence";
@@ -115,9 +116,16 @@ function WhatsNew() {
     );
 }
 
+/** The plan's game-project limit was reached (POST /api/game-projects answers game_limit). */
+const LIMIT_COPY = {
+    reached: { TR: "Planının oyun projesi sınırına ulaştın ({limit} proje). Yer açmak için eski bir projeyi sil ya da planını yükselt.", EN: "You've reached your plan's game project limit ({limit} projects). Delete an old project to make room, or upgrade your plan." },
+    pricing: { TR: "Fiyatlandırma", EN: "Pricing" },
+} satisfies Record<string, Copy>;
+
 export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cloud" | "local") => void }) {
     const t = useEngineText();
-    const { language } = useI18n();
+    const { language, tx } = useI18n();
+    const [limitReached, setLimitReached] = useState<number | null>(null);
     const locale = engineLocale(language);
     const { data: session, status } = useSession();
     const signedIn = Boolean(session?.user?.email);
@@ -162,8 +170,13 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                 onOpen(project.id, "local");
             }
         } catch (error) {
-            toast(error instanceof Error ? error.message : t("createFailed"), "error");
             setCreating(false);
+            if (error instanceof PersistenceError && error.code === "game_limit") {
+                setPending(null);
+                setLimitReached(error.limit ?? 0);
+                return;
+            }
+            toast(error instanceof Error ? error.message : t("createFailed"), "error");
         }
     };
 
@@ -221,6 +234,12 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                             <Link href="/arcade" className="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-zinc-300 transition hover:bg-white/5"><Rocket className="h-4 w-4" />{t("arcade")}</Link>
                         </div>
                         {!signedIn && status !== "loading" ? <p className="mt-4 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-3 py-2 text-[12.5px] leading-relaxed text-amber-100/90">{t("signInForCloud")} <Link href="/login?callbackUrl=/game-engine" className="font-semibold underline underline-offset-2">{t("signIn")}</Link></p> : null}
+                        {limitReached !== null ? (
+                            <p role="alert" data-game-limit className="mt-4 max-w-xl rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] leading-relaxed text-rose-100">
+                                {tx(LIMIT_COPY.reached, { limit: limitReached })}{" "}
+                                <Link href="/plans" className="font-semibold underline underline-offset-2">{tx(LIMIT_COPY.pricing)}</Link>
+                            </p>
+                        ) : null}
                     </div>
                     <div className="relative hidden animate-fade-up lg:block" style={{ animationDelay: "120ms" }}>
                         <div className="grid grid-cols-3 gap-3 [perspective:900px]">

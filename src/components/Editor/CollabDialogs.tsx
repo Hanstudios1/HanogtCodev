@@ -14,7 +14,7 @@ const C = {
     joinTitle: { TR: "Canlı kod oturumuna katıl", EN: "Join the live coding session" },
     joinDescription: { TR: "{owner} seni “{title}” oturumuna davet etti.", EN: "{owner} invited you to “{title}”." },
     inSession: { TR: "Oturumdakiler", EN: "In the session" },
-    full: { TR: "Oturum dolu (en fazla 5 kişi). Biri ayrılınca katılabilirsin.", EN: "The session is full (5 people at most). You can join when someone leaves." },
+    full: { TR: "Oturum dolu: başlatanın planı en fazla {count} kişiye izin veriyor. Biri ayrılınca katılabilirsin.", EN: "The session is full: its owner's plan allows {count} people at most. You can join when someone leaves." },
     readOnly: { TR: "Oturum sahibi şu anda düzenlemeyi kapatmış; katılınca izleyebilirsin.", EN: "The owner has turned editing off for now; you can watch after joining." },
     joinNote: { TR: "Katılınca kendi açık dosyaların korunur; oturumdan ayrılınca onlara geri dönersin. Adın, avatarın ve imlecin oturumdakilere görünür.", EN: "Your own open files are kept while you're in the session and come back when you leave. Your name, avatar and cursor are visible to the people in it." },
     join: { TR: "Katıl", EN: "Join" },
@@ -109,7 +109,7 @@ export default function CollabDialogs({ collab, onKeepCopy }: {
                                 </ul>
                             </div>
                         )}
-                        {info.full && <p role="alert" className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">{tx(C.full)}</p>}
+                        {info.full && <p role="alert" className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">{tx(C.full, { count: info.maxPeople })}</p>}
                         {info.readOnly && !info.full && (
                             <p className="flex items-start gap-1.5 rounded-xl bg-zinc-100 px-3 py-2 text-xs text-zinc-600 dark:bg-white/[0.06] dark:text-zinc-300">
                                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />{tx(C.readOnly)}

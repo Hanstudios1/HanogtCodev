@@ -56,14 +56,22 @@ export type GameScriptRecord = {
 };
 
 export class GameApiError extends Error {
-    constructor(
-        public readonly status: number,
-        message: string,
-        public readonly headers: Record<string, string> = {},
-    ) {
+    readonly status: number;
+    readonly headers: Record<string, string>;
+    /** Machine-readable fields next to the message (e.g. { code: "game_limit", plan, limit }). */
+    readonly extra: Record<string, unknown>;
+    constructor(status: number, message: string, headers: Record<string, string> = {}, extra: Record<string, unknown> = {}) {
         super(message);
         this.name = "GameApiError";
+        this.status = status;
+        this.headers = headers;
+        this.extra = extra;
     }
+}
+
+/** The game-project limit of the plan was reached: the code, the plan and the limit, so pages can translate it. */
+export function gameLimitError(plan: string, limit: number | null) {
+    return new GameApiError(409, `Planının oyun projesi sınırına ulaştın (${limit ?? "∞"}). Yer açmak için eski bir projeyi sil ya da planını yükselt: /plans`, {}, { code: "game_limit", plan, limit });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -159,7 +167,7 @@ export function apiJson(payload: unknown, status = 200, headers: Record<string, 
 }
 
 export function apiError(error: unknown, fallbackMessage: string, fallbackStatus = 500) {
-    if (error instanceof GameApiError) return apiJson({ error: error.message }, error.status, error.headers);
+    if (error instanceof GameApiError) return apiJson({ ...error.extra, error: error.message }, error.status, error.headers);
     if (error instanceof SchemaError) return apiJson({ error: error.message }, 400);
     if (isWriteConflict(error)) {
         return apiJson({ error: "Proje başka bir oturumda değişti. Güncel sürümü yükleyip tekrar deneyin." }, 409);

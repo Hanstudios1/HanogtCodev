@@ -19,10 +19,12 @@ const C = {
     loadFailed: { TR: "Oyun yüklenemedi.", EN: "The game couldn't be loaded." },
     likeFailed: { TR: "Beğeni kaydedilemedi.", EN: "Your like couldn't be saved." },
     remixFailed: { TR: "Remix oluşturulamadı.", EN: "The remix couldn't be created." },
+    remixLimit: { TR: "Planının oyun projesi sınırına ulaştın ({limit} proje). Eski bir projeyi sil ya da Fiyatlandırma'dan planını yükselt.", EN: "You've reached your plan's game project limit ({limit} projects). Delete an old project or upgrade your plan on Pricing." },
     remixLocked: { TR: "Yapımcı bu oyunun remikslenmesine izin vermiyor.", EN: "The author doesn't allow remixes of this game." },
     remixOf: { TR: "{author} tarafından yapılan {title} oyununun remiksi", EN: "A remix of {title} by {author}" },
     remixAllowed: { TR: "Yapımcı remikslemeye izin veriyor; remiksini yayımlarsan ona atıf yapılır.", EN: "The author allows remixes; if you publish yours, they're credited." },
     linkCopied: { TR: "Bağlantı kopyalandı.", EN: "Link copied." },
+    pricing: { TR: "Fiyatlandırma", EN: "Pricing" },
 } satisfies Record<string, CopyText>;
 
 export default function ArcadePlayerView({ gameId }: { gameId: string }) {
@@ -40,6 +42,7 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
     const [muted, setMuted] = useState(false);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
+    const [limitReached, setLimitReached] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -111,7 +114,13 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
             if (session?.user) {
                 // The server checks the author's permission and records the attribution.
                 const response = await fetch(`/api/arcade/${encodeURIComponent(gameId)}/remix`, { method: "POST" });
-                const payload = await response.json().catch(() => ({})) as { projectId?: string; error?: string };
+                const payload = await response.json().catch(() => ({})) as { projectId?: string; error?: string; code?: string; limit?: number };
+                if (payload.code === "game_limit") {
+                    setNotice(tx(C.remixLimit, { limit: typeof payload.limit === "number" ? payload.limit : "?" }));
+                    setLimitReached(true);
+                    setBusy(false);
+                    return;
+                }
                 if (!response.ok || !payload.projectId) throw new Error(payload.error || "");
                 router.push(`/game-engine?project=${encodeURIComponent(payload.projectId)}&source=cloud`);
             } else {
@@ -232,7 +241,12 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                             )}
                             <button type="button" onClick={() => void share()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 text-[13px] font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/10"><Share2 className="h-4 w-4" />{tx({ TR: "Paylaş", EN: "Share" })}</button>
                             <Link href="/game-engine/docs" className="flex h-9 w-full items-center justify-center gap-1.5 text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white">{tx({ TR: "Bu oyun nasıl yapıldı? Belgeler", EN: "How was this made? Docs" })}<ExternalLink className="h-3.5 w-3.5" /></Link>
-                            {notice ? <p className="rounded-lg bg-zinc-100 px-3 py-2 text-[12px] text-zinc-600 dark:bg-white/5 dark:text-zinc-300" role="status">{notice}</p> : null}
+                            {notice ? (
+                                <p className="rounded-lg bg-zinc-100 px-3 py-2 text-[12px] text-zinc-600 dark:bg-white/5 dark:text-zinc-300" role="status">
+                                    {notice}
+                                    {limitReached ? <> <Link href="/plans" className="font-semibold text-indigo-600 underline underline-offset-2 dark:text-indigo-300">{tx(C.pricing)}</Link></> : null}
+                                </p>
+                            ) : null}
                         </div>
                     </aside>
                 </div>

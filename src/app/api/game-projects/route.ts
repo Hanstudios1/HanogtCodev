@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import { createEngineId, nowIso } from "@/lib/game-engine/ids";
 import { createProjectFromTemplate } from "@/lib/game-engine/templates";
 import { commitServerMutations, runServerQuery } from "@/lib/server/firebase-rest";
@@ -7,7 +7,7 @@ import {
     apiJson,
     assertOnlyKeys,
     authorizeGameRequest,
-    GameApiError,
+    gameLimitError,
     projectDocumentFields,
     rateHeaders,
     readDimension,
@@ -20,7 +20,7 @@ import {
     validateProject,
     type GameProjectRecord,
 } from "./_shared";
-import { projectLimitFor } from "@/lib/server/plans";
+import { planQuota } from "@/lib/server/entitlements";
 
 export const runtime = "nodejs";
 
@@ -59,19 +59,15 @@ export async function POST(request: NextRequest) {
         const body = await readJsonBody(request);
         assertOnlyKeys(body, ["project", "thumbnail", "name", "description", "dimension", "templateId"]);
 
-        // Free 10, Plus 40, Pro unlimited (src/lib/plans.ts PLAN_PROJECT_LIMITS).
-        const { limit } = await projectLimitFor(email, "game");
-        if (limit !== null) {
-            const existing = await runServerQuery<GameProjectRecord>({
-                collectionId: "game_projects",
-                where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
-                select: ["ownerEmail"],
-                limit: limit + 1,
-            });
-            if (existing.length >= limit) {
-                throw new GameApiError(409, `Planının oyun projesi sınırına ulaştın (${limit}). Yer açmak için eski bir projeyi sil ya da planını yükselt: /plans`);
-            }
-        }
+        // Free 10, Plus 40, Pro unlimited (src/lib/plans.ts PLAN_PROJECT_LIMITS); a purchase Paddle
+        // hasn't reported yet is looked up before refusing (entitlements.ts).
+        const quota = await planQuota(email, "game", async (upTo) => (await runServerQuery<GameProjectRecord>({
+            collectionId: "game_projects",
+            where: [{ field: "ownerEmail", op: "EQUAL", value: email }],
+            select: ["ownerEmail"],
+            limit: upTo,
+        })).length, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
+        if (!quota.allowed) throw gameLimitError(quota.plan, quota.limit);
 
         const projectId = createEngineId("game").replace(/[^A-Za-z0-9_-]/g, "_");
         let source: unknown = body.project;

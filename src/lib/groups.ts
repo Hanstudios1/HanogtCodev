@@ -429,7 +429,7 @@ export type GroupErrorCode =
     | "invalid_id" | "invalid_email" | "not_found" | "forbidden" | "self_action"
     | "name_too_short" | "name_too_long" | "description_too_long" | "rules_too_long"
     | "invalid_template" | "invalid_color" | "invalid_emoji" | "invalid_topics"
-    | "project_not_found" | "group_limit" | "group_full" | "not_friend" | "user_not_found"
+    | "project_not_found" | "group_limit" | "target_group_limit" | "group_full" | "not_friend" | "user_not_found"
     | "invites_disabled" | "invite_not_found" | "banned" | "target_banned" | "target_not_member"
     | "cannot_remove_owner" | "cannot_remove_admin" | "owner_cannot_leave" | "confirm_mismatch"
     | "link_not_found" | "link_expired" | "link_exhausted" | "link_limit" | "invalid_expiry" | "invalid_max_uses"

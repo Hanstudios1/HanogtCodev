@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, Check, LoaderCircle, MessageSquareText, Mic, UsersRound } from "lucide-react";
+import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import CollabFriendPicker, { useCollabFriends } from "@/components/Editor/CollabFriendPicker";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
@@ -8,6 +9,7 @@ import Modal, { buttonClasses } from "@/components/Editor/Modal";
 import { COLLAB_LIMITS, isCollabFileId, randomId } from "@/lib/collab/protocol";
 import type { CollabStartInput } from "@/lib/collab/use-editor-collab";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { PLAN_COLLAB_LIMITS, PLAN_COPY } from "@/lib/plans";
 
 const C = {
     title: { TR: "Ekiple beraber kod düzenle", EN: "Edit code together with your team" },
@@ -19,7 +21,10 @@ const C = {
     totalTooLarge: { TR: "Seçilen dosyalar toplam 1.000.000 karakteri aşıyor.", EN: "The selected files exceed 1,000,000 characters in total." },
     tooMany: { TR: "En fazla {count} dosya seçebilirsin.", EN: "You can select up to {count} files." },
     invite: { TR: "Arkadaşlarını davet et", EN: "Invite friends" },
-    inviteHint: { TR: "Yalnızca arkadaşların davet edilebilir. Davet edilenlere bildirim gider; davet bağlantısıyla da katılabilirler. Oturuma en fazla 5 kişi katılabilir.", EN: "Only your friends can be invited. They get a notification and can also join with the invite link. Up to 5 people can be in a session." },
+    inviteHint: { TR: "Yalnızca arkadaşların davet edilebilir. Davet edilenlere bildirim gider; davet bağlantısıyla da katılabilirler.", EN: "Only your friends can be invited. They get a notification and can also join with the invite link." },
+    planPeople: { TR: "{plan} planınla oturumda sen dahil en fazla {people} kişi olabilir.", EN: "With your {plan} plan, a session holds up to {people} people, you included." },
+    planUpgrade: { TR: "Plus ile {plus}, Pro ile {pro} kişi.", EN: "Plus allows {plus}, Pro {pro} people." },
+    pricing: { TR: "Fiyatlandırma", EN: "Pricing" },
     later: { TR: "Davetleri sonra da gönderebilirsin.", EN: "You can also invite people later." },
     features: { TR: "Canlı imleçler · sohbet · sesli konuşma · takip modu", EN: "Live cursors · chat · voice · follow mode" },
     start: { TR: "Oturumu başlat", EN: "Start the session" },
@@ -55,7 +60,9 @@ export default function CollabStartDialog({ open, onClose, files, defaultTitle, 
     const [title, setTitle] = useState(defaultTitle);
     const [chosen, setChosen] = useState<Set<string>>(() => defaultSelection(files));
     const [invite, setInvite] = useState<Set<string>>(() => new Set());
-    const { friends, failed, retry } = useCollabFriends(open);
+    const { friends, limits, failed, retry } = useCollabFriends(open);
+    // Until the plan is known, the Free plan's numbers (the server checks again).
+    const people = limits?.people ?? PLAN_COLLAB_LIMITS.free.people;
     // Every opening starts from the current tabs.
     const [wasOpen, setWasOpen] = useState(open);
     if (open !== wasOpen) {
@@ -82,7 +89,7 @@ export default function CollabStartDialog({ open, onClose, files, defaultTitle, 
     const toggleFriend = (email: string) => setInvite((current) => {
         const next = new Set(current);
         if (next.has(email)) next.delete(email);
-        else if (next.size < COLLAB_LIMITS.maxParticipants - 1) next.add(email);
+        else if (next.size < Math.min(people - 1, limits?.invites ?? people - 1)) next.add(email);
         return next;
     });
 
@@ -167,7 +174,13 @@ export default function CollabStartDialog({ open, onClose, files, defaultTitle, 
                 <section className="min-w-0">
                     <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">{tx(C.invite)}</h3>
                     <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.inviteHint)}</p>
-                    <CollabFriendPicker friends={friends} failed={failed} onRetry={retry} selected={invite} onToggle={toggleFriend} max={COLLAB_LIMITS.maxParticipants - 1} />
+                    {limits ? (
+                        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400" data-collab-plan>
+                            {tx(C.planPeople, { plan: tx(PLAN_COPY[limits.plan].name), people: limits.people })}
+                            {limits.plan !== "pro" ? <> {tx(C.planUpgrade, { plus: PLAN_COLLAB_LIMITS.plus.people, pro: PLAN_COLLAB_LIMITS.pro.people })} <Link href="/plans" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-300">{tx(C.pricing)}</Link></> : null}
+                        </p>
+                    ) : null}
+                    <CollabFriendPicker friends={friends} failed={failed} onRetry={retry} selected={invite} onToggle={toggleFriend} max={Math.max(0, Math.min(people - 1, limits?.invites ?? people - 1))} />
                     {!invite.size && friends?.length ? <p className="mt-1 text-xs text-zinc-400">{tx(C.later)}</p> : null}
                 </section>
             </div>

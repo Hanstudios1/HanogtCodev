@@ -10,6 +10,7 @@ import {
     type CollabInfoResponse,
     type CollabInvitee,
     type CollabMeta,
+    type CollabPlanLimits,
     type CollabPollResponse,
     type CollabSignalKind,
 } from "./protocol";
@@ -66,7 +67,7 @@ export type CollabOutgoingSignal = { to: string; toClient: number; kind: CollabS
 const base = (id: string) => `/api/collab/${encodeURIComponent(id)}`;
 
 export const collabApi = {
-    friends: () => request<{ friends: CollabFriend[] }>("/api/collab?view=friends"),
+    friends: () => request<{ friends: CollabFriend[]; limits?: CollabPlanLimits }>("/api/collab?view=friends"),
     create: (body: { title: string; files: CollabCreateFile[]; invite: string[] }) => request<{ id: string; meta: CollabMeta }>("/api/collab", { method: "POST", json: body }),
     info: (id: string) => request<CollabInfoResponse>(`${base(id)}?view=info`),
     poll: (id: string, params: { after: number; chat: number; signals: boolean; client: number }) => {

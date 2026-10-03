@@ -1,7 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { getActiveSession } from "@/lib/server/active-session";
+import { planQuota } from "@/lib/server/entitlements";
 import { commitServerMutations, countServerQuery, getServerDocument, isFirebaseServerConfigured, isWriteConflict } from "@/lib/server/firebase-rest";
-import { projectLimitFor } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
@@ -38,11 +38,12 @@ export async function POST(request: NextRequest) {
         const existing = await getServerDocument<{ email?: unknown }>(path);
         if (existing) return existing.email === active.email ? json({ ok: true, created: false }) : json({ error: "forbidden" }, 403);
 
-        const { plan, limit } = await projectLimitFor(active.email, "code");
-        if (limit !== null) {
-            const count = await countServerQuery({ collectionId: "projects", where: [{ field: "email", op: "EQUAL", value: active.email }], upTo: limit + 1 });
-            if (typeof count === "number" && count >= limit) return json({ error: "project_limit", plan, limit }, 403);
-        }
+        // A purchase Paddle hasn't reported yet is looked up before refusing (entitlements.ts).
+        const quota = await planQuota(active.email, "code", async (upTo) => {
+            const count = await countServerQuery({ collectionId: "projects", where: [{ field: "email", op: "EQUAL", value: active.email }], upTo });
+            return typeof count === "number" ? count : 0;
+        }, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
+        if (!quota.allowed) return json({ error: "project_limit", plan: quota.plan, limit: quota.limit }, 403);
         const now = new Date();
         await commitServerMutations([{
             type: "create",

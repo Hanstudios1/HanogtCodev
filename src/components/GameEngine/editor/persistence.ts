@@ -25,9 +25,18 @@ export interface ProjectSummary {
 }
 
 export class PersistenceError extends Error {
-    constructor(message: string, readonly status = 0) {
+    readonly status: number;
+    /** The server's machine-readable code ("game_limit"), with the plan and its limit when it sent them. */
+    readonly code: string | null;
+    readonly plan: string | null;
+    readonly limit: number | null;
+    constructor(message: string, status = 0, details: { code?: unknown; plan?: unknown; limit?: unknown } = {}) {
         super(message);
         this.name = "PersistenceError";
+        this.status = status;
+        this.code = typeof details.code === "string" ? details.code : null;
+        this.plan = typeof details.plan === "string" ? details.plan : null;
+        this.limit = typeof details.limit === "number" ? details.limit : null;
     }
 }
 
@@ -149,8 +158,8 @@ async function request<T>(url: string, init: RequestInit = {}): Promise<T> {
     } catch {
         throw new PersistenceError("Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edin.");
     }
-    const payload = await response.json().catch(() => ({})) as T & { error?: string };
-    if (!response.ok) throw new PersistenceError(payload.error || `İstek başarısız oldu (${response.status}).`, response.status);
+    const payload = await response.json().catch(() => ({})) as T & { error?: string; code?: unknown; plan?: unknown; limit?: unknown };
+    if (!response.ok) throw new PersistenceError(payload.error || `İstek başarısız oldu (${response.status}).`, response.status, payload);
     return payload;
 }
 

@@ -1,5 +1,29 @@
 # Değişiklik Günlüğü
 
+## 0.3.8 — 2026-10-03
+
+### Plan hakları her yerde, ödeme bildirimini beklemeden
+
+- Ödeyip bildirim gelmeden doğrudan editöre, oyun motoruna, gruplara ya da
+  kendi anahtar bağlantılarına geçen kişi artık Ücretsiz sınırlara
+  takılmıyor: bir sınır reddetmeden önce Paddle'a bir kez soruluyor
+  (`healBeforeRefusing`, hesap başına 10 dakikada bir, 6 sn). Plan yükseldiyse
+  yalnızca reddeden kontrol yeni sınırla, sayım da yeni sınırla yeniden
+  yapılıyor (`planQuota`).
+- Oyun projesi sınırı `{ code: "game_limit", plan, limit }` döndürüyor;
+  Hanogt Engine ve Arcade'deki "Remix" çevrilmiş metin ve Fiyatlandırma
+  bağlantısı gösteriyor (önceden ham Türkçe metin ya da `server_error`).
+- Grup sınırı plana göre yazılıyor (Ücretsiz 3, Plus 10, Pro sınırsız);
+  eski "en fazla 30 grup" metni kalktı. Grup sahipliği devrinde alıcının
+  grup sınırına bakılıyor (`target_group_limit`).
+- Ekiple düzenleme kişi sınırı oturumu başlatanın planına göre: Ücretsiz 2,
+  Plus 5, Pro 30 kişi (davet sınırı 4 / 12 / 60). Sahip yükseltince açık
+  oturum hemen genişliyor; düşürünce içeridekiler kalıyor, yeni katılım
+  plana göre. Sesli görüşme aynı anda en fazla 5 kişi (eşler arası ağ).
+- Plan değişince (ödeme, sürdürme, değişiklik) diğer sekmeler de haberdar
+  oluyor (`hanogt:plan-changed`); kendi anahtar bağlantıları yeniden okunuyor.
+- Fiyatlandırma, SSS, Hanogt AI bilgisi ve Rehber yeni sayıları gösteriyor.
+
 ## 0.3.7 — 2026-10-03
 
 ### Ödeme güvenliği ve doğruluğu

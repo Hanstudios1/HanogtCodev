@@ -1,7 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { isAiProviderId, isPlausibleApiKey, type AiConnectionsErrorCode } from "@/lib/ai/connections";
 import { getActiveSession } from "@/lib/server/active-session";
 import { addConnection, canAddConnection, deleteConnection, listConnections, testKey, updateConnection } from "@/lib/server/ai-connections";
+import { healBeforeRefusing } from "@/lib/server/entitlements";
 import { isWriteConflict } from "@/lib/server/firebase-rest";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
@@ -64,6 +65,19 @@ function fail(code: AiConnectionsErrorCode, headers: Record<string, string> = {}
     return json({ error: MESSAGES[code], code }, STATUS[code], headers);
 }
 
+const keepRunning = (work: Promise<unknown>) => after(() => work.then(() => undefined, () => undefined));
+
+/**
+ * A plan refusal (no connections on Free, or the plan's number reached) may
+ * be a purchase Paddle hasn't reported yet: ask Paddle once, then try again.
+ */
+async function withPlanRetry<T extends { ok: boolean; code?: AiConnectionsErrorCode }>(email: string, run: () => Promise<T>): Promise<T> {
+    const first = await run();
+    if (first.ok || (first.code !== "plan_required" && first.code !== "limit_reached")) return first;
+    const healed = await healBeforeRefusing(email, null, { onLate: keepRunning });
+    return healed.upgraded ? run() : first;
+}
+
 export async function GET() {
     const active = await getActiveSession();
     if (!active) return fail("auth_required");
@@ -98,14 +112,14 @@ export async function POST(request: NextRequest) {
             case "test": {
                 const apiKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
                 if (!isAiProviderId(body.provider) || !isPlausibleApiKey(apiKey)) return fail("invalid_request");
-                const allowed = await canAddConnection(email);
+                const allowed = await withPlanRetry(email, () => canAddConnection(email));
                 if (!allowed.ok) return fail(allowed.code);
                 const result = await testKey(body.provider, apiKey);
                 return result.ok ? json({ ok: true, models: result.models }) : fail(result.reason);
             }
             case "add": {
                 // Explicit consent (KVKK m.9/6-a) must come with the request itself: `consent: true`.
-                const result = await addConnection(email, { provider: body.provider, apiKey: body.apiKey, model: body.model, label: body.label, consent: body.consent });
+                const result = await withPlanRetry(email, () => addConnection(email, { provider: body.provider, apiKey: body.apiKey, model: body.model, label: body.label, consent: body.consent }));
                 return result.ok ? json({ ...result.state, addedId: result.id }) : fail(result.code);
             }
             case "update": {

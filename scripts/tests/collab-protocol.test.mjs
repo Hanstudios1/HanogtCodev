@@ -246,7 +246,7 @@ test("reading and writing: participants only; read-only and frozen sessions", ()
     assert.equal(readAccess(keyless, ALI, NOW), "not_found");
 });
 
-test("joining: invited friends of the owner, at most five people", () => {
+test("joining: invited friends of the owner, at most five people in a session without a stored limit", () => {
     const view = readSessionRecord(stored());
     const friends = [ALI, AYSE];
     assert.equal(joinDecision(view, ALI, friends, NOW), "member");
@@ -269,6 +269,47 @@ test("invitations: friends only, never the owner, within the limit", () => {
     assert.deepEqual(invitableEmails(view, [OWNER], [OWNER]).rejected, [OWNER]);
     const crowded = readSessionRecord(stored({ invited: Array.from({ length: COLLAB_LIMITS.maxInvites }, (_, index) => `p${index}@example.com`) }));
     assert.deepEqual(invitableEmails(crowded, ["new@example.com"], ["new@example.com"]).accepted, []);
+});
+
+test("the owner's plan sets the session size: Free 2, Plus 5, Pro 30 people", async () => {
+    const { PLAN_COLLAB_LIMITS } = await load("lib/plans.ts");
+    const people = (count) => Array.from({ length: count }, (_, index) => (index === 0 ? OWNER : `p${index}@example.com`));
+    const keyed = (emails) => Object.fromEntries(emails.map((email, index) => [email, `k${String(index).padStart(11, "0")}`]));
+    for (const [plan, limits] of Object.entries(PLAN_COLLAB_LIMITS)) {
+        const room = (inside) => readSessionRecord(stored({ participants: inside, keys: keyed(inside), invited: [...inside.slice(1), AYSE], maxPeople: limits.people, maxInvites: limits.invites }));
+        const friends = [AYSE];
+        assert.equal(joinDecision(room(people(limits.people - 1)), AYSE, friends, NOW), "ok", `${plan}: one place left`);
+        assert.equal(joinDecision(room(people(limits.people)), AYSE, friends, NOW), "full", `${plan}: ${limits.people} people is full`);
+        // The owner moved to a lower plan: nobody is removed, but nobody new joins.
+        assert.equal(joinDecision(room(people(limits.people + 1)), AYSE, friends, NOW), "full");
+        const meta = publicMeta("A1b2C3d4E5f6G7h8I9j0", room(people(1)));
+        assert.deepEqual([meta.maxPeople, meta.maxInvites], [limits.people, limits.invites]);
+        assert.deepEqual([readMeta(meta).maxPeople, readMeta(meta).maxInvites], [limits.people, limits.invites]);
+    }
+    assert.equal(COLLAB_LIMITS.maxParticipants, PLAN_COLLAB_LIMITS.pro.people, "no plan above the hard cap");
+    assert.equal(COLLAB_LIMITS.maxInvites, PLAN_COLLAB_LIMITS.pro.invites);
+});
+
+test("sessions from before per-plan limits keep five people and twelve invitations; junk is never a bigger room", () => {
+    const legacy = readSessionRecord(stored());
+    assert.deepEqual([legacy.maxPeople, legacy.maxInvites], [COLLAB_LIMITS.legacyPeople, COLLAB_LIMITS.legacyInvites]);
+    for (const junk of ["30", 0, -3, 2.5, null, Number.NaN]) {
+        const view = readSessionRecord(stored({ maxPeople: junk, maxInvites: junk }));
+        assert.deepEqual([view.maxPeople, view.maxInvites], [COLLAB_LIMITS.legacyPeople, COLLAB_LIMITS.legacyInvites], `maxPeople ${String(junk)}`);
+    }
+    const huge = readSessionRecord(stored({ maxPeople: 1_000, maxInvites: 1_000 }));
+    assert.deepEqual([huge.maxPeople, huge.maxInvites], [COLLAB_LIMITS.maxParticipants, COLLAB_LIMITS.maxInvites], "capped at Pro's limits");
+    assert.equal(readMeta({ ...publicMeta("A1b2C3d4E5f6G7h8I9j0", legacy), maxPeople: 999 }).maxPeople, COLLAB_LIMITS.maxParticipants);
+});
+
+test("invitations stop at the session's own limit", () => {
+    const free = readSessionRecord(stored({ invited: [ALI, AYSE, "c@example.com"], maxPeople: 2, maxInvites: 4 }));
+    const friends = ["d@example.com", "e@example.com", "f@example.com"];
+    assert.deepEqual(invitableEmails(free, friends, friends), { accepted: ["d@example.com"], rejected: [] }, "one invitation left on Free");
+    const full = readSessionRecord(stored({ invited: [ALI, AYSE, "c@example.com", "d@example.com"], maxPeople: 2, maxInvites: 4 }));
+    assert.deepEqual(invitableEmails(full, ["e@example.com"], friends).accepted, []);
+    const pro = readSessionRecord(stored({ invited: [ALI, AYSE, "c@example.com", "d@example.com"], maxPeople: 30, maxInvites: 60 }));
+    assert.deepEqual(invitableEmails(pro, ["e@example.com"], friends).accepted, ["e@example.com"], "the same session after moving to Pro");
 });
 
 test("the public meta never contains e-mail addresses", () => {

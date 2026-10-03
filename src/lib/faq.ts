@@ -1,5 +1,5 @@
 import type { Copy } from "@/lib/i18n";
-import { PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
+import { PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
 export type Faq = { id: string; category: Copy; question: Copy; answer: Copy };
@@ -43,6 +43,11 @@ const PLAN_NUMBERS = {
     gamePlus: limit(PLAN_PROJECT_LIMITS.plus.game),
     connectionsPlus: PLAN_AI_CONNECTIONS.plus,
     connectionsPro: PLAN_AI_CONNECTIONS.pro,
+    groupsFree: limit(PLAN_GROUP_LIMITS.free),
+    groupsPlus: limit(PLAN_GROUP_LIMITS.plus),
+    collabFree: PLAN_COLLAB_LIMITS.free.people,
+    collabPlus: PLAN_COLLAB_LIMITS.plus.people,
+    collabPro: PLAN_COLLAB_LIMITS.pro.people,
 };
 
 /** Frequently asked questions: shown on /feedback and used by Hanogt AI's knowledge base. */
@@ -142,8 +147,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.billing,
         question: { TR: "Plus ve Pro planlarında neler var?", EN: "What do the Plus and Pro plans include?" },
         answer: {
-            TR: "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile günde {aiFree} yerine Plus'ta {aiPlus}, Pro'da {aiPro} mesaj; Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama ve destek taleplerinde öncelik. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
-            EN: "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} (Plus) or {aiPro} (Pro) Hanogt AI messages a day instead of {aiFree}; {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; and priority on support tickets. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
+            TR: "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile günde {aiFree} yerine Plus'ta {aiPlus}, Pro'da {aiPro} mesaj; Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama ve destek taleplerinde öncelik. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
+            EN: "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} (Plus) or {aiPro} (Pro) Hanogt AI messages a day instead of {aiFree}; {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; and priority on support tickets. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
             vars: PLAN_NUMBERS,
         },
     },
