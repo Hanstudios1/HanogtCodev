@@ -8,7 +8,7 @@ Hanogt Codev; Next.js, Monaco Editor, NextAuth ve Firebase tabanlı çevrim içi
 - Yapılandırılmış, izole ve Piston uyumlu bir runner üzerinden kod çalıştırma
 - Sunucu tarafı kod kötüye kullanım taraması ve Firestore destekli dağıtık oran sınırlama
 - Arkadaşlık, engelleme, güncel çevrim içi durumu ve gerçek zamanlı mesajlaşma
-- WebRTC sesli arama ve Firebase Storage tabanlı, süre/boyut sınırlı sesli mesajlar
+- WebRTC sesli arama (TURN desteği, ses ayarları) ve Firestore'da saklanan, süre/boyut sınırlı sesli mesajlar
 - Hanogt Media'da proje yayımlama, lisans seçimi, indirme, beğeni, yorum, bildirim ve popüler proje keşfi
 - Davet/rol yönetimli grup çalışma alanı, ortak dosyalar, gerçek zamanlı sohbet, bire bir WebRTC araması ve sesli mesaj
 - Tek Çalıştır komutuyla en fazla sekiz farklı dildeki dosyayı bağımsız işler olarak paralel çalıştırma

@@ -707,7 +707,7 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
         if (isNewest(message)) await updateDoc(doc(db, "chats", chatId), { lastMessage: previewText(nextText) }).catch(() => undefined);
     }, [chatId, isNewest, live, partner]);
 
-    // Deleting goes through the server, which also removes a voice recording from Storage.
+    // Deleting goes through the server, which also removes a voice recording (voice_clips, or Storage for older ones).
     const deleteMessage = useCallback(async (message: DmMessage) => {
         await socialApi.dmAction({ action: "delete", with: partner, messageId: message.id });
         setRemoved((current) => ({ ...current, [message.id]: true }));

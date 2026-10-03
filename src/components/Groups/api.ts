@@ -15,7 +15,7 @@ import type {
 export type GroupClientErrorCode =
     | GroupErrorCode
     | "network" | "files" | "chat" | "save_failed" | "file_deleted" | "file_too_large" | "file_exists" | "file_name"
-    | "files_limit" | "voice_too_large" | "voice_failed" | "voice_unavailable" | "mic_denied" | "mic_missing" | "mic_busy" | "zip_failed"
+    | "files_limit" | "voice_too_large" | "voice_format" | "voice_failed" | "voice_unavailable" | "mic_denied" | "mic_missing" | "mic_busy" | "zip_failed"
     | "editor_too_large" | "clipboard_failed" | "message_failed" | "offline";
 
 export class GroupRequestError extends Error {
@@ -83,6 +83,7 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     file_name: { TR: "Dosya adı geçersiz. \\ : * ? \" < > | karakterlerini kullanmayın.", EN: "Invalid file name. Don't use \\ : * ? \" < > | characters." },
     files_limit: { TR: "Bir grupta en fazla 50 dosya olabilir.", EN: "A group can have at most 50 files." },
     voice_too_large: { TR: "Sesli mesaj 3 MB sınırını aşıyor.", EN: "The voice message exceeds the 3 MB limit." },
+    voice_format: { TR: "Bu ses biçimi desteklenmiyor. Tarayıcınızı güncelleyip tekrar deneyin.", EN: "This audio format isn't supported. Update your browser and try again." },
     voice_failed: { TR: "Sesli mesaj gönderilemedi.", EN: "The voice message couldn't be sent." },
     voice_unavailable: { TR: "Sesli mesaj kullanılamıyor veya silinmiş.", EN: "The voice message is unavailable or was deleted." },
     mic_denied: { TR: "Mikrofon izni verilmedi.", EN: "Microphone permission was denied." },

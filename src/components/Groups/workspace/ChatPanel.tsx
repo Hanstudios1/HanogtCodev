@@ -359,7 +359,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             if (!live) onServerChange?.();
         } catch (error) {
             const code = error instanceof SocialRequestError ? error.code : "";
-            notify(errorText(code === "voice_too_large" || code === "rate_limited" || code === "network" || code === "not_found" || code === "unauthorized" ? code : "voice_failed"), "error");
+            notify(errorText(code === "voice_too_large" || code === "voice_format" || code === "rate_limited" || code === "network" || code === "not_found" || code === "unauthorized" ? code : "voice_failed"), "error");
         }
     };
 

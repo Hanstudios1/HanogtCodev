@@ -101,6 +101,16 @@
   ],
   "fieldOverrides": [
     {
+      "collectionGroup": "voice_clips",
+      "fieldPath": "data",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "parts",
+      "fieldPath": "data",
+      "indexes": []
+    },
+    {
       "collectionGroup": "calls",
       "fieldPath": "expiresAt",
       "ttl": true,

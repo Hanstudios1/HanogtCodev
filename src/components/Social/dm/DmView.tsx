@@ -50,7 +50,6 @@ const C = {
     copied: { TR: "Mesaj panoya kopyalandı.", EN: "Message copied to the clipboard." },
     copyFailed: { TR: "Panoya kopyalanamadı.", EN: "Couldn't copy to the clipboard." },
     voiceLabel: { TR: "🎤 Sesli mesaj ({time})", EN: "🎤 Voice message ({time})" },
-    deafened: { TR: "Sesin kapalı; sesli mesajları dinlemek için sol alttaki panelden aç.", EN: "Your sound is off; turn it on in the panel at the bottom left to listen." },
 } satisfies Record<string, Copy>;
 
 const EMAIL = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -82,7 +81,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
     const { tx } = useI18n();
     const router = useRouter();
     const social = useSocial();
-    const { me: meState, mode, live, dms, isFriend, isBlocked, person, notify, errorText, confirm, friendAction, audio, now, markBroken } = social;
+    const { me: meState, mode, live, dms, isFriend, isBlocked, person, notify, errorText, confirm, friendAction, now, markBroken } = social;
     const call = useVoiceCall();
     const inCallHere = call.status !== "idle" && call.peer?.email === partnerEmail;
     const busyElsewhere = call.status !== "idle" && !inCallHere;
@@ -178,11 +177,8 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
         notify(tx(await copyText(message.text) ? C.copied : C.copyFailed), "info");
     };
 
+    // Voice messages play regardless of the Social deafen toggle.
     const toggleVoice = (message: DmMessage) => {
-        if (audio.deafened) {
-            notify(tx(C.deafened), "info");
-            return;
-        }
         void player.toggle(message);
     };
 
@@ -190,12 +186,6 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
         const last = [...conversation.messages].reverse().find((message) => message.fromEmail === meState.email && message.type === "text" && !message.deleted && !message.pending);
         if (last) setEditingId(last.id);
     };
-
-    // Deafening stops what is playing.
-    const stopPlayer = player.stop;
-    useEffect(() => {
-        if (audio.deafened) stopPlayer();
-    }, [audio.deafened, stopPlayer]);
 
     const removeFriend = async () => {
         if (!await confirm({ title: tx(C.removeTitle, { name: partner.username }), body: tx(C.removeBody), confirmLabel: tx(C.remove), tone: "danger" })) return;

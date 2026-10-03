@@ -26651,6 +26651,14 @@
       "src/lib/social/api.ts"
     ]
   },
+  "21rt4scrahd": {
+    "en": "This audio format isn't supported. Update your browser and try again.",
+    "tr": "Bu ses biçimi desteklenmiyor. Tarayıcınızı güncelleyip tekrar deneyin.",
+    "files": [
+      "src/components/Groups/api.ts",
+      "src/lib/social/api.ts"
+    ]
+  },
   "4g3brwwaw7": {
     "en": "The voice message couldn't be sent.",
     "tr": "Sesli mesaj gönderilemedi.",
@@ -34373,13 +34381,6 @@
   "r7amvsvqk4": {
     "en": "🎤 Voice message ({time})",
     "tr": "🎤 Sesli mesaj ({time})",
-    "files": [
-      "src/components/Social/dm/DmView.tsx"
-    ]
-  },
-  "l7fmq5dyge": {
-    "en": "Your sound is off; turn it on in the panel at the bottom left to listen.",
-    "tr": "Sesin kapalı; sesli mesajları dinlemek için sol alttaki panelden aç.",
     "files": [
       "src/components/Social/dm/DmView.tsx"
     ]
@@ -44137,13 +44138,6 @@
   "16r24knjad0": {
     "en": "The voice message couldn't be opened or was deleted.",
     "tr": "Sesli mesaj açılamadı veya silinmiş.",
-    "files": [
-      "src/lib/social/api.ts"
-    ]
-  },
-  "21rt4scrahd": {
-    "en": "This audio format isn't supported. Update your browser and try again.",
-    "tr": "Bu ses biçimi desteklenmiyor. Tarayıcını güncelleyip tekrar dene.",
     "files": [
       "src/lib/social/api.ts"
     ]
