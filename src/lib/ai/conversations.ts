@@ -22,6 +22,8 @@ export interface AiMessage {
     error?: boolean;
     /** Why the offline core answered instead of the language model (already localized). */
     notice?: string;
+    /** A link next to the notice: "plans" (a daily limit a bigger plan raises). */
+    noticeAction?: "plans";
     /** Agent actions proposed in this answer and what became of them. */
     agent?: AgentMessageState;
     /** A code file sent with this question (only its name and language are kept). */

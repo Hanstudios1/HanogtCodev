@@ -65,7 +65,7 @@ export const NOTICES: Record<AiFailure, Copy> = {
     auth_required: { TR: "Oturumun yenilenmeli; bu yanıtı Hanogt AI Çekirdeği verdi.", EN: "Your session needs to be renewed; Hanogt AI Core answered this one." },
     not_configured: { TR: "Bu sunucuda dil modeli yapılandırılmamış; yanıtı Hanogt AI Çekirdeği verdi.", EN: "No language model is configured on this server; Hanogt AI Core answered." },
     rate_limited: { TR: "Dakikalık istek sınırı doldu; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The per-minute limit was reached; Hanogt AI Core answered." },
-    daily_limit: { TR: "Günlük dil modeli sınırın doldu; yarına kadar Hanogt AI Çekirdeği yanıt verecek.", EN: "Your daily language-model limit is used up; Hanogt AI Core answers until tomorrow." },
+    daily_limit: { TR: "Günlük dil modeli hakkın doldu; ilk mesajından 24 saat sonra yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "Your daily language-model messages are used up; they renew 24 hours after your first message. Until then Hanogt AI Core answers." },
     network: { TR: "Dil modeline ulaşılamadı; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model couldn't be reached; Hanogt AI Core answered." },
     timeout: { TR: "Dil modeli zamanında yanıt vermedi; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model timed out; Hanogt AI Core answered." },
     upstream: { TR: "Dil modeli hizmeti hata verdi; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model service failed; Hanogt AI Core answered." },
@@ -75,7 +75,7 @@ export const NOTICES: Record<AiFailure, Copy> = {
     connection_quota: { TR: "Sağlayıcı hesabının kotası ya da kredisi bitmiş; sağlayıcının panelinden kontrol et. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "Your provider account is out of quota or credit; check the provider's dashboard. Hanogt AI Core answered." },
     connection_model: { TR: "Seçtiğin model sağlayıcıda bulunamadı; modeli bağlantı ayarlarından değiştir. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "The provider couldn't find the model you chose; change it in the connection settings. Hanogt AI Core answered." },
     connection_rate_limited: { TR: "Sağlayıcının istek sınırına takıldın; yanıtı Hanogt AI Çekirdeği verdi.", EN: "You hit the provider's rate limit; Hanogt AI Core answered." },
-    connection_daily_limit: { TR: "Kendi bağlantılarınla bugünkü mesaj sınırına ulaştın; yarına kadar Hanogt AI Çekirdeği yanıt verecek.", EN: "You've used today's messages for your own connections; Hanogt AI Core answers until tomorrow." },
+    connection_daily_limit: { TR: "Kendi bağlantıların için günlük mesaj hakkın doldu; ilk mesajından 24 saat sonra yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used the day's messages for your own connections; they renew 24 hours after your first one. Until then Hanogt AI Core answers." },
 };
 
 /** Failures caused by the person's own connection: the connection list is refreshed afterwards. */
@@ -84,6 +84,9 @@ export const CONNECTION_FAILURES: ReadonlySet<AiFailure> = new Set<AiFailure>(["
 export const CHAT_COPY = {
     somethingWrong: { TR: "Bir şeyler ters gitti. Lütfen tekrar dene.", EN: "Something went wrong. Please try again." },
     retryIn: { TR: "{seconds} sn sonra tekrar dene.", EN: "Try again in {seconds} s." },
+    dailyLimitAt: { TR: "Günlük {limit} mesajlık Hanogt AI hakkının hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} of today's Hanogt AI messages. Renews: {time}. Until then Hanogt AI Core answers." },
+    ownDailyLimitAt: { TR: "Kendi bağlantıların için günlük {limit} mesajın hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} of the day's messages for your own connections. Renews: {time}. Until then Hanogt AI Core answers." },
+    upgrade: { TR: "Planını yükselt", EN: "Upgrade your plan" },
     followUpFailed: { TR: "İşlem tamamlandı, ancak dil modeline şu an ulaşılamadığı için sonucu özetleyemiyorum. Sonuç yukarıdaki kartta.", EN: "The action finished, but the language model can't be reached right now, so I can't summarise it. The result is on the card above." },
     attachTooLarge: { TR: "Bu dosya çok büyük (en fazla 200 KB).", EN: "This file is too large (200 KB at most)." },
     attachUnreadable: { TR: "Bu dosya metin olarak okunamadı.", EN: "This file couldn't be read as text." },

@@ -1,7 +1,8 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { encodeAgentTrailer, normalizeChatMessages, stripTrailerMark, type AgentTrailerCall, type WireMessage } from "@/lib/ai/agent-protocol";
 import { AGENT_CALL_ID_PATTERN, AGENT_MAX_CALLS, agentToolSchemas, detectSensitiveRequest, isHowToQuestion, sanitizeAgentCall, type SensitiveRequest } from "@/lib/ai/agent-tools";
-import { DEFAULT_CONNECTION, OWN_KEY_LIMITS, isConnectionId, ownKeyRequestParams, type AiConnectionError } from "@/lib/ai/connections";
+import { DEFAULT_CONNECTION, isConnectionId, ownKeyRequestParams, type AiConnectionError } from "@/lib/ai/connections";
+import type { DayQuota } from "@/lib/ai/usage";
 import { explainError, looksLikeError } from "@/lib/ai/errors";
 import { knowledgeText } from "@/lib/ai/knowledge";
 import { searchKnowledge } from "@/lib/ai/retrieval";
@@ -9,9 +10,8 @@ import { BROWSER_LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 import { analyzeCode } from "@/lib/security/advisor";
 import { checkLink, findUrl } from "@/lib/security/links";
 import { getActiveSession } from "@/lib/server/active-session";
-import { OWN_KEY_LIMIT_KEYS, classifyProviderFailure, markUsed, resolveConnectionForChat, shouldRecordUse, type ResolvedConnection } from "@/lib/server/ai-connections";
-import { AI_DAY_MS, AI_LIMIT_KEYS, aiLimitsForEmail } from "@/lib/server/plans";
-import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
+import { classifyProviderFailure, markUsed, resolveConnectionForChat, shouldRecordUse, type ResolvedConnection } from "@/lib/server/ai-connections";
+import { enforceHanogtAi, enforceOwnKeys, quotaHeaders, refusalDetails, type QuotaRefusal } from "@/lib/server/ai-usage";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
 
@@ -79,6 +79,16 @@ function providerConfig() {
 
 function errorResponse(status: number, code: string, error: string, extra: Record<string, string> = {}) {
     return NextResponse.json({ error, code }, { status, headers: jsonSecurityHeaders(extra) });
+}
+
+/** A limit refused the message: 429 with the limit, when it resets and which plan raises it. */
+function limitResponse(refusal: QuotaRefusal, error: string) {
+    return NextResponse.json({ error, code: refusal.code, ...refusalDetails(refusal) }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(refusal.retryAfterSeconds) }) });
+}
+
+/** A Paddle check that outlives the request keeps running after the answer. */
+function keepRunning(work: Promise<unknown>) {
+    after(() => work.then(() => undefined, () => undefined));
 }
 
 /**
@@ -230,52 +240,7 @@ export async function POST(request: NextRequest) {
     const connectionId = body.connectionId === undefined || body.connectionId === null || body.connectionId === "" ? null : body.connectionId;
     if (connectionId !== null && !isConnectionId(connectionId)) return errorResponse(400, "bad_request", "Geçersiz bağlantı.");
 
-    let target: { apiKey: string; baseUrl: string; model: string; connection: ResolvedConnection | null };
-    let remaining: number;
-    if (connectionId) {
-        // Own keys have their own allowance and never use the Hanogt AI daily quota.
-        const keys = OWN_KEY_LIMIT_KEYS(email);
-        const [minute, day] = await Promise.all([
-            enforceRateLimitWithFallback(keys.minute, OWN_KEY_LIMITS.perMinute, 60_000),
-            enforceRateLimitWithFallback(keys.day, OWN_KEY_LIMITS.perDay, AI_DAY_MS),
-        ]);
-        const limited = !minute.allowed ? minute : !day.allowed ? day : null;
-        if (limited) {
-            return errorResponse(429, !day.allowed ? "connection_daily_limit" : "rate_limited", "Kendi bağlantılarınızla istek sınırına ulaştınız. Biraz sonra tekrar deneyin.", { "Retry-After": String(limited.retryAfterSeconds) });
-        }
-        let connection: ResolvedConnection | null;
-        try {
-            connection = await resolveConnectionForChat(email, connectionId);
-        } catch {
-            return errorResponse(503, "unavailable", "Bağlantı bilgileri şu anda okunamadı. Biraz sonra tekrar deneyin.");
-        }
-        if (!connection) return errorResponse(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.");
-        target = { apiKey: connection.apiKey, baseUrl: connection.baseUrl, model: connection.model, connection };
-        remaining = Math.min(minute.remaining, day.remaining);
-    } else {
-        const config = providerConfig();
-        if (!config) return errorResponse(503, "not_configured", "Hanogt AI dil modeli bu sunucuda yapılandırılmamış.");
-
-        // Plans (assigned by staff while sales are "coming soon") and staff grants raise the limits.
-        const limits = await aiLimitsForEmail(email);
-        const keys = AI_LIMIT_KEYS(email);
-        const [minute, day] = await Promise.all([
-            enforceRateLimitWithFallback(keys.minute, limits.perMinute, 60_000),
-            enforceRateLimitWithFallback(keys.day, limits.perDay, AI_DAY_MS),
-        ]);
-        const limited = !minute.allowed ? minute : !day.allowed ? day : null;
-        if (limited) {
-            return errorResponse(429, !day.allowed ? "daily_limit" : "rate_limited", "Hanogt AI istek sınırına ulaştınız. Biraz sonra tekrar deneyin.", { "Retry-After": String(limited.retryAfterSeconds) });
-        }
-        target = { ...config, connection: null };
-        remaining = Math.min(minute.remaining, day.remaining);
-    }
-    const ownConnection = target.connection;
-    /** Notes the outcome on the connection after the response (best effort, at most once a minute per outcome). */
-    const recordUse = (error: AiConnectionError | null) => {
-        if (ownConnection && shouldRecordUse(ownConnection, error)) after(() => markUsed(email, ownConnection.id, error));
-    };
-
+    // The request is checked before anything is counted: a malformed one never uses up a message.
     const agentRequested = body.agent === true;
     const messages = normalizeChatMessages(body.messages, { tools: agentRequested });
     if (!messages) return errorResponse(400, "bad_request", "Mesajlar geçersiz.");
@@ -294,6 +259,41 @@ export async function POST(request: NextRequest) {
             code: fileCode,
         }
         : null;
+
+    let target: { apiKey: string; baseUrl: string; model: string; connection: ResolvedConnection | null };
+    // The day window this message was counted in; every answer reports it (X-Hanogt-AI-*) for the usage meter.
+    let quota: DayQuota;
+    if (connectionId) {
+        // Own keys have their own allowance and never use the Hanogt AI daily quota.
+        const counted = await enforceOwnKeys(email, { onLate: keepRunning });
+        if (!counted.ok) {
+            if (counted.code === "connection_unavailable") return errorResponse(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.");
+            return limitResponse(counted, "Kendi bağlantılarınızla istek sınırına ulaştınız. Biraz sonra tekrar deneyin.");
+        }
+        quota = counted.quota;
+        let connection: ResolvedConnection | null;
+        try {
+            connection = await resolveConnectionForChat(email, connectionId);
+        } catch {
+            return errorResponse(503, "unavailable", "Bağlantı bilgileri şu anda okunamadı. Biraz sonra tekrar deneyin.", quotaHeaders(quota));
+        }
+        if (!connection) return errorResponse(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.", quotaHeaders(quota));
+        target = { apiKey: connection.apiKey, baseUrl: connection.baseUrl, model: connection.model, connection };
+    } else {
+        const config = providerConfig();
+        if (!config) return errorResponse(503, "not_configured", "Hanogt AI dil modeli bu sunucuda yapılandırılmamış.");
+        // Plans, staff grants and a purchase Paddle hasn't reported yet (asked before refusing) set the limits.
+        const counted = await enforceHanogtAi(email, { onLate: keepRunning });
+        if (!counted.ok) return limitResponse(counted, "Hanogt AI istek sınırına ulaştınız. Biraz sonra tekrar deneyin.");
+        quota = counted.quota;
+        target = { ...config, connection: null };
+    }
+    const counted = quotaHeaders(quota);
+    const ownConnection = target.connection;
+    /** Notes the outcome on the connection after the response (best effort, at most once a minute per outcome). */
+    const recordUse = (error: AiConnectionError | null) => {
+        if (ownConnection && shouldRecordUse(ownConnection, error)) after(() => markUsed(email, ownConnection.id, error));
+    };
 
     // Follow-up rounds end with tool results; knowledge and analyzers use the user's own words.
     const userTurns = messages.filter((turn): turn is Extract<WireMessage, { role: "user" }> => turn.role === "user");
@@ -346,7 +346,7 @@ export async function POST(request: NextRequest) {
         const aborted = error instanceof Error && error.name === "AbortError";
         // A stop in the browser is not the connection's fault.
         if (!request.signal.aborted) recordUse("unreachable");
-        return errorResponse(503, aborted ? "timeout" : "upstream_unreachable", aborted ? "Yanıt zaman aşımına uğradı." : "Dil modeli hizmetine bağlanılamadı.");
+        return errorResponse(503, aborted ? "timeout" : "upstream_unreachable", aborted ? "Yanıt zaman aşımına uğradı." : "Dil modeli hizmetine bağlanılamadı.", counted);
     }
 
     if (!upstream.ok || !upstream.body) {
@@ -358,11 +358,11 @@ export async function POST(request: NextRequest) {
             if (upstream.ok) await upstream.body?.cancel().catch(() => undefined);
             recordUse(failure);
             const reply = CONNECTION_FAILURES[failure];
-            return errorResponse(reply.status, reply.code, reply.error, failure === "rate_limited" ? retryAfterOf(upstream) : {});
+            return errorResponse(reply.status, reply.code, reply.error, { ...counted, ...(failure === "rate_limited" ? retryAfterOf(upstream) : {}) });
         }
         await upstream.body?.cancel().catch(() => undefined);
         const code = upstream.status === 429 ? "upstream_rate_limited" : upstream.status === 401 || upstream.status === 403 ? "not_configured" : "upstream_error";
-        return errorResponse(upstream.status === 429 ? 429 : 424, code, "Dil modeli isteği tamamlayamadı.");
+        return errorResponse(upstream.status === 429 ? 429 : 424, code, "Dil modeli isteği tamamlayamadı.", counted);
     }
     recordUse(null);
 
@@ -373,7 +373,8 @@ export async function POST(request: NextRequest) {
         // Which connection answered: its id, or "hanogt" for Hanogt AI's own model.
         "X-Hanogt-AI-Connection": ownConnection ? ownConnection.id : DEFAULT_CONNECTION,
         ...(ownConnection ? { "X-Hanogt-AI-Provider": ownConnection.provider } : {}),
-        "X-RateLimit-Remaining": String(remaining),
+        // The day window this message counted in (usage meter); see src/lib/ai/usage.ts.
+        ...counted,
     };
 
     if (!stream) {
@@ -385,7 +386,7 @@ export async function POST(request: NextRequest) {
         const calls: CallAccumulator = new Map();
         if (agentStatus === "tools") collectToolCalls(calls, choice?.tool_calls?.map((call, index) => ({ ...call, index })));
         const toolCalls = trailerCalls(calls);
-        if (!message && !toolCalls.length) return errorResponse(424, "upstream_error", "Dil modeli boş yanıt verdi.");
+        if (!message && !toolCalls.length) return errorResponse(424, "upstream_error", "Dil modeli boş yanıt verdi.", counted);
         return NextResponse.json({ message, toolCalls, sources, model: target.model, connection: ownConnection ? ownConnection.id : DEFAULT_CONNECTION, agent: agentStatus }, { headers: jsonSecurityHeaders(meta) });
     }
 

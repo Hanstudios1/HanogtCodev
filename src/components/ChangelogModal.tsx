@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.9",
+        version: "v0.3.9",
+        date: "2026-10-03",
+        title: { TR: "Hanogt AI'da kullanım sayacı", EN: "A usage meter in Hanogt AI" },
+        desc: { TR: "Bugün kaç Hanogt AI mesajı kullandığını ve hakkının ne zaman yenileneceğini sohbetin üstünde görürsün.", EN: "See how many Hanogt AI messages you've used today, and when they renew, right above the chat." },
+        items: [
+            { TR: "\"Bugün 12 / 750\" sayacı sohbet sayfasında ve yüzen panelde; sınıra yaklaşınca renk değiştirir.", EN: "A \"Today 12 / 750\" meter on the chat page and in the floating panel; it changes colour as you near the limit." },
+            { TR: "Sınıra gelince saat ve plan yükseltme bağlantısı gösterilir; abone olunca sayaç hemen yeni planı gösterir.", EN: "At the limit you see when it renews and a link to upgrade; after subscribing the meter shows the new plan at once." },
+            { TR: "Model seçicide kalan mesajlar; Fiyatlandırma'da bütün hakların \"kullanılan / sınır\" olarak.", EN: "Messages left in the model picker; every benefit as \"used / limit\" on Pricing." },
+            { TR: "Dakika sınırına takılan mesajlar artık günlük hakkından düşmez.", EN: "Messages refused by the per-minute limit no longer use up your daily messages." },
+        ],
+    },
+    {
         id: "v0.3.8",
         version: "v0.3.8",
         date: "2026-10-03",

@@ -1,0 +1,164 @@
+import "server-only";
+
+import { OWN_KEY_LIMITS } from "@/lib/ai/connections";
+import { QUOTA_HEADERS, type AiUsage, type CountedLimit, type DayQuota, type PlanUsage, type QuotaKind, type UsageWindow } from "@/lib/ai/usage";
+import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, aiLimitsFor, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
+import { healBeforeRefusing, type HealOptions } from "./entitlements";
+import { countServerQuery, getServerDocument } from "./firebase-rest";
+import { AI_DAY_MS, AI_LIMIT_KEYS, OWN_KEY_LIMIT_KEYS, getSubscription } from "./plans";
+import { enforceRateLimitWithFallback, readRateLimit, type RateLimitResult } from "./rate-limit";
+
+/*
+ * Hanogt AI usage: what the chat route counts (a minute and a 24-hour window
+ * that starts with the first message), what the usage meter shows, and the
+ * headers every answer carries so the meter stays right without asking again.
+ * Kept free of next/server so the plain-Node tests can load it; routes pass
+ * after() as `onLate`.
+ */
+
+const MINUTE_MS = 60_000;
+
+type Limits = { perMinute: number; perDay: number };
+
+/** Messages a plan allows through the person's own connections; null when the plan has none. */
+export function ownKeyLimitsFor(plan: PlanId): Limits | null {
+    return PLAN_AI_CONNECTIONS[plan] > 0 ? { perMinute: OWN_KEY_LIMITS.perMinute, perDay: OWN_KEY_LIMITS.perDay } : null;
+}
+
+/** A stored window as the meter shows it; no open window is an unused one. */
+export function usageWindow(state: { count: number; resetsAt: string } | null, limit: number): UsageWindow {
+    const used = Math.max(0, Math.floor(state?.count ?? 0));
+    return { limit, used, remaining: Math.max(0, limit - used), resetsAt: state ? state.resetsAt : null };
+}
+
+const readWindow = (key: string, windowMs: number) => readRateLimit(key, windowMs).catch(() => null);
+
+/** The account's Hanogt AI windows now; nothing is counted. */
+export async function aiUsageFor(email: string, subscription: UserSubscription | null = null): Promise<AiUsage> {
+    const record = subscription ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
+    const plan = effectivePlan(record);
+    const limits = aiLimitsFor(record);
+    const own = ownKeyLimitsFor(plan);
+    const keys = AI_LIMIT_KEYS(email);
+    const ownKeys = OWN_KEY_LIMIT_KEYS(email);
+    const [minute, day, ownMinute, ownDay] = await Promise.all([
+        readWindow(keys.minute, MINUTE_MS),
+        readWindow(keys.day, AI_DAY_MS),
+        own ? readWindow(ownKeys.minute, MINUTE_MS) : null,
+        own ? readWindow(ownKeys.day, AI_DAY_MS) : null,
+    ]);
+    return {
+        plan,
+        hanogt: { day: usageWindow(day, limits.perDay), minute: usageWindow(minute, limits.perMinute), bonus: Math.max(0, limits.perDay - PLAN_AI_LIMITS[plan].perDay) },
+        own: own ? { day: usageWindow(ownDay, own.perDay), minute: usageWindow(ownMinute, own.perMinute) } : null,
+    };
+}
+
+/** A count for the usage list (up to a thousand); null when it can't be taken (the list still shows the limit). */
+async function countOf(collectionId: string, field: string, email: string, limit: number | null): Promise<CountedLimit> {
+    const used = await countServerQuery({ collectionId, where: [{ field, op: "EQUAL", value: email }], upTo: 1_000 }).catch(() => null);
+    return { used, limit };
+}
+
+/** aiUsageFor plus everything else the plan counts (projects, games, groups, connections). */
+export async function planUsageFor(email: string, subscription: UserSubscription | null = null): Promise<PlanUsage> {
+    const record = subscription ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
+    const plan = effectivePlan(record);
+    const [usage, codeProjects, gameProjects, groups, connections] = await Promise.all([
+        aiUsageFor(email, record),
+        countOf("projects", "email", email, PLAN_PROJECT_LIMITS[plan].code),
+        countOf("game_projects", "ownerEmail", email, PLAN_PROJECT_LIMITS[plan].game),
+        countOf("groups", "ownerEmail", email, PLAN_GROUP_LIMITS[plan]),
+        getServerDocument<{ items?: unknown }>(`ai_connections/${email}`)
+            .then((stored): CountedLimit => ({ used: Array.isArray(stored?.items) ? stored.items.length : 0, limit: PLAN_AI_CONNECTIONS[plan] }))
+            .catch((): CountedLimit => ({ used: null, limit: PLAN_AI_CONNECTIONS[plan] })),
+    ]);
+    return { ...usage, counts: { codeProjects, gameProjects, groups, connections } };
+}
+
+export type QuotaPass = { ok: true; plan: PlanId; quota: DayQuota };
+
+export type QuotaRefusal = {
+    ok: false;
+    /** "rate_limited": the minute window · "daily_limit" / "connection_daily_limit": the day window. */
+    code: "rate_limited" | "daily_limit" | "connection_daily_limit";
+    retryAfterSeconds: number;
+    quota: QuotaKind;
+    plan: PlanId;
+    limit: number;
+    used: number;
+    resetsAt: string;
+    upgrade: PaidPlanId | null;
+};
+
+/** The plan doesn't include own connections (Free), even after asking Paddle. */
+export type QuotaNoPlan = { ok: false; code: "connection_unavailable"; plan: PlanId };
+
+const resetsAtOf = (result: RateLimitResult) => new Date(Date.now() + result.retryAfterSeconds * 1000).toISOString();
+
+/**
+ * Counts one message in the minute and then the day window of `kind`. The
+ * day is counted only once the minute let the message through, so a refused
+ * burst never uses up the day. Before refusing, Paddle is asked once (only
+ * when selfHealReason says it may help): a purchase no notification reported
+ * raises the limit, and only the window that refused is checked again.
+ */
+async function enforceWindows(email: string, kind: QuotaKind, initial: UserSubscription, options: HealOptions): Promise<QuotaPass | QuotaRefusal | QuotaNoPlan> {
+    let subscription = initial;
+    let asked = false;
+    const keys = kind === "hanogt" ? AI_LIMIT_KEYS(email) : OWN_KEY_LIMIT_KEYS(email);
+    const covered = () => kind === "hanogt" || ownKeyLimitsFor(effectivePlan(subscription)) !== null;
+    const limitsOf = (): Limits => (kind === "hanogt" ? aiLimitsFor(subscription) : ownKeyLimitsFor(effectivePlan(subscription)) ?? { perMinute: 0, perDay: 0 });
+    const heal = async () => {
+        if (asked) return false;
+        asked = true;
+        const healed = await healBeforeRefusing(email, subscription, options).catch(() => null);
+        if (!healed?.upgraded) return false;
+        subscription = healed.subscription;
+        return true;
+    };
+
+    if (!covered() && !((await heal()) && covered())) return { ok: false, code: "connection_unavailable", plan: effectivePlan(subscription) };
+    const refuse = (code: QuotaRefusal["code"], result: RateLimitResult, limit: number): QuotaRefusal => {
+        const plan = effectivePlan(subscription);
+        return { ok: false, code, retryAfterSeconds: result.retryAfterSeconds, quota: kind, plan, limit, used: limit, resetsAt: resetsAtOf(result), upgrade: nextPlanUp(plan) };
+    };
+
+    let minute = await enforceRateLimitWithFallback(keys.minute, limitsOf().perMinute, MINUTE_MS);
+    if (!minute.allowed && (await heal())) minute = await enforceRateLimitWithFallback(keys.minute, limitsOf().perMinute, MINUTE_MS);
+    if (!minute.allowed) return refuse("rate_limited", minute, limitsOf().perMinute);
+
+    let day = await enforceRateLimitWithFallback(keys.day, limitsOf().perDay, AI_DAY_MS);
+    if (!day.allowed && (await heal())) day = await enforceRateLimitWithFallback(keys.day, limitsOf().perDay, AI_DAY_MS);
+    if (!day.allowed) return refuse(kind === "hanogt" ? "daily_limit" : "connection_daily_limit", day, limitsOf().perDay);
+
+    return { ok: true, plan: effectivePlan(subscription), quota: { quota: kind, limit: limitsOf().perDay, remaining: day.remaining, resetsAt: resetsAtOf(day) } };
+}
+
+/** One message to Hanogt AI's own model. */
+export async function enforceHanogtAi(email: string, options: HealOptions = {}): Promise<QuotaPass | QuotaRefusal> {
+    const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
+    // Hanogt AI has limits on every plan, so "connection_unavailable" can't come back here.
+    return await enforceWindows(email, "hanogt", subscription, options) as QuotaPass | QuotaRefusal;
+}
+
+/** One message through the person's own connection (Plus and Pro). */
+export async function enforceOwnKeys(email: string, options: HealOptions = {}): Promise<QuotaPass | QuotaRefusal | QuotaNoPlan> {
+    const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
+    return enforceWindows(email, "own", subscription, options);
+}
+
+/** The headers an answer reports its day window with (src/lib/ai/usage.ts QUOTA_HEADERS). */
+export function quotaHeaders(quota: DayQuota): Record<string, string> {
+    return {
+        [QUOTA_HEADERS.quota]: quota.quota,
+        [QUOTA_HEADERS.limit]: String(quota.limit),
+        [QUOTA_HEADERS.remaining]: String(quota.remaining),
+        ...(quota.resetsAt ? { [QUOTA_HEADERS.reset]: quota.resetsAt } : {}),
+    };
+}
+
+/** The body fields of a 429 (besides `error` and `code`): what the limit is, when it resets, which plan raises it. */
+export function refusalDetails(refusal: QuotaRefusal) {
+    return { plan: refusal.plan, limit: refusal.limit, used: refusal.used, resetsAt: refusal.resetsAt, upgrade: refusal.upgrade };
+}

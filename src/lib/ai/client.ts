@@ -7,6 +7,7 @@
 import { splitAgentStream, type AgentTrailerCall, type WireMessage } from "./agent-protocol";
 import { DEFAULT_CONNECTION, isConnectionId } from "./connections";
 import type { AiContext, AiMode } from "./local-engine";
+import { limitDetailsOf, quotaFromHeaders, type DayQuota, type LimitDetails } from "./usage";
 
 export type AiFailure =
     | "auth_required" | "not_configured" | "rate_limited" | "daily_limit" | "network" | "timeout" | "upstream" | "aborted"
@@ -45,6 +46,10 @@ export interface AiStreamResult {
     /** Tool calls the model asked for (agent mode only). */
     toolCalls: AgentTrailerCall[];
     agent: AiAgentStatus;
+    /** The day window the message counted in (X-Hanogt-AI-* headers), for the usage meter. */
+    quota?: DayQuota;
+    /** A daily limit refused the message: the limit, when it resets and which plan raises it. */
+    limit?: LimitDetails;
 }
 
 function parseSources(header: string | null) {
@@ -99,6 +104,8 @@ export async function streamHanogtAI(options: {
         return { ok: false, text: "", failure: aborted ? "aborted" : "network", ...empty };
     }
 
+    // A message that was counted reports its day window, also when the model then failed.
+    const quota = quotaFromHeaders(response.headers) ?? undefined;
     if (!response.ok || !response.body) {
         const payload = await response.json().catch(() => ({})) as { code?: string };
         const retryAfter = Number(response.headers.get("Retry-After")) || undefined;
@@ -107,7 +114,7 @@ export async function streamHanogtAI(options: {
             ?? (response.status === 429 ? (options.connectionId && code === "upstream_rate_limited" ? "connection_rate_limited" : "rate_limited")
                 : response.status === 504 || code === "timeout" ? "timeout"
                     : response.status === 401 ? "auth_required" : "upstream");
-        return { ok: false, text: "", failure, retryAfterSeconds: retryAfter, ...empty };
+        return { ok: false, text: "", failure, retryAfterSeconds: retryAfter, quota, limit: limitDetailsOf(payload) ?? undefined, ...empty };
     }
 
     const sources = parseSources(response.headers.get("X-Hanogt-AI-Sources"));
@@ -129,10 +136,10 @@ export async function streamHanogtAI(options: {
     } catch (error) {
         const aborted = error instanceof DOMException && error.name === "AbortError";
         const partial = splitAgentStream(raw).text;
-        return { ok: partial.length > 0, text: partial, failure: aborted ? "aborted" : "network", sources, model, connectionId, toolCalls: [], agent };
+        return { ok: partial.length > 0, text: partial, failure: aborted ? "aborted" : "network", sources, model, connectionId, toolCalls: [], agent, quota };
     }
     const { text, trailer } = splitAgentStream(raw);
     const toolCalls = trailer?.toolCalls ?? [];
-    if (!text.trim() && !toolCalls.length) return { ok: false, text: "", failure: "upstream", sources, model, connectionId, toolCalls: [], agent };
-    return { ok: true, text, sources, model, connectionId, toolCalls, agent };
+    if (!text.trim() && !toolCalls.length) return { ok: false, text: "", failure: "upstream", sources, model, connectionId, toolCalls: [], agent, quota };
+    return { ok: true, text, sources, model, connectionId, toolCalls, agent, quota };
 }

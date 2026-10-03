@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/runtimes/languages";
 import AgentCard from "./AgentCard";
 import type { ChatArtifact } from "./artifacts";
+import { CHAT_COPY } from "./chat-copy";
 import Markdown from "./Markdown";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
 
@@ -152,7 +153,13 @@ export default function ChatMessage(props: ChatMessageProps) {
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="group flex gap-3">
             <div className="pt-0.5"><AiAvatar size={variant === "page" ? "h-7 w-7" : "h-6 w-6"} /></div>
             <div className="min-w-0 flex-1 space-y-3">
-                {message.notice ? <p className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-2 py-1 text-[11.5px] font-semibold text-amber-700 dark:text-amber-300"><Cpu className="h-3 w-3" aria-hidden />{message.notice}</p> : null}
+                {message.notice ? (
+                    <p className="w-fit max-w-full rounded-lg bg-amber-500/10 px-2 py-1 text-[11.5px] font-semibold leading-relaxed text-amber-700 dark:text-amber-300" data-ai-notice>
+                        <Cpu className="me-1.5 inline h-3 w-3 align-[-1px]" aria-hidden />
+                        {message.notice}
+                        {message.noticeAction === "plans" ? <> <Link href="/plans" onClick={props.onNavigate} className="whitespace-nowrap font-bold text-violet-700 underline underline-offset-2 dark:text-violet-300" data-notice-plans>{tx(CHAT_COPY.upgrade)}</Link></> : null}
+                    </p>
+                ) : null}
                 {content || !isStreaming ? (
                     <div className={cx("leading-relaxed text-zinc-800 dark:text-zinc-100", variant === "page" ? "text-[15px]" : "text-[13.5px]", message.error && "text-red-600 dark:text-red-400")}>
                         {content ? <Markdown text={content} onNavigate={props.onNavigate} onOpenInEditor={props.onOpenInEditor} onOpenArtifact={props.onOpenArtifact} /> : null}

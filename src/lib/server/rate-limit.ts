@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { deleteServerDocument, getServerDocument, isWriteConflict, patchServerDocument } from "./firebase-rest";
 
-type RateLimitResult = { allowed: boolean; remaining: number; retryAfterSeconds: number };
+export type RateLimitResult = { allowed: boolean; remaining: number; retryAfterSeconds: number };
 
 export async function enforceRateLimit(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
     const salt = process.env.RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET;
@@ -50,6 +50,15 @@ export async function enforceRateLimitWithFallback(key: string, limit: number, w
     } catch (error) {
         console.warn("[rate-limit] Firestore unavailable, using in-memory window:", error instanceof Error ? error.message : error);
     }
+    return memoryRateLimit(key, limit, windowMs);
+}
+
+/**
+ * A window kept only in this server instance's memory: a cheap guard for
+ * read-only routes that shouldn't cost a database write per request (each
+ * instance counts on its own), and the fallback above.
+ */
+export function memoryRateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
     const now = Date.now();
     if (memoryWindows.size > 5_000) {
         for (const [entryKey, entry] of memoryWindows) if (now - entry.startedAt >= windowMs) memoryWindows.delete(entryKey);

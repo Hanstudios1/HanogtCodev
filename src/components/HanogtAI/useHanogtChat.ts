@@ -15,10 +15,12 @@ import {
     type AiConversation, type AiMessage,
 } from "@/lib/ai/conversations";
 import { answerLocally, proposeActionsLocally, type AiContext, type AiMode } from "@/lib/ai/local-engine";
+import { formatResetTime, type LimitDetails } from "@/lib/ai/usage";
 import { languageFromFileName } from "@/lib/runtimes/languages";
 import { useI18n } from "@/lib/i18n";
 import { CHAT_COPY, CONNECTION_FAILURES, MAX_ATTACHMENT_BYTES, MAX_INPUT, NOTICES } from "./chat-copy";
 import { useAiConnections } from "./connections-store";
+import { useAiUsage } from "./usage-store";
 
 export interface ChatLaunch {
     prompt?: string;
@@ -78,6 +80,9 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     // The person's own provider connections (Plus/Pro) and the one chosen on this device.
     const connections = useAiConnections(signedIn ? session?.user?.email ?? null : null);
     const { items: connectionItems, refresh: refreshConnections, select: selectConnection, selectedId: selectedConnection } = connections;
+    // Messages used today (the usage meter); every answer updates it from its headers.
+    const usage = useAiUsage(signedIn ? session?.user?.email ?? null : null);
+    const { applyQuota, applyLimit } = usage;
 
     const conversations = useConversations();
     const activeId = useActiveConversationId();
@@ -208,14 +213,16 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         const currentMode = conversation.mode;
         const agentOn = latest.current.agentMode !== "off";
         const connectionId = selectedConnection;
-        const runCore = async (failure?: AiFailure, retryAfterSeconds?: number) => {
+        const runCore = async (failure?: AiFailure, retryAfterSeconds?: number, limit?: LimitDetails) => {
             const reply = await answerLocally(text, { tx, locale, mode: currentMode, signedIn, context, agentMode: latest.current.agentMode });
             const retryable = failure === "rate_limited" || failure === "connection_rate_limited";
-            const notice = failure && failure !== "aborted"
-                ? [tx(NOTICES[failure]), retryable && retryAfterSeconds ? tx(CHAT_COPY.retryIn, { seconds: retryAfterSeconds }) : ""].filter(Boolean).join(" ")
-                : undefined;
+            // A daily limit says when it renews (24 hours after the first message), and how to get more.
+            const dailyLimit = limit && (failure === "daily_limit" || failure === "connection_daily_limit") ? limit : null;
+            const notice = !failure || failure === "aborted" ? undefined
+                : dailyLimit ? tx(dailyLimit.quota === "own" ? CHAT_COPY.ownDailyLimitAt : CHAT_COPY.dailyLimitAt, { limit: dailyLimit.limit.toLocaleString(locale), time: dailyLimit.resetsAt ? formatResetTime(dailyLimit.resetsAt, locale) : "—" })
+                    : [tx(NOTICES[failure]), retryable && retryAfterSeconds ? tx(CHAT_COPY.retryIn, { seconds: retryAfterSeconds }) : ""].filter(Boolean).join(" ");
             const agent = reply.actions?.length ? coreAgentState(reply.actions) : undefined;
-            finish(conversationId, assistantId, { content: reply.text, engine: "core", sources: reply.sources, code: reply.code, notice, agent });
+            finish(conversationId, assistantId, { content: reply.text, engine: "core", sources: reply.sources, code: reply.code, notice, noticeAction: dailyLimit?.upgrade ? "plans" : undefined, agent });
             autoRun(conversationId, assistantId, agent);
         };
 
@@ -242,6 +249,8 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 },
             });
             cancelAnimationFrame(frame);
+            applyQuota(result.quota);
+            applyLimit(result.limit);
             if (result.ok) {
                 let agent = llmAgentState(result, 0);
                 // The provider can't call tools: the Core proposes the same actions.
@@ -257,7 +266,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             } else {
                 connectionFailed(result.failure);
                 // A signed-out visitor asking during session loading needs no "session expired" notice.
-                await runCore(result.failure === "auth_required" && !signedIn ? undefined : result.failure, result.retryAfterSeconds);
+                await runCore(result.failure === "auth_required" && !signedIn ? undefined : result.failure, result.retryAfterSeconds, result.limit);
             }
         } catch {
             finish(conversationId, assistantId, { content: tx(CHAT_COPY.somethingWrong), error: true });
@@ -265,7 +274,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [active, answeredBy, attachment, autoRun, buildContext, connectionFailed, create, draftMode, finish, language, locale, selectedConnection, signedIn, tryModel, tx, update]);
+    }, [active, answeredBy, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, create, draftMode, finish, language, locale, selectedConnection, signedIn, tryModel, tx, update]);
 
     /** Sends the tool results back to the model once every card of its message is settled. */
     const continueAfterTools = useCallback(async (conversation: AiConversation, source: AiMessage) => {
@@ -301,6 +310,8 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 },
             });
             cancelAnimationFrame(frame);
+            applyQuota(result.quota);
+            applyLimit(result.limit);
             if (result.ok) {
                 const agent = final ? undefined : llmAgentState(result, round);
                 finish(conversationId, assistantId, { content: result.text, engine: "llm", sources: result.sources, agent, ...answeredBy(result) });
@@ -318,7 +329,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [answeredBy, autoRun, connectionFailed, finish, language, tx, update]);
+    }, [answeredBy, applyLimit, applyQuota, autoRun, connectionFailed, finish, language, tx, update]);
 
     // The follow-up starts when the last message's cards are all settled.
     useEffect(() => {
@@ -447,6 +458,8 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         agent: { mode: agentMode, setMode: setAgentMode as (mode: AgentMode) => void, granted, revokeAll, approve, deny },
         // own provider connections
         connections,
+        // messages used today
+        usage,
         navigate,
     };
 }

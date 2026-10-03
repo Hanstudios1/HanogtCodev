@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Maximize2, Menu as MenuIcon, MessageSquarePlus, PanelLeftOpen, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { currentWindow } from "@/lib/ai/usage";
 import { openInEditor } from "@/lib/editor-bridge";
 import { useI18n } from "@/lib/i18n";
 import { normalizeLanguageId } from "@/lib/runtimes/languages";
@@ -15,6 +16,7 @@ import ChatSidebar from "./ChatSidebar";
 import ConnectionsDialog from "./ConnectionsDialog";
 import { useHanogtChat, type ChatLaunch } from "./useHanogtChat";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
+import UsageMeter from "./UsageMeter";
 import WelcomeScreen from "./WelcomeScreen";
 
 export type { ChatLaunch };
@@ -131,6 +133,11 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
         window.setTimeout(() => inputRef.current?.focus(), 0);
     }, []);
 
+    // Messages left today, for the model picker.
+    const usageNow = chat.usage.usage;
+    const remaining = usageNow ? { hanogt: currentWindow(usageNow.hanogt.day).remaining, own: usageNow.own ? currentWindow(usageNow.own.day).remaining : null } : null;
+    const meter = <UsageMeter handle={chat.usage} variant={variant} onNavigate={closePanelOnNavigate} />;
+
     const lastAssistantId = [...messages].reverse().find((message) => message.role === "assistant")?.id;
     const lastUserId = [...messages].reverse().find((message) => message.role === "user")?.id;
     const engineLabel = tx(chat.signedIn ? C.engineSignedIn : C.engineSignedOut);
@@ -165,6 +172,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                 selectedId: chat.connections.selectedId,
                 onSelect: chat.connections.select,
                 onManage: () => setConnectionsOpen(true),
+                remaining,
             } : null}
         />
     );
@@ -246,6 +254,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         </h2>
                         <p className="truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">{engineLabel}</p>
                     </div>
+                    {meter}
                     <button type="button" onClick={newChat} className={ICON_BUTTON} title={tx(C.newChat)} aria-label={tx(C.newChat)}><MessageSquarePlus className="h-4.5 w-4.5" /></button>
                     <Link href="/ai" onClick={onClose} className={ICON_BUTTON} title={tx(C.fullScreen)} aria-label={tx(C.fullScreen)}><Maximize2 className="h-4.5 w-4.5" /></Link>
                     <button type="button" onClick={onClose} className={ICON_BUTTON} title={tx(C.close)} aria-label={tx(C.close)}><X className="h-5 w-5" /></button>
@@ -310,6 +319,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         <p className="truncate text-[14px] font-semibold text-zinc-800 dark:text-zinc-100">{active?.title || "Hanogt AI"}</p>
                         <p className="flex items-center gap-1.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", chat.signedIn ? "bg-emerald-500" : "bg-amber-500")} aria-hidden />{engineLabel}</p>
                     </div>
+                    {meter}
                     <button type="button" onClick={newChat} className={ICON_BUTTON} title={tx(C.newChat)} aria-label={tx(C.newChat)}><MessageSquarePlus className="h-5 w-5" /></button>
                 </div>
                 {messages.length ? (

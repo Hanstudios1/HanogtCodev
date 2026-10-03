@@ -5,6 +5,7 @@
  * higher of the two: the staff-assigned plan or the paid one.
  * Client-safe; the server copies live in src/lib/server/plans.ts.
  */
+import type { PlanUsage } from "@/lib/ai/usage";
 import type { Copy } from "@/lib/i18n";
 import { paddleEntitles, type BillingView, type PaddleCheckoutConfig, type PaddleSubscriptionState } from "@/lib/paddle";
 
@@ -146,6 +147,11 @@ export function planRank(plan: PlanId) {
     return PLAN_RANK[plan];
 }
 
+/** The plan to suggest when a limit is reached: Plus after Free, Pro after Plus, none after Pro. */
+export function nextPlanUp(plan: PlanId): PaidPlanId | null {
+    return plan === "free" ? "plus" : plan === "plus" ? "pro" : null;
+}
+
 type PlanSources = Pick<UserSubscription, "plan" | "status" | "expiresAt"> & { paddle?: PaddleSubscriptionState | null };
 
 /** The staff-assigned plan while it hasn't expired. */
@@ -205,6 +211,8 @@ export type PlansResponse = {
         checkoutPending: boolean;
         aiLimits: { perMinute: number; perDay: number };
         aiUsedToday: number;
+        /** Every benefit with a number: used out of the plan's limit (src/lib/ai/usage.ts). */
+        usage: PlanUsage;
         waitlist: PaidPlanId[];
         /** Hanogt team (any role): the Plans page also shows them why a checkout failed. */
         isStaff: boolean;

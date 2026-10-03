@@ -30,6 +30,8 @@ const C = {
     hanogt: { TR: "Hanogt AI (varsayılan)", EN: "Hanogt AI (default)" },
     hanogtShort: { TR: "Hanogt AI", EN: "Hanogt AI" },
     hanogtDescription: { TR: "Hanogt'un kendi dil modeli; günlük mesaj hakkını kullanır.", EN: "Hanogt's own language model; uses your daily messages." },
+    hanogtLeft: { TR: "Bugün {count} mesaj kaldı.", EN: "{count} messages left today." },
+    ownLeft: { TR: "bugün {count} mesaj kaldı", EN: "{count} messages left today" },
     ownConnection: { TR: "Kendi bağlantın", EN: "Your connection" },
     notInPlan: { TR: "Planın kapsamıyor", EN: "Not in your plan" },
     manage: { TR: "Bağlantıları yönet…", EN: "Manage connections…" },
@@ -76,21 +78,30 @@ export interface ComposerConnections {
     selectedId: string | null;
     onSelect: (id: string | null) => void;
     onManage: () => void;
+    /** Messages left today for Hanogt AI and for own connections (null: not known yet). */
+    remaining?: { hanogt: number | null; own: number | null } | null;
 }
 
 /** Hanogt AI or one of the person's own connections; connections outside the plan are listed but can't be chosen. */
 function ModelPicker({ connections, variant }: { connections: ComposerConnections; variant: "panel" | "page" }) {
-    const { tx } = useI18n();
-    const { items, selectedId } = connections;
+    const { tx, locale } = useI18n();
+    const { items, selectedId, remaining } = connections;
     const selected = selectedId ? items.find((item) => item.id === selectedId) ?? null : null;
+    const hanogtLeft = remaining?.hanogt ?? null;
+    const ownLeft = remaining?.own ?? null;
     const options: Array<MenuOption<string>> = [
-        { id: DEFAULT_CONNECTION, label: tx(C.hanogt), description: tx(C.hanogtDescription), icon: <Sparkles className="h-4 w-4" aria-hidden /> },
+        {
+            id: DEFAULT_CONNECTION,
+            label: tx(C.hanogt),
+            description: hanogtLeft === null ? tx(C.hanogtDescription) : `${tx(C.hanogtDescription)} ${tx(C.hanogtLeft, { count: hanogtLeft.toLocaleString(locale) })}`,
+            icon: <Sparkles className="h-4 w-4" aria-hidden />,
+        },
         ...items.map((item) => {
             const provider = aiProvider(item.provider).name;
             return {
                 id: item.id,
                 label: `${item.label} · ${item.model}`,
-                description: item.active ? provider : `${provider} · ${tx(C.notInPlan)}`,
+                description: !item.active ? `${provider} · ${tx(C.notInPlan)}` : ownLeft === null ? provider : `${provider} · ${tx(C.ownLeft, { count: ownLeft.toLocaleString(locale) })}`,
                 icon: <KeyRound className="h-4 w-4" aria-hidden />,
                 disabled: !item.active,
             };

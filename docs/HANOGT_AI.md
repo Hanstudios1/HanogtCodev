@@ -234,11 +234,46 @@ follow-up round is one request. On a limit the Core answers with a notice; a
 purchase Paddle hasn't reported yet is looked up first
 (`src/lib/server/entitlements.ts`).
 
+### Usage meter
+
+`src/lib/server/ai-usage.ts` counts every message: the minute window first,
+then the day, so a refused burst never uses up the day; a request that fails
+validation counts nothing. Messages through the person's own connections have
+their own windows (`ai-own:` / `ai-own-day:`) and never touch the Hanogt AI
+day.
+
+Every answer of `/api/ai` (also a failed one that was counted) reports the day
+window it counted in:
+
+| Header | Meaning |
+| --- | --- |
+| `X-Hanogt-AI-Quota` | `hanogt` (Hanogt AI's daily messages) or `own` (own connections) |
+| `X-Hanogt-AI-Day-Limit` | Messages a day, a staff grant included |
+| `X-Hanogt-AI-Day-Remaining` | Left in the current window |
+| `X-Hanogt-AI-Day-Reset` | ISO time the window starts afresh |
+
+A refused message is `429` with `{ error, code, plan, limit, used, resetsAt,
+upgrade }` (`code`: `rate_limited`, `daily_limit` or `connection_daily_limit`;
+`upgrade`: the plan that raises it, or null on Pro) and `Retry-After`.
+
+`GET /api/ai/usage` (signed in, `no-store`, a per-instance guard instead of a
+database write) returns the plan, the Hanogt AI day and minute windows
+(`limit`, `used`, `remaining`, `resetsAt`), the staff grant (`bonus`) and the
+own-connection windows (null on Free). It looks up a purchase Paddle never
+reported (throttled), so someone who pays and comes straight to Hanogt AI sees
+the new plan. The meter (`UsageMeter.tsx`, `usage-store.ts`) sits in the /ai
+top bar and the floating panel's header: amber from 80 %, red at the limit;
+its card shows when the count renews, the minute limit, the grant, the own
+connections and a way to a bigger plan. `GET /api/plans` returns the same
+plus projects, games, groups and connections as `usage` for the Plans page
+(`/plans#usage`).
+
 ## File map
 
 | Area | Files |
 | --- | --- |
-| Server route | `src/app/api/ai/route.ts` |
+| Server route | `src/app/api/ai/route.ts`, `src/app/api/ai/usage/route.ts` |
+| Limits and usage | `src/lib/server/ai-usage.ts`, `src/lib/ai/usage.ts` |
 | Agent registry, validation, permissions, refusals | `src/lib/ai/agent-tools.ts` |
 | Wire protocol (trailer, history) | `src/lib/ai/agent-protocol.ts` |
 | Core intent → action mapping | `src/lib/ai/agent-intents.ts`, `src/lib/ai/programs.ts` |
@@ -246,6 +281,6 @@ purchase Paddle hasn't reported yet is looked up first
 | Offline engine | `src/lib/ai/local-engine.ts`, `nlp.mjs`, `snippets.ts`, `errors.ts`, `calc.ts` |
 | Knowledge base + retrieval | `src/lib/ai/knowledge.ts`, `src/lib/ai/retrieval.ts` |
 | Client streaming, conversations | `src/lib/ai/client.ts`, `src/lib/ai/conversations.ts` |
-| UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`), `src/app/ai/*` |
+| UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`, `UsageMeter`, `usage-store`), `src/app/ai/*` |
 | Training | `ai/dataset/*`, `scripts/train-hanogt-ai.mjs`, `ai/reports/intent-training-report.md` |
-| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs` (`npm test`) |
+| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs` (`npm test`) |

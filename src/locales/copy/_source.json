@@ -416,7 +416,8 @@
       "src/components/Admin/OverviewSection.tsx",
       "src/components/Admin/UsersSection.tsx",
       "src/components/Guide/book-content.ts",
-      "src/components/Landing/LandingPage.tsx"
+      "src/components/Landing/LandingPage.tsx",
+      "src/components/Plans/UsageList.tsx"
     ]
   },
   "1acx0jtveu3": {
@@ -429,7 +430,8 @@
       "src/components/Admin/OverviewSection.tsx",
       "src/components/Admin/UsersSection.tsx",
       "src/components/Guide/book-content.ts",
-      "src/components/Landing/LandingPage.tsx"
+      "src/components/Landing/LandingPage.tsx",
+      "src/components/Plans/UsageList.tsx"
     ]
   },
   "oho9xsoz27": {
@@ -537,6 +539,7 @@
       "src/components/Editor/WebPreview.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/HanogtAI/ConnectionsDialog.tsx",
+      "src/components/HanogtAI/UsageMeter.tsx",
       "src/components/News/MarketsStrip.tsx",
       "src/components/NotificationCenter.tsx",
       "src/components/Social/FriendsView.tsx",
@@ -21967,6 +21970,48 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
+  "1mj75cnkdcu": {
+    "en": "A usage meter in Hanogt AI",
+    "tr": "Hanogt AI'da kullanım sayacı",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "dauczcdbsv": {
+    "en": "See how many Hanogt AI messages you've used today, and when they renew, right above the chat.",
+    "tr": "Bugün kaç Hanogt AI mesajı kullandığını ve hakkının ne zaman yenileneceğini sohbetin üstünde görürsün.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "280nz2gyhsf": {
+    "en": "A \"Today 12 / 750\" meter on the chat page and in the floating panel; it changes colour as you near the limit.",
+    "tr": "\"Bugün 12 / 750\" sayacı sohbet sayfasında ve yüzen panelde; sınıra yaklaşınca renk değiştirir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2d9n437zvba": {
+    "en": "At the limit you see when it renews and a link to upgrade; after subscribing the meter shows the new plan at once.",
+    "tr": "Sınıra gelince saat ve plan yükseltme bağlantısı gösterilir; abone olunca sayaç hemen yeni planı gösterir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "z3rqnq3998": {
+    "en": "Messages left in the model picker; every benefit as \"used / limit\" on Pricing.",
+    "tr": "Model seçicide kalan mesajlar; Fiyatlandırma'da bütün hakların \"kullanılan / sınır\" olarak.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "13hovfwagtk": {
+    "en": "Messages refused by the per-minute limit no longer use up your daily messages.",
+    "tr": "Dakika sınırına takılan mesajlar artık günlük hakkından düşmez.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
   "13wzv7i8f5p": {
     "en": "Your plan's benefits everywhere, right away",
     "tr": "Plan hakların her yerde, hemen",
@@ -32792,9 +32837,9 @@
       "src/components/HanogtAI/chat-copy.ts"
     ]
   },
-  "2a86f173znn": {
-    "en": "Your daily language-model limit is used up; Hanogt AI Core answers until tomorrow.",
-    "tr": "Günlük dil modeli sınırın doldu; yarına kadar Hanogt AI Çekirdeği yanıt verecek.",
+  "zmwecq0i35": {
+    "en": "Your daily language-model messages are used up; they renew 24 hours after your first message. Until then Hanogt AI Core answers.",
+    "tr": "Günlük dil modeli hakkın doldu; ilk mesajından 24 saat sonra yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.",
     "files": [
       "src/components/HanogtAI/chat-copy.ts"
     ]
@@ -32862,9 +32907,9 @@
       "src/components/HanogtAI/chat-copy.ts"
     ]
   },
-  "17rditnj741": {
-    "en": "You've used today's messages for your own connections; Hanogt AI Core answers until tomorrow.",
-    "tr": "Kendi bağlantılarınla bugünkü mesaj sınırına ulaştın; yarına kadar Hanogt AI Çekirdeği yanıt verecek.",
+  "1kohhndqs7x": {
+    "en": "You've used the day's messages for your own connections; they renew 24 hours after your first one. Until then Hanogt AI Core answers.",
+    "tr": "Kendi bağlantıların için günlük mesaj hakkın doldu; ilk mesajından 24 saat sonra yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.",
     "files": [
       "src/components/HanogtAI/chat-copy.ts"
     ]
@@ -32872,6 +32917,20 @@
   "2dzmn3tbxtb": {
     "en": "Try again in {seconds} s.",
     "tr": "{seconds} sn sonra tekrar dene.",
+    "files": [
+      "src/components/HanogtAI/chat-copy.ts"
+    ]
+  },
+  "16yc779ph3c": {
+    "en": "You've used all {limit} of today's Hanogt AI messages. Renews: {time}. Until then Hanogt AI Core answers.",
+    "tr": "Günlük {limit} mesajlık Hanogt AI hakkının hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.",
+    "files": [
+      "src/components/HanogtAI/chat-copy.ts"
+    ]
+  },
+  "11rhli8jvwz": {
+    "en": "You've used all {limit} of the day's messages for your own connections. Renews: {time}. Until then Hanogt AI Core answers.",
+    "tr": "Kendi bağlantıların için günlük {limit} mesajın hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.",
     "files": [
       "src/components/HanogtAI/chat-copy.ts"
     ]
@@ -32985,6 +33044,20 @@
   "285fmi10j7x": {
     "en": "Hanogt's own language model; uses your daily messages.",
     "tr": "Hanogt'un kendi dil modeli; günlük mesaj hakkını kullanır.",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "20430q2ubqa": {
+    "en": "{count} messages left today.",
+    "tr": "Bugün {count} mesaj kaldı.",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "24pcv9xun2c": {
+    "en": "{count} messages left today",
+    "tr": "bugün {count} mesaj kaldı",
     "files": [
       "src/components/HanogtAI/ChatComposer.tsx"
     ]
@@ -33628,6 +33701,127 @@
     "tr": "{language} · {lines} satır · açmak için tıkla",
     "files": [
       "src/components/HanogtAI/Markdown.tsx"
+    ]
+  },
+  "11s36tkdfgj": {
+    "en": "Your Hanogt AI usage",
+    "tr": "Hanogt AI kullanımın",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "20lrnyv7mo0": {
+    "en": "Today {used} / {limit}",
+    "tr": "Bugün {used} / {limit}",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "bthsl0dqth": {
+    "en": "You've used {used} of today's {limit} messages. Open for details.",
+    "tr": "Bugün {limit} mesajın {used} tanesini kullandın. Ayrıntılar için aç.",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "1o9q4vz4jee": {
+    "en": "Today's messages",
+    "tr": "Bugünkü mesajlar",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "v3gwnymvgq": {
+    "en": "{count} messages left",
+    "tr": "{count} mesaj kaldı",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "1zvg9gn1raw": {
+    "en": "Today's messages are used up",
+    "tr": "Bugünkü hakkın doldu",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "1vkfcih7nh0": {
+    "en": "Renews: {time}",
+    "tr": "Yenilenme: {time}",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx",
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "y8cyv9oxv8": {
+    "en": "The count starts with your first message and lasts 24 hours.",
+    "tr": "Sayaç ilk mesajınla başlar ve 24 saat sürer.",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "1ijlgmtdto6": {
+    "en": "Up to {count} messages a minute",
+    "tr": "Dakikada en fazla {count} mesaj",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "nlihjz3vvz": {
+    "en": "Includes +{count} extra messages from the Hanogt team",
+    "tr": "Hanogt ekibinden +{count} ek mesaj dahil",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "2be057ld1yq": {
+    "en": "Your own connections (today)",
+    "tr": "Kendi bağlantıların (bugün)",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "1yt5vnlq2wd": {
+    "en": "Messages sent with your own API key don't use your Hanogt AI messages.",
+    "tr": "Kendi API anahtarınla gönderdiklerin Hanogt AI hakkından düşmez.",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "16iw6jvqetd": {
+    "en": "Upgrade your plan",
+    "tr": "Planını yükselt",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx",
+      "src/components/HanogtAI/chat-copy.ts"
+    ]
+  },
+  "2549mv95y2s": {
+    "en": "{count} messages a day with {plan}",
+    "tr": "{plan} ile günde {count} mesaj",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "1m95nkvydto": {
+    "en": "All your plan benefits",
+    "tr": "Tüm plan hakların",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "ajy9kya7wk": {
+    "en": "Loading usage…",
+    "tr": "Kullanım yükleniyor…",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "qemzy8l3cy": {
+    "en": "Usage can't be read right now.",
+    "tr": "Kullanım şu anda okunamadı.",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
     ]
   },
   "3bot9fr0le": {
@@ -34949,6 +35143,76 @@
     "tr": "Onayla ve değiştir",
     "files": [
       "src/components/Plans/ChangePlanDialog.tsx"
+    ]
+  },
+  "1axof5dlnba": {
+    "en": "Your plan's usage",
+    "tr": "Planının kullanımı",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "fc849nnbmz": {
+    "en": "Hanogt AI messages (today)",
+    "tr": "Hanogt AI mesajı (bugün)",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "u66expsskd": {
+    "en": "Messages through your own connections (today)",
+    "tr": "Kendi bağlantılarınla mesaj (bugün)",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "sme7a582ft": {
+    "en": "Hanogt Social groups you own",
+    "tr": "Sahibi olduğun Hanogt Social grubu",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "au9gqp6a7z": {
+    "en": "AI connections (your own key)",
+    "tr": "Yapay zekâ bağlantısı (kendi anahtarın)",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "16y7j30wa2b": {
+    "en": "unlimited",
+    "tr": "sınırsız",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "1klp8swy7h4": {
+    "en": "not in your plan",
+    "tr": "planında yok",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "21kru7d4bgk": {
+    "en": "couldn't be read",
+    "tr": "okunamadı",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "u3u2tz550j": {
+    "en": "Counted for 24 hours from your first message.",
+    "tr": "İlk mesajından itibaren 24 saat sayılır.",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "6xjoq5zecw": {
+    "en": "includes +{count} extra messages",
+    "tr": "+{count} ek mesaj dahil",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
     ]
   },
   "s086r830u2": {
@@ -39284,9 +39548,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "sr4yvgpscf": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued with high priority (not a promise of a response time).\nPrices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır (belirli bir yanıt süresi taahhüdü değildir).\nFiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "a3or8ipy9v": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}. The day is counted for 24 hours from your first message; the meter at the top of Hanogt AI shows how many you've used today and when they renew.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued with high priority (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}. Gün, ilk mesajından itibaren 24 saat sayılır; Hanogt AI sekmesinin üstündeki sayaç bugün kaç mesaj kullandığını ve ne zaman yenileneceğini gösterir.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]

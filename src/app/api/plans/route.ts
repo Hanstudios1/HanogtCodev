@@ -1,13 +1,14 @@
 import { NextResponse, after, type NextRequest } from "next/server";
 import { billingView, paddleEntitles, type PaddleCheckoutConfig } from "@/lib/paddle";
-import { PAID_PLAN_IDS, aiLimitsFor, effectivePlan, isPaidPlanId, isRecentCheckout, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse } from "@/lib/plans";
+import { PAID_PLAN_IDS, effectivePlan, isPaidPlanId, isRecentCheckout, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
+import { planUsageFor } from "@/lib/server/ai-usage";
 import { commitServerMutations, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
 import { checkoutConfigFor, getPaddleConfig, isBillingTester, isPaddleConfigured } from "@/lib/server/paddle";
 import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
-import { AI_DAY_MS, AI_LIMIT_KEYS, getPlanCatalog, getSubscription } from "@/lib/server/plans";
-import { enforceRateLimitWithFallback, readRateLimit } from "@/lib/server/rate-limit";
+import { getPlanCatalog, getSubscription } from "@/lib/server/plans";
+import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders, visitorCountryFromHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
 
@@ -53,14 +54,12 @@ export async function GET(request: NextRequest) {
         const staff = active ? Boolean(await getStaffSession().catch(() => null)) : false;
         const checkout = await checkoutOf(catalog, request, active?.email ?? null, staff);
         if (!active) return json({ catalog: publicCatalog(catalog), checkout, me: null } satisfies PlansResponse);
-        const [stored, used, waitlist] = await Promise.all([
-            getSubscription(active.email),
-            readRateLimit(AI_LIMIT_KEYS(active.email).day, AI_DAY_MS).catch(() => null),
-            waitlistOf(active.email),
-        ]);
+        const [stored, waitlist] = await Promise.all([getSubscription(active.email), waitlistOf(active.email)]);
         // What Paddle knows but no notification told us (selfHealReason), asked once every ten minutes at most;
         // a slow Paddle finishes after the answer and counts next time.
         const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
+        // Every benefit with a number, used out of the plan's limit (Hanogt AI today, projects, games, groups, connections).
+        const usage = await planUsageFor(active.email, subscription);
         return json({
             catalog: publicCatalog(catalog),
             checkout,
@@ -75,8 +74,9 @@ export async function GET(request: NextRequest) {
                 canManageBilling: Boolean(subscription.paddle && (subscription.paddleCustomerId ?? subscription.paddle.customerId) && isPaddleConfigured(getPaddleConfig())),
                 paddleCustomerId: subscription.paddleCustomerId ?? subscription.paddle?.customerId ?? null,
                 checkoutPending: Boolean(subscription.paddleCustomerId) && !paddleEntitles(subscription.paddle) && isRecentCheckout(subscription.paddleCheckout),
-                aiLimits: aiLimitsFor(subscription),
-                aiUsedToday: used?.count ?? 0,
+                aiLimits: { perMinute: usage.hanogt.minute.limit, perDay: usage.hanogt.day.limit },
+                aiUsedToday: usage.hanogt.day.used,
+                usage,
                 waitlist,
                 isStaff: staff,
             },

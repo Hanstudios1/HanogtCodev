@@ -1,5 +1,30 @@
 # Değişiklik Günlüğü
 
+## 0.3.9 — 2026-10-03
+
+### Hanogt AI sekmesinde kullanım sayacı
+
+- `/ai` üst çubuğunda ve yüzen panelin başlığında "Bugün 12 / 750" sayacı:
+  %80'de sarı, sınırda kırmızı. Açılan kartta plan, kalan mesaj, yenilenme
+  saati (gün ilk mesajdan itibaren 24 saat), dakika sınırı, ekip hediyesi,
+  kendi bağlantıların ve "Planını yükselt".
+- Yeni `GET /api/ai/usage`; ödeyip bildirim gelmeden doğrudan Hanogt AI'a
+  gelen de Plus'ı görüyor (Paddle'a kısmalı soruluyor). Her yanıt
+  `X-Hanogt-AI-Quota`, `-Day-Limit`, `-Day-Remaining`, `-Day-Reset`
+  başlıklarıyla sayacı istek atmadan güncelliyor; karışık
+  `X-RateLimit-Remaining` kalktı.
+- Sınır uyarısı artık "yarına kadar" değil, yenilenme saatini söylüyor ve
+  Fiyatlandırma bağlantısı veriyor; 429 gövdesi `limit`, `used`, `resetsAt`,
+  `upgrade` taşıyor. Günlük sınır reddetmeden önce bildirilmemiş satın alma
+  aranıyor.
+- Sayım düzeltmeleri: dakika sınırına takılan istek günlük hakkı yemiyor
+  (önce dakika, sonra gün); geçersiz istek hiç sayılmıyor.
+- Model seçicide "Bugün 738 mesaj kaldı"; başka sekmede satın alınca AI
+  sekmesi hemen Plus'a dönüyor.
+- Fiyatlandırma'daki hesap kutusu bütün hakları "kullanılan / sınır" olarak
+  listeliyor (`/plans#usage`): AI mesajı, kendi bağlantılarla mesaj, kod ve
+  oyun projesi, grup, AI bağlantısı.
+
 ## 0.3.8 — 2026-10-03
 
 ### Plan hakları her yerde, ödeme bildirimini beklemeden

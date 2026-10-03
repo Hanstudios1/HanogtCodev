@@ -241,6 +241,16 @@ export function createBackend(seed, options = {}) {
                 const parent = rest.slice(0, -":runQuery".length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
                 return runQuery(parent, body.structuredQuery);
             }
+            if (rest.endsWith(":runAggregationQuery")) {
+                // count() with an optional upTo, like countServerQuery sends it.
+                const parent = rest.slice(0, -":runAggregationQuery".length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
+                const { structuredQuery, aggregations } = body.structuredAggregationQuery;
+                const listed = await runQuery(parent, { ...structuredQuery, limit: undefined }).json();
+                if (!Array.isArray(listed)) return failure(400, "FAILED_PRECONDITION");
+                const [aggregation] = aggregations;
+                const upTo = aggregation.count?.upTo ? Number(aggregation.count.upTo) : Infinity;
+                return json(200, [{ result: { aggregateFields: { [aggregation.alias]: { integerValue: String(Math.min(listed.length, upTo)) } } } }]);
+            }
         } catch (error) {
             if (error instanceof Precondition) return failure(error.status, error.reason);
             throw error;

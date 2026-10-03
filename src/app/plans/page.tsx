@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Header from "@/components/Header";
 import ChangePlanDialog from "@/components/Plans/ChangePlanDialog";
+import UsageList from "@/components/Plans/UsageList";
 import { PaddleLoadError, checkoutEventError, closeCheckout, failureMessage, getPaddle, onPaddleEvent, openCheckout } from "@/components/Plans/paddle-js";
 import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
@@ -1039,12 +1040,11 @@ export default function PlansPage() {
                                         {busy === "portal" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <CreditCard className="h-3.5 w-3.5" aria-hidden />}{tx(C.manage)}
                                     </button>
                                 ) : null}
-                                <div className="w-64 max-w-full">
-                                    <p className="text-[12.5px] text-zinc-500 dark:text-zinc-400">{tx(C.aiToday, { used: me.aiUsedToday, limit: me.aiLimits.perDay })}</p>
-                                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10" role="progressbar" aria-valuemin={0} aria-valuemax={me.aiLimits.perDay} aria-valuenow={Math.min(me.aiUsedToday, me.aiLimits.perDay)}>
-                                        <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" style={{ width: `${Math.min(100, (me.aiUsedToday / Math.max(1, me.aiLimits.perDay)) * 100)}%` }} />
+                                {me.usage ? <UsageList usage={me.usage} /> : (
+                                    <div className="w-64 max-w-full">
+                                        <p className="text-[12.5px] text-zinc-500 dark:text-zinc-400">{tx(C.aiToday, { used: me.aiUsedToday, limit: me.aiLimits.perDay })}</p>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         ) : null}
                         {failed ? <p className="mx-auto mt-5 max-w-xl text-[13px] text-zinc-500">{tx(C.unavailable)}</p> : null}

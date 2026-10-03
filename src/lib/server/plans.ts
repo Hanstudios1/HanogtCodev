@@ -10,7 +10,6 @@ import {
     PLAN_GROUP_LIMITS,
     PLAN_PROJECT_LIMITS,
     PRICE_MAX,
-    aiLimitsFor,
     effectivePlan,
     isPlanId,
     type PaidPlanId,
@@ -27,7 +26,7 @@ import { readRateLimit, resetRateLimit } from "./rate-limit";
 export const CATALOG_PATH = "site_config/plans";
 export const subscriptionPath = (email: string) => `subscriptions/${email}`;
 
-/** Rate-limit keys of Hanogt AI (src/app/api/ai/route.ts). */
+/** Rate-limit keys of Hanogt AI (src/lib/server/ai-usage.ts, src/app/api/ai/route.ts). */
 export const AI_LIMIT_KEYS = (email: string) => ({ minute: `ai:${email}`, day: `ai-day:${email}` });
 export const AI_DAY_MS = 24 * 60 * 60_000;
 
@@ -114,12 +113,6 @@ function checkoutOf(value: unknown, environment: string): UserSubscription["padd
 
 export async function getSubscription(email: string): Promise<UserSubscription> {
     return normalizeSubscription(await getServerDocument<Record<string, unknown>>(subscriptionPath(email)));
-}
-
-/** Hanogt AI limits for an account; Free limits when the record can't be read. */
-export async function aiLimitsForEmail(email: string) {
-    const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
-    return { ...aiLimitsFor(subscription), plan: effectivePlan(subscription) };
 }
 
 /** Messages used in the current minute and day windows (for staff). */
