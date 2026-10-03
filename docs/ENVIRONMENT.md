@@ -194,6 +194,7 @@ See [docs/HANOGT_AI.md](./HANOGT_AI.md) for the full picture.
 | `HANOGT_AI_API_KEY` | – | API key (falls back to `GROQ_API_KEY`). |
 | `HANOGT_AI_BASE_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible endpoint. http allowed only to loopback. |
 | `HANOGT_AI_MODEL` | `llama-3.3-70b-versatile` | Model id (falls back to `GROQ_MODEL`). |
+| `HANOGT_AI_EXTRA_BODY` | – | Optional JSON object added to every request to Hanogt AI's own model (chat and `/api/v1`), for a self-hosted server: e.g. `{"chat_template_kwargs":{"enable_thinking":false}}` for a Qwen model on vLLM (see training/README.md). The request's own fields (model, messages, tools, max_tokens…) always win; an invalid value is ignored. |
 | `ANTHROPIC_API_KEY` | – | **Secret.** Turns on the advanced code engine (Claude): code and security questions in the chat go to it, up to each plan's daily allowance (Admin › Subscriptions › Hanogt AI engine). Without it the standard engine answers everything. |
 | `HANOGT_AI_CLAUDE_MODEL` | `DEFAULT_ENGINE_MODEL` in `src/lib/ai/engine.ts` | The advanced engine's default model, an Anthropic model ID (the admin card overrides it). |
 | `HANOGT_AI_CLAUDE_EFFORT` | `medium` | Its default effort: `low`, `medium`, `high`, `xhigh` or `max`. Higher thinks deeper, answers slower and costs more; the chat stops answers after 55 seconds. |

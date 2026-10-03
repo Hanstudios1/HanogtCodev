@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     const fileName = typeof context.fileName === "string" ? context.fileName.replace(/[^\w.\- ]/g, "").slice(0, 80) || "main" : "main";
     const fileLanguage = typeof context.language === "string" ? context.language.replace(/[^\w#+-]/g, "").slice(0, 20) : "text";
 
-    let target: { apiKey: string; baseUrl: string; model: string; connection: ResolvedConnection | null };
+    let target: { apiKey: string; baseUrl: string; model: string; connection: ResolvedConnection | null; extraBody: Record<string, unknown> };
     // The day window this message was counted in; every answer reports it (X-Hanogt-AI-*) for the usage meter.
     let quota: DayQuota;
     // The plan the message was counted under: it sets the answer's length and how much of the file is read.
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
             return errorResponse(503, "unavailable", "Bağlantı bilgileri şu anda okunamadı. Biraz sonra tekrar deneyin.", quotaHeaders(quota));
         }
         if (!connection) return errorResponse(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.", quotaHeaders(quota));
-        target = { apiKey: connection.apiKey, baseUrl: connection.baseUrl, model: connection.model, connection };
+        target = { apiKey: connection.apiKey, baseUrl: connection.baseUrl, model: connection.model, connection, extraBody: {} };
     } else {
         const config = providerConfig();
         if (!config) return errorResponse(503, "not_configured", "Hanogt AI dil modeli bu sunucuda yapılandırılmamış.");
@@ -289,6 +289,8 @@ export async function POST(request: NextRequest) {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${target.apiKey}` },
         body: JSON.stringify({
+            // Options for a self-hosted model (HANOGT_AI_EXTRA_BODY) first: the request's own fields win.
+            ...target.extraBody,
             model: target.model,
             ...sampling,
             stream,

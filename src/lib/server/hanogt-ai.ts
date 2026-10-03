@@ -83,6 +83,30 @@ const SENSITIVE_NOTES: Record<SensitiveRequest, string> = {
 };
 
 /** Hanogt AI's own model: an OpenAI-compatible endpoint (Groq by default); null when not configured. */
+/** Fields every request to Hanogt AI's own model sets itself: HANOGT_AI_EXTRA_BODY can't change them. */
+const RESERVED_BODY_KEYS = new Set(["model", "messages", "stream", "stream_options", "tools", "tool_choice", "max_tokens", "max_completion_tokens", "temperature", "top_p", "stop", "n", "user", "response_format"]);
+let extraBodyWarned = false;
+
+/**
+ * Extra fields for every request to Hanogt AI's own model (HANOGT_AI_EXTRA_BODY, a JSON
+ * object): options a self-hosted server understands, such as
+ * {"chat_template_kwargs":{"enable_thinking":false}} for a Qwen model on vLLM. The
+ * request's own fields always win; an invalid value is ignored (and logged once).
+ */
+export function providerExtraBody(): Record<string, unknown> {
+    const raw = (process.env.HANOGT_AI_EXTRA_BODY || "").trim();
+    if (!raw) return {};
+    try {
+        const parsed: unknown = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || raw.length > 4_000) throw new Error("not a JSON object of at most 4,000 characters");
+        return Object.fromEntries(Object.entries(parsed).filter(([key]) => !RESERVED_BODY_KEYS.has(key)));
+    } catch (error) {
+        if (!extraBodyWarned) console.warn("[hanogt-ai] HANOGT_AI_EXTRA_BODY ignored:", error instanceof Error ? error.message : error);
+        extraBodyWarned = true;
+        return {};
+    }
+}
+
 export function providerConfig() {
     const apiKey = (process.env.HANOGT_AI_API_KEY || process.env.GROQ_API_KEY || "").trim();
     const baseUrl = (process.env.HANOGT_AI_BASE_URL || "https://api.groq.com/openai/v1").trim().replace(/\/+$/, "");
@@ -95,7 +119,7 @@ export function providerConfig() {
     } catch {
         validUrl = false;
     }
-    return apiKey && validUrl ? { apiKey, baseUrl, model } : null;
+    return apiKey && validUrl ? { apiKey, baseUrl, model, extraBody: providerExtraBody() } : null;
 }
 
 export function clip(text: string, max: number) {

@@ -90,7 +90,7 @@ test("which model answers: an https endpoint, or plain http only to this machine
         process.env.HANOGT_AI_BASE_URL = "http://evil.example.com/v1";
         assert.equal(core.providerConfig(), null);
         process.env.HANOGT_AI_BASE_URL = "http://127.0.0.1:11434/v1/";
-        assert.deepEqual(core.providerConfig(), { apiKey: "k", baseUrl: "http://127.0.0.1:11434/v1", model: "llama-3.3-70b-versatile" });
+        assert.deepEqual(core.providerConfig(), { apiKey: "k", baseUrl: "http://127.0.0.1:11434/v1", model: "llama-3.3-70b-versatile", extraBody: {} });
         process.env.HANOGT_AI_BASE_URL = "https://api.example.com/openai/v1";
         process.env.HANOGT_AI_MODEL = "my-model";
         assert.equal(core.providerConfig().model, "my-model");
@@ -123,4 +123,26 @@ test("the prompt in two parts: the stable rules (cached by the advanced engine) 
     const general = core.systemPrompt({ ...base, agent: "off" });
     assert.ok(general.includes("Never invent APIs") && general.includes("complete, runnable code"), "code practice in every mode");
     assert.ok(core.systemPrompt({ ...base, mode: "security", agent: "off" }).includes("Never invent APIs"));
+});
+
+test("HANOGT_AI_EXTRA_BODY: extra fields for a self-hosted model, never the request's own", () => {
+    const saved = { ...process.env };
+    try {
+        process.env.HANOGT_AI_API_KEY = "test-key";
+        process.env.HANOGT_AI_BASE_URL = "http://127.0.0.1:8000/v1";
+        delete process.env.HANOGT_AI_EXTRA_BODY;
+        assert.deepEqual(core.providerConfig().extraBody, {}, "none by default");
+        process.env.HANOGT_AI_EXTRA_BODY = JSON.stringify({ chat_template_kwargs: { enable_thinking: false }, top_k: 20, model: "other", messages: [], stream: false, max_tokens: 99999, tools: [] });
+        assert.deepEqual(core.providerExtraBody(), { chat_template_kwargs: { enable_thinking: false }, top_k: 20 }, "reserved fields are dropped");
+        assert.deepEqual(core.providerConfig().extraBody, { chat_template_kwargs: { enable_thinking: false }, top_k: 20 });
+        for (const broken of ["{not json", "[1,2]", "\"text\"", "null", JSON.stringify({ x: "y".repeat(5000) })]) {
+            process.env.HANOGT_AI_EXTRA_BODY = broken;
+            assert.deepEqual(core.providerExtraBody(), {}, broken.slice(0, 20));
+        }
+    } finally {
+        for (const key of ["HANOGT_AI_API_KEY", "HANOGT_AI_BASE_URL", "HANOGT_AI_EXTRA_BODY"]) {
+            if (key in saved) process.env[key] = saved[key];
+            else delete process.env[key];
+        }
+    }
 });

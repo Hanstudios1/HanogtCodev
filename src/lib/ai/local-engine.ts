@@ -99,6 +99,19 @@ function snippets() {
     return snippetIndex;
 }
 
+type ConceptLibrary = { concepts: typeof import("./concepts").CONCEPTS; index: InstanceType<typeof Bm25Index> };
+let conceptLibrary: Promise<ConceptLibrary | null> | null = null;
+/** The programming concepts glossary (concepts.ts) and its index, loaded on first use. */
+function conceptsLibrary() {
+    conceptLibrary ??= import("./concepts")
+        .then(({ CONCEPTS }) => ({
+            concepts: CONCEPTS,
+            index: new Bm25Index(CONCEPTS.map((concept) => ({ id: concept.id, text: `${concept.title.TR} ${concept.title.EN} ${concept.keywords} ${concept.keywords}` }))),
+        }))
+        .catch(() => null);
+    return conceptLibrary;
+}
+
 // ------------------------------------------------------------------ copy
 const C = {
     greetings: [
@@ -193,6 +206,11 @@ const SUGGESTIONS: Record<string, Copy[]> = {
         { TR: "Python'da liste nasıl sıralanır?", EN: "How do I sort a list in Python?" },
         { TR: "Zıplama kodu (Hanogt Engine)", EN: "Jump code (Hanogt Engine)" },
     ],
+    code_concept: [
+        { TR: "Özyineleme nedir?", EN: "What is recursion?" },
+        { TR: "async/await nasıl çalışır?", EN: "How does async/await work?" },
+        { TR: "SQL ile NoSQL farkı", EN: "SQL vs NoSQL" },
+    ],
     code: [
         { TR: "C# ile sınıf örneği", EN: "Class example in C#" },
         { TR: "JavaScript'te dosya okuma", EN: "Read a file in JavaScript" },
@@ -255,6 +273,24 @@ const GENERIC_WORDS = /(?<![\p{L}\p{N}])(?:kod(?:u|lar[ıi])?|code|script(?:i)?|
 /** The task part of a code request: language names and filler words removed. */
 function snippetQuery(text: string) {
     const stripped = text.toLocaleLowerCase("tr").replace(LANGUAGE_WORDS, " ").replace(GENERIC_WORDS, " ").replace(/\s+/g, " ").trim();
+    return stripped || text;
+}
+
+// The question around a concept ("X nedir", "what is X", "X ile Y farkı"); no lookbehind (older Safari can't parse it).
+const CONCEPT_FILLER = new RegExp(`(^|[^\\p{L}\\p{N}_])(?:${[
+    "nedir", "ne demek(?:tir)?", "ne işe yarar", "ne ise yarar", "ne zaman kullanılır", "nasıl çalışır", "nasil calisir", "neden önemli",
+    "açıklar mısın", "açıkla", "acikla", "anlatır mısın", "anlat", "kısaca", "basitçe", "tam olarak", "programlamada", "yazılımda",
+    "hakkında bilgi verir misin", "kavramını", "kavramı", "mantığını anlamadım", "arasındaki", "farkı", "fark", "farklar", "neler", "nelerdir", "bana",
+    "bir", "bu", "oluyor", "olur", "aynı şey", "m[ıiuü]", "neden", "kullanırız", "işler",
+    "what(?:'s| is| are)?", "explain", "explained", "simply", "define", "meaning of", "mean", "does", "how", "work", "why do we use",
+    "when should i use", "help me understand", "i don't understand", "in programming", "difference between", "the", "an?", "vs", "and", "ile", "ve",
+].join("|")})(?=$|[^\\p{L}\\p{N}_])`, "giu");
+/** Asks what a programming concept is (used when the intent model isn't sure). */
+const DEFINITION_WORDS = /(?:nedir|ne demek|ne işe yarar|farkı|nasıl (?:çalışır|işler)|what (?:is|are|'s)|what's|explain|difference between|how does|\bvs\b)/i;
+
+/** The concept part of a "what is X" question. */
+function conceptQuery(text: string) {
+    const stripped = text.toLocaleLowerCase("tr").replace(/[?!.,:;"“”]+/g, " ").replace(CONCEPT_FILLER, "$1 ").replace(/\s+/g, " ").trim();
     return stripped || text;
 }
 
@@ -479,6 +515,23 @@ export async function answerLocally(message: string, options: LocalOptions): Pro
         });
     };
 
+    /** A programming concept from the glossary; `strict` when the intent model didn't ask for one. */
+    const answerConcept = async (strict: boolean): Promise<LocalReply | null> => {
+        const library = await conceptsLibrary();
+        const hit = library?.index.search(conceptQuery(text), 1)[0];
+        if (!library || !hit || hit.coverage < (strict ? 0.6 : 0.5)) return null;
+        const concept = library.concepts.find((entry) => entry.id === hit.id);
+        if (!concept) return null;
+        const example = concept.example;
+        const editorLanguage = example?.language === "python" ? "py" : example?.language === "javascript" ? "js" : null;
+        return reply({
+            text: [`**${tx(concept.title)}**`, tx(concept.text), example ? `\`\`\`${example.language}\n${example.code}\n\`\`\`` : ""].filter(Boolean).join("\n\n"),
+            intent: "code_concept",
+            confidence: strict ? Math.min(0.9, hit.coverage) : confidence,
+            ...(example && editorLanguage ? { code: { language: editorLanguage, code: example.code } } : {}),
+        });
+    };
+
     // 9. Agent actions: the same tool calls the language model would make, shown as permission cards.
     const actionReply = (proposal: CoreProposal, library: ProgramsModule | null): LocalReply | null => {
         if (proposal.kind === "need_topic") {
@@ -531,9 +584,15 @@ export async function answerLocally(message: string, options: LocalOptions): Pro
             return reply({ text: tx(C.errorGeneric), intent, confidence });
         }
         case "code_howto": {
-            const answer = answerSnippet();
+            // "event loop nasıl işler" is a how-it-works question: a concept answers it when no example does.
+            const answer = answerSnippet() ?? await answerConcept(true);
             if (answer) return answer;
             return reply({ text: tx(C.snippetMissing), intent, confidence });
+        }
+        case "code_concept": {
+            const answer = await answerConcept(false);
+            if (answer) return answer;
+            break;
         }
         case "unknown":
             // The model is sure it's off-topic: don't let a weak keyword match answer it.
@@ -558,7 +617,11 @@ export async function answerLocally(message: string, options: LocalOptions): Pro
         }
     }
 
-    // 10. Low confidence: programming how-to, then knowledge retrieval, then fallback.
+    // 10. Low confidence: a programming concept, a programming how-to, then knowledge retrieval, then fallback.
+    if (intent !== "unknown" && DEFINITION_WORDS.test(text)) {
+        const answer = await answerConcept(true);
+        if (answer) return answer;
+    }
     if (HOWTO_WORDS.test(text) || detectSnippetLanguage(text)) {
         const answer = answerSnippet();
         if (answer) return answer;

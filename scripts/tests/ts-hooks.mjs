@@ -1,7 +1,8 @@
 // Module resolution hooks for the plain-Node tests in this folder.
 // Node 22 strips TypeScript types natively; these hooks only teach it the
 // project's import style: "@/x" → src/x.ts, extensionless relative imports
-// from .ts files, and the "server-only" marker package (a no-op here).
+// from .ts files, the "server-only" marker package (a no-op here) and JSON
+// imports without an import attribute (the bundler's style).
 import fs from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -31,4 +32,11 @@ export async function resolve(specifier, context, nextResolve) {
         if (found) return { url: found, shortCircuit: true };
     }
     return nextResolve(specifier, context);
+}
+
+export async function load(url, context, nextLoad) {
+    if (url.startsWith("file:") && url.endsWith(".json")) {
+        return { format: "json", source: fs.readFileSync(fileURLToPath(url), "utf8"), shortCircuit: true };
+    }
+    return nextLoad(url, context);
 }

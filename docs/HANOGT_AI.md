@@ -134,7 +134,7 @@ are asked to sign in for account actions.
 5. Pasted code gets the Code Advisor security scan.
 6. Arithmetic is calculated without `eval` (`calc.ts`).
 7. Sensitive requests are refused (see above).
-8. The **trained intent model** classifies the message (52 intents).
+8. The **trained intent model** classifies the message (53 intents).
 9. Action intents (`create_group`, `my_profile`, `write_code`, `open_editor`,
    `make_game`, `navigate`) become the same tool calls the LLM makes
    (`src/lib/ai/agent-intents.ts`): e.g. *“React çalışma grubu kur”* →
@@ -145,6 +145,18 @@ are asked to sign in for account actions.
 10. Other intents are answered from the curated knowledge base, code snippets
     (`snippets.ts`) or retrieval; anything else gets an honest “outside my
     offline knowledge” answer.
+11. **Programming concepts** (`code_concept`): *“özyineleme nedir”*, *“what is
+    a closure”*, *“SQL ile NoSQL farkı”* are answered from
+    `src/lib/ai/concepts.ts` (50 concepts, Turkish and English, most with a
+    short example that opens in the editor; loaded on demand). A definition
+    question the model isn't sure about (*“… nedir / ne demek / nasıl
+    çalışır”*, *“what is / explain / how does …”*) gets a concept only when the
+    match is strong, and a how-to question without a ready example gets one
+    too (*“event loop nasıl işler”*).
+
+The Python and JavaScript examples of `snippets.ts` are run by
+`scripts/tests/snippets-run.test.mjs`, and the concepts' JavaScript examples
+are parsed by `scripts/tests/core-concepts.test.mjs`.
 
 **Offline programs** (`src/lib/ai/programs.ts`, loaded on demand): calculator,
 number guessing game, to-do list, temperature converter, rock-paper-scissors,
@@ -164,11 +176,12 @@ npm run ai:train -- --cv    # also 5-fold cross-validation (~30 min)
 npm run ai:train -- --quick # first grid configuration only
 ```
 
-- **Dataset**: `ai/dataset/intents.json` — 52 intents, 10,135 examples in
+- **Dataset**: `ai/dataset/intents.json` — 53 intents, 10,495 examples in
   Turkish, English and 20+ other languages, with paraphrases, typos, text
   without Turkish characters and mixed TR/EN.
-- **Blind holdout**: `ai/dataset/holdout.json` — 318 natural requests written
-  after the dataset and never used for training, selection or error analysis.
+- **Blind holdout**: `ai/dataset/holdout.json` — 343 natural requests written
+  after the dataset and never used for training, selection or error analysis
+  (25 of them, for `code_concept`, were added with that intent).
 - **Features** (`src/lib/ai/nlp.mjs`, feature version 4): words, 5-character
   stems, stem bigrams, in-word character trigrams, first/last stem, a
   multilingual **concept lexicon** (e.g. *kur / create / создай* → `create`,
@@ -196,17 +209,57 @@ npm run ai:train -- --quick # first grid configuration only
 | | Intents | Examples | Test accuracy | Test macro-F1 | After int8 quantization | Model |
 | --- | --- | --- | --- | --- | --- | --- |
 | Before (feature version 2) | 41 | 1,528 | 67.2% | 68.3% | 66.4% | 396.8 KB JSON |
-| Now (feature version 4) | 52 | 10,135 | 90.1% | 90.7% | 89.9% / 90.6% F1 | 1402.7 KB binary |
+| Feature version 4, 2 October 2026 | 52 | 10,135 | 90.1% | 90.7% | 89.9% / 90.6% F1 | 1402.7 KB binary |
+| Now, with `code_concept` | 53 | 10,495 | 90.7% | 91.3% | 90.4% / 91.0% F1 | 1449.1 KB binary |
 
 | Other measurements of the current model | Accuracy | Macro-F1 |
 | --- | --- | --- |
 | 5-fold cross-validation (every example tested once, quantized) | 89.9% | 90.3% |
-| Blind holdout, shipped model (318 sentences) | 95.9% | 95.6% |
+| Blind holdout, shipped model (343 sentences) | 94.8% | 94.6% |
+| … the 318 sentences of the previous holdout | 95.6% (before: 95.9%) | |
+| … the 25 new `code_concept` sentences | 84% | |
 
 The test sentences include deliberately hard cases (one-word messages in other
 languages, ambiguous wording); the blind holdout of ordinary requests is closer
 to everyday use. To improve the model, add examples to the dataset (never to
 the holdout), keep labels consistent, and re-run `npm run ai:train -- --cv`.
+
+## Measuring code quality (code-bench)
+
+`scripts/ai-eval/code-bench.mjs` measures how well an engine writes code:
+pass@1 on 40 tasks (20 JavaScript, 20 Python) with hidden tests
+(`scripts/ai-eval/bench-tasks.mjs`, written for this benchmark and kept out of
+any training data). The answer's code block runs in a child process with a
+time and memory limit, no inherited environment (no API keys), Node's
+permission model for JavaScript (no writes, no processes) and audit hooks for
+Python (no sockets, processes or writes outside its folder); results are
+classified as pass, wrong answer, syntax/runtime error, timeout, missing
+function, no code or refusal.
+
+```bash
+node scripts/ai-eval/code-bench.mjs --self-check     # every reference passes, every stub fails
+node scripts/ai-eval/code-bench.mjs --engine hanogt --api-key-env HANOGT_API_KEY
+node scripts/ai-eval/code-bench.mjs --engine openai --base-url https://api.groq.com/openai/v1 --model llama-3.3-70b-versatile --api-key-env GROQ_API_KEY
+node scripts/ai-eval/code-bench.mjs --engine anthropic --model <model id> --effort medium
+node scripts/ai-eval/code-bench.mjs --compare        # → ai/reports/code-bench.md
+```
+
+Runs are saved under `ai/reports/code-bench/`. Prompts are Turkish by default
+(`--lang en` for English). Model-written code runs on the machine that runs
+the benchmark: use a throwaway VM or container for untrusted models. The
+harness is tested with fake engines (`scripts/tests/code-bench.test.mjs`);
+measuring real engines needs their keys, so the owner runs it.
+
+## Fine-tuning your own model (Qwen)
+
+`training/` builds a supervised fine-tuning set from this repository (no user
+data; the code-bench stays out), trains a LoRA/QLoRA adapter on a Qwen model
+(default `Qwen/Qwen3.6-27B`, smaller preset `Qwen/Qwen3-8B`; the model is a
+parameter) and merges/exports it for vLLM or Ollama. A self-hosted model plugs
+into the standard engine with `HANOGT_AI_BASE_URL`, `HANOGT_AI_API_KEY`,
+`HANOGT_AI_MODEL` and, for options such as Qwen's thinking switch,
+`HANOGT_AI_EXTRA_BODY`. Steps, hardware, cost and serving: see
+[training/README.md](../training/README.md) (Turkish).
 
 ## Knowledge base
 
@@ -429,9 +482,11 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Wire protocol (trailer, history) | `src/lib/ai/agent-protocol.ts` |
 | Core intent → action mapping | `src/lib/ai/agent-intents.ts`, `src/lib/ai/programs.ts` |
 | Browser executors, settings | `src/lib/ai/agent-client.ts`, `src/lib/ai/agent-settings.ts` |
-| Offline engine | `src/lib/ai/local-engine.ts`, `nlp.mjs`, `snippets.ts`, `errors.ts`, `calc.ts` |
+| Offline engine | `src/lib/ai/local-engine.ts`, `nlp.mjs`, `snippets.ts`, `concepts.ts`, `errors.ts`, `calc.ts` |
 | Knowledge base + retrieval | `src/lib/ai/knowledge.ts`, `src/lib/ai/retrieval.ts` |
 | Client streaming, conversations | `src/lib/ai/client.ts`, `src/lib/ai/conversations.ts` |
 | UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`, `UsageMeter`, `usage-store`), `src/app/ai/*` |
 | Training | `ai/dataset/*`, `scripts/train-hanogt-ai.mjs`, `ai/reports/intent-training-report.md` |
-| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs`, `scripts/tests/ai-api.test.mjs`, `scripts/tests/voice.test.mjs`, `scripts/tests/ai-engine.test.mjs` (`npm test`) |
+| Code benchmark | `scripts/ai-eval/code-bench.mjs`, `bench-lib.mjs`, `bench-tasks.mjs`, `ai/reports/code-bench*` |
+| Fine-tuning | `training/build-dataset.mjs`, `train_lora.py`, `merge_and_export.py`, `requirements.txt`, `README.md` |
+| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs`, `scripts/tests/ai-api.test.mjs`, `scripts/tests/voice.test.mjs`, `scripts/tests/ai-engine.test.mjs`, `scripts/tests/core-concepts.test.mjs`, `scripts/tests/snippets-run.test.mjs`, `scripts/tests/code-bench.test.mjs`, `scripts/tests/training-dataset.test.mjs` (`npm test`) |

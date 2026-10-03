@@ -423,6 +423,33 @@
    "ajan modunu kapat",
    "benden izin almadan işlem yapabilir misin",
    "what is ask every time mode"
+  ],
+  "code_concept": [
+   "polimorfizmi bir örnekle anlatır mısın",
+   "closure kavramını hiç anlamadım",
+   "what exactly is big o notation",
+   "sql ve nosql arasındaki farkları söyler misin",
+   "bir değişkenin kapsamı ne demek oluyor",
+   "rebase ile merge arasında ne fark var",
+   "promise tam olarak ne işe yarıyor",
+   "çöp toplayıcı ne yapar",
+   "ortam değişkenlerini neden kullanırız",
+   "hash ile şifreleme aynı şey mi",
+   "why are immutable objects useful",
+   "interface mi abstract class mı kullanmalıyım",
+   "regex dediğin şey ne",
+   "thread nedir kısaca anlat",
+   "frontend ile backend arasındaki ayrım ne",
+   "unit test yazmak neden önemli",
+   "rest api ne anlama geliyor",
+   "rekürsif fonksiyonu anlamadım",
+   "what's the point of a hash map",
+   "callback hell neye denir",
+   "event loop nasıl işler",
+   "tasarım desenleri nelerdir",
+   "oop'nin dört prensibi neler",
+   "what is a deadlock between threads",
+   "kalıtım ile bileşim farkı nedir"
   ]
  }
 }

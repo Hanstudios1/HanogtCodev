@@ -24,6 +24,18 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.16",
+        version: "v0.3.16",
+        date: "2026-10-03",
+        title: { TR: "Daha bilgili Hanogt AI Çekirdeği", EN: "A better-informed Hanogt AI Core" },
+        desc: { TR: "Çevrimdışı Çekirdek artık programlama kavramlarını açıklıyor; kod yazma başarısı ölçülebiliyor.", EN: "The offline Core now explains programming concepts, and code quality can be measured." },
+        items: [
+            { TR: "\"Özyineleme nedir?\", \"What is a closure?\" gibi 50 programlama kavramı, örnekleriyle çevrimdışı da yanıtlanıyor.", EN: "50 programming concepts such as \"What is recursion?\" or \"What is a closure?\" are answered offline too, with examples." },
+            { TR: "Çekirdeğin niyet modeli yeniden eğitildi: daha isabetli yönlendirme.", EN: "The Core's intent model was retrained for more accurate routing." },
+            { TR: "Ekip için: kod yazma başarısını ölçen code-bench ve kendi Hanogt AI modelini eğitme düzeneği.", EN: "For the team: code-bench to measure coding quality, and a pipeline to train an own Hanogt AI model." },
+        ],
+    },
+    {
         id: "v0.3.15",
         version: "v0.3.15",
         date: "2026-10-03",

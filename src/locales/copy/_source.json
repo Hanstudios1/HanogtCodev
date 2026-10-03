@@ -7366,7 +7366,8 @@
     "files": [
       "src/app/privacy-policy/page.tsx",
       "src/app/refund-policy/page.tsx",
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/lib/ai/concepts.ts"
     ]
   },
   "4pejbpjzk3": {
@@ -22708,6 +22709,41 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "15rhf193jgb": {
+    "en": "A better-informed Hanogt AI Core",
+    "tr": "Daha bilgili Hanogt AI Çekirdeği",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1one45aggos": {
+    "en": "The offline Core now explains programming concepts, and code quality can be measured.",
+    "tr": "Çevrimdışı Çekirdek artık programlama kavramlarını açıklıyor; kod yazma başarısı ölçülebiliyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "m6xc84g4a5": {
+    "en": "50 programming concepts such as \"What is recursion?\" or \"What is a closure?\" are answered offline too, with examples.",
+    "tr": "\"Özyineleme nedir?\", \"What is a closure?\" gibi 50 programlama kavramı, örnekleriyle çevrimdışı da yanıtlanıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "oe8j0rwa7y": {
+    "en": "The Core's intent model was retrained for more accurate routing.",
+    "tr": "Çekirdeğin niyet modeli yeniden eğitildi: daha isabetli yönlendirme.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "pgezv6iejj": {
+    "en": "For the team: code-bench to measure coding quality, and a pipeline to train an own Hanogt AI model.",
+    "tr": "Ekip için: kod yazma başarısını ölçen code-bench ve kendi Hanogt AI modelini eğitme düzeneği.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "kuffyeh79u": {
@@ -40127,6 +40163,699 @@
       "src/lib/ai/agent-tools.ts"
     ]
   },
+  "1owqo35de79": {
+    "en": "Variable",
+    "tr": "Değişken",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "ec04u42a42": {
+    "en": "A variable is a named box that lets a program store a value and use it later. Its value can change; constants (`const` in JavaScript) are assigned once. A good variable name says what it holds: `totalPrice` rather than `x`.",
+    "tr": "Değişken, programın bir değeri adıyla saklayıp sonra kullanmasını sağlayan etiketli bir kutudur. Değeri değişebilir; sabitler (JavaScript'te `const`) ise bir kez atanır. İyi bir değişken adı ne tuttuğunu anlatır: `x` yerine `totalPrice`.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "od6logcx84": {
+    "en": "Data types",
+    "tr": "Veri tipleri",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "byepxoucdm": {
+    "en": "A data type says what kind of thing a value is and what you can do with it: integers (int), decimals (float/double), text (string), true/false (bool), lists, dictionaries and so on. The result of something like `\"5\" + 1` depends on the types: \"51\" in JavaScript, an error in Python.",
+    "tr": "Veri tipi bir değerin ne tür bir şey olduğunu ve onunla ne yapılabileceğini belirler: tam sayı (int), ondalık sayı (float/double), metin (string), doğru/yanlış (bool), liste, sözlük gibi. `\"5\" + 1` gibi işlemlerin sonucu tiplere göre değişir; JavaScript'te \"51\", Python'da hata verir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "dpojr3n4cv": {
+    "en": "Functions, parameters and return values",
+    "tr": "Fonksiyon, parametre ve dönüş değeri",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "hve6kyju4f": {
+    "en": "A function is a named block of code that does one job and can be called again and again. The inputs in its definition are parameters; the values passed when calling it are arguments; `return` hands the result back to the caller. Small functions that do one thing make code readable and testable.",
+    "tr": "Fonksiyon, bir işi yapan ve tekrar tekrar çağrılabilen adlandırılmış kod bloğudur. Tanımdaki girdilere parametre, çağırırken verilen değerlere argüman denir; `return` sonucu çağırana geri verir. Küçük ve tek işi yapan fonksiyonlar kodu okunur ve test edilebilir kılar.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "gbz1b5t1c2": {
+    "en": "Scope is the part of the code from which a variable can be seen. A variable defined inside a function is local and invisible outside; one visible everywhere is global. In JavaScript `let` and `const` are block-scoped (valid only inside `{ }`), while the old `var` is function-scoped.",
+    "tr": "Kapsam, bir değişkenin kodun hangi bölümünden görülebildiğidir. Fonksiyon içinde tanımlanan değişken yereldir ve dışarıdan görünmez; her yerden görülen değişkenler globaldir. JavaScript'te `let` ve `const` blok kapsamlıdır (yalnızca `{ }` içinde geçerli), eski `var` ise fonksiyon kapsamlıdır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "qa0m44p3mu": {
+    "en": "Recursion",
+    "tr": "Özyineleme (recursion)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "5x873r2af8": {
+    "en": "Recursion is when a function solves a smaller version of the problem by calling itself. Every recursive function needs a base case; without one it calls itself forever and overflows the stack. It is natural for walking trees and divide-and-conquer algorithms; for very deep inputs a loop is safer.",
+    "tr": "Özyineleme, bir fonksiyonun problemi küçültüp kendini yeniden çağırmasıdır. Her özyinelemeli fonksiyonun bir temel durumu (base case) olmalıdır; yoksa sonsuza kadar çağırır ve yığın taşması (stack overflow) olur. Ağaç gezme, böl ve yönet algoritmaları için doğaldır; çok derin girdilerde döngüyle yazmak daha güvenlidir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "100zjhefoxj": {
+    "en": "Loops",
+    "tr": "Döngüler",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2380l9atxmk": {
+    "en": "A loop repeats a block of code while a condition holds or once for each element of a collection. `for` runs a set number of times or per element; `while` runs as long as its condition is true. If the condition never becomes false you get an infinite loop; `break` leaves the loop and `continue` skips to the next round.",
+    "tr": "Döngü, bir kod bloğunu koşul sağlandıkça ya da bir koleksiyonun her elemanı için tekrarlar. `for` belirli sayıda ya da her eleman için, `while` koşul doğru olduğu sürece çalışır. Koşul hiç yanlış olmazsa sonsuz döngü oluşur; `break` döngüden çıkar, `continue` sıradaki tura geçer.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1k8ih1vymak": {
+    "en": "Arrays and lists",
+    "tr": "Dizi ve liste",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2d5h33dkjz": {
+    "en": "An array (list) keeps elements in order, and each element is reached by its index (starting at 0 in most languages). Reading by index is very fast (O(1)); inserting in the middle or searching is O(n) because elements are shifted or scanned. Python has `list`, JavaScript `Array`, Java `ArrayList`, C++ `std::vector`.",
+    "tr": "Dizi (liste), elemanları sırayla tutan ve her elemana indeksiyle (çoğu dilde 0'dan başlayarak) erişilen yapıdır. İndeksle okuma çok hızlıdır (O(1)); ortaya eleman eklemek ya da aramak ise elemanları kaydırdığı veya taradığı için O(n)'dir. Python'da `list`, JavaScript'te `Array`, Java'da `ArrayList`, C++'ta `std::vector` kullanılır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "fizdq8ahao": {
+    "en": "Dictionaries / hash maps",
+    "tr": "Sözlük / hash map",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1z01b9jvnsy": {
+    "en": "A dictionary (hash map) stores values under keys and finds a key's value in O(1) on average by computing its position from the key's hash. For \"have we seen this before?\", counting and grouping it is far faster than scanning a list again and again. Python has `dict`, JavaScript `Map` (or plain objects), Java `HashMap`.",
+    "tr": "Sözlük (hash map), değerleri anahtarlarla saklar ve bir anahtarın değerini ortalama O(1) sürede bulur; bunu anahtarın hash değerinden yerini hesaplayarak yapar. \"Bu daha önce görüldü mü?\", sayma ve gruplama gibi işlerde listeyi tekrar tekrar taramaktan çok daha hızlıdır. Python'da `dict`, JavaScript'te `Map` (ya da nesne), Java'da `HashMap`.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "qwo7lmxeui": {
+    "en": "Stacks and queues",
+    "tr": "Yığın (stack) ve kuyruk (queue)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "gnznabpy53": {
+    "en": "A stack is last in, first out (LIFO): undo, bracket matching and function calls are managed with stacks. A queue is first in, first out (FIFO): job queues and breadth-first search (BFS) use one. In Python use `collections.deque` for a queue; a list is enough for a stack.",
+    "tr": "Yığın (stack) son giren ilk çıkar (LIFO) mantığıyla çalışır: geri alma, ayraç eşleme ve fonksiyon çağrıları yığınla yönetilir. Kuyruk (queue) ilk giren ilk çıkar (FIFO): iş sıraları ve genişlik öncelikli arama (BFS) kuyruk kullanır. Python'da kuyruk için `collections.deque`, yığın için liste yeterlidir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1zrlwxaz6jl": {
+    "en": "Linked lists",
+    "tr": "Bağlı liste",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "13brg5npkhx": {
+    "en": "A linked list is made of nodes that each hold a value and a link (pointer) to the next node. Adding at the head, or next to a node you already hold, is O(1), but reaching the i-th element means walking from the start (O(n)). For everyday work a dynamic array is usually faster; linked lists mostly live inside structures such as queues and LRU caches.",
+    "tr": "Bağlı liste, her düğümün değeri ve bir sonraki düğüme bağlantıyı (pointer) tuttuğu yapıdır. Başa ya da elinizdeki bir düğümün yanına eleman eklemek O(1)'dir, ama i'nci elemana ulaşmak için baştan yürümek gerekir (O(n)). Günlük işlerde çoğu zaman dinamik dizi daha hızlıdır; bağlı liste daha çok kuyruk ve LRU önbellek gibi yapıların içinde kullanılır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "11y53g8uq8f": {
+    "en": "Trees and graphs",
+    "tr": "Ağaç ve grafik",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1vf7nwsdyaf": {
+    "en": "A graph is made of nodes and the edges connecting them (roads, social networks, dependencies). A tree is a special graph without cycles that branches out from one root (folders, the HTML DOM). To walk them you use breadth-first search (BFS, with a queue; it finds the fewest steps) or depth-first search (DFS, with a stack or recursion).",
+    "tr": "Grafik, düğümler ve onları bağlayan kenarlardan oluşur (yollar, sosyal ağlar, bağımlılıklar). Ağaç, döngüsü olmayan ve tek bir kökten dallanan özel bir grafiktir (klasörler, HTML DOM). Gezmek için genişlik öncelikli arama (BFS, kuyrukla; en kısa adım sayısını bulur) ya da derinlik öncelikli arama (DFS, yığınla ya da özyinelemeyle) kullanılır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1l8hxbau837": {
+    "en": "Time complexity (Big O)",
+    "tr": "Zaman karmaşıklığı (Big O)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1pgmjkf5jp1": {
+    "en": "Big O roughly describes how an algorithm's time (or memory) grows with the input size. O(1) is constant, O(log n) grows very slowly like binary search, O(n) is a single pass, O(n log n) good sorting, O(n²) nested loops. On a million items O(n²) is about 10¹² steps, so choosing the right data structure (e.g. a dictionary) is the biggest win on large data.",
+    "tr": "Big O, girdi büyüdükçe bir algoritmanın süresinin (ya da belleğinin) nasıl arttığını kabaca anlatır. O(1) sabit, O(log n) ikili arama gibi çok yavaş artan, O(n) tek tarama, O(n log n) iyi sıralamalar, O(n²) iç içe döngüler demektir. Bir milyon elemanda O(n²) yaklaşık 10¹² adım eder; bu yüzden büyük veride doğru veri yapısını seçmek (ör. sözlük) en büyük kazançtır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "29uq1jqdtw9": {
+    "en": "Sorting algorithms",
+    "tr": "Sıralama algoritmaları",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "96w7cxtedv": {
+    "en": "Bubble sort and insertion sort are simple but O(n²), so they are slow on large lists. Merge sort is always O(n log n) and stable (equal elements keep their order); quicksort is O(n log n) on average. In real projects, use the language's built-in sort (`sorted`, `Array.prototype.sort`) with a comparison function.",
+    "tr": "Kabarcık ve ekleme sıralaması basittir ama O(n²) olduğu için büyük listelerde yavaştır. Birleştirme (merge) sıralaması her zaman O(n log n)'dir ve kararlıdır (eşit elemanların sırası korunur); hızlı sıralama (quick sort) ortalamada O(n log n)'dir. Gerçek projelerde dilin hazır sıralamasını (`sorted`, `Array.prototype.sort`) bir karşılaştırma fonksiyonuyla kullanmak en doğrusudur.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2blukjgfipo": {
+    "en": "Object-oriented programming (OOP)",
+    "tr": "Nesne yönelimli programlama (OOP)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2gll2azpxxm": {
+    "en": "Object-oriented programming groups data and the functions (methods) that work on it into classes. A class is a blueprint; an object is an instance made from it. Its four core ideas are encapsulation, inheritance, polymorphism and abstraction.",
+    "tr": "Nesne yönelimli programlama, veriyi ve o veriyle çalışan fonksiyonları (metotları) sınıflar içinde bir araya getirir. Sınıf bir kalıptır, nesne o kalıptan üretilmiş örnektir. Dört temel fikri kapsülleme, kalıtım, çok biçimlilik ve soyutlamadır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "ketsle6y9z": {
+    "en": "Inheritance",
+    "tr": "Kalıtım (inheritance)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "18hu90wxyu": {
+    "en": "Inheritance is when a class takes over the properties and methods of another: `Cat` can derive from `Animal` and add its own behavior without rewriting the shared code. A subclass can override a parent method and call the parent with `super`. Instead of deep inheritance chains, composition is often more flexible.",
+    "tr": "Kalıtım, bir sınıfın başka bir sınıfın özelliklerini ve metotlarını devralmasıdır: `Kedi`, `Hayvan`'dan türeyebilir ve kendine özgü davranışı eklerken ortak kodu tekrar yazmaz. Alt sınıf üst sınıfın metodunu ezebilir (override) ve `super` ile üst sınıfı çağırabilir. Derin kalıtım zincirleri yerine çoğu zaman bileşim (composition) daha esnektir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "z5ir5xvbww": {
+    "en": "Polymorphism",
+    "tr": "Çok biçimlilik (polymorphism)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "195itp4thxn": {
+    "en": "Polymorphism means objects of different types are used through the same interface while each behaves in its own way: calling `shape.area()` computes πr² for a circle and a² for a square. The calling code doesn't need to know the exact type, and adding new types gets easier.",
+    "tr": "Çok biçimlilik, farklı türdeki nesnelerin aynı arayüz üzerinden kullanılıp her birinin kendi davranışını göstermesidir: `shape.area()` çağrısı daire için πr², kare için a² hesaplar. Böylece çağıran kod nesnenin tam türünü bilmek zorunda kalmaz ve yeni türler eklemek kolaylaşır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2f6711zywct": {
+    "en": "Encapsulation",
+    "tr": "Kapsülleme (encapsulation)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "xtoa6yuvwo": {
+    "en": "Encapsulation keeps an object's internal state from being changed directly from outside and allows access only through controlled methods (`private` fields, `public` methods). It prevents invalid states (e.g. a balance going negative) and lets the internals change without breaking outside code.",
+    "tr": "Kapsülleme, bir nesnenin iç durumunu dışarıdan doğrudan değiştirilmeye kapatıp yalnızca kontrollü metotlarla erişim vermektir (`private` alanlar, `public` metotlar). Böylece geçersiz durumlar engellenir (ör. bakiyenin eksiye düşmesi) ve iç yapı değişse de dışarıdaki kod bozulmaz.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1dzvhacfb11": {
+    "en": "Interfaces and abstract classes",
+    "tr": "Arayüz ve soyut sınıf",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "18g8po6o6ff": {
+    "en": "An interface is a contract saying which methods a class must provide, not how. An abstract class can also contain shared code but can't be instantiated directly. Depending on interfaces rather than concrete classes makes code easier to test and parts easier to swap.",
+    "tr": "Arayüz (interface), bir sınıfın hangi metotları sağlaması gerektiğini söyleyen bir sözleşmedir; nasıl yapılacağını söylemez. Soyut sınıf ise ortak kodu da içerebilir ama doğrudan örneklenemez. Kodu somut sınıflar yerine arayüzlere bağlamak test etmeyi ve parçaları değiştirmeyi kolaylaştırır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2073sbcoxxk": {
+    "en": "Closures",
+    "tr": "Closure (kapanış)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1v91ydeczvl": {
+    "en": "A closure is a function that remembers the variables from where it was defined, even after that scope has finished. It is used to build counters or pre-configured functions and gives private state that can't be reached from outside. For closures created in a loop, using `let` instead of `var` in JavaScript avoids the classic bug.",
+    "tr": "Closure, bir fonksiyonun tanımlandığı yerdeki değişkenleri, o kapsam bittikten sonra da hatırlamasıdır. Bir sayaç ya da ayarlanmış bir fonksiyon üretmek için kullanılır ve dışarıdan erişilemeyen özel durum sağlar. Döngü içinde oluşturulan closure'larda JavaScript'te `var` yerine `let` kullanmak klasik hatayı önler.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "a35l3t9qv2": {
+    "en": "Callbacks and promises",
+    "tr": "Callback ve Promise",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2d9v3h0u1pc": {
+    "en": "A callback is a function passed to another function so that it's called when some work is done. When nested callbacks become unreadable, promises take over: a promise stands for a result that will arrive later; `.then` handles success and `.catch` the error. Today promises are mostly written with `async/await`.",
+    "tr": "Callback, bir iş bitince çağrılsın diye başka bir fonksiyona verilen fonksiyondur. İç içe callback'ler okunmaz hâle gelince Promise kullanılır: Promise, ileride gelecek bir sonucu temsil eder; `.then` başarıyı, `.catch` hatayı ele alır. Günümüzde Promise'ler çoğunlukla `async/await` ile yazılır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "15ujcb10y8q": {
+    "en": "Asynchronous code and async/await",
+    "tr": "Asenkron programlama ve async/await",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1b2gvfuo3hc": {
+    "en": "Asynchronous code lets a program keep going while slow work such as a network request or a file read is pending. An `async` function returns a promise; `await` inside it pauses only that function until the promise settles. Catch errors with `try/catch` and start independent requests together with `Promise.all`.",
+    "tr": "Asenkron kod, ağ isteği ya da dosya okuma gibi bekleyen işler sürerken programın durmadan devam etmesini sağlar. `async` fonksiyon bir Promise döndürür; içindeki `await` o Promise bitene kadar yalnızca bu fonksiyonu bekletir. Hataları `try/catch` ile yakala ve birbirinden bağımsız istekleri `Promise.all` ile aynı anda başlat.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1n1c7hdogpw": {
+    "en": "Threads and concurrency",
+    "tr": "İş parçacığı ve eşzamanlılık",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "fv0ihrv2kl": {
+    "en": "Threads let a program run several pieces of work at the same time. If several threads write to the same data without control, the result depends on timing (a race condition); you prevent it with locks (mutexes) or immutable data. Locks waiting on each other can also freeze the program (deadlock).",
+    "tr": "İş parçacıkları (thread) bir programın birden çok işi aynı anda yürütmesini sağlar. Aynı veriye birden çok iş parçacığı kontrolsüz yazarsa sonuç zamanlamaya göre değişir (race condition); bunu kilitler (mutex) ya da değiştirilemez veriyle önlersin. Birbirini bekleyen kilitler de programı dondurabilir (deadlock).",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "e9pcj7pgh8": {
+    "en": "Exceptions and error handling",
+    "tr": "İstisnalar ve hata yakalama",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "yxowdp2erc": {
+    "en": "An exception signals a situation where the program can't continue normally (missing file, not a number…). An exception raised in a `try` block is caught by `catch`/`except`, and `finally` always runs. Catch only the errors you can really handle, never swallow them silently, and show the user a clear message.",
+    "tr": "İstisna, programın normal akışında devam edemeyeceği bir durumu bildirir (dosya yok, sayı değil…). `try` bloğunda oluşan istisnayı `catch`/`except` yakalar, `finally` her durumda çalışır. Yalnızca gerçekten ele alabileceğin hataları yakala, hatayı sessizce yutma ve kullanıcıya anlaşılır bir mesaj göster.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2ebnft4cqwb": {
+    "en": "null, undefined and None",
+    "tr": "null, undefined ve None",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "t4ie1w5ctq": {
+    "en": "null (None in Python) means \"no value\"; in JavaScript undefined means \"not assigned yet\". Reading a property of such a value is one of the most common bugs (NullReferenceException, \"Cannot read properties of undefined\"). Check before use, or in JavaScript use the `?.` and `??` operators.",
+    "tr": "null (Python'da None) \"değer yok\" demektir; JavaScript'te undefined ise \"henüz değer atanmadı\" anlamına gelir. Böyle bir değerin özelliğine erişmek en sık görülen hatalardandır (NullReferenceException, \"Cannot read properties of undefined\"). Kullanmadan önce kontrol et ya da JavaScript'te `?.` ve `??` işleçlerini kullan.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "167zknyza2w": {
+    "en": "Mutability (mutable / immutable)",
+    "tr": "Değiştirilebilirlik (mutable / immutable)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "25y88sgj8aw": {
+    "en": "A mutable object can be changed in place (lists and dicts in Python; arrays and objects in JavaScript); an immutable value is replaced by a new one when changed (strings, numbers, tuples in Python). If two variables share the same list, a change through one shows up in the other; take a (shallow or deep) copy when needed.",
+    "tr": "Değiştirilebilir (mutable) bir nesne yerinde değiştirilebilir (Python'da list, dict; JavaScript'te dizi ve nesneler); değiştirilemez (immutable) bir değer ise değişiklikte yenisi üretilir (metinler, sayılar, Python'da tuple). Aynı listeyi iki değişken paylaşıyorsa birindeki değişiklik diğerinde de görünür; gerekirse kopya (sığ ya da derin) al.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2am7z4hc8m9": {
+    "en": "Pass by value and by reference",
+    "tr": "Değerle ve referansla aktarım",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "py23cq1ape": {
+    "en": "With pass by value the function gets a copy of the argument; changes inside don't affect the caller. With pass by reference it works on the same object and can change it. Python, Java and JavaScript pass objects \"by the value of the reference\": you can modify the object inside, but assigning a new object to the parameter doesn't affect the caller.",
+    "tr": "Değerle aktarımda fonksiyon argümanın bir kopyasını alır; içerideki değişiklik dışarıyı etkilemez. Referansla aktarımda fonksiyon aynı nesneye erişir ve onu değiştirebilir. Python, Java ve JavaScript nesneleri \"referansın değeriyle\" aktarır: içerideki nesneyi değiştirebilirsin ama değişkene yeni bir nesne atamak dışarıyı etkilemez.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2c1rw8vupj4": {
+    "en": "Compilers and interpreters",
+    "tr": "Derleyici ve yorumlayıcı",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "20hmczjl2bl": {
+    "en": "A compiler translates the whole source to machine code or an intermediate bytecode before running (C, C++, Rust, Go); many errors are caught at compile time. An interpreter processes the code while running it (Python, Ruby). Java and C# are compiled to bytecode first and turned into machine code at run time by a JIT.",
+    "tr": "Derleyici, kaynak kodu çalıştırmadan önce bütünüyle makine koduna ya da ara koda (bytecode) çevirir (C, C++, Rust, Go); hatalar çoğunlukla derlemede yakalanır. Yorumlayıcı kodu çalıştırırken satır satır işler (Python, Ruby). Java ve C# önce bytecode'a derlenir, sonra çalışma zamanında JIT ile makine koduna çevrilir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "4llg4vu3vd": {
+    "en": "Static and dynamic typing",
+    "tr": "Statik ve dinamik tip",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "20cbd0cgxz2": {
+    "en": "In statically typed languages (Java, C#, TypeScript, Go) variable types are checked at compile time, so many bugs are caught before the code runs. In dynamically typed languages (Python, JavaScript) types are decided at run time: faster to write, but type errors show up later. Python's type hints and TypeScript sit between the two.",
+    "tr": "Statik tipli dillerde (Java, C#, TypeScript, Go) değişkenlerin tipi derleme sırasında denetlenir; birçok hata kod çalışmadan yakalanır. Dinamik tipli dillerde (Python, JavaScript) tip çalışma anında belirlenir; yazmak daha hızlıdır ama tip hataları geç ortaya çıkar. Python'daki tip ipuçları ve TypeScript iki dünyanın arasında bir denge sağlar.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "25rm6dgmv5h": {
+    "en": "APIs",
+    "tr": "API",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "16ctboldt6r": {
+    "en": "An API is the defined way one piece of software offers its features to another: which requests it accepts and what it returns. Web APIs usually exchange JSON over HTTP; sending a city to a weather service and getting the temperature back is an example. Hanogt's own developer API is described on the /ai/api page.",
+    "tr": "API, bir yazılımın başka bir yazılıma sunduğu tanımlı kullanım yoludur: hangi istekleri kabul ettiğini ve ne döndürdüğünü belirler. Web API'leri genellikle HTTP üzerinden JSON alıp verir; bir hava durumu servisine şehir gönderip sıcaklığı almak buna örnektir. Hanogt'un kendi geliştirici API'si de /ai/api sayfasında anlatılıyor.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "qcmzbqg4d": {
+    "en": "REST and HTTP methods",
+    "tr": "REST ve HTTP metotları",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "267lknxxnqg": {
+    "en": "REST is an API style that names resources with URLs and works on them with HTTP methods: GET reads, POST creates, PUT/PATCH update, DELETE removes (CRUD). GET is safe and must not change data; PUT and DELETE are designed to be idempotent (repeating the request has the same effect). Results usually come back as JSON with a status code.",
+    "tr": "REST, kaynakları URL'lerle adlandırıp HTTP metotlarıyla işlemeyi öneren bir API tarzıdır: GET okur, POST oluşturur, PUT/PATCH günceller, DELETE siler (CRUD). GET güvenlidir ve veriyi değiştirmemelidir; PUT ve DELETE aynı istek tekrarlansa da aynı sonucu verecek şekilde (idempotent) tasarlanır. Sonuç, durum koduyla birlikte genellikle JSON olarak döner.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1jpx3lkq0cv": {
+    "en": "HTTP status codes",
+    "tr": "HTTP durum kodları",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "270q9w3d2je": {
+    "en": "An HTTP status code tells you how a request went: 2xx success (200 OK, 201 created), 3xx redirects, 4xx client errors (400 bad request, 401 sign-in needed, 403 forbidden, 404 not found, 429 too many requests), 5xx server errors (500 internal error, 503 service unavailable). For 4xx fix the request; for 5xx wait and retry.",
+    "tr": "HTTP durum kodu isteğin sonucunu söyler: 2xx başarı (200 OK, 201 oluşturuldu), 3xx yönlendirme, 4xx istemci hatası (400 hatalı istek, 401 giriş gerekli, 403 yetki yok, 404 bulunamadı, 429 çok fazla istek), 5xx sunucu hatası (500 iç hata, 503 hizmet geçici olarak kullanılamıyor). 4xx'te isteği düzeltmek, 5xx'te bekleyip yeniden denemek gerekir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2emv5nc5qx0": {
+    "en": "JSON",
+    "tr": "JSON",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "8go6qh7f49": {
+    "en": "JSON is a human-readable text format that writes data with objects (`{}`), arrays (`[]`), strings, numbers, true/false and null; it's the common language of web APIs. Keys use double quotes and trailing commas aren't allowed. Use `JSON.parse`/`JSON.stringify` in JavaScript and `json.loads`/`json.dumps` in Python.",
+    "tr": "JSON, veriyi nesneler (`{}`), diziler (`[]`), metinler, sayılar, true/false ve null ile yazan, insanların da okuyabildiği bir metin biçimidir; web API'lerinin ortak dilidir. Anahtarlar çift tırnakla yazılır ve sonda virgül olamaz. JavaScript'te `JSON.parse`/`JSON.stringify`, Python'da `json.loads`/`json.dumps` kullanılır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "228k6zs39t7": {
+    "en": "SQL and databases",
+    "tr": "SQL ve veritabanları",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1387kdj15qb": {
+    "en": "Relational databases keep data in tables and are queried with SQL: SELECT reads, INSERT adds, UPDATE changes, DELETE removes, and JOIN combines tables through related columns. Indexes on frequently searched columns speed queries up. Never paste user input into a query as text; parameterized queries prevent SQL injection. NoSQL databases (Firestore, MongoDB) store more flexible structures such as documents.",
+    "tr": "İlişkisel veritabanları veriyi tablolarda tutar ve SQL ile sorgulanır: SELECT okur, INSERT ekler, UPDATE günceller, DELETE siler, JOIN tabloları ilişkili sütunlar üzerinden birleştirir. Sık aranan sütunlara indeks eklemek sorguları hızlandırır. Kullanıcı girdisini sorguya asla metin olarak eklemeyip parametreli sorgu kullanmak SQL enjeksiyonunu önler. NoSQL veritabanları (Firestore, MongoDB) ise belgeler gibi daha esnek yapılar tutar.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "28phlcpue2f": {
+    "en": "Git: commits, branches and merges",
+    "tr": "Git: commit, branch ve merge",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "9yx1h4r3d8": {
+    "en": "Git is a version control system that keeps the history of changes to your files. A commit is a snapshot; a branch opens a separate line of work without breaking the main code; merge joins branches, and if the same lines changed on both, the conflict is resolved by hand. `git status`, `git add`, `git commit -m \"...\"` and `git push` are the everyday commands.",
+    "tr": "Git, dosyalardaki değişikliklerin geçmişini tutan bir sürüm kontrol sistemidir. Commit bir anlık görüntüdür; branch (dal) ana kodu bozmadan ayrı bir çalışma hattı açar; merge dalları birleştirir; aynı satırlar iki dalda değiştiyse çakışma (conflict) elle çözülür. `git status`, `git add`, `git commit -m \"...\"`, `git push` en sık kullanılan komutlardır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1j81x353upg": {
+    "en": "Pull requests and code review",
+    "tr": "Pull request ve kod incelemesi",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "q0gyb3bq47": {
+    "en": "A pull request (PR) proposes the changes on a branch for the team to review before they go into the main branch. Reviewers comment, automated tests run, and it's merged after approval. Small, single-topic PRs with a good description get reviewed faster and better.",
+    "tr": "Pull request (PR), bir daldaki değişiklikleri ana dala almadan önce ekibin incelemesine sunmaktır. İnceleyenler yorum yazar, otomatik testler çalışır ve onaydan sonra birleştirilir. Küçük, tek konulu ve açıklaması iyi yazılmış PR'lar daha hızlı ve daha doğru incelenir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "jex7rgomr9": {
+    "en": "Package managers and dependencies",
+    "tr": "Paket yöneticisi ve bağımlılıklar",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "77dgujrg4": {
+    "en": "A package manager downloads the ready-made libraries (dependencies) a project uses, tracks their versions and updates them: npm/pnpm for JavaScript, pip for Python, NuGet for C#, Maven/Gradle for Java. Dependencies are listed in files such as `package.json` or `requirements.txt`; the lock file makes everyone install the same versions.",
+    "tr": "Paket yöneticisi, projenin kullandığı hazır kütüphaneleri (bağımlılıkları) indirir, sürümlerini takip eder ve günceller: JavaScript'te npm/pnpm, Python'da pip, C#'ta NuGet, Java'da Maven/Gradle. Bağımlılıklar `package.json` ya da `requirements.txt` gibi dosyalarda yazılır; lock dosyası herkesin aynı sürümleri kurmasını sağlar.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "qq0dgjklt2": {
+    "en": "Frameworks vs libraries",
+    "tr": "Framework ve kütüphane farkı",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1o0cfam1xc5": {
+    "en": "You call a library: you take the function you need and use it in your own flow (e.g. lodash, NumPy). A framework sets up the application's skeleton and calls your code at the places it defines (e.g. Django, Angular, Next.js). In short, with a library you're in control; with a framework, the framework is.",
+    "tr": "Kütüphaneyi sen çağırırsın: ihtiyacın olan fonksiyonu alıp kendi akışında kullanırsın (ör. lodash, NumPy). Framework ise uygulamanın iskeletini kurar ve senin kodunu kendi belirlediği yerlerde çağırır (ör. Django, Angular, Next.js). Kısacası kütüphanede kontrol sende, framework'te çatıdadır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "bscsr84yyz": {
+    "en": "Regular expressions (regex)",
+    "tr": "Düzenli ifadeler (regex)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1py7yuxrx0": {
+    "en": "Regular expressions (regex) are a small language for searching, validating and splitting text by pattern: `\\d` is a digit, `\\w` a letter/digit/underscore, `+` one or more, `^` and `$` the start and end of the text. They are powerful for short validations, but parsing complex formats (such as HTML) with regex is error-prone.",
+    "tr": "Düzenli ifadeler (regex), metinde desen aramak, doğrulamak ve parçalamak için kullanılan küçük bir dildir: `\\d` rakam, `\\w` harf/rakam/alt çizgi, `+` bir veya daha fazla, `^` ve `$` metnin başı ve sonu demektir. Kısa doğrulamalar için güçlüdür ama karmaşık biçimleri (HTML gibi) regex'le ayrıştırmak hataya açıktır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "202fhqpny1p": {
+    "en": "Unit testing",
+    "tr": "Birim testi",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2bsg7acqoju": {
+    "en": "A unit test automatically checks that a small piece of code (usually one function) gives the expected result for given inputs. Test the normal cases and the edge cases (empty input, zero, very large values). pytest for Python, Jest or node:test for JavaScript and JUnit for Java are common.",
+    "tr": "Birim testi, kodun küçük bir parçasının (genellikle bir fonksiyonun) belirli girdiler için beklenen sonucu verdiğini otomatik olarak kontrol eder. Normal durumları ve uç durumları (boş girdi, sıfır, çok büyük değer) test et. Python'da pytest, JavaScript'te Jest ya da node:test, Java'da JUnit yaygındır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "rww84i0io9": {
+    "en": "Debugging",
+    "tr": "Hata ayıklama (debugging)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1eckiddrtk9": {
+    "en": "When debugging, first find the smallest example that reproduces the bug every time, then read the error message and the stack trace from the bottom up: it tells you the file and line. Watch variables with `print`/`console.log` or by setting a breakpoint in a debugger and stepping through; change one thing at a time.",
+    "tr": "Hata ayıklarken önce hatayı her seferinde yeniden üretebileceğin en küçük örneği bul, sonra hata mesajını ve yığın izini (stack trace) sondan başa doğru oku: hangi dosyanın hangi satırında olduğu yazar. Değişkenleri `print`/`console.log` ile ya da debugger'da kesme noktası (breakpoint) koyup adım adım izle; bir seferde tek bir şeyi değiştir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2edjvrf0u32": {
+    "en": "Clean code and refactoring",
+    "tr": "Temiz kod ve yeniden düzenleme",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "25j035z11q2": {
+    "en": "Clean code stays readable with meaningful names, short functions that do one thing and logic that isn't repeated (DRY). Refactoring is improving the code's structure without changing its behavior; it's safe when tests are in place. Prefer boring, clear code to a clever line nobody understands.",
+    "tr": "Temiz kod; anlamlı isimler, tek işi yapan kısa fonksiyonlar ve tekrar etmeyen (DRY) mantıkla okunabilir kalan koddur. Yeniden düzenleme (refactoring), davranışı değiştirmeden kodun yapısını iyileştirmektir; testler varken yapmak güvenlidir. Akıllıca ama anlaşılmaz bir satır yerine sıkıcı ama açık bir kod tercih et.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "2758lrfimoz": {
+    "en": "Design patterns",
+    "tr": "Tasarım kalıpları",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "d1oe003ofy": {
+    "en": "Design patterns are names for proven solutions to recurring design problems: Singleton keeps a single instance, Factory centralizes object creation, Observer announces a change to subscribers, Strategy makes behavior swappable. A pattern is a tool, not a goal; using one without need just complicates the code.",
+    "tr": "Tasarım kalıpları, sık karşılaşılan tasarım sorunlarına denenmiş çözümlerin adlarıdır: Singleton tek bir örnek, Factory nesne üretimini bir yerde toplar, Observer bir değişikliği abonelere duyurur, Strategy davranışı değiştirilebilir yapar. Kalıp bir amaç değil araçtır; ihtiyaç yokken kullanmak kodu gereksiz karmaşıklaştırır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "28xsj5lgtgc": {
+    "en": "Environment variables and secrets",
+    "tr": "Ortam değişkenleri ve gizli anahtarlar",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1mngqm9h7rr": {
+    "en": "Environment variables are configuration values kept outside the code (database address, API key). Never write secrets into code or the repository (git); add the `.env` file to `.gitignore` and read values with `process.env.API_KEY` (Node) or `os.environ[\"API_KEY\"]` (Python). If a key was shared by mistake, revoke it right away and create a new one.",
+    "tr": "Ortam değişkenleri, kodun dışında tutulan yapılandırma değerleridir (veritabanı adresi, API anahtarı). Gizli anahtarları asla koda ya da depoya (git) yazma; `.env` dosyasını `.gitignore`'a ekle ve kodda `process.env.API_KEY` (Node) ya da `os.environ[\"API_KEY\"]` (Python) ile oku. Bir anahtar yanlışlıkla paylaşıldıysa hemen iptal edip yenisini oluştur.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1xgh90qw17u": {
+    "en": "Hashing vs encryption",
+    "tr": "Hash ve şifreleme farkı",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "18z41zgw459": {
+    "en": "Encryption is reversible: whoever has the key can decrypt the data (e.g. AES, HTTPS). A hash is one-way: the same input always gives the same digest, but the input can't be recovered from it. Passwords aren't encrypted; they're stored with slow, salted hashes such as bcrypt, scrypt or Argon2. MD5 or plain SHA-256 isn't suitable for passwords.",
+    "tr": "Şifreleme geri döndürülebilir: anahtarı olan veriyi çözebilir (ör. AES, HTTPS). Hash tek yönlüdür: aynı girdi hep aynı özeti verir ama özetten girdi geri elde edilemez. Parolalar şifrelenmez, bcrypt/scrypt/Argon2 gibi yavaş ve tuzlu (salt) hash'lerle saklanır; MD5 ya da düz SHA-256 parola için uygun değildir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "18ig301qfyk": {
+    "en": "Frontend, backend and full stack",
+    "tr": "Frontend, backend ve full stack",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "16yv42ryim8": {
+    "en": "The frontend is the part users see and interact with in the browser (HTML, CSS, JavaScript; tools such as React). The backend runs on the server: it stores data, applies business rules and serves an API (Node.js, Python, Java, C#). A full-stack developer works on both.",
+    "tr": "Frontend, kullanıcının tarayıcıda gördüğü ve etkileşime girdiği kısımdır (HTML, CSS, JavaScript; React gibi araçlar). Backend sunucuda çalışır: veriyi saklar, iş kurallarını uygular ve API sunar (Node.js, Python, Java, C#). Full stack geliştirici ikisinde de çalışır.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "inqm1a44x2": {
+    "en": "The DOM",
+    "tr": "DOM",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "u9wif27le5": {
+    "en": "The DOM (Document Object Model) is the browser's view of an HTML page as a tree of objects. JavaScript finds elements in it (`document.querySelector`), changes their content and listens for events (`addEventListener`). When putting user-supplied text on the page, using `textContent` instead of `innerHTML` prevents XSS attacks.",
+    "tr": "DOM (Document Object Model), tarayıcının HTML sayfasını bir nesne ağacı olarak sunmasıdır. JavaScript bu ağaçta öğe bulur (`document.querySelector`), içeriği değiştirir ve olay dinler (`addEventListener`). Kullanıcıdan gelen metni sayfaya eklerken `innerHTML` yerine `textContent` kullanmak XSS saldırılarını önler.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "wyi0w9pif1": {
+    "en": "CORS",
+    "tr": "CORS",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "54ymkx5zgq": {
+    "en": "CORS is the browser checking whether a web page may call a server on another origin (a different domain, port or protocol). If the server doesn't allow it with headers such as `Access-Control-Allow-Origin`, the browser withholds the response from the page. The fix is on the server: configure the allowed origins, and never put secret keys in browser code.",
+    "tr": "CORS, bir web sayfasının başka bir kökendeki (alan adı, port ya da protokol farklı) sunucuya istek atıp atamayacağını tarayıcının denetlemesidir. Sunucu `Access-Control-Allow-Origin` gibi başlıklarla izin vermezse tarayıcı yanıtı sayfaya vermez. Çözüm sunucu tarafındadır: izin verilen kökenleri ayarla; gizli anahtarları asla tarayıcı koduna koyma.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "26zfy4pdsy7": {
+    "en": "Memory management and garbage collection",
+    "tr": "Bellek yönetimi ve çöp toplayıcı",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1srea3za08l": {
+    "en": "While a program runs, objects take up memory (on the heap). In C and C++ you allocate and free memory yourself (or use smart pointers); in Java, C#, Python and JavaScript a garbage collector cleans up objects that can no longer be reached. References kept by mistake (ever-growing caches, event listeners never removed) still cause memory leaks.",
+    "tr": "Program çalışırken nesneler bellekte (heap) yer kaplar. C ve C++'ta belleği elle ayırıp bırakırsın (ya da akıllı işaretçiler kullanırsın); Java, C#, Python ve JavaScript'te çöp toplayıcı artık ulaşılamayan nesneleri kendisi temizler. Gereksiz yere tutulan referanslar (sürekli büyüyen önbellekler, kaldırılmayan olay dinleyicileri) yine de bellek sızıntısına yol açar.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1nb4wmc8zsh": {
+    "en": "Programming paradigms",
+    "tr": "Programlama paradigmaları",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1ujc7lsc0eb": {
+    "en": "A paradigm is a way of thinking about a program. Procedural programming writes step-by-step instructions; object-oriented programming groups data and behavior into objects; functional programming works with side-effect-free pure functions and transformations such as `map`/`filter`/`reduce`. Modern languages (Python, JavaScript, C#) let you mix these approaches.",
+    "tr": "Paradigma, programı düşünme biçimidir. Prosedürel programlama adım adım talimatlar yazar; nesne yönelimli programlama veriyi ve davranışı nesnelerde toplar; fonksiyonel programlama yan etkisiz saf fonksiyonlarla ve `map`/`filter`/`reduce` gibi dönüşümlerle çalışır. Modern diller (Python, JavaScript, C#) bu yaklaşımları birlikte kullanmana izin verir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "a7sbc671vf": {
+    "en": "Caching",
+    "tr": "Önbellek (cache)",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
+  "1wt04ki6djv": {
+    "en": "A cache keeps the result of expensive work (a database query, a network request, a long computation) for a while and serves it quickly when asked again. The hard part is invalidating it at the right time when the data changes, which is why most caches get a time to live (TTL). Storing the results of a pure function by its arguments is called memoization.",
+    "tr": "Önbellek, pahalı bir işin (veritabanı sorgusu, ağ isteği, uzun hesaplama) sonucunu bir süre saklayıp tekrar istendiğinde hızlıca vermektir. Zor olan, veri değiştiğinde önbelleği doğru zamanda geçersiz kılmaktır; bu yüzden çoğu önbelleğe bir yaşam süresi (TTL) verilir. Aynı argümanlarla çağrılan saf fonksiyonların sonucunu saklamaya memoization denir.",
+    "files": [
+      "src/lib/ai/concepts.ts"
+    ]
+  },
   "8xkxcidgj": {
     "en": "Starts with sk-",
     "tr": "sk- ile başlar",
@@ -42189,6 +42918,27 @@
   "16on34mrj5n": {
     "en": "Jump code (Hanogt Engine)",
     "tr": "Zıplama kodu (Hanogt Engine)",
+    "files": [
+      "src/lib/ai/local-engine.ts"
+    ]
+  },
+  "26dlbingccn": {
+    "en": "What is recursion?",
+    "tr": "Özyineleme nedir?",
+    "files": [
+      "src/lib/ai/local-engine.ts"
+    ]
+  },
+  "yjccwhey3t": {
+    "en": "How does async/await work?",
+    "tr": "async/await nasıl çalışır?",
+    "files": [
+      "src/lib/ai/local-engine.ts"
+    ]
+  },
+  "138am8rtc64": {
+    "en": "SQL vs NoSQL",
+    "tr": "SQL ile NoSQL farkı",
     "files": [
       "src/lib/ai/local-engine.ts"
     ]

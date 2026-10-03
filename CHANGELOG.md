@@ -1,5 +1,38 @@
 # Değişiklik Günlüğü
 
+## 0.3.16 — 2026-10-03
+
+### Kod kalitesini ölçme, daha bilgili Hanogt AI Çekirdeği ve kendi modelini eğitme
+
+- **code-bench** (`scripts/ai-eval/code-bench.mjs`): bir motorun kod yazma
+  başarısını 40 görevde (20 JavaScript, 20 Python) gizli testlerle pass@1
+  olarak ölçer. Hanogt AI API'si, OpenAI uyumlu herhangi bir uç nokta (Groq,
+  vLLM, Ollama) ve resmî SDK ile Claude desteklenir; `--compare` sonuçları
+  `ai/reports/code-bench.md`'de yan yana koyar. Modelin yazdığı kod ortam
+  değişkenleri olmadan, zaman ve bellek sınırıyla, JavaScript'te Node izin
+  modeliyle ve Python'da denetim kancalarıyla (ağ, süreç ve klasör dışına
+  yazma yok) çalışır. Düzenek sahte motorlarla test edildi; gerçek motorları
+  anahtarlarla sahip çalıştırır.
+- **Hanogt AI Çekirdeği programlama kavramlarını açıklıyor:** "özyineleme
+  nedir", "what is a closure", "SQL ile NoSQL farkı" gibi sorulara 50
+  kavramlık Türkçe/İngilizce sözlükten (`src/lib/ai/concepts.ts`) yanıt;
+  örnekler editörde açılabilir. Yeni `code_concept` niyetiyle model yeniden
+  eğitildi: 53 niyet, 10.495 örnek; test doğruluğu %90,1 → %90,7 (makro F1
+  %90,7 → %91,3), önceki 318 cümlelik kör testte %95,6 (önce %95,9), yeni
+  kavram cümlelerinde %84. Çekirdeğin Python ve JavaScript örneklerinin
+  hepsi artık testlerde çalıştırılıyor.
+- **Kendi modelini eğit (`training/`):** depodaki bilgiden (kullanıcı verisi
+  yok, code-bench hariç) yaklaşık 2.100 örneklik sohbet veri seti, Qwen için
+  LoRA/QLoRA eğitimi (varsayılan `Qwen/Qwen3.6-27B`, küçük ayar
+  `Qwen/Qwen3-8B`; "Qwen 2.7" diye bir model olmadığından model bir
+  parametredir), birleştirme, GGUF ve Ollama çıktısı. Türkçe kılavuz:
+  `training/README.md`. Betikler aynı mimarideki küçük modellerle CPU'da
+  baştan sona denendi; asıl eğitimi GPU'da sahip çalıştırır.
+- **`HANOGT_AI_EXTRA_BODY`:** kendi sunduğun model için her isteğe eklenecek
+  JSON alanları (ör. Qwen'in düşünme modunu kapatmak için
+  `{"chat_template_kwargs":{"enable_thinking":false}}`); isteğin kendi
+  alanları her zaman önceliklidir.
+
 ## 0.3.15 — 2026-10-03
 
 ### Gelişmiş kod motoru (Claude) ve daha güçlü kod yanıtları

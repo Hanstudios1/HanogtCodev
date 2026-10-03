@@ -1,0 +1,13 @@
+# Fine-tuning Hanogt AI (training/train_lora.py, training/merge_and_export.py). Python 3.10+.
+# Install PyTorch for your CUDA version first (https://pytorch.org), then: pip install -r training/requirements.txt
+torch>=2.4
+# Qwen3.6 (model type "qwen3_5") needs a recent release: if it isn't recognized, pip install -U transformers
+transformers>=5.0
+peft>=0.17
+accelerate>=1.2
+safetensors>=0.4
+# QLoRA (4-bit): Linux with an NVIDIA GPU
+bitsandbytes>=0.45; platform_system == "Linux"
+# Optional, much faster Gated DeltaNet layers for Qwen3.5/3.6 on CUDA (without them a slower PyTorch path is used):
+# flash-linear-attention
+# causal-conv1d

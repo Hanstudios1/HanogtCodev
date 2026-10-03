@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.apiKey}` },
             body: JSON.stringify({
+                ...config.extraBody,
                 model: config.model,
                 messages: [{ role: "system", content: prompt }, ...input.messages],
                 temperature: input.temperature ?? (input.mode === "code" ? 0.25 : 0.45),
