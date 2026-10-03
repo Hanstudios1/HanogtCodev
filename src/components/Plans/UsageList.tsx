@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderCode, Gamepad2, KeyRound, Sparkles, UsersRound } from "lucide-react";
+import { Code2, FolderCode, Gamepad2, KeyRound, Sparkles, UsersRound } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { currentWindow, formatResetTime, usageLevel, type CountedLimit, type PlanUsage, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -13,6 +13,8 @@ const C = {
     gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
     groups: { TR: "Sahibi olduğun Hanogt Social grubu", EN: "Hanogt Social groups you own" },
     connections: { TR: "Yapay zekâ bağlantısı (kendi anahtarın)", EN: "AI connections (your own key)" },
+    apiToday: { TR: "Hanogt AI API isteği (24 saat)", EN: "Hanogt AI API requests (24 hours)" },
+    apiKeys: { TR: "Hanogt AI API anahtarı", EN: "Hanogt AI API keys" },
     unlimited: { TR: "sınırsız", EN: "unlimited" },
     notInPlan: { TR: "planında yok", EN: "not in your plan" },
     unknown: { TR: "okunamadı", EN: "couldn't be read" },
@@ -64,6 +66,7 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
     };
     const day = currentWindow(usage.hanogt.day);
     const ownDay = usage.own ? currentWindow(usage.own.day) : null;
+    const apiDay = usage.api ? currentWindow(usage.api.day) : null;
     const icon = "h-3.5 w-3.5 shrink-0";
 
     return (
@@ -86,6 +89,12 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
                 <Row icon={<Gamepad2 className={`${icon} text-indigo-500`} aria-hidden />} label={tx(C.gameProjects)} value={counted(usage.counts.gameProjects)} />
                 <Row icon={<UsersRound className={`${icon} text-amber-500`} aria-hidden />} label={tx(C.groups)} value={counted(usage.counts.groups)} />
                 <Row icon={<KeyRound className={`${icon} text-zinc-400`} aria-hidden />} label={tx(C.connections)} value={counted(usage.counts.connections)} />
+                {apiDay ? (
+                    <Row icon={<Code2 className={`${icon} text-fuchsia-500`} aria-hidden />} label={tx(C.apiToday)} value={`${number(apiDay.used)} / ${number(apiDay.limit)}`}>
+                        <WindowBar window={apiDay} label={tx(C.apiToday)} />
+                    </Row>
+                ) : null}
+                {usage.counts.apiKeys ? <Row icon={<Code2 className={`${icon} text-zinc-400`} aria-hidden />} label={tx(C.apiKeys)} value={counted(usage.counts.apiKeys)} /> : null}
             </ul>
         </div>
     );

@@ -43,6 +43,7 @@ const C = {
     chatHint: { TR: "Yeni sohbetler bu ayarlarla başlar. Bu cihazda seçtiğin ajan modu ve model, buradaki varsayılanlardan önce gelir.", EN: "New chats start with these. The agent mode and model you pick on a device win over these defaults there." },
     defaultMode: { TR: "Varsayılan yanıt modu", EN: "Default answer mode" },
     defaultModel: { TR: "Varsayılan model", EN: "Default model" },
+    manageConnections: { TR: "Kendi anahtarlarını ve Hanogt AI API'sini yönet", EN: "Manage your own keys and the Hanogt AI API" },
     hanogtModel: { TR: "Hanogt AI (varsayılan)", EN: "Hanogt AI (default)" },
     agentMode: { TR: "Varsayılan ajan modu", EN: "Default agent mode" },
     attachFile: { TR: "Açık editör dosyasını sorulara ekle", EN: "Attach the open editor file to questions" },
@@ -286,6 +287,7 @@ export default function AiSettingsPage() {
                                     {activeConnections.map((item) => <option key={item.id} value={item.id}>{`${item.label} · ${item.model}`}</option>)}
                                     {draft.defaultModel !== DEFAULT_CONNECTION && !activeConnections.some((item) => item.id === draft.defaultModel) ? <option value={draft.defaultModel}>{draft.defaultModel}</option> : null}
                                 </select>
+                                <Link href="/ai/api#connections" className="mt-1.5 inline-block text-[12px] font-semibold text-violet-600 hover:underline dark:text-violet-300" data-settings-connections-link>{tx(C.manageConnections)}</Link>
                             </div>
                             <div>
                                 <label className={LABEL} htmlFor="ai-agent">{tx(C.agentMode)}</label>

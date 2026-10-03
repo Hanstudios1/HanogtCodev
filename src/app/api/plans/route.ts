@@ -4,6 +4,7 @@ import { PAID_PLAN_IDS, effectivePlan, isPaidPlanId, isRecentCheckout, planSourc
 import { getActiveSession } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
 import { planUsageFor } from "@/lib/server/ai-usage";
+import { featureAllowed } from "@/lib/server/features";
 import { commitServerMutations, getServerDocument, isFirebaseServerConfigured, isMissingDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { checkoutConfigFor, getPaddleConfig, isBillingTester, isPaddleConfigured } from "@/lib/server/paddle";
 import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
@@ -60,7 +61,9 @@ export async function GET(request: NextRequest) {
         // a slow Paddle finishes after the answer and counts next time.
         const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
         // Every benefit with a number, used out of the plan's limit (Hanogt AI today, projects, games, groups, connections).
-        const [usage, badge] = await Promise.all([planUsageFor(active.email, subscription), planBadgeStateFor(active.email, subscription, staff)]);
+        // The developer API's requests and keys are listed once the team opened it for the account.
+        const api = await featureAllowed("ai_api", { staff, plan: effectivePlan(subscription) }).catch(() => false);
+        const [usage, badge] = await Promise.all([planUsageFor(active.email, subscription, { api }), planBadgeStateFor(active.email, subscription, staff)]);
         // The profile's Plus / Pro badge catches up with the plan now and then (a lost notification, an ended grant).
         after(() => syncPlanBadgeThrottled(active.email, { subscription, staff }).then(() => undefined));
         return json({

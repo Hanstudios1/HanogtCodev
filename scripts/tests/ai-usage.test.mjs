@@ -209,19 +209,26 @@ test("planUsageFor counts projects, games, groups and connections against the pl
             gameProjects: { used: 1, limit: plans.PLAN_PROJECT_LIMITS.free.game },
             groups: { used: 3, limit: plans.PLAN_GROUP_LIMITS.free },
             connections: { used: 0, limit: 0 },
+            apiKeys: null,
         });
+        assert.equal(read.api, null, "the developer API isn't listed unless it is open to the account");
     });
-    await withPaddle(seed({ plan: "pro", status: "active" }, { "groups/a": { ownerEmail: ALI } }), [], async () => {
-        const read = await usage.planUsageFor(ALI);
+    await withPaddle(seed({ plan: "pro", status: "active" }, { "groups/a": { ownerEmail: ALI }, [`ai_api_keys/${ALI}`]: { items: [{ id: "key_0000000000000001" }, { id: "key_0000000000000002" }] } }), [], async () => {
+        const read = await usage.planUsageFor(ALI, null, { api: true });
         assert.deepEqual(read.counts.groups, { used: 1, limit: null }, "unlimited");
+        assert.deepEqual(read.counts.apiKeys, { used: 2, limit: plans.PLAN_AI_FEATURES.pro.api.keys });
+        assert.deepEqual([read.api.day.limit, read.api.minute.limit, read.api.day.used], [plans.PLAN_AI_FEATURES.pro.api.perDay, plans.PLAN_AI_FEATURES.pro.api.perMinute, 0]);
     });
 });
 
 test("the browser side: usage answers and headers are checked, windows move on", () => {
     assert.equal(shared.readAiUsage({ plan: "gold", hanogt: {} }), null);
     assert.equal(shared.readAiUsage({ plan: "free", hanogt: { day: { limit: -1, used: 0, remaining: 0 }, minute: { limit: 1, used: 0, remaining: 1 } } }), null);
-    const valid = { plan: "plus", hanogt: { day: { limit: 750, used: 10, remaining: 740, resetsAt: iso(HOUR) }, minute: { limit: 20, used: 1, remaining: 19, resetsAt: null }, bonus: 0 }, own: null };
+    const valid = { plan: "plus", hanogt: { day: { limit: 750, used: 10, remaining: 740, resetsAt: iso(HOUR) }, minute: { limit: 20, used: 1, remaining: 19, resetsAt: null }, bonus: 0 }, own: null, api: null };
     assert.deepEqual(shared.readAiUsage(valid), valid);
+    const withApi = { ...valid, api: { day: { limit: 250, used: 3, remaining: 247, resetsAt: iso(HOUR) }, minute: { limit: 10, used: 1, remaining: 9, resetsAt: null } } };
+    assert.deepEqual(shared.readAiUsage(withApi), withApi);
+    assert.equal(shared.readAiUsage({ ...valid, api: { day: { limit: 1 } } }).api, null, "a broken API part is dropped, the rest stays");
     assert.equal(shared.quotaFromHeaders(new Headers({ "X-Hanogt-AI-Quota": "other", "X-Hanogt-AI-Day-Limit": "1", "X-Hanogt-AI-Day-Remaining": "1" })), null);
     assert.equal(shared.limitDetailsOf({ code: "rate_limited", plan: "free", limit: 12 }), null, "only daily limits carry details");
     const after = shared.windowAfter(valid.hanogt.day, { quota: "hanogt", limit: 750, remaining: 739, resetsAt: null });

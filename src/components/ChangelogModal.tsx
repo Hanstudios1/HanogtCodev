@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.13",
+        version: "v0.3.13",
+        date: "2026-10-03",
+        title: { TR: "Hanogt AI API'si", EN: "The Hanogt AI API" },
+        desc: { TR: "Hanogt AI'ı kendi uygulamandan OpenAI uyumlu bir API ile çağır; anahtarların ve bağlantıların tek sayfada.", EN: "Call Hanogt AI from your own app through an OpenAI-compatible API; your keys and connections on one page." },
+        items: [
+            { TR: "Yeni \"API ve bağlantılar\" sayfası: sohbetin üstündeki 🔑 düğmesinden aç.", EN: "A new \"API and connections\" page: open it with the 🔑 button above the chat." },
+            { TR: "Plus ve Pro ile API anahtarı oluştur; OpenAI'ın kütüphaneleri temel adresi değiştirerek çalışır.", EN: "Create API keys with Plus or Pro; OpenAI's libraries work by changing the base URL." },
+            { TR: "Belgelerde curl, JavaScript, Python ve OpenAI SDK örnekleri var.", EN: "The docs have curl, JavaScript, Python and OpenAI SDK samples." },
+            { TR: "API, ekip tarafından kademeli olarak açılıyor.", EN: "The team is opening the API gradually." },
+        ],
+    },
+    {
         id: "v0.3.12",
         version: "v0.3.12",
         date: "2026-10-03",

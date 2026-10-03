@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { agentUserKey } from "@/lib/ai/agent-settings";
-import { readAiUsage, windowAfter, type AiUsage, type DayQuota, type LimitDetails, type UsageWindow } from "@/lib/ai/usage";
+import { readAiUsage, windowAfter, type AiUsage, type DayQuota, type LimitDetails, type QuotaKind, type UsageWindow } from "@/lib/ai/usage";
 import { onPlanChange } from "@/lib/plan-signal";
 
 const EVENT = "hanogt-ai:usage";
@@ -48,10 +48,11 @@ async function loadUsage(owner: string, force = false) {
     }
 }
 
-/** Replaces the day window of `quota` ("hanogt" or "own"). */
-function withDay(usage: AiUsage, quota: "hanogt" | "own", day: UsageWindow): AiUsage {
+/** Replaces the day window of `quota`. */
+function withDay(usage: AiUsage, quota: QuotaKind, day: UsageWindow): AiUsage {
     if (quota === "hanogt") return { ...usage, hanogt: { ...usage.hanogt, day } };
-    return usage.own ? { ...usage, own: { ...usage.own, day } } : usage;
+    if (quota === "own") return usage.own ? { ...usage, own: { ...usage.own, day } } : usage;
+    return usage.api ? { ...usage, api: { ...usage.api, day } } : usage;
 }
 
 export type AiUsageHandle = {
@@ -99,7 +100,7 @@ export function useAiUsage(email: string | null): AiUsageHandle {
             void loadUsage(owner, true);
             return;
         }
-        const window = quota.quota === "hanogt" ? snapshot.usage.hanogt.day : snapshot.usage.own?.day;
+        const window = quota.quota === "hanogt" ? snapshot.usage.hanogt.day : quota.quota === "own" ? snapshot.usage.own?.day : snapshot.usage.api?.day;
         // Own connections the stored usage doesn't know about (the plan changed): ask again.
         if (!window) {
             void loadUsage(owner, true);

@@ -30,6 +30,7 @@ import {
     toIso,
     writeAuditLog,
 } from "@/lib/server/admin";
+import { revokeAllApiKeys } from "@/lib/server/ai-api-keys";
 import { couponDeletionDetails, listDeletedCoupons, restoreCoupon } from "@/lib/server/coupon-admin";
 import { FEATURES_PATH, featureAudienceWrite, forgetFeatureCache } from "@/lib/server/features";
 import { commitServerMutations, countServerQuery, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
@@ -56,7 +57,7 @@ import {
 
 export const runtime = "nodejs";
 
-const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "restoreCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi", "setFeature"] as const;
+const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "restoreCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi", "setFeature", "revokeApiKeys"] as const;
 const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "recur", "note", "active", "email", "days", "blocked", "extraDaily", "feature", "audience"];
 const HISTORY_MAX = 30;
 const COUPONS_MAX = 200;
@@ -333,6 +334,13 @@ export async function POST(request: NextRequest) {
         if (action === "resetAi") {
             await resetAiLimits(email);
             await writeAuditLog(actor, "subscription.reset_ai", `users/${email}`, { email });
+            return adminJson(await adminPersonPlan(email));
+        }
+
+        // Every Hanogt AI API key of the account stops working at once (a leaked key, abuse).
+        if (action === "revokeApiKeys") {
+            const revoked = await revokeAllApiKeys(email);
+            await writeAuditLog(actor, "ai_api.revoke_all", `users/${email}`, { email, keys: revoked });
             return adminJson(await adminPersonPlan(email));
         }
 

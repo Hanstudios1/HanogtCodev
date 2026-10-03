@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import type { AdminErrorCode, AdminPaddleCatalogReport, AdminPaddleClientTokenCheck, AdminPaddlePrice, AdminPaddleUnlinked, AdminUserPlanResponse } from "@/components/Admin/types";
 import { BILLING_INTERVALS, isPaddleId, type BillingInterval, type PaddleClientError, type PaddleEnvironment, type PaddleServerError } from "@/lib/paddle";
 import { PAID_PLAN_IDS, PLAN_COPY, aiLimitsFor, effectivePlan, normalizeCouponRecur, planSource, type CouponRecur, type PaidPlanId } from "@/lib/plans";
+import { apiKeyCount } from "./ai-api-keys";
 import { commitServerMutations, getServerDocument, runServerQuery } from "./firebase-rest";
 import {
     EMPTY_PLAN_PRICES,
@@ -613,10 +614,11 @@ export async function resyncAccount(email: string): Promise<number> {
 
 /** One person's plan for Admin › Subscriptions: staff assignment, Paddle subscription and Hanogt AI limits. */
 export async function adminPersonPlan(email: string): Promise<AdminUserPlanResponse> {
-    const [user, record, usage] = await Promise.all([
+    const [user, record, usage, apiKeys] = await Promise.all([
         getServerDocument<Record<string, unknown>>(`users/${email}`),
         getServerDocument<Record<string, unknown>>(subscriptionPath(email)),
         aiUsage(email),
+        apiKeyCount(email),
     ]);
     const environment = getPaddleConfig().environment;
     const subscription = normalizeSubscription(record, environment);
@@ -628,6 +630,7 @@ export async function adminPersonPlan(email: string): Promise<AdminUserPlanRespo
         planSource: planSource(subscription),
         aiLimits: aiLimitsFor(subscription),
         aiUsage: usage,
+        apiKeys,
         paddleEnvironment: environment,
         paddleDashboard: paddleDashboardUrl(environment, ""),
     };

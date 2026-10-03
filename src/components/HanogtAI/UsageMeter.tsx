@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Gauge, KeyRound, Sparkles } from "lucide-react";
+import { ArrowUpRight, Code2, Gauge, KeyRound, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { currentWindow, formatResetTime, usageLevel, type UsageWindow } from "@/lib/ai/usage";
@@ -22,6 +22,8 @@ const C = {
     bonus: { TR: "Hanogt ekibinden +{count} ek mesaj dahil", EN: "Includes +{count} extra messages from the Hanogt team" },
     own: { TR: "Kendi bağlantıların (bugün)", EN: "Your own connections (today)" },
     ownHint: { TR: "Kendi API anahtarınla gönderdiklerin Hanogt AI hakkından düşmez.", EN: "Messages sent with your own API key don't use your Hanogt AI messages." },
+    api: { TR: "Hanogt AI API (24 saat)", EN: "Hanogt AI API (24 hours)" },
+    apiHint: { TR: "Kendi uygulamalarından gelen istekler; ayrı sayılır.", EN: "Requests from your own apps; counted separately." },
     upgrade: { TR: "Planını yükselt", EN: "Upgrade your plan" },
     upgradeHint: { TR: "{plan} ile günde {count} mesaj", EN: "{count} messages a day with {plan}" },
     details: { TR: "Tüm plan hakların", EN: "All your plan benefits" },
@@ -103,6 +105,7 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
     const day = currentWindow(usage.hanogt.day, now);
     const level = usageLevel(day);
     const ownDay = usage.own ? currentWindow(usage.own.day, now) : null;
+    const apiDay = usage.api ? currentWindow(usage.api.day, now) : null;
     const nextPlan = nextPlanUp(usage.plan);
     const pillText = tx(C.pill, { used: day.used.toLocaleString(locale), limit: day.limit.toLocaleString(locale) });
 
@@ -157,6 +160,17 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                             </div>
                             <Bar window={ownDay} label={tx(C.own)} />
                             <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">{tx(C.ownHint)}</p>
+                        </div>
+                    ) : null}
+
+                    {apiDay ? (
+                        <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.06]" data-usage-api>
+                            <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><Code2 className="h-3.5 w-3.5 text-fuchsia-500" aria-hidden />{tx(C.api)}</span>
+                                <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{apiDay.used.toLocaleString(locale)} / {apiDay.limit.toLocaleString(locale)}</span>
+                            </div>
+                            <Bar window={apiDay} label={tx(C.api)} />
+                            <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">{tx(C.apiHint)}</p>
                         </div>
                     ) : null}
 

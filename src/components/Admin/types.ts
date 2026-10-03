@@ -346,7 +346,8 @@ export type AdminAuditAction =
     | "subscription.unblock"
     | "subscription.remove"
     | "subscription.reset_ai"
-    | "subscription.grant_ai";
+    | "subscription.grant_ai"
+    | "ai_api.revoke_all";
 
 export type AuditDetailValue = string | number | boolean | null;
 
@@ -479,6 +480,8 @@ export type AdminUserPlanResponse = {
     planSource: "paddle" | "staff" | null;
     aiLimits: { perMinute: number; perDay: number };
     aiUsage: { minute: { count: number; resetsAt: string } | null; day: { count: number; resetsAt: string } | null };
+    /** Hanogt AI API keys the account keeps; null when they couldn't be read. */
+    apiKeys: number | null;
     /** The environment Paddle is set up for; `subscription` only holds Paddle data from it. */
     paddleEnvironment: import("@/lib/paddle").PaddleEnvironment;
     /** Paddle's dashboard for that environment (links to the customer and subscription). */

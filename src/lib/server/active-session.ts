@@ -15,6 +15,8 @@ export type ActiveUser = {
     emailVerifiedAt?: unknown;
     /** Hanogt AI settings (src/lib/ai/ai-settings.ts), written only by /api/ai/settings. */
     aiSettings?: unknown;
+    /** The stored staff role; read it through resolveUserRole (src/lib/server/roles.ts). */
+    role?: unknown;
 };
 
 export type ActiveSession = { session: Session; email: string; user: ActiveUser };

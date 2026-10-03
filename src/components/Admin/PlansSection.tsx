@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, BadgePercent, Bot, CreditCard, Crown, ExternalLink, History, Plus, RefreshCw, RotateCcw, Search, Tag, Trash2, Upload, UserCog } from "lucide-react";
+import { Ban, BadgePercent, Bot, CreditCard, Crown, ExternalLink, History, KeyRound, Plus, RefreshCw, RotateCcw, Search, Tag, Trash2, Upload, UserCog } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { billingView, paddleEntitles } from "@/lib/paddle";
@@ -125,6 +125,12 @@ const C = {
     removed: { TR: "Plan kaldırıldı.", EN: "Plan removed." },
     resetAi: { TR: "Hanogt AI sınırını sıfırla", EN: "Reset the Hanogt AI limit" },
     resetDone: { TR: "Hanogt AI sayaçları sıfırlandı.", EN: "Hanogt AI counters reset." },
+    apiKeys: { TR: "Hanogt AI API anahtarı: {count}", EN: "Hanogt AI API keys: {count}" },
+    apiKeysUnknown: { TR: "Hanogt AI API anahtarları okunamadı.", EN: "Hanogt AI API keys couldn't be read." },
+    revokeKeys: { TR: "Tümünü iptal et", EN: "Revoke all" },
+    revokeKeysTitle: { TR: "{email} hesabının bütün API anahtarları iptal edilsin mi?", EN: "Revoke every API key of {email}?" },
+    revokeKeysBody: { TR: "Anahtarlar hemen çalışmaz hâle gelir ve geri alınamaz; kişi yenilerini oluşturabilir. İşlem denetim kaydına yazılır.", EN: "The keys stop working at once and this can't be undone; the person can create new ones. The action is written to the audit log." },
+    keysRevoked: { TR: "API anahtarları iptal edildi.", EN: "API keys revoked." },
     grantTitle: { TR: "Ek Hanogt AI hakkı", EN: "Extra Hanogt AI quota" },
     extraDaily: { TR: "Günlük ek mesaj", EN: "Extra messages a day" },
     grantDays: { TR: "Kaç gün", EN: "For how many days" },
@@ -505,6 +511,7 @@ function PersonPlan() {
     const [extra, setExtra] = useState("100");
     const [grantDays, setGrantDays] = useState("7");
     const [confirmRemove, setConfirmRemove] = useState(false);
+    const [confirmRevokeKeys, setConfirmRevokeKeys] = useState(false);
 
     const find = async (event?: FormEvent) => {
         event?.preventDefault();
@@ -582,6 +589,11 @@ function PersonPlan() {
                         <p className="mt-1 text-zinc-500">{tx(C.aiUsage, { used: result.aiUsage.day?.count ?? 0, day: result.aiLimits.perDay })}</p>
                         {subscription.aiBonusDaily > 0 && subscription.aiBonusUntil ? <p className="mt-1 text-zinc-500">{tx(C.bonus, { extra: subscription.aiBonusDaily, date: date(subscription.aiBonusUntil) })}</p> : null}
                         <Button className="mt-2" size="sm" icon={RotateCcw} busy={busy === "reset"} onClick={() => void act("reset", { action: "resetAi" }, C.resetDone)}>{tx(C.resetAi)}</Button>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-3 dark:border-white/10" data-admin-api-keys>
+                            <KeyRound className="h-4 w-4 text-violet-500" aria-hidden="true" />
+                            <span className="font-semibold">{result.apiKeys === null ? tx(C.apiKeysUnknown) : tx(C.apiKeys, { count: result.apiKeys })}</span>
+                            {result.apiKeys ? <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setConfirmRevokeKeys(true)}>{tx(C.revokeKeys)}</Button> : null}
+                        </div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-3">
                         <label className={label}>{tx(C.plan)}
@@ -610,6 +622,17 @@ function PersonPlan() {
                             <Button size="sm" icon={Bot} busy={busy === "grant"} onClick={() => void act("grant", { action: "grantAi", extraDaily: Number(extra || 0), days: Number(grantDays || 1) }, C.granted)}>{tx(C.grant)}</Button>
                         </div>
                     </div>
+                    <ConfirmDialog
+                        open={confirmRevokeKeys}
+                        onClose={() => setConfirmRevokeKeys(false)}
+                        onConfirm={async () => {
+                            if (await act("revokeKeys", { action: "revokeApiKeys" }, C.keysRevoked)) setConfirmRevokeKeys(false);
+                        }}
+                        title={tx(C.revokeKeysTitle, { email: result.email })}
+                        description={tx(C.revokeKeysBody)}
+                        confirmLabel={tx(C.revokeKeys)}
+                        busy={busy === "revokeKeys"}
+                    />
                     <ConfirmDialog
                         open={confirmRemove}
                         onClose={() => setConfirmRemove(false)}

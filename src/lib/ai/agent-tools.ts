@@ -83,6 +83,7 @@ export const AGENT_ROUTES = [
     { path: "/game-engine", label: { TR: "Oyun Motoru", EN: "Game Engine" } },
     { path: "/account-settings", label: { TR: "Hesap Ayarları", EN: "Account Settings" } },
     { path: "/ai/settings", label: { TR: "Hanogt AI Ayarları", EN: "Hanogt AI Settings" } },
+    { path: "/ai/api", label: { TR: "Hanogt AI API ve bağlantılar", EN: "Hanogt AI API and connections" } },
     { path: "/settings", label: { TR: "Editör Ayarları", EN: "Editor Settings" } },
     { path: "/feedback", label: { TR: "Geri Bildirim ve Destek", EN: "Feedback and Support" } },
     { path: "/guide", label: { TR: "Kullanım Kılavuzu", EN: "User Guide" } },

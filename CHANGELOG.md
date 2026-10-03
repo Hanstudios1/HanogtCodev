@@ -1,5 +1,35 @@
 # Değişiklik Günlüğü
 
+## 0.3.13 — 2026-10-03
+
+### Hanogt AI API'si ve "API ve bağlantılar" sayfası
+
+- Yeni `/ai/api` sayfası (sohbetin üstündeki 🔑, kenar çubuğu, Hanogt AI
+  ayarları): iki sekme. **Hanogt AI API**: anahtarlar, son 24 saatteki
+  istekler ve belgeler (curl, JavaScript, Python ve OpenAI SDK örnekleri, uç
+  noktalar, parametreler, sınırlar, hatalar). **Kendi anahtarların**: sohbetin
+  bağlantı penceresiyle aynı bileşen (`ConnectionsManager`).
+- OpenAI uyumlu API: `POST /api/v1/chat/completions` (akışlı ve akışsız,
+  model `hanogt-ai`), `GET /api/v1/models`, `GET /api/v1/usage`. Anahtar
+  `Authorization: Bearer hnk_…` ile gelir; oturum çerezi ve CORS yok. Hatalar
+  OpenAI biçiminde, `x-ratelimit-*` başlıklarıyla. Geliştiricinin system
+  metni Hanogt AI kurallarından sonra veri olarak eklenir.
+- Anahtarlar bir kez gösterilir, yalnızca SHA-256'sı saklanır
+  (`ai_api_keys`, `ai_api_key_index`; tarayıcıya kapalı). Plus 2 anahtar,
+  dakikada 10 / 24 saatte 250 istek; Pro 5 anahtar, 30 / 1.000. Plan düşerse
+  en eski anahtarlar çalışmaya devam eder.
+- Doğrulama sırası: biçim (okumadan önce), adres başına dakikada 300, anahtar
+  dizini, hesap (silinmiş/askıda), plan, anahtar hakkı, `ai_api` özelliği;
+  gövde sayılmadan önce kontrol edilir.
+- Hesap silme anahtarları ve dizin kayıtlarını siler; veri dışa aktarımı
+  anahtarı ya da özetini vermez. Yönetici kişi kartında anahtar sayısı ve
+  "Tümünü iptal et" (denetim kaydıyla).
+- Kullanım listesi ve sayaç, API açık olan hesaplarda API isteklerini ve
+  anahtarları da gösteriyor.
+- API şimdilik yalnızca ekibe açık (Yönetici › Abonelikler › Özellikler).
+- Belgeler: `docs/HANOGT_AI_API.md`. Testler: anahtarlar, eşzamanlı oluşturma,
+  iptal, kimlik doğrulama sırası, istek gövdesi, akış biçimi, sayma, veri.
+
 ## 0.3.12 — 2026-10-03
 
 ### Plan rozeti ve destekte plan önceliği

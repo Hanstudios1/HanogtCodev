@@ -640,6 +640,13 @@ async function deleteAiConnections(ctx: Context) {
     if (removed) ctx.tally.count("aiConnections", removed);
 }
 
+/** Hanogt AI developer API keys with their index entries: every key stops working at once. */
+async function deleteAiApiKeys(ctx: Context) {
+    const { revokeAllApiKeys } = await import("./ai-api-keys");
+    const removed = await revokeAllApiKeys(ctx.email);
+    if (removed) ctx.tally.count("aiApiKeys", removed);
+}
+
 /**
  * The account itself, in one commit: without the user document every
  * session ends (getActiveSession requires it). Then the Firebase Auth record,
@@ -684,6 +691,7 @@ const STEPS: readonly Step[] = [
     { id: "supportTickets", scopes: ALL, run: deleteSupportTickets },
     { id: "plans", scopes: ALL, run: deletePlanRecords },
     { id: "aiConnections", scopes: ALL, run: deleteAiConnections },
+    { id: "aiApiKeys", scopes: ALL, run: deleteAiApiKeys },
     { id: "account", scopes: ALL, run: deleteAccount },
 ];
 

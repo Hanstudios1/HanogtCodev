@@ -1,10 +1,13 @@
 import { NextResponse, after, type NextRequest } from "next/server";
+import { effectivePlan } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { aiUsageFor, planUsageFor } from "@/lib/server/ai-usage";
+import { featureAllowed } from "@/lib/server/features";
 import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
 import { getSubscription } from "@/lib/server/plans";
 import { memoryRateLimit } from "@/lib/server/rate-limit";
 import { jsonSecurityHeaders } from "@/lib/server/request-security";
+import { resolveUserRole } from "@/lib/server/roles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +27,7 @@ function json(payload: unknown, status = 200, headers: Record<string, string> = 
  * (throttled), so someone who pays and comes straight to Hanogt AI sees the
  * new plan. Only reads: no database write per request, a per-instance guard.
  * ?full=1 adds what else the plan counts (PlanUsage: projects, games, groups,
- * connections) for the Hanogt AI settings page.
+ * connections, API keys) for the Hanogt AI settings page.
  */
 export async function GET(request: NextRequest) {
     const active = await getActiveSession();
@@ -35,7 +38,10 @@ export async function GET(request: NextRequest) {
         const stored = await getSubscription(active.email);
         const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
         const full = request.nextUrl.searchParams.get("full") === "1";
-        return json(full ? await planUsageFor(active.email, subscription) : await aiUsageFor(active.email, subscription));
+        // The developer API's requests and keys, once the team opened it for the account.
+        const staff = resolveUserRole(active.email, active.user.role) !== "user";
+        const options = { api: await featureAllowed("ai_api", { staff, plan: effectivePlan(subscription) }).catch(() => false) };
+        return json(full ? await planUsageFor(active.email, subscription, options) : await aiUsageFor(active.email, subscription, options));
     } catch {
         return json({ error: "Kullanım bilgisi şu anda okunamadı.", code: "unavailable" }, 503);
     }

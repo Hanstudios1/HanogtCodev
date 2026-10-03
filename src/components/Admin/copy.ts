@@ -200,6 +200,7 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "subscription.unblock": { TR: "Plan engeli kaldırıldı", EN: "Plan block lifted" },
     "subscription.remove": { TR: "Plan kaldırıldı", EN: "Plan removed" },
     "subscription.reset_ai": { TR: "Hanogt AI sınırı sıfırlandı", EN: "Hanogt AI limit reset" },
+    "ai_api.revoke_all": { TR: "Hanogt AI API anahtarlarının tümü iptal edildi", EN: "All Hanogt AI API keys revoked" },
     "subscription.grant_ai": { TR: "Ek Hanogt AI hakkı verildi", EN: "Extra Hanogt AI quota granted" },
 };
 

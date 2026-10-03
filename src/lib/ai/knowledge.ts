@@ -52,6 +52,7 @@ const L = {
     dashboard: { href: "/dashboard", label: { TR: "Panel", EN: "Dashboard" } },
     ai: { href: "/ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" } },
     aiSettings: { href: "/ai/settings", label: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" } },
+    aiApi: { href: "/ai/api", label: { TR: "API ve bağlantılar", EN: "API and connections" } },
     plans: { href: "/plans", label: { TR: "Fiyatlandırma", EN: "Pricing" } },
     refunds: { href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
 } satisfies Record<string, KnowledgeLink>;
@@ -135,6 +136,21 @@ export const CURATED_KNOWLEDGE: KnowledgeEntry[] = [
         },
         keywords: "hanogt ai ayarları ai settings yapay zeka ayarlar talimat instructions üslup ton tone uzunluk length dil language varsayılan default model ajan agent geçmiş history sil delete dışa aktar export kişiselleştirme personalization custom instructions",
         links: [L.aiSettings, L.ai],
+    },
+    {
+        id: "ai-api",
+        intents: [],
+        title: { TR: "Hanogt AI API'si", EN: "The Hanogt AI API" },
+        body: {
+            TR: "Hanogt AI'ı kendi uygulamandan (bot, site, betik) **OpenAI uyumlu** bir API ile çağırabilirsin. [API ve bağlantılar](/ai/api) sayfasından (sohbetin üstündeki 🔑 düğmesi) anahtar oluşturursun; anahtar `hnk_` ile başlar ve **yalnızca bir kez** gösterilir, biz yalnızca özetini saklarız.\n• **Adres:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI'ın resmî kütüphaneleri temel adresi değiştirerek çalışır. Akışlı yanıt (stream) desteklenir; araç çağrısı (tools) ve görseller desteklenmez.\n• **Planlar:** Plus'ta {plusKeys} anahtar, dakikada {plusMinute} ve 24 saatte {plusDay} istek; Pro'da {proKeys} anahtar, dakikada {proMinute} ve 24 saatte {proDay} istek. API istekleri sohbet mesajlarından ayrı sayılır.\n• **Güvenlik:** anahtarını tarayıcıda, mobil uygulamada ya da herkese açık depoda kullanma; sızdıysa sayfadan hemen iptal et. Başka sitelerin tarayıcıdan çağırmasına izin verilmez.\n• Aynı sayfanın **Kendi anahtarların** sekmesinde OpenAI, Claude, Gemini gibi sağlayıcıları kendi anahtarınla Hanogt AI sohbetine bağlarsın.\nAPI, ekip tarafından kademeli olarak açılıyor; hesabında henüz açık değilse sayfa bunu söyler.",
+            EN: "You can call Hanogt AI from your own app (a bot, a site, a script) through an **OpenAI-compatible** API. Create a key on the [API and connections](/ai/api) page (the 🔑 button above the chat); keys start with `hnk_` and are shown **only once**, and we keep only a hash.\n• **Address:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI's official libraries work by changing the base URL. Streaming is supported; tool calls and images aren't.\n• **Plans:** {plusKeys} keys on Plus with {plusMinute} requests a minute and {plusDay} in 24 hours; {proKeys} keys on Pro with {proMinute} a minute and {proDay} in 24 hours. API requests are counted separately from chat messages.\n• **Safety:** don't use your key in a browser, a mobile app or a public repository; if it leaks, revoke it on the page at once. Other sites can't call the API from a browser.\n• On the same page's **Your own keys** tab you connect providers such as OpenAI, Claude or Gemini to the Hanogt AI chat with your own key.\nThe team is opening the API gradually; if it isn't on for your account yet, the page says so.",
+            vars: {
+                plusKeys: PLAN_AI_FEATURES.plus.api?.keys ?? 0, plusMinute: PLAN_AI_FEATURES.plus.api?.perMinute ?? 0, plusDay: PLAN_AI_FEATURES.plus.api?.perDay ?? 0,
+                proKeys: PLAN_AI_FEATURES.pro.api?.keys ?? 0, proMinute: PLAN_AI_FEATURES.pro.api?.perMinute ?? 0, proDay: PLAN_AI_FEATURES.pro.api?.perDay ?? 0,
+            },
+        },
+        keywords: "hanogt ai api developer api geliştirici api anahtar key hnk openai uyumlu compatible chat completions sdk curl python javascript bot entegrasyon integration stream kota quota rate limit",
+        links: [L.aiApi, L.plans],
     },
     {
         id: "password",

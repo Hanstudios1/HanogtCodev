@@ -4,7 +4,7 @@ import { QUOTA_HEADERS, type AiUsage, type CountedLimit, type DayQuota, type Pla
 import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, aiLimitsFor, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
 import { healBeforeRefusing, type HealOptions } from "./entitlements";
 import { countServerQuery, getServerDocument } from "./firebase-rest";
-import { AI_DAY_MS, AI_LIMIT_KEYS, OWN_KEY_LIMIT_KEYS, getSubscription } from "./plans";
+import { AI_API_LIMIT_KEYS, AI_DAY_MS, AI_LIMIT_KEYS, OWN_KEY_LIMIT_KEYS, getSubscription } from "./plans";
 import { enforceRateLimitWithFallback, readRateLimit, type RateLimitResult } from "./rate-limit";
 
 /*
@@ -25,6 +25,20 @@ export function ownKeyLimitsFor(plan: PlanId): Limits | null {
     return own && PLAN_AI_CONNECTIONS[plan] > 0 ? { perMinute: own.perMinute, perDay: own.perDay } : null;
 }
 
+/** Developer API requests a plan allows (Plus 250, Pro 1,000 a day); null when the plan has none. */
+export function apiLimitsFor(plan: PlanId): Limits | null {
+    const api = PLAN_AI_FEATURES[plan].api;
+    return api ? { perMinute: api.perMinute, perDay: api.perDay } : null;
+}
+
+/** What each kind counts with: its keys and the plan's limits (null: the plan has none). */
+function countedBy(kind: QuotaKind, email: string, subscription: UserSubscription): { keys: { minute: string; day: string }; limits: Limits | null } {
+    if (kind === "hanogt") return { keys: AI_LIMIT_KEYS(email), limits: aiLimitsFor(subscription) };
+    const plan = effectivePlan(subscription);
+    if (kind === "own") return { keys: OWN_KEY_LIMIT_KEYS(email), limits: ownKeyLimitsFor(plan) };
+    return { keys: AI_API_LIMIT_KEYS(email), limits: apiLimitsFor(plan) };
+}
+
 /** A stored window as the meter shows it; no open window is an unused one. */
 export function usageWindow(state: { count: number; resetsAt: string } | null, limit: number): UsageWindow {
     const used = Math.max(0, Math.floor(state?.count ?? 0));
@@ -33,24 +47,40 @@ export function usageWindow(state: { count: number; resetsAt: string } | null, l
 
 const readWindow = (key: string, windowMs: number) => readRateLimit(key, windowMs).catch(() => null);
 
+export type UsageOptions = {
+    /** The developer API is open to the account (the ai_api feature): its windows are read too. */
+    api?: boolean;
+};
+
+/** A kind's minute and day windows as the meter shows them; null when the plan has none of it. */
+async function windowsOf(kind: QuotaKind, email: string, subscription: UserSubscription) {
+    const { keys, limits } = countedBy(kind, email, subscription);
+    if (!limits) return null;
+    const [minute, day] = await Promise.all([readWindow(keys.minute, MINUTE_MS), readWindow(keys.day, AI_DAY_MS)]);
+    return { day: usageWindow(day, limits.perDay), minute: usageWindow(minute, limits.perMinute) };
+}
+
+/** Only the developer API's windows (its page, /api/v1/usage); null when the plan has no API. */
+export function apiUsageFor(email: string, subscription: UserSubscription) {
+    return windowsOf("api", email, subscription);
+}
+
 /** The account's Hanogt AI windows now; nothing is counted. */
-export async function aiUsageFor(email: string, subscription: UserSubscription | null = null): Promise<AiUsage> {
+export async function aiUsageFor(email: string, subscription: UserSubscription | null = null, options: UsageOptions = {}): Promise<AiUsage> {
     const record = subscription ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
     const plan = effectivePlan(record);
-    const limits = aiLimitsFor(record);
-    const own = ownKeyLimitsFor(plan);
-    const keys = AI_LIMIT_KEYS(email);
-    const ownKeys = OWN_KEY_LIMIT_KEYS(email);
-    const [minute, day, ownMinute, ownDay] = await Promise.all([
-        readWindow(keys.minute, MINUTE_MS),
-        readWindow(keys.day, AI_DAY_MS),
-        own ? readWindow(ownKeys.minute, MINUTE_MS) : null,
-        own ? readWindow(ownKeys.day, AI_DAY_MS) : null,
+    const [hanogt, own, api] = await Promise.all([
+        windowsOf("hanogt", email, record),
+        windowsOf("own", email, record),
+        options.api ? windowsOf("api", email, record) : null,
     ]);
+    const limits = aiLimitsFor(record);
     return {
         plan,
-        hanogt: { day: usageWindow(day, limits.perDay), minute: usageWindow(minute, limits.perMinute), bonus: Math.max(0, limits.perDay - PLAN_AI_LIMITS[plan].perDay) },
-        own: own ? { day: usageWindow(ownDay, own.perDay), minute: usageWindow(ownMinute, own.perMinute) } : null,
+        // Hanogt AI has limits on every plan.
+        hanogt: { ...hanogt!, bonus: Math.max(0, limits.perDay - PLAN_AI_LIMITS[plan].perDay) },
+        own,
+        api,
     };
 }
 
@@ -60,28 +90,41 @@ async function countOf(collectionId: string, field: string, email: string, limit
     return { used, limit };
 }
 
-/** aiUsageFor plus everything else the plan counts (projects, games, groups, connections). */
-export async function planUsageFor(email: string, subscription: UserSubscription | null = null): Promise<PlanUsage> {
+/** Items stored in a list document (connections, API keys) against the plan's allowance. */
+function listCount(path: string, limit: number): Promise<CountedLimit> {
+    return getServerDocument<{ items?: unknown }>(path)
+        .then((stored): CountedLimit => ({ used: Array.isArray(stored?.items) ? stored.items.length : 0, limit }))
+        .catch((): CountedLimit => ({ used: null, limit }));
+}
+
+/** aiUsageFor plus everything else the plan counts (projects, games, groups, connections, API keys). */
+export async function planUsageFor(email: string, subscription: UserSubscription | null = null, options: UsageOptions = {}): Promise<PlanUsage> {
     const record = subscription ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
     const plan = effectivePlan(record);
-    const [usage, codeProjects, gameProjects, groups, connections] = await Promise.all([
-        aiUsageFor(email, record),
+    const [usage, codeProjects, gameProjects, groups, connections, apiKeys] = await Promise.all([
+        aiUsageFor(email, record, options),
         countOf("projects", "email", email, PLAN_PROJECT_LIMITS[plan].code),
         countOf("game_projects", "ownerEmail", email, PLAN_PROJECT_LIMITS[plan].game),
         countOf("groups", "ownerEmail", email, PLAN_GROUP_LIMITS[plan]),
-        getServerDocument<{ items?: unknown }>(`ai_connections/${email}`)
-            .then((stored): CountedLimit => ({ used: Array.isArray(stored?.items) ? stored.items.length : 0, limit: PLAN_AI_CONNECTIONS[plan] }))
-            .catch((): CountedLimit => ({ used: null, limit: PLAN_AI_CONNECTIONS[plan] })),
+        listCount(`ai_connections/${email}`, PLAN_AI_CONNECTIONS[plan]),
+        options.api ? listCount(`ai_api_keys/${email}`, PLAN_AI_FEATURES[plan].api?.keys ?? 0) : null,
     ]);
-    return { ...usage, counts: { codeProjects, gameProjects, groups, connections } };
+    return { ...usage, counts: { codeProjects, gameProjects, groups, connections, apiKeys } };
 }
 
-export type QuotaPass = { ok: true; plan: PlanId; quota: DayQuota };
+export type QuotaPass = {
+    ok: true;
+    plan: PlanId;
+    /** The day window this request counted in. */
+    quota: DayQuota;
+    /** The minute window it counted in (the developer API reports it as x-ratelimit-*). */
+    minute: { limit: number; remaining: number; resetsAt: string };
+};
 
 export type QuotaRefusal = {
     ok: false;
-    /** "rate_limited": the minute window · "daily_limit" / "connection_daily_limit": the day window. */
-    code: "rate_limited" | "daily_limit" | "connection_daily_limit";
+    /** "rate_limited": the minute window · "daily_limit" / "connection_daily_limit" / "api_daily_limit": the day window. */
+    code: "rate_limited" | "daily_limit" | "connection_daily_limit" | "api_daily_limit";
     retryAfterSeconds: number;
     quota: QuotaKind;
     plan: PlanId;
@@ -91,7 +134,7 @@ export type QuotaRefusal = {
     upgrade: PaidPlanId | null;
 };
 
-/** The plan doesn't include own connections (Free), even after asking Paddle. */
+/** The plan doesn't include own connections or the developer API (Free), even after asking Paddle. */
 export type QuotaNoPlan = { ok: false; code: "connection_unavailable"; plan: PlanId };
 
 const resetsAtOf = (result: RateLimitResult) => new Date(Date.now() + result.retryAfterSeconds * 1000).toISOString();
@@ -106,9 +149,9 @@ const resetsAtOf = (result: RateLimitResult) => new Date(Date.now() + result.ret
 async function enforceWindows(email: string, kind: QuotaKind, initial: UserSubscription, options: HealOptions): Promise<QuotaPass | QuotaRefusal | QuotaNoPlan> {
     let subscription = initial;
     let asked = false;
-    const keys = kind === "hanogt" ? AI_LIMIT_KEYS(email) : OWN_KEY_LIMIT_KEYS(email);
-    const covered = () => kind === "hanogt" || ownKeyLimitsFor(effectivePlan(subscription)) !== null;
-    const limitsOf = (): Limits => (kind === "hanogt" ? aiLimitsFor(subscription) : ownKeyLimitsFor(effectivePlan(subscription)) ?? { perMinute: 0, perDay: 0 });
+    const { keys } = countedBy(kind, email, subscription);
+    const covered = () => countedBy(kind, email, subscription).limits !== null;
+    const limitsOf = (): Limits => countedBy(kind, email, subscription).limits ?? { perMinute: 0, perDay: 0 };
     const heal = async () => {
         if (asked) return false;
         asked = true;
@@ -130,9 +173,14 @@ async function enforceWindows(email: string, kind: QuotaKind, initial: UserSubsc
 
     let day = await enforceRateLimitWithFallback(keys.day, limitsOf().perDay, AI_DAY_MS);
     if (!day.allowed && (await heal())) day = await enforceRateLimitWithFallback(keys.day, limitsOf().perDay, AI_DAY_MS);
-    if (!day.allowed) return refuse(kind === "hanogt" ? "daily_limit" : "connection_daily_limit", day, limitsOf().perDay);
+    if (!day.allowed) return refuse(kind === "hanogt" ? "daily_limit" : kind === "own" ? "connection_daily_limit" : "api_daily_limit", day, limitsOf().perDay);
 
-    return { ok: true, plan: effectivePlan(subscription), quota: { quota: kind, limit: limitsOf().perDay, remaining: day.remaining, resetsAt: resetsAtOf(day) } };
+    return {
+        ok: true,
+        plan: effectivePlan(subscription),
+        quota: { quota: kind, limit: limitsOf().perDay, remaining: day.remaining, resetsAt: resetsAtOf(day) },
+        minute: { limit: limitsOf().perMinute, remaining: minute.remaining, resetsAt: resetsAtOf(minute) },
+    };
 }
 
 /** One message to Hanogt AI's own model. */
@@ -146,6 +194,11 @@ export async function enforceHanogtAi(email: string, options: HealOptions = {}):
 export async function enforceOwnKeys(email: string, options: HealOptions = {}): Promise<QuotaPass | QuotaRefusal | QuotaNoPlan> {
     const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
     return enforceWindows(email, "own", subscription, options);
+}
+
+/** One developer API request (Plus and Pro), with the subscription the key check has read. */
+export async function enforceApiRequests(email: string, subscription: UserSubscription, options: HealOptions = {}): Promise<QuotaPass | QuotaRefusal | QuotaNoPlan> {
+    return enforceWindows(email, "api", subscription, options);
 }
 
 /** The headers an answer reports its day window with (src/lib/ai/usage.ts QUOTA_HEADERS). */

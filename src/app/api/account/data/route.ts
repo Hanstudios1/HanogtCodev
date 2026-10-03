@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { deleteAccountData } from "@/lib/server/account-deletion";
 import { getActiveSession } from "@/lib/server/active-session";
 import { stringOr, toIso } from "@/lib/server/admin";
+import { exportApiKeys } from "@/lib/server/ai-api-keys";
 import { exportAiConnections } from "@/lib/server/ai-connections";
 import { getServerDocument, listServerCollection, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
 import { voterHash } from "@/lib/server/ai-rankings";
@@ -170,7 +171,7 @@ export async function GET() {
             return NextResponse.json({ error: "Çok fazla dışa aktarma isteği. Biraz sonra tekrar deneyin." }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }) });
         }
 
-        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats, subscription, waitlist, aiConnections] = await Promise.all([
+        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats, subscription, waitlist, aiConnections, aiApiKeys] = await Promise.all([
             getServerDocument<Record<string, unknown>>(`users/${email}`),
             queryServerCollection<Record<string, unknown>>("projects", "email", "EQUAL", email),
             queryServerCollection<Record<string, unknown>>("game_projects", "ownerEmail", "EQUAL", email),
@@ -187,6 +188,8 @@ export async function GET() {
             getServerDocument<Record<string, unknown>>(`plan_waitlist/${email}`).catch(() => null),
             // Hanogt AI connections without their encrypted API keys (only the last four characters).
             exportAiConnections(email).catch(() => []),
+            // Hanogt AI API keys: names, first and last characters and dates (never a key or its hash).
+            exportApiKeys(email).catch(() => []),
         ]);
         const exportedProjects = await Promise.all(projects.map(async (project) => ({
             ...publicAccountData(project),
@@ -228,9 +231,10 @@ export async function GET() {
             plan: subscription ? withoutKeys(publicAccountData(subscription) as Record<string, unknown>, ["grantedBy", "blockedBy"]) : null,
             planWaitlist: waitlist ? publicAccountData(waitlist) : null,
             aiConnections,
+            aiApiKeys,
             privateChats,
             exportedAt: new Date().toISOString(),
-            note: "Kimlik bilgileri ve parola özetleri bu dosyaya dahil edilmez. Hanogt AI bağlantılarınızın API anahtarları da eklenmez; yalnızca son dört karakterleri gösterilir. Özel sohbetlerde yalnızca sizin yazdığınız mesajlar yer alır; diğer katılımcılar görünen adlarıyla gösterilir.",
+            note: "Kimlik bilgileri ve parola özetleri bu dosyaya dahil edilmez. Hanogt AI bağlantılarınızın ve Hanogt AI API'sinin anahtarları da eklenmez; yalnızca baştaki ve sondaki birkaç karakter gösterilir. Özel sohbetlerde yalnızca sizin yazdığınız mesajlar yer alır; diğer katılımcılar görünen adlarıyla gösterilir.",
         }, { headers: jsonSecurityHeaders() });
     } catch (error) {
         console.error("[account:export]", error instanceof Error ? error.message : error);

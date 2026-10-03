@@ -256,6 +256,13 @@ first, then the agent's rules (chat), then the person's own preferences or a
 developer's system text (API) as tagged data that can't change the rules, and
 last the knowledge notes, analyzer results and the open file.
 
+### API and connections (`/ai/api`)
+
+The 🔑 button above the chat opens `/ai/api`: the developer API (keys,
+today's requests, docs with samples) and, in a second tab, the person's own
+provider connections (`ConnectionsManager`, the same component as the chat's
+dialog). The API itself is described in [HANOGT_AI_API.md](HANOGT_AI_API.md).
+
 ### Settings (`/ai/settings`)
 
 The account's settings live in `users/{email}.aiSettings`
@@ -340,6 +347,7 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Limits and usage | `src/lib/server/ai-usage.ts`, `src/lib/ai/usage.ts` |
 | Prompt, provider, knowledge notes | `src/lib/server/hanogt-ai.ts` |
 | Settings | `src/lib/ai/ai-settings.ts`, `src/app/api/ai/settings/route.ts`, `src/components/HanogtAI/AiSettingsPage.tsx`, `ai-settings-store.ts`, `src/lib/ai/sign-out.ts`, `src/app/ai/settings/*` |
+| Developer API, own connections page | `src/lib/ai/api-keys.ts`, `src/lib/server/ai-api-keys.ts`, `src/lib/server/hanogt-ai-api.ts`, `src/app/api/v1/**`, `src/app/api/ai/keys/route.ts`, `src/components/HanogtAI/AiApiPage.tsx`, `ApiKeysPanel.tsx`, `ApiDocs.tsx`, `ConnectionsManager.tsx`, `src/app/ai/api/*` (see [HANOGT_AI_API.md](HANOGT_AI_API.md)) |
 | Feature audiences | `src/lib/features.ts`, `src/lib/server/features.ts`, `src/app/api/features/route.ts`, `src/components/Admin/FeaturesCard.tsx` |
 | Agent registry, validation, permissions, refusals | `src/lib/ai/agent-tools.ts` |
 | Wire protocol (trailer, history) | `src/lib/ai/agent-protocol.ts` |
@@ -350,4 +358,4 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Client streaming, conversations | `src/lib/ai/client.ts`, `src/lib/ai/conversations.ts` |
 | UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`, `UsageMeter`, `usage-store`), `src/app/ai/*` |
 | Training | `ai/dataset/*`, `scripts/train-hanogt-ai.mjs`, `ai/reports/intent-training-report.md` |
-| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs` (`npm test`) |
+| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs`, `scripts/tests/ai-api.test.mjs` (`npm test`) |

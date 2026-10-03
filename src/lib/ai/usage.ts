@@ -20,6 +20,8 @@ export type AiUsage = {
     hanogt: { day: UsageWindow; minute: UsageWindow; bonus: number };
     /** Messages through the person's own provider connections; null when the plan has none. */
     own: { day: UsageWindow; minute: UsageWindow } | null;
+    /** Requests through the developer API (/api/v1); null when the plan has none or the API isn't open to the account. */
+    api: { day: UsageWindow; minute: UsageWindow } | null;
 };
 
 /** Something the plan counts: how many there are (null: couldn't be counted) out of the limit (null: unlimited). */
@@ -27,7 +29,14 @@ export type CountedLimit = { used: number | null; limit: number | null };
 
 /** Every benefit with a number, for the Plans page and the AI settings. */
 export type PlanUsage = AiUsage & {
-    counts: { codeProjects: CountedLimit; gameProjects: CountedLimit; groups: CountedLimit; connections: CountedLimit };
+    counts: {
+        codeProjects: CountedLimit;
+        gameProjects: CountedLimit;
+        groups: CountedLimit;
+        connections: CountedLimit;
+        /** Developer API keys; null while the API isn't open to the account. */
+        apiKeys: CountedLimit | null;
+    };
 };
 
 export const QUOTA_HEADERS = {
@@ -39,7 +48,8 @@ export const QUOTA_HEADERS = {
     reset: "X-Hanogt-AI-Day-Reset",
 } as const;
 
-export type QuotaKind = "hanogt" | "own";
+/** "hanogt": Hanogt AI's own model in the chat · "own": the person's own connections · "api": the developer API. */
+export type QuotaKind = "hanogt" | "own" | "api";
 
 /** A day window as an answer reports it. */
 export type DayQuota = { quota: QuotaKind; limit: number; remaining: number; resetsAt: string | null };
@@ -60,6 +70,14 @@ function readWindow(value: unknown): UsageWindow | null {
     return { limit, used, remaining, resetsAt: isoOrNull(record.resetsAt) };
 }
 
+/** A day and a minute window together; null unless both are valid. */
+function readPair(value: unknown): { day: UsageWindow; minute: UsageWindow } | null {
+    if (!value || typeof value !== "object") return null;
+    const day = readWindow((value as Record<string, unknown>).day);
+    const minute = readWindow((value as Record<string, unknown>).minute);
+    return day && minute ? { day, minute } : null;
+}
+
 /** A GET /api/ai/usage answer, checked before the browser trusts it. */
 export function readAiUsage(value: unknown): AiUsage | null {
     if (!value || typeof value !== "object") return null;
@@ -69,13 +87,7 @@ export function readAiUsage(value: unknown): AiUsage | null {
     const day = readWindow(hanogt.day);
     const minute = readWindow(hanogt.minute);
     if (!day || !minute) return null;
-    let own: AiUsage["own"] = null;
-    if (record.own && typeof record.own === "object") {
-        const ownDay = readWindow((record.own as Record<string, unknown>).day);
-        const ownMinute = readWindow((record.own as Record<string, unknown>).minute);
-        if (ownDay && ownMinute) own = { day: ownDay, minute: ownMinute };
-    }
-    return { plan: record.plan, hanogt: { day, minute, bonus: count(hanogt.bonus) ?? 0 }, own };
+    return { plan: record.plan, hanogt: { day, minute, bonus: count(hanogt.bonus) ?? 0 }, own: readPair(record.own), api: readPair(record.api) };
 }
 
 /** The day window an /api/ai answer reports in its headers; null when it sent none. */
