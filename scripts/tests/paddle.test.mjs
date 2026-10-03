@@ -572,3 +572,123 @@ test("project limits: Free 10, Plus 40, Pro unlimited, from either plan source",
     });
     assert.deepEqual(plans.PLAN_GROUP_LIMITS, { free: 3, plus: 10, pro: null });
 });
+
+// ---------------------------------------------------------------------------
+// Checkout failures browsers report (POST /api/paddle/client-error)
+// ---------------------------------------------------------------------------
+
+const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
+const STATUS_PATH = "site_config/paddle_status";
+/** Built from code points: invisible characters shouldn't sit in the test's source. */
+const NUL = String.fromCharCode(0);
+const RLO = String.fromCharCode(0x202e);
+const LINE_SEPARATOR = String.fromCharCode(0x2028);
+
+test("client error reports: known stages, one clean line, https addresses and Paddle codes only", () => {
+    const report = paddle.normalizeClientErrorReport;
+    for (const body of [null, "blocked", [], { message: "no stage" }, { stage: "exploded" }, { stage: "BLOCKED" }]) {
+        assert.equal(report(body), null, JSON.stringify(body));
+    }
+    const cleaned = report({
+        stage: "blocked",
+        message: `  Failed\nto${NUL} load${RLO} for ${ALI}${LINE_SEPARATOR}  `,
+        blockedUrl: "https://cdn.paddle.com/paddle/v2/paddle.js?token=test_abc#frag",
+        code: " Forbidden ",
+        email: ALI,
+        userId: "u_1",
+    });
+    assert.deepEqual(cleaned, { stage: "blocked", message: "Failed to load for [e-mail]", blockedUrl: "https://cdn.paddle.com/paddle/v2/paddle.js", code: "forbidden" }, "controls stripped, the e-mail hidden, the query dropped, unknown fields ignored");
+    assert.equal(report({ stage: "init", message: "x".repeat(400) }).message.length, 300);
+    assert.equal(report({ stage: "init", message: 42 }).message, "");
+    assert.equal(report({ stage: "open", blockedUrl: `https://sandbox-buy.paddle.com/${"a".repeat(400)}` }).blockedUrl.length, 300);
+    for (const blockedUrl of ["http://cdn.paddle.com/paddle.js", "javascript:alert(1)", "cdn.paddle.com", "https://", 42]) {
+        assert.equal(report({ stage: "blocked", blockedUrl }).blockedUrl, null, String(blockedUrl));
+    }
+    assert.equal(report({ stage: "blocked", blockedUrl: "https://user:secret@cdn.paddle.com/x" }).blockedUrl, "https://cdn.paddle.com/x", "credentials in an address are dropped");
+    assert.equal(report({ stage: "checkout_error", code: "transaction_not_found" }).code, "transaction_not_found");
+    for (const code of ["bad-code", "a b", "x".repeat(81), "", 7]) assert.equal(report({ stage: "checkout_error", code }).code, null, String(code));
+    for (const stage of ["blocked", "missing", "init", "open", "checkout_error", "checkout_failed", "payment_error"]) assert.equal(report({ stage }).stage, stage);
+});
+
+test("browser labels: family and major version from the User-Agent", () => {
+    const cases = [
+        [CHROME, "Chrome 141"],
+        [`${CHROME} Edg/141.0.3537.57`, "Edge 141"],
+        [`${CHROME} OPR/123.0.0.0`, "Opera 123"],
+        ["Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36", "Samsung Internet 28"],
+        ["Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0", "Firefox 140"],
+        ["Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15", "Safari 18"],
+        ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1", "Safari 18"],
+        ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/141.0.7390.41 Mobile/15E148 Safari/604.1", "Chrome 141"],
+        ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/140.0 Mobile/15E148 Safari/605.1.15", "Firefox 140"],
+        ["curl/8.5.0", "Other"],
+        ["", "Other"],
+        [null, "Other"],
+    ];
+    for (const [agent, label] of cases) assert.equal(paddle.browserLabel(agent), label, String(agent));
+});
+
+test("client errors: newest first, ten at most, no names, the webhook's notes kept", async () => {
+    const commits = [];
+    const seed = { [STATUS_PATH]: { lastEventAt: new Date(NOW), lastEventType: "subscription.created" } };
+    await withBackend(seed, { onCommit: (writes) => commits.push(writes) }, async (db) => {
+        for (let index = 1; index <= 12; index += 1) {
+            const stage = index % 2 ? "blocked" : "init";
+            await paddle.recordPaddleClientError({ stage, message: `failure ${index}`, blockedUrl: null, code: null, browser: paddle.browserLabel(CHROME) }, new Date(NOW + index * 1_000));
+        }
+        const stored = db.get(STATUS_PATH);
+        assert.equal(stored.lastEventType, "subscription.created", "only clientErrors is written");
+        assert.equal(stored.clientErrors.length, 10);
+        assert.deepEqual(stored.clientErrors.map((entry) => entry.message), [12, 11, 10, 9, 8, 7, 6, 5, 4, 3].map((index) => `failure ${index}`), "newest first; the two oldest dropped");
+        assert.deepEqual(stored.clientErrors[0], { at: new Date(NOW + 12_000).toISOString(), stage: "init", message: "failure 12", blockedUrl: null, code: null, browser: "Chrome 141", environment: "sandbox" });
+        for (const entry of stored.clientErrors) assert.deepEqual(Object.keys(entry).sort(), ["at", "blockedUrl", "browser", "code", "environment", "message", "stage"]);
+        assert.equal(JSON.stringify(stored).includes("ali"), false, "nothing about who reported it");
+        for (const writes of commits) {
+            assert.deepEqual(writes[0].updateMask.fieldPaths, ["clientErrors"]);
+            assert.ok(writes[0].currentDocument?.updateTime, "written against the version that was read");
+        }
+    });
+
+    await withBackend({}, {}, async (db) => {
+        const entry = await paddle.recordPaddleClientError({ stage: "checkout_error", message: "checkout.error · request_error · forbidden", blockedUrl: "https://sandbox-buy.paddle.com/x", code: "forbidden", browser: "Firefox 140" }, new Date(NOW));
+        assert.deepEqual(db.get(STATUS_PATH).clientErrors, [entry], "the document is created when it doesn't exist");
+        assert.equal(entry.code, "forbidden");
+    });
+});
+
+test("client errors: a concurrent write means reading again, and junk entries are dropped", async () => {
+    const holder = {};
+    let interfere = true;
+    let attempts = 0;
+    const commitUrl = "http://127.0.0.1:8080/v1/projects/demo-hanogt/databases/(default)/documents:commit";
+    const options = {
+        onCommit: (writes) => {
+            if (!writes.some((write) => write.update?.name.endsWith(STATUS_PATH) && write.updateMask?.fieldPaths.includes("clientErrors"))) return;
+            attempts += 1;
+            if (!interfere) return;
+            interfere = false;
+            // Another report (or the webhook) lands between our read and our write.
+            void holder.db.fetch(commitUrl, {
+                method: "POST",
+                body: JSON.stringify({ writes: [{ update: { name: `projects/demo-hanogt/databases/(default)/documents/${STATUS_PATH}`, fields: { lastEventType: { stringValue: "transaction.completed" } } }, updateMask: { fieldPaths: ["lastEventType"] } }] }),
+            });
+        },
+    };
+    const junk = [
+        { at: "yesterday", stage: "blocked", message: "bad date", environment: "sandbox" },
+        { at: new Date(NOW).toISOString(), stage: "exploded", message: "bad stage", environment: "sandbox" },
+        { at: new Date(NOW).toISOString(), stage: "open", message: "bad environment", environment: "mars" },
+        "not an entry",
+        { at: new Date(NOW).toISOString(), stage: "open", message: "kept", blockedUrl: "http://insecure.example/x", code: "Bad-Code", browser: "", environment: "production" },
+    ];
+    await withBackend({ [STATUS_PATH]: { clientErrors: junk } }, options, async (db) => {
+        holder.db = db;
+        await paddle.recordPaddleClientError({ stage: "missing", message: "no instance", blockedUrl: null, code: null, browser: "Safari 18" }, new Date(NOW + 60_000));
+        assert.equal(interfere, false, "the concurrent write happened");
+        assert.equal(attempts, 2, "the first write was refused and the list read again");
+        const stored = db.get(STATUS_PATH);
+        assert.equal(stored.lastEventType, "transaction.completed", "the other write survives");
+        assert.deepEqual(stored.clientErrors.map((entry) => entry.message), ["no instance", "kept"]);
+        assert.deepEqual(stored.clientErrors[1], { at: new Date(NOW).toISOString(), stage: "open", message: "kept", blockedUrl: null, code: null, browser: "Other", environment: "production" });
+    });
+});

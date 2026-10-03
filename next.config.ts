@@ -28,24 +28,29 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     if (isElectron) return [];
-    // Paddle Billing (Plans page): Paddle.js from its CDN, the checkout in an
-    // iframe on buy.paddle.com, and its API calls (sandbox hosts included).
-    const paddleCdn = "https://cdn.paddle.com https://sandbox-cdn.paddle.com";
-    const paddleCheckout = "https://buy.paddle.com https://sandbox-buy.paddle.com";
+    // Paddle Billing (Plans page): Paddle.js with its styles and fonts from
+    // Paddle's CDNs, the checkout in an iframe on (sandbox-)buy.paddle.com and
+    // its API calls. Paddle serves all of it from paddle.com subdomains, live
+    // and sandbox alike, and adds hosts over time, so one wildcard covers them.
+    // Paddle Retain, which Paddle.js loads for live accounts only, comes from
+    // public.profitwell.com and talks to profitwell.com hosts.
+    const paddle = "https://*.paddle.com";
+    const retainScript = "https://public.profitwell.com";
+    const retainApi = "https://*.profitwell.com";
     const contentSecurityPolicy = [
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
       "object-src 'none'",
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${paddleCdn}`,
-      `style-src 'self' 'unsafe-inline' ${paddleCdn}`,
+      `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${paddle} ${retainScript}`,
+      `style-src 'self' 'unsafe-inline' ${paddle}`,
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
-      `frame-src 'self' ${paddleCheckout}`,
+      `font-src 'self' data: ${paddle}`,
+      `frame-src 'self' ${paddle}`,
       `media-src 'self' blob: https://firebasestorage.googleapis.com${emulatorHost ? ` http://${emulatorHost}:9199` : ""}`,
       "worker-src 'self' blob:",
-      `connect-src 'self' blob: https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://*.paddle.com${emulatorSources ? ` ${emulatorSources}` : ""}`,
+      `connect-src 'self' blob: https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com ${paddle} ${retainApi}${emulatorSources ? ` ${emulatorSources}` : ""}`,
       "upgrade-insecure-requests",
     ].join("; ");
     return [{

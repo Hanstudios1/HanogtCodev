@@ -34,6 +34,7 @@ import {
     EMPTY_WEBHOOK_STATUS,
     EXPECTED_PRICES,
     adminPersonPlan,
+    checkClientToken,
     couponDiscountId,
     createPaddleDiscount,
     ensurePaddleCatalog,
@@ -79,13 +80,16 @@ async function priceListing(apiKey: boolean): Promise<{ prices: AdminPaddlePrice
 
 async function overview(origin: string, owner: boolean): Promise<AdminPaddleResponse> {
     const config = getPaddleConfig();
-    const [settingsRecord, status, unlinked, legal, listing] = await Promise.all([
+    const [settingsRecord, statusRecord, unlinked, legal, listing, clientTokenCheck] = await Promise.all([
         getServerDocument<Record<string, unknown>>(PADDLE_SETTINGS_PATH),
         readPaddleStatus().catch(() => EMPTY_WEBHOOK_STATUS),
         listUnlinked(20, config.environment).catch(() => []),
         getOperatorInfo(true),
         priceListing(Boolean(config.apiKey)),
+        // Whether Paddle.js can start with the client-side token at all (cached for ten minutes).
+        checkClientToken(config).catch(() => null),
     ]);
+    const { clientErrors, ...status } = statusRecord;
     const settings = normalizePaddleSettings(settingsRecord, config.environment);
     const environmentSettings = (environment: PaddleEnvironment) => {
         const scoped = normalizePaddleSettings(settingsRecord, environment);
@@ -115,6 +119,8 @@ async function overview(origin: string, owner: boolean): Promise<AdminPaddleResp
         mappingUpdatedAt: toIso(settings.updatedAt),
         mappingUpdatedBy: settings.updatedBy,
         status,
+        clientTokenCheck,
+        clientErrors,
         urls: { webhook: `${origin}/api/paddle/webhook`, paymentLink: `${origin}/plans` },
         unlinked,
         legal,
@@ -143,9 +149,11 @@ function requireSubscriptionId(value: unknown) {
 
 /**
  * GET /api/admin/paddle: the Paddle connection (which variables are set,
- * whether the API answers, the last webhook delivery), the configured
- * environment's prices and their mapping, subscriptions without an account
- * and the business details shown in the legal texts.
+ * whether the API answers, whether the client-side token belongs to the
+ * key's account, the last webhook delivery and the checkout failures
+ * browsers reported), the configured environment's prices and their mapping,
+ * subscriptions without an account and the business details shown in the
+ * legal texts.
  */
 export async function GET(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "admin" });

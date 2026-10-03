@@ -3,10 +3,10 @@
 import { motion } from "framer-motion";
 import { Bell, BellRing, Check, Clock, CreditCard, Crown, LoaderCircle, PartyPopper, ShieldCheck, Sparkles, Ticket, Zap } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import ChangePlanDialog from "@/components/Plans/ChangePlanDialog";
-import { getPaddle, onPaddleEvent } from "@/components/Plans/paddle-js";
+import { PaddleLoadError, failureMessage, getPaddle, onPaddleEvent, openCheckout, type PaddleCheckoutEvent } from "@/components/Plans/paddle-js";
 import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -17,6 +17,7 @@ import {
     yearlySavingsPercent,
     type BillingErrorCode,
     type BillingInterval,
+    type PaddleClientErrorStage,
     type PlanChangePreview,
 } from "@/lib/paddle";
 import {
@@ -98,7 +99,14 @@ const C = {
     rateLimited: { TR: "Çok fazla deneme oldu. Bir dakika sonra tekrar dene.", EN: "Too many attempts. Try again in a minute." },
     signedOut: { TR: "Oturumun sona ermiş; yeniden giriş yap.", EN: "Your session has ended; please sign in again." },
     paddleError: { TR: "Paddle şu anda yanıt vermiyor ({code}). Biraz sonra tekrar dene.", EN: "Paddle isn't responding right now ({code}). Try again in a moment." },
-    paddleBlocked: { TR: "Ödeme ekranı yüklenemedi. Reklam engelleyici ya da ağ ayarları cdn.paddle.com adresini engelliyor olabilir.", EN: "The checkout couldn't load. An ad blocker or network setting may be blocking cdn.paddle.com." },
+    paddleBlocked: { TR: "Ödeme ekranı yüklenemedi: Paddle'ın ödeme betiği tarayıcına ulaşmadı. Reklam engelleyici, tarayıcının izleme koruması ya da ağ ayarların (ör. kurum ağı, VPN, DNS filtresi) cdn.paddle.com adresini engelliyor olabilir. Bu site için izin verip tekrar dene.", EN: "The checkout couldn't load: Paddle's checkout script didn't reach your browser. An ad blocker, your browser's tracking protection or your network (e.g. a work network, VPN or DNS filter) may be blocking cdn.paddle.com. Allow it for this site and try again." },
+    paddleBlockedUrl: { TR: "Ödeme ekranı yüklenemedi: tarayıcın {url} adresini engelledi. Reklam ya da betik engelleyiciyi veya tarayıcının izleme korumasını bu site için kapatıp tekrar dene; sorun sürerse destek talebi aç.", EN: "The checkout couldn't load: your browser blocked {url}. Turn off your ad or script blocker or your browser's tracking protection for this site and try again; if it keeps happening, open a support ticket." },
+    paddleStart: { TR: "Ödeme ekranı başlatılamadı: Paddle yüklendi ama çalıştırılamadı. Biraz sonra tekrar dene; sorun sürerse destek talebi aç.", EN: "The checkout couldn't start: Paddle loaded but couldn't be started. Try again in a moment; if it keeps happening, open a support ticket." },
+    paddleStartTeam: { TR: "Ekip için: Vercel'deki istemci tarafı jeton (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) başka bir Paddle hesabına ya da öbür ortama (Sandbox/Canlı) ait olabilir. Yönetici Paneli › Abonelikler › Paddle bölümündeki jeton denetimine bakın.", EN: "For the team: the client-side token in Vercel (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) may belong to another Paddle account or to the other environment (sandbox/live). See the token check under Admin Panel › Subscriptions › Paddle." },
+    paddleOpen: { TR: "Ödeme ekranı açılamadı. Sayfayı yenileyip tekrar dene; sorun sürerse destek talebi aç.", EN: "The checkout couldn't open. Refresh the page and try again; if it keeps happening, open a support ticket." },
+    checkoutError: { TR: "Ödeme ekranı bir hata bildirdi: {detail}", EN: "The checkout reported an error: {detail}" },
+    checkoutErrorGeneric: { TR: "Ödeme ekranında bir hata oluştu. Tekrar dene; sorun sürerse destek talebi aç.", EN: "Something went wrong in the checkout. Try again; if it keeps happening, open a support ticket." },
+    technical: { TR: "Teknik ayrıntı: {stage}: {message}", EN: "Technical detail: {stage}: {message}" },
     unavailable: { TR: "Plan bilgileri şu anda alınamıyor; aşağıdaki fiyatlar henüz kesinleşmedi.", EN: "Plan details can't be loaded right now; the prices below aren't final yet." },
     taxNote: { TR: "Fiyatlara bulunduğun ülkenin vergileri dahildir; kesin tutar ödeme ekranında gösterilir. Ödemeler, Kayıtlı Satıcımız (Merchant of Record) Paddle.com tarafından alınır.", EN: "Prices include the taxes of your country; the exact amount is shown at checkout. Payments are taken by Paddle.com, our Merchant of Record." },
     refundPolicy: { TR: "İade Politikası", EN: "Refund Policy" },
@@ -132,7 +140,58 @@ const ACCENT: Record<PlanId, { ring: string; icon: typeof Zap; gradient: string 
 
 const PLAN_RANK: Record<PlanId, number> = { free: 0, plus: 1, pro: 2 };
 
-type Notice = { tone: "info" | "success" | "error"; copy: Copy; vars?: Record<string, string | number> } | null;
+type Notice = {
+    tone: "info" | "success" | "error";
+    copy: Copy;
+    vars?: Record<string, string | number>;
+    /** For the team and testers only: what to check. */
+    hint?: Copy;
+    /** For the team and testers only: the stage that failed and Paddle's own words. */
+    technical?: { stage: string; message: string };
+} | null;
+
+/** Paddle checkout events the page reports, as stages of POST /api/paddle/client-error. */
+const EVENT_STAGES: Partial<Record<string, PaddleClientErrorStage>> = {
+    "checkout.error": "checkout_error",
+    "checkout.failed": "checkout_failed",
+    "checkout.payment.error": "payment_error",
+};
+
+type ClientErrorReport = { stage: PaddleClientErrorStage; message: string; blockedUrl?: string | null; code?: string | null };
+
+/** Paddle's error code the way the report route takes it ([a-z0-9_]). */
+function reportCode(value: string) {
+    return value.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80);
+}
+
+/** What a checkout error event says: type, code and detail are on the event (or, in some builds, in its data). */
+function checkoutEventError(event: PaddleCheckoutEvent) {
+    const data = event.data && typeof event.data === "object" ? event.data as Record<string, unknown> : {};
+    const field = (key: "type" | "code" | "detail") => {
+        const value = event[key] ?? data[key];
+        return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, 200) : "";
+    };
+    const type = field("type");
+    const code = field("code");
+    const detail = field("detail");
+    return {
+        code: reportCode(code),
+        /** For the notice: Paddle's detail with its code, or whichever of them there is. */
+        text: detail && code ? `${detail} (${code})` : detail || code,
+        message: [event.name, type, code, detail].filter(Boolean).join(" · ").slice(0, 300),
+    };
+}
+
+/** Fire and forget: the team sees it under Admin › Subscriptions › Paddle. */
+function postClientError(report: ClientErrorReport) {
+    void fetch("/api/paddle/client-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        keepalive: true,
+        body: JSON.stringify(report),
+    }).catch(() => undefined);
+}
 
 const ERROR_COPY: Partial<Record<BillingErrorCode, Copy>> = {
     already_subscribed: C.alreadySubscribed,
@@ -208,6 +267,33 @@ export default function PlansPage() {
     const onSale = (plan: PaidPlanId) => checkout?.onSale[plan] ?? [];
     const anyOnSale = onSale("plus").length > 0 || onSale("pro").length > 0;
 
+    // The team and testers (and anyone in the sandbox, where nothing is charged) also see why Paddle failed.
+    const diagnostics = Boolean(checkout && (checkout.testMode || checkout.environment === "sandbox"));
+    const reported = useRef(new Set<string>());
+
+    /** Tells the team about a failure, once per page view and kind (the route keeps no names). */
+    const report = useCallback((entry: ClientErrorReport) => {
+        if (!signedIn) return;
+        const key = `${entry.stage}:${entry.code ?? ""}`;
+        if (reported.current.has(key)) return;
+        reported.current.add(key);
+        postClientError(entry);
+    }, [signedIn]);
+
+    /** A failure of getPaddle or openCheckout, in words for its stage. */
+    const showPaddleFailure = useCallback((error: unknown) => {
+        const failure = error instanceof PaddleLoadError ? error : new PaddleLoadError("init", failureMessage(error));
+        const starting = failure.stage === "missing" || failure.stage === "init";
+        setNotice({
+            tone: "error",
+            copy: failure.stage === "blocked" ? (failure.blockedUrl ? C.paddleBlockedUrl : C.paddleBlocked) : starting ? C.paddleStart : C.paddleOpen,
+            vars: failure.blockedUrl ? { url: failure.blockedUrl } : undefined,
+            hint: diagnostics && starting ? C.paddleStartTeam : undefined,
+            technical: diagnostics ? { stage: failure.stage, message: failure.message } : undefined,
+        });
+        report({ stage: failure.stage, message: failure.message, blockedUrl: failure.blockedUrl });
+    }, [diagnostics, report]);
+
     // Paddle sends payment links (the default payment link, /plans?_ptxn=…); Paddle.js opens them itself.
     // Customers get Paddle.js right away too, so Paddle Retain can reach them (pwCustomer).
     const customerId = me?.paddleCustomerId ?? null;
@@ -215,17 +301,33 @@ export default function PlansPage() {
         if (!checkout) return;
         const paymentLink = new URLSearchParams(window.location.search).has("_ptxn");
         if (!paymentLink && !customerId) return;
-        getPaddle(checkout, {}, customerId).catch(() => {
-            if (paymentLink) setNotice({ tone: "error", copy: C.paddleBlocked });
+        getPaddle(checkout, { customerId, debug: checkout.testMode }).catch((error: unknown) => {
+            // Loaded only for Paddle Retain it fails quietly; a payment link someone opened doesn't.
+            if (paymentLink) showPaddleFailure(error);
         });
-    }, [checkout, customerId]);
+    }, [checkout, customerId, showPaddleFailure]);
 
     useEffect(() => {
         onPaddleEvent((event) => {
-            if (event.name === "checkout.completed") setActivating(purchased.current ?? "plus");
+            if (event.name === "checkout.completed") {
+                setActivating(purchased.current ?? "plus");
+                return;
+            }
+            const stage = EVENT_STAGES[event.name ?? ""];
+            if (!stage) return;
+            const error = checkoutEventError(event);
+            report({ stage, message: error.message, code: error.code || null });
+            // Declined cards and other payment problems are explained by Paddle inside its own frame.
+            if (stage === "payment_error") return;
+            setNotice({
+                tone: "error",
+                copy: error.text ? C.checkoutError : C.checkoutErrorGeneric,
+                vars: error.text ? { detail: error.text } : undefined,
+                technical: diagnostics ? { stage, message: error.message } : undefined,
+            });
         });
         return () => onPaddleEvent(null);
-    }, []);
+    }, [diagnostics, report]);
 
     // After a checkout the webhook activates the plan within seconds: wait for it.
     useEffect(() => {
@@ -301,11 +403,11 @@ export default function PlansPage() {
         }
         try {
             const settings = checkoutSettings();
-            const paddle = await getPaddle(checkout, settings, customerId);
+            const paddle = await getPaddle(checkout, { settings, customerId, debug: checkout.testMode });
             purchased.current = plan;
-            paddle.Checkout.open({ transactionId: result.data.transactionId, settings });
-        } catch {
-            setNotice({ tone: "error", copy: C.paddleBlocked });
+            openCheckout(paddle, result.data.transactionId, settings);
+        } catch (error) {
+            showPaddleFailure(error);
         }
         setBusy(null);
     };
@@ -513,9 +615,13 @@ export default function PlansPage() {
                         </div>
                     ) : null}
                     {notice ? (
-                        <p role={notice.tone === "error" ? "alert" : "status"} className={`mx-auto mb-5 flex max-w-2xl items-center justify-center gap-2 rounded-2xl px-4 py-3 text-center text-[13.5px] font-semibold ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"}`}>
-                            {notice.tone === "success" ? <PartyPopper className="h-4 w-4 shrink-0" aria-hidden /> : null}{tx(notice.copy, notice.vars)}
-                        </p>
+                        <div role={notice.tone === "error" ? "alert" : "status"} className={`mx-auto mb-5 max-w-2xl rounded-2xl px-4 py-3 text-center text-[13.5px] font-semibold ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"}`}>
+                            <p className="flex items-center justify-center gap-2">
+                                {notice.tone === "success" ? <PartyPopper className="h-4 w-4 shrink-0" aria-hidden /> : null}{tx(notice.copy, notice.vars)}
+                            </p>
+                            {notice.hint ? <p className="mt-2 text-[12.5px] font-medium opacity-90">{tx(notice.hint)}</p> : null}
+                            {notice.technical ? <p className="mt-2 break-all font-mono text-[11.5px] font-medium opacity-80">{tx(C.technical, notice.technical)}</p> : null}
+                        </div>
                     ) : null}
                     <div className="grid gap-5 md:grid-cols-3 md:items-stretch">
                         {PLAN_IDS.map((plan, index) => {

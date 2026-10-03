@@ -495,6 +495,24 @@ export type AdminPaddleUnlinked = {
     seenAt: string | null;
 };
 
+/**
+ * Whether the client-side token (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) is one of
+ * the API key's Paddle account (GET /client-tokens). "missing": it belongs to
+ * another account or the other environment; "no_permission": the key lacks
+ * client_token.read; "error": Paddle failed (see `code`).
+ */
+export type AdminPaddleClientTokenCheck = {
+    result: "active" | "revoked" | "missing" | "no_permission" | "error";
+    /** Paddle's error, e.g. "500 internal_error" (results no_permission and error). */
+    code: string | null;
+    /** The token's name in Paddle, when it was found. */
+    name: string | null;
+    checkedAt: string;
+};
+
+/** A checkout failure a browser reported (site_config/paddle_status.clientErrors); nothing about who reported it. */
+export type AdminPaddleClientError = import("@/lib/paddle").PaddleClientError;
+
 /** GET /api/admin/paddle (and the answer to its POST actions, except resync and syncCoupon). */
 export type AdminPaddleResponse = {
     /** Which variables are set (never their values). */
@@ -522,6 +540,10 @@ export type AdminPaddleResponse = {
     mappingUpdatedBy: string | null;
     /** The webhook: last accepted notification and last refused delivery (with the reason). */
     status: { lastEventAt: string | null; lastEventType: string | null; lastRejectedAt: string | null; lastRejectedReason: string | null };
+    /** Null without an API key or a client-side token. */
+    clientTokenCheck: AdminPaddleClientTokenCheck | null;
+    /** The newest checkout failures browsers reported (at most ten), newest first. */
+    clientErrors: AdminPaddleClientError[];
     /** Addresses to enter in Paddle. */
     urls: { webhook: string; paymentLink: string };
     unlinked: AdminPaddleUnlinked[];

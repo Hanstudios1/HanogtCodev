@@ -3,6 +3,7 @@
 import {
     AlertTriangle,
     ArrowLeftRight,
+    Bug,
     Building2,
     CheckCircle2,
     ClipboardCopy,
@@ -27,12 +28,21 @@ import {
 import { useState, type FormEvent } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { DEFAULT_BRAND, OPERATOR_LIMITS, isOperatorPublished } from "@/lib/legal-info";
-import { BILLING_INTERVALS, PADDLE_STATUSES, currencyDigits, formatMoney, type BillingInterval, type PaddleEnvironment, type PaddleStatus } from "@/lib/paddle";
+import { BILLING_INTERVALS, PADDLE_STATUSES, currencyDigits, formatMoney, type BillingInterval, type PaddleClientErrorStage, type PaddleEnvironment, type PaddleStatus } from "@/lib/paddle";
 import { PAID_PLAN_IDS, PLAN_COPY, type PaidPlanId, type PlanCatalog } from "@/lib/plans";
 import { adminPost, type ApiFailure } from "./api";
 import { COMMON, PADDLE_ENVIRONMENT_COPY, PADDLE_STATUS_COPY } from "./copy";
 import { formatDateTime, formatRelativeTime, useNow, type AdminResource } from "./hooks";
-import type { AdminPaddleCatalogReport, AdminPaddleCatalogResponse, AdminPaddlePrice, AdminPaddleResponse, AdminPaddleUnlinked, AdminPaddleWarning } from "./types";
+import type {
+    AdminPaddleCatalogReport,
+    AdminPaddleCatalogResponse,
+    AdminPaddleClientError,
+    AdminPaddleClientTokenCheck,
+    AdminPaddlePrice,
+    AdminPaddleResponse,
+    AdminPaddleUnlinked,
+    AdminPaddleWarning,
+} from "./types";
 import { Badge, Button, ConfirmDialog, ErrorNotice, IconButton, INPUT_CLASS, LoadingRows, Notice, Panel, Switch, cx, useErrorText, useToast, type Tone } from "./ui";
 
 const C = {
@@ -56,6 +66,13 @@ const C = {
     apiNetwork: { TR: "Paddle'a bağlanılamadı (ağ hatası ya da zaman aşımı); biraz sonra yenileyin.", EN: "Couldn't connect to Paddle (network error or timeout); refresh in a moment." },
     apiServer: { TR: "Paddle geçici bir hata verdi; biraz sonra yenileyin.", EN: "Paddle had a temporary error; refresh in a moment." },
     apiOther: { TR: "Paddle isteği reddetti; ayrıntı hata kodunda.", EN: "Paddle refused the request; the error code has the details." },
+    tokenActive: { TR: "İstemci tarafı jeton bu Paddle hesabında etkin; Paddle.js onunla başlayabilir.", EN: "The client-side token is active in this Paddle account; Paddle.js can start with it." },
+    tokenActiveNamed: { TR: "İstemci tarafı jeton bu Paddle hesabında etkin ({name}); Paddle.js onunla başlayabilir.", EN: "The client-side token is active in this Paddle account ({name}); Paddle.js can start with it." },
+    tokenRevoked: { TR: "Vercel'deki NEXT_PUBLIC_PADDLE_CLIENT_TOKEN Paddle'da iptal edilmiş; ödeme ekranı bu jetonla açılmaz. {env} hesabının Developer tools > Authentication sayfasından yeni bir istemci tarafı jeton (client-side token) oluşturup Vercel'e girin ve yeniden dağıtın.", EN: "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN in Vercel has been revoked in Paddle; the checkout won't open with it. Create a new client-side token under Developer tools > Authentication in the {env} account, enter it in Vercel and redeploy." },
+    tokenMissing: { TR: "Vercel'deki NEXT_PUBLIC_PADDLE_CLIENT_TOKEN bu Paddle hesabında yok: büyük olasılıkla başka bir Paddle hesabına ya da öbür ortama ait, bu yüzden ödeme ekranı açılamaz. API anahtarıyla aynı {env} hesabının Developer tools > Authentication sayfasından istemci tarafı jeton (client-side token) oluşturup Vercel'e girin ve yeniden dağıtın.", EN: "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN in Vercel isn't in this Paddle account: it most likely belongs to another Paddle account or to the other environment, so the checkout can't open. Create a client-side token under Developer tools > Authentication in the same {env} account as the API key, enter it in Vercel and redeploy." },
+    tokenNoPermission: { TR: "İstemci tarafı jeton denetlenemedi: API anahtarının client_token.read izni yok. Paddle'da Developer tools > Authentication bölümünde API anahtarına client_token.read iznini ekleyin.", EN: "The client-side token couldn't be checked: the API key doesn't have the client_token.read permission. Add client_token.read to the API key under Developer tools > Authentication in Paddle." },
+    tokenError: { TR: "İstemci tarafı jeton denetlenemedi; Paddle bir hata döndürdü. Biraz sonra yenileyin.", EN: "The client-side token couldn't be checked; Paddle returned an error. Refresh in a moment." },
+    tokenChecked: { TR: "Denetim: {time}", EN: "Checked {time}" },
     webhookLast: { TR: "Son bildirim {time} geldi ({type}).", EN: "The last notification arrived {time} ({type})." },
     webhookNone: { TR: "Henüz bildirim gelmedi.", EN: "No notification has arrived yet." },
     webhookNoSecret: { TR: "Webhook gizli anahtarı tanımlı olmadığı için bildirimler kabul edilmiyor.", EN: "Notifications are refused because the webhook secret isn't set." },
@@ -155,6 +172,16 @@ const C = {
     saved: { TR: "Fiyat eşlemesi kaydedildi.", EN: "Price mapping saved." },
     lastSaved: { TR: "Son değişiklik: {who} · {time}", EN: "Last change: {who} · {time}" },
 
+    // Checkout errors browsers reported
+    errorsTitle: { TR: "Son ödeme ekranı hataları", EN: "Recent checkout errors" },
+    errorsDescription: { TR: "Planlar sayfasında ödeme ekranı açılamadığında tarayıcıların bildirdikleri", EN: "What browsers reported when the checkout couldn't open on the Plans page" },
+    errorsHint: { TR: "En yeni 10 kayıt tutulur. Kimin bildirdiği saklanmaz; yalnızca aşama, hata metni, engellenen adres, tarayıcı ve ortam.", EN: "The newest 10 are kept. Who reported them isn't stored; only the stage, the error text, the blocked address, the browser and the environment." },
+    errorsEmpty: { TR: "Henüz bildirilen bir hata yok.", EN: "No errors have been reported yet." },
+    errorsEmptyHint: { TR: "Planlar sayfasında ödeme ekranı açılamazsa nedeni burada görünür.", EN: "If the checkout can't open on the Plans page, the reason shows up here." },
+    openPlans: { TR: "Planlar sayfasını yeni sekmede aç", EN: "Open the Plans page in a new tab" },
+    blockedAddress: { TR: "Engellenen adres: {url}", EN: "Blocked address: {url}" },
+    errorCode: { TR: "Paddle kodu: {code}", EN: "Paddle code: {code}" },
+
     // Business details
     legalTitle: { TR: "İşletme bilgileri", EN: "Business details" },
     legalDescription: { TR: "Kullanım Şartları, Gizlilik ve İade metinlerinde görünür", EN: "Shown in the Terms, Privacy and Refund texts" },
@@ -201,6 +228,33 @@ const REJECTIONS: Record<string, Copy> = {
     signature_malformed: { TR: "Paddle imzası okunamadı.", EN: "Its Paddle signature couldn't be read." },
     signature_expired: { TR: "İmza beş dakikadan eskiydi; sunucu saati kaymış ya da bildirim yeniden gönderilmiş olabilir.", EN: "The signature was more than five minutes old; the server clock may be off or the delivery was replayed." },
     signature_mismatch: { TR: "İmza tutmadı: PADDLE_WEBHOOK_SECRET, Paddle'daki bildirim hedefinin gizli anahtarıyla aynı değil (ya da öbür ortamın anahtarı).", EN: "The signature didn't match: PADDLE_WEBHOOK_SECRET isn't the secret of the notification destination in Paddle (or it's the other environment's)." },
+};
+
+/** The stages of a reported checkout failure (site_config/paddle_status.clientErrors), with what they usually mean. */
+const CLIENT_ERROR_STAGES: Record<PaddleClientErrorStage, { label: Copy; tone: Tone; hint?: Copy }> = {
+    blocked: {
+        label: { TR: "Betik engellendi", EN: "Script blocked" },
+        tone: "amber",
+        hint: { TR: "Paddle.js tarayıcıya ulaşmadı: reklam engelleyici, tarayıcı koruması ya da ağ. Engellenen adres paddle.com'daysa sitenin güvenlik politikası (CSP) da olabilir.", EN: "Paddle.js didn't reach the browser: an ad blocker, browser protection or the network. If the blocked address is on paddle.com, it may also be the site's security policy (CSP)." },
+    },
+    missing: {
+        label: { TR: "Paddle.js eksik", EN: "Paddle.js missing" },
+        tone: "red",
+        hint: { TR: "Betik yüklendi ama Paddle'ın nesnesi oluşmadı; tarayıcı eklentisi betiği bozmuş olabilir.", EN: "The script loaded but Paddle's object wasn't created; a browser extension may have broken the script." },
+    },
+    init: {
+        label: { TR: "Başlatılamadı", EN: "Couldn't start" },
+        tone: "red",
+        hint: { TR: "Paddle.js başlatılırken hata verdi; çoğunlukla istemci tarafı jeton başka bir Paddle hesabına ya da öbür ortama aittir (yukarıdaki jeton denetimine bakın).", EN: "Paddle.js failed while starting; usually the client-side token belongs to another Paddle account or to the other environment (see the token check above)." },
+    },
+    open: {
+        label: { TR: "Açılamadı", EN: "Couldn't open" },
+        tone: "red",
+        hint: { TR: "Paddle.js başladı ama ödeme ekranını açarken hata verdi.", EN: "Paddle.js started but failed while opening the checkout." },
+    },
+    checkout_error: { label: { TR: "Ödeme ekranı hatası", EN: "Checkout error" }, tone: "red" },
+    checkout_failed: { label: { TR: "Ödeme ekranı başarısız", EN: "Checkout failed" }, tone: "red" },
+    payment_error: { label: { TR: "Ödeme hatası", EN: "Payment error" }, tone: "zinc" },
 };
 
 const ENV_VARIABLES: Array<{ name: string; note: Copy }> = [
@@ -326,14 +380,44 @@ function AddressRow({ label, value, hint }: { label: string; value: string; hint
     );
 }
 
+/** Whether the client-side token is one of the API key's account, and what to do when it isn't. */
+function ClientTokenCheck({ check, environment }: { check: AdminPaddleClientTokenCheck; environment: PaddleEnvironment }) {
+    const { tx } = useI18n();
+    const when = useWhen();
+    const active = check.result === "active";
+    // Revoked or missing: the checkout can't open. No permission or an error: unknown.
+    const broken = check.result === "revoked" || check.result === "missing";
+    const Icon = active ? CheckCircle2 : broken ? XCircle : AlertTriangle;
+    const copy = {
+        active: check.name ? C.tokenActiveNamed : C.tokenActive,
+        revoked: C.tokenRevoked,
+        missing: C.tokenMissing,
+        no_permission: C.tokenNoPermission,
+        error: C.tokenError,
+    }[check.result];
+    return (
+        <div className="flex items-start gap-2 text-zinc-700 dark:text-zinc-200">
+            <Icon className={cx("mt-0.5 h-4 w-4 shrink-0", active ? "text-emerald-500" : broken ? "text-red-500" : "text-amber-500")} aria-hidden="true" />
+            <div className="min-w-0">
+                <p className={cx(!active && "font-semibold", broken && "text-red-700 dark:text-red-300")}>{tx(copy, { env: tx(PADDLE_ENVIRONMENT_COPY[environment]), name: check.name ?? "" })}</p>
+                <p className="mt-0.5 flex flex-wrap gap-x-3 text-[11.5px] text-zinc-500">
+                    <span>{tx(C.tokenChecked, { time: when(check.checkedAt) })}</span>
+                    {check.code ? <span className="font-mono" dir="ltr">{tx(C.apiCode, { code: check.code })}</span> : null}
+                </p>
+            </div>
+        </div>
+    );
+}
+
 function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleResponse; loading: boolean; onReload: () => void }) {
     const { tx } = useI18n();
     const when = useWhen();
-    const { config, api, status } = data;
+    const { config, api, status, clientTokenCheck } = data;
     const sandbox = config.environment === "sandbox";
     const rejectedLater = Boolean(status.lastRejectedAt && (!status.lastEventAt || Date.parse(status.lastRejectedAt) > Date.parse(status.lastEventAt)));
     const rejection = status.lastRejectedReason ? REJECTIONS[status.lastRejectedReason] : undefined;
-    const ready = config.apiKey && config.clientToken && config.webhookSecret && api.ok;
+    const tokenBroken = clientTokenCheck?.result === "missing" || clientTokenCheck?.result === "revoked";
+    const ready = config.apiKey && config.clientToken && config.webhookSecret && api.ok && !tokenBroken;
 
     return (
         <Panel
@@ -372,6 +456,7 @@ function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleRespons
                         </div>
                     </div>
                 ) : null}
+                {clientTokenCheck ? <ClientTokenCheck check={clientTokenCheck} environment={config.environment} /> : null}
                 <p className="flex items-start gap-2 text-zinc-700 dark:text-zinc-200">
                     <Webhook className={cx("mt-0.5 h-4 w-4 shrink-0", status.lastEventAt ? "text-emerald-500" : "text-zinc-400")} aria-hidden="true" />
                     <span>
@@ -413,6 +498,53 @@ function ConnectionPanel({ data, loading, onReload }: { data: AdminPaddleRespons
                     <li>{tx(C.step5)}</li>
                 </ol>
             </details>
+        </Panel>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Checkout errors browsers reported
+// ---------------------------------------------------------------------------
+
+function ClientErrorRow({ entry }: { entry: AdminPaddleClientError }) {
+    const { tx, locale } = useI18n();
+    const when = useWhen();
+    const stage = CLIENT_ERROR_STAGES[entry.stage];
+    return (
+        <li className="py-3">
+            <div className="flex flex-wrap items-center gap-2">
+                <Badge tone={stage.tone}>{tx(stage.label)}</Badge>
+                <PaddleEnvironmentBadge environment={entry.environment} />
+                <time dateTime={entry.at} title={formatDateTime(entry.at, locale)} className="text-[12px] text-zinc-500">{when(entry.at)}</time>
+                <span className="text-[12px] text-zinc-500" dir="ltr">{entry.browser}</span>
+            </div>
+            {entry.message ? <p className="mt-1.5 break-all font-mono text-[12px] text-zinc-700 dark:text-zinc-200" dir="ltr">{entry.message}</p> : null}
+            {entry.blockedUrl ? <p className="mt-1 break-all text-[12px] font-semibold text-amber-800 dark:text-amber-200">{tx(C.blockedAddress, { url: entry.blockedUrl })}</p> : null}
+            {entry.code ? <p className="mt-0.5 font-mono text-[11.5px] text-zinc-500" dir="ltr">{tx(C.errorCode, { code: entry.code })}</p> : null}
+            {stage.hint ? <p className="mt-1 text-[12px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(stage.hint)}</p> : null}
+        </li>
+    );
+}
+
+function ClientErrorsPanel({ errors }: { errors: AdminPaddleClientError[] }) {
+    const { tx } = useI18n();
+    return (
+        <Panel title={tx(C.errorsTitle)} description={tx(C.errorsDescription)} icon={Bug} actions={errors.length ? <Badge tone="amber">{errors.length}</Badge> : undefined}>
+            <p className="text-[12.5px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(C.errorsHint)}</p>
+            {errors.length === 0 ? (
+                <div className="mt-3 flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-zinc-200 px-4 py-6 text-center dark:border-white/10">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-500" aria-hidden="true" />
+                    <p className="text-[13px] font-bold text-zinc-800 dark:text-zinc-100">{tx(C.errorsEmpty)}</p>
+                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.errorsEmptyHint)}</p>
+                    <a href="/plans" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[12.5px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
+                        {tx(C.openPlans)}<ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    </a>
+                </div>
+            ) : (
+                <ul className="mt-2 divide-y divide-zinc-100 dark:divide-white/[0.06]">
+                    {errors.map((entry, index) => <ClientErrorRow key={`${entry.at}-${index}`} entry={entry} />)}
+                </ul>
+            )}
         </Panel>
     );
 }
@@ -996,8 +1128,9 @@ function UnlinkedPanel({ data, onChanged }: { data: AdminPaddleResponse; onChang
 // ---------------------------------------------------------------------------
 
 /**
- * Admin › Subscriptions, Paddle side: connection and setup, the sales gate,
- * the catalog and price mapping of the configured environment, business
+ * Admin › Subscriptions, Paddle side: connection and setup (with the
+ * client-side token check), the checkout errors browsers reported, the sales
+ * gate, the catalog and price mapping of the configured environment, business
  * details for the legal texts and subscriptions without an account.
  * `catalog` (the site's prices) lets the mapping flag Paddle prices that differ.
  */
@@ -1009,6 +1142,7 @@ export default function PaddleCard({ resource, catalog }: { resource: AdminResou
         <div className="space-y-6">
             {resource.error ? <ErrorNotice error={resource.error} onRetry={resource.reload} /> : null}
             <ConnectionPanel data={data} loading={resource.loading} onReload={resource.reload} />
+            <ClientErrorsPanel errors={data.clientErrors ?? []} />
             <SalesPanel data={data} catalog={catalog} onChanged={replace} />
             <LegalPanel key={data.legal.updatedAt ?? "new"} data={data} onSaved={replace} />
             <UnlinkedPanel data={data} onChanged={replace} />

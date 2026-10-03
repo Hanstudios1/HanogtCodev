@@ -227,6 +227,37 @@ export type PlanChangePreview = {
     nextAmount: string | null;
 };
 
+/**
+ * Why the Plans page couldn't take someone through a checkout, as browsers
+ * report it (POST /api/paddle/client-error): Paddle.js never arrived
+ * (blocked), ran without its instance (missing), failed to start (init) or to
+ * open the checkout (open), or Paddle's checkout itself reported an error
+ * (checkout.error, checkout.failed, checkout.payment.error).
+ */
+export const PADDLE_CLIENT_ERROR_STAGES = ["blocked", "missing", "init", "open", "checkout_error", "checkout_failed", "payment_error"] as const;
+export type PaddleClientErrorStage = (typeof PADDLE_CLIENT_ERROR_STAGES)[number];
+
+export function isPaddleClientErrorStage(value: unknown): value is PaddleClientErrorStage {
+    return typeof value === "string" && (PADDLE_CLIENT_ERROR_STAGES as readonly string[]).includes(value);
+}
+
+/** The newest reports kept in site_config/paddle_status.clientErrors. */
+export const PADDLE_CLIENT_ERRORS_MAX = 10;
+
+/** One of those reports. Nothing in it says who sent it. */
+export type PaddleClientError = {
+    at: string;
+    stage: PaddleClientErrorStage;
+    message: string;
+    /** A Paddle or Retain address the browser refused to load (https, without its query). */
+    blockedUrl: string | null;
+    /** Paddle's error code from a checkout event. */
+    code: string | null;
+    /** Browser and major version from the User-Agent, e.g. "Chrome 141". */
+    browser: string;
+    environment: PaddleEnvironment;
+};
+
 /** In-app notifications about a subscription (NotificationCenter shows them translated). */
 export const BILLING_NOTIFICATION_KINDS = ["active", "changed", "cancel", "pastdue", "ended"] as const;
 export type BillingNotificationKind = (typeof BILLING_NOTIFICATION_KINDS)[number];

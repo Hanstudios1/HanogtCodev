@@ -476,3 +476,110 @@ test("re-syncing an account stores its most relevant subscription in this enviro
         assert.equal(api.state.calls.length, calls, "Paddle isn't asked without a customer of this environment");
     });
 });
+
+// ---------------------------------------------------------------------------
+// The client-side token and the checkout errors browsers reported
+// ---------------------------------------------------------------------------
+
+const TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+
+function clientToken(name, token, status = "active") {
+    return { id: pid("ctkn", name), token, name, description: null, status, revoked_at: status === "revoked" ? "2026-09-01T00:00:00Z" : null, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" };
+}
+
+/** GET /client-tokens: the tokens, filtered by status and paged like Paddle (meta.pagination.next with `after`); or one fixed failure. */
+function createTokenApi({ tokens = [], pageSize = 200, fail = null } = {}) {
+    const calls = [];
+    async function route(url, init = {}) {
+        assert.equal(url.host, PADDLE_HOST, `unexpected request to ${url.href}`);
+        assert.equal((init.method || "GET").toUpperCase(), "GET", "the check only reads");
+        calls.push(`${url.pathname}${url.search}`);
+        if (fail) return json(fail.status, { error: { type: "request_error", code: fail.code, detail: "" } });
+        assert.equal(url.pathname, "/client-tokens");
+        const status = url.searchParams.get("status");
+        const matching = tokens.filter((entry) => !status || entry.status === status);
+        const after = url.searchParams.get("after");
+        const start = after ? matching.findIndex((entry) => entry.id === after) + 1 : 0;
+        const page = matching.slice(start, start + pageSize);
+        const next = `http://${PADDLE_HOST}/client-tokens?after=${page.at(-1)?.id ?? ""}&per_page=200${status ? `&status=${status}` : ""}`;
+        return json(200, { data: page, meta: { pagination: { per_page: pageSize, next, has_more: start + pageSize < matching.length, estimated_total: matching.length } } });
+    }
+    return { calls, route };
+}
+
+async function tokenCheck(api, config = paddle.getPaddleConfig()) {
+    admin.forgetClientTokenCheck();
+    return withBackend({}, { route: api.route }, () => admin.checkClientToken(config));
+}
+
+const others = (count, status = "active") => Array.from({ length: count }, (_, index) => clientToken(`other${index}`, `test_other${String(index).padStart(16, "0")}`, status));
+
+test("client-side token: active, revoked or missing in the API key's account", async () => {
+    const active = createTokenApi({ tokens: [...others(2), clientToken("vercel", TOKEN)] });
+    const found = await tokenCheck(active);
+    assert.equal(found.result, "active");
+    assert.equal(found.name, "vercel");
+    assert.equal(found.code, null);
+    assert.ok(Number.isFinite(Date.parse(found.checkedAt)));
+    assert.deepEqual(active.calls, ["/client-tokens?status=active&per_page=200"]);
+
+    const revoked = createTokenApi({ tokens: [...others(2), clientToken("old", TOKEN, "revoked")] });
+    assert.equal((await tokenCheck(revoked)).result, "revoked");
+    assert.deepEqual(revoked.calls, ["/client-tokens?status=active&per_page=200", "/client-tokens?status=revoked&per_page=200"], "revoked tokens are looked up when no active one matches");
+
+    const missing = createTokenApi({ tokens: [...others(3), clientToken("revokedother", "test_someoneelse0000000", "revoked")] });
+    const absent = await tokenCheck(missing);
+    assert.deepEqual({ result: absent.result, name: absent.name, code: absent.code }, { result: "missing", name: null, code: null }, "another account's or the other environment's token");
+
+    const ignoresFilter = createTokenApi({ tokens: [clientToken("old", TOKEN, "revoked")] });
+    ignoresFilter.route = ((route) => (url, init) => route(new URL(url.href.replace("status=active", "status=revoked")), init))(ignoresFilter.route);
+    assert.equal((await tokenCheck(ignoresFilter)).result, "revoked", "an entry's own status counts");
+});
+
+test("client-side token: pages are followed, five at most per status", async () => {
+    const third = createTokenApi({ pageSize: 2, tokens: [...others(5), clientToken("vercel", TOKEN)] });
+    assert.equal((await tokenCheck(third)).result, "active");
+    assert.equal(third.calls.length, 3, "found on the third page");
+    assert.match(third.calls[1], /^\/client-tokens\?after=ctkn_01other1x+&per_page=200&status=active$/, "the next page comes from meta.pagination.next");
+
+    const far = createTokenApi({ pageSize: 2, tokens: [...others(10), clientToken("vercel", TOKEN)] });
+    assert.equal((await tokenCheck(far)).result, "missing", "beyond five pages counts as not found");
+    assert.equal(far.calls.filter((call) => call.includes("status=active")).length, 5);
+    assert.equal(far.calls.filter((call) => call.includes("status=revoked")).length, 1);
+});
+
+test("client-side token: no permission, Paddle errors, nothing to check and the cache", async () => {
+    const forbidden = await tokenCheck(createTokenApi({ fail: { status: 403, code: "forbidden" } }));
+    assert.deepEqual({ result: forbidden.result, code: forbidden.code }, { result: "no_permission", code: "forbidden" }, "the key lacks client_token.read");
+    const broken = await tokenCheck(createTokenApi({ fail: { status: 500, code: "internal_error" } }));
+    assert.deepEqual({ result: broken.result, code: broken.code }, { result: "error", code: "500 internal_error" });
+
+    const none = createTokenApi();
+    const config = paddle.getPaddleConfig();
+    assert.equal(await tokenCheck(none, { ...config, clientToken: null }), null, "no token, nothing to check");
+    assert.equal(await tokenCheck(none, { ...config, apiKey: null }), null, "no API key, no way to check");
+    assert.deepEqual(none.calls, []);
+
+    const api = createTokenApi({ tokens: [clientToken("vercel", TOKEN)] });
+    admin.forgetClientTokenCheck();
+    await withBackend({}, { route: api.route }, async () => {
+        assert.equal((await admin.checkClientToken(config)).result, "active");
+        assert.equal((await admin.checkClientToken(config)).result, "active");
+        assert.equal(api.calls.length, 1, "cached for ten minutes");
+        assert.equal((await admin.checkClientToken({ ...config, clientToken: "test_anothertoken00000000" })).result, "missing", "another token is checked anew");
+        assert.equal(api.calls.length, 3);
+    });
+    admin.forgetClientTokenCheck();
+});
+
+test("the status record carries the reported checkout errors, malformed ones left out", async () => {
+    const entry = { at: "2026-10-02T10:00:00.000Z", stage: "blocked", message: "https://cdn.paddle.com/paddle/v2/paddle.js failed to load", blockedUrl: "https://cdn.paddle.com/paddle/v2/paddle.js", code: null, browser: "Chrome 141", environment: "sandbox" };
+    const seed = { "site_config/paddle_status": { lastEventType: "subscription.updated", lastEventAt: new Date("2026-10-02T09:00:00Z"), clientErrors: [entry, { stage: "blocked" }, null] } };
+    await withBackend(seed, {}, async () => {
+        const status = await admin.readPaddleStatus();
+        assert.equal(status.lastEventType, "subscription.updated");
+        assert.deepEqual(status.clientErrors, [entry]);
+    });
+    await withBackend({}, {}, async () => assert.deepEqual((await admin.readPaddleStatus()).clientErrors, []));
+    assert.deepEqual(admin.EMPTY_WEBHOOK_STATUS.clientErrors, []);
+});

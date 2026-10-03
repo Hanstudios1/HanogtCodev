@@ -4,13 +4,16 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import {
     BILLING_INTERVALS,
     ENTITLED_STATUSES,
+    PADDLE_CLIENT_ERRORS_MAX,
     PADDLE_STATUSES,
+    isPaddleClientErrorStage,
     isPaddleId,
     normalizePaddleState,
     paddleEntitles,
     type BillingInterval,
     type BillingNotificationKind,
     type PaddleCheckoutConfig,
+    type PaddleClientError,
     type PaddleEnvironment,
     type PaddlePriceView,
     type PaddleStatus,
@@ -19,7 +22,7 @@ import {
 } from "@/lib/paddle";
 import { PAID_PLAN_IDS, type PaidPlanId, type PlanCatalog } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, isWriteConflict } from "./firebase-rest";
-import { cleanValue, getPaddleConfig, isPaddleConfigured, type Env, type PaddleConfig } from "./paddle-config";
+import { cleanValue, currentPaddleEnvironment, getPaddleConfig, isPaddleConfigured, type Env, type PaddleConfig } from "./paddle-config";
 import { subscriptionPath } from "./plans";
 import { normalizeEmail } from "./validate";
 
@@ -223,6 +226,125 @@ export async function recordWebhookRejection(reason: string) {
         path: PADDLE_STATUS_PATH,
         data: { lastRejectedAt: new Date(), lastRejectedReason: reason.slice(0, 40) },
     }]).catch(() => undefined);
+}
+
+// ---------------------------------------------------------------------------
+// Checkout failures browsers report (POST /api/paddle/client-error)
+// ---------------------------------------------------------------------------
+
+/** C0/C1 control characters and the invisible marks (zero-width, bidi) that could disguise text in the panel. */
+const UNSAFE_CHARACTERS = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]/g;
+const EMAIL_LIKE = /[^\s@<>()[\]"',;:]+@[^\s@<>()[\]"',;:]+\.[a-z]{2,}/gi;
+const REPORT_CODE = /^[a-z0-9_]{1,80}$/;
+
+/** One line of plain text without control characters or e-mail addresses, at most `max` characters. */
+function reportText(value: unknown, max: number) {
+    if (typeof value !== "string") return "";
+    return value.replace(UNSAFE_CHARACTERS, " ").replace(EMAIL_LIKE, "[e-mail]").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+/** An https address as origin and path only (its query could carry ids), or null. */
+function reportUrl(value: unknown) {
+    if (typeof value !== "string" || !value.trim() || value.length > 4_000) return null;
+    try {
+        const url = new URL(value.replace(UNSAFE_CHARACTERS, "").trim());
+        return url.protocol === "https:" ? reportText(`${url.origin}${url.pathname}`, 300) || null : null;
+    } catch {
+        return null;
+    }
+}
+
+export type PaddleClientErrorReport = Pick<PaddleClientError, "stage" | "message" | "blockedUrl" | "code">;
+
+/**
+ * The body of POST /api/paddle/client-error, cleaned: a known stage (null
+ * otherwise), the message on one line (300 characters), an https blocked
+ * address (300) and Paddle's error code ([a-z0-9_], 80); anything else is dropped.
+ */
+export function normalizeClientErrorReport(body: unknown): PaddleClientErrorReport | null {
+    if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+    const record = body as Record<string, unknown>;
+    if (!isPaddleClientErrorStage(record.stage)) return null;
+    const code = typeof record.code === "string" ? record.code.trim().toLowerCase() : "";
+    return {
+        stage: record.stage,
+        message: reportText(record.message, 300),
+        blockedUrl: reportUrl(record.blockedUrl),
+        code: REPORT_CODE.test(code) ? code : null,
+    };
+}
+
+/** Engines that also name Chrome or Safari come first; Brave can't be told from Chrome. */
+const BROWSERS: Array<[name: string, pattern: RegExp]> = [
+    ["Edge", /\bEdg(?:e|A|iOS)?\/(\d{1,4})/],
+    ["Opera", /\b(?:OPR|OPT|Opera)\/(\d{1,4})/],
+    ["Samsung Internet", /\bSamsungBrowser\/(\d{1,4})/],
+    ["Yandex", /\bYaBrowser\/(\d{1,4})/],
+    ["Firefox", /\b(?:Firefox|FxiOS)\/(\d{1,4})/],
+    ["Chrome", /\b(?:CriOS|Chrome|Chromium)\/(\d{1,4})/],
+    ["Safari", /\bVersion\/(\d{1,4})[\d.]*\s.*\bSafari\//],
+];
+
+/** A short browser label from a User-Agent ("Chrome 141", "Safari 18"), "Other" when it's none of the known ones. */
+export function browserLabel(userAgent: string | null | undefined) {
+    const agent = (userAgent ?? "").slice(0, 512);
+    for (const [name, pattern] of BROWSERS) {
+        const major = pattern.exec(agent)?.[1];
+        if (major) return `${name} ${Number(major)}`;
+    }
+    return "Other";
+}
+
+/** Stored reports read back, newest first; malformed entries are left out. */
+export function normalizePaddleClientErrors(value: unknown): PaddleClientError[] {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item): PaddleClientError[] => {
+        if (!item || typeof item !== "object") return [];
+        const entry = item as Record<string, unknown>;
+        const at = isoOrNull(entry.at);
+        const environment = entry.environment === "sandbox" || entry.environment === "production" ? entry.environment : null;
+        if (!at || !environment || !isPaddleClientErrorStage(entry.stage)) return [];
+        return [{
+            at,
+            stage: entry.stage,
+            message: reportText(entry.message, 300),
+            blockedUrl: reportUrl(entry.blockedUrl),
+            code: typeof entry.code === "string" && REPORT_CODE.test(entry.code) ? entry.code : null,
+            browser: reportText(entry.browser, 40) || "Other",
+            environment,
+        }];
+    }).slice(0, PADDLE_CLIENT_ERRORS_MAX);
+}
+
+/**
+ * Puts a report first in site_config/paddle_status.clientErrors (the newest
+ * ten are kept). Who sent it isn't stored. The list is read and written with
+ * the document's update time as precondition, so concurrent reports and the
+ * webhook's notes can't undo each other; a conflict means reading again.
+ */
+export async function recordPaddleClientError(report: PaddleClientErrorReport & { browser: string }, now = new Date()): Promise<PaddleClientError> {
+    const entry: PaddleClientError = {
+        at: now.toISOString(),
+        stage: report.stage,
+        message: reportText(report.message, 300),
+        blockedUrl: reportUrl(report.blockedUrl),
+        code: report.code && REPORT_CODE.test(report.code) ? report.code : null,
+        browser: reportText(report.browser, 40) || "Other",
+        environment: currentPaddleEnvironment(),
+    };
+    for (let attempt = 1; ; attempt += 1) {
+        const record = await getServerDocument<Record<string, unknown>>(PADDLE_STATUS_PATH);
+        const clientErrors = [entry, ...normalizePaddleClientErrors(record?.clientErrors)].slice(0, PADDLE_CLIENT_ERRORS_MAX);
+        const write = record
+            ? { type: "update" as const, path: PADDLE_STATUS_PATH, data: { clientErrors }, updateFields: ["clientErrors"], ...(record._updateTime ? { updateTime: record._updateTime } : {}) }
+            : { type: "create" as const, path: PADDLE_STATUS_PATH, data: { clientErrors } };
+        try {
+            await commitServerMutations([write]);
+            return entry;
+        } catch (error) {
+            if (!isWriteConflict(error) || attempt >= 4) throw error;
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

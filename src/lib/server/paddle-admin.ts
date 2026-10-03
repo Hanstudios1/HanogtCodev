@@ -1,7 +1,8 @@
 import "server-only";
 
-import type { AdminErrorCode, AdminPaddleCatalogReport, AdminPaddlePrice, AdminPaddleUnlinked, AdminUserPlanResponse } from "@/components/Admin/types";
-import { BILLING_INTERVALS, isPaddleId, type BillingInterval, type PaddleEnvironment } from "@/lib/paddle";
+import { createHash } from "node:crypto";
+import type { AdminErrorCode, AdminPaddleCatalogReport, AdminPaddleClientTokenCheck, AdminPaddlePrice, AdminPaddleUnlinked, AdminUserPlanResponse } from "@/components/Admin/types";
+import { BILLING_INTERVALS, isPaddleId, type BillingInterval, type PaddleClientError, type PaddleEnvironment } from "@/lib/paddle";
 import { PAID_PLAN_IDS, PLAN_COPY, aiLimitsFor, effectivePlan, planSource, type PaidPlanId } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, runServerQuery } from "./firebase-rest";
 import {
@@ -15,6 +16,7 @@ import {
     getPaddleConfig,
     getPaddleSettings,
     intervalOf,
+    normalizePaddleClientErrors,
     normalizePaddleSettings,
     paddleDashboardUrl,
     paddleRequest,
@@ -22,6 +24,7 @@ import {
     rememberCustomer,
     syncSubscription,
     unlinkedPath,
+    type PaddleConfig,
     type PaddlePlanPrices,
     type PaddlePriceEntity,
     type PaddleSettings,
@@ -34,7 +37,8 @@ import { normalizeEmail } from "./validate";
 /*
  * Paddle for Admin › Subscriptions: the price mapping and the sales gate of
  * the configured environment, creating the catalog, subscriptions no account
- * could be matched to, re-syncing a person and coupons as Paddle discounts.
+ * could be matched to, re-syncing a person, coupons as Paddle discounts and
+ * whether the client-side token belongs to the API key's Paddle account.
  * Kept free of next/server (and of ./admin) so the plain-Node tests can load
  * it; the route turns PaddleAdminError into admin errors.
  */
@@ -112,7 +116,7 @@ function copyPrices(prices: PaddlePlanPrices): PaddlePlanPrices {
     return { plus: { ...prices.plus }, pro: { ...prices.pro } };
 }
 
-/** Path and query of the next page Paddle points to (it sends a full URL), if there is one. */
+/** Path and query of the next page Paddle points to (it sends a full URL, `after` included), if there is one. */
 function nextPage(pagination: Pagination, expectedPath: string): string | null {
     if (!pagination?.next || pagination.has_more === false) return null;
     try {
@@ -318,16 +322,90 @@ export type PaddleWebhookStatus = {
     lastRejectedReason: string | null;
 };
 
-export const EMPTY_WEBHOOK_STATUS: PaddleWebhookStatus = { lastEventAt: null, lastEventType: null, lastRejectedAt: null, lastRejectedReason: null };
+/** site_config/paddle_status: the webhook's notes and the checkout failures browsers reported (newest first). */
+export type PaddleStatusRecord = PaddleWebhookStatus & { clientErrors: PaddleClientError[] };
 
-export async function readPaddleStatus(): Promise<PaddleWebhookStatus> {
+export const EMPTY_WEBHOOK_STATUS: PaddleStatusRecord = { lastEventAt: null, lastEventType: null, lastRejectedAt: null, lastRejectedReason: null, clientErrors: [] };
+
+export async function readPaddleStatus(): Promise<PaddleStatusRecord> {
     const record = await getServerDocument<Record<string, unknown>>(PADDLE_STATUS_PATH);
     return {
         lastEventAt: isoOrNull(record?.lastEventAt),
         lastEventType: text(record?.lastEventType, 60) || null,
         lastRejectedAt: isoOrNull(record?.lastRejectedAt),
         lastRejectedReason: text(record?.lastRejectedReason, 40) || null,
+        clientErrors: normalizePaddleClientErrors(record?.clientErrors),
     };
+}
+
+// ---------------------------------------------------------------------------
+// The client-side token
+// ---------------------------------------------------------------------------
+
+type PaddleClientTokenEntity = { id?: string; token?: string; name?: string | null; status?: string };
+
+/** Pages of 200 tokens read per status before giving up. */
+const TOKEN_PAGES_MAX = 5;
+const TOKEN_CHECK_TTL_MS = 10 * 60_000;
+/** A failed check is repeated sooner. */
+const TOKEN_CHECK_RETRY_MS = 60_000;
+let tokenCheckCache: { key: string; at: number; ttl: number; value: Promise<AdminPaddleClientTokenCheck> } | null = null;
+
+/** The entry for `token` among the account's client-side tokens with that status, if Paddle lists it. */
+async function findClientToken(token: string, status: "active" | "revoked", config: PaddleConfig) {
+    let path: string | null = `/client-tokens?status=${status}&per_page=200`;
+    for (let page = 0; path && page < TOKEN_PAGES_MAX; page += 1) {
+        const response: ListResponse<PaddleClientTokenEntity> = await paddleRequest<ListResponse<PaddleClientTokenEntity>>("GET", path, undefined, config);
+        const found = (response.data ?? []).find((entry) => isRecord(entry) && entry.token === token);
+        if (found) return found;
+        path = nextPage(response.meta?.pagination, "/client-tokens");
+    }
+    return null;
+}
+
+async function runClientTokenCheck(config: PaddleConfig, token: string): Promise<AdminPaddleClientTokenCheck> {
+    const checkedAt = new Date().toISOString();
+    try {
+        const active = await findClientToken(token, "active", config);
+        if (active) return { result: active.status === "revoked" ? "revoked" : "active", code: null, name: text(active.name, 100) || null, checkedAt };
+        const revoked = await findClientToken(token, "revoked", config);
+        if (revoked) return { result: "revoked", code: null, name: text(revoked.name, 100) || null, checkedAt };
+        return { result: "missing", code: null, name: null, checkedAt };
+    } catch (error) {
+        if (error instanceof PaddleApiError && (error.status === 403 || error.code === "forbidden")) return { result: "no_permission", code: error.code, name: null, checkedAt };
+        const code = error instanceof PaddleApiError ? `${error.status || "network"} ${error.code}` : "unexpected";
+        console.error("[admin:paddle:client-token]", code);
+        return { result: "error", code, name: null, checkedAt };
+    }
+}
+
+/**
+ * Whether the client-side token the Plans page hands to Paddle.js is one of
+ * the API key's Paddle account (GET /client-tokens, active ones first, then
+ * revoked ones): "active", "revoked", "missing" (it belongs to another account
+ * or to the other environment, so Paddle.js can't start with it),
+ * "no_permission" (the key lacks client_token.read) or "error". Cached for ten
+ * minutes, a failed check for one; null without an API key or a token.
+ */
+export function checkClientToken(config: PaddleConfig = getPaddleConfig()): Promise<AdminPaddleClientTokenCheck | null> {
+    const token = config.clientToken;
+    if (!config.apiKey || !token) return Promise.resolve(null);
+    // Keyed by what was checked (hashed: no key material is kept as is), so new variables mean a new check.
+    const key = createHash("sha256").update(`${config.apiBase}\n${config.apiKey}\n${token}`).digest("hex");
+    const now = Date.now();
+    if (tokenCheckCache?.key === key && now - tokenCheckCache.at < tokenCheckCache.ttl) return tokenCheckCache.value;
+    const value = runClientTokenCheck(config, token);
+    const entry = { key, at: now, ttl: TOKEN_CHECK_TTL_MS, value };
+    tokenCheckCache = entry;
+    void value.then((check) => {
+        if (check.result === "error") entry.ttl = TOKEN_CHECK_RETRY_MS;
+    });
+    return value;
+}
+
+/** Drops the cached token check (tests, and after the variables changed). */
+export function forgetClientTokenCheck() {
+    tokenCheckCache = null;
 }
 
 // ---------------------------------------------------------------------------
