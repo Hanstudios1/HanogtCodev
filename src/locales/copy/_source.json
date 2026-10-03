@@ -6709,6 +6709,13 @@
       "src/app/plans/page.tsx"
     ]
   },
+  "eew0ntysvc": {
+    "en": "For the team: Paddle refused a field of the request while opening the checkout (the fields are above). One possible cause is a client-side token (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) from another Paddle account or environment than the API key that created the transaction; see the token check under Admin Panel › Subscriptions › Paddle.",
+    "tr": "Ekip için: Paddle ödeme ekranını açarken isteğin bir alanını kabul etmedi (alanlar yukarıda). Olası nedenlerden biri, tarayıcıdaki istemci tarafı jetonun (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) işlemi oluşturan API anahtarından farklı bir Paddle hesabına ya da ortama ait olması; Yönetici Paneli › Abonelikler › Paddle'daki jeton denetimine bak.",
+    "files": [
+      "src/app/plans/page.tsx"
+    ]
+  },
   "1hbmxqsqeat": {
     "en": "Technical detail: {stage}: {message}",
     "tr": "Teknik ayrıntı: {stage}: {message}",
@@ -20960,6 +20967,13 @@
   "23hzta9zb3x": {
     "en": "Hanogt AI errors with your own API key (invalid key, model not found) and timeouts show the right message again; so do code run timeouts.",
     "tr": "Hanogt AI'da kendi API anahtarınla bağlantı hataları (geçersiz anahtar, model bulunamadı) ve zaman aşımları doğru mesajla gösteriliyor; kod çalıştırma zaman aşımı da öyle.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "17bep7xrai7": {
+    "en": "If the checkout can't start, Paddle's \"Something went wrong\" window closes and the page says which detail Paddle didn't accept.",
+    "tr": "Ödeme ekranı açılamazsa Paddle'ın \"Something went wrong\" penceresi kapanıyor ve sayfada Paddle'ın hangi bilgiyi kabul etmediği yazıyor.",
     "files": [
       "src/components/ChangelogModal.tsx"
     ]

@@ -272,7 +272,10 @@ that nothing (a proxy, Vercel's firewall) replaces the client address.
   `paddle_cleanup`.
 - If the Plans page says the checkout couldn't load, start or open, the browser
   reports why (`POST /api/paddle/client-error`: blocked, missing, init, open,
-  or Paddle's `checkout.error`/`checkout.failed`/`checkout.payment.error`, with
+  or Paddle's `checkout.error`/`checkout.failed`/`checkout.payment.error` (a
+  validation error lists the refused fields, `errors[].field: message`, and
+  Paddle's own "Something went wrong" overlay is closed so the page's notice
+  shows them), with
   the refused address, the browser and the environment, never the account).
   The Paddle card lists the newest ten under "Son ödeme ekranı hataları" and
   checks that the client-side token exists in the API key's account

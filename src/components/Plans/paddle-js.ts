@@ -19,7 +19,10 @@ import type { PaddleClientErrorStage, PaddleEnvironment } from "@/lib/paddle";
  * Plans page can tell people, and the team, what actually went wrong.
  */
 
-/** What Paddle.js passes to eventCallback; error events also carry type, code and detail. */
+/**
+ * What Paddle.js passes to eventCallback. Error events also carry type, code
+ * and detail; validation errors list each refused field in errors.
+ */
 export type PaddleCheckoutEvent = {
     name?: string;
     data?: unknown;
@@ -27,7 +30,58 @@ export type PaddleCheckoutEvent = {
     code?: string;
     detail?: string;
     documentation_url?: string;
+    errors?: unknown;
+    /** Older builds nested type, code, detail and errors here. */
+    error?: unknown;
 };
+
+/** Paddle's error code the way the report route takes it ([a-z0-9_]). */
+export function reportCode(value: string) {
+    return value.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80);
+}
+
+function oneLine(value: unknown, max: number) {
+    return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max) : "";
+}
+
+/**
+ * What a checkout error event says. Paddle.js puts type, code and detail on
+ * the event itself (older builds: in data or in a nested error object), and a
+ * validation error ("api_error" / "validation") lists every field Paddle
+ * refused with its message: without them "Invalid request." says nothing.
+ */
+export function checkoutEventError(event: PaddleCheckoutEvent) {
+    const record = event as Record<string, unknown>;
+    const data = record.data && typeof record.data === "object" ? record.data as Record<string, unknown> : null;
+    const sources = [record, data, record.error, data?.error]
+        .filter((value): value is Record<string, unknown> => Boolean(value) && typeof value === "object" && !Array.isArray(value));
+    const field = (key: string) => sources.map((source) => oneLine(source[key], 200)).find(Boolean) ?? "";
+    const type = field("type");
+    const code = field("code");
+    const detail = field("detail");
+    const fields = sources
+        .flatMap((source) => (Array.isArray(source.errors) ? source.errors as unknown[] : []))
+        .map((item) => {
+            if (typeof item === "string") return oneLine(item, 160);
+            if (!item || typeof item !== "object") return "";
+            const entry = item as Record<string, unknown>;
+            const name = oneLine(entry.field ?? entry.name, 60);
+            const message = oneLine(entry.message ?? entry.detail, 160);
+            return name && message ? `${name}: ${message}` : name || message;
+        })
+        .filter(Boolean)
+        .slice(0, 5);
+    const refused = fields.join("; ");
+    const main = detail && code ? `${detail} (${code})` : detail || code;
+    return {
+        code: reportCode(code),
+        /** For the notice: Paddle's detail with its code, then the refused fields. */
+        text: [main, refused].filter(Boolean).join(" — "),
+        /** For the team and the report (300 characters): the fields come before the detail so they survive the cut. */
+        message: [event.name, type, code, refused, detail].filter(Boolean).join(" · ").slice(0, 300),
+        fields,
+    };
+}
 
 type RetainCustomer = { id: string };
 type CheckoutSettings = Record<string, unknown>;
@@ -337,4 +391,17 @@ export async function getPaddle(config: { environment: PaddleEnvironment; client
  */
 export function openCheckout(paddle: PaddleJs, transactionId: string, settings: CheckoutSettings = {}) {
     guarded("Checkout.open", () => paddle.Checkout.open({ transactionId, settings }));
+}
+
+/**
+ * Closes Paddle's overlay, if Paddle.js is on the page. After a checkout.error
+ * Paddle shows only "Something went wrong" (and a button to Paddle's support)
+ * on top of the page; closing it lets the page say what Paddle refused.
+ */
+export function closeCheckout() {
+    try {
+        instance()?.Checkout.close();
+    } catch {
+        // Nothing open, or a build without close: the page's notice is still shown.
+    }
 }

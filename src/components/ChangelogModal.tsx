@@ -32,6 +32,7 @@ export const UPDATES: UpdateEntry[] = [
         items: [
             { TR: "Plus/Pro ödemesi başlamazsa Paddle'ın bildirdiği neden gösteriliyor (önceden yalnızca \"İşlem tamamlanamadı\" çıkıyordu).", EN: "If a Plus/Pro checkout can't start, the reason Paddle gave is shown (before, only \"That didn't work\" appeared)." },
             { TR: "Hanogt AI'da kendi API anahtarınla bağlantı hataları (geçersiz anahtar, model bulunamadı) ve zaman aşımları doğru mesajla gösteriliyor; kod çalıştırma zaman aşımı da öyle.", EN: "Hanogt AI errors with your own API key (invalid key, model not found) and timeouts show the right message again; so do code run timeouts." },
+            { TR: "Ödeme ekranı açılamazsa Paddle'ın \"Something went wrong\" penceresi kapanıyor ve sayfada Paddle'ın hangi bilgiyi kabul etmediği yazıyor.", EN: "If the checkout can't start, Paddle's \"Something went wrong\" window closes and the page says which detail Paddle didn't accept." },
         ],
     },
     {

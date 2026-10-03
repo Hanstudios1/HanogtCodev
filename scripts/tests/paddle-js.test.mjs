@@ -310,3 +310,39 @@ test("a refusal from before the press isn't blamed on it", async () => {
         await assert.rejects(js.getPaddle(SANDBOX), (error) => error.stage === "blocked" && error.blockedUrl === null);
     });
 });
+
+// ---------------------------------------------------------------------------
+// Checkout error events
+// ---------------------------------------------------------------------------
+
+test("checkout errors: Paddle's detail with its code and every refused field, wherever the build puts them", async () => {
+    const { checkoutEventError, reportCode } = await loader();
+    const validation = checkoutEventError({
+        name: "checkout.error",
+        type: "api_error",
+        code: "validation",
+        detail: "Invalid request.",
+        documentation_url: "https://developer.paddle.com/errors/shared/bad_request",
+        errors: [{ field: "transaction_id", message: "transaction not found" }, { field: "customer.email", message: "is invalid" }],
+    });
+    assert.equal(validation.code, "validation");
+    assert.equal(validation.text, "Invalid request. (validation) — transaction_id: transaction not found; customer.email: is invalid");
+    assert.equal(validation.message, "checkout.error · api_error · validation · transaction_id: transaction not found; customer.email: is invalid · Invalid request.");
+    assert.deepEqual(validation.fields, ["transaction_id: transaction not found", "customer.email: is invalid"]);
+
+    // Older builds: everything in data, or in a nested error object.
+    const nested = checkoutEventError({ name: "checkout.error", data: { error: { type: "api_error", code: "validation", detail: "Invalid request.", errors: [{ field: "locale", message: "unsupported" }] } } });
+    assert.equal(nested.text, "Invalid request. (validation) — locale: unsupported");
+    const inData = checkoutEventError({ name: "checkout.failed", data: { code: "Transaction-Locked", detail: "  The transaction\nis locked  " } });
+    assert.equal(inData.text, "The transaction is locked (Transaction-Locked)");
+    assert.equal(inData.code, "transaction_locked");
+
+    // Only what's there; junk and long text are cut down.
+    assert.deepEqual(checkoutEventError({ name: "checkout.error" }), { code: "", text: "", message: "checkout.error", fields: [] });
+    const messy = checkoutEventError({ name: "checkout.error", code: "validation", errors: ["plain text error", 42, null, { message: "no field" }, { field: "only_field" }, ...Array.from({ length: 6 }, (_, i) => ({ field: `f${i}`, message: "x".repeat(400) }))] });
+    assert.equal(messy.fields.length, 5);
+    assert.deepEqual(messy.fields.slice(0, 3), ["plain text error", "no field", "only_field"]);
+    assert.ok(messy.fields[3].length <= 60 + 2 + 160);
+    assert.ok(messy.message.length <= 300);
+    assert.equal(reportCode(" API Error! "), "api_error");
+});

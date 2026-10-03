@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import ChangePlanDialog from "@/components/Plans/ChangePlanDialog";
-import { PaddleLoadError, failureMessage, getPaddle, onPaddleEvent, openCheckout, type PaddleCheckoutEvent } from "@/components/Plans/paddle-js";
+import { PaddleLoadError, checkoutEventError, closeCheckout, failureMessage, getPaddle, onPaddleEvent, openCheckout } from "@/components/Plans/paddle-js";
 import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -116,6 +116,7 @@ const C = {
     paddleOpen: { TR: "Ödeme ekranı açılamadı. Sayfayı yenileyip tekrar dene; sorun sürerse destek talebi aç.", EN: "The checkout couldn't open. Refresh the page and try again; if it keeps happening, open a support ticket." },
     checkoutError: { TR: "Ödeme ekranı bir hata bildirdi: {detail}", EN: "The checkout reported an error: {detail}" },
     checkoutErrorGeneric: { TR: "Ödeme ekranında bir hata oluştu. Tekrar dene; sorun sürerse destek talebi aç.", EN: "Something went wrong in the checkout. Try again; if it keeps happening, open a support ticket." },
+    checkoutValidationTeam: { TR: "Ekip için: Paddle ödeme ekranını açarken isteğin bir alanını kabul etmedi (alanlar yukarıda). Olası nedenlerden biri, tarayıcıdaki istemci tarafı jetonun (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) işlemi oluşturan API anahtarından farklı bir Paddle hesabına ya da ortama ait olması; Yönetici Paneli › Abonelikler › Paddle'daki jeton denetimine bak.", EN: "For the team: Paddle refused a field of the request while opening the checkout (the fields are above). One possible cause is a client-side token (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) from another Paddle account or environment than the API key that created the transaction; see the token check under Admin Panel › Subscriptions › Paddle." },
     technical: { TR: "Teknik ayrıntı: {stage}: {message}", EN: "Technical detail: {stage}: {message}" },
     unavailable: { TR: "Plan bilgileri şu anda alınamıyor; aşağıdaki fiyatlar henüz kesinleşmedi.", EN: "Plan details can't be loaded right now; the prices below aren't final yet." },
     taxNote: { TR: "Fiyatlara bulunduğun ülkenin vergileri dahildir; kesin tutar ödeme ekranında gösterilir. Ödemeler, Kayıtlı Satıcımız (Merchant of Record) Paddle.com tarafından alınır.", EN: "Prices include the taxes of your country; the exact amount is shown at checkout. Payments are taken by Paddle.com, our Merchant of Record." },
@@ -170,29 +171,6 @@ const EVENT_STAGES: Partial<Record<string, PaddleClientErrorStage>> = {
 };
 
 type ClientErrorReport = { stage: PaddleClientErrorStage; message: string; blockedUrl?: string | null; code?: string | null };
-
-/** Paddle's error code the way the report route takes it ([a-z0-9_]). */
-function reportCode(value: string) {
-    return value.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80);
-}
-
-/** What a checkout error event says: type, code and detail are on the event (or, in some builds, in its data). */
-function checkoutEventError(event: PaddleCheckoutEvent) {
-    const data = event.data && typeof event.data === "object" ? event.data as Record<string, unknown> : {};
-    const field = (key: "type" | "code" | "detail") => {
-        const value = event[key] ?? data[key];
-        return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, 200) : "";
-    };
-    const type = field("type");
-    const code = field("code");
-    const detail = field("detail");
-    return {
-        code: reportCode(code),
-        /** For the notice: Paddle's detail with its code, or whichever of them there is. */
-        text: detail && code ? `${detail} (${code})` : detail || code,
-        message: [event.name, type, code, detail].filter(Boolean).join(" · ").slice(0, 300),
-    };
-}
 
 /** Fire and forget: the team sees it under Admin › Subscriptions › Paddle. */
 function postClientError(report: ClientErrorReport) {
@@ -449,10 +427,13 @@ export default function PlansPage() {
             report({ stage, message: error.message, code: error.code || null });
             // Declined cards and other payment problems are explained by Paddle inside its own frame.
             if (stage === "payment_error") return;
+            // A checkout that can't start leaves only Paddle's "Something went wrong" over the page.
+            if (stage === "checkout_error") closeCheckout();
             setNotice({
                 tone: "error",
                 copy: error.text ? C.checkoutError : C.checkoutErrorGeneric,
                 vars: error.text ? { detail: error.text } : undefined,
+                hint: diagnostics && error.code === "validation" ? C.checkoutValidationTeam : undefined,
                 technical: diagnostics ? { stage, message: error.message } : undefined,
             });
         });
@@ -758,7 +739,7 @@ export default function PlansPage() {
                         </div>
                     ) : null}
                     {notice ? (
-                        <div ref={noticeRef} role={notice.tone === "error" ? "alert" : "status"} className={`mx-auto mb-5 max-w-2xl rounded-2xl px-4 py-3 text-center text-[13.5px] font-semibold ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"}`}>
+                        <div ref={noticeRef} role={notice.tone === "error" ? "alert" : "status"} className={`mx-auto mb-5 max-w-2xl scroll-mt-24 rounded-2xl px-4 py-3 text-center text-[13.5px] font-semibold ${notice.tone === "error" ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : notice.tone === "success" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"}`}>
                             <p className="flex items-center justify-center gap-2">
                                 {notice.tone === "success" ? <PartyPopper className="h-4 w-4 shrink-0" aria-hidden /> : null}{tx(notice.copy, notice.vars)}
                             </p>

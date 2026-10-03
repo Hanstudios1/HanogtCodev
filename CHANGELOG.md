@@ -15,6 +15,12 @@
   `/subscription`, Yönetici Paneli'nin Paddle ve dağıtım uçları,
   `/api/ai` (kendi anahtarınla bağlantı hataları, zaman aşımı),
   `/api/ai/connections`, `/api/execute` (zaman aşımı).
+- Paddle'ın ödeme ekranı `checkout.error` gönderirse (ör. `api_error` /
+  `validation`) reddettiği alanlar (`errors[].field: message`) da bantta ve
+  ekibe giden raporda yazıyor; önceden yalnızca "Invalid request." kalıyordu.
+  Bu durumda Paddle'ın yalnızca "Something went wrong" diyen penceresi
+  kapatılıyor, neden sayfanın bandında görünüyor (bant sabit üst menünün
+  altında kalmayacak şekilde kaydırılıyor).
 - Paddle'ın kurulum hataları (`transaction_default_checkout_url_not_set`,
   `transaction_checkout_url_domain_is_not_approved`,
   `transaction_checkout_not_enabled`, `paddle_billing_not_enabled`,
