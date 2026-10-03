@@ -30,6 +30,7 @@ export function toModalProfile(profile: SocialProfile): UserProfile {
         badges: profile.badges,
         publicProjects: profile.publicProjects,
         staffRole: profile.staffRole,
+        planBadge: profile.planBadge,
     };
     if (profile.presence) {
         user.presence = profile.presence;

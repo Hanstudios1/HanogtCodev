@@ -9,6 +9,7 @@
  */
 import type { FeedbackStatus } from "@/components/Admin/types";
 import type { Copy } from "@/lib/i18n";
+import type { PlanId } from "@/lib/plans";
 
 // ---------------------------------------------------------------------------
 // Categories, statuses, priorities
@@ -144,6 +145,50 @@ export function ticketReference(id: string) {
 export function defaultTicketPriority(category: TicketCategory, severity: TicketSeverity | null = null): TicketPriority {
     if (category === "security") return severity === "critical" ? "critical" : "high";
     return category === "ban_appeal" ? "high" : "normal";
+}
+
+// ---------------------------------------------------------------------------
+// The author's plan: Plus and Pro tickets come first
+// ---------------------------------------------------------------------------
+
+/** Pro before Plus before Free (and before tickets from before plans were noted). */
+const PLAN_ORDER: Record<PlanId, number> = { free: 0, plus: 1, pro: 2 };
+const PRIORITY_ORDER: Record<TicketPriority, number> = { low: 0, normal: 1, high: 2, critical: 3 };
+
+/** The plan noted on a ticket; null for tickets from before plans were noted, or anything unknown. */
+export function readTicketPlan(value: unknown): PlanId | null {
+    return value === "free" || value === "plus" || value === "pro" ? value : null;
+}
+
+/** Plus and Pro tickets are "high" at least; a higher priority stays. */
+export function planTicketPriority(priority: TicketPriority, plan: PlanId): TicketPriority {
+    return plan !== "free" && PRIORITY_ORDER[priority] < PRIORITY_ORDER.high ? "high" : priority;
+}
+
+/**
+ * What the author's follow-up changes on their ticket: the plan they have
+ * now, and "high" when they moved up to Plus or Pro since the ticket last
+ * noted it. Nothing goes down by itself: a lower plan only updates the note,
+ * and a priority the team set stays while the plan doesn't rise.
+ */
+export function ticketPlanUpdate(stored: { authorPlan: PlanId | null; priority: TicketPriority }, plan: PlanId): { authorPlan?: PlanId; priority?: TicketPriority } {
+    const update: { authorPlan?: PlanId; priority?: TicketPriority } = {};
+    if (stored.authorPlan !== plan) update.authorPlan = plan;
+    if (PLAN_ORDER[plan] > PLAN_ORDER[stored.authorPlan ?? "free"]) {
+        const priority = planTicketPriority(stored.priority, plan);
+        if (priority !== stored.priority) update.priority = priority;
+    }
+    return update;
+}
+
+type InboxOrderFields = { unreadForStaff: boolean; priority: TicketPriority; authorPlan: PlanId | null; lastMessageAt: string | null };
+
+/** The admin inbox's order: unread first, then priority, then the author's plan (Pro, Plus, Free), then the latest message. */
+export function compareInboxTickets(a: InboxOrderFields, b: InboxOrderFields) {
+    return Number(b.unreadForStaff) - Number(a.unreadForStaff)
+        || PRIORITY_ORDER[b.priority] - PRIORITY_ORDER[a.priority]
+        || PLAN_ORDER[b.authorPlan ?? "free"] - PLAN_ORDER[a.authorPlan ?? "free"]
+        || (Date.parse(b.lastMessageAt ?? "") || 0) - (Date.parse(a.lastMessageAt ?? "") || 0);
 }
 
 /** A staff reply answers the ticket unless it was already resolved or closed. */

@@ -3,6 +3,7 @@
 import { UserRound } from "lucide-react";
 import Link from "next/link";
 import { GroupTile, Spinner, relativeTime } from "@/components/Groups/ui";
+import PlanBadge from "@/components/PlanBadge";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge from "@/components/StaffBadge";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -50,6 +51,7 @@ export default function DmProfileAside({ person, isFriend, profile, loading, now
                     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                         <h2 className="min-w-0 break-words text-xl font-black text-zinc-900 dark:text-white">{person.username}</h2>
                         <StaffBadge role={person.staffRole} size="sm" />
+                        <PlanBadge plan={person.planBadge} size="sm" />
                     </div>
                     {tag && <p className="font-mono text-sm text-zinc-500 dark:text-zinc-400">{tag}</p>}
                     {isFriend && (

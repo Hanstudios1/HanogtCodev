@@ -7,6 +7,7 @@
  * free of React, Firebase and Node imports (type-only imports are fine).
  */
 import { mentionsUser, tokenizeMessage } from "@/lib/groups";
+import type { PlanBadge } from "@/lib/plan-badge";
 import type { PresenceStatus } from "@/lib/presence";
 
 /* -------------------------------------------------------------------------- */
@@ -65,6 +66,7 @@ export function isSticker(value: unknown): value is string {
 export type SocialMode = "live" | "fallback" | "connecting";
 
 export type StaffRoleBadge = "owner" | "admin" | "moderator";
+export type { PlanBadge };
 
 /** Name card of a person without presence (friend requests, blocked people). */
 export type PersonCard = {
@@ -73,6 +75,8 @@ export type PersonCard = {
     nickname: string;
     nicknameTag: string;
     staffRole: StaffRoleBadge | null;
+    /** The Plus / Pro badge while it lasts (src/lib/plan-badge.ts); written by the server only. */
+    planBadge: PlanBadge | null;
 };
 
 /** A person Social shows with presence; `status` is effectiveStatus() of their public profile. */

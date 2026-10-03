@@ -8,6 +8,7 @@
 import type { PlanUsage } from "@/lib/ai/usage";
 import type { Copy } from "@/lib/i18n";
 import { paddleEntitles, type BillingView, type PaddleCheckoutConfig, type PaddleSubscriptionState } from "@/lib/paddle";
+import type { PlanBadgeState } from "@/lib/plan-badge";
 
 export const PLAN_IDS = ["free", "plus", "pro"] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
@@ -124,6 +125,8 @@ export type UserSubscription = {
     paddleCustomerId: string | null;
     /** The last checkout the Plans page opened for them in this environment (its transaction and when). */
     paddleCheckout: { transactionId: string; at: string } | null;
+    /** The subscriber chose not to show the Plus / Pro badge on their profile (src/lib/plan-badge.ts). */
+    planBadgeHidden: boolean;
 };
 
 export const FREE_SUBSCRIPTION: UserSubscription = {
@@ -138,6 +141,7 @@ export const FREE_SUBSCRIPTION: UserSubscription = {
     paddle: null,
     paddleCustomerId: null,
     paddleCheckout: null,
+    planBadgeHidden: false,
 };
 
 /**
@@ -233,6 +237,8 @@ export type PlansResponse = {
         aiUsedToday: number;
         /** Every benefit with a number: used out of the plan's limit (src/lib/ai/usage.ts). */
         usage: PlanUsage;
+        /** The Plus / Pro profile badge: the plan it shows (null on Free), hidden by choice, opened by the team for this account. */
+        badge: PlanBadgeState;
         waitlist: PaidPlanId[];
         /** Hanogt team (any role): the Plans page also shows them why a checkout failed. */
         isStaff: boolean;
@@ -329,7 +335,8 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
             { text: { TR: "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur", EN: "The longest AI answers; 40,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı, günde 10.000 mesaj", EN: "Connect 5 AI providers with your own API keys, 10,000 messages a day" } },
-            { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
+            { text: { TR: "Destek taleplerinde en yüksek öncelik: talebin Plus taleplerinden önce ele alınır", EN: "Top priority on support tickets: yours are handled before Plus tickets" } },
+            { text: { TR: "Profilinde Pro rozeti", EN: "A Pro badge on your profile" }, planned: true },
             { text: { TR: "Yeni özelliklere erken erişim", EN: "Early access to new features" }, planned: true },
         ],
     },

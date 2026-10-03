@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Header from "@/components/Header";
 import ChangePlanDialog from "@/components/Plans/ChangePlanDialog";
+import PlanBadgeSetting from "@/components/Plans/PlanBadgeSetting";
 import UsageList from "@/components/Plans/UsageList";
 import { PaddleLoadError, checkoutEventError, closeCheckout, failureMessage, getPaddle, onPaddleEvent, openCheckout } from "@/components/Plans/paddle-js";
 import { useRawSession } from "@/components/Provider";
@@ -1039,6 +1040,13 @@ export default function PlansPage() {
                                     <button type="button" onClick={() => void openPortal("overview")} disabled={busy !== null} className={quietButton} title={tx(C.manageHint)}>
                                         {busy === "portal" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <CreditCard className="h-3.5 w-3.5" aria-hidden />}{tx(C.manage)}
                                     </button>
+                                ) : null}
+                                {me.badge?.plan ? (
+                                    <PlanBadgeSetting
+                                        state={me.badge}
+                                        onChange={(badge) => setData((current) => (current?.me ? { ...current, me: { ...current.me, badge } } : current))}
+                                        className="w-full max-w-sm rounded-xl border border-zinc-200 px-3.5 py-2.5 dark:border-white/10"
+                                    />
                                 ) : null}
                                 {me.usage ? <UsageList usage={me.usage} /> : (
                                     <div className="w-64 max-w-full">

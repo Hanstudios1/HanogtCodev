@@ -21,6 +21,7 @@ import { getActiveSession } from "./active-session";
 import { commitServerMutations, countServerQuery, getServerDocument, patchServerDocument, runServerQuery } from "./firebase-rest";
 import { enforceRateLimitWithFallback } from "./rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "./request-security";
+import { resolveUserRole } from "./roles";
 import { isDocId, normalizeEmail } from "./validate";
 
 /*
@@ -45,40 +46,9 @@ const WRITE_LIMIT_PER_MINUTE = 40;
 
 export type AdminSession = { email: string; role: StaffRole };
 
-/**
- * The site founder. Always an owner, also on deployments where ADMIN_EMAILS
- * was never set (the Admin Panel used to stay hidden there).
- */
-export const BUILT_IN_OWNER_EMAILS: readonly string[] = ["oguzhanguluzade21@gmail.com"];
-
-let ownerCache: { raw: string; emails: ReadonlySet<string> } | null = null;
-
-/** Built-in owners plus ADMIN_EMAILS, lower-cased (parsed once per value). */
-export function getOwnerEmails(): ReadonlySet<string> {
-    const raw = process.env.ADMIN_EMAILS ?? "";
-    if (!ownerCache || ownerCache.raw !== raw) {
-        const emails = raw
-            .split(/[\s,;]+/)
-            .map((entry) => normalizeEmail(entry.replace(/^["']+|["']+$/g, "")))
-            .filter(Boolean);
-        ownerCache = { raw, emails: new Set([...BUILT_IN_OWNER_EMAILS, ...emails]) };
-    }
-    return ownerCache.emails;
-}
-
-export function isOwnerEmail(email: string) {
-    return getOwnerEmails().has(email.trim().toLowerCase());
-}
-
-/** The staff role stored in Firestore; anything unexpected counts as none. */
-export function parseStoredRole(value: unknown): "admin" | "moderator" | null {
-    return value === "admin" || value === "moderator" ? value : null;
-}
-
-export function resolveUserRole(email: string, storedRole: unknown): UserRole {
-    if (isOwnerEmail(email)) return "owner";
-    return parseStoredRole(storedRole) ?? "user";
-}
+// Owners and stored roles live in ./roles (also used where this module's
+// Next.js imports can't go, e.g. the plan badge written after a payment).
+export { BUILT_IN_OWNER_EMAILS, getOwnerEmails, isOwnerEmail, parseStoredRole, resolveUserRole } from "./roles";
 
 export function roleAtLeast(role: UserRole, minimum: StaffRole) {
     return role !== "user" && ROLE_RANK[role] >= ROLE_RANK[minimum];

@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Spinner, cx } from "@/components/Groups/ui";
+import PlanBadge from "@/components/PlanBadge";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge from "@/components/StaffBadge";
+import type { PlanBadge as PlanBadgeId } from "@/lib/plan-badge";
 import { useVoiceCall } from "@/components/VoiceCallProvider";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PRESENCE_STATUS_COPY, type PresenceStatus } from "@/lib/presence";
@@ -42,6 +44,7 @@ export type PopoutPerson = {
     nickname?: string;
     nicknameTag?: string;
     staffRole?: StaffRoleBadge | null;
+    planBadge?: PlanBadgeId | null;
     customStatus?: string;
     statusEmoji?: string;
 };
@@ -91,7 +94,7 @@ export default function UserPopout({ popout, onClose, onViewProfile, badges, foo
     const [busy, setBusy] = useState(false);
     const friend = social.isFriend(person.email);
     const blocked = social.isBlocked(person.email);
-    const known = self ? { ...social.me, staffRole: null, lastSeenAt: null } : social.person(person.email);
+    const known = self ? { ...social.me, staffRole: null, planBadge: null, lastSeenAt: null } : social.person(person.email);
 
     useEffect(() => {
         if (self) return;
@@ -158,6 +161,7 @@ export default function UserPopout({ popout, onClose, onViewProfile, badges, foo
     const nicknameTag = person.nicknameTag || known?.nicknameTag || full?.nicknameTag || "";
     const tag = formatFriendTag(nickname, nicknameTag);
     const staffRole = person.staffRole ?? full?.staffRole ?? null;
+    const planBadge = person.planBadge ?? known?.planBadge ?? full?.planBadge ?? null;
     const customStatus = known?.customStatus ?? full?.customStatus ?? person.customStatus ?? "";
     const statusEmoji = known?.statusEmoji ?? full?.statusEmoji ?? person.statusEmoji ?? "";
     // Presence only for people whose status the user may see (friends, the same group).
@@ -206,6 +210,7 @@ export default function UserPopout({ popout, onClose, onViewProfile, badges, foo
                 <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <h2 className="min-w-0 break-words text-lg font-black leading-6">{username}</h2>
                     <StaffBadge role={staffRole} size="sm" />
+                    <PlanBadge plan={planBadge} size="sm" />
                     {badges}
                 </div>
                 {tag && <p className="font-mono text-[13px] text-zinc-500 dark:text-zinc-400">{tag}</p>}

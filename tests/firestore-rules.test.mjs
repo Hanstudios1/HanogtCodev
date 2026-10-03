@@ -19,6 +19,8 @@ await env.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(db, "users", C), { email: C, username: "carol", friends: [] });
     await setDoc(doc(db, "public_profiles", A), {
         email: A, username: "alice", badges: ["verified"], nicknameTag: "1234",
+        // The Plus / Pro badge as the server writes it.
+        planBadge: { plan: "plus", until: new Date(Date.now() + 86_400_000).toISOString() },
         // Presence as /api/presence writes it.
         isOnline: true, lastSeenAt: new Date().toISOString(), dndMode: false, presence: { status: "online", updatedAt: new Date().toISOString() },
     });
@@ -53,6 +55,8 @@ await check("status can't be set from the browser", assertFails(setDoc(doc(as(A)
 await check("Do Not Disturb can't be set from the browser", assertFails(setDoc(doc(as(A), "public_profiles", A), { dndMode: true, email: A }, { merge: true })));
 await check("last-seen time can't be removed from the browser", assertFails(setDoc(doc(as(A), "public_profiles", A), { email: A, lastSeenAt: deleteField() }, { merge: true })));
 await check("owner cannot grant badges", assertFails(setDoc(doc(as(A), "public_profiles", A), { badges: ["verified", "developer"] }, { merge: true })));
+await check("owner cannot raise or extend their plan badge", assertFails(updateDoc(doc(as(A), "public_profiles", A), { planBadge: { plan: "pro", until: null } })));
+await check("owner cannot give themselves a plan badge", assertFails(setDoc(doc(as(B), "public_profiles", B), { email: B, username: "bob", planBadge: { plan: "pro", until: null } })));
 await check("CSS injection accent rejected", assertFails(updateDoc(doc(as(A), "public_profiles", A), { accentColor: "red;background:url(//x)" })));
 await check("banner must be https", assertFails(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "http://x.com/a.png" })));
 await check("valid banner accepted", assertSucceeds(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "https://x.com/a.png" })));
@@ -105,7 +109,8 @@ await check("someone else can't change it", assertFails(setDoc(doc(as(B), "proje
 await check("owner can't hand it to someone else", assertFails(updateDoc(doc(as(A), "projects", "p1"), { email: B })));
 
 console.log("server-only collections/");
-for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "ai_connections/" + A, "voice_clips/x"]) {
+await check("hiding the plan badge goes through the server only", assertFails(setDoc(doc(as(A), "subscriptions", A), { planBadgeHidden: true }, { merge: true })));
+for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "site_config/features", "ai_connections/" + A, "voice_clips/x"]) {
     const [collectionName, id] = path.split("/");
     await check(`${collectionName} is closed`, assertFails(getDoc(doc(as(A), collectionName, id))));
 }

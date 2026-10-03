@@ -6,10 +6,12 @@ import { signOut } from "next-auth/react";
 import { prepareSignOut } from "@/lib/ai/sign-out";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Bell, ChevronRight, CircleDot, Clock, Code2, Copy as CopyIcon, Database, Download, ExternalLink, Eye, EyeOff, Github, Globe2, Hash, Image as ImageIcon, KeyRound, Laptop, Link2, Linkedin, LoaderCircle, Lock, LogOut, Mail, Megaphone, MessageCircle, Monitor, Moon, Paintbrush, Palette, RefreshCw, Save, Shield, Shuffle, Sparkles, Star, Sun, Trash2, Twitter, Undo2, User, UserRound, Users, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, ChevronRight, CircleDot, Clock, Code2, Copy as CopyIcon, Database, Download, ExternalLink, Eye, EyeOff, Gem, Github, Globe2, Hash, Image as ImageIcon, KeyRound, Laptop, Link2, Linkedin, LoaderCircle, Lock, LogOut, Mail, Megaphone, MessageCircle, Monitor, Moon, Paintbrush, Palette, RefreshCw, Save, Shield, Shuffle, Sparkles, Star, Sun, Trash2, Twitter, Undo2, User, UserRound, Users, type LucideIcon } from "lucide-react";
 import Header from "@/components/Header";
 import TwoFactorSettings from "@/components/Account/TwoFactorSettings";
 import { ToastViewport, useToasts } from "@/components/Editor/Toasts";
+import PlanBadge from "@/components/PlanBadge";
+import PlanBadgeSetting from "@/components/Plans/PlanBadgeSetting";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import { useRawSession } from "@/components/Provider";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
@@ -21,6 +23,7 @@ import {
 import { reportPresenceOffline, useOwnStatus } from "@/lib/account-profile-client";
 import { DEFAULT_EDITOR_SETTINGS, readEditorSettings, resetEditorSettings } from "@/lib/editor-settings";
 import { LANGUAGES, useI18n, type Copy } from "@/lib/i18n";
+import { visiblePlanBadge, type PlanBadgeState } from "@/lib/plan-badge";
 import { PRESENCE_STATUS_COPY, STATUS_PREFERENCE_COPY, resolvePresence, type PresenceStatus } from "@/lib/presence";
 import { POPULAR_LANGUAGE_IDS, getLanguage } from "@/lib/runtimes/languages";
 import { useTheme, type ThemePreference } from "@/lib/theme";
@@ -136,6 +139,9 @@ const C = {
     aiHint: { TR: "Hanogt AI'ın seni nasıl yanıtlayacağını (talimatlar, üslup, uzunluk, dil), yeni sohbetlerin varsayılanlarını ve sohbet geçmişini yönet.", EN: "Choose how Hanogt AI answers you (instructions, tone, length, language), how new chats start, and manage your chat history." },
     openAiSettings: { TR: "Hanogt AI ayarlarını aç", EN: "Open Hanogt AI settings" },
     aiUsage: { TR: "Kullanımım", EN: "My usage" },
+    planBadgeTitle: { TR: "Plan rozeti", EN: "Plan badge" },
+    planBadgeTeaser: { TR: "Plus ya da Pro aboneliğinle adının yanında bir rozet görünür.", EN: "With a Plus or Pro subscription, a badge appears next to your name." },
+    seePlans: { TR: "Planları gör", EN: "See the plans" },
     exportTitle: { TR: "Verilerinizi indirin", EN: "Download your data" },
     dangerTitle: { TR: "Tehlikeli bölge", EN: "Danger zone" },
     signOutTitle: { TR: "Oturumu kapat", EN: "Sign out" },
@@ -408,7 +414,10 @@ function ProfilePreview({ form, email, facts, status }: { form: EditableAccountF
                     <span className="inline-block rounded-full border-4 border-white bg-white dark:border-zinc-900 dark:bg-zinc-900">
                         <PresenceAvatar src={isSafeProfileUrl(avatar) ? avatar : null} name={name} status={status} size="xl" ring="bg-white dark:bg-zinc-900" />
                     </span>
-                    <StaffBadge role={parseStaffRole(facts?.staffRole)} size="sm" className="mb-2" />
+                    <span className="mb-2 flex flex-wrap items-center justify-end gap-1.5">
+                        <StaffBadge role={parseStaffRole(facts?.staffRole)} size="sm" />
+                        <PlanBadge plan={visiblePlanBadge(facts?.planBadge)} size="sm" />
+                    </span>
                 </div>
                 <p className="mt-2 break-words text-lg font-black text-zinc-900 dark:text-white">{name}</p>
                 {form.nickname ? <p className="font-mono text-[13px] text-zinc-500">{form.nickname}#{form.nicknameTag || "0000"}</p> : null}
@@ -653,6 +662,11 @@ export default function AccountSettingsPage() {
         toast({ tone: "success", message: tx(C.settingSaved) });
     };
 
+    /** The badge switch saved: the facts follow (the preview and the header show it at once). */
+    const applyPlanBadge = (planBadge: PlanBadgeState) => {
+        setLoaded((state) => (state?.profile ? { ...state, profile: { ...state.profile, account: { ...state.profile.account, planBadge } } } : state));
+    };
+
     const copyTag = async () => {
         if (!base) return;
         const handle = [base.nickname, base.nicknameTag].join("#");
@@ -884,6 +898,7 @@ export default function AccountSettingsPage() {
                                         <div className="flex min-w-0 flex-wrap items-center gap-2">
                                             <p className="truncate text-lg font-black">{displayName}</p>
                                             <StaffBadge role={parseStaffRole(facts?.staffRole)} size="sm" />
+                                            <PlanBadge plan={visiblePlanBadge(facts?.planBadge)} size="sm" />
                                         </div>
                                         <p className="truncate text-[13px] text-zinc-500" dir="ltr">{email}</p>
                                     </div>
@@ -1008,6 +1023,18 @@ export default function AccountSettingsPage() {
                                     </fieldset>
                                 </div>
                             </Card>
+
+                            {facts?.planBadge?.plan ? (
+                                <Card icon={Gem} title={tx(C.planBadgeTitle)}>
+                                    <PlanBadgeSetting state={facts.planBadge} onChange={applyPlanBadge} className="pt-2" />
+                                </Card>
+                            ) : facts?.planBadge?.allowed ? (
+                                <Card icon={Gem} title={tx(C.planBadgeTitle)} description={tx(C.planBadgeTeaser)}>
+                                    <Link href="/plans" className={`mt-1 inline-flex items-center gap-1.5 text-[13px] font-bold text-indigo-600 hover:underline dark:text-indigo-300 ${FOCUS}`} data-plan-badge-teaser>
+                                        {tx(C.seePlans)}<ChevronRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                                    </Link>
+                                </Card>
+                            ) : null}
 
                             <Card icon={User} title={tx(C.about)}>
                                 <div className="space-y-4 pt-2">
@@ -1381,6 +1408,7 @@ export default function AccountSettingsPage() {
                                     <span className="flex min-w-0 items-center gap-1.5">
                                         <span className="truncate text-[16px] font-black">{displayName}</span>
                                         <StaffBadge role={parseStaffRole(facts?.staffRole)} size="sm" compactOnMobile />
+                                        <PlanBadge plan={visiblePlanBadge(facts?.planBadge)} size="sm" compactOnMobile />
                                     </span>
                                     {form?.nickname ? <span className="block truncate font-mono text-[12.5px] text-zinc-500">{form.nickname}#{form.nicknameTag}</span> : null}
                                     <span className="block truncate text-[12.5px] text-zinc-500" dir="ltr">{email}</span>

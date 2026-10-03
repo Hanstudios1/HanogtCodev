@@ -1,6 +1,7 @@
 import "server-only";
 
 import { NextResponse, type NextRequest } from "next/server";
+import { readPlanBadge } from "@/lib/plan-badge";
 import { effectiveStatus, lastSeenTime, presenceTime } from "@/lib/presence";
 import { getActiveSession } from "@/lib/server/active-session";
 import { getServerDocument } from "@/lib/server/firebase-rest";
@@ -173,6 +174,7 @@ export function personCard(email: string, profile: StoredProfile | null | undefi
         nickname: nickname && tag ? nickname : "",
         nicknameTag: nickname && tag ? tag : "",
         staffRole: STAFF_ROLES.find((role) => role === profile?.staffRole) ?? null,
+        planBadge: readPlanBadge(profile?.planBadge),
     };
 }
 

@@ -31,6 +31,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { db } from "@/lib/firebase";
 import { mentionsUser, type GroupInvitationItem, type GroupListItem, type GroupListResponse } from "@/lib/groups";
+import { readPlanBadge } from "@/lib/plan-badge";
 import { effectiveStatus, lastSeenTime } from "@/lib/presence";
 import { SocialRequestError, socialApi, type VoiceTarget } from "./api";
 import { readAudioDevices } from "./local-state";
@@ -260,6 +261,7 @@ function liveProfile(data: DocumentData, now: number): LiveProfile {
         nickname: nickname && tag ? nickname : "",
         nicknameTag: nickname && tag ? tag : "",
         staffRole: STAFF_ROLES.find((role) => role === data.staffRole) ?? null,
+        planBadge: readPlanBadge(data.planBadge, now),
         customStatus: text(data.customStatus, 120),
         statusEmoji: text(data.statusEmoji, 16),
         status: effectiveStatus(data, now),

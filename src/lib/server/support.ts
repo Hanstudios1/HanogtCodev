@@ -22,6 +22,7 @@ import {
     messagePreview,
     normalizePageUrl,
     normalizeUserAgent,
+    readTicketPlan,
     staffTicketLink,
     staffTicketNotificationId,
     ticketReference,
@@ -41,6 +42,7 @@ import {
     type UserRecordFacts,
     type UserRecordSummary,
 } from "@/lib/support";
+import type { PlanId } from "@/lib/plans";
 import { firestoreStatus, getOwnerEmails, httpsUrlOrNull, stringOr, toIso } from "./admin";
 import { commitServerMutations, getServerDocument, isWriteConflict, runServerQuery } from "./firebase-rest";
 import { enforceRateLimitWithFallback } from "./rate-limit";
@@ -169,6 +171,7 @@ export type TicketRecord = {
     status?: unknown;
     priority?: unknown;
     authorEmail?: unknown;
+    authorPlan?: unknown;
     authorName?: unknown;
     authorAvatar?: unknown;
     createdAt?: unknown;
@@ -187,7 +190,7 @@ export type StoredTicket = TicketRecord & { _id: string; _updateTime?: string };
 
 /** Fields list views read (the conversation is left out). */
 export const TICKET_LIST_FIELDS = [
-    "category", "title", "status", "priority", "authorEmail", "authorName", "authorAvatar", "createdAt", "updatedAt",
+    "category", "title", "status", "priority", "authorEmail", "authorPlan", "authorName", "authorAvatar", "createdAt", "updatedAt",
     "lastMessageAt", "lastMessageFrom", "lastMessagePreview", "messageCount", "unreadForUser", "unreadForStaff", "meta",
 ];
 
@@ -227,6 +230,8 @@ export type NewTicketInput = {
     description: string;
     priority: TicketPriority;
     authorEmail: string;
+    /** The author's plan when known (the admin inbox puts Pro, then Plus first). */
+    authorPlan?: PlanId;
     authorName: string;
     authorAvatar: string | null;
     /** Undefined entries are left out of the stored map. */
@@ -247,6 +252,7 @@ export function newTicketDocument(input: NewTicketInput, now = new Date()) {
         status: "open",
         priority: input.priority,
         authorEmail: input.authorEmail,
+        ...(input.authorPlan ? { authorPlan: input.authorPlan } : {}),
         authorName: input.authorName.slice(0, 80),
         authorAvatar: input.authorAvatar,
         createdAt: now,
@@ -355,6 +361,7 @@ export function toAdminListItem(record: StoredTicket): AdminTicketListItem {
         priority: ticketPriority(record.priority),
         severity: readTicketMeta(record).severity,
         authorEmail: stringOr(record.authorEmail, "", 254),
+        authorPlan: readTicketPlan(record.authorPlan),
         authorName: stringOr(record.authorName, "", 80),
         authorAvatar: httpsUrlOrNull(record.authorAvatar),
         createdAt: summary.createdAt,

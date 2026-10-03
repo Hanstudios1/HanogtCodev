@@ -4,9 +4,10 @@ import { PAID_PLAN_IDS, effectivePlan, isPaidPlanId, isRecentCheckout, planSourc
 import { getActiveSession } from "@/lib/server/active-session";
 import { getStaffSession } from "@/lib/server/admin";
 import { planUsageFor } from "@/lib/server/ai-usage";
-import { commitServerMutations, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
+import { commitServerMutations, getServerDocument, isFirebaseServerConfigured, isMissingDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { checkoutConfigFor, getPaddleConfig, isBillingTester, isPaddleConfigured } from "@/lib/server/paddle";
 import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
+import { planBadgeStateFor, syncPlanBadge, syncPlanBadgeThrottled } from "@/lib/server/plan-badge";
 import { getPlanCatalog, getSubscription } from "@/lib/server/plans";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders, visitorCountryFromHeaders } from "@/lib/server/request-security";
@@ -59,7 +60,9 @@ export async function GET(request: NextRequest) {
         // a slow Paddle finishes after the answer and counts next time.
         const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
         // Every benefit with a number, used out of the plan's limit (Hanogt AI today, projects, games, groups, connections).
-        const usage = await planUsageFor(active.email, subscription);
+        const [usage, badge] = await Promise.all([planUsageFor(active.email, subscription), planBadgeStateFor(active.email, subscription, staff)]);
+        // The profile's Plus / Pro badge catches up with the plan now and then (a lost notification, an ended grant).
+        after(() => syncPlanBadgeThrottled(active.email, { subscription, staff }).then(() => undefined));
         return json({
             catalog: publicCatalog(catalog),
             checkout,
@@ -77,6 +80,7 @@ export async function GET(request: NextRequest) {
                 aiLimits: { perMinute: usage.hanogt.minute.limit, perDay: usage.hanogt.day.limit },
                 aiUsedToday: usage.hanogt.day.used,
                 usage,
+                badge,
                 waitlist,
                 isStaff: staff,
             },
@@ -86,7 +90,11 @@ export async function GET(request: NextRequest) {
     }
 }
 
-/** POST /api/plans { action: "waitlist", plan: "plus" | "pro", join: boolean }: "Let me know when it opens". */
+/**
+ * POST /api/plans
+ *   { action: "waitlist", plan: "plus" | "pro", join: boolean }  "Let me know when it opens"
+ *   { action: "badge", hidden: boolean }                          hide or show the Plus / Pro badge on the profile
+ */
 export async function POST(request: NextRequest) {
     if (!isSameOrigin(request)) return json({ error: "forbidden_origin" }, 403);
     if (!isFirebaseServerConfigured()) return json({ error: "unavailable" }, 503);
@@ -94,7 +102,8 @@ export async function POST(request: NextRequest) {
     if (!active) return json({ error: "unauthorized" }, 401);
     const rate = await enforceRateLimitWithFallback(`plans-waitlist:${active.email}`, 20, 60_000);
     if (!rate.allowed) return json({ error: "rate_limited" }, 429);
-    const body = await readJsonBody<{ action?: unknown; plan?: unknown; join?: unknown }>(request, 1_000);
+    const body = await readJsonBody<{ action?: unknown; plan?: unknown; join?: unknown; hidden?: unknown }>(request, 1_000);
+    if (body?.action === "badge") return setBadgeHidden(active.email, body.hidden);
     if (!body || body.action !== "waitlist" || !isPaidPlanId(body.plan) || typeof body.join !== "boolean") return json({ error: "invalid_request" }, 400);
     try {
         const current = await waitlistOf(active.email);
@@ -107,6 +116,25 @@ export async function POST(request: NextRequest) {
         ]);
         return json({ waitlist: plans });
     } catch {
+        return json({ error: "unavailable" }, 503);
+    }
+}
+
+/** Hides or shows the subscriber's badge: subscriptions/{email}.planBadgeHidden, then the profile follows. */
+async function setBadgeHidden(email: string, hidden: unknown) {
+    if (typeof hidden !== "boolean") return json({ error: "invalid_request" }, 400);
+    try {
+        const subscription = await getSubscription(email);
+        const plan = effectivePlan(subscription);
+        if (plan === "free") return json({ error: "no_plan" }, 409);
+        // Only these fields, only while the record exists (an account deleted meanwhile stays deleted).
+        await patchServerDocument(`subscriptions/${email}`, { planBadgeHidden: hidden, updatedAt: new Date() }, { updateFields: ["planBadgeHidden", "updatedAt"], exists: true });
+        const next = { ...subscription, planBadgeHidden: hidden };
+        const staff = Boolean(await getStaffSession().catch(() => null));
+        await syncPlanBadge(email, { subscription: next, staff });
+        return json({ badge: await planBadgeStateFor(email, next, staff) });
+    } catch (error) {
+        if (isMissingDocument(error)) return json({ error: "no_plan" }, 409);
         return json({ error: "unavailable" }, 503);
     }
 }

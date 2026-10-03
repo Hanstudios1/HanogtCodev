@@ -103,7 +103,7 @@ function SignedOut() {
 }
 
 function placeholderPerson(email: string): SocialPerson {
-    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, customStatus: "", statusEmoji: "", status: "offline", lastSeenAt: null };
+    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, planBadge: null, customStatus: "", statusEmoji: "", status: "offline", lastSeenAt: null };
 }
 
 function SocialApp({ email, sessionName, children }: { email: string; sessionName: string; children: ReactNode }) {

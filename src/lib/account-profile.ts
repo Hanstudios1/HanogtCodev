@@ -8,6 +8,7 @@
  * firestore.rules so a value accepted here is also valid for direct writes.
  */
 
+import type { PlanBadgeState } from "@/lib/plan-badge";
 import { STATUS_PREFERENCES, isStatusPreference, readStatusPreference, type PresenceStatus, type StatusPreference } from "@/lib/presence";
 
 export type StaffRoleBadge = "owner" | "admin" | "moderator";
@@ -112,6 +113,8 @@ export interface AccountFacts {
     lastLoginAt: string | null;
     /** Hanogt team role shown as a badge; null for everyone else. */
     staffRole: StaffRoleBadge | null;
+    /** The Plus / Pro profile badge as its owner sees it; null when the plan couldn't be read. */
+    planBadge: PlanBadgeState | null;
 }
 
 export interface AccountProfileResponse {

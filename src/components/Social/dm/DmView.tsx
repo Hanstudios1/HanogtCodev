@@ -55,7 +55,7 @@ const C = {
 const EMAIL = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 function placeholder(email: string): SocialPerson {
-    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, customStatus: "", statusEmoji: "", status: "offline", lastSeenAt: null };
+    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, planBadge: null, customStatus: "", statusEmoji: "", status: "offline", lastSeenAt: null };
 }
 
 /** A direct conversation: header, messages, composer and the other person's profile on the right. */
@@ -114,7 +114,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
         return fromProfile ?? placeholder(partnerEmail);
     }, [partnerEmail, person, profile, summary]);
 
-    const me: SocialPerson = useMemo(() => ({ ...meState, lastSeenAt: null, staffRole: null }), [meState]);
+    const me: SocialPerson = useMemo(() => ({ ...meState, lastSeenAt: null, staffRole: null, planBadge: null }), [meState]);
 
     const openProfile = useCallback((target: string, trigger: HTMLElement) => {
         const known = target === me.email ? me : partner;

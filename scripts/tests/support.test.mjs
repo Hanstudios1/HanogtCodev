@@ -213,6 +213,42 @@ test("priorities and status transitions", () => {
     assert.deepEqual(TICKET_STATUSES.filter(canUserReopen), ["resolved", "closed"]);
 });
 
+test("the author's plan: Plus and Pro tickets start high, an upgrade moves a ticket up, Pro comes first", () => {
+    const { planTicketPriority, ticketPlanUpdate, compareInboxTickets, readTicketPlan } = support;
+    assert.equal(readTicketPlan("pro"), "pro");
+    assert.equal(readTicketPlan("gold"), null);
+    assert.equal(readTicketPlan(undefined), null, "tickets from before plans were noted");
+
+    assert.equal(planTicketPriority("normal", "free"), "normal");
+    assert.equal(planTicketPriority("low", "plus"), "high");
+    assert.equal(planTicketPriority("normal", "pro"), "high");
+    assert.equal(planTicketPriority("critical", "plus"), "critical", "a higher priority stays");
+
+    // The follow-up of someone who moved up since: the ticket moves up too.
+    assert.deepEqual(ticketPlanUpdate({ authorPlan: "free", priority: "normal" }, "plus"), { authorPlan: "plus", priority: "high" });
+    assert.deepEqual(ticketPlanUpdate({ authorPlan: null, priority: "low" }, "pro"), { authorPlan: "pro", priority: "high" });
+    assert.deepEqual(ticketPlanUpdate({ authorPlan: "plus", priority: "high" }, "pro"), { authorPlan: "pro" });
+    // Same plan: a priority the team lowered stays; a lower plan only updates the note.
+    assert.deepEqual(ticketPlanUpdate({ authorPlan: "pro", priority: "low" }, "pro"), {});
+    assert.deepEqual(ticketPlanUpdate({ authorPlan: "pro", priority: "high" }, "free"), { authorPlan: "free" });
+    assert.deepEqual(ticketPlanUpdate({ authorPlan: null, priority: "normal" }, "free"), { authorPlan: "free" });
+
+    // The inbox: unread first, then priority, then Pro, Plus, Free, then the latest message.
+    const ticket = (id, fields) => ({ id, unreadForStaff: false, priority: "normal", authorPlan: null, lastMessageAt: "2026-10-01T10:00:00.000Z", ...fields });
+    const inbox = [
+        ticket("free-new", { authorPlan: "free", lastMessageAt: "2026-10-02T10:00:00.000Z" }),
+        ticket("legacy", {}),
+        ticket("plus", { authorPlan: "plus" }),
+        ticket("pro", { authorPlan: "pro" }),
+        ticket("critical-free", { authorPlan: "free", priority: "critical" }),
+        ticket("high-plus", { authorPlan: "plus", priority: "high" }),
+        ticket("high-pro", { authorPlan: "pro", priority: "high" }),
+        ticket("unread-low", { priority: "low", unreadForStaff: true }),
+        ticket("no-date", { lastMessageAt: null }),
+    ];
+    assert.deepEqual(inbox.sort(compareInboxTickets).map((item) => item.id), ["unread-low", "critical-free", "high-pro", "high-plus", "pro", "plus", "free-new", "legacy", "no-date"]);
+});
+
 test("ticket ids and references", () => {
     assert.equal(isTicketId("3fa9c2d1e4b5a6978877"), true);
     for (const bad of ["3FA9C2D1E4B5A6978877", "../credentials/x", "3fa9c2d1", "", null, 12]) assert.equal(isTicketId(bad), false, String(bad));

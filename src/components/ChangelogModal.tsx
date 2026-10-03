@@ -24,6 +24,18 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.12",
+        version: "v0.3.12",
+        date: "2026-10-03",
+        title: { TR: "Destekte Pro önceliği ve plan rozeti", EN: "Pro priority in support, and plan badges" },
+        desc: { TR: "Pro talepleri Plus'tan önce ele alınıyor; Plus ve Pro rozetleri kademeli olarak açılıyor.", EN: "Pro tickets are handled before Plus ones; Plus and Pro badges are opening gradually." },
+        items: [
+            { TR: "Pro aboneliğinin destek talepleri Plus taleplerinden önce ele alınır.", EN: "Support tickets from Pro subscribers are handled before Plus tickets." },
+            { TR: "Plus veya Pro'ya geçtikten sonra açık talebine yazdığında talebin yüksek önceliğe çıkar.", EN: "After you move up to Plus or Pro, an open ticket moves to high priority when you write in it." },
+            { TR: "Plus ve Pro rozeti adının yanında profilinde, kullanıcı kartında ve mesajlarda görünür; Fiyatlandırma ya da Hesap Ayarları › Profil'den gizleyebilirsin.", EN: "A Plus or Pro badge shows next to your name on your profile, your user card and in messages; hide it from Pricing or Account Settings › Profile." },
+        ],
+    },
+    {
         id: "v0.3.11",
         version: "v0.3.11",
         date: "2026-10-03",

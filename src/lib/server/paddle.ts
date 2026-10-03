@@ -28,6 +28,7 @@ import { commitServerMutations, getServerDocument, isWriteConflict } from "./fir
 import { isCidr } from "./request-security";
 import { cleanValue, currentPaddleEnvironment, getPaddleConfig, isPaddleConfigured, type Env, type PaddleConfig } from "./paddle-config";
 import { subscriptionPath } from "./plans";
+import { syncPlanBadgeQuietly } from "./plan-badge";
 import { normalizeEmail } from "./validate";
 
 export { currentPaddleEnvironment, getPaddleConfig, isPaddleConfigured, paddleDashboardUrl, type PaddleConfig, type PaddleConfigWarning } from "./paddle-config";
@@ -773,10 +774,13 @@ export async function storeSubscriptionState(email: string, state: PaddleSubscri
             };
         try {
             await commitServerMutations([write, ...billingNotifications(email, current, state, now)]);
-            return "stored";
         } catch (error) {
             if (!isWriteConflict(error) || attempt >= 3) throw error;
+            continue;
         }
+        // The profile's Plus / Pro badge follows the new state (best effort).
+        await syncPlanBadgeQuietly(email);
+        return "stored";
     }
 }
 

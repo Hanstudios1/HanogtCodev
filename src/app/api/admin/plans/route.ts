@@ -43,6 +43,7 @@ import {
     paddleDiscountUsage,
     setPaddleDiscountActive,
 } from "@/lib/server/paddle-admin";
+import { syncPlanBadgeQuietly } from "@/lib/server/plan-badge";
 import {
     CATALOG_PATH,
     forgetCatalogCache,
@@ -353,6 +354,7 @@ export async function POST(request: NextRequest) {
                     auditLogMutation(actor, "subscription.remove", path, { email, plan: current.plan }),
                 ]);
             }
+            await syncPlanBadgeQuietly(email);
             return adminJson(await adminPersonPlan(email));
         }
 
@@ -387,6 +389,8 @@ export async function POST(request: NextRequest) {
                 : { type: "create", path, data: { plan: "free", status: "active", aiBonusDaily: 0, aiBonusUntil: null, ...data, email, createdAt: now } },
             auditLogMutation(actor, audit, path, details),
         ]);
+        // A plan given or taken, or the account blocked: the profile's badge follows.
+        if (action !== "grantAi") await syncPlanBadgeQuietly(email);
         return adminJson(await adminPersonPlan(email));
     } catch (error) {
         const paddle = paddleFailure(error);

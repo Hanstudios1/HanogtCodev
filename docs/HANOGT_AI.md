@@ -289,6 +289,15 @@ person; the routes behind a feature check again themselves.
 | `plan_badge` | Plus and Pro badges on profiles |
 | `ai_voice` | Dictation and reading answers aloud |
 
+`plan_badge` is decided by the profile's owner: only the server writes
+`public_profiles/{email}.planBadge = { plan, until }` (firestore.rules keep
+browsers out), after Paddle stores a subscription, after staff change a plan,
+when the subscriber hides or shows it (Pricing and Account Settings ›
+Profile; `subscriptions/{email}.planBadgeHidden`) and, at most every ten
+minutes, when they open Pricing or Account Settings. Readers ignore a badge
+whose `until` has passed (the paid period plus the payment grace, or the end
+of a staff grant), so an ended plan loses its badge without a write.
+
 ### Usage meter
 
 `src/lib/server/ai-usage.ts` counts every message: the minute window first,

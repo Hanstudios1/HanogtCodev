@@ -14,6 +14,7 @@ import type {
     TicketStatus,
     UserRecordSummary,
 } from "@/lib/support";
+import type { PlanId } from "@/lib/plans";
 import type { UserRole } from "./types";
 
 /** Status filter of the inbox: one status, every active one (default) or all. */
@@ -45,6 +46,8 @@ export type AdminTicketListItem = {
     unreadForStaff: boolean;
     /** The team replied and the author hasn't opened it yet. */
     unreadForUser: boolean;
+    /** The author's plan when they filed or last wrote (Pro and Plus come first); null on tickets from before plans were noted. */
+    authorPlan: PlanId | null;
     /** Appeal against a suspension, filed from the login page (meta.appeal). */
     appeal: boolean;
     /**

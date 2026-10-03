@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
-import { FREE_SUBSCRIPTION, effectivePlan } from "@/lib/plans";
-import { getSubscription } from "@/lib/server/plans";
+import { effectivePlan, type PlanId } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
 import { httpsUrlOrNull, stringOr } from "@/lib/server/admin";
 import { commitServerMutations, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { getSubscription } from "@/lib/server/plans";
 import { isSameOrigin } from "@/lib/server/request-security";
 import {
     SupportError,
@@ -19,6 +19,7 @@ import {
     supportError,
     supportFailure,
     supportJson,
+    ticketPriority,
     ticketStatus,
     toTicketSummary,
     toTicketView,
@@ -36,7 +37,10 @@ import {
     isTicketId,
     normalizePageUrl,
     normalizeUserAgent,
+    planTicketPriority,
+    readTicketPlan,
     statusAfterUserReply,
+    ticketPlanUpdate,
     validateTicketDraft,
     validateTicketMessage,
     type SupportListResponse,
@@ -124,11 +128,9 @@ export async function GET(request: NextRequest) {
     }
 }
 
-/** Plus and Pro accounts' new tickets start one step higher than "normal". */
-async function planPriority(email: string, priority: ReturnType<typeof defaultTicketPriority>) {
-    if (priority !== "low" && priority !== "normal") return priority;
-    const plan = effectivePlan(await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
-    return plan === "free" ? priority : "high";
+/** The author's plan now; null when it can't be read (the ticket then keeps what it noted before). */
+function authorPlanOf(email: string): Promise<PlanId | null> {
+    return getSubscription(email).then((subscription) => effectivePlan(subscription), () => null);
 }
 
 async function createTicket(request: NextRequest, active: ActiveUser, body: Record<string, unknown>) {
@@ -148,14 +150,19 @@ async function createTicket(request: NextRequest, active: ActiveUser, body: Reco
     const pageUrl = technical ? normalizePageUrl(body.technicalPage) ?? null : null;
     const userAgent = technical ? normalizeUserAgent(request.headers.get("user-agent")) : null;
 
-    const profile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`).catch(() => null);
+    const [profile, authorPlan] = await Promise.all([
+        getServerDocument<Record<string, unknown>>(`public_profiles/${email}`).catch(() => null),
+        authorPlanOf(email),
+    ]);
     const user = active.user as Record<string, unknown>;
     const { id, data } = await createSupportTicket({
         category: draft.category,
         title: draft.title,
         description: draft.description,
-        priority: await planPriority(email, defaultTicketPriority(draft.category, draft.severity)),
+        // Plus and Pro tickets start at "high"; the inbox puts Pro before Plus.
+        priority: planTicketPriority(defaultTicketPriority(draft.category, draft.severity), authorPlan ?? "free"),
         authorEmail: email,
+        authorPlan: authorPlan ?? undefined,
         authorName: displayName(active, profile),
         authorAvatar: httpsUrlOrNull(profile?.avatarUrl) ?? httpsUrlOrNull(user.avatarUrl) ?? httpsUrlOrNull(active.session?.user?.image),
         meta: {
@@ -178,6 +185,7 @@ async function reply(active: ActiveUser, id: string, text: unknown): Promise<Sup
     const message = validateTicketMessage(text);
     if (!message.ok) throw new SupportError(400, message.code);
     await requireRateLimit(`support:reply:${active.email}`, TICKET_RATE_LIMITS.repliesPerHour, HOUR);
+    const plan = await authorPlanOf(active.email);
     const ticket = await withWriteRetry(async () => {
         const record = await loadOwnTicket(id, active.email);
         const status = ticketStatus(record.status);
@@ -195,6 +203,8 @@ async function reply(active: ActiveUser, id: string, text: unknown): Promise<Sup
             ...(next !== status ? { statusUpdatedAt: now } : {}),
             unreadForStaff: true,
             unreadForUser: false,
+            // Moved up to Plus or Pro since: the ticket moves up too.
+            ...(plan ? ticketPlanUpdate({ authorPlan: readTicketPlan(record.authorPlan), priority: ticketPriority(record.priority) }, plan) : {}),
         });
     });
     await notifyStaffAboutTicket({ ticketId: id, title: ticket.title, authorEmail: active.email, event: "reply" });

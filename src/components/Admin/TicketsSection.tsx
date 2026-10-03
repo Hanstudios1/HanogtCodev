@@ -7,6 +7,7 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import PlanBadge from "@/components/PlanBadge";
 import ProfileModal, { type UserProfile } from "@/components/ProfileModal";
 import { useI18n, type Copy } from "@/lib/i18n";
 import {
@@ -25,6 +26,7 @@ import {
     TICKET_SEVERITY_COPY,
     TICKET_STATUSES,
     TICKET_STATUS_COPY,
+    compareInboxTickets,
     isTicketId,
     type RecordSeverity,
     type RecordVerdict,
@@ -161,6 +163,7 @@ function toListItem(ticket: AdminTicketDetail): AdminTicketListItem {
         priority: ticket.priority,
         severity: ticket.severity,
         authorEmail: ticket.authorEmail,
+        authorPlan: ticket.authorPlan,
         authorName: ticket.authorName,
         authorAvatar: ticket.authorAvatar,
         createdAt: ticket.createdAt,
@@ -348,6 +351,7 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                     {ticket.twoFactorRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(TWO_FACTOR_RECOVERY_COPY)}</Badge> : null}
                     <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                     <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge>
+                    <PlanBadge plan={ticket.authorPlan === "free" ? null : ticket.authorPlan} size="sm" />
                     {ticket.severity ? <Badge tone={SEVERITY_TONES[ticket.severity]} icon={ShieldAlert}>{tx({ TR: "Önem: {level}", EN: "Severity: {level}" }, { level: tx(TICKET_SEVERITY_COPY[ticket.severity].label) })}</Badge> : null}
                     <span className="font-mono" dir="ltr">#{ticket.reference}</span>
                     <RelativeTime iso={ticket.createdAt} />
@@ -581,7 +585,8 @@ export default function TicketsSection() {
     const { mutate: mutateDetail } = detail;
 
     // Unread tickets first; otherwise the inbox order (latest activity first).
-    const tickets = useMemo(() => [...(inbox.data?.tickets ?? [])].sort((a, b) => Number(b.unreadForStaff) - Number(a.unreadForStaff)), [inbox.data]);
+    // Unread first, then priority, then the author's plan (Pro, Plus, Free), then the latest message.
+    const tickets = useMemo(() => [...(inbox.data?.tickets ?? [])].sort(compareInboxTickets), [inbox.data]);
     const selected = detail.data && detail.data.ticket.id === selectedId ? detail.data : null;
     const filtersActive = status !== "active" || category !== "all" || priority !== "all" || unreadOnly || Boolean(query.trim());
 
@@ -747,6 +752,7 @@ export default function TicketsSection() {
                                                         {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
                                                         {ticket.twoFactorRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(TWO_FACTOR_RECOVERY_COPY)}</Badge> : null}
                                                         {ticket.priority === "high" || ticket.priority === "critical" ? <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge> : null}
+                                                        <PlanBadge plan={ticket.authorPlan === "free" ? null : ticket.authorPlan} size="sm" />
                                                         {ticket.unreadForStaff ? <Badge tone="violet">{tx({ TR: "Yeni", EN: "New" })}</Badge> : null}
                                                         <span className="ms-auto"><RelativeTime iso={ticket.lastMessageAt} /></span>
                                                     </div>

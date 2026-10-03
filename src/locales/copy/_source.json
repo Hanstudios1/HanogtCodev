@@ -1151,6 +1151,28 @@
       "src/app/account-settings/page.tsx"
     ]
   },
+  "1en195gmcxx": {
+    "en": "Plan badge",
+    "tr": "Plan rozeti",
+    "files": [
+      "src/app/account-settings/page.tsx",
+      "src/lib/features.ts"
+    ]
+  },
+  "15a3jhzmw7j": {
+    "en": "With a Plus or Pro subscription, a badge appears next to your name.",
+    "tr": "Plus ya da Pro aboneliğinle adının yanında bir rozet görünür.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "1n76emd07ey": {
+    "en": "See the plans",
+    "tr": "Planları gör",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
   "28skyabr6sd": {
     "en": "Download your data",
     "tr": "Verilerinizi indirin",
@@ -1815,6 +1837,7 @@
       "src/components/News/CommentsDrawer.tsx",
       "src/components/NotificationCenter.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
+      "src/components/ProfileModal.tsx",
       "src/components/Social/AudioSettings.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -22066,6 +22089,41 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
+  "1bw68slusrl": {
+    "en": "Pro priority in support, and plan badges",
+    "tr": "Destekte Pro önceliği ve plan rozeti",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "na8qsx9xak": {
+    "en": "Pro tickets are handled before Plus ones; Plus and Pro badges are opening gradually.",
+    "tr": "Pro talepleri Plus'tan önce ele alınıyor; Plus ve Pro rozetleri kademeli olarak açılıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "ri163cggq2": {
+    "en": "Support tickets from Pro subscribers are handled before Plus tickets.",
+    "tr": "Pro aboneliğinin destek talepleri Plus taleplerinden önce ele alınır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1z9ubkysht2": {
+    "en": "After you move up to Plus or Pro, an open ticket moves to high priority when you write in it.",
+    "tr": "Plus veya Pro'ya geçtikten sonra açık talebine yazdığında talebin yüksek önceliğe çıkar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "idwbzy06jp": {
+    "en": "A Plus or Pro badge shows next to your name on your profile, your user card and in messages; hide it from Pricing or Account Settings › Profile.",
+    "tr": "Plus ve Pro rozeti adının yanında profilinde, kullanıcı kartında ve mesajlarda görünür; Fiyatlandırma ya da Hesap Ayarları › Profil'den gizleyebilirsin.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
   "1dnktix905r": {
     "en": "Decide how Hanogt AI answers you: instructions, tone, length, language and how new chats start.",
     "tr": "Hanogt AI'ın seni nasıl yanıtlayacağını kendin belirle: talimatlar, üslup, uzunluk, dil ve yeni sohbetlerin varsayılanları.",
@@ -35575,6 +35633,20 @@
       "src/components/NotificationCenter.tsx"
     ]
   },
+  "fjlze0w3r3": {
+    "en": "Hanogt Codev Plus subscriber",
+    "tr": "Hanogt Codev Plus abonesi",
+    "files": [
+      "src/components/PlanBadge.tsx"
+    ]
+  },
+  "v523xikpet": {
+    "en": "Hanogt Codev Pro subscriber",
+    "tr": "Hanogt Codev Pro abonesi",
+    "files": [
+      "src/components/PlanBadge.tsx"
+    ]
+  },
   "zzur4nkl9l": {
     "en": "Change your plan",
     "tr": "Planını değiştir",
@@ -35657,6 +35729,48 @@
     "tr": "Onayla ve değiştir",
     "files": [
       "src/components/Plans/ChangePlanDialog.tsx"
+    ]
+  },
+  "24e3i0xlgdi": {
+    "en": "Show the {plan} badge on my profile",
+    "tr": "Profilimde {plan} rozetini göster",
+    "files": [
+      "src/components/Plans/PlanBadgeSetting.tsx"
+    ]
+  },
+  "d9q8xqqh6v": {
+    "en": "The badge appears next to your name on your profile, your user card and in messages.",
+    "tr": "Rozet; profilinde, kullanıcı kartında ve mesajlarda adının yanında görünür.",
+    "files": [
+      "src/components/Plans/PlanBadgeSetting.tsx"
+    ]
+  },
+  "1clhlxnqis1": {
+    "en": "Profile badges are opening gradually; they aren't on for your account yet.",
+    "tr": "Profil rozetleri kademeli olarak açılıyor; hesabında henüz açık değil.",
+    "files": [
+      "src/components/Plans/PlanBadgeSetting.tsx"
+    ]
+  },
+  "13wisq41x8x": {
+    "en": "Your badge now shows on your profile.",
+    "tr": "Rozetin artık profilinde görünüyor.",
+    "files": [
+      "src/components/Plans/PlanBadgeSetting.tsx"
+    ]
+  },
+  "j3qf58omiv": {
+    "en": "Your badge is hidden.",
+    "tr": "Rozetin gizlendi.",
+    "files": [
+      "src/components/Plans/PlanBadgeSetting.tsx"
+    ]
+  },
+  "1fjo4171nnz": {
+    "en": "Couldn't save. Try again in a moment.",
+    "tr": "Kaydedilemedi. Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/Plans/PlanBadgeSetting.tsx"
     ]
   },
   "1axof5dlnba": {
@@ -40076,9 +40190,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "a3or8ipy9v": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}. The day is counted for 24 hours from your first message; the meter at the top of Hanogt AI shows how many you've used today and when they renew.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued with high priority (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}. Gün, ilk mesajından itibaren 24 saat sayılır; Hanogt AI sekmesinin üstündeki sayaç bugün kaç mesaj kullandığını ve ne zaman yenileneceğini gösterir.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "1szh61vhbl3": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiPlus} messages a day on Plus and {aiPro} on Pro instead of {aiFree}. The day is counted for 24 hours from your first message; the meter at the top of Hanogt AI shows how many you've used today and when they renew.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) providers to Hanogt AI with your own API keys.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** günde {aiFree} mesaj yerine Plus'ta {aiPlus}, Pro'da {aiPro}. Gün, ilk mesajından itibaren 24 saat sayılır; Hanogt AI sekmesinin üstündeki sayaç bugün kaç mesaj kullandığını ve ne zaman yenileneceğini gösterir.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -42188,13 +42302,6 @@
       "src/lib/features.ts"
     ]
   },
-  "1en195gmcxx": {
-    "en": "Plan badge",
-    "tr": "Plan rozeti",
-    "files": [
-      "src/lib/features.ts"
-    ]
-  },
   "w6rcfgtpnc": {
     "en": "A badge on Plus and Pro subscribers' profiles.",
     "tr": "Plus ve Pro abonelerinin profilinde rozet.",
@@ -43276,6 +43383,20 @@
   "2aarv22a2xb": {
     "en": "Connect 5 AI providers with your own API keys, 10,000 messages a day",
     "tr": "Kendi API anahtarınla 5 yapay zekâ bağlantısı, günde 10.000 mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1r6tj06s3f2": {
+    "en": "Top priority on support tickets: yours are handled before Plus tickets",
+    "tr": "Destek taleplerinde en yüksek öncelik: talebin Plus taleplerinden önce ele alınır",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "gevl7bh210": {
+    "en": "A Pro badge on your profile",
+    "tr": "Profilinde Pro rozeti",
     "files": [
       "src/lib/plans.ts"
     ]

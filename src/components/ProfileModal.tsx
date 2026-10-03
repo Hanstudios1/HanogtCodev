@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { useI18n } from "@/lib/i18n";
 import { X, Github, Linkedin, Twitter, Globe2, Download, Heart, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { formatRelativeTime, useNow } from "@/components/Admin/hooks";
 import type { StaffRole } from "@/components/Admin/types";
+import PlanBadge from "@/components/PlanBadge";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
+import type { PlanBadge as PlanBadgeId } from "@/lib/plan-badge";
 import { LAST_SEEN_COPY, PRESENCE_STATUS_COPY, effectiveStatus, lastSeenTime } from "@/lib/presence";
 
 /** Profile values are user-written: only plain https URLs reach CSS url(). */
@@ -68,6 +70,8 @@ interface UserProfile {
     email?: string;
     /** Hanogt team role; written by the server only (public_profiles/{email}.staffRole). */
     staffRole?: StaffRole | null;
+    /** The Plus / Pro badge while it lasts; written by the server only (public_profiles/{email}.planBadge). */
+    planBadge?: PlanBadgeId | null;
 }
 
 interface Project {
@@ -129,6 +133,7 @@ const getFileExtension = (lang: string): string => {
 export default function ProfileModal({ user, projects = [], isOpen, onClose, onLikeProject, onDownloadProject }: ProfileModalProps) {
     const { t, tx, locale } = useI18n();
     const now = useNow();
+    const titleId = useId();
     const [activeTab, setActiveTab] = useState<"about" | "projects">("about");
     const [fetchedProjects, setFetchedProjects] = useState<Project[]>([]);
     const [loadingProjects, setLoadingProjects] = useState(false);
@@ -181,6 +186,9 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
     return (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
             <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
                 className="bg-white dark:bg-zinc-900 rounded-2xl max-w-md w-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -194,10 +202,12 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                     }}
                 >
                     <button
+                        type="button"
                         onClick={onClose}
+                        aria-label={tx({ TR: "Kapat", EN: "Close" })}
                         className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition-colors"
                     >
-                        <X className="w-4 h-4" />
+                        <X className="w-4 h-4" aria-hidden="true" />
                     </button>
                 </div>
 
@@ -211,8 +221,9 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
                 {/* User Info */}
                 <div className="px-6 pt-3 pb-4">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <h3 className="min-w-0 break-words text-xl font-bold">{user.username}</h3>
+                        <h3 id={titleId} className="min-w-0 break-words text-xl font-bold">{user.username}</h3>
                         <StaffBadge role={parseStaffRole(user.staffRole)} />
+                        <PlanBadge plan={user.planBadge} />
                     </div>
                     {user.nickname && (
                         <p className="text-sm text-zinc-500 font-mono">

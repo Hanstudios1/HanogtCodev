@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import type { Session } from "next-auth";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import {
     PUBLIC_PROFILE_KEYS,
     defaultNickname,
@@ -17,10 +17,13 @@ import {
     type AccountProfileResponse,
     type EditableAccountFields,
 } from "@/lib/account-profile";
+import type { PlanBadgeState } from "@/lib/plan-badge";
 import { effectiveStatus, presenceWrites, readPresenceReport, resolvePresence, type PresenceStatus } from "@/lib/presence";
 import { getActiveSession } from "@/lib/server/active-session";
 import { resolveUserRole, toIso } from "@/lib/server/admin";
 import { commitServerPatches, countServerQuery, getServerDocument, isWriteConflict, runServerQuery } from "@/lib/server/firebase-rest";
+import { planBadgeStateFor, syncPlanBadgeThrottled } from "@/lib/server/plan-badge";
+import { getSubscription } from "@/lib/server/plans";
 import { enforceRateLimit, enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
@@ -124,7 +127,7 @@ function publicFieldsOf(fields: EditableAccountFields) {
 }
 
 /** Account facts shown next to the form; the stored role is never returned as such. */
-function accountFacts(email: string, user: StoredDoc): AccountFacts {
+function accountFacts(email: string, user: StoredDoc, planBadge: PlanBadgeState | null): AccountFacts {
     const role = resolveUserRole(email, user.role);
     const hasPassword = user.hasPassword === true;
     return {
@@ -134,7 +137,24 @@ function accountFacts(email: string, user: StoredDoc): AccountFacts {
         createdAt: toIso(user.createdAt),
         lastLoginAt: toIso(user.lastLoginAt ?? user.lastLoginDate),
         staffRole: role === "user" ? null : role,
+        planBadge,
     };
+}
+
+/**
+ * The Plus / Pro badge as its owner sees it; null when the plan can't be read
+ * now. On a page load the public profile also catches up with the plan
+ * (at most every ten minutes).
+ */
+async function loadPlanBadge(email: string, user: StoredDoc, catchUp: boolean): Promise<PlanBadgeState | null> {
+    const staff = resolveUserRole(email, user.role) !== "user";
+    try {
+        const subscription = await getSubscription(email);
+        if (catchUp) after(() => syncPlanBadgeThrottled(email, { subscription, staff }).then(() => undefined));
+        return await planBadgeStateFor(email, subscription, staff);
+    } catch {
+        return null;
+    }
 }
 
 async function loadStats(email: string, user: StoredDoc): Promise<AccountProfileResponse["stats"]> {
@@ -198,8 +218,8 @@ export async function GET() {
         if (!rate.allowed) return errorResponse(429, "rate_limited", {}, { "Retry-After": String(rate.retryAfterSeconds) });
         const user = active.user as StoredDoc;
         const profile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
-        const [fields, stats] = await Promise.all([loadFields(email, session, user, profile), loadStats(email, user)]);
-        return json({ account: accountFacts(email, user), fields, presence: effectiveStatus(profile), stats });
+        const [fields, stats, planBadge] = await Promise.all([loadFields(email, session, user, profile), loadStats(email, user), loadPlanBadge(email, user, true)]);
+        return json({ account: accountFacts(email, user, planBadge), fields, presence: effectiveStatus(profile), stats });
     } catch (error) {
         console.error("[account-profile:get]", error instanceof Error ? error.message : error);
         return errorResponse(503, "unavailable");
@@ -254,8 +274,9 @@ export async function PATCH(request: NextRequest) {
             }
         }
 
-        // The friend count comes from the users document, which this patch never changes.
+        // The friend count comes from the users document and the badge from the plan: this patch changes neither.
         const statsPromise = loadStats(email, user);
+        const planBadgePromise = loadPlanBadge(email, user, false);
         let nextUser = user;
         let nextProfile = profile;
         let presenceStatus: PresenceStatus | null = null;
@@ -299,7 +320,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         const fields = withSessionFallbacks(mergeStoredAccount(nextUser, nextProfile), email, session);
-        return json({ account: accountFacts(email, nextUser), fields, presence: presenceStatus ?? effectiveStatus(nextProfile), stats: await statsPromise });
+        return json({ account: accountFacts(email, nextUser, await planBadgePromise), fields, presence: presenceStatus ?? effectiveStatus(nextProfile), stats: await statsPromise });
     } catch (error) {
         console.error("[account-profile:patch]", error instanceof Error ? error.message : error);
         return errorResponse(503, "unavailable");

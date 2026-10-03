@@ -1,5 +1,37 @@
 # Değişiklik Günlüğü
 
+## 0.3.12 — 2026-10-03
+
+### Plan rozeti ve destekte plan önceliği
+
+- Plus ve Pro rozeti: `public_profiles/{email}.planBadge = { plan, until }`
+  alanını yalnızca sunucu yazar (kurallar tarayıcıyı dışarıda tutar). Rozet
+  Paddle aboneliği kaydettiğinde, ekip planı değiştirdiğinde, abone gizleyip
+  gösterdiğinde ve Fiyatlandırma ile Hesap Ayarları açıldığında (en fazla on
+  dakikada bir) planla eşitlenir. Okuyan taraf `until`'a bakar: ödenen dönem
+  artı ödeme toleransı ya da ekibin tanımladığı planın bitişi geçince rozet
+  yazma gerekmeden kaybolur.
+- Rozet profil penceresinde, kullanıcı kartında, DM'deki profil panelinde ve
+  Hesap Ayarları'nda adın yanında görünür. Hangi hesaplarda rozet olacağını
+  `plan_badge` kitlesi belirler (şimdilik yalnızca ekip; erken erişimde Pro
+  ve ekip; herkes).
+- Gizleme: Fiyatlandırma'daki hesap kutusunda ve Hesap Ayarları › Profil'de
+  bir anahtar; `POST /api/plans { action: "badge", hidden }` →
+  `subscriptions/{email}.planBadgeHidden` (yalnızca var olan kayda yazar).
+  `/api/account/profile` artık rozetin durumunu da döndürüyor.
+- Destek: talepler yazarın planını (`authorPlan`) saklıyor. Yönetici
+  kutusunda plan çipi görünüyor; kutu okunmamış → öncelik → plan (Pro, Plus,
+  Ücretsiz) → son mesaj sırasıyla diziliyor. Plus veya Pro'ya geçen biri açık
+  talebine yazınca talep "yüksek"e çıkıyor; ekibin belirlediği öncelik plan
+  yükselmedikçe değişmiyor.
+- Fiyatlandırma: Pro'da "destekte en yüksek öncelik (Plus'tan önce)" ve
+  "Profilinde Pro rozeti" (planlanıyor) satırları.
+- Rol çözümleme `src/lib/server/roles.ts`'e taşındı (testlerin yükleyebildiği
+  sunucu modülleri yönetici modülüne bağlanmasın diye).
+- Testler: rozet hesaplama ve okuma, kitleye göre yazma, gizleme, silinmiş
+  profil, kısma; talep plan önceliği ve kutu sırası; kurallar (tarayıcı rozet
+  yazamaz, gizleme tercihi sunucuda).
+
 ## 0.3.11 — 2026-10-03
 
 ### Hanogt AI ayarları

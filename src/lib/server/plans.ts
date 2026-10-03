@@ -100,6 +100,7 @@ export function normalizeSubscription(record: Record<string, unknown> | null, en
         paddle: paddle?.environment === environment ? paddle : null,
         paddleCustomerId: isPaddleId("customer", record.paddleCustomerId) && record.paddleEnvironment === environment ? record.paddleCustomerId : null,
         paddleCheckout: checkoutOf(record.paddleCheckout, environment),
+        planBadgeHidden: record.planBadgeHidden === true,
     };
 }
 
