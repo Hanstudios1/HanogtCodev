@@ -24,6 +24,18 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.5",
+        version: "v0.3.5",
+        date: "2026-10-03",
+        title: { TR: "Kupon bağlantıları girişten sonra da çalışıyor", EN: "Coupon links keep working after you sign in" },
+        desc: { TR: "Kampanya bağlantısındaki kupon kodu artık giriş yaptıktan sonra kendiliğinden uygulanıyor; eski kupon kodları da ödemede çalışıyor.", EN: "The coupon code in a campaign link is now applied automatically after you sign in, and older coupon codes work at checkout too." },
+        items: [
+            { TR: "Kupon bağlantısıyla gelip giriş yapınca kod kendiliğinden uygulanır.", EN: "Arrive with a coupon link, sign in, and the code is applied for you." },
+            { TR: "Tire ya da alt çizgi içeren eski kupon kodları ödemede de geçerli.", EN: "Older coupon codes with a dash or underscore work at checkout too." },
+            { TR: "Abonelere kuponların yeni aboneliklerde geçerli olduğu söylenir; kartlarda yanıltıcı kupon fiyatı çıkmaz.", EN: "Subscribers are told coupons apply to new subscriptions; no misleading coupon prices on the cards." },
+        ],
+    },
+    {
         id: "v0.3.4",
         version: "v0.3.4",
         date: "2026-10-03",

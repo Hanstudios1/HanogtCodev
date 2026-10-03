@@ -293,7 +293,17 @@ on, and one that doesn't cover the price yet is widened to the mapped prices.
 Saving the price mapping (or creating the catalog) widens every active
 coupon's discount to the newly mapped prices, so codes typed in Paddle's
 checkout keep working too. A link to `/plans?coupon=CODE` applies the code
-once the visitor is signed in.
+once the visitor is signed in (the sign-in links carry it back to the page).
+
+Paddle takes letters and digits only and gives each code to one discount,
+archived ones included. A coupon from before Paddle with `-` or `_`, or one
+whose code another Paddle discount already has (made in Paddle by hand, or a
+deleted coupon's), gets a discount with a code Paddle makes up the first time
+it's used at checkout: the Pricing page applies it by id, only typing the code
+into Paddle's own checkout doesn't. Creating a coupon in the admin panel with a
+code Paddle already has is refused ("Bu kod Paddle'da başka bir indirime
+ait"). Coupons apply to new subscriptions only: plan changes don't carry them,
+so subscribers see a note instead of coupon prices.
 
 ### Troubleshooting
 

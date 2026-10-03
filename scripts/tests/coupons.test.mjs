@@ -48,7 +48,11 @@ function createPaddle(discounts = []) {
         const body = init.body ? JSON.parse(init.body) : null;
         state.calls.push({ method, path: url.pathname, body });
         if (method === "POST" && url.pathname === "/discounts") {
-            const discount = { id: `dsc_01created${String(++created).padStart(16, "0")}`, status: "active", times_used: 0, ...body };
+            // Paddle: one discount per code, archived ones included; null makes one up.
+            const taken = body.code ? state.discounts.find((entry) => entry.code?.toUpperCase() === body.code.toUpperCase()) : null;
+            if (taken) return json(409, { error: { code: "discount_code_conflict", detail: `Discount code conflicts with Discount ID ${taken.id}` } });
+            const id = `dsc_01created${String(++created).padStart(16, "0")}`;
+            const discount = { id, status: "active", times_used: 0, ...body, code: body.code ?? `GEN${String(created).padStart(7, "0")}` };
             state.discounts.push(discount);
             return json(201, { data: discount });
         }
@@ -119,10 +123,24 @@ test("a coupon without a Paddle discount gets one with its code, payments and th
         assert.equal(api.writes().length, 1, "nothing else is created or changed");
     });
 
-    // Codes Paddle can't take (with - or _) can't get a discount.
-    await withBackend(seed({ "plan_coupons/SPRING-20": coupon("SPRING-20") }), { route: createPaddle().route }, async () => {
+    // A code Paddle can't take (with - or _, from before Paddle was connected): Paddle makes one up, the checkout applies it by id.
+    const dashed = createPaddle();
+    await withBackend(seed({ "plan_coupons/SPRING-20": coupon("SPRING-20") }), { route: dashed.route }, async (db) => {
         const { view, record } = await coupons.findCoupon("SPRING-20", null, NOW);
-        await rejectsWith(coupons.couponDiscount(view, record, PRICES.plusMonth), "coupon_invalid");
+        const id = await coupons.couponDiscount(view, record, PRICES.plusMonth);
+        assert.deepEqual(dashed.writes().map((call) => [call.method, call.path, call.body.code]), [["POST", "/discounts", null]]);
+        assert.equal(db.get("plan_coupons/SPRING-20").paddleDiscountId, id);
+    });
+
+    // The code already belongs to another Paddle discount (made in Paddle by hand, or an archived old one): ours gets a made-up code.
+    const taken = createPaddle([{ id: "dsc_01handmadexxxxxxxxxxxxxxxx", status: "archived", code: "WELCOME50", usage_limit: null, times_used: 0, restrict_to: null }]);
+    await withBackend(seed({ "plan_coupons/WELCOME50": coupon("WELCOME50", { plan: "pro" }) }), { route: taken.route }, async (db) => {
+        const { view, record } = await coupons.findCoupon("welcome50", "pro", NOW);
+        const id = await coupons.couponDiscount(view, record, PRICES.proYear);
+        assert.notEqual(id, "dsc_01handmadexxxxxxxxxxxxxxxx", "the other discount isn't adopted: its terms may differ");
+        assert.deepEqual(taken.writes().map((call) => [call.method, call.path, call.body.code]), [["POST", "/discounts", "WELCOME50"], ["POST", "/discounts", null]]);
+        assert.deepEqual(taken.state.discounts.find((entry) => entry.id === id).restrict_to, [PRICES.proMonth, PRICES.proYear]);
+        assert.equal(db.get("plan_coupons/WELCOME50").paddleDiscountId, id);
     });
 });
 
@@ -145,6 +163,14 @@ test("an existing discount is switched back on, widened to a newly mapped price,
         const { view, record } = await coupons.findCoupon("HANOGT20", null, NOW);
         await rejectsWith(coupons.couponDiscount(view, record, PRICES.plusMonth), "coupon_used_up");
         assert.equal(usedUp.writes().length, 0);
+    });
+
+    // Paddle marks a discount "used" once its redemptions are spent.
+    const used = createPaddle([{ id: DISCOUNT, status: "used", usage_limit: null, times_used: 3, restrict_to: null }]);
+    await withBackend(seed({ "plan_coupons/HANOGT20": coupon("HANOGT20", linked) }), { route: used.route }, async () => {
+        const { view, record } = await coupons.findCoupon("HANOGT20", null, NOW);
+        await rejectsWith(coupons.couponDiscount(view, record, PRICES.plusMonth), "coupon_used_up");
+        assert.equal(used.writes().length, 0, "not switched back on");
     });
 
     const expired = createPaddle([{ id: DISCOUNT, status: "expired", restrict_to: null }]);

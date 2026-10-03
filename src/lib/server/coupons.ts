@@ -3,15 +3,15 @@ import "server-only";
 import { isPaddleId } from "@/lib/paddle";
 import { normalizeCouponCode, normalizeCouponRecur, type CouponView, type PaidPlanId } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, isWriteConflict } from "./firebase-rest";
-import { getPaddleConfig, getPaddleSettings } from "./paddle";
+import { PaddleApiError, getPaddleConfig, getPaddleSettings } from "./paddle";
 import {
     couponDiscountId,
     createPaddleDiscount,
     discountRestriction,
     getPaddleDiscount,
-    isPaddleDiscountCode,
     setPaddleDiscountActive,
     setPaddleDiscountPrices,
+    type PaddleDiscountInput,
 } from "./paddle-admin";
 
 /*
@@ -81,14 +81,21 @@ export async function couponDiscount(view: CouponView, record: CouponRecord, pri
     const environment = getPaddleConfig().environment;
     const known = couponDiscountId(record, environment);
     if (!known) {
-        if (!isPaddleDiscountCode(view.code)) throw new CouponError("coupon_invalid");
-        const created = await createPaddleDiscount({
+        const input: PaddleDiscountInput = {
             code: view.code,
             percentOff: view.percentOff,
             plan: view.plan,
             maxUses: typeof record.maxUses === "number" && Number.isInteger(record.maxUses) && record.maxUses > 0 ? record.maxUses : null,
             expiresAt: view.expiresAt,
             recur: view.recur,
+        };
+        // Each code belongs to one Paddle discount, archived ones included (one
+        // made in Paddle by hand, or an old coupon's): ours then gets a code Paddle
+        // makes up. The checkout applies it by id; only typing the code into
+        // Paddle's own checkout finds the other one.
+        const created = await createPaddleDiscount(input).catch((error: unknown) => {
+            if (error instanceof PaddleApiError && error.code === "discount_code_conflict") return createPaddleDiscount({ ...input, checkoutCode: false });
+            throw error;
         });
         try {
             await commitServerMutations([{
@@ -110,14 +117,11 @@ export async function couponDiscount(view: CouponView, record: CouponRecord, pri
         return created;
     }
     const discount = await getPaddleDiscount(known);
-    if (typeof discount.usage_limit === "number" && typeof discount.times_used === "number" && discount.times_used >= discount.usage_limit) {
-        throw new CouponError("coupon_used_up");
-    }
-    if (discount.expires_at && Date.parse(discount.expires_at) <= Date.now()) throw new CouponError("coupon_expired");
-    if (discount.status && discount.status !== "active") {
-        if (discount.status === "expired") throw new CouponError("coupon_expired");
-        await setPaddleDiscountActive(known, true);
-    }
+    // Paddle sets "used" and "expired" itself; only an archived one can be switched back on.
+    const usedUp = typeof discount.usage_limit === "number" && typeof discount.times_used === "number" && discount.times_used >= discount.usage_limit;
+    if (discount.status === "used" || usedUp) throw new CouponError("coupon_used_up");
+    if (discount.status === "expired" || (discount.expires_at && Date.parse(discount.expires_at) <= Date.now())) throw new CouponError("coupon_expired");
+    if (discount.status === "archived") await setPaddleDiscountActive(known, true);
     if (Array.isArray(discount.restrict_to) && !discount.restrict_to.includes(priceId)) {
         const settings = await getPaddleSettings();
         const prices = new Set([...(discountRestriction(view.plan, settings.prices) ?? []), priceId].filter((id) => isPaddleId("price", id)));

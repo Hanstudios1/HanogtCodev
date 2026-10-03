@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Bell, BellRing, Check, Clock, CreditCard, Crown, LoaderCircle, PartyPopper, ShieldCheck, Sparkles, Ticket, Zap } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Header from "@/components/Header";
 import ChangePlanDialog from "@/components/Plans/ChangePlanDialog";
 import { PaddleLoadError, checkoutEventError, closeCheckout, failureMessage, getPaddle, onPaddleEvent, openCheckout } from "@/components/Plans/paddle-js";
@@ -27,6 +27,7 @@ import {
     PLAN_IDS,
     couponAmount,
     discountedPrice,
+    normalizeCouponCode,
     type CouponRecur,
     type CouponView,
     type PaidPlanId,
@@ -106,6 +107,8 @@ const C = {
     couponLabel: { TR: "Kupon kodu", EN: "Coupon code" },
     couponApply: { TR: "Uygula", EN: "Apply" },
     couponSignIn: { TR: "Kupon kullanmak için giriş yap", EN: "Sign in to use a coupon" },
+    couponSignInCode: { TR: "{code} kuponunu kullanmak için giriş yap", EN: "Sign in to use the coupon {code}" },
+    couponSubscribed: { TR: "Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğine ve plan değişikliklerine uygulanmaz.", EN: "Coupons apply to new subscriptions, not to your current one or to plan changes." },
     couponApplied: { TR: "{code} uygulandı: %{percent} indirim · {plans} · {payments}", EN: "{code} applied: {percent}% off · {plans} · {payments}" },
     couponRemove: { TR: "Kaldır", EN: "Remove" },
     couponAllPlans: { TR: "Plus ve Pro", EN: "Plus and Pro" },
@@ -158,7 +161,7 @@ const C = {
     bq4: { TR: "Planımı değiştirebilir miyim?", EN: "Can I change my plan?" },
     ba4: { TR: "Evet. Plus ile Pro arasında ya da aylık ile yıllık ödeme arasında geçebilirsin. Kalan süren için fark orantılı hesaplanır ve onaylamadan önce gösterilir.", EN: "Yes. You can move between Plus and Pro, or between monthly and yearly billing. The difference for the rest of your period is prorated and shown before you confirm." },
     bq5: { TR: "Kupon kodumu nerede kullanırım?", EN: "Where do I use a coupon code?" },
-    ba5: { TR: "Bu sayfada \"Kupon kodun var mı?\"ya bas, kodunu yazıp Uygula'ya bas: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. İstersen kodu ödeme ekranındaki \"İndirim ekle\"ye de yazabilirsin. Kuponun hangi planda ve kaç ödemede geçerli olduğu kod uygulanınca yazılır.", EN: "On this page press \"Have a coupon code?\", enter it and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter it with \"Add discount\" at checkout. Which plan and how many payments it covers is shown once it's applied." },
+    ba5: { TR: "Bu sayfada \"Kupon kodun var mı?\"ya bas, kodunu yazıp Uygula'ya bas: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. İstersen kodu ödeme ekranındaki \"İndirim ekle\"ye de yazabilirsin. Kuponun hangi planda ve kaç ödemede geçerli olduğu kod uygulanınca yazılır. Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğe ya da plan değişikliğine uygulanmaz.", EN: "On this page press \"Have a coupon code?\", enter it and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter it with \"Add discount\" at checkout. Which plan and how many payments it covers is shown once it's applied. Coupons apply to new subscriptions, not to an existing one or to plan changes." },
 } satisfies Record<string, Copy>;
 
 const ACCENT: Record<PlanId, { ring: string; icon: typeof Zap; gradient: string }> = {
@@ -323,6 +326,16 @@ const PADDLE_SETUP_HINTS: Record<string, Copy> = {
 const EXPECTED_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["already_subscribed", "plan_unavailable", "plan_blocked", "rate_limited", "unauthorized", "no_subscription", "no_change", "coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
 const COUPON_ERRORS: ReadonlySet<RequestFailure["error"]> = new Set(["coupon_invalid", "coupon_expired", "coupon_used_up", "coupon_plan"]);
 
+/** The code of a /plans?coupon=CODE link (from a campaign); "" without one. Read on the client only. */
+const readLinkCoupon = () => (new URLSearchParams(window.location.search).get("coupon") ?? "").trim().slice(0, 40);
+const noSubscription = () => () => undefined;
+
+/** Sign-in that comes back here, with a link's coupon code kept so it applies afterwards. */
+function loginHref(linkCoupon: string) {
+    const back = linkCoupon ? `/plans?coupon=${encodeURIComponent(linkCoupon)}` : "/plans";
+    return `/login?callbackUrl=${encodeURIComponent(back)}`;
+}
+
 /** How many payments a coupon covers, in words ("on the first payment"). */
 function couponPayments(recur: CouponRecur): { copy: Copy; vars?: Record<string, number> } {
     return recur === "first" ? { copy: C.couponFirst } : recur === "all" ? { copy: C.couponAll } : { copy: C.couponCount, vars: { count: recur } };
@@ -367,6 +380,8 @@ export default function PlansPage() {
     const [couponInput, setCouponInput] = useState("");
     const [couponError, setCouponError] = useState<Copy | null>(null);
     const couponFromLink = useRef(false);
+    const linkCoupon = useSyncExternalStore(noSubscription, readLinkCoupon, () => "");
+    const signInHref = loginHref(linkCoupon);
     const purchased = useRef<PaidPlanId | null>(null);
 
     useEffect(() => {
@@ -540,7 +555,8 @@ export default function PlansPage() {
         setBusy(null);
     };
 
-    const couponFor = (plan: PaidPlanId) => (coupon && (coupon.plan === "any" || coupon.plan === plan) ? coupon : null);
+    // Only a new subscription's checkout carries a coupon: plan changes don't, so a subscriber sees no coupon prices.
+    const couponFor = (plan: PaidPlanId) => (!liveSubscription && coupon && (coupon.plan === "any" || coupon.plan === plan) ? coupon : null);
 
     const applyCoupon = async (value: string) => {
         const code = value.trim().toUpperCase();
@@ -567,11 +583,9 @@ export default function PlansPage() {
 
     // A link with ?coupon=CODE (e.g. from a campaign) applies the code once the visitor is signed in.
     useEffect(() => {
-        if (!signedIn || !checkout || couponFromLink.current) return;
-        const code = new URLSearchParams(window.location.search).get("coupon");
-        if (!code) return;
+        if (!signedIn || !checkout || liveSubscription || couponFromLink.current || !linkCoupon) return;
         couponFromLink.current = true;
-        void Promise.resolve().then(() => applyCoupon(code));
+        void Promise.resolve().then(() => applyCoupon(linkCoupon));
     });
 
     const startCheckout = async (plan: PaidPlanId) => {
@@ -666,7 +680,7 @@ export default function PlansPage() {
         const interval = intervalFor(plan);
         const loading = busy === `checkout:${plan}`;
         if (!me) {
-            return <Link href="/login?callbackUrl=%2Fplans" className={primaryButton(gradient)}><CreditCard className="h-4 w-4" aria-hidden />{tx(C.signInToBuy)}</Link>;
+            return <Link href={signInHref} className={primaryButton(gradient)}><CreditCard className="h-4 w-4" aria-hidden />{tx(C.signInToBuy)}</Link>;
         }
         if (me.blocked) return <p className="flex h-11 items-center justify-center rounded-xl border border-zinc-200 text-[14px] font-bold text-zinc-500 dark:border-white/10">{tx(C.unavailableBlocked)}</p>;
         if (liveSubscription && billing?.plan) {
@@ -700,7 +714,7 @@ export default function PlansPage() {
 
     const waitlistButton = (plan: PaidPlanId, gradient: string) => {
         const waiting = Boolean(me?.waitlist.includes(plan));
-        if (!me) return <Link href="/login?callbackUrl=%2Fplans" className={primaryButton(gradient)}><Bell className="h-4 w-4" aria-hidden />{tx(C.signInToNotify)}</Link>;
+        if (!me) return <Link href={signInHref} className={primaryButton(gradient)}><Bell className="h-4 w-4" aria-hidden />{tx(C.signInToNotify)}</Link>;
         return (
             <>
                 <button
@@ -812,9 +826,13 @@ export default function PlansPage() {
                     {anyOnSale ? (
                         <div className="mx-auto mb-5 flex max-w-2xl flex-col items-center gap-2" data-coupon>
                             {!me ? (
-                                <Link href="/login?callbackUrl=%2Fplans" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
-                                    <Ticket className="h-4 w-4" aria-hidden />{tx(C.couponSignIn)}
+                                <Link href={signInHref} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
+                                    <Ticket className="h-4 w-4" aria-hidden />{normalizeCouponCode(linkCoupon) ? tx(C.couponSignInCode, { code: normalizeCouponCode(linkCoupon) }) : tx(C.couponSignIn)}
                                 </Link>
+                            ) : liveSubscription ? (
+                                <p className="inline-flex items-center gap-1.5 text-center text-[12.5px] text-zinc-500 dark:text-zinc-400" data-coupon-subscribed>
+                                    <Ticket className="h-4 w-4 shrink-0" aria-hidden />{tx(C.couponSubscribed)}
+                                </p>
                             ) : coupon ? (
                                 <p className="flex flex-wrap items-center justify-center gap-2 rounded-2xl bg-emerald-500/10 px-4 py-2 text-center text-[13.5px] font-semibold text-emerald-700 dark:text-emerald-300" data-coupon-applied>
                                     <Ticket className="h-4 w-4 shrink-0" aria-hidden />

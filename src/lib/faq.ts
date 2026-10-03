@@ -206,8 +206,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.billing,
         question: { TR: "Kupon (indirim) kodumu nerede kullanırım?", EN: "Where do I use a coupon (discount) code?" },
         answer: {
-            TR: "Fiyatlandırma sayfasında “Kupon kodun var mı?”ya basıp kodunuzu yazın ve Uygula'ya basın: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. Kodu ödeme ekranındaki “İndirim ekle” ile de girebilirsiniz. Kodun hangi planlarda ve kaç ödeme için (yalnızca ilk ödeme, her ödeme ya da ilk birkaç ödeme) geçerli olduğu kod uygulanınca yazılır. Kod, ödeme tamamlanmadan önce girilmelidir.",
-            EN: "On the Pricing page, press “Have a coupon code?”, enter your code and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter the code with “Add discount” at checkout. Which plans the code works for and for how many payments (the first only, every payment or the first few) is shown once it's applied. The code must be entered before the payment is completed.",
+            TR: "Fiyatlandırma sayfasında “Kupon kodun var mı?”ya basıp kodunuzu yazın ve Uygula'ya basın: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. Kodu ödeme ekranındaki “İndirim ekle” ile de girebilirsiniz. Kodun hangi planlarda ve kaç ödeme için (yalnızca ilk ödeme, her ödeme ya da ilk birkaç ödeme) geçerli olduğu kod uygulanınca yazılır. Kod, ödeme tamamlanmadan önce girilmelidir; kuponlar yeni aboneliklerde geçerlidir, mevcut aboneliğe ya da plan değişikliğine uygulanmaz.",
+            EN: "On the Pricing page, press “Have a coupon code?”, enter your code and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter the code with “Add discount” at checkout. Which plans the code works for and for how many payments (the first only, every payment or the first few) is shown once it's applied. The code must be entered before the payment is completed; coupons apply to new subscriptions, not to an existing one or to plan changes.",
         },
     },
     {

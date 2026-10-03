@@ -1,5 +1,29 @@
 # Değişiklik Günlüğü
 
+## 0.3.5 — 2026-10-03
+
+### Kuponlar: kampanya bağlantısı, eski kodlar, aboneler
+
+- `/plans?coupon=KOD` bağlantısıyla gelen ziyaretçi giriş yapınca kod
+  kayboluyordu: giriş bağlantıları kodu geri dönüş adresinde taşıyor, kupon
+  bölümü "KOD kuponunu kullanmak için giriş yap" diyor ve kod girişten sonra
+  kendiliğinden uygulanıyor (bağlantıdaki geçersiz metin gösterilmiyor).
+- Paddle'dan önce oluşturulmuş, `-` ya da `_` içeren kuponlar sayfada
+  uygulanıp ödemede "geçerli değil" diye düşüyordu: artık bu kuponların Paddle
+  indiriminin kodunu Paddle üretiyor, ödeme indirimi kimliğiyle uyguluyor.
+- Kod Paddle'da başka bir indirime aitse (elle oluşturulmuş ya da silinmiş
+  eski bir kuponun, arşivlenmiş olsa da; Paddle `discount_code_conflict`):
+  ödeme bu kupon için Paddle'ın ürettiği kodla yeni bir indirim açıyor,
+  öbür indirime dokunmuyor; yönetici panelinde aynı kodla yeni kupon
+  oluşturmak "Bu kod Paddle'da başka bir indirime ait" açıklamasıyla
+  reddediliyor.
+- Paddle'ın "used" (kullanım hakkı bitmiş) durumundaki indirimi yeniden
+  açılmaya çalışılmıyor; "Bu kuponun kullanım hakkı dolmuş" deniyor.
+- Aboneler kartlarda kuponlu fiyat görüyordu, oysa plan değişikliğine kupon
+  uygulanmıyor: abonelere kupon fiyatı gösterilmiyor, kupon bölümünde
+  "Kuponlar yeni aboneliklerde geçerlidir" yazıyor; SSS ve Hanogt AI bilgisi
+  güncellendi.
+
 ## 0.3.4 — 2026-10-03
 
 ### Kuponlar abonelikte çalışıyor; Fiyatlandırma'da kupon bölümü

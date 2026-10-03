@@ -88,6 +88,7 @@ export class PaddleAdminError extends Error {
  */
 export function paddleAdminFailure(error: unknown): { status: number; code: AdminErrorCode } | null {
     if (error instanceof PaddleAdminError) return { status: ERROR_STATUS[error.code], code: error.code };
+    if (error instanceof PaddleApiError && error.code === "discount_code_conflict") return { status: 409, code: "paddle_coupon_taken" };
     if (error instanceof PaddleApiError) return error.code === "not_configured" ? { status: 409, code: "paddle_unconfigured" } : { status: 424, code: "paddle_error" };
     return null;
 }
@@ -674,6 +675,12 @@ export type PaddleDiscountInput = {
     expiresAt: Date | string | null;
     /** The first payment only (the default), every payment, or the first 2–24 billing periods. */
     recur?: CouponRecur;
+    /**
+     * false: Paddle makes up the discount's code (ours is taken by another
+     * Paddle discount). A code that isn't letters and digits always gets one
+     * made up; the Pricing page applies the discount by its id either way.
+     */
+    checkoutCode?: boolean;
 };
 
 /** Paddle's recur fields for a coupon's setting. */
@@ -690,7 +697,8 @@ export async function createPaddleDiscount(input: PaddleDiscountInput): Promise<
         description: `Hanogt ${input.code}`,
         type: "percentage",
         enabled_for_checkout: true,
-        code: input.code,
+        // null: Paddle makes up a unique code.
+        code: input.checkoutCode !== false && isPaddleDiscountCode(input.code) ? input.code : null,
         ...discountRecurrence(input.recur),
         usage_limit: input.maxUses,
         expires_at: rfc3339(input.expiresAt),

@@ -221,6 +221,7 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
     operator_required: "Satışları herkese açmadan önce İşletme bilgilerini (yasal ad ve iletişim e-postası) doldurun; Paddle'ın site incelemesi ve yasal metinler bunu istiyor.",
     paddle_error: "Paddle isteği tamamlanamadı.",
     paddle_coupon_code: "Paddle'a aktarılan kupon kodları yalnızca harf ve rakam içerebilir.",
+    paddle_coupon_taken: "Bu kod Paddle'da başka bir indirime ait; başka bir kod seçin.",
     invalid_price_id: "Geçersiz Paddle fiyat kimliği.",
     price_mismatch: "Seçilen Paddle fiyatı bu plana veya faturalama aralığına uymuyor.",
     already_linked: "Bu Paddle müşterisi başka bir hesaba bağlı.",

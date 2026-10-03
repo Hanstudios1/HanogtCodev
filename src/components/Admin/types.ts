@@ -80,6 +80,7 @@ export type AdminErrorCode =
     | "operator_required"
     | "paddle_error"
     | "paddle_coupon_code"
+    | "paddle_coupon_taken"
     | "invalid_price_id"
     | "price_mismatch"
     | "already_linked"
