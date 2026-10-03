@@ -1,6 +1,6 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { getActiveSession } from "@/lib/server/active-session";
-import { aiUsageFor } from "@/lib/server/ai-usage";
+import { aiUsageFor, planUsageFor } from "@/lib/server/ai-usage";
 import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
 import { getSubscription } from "@/lib/server/plans";
 import { memoryRateLimit } from "@/lib/server/rate-limit";
@@ -23,8 +23,10 @@ function json(payload: unknown, status = 200, headers: Record<string, string> = 
  * from its headers. A purchase Paddle never reported is looked up here too
  * (throttled), so someone who pays and comes straight to Hanogt AI sees the
  * new plan. Only reads: no database write per request, a per-instance guard.
+ * ?full=1 adds what else the plan counts (PlanUsage: projects, games, groups,
+ * connections) for the Hanogt AI settings page.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
     const active = await getActiveSession();
     if (!active) return json({ error: "Giriş yapın.", code: "auth_required" }, 401);
     const rate = memoryRateLimit(`ai-usage:${active.email}`, 30, 60_000);
@@ -32,7 +34,8 @@ export async function GET() {
     try {
         const stored = await getSubscription(active.email);
         const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
-        return json(await aiUsageFor(active.email, subscription));
+        const full = request.nextUrl.searchParams.get("full") === "1";
+        return json(full ? await planUsageFor(active.email, subscription) : await aiUsageFor(active.email, subscription));
     } catch {
         return json({ error: "Kullanım bilgisi şu anda okunamadı.", code: "unavailable" }, 503);
     }

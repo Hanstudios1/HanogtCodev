@@ -21,6 +21,7 @@ import { languageFromFileName } from "@/lib/runtimes/languages";
 import { useI18n } from "@/lib/i18n";
 import { CHAT_COPY, CONNECTION_FAILURES, MAX_ATTACHMENT_BYTES, MAX_INPUT, NOTICES } from "./chat-copy";
 import { useAiConnections } from "./connections-store";
+import { useAiSettings } from "./ai-settings-store";
 import { useAiUsage } from "./usage-store";
 
 export interface ChatLaunch {
@@ -76,10 +77,13 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     // knows whether this browser is signed in, and the core answers otherwise.
     const tryModel = status !== "unauthenticated";
     const userName = session?.user?.name?.trim() || null;
-    const agentMode = useAgentMode();
+    // The account's Hanogt AI settings: defaults for this device until it makes its own choice.
+    const aiSettings = useAiSettings(signedIn ? session?.user?.email ?? null : null);
+    const accountDefaults = aiSettings.data?.settings ?? null;
+    const agentMode = useAgentMode(accountDefaults?.agentMode);
     const { granted, grant, revokeAll } = useAgentGrants(agentUserKey(session?.user?.email ?? null));
     // The person's own provider connections (Plus/Pro) and the one chosen on this device.
-    const connections = useAiConnections(signedIn ? session?.user?.email ?? null : null);
+    const connections = useAiConnections(signedIn ? session?.user?.email ?? null : null, accountDefaults?.defaultModel ?? null);
     const { items: connectionItems, refresh: refreshConnections, select: selectConnection, selectedId: selectedConnection } = connections;
     // Messages used today (the usage meter); every answer updates it from its headers.
     const usage = useAiUsage(signedIn ? session?.user?.email ?? null : null);
@@ -92,11 +96,14 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     const { create, update, remove, clearAll } = useConversationActions();
     const editorContext = useAiContext();
     const active = useMemo(() => conversations.find((conversation) => conversation.id === activeId) ?? null, [conversations, activeId]);
-    const [draftMode, setDraftMode] = useState<AiMode>("general");
+    // A new chat starts in the account's default mode until one is picked here.
+    const [pickedMode, setDraftMode] = useState<AiMode | null>(null);
+    const draftMode: AiMode = pickedMode ?? accountDefaults?.defaultMode ?? "general";
     const mode = active?.mode ?? draftMode;
     const [input, setInput] = useState("");
     const [streaming, setStreaming] = useState<Streaming | null>(null);
-    const [attachEditorFile, setAttachEditorFile] = useState(true);
+    const [attachChoice, setAttachEditorFile] = useState<boolean | null>(null);
+    const attachEditorFile = attachChoice ?? accountDefaults?.attachEditorFile ?? true;
     const [attachment, setAttachment] = useState<FileAttachment | null>(null);
     const [attachError, setAttachError] = useState<string | null>(null);
     const controllerRef = useRef<AbortController | null>(null);
@@ -395,11 +402,12 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     const newChat = useCallback(() => {
         controllerRef.current?.abort();
         setActiveConversation(null);
-        setDraftMode(mode);
+        // A new chat starts in the default mode (the account's Hanogt AI settings, else General).
+        setDraftMode(null);
         setInput("");
         setAttachment(null);
         setAttachError(null);
-    }, [mode]);
+    }, []);
 
     const switchMode = useCallback((next: AiMode) => {
         if (busy || next === mode) return;

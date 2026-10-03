@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.11",
+        version: "v0.3.11",
+        date: "2026-10-03",
+        title: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" },
+        desc: { TR: "Hanogt AI'ın seni nasıl yanıtlayacağını kendin belirle: talimatlar, üslup, uzunluk, dil ve yeni sohbetlerin varsayılanları.", EN: "Decide how Hanogt AI answers you: instructions, tone, length, language and how new chats start." },
+        items: [
+            { TR: "Hanogt AI'a kendini tanıt ve nasıl yanıt vermesini istediğini yaz; her yanıtta dikkate alınır.", EN: "Tell Hanogt AI about yourself and how you want answers; it's considered in every reply." },
+            { TR: "Üslup, yanıt uzunluğu ve sabit bir yanıt dili seç.", EN: "Choose the tone, answer length and a fixed answer language." },
+            { TR: "Yeni sohbetin modu, varsayılan model ve ajan modu hesabınla saklanır.", EN: "A new chat's mode, the default model and the agent mode are kept with your account." },
+            { TR: "Sohbetlerini dışa aktar, sil ya da çıkış yapınca bu cihazdan silinmesini seç.", EN: "Export or delete your chats, or have them deleted from this device when you sign out." },
+        ],
+    },
+    {
         id: "v0.3.10",
         version: "v0.3.10",
         date: "2026-10-03",

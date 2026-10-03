@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { prepareSignOut } from "@/lib/ai/sign-out";
 import { useEffect, useRef, useState } from "react";
 import type { StaffRole } from "@/components/Admin/types";
 import NotificationCenter, { useUnreadNotifications } from "@/components/NotificationCenter";
@@ -238,6 +239,7 @@ export default function Header() {
 
     const signOutNow = () => {
         reportPresenceOffline();
+        prepareSignOut();
         void signOut({ callbackUrl: "/" });
     };
 

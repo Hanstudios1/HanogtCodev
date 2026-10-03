@@ -259,6 +259,7 @@
     "tr": "Hanogt AI",
     "files": [
       "src/app/about/page.tsx",
+      "src/app/account-settings/page.tsx",
       "src/app/privacy-policy/page.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
@@ -538,6 +539,7 @@
       "src/components/Editor/PublishDialog.tsx",
       "src/components/Editor/WebPreview.tsx",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/HanogtAI/ConnectionsDialog.tsx",
       "src/components/HanogtAI/UsageMeter.tsx",
       "src/components/News/MarketsStrip.tsx",
@@ -1058,7 +1060,8 @@
     "files": [
       "src/app/account-settings/page.tsx",
       "src/components/Editor/CollabChat.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
   "1ttsc6ef33j": {
@@ -1111,6 +1114,39 @@
   "8qhs1sjteg": {
     "en": "Open editor settings",
     "tr": "Editör ayarlarını aç",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "24an0rwrcju": {
+    "en": "Hanogt AI settings",
+    "tr": "Hanogt AI ayarları",
+    "files": [
+      "src/app/account-settings/page.tsx",
+      "src/components/ChangelogModal.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx",
+      "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "6tu7xzs061": {
+    "en": "Choose how Hanogt AI answers you (instructions, tone, length, language), how new chats start, and manage your chat history.",
+    "tr": "Hanogt AI'ın seni nasıl yanıtlayacağını (talimatlar, üslup, uzunluk, dil), yeni sohbetlerin varsayılanlarını ve sohbet geçmişini yönet.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "25hv2cvwxah": {
+    "en": "Open Hanogt AI settings",
+    "tr": "Hanogt AI ayarlarını aç",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "2c3pphr6x66": {
+    "en": "My usage",
+    "tr": "Kullanımım",
     "files": [
       "src/app/account-settings/page.tsx"
     ]
@@ -1519,6 +1555,13 @@
       "src/app/account-settings/page.tsx"
     ]
   },
+  "2cn5nplfmku": {
+    "en": "Instructions, tone, defaults, usage",
+    "tr": "Talimatlar, üslup, varsayılanlar, kullanım",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
   "1z3udzc4a88": {
     "en": "Data",
     "tr": "Veri",
@@ -1576,6 +1619,7 @@
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/JoinGroupView.tsx",
       "src/components/HanogtAI/AgentCard.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/News/AiRankings.tsx",
       "src/components/Social/SocialShell.tsx"
     ]
@@ -3521,6 +3565,7 @@
       "src/components/Groups/workspace/FilesPanel.tsx",
       "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/Guide/book-content.ts",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/HanogtAI/ConnectionsDialog.tsx",
       "src/components/Social/dm/DmMessages.tsx",
       "src/components/StatusMenu.tsx"
@@ -11498,6 +11543,7 @@
     "files": [
       "src/app/settings/page.tsx",
       "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/Social/dm/DmComposer.tsx"
     ]
   },
@@ -22018,6 +22064,41 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "1dnktix905r": {
+    "en": "Decide how Hanogt AI answers you: instructions, tone, length, language and how new chats start.",
+    "tr": "Hanogt AI'ın seni nasıl yanıtlayacağını kendin belirle: talimatlar, üslup, uzunluk, dil ve yeni sohbetlerin varsayılanları.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "ru0o03lb8o": {
+    "en": "Tell Hanogt AI about yourself and how you want answers; it's considered in every reply.",
+    "tr": "Hanogt AI'a kendini tanıt ve nasıl yanıt vermesini istediğini yaz; her yanıtta dikkate alınır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2a3aeupuzfp": {
+    "en": "Choose the tone, answer length and a fixed answer language.",
+    "tr": "Üslup, yanıt uzunluğu ve sabit bir yanıt dili seç.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1bgb9syetdg": {
+    "en": "A new chat's mode, the default model and the agent mode are kept with your account.",
+    "tr": "Yeni sohbetin modu, varsayılan model ve ajan modu hesabınla saklanır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "25ek76o6nc4": {
+    "en": "Export or delete your chats, or have them deleted from this device when you sign out.",
+    "tr": "Sohbetlerini dışa aktar, sil ya da çıkış yapınca bu cihazdan silinmesini seç.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "hrwa2wvv25": {
@@ -32614,6 +32695,375 @@
       "src/lib/nav.ts"
     ]
   },
+  "eqwfanjh6o": {
+    "en": "Back to Hanogt AI",
+    "tr": "Hanogt AI'a dön",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "16o6tugi70f": {
+    "en": "Choose how Hanogt AI answers you and how new chats start. Settings are kept with your account; your chats stay in this browser only.",
+    "tr": "Hanogt AI'ın seni nasıl yanıtlayacağını ve yeni sohbetlerin nasıl başlayacağını seç. Ayarlar hesabınla saklanır; sohbetlerin yalnızca bu tarayıcıda kalır.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "5cg26vn8l9": {
+    "en": "Sign in to change your Hanogt AI settings.",
+    "tr": "Hanogt AI ayarları için giriş yap.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "cd7z4wdl9o": {
+    "en": "Loading settings…",
+    "tr": "Ayarlar yükleniyor…",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1fv8z6ck1k7": {
+    "en": "Settings couldn't be loaded.",
+    "tr": "Ayarlar yüklenemedi.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1zr40g65cyq": {
+    "en": "Personalization",
+    "tr": "Kişiselleştirme",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "mgw411b38j": {
+    "en": "Hanogt AI considers these in every answer; they can't change its safety rules.",
+    "tr": "Hanogt AI bunları her yanıtta dikkate alır; güvenlik kurallarını değiştiremezler.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "26vrusxkm68": {
+    "en": "What should Hanogt AI know about you?",
+    "tr": "Hanogt AI senin hakkında neyi bilsin?",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "uq14zatz5g": {
+    "en": "E.g. I'm a student learning Python and game development.",
+    "tr": "Örn. Lise öğrencisiyim, Python ve oyun geliştirme öğreniyorum.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "213eldj687h": {
+    "en": "How should it answer?",
+    "tr": "Nasıl yanıt versin?",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "5kqvvnoifz": {
+    "en": "E.g. Start with a short summary, then explain step by step; comment the code.",
+    "tr": "Örn. Önce kısa özet ver, sonra adım adım anlat; kodda yorum satırı kullan.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "9y8pybjpvx": {
+    "en": "{count} / {max}",
+    "tr": "{count} / {max}",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1a55ixkrzlo": {
+    "en": "Up to {max} characters each on {plan}.",
+    "tr": "{plan} planında her alan en fazla {max} karakter.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1ni64rjlvtc": {
+    "en": "Tone",
+    "tr": "Üslup",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "165pz7586zb": {
+    "en": "Answer length",
+    "tr": "Yanıt uzunluğu",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "apl85jmk19": {
+    "en": "Answer language",
+    "tr": "Yanıt dili",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "278ctmn4kcv": {
+    "en": "The site's language (now {name})",
+    "tr": "Sitenin dili (şu an {name})",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "xh5j0x5p18": {
+    "en": "New chats start with these. The agent mode and model you pick on a device win over these defaults there.",
+    "tr": "Yeni sohbetler bu ayarlarla başlar. Bu cihazda seçtiğin ajan modu ve model, buradaki varsayılanlardan önce gelir.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "16cdt8vwojf": {
+    "en": "Default answer mode",
+    "tr": "Varsayılan yanıt modu",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1py52ee4wfc": {
+    "en": "Default model",
+    "tr": "Varsayılan model",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "zf0rduxhdp": {
+    "en": "Hanogt AI (default)",
+    "tr": "Hanogt AI (varsayılan)",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "283osynq1l": {
+    "en": "Default agent mode",
+    "tr": "Varsayılan ajan modu",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "eybupnuhs2": {
+    "en": "Attach the open editor file to questions",
+    "tr": "Açık editör dosyasını sorulara ekle",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "7qkzm429yr": {
+    "en": "When a file is open in the editor, Hanogt AI reads it (up to your plan's length).",
+    "tr": "Editörde açık dosya varsa Hanogt AI onu okur (planına göre en fazla belli bir uzunluk).",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "j1biijznj3": {
+    "en": "Saved.",
+    "tr": "Kaydedildi.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "7i5flxpm6d": {
+    "en": "You have unsaved changes.",
+    "tr": "Kaydedilmemiş değişiklikler var.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1p6ptfkzu26": {
+    "en": "This field can be at most {limit} characters on your plan.",
+    "tr": "Bu alan planında en fazla {limit} karakter olabilir.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1uyb2g2so3j": {
+    "en": "Couldn't save ({code}). Try again in a moment.",
+    "tr": "Kaydedilemedi ({code}). Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "3y104htn2f": {
+    "en": "History and privacy",
+    "tr": "Geçmiş ve gizlilik",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1z6wsyvsccv": {
+    "en": "Your chats aren't stored on the server; they're kept in this browser only.",
+    "tr": "Sohbetlerin sunucuya kaydedilmez; yalnızca bu tarayıcıda saklanır.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "zbqy4oyf70": {
+    "en": "{count} chats in this browser.",
+    "tr": "Bu tarayıcıda {count} sohbet var.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1jn7mjy092m": {
+    "en": "Export chats (JSON)",
+    "tr": "Sohbetleri dışa aktar (JSON)",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1n9jh19l0ai": {
+    "en": "Delete all chats",
+    "tr": "Tüm sohbetleri sil",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "16lrsozrah3": {
+    "en": "Delete all Hanogt AI chats in this browser? This can't be undone.",
+    "tr": "Bu tarayıcıdaki tüm Hanogt AI sohbetleri silinsin mi? Bu geri alınamaz.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "159s6wqxb1t": {
+    "en": "Chats deleted.",
+    "tr": "Sohbetler silindi.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "285f9ba794b": {
+    "en": "Delete this device's chats when I sign out",
+    "tr": "Çıkış yapınca bu cihazdaki sohbetleri sil",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "gqdnf2kgak": {
+    "en": "A device setting: it applies to this browser only.",
+    "tr": "Bu bir cihaz ayarıdır; yalnızca bu tarayıcıda geçerli.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "u6hqzdyk8n": {
+    "en": "Usage",
+    "tr": "Kullanım",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "qemzy8l3cy": {
+    "en": "Usage can't be read right now.",
+    "tr": "Kullanım şu anda okunamadı.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "1f7j4sdefip": {
+    "en": "Early access",
+    "tr": "Erken erişim",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1h9c1cne8v9": {
+    "en": "New features open to the Hanogt team first, then to Pro subscribers in early access, and finally to everyone.",
+    "tr": "Yeni özellikler önce Hanogt ekibine, sonra erken erişimle Pro abonelerine, en son herkese açılır.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "nfosftyzyk": {
+    "en": "Open to you",
+    "tr": "Sana açık",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "a1pp6obbkc": {
+    "en": "Not open yet",
+    "tr": "Henüz açık değil",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "tbp1gunicu": {
+    "en": "Early access comes with Pro.",
+    "tr": "Erken erişim Pro planına dahil.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "bf1sp7qda4": {
+    "en": "See plans",
+    "tr": "Planları gör",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/ConnectionsDialog.tsx"
+    ]
+  },
+  "dlnid2020k": {
+    "en": "All your benefits",
+    "tr": "Tüm hakların",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "jy5ya4dnaf": {
+    "en": "Balanced",
+    "tr": "Dengeli",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "5rz3oms88y": {
+    "en": "Friendly",
+    "tr": "Samimi",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1wcw3kmhpbi": {
+    "en": "Professional",
+    "tr": "Profesyonel",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "vm3w45u4sb": {
+    "en": "Short",
+    "tr": "Kısa",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1yqnq4foavx": {
+    "en": "Normal",
+    "tr": "Normal",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/lib/support.ts"
+    ]
+  },
+  "12uxoxlp49g": {
+    "en": "Detailed",
+    "tr": "Ayrıntılı",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
   "me8zhz4yrb": {
     "en": "Open in editor",
     "tr": "Editörde aç",
@@ -33126,13 +33576,6 @@
       "src/components/HanogtAI/ConnectionsDialog.tsx"
     ]
   },
-  "zf0rduxhdp": {
-    "en": "Hanogt AI (default)",
-    "tr": "Hanogt AI (varsayılan)",
-    "files": [
-      "src/components/HanogtAI/ChatComposer.tsx"
-    ]
-  },
   "285fmi10j7x": {
     "en": "Hanogt's own language model; uses your daily messages.",
     "tr": "Hanogt'un kendi dil modeli; günlük mesaj hakkını kullanır.",
@@ -33325,13 +33768,6 @@
       "src/components/HanogtAI/ChatSidebar.tsx"
     ]
   },
-  "1n9jh19l0ai": {
-    "en": "Delete all chats",
-    "tr": "Tüm sohbetleri sil",
-    "files": [
-      "src/components/HanogtAI/ChatSidebar.tsx"
-    ]
-  },
   "2a6t4xzeei8": {
     "en": "Hide sidebar",
     "tr": "Kenar çubuğunu gizle",
@@ -33433,13 +33869,6 @@
   "2efxp9j9gdp": {
     "en": "Connections outside your plan aren't deleted; you can use them again if you upgrade.",
     "tr": "Planının kapsamadığı bağlantılar silinmez; planını yükseltirsen yeniden kullanabilirsin.",
-    "files": [
-      "src/components/HanogtAI/ConnectionsDialog.tsx"
-    ]
-  },
-  "bf1sp7qda4": {
-    "en": "See plans",
-    "tr": "Planları gör",
     "files": [
       "src/components/HanogtAI/ConnectionsDialog.tsx"
     ]
@@ -33905,13 +34334,6 @@
   "ajy9kya7wk": {
     "en": "Loading usage…",
     "tr": "Kullanım yükleniyor…",
-    "files": [
-      "src/components/HanogtAI/UsageMeter.tsx"
-    ]
-  },
-  "qemzy8l3cy": {
-    "en": "Usage can't be read right now.",
-    "tr": "Kullanım şu anda okunamadı.",
     "files": [
       "src/components/HanogtAI/UsageMeter.tsx"
     ]
@@ -38167,6 +38589,13 @@
       "src/lib/nav.ts"
     ]
   },
+  "jguju5iwha": {
+    "en": "Hanogt AI Settings",
+    "tr": "Hanogt AI Ayarları",
+    "files": [
+      "src/lib/ai/agent-tools.ts"
+    ]
+  },
   "2d3sadhldsn": {
     "en": "Editor Settings",
     "tr": "Editör Ayarları",
@@ -39201,6 +39630,13 @@
   "26fo5divmys": {
     "en": "In **Agent mode** Hanogt AI can do these things with your session and the site's own features: summarise your profile, create a group, open the code it wrote in the Code Editor, create a game project from a template and open pages.\n• The **Agent** menu next to the message box: **Off** (explain only), **Ask every time** (default) or **Automatic for safe actions** (opening pages and editor tabs runs without asking; creating things still asks).\n• Every action is first shown on a confirmation card; you can edit the details (e.g. the group or file name) and choose **Allow**, **Always allow this session** or **Deny**. Reading your profile is asked once per session.\n• I **never** do sensitive things such as deleting, passwords, two-factor authentication, admin work or messaging other people; I explain how you can do them.\n• Account actions need you to be signed in.",
     "tr": "**Ajan modunda** Hanogt AI, senin oturumunla ve sitenin kendi işlevleriyle şu işleri yapabilir: profilini özetlemek, grup kurmak, yazdığı kodu Kod Editörü'nde açmak, hazır şablondan oyun projesi oluşturmak ve sayfa açmak.\n• Mesaj kutusunun yanındaki **Ajan** menüsü: **Kapalı** (yalnızca anlatır), **Her seferinde sor** (varsayılan) ya da **Güvenli işlemlerde otomatik** (sayfa ve editör sekmesi açmak sormadan yapılır, oluşturma işlemleri yine izin ister).\n• Her işlem önce bir onay kartıyla gösterilir; ayrıntıları (ör. grup adı, dosya adı) düzenleyip **İzin ver**, **Bu oturumda hep izin ver** ya da **Reddet** seçebilirsin. Profilini okumak için oturum başına bir kez izin istenir.\n• Silme, parola, iki adımlı doğrulama, yönetici işlemleri ve başkalarına mesaj göndermek gibi hassas işleri **asla yapmam**; nasıl yapacağını anlatırım.\n• Hesap işlemleri için giriş yapman gerekir.",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "orqewcmmee": {
+    "en": "On the [Hanogt AI settings](/ai/settings) page (the ⚙ button above the chat, or Account Settings › Hanogt AI) you can choose:\n• **Personalization:** what Hanogt AI should know about you and how you want answers ({instructionsFree} characters each on Free, {instructionsPlus} on Plus, {instructionsPro} on Pro), the tone (balanced, friendly, professional), answer length and a fixed answer language. They can't change the safety rules.\n• **Chat defaults:** the answer mode of a new chat, the default model (Hanogt AI or one of your connections), the agent mode and attaching the open editor file. The agent mode and model you pick yourself on a device win over the defaults there.\n• **History and privacy:** your chats stay in your browser only; export them as JSON, delete them all, or have this device's chats deleted when you sign out.\n• **Usage and early access:** today's messages, every benefit of your plan and new features open to you.\nSettings are kept with your account and included when you download your account data.",
+    "tr": "[Hanogt AI ayarları](/ai/settings) sayfasında (sohbetin üstündeki ⚙ düğmesi ya da Hesap Ayarları › Hanogt AI) şunları seçebilirsin:\n• **Kişiselleştirme:** Hanogt AI'ın senin hakkında bilmesini istediklerin ve nasıl yanıt vermesini istediğin (her biri Ücretsiz'de {instructionsFree}, Plus'ta {instructionsPlus}, Pro'da {instructionsPro} karakter), üslup (dengeli, samimi, profesyonel), yanıt uzunluğu ve sabit bir yanıt dili. Bunlar güvenlik kurallarını değiştiremez.\n• **Sohbet varsayılanları:** yeni sohbetin yanıt modu, varsayılan model (Hanogt AI ya da kendi bağlantın), ajan modu ve açık editör dosyasının sorulara eklenmesi. Bir cihazda kendin seçtiğin ajan modu ve model, oradaki varsayılandan önce gelir.\n• **Geçmiş ve gizlilik:** sohbetlerin yalnızca tarayıcında saklanır; JSON olarak dışa aktarabilir, hepsini silebilir ya da çıkış yapınca bu cihazdaki sohbetlerin silinmesini açabilirsin.\n• **Kullanım ve erken erişim:** bugünkü mesajların, planındaki bütün haklar ve sana açık yeni özellikler.\nAyarlar hesabınla saklanır; hesap verilerini indirdiğinde dosyada yer alır.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -46526,13 +46962,6 @@
   "2d7ew6c3wrg": {
     "en": "The ticket is closed. Reopen it to write again.",
     "tr": "Talep kapatıldı. Yazmak için yeniden açın.",
-    "files": [
-      "src/lib/support.ts"
-    ]
-  },
-  "1yqnq4foavx": {
-    "en": "Normal",
-    "tr": "Normal",
     "files": [
       "src/lib/support.ts"
     ]

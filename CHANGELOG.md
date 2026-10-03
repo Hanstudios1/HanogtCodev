@@ -1,5 +1,27 @@
 # Değişiklik Günlüğü
 
+## 0.3.11 — 2026-10-03
+
+### Hanogt AI ayarları
+
+- Yeni `/ai/settings` sayfası (sohbetin üstündeki ⚙, kenar çubuğu ve Hesap
+  Ayarları › Hanogt AI): kişisel talimatlar ("hakkımda" ve "nasıl yanıt
+  versin", planına göre 500 / 1.500 / 3.000 karakter), üslup, yanıt
+  uzunluğu, sabit yanıt dili; yeni sohbetin modu, varsayılan model, ajan modu
+  ve açık dosyanın eklenmesi; sohbetleri JSON olarak dışa aktarma, silme,
+  "çıkışta bu cihazdaki sohbetleri sil"; kullanım ve erken erişim.
+- Ayarlar `users/{email}.aiSettings`'te; yalnızca `PUT /api/ai/settings`
+  yazar (aynı köken, dakikada 20, `exists: true`). Sohbet bunları zaten
+  okuduğu kullanıcı belgesinden alır; talimatlar istemde kurallardan sonra,
+  etiketli veri olarak ve planına göre kırpılarak yer alır.
+- Cihazda seçilen ajan modu ve model hesap varsayılanından önce gelir;
+  Hanogt AI'ı bilerek seçmek de artık hatırlanıyor.
+- Bütün çıkış düğmeleri "çıkışta sohbetleri sil" tercihini uyguluyor.
+- `/api/account/preferences` PUT artık `exists: true` ile yazıyor: silinmiş
+  bir hesabın açık sekmesi belgesini geri getiremiyor.
+- Ajan "Hanogt AI ayarlarını aç" isteğini yeni sayfaya götürüyor; bilgi
+  tabanına ayarlar girdisi eklendi.
+
 ## 0.3.10 — 2026-10-03
 
 ### Plana göre Hanogt AI ve adım adım açılan özellikler

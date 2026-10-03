@@ -10,7 +10,7 @@
  */
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { agentUserKey } from "@/lib/ai/agent-settings";
-import { isConnectionId, isConnectionsState, type AiConnectionView, type AiConnectionsState } from "@/lib/ai/connections";
+import { DEFAULT_CONNECTION, isConnectionId, isConnectionsState, type AiConnectionView, type AiConnectionsState } from "@/lib/ai/connections";
 import { onPlanChange } from "@/lib/plan-signal";
 
 const SELECTED_KEY = "hanogt-ai:connection:v1";
@@ -82,7 +82,8 @@ function parseSelection(raw: string): Record<string, string> {
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
         const out: Record<string, string> = {};
         for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
-            if (/^u[0-9a-z]{1,14}$/.test(key) && isConnectionId(value)) out[key] = value;
+            // A connection id, or "hanogt" when Hanogt AI was chosen on purpose on this device.
+            if (/^u[0-9a-z]{1,14}$/.test(key) && (isConnectionId(value) || value === DEFAULT_CONNECTION)) out[key] = value;
         }
         return out;
     } catch {
@@ -92,8 +93,8 @@ function parseSelection(raw: string): Record<string, string> {
 
 function storeSelection(owner: string, id: string | null) {
     const selection = parseSelection(readSelection());
-    if (id) selection[owner] = id;
-    else delete selection[owner];
+    // Hanogt AI is remembered too, so the account's default model doesn't override the device's choice.
+    selection[owner] = id ?? DEFAULT_CONNECTION;
     const raw = JSON.stringify(selection);
     try {
         window.localStorage.setItem(SELECTED_KEY, raw);
@@ -141,7 +142,11 @@ export type AiConnectionsHandle = {
     apply: (state: AiConnectionsState) => void;
 };
 
-export function useAiConnections(email: string | null): AiConnectionsHandle {
+/**
+ * `fallbackModel`: the account's default model (Hanogt AI settings), used
+ * while nothing was chosen on this device.
+ */
+export function useAiConnections(email: string | null, fallbackModel: string | null = null): AiConnectionsHandle {
     const owner = agentUserKey(email);
     const snapshot = useSyncExternalStore(subscribe, readList, readIdle);
     const selectionRaw = useSyncExternalStore(subscribe, readSelection, readNoSelection);
@@ -158,7 +163,8 @@ export function useAiConnections(email: string | null): AiConnectionsHandle {
 
     const state = owner && snapshot.owner === owner ? snapshot.state : null;
     const items = state?.items ?? NO_ITEMS;
-    const stored = owner ? parseSelection(selectionRaw)[owner] ?? null : null;
+    const chosen = owner ? parseSelection(selectionRaw)[owner] ?? null : null;
+    const stored = chosen === DEFAULT_CONNECTION ? null : chosen ?? (isConnectionId(fallbackModel) ? fallbackModel : null);
     // Until the list is known the stored choice is sent as it is (the server checks it);
     // afterwards a connection that is gone or not in the plan falls back to Hanogt AI.
     const selectedId = !stored ? null : state ? (items.some((item) => item.id === stored && item.active) ? stored : null) : stored;

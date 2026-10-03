@@ -1,6 +1,7 @@
 "use client";
 
-import { Bot, Code2, Cpu, MessageSquarePlus, PanelLeftClose, Pencil, Search, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
+import { Bot, Code2, Cpu, MessageSquarePlus, PanelLeftClose, Pencil, Search, Settings2, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CORE_INFO } from "@/lib/ai/local-engine";
 import type { AiConversation } from "@/lib/ai/conversations";
@@ -20,6 +21,7 @@ const C = {
     confirmDelete: { TR: "Bu sohbet silinsin mi?", EN: "Delete this chat?" },
     confirmDeleteAll: { TR: "Tüm sohbetler silinsin mi?", EN: "Delete all chats?" },
     deleteAll: { TR: "Tüm sohbetleri sil", EN: "Delete all chats" },
+    settings: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" },
     collapse: { TR: "Kenar çubuğunu gizle", EN: "Hide sidebar" },
     close: { TR: "Kapat", EN: "Close" },
     local: { TR: "Sohbetlerin yalnızca bu tarayıcıda saklanır.", EN: "Your chats are stored only in this browser." },
@@ -141,7 +143,10 @@ export default function ChatSidebar({ conversations, activeId, onSelect, onNew, 
             <div className="space-y-1.5 border-t border-zinc-200/80 p-3 text-[11.5px] text-zinc-500 dark:border-white/[0.06] dark:text-zinc-400">
                 <p className="flex items-start gap-1.5"><Bot className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden />{tx(C.local)}</p>
                 <p className="flex items-start gap-1.5"><Cpu className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden />{tx(C.core, { intents: CORE_INFO.intents, accuracy: CORE_INFO.quantizedTestAccuracy })}</p>
-                {conversations.length ? <button type="button" onClick={() => { if (window.confirm(tx(C.confirmDeleteAll))) onClearAll(); }} className="font-semibold text-red-500 hover:underline">{tx(C.deleteAll)}</button> : null}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <Link href="/ai/settings" className="inline-flex items-center gap-1 font-semibold text-violet-600 hover:underline dark:text-violet-300" data-ai-settings-link><Settings2 className="h-3.5 w-3.5" aria-hidden />{tx(C.settings)}</Link>
+                    {conversations.length ? <button type="button" onClick={() => { if (window.confirm(tx(C.confirmDeleteAll))) onClearAll(); }} className="font-semibold text-red-500 hover:underline">{tx(C.deleteAll)}</button> : null}
+                </div>
             </div>
         </aside>
     );

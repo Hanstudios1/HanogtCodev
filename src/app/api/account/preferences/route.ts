@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { parseAccountEditorSettings, type AccountEditorSettings } from "@/lib/editor-settings";
 import { getActiveSession } from "@/lib/server/active-session";
-import { patchServerDocument } from "@/lib/server/firebase-rest";
+import { isMissingDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
@@ -74,10 +74,12 @@ export async function PUT(request: NextRequest) {
 
     try {
         const now = new Date();
-        await patchServerDocument(`users/${email}`, { editorSettings, editorSettingsUpdatedAt: now }, { updateFields: ["editorSettings", "editorSettingsUpdatedAt"] });
+        // Only while the account exists: a deleted account's open tab must not bring its document back.
+        await patchServerDocument(`users/${email}`, { editorSettings, editorSettingsUpdatedAt: now }, { updateFields: ["editorSettings", "editorSettingsUpdatedAt"], exists: true });
         const payload: AccountEditorSettings = { editorSettings, updatedAt: now.toISOString() };
         return NextResponse.json(payload, { headers: jsonSecurityHeaders() });
     } catch (error) {
+        if (isMissingDocument(error)) return errorResponse(401, "unauthorized");
         console.error("[account-preferences:put]", error instanceof Error ? error.message : error);
         return errorResponse(503, "unavailable");
     }

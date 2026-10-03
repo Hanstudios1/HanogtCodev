@@ -256,6 +256,24 @@ first, then the agent's rules (chat), then the person's own preferences or a
 developer's system text (API) as tagged data that can't change the rules, and
 last the knowledge notes, analyzer results and the open file.
 
+### Settings (`/ai/settings`)
+
+The account's settings live in `users/{email}.aiSettings`
+(`src/lib/ai/ai-settings.ts`), written only by `PUT /api/ai/settings` (same
+origin, 20 saves a minute, `exists: true` so a deleted account never comes
+back; browsers can't write the field, `firestore.rules`). They hold the
+person's own instructions ("about me" and "how to answer", each cut to the
+plan's length), tone, answer length, a fixed answer language, and the
+defaults a device starts with: answer mode, model (Hanogt AI or a
+connection), agent mode, attaching the open file. The chat reads them from
+the user document the session check already loaded (no extra read); the
+instructions go into the prompt after the rules as tagged data. The
+developer API never uses them. A choice made on a device (agent mode, model)
+wins over the account default; "delete this device's chats when I sign out"
+is a device setting that every sign-out button applies (`src/lib/ai/sign-out.ts`).
+The page also exports this browser's chats as JSON, deletes them, shows the
+plan's usage (`GET /api/ai/usage?full=1`) and the features open to the person.
+
 ### Features opened step by step
 
 `src/lib/features.ts` lists features with an audience: `off`, `staff`,
@@ -312,6 +330,7 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Server route | `src/app/api/ai/route.ts`, `src/app/api/ai/usage/route.ts` |
 | Limits and usage | `src/lib/server/ai-usage.ts`, `src/lib/ai/usage.ts` |
 | Prompt, provider, knowledge notes | `src/lib/server/hanogt-ai.ts` |
+| Settings | `src/lib/ai/ai-settings.ts`, `src/app/api/ai/settings/route.ts`, `src/components/HanogtAI/AiSettingsPage.tsx`, `ai-settings-store.ts`, `src/lib/ai/sign-out.ts`, `src/app/ai/settings/*` |
 | Feature audiences | `src/lib/features.ts`, `src/lib/server/features.ts`, `src/app/api/features/route.ts`, `src/components/Admin/FeaturesCard.tsx` |
 | Agent registry, validation, permissions, refusals | `src/lib/ai/agent-tools.ts` |
 | Wire protocol (trailer, history) | `src/lib/ai/agent-protocol.ts` |
@@ -322,4 +341,4 @@ plus projects, games, groups and connections as `usage` for the Plans page
 | Client streaming, conversations | `src/lib/ai/client.ts`, `src/lib/ai/conversations.ts` |
 | UI | `src/components/HanogtAI/*` (`HanogtAIChat`, `useHanogtChat`, `ChatSidebar`, `ChatComposer`, `ChatMessage`, `AgentCard`, `ArtifactPanel`, `WelcomeScreen`, `Markdown`, `HanogtAIDock`, `UsageMeter`, `usage-store`), `src/app/ai/*` |
 | Training | `ai/dataset/*`, `scripts/train-hanogt-ai.mjs`, `ai/reports/intent-training-report.md` |
-| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs` (`npm test`) |
+| Tests | `scripts/tests/ai-agent.test.mjs`, `scripts/tests/ai-model.test.mjs`, `scripts/tests/ai-usage.test.mjs`, `scripts/tests/hanogt-ai.test.mjs`, `scripts/tests/features.test.mjs`, `scripts/tests/ai-settings.test.mjs` (`npm test`) |

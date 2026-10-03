@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { encodeAgentTrailer, normalizeChatMessages, stripTrailerMark, type AgentTrailerCall, type WireMessage } from "@/lib/ai/agent-protocol";
 import { AGENT_CALL_ID_PATTERN, AGENT_MAX_CALLS, agentToolSchemas, detectSensitiveRequest, isHowToQuestion, sanitizeAgentCall } from "@/lib/ai/agent-tools";
+import { normalizeAiSettings } from "@/lib/ai/ai-settings";
 import { DEFAULT_CONNECTION, isConnectionId, ownKeyRequestParams, type AiConnectionError } from "@/lib/ai/connections";
 import type { DayQuota } from "@/lib/ai/usage";
 import { PLAN_AI_FEATURES, type PlanId } from "@/lib/plans";
@@ -146,6 +147,10 @@ export async function POST(request: NextRequest) {
         target = { ...config, connection: null };
     }
     const features = PLAN_AI_FEATURES[plan];
+    // The person's Hanogt AI settings, from the user document the session check has read (cut to the plan).
+    const settings = normalizeAiSettings(activeSession.user.aiSettings, plan);
+    const answerLanguage = settings.language === "site" ? language : settings.language;
+    const personal = { about: settings.about, style: settings.style, tone: settings.tone, length: settings.length };
     const fileCode = contextCode ? clip(contextCode, features.contextChars) : "";
     const file = fileCode.trim() ? { name: fileName, language: fileLanguage, code: fileCode } : null;
     const counted = quotaHeaders(quota);
@@ -159,10 +164,10 @@ export async function POST(request: NextRequest) {
     const userTurns = messages.filter((turn): turn is Extract<WireMessage, { role: "user" }> => turn.role === "user");
     const latest = userTurns[userTurns.length - 1]?.content ?? "";
     const previousUser = userTurns[userTurns.length - 2]?.content ?? "";
-    const { notes, sources } = knowledgeNotes(`${latest} ${previousUser.slice(0, 300)}`, language === "TR");
+    const { notes, sources } = knowledgeNotes(`${latest} ${previousUser.slice(0, 300)}`, answerLanguage === "TR");
     const sensitiveRequest = detectSensitiveRequest(latest);
     const sensitive = sensitiveRequest && !isHowToQuestion(latest) ? sensitiveRequest : null;
-    const promptFor = (agent: AgentStatus | "requested") => systemPrompt({ language, mode, path, knowledge: notes, tools: toolNotes(latest), file, agent, sensitive });
+    const promptFor = (agent: AgentStatus | "requested") => systemPrompt({ language: answerLanguage, mode, path, knowledge: notes, tools: toolNotes(latest), file, agent, sensitive, personal, personalMax: features.instructionsChars });
 
     const upstreamAbort = new AbortController();
     const timeout = setTimeout(() => upstreamAbort.abort(), 55_000);

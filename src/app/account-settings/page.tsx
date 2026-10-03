@@ -3,13 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { signOut } from "next-auth/react";
+import { prepareSignOut } from "@/lib/ai/sign-out";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-    AlertTriangle, ArrowLeft, Bell, ChevronRight, CircleDot, Clock, Code2, Copy as CopyIcon, Database, Download, ExternalLink, Eye, EyeOff, Github, Globe2,
-    Hash, Image as ImageIcon, KeyRound, Laptop, Link2, Linkedin, LoaderCircle, Lock, LogOut, Mail, Megaphone, MessageCircle, Monitor, Moon, Paintbrush, Palette,
-    RefreshCw, Save, Shield, Shuffle, Star, Sun, Trash2, Twitter, Undo2, User, UserRound, Users, type LucideIcon,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, Bell, ChevronRight, CircleDot, Clock, Code2, Copy as CopyIcon, Database, Download, ExternalLink, Eye, EyeOff, Github, Globe2, Hash, Image as ImageIcon, KeyRound, Laptop, Link2, Linkedin, LoaderCircle, Lock, LogOut, Mail, Megaphone, MessageCircle, Monitor, Moon, Paintbrush, Palette, RefreshCw, Save, Shield, Shuffle, Sparkles, Star, Sun, Trash2, Twitter, Undo2, User, UserRound, Users, type LucideIcon } from "lucide-react";
 import Header from "@/components/Header";
 import TwoFactorSettings from "@/components/Account/TwoFactorSettings";
 import { ToastViewport, useToasts } from "@/components/Editor/Toasts";
@@ -135,6 +132,10 @@ const C = {
     editorTitle: { TR: "Kod editörü", EN: "Code editor" },
     editorHint: { TR: "Yazı tipi, tema, kısayollar ve çalıştırma ayarları editörün kendi sayfasında.", EN: "Font, theme, shortcuts and run settings are on the editor's own page." },
     openEditorSettings: { TR: "Editör ayarlarını aç", EN: "Open editor settings" },
+    aiTitle: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" },
+    aiHint: { TR: "Hanogt AI'ın seni nasıl yanıtlayacağını (talimatlar, üslup, uzunluk, dil), yeni sohbetlerin varsayılanlarını ve sohbet geçmişini yönet.", EN: "Choose how Hanogt AI answers you (instructions, tone, length, language), how new chats start, and manage your chat history." },
+    openAiSettings: { TR: "Hanogt AI ayarlarını aç", EN: "Open Hanogt AI settings" },
+    aiUsage: { TR: "Kullanımım", EN: "My usage" },
     exportTitle: { TR: "Verilerinizi indirin", EN: "Download your data" },
     dangerTitle: { TR: "Tehlikeli bölge", EN: "Danger zone" },
     signOutTitle: { TR: "Oturumu kapat", EN: "Sign out" },
@@ -194,7 +195,7 @@ const FIELD_LABELS: Partial<Record<keyof EditableAccountFields, Copy>> = {
 
 // ------------------------------------------------------------------ sections
 
-type SectionId = "account" | "profile" | "status" | "privacy" | "notifications" | "messaging" | "appearance" | "editor" | "data";
+type SectionId = "account" | "profile" | "status" | "privacy" | "notifications" | "messaging" | "appearance" | "editor" | "ai" | "data";
 
 type SectionDefinition = { id: SectionId; icon: LucideIcon; label: Copy; hint: Copy; group: "user" | "app" | "data"; tint: string };
 
@@ -207,6 +208,7 @@ const SECTIONS: SectionDefinition[] = [
     { id: "messaging", icon: MessageCircle, label: { TR: "Mesajlaşma", EN: "Messaging" }, hint: { TR: "Yazıyor göstergesi, okundu bilgisi, sohbet görünümü", EN: "Typing indicator, read receipts, chat look" }, group: "app", tint: "from-blue-500 to-cyan-500" },
     { id: "appearance", icon: Palette, label: { TR: "Görünüm", EN: "Appearance" }, hint: { TR: "Tema, dil, yazı boyutu, erişilebilirlik", EN: "Theme, language, text size, accessibility" }, group: "app", tint: "from-rose-500 to-fuchsia-500" },
     { id: "editor", icon: Code2, label: { TR: "Editör", EN: "Editor" }, hint: { TR: "Kod editörü ayarları", EN: "Code editor settings" }, group: "app", tint: "from-zinc-600 to-zinc-800" },
+    { id: "ai", icon: Sparkles, label: { TR: "Hanogt AI", EN: "Hanogt AI" }, hint: { TR: "Talimatlar, üslup, varsayılanlar, kullanım", EN: "Instructions, tone, defaults, usage" }, group: "app", tint: "from-violet-500 to-fuchsia-500" },
     { id: "data", icon: Database, label: { TR: "Veri", EN: "Data" }, hint: { TR: "Verileri indirme, hesabı silme", EN: "Download data, delete account" }, group: "data", tint: "from-cyan-600 to-teal-600" },
 ];
 
@@ -612,6 +614,7 @@ export default function AccountSettingsPage() {
 
     const signOutNow = () => {
         reportPresenceOffline();
+        prepareSignOut();
         void signOut({ callbackUrl: "/" });
     };
 
@@ -685,6 +688,7 @@ export default function AccountSettingsPage() {
             } catch {
                 // Storage blocked: nothing to clear.
             }
+            prepareSignOut();
             await signOut({ redirect: false });
             router.push("/");
         } catch {
@@ -849,7 +853,10 @@ export default function AccountSettingsPage() {
                             {tx(C.retry)}
                         </button>
                         {loadError.code === "unauthorized" ? (
-                            <button type="button" onClick={() => void signOut({ callbackUrl: "/login?callbackUrl=%2Faccount-settings" })} className={`inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-semibold dark:border-zinc-700 ${FOCUS}`}>
+                            <button type="button" onClick={() => {
+                                prepareSignOut();
+                                void signOut({ callbackUrl: "/login?callbackUrl=%2Faccount-settings" });
+                            }} className={`inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-semibold dark:border-zinc-700 ${FOCUS}`}>
                                 <LogOut className="h-4 w-4" aria-hidden="true" />
                                 {tx(C.signInAgain)}
                             </button>
@@ -1271,6 +1278,22 @@ export default function AccountSettingsPage() {
                             <button type="button" onClick={() => void handleResetEditorSettings()} className={`mt-3 rounded-xl bg-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600 ${FOCUS}`}>
                                 {t("reset")}
                             </button>
+                        </Card>
+                    </div>
+                );
+
+            case "ai":
+                return (
+                    <div className="space-y-4">
+                        <Card icon={Sparkles} title={tx(C.aiTitle)} description={tx(C.aiHint)}>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                <Link href="/ai/settings" className={`inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-violet-500 ${FOCUS}`} data-account-ai-settings>
+                                    <ExternalLink className="h-4 w-4" aria-hidden="true" />{tx(C.openAiSettings)}
+                                </Link>
+                                <Link href="/plans#usage" className={`inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700 ${FOCUS}`}>
+                                    {tx(C.aiUsage)}
+                                </Link>
+                            </div>
                         </Card>
                     </div>
                 );

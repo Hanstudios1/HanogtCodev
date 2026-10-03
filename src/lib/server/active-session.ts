@@ -13,6 +13,8 @@ export type ActiveUser = {
     provider?: unknown;
     /** First Google sign-in that confirmed the address (Google's email_verified). */
     emailVerifiedAt?: unknown;
+    /** Hanogt AI settings (src/lib/ai/ai-settings.ts), written only by /api/ai/settings. */
+    aiSettings?: unknown;
 };
 
 export type ActiveSession = { session: Session; email: string; user: ActiveUser };

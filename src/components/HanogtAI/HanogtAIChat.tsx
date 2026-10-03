@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Maximize2, Menu as MenuIcon, MessageSquarePlus, PanelLeftOpen, X } from "lucide-react";
+import { Maximize2, Menu as MenuIcon, MessageSquarePlus, PanelLeftOpen, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { currentWindow } from "@/lib/ai/usage";
@@ -30,6 +30,7 @@ const C = {
     engineSignedIn: { TR: "Dil modeli + Hanogt bilgi tabanı", EN: "Language model + Hanogt knowledge" },
     engineSignedOut: { TR: "Çekirdek · çevrimdışı · giriş yapınca dil modeli", EN: "Core · offline · sign in for the language model" },
     conversation: { TR: "Sohbet", EN: "Conversation" },
+    settings: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" },
 };
 
 // Desktop sidebar visibility is a per-browser preference.
@@ -255,6 +256,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         <p className="truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">{engineLabel}</p>
                     </div>
                     {meter}
+                    <Link href="/ai/settings" onClick={closePanelOnNavigate} className={ICON_BUTTON} title={tx(C.settings)} aria-label={tx(C.settings)}><Settings2 className="h-4.5 w-4.5" /></Link>
                     <button type="button" onClick={newChat} className={ICON_BUTTON} title={tx(C.newChat)} aria-label={tx(C.newChat)}><MessageSquarePlus className="h-4.5 w-4.5" /></button>
                     <Link href="/ai" onClick={onClose} className={ICON_BUTTON} title={tx(C.fullScreen)} aria-label={tx(C.fullScreen)}><Maximize2 className="h-4.5 w-4.5" /></Link>
                     <button type="button" onClick={onClose} className={ICON_BUTTON} title={tx(C.close)} aria-label={tx(C.close)}><X className="h-5 w-5" /></button>
@@ -320,6 +322,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         <p className="flex items-center gap-1.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", chat.signedIn ? "bg-emerald-500" : "bg-amber-500")} aria-hidden />{engineLabel}</p>
                     </div>
                     {meter}
+                    {chat.signedIn ? <Link href="/ai/settings" className={ICON_BUTTON} title={tx(C.settings)} aria-label={tx(C.settings)} data-ai-settings-button><Settings2 className="h-5 w-5" /></Link> : null}
                     <button type="button" onClick={newChat} className={ICON_BUTTON} title={tx(C.newChat)} aria-label={tx(C.newChat)}><MessageSquarePlus className="h-5 w-5" /></button>
                 </div>
                 {messages.length ? (

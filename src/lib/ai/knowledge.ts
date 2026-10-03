@@ -9,7 +9,7 @@
  */
 import type { Copy } from "@/lib/i18n";
 import { FAQS } from "@/lib/faq";
-import { PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
+import { PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { BROWSER_LANGUAGES, LANGUAGE_STATS, LANGUAGES } from "@/lib/runtimes/languages";
 import { CHAPTERS, PAGES, type Block } from "@/components/Guide/book-content";
 
@@ -51,6 +51,7 @@ const L = {
     privacy: { href: "/privacy-policy", label: { TR: "Gizlilik Politikası", EN: "Privacy Policy" } },
     dashboard: { href: "/dashboard", label: { TR: "Panel", EN: "Dashboard" } },
     ai: { href: "/ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" } },
+    aiSettings: { href: "/ai/settings", label: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" } },
     plans: { href: "/plans", label: { TR: "Fiyatlandırma", EN: "Pricing" } },
     refunds: { href: "/refund-policy", label: { TR: "İade Politikası", EN: "Refund Policy" } },
 } satisfies Record<string, KnowledgeLink>;
@@ -122,6 +123,18 @@ export const CURATED_KNOWLEDGE: KnowledgeEntry[] = [
         },
         keywords: "ajan modu agent mode izin permission onay confirm otomatik automatic benim yerime on my behalf işlem action",
         links: [L.ai],
+    },
+    {
+        id: "ai-settings",
+        intents: [],
+        title: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" },
+        body: {
+            TR: "[Hanogt AI ayarları](/ai/settings) sayfasında (sohbetin üstündeki ⚙ düğmesi ya da Hesap Ayarları › Hanogt AI) şunları seçebilirsin:\n• **Kişiselleştirme:** Hanogt AI'ın senin hakkında bilmesini istediklerin ve nasıl yanıt vermesini istediğin (her biri Ücretsiz'de {instructionsFree}, Plus'ta {instructionsPlus}, Pro'da {instructionsPro} karakter), üslup (dengeli, samimi, profesyonel), yanıt uzunluğu ve sabit bir yanıt dili. Bunlar güvenlik kurallarını değiştiremez.\n• **Sohbet varsayılanları:** yeni sohbetin yanıt modu, varsayılan model (Hanogt AI ya da kendi bağlantın), ajan modu ve açık editör dosyasının sorulara eklenmesi. Bir cihazda kendin seçtiğin ajan modu ve model, oradaki varsayılandan önce gelir.\n• **Geçmiş ve gizlilik:** sohbetlerin yalnızca tarayıcında saklanır; JSON olarak dışa aktarabilir, hepsini silebilir ya da çıkış yapınca bu cihazdaki sohbetlerin silinmesini açabilirsin.\n• **Kullanım ve erken erişim:** bugünkü mesajların, planındaki bütün haklar ve sana açık yeni özellikler.\nAyarlar hesabınla saklanır; hesap verilerini indirdiğinde dosyada yer alır.",
+            EN: "On the [Hanogt AI settings](/ai/settings) page (the ⚙ button above the chat, or Account Settings › Hanogt AI) you can choose:\n• **Personalization:** what Hanogt AI should know about you and how you want answers ({instructionsFree} characters each on Free, {instructionsPlus} on Plus, {instructionsPro} on Pro), the tone (balanced, friendly, professional), answer length and a fixed answer language. They can't change the safety rules.\n• **Chat defaults:** the answer mode of a new chat, the default model (Hanogt AI or one of your connections), the agent mode and attaching the open editor file. The agent mode and model you pick yourself on a device win over the defaults there.\n• **History and privacy:** your chats stay in your browser only; export them as JSON, delete them all, or have this device's chats deleted when you sign out.\n• **Usage and early access:** today's messages, every benefit of your plan and new features open to you.\nSettings are kept with your account and included when you download your account data.",
+            vars: { instructionsFree: PLAN_AI_FEATURES.free.instructionsChars, instructionsPlus: PLAN_AI_FEATURES.plus.instructionsChars, instructionsPro: PLAN_AI_FEATURES.pro.instructionsChars },
+        },
+        keywords: "hanogt ai ayarları ai settings yapay zeka ayarlar talimat instructions üslup ton tone uzunluk length dil language varsayılan default model ajan agent geçmiş history sil delete dışa aktar export kişiselleştirme personalization custom instructions",
+        links: [L.aiSettings, L.ai],
     },
     {
         id: "password",

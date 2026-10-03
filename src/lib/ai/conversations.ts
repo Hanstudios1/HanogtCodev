@@ -162,6 +162,17 @@ export function titleFrom(text: string) {
     return (line || "…").slice(0, 60);
 }
 
+/** Removes every conversation in this browser (sign-out with "delete my chats", the settings page). */
+export function clearAllConversations() {
+    write([]);
+    setActiveConversation(null);
+}
+
+/** This browser's conversations as a JSON file's text (the settings page's export). */
+export function exportConversationsJson() {
+    return JSON.stringify({ exportedAt: new Date().toISOString(), conversations: read() }, null, 2);
+}
+
 export function useConversationActions() {
     const create = useCallback((mode: AiMode, title = ""): AiConversation => {
         const now = Date.now();
@@ -177,9 +188,6 @@ export function useConversationActions() {
         write(read().filter((conversation) => conversation.id !== id));
         if (readActive() === id) setActiveConversation(null);
     }, []);
-    const clearAll = useCallback(() => {
-        write([]);
-        setActiveConversation(null);
-    }, []);
+    const clearAll = useCallback(() => clearAllConversations(), []);
     return { create, update, remove, clearAll };
 }

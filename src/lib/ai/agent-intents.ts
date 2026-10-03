@@ -188,6 +188,7 @@ export function extractGameName(text: string): string | null {
 
 // ------------------------------------------------------------------ routes
 const ROUTE_WORDS: Array<[RegExp, AgentRoute]> = [
+    [/\b(?:(?:hanogt )?ai(?:'?(?:n|nin|in))? ayar\w*|yapay zeka ayar\w*|asistan ayar\w*|(?:hanogt )?ai settings|assistant settings)\b/, "/ai/settings"],
     [/\b(?:editor ayar\w*|editor settings|kod ayar\w*)\b/, "/settings"],
     [/\b(?:hesap ayar\w*|profil ayar\w*|account settings|profile settings|hesap sayfa\w*|account page)\b/, "/account-settings"],
     [/\b(?:oyun motor\w*|game engine|engine|motor\w*|hanogt engine)\b/, "/game-engine"],

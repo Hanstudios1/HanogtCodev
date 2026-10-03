@@ -31,12 +31,13 @@ function subscribe(listener: () => void) {
 }
 
 // ------------------------------------------------------------------ mode
-function readMode(): AgentMode {
+/** The mode chosen on this device; null when none was (the account's default applies then). */
+function readStoredMode(): AgentMode | null {
     try {
         const value = window.localStorage.getItem(MODE_KEY);
-        return isAgentMode(value) ? value : DEFAULT_AGENT_MODE;
+        return isAgentMode(value) ? value : null;
     } catch {
-        return DEFAULT_AGENT_MODE;
+        return null;
     }
 }
 
@@ -49,8 +50,9 @@ export function setAgentMode(mode: AgentMode) {
     emit();
 }
 
-export function useAgentMode(): AgentMode {
-    return useSyncExternalStore(subscribe, readMode, () => DEFAULT_AGENT_MODE);
+/** This device's choice, else `fallback` (the account's default from the Hanogt AI settings), else "ask". */
+export function useAgentMode(fallback: AgentMode = DEFAULT_AGENT_MODE): AgentMode {
+    return useSyncExternalStore(subscribe, readStoredMode, () => null) ?? fallback;
 }
 
 // ------------------------------------------------------------------ session grants

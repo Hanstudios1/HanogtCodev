@@ -455,6 +455,13 @@ async function firestoreHttpError(response: Response, label: string) {
     return error;
 }
 
+/** True when a write that required an existing document (`exists: true`) found none. */
+export function isMissingDocument(error: unknown) {
+    if (!(error instanceof Error)) return false;
+    const { status, reason } = error as FirestoreHttpError;
+    return reason ? reason === "NOT_FOUND" : status === 404;
+}
+
 /**
  * True when a conditional write lost a race: a stale `updateTime` (HTTP 400
  * FAILED_PRECONDITION), a document that already exists (409) or an aborted commit.
