@@ -8,12 +8,12 @@ import {
     commitServerPatches,
     deleteFirebaseAuthUser,
     deleteServerDocument,
-    deleteServerStorageObject,
     getServerDocument,
     isWriteConflict,
     listServerCollection,
     queryServerCollection,
 } from "./firebase-rest";
+import { deleteVoiceRecording } from "./social-voice";
 import { isOwnedStoragePath, normalizeEmail } from "./validate";
 
 /*
@@ -325,9 +325,10 @@ async function deleteAndDecrement(record: StoredDocument, counterPath: string | 
 }
 
 async function deleteVoiceFile(ctx: Context, voicePath: unknown, prefix: string, containerId: string) {
-    // voicePath is written by clients: only files inside the chat's or group's own folder are deleted.
+    // voicePath is written by clients: only recordings inside the chat's or group's own folder are deleted.
     if (!isOwnedStoragePath(voicePath, prefix, containerId)) return;
-    await deleteServerStorageObject(voicePath);
+    // A temporary Storage failure (older recordings) is thrown too, so the message stays for a later run.
+    await deleteVoiceRecording(voicePath, { retryStorage: true });
     ctx.tally.count("voiceFiles");
 }
 

@@ -42,7 +42,6 @@ const C = {
     placeholder: { TR: "Mesaj yaz… (@ bahset, # konu)", EN: "Write a message… (@ mention, # topic)" },
     placeholderTopic: { TR: "#{topic} konusuna yaz…", EN: "Write in #{topic}…" },
     placeholderChannel: { TR: "#{channel} kanalına mesaj gönder", EN: "Message #{channel}" },
-    micOff: { TR: "Mikrofonun kapalı (sol alttaki panelden açabilirsin)", EN: "Your microphone is off (turn it on in the panel at the bottom left)" },
     composerLabel: { TR: "Mesaj", EN: "Message" },
     send: { TR: "Gönder", EN: "Send" },
     record: { TR: "Sesli mesaj kaydet", EN: "Record a voice message" },
@@ -138,13 +137,11 @@ type ChatPanelProps = {
     channelName?: string;
     /** Called after a message, reaction or deletion went through the server (the list then re-reads at once). */
     onServerChange?: () => void;
-    /** The microphone is switched off in Hanogt Social. */
-    micOff?: boolean;
     /** Clicking an avatar or a name opens the person's profile card. */
     onOpenUser?: (email: string, trigger: HTMLElement) => void;
 };
 
-export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, onShowPinned, chrome = true, topic: topicProp, onTopicChange, search: searchProp, channelName, onServerChange, micOff = false, onOpenUser }: ChatPanelProps) {
+export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, lastReadAt, visible, typingNames, onTyping, onStopTyping, focusNonce, jumpTarget, onShowPinned, chrome = true, topic: topicProp, onTopicChange, search: searchProp, channelName, onServerChange, onOpenUser }: ChatPanelProps) {
     const { tx, locale, language } = useI18n();
     const { groupId, group, me, members, usernames, now, notify, confirm, errorText, live } = useWorkspace();
     const [draft, setDraft] = useState("");
@@ -370,14 +367,6 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         onRecorded: (blob, mimeType, seconds) => void sendVoice(blob, mimeType, seconds),
         onError: (code) => notify(errorText(code), "error"),
     });
-
-    const startRecording = () => {
-        if (micOff) {
-            notify(tx(C.micOff), "info");
-            return;
-        }
-        void recorder.start();
-    };
 
     const onKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
         if (mention && mentionOptions.length) {
@@ -689,8 +678,8 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                                     {sending ? <Spinner className="h-5 w-5" /> : <Send className="h-5 w-5 rtl:-scale-x-100" aria-hidden />}
                                 </button>
                             ) : (
-                                <button type="button" onClick={startRecording} aria-disabled={micOff || undefined} className={cx("rounded-2xl bg-zinc-100 p-3 text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white", micOff && "opacity-50")} aria-label={micOff ? tx(C.micOff) : tx(C.record)} title={micOff ? tx(C.micOff) : tx(C.record)}>
-                                    {micOff ? <MicOff className="h-5 w-5" aria-hidden /> : <Mic className="h-5 w-5" aria-hidden />}
+                                <button type="button" onClick={() => void recorder.start()} className="rounded-2xl bg-zinc-100 p-3 text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white" aria-label={tx(C.record)} title={tx(C.record)}>
+                                    <Mic className="h-5 w-5" aria-hidden />
                                 </button>
                             )}
                         </div>

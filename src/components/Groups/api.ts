@@ -15,7 +15,7 @@ import type {
 export type GroupClientErrorCode =
     | GroupErrorCode
     | "network" | "files" | "chat" | "save_failed" | "file_deleted" | "file_too_large" | "file_exists" | "file_name"
-    | "files_limit" | "voice_too_large" | "voice_failed" | "voice_unavailable" | "mic_denied" | "zip_failed"
+    | "files_limit" | "voice_too_large" | "voice_failed" | "voice_unavailable" | "mic_denied" | "mic_missing" | "mic_busy" | "zip_failed"
     | "editor_too_large" | "clipboard_failed" | "message_failed" | "offline";
 
 export class GroupRequestError extends Error {
@@ -86,6 +86,8 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     voice_failed: { TR: "Sesli mesaj gönderilemedi.", EN: "The voice message couldn't be sent." },
     voice_unavailable: { TR: "Sesli mesaj kullanılamıyor veya silinmiş.", EN: "The voice message is unavailable or was deleted." },
     mic_denied: { TR: "Mikrofon izni verilmedi.", EN: "Microphone permission was denied." },
+    mic_missing: { TR: "Mikrofon bulunamadı. Bir mikrofon bağlayıp tekrar deneyin.", EN: "No microphone was found. Connect one and try again." },
+    mic_busy: { TR: "Mikrofon başlatılamadı; başka bir uygulama kullanıyor olabilir. Onu kapatıp tekrar deneyin.", EN: "The microphone couldn't be started; another app may be using it. Close it and try again." },
     zip_failed: { TR: "ZIP dosyası oluşturulamadı.", EN: "The ZIP file couldn't be created." },
     editor_too_large: { TR: "Dosyalar Düzenleyici'ye aktarmak için çok büyük. Tek bir dosya açmayı deneyin.", EN: "The files are too large to open in the Editor. Try opening a single file." },
     clipboard_failed: { TR: "Panoya kopyalanamadı.", EN: "Couldn't copy to the clipboard." },

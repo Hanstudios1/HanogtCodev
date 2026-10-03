@@ -13,6 +13,8 @@ type FirestoreValue =
     | { doubleValue: number }
     | { timestampValue: string }
     | { stringValue: string }
+    /** Base64 in the REST API; a Uint8Array (or Buffer) is written as bytes and read back as a Buffer. */
+    | { bytesValue: string }
     | { arrayValue: { values?: FirestoreValue[] } }
     | { mapValue: { fields?: Record<string, FirestoreValue> } };
 
@@ -249,6 +251,7 @@ function toFirestoreValue(value: unknown): FirestoreValue {
     }
     if (typeof value === "string") return { stringValue: value };
     if (value instanceof Date) return { timestampValue: value.toISOString() };
+    if (value instanceof Uint8Array) return { bytesValue: Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString("base64") };
     if (Array.isArray(value)) return { arrayValue: { values: value.map(toFirestoreValue) } };
     if (typeof value === "object") {
         return { mapValue: { fields: encodeFields(value as Record<string, unknown>) } };
@@ -263,6 +266,7 @@ function fromFirestoreValue(value: FirestoreValue): unknown {
     if ("doubleValue" in value) return value.doubleValue;
     if ("timestampValue" in value) return value.timestampValue;
     if ("stringValue" in value) return value.stringValue;
+    if ("bytesValue" in value) return Buffer.from(value.bytesValue, "base64");
     if ("arrayValue" in value) return (value.arrayValue.values || []).map(fromFirestoreValue);
     if ("mapValue" in value) return decodeFields(value.mapValue.fields || {});
     return null;

@@ -286,10 +286,9 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
                     onSend={send}
                     onSticker={sendSticker}
                     onVoice={sendVoice}
-                    onVoiceError={() => notify(errorText("mic_denied"), "error")}
+                    onVoiceError={(code) => notify(errorText(code), "error")}
                     onTyping={conversation.notifyTyping}
                     onEditLast={editLast}
-                    micOff={audio.micOff}
                     focusNonce={focusNonce}
                 />
             </main>

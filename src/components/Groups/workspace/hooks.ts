@@ -348,9 +348,25 @@ export function useGroupMessages({ groupId, enabled, live = true, onError }: { g
 }
 
 const VOICE_LIMIT_SECONDS = 60;
+/** Mono speech at 32 kbit/s: a minute is about 240 kB. */
+const VOICE_BITS_PER_SECOND = 32_000;
 
-/** Microphone recording (max 60 s) that hands the finished clip to `onRecorded`. */
-export function useVoiceRecorder({ onRecorded, onError }: { onRecorded: (blob: Blob, mimeType: string, seconds: number) => void; onError: ErrorSink }) {
+/** Why the microphone couldn't be used (getUserMedia's error names; older Chrome names too). */
+export type MicErrorCode = "mic_denied" | "mic_missing" | "mic_busy";
+
+function micErrorCode(error: unknown): MicErrorCode {
+    const name = typeof error === "object" && error !== null && "name" in error ? String((error as { name: unknown }).name) : "";
+    if (name === "NotFoundError" || name === "OverconstrainedError" || name === "DevicesNotFoundError" || name === "ConstraintNotSatisfiedError") return "mic_missing";
+    if (name === "NotReadableError" || name === "AbortError" || name === "TrackStartError") return "mic_busy";
+    // NotAllowedError, SecurityError, and no microphone access at all (e.g. a page without HTTPS).
+    return "mic_denied";
+}
+
+/**
+ * Microphone recording (max 60 s) that hands the finished clip to `onRecorded`.
+ * `deviceId` picks a microphone (when it is still there; otherwise the default one).
+ */
+export function useVoiceRecorder({ onRecorded, onError, deviceId = null }: { onRecorded: (blob: Blob, mimeType: string, seconds: number) => void; onError: (code: MicErrorCode) => void; deviceId?: string | null }) {
     const [recording, setRecording] = useState(false);
     const [seconds, setSeconds] = useState(0);
     const recorderRef = useRef<MediaRecorder | null>(null);
@@ -360,7 +376,7 @@ export function useVoiceRecorder({ onRecorded, onError }: { onRecorded: (blob: B
     const startingRef = useRef(false);
     const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const limitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const callbacks = useLatest({ onRecorded, onError });
+    const callbacks = useLatest({ onRecorded, onError, deviceId });
 
     const clearTimers = () => {
         if (tickRef.current) clearInterval(tickRef.current);
@@ -383,32 +399,43 @@ export function useVoiceRecorder({ onRecorded, onError }: { onRecorded: (blob: B
         startingRef.current = true;
         let stream: MediaStream;
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
-        } catch {
-            callbacks.current.onError("mic_denied");
+            const audio: MediaTrackConstraints = { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+            const chosen = callbacks.current.deviceId;
+            if (chosen) audio.deviceId = { ideal: chosen };
+            stream = await navigator.mediaDevices.getUserMedia({ audio, video: false });
+        } catch (error) {
+            callbacks.current.onError(micErrorCode(error));
             return;
         } finally {
             startingRef.current = false;
         }
         const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((type) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(type));
-        const recorder = new MediaRecorder(stream, mimeType ? { mimeType, audioBitsPerSecond: 64_000 } : undefined);
-        recorderRef.current = recorder;
         chunksRef.current = [];
         discardRef.current = false;
-        recorder.ondataavailable = (event) => {
-            if (event.data.size) chunksRef.current.push(event.data);
-        };
-        recorder.onstop = () => {
+        let recorder: MediaRecorder;
+        try {
+            recorder = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: VOICE_BITS_PER_SECOND });
+            recorder.ondataavailable = (event) => {
+                if (event.data.size) chunksRef.current.push(event.data);
+            };
+            recorder.onstop = () => {
+                stream.getTracks().forEach((track) => track.stop());
+                const type = recorder.mimeType || mimeType || "audio/webm";
+                const blob = new Blob(chunksRef.current, { type });
+                const duration = Math.max(1, Math.min(VOICE_LIMIT_SECONDS, Math.round((performance.now() - startedRef.current) / 1000)));
+                chunksRef.current = [];
+                recorderRef.current = null;
+                setSeconds(0);
+                if (!discardRef.current && blob.size) callbacks.current.onRecorded(blob, type, duration);
+            };
+            recorder.start(1000);
+        } catch {
+            // The browser can't record this microphone (e.g. no MediaRecorder): release it right away.
             stream.getTracks().forEach((track) => track.stop());
-            const type = recorder.mimeType || mimeType || "audio/webm";
-            const blob = new Blob(chunksRef.current, { type });
-            const duration = Math.max(1, Math.min(VOICE_LIMIT_SECONDS, Math.round((performance.now() - startedRef.current) / 1000)));
-            chunksRef.current = [];
-            recorderRef.current = null;
-            setSeconds(0);
-            if (!discardRef.current && blob.size) callbacks.current.onRecorded(blob, type, duration);
-        };
-        recorder.start(1000);
+            callbacks.current.onError("mic_busy");
+            return;
+        }
+        recorderRef.current = recorder;
         startedRef.current = performance.now();
         setSeconds(0);
         setRecording(true);

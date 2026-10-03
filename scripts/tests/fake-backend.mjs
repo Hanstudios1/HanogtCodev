@@ -25,6 +25,8 @@ export function encode(value) {
     if (typeof value === "number") return Number.isInteger(value) ? { integerValue: String(value) } : { doubleValue: value };
     if (typeof value === "string") return { stringValue: value };
     if (value instanceof Date) return { timestampValue: value.toISOString() };
+    // Bytes (a Uint8Array or Buffer) travel as base64, like the REST API.
+    if (value instanceof Uint8Array) return { bytesValue: Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString("base64") };
     if (Array.isArray(value)) return { arrayValue: { values: value.map(encode) } };
     return { mapValue: { fields: encodeFields(value) } };
 }
@@ -40,6 +42,7 @@ export function decode(value) {
     if ("doubleValue" in value) return value.doubleValue;
     if ("timestampValue" in value) return value.timestampValue;
     if ("stringValue" in value) return value.stringValue;
+    if ("bytesValue" in value) return Buffer.from(value.bytesValue, "base64");
     if ("arrayValue" in value) return (value.arrayValue.values || []).map(decode);
     if ("mapValue" in value) return decodeFields(value.mapValue.fields || {});
     throw new Error(`Unknown Firestore value ${JSON.stringify(value)}`);
@@ -192,6 +195,8 @@ export function createBackend(seed, options = {}) {
         }
         const object = decodeURIComponent(url.pathname.split("/o/")[1]);
         if (method === "GET" && url.searchParams.get("alt") === "media") {
+            const refused = options.failDownload?.(object);
+            if (refused) return failure(refused, "PERMISSION_DENIED");
             const stored = objects.get(object);
             if (!stored) return failure(404, "NOT_FOUND");
             const range = /^bytes=(\d+)-(\d*)$/.exec(headerOf(init, "range"));
@@ -226,7 +231,12 @@ export function createBackend(seed, options = {}) {
         assert.ok(url.pathname.startsWith(DOCUMENTS_PREFIX), url.pathname);
         const rest = url.pathname.slice(DOCUMENTS_PREFIX.length);
         try {
-            if (rest === ":commit") return json(200, commit(body.writes));
+            if (rest === ":commit") {
+                const result = commit(body.writes);
+                // Throwing here loses the response of a commit that was applied (e.g. a dropped connection).
+                options.afterCommit?.(body.writes);
+                return json(200, result);
+            }
             if (rest.endsWith(":runQuery")) {
                 const parent = rest.slice(0, -":runQuery".length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
                 return runQuery(parent, body.structuredQuery);

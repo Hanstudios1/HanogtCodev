@@ -7,13 +7,13 @@ import {
     commitServerMutations,
     createServerDocument,
     deleteServerDocument,
-    deleteServerStorageObject,
     getServerDocument,
     listServerCollection,
     queryServerCollection,
 } from "@/lib/server/firebase-rest";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { effectiveStatus, type PresenceStatus } from "@/lib/presence";
 import {
     GROUP_LIMITS,
@@ -416,10 +416,11 @@ async function deleteGroupContent(groupId: string) {
         listServerCollection(`groups/${groupId}/files`, 300),
         listServerCollection<{ voicePath?: unknown }>(`groups/${groupId}/messages`, 1000),
     ]);
-    // Voice paths are written by clients: only objects inside this group's own folder are deleted.
+    // Voice paths are written by clients: only recordings inside this group's own folder are deleted.
+    // A recording that can't be deleted keeps its message (and the group) for the next attempt.
     await mapLimit(messages, 8, async (message) => {
         const path = safeGroupVoicePath(message.voicePath, groupId);
-        if (path) await deleteServerStorageObject(path).catch(() => undefined);
+        if (path) await deleteVoiceRecording(path);
     });
     await deleteInBatches([...files, ...messages].map((document) => document._path));
 }

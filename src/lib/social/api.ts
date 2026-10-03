@@ -17,7 +17,8 @@ export type SocialErrorCode =
     | "invalid_email" | "invalid_id" | "not_found" | "not_friend" | "blocked" | "forbidden"
     | "message_not_found" | "empty_message" | "message_too_long" | "invalid_tag" | "user_not_found"
     | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error"
-    | "network" | "send_failed" | "voice_failed" | "voice_too_large" | "voice_unavailable" | "voice_format" | "voice_storage" | "mic_denied";
+    | "network" | "send_failed" | "voice_failed" | "voice_too_large" | "voice_unavailable" | "voice_format" | "voice_storage" | "mic_denied"
+    | "mic_missing" | "mic_busy";
 
 export class SocialRequestError extends Error {
     readonly code: SocialErrorCode;
@@ -62,6 +63,8 @@ export const SOCIAL_ERROR_COPY: Record<SocialErrorCode, Copy> = {
     voice_format: { TR: "Bu ses biçimi desteklenmiyor. Tarayıcını güncelleyip tekrar dene.", EN: "This audio format isn't supported. Update your browser and try again." },
     voice_storage: { TR: "Sesli mesajlar şu anda kullanılamıyor (depolama yapılandırılmamış).", EN: "Voice messages are unavailable right now (storage isn't configured)." },
     mic_denied: { TR: "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin verip tekrar dene.", EN: "Microphone access was denied. Allow the microphone from the lock icon in the address bar and try again." },
+    mic_missing: { TR: "Mikrofon bulunamadı. Bir mikrofon bağlayıp tekrar dene.", EN: "No microphone was found. Connect one and try again." },
+    mic_busy: { TR: "Mikrofon başlatılamadı; başka bir uygulama kullanıyor olabilir. Onu kapatıp tekrar dene.", EN: "The microphone couldn't be started; another app may be using it. Close it and try again." },
 };
 
 function isCode(value: unknown): value is SocialErrorCode {

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
-import { commitServerMutations, commitServerPatches, deleteServerStorageObject, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { commitServerMutations, commitServerPatches, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { isDocId, isOwnedStoragePath } from "@/lib/server/validate";
 import {
     SOCIAL_LIMITS,
@@ -203,8 +204,8 @@ async function remove(user: SocialUser, partner: string, body: Record<string, un
     await assertRateLimit(`social:dm-write:${user.email}`, 60);
     const { chatId, id, message, newest } = await ownMessage(user, partner, body.messageId);
     if (message.deleted === true) return { success: true };
-    // Voice paths are written by clients: only objects inside this chat's folder are removed.
-    if (isOwnedStoragePath(message.voicePath, "voice-messages", chatId)) await deleteServerStorageObject(message.voicePath).catch(() => undefined);
+    // Voice paths are written by clients: only recordings inside this chat's folder are removed.
+    if (isOwnedStoragePath(message.voicePath, "voice-messages", chatId)) await deleteVoiceRecording(message.voicePath);
     // Fields named in the mask without a value are removed: the text is gone, not only hidden.
     await commitServerPatches([
         { path: messagePath(chatId, id), data: { deleted: true, text: "" }, updateFields: ["deleted", "text", "voicePath", "voiceDuration", "replyTo"], updateTime: message._updateTime },

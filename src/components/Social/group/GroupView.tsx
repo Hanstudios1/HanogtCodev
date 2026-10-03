@@ -203,7 +203,6 @@ function ChannelScreen() {
                     jumpTarget={session.jumpTarget}
                     onShowPinned={() => showPanel("pinned")}
                     onServerChange={session.messages.refresh}
-                    micOff={social.audio.micOff}
                     onOpenUser={session.openUserCard}
                 />
             </div>

@@ -2,7 +2,7 @@
 
 import { Mic, MicOff, Send, Smile, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { useVoiceRecorder } from "@/components/Groups/workspace/hooks";
+import { useVoiceRecorder, type MicErrorCode } from "@/components/Groups/workspace/hooks";
 import { Spinner, cx } from "@/components/Groups/ui";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { DM_STICKERS, SOCIAL_LIMITS, type DmMessage } from "@/lib/social/model";
@@ -14,7 +14,6 @@ const C = {
     stickers: { TR: "Çıkartma gönder", EN: "Send a sticker" },
     stickerList: { TR: "Çıkartmalar", EN: "Stickers" },
     record: { TR: "Sesli mesaj kaydet", EN: "Record a voice message" },
-    micOff: { TR: "Mikrofonun kapalı (sol alttaki panelden açabilirsin)", EN: "Your microphone is off (turn it on in the panel at the bottom left)" },
     stopRecord: { TR: "Kaydı bitir ve gönder", EN: "Stop and send" },
     recording: { TR: "Kaydediliyor {seconds}/{limit} sn", EN: "Recording {seconds}/{limit}s" },
     discard: { TR: "Vazgeç", EN: "Discard" },
@@ -35,16 +34,16 @@ type ComposerProps = {
     onSend: (text: string) => Promise<boolean>;
     onSticker: (emoji: string) => void;
     onVoice: (blob: Blob, mimeType: string, seconds: number) => void;
-    onVoiceError: (code: "mic_denied") => void;
+    /** The microphone couldn't be used (denied, missing or busy). */
+    onVoiceError: (code: MicErrorCode) => void;
     onTyping: (text: string) => void;
     /** ArrowUp in an empty box edits the last own message (like Discord). */
     onEditLast: () => void;
-    micOff: boolean;
     focusNonce: number;
 };
 
 export default function DmComposer(props: ComposerProps) {
-    const { partnerName, disabled, typing, replyTo, replyAuthor, onCancelReply, onSend, onSticker, onVoice, onVoiceError, onTyping, onEditLast, micOff, focusNonce } = props;
+    const { partnerName, disabled, typing, replyTo, replyAuthor, onCancelReply, onSend, onSticker, onVoice, onVoiceError, onTyping, onEditLast, focusNonce } = props;
     const { tx } = useI18n();
     const [draft, setDraft] = useState("");
     const [sending, setSending] = useState(false);
@@ -54,7 +53,7 @@ export default function DmComposer(props: ComposerProps) {
 
     const recorder = useVoiceRecorder({
         onRecorded: (blob, mimeType, seconds) => onVoice(blob, mimeType, seconds),
-        onError: () => onVoiceError("mic_denied"),
+        onError: (code) => onVoiceError(code),
     });
 
     useEffect(() => {
@@ -108,16 +107,9 @@ export default function DmComposer(props: ComposerProps) {
         }
     };
 
-    const startRecording = () => {
-        if (micOff) return;
-        void recorder.start();
-    };
-
     if (disabled) {
         return <div className="shrink-0 px-4 pb-4 pt-1"><div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-300">{disabled}</div></div>;
     }
-
-    const micLabel = micOff ? tx(C.micOff) : tx(C.record);
 
     return (
         <div className="shrink-0 px-3 pb-3 pt-1 sm:px-4 sm:pb-4">
@@ -167,8 +159,8 @@ export default function DmComposer(props: ComposerProps) {
                             {sending ? <Spinner className="h-5 w-5" /> : <Send className="h-5 w-5 rtl:-scale-x-100" aria-hidden />}
                         </button>
                     ) : (
-                        <button type="button" onClick={startRecording} aria-disabled={micOff || undefined} className={cx("rounded-lg p-2 transition", micOff ? "text-zinc-400 opacity-60" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white")} aria-label={micLabel} title={micLabel}>
-                            {micOff ? <MicOff className="h-5 w-5" aria-hidden /> : <Mic className="h-5 w-5" aria-hidden />}
+                        <button type="button" onClick={() => void recorder.start()} className="rounded-lg p-2 text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label={tx(C.record)} title={tx(C.record)}>
+                            <Mic className="h-5 w-5" aria-hidden />
                         </button>
                     )}
                 </div>

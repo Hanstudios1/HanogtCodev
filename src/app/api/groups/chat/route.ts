@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { createServerDocument, deleteServerDocument, deleteServerStorageObject, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { previewText } from "@/lib/social/model";
 import { GROUP_LIMITS, SYSTEM_SENDER, cleanMultiLine, isGroupId, isManagerRole, isMemberKey, isReactionKey, safeGroupVoicePath } from "@/lib/groups";
 import {
@@ -78,9 +79,9 @@ async function deleteMessage(groupId: string, messageId: string, email: string) 
     if (!message) return { success: true };
     const own = message.fromEmail === email && message.fromEmail !== SYSTEM_SENDER;
     if (!own && !isManagerRole(role)) throw new GroupApiError(403, "forbidden", "Bu mesajı silme yetkiniz yok.");
-    // Voice paths are written by clients: only objects inside this group's folder are removed.
+    // Voice paths are written by clients: only recordings inside this group's folder are removed.
     const voicePath = safeGroupVoicePath(message.voicePath, groupId);
-    if (voicePath) await deleteServerStorageObject(voicePath).catch(() => undefined);
+    if (voicePath) await deleteVoiceRecording(voicePath);
     await deleteServerDocument(path);
     await retryOnConflict(async () => {
         const { group } = await requireGroupMember(groupId, email);

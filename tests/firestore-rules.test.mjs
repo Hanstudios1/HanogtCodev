@@ -105,7 +105,7 @@ await check("someone else can't change it", assertFails(setDoc(doc(as(B), "proje
 await check("owner can't hand it to someone else", assertFails(updateDoc(doc(as(A), "projects", "p1"), { email: B })));
 
 console.log("server-only collections/");
-for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "ai_connections/" + A]) {
+for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "ai_connections/" + A, "voice_clips/x"]) {
     const [collectionName, id] = path.split("/");
     await check(`${collectionName} is closed`, assertFails(getDoc(doc(as(A), collectionName, id))));
 }

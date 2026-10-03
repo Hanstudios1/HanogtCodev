@@ -8,21 +8,24 @@ import {
     deleteServerStorageObject,
     downloadServerStorageObject,
     getServerDocument,
+    runServerQuery,
     serverStorageBucket,
-    uploadServerStorageObject,
 } from "./firebase-rest";
 import { isDocId, isOwnedStoragePath, normalizeEmail } from "./validate";
 
 /*
  * Voice messages of Hanogt Social (direct messages and group chats) through
  * the server: the browser sends the recording to /api/social/voice, which
- * checks the friendship or membership, stores the file in Firebase Storage
- * with the service account and writes the message document; playback streams
- * the file back after the same check. Neither the Firebase bridge nor the
- * Storage security rules (whose cross-service Firestore lookups need an extra
- * project permission) are involved. Paths keep the existing layout
- * (voice-messages/<chatId>/…, group-voice-messages/<groupId>/…), so deleting
- * messages, chats, groups and accounts removes the files as before.
+ * checks the friendship or membership and writes the recording into the
+ * server-only Firestore collection voice_clips together with the message, in
+ * one commit; playback reads it back after the same check. Cloud Storage for
+ * Firebase needs the Blaze plan since 2024, so it is not needed any more:
+ * recordings stored there before keep playing (and are deleted) while a bucket
+ * is configured. Paths keep the existing layout
+ * (voice-messages/<chatId>/<id>.<ext>, group-voice-messages/<groupId>/<id>.<ext>),
+ * so the message documents, the path checks and every deletion flow are
+ * unchanged. <id> is the clip document's id; the clip repeats the full path,
+ * so a message can only reach the recording written for exactly that path.
  */
 
 export const VOICE_LIMITS = {
@@ -33,7 +36,7 @@ export const VOICE_LIMITS = {
 
 export type VoiceErrorCode =
     | "invalid_request" | "invalid_email" | "invalid_id" | "self_action" | "not_found" | "not_friend" | "blocked"
-    | "voice_too_large" | "voice_format" | "voice_unavailable" | "voice_storage";
+    | "voice_too_large" | "voice_format" | "voice_unavailable" | "voice_failed";
 
 /** Expected failures: the message is Turkish (primary language), the interface translates the code. */
 export class VoiceApiError extends Error {
@@ -56,10 +59,170 @@ type StoredChat = { participants?: unknown };
 type StoredMessage = { fromEmail?: unknown; type?: unknown; voicePath?: unknown; deleted?: unknown };
 type StoredGroup = { members?: unknown };
 type StoredProfile = { username?: unknown; avatarUrl?: unknown };
+type StoredClip = { path?: unknown; contentType?: unknown; size?: unknown; parts?: unknown; data?: unknown };
+type Mutations = Parameters<typeof commitServerMutations>[0];
 
 function emails(value: unknown) {
     return Array.isArray(value) ? value.map(normalizeEmail).filter(Boolean) : [];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Clips: recordings in Firestore                                             */
+/* -------------------------------------------------------------------------- */
+
+const CLIPS = "voice_clips";
+/** Bytes kept in one document (Firestore allows 1 MiB per document); longer recordings are split into parts. */
+const CLIP_PART_BYTES = 700_000;
+const CLIP_MAX_PARTS = Math.ceil(VOICE_LIMITS.maxBytes / CLIP_PART_BYTES);
+/** `<uuid>.<ext>`: the clip's document id is the uuid. */
+const CLIP_FILE = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.[a-z0-9]{1,8}$/;
+
+const unavailable = () => new VoiceApiError(404, "voice_unavailable", "Sesli mesaj bulunamadı veya silinmiş.");
+
+/** A voice message path: `voice-messages/<chatId>/<file>` or `group-voice-messages/<groupId>/<file>`. */
+function isVoicePath(path: unknown): path is string {
+    if (typeof path !== "string") return false;
+    const [folder, containerId = ""] = path.split("/");
+    return (folder === "voice-messages" || folder === "group-voice-messages")
+        && containerId.length > 0 && containerId !== "." && containerId !== ".."
+        && isOwnedStoragePath(path, folder, containerId);
+}
+
+function clipIdOf(path: string) {
+    return CLIP_FILE.exec(path.split("/")[2] ?? "")?.[1] ?? null;
+}
+
+/** The stored number of parts (0: the bytes are inline); null when it isn't a valid count. */
+function clipParts(value: unknown) {
+    return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= CLIP_MAX_PARTS ? value : null;
+}
+
+/** What is served as the recording's type: audio types only, anything else as plain bytes. */
+function audioType(value: unknown) {
+    const type = typeof value === "string" ? value.split(";")[0].trim().toLowerCase() : "";
+    return /^audio\/[a-z0-9.+-]{1,40}$/.test(type) ? type : "application/octet-stream";
+}
+
+/**
+ * The clip document of a new recording (with the bytes inline up to 700 kB,
+ * otherwise in voice_clips/<id>/parts/<0…n-1>), created with its message.
+ */
+function clipWrites(clipId: string, voicePath: string, bytes: Uint8Array, contentType: string, owner: { sender: string; scope: "dm" | "group"; scopeId: string }, createdAt: Date): Mutations {
+    const size = bytes.byteLength;
+    const parts = size <= CLIP_PART_BYTES ? 0 : Math.ceil(size / CLIP_PART_BYTES);
+    const clip: Record<string, unknown> = { path: voicePath, contentType, size, parts, createdAt, sender: owner.sender, scope: owner.scope, scopeId: owner.scopeId };
+    if (!parts) clip.data = bytes;
+    return [
+        { type: "create", path: `${CLIPS}/${clipId}`, data: clip },
+        ...Array.from({ length: parts }, (_, index) => ({
+            type: "create" as const,
+            path: `${CLIPS}/${clipId}/parts/${index}`,
+            data: { data: bytes.subarray(index * CLIP_PART_BYTES, (index + 1) * CLIP_PART_BYTES) },
+        })),
+    ];
+}
+
+/**
+ * The recording stored for exactly `path`; null when there is no clip for it
+ * (recordings from before voice_clips are in Storage).
+ */
+async function readVoiceClip(path: string): Promise<{ bytes: Uint8Array<ArrayBuffer>; contentType: string } | null> {
+    const clipId = clipIdOf(path);
+    if (!clipId) return null;
+    const clip = await getServerDocument<StoredClip>(`${CLIPS}/${clipId}`);
+    if (!clip || clip.path !== path) return null;
+    const size = typeof clip.size === "number" && Number.isInteger(clip.size) && clip.size > 0 && clip.size <= VOICE_LIMITS.maxBytes ? clip.size : 0;
+    const parts = clipParts(clip.parts);
+    if (!size || parts === null) throw unavailable();
+    const chunks = parts === 0
+        ? [clip.data]
+        : (await Promise.all(Array.from({ length: parts }, (_, index) => getServerDocument<{ data?: unknown }>(`${CLIPS}/${clipId}/parts/${index}`)))).map((part) => part?.data);
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+        // A missing or mismatched part (e.g. while the clip is being deleted): never serve a cut recording.
+        if (!(chunk instanceof Uint8Array) || offset + chunk.byteLength > size) throw unavailable();
+        bytes.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+    if (offset !== size) throw unavailable();
+    return { bytes, contentType: audioType(clip.contentType) };
+}
+
+/** Deletes the clip written for exactly `path` (with its parts); false when there is none. */
+async function deleteVoiceClip(path: string) {
+    const clipId = clipIdOf(path);
+    if (!clipId) return false;
+    // A projection, so the recording itself isn't downloaded just to be deleted.
+    const [clip] = (await runServerQuery<StoredClip>({ collectionId: CLIPS, where: [{ field: "path", op: "EQUAL", value: path }], select: ["parts"], limit: 5 }))
+        .filter((record) => record._id === clipId);
+    if (!clip) return false;
+    // An unreadable count removes every part a recording can have (deleting a missing document is fine).
+    const parts = clipParts(clip.parts) ?? CLIP_MAX_PARTS;
+    await commitServerMutations([
+        ...Array.from({ length: parts }, (_, index) => ({ type: "delete" as const, path: `${CLIPS}/${clipId}/parts/${index}` })),
+        { type: "delete", path: `${CLIPS}/${clipId}` },
+    ]);
+    return true;
+}
+
+/**
+ * HTTP status of a failed Storage call, read from the helper's message
+ * ("… (403)."); 0 for network errors.
+ */
+function storageStatus(error: unknown) {
+    return Number(/\((\d{3})\)\.?$/.exec(error instanceof Error ? error.message : "")?.[1] ?? 0);
+}
+
+/**
+ * Storage refuses for good (no Blaze plan, missing permission or bucket):
+ * every 4xx except timeouts and rate limits. Retrying won't help.
+ */
+function storageUnavailable(error: unknown) {
+    const status = storageStatus(error);
+    return status >= 400 && status < 500 && status !== 408 && status !== 429;
+}
+
+/**
+ * Deletes the recording of a voice message: its clip in voice_clips (only the
+ * one written for exactly this path) or, for messages from before, the
+ * Storage object. Callers check first that the path belongs to the chat or
+ * group. Storage is best effort: without the Blaze plan every Storage call
+ * fails, which must never keep a message, group or account from being
+ * deleted. With `retryStorage` (account deletion) a temporary Storage failure
+ * (rate limit, server error, network) is still thrown, so the message is kept
+ * and a later run deletes the file. Failures to delete a clip are thrown.
+ */
+export async function deleteVoiceRecording(path: string, options: { retryStorage?: boolean } = {}) {
+    if (!isVoicePath(path)) return;
+    if (await deleteVoiceClip(path)) return;
+    try {
+        await deleteServerStorageObject(path);
+    } catch (error) {
+        if (options.retryStorage && !storageUnavailable(error)) throw error;
+    }
+}
+
+/**
+ * Writes the recording and its message in one commit: at most 3 MB, about
+ * 4 MB as base64, well within Firestore's 10 MiB per request. A commit is
+ * atomic, so a failed one wrote nothing; after an unclear failure (e.g. the
+ * connection dropped after Firestore applied it) the clip is removed unless
+ * its message is there, so no recording is ever left without a message.
+ */
+async function commitVoiceMessage(voicePath: string, messagePath: string, writes: Mutations) {
+    try {
+        await commitServerMutations(writes);
+    } catch (error) {
+        const message = await getServerDocument(messagePath).catch(() => undefined);
+        if (message === null) await deleteVoiceClip(voicePath).catch(() => undefined);
+        throw error;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Requests                                                                   */
+/* -------------------------------------------------------------------------- */
 
 /** `with=<e-mail>` (a direct conversation) or `group=<id>`; exactly one of them. */
 export function readVoiceTarget(params: { get(name: string): string | null }, me: string): VoiceTarget {
@@ -175,33 +338,29 @@ export async function sendVoiceMessage(
     const format = sniffAudio(input.bytes);
     if (!format) throw new VoiceApiError(415, "voice_format", "Bu ses biçimi desteklenmiyor.");
     const seconds = Math.max(1, Math.min(VOICE_LIMITS.maxSeconds, Math.round(Number(input.seconds)) || 1));
-    if (!serverStorageBucket()) throw new VoiceApiError(503, "voice_storage", "Sesli mesajlar için depolama yapılandırılmamış.");
+    const clipId = randomUUID();
+    const createdAt = new Date(now);
+    const id = newMessageId();
 
     if (target.kind === "dm") {
         const partner = target.partner;
         await requireFriendship(user, partner);
         const { chatId } = await loadChat(user.email, partner);
         const label = previewText(input.label, VOICE_LIMITS.labelMax) || `🎤 Sesli mesaj (${clockLabel(seconds)})`;
-        const voicePath = `voice-messages/${chatId}/${randomUUID()}.${format.extension}`;
-        await uploadServerStorageObject(voicePath, input.bytes, format.contentType, { sender: user.email, recipient: partner });
-        const createdAt = new Date(now);
-        const id = newMessageId();
+        const voicePath = `voice-messages/${chatId}/${clipId}.${format.extension}`;
+        const messagePath = `chats/${chatId}/messages/${id}`;
         const message = { fromEmail: user.email, text: label, type: "voice", voicePath, voiceDuration: seconds, createdAt, read: false };
-        try {
-            // One commit: the chat document (created by a first message) and the message appear together.
-            await commitServerMutations([
-                {
-                    type: "update",
-                    path: `chats/${chatId}`,
-                    data: { participants: [user.email, partner].sort(), updatedAt: createdAt, lastMessage: previewText(label), lastMessageAt: createdAt, lastSender: user.email, typingUser: null },
-                    updateFields: ["participants", "updatedAt", "lastMessage", "lastMessageAt", "lastSender", "typingUser"],
-                },
-                { type: "create", path: `chats/${chatId}/messages/${id}`, data: message },
-            ]);
-        } catch (error) {
-            await deleteServerStorageObject(voicePath).catch(() => undefined);
-            throw error;
-        }
+        // One commit: the recording, the chat document (created by a first message) and the message appear together.
+        await commitVoiceMessage(voicePath, messagePath, [
+            ...clipWrites(clipId, voicePath, input.bytes, format.contentType, { sender: user.email, scope: "dm", scopeId: chatId }, createdAt),
+            {
+                type: "update",
+                path: `chats/${chatId}`,
+                data: { participants: [user.email, partner].sort(), updatedAt: createdAt, lastMessage: previewText(label), lastMessageAt: createdAt, lastSender: user.email, typingUser: null },
+                updateFields: ["participants", "updatedAt", "lastMessage", "lastMessageAt", "lastSender", "typingUser"],
+            },
+            { type: "create", path: messagePath, data: message },
+        ]);
         return { kind: "dm", message: dmMessageFromData(id, { ...message, createdAt: now }) };
     }
 
@@ -212,26 +371,48 @@ export async function sendVoiceMessage(
     const author = (username || user.sessionName?.trim() || user.email.split("@")[0]).slice(0, 80);
     const authorAvatar = typeof profile?.avatarUrl === "string" && profile.avatarUrl.length <= 2048 && /^https:\/\/[^\s"'<>`]+$/.test(profile.avatarUrl) ? profile.avatarUrl : null;
     const label = previewText(input.label, VOICE_LIMITS.labelMax) || `Sesli mesaj (${seconds} sn)`;
-    const voicePath = `group-voice-messages/${groupId}/${randomUUID()}.${format.extension}`;
-    await uploadServerStorageObject(voicePath, input.bytes, format.contentType, { sender: user.email, groupId });
-    const createdAt = new Date(now);
-    const id = newMessageId();
+    const voicePath = `group-voice-messages/${groupId}/${clipId}.${format.extension}`;
+    const messagePath = `groups/${groupId}/messages/${id}`;
     const message = { fromEmail: user.email, author, authorAvatar, type: "voice", text: label, voicePath, voiceDuration: seconds, createdAt };
-    try {
-        await commitServerMutations([{ type: "create", path: `groups/${groupId}/messages/${id}`, data: message }]);
-    } catch (error) {
-        await deleteServerStorageObject(voicePath).catch(() => undefined);
-        throw error;
-    }
+    await commitVoiceMessage(voicePath, messagePath, [
+        ...clipWrites(clipId, voicePath, input.bytes, format.contentType, { sender: user.email, scope: "group", scopeId: groupId }, createdAt),
+        { type: "create", path: messagePath, data: message },
+    ]);
     return { kind: "group", message: { ...message, id, createdAt: createdAt.toISOString() } };
 }
 
 /**
- * The stored recording of one voice message for someone in the conversation
- * or group (former friends keep their history). `range` is passed on, so
- * players that ask for byte ranges get them.
+ * One byte range (`bytes=a-b`, `bytes=a-` or the last n bytes, `bytes=-n`) of
+ * a recording of `size` bytes; null serves all of it (no or an invalid header,
+ * several ranges), "unsatisfiable" when the range starts past the end.
  */
-export async function openVoiceMessage(user: VoiceUser, target: VoiceTarget, messageId: unknown, range?: string | null) {
+function byteRange(header: string | null | undefined, size: number): { start: number; end: number } | "unsatisfiable" | null {
+    const match = /^bytes=(\d{0,12})-(\d{0,12})$/.exec(header?.trim() ?? "");
+    if (!match || (!match[1] && !match[2])) return null;
+    if (!match[1]) {
+        const length = Number(match[2]);
+        return length > 0 ? { start: Math.max(0, size - length), end: size - 1 } : "unsatisfiable";
+    }
+    const start = Number(match[1]);
+    // A last byte before the first makes the header invalid, which means it is ignored (RFC 9110).
+    if (match[2] && Number(match[2]) < start) return null;
+    if (start >= size) return "unsatisfiable";
+    return { start, end: match[2] ? Math.min(Number(match[2]), size - 1) : size - 1 };
+}
+
+/** A recording ready to be served. */
+export type VoicePlayback =
+    /** From voice_clips: all of it (200), the asked byte range (206) or none for a range past the end (416). */
+    | { source: "clip"; status: 200 | 206 | 416; body: Uint8Array<ArrayBuffer>; contentType: string; contentRange: string | null }
+    /** From Storage (recordings from before voice_clips): the download, streamed on. */
+    | { source: "storage"; status: 200 | 206; response: Response; contentType: string };
+
+/**
+ * The stored recording of one voice message for someone in the conversation
+ * or group (former friends keep their history). `range` (one byte range) is
+ * honoured, so players that ask for byte ranges get them.
+ */
+export async function openVoiceMessage(user: VoiceUser, target: VoiceTarget, messageId: unknown, range?: string | null): Promise<VoicePlayback> {
     if (!isDocId(messageId)) throw new VoiceApiError(400, "invalid_id", "Geçersiz mesaj.");
     let voicePath: string | null = null;
     if (target.kind === "dm") {
@@ -244,11 +425,27 @@ export async function openVoiceMessage(user: VoiceUser, target: VoiceTarget, mes
         const message = await getServerDocument<StoredMessage>(`groups/${target.groupId}/messages/${messageId}`);
         voicePath = message ? safeGroupVoicePath(message.voicePath, target.groupId) : null;
     }
-    if (!voicePath) throw new VoiceApiError(404, "voice_unavailable", "Sesli mesaj bulunamadı veya silinmiş.");
-    if (!serverStorageBucket()) throw new VoiceApiError(503, "voice_storage", "Sesli mesajlar için depolama yapılandırılmamış.");
-    const response = await downloadServerStorageObject(voicePath, range);
-    if (!response) throw new VoiceApiError(404, "voice_unavailable", "Sesli mesaj bulunamadı veya silinmiş.");
-    const stored = response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() ?? "";
-    const contentType = /^audio\/[a-z0-9.+-]{1,40}$/.test(stored) ? stored : "application/octet-stream";
-    return { response, contentType };
+    if (!voicePath) throw unavailable();
+
+    const clip = await readVoiceClip(voicePath);
+    if (clip) {
+        const size = clip.bytes.byteLength;
+        const wanted = byteRange(range, size);
+        if (wanted === "unsatisfiable") return { source: "clip", status: 416, body: new Uint8Array(0), contentType: clip.contentType, contentRange: `bytes */${size}` };
+        if (wanted) return { source: "clip", status: 206, body: clip.bytes.subarray(wanted.start, wanted.end + 1), contentType: clip.contentType, contentRange: `bytes ${wanted.start}-${wanted.end}/${size}` };
+        return { source: "clip", status: 200, body: clip.bytes, contentType: clip.contentType, contentRange: null };
+    }
+
+    // Recordings from before voice_clips are in Storage, which only exists with a configured bucket (Blaze plan).
+    if (!serverStorageBucket()) throw unavailable();
+    let response: Response | null;
+    try {
+        response = await downloadServerStorageObject(voicePath, range);
+    } catch (error) {
+        // Storage refusing for good (e.g. back on the Spark plan): the recording can't be opened.
+        if (storageUnavailable(error)) throw unavailable();
+        throw error;
+    }
+    if (!response) throw unavailable();
+    return { source: "storage", status: response.status === 206 ? 206 : 200, response, contentType: audioType(response.headers.get("content-type")) };
 }
