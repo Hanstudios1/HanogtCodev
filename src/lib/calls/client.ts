@@ -72,6 +72,7 @@ export const callsApi = {
     candidates: (callId: string, candidates: RTCIceCandidateInit[]) => post<{ success: true }>({ action: "candidates", callId, candidates }),
     decline: (callId: string, reason: DeclineReason) => post<{ success: true }>({ action: "decline", callId, reason }),
     end: (callId: string, keepalive = false) => post<{ success: true }>({ action: "end", callId }, keepalive),
+    mute: (callId: string, muted: boolean) => post<{ success: true }>({ action: "mute", callId, muted }),
     get: (callId: string, have: number) => request<{ call: CallWire }>(`/api/calls?id=${encodeURIComponent(callId)}&have=${Math.max(0, Math.floor(have))}`),
     incoming: () => request<{ calls: IncomingCall[] }>("/api/calls/incoming"),
     /** Hang-up that survives the tab closing. */
@@ -91,6 +92,8 @@ export type CallView = {
     answer: CallDescription | null;
     remote: CallCandidate[];
     endReason: DeclineReason | null;
+    /** The other side switched its microphone off. */
+    remoteMuted: boolean;
 };
 
 function warn(scope: string, error: unknown) {
@@ -124,7 +127,7 @@ export function watchCall(options: {
             if (stopped) return;
             failures = 0;
             remote = call.candidateCount < remote.length ? [...call.candidates] : [...remote, ...call.candidates];
-            options.onUpdate({ status: call.status, offer: call.offer, answer: call.answer, remote, endReason: call.endReason });
+            options.onUpdate({ status: call.status, offer: call.offer, answer: call.answer, remote, endReason: call.endReason, remoteMuted: call.remoteMuted === true });
         } catch (error) {
             if (stopped) return;
             if (error instanceof CallRequestError && (error.code === "not_found" || error.code === "invalid_id" || error.code === "unauthorized")) {
@@ -150,7 +153,7 @@ export function watchCall(options: {
                 return;
             }
             const wire = callWire(record, options.role);
-            options.onUpdate({ status: wire.status, offer: wire.offer, answer: wire.answer, remote: wire.candidates, endReason: wire.endReason });
+            options.onUpdate({ status: wire.status, offer: wire.offer, answer: wire.answer, remote: wire.candidates, endReason: wire.endReason, remoteMuted: wire.remoteMuted });
         }, (error) => {
             warn("call", error);
             unsubscribe = null;

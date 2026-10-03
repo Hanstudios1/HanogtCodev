@@ -1,11 +1,12 @@
 "use client";
 
-import { HeadphoneOff, Headphones, Mic, MicOff, PhoneOff, Settings, Signal } from "lucide-react";
+import { HeadphoneOff, Headphones, Mic, MicOff, PhoneOff, Settings, Signal, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { cx } from "@/components/Groups/ui";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StatusMenu from "@/components/StatusMenu";
+import AudioSettingsDialog from "@/components/Social/AudioSettings";
 import { useVoiceCall } from "@/components/VoiceCallProvider";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PRESENCE_STATUS_COPY } from "@/lib/presence";
@@ -24,7 +25,8 @@ const C = {
     connecting: { TR: "Bağlanıyor…", EN: "Connecting…" },
     incoming: { TR: "Gelen arama…", EN: "Incoming call…" },
     disconnect: { TR: "Bağlantıyı kes", EN: "Disconnect" },
-    audioHint: { TR: "Mikrofon kapalıyken aramalarda sesin gitmez ve sesli mesaj kaydedilmez; ses kapalıyken aramaları ve sesli mesajları duymazsın.", EN: "With the microphone off you aren't heard in calls and no voice messages are recorded; with sound off you don't hear calls or voice messages." },
+    audioHint: { TR: "Mikrofon kapalıyken görüşmede sesin gitmez; ses kapalıyken karşı tarafı duymazsın. Yeni bir arama başlatınca ya da yanıtlayınca ikisi de açılır.", EN: "With the microphone off you aren't heard in a call; with sound off you don't hear the other person. Both turn back on when you start or answer a call." },
+    voiceSettings: { TR: "Ses ayarları (mikrofon ve hoparlör)", EN: "Voice settings (microphone and speaker)" },
 } satisfies Record<string, Copy>;
 
 /**
@@ -37,6 +39,7 @@ export default function UserPanel() {
     const { me, audio } = useSocial();
     const call = useVoiceCall();
     const [open, setOpen] = useState(false);
+    const [voiceSettings, setVoiceSettings] = useState(false);
     const menuId = useId();
     const wrapRef = useRef<HTMLDivElement | null>(null);
     const statusLabel = tx(PRESENCE_STATUS_COPY[me.status]);
@@ -105,6 +108,9 @@ export default function UserPanel() {
                 <PanelButton label={tx(C.deafen)} pressed={audio.deafened} danger={audio.deafened} onClick={audio.toggleDeafen}>
                     {audio.deafened ? <HeadphoneOff className="h-[18px] w-[18px]" aria-hidden /> : <Headphones className="h-[18px] w-[18px]" aria-hidden />}
                 </PanelButton>
+                <PanelButton label={tx(C.voiceSettings)} pressed={false} danger={false} onClick={() => setVoiceSettings(true)}>
+                    <SlidersHorizontal className="h-[18px] w-[18px]" aria-hidden />
+                </PanelButton>
                 <Link href="/account-settings" aria-label={tx(C.settings)} title={tx(C.settings)} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-300/60 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white">
                     <Settings className="h-[18px] w-[18px]" aria-hidden />
                 </Link>
@@ -115,6 +121,7 @@ export default function UserPanel() {
                     {(audio.micOff || audio.deafened) && <p className="mt-3 border-t border-zinc-100 pt-2 text-[11px] leading-4 text-zinc-500 dark:border-white/[0.08] dark:text-zinc-400">{tx(C.audioHint)}</p>}
                 </div>
             )}
+            {voiceSettings && <AudioSettingsDialog onClose={() => setVoiceSettings(false)} />}
         </div>
     );
 }

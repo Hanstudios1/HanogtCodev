@@ -1,11 +1,12 @@
 "use client";
 
 import { doc, getDoc } from "firebase/firestore";
-import { HeadphoneOff, Headphones, Mic, MicOff, Phone, PhoneOff, ShieldCheck, X } from "lucide-react";
+import { HeadphoneOff, Headphones, Mic, MicOff, Phone, PhoneOff, Settings2, ShieldCheck, Volume2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import { useFirebaseBridge } from "@/components/Provider";
+import AudioSettingsDialog from "@/components/Social/AudioSettings";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { useOwnProfile } from "@/lib/account-profile-client";
 import { callsApi, watchIncoming } from "@/lib/calls/client";
@@ -14,7 +15,7 @@ import { CallSession, type CallNotice, type CallSessionState } from "@/lib/calls
 import { startTone } from "@/lib/calls/sounds";
 import { db } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { setSocialAudio, useSocialAudio } from "@/lib/social/local-state";
+import { setSocialAudio, useAudioDevices, useSocialAudio } from "@/lib/social/local-state";
 
 export type CallPeer = { email: string; username: string; avatarUrl?: string; staffRole?: string | null };
 export type VoiceCallStatus = "idle" | "incoming" | "calling" | "connecting" | "active";
@@ -54,7 +55,17 @@ const C = {
     privacy: { TR: "Ses kaydedilmez; geçici bağlantı verisi arama bitince silinir.", EN: "Audio is never recorded; temporary connection data is deleted when the call ends." },
     slow: { TR: "Bağlantı uzun sürüyor. Bazı ağlar (mobil veri, kurumsal veya okul ağları) doğrudan bağlantıyı engeller; bu ağlarda aramanın kurulması için sitenin bir TURN sunucusu kullanması gerekir.", EN: "Connecting is taking a while. Some networks (mobile data, company or school networks) block direct connections; on them the site needs a TURN server for calls to connect." },
     slowTurn: { TR: "Bağlantı uzun sürüyor; ağ bağlantını kontrol et.", EN: "Connecting is taking a while; check your network connection." },
-    youMuted: { TR: "Mikrofonun kapalı", EN: "You're muted" },
+    routeDirect: { TR: "Doğrudan bağlantı", EN: "Direct connection" },
+    routeRelay: { TR: "TURN üzerinden", EN: "Via TURN relay" },
+    settings: { TR: "Ses ayarları", EN: "Voice settings" },
+    mutedWarning: { TR: "Mikrofonun kapalı: karşı taraf seni duymuyor.", EN: "Your microphone is off: the other person can't hear you." },
+    deafenedWarning: { TR: "Sesin kapalı: karşı tarafı duymuyorsun.", EN: "Your sound is off: you can't hear the other person." },
+    turnOn: { TR: "Aç", EN: "Turn on" },
+    remoteMuted: { TR: "{name} mikrofonunu kapattı.", EN: "{name} has muted their microphone." },
+    audioBlocked: { TR: "Tarayıcın sesi otomatik başlatmadı.", EN: "Your browser didn't start the audio by itself." },
+    startAudio: { TR: "Sesi başlat", EN: "Start audio" },
+    noIncomingAudio: { TR: "Karşı taraftan ses verisi gelmiyor; bağlantı kopmuş olabilir. Sorun sürerse aramayı bitirip yeniden dene.", EN: "No audio data is arriving from the other person; the connection may have dropped. If it continues, end the call and try again." },
+    micSilent: { TR: "Mikrofonundan hiç ses gelmiyor gibi görünüyor. Doğru mikrofon seçili mi?", EN: "No sound seems to be coming from your microphone. Is the right one selected?" },
 } satisfies Record<string, Copy>;
 
 const NOTICES: Record<CallNotice, Copy> = {
@@ -118,6 +129,8 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
     const email = session?.user?.email?.toLowerCase() || "";
     const live = bridge.ready;
     const audio = useSocialAudio();
+    const devices = useAudioDevices();
+    const [settingsOpen, setSettingsOpen] = useState(false);
     // Do Not Disturb declines incoming calls without ringing; the caller sees "unavailable".
     const doNotDisturb = useOwnProfile(email || null)?.statusPreference === "dnd";
     const [call, setCall] = useState<ActiveCall | null>(null);
@@ -125,9 +138,9 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
     const keyRef = useRef(0);
     const handledRef = useRef(new Set<string>());
     const audioElementRef = useRef<HTMLAudioElement | null>(null);
-    const settingsRef = useRef({ live, audio, doNotDisturb });
+    const settingsRef = useRef({ live, audio, devices, doNotDisturb });
     useEffect(() => {
-        settingsRef.current = { live, audio, doNotDisturb };
+        settingsRef.current = { live, audio, devices, doNotDisturb };
     });
 
     const begin = useCallback((role: "caller" | "callee", peer: CallPeer, callId: string | null) => {
@@ -142,6 +155,8 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
             muted: settings.audio.micOff,
             deafened: settings.audio.deafened,
             audio: audioElementRef.current,
+            inputDeviceId: settings.devices.input,
+            outputDeviceId: settings.devices.output,
             onChange: (state) => setCall((current) => (current && current.key === key ? { ...current, state } : current)),
         });
         sessionRef.current = created;
@@ -152,8 +167,22 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
     const startCall = useCallback(async (target: CallPeer) => {
         const peerEmail = target.email.trim().toLowerCase();
         if (!email || !peerEmail || peerEmail === email || sessionRef.current?.busy) return;
-        await begin("caller", { ...target, email: peerEmail }, null).startOutgoing();
+        unmuteForCall();
+        const created = begin("caller", { ...target, email: peerEmail }, null);
+        created.setMuted(false);
+        created.setDeafened(false);
+        // Still inside the click: lets the browser play the call audio later.
+        created.unlock();
+        await created.startOutgoing();
     }, [begin, email]);
+
+    const acceptCall = useCallback((session: CallSession) => {
+        unmuteForCall();
+        session.setMuted(false);
+        session.setDeafened(false);
+        session.unlock();
+        void session.accept();
+    }, []);
 
     const hangUp = useCallback(() => sessionRef.current?.hangUp(), []);
 
@@ -237,6 +266,12 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
         activeSession?.setDeafened(audio.deafened);
     }, [activeSession, audio.deafened, audio.micOff]);
 
+    // A microphone or speaker picked in the voice settings applies to the running call at once.
+    useEffect(() => {
+        void activeSession?.setInputDevice(devices.input);
+        activeSession?.setOutputDevice(devices.output);
+    }, [activeSession, devices.input, devices.output]);
+
     useEffect(() => {
         const onExit = () => sessionRef.current?.dispose();
         window.addEventListener("pagehide", onExit);
@@ -262,7 +297,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
             {call && call.state.phase === "incoming" && (
                 <IncomingCallDialog
                     peer={call.peer}
-                    onAccept={() => void call.session.accept()}
+                    onAccept={() => acceptCall(call.session)}
                     onDecline={() => void call.session.decline("declined")}
                 />
             )}
@@ -273,10 +308,20 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
                     deafened={audio.deafened}
                     onHangUp={() => call.session.hangUp()}
                     onClose={() => setCall((current) => (current?.key === call.key ? null : current))}
+                    onSettings={() => setSettingsOpen(true)}
                 />
             )}
+            {settingsOpen && <AudioSettingsDialog onClose={() => setSettingsOpen(false)} />}
         </VoiceCallContext.Provider>
     );
+}
+
+/**
+ * A call always starts with the microphone and sound on: the Social toggles
+ * are remembered between visits, and a forgotten "muted" made calls silent.
+ */
+function unmuteForCall() {
+    setSocialAudio({ micOff: false, deafened: false });
 }
 
 function toggleMic(micOff: boolean) {
@@ -324,12 +369,13 @@ function useClock(active: boolean) {
 }
 
 /** The running call: a floating bar at the top that leaves the page usable. */
-function CallBar({ call, micOff, deafened, onHangUp, onClose }: { call: ActiveCall; micOff: boolean; deafened: boolean; onHangUp: () => void; onClose: () => void }) {
+function CallBar({ call, micOff, deafened, onHangUp, onClose, onSettings }: { call: ActiveCall; micOff: boolean; deafened: boolean; onHangUp: () => void; onClose: () => void; onSettings: () => void }) {
     const { tx } = useI18n();
     const { state, peer } = call;
     const now = useClock(state.phase === "active");
     const ended = state.phase === "ended";
-    const statusText = state.phase === "active"
+    const active = state.phase === "active";
+    const statusText = active
         ? tx(C.connected, { time: duration(now - state.connectedAt) })
         : state.phase === "connecting" ? tx(C.connecting)
             : state.phase === "ringing" ? tx(C.ringing)
@@ -337,20 +383,40 @@ function CallBar({ call, micOff, deafened, onHangUp, onClose }: { call: ActiveCa
                     : state.notice ? tx(NOTICES[state.notice], { name: peer.username }) : tx(NOTICES.ended);
     const hint = !ended && state.slow ? tx(state.turnConfigured ? C.slowTurn : C.slow) : "";
     const longNotice = ended && state.notice && LONG_NOTICES.has(state.notice);
+    // Why nobody hears anything, most actionable first; one line at a time.
+    const problem = ended ? null
+        : micOff ? { text: tx(C.mutedWarning), action: tx(C.turnOn), run: () => toggleMic(true), danger: true }
+            : deafened ? { text: tx(C.deafenedWarning), action: tx(C.turnOn), run: () => toggleDeafen(true), danger: true }
+                : state.audioBlocked ? { text: tx(C.audioBlocked), action: tx(C.startAudio), run: () => call.session.resumeAudio(), danger: true }
+                    : active && state.micSilent ? { text: tx(C.micSilent), action: tx(C.settings), run: onSettings, danger: false }
+                        : active && state.noIncomingAudio ? { text: tx(C.noIncomingAudio), action: null, run: null, danger: false }
+                            : active && state.remoteMuted ? { text: tx(C.remoteMuted, { name: peer.username }), action: null, run: null, danger: false }
+                                : null;
 
     return (
         // Below the site header (64 px) and Social's channel header (48 px), clear of the composer and the AI dock.
         <div className="pointer-events-none fixed inset-x-0 top-[4.25rem] z-[140] flex justify-center px-2">
-            <section aria-label={tx(C.region)} className="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/95 text-white shadow-2xl shadow-black/30 backdrop-blur">
+            <section
+                aria-label={tx(C.region)}
+                data-call-phase={state.phase}
+                data-call-route={state.route ?? ""}
+                data-call-received-kb={state.receivedKb}
+                data-remote-speaking={state.remoteSpeaking ? "true" : "false"}
+                data-mic-off={micOff ? "true" : "false"}
+                className="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/95 text-white shadow-2xl shadow-black/30 backdrop-blur"
+            >
                 <div className="flex items-center gap-3 px-3 py-2">
                     <span className={`relative shrink-0 rounded-full transition-shadow ${state.remoteSpeaking ? "shadow-[0_0_0_3px_rgb(16,185,129)]" : ""}`}>
                         <PresenceAvatar src={peer.avatarUrl ?? null} name={peer.username} size="sm" />
+                        {active && state.remoteMuted && (
+                            <span className="absolute -bottom-1 -end-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 ring-2 ring-zinc-900"><MicOff className="h-2.5 w-2.5" aria-hidden /></span>
+                        )}
                     </span>
                     <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{peer.username}</p>
-                        <p aria-live="polite" className={`truncate text-xs ${state.phase === "active" ? "font-semibold text-emerald-400" : ended && longNotice ? "text-amber-300" : "text-zinc-400"}`}>
+                        <p aria-live="polite" className={`truncate text-xs ${active ? "font-semibold text-emerald-400" : ended && longNotice ? "text-amber-300" : "text-zinc-400"}`}>
                             {longNotice ? tx(NOTICES.ended) : statusText}
-                            {!ended && micOff ? <span className="ms-1.5 text-red-400">· {tx(C.youMuted)}</span> : null}
+                            {active && state.route ? <span className="ms-1.5 font-normal text-zinc-400">· {tx(state.route === "relay" ? C.routeRelay : C.routeDirect)}</span> : null}
                         </p>
                     </div>
                     {ended ? (
@@ -363,12 +429,26 @@ function CallBar({ call, micOff, deafened, onHangUp, onClose }: { call: ActiveCa
                             <BarButton label={tx(deafened ? C.undeafen : C.deafen)} pressed={deafened} danger={deafened} onClick={() => toggleDeafen(deafened)}>
                                 {deafened ? <HeadphoneOff className="h-[18px] w-[18px]" aria-hidden /> : <Headphones className="h-[18px] w-[18px]" aria-hidden />}
                             </BarButton>
+                            <BarButton label={tx(C.settings)} pressed={false} danger={false} onClick={onSettings}>
+                                <Settings2 className="h-[18px] w-[18px]" aria-hidden />
+                            </BarButton>
                             <button type="button" onClick={onHangUp} className="flex h-9 w-11 items-center justify-center rounded-full bg-red-500 transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/50" aria-label={tx(state.phase === "active" || state.phase === "connecting" ? C.hangUp : C.cancel)} title={tx(state.phase === "active" || state.phase === "connecting" ? C.hangUp : C.cancel)}>
                                 <PhoneOff className="h-[18px] w-[18px]" aria-hidden />
                             </button>
                         </div>
                     )}
                 </div>
+                {problem && (
+                    <div role="status" className={`flex items-center gap-2 border-t border-white/10 px-3 py-2 text-xs leading-5 ${problem.danger ? "bg-red-500/15 text-red-200" : "bg-amber-500/10 text-amber-200"}`}>
+                        {state.audioBlocked && !micOff && !deafened ? <Volume2 className="h-4 w-4 shrink-0" aria-hidden /> : null}
+                        <span className="min-w-0 flex-1">{problem.text}</span>
+                        {problem.action && problem.run ? (
+                            <button type="button" onClick={problem.run} className="shrink-0 rounded-lg bg-white/15 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
+                                {problem.action}
+                            </button>
+                        ) : null}
+                    </div>
+                )}
                 {(hint || longNotice) && (
                     <p role={longNotice ? "alert" : "status"} className="border-t border-white/10 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-200">
                         {longNotice && state.notice ? tx(NOTICES[state.notice], { name: peer.username }) : hint}

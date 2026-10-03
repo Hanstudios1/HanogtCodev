@@ -11,6 +11,7 @@ import {
     probeServerDocument,
     type ServerCredentialInfo,
 } from "./firebase-rest";
+import { checkTurn } from "./turn";
 
 /*
  * Cloud Health: the owner's end-to-end diagnosis of the Firebase setup
@@ -36,7 +37,8 @@ export type CloudCheckId =
     | "rulesSelfRead"
     | "firestoreRules"
     | "storageRules"
-    | "storageBucket";
+    | "storageBucket"
+    | "turnServer";
 
 /** Remedies the UI renders as translated steps. */
 export type CloudFixId =
@@ -63,7 +65,8 @@ export type CloudFixId =
     | "initStorage"
     | "redeploy"
     | "redeployClientConfig"
-    | "checkNetwork";
+    | "checkNetwork"
+    | "setupTurn";
 
 /** Machine-readable outcome of a check; the UI shows a translated sentence for each. */
 export type CloudReason =
@@ -133,7 +136,11 @@ export type CloudReason =
     | "bucket_missing"
     | "bucket_not_found"
     | "bucket_permission"
-    | "bucket_failed";
+    | "bucket_failed"
+    | "turn_ok"
+    | "turn_missing"
+    | "turn_credentials_missing"
+    | "turn_failed";
 
 export type CloudCheck = {
     id: CloudCheckId;
@@ -676,15 +683,29 @@ async function checkRulesRelease(kind: "firestore" | "storage", project: string,
     return check(id, "warn", "rules_differ", hashes, "deployRules", facts);
 }
 
+/**
+ * Voice messages are kept in Firestore now; the bucket only serves older
+ * recordings, so a missing one (Storage needs the Blaze plan) isn't an error.
+ */
 async function checkStorageBucket(bucket: { name: string | null; raw: string }, token: string | null): Promise<CloudCheck> {
-    if (!bucket.name) return check("storageBucket", "warn", "bucket_missing", bucket.raw ? `"${bucket.raw.slice(0, 80)}"` : "FIREBASE_STORAGE_BUCKET / NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET", "fixStorageBucket");
+    if (!bucket.name) return check("storageBucket", "skip", "bucket_missing", bucket.raw ? `"${bucket.raw.slice(0, 80)}"` : "FIREBASE_STORAGE_BUCKET / NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET");
     if (!token) return skipped("storageBucket");
     const result = await googleRequest<{ location?: unknown }>(`https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket.name)}`, { token });
     const facts = { bucket: bucket.name };
     if (result.ok) return check("storageBucket", "ok", "bucket_ok", typeof result.data.location === "string" ? `${bucket.name} · ${result.data.location}` : bucket.name, null, facts);
-    if (result.error.status === 404) return check("storageBucket", "fail", "bucket_not_found", describeError(result.error), "initStorage", facts);
+    if (result.error.status === 404 || result.error.status === 402) return check("storageBucket", "warn", "bucket_not_found", describeError(result.error), "initStorage", facts);
     if (result.error.status === 401 || result.error.status === 403) return check("storageBucket", "warn", "bucket_permission", describeError(result.error), "grantServiceAccountRoles", facts);
     return check("storageBucket", "warn", "bucket_failed", describeError(result.error), result.error.status === 0 ? "checkNetwork" : null, facts);
+}
+
+/** Voice calls: is a TURN relay configured, and does it hand out credentials? */
+async function checkTurnServer(): Promise<CloudCheck> {
+    const result = await checkTurn().catch(() => ({ provider: "none" as const, ok: false, problem: "turn_failed", urls: [] as string[] }));
+    const facts = { provider: result.provider, problem: result.problem ?? "" };
+    if (result.ok) return check("turnServer", "ok", "turn_ok", result.urls.slice(0, 4).join(" · "), null, facts);
+    if (result.problem === "turn_missing") return check("turnServer", "warn", "turn_missing", "CLOUDFLARE_TURN_KEY_ID · CLOUDFLARE_TURN_KEY_API_TOKEN", "setupTurn", facts);
+    if (result.problem === "turn_credentials_missing") return check("turnServer", "warn", "turn_credentials_missing", "TURN_SHARED_SECRET · TURN_USERNAME + TURN_CREDENTIAL", "setupTurn", facts);
+    return check("turnServer", "fail", "turn_failed", result.problem ?? "", "setupTurn", facts);
 }
 
 type WebApp = { appId: string; displayName: string | null; config: PublicFirebaseConfig };
@@ -746,6 +767,8 @@ export async function runCloudHealthChecks(options: { ownerEmail: string; origin
         siteHost = "";
     }
 
+    // Independent of Firebase: runs alongside everything else.
+    const turnServer = checkTurnServer();
     const browser = await checkBrowserConfig(env);
     // Build-time values the runtime config already replaces still need fixing,
     // but they no longer break the browser: report them as warnings.
@@ -783,6 +806,7 @@ export async function runCloudHealthChecks(options: { ownerEmail: string; origin
         suggestion = suggested;
         checks = [clientConfig, serverCredentials, projectMatch, browser.result, token.result, firestoreRead, authConfig, browserSignIn, rulesSelfRead, firestoreRules, storageRules, storageBucketCheck];
     }
+    checks.push(await turnServer);
 
     const summary: Record<CloudCheckStatus, number> = { ok: 0, warn: 0, fail: 0, skip: 0 };
     for (const item of checks) summary[item.status] += 1;

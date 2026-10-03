@@ -97,7 +97,7 @@ a NextAuth session to Firebase. Provide the service account in any one form:
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Full service-account JSON (string). Tried first. |
 | `FIREBASE_SERVICE_ACCOUNT_BASE64` | The same JSON, base64-encoded on one line (`base64 -w0 service-account.json`). The older name `FIREBASE_SERVICE_ACCOUNT_BASE` is still accepted. |
 | `FIREBASE_PROJECT_ID` + `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY` | The three fields individually (`\n` escapes in the key are handled; the project id can also come from the service-account e-mail). `FIREBASE_ADMIN_*` names work too. |
-| `FIREBASE_STORAGE_BUCKET` | Storage bucket for voice messages and uploads (falls back to `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`). |
+| `FIREBASE_STORAGE_BUCKET` | Optional Storage bucket (older voice messages; falls back to `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`). |
 
 Every variable that is set is tried in order and the first usable key wins,
 so a broken variable doesn't hide a working one. Pasting is forgiving
@@ -151,27 +151,39 @@ after every change, either
   *Firebase Rules Admin* role), or
 - from a computer: `firebase deploy --only firestore:rules,storage`.
 
-Voice messages no longer depend on `storage.rules`: browsers upload and play
-them through `/api/social/voice`, which checks the friendship or group
-membership and uses the service account (the cross-service Storage → Firestore
-permission that `storage.rules` needs only matters for tabs still running
-older code).
+Voice messages no longer depend on Cloud Storage or `storage.rules`:
+browsers upload and play them through `/api/social/voice`, which checks the
+friendship or group membership and keeps the recording in the server-only
+Firestore collection `voice_clips` (Cloud Storage needs Firebase's Blaze
+plan). Recordings made before that are still played from the bucket when one
+is configured.
 
 ## Hanogt Social: voice calls and voice messages
 
+A TURN relay lets calls connect on networks that block direct connections.
+The first configured option is used (`src/lib/server/turn.ts`):
+
 | Variable | Meaning |
 | --- | --- |
-| `TURN_SERVER_URL` | TURN relay URL(s), comma separated (e.g. `turn:turn.example.com:3478,turns:turn.example.com:5349?transport=tcp`). |
-| `TURN_SHARED_SECRET` | **Secret.** Shared secret of the TURN REST API (coturn `use-auth-secret` + `static-auth-secret`). `/api/calls/ice` hands out credentials valid for an hour; the username is an opaque hash, never the e-mail address. |
-| `FIREBASE_STORAGE_BUCKET` | Required for voice messages (see above; falls back to `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`). |
+| `CLOUDFLARE_TURN_KEY_ID`, `CLOUDFLARE_TURN_KEY_API_TOKEN` | **Secret.** Cloudflare Realtime TURN (Cloudflare dashboard → Realtime → TURN Server → Create; 1,000 GB a month free). Credentials valid for an hour are generated per call. |
+| `TURN_SERVER_URL` | Your own relay's URL(s), comma separated (e.g. `turn:turn.example.com:3478,turns:turn.example.com:5349?transport=tcp`). |
+| `TURN_SHARED_SECRET` | **Secret.** coturn's TURN REST secret (`use-auth-secret` + `static-auth-secret`); the username is an opaque hash, never the e-mail address. |
+| `TURN_USERNAME`, `TURN_CREDENTIAL` | **Secret.** Fixed credentials of a TURN provider (with `TURN_SERVER_URL`). |
+| `FIREBASE_STORAGE_BUCKET` | Optional: only for playing voice messages recorded before they moved to Firestore. |
+
+Admin Panel → Cloud Health shows whether TURN is set up and can test the
+relay from the owner's browser.
 
 Call signalling goes through `/api/calls` (the server writes `calls/{id}` after
 checking the friendship), so calls work even when the browser's Firebase
 bridge fails; with the bridge, browsers only add realtime listeners (ringing
-and call updates), otherwise they poll. Audio is peer to peer. Without TURN
-only Google's public STUN servers are used: calls connect on most home
-networks but fail between symmetric NATs (many mobile carriers, company and
-school networks), and the call bar says so.
+and call updates), otherwise they poll. Audio is peer to peer (DTLS-SRTP, also
+through a relay). Without TURN only public STUN servers are used: calls
+connect on most home networks but fail between symmetric NATs (many mobile
+carriers, company and school networks), and the call bar says so. A call
+always starts with the microphone and sound on; the call bar names the reason
+when nobody can be heard (microphone off, the other side muted, playback
+blocked, no audio arriving, a silent microphone).
 
 ## Hanogt AI
 

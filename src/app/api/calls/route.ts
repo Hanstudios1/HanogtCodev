@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { addCandidates, answerCall, declineCall, deleteCall, readCall, startCall } from "@/lib/server/calls";
+import { addCandidates, answerCall, declineCall, deleteCall, readCall, setCallMuted, startCall } from "@/lib/server/calls";
 import { SocialApiError, assertRateLimit, assertSameOrigin, readBody, requireSocialUser, socialJson } from "@/lib/social/server";
 import { assertBurst, callErrorResponse } from "./_shared";
 
@@ -16,6 +16,7 @@ export const dynamic = "force-dynamic";
  *        { action: "candidates", callId, candidates }
  *        { action: "decline", callId, reason }     declined / busy / unavailable (callee)
  *        { action: "end", callId }                 hang up or cancel (either side; deletes the call)
+ *        { action: "mute", callId, muted }         microphone switched off/on (the other side shows it)
  */
 
 export async function GET(request: NextRequest) {
@@ -50,6 +51,9 @@ export async function POST(request: NextRequest) {
             case "end":
                 await assertRateLimit(`calls:state:${user.email}`, 40);
                 return socialJson(await deleteCall(user.email, body.callId));
+            case "mute":
+                await assertBurst(`calls:mute:${user.email}`, 2, 10, 600);
+                return socialJson(await setCallMuted(user, body));
             case "candidates":
                 await assertBurst(`calls:ice:${user.email}`, 5, 20, 1_500);
                 return socialJson(await addCandidates(user, body));

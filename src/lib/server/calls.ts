@@ -204,6 +204,22 @@ export async function declineCall(user: CallUser, input: Record<string, unknown>
     return { success: true };
 }
 
+/** A participant switches their microphone on or off; the other side shows it (like Discord's muted icon). */
+export async function setCallMuted(user: CallUser, input: Record<string, unknown>) {
+    if (typeof input.muted !== "boolean") throw new CallApiError(400, "invalid_request", "Geçersiz istek.");
+    const { record, role } = await loadCall(input.callId, user.email);
+    if (record.status === "declined" || record.status === "ended") return { success: true };
+    const field = role === "caller" ? "callerMuted" : "calleeMuted";
+    try {
+        // `exists`: a call that ended meanwhile must not come back as a stub.
+        await commitServerPatches([{ path: callPath(record.id), data: { [field]: input.muted }, updateFields: [field], exists: true }]);
+    } catch (error) {
+        if ((error as { status?: number }).status === 404) throw new CallApiError(404, "not_found", "Arama bulunamadı veya sona erdi.");
+        throw error;
+    }
+    return { success: true };
+}
+
 /**
  * Hangs up (or cancels, or cleans up after a finished call): the call
  * document and the candidate subcollections older clients wrote are deleted.

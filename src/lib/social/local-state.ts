@@ -3,8 +3,9 @@
 /**
  * Hanogt Social preferences and read markers that live in this browser
  * (localStorage): when a group was last read, closed conversations, the
- * per-group notification level, the microphone/headphone toggles and the
- * collapsed side panel. Every change is announced to the other components
+ * per-group notification level, the microphone/headphone toggles, the chosen
+ * microphone and speaker, and the collapsed side panel. Every change is
+ * announced to the other components
  * of this tab (and to other tabs through the storage event).
  */
 import { useMemo, useSyncExternalStore } from "react";
@@ -14,6 +15,7 @@ const CHANGE_EVENT = "hanogt:social-local";
 const HIDDEN_DMS_KEY = "hanogt_social_hidden_dms";
 const NOTIFY_KEY = "hanogt_social_notify";
 const AUDIO_KEY = "hanogt_social_audio";
+const DEVICES_KEY = "hanogt_social_audio_devices";
 const ASIDE_KEY = "hanogt_social_aside";
 const MAP_ENTRIES_MAX = 300;
 
@@ -176,6 +178,38 @@ export function useSocialAudio(): SocialAudio {
 
 export function setSocialAudio(next: SocialAudio) {
     write(AUDIO_KEY, JSON.stringify({ micOff: next.micOff, deafened: next.deafened }));
+}
+
+/** Microphone and speaker for calls and voice messages; null = the system default. */
+export type AudioDevices = { input: string | null; output: string | null };
+
+function deviceId(value: unknown) {
+    return typeof value === "string" && value.length > 0 && value.length <= 200 ? value : null;
+}
+
+function parseDevices(raw: string | null): AudioDevices {
+    try {
+        const parsed = JSON.parse(raw || "{}") as Partial<Record<keyof AudioDevices, unknown>>;
+        return { input: deviceId(parsed.input), output: deviceId(parsed.output) };
+    } catch {
+        return { input: null, output: null };
+    }
+}
+
+export function useAudioDevices(): AudioDevices {
+    const raw = useStoredValue(DEVICES_KEY);
+    return useMemo(() => parseDevices(raw), [raw]);
+}
+
+/** The stored choice outside React (the call engine reads it when a call starts). */
+export function readAudioDevices(): AudioDevices {
+    return parseDevices(read(DEVICES_KEY));
+}
+
+export function setAudioDevices(next: Partial<AudioDevices>) {
+    const current = readAudioDevices();
+    const merged = { ...current, ...next };
+    write(DEVICES_KEY, merged.input || merged.output ? JSON.stringify({ input: deviceId(merged.input), output: deviceId(merged.output) }) : null);
 }
 
 /** Whether the right-hand panel (members / profile) is collapsed on wide screens. */

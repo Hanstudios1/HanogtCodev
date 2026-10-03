@@ -77,8 +77,12 @@ const CHECKS: Record<CloudCheckId, { title: Copy; description: Copy }> = {
         description: { TR: "Firebase'deki kurallar depodaki storage.rules ile aynı mı?", EN: "Do the rules in Firebase match the repository's storage.rules?" },
     },
     storageBucket: {
-        title: { TR: "Depolama kovası", EN: "Storage bucket" },
-        description: { TR: "Sesli mesajların saklandığı Cloud Storage kovası.", EN: "The Cloud Storage bucket that holds voice messages." },
+        title: { TR: "Depolama kovası (isteğe bağlı)", EN: "Storage bucket (optional)" },
+        description: { TR: "Yeni sesli mesajlar Firestore'da saklanır; Cloud Storage kovası yalnızca eski sesli mesajlar için kullanılır.", EN: "New voice messages are kept in Firestore; the Cloud Storage bucket is only used for older voice messages." },
+    },
+    turnServer: {
+        title: { TR: "Sesli arama aktarım sunucusu (TURN)", EN: "Voice call relay (TURN)" },
+        description: { TR: "Mobil veri, şirket ve okul ağları doğrudan bağlantıya izin vermez; bu ağlarda sesli aramaların bağlanması için TURN gerekir.", EN: "Mobile data, company and school networks block direct connections; on them voice calls need a TURN relay to connect." },
     },
 };
 
@@ -146,10 +150,14 @@ const REASONS: Record<CloudReason, Copy> = {
     rules_no_bucket: { TR: "Depolama kovası tanımlı olmadığı için Storage kuralları denetlenmedi.", EN: "Storage rules weren't checked because no storage bucket is configured." },
     rules_failed: { TR: "Yayımlanan kurallar okunamadı.", EN: "Couldn't read the deployed rules." },
     bucket_ok: { TR: "{bucket} kovası erişilebilir.", EN: "The {bucket} bucket is reachable." },
-    bucket_missing: { TR: "Geçerli bir depolama kovası tanımlı değil; sesli mesajlar çalışmaz.", EN: "No valid storage bucket is configured; voice messages won't work." },
-    bucket_not_found: { TR: "{bucket} kovası bulunamadı; Storage başlatılmamış olabilir.", EN: "The {bucket} bucket wasn't found; Storage may not be set up." },
+    bucket_missing: { TR: "Depolama kovası tanımlı değil. Sorun değil: sesli mesajlar Firestore'da saklanıyor; yalnızca Storage'a kaydedilmiş eski sesli mesajlar dinlenemez.", EN: "No storage bucket is configured. That's fine: voice messages are kept in Firestore; only older voice messages saved to Storage can't be played." },
+    bucket_not_found: { TR: "{bucket} kovasına ulaşılamadı (Storage, Firebase'in Blaze planını gerektirir). Yeni sesli mesajlar Firestore'da saklandığı için yalnızca eski sesli mesajlar etkilenir.", EN: "The {bucket} bucket can't be reached (Storage needs Firebase's Blaze plan). New voice messages are kept in Firestore, so only older voice messages are affected." },
     bucket_permission: { TR: "Hizmet hesabı {bucket} kovasına erişemiyor.", EN: "The service account can't access the {bucket} bucket." },
     bucket_failed: { TR: "Depolama kovası denetlenemedi.", EN: "Couldn't check the storage bucket." },
+    turn_ok: { TR: "TURN hazır; aramalar zor ağlarda da bağlanabilir.", EN: "TURN is ready; calls can connect on restrictive networks too." },
+    turn_missing: { TR: "TURN tanımlı değil. Aramalar ev ağlarının çoğunda çalışır, ama mobil veride ve kurumsal ağlarda bağlanamayabilir.", EN: "No TURN is configured. Calls work on most home networks but may not connect on mobile data or company networks." },
+    turn_credentials_missing: { TR: "TURN_SERVER_URL tanımlı ama kimlik bilgisi yok (TURN_SHARED_SECRET ya da TURN_USERNAME ile TURN_CREDENTIAL).", EN: "TURN_SERVER_URL is set but there are no credentials (TURN_SHARED_SECRET, or TURN_USERNAME with TURN_CREDENTIAL)." },
+    turn_failed: { TR: "TURN kimlik bilgileri alınamadı ({problem}); anahtarı kontrol edin. Bu sırada aramalar yalnızca doğrudan bağlantıyı dener.", EN: "Couldn't get TURN credentials ({problem}); check the key. Meanwhile calls only try direct connections." },
 };
 
 const REDEPLOY: Copy = { TR: "NEXT_PUBLIC_ değişkenleri derleme sırasında pakete yazılır: Vercel → Deployments → son dağıtım → Redeploy ile yeniden dağıtın.", EN: "NEXT_PUBLIC_ variables are baked in at build time: redeploy via Vercel → Deployments → latest deployment → Redeploy." };
@@ -310,10 +318,19 @@ const FIXES: Record<CloudFixId, { title: Copy; steps: Copy[] }> = {
             CLI_DEPLOY,
         ],
     },
-    initStorage: {
-        title: { TR: "Cloud Storage'ı başlatın", EN: "Set up Cloud Storage" },
+    setupTurn: {
+        title: { TR: "Ücretsiz TURN kurun (Cloudflare)", EN: "Set up free TURN (Cloudflare)" },
         steps: [
-            { TR: "Firebase Console → Build → Storage → Başlayın ile varsayılan kovayı oluşturun.", EN: "Create the default bucket with Firebase Console → Build → Storage → Get started." },
+            { TR: "dash.cloudflare.com'da ücretsiz bir hesap açın; Realtime → TURN Server → Create ile bir TURN anahtarı oluşturun (her ay 1.000 GB ücretsiz).", EN: "Create a free account at dash.cloudflare.com, then a TURN key under Realtime → TURN Server → Create (1,000 GB free every month)." },
+            { TR: "Gösterilen “Turn Token ID” ve “API Token” değerlerini Vercel → Settings → Environment Variables bölümüne CLOUDFLARE_TURN_KEY_ID ve CLOUDFLARE_TURN_KEY_API_TOKEN olarak ekleyin (ikisi de gizli; NEXT_PUBLIC_ ile başlamasın).", EN: "Add the “Turn Token ID” and “API Token” it shows in Vercel → Settings → Environment Variables as CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN (both secret; no NEXT_PUBLIC_ prefix)." },
+            REDEPLOY_SERVER,
+            { TR: "Kendi coturn sunucunuz varsa bunun yerine TURN_SERVER_URL ve TURN_SHARED_SECRET; sabit kullanıcı adı veren bir hizmette TURN_SERVER_URL, TURN_USERNAME ve TURN_CREDENTIAL girin.", EN: "With your own coturn server use TURN_SERVER_URL and TURN_SHARED_SECRET instead; with a service that gives a fixed username use TURN_SERVER_URL, TURN_USERNAME and TURN_CREDENTIAL." },
+        ],
+    },
+    initStorage: {
+        title: { TR: "Cloud Storage'ı başlatın (isteğe bağlı)", EN: "Set up Cloud Storage (optional)" },
+        steps: [
+            { TR: "Yalnızca eski sesli mesajlar için gerekir. Firebase projesini Blaze planına geçirip Firebase Console → Build → Storage → Başlayın ile varsayılan kovayı oluşturun.", EN: "Only needed for older voice messages. Move the Firebase project to the Blaze plan, then create the default bucket with Firebase Console → Build → Storage → Get started." },
             { TR: "Kova adını FIREBASE_STORAGE_BUCKET ve NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET olarak girip yeniden dağıtın.", EN: "Set the bucket name as FIREBASE_STORAGE_BUCKET and NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET and redeploy." },
         ],
     },
@@ -448,6 +465,76 @@ function FixSteps({ fix, vars }: { fix: CloudFixId; vars: Vars }) {
     );
 }
 
+const TURN_TEST: Record<"idle" | "running" | "relay" | "no_relay" | "no_turn" | "failed", Copy> = {
+    idle: { TR: "Bu tarayıcıdan TURN testi yap", EN: "Test TURN from this browser" },
+    running: { TR: "Deneniyor…", EN: "Testing…" },
+    relay: { TR: "TURN çalışıyor: bu tarayıcı aktarım sunucusuna bağlanabildi.", EN: "TURN works: this browser reached the relay." },
+    no_relay: { TR: "Aktarım sunucusuna ulaşılamadı. Anahtarı ve bu ağın 3478/443 portlarına izin verdiğini kontrol edin.", EN: "The relay couldn't be reached. Check the key and that this network allows ports 3478/443." },
+    no_turn: { TR: "Site henüz TURN sunucusu vermiyor (önce yukarıdaki kurulumu yapın).", EN: "The site doesn't hand out a TURN server yet (do the setup above first)." },
+    failed: { TR: "Test başlatılamadı (oturum veya tarayıcı desteği).", EN: "The test couldn't start (session or browser support)." },
+};
+
+/** Asks /api/calls/ice for this browser's servers and gathers relay-only candidates. */
+async function runRelayTest(): Promise<"relay" | "no_relay" | "no_turn" | "failed"> {
+    let servers: RTCIceServer[] = [];
+    try {
+        const response = await fetch("/api/calls/ice", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin" });
+        const data = await response.json() as { iceServers?: RTCIceServer[] };
+        if (!response.ok) return "failed";
+        servers = (data.iceServers ?? []).filter((server) => server.username && server.credential);
+    } catch {
+        return "failed";
+    }
+    if (!servers.length) return "no_turn";
+    if (typeof RTCPeerConnection === "undefined") return "failed";
+    const pc = new RTCPeerConnection({ iceServers: servers, iceTransportPolicy: "relay" });
+    try {
+        pc.createDataChannel("turn-test");
+        const found = new Promise<boolean>((resolve) => {
+            const timer = window.setTimeout(() => resolve(false), 8_000);
+            pc.onicecandidate = (event) => {
+                if (event.candidate && / typ relay /.test(event.candidate.candidate)) {
+                    window.clearTimeout(timer);
+                    resolve(true);
+                } else if (!event.candidate) {
+                    window.clearTimeout(timer);
+                    resolve(false);
+                }
+            };
+        });
+        await pc.setLocalDescription(await pc.createOffer());
+        return (await found) ? "relay" : "no_relay";
+    } catch {
+        return "failed";
+    } finally {
+        pc.close();
+    }
+}
+
+function TurnRelayTest() {
+    const { tx } = useI18n();
+    const [result, setResult] = useState<keyof typeof TURN_TEST>("idle");
+    return (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+                type="button"
+                disabled={result === "running"}
+                onClick={() => {
+                    setResult("running");
+                    void runRelayTest().then(setResult);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1 text-[12px] font-bold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5"
+            >
+                <Globe className="h-3.5 w-3.5" aria-hidden="true" />
+                {tx(result === "running" ? TURN_TEST.running : TURN_TEST.idle)}
+            </button>
+            {result !== "idle" && result !== "running" ? (
+                <span role="status" className={cx("text-[12px] font-semibold", result === "relay" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-300")}>{tx(TURN_TEST[result])}</span>
+            ) : null}
+        </div>
+    );
+}
+
 function CheckRow({ item, vars }: { item: CloudCheck; vars: Vars }) {
     const { tx } = useI18n();
     const [open, setOpen] = useState(item.status === "fail" || item.status === "warn");
@@ -474,6 +561,7 @@ function CheckRow({ item, vars }: { item: CloudCheck; vars: Vars }) {
                             <span className="font-sans font-semibold">{tx(T.technical)}:</span> {item.detail}
                         </p>
                     ) : null}
+                    {item.id === "turnServer" ? <TurnRelayTest /> : null}
                     {item.fix ? (
                         <div className="mt-2">
                             <button

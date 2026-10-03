@@ -189,6 +189,28 @@ test("a call from offer to answer, with candidates from both sides", async () =>
     });
 });
 
+test("muting: each side's switch, seen by the other side only", async () => {
+    await withBackend(seed(), {}, async (db) => {
+        const { callId } = await calls.startCall(ali, { callee: BERK, offer: OFFER });
+        const path = `calls/${callId}`;
+        assert.equal((await calls.readCall(berk, callId)).call.remoteMuted, false);
+        await calls.setCallMuted(ali, { callId, muted: true });
+        assert.equal(db.get(path).callerMuted, true);
+        assert.equal((await calls.readCall(berk, callId)).call.remoteMuted, true, "the callee sees the caller muted");
+        assert.equal((await calls.readCall(ali, callId)).call.remoteMuted, false, "the caller's own switch isn't 'remote'");
+        await calls.setCallMuted(berk, { callId, muted: true });
+        assert.equal(db.get(path).calleeMuted, true);
+        assert.equal((await calls.readCall(ali, callId)).call.remoteMuted, true);
+        await calls.setCallMuted(ali, { callId, muted: false });
+        assert.equal((await calls.readCall(berk, callId)).call.remoteMuted, false);
+        await rejects(calls.setCallMuted(ali, { callId, muted: "yes" }), "invalid_request");
+        await rejects(calls.setCallMuted(user(CEM), { callId, muted: true }), "not_found");
+        await calls.deleteCall(ALI, callId);
+        await rejects(calls.setCallMuted(ali, { callId, muted: true }), "not_found");
+        assert.equal(db.has(path), false, "muting a finished call doesn't bring it back");
+    });
+});
+
 test("candidates per side are capped", async () => {
     await withBackend(seed(), {}, async (db) => {
         const { callId } = await calls.startCall(ali, { callee: BERK, offer: OFFER });

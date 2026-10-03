@@ -2,8 +2,10 @@
 
 /**
  * One 1:1 voice call in the browser: microphone, RTCPeerConnection, the
- * signalling through /api/calls (client.ts), timeouts and the "speaking"
- * meters. The React provider (components/VoiceCallProvider.tsx) creates one
+ * signalling through /api/calls (client.ts), timeouts, the "speaking"
+ * indicators and the checks that tell people why they can't hear each other
+ * (muted microphone, blocked playback, no audio arriving, a silent input
+ * device). The React provider (components/VoiceCallProvider.tsx) creates one
  * per call and renders its state.
  */
 import { CallRequestError, callsApi, watchCall, type CallView } from "./client";
@@ -17,6 +19,9 @@ export type CallNotice =
     | "failed" | "failed_turn" | "mic_denied" | "mic_missing" | "mic_busy" | "unsupported" | "ice"
     | "start_failed" | "inactive" | "not_friend" | "blocked" | "rate_limited" | "network";
 
+/** How the audio travels: straight between the two browsers, or through the TURN relay. */
+export type CallRoute = "direct" | "relay";
+
 export type CallSessionState = {
     phase: CallPhase;
     callId: string | null;
@@ -29,6 +34,17 @@ export type CallSessionState = {
     slow: boolean;
     remoteSpeaking: boolean;
     localSpeaking: boolean;
+    route: CallRoute | null;
+    /** The other side switched its microphone off. */
+    remoteMuted: boolean;
+    /** The browser refused to start the other side's audio; a click on "start audio" fixes it. */
+    audioBlocked: boolean;
+    /** Connected, but no audio data has arrived for a while. */
+    noIncomingAudio: boolean;
+    /** The microphone only delivers digital silence (wrong or switched-off input device). */
+    micSilent: boolean;
+    /** Audio received so far, in kilobytes. */
+    receivedKb: number;
 };
 
 type SessionOptions = {
@@ -43,12 +59,26 @@ type SessionOptions = {
     deafened: boolean;
     /** The page's <audio> element for the other side (a detached one is made otherwise). */
     audio: HTMLAudioElement | null;
+    /** Chosen microphone and speaker (Hanogt Social's audio settings); null = the system default. */
+    inputDeviceId?: string | null;
+    outputDeviceId?: string | null;
     onChange: (state: CallSessionState) => void;
 };
 
+type SinkAudio = HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
+
 const SPEAKING_LEVEL = 0.035;
 const SPEAKING_HOLD_MS = 450;
+/** getStats' audioLevel (0…1) above which the other side counts as speaking. */
+const REMOTE_SPEAKING_LEVEL = 0.02;
+const REMOTE_HOLD_MS = 800;
 const SLOW_AFTER_MS = 8_000;
+const STATS_EVERY_MS = 500;
+/** Connected but no audio packets for this long: tell the user. */
+const NO_AUDIO_AFTER_MS = 5_000;
+/** The microphone has delivered digital silence for this long: tell the user. */
+const MIC_SILENT_AFTER_MS = 8_000;
+const MIC_SILENT_LEVEL = 0.0004;
 
 function micNotice(error: unknown): CallNotice {
     const name = error instanceof DOMException ? error.name : (error as { name?: string } | null)?.name ?? "";
@@ -70,6 +100,45 @@ function requestNotice(error: unknown, fallback: CallNotice): CallNotice {
     }
 }
 
+type StatsEntry = Record<string, unknown> & { id?: string; type?: string };
+
+/** What getStats says about the call's audio and route (fields browsers may lack are null). */
+export function readCallStats(report: { forEach(callback: (value: StatsEntry) => void): void }) {
+    let bytes = 0;
+    // `as`: assigned inside the callback, where TypeScript doesn't follow them.
+    let level = null as number | null;
+    let energy = null as { energy: number; duration: number } | null;
+    let selectedPair = null as string | null;
+    const pairs = new Map<string, StatsEntry>();
+    const candidates = new Map<string, string>();
+    report.forEach((entry) => {
+        const isAudio = entry.kind === "audio" || entry.mediaType === "audio";
+        if (entry.type === "inbound-rtp" && isAudio) {
+            bytes += Number(entry.bytesReceived) || 0;
+            if (typeof entry.audioLevel === "number") level = Math.max(level ?? 0, entry.audioLevel);
+            if (typeof entry.totalAudioEnergy === "number" && typeof entry.totalSamplesDuration === "number") {
+                energy = { energy: entry.totalAudioEnergy, duration: entry.totalSamplesDuration };
+            }
+        } else if (entry.type === "transport" && typeof entry.selectedCandidatePairId === "string") {
+            selectedPair = entry.selectedCandidatePairId;
+        } else if (entry.type === "candidate-pair" && typeof entry.id === "string") {
+            pairs.set(entry.id, entry);
+        } else if ((entry.type === "local-candidate" || entry.type === "remote-candidate") && typeof entry.id === "string") {
+            candidates.set(entry.id, String(entry.candidateType ?? ""));
+        }
+    });
+    // Chrome and Safari name the pair on the transport; Firefox marks it `selected`.
+    const pair = (selectedPair ? pairs.get(selectedPair) : undefined)
+        ?? [...pairs.values()].find((entry) => entry.selected === true)
+        ?? [...pairs.values()].find((entry) => entry.nominated === true && entry.state === "succeeded");
+    let route: CallRoute | null = null;
+    if (pair) {
+        const types = [candidates.get(String(pair.localCandidateId)), candidates.get(String(pair.remoteCandidateId))];
+        route = types.includes("relay") ? "relay" : "direct";
+    }
+    return { bytes, level, energy, route };
+}
+
 export class CallSession {
     readonly role: CallRole;
     readonly peer: string;
@@ -78,7 +147,7 @@ export class CallSession {
     private pc: RTCPeerConnection | null = null;
     private local: MediaStream | null = null;
     private remoteStream: MediaStream | null = null;
-    private audio: HTMLAudioElement | null = null;
+    private audio: SinkAudio | null = null;
     private ownsAudio = false;
     private stopWatch: (() => void) | null = null;
     private offer: CallDescription | null = null;
@@ -92,9 +161,18 @@ export class CallSession {
     private closed = false;
     private muted: boolean;
     private deafened: boolean;
+    private inputDeviceId: string | null;
+    private outputDeviceId: string | null;
+    /** What the server last heard about this side's microphone (absent on the call = on). */
+    private muteSent = false;
     private audioContext: AudioContext | null = null;
     private analysers: { local: AnalyserNode | null; remote: AnalyserNode | null } = { local: null, remote: null };
     private readonly lastLoud = { local: 0, remote: 0 };
+    /** The other side's level comes from getStats; the Web Audio meter is only a fallback. */
+    private remoteLevelFromStats = false;
+    private lastEnergy: { energy: number; duration: number } | null = null;
+    private received = { bytes: 0, changedAt: 0 };
+    private micQuietSince = 0;
 
     constructor(options: SessionOptions) {
         this.options = options;
@@ -102,6 +180,8 @@ export class CallSession {
         this.peer = options.peer;
         this.muted = options.muted;
         this.deafened = options.deafened;
+        this.inputDeviceId = options.inputDeviceId ?? null;
+        this.outputDeviceId = options.outputDeviceId ?? null;
         this.state = {
             phase: options.role === "caller" ? "preparing" : "incoming",
             callId: options.callId,
@@ -111,6 +191,12 @@ export class CallSession {
             slow: false,
             remoteSpeaking: false,
             localSpeaking: false,
+            route: null,
+            remoteMuted: false,
+            audioBlocked: false,
+            noIncomingAudio: false,
+            micSilent: false,
+            receivedKb: 0,
         };
     }
 
@@ -150,6 +236,55 @@ export class CallSession {
         return typeof window !== "undefined" && typeof RTCPeerConnection !== "undefined" && Boolean(navigator.mediaDevices?.getUserMedia);
     }
 
+    private audioConstraints(): MediaTrackConstraints {
+        const constraints: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 };
+        // `ideal`: a microphone that was unplugged falls back to the default one instead of failing.
+        if (this.inputDeviceId) constraints.deviceId = { ideal: this.inputDeviceId };
+        return constraints;
+    }
+
+    /** The element that plays the other side (the page's, or a detached one). */
+    private ensureAudio(): SinkAudio {
+        if (!this.audio) {
+            this.audio = this.options.audio ?? new Audio();
+            this.ownsAudio = !this.options.audio;
+            this.audio.autoplay = true;
+            this.audio.muted = this.deafened;
+            this.applySink();
+        }
+        return this.audio;
+    }
+
+    private ensureAudioContext() {
+        if (this.audioContext) {
+            if (this.audioContext.state === "suspended") void this.audioContext.resume().catch(() => undefined);
+            return this.audioContext;
+        }
+        try {
+            const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            this.audioContext = AudioContextClass ? new AudioContextClass() : null;
+            void this.audioContext?.resume().catch(() => undefined);
+        } catch {
+            this.audioContext = null;
+        }
+        return this.audioContext;
+    }
+
+    /**
+     * Called synchronously from the click that starts or answers the call:
+     * browsers (Safari above all) then let the call audio and the level
+     * meters play later, after the connection comes up.
+     */
+    unlock() {
+        const audio = this.ensureAudio();
+        try {
+            void audio.play()?.catch(() => undefined);
+        } catch {
+            // Nothing to play yet; the click still counts.
+        }
+        this.ensureAudioContext();
+    }
+
     /** Microphone and ICE servers, then the connection; false (and the call ended) when something fails. */
     private async prepare(): Promise<boolean> {
         if (!this.supported()) {
@@ -157,7 +292,7 @@ export class CallSession {
             return false;
         }
         try {
-            this.local = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+            this.local = await navigator.mediaDevices.getUserMedia({ audio: this.audioConstraints(), video: false });
         } catch (error) {
             this.finish(micNotice(error), this.role === "callee" ? "decline" : "remove");
             return false;
@@ -190,20 +325,16 @@ export class CallSession {
         this.pc = pc;
         const local = this.local;
         local?.getTracks().forEach((track) => pc.addTrack(track, local));
-        const stream = new MediaStream();
-        this.remoteStream = stream;
-        this.audio = this.options.audio;
-        if (!this.audio) {
-            this.audio = new Audio();
-            this.ownsAudio = true;
-        }
-        this.audio.autoplay = true;
-        this.audio.muted = this.deafened;
-        this.audio.srcObject = stream;
+        const remote = new MediaStream();
+        this.remoteStream = remote;
+        const audio = this.ensureAudio();
         pc.ontrack = (event) => {
-            for (const track of event.streams[0]?.getTracks() ?? [event.track]) if (!stream.getTracks().includes(track)) stream.addTrack(track);
-            void this.audio?.play().catch(() => undefined);
-            if (!this.analysers.remote) this.analysers.remote = this.analyse(stream);
+            if (!remote.getTracks().includes(event.track)) remote.addTrack(event.track);
+            // Attached only once the track is in the stream: some browsers never
+            // play tracks added to a stream that was already attached empty.
+            if (audio.srcObject !== remote) audio.srcObject = remote;
+            this.playRemote();
+            event.track.onunmute = () => this.playRemote();
         };
         pc.onicecandidate = (event) => {
             if (!event.candidate || !event.candidate.candidate) return;
@@ -213,6 +344,66 @@ export class CallSession {
         const onState = () => this.connectionChanged();
         pc.onconnectionstatechange = onState;
         pc.oniceconnectionstatechange = onState;
+    }
+
+    private playRemote() {
+        const audio = this.audio;
+        if (!audio || this.closed || !audio.srcObject) return;
+        let attempt: Promise<void> | undefined;
+        try {
+            attempt = audio.play();
+        } catch {
+            attempt = undefined;
+        }
+        attempt?.then(() => this.set({ audioBlocked: false })).catch((error: unknown) => {
+            // Autoplay rules: the browser wants a click before it plays sound.
+            if (!this.closed && (error as { name?: string } | null)?.name === "NotAllowedError") this.set({ audioBlocked: true });
+        });
+    }
+
+    /** The "start audio" button: a click lets the browser play the call. */
+    resumeAudio() {
+        this.ensureAudioContext();
+        this.playRemote();
+    }
+
+    private applySink() {
+        const audio = this.audio;
+        if (!audio || typeof audio.setSinkId !== "function") return;
+        // "" is the system default; a speaker that is gone keeps the current one.
+        void audio.setSinkId(this.outputDeviceId ?? "").catch(() => undefined);
+    }
+
+    /** Speaker chosen in the audio settings (applies at once). */
+    setOutputDevice(id: string | null) {
+        if (id === this.outputDeviceId) return;
+        this.outputDeviceId = id;
+        this.applySink();
+    }
+
+    /** Microphone chosen in the audio settings: the running call switches to it without renegotiating. */
+    async setInputDevice(id: string | null) {
+        if (id === this.inputDeviceId) return;
+        this.inputDeviceId = id;
+        const pc = this.pc;
+        if (!pc || this.closed || !this.local) return;
+        try {
+            const next = await navigator.mediaDevices.getUserMedia({ audio: this.audioConstraints(), video: false });
+            const track = next.getAudioTracks()[0];
+            if (!track || this.closed || this.pc !== pc) {
+                next.getTracks().forEach((entry) => entry.stop());
+                return;
+            }
+            track.enabled = !this.muted;
+            await pc.getSenders().find((sender) => sender.track?.kind === "audio")?.replaceTrack(track);
+            this.local.getTracks().forEach((old) => old.stop());
+            this.local = next;
+            this.analysers.local = this.analyse(next);
+            this.micQuietSince = 0;
+            this.set({ micSilent: false });
+        } catch {
+            // The other microphone couldn't be opened: the call keeps the current one.
+        }
     }
 
     /* ----------------------------- outgoing ---------------------------- */
@@ -238,6 +429,7 @@ export class CallSession {
         this.set({ callId, phase: "ringing" });
         this.canSend = true;
         void this.flushCandidates();
+        this.reportMute();
         this.watch(callId);
         this.later("ring", CALL_LIMITS.ringMs, () => this.finish("no_answer", "remove"));
     }
@@ -275,6 +467,7 @@ export class CallSession {
         if (this.closed) return;
         this.canSend = true;
         void this.flushCandidates();
+        this.reportMute();
         this.connecting();
     }
 
@@ -323,6 +516,7 @@ export class CallSession {
             this.finish(null, "none");
             return;
         }
+        this.set({ remoteMuted: view.remoteMuted === true });
         if (this.role === "caller" && view.answer && !this.answerApplied && this.pc) {
             this.answerApplied = true;
             this.clear("ring");
@@ -380,6 +574,21 @@ export class CallSession {
         if (this.outgoing.length && !this.timers.has("send")) this.later("send", 150, () => void this.flushCandidates());
     }
 
+    /** Tells the other side when this microphone goes off or on (debounced; the last state wins). */
+    private reportMute() {
+        const callId = this.state.callId;
+        if (!callId || !this.canSend || this.closed || this.muteSent === this.muted) return;
+        this.later("mute", 250, () => {
+            const muted = this.muted;
+            if (this.muteSent === muted) return;
+            this.muteSent = muted;
+            void callsApi.mute(callId, muted).catch(() => {
+                // Try again with the next change (or the next state check).
+                this.muteSent = !muted;
+            });
+        });
+    }
+
     /* ---------------------------- connection --------------------------- */
 
     private connecting() {
@@ -392,19 +601,28 @@ export class CallSession {
         if (!pc || this.closed) return;
         const state = pc.connectionState;
         const ice = pc.iceConnectionState;
-        if (state === "connected" || ice === "connected" || ice === "completed") {
+        // connectionState covers ICE and the encryption handshake (DTLS): audio
+        // only flows once it is "connected". Old browsers only have the ICE state.
+        const connected = state ? state === "connected" : ice === "connected" || ice === "completed";
+        if (connected) {
             this.clear("connect");
             this.clear("slow");
             this.clear("drop");
-            if (this.state.phase !== "active") this.set({ phase: "active", connectedAt: Date.now(), slow: false });
-            void this.audio?.play().catch(() => undefined);
+            if (this.state.phase !== "active") {
+                const now = Date.now();
+                this.received = { bytes: 0, changedAt: now };
+                this.set({ phase: "active", connectedAt: now, slow: false });
+            }
+            this.playRemote();
+            this.startStats();
             return;
         }
         if (state === "failed" || ice === "failed") {
             this.fail();
             return;
         }
-        if ((state === "disconnected" || ice === "disconnected") && this.state.phase === "active") {
+        const dropped = state ? state === "disconnected" : ice === "disconnected";
+        if (dropped && this.state.phase === "active") {
             // Networks change (Wi-Fi to mobile…); give it a moment to recover.
             if (!this.timers.has("drop")) this.later("drop", CALL_LIMITS.disconnectGraceMs, () => this.fail());
         }
@@ -430,7 +648,7 @@ export class CallSession {
         if (callId && this.state.phase !== "incoming") callsApi.beacon(callId);
         this.closed = true;
         this.teardown();
-        this.set({ phase: "ended", notice: null, slow: false, remoteSpeaking: false, localSpeaking: false });
+        this.set({ phase: "ended", notice: null, slow: false, remoteSpeaking: false, localSpeaking: false, audioBlocked: false, noIncomingAudio: false, micSilent: false });
     }
 
     /**
@@ -445,7 +663,7 @@ export class CallSession {
         this.teardown();
         if (callId && server === "remove") void callsApi.end(callId, true).catch(() => undefined);
         if (callId && server === "decline") void callsApi.decline(callId, "unavailable").catch(() => undefined);
-        this.set({ phase: "ended", notice, slow: false, remoteSpeaking: false, localSpeaking: false });
+        this.set({ phase: "ended", notice, slow: false, remoteSpeaking: false, localSpeaking: false, audioBlocked: false, noIncomingAudio: false, micSilent: false });
     }
 
     private stopLocal() {
@@ -485,6 +703,9 @@ export class CallSession {
     setMuted(muted: boolean) {
         this.muted = muted;
         this.local?.getAudioTracks().forEach((track) => { track.enabled = !muted; });
+        this.micQuietSince = 0;
+        if (muted) this.set({ micSilent: false });
+        this.reportMute();
     }
 
     setDeafened(deafened: boolean) {
@@ -507,16 +728,12 @@ export class CallSession {
         }
     }
 
-    /** Green "speaking" rings, like Discord: a level meter on both sides (best effort). */
+    /**
+     * Green "speaking" rings, like Discord, and the silent-microphone check:
+     * a Web Audio level meter on this side's microphone (best effort).
+     */
     private startMeters() {
-        try {
-            const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-            this.audioContext = AudioContextClass ? new AudioContextClass() : null;
-            void this.audioContext?.resume().catch(() => undefined);
-        } catch {
-            this.audioContext = null;
-        }
-        if (!this.audioContext) return;
+        if (!this.ensureAudioContext()) return;
         if (this.local) this.analysers.local = this.analyse(this.local);
         const buffer = new Uint8Array(512);
         const level = (analyser: AnalyserNode | null) => {
@@ -531,14 +748,68 @@ export class CallSession {
         };
         const tick = () => {
             const now = Date.now();
-            if (!this.muted && level(this.analysers.local) > SPEAKING_LEVEL) this.lastLoud.local = now;
-            if (level(this.analysers.remote) > SPEAKING_LEVEL) this.lastLoud.remote = now;
-            this.set({
-                localSpeaking: !this.muted && now - this.lastLoud.local < SPEAKING_HOLD_MS,
-                remoteSpeaking: now - this.lastLoud.remote < SPEAKING_HOLD_MS,
-            });
+            const local = level(this.analysers.local);
+            if (!this.muted && local > SPEAKING_LEVEL) this.lastLoud.local = now;
+            const patch: Partial<CallSessionState> = { localSpeaking: !this.muted && now - this.lastLoud.local < SPEAKING_HOLD_MS };
+            if (!this.remoteLevelFromStats && this.analysers.remote) {
+                if (level(this.analysers.remote) > SPEAKING_LEVEL) this.lastLoud.remote = now;
+                patch.remoteSpeaking = now - this.lastLoud.remote < SPEAKING_HOLD_MS;
+            }
+            // Only judged while the meter really runs (a suspended audio context reads zeros).
+            const metering = this.audioContext?.state === "running" && Boolean(this.analysers.local) && !this.muted
+                && Boolean(this.local?.getAudioTracks().some((track) => track.enabled && track.readyState === "live"));
+            if (!metering || local > MIC_SILENT_LEVEL) this.micQuietSince = 0;
+            else if (!this.micQuietSince) this.micQuietSince = now;
+            patch.micSilent = this.state.phase === "active" && this.micQuietSince > 0 && now - this.micQuietSince > MIC_SILENT_AFTER_MS;
+            this.set(patch);
             this.later("meter", 150, tick);
         };
         this.later("meter", 150, tick);
+    }
+
+    /** Twice a second while connected: route, incoming audio and the other side's level. */
+    private startStats() {
+        if (this.timers.has("stats")) return;
+        const tick = async () => {
+            await this.readStats();
+            if (!this.closed && this.pc) this.later("stats", STATS_EVERY_MS, () => void tick());
+        };
+        this.later("stats", STATS_EVERY_MS, () => void tick());
+    }
+
+    private async readStats() {
+        const pc = this.pc;
+        if (!pc || this.closed || typeof pc.getStats !== "function") return;
+        let stats: ReturnType<typeof readCallStats>;
+        try {
+            stats = readCallStats(await pc.getStats() as unknown as Parameters<typeof readCallStats>[0]);
+        } catch {
+            return;
+        }
+        if (this.closed || this.pc !== pc) return;
+        const now = Date.now();
+        let level = stats.level;
+        if (level === null && stats.energy) {
+            // Safari and older Chrome: the level from the energy since the last reading.
+            const previous = this.lastEnergy;
+            this.lastEnergy = stats.energy;
+            const duration = previous ? stats.energy.duration - previous.duration : 0;
+            if (previous && duration > 0) level = Math.sqrt(Math.max(0, stats.energy.energy - previous.energy) / duration);
+        }
+        if (level !== null) {
+            this.remoteLevelFromStats = true;
+            if (level > REMOTE_SPEAKING_LEVEL) this.lastLoud.remote = now;
+        } else if (!this.analysers.remote && this.remoteStream?.getAudioTracks().length) {
+            // No level in the stats (some browsers): measure the other side with Web Audio instead.
+            this.analysers.remote = this.analyse(this.remoteStream);
+        }
+        if (stats.bytes > this.received.bytes) this.received = { bytes: stats.bytes, changedAt: now };
+        const active = this.state.phase === "active";
+        this.set({
+            route: stats.route ?? this.state.route,
+            receivedKb: Math.floor(stats.bytes / 1024),
+            noIncomingAudio: active && now - Math.max(this.received.changedAt, this.state.connectedAt) > NO_AUDIO_AFTER_MS,
+            ...(this.remoteLevelFromStats ? { remoteSpeaking: now - this.lastLoud.remote < REMOTE_HOLD_MS } : {}),
+        });
     }
 }

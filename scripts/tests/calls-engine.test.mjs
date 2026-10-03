@@ -32,9 +32,22 @@ class FakePeer {
         this.iceConnectionState = "new";
         this.remoteCandidates = [];
         this.closed = false;
+        this.statsCalls = 0;
         connections.push(this);
     }
     addTrack() {}
+    getSenders() { return []; }
+    // Audio arriving at 4 KB a second over a direct path, as Chrome reports it.
+    async getStats() {
+        const bytes = this.connectionState === "connected" ? 4_000 * (1 + this.statsCalls++) : 0;
+        return new Map([
+            ["in", { id: "in", type: "inbound-rtp", kind: "audio", bytesReceived: bytes, audioLevel: 0.2 }],
+            ["t", { id: "t", type: "transport", selectedCandidatePairId: "p" }],
+            ["p", { id: "p", type: "candidate-pair", localCandidateId: "l", remoteCandidateId: "r", state: "succeeded", nominated: true }],
+            ["l", { id: "l", type: "local-candidate", candidateType: "host" }],
+            ["r", { id: "r", type: "remote-candidate", candidateType: "srflx" }],
+        ]);
+    }
     async createOffer() { return { type: "offer", sdp: "v=0\r\no=- 1 1 IN IP4 0.0.0.0\r\n" }; }
     async createAnswer() { return { type: "answer", sdp: "v=0\r\no=- 2 2 IN IP4 0.0.0.0\r\n" }; }
     async setLocalDescription(description) {
@@ -77,7 +90,7 @@ globalThis.RTCPeerConnection = FakePeer;
 const identity = new AsyncLocalStorage();
 const model = await load("lib/calls/model.ts");
 const server = await load("lib/server/calls.ts");
-const { CallSession } = await load("lib/calls/session.ts");
+const { CallSession, readCallStats } = await load("lib/calls/session.ts");
 const { watchIncoming } = await load("lib/calls/client.ts");
 
 // Fast timings for the simulation.
@@ -113,6 +126,7 @@ async function api(url, init = {}) {
                 case "decline": return reply(200, await server.declineCall(user, body));
                 case "end": return reply(200, await server.deleteCall(me, body.callId));
                 case "candidates": return reply(200, await server.addCandidates(user, body));
+                case "mute": return reply(200, await server.setCallMuted(user, body));
             }
         }
         return reply(404, { code: "not_found" });
@@ -136,7 +150,7 @@ async function withWorld(run) {
 const until = async (predicate, ms = 8_000) => {
     const start = Date.now();
     while (!predicate()) {
-        if (Date.now() - start > ms) throw new Error("timed out");
+        if (Date.now() - start > ms) throw new Error(`timed out: ${predicate.toString().slice(0, 160)}`);
         await new Promise((resolve) => setTimeout(resolve, 10));
     }
 };
@@ -284,4 +298,86 @@ test("calling a stranger fails clearly", async () => {
         assert.equal(a.last().phase, "ended");
         assert.equal(a.last().notice, "not_friend");
     });
+});
+
+test("muting reaches the other side, and unmuting clears it", async () => {
+    await withWorld(async (db) => {
+        const b = callee((created) => created.accept());
+        const a = session(A, { role: "caller", peer: B, callId: null });
+        await identity.run(A, () => a.created.startOutgoing());
+        await until(() => a.last().phase === "active" && b.sessions[0]?.last().phase === "active");
+        identity.run(A, () => a.created.setMuted(true));
+        await until(() => b.sessions[0].last().remoteMuted === true);
+        assert.equal(db.get(`calls/${a.last().callId}`).callerMuted, true);
+        identity.run(A, () => a.created.setMuted(false));
+        await until(() => b.sessions[0].last().remoteMuted === false);
+        identity.run(A, () => a.created.hangUp());
+        await until(() => b.sessions[0].last().phase === "ended");
+        b.stop();
+    });
+});
+
+test("a call that starts muted tells the other side once it rings", async () => {
+    await withWorld(async (db) => {
+        const b = callee((created) => created.accept());
+        const a = session(A, { role: "caller", peer: B, callId: null, muted: true });
+        await identity.run(A, () => a.created.startOutgoing());
+        await until(() => b.sessions[0]?.last().phase === "active");
+        await until(() => b.sessions[0].last().remoteMuted === true);
+        assert.equal(db.get(`calls/${a.last().callId}`).callerMuted, true);
+        identity.run(A, () => a.created.hangUp());
+        await until(() => b.sessions[0].last().phase === "ended");
+        b.stop();
+    });
+});
+
+test("connected means ICE and the encryption handshake, and stats report route and audio", async () => {
+    await withWorld(async () => {
+        const b = callee(() => undefined);
+        const a = session(A, { role: "caller", peer: B, callId: null });
+        await identity.run(A, () => a.created.startOutgoing());
+        await until(() => a.last().phase === "ringing" && b.sessions[0]?.last().phase === "incoming");
+        const pc = connections[connections.length - 1];
+        // ICE is up but DTLS isn't: no audio can flow yet.
+        // The browser's events run in A's tab (A's requests).
+        const fire = (handler) => identity.run(A, () => pc[handler]?.());
+        pc.iceConnectionState = "connected";
+        pc.connectionState = "connecting";
+        fire("oniceconnectionstatechange");
+        assert.equal(a.last().phase, "ringing");
+        pc.connectionState = "connected";
+        fire("onconnectionstatechange");
+        assert.equal(a.last().phase, "active");
+        await until(() => a.last().route === "direct" && a.last().receivedKb > 0 && a.last().remoteSpeaking);
+        // DTLS fails while ICE still says connected: the call ends instead of staying silent.
+        pc.connectionState = "failed";
+        fire("onconnectionstatechange");
+        assert.equal(a.last().phase, "ended");
+        assert.equal(a.last().notice, "failed_turn");
+        // The callee's ringing stops once the call is gone (sessions must end before the fake server goes away).
+        await until(() => b.sessions[0]?.last().phase === "ended");
+        b.stop();
+    });
+});
+
+test("readCallStats: Chrome and Firefox shaped reports", () => {
+    const chrome = readCallStats(new Map([
+        ["in", { id: "in", type: "inbound-rtp", kind: "audio", bytesReceived: 9000, audioLevel: 0.05 }],
+        ["in2", { id: "in2", type: "inbound-rtp", kind: "video", bytesReceived: 1 }],
+        ["t", { id: "t", type: "transport", selectedCandidatePairId: "p2" }],
+        ["p1", { id: "p1", type: "candidate-pair", localCandidateId: "l1", remoteCandidateId: "r1", state: "succeeded", nominated: true }],
+        ["p2", { id: "p2", type: "candidate-pair", localCandidateId: "l2", remoteCandidateId: "r1", state: "succeeded", nominated: true }],
+        ["l1", { id: "l1", type: "local-candidate", candidateType: "host" }],
+        ["l2", { id: "l2", type: "local-candidate", candidateType: "relay" }],
+        ["r1", { id: "r1", type: "remote-candidate", candidateType: "srflx" }],
+    ]));
+    assert.deepEqual(chrome, { bytes: 9000, level: 0.05, energy: null, route: "relay" });
+    const firefox = readCallStats(new Map([
+        ["in", { id: "in", type: "inbound-rtp", mediaType: "audio", bytesReceived: 300, totalAudioEnergy: 0.5, totalSamplesDuration: 10 }],
+        ["p", { id: "p", type: "candidate-pair", localCandidateId: "l", remoteCandidateId: "r", selected: true, state: "succeeded" }],
+        ["l", { id: "l", type: "local-candidate", candidateType: "host" }],
+        ["r", { id: "r", type: "remote-candidate", candidateType: "host" }],
+    ]));
+    assert.deepEqual(firefox, { bytes: 300, level: null, energy: { energy: 0.5, duration: 10 }, route: "direct" });
+    assert.deepEqual(readCallStats(new Map()), { bytes: 0, level: null, energy: null, route: null });
 });

@@ -36,6 +36,9 @@ export type CallRecord = {
     endedAt: number;
     expiresAt: number;
     endReason: DeclineReason | null;
+    /** Each side's microphone switch, so the other side can show "muted". */
+    callerMuted: boolean;
+    calleeMuted: boolean;
 };
 
 export const CALL_LIMITS = {
@@ -141,6 +144,8 @@ export function callFromData(id: string, data: Record<string, unknown> | null | 
         endedAt: timeOf(data.endedAt),
         expiresAt: timeOf(data.expiresAt),
         endReason: DECLINE_REASONS.find((entry) => entry === data.endReason) ?? null,
+        callerMuted: data.callerMuted === true,
+        calleeMuted: data.calleeMuted === true,
     };
 }
 
@@ -194,6 +199,8 @@ export type CallWire = {
     candidates: CallCandidate[];
     candidateCount: number;
     endReason: DeclineReason | null;
+    /** The other side switched its microphone off. */
+    remoteMuted: boolean;
     createdAt: number;
     answeredAt: number;
 };
@@ -212,6 +219,7 @@ export function callWire(record: CallRecord, role: CallRole, have = 0): CallWire
         candidates: remote.slice(from),
         candidateCount: remote.length,
         endReason: record.endReason,
+        remoteMuted: role === "caller" ? record.calleeMuted : record.callerMuted,
         createdAt: record.createdAt,
         answeredAt: record.answeredAt,
     };
