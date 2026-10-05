@@ -171,8 +171,39 @@ export async function buildDataset({ seed = 20261003 } = {}) {
     for (const [intent, entry] of byIntent) {
         if (agentIntents.isCoreActionIntent(intent)) continue;
         const phrasings = (intents[intent] ?? []).map((text) => ({ text, lang: languageOf(text) })).filter((item) => item.lang && searchKnowledge(item.text, 1)[0]?.id === entry.id);
-        for (const [index, item] of sampleOf(phrasings, 14).entries()) {
+        for (const [index, item] of sampleOf(phrasings, 40).entries()) {
             chat(`phrasing:${intent}:${index}`, `knowledge:${entry.id}`, "phrasing", item.lang, "general", item.text, knowledgeAnswer(entry, item.lang));
+        }
+    }
+
+    // ---------------------------------------------------------------- follow-up questions
+    // Two related entries in one conversation (they share an intent or a section): the second
+    // question builds on the first answer, and the system prompt is the one the second request gets.
+    const FOLLOW_UP_FORMS = {
+        TR: ["Peki {title}?", "Bir de {title} hakkında bilgi verir misin?", "Teşekkürler. {title} konusunu da anlatır mısın?"],
+        EN: ["And {title}?", "What about {title}?", "Thanks. Can you also explain {title}?"],
+    };
+    const sectionOf = (entry) => entry.id.split(":")[0];
+    for (const entry of entries) {
+        const related = entries.filter((other) => other.id !== entry.id && (other.intents.some((intent) => entry.intents.includes(intent)) || (sectionOf(other) === sectionOf(entry) && sectionOf(entry) !== entry.id)));
+        if (!related.length) continue;
+        const next = pick(related);
+        for (const lang of ["TR", "EN"]) {
+            const first = sampleOf(QUESTION_FORMS[lang], 1)[0].replace("{title}", knowledgeText(entry.title, lang === "TR"));
+            const second = pick(FOLLOW_UP_FORMS[lang]).replace("{title}", knowledgeText(next.title, lang === "TR").replace(/\?\s*$/, ""));
+            add({
+                id: `followup:${entry.id}:${next.id}:${lang}`,
+                group: `knowledge:${entry.id}`,
+                source: "followup",
+                lang,
+                messages: [
+                    { role: "system", content: system(lang, "general", second) },
+                    { role: "user", content: first },
+                    { role: "assistant", content: knowledgeAnswer(entry, lang) },
+                    { role: "user", content: second },
+                    { role: "assistant", content: knowledgeAnswer(next, lang) },
+                ],
+            });
         }
     }
 
@@ -312,7 +343,7 @@ export async function buildDataset({ seed = 20261003 } = {}) {
     };
     for (const intent of agentIntents.CORE_ACTION_INTENTS) {
         const phrasings = (intents[intent] ?? []).map((text) => ({ text, lang: languageOf(text) })).filter((item) => item.lang);
-        for (const [index, item] of sampleOf(phrasings, 70).entries()) {
+        for (const [index, item] of sampleOf(phrasings, 140).entries()) {
             const tx = txFor(item.lang);
             const proposal = agentIntents.proposeCoreAction(intent, item.text, { tx, programs, editorLanguage: null });
             if (!proposal || proposal.kind !== "call") continue;

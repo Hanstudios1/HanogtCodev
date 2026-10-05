@@ -1,5 +1,38 @@
 # Değişiklik Günlüğü
 
+## 0.3.17 — 2026-10-05
+
+### Hanogt AI eğitimi: veri seti v2
+
+- **Kaynak kaydı (`training/sources.json`):** eğitimde kullanılabilecek her
+  kaynak lisansı, üretim kaynağı ve durumuyla (alınır / kontrol edilecek /
+  alınmaz) listelenir. Yalnızca MIT, Apache-2.0, BSD, CC0, CC BY 4.0 ve
+  ODC-BY kabul edilir; NC/SA lisanslı, lisansı belirsiz ya da kapalı
+  modellerin çıktısıyla üretilmiş veri alınmaz.
+- **GitHub kaynakları (`training/import-github.mjs`):** Exercism'in 61 dil
+  izinden alıştırma, örnek çözüm ve konu anlatımları; TheAlgorithms/Python;
+  GSM8K'nın adım adım çözümleri. Python ve JavaScript çözümleri
+  alıştırmaların kendi testleriyle burada çalıştırılır (279), algoritmalar
+  doctest'lerinden geçer (717); testi geçemeyen alınmaz. HumanEval ve
+  GSM8K'nın test bölümü yalnızca parmak izi olarak tutulur.
+- **Hugging Face içe aktarıcı (`training/import_hf.py`):** Aya, oasst2,
+  self-oss-instruct, OpenCodeInstruct, OpenThoughts ve kontrol bekleyen
+  Türkçe veri setleri için dönüştürücüler; bu ortamın ağı huggingface.co'ya
+  açılınca çalıştırılır.
+- **Karıştırıcı (`training/mix.mjs`):** düşünme metnini Qwen3'ün okuduğu
+  `reasoning_content` alanına taşır; kişisel veri, başka model kimliği, aşırı
+  ret, değerlendirme seti örtüşmesi, birebir ve MinHash ile yakın tekrarları
+  ayıklar; kaynak sınırları ve gruba göre bölme; atıf dosyası ve veri seti
+  kartı üretir. İlk sonuç 17.662 örnek (≈ 13,2 milyon token; 5.039'u
+  düşünmeli; TR 5.068, EN 12.594): `ai/reports/finetune-dataset-v2.md`.
+  140.000 hedefinin kalanı Hugging Face kaynaklarından gelecek.
+- **Eğitim:** `train_lora.py` v2 setini okur ve bağdaştırıcıyı özel bir
+  Hugging Face deposuna yükleyebilir (`--push-to-hub`); Hugging Face Jobs
+  için `training/hf_job.py` (maliyet tahmini; ücretli iş yalnızca
+  `--confirm` ile başlar) ve Colab defteri `training/colab/hanogt_train.ipynb`.
+- Sitenin kendi örnekleri 2.104'ten 3.319'a çıktı (daha çok ifade, daha çok
+  ajan örneği, çok turlu sohbetler).
+
 ## 0.3.16 — 2026-10-03
 
 ### Kod kalitesini ölçme, daha bilgili Hanogt AI Çekirdeği ve kendi modelini eğitme

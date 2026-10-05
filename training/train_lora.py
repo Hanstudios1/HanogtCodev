@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """LoRA / QLoRA fine-tuning of a Qwen model on the Hanogt SFT set.
 
-The data comes from `node training/build-dataset.mjs` (chat JSONL: "messages"
-and, for agent samples, "tools"). Only the assistant's turns are learned: the
-system prompt, the user's words and tool results are context.
+The data comes from `node training/mix.mjs` (set v2: the site's own samples,
+the GitHub sources and, once imported, the Hugging Face sources) or, for the
+site alone, `node training/build-dataset.mjs` (chat JSONL: "messages" and, for
+agent samples, "tools"). Only the assistant's turns are learned: the system
+prompt, the user's words and tool results are context. A last assistant
+message with "reasoning_content" is rendered by Qwen3's chat template as a
+<think> block, so the model learns to show its thinking on those samples.
 
 Base models (the model is a parameter; "Qwen 2.7" doesn't exist):
   --preset 27b    Qwen/Qwen3.6-27B (default; Apache-2.0, text + vision, hybrid
@@ -14,9 +18,11 @@ Base models (the model is a parameter; "Qwen 2.7" doesn't exist):
   python training/train_lora.py --preset 27b
   python training/train_lora.py --preset small --epochs 3
   python training/train_lora.py --dry-run          # data and token counts only, no GPU
+  python training/train_lora.py --preset small --push-to-hub HanStudios/hanogt-ai-qwen3-8b-lora
 
-The adapter goes to --output (training/output/<name>/adapter); merge it with
-training/merge_and_export.py or serve it directly with vLLM (--enable-lora).
+The adapter goes to --output (training/output/<name>/adapter) and, with
+--push-to-hub, to a private Hugging Face model repository (HF_TOKEN). Merge it
+with training/merge_and_export.py or serve it directly with vLLM (--enable-lora).
 See training/README.md.
 """
 from __future__ import annotations
@@ -49,8 +55,8 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--preset", choices=sorted(PRESETS), default="27b")
     parser.add_argument("--base-model", help="Hugging Face id or local folder (overrides the preset)")
-    parser.add_argument("--data", default="training/data/train.jsonl")
-    parser.add_argument("--eval-data", default="training/data/eval.jsonl", help="'' to skip evaluation")
+    parser.add_argument("--data", default="training/data/v2/train.jsonl")
+    parser.add_argument("--eval-data", default="training/data/v2/eval.jsonl", help="'' to skip evaluation")
     parser.add_argument("--output", help="default: training/output/hanogt-<base model name>")
     parser.add_argument("--epochs", type=float, default=2.0)
     parser.add_argument("--max-steps", type=int, default=-1, help="stop after this many optimizer steps (smoke tests)")
@@ -72,6 +78,8 @@ def parse_args(argv=None):
     parser.add_argument("--report-to", default="none", help="none, tensorboard, wandb…")
     parser.add_argument("--resume", action="store_true", help="continue from the last checkpoint in --output")
     parser.add_argument("--dry-run", action="store_true", help="tokenize the data and print the counts; no model is loaded")
+    parser.add_argument("--push-to-hub", metavar="REPO", help="also upload the adapter to this Hugging Face model repository (private; needs HF_TOKEN)")
+    parser.add_argument("--hub-public", action="store_true", help="create the --push-to-hub repository as public instead of private")
     args = parser.parse_args(argv)
     preset = PRESETS[args.preset]
     args.base_model = args.base_model or preset["base_model"]
@@ -299,7 +307,19 @@ def main(argv=None):
     (adapter / "hanogt-training.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(summary["metrics"], indent=2))
     print(f"adapter saved to {adapter}")
+    if args.push_to_hub:
+        push_adapter(adapter, args.push_to_hub, private=not args.hub_public)
     return 0
+
+
+def push_adapter(adapter, repo, private=True):
+    """Uploads the adapter folder (weights, tokenizer, hanogt-training.json) to a model repository."""
+    from huggingface_hub import HfApi
+
+    api = HfApi(token=os.environ.get("HF_TOKEN"))
+    api.create_repo(repo, repo_type="model", private=private, exist_ok=True)
+    api.upload_folder(repo_id=repo, repo_type="model", folder_path=str(adapter), commit_message="Hanogt AI LoRA adapter")
+    print(f"adapter uploaded to https://huggingface.co/{repo}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1395 @@
+{
+  "version": 2,
+  "description": "Every source the Hanogt AI fine-tuning set may use. Only sources with status 'allowed' are imported; 'review' sources need their dataset card's provenance read and recorded here first; 'excluded' sources are listed so they aren't proposed again. Licenses allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, CC0-1.0, CC-BY-4.0, ODC-BY-1.0. Not allowed: non-commercial (NC), share-alike (SA), unknown licenses, and data generated with closed models whose terms forbid training other models.",
+  "licensesAllowed": [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "CC-BY-4.0",
+    "ODC-BY-1.0"
+  ],
+  "sources": [
+    {
+      "id": "hanogt-site",
+      "kind": "own",
+      "status": "allowed",
+      "license": "Proprietary (Hanogt Codev)",
+      "family": [
+        "site",
+        "agent"
+      ],
+      "languages": [
+        "TR",
+        "EN"
+      ],
+      "cap": null,
+      "provenance": "This repository: knowledge base, FAQ, guide, intent phrasings, Core concepts, snippets, programs, error explanations, agent tool calls and site-safety refusals (training/build-dataset.mjs).",
+      "attribution": null
+    },
+    {
+      "id": "exercism-arm64-assembly",
+      "kind": "github",
+      "repo": "exercism/arm64-assembly",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism arm64-assembly track, https://github.com/exercism/arm64-assembly (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-awk",
+      "kind": "github",
+      "repo": "exercism/awk",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism awk track, https://github.com/exercism/awk (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-bash",
+      "kind": "github",
+      "repo": "exercism/bash",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism bash track, https://github.com/exercism/bash (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-c",
+      "kind": "github",
+      "repo": "exercism/c",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism c track, https://github.com/exercism/c (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-clojure",
+      "kind": "github",
+      "repo": "exercism/clojure",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism clojure track, https://github.com/exercism/clojure (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-cobol",
+      "kind": "github",
+      "repo": "exercism/cobol",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism cobol track, https://github.com/exercism/cobol (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-coffeescript",
+      "kind": "github",
+      "repo": "exercism/coffeescript",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism coffeescript track, https://github.com/exercism/coffeescript (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-common-lisp",
+      "kind": "github",
+      "repo": "exercism/common-lisp",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism common-lisp track, https://github.com/exercism/common-lisp (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-cpp",
+      "kind": "github",
+      "repo": "exercism/cpp",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism cpp track, https://github.com/exercism/cpp (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-crystal",
+      "kind": "github",
+      "repo": "exercism/crystal",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism crystal track, https://github.com/exercism/crystal (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-csharp",
+      "kind": "github",
+      "repo": "exercism/csharp",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism csharp track, https://github.com/exercism/csharp (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-d",
+      "kind": "github",
+      "repo": "exercism/d",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism d track, https://github.com/exercism/d (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-dart",
+      "kind": "github",
+      "repo": "exercism/dart",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism dart track, https://github.com/exercism/dart (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-delphi",
+      "kind": "github",
+      "repo": "exercism/delphi",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism delphi track, https://github.com/exercism/delphi (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-elixir",
+      "kind": "github",
+      "repo": "exercism/elixir",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism elixir track, https://github.com/exercism/elixir (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-elm",
+      "kind": "github",
+      "repo": "exercism/elm",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism elm track, https://github.com/exercism/elm (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-emacs-lisp",
+      "kind": "github",
+      "repo": "exercism/emacs-lisp",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism emacs-lisp track, https://github.com/exercism/emacs-lisp (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-erlang",
+      "kind": "github",
+      "repo": "exercism/erlang",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism erlang track, https://github.com/exercism/erlang (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-forth",
+      "kind": "github",
+      "repo": "exercism/forth",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism forth track, https://github.com/exercism/forth (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-fortran",
+      "kind": "github",
+      "repo": "exercism/fortran",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism fortran track, https://github.com/exercism/fortran (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-fsharp",
+      "kind": "github",
+      "repo": "exercism/fsharp",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism fsharp track, https://github.com/exercism/fsharp (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-gleam",
+      "kind": "github",
+      "repo": "exercism/gleam",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism gleam track, https://github.com/exercism/gleam (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-go",
+      "kind": "github",
+      "repo": "exercism/go",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism go track, https://github.com/exercism/go (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-groovy",
+      "kind": "github",
+      "repo": "exercism/groovy",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism groovy track, https://github.com/exercism/groovy (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-haskell",
+      "kind": "github",
+      "repo": "exercism/haskell",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism haskell track, https://github.com/exercism/haskell (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-java",
+      "kind": "github",
+      "repo": "exercism/java",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism java track, https://github.com/exercism/java (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-javascript",
+      "kind": "github",
+      "repo": "exercism/javascript",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism javascript track, https://github.com/exercism/javascript (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-jq",
+      "kind": "github",
+      "repo": "exercism/jq",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism jq track, https://github.com/exercism/jq (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-julia",
+      "kind": "github",
+      "repo": "exercism/julia",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism julia track, https://github.com/exercism/julia (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-kotlin",
+      "kind": "github",
+      "repo": "exercism/kotlin",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism kotlin track, https://github.com/exercism/kotlin (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-lfe",
+      "kind": "github",
+      "repo": "exercism/lfe",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism lfe track, https://github.com/exercism/lfe (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-lua",
+      "kind": "github",
+      "repo": "exercism/lua",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism lua track, https://github.com/exercism/lua (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-mips",
+      "kind": "github",
+      "repo": "exercism/mips",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism mips track, https://github.com/exercism/mips (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-nim",
+      "kind": "github",
+      "repo": "exercism/nim",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism nim track, https://github.com/exercism/nim (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-objective-c",
+      "kind": "github",
+      "repo": "exercism/objective-c",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism objective-c track, https://github.com/exercism/objective-c (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-ocaml",
+      "kind": "github",
+      "repo": "exercism/ocaml",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism ocaml track, https://github.com/exercism/ocaml (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-perl5",
+      "kind": "github",
+      "repo": "exercism/perl5",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism perl5 track, https://github.com/exercism/perl5 (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-php",
+      "kind": "github",
+      "repo": "exercism/php",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism php track, https://github.com/exercism/php (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-powershell",
+      "kind": "github",
+      "repo": "exercism/powershell",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism powershell track, https://github.com/exercism/powershell (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-prolog",
+      "kind": "github",
+      "repo": "exercism/prolog",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism prolog track, https://github.com/exercism/prolog (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-purescript",
+      "kind": "github",
+      "repo": "exercism/purescript",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism purescript track, https://github.com/exercism/purescript (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-python",
+      "kind": "github",
+      "repo": "exercism/python",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism python track, https://github.com/exercism/python (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-r",
+      "kind": "github",
+      "repo": "exercism/r",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism r track, https://github.com/exercism/r (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-racket",
+      "kind": "github",
+      "repo": "exercism/racket",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism racket track, https://github.com/exercism/racket (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-raku",
+      "kind": "github",
+      "repo": "exercism/raku",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism raku track, https://github.com/exercism/raku (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-red",
+      "kind": "github",
+      "repo": "exercism/red",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism red track, https://github.com/exercism/red (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-ruby",
+      "kind": "github",
+      "repo": "exercism/ruby",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism ruby track, https://github.com/exercism/ruby (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-rust",
+      "kind": "github",
+      "repo": "exercism/rust",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism rust track, https://github.com/exercism/rust (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-scala",
+      "kind": "github",
+      "repo": "exercism/scala",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism scala track, https://github.com/exercism/scala (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-scheme",
+      "kind": "github",
+      "repo": "exercism/scheme",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism scheme track, https://github.com/exercism/scheme (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-sml",
+      "kind": "github",
+      "repo": "exercism/sml",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism sml track, https://github.com/exercism/sml (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-sqlite",
+      "kind": "github",
+      "repo": "exercism/sqlite",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism sqlite track, https://github.com/exercism/sqlite (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-swift",
+      "kind": "github",
+      "repo": "exercism/swift",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism swift track, https://github.com/exercism/swift (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-tcl",
+      "kind": "github",
+      "repo": "exercism/tcl",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism tcl track, https://github.com/exercism/tcl (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-typescript",
+      "kind": "github",
+      "repo": "exercism/typescript",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism typescript track, https://github.com/exercism/typescript (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-vbnet",
+      "kind": "github",
+      "repo": "exercism/vbnet",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism vbnet track, https://github.com/exercism/vbnet (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-vimscript",
+      "kind": "github",
+      "repo": "exercism/vimscript",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism vimscript track, https://github.com/exercism/vimscript (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-wasm",
+      "kind": "github",
+      "repo": "exercism/wasm",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism wasm track, https://github.com/exercism/wasm (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-x86-64-assembly",
+      "kind": "github",
+      "repo": "exercism/x86-64-assembly",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism x86-64-assembly track, https://github.com/exercism/x86-64-assembly (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-zig",
+      "kind": "github",
+      "repo": "exercism/zig",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-solve",
+        "code-explain"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written exercises, reference solutions (checked by the track's CI) and concept documents of the Exercism language track.",
+      "attribution": "Exercism zig track, https://github.com/exercism/zig (MIT License, © Exercism)"
+    },
+    {
+      "id": "exercism-problem-specifications",
+      "kind": "github",
+      "repo": "exercism/problem-specifications",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [],
+      "languages": [
+        "EN"
+      ],
+      "cap": null,
+      "role": "metadata",
+      "provenance": "Canonical problem descriptions shared by every Exercism track (used for titles only).",
+      "attribution": "Exercism problem specifications, https://github.com/exercism/problem-specifications (MIT License, © Exercism)"
+    },
+    {
+      "id": "thealgorithms-python",
+      "kind": "github",
+      "repo": "TheAlgorithms/Python",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "code-algorithm"
+      ],
+      "languages": [
+        "EN",
+        "TR"
+      ],
+      "cap": null,
+      "provenance": "Human-written algorithm implementations with doctests; only files using the standard library whose doctests pass here are kept.",
+      "attribution": "The Algorithms — Python, https://github.com/TheAlgorithms/Python (MIT License, © The Algorithms)"
+    },
+    {
+      "id": "gsm8k-train",
+      "kind": "github",
+      "repo": "openai/grade-school-math",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [
+        "math-reasoning"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": null,
+      "provenance": "Grade-school math word problems with human-written step-by-step solutions (train split only; the test split is kept out as an evaluation set).",
+      "attribution": "GSM8K (Cobbe et al., 2021), https://github.com/openai/grade-school-math (MIT License, © OpenAI)"
+    },
+    {
+      "id": "human-eval",
+      "kind": "github",
+      "repo": "openai/human-eval",
+      "status": "allowed",
+      "license": "MIT",
+      "family": [],
+      "languages": [
+        "EN"
+      ],
+      "cap": null,
+      "role": "evaluation",
+      "provenance": "Evaluation only: its prompts and function names are fingerprints no training sample may contain.",
+      "attribution": null
+    },
+    {
+      "id": "hf-aya-dataset",
+      "kind": "hf",
+      "repo": "CohereLabs/aya_dataset",
+      "status": "allowed",
+      "license": "Apache-2.0",
+      "family": [
+        "chat"
+      ],
+      "languages": [
+        "TR",
+        "EN"
+      ],
+      "cap": 20000,
+      "provenance": "Human-annotated prompt/completion pairs (Aya Annotation Platform); Turkish and English rows only.",
+      "attribution": "Aya Dataset (Singh et al., 2024), https://huggingface.co/datasets/CohereLabs/aya_dataset (Apache-2.0)"
+    },
+    {
+      "id": "hf-oasst2",
+      "kind": "hf",
+      "repo": "OpenAssistant/oasst2",
+      "status": "allowed",
+      "license": "Apache-2.0",
+      "family": [
+        "chat"
+      ],
+      "languages": [
+        "TR",
+        "EN"
+      ],
+      "cap": 15000,
+      "provenance": "Human-written conversation trees; the best-ranked thread of each tree, Turkish and English, reviewed and not deleted.",
+      "attribution": "OpenAssistant Conversations 2, https://huggingface.co/datasets/OpenAssistant/oasst2 (Apache-2.0)"
+    },
+    {
+      "id": "hf-self-oss-instruct",
+      "kind": "hf",
+      "repo": "bigcode/self-oss-instruct-sc2-exec-filter-50k",
+      "status": "allowed",
+      "license": "ODC-BY-1.0",
+      "family": [
+        "code-solve"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 20000,
+      "provenance": "Instructions and execution-validated Python answers generated by StarCoder2-15B (an open model) from MultiPL-T seed functions.",
+      "attribution": "StarCoder2-Instruct self-alignment data, https://huggingface.co/datasets/bigcode/self-oss-instruct-sc2-exec-filter-50k (ODC-BY-1.0, BigCode)"
+    },
+    {
+      "id": "hf-opencodeinstruct",
+      "kind": "hf",
+      "repo": "nvidia/OpenCodeInstruct",
+      "status": "allowed",
+      "license": "CC-BY-4.0",
+      "family": [
+        "code-solve"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 20000,
+      "provenance": "Code instructions with answers generated by open Qwen2.5-Coder models and unit-tested; only rows whose average test score is at least 0.9.",
+      "attribution": "OpenCodeInstruct (Ahmad et al., 2025), https://huggingface.co/datasets/nvidia/OpenCodeInstruct (CC BY 4.0, NVIDIA)"
+    },
+    {
+      "id": "hf-openthoughts-114k",
+      "kind": "hf",
+      "repo": "open-thoughts/OpenThoughts-114k",
+      "status": "allowed",
+      "license": "Apache-2.0",
+      "family": [
+        "chat-reasoning"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 8000,
+      "provenance": "Reasoning traces for math, science, code and puzzles generated by DeepSeek-R1 (MIT-licensed, distillation allowed); shorter traces only.",
+      "attribution": "OpenThoughts-114k (Guha et al., 2025), https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k (Apache-2.0)"
+    },
+    {
+      "id": "hf-turkish-chat-max-25k",
+      "kind": "hf",
+      "repo": "cisimcik/turkish-chat-max-25k",
+      "status": "review",
+      "license": "Apache-2.0",
+      "family": [
+        "chat",
+        "chat-reasoning"
+      ],
+      "languages": [
+        "TR"
+      ],
+      "cap": 24543,
+      "provenance": "Synthetic Turkish conversations (16 task types, reasoning, multi-turn, tool calling); the card says the author's own generator produced every row — which model it used must be checked before import.",
+      "attribution": "Turkish Chat Max 25K, https://huggingface.co/datasets/cisimcik/turkish-chat-max-25k (Apache-2.0)"
+    },
+    {
+      "id": "hf-turkish-sft-v1",
+      "kind": "hf",
+      "repo": "AlicanKiraz0/Turkish-SFT-Dataset-v1.0",
+      "status": "review",
+      "license": "MIT",
+      "family": [
+        "instruction"
+      ],
+      "languages": [
+        "TR"
+      ],
+      "cap": 5500,
+      "provenance": "Long Turkish SFT answers; how they were produced must be checked before import.",
+      "attribution": "Turkish-SFT-Dataset-v1.0, https://huggingface.co/datasets/AlicanKiraz0/Turkish-SFT-Dataset-v1.0 (MIT)"
+    },
+    {
+      "id": "hf-turkce-atlas-instruct",
+      "kind": "hf",
+      "repo": "AlicanKiraz0/Turkce-Atlas-Instruct",
+      "status": "review",
+      "license": "MIT",
+      "family": [
+        "instruction"
+      ],
+      "languages": [
+        "TR"
+      ],
+      "cap": 50000,
+      "provenance": "336,146 Turkish system/user/assistant samples; how they were produced must be checked before import.",
+      "attribution": "Türkçe Atlas Instruct, https://huggingface.co/datasets/AlicanKiraz0/Turkce-Atlas-Instruct (MIT)"
+    },
+    {
+      "id": "hf-smoltalk2",
+      "kind": "hf",
+      "repo": "HuggingFaceTB/smoltalk2",
+      "status": "review",
+      "license": "unknown",
+      "family": [
+        "chat",
+        "chat-reasoning"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 10000,
+      "provenance": "SmolLM3 post-training mix with think / no_think subsets; the license of each subset must be checked before import.",
+      "attribution": "SmolTalk2, https://huggingface.co/datasets/HuggingFaceTB/smoltalk2"
+    },
+    {
+      "id": "excluded-turkish-multi-turn-dialog-dataset",
+      "kind": "hf",
+      "repo": "magibu/turkish-multi-turn-dialog-dataset",
+      "status": "excluded",
+      "license": "n/a",
+      "family": [],
+      "languages": [],
+      "cap": 0,
+      "provenance": "Generated with Gemini from LIMA (LIMA is non-commercial).",
+      "attribution": null
+    },
+    {
+      "id": "excluded-turkish-alpaca",
+      "kind": "hf",
+      "repo": "TFLai/Turkish-Alpaca",
+      "status": "excluded",
+      "license": "n/a",
+      "family": [],
+      "languages": [],
+      "cap": 0,
+      "provenance": "Alpaca data is CC BY-NC and was generated with an OpenAI model.",
+      "attribution": null
+    },
+    {
+      "id": "excluded-databricks-dolly-15k",
+      "kind": "hf",
+      "repo": "databricks/databricks-dolly-15k",
+      "status": "excluded",
+      "license": "n/a",
+      "family": [],
+      "languages": [],
+      "cap": 0,
+      "provenance": "CC BY-SA 3.0 (share-alike).",
+      "attribution": null
+    },
+    {
+      "id": "excluded-ultrachat_200k",
+      "kind": "hf",
+      "repo": "HuggingFaceH4/ultrachat_200k",
+      "status": "excluded",
+      "license": "n/a",
+      "family": [],
+      "languages": [],
+      "cap": 0,
+      "provenance": "Generated with ChatGPT.",
+      "attribution": null
+    },
+    {
+      "id": "excluded-openhermes-2.5",
+      "kind": "hf",
+      "repo": "teknium/OpenHermes-2.5",
+      "status": "excluded",
+      "license": "n/a",
+      "family": [],
+      "languages": [],
+      "cap": 0,
+      "provenance": "Mostly GPT-4 outputs; mixed licenses.",
+      "attribution": null
+    },
+    {
+      "id": "excluded-mbpp",
+      "kind": "hf",
+      "repo": "google-research/mbpp",
+      "status": "excluded",
+      "license": "n/a",
+      "family": [],
+      "languages": [],
+      "cap": 0,
+      "provenance": "Evaluation benchmark: kept out of training.",
+      "attribution": null
+    }
+  ]
+}

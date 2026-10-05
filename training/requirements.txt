@@ -11,3 +11,4 @@ bitsandbytes>=0.45; platform_system == "Linux"
 # Optional, much faster Gated DeltaNet layers for Qwen3.5/3.6 on CUDA (without them a slower PyTorch path is used):
 # flash-linear-attention
 # causal-conv1d
+huggingface_hub>=0.35

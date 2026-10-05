@@ -64,4 +64,5 @@ next-env.d.ts
 # fine-tuning: generated data, checkpoints and models (training/README.md)
 /training/data/
 /training/output/
+/training/cache/
 __pycache__/

@@ -27,6 +27,10 @@ const eslintConfig = defineConfig([
     "public/monaco/**",
     "public/engine/**",
     "public/runtimes/**",
+    // Fine-tuning: cloned source repositories, generated data and models (gitignored).
+    "training/cache/**",
+    "training/data/**",
+    "training/output/**",
   ]),
 ]);
 
