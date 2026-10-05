@@ -6,6 +6,10 @@ import type { Copy } from "@/lib/i18n";
 import type { GroupInvitationItem, GroupListItem } from "@/lib/groups";
 import type { PresenceStatus } from "@/lib/presence";
 import type { SocialAudio } from "@/lib/social/local-state";
+import type { SocialPrefs } from "@/lib/social/prefs";
+import type { StarScope, StarredMessage } from "@/lib/social/stars";
+import type { ForwardPayload } from "./chat/ForwardDialog";
+import type { SocialSettingsTab } from "./SocialSettings";
 import type {
     BlockedItem,
     DmSummary,
@@ -75,6 +79,21 @@ export type SocialContextValue = {
 
     homeBadge: number;
 
+    /** Messaging settings (Enter to send, typing, read receipts, text size, background, GIFs…). */
+    prefs: SocialPrefs;
+
+    /** Starred messages, newest first; `has` checks one message. */
+    stars: {
+        list: StarredMessage[];
+        loaded: boolean;
+        has: (scope: StarScope, target: string, messageId: string) => boolean;
+        toggle: (scope: StarScope, target: string, messageId: string) => Promise<void>;
+        refresh: () => Promise<void>;
+    };
+
+    /** Opens the "Forward message" dialog. */
+    forward: (payload: ForwardPayload) => void;
+
     /** Friend actions with toasts; resolves to true on success. */
     friendAction: (body: Record<string, unknown>, success?: Copy) => Promise<boolean>;
     notify: (text: string, tone?: ToastTone) => void;
@@ -87,6 +106,8 @@ export type SocialContextValue = {
         openSwitcher: () => void;
         openCreateGroup: () => void;
         openJoin: () => void;
+        openSettings: (tab?: SocialSettingsTab) => void;
+        openStars: () => void;
         /** Mobile: rail + sidebar drawer. */
         navOpen: boolean;
         setNavOpen: (open: boolean) => void;

@@ -292,6 +292,11 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
             pinnedMessageIds: liveFields.pinnedMessageIds ? liveFields.pinnedMessageIds.filter(isGroupId) : base.pinnedMessageIds,
             allowMemberInvites: liveFields.allowMemberInvites ?? base.allowMemberInvites,
             onboarding: liveFields.onboarding ?? base.onboarding,
+            moderators: liveFields.moderators ?? base.moderators,
+            slowmode: liveFields.slowmode ?? base.slowmode,
+            aiBot: liveFields.aiBot ?? base.aiBot,
+            welcomeMessage: liveFields.welcomeMessage ?? base.welcomeMessage,
+            customCommands: liveFields.customCommands ?? base.customCommands,
         };
     }, [detail, live, liveFields, messagesApi.serverPins]);
 

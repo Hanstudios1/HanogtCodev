@@ -348,7 +348,7 @@ export function useGroupMessages({ groupId, enabled, live = true, onError }: { g
 }
 
 const VOICE_LIMIT_SECONDS = 60;
-/** Mono speech at 32 kbit/s: a minute is about 240 kB. */
+/** Mono speech at 32 kbit/s by default ("Voice message quality" picks 16, 32 or 64): a minute is about 240 kB. */
 const VOICE_BITS_PER_SECOND = 32_000;
 
 /** Why the microphone couldn't be used (getUserMedia's error names; older Chrome names too). */
@@ -366,7 +366,7 @@ function micErrorCode(error: unknown): MicErrorCode {
  * Microphone recording (max 60 s) that hands the finished clip to `onRecorded`.
  * `deviceId` picks a microphone (when it is still there; otherwise the default one).
  */
-export function useVoiceRecorder({ onRecorded, onError, deviceId = null }: { onRecorded: (blob: Blob, mimeType: string, seconds: number) => void; onError: (code: MicErrorCode) => void; deviceId?: string | null }) {
+export function useVoiceRecorder({ onRecorded, onError, deviceId = null, bitsPerSecond = VOICE_BITS_PER_SECOND }: { onRecorded: (blob: Blob, mimeType: string, seconds: number) => void; onError: (code: MicErrorCode) => void; deviceId?: string | null; bitsPerSecond?: number }) {
     const [recording, setRecording] = useState(false);
     const [seconds, setSeconds] = useState(0);
     const recorderRef = useRef<MediaRecorder | null>(null);
@@ -376,7 +376,7 @@ export function useVoiceRecorder({ onRecorded, onError, deviceId = null }: { onR
     const startingRef = useRef(false);
     const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const limitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const callbacks = useLatest({ onRecorded, onError, deviceId });
+    const callbacks = useLatest({ onRecorded, onError, deviceId, bitsPerSecond });
 
     const clearTimers = () => {
         if (tickRef.current) clearInterval(tickRef.current);
@@ -414,7 +414,7 @@ export function useVoiceRecorder({ onRecorded, onError, deviceId = null }: { onR
         discardRef.current = false;
         let recorder: MediaRecorder;
         try {
-            recorder = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: VOICE_BITS_PER_SECOND });
+            recorder = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: callbacks.current.bitsPerSecond });
             recorder.ondataavailable = (event) => {
                 if (event.data.size) chunksRef.current.push(event.data);
             };

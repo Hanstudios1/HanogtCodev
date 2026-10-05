@@ -15,6 +15,7 @@ import { LAST_SEEN_COPY, PRESENCE_STATUS_COPY, presenceTime } from "@/lib/presen
 import { socialApi } from "@/lib/social/api";
 import { FRIENDS_TABS, dmHref, filterFriends, formatFriendTag, groupHref, isFriendsTab, parseFriendTag, type FriendRequestItem, type FriendsTab, type SocialPerson } from "@/lib/social/model";
 import { useSocial } from "./context";
+import { FirstRunNotice } from "./Disclaimer";
 import { useProfileViewer } from "./profile";
 import { CountBadge, DropdownMenu, EmptyState, MainHeader } from "./ui";
 
@@ -176,6 +177,7 @@ export default function FriendsView() {
             <div id="friends-panel" role={view === "add" ? undefined : "tabpanel"} aria-labelledby={view === "add" ? undefined : `friends-tab-${view}`} className="min-h-0 flex-1 overflow-y-auto">
                 {view === "add" ? <AddFriend /> : (
                     <div className="mx-auto w-full max-w-4xl px-3 py-4 sm:px-6">
+                        <FirstRunNotice />
                         {friends.failed ? (
                             <div className="flex flex-col items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 sm:flex-row sm:items-center sm:justify-between" role="alert">
                                 <span>{tx(C.loadFailed)}</span>

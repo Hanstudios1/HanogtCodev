@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type { GifSearchResult, MessageGif } from "./gif";
+import type { StarScope, StarredMessage } from "./stars";
 import {
     dmMessageFromData,
     type DmConversationResponse,
@@ -159,6 +160,9 @@ export const socialApi = {
     /** A page of GIFs from KLIPY or GIPHY through the server (empty text: trending). */
     gifs: (query: string, page: number, language: "tr" | "en") => request<GifSearchResult>(`/api/social/gifs?${new URLSearchParams({ q: query, page: String(page), lang: language }).toString()}`),
     friendAction: (body: Record<string, unknown>) => request<{ success: true; accepted?: boolean; sent?: boolean }>("/api/friends", body),
+    /** The signed-in person's starred messages, newest star first. */
+    stars: () => request<{ stars: StarredMessage[] }>("/api/social/stars"),
+    star: (body: { scope: StarScope; target: string; messageId: string; starred: boolean }) => request<{ success: true; starred: boolean }>("/api/social/stars", body),
     sendDmVoice: async (email: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => messages([await uploadVoice({ with: email }, blob, options)])[0] ?? null,
     sendGroupVoice: (groupId: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => uploadVoice({ group: groupId }, blob, options),
     /** The recording of a voice message (GET /api/social/voice, checked like the conversation itself). */

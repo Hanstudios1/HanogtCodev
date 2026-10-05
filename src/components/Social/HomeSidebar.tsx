@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search, Users, X } from "lucide-react";
+import { Plus, Search, Star, Users, X } from "lucide-react";
 import Link from "next/link";
 import { cx } from "@/components/Groups/ui";
 import PresenceAvatar from "@/components/PresenceAvatar";
@@ -13,6 +13,7 @@ const C = {
     find: { TR: "Sohbet bul veya başlat", EN: "Find or start a conversation" },
     shortcut: { TR: "Ctrl K", EN: "Ctrl K" },
     friends: { TR: "Arkadaşlar", EN: "Friends" },
+    starred: { TR: "Yıldızlı mesajlar", EN: "Starred messages" },
     dms: { TR: "Direkt mesajlar", EN: "Direct messages" },
     newDm: { TR: "Direkt mesaj başlat", EN: "Start a direct message" },
     empty: { TR: "Henüz sohbet yok. Bir arkadaşına mesaj göndererek başla.", EN: "No conversations yet. Start by messaging a friend." },
@@ -27,7 +28,7 @@ const C = {
 /** Second column on Home: search, the Friends entry and the direct-message list. */
 export default function HomeSidebar() {
     const { tx } = useI18n();
-    const { route, friends, dms, ui, me } = useSocial();
+    const { route, friends, dms, ui, me, stars } = useSocial();
     const activeChat = route.kind === "dm" ? dmChatId(me.email, route.email) : "";
     const close = () => ui.setNavOpen(false);
 
@@ -47,6 +48,15 @@ export default function HomeSidebar() {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
                 <SidebarLink href="/social" active={route.kind === "home"} icon={<Users className="h-5 w-5" aria-hidden />} label={tx(C.friends)} badge={friends.incoming.length} onClick={close} />
+                <button
+                    type="button"
+                    onClick={() => { close(); ui.openStars(); }}
+                    className="mt-0.5 flex w-full items-center gap-3 rounded-md px-2 py-2 text-start text-[15px] font-medium text-zinc-600 transition hover:bg-zinc-200/70 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
+                >
+                    <Star className="h-5 w-5" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate">{tx(C.starred)}</span>
+                    {stars.list.length > 0 && <span className="text-xs tabular-nums text-zinc-400">{stars.list.length}</span>}
+                </button>
                 <SectionLabel id="dm-list-title" action={(
                     <button type="button" onClick={() => { close(); ui.openSwitcher(); }} className="rounded p-0.5 text-zinc-500 transition hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:text-white" aria-label={tx(C.newDm)} title={tx(C.newDm)}>
                         <Plus className="h-4 w-4" aria-hidden />

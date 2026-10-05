@@ -72,6 +72,8 @@ export interface PrivateSettingsFields {
     photoVisibility: "everyone" | "friends" | "nobody";
     bioVisibility: "everyone" | "friends" | "nobody";
     msgNotifications: boolean;
+    /** @mentions in Hanogt Social groups (the bell). */
+    mentionNotifications: boolean;
     callNotifications: boolean;
     friendReqNotifications: boolean;
     likeNotifications: boolean;
@@ -171,6 +173,7 @@ export const DEFAULT_ACCOUNT_FIELDS: EditableAccountFields = {
     photoVisibility: "everyone",
     bioVisibility: "everyone",
     msgNotifications: true,
+    mentionNotifications: true,
     callNotifications: true,
     friendReqNotifications: true,
     likeNotifications: true,

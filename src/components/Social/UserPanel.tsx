@@ -1,12 +1,10 @@
 "use client";
 
 import { HeadphoneOff, Headphones, Mic, MicOff, PhoneOff, Settings, Signal, SlidersHorizontal } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { cx } from "@/components/Groups/ui";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StatusMenu from "@/components/StatusMenu";
-import AudioSettingsDialog from "@/components/Social/AudioSettings";
 import { useVoiceCall } from "@/components/VoiceCallProvider";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PRESENCE_STATUS_COPY } from "@/lib/presence";
@@ -19,7 +17,7 @@ const C = {
     mute: { TR: "Mikrofonu sessize al", EN: "Mute microphone" },
     deafen: { TR: "Sesi kapat", EN: "Deafen" },
     statusMenu: { TR: "Durumun", EN: "Your status" },
-    settings: { TR: "Kullanıcı ayarları", EN: "User settings" },
+    settings: { TR: "Hanogt Social ayarları", EN: "Hanogt Social settings" },
     inCall: { TR: "Ses bağlantısı kuruldu", EN: "Voice connected" },
     calling: { TR: "Aranıyor…", EN: "Calling…" },
     connecting: { TR: "Bağlanıyor…", EN: "Connecting…" },
@@ -36,10 +34,9 @@ const C = {
  */
 export default function UserPanel() {
     const { tx } = useI18n();
-    const { me, audio } = useSocial();
+    const { me, audio, ui } = useSocial();
     const call = useVoiceCall();
     const [open, setOpen] = useState(false);
-    const [voiceSettings, setVoiceSettings] = useState(false);
     const menuId = useId();
     const wrapRef = useRef<HTMLDivElement | null>(null);
     const statusLabel = tx(PRESENCE_STATUS_COPY[me.status]);
@@ -108,12 +105,12 @@ export default function UserPanel() {
                 <PanelButton label={tx(C.deafen)} pressed={audio.deafened} danger={audio.deafened} onClick={audio.toggleDeafen}>
                     {audio.deafened ? <HeadphoneOff className="h-[18px] w-[18px]" aria-hidden /> : <Headphones className="h-[18px] w-[18px]" aria-hidden />}
                 </PanelButton>
-                <PanelButton label={tx(C.voiceSettings)} pressed={false} danger={false} onClick={() => setVoiceSettings(true)}>
+                <PanelButton label={tx(C.voiceSettings)} pressed={false} danger={false} onClick={() => ui.openSettings("voice")}>
                     <SlidersHorizontal className="h-[18px] w-[18px]" aria-hidden />
                 </PanelButton>
-                <Link href="/account-settings" aria-label={tx(C.settings)} title={tx(C.settings)} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-300/60 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white">
+                <PanelButton label={tx(C.settings)} pressed={false} danger={false} onClick={() => ui.openSettings("messages")}>
                     <Settings className="h-[18px] w-[18px]" aria-hidden />
-                </Link>
+                </PanelButton>
             </div>
             {open && (
                 <div id={menuId} role="dialog" aria-label={tx(C.statusMenu)} className="absolute bottom-full start-1.5 z-30 mb-2 max-h-[70dvh] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-white/10 dark:bg-zinc-900">
@@ -121,7 +118,6 @@ export default function UserPanel() {
                     {(audio.micOff || audio.deafened) && <p className="mt-3 border-t border-zinc-100 pt-2 text-[11px] leading-4 text-zinc-500 dark:border-white/[0.08] dark:text-zinc-400">{tx(C.audioHint)}</p>}
                 </div>
             )}
-            {voiceSettings && <AudioSettingsDialog onClose={() => setVoiceSettings(false)} />}
         </div>
     );
 }

@@ -3,6 +3,7 @@ import type { DocumentData } from "firebase/firestore";
 import {
     GROUP_REACTIONS,
     WELCOME_MESSAGE_MAX,
+    botOfSender,
     isGroupId,
     isGroupTemplateId,
     isMemberKey,
@@ -16,9 +17,12 @@ import {
     type GroupReactionKey,
     type GroupRole,
     type GroupSystemEvent,
+    type GroupBot,
     type GroupTemplateId,
 } from "@/lib/groups";
+import { BOT_EVENT_COPY, type BotEvent } from "@/lib/social/bots";
 import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
+import { readMessageGif, type MessageGif } from "@/lib/social/gif";
 
 export type MonacoEditor = Parameters<OnMount>[0];
 
@@ -43,7 +47,7 @@ export type GroupChatMessage = {
     fromEmail: string;
     author: string;
     authorAvatar: string | null;
-    type: "text" | "voice" | "system";
+    type: "text" | "voice" | "system" | "gif";
     text: string;
     voicePath: string | null;
     voiceDuration: number;
@@ -55,7 +59,17 @@ export type GroupChatMessage = {
     reactions: Partial<Record<GroupReactionKey, string[]>>;
     replyTo: GroupReply | null;
     edited: boolean;
+    gif: MessageGif | null;
+    /** Messages of the Hanogt Security Bot or Hanogt AI (only the server writes them). */
+    bot: GroupBot | null;
+    /** A bot notice shown in each reader's language (with `vars`). */
+    botEvent: BotEvent | null;
+    /** Hanogt AI's answer: thinking until it's written, or failed (the asker got the message back). */
+    botState: "thinking" | "done" | "failed" | null;
+    forwarded: boolean;
 };
+
+const isBotEvent = (value: unknown): value is BotEvent => typeof value === "string" && Object.prototype.hasOwnProperty.call(BOT_EVENT_COPY, value);
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -91,10 +105,13 @@ export function messageFromData(id: string, data: DocumentData, pending: boolean
         if (keys?.length) reactions[reaction.key] = keys;
     }
     const vars = data.vars && typeof data.vars === "object"
-        ? Object.fromEntries(Object.entries(data.vars as Record<string, unknown>).filter((entry): entry is [string, string] => typeof entry[1] === "string").map(([key, value]) => [key, value.slice(0, 80)]))
+        ? Object.fromEntries(Object.entries(data.vars as Record<string, unknown>).filter((entry): entry is [string, string] => typeof entry[1] === "string").slice(0, 12).map(([key, value]) => [key, value.slice(0, key === "reason" ? 300 : 80)]))
         : {};
-    const type = data.type === "voice" || data.type === "system" ? data.type : "text";
+    const gif = data.type === "gif" ? readMessageGif(data.gif) : null;
+    const type = data.type === "voice" || data.type === "system" ? data.type : gif ? "gif" : "text";
     const reply = data.replyTo && typeof data.replyTo === "object" ? data.replyTo as Record<string, unknown> : null;
+    // Only the server writes as a bot; the bot field must match the sender.
+    const bot = botOfSender(data.fromEmail);
     return {
         id,
         fromEmail: text(data.fromEmail),
@@ -112,6 +129,11 @@ export function messageFromData(id: string, data: DocumentData, pending: boolean
         reactions,
         replyTo: reply && isGroupId(reply.id) ? { id: reply.id, text: text(reply.text).slice(0, 120) } : null,
         edited: data.edited === true,
+        gif,
+        bot: bot && data.bot === bot ? bot : null,
+        botEvent: bot && isBotEvent(data.botEvent) ? data.botEvent : null,
+        botState: bot === "ai" && (data.botState === "thinking" || data.botState === "done" || data.botState === "failed") ? data.botState : null,
+        forwarded: data.forwarded === true,
     };
 }
 

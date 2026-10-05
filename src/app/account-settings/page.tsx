@@ -120,6 +120,8 @@ const C = {
     twoFactor: { TR: "İki adımlı doğrulama", EN: "Two-step verification" },
     passwordTitle: { TR: "Şifre", EN: "Password" },
     inApp: { TR: "Site içi bildirimler", EN: "In-app notifications" },
+    mentionNotifications: { TR: "Gruplarda bahsedilme bildirimleri", EN: "Group mention notifications" },
+    mentionNotificationsHint: { TR: "Hanogt Social gruplarında biri senden @ ile bahsettiğinde.", EN: "When someone @mentions you in a Hanogt Social group." },
     emailTitle: { TR: "E-posta", EN: "E-mail" },
     quietHours: { TR: "Sessiz saatler", EN: "Quiet hours" },
     quietHoursHint: { TR: "Örn. 22:00 - 08:00", EN: "e.g. 22:00 - 08:00" },
@@ -1242,6 +1244,7 @@ export default function AccountSettingsPage() {
                     <div className="space-y-4">
                         <Card icon={Bell} title={tx(C.inApp)}>
                             <ToggleRow label={t("msg_notification")} checked={form.msgNotifications} onChange={(value) => setField("msgNotifications", value)} />
+                            <ToggleRow label={tx(C.mentionNotifications)} description={tx(C.mentionNotificationsHint)} checked={form.mentionNotifications} onChange={(value) => setField("mentionNotifications", value)} />
                             <ToggleRow label={t("call_notification")} checked={form.callNotifications} onChange={(value) => setField("callNotifications", value)} />
                             <ToggleRow label={t("friend_req_notification")} checked={form.friendReqNotifications} onChange={(value) => setField("friendReqNotifications", value)} />
                             <ToggleRow label={t("like_notification")} checked={form.likeNotifications} onChange={(value) => setField("likeNotifications", value)} />

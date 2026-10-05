@@ -1,20 +1,31 @@
 "use client";
 
-import { ArrowDown, Check, CheckCheck, ChevronUp, Clock3, Copy as CopyIcon, CornerUpLeft, LoaderCircle, Mic, Pause, Pencil, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowDown, Check, CheckCheck, ChevronUp, Clock3, Copy as CopyIcon, CornerUpLeft, CornerUpRight, Forward, LoaderCircle, Mic, Pause, Pencil, Pin, PinOff, Smile, Star, Trash2 } from "lucide-react";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Spinner, UI_COPY, clockTime, cx, dayKey, fullDateTime } from "@/components/Groups/ui";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge from "@/components/StaffBadge";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { tokenizeMessage } from "@/lib/groups";
-import { SOCIAL_LIMITS, formatFriendTag, type DmMessage, type SocialPerson } from "@/lib/social/model";
+import { GROUP_REACTIONS, tokenizeMessage, type GroupReactionKey } from "@/lib/groups";
+import { SOCIAL_LIMITS, formatFriendTag, reactionSummary, type DmMessage, type SocialPerson } from "@/lib/social/model";
+import { ChatMarkdown } from "../chat/ChatMarkdown";
+import GifView from "../chat/GifView";
 
 const C = {
     start: { TR: "Bu, {name} ile direkt mesaj geçmişinin başlangıcı.", EN: "This is the beginning of your direct message history with {name}." },
     loadOlder: { TR: "Daha eski mesajları yükle", EN: "Load older messages" },
     newMessages: { TR: "Yeni mesajlar", EN: "New messages" },
     jumpLatest: { TR: "En yeniye git", EN: "Jump to latest" },
+    react: { TR: "Tepki ver", EN: "React" },
     reply: { TR: "Yanıtla", EN: "Reply" },
+    forward: { TR: "İlet", EN: "Forward" },
+    forwarded: { TR: "İletildi", EN: "Forwarded" },
+    star: { TR: "Yıldızla", EN: "Star" },
+    unstar: { TR: "Yıldızı kaldır", EN: "Unstar" },
+    pin: { TR: "Sabitle", EN: "Pin" },
+    unpin: { TR: "Sabitlemeyi kaldır", EN: "Unpin" },
+    pinned: { TR: "Sabitlendi", EN: "Pinned" },
     edit: { TR: "Düzenle", EN: "Edit" },
     delete: { TR: "Sil", EN: "Delete" },
     copy: { TR: "Metni kopyala", EN: "Copy text" },
@@ -27,7 +38,6 @@ const C = {
     voice: { TR: "Sesli mesaj, {time}", EN: "Voice message, {time}" },
     play: { TR: "Sesli mesajı oynat", EN: "Play voice message" },
     stop: { TR: "Durdur", EN: "Stop" },
-    repliedTo: { TR: "{name} kişisine yanıt", EN: "Replying to {name}" },
     original: { TR: "Yanıtlanan mesaja git", EN: "Go to the replied message" },
     editLabel: { TR: "Mesajı düzenle", EN: "Edit message" },
     editHint: { TR: "Kaydetmek için Enter, vazgeçmek için Esc", EN: "Enter to save, Esc to cancel" },
@@ -35,6 +45,8 @@ const C = {
     cancel: { TR: "Vazgeç", EN: "Cancel" },
     empty: { TR: "Henüz mesaj yok. İlk mesajı gönder!", EN: "No messages yet. Send the first one!" },
     openProfile: { TR: "{name} profil kartını aç", EN: "Open {name}'s profile card" },
+    reactedBy: { TR: "{names} tepki verdi", EN: "{names} reacted" },
+    you: { TR: "Sen", EN: "You" },
 } satisfies Record<string, Copy>;
 
 const GROUPING_WINDOW_MS = 7 * 60_000;
@@ -55,29 +67,10 @@ function dayLabel(ms: number, now: number, locale: string, tx: (copy: Copy) => s
     }
 }
 
-/** Plain text with clickable http(s) links and "> " quote lines; nothing is rendered as HTML. */
-function MessageText({ text }: { text: string }) {
-    const blocks = useMemo(() => {
-        const result: Array<{ quote: boolean; lines: string[] }> = [];
-        for (const line of text.split("\n")) {
-            const quote = line.startsWith("> ");
-            const last = result[result.length - 1];
-            if (last && last.quote === quote) last.lines.push(quote ? line.slice(2) : line);
-            else result.push({ quote, lines: [quote ? line.slice(2) : line] });
-        }
-        return result;
-    }, [text]);
-    const render = (content: string) => tokenizeMessage(content, []).map((segment, index) => (segment.kind === "link"
-        ? <a key={index} href={segment.href} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-indigo-600 underline decoration-indigo-500/40 underline-offset-2 hover:decoration-indigo-500 dark:text-indigo-400">{segment.text}</a>
-        : <span key={index}>{segment.text}</span>));
-    return (
-        <div className="break-words text-[15px] leading-[1.375rem] text-zinc-800 dark:text-zinc-100">
-            {blocks.map((block, index) => block.quote
-                ? <blockquote key={index} className="my-0.5 whitespace-pre-wrap border-s-4 border-zinc-300 ps-2.5 text-zinc-600 dark:border-zinc-600 dark:text-zinc-300">{render(block.lines.join("\n"))}</blockquote>
-                : <p key={index} className="whitespace-pre-wrap">{render(block.lines.join("\n"))}</p>)}
-        </div>
-    );
-}
+/** Links in a message's text pieces (direct messages have no mentions or topics). */
+const renderLinks = (content: string, key: string): ReactNode => tokenizeMessage(content, []).map((segment, index) => (segment.kind === "link"
+    ? <a key={`${key}-${index}`} href={segment.href} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-indigo-600 underline decoration-indigo-500/40 underline-offset-2 hover:decoration-indigo-500 dark:text-indigo-400">{segment.text}</a>
+    : <span key={`${key}-${index}`}>{segment.text}</span>));
 
 export type DmMessagesProps = {
     chatId: string;
@@ -95,6 +88,12 @@ export type DmMessagesProps = {
     onReply: (message: DmMessage) => void;
     onDelete: (message: DmMessage) => void;
     onCopy: (message: DmMessage) => void;
+    onReact: (message: DmMessage, reaction: GroupReactionKey) => void;
+    onTogglePin: (message: DmMessage) => void;
+    onToggleStar: (message: DmMessage) => void;
+    onForward: (message: DmMessage) => void;
+    pinnedIds: readonly string[];
+    starredIds: ReadonlySet<string>;
     playingId: string;
     loadingVoiceId: string;
     onToggleVoice: (message: DmMessage) => void;
@@ -102,15 +101,24 @@ export type DmMessagesProps = {
     onOpenProfile: (email: string, trigger: HTMLElement) => void;
     /** Shown above the conversation start (Discord's "This is the beginning…" card). */
     intro: ReactNode;
+    /** "Read receipts" in the messaging settings: off hides "Seen" (the partner doesn't get yours either). */
+    showReceipts: boolean;
+    fontClass: string;
+    backgroundClass: string;
+    gifAutoplay: boolean;
+    /** Scroll to this message (a star or a pin); a new nonce scrolls again. */
+    jumpTarget: { id: string; nonce: number } | null;
+    onJumpMissing: () => void;
 };
 
 /**
  * The conversation, Discord style: day dividers, a "new messages" line,
- * grouped messages from the same person, a hover toolbar (reply, edit,
- * delete, copy), replies, read receipts and voice messages.
+ * grouped messages from the same person, a hover toolbar (react, reply,
+ * forward, edit, star, pin, delete, copy), Markdown, GIFs, replies, read
+ * receipts and voice messages.
  */
 export default function DmMessages(props: DmMessagesProps) {
-    const { chatId, me, partner, messages, loaded, hasMore, onLoadOlder, now, intro } = props;
+    const { chatId, me, partner, messages, loaded, hasMore, onLoadOlder, now, intro, showReceipts, backgroundClass, jumpTarget, onJumpMissing } = props;
     const { tx, locale } = useI18n();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const atBottomRef = useRef(true);
@@ -128,12 +136,13 @@ export default function DmMessages(props: DmMessagesProps) {
     const dividerId = divider?.chatId === chatId ? divider.id : "";
 
     const lastOwnRead = useMemo(() => {
+        if (!showReceipts) return "";
         for (let index = messages.length - 1; index >= 0; index -= 1) {
             const message = messages[index];
             if (message.fromEmail === me.email) return message.read ? message.id : "";
         }
         return "";
-    }, [me.email, messages]);
+    }, [me.email, messages, showReceipts]);
 
     const scrollToBottom = useCallback((smooth: boolean) => {
         const element = containerRef.current;
@@ -178,14 +187,31 @@ export default function DmMessages(props: DmMessagesProps) {
 
     const jumpTo = useCallback((id: string) => {
         const element = document.getElementById(`dm-${id}`);
-        if (!element) return;
+        if (!element) return false;
         element.scrollIntoView({ block: "center", behavior: "smooth" });
         element.classList.add(...FLASH);
         window.setTimeout(() => element.classList.remove(...FLASH), 1600);
+        return true;
     }, []);
+
+    // A star or a pin asked for a message: scroll to it once the messages are there.
+    const jumpRef = useRef({ jumpTo, onJumpMissing, id: jumpTarget?.id ?? "" });
+    useEffect(() => {
+        jumpRef.current = { jumpTo, onJumpMissing, id: jumpTarget?.id ?? "" };
+    });
+    const jumpKey = loaded && jumpTarget ? `${jumpTarget.id}:${jumpTarget.nonce}` : "";
+    useEffect(() => {
+        if (!jumpKey) return;
+        const timer = window.setTimeout(() => {
+            const { jumpTo: jump, onJumpMissing: missing, id } = jumpRef.current;
+            if (id && !jump(id)) missing();
+        }, 60);
+        return () => window.clearTimeout(timer);
+    }, [jumpKey]);
 
     const byId = useMemo(() => new Map(messages.map((message) => [message.id, message])), [messages]);
     const activate = useCallback((id: string) => setActiveId((current) => (current === id ? "" : id)), []);
+    const onJump = useCallback((id: string) => void jumpTo(id), [jumpTo]);
 
     const rows: ReactNode[] = [];
     let previous: DmMessage | null = null;
@@ -207,7 +233,7 @@ export default function DmMessages(props: DmMessagesProps) {
                 </div>,
             );
         }
-        const compact = Boolean(previous && previous.fromEmail === message.fromEmail && !message.replyTo
+        const compact = Boolean(previous && previous.fromEmail === message.fromEmail && !message.replyTo && !message.forwarded
             && message.createdAt - previous.createdAt < GROUPING_WINDOW_MS && dayKey(previous.createdAt) === dayKey(message.createdAt) && message.id !== dividerId);
         const author = message.fromEmail === me.email ? me : partner;
         rows.push(
@@ -215,23 +241,34 @@ export default function DmMessages(props: DmMessagesProps) {
                 key={message.id}
                 message={message}
                 author={author}
+                me={me.email}
                 mine={message.fromEmail === me.email}
                 compact={compact}
                 replied={message.replyTo ? byId.get(message.replyTo.id) ?? null : null}
                 replyAuthor={message.replyTo ? (message.replyTo.fromEmail === me.email ? me.username : partner.username) : ""}
                 seen={message.id === lastOwnRead}
+                showReceipts={showReceipts}
+                pinned={props.pinnedIds.includes(message.id)}
+                starred={props.starredIds.has(message.id)}
                 active={activeId === message.id}
                 editing={props.editingId === message.id}
                 playing={props.playingId === message.id}
                 loadingVoice={props.loadingVoiceId === message.id}
+                fontClass={props.fontClass}
+                gifAutoplay={props.gifAutoplay}
+                partnerName={partner.username}
                 onActivate={activate}
-                onJump={jumpTo}
+                onJump={onJump}
                 onReply={props.onReply}
                 onStartEdit={props.onStartEdit}
                 onCancelEdit={props.onCancelEdit}
                 onSaveEdit={props.onSaveEdit}
                 onDelete={props.onDelete}
                 onCopy={props.onCopy}
+                onReact={props.onReact}
+                onTogglePin={props.onTogglePin}
+                onToggleStar={props.onToggleStar}
+                onForward={props.onForward}
                 onToggleVoice={props.onToggleVoice}
                 onOpenProfile={props.onOpenProfile}
             />,
@@ -241,11 +278,11 @@ export default function DmMessages(props: DmMessagesProps) {
 
     return (
         <div className="relative min-h-0 flex-1">
-            <div ref={containerRef} onScroll={onScroll} className="h-full overflow-y-auto overscroll-contain pb-4" aria-live="polite" aria-relevant="additions" onKeyDown={(event) => { if (event.key === "Escape") setActiveId(""); }}>
+            <div ref={containerRef} onScroll={onScroll} className={cx("h-full overflow-y-auto overscroll-contain pb-4", backgroundClass)} aria-live="polite" aria-relevant="additions" onKeyDown={(event) => { if (event.key === "Escape") setActiveId(""); }}>
                 {loaded && !hasMore && intro}
                 {hasMore && (
                     <div className="flex justify-center p-3">
-                        <button type="button" onClick={loadOlder} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-zinc-800"><ChevronUp className="h-3.5 w-3.5" aria-hidden />{tx(C.loadOlder)}</button>
+                        <button type="button" onClick={loadOlder} className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"><ChevronUp className="h-3.5 w-3.5" aria-hidden />{tx(C.loadOlder)}</button>
                     </div>
                 )}
                 {!loaded ? (
@@ -266,15 +303,22 @@ export default function DmMessages(props: DmMessagesProps) {
 type RowProps = {
     message: DmMessage;
     author: SocialPerson;
+    me: string;
     mine: boolean;
     compact: boolean;
     replied: DmMessage | null;
     replyAuthor: string;
     seen: boolean;
+    showReceipts: boolean;
+    pinned: boolean;
+    starred: boolean;
     active: boolean;
     editing: boolean;
     playing: boolean;
     loadingVoice: boolean;
+    fontClass: string;
+    gifAutoplay: boolean;
+    partnerName: string;
     onActivate: (id: string) => void;
     onJump: (id: string) => void;
     onReply: (message: DmMessage) => void;
@@ -283,35 +327,56 @@ type RowProps = {
     onSaveEdit: (message: DmMessage, text: string) => Promise<void>;
     onDelete: (message: DmMessage) => void;
     onCopy: (message: DmMessage) => void;
+    onReact: (message: DmMessage, reaction: GroupReactionKey) => void;
+    onTogglePin: (message: DmMessage) => void;
+    onToggleStar: (message: DmMessage) => void;
+    onForward: (message: DmMessage) => void;
     onToggleVoice: (message: DmMessage) => void;
     onOpenProfile: (email: string, trigger: HTMLElement) => void;
 };
 
 function RowView(props: RowProps) {
-    const { message, author, mine, compact, replied, replyAuthor, seen, active, editing, playing, loadingVoice } = props;
+    const { message, author, me, mine, compact, replied, replyAuthor, seen, showReceipts, pinned, starred, active, editing, playing, loadingVoice, fontClass, gifAutoplay, partnerName } = props;
     const { tx, locale } = useI18n();
+    const [picker, setPicker] = useState(false);
     const time = clockTime(message.createdAt, locale);
     const iso = message.createdAt ? new Date(message.createdAt).toISOString() : undefined;
     const reply = message.replyTo;
     const canEdit = mine && message.type === "text" && !message.deleted && !message.pending;
+    const canForward = !message.pending && !message.deleted && (message.type === "text" || message.type === "gif" || message.type === "sticker");
+    const reactions = reactionSummary(message.reactions, me);
 
-    const toolbar = !message.deleted && !editing && (
+    const toolbar = !message.deleted && !editing && !message.pending && (
         <div
             role="toolbar"
             aria-label={tx(C.actions)}
-            className={cx("absolute -top-3.5 end-3 z-10 flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-white p-0.5 shadow-md transition dark:border-white/10 dark:bg-zinc-800", active ? "opacity-100" : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100")}
+            onBlur={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setPicker(false); }}
+            className={cx("absolute -top-3.5 end-3 z-10 flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-white p-0.5 shadow-md transition dark:border-white/10 dark:bg-zinc-800", active || picker ? "opacity-100" : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100")}
         >
+            <Tool label={tx(C.react)} onClick={() => setPicker((value) => !value)}><Smile className="h-4 w-4" aria-hidden /></Tool>
             <Tool label={tx(C.reply)} onClick={() => props.onReply(message)}><CornerUpLeft className="h-4 w-4" aria-hidden /></Tool>
+            {canForward && <Tool label={tx(C.forward)} onClick={() => props.onForward(message)}><CornerUpRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden /></Tool>}
             {canEdit && <Tool label={tx(C.edit)} onClick={() => props.onStartEdit(message)}><Pencil className="h-4 w-4" aria-hidden /></Tool>}
-            {message.type !== "voice" && <Tool label={tx(C.copy)} onClick={() => props.onCopy(message)}><CopyIcon className="h-4 w-4" aria-hidden /></Tool>}
+            {message.type === "text" && <Tool label={tx(C.copy)} onClick={() => props.onCopy(message)}><CopyIcon className="h-4 w-4" aria-hidden /></Tool>}
+            <Tool label={tx(starred ? C.unstar : C.star)} onClick={() => props.onToggleStar(message)}><Star className={cx("h-4 w-4", starred && "fill-amber-400 text-amber-500")} aria-hidden /></Tool>
+            <Tool label={tx(pinned ? C.unpin : C.pin)} onClick={() => props.onTogglePin(message)}>{pinned ? <PinOff className="h-4 w-4" aria-hidden /> : <Pin className="h-4 w-4" aria-hidden />}</Tool>
             {mine && <Tool label={tx(C.delete)} danger onClick={() => props.onDelete(message)}><Trash2 className="h-4 w-4" aria-hidden /></Tool>}
+            <AnimatePresence>
+                {picker && (
+                    <motion.div initial={{ opacity: 0, y: 4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.96 }} transition={{ duration: 0.12 }} className="absolute end-0 top-full mt-1 flex gap-0.5 rounded-xl border border-zinc-200 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-zinc-800">
+                        {GROUP_REACTIONS.map((reaction) => (
+                            <button key={reaction.key} type="button" onClick={(event) => { event.stopPropagation(); setPicker(false); props.onReact(message, reaction.key); }} className="rounded-lg p-1.5 text-lg leading-none transition hover:scale-125 hover:bg-zinc-100 dark:hover:bg-zinc-700" aria-label={tx(reaction.label)} title={tx(reaction.label)}>{reaction.emoji}</button>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 
     const receipt = mine && !message.deleted && (
         message.pending
             ? <Clock3 className="h-3 w-3 text-zinc-400" aria-label={tx(C.sending)} />
-            : message.read ? <CheckCheck className="h-3.5 w-3.5 text-indigo-500" aria-label={tx(C.read)} /> : <Check className="h-3.5 w-3.5 text-zinc-400" aria-label={tx(C.sent)} />
+            : showReceipts && message.read ? <CheckCheck className="h-3.5 w-3.5 text-indigo-500" aria-label={tx(C.read)} /> : <Check className="h-3.5 w-3.5 text-zinc-400" aria-label={tx(C.sent)} />
     );
 
     let body: ReactNode;
@@ -321,6 +386,8 @@ function RowView(props: RowProps) {
         body = <EditBox message={message} onCancel={props.onCancelEdit} onSave={props.onSaveEdit} />;
     } else if (message.type === "sticker") {
         body = <p className="text-5xl leading-tight" role="img" aria-label={message.text}>{message.text}</p>;
+    } else if (message.type === "gif" && message.gif) {
+        body = <GifView gif={message.gif} autoplay={gifAutoplay} />;
     } else if (message.type === "voice") {
         body = (
             <button type="button" onClick={() => props.onToggleVoice(message)} className={cx("mt-0.5 inline-flex items-center gap-2.5 rounded-2xl border px-3 py-2 text-sm transition", playing ? "border-indigo-500/50 bg-indigo-500/10" : "border-zinc-200 bg-white hover:border-indigo-500/40 dark:border-white/10 dark:bg-zinc-950")} aria-label={playing ? tx(C.stop) : `${tx(C.play)} (${formatDuration(message.voiceDuration)})`}>
@@ -336,16 +403,27 @@ function RowView(props: RowProps) {
             </button>
         );
     } else {
-        body = <MessageText text={message.text} />;
+        body = <ChatMarkdown text={message.text} renderText={renderLinks} className={cx("text-zinc-800 dark:text-zinc-100", fontClass)} />;
     }
+
+    const reactionRow = reactions.length > 0 && !message.deleted && (
+        <div className="mt-1.5 flex flex-wrap gap-1">
+            {reactions.map((reaction) => (
+                <button key={reaction.key} type="button" onClick={() => props.onReact(message, reaction.key)} aria-pressed={reaction.mine} title={tx(C.reactedBy, { names: (message.reactions[reaction.key] ?? []).map((email) => (email === me ? tx(C.you) : partnerName)).join(", ") })} className={cx("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition", reaction.mine ? "border-indigo-500/60 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300" : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-300")}>
+                    <span className="text-sm leading-none">{reaction.emoji}</span>{reaction.count}
+                </button>
+            ))}
+        </div>
+    );
 
     return (
         <div
             id={`dm-${message.id}`}
-            className={cx("group relative px-4 transition-colors scroll-mt-24", compact ? "py-0.5" : "mt-3 pt-0.5 pb-0.5", active ? "bg-zinc-100 dark:bg-white/[0.04]" : "hover:bg-zinc-50 dark:hover:bg-white/[0.025]", message.pending && "opacity-70")}
+            className={cx("group relative px-4 transition-colors scroll-mt-24", compact ? "py-0.5" : "mt-3 pt-0.5 pb-0.5", active ? "bg-zinc-100 dark:bg-white/[0.04]" : "hover:bg-zinc-50/80 dark:hover:bg-white/[0.025]", message.pending && "opacity-70")}
             onClick={(event) => {
                 if (!(event.target instanceof Element) || !event.target.closest("a,button,textarea")) props.onActivate(message.id);
             }}
+            onMouseLeave={() => setPicker(false)}
         >
             {toolbar}
             {reply && !message.deleted && (
@@ -370,9 +448,15 @@ function RowView(props: RowProps) {
                             <button type="button" onClick={(event) => props.onOpenProfile(author.email, event.currentTarget)} className="font-semibold text-zinc-900 hover:underline focus-visible:underline focus-visible:outline-none dark:text-white">{author.username}</button>
                             <StaffBadge role={author.staffRole} size="sm" compactOnMobile />
                             <time dateTime={iso} title={fullDateTime(message.createdAt, locale)} className="text-xs text-zinc-400">{time}</time>
+                            {pinned && <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400"><Pin className="h-3 w-3" aria-hidden />{tx(C.pinned)}</span>}
+                            {starred && <Star className="h-3 w-3 fill-amber-400 text-amber-500" aria-label={tx(C.unstar)} />}
                         </div>
                     )}
-                    {body}
+                    {message.forwarded && !message.deleted && (
+                        <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold italic text-zinc-500 dark:text-zinc-400"><Forward className="h-3 w-3 rtl:-scale-x-100" aria-hidden />{tx(C.forwarded)}</p>
+                    )}
+                    <div className={cx(message.forwarded && !message.deleted && "border-s-2 border-zinc-300 ps-2.5 dark:border-zinc-600")}>{body}</div>
+                    {reactionRow}
                     {(message.edited && !message.deleted) || receipt || seen ? (
                         <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-zinc-400">
                             {message.edited && !message.deleted && <span>{tx(C.edited)}</span>}
@@ -477,4 +561,3 @@ export function ConversationIntro({ partner, children }: { partner: SocialPerson
         </div>
     );
 }
-

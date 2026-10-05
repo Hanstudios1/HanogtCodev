@@ -1,15 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, BookOpen, Crown, Hash, LogOut, Plus, Save, Settings2, ShieldAlert, Trash2, UserCheck, UsersRound, X } from "lucide-react";
+import { AlertTriangle, BookOpen, Bot, Crown, Hash, LogOut, Plus, Save, Settings2, ShieldAlert, ShieldCheck, Trash2, UserCheck, UsersRound, X } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { GROUP_COLORS, GROUP_COLOR_IDS, GROUP_EMOJIS, GROUP_LIMITS, normalizeTopic, type GroupColor } from "@/lib/groups";
+import { GROUP_COLORS, GROUP_COLOR_IDS, GROUP_EMOJIS, GROUP_LIMITS, canModerate, normalizeTopic, type GroupColor } from "@/lib/groups";
 import { groupsApi } from "../api";
 import { GroupTile, Modal, ModalHeader, Spinner, cx } from "../ui";
+import BotSettings from "./BotSettings";
 import { useWorkspace } from "./context";
+import SafetySettings from "./SafetySettings";
 
-export type SettingsTab = "general" | "rules" | "membership" | "danger";
+export type SettingsTab = "general" | "rules" | "membership" | "safety" | "bots" | "danger";
 
 const C = {
     title: { TR: "Grup ayarları", EN: "Group settings" },
@@ -17,6 +19,8 @@ const C = {
     general: { TR: "Genel", EN: "General" },
     rules: { TR: "Kurallar ve konular", EN: "Rules & topics" },
     membership: { TR: "Üyelik", EN: "Membership" },
+    safety: { TR: "Güvenlik", EN: "Safety" },
+    bots: { TR: "Botlar", EN: "Bots" },
     danger: { TR: "Gelişmiş", EN: "Advanced" },
     name: { TR: "Grup adı", EN: "Group name" },
     description: { TR: "Açıklama", EN: "Description" },
@@ -78,7 +82,7 @@ function Section({ title, icon, children, tone = "default" }: { title: string; i
 
 export default function SettingsDialog({ open, onClose, initialTab, onLeft, onRestoreGuide }: { open: boolean; onClose: () => void; initialTab: SettingsTab; onLeft: (reason: "left" | "deleted") => void; onRestoreGuide: () => Promise<boolean> }) {
     const { tx } = useI18n();
-    const { groupId, group, members, me, isManager, isOwner, banned, notify, confirm, errorText, refresh } = useWorkspace();
+    const { groupId, group, members, me, role, isManager, isOwner, banned, notify, confirm, errorText, refresh } = useWorkspace();
     const [tab, setTab] = useState<SettingsTab>(initialTab);
     const [name, setName] = useState(group.name);
     const [description, setDescription] = useState(group.description);
@@ -98,6 +102,8 @@ export default function SettingsDialog({ open, onClose, initialTab, onLeft, onRe
         { id: "general", label: C.general, icon: <Settings2 className="h-4 w-4" aria-hidden /> },
         { id: "rules", label: C.rules, icon: <BookOpen className="h-4 w-4" aria-hidden /> },
         ...(isManager ? [{ id: "membership" as const, label: C.membership, icon: <UsersRound className="h-4 w-4" aria-hidden /> }] : []),
+        ...(canModerate(role) ? [{ id: "safety" as const, label: C.safety, icon: <ShieldCheck className="h-4 w-4" aria-hidden /> }] : []),
+        { id: "bots", label: C.bots, icon: <Bot className="h-4 w-4" aria-hidden /> },
         { id: "danger", label: C.danger, icon: <ShieldAlert className="h-4 w-4" aria-hidden /> },
     ];
 
@@ -313,6 +319,10 @@ export default function SettingsDialog({ open, onClose, initialTab, onLeft, onRe
                             )}
                         </div>
                     )}
+
+                    {tab === "safety" && canModerate(role) && <SafetySettings />}
+
+                    {tab === "bots" && <BotSettings />}
 
                     {tab === "danger" && (
                         <div className="space-y-4">

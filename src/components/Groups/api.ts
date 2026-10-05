@@ -2,6 +2,8 @@
 
 import { useCallback } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
+import type { AutoModConfig } from "@/lib/social/automod-config";
+import type { EphemeralReply } from "@/lib/social/bots";
 import type {
     GroupDetailResponse,
     GroupErrorCode,
@@ -17,6 +19,19 @@ export type GroupClientErrorCode =
     | "network" | "files" | "chat" | "save_failed" | "file_deleted" | "file_too_large" | "file_exists" | "file_name"
     | "files_limit" | "voice_too_large" | "voice_format" | "voice_failed" | "voice_unavailable" | "mic_denied" | "mic_missing" | "mic_busy" | "zip_failed"
     | "editor_too_large" | "clipboard_failed" | "message_failed" | "offline";
+
+type ModerationPerson = { email: string; name: string } | null;
+
+/** GET /api/groups/moderation: what moderators see in the group's Safety settings. */
+export type GroupModerationResponse = {
+    automod: AutoModConfig;
+    /** The group's own banned words (owners and admins only; null for moderators). */
+    customWords: string[] | null;
+    canEdit: boolean;
+    reports: Array<{ id: string; reporter: ModerationPerson; target: ModerationPerson; reason: string; createdAt: string | null }>;
+    mutes: Array<{ person: ModerationPerson; until: string | null; reason: string; byAutoMod: boolean }>;
+    events: Array<{ person: ModerationPerson; rule: string; createdAt: string | null }>;
+};
 
 export class GroupRequestError extends Error {
     constructor(
@@ -149,6 +164,11 @@ export const groupsApi = {
     detail: (groupId: string) => request<GroupDetailResponse>(`/api/groups?id=${encodeURIComponent(groupId)}`),
     action: <T extends object = Success>(body: Record<string, unknown>) => request<T>("/api/groups", { body }),
     chat: (body: Record<string, unknown>, keepalive = false) => request<Success>("/api/groups/chat", { body, keepalive }),
+    /** Sends a message or runs a command: the stored message and/or what only the sender sees. */
+    send: (body: Record<string, unknown>) => request<{ success: true; message?: Record<string, unknown>; ephemeral?: EphemeralReply }>("/api/groups/chat", { body: { ...body, action: "send" } }),
+    /** The group's safety screen (moderators): AutoMod, reports, mutes and AutoMod stops. */
+    moderation: (groupId: string) => request<GroupModerationResponse>(`/api/groups/moderation?groupId=${encodeURIComponent(groupId)}`),
+    moderate: <T extends object = Success>(body: Record<string, unknown>) => request<T>("/api/groups/moderation", { body }),
     invites: (groupId: string) => request<GroupInvitesResponse>(`/api/groups/invites?groupId=${encodeURIComponent(groupId)}`),
     createLink: (body: Record<string, unknown>) => request<{ success: true; link: GroupInviteLinkInfo }>("/api/groups/invites", { body: { ...body, action: "create-link" } }),
     revokeLink: (groupId: string, token: string) => request<Success>("/api/groups/invites", { body: { action: "revoke-link", groupId, token } }),

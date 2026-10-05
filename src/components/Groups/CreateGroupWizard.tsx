@@ -19,6 +19,8 @@ import {
     type GroupColor,
     type GroupTemplateId,
 } from "@/lib/groups";
+import SocialDisclaimer from "@/components/Social/Disclaimer";
+import { GROUP_OWNER_NOTE } from "@/lib/social/disclaimer";
 import { groupsApi, useGroupErrorText } from "./api";
 import { GroupTile, Modal, ModalHeader, Spinner, cx } from "./ui";
 
@@ -281,9 +283,11 @@ export default function CreateGroupWizard({ open, onClose, onCreated, email }: {
                                 </section>
                                 <section className="rounded-2xl border border-zinc-200 p-4 dark:border-white/10">
                                     <h3 className="flex items-center gap-2 text-sm font-bold"><Pin className="h-4 w-4 text-amber-500" aria-hidden />{tx(C.welcome)}</h3>
-                                    <p className="mt-2 rounded-xl bg-gradient-to-br from-indigo-500/[0.08] to-fuchsia-500/[0.08] p-3 text-sm leading-6 text-zinc-700 dark:text-zinc-200">{tx(template.welcome, { group: trimmedName })}</p>
+                                    <p className="mt-2 rounded-xl bg-indigo-500/[0.06] p-3 text-sm leading-6 text-zinc-700 dark:text-zinc-200">{tx(template.welcome, { group: trimmedName })}</p>
                                 </section>
                                 <p className="text-xs text-zinc-500 dark:text-zinc-400">{tx(C.contentLanguage)}</p>
+                                <p className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3 text-xs leading-5 text-zinc-700 dark:text-zinc-200">{tx(GROUP_OWNER_NOTE)}</p>
+                                <SocialDisclaimer compact />
                             </div>
                         </motion.div>
                     )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Ban, Crown, Gavel, Shield, ShieldOff, UserMinus, UserPlus, UsersRound } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { groupsApi } from "@/components/Groups/api";
 import { RoleBadge, Spinner, UI_COPY, cx } from "@/components/Groups/ui";
 import { useWorkspace } from "@/components/Groups/workspace/context";
@@ -12,6 +12,7 @@ import { useI18n, type Copy } from "@/lib/i18n";
 import { GROUP_LIMITS, ROLE_RANK, canModerate, isManagerRole } from "@/lib/groups";
 import { LAST_SEEN_COPY } from "@/lib/presence";
 import { sectionMembers, type MemberSectionId } from "@/lib/social/model";
+import { BOT_LABEL, BotAvatar, BotTag } from "../chat/bots";
 import { useProfileViewer } from "../profile";
 import UserPopout from "../UserPopout";
 import { useGroupSession } from "./GroupSession";
@@ -25,6 +26,9 @@ const C = {
     moderator: { TR: "Moderatörler — {count}", EN: "Moderators — {count}" },
     member: { TR: "Üyeler — {count}", EN: "Members — {count}" },
     offline: { TR: "Çevrimdışı — {count}", EN: "Offline — {count}" },
+    bots: { TR: "Botlar — {count}", EN: "Bots — {count}" },
+    securityBotNote: { TR: "Moderasyon ve AutoMod · /yardim", EN: "Moderation and AutoMod · /help" },
+    aiBotNote: { TR: "/ai ya da @Hanogt AI ile sor", EN: "Ask with /ai or @Hanogt AI" },
     open: { TR: "{name} üye kartını aç", EN: "Open {name}'s member card" },
     manage: { TR: "Yönetim", EN: "Management" },
     makeAdmin: { TR: "Yönetici yap", EN: "Make admin" },
@@ -60,10 +64,32 @@ type MemberAction = "make-admin" | "remove-admin" | "make-moderator" | "remove-m
 /** Right column inside a group: people grouped by role while they're around, then everyone offline. */
 export default function MemberList() {
     const { tx, locale } = useI18n();
-    const { members, me, canInvite } = useWorkspace();
+    const { members, me, canInvite, group } = useWorkspace();
     const session = useGroupSession();
     const sections = sectionMembers(members, locale);
     const openEmail = session.userCard?.person.email ?? "";
+    // Hanogt Security Bot is in every group; Hanogt AI while the group has it on.
+    const bots = ([["security", C.securityBotNote], ...(group.aiBot !== false ? [["ai", C.aiBotNote]] : [])] as Array<["security" | "ai", Copy]>);
+    const botSection = (
+        <section key="bots" aria-labelledby="members-bots">
+            <h3 id="members-bots" className="px-2 pb-1 pt-5 text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{tx(C.bots, { count: bots.length })}</h3>
+            <ul className="space-y-0.5">
+                {bots.map(([bot, note]) => (
+                    <li key={bot} className="flex items-center gap-2.5 rounded-md px-2 py-1.5">
+                        <BotAvatar bot={bot} size={32} />
+                        <span className="min-w-0 flex-1">
+                            <span className="flex min-w-0 items-center gap-1">
+                                <span className={cx("truncate text-[15px] font-medium", bot === "security" ? "text-emerald-700 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-300")}>{tx(BOT_LABEL[bot])}</span>
+                                <BotTag />
+                            </span>
+                            <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{tx(note)}</span>
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        </section>
+    );
+    const offlineIndex = sections.findIndex((section) => section.id === "offline");
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
@@ -73,8 +99,10 @@ export default function MemberList() {
                 {canInvite && <button type="button" onClick={session.openInvite} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-500"><UserPlus className="h-3.5 w-3.5" aria-hidden />{tx(C.invite)}</button>}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
-                {sections.map((section) => (
-                    <section key={section.id} aria-labelledby={`members-${section.id}`}>
+                {offlineIndex === 0 && botSection}
+                {sections.map((section, index) => (
+                    <Fragment key={section.id}>
+                    <section aria-labelledby={`members-${section.id}`}>
                         <h3 id={`members-${section.id}`} className="px-2 pb-1 pt-5 text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{tx(SECTION_COPY[section.id], { count: section.members.length })}</h3>
                         <ul className="space-y-0.5">
                             {section.members.map((entry) => {
@@ -104,7 +132,11 @@ export default function MemberList() {
                             })}
                         </ul>
                     </section>
+                    {/* Bots show with the people who are around, before everyone offline. */}
+                    {(index === offlineIndex - 1 || (offlineIndex < 0 && index === sections.length - 1)) && botSection}
+                    </Fragment>
                 ))}
+                {!sections.length && botSection}
             </div>
         </div>
     );

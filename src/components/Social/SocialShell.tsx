@@ -37,6 +37,9 @@ import {
     type DmSummary,
     type SocialPerson,
 } from "@/lib/social/model";
+import { DEFAULT_SOCIAL_PREFS } from "@/lib/social/prefs";
+import { starKey, type StarScope, type StarredMessage } from "@/lib/social/stars";
+import ForwardDialog, { type ForwardPayload } from "./chat/ForwardDialog";
 import { SocialContext, type SocialContextValue } from "./context";
 import { clearSocialProfileCache } from "./profile";
 import { GroupNavContext, type GroupNavState } from "./group/nav";
@@ -45,6 +48,8 @@ import HomeSidebar from "./HomeSidebar";
 import JoinInviteDialog from "./JoinInviteDialog";
 import QuickSwitcher from "./QuickSwitcher";
 import ServerRail from "./ServerRail";
+import SocialSettingsDialog, { type SocialSettingsTab } from "./SocialSettings";
+import StarredDialog from "./StarredDialog";
 import { useDrawerFocus, useMediaQuery } from "./ui";
 import UserPanel from "./UserPanel";
 
@@ -134,6 +139,8 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
         status: ownStatus ?? (own?.statusPreference === "invisible" ? "offline" as const : own?.statusPreference === "dnd" ? "dnd" as const : own?.statusPreference === "idle" ? "idle" as const : "online" as const),
     }), [email, own, ownStatus, sessionName]);
 
+    const prefs = own?.social ?? DEFAULT_SOCIAL_PREFS;
+
     /* ---------------------------------- data ----------------------------------- */
 
     const friendsData = useFriendsOverview(email, mode, markBroken);
@@ -208,6 +215,47 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
         }
     }, [errorText, mode, notify, refreshDms, refreshFriends, tx]);
 
+    /* ------------------------------ starred messages ------------------------------ */
+
+    const [stars, setStars] = useState<{ list: StarredMessage[]; loaded: boolean }>({ list: [], loaded: false });
+    const refreshStars = useCallback(async () => {
+        try {
+            const data = await socialApi.stars();
+            setStars({ list: data.stars, loaded: true });
+        } catch {
+            setStars((current) => ({ ...current, loaded: true }));
+        }
+    }, []);
+    useEffect(() => {
+        let active = true;
+        socialApi.stars()
+            .then((data) => { if (active) setStars({ list: data.stars, loaded: true }); })
+            .catch(() => { if (active) setStars((current) => ({ ...current, loaded: true })); });
+        return () => { active = false; };
+    }, []);
+    const starKeys = useMemo(() => new Set(stars.list.map((star) => starKey(star.scope, star.target, star.messageId))), [stars.list]);
+    const hasStar = useCallback((scope: StarScope, target: string, messageId: string) => starKeys.has(starKey(scope, target, messageId)), [starKeys]);
+    const toggleStar = useCallback(async (scope: StarScope, target: string, messageId: string) => {
+        const key = starKey(scope, target, messageId);
+        const starred = !starKeys.has(key);
+        // Shown at once; the list is read again for the excerpt and the time.
+        setStars((current) => ({
+            ...current,
+            list: starred
+                ? [{ id: `pending-${key}`, scope, target, messageId, excerpt: "", author: "", href: scope === "dm" ? dmHref(target) : groupHref(target), starredAt: new Date().toISOString(), messageAt: null }, ...current.list]
+                : current.list.filter((star) => starKey(star.scope, star.target, star.messageId) !== key),
+        }));
+        try {
+            await socialApi.star({ scope, target, messageId, starred });
+            await refreshStars();
+        } catch (failure) {
+            notify(errorText(failure), "error");
+            await refreshStars();
+        }
+    }, [errorText, notify, refreshStars, starKeys]);
+
+    const [forwarding, setForwarding] = useState<ForwardPayload | null>(null);
+
     const audio = useSocialAudio();
     const toggleMic = useCallback(() => setSocialAudio(audio.micOff ? { micOff: false, deafened: false } : { micOff: true, deafened: false }), [audio.micOff]);
     const toggleDeafen = useCallback(() => setSocialAudio(audio.deafened ? { micOff: false, deafened: false } : { micOff: true, deafened: true }), [audio.deafened]);
@@ -225,6 +273,8 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
     const [switcher, setSwitcher] = useState({ open: false, key: 0 });
     const [wizard, setWizard] = useState({ open: false, key: 0 });
     const [join, setJoin] = useState({ open: false, key: 0 });
+    const [settingsDialog, setSettingsDialog] = useState<{ open: boolean; key: number; tab: SocialSettingsTab }>({ open: false, key: 0, tab: "messages" });
+    const [starsOpen, setStarsOpen] = useState(false);
     const navRef = useRef<HTMLDivElement | null>(null);
     useDrawerFocus(navOpen, navRef);
     const [groupNav, setGroupNav] = useState<GroupNavState | null>(null);
@@ -233,6 +283,8 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
     const openSwitcher = useCallback(() => setSwitcher(({ key }) => ({ open: true, key: key + 1 })), []);
     const openCreateGroup = useCallback(() => setWizard(({ key }) => ({ open: true, key: key + 1 })), []);
     const openJoin = useCallback(() => setJoin(({ key }) => ({ open: true, key: key + 1 })), []);
+    const openSettings = useCallback((tab: SocialSettingsTab = "messages") => setSettingsDialog(({ key }) => ({ open: true, key: key + 1, tab })), []);
+    const openStars = useCallback(() => setStarsOpen(true), []);
     const setNavOpen = useCallback((open: boolean) => setNavPath(open ? pathname : null), [pathname]);
     const toggleAside = useCallback(() => {
         if (wide) setAsideCollapsed(!asideCollapsed);
@@ -339,6 +391,9 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
             patch: groupsList.patchGroup,
         },
         homeBadge,
+        prefs,
+        stars: { list: stars.list, loaded: stars.loaded, has: hasStar, toggle: toggleStar, refresh: refreshStars },
+        forward: setForwarding,
         friendAction,
         notify,
         confirm,
@@ -348,6 +403,8 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
             openSwitcher,
             openCreateGroup,
             openJoin,
+            openSettings,
+            openStars,
             navOpen,
             setNavOpen,
             asideCollapsed,
@@ -360,8 +417,8 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
     }), [
         asideCollapsed, asideOpen, audio, blockedSet, closeAside, confirm, desktop, dmList.loaded, dmSummaries, errorText, friendAction, friendSet, friendsData.data,
         friendsData.error, friendsData.loaded, friendsList, groupUnread, groupsList.error, groupsList.groups, groupsList.invites, groupsList.loaded, groupsList.patchGroup,
-        groupsList.refresh, homeBadge, levels, live, markBroken, me, mode, navOpen, notify, now, openCreateGroup, openJoin, openSwitcher, person, refreshDms, refreshFriends,
-        route, setNavOpen, toggleAside, toggleDeafen, toggleMic, unreadTotal, visibleDmList, wide,
+        groupsList.refresh, hasStar, homeBadge, levels, live, markBroken, me, mode, navOpen, notify, now, openCreateGroup, openJoin, openSettings, openStars, openSwitcher, person, prefs,
+        refreshDms, refreshFriends, refreshStars, route, setNavOpen, stars.list, stars.loaded, toggleAside, toggleDeafen, toggleMic, toggleStar, unreadTotal, visibleDmList, wide,
     ]);
 
     const frame = (
@@ -406,6 +463,9 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
                 }}
                 email={email}
             />
+            <SocialSettingsDialog key={`settings-${settingsDialog.key}`} open={settingsDialog.open} initialTab={settingsDialog.tab} onClose={() => setSettingsDialog((current) => ({ ...current, open: false }))} />
+            <StarredDialog open={starsOpen} onClose={() => setStarsOpen(false)} />
+            <ForwardDialog payload={forwarding} onClose={() => setForwarding(null)} />
             {confirmElement}
             <ToastViewport toasts={toasts} onDismiss={dismiss} />
         </SocialContext.Provider>

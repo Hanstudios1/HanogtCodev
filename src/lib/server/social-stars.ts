@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { isGroupId } from "@/lib/groups";
 import { dmChatId, dmHref, groupHref, previewText } from "@/lib/social/model";
+import { STARS_MAX, type StarScope, type StarredMessage } from "@/lib/social/stars";
 import { deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection } from "./firebase-rest";
 import { isDocId, normalizeEmail } from "./validate";
 
@@ -13,22 +14,8 @@ import { isDocId, normalizeEmail } from "./validate";
  * read the message (a participant of the conversation, a member of the group).
  */
 
-export type StarScope = "dm" | "group";
-
-export type StarredMessage = {
-    id: string;
-    scope: StarScope;
-    /** The partner's address (direct messages) or the group id. */
-    target: string;
-    messageId: string;
-    excerpt: string;
-    author: string;
-    href: string;
-    starredAt: string | null;
-    messageAt: string | null;
-};
-
-export const STARS_MAX = 200;
+export type { StarScope, StarredMessage };
+export { STARS_MAX };
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex").slice(0, 24);
 export const starDocumentId = (owner: string, scope: StarScope, target: string, messageId: string) => `${hash(owner)}_${hash(`${scope}:${target}:${messageId}`)}`;

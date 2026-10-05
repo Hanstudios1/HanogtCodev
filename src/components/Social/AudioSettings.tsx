@@ -1,13 +1,13 @@
 "use client";
 
-import { LoaderCircle, Mic, Play, Square, Volume2, X } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { LoaderCircle, Mic, Play, Square, Volume2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Modal, ModalHeader } from "@/components/Groups/ui";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { setAudioDevices, useAudioDevices } from "@/lib/social/local-state";
 
 const C = {
     title: { TR: "Ses ayarları", EN: "Voice settings" },
-    close: { TR: "Kapat", EN: "Close" },
     input: { TR: "Mikrofon", EN: "Microphone" },
     output: { TR: "Hoparlör / kulaklık", EN: "Speaker / headphones" },
     systemDefault: { TR: "Sistem varsayılanı", EN: "System default" },
@@ -54,11 +54,11 @@ function sinkSupported() {
 /**
  * Discord's "Voice & Video" in small: the microphone and speaker used for
  * calls and voice messages, a live microphone meter and a test sound on the
- * chosen speaker. The choice lives in this browser (local-state.ts).
+ * chosen speaker. The choice lives in this browser (local-state.ts). Shown
+ * in Hanogt Social's settings.
  */
-export default function AudioSettingsDialog({ onClose }: { onClose: () => void }) {
+export function AudioSettingsPanel() {
     const { tx } = useI18n();
-    const titleId = useId();
     const devices = useAudioDevices();
     const [inputs, setInputs] = useState<Device[]>([]);
     const [outputs, setOutputs] = useState<Device[]>([]);
@@ -68,7 +68,6 @@ export default function AudioSettingsDialog({ onClose }: { onClose: () => void }
     const [starting, setStarting] = useState(false);
     const [level, setLevel] = useState(0);
     const [silent, setSilent] = useState(false);
-    const closeRef = useRef<HTMLButtonElement | null>(null);
     const testRef = useRef<{ stream: MediaStream; context: AudioContext; frame: number } | null>(null);
 
     const refresh = useCallback(() => listDevices().then((list) => {
@@ -95,22 +94,14 @@ export default function AudioSettingsDialog({ onClose }: { onClose: () => void }
     }, []);
 
     useEffect(() => {
-        closeRef.current?.focus();
         void refresh();
         const mediaDevices = navigator.mediaDevices;
         const onChange = () => void refresh();
         mediaDevices?.addEventListener?.("devicechange", onChange);
-        const onKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", onKey);
-        return () => {
-            mediaDevices?.removeEventListener?.("devicechange", onChange);
-            window.removeEventListener("keydown", onKey);
-        };
-    }, [onClose, refresh]);
+        return () => mediaDevices?.removeEventListener?.("devicechange", onChange);
+    }, [refresh]);
 
-    // The test always uses the microphone currently chosen.
+    // The test always uses the microphone currently chosen (and stops when the panel closes).
     useEffect(() => stopTest, [devices.input, stopTest]);
 
     const allowNames = async () => {
@@ -209,16 +200,8 @@ export default function AudioSettingsDialog({ onClose }: { onClose: () => void }
     const outputKnown = !devices.output || outputs.some((device) => device.id === devices.output);
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-            <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 text-zinc-900 shadow-2xl dark:border-white/10 dark:bg-zinc-900 dark:text-white">
-                <div className="flex items-center justify-between gap-3">
-                    <h2 id={titleId} className="text-lg font-bold">{tx(C.title)}</h2>
-                    <button ref={closeRef} type="button" onClick={onClose} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-white/10 dark:hover:text-white" aria-label={tx(C.close)}>
-                        <X className="h-4 w-4" aria-hidden />
-                    </button>
-                </div>
-
-                <label className="mt-4 block text-[12px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <div>
+                <label className="block text-[12px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     {tx(C.input)}
                     <select className={select} value={inputKnown ? devices.input ?? "" : ""} onChange={(event) => setAudioDevices({ input: event.target.value || null })}>
                         <option value="">{tx(C.systemDefault)}</option>
@@ -266,7 +249,17 @@ export default function AudioSettingsDialog({ onClose }: { onClose: () => void }
 
                 {error && <p role="alert" className="mt-3 text-[13px] font-semibold text-red-600 dark:text-red-400">{tx(error)}</p>}
                 <p className="mt-4 text-[12px] leading-5 text-zinc-500 dark:text-zinc-400">{tx(C.stored)}</p>
-            </div>
         </div>
+    );
+}
+
+/** The voice settings on their own (from a call's controls). */
+export default function AudioSettingsDialog({ onClose }: { onClose: () => void }) {
+    const { tx } = useI18n();
+    return (
+        <Modal open onClose={onClose} labelledBy="audio-settings-title" size="sm" elevated>
+            <ModalHeader id="audio-settings-title" title={tx(C.title)} onClose={onClose} />
+            <div className="overflow-y-auto p-5"><AudioSettingsPanel /></div>
+        </Modal>
     );
 }

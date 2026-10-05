@@ -162,7 +162,7 @@ const MODAL_SIZES = { sm: "sm:max-w-md", md: "sm:max-w-xl", lg: "sm:max-w-3xl", 
  * Accessible dialog: bottom sheet on phones, centered card from `sm` up.
  * Escape and a click on the backdrop close it; focus returns afterwards.
  */
-export function Modal({ open, onClose, labelledBy, size = "md", dismissible = true, children }: { open: boolean; onClose: () => void; labelledBy: string; size?: keyof typeof MODAL_SIZES; dismissible?: boolean; children: ReactNode }) {
+export function Modal({ open, onClose, labelledBy, size = "md", dismissible = true, elevated = false, children }: { open: boolean; onClose: () => void; labelledBy: string; size?: keyof typeof MODAL_SIZES; dismissible?: boolean; /** Above the call screen and its bars. */ elevated?: boolean; children: ReactNode }) {
     const onCloseRef = useRef(onClose);
     const panelRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
@@ -197,7 +197,7 @@ export function Modal({ open, onClose, labelledBy, size = "md", dismissible = tr
         <AnimatePresence>
             {open && (
                 <motion.div
-                    className="fixed inset-0 z-[80] flex items-end justify-center bg-zinc-950/70 backdrop-blur-sm sm:items-center sm:p-4"
+                    className={cx("fixed inset-0 flex items-end justify-center bg-zinc-950/70 backdrop-blur-sm sm:items-center sm:p-4", elevated ? "z-[150]" : "z-[80]")}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}

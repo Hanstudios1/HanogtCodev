@@ -5,6 +5,7 @@
  * word lists themselves stay on the server (src/lib/server/automod.ts), and
  * a group's own banned words are kept where members can't read them.
  */
+import type { Copy } from "@/lib/i18n";
 import type { GroupRank } from "./commands";
 
 export type AutoModLinks = "allow" | "block" | "allowlist";
@@ -119,3 +120,23 @@ export function sanitizeCustomWords(value: unknown): string[] {
 
 /** Why AutoMod stopped a message (shown to its writer, logged for moderators). */
 export type AutoModRule = "profanity" | "slang" | "custom" | "spam" | "mentions" | "links" | "caps" | "personal";
+
+export const AUTOMOD_RULE_COPY: Record<AutoModRule, Copy> = {
+    profanity: { TR: "küfür", EN: "swearing" },
+    slang: { TR: "argo ve hakaret", EN: "slang and insults" },
+    custom: { TR: "grubun yasaklı kelimeleri", EN: "the group's banned words" },
+    spam: { TR: "spam", EN: "spam" },
+    mentions: { TR: "çok fazla bahsetme", EN: "too many mentions" },
+    links: { TR: "bağlantılar", EN: "links" },
+    caps: { TR: "büyük harfle yazma", EN: "writing in capitals" },
+    personal: { TR: "kişisel veri", EN: "personal data" },
+};
+
+export const AUTOMOD_BLOCKED_COPY: Copy = {
+    TR: "Mesajın grubun AutoMod kuralına takıldı ({rule}) ve gönderilmedi.",
+    EN: "Your message hit the group's AutoMod rule ({rule}) and wasn't sent.",
+};
+
+export function isAutoModRule(value: unknown): value is AutoModRule {
+    return typeof value === "string" && Object.prototype.hasOwnProperty.call(AUTOMOD_RULE_COPY, value);
+}

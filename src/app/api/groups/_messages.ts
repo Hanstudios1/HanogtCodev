@@ -8,6 +8,7 @@ import {
     canModerate,
     channelKey,
     cleanMultiLine,
+    cleanSingleLine,
     fillVars,
     isGroupId,
     outranks,
@@ -520,21 +521,24 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
 
     const gif = body.type === "gif" ? readMessageGif(body.gif) : null;
     if (body.type === "gif" && !gif) throw new GroupApiError(400, "invalid_request", "Geçersiz GIF.");
-    const text = gif ? gif.title : cleanMultiLine(body.text, GROUP_LIMITS.messageMax * 2);
+    // A GIF's text is a short caption (the #channel it was sent in) and its title: channels, search and notifications read it.
+    const text = gif ? [cleanSingleLine(body.text, 100), gif.title].filter(Boolean).join(" ") : cleanMultiLine(body.text, GROUP_LIMITS.messageMax * 2);
     if (!gif && !text) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
     if (text.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
 
     const name = (await ownDisplayName(user)).slice(0, 80);
     const channel = channelOf(text, strings(group.topics));
+    // A forwarded message is passed on as it is: no commands, no Hanogt AI, no notifications.
+    const forwarded = body.forwarded === true;
     let question: string | null = null;
-    if (!gif && text.startsWith("/")) {
+    if (!gif && !forwarded && text.startsWith("/")) {
         const outcome = await runCommand(ctx, text, name, channel);
         if (outcome?.kind === "done") return outcome.result;
         if (outcome?.kind === "ask") question = outcome.question;
     }
 
     // Mentions: who is named (for the bell and AutoMod's limit) and whether Hanogt AI is asked.
-    const mentionsSomeone = text.includes("@");
+    const mentionsSomeone = !forwarded && text.includes("@");
     const directory = mentionsSomeone ? await memberDirectory(group) : null;
     const segments = mentionsSomeone ? tokenizeMessage(text, [...(directory?.byEmail.values() ?? []), AI_NAME]).filter((segment) => segment.kind === "mention") : [];
     const people = segments.filter((segment) => segment.kind === "mention" && segment.username !== AI_NAME);
@@ -556,7 +560,7 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
     if (gif) data.gif = gif;
     const reply = await readReply(groupId, body.replyTo);
     if (reply) data.replyTo = reply;
-    if (body.forwarded === true) data.forwarded = true;
+    if (forwarded) data.forwarded = true;
     const created = await createServerDocument(messagesPath(groupId), data);
     const id = created.name.split("/").pop() || "";
     const result: GroupSendResult = { success: true, message: wire(id, data) };

@@ -3,7 +3,7 @@
 import { ArrowLeft, CloudOff, FolderOpen, Hash, Pin, RefreshCw, Search, UserPlus, UsersRound, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Spinner, cx } from "@/components/Groups/ui";
 import ChatPanel, { PinnedPanel } from "@/components/Groups/workspace/ChatPanel";
 import EditorPane, { SaveIndicator } from "@/components/Groups/workspace/EditorPane";
@@ -133,6 +133,18 @@ function ChannelScreen() {
         return () => document.removeEventListener("visibilitychange", onVisible);
     }, [channelKey, latest, markChannelRead]);
 
+    // A starred message's link (?message=…) scrolls to it once the messages are there.
+    const wantedMessage = params.get("message") || "";
+    const messagesLoaded = session.messages.loaded;
+    const jumpTo = session.jumpTo;
+    const jumpedRef = useRef("");
+    useEffect(() => {
+        if (!wantedMessage || !messagesLoaded || jumpedRef.current === wantedMessage) return;
+        jumpedRef.current = wantedMessage;
+        const timer = window.setTimeout(() => jumpTo(wantedMessage), 120);
+        return () => window.clearTimeout(timer);
+    }, [jumpTo, messagesLoaded, wantedMessage]);
+
     const showPanel = (panel: "members" | "pinned") => {
         if (session.panel === panel && asideShown) {
             social.ui.toggleAside();
@@ -185,7 +197,6 @@ function ChannelScreen() {
             <div className="relative flex min-h-0 flex-1">
                 <ChatPanel
                     key={topic}
-                    chrome={false}
                     topic={topic}
                     onTopicChange={(next) => router.push(groupHref(context.groupId, next ? { topic: next } : {}))}
                     search={search}
@@ -201,7 +212,6 @@ function ChannelScreen() {
                     onStopTyping={session.stopTyping}
                     focusNonce={session.focusNonce}
                     jumpTarget={session.jumpTarget}
-                    onShowPinned={() => showPanel("pinned")}
                     onServerChange={session.messages.refresh}
                     onOpenUser={session.openUserCard}
                 />

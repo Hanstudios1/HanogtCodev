@@ -181,7 +181,8 @@
     "en": "Open a support ticket",
     "tr": "Destek talebi aç",
     "files": [
-      "src/app/about/page.tsx"
+      "src/app/about/page.tsx",
+      "src/components/Social/Disclaimer.tsx"
     ]
   },
   "1huwu0jnbe6": {
@@ -265,6 +266,8 @@
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/SiteFooter.tsx",
+      "src/components/Social/SocialSettings.tsx",
+      "src/components/Social/chat/bots.tsx",
       "src/lib/ai/knowledge.ts",
       "src/lib/faq.ts",
       "src/lib/nav.ts"
@@ -405,6 +408,7 @@
     "files": [
       "src/app/about/page.tsx",
       "src/components/Landing/LandingPage.tsx",
+      "src/components/Social/chat/Composer.tsx",
       "src/components/Social/group/GroupView.tsx",
       "src/components/Social/group/MemberList.tsx"
     ]
@@ -467,6 +471,7 @@
       "src/components/Admin/OverviewSection.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/AgentCard.tsx",
+      "src/components/Social/chat/ForwardDialog.tsx",
       "src/lib/nav.ts"
     ]
   },
@@ -495,8 +500,7 @@
     "en": "User settings",
     "tr": "Kullanıcı ayarları",
     "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/Social/UserPanel.tsx"
+      "src/app/account-settings/page.tsx"
     ]
   },
   "biocx019tl": {
@@ -543,6 +547,7 @@
       "src/components/Editor/PublishDialog.tsx",
       "src/components/Editor/WebPreview.tsx",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/SafetySettings.tsx",
       "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/HanogtAI/ApiKeysPanel.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
@@ -552,6 +557,7 @@
       "src/components/Security/AccountSecurityCard.tsx",
       "src/components/Security/RecentSignIns.tsx",
       "src/components/Social/FriendsView.tsx",
+      "src/components/Social/chat/ExpressionPicker.tsx",
       "src/components/Social/group/GroupView.tsx"
     ]
   },
@@ -744,6 +750,7 @@
       "src/components/Social/FriendsView.tsx",
       "src/components/Social/HomeSidebar.tsx",
       "src/components/Social/SocialShell.tsx",
+      "src/components/Social/chat/ForwardDialog.tsx",
       "src/lib/ai/knowledge.ts",
       "src/lib/nav.ts"
     ]
@@ -873,6 +880,7 @@
       "src/components/Editor/WebPreview.tsx",
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/HanogtAI/ArtifactPanel.tsx",
+      "src/components/Social/SocialSettings.tsx",
       "src/lib/runtimes/languages.ts"
     ]
   },
@@ -1042,6 +1050,20 @@
       "src/app/account-settings/page.tsx"
     ]
   },
+  "1t254np0y9n": {
+    "en": "Group mention notifications",
+    "tr": "Gruplarda bahsedilme bildirimleri",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "1tnvstpn0s3": {
+    "en": "When someone @mentions you in a Hanogt Social group.",
+    "tr": "Hanogt Social gruplarında biri senden @ ile bahsettiğinde.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
   "4y3goyerw6": {
     "en": "E-mail",
     "tr": "E-posta",
@@ -1074,7 +1096,6 @@
     "files": [
       "src/app/account-settings/page.tsx",
       "src/components/Editor/CollabChat.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
@@ -1616,7 +1637,8 @@
       "src/app/account-settings/page.tsx",
       "src/components/Admin/UsersSection.tsx",
       "src/components/Guide/book-content.ts",
-      "src/components/Social/GroupSidebar.tsx"
+      "src/components/Social/GroupSidebar.tsx",
+      "src/components/Social/SocialSettings.tsx"
     ]
   },
   "9vpuo68qka": {
@@ -1645,7 +1667,8 @@
     "tr": "Görünüm",
     "files": [
       "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx"
+      "src/app/settings/page.tsx",
+      "src/components/Social/SocialSettings.tsx"
     ]
   },
   "17t4771boqx": {
@@ -1943,7 +1966,7 @@
       "src/components/NotificationCenter.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
       "src/components/ProfileModal.tsx",
-      "src/components/Social/AudioSettings.tsx",
+      "src/components/Social/chat/ExpressionPicker.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -4247,7 +4270,6 @@
       "src/components/Admin/copy.ts",
       "src/components/Editor/Console.tsx",
       "src/components/Editor/NewFileDialog.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/News/NewsPage.tsx",
       "src/components/Social/FriendsView.tsx"
     ]
@@ -4564,7 +4586,8 @@
       "src/app/feedback/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Editor/CollabChat.tsx",
-      "src/components/Groups/ui.tsx"
+      "src/components/Groups/ui.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
     ]
   },
   "1ymxd8tl8uu": {
@@ -4588,6 +4611,7 @@
       "src/app/feedback/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Editor/WebPreview.tsx",
+      "src/components/Groups/workspace/SafetySettings.tsx",
       "src/components/News/AiRankings.tsx"
     ]
   },
@@ -4700,12 +4724,12 @@
       "src/app/feedback/page.tsx",
       "src/components/ChangelogModal.tsx",
       "src/components/Editor/CollabChat.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/News/CommentsDrawer.tsx",
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/Composer.tsx",
+      "src/components/Social/chat/ForwardDialog.tsx"
     ]
   },
   "237o5otl6b6": {
@@ -4858,6 +4882,7 @@
     "tr": "Açıklama (isteğe bağlı)",
     "files": [
       "src/app/feedback/page.tsx",
+      "src/components/Groups/workspace/BotSettings.tsx",
       "src/components/HanogtAI/AgentCard.tsx"
     ]
   },
@@ -4916,9 +4941,7 @@
     "tr": "Yanıtlanıyor: {name}",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/dm/DmComposer.tsx",
-      "src/components/Social/dm/DmMessages.tsx"
+      "src/components/Social/chat/Composer.tsx"
     ]
   },
   "24cv2j6lzwo": {
@@ -4926,8 +4949,7 @@
     "tr": "Yanıtı iptal et",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/Composer.tsx"
     ]
   },
   "2ygif8vnp4": {
@@ -9437,6 +9459,7 @@
       "src/app/privacy-policy/page.tsx",
       "src/components/LegalPage.tsx",
       "src/components/PrivacyPolicyModal.tsx",
+      "src/components/Social/Disclaimer.tsx",
       "src/lib/ai/knowledge.ts"
     ]
   },
@@ -10240,6 +10263,7 @@
       "src/components/Admin/copy.ts",
       "src/components/Editor/PublishDialog.tsx",
       "src/components/Security/CodeAdvisor.tsx",
+      "src/components/Social/SocialSettings.tsx",
       "src/lib/support.ts"
     ]
   },
@@ -11292,9 +11316,8 @@
     "tr": "Vazgeç",
     "files": [
       "src/app/settings/page.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/HanogtAI/AiSettingsPage.tsx",
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/Composer.tsx"
     ]
   },
   "lubvx2a2rg": {
@@ -13072,7 +13095,8 @@
       "src/app/terms-of-use/page.tsx",
       "src/components/LegalPage.tsx",
       "src/components/Plans/plans-copy.ts",
-      "src/components/PrivacyPolicyModal.tsx"
+      "src/components/PrivacyPolicyModal.tsx",
+      "src/components/Social/Disclaimer.tsx"
     ]
   },
   "v3of2oaavr": {
@@ -16245,7 +16269,8 @@
     "en": "Load more",
     "tr": "Daha fazla yükle",
     "files": [
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/Social/chat/ExpressionPicker.tsx"
     ]
   },
   "1hikkpwixsm": {
@@ -16318,7 +16343,8 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/HanogtAI/AgentCard.tsx",
-      "src/components/StaffBadge.tsx"
+      "src/components/StaffBadge.tsx",
+      "src/lib/groups.ts"
     ]
   },
   "267y1hl58n1": {
@@ -16960,6 +16986,7 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/Social/SocialSettings.tsx",
       "src/lib/nav.ts"
     ]
   },
@@ -17371,7 +17398,8 @@
     "en": "Open reports",
     "tr": "Açık bildirimler",
     "files": [
-      "src/components/Admin/OverviewSection.tsx"
+      "src/components/Admin/OverviewSection.tsx",
+      "src/components/Groups/workspace/SafetySettings.tsx"
     ]
   },
   "uz7l298ea4": {
@@ -18767,7 +18795,8 @@
     "files": [
       "src/components/Admin/PaddleCard.tsx",
       "src/components/Admin/ReportsPanel.tsx",
-      "src/components/HanogtAI/ChangesCard.tsx"
+      "src/components/HanogtAI/ChangesCard.tsx",
+      "src/lib/social/bots.ts"
     ]
   },
   "208mnkj69et": {
@@ -20421,6 +20450,7 @@
     "tr": "Çözüldü",
     "files": [
       "src/components/Admin/ReportsPanel.tsx",
+      "src/components/Groups/workspace/SafetySettings.tsx",
       "src/lib/support.ts"
     ]
   },
@@ -22096,6 +22126,7 @@
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/Groups/workspace/SafetySettings.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -23903,7 +23934,8 @@
       "src/components/HanogtAI/ChangesCard.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/HanogtAI/Markdown.tsx",
-      "src/components/Security/PasswordLab.tsx"
+      "src/components/Security/PasswordLab.tsx",
+      "src/components/Social/chat/ChatMarkdown.tsx"
     ]
   },
   "th6b98s8ij": {
@@ -24060,6 +24092,7 @@
     "tr": "Hanogt AI'a sor",
     "files": [
       "src/components/Editor/AIAssistant.tsx",
+      "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
@@ -24112,7 +24145,6 @@
     "tr": "Mesaj",
     "files": [
       "src/components/Editor/CollabChat.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/Social/FriendsView.tsx",
       "src/components/Social/UserPopout.tsx"
@@ -27997,7 +28029,8 @@
     "en": "Objects",
     "tr": "Nesneler",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/lib/social/emoji.ts"
     ]
   },
   "gbtclg6uu6": {
@@ -29244,6 +29277,42 @@
       "src/components/Groups/api.ts"
     ]
   },
+  "wezwurvie4": {
+    "en": "You're muted in this group; you can write again in {minutes} minutes.",
+    "tr": "Bu grupta susturuldun; {minutes} dakika sonra yeniden yazabilirsin.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1vry8pkjzso": {
+    "en": "Slow mode is on in this channel; you can write again in {seconds} seconds.",
+    "tr": "Bu kanalda yavaş mod açık; {seconds} saniye sonra yeniden yazabilirsin.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1xxu0akusj8": {
+    "en": "Your message hit the group's AutoMod rules and wasn't sent.",
+    "tr": "Mesajın grubun AutoMod kurallarına takıldı ve gönderilmedi.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "tb449iwnfl": {
+    "en": "You can't do that to this person; their rank is the same as yours or higher.",
+    "tr": "Bu kişiye bu işlemi uygulayamazsın; rütbesi seninkiyle aynı ya da daha yüksek.",
+    "files": [
+      "src/components/Groups/api.ts",
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "9rh5qhub0a": {
+    "en": "The command couldn't be read. See the commands you can use with /help.",
+    "tr": "Komut anlaşılamadı. Kullanabileceğin komutları /yardim ile görebilirsin.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
   "1t0tvfuufn": {
     "en": "Create a new group",
     "tr": "Yeni grup oluştur",
@@ -29436,11 +29505,11 @@
     "tr": "{count}/{max}",
     "files": [
       "src/components/Groups/CreateGroupWizard.tsx",
-      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Groups/workspace/BotSettings.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx",
       "src/components/Groups/workspace/SettingsDialog.tsx",
       "src/components/HanogtAI/ChatComposer.tsx",
-      "src/components/Social/dm/DmComposer.tsx",
+      "src/components/Social/chat/Composer.tsx",
       "src/components/Social/group/MemberList.tsx"
     ]
   },
@@ -29612,40 +29681,152 @@
       "src/components/HanogtAI/ChatSidebar.tsx"
     ]
   },
-  "x97l4wfezx": {
-    "en": "Search messages",
-    "tr": "Mesajlarda ara",
+  "b28n312z00": {
+    "en": "Part of every group and can't be removed. It applies the group's AutoMod rules, runs moderator commands such as /warn, /mute, /kick, /ban, /purge and /slowmode, and announces decisions in the chat.",
+    "tr": "Her grupta bulunur ve kaldırılamaz. Grubun AutoMod kurallarını uygular, /uyar, /sustur, /at, /yasakla, /temizle ve /yavasmod gibi moderatör komutlarını çalıştırır ve kararları sohbette duyurur.",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/BotSettings.tsx"
     ]
   },
-  "2awai7by9ad": {
-    "en": "Search messages…",
-    "tr": "Mesajlarda ara…",
+  "2gdv9wgcv5j": {
+    "en": "Always on",
+    "tr": "Her zaman açık",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/BotSettings.tsx"
     ]
   },
-  "10v9vnqdks6": {
-    "en": "Close search",
-    "tr": "Aramayı kapat",
+  "1kyxgh1ddfj": {
+    "en": "Members ask with /ai or by mentioning @Hanogt AI. The answer takes the channel's latest messages into account and counts against the asker's Hanogt AI allowance.",
+    "tr": "Üyeler /ai yazarak ya da @Hanogt AI diyerek soru sorar. Yanıt, kanalın son mesajlarını dikkate alır ve soran kişinin Hanogt AI hakkından düşer.",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/group/GroupView.tsx"
+      "src/components/Groups/workspace/BotSettings.tsx"
     ]
   },
-  "2ffed0g7hmi": {
-    "en": "{count} results",
-    "tr": "{count} sonuç",
+  "1vbhg2svasz": {
+    "en": "Hanogt AI is on in this group",
+    "tr": "Hanogt AI bu grupta açık",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/BotSettings.tsx"
     ]
   },
-  "k3zva7ngth": {
-    "en": "Filter by topic",
-    "tr": "Konuya göre filtrele",
+  "d92b0afvb9": {
+    "en": "Welcome message",
+    "tr": "Karşılama mesajı",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/BotSettings.tsx",
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "ndxufilho6": {
+    "en": "When someone joins, Hanogt Security Bot sends this message. {name} is replaced with the newcomer's name. Leave it empty to send nothing.",
+    "tr": "Yeni bir üye katıldığında Hanogt Security Bot bu mesajı gönderir. {name} yeni üyenin adıyla değiştirilir. Boş bırakırsan mesaj gönderilmez.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "kqmo2725cp": {
+    "en": "Welcome {name}! Type /rules to read the rules.",
+    "tr": "Hoş geldin {name}! Kurallara göz atmak için /kurallar yaz.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "6ajzflmnxn": {
+    "en": "Custom commands",
+    "tr": "Özel komutlar",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "298tdm08hdw": {
+    "en": "When a member types /command, Hanogt Security Bot posts the answer you write here (up to {max} commands). Hanogt's own command names can't be used.",
+    "tr": "Bir üye /komut yazdığında Hanogt Security Bot buradaki yanıtı gönderir (en fazla {max} komut). Hanogt'un kendi komut adları kullanılamaz.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "dj6v8u5vwr": {
+    "en": "Command name",
+    "tr": "Komut adı",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "21k9bjhmenm": {
+    "en": "Answer",
+    "tr": "Yanıt",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "2g86ircksrw": {
+    "en": "Add a command",
+    "tr": "Komut ekle",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "12un4dkwkmi": {
+    "en": "Delete /{name}",
+    "tr": "/{name} komutunu sil",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "hukblhkqz0": {
+    "en": "The name must start with a lowercase letter and may contain letters, digits, - and _ (24 at most).",
+    "tr": "Ad küçük harfle başlamalı; harf, rakam, - ve _ içerebilir (en fazla 24).",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "29u1xt70ozc": {
+    "en": "This name belongs to one of Hanogt's commands.",
+    "tr": "Bu ad Hanogt'un bir komutuna ait.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "1k3bf092vi8": {
+    "en": "There is already a command with this name.",
+    "tr": "Bu adla bir komut zaten var.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "c8srm10m86": {
+    "en": "Write an answer.",
+    "tr": "Bir yanıt yaz.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "z0c6ok4uls": {
+    "en": "No custom commands yet.",
+    "tr": "Henüz özel komut yok.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "1xpbslmifpl": {
+    "en": "Save bot settings",
+    "tr": "Bot ayarlarını kaydet",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "7cpkp2kbdp": {
+    "en": "Bot settings saved.",
+    "tr": "Bot ayarları kaydedildi.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
+    ]
+  },
+  "hzbiokba12": {
+    "en": "The owner and admins change the bot settings.",
+    "tr": "Bot ayarlarını grup sahibi ve yöneticiler değiştirir.",
+    "files": [
+      "src/components/Groups/workspace/BotSettings.tsx"
     ]
   },
   "26mzw7lh55m": {
@@ -29671,14 +29852,6 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
-  "xn5isedqi5": {
-    "en": "Jump to latest",
-    "tr": "En yeniye git",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/dm/DmMessages.tsx"
-    ]
-  },
   "1swt1mcfk62": {
     "en": "Start the conversation",
     "tr": "Sohbeti başlat",
@@ -29686,9 +29859,9 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
-  "18ckjua9682": {
-    "en": "Write the first message; use @ to mention someone and # to tag a topic.",
-    "tr": "İlk mesajı yaz; @ ile birinden bahset, # ile konu etiketle.",
+  "1j5ju39e8f6": {
+    "en": "Write the first message; use @ to mention someone, # for a channel and / for commands.",
+    "tr": "İlk mesajı yaz; @ ile birinden bahset, # ile kanal seç, / ile komutları gör.",
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
@@ -29700,20 +29873,6 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
-  "6rhsmjf96s": {
-    "en": "Write a message… (@ mention, # topic)",
-    "tr": "Mesaj yaz… (@ bahset, # konu)",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
-    ]
-  },
-  "1yrhclspnx4": {
-    "en": "Write in #{topic}…",
-    "tr": "#{topic} konusuna yaz…",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
-    ]
-  },
   "1lfsiakyk8z": {
     "en": "Message #{channel}",
     "tr": "#{channel} kanalına mesaj gönder",
@@ -29721,28 +29880,11 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
-  "re1tt3lxma": {
-    "en": "Record a voice message",
-    "tr": "Sesli mesaj kaydet",
+  "23bimsnb0nh": {
+    "en": "Message to #{channel}",
+    "tr": "#{channel} kanalına mesaj",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/dm/DmComposer.tsx"
-    ]
-  },
-  "21571d7bdki": {
-    "en": "Stop and send",
-    "tr": "Kaydı bitir ve gönder",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/dm/DmComposer.tsx"
-    ]
-  },
-  "3p32tym3f5": {
-    "en": "Recording {seconds}/{limit}s",
-    "tr": "Kaydediliyor {seconds}/{limit} sn",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
   "w8qtnkac76": {
@@ -29787,11 +29929,23 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
-  "249e292lfkk": {
-    "en": "Member to mention",
-    "tr": "Bahsedilecek üye",
+  "1vrusjep4pa": {
+    "en": "BOT",
+    "tr": "BOT",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Social/chat/bots.tsx"
+    ]
+  },
+  "103oaswksww": {
+    "en": "Group",
+    "tr": "Grup",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Social/GroupSidebar.tsx",
+      "src/components/Social/QuickSwitcher.tsx",
+      "src/components/Social/StarredDialog.tsx",
+      "src/lib/support.ts"
     ]
   },
   "icsop9xgmk": {
@@ -29800,6 +29954,7 @@
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx",
       "src/components/Social/GroupSidebar.tsx",
+      "src/components/Social/dm/DmView.tsx",
       "src/components/Social/group/GroupView.tsx"
     ]
   },
@@ -29810,9 +29965,9 @@
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
   },
-  "hfvzvq6s2w": {
-    "en": "Admins can hover a message and use 📌 to pin it here.",
-    "tr": "Yöneticiler bir mesajın üzerine gelip 📌 simgesiyle onu buraya sabitleyebilir.",
+  "1w6490vgqjv": {
+    "en": "Moderators can hover a message and use 📌 to pin it here.",
+    "tr": "Moderatörler bir mesajın üzerine gelip 📌 simgesiyle onu buraya sabitleyebilir.",
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
@@ -29821,7 +29976,9 @@
     "en": "Go to message",
     "tr": "Mesaja git",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Social/StarredDialog.tsx",
+      "src/components/Social/dm/DmView.tsx"
     ]
   },
   "rizei5ryz7": {
@@ -29829,21 +29986,25 @@
     "tr": "Sabitlemeyi kaldır",
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Groups/workspace/MessageItem.tsx"
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx",
+      "src/components/Social/dm/DmView.tsx"
     ]
   },
   "htce00lorc": {
     "en": "Message pinned.",
     "tr": "Mesaj sabitlendi.",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Social/dm/DmView.tsx"
     ]
   },
   "1vfgusg7rrw": {
     "en": "Message unpinned.",
     "tr": "Sabitleme kaldırıldı.",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Social/dm/DmView.tsx"
     ]
   },
   "277cmvzlh36": {
@@ -29895,7 +30056,18 @@
     "en": "🎤 Voice message",
     "tr": "🎤 Sesli mesaj",
     "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx"
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "159ascdnz3b": {
+    "en": "GIF",
+    "tr": "GIF",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Social/chat/ForwardDialog.tsx",
+      "src/components/Social/chat/GifView.tsx",
+      "src/components/Social/dm/DmView.tsx"
     ]
   },
   "1jws8phvszk": {
@@ -29909,6 +30081,13 @@
   "t05c69jz7d": {
     "en": "This message can't be loaded right now.",
     "tr": "Bu mesaj şu anda yüklenemiyor.",
+    "files": [
+      "src/components/Groups/workspace/ChatPanel.tsx"
+    ]
+  },
+  "xvml6w0w0x": {
+    "en": "Slow mode is on: {duration} between two messages.",
+    "tr": "Yavaş mod açık: iki mesaj arasında {duration}.",
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx"
     ]
@@ -30501,7 +30680,8 @@
     "en": "React",
     "tr": "Tepki ver",
     "files": [
-      "src/components/Groups/workspace/MessageItem.tsx"
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
     ]
   },
   "tb3rhymjje": {
@@ -30553,18 +30733,53 @@
       "src/components/Social/dm/DmMessages.tsx"
     ]
   },
+  "o8xfdxsfge": {
+    "en": "Forward",
+    "tr": "İlet",
+    "files": [
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
+    ]
+  },
+  "248m0wpbau6": {
+    "en": "Forwarded",
+    "tr": "İletildi",
+    "files": [
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
+    ]
+  },
+  "9ipi38tplb": {
+    "en": "Star",
+    "tr": "Yıldızla",
+    "files": [
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
+    ]
+  },
+  "1wi3cxitln2": {
+    "en": "Unstar",
+    "tr": "Yıldızı kaldır",
+    "files": [
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/StarredDialog.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
+    ]
+  },
   "1qvyn4kd7xa": {
     "en": "Pin",
     "tr": "Sabitle",
     "files": [
-      "src/components/Groups/workspace/MessageItem.tsx"
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
     ]
   },
   "1iz7nsfjlgb": {
     "en": "Pinned",
     "tr": "Sabitlendi",
     "files": [
-      "src/components/Groups/workspace/MessageItem.tsx"
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
     ]
   },
   "1lhdgbwjayy": {
@@ -30594,7 +30809,8 @@
     "en": "{names} reacted",
     "tr": "{names} tepki verdi",
     "files": [
-      "src/components/Groups/workspace/MessageItem.tsx"
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
     ]
   },
   "193y8pkt09s": {
@@ -30609,7 +30825,8 @@
     "en": "Hanogt",
     "tr": "Hanogt",
     "files": [
-      "src/components/Groups/workspace/MessageItem.tsx"
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/SocialSettings.tsx"
     ]
   },
   "llacfz69j3": {
@@ -30617,6 +30834,350 @@
     "tr": "Senden bahsedildi",
     "files": [
       "src/components/Groups/workspace/MessageItem.tsx"
+    ]
+  },
+  "2bz3oco16tj": {
+    "en": "AutoMod",
+    "tr": "AutoMod",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx",
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1kw5g2lrf33": {
+    "en": "Hanogt Security Bot checks messages against these rules before they are sent; a message that hits one never reaches the group and only its writer sees why.",
+    "tr": "Hanogt Security Bot mesajları gönderilmeden önce bu kurallara göre denetler; takılan mesaj gruba hiç düşmez ve yalnızca yazan kişi neden engellendiğini görür.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "vqeyjuq84q": {
+    "en": "The owner and admins change AutoMod.",
+    "tr": "AutoMod'u grup sahibi ve yöneticiler değiştirir.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "297r055n8fr": {
+    "en": "AutoMod on",
+    "tr": "AutoMod açık",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "pwo5ywcyyt": {
+    "en": "What it stops",
+    "tr": "Neyi durdursun",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "19u9hyjq8fz": {
+    "en": "Swearing (Turkish and English)",
+    "tr": "Küfür (Türkçe ve İngilizce)",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "gfle6adqgu": {
+    "en": "Also catches disguised spellings like \"sh1t\" or \"shiiit\".",
+    "tr": "\"s1kt1r\" ya da \"siiiktir\" gibi gizlenmiş yazımları da yakalar.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1zmsqyusmy5": {
+    "en": "Slang and insults",
+    "tr": "Argo ve hakaret",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "9uyhce3eox": {
+    "en": "Milder words like \"stupid\" or \"idiot\".",
+    "tr": "\"salak\", \"aptal\", \"stupid\" gibi daha hafif sözler.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "14vecnbz4c5": {
+    "en": "The group's banned words",
+    "tr": "Grubun yasaklı kelimeleri",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "11i9brgogem": {
+    "en": "Separate with commas or new lines (up to {max}). Members can't see this list.",
+    "tr": "Virgülle ya da satır satır yaz (en fazla {max}). Bu listeyi üyeler göremez.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "29jzff10iaj": {
+    "en": "Only the owner and admins can see the group's banned words.",
+    "tr": "Grubun yasaklı kelimelerini yalnızca sahip ve yöneticiler görür.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "2ef3vy734id": {
+    "en": "Spam: repeated messages and bursts",
+    "tr": "Spam: aynı mesajın tekrarı ve seri mesaj",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1ohgz6n3aoe": {
+    "en": "Most mentions in one message",
+    "tr": "Bir mesajdaki en fazla bahsetme",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1zrikbs9mk5": {
+    "en": "0 turns this check off.",
+    "tr": "0 bu denetimi kapatır.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "222bd59jmxt": {
+    "en": "Links",
+    "tr": "Bağlantılar",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1pys01mtixq": {
+    "en": "Allow all",
+    "tr": "Hepsine izin ver",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "r93jqokece": {
+    "en": "Block all",
+    "tr": "Hepsini engelle",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "10rwzlrehou": {
+    "en": "Only allowed sites",
+    "tr": "Yalnızca izin verilen siteler",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1a5047gemek": {
+    "en": "Allowed sites",
+    "tr": "İzin verilen siteler",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "xhzwnzr15z": {
+    "en": "Add site",
+    "tr": "Site ekle",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1rfbpjgtngz": {
+    "en": "e.g. github.com",
+    "tr": "örn. github.com",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "fsywekjqvk": {
+    "en": "Enter a valid domain (e.g. github.com).",
+    "tr": "Geçerli bir alan adı yaz (örn. github.com).",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "13n68k3nmid": {
+    "en": "Remove {domain}",
+    "tr": "{domain} sitesini kaldır",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1zoydbb9uid": {
+    "en": "Messages written mostly in capitals",
+    "tr": "Çoğunlukla büyük harfle yazılmış mesajlar",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "mi8reh4vzx": {
+    "en": "Personal data (e-mail, phone, ID, card and IBAN numbers)",
+    "tr": "Kişisel veri (e-posta, telefon, T.C. kimlik, kart, IBAN)",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1a56fxt6c5v": {
+    "en": "What it does",
+    "tr": "Ne yapsın",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1t133x4c6pb": {
+    "en": "Block only",
+    "tr": "Yalnızca engelle",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "ath05hbnli": {
+    "en": "Block and warn",
+    "tr": "Engelle ve uyar",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1djh4nkgdvo": {
+    "en": "Mute after this many warnings (in 30 days)",
+    "tr": "Kaç uyarıda sustursun (30 gün içinde)",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "213xt0vr8ui": {
+    "en": "0 turns automatic muting off. Warnings also come from moderators' /warn.",
+    "tr": "0 otomatik susturmayı kapatır. Uyarılar moderatörlerin /uyar komutundan da gelir.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "21ygcyex3lq": {
+    "en": "Mute length (minutes)",
+    "tr": "Susturma süresi (dakika)",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "qklnhyi4cv": {
+    "en": "Roles AutoMod leaves alone",
+    "tr": "AutoMod'un dokunmadığı roller",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "2cfcmj0ye4t": {
+    "en": "The owner is always exempt.",
+    "tr": "Grup sahibi her zaman muaftır.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "2jx140zrdw": {
+    "en": "Moderators",
+    "tr": "Moderatörler",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1kqfvtuu654": {
+    "en": "Admins",
+    "tr": "Yöneticiler",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "jdflkcefdr": {
+    "en": "Save AutoMod",
+    "tr": "AutoMod'u kaydet",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1quo9t1r7kf": {
+    "en": "AutoMod saved.",
+    "tr": "AutoMod kaydedildi.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "ly8uu3n8nz": {
+    "en": "No open reports. Members can report with /report @person reason.",
+    "tr": "Açık rapor yok. Üyeler /rapor @kişi sebep ile bildirebilir.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "tp4nxmi6uf": {
+    "en": "{reporter} → {target}",
+    "tr": "{reporter} → {target}",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "6sft980fdk": {
+    "en": "Report closed.",
+    "tr": "Rapor kapatıldı.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "1g2swtptky6": {
+    "en": "Muted members",
+    "tr": "Susturulanlar",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "717djojdp6": {
+    "en": "Nobody is muted right now.",
+    "tr": "Şu anda susturulan kimse yok.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "m824h5fi4i": {
+    "en": "Until {time}",
+    "tr": "{time} tarihine kadar",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "2bqtw4tbrc5": {
+    "en": "Mute lifted.",
+    "tr": "Susturma kaldırıldı.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "hmldpslut5": {
+    "en": "AutoMod's latest stops",
+    "tr": "AutoMod'un son engelledikleri",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "24q2phyey9v": {
+    "en": "AutoMod hasn't stopped a message lately.",
+    "tr": "AutoMod son zamanlarda bir mesaj engellemedi.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "10aweocn0x8": {
+    "en": "Former member",
+    "tr": "Ayrılmış üye",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
+  "5ju7fv8f7": {
+    "en": "The safety details couldn't be loaded.",
+    "tr": "Güvenlik bilgileri yüklenemedi.",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
     ]
   },
   "1fd2cjlih0i": {
@@ -30655,6 +31216,22 @@
     "tr": "Üyelik",
     "files": [
       "src/components/Groups/workspace/SettingsDialog.tsx"
+    ]
+  },
+  "18m37hfsd8a": {
+    "en": "Safety",
+    "tr": "Güvenlik",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "2bflsot9afn": {
+    "en": "Bots",
+    "tr": "Botlar",
+    "files": [
+      "src/components/Groups/workspace/SettingsDialog.tsx",
+      "src/components/Social/SocialSettings.tsx"
     ]
   },
   "49k5vgg2yp": {
@@ -30752,7 +31329,8 @@
     "en": "Blocked people",
     "tr": "Engellenen kişiler",
     "files": [
-      "src/components/Groups/workspace/SettingsDialog.tsx"
+      "src/components/Groups/workspace/SettingsDialog.tsx",
+      "src/components/Social/SocialSettings.tsx"
     ]
   },
   "1b1upcnonid": {
@@ -30768,6 +31346,7 @@
     "files": [
       "src/components/Groups/workspace/SettingsDialog.tsx",
       "src/components/Social/FriendsView.tsx",
+      "src/components/Social/SocialSettings.tsx",
       "src/components/Social/dm/DmView.tsx"
     ]
   },
@@ -32400,6 +32979,7 @@
     "files": [
       "src/components/Guide/book-content.ts",
       "src/components/Social/HomeSidebar.tsx",
+      "src/components/Social/SocialSettings.tsx",
       "src/lib/ai/knowledge.ts"
     ]
   },
@@ -33549,7 +34129,8 @@
     "tr": "Düşünme",
     "files": [
       "src/components/HanogtAI/AiSettingsPage.tsx",
-      "src/components/HanogtAI/ThinkingPanel.tsx"
+      "src/components/HanogtAI/ThinkingPanel.tsx",
+      "src/components/Social/chat/bots.tsx"
     ]
   },
   "21gwemlzf6c": {
@@ -33584,7 +34165,8 @@
     "en": "Saved.",
     "tr": "Kaydedildi.",
     "files": [
-      "src/components/HanogtAI/AiSettingsPage.tsx"
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/Social/SocialSettings.tsx"
     ]
   },
   "7i5flxpm6d": {
@@ -39844,7 +40426,8 @@
     "en": "Symbols",
     "tr": "Sembol",
     "files": [
-      "src/components/Security/PasswordLab.tsx"
+      "src/components/Security/PasswordLab.tsx",
+      "src/lib/social/emoji.ts"
     ]
   },
   "3m05ffgef6": {
@@ -40152,7 +40735,9 @@
     "en": "Hanogt Security Bot",
     "tr": "Hanogt Security Bot",
     "files": [
-      "src/components/Security/SecurityCenter.tsx"
+      "src/components/Security/SecurityCenter.tsx",
+      "src/components/Social/SocialSettings.tsx",
+      "src/components/Social/chat/bots.tsx"
     ]
   },
   "g0rwg22sus": {
@@ -40535,44 +41120,311 @@
       "src/components/Social/AudioSettings.tsx"
     ]
   },
-  "1nsqu9y9u5l": {
-    "en": "Message @{name}",
-    "tr": "@{name} kişisine mesaj gönder",
+  "xa38n1ocp2": {
+    "en": "Hanogt's verified bot",
+    "tr": "Hanogt'un doğrulanmış botu",
     "files": [
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/bots.tsx"
     ]
   },
-  "gtbstpmyu6": {
-    "en": "Message to {name}",
-    "tr": "{name} kişisine mesaj",
+  "1feoj65yz63": {
+    "en": "{actor} used /{command}",
+    "tr": "{actor}, /{command} komutunu kullandı",
     "files": [
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/bots.tsx"
+    ]
+  },
+  "1xdwotyklwt": {
+    "en": "Hanogt commands",
+    "tr": "Hanogt komutları",
+    "files": [
+      "src/components/Social/chat/bots.tsx"
+    ]
+  },
+  "2522dszwmj3": {
+    "en": "Copy code",
+    "tr": "Kodu kopyala",
+    "files": [
+      "src/components/Social/chat/ChatMarkdown.tsx"
+    ]
+  },
+  "1utk7d5z8f5": {
+    "en": "Reveal spoiler",
+    "tr": "Sürprizi göster",
+    "files": [
+      "src/components/Social/chat/ChatMarkdown.tsx"
+    ]
+  },
+  "1uks5t8ywz3": {
+    "en": "Add emoji",
+    "tr": "Emoji ekle",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "1661jpsoayc": {
+    "en": "Send a GIF",
+    "tr": "GIF gönder",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
     ]
   },
   "duj0b6qgvg": {
     "en": "Send a sticker",
     "tr": "Çıkartma gönder",
     "files": [
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "re1tt3lxma": {
+    "en": "Record a voice message",
+    "tr": "Sesli mesaj kaydet",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "21571d7bdki": {
+    "en": "Stop and send",
+    "tr": "Kaydı bitir ve gönder",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "3p32tym3f5": {
+    "en": "Recording {seconds}/{limit}s",
+    "tr": "Kaydediliyor {seconds}/{limit} sn",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "mz46nmzci": {
+    "en": "The message is too long: {max} characters at most.",
+    "tr": "Mesaj çok uzun: en fazla {max} karakter.",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "2x1rqqw8ji": {
+    "en": "Channels",
+    "tr": "Kanallar",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "s6n3xtlnca": {
+    "en": "Emoji matching \":{query}\"",
+    "tr": "\":{query}\" ile eşleşen emojiler",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "25v79vz0ppu": {
+    "en": "Suggestions",
+    "tr": "Öneriler",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "5tw2ciuptl": {
+    "en": "Ctrl+Enter to send",
+    "tr": "Göndermek için Ctrl+Enter",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "1ewehvupydo": {
+    "en": "Emoji",
+    "tr": "Emoji",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "6m12dyej24": {
+    "en": "GIFs",
+    "tr": "GIF",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
     ]
   },
   "13mpcwcjxa0": {
     "en": "Stickers",
-    "tr": "Çıkartmalar",
+    "tr": "Çıkartma",
     "files": [
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/ExpressionPicker.tsx"
     ]
   },
-  "tdeatucxxc": {
-    "en": "{name} is typing…",
-    "tr": "{name} yazıyor…",
+  "avy3j7papp": {
+    "en": "Expression types",
+    "tr": "İfade türleri",
     "files": [
-      "src/components/Social/dm/DmComposer.tsx"
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "2fjl16ha5on": {
+    "en": "Search emoji",
+    "tr": "Emoji ara",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "1xfesljskg8": {
+    "en": "Search GIFs",
+    "tr": "GIF ara",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "1uq5ks0q4y7": {
+    "en": "Recently used",
+    "tr": "Son kullanılanlar",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "14icqiy2mfj": {
+    "en": "No matching emoji.",
+    "tr": "Eşleşen emoji yok.",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "1z8htot3ajc": {
+    "en": "Trending now",
+    "tr": "Şu an popüler",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "3l2tjbv06q": {
+    "en": "Results for \"{query}\"",
+    "tr": "\"{query}\" için sonuçlar",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "1n2wdwxq91c": {
+    "en": "No GIFs found. Try another word.",
+    "tr": "GIF bulunamadı. Başka bir kelime dene.",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "m3q5hl0j5z": {
+    "en": "GIF search isn't set up on this site yet.",
+    "tr": "GIF araması bu sitede henüz açılmadı.",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "1wnscilkitk": {
+    "en": "GIFs can't be loaded right now.",
+    "tr": "GIF'ler şu anda yüklenemiyor.",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "1o4rg4q5hi0": {
+    "en": "Powered by {provider}",
+    "tr": "{provider} tarafından sağlanır",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "1f8v2x4tos5": {
+    "en": "Emoji groups",
+    "tr": "Emoji grupları",
+    "files": [
+      "src/components/Social/chat/ExpressionPicker.tsx"
+    ]
+  },
+  "2fre5er26bi": {
+    "en": "Forward message",
+    "tr": "Mesajı ilet",
+    "files": [
+      "src/components/Social/chat/ForwardDialog.tsx"
+    ]
+  },
+  "11jjubhq9tj": {
+    "en": "Send it to a friend or one of your groups.",
+    "tr": "Bir arkadaşına ya da grubuna gönder.",
+    "files": [
+      "src/components/Social/chat/ForwardDialog.tsx"
+    ]
+  },
+  "217pqc484o5": {
+    "en": "Search people or groups",
+    "tr": "Kişi veya grup ara",
+    "files": [
+      "src/components/Social/chat/ForwardDialog.tsx"
+    ]
+  },
+  "wzr6y3w68s": {
+    "en": "Forwarded to {name}.",
+    "tr": "{name} hedefine iletildi.",
+    "files": [
+      "src/components/Social/chat/ForwardDialog.tsx"
+    ]
+  },
+  "1tgtgqoe53e": {
+    "en": "No matching people or groups.",
+    "tr": "Eşleşen kişi ya da grup yok.",
+    "files": [
+      "src/components/Social/chat/ForwardDialog.tsx"
+    ]
+  },
+  "2ec6qgwzsrn": {
+    "en": "Message to forward",
+    "tr": "İletilecek mesaj",
+    "files": [
+      "src/components/Social/chat/ForwardDialog.tsx"
+    ]
+  },
+  "1xzdfg7991p": {
+    "en": "GIF: {title}",
+    "tr": "GIF: {title}",
+    "files": [
+      "src/components/Social/chat/GifView.tsx"
+    ]
+  },
+  "f66tah6582": {
+    "en": "Play GIF",
+    "tr": "GIF'i oynat",
+    "files": [
+      "src/components/Social/chat/GifView.tsx"
+    ]
+  },
+  "xcpet1fl30": {
+    "en": "Welcome to Hanogt Social",
+    "tr": "Hanogt Social'a hoş geldin",
+    "files": [
+      "src/components/Social/Disclaimer.tsx",
+      "src/components/Social/SocialShell.tsx"
+    ]
+  },
+  "x1mjrvre5s": {
+    "en": "Groups follow Hanogt Security Bot and AutoMod rules; you can ask Hanogt AI with /ai. Change your messaging settings with the gear at the bottom left.",
+    "tr": "Gruplarda Hanogt Security Bot ve AutoMod kuralları geçerlidir; Hanogt AI'a /ai ile soru sorabilirsin. Mesajlaşma ayarlarını sol alttaki dişli simgesinden değiştirebilirsin.",
+    "files": [
+      "src/components/Social/Disclaimer.tsx"
+    ]
+  },
+  "2g6568pba64": {
+    "en": "Got it",
+    "tr": "Anladım",
+    "files": [
+      "src/components/Social/Disclaimer.tsx"
     ]
   },
   "21zsifehjoh": {
     "en": "This is the beginning of your direct message history with {name}.",
     "tr": "Bu, {name} ile direkt mesaj geçmişinin başlangıcı.",
+    "files": [
+      "src/components/Social/dm/DmMessages.tsx"
+    ]
+  },
+  "xn5isedqi5": {
+    "en": "Jump to latest",
+    "tr": "En yeniye git",
     "files": [
       "src/components/Social/dm/DmMessages.tsx"
     ]
@@ -40707,6 +41559,41 @@
   "r7amvsvqk4": {
     "en": "🎤 Voice message ({time})",
     "tr": "🎤 Sesli mesaj ({time})",
+    "files": [
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "1nsqu9y9u5l": {
+    "en": "Message @{name}",
+    "tr": "@{name} kişisine mesaj gönder",
+    "files": [
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "gtbstpmyu6": {
+    "en": "Message to {name}",
+    "tr": "{name} kişisine mesaj",
+    "files": [
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "tdeatucxxc": {
+    "en": "{name} is typing…",
+    "tr": "{name} yazıyor…",
+    "files": [
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "1uzzu2q5e06": {
+    "en": "No pinned messages in this conversation. Hover a message and press 📌.",
+    "tr": "Bu sohbette sabitlenen mesaj yok. Bir mesajın üzerine gelip 📌 simgesine bas.",
+    "files": [
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "4z99gi2hz4": {
+    "en": "This message isn't loaded yet; load older messages and try again.",
+    "tr": "Bu mesaj henüz yüklenmedi; daha eski mesajları yükleyip tekrar dene.",
     "files": [
       "src/components/Social/dm/DmView.tsx"
     ]
@@ -40912,6 +41799,7 @@
     "tr": "Engel kaldırıldı.",
     "files": [
       "src/components/Social/FriendsView.tsx",
+      "src/components/Social/SocialSettings.tsx",
       "src/components/Social/dm/DmView.tsx"
     ]
   },
@@ -41190,6 +42078,13 @@
       "src/components/Social/group/GroupView.tsx"
     ]
   },
+  "10v9vnqdks6": {
+    "en": "Close search",
+    "tr": "Aramayı kapat",
+    "files": [
+      "src/components/Social/group/GroupView.tsx"
+    ]
+  },
   "5ke16798yq": {
     "en": "Messages tagged #{topic}; what you write here is tagged automatically.",
     "tr": "#{topic} etiketli mesajlar; buraya yazdıkların otomatik etiketlenir.",
@@ -41246,6 +42141,13 @@
       "src/components/Social/group/MemberList.tsx"
     ]
   },
+  "xsah5t566c": {
+    "en": "Moderators — {count}",
+    "tr": "Moderatörler — {count}",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
   "1akudcyrski": {
     "en": "Members — {count}",
     "tr": "Üyeler — {count}",
@@ -41256,6 +42158,27 @@
   "te0d1xqc4m": {
     "en": "Offline — {count}",
     "tr": "Çevrimdışı — {count}",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "1sj9xgznxgu": {
+    "en": "Bots — {count}",
+    "tr": "Botlar — {count}",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "nbrgddnfch": {
+    "en": "Moderation and AutoMod · /help",
+    "tr": "Moderasyon ve AutoMod · /yardim",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "1lu8xlqlynd": {
+    "en": "Ask with /ai or @Hanogt AI",
+    "tr": "/ai ya da @Hanogt AI ile sor",
     "files": [
       "src/components/Social/group/MemberList.tsx"
     ]
@@ -41284,6 +42207,41 @@
   "1yp838eaqoc": {
     "en": "Remove admin role",
     "tr": "Yöneticiliği kaldır",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "izjk85iyh8": {
+    "en": "Make moderator",
+    "tr": "Moderatör yap",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "1e1ta5mmbuz": {
+    "en": "Remove moderator role",
+    "tr": "Moderatörlüğü kaldır",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "1pbk3pm5967": {
+    "en": "Make {name} a moderator?",
+    "tr": "{name} moderatör olsun mu?",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "8esgwnqdkm": {
+    "en": "Moderators keep the chat in order: they delete messages, warn, mute, remove members and turn on slow mode. They can't change the group's settings or block anyone.",
+    "tr": "Moderatörler sohbeti düzenli tutar: mesaj siler, uyarır, susturur, üyeleri çıkarır ve yavaş modu açar. Grup ayarlarını değiştiremez, kimseyi engelleyemez.",
+    "files": [
+      "src/components/Social/group/MemberList.tsx"
+    ]
+  },
+  "1lfthconhav": {
+    "en": "Remove moderator role from {name}?",
+    "tr": "{name} için moderatörlük kaldırılsın mı?",
     "files": [
       "src/components/Social/group/MemberList.tsx"
     ]
@@ -41449,15 +42407,6 @@
       "src/components/Social/GroupSidebar.tsx"
     ]
   },
-  "103oaswksww": {
-    "en": "Group",
-    "tr": "Grup",
-    "files": [
-      "src/components/Social/GroupSidebar.tsx",
-      "src/components/Social/QuickSwitcher.tsx",
-      "src/lib/support.ts"
-    ]
-  },
   "ct7cjrrabg": {
     "en": "Needs the cloud connection",
     "tr": "Bulut bağlantısı gerekiyor",
@@ -41507,6 +42456,15 @@
     "tr": "Ctrl K",
     "files": [
       "src/components/Social/HomeSidebar.tsx"
+    ]
+  },
+  "1rige9q5jum": {
+    "en": "Starred messages",
+    "tr": "Yıldızlı mesajlar",
+    "files": [
+      "src/components/Social/HomeSidebar.tsx",
+      "src/components/Social/StarredDialog.tsx",
+      "src/components/Social/dm/DmView.tsx"
     ]
   },
   "mdx29rfjqb": {
@@ -41639,7 +42597,8 @@
     "en": "Direct message",
     "tr": "Direkt mesaj",
     "files": [
-      "src/components/Social/QuickSwitcher.tsx"
+      "src/components/Social/QuickSwitcher.tsx",
+      "src/components/Social/StarredDialog.tsx"
     ]
   },
   "raz16716x9": {
@@ -41706,6 +42665,394 @@
       "src/components/Social/ServerRail.tsx"
     ]
   },
+  "px9w7fvq63": {
+    "en": "Hanogt Social settings",
+    "tr": "Hanogt Social ayarları",
+    "files": [
+      "src/components/Social/SocialSettings.tsx",
+      "src/components/Social/UserPanel.tsx"
+    ]
+  },
+  "1gn0n5nlxy": {
+    "en": "Changes are saved right away and apply on all your devices.",
+    "tr": "Değişiklikler hemen kaydedilir ve tüm cihazlarında geçerli olur.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1kitahb53ez": {
+    "en": "Settings sections",
+    "tr": "Ayar bölümleri",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "14gv2eaaib3": {
+    "en": "Voice & Video",
+    "tr": "Ses ve Görüntü",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "jeziifdar1": {
+    "en": "Privacy",
+    "tr": "Gizlilik",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "kuqm0f2lz4": {
+    "en": "The setting couldn't be saved. Try again.",
+    "tr": "Ayar kaydedilemedi. Tekrar dene.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "g13n59mh9i": {
+    "en": "Writing",
+    "tr": "Yazma",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "tt38g0v0e9": {
+    "en": "Send with Enter",
+    "tr": "Enter ile gönder",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "arp6oju603": {
+    "en": "When off, Enter adds a new line and Ctrl+Enter (⌘+Enter on Mac) sends.",
+    "tr": "Kapalıyken Enter yeni satır ekler; göndermek için Ctrl+Enter (Mac'te ⌘+Enter) kullanılır.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1k4yq177xlt": {
+    "en": "Typing indicator",
+    "tr": "Yazıyor göstergesi",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1q5m5o9q4k9": {
+    "en": "When off, nobody sees you typing and you don't see others typing.",
+    "tr": "Kapalıyken yazdığın görünmez ve başkalarının yazdığını da görmezsin.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "3qujim5kip": {
+    "en": "Read receipts",
+    "tr": "Okundu bilgisi",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1aioecszt5m": {
+    "en": "When off, the other person in a direct message doesn't see that you read their message, and you don't see it either.",
+    "tr": "Kapalıyken direkt mesajlarda karşı taraf mesajını gördüğünü bilmez; sen de onunkini göremezsin.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1wpimvsjh65": {
+    "en": "Message text size",
+    "tr": "Mesaj yazı boyutu",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1afq7jmgyp3": {
+    "en": "Small",
+    "tr": "Küçük",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "npww5bg4pe": {
+    "en": "Large",
+    "tr": "Büyük",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "n934w09ehz": {
+    "en": "Chat background",
+    "tr": "Sohbet arka planı",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "2faaveaf735": {
+    "en": "Default",
+    "tr": "Varsayılan",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "n5wyvsiwgf": {
+    "en": "Dim",
+    "tr": "Koyu",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1gv78wj6k4h": {
+    "en": "Tinted",
+    "tr": "Renkli",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "jij6y8rh1q": {
+    "en": "Pattern",
+    "tr": "Desenli",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "14ketekcrrm": {
+    "en": "Play GIFs automatically",
+    "tr": "GIF'ler kendiliğinden oynasın",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "2fb71mr05z0": {
+    "en": "When off, GIFs play when you hover or tap them. Your system's reduce motion setting stops them too.",
+    "tr": "Kapalıyken GIF'ler üzerine gelince ya da dokununca oynar. Sistemin hareketi azalt ayarı da GIF'leri durdurur.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1olfqepur87": {
+    "en": "Hi! This is a **sample** message. `code` looks like this.",
+    "tr": "Merhaba! Bu bir **örnek** mesaj. `kod` da böyle görünür.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1sy1xaa8c9b": {
+    "en": "Voice messages",
+    "tr": "Sesli mesajlar",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1kglpjqdei2": {
+    "en": "Recording quality",
+    "tr": "Kayıt kalitesi",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1pv5ip9a665": {
+    "en": "Low (~120 kB a minute)",
+    "tr": "Düşük (dakikası ~120 kB)",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1fhbr12y66u": {
+    "en": "Normal (~240 kB a minute)",
+    "tr": "Normal (dakikası ~240 kB)",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "gympseovib": {
+    "en": "High (~480 kB a minute)",
+    "tr": "Yüksek (dakikası ~480 kB)",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1wjjssm7fsq": {
+    "en": "Bell notifications",
+    "tr": "Zil bildirimleri",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "2376mta0vwi": {
+    "en": "When someone sends you a message.",
+    "tr": "Biri sana mesaj gönderdiğinde.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "uk32ae0k1r": {
+    "en": "Group mentions",
+    "tr": "Gruplarda bahsedilme",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1idja39b9x2": {
+    "en": "When someone @mentions you or uses @everyone.",
+    "tr": "Biri senden @ ile ya da @herkes ile bahsettiğinde.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "iiee6u3dll": {
+    "en": "Missed calls",
+    "tr": "Cevapsız aramalar",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1p10zkh5ohv": {
+    "en": "Voice calls you couldn't answer.",
+    "tr": "Yanıtlayamadığın sesli aramalar.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "8dokjrnidn": {
+    "en": "You can also pick each group's notification level (all messages, mentions only, nothing) from the group's menu.",
+    "tr": "Her grubun bildirim düzeyini (tüm mesajlar, yalnızca bahsetmeler, hiçbiri) grubun menüsünden ayrıca seçebilirsin.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "ydp3v7bl78": {
+    "en": "Presence",
+    "tr": "Durum",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "66sezfzo6e": {
+    "en": "Show when I'm online",
+    "tr": "Çevrimiçi durumumu göster",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1r3odga0or3": {
+    "en": "When off, your friends see you as offline.",
+    "tr": "Kapalıyken arkadaşların seni çevrimdışı görür.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "chdknz41mk": {
+    "en": "Show when I was last seen",
+    "tr": "Son görülme zamanımı göster",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "20ifp74flzq": {
+    "en": "Who can contact you",
+    "tr": "Seninle kim iletişim kurabilir",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1yjm4mk4gxw": {
+    "en": "Who can send me friend requests",
+    "tr": "Bana arkadaşlık isteği gönderebilecekler",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1z5qcscc4pb": {
+    "en": "Everyone",
+    "tr": "Herkes",
+    "files": [
+      "src/components/Social/SocialSettings.tsx",
+      "src/lib/features.ts"
+    ]
+  },
+  "1orak3bghma": {
+    "en": "Friends of friends",
+    "tr": "Arkadaşlarımın arkadaşları",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "uwj9yk2ogf": {
+    "en": "Nobody",
+    "tr": "Hiç kimse",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "eq1hw2gywz": {
+    "en": "Hide my friends list",
+    "tr": "Arkadaş listemi gizle",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "zgmg0jsvh2": {
+    "en": "More privacy settings in Account Settings",
+    "tr": "Diğer gizlilik ayarları Hesap Ayarları'nda",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "22rq5i4rc83": {
+    "en": "You haven't blocked anyone.",
+    "tr": "Kimseyi engellemedin.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1tf5mtdrkd6": {
+    "en": "Part of every group and can't be removed. It applies the group's AutoMod rules, runs the moderators' commands and announces their decisions in the chat.",
+    "tr": "Her grupta bulunur ve kaldırılamaz. Grubun AutoMod kurallarını uygular, moderatörlerin komutlarını çalıştırır ve kararlarını sohbette duyurur.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1tlkedydhl0": {
+    "en": "In a group, type /ai or mention @Hanogt AI to ask a question. The answer takes the chat's latest messages into account and counts against your Hanogt AI allowance; if no answer comes, your message is given back. Group admins can turn Hanogt AI off in the group settings.",
+    "tr": "Bir grupta /ai yazarak ya da @Hanogt AI diyerek soru sorabilirsin. Yanıt, sohbetin son mesajlarını da dikkate alır ve senin Hanogt AI hakkından düşer; yanıt gelmezse hakkın iade edilir. Grup yöneticileri Hanogt AI'ı grup ayarlarından kapatabilir.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1n6uxi5p82j": {
+    "en": "See your Hanogt AI allowance",
+    "tr": "Hanogt AI hakkını gör",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "15wwozm2wan": {
+    "en": "Commands",
+    "tr": "Komutlar",
+    "files": [
+      "src/components/Social/SocialSettings.tsx",
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "26cdpu2nmez": {
+    "en": "Moderators and up",
+    "tr": "Moderatörler ve üstü",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1q9kuh6rhy4": {
+    "en": "Group admins can add their own commands and a welcome message for new members in group settings › Bots.",
+    "tr": "Grup yöneticileri, grup ayarları › Botlar bölümünden kendi komutlarını ve yeni üyelere gönderilecek karşılama mesajını ekleyebilir.",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1zsgvqyfi3x": {
+    "en": "Loading settings",
+    "tr": "Ayarlar yükleniyor",
+    "files": [
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
   "2wxvm1ysew": {
     "en": "Opening Hanogt Social",
     "tr": "Hanogt Social açılıyor",
@@ -41727,18 +43074,32 @@
       "src/components/Social/SocialShell.tsx"
     ]
   },
-  "xcpet1fl30": {
-    "en": "Welcome to Hanogt Social",
-    "tr": "Hanogt Social'a hoş geldin",
-    "files": [
-      "src/components/Social/SocialShell.tsx"
-    ]
-  },
   "2ecf4owb0de": {
     "en": "Your friends, direct messages and groups in one place. Sign in for voice messages, calls and shared code files.",
     "tr": "Arkadaşların, direkt mesajların ve grupların tek yerde. Sesli mesajlar, aramalar ve ortak kod dosyaları için giriş yap.",
     "files": [
       "src/components/Social/SocialShell.tsx"
+    ]
+  },
+  "en7rvkvkjk": {
+    "en": "Only you can see the messages you star ({count}/{max}).",
+    "tr": "Yıldızladığın mesajlar yalnızca sana görünür ({count}/{max}).",
+    "files": [
+      "src/components/Social/StarredDialog.tsx"
+    ]
+  },
+  "1xsprvrf2ix": {
+    "en": "No starred messages yet. Hover a message and press ☆.",
+    "tr": "Henüz yıldızlı mesajın yok. Bir mesajın üzerine gelip ☆ simgesine bas.",
+    "files": [
+      "src/components/Social/StarredDialog.tsx"
+    ]
+  },
+  "1hqgydsa63i": {
+    "en": "Starred: {time}",
+    "tr": "Yıldızlandı: {time}",
+    "files": [
+      "src/components/Social/StarredDialog.tsx"
     ]
   },
   "6v5roztmpx": {
@@ -46782,13 +48143,6 @@
       "src/lib/features.ts"
     ]
   },
-  "1z5qcscc4pb": {
-    "en": "Everyone",
-    "tr": "Herkes",
-    "files": [
-      "src/lib/features.ts"
-    ]
-  },
   "cgatfys38w": {
     "en": "Tilemap Adventure",
     "tr": "Tilemap Macerası",
@@ -51526,6 +52880,27 @@
       "src/lib/social/api.ts"
     ]
   },
+  "ekhjguwhg1": {
+    "en": "GIF search isn't switched on yet.",
+    "tr": "GIF araması henüz açılmadı.",
+    "files": [
+      "src/lib/social/api.ts"
+    ]
+  },
+  "13nf9cbvmmy": {
+    "en": "You're muted in this group; you can't send messages for now.",
+    "tr": "Bu grupta susturuldun; şimdilik mesaj gönderemezsin.",
+    "files": [
+      "src/lib/social/api.ts"
+    ]
+  },
+  "m8glogwwc0": {
+    "en": "GIFs can't be loaded right now. Try again in a moment.",
+    "tr": "GIF'ler şu anda yüklenemiyor. Biraz sonra tekrar dene.",
+    "files": [
+      "src/lib/social/api.ts"
+    ]
+  },
   "16r24knjad0": {
     "en": "The voice message couldn't be opened or was deleted.",
     "tr": "Sesli mesaj açılamadı veya silinmiş.",
@@ -51538,6 +52913,713 @@
     "tr": "Sesli mesajlar şu anda kullanılamıyor (depolama yapılandırılmamış).",
     "files": [
       "src/lib/social/api.ts"
+    ]
+  },
+  "84rjxlg6n4": {
+    "en": "swearing",
+    "tr": "küfür",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "fo5bfqhuhp": {
+    "en": "slang and insults",
+    "tr": "argo ve hakaret",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "1hv0xmp5isb": {
+    "en": "the group's banned words",
+    "tr": "grubun yasaklı kelimeleri",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "igy0neme0l": {
+    "en": "spam",
+    "tr": "spam",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "1kpocsnzmbm": {
+    "en": "too many mentions",
+    "tr": "çok fazla bahsetme",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "788zd1mf1f": {
+    "en": "links",
+    "tr": "bağlantılar",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "16d7cx4bo1a": {
+    "en": "writing in capitals",
+    "tr": "büyük harfle yazma",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "6rrp9gcus1": {
+    "en": "personal data",
+    "tr": "kişisel veri",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "1xb14v6jmns": {
+    "en": "Your message hit the group's AutoMod rule ({rule}) and wasn't sent.",
+    "tr": "Mesajın grubun AutoMod kuralına takıldı ({rule}) ve gönderilmedi.",
+    "files": [
+      "src/lib/social/automod-config.ts"
+    ]
+  },
+  "2epu7hjttnk": {
+    "en": "{target} was warned by {actor} (warning {count}).",
+    "tr": "{target}, {actor} tarafından uyarıldı ({count}. uyarı).",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "2d122gc1myx": {
+    "en": "{target} was muted by {actor} for {duration}.",
+    "tr": "{target}, {actor} tarafından {duration} susturuldu.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1veh8jdph7h": {
+    "en": "{actor} lifted {target}'s mute.",
+    "tr": "{target} için susturma {actor} tarafından kaldırıldı.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1yiycyh86z5": {
+    "en": "{target} was removed from the group by {actor}.",
+    "tr": "{target}, {actor} tarafından gruptan çıkarıldı.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "vgoevwa9cw": {
+    "en": "{target} was removed and blocked by {actor}.",
+    "tr": "{target}, {actor} tarafından gruptan çıkarıldı ve engellendi.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "rnfxx3qte8": {
+    "en": "{actor} deleted the last {count} messages in this channel.",
+    "tr": "{actor} bu kanaldaki son {count} mesajı sildi.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "szewcbowbq": {
+    "en": "{actor} turned on slow mode in this channel: {duration} between two messages.",
+    "tr": "{actor} bu kanalda yavaş modu açtı: iki mesaj arasında {duration}.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1njz9mf51fj": {
+    "en": "{actor} turned off slow mode in this channel.",
+    "tr": "{actor} bu kanalda yavaş modu kapattı.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "lnnur3gekd": {
+    "en": "{target} was muted for {duration} after AutoMod warnings.",
+    "tr": "{target}, AutoMod uyarıları nedeniyle {duration} susturuldu.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1chs0xka500": {
+    "en": "{actor} used /{command}.",
+    "tr": "{actor}, /{command} komutunu kullandı.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "7exrk0z044": {
+    "en": "Hanogt AI couldn't answer right now; your message was given back. Try again in a moment.",
+    "tr": "Hanogt AI şu anda yanıt veremedi; hakkın iade edildi. Biraz sonra tekrar dene.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1oeu6gi0vna": {
+    "en": "Reason: {reason}",
+    "tr": "Sebep: {reason}",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1vkff2qpq8m": {
+    "en": "week",
+    "tr": "hafta",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "2d9j6f1ovyo": {
+    "en": "weeks",
+    "tr": "hafta",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "rcw7kap3ia": {
+    "en": "day",
+    "tr": "gün",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1qn5tzfsu4y": {
+    "en": "days",
+    "tr": "gün",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "14b0j8f8s8t": {
+    "en": "hour",
+    "tr": "saat",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "2eruzlr62qp": {
+    "en": "hours",
+    "tr": "saat",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1uf4kemush6": {
+    "en": "minute",
+    "tr": "dakika",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1jj8c6wfcmv": {
+    "en": "minutes",
+    "tr": "dakika",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1vgw1pr4sir": {
+    "en": "second",
+    "tr": "saniye",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "2ddehafzm6d": {
+    "en": "seconds",
+    "tr": "saniye",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "3dgl74mqbc": {
+    "en": "Only you can see this",
+    "tr": "Bunu yalnızca sen görüyorsun",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1sl6njnixuv": {
+    "en": "Commands you can use",
+    "tr": "Kullanabileceğin komutlar",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "tkdpyick3p": {
+    "en": "This group's commands",
+    "tr": "Bu grubun komutları",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1ufygz8pnrd": {
+    "en": "The group's rules",
+    "tr": "Grubun kuralları",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "oirk8tgyv4": {
+    "en": "This group hasn't written any rules yet.",
+    "tr": "Bu grup henüz kural yazmadı.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1ymib1wjqir": {
+    "en": "Warnings for {name}",
+    "tr": "{name} için uyarılar",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "jej4zyteij": {
+    "en": "No warnings. 👍",
+    "tr": "Uyarı yok. 👍",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "6wjsanr6y8": {
+    "en": "Your report about {name} went to the group's moderators. Thank you.",
+    "tr": "{name} için raporun grubun moderatörlerine iletildi. Teşekkürler.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "b7b6r6fk32": {
+    "en": "{name} isn't muted.",
+    "tr": "{name} zaten susturulmuş değil.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1xduc05ei9m": {
+    "en": "You've used your Hanogt AI allowance. It renews: {time}.",
+    "tr": "Hanogt AI hakkın doldu. Yenilenme: {time}.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "tcy8cae02s": {
+    "en": "You've used your Hanogt AI allowance; try again later.",
+    "tr": "Hanogt AI hakkın doldu; biraz sonra tekrar dene.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1u3ssvw46sk": {
+    "en": "Hanogt AI is turned off in this group. Admins can turn it on in the group settings.",
+    "tr": "Bu grupta Hanogt AI kapalı. Yöneticiler grup ayarlarından açabilir.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "28hrbn1mz53": {
+    "en": "Hanogt AI isn't available right now.",
+    "tr": "Hanogt AI şu anda kullanılamıyor.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "22jy1wcd8jk": {
+    "en": "There's no such command. See the commands with /help.",
+    "tr": "Böyle bir komut yok. Komutları /yardim ile görebilirsin.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1z9xj0csvbj": {
+    "en": "Name someone: type @ and their name.",
+    "tr": "Bir kişi belirt: @ ile adını yaz.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "syvawvzio8": {
+    "en": "No member with that name was found.",
+    "tr": "Bu adda bir üye bulunamadı.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "18pyr8z136t": {
+    "en": "Write something after the command.",
+    "tr": "Komuttan sonra bir şey yaz.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "etfuvq11vf": {
+    "en": "The duration couldn't be read. Example: 10m, 2h, 1d.",
+    "tr": "Süre anlaşılamadı. Örnek: 10dk, 2sa, 1g.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "ot5eippzbw": {
+    "en": "Write a number from 1 to 100.",
+    "tr": "1 ile 100 arasında bir sayı yaz.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "26mvs1kqv1k": {
+    "en": "You don't have permission for this command.",
+    "tr": "Bu komut için yetkin yok.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "22hel0smcdk": {
+    "en": "You can't do that to yourself.",
+    "tr": "Bunu kendine uygulayamazsın.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "yf0hymi0z6": {
+    "en": "You're going a bit fast. Wait a moment.",
+    "tr": "Çok hızlı gidiyorsun. Biraz bekle.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "1mf6oo9w23i": {
+    "en": "The command couldn't run. Try again.",
+    "tr": "Komut çalıştırılamadı. Tekrar dene.",
+    "files": [
+      "src/lib/social/bots.ts"
+    ]
+  },
+  "yd262e0gbm": {
+    "en": "help",
+    "tr": "yardim",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1hqd1ktxgia": {
+    "en": "/help",
+    "tr": "/yardim",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1hztbi3ahl0": {
+    "en": "Lists the commands you can use.",
+    "tr": "Kullanabileceğin komutları listeler.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1vn99lpaltk": {
+    "en": "ai",
+    "tr": "ai",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "22az7rva8ld": {
+    "en": "/ai <question>",
+    "tr": "/ai <soru>",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1wtjjkirnb4": {
+    "en": "Asks Hanogt AI; the answer counts against your Hanogt AI allowance.",
+    "tr": "Hanogt AI'a sorar; yanıt senin Hanogt AI hakkından düşer.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "khrd6mhj36": {
+    "en": "rules",
+    "tr": "kurallar",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "sl9488akpu": {
+    "en": "/rules",
+    "tr": "/kurallar",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "gg74jijw08": {
+    "en": "Shows the group's rules.",
+    "tr": "Grubun kurallarını gösterir.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1a1uu006upm": {
+    "en": "report",
+    "tr": "rapor",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1mdjc26d7xh": {
+    "en": "/report @person <reason>",
+    "tr": "/rapor @kişi <sebep>",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1d31okgv5g8": {
+    "en": "Reports a member to the group's moderators.",
+    "tr": "Bir üyeyi grubun yöneticilerine bildirir.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "15vjjk6man5": {
+    "en": "warnings",
+    "tr": "uyarilar",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "2ej904h7nsf": {
+    "en": "/warnings [@person]",
+    "tr": "/uyarilar [@kişi]",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "14flb5hqi2c": {
+    "en": "Shows warnings; only moderators see someone else's.",
+    "tr": "Uyarıları gösterir; başkasınınkini yalnızca moderatörler görür.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "vw05apxrfw": {
+    "en": "warn",
+    "tr": "uyar",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1ygp3apkd7d": {
+    "en": "/warn @person [reason]",
+    "tr": "/uyar @kişi [sebep]",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "lteh9t38tl": {
+    "en": "Warns a member.",
+    "tr": "Üyeye uyarı verir.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1wx5itfqd5e": {
+    "en": "mute",
+    "tr": "sustur",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "3sd8m3fsky": {
+    "en": "/mute @person [duration: 10m, 2h, 1d] [reason]",
+    "tr": "/sustur @kişi [süre: 10dk, 2sa, 1g] [sebep]",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "mex8x8hobt": {
+    "en": "Mutes a member for a while (10 minutes by default, 28 days at most).",
+    "tr": "Üyeyi bir süre susturur (varsayılan 10 dakika, en çok 28 gün).",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "2eyxd32qbus": {
+    "en": "unmute",
+    "tr": "sesiac",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "16wgawidpx4": {
+    "en": "/unmute @person",
+    "tr": "/sesiac @kişi",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "290wff3dvhq": {
+    "en": "Lifts a mute.",
+    "tr": "Susturmayı kaldırır.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "7k0xp5bo6q": {
+    "en": "kick",
+    "tr": "at",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "221qtmzyio": {
+    "en": "/kick @person [reason]",
+    "tr": "/at @kişi [sebep]",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "y0i2gx2r4w": {
+    "en": "Removes a member; they can come back with an invite.",
+    "tr": "Üyeyi gruptan çıkarır; davetle geri dönebilir.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "xnnn4qjdpl": {
+    "en": "ban",
+    "tr": "yasakla",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1d32dls6o8s": {
+    "en": "/ban @person [reason]",
+    "tr": "/yasakla @kişi [sebep]",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "2dxuig5h87r": {
+    "en": "Removes a member and keeps them from rejoining.",
+    "tr": "Üyeyi çıkarır ve geri katılmasını engeller.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1cfuuz1a4kx": {
+    "en": "purge",
+    "tr": "temizle",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "2ffvaaqas80": {
+    "en": "/purge <1-100> [@person]",
+    "tr": "/temizle <1-100> [@kişi]",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "4jbsv9r015": {
+    "en": "Deletes the latest messages in this channel (optionally one person's).",
+    "tr": "Bu kanaldaki son mesajları siler (isteğe bağlı olarak bir kişinin).",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1b5qofinf3o": {
+    "en": "slowmode",
+    "tr": "yavasmod",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "2akgbv4qlat": {
+    "en": "/slowmode <duration: 5s, 1m> | off",
+    "tr": "/yavasmod <süre: 5sn, 1dk> | kapat",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1y6bfmtn7iy": {
+    "en": "Sets how long people wait between messages in this channel.",
+    "tr": "Bu kanalda iki mesaj arasında beklenecek süreyi ayarlar.",
+    "files": [
+      "src/lib/social/commands.ts"
+    ]
+  },
+  "1d1ktxbv3sf": {
+    "en": "Disclaimer",
+    "tr": "Sorumluluk reddi",
+    "files": [
+      "src/lib/social/disclaimer.ts"
+    ]
+  },
+  "13fra36ewcg": {
+    "en": "Messages, GIFs, voice messages and files shared on Hanogt Social are the responsibility of the people who share them. Hanogt doesn't review this content in advance, and automated tools such as Hanogt Security Bot and AutoMod can't catch every violation. To the extent permitted by applicable law, Hanogt is not liable for content shared by users or for damage arising from it.",
+    "tr": "Hanogt Social'da paylaşılan mesajlar, GIF'ler, sesli mesajlar ve dosyalar onları paylaşan kullanıcıların sorumluluğundadır. Hanogt bu içerikleri önceden denetlemez; Hanogt Security Bot ve AutoMod gibi otomatik araçlar her ihlali yakalayamaz. Yürürlükteki mevzuatın izin verdiği ölçüde Hanogt, kullanıcıların paylaştığı içeriklerden ve bu içeriklerden doğan zararlardan sorumlu tutulamaz.",
+    "files": [
+      "src/lib/social/disclaimer.ts"
+    ]
+  },
+  "228t3hma2si": {
+    "en": "If you see unlawful content, you can report it to us with a support ticket. Proper notices and decisions of competent authorities are reviewed, recorded and applied only within their scope, as far as applicable under Law No. 5651 and related legislation.",
+    "tr": "Hukuka aykırı bir içerik gördüğünde bunu bir destek talebiyle bize bildirebilirsin. Usulüne uygun bildirimler ve yetkili makam kararları, 5651 sayılı Kanun ve ilgili mevzuat çerçevesinde uygulanabildiği ölçüde incelenir, kayıt altına alınır ve kapsamıyla sınırlı olarak uygulanır.",
+    "files": [
+      "src/lib/social/disclaimer.ts"
+    ]
+  },
+  "1utplibb40i": {
+    "en": "You can also report a rule break in a group to its moderators with /report @person reason.",
+    "tr": "Bir gruptaki kural ihlalini /rapor @kişi sebep komutuyla grubun moderatörlerine de iletebilirsin.",
+    "files": [
+      "src/lib/social/disclaimer.ts"
+    ]
+  },
+  "214regnbjxx": {
+    "en": "When you create the group, you become its owner: you're responsible for running it in line with the Terms of Use and for choosing its admins, moderators and AutoMod settings. Hanogt Security Bot is part of every group and can't be removed.",
+    "tr": "Grubu oluşturduğunda grubun sahibi olursun: grubu Kullanım Şartları'na uygun yönetmekten ve yöneticileri, moderatörleri ve AutoMod ayarlarını belirlemekten sen sorumlusun. Hanogt Security Bot her grupta bulunur ve kaldırılamaz.",
+    "files": [
+      "src/lib/social/disclaimer.ts"
+    ]
+  },
+  "2aq3n6cik38": {
+    "en": "Smileys",
+    "tr": "Yüzler",
+    "files": [
+      "src/lib/social/emoji.ts"
+    ]
+  },
+  "2cuagleuhom": {
+    "en": "People",
+    "tr": "İnsanlar",
+    "files": [
+      "src/lib/social/emoji.ts"
+    ]
+  },
+  "k3q2fy04zv": {
+    "en": "Nature",
+    "tr": "Doğa",
+    "files": [
+      "src/lib/social/emoji.ts"
+    ]
+  },
+  "10a0gelj0ta": {
+    "en": "Food",
+    "tr": "Yiyecek",
+    "files": [
+      "src/lib/social/emoji.ts"
+    ]
+  },
+  "1lf0xf1ufz2": {
+    "en": "Activity",
+    "tr": "Etkinlik",
+    "files": [
+      "src/lib/social/emoji.ts"
+    ]
+  },
+  "aydv1hwc0j": {
+    "en": "Travel",
+    "tr": "Seyahat",
+    "files": [
+      "src/lib/social/emoji.ts"
     ]
   },
   "ugev718i4g": {

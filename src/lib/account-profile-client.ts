@@ -11,6 +11,7 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { PROFILE_TEXT_LIMITS, isSafeProfileUrl, type AccountProfileResponse } from "@/lib/account-profile";
+import { SOCIAL_PREF_KEYS, readSocialPrefs, type SocialPrefs } from "@/lib/social/prefs";
 import {
     AUTO_IDLE_MS,
     PRESENCE_HEARTBEAT_MS,
@@ -44,6 +45,8 @@ export type OwnProfile = {
     /** Accessibility settings (users/{email}), applied to every page (src/lib/appearance.tsx). */
     reduceAnimations: boolean;
     highContrast: boolean;
+    /** Messaging settings Hanogt Social applies (src/lib/social/prefs.ts). */
+    social: SocialPrefs;
 };
 
 /** Read again after this long, so a change made on another device or tab is picked up. */
@@ -95,6 +98,7 @@ function readProfile(email: string, payload: unknown): OwnProfile | null {
         showLastSeen: fields.showLastSeen === true,
         reduceAnimations: fields.reduceAnimations === true,
         highContrast: fields.highContrast === true,
+        social: readSocialPrefs(fields),
     };
 }
 
@@ -116,6 +120,44 @@ export function applyOwnProfileResponse(email: string, payload: AccountProfileRe
     current.failedAt = 0;
     if (isPresenceStatus(payload.presence)) current.status = payload.presence;
     emit();
+}
+
+/** The whole GET /api/account/profile answer (settings screens that show more than the cache keeps). */
+export async function fetchOwnProfileResponse(email: string): Promise<AccountProfileResponse | null> {
+    try {
+        const response = await fetch("/api/account/profile", { cache: "no-store", credentials: "same-origin", headers: { Accept: "application/json" } });
+        if (!response.ok) return null;
+        const payload = await response.json().catch(() => null) as AccountProfileResponse | null;
+        if (!payload || typeof payload !== "object" || !payload.fields) return null;
+        applyOwnProfileResponse(email, payload);
+        return payload;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Saves some settings (PATCH /api/account/profile) and shares the saved
+ * profile with every reader of the cache; the code says why it failed.
+ */
+export async function saveOwnSettings(email: string, patch: Record<string, unknown>): Promise<{ ok: true; data: AccountProfileResponse } | { ok: false; code: string }> {
+    try {
+        const response = await fetch("/api/account/profile", {
+            method: "PATCH",
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(patch),
+        });
+        const payload = await response.json().catch(() => null) as (AccountProfileResponse & { code?: unknown }) | null;
+        if (response.ok && payload?.fields) {
+            applyOwnProfileResponse(email, payload);
+            return { ok: true, data: payload };
+        }
+        return { ok: false, code: typeof payload?.code === "string" ? payload.code : response.status === 429 ? "rate_limited" : "unavailable" };
+    } catch {
+        return { ok: false, code: "network" };
+    }
 }
 
 /** The status others see, as the presence heartbeat last heard it from the server. */
@@ -183,6 +225,7 @@ function onProfileUpdated(event: Event) {
         if (typeof detail.customStatus === "string") next.customStatus = text(detail.customStatus, PROFILE_TEXT_LIMITS.customStatus);
         if (typeof detail.reduceAnimations === "boolean") next.reduceAnimations = detail.reduceAnimations;
         if (typeof detail.highContrast === "boolean") next.highContrast = detail.highContrast;
+        if (SOCIAL_PREF_KEYS.some((key) => key in detail)) next.social = readSocialPrefs({ ...next.social, ...detail });
         current.profile = settings ? { ...next, ...settings } : next;
         if (isPresenceStatus(detail.presence)) current.status = detail.presence;
         emit();
