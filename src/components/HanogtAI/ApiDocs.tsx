@@ -114,8 +114,8 @@ function CodeSamples({ base }: { base: string }) {
         }
     };
     return (
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10" data-api-samples>
-            <div className="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 bg-zinc-50 px-2 py-1.5 dark:border-white/10 dark:bg-white/[0.03]" role="tablist" aria-label={tx(C.examples)}>
+        <div className="overflow-hidden rounded-2xl border border-ai-line" data-api-samples>
+            <div className="flex items-center gap-1 overflow-x-auto border-b border-ai-line bg-ai-paper px-2 py-1.5" role="tablist" aria-label={tx(C.examples)}>
                 {list.map((entry) => (
                     <button
                         key={entry.id}
@@ -123,12 +123,12 @@ function CodeSamples({ base }: { base: string }) {
                         role="tab"
                         aria-selected={entry.id === sample.id}
                         onClick={() => setActive(entry.id)}
-                        className={cx("shrink-0 rounded-lg px-2.5 py-1 text-[12px] font-bold transition", entry.id === sample.id ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200")}
+                        className={cx("shrink-0 rounded-lg px-2.5 py-1 text-[12px] font-bold transition", entry.id === sample.id ? "bg-white text-ai-ink shadow-sm dark:bg-zinc-800" : "text-ai-muted hover:text-ai-ink")}
                     >
                         {entry.label}
                     </button>
                 ))}
-                <button type="button" onClick={() => void copy()} className="ms-auto inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                <button type="button" onClick={() => void copy()} className="ms-auto inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-semibold text-ai-muted hover:text-ai-ink">
                     {copied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <CopyIcon className="h-3.5 w-3.5" aria-hidden />}{tx(copied ? C.copied : C.copy)}
                 </button>
             </div>
@@ -138,7 +138,7 @@ function CodeSamples({ base }: { base: string }) {
 }
 
 function Heading({ children }: { children: string }) {
-    return <h3 className="mt-6 text-[14px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{children}</h3>;
+    return <h3 className="mt-6 text-[14px] font-black uppercase tracking-wider text-ai-muted">{children}</h3>;
 }
 
 /** How to call the Hanogt AI API: address, key, samples, endpoints, parameters, limits, errors and rules. */
@@ -149,15 +149,15 @@ export default function ApiDocs() {
     const plus = PLAN_AI_FEATURES.plus;
     const pro = PLAN_AI_FEATURES.pro;
     return (
-        <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-zinc-900 sm:p-6" data-api-docs>
-            <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-zinc-900 dark:text-white"><BookOpen className="h-5 w-5 text-violet-500" aria-hidden />{tx(C.title)}</h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.intro, { model: API_MODEL_ID })}</p>
+        <section className="rounded-3xl border border-ai-line bg-ai-surface p-5 shadow-sm sm:p-6" data-api-docs>
+            <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-ai-ink"><BookOpen className="h-5 w-5 text-brand-green" aria-hidden />{tx(C.title)}</h2>
+            <p className="mt-1 text-[13px] leading-relaxed text-ai-ink/75">{tx(C.intro, { model: API_MODEL_ID })}</p>
 
             <Heading>{tx(C.baseUrl)}</Heading>
-            <p className="mt-2 rounded-xl bg-zinc-50 px-3 py-2 font-mono text-[13px] text-zinc-800 dark:bg-white/[0.04] dark:text-zinc-100" dir="ltr" data-api-base-url>{base}</p>
+            <p className="mt-2 rounded-xl bg-ai-paper px-3 py-2 font-mono text-[13px] text-ai-ink" dir="ltr" data-api-base-url>{base}</p>
 
             <Heading>{tx(C.auth)}</Heading>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.authBody)}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-ai-ink/75">{tx(C.authBody)}</p>
 
             <Heading>{tx(C.examples)}</Heading>
             <div className="mt-2"><CodeSamples base={base} /></div>
@@ -165,15 +165,15 @@ export default function ApiDocs() {
             <Heading>{tx(C.endpoints)}</Heading>
             <dl className="mt-2 space-y-2 text-[13px]">
                 {([["POST", "/chat/completions", tx(C.completions)], ["GET", "/models", tx(C.models, { model: API_MODEL_ID })], ["GET", "/usage", tx(C.usage)]] as const).map(([method, path, text]) => (
-                    <div key={path} className="rounded-xl border border-zinc-200 px-3 py-2 dark:border-white/10">
-                        <dt className="font-mono text-[12.5px] font-bold text-zinc-900 dark:text-white" dir="ltr"><span className="me-2 rounded bg-violet-500/10 px-1.5 py-0.5 text-violet-700 dark:text-violet-300">{method}</span>{API_BASE_PATH}{path}</dt>
-                        <dd className="mt-1 text-zinc-600 dark:text-zinc-300">{text}</dd>
+                    <div key={path} className="rounded-xl border border-ai-line px-3 py-2">
+                        <dt className="font-mono text-[12.5px] font-bold text-ai-ink" dir="ltr"><span className="me-2 rounded bg-brand-green/10 px-1.5 py-0.5 text-brand-green">{method}</span>{API_BASE_PATH}{path}</dt>
+                        <dd className="mt-1 text-ai-ink/75">{text}</dd>
                     </div>
                 ))}
             </dl>
 
             <Heading>{tx(C.params)}</Heading>
-            <ul className="mt-2 list-disc space-y-1.5 ps-5 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+            <ul className="mt-2 list-disc space-y-1.5 ps-5 text-[13px] leading-relaxed text-ai-ink/75">
                 <li><code className="font-mono text-[12.5px]">model</code>: {tx(C.paramModel, { model: API_MODEL_ID })}</li>
                 <li><code className="font-mono text-[12.5px]">messages</code>: {tx(C.paramMessages, { messages: API_MESSAGES_MAX, chars: number(API_INPUT_CHARS_MAX), system: number(API_SYSTEM_MAX) })}</li>
                 <li><code className="font-mono text-[12.5px]">stream</code>: {tx(C.paramStream)}</li>
@@ -184,21 +184,21 @@ export default function ApiDocs() {
             </ul>
 
             <Heading>{tx(C.limits)}</Heading>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+            <p className="mt-2 text-[13px] leading-relaxed text-ai-ink/75">
                 {tx(C.limitsBody, {
                     plusMinute: number(PLAN_AI_LIMITS.plus.perMinute), plusWindow: number(PLAN_AI_LIMITS.plus.perWindow), proMinute: number(PLAN_AI_LIMITS.pro.perMinute), proWindow: number(PLAN_AI_LIMITS.pro.perWindow),
                     plusKeys: plus.api?.keys ?? 0, proKeys: pro.api?.keys ?? 0,
                 })}
             </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.headers)}</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300" data-api-reasoning>{tx(C.reasoning)}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-ai-ink/75">{tx(C.headers)}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-ai-ink/75" data-api-reasoning>{tx(C.reasoning)}</p>
 
             <Heading>{tx(C.errors)}</Heading>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.errorsBody)}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-ai-ink/75">{tx(C.errorsBody)}</p>
             <div className="mt-2 overflow-x-auto">
                 <table className="w-full min-w-[480px] text-start text-[12.5px]">
                     <thead>
-                        <tr className="border-b border-zinc-200 text-zinc-500 dark:border-white/10">
+                        <tr className="border-b border-ai-line text-ai-muted">
                             <th scope="col" className="py-1.5 pe-3 text-start font-bold">{tx(C.status)}</th>
                             <th scope="col" className="py-1.5 pe-3 text-start font-bold">{tx(C.code)}</th>
                             <th scope="col" className="py-1.5 text-start font-bold">{tx(C.meaning)}</th>
@@ -206,10 +206,10 @@ export default function ApiDocs() {
                     </thead>
                     <tbody>
                         {API_ERROR_CODES.map((entry) => (
-                            <tr key={entry.code} className="border-b border-zinc-100 last:border-0 dark:border-white/[0.06]">
+                            <tr key={entry.code} className="border-b border-ai-line last:border-0">
                                 <td className="py-1.5 pe-3 font-mono tabular-nums">{entry.status}</td>
-                                <td className="py-1.5 pe-3 font-mono text-zinc-900 dark:text-zinc-100">{entry.code}</td>
-                                <td className="py-1.5 text-zinc-600 dark:text-zinc-300">{tx(ERROR_MEANINGS[entry.code])}</td>
+                                <td className="py-1.5 pe-3 font-mono text-ai-ink">{entry.code}</td>
+                                <td className="py-1.5 text-ai-ink/75">{tx(ERROR_MEANINGS[entry.code])}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -217,7 +217,7 @@ export default function ApiDocs() {
             </div>
 
             <Heading>{tx(C.rules)}</Heading>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.rulesBody)}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-ai-ink/75">{tx(C.rulesBody)}</p>
         </section>
     );
 }

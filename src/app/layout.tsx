@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/source-serif-4";
 import "./globals.css";
 import Provider from "@/components/Provider";
 import { I18nProvider } from "@/lib/i18n";

@@ -123,7 +123,7 @@ export default function SecurityCenter() {
                                     <ShieldCheck className="h-3.5 w-3.5" aria-hidden />{tx(C.heroNote)}
                                 </span>
                             </div>
-                            <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Hanogt Security</h1>
+                            <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Hanogt <span className="text-gradient animate-gradient">Security</span></h1>
                             <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(C.heroText)}</p>
                             <div className="mt-7 flex flex-wrap gap-3">
                                 <a href="#advisor" onClick={(event) => { event.preventDefault(); openTool("advisor"); document.getElementById("tools")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex h-12 items-center gap-2 rounded-2xl bg-zinc-900 px-5 text-[15px] font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">

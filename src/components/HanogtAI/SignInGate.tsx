@@ -27,18 +27,18 @@ export default function SignInGate({ variant, onNavigate }: { variant: "panel" |
     const free = PLAN_AI_LIMITS.free;
     return (
         <div className={cx("flex flex-col items-center text-center", variant === "page" ? "mx-auto max-w-md px-6 py-10" : "px-5 py-8")} data-ai-signin-gate>
-            <AiAvatar size={variant === "page" ? "h-14 w-14" : "h-11 w-11"} />
-            <h2 className={cx("mt-4 font-black tracking-tight text-zinc-900 dark:text-white", variant === "page" ? "text-2xl" : "text-lg")}>{tx(C.title)}</h2>
-            <p className="mt-2 text-[13.5px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.text, { count: free.perWindow.toLocaleString(locale), period: tx(aiWindowCopy(free.windowDays)) })}</p>
+            <AiAvatar size={variant === "page" ? 56 : 44} />
+            <h2 className={cx("mt-4 font-black tracking-tight text-ai-ink", variant === "page" ? "text-2xl" : "text-lg")}>{tx(C.title)}</h2>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-ai-ink/75">{tx(C.text, { count: free.perWindow.toLocaleString(locale), period: tx(aiWindowCopy(free.windowDays)) })}</p>
             <div className="mt-5 flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <Link href={`/login?callbackUrl=${back}`} onClick={onNavigate} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 text-[13.5px] font-semibold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+                <Link href={`/login?callbackUrl=${back}`} onClick={onNavigate} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-ai-ink px-5 text-[13.5px] font-semibold text-ai-paper transition hover:opacity-90">
                     <LogIn className="h-4 w-4" aria-hidden />{tx(C.signIn)}
                 </Link>
-                <Link href={`/signup?callbackUrl=${back}`} onClick={onNavigate} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-zinc-300 px-5 text-[13.5px] font-semibold text-zinc-800 transition hover:bg-zinc-900/[0.04] dark:border-white/15 dark:text-zinc-100 dark:hover:bg-white/[0.06]">
+                <Link href={`/signup?callbackUrl=${back}`} onClick={onNavigate} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-ai-line px-5 text-[13.5px] font-semibold text-ai-ink transition hover:bg-ai-ink/[0.04] dark:border-white/15">
                     <UserPlus className="h-4 w-4" aria-hidden />{tx(C.signUp)}
                 </Link>
             </div>
-            <Link href="/plans" onClick={onNavigate} className="mt-4 text-[12.5px] font-semibold text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-white">{tx(C.plans)}</Link>
+            <Link href="/plans" onClick={onNavigate} className="mt-4 text-[12.5px] font-semibold text-ai-muted underline-offset-2 hover:text-ai-ink hover:underline">{tx(C.plans)}</Link>
         </div>
     );
 }

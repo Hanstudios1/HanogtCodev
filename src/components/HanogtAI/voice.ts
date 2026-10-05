@@ -75,10 +75,27 @@ export function stopSpeaking() {
     if (speakingId !== null) setSpeaking(null);
 }
 
+/** The voices this device can read with (they load late in some browsers). */
+export function useSpeechVoices() {
+    const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+    useEffect(() => {
+        if (!speechSupported()) return;
+        const synth = window.speechSynthesis;
+        const load = () => setVoices(synth.getVoices());
+        load();
+        synth.addEventListener("voiceschanged", load);
+        return () => synth.removeEventListener("voiceschanged", load);
+    }, []);
+    return voices;
+}
+
+/** How answers are read: a voice by name ("" for the device's default for the language) and a speed. */
+export type SpeechOptions = { voiceName?: string; rate?: number };
+
 /** Reads one answer at a time; `speakingId` is the message being read. */
 export function useSpeech() {
     const current = useSyncExternalStore(subscribeSpeech, () => speakingId, () => null);
-    const speak = useCallback((id: string, markdown: string, language: string, codeBlockLabel: string) => {
+    const speak = useCallback((id: string, markdown: string, language: string, codeBlockLabel: string, options: SpeechOptions = {}) => {
         if (!speechSupported()) return;
         const synth = window.speechSynthesis;
         synth.cancel();
@@ -89,6 +106,9 @@ export function useSpeech() {
             return;
         }
         const lang = speechLangOf(language, browserLanguage());
+        // The chosen voice if this device has it; otherwise the browser picks one for the language.
+        const voice = options.voiceName ? synth.getVoices().find((entry) => entry.name === options.voiceName) ?? null : null;
+        const rate = typeof options.rate === "number" && options.rate >= 0.5 && options.rate <= 2 ? options.rate : 1;
         const finish = () => {
             if (reading !== turn) return;
             reading++;
@@ -97,7 +117,9 @@ export function useSpeech() {
         setSpeaking(id);
         chunks.forEach((chunk, index) => {
             const utterance = new window.SpeechSynthesisUtterance(chunk);
-            utterance.lang = lang;
+            utterance.lang = voice?.lang || lang;
+            if (voice) utterance.voice = voice;
+            utterance.rate = rate;
             // A piece that fails stops the rest; the last piece ends the reading.
             utterance.onerror = () => {
                 if (reading !== turn) return;
@@ -118,8 +140,10 @@ export type DictationError = "denied" | "failed";
 /**
  * Dictation into the message box: one phrase per press (the browser stops
  * after a pause); what was heard is added to `text` through `onText`.
+ * `heard` is the language to listen for (a BCP 47 tag from the Hanogt AI
+ * settings); "site" or nothing follows the site's language.
  */
-export function useDictation(language: string, text: string, onText: (next: string) => void) {
+export function useDictation(language: string, text: string, onText: (next: string) => void, heard?: string) {
     const [listening, setListening] = useState(false);
     const [error, setError] = useState<DictationError | null>(null);
     const recognition = useRef<Recognition | null>(null);
@@ -138,7 +162,7 @@ export function useDictation(language: string, text: string, onText: (next: stri
         if (!Constructor) return;
         recognition.current?.abort();
         const next = new Constructor();
-        next.lang = speechLangOf(language, browserLanguage());
+        next.lang = heard && heard !== "site" ? heard : speechLangOf(language, browserLanguage());
         next.interimResults = false;
         next.continuous = false;
         next.maxAlternatives = 1;
@@ -164,7 +188,7 @@ export function useDictation(language: string, text: string, onText: (next: stri
             setListening(false);
             setError("failed");
         }
-    }, [language]);
+    }, [heard, language]);
 
     return { listening, error, start, stop };
 }

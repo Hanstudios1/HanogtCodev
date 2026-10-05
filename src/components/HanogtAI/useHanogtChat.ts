@@ -12,9 +12,11 @@ import type { ThinkingStep } from "@/lib/ai/thinking";
 import { isConnectionId } from "@/lib/ai/connections";
 import { openHanogtAI, useAiContext } from "@/lib/ai/context-store";
 import {
-    createId, setActiveConversation, titleFrom, useActiveConversationId, useConversationActions, useConversations,
-    THINKING_STORED_MAX, type AiConversation, type AiMessage, type AiThinking,
+    createId, pruneConversations, setActiveConversation, titleFrom, useActiveConversationId, useConversationActions, useConversations,
+    EDIT_BASE_MAX, THINKING_STORED_MAX, type AiConversation, type AiEdit, type AiMessage, type AiThinking,
 } from "@/lib/ai/conversations";
+import { requestApply, type ApplyStatus } from "@/lib/ai/editor-apply";
+import { proposedEdit } from "@/lib/ai/file-edit";
 import { answerLocally, proposeActionsLocally, type AiContext, type AiMode } from "@/lib/ai/local-engine";
 import { formatResetTime, type LimitDetails } from "@/lib/ai/usage";
 import { PLAN_AI_FEATURES } from "@/lib/plans";
@@ -64,6 +66,29 @@ const CONTINUE_PROMPT = {
     TR: "Yanıtın yarıda kesildi. Kaldığın yerden, önceki kısmı tekrar etmeden devam et; açık bir kod bloğu varsa onun içinden sürdür.",
     EN: "Your answer was cut off. Continue exactly where you stopped without repeating what you already wrote; if a code block is open, continue inside it.",
 };
+
+/** How many answers of a conversation keep their file for the "Changes" card (each can be up to 40,000 characters). */
+const EDITS_KEPT = 3;
+
+/** Keeps the file only on the newest answers about files; older ones lose their card's base. */
+function keepRecentEdits(messages: AiMessage[]): AiMessage[] {
+    let seen = 0;
+    const kept = [...messages].reverse().map((message) => {
+        if (!message.edit) return message;
+        seen += 1;
+        if (seen <= EDITS_KEPT) return message;
+        const { edit: _dropped, ...rest } = message;
+        void _dropped;
+        return rest;
+    });
+    return kept.reverse();
+}
+
+/** What an answer keeps about the file its question carried, for the "Changes" card. */
+function editOf(context: AiContext): AiEdit | undefined {
+    if (typeof context.code !== "string" || !context.fileName || context.code.length > EDIT_BASE_MAX) return undefined;
+    return { fileName: context.fileName.slice(0, 120), language: (context.language || "plaintext").slice(0, 40), ...(context.tabId ? { tabId: context.tabId } : {}), base: context.code };
+}
 
 /** Cards that were still waiting when the user moved on: nothing was done for them. */
 function dismissPending(message: AiMessage): AiMessage {
@@ -244,11 +269,17 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         refreshConnections();
     }, [refreshConnections, selectConnection]);
 
+    // What else goes with the open file: the errors of its last run (on by default) and the project's other file names (off by default).
+    const attachConsoleErrors = accountDefaults?.attachConsoleErrors ?? true;
+    const attachProjectTree = accountDefaults?.attachProjectTree ?? false;
     const buildContext = useCallback((): AiContext => {
         if (attachment) return { code: attachment.code, language: attachment.language, fileName: attachment.name, path: window.location.pathname };
-        if (hasEditorFile && attachEditorFile && editorContext) return editorContext;
+        if (hasEditorFile && attachEditorFile && editorContext) {
+            const { consoleErrors, projectFiles, ...file } = editorContext;
+            return { ...file, ...(attachConsoleErrors && consoleErrors ? { consoleErrors } : {}), ...(attachProjectTree && projectFiles?.length ? { projectFiles } : {}) };
+        }
         return { path: editorContext?.path ?? window.location.pathname };
-    }, [attachEditorFile, attachment, editorContext, hasEditorFile]);
+    }, [attachConsoleErrors, attachEditorFile, attachProjectTree, attachment, editorContext, hasEditorFile]);
 
     const ask = useCallback(async (raw: string, history?: AiMessage[]) => {
         const text = raw.trim().slice(0, MAX_INPUT);
@@ -273,10 +304,12 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         const assistantId = createId();
         // A new message answers any card that was still waiting.
         const base = (history ?? conversation.messages).map(dismissPending);
+        // An answer about a file keeps the file as sent: its "Changes" card compares the proposal with it.
+        const edit = editOf(context);
         update(conversationId, (current) => ({
             ...current,
             title: current.title || titleFrom(text),
-            messages: [...base, userMessage, { id: assistantId, role: "assistant", content: "", createdAt: Date.now() }],
+            messages: keepRecentEdits([...base, userMessage, { id: assistantId, role: "assistant", content: "", createdAt: Date.now(), ...(edit ? { edit } : {}) }]),
         }));
         setInput("");
         setAttachment(null);
@@ -522,6 +555,33 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
 
     const stop = useCallback(() => controllerRef.current?.abort(), []);
 
+    /**
+     * Applies an answer's proposed change to the file in the editor on this
+     * page. "changed": the file isn't the one Hanogt AI read (the card asks,
+     * then calls again with `force`); "missing": no editor with that file here.
+     */
+    const applyEdit = useCallback((messageId: string, force = false): ApplyStatus | "none" => {
+        const message = active?.messages.find((entry) => entry.id === messageId);
+        const edit = message?.edit;
+        if (!active || !message || !edit) return "none";
+        const proposal = proposedEdit(message.content, { code: edit.base, language: edit.language, fileName: edit.fileName });
+        if (!proposal) return "none";
+        const status = requestApply({ tabId: edit.tabId, fileName: edit.fileName, base: edit.base, code: proposal.code, force });
+        if (status === "applied") finish(active.id, messageId, { edit: { ...edit, status: "applied", appliedAt: Date.now() } });
+        return status;
+    }, [active, finish]);
+
+    const dismissEdit = useCallback((messageId: string) => {
+        const message = active?.messages.find((entry) => entry.id === messageId);
+        if (active && message?.edit) finish(active.id, messageId, { edit: { ...message.edit, status: "dismissed" } });
+    }, [active, finish]);
+
+    // Chats older than the person keeps them for go once the settings are known (and again when the setting changes).
+    const retentionDays = accountDefaults?.localRetentionDays ?? 0;
+    useEffect(() => {
+        if (retentionDays > 0) pruneConversations(retentionDays);
+    }, [retentionDays]);
+
     const newChat = useCallback(() => {
         controllerRef.current?.abort();
         setActiveConversation(null);
@@ -589,6 +649,10 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         // composer
         mode, switchMode, input, setInput, busy, streaming, ask, stop, newChat, regenerate, editLast, setFeedback, continueAnswer,
         editorContext, hasEditorFile, attachEditorFile, setAttachEditorFile, attachment, setAttachment, attachFile, attachError,
+        // changes to the open file
+        applyEdit, dismissEdit, editorPresent: Boolean(editorContext?.tabId),
+        // the account's Hanogt AI settings (null until loaded)
+        settings: accountDefaults,
         // agent
         agent: { mode: agentMode, setMode: setAgentMode as (mode: AgentMode) => void, granted, revokeAll, approve, deny },
         // own provider connections

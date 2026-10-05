@@ -20,7 +20,52 @@ test("stored settings: broken or unknown fields fall back to the defaults", () =
     assert.deepEqual(read, DEFAULT_AI_SETTINGS);
     assert.ok(!("secret" in read));
     const good = { about: "  Öğrenciyim\r\nPython öğreniyorum \u0007", style: "Kısa yaz.", tone: "friendly", length: "short", language: "EN", defaultMode: "code", defaultModel: "conn_12345678", attachEditorFile: false, agentMode: "auto_safe", thinking: "off", showThinking: false };
-    assert.deepEqual(normalizeAiSettings(good, "plus"), { ...good, about: "Öğrenciyim\nPython öğreniyorum" });
+    assert.deepEqual(normalizeAiSettings(good, "plus"), { ...DEFAULT_AI_SETTINGS, ...good, about: "Öğrenciyim\nPython öğreniyorum" });
+});
+
+test("code and conversation preferences: kept when valid, defaults otherwise", () => {
+    assert.deepEqual(
+        [DEFAULT_AI_SETTINGS.expertise, DEFAULT_AI_SETTINGS.codeOutput, DEFAULT_AI_SETTINGS.sendShortcut, DEFAULT_AI_SETTINGS.attachConsoleErrors, DEFAULT_AI_SETTINGS.attachProjectTree, DEFAULT_AI_SETTINGS.autoOpenArtifacts, DEFAULT_AI_SETTINGS.localRetentionDays, DEFAULT_AI_SETTINGS.answerFont],
+        ["intermediate", "full", "enter", true, false, true, 0, "serif"],
+    );
+    const good = {
+        expertise: "expert", commentLanguage: "EN", codeStyle: "  4 spaces,\nsingle quotes  ", preferredLanguages: ["python", "typescript", "python", "nope"],
+        codeOutput: "diff", sendShortcut: "mod-enter", attachConsoleErrors: false, attachProjectTree: true, autoOpenArtifacts: false,
+        dictationLanguage: "tr-TR", localRetentionDays: 30, answerVoice: "Google Türkçe", answerVoiceRate: 1.256, answerFont: "sans",
+    };
+    const read = normalizeAiSettings(good, "free");
+    assert.equal(read.expertise, "expert");
+    assert.equal(read.commentLanguage, "EN");
+    assert.equal(read.codeStyle, "4 spaces, single quotes", "one line, trimmed");
+    assert.deepEqual(read.preferredLanguages, ["python", "typescript"], "known languages, each once");
+    assert.deepEqual([read.codeOutput, read.sendShortcut, read.attachConsoleErrors, read.attachProjectTree, read.autoOpenArtifacts], ["diff", "mod-enter", false, true, false]);
+    assert.deepEqual([read.dictationLanguage, read.localRetentionDays, read.answerVoice, read.answerVoiceRate, read.answerFont], ["tr-TR", 30, "Google Türkçe", 1.26, "sans"]);
+    const broken = normalizeAiSettings({ expertise: "guru", commentLanguage: "turkish", preferredLanguages: "python", codeOutput: "patch", sendShortcut: "space", dictationLanguage: "Turkish", localRetentionDays: 14, answerVoiceRate: 5, answerFont: "comic" }, "free");
+    for (const field of ["expertise", "commentLanguage", "preferredLanguages", "codeOutput", "sendShortcut", "dictationLanguage", "localRetentionDays", "answerVoiceRate", "answerFont"]) {
+        assert.deepEqual(broken[field], DEFAULT_AI_SETTINGS[field], field);
+    }
+    assert.equal(normalizeAiSettings({ codeStyle: "x".repeat(900) }, "pro").codeStyle.length, settings.AI_CODE_STYLE_MAX);
+    assert.equal(normalizeAiSettings({ preferredLanguages: ["python", "javascript", "typescript", "go", "rust", "java", "c"] }, "pro").preferredLanguages.length, settings.AI_PREFERRED_LANGUAGES_MAX);
+});
+
+test("a save of the new preferences is checked strictly too", () => {
+    const ok = parseAiSettingsInput({ expertise: "beginner", preferredLanguages: ["python", "go"], localRetentionDays: 7, sendShortcut: "mod-enter", answerVoiceRate: 0.5 }, "free");
+    assert.equal(ok.ok, true);
+    assert.deepEqual(ok.settings.preferredLanguages, ["python", "go"]);
+    const refused = [
+        [{ expertise: "guru" }, "expertise"],
+        [{ preferredLanguages: ["python", "python"] }, "preferredLanguages"],
+        [{ preferredLanguages: ["plaintext"] }, "preferredLanguages"],
+        [{ preferredLanguages: ["python", "javascript", "typescript", "go", "rust", "java"] }, "preferredLanguages"],
+        [{ codeStyle: "x".repeat(301) }, "codeStyle"],
+        [{ localRetentionDays: 14 }, "localRetentionDays"],
+        [{ dictationLanguage: "tr_TR" }, "dictationLanguage"],
+        [{ answerVoiceRate: 2.5 }, "answerVoiceRate"],
+        [{ answerVoiceRate: Number.NaN }, "answerVoiceRate"],
+        [{ attachProjectTree: "yes" }, "attachProjectTree"],
+        [{ codeOutput: "patch" }, "codeOutput"],
+    ];
+    for (const [input, field] of refused) assert.deepEqual(parseAiSettingsInput(input, "pro"), { ok: false, code: "invalid_value", field }, field);
 });
 
 test("instructions are cut to the plan: 500, 1,500 and 3,000 characters", () => {

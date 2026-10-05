@@ -34,11 +34,11 @@ const C = {
 } satisfies Record<string, Copy>;
 
 const LEVEL_PILL = {
-    ok: "border-zinc-200 text-zinc-600 dark:border-white/10 dark:text-zinc-300",
+    ok: "border-ai-line text-ai-ink/75",
     high: "border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-300",
     full: "border-rose-400/50 bg-rose-500/10 text-rose-700 dark:text-rose-300",
 } as const;
-const LEVEL_BAR = { ok: "from-indigo-500 to-fuchsia-500", high: "from-amber-400 to-amber-500", full: "from-rose-500 to-rose-600" } as const;
+const LEVEL_BAR = { ok: "bg-brand-green", high: "bg-amber-500", full: "bg-rose-500" } as const;
 
 /** Re-renders every minute, so a window that ended shows as fresh. */
 function useMinuteClock() {
@@ -55,7 +55,7 @@ function Bar({ window: shown, label }: { window: UsageWindow; label: string }) {
     const percent = shown.limit > 0 ? Math.min(100, (shown.used / shown.limit) * 100) : 100;
     return (
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={shown.limit} aria-valuenow={Math.min(shown.used, shown.limit)}>
-            <div className={cx("h-full rounded-full bg-gradient-to-r transition-[width]", LEVEL_BAR[level])} style={{ width: `${percent}%` }} />
+            <div className={cx("h-full rounded-full transition-[width]", LEVEL_BAR[level])} style={{ width: `${percent}%` }} />
         </div>
     );
 }
@@ -97,7 +97,7 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
     if (!usage) {
         // Nothing to show yet; a failed first load offers a retry in the same place.
         return handle.failed ? (
-            <button type="button" onClick={handle.refresh} className="inline-flex h-7 items-center gap-1 rounded-full border border-zinc-200 px-2 text-[11.5px] font-semibold text-zinc-500 hover:text-zinc-900 dark:border-white/10 dark:text-zinc-400 dark:hover:text-white" title={tx(C.failed)}>
+            <button type="button" onClick={handle.refresh} className="inline-flex h-7 items-center gap-1 rounded-full border border-ai-line px-2 text-[11.5px] font-semibold text-ai-muted hover:text-ai-ink" title={tx(C.failed)}>
                 <Gauge className="h-3.5 w-3.5" aria-hidden />{tx(C.retry)}
             </button>
         ) : null;
@@ -122,7 +122,7 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                 aria-label={tx(C.pillLabel, { period, used: day.used, limit: day.limit })}
                 data-usage-meter={level}
                 className={cx(
-                    "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11.5px] font-semibold tabular-nums transition hover:bg-zinc-900/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 dark:hover:bg-white/[0.06]",
+                    "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11.5px] font-semibold tabular-nums transition hover:bg-ai-ink/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30",
                     LEVEL_PILL[level],
                 )}
             >
@@ -133,45 +133,45 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                 <div
                     role="dialog"
                     aria-label={tx(C.title)}
-                    className="absolute end-0 top-full z-40 mt-2 w-[18.5rem] rounded-2xl border border-zinc-200 bg-white p-3.5 text-start shadow-xl shadow-zinc-900/10 dark:border-white/10 dark:bg-zinc-900 max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:mt-0 max-sm:w-auto"
+                    className="absolute end-0 top-full z-40 mt-2 w-[18.5rem] rounded-2xl border border-ai-line bg-ai-surface p-3.5 text-start shadow-xl shadow-zinc-900/10 max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:mt-0 max-sm:w-auto"
                 >
                     <div className="flex items-center justify-between gap-2">
-                        <p className="text-[13px] font-black text-zinc-900 dark:text-white">{tx(C.title)}</p>
-                        <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-bold text-violet-700 dark:text-violet-300">{tx(PLAN_COPY[usage.plan].name)}</span>
+                        <p className="text-[13px] font-black text-ai-ink">{tx(C.title)}</p>
+                        <span className="rounded-full bg-brand-green/10 px-2 py-0.5 text-[11px] font-bold text-brand-green">{tx(PLAN_COPY[usage.plan].name)}</span>
                     </div>
 
                     <div className="mt-3">
                         <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><Sparkles className="h-3.5 w-3.5 text-violet-500" aria-hidden />{tx(C.messages, { period: period.toLocaleLowerCase(locale) })}</span>
-                            <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{day.used.toLocaleString(locale)} / {day.limit.toLocaleString(locale)}</span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-ai-ink/85"><Sparkles className="h-3.5 w-3.5 text-brand-green" aria-hidden />{tx(C.messages, { period: period.toLocaleLowerCase(locale) })}</span>
+                            <span className="font-bold tabular-nums text-ai-ink">{day.used.toLocaleString(locale)} / {day.limit.toLocaleString(locale)}</span>
                         </div>
                         <Bar window={day} label={tx(C.messages, { period: period.toLocaleLowerCase(locale) })} />
-                        <p className={cx("mt-1.5 text-[11.5px]", level === "full" ? "font-semibold text-rose-600 dark:text-rose-300" : "text-zinc-500 dark:text-zinc-400")}>
+                        <p className={cx("mt-1.5 text-[11.5px]", level === "full" ? "font-semibold text-rose-600 dark:text-rose-300" : "text-ai-muted")}>
                             {day.remaining > 0 ? tx(C.left, { count: day.remaining.toLocaleString(locale) }) : tx(C.none)}
                             {day.resetsAt ? ` · ${tx(C.resets, { time: formatResetTime(day.resetsAt, locale, now) })}` : ""}
                         </p>
-                        <p className="mt-1 text-[11px] leading-snug text-zinc-400">{tx(C.window, { days })} {tx(C.perMinute, { count: usage.hanogt.minute.limit })}.</p>
+                        <p className="mt-1 text-[11px] leading-snug text-ai-muted">{tx(C.window, { days })} {tx(C.perMinute, { count: usage.hanogt.minute.limit })}.</p>
                         {usage.hanogt.bonus > 0 ? <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{tx(C.bonus, { count: usage.hanogt.bonus.toLocaleString(locale) })}</p> : null}
                     </div>
 
                     {ownDay ? (
-                        <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.06]">
+                        <div className="mt-3 border-t border-ai-line pt-3">
                             <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><KeyRound className="h-3.5 w-3.5 text-sky-500" aria-hidden />{tx(C.own)}</span>
-                                <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{ownDay.used.toLocaleString(locale)} / {ownDay.limit.toLocaleString(locale)}</span>
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-ai-ink/85"><KeyRound className="h-3.5 w-3.5 text-sky-500" aria-hidden />{tx(C.own)}</span>
+                                <span className="font-bold tabular-nums text-ai-ink">{ownDay.used.toLocaleString(locale)} / {ownDay.limit.toLocaleString(locale)}</span>
                             </div>
                             <Bar window={ownDay} label={tx(C.own)} />
-                            <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">{tx(C.ownHint)}</p>
+                            <p className="mt-1.5 text-[11px] leading-snug text-ai-muted">{tx(C.ownHint)}</p>
                         </div>
                     ) : null}
 
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-zinc-100 pt-3 text-[12px] font-semibold dark:border-white/[0.06]">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-ai-line pt-3 text-[12px] font-semibold">
                         {nextPlan ? (
-                            <Link href="/plans" onClick={() => { setOpen(false); onNavigate?.(); }} className="inline-flex items-center gap-1 text-violet-600 hover:underline dark:text-violet-300" title={tx(C.upgradeHint, { plan: tx(PLAN_COPY[nextPlan].name), period: tx(aiWindowCopy(PLAN_AI_LIMITS[nextPlan].windowDays)), count: PLAN_AI_LIMITS[nextPlan].perWindow.toLocaleString(locale) })} data-usage-upgrade>
+                            <Link href="/plans" onClick={() => { setOpen(false); onNavigate?.(); }} className="inline-flex items-center gap-1 text-brand-green hover:underline" title={tx(C.upgradeHint, { plan: tx(PLAN_COPY[nextPlan].name), period: tx(aiWindowCopy(PLAN_AI_LIMITS[nextPlan].windowDays)), count: PLAN_AI_LIMITS[nextPlan].perWindow.toLocaleString(locale) })} data-usage-upgrade>
                                 {tx(C.upgrade)}<ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
                             </Link>
                         ) : null}
-                        <Link href="/plans#usage" onClick={() => { setOpen(false); onNavigate?.(); }} className="text-zinc-500 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-white">{tx(C.details)}</Link>
+                        <Link href="/plans#usage" onClick={() => { setOpen(false); onNavigate?.(); }} className="text-ai-muted hover:text-ai-ink hover:underline">{tx(C.details)}</Link>
                     </div>
                 </div>
             ) : null}

@@ -1,10 +1,10 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Check, Code2, FlaskConical, Gamepad2, LogIn, Play, Radio, Rocket, UsersRound, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import Comparison from "@/components/Comparison";
 import Header from "@/components/Header";
 import { CountUp, formatCount, usePublicStats, type PublicStatKey } from "@/components/PublicStats";
@@ -166,11 +166,11 @@ function RotatingWord() {
             <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
                     key={index}
-                    initial={{ y: "40%", opacity: 0 }}
-                    animate={{ y: "0%", opacity: 1 }}
-                    exit={{ y: "-40%", opacity: 0 }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                    className="whitespace-nowrap pb-2 text-brand-green"
+                    initial={{ y: "55%", opacity: 0, filter: "blur(6px)" }}
+                    animate={{ y: "0%", opacity: 1, filter: "blur(0px)" }}
+                    exit={{ y: "-55%", opacity: 0, filter: "blur(6px)" }}
+                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-gradient animate-gradient whitespace-nowrap pb-2"
                 >
                     {words[index]}
                 </motion.span>
@@ -179,30 +179,78 @@ function RotatingWord() {
     );
 }
 
+/** Rises into view once, when it scrolls in. */
+function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+            className={className}
+        >
+            {children}
+        </motion.div>
+    );
+}
+
+/** A preview that leans toward the pointer (not with reduced motion or touch). */
+function TiltCard({ children }: { children: ReactNode }) {
+    const still = useReducedMotion();
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+    const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [5, -5]), { stiffness: 200, damping: 20 });
+    const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-6, 6]), { stiffness: 200, damping: 20 });
+    const move = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (still || event.pointerType !== "mouse") return;
+        const box = event.currentTarget.getBoundingClientRect();
+        x.set((event.clientX - box.left) / box.width - 0.5);
+        y.set((event.clientY - box.top) / box.height - 0.5);
+    };
+    const leave = () => {
+        x.set(0);
+        y.set(0);
+    };
+    return (
+        <div style={{ perspective: 1100 }} onPointerMove={move} onPointerLeave={leave}>
+            <motion.div style={still ? undefined : { rotateX, rotateY }} whileHover={still ? undefined : { scale: 1.015 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
+                {children}
+            </motion.div>
+        </div>
+    );
+}
+
 function ProductRow({ row, index }: { row: Row; index: number }) {
     const { tx } = useI18n();
     const name = typeof row.name === "string" ? row.name : tx(row.name);
     const flip = index % 2 === 1;
     return (
-        <article className="grid items-center gap-8 border-t border-zinc-200 py-14 first:border-t-0 lg:grid-cols-2 lg:gap-16 dark:border-white/[0.08]">
-            <div className={flip ? "lg:order-2" : ""}>
+        <article className="group grid items-center gap-8 border-t border-zinc-200 py-14 first:border-t-0 lg:grid-cols-2 lg:gap-16 dark:border-white/[0.08]">
+            <Reveal className={flip ? "lg:order-2" : ""}>
                 <div className="flex items-center gap-3">
-                    {row.logo ? <ProductLogo product={row.logo} size={44} /> : null}
-                    <h3 className="text-2xl font-black tracking-tight sm:text-3xl">{name}</h3>
+                    {row.logo ? <span className="inline-flex transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"><ProductLogo product={row.logo} size={44} /></span> : null}
+                    <h3 className="hover-text-gradient text-2xl font-black tracking-tight sm:text-3xl">{name}</h3>
                 </div>
                 <p className="mt-3 text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(row.tagline)}</p>
                 <ul className="mt-5 space-y-2.5">
-                    {row.points.map((point) => (
-                        <li key={point.EN} className="flex items-start gap-2.5 text-[15px] text-zinc-700 dark:text-zinc-300">
+                    {row.points.map((point, pointIndex) => (
+                        <motion.li
+                            key={point.EN}
+                            initial={{ opacity: 0, x: flip ? 16 : -16 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true, amount: 0.6 }}
+                            transition={{ duration: 0.45, delay: 0.15 + pointIndex * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                            className="flex items-start gap-2.5 text-[15px] text-zinc-700 dark:text-zinc-300"
+                        >
                             <Check className="mt-0.5 h-4.5 w-4.5 shrink-0 text-brand-green" strokeWidth={2.5} aria-hidden="true" />{tx(point)}
-                        </li>
+                        </motion.li>
                     ))}
                 </ul>
                 <Link href={row.href} aria-label={`${name}: ${tx(COPY.tryIt)}`} className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-bold text-zinc-900 underline decoration-zinc-300 decoration-2 underline-offset-4 transition hover:decoration-brand-green dark:text-white dark:decoration-zinc-600">
-                    {tx(COPY.tryIt)}<ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                    {tx(COPY.tryIt)}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" aria-hidden="true" />
                 </Link>
-            </div>
-            <div className={`min-w-0 ${flip ? "lg:order-1" : ""}`}>{row.preview}</div>
+            </Reveal>
+            <Reveal delay={0.1} className={`min-w-0 ${flip ? "lg:order-1" : ""}`}><TiltCard>{row.preview}</TiltCard></Reveal>
         </article>
     );
 }
@@ -246,22 +294,22 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
 
     return (
         <section aria-labelledby="final-cta-title" className="px-4 py-24 sm:px-6">
-            <div className="mx-auto max-w-6xl rounded-[2rem] bg-zinc-950 px-5 py-14 text-white sm:px-10 lg:px-14 lg:py-16 dark:border dark:border-white/10">
+            <div className="mx-auto max-w-6xl rounded-[2rem] bg-zinc-950 px-5 py-14 text-white [--text-gradient:var(--text-gradient-bright)] sm:px-10 lg:px-14 lg:py-16 dark:border dark:border-white/10">
                 <div className="mx-auto max-w-3xl text-center">
                     <span className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3.5 py-1.5 text-[12.5px] font-bold text-zinc-200">
                         <Rocket className="h-3.5 w-3.5 text-brand-crescent" aria-hidden="true" />{tx(COPY.cta)}
                     </span>
-                    <h2 id="final-cta-title" className="mt-5 text-balance text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl">{tx(COPY.ctaTitle)}</h2>
+                    <h2 id="final-cta-title" className="mt-5 text-balance text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl"><span className="text-gradient animate-gradient">{tx(COPY.ctaTitle)}</span></h2>
                     <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-300">{tx(COPY.ctaSub, { count: languageCount })}</p>
                 </div>
 
                 <ul className="mt-10 grid gap-3 md:grid-cols-3" aria-label={tx(COPY.quickStart)}>
                     {QUICK_START.map(({ href, icon: Icon, title, text }) => (
                         <li key={href}>
-                            <Link href={href} className="group flex h-full items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:border-white/30 hover:bg-white/[0.07] md:flex-col md:items-start md:gap-3 md:p-5">
-                                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10"><Icon className="h-5 w-5 text-brand-crescent" aria-hidden="true" /></span>
+                            <Link href={href} className="group flex h-full items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition duration-300 hover:-translate-y-1 hover:border-white/30 hover:bg-white/[0.07] md:flex-col md:items-start md:gap-3 md:p-5">
+                                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"><Icon className="h-5 w-5 text-brand-crescent" aria-hidden="true" /></span>
                                 <span className="min-w-0 flex-1">
-                                    <span className="block text-lg font-black leading-tight">{tx(title)}</span>
+                                    <span className="hover-text-gradient block text-lg font-black leading-tight">{tx(title)}</span>
                                     <span className="mt-1 block text-[13.5px] leading-snug text-zinc-400">{tx(text, { count: languageCount })}</span>
                                 </span>
                                 <ArrowRight className="h-5 w-5 shrink-0 text-zinc-500 transition group-hover:translate-x-0.5 group-hover:text-white rtl:rotate-180 md:hidden" aria-hidden="true" />
@@ -351,6 +399,7 @@ export default function LandingPage() {
     const trust: string[] = [t("f_free"), t("f_no_ads"), t("f_setup"), t("lp_ui_languages").replace("{count}", String(LANGUAGES.length))].filter(Boolean);
 
     return (
+        <MotionConfig reducedMotion="user">
         <div className="min-h-dvh overflow-x-clip bg-white text-zinc-900 dark:bg-zinc-950 dark:text-white">
             <Header />
 
@@ -375,7 +424,7 @@ export default function LandingPage() {
                 <section className="pt-16">
                     <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:pb-24 lg:pt-20">
                         <div className="min-w-0">
-                            <Link href="/news" className="group inline-flex items-center gap-2 rounded-full border border-zinc-200 py-1 pe-3 ps-1 text-[12.5px] font-semibold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:text-zinc-200 dark:hover:border-white/30">
+                            <Link href="/news" className="group inline-flex animate-fade-up items-center gap-2 rounded-full border border-zinc-200 py-1 pe-3 ps-1 text-[12.5px] font-semibold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:text-zinc-200 dark:hover:border-white/30">
                                 <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10.5px] font-black uppercase tracking-wider text-white">
                                     <Radio className="h-3 w-3" aria-hidden="true" />{t("lp_new")}
                                 </span>
@@ -383,7 +432,7 @@ export default function LandingPage() {
                                 <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
                             </Link>
 
-                            <h1 className="mt-6 text-[2.6rem] font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-[4rem]">
+                            <h1 className="mt-6 animate-fade-up text-[2.6rem] font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-[4rem]" style={{ animationDelay: "80ms" }}>
                                 <span className="sr-only">{t("lp_hero_sr")}</span>
                                 <span aria-hidden="true">
                                     {t("lp_hero_prefix")}
@@ -392,27 +441,27 @@ export default function LandingPage() {
                                 </span>
                             </h1>
 
-                            <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+                            <p className="mt-5 max-w-xl animate-fade-up text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400" style={{ animationDelay: "160ms" }}>
                                 {formatCopy(t("lp_hero_sub"), { count: languageCount })}
                             </p>
 
                             {/* z-10: the download menu opens over the showcase below on narrow screens. */}
-                            <div className="relative z-10 mt-8 flex flex-wrap items-center gap-3">
-                                <Link href={signedIn ? "/dashboard" : "/signup"} className="inline-flex h-12 items-center gap-2 rounded-2xl bg-zinc-900 px-6 text-[15px] font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
-                                    <Rocket className="h-4.5 w-4.5" aria-hidden="true" />
+                            <div className="relative z-10 mt-8 flex animate-fade-up flex-wrap items-center gap-3" style={{ animationDelay: "240ms" }}>
+                                <Link href={signedIn ? "/dashboard" : "/signup"} className="group inline-flex h-12 items-center gap-2 rounded-2xl bg-zinc-900 px-6 text-[15px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-zinc-700 hover:shadow-lg active:translate-y-0 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+                                    <Rocket className="h-4.5 w-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
                                     {signedIn ? t("go_to_dashboard") : t("lp_start_free")}
                                 </Link>
                                 <DownloadMenu />
                             </div>
 
-                            <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[13.5px] font-medium text-zinc-600 dark:text-zinc-400">
+                            <ul className="mt-8 flex animate-fade-up flex-wrap gap-x-5 gap-y-2 text-[13.5px] font-medium text-zinc-600 dark:text-zinc-400" style={{ animationDelay: "320ms" }}>
                                 {trust.map((item) => (
                                     <li key={item} className="inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-brand-green" strokeWidth={3} aria-hidden="true" />{item}</li>
                                 ))}
                             </ul>
                         </div>
 
-                        <div className="min-w-0">
+                        <div className="min-w-0 animate-fade-up" style={{ animationDelay: "200ms" }}>
                             <CodeShowcase labels={{
                                 file: "Runner.cs",
                                 runs: tx(COPY.showcaseRuns),
@@ -447,7 +496,7 @@ export default function LandingPage() {
                 <section aria-labelledby="products-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
                     <div className="max-w-2xl">
                         <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-brand-green">{tx(COPY.whatKicker)}</p>
-                        <h2 id="products-title" className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{tx(COPY.whatTitle)}</h2>
+                        <h2 id="products-title" className="mt-3 text-4xl font-black tracking-tight sm:text-5xl"><span className="text-gradient animate-gradient">{tx(COPY.whatTitle)}</span></h2>
                         <p className="mt-4 text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(COPY.whatSub)}</p>
                     </div>
                     <div className="mt-6">
@@ -481,5 +530,6 @@ export default function LandingPage() {
 
             <SiteFooter />
         </div>
+        </MotionConfig>
     );
 }

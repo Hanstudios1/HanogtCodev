@@ -495,7 +495,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                         </div>
                         <div className="mt-4 flex items-center gap-4 animate-fade-up" style={{ animationDelay: "60ms" }}>
                             <ProductLogo product="news" size={56} priority />
-                            <h1 className="text-5xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-6xl">Hanogt News</h1>
+                            <h1 className="text-5xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-6xl">Hanogt <span className="text-gradient animate-gradient">News</span></h1>
                         </div>
                         <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "120ms" }}>
                             {tx({ TR: "Yapay zeka, yazılım, oyun, uygulama, bilim ve ekonomi dünyasından güncel haberler tek akışta. Akış kendiliğinden yenilenir, yeni haberler canlı olarak düşer; döviz, altın ve borsa için piyasa şeridi var; yorum yap, kaydet, yapay zeka arenasında oy ver.", EN: "The latest from AI, software, games, apps, science and finance in one stream. The feed refreshes itself and new stories drop in live; a markets strip tracks currencies, gold and stocks; comment, save and vote in the AI arena." })}

@@ -83,16 +83,16 @@ export default function ArtifactPanel({ artifact, variant, onClose, onOpenInEdit
                 }
             }}
             className={cx(
-                "flex min-h-0 flex-col bg-white dark:bg-zinc-900",
+                "flex min-h-0 flex-col bg-ai-surface",
                 variant === "page"
                     ? "fixed inset-0 z-[60] lg:static lg:z-auto lg:w-[min(46vw,680px)] lg:shrink-0 lg:border-s lg:border-zinc-200 lg:dark:border-white/[0.06]"
                     : "absolute inset-0 z-20",
             )}
         >
-            <div className="flex items-center gap-2 border-b border-zinc-200/80 px-3 py-2.5 dark:border-white/[0.06]">
+            <div className="flex items-center gap-2 border-b border-ai-line px-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-[14px] font-bold text-zinc-900 dark:text-white">{title}</h2>
-                    <p className="truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">{artifactLanguageName(artifact.language)} · {tx(C.lines, { lines: lineCount })}</p>
+                    <h2 className="truncate text-[14px] font-bold text-ai-ink">{title}</h2>
+                    <p className="truncate text-[11.5px] text-ai-muted">{artifactLanguageName(artifact.language)} · {tx(C.lines, { lines: lineCount })}</p>
                 </div>
                 {web ? (
                     <div className="flex rounded-lg bg-zinc-900/[0.05] p-0.5 dark:bg-white/[0.06]" role="tablist" aria-label={title}>
@@ -103,7 +103,7 @@ export default function ArtifactPanel({ artifact, variant, onClose, onOpenInEdit
                                 role="tab"
                                 aria-selected={tab === id}
                                 onClick={() => setTab(id)}
-                                className={cx("inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold transition", tab === id ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white" : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100")}
+                                className={cx("inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold transition", tab === id ? "bg-white text-ai-ink shadow-sm dark:bg-zinc-800" : "text-ai-muted hover:text-ai-ink")}
                             >
                                 {id === "preview" ? <Eye className="h-3.5 w-3.5" aria-hidden /> : <Code2 className="h-3.5 w-3.5" aria-hidden />}
                                 <span className="hidden sm:inline">{tx(id === "preview" ? C.preview : C.code)}</span>
@@ -122,16 +122,16 @@ export default function ArtifactPanel({ artifact, variant, onClose, onOpenInEdit
                 </button>
             </div>
             {tab === "preview" && previewHtml ? (
-                <div className="flex min-h-0 flex-1 flex-col bg-zinc-100 p-2 dark:bg-zinc-950">
+                <div className="flex min-h-0 flex-1 flex-col bg-ai-ink/[0.06] p-2 dark:bg-zinc-950">
                     <iframe
                         key={artifact.id}
                         title={tx(C.frame, { name: title })}
                         srcDoc={previewHtml}
                         sandbox="allow-scripts allow-forms"
                         referrerPolicy="no-referrer"
-                        className="min-h-0 w-full flex-1 rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-white/10"
+                        className="min-h-0 w-full flex-1 rounded-lg border border-ai-line bg-white shadow-sm"
                     />
-                    <p className="px-1 pt-1.5 text-[10.5px] text-zinc-500 dark:text-zinc-400">{tx(C.sandbox)}</p>
+                    <p className="px-1 pt-1.5 text-[10.5px] text-ai-muted">{tx(C.sandbox)}</p>
                 </div>
             ) : (
                 <div className="scrollbar-thin min-h-0 flex-1 overflow-auto bg-zinc-950 text-zinc-100" dir="ltr">

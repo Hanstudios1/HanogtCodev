@@ -1,15 +1,18 @@
 /**
  * Hanogt AI settings kept with the account (users/{email}.aiSettings, written
  * only by PUT /api/ai/settings): how answers should sound (the person's own
- * instructions, tone, length, a fixed answer language) and the defaults a
- * device starts with (answer mode, model, attaching the open file, agent
- * mode). A choice made on the device itself wins over these defaults. No
+ * instructions, tone, length, a fixed answer language, their level and how
+ * they like code), the defaults a device starts with (answer mode, model,
+ * what goes with a question, agent mode) and how the chat behaves (send
+ * shortcut, artifacts, dictation, reading answers aloud, how long chats are
+ * kept). A choice made on the device itself wins over these defaults. No
  * hooks: the routes import this too.
  */
 import { AGENT_MODES, DEFAULT_AGENT_MODE, isAgentMode, type AgentMode } from "./agent-tools";
 import { DEFAULT_CONNECTION, isConnectionId } from "./connections";
 import { THINKING_SETTINGS, type ThinkingSetting } from "./thinking";
 import { PLAN_AI_FEATURES, type PlanId } from "@/lib/plans";
+import { getLanguage } from "@/lib/runtimes/languages";
 
 export const AI_TONES = ["balanced", "friendly", "professional"] as const;
 export type AiTone = (typeof AI_TONES)[number];
@@ -17,6 +20,25 @@ export const AI_LENGTHS = ["short", "normal", "detailed"] as const;
 export type AiLength = (typeof AI_LENGTHS)[number];
 export const AI_ANSWER_MODES = ["general", "code", "security"] as const;
 export type AiAnswerModeSetting = (typeof AI_ANSWER_MODES)[number];
+export const AI_EXPERTISE = ["beginner", "intermediate", "expert"] as const;
+export type AiExpertise = (typeof AI_EXPERTISE)[number];
+/** How changes to the open file come back: the whole file, or a unified diff. */
+export const AI_CODE_OUTPUTS = ["full", "diff"] as const;
+export type AiCodeOutput = (typeof AI_CODE_OUTPUTS)[number];
+/** "enter": Enter sends, Shift+Enter is a new line · "mod-enter": Ctrl/Cmd+Enter sends, Enter is a new line. */
+export const AI_SEND_SHORTCUTS = ["enter", "mod-enter"] as const;
+export type AiSendShortcut = (typeof AI_SEND_SHORTCUTS)[number];
+/** Days chats are kept in the browser; 0 keeps them until deleted. */
+export const AI_RETENTION_DAYS = [0, 7, 30, 90] as const;
+export type AiRetentionDays = (typeof AI_RETENTION_DAYS)[number];
+export const AI_ANSWER_FONTS = ["serif", "sans"] as const;
+export type AiAnswerFont = (typeof AI_ANSWER_FONTS)[number];
+/** Preferred programming languages (ids of src/lib/runtimes/languages.ts). */
+export const AI_PREFERRED_LANGUAGES_MAX = 5;
+export const AI_CODE_STYLE_MAX = 300;
+export const AI_VOICE_NAME_MAX = 120;
+export const AI_VOICE_RATE_MIN = 0.5;
+export const AI_VOICE_RATE_MAX = 2;
 
 export type AiSettings = {
     /** What the person wants Hanogt AI to know about them. */
@@ -38,6 +60,31 @@ export type AiSettings = {
     thinking: ThinkingSetting;
     /** Show the thinking (and the steps taken) above the answer. */
     showThinking: boolean;
+    /** How much the person already knows: explanations are pitched at this level. */
+    expertise: AiExpertise;
+    /** Language of comments in code: "site" follows the answer language, else a language code (TR, EN…). */
+    commentLanguage: string;
+    /** Code style wishes (indentation, quotes, naming…), at most 300 characters. */
+    codeStyle: string;
+    /** Languages to use when a question doesn't name one (up to five language ids). */
+    preferredLanguages: string[];
+    /** Changes to the open file as the whole file or as a unified diff. */
+    codeOutput: AiCodeOutput;
+    sendShortcut: AiSendShortcut;
+    /** The errors of the editor's last run go with questions about the open file. */
+    attachConsoleErrors: boolean;
+    /** The names of the project's other files go with questions about the open file. */
+    attachProjectTree: boolean;
+    /** Long code and pages open in the side panel by themselves. */
+    autoOpenArtifacts: boolean;
+    /** Language heard by dictation: "site" follows the site, else a BCP 47 tag (tr-TR, en-US…). */
+    dictationLanguage: string;
+    localRetentionDays: AiRetentionDays;
+    /** The voice that reads answers aloud ("" is the device's default for the answer's language). */
+    answerVoice: string;
+    answerVoiceRate: number;
+    /** Answers in a serif (paper) or a sans-serif face. */
+    answerFont: AiAnswerFont;
 };
 
 export const DEFAULT_AI_SETTINGS: AiSettings = {
@@ -52,6 +99,20 @@ export const DEFAULT_AI_SETTINGS: AiSettings = {
     agentMode: DEFAULT_AGENT_MODE,
     thinking: "auto",
     showThinking: true,
+    expertise: "intermediate",
+    commentLanguage: "site",
+    codeStyle: "",
+    preferredLanguages: [],
+    codeOutput: "full",
+    sendShortcut: "enter",
+    attachConsoleErrors: true,
+    attachProjectTree: false,
+    autoOpenArtifacts: true,
+    dictationLanguage: "site",
+    localRetentionDays: 0,
+    answerVoice: "",
+    answerVoiceRate: 1,
+    answerFont: "serif",
 };
 
 /** The longest instruction any plan allows (Pro); a stored text is cut to the person's plan when used. */
@@ -66,6 +127,18 @@ function cleanText(value: string) {
 
 const isLanguageSetting = (value: unknown): value is string => value === "site" || (typeof value === "string" && /^[A-Z]{2}$/.test(value));
 const oneOf = <T extends string>(list: readonly T[], value: unknown): value is T => typeof value === "string" && (list as readonly string[]).includes(value);
+const isDictationLanguage = (value: unknown): value is string => value === "site" || (typeof value === "string" && /^[a-z]{2,3}(?:-[A-Z]{2})?$/.test(value));
+const isRetentionDays = (value: unknown): value is AiRetentionDays => typeof value === "number" && (AI_RETENTION_DAYS as readonly number[]).includes(value);
+const isVoiceRate = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= AI_VOICE_RATE_MIN && value <= AI_VOICE_RATE_MAX;
+const isProgrammingLanguage = (value: unknown): value is string => typeof value === "string" && value !== "plaintext" && Boolean(getLanguage(value));
+/** One line of text: no control characters or line breaks. */
+const oneLine = (value: string) => value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+
+/** Known language ids, each once, at most five. */
+function preferredLanguagesOf(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return [...new Set(value.filter(isProgrammingLanguage))].slice(0, AI_PREFERRED_LANGUAGES_MAX);
+}
 
 /**
  * Stored settings as they apply on `plan`: unknown or broken fields fall back
@@ -88,6 +161,20 @@ export function normalizeAiSettings(value: unknown, plan: PlanId): AiSettings {
         agentMode: isAgentMode(record.agentMode) ? record.agentMode : DEFAULT_AI_SETTINGS.agentMode,
         thinking: oneOf(THINKING_SETTINGS, record.thinking) ? record.thinking : DEFAULT_AI_SETTINGS.thinking,
         showThinking: typeof record.showThinking === "boolean" ? record.showThinking : DEFAULT_AI_SETTINGS.showThinking,
+        expertise: oneOf(AI_EXPERTISE, record.expertise) ? record.expertise : DEFAULT_AI_SETTINGS.expertise,
+        commentLanguage: isLanguageSetting(record.commentLanguage) ? record.commentLanguage : DEFAULT_AI_SETTINGS.commentLanguage,
+        codeStyle: typeof record.codeStyle === "string" ? oneLine(record.codeStyle).slice(0, AI_CODE_STYLE_MAX) : "",
+        preferredLanguages: preferredLanguagesOf(record.preferredLanguages),
+        codeOutput: oneOf(AI_CODE_OUTPUTS, record.codeOutput) ? record.codeOutput : DEFAULT_AI_SETTINGS.codeOutput,
+        sendShortcut: oneOf(AI_SEND_SHORTCUTS, record.sendShortcut) ? record.sendShortcut : DEFAULT_AI_SETTINGS.sendShortcut,
+        attachConsoleErrors: typeof record.attachConsoleErrors === "boolean" ? record.attachConsoleErrors : DEFAULT_AI_SETTINGS.attachConsoleErrors,
+        attachProjectTree: typeof record.attachProjectTree === "boolean" ? record.attachProjectTree : DEFAULT_AI_SETTINGS.attachProjectTree,
+        autoOpenArtifacts: typeof record.autoOpenArtifacts === "boolean" ? record.autoOpenArtifacts : DEFAULT_AI_SETTINGS.autoOpenArtifacts,
+        dictationLanguage: isDictationLanguage(record.dictationLanguage) ? record.dictationLanguage : DEFAULT_AI_SETTINGS.dictationLanguage,
+        localRetentionDays: isRetentionDays(record.localRetentionDays) ? record.localRetentionDays : DEFAULT_AI_SETTINGS.localRetentionDays,
+        answerVoice: typeof record.answerVoice === "string" ? oneLine(record.answerVoice).slice(0, AI_VOICE_NAME_MAX) : "",
+        answerVoiceRate: isVoiceRate(record.answerVoiceRate) ? Math.round(record.answerVoiceRate * 100) / 100 : DEFAULT_AI_SETTINGS.answerVoiceRate,
+        answerFont: oneOf(AI_ANSWER_FONTS, record.answerFont) ? record.answerFont : DEFAULT_AI_SETTINGS.answerFont,
     };
 }
 
@@ -108,6 +195,20 @@ export function parseAiSettingsInput(value: unknown, plan: PlanId): { ok: true; 
         if (typeof record[field] === "string" && cleanText(record[field]).length > limit) return { ok: false, code: "too_long", field, limit };
     }
     const checks: Record<Exclude<keyof AiSettings, "about" | "style">, (input: unknown) => boolean> = {
+        expertise: (input) => oneOf(AI_EXPERTISE, input),
+        commentLanguage: isLanguageSetting,
+        codeStyle: (input) => typeof input === "string" && oneLine(input).length <= AI_CODE_STYLE_MAX,
+        preferredLanguages: (input) => Array.isArray(input) && input.length <= AI_PREFERRED_LANGUAGES_MAX && input.every(isProgrammingLanguage) && new Set(input).size === input.length,
+        codeOutput: (input) => oneOf(AI_CODE_OUTPUTS, input),
+        sendShortcut: (input) => oneOf(AI_SEND_SHORTCUTS, input),
+        attachConsoleErrors: (input) => typeof input === "boolean",
+        attachProjectTree: (input) => typeof input === "boolean",
+        autoOpenArtifacts: (input) => typeof input === "boolean",
+        dictationLanguage: isDictationLanguage,
+        localRetentionDays: isRetentionDays,
+        answerVoice: (input) => typeof input === "string" && oneLine(input).length <= AI_VOICE_NAME_MAX,
+        answerVoiceRate: isVoiceRate,
+        answerFont: (input) => oneOf(AI_ANSWER_FONTS, input),
         tone: (input) => oneOf(AI_TONES, input),
         length: (input) => oneOf(AI_LENGTHS, input),
         language: isLanguageSetting,

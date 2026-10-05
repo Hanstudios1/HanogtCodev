@@ -54,20 +54,20 @@ export default function AiApiPage() {
 
     return (
         <div className="mx-auto max-w-3xl px-4 pb-24 pt-8 sm:px-6">
-            <Link href="/ai" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"><ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />{tx(C.back)}</Link>
-            <h1 className="mt-3 flex items-center gap-2 text-3xl font-black tracking-tight text-zinc-900 dark:text-white"><KeyRound className="h-7 w-7 text-violet-500" aria-hidden />{tx(C.title)}</h1>
-            <p className="mt-2 text-[14px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(C.subtitle)}</p>
+            <Link href="/ai" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ai-muted hover:text-ai-ink"><ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />{tx(C.back)}</Link>
+            <h1 className="mt-3 flex items-center gap-2 text-3xl font-black tracking-tight text-ai-ink"><KeyRound className="h-7 w-7 text-brand-green" aria-hidden />{tx(C.title)}</h1>
+            <p className="mt-2 text-[14px] leading-relaxed text-ai-muted">{tx(C.subtitle)}</p>
 
             {status === "unauthenticated" ? (
-                <div className="mt-8 rounded-3xl border border-zinc-200 bg-white p-6 text-center dark:border-white/10 dark:bg-zinc-900">
-                    <p className="text-[14px] text-zinc-600 dark:text-zinc-300">{tx(C.signIn)}</p>
-                    <Link href="/login?callbackUrl=%2Fai%2Fapi" className="mt-4 inline-flex items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-[13px] font-bold text-white hover:bg-violet-500">{tx(C.signInButton)}</Link>
+                <div className="mt-8 rounded-3xl border border-ai-line bg-ai-surface p-6 text-center">
+                    <p className="text-[14px] text-ai-ink/75">{tx(C.signIn)}</p>
+                    <Link href="/login?callbackUrl=%2Fai%2Fapi" className="mt-4 inline-flex items-center justify-center rounded-xl bg-ai-ink px-4 py-2 text-[13px] font-bold text-ai-paper hover:opacity-90">{tx(C.signInButton)}</Link>
                 </div>
             ) : status === "loading" ? (
-                <p className="mt-8 flex items-center gap-2 text-[14px] text-zinc-500" role="status"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx(C.loading)}</p>
+                <p className="mt-8 flex items-center gap-2 text-[14px] text-ai-muted" role="status"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx(C.loading)}</p>
             ) : (
                 <>
-                    <div role="tablist" aria-label={tx(C.tabs)} className="mt-7 inline-flex rounded-2xl border border-zinc-200 bg-zinc-50 p-1 dark:border-white/10 dark:bg-white/[0.04]">
+                    <div role="tablist" aria-label={tx(C.tabs)} className="mt-7 inline-flex rounded-2xl border border-ai-line bg-ai-paper p-1">
                         {TABS.map((entry) => {
                             const Icon = entry.icon;
                             const selected = entry.id === tab;
@@ -81,7 +81,7 @@ export default function AiApiPage() {
                                     aria-controls={`ai-api-panel-${entry.id}`}
                                     onClick={() => choose(entry.id)}
                                     data-ai-api-tab={entry.id}
-                                    className={cx("inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[13.5px] font-bold transition", selected ? "bg-white text-zinc-900 shadow dark:bg-zinc-800 dark:text-white" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200")}
+                                    className={cx("inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[13.5px] font-bold transition", selected ? "bg-white text-ai-ink shadow dark:bg-zinc-800" : "text-ai-muted hover:text-ai-ink")}
                                 >
                                     <Icon className="h-4 w-4" aria-hidden />{tx(entry.label)}
                                 </button>
@@ -95,9 +95,9 @@ export default function AiApiPage() {
                                 <ApiDocs />
                             </>
                         ) : (
-                            <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-zinc-900 sm:p-6">
-                                <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-zinc-900 dark:text-white"><PlugZap className="h-5 w-5 text-sky-500" aria-hidden />{tx(C.connections)}</h2>
-                                <p className="mb-4 mt-1 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(C.connectionsHint)}</p>
+                            <section className="rounded-3xl border border-ai-line bg-ai-surface p-5 shadow-sm sm:p-6">
+                                <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-ai-ink"><PlugZap className="h-5 w-5 text-sky-500" aria-hidden />{tx(C.connections)}</h2>
+                                <p className="mb-4 mt-1 text-[13px] leading-relaxed text-ai-muted">{tx(C.connectionsHint)}</p>
                                 <ConnectionsManager connections={connections} onUse={() => router.push("/ai")} />
                             </section>
                         )}

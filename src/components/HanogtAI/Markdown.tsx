@@ -94,11 +94,11 @@ export function parseBlocks(source: string): Block[] {
 
 function SafeLink({ href, children, onNavigate }: { href: string; children: ReactNode; onNavigate?: () => void }) {
     if (/^\/(?![/\\])[^\s]*$/.test(href)) {
-        return <Link href={href} onClick={onNavigate} className="font-semibold text-indigo-600 underline decoration-indigo-500/30 underline-offset-2 hover:decoration-indigo-500 dark:text-indigo-300">{children}</Link>;
+        return <Link href={href} onClick={onNavigate} className="font-semibold text-brand-green underline decoration-brand-green/30 underline-offset-2 hover:decoration-brand-green">{children}</Link>;
     }
     if (/^https?:\/\/[^\s]+$/i.test(href)) {
         return (
-            <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-0.5 font-semibold text-indigo-600 underline decoration-indigo-500/30 underline-offset-2 hover:decoration-indigo-500 dark:text-indigo-300">
+            <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-0.5 font-semibold text-brand-green underline decoration-brand-green/30 underline-offset-2 hover:decoration-brand-green">
                 {children}<ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
             </a>
         );
@@ -115,8 +115,8 @@ export function Inline({ text, onNavigate }: { text: string; onNavigate?: () => 
     for (const match of text.matchAll(INLINE)) {
         const start = match.index ?? 0;
         if (start > last) parts.push(text.slice(last, start));
-        if (match[2] !== undefined) parts.push(<code key={key++} className="rounded-md bg-zinc-900/[0.07] px-1.5 py-0.5 font-mono text-[0.86em] text-fuchsia-700 dark:bg-white/10 dark:text-fuchsia-300" dir="ltr">{match[2]}</code>);
-        else if (match[3] !== undefined || match[4] !== undefined) parts.push(<strong key={key++} className="font-bold text-zinc-900 dark:text-white"><Inline text={match[3] ?? match[4]} onNavigate={onNavigate} /></strong>);
+        if (match[2] !== undefined) parts.push(<code key={key++} className="rounded-md bg-zinc-900/[0.07] px-1.5 py-0.5 font-mono text-[0.86em] text-brand-green dark:bg-white/10" dir="ltr">{match[2]}</code>);
+        else if (match[3] !== undefined || match[4] !== undefined) parts.push(<strong key={key++} className="font-bold text-ai-ink"><Inline text={match[3] ?? match[4]} onNavigate={onNavigate} /></strong>);
         else if (match[5] !== undefined || match[6] !== undefined) parts.push(<em key={key++}>{match[5] ?? match[6]}</em>);
         else if (match[7] !== undefined) parts.push(<SafeLink key={key++} href={match[8]} onNavigate={onNavigate}><Inline text={match[7]} onNavigate={onNavigate} /></SafeLink>);
         else if (match[9] !== undefined) parts.push(<SafeLink key={key++} href={match[9]} onNavigate={onNavigate}>{match[9].replace(/^https?:\/\//, "").slice(0, 60)}</SafeLink>);
@@ -158,12 +158,12 @@ export function highlight(code: string, language: string): ReactNode[] {
         const start = match.index ?? 0;
         if (start > last) out.push(code.slice(last, start));
         let className = "";
-        if (token.startsWith("/*") || token.startsWith("//")) className = family === "py" || family === "sh" ? "" : "text-zinc-500 italic";
-        else if (token.startsWith("#")) className = family === "py" || family === "sh" ? "text-zinc-500 italic" : "";
-        else if (token.startsWith("--")) className = family === "sql" || family === "lua" ? "text-zinc-500 italic" : "";
+        if (token.startsWith("/*") || token.startsWith("//")) className = family === "py" || family === "sh" ? "" : "text-ai-muted italic";
+        else if (token.startsWith("#")) className = family === "py" || family === "sh" ? "text-ai-muted italic" : "";
+        else if (token.startsWith("--")) className = family === "sql" || family === "lua" ? "text-ai-muted italic" : "";
         else if (/^["'`]/.test(token)) className = "text-emerald-300";
         else if (/^\d/.test(token)) className = "text-amber-300";
-        else if (words.has(family === "sql" ? token.toLowerCase() : token)) className = "text-fuchsia-400 font-semibold";
+        else if (words.has(family === "sql" ? token.toLowerCase() : token)) className = "text-brand-green font-semibold";
         else if (code[start + token.length] === "(") className = "text-sky-300";
         else if (/^[A-Z][a-zA-Z0-9]+$/.test(token)) className = "text-cyan-300";
         out.push(className ? <span key={key++} className={className}>{token}</span> : token);
@@ -192,18 +192,18 @@ function ArtifactCard({ language, code, onOpen }: { language: string; code: stri
         <button
             type="button"
             onClick={() => onOpen({ id: artifactId(language, code), language, code })}
-            className="group my-2 flex w-full items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 text-start shadow-sm transition hover:border-violet-400/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-violet-400/40"
+            className="group my-2 flex w-full items-center gap-3 rounded-2xl border border-ai-line bg-white p-3 text-start shadow-sm transition hover:border-ai-ink/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 dark:bg-white/[0.03]"
         >
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300"><Icon className="h-5 w-5" aria-hidden /></span>
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-green/10 text-brand-green"><Icon className="h-5 w-5" aria-hidden /></span>
             <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13.5px] font-semibold text-zinc-900 dark:text-white">{title}</span>
-                <span className="block truncate text-[12px] text-zinc-500 dark:text-zinc-400">
+                <span className="block truncate text-[13.5px] font-semibold text-ai-ink">{title}</span>
+                <span className="block truncate text-[12px] text-ai-muted">
                     {web
                         ? tx({ TR: "{lines} satır · önizlemek için tıkla", EN: "{lines} lines · click to preview" }, { lines })
                         : tx({ TR: "{language} · {lines} satır · açmak için tıkla", EN: "{language} · {lines} lines · click to open" }, { language: artifactLanguageName(language), lines })}
                 </span>
             </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400 transition group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden />
+            <ChevronRight className="h-4 w-4 shrink-0 text-ai-muted transition group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden />
         </button>
     );
 }
@@ -225,7 +225,7 @@ function CodeBlock({ language, code, open, onOpenInEditor, onOpenArtifact }: { l
     return (
         <div className="my-2 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-inner" dir="ltr">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px]">
-                <span className="font-mono font-semibold uppercase tracking-wide text-zinc-400">{language || "code"}</span>
+                <span className="font-mono font-semibold uppercase tracking-wide text-ai-muted">{language || "code"}</span>
                 <span className="flex items-center gap-1">
                     {onOpenInEditor && editorLanguage && !open ? (
                         <button type="button" onClick={() => onOpenInEditor(editorLanguage, code)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 font-semibold text-zinc-300 transition hover:bg-white/10 hover:text-white">
@@ -256,13 +256,13 @@ function MarkdownImpl({ text, onNavigate, onOpenInEditor, onOpenArtifact }: { te
                         return <p key={index} className={`${size} pt-1 font-black tracking-tight text-zinc-900 dark:text-white`}><Inline text={block.text} onNavigate={onNavigate} /></p>;
                     }
                     case "hr":
-                        return <hr key={index} className="border-zinc-200 dark:border-white/10" />;
+                        return <hr key={index} className="border-ai-line" />;
                     case "quote":
-                        return <blockquote key={index} className="border-s-4 border-indigo-400/50 ps-3 text-zinc-600 dark:text-zinc-300">{block.lines.map((line, lineIndex) => <p key={lineIndex}><Inline text={line} onNavigate={onNavigate} /></p>)}</blockquote>;
+                        return <blockquote key={index} className="border-s-4 border-ai-line ps-3 text-ai-ink/75">{block.lines.map((line, lineIndex) => <p key={lineIndex}><Inline text={line} onNavigate={onNavigate} /></p>)}</blockquote>;
                     case "list": {
                         const Tag = block.ordered ? "ol" : "ul";
                         return (
-                            <Tag key={index} start={block.ordered ? block.start : undefined} className={`space-y-1 ps-5 ${block.ordered ? "list-decimal marker:font-bold marker:text-indigo-500" : "list-disc marker:text-indigo-500"}`}>
+                            <Tag key={index} start={block.ordered ? block.start : undefined} className={`space-y-1 ps-5 ${block.ordered ? "list-decimal marker:font-bold marker:text-ai-muted" : "list-disc marker:text-ai-muted"}`}>
                                 {block.items.map((item, itemIndex) => (
                                     <li key={itemIndex}>{item.split("\n").map((line, lineIndex) => <Fragment key={lineIndex}>{lineIndex ? <br /> : null}<Inline text={line} onNavigate={onNavigate} /></Fragment>)}</li>
                                 ))}
@@ -271,10 +271,10 @@ function MarkdownImpl({ text, onNavigate, onOpenInEditor, onOpenArtifact }: { te
                     }
                     case "table":
                         return (
-                            <div key={index} className="scrollbar-thin overflow-x-auto rounded-xl border border-zinc-200 dark:border-white/10">
+                            <div key={index} className="scrollbar-thin overflow-x-auto rounded-xl border border-ai-line">
                                 <table className="w-full text-[12.5px]">
-                                    <thead className="bg-zinc-50 dark:bg-white/[0.04]"><tr>{block.header.map((cell, cellIndex) => <th key={cellIndex} className="px-3 py-1.5 font-bold" style={{ textAlign: block.align[cellIndex] ?? "left" }}><Inline text={cell} onNavigate={onNavigate} /></th>)}</tr></thead>
-                                    <tbody>{block.rows.map((row, rowIndex) => <tr key={rowIndex} className="border-t border-zinc-100 dark:border-white/[0.06]">{row.map((cell, cellIndex) => <td key={cellIndex} className="px-3 py-1.5" style={{ textAlign: block.align[cellIndex] ?? "left" }}><Inline text={cell} onNavigate={onNavigate} /></td>)}</tr>)}</tbody>
+                                    <thead className="bg-ai-paper"><tr>{block.header.map((cell, cellIndex) => <th key={cellIndex} className="px-3 py-1.5 font-bold" style={{ textAlign: block.align[cellIndex] ?? "left" }}><Inline text={cell} onNavigate={onNavigate} /></th>)}</tr></thead>
+                                    <tbody>{block.rows.map((row, rowIndex) => <tr key={rowIndex} className="border-t border-ai-line">{row.map((cell, cellIndex) => <td key={cellIndex} className="px-3 py-1.5" style={{ textAlign: block.align[cellIndex] ?? "left" }}><Inline text={cell} onNavigate={onNavigate} /></td>)}</tr>)}</tbody>
                                 </table>
                             </div>
                         );

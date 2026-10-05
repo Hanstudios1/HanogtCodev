@@ -1,4 +1,4 @@
-import { Bot, Code2, Hand, ShieldCheck, Sparkles, Zap, type LucideIcon } from "lucide-react";
+import { Bot, Bug, Calculator, Code2, Gamepad2, Hand, KeyRound, Link2, ShieldAlert, ShieldCheck, Sparkles, UserRound, UsersRound, Zap, type LucideIcon } from "lucide-react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
 import type { AiFailure } from "@/lib/ai/client";
 import type { AiMode } from "@/lib/ai/local-engine";
@@ -40,24 +40,24 @@ export const AGENT_MODE_OPTIONS: Array<{ id: AgentMode; label: Copy; short: Copy
 
 export const AGENT_NEVER: Copy = { TR: "Silme, parola, 2FA, yönetici işlemleri ve başkalarına mesaj gönderme hiçbir modda yapılmaz.", EN: "Deleting, passwords, 2FA, admin work and messaging other people are never done in any mode." };
 
-export const STARTERS: Record<AiMode, Array<{ title: Copy; prompt: Copy }>> = {
+export const STARTERS: Record<AiMode, Array<{ title: Copy; prompt: Copy; icon: LucideIcon }>> = {
     general: [
-        { title: { TR: "Neler yapabilirsin?", EN: "What can you do?" }, prompt: { TR: "Neler yapabilirsin?", EN: "What can you do?" } },
-        { title: { TR: "Platform oyunu yap", EN: "Make a platformer" }, prompt: { TR: "Bana bir platform oyunu yap", EN: "Make me a platformer game" } },
-        { title: { TR: "Çalışma grubu kur", EN: "Create a study group" }, prompt: { TR: "React çalışma grubu kur", EN: "Create a React study group" } },
-        { title: { TR: "Profilimi özetle", EN: "Summarise my profile" }, prompt: { TR: "Profilimde neler var?", EN: "What's on my profile?" } },
+        { title: { TR: "Neler yapabilirsin?", EN: "What can you do?" }, prompt: { TR: "Neler yapabilirsin?", EN: "What can you do?" }, icon: Sparkles },
+        { title: { TR: "Platform oyunu yap", EN: "Make a platformer" }, prompt: { TR: "Bana bir platform oyunu yap", EN: "Make me a platformer game" }, icon: Gamepad2 },
+        { title: { TR: "Çalışma grubu kur", EN: "Create a study group" }, prompt: { TR: "React çalışma grubu kur", EN: "Create a React study group" }, icon: UsersRound },
+        { title: { TR: "Profilimi özetle", EN: "Summarise my profile" }, prompt: { TR: "Profilimde neler var?", EN: "What's on my profile?" }, icon: UserRound },
     ],
     code: [
-        { title: { TR: "Hesap makinesi", EN: "Calculator" }, prompt: { TR: "Python ile hesap makinesi yaz ve editörde aç", EN: "Write a calculator in Python and open it in the editor" } },
-        { title: { TR: "Yılan oyunu", EN: "Snake game" }, prompt: { TR: "HTML ile yılan oyunu yap", EN: "Make a snake game in HTML" } },
-        { title: { TR: "Hatayı açıkla", EN: "Explain an error" }, prompt: { TR: "TypeError: Cannot read properties of undefined ne demek?", EN: "What does TypeError: Cannot read properties of undefined mean?" } },
-        { title: { TR: "Zıplama scripti", EN: "Jump script" }, prompt: { TR: "Hanogt Engine için C# zıplama kodu yaz", EN: "Write a C# jump script for Hanogt Engine" } },
+        { title: { TR: "Hesap makinesi", EN: "Calculator" }, prompt: { TR: "Python ile hesap makinesi yaz ve editörde aç", EN: "Write a calculator in Python and open it in the editor" }, icon: Calculator },
+        { title: { TR: "Yılan oyunu", EN: "Snake game" }, prompt: { TR: "HTML ile yılan oyunu yap", EN: "Make a snake game in HTML" }, icon: Gamepad2 },
+        { title: { TR: "Hatayı açıkla", EN: "Explain an error" }, prompt: { TR: "TypeError: Cannot read properties of undefined ne demek?", EN: "What does TypeError: Cannot read properties of undefined mean?" }, icon: Bug },
+        { title: { TR: "Zıplama scripti", EN: "Jump script" }, prompt: { TR: "Hanogt Engine için C# zıplama kodu yaz", EN: "Write a C# jump script for Hanogt Engine" }, icon: Code2 },
     ],
     security: [
-        { title: { TR: "Bağlantı kontrolü", EN: "Check a link" }, prompt: { TR: "Bu bağlantı güvenli mi? https://", EN: "Is this link safe? https://" } },
-        { title: { TR: "Parola gücü", EN: "Password strength" }, prompt: { TR: "\"Kedi2024!\" parolası güçlü mü?", EN: "Is the password \"Kitty2024!\" strong?" } },
-        { title: { TR: "Hesabım çalındı", EN: "I was hacked" }, prompt: { TR: "Hesabım ele geçirildi galiba, ne yapmalıyım?", EN: "I think my account was hacked, what should I do?" } },
-        { title: { TR: "2FA nasıl açılır?", EN: "Enable 2FA" }, prompt: { TR: "İki adımlı doğrulamayı nasıl açarım?", EN: "How do I turn on two-factor authentication?" } },
+        { title: { TR: "Bağlantı kontrolü", EN: "Check a link" }, prompt: { TR: "Bu bağlantı güvenli mi? https://", EN: "Is this link safe? https://" }, icon: Link2 },
+        { title: { TR: "Parola gücü", EN: "Password strength" }, prompt: { TR: "\"Kedi2024!\" parolası güçlü mü?", EN: "Is the password \"Kitty2024!\" strong?" }, icon: KeyRound },
+        { title: { TR: "Hesabım çalındı", EN: "I was hacked" }, prompt: { TR: "Hesabım ele geçirildi galiba, ne yapmalıyım?", EN: "I think my account was hacked, what should I do?" }, icon: ShieldAlert },
+        { title: { TR: "2FA nasıl açılır?", EN: "Enable 2FA" }, prompt: { TR: "İki adımlı doğrulamayı nasıl açarım?", EN: "How do I turn on two-factor authentication?" }, icon: ShieldCheck },
     ],
 };
 

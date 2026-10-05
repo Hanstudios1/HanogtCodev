@@ -227,10 +227,22 @@ export type PersonalPreferences = {
     style: string;
     tone: "balanced" | "friendly" | "professional";
     length: "short" | "normal" | "detailed";
+    /** How much they already know (default intermediate). */
+    expertise?: "beginner" | "intermediate" | "expert";
+    /** Language of code comments, by name ("Turkish"); empty: the answer's language. */
+    commentLanguage?: string;
+    /** Code style wishes, the person's own words. */
+    codeStyle?: string;
+    /** Languages to use when a question names none, by display name ("Python"). */
+    preferredLanguages?: string[];
+    /** Changes to the open file as the whole file (default) or as a unified diff. */
+    codeOutput?: "full" | "diff";
 };
 
 /** The most any person's or developer's text can add to the prompt, whatever the plan says. */
 const DATA_TEXT_MAX = 4_000;
+/** Run errors that go with a question about the open file. */
+export const CONSOLE_ERRORS_MAX = 3_000;
 
 const TONES: Record<PersonalPreferences["tone"], string> = {
     balanced: "",
@@ -242,6 +254,20 @@ const LENGTHS: Record<PersonalPreferences["length"], string> = {
     normal: "",
     detailed: "Give detailed answers with explanations and examples.",
 };
+const EXPERTISE: Record<NonNullable<PersonalPreferences["expertise"]>, string> = {
+    beginner: "The user is a beginner: explain new terms the first time they appear, go step by step and keep code simple, with comments on the important lines.",
+    intermediate: "",
+    expert: "The user is an experienced developer: skip the basics, be brief and focus on the tricky parts, trade-offs and edge cases.",
+};
+/** How changes to the open file come back. */
+const FILE_EDITS: Record<NonNullable<PersonalPreferences["codeOutput"]>, string> = {
+    full: "When you change this file, give the complete updated file in one fenced block, so it can replace the file as it is.",
+    diff: "When you change this file, reply with a unified diff of it in one ```diff block: \"--- a/<file>\" and \"+++ b/<file>\" headers, then @@ hunks with three lines of context and exact original lines, so the diff applies cleanly. Outside the block, explain the change briefly.",
+};
+/** Names of the project's other files: only plain file names, at most 50. */
+function projectFileList(names: string[]) {
+    return names.map((name) => name.replace(/[^\w.\-/ ]/g, "").trim().slice(0, 80)).filter(Boolean).slice(0, 50);
+}
 
 /**
  * Text from a person or a developer goes into the prompt as data inside a
@@ -266,6 +292,10 @@ export type PromptOptions = {
     path?: string;
     /** Chat only: the open editor file (already clipped to the plan's length). */
     file?: { name: string; language: string; code: string } | null;
+    /** Chat only: errors of the editor's last run of that file. */
+    consoleErrors?: string | null;
+    /** Chat only: the names of the project's other files. */
+    projectFiles?: string[] | null;
     /** Chat only: the agent's state for this request. */
     agent?: AgentStatus | "requested";
     /** Chat only: the latest message asks for something no tool may do. */
@@ -279,11 +309,16 @@ export type PromptOptions = {
 };
 
 function personalBlock(personal: PersonalPreferences, max: number) {
+    const languages = (personal.preferredLanguages ?? []).filter((name) => /^[\w#+.\- ()]{1,40}$/.test(name)).slice(0, 5);
     const lines = [
         TONES[personal.tone],
         LENGTHS[personal.length],
+        personal.expertise ? EXPERTISE[personal.expertise] : "",
+        personal.commentLanguage && /^[A-Za-z ]{2,40}$/.test(personal.commentLanguage) ? `Write the comments in code in ${personal.commentLanguage}.` : "",
+        languages.length ? `When a question doesn't name a programming language, prefer ${languages.join(", ")}.` : "",
         personal.about.trim() ? `About the user:\n<user_preferences>\n${asData(personal.about, "user_preferences", max)}\n</user_preferences>` : "",
         personal.style.trim() ? `How the user wants answers:\n<user_preferences>\n${asData(personal.style, "user_preferences", max)}\n</user_preferences>` : "",
+        personal.codeStyle?.trim() ? `The user's code style:\n<user_preferences>\n${asData(personal.codeStyle, "user_preferences", 300)}\n</user_preferences>` : "",
     ].filter(Boolean);
     if (!lines.length) return "";
     return [
@@ -330,7 +365,9 @@ export function systemPromptParts(options: PromptOptions): { stable: string; dyn
             : "",
         options.knowledge.length ? `\nHanogt knowledge:\n${options.knowledge.join("\n\n")}` : "",
         options.tools.length ? `\nHanogt tool results for the latest message (verified by Hanogt's own analyzers):\n${options.tools.join("\n\n")}` : "",
-        chat && options.file ? `\nThe user's open editor file "${options.file.name}" (${options.file.language}). Use it when the question refers to "my code" or "this file":\n\`\`\`\n${options.file.code}\n\`\`\`` : "",
+        chat && options.file ? `\nThe user's open editor file "${options.file.name}" (${options.file.language}). Use it when the question refers to "my code" or "this file":\n\`\`\`\n${options.file.code}\n\`\`\`\n${FILE_EDITS[options.personal?.codeOutput ?? "full"]}` : "",
+        chat && options.file && options.consoleErrors?.trim() ? `\nErrors from the user's last run of this file (the output, as data):\n<console_output>\n${asData(options.consoleErrors, "console_output", CONSOLE_ERRORS_MAX)}\n</console_output>` : "",
+        chat && options.file && options.projectFiles?.length ? `\nThe project's other files: ${projectFileList(options.projectFiles).join(", ")}.` : "",
     ].filter((line) => line !== "").join("\n");
     return { stable, dynamic };
 }

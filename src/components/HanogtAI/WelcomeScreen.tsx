@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useSyncExternalStore, type ReactNode } from "react";
+import Accented, { accent } from "@/components/Accented";
 import type { AiMode } from "@/lib/ai/local-engine";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { STARTERS } from "./chat-copy";
@@ -30,7 +31,16 @@ function partOfDay(): keyof Pick<typeof C, "morning" | "afternoon" | "evening" |
 
 const noop = () => () => undefined;
 
-/** The empty conversation: a greeting, the composer (on the full page) and suggestion chips. */
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+/** The suggestion icons take the accent's colors in turn: purple, blue, pink, yellow. */
+const ICON_TONES = ["text-violet-600 dark:text-violet-400", "text-blue-600 dark:text-blue-400", "text-pink-600 dark:text-pink-400", "text-amber-600 dark:text-amber-400"];
+
+/**
+ * The empty conversation: the logo and a serif greeting with the person's
+ * name in the accent gradient, the composer (on the full page) and
+ * suggestions, arriving one after another.
+ */
 export default function WelcomeScreen({ variant, mode, userName, onPick, composer }: {
     variant: "panel" | "page";
     mode: AiMode;
@@ -44,29 +54,64 @@ export default function WelcomeScreen({ variant, mode, userName, onPick, compose
     // The time of day is only known in the browser.
     const part = useSyncExternalStore(noop, partOfDay, () => "afternoon" as const);
     const firstName = userName?.split(/\s+/)[0] ?? null;
-    const greeting = firstName ? tx(C.named, { greeting: tx(C[part]), name: firstName }) : tx(C[part]);
+    const greeting = firstName ? tx(C.named, { greeting: tx(C[part]), name: accent(firstName) }) : tx(C[part]);
     const page = variant === "page";
+    const Heading = page ? motion.h1 : motion.h2;
 
     return (
-        <div className={cx("flex flex-col items-center px-4 text-center", page ? "w-full" : "h-full justify-center py-8")}>
-            <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }} className="flex items-center gap-3">
-                <AiAvatar size={page ? "h-10 w-10" : "h-12 w-12"} />
-                {page ? <h1 className="font-serif text-[30px] font-semibold tracking-tight text-zinc-800 sm:text-[38px] dark:text-zinc-100">{greeting}</h1> : null}
-            </motion.div>
-            {!page ? <h2 className="mt-4 font-serif text-[22px] font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">{greeting}</h2> : null}
-            <p className={cx("mt-2 max-w-md leading-relaxed text-zinc-500 dark:text-zinc-400", page ? "text-[14.5px]" : "text-[13px]")}>{tx(C.subtitle[mode])}</p>
-            {composer ? <div className="mt-7 w-full">{composer}</div> : null}
+        <div className={cx("flex flex-col items-center px-4 text-center", page ? "w-full" : "h-full justify-center py-8")} data-ai-welcome>
+            <div className={cx("flex items-center gap-3", !page && "flex-col")}>
+                <motion.span
+                    initial={{ scale: 0.6, rotate: -14, opacity: 0 }}
+                    animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                    whileHover={{ rotate: [0, -10, 10, 0], transition: { duration: 0.5 } }}
+                    className="inline-flex"
+                >
+                    <AiAvatar size={page ? 44 : 48} />
+                </motion.span>
+                <Heading
+                    initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{ duration: 0.6, delay: 0.08, ease: EASE }}
+                    className={cx("font-serif font-normal tracking-tight text-ai-ink", page ? "text-[32px] leading-tight sm:text-[42px]" : "text-[24px] leading-snug")}
+                >
+                    <Accented text={greeting} />
+                </Heading>
+            </div>
+            <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.18, ease: EASE }}
+                className={cx("mt-2 max-w-md leading-relaxed text-ai-muted", page ? "text-[14.5px]" : "text-[13px]")}
+            >
+                {tx(C.subtitle[mode])}
+            </motion.p>
+            {composer ? (
+                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.26, ease: EASE }} className="mt-7 w-full">
+                    {composer}
+                </motion.div>
+            ) : null}
             <div className={cx("mt-5 flex flex-wrap justify-center gap-2", page ? "max-w-3xl" : "max-w-sm")}>
-                {STARTERS[mode].map((starter) => (
-                    <button
-                        key={starter.title.EN}
-                        type="button"
-                        onClick={() => onPick(tx(starter.prompt))}
-                        className="rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[12.5px] font-semibold text-zinc-600 transition hover:border-violet-300 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-300 dark:hover:border-violet-400/40 dark:hover:text-violet-300"
-                    >
-                        {tx(starter.title)}
-                    </button>
-                ))}
+                {STARTERS[mode].map((starter, index) => {
+                    const Icon = starter.icon;
+                    return (
+                        <motion.button
+                            key={`${mode}-${starter.title.EN}`}
+                            type="button"
+                            onClick={() => onPick(tx(starter.prompt))}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.34 + index * 0.06, ease: EASE }}
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="group inline-flex items-center gap-1.5 rounded-full border border-ai-line bg-ai-surface px-3.5 py-1.5 text-[12.5px] font-semibold text-ai-ink/75 shadow-sm shadow-black/[0.02] transition-colors hover:border-ai-ink/25 hover:text-ai-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30"
+                        >
+                            <Icon className={cx("h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6", ICON_TONES[index % ICON_TONES.length])} aria-hidden />
+                            {tx(starter.title)}
+                        </motion.button>
+                    );
+                })}
             </div>
         </div>
     );

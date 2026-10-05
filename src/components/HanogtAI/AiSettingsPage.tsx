@@ -97,15 +97,15 @@ const LENGTH_COPY: Record<AiSettings["length"], Copy> = {
     detailed: { TR: "Ayrıntılı", EN: "Detailed" },
 };
 
-const FIELD = "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[14px] text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-100";
-const LABEL = "block text-[13px] font-semibold text-zinc-700 dark:text-zinc-200";
-const BUTTON = "inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50";
+const FIELD = "w-full rounded-xl border border-ai-line bg-ai-surface px-3 py-2 text-[14px] text-ai-ink outline-none transition placeholder:text-zinc-400 focus:border-ai-ink/40 focus:ring-2 focus:ring-ai-ink/10";
+const LABEL = "block text-[13px] font-semibold text-ai-ink/85";
+const BUTTON = "inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 disabled:opacity-50";
 
 function Section({ id, icon, title, hint, children }: { id: string; icon: ReactNode; title: string; hint?: string; children: ReactNode }) {
     return (
-        <section id={id} className="scroll-mt-24 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-zinc-900 sm:p-6">
-            <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-zinc-900 dark:text-white">{icon}{title}</h2>
-            {hint ? <p className="mt-1 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">{hint}</p> : null}
+        <section id={id} className="scroll-mt-24 rounded-3xl border border-ai-line bg-ai-surface p-5 shadow-sm sm:p-6">
+            <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-ai-ink">{icon}{title}</h2>
+            {hint ? <p className="mt-1 text-[13px] leading-relaxed text-ai-muted">{hint}</p> : null}
             <div className="mt-4 space-y-4">{children}</div>
         </section>
     );
@@ -116,7 +116,7 @@ function Toggle({ checked, onChange, label, hint, name }: { checked: boolean; on
         <label className="flex cursor-pointer items-start justify-between gap-4">
             <span>
                 <span className={LABEL}>{label}</span>
-                {hint ? <span className="mt-0.5 block text-[12px] text-zinc-500 dark:text-zinc-400">{hint}</span> : null}
+                {hint ? <span className="mt-0.5 block text-[12px] text-ai-muted">{hint}</span> : null}
             </span>
             <button
                 type="button"
@@ -125,7 +125,7 @@ function Toggle({ checked, onChange, label, hint, name }: { checked: boolean; on
                 aria-label={label}
                 data-setting={name}
                 onClick={() => onChange(!checked)}
-                className={cx("relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60", checked ? "bg-violet-600" : "bg-zinc-300 dark:bg-zinc-700")}
+                className={cx("relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30", checked ? "bg-brand-green" : "bg-zinc-300 dark:bg-zinc-700")}
             >
                 <span className={cx("inline-block h-5 w-5 rounded-full bg-white shadow transition", checked ? "translate-x-[22px] rtl:-translate-x-[22px]" : "translate-x-0.5 rtl:-translate-x-0.5")} />
             </button>
@@ -219,21 +219,21 @@ export default function AiSettingsPage() {
 
     return (
         <div className="mx-auto max-w-3xl px-4 pb-24 pt-8 sm:px-6">
-            <Link href="/ai" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"><ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />{tx(C.back)}</Link>
-            <h1 className="mt-3 flex items-center gap-2 text-3xl font-black tracking-tight text-zinc-900 dark:text-white"><Settings2 className="h-7 w-7 text-violet-500" aria-hidden />{tx(C.title)}</h1>
-            <p className="mt-2 text-[14px] leading-relaxed text-zinc-500 dark:text-zinc-400">{tx(C.subtitle)}</p>
+            <Link href="/ai" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ai-muted hover:text-ai-ink"><ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />{tx(C.back)}</Link>
+            <h1 className="mt-3 flex items-center gap-2 text-3xl font-black tracking-tight text-ai-ink"><Settings2 className="h-7 w-7 text-brand-green" aria-hidden />{tx(C.title)}</h1>
+            <p className="mt-2 text-[14px] leading-relaxed text-ai-muted">{tx(C.subtitle)}</p>
 
             {status === "unauthenticated" ? (
-                <div className="mt-8 rounded-3xl border border-zinc-200 bg-white p-6 text-center dark:border-white/10 dark:bg-zinc-900">
-                    <p className="text-[14px] text-zinc-600 dark:text-zinc-300">{tx(C.signIn)}</p>
-                    <Link href="/login?callbackUrl=%2Fai%2Fsettings" className={cx(BUTTON, "mt-4 bg-violet-600 text-white hover:bg-violet-500")}>{tx(C.signInButton)}</Link>
+                <div className="mt-8 rounded-3xl border border-ai-line bg-ai-surface p-6 text-center">
+                    <p className="text-[14px] text-ai-ink/75">{tx(C.signIn)}</p>
+                    <Link href="/login?callbackUrl=%2Fai%2Fsettings" className={cx(BUTTON, "mt-4 bg-ai-ink text-ai-paper hover:opacity-90")}>{tx(C.signInButton)}</Link>
                 </div>
             ) : !draft ? (
-                <div className="mt-8 flex items-center gap-2 text-[14px] text-zinc-500">
+                <div className="mt-8 flex items-center gap-2 text-[14px] text-ai-muted">
                     {settings.failed ? (
                         <>
                             <span>{tx(C.loadFailed)}</span>
-                            <button type="button" onClick={settings.refresh} className="font-semibold text-violet-600 underline dark:text-violet-300">{tx(C.retry)}</button>
+                            <button type="button" onClick={settings.refresh} className="font-semibold text-brand-green underline">{tx(C.retry)}</button>
                         </>
                     ) : (
                         <><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx(C.loading)}</>
@@ -241,7 +241,7 @@ export default function AiSettingsPage() {
                 </div>
             ) : (
                 <div className="mt-8 space-y-6" data-ai-settings-form>
-                    <Section id="personal" icon={<UserRound className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.personal)} hint={tx(C.personalHint)}>
+                    <Section id="personal" icon={<UserRound className="h-5 w-5 text-brand-green" aria-hidden />} title={tx(C.personal)} hint={tx(C.personalHint)}>
                         {(["about", "style"] as const).map((field) => (
                             <div key={field}>
                                 <label className={LABEL} htmlFor={`ai-${field}`}>{tx(field === "about" ? C.about : C.style)}</label>
@@ -255,11 +255,11 @@ export default function AiSettingsPage() {
                                     onChange={(event) => update(field, event.target.value)}
                                     className={cx(FIELD, "mt-1.5 resize-y leading-relaxed")}
                                 />
-                                <p className={cx("mt-1 text-end text-[11.5px] tabular-nums", draft[field].length >= limit ? "font-semibold text-amber-600 dark:text-amber-300" : "text-zinc-400")}>{tx(C.chars, { count: draft[field].length, max: limit })}</p>
+                                <p className={cx("mt-1 text-end text-[11.5px] tabular-nums", draft[field].length >= limit ? "font-semibold text-amber-600 dark:text-amber-300" : "text-ai-muted")}>{tx(C.chars, { count: draft[field].length, max: limit })}</p>
                             </div>
                         ))}
-                        <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
-                            {tx(C.planLimit, { plan: planName, max: limit })} <Link href="/plans" className="font-semibold text-violet-600 hover:underline dark:text-violet-300">{tx(C.seePlans)}</Link>
+                        <p className="text-[12px] text-ai-muted">
+                            {tx(C.planLimit, { plan: planName, max: limit })} <Link href="/plans" className="font-semibold text-brand-green hover:underline">{tx(C.seePlans)}</Link>
                         </p>
                         <div className="grid gap-4 sm:grid-cols-3">
                             <div>
@@ -284,7 +284,7 @@ export default function AiSettingsPage() {
                         </div>
                     </Section>
 
-                    <Section id="chat" icon={<MessagesSquare className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.chat)} hint={tx(C.chatHint)}>
+                    <Section id="chat" icon={<MessagesSquare className="h-5 w-5 text-brand-green" aria-hidden />} title={tx(C.chat)} hint={tx(C.chatHint)}>
                         <div className="grid gap-4 sm:grid-cols-3">
                             <div>
                                 <label className={LABEL} htmlFor="ai-mode">{tx(C.defaultMode)}</label>
@@ -299,7 +299,7 @@ export default function AiSettingsPage() {
                                     {activeConnections.map((item) => <option key={item.id} value={item.id}>{`${item.label} · ${item.model}`}</option>)}
                                     {draft.defaultModel !== DEFAULT_CONNECTION && !activeConnections.some((item) => item.id === draft.defaultModel) ? <option value={draft.defaultModel}>{draft.defaultModel}</option> : null}
                                 </select>
-                                <Link href="/ai/api#connections" className="mt-1.5 inline-block text-[12px] font-semibold text-violet-600 hover:underline dark:text-violet-300" data-settings-connections-link>{tx(C.manageConnections)}</Link>
+                                <Link href="/ai/api#connections" className="mt-1.5 inline-block text-[12px] font-semibold text-brand-green hover:underline" data-settings-connections-link>{tx(C.manageConnections)}</Link>
                             </div>
                             <div>
                                 <label className={LABEL} htmlFor="ai-agent">{tx(C.agentMode)}</label>
@@ -311,7 +311,7 @@ export default function AiSettingsPage() {
                         <Toggle name="attachEditorFile" checked={draft.attachEditorFile} onChange={(value) => update("attachEditorFile", value)} label={tx(C.attachFile)} hint={tx(C.attachHint)} />
                     </Section>
 
-                    <Section id="thinking" icon={<Brain className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.thinkingSection)} hint={tx(C.thinkingSectionHint)}>
+                    <Section id="thinking" icon={<Brain className="h-5 w-5 text-brand-green" aria-hidden />} title={tx(C.thinkingSection)} hint={tx(C.thinkingSectionHint)}>
                         <div className="max-w-sm">
                             <label className={LABEL} htmlFor="ai-thinking">{tx(C.thinking)}</label>
                             <select id="ai-thinking" data-setting="thinking" value={draft.thinking} onChange={(event) => update("thinking", event.target.value as AiSettings["thinking"])} className={cx(FIELD, "mt-1.5")}>
@@ -321,53 +321,53 @@ export default function AiSettingsPage() {
                         <Toggle name="showThinking" checked={draft.showThinking} onChange={(value) => update("showThinking", value)} label={tx(C.showThinking)} hint={tx(C.showThinkingHint)} />
                     </Section>
 
-                    <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-zinc-200 bg-white/90 px-4 py-3 shadow-lg backdrop-blur dark:border-white/10 dark:bg-zinc-900/90">
+                    <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-ai-line bg-white/90 px-4 py-3 shadow-lg backdrop-blur dark:bg-zinc-900/90">
                         {message ? (
                             <p role={message.tone === "error" ? "alert" : "status"} className={cx("me-auto inline-flex items-center gap-1.5 text-[13px] font-semibold", message.tone === "error" ? "text-rose-600 dark:text-rose-300" : "text-emerald-600 dark:text-emerald-300")} data-settings-message>
                                 {message.tone === "success" ? <Check className="h-4 w-4" aria-hidden /> : null}{message.text}
                             </p>
-                        ) : dirty ? <p className="me-auto text-[13px] text-zinc-500">{tx(C.unsaved)}</p> : null}
-                        {dirty ? <button type="button" onClick={() => server && setDraft(server.settings)} disabled={busy} className={cx(BUTTON, "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10")}>{tx(C.discard)}</button> : null}
-                        <button type="button" onClick={() => void save()} disabled={busy || !dirty} className={cx(BUTTON, "bg-violet-600 text-white hover:bg-violet-500")} data-settings-save>
+                        ) : dirty ? <p className="me-auto text-[13px] text-ai-muted">{tx(C.unsaved)}</p> : null}
+                        {dirty ? <button type="button" onClick={() => server && setDraft(server.settings)} disabled={busy} className={cx(BUTTON, "text-ai-ink/75 hover:bg-ai-ink/[0.06]")}>{tx(C.discard)}</button> : null}
+                        <button type="button" onClick={() => void save()} disabled={busy || !dirty} className={cx(BUTTON, "bg-ai-ink text-ai-paper hover:opacity-90")} data-settings-save>
                             {busy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Check className="h-4 w-4" aria-hidden />}{tx(C.save)}
                         </button>
                     </div>
 
-                    <Section id="history" icon={<History className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.history)} hint={tx(C.historyHint)}>
-                        <p className="text-[13px] text-zinc-600 dark:text-zinc-300">{tx(C.chatCount, { count: conversations.length })}</p>
+                    <Section id="history" icon={<History className="h-5 w-5 text-brand-green" aria-hidden />} title={tx(C.history)} hint={tx(C.historyHint)}>
+                        <p className="text-[13px] text-ai-ink/75">{tx(C.chatCount, { count: conversations.length })}</p>
                         <div className="flex flex-wrap gap-2">
-                            <button type="button" onClick={exportChats} disabled={!conversations.length} className={cx(BUTTON, "border border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5")}><Download className="h-4 w-4" aria-hidden />{tx(C.export)}</button>
+                            <button type="button" onClick={exportChats} disabled={!conversations.length} className={cx(BUTTON, "border border-ai-line text-ai-ink/85 hover:bg-ai-ink/[0.04]")}><Download className="h-4 w-4" aria-hidden />{tx(C.export)}</button>
                             <button type="button" onClick={deleteChats} disabled={!conversations.length} className={cx(BUTTON, "border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10")} data-delete-chats><Trash2 className="h-4 w-4" aria-hidden />{tx(C.deleteAll)}</button>
                         </div>
                         <Toggle name="clearOnSignOut" checked={clearOnSignOut} onChange={setClearChatsOnSignOut} label={tx(C.clearOnSignOut)} hint={tx(C.clearOnSignOutHint)} />
                     </Section>
 
-                    <Section id="plan-usage" icon={<Gauge className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.usage)}>
-                        {usage === "failed" ? <p className="text-[13px] text-zinc-500">{tx(C.usageFailed)}</p> : usage ? (
+                    <Section id="plan-usage" icon={<Gauge className="h-5 w-5 text-brand-green" aria-hidden />} title={tx(C.usage)}>
+                        {usage === "failed" ? <p className="text-[13px] text-ai-muted">{tx(C.usageFailed)}</p> : usage ? (
                             <div className="flex flex-col gap-3">
                                 <UsageList usage={usage} />
-                                <Link href="/plans#usage" className="text-[13px] font-semibold text-violet-600 hover:underline dark:text-violet-300">{tx(C.managePlan)}</Link>
+                                <Link href="/plans#usage" className="text-[13px] font-semibold text-brand-green hover:underline">{tx(C.managePlan)}</Link>
                             </div>
-                        ) : <LoaderCircle className="h-4 w-4 animate-spin text-zinc-400" aria-hidden />}
+                        ) : <LoaderCircle className="h-4 w-4 animate-spin text-ai-muted" aria-hidden />}
                     </Section>
 
-                    <Section id="early-access" icon={<FlaskConical className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.early)} hint={tx(C.earlyHint)}>
-                        {features && !features.rollout.length ? <p className="text-[13px] text-zinc-500 dark:text-zinc-400" data-early-access-empty>{tx(C.noneEarly)}</p> : null}
-                        <ul className="divide-y divide-zinc-100 dark:divide-white/[0.06]" data-early-access>
+                    <Section id="early-access" icon={<FlaskConical className="h-5 w-5 text-brand-green" aria-hidden />} title={tx(C.early)} hint={tx(C.earlyHint)}>
+                        {features && !features.rollout.length ? <p className="text-[13px] text-ai-muted" data-early-access-empty>{tx(C.noneEarly)}</p> : null}
+                        <ul className="divide-y divide-ai-line" data-early-access>
                             {(features?.rollout ?? []).map((id) => {
                                 const open = features?.open[id] ?? false;
                                 return (
                                     <li key={id} className="flex items-start justify-between gap-3 py-2.5">
                                         <span>
-                                            <span className="flex items-center gap-1.5 text-[14px] font-semibold text-zinc-800 dark:text-zinc-100"><Sparkles className="h-3.5 w-3.5 text-fuchsia-500" aria-hidden />{tx(FEATURES[id].title)}</span>
-                                            <span className="mt-0.5 block text-[12.5px] text-zinc-500 dark:text-zinc-400">{tx(FEATURES[id].description)}</span>
+                                            <span className="flex items-center gap-1.5 text-[14px] font-semibold text-ai-ink"><Sparkles className="h-3.5 w-3.5 text-brand-green" aria-hidden />{tx(FEATURES[id].title)}</span>
+                                            <span className="mt-0.5 block text-[12.5px] text-ai-muted">{tx(FEATURES[id].description)}</span>
                                         </span>
-                                        <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold", open ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-zinc-500/10 text-zinc-500")} data-feature-state={id}>{tx(open ? C.open : C.notYet)}</span>
+                                        <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold", open ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-zinc-500/10 text-ai-muted")} data-feature-state={id}>{tx(open ? C.open : C.notYet)}</span>
                                     </li>
                                 );
                             })}
                         </ul>
-                        {server?.plan !== "pro" ? <p className="text-[12.5px] text-zinc-500 dark:text-zinc-400">{tx(C.earlyPro)} <Link href="/plans" className="font-semibold text-violet-600 hover:underline dark:text-violet-300">{tx(C.seePlans)}</Link></p> : null}
+                        {server?.plan !== "pro" ? <p className="text-[12.5px] text-ai-muted">{tx(C.earlyPro)} <Link href="/plans" className="font-semibold text-brand-green hover:underline">{tx(C.seePlans)}</Link></p> : null}
                     </Section>
                 </div>
             )}

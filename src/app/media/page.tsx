@@ -758,7 +758,7 @@ export default function MediaPage() {
                     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="grid gap-8 lg:grid-cols-[1fr_380px] lg:items-end">
                         <div>
                             <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300"><Sparkles className="h-3.5 w-3.5" aria-hidden /> {tx({ TR: "Topluluk kod vitrini", EN: "Community code showcase" })}</span>
-                            <h1 className="max-w-3xl text-4xl font-black tracking-tight sm:text-6xl">Hanogt <span className="bg-gradient-to-r from-blue-500 to-violet-500 bg-clip-text text-transparent">Media</span></h1>
+                            <h1 className="max-w-3xl text-4xl font-black tracking-tight sm:text-6xl">Hanogt <span className="text-gradient animate-gradient">Media</span></h1>
                             <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">{tx({ TR: "Projeleri keşfedin, kaynak dosyalarını inceleyin, indirin ve geliştiricilere geri bildirim verin. Yayınlar güvenlik kontrolünden geçirilir; sahip e-postaları herkese açılmaz.", EN: "Discover projects, read their source files, download them and give developers feedback. Posts go through a security check, and owners' e-mail addresses are never shown." })}</p>
                         </div>
                         <div className={`${panel} rounded-3xl p-5`}>

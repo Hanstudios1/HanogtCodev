@@ -44,6 +44,7 @@ import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-t
 import { storedPublication, useMediaPublication } from "@/components/Editor/useMediaPublication";
 import { useFirebaseBridge, useRawSession } from "@/components/Provider";
 import { publishAiContext } from "@/lib/ai/context-store";
+import { useApplyRequests, type ApplyRequest } from "@/lib/ai/editor-apply";
 import { COLLAB_COPY, COLLAB_ERROR_COPY, COLLAB_NOTICE_COPY, collabNoticeToast } from "@/lib/collab/copy";
 import type { CollabFileContent } from "@/lib/collab/doc";
 import type { CollabClosed } from "@/lib/collab/session-client";
@@ -434,14 +435,30 @@ function EditorContent() {
     const isWebProject = tabs.some((tab) => tab.lang === "html");
     const modShortcut = (key: string, shift = false) => formatShortcut(shift ? ["Mod", "Shift", key] : ["Mod", key], mac);
 
-    // The open file goes to Hanogt AI (the dock and its "attach the open file" switch), a moment after typing stops.
+    // The open file goes to Hanogt AI (the dock and its "attach the open file" switch), a moment after typing stops,
+    // with the errors of its last run and the names of the other files (sent only when the AI settings allow).
     const aiCode = activeTab?.code;
     const aiLanguage = activeTab?.lang;
     const aiFileName = activeTab?.name;
+    const aiTabId = activeTab?.id;
+    const aiRunErrors = useMemo(() => {
+        const job = run?.status === "done" ? run.entries.find((entry) => entry.tabId === aiTabId)?.job : null;
+        if (!job || (job.run.code === 0 && !job.run.stderr.trim() && !job.failure)) return "";
+        return (job.run.stderr.trim() || job.run.output).slice(-3_000);
+    }, [run, aiTabId]);
+    const aiOtherFiles = useMemo(() => tabs.filter((tab) => tab.id !== aiTabId).map((tab) => tab.name).join("\n"), [tabs, aiTabId]);
     useEffect(() => {
-        const timer = window.setTimeout(() => publishAiContext(aiFileName === undefined ? { path: "/editor" } : { code: aiCode, language: aiLanguage, fileName: aiFileName, path: "/editor" }), 300);
+        const timer = window.setTimeout(() => publishAiContext(aiFileName === undefined ? { path: "/editor" } : {
+            code: aiCode,
+            language: aiLanguage,
+            fileName: aiFileName,
+            path: "/editor",
+            tabId: aiTabId,
+            ...(aiRunErrors ? { consoleErrors: aiRunErrors } : {}),
+            ...(aiOtherFiles ? { projectFiles: aiOtherFiles.split("\n") } : {}),
+        }), 300);
         return () => window.clearTimeout(timer);
-    }, [aiCode, aiLanguage, aiFileName]);
+    }, [aiCode, aiLanguage, aiFileName, aiTabId, aiRunErrors, aiOtherFiles]);
     useEffect(() => () => publishAiContext(null), []);
 
     // ------------------------------------------------------------------ loading
@@ -664,6 +681,25 @@ function EditorContent() {
         const code = value ?? "";
         setTabs((current) => current.map((tab) => (tab.id === shownTabId && tab.code !== code ? { ...tab, code, isSaved: false } : tab)));
     }, [setTabs, shownTabId]);
+
+    // "Apply to editor" from Hanogt AI: the tab on screen changes through Monaco, so Undo takes it back;
+    // another tab is changed directly and brought to the front. A file that changed since Hanogt AI read it is only
+    // overwritten once the person confirms in the chat.
+    useApplyRequests((request: ApplyRequest) => {
+        const target = (request.tabId ? tabs.find((tab) => tab.id === request.tabId) : undefined) ?? tabs.find((tab) => tab.name === request.fileName);
+        if (!target) return "missing";
+        if (target.code !== request.base && !request.force) return "changed";
+        const model = target.id === shownTabId ? editorInstance?.getModel() : null;
+        if (model && editorInstance) {
+            editorInstance.pushUndoStop();
+            editorInstance.executeEdits("hanogt-ai", [{ range: model.getFullModelRange(), text: request.code, forceMoveMarkers: true }]);
+            editorInstance.pushUndoStop();
+        } else {
+            setTabs((current) => current.map((tab) => (tab.id === target.id ? { ...tab, code: request.code, isSaved: false } : tab)));
+            setActiveTabId(target.id);
+        }
+        return "applied";
+    });
 
     /** Removes tabs (never the last one) and activates a neighbour of the active tab when it goes. */
     const removeTabs = useCallback((ids: string[]) => {

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, type ReactNode } from "react";
+import Accented, { accent } from "@/components/Accented";
 import DeleteProjectModal from "@/components/DeleteProjectModal";
 import Header from "@/components/Header";
 import OptimizedImage from "@/components/OptimizedImage";
@@ -41,6 +42,7 @@ const CODE_LANGUAGES = LANGUAGES
 
 const C = {
     welcome: { TR: "Tekrar hoş geldin", EN: "Welcome back" },
+    welcomeNamed: { TR: "Tekrar hoş geldin, {name}", EN: "Welcome back, {name}" },
     codeStat: { TR: "kod projesi", EN: "code projects" },
     gameStat: { TR: "oyun projesi", EN: "game projects" },
     codeCard: { TR: "Kod projesi", EN: "Code project" },
@@ -412,7 +414,7 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div className="min-w-0">
                             <p className="mb-2 text-sm font-semibold text-brand-green">
-                                {tx(C.welcome)}{firstName ? `, ${firstName}` : ""}
+                                {firstName ? <Accented text={tx(C.welcomeNamed, { name: accent(firstName) })} /> : tx(C.welcome)}
                             </p>
                             <h1 className="text-3xl font-black tracking-tight sm:text-4xl">{t("dashboard_title")}</h1>
                             <p className="mt-2 max-w-xl text-zinc-500 dark:text-zinc-400">{t("dashboard_desc")}</p>

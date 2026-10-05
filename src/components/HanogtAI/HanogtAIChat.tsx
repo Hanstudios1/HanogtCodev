@@ -4,16 +4,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import { KeyRound, Maximize2, Menu as MenuIcon, MessageSquarePlus, PanelLeftOpen, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { AiMessage } from "@/lib/ai/conversations";
+import { codeBlocks } from "@/lib/ai/file-edit";
 import { currentWindow } from "@/lib/ai/usage";
 import { openInEditor } from "@/lib/editor-bridge";
 import { useI18n } from "@/lib/i18n";
 import { normalizeLanguageId } from "@/lib/runtimes/languages";
 import ArtifactPanel from "./ArtifactPanel";
-import { artifactFileName, type ChatArtifact } from "./artifacts";
+import { artifactFileName, artifactId, isArtifactCode, type ChatArtifact } from "./artifacts";
 import ChatComposer from "./ChatComposer";
 import ChatMessage from "./ChatMessage";
 import ChatSidebar from "./ChatSidebar";
 import ConnectionsDialog from "./ConnectionsDialog";
+import { proposalOf } from "./proposals";
+import RecentChats from "./RecentChats";
 import SignInGate from "./SignInGate";
 import { useHanogtChat, type ChatLaunch } from "./useHanogtChat";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
@@ -59,10 +63,28 @@ function setSidebarHidden(hidden: boolean) {
     window.dispatchEvent(new Event(SIDEBAR_EVENT));
 }
 
+// Artifacts open by themselves only where the side panel fits next to the conversation.
+const WIDE = "(min-width: 1024px)";
+function subscribeWide(listener: () => void) {
+    const query = window.matchMedia(WIDE);
+    query.addEventListener("change", listener);
+    return () => query.removeEventListener("change", listener);
+}
+const readWide = () => window.matchMedia(WIDE).matches;
+
+/** The artifact a finished answer would open: its last long code block or web page (not a change to the open file, which has its own card). */
+function answerArtifact(message: AiMessage): ChatArtifact | null {
+    if (message.role !== "assistant" || message.error || !message.content || proposalOf(message)) return null;
+    const blocks = codeBlocks(message.content).filter((block) => isArtifactCode(block.lang, block.code));
+    const block = blocks[blocks.length - 1];
+    return block ? { id: artifactId(block.lang, block.code), language: block.lang, code: block.code } : null;
+}
+
 /**
- * Hanogt AI chat. `page` is the full-screen /ai experience (sidebar, centered
- * conversation, artifact panel); `panel` is the compact floating dock that can
- * open the same conversation full screen.
+ * Hanogt AI chat. `page` is the full-screen /ai experience (sidebar with
+ * chats and tasks, centered conversation on paper, artifact panel); `panel`
+ * is the compact floating dock that can switch between recent chats and open
+ * the same conversation full screen.
  */
 export default function HanogtAIChat({ variant, onClose, launch }: { variant: "panel" | "page"; onClose?: () => void; launch?: ChatLaunch }) {
     const { tx, dir } = useI18n();
@@ -76,11 +98,23 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const stickToBottom = useRef(true);
     const [shownConversation, setShownConversation] = useState<string | null>(chat.activeId);
+    const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
+    const streamingId = streaming?.messageId ?? null;
+    const [watchedId, setWatchedId] = useState<string | null>(null);
 
     // Switching conversations closes the artifact of the previous one (adjusted while rendering).
     if (shownConversation !== chat.activeId) {
         setShownConversation(chat.activeId);
         setArtifact(null);
+    }
+
+    // When an answer finishes with a long piece of code or a web page, it opens in the side panel (a setting).
+    if (streamingId !== null && watchedId !== streamingId) setWatchedId(streamingId);
+    if (streamingId === null && watchedId !== null) {
+        setWatchedId(null);
+        const finished = messages.find((message) => message.id === watchedId);
+        const next = variant === "page" && wide && chat.settings?.autoOpenArtifacts !== false && finished ? answerArtifact(finished) : null;
+        if (next) setArtifact(next);
     }
 
     // Keep the newest message in view unless the user scrolled up.
@@ -173,6 +207,8 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
             onAttach={(file) => void chat.attachFile(file)}
             onRemoveAttachment={() => chat.setAttachment(null)}
             attachError={chat.attachError}
+            sendShortcut={chat.settings?.sendShortcut}
+            dictationLanguage={chat.settings?.dictationLanguage}
             editorContext={chat.editorContext}
             hasEditorFile={chat.hasEditorFile}
             attachEditorFile={chat.attachEditorFile}
@@ -230,6 +266,11 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         onOpenInEditor={openCodeInEditor}
                         onOpenArtifact={setArtifact}
                         onNavigate={closePanelOnNavigate}
+                        editorPresent={chat.editorPresent}
+                        onApplyEdit={(force) => chat.applyEdit(message.id, force)}
+                        onDismissEdit={() => chat.dismissEdit(message.id)}
+                        answerFont={chat.settings?.answerFont ?? "serif"}
+                        speechOptions={{ voiceName: chat.settings?.answerVoice || undefined, rate: chat.settings?.answerVoiceRate }}
                     />
                 ))}
             </div>
@@ -257,16 +298,19 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                 transition={{ type: "spring", stiffness: 320, damping: 28 }}
                 role="dialog"
                 aria-label="Hanogt AI"
-                className="fixed bottom-3 end-3 z-[120] flex h-[min(680px,calc(100dvh-5rem))] w-[min(440px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl shadow-zinc-900/20 dark:border-white/10 dark:bg-zinc-900"
+                className="fixed bottom-3 end-3 z-[120] flex h-[min(680px,calc(100dvh-5rem))] w-[min(440px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-3xl border border-ai-line bg-ai-paper shadow-2xl shadow-zinc-900/20"
             >
-                <header className="flex items-center gap-2.5 border-b border-zinc-200/80 px-3.5 py-3 dark:border-white/[0.06]">
-                    <AiAvatar size="h-9 w-9" />
+                <header className="flex items-center gap-2 border-b border-ai-line px-3 py-2.5">
+                    <motion.span className="inline-flex shrink-0" whileHover={{ rotate: [0, -10, 10, 0], transition: { duration: 0.5 } }} animate={busy ? { scale: [1, 1.08, 1] } : { scale: 1 }} transition={busy ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : undefined}>
+                        <AiAvatar size={30} />
+                    </motion.span>
                     <div className="min-w-0 flex-1">
-                        <h2 className="flex items-center gap-1.5 truncate text-[14.5px] font-black tracking-tight text-zinc-900 dark:text-white">
-                            {active?.title || "Hanogt AI"}
-                            <span className={cx("h-2 w-2 shrink-0 rounded-full", chat.signedIn ? "bg-emerald-500" : "bg-amber-500")} aria-hidden />
-                        </h2>
-                        <p className="truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">{engineLabel}</p>
+                        {gated ? (
+                            <h2 className="truncate px-1.5 text-[14.5px] font-bold tracking-tight text-ai-ink">Hanogt AI</h2>
+                        ) : (
+                            <RecentChats conversations={chat.conversations} activeId={chat.activeId} title={active?.title || "Hanogt AI"} onSelect={chat.selectConversation} onNavigate={onClose} />
+                        )}
+                        <p className="flex items-center gap-1.5 truncate px-1.5 text-[11px] text-ai-muted"><span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", chat.signedIn ? "bg-emerald-500" : "bg-amber-500")} aria-hidden />{engineLabel}</p>
                     </div>
                     {meter}
                     {!gated ? <Link href="/ai/settings" onClick={closePanelOnNavigate} className={ICON_BUTTON} title={tx(C.settings)} aria-label={tx(C.settings)}><Settings2 className="h-4.5 w-4.5" /></Link> : null}
@@ -280,7 +324,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                     ) : (
                         <>
                             {messages.length ? messageList : <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">{welcome}</div>}
-                            <div className="border-t border-zinc-200/60 p-3 dark:border-white/[0.06]">{composer(false)}</div>
+                            <div className="border-t border-ai-line p-3">{composer(false)}</div>
                         </>
                     )}
                     <AnimatePresence>
@@ -297,6 +341,7 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
         <ChatSidebar
             conversations={chat.conversations}
             activeId={chat.activeId}
+            streamingId={streamingId}
             onSelect={(id) => {
                 chat.selectConversation(id);
                 setDrawerOpen(false);
@@ -312,14 +357,14 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
 
     if (gated) {
         return (
-            <div className="flex h-[calc(100dvh-4rem)] items-center justify-center overflow-y-auto bg-[#fbfaf8] dark:bg-zinc-900/60">
+            <div className="flex h-[calc(100dvh-4rem)] items-center justify-center overflow-y-auto bg-ai-paper">
                 <SignInGate variant="page" />
             </div>
         );
     }
 
     return (
-        <div className="flex h-[calc(100dvh-4rem)] overflow-hidden bg-[#fbfaf8] dark:bg-zinc-900/60">
+        <div className="flex h-[calc(100dvh-4rem)] overflow-hidden bg-ai-paper">
             {!sidebarHidden ? <div className="hidden lg:flex">{sidebar(false)}</div> : null}
             <AnimatePresence>
                 {drawerOpen ? (
@@ -345,8 +390,8 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                     <button type="button" onClick={() => setDrawerOpen(true)} className={cx(ICON_BUTTON, "lg:hidden")} title={tx(C.chats)} aria-label={tx(C.chats)}><MenuIcon className="h-5 w-5" /></button>
                     {sidebarHidden ? <button type="button" onClick={() => setSidebarHidden(false)} className={cx(ICON_BUTTON, "hidden lg:inline-flex")} title={tx(C.showSidebar)} aria-label={tx(C.showSidebar)}><PanelLeftOpen className="h-5 w-5" /></button> : null}
                     <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14px] font-semibold text-zinc-800 dark:text-zinc-100">{active?.title || "Hanogt AI"}</p>
-                        <p className="flex items-center gap-1.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400"><span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", chat.signedIn ? "bg-emerald-500" : "bg-amber-500")} aria-hidden />{engineLabel}</p>
+                        <p className="truncate text-[14px] font-semibold text-ai-ink">{active?.title || "Hanogt AI"}</p>
+                        <p className="flex items-center gap-1.5 truncate text-[11px] text-ai-muted"><span className={cx("h-1.5 w-1.5 shrink-0 rounded-full", chat.signedIn ? "bg-emerald-500" : "bg-amber-500")} aria-hidden />{engineLabel}</p>
                     </div>
                     {meter}
                     {chat.signedIn ? <Link href="/ai/api" className={ICON_BUTTON} title={tx(C.api)} aria-label={tx(C.api)} data-ai-api-button><KeyRound className="h-5 w-5" /></Link> : null}

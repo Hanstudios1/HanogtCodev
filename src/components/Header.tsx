@@ -252,7 +252,7 @@ export default function Header() {
                             <ProductLogo product="hanogt" size={36} priority />
                         </span>
                         <span className="hidden text-[17px] font-black tracking-tight text-zinc-900 sm:block dark:text-white">
-                            Hanogt <span className="text-brand-green">Codev</span>
+                            Hanogt <span className="text-gradient">Codev</span>
                         </span>
                     </Link>
 

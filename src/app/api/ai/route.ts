@@ -7,10 +7,11 @@ import { WIRE_CONTENT_TYPE, WIRE_HEADER, WIRE_VERSION } from "@/lib/ai/stream-pr
 import { reasoningOf, splitThinkingText, stripThinkBlocks, wantsThinking, type ThinkingStep } from "@/lib/ai/thinking";
 import type { WindowQuota } from "@/lib/ai/usage";
 import { PLAN_AI_FEATURES, type PlanId } from "@/lib/plans";
+import { languageDisplayName } from "@/lib/runtimes/languages";
 import { getActiveSession } from "@/lib/server/active-session";
 import { classifyProviderFailure, markUsed, resolveConnectionForChat, shouldRecordUse, type ResolvedConnection } from "@/lib/server/ai-connections";
 import { enforceHanogtAi, enforceOwnKeys, quotaHeaders, refundHanogtAi, refusalDetails, type QuotaPass, type QuotaRefusal } from "@/lib/server/ai-usage";
-import { analyzeMessage, clip, hanogtRequestBody, knowledgeNotes, providerConfig, systemPrompt, type AgentStatus, type AiAnswerMode, type PromptOptions } from "@/lib/server/hanogt-ai";
+import { LANGUAGE_NAMES, analyzeMessage, clip, hanogtRequestBody, knowledgeNotes, providerConfig, systemPrompt, type AgentStatus, type AiAnswerMode, type PersonalPreferences, type PromptOptions } from "@/lib/server/hanogt-ai";
 import { chatOutputStream, collectToolCalls, trailerCalls, type CallAccumulator, type ToolCallDelta } from "@/lib/server/hanogt-ai-stream";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { readJsonBody } from "@/lib/server/validate";
@@ -92,6 +93,9 @@ export async function POST(request: NextRequest) {
     const contextCode = typeof context.code === "string" ? context.code.replace(/\0/g, "") : "";
     const fileName = typeof context.fileName === "string" ? context.fileName.replace(/[^\w.\- ]/g, "").slice(0, 80) || "main" : "main";
     const fileLanguage = typeof context.language === "string" ? context.language.replace(/[^\w#+-]/g, "").slice(0, 20) : "text";
+    // With the open file only: the errors of its last run and the names of the project's other files.
+    const consoleErrors = typeof context.consoleErrors === "string" ? context.consoleErrors.replace(/\0/g, "").slice(-6_000) : "";
+    const projectFiles = Array.isArray(context.projectFiles) ? context.projectFiles.filter((name): name is string => typeof name === "string").slice(0, 50) : [];
 
     let target: { apiKey: string; baseUrl: string; model: string; connection: ResolvedConnection | null; extraBody: Record<string, unknown> };
     // The window this message was counted in; every answer reports it (X-Hanogt-AI-Window-*) for the usage meter.
@@ -136,7 +140,17 @@ export async function POST(request: NextRequest) {
     // The person's Hanogt AI settings, from the user document the session check has read (cut to the plan).
     const settings = normalizeAiSettings(activeSession.user.aiSettings, plan);
     const answerLanguage = settings.language === "site" ? language : settings.language;
-    const personal = { about: settings.about, style: settings.style, tone: settings.tone, length: settings.length };
+    const personal: PersonalPreferences = {
+        about: settings.about,
+        style: settings.style,
+        tone: settings.tone,
+        length: settings.length,
+        expertise: settings.expertise,
+        commentLanguage: settings.commentLanguage === "site" ? "" : LANGUAGE_NAMES[settings.commentLanguage] ?? "",
+        codeStyle: settings.codeStyle,
+        preferredLanguages: settings.preferredLanguages.map((id) => languageDisplayName(id)),
+        codeOutput: settings.codeOutput,
+    };
     const fileCode = contextCode ? clip(contextCode, features.contextChars) : "";
     const file = fileCode.trim() ? { name: fileName, language: fileLanguage, code: fileCode } : null;
     const counted = quotaHeaders(quota);
@@ -161,7 +175,7 @@ export async function POST(request: NextRequest) {
     const sensitiveRequest = detectSensitiveRequest(latest);
     const sensitive = sensitiveRequest && !isHowToQuestion(latest) ? sensitiveRequest : null;
     const analyses = analyzeMessage(latest);
-    const promptOptions = (agent: AgentStatus | "requested"): PromptOptions => ({ language: answerLanguage, mode, path, knowledge: notes, tools: analyses.map((item) => item.note), file, agent, sensitive, personal, personalMax: features.instructionsChars });
+    const promptOptions = (agent: AgentStatus | "requested"): PromptOptions => ({ language: answerLanguage, mode, path, knowledge: notes, tools: analyses.map((item) => item.note), file, consoleErrors: file ? consoleErrors : null, projectFiles: file ? projectFiles : null, agent, sensitive, personal, personalMax: features.instructionsChars });
     const promptFor = (agent: AgentStatus | "requested") => systemPrompt(promptOptions(agent));
 
     // Thinking first: the person's setting decides for Hanogt AI's own model; own connections think as their model does.

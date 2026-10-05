@@ -34,6 +34,12 @@ export interface AiContext {
     fileName?: string;
     /** Current page path. */
     path?: string;
+    /** The editor tab of that file ("Apply to editor" finds it by this). */
+    tabId?: string;
+    /** Errors of that file's last run in the editor (goes with a question when the setting allows). */
+    consoleErrors?: string;
+    /** Names of the project's other files (goes with a question when the setting allows). */
+    projectFiles?: string[];
 }
 
 export interface LocalReply {

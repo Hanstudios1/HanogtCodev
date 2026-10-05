@@ -80,18 +80,18 @@ const TOOL_ICONS: Record<AgentToolName, typeof Bot> = {
     search_site: Search,
 };
 
-const FIELD = "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-900 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-100";
-const LABEL = "mb-1 block text-[11.5px] font-semibold text-zinc-600 dark:text-zinc-300";
+const FIELD = "w-full rounded-xl border border-ai-line bg-ai-surface px-3 py-2 text-[13px] text-ai-ink outline-none transition focus:border-ai-ink/40 focus:ring-4 focus:ring-ai-ink/10";
+const LABEL = "mb-1 block text-[11.5px] font-semibold text-ai-ink/75";
 
 /** Renders **bold** in a short, already translated line. */
 function Strong({ text }: { text: string }) {
     const parts = text.split(/\*\*(.+?)\*\*/g);
-    return <>{parts.map((part, index) => (index % 2 ? <strong key={index} className="font-semibold text-zinc-900 dark:text-white">{part}</strong> : part))}</>;
+    return <>{parts.map((part, index) => (index % 2 ? <strong key={index} className="font-semibold text-ai-ink">{part}</strong> : part))}</>;
 }
 
 function ResultLink({ href, label, onNavigate }: { href: string; label: string; onNavigate?: () => void }) {
     return (
-        <Link href={href} onClick={onNavigate} className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-[12.5px] font-semibold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+        <Link href={href} onClick={onNavigate} className="inline-flex items-center gap-1.5 rounded-lg bg-ai-ink px-3 py-1.5 text-[12.5px] font-semibold text-ai-paper transition hover:opacity-90">
             <SquareArrowOutUpRight className="h-3.5 w-3.5" aria-hidden />{label}
         </Link>
     );
@@ -105,26 +105,26 @@ function ProfileView({ profile }: { profile: AgentProfileSummary }) {
     return (
         <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="text-[14px] font-bold text-zinc-900 dark:text-white">{profile.displayName || profile.nickname}</span>
-                {profile.nickname ? <span className="font-mono text-[12px] text-zinc-500 dark:text-zinc-400" dir="ltr">{profile.tag ? tx(C.nicknameTag, { nickname: profile.nickname, tag: profile.tag }) : profile.nickname}</span> : null}
-                {profile.staffRole ? <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[11px] font-bold text-violet-700 dark:text-violet-300">{tx(C.roles[profile.staffRole])}</span> : null}
+                <span className="text-[14px] font-bold text-ai-ink">{profile.displayName || profile.nickname}</span>
+                {profile.nickname ? <span className="font-mono text-[12px] text-ai-muted" dir="ltr">{profile.tag ? tx(C.nicknameTag, { nickname: profile.nickname, tag: profile.tag }) : profile.nickname}</span> : null}
+                {profile.staffRole ? <span className="rounded-full bg-brand-green/15 px-2 py-0.5 text-[11px] font-bold text-brand-green">{tx(C.roles[profile.staffRole])}</span> : null}
             </div>
-            {profile.customStatus ? <p className="text-[12.5px] text-zinc-600 dark:text-zinc-300">{profile.customStatus}</p> : null}
-            {profile.bio ? <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-zinc-600 dark:text-zinc-300">{profile.bio}</p> : null}
+            {profile.customStatus ? <p className="text-[12.5px] text-ai-ink/75">{profile.customStatus}</p> : null}
+            {profile.bio ? <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-ai-ink/75">{profile.bio}</p> : null}
             {profile.favoriteLanguages.length ? (
                 <div className="flex flex-wrap gap-1.5">
-                    {profile.favoriteLanguages.map((name) => <span key={name} className="rounded-full border border-zinc-200 px-2 py-0.5 text-[11.5px] font-semibold text-zinc-600 dark:border-white/10 dark:text-zinc-300">{name}</span>)}
+                    {profile.favoriteLanguages.map((name) => <span key={name} className="rounded-full border border-ai-line px-2 py-0.5 text-[11.5px] font-semibold text-ai-ink/75">{name}</span>)}
                 </div>
             ) : null}
             <dl className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
                 {stats.map(([label, value]) => (
                     <div key={label.EN} className="rounded-xl bg-white px-2 py-1.5 text-center dark:bg-white/[0.04]">
-                        <dt className="text-[10.5px] font-semibold uppercase tracking-wide text-zinc-400">{tx(label)}</dt>
-                        <dd className="text-[15px] font-black tabular-nums text-zinc-900 dark:text-white">{value ?? "—"}</dd>
+                        <dt className="text-[10.5px] font-semibold uppercase tracking-wide text-ai-muted">{tx(label)}</dt>
+                        <dd className="text-[15px] font-black tabular-nums text-ai-ink">{value ?? "—"}</dd>
                     </div>
                 ))}
             </dl>
-            {profile.memberSince ? <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">{tx(C.memberSince, { date: new Date(profile.memberSince).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }) })}</p> : null}
+            {profile.memberSince ? <p className="text-[11.5px] text-ai-muted">{tx(C.memberSince, { date: new Date(profile.memberSince).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }) })}</p> : null}
         </div>
     );
 }
@@ -180,9 +180,9 @@ function Fields({ name, draft, setDraft }: { name: AgentToolName; draft: Record<
                         <span className={LABEL}>{tx(C.fileName)}</span>
                         <input value={text("fileName")} maxLength={120} onChange={(event) => setDraft({ fileName: event.target.value })} className={cx(FIELD, "font-mono")} dir="ltr" />
                     </label>
-                    <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">{tx(C.language, { language: languageDisplayName(text("language")) })}</p>
-                    <details className="rounded-xl border border-zinc-200 dark:border-white/10">
-                        <summary className="cursor-pointer select-none px-3 py-2 text-[12.5px] font-semibold text-zinc-600 dark:text-zinc-300">{tx(C.showCode, { lines: code.split("\n").length })}</summary>
+                    <p className="text-[11.5px] text-ai-muted">{tx(C.language, { language: languageDisplayName(text("language")) })}</p>
+                    <details className="rounded-xl border border-ai-line">
+                        <summary className="cursor-pointer select-none px-3 py-2 text-[12.5px] font-semibold text-ai-ink/75">{tx(C.showCode, { lines: code.split("\n").length })}</summary>
                         <textarea
                             id={`${id}-code`}
                             aria-label={tx(C.showCode, { lines: code.split("\n").length })}
@@ -191,7 +191,7 @@ function Fields({ name, draft, setDraft }: { name: AgentToolName; draft: Record<
                             rows={10}
                             spellCheck={false}
                             dir="ltr"
-                            className="block w-full resize-y rounded-b-xl border-t border-zinc-200 bg-zinc-950 p-3 font-mono text-[12px] leading-relaxed text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400/50 dark:border-white/10"
+                            className="block w-full resize-y rounded-b-xl border-t border-ai-line bg-zinc-950 p-3 font-mono text-[12px] leading-relaxed text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400/50"
                         />
                     </details>
                 </div>
@@ -214,7 +214,7 @@ function Fields({ name, draft, setDraft }: { name: AgentToolName; draft: Record<
                 </label>
             );
         default:
-            return <p className="text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.profileReads)}</p>;
+            return <p className="text-[12px] leading-relaxed text-ai-ink/75">{tx(C.profileReads)}</p>;
     }
 }
 
@@ -259,14 +259,14 @@ function DoneView({ call, onNavigate }: { call: AgentCallRecord; onNavigate?: ()
             const hits = (call.view?.hits ?? []).map((id) => knowledgeById(id)).filter((entry) => entry !== undefined);
             return (
                 <div className="space-y-1.5">
-                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.searched, { query: String(call.args.query ?? "") })}</p>
+                    <p className="text-[12px] text-ai-muted">{tx(C.searched, { query: String(call.args.query ?? "") })}</p>
                     {hits.length ? (
                         <ul className="flex flex-wrap gap-1.5">
                             {hits.map((entry) => (
                                 <li key={entry.id}>
                                     {entry.links?.[0]
-                                        ? <Link href={entry.links[0].href} onClick={onNavigate} className="inline-block rounded-full border border-zinc-200 px-2.5 py-1 text-[12px] font-semibold text-zinc-600 transition hover:border-violet-400 hover:text-violet-700 dark:border-white/10 dark:text-zinc-300 dark:hover:text-violet-300">{tx(entry.title)}</Link>
-                                        : <span className="inline-block rounded-full border border-zinc-200 px-2.5 py-1 text-[12px] font-semibold text-zinc-600 dark:border-white/10 dark:text-zinc-300">{tx(entry.title)}</span>}
+                                        ? <Link href={entry.links[0].href} onClick={onNavigate} className="inline-block rounded-full border border-ai-line px-2.5 py-1 text-[12px] font-semibold text-ai-ink/75 transition hover:border-ai-ink/30 hover:text-ai-ink">{tx(entry.title)}</Link>
+                                        : <span className="inline-block rounded-full border border-ai-line px-2.5 py-1 text-[12px] font-semibold text-ai-ink/75">{tx(entry.title)}</span>}
                                 </li>
                             ))}
                         </ul>
@@ -310,9 +310,9 @@ export default function AgentCard({ call, agentMode, signedIn, onApprove, onDeny
 
     let status: ReactNode = null;
     if (call.status === "running") {
-        status = <p className="flex items-center gap-2 text-[12.5px] font-semibold text-violet-700 dark:text-violet-300"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{tx(C.running)}</p>;
+        status = <p className="flex items-center gap-2 text-[12.5px] font-semibold text-brand-green"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{tx(C.running)}</p>;
     } else if (call.status === "done") {
-        status = <div className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden /><div className="min-w-0 flex-1 text-[13px] text-zinc-700 dark:text-zinc-200"><DoneView call={call} onNavigate={onNavigate} /></div></div>;
+        status = <div className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden /><div className="min-w-0 flex-1 text-[13px] text-ai-ink/85"><DoneView call={call} onNavigate={onNavigate} /></div></div>;
     } else if (call.status === "error") {
         status = (
             <div className="flex flex-wrap items-center gap-2 text-[12.5px] text-red-600 dark:text-red-400">
@@ -322,7 +322,7 @@ export default function AgentCard({ call, agentMode, signedIn, onApprove, onDeny
             </div>
         );
     } else if (call.status === "denied" || call.status === "dismissed") {
-        status = <p className="flex items-center gap-2 text-[12.5px] text-zinc-500 dark:text-zinc-400"><Ban className="h-4 w-4 shrink-0" aria-hidden />{tx(call.status === "denied" ? C.denied : C.dismissed)}</p>;
+        status = <p className="flex items-center gap-2 text-[12.5px] text-ai-muted"><Ban className="h-4 w-4 shrink-0" aria-hidden />{tx(call.status === "denied" ? C.denied : C.dismissed)}</p>;
     }
 
     return (
@@ -331,16 +331,16 @@ export default function AgentCard({ call, agentMode, signedIn, onApprove, onDeny
             aria-labelledby={titleId}
             className={cx(
                 "overflow-hidden rounded-2xl border text-[13px]",
-                pending ? "border-violet-300/70 bg-violet-50/70 shadow-sm shadow-violet-500/5 dark:border-violet-400/25 dark:bg-violet-500/[0.07]" : "border-zinc-200 bg-zinc-50/80 dark:border-white/10 dark:bg-white/[0.03]",
+                pending ? "border-ai-line bg-brand-green/5 shadow-sm" : "border-ai-line bg-ai-ink/[0.03]",
             )}
         >
             <div className="flex items-start gap-2.5 px-3 pb-2 pt-3">
-                <span className={cx("grid h-8 w-8 shrink-0 place-items-center rounded-xl", pending ? "bg-violet-600 text-white" : "bg-zinc-200 text-zinc-600 dark:bg-white/10 dark:text-zinc-300")}><Icon className="h-4 w-4" aria-hidden /></span>
+                <span className={cx("grid h-8 w-8 shrink-0 place-items-center rounded-xl", pending ? "bg-ai-ink text-ai-paper" : "bg-zinc-200 text-ai-ink/75 dark:bg-white/10")}><Icon className="h-4 w-4" aria-hidden /></span>
                 <div className="min-w-0 flex-1">
-                    <p id={titleId} className="leading-snug text-zinc-600 dark:text-zinc-300">
-                        {tx(pending ? C.wants : C.did)} <strong className="font-bold text-zinc-900 dark:text-white">{tx(AGENT_TOOL_TITLES[call.name])}</strong>
+                    <p id={titleId} className="leading-snug text-ai-ink/75">
+                        {tx(pending ? C.wants : C.did)} <strong className="font-bold text-ai-ink">{tx(AGENT_TOOL_TITLES[call.name])}</strong>
                     </p>
-                    {pending ? <p className="mt-0.5 text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(C.kind[kind])}</p> : null}
+                    {pending ? <p className="mt-0.5 text-[11.5px] leading-snug text-ai-muted">{tx(C.kind[kind])}</p> : null}
                 </div>
             </div>
             {pending ? (
@@ -354,16 +354,16 @@ export default function AgentCard({ call, agentMode, signedIn, onApprove, onDeny
                             <ResultLink href="/login?callbackUrl=/ai" label={tx(C.signIn)} onNavigate={onNavigate} />
                         </div>
                     ) : null}
-                    <div className="flex flex-wrap items-center gap-2 border-t border-violet-200/70 bg-white/60 px-3 py-2.5 dark:border-violet-400/15 dark:bg-black/10">
-                        <button type="button" onClick={() => approve(false)} disabled={Boolean(problem) || blocked} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 text-[13px] font-bold text-white shadow-sm transition hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 focus-visible:ring-offset-2 disabled:opacity-50 dark:focus-visible:ring-offset-zinc-900">
+                    <div className="flex flex-wrap items-center gap-2 border-t border-ai-line bg-white/60 px-3 py-2.5 dark:bg-black/10">
+                        <button type="button" onClick={() => approve(false)} disabled={Boolean(problem) || blocked} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-ai-ink px-3.5 text-[13px] font-bold text-ai-paper shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 focus-visible:ring-offset-2 disabled:opacity-50 dark:focus-visible:ring-offset-zinc-900">
                             <Check className="h-4 w-4" aria-hidden />{tx(C.allow)}
                         </button>
                         {kind !== "read" ? (
-                            <button type="button" onClick={() => approve(true)} disabled={Boolean(problem) || blocked} className="inline-flex h-9 items-center rounded-xl border border-violet-300 bg-white px-3 text-[12.5px] font-semibold text-violet-700 transition hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50 dark:border-violet-400/30 dark:bg-transparent dark:text-violet-300 dark:hover:bg-violet-500/10">
+                            <button type="button" onClick={() => approve(true)} disabled={Boolean(problem) || blocked} className="inline-flex h-9 items-center rounded-xl border border-ai-line bg-white px-3 text-[12.5px] font-semibold text-brand-green transition hover:bg-brand-green/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 disabled:opacity-50 dark:bg-transparent">
                                 {tx(C.allowSession)}
                             </button>
                         ) : null}
-                        <button type="button" onClick={onDeny} className="inline-flex h-9 items-center rounded-xl px-3 text-[12.5px] font-semibold text-zinc-600 transition hover:bg-zinc-900/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 dark:text-zinc-300 dark:hover:bg-white/10">
+                        <button type="button" onClick={onDeny} className="inline-flex h-9 items-center rounded-xl px-3 text-[12.5px] font-semibold text-ai-ink/75 transition hover:bg-ai-ink/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30">
                             {tx(C.deny)}
                         </button>
                     </div>

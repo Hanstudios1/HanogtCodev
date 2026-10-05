@@ -81,7 +81,7 @@ export function PricingHero({ billing }: { billing: PlansBilling }) {
                     {checkout.environment === "sandbox" ? <p>{tx(C.sandbox)}</p> : null}
                 </div>
             ) : null}
-            <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl">{tx(C.title)}</h1>
+            <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl"><span className="text-gradient animate-gradient">{tx(C.title)}</span></h1>
             <p className="mx-auto mt-4 max-w-2xl text-[16.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(anyOnSale ? C.subtitleOpen : liveSubscription ? C.subtitleSubscriber : C.subtitle)}</p>
             <BillingToggle billing={billing} />
             {failed ? <p className="mx-auto mt-5 max-w-xl text-[13px] text-zinc-500">{tx(C.unavailable)}</p> : null}

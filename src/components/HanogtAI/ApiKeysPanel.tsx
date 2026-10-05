@@ -59,9 +59,9 @@ const ERRORS: Record<string, Copy> = {
 };
 const GENERIC_ERROR: Copy = { TR: "Bir şeyler ters gitti. Lütfen tekrar dene.", EN: "Something went wrong. Please try again." };
 
-const BUTTON = "inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50";
-const FIELD = "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[14px] text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-100";
-const BAR = { ok: "from-indigo-500 to-fuchsia-500", high: "from-amber-400 to-amber-500", full: "from-rose-500 to-rose-600" } as const;
+const BUTTON = "inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 disabled:opacity-50";
+const FIELD = "w-full rounded-xl border border-ai-line bg-ai-surface px-3 py-2 text-[14px] text-ai-ink outline-none transition placeholder:text-zinc-400 focus:border-ai-ink/40 focus:ring-2 focus:ring-ai-ink/10";
+const BAR = { ok: "bg-brand-green", high: "bg-amber-500", full: "bg-rose-500" } as const;
 
 type Result<T> = { ok: true; data: T } | { ok: false; code: string };
 
@@ -96,13 +96,13 @@ function UsageBar({ window }: { window: UsageWindow }) {
     return (
         <div data-api-usage>
             <div className="flex items-baseline justify-between gap-3 text-[12.5px]">
-                <span className="font-semibold text-zinc-600 dark:text-zinc-300">{tx(C.today)}</span>
-                <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{number(now.used)} / {number(now.limit)}</span>
+                <span className="font-semibold text-ai-ink/75">{tx(C.today)}</span>
+                <span className="font-bold tabular-nums text-ai-ink">{number(now.used)} / {number(now.limit)}</span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10" role="progressbar" aria-label={tx(C.today)} aria-valuemin={0} aria-valuemax={now.limit} aria-valuenow={Math.min(now.used, now.limit)}>
-                <div className={`h-full rounded-full bg-gradient-to-r ${BAR[level]}`} style={{ width: `${now.limit > 0 ? Math.min(100, (now.used / now.limit) * 100) : 100}%` }} />
+                <div className={`h-full rounded-full ${BAR[level]}`} style={{ width: `${now.limit > 0 ? Math.min(100, (now.used / now.limit) * 100) : 100}%` }} />
             </div>
-            {now.resetsAt ? <p className="mt-1 text-[11.5px] text-zinc-500 dark:text-zinc-400">{tx(C.renews, { time: formatResetTime(now.resetsAt, locale) })}</p> : null}
+            {now.resetsAt ? <p className="mt-1 text-[11.5px] text-ai-muted">{tx(C.renews, { time: formatResetTime(now.resetsAt, locale) })}</p> : null}
         </div>
     );
 }
@@ -128,15 +128,15 @@ function KeyRow({ item, onState }: { item: ApiKeyView; onState: (state: ApiKeysS
     };
 
     return (
-        <li className="rounded-2xl border border-zinc-200 p-3 dark:border-white/10" data-api-key-row={item.id}>
+        <li className="rounded-2xl border border-ai-line p-3" data-api-key-row={item.id}>
             <div className="flex flex-wrap items-center gap-1.5">
                 <span className="min-w-0 truncate text-[14px] font-bold">{item.name}</span>
-                <span className={cx("rounded-full px-2 py-0.5 text-[10.5px] font-bold", item.active ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-zinc-500/10 text-zinc-500 dark:text-zinc-400")}>
+                <span className={cx("rounded-full px-2 py-0.5 text-[10.5px] font-bold", item.active ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-zinc-500/10 text-ai-muted")}>
                     {tx(item.active ? C.active : C.inactive)}
                 </span>
             </div>
-            <p className="mt-0.5 font-mono text-[12.5px] text-zinc-600 dark:text-zinc-300" dir="ltr">{item.start}…{item.last4}</p>
-            <p className="mt-0.5 text-[11.5px] text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 font-mono text-[12.5px] text-ai-ink/75" dir="ltr">{item.start}…{item.last4}</p>
+            <p className="mt-0.5 text-[11.5px] text-ai-muted">
                 {created ? tx(C.created, { date: created }) : ""}{created ? " · " : ""}{used ? tx(C.lastUsed, { date: used }) : tx(C.neverUsed)}
             </p>
             {confirming ? (
@@ -146,7 +146,7 @@ function KeyRow({ item, onState }: { item: ApiKeyView; onState: (state: ApiKeysS
                         <button type="button" onClick={() => void revoke()} disabled={working} className={cx(BUTTON, "bg-rose-600 text-white hover:bg-rose-500")} data-api-key-confirm>
                             {working ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}{tx(C.revokeYes)}
                         </button>
-                        <button type="button" onClick={() => setConfirming(false)} disabled={working} className={cx(BUTTON, "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/5")}>{tx(C.cancel)}</button>
+                        <button type="button" onClick={() => setConfirming(false)} disabled={working} className={cx(BUTTON, "text-ai-ink/75 hover:bg-ai-ink/[0.06] dark:hover:bg-white/5")}>{tx(C.cancel)}</button>
                     </div>
                 </div>
             ) : (
@@ -238,9 +238,9 @@ export default function ApiKeysPanel() {
 
     if (!state) {
         return (
-            <section className="rounded-3xl border border-zinc-200 bg-white p-5 dark:border-white/10 dark:bg-zinc-900" data-api-keys-panel="loading">
+            <section className="rounded-3xl border border-ai-line bg-ai-surface p-5" data-api-keys-panel="loading">
                 {failed ? (
-                    <div className="flex flex-wrap items-center gap-3 text-[13.5px] text-zinc-600 dark:text-zinc-300">
+                    <div className="flex flex-wrap items-center gap-3 text-[13.5px] text-ai-ink/75">
                         {tx(C.loadFailed)}
                         <button
                             type="button"
@@ -248,11 +248,11 @@ export default function ApiKeysPanel() {
                                 setFailed(false);
                                 setReloads((count) => count + 1);
                             }}
-                            className={cx(BUTTON, "border border-zinc-200 dark:border-white/10")}
+                            className={cx(BUTTON, "border border-ai-line")}
                         ><RotateCcw className="h-4 w-4" aria-hidden />{tx(C.retry)}</button>
                     </div>
                 ) : (
-                    <p className="flex items-center gap-2 text-[13.5px] text-zinc-500" role="status"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx(C.loading)}</p>
+                    <p className="flex items-center gap-2 text-[13.5px] text-ai-muted" role="status"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx(C.loading)}</p>
                 )}
             </section>
         );
@@ -266,18 +266,18 @@ export default function ApiKeysPanel() {
     const pro = PLAN_AI_FEATURES.pro.api;
 
     return (
-        <section className="space-y-4 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-zinc-900 sm:p-6" data-api-keys-panel={state.allowed ? "open" : "closed"}>
-            <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-zinc-900 dark:text-white"><KeyRound className="h-5 w-5 text-violet-500" aria-hidden />{tx(C.title)}</h2>
+        <section className="space-y-4 rounded-3xl border border-ai-line bg-ai-surface p-5 shadow-sm sm:p-6" data-api-keys-panel={state.allowed ? "open" : "closed"}>
+            <h2 className="flex items-center gap-2 text-[16px] font-black tracking-tight text-ai-ink"><KeyRound className="h-5 w-5 text-brand-green" aria-hidden />{tx(C.title)}</h2>
 
             {state.limit === 0 ? (
-                <div className="rounded-2xl bg-zinc-50 p-3.5 text-[13px] leading-relaxed text-zinc-700 dark:bg-white/[0.04] dark:text-zinc-200">
+                <div className="rounded-2xl bg-ai-paper p-3.5 text-[13px] leading-relaxed text-ai-ink/85">
                     <p>{tx(C.planRequired, { plus: plus?.keys ?? 2, plusWindow: number(PLAN_AI_LIMITS.plus.perWindow), pro: pro?.keys ?? 5, proWindow: number(PLAN_AI_LIMITS.pro.perWindow) })}</p>
-                    <Link href="/plans" className="mt-1.5 inline-block font-bold text-violet-600 hover:underline dark:text-violet-300">{tx(C.seePlans)}</Link>
+                    <Link href="/plans" className="mt-1.5 inline-block font-bold text-brand-green hover:underline">{tx(C.seePlans)}</Link>
                 </div>
             ) : (
-                <div className="space-y-3 rounded-2xl bg-zinc-50 p-3.5 text-[13px] dark:bg-white/[0.04]">
-                    <p className="font-bold text-zinc-800 dark:text-zinc-100">{tx(C.planLine, { plan: planName, count: state.keys.length, limit: state.limit })}</p>
-                    {state.limits ? <p className="text-zinc-600 dark:text-zinc-300">{tx(C.limits, { perMinute: number(state.limits.perMinute), perWindow: number(state.limits.perWindow), days: state.limits.windowDays })}</p> : null}
+                <div className="space-y-3 rounded-2xl bg-ai-paper p-3.5 text-[13px]">
+                    <p className="font-bold text-ai-ink">{tx(C.planLine, { plan: planName, count: state.keys.length, limit: state.limit })}</p>
+                    {state.limits ? <p className="text-ai-ink/75">{tx(C.limits, { perMinute: number(state.limits.perMinute), perWindow: number(state.limits.perWindow), days: state.limits.windowDays })}</p> : null}
                     {state.usage ? <UsageBar window={state.usage.window} /> : null}
                 </div>
             )}
@@ -293,23 +293,23 @@ export default function ApiKeysPanel() {
                     {state.keys.map((item) => <KeyRow key={item.id} item={item} onState={setState} />)}
                 </ul>
             ) : state.limit > 0 ? (
-                <p className="text-[13px] text-zinc-500 dark:text-zinc-400">{tx(C.none)}</p>
+                <p className="text-[13px] text-ai-muted">{tx(C.none)}</p>
             ) : null}
-            {state.keys.some((item) => !item.active) ? <p className="text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.inactiveNote)}</p> : null}
+            {state.keys.some((item) => !item.active) ? <p className="text-[12px] text-ai-muted">{tx(C.inactiveNote)}</p> : null}
 
             {state.allowed && state.limit > 0 ? (
                 <form
-                    className="space-y-2 rounded-2xl border border-dashed border-zinc-300 p-3.5 dark:border-white/15"
+                    className="space-y-2 rounded-2xl border border-dashed border-ai-line p-3.5 dark:border-white/15"
                     onSubmit={(event) => {
                         event.preventDefault();
                         if (canCreate && !working) void create();
                     }}
                 >
-                    <p className="text-[13px] font-bold text-zinc-800 dark:text-zinc-100">{tx(C.newKey)}</p>
-                    <label htmlFor={nameId} className="block text-[12px] font-semibold text-zinc-600 dark:text-zinc-300">{tx(C.name)}</label>
+                    <p className="text-[13px] font-bold text-ai-ink">{tx(C.newKey)}</p>
+                    <label htmlFor={nameId} className="block text-[12px] font-semibold text-ai-ink/75">{tx(C.name)}</label>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <input id={nameId} value={name} onChange={(event) => setName(event.target.value)} maxLength={API_KEY_NAME_MAX} placeholder={tx(C.namePlaceholder)} disabled={!canCreate || working} className={FIELD} data-api-key-name />
-                        <button type="submit" disabled={!canCreate || working} className={cx(BUTTON, "shrink-0 bg-violet-600 text-white hover:bg-violet-500")} data-api-key-create>
+                        <button type="submit" disabled={!canCreate || working} className={cx(BUTTON, "shrink-0 bg-ai-ink text-ai-paper hover:opacity-90")} data-api-key-create>
                             {working ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}{tx(working ? C.creating : C.create)}
                         </button>
                     </div>
@@ -318,7 +318,7 @@ export default function ApiKeysPanel() {
             ) : null}
             {error ? <p role="alert" className="text-[12.5px] font-semibold text-rose-600 dark:text-rose-400">{tx(error)}</p> : null}
 
-            <p className="flex gap-2 rounded-2xl bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-300"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />{tx(C.safety)}</p>
+            <p className="flex gap-2 rounded-2xl bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-ai-ink/75"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />{tx(C.safety)}</p>
         </section>
     );
 }

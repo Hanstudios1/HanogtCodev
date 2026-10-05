@@ -53,14 +53,14 @@ export default function ConnectionsDialog({ connections, onClose, onNavigate }: 
                 if (event.target === event.currentTarget && !busy) onClose();
             }}
         >
-            <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100">
-                <header className="flex items-start gap-3 border-b border-zinc-100 px-5 py-4 dark:border-white/[0.06]">
+            <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-ai-line bg-ai-surface text-ai-ink shadow-2xl">
+                <header className="flex items-start gap-3 border-b border-ai-line px-5 py-4">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-300" aria-hidden>
                         <KeyRound className="h-4.5 w-4.5" />
                     </span>
                     <div className="min-w-0 flex-1">
                         <h2 id={titleId} className="text-[17px] font-black tracking-tight">{tx(C.title)}</h2>
-                        <p className="mt-0.5 text-[12.5px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(C.intro)}</p>
+                        <p className="mt-0.5 text-[12.5px] leading-snug text-ai-muted">{tx(C.intro)}</p>
                     </div>
                     <button ref={closeRef} type="button" onClick={onClose} disabled={busy} className={ICON_BUTTON} aria-label={tx(C.close)} title={tx(C.close)}>
                         <X className="h-5 w-5" />
@@ -82,7 +82,7 @@ export default function ConnectionsDialog({ connections, onClose, onNavigate }: 
                             onClose();
                             onNavigate?.();
                         }}
-                        className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-violet-600 hover:underline dark:text-violet-300"
+                        className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-brand-green hover:underline"
                         data-connections-page-link
                     >
                         {tx(C.page)}<ArrowRight className="h-3 w-3 rtl:rotate-180" aria-hidden />

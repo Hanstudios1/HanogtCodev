@@ -213,7 +213,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                     <Link href="/" className="grid h-9 w-9 place-items-center rounded-xl text-zinc-400 transition hover:bg-white/5 hover:text-white" aria-label="Ana sayfa"><ArrowLeft className="h-4 w-4" /></Link>
                     <div className="flex items-center gap-2">
                         <ProductLogo product="engine" size={32} priority />
-                        <span className="text-[15px] font-black tracking-tight">Hanogt Engine</span>
+                        <span className="text-[15px] font-black tracking-tight">Hanogt <span className="text-gradient">Engine</span></span>
                         <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold text-indigo-200" title={ENGINE_VERSION_LABEL}>V{ENGINE_VERSION}</span>
                     </div>
                     <div className="flex-1" />

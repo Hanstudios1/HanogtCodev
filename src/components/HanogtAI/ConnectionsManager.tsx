@@ -89,13 +89,13 @@ const LAST_ERRORS: Record<AiConnectionError, Copy> = {
     key_unreadable: { TR: "Anahtar okunamıyor; bağlantıyı silip yeniden ekle.", EN: "The key can't be read; delete the connection and add it again." },
 };
 
-const LABEL = "text-[12px] font-bold text-zinc-600 dark:text-zinc-300";
-const FIELD = "mt-1 block h-10 w-full min-w-0 rounded-xl border border-zinc-200 bg-white px-3 text-[13.5px] text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-60 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-100 dark:[color-scheme:dark]";
-const HINT = "mt-1 text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400";
-const PRIMARY = "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-[13.5px] font-bold text-white shadow-sm transition hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50 disabled:hover:bg-violet-600";
-const SECONDARY = "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3.5 text-[13px] font-bold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5";
-const SMALL = "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:opacity-50";
-const TEXT_LINK = "text-[12px] font-semibold text-violet-600 hover:underline dark:text-violet-300";
+const LABEL = "text-[12px] font-bold text-ai-ink/75";
+const FIELD = "mt-1 block h-10 w-full min-w-0 rounded-xl border border-ai-line bg-ai-surface px-3 text-[13.5px] text-ai-ink outline-none transition placeholder:text-zinc-400 focus:border-ai-ink/40 focus:ring-2 focus:ring-ai-ink/10 disabled:opacity-60 dark:[color-scheme:dark]";
+const HINT = "mt-1 text-[11.5px] leading-snug text-ai-muted";
+const PRIMARY = "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-ai-ink px-4 text-[13.5px] font-bold text-ai-paper shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 disabled:opacity-50 disabled:hover:opacity-40";
+const SECONDARY = "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-ai-line px-3.5 text-[13px] font-bold text-ai-ink/85 transition hover:bg-ai-ink/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 disabled:opacity-50";
+const SMALL = "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30 disabled:opacity-50";
+const TEXT_LINK = "text-[12px] font-semibold text-brand-green hover:underline";
 
 /** Runs a request while the dialog counts it as busy (it can't be closed meanwhile). */
 type Track = <T>(run: () => Promise<T>) => Promise<T>;
@@ -151,7 +151,7 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
     };
 
     return (
-        <li className={cx("rounded-2xl border p-3", selected ? "border-sky-300 bg-sky-500/[0.04] dark:border-sky-400/30" : "border-zinc-200 dark:border-white/10")}>
+        <li className={cx("rounded-2xl border p-3", selected ? "border-sky-300 bg-sky-500/[0.04] dark:border-sky-400/30" : "border-ai-line")}>
             <div className="flex flex-wrap items-center gap-1.5">
                 <span className="min-w-0 truncate text-[14px] font-bold">{item.label}</span>
                 {retired ? (
@@ -161,14 +161,14 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
                 ) : item.active ? (
                     <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10.5px] font-bold text-emerald-700 dark:text-emerald-300">{tx(C.active)}</span>
                 ) : (
-                    <span className="rounded-full bg-zinc-500/10 px-2 py-0.5 text-[10.5px] font-bold text-zinc-500 dark:text-zinc-400">{tx(C.inactive)}</span>
+                    <span className="rounded-full bg-zinc-500/10 px-2 py-0.5 text-[10.5px] font-bold text-ai-muted">{tx(C.inactive)}</span>
                 )}
             </div>
-            <p className="mt-0.5 truncate text-[12.5px] text-zinc-600 dark:text-zinc-300">
+            <p className="mt-0.5 truncate text-[12.5px] text-ai-ink/75">
                 {providerLabel} · <span className="font-mono">{item.model || "—"}</span>
             </p>
             {retired ? <p className="mt-1 text-[11.5px] leading-snug text-amber-700 dark:text-amber-300">{tx(C.retiredHint)}</p> : null}
-            <p className="mt-0.5 text-[11.5px] text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-[11.5px] text-ai-muted">
                 <span className="font-mono">{tx(C.keyHint, { hint: item.keyHint || "…" })}</span>
                 {date ? ` · ${date}` : ""}
             </p>
@@ -192,8 +192,8 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
                         <input id={modelId} value={model} onChange={(event) => setModel(event.target.value)} maxLength={CONNECTION_MODEL_MAX} spellCheck={false} autoCapitalize="off" autoComplete="off" placeholder={tx(C.modelExample, { model: provider?.exampleModel ?? "" })} className={cx(FIELD, "font-mono")} />
                     </div>
                     <div className="flex justify-end gap-2 pt-1">
-                        <button type="button" onClick={() => setMode("view")} disabled={working} className={cx(SMALL, "text-zinc-600 hover:bg-zinc-900/[0.05] dark:text-zinc-300 dark:hover:bg-white/10")}>{tx(C.cancel)}</button>
-                        <button type="submit" disabled={working || !model.trim()} className={cx(SMALL, "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200")}>
+                        <button type="button" onClick={() => setMode("view")} disabled={working} className={cx(SMALL, "text-ai-ink/75 hover:bg-ai-ink/[0.05]")}>{tx(C.cancel)}</button>
+                        <button type="submit" disabled={working || !model.trim()} className={cx(SMALL, "bg-ai-ink text-ai-paper hover:opacity-90")}>
                             {working ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Check className="h-3.5 w-3.5" aria-hidden />}
                             {tx(C.save)}
                         </button>
@@ -203,7 +203,7 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
                 <div className="mt-3 rounded-xl bg-rose-500/[0.06] p-2.5">
                     <p className="text-[12.5px] font-semibold text-rose-700 dark:text-rose-300">{tx(C.confirmRemove)}</p>
                     <div className="mt-2 flex justify-end gap-2">
-                        <button type="button" onClick={() => setMode("view")} disabled={working} className={cx(SMALL, "text-zinc-600 hover:bg-zinc-900/[0.05] dark:text-zinc-300 dark:hover:bg-white/10")}>{tx(C.cancel)}</button>
+                        <button type="button" onClick={() => setMode("view")} disabled={working} className={cx(SMALL, "text-ai-ink/75 hover:bg-ai-ink/[0.05]")}>{tx(C.cancel)}</button>
                         <button type="button" autoFocus onClick={() => void send({ action: "delete", id: item.id })} disabled={working} className={cx(SMALL, "bg-rose-600 text-white hover:bg-rose-500")}>
                             {working ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Trash2 className="h-3.5 w-3.5" aria-hidden />}
                             {tx(C.confirmYes)}
@@ -227,7 +227,7 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
                                 setError(null);
                                 setMode("edit");
                             }}
-                            className={cx(SMALL, "text-zinc-600 hover:bg-zinc-900/[0.05] dark:text-zinc-300 dark:hover:bg-white/10")}
+                            className={cx(SMALL, "text-ai-ink/75 hover:bg-ai-ink/[0.05]")}
                         >
                             <Pencil className="h-3.5 w-3.5" aria-hidden />
                             {tx(C.edit)}
@@ -331,9 +331,9 @@ function AddConnectionForm({ providers, onAdded, track }: {
     };
 
     return (
-        <section aria-labelledby={headingId} className="rounded-2xl border border-zinc-200 p-3.5 dark:border-white/10">
+        <section aria-labelledby={headingId} className="rounded-2xl border border-ai-line p-3.5">
             <h3 id={headingId} className="flex items-center gap-1.5 text-[14px] font-bold">
-                <Plus className="h-4 w-4 text-violet-500" aria-hidden />
+                <Plus className="h-4 w-4 text-brand-green" aria-hidden />
                 {tx(C.addTitle)}
             </h3>
             <form
@@ -442,7 +442,7 @@ function AddConnectionForm({ providers, onAdded, track }: {
                             <label htmlFor={labelFieldId} className={LABEL}>{tx(C.label)}</label>
                             <input id={labelFieldId} value={label} disabled={working !== null} onChange={(event) => setLabel(event.target.value)} maxLength={CONNECTION_LABEL_MAX} placeholder={provider.name} className={FIELD} />
                         </div>
-                        <div className="flex items-start gap-2.5 rounded-xl bg-zinc-50 p-3 dark:bg-white/[0.04]">
+                        <div className="flex items-start gap-2.5 rounded-xl bg-ai-paper p-3">
                             <input
                                 id={consentFieldId}
                                 type="checkbox"
@@ -453,9 +453,9 @@ function AddConnectionForm({ providers, onAdded, track }: {
                                     setConsent(event.target.checked);
                                     if (event.target.checked) setError(null);
                                 }}
-                                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-zinc-300 accent-violet-600 dark:border-white/20"
+                                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-ai-line accent-brand-green dark:border-white/20"
                             />
-                            <label htmlFor={consentFieldId} className="cursor-pointer text-[12px] leading-relaxed text-zinc-700 dark:text-zinc-300">{tx(C.consent)}</label>
+                            <label htmlFor={consentFieldId} className="cursor-pointer text-[12px] leading-relaxed text-ai-ink/85">{tx(C.consent)}</label>
                         </div>
                         <div className="flex justify-end">
                             <button type="submit" disabled={working !== null || !model.trim() || !consent} className={PRIMARY}>
@@ -535,14 +535,14 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
     if (!state) {
         body = failed ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <p className="text-[13.5px] font-semibold text-zinc-600 dark:text-zinc-300">{tx(C.loadFailed)}</p>
+                <p className="text-[13.5px] font-semibold text-ai-ink/75">{tx(C.loadFailed)}</p>
                 <button type="button" onClick={refresh} className={SECONDARY}>
                     <RotateCcw className="h-4 w-4" aria-hidden />
                     {tx(C.retry)}
                 </button>
             </div>
         ) : (
-            <p className="flex items-center justify-center gap-2 py-10 text-[13.5px] text-zinc-500" role="status">
+            <p className="flex items-center justify-center gap-2 py-10 text-[13.5px] text-ai-muted" role="status">
                 <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
                 {tx(C.loading)}
             </p>
@@ -558,17 +558,17 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
         const showPlans = state.limit === 0 || (full && state.plan !== "pro");
         body = (
             <>
-                <section className="rounded-2xl bg-zinc-50 p-3.5 text-[13px] leading-relaxed dark:bg-white/[0.04]">
-                    <p className="font-bold text-zinc-800 dark:text-zinc-100">
+                <section className="rounded-2xl bg-ai-paper p-3.5 text-[13px] leading-relaxed">
+                    <p className="font-bold text-ai-ink">
                         {state.limit > 0 ? tx(C.planLine, { plan: planName, limit: state.limit }) : tx(C.planRequired)}
                     </p>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-zinc-600 dark:text-zinc-300">
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-ai-ink/75">
                         <span>{tx(C.planLimits, { plus: PLAN_AI_CONNECTIONS.plus, pro: PLAN_AI_CONNECTIONS.pro })}</span>
                         {showPlans ? plansLink : null}
                     </p>
-                    {state.limit > 0 && ownKey ? <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.ownLimit, { perDay: new Intl.NumberFormat(locale).format(ownKey.perDay) })}</p> : null}
+                    {state.limit > 0 && ownKey ? <p className="mt-0.5 text-[12px] text-ai-muted">{tx(C.ownLimit, { perDay: new Intl.NumberFormat(locale).format(ownKey.perDay) })}</p> : null}
                     {full ? <p className="mt-1.5 font-semibold text-amber-700 dark:text-amber-300">{tx(C.limitReached)}</p> : null}
-                    {count > state.limit ? <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">{tx(C.inactiveNote)}</p> : null}
+                    {count > state.limit ? <p className="mt-1 text-[12px] text-ai-muted">{tx(C.inactiveNote)}</p> : null}
                     {!state.canStore && state.limit > 0 ? <p className="mt-1.5 font-semibold text-amber-700 dark:text-amber-300">{tx(C.encryptionOff)}</p> : null}
                 </section>
 
@@ -577,7 +577,7 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
                 {/* Every stored connection is listed, a retired provider's too (it can only be deleted). */}
                 {state.items.length ? (
                     <section>
-                        <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                        <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ai-muted">
                             {tx(C.yours)}
                             {loading ? <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden /> : null}
                         </h3>
@@ -598,7 +598,7 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
                         </ul>
                     </section>
                 ) : state.limit > 0 ? (
-                    <p className="text-[13px] text-zinc-500 dark:text-zinc-400">{tx(C.none)}</p>
+                    <p className="text-[13px] text-ai-muted">{tx(C.none)}</p>
                 ) : null}
 
                 {canAdd ? <AddConnectionForm providers={state.providers} onAdded={onAdded} track={track} /> : null}
@@ -609,7 +609,7 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
     return (
         <div className="space-y-4" data-connections-manager>
             {body}
-            <p className="flex gap-2 rounded-2xl bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+            <p className="flex gap-2 rounded-2xl bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-ai-ink/75">
                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />
                 <span>{tx(C.privacy)}</span>
             </p>

@@ -24,6 +24,25 @@ export interface AiThinking {
 
 export const THINKING_STORED_MAX = 6_000;
 
+/**
+ * The file a question was about, kept with its answer for the "Changes" card:
+ * the file as it was sent (`base`; the answer proposes changes to it) and
+ * what became of the proposal.
+ */
+export interface AiEdit {
+    fileName: string;
+    /** Editor language id. */
+    language: string;
+    /** The editor tab it came from; absent for an attached file. */
+    tabId?: string;
+    base: string;
+    status?: "applied" | "dismissed";
+    appliedAt?: number;
+}
+
+/** Files longer than this aren't kept for the card (the storage budget is shared by every chat). */
+export const EDIT_BASE_MAX = 40_000;
+
 export interface AiMessage {
     id: string;
     role: "user" | "assistant";
@@ -53,6 +72,8 @@ export interface AiMessage {
     thinking?: AiThinking;
     /** The answer stopped early: it hit its length, the time limit or an error ("continue" picks it up). */
     cut?: "length" | "timeout" | "error";
+    /** Answers about a file: the file as sent, for the "Changes" card. */
+    edit?: AiEdit;
 }
 
 export interface AiConversation {
@@ -112,6 +133,21 @@ function readThinking(value: unknown): AiThinking | undefined {
 
 const CUTS = new Set(["length", "timeout", "error"]);
 
+/** A stored edit re-checked: a bounded file and a plain name. */
+function readEdit(value: unknown): AiEdit | undefined {
+    if (!value || typeof value !== "object") return undefined;
+    const record = value as Record<string, unknown>;
+    if (typeof record.base !== "string" || record.base.length > EDIT_BASE_MAX || typeof record.fileName !== "string" || !record.fileName.trim()) return undefined;
+    return {
+        fileName: record.fileName.slice(0, 120),
+        language: typeof record.language === "string" ? record.language.slice(0, 40) : "plaintext",
+        ...(typeof record.tabId === "string" && record.tabId.length <= 80 ? { tabId: record.tabId } : {}),
+        base: record.base,
+        ...(record.status === "applied" || record.status === "dismissed" ? { status: record.status } : {}),
+        ...(typeof record.appliedAt === "number" && Number.isFinite(record.appliedAt) ? { appliedAt: record.appliedAt } : {}),
+    };
+}
+
 function read(): AiConversation[] {
     if (cache) return cache;
     try {
@@ -123,10 +159,11 @@ function read(): AiConversation[] {
                     ...entry,
                     mode: entry.mode === "code" || entry.mode === "security" ? entry.mode : "general",
                     messages: entry.messages.filter(isMessage).map((message) => {
-                        const { thinking, cut, ...rest } = message;
+                        const { thinking, cut, edit, ...rest } = message;
                         const checked = { ...rest, ...(message.agent ? { agent: readAgentState(message.agent) } : {}) };
                         const kept = readThinking(thinking);
-                        return { ...checked, ...(kept ? { thinking: kept } : {}), ...(cut && CUTS.has(cut) ? { cut } : {}) };
+                        const keptEdit = message.role === "assistant" ? readEdit(edit) : undefined;
+                        return { ...checked, ...(kept ? { thinking: kept } : {}), ...(cut && CUTS.has(cut) ? { cut } : {}), ...(keptEdit ? { edit: keptEdit } : {}) };
                     }),
                 }))
             : [];
@@ -206,6 +243,22 @@ export function titleFrom(text: string) {
 export function clearAllConversations() {
     write([]);
     setActiveConversation(null);
+}
+
+/**
+ * Deletes the chats not touched in `days` days (the Hanogt AI setting "keep
+ * chats for"; 0 keeps them). Returns how many went.
+ */
+export function pruneConversations(days: number, now = Date.now()) {
+    if (!days || days <= 0) return 0;
+    const cutoff = now - days * 86_400_000;
+    const all = read();
+    const kept = all.filter((conversation) => conversation.updatedAt >= cutoff);
+    if (kept.length === all.length) return 0;
+    write(kept);
+    const active = readActive();
+    if (active && !kept.some((conversation) => conversation.id === active)) setActiveConversation(null);
+    return all.length - kept.length;
 }
 
 /** This browser's conversations as a JSON file's text (the settings page's export). */

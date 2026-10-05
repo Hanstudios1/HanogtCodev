@@ -69,7 +69,7 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
                     <div className="max-w-sm">
                         <Link href="/" className="inline-flex items-center gap-2.5">
                             <ProductLogo product="hanogt" size={40} />
-                            <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Hanogt <span className="text-brand-green">Codev</span></span>
+                            <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Hanogt <span className="text-gradient">Codev</span></span>
                         </Link>
                         <p className="mt-4 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">
                             {t("sf_about")}
