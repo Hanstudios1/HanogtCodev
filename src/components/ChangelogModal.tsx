@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.19",
+        version: "v0.3.19",
+        date: "2026-10-05",
+        title: { TR: "Hesabın daha güvenli", EN: "Your account is safer" },
+        desc: { TR: "Hesabına şifre eklediysen Google ile girişte de bu şifre soruluyor; tek tuşla diğer tüm oturumlarını kapatabiliyorsun.", EN: "If you added a password to your account, Google sign-in asks for it too, and one button signs out all your other sessions." },
+        items: [
+            { TR: "Google ile giriş: hesabında şifre varsa her Google girişinden sonra şifren, iki adımlı doğrulama açıksa kodun da soruluyor. Şifreni unuttuysan aynı ekrandan ekipten yardım isteyebilirsin.", EN: "Google sign-in: if your account has a password, every Google sign-in asks for it, plus your code when two-step verification is on. If you forgot it, you can ask the team for help from the same screen." },
+            { TR: "Hesap Ayarları → Gizlilik ve Güvenlik'te \"Diğer tüm oturumları kapat\"; şifreni değiştirdiğinde de diğer cihazlardaki oturumların kapanıyor.", EN: "\"Sign out all other sessions\" in Account Settings → Privacy & Security; changing your password signs your other devices out too." },
+            { TR: "Başkası adınla önceden şifreli bir hesap açtıysa, Google ile ilk girişin o şifreyi ve iki adımlı doğrulamayı kaldırıp hesabı sana veriyor.", EN: "If someone opened an account with your address and a password before you, your first Google sign-in removes that password and two-step verification and hands the account to you." },
+            { TR: "İlk şifreni belirlemek ve hesabını silmek için son 30 dakika içinde giriş yapmış olman gerekiyor.", EN: "Setting your first password and deleting your account need a sign-in within the last 30 minutes." },
+            { TR: "Profiller artık listelenemiyor, yalnızca tek tek açılıyor; özel durumdaki emoji kalktı, durum yalnızca metin.", EN: "Profiles can no longer be listed, only opened one at a time; the custom status emoji is gone and the status is text only." },
+            { TR: "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 4.8.", EN: "Privacy Policy, KVKK Information Notice and Terms of Use 4.8." },
+        ],
+    },
+    {
         id: "v0.3.18",
         version: "v0.3.18",
         date: "2026-10-05",

@@ -13,7 +13,7 @@ import { ToastViewport, useToasts } from "@/components/Editor/Toasts";
 import PlanBadge from "@/components/PlanBadge";
 import PlanBadgeSetting from "@/components/Plans/PlanBadgeSetting";
 import PresenceAvatar from "@/components/PresenceAvatar";
-import { useRawSession } from "@/components/Provider";
+import { useFirebaseBridge, useRawSession } from "@/components/Provider";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import StatusMenu, { announceOwnProfile, saveOwnProfile } from "@/components/StatusMenu";
 import {
@@ -146,6 +146,17 @@ const C = {
     dangerTitle: { TR: "Tehlikeli bölge", EN: "Danger zone" },
     signOutTitle: { TR: "Oturumu kapat", EN: "Sign out" },
     backToList: { TR: "Ayarlara dön", EN: "Back to settings" },
+    passwordStepUpNote: { TR: "Şifre belirlediğinizde Google ile her girişte bu şifre, iki adımlı doğrulama açıksa kod da sorulur.", EN: "Once you set a password, every Google sign-in asks for it too, plus the code when two-step verification is on." },
+    passwordWrong: { TR: "Mevcut şifre yanlış.", EN: "The current password is wrong." },
+    passwordSavedOthersOut: { TR: "Şifreniz kaydedildi; diğer cihazlardaki oturumlarınız kapatıldı.", EN: "Your password was saved and your other devices were signed out." },
+    reauthPassword: { TR: "Güvenliğiniz için şifre belirlemeden önce yeniden giriş yapmanız gerekiyor (son 30 dakika içinde).", EN: "For your security, sign in again before setting a password (within the last 30 minutes)." },
+    reauthDelete: { TR: "Hesabınızı silmek için son 30 dakika içinde giriş yapmış olmanız gerekiyor. Yeniden giriş yapıp tekrar deneyin.", EN: "To delete your account, you need to have signed in within the last 30 minutes. Sign in again and try once more." },
+    sessionsTitle: { TR: "Oturumlar", EN: "Sessions" },
+    sessionsHint: { TR: "Hesabınız başka bir cihazda ya da tarayıcıda açık kaldıysa hepsini buradan kapatın; bu cihazdaki oturumunuz açık kalır. Şifrenizi değiştirdiğinizde de diğer oturumlar kapanır.", EN: "If your account is still signed in on another device or browser, sign them all out here; you stay signed in on this device. Changing your password signs the other sessions out too." },
+    signOutOthers: { TR: "Diğer tüm oturumları kapat", EN: "Sign out all other sessions" },
+    signOutOthersDone: { TR: "Diğer tüm oturumlarınız kapatıldı; bu cihazda oturumunuz açık.", EN: "All your other sessions were signed out; you're still signed in here." },
+    signOutOthersFailed: { TR: "Oturumlar şu anda kapatılamadı. Biraz sonra tekrar deneyin.", EN: "Couldn't sign the sessions out right now. Try again in a moment." },
+    tooManyTries: { TR: "Çok sık denediniz. Biraz bekleyip tekrar deneyin.", EN: "You tried too often. Wait a little and try again." },
 } satisfies Record<string, Copy>;
 
 /** Messages for the `code` of /api/account/profile errors (and network failures). */
@@ -183,7 +194,6 @@ const FIELD_LABELS: Partial<Record<keyof EditableAccountFields, Copy>> = {
     bannerUrl: { TR: "Kapak görseli adresi", EN: "Banner URL" },
     bio: { TR: "Hakkında", EN: "About" },
     customStatus: { TR: "Özel durum", EN: "Custom status" },
-    statusEmoji: { TR: "Durum emojisi", EN: "Status emoji" },
     accentColor: { TR: "Vurgu rengi", EN: "Accent colour" },
     bubbleColor: { TR: "Baloncuk rengi", EN: "Bubble colour" },
     favoriteLangs: { TR: "Favori diller", EN: "Favourite languages" },
@@ -209,7 +219,7 @@ const SECTIONS: SectionDefinition[] = [
     { id: "account", icon: UserRound, label: { TR: "Hesabım", EN: "My Account" }, hint: { TR: "Kullanıcı adı, takma ad, oturum", EN: "Username, nickname, session" }, group: "user", tint: "from-indigo-500 to-violet-500" },
     { id: "profile", icon: Paintbrush, label: { TR: "Profil", EN: "Profile" }, hint: { TR: "Resim, kapak, hakkında, bağlantılar", EN: "Picture, banner, about, links" }, group: "user", tint: "from-fuchsia-500 to-pink-500" },
     { id: "status", icon: CircleDot, label: { TR: "Durum", EN: "Status" }, hint: { TR: "Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez", EN: "Online, Idle, Do Not Disturb, Invisible" }, group: "user", tint: "from-emerald-500 to-teal-500" },
-    { id: "privacy", icon: Shield, label: { TR: "Gizlilik ve Güvenlik", EN: "Privacy & Security" }, hint: { TR: "Görünürlük, iki adımlı doğrulama, şifre", EN: "Visibility, two-step verification, password" }, group: "user", tint: "from-sky-500 to-blue-600" },
+    { id: "privacy", icon: Shield, label: { TR: "Gizlilik ve Güvenlik", EN: "Privacy & Security" }, hint: { TR: "Görünürlük, iki adımlı doğrulama, şifre, oturumlar", EN: "Visibility, two-step verification, password, sessions" }, group: "user", tint: "from-sky-500 to-blue-600" },
     { id: "notifications", icon: Bell, label: { TR: "Bildirimler", EN: "Notifications" }, hint: { TR: "Mesaj, arama, istek ve e-posta bildirimleri", EN: "Message, call, request and e-mail notifications" }, group: "app", tint: "from-amber-500 to-orange-500" },
     { id: "messaging", icon: MessageCircle, label: { TR: "Mesajlaşma", EN: "Messaging" }, hint: { TR: "Yazıyor göstergesi, okundu bilgisi, sohbet görünümü", EN: "Typing indicator, read receipts, chat look" }, group: "app", tint: "from-blue-500 to-cyan-500" },
     { id: "appearance", icon: Palette, label: { TR: "Görünüm", EN: "Appearance" }, hint: { TR: "Tema, dil, yazı boyutu, erişilebilirlik", EN: "Theme, language, text size, accessibility" }, group: "app", tint: "from-rose-500 to-fuchsia-500" },
@@ -230,12 +240,12 @@ const FIELD_SECTIONS: Partial<Record<keyof EditableAccountFields, SectionId>> = 
     avatarUrl: "profile", bannerUrl: "profile", bio: "profile", accentColor: "profile", favoriteLangs: "profile",
     socialGithub: "profile", socialLinkedin: "profile", socialTwitter: "profile", socialWebsite: "profile",
     socialYoutube: "profile", socialTiktok: "profile", socialInstagram: "profile", socialFacebook: "profile",
-    customStatus: "status", statusEmoji: "status", statusPreference: "status",
+    customStatus: "status", statusPreference: "status",
     dndSchedule: "notifications", bubbleColor: "messaging", timezone: "appearance",
 };
 
 /** Fields the status menu and the visibility switches save on their own (outside the save bar). */
-const INSTANT_FIELDS: ReadonlyArray<keyof EditableAccountFields> = ["statusPreference", "customStatus", "statusEmoji", "dndMode", "showOnlineStatus", "showLastSeen"];
+const INSTANT_FIELDS: ReadonlyArray<keyof EditableAccountFields> = ["statusPreference", "customStatus", "dndMode", "showOnlineStatus", "showLastSeen"];
 
 // The open section lives in the URL hash (#profile), so reloads and the back button keep it.
 function subscribeHash(callback: () => void) {
@@ -405,7 +415,7 @@ function ProfilePreview({ form, email, facts, status }: { form: EditableAccountF
     const { t, tx } = useI18n();
     const avatar = form.avatarUrl.trim();
     const name = form.username.trim() || email.split("@")[0];
-    const custom = [form.statusEmoji, form.customStatus.trim()].filter(Boolean).join(" ");
+    const custom = form.customStatus.trim();
     return (
         <article aria-label={tx(C.preview)} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-zinc-900">
             <div className="h-24" style={bannerStyle(form)} />
@@ -447,6 +457,7 @@ export default function AccountSettingsPage() {
     const { t, tx, language, setLanguage, locale } = useI18n();
     const { preference: themePreference, setPreference: setThemePreference } = useTheme();
     const { toasts, push: toast, dismiss } = useToasts();
+    const bridge = useFirebaseBridge();
     const email = auth.status === "authenticated" ? auth.data?.user?.email?.toLowerCase() || null : null;
     const hash = useSyncExternalStore(subscribeHash, hashSnapshot, serverHash);
     const selected = SECTIONS.find((section) => section.id === hash)?.id ?? null;
@@ -467,7 +478,7 @@ export default function AccountSettingsPage() {
     const [saveError, setSaveError] = useState<ProfileError | null>(null);
     const [instantBusy, setInstantBusy] = useState<keyof EditableAccountFields | null>(null);
 
-    const [busyAction, setBusyAction] = useState<"export" | "delete" | "password" | null>(null);
+    const [busyAction, setBusyAction] = useState<"export" | "delete" | "password" | "sessions" | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -692,10 +703,35 @@ export default function AccountSettingsPage() {
         else if (list.length < 5) setField("favoriteLangs", [...list, lang]);
     };
 
+    /** Sensitive changes need a recent sign-in (the server answers reauth_required): sign out and come back here. */
+    const askToSignInAgain = (message: Copy) => {
+        toast({
+            tone: "warning",
+            message: tx(message),
+            duration: 0,
+            action: {
+                label: tx(C.signInAgain),
+                onClick: () => {
+                    reportPresenceOffline();
+                    prepareSignOut();
+                    void signOut({ callbackUrl: "/login?callbackUrl=%2Faccount-settings" });
+                },
+            },
+        });
+    };
+
     const handleDeleteAccount = async () => {
         setBusyAction("delete");
         try {
             const response = await fetch("/api/account/data", { method: "DELETE", credentials: "same-origin" });
+            if (response.status === 403) {
+                const result = await response.json().catch(() => ({})) as { code?: string };
+                if (result.code === "reauth_required") {
+                    setShowDeleteConfirm(false);
+                    askToSignInAgain(C.reauthDelete);
+                    return;
+                }
+            }
             if (!response.ok) throw new Error(String(response.status));
             try {
                 localStorage.clear();
@@ -770,16 +806,46 @@ export default function AccountSettingsPage() {
                 credentials: "same-origin",
                 body: JSON.stringify({ currentPassword, newPassword }),
             });
-            const result = await response.json().catch(() => ({})) as { error?: string };
+            const result = await response.json().catch(() => ({})) as { error?: string; code?: string; otherSessionsSignedOut?: boolean };
+            if (result.code === "reauth_required") {
+                askToSignInAgain(C.reauthPassword);
+                return;
+            }
+            if (result.code === "wrong_password") throw new Error(tx(C.passwordWrong));
             // The password route answers in Turkish only.
             if (!response.ok) throw new Error(language === "TR" && result.error ? result.error : t("error_occurred"));
             setPasswordSet(true);
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
-            toast({ tone: "success", message: t("password_set_success") });
+            toast({ tone: "success", message: result.otherSessionsSignedOut ? tx(C.passwordSavedOthersOut) : t("password_set_success") });
+            // The other sessions' data connections were cut, this browser's too: connect again.
+            if (result.otherSessionsSignedOut) void bridge.reconnect();
         } catch (error) {
             toast({ tone: "error", message: error instanceof Error ? error.message : t("error_occurred") });
+        } finally {
+            setBusyAction(null);
+        }
+    };
+
+    const handleSignOutOthers = async () => {
+        setBusyAction("sessions");
+        try {
+            const response = await fetch("/api/account/sessions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ action: "sign_out_everywhere" }),
+            });
+            if (response.status === 429) {
+                toast({ tone: "error", message: tx(C.tooManyTries) });
+                return;
+            }
+            if (!response.ok) throw new Error(String(response.status));
+            toast({ tone: "success", message: tx(C.signOutOthersDone) });
+            void bridge.reconnect();
+        } catch {
+            toast({ tone: "error", message: tx(C.signOutOthersFailed) });
         } finally {
             setBusyAction(null);
         }
@@ -1154,6 +1220,7 @@ export default function AccountSettingsPage() {
                             ) : (
                                 <p className="pt-1 text-sm text-zinc-500">{t("password_google_info")}</p>
                             )}
+                            <p className="mt-1 text-[12.5px] text-zinc-500">{tx(C.passwordStepUpNote)}</p>
                             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {hasPassword ? (
                                     <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" aria-label={tx(C.currentPassword)} placeholder={t("current_password")} className={`${INPUT} sm:col-span-2`} />
@@ -1164,6 +1231,12 @@ export default function AccountSettingsPage() {
                             <button type="button" onClick={() => void handleSetPassword()} disabled={busyAction === "password"} className={`mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-50 ${FOCUS}`}>
                                 {busyAction === "password" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
                                 {hasPassword ? t("change_password") : t("set_password")}
+                            </button>
+                        </Card>
+                        <Card icon={Monitor} title={tx(C.sessionsTitle)} description={tx(C.sessionsHint)}>
+                            <button type="button" onClick={() => void handleSignOutOthers()} disabled={busyAction === "sessions"} className={`mt-3 inline-flex items-center gap-2 rounded-xl bg-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 ${FOCUS}`}>
+                                {busyAction === "sessions" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogOut className="h-4 w-4" aria-hidden="true" />}
+                                {tx(C.signOutOthers)}
                             </button>
                         </Card>
                     </div>

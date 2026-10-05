@@ -1,11 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { isOwnerEmail } from "@/lib/server/admin";
 import { createFirebaseCustomToken, describeServerCredentials, getFirebaseProjectId, getServerDocument } from "@/lib/server/firebase-rest";
-import { enforceRateLimit } from "@/lib/server/rate-limit";
-import { jsonSecurityHeaders } from "@/lib/server/request-security";
+import { enforceRateLimit, memoryRateLimit } from "@/lib/server/rate-limit";
+import { clientIpFromHeaders, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { getSignedInSession } from "@/lib/server/active-session";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +40,11 @@ function hostOf(value: string | undefined) {
  * "login fails" needs a precise cause.
  */
 export async function GET(request: NextRequest) {
+    // Kept in memory so the report still works while Firestore is what's broken.
+    const rate = memoryRateLimit(`health-auth:${clientIpFromHeaders(request.headers)}`, 30, 10 * 60_000);
+    if (!rate.allowed) {
+        return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }) });
+    }
     const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
     if (cached && cached.host === host && Date.now() - cached.at < CACHE_MS) {
         return respond(request, cached.body);
@@ -122,7 +126,7 @@ async function mayReadDetails(request: NextRequest) {
     const expected = process.env.HEALTH_CHECK_TOKEN?.trim();
     const supplied = request.nextUrl.searchParams.get("token") || "";
     if (expected && expected.length >= 16 && supplied.length === expected.length && timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) return true;
-    const session = await getServerSession(authOptions).catch(() => null);
+    const session = await getSignedInSession();
     const email = session?.user?.email?.toLowerCase();
     return Boolean(email && isOwnerEmail(email));
 }

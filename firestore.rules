@@ -37,67 +37,6 @@ service cloud.firestore {
         );
     }
 
-    // Fields a user may write on their own users/{email} document. Everything
-    // else (friends, blockedUsers, role, suspension, credentials…) is server-only:
-    // the friend graph is trusted by the chat/call rules and the APIs below.
-    // Presence (isOnline, lastSeenAt, dndMode, presence, presenceState,
-    // statusPreference) is written by /api/presence and /api/account/profile only,
-    // so the privacy settings can't be bypassed from the browser.
-    function userEditableKeys() {
-      return [
-        "email", "username", "avatarUrl", "bio", "emailNotifications", "newFeatureAlerts",
-        "publicProfile", "showOnlineStatus", "timezone", "nickname", "nicknameTag", "customStatus",
-        "statusEmoji", "bannerUrl", "accentColor", "favoriteLangs", "socialGithub", "socialLinkedin",
-        "socialTwitter", "socialWebsite", "socialYoutube", "socialTiktok", "socialInstagram",
-        "socialFacebook", "lastLoginDate", "updatedAt", "typingIndicator", "readReceipts",
-        "msgFontSize", "chatBackground", "voiceMsgQuality", "linkPreview", "gifAutoplay",
-        "enterToSend", "stickerSuggestions", "whoCanAdd", "hideFriendList", "showLastSeen",
-        "photoVisibility", "bioVisibility", "publicProjects", "msgNotifications", "callNotifications",
-        "friendReqNotifications", "likeNotifications", "notifSound", "dndSchedule",
-        "bubbleColor", "compactMode", "reduceAnimations", "highContrast", "uiFontSize", "emojiStyle"
-      ];
-    }
-
-    function profileEditableKeys() {
-      return [
-        "email", "username", "avatarUrl", "nickname", "nicknameTag", "bio", "bannerUrl", "accentColor",
-        "favoriteLangs", "socialGithub", "socialLinkedin", "socialTwitter", "socialWebsite",
-        "customStatus", "statusEmoji", "publicProfile", "publicProjects", "updatedAt"
-      ];
-    }
-
-    // True when the write creates the document or changes `key`; validation of
-    // untouched legacy values must not block unrelated updates.
-    function touches(key) {
-      return resource == null || request.resource.data.diff(resource.data).affectedKeys().hasAny([key]);
-    }
-
-    function textField(key, max) {
-      return !(key in request.resource.data) || !touches(key) || request.resource.data[key] == null
-        || (request.resource.data[key] is string && request.resource.data[key].size() <= max);
-    }
-
-    function urlField(key) {
-      return !(key in request.resource.data) || !touches(key) || request.resource.data[key] == null
-        || request.resource.data[key] == ""
-        || (request.resource.data[key] is string && request.resource.data[key].size() <= 2048
-          && request.resource.data[key].matches('https://[^ <>()]+'));
-    }
-
-    function colorField(key) {
-      return !(key in request.resource.data) || !touches(key) || request.resource.data[key] == null
-        || request.resource.data[key] == ""
-        || (request.resource.data[key] is string && request.resource.data[key].matches('#[0-9a-fA-F]{3,8}'));
-    }
-
-    function validProfileFields() {
-      return textField("username", 100) && textField("nickname", 100) && textField("bio", 2000)
-        && textField("customStatus", 300) && textField("statusEmoji", 32)
-        && (!("nicknameTag" in request.resource.data) || !touches("nicknameTag")
-          || (request.resource.data.nicknameTag is string && request.resource.data.nicknameTag.matches('[0-9]{4}')))
-        && urlField("avatarUrl") && urlField("bannerUrl") && colorField("accentColor");
-    }
-
     // Voice files must live in the owning chat/group folder: `<prefix>/<id>/<file>`.
     // The server deletes these paths when chats, groups or accounts are removed.
     function validVoicePath(path, prefix, containerId) {
@@ -224,44 +163,28 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Users documents are created by the server only (sign-up, Google sign-in).
-    // A still-open tab of a deleted account must not bring its document back
-    // through the presence heartbeat (a merge write that becomes a create).
+    // Accounts and their public profiles are written by the server only:
+    // sign-up and Google sign-in create them; /api/account/profile and
+    // /api/presence change them, which moderate the text, keep nickname#tag
+    // unique and apply the privacy settings. Browsers only read them.
     match /users/{userId} {
       allow read: if isSelf(userId);
-      allow create: if false;
-      allow update: if isSelf(userId)
-        && request.resource.data.email == email()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(userEditableKeys())
-        && validProfileFields();
-      allow delete: if false;
+      allow write: if false;
     }
 
     match /public_profiles/{userId} {
-      allow read: if signedIn();
-      // Badges are server-only (they include "verified"). Only an existing
-      // account gets a profile: a deleted account's open tab can't recreate it.
-      allow create: if isSelf(userId)
-        && exists(/databases/$(database)/documents/users/$(userId))
-        && request.resource.data.email == email()
-        && request.resource.data.keys().hasOnly(profileEditableKeys())
-        && validProfileFields();
-      allow update: if isSelf(userId)
-        && request.resource.data.email == email()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(profileEditableKeys())
-        && validProfileFields();
-      allow delete: if isSelf(userId);
+      // Read one at a time, by address: listing them would hand out every member's address.
+      allow get: if signedIn();
+      allow list: if false;
+      allow write: if false;
     }
 
+    // Sent through /api/friends only, which checks blocks, the recipient's
+    // "who can add me" setting and the limits; browsers just watch them.
     match /friendRequests/{requestId} {
       allow read: if signedIn()
         && (resource.data.fromEmail == email() || resource.data.toEmail == email());
-      allow create: if signedIn()
-        && request.resource.data.fromEmail == email()
-        && request.resource.data.toEmail != email()
-        && request.resource.data.status == "pending"
-        && request.resource.data.keys().hasOnly(["fromEmail", "toEmail", "status", "createdAt"]);
-      allow update, delete: if false;
+      allow create, update, delete: if false;
     }
 
     match /chats/{chatId} {

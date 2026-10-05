@@ -528,11 +528,18 @@ export async function commitServerPatches(writes: Array<{
 type ServerMutation =
     | { type: "create" | "update"; path: string; data: Record<string, unknown>; updateFields?: string[]; updateTime?: string }
     | { type: "delete"; path: string; updateTime?: string }
-    | { type: "increment"; path: string; fields: Record<string, number> }
+    /** Adds to numeric fields (missing ones count as 0); with mustExist, a deleted document isn't brought back. */
+    | { type: "increment"; path: string; fields: Record<string, number>; mustExist?: boolean }
     /** arrayUnion: appends the values a field doesn't hold yet (the document must exist). */
     | { type: "append"; path: string; fields: Record<string, unknown[]> };
 
-export async function commitServerMutations(mutations: ServerMutation[]): Promise<{ writeResults: Array<{ updateTime?: string }>; commitTime: string | null }> {
+type MutationResult = {
+    updateTime?: string;
+    /** The values the field transforms (increment, append) produced, in their order. */
+    transformResults?: unknown[];
+};
+
+export async function commitServerMutations(mutations: ServerMutation[]): Promise<{ writeResults: MutationResult[]; commitTime: string | null }> {
     if (!mutations.length) return { writeResults: [], commitTime: null };
     const projectId = getFirebaseProjectId();
     const writes = mutations.map((mutation) => {
@@ -551,6 +558,7 @@ export async function commitServerMutations(mutations: ServerMutation[]): Promis
                         increment: toFirestoreValue(amount),
                     })),
                 },
+                ...(mutation.mustExist ? { currentDocument: { exists: true } } : {}),
             };
         }
         if (mutation.type === "append") {
@@ -579,8 +587,12 @@ export async function commitServerMutations(mutations: ServerMutation[]): Promis
         { method: "POST", body: JSON.stringify({ writes }) },
     );
     if (!response.ok) throw await firestoreHttpError(response, "Firestore atomik işlem hatası");
-    const result = await response.json().catch(() => ({})) as { writeResults?: Array<{ updateTime?: string }>; commitTime?: string };
-    return { writeResults: result.writeResults || [], commitTime: result.commitTime || null };
+    const result = await response.json().catch(() => ({})) as { writeResults?: Array<{ updateTime?: string; transformResults?: FirestoreValue[] }>; commitTime?: string };
+    const writeResults = (result.writeResults || []).map(({ updateTime, transformResults }) => ({
+        ...(updateTime ? { updateTime } : {}),
+        ...(Array.isArray(transformResults) ? { transformResults: transformResults.map(fromFirestoreValue) } : {}),
+    }));
+    return { writeResults, commitTime: result.commitTime || null };
 }
 
 export async function deleteServerDocument(path: string) {

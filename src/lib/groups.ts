@@ -498,7 +498,6 @@ export type GroupMemberInfo = {
     nickname: string;
     nicknameTag: string;
     customStatus: string;
-    statusEmoji: string;
     /** effectiveStatus() of the public profile when the detail was read. */
     status: PresenceStatus;
     /** status !== "offline" (kept for older readers). */

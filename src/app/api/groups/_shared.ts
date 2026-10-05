@@ -314,7 +314,6 @@ export type PublicProfile = {
     nickname?: string;
     nicknameTag?: string;
     customStatus?: string;
-    statusEmoji?: string;
     /** Written by POST /api/presence (lib/presence.ts); read with effectiveStatus(). */
     presence?: unknown;
     isOnline?: boolean;

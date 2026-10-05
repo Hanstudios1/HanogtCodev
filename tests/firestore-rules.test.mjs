@@ -2,7 +2,7 @@
 // Firestore rules regression tests for Hanogt Codev (run inside the emulator).
 import fs from "node:fs";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { doc, getDoc, getDocs, setDoc, updateDoc, addDoc, collection, query, where, serverTimestamp, deleteField } from "firebase/firestore";
+import { doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc, collection, query, where, serverTimestamp, deleteField } from "firebase/firestore";
 
 const rules = fs.readFileSync(process.env.RULES_FILE || new URL("../firestore.rules", import.meta.url), "utf8");
 const env = await initializeTestEnvironment({ projectId: "hanogt-rules-test", firestore: { rules, host: "127.0.0.1", port: 8080 } });
@@ -37,7 +37,9 @@ async function check(name, promise) {
 console.log("users/");
 await check("presence is server-only (users)", assertFails(setDoc(doc(as(A), "users", A), { isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
 await check("status preference is server-only", assertFails(updateDoc(doc(as(A), "users", A), { statusPreference: "invisible" })));
-await check("owner can edit profile fields (account settings)", assertSucceeds(setDoc(doc(as(A), "users", A), { email: A, username: "Alice", bio: "hi", avatarUrl: "https://example.com/a.png", accentColor: "#10b981", nicknameTag: "1234", typingIndicator: true, whoCanAdd: "everyone" }, { merge: true })));
+await check("owner reads their own user doc", assertSucceeds(getDoc(doc(as(A), "users", A))));
+// Account Settings saves through /api/account/profile (moderation, unique nickname#tag).
+await check("profile fields are written through the API only", assertFails(setDoc(doc(as(A), "users", A), { email: A, username: "Alice", bio: "hi", avatarUrl: "https://example.com/a.png", accentColor: "#10b981", nicknameTag: "1234", typingIndicator: true, whoCanAdd: "everyone" }, { merge: true })));
 await check("owner cannot self-grant friends", assertFails(setDoc(doc(as(C), "users", C), { friends: [A] }, { merge: true })));
 await check("owner cannot edit blockedUsers", assertFails(updateDoc(doc(as(A), "users", A), { blockedUsers: [C] })));
 await check("owner cannot set role", assertFails(updateDoc(doc(as(A), "users", A), { role: "admin" })));
@@ -49,7 +51,14 @@ await check("users doc cannot be created by a client", assertFails(setDoc(doc(as
 await check("deleted account's presence heartbeat cannot recreate users doc", assertFails(setDoc(doc(as(D), "users", D), { isOnline: true, lastSeenAt: new Date().toISOString() }, { merge: true })));
 
 console.log("public_profiles/");
-await check("owner can edit own profile despite server badges and presence", assertSucceeds(setDoc(doc(as(A), "public_profiles", A), { customStatus: "coding", email: A }, { merge: true })));
+await check("a profile is read by its address", assertSucceeds(getDoc(doc(as(B), "public_profiles", A))));
+await check("a missing profile reads as missing", assertSucceeds(getDoc(doc(as(B), "public_profiles", D))));
+await check("profiles can't be listed (every member's address)", assertFails(getDocs(collection(as(B), "public_profiles"))));
+await check("profiles can't be searched", assertFails(getDocs(query(collection(as(B), "public_profiles"), where("nicknameTag", "==", "1234")))));
+await check("signed-out visitors can't read profiles", assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), "public_profiles", A))));
+await check("own public profile is written through the API only", assertFails(setDoc(doc(as(A), "public_profiles", A), { customStatus: "coding", email: A }, { merge: true })));
+// A copied nickname#tag would catch friend requests meant for someone else.
+await check("nickname and tag can't be set from the browser", assertFails(updateDoc(doc(as(C), "public_profiles", A), { nickname: "alice", nicknameTag: "1234" })));
 await check("presence is server-only (public profile)", assertFails(setDoc(doc(as(A), "public_profiles", A), { isOnline: false, email: A }, { merge: true })));
 await check("status can't be set from the browser", assertFails(setDoc(doc(as(A), "public_profiles", A), { presence: { status: "dnd", updatedAt: new Date().toISOString() }, email: A }, { merge: true })));
 await check("Do Not Disturb can't be set from the browser", assertFails(setDoc(doc(as(A), "public_profiles", A), { dndMode: true, email: A }, { merge: true })));
@@ -59,11 +68,24 @@ await check("owner cannot raise or extend their plan badge", assertFails(updateD
 await check("owner cannot give themselves a plan badge", assertFails(setDoc(doc(as(B), "public_profiles", B), { email: B, username: "bob", planBadge: { plan: "pro", until: null } })));
 await check("CSS injection accent rejected", assertFails(updateDoc(doc(as(A), "public_profiles", A), { accentColor: "red;background:url(//x)" })));
 await check("banner must be https", assertFails(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "http://x.com/a.png" })));
-await check("valid banner accepted", assertSucceeds(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "https://x.com/a.png" })));
+await check("even a valid banner goes through the API", assertFails(updateDoc(doc(as(A), "public_profiles", A), { bannerUrl: "https://x.com/a.png" })));
 await check("tag must be 4 digits", assertFails(updateDoc(doc(as(A), "public_profiles", A), { nicknameTag: "0001x" })));
-await check("new profile create by owner", assertSucceeds(setDoc(doc(as(C), "public_profiles", C), { email: C, username: "carol", nicknameTag: "4321" })));
+await check("a profile can't be created from the browser", assertFails(setDoc(doc(as(C), "public_profiles", C), { email: C, username: "carol", nicknameTag: "4321" })));
+await check("a profile can't be deleted from the browser", assertFails(deleteDoc(doc(as(A), "public_profiles", A))));
 await check("new profile can't carry presence", assertFails(setDoc(doc(as(B), "public_profiles", B), { email: B, username: "bob", isOnline: true })));
 await check("profile cannot be created without a users doc", assertFails(setDoc(doc(as(D), "public_profiles", D), { email: D, username: "dave" }, { merge: true })));
+
+console.log("friendRequests/");
+await env.withSecurityRulesDisabled(async (ctx) => {
+    // As POST /api/friends writes it.
+    await setDoc(doc(ctx.firestore(), "friendRequests", `${C}_${A}_1`), { fromEmail: C, toEmail: A, status: "pending", createdAt: new Date() });
+});
+await check("the recipient watches incoming requests", assertSucceeds(getDocs(query(collection(as(A), "friendRequests"), where("toEmail", "==", A), where("status", "==", "pending")))));
+await check("the sender watches outgoing requests", assertSucceeds(getDocs(query(collection(as(C), "friendRequests"), where("fromEmail", "==", C), where("status", "==", "pending")))));
+await check("others can't read them", assertFails(getDoc(doc(as(B), "friendRequests", `${C}_${A}_1`))));
+// /api/friends checks blocks, "who can add me" and the limits.
+await check("a request can't be sent from the browser", assertFails(setDoc(doc(as(C), "friendRequests", `${C}_${B}_2`), { fromEmail: C, toEmail: B, status: "pending", createdAt: serverTimestamp() })));
+await check("a request can't be accepted from the browser", assertFails(updateDoc(doc(as(A), "friendRequests", `${C}_${A}_1`), { status: "accepted" })));
 
 console.log("chats/");
 await check("friend can open chat", assertSucceeds(setDoc(doc(as(A), "chats", chatId), { participants: [A, B].sort(), updatedAt: serverTimestamp() }, { merge: true })));

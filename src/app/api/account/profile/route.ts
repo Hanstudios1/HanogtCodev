@@ -3,6 +3,7 @@ import type { Session } from "next-auth";
 import { NextResponse, after, type NextRequest } from "next/server";
 import {
     PUBLIC_PROFILE_KEYS,
+    RETIRED_ACCOUNT_KEYS,
     defaultNickname,
     isNicknameTag,
     isSafeProfileUrl,
@@ -298,8 +299,10 @@ export async function PATCH(request: NextRequest) {
                     force: true,
                 });
             }
+            // The status is text only now: saving it deletes an emoji stored with it before.
+            const retired = "customStatus" in patch ? RETIRED_ACCOUNT_KEYS : [];
             const userData = { ...patch, email, updatedAt: now, ...presence?.user.data };
-            const writes: Parameters<typeof commitServerPatches>[0] = [{ path: `users/${email}`, data: userData, updateFields: maskOf(userData, presence?.user.mask) }];
+            const writes: Parameters<typeof commitServerPatches>[0] = [{ path: `users/${email}`, data: userData, updateFields: maskOf(userData, [...presence?.user.mask ?? [], ...retired]) }];
             let profileData: Record<string, unknown> | null = null;
             if (profile) {
                 if (Object.keys(publicPatch).length) profileData = { ...publicPatch, email, updatedAt: now };
@@ -310,7 +313,7 @@ export async function PATCH(request: NextRequest) {
             if (profileData || presence?.profile) {
                 const data = { ...profileData, ...presence?.profile?.data };
                 // A field in the mask without a value is deleted (lastSeenAt while "show last seen" is off).
-                writes.push({ path: `public_profiles/${email}`, data, updateFields: maskOf(data, presence?.profile?.mask) });
+                writes.push({ path: `public_profiles/${email}`, data, updateFields: maskOf(data, [...presence?.profile?.mask ?? [], ...retired]) });
                 profileData = data;
             }
             // updateMask = the given fields only: friends, role and badges stay untouched.

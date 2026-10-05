@@ -23,7 +23,7 @@ import {
 import { ROLE_TONES } from "./tones";
 
 type DialogState =
-    | { kind: "suspend" | "unsuspend" | "reset2fa"; user: AdminUser }
+    | { kind: "suspend" | "unsuspend" | "reset2fa" | "removePassword"; user: AdminUser }
     | { kind: "role"; user: AdminUser; role: AssignableRole };
 
 /** The stored role as it appears among the assignable ones ("user" when none). */
@@ -96,6 +96,9 @@ function UserRow({ user, self, onAction, onDeleteData }: { user: AdminUser; self
                 ) : null}
                 {user.canSuspend && user.twoFactorEnabled ? (
                     <Button size="sm" variant="ghost" icon={ShieldOff} onClick={() => onAction({ kind: "reset2fa", user })}>{tx({ TR: "2FA sıfırla", EN: "Reset 2FA" })}</Button>
+                ) : null}
+                {user.canSuspend && user.hasPassword ? (
+                    <Button size="sm" variant="ghost" icon={KeyRound} onClick={() => onAction({ kind: "removePassword", user })}>{tx({ TR: "Şifreyi kaldır", EN: "Remove password" })}</Button>
                 ) : null}
                 {user.canSuspend ? (
                     user.suspended
@@ -508,6 +511,8 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
             toast("success", tx({ TR: "{email} yeniden etkin.", EN: "{email} is active again." }, { email: updated.email }));
         } else if (dialog.kind === "reset2fa") {
             toast("success", tx({ TR: "{email} için iki adımlı doğrulama kapatıldı.", EN: "Two-step verification was turned off for {email}." }, { email: updated.email }));
+        } else if (dialog.kind === "removePassword") {
+            toast("success", tx({ TR: "{email} hesabının şifresi kaldırıldı; Google ile giriş artık yeterli.", EN: "The password of {email} was removed; signing in with Google is enough now." }, { email: updated.email }));
         } else {
             toast("success", tx({ TR: "{email} artık {role} rolünde.", EN: "{email} now has the {role} role." }, { email: updated.email, role: tx(ROLE_COPY[updated.role]) }));
         }
@@ -645,6 +650,31 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
                 title={tx({ TR: "İki adımlı doğrulama sıfırlansın mı?", EN: "Reset two-step verification?" })}
                 description={dialog ? tx({ TR: "{email} yalnızca şifresiyle giriş yapabilecek. Bunu yalnızca kimliğini başka bir yolla doğruladığınız, doğrulama uygulamasını ve kurtarma kodlarını kaybetmiş kişiler için yapın.", EN: "{email} will be able to sign in with just the password. Only do this for people who lost their authenticator and recovery codes and whose identity you verified another way." }, { email: dialog.user.email }) : undefined}
                 confirmLabel={tx({ TR: "Sıfırla", EN: "Reset" })}
+                confirmDisabled={!reason.trim() || reason.length > SUSPEND_REASON_MAX}
+            >
+                <TextArea
+                    label={tx({ TR: "Gerekçe", EN: "Reason" })}
+                    value={reason}
+                    onChange={setReason}
+                    max={SUSPEND_REASON_MAX}
+                    rows={2}
+                    autoFocus
+                    placeholder={tx({ TR: "Örn. destek talebi #123, kimlik e-postayla doğrulandı", EN: "e.g. support ticket #123, identity verified by e-mail" })}
+                    hint={tx({ TR: "Zorunlu; denetim kaydına yazılır.", EN: "Required; written to the audit log." })}
+                />
+            </ConfirmDialog>
+
+            <ConfirmDialog
+                open={dialog?.kind === "removePassword"}
+                onClose={closeDialog}
+                onConfirm={() => void submit()}
+                busy={busy}
+                error={actionError}
+                icon={KeyRound}
+                tone="danger"
+                title={tx({ TR: "Hesabın şifresi kaldırılsın mı?", EN: "Remove the account's password?" })}
+                description={dialog ? tx({ TR: "{email} artık şifreyle giriş yapamaz; Google ile giriş yaptıktan sonra şifre de sorulmaz. Açıksa iki adımlı doğrulama da kapanır. Bunu yalnızca şifresini unutan ve kimliğini başka bir yolla doğruladığınız kişiler için yapın (şifre kurtarma talepleri).", EN: "{email} can no longer sign in with a password, and no password is asked for after signing in with Google. Two-step verification is turned off too if it was on. Only do this for people who forgot their password and whose identity you verified another way (password recovery requests)." }, { email: dialog.user.email }) : undefined}
+                confirmLabel={tx({ TR: "Şifreyi kaldır", EN: "Remove password" })}
                 confirmDisabled={!reason.trim() || reason.length > SUSPEND_REASON_MAX}
             >
                 <TextArea

@@ -1,15 +1,14 @@
-import { getServerSession } from "next-auth";
 import type { AdminMeResponse } from "@/components/Admin/types";
-import { authOptions } from "@/lib/auth";
 import { adminError, adminJson, adminPermissions, getStaffSession, syncStaffRoleBadgeThrottled } from "@/lib/server/admin";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
+import { getSignedInSession } from "@/lib/server/active-session";
 
 export const runtime = "nodejs";
 
 /** Whether the caller is staff. Everyone else gets a plain `{ isAdmin: false }`. */
 export async function GET() {
     // Signed-out visitors are answered without touching the database.
-    const session = await getServerSession(authOptions).catch(() => null);
+    const session = await getSignedInSession();
     const sessionEmail = session?.user?.email?.trim().toLowerCase();
     if (!sessionEmail) return adminJson({ isAdmin: false } satisfies AdminMeResponse);
     // Per account, not per IP: behind a shared address (or on a host without

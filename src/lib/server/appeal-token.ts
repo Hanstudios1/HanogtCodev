@@ -14,6 +14,9 @@ import { normalizeEmail } from "./validate";
  * - "2fa-recovery": the password was right, but the authenticator and the
  *   recovery codes are both lost; the person asks the team to reset two-step
  *   verification (/api/support/two-factor-recovery).
+ * - "password-recovery": Google confirmed the address, but the password the
+ *   account also has (asked for at /login/verify) is forgotten; the person
+ *   asks the team to remove it (/api/support/password-recovery).
  *
  * Format: base64url("<purpose>|<email>|<expiresAt ms>") + "." + base64url(HMAC-SHA256(key, the same text)).
  * Plain ASCII and URL-safe, because sign-in error codes end up in redirect
@@ -31,7 +34,7 @@ import { normalizeEmail } from "./validate";
  * environment.
  */
 
-export const SIGN_IN_TOKEN_PURPOSES = ["appeal", "2fa-recovery"] as const;
+export const SIGN_IN_TOKEN_PURPOSES = ["appeal", "2fa-recovery", "password-recovery"] as const;
 export type SignInTokenPurpose = (typeof SIGN_IN_TOKEN_PURPOSES)[number];
 
 export const SIGN_IN_TOKEN_TTL_MS = 30 * 60_000;
@@ -145,4 +148,13 @@ export function issueTwoFactorRecoveryToken(email: string, now = Date.now()): st
 
 export function readTwoFactorRecoveryToken(token: unknown, now = Date.now()): SignInTokenClaims | null {
     return readSignInToken(token, "2fa-recovery", now);
+}
+
+/** For someone signed in with Google who can't give the account's password at /login/verify. */
+export function issuePasswordRecoveryToken(email: string, now = Date.now()): string | null {
+    return issueSignInToken("password-recovery", email, now);
+}
+
+export function readPasswordRecoveryToken(token: unknown, now = Date.now()): SignInTokenClaims | null {
+    return readSignInToken(token, "password-recovery", now);
 }

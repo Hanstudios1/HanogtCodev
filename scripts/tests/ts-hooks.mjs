@@ -1,8 +1,10 @@
 // Module resolution hooks for the plain-Node tests in this folder.
 // Node 22 strips TypeScript types natively; these hooks only teach it the
 // project's import style: "@/x" → src/x.ts, extensionless relative imports
-// from .ts files, the "server-only" marker package (a no-op here) and JSON
-// imports without an import attribute (the bundler's style).
+// from .ts files, the "server-only" marker package (a no-op here), JSON
+// imports without an import attribute, package subpaths without an exports
+// map ("next/server") and the default export of CommonJS modules compiled
+// from ES modules (next-auth's providers), all as the bundler does.
 import fs from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -18,9 +20,19 @@ function withExtension(url) {
     return null;
 }
 
+/** CommonJS packages whose `exports.default` the bundler hands to a default import. */
+const DEFAULT_INTEROP = /^next-auth\/providers\/[a-z0-9-]+$/;
+const INTEROP_SHIM = new URL("./cjs-default.mjs", import.meta.url);
+
 export async function resolve(specifier, context, nextResolve) {
     if (specifier === "server-only") {
         return { url: "data:text/javascript,export {};", shortCircuit: true };
+    }
+    // The shim itself loads the real module.
+    if (DEFAULT_INTEROP.test(specifier) && !(context.parentURL ?? "").startsWith(INTEROP_SHIM.href)) {
+        const shim = new URL(INTEROP_SHIM);
+        shim.searchParams.set("module", specifier);
+        return { url: shim.href, shortCircuit: true };
     }
     if (specifier.startsWith("@/")) {
         const found = withExtension(new URL(specifier.slice(2), SRC));
@@ -31,7 +43,15 @@ export async function resolve(specifier, context, nextResolve) {
         const found = withExtension(new URL(specifier, parent));
         if (found) return { url: found, shortCircuit: true };
     }
-    return nextResolve(specifier, context);
+    try {
+        return await nextResolve(specifier, context);
+    } catch (error) {
+        // A package without an exports map ("next/server"): the bundler adds the extension.
+        if (error?.code === "ERR_MODULE_NOT_FOUND" && /^(?:@[\w.-]+\/)?[\w.-]+\/[\w./-]+$/.test(specifier) && !/\.[cm]?js$/.test(specifier)) {
+            return nextResolve(`${specifier}.js`, context);
+        }
+        throw error;
+    }
 }
 
 export async function load(url, context, nextLoad) {

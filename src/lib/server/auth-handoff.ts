@@ -3,6 +3,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { AUTH_HANDOFF_COOKIE, AUTH_HANDOFF_NONCE } from "@/lib/auth-client";
+import { readStepUpClaim, type StepUpClaim } from "@/lib/step-up";
 
 /**
  * Session hand-off between our own domains.
@@ -12,13 +13,17 @@ import { AUTH_HANDOFF_COOKIE, AUTH_HANDOFF_NONCE } from "@/lib/auth-client";
  * other host and looked signed out when they came back. After the Google step
  * the auth host now issues a short-lived signed token that only the original
  * site can redeem, and only in the browser that started the sign-in (the token
- * carries a nonce that must match a cookie set there).
+ * carries a nonce that must match a cookie set there). The token also carries
+ * what the sign-in proved (src/lib/step-up.ts): a step-up still pending on the
+ * auth host stays pending on the other site, so the hand-off can't skip it.
  */
 
 const TOKEN_TTL_SECONDS = 120;
 
 export type HandoffUser = { email: string; name: string | null; picture: string | null; id: string };
-type HandoffPayload = { v: 1; aud: string; nonce: string; next: string; user: HandoffUser; exp: number };
+/** The session token's sign-in fields, carried over to the other site. */
+export type HandoffClaims = { authTime: number; provider: string; authVersion: number; stepUp: StepUpClaim | null };
+type HandoffPayload = { v: 1; aud: string; nonce: string; next: string; user: HandoffUser; claims: HandoffClaims; exp: number };
 
 function signingKey() {
     const secret = process.env.NEXTAUTH_SECRET;
@@ -90,6 +95,10 @@ export function verifyHandoff(token: string, audience: string, nonce: string): H
     if (payload.aud !== audience || typeof payload.nonce !== "string" || !sameText(payload.nonce, nonce)) return null;
     if (typeof payload.next !== "string" || !/^\/(?![/\\])/.test(payload.next) || /[\u0000-\u001f\u007f\\]/.test(payload.next)) return null;
     if (!payload.user || typeof payload.user.email !== "string" || !payload.user.email.includes("@")) return null;
+    // Without the sign-in fields a hand-off could drop a pending step-up: refused.
+    const claims = payload.claims as Partial<HandoffClaims> | undefined;
+    if (!claims || typeof claims.authTime !== "number" || typeof claims.provider !== "string" || typeof claims.authVersion !== "number") return null;
+    if (claims.stepUp !== null && !readStepUpClaim(claims.stepUp)) return null;
     return payload;
 }
 

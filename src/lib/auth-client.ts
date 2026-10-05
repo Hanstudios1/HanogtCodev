@@ -9,6 +9,42 @@ export function safeCallbackPath(value: string | null) {
     return value.slice(0, 500);
 }
 
+/**
+ * Where NextAuth may send the browser after signing in or out: our own
+ * origin only (an address like "https://site.com.evil.example" also starts
+ * with the base URL). A bare /login or /signup becomes the dashboard; one
+ * that carries something to show stays, which is how signing out lands on
+ * "/login?error=StepUpExpired" or "/login?callbackUrl=…" (the sign-in form
+ * itself always names its destination, see safeCallbackPath).
+ */
+export function authRedirectTarget(url: string, baseUrl: string) {
+    if (url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\")) {
+        if (url === "/") return baseUrl;
+        return isBareAuthPage(url) ? `${baseUrl}/dashboard` : `${baseUrl}${url}`;
+    }
+    let target: URL;
+    let base: URL;
+    try {
+        target = new URL(url);
+        base = new URL(baseUrl);
+    } catch {
+        return baseUrl;
+    }
+    if (target.origin !== base.origin) return baseUrl;
+    if (url === baseUrl || isBareAuthPage(`${target.pathname}${target.search}`)) return `${baseUrl}/dashboard`;
+    return target.href;
+}
+
+/** /login or /signup without an error or a destination to show. */
+function isBareAuthPage(path: string) {
+    return /^\/(?:login|signup)\/?(?:[?#]|$)/.test(path) && !/[?&](?:error|callbackUrl)=/.test(path);
+}
+
+/** Google said it hasn't verified the account's address: it can't stand for the account. */
+export const GOOGLE_EMAIL_UNVERIFIED = "GoogleEmailUnverified";
+/** The second check after a Google sign-in wasn't finished in time. */
+export const STEP_UP_EXPIRED = "StepUpExpired";
+
 /** Error code used when the auth endpoints cannot be reached at all. */
 export const AUTH_NETWORK_ERROR = "Network";
 
@@ -281,6 +317,11 @@ export function submitSuspensionAppeal(token: string, message: string) {
 /** Asks the team to reset two-step verification, with the token from "TwoFactorRecovery:<token>". */
 export function submitTwoFactorRecovery(token: string, message: string) {
     return submitSignInRequest("/api/support/two-factor-recovery", token, message);
+}
+
+/** Asks the team to remove a forgotten password, with the token /api/auth/step-up gives at /login/verify. */
+export function submitPasswordRecovery(token: string, message: string) {
+    return submitSignInRequest("/api/support/password-recovery", token, message);
 }
 
 /** Names the suspension appeal form uses (same rules as every sign-in request). */

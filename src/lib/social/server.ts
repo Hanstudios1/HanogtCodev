@@ -147,7 +147,6 @@ export type StoredProfile = Record<string, unknown> & {
     nickname?: unknown;
     nicknameTag?: unknown;
     customStatus?: unknown;
-    statusEmoji?: unknown;
     staffRole?: unknown;
 };
 
@@ -188,7 +187,6 @@ export function socialPerson(email: string, profile: StoredProfile | null | unde
         ...personCard(email, profile),
         email,
         customStatus: withPresence ? text(profile?.customStatus, 120) : "",
-        statusEmoji: withPresence ? text(profile?.statusEmoji, 16) : "",
         status: withPresence ? effectiveStatus(profile, now) : "offline",
         lastSeenAt: seen ? new Date(seen).toISOString() : null,
     };

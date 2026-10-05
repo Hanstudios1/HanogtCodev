@@ -320,7 +320,6 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
                     username: realtime?.username || member.username,
                     avatarUrl: realtime ? realtime.avatarUrl : member.avatarUrl,
                     customStatus: realtime ? realtime.customStatus : member.customStatus,
-                    statusEmoji: realtime ? realtime.statusEmoji : member.statusEmoji,
                     status,
                     online: status !== "offline",
                     role: roleFor(member.email, group.ownerEmail, group.admins),
@@ -337,7 +336,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     const openUserCard = useCallback((target: string, trigger: HTMLElement) => {
         const member = membersRef.current.find((entry) => entry.email === target);
         const person = member
-            ? { email: member.email, username: member.username, avatarUrl: member.avatarUrl, status: member.status, nickname: member.nickname, nicknameTag: member.nicknameTag, staffRole: member.staffRole ?? null, customStatus: member.customStatus, statusEmoji: member.statusEmoji }
+            ? { email: member.email, username: member.username, avatarUrl: member.avatarUrl, status: member.status, nickname: member.nickname, nicknameTag: member.nicknameTag, staffRole: member.staffRole ?? null, customStatus: member.customStatus }
             // Someone who left the group: the card loads what it may show.
             : { email: target, username: target.split("@")[0] || "Hanogt", avatarUrl: null, status: null };
         setUserCard((current) => nextPopout(current, person, trigger));

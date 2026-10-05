@@ -11,14 +11,16 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 - Düz metin parola saklama kaldırıldı. Yeni parolalar scrypt ile tuzlanıp hashlenir; eski kayıtlar başarılı oturum açmada güvenli biçime taşınır.
 - Yetkilendirme yalnız istemci kontrollerine bırakılmaz. Kod çalıştırma, yapay zekâ, arkadaş, grup, medya, çağrı ve oyun projesi işlemleri sunucu oturumu, aynı-origin kontrolü, giriş doğrulama, hız sınırı ve kaynak sahipliği denetimi uygular.
 - Kod çalıştırma güvenliği regex tabanlı bir tarayıcı iddiası değildir. JavaScript, TypeScript, Python, SQL ve Lua ziyaretçinin tarayıcısında WebAssembly ile çalışır. Derlenen diller `/api/execute` üzerinden sunucu tarafı politika katmanından geçip `CODE_RUNNER_URL` (tanımlıysa) ya da herkese açık Wandbox / Kotlin Playground derleyicisinde yürütülür; kod hiçbir zaman Hanogt sunucularında çalıştırılmaz.
-- Firestore ve Storage kuralları repoda sürümlenir. Oyun projeleri dahil hassas koleksiyonlarda doğrudan istemci yazımı engellenir; yazma işlemleri yetkili sunucu uçlarından geçer.
+- Firestore ve Storage kuralları repoda sürümlenir. Oyun projeleri dahil hassas koleksiyonlarda doğrudan istemci yazımı engellenir; yazma işlemleri yetkili sunucu uçlarından geçer. `users` ve `public_profiles` yalnızca sunucudan yazılır, `public_profiles` listelenemez (yalnızca adresle tek tek okunur), arkadaşlık istekleri yalnızca `/api/friends` ile oluşur.
 - `/api/ai` kimlik doğrulamalı ve hız sınırlıdır. Sunucu sırları istemci paketine gönderilmez.
 - Güvenlik botuna kod katkısı açık rıza/opt-in ile alınır; kod otomatik ve denetimsiz biçimde modeli “kendi kendine eğitmez”. Katkı inceleme adayı olarak kaydedilir ve silme/geri çekme süreçlerine tabidir.
 - Sahte kurulum dosyası ile yinelenen APK artefaktları kaldırıldı. Dağıtım düğmeleri yalnız doğrulanmış sürüm artefaktlarına bağlanmalıdır.
 
 ## Kimlik, veri ve hesap yaşam döngüsü
 
-- NextAuth oturumları aktif kullanıcı ve parola sürümü kontrolleriyle desteklenir.
+- NextAuth oturumları aktif kullanıcı ve oturum sürümü (`users/{email}.authVersion`) kontrolleriyle desteklenir. "Diğer tüm oturumları kapat", şifre değişikliği ve doğrulanmamış şifrenin kaldırılması bu sürümü artırır; eski sürümlü oturumlar her istekte reddedilir ve Firebase oturumları da kapatılır.
+- Hesapta şifre varsa Google ile her girişten sonra `/login/verify`'da şifre (2FA açıksa kod) istenir; o zamana kadar oturum sunucuda kapalı sayılır ve 15 dakikada düşer (`src/lib/step-up.ts`). Şifresini unutan talep açar; yönetici "Şifreyi kaldır" ile şartı kaldırır.
+- Google `email_verified` olmadan giriş yapılamaz; doğrulanmamış şifreli hesaba ilk doğrulanmış Google girişi o şifreyi ve 2FA'yı siler (önceden ele geçirme koruması). İlk şifreyi koymak ve hesabı silmek son 30 dakikada giriş ister.
 - Firebase istemci erişimi için kısa ömürlü özel token köprüsü kullanılır.
 - Hesap verisi dışa aktarma ve silme uçları arkadaşlıklar, mesajlar, çağrı verileri, medya ve oyun projeleri gibi ilişkili kayıtları kapsar.
 - Gerçek üretim ortamında Firebase Admin kimlik bilgileri, runner adresi, TURN bilgileri ve diğer sırlar yalnız sunucu ortam değişkenlerinde tutulmalıdır.
@@ -26,7 +28,7 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 ## Hanogt Social, durum ve WebRTC
 
 - Arkadaşlar, direkt mesajlar ve gruplar `/social` altında Discord benzeri tek ekranda birleşti (grup rayı, kanallar, üye listesi). Firebase tarayıcı köprüsü kurulamazsa sohbetler `/api/social/*` ile sunucu üzerinden okunup gönderilir.
-- Durum (Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez + özel durum) `/api/presence` ile yalnız sunucudan yazılır; sekme başına rastgele kimlik, 5 dakikada otomatik Boşta, birden çok sekmede en etkin olanı geçerli. Rahatsız Etmeyin'de gelen aramalar çalmaz.
+- Durum (Çevrimiçi, Boşta, Rahatsız Etmeyin, Görünmez + yalnızca metin olan özel durum; emoji kaldırıldı) `/api/presence` ile yalnız sunucudan yazılır; sekme başına rastgele kimlik, 5 dakikada otomatik Boşta, birden çok sekmede en etkin olanı geçerli. Rahatsız Etmeyin'de gelen aramalar çalmaz.
 - Çağrılarda yalnız katılımcılar çağrı/sinyal verisini okuyabilir ve değiştirebilir.
 - STUN/TURN yapılandırması desteklenir; güvenilir NAT geçişi için üretimde `TURN_SERVER_URL` ve `TURN_SHARED_SECRET` zorunludur.
 - Çağrı bittiğinde sinyalleşme/ICE belgeleri ve geçici çağrı kayıtları temizlenir. Yarım kalan kayıtlar için sunucu temizleme ucu vardır.

@@ -138,6 +138,7 @@ const APPEAL_COPY: Copy = { TR: "İtiraz", EN: "Appeal" };
 
 /** Badge of a 2FA recovery request (filed from the login page's two-step verification step). */
 const TWO_FACTOR_RECOVERY_COPY: Copy = { TR: "2FA kurtarma", EN: "2FA recovery" };
+const PASSWORD_RECOVERY_COPY: Copy = { TR: "Şifre kurtarma", EN: "Password recovery" };
 
 /** /admin#users?q=<e-mail>: the Users section opens with this search, where "2FA sıfırla" is. */
 function openUserInUsers(email: string) {
@@ -349,6 +350,7 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                     <Badge tone={CATEGORY_STYLES[ticket.category].tone} icon={Icon}>{tx(TICKET_CATEGORY_COPY[ticket.category].label)}</Badge>
                     {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
                     {ticket.twoFactorRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(TWO_FACTOR_RECOVERY_COPY)}</Badge> : null}
+                    {ticket.passwordRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(PASSWORD_RECOVERY_COPY)}</Badge> : null}
                     <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                     <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge>
                     <PlanBadge plan={ticket.authorPlan === "free" ? null : ticket.authorPlan} size="sm" />
@@ -377,6 +379,20 @@ function TicketDetailPane({ data, onUpdated, onDelete, onBack }: {
                             </Button>
                         ) : !viewer.manageUsers ? (
                             <p>{tx({ TR: "2FA'yı yöneticiler ve sahipler, Kullanıcılar bölümünden sıfırlayabilir.", EN: "Admins and owners can reset 2FA from the Users section." })}</p>
+                        ) : null}
+                    </div>
+                ) : null}
+                {ticket.passwordRecovery ? (
+                    <div className="mt-3 space-y-2 rounded-2xl bg-indigo-50 px-3 py-2.5 text-[12.5px] leading-relaxed text-indigo-900 dark:bg-indigo-500/10 dark:text-indigo-200">
+                        <p>
+                            {tx({ TR: "Bu talep, Google ile giriş yaptıktan sonra hesabın şifresini giremeyen biri tarafından /login/verify sayfasından gönderildi. Yalnızca Google hesabı doğrulandı, şifre doğrulanmadı: şifreyi kaldırmadan önce hesabın gerçekten gönderene ait olduğundan emin olun. Şifre kaldırılınca Google ile giriş yeterli olur ve kullanıcı yanıtınızı Taleplerim'de bulur.", EN: "This request was sent from /login/verify by someone who signed in with Google but couldn't enter the account's password. Only the Google account was verified, not the password: make sure the account really belongs to the sender before removing the password. Once it's removed, a Google sign-in is enough and the person finds your reply under My tickets." })}
+                        </p>
+                        {viewer.manageUsers && sender.exists && sender.email ? (
+                            <Button size="sm" icon={ExternalLink} onClick={() => openUserInUsers(sender.email)}>
+                                {tx({ TR: "Şifreyi kaldırmak için kullanıcıyı aç", EN: "Open the user to remove the password" })}
+                            </Button>
+                        ) : !viewer.manageUsers ? (
+                            <p>{tx({ TR: "Şifreyi yöneticiler ve sahipler, Kullanıcılar bölümünden kaldırabilir.", EN: "Admins and owners can remove the password from the Users section." })}</p>
                         ) : null}
                     </div>
                 ) : null}
@@ -751,6 +767,7 @@ export default function TicketsSection() {
                                                         <Badge tone={STATUS_TONES[ticket.status]}>{tx(TICKET_STATUS_COPY[ticket.status].label)}</Badge>
                                                         {ticket.appeal ? <Badge tone="amber" icon={Gavel}>{tx(APPEAL_COPY)}</Badge> : null}
                                                         {ticket.twoFactorRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(TWO_FACTOR_RECOVERY_COPY)}</Badge> : null}
+                                                        {ticket.passwordRecovery ? <Badge tone="indigo" icon={KeyRound}>{tx(PASSWORD_RECOVERY_COPY)}</Badge> : null}
                                                         {ticket.priority === "high" || ticket.priority === "critical" ? <Badge tone={PRIORITY_TONES[ticket.priority]}>{tx(TICKET_PRIORITY_COPY[ticket.priority])}</Badge> : null}
                                                         <PlanBadge plan={ticket.authorPlan === "free" ? null : ticket.authorPlan} size="sm" />
                                                         {ticket.unreadForStaff ? <Badge tone="violet">{tx({ TR: "Yeni", EN: "New" })}</Badge> : null}

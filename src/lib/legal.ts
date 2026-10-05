@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.7";
+export const LEGAL_VERSION = "4.8";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "5 Ekim 2026", EN: "5 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.7-2026-10-05";
+export const LEGAL_NOTICE_ID = "4.8-2026-10-05";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,16 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.8",
+        date: { TR: "5 Ekim 2026", EN: "5 October 2026" },
+        items: [
+            { TR: "Google ile giriş ve parola: Hesabınızda bir parola varsa Google ile her girişten sonra bu parola, iki adımlı doğrulama açıksa kodunuz da istenir; 15 dakika içinde tamamlanmayan giriş iptal edilir. Parolasını unutan, ekipten parola şartının kaldırılmasını isteyebilir. Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları buna göre güncellendi.", EN: "Google sign-in and passwords: if your account has a password, every Google sign-in is followed by a request for it, and for your code when two-step verification is on; a sign-in not completed within 15 minutes is cancelled. If you forget the password, you can ask the team to remove the requirement. The Privacy Policy, the KVKK Information Notice and the Terms of Use were updated accordingly." },
+            { TR: "Hesapların korunması: Bir adresle yapılan ilk Google girişi, o adresle önceden açılmış hesabın doğrulanmamış parolasını ve iki adımlı doğrulamasını kaldırır, diğer oturumları kapatır ve size bildirir. Google'ın doğrulamadığı adreslerle Google girişi kabul edilmez.", EN: "Protecting accounts: the first Google sign-in with an address removes the unverified password and two-step verification of an account opened earlier with that address, signs other sessions out and lets you know. Google sign-in with an address Google hasn't verified is not accepted." },
+            { TR: "Oturumlar: “Diğer tüm oturumları kapat” ve parola değişikliği diğer cihazlardaki oturumlarınızı ve gerçek zamanlı bağlantılarınızı sonlandırır. İlk parolayı belirlemek ve hesabı silmek için son 30 dakika içinde giriş yapmış olmanız gerekir. İki adımlı doğrulama kodu denemeleri günde 20 ile sınırlandı; sınır aşılırsa size bildirim gönderilir.", EN: "Sessions: “Sign out all other sessions” and changing your password end your sessions and real-time connections on other devices. Setting the first password and deleting the account require a sign-in within the last 30 minutes. Two-step verification code attempts are now limited to 20 a day; if the limit is exceeded, you are notified." },
+            { TR: "Profiller: Herkese açık profil kayıtları artık tarayıcıdan listelenemez veya aranamaz; yalnızca tek tek açılabilir ve yalnızca sunucu tarafından yazılır. Özel durumdaki emoji kaldırıldı; durum yalnızca metindir.", EN: "Profiles: public profile records can no longer be listed or searched from the browser; they can only be opened one at a time and are written by the server only. The emoji was removed from the custom status; the status is text only." },
+        ],
+    },
     {
         version: "4.7",
         date: { TR: "5 Ekim 2026", EN: "5 October 2026" },

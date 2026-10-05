@@ -55,7 +55,7 @@ const C = {
 const EMAIL = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 function placeholder(email: string): SocialPerson {
-    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, planBadge: null, customStatus: "", statusEmoji: "", status: "offline", lastSeenAt: null };
+    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, planBadge: null, customStatus: "", status: "offline", lastSeenAt: null };
 }
 
 /** A direct conversation: header, messages, composer and the other person's profile on the right. */
@@ -212,7 +212,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
         );
     }
 
-    const statusText = partner.customStatus ? `${partner.statusEmoji ? `${partner.statusEmoji} ` : ""}${partner.customStatus}` : tx(PRESENCE_STATUS_COPY[partner.status]);
+    const statusText = partner.customStatus || tx(PRESENCE_STATUS_COPY[partner.status]);
     const disabledNotice = blocked ? (
         <span className="flex flex-wrap items-center gap-2">{tx(C.youBlocked, { name: partner.username })}<button type="button" onClick={unblock} className="rounded-lg bg-zinc-200 px-2.5 py-1 text-xs font-semibold hover:bg-zinc-300 dark:bg-white/10 dark:hover:bg-white/15">{tx(C.unblock)}</button></span>
     ) : !canSend ? (

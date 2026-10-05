@@ -55,6 +55,11 @@ export type AdminTicketListItem = {
      * the password was verified, the second factor wasn't. Set by /api/admin/tickets.
      */
     twoFactorRecovery?: boolean;
+    /**
+     * Forgotten-password request from /login/verify (meta.passwordRecovery):
+     * Google was verified, the account's password wasn't. Set by /api/admin/tickets.
+     */
+    passwordRecovery?: boolean;
 };
 
 export type AdminTicketDetail = AdminTicketListItem & {
@@ -72,7 +77,6 @@ export type TicketSenderProfile = {
     bannerUrl?: string;
     bio?: string;
     customStatus?: string;
-    statusEmoji?: string;
     accentColor?: string;
     favoriteLangs?: string[];
     socialGithub?: string;

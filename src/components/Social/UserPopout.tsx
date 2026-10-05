@@ -46,7 +46,6 @@ export type PopoutPerson = {
     staffRole?: StaffRoleBadge | null;
     planBadge?: PlanBadgeId | null;
     customStatus?: string;
-    statusEmoji?: string;
 };
 
 export type PopoutAnchor = { top: number; left: number; right: number; bottom: number };
@@ -163,7 +162,6 @@ export default function UserPopout({ popout, onClose, onViewProfile, badges, foo
     const staffRole = person.staffRole ?? full?.staffRole ?? null;
     const planBadge = person.planBadge ?? known?.planBadge ?? full?.planBadge ?? null;
     const customStatus = known?.customStatus ?? full?.customStatus ?? person.customStatus ?? "";
-    const statusEmoji = known?.statusEmoji ?? full?.statusEmoji ?? person.statusEmoji ?? "";
     // Presence only for people whose status the user may see (friends, the same group).
     const status: PresenceStatus | null = self ? social.me.status : person.status !== undefined ? person.status : friend ? known?.status ?? null : null;
     const accent = safeAccent(full?.accentColor || "");
@@ -215,7 +213,7 @@ export default function UserPopout({ popout, onClose, onViewProfile, badges, foo
                 </div>
                 {tag && <p className="font-mono text-[13px] text-zinc-500 dark:text-zinc-400">{tag}</p>}
                 {status && !customStatus && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{tx(PRESENCE_STATUS_COPY[status])}</p>}
-                {customStatus && <p className="mt-1.5 text-sm text-zinc-700 dark:text-zinc-200">{statusEmoji ? `${statusEmoji} ` : ""}{customStatus}</p>}
+                {customStatus && <p className="mt-1.5 text-sm text-zinc-700 dark:text-zinc-200">{customStatus}</p>}
                 {!self && (full?.bio || loading) && (
                     <section className="mt-3 rounded-lg bg-zinc-100 p-2.5 dark:bg-black/30">
                         <h3 className="text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{tx(C.about)}</h3>

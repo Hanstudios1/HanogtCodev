@@ -726,7 +726,6 @@ export type BoardAuthorProfile = {
     bannerUrl?: string;
     bio?: string;
     customStatus?: string;
-    statusEmoji?: string;
     accentColor?: string;
     favoriteLangs?: string[];
     socialGithub?: string;

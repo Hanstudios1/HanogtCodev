@@ -12,6 +12,7 @@ import { enforceRateLimit, enforceRateLimitWithFallback } from "@/lib/server/rat
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { TICKETS_COLLECTION, readTicketMessages, readTicketMeta, ticketCategory, ticketPriority, ticketStatus, type TicketRecord } from "@/lib/server/support";
 import { normalizeEmail } from "@/lib/server/validate";
+import { isRecentAuth } from "@/lib/step-up";
 import { TICKET_LIMITS, ticketReference } from "@/lib/support";
 
 // Deleting a large account takes many Firestore round trips.
@@ -251,6 +252,10 @@ export async function DELETE(request: NextRequest) {
     const activeSession = await getActiveSession();
     if (!activeSession) return NextResponse.json({ error: "Etkin oturum gerekli." }, { status: 401 });
     const { email } = activeSession;
+    // A session left open somewhere can't delete the account: it needs a sign-in in the last 30 minutes.
+    if (!isRecentAuth(activeSession.session.authTime)) {
+        return NextResponse.json({ error: "Güvenliğiniz için çıkış yapıp yeniden giriş yapın, sonra hesabınızı silin.", code: "reauth_required" }, { status: 403, headers: jsonSecurityHeaders() });
+    }
     const rate = await enforceRateLimit(`account-delete:${email}`, 2, 24 * 60 * 60_000);
     if (!rate.allowed) return NextResponse.json({ error: "Hesap silme isteği sınırı aşıldı." }, { status: 429 });
 

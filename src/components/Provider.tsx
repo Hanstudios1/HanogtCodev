@@ -1,11 +1,14 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { SessionContext, SessionProvider, useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { SessionContext, SessionProvider, signOut, useSession } from "next-auth/react";
 import { signInWithCustomToken, signOut as signOutFirebase } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { startPresenceReports, useOwnProfile } from "@/lib/account-profile-client";
+import { STEP_UP_EXPIRED } from "@/lib/auth-client";
 import { auth, db, firebaseClientDiagnostics, hasFirebaseClientConfig } from "@/lib/firebase";
+import { STEP_UP_PATH, readSessionStepUp, stepUpExpired } from "@/lib/step-up";
 import { ThemeProvider } from "@/lib/theme";
 
 /**
@@ -62,9 +65,14 @@ type FirebaseBridgeState = {
     error: string | null;
     failure: FirebaseBridgeFailure | null;
     retry: () => void;
+    /**
+     * Connects again from scratch: after "sign out everywhere" or a password
+     * change the server ends every data connection, this browser's too.
+     */
+    reconnect: () => Promise<void>;
 };
 
-const FirebaseBridgeContext = createContext<FirebaseBridgeState>({ ready: false, error: null, failure: null, retry: () => undefined });
+const FirebaseBridgeContext = createContext<FirebaseBridgeState>({ ready: false, error: null, failure: null, retry: () => undefined, reconnect: async () => undefined });
 
 export function useFirebaseBridge() {
     return useContext(FirebaseBridgeContext);
@@ -206,7 +214,8 @@ async function probeSecurityRules(email: string): Promise<FirebaseBridgeFailure 
  */
 function PresenceHeartbeat() {
     const session = useRawSession();
-    const email = session.status === "authenticated" ? session.data?.user?.email?.toLowerCase() || null : null;
+    // Not reported while the second check after a Google sign-in is pending.
+    const email = session.status === "authenticated" && !readSessionStepUp(session.data) ? session.data?.user?.email?.toLowerCase() || null : null;
     const profile = useOwnProfile(email);
     // Invisible (or "show online status" off): the server shows offline anyway, so nothing is reported.
     const quiet = profile ? profile.statusPreference === "invisible" || !profile.showOnlineStatus : false;
@@ -227,10 +236,47 @@ function PresenceHeartbeat() {
  * Failures are exposed through useFirebaseBridge() and shown by
  * CloudStatusBanner, which lives inside the I18nProvider.
  */
+/**
+ * A session whose second check after a Google sign-in is pending (src/lib/
+ * step-up.ts) can only be on /login/verify: every other page (but /login and
+ * /signup) sends it there and comes back afterwards. Once the time for it is
+ * over, the session is signed out and /login says why.
+ */
+function StepUpGuard() {
+    // The raw session: the gated one never shows a pending step-up as signed in.
+    const session = useRawSession();
+    const stepUp = session.status === "authenticated" ? readSessionStepUp(session.data) : null;
+    const pathname = usePathname() || "/";
+    const router = useRouter();
+    const expiresAt = stepUp?.expiresAt ?? null;
+
+    useEffect(() => {
+        if (expiresAt === null) return;
+        const expire = () => void signOut({ callbackUrl: `/login?error=${STEP_UP_EXPIRED}` });
+        if (stepUpExpired({ expiresAt })) {
+            expire();
+            return;
+        }
+        // /login and /signup finish their own flow first (a hand-off to another of our
+        // sites carries the pending step-up there); /login/verify is the destination.
+        if (!pathname.startsWith("/login") && !pathname.startsWith("/signup")) {
+            const back = `${pathname}${window.location.search}`;
+            router.replace(`${STEP_UP_PATH}?callbackUrl=${encodeURIComponent(back)}`);
+        }
+        const timer = window.setTimeout(expire, Math.min(expiresAt - Date.now(), 2 ** 31 - 1));
+        return () => window.clearTimeout(timer);
+    }, [expiresAt, pathname, router]);
+
+    return null;
+}
+
 function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
     const session = useSession();
-    const { status, update } = session;
-    const email = session.data?.user?.email?.toLowerCase() || "";
+    const { update } = session;
+    // A pending step-up isn't signed in yet: no Firebase sign-in, and pages wait (StepUpGuard moves them on).
+    const pendingStepUp = session.status === "authenticated" && Boolean(readSessionStepUp(session.data));
+    const status = pendingStepUp ? "unauthenticated" : session.status;
+    const email = pendingStepUp ? "" : session.data?.user?.email?.toLowerCase() || "";
     const identity = status === "authenticated" ? `user:${email}` : status;
     const [syncedIdentity, setSyncedIdentity] = useState<string | null>(null);
     const [failure, setFailure] = useState<{ identity: string; failure: FirebaseBridgeFailure } | null>(null);
@@ -287,21 +333,28 @@ function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
     const ready = syncedIdentity === identity && status !== "loading";
     const bridgeFailure = failure?.identity === identity ? failure.failure : null;
     const retry = useCallback(() => setAttempt((value) => value + 1), []);
+    const reconnect = useCallback(async () => {
+        // The stored Firebase user still looks signed in until its token expires: drop it first.
+        if (auth) await signOutFirebase(auth).catch(() => undefined);
+        setSyncedIdentity(null);
+        setAttempt((value) => value + 1);
+    }, []);
 
     const gatedValue = useMemo(() => {
         if (status === "authenticated" && stableData && ready) {
             return { data: stableData, status: "authenticated" as const, update };
         }
-        if (status === "unauthenticated") return { data: null, status: "unauthenticated" as const, update };
+        if (status === "unauthenticated" && !pendingStepUp) return { data: null, status: "unauthenticated" as const, update };
         return { data: null, status: "loading" as const, update };
-    }, [ready, stableData, status, update]);
+    }, [pendingStepUp, ready, stableData, status, update]);
 
     const bridgeState = useMemo<FirebaseBridgeState>(() => ({
         ready: ready && !bridgeFailure,
         error: bridgeFailure ? bridgeFailure.message || bridgeFailure.code : null,
         failure: bridgeFailure,
         retry,
-    }), [bridgeFailure, ready, retry]);
+        reconnect,
+    }), [bridgeFailure, ready, reconnect, retry]);
 
     return (
         <FirebaseBridgeContext.Provider value={bridgeState}>
@@ -309,6 +362,7 @@ function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
                 <SessionContext.Provider value={gatedValue}>
                     {children}
                     <PresenceHeartbeat />
+                    <StepUpGuard />
                 </SessionContext.Provider>
             </RawSessionContext.Provider>
         </FirebaseBridgeContext.Provider>

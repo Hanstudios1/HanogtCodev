@@ -83,7 +83,6 @@ export type PersonCard = {
 export type SocialPerson = PersonCard & {
     email: string;
     customStatus: string;
-    statusEmoji: string;
     status: PresenceStatus;
     lastSeenAt: string | null;
 };

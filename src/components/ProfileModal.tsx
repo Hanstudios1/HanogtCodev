@@ -52,7 +52,6 @@ interface UserProfile {
     bannerUrl?: string;
     bio?: string;
     customStatus?: string;
-    statusEmoji?: string;
     accentColor?: string;
     favoriteLangs?: string[];
     socialGithub?: string;
@@ -239,10 +238,7 @@ export default function ProfileModal({ user, projects = [], isOpen, onClose, onL
 
                     {/* Custom Status */}
                     {user.customStatus && (
-                        <div className="mt-2 flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
-                            <span>{user.statusEmoji || "😊"}</span>
-                            <span>{user.customStatus}</span>
-                        </div>
+                        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{user.customStatus}</p>
                     )}
 
                     {/* Badges */}

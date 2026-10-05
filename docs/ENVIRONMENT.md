@@ -23,7 +23,32 @@ backend simply report that they are not configured.
 
 See [two-step verification](#) in Account Settings → Security. Secrets and
 recovery-code hashes live only in the server-only `credentials/{email}`
-document; the browser never receives them.
+document; the browser never receives them. Codes are limited to 6 tries per
+15 minutes and 20 a day per account; past the daily limit the owner of the
+account gets a security notification and a `two_factor_attempts_exceeded`
+security event is written.
+
+## Sign-in security (no extra variables)
+
+- **Password after Google.** When an account has a password (also one added
+  later to a Google account), every Google sign-in is "pending" until the
+  password, and the code when 2FA is on, is entered at `/login/verify`
+  (`src/lib/step-up.ts`, `/api/auth/step-up`). A pending session is treated
+  as signed out by every API route and expires after 15 minutes.
+- **Forgotten password.** `/login/verify` files a high-priority "Şifre
+  şartını kaldırma talebi" ticket (Tickets shows a "Şifre kurtarma" badge).
+  Once you are sure the account is the sender's, remove the password in
+  Admin Panel → Users → "Şifreyi kaldır" (needs a reason; audit log
+  `user.remove_password`); a Google sign-in is then enough again.
+- **Sessions.** `users/{email}.authVersion` signs earlier sessions out when it
+  goes up: "Sign out all other sessions" in Account Settings, a password
+  change and the first verified Google sign-in to an account whose address
+  was never verified (which also removes that unverified password and 2FA).
+  These also delete the Firebase Auth user, which ends every browser's
+  realtime connection; signed-in browsers get a new one automatically.
+  Setting the first password and deleting the account need a sign-in within
+  the last 30 minutes.
+- **Google accounts** whose address Google hasn't verified can't sign in.
 
 ## Firebase — client (browser)
 
@@ -150,6 +175,10 @@ after every change, either
   audit log; identical files are skipped; the service account needs the
   *Firebase Rules Admin* role), or
 - from a computer: `firebase deploy --only firestore:rules,storage`.
+
+Since 0.3.19 browsers can no longer write `users` or `public_profiles` (the
+server writes both), list `public_profiles` or create `friendRequests`. The
+app works with the older rules too, but deploy the new ones to close these.
 
 Voice messages no longer depend on Cloud Storage or `storage.rules`:
 browsers upload and play them through `/api/social/voice`, which checks the

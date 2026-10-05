@@ -20,7 +20,6 @@ export function toModalProfile(profile: SocialProfile): UserProfile {
         bannerUrl: profile.bannerUrl || undefined,
         bio: profile.bio || undefined,
         customStatus: profile.customStatus || undefined,
-        statusEmoji: profile.statusEmoji || undefined,
         accentColor: profile.accentColor || undefined,
         favoriteLangs: profile.favoriteLangs,
         socialGithub: profile.socialGithub || undefined,

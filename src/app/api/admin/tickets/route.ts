@@ -111,13 +111,19 @@ function isTwoFactorRecovery(record: TicketRecord) {
     return meta?.twoFactorRecovery === true;
 }
 
-// Every list item and detail this route returns carries the 2FA recovery flag for the badge.
+/** Forgotten-password requests from /login/verify (/api/support/password-recovery) carry meta.passwordRecovery. */
+function isPasswordRecovery(record: TicketRecord) {
+    const meta = record.meta && typeof record.meta === "object" && !Array.isArray(record.meta) ? record.meta as Record<string, unknown> : null;
+    return meta?.passwordRecovery === true;
+}
+
+// Every list item and detail this route returns carries the recovery flags for the badges.
 function toAdminListItem(record: StoredTicket): AdminTicketListItem {
-    return { ...baseAdminListItem(record), twoFactorRecovery: isTwoFactorRecovery(record) };
+    return { ...baseAdminListItem(record), twoFactorRecovery: isTwoFactorRecovery(record), passwordRecovery: isPasswordRecovery(record) };
 }
 
 function toAdminDetail(record: StoredTicket): AdminTicketDetail {
-    return { ...baseAdminDetail(record), twoFactorRecovery: isTwoFactorRecovery(record) };
+    return { ...baseAdminDetail(record), twoFactorRecovery: isTwoFactorRecovery(record), passwordRecovery: isPasswordRecovery(record) };
 }
 
 // ---------------------------------------------------------------------------
@@ -251,7 +257,6 @@ function senderProfile(profile: Record<string, unknown> | null, email: string, f
         bannerUrl: httpsOrUndefined(profile.bannerUrl),
         bio: textOrUndefined(profile.bio, 2_000),
         customStatus: textOrUndefined(profile.customStatus, 300),
-        statusEmoji: textOrUndefined(profile.statusEmoji, 32),
         accentColor: typeof profile.accentColor === "string" && /^#[0-9a-fA-F]{3,8}$/.test(profile.accentColor) ? profile.accentColor : undefined,
         favoriteLangs: Array.isArray(profile.favoriteLangs) ? profile.favoriteLangs.filter((item): item is string => typeof item === "string").slice(0, 20).map((item) => item.slice(0, 40)) : undefined,
         socialGithub: textOrUndefined(profile.socialGithub, 200),

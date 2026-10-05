@@ -40,8 +40,21 @@ test("types, enums and text limits", () => {
     assert.deepEqual(clean({ msgFontSize: "large", publicProfile: false }), { msgFontSize: "large", publicProfile: false });
     assert.deepEqual(fieldError({ bio: "a".repeat(601) }), { field: "bio", code: "too_long" });
     // Limits count characters (code points), not UTF-16 units.
-    assert.deepEqual(clean({ statusEmoji: "🎮".repeat(16) }), { statusEmoji: "🎮".repeat(16) });
+    assert.deepEqual(clean({ customStatus: "🎮".repeat(120) }), { customStatus: "🎮".repeat(120) });
+    assert.deepEqual(fieldError({ customStatus: "🎮".repeat(121) }), { field: "customStatus", code: "too_long" });
     assert.deepEqual(clean({ bio: "  Merhaba\u0000 dünya\u0007  " }), { bio: "Merhaba dünya" });
+});
+
+test("the status emoji is retired: an open tab may still send it, and it is dropped", () => {
+    assert.deepEqual(clean({ statusEmoji: "🎮", customStatus: "Kod yazıyorum" }), { customStatus: "Kod yazıyorum" });
+    assert.deepEqual(clean({ statusEmoji: 42 }), {});
+    assert.ok(profile.RETIRED_ACCOUNT_KEYS.includes("statusEmoji"));
+    assert.equal("statusEmoji" in DEFAULT_ACCOUNT_FIELDS, false);
+    assert.equal(PUBLIC_PROFILE_KEYS.includes("statusEmoji"), false);
+    // A stored emoji isn't read back into the form.
+    const merged = mergeStoredAccount({ statusEmoji: "😊", customStatus: "Burada" }, null);
+    assert.equal(merged.customStatus, "Burada");
+    assert.equal("statusEmoji" in merged, false);
 });
 
 test("username and nickname", () => {

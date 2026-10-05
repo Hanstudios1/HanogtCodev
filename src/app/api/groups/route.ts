@@ -206,7 +206,6 @@ async function groupDetail(groupId: string, user: GroupUser): Promise<GroupDetai
                 ...profileTag(profile),
                 staffRole: profileStaffRole(profile),
                 customStatus: typeof profile?.customStatus === "string" ? profile.customStatus.slice(0, 120) : "",
-                statusEmoji: typeof profile?.statusEmoji === "string" ? profile.statusEmoji.slice(0, 16) : "",
                 status,
                 online: status !== "offline",
                 lastSeenAt: profile?.lastSeenAt || null,

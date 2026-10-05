@@ -1,19 +1,8 @@
-import { encode } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
-import { SESSION_MAX_AGE, authOptions } from "@/lib/auth";
 import { AUTH_HANDOFF_COOKIE, requestOrigin, verifyHandoff } from "@/lib/server/auth-handoff";
 import { getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
-
-function serializeCookie(name: string, value: string, options: { path?: string; httpOnly?: boolean; sameSite?: unknown; secure?: boolean; maxAge?: number }) {
-    const parts = [`${name}=${value}`, `Path=${options.path || "/"}`];
-    if (options.maxAge !== undefined) {
-        parts.push(`Max-Age=${options.maxAge}`, `Expires=${new Date(Date.now() + options.maxAge * 1000).toUTCString()}`);
-    }
-    if (options.httpOnly) parts.push("HttpOnly");
-    if (typeof options.sameSite === "string") parts.push(`SameSite=${options.sameSite.charAt(0).toUpperCase()}${options.sameSite.slice(1)}`);
-    if (options.secure) parts.push("Secure");
-    return parts.join("; ");
-}
+import { serializeCookie, sessionCookieHeaders } from "@/lib/server/session-cookie";
+import { SESSION_TOKEN_VERSION } from "@/lib/step-up";
 
 /**
  * Redeems a hand-off token on the site where the sign-in started and stores
@@ -48,14 +37,22 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    const cookie = authOptions.cookies?.sessionToken;
-    if (!cookie || !process.env.NEXTAUTH_SECRET) return fail("Configuration");
-    const sessionToken = await encode({
-        token: { name: user.name, email: user.email, picture: user.picture, sub: user.id, id: user.id },
-        secret: process.env.NEXTAUTH_SECRET,
-        maxAge: SESSION_MAX_AGE,
-    });
-    headers.append("Set-Cookie", serializeCookie(cookie.name, sessionToken, { ...cookie.options, maxAge: SESSION_MAX_AGE }));
+    const { claims } = payload;
+    const cookies = await sessionCookieHeaders({
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        sub: user.id,
+        id: user.id,
+        sv: SESSION_TOKEN_VERSION,
+        authTime: claims.authTime,
+        provider: claims.provider,
+        authVersion: claims.authVersion,
+        // A step-up still pending on the auth host is finished here, at /login/verify.
+        ...(claims.stepUp ? { stepUp: claims.stepUp } : {}),
+    }, request);
+    if (!cookies) return fail("Configuration");
+    for (const cookie of cookies) headers.append("Set-Cookie", cookie);
     headers.set("Location", payload.next);
     return new Response(null, { status: 302, headers });
 }

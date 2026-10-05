@@ -15,7 +15,6 @@ import {
     addDoc,
     collection,
     doc,
-    documentId,
     limit,
     onSnapshot,
     orderBy,
@@ -242,8 +241,6 @@ export function useFriendsOverview(email: string, mode: SocialMode, onBroken: ()
 
 export type LiveProfile = Omit<SocialPerson, "email">;
 
-const PROFILE_CHUNK = 30;
-
 function text(value: unknown, max: number) {
     return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
@@ -263,7 +260,6 @@ function liveProfile(data: DocumentData, now: number): LiveProfile {
         staffRole: STAFF_ROLES.find((role) => role === data.staffRole) ?? null,
         planBadge: readPlanBadge(data.planBadge, now),
         customStatus: text(data.customStatus, 120),
-        statusEmoji: text(data.statusEmoji, 16),
         status: effectiveStatus(data, now),
         lastSeenAt: seen ? new Date(seen).toISOString() : null,
     };
@@ -271,7 +267,8 @@ function liveProfile(data: DocumentData, now: number): LiveProfile {
 
 /**
  * Realtime public profiles (names, avatars, Discord-style presence) of the
- * given people, 30 per listener. Live mode only; empty otherwise.
+ * given people, one listener each: the rules let a profile be read by its
+ * address, never listed. Live mode only; empty otherwise.
  */
 export function useLiveProfiles(emails: readonly string[], enabled: boolean, onBroken: () => void): Map<string, LiveProfile> {
     const [raw, setRaw] = useState<Record<string, DocumentData>>({});
@@ -281,23 +278,17 @@ export function useLiveProfiles(emails: readonly string[], enabled: boolean, onB
 
     useEffect(() => {
         if (!enabled || !key) return;
-        const list = key.split("\n");
-        const unsubscribers: Array<() => void> = [];
-        for (let index = 0; index < list.length; index += PROFILE_CHUNK) {
-            const chunk = list.slice(index, index + PROFILE_CHUNK);
-            unsubscribers.push(onSnapshot(query(collection(db, "public_profiles"), where(documentId(), "in", chunk)), (snapshot) => {
-                setRaw((current) => {
-                    const next = { ...current };
-                    for (const change of snapshot.docChanges()) {
-                        if (change.type === "removed") delete next[change.doc.id];
-                        else next[change.doc.id] = change.doc.data();
-                    }
-                    return next;
-                });
-            }, (failure) => {
-                if (isPermissionError(failure)) onBrokenRef.current();
-            }));
-        }
+        const unsubscribers = key.split("\n").map((email) => onSnapshot(doc(db, "public_profiles", email), (snapshot) => {
+            setRaw((current) => {
+                if (snapshot.exists()) return { ...current, [email]: snapshot.data() };
+                if (!(email in current)) return current;
+                const next = { ...current };
+                delete next[email];
+                return next;
+            });
+        }, (failure) => {
+            if (isPermissionError(failure)) onBrokenRef.current();
+        }));
         return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
     }, [enabled, key, onBrokenRef]);
 

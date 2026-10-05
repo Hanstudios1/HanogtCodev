@@ -103,7 +103,7 @@ function SignedOut() {
 }
 
 function placeholderPerson(email: string): SocialPerson {
-    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, planBadge: null, customStatus: "", statusEmoji: "", status: "offline", lastSeenAt: null };
+    return { email, username: email.split("@")[0] || "Hanogt", avatarUrl: null, nickname: "", nicknameTag: "", staffRole: null, planBadge: null, customStatus: "", status: "offline", lastSeenAt: null };
 }
 
 function SocialApp({ email, sessionName, children }: { email: string; sessionName: string; children: ReactNode }) {
@@ -130,7 +130,6 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
         nickname: own?.nickname || "",
         nicknameTag: own?.nicknameTag || "",
         customStatus: own?.customStatus || "",
-        statusEmoji: own?.statusEmoji || "",
         status: ownStatus ?? (own?.statusPreference === "invisible" ? "offline" as const : own?.statusPreference === "dnd" ? "dnd" as const : own?.statusPreference === "idle" ? "idle" as const : "online" as const),
     }), [email, own, ownStatus, sessionName]);
 
@@ -155,7 +154,7 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
         if (!realtime) return base;
         const merged: SocialPerson = { ...(base ?? placeholderPerson(target)), ...realtime, email: target, username: realtime.username || base?.username || target.split("@")[0] };
         // Presence is shared between friends only (the server API does the same).
-        return friendSet.has(target) ? merged : { ...merged, status: "offline", customStatus: "", statusEmoji: "", lastSeenAt: null };
+        return friendSet.has(target) ? merged : { ...merged, status: "offline", customStatus: "", lastSeenAt: null };
     }, [dmPeople, friendMap, friendSet, liveProfiles]);
 
     const friendsList = useMemo(() => friendEmails.map((friend) => person(friend) ?? placeholderPerson(friend)), [friendEmails, person]);

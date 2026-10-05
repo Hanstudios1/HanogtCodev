@@ -24,7 +24,6 @@ export type SocialMe = {
     nickname: string;
     nicknameTag: string;
     customStatus: string;
-    statusEmoji: string;
     status: PresenceStatus;
 };
 

@@ -11,15 +11,11 @@ import { STATUS_PREFERENCES, STATUS_PREFERENCE_COPY, type PresenceStatus, type S
 /** The mark each choice shows: invisible looks offline to others. */
 export const PREFERENCE_MARKS: Record<StatusPreference, PresenceStatus> = { auto: "online", idle: "idle", dnd: "dnd", invisible: "offline" };
 
-const QUICK_EMOJI = ["😊", "💻", "🎮", "📚", "☕", "🎧", "🚀", "🌙"];
-
 const C = {
     title: { TR: "Durum", EN: "Status" },
     custom: { TR: "Özel durum", EN: "Custom status" },
     customHint: { TR: "Profilinizde ve arkadaş listelerinde adınızın altında görünür.", EN: "Shown under your name on your profile and in friend lists." },
     placeholder: { TR: "Ne yapıyorsunuz?", EN: "What are you up to?" },
-    emoji: { TR: "Durum emojisi", EN: "Status emoji" },
-    pickEmoji: { TR: "{emoji} emojisini seç", EN: "Choose {emoji}" },
     left: { TR: "{count} karakter kaldı", EN: "{count} characters left" },
     save: { TR: "Kaydet", EN: "Save" },
     clear: { TR: "Temizle", EN: "Clear" },
@@ -63,7 +59,6 @@ export function announceOwnProfile(email: string, data: AccountProfileResponse) 
             nickname: fields.nickname,
             nicknameTag: fields.nicknameTag,
             customStatus: fields.customStatus,
-            statusEmoji: fields.statusEmoji,
             statusPreference: fields.statusPreference,
             showOnlineStatus: fields.showOnlineStatus,
             showLastSeen: fields.showLastSeen,
@@ -90,12 +85,11 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
     const hintId = useId();
     const [pending, setPending] = useState<StatusPreference | null>(null);
     const [savingCustom, setSavingCustom] = useState(false);
-    const [draft, setDraft] = useState<{ emoji: string; text: string } | null>(null);
+    const [draft, setDraft] = useState<string | null>(null);
     const [message, setMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
     const current = pending ?? profile?.statusPreference ?? null;
-    const emoji = draft?.emoji ?? profile?.statusEmoji ?? "";
-    const text = draft?.text ?? profile?.customStatus ?? "";
-    const customChanged = draft !== null && (draft.emoji !== (profile?.statusEmoji ?? "") || draft.text !== (profile?.customStatus ?? ""));
+    const text = draft ?? profile?.customStatus ?? "";
+    const customChanged = draft !== null && draft.trim() !== (profile?.customStatus ?? "");
 
     const failure = (result: Extract<SaveResult, { ok: false }>) => {
         if (result.status === 429) return tx(C.rateLimited);
@@ -134,14 +128,14 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
         event?.preventDefault();
         if (savingCustom) return;
         setSavingCustom(true);
-        if (await save({ customStatus: text.trim(), statusEmoji: emoji.trim() }, C.saved)) setDraft(null);
+        if (await save({ customStatus: text.trim() }, C.saved)) setDraft(null);
         setSavingCustom(false);
     };
 
     const clearCustom = async () => {
         if (savingCustom) return;
         setSavingCustom(true);
-        if (await save({ customStatus: "", statusEmoji: "" }, C.cleared)) setDraft(null);
+        if (await save({ customStatus: "" }, C.cleared)) setDraft(null);
         setSavingCustom(false);
     };
 
@@ -160,7 +154,7 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
     };
 
     const remaining = PROFILE_TEXT_LIMITS.customStatus - Array.from(text).length;
-    const hasCustom = Boolean((profile?.customStatus ?? "") || (profile?.statusEmoji ?? ""));
+    const hasCustom = Boolean(profile?.customStatus);
 
     return (
         <div className={className}>
@@ -196,39 +190,16 @@ export default function StatusMenu({ email, onSaved, className = "" }: {
 
             <form onSubmit={(event) => void saveCustom(event)} className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.08]">
                 <label htmlFor={customId} className="block px-1 text-[11px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{tx(C.custom)}</label>
-                <div className="mt-1.5 flex gap-2">
-                    <input
-                        type="text"
-                        value={emoji}
-                        onChange={(event) => setDraft({ emoji: Array.from(event.target.value).slice(0, PROFILE_TEXT_LIMITS.statusEmoji).join(""), text })}
-                        aria-label={tx(C.emoji)}
-                        className="h-10 w-12 shrink-0 rounded-xl border border-zinc-200 bg-white text-center text-lg outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-zinc-950"
-                    />
-                    <input
-                        id={customId}
-                        type="text"
-                        value={text}
-                        maxLength={PROFILE_TEXT_LIMITS.customStatus}
-                        onChange={(event) => setDraft({ emoji, text: event.target.value })}
-                        placeholder={tx(C.placeholder)}
-                        aria-describedby={hintId}
-                        className="h-10 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-[14px] outline-none transition placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-zinc-950"
-                    />
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={tx(C.emoji)}>
-                    {QUICK_EMOJI.map((choice) => (
-                        <button
-                            key={choice}
-                            type="button"
-                            onClick={() => setDraft({ emoji: choice, text })}
-                            aria-label={tx(C.pickEmoji, { emoji: choice })}
-                            aria-pressed={emoji === choice}
-                            className={`grid h-8 w-8 place-items-center rounded-lg text-base transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${emoji === choice ? "bg-indigo-100 dark:bg-indigo-500/20" : "hover:bg-zinc-100 dark:hover:bg-white/[0.06]"}`}
-                        >
-                            {choice}
-                        </button>
-                    ))}
-                </div>
+                <input
+                    id={customId}
+                    type="text"
+                    value={text}
+                    maxLength={PROFILE_TEXT_LIMITS.customStatus}
+                    onChange={(event) => setDraft(event.target.value)}
+                    placeholder={tx(C.placeholder)}
+                    aria-describedby={hintId}
+                    className="mt-1.5 h-10 w-full min-w-0 rounded-xl border border-zinc-200 bg-white px-3 text-[14px] outline-none transition placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-zinc-950"
+                />
                 <p id={hintId} className="mt-2 px-1 text-[11.5px] text-zinc-500 dark:text-zinc-400">
                     {tx(C.customHint)} <span className="tabular-nums">{tx(C.left, { count: Math.max(0, remaining) })}</span>
                 </p>

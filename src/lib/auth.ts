@@ -4,15 +4,17 @@ import { randomInt, timingSafeEqual } from "node:crypto";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { ACCOUNT_SUSPENDED, TWO_FACTOR_RECOVERY } from "@/lib/auth-client";
+import { ACCOUNT_SUSPENDED, GOOGLE_EMAIL_UNVERIFIED, TWO_FACTOR_RECOVERY, authRedirectTarget } from "@/lib/auth-client";
 import { issueAppealToken, issueTwoFactorRecoveryToken } from "@/lib/server/appeal-token";
 import { recordAuthError } from "@/lib/server/auth-diagnostics";
+import { cachedAuthVersion, revokeDataSessions } from "@/lib/server/auth-version";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { clientIpFromHeaders } from "@/lib/server/request-security";
 import { normalizeEmail } from "@/lib/server/validate";
-import { getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
+import { commitServerPatches, createServerDocument, getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
-import { verifySecondFactor, type CredentialRecord, type SecondFactorResult } from "@/lib/server/two-factor";
+import { TWO_FACTOR_FIELDS, verifySecondFactor, type CredentialRecord, type SecondFactorResult } from "@/lib/server/two-factor";
+import { SESSION_TOKEN_VERSION, isStaleAuthVersion, readStepUpClaim, sessionStepUpOf, stepUpForSignIn, type CredentialFacts } from "@/lib/step-up";
 
 // Codes thrown from authorize()/signIn end up in redirect URLs and HTTP
 // headers, so they must be plain ASCII; /login translates them.
@@ -44,6 +46,28 @@ function legacyPasswordMatches(supplied: string, stored: string) {
 }
 
 /**
+ * Whether `password` is the account's: its stored hash, or a password from
+ * the old plaintext implementation, which a match migrates (hashed, the clear
+ * value deleted) since it proves ownership. Unknown accounts and accounts
+ * without a password spend the same work, so timing tells nothing.
+ */
+export async function checkAccountPassword(email: string, password: string, user: { password?: unknown } | null, credential: CredentialRecord | null) {
+    if (credential?.passwordHash && await verifyPassword(password, credential.passwordHash)) return true;
+    if (!credential?.passwordHash) await burnPasswordCheck(password);
+    if (typeof user?.password !== "string" || !legacyPasswordMatches(password, user.password)) return false;
+    await patchServerDocument(`credentials/${email}`, {
+        passwordHash: await hashPassword(password),
+        updatedAt: new Date(),
+        migratedFromLegacy: true,
+    });
+    await patchServerDocument(`users/${email}`, {
+        hasPassword: true,
+        credentialMigratedAt: new Date(),
+    }, { updateFields: ["hasPassword", "credentialMigratedAt", "password", "passwordHash"] });
+    return true;
+}
+
+/**
  * Suspended accounts can't sign in to open a support ticket, so once the
  * person has proven they own the account, the suspension is reported together
  * with a short-lived token that lets /login file an appeal
@@ -64,13 +88,64 @@ function twoFactorRecoveryCode(email: string) {
     return token ? `${TWO_FACTOR_RECOVERY}:${token}` : AUTH_SERVICE_UNAVAILABLE;
 }
 
+/** What the session token records about an account when it signs in (src/lib/step-up.ts). */
+export async function credentialFacts(email: string): Promise<CredentialFacts> {
+    const [user, credential] = await Promise.all([
+        getServerDocument<{ password?: unknown; authVersion?: unknown }>(`users/${email}`),
+        getServerDocument<CredentialRecord>(`credentials/${email}`),
+    ]);
+    return {
+        hasPassword: Boolean(credential?.passwordHash) || typeof user?.password === "string",
+        twoFactor: Boolean(credential?.totpEnabled && credential.totpSecretEnc),
+        authVersion: typeof user?.authVersion === "number" && Number.isFinite(user.authVersion) ? user.authVersion : 0,
+    };
+}
+
+/**
+ * Closes a pre-account takeover: anyone could sign up with someone else's
+ * address and a password (sign-up doesn't verify the address), wait for the
+ * owner to arrive with Google and keep a way in. So the first Google sign-in
+ * that confirms the address of an account created with a password removes
+ * that unverified password and any two-step verification set up with it,
+ * signs every other session out (authVersion) and tells the owner, who can
+ * set a password of their own afterwards.
+ */
+async function removeUnverifiedPassword(email: string, existing: { authVersion?: unknown }) {
+    const now = new Date();
+    const authVersion = (typeof existing.authVersion === "number" && Number.isFinite(existing.authVersion) ? existing.authVersion : 0) + 1;
+    await commitServerPatches([
+        // Every listed field is removed (none is in the data).
+        { path: `credentials/${email}`, data: {}, updateFields: ["passwordHash", ...TWO_FACTOR_FIELDS] },
+        {
+            path: `users/${email}`,
+            data: { hasPassword: false, twoFactorEnabled: false, authVersion, unverifiedPasswordRemovedAt: now },
+            updateFields: ["hasPassword", "twoFactorEnabled", "authVersion", "unverifiedPasswordRemovedAt", "password", "passwordHash"],
+            exists: true,
+        },
+        {
+            path: `notifications/${email}/items/security_unverified_password`,
+            data: {
+                type: "security",
+                title: "Hesabındaki doğrulanmamış şifre kaldırıldı",
+                body: "Google ile ilk girişin bu e-posta adresinin senin olduğunu doğruladı. Hesap daha önce doğrulanmamış bir şifreyle açıldığı için o şifre ve iki adımlı doğrulama kaldırıldı, diğer oturumlar kapatıldı. İstersen Hesap Ayarları'ndan yeni bir şifre belirleyebilirsin.",
+                actionUrl: "/account-settings",
+                read: false,
+                createdAt: now,
+            },
+        },
+    ]);
+    // Whoever set that password may still hold a Firestore connection.
+    await revokeDataSessions(email);
+    await createServerDocument("security_events", { actor: email, action: "unverified_password_removed", risk: "medium", createdAt: now, reviewStatus: "none" }).catch(() => undefined);
+}
+
 /**
  * Server-side part of every sign-in: blocks suspended accounts and creates or
  * completes the Firestore profile of Google users. Throws when Firestore is
  * unreachable or not configured; the signIn callback turns that into a code.
  */
 async function completeSignIn(email: string, user: { name?: string | null; image?: string | null }, provider: string | undefined, emailVerified = false): Promise<true | string> {
-    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown; emailVerifiedAt?: unknown }>(`users/${email}`);
+    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown; emailVerifiedAt?: unknown; provider?: unknown; hasPassword?: unknown; password?: unknown; authVersion?: unknown }>(`users/${email}`);
     if (existing?.suspended || existing?.banned) {
         // The provider (Google) or authorize() has verified the address, so the person may appeal.
         const token = issueAppealToken(email);
@@ -79,6 +154,10 @@ async function completeSignIn(email: string, user: { name?: string | null; image
     // The public profile after the Google branch below; undefined when it was not read.
     let knownProfile: Record<string, unknown> | undefined;
     if (provider === "google") {
+        // An account opened with a password whose address nobody had verified yet: see removeUnverifiedPassword.
+        if (existing && emailVerified && !existing.emailVerifiedAt && existing.provider === "credentials" && (existing.hasPassword === true || typeof existing.password === "string")) {
+            await removeUnverifiedPassword(email, existing);
+        }
         const existingProfile = await getServerDocument<Record<string, unknown>>(`public_profiles/${email}`);
         const fallbackName = user.name || email.split("@")[0];
         // Only fill profile fields that are still empty: previously every
@@ -125,6 +204,37 @@ async function syncStaffBadge(email: string, storedRole: unknown, knownProfile: 
     } catch (error) {
         console.warn("[auth] staff badge sync failed:", error instanceof Error ? error.message : error);
     }
+}
+
+/** Second-factor guesses an account may make in a day, on top of 6 per 15 minutes. */
+const SECOND_FACTOR_ATTEMPTS_PER_DAY = 20;
+
+/**
+ * Counts one second-factor attempt (sign-in and the step-up after Google share
+ * it): 6 per 15 minutes and 20 a day per account. When the day's attempts
+ * run out, the owner is warned once that day: someone who knows the password
+ * may be guessing codes.
+ */
+export async function secondFactorAttempt(email: string) {
+    const short = await enforceRateLimit(`login-2fa:${email}`, 6, 15 * 60_000);
+    if (!short.allowed) return short;
+    const day = await enforceRateLimit(`login-2fa-day:${email}`, SECOND_FACTOR_ATTEMPTS_PER_DAY, 24 * 60 * 60_000);
+    if (!day.allowed) {
+        const now = new Date();
+        const id = `security_2fa_attempts_${now.toISOString().slice(0, 10)}`;
+        await Promise.all([
+            patchServerDocument(`notifications/${email}/items/${id}`, {
+                type: "security",
+                title: "Çok sayıda hatalı doğrulama kodu denendi",
+                body: "Bugün hesabında iki adımlı doğrulama kodu çok kez yanlış girildi, bu yüzden kod girişi 24 saat durduruldu. Bunu sen yapmadıysan şifreni değiştir ve diğer oturumları kapat.",
+                actionUrl: "/account-settings",
+                read: false,
+                createdAt: now,
+            }),
+            createServerDocument("security_events", { actor: email, action: "two_factor_attempts_exceeded", risk: "high", createdAt: now, reviewStatus: "pending" }),
+        ]).catch(() => undefined);
+    }
+    return day;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -198,27 +308,7 @@ export const authOptions: NextAuthOptions = {
                 // second factor: until then they answer exactly like any other
                 // account, so the form never tells strangers which addresses are suspended.
 
-                let valid = credential?.passwordHash
-                    ? await verifyPassword(credentials.password, credential.passwordHash)
-                    : (await burnPasswordCheck(credentials.password), false);
-
-                // One-time migration for accounts created by the legacy
-                // plaintext implementation. The clear value is deleted as
-                // soon as a valid login proves ownership.
-                if (!valid && typeof user.password === "string" && legacyPasswordMatches(credentials.password, user.password)) {
-                    await patchServerDocument(`credentials/${email}`, {
-                        passwordHash: await hashPassword(credentials.password),
-                        updatedAt: new Date(),
-                        migratedFromLegacy: true,
-                    });
-                    await patchServerDocument(`users/${email}`, {
-                        hasPassword: true,
-                        credentialMigratedAt: new Date(),
-                    }, { updateFields: ["hasPassword", "credentialMigratedAt", "password", "passwordHash"] });
-                    valid = true;
-                }
-
-                if (!valid) return null;
+                if (!(await checkAccountPassword(email, credentials.password, user, credential))) return null;
 
                 // Two-step verification: the password was right, now the second factor.
                 // The codes below are ASCII so they survive the redirect URL (see top).
@@ -232,7 +322,7 @@ export const authOptions: NextAuthOptions = {
                     let otpRate: Awaited<ReturnType<typeof enforceRateLimit>>;
                     let check: SecondFactorResult;
                     try {
-                        otpRate = await enforceRateLimit(`login-2fa:${email}`, 6, 15 * 60_000);
+                        otpRate = await secondFactorAttempt(email);
                         check = otpRate.allowed ? await verifySecondFactor(email, credential, otp) : { ok: false };
                     } catch (error) {
                         recordAuthError("CALLBACK_CREDENTIALS_HANDLER_ERROR", error);
@@ -244,6 +334,8 @@ export const authOptions: NextAuthOptions = {
 
                 // Ownership is proven: report the suspension with an appeal token.
                 if (user.suspended || user.banned) throw new Error(suspendedCode(email));
+                // Best effort: shown in Account Settings and to the team.
+                await patchServerDocument(`users/${email}`, { lastLoginAt: new Date() }).catch(() => undefined);
 
                 return {
                     id: email,
@@ -281,6 +373,8 @@ export const authOptions: NextAuthOptions = {
             user.email = email;
             // Google's ID token says whether it has verified the address (the email_verified claim).
             const emailVerified = account?.provider === "google" && (profile as { email_verified?: unknown } | undefined)?.email_verified === true;
+            // An unverified Google address proves nothing about the account it names.
+            if (account?.provider === "google" && !emailVerified) return `/login?error=${GOOGLE_EMAIL_UNVERIFIED}`;
             try {
                 return await completeSignIn(email, user, account?.provider, emailVerified);
             } catch (error) {
@@ -291,29 +385,62 @@ export const authOptions: NextAuthOptions = {
                 return `/login?error=${AUTH_SERVICE_UNAVAILABLE}`;
             }
         },
-        async jwt({ token, user }) {
+        // The `session` an update() call sends is never read here: nothing in the
+        // browser can change these fields (a pending step-up above all).
+        async jwt({ token, user, account }) {
             if (user) token.id = user.id || user.email;
             // Firestore rules compare against the lower-cased e-mail carried by
             // the Firebase token; mixed-case Google addresses used to make every
             // client write fail with permission-denied.
             if (typeof token.email === "string") token.email = normalizedEmail(token.email);
+            const email = typeof token.email === "string" ? token.email : null;
+            if (account && email) {
+                // A new sign-in: what it proved, and whether a step-up is still needed (src/lib/step-up.ts).
+                const now = Date.now();
+                const facts = await credentialFacts(email);
+                token.sv = SESSION_TOKEN_VERSION;
+                token.authTime = now;
+                token.provider = account.provider;
+                token.authVersion = facts.authVersion;
+                const stepUp = stepUpForSignIn(account.provider, facts, now);
+                if (stepUp) token.stepUp = stepUp;
+                else delete token.stepUp;
+            } else if (email && token.sv !== SESSION_TOKEN_VERSION) {
+                // A session from before step-ups: an account with a password proves it once more.
+                // Unreadable now: left as it is and tried again next time.
+                const facts = await credentialFacts(email).catch(() => null);
+                if (facts) {
+                    token.sv = SESSION_TOKEN_VERSION;
+                    // When it signed in is unknown (iat is renewed on every visit): never "recent".
+                    token.authTime = 0;
+                    token.authVersion = facts.authVersion;
+                    const stepUp = stepUpForSignIn(undefined, facts, Date.now());
+                    if (stepUp) token.stepUp = stepUp;
+                }
+            } else if (email && !token.revoked) {
+                // Signed out everywhere (or the password changed) since: the server already refuses
+                // the session (active-session.ts); from here on the browser sees it signed out too.
+                const current = await cachedAuthVersion(email);
+                if (current !== null && isStaleAuthVersion(current, token.authVersion)) token.revoked = true;
+            }
             return token;
         },
         async session({ session, token }) {
+            // An empty session is "signed out" to NextAuth's client and to getServerSession.
+            if (token.revoked) return {} as typeof session;
             if (session.user) {
                 (session.user as typeof session.user & { id?: string }).id = String(token.id || token.sub || "");
                 if (session.user.email) session.user.email = normalizedEmail(session.user.email);
             }
+            const stepUp = readStepUpClaim(token.stepUp);
+            if (stepUp) session.stepUp = sessionStepUpOf(stepUp);
+            session.authTime = typeof token.authTime === "number" ? token.authTime : null;
+            session.authVersion = typeof token.authVersion === "number" ? token.authVersion : 0;
             return session;
         },
         async redirect({ url, baseUrl }) {
-            // The login screen sends relative paths; they used to fall back to the home page.
-            if (url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\")) {
-                if (url === "/") return baseUrl;
-                return url.startsWith("/login") || url.startsWith("/signup") ? `${baseUrl}/dashboard` : `${baseUrl}${url}`;
-            }
-            if (url.includes("/login") || url.includes("/signup") || url === baseUrl) return `${baseUrl}/dashboard`;
-            return url.startsWith(baseUrl) ? url : baseUrl;
+            // Relative paths from the login screen, or an address on our own origin (src/lib/auth-client.ts).
+            return authRedirectTarget(url, baseUrl);
         },
     },
     secret: process.env.NEXTAUTH_SECRET,

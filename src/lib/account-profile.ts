@@ -4,8 +4,8 @@
  * Settings and Hanogt AI (client), so it is dependency-free.
  *
  * Public fields are mirrored to public_profiles/{email}; private settings stay
- * in users/{email}. The validation mirrors validProfileFields() in
- * firestore.rules so a value accepted here is also valid for direct writes.
+ * in users/{email}. Only the server writes either document (firestore.rules),
+ * so this validation is the only one.
  */
 
 import type { PlanBadgeState } from "@/lib/plan-badge";
@@ -19,7 +19,6 @@ export const PROFILE_TEXT_LIMITS = {
     nickname: 100,
     bio: 600,
     customStatus: 120,
-    statusEmoji: 16,
     social: 200,
     timezone: 64,
     dndSchedule: 40,
@@ -35,7 +34,6 @@ export interface PublicProfileFields {
     bannerUrl: string;
     bio: string;
     customStatus: string;
-    statusEmoji: string;
     accentColor: string;
     favoriteLangs: string[];
     socialGithub: string;
@@ -146,7 +144,6 @@ export const DEFAULT_ACCOUNT_FIELDS: EditableAccountFields = {
     bannerUrl: "",
     bio: "",
     customStatus: "",
-    statusEmoji: "😊",
     accentColor: "#3B82F6",
     favoriteLangs: [],
     socialGithub: "",
@@ -194,12 +191,19 @@ export const DEFAULT_ACCOUNT_FIELDS: EditableAccountFields = {
 };
 
 export const PUBLIC_PROFILE_KEYS: ReadonlyArray<keyof PublicProfileFields> = [
-    "username", "nickname", "nicknameTag", "avatarUrl", "bannerUrl", "bio", "customStatus", "statusEmoji", "accentColor",
+    "username", "nickname", "nicknameTag", "avatarUrl", "bannerUrl", "bio", "customStatus", "accentColor",
     "favoriteLangs", "socialGithub", "socialLinkedin", "socialTwitter", "socialWebsite", "socialYoutube", "socialTiktok",
     "socialInstagram", "socialFacebook", "publicProfile", "publicProjects", "dndMode",
 ];
 
 export const EDITABLE_ACCOUNT_KEYS = Object.keys(DEFAULT_ACCOUNT_FIELDS) as ReadonlyArray<keyof EditableAccountFields>;
+
+/**
+ * Fields that are no longer part of the profile. A save that sends one is
+ * still accepted (the value is ignored), and saving the custom status deletes
+ * the stored statusEmoji (the status is text only now).
+ */
+export const RETIRED_ACCOUNT_KEYS: readonly string[] = ["statusEmoji"];
 
 // Own-key lookups only: `key in object` is also true for "toString",
 // "constructor" or "__proto__", which would slip past the unknown-field check.
@@ -231,7 +235,6 @@ const TEXT_LIMITS: Partial<Record<keyof EditableAccountFields, number>> = {
     nickname: PROFILE_TEXT_LIMITS.nickname,
     bio: PROFILE_TEXT_LIMITS.bio,
     customStatus: PROFILE_TEXT_LIMITS.customStatus,
-    statusEmoji: PROFILE_TEXT_LIMITS.statusEmoji,
     socialGithub: PROFILE_TEXT_LIMITS.social,
     socialLinkedin: PROFILE_TEXT_LIMITS.social,
     socialTwitter: PROFILE_TEXT_LIMITS.social,
@@ -314,6 +317,8 @@ export function sanitizeAccountPatch(input: unknown): { ok: true; patch: Account
     if (!input || typeof input !== "object" || Array.isArray(input)) return { ok: false, error: { field: "", code: "unknown_field" } };
     const patch: Record<string, unknown> = {};
     for (const [key, raw] of Object.entries(input as Record<string, unknown>)) {
+        // Retired fields an open tab may still send: accepted and dropped.
+        if (RETIRED_ACCOUNT_KEYS.includes(key)) continue;
         if (!isEditableAccountKey(key)) return { ok: false, error: { field: key, code: "unknown_field" } };
         const field = key;
         const fallback = DEFAULT_ACCOUNT_FIELDS[field];

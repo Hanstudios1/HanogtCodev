@@ -149,6 +149,8 @@ export type AdminUser = {
     suspendReason: string | null;
     /** Two-step verification is on (only staff who may suspend can reset it). */
     twoFactorEnabled: boolean;
+    /** The account has a password (asked for again after every Google sign-in); staff who may suspend can remove it. */
+    hasPassword: boolean;
     /** What the requesting staff member may do with this account. */
     canSuspend: boolean;
     assignableRoles: AssignableRole[];
@@ -305,6 +307,7 @@ export type AdminAuditAction =
     | "user.unsuspend"
     | "user.set_role"
     | "user.reset_2fa"
+    | "user.remove_password"
     | "report.resolve"
     | "report.dismiss"
     | "report.remove_content"

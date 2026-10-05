@@ -1,5 +1,72 @@
 # Değişiklik Günlüğü
 
+## 0.3.19 — 2026-10-05
+
+### Hesap güvenliği: Google'dan sonra şifre, her yerden çıkış, açıklar
+
+- **Google'dan sonra adım doğrulama:** hesapta şifre varsa (Google ile
+  açılıp sonradan şifre eklenmiş hesaplar dahil) Google ile her girişte JWT'ye
+  `stepUp {needs: ["password"(, "totp")], since}` yazılır. Talep 15 dakika
+  geçerlidir ve `update()` ile silinemez. Bekleyen oturum sunucuda oturum
+  kapalı sayılır (`getActiveSessionState` ve `getServerSession` kullanan
+  `execute`, `media`, `arcade/[gameId]`, `health/auth`, `admin/me` yeni
+  `getSignedInSession` ile); tarayıcıda `StepUpGuard` `/login/verify`'a
+  yönlendirir, Firebase köprüsü bağlanmaz, çevrimiçi bildirimi durur. Süre
+  dolunca oturum kapanır ve `/login` `StepUpExpired` der.
+- **`/api/auth/step-up`:** GET bekleyen adımı söyler; POST `verify` şifreyi
+  (eski düz metin şifre girişteki gibi taşınır), 2FA açıksa kodu ya da
+  kurtarma kodunu doğrular ve çerezi adımsız, yeni `authTime` ile yeniden
+  basar. Şifre denemeleri hesap başına 15 dakikada 10, adres başına 60;
+  kodlar girişin bütçesini paylaşır. Askıya alma ancak sahiplik
+  kanıtlanınca söylenir. `recovery_token` → `/api/support/password-recovery`
+  ile "Şifre şartını kaldırma talebi" (yüksek öncelikli İstek, hesap başına
+  günde bir). Yönetici panelinde Kişiler → "Şifreyi kaldır" (gerekçe
+  zorunlu, denetim kaydı `user.remove_password`) ve taleplerde "Şifre
+  kurtarma" rozeti.
+- **Oturum belirteci:** `sv` (2), `authTime`, `provider`, `authVersion`.
+  Eski belirteçler bir kez yükseltilir: `authTime` 0 (yakın zamanda giriş
+  sayılmaz) ve şifreli hesaplarda adım doğrulama istenir. Oturum el
+  değiştirme (`auth-handoff`) bu alanları imzalı taşır; bekleyen adım diğer
+  sitede de bekler.
+- **Önceden ele geçirme:** Google `email_verified` olmadan giriş reddedilir
+  (`GoogleEmailUnverified`). Şifreyle açılmış ve adresi hiç doğrulanmamış bir
+  hesaba ilk doğrulanmış Google girişi doğrulanmamış şifreyi ve 2FA'yı siler,
+  `authVersion`'ı artırır, Firebase oturumlarını kapatır, bildirim ve
+  `unverified_password_removed` güvenlik olayı yazar.
+- **Her yerden çıkış:** `POST /api/account/sessions {action:
+  "sign_out_everywhere"}` (saatte 5) `users/{email}.authVersion`'ı atomik
+  artırır (`increment`, belge yoksa yazmaz), Firebase Auth kullanıcısını
+  silerek tüm gerçek zamanlı bağlantıları keser ve bu cihazın çerezini yeni
+  sürümle yeniden basar. Şifre değiştirme/belirleme de aynısını yapar.
+  Sunucu eski sürümlü oturumu her istekte reddeder; tarayıcı bunu
+  `/api/auth/session`'dan öğrenir (jwt geri çağrısı sürümü örnek başına
+  60 sn önbellekle okur, eski oturum `revoked` olur ve boş oturum döner).
+  Firebase köprüsüne `reconnect()` eklendi. Hesap Ayarları → Gizlilik ve
+  Güvenlik'e "Oturumlar" kartı.
+- **Yakın zamanda giriş:** ilk şifreyi belirlemek ve hesabı silmek son 30
+  dakikada giriş gerektirir (`reauth_required`; arayüz "Yeniden giriş yap"
+  önerir). Şifre değiştirme mevcut şifreyi (eski düz metin dahil) ister.
+- **Diğer açıklar:** `redirect` geri çağrısı yalnızca aynı kökene
+  yönlendirir; çıplak `/login` ve `/signup` panoya gider, ama çıkıştaki
+  `/login?error=…` ve `/login?callbackUrl=…` hedefleri artık korunur (önceden
+  panoya çevriliyordu, "Yeniden giriş yap" düğmeleri de dahil); 2FA kodlarına günde 20 deneme sınırı, aşılınca bildirim ve
+  `two_factor_attempts_exceeded` olayı; şifreli girişte `lastLoginAt`.
+  `health/auth` (10 dakikada 30), `news/comments/counts` (120) ve
+  `news/rankings` (60) adres başına bellek içi sınır aldı.
+- **Firestore kuralları (sahip yükler):** `users` ve `public_profiles`
+  yalnızca sunucudan yazılır (takma ad#etiket kopyalanarak arkadaşlık
+  isteklerinin kaçırılması kapandı); `public_profiles` yalnızca tek tek
+  okunur, listelenemez (Social canlı profilleri belge başına dinler);
+  `friendRequests` yalnızca `/api/friends` ile oluşturulur. Kural testleri
+  güncellendi (88 test).
+- **Özel durum emojisi kaldırıldı:** durum yalnızca metin; `statusEmoji`
+  kabul edilir ama yok sayılır, durum kaydedilince saklı emoji silinir.
+- **Yasal 4.8**, testler: `account-security.test.mjs` (adım doğrulama,
+  yönlendirme, el değiştirme talepleri, `authVersion`, çerez, jwt/session
+  geri çağrıları, `/api/auth/step-up`), şifre kurtarma belirteci, emoji.
+  Test yükleyicisi `next/server` gibi alt yolları ve next-auth
+  sağlayıcılarının varsayılan dışa aktarımını paketleyici gibi çözer.
+
 ## 0.3.18 — 2026-10-05
 
 ### Hanogt AI kendi modeline geçti: düşünme, haftalık haklar, giriş zorunluluğu

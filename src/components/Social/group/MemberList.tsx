@@ -72,7 +72,7 @@ export default function MemberList() {
                         <h3 id={`members-${section.id}`} className="px-2 pb-1 pt-5 text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{tx(SECTION_COPY[section.id], { count: section.members.length })}</h3>
                         <ul className="space-y-0.5">
                             {section.members.map((entry) => {
-                                const status = entry.customStatus ? `${entry.statusEmoji ? `${entry.statusEmoji} ` : ""}${entry.customStatus}` : "";
+                                const status = entry.customStatus;
                                 return (
                                     <li key={entry.email}>
                                         <button

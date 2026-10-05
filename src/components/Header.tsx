@@ -142,7 +142,7 @@ export default function Header() {
     const statusLabel = profile?.statusPreference === "invisible"
         ? tx(STATUS_PREFERENCE_COPY.invisible.label)
         : ownStatus ? tx(PRESENCE_STATUS_COPY[ownStatus]) : "";
-    const customStatus = profile ? [profile.statusEmoji, profile.customStatus].filter(Boolean).join(" ") : "";
+    const customStatus = profile?.customStatus ?? "";
     const unread = useUnreadNotifications(signedIn ? email : null);
     // Staff see the Admin Panel in the profile menu and the mobile menu.
     const staffRole = useStaffRole(email);

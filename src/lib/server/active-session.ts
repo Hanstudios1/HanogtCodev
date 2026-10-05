@@ -2,6 +2,7 @@ import "server-only";
 
 import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isStaleAuthVersion } from "@/lib/step-up";
 import { getServerDocument } from "./firebase-rest";
 
 export type ActiveUser = {
@@ -17,15 +18,19 @@ export type ActiveUser = {
     aiSettings?: unknown;
     /** The stored staff role; read it through resolveUserRole (src/lib/server/roles.ts). */
     role?: unknown;
+    /** Raised by "sign out everywhere" and password changes: sessions issued before it are signed out (src/lib/step-up.ts). */
+    authVersion?: unknown;
 };
 
 export type ActiveSession = { session: Session; email: string; user: ActiveUser };
 
 /**
  * The signed-in account, told apart from "couldn't check": "none" (signed
- * out, or the account is gone, banned or suspended) and "error" (the session
- * or the database couldn't be read). Billing routes answer "error" with 503
- * so a database hiccup right after a payment doesn't look like a sign-out.
+ * out, the second check after a Google sign-in still pending, a session
+ * signed out everywhere, or the account is gone, banned or suspended) and
+ * "error" (the session or the database couldn't be read). Billing routes
+ * answer "error" with 503 so a database hiccup right after a payment doesn't
+ * look like a sign-out.
  */
 export async function getActiveSessionState(): Promise<{ state: "active"; active: ActiveSession } | { state: "none" } | { state: "error" }> {
     let email: string | undefined;
@@ -38,9 +43,12 @@ export async function getActiveSessionState(): Promise<{ state: "active"; active
         return { state: "none" };
     }
     if (!session || !email) return { state: "none" };
+    // Pending (or expired) step-up: not signed in until /login/verify is done.
+    if (session.stepUp) return { state: "none" };
     try {
         const user = await getServerDocument<ActiveUser>(`users/${email}`);
         if (!user || user.banned || user.suspended) return { state: "none" };
+        if (isStaleAuthVersion(user.authVersion, session.authVersion)) return { state: "none" };
         return { state: "active", active: { session, email, user } };
     } catch {
         return { state: "error" };
@@ -52,6 +60,17 @@ export async function getActiveSession() {
     // must not turn an anonymous request into an internal-error response.
     const result = await getActiveSessionState().catch(() => ({ state: "error" as const }));
     return result.state === "active" ? result.active : null;
+}
+
+/**
+ * The NextAuth session without the database read of getActiveSession, for
+ * routes that only need the address (running code, Media, Arcade): null when
+ * signed out or while the second check after a Google sign-in is pending.
+ */
+export async function getSignedInSession(): Promise<Session | null> {
+    const session = await getServerSession(authOptions).catch(() => null);
+    if (!session?.user?.email || session.stepUp) return null;
+    return session;
 }
 
 /** The account's address is verified: it signed in with Google (which confirmed it) or was created with Google. */

@@ -19,8 +19,9 @@ import { readJsonBody } from "@/lib/server/validate";
 /**
  * Requests filed from /login by someone who can't finish signing in, carrying
  * the short-lived token sign-in gave them (src/lib/server/appeal-token.ts):
- * suspension appeals (./appeal) and 2FA recovery requests
- * (./two-factor-recovery). Both become ordinary tickets of the account's
+ * suspension appeals (./appeal), 2FA recovery requests (./two-factor-recovery)
+ * and forgotten-password requests after a Google sign-in
+ * (./password-recovery). Each becomes an ordinary ticket of the account's
  * address, so staff answer them in the Tickets section and the person finds
  * the reply under "Taleplerim" once they can sign in again. Whatever the
  * account's state, the only success answer is "received".

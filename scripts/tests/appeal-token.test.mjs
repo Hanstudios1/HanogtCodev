@@ -11,7 +11,8 @@ import { load } from "./setup.mjs";
 const {
     APPEAL_TOKEN_MAX_LENGTH, APPEAL_TOKEN_TTL_MS, SIGN_IN_TOKEN_MAX_LENGTH, SIGN_IN_TOKEN_PURPOSES, SIGN_IN_TOKEN_TTL_MS,
     deriveSignInTokenKey, encodeAppealToken, encodeSignInToken, issueAppealToken, issueSignInToken,
-    issueTwoFactorRecoveryToken, readAppealToken, readSignInToken, readTwoFactorRecoveryToken, verifyAppealToken, verifySignInToken,
+    issuePasswordRecoveryToken, issueTwoFactorRecoveryToken, readAppealToken, readPasswordRecoveryToken, readSignInToken,
+    readTwoFactorRecoveryToken, verifyAppealToken, verifySignInToken,
 } = await load("lib/server/appeal-token.ts");
 const {
     ACCOUNT_SUSPENDED, APPEAL_LIMITS, SIGN_IN_REQUEST_LIMITS, TWO_FACTOR_RECOVERY, normalizeAppealMessage, normalizeSignInRequestMessage,
@@ -104,9 +105,12 @@ test("keys are domain-separated: per purpose and from every other use of the sec
 
 test("a token of one purpose never verifies as another", () => {
     const expiresAt = NOW + SIGN_IN_TOKEN_TTL_MS;
-    const keys = { appeal: KEY, "2fa-recovery": RECOVERY_KEY };
+    const keys = Object.fromEntries(SIGN_IN_TOKEN_PURPOSES.map((purpose) => [purpose, deriveSignInTokenKey(SECRET, purpose)]));
+    assert.deepEqual(keys.appeal, KEY);
+    assert.deepEqual(keys["2fa-recovery"], RECOVERY_KEY);
+    assert.deepEqual(keys["password-recovery"], createHmac("sha256", SECRET).update("hanogt-password-recovery-v1").digest());
     const tokens = Object.fromEntries(SIGN_IN_TOKEN_PURPOSES.map((purpose) => [purpose, encodeSignInToken(purpose, EMAIL, expiresAt, SECRET)]));
-    assert.deepEqual([...SIGN_IN_TOKEN_PURPOSES].sort(), ["2fa-recovery", "appeal"]);
+    assert.deepEqual([...SIGN_IN_TOKEN_PURPOSES].sort(), ["2fa-recovery", "appeal", "password-recovery"]);
 
     // Every (issued purpose, checked purpose) pair under the same secret: only the exact match passes.
     for (const issued of SIGN_IN_TOKEN_PURPOSES) {
@@ -116,23 +120,48 @@ test("a token of one purpose never verifies as another", () => {
         }
     }
     assert.equal(verifyAppealToken(tokens["2fa-recovery"], SECRET, NOW), null);
-    assert.notEqual(tokens.appeal.split(".")[0], tokens["2fa-recovery"].split(".")[0]);
-    assert.notEqual(tokens.appeal.split(".")[1], tokens["2fa-recovery"].split(".")[1]);
+    assert.equal(verifyAppealToken(tokens["password-recovery"], SECRET, NOW), null);
+    for (const issued of SIGN_IN_TOKEN_PURPOSES) {
+        for (const other of SIGN_IN_TOKEN_PURPOSES.filter((purpose) => purpose !== issued)) {
+            assert.notEqual(tokens[issued].split(".")[0], tokens[other].split(".")[0], `${issued} / ${other} payload`);
+            assert.notEqual(tokens[issued].split(".")[1], tokens[other].split(".")[1], `${issued} / ${other} signature`);
+        }
+    }
 
-    // Both barriers on their own: the right claims under the other purpose's key (key check),
-    // and the other purpose's claims under the right key (purpose check). Refused either way.
+    // Both barriers on their own: the right claims under another purpose's key (key check),
+    // and another purpose's claims under the right key (purpose check). Refused either way.
     for (const purpose of SIGN_IN_TOKEN_PURPOSES) {
-        const other = purpose === "appeal" ? "2fa-recovery" : "appeal";
-        assert.equal(verifySignInToken(signClaims(`${purpose}|${EMAIL}|${expiresAt}`, keys[other]), purpose, SECRET, NOW), null, `${purpose} claims, ${other} key`);
-        assert.equal(verifySignInToken(signClaims(`${other}|${EMAIL}|${expiresAt}`, keys[purpose]), purpose, SECRET, NOW), null, `${other} claims, ${purpose} key`);
+        for (const other of SIGN_IN_TOKEN_PURPOSES.filter((candidate) => candidate !== purpose)) {
+            assert.equal(verifySignInToken(signClaims(`${purpose}|${EMAIL}|${expiresAt}`, keys[other]), purpose, SECRET, NOW), null, `${purpose} claims, ${other} key`);
+            assert.equal(verifySignInToken(signClaims(`${other}|${EMAIL}|${expiresAt}`, keys[purpose]), purpose, SECRET, NOW), null, `${other} claims, ${purpose} key`);
+        }
         assert.ok(verifySignInToken(signClaims(`${purpose}|${EMAIL}|${expiresAt}`, keys[purpose]), purpose, SECRET, NOW), `${purpose} claims, ${purpose} key`);
     }
 
-    // A recovery token's signature on an appeal payload (and the reverse) doesn't work either.
-    const [appealPayload, appealSignature] = tokens.appeal.split(".");
-    const [recoveryPayload, recoverySignature] = tokens["2fa-recovery"].split(".");
-    assert.equal(verifySignInToken(`${appealPayload}.${recoverySignature}`, "appeal", SECRET, NOW), null);
-    assert.equal(verifySignInToken(`${recoveryPayload}.${appealSignature}`, "2fa-recovery", SECRET, NOW), null);
+    // One purpose's signature on another's payload doesn't work either.
+    for (const purpose of SIGN_IN_TOKEN_PURPOSES) {
+        for (const other of SIGN_IN_TOKEN_PURPOSES.filter((candidate) => candidate !== purpose)) {
+            const [payload] = tokens[purpose].split(".");
+            const [, signature] = tokens[other].split(".");
+            assert.equal(verifySignInToken(`${payload}.${signature}`, purpose, SECRET, NOW), null, `${purpose} payload, ${other} signature`);
+        }
+    }
+});
+
+test("password-recovery tokens: issued for a pending step-up, read back by /api/support/password-recovery", () => {
+    withEnv({ NEXTAUTH_SECRET: SECRET }, () => {
+        const token = issuePasswordRecoveryToken(EMAIL, NOW);
+        assert.match(token, TOKEN_SHAPE);
+        assert.deepEqual(readPasswordRecoveryToken(token, NOW), { email: EMAIL, expiresAt: NOW + SIGN_IN_TOKEN_TTL_MS });
+        assert.equal(readPasswordRecoveryToken(token, NOW + SIGN_IN_TOKEN_TTL_MS), null);
+        // Not an appeal or a 2FA reset, and those aren't one either.
+        assert.equal(readAppealToken(token, NOW), null);
+        assert.equal(readTwoFactorRecoveryToken(token, NOW), null);
+        assert.equal(readPasswordRecoveryToken(issueTwoFactorRecoveryToken(EMAIL, NOW), NOW), null);
+        assert.equal(readPasswordRecoveryToken(issueAppealToken(EMAIL, NOW), NOW), null);
+    });
+    // Without a secret nothing is issued.
+    withEnv({}, () => assert.equal(issuePasswordRecoveryToken(EMAIL, NOW), null));
 });
 
 test("unknown purposes are refused", () => {

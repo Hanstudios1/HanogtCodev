@@ -203,7 +203,7 @@ function ListHeading({ children }: { children: ReactNode }) {
 }
 
 function personLine(person: SocialPerson, tx: (copy: Copy, vars?: Record<string, string | number>) => string, now: number, locale: string) {
-    if (person.customStatus) return `${person.statusEmoji ? `${person.statusEmoji} ` : ""}${person.customStatus}`;
+    if (person.customStatus) return person.customStatus;
     if (person.status === "offline") {
         const seen = presenceTime(person.lastSeenAt);
         return seen ? tx(C.lastSeen, { time: relativeTime(seen, now, locale) }) : tx(PRESENCE_STATUS_COPY.offline);

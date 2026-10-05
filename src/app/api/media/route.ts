@@ -1,6 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import {
     cleanMediaDescription,
     cleanMediaTags,
@@ -13,8 +12,7 @@ import {
     type MediaFilesError,
     type MediaLicense,
 } from "@/components/Editor/media-publish";
-import { authOptions } from "@/lib/auth";
-import { getActiveSession } from "@/lib/server/active-session";
+import { getActiveSession, getSignedInSession } from "@/lib/server/active-session";
 import {
     commitServerPatches,
     commitServerMutations,
@@ -148,7 +146,7 @@ async function optionalViewer() {
     // Anonymous visitors must still be able to browse Media even when the
     // session lookup fails (expired cookie, transient Firestore error).
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getSignedInSession();
         const email = session?.user?.email?.toLowerCase();
         if (!email) return { email: "", consent: false };
         const user = await getServerDocument<{ banned?: boolean; suspended?: boolean; securityResearchConsent?: boolean }>(`users/${email}`);

@@ -53,7 +53,7 @@ const USER_FIELDS = [
     "email", "username", "nickname", "nicknameTag", "avatarUrl", "provider", "createdAt", "lastLoginAt", "lastSeenAt",
     "isOnline", "suspended", "banned", "suspendedAt", "suspendedBy", "suspendReason", "unsuspendedAt", "role", "twoFactorEnabled",
 ];
-const ACTIONS = ["suspend", "unsuspend", "setRole", "reset2fa", "deleteData"] as const;
+const ACTIONS = ["suspend", "unsuspend", "setRole", "reset2fa", "removePassword", "deleteData"] as const;
 const DELETE_DATA_PER_HOUR = 10;
 const UNSAFE_QUERY = /[\u0000-\u001f\u007f]/;
 
@@ -85,6 +85,7 @@ function toAdminUser(record: Record<string, unknown>, email: string, actor: Admi
         suspendReason: typeof record.suspendReason === "string" ? record.suspendReason.slice(0, SUSPEND_REASON_MAX) : null,
         unsuspendedAt: toIso(record.unsuspendedAt),
         twoFactorEnabled: record.twoFactorEnabled === true,
+        hasPassword: record.hasPassword === true || typeof record.password === "string",
         canSuspend: policy.canSuspend,
         assignableRoles: policy.assignableRoles,
     };
@@ -297,6 +298,28 @@ export async function POST(request: NextRequest) {
                 auditLogPatch(actor.email, "user.reset_2fa", target, { email, reason }),
             ]);
             const response: AdminUserActionResponse = { user: toAdminUser({ ...record, twoFactorEnabled: false }, email, actor) };
+            return adminJson(response);
+        }
+
+        if (action === "removePassword") {
+            // For someone signed in with Google who forgot the password the account also has
+            // (a "password recovery" ticket from /login/verify): a Google sign-in is enough again.
+            // Two-step verification goes with it (it protects password sign-ins).
+            if (!policy.canSuspend) throw new AdminHttpError(403, policy.denial ?? "forbidden");
+            const credential = await getServerDocument<{ passwordHash?: unknown }>(`credentials/${email}`);
+            if (!credential?.passwordHash && typeof record.password !== "string") throw new AdminHttpError(409, "no_change");
+            if (!reason) throw new AdminHttpError(400, "text_required");
+            await commitServerPatches([
+                { path: `credentials/${email}`, data: {}, updateFields: ["passwordHash", ...TWO_FACTOR_FIELDS] },
+                {
+                    path: target,
+                    data: { hasPassword: false, twoFactorEnabled: false, passwordRemovedAt: now },
+                    updateFields: ["hasPassword", "twoFactorEnabled", "passwordRemovedAt", "password", "passwordHash"],
+                    exists: true,
+                },
+                auditLogPatch(actor.email, "user.remove_password", target, { email, reason }),
+            ]);
+            const response: AdminUserActionResponse = { user: toAdminUser({ ...record, hasPassword: false, twoFactorEnabled: false, password: undefined }, email, actor) };
             return adminJson(response);
         }
 

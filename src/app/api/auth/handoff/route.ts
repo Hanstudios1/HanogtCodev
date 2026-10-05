@@ -1,8 +1,8 @@
-import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
-import { authOptions } from "@/lib/auth";
 import { AUTH_HANDOFF_NONCE, safeCallbackPath } from "@/lib/auth-client";
 import { allowedHandoffOrigins, requestOrigin, signHandoff } from "@/lib/server/auth-handoff";
+import { readSessionToken } from "@/lib/server/session-cookie";
+import { SESSION_TOKEN_VERSION, readStepUpClaim } from "@/lib/step-up";
 
 function redirect(location: string) {
     return new Response(null, {
@@ -29,17 +29,23 @@ export async function GET(request: NextRequest) {
         return redirect("/login?error=Default");
     }
 
-    const session = await getServerSession(authOptions).catch(() => null);
-    const user = session?.user as { email?: string | null; name?: string | null; image?: string | null; id?: string } | undefined;
-    const email = user?.email?.toLowerCase();
+    // The session NextAuth has just stored here, with what the sign-in proved (a pending step-up included).
+    const session = await readSessionToken(request);
+    const email = typeof session?.email === "string" ? session.email.toLowerCase() : "";
     // The Google step did not finish here: start over on the site the visitor came from.
-    if (!email) return redirect(`${target}/login?error=OAuthCallback&callbackUrl=${encodeURIComponent(next)}`);
+    if (!session || !email || session.sv !== SESSION_TOKEN_VERSION || session.revoked) return redirect(`${target}/login?error=OAuthCallback&callbackUrl=${encodeURIComponent(next)}`);
 
     const token = signHandoff({
         aud: target,
         nonce,
         next,
-        user: { email, name: user?.name ?? null, picture: user?.image ?? null, id: user?.id || email },
+        user: { email, name: typeof session.name === "string" ? session.name : null, picture: typeof session.picture === "string" ? session.picture : null, id: typeof session.id === "string" && session.id ? session.id : email },
+        claims: {
+            authTime: typeof session.authTime === "number" ? session.authTime : Date.now(),
+            provider: typeof session.provider === "string" ? session.provider : "google",
+            authVersion: typeof session.authVersion === "number" ? session.authVersion : 0,
+            stepUp: readStepUpClaim(session.stepUp),
+        },
     });
     const complete = new URL("/api/auth/handoff/complete", target);
     complete.searchParams.set("token", token);

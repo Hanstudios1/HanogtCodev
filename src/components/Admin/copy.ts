@@ -159,6 +159,7 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "user.unsuspend": { TR: "Askı kaldırıldı", EN: "Suspension lifted" },
     "user.set_role": { TR: "Rol değiştirildi", EN: "Role changed" },
     "user.reset_2fa": { TR: "İki adımlı doğrulama sıfırlandı", EN: "Two-step verification reset" },
+    "user.remove_password": { TR: "Hesabın şifresi kaldırıldı", EN: "Account password removed" },
     "report.resolve": { TR: "Bildirim çözüldü", EN: "Report resolved" },
     "report.dismiss": { TR: "Bildirim reddedildi", EN: "Report dismissed" },
     "report.remove_content": { TR: "İçerik kaldırıldı", EN: "Content removed" },

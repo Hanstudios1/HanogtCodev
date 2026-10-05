@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { normalizeLanguageId } from "@/lib/runtimes/languages";
 import { RunnerError, SERVER_LANGUAGES, runFiles, runnerName, type RunFile } from "@/lib/server/code-runner";
 import { createServerDocument, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
+import { getSignedInSession } from "@/lib/server/active-session";
 
 // Compiling on the public runner can take a while (Rust, Swift, Haskell).
 export const maxDuration = 60;
@@ -37,7 +36,7 @@ function normalizeLanguage(value: unknown) {
  * outage must not stop everyone from coding, so it only skips the ban check.
  */
 async function resolveRunner(): Promise<{ email: string } | { error: string; status: number; code: ErrorCode }> {
-    const session = await getServerSession(authOptions).catch(() => null);
+    const session = await getSignedInSession();
     const email = session?.user?.email?.toLowerCase();
     if (!email) {
         return { error: "Derlenen dilleri (C, C++, Java, Go…) çalıştırmak için giriş yapın. JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS gibi tarayıcı dilleri ve dosya doğrulayıcıları girişsiz de çalışır.", status: 401, code: "auth_required" };

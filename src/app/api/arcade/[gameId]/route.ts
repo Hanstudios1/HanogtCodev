@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { arcadeProject, arcadeSummary, assertGameId, likeDocumentId, type ArcadeRecord } from "@/lib/server/arcade";
 import { getServerDocument } from "@/lib/server/firebase-rest";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getClientKey, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { getSignedInSession } from "@/lib/server/active-session";
 
 export const runtime = "nodejs";
 
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         if (!rate.allowed) return NextResponse.json({ error: "Çok fazla istek." }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }) });
         const record = await getServerDocument<ArcadeRecord>(`arcade_games/${gameId}`);
         if (!record) return NextResponse.json({ error: "Oyun bulunamadı veya yayından kaldırıldı." }, { status: 404, headers: jsonSecurityHeaders() });
-        const session = await getServerSession(authOptions).catch(() => null);
+        const session = await getSignedInSession();
         const email = session?.user?.email?.toLowerCase();
         const liked = email ? Boolean(await getServerDocument(`arcade_likes/${likeDocumentId(gameId, email)}`).catch(() => null)) : false;
         return NextResponse.json({

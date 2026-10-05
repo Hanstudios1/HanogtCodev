@@ -53,7 +53,7 @@ type CommentEntry = StoredComment & { id: string };
 
 const PROFILE_FIELDS = [
     "email", "username", "nickname", "nicknameTag", "avatarUrl", "staffRole", "publicProfile", "bio", "bannerUrl", "accentColor",
-    "customStatus", "statusEmoji", "favoriteLangs", "socialGithub", "socialLinkedin", "socialTwitter", "socialWebsite", "badges", "dndMode",
+    "customStatus", "favoriteLangs", "socialGithub", "socialLinkedin", "socialTwitter", "socialWebsite", "badges", "dndMode",
 ];
 const STAFF_ROLES: readonly BoardStaffRole[] = ["owner", "admin", "moderator"];
 /** Anonymous visitors all see the same board, so it is shared for a few seconds per instance. */
@@ -126,7 +126,6 @@ function extendedProfile(profile: Record<string, unknown>, name: string): BoardA
         bannerUrl: httpsOrNull(profile.bannerUrl) ?? undefined,
         bio: optional(profile.bio, 2_000),
         customStatus: optional(profile.customStatus, 300),
-        statusEmoji: optional(profile.statusEmoji, 32),
         accentColor: typeof profile.accentColor === "string" && /^#[0-9a-fA-F]{3,8}$/.test(profile.accentColor) ? profile.accentColor : undefined,
         favoriteLangs: list(profile.favoriteLangs, 20),
         socialGithub: optional(profile.socialGithub, 200),

@@ -60,7 +60,7 @@ export default function DmProfileAside({ person, isFriend, profile, loading, now
                             {seen ? <> · {tx(LAST_SEEN_COPY, { time: relativeTime(seen, now, locale) })}</> : null}
                         </p>
                     )}
-                    {person.customStatus && <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-200">{person.statusEmoji} {person.customStatus}</p>}
+                    {person.customStatus && <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-200">{person.customStatus}</p>}
                 </div>
                 <section className="rounded-xl bg-white p-3 dark:bg-zinc-900" aria-label={tx(C.about)}>
                     <h3 className="text-[11px] font-black uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{tx(C.about)}</h3>

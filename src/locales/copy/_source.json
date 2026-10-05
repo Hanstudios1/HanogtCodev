@@ -553,7 +553,8 @@
     "en": "Sign in again",
     "tr": "Yeniden giriş yap",
     "files": [
-      "src/app/account-settings/page.tsx"
+      "src/app/account-settings/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "22e1rppx788": {
@@ -1019,7 +1020,8 @@
     "en": "Password",
     "tr": "Şifre",
     "files": [
-      "src/app/account-settings/page.tsx"
+      "src/app/account-settings/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "9x52vw2d1x": {
@@ -1203,6 +1205,83 @@
       "src/app/account-settings/page.tsx"
     ]
   },
+  "1755syldh5i": {
+    "en": "Once you set a password, every Google sign-in asks for it too, plus the code when two-step verification is on.",
+    "tr": "Şifre belirlediğinizde Google ile her girişte bu şifre, iki adımlı doğrulama açıksa kod da sorulur.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "280utzfwg89": {
+    "en": "The current password is wrong.",
+    "tr": "Mevcut şifre yanlış.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "17za943l44s": {
+    "en": "Your password was saved and your other devices were signed out.",
+    "tr": "Şifreniz kaydedildi; diğer cihazlardaki oturumlarınız kapatıldı.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "11ufgnti1hn": {
+    "en": "For your security, sign in again before setting a password (within the last 30 minutes).",
+    "tr": "Güvenliğiniz için şifre belirlemeden önce yeniden giriş yapmanız gerekiyor (son 30 dakika içinde).",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "3g0orglrh3": {
+    "en": "To delete your account, you need to have signed in within the last 30 minutes. Sign in again and try once more.",
+    "tr": "Hesabınızı silmek için son 30 dakika içinde giriş yapmış olmanız gerekiyor. Yeniden giriş yapıp tekrar deneyin.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "6rktgkvem2": {
+    "en": "Sessions",
+    "tr": "Oturumlar",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "4mnk6canji": {
+    "en": "If your account is still signed in on another device or browser, sign them all out here; you stay signed in on this device. Changing your password signs the other sessions out too.",
+    "tr": "Hesabınız başka bir cihazda ya da tarayıcıda açık kaldıysa hepsini buradan kapatın; bu cihazdaki oturumunuz açık kalır. Şifrenizi değiştirdiğinizde de diğer oturumlar kapanır.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "1jwubaruv5x": {
+    "en": "Sign out all other sessions",
+    "tr": "Diğer tüm oturumları kapat",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "ypynchgyif": {
+    "en": "All your other sessions were signed out; you're still signed in here.",
+    "tr": "Diğer tüm oturumlarınız kapatıldı; bu cihazda oturumunuz açık.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "kqxiam0zqr": {
+    "en": "Couldn't sign the sessions out right now. Try again in a moment.",
+    "tr": "Oturumlar şu anda kapatılamadı. Biraz sonra tekrar deneyin.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "2e2bvdsgh9u": {
+    "en": "You tried too often. Wait a little and try again.",
+    "tr": "Çok sık denediniz. Biraz bekleyip tekrar deneyin.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
   "2d7noe4lj8n": {
     "en": "Your session has ended. Sign in in a new tab, then save again so your changes aren't lost.",
     "tr": "Oturumunuz sona ermiş. Değişikliklerinizi kaybetmemek için yeni bir sekmede giriş yapıp tekrar kaydedin.",
@@ -1364,14 +1443,6 @@
       "src/components/StatusMenu.tsx"
     ]
   },
-  "1xqrgu4j6hy": {
-    "en": "Status emoji",
-    "tr": "Durum emojisi",
-    "files": [
-      "src/app/account-settings/page.tsx",
-      "src/components/StatusMenu.tsx"
-    ]
-  },
   "1cc2yp2p9w1": {
     "en": "Accent colour",
     "tr": "Vurgu rengi",
@@ -1512,9 +1583,9 @@
       "src/app/account-settings/page.tsx"
     ]
   },
-  "34kgdrt3z7": {
-    "en": "Visibility, two-step verification, password",
-    "tr": "Görünürlük, iki adımlı doğrulama, şifre",
+  "1n3tuhsnx4k": {
+    "en": "Visibility, two-step verification, password, sessions",
+    "tr": "Görünürlük, iki adımlı doğrulama, şifre, oturumlar",
     "files": [
       "src/app/account-settings/page.tsx"
     ]
@@ -2244,9 +2315,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "ytqjmsvtmw": {
-    "en": "Password hash, encrypted two-step verification records, session data, rate-limit keys derived from IP addresses or accounts, security events, audit records, hosting logs",
-    "tr": "Parola karması, şifreli iki adımlı doğrulama kayıtları, oturum bilgileri, IP adresinden veya hesaptan türetilen hız sınırı anahtarları, güvenlik olayları, denetim kayıtları, barındırma günlükleri",
+  "1rcsggvpkyq": {
+    "en": "Password hash, encrypted two-step verification records, session data (sign-in time, sign-in provider, session version), rate-limit keys derived from IP addresses or accounts, security events, audit records, hosting logs",
+    "tr": "Parola karması, şifreli iki adımlı doğrulama kayıtları, oturum bilgileri (giriş zamanı, giriş sağlayıcısı, oturum sürümü), IP adresinden veya hesaptan türetilen hız sınırı anahtarları, güvenlik olayları, denetim kayıtları, barındırma günlükleri",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2363,9 +2434,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1x31if19z00": {
-    "en": "running membership processes: creating accounts, sign-in, sessions and two-step verification;",
-    "tr": "Üyelik işlemlerinin yürütülmesi: hesap açma, giriş, oturum ve iki adımlı doğrulama,",
+  "aedw4x8qv4": {
+    "en": "running membership processes: creating accounts, sign-in, sessions and two-step verification, asking for the password (and the code) after a Google sign-in, signing sessions out and protecting accounts against takeover;",
+    "tr": "Üyelik işlemlerinin yürütülmesi: hesap açma, giriş, oturum ve iki adımlı doğrulama, Google ile girişten sonra parolanın (ve kodun) istenmesi, oturumların kapatılması ve hesabın ele geçirilmesine karşı koruma,",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -5222,7 +5293,8 @@
     "en": "Sign in with another account",
     "tr": "Başka bir hesapla giriş yap",
     "files": [
-      "src/app/login/page.tsx"
+      "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "1npc5o2mql5": {
@@ -5321,6 +5393,7 @@
     "tr": "Talebiniz",
     "files": [
       "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx",
       "src/app/privacy-policy/page.tsx"
     ]
   },
@@ -5342,7 +5415,8 @@
     "en": "Send request",
     "tr": "Talebi gönder",
     "files": [
-      "src/app/login/page.tsx"
+      "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "24l1xdly6iz": {
@@ -5398,7 +5472,8 @@
     "en": "The request needs at least {min} characters.",
     "tr": "Talep en az {min} karakter olmalı.",
     "files": [
-      "src/app/login/page.tsx"
+      "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "fl33vq0uww": {
@@ -5412,7 +5487,8 @@
     "en": "The request couldn't be sent. Please try again.",
     "tr": "Talep gönderilemedi. Lütfen tekrar deneyin.",
     "files": [
-      "src/app/login/page.tsx"
+      "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "7f7m0gfm9p": {
@@ -5436,6 +5512,20 @@
       "src/app/login/page.tsx"
     ]
   },
+  "13g48hpfxpf": {
+    "en": "Google hasn't verified this account's e-mail address. Verify it in your Google account and try again, or sign in with your password.",
+    "tr": "Google bu hesabın e-posta adresini doğrulamamış. Adresini Google hesabında doğruladıktan sonra tekrar dene ya da şifrenle giriş yap.",
+    "files": [
+      "src/app/login/page.tsx"
+    ]
+  },
+  "143xt1ii8kr": {
+    "en": "The password check after the Google sign-in wasn't finished within 15 minutes. For your security, sign in again.",
+    "tr": "Google girişinden sonraki şifre doğrulaması 15 dakika içinde tamamlanmadı. Güvenliğin için yeniden giriş yap.",
+    "files": [
+      "src/app/login/page.tsx"
+    ]
+  },
   "2buctvn1p76": {
     "en": "Enter one of the recovery codes you saved during setup. Each code works only once.",
     "tr": "Hesabınızı kurarken kaydettiğiniz kurtarma kodlarından birini girin. Her kod yalnızca bir kez kullanılabilir.",
@@ -5454,7 +5544,8 @@
     "en": "Recovery code",
     "tr": "Kurtarma kodu",
     "files": [
-      "src/app/login/page.tsx"
+      "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "25ccfx3r1yh": {
@@ -5462,6 +5553,7 @@
     "tr": "Doğrulama kodu",
     "files": [
       "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx"
     ]
   },
@@ -5476,7 +5568,8 @@
     "en": "Use the authenticator app",
     "tr": "Doğrulama uygulamasını kullan",
     "files": [
-      "src/app/login/page.tsx"
+      "src/app/login/page.tsx",
+      "src/app/login/verify/page.tsx"
     ]
   },
   "1jk3sisn6hh": {
@@ -5502,6 +5595,217 @@
     "files": [
       "src/app/login/page.tsx",
       "src/app/signup/page.tsx"
+    ]
+  },
+  "jmiuo5cb4b": {
+    "en": "Verify it's you",
+    "tr": "Hesabını doğrula",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "m1p81o31yv": {
+    "en": "You signed in with Google. This account also has a password; enter it to continue.",
+    "tr": "Google ile giriş yaptın. Bu hesabın bir şifresi de var; devam etmek için onu gir.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "4n1hqnuahy": {
+    "en": "You signed in with Google. This account also has a password and two-step verification; enter both to continue.",
+    "tr": "Google ile giriş yaptın. Bu hesabın bir şifresi ve iki adımlı doğrulaması var; devam etmek için ikisini de gir.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "2b6zov76sz6": {
+    "en": "Continuing as {email}",
+    "tr": "{email} olarak devam ediyorsun",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1mk99l2tc57": {
+    "en": "Because a password was added to your account, it is asked for after every Google sign-in: someone who takes over your Google account still can't get into your account alone.",
+    "tr": "Hesabına sonradan şifre eklendiği için her Google girişinden sonra şifren de istenir: Google hesabını ele geçiren biri tek başına hesabına giremez.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "kthiux3p": {
+    "en": "Show password",
+    "tr": "Şifreyi göster",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1rj859nmbst": {
+    "en": "Hide password",
+    "tr": "Şifreyi gizle",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "17rrih3keyv": {
+    "en": "The 6-digit code from your authenticator app.",
+    "tr": "Doğrulama uygulamandaki 6 haneli kod.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "n19k7pt8n4": {
+    "en": "One of the recovery codes you saved; each works once.",
+    "tr": "Kaydettiğin kurtarma kodlarından biri; her kod bir kez çalışır.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1a22cstjrgq": {
+    "en": "Use a recovery code",
+    "tr": "Kurtarma kodu kullan",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "45ec36r1tg": {
+    "en": "Verify and continue",
+    "tr": "Doğrula ve devam et",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1sgbuvkfelc": {
+    "en": "This check ends in {time}.",
+    "tr": "Bu doğrulama {time} içinde sona erer.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "26k1yldxzpl": {
+    "en": "The check timed out",
+    "tr": "Doğrulama süresi doldu",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "cpzkd4y4e2": {
+    "en": "For your security, you need to sign in again.",
+    "tr": "Güvenliğin için yeniden giriş yapman gerekiyor.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "29a1nzhkzr6": {
+    "en": "I don't remember my password",
+    "tr": "Şifremi hatırlamıyorum",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "pad0gw913s": {
+    "en": "Ask to remove the password",
+    "tr": "Şifre şartını kaldırma talebi",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "lclk5wn8n4": {
+    "en": "Your Google account was verified, but the account's password wasn't. Once the team is sure the account is yours, they remove the password; signing in with Google is then enough, and you can set a new password if you like.",
+    "tr": "Google hesabın doğrulandı, ancak hesabın şifresi doğrulanmadı. Ekip, hesabın sana ait olduğundan emin olduktan sonra şifreyi kaldırır; ardından Google ile giriş yapman yeterli olur ve istersen yeni bir şifre belirleyebilirsin.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "15ddgguc7ym": {
+    "en": "Say when you added the password, when you last used the account and anything that shows the account is yours…",
+    "tr": "Şifreyi ne zaman eklediğini, hesabı en son ne zaman kullandığını ve hesabın sana ait olduğunu gösterecek ayrıntıları yaz…",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "15c0y7bk8y1": {
+    "en": "At least {min} characters. Never include your password or codes. Each account can send one request a day.",
+    "tr": "En az {min} karakter. Şifreni ya da kodlarını asla yazma. Her hesap günde bir talep gönderebilir.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "6sd4aagx91": {
+    "en": "Your request was received. If the team removes the password, signing in with Google is enough; you'll find the reply under “My tickets” on the Feedback page.",
+    "tr": "Talebin alındı. Ekip şifreyi kaldırırsa Google ile giriş yapman yeterli olur; yanıtı Geri Bildirim sayfasındaki “Taleplerim” bölümünde görürsün.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1siuy01gmmp": {
+    "en": "Back to the check",
+    "tr": "Doğrulamaya dön",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "wlnx573mqn": {
+    "en": "That password is wrong.",
+    "tr": "Şifre yanlış.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1m2ozqhj7wr": {
+    "en": "Enter the code from your authenticator app too.",
+    "tr": "Doğrulama uygulamandaki kodu da gir.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "5lzbg6w9wm": {
+    "en": "The code is wrong, expired or already used.",
+    "tr": "Doğrulama kodu hatalı, süresi dolmuş ya da zaten kullanılmış.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1b22jr57ux2": {
+    "en": "Too many tries. Try again in {minutes} minutes.",
+    "tr": "Çok fazla deneme. {minutes} dakika sonra tekrar dene.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "o1zusamz8v": {
+    "en": "The check isn't available right now. Try again shortly.",
+    "tr": "Doğrulama şu anda yapılamıyor. Biraz sonra tekrar dene.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "zlwit9f944": {
+    "en": "Couldn't reach the server. Check your connection and try again.",
+    "tr": "Sunucuya bağlanılamadı. İnternet bağlantını kontrol edip tekrar dene.",
+    "files": [
+      "src/app/login/verify/page.tsx",
+      "src/components/Editor/media-api.ts"
+    ]
+  },
+  "1jnpdoyp9mo": {
+    "en": "Enter your password.",
+    "tr": "Şifreni gir.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "136sfy56kwm": {
+    "en": "A request was already sent for this account today, or there were too many tries.",
+    "tr": "Bu hesap için bugün zaten bir talep gönderildi ya da çok fazla deneme yapıldı.",
+    "files": [
+      "src/app/login/verify/page.tsx"
+    ]
+  },
+  "1i4gp0p7k3b": {
+    "en": "The request form expired; open it again.",
+    "tr": "Talep formunun süresi doldu; yeniden aç.",
+    "files": [
+      "src/app/login/verify/page.tsx"
     ]
   },
   "1vtt3d7nce8": {
@@ -7504,9 +7808,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "266k9f7h95g": {
-    "en": "scrypt hash of your password, encrypted two-step verification secret and recovery-code digests, session cookie, sign-in provider, account creation and last sign-in time",
-    "tr": "Parolanın scrypt karması, şifreli iki adımlı doğrulama anahtarı ve kurtarma kodu özetleri, oturum çerezi, giriş sağlayıcısı, hesap oluşturma ve son giriş zamanı",
+  "25t3vn4hwy7": {
+    "en": "scrypt hash of your password, encrypted two-step verification secret and recovery-code digests, session cookie (with the sign-in time, sign-in provider and session version), account creation and last sign-in time, account security events",
+    "tr": "Parolanın scrypt karması, şifreli iki adımlı doğrulama anahtarı ve kurtarma kodu özetleri, oturum çerezi (giriş zamanı, giriş sağlayıcısı ve oturum sürümüyle), hesap oluşturma ve son giriş zamanı, hesap güvenliği olayları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7724,9 +8028,37 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "ifrmgju1mc": {
-    "en": "Your session is kept in a signed cookie called hanogt.session-token that JavaScript cannot read (httpOnly); in production it carries the __Secure- prefix and is only sent over HTTPS. A session lasts 90 days and is renewed as you use the site; it ends when you sign out. If your account is suspended, your open sessions are treated as invalid on the server.",
-    "tr": "Oturumunuz, JavaScript'in okuyamadığı (httpOnly) ve imzalı hanogt.session-token çerezinde tutulur; üretim ortamında bu çerez __Secure- önekini taşır ve yalnızca HTTPS üzerinden gönderilir. Oturum 90 gün geçerlidir ve siteyi kullandıkça yenilenir; çıkış yaptığınızda sona erer. Hesabınız askıya alınırsa açık oturumlarınız sunucu tarafında geçersiz sayılır.",
+  "26q68an9ze0": {
+    "en": "Two-step verification code attempts are limited to 6 per 15 minutes and 20 a day per account. If the daily limit is exceeded, you receive a security notification and the event is recorded as a security event for the team to review.",
+    "tr": "İki adımlı doğrulama kodu denemeleri hesap başına 15 dakikada 6 ve günde 20 ile sınırlıdır. Günlük sınır aşılırsa size bir güvenlik bildirimi gönderilir ve olay, ekibin incelemesi için güvenlik olayı olarak kaydedilir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1y0zvgn83ku": {
+    "en": "Google sign-in and passwords: if your account has a password (for example, you added one to an account you created with Google), every Google sign-in is followed by a request for that password, and for your verification code when two-step verification is on. If this step isn't completed within 15 minutes, the sign-in is cancelled; until it is, the session allows no account actions and no real-time connection is opened. Password attempts are limited to 10 per 15 minutes per account. If you have forgotten the password, you can send the team a high-priority “Request” ticket from the same screen (one per account per day); it is linked to the e-mail address Google verified. Once your identity has been verified, an authorised administrator can remove the password requirement; this action and its reason are written to the audit log.",
+    "tr": "Google ile giriş ve parola: Hesabınızda bir parola varsa (örneğin Google ile açtığınız hesaba sonradan parola eklediyseniz) Google ile her girişten sonra parolanız, iki adımlı doğrulama açıksa doğrulama kodunuz da istenir. Bu adım 15 dakika içinde tamamlanmazsa giriş iptal edilir; tamamlanana kadar oturum hiçbir hesap işlemine izin vermez ve gerçek zamanlı bağlantı açılmaz. Parola denemeleri hesap başına 15 dakikada 10 ile sınırlıdır. Parolanızı unuttuysanız aynı ekrandaki formla ekibe yüksek öncelikli bir “İstek” talebi iletebilirsiniz (hesap başına günde bir); talep, Google'ın doğruladığı e-posta adresinizle ilişkilendirilir. Kimliğiniz doğrulandıktan sonra yetkili bir yönetici parola şartını kaldırabilir; bu işlem gerekçesiyle birlikte denetim kaydına yazılır.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "pawwy6wcs6": {
+    "en": "Protecting unverified accounts: because e-mail addresses aren't verified at sign-up, someone else may have opened an account with your address and a password beforehand. So the first Google sign-in to such an account with that address (Google has verified the address) settles who owns it: the unverified password and any two-step verification added before are removed, other sessions and real-time connections are closed, you receive a notification and a security event is recorded. Google sign-in with an address Google hasn't verified is not accepted.",
+    "tr": "Doğrulanmamış hesapların korunması: Kayıt sırasında e-posta adresi doğrulanmadığı için, bir başkası adresinizle önceden parolalı bir hesap açmış olabilir. Bu nedenle böyle bir hesaba o adresle yapılan ilk Google girişi (Google adresi doğruladığı için) hesabın sahibini belirler: hesaba önceden eklenmiş doğrulanmamış parola ve iki adımlı doğrulama kaldırılır, diğer oturumlar ve gerçek zamanlı bağlantılar kapatılır, size bir bildirim gönderilir ve bir güvenlik olayı kaydedilir. Google'ın doğrulamadığı bir adresle Google girişi kabul edilmez.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "p27mt3vtq4": {
+    "en": "Your session is kept in a signed cookie called hanogt.session-token that JavaScript cannot read (httpOnly); in production it carries the __Secure- prefix and is only sent over HTTPS. The cookie also carries your sign-in time, your sign-in provider and your account's session version. A session lasts 90 days and is renewed as you use the site; it ends when you sign out. If your account is suspended, your open sessions are treated as invalid on the server.",
+    "tr": "Oturumunuz, JavaScript'in okuyamadığı (httpOnly) ve imzalı hanogt.session-token çerezinde tutulur; üretim ortamında bu çerez __Secure- önekini taşır ve yalnızca HTTPS üzerinden gönderilir. Çerez; giriş zamanınızı, giriş sağlayıcınızı ve hesabınızın oturum sürümünü de taşır. Oturum 90 gün geçerlidir ve siteyi kullandıkça yenilenir; çıkış yaptığınızda sona erer. Hesabınız askıya alınırsa açık oturumlarınız sunucu tarafında geçersiz sayılır.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "rtsadtlxuc": {
+    "en": "The “Sign out all other sessions” button under Account Settings → Privacy & Security and changing your password raise your account's session version: your sessions and real-time connections on other devices and browsers end, and you stay signed in on the device you are using. Setting your first password and deleting your account require a sign-in within the last 30 minutes; otherwise you are asked to sign in again.",
+    "tr": "Hesap Ayarları → Gizlilik ve Güvenlik bölümündeki “Diğer tüm oturumları kapat” düğmesi ve parola değişikliği, hesabınızın oturum sürümünü artırır: diğer cihaz ve tarayıcılardaki oturumlarınız ile gerçek zamanlı bağlantılarınız sonlandırılır, kullandığınız cihazdaki oturumunuz açık kalır. İlk parolanızı belirlemek ve hesabınızı silmek için son 30 dakika içinde giriş yapmış olmanız gerekir; aksi hâlde sizden yeniden giriş yapmanız istenir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8166,9 +8498,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "dvimc7ozcz": {
-    "en": "For finding friends, messaging and groups, your public profile record (username, nickname and tag, avatar, banner image, bio, links, status message and online status) is kept in a record that other signed-in users can access. Because your account's technical identifier is your e-mail address, this record is linked to your e-mail address and signed-in users can technically access that address. Only put information you are happy to share in your profile.",
-    "tr": "Arkadaş bulma, mesajlaşma ve gruplar için herkese açık profil kaydınız (kullanıcı adı, takma ad ve etiket, avatar, kapak görseli, biyografi, bağlantılar, durum mesajı ve çevrimiçi durum) giriş yapmış diğer kullanıcıların erişebildiği bir kayıtta tutulur. Hesabınızın teknik tanımlayıcısı e-posta adresiniz olduğundan bu kayıt e-posta adresinizle ilişkilidir ve giriş yapmış kullanıcılar bu adrese teknik olarak erişebilir. Profilinize yalnızca paylaşmak istediğiniz bilgileri yazın.",
+  "b7tv5kviuu": {
+    "en": "For finding friends, messaging and groups, your public profile record (username, nickname and tag, avatar, banner image, bio, links, status message and online status) is kept in a record that other signed-in users can access. Because your account's technical identifier is your e-mail address, this record is linked to your e-mail address and signed-in users can technically access that address. Profile records can only be opened one at a time: browsers can't list or search them (finding friends by nickname and tag goes through the server), and only the server writes them. Only put information you are happy to share in your profile.",
+    "tr": "Arkadaş bulma, mesajlaşma ve gruplar için herkese açık profil kaydınız (kullanıcı adı, takma ad ve etiket, avatar, kapak görseli, biyografi, bağlantılar, durum mesajı ve çevrimiçi durum) giriş yapmış diğer kullanıcıların erişebildiği bir kayıtta tutulur. Hesabınızın teknik tanımlayıcısı e-posta adresiniz olduğundan bu kayıt e-posta adresinizle ilişkilidir ve giriş yapmış kullanıcılar bu adrese teknik olarak erişebilir. Profil kayıtları yalnızca tek tek açılabilir; tarayıcıdan listelenemez veya aranamaz (takma ad ve etiketle arkadaş arama sunucu üzerinden yapılır) ve bu kayıtları yalnızca sunucu yazar. Profilinize yalnızca paylaşmak istediğiniz bilgileri yazın.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9428,9 +9760,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "atcq37520m": {
-    "en": "Security events (blocked runs)",
-    "tr": "Güvenlik olayları (engellenen çalıştırmalar)",
+  "we7ti25d57": {
+    "en": "Security events (blocked runs, account security events)",
+    "tr": "Güvenlik olayları (engellenen çalıştırmalar, hesap güvenliği olayları)",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -12174,9 +12506,23 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "1qoguse0vcb": {
-    "en": "If you notice unauthorised access to your account, change your password immediately and tell us with a support ticket in the “Security vulnerability” category. Sign out when you're done on shared devices.",
-    "tr": "Hesabınıza yetkisiz erişim fark ederseniz parolanızı hemen değiştirin ve “Güvenlik Açığı” kategorisinde destek talebiyle bize bildirin. Ortak kullanılan cihazlarda işiniz bitince çıkış yapın.",
+  "1nw1zftw4cy": {
+    "en": "If you notice unauthorised access to your account, change your password immediately (your other sessions are signed out) or use “Sign out all other sessions” in Account Settings, and tell us with a support ticket in the “Security vulnerability” category. Sign out when you're done on shared devices.",
+    "tr": "Hesabınıza yetkisiz erişim fark ederseniz parolanızı hemen değiştirin (diğer oturumlarınız kapanır) ya da Hesap Ayarları'ndaki “Diğer tüm oturumları kapat” düğmesini kullanın ve “Güvenlik Açığı” kategorisinde destek talebiyle bize bildirin. Ortak kullanılan cihazlarda işiniz bitince çıkış yapın.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "w5vekphn1s": {
+    "en": "If your account has a password, a Google sign-in isn't complete until you enter it (and your code when two-step verification is on). If you forget the password, the team can remove the password requirement once they have verified your identity. Sensitive actions such as setting your first password and deleting your account require a recent sign-in (within the last 30 minutes).",
+    "tr": "Hesabınızda bir parola varsa Google ile giriş, parolanız (ve iki adımlı doğrulama açıksa kodunuz) girilene kadar tamamlanmaz. Parolanızı unuttuğunuzda ekip, kimliğinizi doğruladıktan sonra parola şartını kaldırabilir. İlk parolanızı belirlemek ve hesabınızı silmek gibi hassas işlemler için yakın zamanda (son 30 dakika içinde) giriş yapmış olmanız istenir.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "g2zzukcq24": {
+    "en": "E-mail addresses aren't verified at sign-up. So the first Google sign-in with an address removes the unverified password and two-step verification of an account opened earlier with that address and a password; don't open accounts with an address that isn't yours.",
+    "tr": "Kayıt sırasında e-posta adresi doğrulanmaz. Bu nedenle bir adresle yapılan ilk Google girişi, o adresle önceden parolayla açılmış hesabın doğrulanmamış parolasını ve iki adımlı doğrulamasını kaldırır; başkasına ait bir adresle hesap açmayın.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -16908,6 +17254,13 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "2ej6vkjvy8t": {
+    "en": "Account password removed",
+    "tr": "Hesabın şifresi kaldırıldı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "d877fjvbth": {
     "en": "Report resolved",
     "tr": "Bildirim çözüldü",
@@ -21092,6 +21445,13 @@
       "src/components/Admin/TicketsSection.tsx"
     ]
   },
+  "atr23y5xcu": {
+    "en": "Password recovery",
+    "tr": "Şifre kurtarma",
+    "files": [
+      "src/components/Admin/TicketsSection.tsx"
+    ]
+  },
   "y1rwoc0czs": {
     "en": "Checked ",
     "tr": "Kontrol edildi: ",
@@ -21217,6 +21577,27 @@
   "vzrx5achs4": {
     "en": "Admins and owners can reset 2FA from the Users section.",
     "tr": "2FA'yı yöneticiler ve sahipler, Kullanıcılar bölümünden sıfırlayabilir.",
+    "files": [
+      "src/components/Admin/TicketsSection.tsx"
+    ]
+  },
+  "cgr4yswdmx": {
+    "en": "This request was sent from /login/verify by someone who signed in with Google but couldn't enter the account's password. Only the Google account was verified, not the password: make sure the account really belongs to the sender before removing the password. Once it's removed, a Google sign-in is enough and the person finds your reply under My tickets.",
+    "tr": "Bu talep, Google ile giriş yaptıktan sonra hesabın şifresini giremeyen biri tarafından /login/verify sayfasından gönderildi. Yalnızca Google hesabı doğrulandı, şifre doğrulanmadı: şifreyi kaldırmadan önce hesabın gerçekten gönderene ait olduğundan emin olun. Şifre kaldırılınca Google ile giriş yeterli olur ve kullanıcı yanıtınızı Taleplerim'de bulur.",
+    "files": [
+      "src/components/Admin/TicketsSection.tsx"
+    ]
+  },
+  "2dzcb08o2fx": {
+    "en": "Open the user to remove the password",
+    "tr": "Şifreyi kaldırmak için kullanıcıyı aç",
+    "files": [
+      "src/components/Admin/TicketsSection.tsx"
+    ]
+  },
+  "mr802bifi": {
+    "en": "Admins and owners can remove the password from the Users section.",
+    "tr": "Şifreyi yöneticiler ve sahipler, Kullanıcılar bölümünden kaldırabilir.",
     "files": [
       "src/components/Admin/TicketsSection.tsx"
     ]
@@ -21454,6 +21835,13 @@
   "nnny0zzcf": {
     "en": "Reset 2FA",
     "tr": "2FA sıfırla",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "15kkz46me0z": {
+    "en": "Remove password",
+    "tr": "Şifreyi kaldır",
     "files": [
       "src/components/Admin/UsersSection.tsx"
     ]
@@ -21971,6 +22359,13 @@
       "src/components/Admin/UsersSection.tsx"
     ]
   },
+  "36yilj9itj": {
+    "en": "The password of {email} was removed; signing in with Google is enough now.",
+    "tr": "{email} hesabının şifresi kaldırıldı; Google ile giriş artık yeterli.",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
   "mutbfadcae": {
     "en": "{email} now has the {role} role.",
     "tr": "{email} artık {role} rolünde.",
@@ -22109,6 +22504,20 @@
   "riw674rpmd": {
     "en": "e.g. support ticket #123, identity verified by e-mail",
     "tr": "Örn. destek talebi #123, kimlik e-postayla doğrulandı",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "kn9y5mbsnz": {
+    "en": "Remove the account's password?",
+    "tr": "Hesabın şifresi kaldırılsın mı?",
+    "files": [
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "13dtu4z53ty": {
+    "en": "{email} can no longer sign in with a password, and no password is asked for after signing in with Google. Two-step verification is turned off too if it was on. Only do this for people who forgot their password and whose identity you verified another way (password recovery requests).",
+    "tr": "{email} artık şifreyle giriş yapamaz; Google ile giriş yaptıktan sonra şifre de sorulmaz. Açıksa iki adımlı doğrulama da kapanır. Bunu yalnızca şifresini unutan ve kimliğini başka bir yolla doğruladığınız kişiler için yapın (şifre kurtarma talepleri).",
     "files": [
       "src/components/Admin/UsersSection.tsx"
     ]
@@ -22517,6 +22926,62 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "28k1ccohifm": {
+    "en": "Your account is safer",
+    "tr": "Hesabın daha güvenli",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1chbpjzx2t4": {
+    "en": "If you added a password to your account, Google sign-in asks for it too, and one button signs out all your other sessions.",
+    "tr": "Hesabına şifre eklediysen Google ile girişte de bu şifre soruluyor; tek tuşla diğer tüm oturumlarını kapatabiliyorsun.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "vdooe0kv97": {
+    "en": "Google sign-in: if your account has a password, every Google sign-in asks for it, plus your code when two-step verification is on. If you forgot it, you can ask the team for help from the same screen.",
+    "tr": "Google ile giriş: hesabında şifre varsa her Google girişinden sonra şifren, iki adımlı doğrulama açıksa kodun da soruluyor. Şifreni unuttuysan aynı ekrandan ekipten yardım isteyebilirsin.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1hhamlzfb4i": {
+    "en": "\"Sign out all other sessions\" in Account Settings → Privacy & Security; changing your password signs your other devices out too.",
+    "tr": "Hesap Ayarları → Gizlilik ve Güvenlik'te \"Diğer tüm oturumları kapat\"; şifreni değiştirdiğinde de diğer cihazlardaki oturumların kapanıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1wt5kg4wmo8": {
+    "en": "If someone opened an account with your address and a password before you, your first Google sign-in removes that password and two-step verification and hands the account to you.",
+    "tr": "Başkası adınla önceden şifreli bir hesap açtıysa, Google ile ilk girişin o şifreyi ve iki adımlı doğrulamayı kaldırıp hesabı sana veriyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "28qmvzj0r6y": {
+    "en": "Setting your first password and deleting your account need a sign-in within the last 30 minutes.",
+    "tr": "İlk şifreni belirlemek ve hesabını silmek için son 30 dakika içinde giriş yapmış olman gerekiyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1u8e7fzlu17": {
+    "en": "Profiles can no longer be listed, only opened one at a time; the custom status emoji is gone and the status is text only.",
+    "tr": "Profiller artık listelenemiyor, yalnızca tek tek açılıyor; özel durumdaki emoji kalktı, durum yalnızca metin.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1wf4hgk2b8r": {
+    "en": "Privacy Policy, KVKK Information Notice and Terms of Use 4.8.",
+    "tr": "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 4.8.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "149j7rk1w1z": {
@@ -25442,13 +25907,6 @@
   "4nu6yzg2t7": {
     "en": "Hanogt Media isn't responding right now. Please try again later.",
     "tr": "Hanogt Media şu anda yanıt vermiyor. Biraz sonra tekrar deneyin.",
-    "files": [
-      "src/components/Editor/media-api.ts"
-    ]
-  },
-  "zlwit9f944": {
-    "en": "Couldn't reach the server. Check your connection and try again.",
-    "tr": "Sunucuya ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.",
     "files": [
       "src/components/Editor/media-api.ts"
     ]
@@ -39746,13 +40204,6 @@
       "src/components/StatusMenu.tsx"
     ]
   },
-  "aupy3fm9oi": {
-    "en": "Choose {emoji}",
-    "tr": "{emoji} emojisini seç",
-    "files": [
-      "src/components/StatusMenu.tsx"
-    ]
-  },
   "260at86oaew": {
     "en": "Your status was updated.",
     "tr": "Durumunuz güncellendi.",
@@ -45082,6 +45533,34 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "129kbvat3br": {
+    "en": "Google sign-in and passwords: if your account has a password, every Google sign-in is followed by a request for it, and for your code when two-step verification is on; a sign-in not completed within 15 minutes is cancelled. If you forget the password, you can ask the team to remove the requirement. The Privacy Policy, the KVKK Information Notice and the Terms of Use were updated accordingly.",
+    "tr": "Google ile giriş ve parola: Hesabınızda bir parola varsa Google ile her girişten sonra bu parola, iki adımlı doğrulama açıksa kodunuz da istenir; 15 dakika içinde tamamlanmayan giriş iptal edilir. Parolasını unutan, ekipten parola şartının kaldırılmasını isteyebilir. Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "904webvtss": {
+    "en": "Protecting accounts: the first Google sign-in with an address removes the unverified password and two-step verification of an account opened earlier with that address, signs other sessions out and lets you know. Google sign-in with an address Google hasn't verified is not accepted.",
+    "tr": "Hesapların korunması: Bir adresle yapılan ilk Google girişi, o adresle önceden açılmış hesabın doğrulanmamış parolasını ve iki adımlı doğrulamasını kaldırır, diğer oturumları kapatır ve size bildirir. Google'ın doğrulamadığı adreslerle Google girişi kabul edilmez.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1d4976ethoz": {
+    "en": "Sessions: “Sign out all other sessions” and changing your password end your sessions and real-time connections on other devices. Setting the first password and deleting the account require a sign-in within the last 30 minutes. Two-step verification code attempts are now limited to 20 a day; if the limit is exceeded, you are notified.",
+    "tr": "Oturumlar: “Diğer tüm oturumları kapat” ve parola değişikliği diğer cihazlardaki oturumlarınızı ve gerçek zamanlı bağlantılarınızı sonlandırır. İlk parolayı belirlemek ve hesabı silmek için son 30 dakika içinde giriş yapmış olmanız gerekir. İki adımlı doğrulama kodu denemeleri günde 20 ile sınırlandı; sınır aşılırsa size bildirim gönderilir.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "ey4n394owh": {
+    "en": "Profiles: public profile records can no longer be listed or searched from the browser; they can only be opened one at a time and are written by the server only. The emoji was removed from the custom status; the status is text only.",
+    "tr": "Profiller: Herkese açık profil kayıtları artık tarayıcıdan listelenemez veya aranamaz; yalnızca tek tek açılabilir ve yalnızca sunucu tarafından yazılır. Özel durumdaki emoji kaldırıldı; durum yalnızca metindir.",
     "files": [
       "src/lib/legal.ts"
     ]

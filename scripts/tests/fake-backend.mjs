@@ -123,32 +123,35 @@ export function createBackend(seed, options = {}) {
 
     function commit(writes) {
         options.onCommit?.(writes);
+        const results = writes.map(() => ({}));
         // Atomic: every precondition is checked before anything changes.
         for (const write of writes) {
             if (write.delete) check(pathOf(write.delete), write.currentDocument);
             if (write.update) check(pathOf(write.update.name), write.currentDocument);
             if (write.transform) check(pathOf(write.transform.document), write.currentDocument);
         }
-        for (const write of writes) {
+        writes.forEach((write, index) => {
             if (write.delete) docs.delete(pathOf(write.delete));
             else if (write.update) applyUpdate(pathOf(write.update.name), write.update.fields, write.updateMask?.fieldPaths);
             else if (write.transform) {
                 const path = pathOf(write.transform.document);
                 const data = { ...(docs.get(path)?.data ?? {}) };
-                for (const transform of write.transform.fieldTransforms) {
+                // Like the REST API, a transform reports the values it produced.
+                results[index].transformResults = write.transform.fieldTransforms.map((transform) => {
                     if (transform.appendMissingElements) {
                         // arrayUnion: values the array doesn't hold yet are appended.
                         const list = Array.isArray(data[transform.fieldPath]) ? [...data[transform.fieldPath]] : [];
                         for (const value of (transform.appendMissingElements.values || []).map(decode)) if (!list.some((entry) => same(entry, value))) list.push(value);
                         data[transform.fieldPath] = list;
-                    } else {
-                        data[transform.fieldPath] = Number(data[transform.fieldPath] || 0) + decode(transform.increment);
+                        return { nullValue: null };
                     }
-                }
+                    data[transform.fieldPath] = Number(data[transform.fieldPath] || 0) + decode(transform.increment);
+                    return encode(data[transform.fieldPath]);
+                });
                 docs.set(path, { data, updateTime: stamp() });
             }
-        }
-        return { writeResults: writes.map(() => ({ updateTime: stamp() })), commitTime: stamp() };
+        });
+        return { writeResults: results.map((result) => ({ ...result, updateTime: stamp() })), commitTime: stamp() };
     }
 
     function matches(data, where) {

@@ -37,7 +37,6 @@ export type OwnProfile = {
     nickname: string;
     nicknameTag: string;
     customStatus: string;
-    statusEmoji: string;
     statusPreference: StatusPreference;
     /** Privacy settings (users/{email}); the server publishes presence accordingly. */
     showOnlineStatus: boolean;
@@ -87,7 +86,6 @@ function readProfile(email: string, payload: unknown): OwnProfile | null {
         nickname: text(fields.nickname, PROFILE_TEXT_LIMITS.nickname),
         nicknameTag: tag(fields.nicknameTag),
         customStatus: text(fields.customStatus, PROFILE_TEXT_LIMITS.customStatus),
-        statusEmoji: text(fields.statusEmoji, PROFILE_TEXT_LIMITS.statusEmoji),
         statusPreference: readStatusPreference(fields.statusPreference),
         // Anything unexpected counts as hidden: presence is only shared when the settings allow it.
         showOnlineStatus: fields.showOnlineStatus === true,
@@ -178,7 +176,6 @@ function onProfileUpdated(event: Event) {
         if (typeof detail.nickname === "string") next.nickname = text(detail.nickname, PROFILE_TEXT_LIMITS.nickname);
         if (typeof detail.nicknameTag === "string") next.nicknameTag = tag(detail.nicknameTag);
         if (typeof detail.customStatus === "string") next.customStatus = text(detail.customStatus, PROFILE_TEXT_LIMITS.customStatus);
-        if (typeof detail.statusEmoji === "string") next.statusEmoji = text(detail.statusEmoji, PROFILE_TEXT_LIMITS.statusEmoji);
         current.profile = settings ? { ...next, ...settings } : next;
         if (isPresenceStatus(detail.presence)) current.status = detail.presence;
         emit();

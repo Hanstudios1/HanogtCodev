@@ -156,6 +156,10 @@ function useAuthErrorMessage() {
             case "ServiceUnavailable":
             case "Configuration":
                 return t("auth_error_config") || "Giriş hizmeti şu anda yapılandırılmamış. Lütfen daha sonra tekrar deneyin.";
+            case "GoogleEmailUnverified":
+                return tx({ TR: "Google bu hesabın e-posta adresini doğrulamamış. Adresini Google hesabında doğruladıktan sonra tekrar dene ya da şifrenle giriş yap.", EN: "Google hasn't verified this account's e-mail address. Verify it in your Google account and try again, or sign in with your password." });
+            case "StepUpExpired":
+                return tx({ TR: "Google girişinden sonraki şifre doğrulaması 15 dakika içinde tamamlanmadı. Güvenliğin için yeniden giriş yap.", EN: "The password check after the Google sign-in wasn't finished within 15 minutes. For your security, sign in again." });
             case "SessionRequired":
                 return t("auth_error_session") || "Bu sayfayı görmek için giriş yapın.";
             default:

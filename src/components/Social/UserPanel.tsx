@@ -44,7 +44,7 @@ export default function UserPanel() {
     const wrapRef = useRef<HTMLDivElement | null>(null);
     const statusLabel = tx(PRESENCE_STATUS_COPY[me.status]);
     const tag = formatFriendTag(me.nickname, me.nicknameTag);
-    const subline = me.customStatus ? `${me.statusEmoji ? `${me.statusEmoji} ` : ""}${me.customStatus}` : tag || statusLabel;
+    const subline = me.customStatus || tag || statusLabel;
 
     useEffect(() => {
         if (!open) return;
