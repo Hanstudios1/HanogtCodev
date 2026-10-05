@@ -50,7 +50,7 @@ import type { CollabFileContent } from "@/lib/collab/doc";
 import type { CollabClosed } from "@/lib/collab/session-client";
 import { COLLAB_PARAM, sharedFileIds, useEditorCollab } from "@/lib/collab/use-editor-collab";
 import { EDITOR_IMPORT_PARAM, consumeEditorImportBundle, type EditorImportError } from "@/lib/editor-bridge";
-import { useEditorSettings } from "@/lib/editor-settings";
+import { readEditorSettings, useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type { MonacoApi } from "@/lib/monaco";
 import {
@@ -559,7 +559,7 @@ function EditorContent() {
                 open([]);
                 return;
             }
-            const language = getLanguage(normalizeLanguageId(initialLang) ?? "javascript") ?? getLanguage("javascript")!;
+            const language = getLanguage(normalizeLanguageId(initialLang) ?? readEditorSettings().defaultLanguage) ?? getLanguage("javascript")!;
             open([{ id: newTabId(), name: language.defaultFileName, lang: language.id, code: language.template, isSaved: false }]);
             if (language.engine === "preview") setPanelTab("preview");
         };
@@ -731,7 +731,7 @@ function EditorContent() {
             if (accepted) removeTabs(ids);
             return;
         }
-        const unsaved = closing.filter((tab) => !tab.isSaved);
+        const unsaved = readEditorSettings().confirmCloseUnsaved ? closing.filter((tab) => !tab.isSaved) : [];
         if (unsaved.length) {
             const accepted = await confirm({
                 title: tx(C.closeUnsavedTitle),
@@ -1358,13 +1358,33 @@ function EditorContent() {
         };
     });
 
+    // Saving yourself (button, menu, palette, Ctrl+S): format first and run afterwards when the settings ask for it.
+    const plainSaveRef = useRef(handleSave);
+    const plainRunRef = useRef(handleRun);
+    useEffect(() => {
+        plainSaveRef.current = handleSave;
+        plainRunRef.current = handleRun;
+    });
+    const saveCommand = useCallback(async () => {
+        const current = readEditorSettings();
+        const format = current.formatOnSave ? editorInstance?.getAction("editor.action.formatDocument") : null;
+        if (format?.isSupported()) {
+            await format.run().catch(() => undefined);
+            // The formatted text reaches the tabs through the editor's change event and a render.
+            await new Promise((resolve) => window.setTimeout(resolve, 60));
+        }
+        plainSaveRef.current();
+        if (current.runOnSave) plainRunRef.current();
+    }, [editorInstance]);
+    const saveNow = useCallback(() => void saveCommand(), [saveCommand]);
+
     // ------------------------------------------------------------------ keyboard
-    const actionsRef = useRef({ run: handleRun, runActive: handleRunActive, save: handleSave, palette: () => setDialog("palette"), switchTab: (index: number) => void index });
+    const actionsRef = useRef({ run: handleRun, runActive: handleRunActive, save: saveNow, palette: () => setDialog("palette"), switchTab: (index: number) => void index });
     useEffect(() => {
         actionsRef.current = {
             run: handleRun,
             runActive: handleRunActive,
-            save: handleSave,
+            save: saveNow,
             palette: () => setDialog((current) => (current === "palette" ? null : "palette")),
             switchTab: (index: number) => {
                 const tab = tabsRef.current[index - 1];
@@ -1494,7 +1514,7 @@ function EditorContent() {
         const icon = (Icon: typeof Save) => <Icon className="h-4 w-4" aria-hidden />;
         const id = activeTab?.id;
         return [
-            { id: "save", label: tx(C.paletteSave), icon: icon(Save), shortcut: formatShortcut(["Mod", "S"], mac), keywords: "save kaydet", run: handleSave },
+            { id: "save", label: tx(C.paletteSave), icon: icon(Save), shortcut: formatShortcut(["Mod", "S"], mac), keywords: "save kaydet", run: saveNow },
             { id: "rename", label: tx(C.renameFile), hint: activeTab?.name, icon: icon(Pencil), keywords: "rename yeniden adlandır", disabled: !id, run: () => id && startRename(id) },
             { id: "duplicate", label: tx(C.duplicateFile), hint: activeTab?.name, icon: icon(CopyIcon), keywords: "duplicate copy çoğalt kopya", disabled: !id || isGameMode || tabs.length >= MAX_TABS, run: () => id && duplicateTab(id) },
             { id: "language", label: tx(C.changeLanguage), hint: activeLanguage.name, icon: icon(Languages), keywords: "language mode dil", run: () => setDialog("language") },
@@ -1503,7 +1523,7 @@ function EditorContent() {
             { id: "share", label: tx(C.paletteShare), icon: icon(Share2), keywords: "share paylaş snippet markdown", run: () => setDialog("share") },
             { id: "delete", label: tx(C.deleteFile), hint: activeTab?.name, icon: icon(Trash2), keywords: "delete remove sil kaldır", danger: true, disabled: !id || tabs.length < 2, run: () => id && void deleteTab(id) },
         ];
-    }, [activeLanguage.name, activeTab?.id, activeTab?.name, deleteTab, downloadProject, downloadTab, duplicateTab, handleSave, isGameMode, mac, startRename, tabs.length, tx]);
+    }, [activeLanguage.name, activeTab?.id, activeTab?.name, deleteTab, downloadProject, downloadTab, duplicateTab, saveNow, isGameMode, mac, startRename, tabs.length, tx]);
 
     const mediaCommands = useMemo<EditorCommand[]>(() => {
         const icon = (Icon: typeof Send) => <Icon className="h-4 w-4" aria-hidden />;
@@ -1645,7 +1665,7 @@ function EditorContent() {
                 paletteShortcut={modShortcut("K")}
                 onNewFile={isGameMode ? undefined : () => setDialog("new")}
                 onUpload={isGameMode ? undefined : () => fileInputRef.current?.click()}
-                onSave={handleSave}
+                onSave={saveNow}
                 onDownload={() => downloadTab()}
                 onDownloadProject={() => void downloadProject()}
                 onShare={() => setDialog("share")}
@@ -1771,7 +1791,7 @@ function EditorContent() {
                                 <div role="menu" aria-label={tx(C.more)} className="absolute end-0 top-full z-[60] mt-1 w-64 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-2xl dark:border-white/10 dark:bg-zinc-900">
                                     {!isGameMode && menuItem(tx(SIDEBAR_COPY.newFile), <FilePlus2 className="h-4 w-4" aria-hidden />, () => setDialog("new"))}
                                     {!isGameMode && menuItem(tx(SIDEBAR_COPY.upload), <Upload className="h-4 w-4" aria-hidden />, () => fileInputRef.current?.click())}
-                                    {menuItem(tx(SIDEBAR_COPY.save), <Save className="h-4 w-4" aria-hidden />, handleSave)}
+                                    {menuItem(tx(SIDEBAR_COPY.save), <Save className="h-4 w-4" aria-hidden />, saveNow)}
                                     {menuItem(tx(SIDEBAR_COPY.download), <Download className="h-4 w-4" aria-hidden />, () => downloadTab())}
                                     {menuItem(tx(SIDEBAR_COPY.downloadProject), <FolderDown className="h-4 w-4" aria-hidden />, () => void downloadProject())}
                                     {menuItem(tx(SIDEBAR_COPY.share), <Share2 className="h-4 w-4" aria-hidden />, () => setDialog("share"))}

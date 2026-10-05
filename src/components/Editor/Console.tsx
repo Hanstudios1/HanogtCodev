@@ -9,6 +9,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
 import { linkifyOutput, stripAnsi } from "@/components/Editor/output-links";
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
+import { useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy as CopyText } from "@/lib/i18n";
 import { LANGUAGES, languageDisplayName } from "@/lib/runtimes/languages";
 import type { RunFailure, RunNotice } from "@/services/piston";
@@ -332,9 +333,11 @@ function SecurityPanel({ risk, findings }: { risk: string; findings: Array<{ id:
 
 function OutputText({ text, entry, onGoToLine, className }: { text: string; entry: RunEntry; onGoToLine: ConsoleProps["onGoToLine"]; className: string }) {
     const { tx } = useI18n();
+    // Editor Settings: the console's text size and whether long lines wrap.
+    const { consoleFontSize, consoleWordWrap } = useEditorSettings();
     const segments = useMemo(() => linkifyOutput(stripAnsi(text), [entry.name]), [text, entry.name]);
     return (
-        <pre className={`whitespace-pre-wrap break-words font-mono text-[12.5px] leading-5 ${className}`}>
+        <pre className={`font-mono ${consoleWordWrap ? "whitespace-pre-wrap break-words" : "overflow-x-auto whitespace-pre"} ${className}`} style={{ fontSize: consoleFontSize, lineHeight: 1.6 }} data-console-wrap={consoleWordWrap ? "on" : "off"}>
             {segments.map((segment, index) => (typeof segment === "string" ? segment : (
                 <button
                     key={index}

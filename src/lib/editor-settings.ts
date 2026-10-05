@@ -15,6 +15,7 @@
  */
 import * as React from "react";
 import type { editor } from "monaco-editor";
+import { getLanguage, normalizeLanguageId } from "@/lib/runtimes/languages";
 
 export const EDITOR_SETTINGS_KEY = "hanogt_editor_settings";
 export const EDITOR_SETTINGS_META_KEY = "hanogt_editor_settings_meta";
@@ -113,6 +114,29 @@ export interface EditorSettings {
     autoSaveDelay: number;
     insertFinalNewline: boolean;
     trimTrailingWhitespace: boolean;
+    /** Format the file (where the language has a formatter) when saving it yourself. */
+    formatOnSave: boolean;
+    /** Run the project after saving it yourself. */
+    runOnSave: boolean;
+    /** Console text size in pixels. */
+    consoleFontSize: number;
+    consoleWordWrap: boolean;
+    /** Language of the file a new, empty workspace starts with (a language id). */
+    defaultLanguage: string;
+    /** Indentation width per language, over tabSize (language id → 1-8). */
+    languageTabSizes: Record<string, number>;
+    /** Highlight invisible and look-alike Unicode characters. */
+    unicodeHighlight: boolean;
+    renderControlCharacters: boolean;
+    /** The key that adds cursors with the mouse ("alt": Alt-click; "ctrlCmd": Ctrl/Cmd-click). */
+    multiCursorModifier: "alt" | "ctrlCmd";
+    fontWeight: "300" | "400" | "500" | "600" | "700";
+    /** Letter spacing in pixels. */
+    letterSpacing: number;
+    minimapSide: "right" | "left";
+    acceptSuggestionOnEnter: "on" | "smart" | "off";
+    /** Ask before closing a tab with unsaved changes. */
+    confirmCloseUnsaved: boolean;
 }
 
 export const DEFAULT_EDITOR_SETTINGS: EditorSettings = Object.freeze({
@@ -158,6 +182,20 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = Object.freeze({
     autoSaveDelay: 2000,
     insertFinalNewline: false,
     trimTrailingWhitespace: false,
+    formatOnSave: false,
+    runOnSave: false,
+    consoleFontSize: 12.5,
+    consoleWordWrap: true,
+    defaultLanguage: "javascript",
+    languageTabSizes: {},
+    unicodeHighlight: true,
+    renderControlCharacters: true,
+    multiCursorModifier: "alt",
+    fontWeight: "400",
+    letterSpacing: 0,
+    minimapSide: "right",
+    acceptSuggestionOnEnter: "on",
+    confirmCloseUnsaved: true,
 }) as EditorSettings;
 
 export const SETTING_LIMITS = {
@@ -167,7 +205,12 @@ export const SETTING_LIMITS = {
     wordWrapColumn: { min: 40, max: 200 },
     ruler: { min: 0, max: 200 },
     autoSaveDelay: { min: 500, max: 60_000 },
+    consoleFontSize: { min: 10, max: 22 },
+    letterSpacing: { min: -1, max: 3 },
 } as const;
+
+/** How many languages can have their own tab size. */
+export const LANGUAGE_TAB_SIZES_MAX = 24;
 
 // ------------------------------------------------------------------ validation
 const oneOf = <T extends string>(value: unknown, options: readonly T[], fallback: T): T =>
@@ -191,6 +234,26 @@ const LEGACY_FONTS: Record<string, EditorFontId> = {
     "jetbrains mono": "jetbrains-mono", "fira code": "fira-code", "cascadia code": "cascadia-code",
     "source code pro": "source-code-pro", consolas: "consolas", monaco: "sf-mono", menlo: "sf-mono", "courier new": "courier-new",
 };
+
+/** A known language id, else the default. */
+function languageId(value: unknown, fallback: string) {
+    const id = typeof value === "string" ? normalizeLanguageId(value) : null;
+    return id && getLanguage(id) ? id : fallback;
+}
+
+/** Per-language tab sizes: known languages only, sizes 1-8, at most 24. */
+function languageTabSizes(value: unknown): Record<string, number> {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    const sizes: Record<string, number> = {};
+    for (const [key, size] of Object.entries(value as Record<string, unknown>)) {
+        if (Object.keys(sizes).length >= LANGUAGE_TAB_SIZES_MAX) break;
+        const id = normalizeLanguageId(key);
+        if (!id || !getLanguage(id) || id in sizes) continue;
+        const number = typeof size === "number" ? Math.round(size) : Number.NaN;
+        if (number >= SETTING_LIMITS.tabSize.min && number <= SETTING_LIMITS.tabSize.max) sizes[id] = number;
+    }
+    return sizes;
+}
 
 /** Turns anything (stored JSON, an imported file) into complete, valid settings. */
 export function sanitizeEditorSettings(input: unknown): EditorSettings {
@@ -246,7 +309,27 @@ export function sanitizeEditorSettings(input: unknown): EditorSettings {
         autoSaveDelay: clamp(raw.autoSaveDelay, SETTING_LIMITS.autoSaveDelay, d.autoSaveDelay, 100),
         insertFinalNewline: bool(raw.insertFinalNewline, d.insertFinalNewline),
         trimTrailingWhitespace: bool(raw.trimTrailingWhitespace, d.trimTrailingWhitespace),
+        formatOnSave: bool(raw.formatOnSave, d.formatOnSave),
+        runOnSave: bool(raw.runOnSave, d.runOnSave),
+        consoleFontSize: clamp(raw.consoleFontSize, SETTING_LIMITS.consoleFontSize, d.consoleFontSize, 0.5),
+        consoleWordWrap: bool(raw.consoleWordWrap, d.consoleWordWrap),
+        defaultLanguage: languageId(raw.defaultLanguage, d.defaultLanguage),
+        languageTabSizes: languageTabSizes(raw.languageTabSizes),
+        unicodeHighlight: bool(raw.unicodeHighlight, d.unicodeHighlight),
+        renderControlCharacters: bool(raw.renderControlCharacters, d.renderControlCharacters),
+        multiCursorModifier: oneOf(raw.multiCursorModifier, ["alt", "ctrlCmd"] as const, d.multiCursorModifier),
+        fontWeight: oneOf(typeof raw.fontWeight === "number" ? String(raw.fontWeight) : raw.fontWeight, ["300", "400", "500", "600", "700"] as const, d.fontWeight),
+        letterSpacing: clamp(raw.letterSpacing, SETTING_LIMITS.letterSpacing, d.letterSpacing, 0.1),
+        minimapSide: oneOf(raw.minimapSide, ["right", "left"] as const, d.minimapSide),
+        acceptSuggestionOnEnter: oneOf(raw.acceptSuggestionOnEnter, ["on", "smart", "off"] as const, d.acceptSuggestionOnEnter),
+        confirmCloseUnsaved: bool(raw.confirmCloseUnsaved, d.confirmCloseUnsaved),
     };
+}
+
+/** The tab size for a language: its own when set, else the general one. */
+export function tabSizeFor(settings: EditorSettings, language: string | null | undefined) {
+    const id = language ? normalizeLanguageId(language) : null;
+    return (id && settings.languageTabSizes[id]) || settings.tabSize;
 }
 
 export type EditorSettingKey = Exclude<keyof EditorSettings, "version">;
@@ -254,9 +337,11 @@ export type EditorSettingKey = Exclude<keyof EditorSettings, "version">;
 /** Every setting except the version marker. */
 export const EDITOR_SETTING_KEYS = Object.keys(DEFAULT_EDITOR_SETTINGS).filter((key): key is EditorSettingKey => key !== "version");
 
+const sameValue = (a: unknown, b: unknown) => a === b || (typeof a === "object" && typeof b === "object" && a !== null && b !== null && JSON.stringify(a) === JSON.stringify(b));
+
 /** Settings whose values differ between `a` and `b`. */
 export function changedEditorSettingKeys(a: EditorSettings, b: EditorSettings): EditorSettingKey[] {
-    return EDITOR_SETTING_KEYS.filter((key) => a[key] !== b[key]);
+    return EDITOR_SETTING_KEYS.filter((key) => !sameValue(a[key], b[key]));
 }
 
 export function editorSettingsEqual(a: EditorSettings, b: EditorSettings) {
@@ -465,6 +550,8 @@ export function toMonacoOptions(settings: EditorSettings): editor.IStandaloneEdi
     return {
         fontFamily: fontStack(settings.fontFamily),
         fontSize: settings.fontSize,
+        fontWeight: settings.fontWeight,
+        letterSpacing: settings.letterSpacing,
         lineHeight: settings.lineHeight,
         fontLigatures: settings.fontLigatures,
         tabSize: settings.tabSize,
@@ -472,7 +559,7 @@ export function toMonacoOptions(settings: EditorSettings): editor.IStandaloneEdi
         detectIndentation: settings.detectIndentation,
         wordWrap: settings.wordWrap,
         wordWrapColumn: settings.wordWrapColumn,
-        minimap: { enabled: settings.minimap },
+        minimap: { enabled: settings.minimap, side: settings.minimapSide },
         lineNumbers: settings.lineNumbers,
         renderWhitespace: settings.renderWhitespace,
         bracketPairColorization: { enabled: settings.bracketPairColorization },
@@ -498,6 +585,12 @@ export function toMonacoOptions(settings: EditorSettings): editor.IStandaloneEdi
         snippetSuggestions: settings.snippetSuggestions ? "inline" : "none",
         parameterHints: { enabled: settings.parameterHints },
         hover: { enabled: settings.hover ? "on" : "off" },
+        acceptSuggestionOnEnter: settings.acceptSuggestionOnEnter,
+        multiCursorModifier: settings.multiCursorModifier,
+        unicodeHighlight: settings.unicodeHighlight
+            ? { ambiguousCharacters: true, invisibleCharacters: true, nonBasicASCII: false }
+            : { ambiguousCharacters: false, invisibleCharacters: false, nonBasicASCII: false },
+        renderControlCharacters: settings.renderControlCharacters,
     };
 }
 

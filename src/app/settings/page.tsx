@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import {
-    AlertTriangle, Check, ClipboardCopy, Cloud, CloudOff, Code2, Download, Eye, LoaderCircle, MousePointer2, Palette, RotateCcw, Save, Search,
-    Settings2, Sparkles, SquareTerminal, Type, Undo2, Upload, X, type LucideIcon,
+    AlertTriangle, Check, ClipboardCopy, Cloud, CloudOff, Code2, Download, Eye, LoaderCircle, MousePointer2, Palette, Plus, RotateCcw, Save, Search,
+    Settings2, Sparkles, SquareTerminal, Terminal, Type, Undo2, Upload, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
@@ -17,12 +17,13 @@ import Header from "@/components/Header";
 import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import {
-    DEFAULT_EDITOR_SETTINGS, EDITOR_FONTS, EDITOR_THEMES, SETTING_LIMITS, changedEditorSettingKeys, compareEditorSettingsCopies, editorSettingsEqual,
+    DEFAULT_EDITOR_SETTINGS, EDITOR_FONTS, EDITOR_THEMES, LANGUAGE_TAB_SIZES_MAX, SETTING_LIMITS, changedEditorSettingKeys, compareEditorSettingsCopies, editorSettingsEqual,
     hasStoredEditorSettings, parseEditorSettingsFile, readEditorSettings, readEditorSettingsUpdatedAt, resolveEditorTheme, saveEditorSettings,
     serializeEditorSettings, useEditorSettings, useEditorSettingsUpdatedAt, type AccountEditorSettings, type EditorSettings,
     type EditorSettingsSyncState, type SettingsImportError,
 } from "@/lib/editor-settings";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { LANGUAGES as CODE_LANGUAGES, languageDisplayName } from "@/lib/runtimes/languages";
 import { useTheme } from "@/lib/theme";
 
 // ------------------------------------------------------------------ setting definitions
@@ -31,6 +32,11 @@ type SettingKey = Exclude<keyof EditorSettings, "version">;
 type BoolKey = KeysOf<boolean>;
 type NumberKey = Exclude<KeysOf<number>, "version">;
 type ChoiceKey = Exclude<KeysOf<string>, "theme" | "fontFamily"> | NumberKey;
+
+/** Languages that run or preview, the popular ones first (new workspaces, per-language tab sizes). */
+const EDITOR_LANGUAGES = CODE_LANGUAGES.filter((language) => language.engine !== "none" && language.id !== "plaintext")
+    .slice()
+    .sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)) || a.name.localeCompare(b.name));
 
 type Choice = { value: string | number; label: Copy };
 
@@ -50,6 +56,7 @@ type RowDef = RowBase & (
     | { kind: "slider"; key: NumberKey; min: number; max: number; step: number; unit: Copy; scale?: number; zero?: Copy }
     | { kind: "theme"; key: "theme" }
     | { kind: "font"; key: "fontFamily" }
+    | { kind: "languageTabs"; key: "languageTabSizes" }
 );
 
 type SectionDef = { id: string; icon: LucideIcon; title: Copy; description: Copy; rows: RowDef[] };
@@ -74,7 +81,17 @@ const SECTIONS: readonly SectionDef[] = [
                 description: { TR: "\"Site temasını izle\", sitenin açık veya koyu moduna göre VS Açık ya da VS Koyu temayı kullanır.", EN: "\"Follow site theme\" uses VS Light or VS Dark depending on the site's light or dark mode." },
                 keywords: "theme tema renk color dark light koyu açık dracula monokai nord solarized github contrast kontrast",
             },
-            { kind: "toggle", key: "minimap", label: { TR: "Mini harita", EN: "Minimap" }, description: { TR: "Sağ kenarda kodun küçük bir özetini gösterir.", EN: "Shows a small overview of the code on the right edge." } },
+            { kind: "toggle", key: "minimap", label: { TR: "Mini harita", EN: "Minimap" }, description: { TR: "Kenarda kodun küçük bir özetini gösterir.", EN: "Shows a small overview of the code at the edge." } },
+            {
+                kind: "segmented", key: "minimapSide",
+                label: { TR: "Mini haritanın yeri", EN: "Minimap side" },
+                keywords: "minimap side left right sol sağ",
+                visible: (settings) => settings.minimap,
+                options: [
+                    { value: "right", label: { TR: "Sağda", EN: "Right" } },
+                    { value: "left", label: { TR: "Solda", EN: "Left" } },
+                ],
+            },
             {
                 kind: "segmented", key: "lineNumbers",
                 label: { TR: "Satır numaraları", EN: "Line numbers" },
@@ -116,6 +133,8 @@ const SECTIONS: readonly SectionDef[] = [
                 ],
             },
             { kind: "toggle", key: "folding", label: { TR: "Kod katlama", EN: "Code folding" }, description: { TR: "Satır numaralarının yanında blokları katlamak için oklar gösterir.", EN: "Shows arrows next to the line numbers to fold blocks." } },
+            { kind: "toggle", key: "unicodeHighlight", label: { TR: "Görünmez ve benzer karakterleri vurgula", EN: "Highlight invisible and look-alike characters" }, description: { TR: "Sıfır genişlikli boşlukları ve Latin harflerine benzeyen karakterleri (ör. Kiril \"а\") çerçeveler; kopyalanan koddaki gizli hataları yakalar.", EN: "Boxes zero-width spaces and characters that look like Latin letters (e.g. Cyrillic \"а\"); catches hidden mistakes in copied code." }, keywords: "unicode invisible görünmez homoglyph" },
+            { kind: "toggle", key: "renderControlCharacters", label: { TR: "Kontrol karakterlerini göster", EN: "Show control characters" }, description: { TR: "Metindeki görünmeyen kontrol karakterlerini simgeyle çizer.", EN: "Draws invisible control characters in the text as symbols." }, keywords: "control character kontrol karakter" },
         ],
     },
     {
@@ -132,6 +151,19 @@ const SECTIONS: readonly SectionDef[] = [
             },
             { kind: "slider", key: "fontSize", label: { TR: "Yazı boyutu", EN: "Font size" }, min: SETTING_LIMITS.fontSize.min, max: SETTING_LIMITS.fontSize.max, step: 1, unit: { TR: "{value} px", EN: "{value} px" }, keywords: "size boyut" },
             { kind: "slider", key: "lineHeight", label: { TR: "Satır yüksekliği", EN: "Line height" }, description: { TR: "Yazı boyutunun katı olarak satır aralığı.", EN: "Line spacing as a multiple of the font size." }, min: SETTING_LIMITS.lineHeight.min, max: SETTING_LIMITS.lineHeight.max, step: 0.1, unit: { TR: "{value}×", EN: "{value}×" }, keywords: "line height satır aralık" },
+            {
+                kind: "select", key: "fontWeight",
+                label: { TR: "Yazı kalınlığı", EN: "Font weight" },
+                keywords: "weight kalınlık bold",
+                options: [
+                    { value: "300", label: { TR: "İnce", EN: "Light" } },
+                    { value: "400", label: { TR: "Normal", EN: "Normal" } },
+                    { value: "500", label: { TR: "Orta", EN: "Medium" } },
+                    { value: "600", label: { TR: "Yarı kalın", EN: "Semibold" } },
+                    { value: "700", label: { TR: "Kalın", EN: "Bold" } },
+                ],
+            },
+            { kind: "slider", key: "letterSpacing", label: { TR: "Harf aralığı", EN: "Letter spacing" }, min: SETTING_LIMITS.letterSpacing.min, max: SETTING_LIMITS.letterSpacing.max, step: 0.1, unit: { TR: "{value} px", EN: "{value} px" }, keywords: "letter spacing harf aralık" },
             { kind: "toggle", key: "fontLigatures", label: { TR: "Bitişik harfler (ligatür)", EN: "Font ligatures" }, description: { TR: "=>, !== ve >= gibi işaretleri tek simge olarak çizer (JetBrains Mono, Fira Code ve Cascadia Code destekler).", EN: "Draws symbols such as =>, !== and >= as single glyphs (supported by JetBrains Mono, Fira Code and Cascadia Code)." }, keywords: "ligature ligatür" },
             { kind: "toggle", key: "mouseWheelZoom", label: { TR: "Fare tekerleğiyle yakınlaştır", EN: "Zoom with the mouse wheel" }, description: { TR: "Ctrl (Mac'te ⌘) basılıyken tekerlek yazı boyutunu geçici olarak değiştirir.", EN: "With Ctrl (⌘ on Mac) held, the wheel changes the font size temporarily." }, keywords: "zoom yakınlaştır" },
         ],
@@ -165,6 +197,16 @@ const SECTIONS: readonly SectionDef[] = [
                     { value: "solid", label: { TR: "Sabit (yanıp sönmez)", EN: "Solid (no blinking)" } },
                 ],
             },
+            {
+                kind: "segmented", key: "multiCursorModifier",
+                label: { TR: "Çoklu imleç tuşu", EN: "Multi-cursor key" },
+                description: { TR: "Fareyle yeni imleç eklerken basılı tutulan tuş. Diğer tuş bağlantıyı ve tanımı açar.", EN: "The key you hold to add a cursor with the mouse. The other one opens links and definitions." },
+                keywords: "multi cursor çoklu imleç alt ctrl cmd",
+                options: [
+                    { value: "alt", label: { TR: "Alt", EN: "Alt" } },
+                    { value: "ctrlCmd", label: { TR: "Ctrl / Cmd", EN: "Ctrl / Cmd" } },
+                ],
+            },
             { kind: "toggle", key: "cursorSmoothCaretAnimation", label: { TR: "Yumuşak imleç hareketi", EN: "Smooth caret animation" }, description: { TR: "İmleç yeni konumuna atlamak yerine kayarak gider.", EN: "The cursor glides to its new position instead of jumping." } },
             { kind: "toggle", key: "smoothScrolling", label: { TR: "Yumuşak kaydırma", EN: "Smooth scrolling" } },
             { kind: "toggle", key: "stickyScroll", label: { TR: "Yapışkan kaydırma", EN: "Sticky scroll" }, description: { TR: "Kaydırırken içinde bulunduğunuz sınıf ve fonksiyon başlıklarını üstte sabit tutar.", EN: "Keeps the headers of the class and function you are in pinned to the top while scrolling." } },
@@ -178,6 +220,7 @@ const SECTIONS: readonly SectionDef[] = [
         description: { TR: "Girinti, satır kaydırma, otomatik kapatma ve biçimlendirme.", EN: "Indentation, word wrap, auto-closing and formatting." },
         rows: [
             { kind: "slider", key: "tabSize", label: { TR: "Sekme boyutu", EN: "Tab size" }, description: { TR: "Bir girinti düzeyinin genişliği.", EN: "The width of one indentation level." }, min: SETTING_LIMITS.tabSize.min, max: SETTING_LIMITS.tabSize.max, step: 1, unit: { TR: "{value} sütun", EN: "{value} columns" }, keywords: "tab indent girinti" },
+            { kind: "languageTabs", key: "languageTabSizes", label: { TR: "Dile göre sekme boyutu", EN: "Tab size per language" }, description: { TR: "Seçtiğin dillerde yukarıdaki boyutun yerine bu kullanılır (ör. Python 4, JavaScript 2).", EN: "Used instead of the size above for the languages you pick (e.g. Python 4, JavaScript 2)." }, keywords: "tab indent per language dil sekme girinti" },
             { kind: "binary", key: "insertSpaces", label: { TR: "Girinti karakteri", EN: "Indent using" }, on: { TR: "Boşluk", EN: "Spaces" }, off: { TR: "Sekme (Tab)", EN: "Tabs" }, keywords: "spaces tabs boşluk sekme indent girinti" },
             { kind: "toggle", key: "detectIndentation", label: { TR: "Girintiyi dosyadan algıla", EN: "Detect indentation from the file" }, description: { TR: "Açılan dosyanın mevcut girintisi yukarıdaki iki ayarın önüne geçer.", EN: "An opened file's existing indentation overrides the two settings above." }, keywords: "indent girinti detect" },
             {
@@ -208,6 +251,13 @@ const SECTIONS: readonly SectionDef[] = [
             },
             { kind: "toggle", key: "formatOnPaste", label: { TR: "Yapıştırırken biçimlendir", EN: "Format on paste" }, description: { TR: "Yapıştırılan kodu dilin biçimlendiricisiyle düzenler (JavaScript, TypeScript, JSON, HTML, CSS).", EN: "Formats pasted code with the language's formatter (JavaScript, TypeScript, JSON, HTML, CSS)." }, keywords: "format biçim paste" },
             { kind: "toggle", key: "formatOnType", label: { TR: "Yazarken biçimlendir", EN: "Format on type" }, description: { TR: "Satır sonunda veya } yazınca satırı biçimlendirir.", EN: "Formats the line when you finish it or type }." }, keywords: "format biçim type" },
+            {
+                kind: "select", key: "defaultLanguage",
+                label: { TR: "Yeni çalışma alanının dili", EN: "Language of a new workspace" },
+                description: { TR: "Editör boş açıldığında ilk dosya bu dilde başlar.", EN: "When the editor opens empty, the first file starts in this language." },
+                keywords: "default language varsayılan dil new project yeni proje",
+                options: EDITOR_LANGUAGES.map((language) => ({ value: language.id, label: { TR: language.name, EN: language.name } })),
+            },
             { kind: "toggle", key: "linkedEditing", label: { TR: "Bağlantılı düzenleme", EN: "Linked editing" }, description: { TR: "HTML'de açılış etiketini değiştirince kapanış etiketi de değişir.", EN: "In HTML, renaming an opening tag also renames the closing tag." }, keywords: "html tag etiket" },
         ],
     },
@@ -221,6 +271,17 @@ const SECTIONS: readonly SectionDef[] = [
             { kind: "toggle", key: "suggestOnTriggerCharacters", label: { TR: "Tetikleyici karakterlerde öner", EN: "Suggest on trigger characters" }, description: { TR: "Nokta (.) gibi karakterlerden sonra önerileri gösterir.", EN: "Shows suggestions after characters such as a dot (.)." }, keywords: "autocomplete trigger" },
             { kind: "toggle", key: "snippetSuggestions", label: { TR: "Kod parçacığı önerileri", EN: "Snippet suggestions" }, description: { TR: "for, if, class gibi hazır kalıpları önerilerde gösterir.", EN: "Includes ready-made patterns such as for, if and class in suggestions." }, keywords: "snippet parçacık" },
             { kind: "toggle", key: "parameterHints", label: { TR: "Parametre ipuçları", EN: "Parameter hints" }, description: { TR: "Fonksiyon çağrısı yazarken parametre listesini gösterir.", EN: "Shows the parameter list while you type a function call." } },
+            {
+                kind: "segmented", key: "acceptSuggestionOnEnter",
+                label: { TR: "Enter ile öneriyi kabul et", EN: "Accept a suggestion with Enter" },
+                description: { TR: "\"Akıllı\": yalnızca öneri metni değiştirdiğinde; aksi hâlde Enter yeni satır açar. Tab her zaman kabul eder.", EN: "\"Smart\": only when the suggestion changes the text; otherwise Enter starts a new line. Tab always accepts." },
+                keywords: "enter accept suggestion kabul öneri tab",
+                options: [
+                    { value: "on", label: { TR: "Açık", EN: "On" } },
+                    { value: "smart", label: { TR: "Akıllı", EN: "Smart" } },
+                    { value: "off", label: { TR: "Kapalı", EN: "Off" } },
+                ],
+            },
             { kind: "toggle", key: "hover", label: { TR: "Üzerine gelince bilgi", EN: "Hover information" }, description: { TR: "Fare bir sembolün üzerindeyken tür ve belge bilgisini gösterir.", EN: "Shows type and documentation information when the mouse is over a symbol." }, keywords: "hover fare" },
         ],
     },
@@ -242,8 +303,21 @@ const SECTIONS: readonly SectionDef[] = [
                 ],
             },
             { kind: "slider", key: "autoSaveDelay", label: { TR: "Kaydetme gecikmesi", EN: "Save delay" }, description: { TR: "Yazmayı bıraktıktan bu kadar sonra kaydedilir.", EN: "Saves this long after you stop typing." }, min: SETTING_LIMITS.autoSaveDelay.min, max: SETTING_LIMITS.autoSaveDelay.max, step: 500, scale: 1000, unit: { TR: "{value} sn", EN: "{value} s" }, visible: (settings) => settings.autoSave === "afterDelay", keywords: "delay gecikme" },
+            { kind: "toggle", key: "formatOnSave", label: { TR: "Kaydederken biçimlendir", EN: "Format on save" }, description: { TR: "Kendin kaydettiğinde dosyayı önce dilin biçimlendiricisiyle düzenler (JavaScript, TypeScript, JSON, HTML, CSS).", EN: "When you save, formats the file first with the language's formatter (JavaScript, TypeScript, JSON, HTML, CSS)." }, keywords: "format save biçim kaydet prettier" },
+            { kind: "toggle", key: "runOnSave", label: { TR: "Kaydedince çalıştır", EN: "Run on save" }, description: { TR: "Kendin kaydettiğinde projeyi hemen çalıştırır.", EN: "Runs the project right after you save." }, keywords: "run save çalıştır kaydet" },
+            { kind: "toggle", key: "confirmCloseUnsaved", label: { TR: "Kaydedilmemiş sekmeyi kapatırken sor", EN: "Ask before closing an unsaved tab" }, keywords: "close tab unsaved kapat sekme kaydedilmemiş" },
             { kind: "toggle", key: "trimTrailingWhitespace", label: { TR: "Satır sonu boşluklarını sil", EN: "Trim trailing whitespace" }, description: { TR: "Kaydederken satırların sonundaki boşlukları kaldırır.", EN: "Removes spaces at the end of lines when saving." }, keywords: "trim whitespace boşluk" },
             { kind: "toggle", key: "insertFinalNewline", label: { TR: "Sona boş satır ekle", EN: "Insert a final newline" }, description: { TR: "Kaydederken dosyanın bir satır sonuyla bitmesini sağlar.", EN: "Makes sure the file ends with a line break when saving." }, keywords: "newline satır" },
+        ],
+    },
+    {
+        id: "console",
+        icon: Terminal,
+        title: { TR: "Konsol", EN: "Console" },
+        description: { TR: "Programların çıktısının görünümü.", EN: "How your programs' output looks." },
+        rows: [
+            { kind: "slider", key: "consoleFontSize", label: { TR: "Konsol yazı boyutu", EN: "Console font size" }, min: SETTING_LIMITS.consoleFontSize.min, max: SETTING_LIMITS.consoleFontSize.max, step: 0.5, unit: { TR: "{value} px", EN: "{value} px" }, keywords: "console konsol output çıktı size boyut" },
+            { kind: "toggle", key: "consoleWordWrap", label: { TR: "Uzun satırları kaydır", EN: "Wrap long lines" }, description: { TR: "Kapalıyken uzun çıktı satırları yatay kaydırılır.", EN: "When off, long output lines scroll sideways." }, keywords: "console wrap konsol kaydır" },
         ],
     },
 ];
@@ -252,6 +326,10 @@ const SECTION_KEYS: Record<string, SettingKey[]> = Object.fromEntries(SECTIONS.m
 const ALL_KEYS = Object.keys(DEFAULT_EDITOR_SETTINGS).filter((key): key is SettingKey => key !== "version");
 
 const C = {
+    languageTabSize: { TR: "{language} sekme boyutu", EN: "{language} tab size" },
+    removeLanguageTabSize: { TR: "{language} için ayrı sekme boyutunu kaldır", EN: "Remove the separate tab size for {language}" },
+    addLanguageTabSize: { TR: "Dil seç…", EN: "Choose a language…" },
+    add: { TR: "Ekle", EN: "Add" },
     eyebrow: { TR: "Kod editörü", EN: "Code editor" },
     title: { TR: "Editör ayarları", EN: "Editor settings" },
     subtitle: { TR: "Kod editörünü kendinize göre ayarlayın. Değişiklikleri önizlemede deneyin, beğendiğinizde Kaydet'e basın; kayıtlı ayarlar açık olan tüm editörlere uygulanır.", EN: "Make the code editor your own. Try changes in the preview and press Save when you like them; saved settings apply to every open editor." },
@@ -689,6 +767,49 @@ function FontPicker({ value, ligatures, onChange, labelledBy }: { value: EditorS
 }
 
 // ------------------------------------------------------------------ rows and sections
+/** Tab sizes for chosen languages: chips to change or remove, and a row to add one. */
+function LanguageTabSizes({ value, fallback, onChange, labelledBy }: { value: Record<string, number>; fallback: number; onChange: (next: Record<string, number>) => void; labelledBy: string }) {
+    const { tx } = useI18n();
+    const [adding, setAdding] = useState("");
+    const sizes = Array.from({ length: SETTING_LIMITS.tabSize.max - SETTING_LIMITS.tabSize.min + 1 }, (_, index) => SETTING_LIMITS.tabSize.min + index);
+    const entries = Object.entries(value);
+    const full = entries.length >= LANGUAGE_TAB_SIZES_MAX;
+    const set = (id: string, size: number) => onChange({ ...value, [id]: size });
+    const remove = (id: string) => onChange(Object.fromEntries(entries.filter(([key]) => key !== id)));
+    const field = "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-800 outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100";
+    return (
+        <div className="space-y-2" role="group" aria-labelledby={labelledBy} data-setting="languageTabSizes">
+            {entries.length ? (
+                <ul className="flex flex-wrap gap-2">
+                    {entries.map(([id, size]) => (
+                        <li key={id} className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 py-1 pe-1 ps-2 text-sm dark:border-white/10 dark:bg-white/[0.03]">
+                            <LanguageIcon language={id} size={16} />
+                            <span className="font-medium">{languageDisplayName(id)}</span>
+                            <select value={size} onChange={(event) => set(id, Number(event.target.value))} className={field} aria-label={tx(C.languageTabSize, { language: languageDisplayName(id) })}>
+                                {sizes.map((option) => <option key={option} value={option}>{option}</option>)}
+                            </select>
+                            <button type="button" onClick={() => remove(id)} className="rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-white/10 dark:hover:text-zinc-200" aria-label={tx(C.removeLanguageTabSize, { language: languageDisplayName(id) })}>
+                                <X className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
+            {!full ? (
+                <div className="flex flex-wrap items-center gap-2">
+                    <select value={adding} onChange={(event) => setAdding(event.target.value)} className={field} aria-label={tx(C.addLanguageTabSize)}>
+                        <option value="">{tx(C.addLanguageTabSize)}</option>
+                        {EDITOR_LANGUAGES.filter((language) => !(language.id in value)).map((language) => <option key={language.id} value={language.id}>{language.name}</option>)}
+                    </select>
+                    <button type="button" disabled={!adding} onClick={() => { set(adding, fallback); setAdding(""); }} className={`${buttonClasses.secondary} px-3 py-1.5`}>
+                        <Plus className="h-4 w-4" aria-hidden />{tx(C.add)}
+                    </button>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
 function SettingRow({ row, settings, onPatch, siteTheme }: { row: RowDef; settings: EditorSettings; onPatch: (patch: Partial<EditorSettings>) => void; siteTheme: "light" | "dark" }) {
     const { tx, locale } = useI18n();
     const baseId = useId();
@@ -697,8 +818,8 @@ function SettingRow({ row, settings, onPatch, siteTheme }: { row: RowDef; settin
     const controlId = `${baseId}-control`;
     const label = tx(row.label);
     const value = settings[row.key];
-    const modified = value !== DEFAULT_EDITOR_SETTINGS[row.key];
-    const wide = row.kind === "theme" || row.kind === "font";
+    const modified = typeof value === "object" ? JSON.stringify(value) !== JSON.stringify(DEFAULT_EDITOR_SETTINGS[row.key]) : value !== DEFAULT_EDITOR_SETTINGS[row.key];
+    const wide = row.kind === "theme" || row.kind === "font" || row.kind === "languageTabs";
     const patch = (next: EditorSettings[typeof row.key]) => onPatch({ [row.key]: next } as Partial<EditorSettings>);
 
     let control: ReactNode;
@@ -734,6 +855,9 @@ function SettingRow({ row, settings, onPatch, siteTheme }: { row: RowDef; settin
             break;
         case "font":
             control = <FontPicker value={settings.fontFamily} ligatures={settings.fontLigatures} onChange={(next) => patch(next)} labelledBy={labelId} />;
+            break;
+        case "languageTabs":
+            control = <LanguageTabSizes value={settings.languageTabSizes} fallback={settings.tabSize} onChange={(next) => patch(next)} labelledBy={labelId} />;
             break;
     }
 

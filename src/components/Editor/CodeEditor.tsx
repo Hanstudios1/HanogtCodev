@@ -4,7 +4,7 @@ import Editor, { type BeforeMount, type OnMount } from "@monaco-editor/react";
 import { LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { editor } from "monaco-editor";
-import { DEFAULT_EDITOR_SETTINGS, resolveEditorTheme, toMonacoOptions, useEditorSettings, type EditorSettings } from "@/lib/editor-settings";
+import { DEFAULT_EDITOR_SETTINGS, resolveEditorTheme, tabSizeFor, toMonacoOptions, useEditorSettings, type EditorSettings } from "@/lib/editor-settings";
 import { useI18n } from "@/lib/i18n";
 import { configureMonaco, setupMonaco, type MonacoApi } from "@/lib/monaco";
 import { monacoLanguageFor } from "@/lib/runtimes/languages";
@@ -77,25 +77,26 @@ export default function CodeEditor({ language, theme, monacoTheme, value, onChan
         onMount?.(instance, monaco);
     }, [onMount]);
 
-    // Indentation is a model option: apply it to the open model too.
+    // Indentation is a model option: apply it to the open model too (the language's own tab size when it has one).
+    const tabSize = tabSizeFor(settings, language);
     useEffect(() => {
         const instance = editorRef.current;
         if (!mounted || !instance) return;
         const apply = () => {
             const model = instance.getModel();
-            if (model && !settings.detectIndentation) model.updateOptions({ tabSize: settings.tabSize, indentSize: settings.tabSize, insertSpaces: settings.insertSpaces });
+            if (model && !settings.detectIndentation) model.updateOptions({ tabSize, indentSize: tabSize, insertSpaces: settings.insertSpaces });
         };
         apply();
         const subscription = instance.onDidChangeModel(apply);
         return () => subscription.dispose();
-    }, [mounted, settings.tabSize, settings.insertSpaces, settings.detectIndentation]);
+    }, [mounted, tabSize, settings.insertSpaces, settings.detectIndentation]);
 
     useEffect(() => {
         if (!mounted || !monacoRef.current) return;
         const monaco = monacoRef.current;
         if (typeof document === "undefined" || !("fonts" in document)) return;
         document.fonts.ready.then(() => monaco.editor.remeasureFonts()).catch(() => undefined);
-    }, [mounted, settings.fontFamily, settings.fontSize]);
+    }, [mounted, settings.fontFamily, settings.fontSize, settings.fontWeight, settings.letterSpacing]);
 
     return (
         <div className={`h-full w-full overflow-hidden rounded-xl border border-zinc-200 shadow-sm dark:border-zinc-800 ${className}`}>
