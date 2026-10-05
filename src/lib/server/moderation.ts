@@ -13,7 +13,8 @@ export interface ModerationResult {
     message?: string;
 }
 
-const PROFANITY = [
+/** Swear words and slurs (Turkish and English); also AutoMod's "profanity" filter. */
+export const PROFANITY = [
     // Türkçe
     "amk", "amq", "aq", "amına", "amina", "amcık", "amcik", "orospu", "orspu", "piç", "oç", "siktir", "sikik", "sikerim", "sikeyim", "sikim",
     "yarrak", "yarak", "göt", "götveren", "ibne", "kahpe", "pezevenk", "gavat", "şerefsiz", "serefsiz", "ananı", "anani", "avradını", "kaltak",
@@ -25,7 +26,8 @@ const PROFANITY = [
 
 const LEET: Record<string, string> = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s", "!": "i" };
 
-function normalizeForMatching(text: string) {
+/** Lower case, look-alike digits and symbols as letters, long letter runs shortened: what the word lists are matched against. */
+export function normalizeForMatching(text: string) {
     return text
         .toLocaleLowerCase("tr")
         .replace(/[013457@$!]/g, (char) => LEET[char] ?? char)

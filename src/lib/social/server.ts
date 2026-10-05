@@ -21,7 +21,8 @@ export type SocialErrorCode =
     | "unauthorized" | "forbidden_origin" | "rate_limited" | "invalid_request" | "payload_too_large"
     | "invalid_email" | "invalid_id" | "not_found" | "not_friend" | "blocked" | "forbidden"
     | "message_not_found" | "empty_message" | "message_too_long" | "invalid_tag" | "user_not_found"
-    | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error";
+    | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error"
+    | "not_configured" | "unavailable";
 
 /** Expected failures: the message is Turkish (primary language), the code is translated by the interface. */
 export class SocialApiError extends Error {
