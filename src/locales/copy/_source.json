@@ -418,6 +418,7 @@
       "src/components/Admin/UsersSection.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/Landing/LandingPage.tsx",
+      "src/components/Plans/PricingSections.tsx",
       "src/components/Plans/UsageList.tsx"
     ]
   },
@@ -432,6 +433,7 @@
       "src/components/Admin/UsersSection.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/Landing/LandingPage.tsx",
+      "src/components/Plans/PricingSections.tsx",
       "src/components/Plans/UsageList.tsx"
     ]
   },
@@ -545,6 +547,7 @@
       "src/components/HanogtAI/UsageMeter.tsx",
       "src/components/News/MarketsStrip.tsx",
       "src/components/NotificationCenter.tsx",
+      "src/components/Security/AccountSecurityCard.tsx",
       "src/components/Social/FriendsView.tsx",
       "src/components/Social/group/GroupView.tsx"
     ]
@@ -1013,7 +1016,9 @@
       "src/app/account-settings/page.tsx",
       "src/app/login/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
-      "src/components/Guide/book-content.ts"
+      "src/components/Guide/book-content.ts",
+      "src/components/Landing/ProductPreviews.tsx",
+      "src/components/Security/AccountSecurityCard.tsx"
     ]
   },
   "1n7j2pocv27": {
@@ -1021,7 +1026,9 @@
     "tr": "Şifre",
     "files": [
       "src/app/account-settings/page.tsx",
-      "src/app/login/verify/page.tsx"
+      "src/app/login/verify/page.tsx",
+      "src/components/Landing/ProductPreviews.tsx",
+      "src/components/Security/AccountSecurityCard.tsx"
     ]
   },
   "9x52vw2d1x": {
@@ -1244,7 +1251,8 @@
     "en": "Sessions",
     "tr": "Oturumlar",
     "files": [
-      "src/app/account-settings/page.tsx"
+      "src/app/account-settings/page.tsx",
+      "src/components/Security/AccountSecurityCard.tsx"
     ]
   },
   "4mnk6canji": {
@@ -1720,6 +1728,7 @@
       "src/components/HanogtAI/SignInGate.tsx",
       "src/components/HanogtAI/chat-copy.ts",
       "src/components/News/AiRankings.tsx",
+      "src/components/Security/AccountSecurityCard.tsx",
       "src/components/Social/SocialShell.tsx"
     ]
   },
@@ -1911,6 +1920,7 @@
       "src/components/HanogtAI/ChatSidebar.tsx",
       "src/components/HanogtAI/ConnectionsDialog.tsx",
       "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/components/Landing/DownloadMenu.tsx",
       "src/components/News/CommentsDrawer.tsx",
       "src/components/NotificationCenter.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
@@ -2002,7 +2012,6 @@
       "src/app/dashboard/page.tsx",
       "src/app/feedback/page.tsx",
       "src/app/media/page.tsx",
-      "src/app/plans/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
@@ -2018,6 +2027,7 @@
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
+      "src/components/Plans/plans-copy.ts",
       "src/components/Social/dm/DmMessages.tsx"
     ]
   },
@@ -3213,7 +3223,8 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/components/Editor/Console.tsx",
-      "src/components/Guide/book-content.ts"
+      "src/components/Guide/book-content.ts",
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "1ypw6v787u8": {
@@ -4048,8 +4059,8 @@
     "tr": "Kaldır",
     "files": [
       "src/app/editor/page.tsx",
-      "src/app/plans/page.tsx",
-      "src/components/Editor/CollabPanel.tsx"
+      "src/components/Editor/CollabPanel.tsx",
+      "src/components/Plans/plans-copy.ts"
     ]
   },
   "9hk855qmc2": {
@@ -5018,7 +5029,7 @@
     "tr": "Sorular",
     "files": [
       "src/app/feedback/page.tsx",
-      "src/app/plans/page.tsx"
+      "src/components/Plans/plans-copy.ts"
     ]
   },
   "2l0hx5jwy5": {
@@ -5063,7 +5074,8 @@
     "en": "Top",
     "tr": "Öne çıkanlar",
     "files": [
-      "src/app/feedback/page.tsx"
+      "src/app/feedback/page.tsx",
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
   "3ht2vjm4ho": {
@@ -6491,1086 +6503,6 @@
       "src/app/media/page.tsx"
     ]
   },
-  "l7ctvsopzx": {
-    "en": "Coming soon",
-    "tr": "Yakında",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "18bz63upsgo": {
-    "en": "Plans are open",
-    "tr": "Planlar açıldı",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "rt9jhdcvnb": {
-    "en": "Hanogt Codev Plans",
-    "tr": "Hanogt Codev Planları",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1li0gj6yfvr": {
-    "en": "Hanogt Codev stays free. Plus and Pro are being prepared for people who want more; no payments are taken right now and no card details are asked for.",
-    "tr": "Hanogt Codev ücretsiz kalacak. Daha fazlasını isteyenler için Plus ve Pro hazırlanıyor; şu anda ödeme alınmıyor ve hiçbir kart bilgisi istenmiyor.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "18imntym3i3": {
-    "en": "Hanogt Codev stays free. Plus and Pro are for people who want more Hanogt AI and priority support. Payments are handled securely by Paddle; your card details never reach us.",
-    "tr": "Hanogt Codev ücretsiz kalacak. Daha çok Hanogt AI ve destekte öncelik isteyenler için Plus ve Pro. Ödemeler Paddle üzerinden güvenle alınır; kart bilgilerin bize ulaşmaz.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "28rnkkq8lse": {
-    "en": "Your subscription is managed through Paddle. New sales are closed right now; your subscription isn't affected.",
-    "tr": "Aboneliğin Paddle üzerinden yönetilir. Yeni satışlar şu anda kapalı; mevcut aboneliğin bundan etkilenmez.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "23dpfwxhous": {
-    "en": "Your plan: {plan}",
-    "tr": "Planın: {plan}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "emtd6qb77p": {
-    "en": "Assigned by the Hanogt team",
-    "tr": "Hanogt ekibi tarafından tanımlandı",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1hgezrfqdbj": {
-    "en": "Monthly subscription",
-    "tr": "Aylık abonelik",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "hb4v3knghc": {
-    "en": "Yearly subscription",
-    "tr": "Yıllık abonelik",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2boxyf77635": {
-    "en": "Subscription",
-    "tr": "Abonelik",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/components/Admin/PlansSection.tsx"
-    ]
-  },
-  "2gan3i8dpmm": {
-    "en": "until {date}",
-    "tr": "{date} tarihine kadar",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/components/Admin/PlansSection.tsx"
-    ]
-  },
-  "14u5dwb7ku2": {
-    "en": "Next payment: {date}",
-    "tr": "Sonraki ödeme: {date}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "aaytsfeu26": {
-    "en": "Your subscription ends on {date}; your benefits last until then.",
-    "tr": "Aboneliğin {date} tarihinde sona erecek; avantajların o güne kadar sürer.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "qrznrbm6im": {
-    "en": "Undo, keep my subscription",
-    "tr": "Vazgeç, aboneliğim devam etsin",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "ijg5x42dpu": {
-    "en": "Your last payment didn't go through. Paddle will try again a few times; your benefits continue meanwhile.",
-    "tr": "Son ödemen alınamadı. Paddle ödemeyi birkaç kez daha deneyecek; avantajların bu sürede devam eder.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1jh81qgvvi8": {
-    "en": "Update payment method",
-    "tr": "Ödeme yöntemini güncelle",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "kilyvth8n1": {
-    "en": "Your subscription is paused; your benefits come back when you resume it.",
-    "tr": "Aboneliğin duraklatıldı; avantajların sürdürünce geri gelir.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "26iiappdtgy": {
-    "en": "Resume subscription",
-    "tr": "Aboneliği sürdür",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1vc5f31xh45": {
-    "en": "When you resume, a new billing period starts today and Paddle charges the {plan} plan to your saved payment method right away.",
-    "tr": "Sürdürünce yeni ödeme dönemi bugün başlar ve Paddle {plan} planının ücretini kayıtlı ödeme yönteminden hemen alır.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "16iwugwusqa": {
-    "en": "Your paid period runs until {date}; resuming now costs nothing.",
-    "tr": "Ödediğin dönem {date} tarihine kadar sürüyor; şimdi sürdürürsen ücret alınmaz.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "u9yjw5mfjw": {
-    "en": "Confirm and resume",
-    "tr": "Onayla ve sürdür",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "10yef2ogu8o": {
-    "en": "Your subscription is resumed; your {plan} plan is active again.",
-    "tr": "Aboneliğin sürdürüldü; {plan} planın yeniden etkin.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "dhy7597b39": {
-    "en": "Your previous subscription has ended.",
-    "tr": "Önceki aboneliğin sona erdi.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "18nj31n79c3": {
-    "en": "Manage subscription",
-    "tr": "Aboneliği yönet",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "t7ps4aoi4u": {
-    "en": "Invoices, payment method and cancellation are in Paddle's secure customer portal.",
-    "tr": "Fatura, ödeme yöntemi ve iptal Paddle'ın güvenli müşteri portalında.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "keo4yklsza": {
-    "en": "Cancel your subscription to go back to Free",
-    "tr": "Ücretsiz plana dönmek için aboneliği iptal et",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1vwwq7ctbcs": {
-    "en": "Your plan benefits are switched off right now. If you think that's a mistake, open a support ticket.",
-    "tr": "Plan avantajların şu anda kullanıma kapalı. Bir sorun olduğunu düşünüyorsan destek talebi aç.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1rkebe3fhrw": {
-    "en": "Hanogt AI ({days} days): {used} / {limit} messages",
-    "tr": "Hanogt AI ({days} gün): {used} / {limit} mesaj",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "aodpagaxob": {
-    "en": "Monthly",
-    "tr": "Aylık",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/components/Admin/PaddleCard.tsx",
-      "src/components/Admin/PlansSection.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/Plans/ChangePlanDialog.tsx"
-    ]
-  },
-  "1kw5y95h7pc": {
-    "en": "Yearly",
-    "tr": "Yıllık",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/components/Admin/PaddleCard.tsx",
-      "src/components/Admin/PlansSection.tsx",
-      "src/components/Admin/copy.ts",
-      "src/components/Plans/ChangePlanDialog.tsx"
-    ]
-  },
-  "21n8pc733xd": {
-    "en": "Save {percent}%",
-    "tr": "%{percent} tasarruf",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1t0nz3q3tp3": {
-    "en": "/month",
-    "tr": "/ay",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "4tfq9we1ji": {
-    "en": "/year",
-    "tr": "/yıl",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "pn8bi1ofx9": {
-    "en": "{price} per year",
-    "tr": "Yıllık {price}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1044itom6yp": {
-    "en": "{price} a month",
-    "tr": "Aylık {price} karşılığı",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1n2oov6s8nq": {
-    "en": "This plan is sold with {interval} billing only for now.",
-    "tr": "Bu plan şimdilik yalnızca {interval} ödemeyle satılıyor.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "pj8y8jlvs7": {
-    "en": "The price is shown at checkout",
-    "tr": "Fiyat ödeme ekranında gösterilir",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "orrfvq8yik": {
-    "en": "{days}-day free trial",
-    "tr": "{days} gün ücretsiz dene",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "v4w992l7bo": {
-    "en": "Price to be announced",
-    "tr": "Fiyat yakında açıklanacak",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "23jpjtpxbdh": {
-    "en": "forever",
-    "tr": "her zaman",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "11lpc6560pm": {
-    "en": "Your current plan",
-    "tr": "Şu anki planın",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "bup4p65h09": {
-    "en": "Start for free",
-    "tr": "Ücretsiz başla",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2g4wms5o93l": {
-    "en": "Get Plus",
-    "tr": "Plus'a geç",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "m1psngexl7": {
-    "en": "Get Pro",
-    "tr": "Pro'ya geç",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "rzwamyd6n6": {
-    "en": "Upgrade to Pro",
-    "tr": "Pro'ya yükselt",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "f3wqqgj2do": {
-    "en": "Switch to Plus",
-    "tr": "Plus'a geç",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "192pqql9w65": {
-    "en": "Switch to yearly",
-    "tr": "Yıllık ödemeye geç",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2376vykhq9n": {
-    "en": "Switch to monthly",
-    "tr": "Aylık ödemeye geç",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "wxjlhhi03u": {
-    "en": "Start your own subscription",
-    "tr": "Kendi aboneliğini başlat",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1d254etnkxr": {
-    "en": "Sign in to buy",
-    "tr": "Giriş yap ve satın al",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "vrzwtwknq1": {
-    "en": "Update your payment method first",
-    "tr": "Önce ödeme yöntemini güncelle",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1gfvy7b4kq4": {
-    "en": "Not available",
-    "tr": "Kullanıma kapalı",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "24cuxfo6rju": {
-    "en": "Notify me when it opens",
-    "tr": "Açılınca haber ver",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1eym5z4j155": {
-    "en": "We'll let you know",
-    "tr": "Haber vereceğiz",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "yp3zaid381": {
-    "en": "Press again to stop the notification.",
-    "tr": "Bildirimden çıkmak için tekrar bas.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "26rql89fuzo": {
-    "en": "Sign in to get notified",
-    "tr": "Haber almak için giriş yap",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "11gk4l406wg": {
-    "en": "Planned",
-    "tr": "Planlanıyor",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/components/Admin/copy.ts"
-    ]
-  },
-  "8fiv05hk7o": {
-    "en": "Most complete",
-    "tr": "En kapsamlı",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1inmuxo99hi": {
-    "en": "{percent}% off",
-    "tr": "%{percent} indirim",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "tjels5ip7e": {
-    "en": "Payment received, activating your plan…",
-    "tr": "Ödemen alındı, planın etkinleştiriliyor…",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "au00i15cwn": {
-    "en": "Welcome! Your {plan} plan is active.",
-    "tr": "Hoş geldin! {plan} planın etkin.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "kqzdqqj3yv": {
-    "en": "Payment received; your plan will be active within a few minutes. To try right away, press \"Check my payment\".",
-    "tr": "Ödemen alındı; planın birkaç dakika içinde etkinleşecek. Hemen denemek için \"Ödememi kontrol et\"e bas.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "ry5m84ldsi": {
-    "en": "Check my payment",
-    "tr": "Ödememi kontrol et",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "11ulgqbpqdw": {
-    "en": "Paid, but your plan didn't change?",
-    "tr": "Ödeme yaptın ama planın değişmedi mi?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "tah4ox1wyq": {
-    "en": "Paddle has no completed payment for this account. If you finished the checkout, try again in a few minutes; if it persists, open a support ticket.",
-    "tr": "Paddle'da bu hesaba ait tamamlanmış bir ödeme bulunamadı. Ödeme ekranını tamamladıysan birkaç dakika sonra tekrar dene; sürerse destek talebi oluştur.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2ewwl3199d": {
-    "en": "Your payment went through and Paddle is creating your subscription. Your plan will be active in a few seconds; there's no need to pay again.",
-    "tr": "Ödemen alındı, Paddle aboneliğini oluşturuyor. Planın birkaç saniye içinde açılacak; yeniden ödeme yapmana gerek yok.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1mbryimzbrj": {
-    "en": "Your plan changed: {plan}.",
-    "tr": "Planın değişti: {plan}.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "icrze65pbo": {
-    "en": "Your subscription will continue.",
-    "tr": "Aboneliğin devam ediyor.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1taj3enp7sm": {
-    "en": "That didn't work. Try again in a moment.",
-    "tr": "İşlem tamamlanamadı. Biraz sonra tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2be87kk1eto": {
-    "en": "The first try didn't work; trying once more…",
-    "tr": "İlk deneme olmadı, bir kez daha deneniyor…",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "cijmw5bz3z": {
-    "en": "Couldn't reach the server. Check your connection; if you use an ad blocker, browser protection or a VPN, turn it off for this site and try again.",
-    "tr": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et; reklam engelleyici, tarayıcı koruması ya da VPN kullanıyorsan bu site için kapatıp tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1llt6qbmzj1": {
-    "en": "The server didn't answer in time; the payment provider or the database is slow right now. Try again in a moment.",
-    "tr": "Sunucu zamanında yanıt vermedi; ödeme sağlayıcısı ya da veritabanı şu an yavaş. Biraz sonra tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "j0y622jrcw": {
-    "en": "Your account details can't be reached right now (the database didn't answer). Try again in a moment.",
-    "tr": "Hesap bilgilerine şu an ulaşılamıyor (veritabanı yanıt vermedi). Biraz sonra tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1lx09mm1h2j": {
-    "en": "The request couldn't be verified from this page. Refresh the page and try again.",
-    "tr": "İstek bu sayfadan doğrulanamadı. Sayfayı yenileyip tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "tbtxnzf9zh": {
-    "en": "No active subscription was found on this account. Refresh the page.",
-    "tr": "Bu hesapta etkin bir abonelik bulunamadı. Sayfayı yenile.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "cw6ertfiep": {
-    "en": "There's nothing to change; refresh the page.",
-    "tr": "Değiştirilecek bir şey yok; sayfayı yenile.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "u745ja2zyx": {
-    "en": "Error code: {ref}",
-    "tr": "Hata kodu: {ref}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "s2xmlv1g25": {
-    "en": "Have a coupon code?",
-    "tr": "Kupon kodun var mı?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2g7n01iw64d": {
-    "en": "Coupon code",
-    "tr": "Kupon kodu",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "319pnaoaed": {
-    "en": "Apply",
-    "tr": "Uygula",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "1pbkl1x0r47": {
-    "en": "Sign in to use a coupon",
-    "tr": "Kupon kullanmak için giriş yap",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "z74lplbu3l": {
-    "en": "Sign in to use the coupon {code}",
-    "tr": "{code} kuponunu kullanmak için giriş yap",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1knl92ri": {
-    "en": "Coupons apply to new subscriptions, not to your current one or to plan changes.",
-    "tr": "Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğine ve plan değişikliklerine uygulanmaz.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1wt85jknw4e": {
-    "en": "{code} applied: {percent}% off · {plans} · {payments}",
-    "tr": "{code} uygulandı: %{percent} indirim · {plans} · {payments}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "28v1beqst2d": {
-    "en": "Plus and Pro",
-    "tr": "Plus ve Pro",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "dqqr792egn": {
-    "en": "on the first payment",
-    "tr": "ilk ödemede",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1xsj0x31kxr": {
-    "en": "on every payment",
-    "tr": "her ödemede",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "zj118ftzua": {
-    "en": "on the first {count} payments",
-    "tr": "ilk {count} ödemede",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "o4nz1el42n": {
-    "en": "With {code}, {payments}",
-    "tr": "{code} kuponuyla, {payments}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "79cbngcmbq": {
-    "en": "This coupon code isn't valid. Check the code and try again.",
-    "tr": "Bu kupon kodu geçerli değil. Kodu kontrol edip tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "372g8zzr4x": {
-    "en": "This coupon has expired.",
-    "tr": "Bu kuponun süresi dolmuş.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1musp2jq94v": {
-    "en": "This coupon has no uses left.",
-    "tr": "Bu kuponun kullanım hakkı dolmuş.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "ua6frj0phf": {
-    "en": "This coupon isn't valid for the plan you picked.",
-    "tr": "Bu kupon seçtiğin planda geçerli değil.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "16qg15s7dsv": {
-    "en": "For the team: the details of this request are under Admin Panel › Subscriptions › Paddle in \"Recent server errors\" (or, when no answer came at all, in \"Recent checkout errors\") and in the Vercel logs.",
-    "tr": "Ekip için: bu isteğin ayrıntısı Yönetici Paneli › Abonelikler › Paddle bölümündeki \"Son sunucu hataları\" listesinde (yanıt hiç gelmediyse \"Son ödeme ekranı hataları\"nda) ve Vercel günlüklerinde.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "29pcbyt8qil": {
-    "en": "Test mode: sales aren't open to everyone yet; only the Hanogt team and testers see these plans as buyable.",
-    "tr": "Test modu: satışlar henüz herkese açık değil; bu sayfayı yalnızca Hanogt ekibi ve test kullanıcıları satın alınabilir görüyor.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "gypk54apn8": {
-    "en": "Paddle sandbox: no real payments; use a test card (4242 4242 4242 4242).",
-    "tr": "Paddle sandbox: gerçek ödeme alınmaz, test kartıyla dene (4242 4242 4242 4242).",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "5h5pbsp1im": {
-    "en": "You already have a subscription; you can change your plan on this page.",
-    "tr": "Zaten bir aboneliğin var; planını bu sayfadan değiştirebilirsin.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "s5bgfgrup7": {
-    "en": "You have a paused subscription; resume it instead of buying a new one.",
-    "tr": "Duraklatılmış bir aboneliğin var; yenisini almak yerine onu sürdürebilirsin.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "3kd21h4myo": {
-    "en": "Paddle already has a customer record with this e-mail address. For your security we need to verify your account's address: sign in with Google once, or open a support ticket so our team can link the record to your account.",
-    "tr": "Bu e-posta adresiyle Paddle'da daha önce açılmış bir müşteri kaydı var. Güvenliğin için hesabının e-postasını doğrulamamız gerekiyor: bir kez Google ile giriş yap ya da destek talebi aç, ekibimiz kaydı hesabına bağlasın.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "ek90fbfo94": {
-    "en": "This account's Paddle customer record is linked to another account. Open a support ticket so our team can sort it out.",
-    "tr": "Bu hesabın Paddle müşteri kaydı başka bir hesaba bağlı. Destek talebi aç; ekibimiz düzeltsin.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1h40i9isrw5": {
-    "en": "Paddle couldn't charge your saved payment method (card declined). Update it and try again.",
-    "tr": "Paddle kayıtlı ödeme yönteminden ücreti alamadı (kart reddedildi). Ödeme yöntemini güncelleyip tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "13sz7bfruxt": {
-    "en": "Refresh the page",
-    "tr": "Sayfayı yenile",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "12y74p7n9r6": {
-    "en": "Payment received, thank you. The plan becomes active on the Hanogt account with the e-mail you paid with; sign in to see it.",
-    "tr": "Ödemen alındı, teşekkürler. Plan, ödemeyi yaptığın e-postayla açılmış Hanogt hesabında etkinleşir; görmek için giriş yap.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1klvo4bz7za": {
-    "en": "Payment received, thank you.",
-    "tr": "Ödemen alındı, teşekkürler.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "28qax9ne7fz": {
-    "en": "The chosen payment method can't be used. Try another one; if it keeps happening, open a support ticket.",
-    "tr": "Seçilen ödeme yöntemi kullanılamadı. Başka bir yöntem dene; sorun sürerse destek talebi aç.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "275rqam8ws": {
-    "en": "A higher plan was assigned by the team",
-    "tr": "Daha yüksek bir plan ekip tarafından tanımlandı",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "cmm9u3hunb": {
-    "en": "This subscription can't be changed on this page; use \"Manage subscription\".",
-    "tr": "Bu abonelik bu sayfadan değiştirilemiyor; \"Aboneliği yönet\"i kullan.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "148vf904f1q": {
-    "en": "This plan isn't on sale right now.",
-    "tr": "Bu plan şu anda satışta değil.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "62g3orb2hn": {
-    "en": "Payments are switched off right now. Try again later.",
-    "tr": "Ödemeler şu anda kapalı. Biraz sonra tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "f09kdcy3gi": {
-    "en": "Too many attempts. Try again in a minute.",
-    "tr": "Çok fazla deneme oldu. Bir dakika sonra tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "14e7hu6s24s": {
-    "en": "Your session has ended; please sign in again.",
-    "tr": "Oturumun sona ermiş; yeniden giriş yap.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "29r4c049gm8": {
-    "en": "Paddle isn't responding right now ({code}). Try again in a moment.",
-    "tr": "Paddle şu anda yanıt vermiyor ({code}). Biraz sonra tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1hvzshua7af": {
-    "en": "Paddle didn't accept the request ({code}). Try again in a moment; if it keeps happening, open a support ticket.",
-    "tr": "Paddle isteği kabul etmedi ({code}). Biraz sonra tekrar dene; sorun sürerse destek talebi aç.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "9vn3d3xcig": {
-    "en": "The checkout couldn't load: Paddle's checkout script didn't reach your browser. An ad blocker, your browser's tracking protection or your network (e.g. a work network, VPN or DNS filter) may be blocking cdn.paddle.com. Allow it for this site and try again.",
-    "tr": "Ödeme ekranı yüklenemedi: Paddle'ın ödeme betiği tarayıcına ulaşmadı. Reklam engelleyici, tarayıcının izleme koruması ya da ağ ayarların (ör. kurum ağı, VPN, DNS filtresi) cdn.paddle.com adresini engelliyor olabilir. Bu site için izin verip tekrar dene.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1w5vopkfpt7": {
-    "en": "The checkout couldn't load: your browser blocked {url}. Turn off your ad or script blocker or your browser's tracking protection for this site and try again; if it keeps happening, open a support ticket.",
-    "tr": "Ödeme ekranı yüklenemedi: tarayıcın {url} adresini engelledi. Reklam ya da betik engelleyiciyi veya tarayıcının izleme korumasını bu site için kapatıp tekrar dene; sorun sürerse destek talebi aç.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "29c0f7k667l": {
-    "en": "The checkout couldn't start: Paddle loaded but couldn't be started. Try again in a moment; if it keeps happening, open a support ticket.",
-    "tr": "Ödeme ekranı başlatılamadı: Paddle yüklendi ama çalıştırılamadı. Biraz sonra tekrar dene; sorun sürerse destek talebi aç.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "ruq8t6357b": {
-    "en": "For the team: the client-side token in Vercel (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) may belong to another Paddle account or to the other environment (sandbox/live). See the token check under Admin Panel › Subscriptions › Paddle.",
-    "tr": "Ekip için: Vercel'deki istemci tarafı jeton (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) başka bir Paddle hesabına ya da öbür ortama (Sandbox/Canlı) ait olabilir. Yönetici Paneli › Abonelikler › Paddle bölümündeki jeton denetimine bakın.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1qxauuptzu4": {
-    "en": "The checkout couldn't open. Refresh the page and try again; if it keeps happening, open a support ticket.",
-    "tr": "Ödeme ekranı açılamadı. Sayfayı yenileyip tekrar dene; sorun sürerse destek talebi aç.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "25rcjpixktv": {
-    "en": "The checkout reported an error: {detail}",
-    "tr": "Ödeme ekranı bir hata bildirdi: {detail}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "26l2geju4c6": {
-    "en": "Something went wrong in the checkout. Try again; if it keeps happening, open a support ticket.",
-    "tr": "Ödeme ekranında bir hata oluştu. Tekrar dene; sorun sürerse destek talebi aç.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "eew0ntysvc": {
-    "en": "For the team: Paddle refused a field of the request while opening the checkout (the fields are above). One possible cause is a client-side token (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) from another Paddle account or environment than the API key that created the transaction; see the token check under Admin Panel › Subscriptions › Paddle.",
-    "tr": "Ekip için: Paddle ödeme ekranını açarken isteğin bir alanını kabul etmedi (alanlar yukarıda). Olası nedenlerden biri, tarayıcıdaki istemci tarafı jetonun (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) işlemi oluşturan API anahtarından farklı bir Paddle hesabına ya da ortama ait olması; Yönetici Paneli › Abonelikler › Paddle'daki jeton denetimine bak.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1hbmxqsqeat": {
-    "en": "Technical detail: {stage}: {message}",
-    "tr": "Teknik ayrıntı: {stage}: {message}",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "70mbu265j2": {
-    "en": "Plan details can't be loaded right now; the prices below aren't final yet.",
-    "tr": "Plan bilgileri şu anda alınamıyor; aşağıdaki fiyatlar henüz kesinleşmedi.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "9jh8nuo1qk": {
-    "en": "Prices include the taxes of your country; the exact amount is shown at checkout. Payments are taken by Paddle.com, our Merchant of Record.",
-    "tr": "Fiyatlara bulunduğun ülkenin vergileri dahildir; kesin tutar ödeme ekranında gösterilir. Ödemeler, Kayıtlı Satıcımız (Merchant of Record) Paddle.com tarafından alınır.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "15zk86prx9b": {
-    "en": "Refund Policy",
-    "tr": "İade Politikası",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/app/refund-policy/page.tsx",
-      "src/components/ContactPage.tsx",
-      "src/components/Guide/book-content.ts",
-      "src/components/LegalPage.tsx",
-      "src/components/PrivacyPolicyModal.tsx",
-      "src/components/SiteFooter.tsx",
-      "src/lib/ai/knowledge.ts"
-    ]
-  },
-  "kbgxhjzi42": {
-    "en": "Terms of Use",
-    "tr": "Kullanım Şartları",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/app/terms-of-use/page.tsx",
-      "src/components/LegalPage.tsx",
-      "src/components/PrivacyPolicyModal.tsx"
-    ]
-  },
-  "1qt1o18noqb": {
-    "en": "When will payments start?",
-    "tr": "Ödeme ne zaman başlayacak?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1qsnt64mnj7": {
-    "en": "There's no date yet. When plans open we'll announce it on this page, in the changelog and, if you pressed \"Notify me\", in your notifications. Until then nothing is charged.",
-    "tr": "Henüz bir tarih yok. Planlar açıldığında bu sayfada, güncelleme günlüğünde ve \"Açılınca haber ver\" dediysen bildirimlerinde duyuracağız. O güne kadar hiçbir ücret alınmaz.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1l18rarqm7l": {
-    "en": "Will the free plan go away?",
-    "tr": "Ücretsiz plan kalkacak mı?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "24a8hq9r3dz": {
-    "en": "No. The code editor, the game engine, the Arcade, Media and Hanogt Social stay in the free plan, and Hanogt AI is available there with 50 messages a week.",
-    "tr": "Hayır. Kod editörü, oyun motoru, Arcade, Media ve Hanogt Social ücretsiz planda kalmaya devam edecek; Hanogt AI da ücretsiz planda haftada 50 mesajla kullanılabilir.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "gdun22bdld": {
-    "en": "I have a coupon code. What do I do?",
-    "tr": "Kupon kodum var, ne yapmalıyım?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "819d2bih3m": {
-    "en": "Keep it; you'll be able to use it at checkout once plans open. A coupon's expiry date is given with the coupon.",
-    "tr": "Kodunu sakla; planlar açıldığında satın alma sırasında kullanabileceksin. Kuponların bitiş tarihi kupon verilirken belirtilir.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "15zkffi8c31": {
-    "en": "How did I get a plan?",
-    "tr": "Planım nasıl tanımlandı?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "hnyl1nou3f": {
-    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit and longer answers, more projects and groups, bigger team sessions, your own API key connections, the developer API, a profile badge, priority support and, on Pro, early access.",
-    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı ve daha uzun yanıtlar, daha fazla proje ve grup, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar, geliştirici API'si, profil rozeti, destekte öncelik ve Pro'da erken erişim.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "l7yh9utz2r": {
-    "en": "Who takes the payment?",
-    "tr": "Ödemeyi kim alıyor?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "10admenpv7l": {
-    "en": "Payments go through Paddle. Paddle.com is the Merchant of Record for Hanogt Codev orders: it takes the payment, issues the invoice and handles taxes. Your card details never reach Hanogt Codev.",
-    "tr": "Ödemeler Paddle üzerinden alınır. Paddle.com, Hanogt Codev siparişlerinin Kayıtlı Satıcısıdır (Merchant of Record): ödemeyi alır, faturayı keser ve vergileri hesaplar. Kart bilgilerin Hanogt Codev'e hiç ulaşmaz.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "1pkkb13dta1": {
-    "en": "How do I cancel?",
-    "tr": "Aboneliğimi nasıl iptal ederim?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "cz5312196": {
-    "en": "Press \"Manage subscription\" on this page and cancel in Paddle's customer portal. Cancellation takes effect at the end of the period you paid for, and your benefits last until then.",
-    "tr": "Bu sayfada \"Aboneliği yönet\"e bas; Paddle'ın müşteri portalından aboneliğini iptal edebilirsin. İptal, ödediğin dönemin sonunda geçerli olur ve o güne kadar avantajların sürer.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "wgngehupe0": {
-    "en": "Can I get a refund?",
-    "tr": "İade alabilir miyim?",
-    "files": [
-      "src/app/plans/page.tsx",
-      "src/lib/faq.ts"
-    ]
-  },
-  "1ofeg73ae3n": {
-    "en": "You can ask for a refund within 14 days of a subscription's first payment. The details are in the Refund Policy.",
-    "tr": "Bir aboneliğin ilk ödemesinden sonraki 14 gün içinde iade isteyebilirsin. Ayrıntılar İade Politikası'nda.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "w6ureqeyyv": {
-    "en": "Can I change my plan?",
-    "tr": "Planımı değiştirebilir miyim?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "14vhgkgomp5": {
-    "en": "Yes. You can move between Plus and Pro, or between monthly and yearly billing. The difference for the rest of your period is prorated and shown before you confirm.",
-    "tr": "Evet. Plus ile Pro arasında ya da aylık ile yıllık ödeme arasında geçebilirsin. Kalan süren için fark orantılı hesaplanır ve onaylamadan önce gösterilir.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "dvjr7cdy5d": {
-    "en": "Where do I use a coupon code?",
-    "tr": "Kupon kodumu nerede kullanırım?",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "18ajbhrvjva": {
-    "en": "On this page press \"Have a coupon code?\", enter it and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter it with \"Add discount\" at checkout. Which plan and how many payments it covers is shown once it's applied. Coupons apply to new subscriptions, not to an existing one or to plan changes.",
-    "tr": "Bu sayfada \"Kupon kodun var mı?\"ya bas, kodunu yazıp Uygula'ya bas: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. İstersen kodu ödeme ekranındaki \"İndirim ekle\"ye de yazabilirsin. Kuponun hangi planda ve kaç ödemede geçerli olduğu kod uygulanınca yazılır. Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğe ya da plan değişikliğine uygulanmaz.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "wxqsu87wuq": {
-    "en": "For the team: no default payment link is set in Paddle. Enter https://hanogtcodev.com/plans under Paddle › Checkout › Checkout settings › Default payment link and save (separately for sandbox and live).",
-    "tr": "Ekip için: Paddle'da varsayılan ödeme bağlantısı tanımlı değil. Paddle › Checkout › Checkout settings › Default payment link alanına https://hanogtcodev.com/plans yazıp kaydet (sandbox ve canlı hesapta ayrı ayrı).",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "cy407wzmbw": {
-    "en": "For the team: the payment link's domain isn't approved in Paddle. Request approval for hanogtcodev.com under Paddle › Checkout › Request domain approval.",
-    "tr": "Ekip için: ödeme bağlantısının alan adı Paddle'da onaylı değil. Paddle › Checkout › Request domain approval bölümünden hanogtcodev.com için onay iste.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "y91yl4yrat": {
-    "en": "For the team: checkout isn't enabled on this Paddle account yet; finish Paddle's account verification (onboarding).",
-    "tr": "Ekip için: bu Paddle hesabında ödeme ekranı henüz açılmamış; Paddle'daki hesap doğrulama (onboarding) adımlarını tamamla.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "ifi0cmttvv": {
-    "en": "For the team: Paddle Billing isn't enabled on this Paddle account (a Classic account). Use a Billing account's keys.",
-    "tr": "Ekip için: bu Paddle hesabında Paddle Billing açık değil (Classic hesap). Billing hesabının anahtarlarını kullan.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2fowvtpbynz": {
-    "en": "For the team: the Paddle API key isn't allowed to do this. Give the key write access to Transactions and Customers under Paddle › Developer tools › Authentication.",
-    "tr": "Ekip için: Paddle API anahtarının bu işlem için izni yok. Paddle › Developer tools › Authentication bölümünde anahtara Transactions ve Customers yazma izni ver.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
-  "2e4i65znsfe": {
-    "en": "For the team: the price or customer wasn't found in this Paddle account (it may be the other environment's id). Check the price mapping under Admin Panel › Subscriptions › Paddle.",
-    "tr": "Ekip için: fiyat ya da müşteri bu Paddle hesabında bulunamadı (öbür ortamın kimliği olabilir). Yönetici Paneli › Abonelikler › Paddle bölümünde fiyat eşleştirmesini kontrol et.",
-    "files": [
-      "src/app/plans/page.tsx"
-    ]
-  },
   "3qcli74vte": {
     "en": "Hanogt AI: Free {free} a week, Plus {plus} every 2 weeks, Pro {pro} a week; the developer API uses the same messages.",
     "tr": "Hanogt AI: Ücretsiz haftada {free}, Plus 2 haftada {plus}, Pro haftada {pro} mesaj; geliştirici API'si aynı haktan düşer.",
@@ -7805,7 +6737,8 @@
     "en": "Account security",
     "tr": "Hesap güvenliği",
     "files": [
-      "src/app/privacy-policy/page.tsx"
+      "src/app/privacy-policy/page.tsx",
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "25t3vn4hwy7": {
@@ -10852,6 +9785,20 @@
       "src/app/refund-policy/page.tsx"
     ]
   },
+  "15zk86prx9b": {
+    "en": "Refund Policy",
+    "tr": "İade Politikası",
+    "files": [
+      "src/app/refund-policy/page.tsx",
+      "src/components/ContactPage.tsx",
+      "src/components/Guide/book-content.ts",
+      "src/components/LegalPage.tsx",
+      "src/components/Plans/plans-copy.ts",
+      "src/components/PrivacyPolicyModal.tsx",
+      "src/components/SiteFooter.tsx",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
   "1cj8h3itf5h": {
     "en": "Explains when and how you can get a refund for Plus and Pro subscriptions bought through Paddle, how cancellation works and how long refunds take.",
     "tr": "Paddle üzerinden satın aldığınız Plus ve Pro aboneliklerinde ne zaman ve nasıl iade alabileceğinizi, iptalin nasıl işlediğini ve iadelerin ne kadar sürede sonuçlandığını açıklar.",
@@ -13817,6 +12764,16 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "kbgxhjzi42": {
+    "en": "Terms of Use",
+    "tr": "Kullanım Şartları",
+    "files": [
+      "src/app/terms-of-use/page.tsx",
+      "src/components/LegalPage.tsx",
+      "src/components/Plans/plans-copy.ts",
+      "src/components/PrivacyPolicyModal.tsx"
+    ]
+  },
   "v3of2oaavr": {
     "en": "Sets out, clearly and fairly, your rights and obligations and ours when you use Hanogt Codev: account security, acceptable use, content and licences, AI output, paid plans and subscriptions, enforcement and how disputes are resolved.",
     "tr": "Hanogt Codev'i kullanırken sizin ve bizim hak ve yükümlülüklerimizi; hesap güvenliğini, kabul edilebilir kullanımı, içerik ve lisansları, yapay zekâ çıktılarını, ücretli planları ve abonelikleri, yaptırımları ve uyuşmazlıkların çözümünü açık ve dengeli biçimde düzenler.",
@@ -14675,7 +13632,8 @@
     "en": "Feature",
     "tr": "Öne çıkar",
     "files": [
-      "src/components/Admin/ArcadePanel.tsx"
+      "src/components/Admin/ArcadePanel.tsx",
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
   "1q0lzoo79g0": {
@@ -16316,8 +15274,7 @@
     "en": "Checklist",
     "tr": "Denetim listesi",
     "files": [
-      "src/components/Admin/CloudHealthSection.tsx",
-      "src/components/Security/SecurityCenter.tsx"
+      "src/components/Admin/CloudHealthSection.tsx"
     ]
   },
   "258ay48ewj8": {
@@ -17091,6 +16048,14 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "11gk4l406wg": {
+    "en": "Planned",
+    "tr": "Planlandı",
+    "files": [
+      "src/components/Admin/copy.ts",
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
   "203kqowxja1": {
     "en": "In progress",
     "tr": "Üzerinde çalışılıyor",
@@ -17153,6 +16118,7 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/Editor/PublishDialog.tsx",
+      "src/components/Plans/PricingSections.tsx",
       "src/components/Security/CodeAdvisor.tsx",
       "src/lib/support.ts"
     ]
@@ -19026,6 +17992,28 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "aodpagaxob": {
+    "en": "Monthly",
+    "tr": "Aylık",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx",
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/Plans/ChangePlanDialog.tsx",
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1kw5y95h7pc": {
+    "en": "Yearly",
+    "tr": "Yıllık",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx",
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/Plans/ChangePlanDialog.tsx",
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
   "1czvam6v2pk": {
     "en": "monthly",
     "tr": "aylık",
@@ -20539,7 +19527,8 @@
     "en": "Unlimited",
     "tr": "Sınırsız",
     "files": [
-      "src/components/Admin/PlansSection.tsx"
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
   "1m2eha4xvpy": {
@@ -20827,6 +19816,14 @@
       "src/components/Social/FriendsView.tsx"
     ]
   },
+  "2gan3i8dpmm": {
+    "en": "until {date}",
+    "tr": "{date} tarihine kadar",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
   "1j2y52h0iig": {
     "en": "Hanogt AI: {minute} a minute, {window} every {days} days (chat and API together)",
     "tr": "Hanogt AI: dakikada {minute}, {days} günde {window} mesaj (sohbet ve API birlikte)",
@@ -20910,6 +19907,14 @@
     "tr": "Müşteri",
     "files": [
       "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "2boxyf77635": {
+    "en": "Subscription",
+    "tr": "Abonelik",
+    "files": [
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Plans/plans-copy.ts"
     ]
   },
   "w7lsyhen0o": {
@@ -21390,8 +20395,7 @@
     "tr": "+{count} daha",
     "files": [
       "src/components/Admin/SecurityEventsSection.tsx",
-      "src/components/Editor/PublishDialog.tsx",
-      "src/components/Landing/LandingPage.tsx"
+      "src/components/Editor/PublishDialog.tsx"
     ]
   },
   "2agukn2judm": {
@@ -21400,7 +20404,8 @@
     "files": [
       "src/components/Admin/SecurityEventsSection.tsx",
       "src/components/Editor/CollabDialogs.tsx",
-      "src/components/Groups/workspace/EditorPane.tsx"
+      "src/components/Groups/workspace/EditorPane.tsx",
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
   "o5ul1anfu2": {
@@ -21792,6 +20797,7 @@
     "tr": "Çevrimiçi",
     "files": [
       "src/components/Admin/UsersSection.tsx",
+      "src/components/Landing/ProductPreviews.tsx",
       "src/components/Social/FriendsView.tsx",
       "src/lib/presence.ts"
     ]
@@ -22769,7 +21775,8 @@
     "tr": "Oyna",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Landing/LandingPage.tsx"
     ]
   },
   "fzkk21l74h": {
@@ -22926,6 +21933,62 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "2dkj50u19cw": {
+    "en": "New logos, new pages",
+    "tr": "Yeni logolar, yeni sayfalar",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "8k9wgxsvf4": {
+    "en": "Hanogt's products got their own logos, and the home page, pricing and the Security page were redone.",
+    "tr": "Hanogt'un ürünleri kendi logolarına kavuştu; ana sayfa, fiyatlandırma ve Security sayfası yenilendi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2ahf6qotlfq": {
+    "en": "Hanogt AI, Engine, Security, News and Social have their new logos, and the site and app icons are new too.",
+    "tr": "Hanogt AI, Engine, Security, News ve Social yeni logolarıyla; site ve uygulama simgeleri de yenilendi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "l5wkc22mxh": {
+    "en": "Home page: \"What's on Hanogt\" with real previews, and the code sample is plain C# now. The mini game has a double jump, a shield, a magnet, a streak multiplier and a best score.",
+    "tr": "Ana sayfa: \"Hanogt'ta neler var\" bölümü gerçek önizlemelerle, kod örneği artık düz C#. Mini oyunda çift zıplama, kalkan, mıknatıs, seri çarpanı ve en iyi skor var.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "guen3tg49n": {
+    "en": "The \"Download the app\" menu is fixed: your device comes first, it opens from the bottom on phones, and iPhone and iPad get the Add to Home Screen steps.",
+    "tr": "\"Uygulamayı indir\" menüsü düzeldi: cihazın öne çıkıyor, telefonda alttan açılıyor; iPhone ve iPad'de ana ekrana ekleme adımları var.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "k6zafe93yt": {
+    "en": "Pricing: simpler cards and a table comparing the plans; your usage sits in a panel under the cards.",
+    "tr": "Fiyatlandırma: sade kartlar ve planları karşılaştırma tablosu; kullanımın kartların altındaki açılır panelde.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1mj3wr4y50f": {
+    "en": "Security is in the top menu: your password, two-step verification, recovery codes and last sign-in at a glance, plus what Security Bot scans for.",
+    "tr": "Security üst menüde: şifren, iki adımlı doğrulaman, kurtarma kodların ve son girişin tek bakışta. Security Bot'un neleri taradığı da anlatılıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1i8r58pbgyl": {
+    "en": "\"Explore\" left the dashboard; the products are in the top menu.",
+    "tr": "Panelden \"Keşfet\" kalktı; ürünlere üst menüden ulaşabilirsin.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "28k1ccohifm": {
@@ -24652,7 +23715,8 @@
     "tr": "{count} kişi",
     "files": [
       "src/components/Editor/CollabButton.tsx",
-      "src/components/Groups/workspace/InviteDialog.tsx"
+      "src/components/Groups/workspace/InviteDialog.tsx",
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
   "1p8xn76zpmb": {
@@ -25389,7 +24453,8 @@
     "en": "Output",
     "tr": "Çıktı",
     "files": [
-      "src/components/Editor/Console.tsx"
+      "src/components/Editor/Console.tsx",
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "2ajxxk08go8": {
@@ -26319,7 +25384,8 @@
     "en": "{count} suggestions",
     "tr": "{count} öneri",
     "files": [
-      "src/components/Editor/PublishDialog.tsx"
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Security/AccountSecurityCard.tsx"
     ]
   },
   "1rjzitpy3lk": {
@@ -27374,7 +26440,8 @@
     "tr": "Hiyerarşi",
     "files": [
       "src/components/GameEngine/editor/text.ts",
-      "src/components/Guide/book-content.ts"
+      "src/components/Guide/book-content.ts",
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "mvlmo2lyvu": {
@@ -27382,7 +26449,8 @@
     "tr": "Inspector",
     "files": [
       "src/components/GameEngine/editor/text.ts",
-      "src/components/Guide/book-content.ts"
+      "src/components/Guide/book-content.ts",
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "xf97jamydt": {
@@ -27945,6 +27013,14 @@
     "tr": "Kısayollar",
     "files": [
       "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "319pnaoaed": {
+    "en": "Apply",
+    "tr": "Uygula",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Plans/plans-copy.ts"
     ]
   },
   "1vf7z7e1qkh": {
@@ -31506,6 +30582,7 @@
     "tr": "Kod Editörü",
     "files": [
       "src/components/Guide/book-content.ts",
+      "src/components/Landing/LandingPage.tsx",
       "src/lib/ai/agent-tools.ts",
       "src/lib/ai/knowledge.ts",
       "src/lib/nav.ts"
@@ -34347,6 +33424,7 @@
     "tr": "Normal",
     "files": [
       "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/Plans/PricingSections.tsx",
       "src/lib/support.ts"
     ]
   },
@@ -35083,7 +34161,8 @@
     "en": "Check a link",
     "tr": "Bağlantı kontrolü",
     "files": [
-      "src/components/HanogtAI/chat-copy.ts"
+      "src/components/HanogtAI/chat-copy.ts",
+      "src/components/Security/SecurityCenter.tsx"
     ]
   },
   "273k1xhq1fk": {
@@ -36469,6 +35548,154 @@
       "src/components/Header.tsx"
     ]
   },
+  "u92waignax": {
+    "en": "Download the app",
+    "tr": "Uygulamayı indir",
+    "files": [
+      "src/components/Landing/DownloadMenu.tsx"
+    ]
+  },
+  "214cyvfzw0z": {
+    "en": "Download Hanogt Codev",
+    "tr": "Hanogt Codev'i indir",
+    "files": [
+      "src/components/Landing/DownloadMenu.tsx"
+    ]
+  },
+  "1xebcjkfw9y": {
+    "en": "This device",
+    "tr": "Bu cihaz",
+    "files": [
+      "src/components/Landing/DownloadMenu.tsx"
+    ]
+  },
+  "l7ctvsopzx": {
+    "en": "Coming soon",
+    "tr": "Yakında",
+    "files": [
+      "src/components/Landing/DownloadMenu.tsx",
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1xnz1zmqw42": {
+    "en": "iPhone and iPad",
+    "tr": "iPhone ve iPad",
+    "files": [
+      "src/components/Landing/DownloadMenu.tsx"
+    ]
+  },
+  "1uwataudmmy": {
+    "en": "In Safari, tap Share, then “Add to Home Screen”: Hanogt opens like an app.",
+    "tr": "Safari'de Paylaş'a, sonra “Ana Ekrana Ekle”ye dokun: Hanogt bir uygulama gibi açılır.",
+    "files": [
+      "src/components/Landing/DownloadMenu.tsx"
+    ]
+  },
+  "1vevy4gh9sp": {
+    "en": "All releases",
+    "tr": "Tüm sürümler",
+    "files": [
+      "src/components/Landing/DownloadMenu.tsx"
+    ]
+  },
+  "kf82svq4tn": {
+    "en": "The game below runs on these rules",
+    "tr": "Aşağıdaki oyun bu kurallarla çalışıyor",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1v0bnsa68b5": {
+    "en": "Tap / Space: play",
+    "tr": "Dokun / Space: oyna",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "wxhzygidqz": {
+    "en": "Tap / Space: jump, again in the air",
+    "tr": "Dokun / Space: zıpla, havada bir daha",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1m3rg0ofk3m": {
+    "en": "Tap / Space to play again",
+    "tr": "Tekrar için dokun / Space",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "koru6slsag": {
+    "en": "Game over",
+    "tr": "Oyun bitti",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "17atojakb5g": {
+    "en": "Best",
+    "tr": "En iyi",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1kkkmzzlb29": {
+    "en": "Score",
+    "tr": "Skor",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1ifrffqdikv": {
+    "en": "What's in Hanogt",
+    "tr": "Hanogt'ta neler var",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "oyjei6g6k2": {
+    "en": "One account, all of it",
+    "tr": "Tek hesap, hepsi bir arada",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "60x1g646wu": {
+    "en": "From writing code to publishing games, from talking with friends to protecting your account, it's all in one place.",
+    "tr": "Kod yazmaktan oyun yayınlamaya, arkadaşlarla konuşmaktan hesabını korumaya kadar her şey aynı yerde.",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "74hkp8psp3": {
+    "en": "Write and run code in your browser, nothing to install",
+    "tr": "Kurulum olmadan, tarayıcında kod yaz ve çalıştır",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1apgl6f78hn": {
+    "en": "Try it now",
+    "tr": "Hemen dene",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "b4ssn4t1h8": {
+    "en": "Arcade and Media",
+    "tr": "Arcade ve Media",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "11bze2trcig": {
+    "en": "Play, like and remix the community's games; share your code on Media and read the comments.",
+    "tr": "Topluluğun oyunlarını oyna, beğen ve remiksle; kodunu Media'da paylaş, yorumları oku.",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
   "2bznff8lnzj": {
     "en": "Free to start, nothing to install",
     "tr": "Ücretsiz başla, kurulum yok",
@@ -36483,9 +35710,9 @@
       "src/components/Landing/LandingPage.tsx"
     ]
   },
-  "a25is7onbx": {
-    "en": "Write code in {count} languages, build games with Hanogt Engine V3, publish them to Arcade and share with the community. All in one account.",
-    "tr": "{count} dilde kod yaz, Hanogt Engine V3 ile oyun yap, Arcade'de yayınla ve toplulukla paylaş. Hepsi tek hesapta.",
+  "1p7b7igrepj": {
+    "en": "Write code in {count} languages, build games with Hanogt Engine, publish them to Arcade and share with the community. All in one account.",
+    "tr": "{count} dilde kod yaz, Hanogt Engine ile oyun yap, Arcade'de yayınla ve toplulukla paylaş. Hepsi tek hesapta.",
     "files": [
       "src/components/Landing/LandingPage.tsx"
     ]
@@ -36511,6 +35738,132 @@
       "src/components/Landing/LandingPage.tsx"
     ]
   },
+  "1uptfdhgrul": {
+    "en": "Run {count} languages in one click",
+    "tr": "{count} dili tek tıkla çalıştır",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "156r2p838lh": {
+    "en": "Monaco, tabs, projects and editing together",
+    "tr": "Monaco, sekmeler, projeler ve ekiple düzenleme",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1cql5ydp4o9": {
+    "en": "Publish your code to Media",
+    "tr": "Kodunu Media'da yayınla",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1i7r8mgrb0q": {
+    "en": "Thinks before answering hard questions",
+    "tr": "Zor sorularda yanıtlamadan önce düşünür",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1kfhjnd0dz7": {
+    "en": "Sees the file open in your editor and fixes your code",
+    "tr": "Editörde açık dosyanı görür, kodunu düzeltir",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "u1mds8lwol": {
+    "en": "{count} messages per {days} days on Free",
+    "tr": "Ücretsiz planda {days} günde {count} mesaj",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1vbr36uqw0p": {
+    "en": "Hierarchy, Inspector, scene and game views",
+    "tr": "Hiyerarşi, Inspector, sahne ve oyun görünümü",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "goqs3vwilm": {
+    "en": "Physics, particles, sound and WebGL",
+    "tr": "Fizik, parçacıklar, ses ve WebGL",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1b4hw2lvstu": {
+    "en": "Export one HTML file, publish it to Arcade",
+    "tr": "Tek dosya HTML olarak dışa aktar, Arcade'de yayınla",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "10edhwg1bwb": {
+    "en": "Friends, direct messages and groups",
+    "tr": "Arkadaşlar, direkt mesajlar ve gruplar",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1b7y2ipcmuq": {
+    "en": "Voice calls and voice messages",
+    "tr": "Sesli arama ve sesli mesaj",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "nqhgy45pnh": {
+    "en": "Online status and a custom status",
+    "tr": "Çevrimiçi durumu ve özel durum",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "5yjfq81o80": {
+    "en": "AI, software, gaming and markets",
+    "tr": "Yapay zekâ, yazılım, oyun ve piyasalar",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "16uj68kxv4p": {
+    "en": "Comments and the AI arena",
+    "tr": "Yorumlar ve yapay zekâ arenası",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "uh8qtr6ffb": {
+    "en": "Updated by the minute",
+    "tr": "Dakika dakika güncellenir",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1u8kvxsv3r0": {
+    "en": "A password step after a Google sign-in",
+    "tr": "Google ile girişten sonra şifre adımı",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "227y2lbcl0x": {
+    "en": "Two-step verification and signing out everywhere",
+    "tr": "İki adımlı doğrulama ve her yerden çıkış",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "75ijqengik": {
+    "en": "A security scan before code runs",
+    "tr": "Kod çalıştırılmadan önce güvenlik taraması",
+    "files": [
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
   "e257bjeim0": {
     "en": "Write code",
     "tr": "Kod yaz",
@@ -36532,9 +35885,9 @@
       "src/components/Landing/LandingPage.tsx"
     ]
   },
-  "18011sczefj": {
-    "en": "Hanogt Engine V3: tilemaps, UI and animation.",
-    "tr": "Hanogt Engine V3: tilemap, arayüz ve animasyon.",
+  "obsfmf2cu4": {
+    "en": "Hanogt Engine: tilemaps, UI and animation.",
+    "tr": "Hanogt Engine: tilemap, arayüz ve animasyon.",
     "files": [
       "src/components/Landing/LandingPage.tsx"
     ]
@@ -36551,6 +35904,104 @@
     "tr": "Arkadaşlar, gruplar ve mesajlar tek yerde.",
     "files": [
       "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "1rcv579nisi": {
+    "en": "Hello, Hanogt!",
+    "tr": "Merhaba, Hanogt!",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "7600h0ilz9": {
+    "en": "How do I make this loop faster?",
+    "tr": "Bu döngüyü nasıl hızlandırırım?",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "jqq5penjz9": {
+    "en": "Thought for 4 s",
+    "tr": "4 sn düşündü",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "634cxz8h3b": {
+    "en": "Use a set instead of searching the list on every step; lookups become O(1):",
+    "tr": "Her adımda listeyi baştan aramak yerine bir küme kullan; arama O(1) olur:",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "25jhh9w67wn": {
+    "en": "Deniz",
+    "tr": "Deniz",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "15yhb6c17br": {
+    "en": "I put the new level on Arcade, want to try it?",
+    "tr": "Oyunun yeni bölümünü Arcade'e koydum, dener misin?",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1hssa29vdjo": {
+    "en": "Looking now! Shall I call you?",
+    "tr": "Hemen bakıyorum! Sesli arayayım mı?",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1s7uemts0jb": {
+    "en": "Voice message · 0:12",
+    "tr": "Sesli mesaj · 0:12",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1k12hth9kz5": {
+    "en": "Link check",
+    "tr": "Bağlantı kontrolü",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "b06dqksvy5": {
+    "en": "Risky: signs of phishing",
+    "tr": "Riskli: kimlik avı belirtileri",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1zrl3pyz5no": {
+    "en": "The domain imitates a well-known brand",
+    "tr": "Alan adı tanınmış bir markayı taklit ediyor",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "29z8dvkq9zq": {
+    "en": "The page asks for a password and card details",
+    "tr": "Sayfa şifre ve kart bilgisi istiyor",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1lxasud95ah": {
+    "en": "Sessions: this device",
+    "tr": "Oturumlar: bu cihaz",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1bxbhegfcxe": {
+    "en": "Hello",
+    "tr": "Merhaba",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "105r6fr3v6r": {
@@ -37615,6 +37066,48 @@
       "src/components/PlanBadge.tsx"
     ]
   },
+  "wxqsu87wuq": {
+    "en": "For the team: no default payment link is set in Paddle. Enter https://hanogtcodev.com/plans under Paddle › Checkout › Checkout settings › Default payment link and save (separately for sandbox and live).",
+    "tr": "Ekip için: Paddle'da varsayılan ödeme bağlantısı tanımlı değil. Paddle › Checkout › Checkout settings › Default payment link alanına https://hanogtcodev.com/plans yazıp kaydet (sandbox ve canlı hesapta ayrı ayrı).",
+    "files": [
+      "src/components/Plans/billing-requests.ts"
+    ]
+  },
+  "cy407wzmbw": {
+    "en": "For the team: the payment link's domain isn't approved in Paddle. Request approval for hanogtcodev.com under Paddle › Checkout › Request domain approval.",
+    "tr": "Ekip için: ödeme bağlantısının alan adı Paddle'da onaylı değil. Paddle › Checkout › Request domain approval bölümünden hanogtcodev.com için onay iste.",
+    "files": [
+      "src/components/Plans/billing-requests.ts"
+    ]
+  },
+  "y91yl4yrat": {
+    "en": "For the team: checkout isn't enabled on this Paddle account yet; finish Paddle's account verification (onboarding).",
+    "tr": "Ekip için: bu Paddle hesabında ödeme ekranı henüz açılmamış; Paddle'daki hesap doğrulama (onboarding) adımlarını tamamla.",
+    "files": [
+      "src/components/Plans/billing-requests.ts"
+    ]
+  },
+  "ifi0cmttvv": {
+    "en": "For the team: Paddle Billing isn't enabled on this Paddle account (a Classic account). Use a Billing account's keys.",
+    "tr": "Ekip için: bu Paddle hesabında Paddle Billing açık değil (Classic hesap). Billing hesabının anahtarlarını kullan.",
+    "files": [
+      "src/components/Plans/billing-requests.ts"
+    ]
+  },
+  "2fowvtpbynz": {
+    "en": "For the team: the Paddle API key isn't allowed to do this. Give the key write access to Transactions and Customers under Paddle › Developer tools › Authentication.",
+    "tr": "Ekip için: Paddle API anahtarının bu işlem için izni yok. Paddle › Developer tools › Authentication bölümünde anahtara Transactions ve Customers yazma izni ver.",
+    "files": [
+      "src/components/Plans/billing-requests.ts"
+    ]
+  },
+  "2e4i65znsfe": {
+    "en": "For the team: the price or customer wasn't found in this Paddle account (it may be the other environment's id). Check the price mapping under Admin Panel › Subscriptions › Paddle.",
+    "tr": "Ekip için: fiyat ya da müşteri bu Paddle hesabında bulunamadı (öbür ortamın kimliği olabilir). Yönetici Paneli › Abonelikler › Paddle bölümünde fiyat eşleştirmesini kontrol et.",
+    "files": [
+      "src/components/Plans/billing-requests.ts"
+    ]
+  },
   "zzur4nkl9l": {
     "en": "Change your plan",
     "tr": "Planını değiştir",
@@ -37739,6 +37232,1064 @@
     "tr": "Kaydedilemedi. Biraz sonra tekrar dene.",
     "files": [
       "src/components/Plans/PlanBadgeSetting.tsx"
+    ]
+  },
+  "18bz63upsgo": {
+    "en": "Plans are open",
+    "tr": "Planlar açıldı",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "rt9jhdcvnb": {
+    "en": "Hanogt Codev Plans",
+    "tr": "Hanogt Codev Planları",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1li0gj6yfvr": {
+    "en": "Hanogt Codev stays free. Plus and Pro are being prepared for people who want more; no payments are taken right now and no card details are asked for.",
+    "tr": "Hanogt Codev ücretsiz kalacak. Daha fazlasını isteyenler için Plus ve Pro hazırlanıyor; şu anda ödeme alınmıyor ve hiçbir kart bilgisi istenmiyor.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "18imntym3i3": {
+    "en": "Hanogt Codev stays free. Plus and Pro are for people who want more Hanogt AI and priority support. Payments are handled securely by Paddle; your card details never reach us.",
+    "tr": "Hanogt Codev ücretsiz kalacak. Daha çok Hanogt AI ve destekte öncelik isteyenler için Plus ve Pro. Ödemeler Paddle üzerinden güvenle alınır; kart bilgilerin bize ulaşmaz.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "28rnkkq8lse": {
+    "en": "Your subscription is managed through Paddle. New sales are closed right now; your subscription isn't affected.",
+    "tr": "Aboneliğin Paddle üzerinden yönetilir. Yeni satışlar şu anda kapalı; mevcut aboneliğin bundan etkilenmez.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "23dpfwxhous": {
+    "en": "Your plan: {plan}",
+    "tr": "Planın: {plan}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "emtd6qb77p": {
+    "en": "Assigned by the Hanogt team",
+    "tr": "Hanogt ekibi tarafından tanımlandı",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1hgezrfqdbj": {
+    "en": "Monthly subscription",
+    "tr": "Aylık abonelik",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "hb4v3knghc": {
+    "en": "Yearly subscription",
+    "tr": "Yıllık abonelik",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "14u5dwb7ku2": {
+    "en": "Next payment: {date}",
+    "tr": "Sonraki ödeme: {date}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "aaytsfeu26": {
+    "en": "Your subscription ends on {date}; your benefits last until then.",
+    "tr": "Aboneliğin {date} tarihinde sona erecek; avantajların o güne kadar sürer.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "qrznrbm6im": {
+    "en": "Undo, keep my subscription",
+    "tr": "Vazgeç, aboneliğim devam etsin",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "ijg5x42dpu": {
+    "en": "Your last payment didn't go through. Paddle will try again a few times; your benefits continue meanwhile.",
+    "tr": "Son ödemen alınamadı. Paddle ödemeyi birkaç kez daha deneyecek; avantajların bu sürede devam eder.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1jh81qgvvi8": {
+    "en": "Update payment method",
+    "tr": "Ödeme yöntemini güncelle",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "kilyvth8n1": {
+    "en": "Your subscription is paused; your benefits come back when you resume it.",
+    "tr": "Aboneliğin duraklatıldı; avantajların sürdürünce geri gelir.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "26iiappdtgy": {
+    "en": "Resume subscription",
+    "tr": "Aboneliği sürdür",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1vc5f31xh45": {
+    "en": "When you resume, a new billing period starts today and Paddle charges the {plan} plan to your saved payment method right away.",
+    "tr": "Sürdürünce yeni ödeme dönemi bugün başlar ve Paddle {plan} planının ücretini kayıtlı ödeme yönteminden hemen alır.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "16iwugwusqa": {
+    "en": "Your paid period runs until {date}; resuming now costs nothing.",
+    "tr": "Ödediğin dönem {date} tarihine kadar sürüyor; şimdi sürdürürsen ücret alınmaz.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "u9yjw5mfjw": {
+    "en": "Confirm and resume",
+    "tr": "Onayla ve sürdür",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "10yef2ogu8o": {
+    "en": "Your subscription is resumed; your {plan} plan is active again.",
+    "tr": "Aboneliğin sürdürüldü; {plan} planın yeniden etkin.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "dhy7597b39": {
+    "en": "Your previous subscription has ended.",
+    "tr": "Önceki aboneliğin sona erdi.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "18nj31n79c3": {
+    "en": "Manage subscription",
+    "tr": "Aboneliği yönet",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "t7ps4aoi4u": {
+    "en": "Invoices, payment method and cancellation are in Paddle's secure customer portal.",
+    "tr": "Fatura, ödeme yöntemi ve iptal Paddle'ın güvenli müşteri portalında.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "keo4yklsza": {
+    "en": "Cancel your subscription to go back to Free",
+    "tr": "Ücretsiz plana dönmek için aboneliği iptal et",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1vwwq7ctbcs": {
+    "en": "Your plan benefits are switched off right now. If you think that's a mistake, open a support ticket.",
+    "tr": "Plan avantajların şu anda kullanıma kapalı. Bir sorun olduğunu düşünüyorsan destek talebi aç.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1rkebe3fhrw": {
+    "en": "Hanogt AI ({days} days): {used} / {limit} messages",
+    "tr": "Hanogt AI ({days} gün): {used} / {limit} mesaj",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "21n8pc733xd": {
+    "en": "Save {percent}%",
+    "tr": "%{percent} tasarruf",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1t0nz3q3tp3": {
+    "en": "/month",
+    "tr": "/ay",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "4tfq9we1ji": {
+    "en": "/year",
+    "tr": "/yıl",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "pn8bi1ofx9": {
+    "en": "{price} per year",
+    "tr": "Yıllık {price}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1044itom6yp": {
+    "en": "{price} a month",
+    "tr": "Aylık {price} karşılığı",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1n2oov6s8nq": {
+    "en": "This plan is sold with {interval} billing only for now.",
+    "tr": "Bu plan şimdilik yalnızca {interval} ödemeyle satılıyor.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "pj8y8jlvs7": {
+    "en": "The price is shown at checkout",
+    "tr": "Fiyat ödeme ekranında gösterilir",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "orrfvq8yik": {
+    "en": "{days}-day free trial",
+    "tr": "{days} gün ücretsiz dene",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "v4w992l7bo": {
+    "en": "Price to be announced",
+    "tr": "Fiyat yakında açıklanacak",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "23jpjtpxbdh": {
+    "en": "forever",
+    "tr": "her zaman",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "11lpc6560pm": {
+    "en": "Your current plan",
+    "tr": "Şu anki planın",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "bup4p65h09": {
+    "en": "Start for free",
+    "tr": "Ücretsiz başla",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "2g4wms5o93l": {
+    "en": "Get Plus",
+    "tr": "Plus'a geç",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "m1psngexl7": {
+    "en": "Get Pro",
+    "tr": "Pro'ya geç",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "rzwamyd6n6": {
+    "en": "Upgrade to Pro",
+    "tr": "Pro'ya yükselt",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "f3wqqgj2do": {
+    "en": "Switch to Plus",
+    "tr": "Plus'a geç",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "192pqql9w65": {
+    "en": "Switch to yearly",
+    "tr": "Yıllık ödemeye geç",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "2376vykhq9n": {
+    "en": "Switch to monthly",
+    "tr": "Aylık ödemeye geç",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "wxjlhhi03u": {
+    "en": "Start your own subscription",
+    "tr": "Kendi aboneliğini başlat",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1d254etnkxr": {
+    "en": "Sign in to buy",
+    "tr": "Giriş yap ve satın al",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "vrzwtwknq1": {
+    "en": "Update your payment method first",
+    "tr": "Önce ödeme yöntemini güncelle",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1gfvy7b4kq4": {
+    "en": "Not available",
+    "tr": "Kullanıma kapalı",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "24cuxfo6rju": {
+    "en": "Notify me when it opens",
+    "tr": "Açılınca haber ver",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1eym5z4j155": {
+    "en": "We'll let you know",
+    "tr": "Haber vereceğiz",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "yp3zaid381": {
+    "en": "Press again to stop the notification.",
+    "tr": "Bildirimden çıkmak için tekrar bas.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "26rql89fuzo": {
+    "en": "Sign in to get notified",
+    "tr": "Haber almak için giriş yap",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "8fiv05hk7o": {
+    "en": "Most complete",
+    "tr": "En kapsamlı",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1inmuxo99hi": {
+    "en": "{percent}% off",
+    "tr": "%{percent} indirim",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "tjels5ip7e": {
+    "en": "Payment received, activating your plan…",
+    "tr": "Ödemen alındı, planın etkinleştiriliyor…",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "au00i15cwn": {
+    "en": "Welcome! Your {plan} plan is active.",
+    "tr": "Hoş geldin! {plan} planın etkin.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "kqzdqqj3yv": {
+    "en": "Payment received; your plan will be active within a few minutes. To try right away, press \"Check my payment\".",
+    "tr": "Ödemen alındı; planın birkaç dakika içinde etkinleşecek. Hemen denemek için \"Ödememi kontrol et\"e bas.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "ry5m84ldsi": {
+    "en": "Check my payment",
+    "tr": "Ödememi kontrol et",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "11ulgqbpqdw": {
+    "en": "Paid, but your plan didn't change?",
+    "tr": "Ödeme yaptın ama planın değişmedi mi?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "tah4ox1wyq": {
+    "en": "Paddle has no completed payment for this account. If you finished the checkout, try again in a few minutes; if it persists, open a support ticket.",
+    "tr": "Paddle'da bu hesaba ait tamamlanmış bir ödeme bulunamadı. Ödeme ekranını tamamladıysan birkaç dakika sonra tekrar dene; sürerse destek talebi oluştur.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "2ewwl3199d": {
+    "en": "Your payment went through and Paddle is creating your subscription. Your plan will be active in a few seconds; there's no need to pay again.",
+    "tr": "Ödemen alındı, Paddle aboneliğini oluşturuyor. Planın birkaç saniye içinde açılacak; yeniden ödeme yapmana gerek yok.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1mbryimzbrj": {
+    "en": "Your plan changed: {plan}.",
+    "tr": "Planın değişti: {plan}.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "icrze65pbo": {
+    "en": "Your subscription will continue.",
+    "tr": "Aboneliğin devam ediyor.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1taj3enp7sm": {
+    "en": "That didn't work. Try again in a moment.",
+    "tr": "İşlem tamamlanamadı. Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "2be87kk1eto": {
+    "en": "The first try didn't work; trying once more…",
+    "tr": "İlk deneme olmadı, bir kez daha deneniyor…",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "cijmw5bz3z": {
+    "en": "Couldn't reach the server. Check your connection; if you use an ad blocker, browser protection or a VPN, turn it off for this site and try again.",
+    "tr": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et; reklam engelleyici, tarayıcı koruması ya da VPN kullanıyorsan bu site için kapatıp tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1llt6qbmzj1": {
+    "en": "The server didn't answer in time; the payment provider or the database is slow right now. Try again in a moment.",
+    "tr": "Sunucu zamanında yanıt vermedi; ödeme sağlayıcısı ya da veritabanı şu an yavaş. Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "j0y622jrcw": {
+    "en": "Your account details can't be reached right now (the database didn't answer). Try again in a moment.",
+    "tr": "Hesap bilgilerine şu an ulaşılamıyor (veritabanı yanıt vermedi). Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1lx09mm1h2j": {
+    "en": "The request couldn't be verified from this page. Refresh the page and try again.",
+    "tr": "İstek bu sayfadan doğrulanamadı. Sayfayı yenileyip tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "tbtxnzf9zh": {
+    "en": "No active subscription was found on this account. Refresh the page.",
+    "tr": "Bu hesapta etkin bir abonelik bulunamadı. Sayfayı yenile.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "cw6ertfiep": {
+    "en": "There's nothing to change; refresh the page.",
+    "tr": "Değiştirilecek bir şey yok; sayfayı yenile.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "u745ja2zyx": {
+    "en": "Error code: {ref}",
+    "tr": "Hata kodu: {ref}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "s2xmlv1g25": {
+    "en": "Have a coupon code?",
+    "tr": "Kupon kodun var mı?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "2g7n01iw64d": {
+    "en": "Coupon code",
+    "tr": "Kupon kodu",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1pbkl1x0r47": {
+    "en": "Sign in to use a coupon",
+    "tr": "Kupon kullanmak için giriş yap",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "z74lplbu3l": {
+    "en": "Sign in to use the coupon {code}",
+    "tr": "{code} kuponunu kullanmak için giriş yap",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1knl92ri": {
+    "en": "Coupons apply to new subscriptions, not to your current one or to plan changes.",
+    "tr": "Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğine ve plan değişikliklerine uygulanmaz.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1wt85jknw4e": {
+    "en": "{code} applied: {percent}% off · {plans} · {payments}",
+    "tr": "{code} uygulandı: %{percent} indirim · {plans} · {payments}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "28v1beqst2d": {
+    "en": "Plus and Pro",
+    "tr": "Plus ve Pro",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "dqqr792egn": {
+    "en": "on the first payment",
+    "tr": "ilk ödemede",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1xsj0x31kxr": {
+    "en": "on every payment",
+    "tr": "her ödemede",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "zj118ftzua": {
+    "en": "on the first {count} payments",
+    "tr": "ilk {count} ödemede",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "o4nz1el42n": {
+    "en": "With {code}, {payments}",
+    "tr": "{code} kuponuyla, {payments}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "79cbngcmbq": {
+    "en": "This coupon code isn't valid. Check the code and try again.",
+    "tr": "Bu kupon kodu geçerli değil. Kodu kontrol edip tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "372g8zzr4x": {
+    "en": "This coupon has expired.",
+    "tr": "Bu kuponun süresi dolmuş.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1musp2jq94v": {
+    "en": "This coupon has no uses left.",
+    "tr": "Bu kuponun kullanım hakkı dolmuş.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "ua6frj0phf": {
+    "en": "This coupon isn't valid for the plan you picked.",
+    "tr": "Bu kupon seçtiğin planda geçerli değil.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "16qg15s7dsv": {
+    "en": "For the team: the details of this request are under Admin Panel › Subscriptions › Paddle in \"Recent server errors\" (or, when no answer came at all, in \"Recent checkout errors\") and in the Vercel logs.",
+    "tr": "Ekip için: bu isteğin ayrıntısı Yönetici Paneli › Abonelikler › Paddle bölümündeki \"Son sunucu hataları\" listesinde (yanıt hiç gelmediyse \"Son ödeme ekranı hataları\"nda) ve Vercel günlüklerinde.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "29pcbyt8qil": {
+    "en": "Test mode: sales aren't open to everyone yet; only the Hanogt team and testers see these plans as buyable.",
+    "tr": "Test modu: satışlar henüz herkese açık değil; bu sayfayı yalnızca Hanogt ekibi ve test kullanıcıları satın alınabilir görüyor.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "gypk54apn8": {
+    "en": "Paddle sandbox: no real payments; use a test card (4242 4242 4242 4242).",
+    "tr": "Paddle sandbox: gerçek ödeme alınmaz, test kartıyla dene (4242 4242 4242 4242).",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "5h5pbsp1im": {
+    "en": "You already have a subscription; you can change your plan on this page.",
+    "tr": "Zaten bir aboneliğin var; planını bu sayfadan değiştirebilirsin.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "s5bgfgrup7": {
+    "en": "You have a paused subscription; resume it instead of buying a new one.",
+    "tr": "Duraklatılmış bir aboneliğin var; yenisini almak yerine onu sürdürebilirsin.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "3kd21h4myo": {
+    "en": "Paddle already has a customer record with this e-mail address. For your security we need to verify your account's address: sign in with Google once, or open a support ticket so our team can link the record to your account.",
+    "tr": "Bu e-posta adresiyle Paddle'da daha önce açılmış bir müşteri kaydı var. Güvenliğin için hesabının e-postasını doğrulamamız gerekiyor: bir kez Google ile giriş yap ya da destek talebi aç, ekibimiz kaydı hesabına bağlasın.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "ek90fbfo94": {
+    "en": "This account's Paddle customer record is linked to another account. Open a support ticket so our team can sort it out.",
+    "tr": "Bu hesabın Paddle müşteri kaydı başka bir hesaba bağlı. Destek talebi aç; ekibimiz düzeltsin.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1h40i9isrw5": {
+    "en": "Paddle couldn't charge your saved payment method (card declined). Update it and try again.",
+    "tr": "Paddle kayıtlı ödeme yönteminden ücreti alamadı (kart reddedildi). Ödeme yöntemini güncelleyip tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "13sz7bfruxt": {
+    "en": "Refresh the page",
+    "tr": "Sayfayı yenile",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "12y74p7n9r6": {
+    "en": "Payment received, thank you. The plan becomes active on the Hanogt account with the e-mail you paid with; sign in to see it.",
+    "tr": "Ödemen alındı, teşekkürler. Plan, ödemeyi yaptığın e-postayla açılmış Hanogt hesabında etkinleşir; görmek için giriş yap.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1klvo4bz7za": {
+    "en": "Payment received, thank you.",
+    "tr": "Ödemen alındı, teşekkürler.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "28qax9ne7fz": {
+    "en": "The chosen payment method can't be used. Try another one; if it keeps happening, open a support ticket.",
+    "tr": "Seçilen ödeme yöntemi kullanılamadı. Başka bir yöntem dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "275rqam8ws": {
+    "en": "A higher plan was assigned by the team",
+    "tr": "Daha yüksek bir plan ekip tarafından tanımlandı",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "cmm9u3hunb": {
+    "en": "This subscription can't be changed on this page; use \"Manage subscription\".",
+    "tr": "Bu abonelik bu sayfadan değiştirilemiyor; \"Aboneliği yönet\"i kullan.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "148vf904f1q": {
+    "en": "This plan isn't on sale right now.",
+    "tr": "Bu plan şu anda satışta değil.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "62g3orb2hn": {
+    "en": "Payments are switched off right now. Try again later.",
+    "tr": "Ödemeler şu anda kapalı. Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "f09kdcy3gi": {
+    "en": "Too many attempts. Try again in a minute.",
+    "tr": "Çok fazla deneme oldu. Bir dakika sonra tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "14e7hu6s24s": {
+    "en": "Your session has ended; please sign in again.",
+    "tr": "Oturumun sona ermiş; yeniden giriş yap.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "29r4c049gm8": {
+    "en": "Paddle isn't responding right now ({code}). Try again in a moment.",
+    "tr": "Paddle şu anda yanıt vermiyor ({code}). Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1hvzshua7af": {
+    "en": "Paddle didn't accept the request ({code}). Try again in a moment; if it keeps happening, open a support ticket.",
+    "tr": "Paddle isteği kabul etmedi ({code}). Biraz sonra tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "9vn3d3xcig": {
+    "en": "The checkout couldn't load: Paddle's checkout script didn't reach your browser. An ad blocker, your browser's tracking protection or your network (e.g. a work network, VPN or DNS filter) may be blocking cdn.paddle.com. Allow it for this site and try again.",
+    "tr": "Ödeme ekranı yüklenemedi: Paddle'ın ödeme betiği tarayıcına ulaşmadı. Reklam engelleyici, tarayıcının izleme koruması ya da ağ ayarların (ör. kurum ağı, VPN, DNS filtresi) cdn.paddle.com adresini engelliyor olabilir. Bu site için izin verip tekrar dene.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1w5vopkfpt7": {
+    "en": "The checkout couldn't load: your browser blocked {url}. Turn off your ad or script blocker or your browser's tracking protection for this site and try again; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranı yüklenemedi: tarayıcın {url} adresini engelledi. Reklam ya da betik engelleyiciyi veya tarayıcının izleme korumasını bu site için kapatıp tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "29c0f7k667l": {
+    "en": "The checkout couldn't start: Paddle loaded but couldn't be started. Try again in a moment; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranı başlatılamadı: Paddle yüklendi ama çalıştırılamadı. Biraz sonra tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "ruq8t6357b": {
+    "en": "For the team: the client-side token in Vercel (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) may belong to another Paddle account or to the other environment (sandbox/live). See the token check under Admin Panel › Subscriptions › Paddle.",
+    "tr": "Ekip için: Vercel'deki istemci tarafı jeton (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) başka bir Paddle hesabına ya da öbür ortama (Sandbox/Canlı) ait olabilir. Yönetici Paneli › Abonelikler › Paddle bölümündeki jeton denetimine bakın.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1qxauuptzu4": {
+    "en": "The checkout couldn't open. Refresh the page and try again; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranı açılamadı. Sayfayı yenileyip tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "25rcjpixktv": {
+    "en": "The checkout reported an error: {detail}",
+    "tr": "Ödeme ekranı bir hata bildirdi: {detail}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "26l2geju4c6": {
+    "en": "Something went wrong in the checkout. Try again; if it keeps happening, open a support ticket.",
+    "tr": "Ödeme ekranında bir hata oluştu. Tekrar dene; sorun sürerse destek talebi aç.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "eew0ntysvc": {
+    "en": "For the team: Paddle refused a field of the request while opening the checkout (the fields are above). One possible cause is a client-side token (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) from another Paddle account or environment than the API key that created the transaction; see the token check under Admin Panel › Subscriptions › Paddle.",
+    "tr": "Ekip için: Paddle ödeme ekranını açarken isteğin bir alanını kabul etmedi (alanlar yukarıda). Olası nedenlerden biri, tarayıcıdaki istemci tarafı jetonun (NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) işlemi oluşturan API anahtarından farklı bir Paddle hesabına ya da ortama ait olması; Yönetici Paneli › Abonelikler › Paddle'daki jeton denetimine bak.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1hbmxqsqeat": {
+    "en": "Technical detail: {stage}: {message}",
+    "tr": "Teknik ayrıntı: {stage}: {message}",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "70mbu265j2": {
+    "en": "Plan details can't be loaded right now; the prices below aren't final yet.",
+    "tr": "Plan bilgileri şu anda alınamıyor; aşağıdaki fiyatlar henüz kesinleşmedi.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "9jh8nuo1qk": {
+    "en": "Prices include the taxes of your country; the exact amount is shown at checkout. Payments are taken by Paddle.com, our Merchant of Record.",
+    "tr": "Fiyatlara bulunduğun ülkenin vergileri dahildir; kesin tutar ödeme ekranında gösterilir. Ödemeler, Kayıtlı Satıcımız (Merchant of Record) Paddle.com tarafından alınır.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1qt1o18noqb": {
+    "en": "When will payments start?",
+    "tr": "Ödeme ne zaman başlayacak?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1qsnt64mnj7": {
+    "en": "There's no date yet. When plans open we'll announce it on this page, in the changelog and, if you pressed \"Notify me\", in your notifications. Until then nothing is charged.",
+    "tr": "Henüz bir tarih yok. Planlar açıldığında bu sayfada, güncelleme günlüğünde ve \"Açılınca haber ver\" dediysen bildirimlerinde duyuracağız. O güne kadar hiçbir ücret alınmaz.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1l18rarqm7l": {
+    "en": "Will the free plan go away?",
+    "tr": "Ücretsiz plan kalkacak mı?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "24a8hq9r3dz": {
+    "en": "No. The code editor, the game engine, the Arcade, Media and Hanogt Social stay in the free plan, and Hanogt AI is available there with 50 messages a week.",
+    "tr": "Hayır. Kod editörü, oyun motoru, Arcade, Media ve Hanogt Social ücretsiz planda kalmaya devam edecek; Hanogt AI da ücretsiz planda haftada 50 mesajla kullanılabilir.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "gdun22bdld": {
+    "en": "I have a coupon code. What do I do?",
+    "tr": "Kupon kodum var, ne yapmalıyım?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "819d2bih3m": {
+    "en": "Keep it; you'll be able to use it at checkout once plans open. A coupon's expiry date is given with the coupon.",
+    "tr": "Kodunu sakla; planlar açıldığında satın alma sırasında kullanabileceksin. Kuponların bitiş tarihi kupon verilirken belirtilir.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "15zkffi8c31": {
+    "en": "How did I get a plan?",
+    "tr": "Planım nasıl tanımlandı?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "hnyl1nou3f": {
+    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit and longer answers, more projects and groups, bigger team sessions, your own API key connections, the developer API, a profile badge, priority support and, on Pro, early access.",
+    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı ve daha uzun yanıtlar, daha fazla proje ve grup, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar, geliştirici API'si, profil rozeti, destekte öncelik ve Pro'da erken erişim.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "l7yh9utz2r": {
+    "en": "Who takes the payment?",
+    "tr": "Ödemeyi kim alıyor?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "10admenpv7l": {
+    "en": "Payments go through Paddle. Paddle.com is the Merchant of Record for Hanogt Codev orders: it takes the payment, issues the invoice and handles taxes. Your card details never reach Hanogt Codev.",
+    "tr": "Ödemeler Paddle üzerinden alınır. Paddle.com, Hanogt Codev siparişlerinin Kayıtlı Satıcısıdır (Merchant of Record): ödemeyi alır, faturayı keser ve vergileri hesaplar. Kart bilgilerin Hanogt Codev'e hiç ulaşmaz.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1pkkb13dta1": {
+    "en": "How do I cancel?",
+    "tr": "Aboneliğimi nasıl iptal ederim?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "cz5312196": {
+    "en": "Press \"Manage subscription\" on this page and cancel in Paddle's customer portal. Cancellation takes effect at the end of the period you paid for, and your benefits last until then.",
+    "tr": "Bu sayfada \"Aboneliği yönet\"e bas; Paddle'ın müşteri portalından aboneliğini iptal edebilirsin. İptal, ödediğin dönemin sonunda geçerli olur ve o güne kadar avantajların sürer.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "wgngehupe0": {
+    "en": "Can I get a refund?",
+    "tr": "İade alabilir miyim?",
+    "files": [
+      "src/components/Plans/plans-copy.ts",
+      "src/lib/faq.ts"
+    ]
+  },
+  "1ofeg73ae3n": {
+    "en": "You can ask for a refund within 14 days of a subscription's first payment. The details are in the Refund Policy.",
+    "tr": "Bir aboneliğin ilk ödemesinden sonraki 14 gün içinde iade isteyebilirsin. Ayrıntılar İade Politikası'nda.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "w6ureqeyyv": {
+    "en": "Can I change my plan?",
+    "tr": "Planımı değiştirebilir miyim?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "14vhgkgomp5": {
+    "en": "Yes. You can move between Plus and Pro, or between monthly and yearly billing. The difference for the rest of your period is prorated and shown before you confirm.",
+    "tr": "Evet. Plus ile Pro arasında ya da aylık ile yıllık ödeme arasında geçebilirsin. Kalan süren için fark orantılı hesaplanır ve onaylamadan önce gösterilir.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "dvjr7cdy5d": {
+    "en": "Where do I use a coupon code?",
+    "tr": "Kupon kodumu nerede kullanırım?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "18ajbhrvjva": {
+    "en": "On this page press \"Have a coupon code?\", enter it and press Apply: the discounted amount shows on the plan and as a discount at checkout. You can also enter it with \"Add discount\" at checkout. Which plan and how many payments it covers is shown once it's applied. Coupons apply to new subscriptions, not to an existing one or to plan changes.",
+    "tr": "Bu sayfada \"Kupon kodun var mı?\"ya bas, kodunu yazıp Uygula'ya bas: indirimli tutar planın üzerinde, ödeme ekranında da indirim olarak görünür. İstersen kodu ödeme ekranındaki \"İndirim ekle\"ye de yazabilirsin. Kuponun hangi planda ve kaç ödemede geçerli olduğu kod uygulanınca yazılır. Kuponlar yeni aboneliklerde geçerlidir; mevcut aboneliğe ya da plan değişikliğine uygulanmaz.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "1cdtf9ojyii": {
+    "en": "Your usage",
+    "tr": "Kullanımın",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1uyjmxvi45o": {
+    "en": "Compare the plans",
+    "tr": "Planları karşılaştır",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1t5ftgnaugi": {
+    "en": "Hanogt AI messages",
+    "tr": "Hanogt AI mesajı",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "2daew7kvlno": {
+    "en": "{count} / {days} days",
+    "tr": "{count} / {days} gün",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1y8epotnesc": {
+    "en": "Messages a minute",
+    "tr": "Dakikada mesaj",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "13lbfraohnp": {
+    "en": "Longest answer",
+    "tr": "En uzun yanıt",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1kgvg2bw38c": {
+    "en": "{count} tokens",
+    "tr": "{count} token",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "s3el82pd45": {
+    "en": "File read",
+    "tr": "Okunan dosya",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "xz0zicvsuv": {
+    "en": "Own API key connections",
+    "tr": "Kendi API anahtarınla bağlantı",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1sbb9804z4y": {
+    "en": "Developer API keys",
+    "tr": "Geliştirici API anahtarı",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "2fw633al52c": {
+    "en": "Hanogt Social groups",
+    "tr": "Hanogt Social grubu",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "loap6wfx6z": {
+    "en": "Team editing",
+    "tr": "Ekiple düzenleme",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "ieiei4kkeg": {
+    "en": "Support priority",
+    "tr": "Destekte öncelik",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "e7wm3qww7e": {
+    "en": "Profile badge",
+    "tr": "Profil rozeti",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "d5p7k1pa3d": {
+    "en": "Early access to new features",
+    "tr": "Yeni özelliklere erken erişim",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
   "1axof5dlnba": {
@@ -37907,6 +38458,175 @@
     "tr": "Okudum ve devam et",
     "files": [
       "src/components/PrivacyPolicyModal.tsx"
+    ]
+  },
+  "1oyo3z26mrw": {
+    "en": "Your account's security",
+    "tr": "Hesabının güvenliği",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1c491jokcao": {
+    "en": "Your account is well protected",
+    "tr": "Hesabın iyi korunuyor",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1c01i3fehp7": {
+    "en": "You can make your account stronger",
+    "tr": "Hesabını güçlendirebilirsin",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "2a3jxq4xkie": {
+    "en": "1 suggestion",
+    "tr": "1 öneri",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1fvavdnrqyj": {
+    "en": "Sign in to see your password, two-step verification and sessions here.",
+    "tr": "Şifreni, iki adımlı doğrulamayı ve oturumlarını burada görmek için giriş yap.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "p1ueqp93tw": {
+    "en": "Your security details couldn't be loaded right now.",
+    "tr": "Güvenlik bilgilerin şu anda alınamadı.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "15myx8rfcd0": {
+    "en": "Loading your security details",
+    "tr": "Güvenlik bilgilerin yükleniyor",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1vnnyo8fxhc": {
+    "en": "Only you can see this.",
+    "tr": "Bu bilgileri yalnızca sen görürsün.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1f7uzysr58h": {
+    "en": "Set.",
+    "tr": "Ayarlı.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "2gnszp8ii8q": {
+    "en": "Set; it's asked after a Google sign-in too.",
+    "tr": "Ayarlı; Google ile girişten sonra da sorulur.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "12r3502yaug": {
+    "en": "None: you sign in with Google. Add one to be able to turn on two-step verification too.",
+    "tr": "Yok: Google ile giriyorsun. Şifre eklersen iki adımlı doğrulamayı da açabilirsin.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1cfwt1po94l": {
+    "en": "Add a password",
+    "tr": "Şifre ekle",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "oqpogw014v": {
+    "en": "On: the code from your app is asked after your password.",
+    "tr": "Açık: girişte şifrenden sonra uygulamadaki kod da sorulur.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "2bi4n3b5xlv": {
+    "en": "Off. Turn it on and a stolen password alone won't get anyone in.",
+    "tr": "Kapalı. Açınca şifren ele geçse bile hesabına girilemez.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "15ajplq70qw": {
+    "en": "Off. Add a password first to turn it on.",
+    "tr": "Kapalı. Açmak için önce bir şifre ekle.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1szo4wvkawl": {
+    "en": "Turn on",
+    "tr": "Aç",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx",
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "20xixacat15": {
+    "en": "Recovery codes",
+    "tr": "Kurtarma kodları",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "ingqq3dke7": {
+    "en": "{count} codes left.",
+    "tr": "{count} kod kaldı.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1h9g1vxvn19": {
+    "en": "Only {count} left; make new ones.",
+    "tr": "Yalnızca {count} kod kaldı; yenilerini oluştur.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "1d300eihf8d": {
+    "en": "None left; make new ones.",
+    "tr": "Hiç kod kalmadı; yenilerini oluştur.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "2f0ibakspjk": {
+    "en": "Renew",
+    "tr": "Yenile",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "17zfy86u6xa": {
+    "en": "Last sign-in: {date}.",
+    "tr": "Son giriş: {date}.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "e484jv39jm": {
+    "en": "If it's still open on a device you don't know, sign the other sessions out.",
+    "tr": "Tanımadığın bir cihazda açık kaldıysa diğer oturumları kapat.",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
+    ]
+  },
+  "hpqeygbcwy": {
+    "en": "Manage sessions",
+    "tr": "Oturumları yönet",
+    "files": [
+      "src/components/Security/AccountSecurityCard.tsx"
     ]
   },
   "1ub188wt16y": {
@@ -38301,13 +39021,6 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
-  "1a2x6trcdfh": {
-    "en": "Measure, check, generate",
-    "tr": "Ölç, sızıntı ara, üret",
-    "files": [
-      "src/components/Security/SecurityCenter.tsx"
-    ]
-  },
   "caia784qt6": {
     "en": "Phishing signs",
     "tr": "Oltalama işaretleri",
@@ -38315,9 +39028,23 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
-  "t9r02gmpwv": {
-    "en": "Harden your account",
-    "tr": "Hesabını güçlendir",
+  "1a2x6trcdfh": {
+    "en": "Measure, check, generate",
+    "tr": "Ölç, sızıntı ara, üret",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "1g2o6s3m2sk": {
+    "en": "Tips",
+    "tr": "İpuçları",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "2b2lt4zpagm": {
+    "en": "Harden your account step by step",
+    "tr": "Hesabını adım adım güçlendir",
     "files": [
       "src/components/Security/SecurityCenter.tsx"
     ]
@@ -38434,6 +39161,48 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
+  "nelpi7rnl9": {
+    "en": "Reverse shells and remote access",
+    "tr": "Ters kabuk ve uzaktan erişim",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "847e2uib1p": {
+    "en": "Disk wipes and fork bombs",
+    "tr": "Disk silme ve fork bomb",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "1sax44ol50r": {
+    "en": "Credential and token theft",
+    "tr": "Kimlik bilgisi ve jeton hırsızlığı",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "29iwwkya2nj": {
+    "en": "Keyloggers",
+    "tr": "Tuş kaydı (keylogger)",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "1xkewruqk1p": {
+    "en": "Cryptomining",
+    "tr": "Kripto madenciliği",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "h9ubf62jvb": {
+    "en": "Container escapes and privilege escalation",
+    "tr": "Konteyner kaçışı ve yetki yükseltme",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
   "16ez6n52jqe": {
     "en": "Your code and password never leave your device",
     "tr": "Kodun ve parolan cihazından çıkmaz",
@@ -38441,9 +39210,9 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
-  "286d75quc8n": {
-    "en": "Find leaked keys and flaws in your code, measure passwords and inspect suspicious links. The Security Advisor and Security Bot are always at hand.",
-    "tr": "Kodundaki sızmış anahtarları ve açıkları bul, parolanı ölç, şüpheli bağlantıları incele. Güvenlik Danışmanı ve Security Bot her zaman yanında.",
+  "h64ysemgqg": {
+    "en": "See your account's security at a glance, find leaked keys and flaws in your code and inspect suspicious links.",
+    "tr": "Hesabının güvenliğini tek bakışta gör, kodundaki sızmış anahtarları ve açıkları bul, şüpheli bağlantıları incele.",
     "files": [
       "src/components/Security/SecurityCenter.tsx"
     ]
@@ -38458,6 +39227,48 @@
   "jlux90hz5x": {
     "en": "Security tools",
     "tr": "Güvenlik araçları",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "2e1i236mmad": {
+    "en": "Hanogt Security Bot",
+    "tr": "Hanogt Security Bot",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "g0rwg22sus": {
+    "en": "An automated pre-screen on the server. Before server-run code is executed, and when a project is sent to Media or a game is published on Arcade, it scans the code for known harmful patterns, blocks what is risky and tells you why.",
+    "tr": "Sunucuda çalışan otomatik bir ön eleme. Sunucuda çalışan dillerdeki kodu çalıştırmadan önce, Media'ya gönderilen projeleri ve Arcade'de yayımlanan oyunları bilinen zararlı kalıplara karşı tarar; riskli olanı engeller ve nedenini gösterir.",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "qzwn6r0n28": {
+    "en": "What it looks for",
+    "tr": "Aradıkları",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "1g51eval63v": {
+    "en": "The scan can't promise to catch every threat; check your code yourself before you share it.",
+    "tr": "Tarama her tehdidi yakalayacağını garanti etmez; paylaşmadan önce kodunu sen de kontrol et.",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "zrcj0ozkk9": {
+    "en": "Coming to Hanogt Social groups: moderation commands and AutoMod.",
+    "tr": "Yakında Hanogt Social gruplarında da: moderasyon komutları ve AutoMod.",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "1ho6or4rg0f": {
+    "en": "Soon",
+    "tr": "Yakında",
     "files": [
       "src/components/Security/SecurityCenter.tsx"
     ]
@@ -38490,6 +39301,27 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
+  "bpkwk1h4qx": {
+    "en": "Send a security report",
+    "tr": "Güvenlik bildirimi gönder",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "2dkld5y187s": {
+    "en": "Was my account compromised?",
+    "tr": "Hesabım ele geçirildi mi?",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
+  "doms2gilpu": {
+    "en": "Talk to Hanogt AI",
+    "tr": "Hanogt AI ile konuş",
+    "files": [
+      "src/components/Security/SecurityCenter.tsx"
+    ]
+  },
   "224z39yshdj": {
     "en": "Create a report titled \"Security\" on the Feedback page.",
     "tr": "Geri Bildirim sayfasından \"Güvenlik\" başlıklı bir bildirim oluştur.",
@@ -38518,23 +39350,9 @@
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
-  "bpkwk1h4qx": {
-    "en": "Send a security report",
-    "tr": "Güvenlik bildirimi gönder",
-    "files": [
-      "src/components/Security/SecurityCenter.tsx"
-    ]
-  },
-  "2dkld5y187s": {
-    "en": "Was my account compromised?",
-    "tr": "Hesabım ele geçirildi mi?",
-    "files": [
-      "src/components/Security/SecurityCenter.tsx"
-    ]
-  },
-  "2480mn1rd8n": {
-    "en": "Change your password now (Account Settings → Password Management). If you use Google sign-in, change your Google password.",
-    "tr": "Hemen parolanı değiştir (Hesap Ayarları → Şifre Yönetimi). Google ile giriyorsan Google parolanı değiştir.",
+  "156wsklfnxo": {
+    "en": "Sign out all other sessions and change your password (Account Settings → Privacy & Security). If you use Google sign-in, change your Google password too.",
+    "tr": "Diğer tüm oturumları kapat ve parolanı değiştir (Hesap Ayarları → Gizlilik ve Güvenlik). Google ile giriyorsan Google parolanı da değiştir.",
     "files": [
       "src/components/Security/SecurityCenter.tsx"
     ]
@@ -38556,13 +39374,6 @@
   "13ukvsjpeeo": {
     "en": "Contact us via Feedback titled \"Security\" and we'll secure the account together.",
     "tr": "Geri Bildirim'den \"Güvenlik\" başlığıyla bize ulaş; hesabını birlikte güvenceye alalım.",
-    "files": [
-      "src/components/Security/SecurityCenter.tsx"
-    ]
-  },
-  "doms2gilpu": {
-    "en": "Talk to Hanogt AI",
-    "tr": "Hanogt AI ile konuş",
     "files": [
       "src/components/Security/SecurityCenter.tsx"
     ]
@@ -40347,13 +41158,6 @@
   "15ky1s8pmex": {
     "en": "Your sound is off: you can't hear the other person.",
     "tr": "Sesin kapalı: karşı tarafı duymuyorsun.",
-    "files": [
-      "src/components/VoiceCallProvider.tsx"
-    ]
-  },
-  "1szo4wvkawl": {
-    "en": "Turn on",
-    "tr": "Aç",
     "files": [
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -45961,7 +46765,8 @@
     "en": "AI assistant for code, games and security",
     "tr": "Kod, oyun ve güvenlik için yapay zeka asistanı",
     "files": [
-      "src/lib/nav.ts"
+      "src/lib/nav.ts",
+      "src/lib/products.ts"
     ]
   },
   "2ashuujttls": {
@@ -46333,6 +47138,34 @@
     "tr": "Son görülme {time}",
     "files": [
       "src/lib/presence.ts"
+    ]
+  },
+  "2g8n69w9how": {
+    "en": "2D and 3D games in C# and C++, in the browser",
+    "tr": "Tarayıcıda C# ve C++ ile 2D ve 3D oyunlar",
+    "files": [
+      "src/lib/products.ts"
+    ]
+  },
+  "22w1uqgru0j": {
+    "en": "Protect your account, your code and your links",
+    "tr": "Hesabını, kodunu ve bağlantılarını koru",
+    "files": [
+      "src/lib/products.ts"
+    ]
+  },
+  "1m7jb7f7zt4": {
+    "en": "Tech, gaming and market news",
+    "tr": "Teknoloji, oyun ve piyasa haberleri",
+    "files": [
+      "src/lib/products.ts"
+    ]
+  },
+  "dm9mcl7hp2": {
+    "en": "Friends, messages, groups and calls",
+    "tr": "Arkadaşlar, mesajlar, gruplar ve aramalar",
+    "files": [
+      "src/lib/products.ts"
     ]
   },
   "29rla57o27b": {

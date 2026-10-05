@@ -2,7 +2,7 @@
 
 import "@fontsource/pixelify-sans/400.css";
 import "@fontsource/pixelify-sans/600.css";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { GUIDE_PAGE_COUNT } from "@/components/Guide/book-meta";
@@ -15,24 +15,23 @@ export default function GuideTeaser() {
     const [titleBefore, titleAfter = ""] = t("gt_title").split("{highlight}");
     return (
         <section className="relative overflow-hidden py-24">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.12),transparent_65%)]" />
             <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">
                 <div>
                     <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-[12px] font-bold text-emerald-700 dark:text-emerald-300">
                         <BookOpen className="h-3.5 w-3.5" />{t("gt_kicker")}
                     </span>
                     <h2 className="mt-4 text-4xl font-black tracking-tight text-zinc-900 sm:text-5xl dark:text-white">
-                        {titleBefore}<span className="bg-gradient-to-r from-emerald-500 to-lime-400 bg-clip-text text-transparent">{t("gt_highlight")}</span>{titleAfter}
+                        {titleBefore}<span className="text-brand-green">{t("gt_highlight")}</span>{titleAfter}
                     </h2>
                     <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-400">
                         {t("gt_text")}
                     </p>
                     <div className="mt-6 flex flex-wrap gap-3">
-                        <Link href="/guide" className="inline-flex h-12 items-center gap-2 rounded-xl border-b-4 border-emerald-800 bg-emerald-600 px-5 text-[15px] font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:-translate-y-0.5 hover:bg-emerald-500 active:translate-y-0.5 active:border-b-2" style={{ fontFamily: "'Pixelify Sans', var(--font-sans)" }}>
-                            📖 {t("gt_open")}
+                        <Link href="/guide" className="inline-flex h-12 items-center gap-2 rounded-xl border-b-4 border-emerald-800 bg-emerald-600 px-5 text-[15px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-emerald-500 active:translate-y-0.5 active:border-b-2" style={{ fontFamily: "'Pixelify Sans', var(--font-sans)" }}>
+                            <BookOpen className="h-4.5 w-4.5" aria-hidden="true" />{t("gt_open")}
                         </Link>
                         <Link href="/guide#news" className="inline-flex h-12 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-[14px] font-semibold text-zinc-700 transition hover:-translate-y-0.5 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200">
-                            📰 {t("gt_news")}
+                            <Newspaper className="h-4.5 w-4.5" aria-hidden="true" />{t("gt_news")}
                         </Link>
                     </div>
                 </div>

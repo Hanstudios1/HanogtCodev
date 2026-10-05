@@ -1,47 +1,91 @@
 "use client";
 
+import { Magnet, Play, RotateCcw, Shield, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { RUNNER } from "./runner-rules";
 
+export type RunnerEvent = "jump" | "doubleJump" | "coin" | "hit" | "shield" | "magnet";
+
+type State = "intro" | "play" | "over";
 interface Obstacle { x: number; w: number; h: number }
 interface Coin { x: number; y: number; taken: boolean; spin: number }
+interface PowerUp { x: number; y: number; kind: "shield" | "magnet" }
 interface Particle { x: number; y: number; vx: number; vy: number; life: number; color: string }
 
-const GRAVITY = 2300;
-const JUMP = 760;
+const BEST_KEY = "hanogt_runner_best";
+/** Back to the self-playing intro after this long on the game-over screen. */
+const OVER_TIMEOUT = 10;
+
+const PALETTE = {
+    light: { sky: "#f6f7fb", far: "#e6e9f1", near: "#d6dbe7", ground: "#e4e4e7", line: "#18181b", ink: "#18181b", obstacle: "#27272a", eye: "#ffffff" },
+    dark: { sky: "#0c0d12", far: "#141821", near: "#1b202b", ground: "#1f2128", line: "#a1a1aa", ink: "#0a0a0f", obstacle: "#d4d4d8", eye: "#0a0a0f" },
+};
+
+function readBest() {
+    try {
+        return Math.max(0, Number(window.localStorage.getItem(BEST_KEY)) || 0);
+    } catch {
+        return 0;
+    }
+}
+
+function writeBest(value: number) {
+    try {
+        window.localStorage.setItem(BEST_KEY, String(value));
+    } catch {
+        // Storage blocked: the best score lasts for this visit.
+    }
+}
 
 /**
- * A tiny endless runner drawn on a canvas: the same game the C# snippet next to it describes.
- * It plays itself until the visitor presses Space / taps, then hands over control.
+ * An endless runner on a canvas, played by the rules of the C# Runner class
+ * next to it (runner-rules.ts): it plays itself until the visitor presses
+ * Space or taps, then it's theirs until they hit an obstacle. Coyote time,
+ * a jump buffer and a double jump make it forgiving; coins in a row raise a
+ * multiplier; a shield takes one hit and a magnet pulls coins in.
  */
-export default function MiniGame({ hint }: { hint: string }) {
+export default function MiniGame({ labels, onEvent }: {
+    labels: { hint: string; tap: string; play: string; again: string; over: string; best: string; score: string };
+    onEvent?: (event: RunnerEvent) => void;
+}) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const jumpRef = useRef<(() => void) | null>(null);
-    const [score, setScore] = useState(0);
-    const [best, setBest] = useState(0);
-    const [manual, setManual] = useState(false);
+    const pressRef = useRef<(() => void) | null>(null);
+    const onEventRef = useRef(onEvent);
+    const [hud, setHud] = useState({ score: 0, best: 0, multiplier: 1, shield: false, magnet: false });
+    const [state, setState] = useState<State>("intro");
+    const [still, setStill] = useState(false);
+
+    useEffect(() => {
+        onEventRef.current = onEvent;
+    }, [onEvent]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         const context = canvas?.getContext("2d");
         if (!canvas || !context) return;
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        let width = 0;
-        let height = 0;
-        let ground = 0;
+        let width = 0, height = 0, ground = 0;
         let frame = 0;
         let last = performance.now();
         let visible = true;
-        let spawnObstacle = 1.2;
-        let spawnCoin = 0.6;
-        let shake = 0;
-        let lastInput = -Infinity;
+        let running = !reduceMotion;
+        let mode: State = "intro";
+        let overFor = 0;
         let elapsed = 0;
-        let currentScore = 0;
-        let bestScore = 0;
+        let spawnObstacle = 1.2, spawnCoin = 0.6, spawnPower = 9;
+        let shake = 0;
+        let score = 0, streak = 0, best = readBest();
+        let shield = false, magnetFor = 0;
+        // The C# fields: time since the runner left the ground, since Jump was pressed, jumps left.
+        let sinceGrounded = 0, sinceJumpPressed = Number.POSITIVE_INFINITY, jumpsLeft: number = RUNNER.maxJumps;
         const player = { x: 56, y: 0, vy: 0, size: 26, grounded: true, squash: 0 };
         let obstacles: Obstacle[] = [];
         let coins: Coin[] = [];
+        let powers: PowerUp[] = [];
         let particles: Particle[] = [];
+        const emit = (event: RunnerEvent) => onEventRef.current?.(event);
+        const multiplier = () => Math.min(RUNNER.maxMultiplier, 1 + Math.floor(streak / RUNNER.streakStep));
+        const publish = () => setHud({ score, best, multiplier: multiplier(), shield, magnet: magnetFor > 0 });
 
         const resize = () => {
             const rect = canvas.getBoundingClientRect();
@@ -53,8 +97,9 @@ export default function MiniGame({ hint }: { hint: string }) {
             context.setTransform(dpr, 0, 0, dpr, 0, 0);
             ground = height - 34;
             if (player.grounded) player.y = ground - player.size;
+            // Resizing clears the canvas: draw again at once rather than leave it blank until the next frame.
+            draw();
         };
-        resize();
         const observer = new ResizeObserver(resize);
         observer.observe(canvas);
         const visibility = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; });
@@ -68,74 +113,188 @@ export default function MiniGame({ hint }: { hint: string }) {
             }
         };
 
-        const jump = () => {
-            if (!player.grounded) return;
-            player.vy = -JUMP;
+        const resetWorld = () => {
+            obstacles = [];
+            coins = [];
+            powers = [];
+            particles = [];
+            spawnObstacle = 1.2;
+            spawnCoin = 0.6;
+            spawnPower = 9;
+            elapsed = 0;
+            score = 0;
+            streak = 0;
+            shield = false;
+            magnetFor = 0;
+            player.vy = 0;
+            player.grounded = true;
+            player.y = ground - player.size;
+            sinceGrounded = 0;
+            sinceJumpPressed = Number.POSITIVE_INFINITY;
+            jumpsLeft = RUNNER.maxJumps;
+        };
+
+        const setMode = (next: State) => {
+            mode = next;
+            setState(next);
+        };
+
+        // Jump(): a press is remembered for the jump buffer; the update decides.
+        const press = () => {
+            if (!running) {
+                running = true;
+                setStill(false);
+                last = performance.now();
+                frame = requestAnimationFrame(loop);
+            }
+            if (mode === "over") {
+                resetWorld();
+                setMode("play");
+                publish();
+                return;
+            }
+            if (mode === "intro") {
+                resetWorld();
+                setMode("play");
+                publish();
+            }
+            sinceJumpPressed = 0;
+        };
+        pressRef.current = press;
+
+        const tryJump = () => {
+            const onGroundOrCoyote = player.grounded || sinceGrounded <= RUNNER.coyoteTime;
+            if (sinceJumpPressed > RUNNER.jumpBuffer) return;
+            if (onGroundOrCoyote && jumpsLeft === RUNNER.maxJumps) {
+                player.vy = -RUNNER.jumpSpeed;
+                jumpsLeft -= 1;
+                emit("jump");
+            } else if (jumpsLeft > 0 && !player.grounded) {
+                player.vy = -RUNNER.doubleJumpSpeed;
+                jumpsLeft = 0;
+                emit("doubleJump");
+                burst(player.x + player.size / 2, player.y + player.size, "rgba(51,185,96,0.9)", 8);
+            } else {
+                return;
+            }
+            sinceJumpPressed = Number.POSITIVE_INFINITY;
             player.grounded = false;
             player.squash = -0.25;
-            burst(player.x + player.size / 2, ground, "rgba(148,163,184,0.9)", 6);
         };
-        jumpRef.current = () => {
-            lastInput = elapsed;
-            setManual(true);
-            jump();
+
+        const hit = (obstacle: Obstacle) => {
+            obstacle.x = -100;
+            shake = 0.35;
+            burst(player.x + player.size / 2, player.y + player.size / 2, "rgba(244,63,94,1)", 16);
+            if (shield) {
+                shield = false;
+                emit("shield");
+                publish();
+                return;
+            }
+            streak = 0;
+            emit("hit");
+            if (mode === "play") {
+                if (score > best) {
+                    best = score;
+                    writeBest(best);
+                }
+                overFor = 0;
+                setMode("over");
+            } else {
+                score = 0;
+            }
+            publish();
         };
 
         const update = (dt: number) => {
+            if (mode === "over") {
+                overFor += dt;
+                if (overFor > OVER_TIMEOUT) {
+                    resetWorld();
+                    setMode("intro");
+                    publish();
+                }
+                return;
+            }
             elapsed += dt;
             const speed = 250 + Math.min(elapsed * 4, 140);
-            const autopilot = elapsed - lastInput > 6;
-            if (autopilot) {
+            // The intro plays itself.
+            if (mode === "intro") {
                 const next = obstacles.find((obstacle) => obstacle.x + obstacle.w > player.x);
-                if (next && next.x - (player.x + player.size) < speed * 0.2 && next.x > player.x) jump();
+                if (next && next.x > player.x && next.x - (player.x + player.size) < speed * 0.2 && player.grounded) sinceJumpPressed = 0;
             }
+            sinceGrounded = player.grounded ? 0 : sinceGrounded + dt;
+            sinceJumpPressed += dt;
+            tryJump();
+
             spawnObstacle -= dt;
             spawnCoin -= dt;
+            spawnPower -= dt;
             if (spawnObstacle <= 0) {
                 obstacles.push({ x: width + 20, w: 18 + Math.random() * 18, h: 22 + Math.random() * 26 });
                 spawnObstacle = 1.1 + Math.random() * 1.1;
             }
             if (spawnCoin <= 0) {
-                coins.push({ x: width + 20, y: ground - 60 - Math.random() * 70, taken: false, spin: Math.random() * Math.PI });
+                coins.push({ x: width + 20, y: ground - 60 - Math.random() * 80, taken: false, spin: Math.random() * Math.PI });
                 spawnCoin = 0.5 + Math.random() * 0.8;
             }
-            player.vy += GRAVITY * dt;
+            if (spawnPower <= 0) {
+                powers.push({ x: width + 20, y: ground - 70 - Math.random() * 50, kind: Math.random() < 0.5 ? "shield" : "magnet" });
+                spawnPower = 12 + Math.random() * 8;
+            }
+
+            player.vy += RUNNER.gravity * dt;
             player.y += player.vy * dt;
             if (player.y >= ground - player.size) {
                 if (!player.grounded) player.squash = 0.3;
                 player.y = ground - player.size;
                 player.vy = 0;
                 player.grounded = true;
+                jumpsLeft = RUNNER.maxJumps;
             }
             player.squash *= Math.pow(0.001, dt);
+            magnetFor = Math.max(0, magnetFor - dt);
+
+            const cx = player.x + player.size / 2, cy = player.y + player.size / 2;
             for (const obstacle of obstacles) obstacle.x -= speed * dt;
+            for (const power of powers) power.x -= speed * dt;
             for (const coin of coins) {
                 coin.x -= speed * dt;
                 coin.spin += dt * 6;
+                if (magnetFor > 0 && coin.x - cx < 220 && coin.x > cx - 30) {
+                    coin.x += (cx - coin.x) * Math.min(1, dt * 7);
+                    coin.y += (cy - coin.y) * Math.min(1, dt * 7);
+                }
             }
             obstacles = obstacles.filter((obstacle) => obstacle.x + obstacle.w > -10);
-            coins = coins.filter((coin) => coin.x > -20 && !coin.taken);
-            const px = player.x;
-            const py = player.y;
-            const ps = player.size;
+            powers = powers.filter((power) => power.x > -20);
+
             for (const coin of coins) {
-                if (Math.abs(coin.x - (px + ps / 2)) < 20 && Math.abs(coin.y - (py + ps / 2)) < 24) {
+                if (Math.abs(coin.x - cx) < 20 && Math.abs(coin.y - cy) < 24) {
                     coin.taken = true;
-                    currentScore += 1;
-                    if (currentScore > bestScore) bestScore = currentScore;
-                    setScore(currentScore);
-                    setBest(bestScore);
-                    burst(coin.x, coin.y, "rgba(250,204,21,1)", 12);
+                    // OnCoin(): the streak raises the multiplier.
+                    streak += 1;
+                    score += multiplier();
+                    if (mode === "intro" && score > 99) score = 0;
+                    emit("coin");
+                    burst(coin.x, coin.y, "rgba(245,179,1,1)", 12);
+                    publish();
+                }
+            }
+            coins = coins.filter((coin) => coin.x > -20 && !coin.taken);
+            for (const power of powers) {
+                if (Math.abs(power.x - cx) < 22 && Math.abs(power.y - cy) < 26) {
+                    power.x = -100;
+                    if (power.kind === "shield") shield = true;
+                    else magnetFor = RUNNER.magnetSeconds;
+                    emit(power.kind);
+                    burst(power.x, power.y, power.kind === "shield" ? "rgba(0,149,233,1)" : "rgba(239,68,68,1)", 12);
+                    publish();
                 }
             }
             for (const obstacle of obstacles) {
-                if (px + ps - 4 > obstacle.x && px + 4 < obstacle.x + obstacle.w && py + ps > ground - obstacle.h + 4) {
-                    burst(px + ps / 2, py + ps / 2, "rgba(244,63,94,1)", 16);
-                    obstacle.x = -100;
-                    shake = 0.35;
-                    currentScore = 0;
-                    setScore(0);
-                }
+                if (player.x + player.size - 4 > obstacle.x && player.x + 4 < obstacle.x + obstacle.w && player.y + player.size > ground - obstacle.h + 4) hit(obstacle);
             }
             for (const particle of particles) {
                 particle.life -= dt;
@@ -147,77 +306,94 @@ export default function MiniGame({ hint }: { hint: string }) {
             shake = Math.max(0, shake - dt);
         };
 
-        const draw = () => {
-            const dark = document.documentElement.classList.contains("dark");
-            context.save();
-            if (shake > 0) context.translate((Math.random() - 0.5) * shake * 18, (Math.random() - 0.5) * shake * 18);
-            const sky = context.createLinearGradient(0, 0, 0, height);
-            sky.addColorStop(0, dark ? "#0b1020" : "#eef2ff");
-            sky.addColorStop(1, dark ? "#1e1b4b" : "#fdf4ff");
-            context.fillStyle = sky;
-            context.fillRect(-20, -20, width + 40, height + 40);
-            // Parallax grid
-            context.strokeStyle = dark ? "rgba(129,140,248,0.10)" : "rgba(99,102,241,0.10)";
-            context.lineWidth = 1;
-            const offset = (elapsed * 60) % 32;
-            for (let x = -offset; x < width; x += 32) {
+        const layer = (color: string, factor: number, base: number, step: number, heights: number[]) => {
+            context.fillStyle = color;
+            const offset = (elapsed * 250 * factor) % (step * heights.length);
+            for (let index = 0, x = -offset; x < width + step; index += 1, x += step) {
+                const h = heights[index % heights.length];
                 context.beginPath();
-                context.moveTo(x, 0);
-                context.lineTo(x, ground);
-                context.stroke();
+                context.roundRect(x, base - h, step - 6, h + 4, 6);
+                context.fill();
             }
-            // Ground
-            context.fillStyle = dark ? "#312e81" : "#c7d2fe";
-            context.fillRect(0, ground, width, height - ground);
-            context.fillStyle = dark ? "#6366f1" : "#6366f1";
-            context.fillRect(0, ground, width, 3);
-            // Coins
+        };
+
+        function draw() {
+            const colors = document.documentElement.classList.contains("dark") ? PALETTE.dark : PALETTE.light;
+            context!.save();
+            if (shake > 0) context!.translate((Math.random() - 0.5) * shake * 18, (Math.random() - 0.5) * shake * 18);
+            context!.fillStyle = colors.sky;
+            context!.fillRect(-20, -20, width + 40, height + 40);
+            // Parallax: far blocks drift slowly, near ones faster.
+            layer(colors.far, 0.15, ground, 70, [46, 70, 38, 88, 56, 64]);
+            layer(colors.near, 0.4, ground, 54, [22, 34, 18, 40, 28]);
+            context!.fillStyle = colors.ground;
+            context!.fillRect(0, ground, width, height - ground);
+            context!.fillStyle = colors.line;
+            context!.fillRect(0, ground, width, 2);
+
             for (const coin of coins) {
                 const squeeze = Math.abs(Math.cos(coin.spin));
-                context.fillStyle = "#facc15";
-                context.beginPath();
-                context.ellipse(coin.x, coin.y, 8 * squeeze + 1, 8, 0, 0, Math.PI * 2);
-                context.fill();
-                context.fillStyle = "rgba(255,255,255,0.7)";
-                context.fillRect(coin.x - 1, coin.y - 5, 2, 4);
+                context!.fillStyle = "#f5b301";
+                context!.strokeStyle = colors.ink;
+                context!.lineWidth = 1.5;
+                context!.beginPath();
+                context!.ellipse(coin.x, coin.y, 8 * squeeze + 1, 8, 0, 0, Math.PI * 2);
+                context!.fill();
+                context!.stroke();
             }
-            // Obstacles
+            for (const power of powers) {
+                context!.fillStyle = power.kind === "shield" ? "#0095e9" : "#ef4444";
+                context!.strokeStyle = colors.ink;
+                context!.lineWidth = 2;
+                context!.beginPath();
+                context!.arc(power.x, power.y, 11, 0, Math.PI * 2);
+                context!.fill();
+                context!.stroke();
+                context!.fillStyle = "#ffffff";
+                context!.font = "bold 11px ui-sans-serif, system-ui";
+                context!.textAlign = "center";
+                context!.textBaseline = "middle";
+                context!.fillText(power.kind === "shield" ? "S" : "M", power.x, power.y + 0.5);
+            }
             for (const obstacle of obstacles) {
-                const gradient = context.createLinearGradient(0, ground - obstacle.h, 0, ground);
-                gradient.addColorStop(0, "#fb7185");
-                gradient.addColorStop(1, "#e11d48");
-                context.fillStyle = gradient;
-                context.beginPath();
-                context.roundRect(obstacle.x, ground - obstacle.h, obstacle.w, obstacle.h, 5);
-                context.fill();
+                context!.fillStyle = colors.obstacle;
+                context!.beginPath();
+                context!.roundRect(obstacle.x, ground - obstacle.h, obstacle.w, obstacle.h, 5);
+                context!.fill();
             }
-            // Player (squash & stretch)
+            // The runner: a green sticker block with an ink outline, squashed on landing.
             const size = player.size;
             const sx = size * (1 + player.squash * 0.6);
             const sy = size * (1 - player.squash * 0.6);
             const bx = player.x + (size - sx) / 2;
             const by = player.y + (size - sy);
-            const body = context.createLinearGradient(bx, by, bx + sx, by + sy);
-            body.addColorStop(0, "#818cf8");
-            body.addColorStop(1, "#d946ef");
-            context.fillStyle = body;
-            context.beginPath();
-            context.roundRect(bx, by, sx, sy, 7);
-            context.fill();
-            context.fillStyle = "#fff";
-            context.fillRect(bx + sx * 0.55, by + sy * 0.28, 5, 6);
-            context.fillRect(bx + sx * 0.78, by + sy * 0.28, 4, 6);
-            // Particles
-            for (const particle of particles) {
-                context.globalAlpha = Math.max(0, Math.min(1, particle.life * 2));
-                context.fillStyle = particle.color;
-                context.fillRect(particle.x - 2, particle.y - 2, 4, 4);
+            if (shield) {
+                context!.strokeStyle = "rgba(0,149,233,0.85)";
+                context!.lineWidth = 3;
+                context!.beginPath();
+                context!.arc(bx + sx / 2, by + sy / 2, size * 0.9, 0, Math.PI * 2);
+                context!.stroke();
             }
-            context.globalAlpha = 1;
-            context.restore();
-        };
+            context!.fillStyle = "#33b960";
+            context!.strokeStyle = colors.ink;
+            context!.lineWidth = 2.5;
+            context!.beginPath();
+            context!.roundRect(bx, by, sx, sy, 7);
+            context!.fill();
+            context!.stroke();
+            context!.fillStyle = colors.eye;
+            context!.fillRect(bx + sx * 0.55, by + sy * 0.28, 4, 6);
+            context!.fillRect(bx + sx * 0.76, by + sy * 0.28, 4, 6);
+            for (const particle of particles) {
+                context!.globalAlpha = Math.max(0, Math.min(1, particle.life * 2));
+                context!.fillStyle = particle.color;
+                context!.fillRect(particle.x - 2, particle.y - 2, 4, 4);
+            }
+            context!.globalAlpha = 1;
+            context!.restore();
+        }
 
-        const loop = (now: number) => {
+        function loop(now: number) {
             const dt = Math.min(0.033, (now - last) / 1000);
             last = now;
             if (visible && !document.hidden) {
@@ -225,40 +401,72 @@ export default function MiniGame({ hint }: { hint: string }) {
                 draw();
             }
             frame = requestAnimationFrame(loop);
-        };
-        if (reduceMotion) {
+        }
+
+        resize();
+        publish();
+        if (running) frame = requestAnimationFrame(loop);
+        else {
+            // Reduced motion: a still frame and a Play button; it moves only once asked to.
+            setStill(true);
             draw();
-        } else {
-            frame = requestAnimationFrame(loop);
         }
         return () => {
             cancelAnimationFrame(frame);
             observer.disconnect();
             visibility.disconnect();
-            jumpRef.current = null;
+            pressRef.current = null;
         };
     }, []);
 
+    const hintText = state === "intro" ? labels.tap : state === "over" ? labels.again : labels.hint;
+
     return (
-        <div className="relative">
+        <div className="relative select-none" data-game-state={state}>
             <canvas
                 ref={canvasRef}
                 tabIndex={0}
-                role="img"
-                aria-label={hint}
-                onPointerDown={(event) => { event.preventDefault(); jumpRef.current?.(); }}
+                role="button"
+                aria-label={`${labels.hint}. ${labels.tap}`}
+                onPointerDown={() => pressRef.current?.()}
                 onKeyDown={(event) => {
-                    if (event.code === "Space" || event.key === "ArrowUp" || event.key === "w") {
+                    if (event.code === "Space" || event.key === "Enter" || event.key === "ArrowUp" || event.key === "w") {
                         event.preventDefault();
-                        jumpRef.current?.();
+                        pressRef.current?.();
                     }
                 }}
-                className="block h-[210px] w-full cursor-pointer touch-none rounded-b-2xl outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                // pan-y: a vertical swipe on the game still scrolls the page on phones.
+                style={{ touchAction: "pan-y" }}
+                className="block h-[210px] w-full cursor-pointer rounded-b-2xl outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-green"
             />
-            <div className="pointer-events-none absolute inset-x-3 top-2.5 flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
-                <span className="rounded-md bg-black/40 px-2 py-1 text-amber-300 backdrop-blur">🪙 {score} <span className="text-white/60">· {best}</span></span>
-                <span className="rounded-md bg-black/40 px-2 py-1 text-white/80 backdrop-blur">{manual ? "🎮" : "🤖"} {hint}</span>
+            <div className="pointer-events-none absolute inset-x-3 top-2.5 flex items-center justify-between gap-2 text-[11px] font-bold">
+                <span className="inline-flex items-center gap-2 rounded-md bg-zinc-900/80 px-2 py-1 text-white tabular-nums">
+                    <span>{labels.score} {hud.score}</span>
+                    {hud.multiplier > 1 ? <span className="rounded bg-amber-400 px-1 text-zinc-900">×{hud.multiplier}</span> : null}
+                    <span className="inline-flex items-center gap-1 text-white/70"><Trophy className="h-3 w-3" aria-hidden="true" />{labels.best} {hud.best}</span>
+                    {hud.shield ? <Shield className="h-3.5 w-3.5 text-sky-300" aria-hidden="true" /> : null}
+                    {hud.magnet ? <Magnet className="h-3.5 w-3.5 text-red-300" aria-hidden="true" /> : null}
+                </span>
+                {still ? null : <span className="truncate rounded-md bg-zinc-900/80 px-2 py-1 text-white/85">{hintText}</span>}
             </div>
+            {state === "over" ? (
+                <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-b-2xl bg-zinc-950/45">
+                    <div className="rounded-xl bg-white px-4 py-3 text-center text-zinc-900 shadow-lg dark:bg-zinc-900 dark:text-white">
+                        <p className="text-[13px] font-black">{labels.over}</p>
+                        <p className="mt-0.5 text-[12px] tabular-nums text-zinc-600 dark:text-zinc-300">{labels.score} {hud.score} · {labels.best} {hud.best}</p>
+                        <p className="mt-1.5 inline-flex items-center gap-1 text-[11.5px] font-bold text-brand-green"><RotateCcw className="h-3 w-3" aria-hidden="true" />{labels.again}</p>
+                    </div>
+                </div>
+            ) : null}
+            {still ? (
+                <button
+                    type="button"
+                    onClick={() => pressRef.current?.()}
+                    className="absolute inset-0 m-auto inline-flex h-11 w-fit items-center gap-2 rounded-xl bg-zinc-900 px-4 text-[14px] font-bold text-white shadow-lg dark:bg-white dark:text-zinc-900"
+                >
+                    <Play className="h-4 w-4" aria-hidden="true" />{labels.play}
+                </button>
+            ) : null}
         </div>
     );
 }

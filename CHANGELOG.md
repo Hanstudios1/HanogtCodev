@@ -1,5 +1,65 @@
 # Değişiklik Günlüğü
 
+## 0.3.20 — 2026-10-05
+
+### Marka ve sayfalar: logolar, ana sayfa, fiyatlandırma, Security
+
+- **Logolar:** sahibin çizimleri `brand/source` altında;
+  `node scripts/brand-assets.mjs` (sharp) köşe işaretlerini ve koyu
+  logodaki filigran yıldızını temizler, kırpar, %6 boşluk bırakır ve
+  `public/brand/<logo>-{64,128,256,512}.{png,webp}`,
+  `public/logo-{light,dark}.png`, `src/app/icon.png`, `src/app/apple-icon.png`,
+  `public/brand/hanogt-app-{192,512}.png`, `hanogt-maskable-512.png` ve
+  `hanogt-og.png` (1200×630) üretir. Ürünler ve logo adresleri
+  `src/lib/products.ts` (`PRODUCTS`, `logoSrc`), çizimi `ProductLogo`.
+  Renk jetonları `--brand-green`, `--brand-crescent`, `--brand-blue`,
+  `--brand-paper`, `--brand-ink` (`text-brand-green` vb.). Üst menü, alt
+  bilgi, giriş ekranları ve News, Engine, Social başlıkları yeni logolarla;
+  üst menüdeki renk geçişleri ve parıltılar kalktı.
+- **Ana sayfa:** bento ızgarası, bulanık küreler, parıltı, renk geçişli metin
+  ve "Oyun motorunu dene" kalktı. "Hanogt'ta neler var" bölümü ürün
+  satırları ve gerçek mini önizlemelerle (`ProductPreviews`). Kod örneği düz
+  C# `Runner` sınıfı ("C# · .NET"); sabitleri oyunla ortak
+  (`runner-rules.ts`), oyundaki olaylar ilgili satırı vurgular. Mini oyun:
+  tanıtım, oyun ve bitiş ekranları, en iyi skor (`hanogt_runner_best`),
+  coyote süresi, zıplama tamponu, çift zıplama, paralaks, seri çarpanı,
+  kalkan ve mıknatıs; dokunmatikte sayfa kaydırması bozulmaz; azaltılmış
+  harekette "Oyna" düğmesi.
+- **İndirme menüsü:** `GET /api/download` son GitHub sürümünün dosyalarını
+  uzantıya göre bulur (15 dakika önbellek); `?platform=` ile dosyaya 302
+  yönlendirir, böylece bağlantılar sürümle değişmez. Menü `<body>`'ye
+  çizilir (hiçbir bölüm kesmez), yer yoksa yukarı açılır, telefonda alttan
+  açılan sayfa olur, dışarı dokunma ve Esc ile kapanır. Bulunulan cihaz öne
+  çıkar; iPhone ve iPad (iPadOS dahil) için "Ana Ekrana Ekle" adımları;
+  dosyası olmayan platform "Yakında". GitHub'a ulaşılamazsa (hız sınırı, ağ)
+  `/api/download` 503 döner ve önbelleğe alınmaz; menü o zaman ve API'siz
+  masaüstü derlemesinde sürümler sayfasına bağlanır, hiçbir platform yanlışlıkla
+  "Yakında" görünmez.
+- **Fiyatlandırma:** sade hero ve faturalama düğmesi, aynı iskelette üç kart
+  (tek vurgu Pro), ince hesap çubuğu, kartların altında açılır kullanım
+  paneli, karşılaştırma tablosu ve oklu SSS. Sayfa bölündü:
+  `usePlansBilling` (durum ve tüm istekler), `PricingSections` (parçalar),
+  `plans-copy.ts`, `billing-requests.ts`; ödeme akışı aynı, ödeme E2E
+  takımları geçti.
+- **Panel ve menü:** panelde "Keşfet" kalktı. Security üst menüde
+  (`PRIMARY_NAV`); menüdeki ürünler logolarıyla. Bağlantı aralıkları
+  sıkılaştırıldı: Türkçede 1280 px'te menü çubuğu tek satıra sığar.
+- **Security sayfası:** yeni hero ve "Hesabının güvenliği" kartı:
+  `GET /api/account/security` (oturum gerekir, dakikada 60) şifre, iki
+  adımlı doğrulama, kalan kurtarma kodu sayısı, son giriş ve bu oturumun
+  doğrulandığı zamanı verir; hiçbir gizli değer, karma ya da kod dönmez.
+  Öneriler `src/lib/account-security.ts`'te hesaplanır, her biri Hesap
+  Ayarları → Gizlilik ve Güvenlik'e götürür. Araçlar (Kod Danışmanı,
+  Bağlantı Kontrolü, Parola Laboratuvarı, İpuçları), Hanogt Security Bot'un
+  neleri taradığı, güvenlik bildirimi ve "Hesabım ele geçirildi mi?" rehberi.
+- **Telefonlar:** Firebase Auth açılır pencere/yönlendirme yardımcısı
+  olmadan başlatılır (`initializeAuth`; site yalnızca özel jetonla giriş
+  yapar). Telefonlarda ve Safari'de bu yardımcının önceden yüklediği ve
+  CSP'nin engellediği Google betiği artık istenmez.
+- **Testler:** `account-security-summary.test.mjs` (öneriler ve yanıtın
+  okunması), `downloads.test.mjs` (cihaz tespiti, dosya eşleme, GitHub'a
+  ulaşılamadığında 503 ve önbelleksiz yönlendirme).
+
 ## 0.3.19 — 2026-10-05
 
 ### Hesap güvenliği: Google'dan sonra şifre, her yerden çıkış, açıklar

@@ -24,25 +24,20 @@ export const metadata: Metadata = {
     keywords: ["online kod editörü", "oyun motoru", "C# oyun", "C++ oyun", "WebGL", "2D oyun", "3D oyun", "Hanogt", "kod çalıştır", "tarayıcıda oyun yap"],
     authors: [{ name: "HanStudios" }],
     creator: "HanStudios",
-    icons: {
-        icon: "/logo-dark.png",
-        shortcut: "/logo-dark.png",
-        apple: "/logo-dark.png",
-    },
     openGraph: {
         title: SITE_NAME,
         description: SITE_DESCRIPTION,
         url: SITE_URL,
         siteName: SITE_NAME,
-        images: [{ url: "/logo-dark.png", width: 500, height: 500, alt: `${SITE_NAME} logosu` }],
+        images: [{ url: "/brand/hanogt-og.png", width: 1200, height: 630, alt: `${SITE_NAME} logosu` }],
         locale: "tr_TR",
         type: "website",
     },
     twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: SITE_NAME,
         description: SITE_DESCRIPTION,
-        images: ["/logo-dark.png"],
+        images: ["/brand/hanogt-og.png"],
     },
     formatDetection: { telephone: false },
 };

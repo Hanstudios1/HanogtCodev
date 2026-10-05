@@ -174,11 +174,11 @@ export default function PasswordLab() {
                 )}
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-emerald-500/[0.06] to-teal-500/[0.06] p-5 dark:border-white/10">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-white/10 dark:bg-zinc-900/60">
                 <h3 className="flex items-center gap-2 text-[15px] font-black text-zinc-900 dark:text-white"><Dices className="h-5 w-5 text-emerald-500" />{tx({ TR: "Güçlü parola üret", EN: "Generate a strong password" })}</h3>
                 <p className="mt-1 text-[13px] text-zinc-600 dark:text-zinc-400">{tx({ TR: "Tarayıcının kriptografik rastgele sayı üreteci (crypto.getRandomValues) kullanılır.", EN: "Uses the browser's cryptographic random generator (crypto.getRandomValues)." })}</p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => setGenerated(generatePassphrase(locale === "tr" ? WORDS_TR : WORDS_EN, 5))} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-[13.5px] font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-500">
+                    <button type="button" onClick={() => setGenerated(generatePassphrase(locale === "tr" ? WORDS_TR : WORDS_EN, 5))} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-[13.5px] font-bold text-white transition hover:bg-emerald-500">
                         <RefreshCw className="h-4 w-4" />{tx({ TR: "Parola cümlesi", EN: "Passphrase" })}
                     </button>
                     <button type="button" onClick={() => setGenerated(generatePassword(length, symbols))} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-600/40 bg-white text-[13.5px] font-bold text-emerald-700 transition hover:bg-emerald-50 dark:bg-zinc-900 dark:text-emerald-300 dark:hover:bg-emerald-500/10">

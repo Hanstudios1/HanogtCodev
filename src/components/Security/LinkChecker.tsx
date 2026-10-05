@@ -37,7 +37,7 @@ export default function LinkChecker() {
                             <Link2 className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                             <input id="link-check" value={input} onChange={(event) => setInput(event.target.value)} dir="ltr" spellCheck={false} placeholder="https://…" className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 pe-3 ps-10 text-[14px] text-zinc-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 dark:border-white/10 dark:bg-zinc-950 dark:text-white" />
                         </div>
-                        <button type="submit" className="h-12 shrink-0 rounded-xl bg-emerald-600 px-4 text-[14px] font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-500">{tx({ TR: "Kontrol et", EN: "Check" })}</button>
+                        <button type="submit" className="h-12 shrink-0 rounded-xl bg-emerald-600 px-4 text-[14px] font-bold text-white transition hover:bg-emerald-500">{tx({ TR: "Kontrol et", EN: "Check" })}</button>
                     </div>
                 </form>
                 <p className="mt-3 text-[12px] font-bold uppercase tracking-wider text-zinc-400">{tx({ TR: "Örnekleri dene", EN: "Try samples" })}</p>
@@ -84,7 +84,7 @@ export default function LinkChecker() {
                     ) : (
                         <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid h-full min-h-[260px] place-items-center text-center">
                             <div>
-                                <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 text-white shadow-xl animate-float"><Link2 className="h-8 w-8" /></div>
+                                <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-300"><Link2 className="h-8 w-8" /></div>
                                 <p className="mt-4 text-[15px] font-bold text-zinc-800 dark:text-zinc-100">{tx({ TR: "Taklit alan adlarını yakala", EN: "Catch lookalike domains" })}</p>
                                 <p className="mx-auto mt-1 max-w-xs text-[13px] text-zinc-500">{tx({ TR: "Kiril harfli sahte adresler, paypa1 gibi taklitler, kısaltıcılar, çift uzantılı dosyalar ve daha fazlası.", EN: "Cyrillic fakes, imitations like paypa1, shorteners, double-extension files and more." })}</p>
                             </div>

@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Header from "@/components/Header";
+import ProductLogo from "@/components/ProductLogo";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n } from "@/lib/i18n";
 import { NEWS_CATEGORIES, type NewsCategory } from "@/lib/news/sources";
@@ -480,24 +481,22 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
             <Header />
             <main id="main-content" dir={contentDir}>
                 {/* Hero */}
-                <section className="relative overflow-hidden">
-                    <div className="absolute inset-0 bg-grid opacity-60 mask-fade-b" />
-                    <div className="absolute -left-24 top-16 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl animate-float" />
-                    <div className="absolute -right-20 -top-10 h-80 w-80 rounded-full bg-rose-500/15 blur-3xl animate-float" style={{ animationDelay: "-3s" }} />
-                    <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-28 sm:pt-32">
+                <section className="border-b border-zinc-200/70 bg-white dark:border-white/[0.06] dark:bg-zinc-950">
+                    <div className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:pt-32">
                         <div className="flex flex-wrap items-center gap-2 animate-fade-up">
                             <span className="inline-flex items-center gap-2 rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1 text-[12px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">
                                 <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" /></span>
                                 {tx({ TR: "Canlı", EN: "Live" })}
                             </span>
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-[12px] font-semibold text-zinc-600 backdrop-blur dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300">
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[12px] font-semibold text-zinc-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300">
                                 {offline ? <WifiOff className="h-3.5 w-3.5 text-amber-500" /> : <Wifi className="h-3.5 w-3.5 text-emerald-500" />}
                                 {fetchedAt ? <>{tx({ TR: "Güncellendi", EN: "Updated" })} <time dateTime={fetchedAt} suppressHydrationWarning>{timeAgo(fetchedAt, locale, now)}</time></> : (tx({ TR: "Bağlanıyor…", EN: "Connecting…" }))}
                             </span>
                         </div>
-                        <h1 className="mt-4 text-5xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-6xl animate-fade-up" style={{ animationDelay: "60ms" }}>
-                            Hanogt <span className="text-gradient animate-gradient">News</span>
-                        </h1>
+                        <div className="mt-4 flex items-center gap-4 animate-fade-up" style={{ animationDelay: "60ms" }}>
+                            <ProductLogo product="news" size={56} priority />
+                            <h1 className="text-5xl font-black tracking-tight text-zinc-900 dark:text-white sm:text-6xl">Hanogt News</h1>
+                        </div>
                         <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-400 animate-fade-up" style={{ animationDelay: "120ms" }}>
                             {tx({ TR: "Yapay zeka, yazılım, oyun, uygulama, bilim ve ekonomi dünyasından güncel haberler tek akışta. Akış kendiliğinden yenilenir, yeni haberler canlı olarak düşer; döviz, altın ve borsa için piyasa şeridi var; yorum yap, kaydet, yapay zeka arenasında oy ver.", EN: "The latest from AI, software, games, apps, science and finance in one stream. The feed refreshes itself and new stories drop in live; a markets strip tracks currencies, gold and stocks; comment, save and vote in the AI arena." })}
                         </p>
@@ -508,8 +507,8 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                                 { icon: Clock, value: `${Math.round(REFRESH_MS / 1000)}${tx({ TR: " sn", EN: "s" })}`, label: tx({ TR: "yenileme aralığı", EN: "refresh interval" }) },
                                 { icon: Bookmark, value: saved.length, label: tx({ TR: "kaydedilen", EN: "saved" }) },
                             ].map((stat) => (
-                                <div key={stat.label} className="flex items-center gap-2.5 rounded-2xl border border-zinc-200/80 bg-white/80 px-3.5 py-2 backdrop-blur dark:border-white/[0.08] dark:bg-white/[0.04]">
-                                    <stat.icon className="h-4 w-4 text-indigo-500" />
+                                <div key={stat.label} className="flex items-center gap-2.5 rounded-2xl border border-zinc-200/80 bg-zinc-50 px-3.5 py-2 dark:border-white/[0.08] dark:bg-white/[0.04]">
+                                    <stat.icon className="h-4 w-4 text-brand-green" />
                                     <span className="text-[15px] font-black tabular-nums text-zinc-900 dark:text-white">{stat.value}</span>
                                     <span className="text-[12px] text-zinc-500 dark:text-zinc-400">{stat.label}</span>
                                 </div>

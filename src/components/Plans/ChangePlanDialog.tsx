@@ -115,7 +115,7 @@ export default function ChangePlanDialog({ from, to, preview, error, busy, endsA
                 </div>
                 <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                     <button type="button" onClick={onClose} disabled={busy} className="h-11 rounded-xl border border-zinc-200 px-5 text-[14px] font-bold transition hover:bg-zinc-50 disabled:opacity-50 dark:border-white/10 dark:hover:bg-white/5">{tx(C.cancel)}</button>
-                    <button ref={confirmRef} type="button" onClick={onConfirm} disabled={busy || !preview} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-5 text-[14px] font-bold text-white shadow-lg transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50">
+                    <button ref={confirmRef} type="button" onClick={onConfirm} disabled={busy || !preview} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 text-[14px] font-bold text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
                         {busy ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden /> : null}
                         {tx(C.confirm)}
                     </button>

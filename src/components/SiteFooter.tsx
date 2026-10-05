@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, Github, Heart } from "lucide-react";
 import Link from "next/link";
-import OptimizedImage from "@/components/OptimizedImage";
+import ProductLogo from "@/components/ProductLogo";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { NAV_LABELS } from "@/lib/nav";
 import { GITHUB_URL, RELEASES_URL } from "@/lib/site";
@@ -68,9 +68,8 @@ export default function SiteFooter({ className = "" }: { className?: string }) {
                 <div className="grid gap-10 lg:grid-cols-[1.3fr_repeat(4,1fr)]">
                     <div className="max-w-sm">
                         <Link href="/" className="inline-flex items-center gap-2.5">
-                            <OptimizedImage src="/logo-light.png" alt="" className="block h-10 w-10 object-contain dark:hidden" />
-                            <OptimizedImage src="/logo-dark.png" alt="" className="hidden h-10 w-10 object-contain dark:block" />
-                            <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Hanogt <span className="text-gradient">Codev</span></span>
+                            <ProductLogo product="hanogt" size={40} />
+                            <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Hanogt <span className="text-brand-green">Codev</span></span>
                         </Link>
                         <p className="mt-4 text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">
                             {t("sf_about")}

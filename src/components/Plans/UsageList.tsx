@@ -22,7 +22,7 @@ const C = {
     bonus: { TR: "+{count} ek mesaj dahil", EN: "includes +{count} extra messages" },
 } satisfies Record<string, Copy>;
 
-const BAR = { ok: "from-indigo-500 to-fuchsia-500", high: "from-amber-400 to-amber-500", full: "from-rose-500 to-rose-600" } as const;
+const BAR = { ok: "bg-brand-green", high: "bg-amber-500", full: "bg-rose-500" } as const;
 
 function Row({ icon, label, value, children }: { icon: ReactNode; label: string; value: string; children?: ReactNode }) {
     return (
@@ -40,7 +40,7 @@ function WindowBar({ window, label }: { window: UsageWindow; label: string }) {
     const level = usageLevel(window);
     return (
         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={window.limit} aria-valuenow={Math.min(window.used, window.limit)}>
-            <div className={`h-full rounded-full bg-gradient-to-r ${BAR[level]}`} style={{ width: `${window.limit > 0 ? Math.min(100, (window.used / window.limit) * 100) : 100}%` }} />
+            <div className={`h-full rounded-full ${BAR[level]}`} style={{ width: `${window.limit > 0 ? Math.min(100, (window.used / window.limit) * 100) : 100}%` }} />
         </div>
     );
 }

@@ -12,9 +12,11 @@ export default function manifest(): MetadataRoute.Manifest {
         theme_color: "#07070b",
         lang: "tr",
         categories: ["developer", "education", "games"],
+        // Built by scripts/brand-assets.mjs.
         icons: [
-            { src: "/logo-dark.png", sizes: "500x500", type: "image/png", purpose: "any" },
-            { src: "/logo-dark.png", sizes: "500x500", type: "image/png", purpose: "maskable" },
+            { src: "/brand/hanogt-app-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+            { src: "/brand/hanogt-app-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+            { src: "/brand/hanogt-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
     };
 }

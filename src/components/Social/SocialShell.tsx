@@ -1,12 +1,13 @@
 "use client";
 
-import { LogIn, MessagesSquare, UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import CreateGroupWizard from "@/components/Groups/CreateGroupWizard";
 import { Spinner, ToastViewport, cx, useConfirm, useToasts } from "@/components/Groups/ui";
 import Header from "@/components/Header";
+import ProductLogo from "@/components/ProductLogo";
 import { useFirebaseBridge, useRawSession } from "@/components/Provider";
 import { useOwnProfile, useOwnStatus } from "@/lib/account-profile-client";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -90,11 +91,11 @@ function SignedOut() {
         <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
             <Header />
             <main id="main-content" className="mx-auto flex max-w-xl flex-col items-center px-4 pb-24 pt-32 text-center">
-                <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-500 to-fuchsia-600 text-white shadow-xl shadow-indigo-500/25"><MessagesSquare className="h-8 w-8" aria-hidden /></span>
+                <ProductLogo product="social" size={64} priority />
                 <h1 className="mt-6 text-3xl font-black tracking-tight">{tx(C.signInTitle)}</h1>
                 <p className="mt-3 text-zinc-500 dark:text-zinc-400">{tx(C.signInText)}</p>
                 <div className="mt-7 flex flex-col gap-2 sm:flex-row">
-                    <Link href={`/login?callbackUrl=${callback}`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 font-bold text-white shadow-lg shadow-indigo-600/25 transition hover:-translate-y-0.5"><LogIn className="h-5 w-5" aria-hidden />{tx(C.signIn)}</Link>
+                    <Link href={`/login?callbackUrl=${callback}`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-6 py-3 font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"><LogIn className="h-5 w-5" aria-hidden />{tx(C.signIn)}</Link>
                     <Link href={`/signup?callbackUrl=${callback}`} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-200 px-6 py-3 font-semibold transition hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-zinc-800"><UserPlus className="h-5 w-5" aria-hidden />{tx(C.signUp)}</Link>
                 </div>
             </main>

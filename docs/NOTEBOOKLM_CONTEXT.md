@@ -21,6 +21,7 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 - NextAuth oturumları aktif kullanıcı ve oturum sürümü (`users/{email}.authVersion`) kontrolleriyle desteklenir. "Diğer tüm oturumları kapat", şifre değişikliği ve doğrulanmamış şifrenin kaldırılması bu sürümü artırır; eski sürümlü oturumlar her istekte reddedilir ve Firebase oturumları da kapatılır.
 - Hesapta şifre varsa Google ile her girişten sonra `/login/verify`'da şifre (2FA açıksa kod) istenir; o zamana kadar oturum sunucuda kapalı sayılır ve 15 dakikada düşer (`src/lib/step-up.ts`). Şifresini unutan talep açar; yönetici "Şifreyi kaldır" ile şartı kaldırır.
 - Google `email_verified` olmadan giriş yapılamaz; doğrulanmamış şifreli hesaba ilk doğrulanmış Google girişi o şifreyi ve 2FA'yı siler (önceden ele geçirme koruması). İlk şifreyi koymak ve hesabı silmek son 30 dakikada giriş ister.
+- Security sayfasındaki "Hesabının güvenliği" kartı `GET /api/account/security`'den gelir: şifre ve 2FA var mı, kaç kurtarma kodu kaldı, son giriş ve bu oturumun doğrulandığı zaman. Gizli değer, karma ya da kod dönmez; öneriler `src/lib/account-security.ts`.
 - Firebase istemci erişimi için kısa ömürlü özel token köprüsü kullanılır.
 - Hesap verisi dışa aktarma ve silme uçları arkadaşlıklar, mesajlar, çağrı verileri, medya ve oyun projeleri gibi ilişkili kayıtları kapsar.
 - Gerçek üretim ortamında Firebase Admin kimlik bilgileri, runner adresi, TURN bilgileri ve diğer sırlar yalnız sunucu ortam değişkenlerinde tutulmalıdır.
@@ -78,6 +79,8 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 - Yerel görseller Next Image üzerinden; kullanıcı kaynaklı dış görseller güvenli lazy-loading ile gösterilir. Geniş ve kontrolsüz uzak görsel allowlist'i açılmaz.
 - Arayüz 50 dilde. Ana sözlük anahtarları (`src/locales/<LANG>.json`) tüm dillerde tamamdır ve `npm run i18n:check` ile denetlenir. Satır içi TR/EN metinler (`{ TR, EN }`) İngilizce metnin özetiyle anahtarlanan çeviri paketlerinden (`src/locales/copy/<LANG>.json`, kaynak `npm run i18n:extract`) gelir; paketi eksik dillerde İngilizce gösterilir.
 - Büyük i18n gövdesi dil bazlı JSON dosyalarına ayrıldı.
+- Marka: ürün logoları sahibin çizimlerinden (`brand/source`) `node scripts/brand-assets.mjs` ile `public/brand` altına üretilir (64–512 px, PNG ve WebP; site simgesi, uygulama simgeleri ve paylaşım görseli dahil). Ürünler ve logo adresleri `src/lib/products.ts`, çizimi `ProductLogo`; renkler `--brand-*` jetonları. Renk geçişli kutu, bulanık küre, parıltı ve ağır emoji kullanılmaz.
+- İndirmeler `GET /api/download` üzerinden: son GitHub sürümünün dosyaları uzantıya göre bulunur (15 dakika önbellek), `?platform=` dosyaya yönlendirir.
 
 ## Hukuki metin durumu
 

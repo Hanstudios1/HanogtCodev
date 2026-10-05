@@ -1,4 +1,5 @@
 import type { Copy } from "@/lib/i18n";
+import type { ProductId } from "@/lib/products";
 
 export type NavIcon = "news" | "arcade" | "engine" | "media" | "guide" | "dashboard" | "security" | "groups" | "friends" | "messages" | "about" | "feedback" | "docs" | "ai" | "admin" | "pricing";
 
@@ -13,6 +14,8 @@ export interface NavItem {
     /** Shown only to signed-in users. */
     auth?: boolean;
     live?: boolean;
+    /** A Hanogt product: menus show its logo instead of the icon. */
+    product?: ProductId;
 }
 
 export const NAV_LABELS = {
@@ -41,10 +44,11 @@ export const NAV_LABELS = {
 
 export const PRIMARY_NAV: NavItem[] = [
     { href: "/dashboard", icon: "dashboard", label: NAV_LABELS.dashboard, auth: true, descKey: "nd_dashboard" },
-    { href: "/ai", icon: "ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" }, desc: { TR: "Kod, oyun ve güvenlik için yapay zeka asistanı", EN: "AI assistant for code, games and security" } },
-    { href: "/news", icon: "news", label: NAV_LABELS.news, live: true, descKey: "nd_news" },
+    { href: "/ai", icon: "ai", label: { TR: "Hanogt AI", EN: "Hanogt AI" }, desc: { TR: "Kod, oyun ve güvenlik için yapay zeka asistanı", EN: "AI assistant for code, games and security" }, product: "ai" },
+    { href: "/news", icon: "news", label: NAV_LABELS.news, live: true, descKey: "nd_news", product: "news" },
     { href: "/arcade", icon: "arcade", label: NAV_LABELS.arcade, descKey: "nd_arcade" },
-    { href: "/game-engine", icon: "engine", label: NAV_LABELS.engine, descKey: "nd_engine" },
+    { href: "/game-engine", icon: "engine", label: NAV_LABELS.engine, descKey: "nd_engine", product: "engine" },
+    { href: "/security", icon: "security", label: NAV_LABELS.security, descKey: "nd_security", product: "security" },
     { href: "/media", icon: "media", label: NAV_LABELS.media, descKey: "nd_media" },
     { href: "/guide", icon: "guide", label: NAV_LABELS.guide, descKey: "nd_guide" },
     { href: "/plans", icon: "pricing", label: NAV_LABELS.pricing, desc: { TR: "Ücretsiz, Plus ve Pro: özellikler ve fiyatlar", EN: "Free, Plus and Pro: features and prices" } },
@@ -57,8 +61,8 @@ export const SECONDARY_NAV: NavItem[] = [
         label: NAV_LABELS.social,
         auth: true,
         desc: { TR: "Arkadaşlar, direkt mesajlar ve gruplar tek yerde", EN: "Friends, direct messages and groups in one place" },
+        product: "social",
     },
-    { href: "/security", icon: "security", label: NAV_LABELS.security, descKey: "nd_security" },
     { href: "/game-engine/docs", icon: "docs", label: NAV_LABELS.docs, descKey: "nd_docs" },
 ];
 

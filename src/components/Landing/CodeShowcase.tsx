@@ -1,159 +1,164 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import MiniGame from "./MiniGame";
+import { useCallback, useEffect, useRef, useState } from "react";
+import MiniGame, { type RunnerEvent } from "./MiniGame";
+import { RUNNER } from "./runner-rules";
 
-const SOURCE = `using UnityEngine;
+/** C# float literal: 2300 → "2300f", 0.1 → "0.1f". */
+const f = (value: number) => `${value}f`;
+/** A line of code with its comment lined up with the others. */
+const note = (code: string, comment: string) => `${code.padEnd(38)}// ${comment}`;
 
-public class Runner : MonoBehaviour
-{
-    public float jumpForce = 11f;
-    private Rigidbody2D rb;
-    private int score;
+/** The game's rules as a plain C# (.NET) class, line by line, tagged with the events that run them. */
+const LINES: Array<{ text: string; on?: RunnerEvent[] }> = [
+    { text: "// The rules of the game below, in plain C#." },
+    { text: "using System;" },
+    { text: "" },
+    { text: "public sealed class Runner" },
+    { text: "{" },
+    { text: `    const float Gravity = ${f(RUNNER.gravity)};` },
+    { text: `    const float JumpSpeed = ${f(RUNNER.jumpSpeed)}, DoubleJumpSpeed = ${f(RUNNER.doubleJumpSpeed)};` },
+    { text: note(`    const float CoyoteTime = ${f(RUNNER.coyoteTime)};`, "just off the ground still counts") },
+    { text: note(`    const float JumpBuffer = ${f(RUNNER.jumpBuffer)};`, "a press just before landing") },
+    { text: note(`    const int MaxJumps = ${RUNNER.maxJumps};`, "double jump") },
+    { text: `    const int StreakStep = ${RUNNER.streakStep}, MaxMultiplier = ${RUNNER.maxMultiplier};` },
+    { text: "" },
+    { text: "    float y, velocityY, sinceGrounded;" },
+    { text: "    float sinceJumpPressed = float.PositiveInfinity;" },
+    { text: "    int jumpsLeft = MaxJumps, streak;" },
+    { text: "    bool grounded = true, shield;" },
+    { text: "" },
+    { text: "    public int Score { get; private set; }" },
+    { text: "    public int Multiplier => Math.Min(MaxMultiplier, 1 + streak / StreakStep);", on: ["coin"] },
+    { text: "" },
+    { text: "    public void Jump() => sinceJumpPressed = 0;", on: ["jump", "doubleJump"] },
+    { text: "" },
+    { text: "    public void Update(float dt, float groundY)" },
+    { text: "    {" },
+    { text: "        sinceGrounded = grounded ? 0 : sinceGrounded + dt;" },
+    { text: "        sinceJumpPressed += dt;" },
+    { text: "        if (sinceJumpPressed <= JumpBuffer)", on: ["jump", "doubleJump"] },
+    { text: "        {" },
+    { text: "            if ((grounded || sinceGrounded <= CoyoteTime) && jumpsLeft == MaxJumps)", on: ["jump"] },
+    { text: "                Launch(JumpSpeed);", on: ["jump"] },
+    { text: "            else if (!grounded && jumpsLeft > 0)", on: ["doubleJump"] },
+    { text: "                Launch(DoubleJumpSpeed);", on: ["doubleJump"] },
+    { text: "        }" },
+    { text: "        velocityY += Gravity * dt;" },
+    { text: "        y += velocityY * dt;" },
+    { text: "        if (y >= groundY)" },
+    { text: "            (y, velocityY, grounded, jumpsLeft) = (groundY, 0, true, MaxJumps);" },
+    { text: "    }" },
+    { text: "" },
+    { text: "    void Launch(float speed)", on: ["jump", "doubleJump"] },
+    { text: "    {", on: ["jump", "doubleJump"] },
+    { text: "        velocityY = -speed;", on: ["jump", "doubleJump"] },
+    { text: "        jumpsLeft = jumpsLeft == MaxJumps ? MaxJumps - 1 : 0;", on: ["jump", "doubleJump"] },
+    { text: "        (grounded, sinceJumpPressed) = (false, float.PositiveInfinity);", on: ["jump", "doubleJump"] },
+    { text: "    }", on: ["jump", "doubleJump"] },
+    { text: "" },
+    { text: "    public void OnCoin() { streak++; Score += Multiplier; }", on: ["coin"] },
+    { text: "    public void OnShield() => shield = true;", on: ["shield"] },
+    { text: "" },
+    { text: note("    public bool OnHit()", "true: game over"), on: ["hit", "shield"] },
+    { text: "    {", on: ["hit", "shield"] },
+    { text: "        if (shield) { shield = false; return false; }", on: ["shield"] },
+    { text: "        streak = 0;", on: ["hit"] },
+    { text: "        return true;", on: ["hit"] },
+    { text: "    }", on: ["hit", "shield"] },
+    { text: "}" },
+];
 
-    void Start()
-    {
-        rb = GetComponent<Rigidbody2D>();
-    }
-
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-    }
-
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!other.CompareTag("Coin")) return;
-        score++;
-        Audio.Play("coin");
-        Destroy(other.gameObject);
-    }
-}`;
-
-type Token = { text: string; kind: "kw" | "type" | "str" | "num" | "fn" | "cm" | "plain" };
-
-const KEYWORDS = new Set(["using", "public", "private", "class", "void", "float", "int", "if", "return", "new", "bool"]);
-const TYPES = new Set(["UnityEngine", "MonoBehaviour", "Rigidbody2D", "Input", "KeyCode", "Vector2", "Collider2D", "Audio"]);
-
-function tokenize(source: string): Token[] {
-    const tokens: Token[] = [];
-    const pattern = /(\/\/[^\n]*)|("(?:[^"\\]|\\.)*")|(\b\d+(?:\.\d+)?f?\b)|([A-Za-z_][A-Za-z0-9_]*)|(\s+|[^\sA-Za-z0-9_"])/g;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(source))) {
-        const [text, comment, string, number, word] = match;
-        if (comment) tokens.push({ text, kind: "cm" });
-        else if (string) tokens.push({ text, kind: "str" });
-        else if (number) tokens.push({ text, kind: "num" });
-        else if (word) {
-            const next = source[pattern.lastIndex];
-            tokens.push({ text, kind: KEYWORDS.has(word) ? "kw" : TYPES.has(word) ? "type" : next === "(" || next === "<" ? "fn" : "plain" });
-        } else tokens.push({ text, kind: "plain" });
-    }
-    return tokens;
-}
-
-const TOKENS = tokenize(SOURCE);
-const COLORS: Record<Token["kind"], string> = {
-    kw: "text-fuchsia-400",
-    type: "text-sky-300",
-    str: "text-amber-300",
-    num: "text-emerald-300",
-    fn: "text-indigo-300",
+type Kind = "kw" | "type" | "num" | "fn" | "cm" | "plain";
+const KEYWORDS = new Set(["using", "public", "private", "sealed", "class", "const", "float", "int", "bool", "void", "if", "else", "return", "get", "set", "true", "false"]);
+const TYPES = new Set(["Runner", "Math", "System"]);
+const COLORS: Record<Kind, string> = {
+    kw: "text-sky-300",
+    type: "text-emerald-300",
+    num: "text-amber-200",
+    fn: "text-yellow-100",
     cm: "text-zinc-500",
     plain: "text-zinc-200",
 };
 
-function renderUntil(count: number) {
-    const out: React.ReactNode[] = [];
-    let remaining = count;
-    for (let index = 0; index < TOKENS.length && remaining > 0; index += 1) {
-        const token = TOKENS[index];
-        const text = token.text.length <= remaining ? token.text : token.text.slice(0, remaining);
-        remaining -= text.length;
-        out.push(<span key={index} className={COLORS[token.kind]}>{text}</span>);
+function tokenize(line: string) {
+    const tokens: Array<{ text: string; kind: Kind }> = [];
+    const pattern = /(\/\/.*)|(\b\d+(?:\.\d+)?f?\b)|([A-Za-z_][A-Za-z0-9_]*)|(\s+|[^\sA-Za-z0-9_])/g;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(line))) {
+        const [text, comment, number, word] = match;
+        if (comment) tokens.push({ text, kind: "cm" });
+        else if (number) tokens.push({ text, kind: "num" });
+        else if (word) tokens.push({ text, kind: KEYWORDS.has(word) ? "kw" : TYPES.has(word) ? "type" : line[pattern.lastIndex] === "(" ? "fn" : "plain" });
+        else tokens.push({ text, kind: "plain" });
     }
-    return out;
+    return tokens;
 }
 
-export default function CodeShowcase({ labels }: { labels: { file: string; play: string; hint: string; compiled: string } }) {
-    const [typed, setTyped] = useState(0);
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const tiltRef = useRef<HTMLDivElement | null>(null);
+const TOKENIZED = LINES.map((line) => ({ ...line, tokens: tokenize(line.text) }));
+const LINE_HEIGHT = 19;
+
+export type ShowcaseLabels = {
+    file: string;
+    runs: string;
+    hint: string;
+    tap: string;
+    play: string;
+    again: string;
+    over: string;
+    best: string;
+    score: string;
+};
+
+/**
+ * The C# Runner class and, under it, the game it describes: what happens in
+ * the game (a jump, a coin, a hit) lights up the lines that handle it.
+ */
+export default function CodeShowcase({ labels }: { labels: ShowcaseLabels }) {
     const preRef = useRef<HTMLPreElement | null>(null);
+    const [active, setActive] = useState<RunnerEvent | null>(null);
+    const timer = useRef<number | undefined>(undefined);
 
-    // Keep the caret in view while typing.
-    useEffect(() => {
+    const onEvent = useCallback((event: RunnerEvent) => {
+        setActive(event);
+        window.clearTimeout(timer.current);
+        timer.current = window.setTimeout(() => setActive(null), 700);
         const pre = preRef.current;
-        if (pre && typed < SOURCE.length) pre.scrollTop = pre.scrollHeight;
-    }, [typed]);
-
-    useEffect(() => {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            const done = window.setTimeout(() => setTyped(SOURCE.length), 0);
-            return () => window.clearTimeout(done);
+        const first = LINES.findIndex((line) => line.on?.includes(event));
+        if (pre && first >= 0) {
+            const top = first * LINE_HEIGHT;
+            if (top < pre.scrollTop || top > pre.scrollTop + pre.clientHeight - LINE_HEIGHT * 3) pre.scrollTop = Math.max(0, top - LINE_HEIGHT * 2);
         }
-        let position = 0;
-        const timer = window.setInterval(() => {
-            position = Math.min(SOURCE.length, position + 3);
-            setTyped(position);
-            if (position >= SOURCE.length) window.clearInterval(timer);
-        }, 22);
-        return () => window.clearInterval(timer);
     }, []);
-
-    // Subtle 3D tilt that follows the pointer (desktop only).
-    useEffect(() => {
-        const container = containerRef.current;
-        const card = tiltRef.current;
-        if (!container || !card || window.matchMedia("(pointer: coarse), (prefers-reduced-motion: reduce)").matches) return;
-        let frame = 0;
-        const onMove = (event: PointerEvent) => {
-            const rect = container.getBoundingClientRect();
-            const x = (event.clientX - rect.left) / rect.width - 0.5;
-            const y = (event.clientY - rect.top) / rect.height - 0.5;
-            cancelAnimationFrame(frame);
-            frame = requestAnimationFrame(() => {
-                card.style.transform = `perspective(1400px) rotateY(${x * 7}deg) rotateX(${-y * 6}deg)`;
-            });
-        };
-        const onLeave = () => {
-            cancelAnimationFrame(frame);
-            card.style.transform = "perspective(1400px) rotateY(0deg) rotateX(0deg)";
-        };
-        container.addEventListener("pointermove", onMove);
-        container.addEventListener("pointerleave", onLeave);
-        return () => {
-            cancelAnimationFrame(frame);
-            container.removeEventListener("pointermove", onMove);
-            container.removeEventListener("pointerleave", onLeave);
-        };
-    }, []);
-
-    const done = typed >= SOURCE.length;
+    useEffect(() => () => window.clearTimeout(timer.current), []);
 
     return (
-        <div ref={containerRef} className="relative" dir="ltr">
-            <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-500/30 via-fuchsia-500/20 to-amber-400/20 blur-3xl" />
-            <div ref={tiltRef} className="relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 shadow-2xl shadow-indigo-500/20 transition-transform duration-300 ease-out will-change-transform">
-                <div className="flex items-center gap-2 border-b border-white/10 bg-zinc-900/80 px-4 py-2.5">
-                    <span className="h-3 w-3 rounded-full bg-rose-500/90" />
-                    <span className="h-3 w-3 rounded-full bg-amber-400/90" />
-                    <span className="h-3 w-3 rounded-full bg-emerald-500/90" />
-                    <span className="ms-3 rounded-md bg-white/10 px-2 py-0.5 font-mono text-[11.5px] text-zinc-300">{labels.file}</span>
-                    <span className={`ms-auto inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-bold transition ${done ? "bg-emerald-500/15 text-emerald-300" : "bg-white/5 text-zinc-400"}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${done ? "bg-emerald-400" : "animate-pulse bg-zinc-400"}`} />{done ? labels.compiled : "C#"}
-                    </span>
-                </div>
-                <pre ref={preRef} className={`scrollbar-thin h-[228px] px-4 py-3 ${done ? "overflow-y-auto" : "overflow-hidden"} font-mono text-[12px] leading-[1.55] sm:text-[12.5px]`} aria-label={labels.file}>
-                    <code>{renderUntil(typed)}{!done ? <span className="inline-block h-[1.1em] w-[7px] translate-y-[2px] animate-pulse bg-indigo-400" /> : null}</code>
-                </pre>
-                <div className="flex items-center gap-2 border-t border-white/10 bg-zinc-900/80 px-4 py-1.5 text-[11px] font-semibold text-zinc-400">
-                    <span className="inline-flex h-5 items-center rounded bg-emerald-500 px-1.5 text-[10px] font-black text-emerald-950">▶ {labels.play}</span>
-                    <span className="truncate">Hanogt Engine · WebGL</span>
-                </div>
-                <MiniGame hint={labels.hint} />
+        <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-xl" dir="ltr">
+            <div className="flex items-center gap-2 border-b border-white/10 bg-zinc-900 px-4 py-2.5">
+                <span className="h-3 w-3 rounded-full bg-zinc-700" />
+                <span className="h-3 w-3 rounded-full bg-zinc-700" />
+                <span className="h-3 w-3 rounded-full bg-zinc-700" />
+                <span className="ms-3 rounded-md bg-white/10 px-2 py-0.5 font-mono text-[11.5px] text-zinc-300">{labels.file}</span>
+                <span className="ms-auto rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-bold text-zinc-300">C# · .NET</span>
             </div>
+            <pre ref={preRef} className="scrollbar-thin relative h-[230px] overflow-y-auto py-2 font-mono text-[12px] sm:text-[12.5px]" aria-label={labels.file} style={{ lineHeight: `${LINE_HEIGHT}px` }}>
+                <code className="block min-w-max">
+                    {TOKENIZED.map((line, index) => {
+                        const lit = Boolean(active && line.on?.includes(active));
+                        return (
+                            <span key={index} className={`flex pe-4 transition-colors duration-200 ${lit ? "bg-brand-crescent/20" : ""}`}>
+                                <span className={`w-10 shrink-0 select-none pe-3 text-end ${lit ? "text-brand-crescent" : "text-zinc-600"}`} aria-hidden="true">{index + 1}</span>
+                                <span>{line.tokens.length ? line.tokens.map((token, position) => <span key={position} className={COLORS[token.kind]}>{token.text}</span>) : " "}</span>
+                            </span>
+                        );
+                    })}
+                </code>
+            </pre>
+            <div className="flex items-center gap-2 border-t border-white/10 bg-zinc-900 px-4 py-1.5 text-[11px] font-semibold text-zinc-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-crescent" aria-hidden="true" />
+                <span className="truncate">{labels.runs}</span>
+            </div>
+            <MiniGame labels={labels} onEvent={onEvent} />
         </div>
     );
 }

@@ -112,7 +112,7 @@ export default function CodeAdvisor() {
                 {!shownReport ? (
                     <div className="grid h-full min-h-[320px] place-items-center text-center">
                         <div>
-                            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl animate-float"><FlaskConical className="h-8 w-8" /></div>
+                            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-brand-green/10 text-brand-green"><FlaskConical className="h-8 w-8" /></div>
                             <p className="mt-4 text-[15px] font-bold text-zinc-800 dark:text-zinc-100">{tx({ TR: "Rapor burada görünecek", EN: "Your report will appear here" })}</p>
                             <p className="mx-auto mt-1 max-w-xs text-[13px] text-zinc-500">{tx({ TR: "Sızmış anahtarlar, SQL/komut enjeksiyonu, XSS, zayıf kripto, kapalı TLS doğrulaması ve daha fazlası için 65+ kural.", EN: "65+ rules for leaked keys, SQL/command injection, XSS, weak crypto, disabled TLS checks and more." })}</p>
                         </div>

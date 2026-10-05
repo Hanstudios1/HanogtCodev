@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { ArrowLeft, Bot, Boxes, Code2, FileCheck2, Languages, LifeBuoy, ShieldCheck, UsersRound, type LucideIcon } from "lucide-react";
 import OptimizedImage from "@/components/OptimizedImage";
+import ProductLogo from "@/components/ProductLogo";
+import { logoSrc } from "@/lib/products";
 import ThemeToggle from "@/components/ThemeToggle";
 import LangToggle from "@/components/LangToggle";
 import { LANGUAGES, formatCopy, useI18n, type Copy } from "@/lib/i18n";
@@ -70,7 +72,7 @@ export default function AuthShell({ title, subtitle, children, footer }: Props) 
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(99,102,241,.45),transparent_45%),radial-gradient(circle_at_85%_70%,rgba(236,72,153,.32),transparent_45%),radial-gradient(circle_at_60%_10%,rgba(14,165,233,.28),transparent_40%)]" aria-hidden="true" />
                 <div className="absolute inset-0 bg-grid opacity-40 mask-fade-b" aria-hidden="true" />
                 <Link href="/" className="relative flex items-center gap-3">
-                    <OptimizedImage src="/logo-dark.png" alt="" className="h-11 w-11 object-contain" priority />
+                    <OptimizedImage src={logoSrc("hanogt", 44, "dark")} alt="" width={44} height={44} className="h-11 w-11 object-contain" priority />
                     <span className="text-lg font-bold tracking-tight">Hanogt Codev</span>
                 </Link>
                 <div className="relative mt-auto max-w-md pt-10 [@media(max-height:760px)]:pt-4">
@@ -108,8 +110,7 @@ export default function AuthShell({ title, subtitle, children, footer }: Props) 
                 </div>
                 <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-10">
                     <Link href="/" className="mb-8 flex items-center gap-3 lg:hidden">
-                        <OptimizedImage src="/logo-light.png" alt="" className="h-10 w-10 object-contain dark:hidden" priority />
-                        <OptimizedImage src="/logo-dark.png" alt="" className="hidden h-10 w-10 object-contain dark:block" priority />
+                        <ProductLogo product="hanogt" size={40} priority />
                         <span className="text-lg font-bold">Hanogt Codev</span>
                     </Link>
                     <h1 className="text-3xl font-black tracking-tight">{title}</h1>

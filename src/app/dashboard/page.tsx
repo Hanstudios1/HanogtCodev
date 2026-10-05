@@ -10,13 +10,11 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, type ReactNode } from "react";
 import DeleteProjectModal from "@/components/DeleteProjectModal";
-import Header, { NAV_ICONS, useStaffRole } from "@/components/Header";
+import Header from "@/components/Header";
 import OptimizedImage from "@/components/OptimizedImage";
 import PrivacyPolicyModal, { legalNoticePending, legalNoticeUpdated } from "@/components/PrivacyPolicyModal";
-import { useRawSession } from "@/components/Provider";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { ADMIN_NAV, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavItem } from "@/lib/nav";
 import { ENGINE_LABELS, LANGUAGES, fileExtensionFor, getLanguage, normalizeLanguageId } from "@/lib/runtimes/languages";
 import { getProjects, getProjectsFromCloud, deleteProjectFromCloud, deleteProject, renameProject, type LegacyProject, type Project, type ProjectFile } from "@/lib/storage";
 
@@ -40,10 +38,6 @@ const CODE_LANGUAGES = LANGUAGES
     .filter((language) => language.engine !== "none")
     .slice()
     .sort((a, b) => Number(Boolean(b.popular)) - Number(Boolean(a.popular)));
-
-const EXPLORE: NavItem[] = ["/ai", "/news", "/arcade", "/guide", "/security", "/social"]
-    .map((href) => [...PRIMARY_NAV, ...SECONDARY_NAV].find((item) => item.href === href))
-    .filter((item): item is NavItem => Boolean(item));
 
 const C = {
     welcome: { TR: "Tekrar hoş geldin", EN: "Welcome back" },
@@ -156,9 +150,6 @@ function CloseButton({ label, onClick }: { label: string; onClick: () => void })
 export default function DashboardPage() {
     const router = useRouter();
     const { data: session } = useSession();
-    // Staff get the Admin Panel as the first Explore card (decided by the raw session, not the Firebase bridge).
-    const staffRole = useStaffRole(useRawSession().data?.user?.email?.toLowerCase() || null);
-    const explore = staffRole ? [ADMIN_NAV, ...EXPLORE] : EXPLORE;
     const { t, tx, language, locale } = useI18n();
 
     const [showLangModal, setShowLangModal] = useState(false);
@@ -416,14 +407,11 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, ease: "easeOut" }}
-                    className="relative mb-8 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900/60 sm:p-8"
+                    className="mb-8 rounded-3xl border border-zinc-200 bg-white p-6 dark:border-white/10 dark:bg-zinc-900/60 sm:p-8"
                 >
-                    <div className="pointer-events-none absolute -top-24 end-0 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl" aria-hidden />
-                    <div className="pointer-events-none absolute -bottom-24 start-1/3 h-56 w-56 rounded-full bg-fuchsia-500/10 blur-3xl" aria-hidden />
-                    <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div className="min-w-0">
-                            <p className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 dark:text-indigo-300">
-                                <Sparkles className="h-4 w-4" aria-hidden />
+                            <p className="mb-2 text-sm font-semibold text-brand-green">
                                 {tx(C.welcome)}{firstName ? `, ${firstName}` : ""}
                             </p>
                             <h1 className="text-3xl font-black tracking-tight sm:text-4xl">{t("dashboard_title")}</h1>
@@ -443,7 +431,7 @@ export default function DashboardPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowProjectTypeModal(true)}
-                                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-5 py-3 font-bold text-white shadow-lg shadow-indigo-600/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-600/30 active:translate-y-0"
+                                className="inline-flex items-center gap-2 rounded-2xl bg-zinc-900 px-5 py-3 font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
                             >
                                 <Plus className="h-5 w-5" aria-hidden />
                                 {t("create_project")}
@@ -455,8 +443,8 @@ export default function DashboardPage() {
                 {/* Quick start */}
                 <div className="mb-8 grid gap-4 md:grid-cols-2">
                     {[
-                        { key: "code", icon: Code2, title: tx(C.codeCard), desc: tx(C.codeCardDesc), onClick: () => setShowLangModal(true), tone: "border-blue-500/20 from-blue-500/10 to-cyan-500/5 hover:border-blue-500/50 hover:shadow-blue-500/10", badge: "bg-blue-600 shadow-blue-600/25", arrow: "text-blue-500" },
-                        { key: "game", icon: Gamepad2, title: tx(C.gameCard), desc: tx(C.gameCardDesc), onClick: openGameModal, tone: "border-fuchsia-500/20 from-fuchsia-500/10 to-violet-500/5 hover:border-fuchsia-500/50 hover:shadow-fuchsia-500/10", badge: "bg-gradient-to-br from-fuchsia-600 to-violet-600 shadow-fuchsia-600/25", arrow: "text-fuchsia-500" },
+                        { key: "code", icon: Code2, title: tx(C.codeCard), desc: tx(C.codeCardDesc), onClick: () => setShowLangModal(true), tone: "hover:border-blue-500/50", badge: "bg-blue-500/10 text-blue-600 dark:text-blue-300", arrow: "text-blue-500" },
+                        { key: "game", icon: Gamepad2, title: tx(C.gameCard), desc: tx(C.gameCardDesc), onClick: openGameModal, tone: "hover:border-fuchsia-500/50", badge: "bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300", arrow: "text-fuchsia-500" },
                     ].map((card, index) => {
                         const Icon = card.icon;
                         return (
@@ -467,9 +455,9 @@ export default function DashboardPage() {
                                 initial={{ opacity: 0, y: 12 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.08 + index * 0.06, duration: 0.4 }}
-                                className={`group flex items-center gap-4 rounded-2xl border bg-gradient-to-br p-5 text-start transition hover:-translate-y-0.5 hover:shadow-lg ${card.tone}`}
+                                className={`group flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 text-start transition dark:border-white/10 dark:bg-zinc-900/60 ${card.tone}`}
                             >
-                                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg ${card.badge}`}><Icon className="h-6 w-6" aria-hidden /></span>
+                                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${card.badge}`}><Icon className="h-6 w-6" aria-hidden /></span>
                                 <span className="min-w-0">
                                     <strong className="block text-lg">{card.title}</strong>
                                     <span className="text-sm text-zinc-500 dark:text-zinc-400">{card.desc}</span>
@@ -479,28 +467,6 @@ export default function DashboardPage() {
                         );
                     })}
                 </div>
-
-                {/* Explore */}
-                <section className="mb-10" aria-labelledby="explore-title">
-                    <h2 id="explore-title" className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">{tx(NAV_LABELS.explore)}</h2>
-                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-                        {explore.map((item) => {
-                            const Icon = NAV_ICONS[item.icon];
-                            return (
-                                <Link key={item.href} href={item.href} className="group relative flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-indigo-500/40 hover:shadow-md dark:border-white/10 dark:bg-zinc-900/60 dark:hover:border-indigo-400/40">
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 transition group-hover:bg-indigo-500/10 group-hover:text-indigo-600 dark:bg-white/5 dark:text-zinc-200 dark:group-hover:text-indigo-300"><Icon className="h-5 w-5" aria-hidden /></span>
-                                    <span className="min-w-0">
-                                        <span className="flex items-center gap-2 font-semibold">
-                                            {tx(item.label)}
-                                            {item.live && <span className="relative flex h-2 w-2" aria-hidden><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" /></span>}
-                                        </span>
-                                        <span className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{item.desc ? tx(item.desc) : item.descKey ? t(item.descKey) : ""}</span>
-                                    </span>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </section>
 
                 {/* Toolbar */}
                 {hasAnyProject && (
@@ -662,7 +628,7 @@ export default function DashboardPage() {
                             {[0, 1, 2].map((item) => <div key={item} className="h-44 animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-white/10 dark:bg-zinc-900" />)}
                         </div>
                     ) : gameProjects.length === 0 ? (
-                        <button type="button" onClick={openGameModal} className="group flex w-full flex-col items-center justify-center rounded-3xl border border-dashed border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-500/5 to-violet-500/5 p-10 text-center transition hover:border-fuchsia-500/60">
+                        <button type="button" onClick={openGameModal} className="group flex w-full flex-col items-center justify-center rounded-3xl border border-dashed border-fuchsia-500/30 bg-white p-10 text-center transition hover:border-fuchsia-500/60 dark:bg-zinc-900/60">
                             <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-fuchsia-500/10 text-fuchsia-500 transition group-hover:scale-105"><Boxes className="h-8 w-8" aria-hidden /></span>
                             <strong className="text-lg">{tx(C.firstScene)}</strong>
                             <span className="mt-2 max-w-lg text-sm text-zinc-500 dark:text-zinc-400">{tx(C.firstSceneDesc)}</span>
@@ -680,11 +646,10 @@ export default function DashboardPage() {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: Math.min(index, 8) * 0.04, duration: 0.3 }}
-                                        className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-fuchsia-500/50 hover:shadow-xl hover:shadow-fuchsia-500/10 dark:border-white/10 dark:bg-zinc-900"
+                                        className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 transition hover:border-fuchsia-500/50 dark:border-white/10 dark:bg-zinc-900"
                                     >
-                                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-blue-500 opacity-70" />
                                         <div className="mb-5 flex items-start justify-between">
-                                            <button type="button" onClick={openProject} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/15 to-violet-500/15 text-fuchsia-500" aria-label={tx({ TR: "{name} projesini oyun motorunda aç", EN: "Open {name} in the game engine" }, { name: project.name })}>
+                                            <button type="button" onClick={openProject} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-500/10 text-fuchsia-500" aria-label={tx({ TR: "{name} projesini oyun motorunda aç", EN: "Open {name} in the game engine" }, { name: project.name })}>
                                                 {project.dimension === "2d" ? <Box className="h-6 w-6" aria-hidden /> : <Boxes className="h-6 w-6" aria-hidden />}
                                             </button>
                                             <button type="button" onClick={() => void handleDeleteGameProject(project)} className="rounded-lg p-2 text-zinc-400 transition hover:bg-red-500/10 hover:text-red-500" aria-label={tx({ TR: "{name} projesini sil", EN: "Delete {name}" }, { name: project.name })}><Trash2 className="h-4 w-4" aria-hidden /></button>
@@ -773,7 +738,7 @@ export default function DashboardPage() {
                                 <Link href="/game-engine" className="text-center text-sm font-medium text-zinc-500 underline-offset-4 transition hover:text-fuchsia-500 hover:underline sm:text-start">{tx(C.templatesHint)}</Link>
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row">
                                     <button type="button" onClick={() => setShowGameModal(false)} className="rounded-xl px-5 py-3 font-semibold text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">{tx(C.cancel)}</button>
-                                    <button type="submit" disabled={isCreatingGame || gameName.trim().length < 2} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 px-6 py-3 font-bold text-white shadow-lg shadow-fuchsia-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+                                    <button type="submit" disabled={isCreatingGame || gameName.trim().length < 2} className="inline-flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-6 py-3 font-bold text-white transition hover:bg-fuchsia-700 disabled:cursor-not-allowed disabled:opacity-50">
                                         {isCreatingGame ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Gamepad2 className="h-5 w-5" aria-hidden />}
                                         {isCreatingGame ? tx(C.creating) : tx(C.openEngine)}
                                     </button>

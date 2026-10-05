@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.20",
+        version: "v0.3.20",
+        date: "2026-10-05",
+        title: { TR: "Yeni logolar, yeni sayfalar", EN: "New logos, new pages" },
+        desc: { TR: "Hanogt'un ürünleri kendi logolarına kavuştu; ana sayfa, fiyatlandırma ve Security sayfası yenilendi.", EN: "Hanogt's products got their own logos, and the home page, pricing and the Security page were redone." },
+        items: [
+            { TR: "Hanogt AI, Engine, Security, News ve Social yeni logolarıyla; site ve uygulama simgeleri de yenilendi.", EN: "Hanogt AI, Engine, Security, News and Social have their new logos, and the site and app icons are new too." },
+            { TR: "Ana sayfa: \"Hanogt'ta neler var\" bölümü gerçek önizlemelerle, kod örneği artık düz C#. Mini oyunda çift zıplama, kalkan, mıknatıs, seri çarpanı ve en iyi skor var.", EN: "Home page: \"What's on Hanogt\" with real previews, and the code sample is plain C# now. The mini game has a double jump, a shield, a magnet, a streak multiplier and a best score." },
+            { TR: "\"Uygulamayı indir\" menüsü düzeldi: cihazın öne çıkıyor, telefonda alttan açılıyor; iPhone ve iPad'de ana ekrana ekleme adımları var.", EN: "The \"Download the app\" menu is fixed: your device comes first, it opens from the bottom on phones, and iPhone and iPad get the Add to Home Screen steps." },
+            { TR: "Fiyatlandırma: sade kartlar ve planları karşılaştırma tablosu; kullanımın kartların altındaki açılır panelde.", EN: "Pricing: simpler cards and a table comparing the plans; your usage sits in a panel under the cards." },
+            { TR: "Security üst menüde: şifren, iki adımlı doğrulaman, kurtarma kodların ve son girişin tek bakışta. Security Bot'un neleri taradığı da anlatılıyor.", EN: "Security is in the top menu: your password, two-step verification, recovery codes and last sign-in at a glance, plus what Security Bot scans for." },
+            { TR: "Panelden \"Keşfet\" kalktı; ürünlere üst menüden ulaşabilirsin.", EN: "\"Explore\" left the dashboard; the products are in the top menu." },
+        ],
+    },
+    {
         id: "v0.3.19",
         version: "v0.3.19",
         date: "2026-10-05",

@@ -12,7 +12,7 @@ import { prepareSignOut } from "@/lib/ai/sign-out";
 import { useEffect, useRef, useState } from "react";
 import type { StaffRole } from "@/components/Admin/types";
 import NotificationCenter, { useUnreadNotifications } from "@/components/NotificationCenter";
-import OptimizedImage from "@/components/OptimizedImage";
+import ProductLogo from "@/components/ProductLogo";
 import PresenceAvatar, { PresenceMark } from "@/components/PresenceAvatar";
 import { useRawSession } from "@/components/Provider";
 import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
@@ -248,18 +248,16 @@ export default function Header() {
             <header className={`fixed inset-x-0 top-0 z-50 h-16 transition-[background-color,box-shadow,border-color] duration-300 ${scrolled || menuOpen ? "border-b border-zinc-200/80 bg-white/80 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/[0.06] dark:bg-zinc-950/80" : "border-b border-transparent bg-white/40 backdrop-blur-md dark:bg-zinc-950/30"}`}>
                 <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 sm:px-6">
                     <Link href="/" className="group flex shrink-0 items-center gap-2.5" onClick={() => setMenuOpen(false)} aria-label="Hanogt Codev">
-                        <span className="relative grid h-10 w-10 place-items-center">
-                            <span className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-500/25 to-fuchsia-500/25 opacity-0 blur-md transition group-hover:opacity-100" />
-                            <OptimizedImage src="/logo-light.png" alt="" className="relative block h-10 w-10 object-contain transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-110 dark:hidden" />
-                            <OptimizedImage src="/logo-dark.png" alt="" className="relative hidden h-10 w-10 object-contain transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-110 dark:block" />
+                        <span className="grid h-10 w-10 place-items-center transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none">
+                            <ProductLogo product="hanogt" size={36} priority />
                         </span>
                         <span className="hidden text-[17px] font-black tracking-tight text-zinc-900 sm:block dark:text-white">
-                            Hanogt <span className="text-gradient">Codev</span>
+                            Hanogt <span className="text-brand-green">Codev</span>
                         </span>
                     </Link>
 
                     <nav ref={navRef} className={`hidden min-w-0 flex-1 justify-center overflow-hidden lg:flex ${navFits ? "" : "invisible"}`} aria-label={t("hd_main_nav")}>
-                        <div ref={navListRef} className="flex w-max items-center gap-0.5">
+                        <div ref={navListRef} className="flex w-max items-center">
                             {primary.map((item) => {
                                 const active = isActivePath(pathname, item.href);
                                 return (
@@ -267,7 +265,7 @@ export default function Header() {
                                         key={item.href}
                                         href={item.href}
                                         aria-current={active ? "page" : undefined}
-                                        className={`relative flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13.5px] font-semibold transition-colors ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
+                                        className={`relative flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13.5px] font-semibold transition-colors ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
                                     >
                                         {active ? <motion.span layoutId="nav-active" className="absolute inset-0 rounded-xl bg-zinc-900/[0.06] ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.08] dark:ring-white/10" transition={{ type: "spring", stiffness: 420, damping: 36 }} /> : null}
                                         <span className="relative">{tx(item.label)}</span>
@@ -287,18 +285,17 @@ export default function Header() {
                             aria-label={tx(NAV_LABELS.whatsNew)}
                         >
                             <Sparkles className="h-[18px] w-[18px]" />
-                            <span className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-zinc-950" />
+                            <span className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-brand-green ring-2 ring-white dark:ring-zinc-950" />
                         </button>
                         <button
                             type="button"
                             onClick={() => window.dispatchEvent(new Event("hanogt:toggle-ai"))}
-                            className={`relative grid h-9 w-9 place-items-center rounded-xl transition ${aiOpen ? "bg-violet-500/15 ring-2 ring-violet-500/40" : "hover:bg-zinc-900/5 dark:hover:bg-white/10"}`}
+                            className={`grid h-9 w-9 place-items-center rounded-xl transition ${aiOpen ? "bg-zinc-900/[0.07] ring-1 ring-zinc-900/10 dark:bg-white/10 dark:ring-white/15" : "hover:bg-zinc-900/5 dark:hover:bg-white/10"}`}
                             title="Hanogt AI"
                             aria-label="Hanogt AI"
                             aria-pressed={aiOpen}
                         >
-                            <span className="grid h-6 w-6 place-items-center rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-sm"><Sparkles className="h-3.5 w-3.5" /></span>
-                            <span className="absolute bottom-1 end-1 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-950" />
+                            <ProductLogo product="ai" size={24} />
                         </button>
                         <div className="hidden sm:block"><LangToggle compact /></div>
                         <ThemeToggle />
@@ -347,7 +344,7 @@ export default function Header() {
                                             transition={{ duration: 0.16 }}
                                             className="absolute end-0 top-full z-[70] mt-2 max-h-[calc(100dvh-5rem)] w-72 max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-2xl shadow-black/10 dark:border-white/10 dark:bg-zinc-900"
                                         >
-                                            <div className="flex items-center gap-3 border-b border-zinc-100 bg-gradient-to-br from-indigo-500/[0.06] to-fuchsia-500/[0.06] p-4 dark:border-white/[0.06]">
+                                            <div className="flex items-center gap-3 border-b border-zinc-100 bg-zinc-50 p-4 dark:border-white/[0.06] dark:bg-white/[0.03]">
                                                 <PresenceAvatar src={displayAvatar} name={displayName} status={ownStatus} size="md" ring="bg-white dark:bg-zinc-900" />
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex min-w-0 items-center gap-1.5">
@@ -427,7 +424,7 @@ export default function Header() {
                         </button>
                     </div>
                 </div>
-                <motion.div className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400" style={{ scaleX: progress }} aria-hidden="true" />
+                <motion.div className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-brand-green" style={{ scaleX: progress }} aria-hidden="true" />
             </header>
 
             <AnimatePresence>
@@ -451,7 +448,7 @@ export default function Header() {
                                             </span>
                                             <span className="block truncate text-[12.5px] text-zinc-500" dir="auto">{customStatus || statusLabel || tx(C.setStatus)}</span>
                                         </span>
-                                        <span className="shrink-0 text-[12px] font-semibold text-indigo-600 dark:text-indigo-300">{tx(C.setStatus)}</span>
+                                        <span className="shrink-0 text-[12px] font-semibold text-brand-green">{tx(C.setStatus)}</span>
                                         <ChevronDown className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${mobileStatusOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                                     </button>
                                     {mobileStatusOpen ? <StatusMenu email={email} className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.08]" /> : null}
@@ -467,10 +464,10 @@ export default function Header() {
                                                 href={item.href}
                                                 onClick={() => setMenuOpen(false)}
                                                 aria-current={active ? "page" : undefined}
-                                                className={`flex h-full flex-col gap-2 rounded-2xl border p-3.5 transition ${active ? "border-indigo-500/40 bg-indigo-500/[0.08]" : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-white/[0.08] dark:bg-white/[0.03]"}`}
+                                                className={`flex h-full flex-col gap-2 rounded-2xl border p-3.5 transition ${active ? "border-brand-green/40 bg-brand-green/[0.06]" : "border-zinc-200 bg-white hover:border-zinc-300 dark:border-white/[0.08] dark:bg-white/[0.03]"}`}
                                             >
                                                 <span className="flex items-center gap-2">
-                                                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow"><Icon className="h-4 w-4" /></span>
+                                                    {item.product ? <ProductLogo product={item.product} size={32} /> : <span className="grid h-8 w-8 place-items-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-white/10 dark:text-zinc-200"><Icon className="h-4 w-4" /></span>}
                                                     {item.live ? <span className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-red-600 dark:text-red-400">{tx(NAV_LABELS.live)}</span> : null}
                                                 </span>
                                                 <span className="text-[15px] font-bold text-zinc-900 dark:text-white">{tx(item.label)}</span>
@@ -487,7 +484,7 @@ export default function Header() {
                                     aria-current={isActivePath(pathname, ADMIN_NAV.href) ? "page" : undefined}
                                     className="mt-4 flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5 transition hover:border-violet-300 dark:border-violet-400/25 dark:bg-violet-500/10 dark:hover:border-violet-400/40"
                                 >
-                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow"><Gauge className="h-4.5 w-4.5" /></span>
+                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-violet-600 text-white"><Gauge className="h-4.5 w-4.5" /></span>
                                     <span className="min-w-0 flex-1">
                                         <span className="block text-[15px] font-bold text-zinc-900 dark:text-white">{tx(ADMIN_NAV.label)}</span>
                                         {ADMIN_NAV.desc ? <span className="block text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">{tx(ADMIN_NAV.desc)}</span> : null}
@@ -526,7 +523,7 @@ export default function Header() {
                             {!signedIn && !sessionLoading ? (
                                 <div className="mt-4 grid grid-cols-2 gap-2">
                                     <Link href="/login" onClick={() => setMenuOpen(false)} className="flex h-11 items-center justify-center rounded-xl border border-zinc-200 text-[14px] font-bold text-zinc-800 dark:border-white/10 dark:text-zinc-100">{t("login")}</Link>
-                                    <Link href="/signup" onClick={() => setMenuOpen(false)} className="flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-[14px] font-bold text-white shadow-lg shadow-indigo-500/25">{t("signup")}</Link>
+                                    <Link href="/signup" onClick={() => setMenuOpen(false)} className="flex h-11 items-center justify-center rounded-xl bg-zinc-900 text-[14px] font-bold text-white dark:bg-white dark:text-zinc-900">{t("signup")}</Link>
                                 </div>
                             ) : null}
                         </nav>

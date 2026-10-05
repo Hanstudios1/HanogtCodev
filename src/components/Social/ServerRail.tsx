@@ -4,7 +4,7 @@ import { LayoutDashboard, Link2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState, type FocusEvent, type PointerEvent, type ReactNode } from "react";
 import { cx } from "@/components/Groups/ui";
-import OptimizedImage from "@/components/OptimizedImage";
+import ProductLogo from "@/components/ProductLogo";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { GROUP_COLORS } from "@/lib/groups";
 import { badgeLabel, groupHref, railBadge } from "@/lib/social/model";
@@ -59,9 +59,7 @@ export default function ServerRail() {
                             homeActive ? "rounded-2xl bg-indigo-600" : "rounded-[24px] bg-white hover:rounded-2xl hover:bg-indigo-600 dark:bg-zinc-800",
                         )}
                     >
-                        {/* The light logo on indigo and dark surfaces, the dark one on the white button. */}
-                        <OptimizedImage src="/logo-dark.png" alt="" width={32} height={32} className={cx("h-8 w-8 object-contain", !homeActive && "hidden group-hover:block dark:block")} />
-                        {!homeActive && <OptimizedImage src="/logo-light.png" alt="" width={32} height={32} className="h-8 w-8 object-contain group-hover:hidden dark:hidden" />}
+                        <ProductLogo product="social" size={32} />
                         <Badge count={homeBadge} />
                     </Link>
                 </RailEntry>

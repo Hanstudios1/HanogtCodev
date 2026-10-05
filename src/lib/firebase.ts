@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth";
+import { browserLocalPersistence, browserSessionPersistence, connectAuthEmulator, getAuth, indexedDBLocalPersistence, initializeAuth, type Auth } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 
@@ -106,14 +106,26 @@ export const firebaseClientDiagnostics: {
     appIdPresent: Boolean(firebaseConfig.appId),
 };
 
+/**
+ * Firebase Auth as getAuth() makes it, but without the popup/redirect helper:
+ * the site signs in with custom tokens only, and on phones and Safari that
+ * helper loads a Google script up front, which the CSP rightly blocks.
+ */
+function createAuth(): Auth {
+    try {
+        return initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence] });
+    } catch {
+        // Already set up (a hot reload): the same instance.
+        return getAuth(app);
+    }
+}
+
 // Firestore/Storage handles are safe to construct during SSR. Firebase Auth is
 // browser-only; constructing it while prerendering also makes builds depend on
 // local environment secrets and turns a configuration issue into a hard crash.
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
-const auth: Auth | null = typeof window !== "undefined" && hasFirebaseClientConfig
-    ? getAuth(app)
-    : null;
+const auth: Auth | null = typeof window !== "undefined" && hasFirebaseClientConfig ? createAuth() : null;
 const storage = getStorage(app);
 
 // Local development and end-to-end tests against the Firebase Emulator Suite

@@ -10,7 +10,7 @@ import { load } from "./setup.mjs";
 // keep this test fast and record the config it was initialised with.
 const FIREBASE_STUBS = {
     "firebase/app": "export const getApps = () => []; export function initializeApp(options) { globalThis.__firebaseInitOptions = options; return { options }; }",
-    "firebase/auth": "export const getAuth = (app) => ({ app }); export const connectAuthEmulator = () => {};",
+    "firebase/auth": "export const getAuth = (app) => ({ app }); export function initializeAuth(app, options) { globalThis.__firebaseAuthOptions = options; return { app, options }; } export const indexedDBLocalPersistence = 'indexedDB'; export const browserLocalPersistence = 'local'; export const browserSessionPersistence = 'session'; export const connectAuthEmulator = () => {};",
     "firebase/firestore": "export const getFirestore = (app) => ({ app }); export const connectFirestoreEmulator = () => {};",
     "firebase/storage": "export const getStorage = (app) => ({ app }); export const connectStorageEmulator = () => {};",
 };
@@ -205,6 +205,8 @@ test("on import, firebase.ts initialises with the runtime config and reports its
         assert.equal(runtimeModule.firebaseClientDiagnostics.source, "runtime-management-api");
         assert.equal(globalThis.__firebaseInitOptions.projectId, "hanogt");
         assert.ok(runtimeModule.auth, "Firebase Auth is created in the browser");
+        // Without a popup/redirect resolver: phones and Safari don't try to load Google's iframe script (the CSP blocks it).
+        assert.deepEqual(globalThis.__firebaseAuthOptions, { persistence: ["indexedDB", "local", "session"] });
     } finally {
         delete globalThis.window;
         setEnv(null);

@@ -6,7 +6,6 @@ import {
     BookOpen,
     Cloud,
     Download,
-    Gamepad2,
     Globe,
     HardDrive,
     LoaderCircle,
@@ -20,6 +19,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import ProductLogo from "@/components/ProductLogo";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { createProjectFromTemplate, PROJECT_TEMPLATES, type TemplateInfo } from "@/lib/game-engine/templates";
 import { createEngineId } from "@/lib/game-engine/ids";
@@ -212,7 +212,7 @@ export default function EngineHub({ onOpen }: { onOpen: (id: string, source: "cl
                 <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
                     <Link href="/" className="grid h-9 w-9 place-items-center rounded-xl text-zinc-400 transition hover:bg-white/5 hover:text-white" aria-label="Ana sayfa"><ArrowLeft className="h-4 w-4" /></Link>
                     <div className="flex items-center gap-2">
-                        <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30"><Gamepad2 className="h-4 w-4" /></div>
+                        <ProductLogo product="engine" size={32} priority />
                         <span className="text-[15px] font-black tracking-tight">Hanogt Engine</span>
                         <span className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold text-indigo-200" title={ENGINE_VERSION_LABEL}>V{ENGINE_VERSION}</span>
                     </div>
