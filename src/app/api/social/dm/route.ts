@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { after, type NextRequest } from "next/server";
 import { isReactionKey } from "@/lib/groups";
 import { commitServerMutations, commitServerPatches, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { clearMessageTraces, refreshMessageTraces } from "@/lib/server/message-traces";
 import { clearDirectMessageNotification, notifyDirectMessage } from "@/lib/server/social-notify";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { isDocId, isOwnedStoragePath } from "@/lib/server/validate";
@@ -12,6 +13,7 @@ import {
     dmChatId,
     dmMessageFromData,
     isSticker,
+    messagePreview,
     previewText,
     readDmReactions,
     readPinnedIds,
@@ -138,13 +140,13 @@ async function readReply(value: unknown, chatId: string): Promise<DmReply | null
     if (!isDocId(id)) return null;
     const quoted = await getServerDocument<StoredMessage>(messagePath(chatId, id));
     if (!quoted || quoted.deleted === true || typeof quoted.fromEmail !== "string") return null;
-    return { id, text: previewText(quoted.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: quoted.fromEmail };
+    return { id, text: messagePreview(quoted.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: quoted.fromEmail };
 }
 
 /** What the chat list and the notification show for a message. */
 function previewOf(type: string, text: string) {
     if (type === "gif") return text ? `GIF · ${previewText(text, 80)}` : "GIF";
-    return previewText(text);
+    return messagePreview(text);
 }
 
 async function send(user: SocialUser, partner: string, body: Record<string, unknown>) {
@@ -217,8 +219,10 @@ async function edit(user: SocialUser, partner: string, body: Record<string, unkn
     if (text.length > SOCIAL_LIMITS.messageMax) throw new SocialApiError(413, "message_too_long", "Mesaj en fazla 4000 karakter olabilir.");
     await commitServerPatches([
         { path: messagePath(chatId, id), data: { text, edited: true }, updateFields: ["text", "edited"], updateTime: message._updateTime },
-        ...(newest ? [{ path: chatPath(chatId), data: { lastMessage: previewText(text) }, updateFields: ["lastMessage"], exists: true }] : []),
+        ...(newest ? [{ path: chatPath(chatId), data: { lastMessage: messagePreview(text) }, updateFields: ["lastMessage"], exists: true }] : []),
     ]);
+    // Replies quote the new words and stars show them.
+    after(() => refreshMessageTraces({ scope: "dm", place: chatId, parentPath: chatPath(chatId) }, id, { ...message, text }, messagePreview(text, SOCIAL_LIMITS.replyExcerptMax)));
     return { success: true };
 }
 
@@ -237,6 +241,8 @@ async function remove(user: SocialUser, partner: string, body: Record<string, un
         { path: messagePath(chatId, id), data: { deleted: true, text: "" }, updateFields: ["deleted", "text", "voicePath", "voiceDuration", "replyTo", "gif", "reactions"], updateTime: message._updateTime },
         ...(Object.keys(chatFields).length ? [{ path: chatPath(chatId), data: chatFields, updateFields: Object.keys(chatFields), exists: true }] : []),
     ]);
+    // Replies stop quoting it and stars on it go.
+    after(() => clearMessageTraces({ scope: "dm", place: chatId, parentPath: chatPath(chatId) }, [id]));
     return { success: true };
 }
 

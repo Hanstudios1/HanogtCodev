@@ -40,7 +40,8 @@ export type GroupFileItem = {
  * The message a reply points to: its id and an excerpt copied when the reply
  * was sent (the author is looked up from the message itself when it's loaded).
  */
-export type GroupReply = { id: string; text: string };
+/** The quoted message; `deleted` once it has been deleted (the quote is emptied then). */
+export type GroupReply = { id: string; text: string; deleted?: boolean };
 
 export type GroupChatMessage = {
     id: string;
@@ -127,7 +128,7 @@ export function messageFromData(id: string, data: DocumentData, pending: boolean
         vars,
         template: isGroupTemplateId(data.template) ? data.template : null,
         reactions,
-        replyTo: reply && isGroupId(reply.id) ? { id: reply.id, text: text(reply.text).slice(0, 120) } : null,
+        replyTo: reply && isGroupId(reply.id) ? { id: reply.id, text: reply.deleted === true ? "" : text(reply.text).slice(0, 120), deleted: reply.deleted === true } : null,
         edited: data.edited === true,
         gif,
         bot: bot && data.bot === bot ? bot : null,

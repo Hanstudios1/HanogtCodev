@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.9";
+export const LEGAL_VERSION = "5.0";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "5 Ekim 2026", EN: "5 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.9-2026-10-05";
+export const LEGAL_NOTICE_ID = "5.0-2026-10-05";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,17 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.0",
+        date: { TR: "5 Ekim 2026", EN: "5 October 2026" },
+        items: [
+            { TR: "Hanogt Social mesajları: Birebir ve grup mesajları artık yalnızca sunucumuz üzerinden yazılıyor; Markdown biçimlendirmesi, GIF, iletme, yıldızlama ve sabitleme eklendi. Birebir mesajlardaki tepkiler, tepki veren katılımcıyla birlikte saklanıyor. Yıldızladığınız mesajlar (en fazla 200) yalnızca sizin görebildiğiniz bir listede kısa bir alıntıyla tutuluyor. Bir mesaj silindiğinde yanıtlardaki alıntısı ve yıldızlardaki kopyası da siliniyor, düzenlendiğinde güncelleniyor.", EN: "Hanogt Social messages: one-to-one and group messages are now written only through our server; Markdown formatting, GIFs, forwarding, starring and pinning were added. Reactions in one-to-one chats are stored with the participant who reacted. Messages you star (up to 200) are kept, with a short excerpt, in a list only you can see. When a message is deleted, its quote in replies and its copy in stars are deleted too, and when it is edited they are updated." },
+            { TR: "GIF'ler: GIF araması sunucumuz üzerinden KLIPY (ABD) ya da GIPHY, Inc. (ABD) ile yapılıyor; sağlayıcıya yalnızca arama metni, sayfa, dil ve içerik derecelendirmesi gidiyor. GIF görselleri sağlayıcının sunucularından yüklendiği için bu sunucular IP adresinizi ve tarayıcı bilgilerinizi görebilir. Alıcılar, yurt dışına aktarım ve tarayıcı depolama tabloları buna göre güncellendi.", EN: "GIFs: GIF search goes through our server to KLIPY (USA) or GIPHY, Inc. (USA); only the search text, page, language and content rating are sent to the provider. Because GIF images load from the provider's servers, those servers can see your IP address and browser details. The recipients, international transfer and browser storage tables were updated accordingly." },
+            { TR: "Grup moderasyonu: Hanogt Security Bot artık her grupta bulunan ve kaldırılamayan moderasyon botu; uyarılar ve raporlar 180 gün, susturmalar süreleri bitene kadar saklanıyor. AutoMod, grup mesajlarını kaydedilmeden önce grubun kurallarına göre otomatik olarak tarıyor ve kurala takılan mesajı durduruyor; durdurulan mesajın metni değil, yalnızca gönderen, kural ve zaman 90 gün saklanıyor. Otomatik kararlar ve itiraz bölümü buna göre güncellendi.", EN: "Group moderation: Hanogt Security Bot is now also the moderation bot of every group and can't be removed; warnings and reports are kept for 180 days and mutes until they end. AutoMod automatically scans group messages against the group's rules before they are saved and stops a message that breaks one; the text of a stopped message isn't kept, only the sender, the rule and the time, for 90 days. The automated decisions and objections section was updated accordingly." },
+            { TR: "Gruplarda Hanogt AI: Bir grupta /ai ile ya da @Hanogt AI diye sorulan soru, kanalın son 12 mesajıyla (yazarlarının görünen adlarıyla) birlikte Hanogt AI'ın dil modeline iletiliyor ve soranın mesaj hakkından düşüyor; soru ve yanıt grubun sohbetinde kalıyor. Grup sahibi ve yöneticileri botu kapatabiliyor.", EN: "Hanogt AI in groups: a question asked in a group with /ai or by mentioning @Hanogt AI is passed to Hanogt AI's language model together with the channel's last 12 messages (with their authors' display names) and counts against the asker's message allowance; the question and the answer stay in the group chat. Group owners and admins can switch the bot off." },
+            { TR: "Bildirimler, ayarlar ve şartlar: Gruplarda sizden bahsedildiğinde ve bir aramayı kaçırdığınızda bildirim gönderiliyor; bunları ve mesajlaşma ayarlarını (okundu bilgisi, yazıyor göstergesi, Enter ile gönderme, GIF'lerin oynaması, yazı boyutu, arka plan) yeni Hanogt Social ayarlarından değiştirebilirsiniz. Kullanım Şartları'na Hanogt Social sorumluluk reddi ile grup sahipleri ve moderatörlerinin sorumlulukları eklendi.", EN: "Notifications, settings and terms: you are notified when you are mentioned in a group and when you miss a call; you can change these and the messaging settings (read receipts, typing indicator, Enter to send, GIF playback, font size, background) in the new Hanogt Social settings. Hanogt Social's disclaimer and the responsibilities of group owners and moderators were added to the Terms of Use." },
+        ],
+    },
     {
         version: "4.9",
         date: { TR: "5 Ekim 2026", EN: "5 October 2026" },

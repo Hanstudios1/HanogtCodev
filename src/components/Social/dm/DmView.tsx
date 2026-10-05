@@ -13,7 +13,7 @@ import { PRESENCE_STATUS_COPY } from "@/lib/presence";
 import { SocialRequestError } from "@/lib/social/api";
 import type { GifItem } from "@/lib/social/gif";
 import { useConversation, useVoiceMessagePlayer } from "@/lib/social/hooks";
-import { SOCIAL_LIMITS, dmChatId, previewText, type DmMessage, type SocialPerson, type SocialProfileResponse } from "@/lib/social/model";
+import { SOCIAL_LIMITS, dmChatId, messagePreview, type DmMessage, type SocialPerson, type SocialProfileResponse } from "@/lib/social/model";
 import { CHAT_BACKGROUND_CLASS, MESSAGE_FONT_CLASS } from "@/lib/social/prefs";
 import Composer from "../chat/Composer";
 import { useSocial } from "../context";
@@ -159,7 +159,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
     const canSend = !blocked && (conversation.canSend ?? friend);
     const notFound = profileMissing && !summary && !friend && !conversation.messages.length && conversation.loaded;
 
-    const replyRef = (message: DmMessage | null) => (message ? { id: message.id, text: previewText(message.type === "gif" ? tx(C.gif) : message.text, 100), fromEmail: message.fromEmail } : null);
+    const replyRef = (message: DmMessage | null) => (message ? { id: message.id, text: message.type === "gif" ? tx(C.gif) : messagePreview(message.text, 100), fromEmail: message.fromEmail } : null);
 
     const send = async (text: string) => {
         const reply = replyTo;
@@ -369,7 +369,7 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
                     maxLength={SOCIAL_LIMITS.messageMax}
                     disabled={disabledNotice}
                     status={conversation.typing && friend ? <><span className="me-1 inline-flex gap-0.5 align-middle" aria-hidden>{[0, 150, 300].map((delay) => <span key={delay} className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: `${delay}ms` }} />)}</span>{tx(C.typing, { name: partner.username })}</> : null}
-                    reply={replyTo ? { author: replyTo.fromEmail === meState.email ? meState.username : partner.username, excerpt: replyTo.type === "voice" ? "🎤" : replyTo.type === "gif" ? tx(C.gif) : previewText(replyTo.text, 80) } : null}
+                    reply={replyTo ? { author: replyTo.fromEmail === meState.email ? meState.username : partner.username, excerpt: replyTo.type === "voice" ? "🎤" : replyTo.type === "gif" ? tx(C.gif) : messagePreview(replyTo.text, 80) } : null}
                     onCancelReply={() => setReplyTo(null)}
                     onSend={send}
                     onGif={sendGif}

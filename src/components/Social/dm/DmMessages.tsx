@@ -429,7 +429,7 @@ function RowView(props: RowProps) {
             {reply && !message.deleted && (
                 <button type="button" onClick={() => props.onJump(reply.id)} className="relative mb-0.5 ms-[52px] flex max-w-full items-center gap-1.5 text-start text-[13px] text-zinc-500 before:absolute before:-start-8 before:top-1/2 before:h-3 before:w-7 before:rounded-ss-md before:border-s-2 before:border-t-2 before:border-zinc-300 hover:text-zinc-800 dark:text-zinc-400 dark:before:border-zinc-600 dark:hover:text-zinc-200" aria-label={tx(C.original)}>
                     <span className="shrink-0 font-semibold">@{replyAuthor}</span>
-                    <span className="truncate">{replied?.deleted ? tx(C.deleted) : replied?.text || reply.text}</span>
+                    <span className="truncate">{replied?.deleted || reply.deleted ? tx(C.deleted) : replied?.text || reply.text}</span>
                 </button>
             )}
             <div className="flex gap-4">

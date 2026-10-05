@@ -24,6 +24,23 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.22",
+        version: "v0.3.22",
+        date: "2026-10-05",
+        title: { TR: "Hanogt Social'da botlar, GIF'ler ve AutoMod", EN: "Bots, GIFs and AutoMod in Hanogt Social" },
+        desc: { TR: "Mesajlaşma baştan yenilendi: Markdown, GIF, emoji, eğik çizgi komutları, Hanogt AI ve Hanogt Security Bot gruplarda, AutoMod ve yeni Hanogt Social ayarları.", EN: "Messaging was redone: Markdown, GIFs, emoji, slash commands, Hanogt AI and Hanogt Security Bot in groups, AutoMod and new Hanogt Social settings." },
+        items: [
+            { TR: "Yeni yazma kutusu: @ ile kişi, # ile kanal, / ile komut önerileri; emoji seçici ve GIF arama (KLIPY ya da GIPHY). Mesajın gönderilirken hemen görünüyor.", EN: "A new message box: suggestions for people with @, channels with # and commands with /; an emoji picker and GIF search (KLIPY or GIPHY). Your message shows up as soon as you send it." },
+            { TR: "Mesajlar: Markdown ve kopyalanabilir kod blokları, spoiler, yanıt önizlemesi, birebir sohbetlerde tepkiler, iletme, yıldızlama ve sabitleme; yıldızlı mesajların sol menüde.", EN: "Messages: Markdown and code blocks you can copy, spoilers, reply previews, reactions in one-to-one chats, forwarding, starring and pinning; your starred messages are in the side menu." },
+            { TR: "Gruplarda Hanogt AI: /ai ya da @Hanogt AI ile sor; kanalın son mesajlarını okuyup grupta yanıtlıyor ve senin mesaj hakkından düşüyor. Grup yöneticileri kapatabilir.", EN: "Hanogt AI in groups: ask with /ai or @Hanogt AI; it reads the channel's latest messages, answers in the group and uses your message allowance. Group admins can switch it off." },
+            { TR: "Hanogt Security Bot her grupta: /uyar, /sustur, /at, /yasakla, /temizle, /yavasmod, /kurallar, /uyarilar ve /rapor. Yeni moderatör rolü, özel komutlar ve karşılama mesajı.", EN: "Hanogt Security Bot in every group: /warn, /mute, /kick, /ban, /purge, /slowmode, /rules, /warnings and /report. A new moderator role, custom commands and a welcome message." },
+            { TR: "AutoMod: küfür, argo, yasaklı kelimeler, spam, bahsetme yağmuru, bağlantılar, büyük harf ve kişisel veri kuralları; mesaj gönderilmeden durduruluyor, istenirse uyarı ve otomatik susturma.", EN: "AutoMod: rules for profanity, slang, banned words, spam, mention floods, links, capitals and personal data; messages are stopped before they are sent, with optional warnings and automatic mutes." },
+            { TR: "Hanogt Social ayarları: Ses ve Görüntü, Mesajlar, Bildirimler, Gizlilik, Güvenlik ve Botlar. Okundu bilgisi, yazıyor göstergesi, Enter ile gönderme, yazı boyutu, arka plan ve GIF oynatma artık gerçekten uygulanıyor; bahsetme ve cevapsız arama bildirimleri eklendi.", EN: "Hanogt Social settings: Voice & Video, Messages, Notifications, Privacy, Safety and Bots. Read receipts, the typing indicator, Enter to send, font size, background and GIF playback now really apply, and mention and missed call notifications were added." },
+            { TR: "Silinen bir mesajın alıntısı yanıtlardan, kopyası yıldızlardan da kalkıyor; sorumluluk reddi Social ayarlarında, grup oluştururken ve ilk açılışta.", EN: "A deleted message's quote disappears from replies and its copy from stars too; the disclaimer is in the Social settings, when you create a group and on first use." },
+            { TR: "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 5.0.", EN: "Privacy Policy, KVKK Information Notice and Terms of Use 5.0." },
+        ],
+    },
+    {
         id: "v0.3.21",
         version: "v0.3.21",
         date: "2026-10-05",

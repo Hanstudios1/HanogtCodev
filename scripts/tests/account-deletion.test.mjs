@@ -104,13 +104,20 @@ function seed() {
         [`notifications/${ALI}/items/n2`]: { text: "b" },
         "support_tickets/t1": { authorEmail: ALI, title: "help", messages: [{ from: "user", text: "hi" }] },
         "support_tickets/t2": { authorEmail: BERK, title: "bug" },
+
+        // Starred messages keep a few words of the message they point at.
+        "message_stars/s1": { owner: BERK, scope: "group", target: "grpB", messageId: "gm2", messageRef: "group:grpB:gm2", placeRef: "group:grpB", authorEmail: ALI, excerpt: "hello", author: "Ali" },
+        "message_stars/s2": { owner: BERK, scope: "dm", target: ALI, messageId: "m1", messageRef: "dm:chat1:m1", placeRef: "dm:chat1", authorEmail: ALI, excerpt: "🎤", author: "Ali" },
+        "message_stars/s3": { owner: BERK, scope: "group", target: "grpB", messageId: "gm4", messageRef: "group:grpB:gm4", placeRef: "group:grpB", authorEmail: BERK, excerpt: "yo", author: "Berk" },
+        "message_stars/s4": { owner: BERK, scope: "group", target: "grpA", messageId: "gm1", messageRef: "group:grpA:gm1", placeRef: "group:grpA", authorEmail: BERK, excerpt: "hey", author: "Berk" },
+        "message_stars/s5": { owner: ALI, scope: "dm", target: BERK, messageId: "m2", messageRef: "dm:chat1:m2", placeRef: "dm:chat1", authorEmail: BERK, excerpt: "hi", author: "Berk" },
     };
 }
 
 const BYSTANDER_DATA = [
     `users/${BERK}`, `users/${CEM}`, `public_profiles/${BERK}`, "chats/chat2", "chats/chat2/messages/m1", "projects/p2", "arcade_games/game2",
     "news_comments/nc2", "media_posts/mp2", "groups/grpB", "groups/grpB/messages/gm4", "groups/grpC", "feedback/fb2",
-    "changelog_comments/v1/comments/cc2", "support_tickets/t2",
+    "changelog_comments/v1/comments/cc2", "support_tickets/t2", "message_stars/s3",
 ];
 
 // ---------------------------------------------------------------------------
@@ -183,6 +190,8 @@ test('"all" deletes the account and everything it left behind', async () => {
             "groups/grpA", "groups/grpA/messages/gm0", "groups/grpA/messages/gm1", "groups/grpA/files/f1", "group_invites/i1", "group_invite_links/link1", "group_bans/b1",
             "group_invite_links/link2", "group_bans/b2", "group_invites/i2", "friendRequests/fr1", "friendRequests/fr2",
             "feedback/fb1", "changelog_comments/v1/comments/cc1", `notifications/${ALI}/items/n1`, `notifications/${ALI}/items/n2`, "support_tickets/t1",
+            // Stars on the account's messages, in its chats and its group, and its own.
+            "message_stars/s1", "message_stars/s2", "message_stars/s4", "message_stars/s5",
         ]) {
             assert.equal(db.has(path), false, `${path} should be deleted`);
         }
@@ -241,6 +250,8 @@ test('"content" removes public content and keeps the account, friends, chats and
             "arcade_games/game1", "arcade_likes/l1", "news_comments/nc1",
             "media_posts/mp1", "media_posts/mp1/files/000", "media_likes/mp1_berk", "media_comments/mc1", "media_reports/r1", "security_training_contributions/mp1",
             "media_comments/mc2", "feedback/fb1", "changelog_comments/v1/comments/cc1",
+            // Other people's stars on the account's group messages go with them.
+            "message_stars/s1",
         ]) {
             assert.equal(db.has(path), false, `${path} should be deleted`);
         }
@@ -248,6 +259,8 @@ test('"content" removes public content and keeps the account, friends, chats and
             `users/${ALI}`, `credentials/${ALI}`, `public_profiles/${ALI}`, "chats/chat1", "chats/chat1/messages/m1", "calls/call1", "projects/p1", "projects/p1/files/f1",
             "game_projects/g1", "arcade_likes/l2", "arena_votes/v1", "media_likes/mp2_ali", "media_reports/r2", "groups/grpA", "groups/grpA/files/f1",
             "group_invite_links/link2", "group_bans/b2", "friendRequests/fr1", "group_invites/i2", `notifications/${ALI}/items/n1`, "support_tickets/t1",
+            // Private chats stay, and with them the stars on them; so do the group and the account's own stars.
+            "message_stars/s2", "message_stars/s4", "message_stars/s5",
             ...BYSTANDER_DATA,
         ]) {
             assert.equal(db.has(path), true, `${path} must stay`);

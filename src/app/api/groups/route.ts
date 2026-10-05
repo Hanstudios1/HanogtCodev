@@ -10,6 +10,7 @@ import {
     runServerQuery,
 } from "@/lib/server/firebase-rest";
 import { planQuota } from "@/lib/server/entitlements";
+import { forgetMemberStars } from "@/lib/server/social-stars";
 import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
 import {
     GROUP_LIMITS,
@@ -584,6 +585,8 @@ async function leaveGroup(body: Record<string, unknown>, user: GroupUser) {
         return current;
     });
     await postSystemMessage(groupId, group, "member_left", { name: await ownDisplayName(user) });
+    // Stars here kept a few words of messages the person can no longer open.
+    after(() => forgetMemberStars(email, groupId).catch(() => undefined));
     return { success: true };
 }
 
@@ -635,7 +638,7 @@ async function updateSettings(body: Record<string, unknown>, user: GroupUser) {
             if (typeof body.aiBot !== "boolean") throw new GroupApiError(400, "invalid_request", "Geçersiz Hanogt AI ayarı.");
             data.aiBot = body.aiBot;
         }
-        if (body.welcomeMessage !== undefined) data.welcomeMessage = cleanMultiLine(body.welcomeMessage, WELCOME_MESSAGE_MAX);
+        if (body.welcomeMessage !== undefined) data.welcomeMessage = cleanMultiLine(body.welcomeMessage, WELCOME_MESSAGE_MAX).slice(0, WELCOME_MESSAGE_MAX).trim();
         if (body.customCommands !== undefined) {
             if (!Array.isArray(body.customCommands)) throw new GroupApiError(400, "invalid_request", "Geçersiz komut listesi.");
             data.customCommands = sanitizeCustomCommands(body.customCommands, RESERVED_COMMAND_NAMES);

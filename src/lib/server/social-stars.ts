@@ -2,9 +2,9 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { isGroupId } from "@/lib/groups";
-import { dmChatId, dmHref, groupHref, previewText } from "@/lib/social/model";
+import { dmChatId, dmHref, groupHref, messagePreview, previewText } from "@/lib/social/model";
 import { STARS_MAX, type StarScope, type StarredMessage } from "@/lib/social/stars";
-import { deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection } from "./firebase-rest";
+import { commitServerMutations, commitServerPatches, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection } from "./firebase-rest";
 import { isDocId, normalizeEmail } from "./validate";
 
 /*
@@ -12,6 +12,10 @@ import { isDocId, normalizeEmail } from "./validate";
  * (message_stars, server-only), with a short excerpt so the list shows
  * without opening every conversation. Starring checks that the person can
  * read the message (a participant of the conversation, a member of the group).
+ * The excerpt is a copy of someone's words, so it follows the message: it is
+ * updated when the message is edited and removed when the message, its
+ * conversation or group, or the account that wrote it is deleted, and when
+ * the person leaves the group.
  */
 
 export type { StarScope, StarredMessage };
@@ -19,9 +23,13 @@ export { STARS_MAX };
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex").slice(0, 24);
 export const starDocumentId = (owner: string, scope: StarScope, target: string, messageId: string) => `${hash(owner)}_${hash(`${scope}:${target}:${messageId}`)}`;
+/** The same for every star of one message, whoever starred it: "dm:<chatId>:<messageId>" or "group:<groupId>:<messageId>". */
+export const starMessageRef = (scope: StarScope, place: string, messageId: string) => `${scope}:${place}:${messageId}`;
+/** Every star in one conversation or group: "dm:<chatId>" or "group:<groupId>". */
+export const starPlaceRef = (scope: StarScope, place: string) => `${scope}:${place}`;
 
 type StoredMessage = { fromEmail?: unknown; author?: unknown; type?: unknown; text?: unknown; createdAt?: unknown; deleted?: unknown };
-type StoredStar = { owner?: unknown; scope?: unknown; target?: unknown; messageId?: unknown; excerpt?: unknown; author?: unknown; createdAt?: unknown; messageAt?: unknown };
+type StoredStar = { owner?: unknown; scope?: unknown; target?: unknown; messageId?: unknown; messageRef?: unknown; placeRef?: unknown; excerpt?: unknown; author?: unknown; createdAt?: unknown; messageAt?: unknown };
 
 const iso = (value: unknown) => {
     const time = value instanceof Date ? value.getTime() : typeof value === "string" ? Date.parse(value) : Number.NaN;
@@ -29,15 +37,20 @@ const iso = (value: unknown) => {
 };
 
 export class StarError extends Error {
-    constructor(readonly status: number, readonly code: "invalid_request" | "not_found" | "conflict") {
+    readonly status: number;
+    readonly code: "invalid_request" | "not_found" | "conflict";
+    constructor(status: number, code: "invalid_request" | "not_found" | "conflict") {
         super(code);
+        this.name = "StarError";
+        this.status = status;
+        this.code = code;
     }
 }
 
-function excerptOf(message: StoredMessage) {
+export function starExcerpt(message: StoredMessage) {
     if (message.type === "voice") return "🎤";
     if (message.type === "gif") return typeof message.text === "string" && message.text ? `GIF · ${previewText(message.text, 80)}` : "GIF";
-    return previewText(message.text, 200);
+    return messagePreview(message.text, 200);
 }
 
 /** The message, if `email` may read it; throws not_found otherwise. */
@@ -73,12 +86,17 @@ export async function starMessage(email: string, scope: StarScope, target: strin
     const { message, target: to } = await readableMessage(email, scope, target, messageId);
     if (existing.length >= STARS_MAX && !existing.some((star) => star._id === starDocumentId(email, scope, to, messageId))) throw new StarError(409, "conflict");
     const author = typeof message.author === "string" ? message.author : typeof message.fromEmail === "string" ? message.fromEmail.split("@")[0] : "";
+    const place = scope === "dm" ? dmChatId(email, to) : to;
     await patchServerDocument(path(to), {
         owner: email,
         scope,
         target: to,
         messageId,
-        excerpt: excerptOf(message),
+        messageRef: starMessageRef(scope, place, messageId),
+        placeRef: starPlaceRef(scope, place),
+        // Whose words the excerpt holds: these stars go when that account is deleted.
+        authorEmail: typeof message.fromEmail === "string" ? message.fromEmail.slice(0, 254) : null,
+        excerpt: starExcerpt(message),
         author: author.slice(0, 80),
         messageAt: message.createdAt ?? null,
         createdAt: new Date(),
@@ -105,4 +123,61 @@ export async function listStars(email: string): Promise<StarredMessage[]> {
             messageAt: iso(record.messageAt),
         }];
     }).sort((a, b) => String(b.starredAt).localeCompare(String(a.starredAt)));
+}
+
+/* -------------------------------------------------------------------------- */
+/* Following the message                                                      */
+/* -------------------------------------------------------------------------- */
+
+const PAGE = 300;
+const WRITES_PER_COMMIT = 400;
+
+async function deleteStars(records: ReadonlyArray<{ _path: string }>) {
+    for (let index = 0; index < records.length; index += WRITES_PER_COMMIT) {
+        await commitServerMutations(records.slice(index, index + WRITES_PER_COMMIT).map((record) => ({ type: "delete" as const, path: record._path })));
+    }
+}
+
+async function deleteMatching(field: "messageRef" | "placeRef" | "authorEmail", value: string) {
+    // Each page is deleted before the next query, so the same page never comes back.
+    for (let round = 0; round < 50; round += 1) {
+        const records = await queryServerCollection<StoredStar>("message_stars", field, "EQUAL", value, { limit: PAGE });
+        await deleteStars(records);
+        if (records.length < PAGE) return;
+    }
+}
+
+/** Removes the stars on deleted messages of one conversation or group (one message, or many after /purge). */
+export async function forgetMessageStars(scope: StarScope, place: string, messageIds: readonly string[]) {
+    if (messageIds.length === 1) return deleteMatching("messageRef", starMessageRef(scope, place, messageIds[0]));
+    if (!messageIds.length) return;
+    const ids = new Set(messageIds);
+    const records = await queryServerCollection<StoredStar>("message_stars", "placeRef", "EQUAL", starPlaceRef(scope, place), { limit: 1000 });
+    await deleteStars(records.filter((record) => typeof record.messageId === "string" && ids.has(record.messageId)));
+}
+
+/** Removes every star in a conversation or group that is being deleted. */
+export function forgetPlaceStars(scope: StarScope, place: string) {
+    return deleteMatching("placeRef", starPlaceRef(scope, place));
+}
+
+/** Removes everyone's stars on messages this account wrote (the account is being deleted). */
+export function forgetAuthorStars(email: string) {
+    return deleteMatching("authorEmail", email);
+}
+
+/** Removes a person's stars in a group they left or were removed from. */
+export async function forgetMemberStars(owner: string, groupId: string) {
+    const place = starPlaceRef("group", groupId);
+    const records = await queryServerCollection<StoredStar>("message_stars", "owner", "EQUAL", owner, { limit: STARS_MAX + 50 });
+    await deleteStars(records.filter((record) => record.placeRef === place));
+}
+
+/** An edited message: every star on it shows the new words. */
+export async function refreshStarExcerpts(scope: StarScope, place: string, messageId: string, message: StoredMessage) {
+    const records = await queryServerCollection<StoredStar>("message_stars", "messageRef", "EQUAL", starMessageRef(scope, place, messageId), { limit: PAGE });
+    const excerpt = starExcerpt(message);
+    for (let index = 0; index < records.length; index += WRITES_PER_COMMIT) {
+        await commitServerPatches(records.slice(index, index + WRITES_PER_COMMIT).map((record) => ({ path: record._path, data: { excerpt }, updateFields: ["excerpt"], exists: true })));
+    }
 }

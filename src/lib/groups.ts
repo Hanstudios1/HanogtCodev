@@ -178,18 +178,25 @@ export function sanitizeCustomCommands(value: unknown, reserved: readonly string
         if (!entry || typeof entry !== "object") continue;
         const raw = entry as Record<string, unknown>;
         const name = typeof raw.name === "string" ? raw.name.trim().replace(/^\//, "").toLowerCase() : "";
-        const response = cleanMultiLine(raw.response, CUSTOM_COMMAND_LIMITS.response);
+        // The cleaners don't clip (callers check lengths), so the limits are applied here.
+        const response = cleanMultiLine(raw.response, CUSTOM_COMMAND_LIMITS.response).slice(0, CUSTOM_COMMAND_LIMITS.response).trim();
         if (!COMMAND_NAME.test(name) || seen.has(name) || !response) continue;
         seen.add(name);
-        commands.push({ name, description: cleanSingleLine(raw.description, CUSTOM_COMMAND_LIMITS.description), response });
+        commands.push({ name, description: cleanSingleLine(raw.description, CUSTOM_COMMAND_LIMITS.description).slice(0, CUSTOM_COMMAND_LIMITS.description).trim(), response });
         if (commands.length >= CUSTOM_COMMAND_LIMITS.count) break;
     }
     return commands;
 }
 
-/** The key of a channel in `slowmode`: "" for the main channel, the topic otherwise. */
+/**
+ * The main channel's key in `slowmode`. Firestore map keys can't be empty, and
+ * "~" can't appear in a topic, so it never collides with one.
+ */
+export const MAIN_CHANNEL_KEY = "~main";
+
+/** The key of a channel in `slowmode`: MAIN_CHANNEL_KEY for the main channel, the topic otherwise. */
 export function channelKey(topic: string | null | undefined) {
-    return (topic ?? "").trim().toLocaleLowerCase("tr").slice(0, 24);
+    return (topic ?? "").trim().toLocaleLowerCase("tr").slice(0, 24) || MAIN_CHANNEL_KEY;
 }
 
 /** Stored slow-mode settings, checked: known-looking channel keys, 1 s to 6 h. */
@@ -197,7 +204,7 @@ export function readSlowmode(value: unknown): Record<string, number> {
     if (!value || typeof value !== "object" || Array.isArray(value)) return {};
     const result: Record<string, number> = {};
     for (const [key, seconds] of Object.entries(value as Record<string, unknown>)) {
-        if (key.length > 24 || typeof seconds !== "number" || !Number.isFinite(seconds)) continue;
+        if (!key || key.length > 24 || typeof seconds !== "number" || !Number.isFinite(seconds)) continue;
         const clamped = Math.min(SLOWMODE_MAX_SECONDS, Math.max(0, Math.round(seconds)));
         if (clamped > 0) result[key] = clamped;
     }

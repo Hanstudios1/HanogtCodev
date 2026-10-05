@@ -265,12 +265,14 @@ export async function GET() {
             // Other members' e-mail addresses are their personal data, not the requester's:
             // the export keeps the group's own fields and only says how many members it has.
             groups: groups.map((group) => {
-                const { members, admins, ownerEmail, ...rest } = publicAccountData(group) as Record<string, unknown>;
+                // Moderator lists hold e-mail addresses too, and typing marks are other members' live state.
+                const { members, admins, moderators, ownerEmail, ...rest } = publicAccountData(group) as Record<string, unknown>;
+                delete rest.typing;
                 return {
                     ...rest,
                     id: group._id,
                     memberCount: Array.isArray(members) ? members.length : 0,
-                    yourRole: ownerEmail === email ? "owner" : Array.isArray(admins) && admins.includes(email) ? "admin" : "member",
+                    yourRole: ownerEmail === email ? "owner" : Array.isArray(admins) && admins.includes(email) ? "admin" : Array.isArray(moderators) && moderators.includes(email) ? "moderator" : "member",
                 };
             }),
             supportTickets: exportSupportTickets(supportTickets),

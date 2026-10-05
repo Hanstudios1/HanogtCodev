@@ -14,6 +14,7 @@ import {
 } from "@/lib/server/firebase-rest";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { forgetMemberStars, forgetPlaceStars } from "@/lib/server/social-stars";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { effectiveStatus, type PresenceStatus } from "@/lib/presence";
 import {
@@ -287,7 +288,7 @@ export function publicGroup(groupId: string, group: StoredGroup): GroupInfo {
         moderators: groupModerators(group),
         slowmode: readSlowmode(group.slowmode),
         aiBot: group.aiBot !== false,
-        welcomeMessage: cleanMultiLine(group.welcomeMessage, WELCOME_MESSAGE_MAX),
+        welcomeMessage: cleanMultiLine(group.welcomeMessage, WELCOME_MESSAGE_MAX).slice(0, WELCOME_MESSAGE_MAX),
         customCommands: sanitizeCustomCommands(group.customCommands, RESERVED_COMMAND_NAMES),
     };
 }
@@ -452,6 +453,8 @@ export async function removeGroupMember(groupId: string, actorEmail: string, tar
         return { group, targetRole };
     });
     await deleteServerDocument(`group_invites/${inviteDocumentId(groupId, targetEmail)}`).catch(() => undefined);
+    // Their stars here kept a few words of messages they can no longer open.
+    await forgetMemberStars(targetEmail, groupId).catch(() => undefined);
     return result;
 }
 
@@ -510,6 +513,8 @@ export async function deleteGroupCascade(groupId: string) {
     const records = await Promise.all(["group_invites", "group_invite_links", "group_bans", "group_mutes", "group_warnings", "group_reports", "automod_events"]
         .map((collectionId) => queryServerCollection(collectionId, "groupId", "EQUAL", groupId, { limit: 1000 })));
     await deleteInBatches([...records.flat().map((document) => document._path), `group_automod/${groupId}`]);
+    // Members' stars here kept a few words of the group's messages.
+    await forgetPlaceStars("group", groupId);
     await deleteServerDocument(`groups/${groupId}`);
     // Members could still write until the group document disappeared (the rules check it).
     await deleteGroupContent(groupId).catch(() => undefined);

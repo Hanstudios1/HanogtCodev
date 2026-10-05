@@ -2395,9 +2395,23 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1ceis1wtmh1": {
-    "en": "One-to-one and group messages, voice messages, friend and group records, notifications, online status; temporary connection data for voice calls (calls are not recorded)",
-    "tr": "Birebir ve grup mesajları, sesli mesajlar, arkadaşlık ve grup kayıtları, bildirimler, çevrimiçi durum; sesli aramalarda geçici bağlantı verileri (aramalar kaydedilmez)",
+  "270ih5n4rri": {
+    "en": "One-to-one and group messages (including GIFs and forwarded messages), reactions, pinned and starred messages, voice messages, friend and group records, notifications, online status; temporary connection data for voice calls (calls are not recorded)",
+    "tr": "Birebir ve grup mesajları (GIF'ler ve iletilen mesajlar dahil), tepkiler, sabitlenen ve yıldızlanan mesajlar, sesli mesajlar, arkadaşlık ve grup kayıtları, bildirimler, çevrimiçi durum; sesli aramalarda geçici bağlantı verileri (aramalar kaydedilmez)",
+    "files": [
+      "src/app/disclosure/page.tsx"
+    ]
+  },
+  "cmjjyd33w2": {
+    "en": "Group moderation",
+    "tr": "Grup moderasyonu",
+    "files": [
+      "src/app/disclosure/page.tsx"
+    ]
+  },
+  "cm4907b4l7": {
+    "en": "Group roles; warning, mute and report records created with Hanogt Security Bot commands; AutoMod records (sender, rule and time; without the message text); the group's AutoMod settings, custom commands and welcome message",
+    "tr": "Grup rolleri; Hanogt Security Bot komutlarıyla oluşan uyarı, susturma ve rapor kayıtları; AutoMod kayıtları (gönderen, kural ve zaman; mesaj metni olmadan); grubun AutoMod ayarları, özel komutları ve karşılama mesajı",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2423,9 +2437,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1cdrv6qyiel": {
-    "en": "Messages and context sent to Hanogt AI (Hanogt AI is open to signed-in people only); personal instructions and preferences in the Hanogt AI settings (thinking, code and voice preferences included); when asking about the open editor file, depending on the settings, the error output of its last run and the names of the project's other files; permissions given in agent mode; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters); if you created them, your Hanogt AI API key records (only the key's SHA-256 digest, its name, first and last characters and dates) and requests sent to the API",
-    "tr": "Hanogt AI'a gönderilen mesajlar ve bağlam (Hanogt AI yalnızca giriş yapmış kişilere açıktır); Hanogt AI ayarlarındaki kişisel talimatlar ve tercihler (düşünme, kod ve ses tercihleri dahil); açık editör dosyası hakkında sorulduğunda, ayarlara göre son çalıştırmanın hata çıktısı ve projedeki diğer dosyaların adları; ajan modunda verilen izinler; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri); oluşturduysanız Hanogt AI API anahtar kayıtlarınız (anahtarın yalnızca SHA-256 özeti, adı, ilk ve son karakterleri, tarihleri) ve API'ye gönderilen istekler",
+  "fp3ft6fxn9": {
+    "en": "Messages and context sent to Hanogt AI (Hanogt AI is open to signed-in people only); questions asked to Hanogt AI in groups and the channel's last 12 messages sent with them (with their authors' display names); personal instructions and preferences in the Hanogt AI settings (thinking, code and voice preferences included); when asking about the open editor file, depending on the settings, the error output of its last run and the names of the project's other files; permissions given in agent mode; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters); if you created them, your Hanogt AI API key records (only the key's SHA-256 digest, its name, first and last characters and dates) and requests sent to the API",
+    "tr": "Hanogt AI'a gönderilen mesajlar ve bağlam (Hanogt AI yalnızca giriş yapmış kişilere açıktır); gruplarda Hanogt AI'a sorulan sorular ve onlarla birlikte gönderilen kanalın son 12 mesajı (yazarların görünen adlarıyla); Hanogt AI ayarlarındaki kişisel talimatlar ve tercihler (düşünme, kod ve ses tercihleri dahil); açık editör dosyası hakkında sorulduğunda, ayarlara göre son çalıştırmanın hata çıktısı ve projedeki diğer dosyaların adları; ajan modunda verilen izinler; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri); oluşturduysanız Hanogt AI API anahtar kayıtlarınız (anahtarın yalnızca SHA-256 özeti, adı, ilk ve son karakterleri, tarihleri) ve API'ye gönderilen istekler",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2493,16 +2507,23 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "spuf82vd2p": {
-    "en": "providing services such as the code editor, code execution, Hanogt Engine, the Arcade, Media, News, the arena, groups, chats and calls;",
-    "tr": "Kod editörü, kod çalıştırma, Hanogt Engine, Arcade, Media, News, arena, gruplar, sohbetler ve aramalar gibi hizmetlerin sunulması,",
+  "1e7txjw9zbj": {
+    "en": "providing services such as the code editor, code execution, Hanogt Engine, the Arcade, Media, News, the arena, groups, chats, starred messages, GIF search and calls;",
+    "tr": "Kod editörü, kod çalıştırma, Hanogt Engine, Arcade, Media, News, arena, gruplar, sohbetler, yıldızlı mesajlar, GIF araması ve aramalar gibi hizmetlerin sunulması,",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
   },
-  "ikv63ju3o7": {
-    "en": "generating Hanogt AI replies, applying your Hanogt AI settings and carrying out agent actions you allow; managing Hanogt AI API keys and answering API requests;",
-    "tr": "Hanogt AI yanıtlarının üretilmesi, Hanogt AI ayarlarınızın uygulanması ve izin verdiğiniz ajan işlemlerinin yapılması; Hanogt AI API anahtarlarının yönetilmesi ve API isteklerinin yanıtlanması,",
+  "rj4otxovs7": {
+    "en": "enforcing community rules in Hanogt Social groups: Hanogt Security Bot commands, AutoMod scanning and keeping moderation records;",
+    "tr": "Hanogt Social gruplarında topluluk kurallarının uygulanması: Hanogt Security Bot komutları, AutoMod taraması ve moderasyon kayıtlarının tutulması,",
+    "files": [
+      "src/app/disclosure/page.tsx"
+    ]
+  },
+  "290mklft9f7": {
+    "en": "generating Hanogt AI replies (including questions asked in groups), applying your Hanogt AI settings and carrying out agent actions you allow; managing Hanogt AI API keys and answering API requests;",
+    "tr": "Hanogt AI yanıtlarının üretilmesi (gruplarda sorulan sorular dahil), Hanogt AI ayarlarınızın uygulanması ve izin verdiğiniz ajan işlemlerinin yapılması; Hanogt AI API anahtarlarının yönetilmesi ve API isteklerinin yanıtlanması,",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2592,9 +2613,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "2fkiisey705": {
-    "en": "Account and sessions, projects, code execution, community and communication features, Hanogt AI, support tickets; selling paid plans, managing subscriptions and the transfer to Paddle this requires",
-    "tr": "Hesap ve oturum, projeler, kod çalıştırma, topluluk ve iletişim özellikleri, Hanogt AI, destek talepleri; ücretli planların satışı, abonelik yönetimi ve bunun için Paddle'a yapılan aktarım",
+  "x7r1mlcqmq": {
+    "en": "Account and sessions, projects, code execution, community and communication features (including starred messages, GIF search and the groups' moderation tools), Hanogt AI (including the asker's questions in groups), support tickets; selling paid plans, managing subscriptions and the transfer to Paddle this requires",
+    "tr": "Hesap ve oturum, projeler, kod çalıştırma, topluluk ve iletişim özellikleri (yıldızlı mesajlar, GIF araması ve grupların moderasyon araçları dahil), Hanogt AI (soranın gruplardaki soruları dahil), destek talepleri; ücretli planların satışı, abonelik yönetimi ve bunun için Paddle'a yapılan aktarım",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2606,9 +2627,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1cljy864pby": {
-    "en": "Account and service security, rate limits, security events, moderation, telling genuine requests from abuse, the audit log; linking purchases to the right account and preventing abuse of plan benefits",
-    "tr": "Hesap ve hizmet güvenliği, hız sınırları, güvenlik olayları, moderasyon, kötüye kullanımın ayırt edilmesi, denetim kaydı; satın almaların doğru hesaba bağlanması ve plan avantajlarının kötüye kullanılmasının önlenmesi",
+  "18u7i1lungq": {
+    "en": "Account and service security, rate limits, security events, moderation (including the groups' AutoMod scanning and moderation records), telling genuine requests from abuse, the audit log; messages of members who didn't ask that are sent to Hanogt AI with a question in a group; linking purchases to the right account and preventing abuse of plan benefits",
+    "tr": "Hesap ve hizmet güvenliği, hız sınırları, güvenlik olayları, moderasyon (grupların AutoMod taraması ve moderasyon kayıtları dahil), kötüye kullanımın ayırt edilmesi, denetim kaydı; gruplarda Hanogt AI'a soruyla birlikte gönderilen, soruyu sormayan üyelere ait mesajlar; satın almaların doğru hesaba bağlanması ve plan avantajlarının kötüye kullanılmasının önlenmesi",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2726,9 +2747,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "25fgk286i36": {
-    "en": "automatically, by our servers, our infrastructure providers and your browser while you use the service (sessions, online status, rate-limit and security records, hosting logs);",
-    "tr": "Hizmeti kullanırken sunucularımız, altyapı sağlayıcılarımız ve tarayıcınız tarafından otomatik olarak (oturum, çevrimiçi durum, hız sınırı ve güvenlik kayıtları, barındırma günlükleri),",
+  "2ddxl24g6tf": {
+    "en": "automatically, by our servers, our infrastructure providers and your browser while you use the service (sessions, online status, rate-limit and security records, AutoMod records in groups, hosting logs);",
+    "tr": "Hizmeti kullanırken sunucularımız, altyapı sağlayıcılarımız ve tarayıcınız tarafından otomatik olarak (oturum, çevrimiçi durum, hız sınırı ve güvenlik kayıtları, gruplardaki AutoMod kayıtları, barındırma günlükleri),",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2740,9 +2761,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "8pnj088aug": {
-    "en": "from actions other users take that concern you (for example friend requests, group invitations or content reports).",
-    "tr": "Diğer kullanıcıların sizinle ilgili yaptığı işlemlerden (ör. arkadaşlık isteği, grup daveti, içerik bildirimi).",
+  "cu40xevlxe": {
+    "en": "from actions other users take that concern you (for example friend requests, group invitations, content reports, warnings, mutes and reports in groups, or your messages being sent along with a question asked to Hanogt AI in a group).",
+    "tr": "Diğer kullanıcıların sizinle ilgili yaptığı işlemlerden (ör. arkadaşlık isteği, grup daveti, içerik bildirimi, gruplardaki uyarı, susturma ve raporlar, bir grupta Hanogt AI'a sorulan bir soruyla mesajlarınızın da gönderilmesi).",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2863,9 +2884,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "spl7kmpisr": {
-    "en": "What you write to Hanogt AI, its context and your personal instructions; requests sent to the Hanogt AI API",
-    "tr": "Hanogt AI'a yazılanlar, bağlam ve kişisel talimatlar; Hanogt AI API'sine gönderilen istekler",
+  "25styfczg35": {
+    "en": "What you write to Hanogt AI, its context and your personal instructions; requests sent to the Hanogt AI API; questions asked in groups and the channel's last 12 messages (with their authors' display names)",
+    "tr": "Hanogt AI'a yazılanlar, bağlam ve kişisel talimatlar; Hanogt AI API'sine gönderilen istekler; gruplarda sorulan sorular ve kanalın son 12 mesajı (yazarlarının görünen adlarıyla)",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2940,6 +2961,29 @@
   "22zb6xiken8": {
     "en": "Connecting voice calls",
     "tr": "Sesli arama bağlantısı",
+    "files": [
+      "src/app/disclosure/page.tsx",
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1iq2oniewp5": {
+    "en": "The GIF provider Hanogt chooses: KLIPY (USA) or GIPHY, Inc. (USA)",
+    "tr": "Hanogt'un seçtiği GIF sağlayıcısı: KLIPY (ABD) veya GIPHY, Inc. (ABD)",
+    "files": [
+      "src/app/disclosure/page.tsx",
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1r95w9sr17p": {
+    "en": "The GIF search text, page, language and content rating (through our server, without account details); your browser's IP address and browser details when GIFs load",
+    "tr": "GIF arama metni, sayfa, dil ve içerik derecelendirmesi (sunucumuz üzerinden, hesap bilgisi olmadan); GIF'ler yüklenirken tarayıcınızın IP adresi ve tarayıcı bilgileri",
+    "files": [
+      "src/app/disclosure/page.tsx"
+    ]
+  },
+  "16brq7z0x3m": {
+    "en": "Searching for and showing GIFs",
+    "tr": "GIF arama ve gösterme",
     "files": [
       "src/app/disclosure/page.tsx",
       "src/app/privacy-policy/page.tsx"
@@ -3092,9 +3136,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1wyxmwsmemc": {
-    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account, project, game, Media, group, comment, like and vote records as a JSON file, and “Delete My Account” deletes your account and the related data.",
-    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap, proje, oyun, Media, grup, yorum, beğeni ve oy kayıtlarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler.",
+  "266bb8iw8k7": {
+    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account, project, game, Media, group, comment, like and vote records, your starred messages and the group moderation records about you as a JSON file, and “Delete My Account” deletes your account and the related data.",
+    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap, proje, oyun, Media, grup, yorum, beğeni ve oy kayıtlarınızı, yıldızlı mesajlarınızı ve hakkınızdaki grup moderasyon kayıtlarını JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler.",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -3203,9 +3247,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1s3vq7mxzu8": {
-    "en": "The Security Bot scan, the comment filter and rate limits may block some requests automatically. These results only affect the request in question; sanctions such as suspension or deletion are applied after human review. You can use your right to object to an outcome against you resulting exclusively from automated analysis (KVKK Art. 11(1)(g)) with a support ticket.",
-    "tr": "Security Bot taraması, yorum filtresi ve hız sınırları bazı istekleri otomatik olarak engelleyebilir. Bu sonuçlar yalnızca ilgili isteği etkiler; askıya alma veya silme gibi yaptırımlar insan incelemesiyle uygulanır. Münhasıran otomatik analiz sonucu aleyhinize ortaya çıkan bir sonuca itiraz etme hakkınızı (KVKK m.11/1-g) destek talebiyle kullanabilirsiniz.",
+  "2alqssh4ghu": {
+    "en": "The Security Bot scan, the comment filter, AutoMod in Hanogt Social groups and rate limits may block some requests automatically; depending on the group's choice, AutoMod may also give automatic warnings and timed mutes. These results only affect the request in question or messaging in that group; sanctions such as suspension or deletion are applied after human review. You can use your right to object to an outcome against you resulting exclusively from automated analysis (KVKK Art. 11(1)(g)) with a support ticket; a mute given by AutoMod can also be lifted by the group's moderators.",
+    "tr": "Security Bot taraması, yorum filtresi, Hanogt Social gruplarındaki AutoMod ve hız sınırları bazı istekleri otomatik olarak engelleyebilir; AutoMod, grubun seçimine göre otomatik uyarı ve süreli susturma da uygulayabilir. Bu sonuçlar yalnızca ilgili isteği veya o gruptaki mesajlaşmayı etkiler; askıya alma veya silme gibi yaptırımlar insan incelemesiyle uygulanır. Münhasıran otomatik analiz sonucu aleyhinize ortaya çıkan bir sonuca itiraz etme hakkınızı (KVKK m.11/1-g) destek talebiyle kullanabilirsiniz; AutoMod'un verdiği bir susturmayı grubun moderatörleri de kaldırabilir.",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -6769,9 +6813,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1gzz8dl1635": {
-    "en": "Bio, status message, banner image, accent colour, favourite languages, social media links; notification, privacy, chat, appearance and time zone preferences",
-    "tr": "Biyografi, durum mesajı, kapak görseli, vurgu rengi, favori diller, sosyal medya bağlantıları; bildirim, gizlilik, sohbet, görünüm ve saat dilimi tercihleri",
+  "24jl8ky8rxt": {
+    "en": "Bio, status message, banner image, accent colour, favourite languages, social media links; notification, privacy, appearance and Hanogt Social messaging preferences",
+    "tr": "Biyografi, durum mesajı, kapak görseli, vurgu rengi, favori diller, sosyal medya bağlantıları; bildirim, gizlilik, görünüm ve Hanogt Social mesajlaşma tercihleri",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6840,9 +6884,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1crf9o3171t": {
-    "en": "Friend requests, friend and block lists, one-to-one and group messages, reactions, voice message files, group memberships and invitations, notifications",
-    "tr": "Arkadaşlık istekleri, arkadaş ve engel listeleri, birebir ve grup mesajları, tepkiler, sesli mesaj dosyaları, grup üyelikleri ve davetler, bildirimler",
+  "25nq6ox97r1": {
+    "en": "Friend requests, friend and block lists, one-to-one and group messages (including GIFs and forwarded messages), reactions, pinned and starred messages, voice message files, group memberships, roles and invitations, group moderation records (warnings, mutes, reports and AutoMod records), notifications",
+    "tr": "Arkadaşlık istekleri, arkadaş ve engel listeleri, birebir ve grup mesajları (GIF'ler ve iletilen mesajlar dahil), tepkiler, sabitlenen ve yıldızlanan mesajlar, sesli mesaj dosyaları, grup üyelikleri, rolleri ve davetler, grup moderasyon kayıtları (uyarılar, susturmalar, raporlar ve AutoMod kayıtları), bildirimler",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6927,9 +6971,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "sbupefv2wb": {
-    "en": "Messages you send while signed in and their context (passed to the provider without being stored on our servers), permissions you grant in agent mode, the chat history in your browser; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters)",
-    "tr": "Giriş yapmışken gönderdiğiniz mesajlar ve bağlamları (sunucularımızda saklanmadan sağlayıcıya iletilir), ajan modunda verdiğiniz izinler, tarayıcınızdaki sohbet geçmişi; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri)",
+  "1gti8tt9pdy": {
+    "en": "Messages you send while signed in and their context (passed to the provider without being stored on our servers), permissions you grant in agent mode, the chat history in your browser; questions you ask Hanogt AI in groups and the channel messages passed with them (the question and the answer stay in the group chat); if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters)",
+    "tr": "Giriş yapmışken gönderdiğiniz mesajlar ve bağlamları (sunucularımızda saklanmadan sağlayıcıya iletilir), ajan modunda verdiğiniz izinler, tarayıcınızdaki sohbet geçmişi; gruplarda Hanogt AI'a sorduğunuz sorular ve onlarla birlikte iletilen kanal mesajları (soru ve yanıt grubun sohbetinde kalır); eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri)",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7158,9 +7202,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1lgdmzbyzl8": {
-    "en": "Hanogt Security Bot is an automated pre-screen that runs on the server; it does not chat. Before server-run code is executed, and when a project is submitted to Hanogt Media or a game is published on Hanogt Arcade, it scans the code with signatures for known harmful patterns such as wiping disks, stealing credentials or tokens, privilege escalation and keylogging.",
-    "tr": "Hanogt Security Bot, sunucuda çalışan otomatik bir ön elemedir; sohbet etmez. Sunucuda çalışan dillerdeki kod çalıştırılmadan önce, Hanogt Media'ya proje gönderildiğinde ve Hanogt Arcade'de oyun yayımlandığında kodu; disk silme, kimlik bilgisi veya jeton hırsızlığı, yetki yükseltme ve tuş kaydı gibi bilinen zararlı kalıplara karşı imza tabanlı olarak tarar.",
+  "1i1gbx52te2": {
+    "en": "Hanogt Security Bot's code pre-screen is an automated scan that runs on the server; it does not chat. Before server-run code is executed, and when a project is submitted to Hanogt Media or a game is published on Hanogt Arcade, it scans the code with signatures for known harmful patterns such as wiping disks, stealing credentials or tokens, privilege escalation and keylogging. Hanogt Security Bot is also the moderation bot of Hanogt Social groups; that role is described in the [Hanogt Social](/privacy-policy#groups) section.",
+    "tr": "Hanogt Security Bot'un kod ön elemesi, sunucuda çalışan otomatik bir taramadır; sohbet etmez. Sunucuda çalışan dillerdeki kod çalıştırılmadan önce, Hanogt Media'ya proje gönderildiğinde ve Hanogt Arcade'de oyun yayımlandığında kodu; disk silme, kimlik bilgisi veya jeton hırsızlığı, yetki yükseltme ve tuş kaydı gibi bilinen zararlı kalıplara karşı imza tabanlı olarak tarar. Hanogt Security Bot ayrıca Hanogt Social gruplarının moderasyon botudur; bu görevi [Hanogt Social](/privacy-policy#groups) bölümünde anlatılır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7200,9 +7244,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "l3tpk4ftq1": {
-    "en": "Your e-mail address and account ID are not sent to the provider, but everything you write in your messages is. Chat content is not stored on our servers and is not used by Hanogt to train models. To prevent abuse and apply your plan's limits, we only keep a per-minute counter and a counter for your plan's message window under keys derived from your account with a secret salt (5 a minute and 50 in 7 days on Free, 20 a minute and 750 in 14 days on Plus, 30 a minute and 2,000 in 7 days on Pro; the window starts with your first message). The chat and the Hanogt AI API share these counters; when the model can't answer at all, that message is taken off the counter. The counters are deleted automatically after they expire. How the provider processes data and how long it keeps it are governed by its own terms.",
-    "tr": "E-posta adresiniz veya hesap kimliğiniz sağlayıcıya gönderilmez; ancak mesajlarınıza yazdığınız her şey iletilir. Sohbet içerikleri sunucularımızda saklanmaz ve Hanogt tarafından model eğitmek için kullanılmaz. Kötüye kullanımı önlemek ve planınızın sınırlarını uygulamak için yalnızca, hesabınızdan gizli bir tuzla türetilen anahtarlarla bir dakikalık sayaç ve planınızın mesaj penceresi için bir sayaç tutulur (Ücretsiz planda dakikada 5 ve 7 günde 50, Plus'ta dakikada 20 ve 14 günde 750, Pro'da dakikada 30 ve 7 günde 2.000 mesaj; pencere ilk mesajınızla başlar). Sohbet ve Hanogt AI API'si aynı sayaçları kullanır; model hiç yanıt veremediğinde o mesaj sayaçtan geri düşülür. Sayaçlar süreleri dolduktan sonra otomatik silinir. Sağlayıcının verileri nasıl işlediği ve ne kadar sakladığı kendi koşullarına tabidir.",
+  "cuy3xjhe7f": {
+    "en": "Your e-mail address and account ID are not sent to the provider, but everything you write in your messages is. The content of Hanogt AI chats is not stored on our servers and is not used by Hanogt to train models; questions asked in groups and Hanogt AI's answers, however, stay in the group chat like other messages (see [Hanogt Social](/privacy-policy#groups)). To prevent abuse and apply your plan's limits, we only keep a per-minute counter and a counter for your plan's message window under keys derived from your account with a secret salt (5 a minute and 50 in 7 days on Free, 20 a minute and 750 in 14 days on Plus, 30 a minute and 2,000 in 7 days on Pro; the window starts with your first message). The chat, the Hanogt AI API and questions asked to Hanogt AI in groups share these counters; when the model can't answer at all, that message is taken off the counter. The counters are deleted automatically after they expire. How the provider processes data and how long it keeps it are governed by its own terms.",
+    "tr": "E-posta adresiniz veya hesap kimliğiniz sağlayıcıya gönderilmez; ancak mesajlarınıza yazdığınız her şey iletilir. Hanogt AI sohbetlerinin içerikleri sunucularımızda saklanmaz ve Hanogt tarafından model eğitmek için kullanılmaz; gruplarda sorulan sorular ve Hanogt AI'ın yanıtları ise diğer mesajlar gibi grubun sohbetinde kalır (bkz. [Hanogt Social](/privacy-policy#groups)). Kötüye kullanımı önlemek ve planınızın sınırlarını uygulamak için yalnızca, hesabınızdan gizli bir tuzla türetilen anahtarlarla bir dakikalık sayaç ve planınızın mesaj penceresi için bir sayaç tutulur (Ücretsiz planda dakikada 5 ve 7 günde 50, Plus'ta dakikada 20 ve 14 günde 750, Pro'da dakikada 30 ve 7 günde 2.000 mesaj; pencere ilk mesajınızla başlar). Sohbet, Hanogt AI API'si ve gruplarda Hanogt AI'a sorulan sorular aynı sayaçları kullanır; model hiç yanıt veremediğinde o mesaj sayaçtan geri düşülür. Sayaçlar süreleri dolduktan sonra otomatik silinir. Sağlayıcının verileri nasıl işlediği ve ne kadar sakladığı kendi koşullarına tabidir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7460,9 +7504,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1sh6aamftwh": {
-    "en": "Your friends, direct messages and groups are shown on one screen in Hanogt Social. If your browser's real-time connection can't be set up, chats are read and sent through our server under the same access rules (refreshed every few seconds while the tab is open); this doesn't change who can see what. Conversations you close, your group notification preferences, the microphone and headphone toggles and your read markers are kept only in your browser.",
-    "tr": "Arkadaşlarınız, direkt mesajlarınız ve gruplarınız Hanogt Social'da tek ekranda gösterilir. Tarayıcınızın gerçek zamanlı bağlantısı kurulamazsa sohbetler aynı erişim kurallarıyla sunucumuz üzerinden okunur ve gönderilir (sekme açıkken birkaç saniyede bir yenilenir); bu, kimin neyi görebileceğini değiştirmez. Kapattığınız sohbetler, grup bildirim tercihleriniz, mikrofon ve kulaklık düğmeleri ve okuma işaretleriniz yalnızca tarayıcınızda tutulur.",
+  "1d38cm4j975": {
+    "en": "Your friends, direct messages and groups are shown on one screen in Hanogt Social. Your messages are always sent through our server: it checks your access to the chat or group, the group's rules and rate limits before saving the message, and browsers can't write message records directly. Chats are read through your browser's real-time connection where possible; if that connection can't be set up, they are read through our server under the same access rules (refreshed every few seconds while the tab is open). Conversations you close, your group notification preferences, the microphone and headphone toggles and your read markers are kept only in your browser.",
+    "tr": "Arkadaşlarınız, direkt mesajlarınız ve gruplarınız Hanogt Social'da tek ekranda gösterilir. Mesajlarınız her zaman sunucumuz üzerinden gönderilir: sunucu, sohbete veya gruba erişiminizi, grubun kurallarını ve hız sınırlarını denetledikten sonra mesajı kaydeder; tarayıcılar mesaj kayıtlarını doğrudan yazamaz. Sohbetler mümkün olduğunda tarayıcınızın gerçek zamanlı bağlantısıyla okunur; bu bağlantı kurulamazsa aynı erişim kurallarıyla sunucumuz üzerinden okunur (sekme açıkken birkaç saniyede bir yenilenir). Kapattığınız sohbetler, grup bildirim tercihleriniz, mikrofon ve kulaklık düğmeleri ve okuma işaretleriniz yalnızca tarayıcınızda tutulur.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7481,23 +7525,79 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1bbrsmt3l9w": {
-    "en": "One-to-one messages and voice messages can be read only by the participants of the chat. Voice messages are stored in Firebase Storage as audio files of up to 3 MB and can be deleted by the sender.",
-    "tr": "Birebir mesajlarınızı ve sesli mesajlarınızı yalnızca sohbetin katılımcıları okuyabilir. Sesli mesajlar en fazla 3 MB'lık ses dosyaları olarak Firebase Storage'da saklanır ve gönderen tarafından silinebilir.",
+  "1xm1i6ntm9f": {
+    "en": "One-to-one messages and voice messages can be read only by the participants of the chat. Voice messages are stored in Firebase Storage as audio files of up to 3 MB and can be deleted by the sender. Reactions to one-to-one messages are stored on the message together with the account of the participant who reacted; both participants can pin up to 25 messages in a chat. While read receipts are on, the other person sees that you read their message; when you turn them off, no read receipts are sent and you don't see theirs either. While the typing indicator is on, the fact that you are typing is shown in the chat or group for a few seconds; when you turn it off, it isn't sent and you don't see other people typing either.",
+    "tr": "Birebir mesajlarınızı ve sesli mesajlarınızı yalnızca sohbetin katılımcıları okuyabilir. Sesli mesajlar en fazla 3 MB'lık ses dosyaları olarak Firebase Storage'da saklanır ve gönderen tarafından silinebilir. Birebir mesajlara verilen tepkiler, tepkiyi veren katılımcının hesabıyla birlikte mesajda saklanır; iki katılımcı da bir sohbette en fazla 25 mesajı sabitleyebilir. Okundu bilgisi açıkken karşı taraf mesajını okuduğunuzu görür; kapattığınızda okundu bilgisi gönderilmez ve siz de karşı tarafınkini görmezsiniz. Yazıyor göstergesi açıkken yazdığınız, sohbette veya grupta birkaç saniyeliğine gösterilir; kapattığınızda gönderilmez ve başkalarınınkini de görmezsiniz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "24za07im68e": {
-    "en": "Group members can see the group's name, the member list and members' profile details, the shared files and who changed them, the chat, pinned messages, reactions and voice messages. You join a group by invitation or through invite links that can expire or have a use limit; you can't see a group's content before accepting. Group owners and admins can remove or ban members. Changes to shared files sync in real time; when people edit at the same time, the last saved version may win.",
-    "tr": "Grup üyeleri grubun adını, üye listesini ve üyelerin profil bilgilerini, ortak dosyaları ve değişikliği yapan üyeyi, sohbeti, sabitlenen mesajları, tepkileri ve sesli mesajları görebilir. Gruplara davetle ya da süreli veya kullanım sınırlı davet bağlantılarıyla katılınır; davet kabul edilmeden grup içeriğine erişilemez. Grup sahibi ve yöneticileri üyeleri gruptan çıkarabilir veya engelleyebilir. Ortak dosyalardaki değişiklikler gerçek zamanlı eşitlenir; aynı anda yapılan düzenlemelerde son kaydedilen sürüm geçerli olabilir.",
+  "1eik6ybxt4u": {
+    "en": "You can use Markdown formatting (bold, italics, underline and strikethrough, code and code blocks, quotes and spoilers), emoji and GIFs in your messages, and reply to, edit, delete and forward messages to another chat or group. A forwarded message is stored in the destination as a new message from you, marked “forwarded”; the original author and the chat it came from are not included. Replies carry a short quote of the message they answer. When a message is deleted, its quote in replies and its copy in stars are deleted too; when it is edited, they are updated with the new text. The chat list, notifications and quotes show a shortened version of a message without its formatting marks.",
+    "tr": "Mesajlarınızda Markdown biçimlendirmesi (kalın, italik, altı ve üstü çizili, kod ve kod blokları, alıntı ve spoiler), emoji ve GIF kullanabilir; mesajları yanıtlayabilir, düzenleyebilir, silebilir ve başka bir sohbete veya gruba iletebilirsiniz. İletilen mesaj, hedef sohbette sizin gönderdiğiniz yeni bir mesaj olarak “iletildi” işaretiyle saklanır; özgün mesajın yazarı ve geldiği sohbet eklenmez. Yanıtlar, yanıtlanan mesajdan kısa bir alıntı taşır. Bir mesaj silindiğinde yanıtlardaki alıntısı ve yıldızlardaki kopyası da silinir; düzenlendiğinde bunlar yeni metinle güncellenir. Sohbet listesi, bildirimler ve alıntılar, mesajın biçimlendirme işaretleri olmadan kısaltılmış hâlini gösterir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "s1jp2qrtr2": {
-    "en": "When you delete your account, the one-to-one chats you were part of (including the other person's messages) and their voice message files are deleted. Groups you own are deleted with all their content; in other groups you belonged to, your messages are anonymised as “Deleted user” and your voice messages are deleted.",
-    "tr": "Hesabınızı sildiğinizde katıldığınız birebir sohbetler (karşı tarafın mesajları dahil) ve sesli mesaj dosyaları silinir. Sahibi olduğunuz gruplar tüm içerikleriyle silinir; üyesi olduğunuz diğer gruplarda mesajlarınız “Silinmiş kullanıcı” adıyla anonimleştirilir ve sesli mesajlarınız silinir.",
+  "1rdij98tbw3": {
+    "en": "Messages you star (up to 200) are kept in a list that only you can see and browsers can't read. Each record holds the chat or group the message is in, the message's ID and date, its author's display name, an excerpt of up to 200 characters and, so we know whose words the excerpt holds, the author's account. Removing the star deletes the record; the related stars are also deleted automatically when the message, the chat or the group is deleted, when you leave or are removed from the group, and when the message's author deletes their account. Your starred messages are included when you download your data (without other people's e-mail addresses) and deleted when you delete your account.",
+    "tr": "Yıldızladığınız mesajlar (en fazla 200) yalnızca sizin görebildiğiniz ve tarayıcıların okuyamadığı bir listede saklanır. Her kayıtta mesajın bulunduğu sohbet veya grup, mesajın kimliği ve tarihi, yazarının görünen adı, mesajdan en fazla 200 karakterlik bir alıntı ve alıntının kime ait olduğunu bilmek için yazarın hesabı tutulur. Yıldızı kaldırdığınızda kayıt silinir; ayrıca mesaj, sohbet veya grup silindiğinde, gruptan ayrıldığınızda ya da çıkarıldığınızda ve mesajın yazarı hesabını sildiğinde ilgili yıldızlar kendiliğinden silinir. Yıldızlı mesajlarınız verilerinizi indirdiğinizde (başka kişilerin e-posta adresleri olmadan) yer alır ve hesabınızı sildiğinizde silinir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "14b654b3yp8": {
+    "en": "GIF search goes through our server to the GIF provider Hanogt chooses: KLIPY (USA) or GIPHY, Inc. (USA). Only the search text, the page number, the interface language and the content rating are sent to the provider; your account, e-mail address and IP address are not sent with this request, and the results are cached in server memory for up to 30 minutes. When you send a GIF, the message stores the GIF's address at the provider, its title and its size. Because GIFs and their previews load directly from the provider's servers, those servers can see your IP address and browser details when you view GIFs; no referrer is sent. How the provider processes this data is governed by its own terms. You can stop GIFs from playing automatically in the Hanogt Social settings.",
+    "tr": "GIF araması sunucumuz üzerinden, Hanogt'un seçtiği GIF sağlayıcısıyla yapılır: KLIPY (ABD) ya da GIPHY, Inc. (ABD). Sağlayıcıya yalnızca arama metni, sayfa numarası, arayüz dili ve içerik derecelendirmesi gönderilir; hesabınız, e-posta adresiniz ve IP adresiniz bu istekle gönderilmez ve sonuçlar en fazla 30 dakika sunucu belleğinde önbelleğe alınır. Bir GIF gönderdiğinizde mesajda GIF'in sağlayıcıdaki adresi, başlığı ve boyutları saklanır. GIF'ler ve önizlemeleri sağlayıcının sunucularından doğrudan yüklendiği için bu sunucular, GIF'leri görüntülediğinizde IP adresinizi ve tarayıcı bilgilerinizi görebilir; yönlendiren (referrer) bilgisi gönderilmez. Sağlayıcının bu verileri nasıl işlediği kendi koşullarına tabidir. GIF'lerin kendiliğinden oynamasını Hanogt Social ayarlarından kapatabilirsiniz.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "26vuhsqpm02": {
+    "en": "Group members can see the group's name, the member list and members' profile details and roles, the shared files and who changed them, the chat, pinned messages, reactions and voice messages. Reactions to group messages are stored with a pseudonymous key derived for each member instead of an e-mail address. You join a group by invitation or through invite links that can expire or have a use limit; you can't see a group's content before accepting. Groups have owner, admin and moderator roles: owners and admins manage the group's settings, roles and AutoMod and can ban members; moderators can delete the messages of members with a lower role and warn, mute and remove them. Changes to shared files sync in real time; when people edit at the same time, the last saved version may win.",
+    "tr": "Grup üyeleri grubun adını, üye listesini ve üyelerin profil bilgilerini ve rollerini, ortak dosyaları ve değişikliği yapan üyeyi, sohbeti, sabitlenen mesajları, tepkileri ve sesli mesajları görebilir. Grup mesajlarındaki tepkiler, e-posta adresi yerine her üye için türetilen takma bir anahtarla saklanır. Gruplara davetle ya da süreli veya kullanım sınırlı davet bağlantılarıyla katılınır; davet kabul edilmeden grup içeriğine erişilemez. Gruplarda sahip, yönetici ve moderatör rolleri vardır: sahip ve yöneticiler grubun ayarlarını, rollerini ve AutoMod'u yönetir ve üyeleri engelleyebilir; moderatörler kendilerinden düşük roldeki üyelerin mesajlarını silebilir, onları uyarabilir, susturabilir ve gruptan çıkarabilir. Ortak dosyalardaki değişiklikler gerçek zamanlı eşitlenir; aynı anda yapılan düzenlemelerde son kaydedilen sürüm geçerli olabilir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1na3rtsyv6p": {
+    "en": "Hanogt Security Bot is part of every group and can't be removed. It shows the group's rules and welcome message, posts moderation notices (for example that a member was muted) to the group chat and carries out commands: /warn, /mute, /unmute, /kick, /purge and /slowmode for moderators and above, /ban for owners and admins, and /rules, /warnings, /report and /help for everyone. The records these commands create are kept in records browsers can't read and are deleted automatically when they expire: warnings (the member warned, the member who warned or AutoMod, the reason and the date) for 180 days, reports (who reported, who was reported, the reason and the status) for 180 days, and mutes (the member muted, who muted them, the reason and when it ends) until the mute ends (28 days at most). You can see your own warnings with /warnings. The group's owner, admins and moderators see warnings, open reports together with who made them, active mutes and AutoMod records; the person reported is not notified.",
+    "tr": "Hanogt Security Bot her grupta bulunur ve kaldırılamaz. Grubun kurallarını ve karşılama mesajını gösterir, moderasyon duyurularını (ör. bir üyenin susturulduğunu) grubun sohbetine yazar ve komutları uygular: moderatörler ve üstü için /uyar, /sustur, /sesiac, /at, /temizle ve /yavasmod, sahip ve yöneticiler için /yasakla; herkes için /kurallar, /uyarilar, /rapor ve /yardim. Bu komutlarla oluşan kayıtlar tarayıcıların okuyamadığı kayıtlarda tutulur ve süreleri dolunca otomatik silinir: uyarılar (uyarılan üye, uyaran üye veya AutoMod, sebep ve tarih) 180 gün, raporlar (raporlayan, raporlanan, sebep ve durum) 180 gün, susturmalar (susturulan üye, susturan, sebep ve bitiş zamanı) susturma bitene kadar (en çok 28 gün). Kendi uyarılarınızı /uyarilar ile görebilirsiniz. Grubun sahibi, yöneticileri ve moderatörleri uyarıları, açık raporları raporlayanla birlikte, etkin susturmaları ve AutoMod kayıtlarını görür; raporlanan kişiye bildirim gönderilmez.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2ahhgo3xruf": {
+    "en": "Every message sent or edited in a group chat is scanned automatically on our server against the group's AutoMod settings before it is saved. AutoMod is on by default in new groups and stops messages containing profanity, spam (messages sent very fast or repeated), mentions of more than five people and personal data (an e-mail address, a phone number, a Turkish ID number, or a card or IBAN number); the group's owner and admins can turn on the slang, the group's own banned words, links and capital letters rules, change the rules or turn AutoMod off. The group owner is always exempt from AutoMod, and admins are by default. A message that breaks a rule is not saved and you are shown which rule it broke; if the group chose this, you also get an automatic warning, and once your warnings in the last 30 days reach the set number you are muted automatically for a while. For each stopped message, your account, the rule and the time (not the message text) are kept for 90 days and can be seen by the group's owner, admins and moderators. Only owners and admins can see the group's banned words list. For the spam check, a simplified form of your latest messages is kept briefly in server memory only and is not saved.",
+    "tr": "Grup sohbetine gönderilen ve düzenlenen her mesaj, kaydedilmeden önce grubun AutoMod ayarlarına göre sunucumuzda otomatik olarak taranır. AutoMod yeni gruplarda varsayılan olarak açıktır ve küfür, spam (çok hızlı gönderilen veya tekrar eden mesajlar), beşten fazla kişiden bahsetme ve kişisel veri (e-posta adresi, telefon, T.C. kimlik, kart veya IBAN numarası) içeren mesajları durdurur; grubun sahibi ve yöneticileri argo, grubun kendi yasaklı kelimeleri, bağlantılar ve büyük harf kurallarını açabilir, kuralları değiştirebilir veya AutoMod'u kapatabilir. Grup sahibi AutoMod'dan her zaman, yöneticiler varsayılan olarak muaftır. Kurala takılan mesaj kaydedilmez ve size hangi kurala takıldığı gösterilir; grup bunu seçtiyse ayrıca otomatik bir uyarı alırsınız ve son 30 gündeki uyarılarınız belirlenen sayıya ulaşınca bir süre otomatik olarak susturulursunuz. Durdurulan her mesaj için hesabınız, takıldığı kural ve zaman (mesajın metni değil) 90 gün saklanır ve grubun sahibi, yöneticileri ve moderatörleri tarafından görülebilir. Grubun yasaklı kelime listesini yalnızca sahip ve yöneticiler görebilir. Spam denetimi için son mesajlarınızın sadeleştirilmiş bir biçimi kısa bir süre yalnızca sunucu belleğinde tutulur ve kaydedilmez.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "mlw3622oa6": {
+    "en": "Hanogt AI can be used in groups too: when you ask with the /ai command or by mentioning @Hanogt AI in your message, the question (up to 2,000 characters) is passed through our server to Hanogt AI's language model together with the last 12 text messages of the channel you asked in (up to 400 characters each, with their authors' display names; see [Hanogt AI](/privacy-policy#hanogt-ai)). These messages may belong to other members of the group; e-mail addresses are not sent. The question counts against the asker's Hanogt AI message allowance on their plan; if the model can't answer, it is given back. The question and Hanogt AI's answer appear to all members in the group chat and are kept there like other messages. Group owners and admins can switch the Hanogt AI bot off in the group settings; while it is off, none of the group's messages are sent to Hanogt AI. Group messages are not used to train models.",
+    "tr": "Hanogt AI gruplarda da kullanılabilir: /ai komutuyla ya da mesajınızda @Hanogt AI diye sorduğunuzda soru (en fazla 2.000 karakter), sorduğunuz kanaldaki son 12 metin mesajıyla birlikte (her biri en fazla 400 karakter, yazarlarının görünen adlarıyla) sunucumuz üzerinden Hanogt AI'ın dil modeline iletilir (bkz. [Hanogt AI](/privacy-policy#hanogt-ai)). Bu mesajlar grubun diğer üyelerine ait olabilir; e-posta adresleri gönderilmez. Soru, soranın planındaki Hanogt AI mesaj hakkından düşer; model yanıt veremezse hak geri verilir. Soru ve Hanogt AI'ın yanıtı grubun sohbetinde, diğer mesajlar gibi tüm üyelere görünür ve orada saklanır. Grup sahibi ve yöneticileri Hanogt AI botunu grup ayarlarından kapatabilir; kapalıyken grubun hiçbir mesajı Hanogt AI'a gönderilmez. Grup mesajları model eğitmek için kullanılmaz.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1t4eh1i19x0": {
+    "en": "Group owners and admins can define the group's own commands (a name, a description and a reply text) and a message that welcomes new members; these are stored in the group record and shown to members. The welcome message is posted to the group chat by Hanogt Security Bot and may contain the new member's display name.",
+    "tr": "Grup sahibi ve yöneticileri gruba özel komutlar (ad, açıklama ve yanıt metni) ve yeni üyeleri karşılayan bir mesaj tanımlayabilir; bunlar grup kaydında saklanır ve üyelere gösterilir. Karşılama mesajı Hanogt Security Bot tarafından grubun sohbetine yazılır ve yeni üyenin görünen adını içerebilir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1zbog1nxu2k": {
+    "en": "Your Hanogt Social settings (Enter to send, typing indicator, read receipts, playing GIFs automatically, message font size, chat background, voice message quality and notification preferences) are stored in your account, so the same settings apply on every device; they are included in your data export and deleted when you delete your account. The microphone and speaker you choose, the emoji you used recently and the fact that you have seen the first-run note are kept only in your browser.",
+    "tr": "Hanogt Social ayarlarınız (Enter ile gönderme, yazıyor göstergesi, okundu bilgisi, GIF'lerin kendiliğinden oynaması, mesaj yazı boyutu, sohbet arka planı, sesli mesaj kalitesi ve bildirim tercihleri) hesabınızda saklanır, böylece her cihazda aynı ayarlar kullanılır; verilerinizin dışa aktarımında yer alır ve hesabınızı sildiğinizde silinir. Seçtiğiniz mikrofon ve hoparlör, son kullandığınız emojiler ve ilk açılış notunu gördüğünüz yalnızca tarayıcınızda tutulur.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "3hjeiewlhd": {
+    "en": "When you delete your account, the one-to-one chats you were part of (including the other person's messages) and their voice message files are deleted. Groups you own are deleted with all their content and moderation records; in other groups you belonged to, your messages are anonymised as “Deleted user” and your voice messages are deleted. Your starred messages, the warning, mute, report and AutoMod records about you and the reports you made are deleted, and so are other people's stars on your messages. Warnings you gave as a moderator stay in force but no longer show you.",
+    "tr": "Hesabınızı sildiğinizde katıldığınız birebir sohbetler (karşı tarafın mesajları dahil) ve sesli mesaj dosyaları silinir. Sahibi olduğunuz gruplar tüm içerikleri ve moderasyon kayıtlarıyla silinir; üyesi olduğunuz diğer gruplarda mesajlarınız “Silinmiş kullanıcı” adıyla anonimleştirilir ve sesli mesajlarınız silinir. Yıldızlı mesaj listeniz, hakkınızdaki uyarı, susturma, rapor ve AutoMod kayıtları ve yaptığınız raporlar silinir; başkalarının mesajlarınıza verdiği yıldızlar da silinir. Moderatör olarak verdiğiniz uyarılar geçerli kalır, ancak artık sizi göstermez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7558,9 +7658,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "hjj74hkhaj": {
-    "en": "Notifications about friend requests, messages, calls, likes, your subscription's status and system announcements are stored with your account; only you can see them, mark them as read and delete them. Hanogt Codev currently does not send e-mails or marketing messages; payment receipts and payment-related e-mails are sent by Paddle.",
-    "tr": "Arkadaşlık istekleri, mesajlar, aramalar, beğeniler, aboneliğinizin durumu ve sistem duyuruları için bildirimler hesabınıza bağlı olarak saklanır; bunları yalnızca siz görebilir, okundu olarak işaretleyebilir ve silebilirsiniz. Hanogt Codev şu anda e-posta veya pazarlama iletisi göndermemektedir; ödeme makbuzlarını ve ödemeyle ilgili e-postaları Paddle gönderir.",
+  "1ghlo19v5ca": {
+    "en": "Notifications about friend requests, messages, being mentioned in a group with @ or @everyone, missed calls, likes, your subscription's status and system announcements are stored with your account; only you can see them, mark them as read and delete them. A notification may show the sender's name, profile photo and a shortened version of the message. You can turn off message, mention and missed call notifications in the Hanogt Social settings or in Account Settings. Hanogt Codev currently does not send e-mails or marketing messages; payment receipts and payment-related e-mails are sent by Paddle.",
+    "tr": "Arkadaşlık istekleri, mesajlar, gruplarda sizden @ ile ya da @herkes ile bahsedilmesi, cevapsız aramalar, beğeniler, aboneliğinizin durumu ve sistem duyuruları için bildirimler hesabınıza bağlı olarak saklanır; bunları yalnızca siz görebilir, okundu olarak işaretleyebilir ve silebilirsiniz. Bir bildirimde gönderenin adı, profil fotoğrafı ve mesajın kısaltılmış hâli yer alabilir. Mesaj, bahsetme ve cevapsız arama bildirimlerini Hanogt Social ayarlarından veya Hesap Ayarları'ndan kapatabilirsiniz. Hanogt Codev şu anda e-posta veya pazarlama iletisi göndermemektedir; ödeme makbuzlarını ve ödemeyle ilgili e-postaları Paddle gönderir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7880,9 +7980,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1et0jut29yi": {
-    "en": "Friends, chats, groups, calls, online status and notifications",
-    "tr": "Arkadaşlar, sohbetler, gruplar, aramalar, çevrimiçi durum ve bildirimler",
+  "m8tb6c9fid": {
+    "en": "Friends, chats, groups, starred messages, GIF search, calls, online status and notifications",
+    "tr": "Arkadaşlar, sohbetler, gruplar, yıldızlı mesajlar, GIF araması, aramalar, çevrimiçi durum ve bildirimler",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7890,6 +7990,48 @@
   "d6rhwavgug": {
     "en": "Communication, online status, voice calls",
     "tr": "İletişim, çevrimiçi durum, sesli aramalar",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "17m9a53qg5u": {
+    "en": "Enforcing community rules in groups: Hanogt Security Bot commands, AutoMod scanning and moderation records",
+    "tr": "Gruplarda topluluk kurallarının uygulanması: Hanogt Security Bot komutları, AutoMod taraması ve moderasyon kayıtları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "jftiqwnwp2": {
+    "en": "Group messages, group roles, warning, mute, report and AutoMod records",
+    "tr": "Grup mesajları, grup rolleri, uyarı, susturma, rapor ve AutoMod kayıtları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "tmsluf0vv": {
+    "en": "Performing the contract (Art. 5(2)(c)); legitimate interest in protecting groups and their members against abuse (Art. 5(2)(f))",
+    "tr": "Sözleşmenin ifası (m.5/2-c); grupların ve üyelerinin kötüye kullanıma karşı korunması için meşru menfaat (m.5/2-f)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "15uzi324cv2": {
+    "en": "Hanogt AI answers in groups",
+    "tr": "Gruplarda Hanogt AI yanıtları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "nfme0ejica": {
+    "en": "The question and the channel's last 12 messages with their authors' display names",
+    "tr": "Soru ile kanalın son 12 mesajı ve yazarlarının görünen adları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "tevvep5sny": {
+    "en": "For the asker, performing the contract (Art. 5(2)(c)); for the messages of members who didn't ask, legitimate interest in the group being able to offer this feature (Art. 5(2)(f)); KVKK Art. 9 also applies to the transfer abroad",
+    "tr": "Soran için sözleşmenin ifası (m.5/2-c); soruyu sormayan üyelerin mesajları için grubun bu özelliği sunabilmesine ilişkin meşru menfaat (m.5/2-f); yurt dışına aktarım için ayrıca KVKK m.9",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8196,9 +8338,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "polxdo9f1w": {
-    "en": "Hanogt AI messages and context, your personal instructions and preferences, results of agent actions you allow; requests sent to the Hanogt AI API",
-    "tr": "Hanogt AI mesajları ve bağlamı, kişisel talimatlarınız ve tercihleriniz, izin verdiğiniz ajan işlemlerinin sonuçları; Hanogt AI API'sine gönderilen istekler",
+  "1dsqsga1540": {
+    "en": "Hanogt AI messages and context, your personal instructions and preferences, results of agent actions you allow; requests sent to the Hanogt AI API; questions asked in groups and the channel's last 12 messages (with their authors' display names)",
+    "tr": "Hanogt AI mesajları ve bağlamı, kişisel talimatlarınız ve tercihleriniz, izin verdiğiniz ajan işlemlerinin sonuçları; Hanogt AI API'sine gönderilen istekler; gruplarda sorulan sorular ve kanalın son 12 mesajı (yazarlarının görünen adlarıyla)",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8210,9 +8352,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1jvx7nadk7f": {
-    "en": "When you write to Hanogt AI while signed in, or a request is sent to the Hanogt AI API with your key",
-    "tr": "Giriş yapmışken Hanogt AI'a yazdığınızda veya anahtarınızla Hanogt AI API'sine istek gönderildiğinde",
+  "jqt6dpvp9a": {
+    "en": "When you write to Hanogt AI while signed in, a request is sent to the Hanogt AI API with your key, or someone asks Hanogt AI a question in a group",
+    "tr": "Giriş yapmışken Hanogt AI'a yazdığınızda, anahtarınızla Hanogt AI API'sine istek gönderildiğinde veya bir grupta Hanogt AI'a soru sorulduğunda",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8273,6 +8415,20 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "1vxnvs4zhd5": {
+    "en": "The search text, page, interface language and content rating (through our server, without account details or IP address); your browser's IP address and browser details when GIFs load",
+    "tr": "Arama metni, sayfa, arayüz dili ve içerik derecelendirmesi (sunucumuz üzerinden, hesap bilgisi ve IP adresi olmadan); GIF'ler yüklenirken tarayıcınızın IP adresi ve tarayıcı bilgileri",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "6kwcjt0deo": {
+    "en": "When you use the GIF picker and view messages containing GIFs",
+    "tr": "GIF seçiciyi kullandığınızda ve GIF içeren mesajları görüntülediğinizde",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "23261hyswzh": {
     "en": "Only the first 5 characters of your password's SHA-1 hash, through our server",
     "tr": "Parolanızın SHA-1 özetinin yalnızca ilk 5 karakteri, sunucumuz üzerinden",
@@ -8322,9 +8478,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "8eksefc0b2": {
-    "en": "Your public profile and the content you publish; your messages only to their recipients",
-    "tr": "Herkese açık profiliniz ve yayımladığınız içerikler; mesajlarınız yalnızca alıcılarına",
+  "1cfb3kzsd0c": {
+    "en": "Your public profile and the content you publish; your messages only to their recipients; your moderation records in a group to its owner, admins and moderators",
+    "tr": "Herkese açık profiliniz ve yayımladığınız içerikler; mesajlarınız yalnızca alıcılarına; bir gruptaki moderasyon kayıtlarınız grubun sahibi, yöneticileri ve moderatörlerine",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8378,9 +8534,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "259duwp4iyt": {
-    "en": "Hosting (Vercel), the database and storage (Google Firebase), payments (Paddle, United Kingdom), Hanogt AI's model hosting provider (Hugging Face, USA) and any AI providers you connect with your own API key, the public compilers and the voice call servers may process data on servers outside Türkiye. This means your personal data is transferred abroad when you use the service.",
-    "tr": "Barındırma (Vercel), veritabanı ve depolama (Google Firebase), ödemeler (Paddle, Birleşik Krallık), Hanogt AI'ın model barındırma sağlayıcısı (Hugging Face, ABD) ve kendi API anahtarınızla bağladığınız yapay zekâ sağlayıcıları, herkese açık derleyiciler ve sesli arama sunucuları verileri Türkiye dışındaki sunucularda işleyebilir. Bu nedenle hizmeti kullandığınızda kişisel verileriniz yurt dışına aktarılır.",
+  "1xwkdxwnf02": {
+    "en": "Hosting (Vercel), the database and storage (Google Firebase), payments (Paddle, United Kingdom), Hanogt AI's model hosting provider (Hugging Face, USA) and any AI providers you connect with your own API key, the GIF provider (KLIPY or GIPHY, USA), the public compilers and the voice call servers may process data on servers outside Türkiye. This means your personal data is transferred abroad when you use the service.",
+    "tr": "Barındırma (Vercel), veritabanı ve depolama (Google Firebase), ödemeler (Paddle, Birleşik Krallık), Hanogt AI'ın model barındırma sağlayıcısı (Hugging Face, ABD) ve kendi API anahtarınızla bağladığınız yapay zekâ sağlayıcıları, GIF sağlayıcısı (KLIPY veya GIPHY, ABD), herkese açık derleyiciler ve sesli arama sunucuları verileri Türkiye dışındaki sunucularda işleyebilir. Bu nedenle hizmeti kullandığınızda kişisel verileriniz yurt dışına aktarılır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8539,16 +8695,100 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "gdd12f42h3": {
-    "en": "Group content",
-    "tr": "Grup içerikleri",
+  "fwydmza49k": {
+    "en": "Group content (including Hanogt AI's answers in groups, custom commands and the welcome message)",
+    "tr": "Grup içerikleri (Hanogt AI'ın gruplardaki yanıtları, özel komutlar ve karşılama mesajı dahil)",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "21ig493px1d": {
-    "en": "Until the group is deleted; when your account is deleted, your messages in other groups are anonymised",
-    "tr": "Grup silinene kadar; hesabınız silindiğinde diğer gruplardaki mesajlarınız anonimleştirilir",
+  "1iw1122tgak": {
+    "en": "Until the group or the content is deleted; when your account is deleted, your messages in other groups are anonymised",
+    "tr": "Grup silinene veya içerik silinene kadar; hesabınız silindiğinde diğer gruplardaki mesajlarınız anonimleştirilir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1nfr0x648le": {
+    "en": "Starred messages (with their excerpt)",
+    "tr": "Yıldızlı mesajlar (alıntıyla birlikte)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1jebgb7quj8": {
+    "en": "Until you remove the star; deleted when the message, the chat or the group is deleted, when you leave or are removed from the group, and when your account or the message author's account is deleted",
+    "tr": "Yıldızı kaldırana kadar; mesaj, sohbet veya grup silindiğinde, gruptan ayrıldığınızda ya da çıkarıldığınızda ve sizin ya da mesajın yazarının hesabı silindiğinde silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1dw6dyhtf6a": {
+    "en": "Group warnings and reports",
+    "tr": "Grup uyarıları ve raporları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2dr81n2z1ds": {
+    "en": "180 days, then deleted automatically. Deleted at once when the group is deleted",
+    "tr": "180 gün; ardından otomatik silinir. Grup silindiğinde hemen silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "13koa4aaruy": {
+    "en": "Group mutes",
+    "tr": "Grup susturmaları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "dnov3p1i72": {
+    "en": "Until the mute ends or is lifted (28 days at most), then deleted automatically",
+    "tr": "Susturma bitene veya kaldırılana kadar (en çok 28 gün); ardından otomatik silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "23vw6jk75cj": {
+    "en": "AutoMod records (sender, rule and time; without the message text)",
+    "tr": "AutoMod kayıtları (gönderen, kural ve zaman; mesaj metni olmadan)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2ekixf706rc": {
+    "en": "90 days, then deleted automatically",
+    "tr": "90 gün; ardından otomatik silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "tqg230ttsk": {
+    "en": "The group's AutoMod settings and banned words",
+    "tr": "Grubun AutoMod ayarları ve yasaklı kelimeleri",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2buykhz2ltm": {
+    "en": "Until the group's owner or admins change them or the group is deleted",
+    "tr": "Grup sahibi veya yöneticileri değiştirene ya da grup silinene kadar",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "jdgoh8nh9c": {
+    "en": "GIF search results",
+    "tr": "GIF arama sonuçları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "12g4rlww4s2": {
+    "en": "Up to 30 minutes in server memory; not stored permanently",
+    "tr": "Sunucu belleğinde en fazla 30 dakika; kalıcı olarak saklanmaz",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9081,9 +9321,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "y3yab8stud": {
-    "en": "Conversations you closed in Hanogt Social, group notification preferences, the microphone and headphone toggles and whether the side panel is open",
-    "tr": "Hanogt Social'da kapattığınız sohbetler, grup bildirim tercihleri, mikrofon ve kulaklık düğmeleri ve yan panelin açık ya da kapalı olması",
+  "1bm7l9idlfk": {
+    "en": "Conversations you closed in Hanogt Social, group notification preferences, the microphone and headphone toggles, the microphone and speaker you chose and whether the side panel is open",
+    "tr": "Hanogt Social'da kapattığınız sohbetler, grup bildirim tercihleri, mikrofon ve kulaklık düğmeleri, seçtiğiniz mikrofon ve hoparlör ve yan panelin açık ya da kapalı olması",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1vj2zr2hbil": {
+    "en": "The emoji you used recently in the emoji picker and the fact that you have seen Hanogt Social's first-run note",
+    "tr": "Emoji seçicide son kullandığınız emojiler ve Hanogt Social'ın ilk açılış notunu gördüğünüz",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9312,16 +9559,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "58yu3yjqgn": {
-    "en": "Some decisions are made automatically: Security Bot may block high-risk code from being run or published; the comment filter may reject news comments containing profanity, spam, lots of links or personal data without saving them; and rate limits may temporarily stop an action.",
-    "tr": "Bazı kararlar otomatik olarak verilir: Security Bot yüksek riskli kodun çalıştırılmasını veya yayımlanmasını engelleyebilir; yorum filtresi küfür, spam, çok sayıda bağlantı veya kişisel veri içeren haber yorumlarını kaydetmeden reddedebilir; hız sınırları bir işlemi geçici olarak durdurabilir.",
+  "odjs932ggv": {
+    "en": "Some decisions are made automatically: Security Bot may block high-risk code from being run or published; the comment filter may reject news comments containing profanity, spam, lots of links or personal data without saving them; in Hanogt Social groups, AutoMod may stop messages that break the group's rules without saving them and, if the group chose this, give an automatic warning and mute the person for a while after a set number of warnings; and rate limits may temporarily stop an action.",
+    "tr": "Bazı kararlar otomatik olarak verilir: Security Bot yüksek riskli kodun çalıştırılmasını veya yayımlanmasını engelleyebilir; yorum filtresi küfür, spam, çok sayıda bağlantı veya kişisel veri içeren haber yorumlarını kaydetmeden reddedebilir; Hanogt Social gruplarında AutoMod, grubun kurallarına takılan mesajları kaydetmeden durdurabilir ve grup bunu seçtiyse otomatik uyarı verip belirlenen sayıda uyarıdan sonra bir süre susturabilir; hız sınırları bir işlemi geçici olarak durdurabilir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "2am8jipl1x3": {
-    "en": "These automated results only affect the request in question; you can edit the code or text and try again. Sanctions such as suspending an account, removing content or deleting an account are never based on an automated match alone; an authorised staff member reviews and carries them out. The automatic record summary staff see next to a support ticket only assists that review.",
-    "tr": "Bu otomatik sonuçlar yalnızca ilgili isteği etkiler; kodu veya metni düzenleyip yeniden deneyebilirsiniz. Hesap askıya alma, içerik kaldırma veya hesap silme gibi yaptırımlar yalnızca otomatik bir eşleşmeye dayanılarak uygulanmaz; bu işlemleri yetkili bir ekip üyesi inceleyerek yapar. Destek taleplerinde ekibe gösterilen otomatik sicil özeti de yalnızca bu incelemeye yardımcı olur.",
+  "2cyw0elh1pj": {
+    "en": "These automated results only affect the request in question or messaging in that group; you can edit the code or text and try again. Sanctions such as suspending an account, removing content or deleting an account are never based on an automated match alone; an authorised staff member reviews and carries them out. The automatic record summary staff see next to a support ticket only assists that review. In groups, warnings, mutes and removals by moderators are decisions of the group's own management; a mute given by AutoMod can be lifted by the group's moderators.",
+    "tr": "Bu otomatik sonuçlar yalnızca ilgili isteği veya o gruptaki mesajlaşmayı etkiler; kodu veya metni düzenleyip yeniden deneyebilirsiniz. Hesap askıya alma, içerik kaldırma veya hesap silme gibi yaptırımlar yalnızca otomatik bir eşleşmeye dayanılarak uygulanmaz; bu işlemleri yetkili bir ekip üyesi inceleyerek yapar. Destek taleplerinde ekibe gösterilen otomatik sicil özeti de yalnızca bu incelemeye yardımcı olur. Gruplarda moderatörlerin verdiği uyarı, susturma ve çıkarma kararları grubun kendi yönetiminin kararlarıdır; AutoMod'un verdiği bir susturmayı grubun moderatörleri kaldırabilir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -12253,9 +12500,37 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "5zavxz4dpn": {
-    "en": "Group owners and admins may set group rules and remove or ban members; they must use these powers in line with these Terms.",
-    "tr": "Grup sahipleri ve yöneticileri grubun kurallarını belirleyebilir, üyeleri çıkarabilir veya engelleyebilir; bu yetkileri bu Şartlara uygun kullanmalıdırlar.",
+  "8tvnbiomrj": {
+    "en": "Messages, GIFs, voice messages and files shared on Hanogt Social are the responsibility of the people who share them. Hanogt doesn't review this content in advance, and automated tools such as Hanogt Security Bot and AutoMod can't catch every violation. To the extent permitted by applicable law, Hanogt is not liable for content shared by users or for damage arising from it. This does not affect the exceptions in [Disclaimers and limitation of liability](/terms-of-use#liability) or the way to report unlawful content to us ([Intellectual property and infringement notices](/terms-of-use#intellectual-property)).",
+    "tr": "Hanogt Social'da paylaşılan mesajlar, GIF'ler, sesli mesajlar ve dosyalar onları paylaşan kullanıcıların sorumluluğundadır. Hanogt bu içerikleri önceden denetlemez; Hanogt Security Bot ve AutoMod gibi otomatik araçlar her ihlali yakalayamaz. Yürürlükteki mevzuatın izin verdiği ölçüde Hanogt, kullanıcıların paylaştığı içeriklerden ve bu içeriklerden doğan zararlardan sorumlu tutulamaz. Bu, [Garanti reddi ve sorumluluğun sınırları](/terms-of-use#liability) bölümündeki istisnaları ve hukuka aykırı içeriği bize bildirme yolunu ([Fikrî mülkiyet ve hak ihlali bildirimleri](/terms-of-use#intellectual-property)) etkilemez.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "yj14dj9om8": {
+    "en": "The person who creates a group is its owner: they are responsible for running it in line with these Terms and for choosing its admins, moderators, AutoMod settings, custom commands and welcome message. Owners, admins and moderators may use their powers (warning, muting, deleting messages, removing and banning members) only to enforce the group's rules and these Terms, never for harassment, discrimination or personal grudges. Moderation decisions in a group are not sanctions by Hanogt; if you think these powers are being abused, you can report it to us.",
+    "tr": "Bir grubu oluşturan kişi grubun sahibidir: grubu bu Şartlara uygun yönetmekten ve yöneticileri, moderatörleri, AutoMod ayarlarını, özel komutları ve karşılama mesajını belirlemekten sorumludur. Sahip, yönetici ve moderatörler yetkilerini (uyarma, susturma, mesaj silme, gruptan çıkarma ve engelleme) yalnızca grubun kurallarını ve bu Şartları uygulamak için kullanabilir; bu yetkiler taciz, ayrımcılık veya kişisel husumet için kullanılamaz. Gruptaki moderasyon kararları Hanogt'un yaptırımı değildir; yetkilerin kötüye kullanıldığını düşünüyorsanız bize bildirebilirsiniz.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1kygzashm5v": {
+    "en": "Hanogt Security Bot is part of every group and can't be removed; AutoMod automatically stops messages that break the group's rules. Trying to get around these tools (for example by disguising banned words or spreading spam) breaks these Terms. You can report a rule break in a group to its moderators with /report; this is not a notice to Hanogt. Report unlawful content to us with a support ticket.",
+    "tr": "Hanogt Security Bot her grupta bulunur ve kaldırılamaz; AutoMod, grubun kurallarına takılan mesajları otomatik olarak durdurur. Bu araçları atlatmaya çalışmak (ör. yasaklı kelimeleri gizlemek veya spam yaymak) bu Şartlara aykırıdır. Bir gruptaki kural ihlalini /rapor komutuyla grubun moderatörlerine bildirebilirsiniz; bu, Hanogt'a yapılmış bir bildirim değildir. Hukuka aykırı içerikleri destek talebiyle bize bildirin.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "wiadwp8vf3": {
+    "en": "When you ask Hanogt AI in a group, the question goes to Hanogt AI's language model together with the channel's latest messages, and the answer is visible to everyone in the group. The rules in [Hanogt AI and AI output](/terms-of-use#hanogt-ai) apply in groups too; don't send chats that contain other people's private information to Hanogt AI.",
+    "tr": "Bir grupta Hanogt AI'a sorduğunuzda soru, kanalın son mesajlarıyla birlikte Hanogt AI'ın dil modeline iletilir ve yanıt gruptaki herkese görünür. [Hanogt AI ve yapay zekâ çıktıları](/terms-of-use#hanogt-ai) bölümündeki kurallar gruplarda da geçerlidir; başkalarının özel bilgilerini içeren sohbetleri Hanogt AI'a göndermeyin.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "29copl7m4p0": {
+    "en": "Before you forward a message to another chat or group, especially one from a private chat, make sure this doesn't go against what its author can reasonably expect. GIFs come from a third-party GIF provider (KLIPY or GIPHY); you can report an inappropriate GIF to us.",
+    "tr": "Bir mesajı başka bir sohbete veya gruba iletmeden ya da yıldızlamadan önce, özellikle özel bir sohbetten geliyorsa, bunun yazarının makul beklentilerine aykırı olmadığından emin olun. GIF'ler üçüncü taraf bir GIF sağlayıcısından (KLIPY veya GIPHY) gelir; uygunsuz bir GIF'i bize bildirebilirsiniz.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12337,9 +12612,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "pq9upmszs1": {
-    "en": "You need to be signed in to use Hanogt AI. Usage limits depend on your plan: 5 messages a minute and 50 in 7 days on Free, 20 a minute and 750 in 14 days on Plus, and 30 a minute and 2,000 in 7 days on Pro (see [Paid plans](/terms-of-use#paid-services)). The window starts with your first message; the chat and the Hanogt AI API share the allowance. When the model can't answer at all, that message doesn't count. When you reach a limit, the Core answers instead.",
-    "tr": "Hanogt AI'ı kullanmak için giriş yapmanız gerekir. Kullanım sınırları planınıza göre uygulanır: Ücretsiz planda dakikada 5 ve 7 günde 50, Plus'ta dakikada 20 ve 14 günde 750, Pro'da dakikada 30 ve 7 günde 2.000 mesaj (bkz. [Ücretli planlar](/terms-of-use#paid-services)). Pencere ilk mesajınızla başlar; sohbet ve Hanogt AI API'si aynı hakkı kullanır. Model hiç yanıt veremediğinde o mesaj hakkınızdan düşmez. Sınıra ulaştığınızda yanıtları Çekirdek verir.",
+  "eufyc2pyo9": {
+    "en": "You need to be signed in to use Hanogt AI. Usage limits depend on your plan: 5 messages a minute and 50 in 7 days on Free, 20 a minute and 750 in 14 days on Plus, and 30 a minute and 2,000 in 7 days on Pro (see [Paid plans](/terms-of-use#paid-services)). The window starts with your first message; the chat, the Hanogt AI API and the questions you ask Hanogt AI in groups share the allowance. When the model can't answer at all, that message doesn't count. When you reach a limit, the Core answers instead.",
+    "tr": "Hanogt AI'ı kullanmak için giriş yapmanız gerekir. Kullanım sınırları planınıza göre uygulanır: Ücretsiz planda dakikada 5 ve 7 günde 50, Plus'ta dakikada 20 ve 14 günde 750, Pro'da dakikada 30 ve 7 günde 2.000 mesaj (bkz. [Ücretli planlar](/terms-of-use#paid-services)). Pencere ilk mesajınızla başlar; sohbet, Hanogt AI API'si ve gruplarda Hanogt AI'a sorduğunuz sorular aynı hakkı kullanır. Model hiç yanıt veremediğinde o mesaj hakkınızdan düşmez. Sınıra ulaştığınızda yanıtları Çekirdek verir.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12843,9 +13118,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "io7azyyoyx": {
-    "en": "Unless there is an urgent risk (for example malware spreading, child abuse, a serious threat or a compromised account), where possible we tell you the reason and how to appeal before or together with the measure. Staff actions and their reasons are written to the audit log. Automated blocks (Security Bot, the comment filter and rate limits) are not sanctions and only affect the request in question.",
-    "tr": "Acil bir risk (ör. zararlı yazılımın yayılması, çocuk istismarı, ciddi bir tehdit veya ele geçirilmiş bir hesap) bulunmadıkça, mümkün olduğunda yaptırımdan önce veya yaptırımla birlikte gerekçesini ve itiraz yolunu size bildiririz. Ekip işlemleri ve gerekçeleri denetim kaydına yazılır. Otomatik engellemeler (Security Bot, yorum filtresi, hız sınırları) yaptırım değildir ve yalnızca ilgili isteği etkiler.",
+  "3ewsbob3hz": {
+    "en": "Unless there is an urgent risk (for example malware spreading, child abuse, a serious threat or a compromised account), where possible we tell you the reason and how to appeal before or together with the measure. Staff actions and their reasons are written to the audit log. Automated blocks (Security Bot, the comment filter, AutoMod in groups and rate limits) are not sanctions by Hanogt and only affect the request in question or messaging in that group.",
+    "tr": "Acil bir risk (ör. zararlı yazılımın yayılması, çocuk istismarı, ciddi bir tehdit veya ele geçirilmiş bir hesap) bulunmadıkça, mümkün olduğunda yaptırımdan önce veya yaptırımla birlikte gerekçesini ve itiraz yolunu size bildiririz. Ekip işlemleri ve gerekçeleri denetim kaydına yazılır. Otomatik engellemeler (Security Bot, yorum filtresi, gruplardaki AutoMod ve hız sınırları) Hanogt'un yaptırımı değildir ve yalnızca ilgili isteği veya o gruptaki mesajlaşmayı etkiler.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12927,16 +13202,16 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "14xtnq56v2": {
-    "en": "The Service's free features are provided “as is” and “as available”. For paid plans, we are bound to provide the benefits of the plan you bought that are marked as live on the Plans page. Beyond that, we don't guarantee that the Service will be uninterrupted, error-free or fit for a particular purpose, or that Security Bot, the Security Center tools and Hanogt AI will detect every threat or error.",
-    "tr": "Hizmetin ücretsiz özellikleri “olduğu gibi” ve “mevcut olduğu şekilde” sunulmaktadır. Ücretli planlarda, satın aldığınız planın Planlar sayfasında canlı olarak belirtilen avantajlarını sağlamakla yükümlüyüz. Bunun dışında Hizmetin kesintisiz, hatasız veya belirli bir amaca uygun olacağını; Security Bot, Güvenlik Merkezi araçları ve Hanogt AI'ın her tehdidi veya hatayı tespit edeceğini garanti etmeyiz.",
+  "1mb5afb27yx": {
+    "en": "The Service's free features are provided “as is” and “as available”. For paid plans, we are bound to provide the benefits of the plan you bought that are marked as live on the Plans page. Beyond that, we don't guarantee that the Service will be uninterrupted, error-free or fit for a particular purpose, or that Security Bot, AutoMod, the Security Center tools and Hanogt AI will detect every threat, violation or error.",
+    "tr": "Hizmetin ücretsiz özellikleri “olduğu gibi” ve “mevcut olduğu şekilde” sunulmaktadır. Ücretli planlarda, satın aldığınız planın Planlar sayfasında canlı olarak belirtilen avantajlarını sağlamakla yükümlüyüz. Bunun dışında Hizmetin kesintisiz, hatasız veya belirli bir amaca uygun olacağını; Security Bot, AutoMod, Güvenlik Merkezi araçları ve Hanogt AI'ın her tehdidi, ihlali veya hatayı tespit edeceğini garanti etmeyiz.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "1u7j6lfg2zs": {
-    "en": "To the extent permitted by law, Hanogt is not liable for outages of third-party services, the results of code you run or publish or of actions you have Hanogt AI's agent carry out on your instructions, data lost for reasons within your control such as clearing browser data, or indirect losses such as lost profits.",
-    "tr": "Kanunun izin verdiği ölçüde Hanogt; üçüncü taraf hizmetlerin kesintilerinden, sizin talimatınızla çalıştırılan veya yayımlanan kodun ya da Hanogt AI ajanına yaptırdığınız işlemlerin sonuçlarından, tarayıcı verilerinin silinmesi gibi sizin kontrolünüzdeki nedenlerle kaybolan verilerden ve kâr kaybı gibi dolaylı zararlardan sorumlu değildir.",
+  "1l6tzlsqb1j": {
+    "en": "To the extent permitted by law, Hanogt is not liable for outages of third-party services, content shared by users or decisions of group managers, the results of code you run or publish or of actions you have Hanogt AI's agent carry out on your instructions, data lost for reasons within your control such as clearing browser data, or indirect losses such as lost profits.",
+    "tr": "Kanunun izin verdiği ölçüde Hanogt; üçüncü taraf hizmetlerin kesintilerinden, kullanıcıların paylaştığı içeriklerden ve grup yöneticilerinin kararlarından, sizin talimatınızla çalıştırılan veya yayımlanan kodun ya da Hanogt AI ajanına yaptırdığınız işlemlerin sonuçlarından, tarayıcı verilerinin silinmesi gibi sizin kontrolünüzdeki nedenlerle kaybolan verilerden ve kâr kaybı gibi dolaylı zararlardan sorumlu değildir.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -22262,6 +22537,76 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
+  "lpxj4otuuk": {
+    "en": "Bots, GIFs and AutoMod in Hanogt Social",
+    "tr": "Hanogt Social'da botlar, GIF'ler ve AutoMod",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "257xpztoeap": {
+    "en": "Messaging was redone: Markdown, GIFs, emoji, slash commands, Hanogt AI and Hanogt Security Bot in groups, AutoMod and new Hanogt Social settings.",
+    "tr": "Mesajlaşma baştan yenilendi: Markdown, GIF, emoji, eğik çizgi komutları, Hanogt AI ve Hanogt Security Bot gruplarda, AutoMod ve yeni Hanogt Social ayarları.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "25hl7x9jbke": {
+    "en": "A new message box: suggestions for people with @, channels with # and commands with /; an emoji picker and GIF search (KLIPY or GIPHY). Your message shows up as soon as you send it.",
+    "tr": "Yeni yazma kutusu: @ ile kişi, # ile kanal, / ile komut önerileri; emoji seçici ve GIF arama (KLIPY ya da GIPHY). Mesajın gönderilirken hemen görünüyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "kehnvij9s8": {
+    "en": "Messages: Markdown and code blocks you can copy, spoilers, reply previews, reactions in one-to-one chats, forwarding, starring and pinning; your starred messages are in the side menu.",
+    "tr": "Mesajlar: Markdown ve kopyalanabilir kod blokları, spoiler, yanıt önizlemesi, birebir sohbetlerde tepkiler, iletme, yıldızlama ve sabitleme; yıldızlı mesajların sol menüde.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1450o0m0vik": {
+    "en": "Hanogt AI in groups: ask with /ai or @Hanogt AI; it reads the channel's latest messages, answers in the group and uses your message allowance. Group admins can switch it off.",
+    "tr": "Gruplarda Hanogt AI: /ai ya da @Hanogt AI ile sor; kanalın son mesajlarını okuyup grupta yanıtlıyor ve senin mesaj hakkından düşüyor. Grup yöneticileri kapatabilir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "bv22se6ilf": {
+    "en": "Hanogt Security Bot in every group: /warn, /mute, /kick, /ban, /purge, /slowmode, /rules, /warnings and /report. A new moderator role, custom commands and a welcome message.",
+    "tr": "Hanogt Security Bot her grupta: /uyar, /sustur, /at, /yasakla, /temizle, /yavasmod, /kurallar, /uyarilar ve /rapor. Yeni moderatör rolü, özel komutlar ve karşılama mesajı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1pi666lm3na": {
+    "en": "AutoMod: rules for profanity, slang, banned words, spam, mention floods, links, capitals and personal data; messages are stopped before they are sent, with optional warnings and automatic mutes.",
+    "tr": "AutoMod: küfür, argo, yasaklı kelimeler, spam, bahsetme yağmuru, bağlantılar, büyük harf ve kişisel veri kuralları; mesaj gönderilmeden durduruluyor, istenirse uyarı ve otomatik susturma.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "c8d00u74jq": {
+    "en": "Hanogt Social settings: Voice & Video, Messages, Notifications, Privacy, Safety and Bots. Read receipts, the typing indicator, Enter to send, font size, background and GIF playback now really apply, and mention and missed call notifications were added.",
+    "tr": "Hanogt Social ayarları: Ses ve Görüntü, Mesajlar, Bildirimler, Gizlilik, Güvenlik ve Botlar. Okundu bilgisi, yazıyor göstergesi, Enter ile gönderme, yazı boyutu, arka plan ve GIF oynatma artık gerçekten uygulanıyor; bahsetme ve cevapsız arama bildirimleri eklendi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "s07f1ae0e": {
+    "en": "A deleted message's quote disappears from replies and its copy from stars too; the disclaimer is in the Social settings, when you create a group and on first use.",
+    "tr": "Silinen bir mesajın alıntısı yanıtlardan, kopyası yıldızlardan da kalkıyor; sorumluluk reddi Social ayarlarında, grup oluştururken ve ilk açılışta.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "7doyslrb41": {
+    "en": "Privacy Policy, KVKK Information Notice and Terms of Use 5.0.",
+    "tr": "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 5.0.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
   "n6ym3byrt7": {
     "en": "A new Hanogt AI and a colourful site",
     "tr": "Yeni Hanogt AI ve renkli bir site",
@@ -30075,6 +30420,7 @@
     "tr": "Bu mesaj silinmiş.",
     "files": [
       "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/Social/dm/DmMessages.tsx"
     ]
   },
@@ -45877,9 +46223,23 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "aamys4thwd": {
-    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, search, voice messages and voice calls. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin and member; owners and admins manage members and settings.\nLimits: 25 members and 50 files per group. How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
-    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, arama, sesli mesaj ve sesli arama var. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici ve üye; sahip ve yöneticiler üyeleri ve ayarları yönetir.\nSınırlar: grup başına 25 üye ve 50 dosya. Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
+  "1e93v98eyo3": {
+    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, #channels, /commands, GIFs, Markdown, search, voice messages and voice calls. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin, moderator and member; owners and admins manage members, settings and AutoMod, and moderators warn, mute, delete messages and remove members. See “Bots and AutoMod in groups” for Hanogt Security Bot and AutoMod.\nLimits: 25 members and 50 files per group. How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
+    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, #kanal, /komutlar, GIF, Markdown, arama, sesli mesaj ve sesli arama var. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici, moderatör ve üye; sahip ve yöneticiler üyeleri, ayarları ve AutoMod'u yönetir, moderatörler uyarır, susturur, mesaj siler ve gruptan çıkarır. Hanogt Security Bot ve AutoMod için “Gruplarda botlar ve AutoMod” notuna bak.\nSınırlar: grup başına 25 üye ve 50 dosya. Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "116los7wq61": {
+    "en": "Bots and AutoMod in groups (Hanogt Social)",
+    "tr": "Gruplarda botlar ve AutoMod (Hanogt Social)",
+    "files": [
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "qafgaz9fjp": {
+    "en": "Every group has two bots:\n• **Hanogt Security Bot** (can't be removed): shows the rules and welcome message and announces moderation. Commands: `/help`, `/rules`, `/warnings` and `/report @person reason` for everyone; `/warn`, `/mute @person 10m reason` (28 days at most), `/unmute`, `/kick`, `/purge 20` and `/slowmode 10s` for moderators; `/ban` for owners and admins. Command replies are visible only to you. Warnings and reports are kept for 180 days.\n• **Hanogt AI**: ask with `/ai question` or `@Hanogt AI`; it reads the channel's last 12 messages, answers in the group and uses your Hanogt AI message allowance. It can be switched off in Group settings → Bots.\n**AutoMod** (Group settings → Safety): rules for profanity, slang, the group's own banned words, spam, too many mentions, links, capital letters and personal data (e-mail, phone, Turkish ID, card, IBAN). A message that breaks a rule is never sent; if the group chooses, a warning is given and a set number of warnings mutes automatically. The owner is always exempt, and admins are by default. Owners and admins can also define **custom commands** and a **welcome message**.",
+    "tr": "Her grupta iki bot var:\n• **Hanogt Security Bot** (kaldırılamaz): kuralları ve karşılama mesajını gösterir, moderasyonu duyurur. Komutlar: herkes için `/yardim`, `/kurallar`, `/uyarilar`, `/rapor @kişi sebep`; moderatörler için `/uyar`, `/sustur @kişi 10dk sebep` (en çok 28 gün), `/sesiac`, `/at`, `/temizle 20`, `/yavasmod 10s`; sahip ve yöneticiler için `/yasakla`. Komut yanıtları yalnızca sana görünür. Uyarılar ve raporlar 180 gün saklanır.\n• **Hanogt AI**: `/ai soru` ya da `@Hanogt AI` ile sor; kanalın son 12 mesajını okuyup grupta yanıtlar ve senin Hanogt AI mesaj hakkından düşer. Grup ayarları → Botlar'dan kapatılabilir.\n**AutoMod** (Grup ayarları → Güvenlik): küfür, argo, gruba özel yasaklı kelimeler, spam, çok fazla bahsetme, bağlantılar, büyük harf ve kişisel veri (e-posta, telefon, T.C. kimlik, kart, IBAN) kuralları. Kurala takılan mesaj hiç gönderilmez; grup seçerse uyarı verilir ve belli sayıda uyarıda otomatik susturulur. Sahip her zaman, yöneticiler varsayılan olarak muaftır. Sahip ve yöneticiler ayrıca **özel komutlar** ve bir **karşılama mesajı** tanımlayabilir.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -45891,9 +46251,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "wgk3bnxi40": {
-    "en": "Direct messages live in [Hanogt Social](/social) (the old /messages address redirects there): pick a chat from the **Direct messages** list on the left, or press the message button on a friend in the Friends screen. The other person's profile card shows on the right.\n• Send text, stickers and **voice messages** (up to 60 s), and reply to, edit or delete messages.\n• There's a typing indicator and read receipts; turn them off in Account Settings → Messaging.\n• You can only message friends; people you block can't write to you.\nHanogt AI never sends messages to other people on your behalf.",
-    "tr": "Direkt mesajlar [Hanogt Social](/social)'dedir (eski /messages adresi buraya yönlenir): soldaki **Direkt mesajlar** listesinden bir sohbet seç ya da Arkadaşlar ekranında arkadaşının mesaj düğmesine bas. Sağda karşındaki kişinin profil kartı görünür.\n• Metin, çıkartma ve **sesli mesaj** (en fazla 60 sn) gönderebilir, mesajı yanıtlayabilir, düzenleyebilir ve silebilirsin.\n• Yazıyor göstergesi ve okundu bilgisi vardır; bunları Hesap Ayarları → Mesajlaşma'dan kapatabilirsin.\n• Yalnızca arkadaşlarınla mesajlaşabilirsin; engellediğin kişiler sana yazamaz.\nHanogt AI senin adına başkalarına mesaj göndermez.",
+  "19xh7jil9fa": {
+    "en": "Direct messages live in [Hanogt Social](/social) (the old /messages address redirects there): pick a chat from the **Direct messages** list on the left, or press the message button on a friend in the Friends screen. The other person's profile card shows on the right.\n• Send text, emoji, GIFs, stickers and **voice messages** (up to 60 s); reply to, edit, delete, forward, star and pin messages, and react to them. Your starred messages are in the side menu.\n• **Markdown:** `**bold**`, `*italic*`, `__underline__`, `~~strikethrough~~`, `||spoiler||`, `` `code` `` and code blocks with ```.\n• The typing indicator, read receipts, Enter to send, font size, background and GIF playback are in **Hanogt Social settings → Messages** (the gear at the bottom left).\n• You can only message friends; people you block can't write to you.\nHanogt AI never sends messages to other people on your behalf.",
+    "tr": "Direkt mesajlar [Hanogt Social](/social)'dedir (eski /messages adresi buraya yönlenir): soldaki **Direkt mesajlar** listesinden bir sohbet seç ya da Arkadaşlar ekranında arkadaşının mesaj düğmesine bas. Sağda karşındaki kişinin profil kartı görünür.\n• Metin, emoji, GIF, çıkartma ve **sesli mesaj** (en fazla 60 sn) gönderebilir; mesajı yanıtlayabilir, düzenleyebilir, silebilir, iletebilir, yıldızlayabilir ve sabitleyebilir, tepki verebilirsin. Yıldızlı mesajların sol menüde.\n• **Markdown:** `**kalın**`, `*italik*`, `__altı çizili__`, `~~üstü çizili~~`, `||spoiler||`, `` `kod` `` ve ``` ile kod blokları.\n• Yazıyor göstergesi, okundu bilgisi, Enter ile gönderme, yazı boyutu, arka plan ve GIF oynatma **Hanogt Social ayarları → Mesajlar**'dadır (sol alttaki dişli).\n• Yalnızca arkadaşlarınla mesajlaşabilirsin; engellediğin kişiler sana yazamaz.\nHanogt AI senin adına başkalarına mesaj göndermez.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -48608,6 +48968,41 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "230emscosio": {
+    "en": "Hanogt Social messages: one-to-one and group messages are now written only through our server; Markdown formatting, GIFs, forwarding, starring and pinning were added. Reactions in one-to-one chats are stored with the participant who reacted. Messages you star (up to 200) are kept, with a short excerpt, in a list only you can see. When a message is deleted, its quote in replies and its copy in stars are deleted too, and when it is edited they are updated.",
+    "tr": "Hanogt Social mesajları: Birebir ve grup mesajları artık yalnızca sunucumuz üzerinden yazılıyor; Markdown biçimlendirmesi, GIF, iletme, yıldızlama ve sabitleme eklendi. Birebir mesajlardaki tepkiler, tepki veren katılımcıyla birlikte saklanıyor. Yıldızladığınız mesajlar (en fazla 200) yalnızca sizin görebildiğiniz bir listede kısa bir alıntıyla tutuluyor. Bir mesaj silindiğinde yanıtlardaki alıntısı ve yıldızlardaki kopyası da siliniyor, düzenlendiğinde güncelleniyor.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "s7dpf3phj5": {
+    "en": "GIFs: GIF search goes through our server to KLIPY (USA) or GIPHY, Inc. (USA); only the search text, page, language and content rating are sent to the provider. Because GIF images load from the provider's servers, those servers can see your IP address and browser details. The recipients, international transfer and browser storage tables were updated accordingly.",
+    "tr": "GIF'ler: GIF araması sunucumuz üzerinden KLIPY (ABD) ya da GIPHY, Inc. (ABD) ile yapılıyor; sağlayıcıya yalnızca arama metni, sayfa, dil ve içerik derecelendirmesi gidiyor. GIF görselleri sağlayıcının sunucularından yüklendiği için bu sunucular IP adresinizi ve tarayıcı bilgilerinizi görebilir. Alıcılar, yurt dışına aktarım ve tarayıcı depolama tabloları buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1xao0n2tjps": {
+    "en": "Group moderation: Hanogt Security Bot is now also the moderation bot of every group and can't be removed; warnings and reports are kept for 180 days and mutes until they end. AutoMod automatically scans group messages against the group's rules before they are saved and stops a message that breaks one; the text of a stopped message isn't kept, only the sender, the rule and the time, for 90 days. The automated decisions and objections section was updated accordingly.",
+    "tr": "Grup moderasyonu: Hanogt Security Bot artık her grupta bulunan ve kaldırılamayan moderasyon botu; uyarılar ve raporlar 180 gün, susturmalar süreleri bitene kadar saklanıyor. AutoMod, grup mesajlarını kaydedilmeden önce grubun kurallarına göre otomatik olarak tarıyor ve kurala takılan mesajı durduruyor; durdurulan mesajın metni değil, yalnızca gönderen, kural ve zaman 90 gün saklanıyor. Otomatik kararlar ve itiraz bölümü buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "r36jku1vtw": {
+    "en": "Hanogt AI in groups: a question asked in a group with /ai or by mentioning @Hanogt AI is passed to Hanogt AI's language model together with the channel's last 12 messages (with their authors' display names) and counts against the asker's message allowance; the question and the answer stay in the group chat. Group owners and admins can switch the bot off.",
+    "tr": "Gruplarda Hanogt AI: Bir grupta /ai ile ya da @Hanogt AI diye sorulan soru, kanalın son 12 mesajıyla (yazarlarının görünen adlarıyla) birlikte Hanogt AI'ın dil modeline iletiliyor ve soranın mesaj hakkından düşüyor; soru ve yanıt grubun sohbetinde kalıyor. Grup sahibi ve yöneticileri botu kapatabiliyor.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1vfcj4iic9d": {
+    "en": "Notifications, settings and terms: you are notified when you are mentioned in a group and when you miss a call; you can change these and the messaging settings (read receipts, typing indicator, Enter to send, GIF playback, font size, background) in the new Hanogt Social settings. Hanogt Social's disclaimer and the responsibilities of group owners and moderators were added to the Terms of Use.",
+    "tr": "Bildirimler, ayarlar ve şartlar: Gruplarda sizden bahsedildiğinde ve bir aramayı kaçırdığınızda bildirim gönderiliyor; bunları ve mesajlaşma ayarlarını (okundu bilgisi, yazıyor göstergesi, Enter ile gönderme, GIF'lerin oynaması, yazı boyutu, arka plan) yeni Hanogt Social ayarlarından değiştirebilirsiniz. Kullanım Şartları'na Hanogt Social sorumluluk reddi ile grup sahipleri ve moderatörlerinin sorumlulukları eklendi.",
     "files": [
       "src/lib/legal.ts"
     ]

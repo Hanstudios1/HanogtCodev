@@ -16,7 +16,7 @@ import { suggestCommands } from "@/lib/social/commands";
 import { rankByQuery, type ComposerTrigger } from "@/lib/social/composer";
 import type { GifItem } from "@/lib/social/gif";
 import { markGroupRead } from "@/lib/social/local-state";
-import { previewText } from "@/lib/social/model";
+import { messagePreview } from "@/lib/social/model";
 import { CHAT_BACKGROUND_CLASS, MESSAGE_FONT_CLASS } from "@/lib/social/prefs";
 import {
     BOT_NAMES,
@@ -315,7 +315,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             vars: {},
             template: null,
             reactions: {},
-            replyTo: reply ? { id: reply.id, text: previewText(renderedText(reply), 120) } : null,
+            replyTo: reply ? { id: reply.id, text: messagePreview(renderedText(reply), 120) } : null,
             edited: false,
             gif: body.gif ?? null,
             bot: null,
@@ -630,7 +630,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                 maxLength={GROUP_LIMITS.messageMax}
                 status={status}
                 footer={footer}
-                reply={replyTo ? { author: authorName(replyTo), excerpt: replyTo.type === "voice" ? "🎤" : replyTo.type === "gif" ? "GIF" : previewText(renderedText(replyTo), 80) } : null}
+                reply={replyTo ? { author: authorName(replyTo), excerpt: replyTo.type === "voice" ? "🎤" : replyTo.type === "gif" ? "GIF" : messagePreview(renderedText(replyTo), 80) } : null}
                 onCancelReply={() => setReplyTo(null)}
                 onSend={sendText}
                 onGif={sendGif}

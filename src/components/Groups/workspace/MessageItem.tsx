@@ -34,6 +34,7 @@ const C = {
     save: { TR: "Kaydet", EN: "Save" },
     cancel: { TR: "Vazgeç", EN: "Cancel" },
     original: { TR: "Yanıtlanan mesaja git", EN: "Go to the replied message" },
+    quoteDeleted: { TR: "Bu mesaj silindi.", EN: "This message was deleted." },
     openProfile: { TR: "{name} profil kartını aç", EN: "Open {name}'s profile card" },
     copy: { TR: "Metni kopyala", EN: "Copy text" },
     forward: { TR: "İlet", EN: "Forward" },
@@ -303,7 +304,7 @@ function MessageItemView(props: MessageItemProps) {
             {reply && (
                 <button type="button" onClick={() => props.onJump(reply.id)} className="relative mb-0.5 ms-12 flex max-w-[calc(100%-3rem)] items-center gap-1.5 text-start text-[13px] text-zinc-500 before:absolute before:-start-7 before:top-1/2 before:h-3 before:w-6 before:rounded-ss-md before:border-s-2 before:border-t-2 before:border-zinc-300 hover:text-zinc-800 dark:text-zinc-400 dark:before:border-zinc-600 dark:hover:text-zinc-200" aria-label={tx(C.original)}>
                     {replyName && <span className="shrink-0 font-semibold">@{replyName}</span>}
-                    <span className="truncate">{reply.text}</span>
+                    <span className={cx("truncate", reply.deleted && "italic")}>{reply.deleted ? tx(C.quoteDeleted) : reply.text}</span>
                 </button>
             )}
             <div className="flex gap-3">

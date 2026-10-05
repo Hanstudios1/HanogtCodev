@@ -142,6 +142,8 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     const social = useSocial();
     const { me: socialMe, live, notify, confirm, now, markBroken } = social;
     const refreshGroups = social.groups.refresh;
+    // "Typing indicator" off: nobody sees this person typing (Hanogt Social settings › Messages).
+    const showTyping = social.prefs.typingIndicator;
     const { startCall } = useVoiceCall();
     const errorText = useGroupErrorText();
     const email = socialMe.email;
@@ -372,7 +374,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     }, [groupId]);
 
     const onTyping = useCallback((text: string) => {
-        if (!text.trim()) {
+        if (!text.trim() || !showTyping) {
             stopTyping();
             return;
         }
@@ -383,7 +385,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
         typingSentRef.current = stamp;
         typingActiveRef.current = true;
         void groupsApi.chat({ action: "typing", groupId, active: true }).catch(() => undefined);
-    }, [groupId, stopTyping]);
+    }, [groupId, showTyping, stopTyping]);
 
     useEffect(() => () => stopTyping(), [stopTyping]);
 

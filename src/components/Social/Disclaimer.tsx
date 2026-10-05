@@ -39,13 +39,13 @@ export function FirstRunNotice() {
             <p className="mt-1.5 text-[13px] leading-6 text-zinc-600 dark:text-zinc-300">{tx(SOCIAL_DISCLAIMER)}</p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button type="button" onClick={dismiss} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-500">{tx(C.gotIt)}</button>
-                <Link href="/terms-of-use#moderation" className="text-[13px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.terms)}</Link>
+                <Link href="/terms-of-use#groups" className="text-[13px] font-semibold text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.terms)}</Link>
             </div>
         </section>
     );
 }
 
-/** Hanogt Social's disclaimer with the way to report unlawful content (Terms of Use, moderation and notices). */
+/** Hanogt Social's disclaimer with the way to report unlawful content (Terms of Use: Hanogt Social, notices and liability). */
 export default function SocialDisclaimer({ compact = false, className }: { compact?: boolean; className?: string }) {
     const { tx } = useI18n();
     return (
@@ -56,7 +56,7 @@ export default function SocialDisclaimer({ compact = false, className }: { compa
             {!compact && <p className="mt-2">{tx(SOCIAL_GROUP_REPORT)}</p>}
             <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] font-semibold">
                 {!compact && <Link href="/feedback" className="text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.support)}</Link>}
-                <Link href="/terms-of-use#moderation" className="text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.terms)}</Link>
+                <Link href="/terms-of-use#groups" className="text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.terms)}</Link>
                 <Link href="/privacy-policy" className="text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.privacy)}</Link>
             </p>
         </section>

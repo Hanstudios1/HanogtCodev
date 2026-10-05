@@ -5,6 +5,7 @@ import {
     BOT_NAMES,
     BOT_SENDERS,
     GROUP_LIMITS,
+    WELCOME_MESSAGE_MAX,
     canModerate,
     channelKey,
     cleanMultiLine,
@@ -24,6 +25,7 @@ import { commitServerMutations, createServerDocument, deleteServerDocument, getS
 import { askGroupModel, groupHistoryText, GROUP_AI_HISTORY } from "@/lib/server/group-ai-bot";
 import { activeMute, minutesLeft, moderationSubject, mutePath } from "@/lib/server/group-moderation";
 import { providerConfig } from "@/lib/server/hanogt-ai";
+import { clearMessageTraces, refreshMessageTraces } from "@/lib/server/message-traces";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { notifyMentions } from "@/lib/server/social-notify";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
@@ -31,7 +33,7 @@ import { sanitizeAutoMod, sanitizeCustomWords, type AutoModConfig, type AutoModR
 import { BOT_EVENT_COPY, formatDuration, type BotEvent, type EphemeralReply } from "@/lib/social/bots";
 import { findCommand, parseCommand, rankAtLeast, readCommandLine, RESERVED_COMMAND_NAMES, type CommandSpec } from "@/lib/social/commands";
 import { readMessageGif } from "@/lib/social/gif";
-import { previewText } from "@/lib/social/model";
+import { messagePreview } from "@/lib/social/model";
 import {
     GroupApiError,
     groupMembers,
@@ -257,7 +259,7 @@ async function guard(ctx: Ctx, name: string, text: string, mentions: number, cha
         if (!verdict.ok) await stoppedByAutoMod(ctx, name, verdict.rule, automod.config);
         if (automod.config.spam && looksLikeSpam(ctx.groupId, ctx.user.email, text, ctx.now)) await stoppedByAutoMod(ctx, name, "spam", automod.config);
     }
-    const seconds = readSlowmode(ctx.group.slowmode)[channel] ?? 0;
+    const seconds = readSlowmode(ctx.group.slowmode)[channelKey(channel)] ?? 0;
     if (seconds > 0 && !canModerate(ctx.role)) {
         const rate = await enforceRateLimitWithFallback(`slowmode:${ctx.groupId}:${channel}:${ctx.user.email}`, 1, seconds * 1000);
         if (!rate.allowed) throw new GroupApiError(429, "slowmode", "Bu kanalda yavaş mod açık.", { seconds: rate.retryAfterSeconds }, { "Retry-After": String(rate.retryAfterSeconds) });
@@ -294,7 +296,7 @@ async function startAiAnswer(ctx: Ctx, question: string, asked: { id: string; te
     if (!providerConfig()) return { kind: "ai_unavailable" };
     const pass = await enforceHanogtAi(ctx.user.email, { source: "group" });
     if (!pass.ok) return { kind: "ai_limit", resetsAt: pass.code === "usage_limit" ? pass.resetsAt : null };
-    const placeholder = await postBotMessage(ctx.groupId, "ai", { botState: "thinking", replyTo: { id: asked.id, text: previewText(asked.text, 100) } }).catch(async (error: unknown) => {
+    const placeholder = await postBotMessage(ctx.groupId, "ai", { botState: "thinking", replyTo: { id: asked.id, text: messagePreview(asked.text, 100) } }).catch(async (error: unknown) => {
         await refundHanogtAi(pass);
         throw error;
     });
@@ -350,6 +352,8 @@ async function deleteRecent(ctx: Ctx, channel: string, count: number, targetEmai
     for (let index = 0; index < chosen.length; index += 400) {
         await commitServerMutations(chosen.slice(index, index + 400).map((record) => ({ type: "delete" as const, path: messagePath(ctx.groupId, record._id) })));
     }
+    // Replies stop quoting them and stars on them go (the messages already loaded are searched for replies).
+    after(() => clearMessageTraces({ scope: "group", place: ctx.groupId, parentPath: `groups/${ctx.groupId}` }, chosen.map((record) => record._id), records.map((record) => ({ _path: messagePath(ctx.groupId, record._id), replyTo: record.replyTo }))));
     // Deleted messages leave the pinned list too.
     const ids = new Set(chosen.map((record) => record._id));
     await retryOnConflict(async () => {
@@ -365,8 +369,8 @@ async function setSlowmode(ctx: Ctx, channel: string, seconds: number) {
     await retryOnConflict(async () => {
         const { group } = await requireGroupMember(ctx.groupId, ctx.user.email);
         const next = readSlowmode(group.slowmode);
-        if (seconds > 0) next[channel] = seconds;
-        else delete next[channel];
+        if (seconds > 0) next[channelKey(channel)] = seconds;
+        else delete next[channelKey(channel)];
         await patchServerDocument(`groups/${ctx.groupId}`, { slowmode: next }, { updateFields: ["slowmode"], updateTime: group._updateTime });
     });
 }
@@ -509,7 +513,7 @@ async function readReply(groupId: string, value: unknown) {
     if (!isGroupId(id)) return null;
     const quoted = await getServerDocument<StoredMessage>(messagePath(groupId, id));
     if (!quoted || quoted.type === "system" || typeof quoted.fromEmail !== "string" || quoted.fromEmail === "system") return null;
-    return { id, text: quoted.type === "voice" ? "🎤" : quoted.type === "gif" ? "GIF" : previewText(quoted.text, 100) };
+    return { id, text: quoted.type === "voice" ? "🎤" : quoted.type === "gif" ? "GIF" : messagePreview(quoted.text, 100) };
 }
 
 export async function sendGroupMessage(user: GroupUser, groupId: string, body: Record<string, unknown>): Promise<GroupSendResult> {
@@ -522,7 +526,7 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
     const gif = body.type === "gif" ? readMessageGif(body.gif) : null;
     if (body.type === "gif" && !gif) throw new GroupApiError(400, "invalid_request", "Geçersiz GIF.");
     // A GIF's text is a short caption (the #channel it was sent in) and its title: channels, search and notifications read it.
-    const text = gif ? [cleanSingleLine(body.text, 100), gif.title].filter(Boolean).join(" ") : cleanMultiLine(body.text, GROUP_LIMITS.messageMax * 2);
+    const text = gif ? [cleanSingleLine(body.text, 100).slice(0, 100), gif.title].filter(Boolean).join(" ") : cleanMultiLine(body.text, GROUP_LIMITS.messageMax * 2);
     if (!gif && !text) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
     if (text.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
 
@@ -570,7 +574,7 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
         const named = everyone
             ? groupMembers(group)
             : people.flatMap((segment) => (segment.kind === "mention" ? [emailForName(directory.byEmail, segment.username)] : [])).filter((email): email is string => Boolean(email));
-        after(() => notifyMentions(named, user.email, { id: groupId, name: typeof group.name === "string" ? group.name : "Hanogt" }, previewText(text, 160), everyone));
+        after(() => notifyMentions(named, user.email, { id: groupId, name: typeof group.name === "string" ? group.name : "Hanogt" }, messagePreview(text, 160), everyone));
     }
     if (question !== null) {
         const refusal = await startAiAnswer(ctx, question, { id, text }, channel);
@@ -581,7 +585,7 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
 
 /** The group's own welcome text from the Hanogt Security Bot when someone joins ("{name}" is the newcomer). Best effort. */
 export async function postWelcomeMessage(groupId: string, group: { welcomeMessage?: string }, name: string) {
-    const template = cleanMultiLine(group.welcomeMessage, 500);
+    const template = cleanMultiLine(group.welcomeMessage, WELCOME_MESSAGE_MAX).slice(0, WELCOME_MESSAGE_MAX);
     if (!template) return;
     await postBotMessage(groupId, "security", { text: template.replace(/\{name\}/g, name.slice(0, 60)), event: "welcome", vars: { name: name.slice(0, 60) } })
         .catch((error: unknown) => console.warn("[groups] welcome message failed:", error instanceof Error ? error.message : "unknown error"));
@@ -607,13 +611,16 @@ export async function editGroupMessage(user: GroupUser, groupId: string, message
         if (!verdict.ok) await stoppedByAutoMod(ctx, (await ownDisplayName(user)).slice(0, 80), verdict.rule, automod.config);
     }
     const path = messagePath(groupId, messageId);
-    await retryOnConflict(async () => {
+    const changed = await retryOnConflict(async () => {
         const message = await getServerDocument<StoredMessage>(path);
         if (!message) throw new GroupApiError(404, "message_not_found", "Mesaj bulunamadı.");
         if (message.fromEmail !== user.email || message.type !== "text") throw new GroupApiError(403, "forbidden", "Yalnızca kendi metin mesajlarınızı düzenleyebilirsiniz.");
-        if (message.text === text) return;
+        if (message.text === text) return null;
         await patchServerDocument(path, { text, edited: true, editedAt: new Date() }, { updateFields: ["text", "edited", "editedAt"], updateTime: message._updateTime });
+        return message;
     });
+    // Replies quote the new words and stars show them.
+    if (changed) after(() => refreshMessageTraces({ scope: "group", place: groupId, parentPath: `groups/${groupId}` }, messageId, { ...changed, text }, messagePreview(text, 100)));
     return { success: true };
 }
 

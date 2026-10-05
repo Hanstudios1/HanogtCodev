@@ -180,6 +180,22 @@ Since 0.3.19 browsers can no longer write `users` or `public_profiles` (the
 server writes both), list `public_profiles` or create `friendRequests`. The
 app works with the older rules too, but deploy the new ones to close these.
 
+Since 0.3.22 browsers can no longer write Hanogt Social messages
+(`chats/*/messages`, `groups/*/messages`): every message goes through
+`/api/social/dm` or `/api/groups/chat`, where friendship, membership, mutes,
+slow mode and AutoMod are checked. **Deploy the rules after updating**; until
+then the app works, but the old rules still let a browser write messages
+directly and skip those checks. The new collections `message_stars`,
+`group_mutes`, `group_warnings`, `group_reports`, `automod_events` and
+`group_automod` are server-only.
+
+Deploy `firestore.indexes.json` too (`firebase deploy --only firestore:indexes`,
+or Firebase console → Firestore → TTL policies): it holds the TTL policies on
+`expiresAt` that remove expired records automatically, now also for
+`group_mutes` (when the mute ends), `group_warnings` and `group_reports`
+(180 days) and `automod_events` (90 days). Without them these records stay
+until someone deletes them, which the Privacy Policy doesn't allow.
+
 Voice messages no longer depend on Cloud Storage or `storage.rules`:
 browsers upload and play them through `/api/social/voice`, which checks the
 friendship or group membership and keeps the recording in the server-only
@@ -213,6 +229,30 @@ carriers, company and school networks), and the call bar says so. A call
 always starts with the microphone and sound on; the call bar names the reason
 when nobody can be heard (microphone off, the other side muted, playback
 blocked, no audio arriving, a silent microphone).
+
+## Hanogt Social: GIFs, bots and AutoMod
+
+GIF search goes through `/api/social/gifs` (`src/lib/server/gifs.ts`), so the
+key stays on the server and only the search text, page, language and content
+rating reach the provider. Results are cached in memory for 10 minutes
+(trending for 30) and only images on the provider's media hosts are accepted
+in messages. Tenor's API was shut down on 30 June 2026, so it isn't offered.
+
+| Variable | Meaning |
+| --- | --- |
+| `KLIPY_API_KEY` | **Secret.** KLIPY API key (klipy.com, free). Preferred when both keys are set. |
+| `GIPHY_API_KEY` | **Secret.** GIPHY API key (developers.giphy.com → Create an App → API, not SDK). |
+| `GIF_PROVIDER` | Optional: `klipy` or `giphy`, when both keys are set. |
+| `GIF_RATING` | Optional content rating: `g`, `pg` (default) or `pg-13`. |
+
+Without a key the GIF tab says GIF search isn't set up; emoji and stickers work
+regardless. The picker shows "Powered by KLIPY/GIPHY" as the providers require.
+
+Hanogt Security Bot, AutoMod and the slash commands need no variables. The
+Hanogt AI group bot (`/ai`, `@Hanogt AI`) uses the same `HANOGT_AI_*` settings
+as Hanogt AI (below); without them it answers that Hanogt AI isn't available
+here. Its answer is written after the response, so `/api/groups/chat` declares
+`maxDuration = 60`.
 
 ## Hanogt AI
 

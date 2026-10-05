@@ -54,6 +54,16 @@ export function decodeFields(fields) {
 
 export const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
+/** A field by its path ("replyTo.id" reads a nested field), and whether it is there. */
+export function lookup(data, fieldPath) {
+    let value = data;
+    for (const key of fieldPath.split(".")) {
+        if (!value || typeof value !== "object" || !(key in value)) return { found: false, value: undefined };
+        value = value[key];
+    }
+    return { found: true, value };
+}
+
 export function json(status, payload) {
     return new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
 }
@@ -112,11 +122,23 @@ export function createBackend(seed, options = {}) {
     }
 
     function applyUpdate(path, fields, mask) {
-        const next = mask ? { ...(docs.get(path)?.data ?? {}) } : {};
+        const next = mask ? structuredClone(docs.get(path)?.data ?? {}) : {};
         const values = decodeFields(fields || {});
+        // A mask entry may name a nested field ("replyTo.text"): only that field changes, or goes when it has no value.
         for (const key of mask ?? Object.keys(values)) {
-            if (key in values) next[key] = values[key];
-            else delete next[key];
+            const found = lookup(values, key);
+            const keys = key.split(".");
+            let node = next;
+            for (const part of keys.slice(0, -1)) {
+                if (!node[part] || typeof node[part] !== "object" || Array.isArray(node[part])) {
+                    if (!found.found) break;
+                    node[part] = {};
+                }
+                node = node[part];
+            }
+            const last = keys.at(-1);
+            if (found.found) node[last] = found.value;
+            else if (node && typeof node === "object") delete node[last];
         }
         docs.set(path, { data: next, updateTime: stamp() });
     }
@@ -158,7 +180,7 @@ export function createBackend(seed, options = {}) {
         if (!where) return true;
         if (where.compositeFilter) return where.compositeFilter.filters.every((filter) => matches(data, filter));
         const { field, op, value } = where.fieldFilter;
-        const actual = data[field.fieldPath];
+        const actual = lookup(data, field.fieldPath).value;
         const expected = decode(value);
         if (op === "EQUAL") return actual !== undefined && same(actual, expected);
         if (op === "ARRAY_CONTAINS") return Array.isArray(actual) && actual.some((entry) => same(entry, expected));

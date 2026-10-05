@@ -360,6 +360,8 @@ async function deleteChats(ctx: Context) {
     await drain(ctx, "chats", query("chats", "participants", "ARRAY_CONTAINS", ctx.email), eachDocument(ctx, "chats", async (chat) => {
         const messagesGone = await deleteSubcollection(ctx, "chats", "chatMessages", `${chat._path}/messages`, (message) => deleteVoiceFile(ctx, message.voicePath, "voice-messages", chat._id));
         if (!messagesGone) return false;
+        // Both people's stars in the chat keep a few words of its messages.
+        if (!(await drain(ctx, "chats", query("message_stars", "placeRef", "EQUAL", `dm:${chat._id}`), deleting(ctx, "chats", "starCopies")))) return false;
         await deleteServerDocument(chat._path);
         ctx.tally.count("chats");
     }));
@@ -457,6 +459,8 @@ async function deleteOwnedGroup(ctx: Context, group: StoredDocument) {
     for (const collectionId of ["group_invites", "group_invite_links", "group_bans", "group_mutes", "group_warnings", "group_reports", "automod_events"]) {
         if (!(await drain(ctx, "groups", query(collectionId, "groupId", "EQUAL", group._id), deleting(ctx, "groups", "groupRecords")))) complete = false;
     }
+    // Members' stars in the group keep a few words of its messages.
+    if (!(await drain(ctx, "groups", query("message_stars", "placeRef", "EQUAL", `group:${group._id}`), deleting(ctx, "groups", "starCopies")))) complete = false;
     // Kept until its content is gone, so a later run finds the group again.
     if (!complete) return false;
     await deleteServerDocument(`group_automod/${group._id}`);
@@ -517,6 +521,11 @@ async function anonymizeRemainingGroupMessages(ctx: Context) {
     await drain(ctx, "groupMessages", query("messages", "fromEmail", "EQUAL", ctx.email, { allDescendants: true }), eachDocument(ctx, "groupMessages", async (message) => {
         if (GROUP_MESSAGE_PATH.test(message._path)) await anonymizeGroupMessage(ctx, message);
     }));
+    // Other people's stars keep a few words of this account's messages and its name: they go with the messages
+    // (stars on direct messages only when the whole account goes, as the chats do).
+    await drain(ctx, "groupMessages", query("message_stars", "authorEmail", "EQUAL", ctx.email), (stars) => (
+        deletePaths(ctx, "groupMessages", "starCopies", stars.filter((star) => ctx.scope === "all" || star.scope === "group").map((star) => star._path))
+    ));
 }
 
 /**

@@ -9,7 +9,7 @@ import { useI18n, type Copy } from "@/lib/i18n";
 import { socialApi } from "@/lib/social/api";
 import { foldForMatch } from "@/lib/social/composer";
 import type { MessageGif } from "@/lib/social/gif";
-import { previewText } from "@/lib/social/model";
+import { messagePreview } from "@/lib/social/model";
 import { useSocial } from "../context";
 
 const C = {
@@ -87,7 +87,7 @@ export default function ForwardDialog({ payload, onClose }: { payload: ForwardPa
                 <div className="flex min-h-0 flex-1 flex-col">
                     <div className="mx-5 mt-4 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-zinc-950" aria-label={tx(C.preview)}>
                         <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">{payload.author}</p>
-                        <p className="mt-0.5 line-clamp-3 whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-200">{payload.type === "gif" ? `${tx(C.gif)}${payload.gif?.title ? ` · ${payload.gif.title}` : ""}` : previewText(payload.text, 300)}</p>
+                        <p className="mt-0.5 line-clamp-3 whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-200">{payload.type === "gif" ? `${tx(C.gif)}${payload.gif?.title ? ` · ${payload.gif.title}` : ""}` : messagePreview(payload.text, 300)}</p>
                     </div>
                     <label className="relative mx-5 mt-3 block">
                         <span className="sr-only">{tx(C.search)}</span>

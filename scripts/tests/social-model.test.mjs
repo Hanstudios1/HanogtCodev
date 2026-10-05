@@ -8,7 +8,7 @@ const groups = await load("lib/groups.ts");
 const {
     SOCIAL_LIMITS, badgeLabel, cleanMessageText, compareMessages, cutText, dmChatId, dmHref, dmMessageFromData, dmUnreadCount, dmUnreadTotal,
     filterFriends, foldText, formatFriendTag, groupHref, groupUnreadState, homeBadgeCount, isDmVoicePath, isFriendsTab, isGroupNotifyLevel, isSticker,
-    mergeMessages, parseFriendTag, parseSocialRoute, personMatches, previewText, railBadge, rankSwitcher, reactionSummary, readDmReactions, readPinnedIds,
+    mergeMessages, messagePreview, parseFriendTag, parseSocialRoute, personMatches, previewText, railBadge, rankSwitcher, reactionSummary, readDmReactions, readPinnedIds,
     sectionMembers, sortDms, timeOf, visibleDms,
 } = model;
 
@@ -99,8 +99,11 @@ test("direct messages from stored data are checked field by field", () => {
     assert.equal(deleted.voicePath, null);
     assert.equal(deleted.createdAt, 77);
     const reply = dmMessageFromData("m3", { replyTo: { id: "abc_DEF-1", text: "y".repeat(500), fromEmail: "B@example.com" } }, true);
-    assert.deepEqual(reply.replyTo, { id: "abc_DEF-1", text: "y".repeat(SOCIAL_LIMITS.replyExcerptMax), fromEmail: "b@example.com" });
+    assert.deepEqual(reply.replyTo, { id: "abc_DEF-1", text: "y".repeat(SOCIAL_LIMITS.replyExcerptMax), fromEmail: "b@example.com", deleted: false });
     assert.equal(reply.pending, true);
+    // A quote of a deleted message says so and never shows the old words.
+    const gone = dmMessageFromData("m4", { replyTo: { id: "abc_DEF-1", text: "old words", fromEmail: "b@example.com", deleted: true } });
+    assert.deepEqual(gone.replyTo, { id: "abc_DEF-1", text: "", fromEmail: "b@example.com", deleted: true });
 });
 
 test("GIF messages keep only an allowed GIF, and reactions and forwards are read safely", () => {
@@ -134,6 +137,14 @@ test("reaction summaries keep the display order and mark one's own", () => {
     const summary = reactionSummary({ love: ["b@example.com"], like: ["a@example.com", "b@example.com"] }, "a@example.com");
     assert.deepEqual(summary.map((item) => [item.key, item.count, item.mine]), [["like", 2, true], ["love", 1, false]]);
     assert.deepEqual(reactionSummary({}, "a@example.com"), []);
+});
+
+test("message previews drop Markdown markers and hide spoilers", () => {
+    assert.equal(messagePreview("**kalın** ve `kod` ||gizli||"), "kalın ve kod ▒▒▒");
+    assert.equal(messagePreview("> alıntı\n- madde"), "alıntı • madde");
+    assert.equal(messagePreview("```js\nconst a = 1;\n```"), "const a = 1;");
+    assert.equal(messagePreview(5), "");
+    assert.equal(messagePreview("x".repeat(500), 20).length, 20);
 });
 
 test("pinned ids are valid, unique and capped", () => {

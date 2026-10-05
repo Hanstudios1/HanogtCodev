@@ -1,7 +1,7 @@
 /**
  * Hanogt Social's disclaimer, shown in Hanogt Social's settings (Safety),
  * when a group is created and once on first use. It mirrors the Terms of
- * Use (moderation, notices and liability sections). Framework-free.
+ * Use (Hanogt Social, notices and liability sections). Framework-free.
  */
 import type { Copy } from "@/lib/i18n";
 

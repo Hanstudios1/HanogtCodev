@@ -8,6 +8,7 @@
  */
 import { GROUP_REACTIONS, isReactionKey, mentionsUser, tokenizeMessage, type GroupReactionKey } from "@/lib/groups";
 import { readMessageGif, type MessageGif } from "./gif";
+import { markdownToPlain } from "./markdown";
 import type { PlanBadge } from "@/lib/plan-badge";
 import type { PresenceStatus } from "@/lib/presence";
 
@@ -99,7 +100,8 @@ export type FriendsOverview = {
 };
 
 export type DmMessageType = "text" | "sticker" | "voice" | "gif";
-export type DmReply = { id: string; text: string; fromEmail: string };
+/** The quoted message; `deleted` once it has been deleted (the quote is emptied then). */
+export type DmReply = { id: string; text: string; fromEmail: string; deleted?: boolean };
 /** Who reacted with what (e-mails of the two participants). */
 export type DmReactions = Partial<Record<GroupReactionKey, string[]>>;
 
@@ -227,6 +229,11 @@ export function previewText(value: unknown, max: number = SOCIAL_LIMITS.previewM
     return line.length <= max ? line : `${cutText(line, max - 1).trimEnd()}…`;
 }
 
+/** A message's text for lists, replies and notifications: Markdown markers removed, spoilers hidden. */
+export function messagePreview(value: unknown, max: number = SOCIAL_LIMITS.previewMax): string {
+    return typeof value === "string" ? previewText(markdownToPlain(value.slice(0, max * 4 + 200)), max) : "";
+}
+
 /**
  * Splits "nickname#1234" into its parts (the last "#" separates them, so a
  * nickname may contain "#" itself). Returns null when the tag isn't four digits.
@@ -314,7 +321,7 @@ export function dmMessageFromData(id: string, data: Record<string, unknown>, pen
         edited: data.edited === true,
         deleted,
         replyTo: reply && typeof reply.id === "string" && DOC_ID.test(reply.id)
-            ? { id: reply.id, text: str(reply.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: str(reply.fromEmail, 254).toLowerCase() }
+            ? { id: reply.id, text: reply.deleted === true ? "" : str(reply.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: str(reply.fromEmail, 254).toLowerCase(), deleted: reply.deleted === true }
             : null,
         gif: !deleted && type === "gif" ? readMessageGif(data.gif) : null,
         reactions: deleted ? {} : readDmReactions(data.reactions),

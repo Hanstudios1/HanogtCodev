@@ -1,5 +1,6 @@
-import { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { deleteServerDocument, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { clearMessageTraces } from "@/lib/server/message-traces";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { GROUP_LIMITS, SYSTEM_SENDER, botOfSender, canModerate, isGroupId, isManagerRole, isMemberKey, isReactionKey, outranks, safeGroupVoicePath } from "@/lib/groups";
 import { editGroupMessage, sendGroupMessage } from "../_messages";
@@ -89,6 +90,8 @@ async function deleteMessage(groupId: string, messageId: string, email: string) 
     const voicePath = safeGroupVoicePath(message.voicePath, groupId);
     if (voicePath) await deleteVoiceRecording(voicePath);
     await deleteServerDocument(path);
+    // Replies stop quoting it and stars on it go.
+    after(() => clearMessageTraces({ scope: "group", place: groupId, parentPath: `groups/${groupId}` }, [messageId]));
     await retryOnConflict(async () => {
         const { group } = await requireGroupMember(groupId, email);
         const pinned = strings(group.pinnedMessageIds);

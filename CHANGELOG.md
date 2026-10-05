@@ -1,5 +1,76 @@
 # Değişiklik Günlüğü
 
+## 0.3.22 — 2026-10-05
+
+### Hanogt Social A: mesajlaşma, GIF, botlar, AutoMod ve Social ayarları
+
+- **Yalnızca sunucudan yazma:**
+  - Birebir ve grup mesajları yalnızca `/api/social/dm` ve `/api/groups/chat`
+    üzerinden yazılır; `firestore.rules` mesaj yazmayı tarayıcılara kapatır.
+  - İstemcide iyimser gönderim (`pending~…` kimlikleri), hata durumunda mesaj
+    kutusuna geri dönüş.
+- **Yazma kutusu v2** (`src/components/Social/chat/Composer.tsx`):
+  - `@` kişi (ve Hanogt AI, @herkes), `#` kanal, `/` komut ve `:emoji:`
+    önerileri; combobox ARIA, taslaklar sohbet başına bellekte.
+  - `ExpressionPicker`: emoji (≈380, TR/EN arama, son kullanılanlar), GIF ve
+    çıkartma sekmeleri.
+  - `/api/social/gifs`: KLIPY (`KLIPY_API_KEY`) ya da GIPHY (`GIPHY_API_KEY`)
+    sunucu vekili, önbellek, medya sunucusu izin listesi (`readMessageGif`).
+- **Mesajlar:**
+  - `src/lib/social/markdown.ts`: kalın, italik, altı/üstü çizili, kod, kod
+    bloğu, alıntı, spoiler; önizlemeler `messagePreview` ile düz metin.
+  - Gruplama, yanıt önizlemesi, DM tepkileri, iletme (`ForwardDialog`),
+    yıldız (`message_stars`, en fazla 200), sabitleme (DM ve grup).
+  - Silinen mesajın yanıtlardaki alıntısı (`replyTo.deleted`) ve yıldızlardaki
+    kopyası temizlenir, düzenlenen mesajınki güncellenir
+    (`src/lib/server/message-traces.ts`). Gruptan ayrılan ya da çıkarılan
+    kişinin o gruptaki yıldızları, silinen grubun ve hesabın yıldız kopyaları
+    da silinir.
+- **Kaydedilip kullanılmayan ayarlar uygulandı:** okundu bilgisi, yazıyor
+  göstergesi (gruplarda da), Enter ile gönderme, yazı boyutu, arka plan, GIF
+  otomatik oynatma; bahsetme ve cevapsız arama bildirimleri
+  (`social-notify.ts`).
+- **Bot sistemi:** `bot:security` ve `bot:ai` gönderenleri, bot rozeti ve
+  avatarı, üye listesinde "Botlar", komut kayıt defteri
+  (`src/lib/social/commands.ts`), yalnızca soranın gördüğü yanıtlar, özel
+  komutlar ve karşılama mesajı.
+- **Hanogt AI botu:** `/ai` ya da `@Hanogt AI`; kanalın son 12 mesajı veri
+  olarak gider, `enforceHanogtAi(…, {source: "group"})` soranın hakkından
+  düşer, yanıt gelmezse iade; "düşünüyor" yer tutucusu sonra doldurulur.
+  Yöneticiler grup ayarlarından kapatabilir.
+- **Hanogt Security Bot:** `/uyar`, `/sustur`, `/sesiac`, `/at`, `/yasakla`,
+  `/temizle`, `/yavasmod`, `/kurallar`, `/uyarilar`, `/rapor`, `/yardim`;
+  sahip, yönetici ve yeni moderatör rolü. Kayıtlar `group_warnings`,
+  `group_mutes`, `group_reports` (TTL: 180 gün / susturma sonu).
+- **AutoMod:** TR/EN küfür (leetspeak normalize), argo, gruba özel yasaklı
+  kelimeler (`group_automod`, yalnızca sunucu), spam ve patlama, bahsetme
+  sınırı, bağlantılar, büyük harf, kişisel veri; engelle / engelle ve uyar /
+  N uyarıda otomatik susturma, muaf roller. `automod_events` 90 gün (TTL).
+- **Hanogt Social ayarları:** Ses ve Görüntü, Mesajlar, Bildirimler, Gizlilik,
+  Güvenlik, Botlar sekmeleri; grup ayarlarında Güvenlik ve Botlar.
+- **Sorumluluk reddi:** Social ayarlarında, grup oluşturma sihirbazında ve ilk
+  açılış notunda ("yürürlükteki mevzuatın izin verdiği ölçüde", 5651
+  bildirim yolu korunarak).
+- **Düzeltmeler:**
+  - Yavaş mod ana kanalda hep 409 veriyordu: Firestore boş harita anahtarını
+    reddediyor; ana kanal anahtarı artık `~main`.
+  - Özel komut açıklaması ve yanıtı, karşılama mesajı ve GIF başlığı sınırda
+    kırpılıyor.
+  - Dışa aktarmada grup kaydındaki moderatör listesi (başka üyelerin
+    e-postaları) ve yazıyor işaretleri artık yer almıyor.
+- **TTL ilkeleri:** `firestore.indexes.json` artık `group_mutes`,
+  `group_warnings`, `group_reports` ve `automod_events` için `expiresAt`
+  TTL'si içeriyor (`firebase deploy --only firestore:indexes`).
+- **Hanogt AI bilgi tabanı:** yeni “Gruplarda botlar ve AutoMod” notu; direkt
+  mesaj ve grup notları yeni özelliklere ve ayar yerine göre güncellendi.
+- **Yasal 5.0:** Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım
+  Şartları: sunucudan yazma, yıldızlar, GIF sağlayıcısı (KLIPY / GIPHY, ABD),
+  grup moderasyonu ve saklama süreleri, AutoMod ve itiraz, gruplarda Hanogt AI,
+  bildirimler ve Hanogt Social sorumluluk reddi.
+- **Testler:** `social-markdown`, `social-composer`, `social-commands`,
+  `social-automod`, `social-gifs`, `social-model`, `social-traces` ve hesap
+  silmede yıldız kopyaları; iki kullanıcılı tarayıcı testi (15 adım).
+
 ## 0.3.21 — 2026-10-05
 
 ### Hanogt AI'ın yeni arayüzü, ayarlar ve renkli yazılar

@@ -8,7 +8,7 @@ import { hanogtRequestBody, knowledgeNotes, providerConfig, systemPrompt, toolNo
  * Hanogt AI in Hanogt Social groups (/ai or @Hanogt AI): one short,
  * non-streamed answer from Hanogt AI's own model, with the group's latest
  * messages as data. Counting and giving back the person's allowance happen
- * where the question is handled (src/app/api/groups/_bots.ts).
+ * where the question is handled (src/app/api/groups/_messages.ts).
  */
 
 /** Group answers stay short: at most this many tokens (or the plan's own limit when lower). */

@@ -89,3 +89,35 @@ test("who may run what, and what the composer suggests", () => {
     const custom = suggestCommands("ku", "member", "TR", [{ name: "kurulum", description: "Kurulum adımları" }]);
     assert.deepEqual(custom.map((command) => [command.kind, command.name]), [["builtin", "kurallar"], ["custom", "kurulum"]]);
 });
+
+const groups = await load("lib/groups.ts");
+
+test("slow mode keys: the main channel has a non-empty key, odd entries are dropped", () => {
+    const { channelKey, readSlowmode, MAIN_CHANNEL_KEY, SLOWMODE_MAX_SECONDS } = groups;
+    assert.equal(channelKey(""), MAIN_CHANNEL_KEY);
+    assert.equal(channelKey(null), MAIN_CHANNEL_KEY);
+    assert.equal(channelKey(" Sorular "), "sorular");
+    assert.ok(MAIN_CHANNEL_KEY.length > 0 && !/^[\p{L}\p{N}_-]+$/u.test(MAIN_CHANNEL_KEY), "can't be a topic name");
+    assert.deepEqual(readSlowmode({ "": 30, [MAIN_CHANNEL_KEY]: 30, sorular: 1e9, kod: -5, uzun: "10", ["x".repeat(25)]: 10 }), { [MAIN_CHANNEL_KEY]: 30, sorular: SLOWMODE_MAX_SECONDS });
+    assert.deepEqual(readSlowmode(null), {});
+    assert.deepEqual(readSlowmode([1]), {});
+});
+
+test("custom commands: valid unique names, Hanogt's own names refused, texts clipped", () => {
+    const { sanitizeCustomCommands, CUSTOM_COMMAND_LIMITS } = groups;
+    const reserved = commands.RESERVED_COMMAND_NAMES;
+    const result = sanitizeCustomCommands([
+        { name: "/Kurulum", description: "Nasıl kurulur", response: "README'yi oku." },
+        { name: "kurulum", response: "ikinci" },
+        { name: "yardim", response: "Hanogt'un komutu" },
+        { name: "9lu", response: "rakamla başlar" },
+        { name: "boş", response: "   " },
+        { name: "uzun", description: "d".repeat(200), response: "y".repeat(5000) },
+        "dize",
+        null,
+    ], reserved);
+    assert.deepEqual(result.map((command) => command.name), ["kurulum", "uzun"]);
+    assert.equal(result[1].description.length, CUSTOM_COMMAND_LIMITS.description);
+    assert.equal(result[1].response.length, CUSTOM_COMMAND_LIMITS.response);
+    assert.equal(sanitizeCustomCommands(Array.from({ length: 40 }, (_, index) => ({ name: `k${index}`, response: "x" }))).length, CUSTOM_COMMAND_LIMITS.count);
+});
