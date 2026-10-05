@@ -191,7 +191,7 @@ function Fields({ name, draft, setDraft }: { name: AgentToolName; draft: Record<
                             rows={10}
                             spellCheck={false}
                             dir="ltr"
-                            className="block w-full resize-y rounded-b-xl border-t border-zinc-200 bg-zinc-950 p-3 font-mono text-[12px] leading-relaxed text-zinc-100 outline-none dark:border-white/10"
+                            className="block w-full resize-y rounded-b-xl border-t border-zinc-200 bg-zinc-950 p-3 font-mono text-[12px] leading-relaxed text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400/50 dark:border-white/10"
                         />
                     </details>
                 </div>

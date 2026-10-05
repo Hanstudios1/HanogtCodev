@@ -614,14 +614,15 @@ export async function resyncAccount(email: string): Promise<number> {
 
 /** One person's plan for Admin › Subscriptions: staff assignment, Paddle subscription and Hanogt AI limits. */
 export async function adminPersonPlan(email: string): Promise<AdminUserPlanResponse> {
-    const [user, record, usage, apiKeys] = await Promise.all([
+    const [user, record, apiKeys] = await Promise.all([
         getServerDocument<Record<string, unknown>>(`users/${email}`),
         getServerDocument<Record<string, unknown>>(subscriptionPath(email)),
-        aiUsage(email),
         apiKeyCount(email),
     ]);
     const environment = getPaddleConfig().environment;
     const subscription = normalizeSubscription(record, environment);
+    // The window's length depends on the plan in effect, so it is read once the plan is known.
+    const usage = await aiUsage(email, effectivePlan(subscription));
     return {
         email,
         exists: Boolean(user),

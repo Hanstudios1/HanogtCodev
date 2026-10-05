@@ -52,8 +52,10 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 ## Hanogt AI
 
-- `/api/ai`, OpenAI uyumlu bir dil modeline (varsayılan Groq) platform bilgi tabanıyla RAG yapar ve akışla yanıtlar; giriş gerekir ve hız sınırlıdır.
-- Çevrimdışı Hanogt AI Çekirdeği tarayıcıda çalışan, 52 niyet ve 10.135 örnekle eğitilmiş bir sınıflandırıcıdır (test doğruluğu %89,9, kör test %95,9).
+- `/api/ai`, Hanogt AI'ın kendi OpenAI uyumlu dil modeline platform bilgi tabanıyla RAG yapar ve akışla (NDJSON, akış protokolü v2) yanıtlar. Model yalnızca `HANOGT_AI_BASE_URL`, `HANOGT_AI_MODEL` ve `HANOGT_AI_API_KEY` ile ayarlanır; varsayılan ya da Groq yedeği yoktur, Groq ve Anthropic adresleri reddedilir (ör. Hugging Face router'da sağlayıcısı sabitlenmiş bir Qwen3 modeli, bir Inference Endpoint ya da ince ayarlı modeli sunan vLLM). Yapılandırılmamışsa hiçbir şey sayılmadan Çekirdek yanıtlar. İsteğe bağlı gelişmiş kod motoru (Claude) kaldırıldı.
+- Hanogt AI yalnızca giriş yapmış kişilere açıktır: oturumsuz istek 401 `auth_required` alır, arayüz giriş/kayıt kapısı gösterir. Mesaj hakları ilk mesajla başlayan plan penceresinde sayılır: Ücretsiz dakikada 5 ve 7 günde 50, Plus dakikada 20 ve 14 günde 750, Pro dakikada 30 ve 7 günde 2.000. Sohbet ve geliştirici API'si aynı haktan düşer; model hiç yanıt veremezse mesaj geri verilir. Kendi API anahtarı bağlantılarının günlük sınırı ayrıdır ve Groq bu bağlantılardan kaldırılmıştır.
+- Düşünme: model zor sorularda yanıt vermeden önce düşünebilir; düşünme yanıtın üstündeki panelde gösterilir, yalnızca tarayıcıda saklanır ve modele geri gönderilmez.
+- Çevrimdışı Hanogt AI Çekirdeği, dil modeli yanıt veremediğinde giriş yapmış kişilere yanıt verir; tarayıcıda çalışan, 52 niyet ve 10.135 örnekle eğitilmiş bir sınıflandırıcıdır (test doğruluğu %89,9, kör test %95,9).
 - Ajan modu: profil okuma, grup oluşturma, kodu editörde açma, oyun oluşturma, gezinme ve arama. Her işlem kullanıcının izin kartıyla ve kendi oturumuyla mevcut API'lerden yapılır; araç adları/argümanları sunucuda yeniden denetlenir. Silme, şifre, 2FA, yönetim ve başkalarına mesaj yapılmaz.
 
 ## Tarayıcı tabanlı oyun motoru (Hanogt Engine V3)

@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { useSyncExternalStore, type ReactNode } from "react";
 import type { AiMode } from "@/lib/ai/local-engine";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -19,8 +18,6 @@ const C = {
         code: { TR: "Kod yazar, açıklar ve hataları birlikte ayıklarız. Yazdığım kodu editörde açabilirim.", EN: "We'll write, explain and debug code together. I can open what I write in the editor." },
         security: { TR: "Şüpheli bağlantıları ve kodu incelerim, hesabını korumana yardım ederim.", EN: "I inspect suspicious links and code and help you keep your account safe." },
     } satisfies Record<AiMode, Copy>,
-    core: { TR: "Şu an cihazında çalışan Hanogt AI Çekirdeği yanıt veriyor. Tam dil modeli için", EN: "Hanogt AI Core is answering on your device. For the full language model," },
-    signIn: { TR: "giriş yap", EN: "sign in" },
 };
 
 function partOfDay(): keyof Pick<typeof C, "morning" | "afternoon" | "evening" | "night"> {
@@ -34,14 +31,13 @@ function partOfDay(): keyof Pick<typeof C, "morning" | "afternoon" | "evening" |
 const noop = () => () => undefined;
 
 /** The empty conversation: a greeting, the composer (on the full page) and suggestion chips. */
-export default function WelcomeScreen({ variant, mode, userName, showSignIn, onPick, onNavigate, composer }: {
+export default function WelcomeScreen({ variant, mode, userName, onPick, composer }: {
     variant: "panel" | "page";
     mode: AiMode;
     userName: string | null;
-    showSignIn: boolean;
     onPick: (prompt: string) => void;
     onNavigate?: () => void;
-    /** Rendered under the greeting on the full page (Claude-style centered composer). */
+    /** Rendered under the greeting on the full page (centered composer). */
     composer?: ReactNode;
 }) {
     const { tx } = useI18n();
@@ -72,12 +68,6 @@ export default function WelcomeScreen({ variant, mode, userName, showSignIn, onP
                     </button>
                 ))}
             </div>
-            {showSignIn ? (
-                <p className="mt-5 max-w-sm rounded-xl bg-amber-500/10 px-3 py-2 text-[12px] leading-snug text-amber-800 dark:text-amber-200">
-                    {tx(C.core)}{" "}
-                    <Link href="/login?callbackUrl=/ai" onClick={onNavigate} className="font-bold underline">{tx(C.signIn)}</Link>.
-                </p>
-            ) : null}
         </div>
     );
 }

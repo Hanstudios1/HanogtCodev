@@ -4,7 +4,7 @@ import test from "node:test";
 import { load } from "./setup.mjs";
 
 const plans = await load("lib/plans.ts");
-const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, aiLimitsFor, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
+const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, aiLimitsFor, aiWindowCopy, aiWindowMs, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
 
 const NOW = Date.UTC(2026, 9, 2, 12);
 const DAY = 24 * 60 * 60_000;
@@ -23,11 +23,14 @@ test("Hanogt AI limits follow the plan and add a live staff grant", () => {
     assert.deepEqual(aiLimitsFor(FREE_SUBSCRIPTION, NOW), PLAN_AI_LIMITS.free);
     const pro = { ...FREE_SUBSCRIPTION, plan: "pro" };
     assert.deepEqual(aiLimitsFor(pro, NOW), PLAN_AI_LIMITS.pro);
+    // The grant (stored as aiBonusDaily, its name from when windows were a day) adds to the plan's window.
     const granted = { ...FREE_SUBSCRIPTION, aiBonusDaily: 100, aiBonusUntil: iso(DAY) };
-    assert.equal(aiLimitsFor(granted, NOW).perDay, PLAN_AI_LIMITS.free.perDay + 100);
-    assert.equal(aiLimitsFor({ ...granted, aiBonusUntil: iso(-1) }, NOW).perDay, PLAN_AI_LIMITS.free.perDay, "an expired grant adds nothing");
-    assert.equal(aiLimitsFor({ ...granted, aiBonusUntil: null }, NOW).perDay, PLAN_AI_LIMITS.free.perDay, "a grant needs an end date");
-    assert.equal(aiLimitsFor({ ...granted, plan: "pro", status: "blocked" }, NOW).perDay, PLAN_AI_LIMITS.free.perDay, "blocked accounts lose plan and grant");
+    assert.deepEqual(aiLimitsFor(granted, NOW), { ...PLAN_AI_LIMITS.free, perWindow: PLAN_AI_LIMITS.free.perWindow + 100 });
+    assert.equal(aiLimitsFor({ ...granted, aiBonusUntil: iso(-1) }, NOW).perWindow, PLAN_AI_LIMITS.free.perWindow, "an expired grant adds nothing");
+    assert.equal(aiLimitsFor({ ...granted, aiBonusUntil: null }, NOW).perWindow, PLAN_AI_LIMITS.free.perWindow, "a grant needs an end date");
+    assert.equal(aiLimitsFor({ ...granted, plan: "pro", status: "blocked" }, NOW).perWindow, PLAN_AI_LIMITS.free.perWindow, "blocked accounts lose plan and grant");
+    assert.equal(aiLimitsFor({ ...FREE_SUBSCRIPTION, plan: "plus" }, NOW).windowDays, 14);
+    assert.equal(aiWindowMs(14), 14 * DAY);
 });
 
 test("discounts round to kuruş and never go negative", () => {
@@ -75,8 +78,10 @@ test("the numbers on the Plans page are the limits the server enforces", () => {
                 return found[0];
             };
             const unlimited = lang === "TR" ? /Sınırsız/ : /Unlimited/;
-            const ai = line(/Hanogt AI/);
-            assert.ok(ai.includes(number(PLAN_AI_LIMITS[plan].perDay, lang)), `${plan}/${lang}: "${ai}" shows ${PLAN_AI_LIMITS[plan].perDay}`);
+            const ai = line(/Hanogt AI (?:ile|messages)/);
+            const { perWindow, windowDays } = PLAN_AI_LIMITS[plan];
+            assert.ok(ai.includes(number(perWindow, lang)), `${plan}/${lang}: "${ai}" shows ${perWindow}`);
+            assert.ok(ai.includes(aiWindowCopy(windowDays)[lang]), `${plan}/${lang}: "${ai}" says ${aiWindowCopy(windowDays)[lang]}`);
 
             const projects = line(lang === "TR" ? /projesi/ : /projects/);
             const { code, game } = PLAN_PROJECT_LIMITS[plan];
@@ -106,15 +111,13 @@ test("the numbers on the Plans page are the limits the server enforces", () => {
                 assert.ok(keys[0].includes(lang === "TR" ? `günde ${perDay} mesaj` : `${perDay} messages a day`), `${plan}/${lang}: "${keys[0]}" shows ${perDay} a day`);
             }
 
-            // The developer API: keys, a minute and a day, as the API counts them.
+            // The developer API: its keys; requests use the same messages as the chat.
             const api = lines.filter((text) => (lang === "TR" ? /Geliştirici API/ : /Developer API/).test(text));
             const apiLimits = PLAN_AI_FEATURES[plan].api;
             if (!apiLimits) assert.deepEqual(api, [], `${plan}/${lang}: no API line`);
             else {
                 assert.equal(api.length, 1);
-                const expected = lang === "TR"
-                    ? `${apiLimits.keys} anahtar, dakikada ${number(apiLimits.perMinute, lang)} ve günde ${number(apiLimits.perDay, lang)} istek`
-                    : `${apiLimits.keys} keys, ${number(apiLimits.perMinute, lang)} requests a minute and ${number(apiLimits.perDay, lang)} a day`;
+                const expected = lang === "TR" ? `${apiLimits.keys} anahtar; istekler mesaj hakkından düşer` : `${apiLimits.keys} keys; requests use your message allowance`;
                 assert.ok(api[0].includes(expected), `${plan}/${lang}: "${api[0]}"`);
             }
 

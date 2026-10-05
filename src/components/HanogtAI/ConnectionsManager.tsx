@@ -3,20 +3,7 @@
 import { ArrowRight, Check, ExternalLink, KeyRound, LoaderCircle, Lock, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
-import {
-    API_KEY_MAX,
-    CONNECTION_LABEL_MAX,
-    CONNECTION_MODEL_MAX,
-    PLAN_AI_CONNECTIONS,
-    aiProvider,
-    isConnectionsState,
-    isPlausibleApiKey,
-    type AiConnectionError,
-    type AiConnectionView,
-    type AiConnectionsState,
-    type AiProviderId,
-    type AiProviderInfo,
-} from "@/lib/ai/connections";
+import { API_KEY_MAX, CONNECTION_LABEL_MAX, CONNECTION_MODEL_MAX, PLAN_AI_CONNECTIONS, aiProvider, isConnectionsState, isPlausibleApiKey, type AiConnectionError, type AiConnectionView, type AiConnectionsState, type AiProviderId, type AiProviderInfo, isAiProviderId, providerName } from "@/lib/ai/connections";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PLAN_AI_FEATURES, PLAN_COPY } from "@/lib/plans";
 import { connectionsRequest, type AiConnectionsHandle } from "./connections-store";
@@ -36,6 +23,8 @@ const C = {
     yours: { TR: "Bağlantıların", EN: "Your connections" },
     none: { TR: "Henüz bağlantın yok.", EN: "You don't have any connections yet." },
     active: { TR: "Etkin", EN: "Active" },
+    retired: { TR: "Artık desteklenmiyor", EN: "No longer supported" },
+    retiredHint: { TR: "Bu sağlayıcı Hanogt AI'dan kaldırıldı. Bağlantı kullanılamaz ve planının bağlantı hakkından düşmez; silebilirsin.", EN: "This provider was removed from Hanogt AI. The connection can't be used and doesn't count toward your plan's connections; you can delete it." },
     inactive: { TR: "Planın kapsamıyor", EN: "Not in your plan" },
     selected: { TR: "Seçili", EN: "Selected" },
     use: { TR: "Kullan", EN: "Use" },
@@ -140,8 +129,11 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
     const [error, setError] = useState<Copy | null>(null);
     const labelId = useId();
     const modelId = useId();
-    const provider = aiProvider(item.provider);
-    const lastError = item.lastError ? LAST_ERRORS[item.lastError] : undefined;
+    // A retired provider's connection is shown only so it can be deleted.
+    const retired = item.retired || !isAiProviderId(item.provider);
+    const provider = isAiProviderId(item.provider) ? aiProvider(item.provider) : null;
+    const providerLabel = providerName(item.provider);
+    const lastError = !retired && item.lastError ? LAST_ERRORS[item.lastError] : undefined;
     const when = formatDate(item.lastUsedAt ?? item.createdAt, locale);
     const date = when ? tx(item.lastUsedAt ? C.lastUsed : C.added, { date: when }) : "";
 
@@ -162,7 +154,9 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
         <li className={cx("rounded-2xl border p-3", selected ? "border-sky-300 bg-sky-500/[0.04] dark:border-sky-400/30" : "border-zinc-200 dark:border-white/10")}>
             <div className="flex flex-wrap items-center gap-1.5">
                 <span className="min-w-0 truncate text-[14px] font-bold">{item.label}</span>
-                {selected ? (
+                {retired ? (
+                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10.5px] font-bold text-amber-700 dark:text-amber-300" data-connection-retired>{tx(C.retired)}</span>
+                ) : selected ? (
                     <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10.5px] font-bold text-sky-700 dark:text-sky-300">{tx(C.selected)}</span>
                 ) : item.active ? (
                     <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10.5px] font-bold text-emerald-700 dark:text-emerald-300">{tx(C.active)}</span>
@@ -171,8 +165,9 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
                 )}
             </div>
             <p className="mt-0.5 truncate text-[12.5px] text-zinc-600 dark:text-zinc-300">
-                {provider.name} · <span className="font-mono">{item.model || "—"}</span>
+                {providerLabel} · <span className="font-mono">{item.model || "—"}</span>
             </p>
+            {retired ? <p className="mt-1 text-[11.5px] leading-snug text-amber-700 dark:text-amber-300">{tx(C.retiredHint)}</p> : null}
             <p className="mt-0.5 text-[11.5px] text-zinc-500 dark:text-zinc-400">
                 <span className="font-mono">{tx(C.keyHint, { hint: item.keyHint || "…" })}</span>
                 {date ? ` · ${date}` : ""}
@@ -190,11 +185,11 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
                 >
                     <div>
                         <label htmlFor={labelId} className={LABEL}>{tx(C.labelField)}</label>
-                        <input id={labelId} value={label} onChange={(event) => setLabel(event.target.value)} maxLength={CONNECTION_LABEL_MAX} placeholder={provider.name} className={FIELD} />
+                        <input id={labelId} value={label} onChange={(event) => setLabel(event.target.value)} maxLength={CONNECTION_LABEL_MAX} placeholder={providerLabel} className={FIELD} />
                     </div>
                     <div>
                         <label htmlFor={modelId} className={LABEL}>{tx(C.model)}</label>
-                        <input id={modelId} value={model} onChange={(event) => setModel(event.target.value)} maxLength={CONNECTION_MODEL_MAX} spellCheck={false} autoCapitalize="off" autoComplete="off" placeholder={tx(C.modelExample, { model: provider.exampleModel })} className={cx(FIELD, "font-mono")} />
+                        <input id={modelId} value={model} onChange={(event) => setModel(event.target.value)} maxLength={CONNECTION_MODEL_MAX} spellCheck={false} autoCapitalize="off" autoComplete="off" placeholder={tx(C.modelExample, { model: provider?.exampleModel ?? "" })} className={cx(FIELD, "font-mono")} />
                     </div>
                     <div className="flex justify-end gap-2 pt-1">
                         <button type="button" onClick={() => setMode("view")} disabled={working} className={cx(SMALL, "text-zinc-600 hover:bg-zinc-900/[0.05] dark:text-zinc-300 dark:hover:bg-white/10")}>{tx(C.cancel)}</button>
@@ -217,25 +212,27 @@ function ConnectionRow({ item, selected, onUse, onState, track }: {
                 </div>
             ) : (
                 <div className="mt-2 flex flex-wrap items-center gap-1">
-                    {item.active && !selected ? (
+                    {item.active && !selected && !retired ? (
                         <button type="button" onClick={onUse} className={cx(SMALL, "bg-sky-600 text-white hover:bg-sky-500")}>
                             <KeyRound className="h-3.5 w-3.5" aria-hidden />
                             {tx(C.use)}
                         </button>
                     ) : null}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setLabel(item.label);
-                            setModel(item.model);
-                            setError(null);
-                            setMode("edit");
-                        }}
-                        className={cx(SMALL, "text-zinc-600 hover:bg-zinc-900/[0.05] dark:text-zinc-300 dark:hover:bg-white/10")}
-                    >
-                        <Pencil className="h-3.5 w-3.5" aria-hidden />
-                        {tx(C.edit)}
-                    </button>
+                    {!retired ? (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setLabel(item.label);
+                                setModel(item.model);
+                                setError(null);
+                                setMode("edit");
+                            }}
+                            className={cx(SMALL, "text-zinc-600 hover:bg-zinc-900/[0.05] dark:text-zinc-300 dark:hover:bg-white/10")}
+                        >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden />
+                            {tx(C.edit)}
+                        </button>
+                    ) : null}
                     <button
                         type="button"
                         onClick={() => {
@@ -551,7 +548,8 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
             </p>
         );
     } else {
-        const count = state.items.length;
+        // Retired providers' connections don't take up the plan's allowance.
+        const count = state.items.filter((item) => !item.retired).length;
         const planName = PLAN_COPY[state.plan] ? tx(PLAN_COPY[state.plan].name) : state.plan;
         // Messages a day through own connections (Plus 3,000, Pro 10,000).
         const ownKey = PLAN_AI_FEATURES[state.plan]?.ownKey ?? null;
@@ -576,7 +574,8 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
 
                 {notice ? <p role="status" className="rounded-xl bg-emerald-500/10 px-3 py-2 text-[12.5px] font-semibold text-emerald-700 dark:text-emerald-300">{tx(notice)}</p> : null}
 
-                {count ? (
+                {/* Every stored connection is listed, a retired provider's too (it can only be deleted). */}
+                {state.items.length ? (
                     <section>
                         <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                             {tx(C.yours)}

@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.18",
+        version: "v0.3.18",
+        date: "2026-10-05",
+        title: { TR: "Hanogt AI kendi modeline geçiyor ve düşünüyor", EN: "Hanogt AI moves to its own model and thinks" },
+        desc: { TR: "Hanogt AI artık kendi dil modeliyle çalışıyor, zor sorularda yanıt vermeden önce düşünüyor ve mesaj hakları haftalık sayılıyor.", EN: "Hanogt AI now runs on its own language model, thinks before it answers hard questions, and messages are counted weekly." },
+        items: [
+            { TR: "Düşünme: zor sorularda \"Düşünüyor…\" paneli açılıyor; modelin düşünmesi, okunan bilgi kaynakları ve çalışan denetimler yanıtın üstünde görünüyor. Hanogt AI ayarlarından açıp kapatabilirsin.", EN: "Thinking: hard questions open a \"Thinking…\" panel showing the model's thinking, the knowledge sources read and the checks that ran, above the answer. Turn it on or off in the Hanogt AI settings." },
+            { TR: "Yeni mesaj hakları: Ücretsiz 7 günde 50, Plus 14 günde 750, Pro 7 günde 2.000 mesaj. Pencere ilk mesajınla başlıyor; model yanıt veremezse hakkın geri veriliyor.", EN: "New message allowances: 50 in 7 days on Free, 750 in 14 days on Plus and 2,000 in 7 days on Pro. The window starts with your first message, and a message the model couldn't answer is given back." },
+            { TR: "Geliştirici API'si artık sohbetle aynı mesaj hakkını kullanıyor; istersen modelin düşünmesini de alabiliyorsun (include_reasoning).", EN: "The developer API now uses the same message allowance as the chat, and can return the model's thinking too (include_reasoning)." },
+            { TR: "Hanogt AI'ı kullanmak için giriş yapman gerekiyor. Kesilen uzun yanıtlar \"Devam et\" ile sürdürülebiliyor.", EN: "You need to sign in to use Hanogt AI. A long answer that was cut off can be picked up with \"Continue\"." },
+            { TR: "Kod editöründe açık dosya Hanogt AI'a gerçekten ulaşıyor; yazma kutusundaki pembe odak çerçevesi kalktı.", EN: "The file open in the code editor now really reaches Hanogt AI, and the pink focus frame around the message box is gone." },
+            { TR: "Groq ve gelişmiş kod motoru kaldırıldı; Groq ile eklenen kendi anahtar bağlantıları \"artık desteklenmiyor\" olarak listeleniyor ve silinebiliyor.", EN: "Groq and the advanced code engine were removed; own-key connections added for Groq are listed as \"no longer supported\" and can be deleted." },
+        ],
+    },
+    {
         id: "v0.3.16",
         version: "v0.3.16",
         date: "2026-10-03",

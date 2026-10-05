@@ -6,12 +6,10 @@
 //       the harness itself: every reference solution passes, every stub fails
 //   node scripts/ai-eval/code-bench.mjs --engine hanogt --api-key-env HANOGT_API_KEY
 //       Hanogt AI through its developer API (model hanogt-ai, Code mode)
-//   node scripts/ai-eval/code-bench.mjs --engine openai --base-url https://api.groq.com/openai/v1 \
-//       --model llama-3.3-70b-versatile --api-key-env GROQ_API_KEY
-//       any OpenAI-compatible endpoint (Groq, vLLM, Ollama with /v1, a fine-tuned model…)
-//   node scripts/ai-eval/code-bench.mjs --engine anthropic --model <model id> --effort medium
-//       Claude through the official SDK (ANTHROPIC_API_KEY); the model ID the
-//       advanced code engine uses is in src/lib/ai/engine.ts (DEFAULT_ENGINE_MODEL)
+//   node scripts/ai-eval/code-bench.mjs --engine openai --base-url "$HANOGT_AI_BASE_URL" \
+//       --model "$HANOGT_AI_MODEL" --api-key-env HANOGT_AI_API_KEY
+//       any OpenAI-compatible endpoint: Hanogt AI's own model (a Hugging Face
+//       router model with its provider, an Inference Endpoint, vLLM), Ollama with /v1…
 //   node scripts/ai-eval/code-bench.mjs --compare
 //       every saved run side by side → ai/reports/code-bench.md
 //
@@ -23,7 +21,7 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { anthropicEngine, checkCode, comparisonReport, defaultPython, fixtureCode, markdownReport, mockEngine, openAiEngine, pythonAvailable, runBench, summarize } from "./bench-lib.mjs";
+import { checkCode, comparisonReport, defaultPython, fixtureCode, markdownReport, mockEngine, openAiEngine, pythonAvailable, runBench, summarize } from "./bench-lib.mjs";
 import { BENCH_TASKS } from "./bench-tasks.mjs";
 
 const { values: args } = parseArgs({
@@ -32,7 +30,6 @@ const { values: args } = parseArgs({
         "base-url": { type: "string" },
         model: { type: "string" },
         "api-key-env": { type: "string" },
-        effort: { type: "string" },
         mock: { type: "string", default: "reference" },
         lang: { type: "string", default: "tr" },
         only: { type: "string" },
@@ -112,7 +109,7 @@ async function makeEngine() {
         case "hanogt": {
             const key = process.env[args["api-key-env"] ?? "HANOGT_API_KEY"];
             if (!key) fail(`set ${args["api-key-env"] ?? "HANOGT_API_KEY"} to a Hanogt AI API key (hnk_…, from /ai/api)`);
-            // Code mode, as the chat's Code button; the developer API always uses the standard engine.
+            // Code mode, as the chat's Code button.
             return openAiEngine({ name: "hanogt-ai-api", baseUrl: args["base-url"] ?? "https://hanogtcodev.com/api/v1", apiKey: key, model: "hanogt-ai", extra: { mode: "code", language: lang } });
         }
         case "openai": {
@@ -121,16 +118,8 @@ async function makeEngine() {
             if (args["api-key-env"] && !key) fail(`${args["api-key-env"]} is empty`);
             return openAiEngine({ baseUrl: args["base-url"], apiKey: key, model: args.model });
         }
-        case "anthropic": {
-            const model = args.model ?? process.env.HANOGT_AI_CLAUDE_MODEL;
-            if (!model) fail("--engine anthropic needs --model (or HANOGT_AI_CLAUDE_MODEL)");
-            if (!process.env.ANTHROPIC_API_KEY) fail("set ANTHROPIC_API_KEY");
-            const { default: Anthropic } = await import("@anthropic-ai/sdk");
-            const client = new Anthropic({ maxRetries: 0, ...(process.env.ANTHROPIC_BASE_URL ? { baseURL: process.env.ANTHROPIC_BASE_URL } : {}) });
-            return anthropicEngine({ client, model, effort: args.effort });
-        }
         default:
-            return fail("choose --engine hanogt | openai | anthropic | mock, or --self-check / --compare");
+            return fail("choose --engine hanogt | openai | mock, or --self-check / --compare");
     }
 }
 

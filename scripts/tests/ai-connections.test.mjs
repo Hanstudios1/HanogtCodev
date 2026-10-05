@@ -27,7 +27,7 @@ const GOOD = {
     openai: "sk-test-openai-good-key-0001",
     anthropic: "sk-ant-test-good-key-0001",
     gemini: "AIza-test-gemini-good-key-0001",
-    groq: "gsk_test_good_key_0001",
+    groq: "gsk_test_good_key_0001", // a retired provider: never asked
     mistral: "mistral-test-good-key-0001",
     openrouter: "sk-or-v1-test-good-key-0001",
     deepseek: "sk-test-deepseek-good-0001",
@@ -36,10 +36,9 @@ const GOOD = {
 };
 const WRONG = "sk-test-wrong-key-0000";
 
-const HOSTS = { "api.openai.com": "openai", "api.groq.com": "groq", "api.mistral.ai": "mistral", "api.deepseek.com": "deepseek", "api.x.ai": "xai" };
+const HOSTS = { "api.openai.com": "openai", "api.mistral.ai": "mistral", "api.deepseek.com": "deepseek", "api.x.ai": "xai" };
 const MODELS = {
     openai: ["gpt-4o-mini", "gpt-4o", "gpt-4o", "text-embedding-3-small", "whisper-1", "dall-e-3", "o3-mini", "omni-moderation-latest"],
-    groq: ["llama-3.3-70b-versatile", "whisper-large-v3", "llama-3.1-8b-instant"],
     mistral: ["mistral-large-latest", "mistral-embed", "codestral-latest"],
     deepseek: ["deepseek-chat", "deepseek-reasoner"],
     xai: ["grok-4", "grok-3-mini"],
@@ -194,7 +193,11 @@ test("secret box: AI_KEYS_ENCRYPTION_KEY, then TOTP_ENCRYPTION_KEY, then NEXTAUT
 // ---------------------------------------------------------------------------
 
 test("provider catalog: fixed https endpoints, model ids and request settings", () => {
-    assert.deepEqual([...shared.AI_PROVIDER_IDS], ["openai", "anthropic", "gemini", "groq", "mistral", "openrouter", "deepseek", "xai", "together"]);
+    assert.deepEqual([...shared.AI_PROVIDER_IDS], ["openai", "anthropic", "gemini", "mistral", "openrouter", "deepseek", "xai", "together"]);
+    // Groq is retired: stored connections are still read (to be deleted), never offered or used.
+    assert.deepEqual([...shared.RETIRED_PROVIDER_IDS], ["groq"]);
+    assert.deepEqual([shared.isAiProviderId("groq"), shared.isRetiredProviderId("groq"), shared.isStoredProviderId("groq"), shared.isStoredProviderId("openai"), shared.isStoredProviderId("custom")], [false, true, true, true, false]);
+    assert.deepEqual([shared.providerName("groq"), shared.providerName("openai")], ["Groq", "OpenAI"]);
     for (const provider of shared.AI_PROVIDERS) {
         assert.match(provider.baseUrl, /^https:\/\/[a-z0-9.-]+(?:\/[\w.-]+)*$/, provider.id);
         assert.match(provider.keyUrl, /^https:\/\//, provider.id);
@@ -228,7 +231,7 @@ test("provider catalog: fixed https endpoints, model ids and request settings", 
     assert.deepEqual(shared.ownKeyRequestParams("openai", "o3-mini", 0.3), { max_completion_tokens: 8000 }, "reasoning models: default temperature");
     assert.deepEqual(shared.ownKeyRequestParams("openai", "gpt-5-mini", 0.3), { max_completion_tokens: 8000 });
     assert.deepEqual(shared.ownKeyRequestParams("openai", "gpt-4o", 0.3), { max_completion_tokens: 4000, temperature: 0.3 });
-    assert.deepEqual(shared.ownKeyRequestParams("anthropic", "claude-sonnet-4-5", 0.45), { max_tokens: 4000, temperature: 0.45 });
+    assert.deepEqual(shared.ownKeyRequestParams("anthropic", "claude-sonnet-4-5", 0.45), { max_tokens: 4000 }, "Anthropic's newer models refuse temperature: its default");
 });
 
 test("own-connection messages grow with the plan: none on Free, Plus 3,000 and Pro 10,000 a day", () => {
@@ -246,7 +249,6 @@ test("own-connection messages grow with the plan: none on Free, Plus 3,000 and P
 test("key checks: OpenAI-style providers list chat models with a Bearer key", async () => {
     const expected = {
         openai: ["gpt-4o", "gpt-4o-mini", "o3-mini"],
-        groq: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
         mistral: ["codestral-latest", "mistral-large-latest"],
         deepseek: ["deepseek-chat", "deepseek-reasoner"],
         xai: ["grok-3-mini", "grok-4"],
@@ -334,7 +336,7 @@ test("key checks: provider errors, outages and the time limit; the provider's te
     api = createProviders({ hang: true });
     await withBackend({}, { route: api.route }, async () => {
         const started = Date.now();
-        assert.deepEqual(await store.testKey("groq", GOOD.groq, { timeoutMs: 40 }), { ok: false, reason: "unreachable" });
+        assert.deepEqual(await store.testKey("deepseek", GOOD.deepseek, { timeoutMs: 40 }), { ok: false, reason: "unreachable" });
         assert.ok(Date.now() - started < 2_000, "the time limit ends the check");
     });
     assert.equal(store.KEY_TEST_TIMEOUT_MS, 10_000);
@@ -342,6 +344,7 @@ test("key checks: provider errors, outages and the time limit; the provider's te
     await withBackend({}, { route: api.route }, async () => {
         assert.deepEqual(await store.testKey("openai", "bad key with spaces"), { ok: false, reason: "invalid_key" });
         assert.deepEqual(await store.testKey("custom", GOOD.openai), { ok: false, reason: "invalid_key" });
+        assert.deepEqual(await store.testKey("groq", GOOD.groq), { ok: false, reason: "invalid_key" }, "a retired provider is never asked");
         assert.equal(api.calls.length, 0, "implausible input never reaches a provider");
     });
 });
@@ -368,7 +371,8 @@ test("Free can't add or check keys; Plus adds two and Pro five", async () => {
         assert.equal(db.has(`ai_connections/${ALI}`), false);
         const state = await store.listConnections(ALI);
         assert.deepEqual({ plan: state.plan, limit: state.limit, items: state.items, canStore: state.canStore }, { plan: "free", limit: 0, items: [], canStore: true });
-        assert.equal(state.providers.length, 9);
+        assert.equal(state.providers.length, 8);
+        assert.ok(!state.providers.some((provider) => provider.id === "groq"), "a retired provider isn't offered");
         assert.equal("baseUrl" in state.providers[0], false, "only display information goes to the browser");
     });
 
@@ -607,6 +611,34 @@ test("damaged records are read safely", async () => {
         const state = await store.listConnections(ALI);
         assert.deepEqual(state.items.map((item) => [item.id, item.label, item.lastError]), [["conn-good-0001", "İyi", null]]);
         assert.equal((await store.resolveConnectionForChat(ALI, "conn-good-0001")).apiKey, GOOD.openai);
+    });
+});
+
+test("a retired Groq connection is listed as no longer supported: never active or counted, only deletable", async () => {
+    const sealedGroq = box.sealSecret(GOOD.groq, box.aiKeyAssociatedData(ALI, "conn-groq-00001"));
+    const seed = {
+        ...userSeed("plus"),
+        [`ai_connections/${ALI}`]: {
+            items: [{ id: "conn-groq-00001", provider: "groq", label: "Groq", model: "llama-3.3-70b-versatile", keySealed: sealedGroq, keyHint: "…0001", createdAt: "2026-09-01T10:00:00.000Z", lastUsedAt: null, lastError: null }],
+        },
+    };
+    const api = createProviders();
+    await withBackend(seed, { route: api.route }, async (db) => {
+        let state = await store.listConnections(ALI);
+        assert.deepEqual(state.items.map((item) => [item.id, item.provider, item.active, item.retired]), [["conn-groq-00001", "groq", false, true]]);
+        assert.equal(await store.resolveConnectionForChat(ALI, "conn-groq-00001"), null, "never used for a message");
+        assert.deepEqual(await store.updateConnection(ALI, "conn-groq-00001", { label: "Yeni" }), { ok: false, code: "invalid_request" });
+        // It doesn't take one of Plus's two places.
+        assert.equal((await addOpenAi("Bir")).ok, true);
+        assert.equal((await addOpenAi("İki")).ok, true);
+        assert.deepEqual(await addOpenAi("Üç"), { ok: false, code: "limit_reached" });
+        state = await store.listConnections(ALI);
+        assert.deepEqual(state.items.map((item) => [item.label, item.active, item.retired]), [["Groq", false, true], ["Bir", true, false], ["İki", true, false]]);
+        assert.ok(!api.calls.some((call) => call.host === "api.groq.com"), "Groq is never asked");
+        const deleted = await store.deleteConnection(ALI, "conn-groq-00001");
+        assert.equal(deleted.ok, true);
+        assert.deepEqual(deleted.state.items.map((item) => item.label), ["Bir", "İki"]);
+        assert.equal(db.get(`ai_connections/${ALI}`).items.length, 2);
     });
 });
 

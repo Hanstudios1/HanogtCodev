@@ -8,6 +8,7 @@
  */
 import { AGENT_MODES, DEFAULT_AGENT_MODE, isAgentMode, type AgentMode } from "./agent-tools";
 import { DEFAULT_CONNECTION, isConnectionId } from "./connections";
+import { THINKING_SETTINGS, type ThinkingSetting } from "./thinking";
 import { PLAN_AI_FEATURES, type PlanId } from "@/lib/plans";
 
 export const AI_TONES = ["balanced", "friendly", "professional"] as const;
@@ -33,6 +34,10 @@ export type AiSettings = {
     /** Whether the open editor file goes with questions by default. */
     attachEditorFile: boolean;
     agentMode: AgentMode;
+    /** Whether Hanogt AI thinks before answering: "auto" in code and security work and for long questions. */
+    thinking: ThinkingSetting;
+    /** Show the thinking (and the steps taken) above the answer. */
+    showThinking: boolean;
 };
 
 export const DEFAULT_AI_SETTINGS: AiSettings = {
@@ -45,6 +50,8 @@ export const DEFAULT_AI_SETTINGS: AiSettings = {
     defaultModel: DEFAULT_CONNECTION,
     attachEditorFile: true,
     agentMode: DEFAULT_AGENT_MODE,
+    thinking: "auto",
+    showThinking: true,
 };
 
 /** The longest instruction any plan allows (Pro); a stored text is cut to the person's plan when used. */
@@ -79,6 +86,8 @@ export function normalizeAiSettings(value: unknown, plan: PlanId): AiSettings {
         defaultModel: record.defaultModel === DEFAULT_CONNECTION || isConnectionId(record.defaultModel) ? record.defaultModel : DEFAULT_CONNECTION,
         attachEditorFile: typeof record.attachEditorFile === "boolean" ? record.attachEditorFile : DEFAULT_AI_SETTINGS.attachEditorFile,
         agentMode: isAgentMode(record.agentMode) ? record.agentMode : DEFAULT_AI_SETTINGS.agentMode,
+        thinking: oneOf(THINKING_SETTINGS, record.thinking) ? record.thinking : DEFAULT_AI_SETTINGS.thinking,
+        showThinking: typeof record.showThinking === "boolean" ? record.showThinking : DEFAULT_AI_SETTINGS.showThinking,
     };
 }
 
@@ -106,6 +115,8 @@ export function parseAiSettingsInput(value: unknown, plan: PlanId): { ok: true; 
         defaultModel: (input) => input === DEFAULT_CONNECTION || isConnectionId(input),
         attachEditorFile: (input) => typeof input === "boolean",
         agentMode: (input) => oneOf(AGENT_MODES, input),
+        thinking: (input) => oneOf(THINKING_SETTINGS, input),
+        showThinking: (input) => typeof input === "boolean",
     };
     for (const [field, check] of Object.entries(checks)) {
         if (field in record && !check(record[field])) return { ok: false, code: "invalid_value", field };

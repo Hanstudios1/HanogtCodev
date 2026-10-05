@@ -68,7 +68,7 @@ const C = {
     manageHint: { TR: "Fatura, ödeme yöntemi ve iptal Paddle'ın güvenli müşteri portalında.", EN: "Invoices, payment method and cancellation are in Paddle's secure customer portal." },
     cancelSubscription: { TR: "Ücretsiz plana dönmek için aboneliği iptal et", EN: "Cancel your subscription to go back to Free" },
     blocked: { TR: "Plan avantajların şu anda kullanıma kapalı. Bir sorun olduğunu düşünüyorsan destek talebi aç.", EN: "Your plan benefits are switched off right now. If you think that's a mistake, open a support ticket." },
-    aiToday: { TR: "Bugün Hanogt AI: {used} / {limit} mesaj", EN: "Hanogt AI today: {used} / {limit} messages" },
+    aiWindow: { TR: "Hanogt AI ({days} gün): {used} / {limit} mesaj", EN: "Hanogt AI ({days} days): {used} / {limit} messages" },
     monthly: { TR: "Aylık", EN: "Monthly" },
     yearly: { TR: "Yıllık", EN: "Yearly" },
     save: { TR: "%{percent} tasarruf", EN: "Save {percent}%" },
@@ -98,7 +98,6 @@ const C = {
     notifyHint: { TR: "Bildirimden çıkmak için tekrar bas.", EN: "Press again to stop the notification." },
     signInToNotify: { TR: "Haber almak için giriş yap", EN: "Sign in to get notified" },
     planned: { TR: "Planlanıyor", EN: "Planned" },
-    engineDaily: { TR: "Gelişmiş kod motoruyla (Claude) günde {count} kod yanıtı", EN: "{count} answers a day from the advanced code engine (Claude)" },
     popular: { TR: "En kapsamlı", EN: "Most complete" },
     discount: { TR: "%{percent} indirim", EN: "{percent}% off" },
     activating: { TR: "Ödemen alındı, planın etkinleştiriliyor…", EN: "Payment received, activating your plan…" },
@@ -173,7 +172,7 @@ const C = {
     q1: { TR: "Ödeme ne zaman başlayacak?", EN: "When will payments start?" },
     a1: { TR: "Henüz bir tarih yok. Planlar açıldığında bu sayfada, güncelleme günlüğünde ve \"Açılınca haber ver\" dediysen bildirimlerinde duyuracağız. O güne kadar hiçbir ücret alınmaz.", EN: "There's no date yet. When plans open we'll announce it on this page, in the changelog and, if you pressed \"Notify me\", in your notifications. Until then nothing is charged." },
     q2: { TR: "Ücretsiz plan kalkacak mı?", EN: "Will the free plan go away?" },
-    a2: { TR: "Hayır. Kod editörü, oyun motoru, Arcade, Media, Hanogt Social ve Hanogt AI ücretsiz planda kalmaya devam edecek.", EN: "No. The code editor, the game engine, the Arcade, Media, Hanogt Social and Hanogt AI stay in the free plan." },
+    a2: { TR: "Hayır. Kod editörü, oyun motoru, Arcade, Media ve Hanogt Social ücretsiz planda kalmaya devam edecek; Hanogt AI da ücretsiz planda haftada 50 mesajla kullanılabilir.", EN: "No. The code editor, the game engine, the Arcade, Media and Hanogt Social stay in the free plan, and Hanogt AI is available there with 50 messages a week." },
     q3: { TR: "Kupon kodum var, ne yapmalıyım?", EN: "I have a coupon code. What do I do?" },
     a3: { TR: "Kodunu sakla; planlar açıldığında satın alma sırasında kullanabileceksin. Kuponların bitiş tarihi kupon verilirken belirtilir.", EN: "Keep it; you'll be able to use it at checkout once plans open. A coupon's expiry date is given with the coupon." },
     q4: { TR: "Planım nasıl tanımlandı?", EN: "How did I get a plan?" },
@@ -1051,7 +1050,7 @@ export default function PlansPage() {
                                 ) : null}
                                 {me.usage ? <UsageList usage={me.usage} /> : (
                                     <div className="w-64 max-w-full">
-                                        <p className="text-[12.5px] text-zinc-500 dark:text-zinc-400">{tx(C.aiToday, { used: me.aiUsedToday, limit: me.aiLimits.perDay })}</p>
+                                        <p className="text-[12.5px] text-zinc-500 dark:text-zinc-400">{tx(C.aiWindow, { used: me.aiUsed, limit: me.aiLimits.perWindow, days: me.aiLimits.windowDays })}</p>
                                     </div>
                                 )}
                             </div>
@@ -1216,12 +1215,6 @@ export default function PlansPage() {
                                                 </span>
                                             </li>
                                         ))}
-                                        {data?.engine && data.engine.daily[plan] > 0 ? (
-                                            <li className="flex items-start gap-2.5" data-plan-engine={plan}>
-                                                <span className="mt-0.5 grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"><Check className="h-3 w-3" strokeWidth={3} aria-hidden /></span>
-                                                <span className="leading-snug text-zinc-700 dark:text-zinc-300">{tx(C.engineDaily, { count: data.engine.daily[plan].toLocaleString(locale) })}</span>
-                                            </li>
-                                        ) : null}
                                     </ul>
                                     <div className="mt-6">
                                         {plan === "free" ? (
@@ -1251,7 +1244,7 @@ export default function PlansPage() {
                     </div>
                     <p className="mt-6 flex items-center justify-center gap-2 text-center text-[12.5px] text-zinc-500 dark:text-zinc-400">
                         <Ticket className="h-4 w-4" aria-hidden />
-                        {tx({ TR: "Hanogt AI sınırları: Ücretsiz {free}, Plus {plus}, Pro {pro} mesaj/gün.", EN: "Hanogt AI limits: Free {free}, Plus {plus}, Pro {pro} messages/day." }, { free: PLAN_AI_LIMITS.free.perDay, plus: PLAN_AI_LIMITS.plus.perDay, pro: PLAN_AI_LIMITS.pro.perDay })}
+                        {tx({ TR: "Hanogt AI: Ücretsiz haftada {free}, Plus 2 haftada {plus}, Pro haftada {pro} mesaj; geliştirici API'si aynı haktan düşer.", EN: "Hanogt AI: Free {free} a week, Plus {plus} every 2 weeks, Pro {pro} a week; the developer API uses the same messages." }, { free: PLAN_AI_LIMITS.free.perWindow, plus: PLAN_AI_LIMITS.plus.perWindow, pro: PLAN_AI_LIMITS.pro.perWindow })}
                     </p>
                     {anyOnSale ? (
                         <p className="mx-auto mt-3 max-w-2xl text-center text-[12px] leading-relaxed text-zinc-500 dark:text-zinc-400">

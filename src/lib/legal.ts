@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.6";
-export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "3 Ekim 2026", EN: "3 October 2026" };
+export const LEGAL_VERSION = "4.7";
+export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "5 Ekim 2026", EN: "5 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.6-2026-10-03";
+export const LEGAL_NOTICE_ID = "4.7-2026-10-05";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,15 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.7",
+        date: { TR: "5 Ekim 2026", EN: "5 October 2026" },
+        items: [
+            { TR: "Hanogt AI'ın motoru: Groq ve Anthropic (Claude) artık Hanogt AI'ın motoru olarak kullanılmıyor; gelişmiş kod motoru kaldırıldı. Sorularınız Hanogt AI'ın kendi dil modeline, Hugging Face, Inc. (ABD) ve onun üzerinden seçilen çıkarım sağlayıcısı aracılığıyla iletiliyor. Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları'ndaki alıcı ve yurt dışı aktarım bilgileri buna göre güncellendi.", EN: "Hanogt AI's engine: Groq and Anthropic (Claude) are no longer used as Hanogt AI's engine, and the advanced code engine was removed. Your questions go to Hanogt AI's own language model through Hugging Face, Inc. (USA) and the inference provider selected through it. The recipient and international transfer details in the Privacy Policy, the KVKK Information Notice and the Terms of Use were updated accordingly." },
+            { TR: "Giriş zorunluluğu ve yeni sınırlar: Hanogt AI artık yalnızca giriş yapmış kişilere açık. Mesaj hakları günlük yerine plan penceresiyle sayılıyor: Ücretsiz planda 7 günde 50, Plus'ta 14 günde 750, Pro'da 7 günde 2.000 mesaj (dakikada 5, 20 ve 30). Geliştirici API'sinin ayrı sınırları kaldırıldı; API istekleri sohbetle aynı haktan düşüyor. Model hiç yanıt veremediğinde mesaj hakkınızdan düşmüyor.", EN: "Sign-in and new limits: Hanogt AI is now open to signed-in people only. Messages are counted per plan window instead of per day: 50 in 7 days on Free, 750 in 14 days on Plus and 2,000 in 7 days on Pro (5, 20 and 30 a minute). The developer API's separate limits were removed; API requests use the same allowance as the chat. When the model can't answer at all, the message doesn't count." },
+            { TR: "Düşünme: Hanogt AI zor sorularda yanıt vermeden önce düşünebiliyor ve bunu yanıtın üstünde gösterebiliyor. Düşünme metni yalnızca tarayıcınızda saklanıyor ve sonraki mesajlarla geri gönderilmiyor; düşünme tercihleriniz Hanogt AI ayarlarınızla birlikte hesabınızda tutuluyor. Groq ile eklenmiş kendi anahtar bağlantıları artık kullanılamıyor ve siz silene kadar listede kalıyor.", EN: "Thinking: Hanogt AI can think before it answers hard questions and show this above the answer. The thinking is kept only in your browser and never sent back with later messages; your thinking preferences are kept in your account with your Hanogt AI settings. Own-key connections added for Groq can no longer be used and stay listed until you delete them." },
+        ],
+    },
     {
         version: "4.6",
         date: { TR: "3 Ekim 2026", EN: "3 October 2026" },

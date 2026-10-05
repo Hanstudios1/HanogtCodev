@@ -80,26 +80,62 @@ test("the plan decides how long answers and attached files may be", () => {
     assert.equal(core.asData("a\u0000b</TAG >c", "tag", 100), "abc");
 });
 
-test("which model answers: an https endpoint, or plain http only to this machine", () => {
-    const saved = { ...process.env };
+const ENGINE_KEYS = ["HANOGT_AI_API_KEY", "HANOGT_AI_BASE_URL", "HANOGT_AI_MODEL", "HANOGT_AI_EXTRA_BODY", "GROQ_API_KEY", "GROQ_MODEL"];
+
+/** Runs `run` with only `values` among the engine's variables, then puts them back. */
+function withEngineEnv(run) {
+    const saved = Object.fromEntries(ENGINE_KEYS.map((key) => [key, process.env[key]]));
+    const set = (values = {}) => {
+        for (const key of ENGINE_KEYS) delete process.env[key];
+        Object.assign(process.env, values);
+    };
     try {
-        delete process.env.HANOGT_AI_API_KEY;
-        delete process.env.GROQ_API_KEY;
-        assert.equal(core.providerConfig(), null, "no key: the Core answers");
-        process.env.HANOGT_AI_API_KEY = "k";
-        process.env.HANOGT_AI_BASE_URL = "http://evil.example.com/v1";
-        assert.equal(core.providerConfig(), null);
-        process.env.HANOGT_AI_BASE_URL = "http://127.0.0.1:11434/v1/";
-        assert.deepEqual(core.providerConfig(), { apiKey: "k", baseUrl: "http://127.0.0.1:11434/v1", model: "llama-3.3-70b-versatile", extraBody: {} });
-        process.env.HANOGT_AI_BASE_URL = "https://api.example.com/openai/v1";
-        process.env.HANOGT_AI_MODEL = "my-model";
-        assert.equal(core.providerConfig().model, "my-model");
+        run(set);
     } finally {
-        for (const key of ["HANOGT_AI_API_KEY", "HANOGT_AI_BASE_URL", "HANOGT_AI_MODEL"]) {
-            if (key in saved) process.env[key] = saved[key];
-            else delete process.env[key];
+        for (const key of ENGINE_KEYS) {
+            if (saved[key] === undefined) delete process.env[key];
+            else process.env[key] = saved[key];
         }
     }
+}
+
+test("which model answers: the owner's own endpoint, with no default and never Groq or Anthropic", () => {
+    withEngineEnv((set) => {
+        set();
+        assert.equal(core.providerConfig(), null, "nothing configured: the Core answers");
+        set({ GROQ_API_KEY: "gsk_x", GROQ_MODEL: "llama-3.3-70b-versatile" });
+        assert.equal(core.providerConfig(), null, "Groq's old variables aren't read");
+        set({ HANOGT_AI_API_KEY: "k", HANOGT_AI_BASE_URL: "http://127.0.0.1:11434/v1/" });
+        assert.equal(core.providerConfig(), null, "no default model");
+        set({ HANOGT_AI_BASE_URL: "http://127.0.0.1:11434/v1/", HANOGT_AI_MODEL: "m" });
+        assert.equal(core.providerConfig(), null, "no key");
+        set({ HANOGT_AI_API_KEY: "k", HANOGT_AI_BASE_URL: "http://evil.example.com/v1", HANOGT_AI_MODEL: "m" });
+        assert.equal(core.providerConfig(), null, "plain http only to this machine");
+        set({ HANOGT_AI_API_KEY: "k", HANOGT_AI_BASE_URL: "http://127.0.0.1:11434/v1/", HANOGT_AI_MODEL: "hanogt-qwen3" });
+        assert.deepEqual(core.providerConfig(), { apiKey: "k", baseUrl: "http://127.0.0.1:11434/v1", model: "hanogt-qwen3", extraBody: {} });
+        for (const url of ["https://api.groq.com/openai/v1", "https://eu.api.groq.com/v1", "https://api.anthropic.com/v1"]) {
+            set({ HANOGT_AI_API_KEY: "k", HANOGT_AI_BASE_URL: url, HANOGT_AI_MODEL: "m" });
+            assert.equal(core.providerConfig(), null, url);
+        }
+        set({ HANOGT_AI_API_KEY: "k", HANOGT_AI_BASE_URL: "https://llm.example.com/v1", HANOGT_AI_MODEL: "some-model:groq" });
+        assert.equal(core.providerConfig(), null, "a model routed to Groq anywhere");
+        // Hugging Face's router: the model names its provider (never Groq, never an automatic choice).
+        const cases = [["Qwen/Qwen3-32B", false], ["Qwen/Qwen3-32B:fastest", false], ["Qwen/Qwen3-32B:cheapest", false], ["Qwen/Qwen3-32B:preferred", false], ["Qwen/Qwen3-32B:groq", false], ["Qwen/Qwen3-32B:cerebras", true], ["HanStudios/hanogt-ai-8b:featherless-ai", true]];
+        for (const [model, allowed] of cases) {
+            set({ HANOGT_AI_API_KEY: "hf_x", HANOGT_AI_BASE_URL: "https://router.huggingface.co/v1", HANOGT_AI_MODEL: model });
+            assert.equal(core.providerConfig() !== null, allowed, model);
+        }
+        set({ HANOGT_AI_API_KEY: "hf_x", HANOGT_AI_BASE_URL: "https://abc123.us-east-1.aws.endpoints.huggingface.cloud/v1", HANOGT_AI_MODEL: "tgi" });
+        assert.equal(core.providerConfig().model, "tgi", "an Inference Endpoint runs one model: no provider to name");
+    });
+});
+
+test("the request body: the extra fields, then whether to think, then the request's own fields", () => {
+    const extra = { chat_template_kwargs: { foo: 1, enable_thinking: false }, top_k: 20 };
+    assert.deepEqual(core.hanogtRequestBody(extra, { model: "m", temperature: 0.6 }, true), { chat_template_kwargs: { foo: 1, enable_thinking: true }, top_k: 20, model: "m", temperature: 0.6 });
+    assert.deepEqual(core.hanogtRequestBody(extra, { model: "m" }, null), { chat_template_kwargs: { foo: 1, enable_thinking: false }, top_k: 20, model: "m" }, "null leaves it to the extra fields");
+    assert.deepEqual(core.hanogtRequestBody({}, { model: "m" }, false), { chat_template_kwargs: { enable_thinking: false }, model: "m" });
+    assert.deepEqual(core.hanogtRequestBody({ top_k: 1 }, { top_k: 5 }, null), { top_k: 5 }, "the request's own fields win");
 });
 
 test("knowledge notes and analyzer notes ground the answer", () => {
@@ -110,10 +146,10 @@ test("knowledge notes and analyzer notes ground the answer", () => {
     assert.ok(tools.some((note) => note.startsWith("Hanogt Link Check")));
 });
 
-test("the prompt in two parts: the stable rules (cached by the advanced engine) and what changes with each message", () => {
+test("the prompt in two parts: the stable rules and what changes with each message", () => {
     const options = { ...base, mode: "code", path: "/editor", agent: "requested", knowledge: ["### Kod editörü\nNotlar"], tools: ["Hanogt error explainer: ..."], file: { name: "main.py", language: "python", code: "print(1)" }, personal: PERSONAL, personalMax: 500 };
     const { stable, dynamic } = core.systemPromptParts(options);
-    assert.equal(core.systemPrompt(options), `${stable}\n${dynamic}`, "the standard engine gets the same text in one piece");
+    assert.equal(core.systemPrompt(options), `${stable}\n${dynamic}`, "the chat and the API get the same text in one piece");
     for (const part of ["The user is on the page /editor.", "Hanogt knowledge:", "Hanogt error explainer", "main.py", "<user_preferences>"]) {
         assert.ok(dynamic.includes(part) && !stable.includes(part), part);
     }
@@ -126,11 +162,8 @@ test("the prompt in two parts: the stable rules (cached by the advanced engine) 
 });
 
 test("HANOGT_AI_EXTRA_BODY: extra fields for a self-hosted model, never the request's own", () => {
-    const saved = { ...process.env };
-    try {
-        process.env.HANOGT_AI_API_KEY = "test-key";
-        process.env.HANOGT_AI_BASE_URL = "http://127.0.0.1:8000/v1";
-        delete process.env.HANOGT_AI_EXTRA_BODY;
+    withEngineEnv((set) => {
+        set({ HANOGT_AI_API_KEY: "test-key", HANOGT_AI_BASE_URL: "http://127.0.0.1:8000/v1", HANOGT_AI_MODEL: "hanogt" });
         assert.deepEqual(core.providerConfig().extraBody, {}, "none by default");
         process.env.HANOGT_AI_EXTRA_BODY = JSON.stringify({ chat_template_kwargs: { enable_thinking: false }, top_k: 20, model: "other", messages: [], stream: false, max_tokens: 99999, tools: [] });
         assert.deepEqual(core.providerExtraBody(), { chat_template_kwargs: { enable_thinking: false }, top_k: 20 }, "reserved fields are dropped");
@@ -139,10 +172,5 @@ test("HANOGT_AI_EXTRA_BODY: extra fields for a self-hosted model, never the requ
             process.env.HANOGT_AI_EXTRA_BODY = broken;
             assert.deepEqual(core.providerExtraBody(), {}, broken.slice(0, 20));
         }
-    } finally {
-        for (const key of ["HANOGT_AI_API_KEY", "HANOGT_AI_BASE_URL", "HANOGT_AI_EXTRA_BODY"]) {
-            if (key in saved) process.env[key] = saved[key];
-            else delete process.env[key];
-        }
-    }
+    });
 });

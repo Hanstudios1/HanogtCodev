@@ -489,7 +489,7 @@ function PostModal({ detail, signedIn, busy, onClose, onDelete, onComment, onRep
                                             <option value="spam">Spam</option>
                                             <option value="other">{tx({ TR: "Diğer", EN: "Other" })}</option>
                                         </select>
-                                        <textarea value={reportReason} onChange={(event) => setReportReason(event.target.value)} placeholder={tx({ TR: "Neyi incelemeliyiz?", EN: "What should we review?" })} aria-label={tx({ TR: "Neyi incelemeliyiz?", EN: "What should we review?" })} rows={3} className="w-full resize-none rounded-xl bg-zinc-950 px-3 py-2 text-xs outline-none" />
+                                        <textarea value={reportReason} onChange={(event) => setReportReason(event.target.value)} placeholder={tx({ TR: "Neyi incelemeliyiz?", EN: "What should we review?" })} aria-label={tx({ TR: "Neyi incelemeliyiz?", EN: "What should we review?" })} rows={3} className="w-full resize-none rounded-xl bg-zinc-950 px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-red-400/50" />
                                         <button type="button" disabled={busy || !reportReason.trim()} onClick={() => void onReport(reportCategory, reportReason).then((ok) => {
                                             if (!ok) return;
                                             setReportOpen(false);
@@ -777,12 +777,12 @@ export default function MediaPage() {
 
             <section className="mx-auto max-w-7xl px-6 py-10">
                 <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center">
-                    <label className={`${panel} flex flex-1 items-center gap-3 rounded-2xl px-4 py-3`}>
+                    <label className={`${panel} flex flex-1 items-center gap-3 rounded-2xl px-4 py-3 transition focus-within:ring-2 focus-within:ring-indigo-500/40`}>
                         <Search className="h-5 w-5 text-zinc-400" aria-hidden />
                         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={tx({ TR: "Proje, geliştirici veya etiket ara", EN: "Search projects, developers or tags" })} aria-label={tx({ TR: "Proje, geliştirici veya etiket ara", EN: "Search projects, developers or tags" })} className="w-full bg-transparent outline-none placeholder:text-zinc-400" />
                     </label>
                     <div className="flex flex-wrap gap-3">
-                        <label className={`${panel} flex items-center gap-2 rounded-2xl px-3`}>
+                        <label className={`${panel} flex items-center gap-2 rounded-2xl px-3 transition focus-within:ring-2 focus-within:ring-indigo-500/40`}>
                             <Filter className="h-4 w-4 text-zinc-400" aria-hidden />
                             <select value={language} onChange={(event) => setLanguage(event.target.value)} aria-label={tx({ TR: "Tüm diller", EN: "All languages" })} className="h-12 bg-transparent text-sm outline-none">
                                 <option value="all">{tx({ TR: "Tüm diller", EN: "All languages" })}</option>

@@ -4,31 +4,39 @@ An OpenAI-compatible subset of the chat completions API, so apps, bots and
 scripts can call Hanogt AI with a key. Keys are made on **/ai/api** (the 🔑
 button above the chat). The page also holds the person's own provider
 connections ("Your own keys"), which are a different thing: those send chat
-messages to OpenAI, Claude, Gemini… with the person's key.
+messages with the person's key to OpenAI, Anthropic Claude, Google Gemini,
+Mistral AI, OpenRouter, DeepSeek, xAI Grok or Together AI. Groq is no longer
+supported there: Groq connections made earlier are listed as *No longer
+supported* and can only be deleted (they don't count toward the plan's
+connections).
 
 The API is behind the `ai_api` feature (Admin › Subscriptions › Features and
 early access), open to everyone by default: every Plus and Pro account can
 make keys. The team can narrow it to early access or staff, or switch it off;
 then `/api/v1` answers 403 `feature_unavailable` and the page says the API
 isn't on for the account. The rules for using it are in the Terms of Use
-(`/terms-of-use#ai-api`, legal 4.5).
+(`/terms-of-use#ai-api`, legal 4.5; the shared allowance since 4.7).
 
 ## Plans
 
 | | Free | Plus | Pro |
 | --- | --- | --- | --- |
 | Keys | – | 2 | 5 |
-| Requests a minute | – | 10 | 30 |
-| Requests in 24 hours | – | 250 | 1,000 |
+| Messages a minute (chat and API together) | – | 20 | 30 |
+| Messages in the window (chat and API together) | – | 750 in 14 days | 2,000 in 7 days |
 | Longest answer (`max_tokens`) | – | 3,000 | 4,000 |
+| Thinking budget on top of it | – | 2,000 | 3,000 |
 
-Requests are counted per account (all keys together) in a minute window and
-a 24-hour window that starts with the first request
-(`ai-api:{email}` / `ai-api-day:{email}`), separately from chat messages.
-Only `POST /chat/completions` counts. After a downgrade the oldest keys
-within the new allowance keep working; the others answer `key_inactive`
+The API has no quota of its own any more. Every `POST /chat/completions` is
+one Hanogt AI message (source `api`), counted per account (all keys together)
+in the same minute guard and plan window as the chat (`ai:{email}` /
+`ai-window:{email}`); the window opens with the first message and a staff
+grant adds to it. A request the model couldn't answer at all (unreachable,
+too slow, an error, an empty answer) is given back while the same window is
+still open. Only `POST /chat/completions` counts. After a downgrade the oldest
+keys within the new allowance keep working; the others answer `key_inactive`
 until the person revokes some or upgrades. The values live in
-`PLAN_AI_FEATURES` (`src/lib/plans.ts`).
+`PLAN_AI_LIMITS` and `PLAN_AI_FEATURES` (`src/lib/plans.ts`).
 
 ## Requests
 
@@ -55,7 +63,21 @@ for await (const chunk of stream) process.stdout.write(chunk.choices[0]?.delta?.
 | --- | --- |
 | `POST /chat/completions` | A chat answer (`chat.completion`), or with `stream: true` server-sent `chat.completion.chunk` events ending with `data: [DONE]`. |
 | `GET /models`, `GET /models/hanogt-ai` | The one model. |
-| `GET /usage` | The account's requests in the current minute and 24 hours, and its key count. |
+| `GET /usage` | The account's Hanogt AI messages in the current minute and in the plan's window (chat and API together), and its key count. Not counted itself. |
+
+```json
+{
+  "object": "usage",
+  "plan": "plus",
+  "requests": {
+    "minute": { "limit": 20, "used": 1, "remaining": 19, "resets_at": "2026-10-05T10:01:00.000Z" },
+    "window": { "limit": 750, "used": 42, "remaining": 708, "resets_at": "2026-10-12T09:30:00.000Z", "days": 14 }
+  },
+  "keys": { "used": 1, "limit": 2 }
+}
+```
+
+`resets_at` is null while no window is open.
 
 `POST /chat/completions` accepts:
 
@@ -70,6 +92,15 @@ for await (const chunk of stream) process.stdout.write(chunk.choices[0]?.delta?.
   `max_tokens` or `max_completion_tokens` (never more than the plan's).
 - Hanogt extras: `mode` (`general`, `code`, `security`) and `language` (a
   two-letter code for the answer's language; default `en`).
+- `include_reasoning: true` (or `reasoning: true`, or a `reasoning` object
+  without `exclude: true`): the model thinks first and its thinking comes back
+  as `message.reasoning_content`, or as `delta.reasoning_content` chunks
+  before the text when streaming. Without it the model still thinks in `code`
+  and `security` mode and for long messages (400 characters or more), but the
+  thinking isn't returned. A thinking request uses `temperature` 0.6 and
+  `top_p` 0.95 unless the request sets them, and gets the plan's thinking
+  budget on top of `max_tokens`. Thinking sent back in later requests (a
+  leading `<think>…</think>` block in an assistant message) is removed.
 - Refused with 400 `unsupported_parameter`: `tools`, `functions`,
   `function_call`, `tool_choice` other than `"none"`, `n` > 1, audio,
   images, `response_format` other than text. Other OpenAI parameters
@@ -77,9 +108,12 @@ for await (const chunk of stream) process.stdout.write(chunk.choices[0]?.delta?.
 
 Answers never carry the provider's ids or model name. Every answer after the
 request was counted has `x-ratelimit-limit-requests`,
-`x-ratelimit-remaining-requests`, `x-ratelimit-reset-requests` (the minute)
-and `x-hanogt-ratelimit-limit-day`, `-remaining-day`, `-reset-day` (the 24
-hours); a 429 has `Retry-After`.
+`x-ratelimit-remaining-requests`, `x-ratelimit-reset-requests` (the minute,
+e.g. `42s`) and `x-hanogt-ratelimit-limit-window`,
+`x-hanogt-ratelimit-remaining-window`, `x-hanogt-ratelimit-reset-window` (ISO
+time the window starts afresh) and `x-hanogt-ratelimit-window-days` (7 or 14):
+the plan's window, shared with the chat. They replace the old
+`x-hanogt-ratelimit-*-day` headers. A 429 has `Retry-After`.
 
 ## Errors
 
@@ -92,9 +126,12 @@ OpenAI's shape: `{ "error": { "message", "type", "code", "param" } }`.
 | 400 | `invalid_request`, `unsupported_parameter` | `param` names the field. |
 | 404 | `model_not_found` | |
 | 413 | `context_length_exceeded` | Messages or the system text too long. |
-| 429 | `rate_limit_exceeded` | The minute or 24-hour window, or one address sending more than 300 requests a minute. |
-| 424 | `upstream_error` | The model failed (never 502/504: Cloudflare would replace the body). |
-| 503 | `service_unavailable` | The database or the model can't be reached, or Hanogt AI isn't configured. |
+| 429 | `rate_limit_exceeded` | The minute guard or the plan's window (both shared with the chat), one address sending more than 300 requests a minute, or the model's host is busy (`Retry-After: 5`). |
+| 424 | `upstream_error` | The model failed or sent an empty answer (never 502/504: Cloudflare would replace the body). |
+| 503 | `service_unavailable` | The database or the model can't be reached, the model took too long, or Hanogt AI isn't configured (`HANOGT_AI_*`, checked before counting). |
+
+A counted request the model didn't answer (a 424 or 503, a busy host's 429,
+or a stream without any text) is given back to the window.
 
 A stream that fails midway ends with an error event and `data: [DONE]`.
 
@@ -128,6 +165,8 @@ A stream that fails midway ends with an error event and `data: [DONE]`.
 | `src/lib/ai/api-keys.ts` | Shared types, limits and error codes (client-safe). |
 | `src/lib/server/ai-api-keys.ts` | Keys: make, list, revoke, find, note use, export, delete. |
 | `src/lib/server/hanogt-ai-api.ts` | Who is calling, the request body, counting, OpenAI's answer and stream shapes. |
+| `src/lib/server/ai-usage.ts` | The minute guard and window shared with the chat, and giving a message back. |
+| `src/lib/ai/thinking.ts` | Splitting the thinking from the answer (shared with the chat). |
 | `src/app/api/v1/**` | The routes (thin). |
 | `src/app/api/ai/keys/route.ts` | Key management for the signed-in account. |
 | `src/components/HanogtAI/AiApiPage.tsx`, `ApiKeysPanel.tsx`, `ApiDocs.tsx`, `ConnectionsManager.tsx` | The /ai/api page. |

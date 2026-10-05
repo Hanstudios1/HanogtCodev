@@ -8,6 +8,21 @@ import { useCallback, useSyncExternalStore } from "react";
 import type { AgentCallRecord, AgentMessageState } from "./agent-protocol";
 import { isAgentToolName } from "./agent-tools";
 import type { AiMode } from "./local-engine";
+import { readThinkingStep, type ThinkingStep } from "./thinking";
+
+/** What the model (or the Core) thought before an answer, as the thinking panel shows it. */
+export interface AiThinking {
+    /** The model's thinking text (kept up to THINKING_STORED_MAX characters). */
+    text: string;
+    /** How long it thought, measured in the browser; null when unknown. */
+    seconds: number | null;
+    /** The steps taken before the answer (knowledge, analyzers, file, agent). */
+    steps: ThinkingStep[];
+    /** The Core's own trace: the intent it recognized and how sure it was. */
+    core?: { intent: string; confidence: number };
+}
+
+export const THINKING_STORED_MAX = 6_000;
 
 export interface AiMessage {
     id: string;
@@ -22,8 +37,8 @@ export interface AiMessage {
     error?: boolean;
     /** Why the offline core answered instead of the language model (already localized). */
     notice?: string;
-    /** A link next to the notice: "plans" (a daily limit a bigger plan raises). */
-    noticeAction?: "plans";
+    /** A link next to the notice: "plans" (a limit a bigger plan raises) or "signin". */
+    noticeAction?: "plans" | "signin";
     /** Agent actions proposed in this answer and what became of them. */
     agent?: AgentMessageState;
     /** A code file sent with this question (only its name and language are kept). */
@@ -34,10 +49,10 @@ export interface AiMessage {
     connectionId?: string;
     /** That connection's label at the time. */
     connectionLabel?: string;
-    /** The advanced code engine wrote this answer (src/lib/ai/engine.ts). */
-    advanced?: boolean;
-    /** Why the standard engine answered although the advanced one was wanted. */
-    engineNote?: "quota" | "unavailable";
+    /** What was thought before this answer (never sent back to the model). */
+    thinking?: AiThinking;
+    /** The answer stopped early: it hit its length, the time limit or an error ("continue" picks it up). */
+    cut?: "length" | "timeout" | "error";
 }
 
 export interface AiConversation {
@@ -81,6 +96,22 @@ function readAgentState(value: unknown): AgentMessageState | undefined {
     return { source: state.source, calls, followUp: state.followUp === "waiting" || state.followUp === "sent" ? state.followUp : undefined, round: typeof state.round === "number" ? state.round : 0 };
 }
 
+/** Stored thinking re-checked (it comes from localStorage): known steps, bounded text, a sane duration. */
+function readThinking(value: unknown): AiThinking | undefined {
+    if (!value || typeof value !== "object") return undefined;
+    const record = value as Record<string, unknown>;
+    const text = typeof record.text === "string" ? record.text.slice(0, THINKING_STORED_MAX) : "";
+    const steps = Array.isArray(record.steps) ? record.steps.map(readThinkingStep).filter((step): step is ThinkingStep => step !== null).slice(0, 12) : [];
+    const seconds = typeof record.seconds === "number" && Number.isFinite(record.seconds) && record.seconds >= 0 && record.seconds < 3_600 ? record.seconds : null;
+    const core = record.core && typeof record.core === "object" && typeof (record.core as { intent?: unknown }).intent === "string" && typeof (record.core as { confidence?: unknown }).confidence === "number"
+        ? { intent: String((record.core as { intent: string }).intent).slice(0, 60), confidence: Math.min(1, Math.max(0, (record.core as { confidence: number }).confidence)) }
+        : undefined;
+    if (!text && !steps.length && !core) return undefined;
+    return { text, seconds, steps, ...(core ? { core } : {}) };
+}
+
+const CUTS = new Set(["length", "timeout", "error"]);
+
 function read(): AiConversation[] {
     if (cache) return cache;
     try {
@@ -91,7 +122,12 @@ function read(): AiConversation[] {
                 .map((entry) => ({
                     ...entry,
                     mode: entry.mode === "code" || entry.mode === "security" ? entry.mode : "general",
-                    messages: entry.messages.filter(isMessage).map((message) => (message.agent ? { ...message, agent: readAgentState(message.agent) } : message)),
+                    messages: entry.messages.filter(isMessage).map((message) => {
+                        const { thinking, cut, ...rest } = message;
+                        const checked = { ...rest, ...(message.agent ? { agent: readAgentState(message.agent) } : {}) };
+                        const kept = readThinking(thinking);
+                        return { ...checked, ...(kept ? { thinking: kept } : {}), ...(cut && CUTS.has(cut) ? { cut } : {}) };
+                    }),
                 }))
             : [];
     } catch {

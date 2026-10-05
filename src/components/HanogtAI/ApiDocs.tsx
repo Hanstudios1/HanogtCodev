@@ -4,7 +4,7 @@ import { BookOpen, Check, Copy as CopyIcon } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { API_BASE_PATH, API_ERROR_CODES, API_INPUT_CHARS_MAX, API_MESSAGES_MAX, API_MODEL_ID, API_SYSTEM_MAX, type ApiErrorCode } from "@/lib/ai/api-keys";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { PLAN_AI_FEATURES } from "@/lib/plans";
+import { PLAN_AI_LIMITS, PLAN_AI_FEATURES } from "@/lib/plans";
 import { SITE_URL } from "@/lib/site";
 import { cx } from "./ui";
 
@@ -30,8 +30,9 @@ const C = {
     paramMode: { TR: "Hanogt'a özel: mode (general, code, security) ve language (iki harfli kod, ör. tr). Varsayılan: general ve en.", EN: "Hanogt extras: mode (general, code, security) and language (a two-letter code such as tr). Defaults: general and en." },
     paramUnsupported: { TR: "Desteklenmeyenler hata verir: tools, function_call, n > 1, ses ve görsel. Diğer OpenAI parametreleri yok sayılır.", EN: "Not supported, with an error: tools, function_call, n > 1, audio and images. Other OpenAI parameters are ignored." },
     limits: { TR: "Sınırlar", EN: "Limits" },
-    limitsBody: { TR: "Hesap başına (bütün anahtarlar birlikte): Plus dakikada {plusMinute} ve 24 saatte {plusDay}, Pro dakikada {proMinute} ve 24 saatte {proDay} istek. Anahtar: Plus {plusKeys}, Pro {proKeys}. 24 saat, ilk isteğinden itibaren sayılır.", EN: "Per account (all keys together): Plus {plusMinute} a minute and {plusDay} in 24 hours, Pro {proMinute} a minute and {proDay} in 24 hours. Keys: Plus {plusKeys}, Pro {proKeys}. The 24 hours count from your first request." },
-    headers: { TR: "Her yanıtta: x-ratelimit-limit-requests, x-ratelimit-remaining-requests ve x-ratelimit-reset-requests (dakika); x-hanogt-ratelimit-limit-day, -remaining-day ve -reset-day (24 saat). 429'da Retry-After saniyeyi söyler.", EN: "Every answer has x-ratelimit-limit-requests, x-ratelimit-remaining-requests and x-ratelimit-reset-requests (the minute) and x-hanogt-ratelimit-limit-day, -remaining-day and -reset-day (the 24 hours). On a 429, Retry-After gives the seconds to wait." },
+    limitsBody: { TR: "API'nin ayrı bir sınırı yok: her istek, planının Hanogt AI mesaj hakkından bir mesaj düşer (sohbetle ortak; bütün anahtarlar birlikte). Plus'ta 2 haftada {plusWindow}, Pro'da haftada {proWindow} mesaj; dakikada en fazla Plus {plusMinute}, Pro {proMinute}. Süre ilk mesajından itibaren sayılır. Model hiç yanıt veremezse mesaj hakkından düşülmez. Anahtar: Plus {plusKeys}, Pro {proKeys}.", EN: "The API has no limit of its own: every request uses one of your plan's Hanogt AI messages (shared with the chat; all keys together). Plus has {plusWindow} every 2 weeks, Pro {proWindow} a week; at most Plus {plusMinute}, Pro {proMinute} a minute. The period counts from your first message. A request the model can't answer at all isn't counted. Keys: Plus {plusKeys}, Pro {proKeys}." },
+    headers: { TR: "Her yanıtta: x-ratelimit-limit-requests, x-ratelimit-remaining-requests ve x-ratelimit-reset-requests (dakika); x-hanogt-ratelimit-limit-window, -remaining-window, -reset-window ve x-hanogt-ratelimit-window-days (mesaj hakkı). 429'da Retry-After saniyeyi söyler.", EN: "Every answer has x-ratelimit-limit-requests, x-ratelimit-remaining-requests and x-ratelimit-reset-requests (the minute) and x-hanogt-ratelimit-limit-window, -remaining-window, -reset-window and x-hanogt-ratelimit-window-days (your message allowance). On a 429, Retry-After gives the seconds to wait." },
+    reasoning: { TR: "Düşünme: istekte include_reasoning: true (ya da reasoning: true) gönderirsen model önce düşünür ve düşüncesi yanıtta message.reasoning_content (akışta delta.reasoning_content) olarak gelir. Düşünce bir sonraki istekte geri gönderilmemeli; gönderilse de silinir.", EN: "Thinking: send include_reasoning: true (or reasoning: true) and the model thinks first; its thinking comes back as message.reasoning_content (delta.reasoning_content when streaming). Don't send the thinking back in later requests; it is removed if you do." },
     errors: { TR: "Hatalar", EN: "Errors" },
     errorsBody: { TR: "Hatalar OpenAI biçimindedir: { \"error\": { \"message\", \"type\", \"code\", \"param\" } }.", EN: "Errors use OpenAI's shape: { \"error\": { \"message\", \"type\", \"code\", \"param\" } }." },
     status: { TR: "Durum", EN: "Status" },
@@ -185,11 +186,12 @@ export default function ApiDocs() {
             <Heading>{tx(C.limits)}</Heading>
             <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
                 {tx(C.limitsBody, {
-                    plusMinute: number(plus.api?.perMinute ?? 0), plusDay: number(plus.api?.perDay ?? 0), proMinute: number(pro.api?.perMinute ?? 0), proDay: number(pro.api?.perDay ?? 0),
+                    plusMinute: number(PLAN_AI_LIMITS.plus.perMinute), plusWindow: number(PLAN_AI_LIMITS.plus.perWindow), proMinute: number(PLAN_AI_LIMITS.pro.perMinute), proWindow: number(PLAN_AI_LIMITS.pro.perWindow),
                     plusKeys: plus.api?.keys ?? 0, proKeys: pro.api?.keys ?? 0,
                 })}
             </p>
             <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.headers)}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300" data-api-reasoning>{tx(C.reasoning)}</p>
 
             <Heading>{tx(C.errors)}</Heading>
             <p className="mt-2 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">{tx(C.errorsBody)}</p>

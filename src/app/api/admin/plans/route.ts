@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import type { AdminCoupon, AdminCouponRestoreResponse, AdminPlansResponse, AdminPriceChange } from "@/components/Admin/types";
-import { readEngineSettingsInput } from "@/lib/ai/engine";
 import { FEATURE_AUDIENCES, FEATURE_IDS, normalizeFeatureFlags } from "@/lib/features";
 import type { PaddleEnvironment } from "@/lib/paddle";
 import {
@@ -32,7 +31,6 @@ import {
     writeAuditLog,
 } from "@/lib/server/admin";
 import { revokeAllApiKeys } from "@/lib/server/ai-api-keys";
-import { AI_ENGINE_PATH, engineOverview, engineSettingsWrite, forgetEngineCache } from "@/lib/server/ai-engine";
 import { couponDeletionDetails, listDeletedCoupons, restoreCoupon } from "@/lib/server/coupon-admin";
 import { FEATURES_PATH, featureAudienceWrite, forgetFeatureCache } from "@/lib/server/features";
 import { commitServerMutations, countServerQuery, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
@@ -59,8 +57,8 @@ import {
 
 export const runtime = "nodejs";
 
-const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "restoreCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi", "setFeature", "revokeApiKeys", "setAiEngine"] as const;
-const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "recur", "note", "active", "email", "days", "blocked", "extraDaily", "feature", "audience", "settings"];
+const ACTIONS = ["setPrice", "createCoupon", "setCouponActive", "deleteCoupon", "restoreCoupon", "setPlan", "setBlocked", "removePlan", "resetAi", "grantAi", "setFeature", "revokeApiKeys"] as const;
+const BODY_KEYS = ["action", "plan", "monthly", "yearly", "discountPercent", "visible", "code", "percentOff", "maxUses", "expiresAt", "recur", "note", "active", "email", "days", "blocked", "extraDaily", "feature", "audience"];
 const HISTORY_MAX = 30;
 const COUPONS_MAX = 200;
 const DAY_MS = 24 * 60 * 60_000;
@@ -117,13 +115,12 @@ function historyOf(value: unknown): AdminPriceChange[] {
 }
 
 async function overview(): Promise<AdminPlansResponse> {
-    const [catalogRecord, coupons, plus, pro, featureRecord, engine] = await Promise.all([
+    const [catalogRecord, coupons, plus, pro, featureRecord] = await Promise.all([
         getServerDocument<Record<string, unknown>>(CATALOG_PATH),
         runServerQuery<Record<string, unknown>>({ collectionId: "plan_coupons", orderBy: [{ field: "createdAt", direction: "DESCENDING" }], limit: COUPONS_MAX }).catch(() => []),
         countServerQuery({ collectionId: "plan_waitlist", where: [{ field: "plans", op: "ARRAY_CONTAINS", value: "plus" }], upTo: 100_000 }).catch(() => null),
         countServerQuery({ collectionId: "plan_waitlist", where: [{ field: "plans", op: "ARRAY_CONTAINS", value: "pro" }], upTo: 100_000 }).catch(() => null),
         getServerDocument<{ audiences?: unknown; updatedAt?: unknown; updatedBy?: unknown }>(FEATURES_PATH),
-        engineOverview(),
     ]);
     const config = getPaddleConfig();
     const list = coupons.map((record) => couponOf(record as Record<string, unknown> & { _id: string }, config.environment));
@@ -149,7 +146,6 @@ async function overview(): Promise<AdminPlansResponse> {
             updatedAt: toIso(featureRecord?.updatedAt),
             updatedBy: typeof featureRecord?.updatedBy === "string" ? featureRecord.updatedBy : null,
         },
-        engine,
     };
 }
 
@@ -195,18 +191,6 @@ export async function POST(request: NextRequest) {
                 auditLogMutation(actor, "feature.set", FEATURES_PATH, { feature, audience }),
             ]);
             forgetFeatureCache();
-            return adminJson(await overview());
-        }
-
-        if (action === "setAiEngine") {
-            // The advanced code engine: on or off, model, effort, which messages and each plan's answers a day.
-            const settings = readEngineSettingsInput(body.settings);
-            if (!settings) throw new AdminHttpError(400, "invalid_action");
-            await commitServerMutations([
-                engineSettingsWrite(settings, actor, now),
-                auditLogMutation(actor, "ai_engine.set", AI_ENGINE_PATH, { enabled: settings.enabled, model: settings.model, effort: settings.effort, scope: settings.scope, free: settings.daily.free, plus: settings.daily.plus, pro: settings.daily.pro }),
-            ]);
-            forgetEngineCache();
             return adminJson(await overview());
         }
 

@@ -11,7 +11,7 @@ import { ICON_BUTTON } from "./ui";
 
 const C = {
     title: { TR: "Yapay zekâ bağlantıları", EN: "AI connections" },
-    intro: { TR: "OpenAI, Claude, Gemini ve diğer sağlayıcılardaki hesabını kendi API anahtarınla Hanogt AI'a bağla. Bu bağlantılarla gönderdiğin mesajlar Hanogt AI'ın günlük mesaj hakkından düşmez.", EN: "Connect your OpenAI, Claude, Gemini or other provider account to Hanogt AI with your own API key. Messages sent through these connections don't use your Hanogt AI daily messages." },
+    intro: { TR: "OpenAI, Claude, Gemini ve diğer sağlayıcılardaki hesabını kendi API anahtarınla Hanogt AI'a bağla. Bu bağlantılarla gönderdiğin mesajlar Hanogt AI'ın mesaj hakkından düşmez; planının kendi anahtar sınırı geçerlidir.", EN: "Connect your OpenAI, Claude, Gemini or other provider account to Hanogt AI with your own API key. Messages sent through these connections don't use your Hanogt AI messages; your plan's own-key limit applies instead." },
     close: { TR: "Kapat", EN: "Close" },
     page: { TR: "API ve bağlantılar sayfası", EN: "The API and connections page" },
 } satisfies Record<string, Copy>;

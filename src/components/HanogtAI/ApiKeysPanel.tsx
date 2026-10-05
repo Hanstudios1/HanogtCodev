@@ -7,7 +7,7 @@ import { API_KEY_NAME_MAX, isApiKeysState, type ApiKeyCreated, type ApiKeyView, 
 import { currentWindow, formatResetTime, usageLevel, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { onPlanChange } from "@/lib/plan-signal";
-import { PLAN_AI_FEATURES, PLAN_COPY } from "@/lib/plans";
+import { PLAN_AI_LIMITS, PLAN_AI_FEATURES, PLAN_COPY } from "@/lib/plans";
 import { cx } from "./ui";
 
 const C = {
@@ -16,11 +16,11 @@ const C = {
     loadFailed: { TR: "Anahtarlar yüklenemedi.", EN: "Your keys couldn't be loaded." },
     retry: { TR: "Tekrar dene", EN: "Try again" },
     planLine: { TR: "Planın: {plan} · {count} / {limit} anahtar", EN: "Your plan: {plan} · {count} / {limit} keys" },
-    limits: { TR: "Dakikada {perMinute}, 24 saatte {perDay} istek", EN: "{perMinute} requests a minute, {perDay} in 24 hours" },
-    planRequired: { TR: "Hanogt AI API'si Plus ve Pro planlarında: Plus'ta {plus} anahtar ve günde {plusDay} istek, Pro'da {pro} anahtar ve günde {proDay} istek.", EN: "The Hanogt AI API comes with Plus and Pro: {plus} keys and {plusDay} requests a day on Plus, {pro} keys and {proDay} on Pro." },
+    limits: { TR: "İstekler Hanogt AI mesaj hakkından düşer (sohbetle ortak): {days} günde {perWindow}, dakikada {perMinute}.", EN: "Requests use your Hanogt AI messages (shared with the chat): {perWindow} every {days} days, {perMinute} a minute." },
+    planRequired: { TR: "Hanogt AI API'si Plus ve Pro planlarında: Plus'ta {plus} anahtar, Pro'da {pro} anahtar. İstekler planın Hanogt AI mesaj hakkından düşer (Plus 2 haftada {plusWindow}, Pro haftada {proWindow}).", EN: "The Hanogt AI API comes with Plus and Pro: {plus} keys on Plus, {pro} on Pro. Requests use the plan's Hanogt AI messages (Plus {plusWindow} every 2 weeks, Pro {proWindow} a week)." },
     seePlans: { TR: "Planları gör", EN: "See plans" },
     notOpen: { TR: "Hanogt AI API'si şu an hesabında açık değil. Belgeleri yine de inceleyebilirsin.", EN: "The Hanogt AI API isn't on for your account right now. You can still read the docs." },
-    today: { TR: "Son 24 saat", EN: "Last 24 hours" },
+    today: { TR: "Bu dönemki Hanogt AI mesajları (sohbet + API)", EN: "This period's Hanogt AI messages (chat + API)" },
     renews: { TR: "Yenilenme: {time}", EN: "Renews: {time}" },
     none: { TR: "Henüz anahtarın yok.", EN: "You don't have any keys yet." },
     active: { TR: "Etkin", EN: "Active" },
@@ -271,14 +271,14 @@ export default function ApiKeysPanel() {
 
             {state.limit === 0 ? (
                 <div className="rounded-2xl bg-zinc-50 p-3.5 text-[13px] leading-relaxed text-zinc-700 dark:bg-white/[0.04] dark:text-zinc-200">
-                    <p>{tx(C.planRequired, { plus: plus?.keys ?? 2, plusDay: number(plus?.perDay ?? 0), pro: pro?.keys ?? 5, proDay: number(pro?.perDay ?? 0) })}</p>
+                    <p>{tx(C.planRequired, { plus: plus?.keys ?? 2, plusWindow: number(PLAN_AI_LIMITS.plus.perWindow), pro: pro?.keys ?? 5, proWindow: number(PLAN_AI_LIMITS.pro.perWindow) })}</p>
                     <Link href="/plans" className="mt-1.5 inline-block font-bold text-violet-600 hover:underline dark:text-violet-300">{tx(C.seePlans)}</Link>
                 </div>
             ) : (
                 <div className="space-y-3 rounded-2xl bg-zinc-50 p-3.5 text-[13px] dark:bg-white/[0.04]">
                     <p className="font-bold text-zinc-800 dark:text-zinc-100">{tx(C.planLine, { plan: planName, count: state.keys.length, limit: state.limit })}</p>
-                    {state.limits ? <p className="text-zinc-600 dark:text-zinc-300">{tx(C.limits, { perMinute: number(state.limits.perMinute), perDay: number(state.limits.perDay) })}</p> : null}
-                    {state.usage ? <UsageBar window={state.usage.day} /> : null}
+                    {state.limits ? <p className="text-zinc-600 dark:text-zinc-300">{tx(C.limits, { perMinute: number(state.limits.perMinute), perWindow: number(state.limits.perWindow), days: state.limits.windowDays })}</p> : null}
+                    {state.usage ? <UsageBar window={state.usage.window} /> : null}
                 </div>
             )}
 

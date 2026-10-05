@@ -82,7 +82,6 @@ const SENSITIVE_NOTES: Record<SensitiveRequest, string> = {
     message_others: "sending messages, comments or invitations to other people",
 };
 
-/** Hanogt AI's own model: an OpenAI-compatible endpoint (Groq by default); null when not configured. */
 /** Fields every request to Hanogt AI's own model sets itself: HANOGT_AI_EXTRA_BODY can't change them. */
 const RESERVED_BODY_KEYS = new Set(["model", "messages", "stream", "stream_options", "tools", "tool_choice", "max_tokens", "max_completion_tokens", "temperature", "top_p", "stop", "n", "user", "response_format"]);
 let extraBodyWarned = false;
@@ -107,51 +106,95 @@ export function providerExtraBody(): Record<string, unknown> {
     }
 }
 
-export function providerConfig() {
-    const apiKey = (process.env.HANOGT_AI_API_KEY || process.env.GROQ_API_KEY || "").trim();
-    const baseUrl = (process.env.HANOGT_AI_BASE_URL || "https://api.groq.com/openai/v1").trim().replace(/\/+$/, "");
-    const model = (process.env.HANOGT_AI_MODEL || process.env.GROQ_MODEL || "llama-3.3-70b-versatile").trim();
-    let validUrl = false;
+/** Services Hanogt AI's own model never runs on (the owner retired them). */
+const REFUSED_HOSTS = /(?:^|\.)(?:groq\.com|anthropic\.com)$/i;
+/** On Hugging Face's router a model must name its provider ("Qwen/Qwen3-32B:cerebras"); automatic routing (a policy such as :fastest) could pick a refused one. */
+const PINNED_ROUTER_MODEL = /:(?!(?:groq|fastest|cheapest|preferred|auto)$)[\w.-]+$/i;
+let refusedWarned = false;
+
+export type ProviderConfig = { apiKey: string; baseUrl: string; model: string; extraBody: Record<string, unknown> };
+
+/**
+ * Hanogt AI's own model: an OpenAI-compatible endpoint the owner runs or
+ * rents (a Hugging Face Inference Endpoint, the Hugging Face router with a
+ * pinned provider, vLLM…), set by HANOGT_AI_BASE_URL, HANOGT_AI_MODEL and
+ * HANOGT_AI_API_KEY. There is no default: null when any of them is missing
+ * or not allowed, and the browser's Hanogt AI Core answers then.
+ */
+export function providerConfig(): ProviderConfig | null {
+    const apiKey = (process.env.HANOGT_AI_API_KEY || "").trim();
+    const baseUrl = (process.env.HANOGT_AI_BASE_URL || "").trim().replace(/\/+$/, "");
+    const model = (process.env.HANOGT_AI_MODEL || "").trim();
+    if (!apiKey || !baseUrl || !model) return null;
+    let parsed: URL;
     try {
-        const parsed = new URL(baseUrl);
-        // https, or plain http only to this machine (a self-hosted model such as Ollama or LM Studio).
-        validUrl = parsed.protocol === "https:" || (parsed.protocol === "http:" && /^(?:127\.0\.0\.1|localhost|\[::1\])$/.test(parsed.hostname));
+        parsed = new URL(baseUrl);
     } catch {
-        validUrl = false;
+        return null;
     }
-    return apiKey && validUrl ? { apiKey, baseUrl, model, extraBody: providerExtraBody() } : null;
+    // https, or plain http only to this machine (a self-hosted model such as vLLM, Ollama or LM Studio).
+    const validUrl = parsed.protocol === "https:" || (parsed.protocol === "http:" && /^(?:127\.0\.0\.1|localhost|\[::1\])$/.test(parsed.hostname));
+    if (!validUrl) return null;
+    const refused = REFUSED_HOSTS.test(parsed.hostname) || /:groq$/i.test(model) || (parsed.hostname === "router.huggingface.co" && !PINNED_ROUTER_MODEL.test(model));
+    if (refused) {
+        if (!refusedWarned) console.warn("[hanogt-ai] HANOGT_AI_* ignored: Groq and Anthropic aren't used for Hanogt AI, and a Hugging Face router model must name its provider (model:provider).");
+        refusedWarned = true;
+        return null;
+    }
+    return { apiKey, baseUrl, model, extraBody: providerExtraBody() };
+}
+
+/**
+ * The body of a request to Hanogt AI's own model: the extra fields
+ * (HANOGT_AI_EXTRA_BODY), then whether the model should think first (Qwen3's
+ * chat_template_kwargs.enable_thinking; null leaves it to the extra fields),
+ * then the request's own fields, which always win.
+ */
+export function hanogtRequestBody(extraBody: Record<string, unknown>, fields: Record<string, unknown>, thinking: boolean | null): Record<string, unknown> {
+    const kwargs = extraBody.chat_template_kwargs && typeof extraBody.chat_template_kwargs === "object" && !Array.isArray(extraBody.chat_template_kwargs)
+        ? extraBody.chat_template_kwargs as Record<string, unknown>
+        : {};
+    return { ...extraBody, ...(thinking === null ? {} : { chat_template_kwargs: { ...kwargs, enable_thinking: thinking } }), ...fields };
 }
 
 export function clip(text: string, max: number) {
     return text.length > max ? `${text.slice(0, max)}\n…` : text;
 }
 
-/** Deterministic analyses of the latest message that ground the model's answer. */
-export function toolNotes(message: string): string[] {
-    const notes: string[] = [];
+/** Which analyzer a note came from: the link checker, the error explainer or the code advisor. */
+export type AnalyzerId = "link" | "error" | "code";
+
+/** Deterministic analyses of the latest message that ground the model's answer, with the analyzer of each. */
+export function analyzeMessage(message: string): Array<{ id: AnalyzerId; note: string }> {
+    const notes: Array<{ id: AnalyzerId; note: string }> = [];
     const url = findUrl(message);
     if (url) {
         const report = checkLink(url);
-        notes.push([
+        notes.push({ id: "link", note: [
             `Hanogt Link Check (structural, no request made) for ${report.host ?? url}: verdict ${report.verdict}, risk score ${report.score}.`,
             ...report.signals.slice(0, 5).map((signal) => `- ${signal.text.EN.replace(/\{(\w+)\}/g, (match, name: string) => String(signal.text.vars?.[name] ?? match))}`),
-        ].join("\n"));
+        ].join("\n") });
     }
     if (looksLikeError(message)) {
         const explained = explainError(message);
-        if (explained) notes.push(`Hanogt error explainer: recognized "${explained.pattern.title.EN}" (${explained.pattern.language})${explained.line ? ` near line ${explained.line}` : ""}. Typical cause: ${explained.pattern.cause.EN}`);
+        if (explained) notes.push({ id: "error", note: `Hanogt error explainer: recognized "${explained.pattern.title.EN}" (${explained.pattern.language})${explained.line ? ` near line ${explained.line}` : ""}. Typical cause: ${explained.pattern.cause.EN}` });
     }
     const lines = message.split("\n").length;
     if (lines >= 3 && /[{}();=]/.test(message)) {
         const report = analyzeCode(message);
         if (report.findings.length) {
-            notes.push([
+            notes.push({ id: "code", note: [
                 `Hanogt Security Code Advisor: detected ${report.language}, score ${report.score}/100 (${report.grade}), ${report.findings.length} finding(s)${report.blockedByGuard ? ", the Hanogt runner would block this code" : ""}:`,
                 ...report.findings.slice(0, 6).map((finding) => `- [${finding.severity}] line ${finding.line}: ${finding.title.EN} — ${finding.fix.EN}`),
-            ].join("\n"));
+            ].join("\n") });
         }
     }
     return notes;
+}
+
+/** The analyzers' notes only (what the system prompt carries). */
+export function toolNotes(message: string): string[] {
+    return analyzeMessage(message).map((item) => item.note);
 }
 
 /** Knowledge-base notes for a question (about 3,600 characters at most) and their links. */
@@ -159,6 +202,7 @@ export function knowledgeNotes(query: string, turkish: boolean) {
     const hits = searchKnowledge(query, 4).filter((hit) => hit.coverage >= 0.34);
     let budget = 3_600;
     const notes: string[] = [];
+    const titles: string[] = [];
     const sources: Array<{ title: string; href: string }> = [];
     for (const hit of hits) {
         const title = knowledgeText(hit.entry.title, turkish);
@@ -167,11 +211,12 @@ export function knowledgeNotes(query: string, turkish: boolean) {
         if (note.length > budget) break;
         budget -= note.length;
         notes.push(note);
+        titles.push(title);
         for (const link of hit.entry.links ?? []) {
             if (!sources.some((source) => source.href === link.href)) sources.push({ title: knowledgeText(link.label, turkish), href: link.href });
         }
     }
-    return { notes, sources: sources.slice(0, 4) };
+    return { notes, titles, sources: sources.slice(0, 4) };
 }
 
 /** The person's own Hanogt AI settings that shape answers (src/lib/ai/ai-settings.ts). */
@@ -249,8 +294,8 @@ function personalBlock(personal: PersonalPreferences, max: number) {
 
 /**
  * Everything the model is told before the conversation, in two parts: the
- * stable rules (the same for a person's whole conversation, so the advanced
- * engine caches them) and what changes with every message.
+ * stable rules (the same for a person's whole conversation, so a server with
+ * prefix caching reuses them) and what changes with every message, last.
  */
 export function systemPromptParts(options: PromptOptions): { stable: string; dynamic: string } {
     const audience = options.audience ?? "chat";
@@ -290,7 +335,7 @@ export function systemPromptParts(options: PromptOptions): { stable: string; dyn
     return { stable, dynamic };
 }
 
-/** The whole system prompt as one text (the standard engine and the developer API). */
+/** The whole system prompt as one text (the chat and the developer API). */
 export function systemPrompt(options: PromptOptions) {
     const { stable, dynamic } = systemPromptParts(options);
     return dynamic ? `${stable}\n${dynamic}` : stable;

@@ -5,7 +5,7 @@
  * src/lib/server/ai-api-keys.ts and src/lib/server/hanogt-ai-api.ts.
  */
 import type { UsageWindow } from "@/lib/ai/usage";
-import { PLAN_AI_FEATURES, isPlanId, type PlanId } from "@/lib/plans";
+import { PLAN_AI_FEATURES, isPlanId, type AiPlanLimits, type PlanId } from "@/lib/plans";
 
 /** The only model the API serves (Hanogt AI's own model, whatever runs it). */
 export const API_MODEL_ID = "hanogt-ai";
@@ -41,11 +41,11 @@ export type ApiKeysState = {
     plan: PlanId;
     /** Keys the plan allows (Free 0, Plus 2, Pro 5). */
     limit: number;
-    /** Requests the plan allows; null on Free. */
-    limits: { perMinute: number; perDay: number } | null;
+    /** Hanogt AI messages the plan allows (the API shares them with the chat); null on Free. */
+    limits: AiPlanLimits | null;
     keys: ApiKeyView[];
-    /** Requests counted in the current windows; null on Free. */
-    usage: { minute: UsageWindow; day: UsageWindow } | null;
+    /** Messages counted in the current minute and window (chat and API together); null on Free. */
+    usage: { minute: UsageWindow; window: UsageWindow; windowDays: number } | null;
     /** The team opened the API for this account (the ai_api feature). */
     allowed: boolean;
 };

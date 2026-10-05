@@ -62,10 +62,10 @@ export const STARTERS: Record<AiMode, Array<{ title: Copy; prompt: Copy }>> = {
 };
 
 export const NOTICES: Record<AiFailure, Copy> = {
-    auth_required: { TR: "Oturumun yenilenmeli; bu yanıtı Hanogt AI Çekirdeği verdi.", EN: "Your session needs to be renewed; Hanogt AI Core answered this one." },
-    not_configured: { TR: "Bu sunucuda dil modeli yapılandırılmamış; yanıtı Hanogt AI Çekirdeği verdi.", EN: "No language model is configured on this server; Hanogt AI Core answered." },
+    auth_required: { TR: "Oturumun sona ermiş. Hanogt AI'ı kullanmak için yeniden giriş yap.", EN: "Your session has ended. Sign in again to use Hanogt AI." },
+    not_configured: { TR: "Hanogt AI'ın modeli şu an bu sunucuda çalışmıyor; yanıtı cihazındaki Hanogt AI Çekirdeği verdi.", EN: "Hanogt AI's model isn't running on this server right now; Hanogt AI Core on your device answered." },
     rate_limited: { TR: "Dakikalık istek sınırı doldu; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The per-minute limit was reached; Hanogt AI Core answered." },
-    daily_limit: { TR: "Günlük dil modeli hakkın doldu; ilk mesajından 24 saat sonra yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "Your daily language-model messages are used up; they renew 24 hours after your first message. Until then Hanogt AI Core answers." },
+    usage_limit: { TR: "Hanogt AI mesaj hakkın doldu; dönemin bitince yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "Your Hanogt AI messages are used up; they renew when the period ends. Until then Hanogt AI Core answers." },
     network: { TR: "Dil modeline ulaşılamadı; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model couldn't be reached; Hanogt AI Core answered." },
     timeout: { TR: "Dil modeli zamanında yanıt vermedi; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model timed out; Hanogt AI Core answered." },
     upstream: { TR: "Dil modeli hizmeti hata verdi; yanıtı Hanogt AI Çekirdeği verdi.", EN: "The language model service failed; Hanogt AI Core answered." },
@@ -84,9 +84,14 @@ export const CONNECTION_FAILURES: ReadonlySet<AiFailure> = new Set<AiFailure>(["
 export const CHAT_COPY = {
     somethingWrong: { TR: "Bir şeyler ters gitti. Lütfen tekrar dene.", EN: "Something went wrong. Please try again." },
     retryIn: { TR: "{seconds} sn sonra tekrar dene.", EN: "Try again in {seconds} s." },
-    dailyLimitAt: { TR: "Günlük {limit} mesajlık Hanogt AI hakkının hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} of today's Hanogt AI messages. Renews: {time}. Until then Hanogt AI Core answers." },
+    usageLimitAt: { TR: "{days} günlük {limit} mesajlık Hanogt AI hakkının hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} Hanogt AI messages of this {days}-day period. Renews: {time}. Until then Hanogt AI Core answers." },
+    signIn: { TR: "Giriş yap", EN: "Sign in" },
+    refunded: { TR: "Model yanıt veremediği için bu mesaj hakkından düşülmedi.", EN: "The model couldn't answer, so this message wasn't counted." },
     ownDailyLimitAt: { TR: "Kendi bağlantıların için günlük {limit} mesajın hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} of the day's messages for your own connections. Renews: {time}. Until then Hanogt AI Core answers." },
     upgrade: { TR: "Planını yükselt", EN: "Upgrade your plan" },
+    continueFailed: { TR: "Yanıt şu anda devam ettirilemedi; biraz sonra yeniden “Devam et”e bas.", EN: "The answer couldn't be continued right now; press “Continue” again in a moment." },
+    continueRetryIn: { TR: "Dakikalık sınır doldu; {seconds} sn sonra yeniden “Devam et”e bas.", EN: "The per-minute limit is reached; press “Continue” again in {seconds} s." },
+    continueUsedUp: { TR: "Mesaj hakkın doldu; yenilenince ({time}) yanıtı sürdürebilirsin.", EN: "Your messages are used up; you can continue the answer once they renew ({time})." },
     followUpFailed: { TR: "İşlem tamamlandı, ancak dil modeline şu an ulaşılamadığı için sonucu özetleyemiyorum. Sonuç yukarıdaki kartta.", EN: "The action finished, but the language model can't be reached right now, so I can't summarise it. The result is on the card above." },
     attachTooLarge: { TR: "Bu dosya çok büyük (en fazla 200 KB).", EN: "This file is too large (200 KB at most)." },
     attachUnreadable: { TR: "Bu dosya metin olarak okunamadı.", EN: "This file couldn't be read as text." },

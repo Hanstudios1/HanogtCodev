@@ -8,11 +8,12 @@ import { buildWireMessages, isSettled, type AgentCallRecord, type AgentMessageSt
 import { agentUserKey, setAgentMode, useAgentGrants, useAgentMode } from "@/lib/ai/agent-settings";
 import { AGENT_MAX_ROUNDS, agentDecision, approvalGrantsSession, isAgentToolName, sanitizeAgentCall, type AgentCallInput, type AgentMode } from "@/lib/ai/agent-tools";
 import { streamHanogtAI, type AiFailure, type AiStreamResult } from "@/lib/ai/client";
+import type { ThinkingStep } from "@/lib/ai/thinking";
 import { isConnectionId } from "@/lib/ai/connections";
 import { openHanogtAI, useAiContext } from "@/lib/ai/context-store";
 import {
     createId, setActiveConversation, titleFrom, useActiveConversationId, useConversationActions, useConversations,
-    type AiConversation, type AiMessage,
+    THINKING_STORED_MAX, type AiConversation, type AiMessage, type AiThinking,
 } from "@/lib/ai/conversations";
 import { answerLocally, proposeActionsLocally, type AiContext, type AiMode } from "@/lib/ai/local-engine";
 import { formatResetTime, type LimitDetails } from "@/lib/ai/usage";
@@ -38,7 +39,31 @@ export interface FileAttachment {
     code: string;
 }
 
-type Streaming = { conversationId: string; messageId: string; text: string };
+/** The answer being written: its text, the thinking and steps so far, and when the thinking started and ended. */
+export type Streaming = {
+    conversationId: string;
+    messageId: string;
+    text: string;
+    thinking: string;
+    steps: ThinkingStep[];
+    thinkingStartedAt: number | null;
+    thinkingSeconds: number | null;
+};
+
+const startStreaming = (conversationId: string, messageId: string, text = ""): Streaming => ({ conversationId, messageId, text, thinking: "", steps: [], thinkingStartedAt: null, thinkingSeconds: null });
+
+/** What an answer keeps of its thinking (bounded; never sent back to the model). */
+function thinkingOf(result: AiStreamResult, seconds: number | null): AiThinking | undefined {
+    const text = (result.thinking ?? "").slice(0, THINKING_STORED_MAX);
+    const steps = result.steps ?? [];
+    return text.trim() || steps.length ? { text, seconds, steps } : undefined;
+}
+
+/** The hidden request that continues a cut answer (counted as one message). */
+const CONTINUE_PROMPT = {
+    TR: "Yanıtın yarıda kesildi. Kaldığın yerden, önceki kısmı tekrar etmeden devam et; açık bir kod bloğu varsa onun içinden sürdür.",
+    EN: "Your answer was cut off. Continue exactly where you stopped without repeating what you already wrote; if a code block is open, continue inside it.",
+};
 
 /** Cards that were still waiting when the user moved on: nothing was done for them. */
 function dismissPending(message: AiMessage): AiMessage {
@@ -72,10 +97,8 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     // The language model only needs the NextAuth session, not the Firebase
     // bridge, so the raw session is used: it is known sooner after a page load.
     const { data: session, status } = useRawSession();
+    // Hanogt AI is for signed-in people: signed-out visitors see the sign-in gate, and nothing is sent.
     const signedIn = status === "authenticated";
-    // While the session is still loading, try the model anyway: the server
-    // knows whether this browser is signed in, and the core answers otherwise.
-    const tryModel = status !== "unauthenticated";
     const userName = session?.user?.name?.trim() || null;
     // The account's Hanogt AI settings: defaults for this device until it makes its own choice.
     const aiSettings = useAiSettings(signedIn ? session?.user?.email ?? null : null);
@@ -85,9 +108,9 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     // The person's own provider connections (Plus/Pro) and the one chosen on this device.
     const connections = useAiConnections(signedIn ? session?.user?.email ?? null : null, accountDefaults?.defaultModel ?? null);
     const { items: connectionItems, refresh: refreshConnections, select: selectConnection, selectedId: selectedConnection } = connections;
-    // Messages used today (the usage meter); every answer updates it from its headers.
+    // Messages used in the plan's window (the usage meter); every answer updates it from its headers.
     const usage = useAiUsage(signedIn ? session?.user?.email ?? null : null);
-    const { applyQuota, applyLimit, applyEngine } = usage;
+    const { applyQuota, applyLimit, refresh: refreshUsage } = usage;
     // How much of the open file goes with a question: the plan's allowance (Free until the plan is known).
     const contextChars = PLAN_AI_FEATURES[usage.usage?.plan ?? "free"].contextChars;
 
@@ -102,6 +125,11 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     const mode = active?.mode ?? draftMode;
     const [input, setInput] = useState("");
     const [streaming, setStreaming] = useState<Streaming | null>(null);
+    // The streaming state as the async code reads it after awaits (the thinking time at the end of an answer).
+    const streamingRef = useRef<Streaming | null>(null);
+    useEffect(() => {
+        streamingRef.current = streaming;
+    }, [streaming]);
     const [attachChoice, setAttachEditorFile] = useState<boolean | null>(null);
     const attachEditorFile = attachChoice ?? accountDefaults?.attachEditorFile ?? true;
     const [attachment, setAttachment] = useState<FileAttachment | null>(null);
@@ -110,10 +138,11 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     const runningCalls = useRef(new Set<string>());
     const followUps = useRef(new Set<string>());
     // Values the async agent loop reads after awaits.
-    const latest = useRef({ agentMode, granted });
+    const showThinking = accountDefaults?.showThinking ?? true;
+    const latest = useRef({ agentMode, granted, showThinking });
     useEffect(() => {
-        latest.current = { agentMode, granted };
-    }, [agentMode, granted]);
+        latest.current = { agentMode, granted, showThinking };
+    }, [agentMode, granted, showThinking]);
 
     const hasEditorFile = Boolean(editorContext?.code?.trim());
     const busy = Boolean(streaming);
@@ -174,11 +203,39 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     /** What an answer records about the model that wrote it. */
     const answeredBy = useCallback((result: AiStreamResult): Partial<AiMessage> => {
         const model = result.model?.slice(0, 200);
-        const engine: Partial<AiMessage> = { ...(result.engine === "advanced" ? { advanced: true } : {}), ...(result.engineNote ? { engineNote: result.engineNote } : {}) };
-        if (!result.connectionId) return { ...(model ? { model } : {}), ...engine };
+        if (!result.connectionId) return { ...(model ? { model } : {}) };
         const label = connectionItems.find((item) => item.id === result.connectionId)?.label;
         return { ...(model ? { model } : {}), connectionId: result.connectionId, ...(label ? { connectionLabel: label } : {}) };
     }, [connectionItems]);
+
+    /** Stream callbacks that keep the visible answer, thinking and steps in step with the server (one update a frame). */
+    const streamHandlers = useCallback((messageId: string) => {
+        let frame = 0;
+        const patch = (change: (current: Streaming) => Streaming) => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => setStreaming((current) => (current && current.messageId === messageId ? change(current) : current)));
+        };
+        return {
+            onToken: (soFar: string) => patch((current) => ({
+                ...current,
+                text: soFar,
+                // The answer started: the thinking time stops here.
+                thinkingSeconds: current.thinkingSeconds ?? (current.thinkingStartedAt ? Math.max(1, Math.round((Date.now() - current.thinkingStartedAt) / 1000)) : null),
+            })),
+            // Empty: what came as thinking was the answer after all, so no thinking time either.
+            onThinking: (soFar: string) => patch((current) => (soFar ? { ...current, thinking: soFar, thinkingStartedAt: current.thinkingStartedAt ?? Date.now() } : { ...current, thinking: "", thinkingStartedAt: null, thinkingSeconds: null })),
+            onSteps: (steps: ThinkingStep[]) => patch((current) => ({ ...current, steps })),
+            cancel: () => cancelAnimationFrame(frame),
+        };
+    }, []);
+
+    /** How long the model thought before this answer, from the streaming state (null when it didn't think). */
+    const thoughtSeconds = useCallback((messageId: string) => {
+        const current = streamingRef.current;
+        if (!current || current.messageId !== messageId) return null;
+        if (current.thinkingSeconds !== null) return current.thinkingSeconds;
+        return current.thinkingStartedAt ? Math.max(1, Math.round((Date.now() - current.thinkingStartedAt) / 1000)) : null;
+    }, []);
 
     /** After a connection failed: show its state again, and go back to Hanogt AI when it can't be used any more. */
     const connectionFailed = useCallback((failure: AiFailure | undefined) => {
@@ -196,6 +253,11 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
     const ask = useCallback(async (raw: string, history?: AiMessage[]) => {
         const text = raw.trim().slice(0, MAX_INPUT);
         if (!text || controllerRef.current) return;
+        // Signed out (or still loading the session): nothing is sent; the text waits in the box.
+        if (!signedIn) {
+            setInput(raw);
+            return;
+        }
         let conversation: AiConversation | null = active;
         if (!conversation) conversation = create(draftMode, titleFrom(text));
         const conversationId = conversation.id;
@@ -219,33 +281,35 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         setInput("");
         setAttachment(null);
         setAttachError(null);
-        setStreaming({ conversationId, messageId: assistantId, text: "" });
+        setStreaming(startStreaming(conversationId, assistantId));
 
         const currentMode = conversation.mode;
         const agentOn = latest.current.agentMode !== "off";
         const connectionId = selectedConnection;
-        const runCore = async (failure?: AiFailure, retryAfterSeconds?: number, limit?: LimitDetails) => {
+        const runCore = async (failure?: AiFailure, retryAfterSeconds?: number, limit?: LimitDetails, refunded?: boolean) => {
+            // The session ended on the server: Hanogt AI needs a sign-in again (the Core doesn't answer signed-out people).
+            if (failure === "auth_required") {
+                finish(conversationId, assistantId, { content: "", engine: "core", notice: tx(NOTICES.auth_required), noticeAction: "signin" });
+                return;
+            }
             const reply = await answerLocally(text, { tx, locale, mode: currentMode, signedIn, context, agentMode: latest.current.agentMode });
             const retryable = failure === "rate_limited" || failure === "connection_rate_limited";
-            // A daily limit says when it renews (24 hours after the first message), and how to get more.
-            const dailyLimit = limit && (failure === "daily_limit" || failure === "connection_daily_limit") ? limit : null;
+            // A used-up window says when it renews, and how to get more.
+            const usedUp = limit && (failure === "usage_limit" || failure === "connection_daily_limit") ? limit : null;
             const notice = !failure || failure === "aborted" ? undefined
-                : dailyLimit ? tx(dailyLimit.quota === "own" ? CHAT_COPY.ownDailyLimitAt : CHAT_COPY.dailyLimitAt, { limit: dailyLimit.limit.toLocaleString(locale), time: dailyLimit.resetsAt ? formatResetTime(dailyLimit.resetsAt, locale) : "—" })
-                    : [tx(NOTICES[failure]), retryable && retryAfterSeconds ? tx(CHAT_COPY.retryIn, { seconds: retryAfterSeconds }) : ""].filter(Boolean).join(" ");
+                : usedUp ? tx(usedUp.quota === "own" ? CHAT_COPY.ownDailyLimitAt : CHAT_COPY.usageLimitAt, { limit: usedUp.limit.toLocaleString(locale), days: usedUp.windowDays, time: usedUp.resetsAt ? formatResetTime(usedUp.resetsAt, locale) : "—" })
+                    : [tx(NOTICES[failure]), retryable && retryAfterSeconds ? tx(CHAT_COPY.retryIn, { seconds: retryAfterSeconds }) : "", refunded ? tx(CHAT_COPY.refunded) : ""].filter(Boolean).join(" ");
             const agent = reply.actions?.length ? coreAgentState(reply.actions) : undefined;
-            finish(conversationId, assistantId, { content: reply.text, engine: "core", sources: reply.sources, code: reply.code, notice, noticeAction: dailyLimit?.upgrade ? "plans" : undefined, agent });
+            // The Core shows how it answered in the thinking panel: the intent it recognized and how sure it was.
+            const thinking: AiThinking | undefined = reply.intent && latest.current.showThinking ? { text: "", seconds: null, steps: [], core: { intent: reply.intent, confidence: reply.confidence } } : undefined;
+            finish(conversationId, assistantId, { content: reply.text, engine: "core", sources: reply.sources, code: reply.code, notice, noticeAction: usedUp?.upgrade ? "plans" : undefined, agent, thinking });
             autoRun(conversationId, assistantId, agent);
         };
 
+        const handlers = streamHandlers(assistantId);
         try {
-            if (!tryModel) {
-                await new Promise((resolve) => window.setTimeout(resolve, 280));
-                await runCore();
-                return;
-            }
             const controller = new AbortController();
             controllerRef.current = controller;
-            let frame = 0;
             const result = await streamHanogtAI({
                 messages: buildWireMessages([...base, userMessage], { tools: agentOn }),
                 mode: currentMode,
@@ -255,15 +319,16 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 connectionId,
                 contextChars,
                 signal: controller.signal,
-                onToken: (soFar) => {
-                    cancelAnimationFrame(frame);
-                    frame = requestAnimationFrame(() => setStreaming((current) => (current && current.messageId === assistantId ? { ...current, text: soFar } : current)));
-                },
+                onToken: handlers.onToken,
+                onThinking: handlers.onThinking,
+                onSteps: handlers.onSteps,
             });
-            cancelAnimationFrame(frame);
+            handlers.cancel();
             applyQuota(result.quota);
             applyLimit(result.limit);
-            applyEngine(result.engineWindow, result.engineNote);
+            // A message given back changes the window the headers reported: read it again.
+            if (result.refunded) refreshUsage();
+            const thinking = thinkingOf(result, thoughtSeconds(assistantId));
             if (result.ok) {
                 let agent = llmAgentState(result, 0);
                 // The provider can't call tools: the Core proposes the same actions.
@@ -271,15 +336,14 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                     const actions = await proposeActionsLocally(text, { tx, context });
                     if (actions.length) agent = coreAgentState(actions);
                 }
-                finish(conversationId, assistantId, { content: result.text, engine: "llm", sources: result.sources, notice: result.failure === "aborted" ? tx(NOTICES.aborted) : undefined, agent, ...answeredBy(result) });
+                finish(conversationId, assistantId, { content: result.text, engine: "llm", sources: result.sources, notice: result.failure === "aborted" ? tx(NOTICES.aborted) : undefined, agent, thinking, ...(result.cut && result.failure !== "aborted" ? { cut: result.cut } : {}), ...answeredBy(result) });
                 autoRun(conversationId, assistantId, agent);
             } else if (result.failure === "aborted") {
-                if (result.text) finish(conversationId, assistantId, { content: result.text, engine: "llm", notice: tx(NOTICES.aborted), ...answeredBy(result) });
+                if (result.text) finish(conversationId, assistantId, { content: result.text, engine: "llm", notice: tx(NOTICES.aborted), thinking, ...answeredBy(result) });
                 else update(conversationId, (current) => ({ ...current, messages: current.messages.filter((message) => message.id !== assistantId) }));
             } else {
                 connectionFailed(result.failure);
-                // A signed-out visitor asking during session loading needs no "session expired" notice.
-                await runCore(result.failure === "auth_required" && !signedIn ? undefined : result.failure, result.retryAfterSeconds, result.limit);
+                await runCore(result.failure, result.retryAfterSeconds, result.limit, result.refunded);
             }
         } catch {
             finish(conversationId, assistantId, { content: tx(CHAT_COPY.somethingWrong), error: true });
@@ -287,7 +351,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [active, answeredBy, applyEngine, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, contextChars, create, draftMode, finish, language, locale, selectedConnection, signedIn, tryModel, tx, update]);
+    }, [active, answeredBy, applyLimit, applyQuota, attachment, autoRun, buildContext, connectionFailed, contextChars, create, draftMode, finish, language, locale, refreshUsage, selectedConnection, signedIn, streamHandlers, thoughtSeconds, tx, update]);
 
     /** Sends the tool results back to the model once every card of its message is settled. */
     const continueAfterTools = useCallback(async (conversation: AiConversation, source: AiMessage) => {
@@ -303,11 +367,11 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 { id: assistantId, role: "assistant", content: "", createdAt: Date.now() },
             ],
         }));
-        setStreaming({ conversationId, messageId: assistantId, text: "" });
+        setStreaming(startStreaming(conversationId, assistantId));
         const controller = new AbortController();
         controllerRef.current = controller;
+        const handlers = streamHandlers(assistantId);
         try {
-            let frame = 0;
             const result = await streamHanogtAI({
                 messages: buildWireMessages(conversation.messages, { tools: true }),
                 mode: conversation.mode,
@@ -317,21 +381,21 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 // The tool results go back to the model that asked for them.
                 connectionId: isConnectionId(source.connectionId) ? source.connectionId : null,
                 signal: controller.signal,
-                onToken: (soFar) => {
-                    cancelAnimationFrame(frame);
-                    frame = requestAnimationFrame(() => setStreaming((current) => (current && current.messageId === assistantId ? { ...current, text: soFar } : current)));
-                },
+                onToken: handlers.onToken,
+                onThinking: handlers.onThinking,
+                onSteps: handlers.onSteps,
             });
-            cancelAnimationFrame(frame);
+            handlers.cancel();
             applyQuota(result.quota);
             applyLimit(result.limit);
-            applyEngine(result.engineWindow, result.engineNote);
+            if (result.refunded) refreshUsage();
+            const thinking = thinkingOf(result, thoughtSeconds(assistantId));
             if (result.ok) {
                 const agent = final ? undefined : llmAgentState(result, round);
-                finish(conversationId, assistantId, { content: result.text, engine: "llm", sources: result.sources, agent, ...answeredBy(result) });
+                finish(conversationId, assistantId, { content: result.text, engine: "llm", sources: result.sources, agent, thinking, ...(result.cut ? { cut: result.cut } : {}), ...answeredBy(result) });
                 autoRun(conversationId, assistantId, agent);
             } else if (result.failure === "aborted") {
-                if (result.text) finish(conversationId, assistantId, { content: result.text, engine: "llm", notice: tx(NOTICES.aborted), ...answeredBy(result) });
+                if (result.text) finish(conversationId, assistantId, { content: result.text, engine: "llm", notice: tx(NOTICES.aborted), thinking, ...answeredBy(result) });
                 else update(conversationId, (current) => ({ ...current, messages: current.messages.filter((message) => message.id !== assistantId) }));
             } else {
                 connectionFailed(result.failure);
@@ -343,7 +407,63 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             controllerRef.current = null;
             setStreaming(null);
         }
-    }, [answeredBy, applyEngine, applyLimit, applyQuota, autoRun, connectionFailed, finish, language, tx, update]);
+    }, [answeredBy, applyLimit, applyQuota, autoRun, connectionFailed, finish, language, refreshUsage, streamHandlers, thoughtSeconds, tx, update]);
+
+    /**
+     * Picks up an answer that was cut (its length, the time limit or an
+     * error): the model gets the conversation with the partial answer and a
+     * request to go on; what it writes is added to the same message. Counts
+     * as one message.
+     */
+    const continueAnswer = useCallback(async (messageId: string) => {
+        if (!active || controllerRef.current) return;
+        const index = active.messages.findIndex((message) => message.id === messageId);
+        const target = active.messages[index];
+        if (!target || target.role !== "assistant" || !target.cut || index !== active.messages.length - 1) return;
+        const conversationId = active.id;
+        const before = target.content;
+        setStreaming({ ...startStreaming(conversationId, messageId, before) });
+        const controller = new AbortController();
+        controllerRef.current = controller;
+        const handlers = streamHandlers(messageId);
+        try {
+            // The partial answer goes back as the model's own turn (its last part, enough to continue a code block).
+            const history = active.messages.slice(0, index).concat({ ...target, content: before.length > 6_000 ? `…${before.slice(-6_000)}` : before, agent: undefined });
+            const result = await streamHanogtAI({
+                messages: [...buildWireMessages(history, { tools: false }), { role: "user", content: tx(CONTINUE_PROMPT) }],
+                mode: active.mode,
+                language,
+                connectionId: isConnectionId(target.connectionId) ? target.connectionId : null,
+                signal: controller.signal,
+                onToken: (soFar) => handlers.onToken(`${before}${soFar}`),
+                onThinking: handlers.onThinking,
+                onSteps: handlers.onSteps,
+            });
+            handlers.cancel();
+            applyQuota(result.quota);
+            applyLimit(result.limit);
+            if (result.refunded) refreshUsage();
+            if (result.text) {
+                const joined = `${before}${result.text}`;
+                // An earlier failed attempt's note goes once the answer moves on.
+                finish(conversationId, messageId, { content: joined, cut: result.ok && result.cut && result.failure !== "aborted" ? result.cut : undefined, notice: undefined, noticeAction: undefined });
+            } else if (!result.ok && result.failure !== "aborted") {
+                // Nothing was added (the Core doesn't continue a model's answer): say why, and the button stays.
+                const usedUp = result.limit && (result.failure === "usage_limit" || result.failure === "connection_daily_limit") ? result.limit : null;
+                const retry = (result.failure === "rate_limited" || result.failure === "connection_rate_limited") && result.retryAfterSeconds ? result.retryAfterSeconds : null;
+                const notice = result.failure === "auth_required" ? tx(NOTICES.auth_required)
+                    : usedUp ? tx(CHAT_COPY.continueUsedUp, { time: usedUp.resetsAt ? formatResetTime(usedUp.resetsAt, locale) : "—" })
+                        : retry ? tx(CHAT_COPY.continueRetryIn, { seconds: retry })
+                            : tx(CHAT_COPY.continueFailed);
+                finish(conversationId, messageId, { notice, noticeAction: result.failure === "auth_required" ? "signin" : usedUp?.upgrade ? "plans" : undefined });
+            }
+        } catch {
+            finish(conversationId, messageId, { notice: tx(CHAT_COPY.somethingWrong) });
+        } finally {
+            controllerRef.current = null;
+            setStreaming(null);
+        }
+    }, [active, applyLimit, applyQuota, finish, language, locale, refreshUsage, streamHandlers, tx]);
 
     // The follow-up starts when the last message's cards are all settled.
     useEffect(() => {
@@ -467,13 +587,13 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
         // conversations
         conversations, active, activeId, messages: active?.messages ?? [], selectConversation: setActiveConversation, rename, remove, clearAll,
         // composer
-        mode, switchMode, input, setInput, busy, streaming, ask, stop, newChat, regenerate, editLast, setFeedback,
+        mode, switchMode, input, setInput, busy, streaming, ask, stop, newChat, regenerate, editLast, setFeedback, continueAnswer,
         editorContext, hasEditorFile, attachEditorFile, setAttachEditorFile, attachment, setAttachment, attachFile, attachError,
         // agent
         agent: { mode: agentMode, setMode: setAgentMode as (mode: AgentMode) => void, granted, revokeAll, approve, deny },
         // own provider connections
         connections,
-        // messages used today
+        // messages used in the plan's window
         usage,
         navigate,
     };

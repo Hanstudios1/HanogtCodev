@@ -6,10 +6,12 @@ import {
     DEFAULT_PLAN_PRICE,
     FREE_SUBSCRIPTION,
     PAID_PLAN_IDS,
+    PLAN_AI_LIMITS,
     PLAN_COLLAB_LIMITS,
     PLAN_GROUP_LIMITS,
     PLAN_PROJECT_LIMITS,
     PRICE_MAX,
+    aiWindowMs,
     effectivePlan,
     isPlanId,
     type PaidPlanId,
@@ -26,9 +28,11 @@ import { readRateLimit, resetRateLimit } from "./rate-limit";
 export const CATALOG_PATH = "site_config/plans";
 export const subscriptionPath = (email: string) => `subscriptions/${email}`;
 
-/** Rate-limit keys of Hanogt AI (src/lib/server/ai-usage.ts, src/app/api/ai/route.ts). */
-export const AI_LIMIT_KEYS = (email: string) => ({ minute: `ai:${email}`, day: `ai-day:${email}` });
-export const AI_DAY_MS = 24 * 60 * 60_000;
+/**
+ * Rate-limit keys of Hanogt AI (src/lib/server/ai-usage.ts): the minute guard
+ * and the plan's window, shared by the chat, the developer API and Social bots.
+ */
+export const AI_LIMIT_KEYS = (email: string) => ({ minute: `ai:${email}`, window: `ai-window:${email}` });
 
 function isoOf(value: unknown): string | null {
     if (typeof value === "string") return Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : null;
@@ -116,26 +120,20 @@ export async function getSubscription(email: string): Promise<UserSubscription> 
     return normalizeSubscription(await getServerDocument<Record<string, unknown>>(subscriptionPath(email)));
 }
 
-/** Messages used in the current minute and day windows (for staff). */
-export async function aiUsage(email: string) {
+/** Messages used in the current minute and the plan's window (for staff). */
+export async function aiUsage(email: string, plan: PlanId) {
     const keys = AI_LIMIT_KEYS(email);
-    const [minute, day] = await Promise.all([readRateLimit(keys.minute, 60_000).catch(() => null), readRateLimit(keys.day, AI_DAY_MS).catch(() => null)]);
-    return { minute, day };
+    const [minute, window] = await Promise.all([readRateLimit(keys.minute, 60_000).catch(() => null), readRateLimit(keys.window, aiWindowMs(PLAN_AI_LIMITS[plan].windowDays)).catch(() => null)]);
+    return { minute, window };
 }
 
-/** Rate-limit keys of messages sent through the person's own AI connections (src/app/api/ai/route.ts). */
-export const OWN_KEY_LIMIT_KEYS = (email: string) => ({ minute: `ai-own:${email}`, day: `ai-own-day:${email}` });
+/** Rate-limit keys of messages sent through the person's own AI connections: a minute and a day (src/app/api/ai/route.ts). */
+export const OWN_KEY_LIMIT_KEYS = (email: string) => ({ minute: `ai-own:${email}`, window: `ai-own-day:${email}` });
 
-/** Rate-limit keys of developer API requests (/api/v1), per account whatever key sent them. */
-export const AI_API_LIMIT_KEYS = (email: string) => ({ minute: `ai-api:${email}`, day: `ai-api-day:${email}` });
-
-/** Rate-limit key of the advanced code engine's answers (24 hours, per account). */
-export const AI_ENGINE_LIMIT_KEY = (email: string) => `ai-engine-day:${email}`;
-
-/** Staff "reset Hanogt AI limit": Hanogt AI's counters, the own-key ones, the developer API's and the advanced engine's. */
+/** Staff "reset Hanogt AI limit": Hanogt AI's counters and the own-key ones. */
 export async function resetAiLimits(email: string) {
-    const keys = [AI_LIMIT_KEYS(email), OWN_KEY_LIMIT_KEYS(email), AI_API_LIMIT_KEYS(email)];
-    await Promise.all([...keys.flatMap((pair) => [resetRateLimit(pair.minute), resetRateLimit(pair.day)]), resetRateLimit(AI_ENGINE_LIMIT_KEY(email))]);
+    const keys = [AI_LIMIT_KEYS(email), OWN_KEY_LIMIT_KEYS(email)];
+    await Promise.all(keys.flatMap((pair) => [resetRateLimit(pair.minute), resetRateLimit(pair.window)]));
 }
 
 /**

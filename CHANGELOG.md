@@ -1,5 +1,88 @@
 # Değişiklik Günlüğü
 
+## 0.3.18 — 2026-10-05
+
+### Hanogt AI kendi modeline geçti: düşünme, haftalık haklar, giriş zorunluluğu
+
+- **Motor:** Hanogt AI'ın dil modeli artık yalnızca sahibin kendi OpenAI
+  uyumlu uç noktası; `HANOGT_AI_BASE_URL`, `HANOGT_AI_MODEL` ve
+  `HANOGT_AI_API_KEY` ile ayarlanır. Varsayılan değerler ve `GROQ_API_KEY` /
+  `GROQ_MODEL` yedekleri kaldırıldı. Groq ve Anthropic adresleri reddedilir;
+  Hugging Face router'da model sağlayıcısını sabitlemeli (`model:sağlayıcı`;
+  `:groq` ve `:fastest`, `:cheapest` gibi yönlendirme seçenekleri kabul
+  edilmez). Tipik kurulumlar: router'da sağlayıcısı sabitlenmiş bir Qwen3
+  modeli, bir Hugging Face Inference Endpoint ya da ince ayarlı modeli sunan
+  vLLM (`training/README.md`). İsteğe bağlı `HANOGT_AI_EXTRA_BODY` her isteğe
+  eklenir; `HANOGT_AI_THINKING=preopened` düşünme bloğunu şablonu kendisi
+  açan modeller içindir. Model yapılandırılmamışsa `/api/ai` hiçbir şey
+  saymadan 503 `not_configured` döner ve yanıtı tarayıcıdaki Çekirdek verir.
+  Hanogt AI'ın kendi modelinin yanıtlarında model adı her zaman
+  `hanogt-ai`; sağlayıcının model kimliği gösterilmez.
+- **Gelişmiş kod motoru kaldırıldı:** Claude tabanlı motor
+  (`claude-engine.ts`, `ai-engine.ts`, `src/lib/ai/engine.ts`, yönetici kartı
+  `AiEngineCard`), `@anthropic-ai/sdk` bağımlılığı ve code-bench'in
+  `--engine anthropic` seçeneği silindi. `ANTHROPIC_API_KEY`,
+  `HANOGT_AI_CLAUDE_MODEL`, `HANOGT_AI_CLAUDE_EFFORT`, `ANTHROPIC_BASE_URL`,
+  `GROQ_API_KEY` ve `GROQ_MODEL` artık okunmuyor; Vercel'den silinebilir.
+- **Giriş zorunlu:** `/api/ai` oturumu olmayan isteklere 401 `auth_required`
+  döner; arayüz sohbet yerine giriş/kayıt kapısı (`SignInGate`) gösterir.
+  Çekirdek de artık oturumu kapalı ziyaretçilere yanıt vermiyor.
+- **Haftalık haklar:** mesajlar ilk mesajla başlayan plan penceresinde
+  sayılır: Ücretsiz dakikada 5 ve 7 günde 50, Plus dakikada 20 ve 14 günde
+  750, Pro dakikada 30 ve 7 günde 2.000. Sayaçlar `ai:<e-posta>` ve
+  `ai-window:<e-posta>` (`security_rate_limits`, Firestore'a ulaşılamazsa
+  bellekte); ekibin ek hakkı (`aiBonusDaily`) pencereye eklenir. Sohbet,
+  geliştirici API'si ve ileride Social gruplarındaki Hanogt AI tek hakkı
+  paylaşır; kendi anahtar bağlantılarının günlük sınırları ayrı kalır (Plus
+  3.000, Pro 10.000). Yanıt başlıkları artık `X-Hanogt-AI-Window-Limit`,
+  `-Remaining`, `-Reset` ve `-Days` (eski `X-Hanogt-AI-Day-*` yerine); hak
+  dolunca 429 `usage_limit` ve `windowDays`. SSS, kılavuz ve bilgi tabanı
+  haftalık haklara göre yazıldı.
+- **İade:** model hiç yanıt veremezse (bağlantı, zaman aşımı, sağlayıcı
+  hatası, boş yanıt) mesaj, aynı pencere hâlâ açıksa geri verilir
+  (`releaseFromWindow`); hata yanıtı `refunded` alanını taşır.
+- **Geliştirici API'si:** ayrı API kotaları kalktı; her istek sohbetle aynı
+  dakika ve pencere sayaçlarından düşer. Anahtar hakkı Plus'ta 2, Pro'da 5.
+  Başlıklar `x-hanogt-ratelimit-limit-window`, `-remaining-window`,
+  `-reset-window` ve `x-hanogt-ratelimit-window-days`; `/api/v1/usage`
+  `requests.minute` ve `requests.window` (`days` ile) döner.
+  `include_reasoning: true` (ya da `reasoning: true`) modelin düşünmesini
+  `message.reasoning_content` (akışta `delta.reasoning_content`) olarak
+  verir; sonraki isteklerde geri gönderilen düşünme silinir.
+- **Düşünme:** Hanogt AI ayarlarında yeni "Düşünme" bölümü: `thinking`
+  (Otomatik: kod ve güvenlik modunda ve uzun sorularda; Her zaman; Kapalı) ve
+  `showThinking` (düşünmeyi ve adımları göster). Düşünen istekte planın
+  düşünme bütçesi (Ücretsiz 1.000, Plus 2.000, Pro 3.000 token)
+  `max_tokens`'a eklenir; `temperature` 0,6, `top_p` 0,95. Qwen3'ün
+  `chat_template_kwargs.enable_thinking` alanı `HANOGT_AI_EXTRA_BODY` ile
+  birleştirilir; sunucu 400 dönerse istek önce bu alan olmadan, ajan modunda
+  sonra araçsız yinelenir. Düşünme `reasoning_content` / `reasoning`
+  alanlarından ya da parçalara bölünse bile `<think>…</think>` bloğundan
+  ayrılır; geçmişle modele hiç geri gönderilmez ve yalnızca tarayıcıda
+  saklanır. Yanıtın üstünde "Düşünüyor…" / "N sn düşündü" paneli: okunan
+  bilgi kaynakları, çalışan denetimler, okunan dosya ve Çekirdeğin anladığı
+  konu.
+- **Akış protokolü v2:** tarayıcı `wire: 2` ister; yanıt
+  `X-Hanogt-AI-Wire: 2` başlığı ve satır başına bir JSON olayıyla (NDJSON)
+  gelir: `step`, `think`, `think_reset`, `text`, `tools`, `end` (`stop`,
+  `length`, `timeout`, `error`) ve `error` (`refunded` ile). Eski sekmeler
+  düz metin akışını almaya devam eder. Yarıda kesilen yanıtta "Devam et"
+  düğmesi çıkar (1 mesaj sayılır).
+- **Groq, kendi anahtar sağlayıcıları arasından kaldırıldı:** eski Groq
+  bağlantıları "Artık desteklenmiyor" olarak listelenir; hiçbir zaman etkin
+  olmaz, bağlantı hakkından düşmez, düzenlenemez ama silinebilir.
+- **Editör bağlamı:** kod editörü açık dosyayı yazma durduktan kısa süre sonra
+  Hanogt AI'a iletir (`publishAiContext`); "açık dosyayı ekle" artık gerçekten
+  çalışıyor.
+- **Arayüz:** Hanogt AI yazma kutusunun etrafındaki pembe odak çerçevesi
+  kalktı: genel `:focus-visible` kuralı `@layer base` içine taşındı, böylece
+  bileşenin kendi odak stili kazanıyor.
+- **Yasal metinler 4.7 (5 Ekim 2026):** motor değişikliği (Hugging Face, Inc.
+  ve onun üzerinden seçilen çıkarım sağlayıcısı), giriş zorunluluğu, yeni
+  sınırlar, iade, düşünme ve Groq bağlantıları.
+- Belgeler: `docs/HANOGT_AI.md`, `docs/HANOGT_AI_API.md`,
+  `docs/ENVIRONMENT.md`, `.env.example`.
+
 ## 0.3.17 — 2026-10-05
 
 ### Hanogt AI eğitimi: veri seti v2

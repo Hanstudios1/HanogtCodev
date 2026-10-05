@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowLeft, Check, Download, FlaskConical, Gauge, History, LoaderCircle, MessagesSquare, Settings2, Sparkles, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, Brain, Check, Download, FlaskConical, Gauge, History, LoaderCircle, MessagesSquare, Settings2, Sparkles, Trash2, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import UsageList from "@/components/Plans/UsageList";
 import { useRawSession } from "@/components/Provider";
 import { AI_LENGTHS, AI_TONES, type AiSettings } from "@/lib/ai/ai-settings";
 import { DEFAULT_CONNECTION } from "@/lib/ai/connections";
+import { THINKING_SETTINGS } from "@/lib/ai/thinking";
 import { clearAllConversations, exportConversationsJson, useConversations } from "@/lib/ai/conversations";
 import { setClearChatsOnSignOut, useClearChatsOnSignOut } from "@/lib/ai/sign-out";
 import type { PlanUsage } from "@/lib/ai/usage";
@@ -48,6 +49,11 @@ const C = {
     agentMode: { TR: "Varsayılan ajan modu", EN: "Default agent mode" },
     attachFile: { TR: "Açık editör dosyasını sorulara ekle", EN: "Attach the open editor file to questions" },
     attachHint: { TR: "Editörde açık dosya varsa Hanogt AI onu okur (planına göre en fazla belli bir uzunluk).", EN: "When a file is open in the editor, Hanogt AI reads it (up to your plan's length)." },
+    thinkingSection: { TR: "Düşünme", EN: "Thinking" },
+    thinkingSectionHint: { TR: "Hanogt AI zor sorularda yanıt vermeden önce düşünebilir. Düşünme yanıtı biraz geciktirir ama kod ve hata ayıklamada daha isabetli sonuç verir.", EN: "Hanogt AI can think before it answers hard questions. Thinking makes the answer a little slower but more accurate in code and debugging." },
+    thinking: { TR: "Yanıt vermeden önce düşün", EN: "Think before answering" },
+    showThinking: { TR: "Düşünmeyi ve adımları göster", EN: "Show the thinking and the steps" },
+    showThinkingHint: { TR: "Yanıtın üstünde “N sn düşündü” paneli açılır: modelin düşünmesi, okunan bilgi kaynakları ve çalışan denetimler. Düşünme yalnızca bu tarayıcıda saklanır ve sonraki mesajlarla geri gönderilmez.", EN: "A “Thought for N s” panel opens above the answer: the model's thinking, the knowledge sources read and the checks that ran. Thinking is kept in this browser only and never sent back with later messages." },
     save: { TR: "Kaydet", EN: "Save" },
     saved: { TR: "Kaydedildi.", EN: "Saved." },
     unsaved: { TR: "Kaydedilmemiş değişiklikler var.", EN: "You have unsaved changes." },
@@ -79,6 +85,11 @@ const TONE_COPY: Record<AiSettings["tone"], Copy> = {
     balanced: { TR: "Dengeli", EN: "Balanced" },
     friendly: { TR: "Samimi", EN: "Friendly" },
     professional: { TR: "Profesyonel", EN: "Professional" },
+};
+const THINKING_COPY: Record<AiSettings["thinking"], Copy> = {
+    auto: { TR: "Otomatik (kod, güvenlik ve uzun sorularda)", EN: "Automatic (code, security and long questions)" },
+    on: { TR: "Her zaman", EN: "Always" },
+    off: { TR: "Kapalı", EN: "Off" },
 };
 const LENGTH_COPY: Record<AiSettings["length"], Copy> = {
     short: { TR: "Kısa", EN: "Short" },
@@ -298,6 +309,16 @@ export default function AiSettingsPage() {
                             </div>
                         </div>
                         <Toggle name="attachEditorFile" checked={draft.attachEditorFile} onChange={(value) => update("attachEditorFile", value)} label={tx(C.attachFile)} hint={tx(C.attachHint)} />
+                    </Section>
+
+                    <Section id="thinking" icon={<Brain className="h-5 w-5 text-violet-500" aria-hidden />} title={tx(C.thinkingSection)} hint={tx(C.thinkingSectionHint)}>
+                        <div className="max-w-sm">
+                            <label className={LABEL} htmlFor="ai-thinking">{tx(C.thinking)}</label>
+                            <select id="ai-thinking" data-setting="thinking" value={draft.thinking} onChange={(event) => update("thinking", event.target.value as AiSettings["thinking"])} className={cx(FIELD, "mt-1.5")}>
+                                {THINKING_SETTINGS.map((option) => <option key={option} value={option}>{tx(THINKING_COPY[option])}</option>)}
+                            </select>
+                        </div>
+                        <Toggle name="showThinking" checked={draft.showThinking} onChange={(value) => update("showThinking", value)} label={tx(C.showThinking)} hint={tx(C.showThinkingHint)} />
                     </Section>
 
                     <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-zinc-200 bg-white/90 px-4 py-3 shadow-lg backdrop-blur dark:border-white/10 dark:bg-zinc-900/90">

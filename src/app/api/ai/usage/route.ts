@@ -1,7 +1,6 @@
 import { NextResponse, after, type NextRequest } from "next/server";
 import { effectivePlan } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
-import { engineAllowances } from "@/lib/server/ai-engine";
 import { aiUsageFor, planUsageFor } from "@/lib/server/ai-usage";
 import { featureAllowed } from "@/lib/server/features";
 import { refreshSubscriptionFromPaddle } from "@/lib/server/paddle-sync";
@@ -21,8 +20,8 @@ function json(payload: unknown, status = 200, headers: Record<string, string> = 
 
 /**
  * GET /api/ai/usage → AiUsage (src/lib/ai/usage.ts): the signed-in person's
- * plan and Hanogt AI windows (messages today and this minute, a staff grant,
- * their own connections' allowance). The Hanogt AI usage meter reads it when
+ * plan and Hanogt AI windows (messages in the plan's window and this minute,
+ * a staff grant, their own connections' allowance). The Hanogt AI usage meter reads it when
  * it opens and when the tab comes back; every /api/ai answer then updates it
  * from its headers. A purchase Paddle never reported is looked up here too
  * (throttled), so someone who pays and comes straight to Hanogt AI sees the
@@ -39,12 +38,11 @@ export async function GET(request: NextRequest) {
         const stored = await getSubscription(active.email);
         const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
         const full = request.nextUrl.searchParams.get("full") === "1";
-        // The developer API's requests and keys, once the team opened it for the account.
+        if (!full) return json(await aiUsageFor(active.email, subscription));
+        // The developer API's keys, once the team opened it for the account.
         const staff = resolveUserRole(active.email, active.user.role) !== "user";
-        // The advanced code engine's answers, when the server has it and the team keeps it on.
-        const [api, engine] = await Promise.all([featureAllowed("ai_api", { staff, plan: effectivePlan(subscription) }).catch(() => false), engineAllowances()]);
-        const options = { api, engine };
-        return json(full ? await planUsageFor(active.email, subscription, options) : await aiUsageFor(active.email, subscription, options));
+        const api = await featureAllowed("ai_api", { staff, plan: effectivePlan(subscription) }).catch(() => false);
+        return json(await planUsageFor(active.email, subscription, { api }));
     } catch {
         return json({ error: "Kullanım bilgisi şu anda okunamadı.", code: "unavailable" }, 503);
     }

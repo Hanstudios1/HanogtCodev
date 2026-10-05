@@ -1,33 +1,32 @@
 "use client";
 
-import { ArrowUpRight, Code2, Gauge, KeyRound, Sparkles, Zap } from "lucide-react";
+import { ArrowUpRight, Gauge, KeyRound, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { currentWindow, formatResetTime, usageLevel, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { PLAN_AI_LIMITS, PLAN_COPY, nextPlanUp } from "@/lib/plans";
+import { PLAN_AI_LIMITS, PLAN_COPY, aiWindowCopy, nextPlanUp } from "@/lib/plans";
 import type { AiUsageHandle } from "./usage-store";
 import { cx } from "./ui";
 
 const C = {
     title: { TR: "Hanogt AI kullanımın", EN: "Your Hanogt AI usage" },
-    pill: { TR: "Bugün {used} / {limit}", EN: "Today {used} / {limit}" },
-    pillLabel: { TR: "Bugün {limit} mesajın {used} tanesini kullandın. Ayrıntılar için aç.", EN: "You've used {used} of today's {limit} messages. Open for details." },
-    today: { TR: "Bugünkü mesajlar", EN: "Today's messages" },
+    pill: { TR: "{period} {used} / {limit}", EN: "{period} {used} / {limit}" },
+    pillLabel: { TR: "{period} {limit} mesajın {used} tanesini kullandın. Ayrıntılar için aç.", EN: "{period}: you've used {used} of {limit} messages. Open for details." },
+    week: { TR: "Bu hafta", EN: "This week" },
+    twoWeeks: { TR: "Bu 2 hafta", EN: "These 2 weeks" },
+    days: { TR: "{days} gün", EN: "{days} days" },
+    messages: { TR: "Mesajların ({period})", EN: "Your messages ({period})" },
     left: { TR: "{count} mesaj kaldı", EN: "{count} messages left" },
-    none: { TR: "Bugünkü hakkın doldu", EN: "Today's messages are used up" },
+    none: { TR: "Bu dönemin hakkı doldu", EN: "This period's messages are used up" },
     resets: { TR: "Yenilenme: {time}", EN: "Renews: {time}" },
-    window: { TR: "Sayaç ilk mesajınla başlar ve 24 saat sürer.", EN: "The count starts with your first message and lasts 24 hours." },
+    window: { TR: "Sayaç ilk mesajınla başlar ve {days} gün sürer. Sohbet, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer.", EN: "The count starts with your first message and lasts {days} days. The chat, the developer API and Hanogt AI in groups share it." },
     perMinute: { TR: "Dakikada en fazla {count} mesaj", EN: "Up to {count} messages a minute" },
     bonus: { TR: "Hanogt ekibinden +{count} ek mesaj dahil", EN: "Includes +{count} extra messages from the Hanogt team" },
     own: { TR: "Kendi bağlantıların (bugün)", EN: "Your own connections (today)" },
     ownHint: { TR: "Kendi API anahtarınla gönderdiklerin Hanogt AI hakkından düşmez.", EN: "Messages sent with your own API key don't use your Hanogt AI messages." },
-    engine: { TR: "Gelişmiş kod motoru (24 saat)", EN: "Advanced code engine (24 hours)" },
-    engineHint: { TR: "Kod ve güvenlik soruları önce gelişmiş motora gider; hak dolunca standart motor yanıtlar.", EN: "Code and security questions go to the advanced engine first; when these run out, the standard engine answers." },
-    api: { TR: "Hanogt AI API (24 saat)", EN: "Hanogt AI API (24 hours)" },
-    apiHint: { TR: "Kendi uygulamalarından gelen istekler; ayrı sayılır.", EN: "Requests from your own apps; counted separately." },
     upgrade: { TR: "Planını yükselt", EN: "Upgrade your plan" },
-    upgradeHint: { TR: "{plan} ile günde {count} mesaj", EN: "{count} messages a day with {plan}" },
+    upgradeHint: { TR: "{plan} ile {period} {count} mesaj", EN: "{count} messages {period} with {plan}" },
     details: { TR: "Tüm plan hakların", EN: "All your plan benefits" },
     loading: { TR: "Kullanım yükleniyor…", EN: "Loading usage…" },
     failed: { TR: "Kullanım şu anda okunamadı.", EN: "Usage can't be read right now." },
@@ -41,7 +40,7 @@ const LEVEL_PILL = {
 } as const;
 const LEVEL_BAR = { ok: "from-indigo-500 to-fuchsia-500", high: "from-amber-400 to-amber-500", full: "from-rose-500 to-rose-600" } as const;
 
-/** Re-renders every minute, so a window whose 24 hours ended shows as fresh. */
+/** Re-renders every minute, so a window that ended shows as fresh. */
 function useMinuteClock() {
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {
@@ -62,10 +61,10 @@ function Bar({ window: shown, label }: { window: UsageWindow; label: string }) {
 }
 
 /**
- * "Today 12 / 750": Hanogt AI messages used today, in the /ai top bar and the
- * floating panel's header. Amber from 80 %, red when nothing is left; opens a
- * card with when the count renews, the minute limit, a staff grant, the
- * person's own connections and a way to a bigger plan.
+ * "This week 12 / 50": Hanogt AI messages used in the plan's window, in the
+ * /ai top bar and the floating panel's header. Amber from 80 %, red when
+ * nothing is left; opens a card with when the count renews, the minute limit,
+ * a staff grant, the person's own connections and a way to a bigger plan.
  */
 export default function UsageMeter({ handle, variant, onNavigate }: { handle: AiUsageHandle; variant: "panel" | "page"; onNavigate?: () => void }) {
     const { tx, locale } = useI18n();
@@ -104,13 +103,13 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
         ) : null;
     }
 
-    const day = currentWindow(usage.hanogt.day, now);
+    const day = currentWindow(usage.hanogt.window, now);
     const level = usageLevel(day);
     const ownDay = usage.own ? currentWindow(usage.own.day, now) : null;
-    const apiDay = usage.api ? currentWindow(usage.api.day, now) : null;
-    const engineDay = usage.engine && usage.engine.limit > 0 ? currentWindow(usage.engine, now) : null;
     const nextPlan = nextPlanUp(usage.plan);
-    const pillText = tx(C.pill, { used: day.used.toLocaleString(locale), limit: day.limit.toLocaleString(locale) });
+    const days = usage.hanogt.windowDays;
+    const period = tx(days === 7 ? C.week : days === 14 ? C.twoWeeks : C.days, { days });
+    const pillText = tx(C.pill, { period, used: day.used.toLocaleString(locale), limit: day.limit.toLocaleString(locale) });
 
     return (
         <div ref={root} className="relative flex shrink-0">
@@ -120,7 +119,7 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                 onClick={() => setOpen((current) => !current)}
                 aria-haspopup="dialog"
                 aria-expanded={open}
-                aria-label={tx(C.pillLabel, { used: day.used, limit: day.limit })}
+                aria-label={tx(C.pillLabel, { period, used: day.used, limit: day.limit })}
                 data-usage-meter={level}
                 className={cx(
                     "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11.5px] font-semibold tabular-nums transition hover:bg-zinc-900/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 dark:hover:bg-white/[0.06]",
@@ -143,28 +142,17 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
 
                     <div className="mt-3">
                         <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><Sparkles className="h-3.5 w-3.5 text-violet-500" aria-hidden />{tx(C.today)}</span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><Sparkles className="h-3.5 w-3.5 text-violet-500" aria-hidden />{tx(C.messages, { period: period.toLocaleLowerCase(locale) })}</span>
                             <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{day.used.toLocaleString(locale)} / {day.limit.toLocaleString(locale)}</span>
                         </div>
-                        <Bar window={day} label={tx(C.today)} />
+                        <Bar window={day} label={tx(C.messages, { period: period.toLocaleLowerCase(locale) })} />
                         <p className={cx("mt-1.5 text-[11.5px]", level === "full" ? "font-semibold text-rose-600 dark:text-rose-300" : "text-zinc-500 dark:text-zinc-400")}>
                             {day.remaining > 0 ? tx(C.left, { count: day.remaining.toLocaleString(locale) }) : tx(C.none)}
                             {day.resetsAt ? ` · ${tx(C.resets, { time: formatResetTime(day.resetsAt, locale, now) })}` : ""}
                         </p>
-                        <p className="mt-1 text-[11px] leading-snug text-zinc-400">{tx(C.window)} {tx(C.perMinute, { count: usage.hanogt.minute.limit })}.</p>
+                        <p className="mt-1 text-[11px] leading-snug text-zinc-400">{tx(C.window, { days })} {tx(C.perMinute, { count: usage.hanogt.minute.limit })}.</p>
                         {usage.hanogt.bonus > 0 ? <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{tx(C.bonus, { count: usage.hanogt.bonus.toLocaleString(locale) })}</p> : null}
                     </div>
-
-                    {engineDay ? (
-                        <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.06]" data-usage-engine>
-                            <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><Zap className="h-3.5 w-3.5 text-fuchsia-500" aria-hidden />{tx(C.engine)}</span>
-                                <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{engineDay.used.toLocaleString(locale)} / {engineDay.limit.toLocaleString(locale)}</span>
-                            </div>
-                            <Bar window={engineDay} label={tx(C.engine)} />
-                            <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">{tx(C.engineHint)}</p>
-                        </div>
-                    ) : null}
 
                     {ownDay ? (
                         <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.06]">
@@ -177,20 +165,9 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                         </div>
                     ) : null}
 
-                    {apiDay ? (
-                        <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-white/[0.06]" data-usage-api>
-                            <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-200"><Code2 className="h-3.5 w-3.5 text-fuchsia-500" aria-hidden />{tx(C.api)}</span>
-                                <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{apiDay.used.toLocaleString(locale)} / {apiDay.limit.toLocaleString(locale)}</span>
-                            </div>
-                            <Bar window={apiDay} label={tx(C.api)} />
-                            <p className="mt-1.5 text-[11px] leading-snug text-zinc-400">{tx(C.apiHint)}</p>
-                        </div>
-                    ) : null}
-
                     <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-zinc-100 pt-3 text-[12px] font-semibold dark:border-white/[0.06]">
                         {nextPlan ? (
-                            <Link href="/plans" onClick={() => { setOpen(false); onNavigate?.(); }} className="inline-flex items-center gap-1 text-violet-600 hover:underline dark:text-violet-300" title={tx(C.upgradeHint, { plan: tx(PLAN_COPY[nextPlan].name), count: PLAN_AI_LIMITS[nextPlan].perDay.toLocaleString(locale) })} data-usage-upgrade>
+                            <Link href="/plans" onClick={() => { setOpen(false); onNavigate?.(); }} className="inline-flex items-center gap-1 text-violet-600 hover:underline dark:text-violet-300" title={tx(C.upgradeHint, { plan: tx(PLAN_COPY[nextPlan].name), period: tx(aiWindowCopy(PLAN_AI_LIMITS[nextPlan].windowDays)), count: PLAN_AI_LIMITS[nextPlan].perWindow.toLocaleString(locale) })} data-usage-upgrade>
                                 {tx(C.upgrade)}<ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
                             </Link>
                         ) : null}

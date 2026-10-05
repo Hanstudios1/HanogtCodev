@@ -14,6 +14,7 @@ import ChatComposer from "./ChatComposer";
 import ChatMessage from "./ChatMessage";
 import ChatSidebar from "./ChatSidebar";
 import ConnectionsDialog from "./ConnectionsDialog";
+import SignInGate from "./SignInGate";
 import { useHanogtChat, type ChatLaunch } from "./useHanogtChat";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
 import UsageMeter from "./UsageMeter";
@@ -28,8 +29,8 @@ const C = {
     close: { TR: "Kapat", EN: "Close" },
     chats: { TR: "Sohbetler", EN: "Chats" },
     showSidebar: { TR: "Kenar çubuğunu göster", EN: "Show sidebar" },
-    engineSignedIn: { TR: "Dil modeli + Hanogt bilgi tabanı", EN: "Language model + Hanogt knowledge" },
-    engineSignedOut: { TR: "Çekirdek · çevrimdışı · giriş yapınca dil modeli", EN: "Core · offline · sign in for the language model" },
+    engineSignedIn: { TR: "Hanogt AI modeli + Hanogt bilgi tabanı", EN: "Hanogt AI model + Hanogt knowledge" },
+    engineSignedOut: { TR: "Giriş yapman gerekiyor", EN: "Sign in required" },
     conversation: { TR: "Sohbet", EN: "Conversation" },
     settings: { TR: "Hanogt AI ayarları", EN: "Hanogt AI settings" },
     api: { TR: "API ve bağlantılar", EN: "API and connections" },
@@ -140,9 +141,11 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
         window.setTimeout(() => inputRef.current?.focus(), 0);
     }, []);
 
-    // Messages left today, for the model picker.
+    // Messages left in the plan's window (and today's own-connection ones), for the model picker.
     const usageNow = chat.usage.usage;
-    const remaining = usageNow ? { hanogt: currentWindow(usageNow.hanogt.day).remaining, own: usageNow.own ? currentWindow(usageNow.own.day).remaining : null } : null;
+    const remaining = usageNow ? { hanogt: currentWindow(usageNow.hanogt.window).remaining, own: usageNow.own ? currentWindow(usageNow.own.day).remaining : null } : null;
+    // Signed-out visitors see the sign-in gate instead of the chat (once the session is known).
+    const gated = chat.status === "unauthenticated";
     const meter = <UsageMeter handle={chat.usage} variant={variant} onNavigate={closePanelOnNavigate} />;
 
     const lastAssistantId = [...messages].reverse().find((message) => message.role === "assistant")?.id;
@@ -205,6 +208,11 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         key={message.id}
                         message={message}
                         streamingText={streaming?.messageId === message.id ? streaming.text : null}
+                        live={streaming?.messageId === message.id ? { text: streaming.thinking, steps: streaming.steps, seconds: streaming.thinkingSeconds } : undefined}
+                        onContinue={() => {
+                            stickToBottom.current = true;
+                            void chat.continueAnswer(message.id);
+                        }}
                         variant={variant}
                         busy={busy}
                         isLastAssistant={message.id === lastAssistantId}
@@ -233,7 +241,6 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
             variant={variant}
             mode={chat.mode}
             userName={chat.userName}
-            showSignIn={!chat.signedIn && chat.status !== "loading"}
             onPick={pick}
             onNavigate={closePanelOnNavigate}
             composer={variant === "page" ? composer(true) : undefined}
@@ -262,14 +269,20 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
                         <p className="truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">{engineLabel}</p>
                     </div>
                     {meter}
-                    <Link href="/ai/settings" onClick={closePanelOnNavigate} className={ICON_BUTTON} title={tx(C.settings)} aria-label={tx(C.settings)}><Settings2 className="h-4.5 w-4.5" /></Link>
+                    {!gated ? <Link href="/ai/settings" onClick={closePanelOnNavigate} className={ICON_BUTTON} title={tx(C.settings)} aria-label={tx(C.settings)}><Settings2 className="h-4.5 w-4.5" /></Link> : null}
                     <button type="button" onClick={newChat} className={ICON_BUTTON} title={tx(C.newChat)} aria-label={tx(C.newChat)}><MessageSquarePlus className="h-4.5 w-4.5" /></button>
                     <Link href="/ai" onClick={onClose} className={ICON_BUTTON} title={tx(C.fullScreen)} aria-label={tx(C.fullScreen)}><Maximize2 className="h-4.5 w-4.5" /></Link>
                     <button type="button" onClick={onClose} className={ICON_BUTTON} title={tx(C.close)} aria-label={tx(C.close)}><X className="h-5 w-5" /></button>
                 </header>
                 <div className="relative flex min-h-0 flex-1 flex-col">
-                    {messages.length ? messageList : <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">{welcome}</div>}
-                    <div className="border-t border-zinc-200/60 p-3 dark:border-white/[0.06]">{composer(false)}</div>
+                    {gated ? (
+                        <div className="scrollbar-thin flex min-h-0 flex-1 items-center overflow-y-auto"><SignInGate variant="panel" onNavigate={onClose} /></div>
+                    ) : (
+                        <>
+                            {messages.length ? messageList : <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">{welcome}</div>}
+                            <div className="border-t border-zinc-200/60 p-3 dark:border-white/[0.06]">{composer(false)}</div>
+                        </>
+                    )}
                     <AnimatePresence>
                         {artifact ? <ArtifactPanel key={artifact.id} artifact={artifact} variant="panel" onClose={() => setArtifact(null)} onOpenInEditor={openCodeInEditor} /> : null}
                     </AnimatePresence>
@@ -296,6 +309,14 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
             onClose={mobile ? () => setDrawerOpen(false) : undefined}
         />
     );
+
+    if (gated) {
+        return (
+            <div className="flex h-[calc(100dvh-4rem)] items-center justify-center overflow-y-auto bg-[#fbfaf8] dark:bg-zinc-900/60">
+                <SignInGate variant="page" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-[calc(100dvh-4rem)] overflow-hidden bg-[#fbfaf8] dark:bg-zinc-900/60">

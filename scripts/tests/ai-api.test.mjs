@@ -4,6 +4,7 @@
 // commit, who may call (cheapest check first), the request body, OpenAI's
 // shapes for answers, streams and errors, counting, and the account's data.
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { setFakeEmulatorEnv, withBackend } from "./fake-backend.mjs";
 import { load } from "./setup.mjs";
@@ -175,24 +176,46 @@ test("one address can't flood the API, whatever keys it sends", async () => {
     assert.ok(Number(last.failure.headers["Retry-After"]) > 0);
 });
 
-test("requests are counted per account: the minute first, then the 24 hours, with x-ratelimit headers", async () => {
+test("requests use the chat's Hanogt AI messages: the minute first, then the plan's window, with x-ratelimit headers", async () => {
     features.forgetFeatureCache();
+    const usage = await load("lib/server/ai-usage.ts");
     await withBackend(seed({ plan: "plus" }), {}, async () => {
         const made = await keys.createApiKey(ALI, "plus");
         const { caller } = await api.authenticateApiCaller(`Bearer ${made.key}`, nextIp());
-        const limits = plans.PLAN_AI_FEATURES.plus.api;
+        const limits = plans.PLAN_AI_LIMITS.plus;
+        // A chat message first: the API counts in the same window.
+        assert.equal((await usage.enforceHanogtAi(ALI, { source: "chat" })).ok, true);
         let counted;
-        for (let n = 0; n < limits.perMinute; n += 1) counted = await api.countApiRequest(caller);
+        for (let n = 1; n < limits.perMinute; n += 1) counted = await api.countApiRequest(caller);
         assert.equal(counted.ok, true);
         assert.equal(counted.headers["x-ratelimit-limit-requests"], String(limits.perMinute));
         assert.equal(counted.headers["x-ratelimit-remaining-requests"], "0");
         assert.match(counted.headers["x-ratelimit-reset-requests"], /^\d+s$/);
-        assert.equal(counted.headers["x-hanogt-ratelimit-limit-day"], String(limits.perDay));
-        assert.equal(counted.headers["x-hanogt-ratelimit-remaining-day"], String(limits.perDay - limits.perMinute));
+        assert.equal(counted.headers["x-hanogt-ratelimit-limit-window"], String(limits.perWindow));
+        assert.equal(counted.headers["x-hanogt-ratelimit-remaining-window"], String(limits.perWindow - limits.perMinute));
+        assert.equal(counted.headers["x-hanogt-ratelimit-window-days"], String(limits.windowDays));
+        assert.ok(Date.parse(counted.headers["x-hanogt-ratelimit-reset-window"]) > Date.now() + (limits.windowDays - 1) * DAY);
+        assert.ok(!("x-hanogt-ratelimit-limit-day" in counted.headers), "no separate API day any more");
         const refused = await api.countApiRequest(caller);
         assert.deepEqual([refused.ok, refused.failure.status, refused.failure.code], [false, 429, "rate_limit_exceeded"]);
         assert.match(refused.failure.message, /per minute/);
         assert.ok(Number(refused.failure.headers["Retry-After"]) > 0);
+        // A request the model never answered is given back to the window.
+        assert.equal(await usage.refundHanogtAi(counted.pass), true);
+        assert.equal((await usage.hanogtUsageFor(ALI, caller.subscription)).window.used, limits.perMinute - 1);
+    });
+    // A window the chat used up refuses the API too, and says when it renews.
+    const limits = plans.PLAN_AI_LIMITS.pro;
+    const windowPath = `security_rate_limits/${createHash("sha256").update(`test-salt:ai-window:${ALI}`).digest("hex")}`;
+    const full = { [windowPath]: { count: limits.perWindow, windowStartedAt: Date.now() - DAY, expiresAt: new Date(Date.now() + 13 * DAY) } };
+    await withBackend({ ...seed({ plan: "pro" }), ...full }, {}, async () => {
+        const made = await keys.createApiKey(ALI, "pro");
+        const { caller } = await api.authenticateApiCaller(`Bearer ${made.key}`, nextIp());
+        const refused = await api.countApiRequest(caller);
+        assert.deepEqual([refused.ok, refused.failure.status, refused.failure.code], [false, 429, "rate_limit_exceeded"]);
+        assert.match(refused.failure.message, new RegExp(`${limits.perWindow} every ${limits.windowDays} days`));
+        assert.match(refused.failure.message, /shared by the chat and the API/);
+        assert.ok(Number(refused.failure.headers["Retry-After"]) > 5 * DAY / 1000, "renews when the window ends");
     });
 });
 
@@ -211,10 +234,23 @@ test("the request body: OpenAI's chat.completions, text only, within the limits"
         maxTokens: plans.PLAN_AI_FEATURES.plus.maxTokens,
         mode: "code",
         language: "TR",
+        includeReasoning: false,
     });
     assert.deepEqual(parse({ messages: [user("x")] }).request.maxTokens, plans.PLAN_AI_FEATURES.plus.maxTokens, "the plan's length by default");
     assert.equal(parse({ messages: [user("x")], max_completion_tokens: 100 }, "pro").request.maxTokens, 100);
     assert.deepEqual([parse({ messages: [user("x")] }).request.mode, parse({ messages: [user("x")] }).request.language], ["general", "EN"]);
+    // Thinking is asked for with include_reasoning (or OpenRouter's reasoning field).
+    assert.deepEqual([
+        parse({ messages: [user("x")], include_reasoning: true }).request.includeReasoning,
+        parse({ messages: [user("x")], reasoning: true }).request.includeReasoning,
+        parse({ messages: [user("x")], reasoning: { effort: "high" } }).request.includeReasoning,
+        parse({ messages: [user("x")], reasoning: { exclude: true } }).request.includeReasoning,
+        parse({ messages: [user("x")], include_reasoning: false }).request.includeReasoning,
+    ], [true, true, true, false, false]);
+    // Thinking a client sends back in its history never reaches the model.
+    const echoed = parse({ messages: [user("x"), { role: "assistant", content: "<think>gizli</think>Selam", reasoning_content: "gizli" }, user("y")] });
+    assert.equal(echoed.ok, true);
+    assert.equal(echoed.request.messages[1].content, "Selam");
 
     const refused = (body, status, code, param) => {
         const result = parse(body);
@@ -253,6 +289,16 @@ test("answers in OpenAI's shapes: a chat.completion, never the provider's ids or
         usage: { prompt_tokens: 12, completion_tokens: 3, total_tokens: 15 },
     });
     assert.equal(api.completionBody({ choices: [{ message: { content: "  " } }] }, meta), null, "an empty answer");
+    // Thinking: only when asked for, from reasoning_content or a <think> block; never in the answer's text.
+    const thought = { choices: [{ message: { content: "Sonuç 4.", reasoning_content: "2 + 2 = 4" }, finish_reason: "stop" }] };
+    assert.deepEqual(api.completionBody(thought, meta, { includeReasoning: true }).choices[0].message, { role: "assistant", content: "Sonuç 4.", reasoning_content: "2 + 2 = 4" });
+    assert.deepEqual(api.completionBody(thought, meta).choices[0].message, { role: "assistant", content: "Sonuç 4." });
+    const inline = { choices: [{ message: { content: "<think>\nkısa düşünce\n</think>\n\nMerhaba!" } }] };
+    assert.deepEqual(api.completionBody(inline, meta, { includeReasoning: true }).choices[0].message, { role: "assistant", content: "Merhaba!", reasoning_content: "kısa düşünce" });
+    assert.equal(api.completionBody(inline, meta).choices[0].message.content, "Merhaba!");
+    assert.equal(api.completionBody({ choices: [{ message: { content: "<think>yalnızca düşündü</think>" } }] }, meta, { includeReasoning: true }), null, "thinking without an answer is an empty answer");
+    // A template that opens the block in the prompt: the text starts inside the thinking.
+    assert.deepEqual(api.completionBody({ choices: [{ message: { content: "önce bunu düşündüm</think>Cevap." } }] }, meta, { includeReasoning: true, preopened: true }).choices[0].message, { role: "assistant", content: "Cevap.", reasoning_content: "önce bunu düşündüm" });
     assert.equal(api.completionBody(null, meta), null);
     assert.deepEqual(api.apiModel(), { id: "hanogt-ai", object: "model", created: api.apiModel().created, owned_by: "hanogt" });
     assert.match(api.newCompletionId(), /^chatcmpl-[0-9a-f]{24}$/);
@@ -314,6 +360,29 @@ test("a stream is re-told as chat.completion.chunk events ending with [DONE]", a
     }
     assert.ok(!out.join("").includes("llama") && !out.join("").includes("prov"), "nothing of the provider's");
     assert.equal(ended, true);
+
+    // Thinking streams as reasoning_content deltas only when asked for; a <think> split across pieces is still found.
+    const thinking = [
+        `data: ${JSON.stringify({ choices: [{ delta: { reasoning_content: "Önce " } }] })}`,
+        `data: ${JSON.stringify({ choices: [{ delta: { reasoning: "düşün." } }] })}`,
+        `data: ${JSON.stringify({ choices: [{ delta: { content: "<thi" } }] })}`,
+        `data: ${JSON.stringify({ choices: [{ delta: { content: "nk>gizli</think>Ce" } }] })}`,
+        `data: ${JSON.stringify({ choices: [{ delta: { content: "vap" }, finish_reason: "stop" }] })}`,
+        "data: [DONE]",
+        "",
+    ].join("\n\n");
+    const deltas = (frames) => frames.slice(0, -1).map((frame) => JSON.parse(frame).choices[0].delta);
+    const withReasoning = deltas(events(await readAll(api.completionStream(upstreamStream(thinking), meta, { includeReasoning: true }))));
+    assert.equal(withReasoning.map((delta) => delta.reasoning_content ?? "").join(""), "Önce düşün.gizli");
+    assert.equal(withReasoning.map((delta) => delta.content ?? "").join(""), "Cevap");
+    const plain = deltas(events(await readAll(api.completionStream(upstreamStream(thinking), meta))));
+    assert.ok(plain.every((delta) => !("reasoning_content" in delta)), "no thinking unless asked for");
+    assert.equal(plain.map((delta) => delta.content ?? "").join(""), "Cevap");
+    // Thinking and no answer: the route is told nothing was answered (the message is given back).
+    let result = null;
+    const unanswered = events(await readAll(api.completionStream(upstreamStream(`data: ${JSON.stringify({ choices: [{ delta: { reasoning_content: "hmm" }, finish_reason: "length" }] })}\n\ndata: [DONE]\n\n`), meta, { onEnd: (value) => { result = value; } })));
+    assert.deepEqual(result, { answered: false });
+    assert.equal(JSON.parse(unanswered.at(-2)).error.code, "upstream_error");
 
     // The provider fails midway: an error event, then [DONE].
     const broken = events(await readAll(api.completionStream(upstreamStream(`data: ${JSON.stringify({ choices: [{ delta: { content: "Yar" } }] })}\n\n`, { failAfter: 1 }), meta)));

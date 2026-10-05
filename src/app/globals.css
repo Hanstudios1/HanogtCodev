@@ -82,9 +82,13 @@ code, kbd, pre, samp {
   font-family: var(--font-mono);
 }
 
-:focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 3px;
+/* In the base layer so a component's own focus style (outline-none with a ring
+   or a focus-within border, as in the Hanogt AI composer) wins over it. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 3px;
+  }
 }
 
 ::selection {

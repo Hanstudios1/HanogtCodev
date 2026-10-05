@@ -133,7 +133,7 @@ export default function DmComposer(props: ComposerProps) {
                     <button type="button" onClick={() => recorder.stop(false)} className="rounded-lg bg-red-600 p-2.5 text-white hover:bg-red-500" aria-label={tx(C.stopRecord)} title={tx(C.stopRecord)}><MicOff className="h-5 w-5" aria-hidden /></button>
                 </div>
             ) : (
-                <div className={cx("relative flex items-end gap-1 border border-zinc-200 bg-zinc-100 px-1.5 py-1.5 dark:border-white/10 dark:bg-zinc-950", replyTo ? "rounded-b-xl" : "rounded-xl")}>
+                <div className={cx("relative flex items-end gap-1 border border-zinc-200 bg-zinc-100 px-1.5 py-1.5 transition focus-within:border-indigo-400 dark:border-white/10 dark:bg-zinc-950 dark:focus-within:border-indigo-400/60", replyTo ? "rounded-b-xl" : "rounded-xl")}>
                     <div ref={stickerRef} className="relative">
                         <button type="button" onClick={() => setStickers((value) => !value)} aria-expanded={stickers} aria-haspopup="true" className={cx("rounded-lg p-2 transition", stickers ? "text-indigo-600 dark:text-indigo-300" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white")} aria-label={tx(C.stickers)} title={tx(C.stickers)}>
                             <Smile className="h-5 w-5" aria-hidden />

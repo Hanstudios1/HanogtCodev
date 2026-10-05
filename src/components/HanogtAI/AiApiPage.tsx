@@ -19,7 +19,7 @@ const C = {
     tabs: { TR: "Bölümler", EN: "Sections" },
     api: { TR: "Hanogt AI API", EN: "Hanogt AI API" },
     connections: { TR: "Kendi anahtarların", EN: "Your own keys" },
-    connectionsHint: { TR: "OpenAI, Claude, Gemini ve diğer sağlayıcılardaki hesabını kendi API anahtarınla Hanogt AI'a bağla. Bu bağlantılarla gönderdiğin mesajlar Hanogt AI'ın günlük mesaj hakkından düşmez.", EN: "Connect your OpenAI, Claude, Gemini or other provider account to Hanogt AI with your own API key. Messages sent through these connections don't use your Hanogt AI daily messages." },
+    connectionsHint: { TR: "OpenAI, Claude, Gemini ve diğer sağlayıcılardaki hesabını kendi API anahtarınla Hanogt AI'a bağla. Bu bağlantılarla gönderdiğin mesajlar Hanogt AI'ın mesaj hakkından düşmez; planının kendi anahtar sınırı geçerlidir.", EN: "Connect your OpenAI, Claude, Gemini or other provider account to Hanogt AI with your own API key. Messages sent through these connections don't use your Hanogt AI messages; your plan's own-key limit applies instead." },
     signIn: { TR: "API anahtarların ve bağlantıların için giriş yap.", EN: "Sign in to manage your API keys and connections." },
     signInButton: { TR: "Giriş yap", EN: "Sign in" },
     loading: { TR: "Yükleniyor…", EN: "Loading…" },

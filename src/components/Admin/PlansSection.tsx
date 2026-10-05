@@ -8,7 +8,6 @@ import { AI_BONUS_MAX, COUPON_RECUR_MAX, GRANT_DAYS_MAX, PAID_PLAN_IDS, PLAN_COP
 import { adminPost, adminRequest, type ApiFailure } from "./api";
 import { COMMON } from "./copy";
 import { formatDateTime, formatNumber, useAdminResource, useNow } from "./hooks";
-import AiEngineCard from "./AiEngineCard";
 import FeaturesCard from "./FeaturesCard";
 import PaddleCard, { PaddleEnvironmentBadge, PaddleStatusBadge } from "./PaddleCard";
 import type { AdminCoupon, AdminCouponRestoreResponse, AdminDeletedCoupon, AdminPaddleCouponResponse, AdminPaddleResponse, AdminPaddleResyncResponse, AdminPlansResponse, AdminUserPlanResponse } from "./types";
@@ -92,9 +91,9 @@ const C = {
     assignedPlan: { TR: "Tanımlı plan: {plan}", EN: "Assigned plan: {plan}" },
     blocked: { TR: "Engelli", EN: "Blocked" },
     until: { TR: "{date} tarihine kadar", EN: "until {date}" },
-    aiLimits: { TR: "Hanogt AI: dakikada {minute}, günde {day} mesaj", EN: "Hanogt AI: {minute} a minute, {day} a day" },
-    aiUsage: { TR: "Bugün kullanılan: {used} / {day}", EN: "Used today: {used} / {day}" },
-    bonus: { TR: "Ek hak: günde +{extra}, {date} tarihine kadar", EN: "Extra quota: +{extra} a day until {date}" },
+    aiLimits: { TR: "Hanogt AI: dakikada {minute}, {days} günde {window} mesaj (sohbet ve API birlikte)", EN: "Hanogt AI: {minute} a minute, {window} every {days} days (chat and API together)" },
+    aiUsage: { TR: "Bu pencerede kullanılan: {used} / {window}", EN: "Used in this window: {used} / {window}" },
+    bonus: { TR: "Ek hak: pencere başına +{extra}, {date} tarihine kadar", EN: "Extra quota: +{extra} a window until {date}" },
     paddleTitle: { TR: "Paddle aboneliği", EN: "Paddle subscription" },
     perMonth: { TR: "Aylık", EN: "Monthly" },
     perYear: { TR: "Yıllık", EN: "Yearly" },
@@ -133,7 +132,7 @@ const C = {
     revokeKeysBody: { TR: "Anahtarlar hemen çalışmaz hâle gelir ve geri alınamaz; kişi yenilerini oluşturabilir. İşlem denetim kaydına yazılır.", EN: "The keys stop working at once and this can't be undone; the person can create new ones. The action is written to the audit log." },
     keysRevoked: { TR: "API anahtarları iptal edildi.", EN: "API keys revoked." },
     grantTitle: { TR: "Ek Hanogt AI hakkı", EN: "Extra Hanogt AI quota" },
-    extraDaily: { TR: "Günlük ek mesaj", EN: "Extra messages a day" },
+    extraDaily: { TR: "Pencere başına ek mesaj", EN: "Extra messages a window" },
     grantDays: { TR: "Kaç gün", EN: "For how many days" },
     grant: { TR: "Hakkı ver", EN: "Grant" },
     granted: { TR: "Ek hak kaydedildi.", EN: "Extra quota saved." },
@@ -586,8 +585,8 @@ function PersonPlan() {
                     </div>
                     <PaddleSubscription result={result} busy={busy === "resync"} onResync={() => void resync()} />
                     <div className="rounded-2xl bg-zinc-50 p-3 text-[13px] dark:bg-white/[0.03]">
-                        <p className="flex items-center gap-2 font-semibold"><Bot className="h-4 w-4 text-indigo-500" aria-hidden="true" />{tx(C.aiLimits, { minute: result.aiLimits.perMinute, day: result.aiLimits.perDay })}</p>
-                        <p className="mt-1 text-zinc-500">{tx(C.aiUsage, { used: result.aiUsage.day?.count ?? 0, day: result.aiLimits.perDay })}</p>
+                        <p className="flex items-center gap-2 font-semibold"><Bot className="h-4 w-4 text-indigo-500" aria-hidden="true" />{tx(C.aiLimits, { minute: result.aiLimits.perMinute, window: result.aiLimits.perWindow, days: result.aiLimits.windowDays })}</p>
+                        <p className="mt-1 text-zinc-500">{tx(C.aiUsage, { used: result.aiUsage.window?.count ?? 0, window: result.aiLimits.perWindow })}</p>
                         {subscription.aiBonusDaily > 0 && subscription.aiBonusUntil ? <p className="mt-1 text-zinc-500">{tx(C.bonus, { extra: subscription.aiBonusDaily, date: date(subscription.aiBonusUntil) })}</p> : null}
                         <Button className="mt-2" size="sm" icon={RotateCcw} busy={busy === "reset"} onClick={() => void act("reset", { action: "resetAi" }, C.resetDone)}>{tx(C.resetAi)}</Button>
                         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-3 dark:border-white/10" data-admin-api-keys>
@@ -738,7 +737,6 @@ export default function PlansSection() {
                         ) : null}
                     </Panel>
                     {data.features ? <FeaturesCard features={data.features} onChanged={replace} /> : null}
-                    {data.engine ? <AiEngineCard key={JSON.stringify(data.engine.settings)} engine={data.engine} onChanged={replace} /> : null}
                 </>
             )}
             <PersonPlan />

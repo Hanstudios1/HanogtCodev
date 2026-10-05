@@ -1,17 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Copy as CopyIcon, Cpu, FileCode2, Gauge, KeyRound, Pencil, RotateCcw, Sparkles, Square, SquareArrowOutUpRight, ThumbsDown, ThumbsUp, Volume2, Zap } from "lucide-react";
+import { Check, Copy as CopyIcon, Cpu, FileCode2, KeyRound, Pencil, Play, RotateCcw, Scissors, Sparkles, Square, SquareArrowOutUpRight, ThumbsDown, ThumbsUp, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
 import type { AiMessage } from "@/lib/ai/conversations";
+import type { ThinkingStep } from "@/lib/ai/thinking";
 import { useI18n } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/runtimes/languages";
 import AgentCard from "./AgentCard";
 import type { ChatArtifact } from "./artifacts";
 import { CHAT_COPY } from "./chat-copy";
 import Markdown from "./Markdown";
+import ThinkingPanel from "./ThinkingPanel";
 import { AiAvatar, cx, ICON_BUTTON } from "./ui";
 import { useSpeech, useVoice } from "./voice";
 
@@ -37,11 +39,12 @@ const C = {
     own: { TR: "Bağlantın", EN: "Your connection" },
     ownTitle: { TR: "Kendi bağlantınla yanıtlandı: {name}", EN: "Answered through your own connection: {name}" },
     coreTitle: { TR: "Cihazında çalışan eğitilmiş Hanogt AI Çekirdeği", EN: "Trained Hanogt AI Core running on your device" },
-    advanced: { TR: "Gelişmiş kod motoru", EN: "Advanced code engine" },
-    advancedTitle: { TR: "Bu yanıtı gelişmiş kod motoru yazdı: {model}", EN: "Written by the advanced code engine: {model}" },
-    engineQuota: { TR: "Bugünkü gelişmiş kod motoru hakkın doldu; bu yanıtı standart motor verdi.", EN: "You've used today's advanced code engine answers; the standard engine wrote this one." },
-    engineUnavailable: { TR: "Gelişmiş kod motoru şu an yanıt veremedi; bu yanıtı standart motor verdi.", EN: "The advanced code engine couldn't answer just now; the standard engine wrote this one." },
     attached: { TR: "Ekli dosya: {name} ({language})", EN: "Attached file: {name} ({language})" },
+    cutLength: { TR: "Yanıt uzunluk sınırına ulaştığı için burada kesildi.", EN: "The answer stopped here because it reached its length limit." },
+    cutTimeout: { TR: "Yanıt süre sınırına ulaştığı için burada kesildi.", EN: "The answer stopped here because it ran out of time." },
+    cutError: { TR: "Yanıt bir bağlantı hatası yüzünden yarıda kaldı.", EN: "The answer was interrupted by a connection error." },
+    continue: { TR: "Devam et", EN: "Continue" },
+    continueHint: { TR: "Kaldığı yerden devam eder (1 mesaj sayılır).", EN: "Picks up where it stopped (counts as 1 message)." },
 };
 
 export interface ChatMessageProps {
@@ -62,6 +65,10 @@ export interface ChatMessageProps {
     onOpenInEditor: (language: string, code: string) => void;
     onOpenArtifact: (artifact: ChatArtifact) => void;
     onNavigate?: () => void;
+    /** Continues an answer that was cut (only the last answer). */
+    onContinue?: () => void;
+    /** While this answer streams: the model's thinking and the steps so far. */
+    live?: { text: string; steps: ThinkingStep[]; seconds: number | null };
 }
 
 function UserMessage({ message, editable, onEdit }: { message: AiMessage; editable: boolean; onEdit: (text: string) => void }) {
@@ -124,7 +131,7 @@ function UserMessage({ message, editable, onEdit }: { message: AiMessage; editab
     );
 }
 
-/** One message of the conversation, Claude-style: questions in a soft bubble, answers as plain text with a quiet action row. */
+/** One message of the conversation: questions in a soft bubble; answers as plain text, their thinking above them and a quiet action row. */
 export default function ChatMessage(props: ChatMessageProps) {
     const { message, streamingText, variant, busy, isLastAssistant, isLastUser, agentMode, signedIn } = props;
     const { tx, language } = useI18n();
@@ -146,12 +153,11 @@ export default function ChatMessage(props: ChatMessageProps) {
     const model = typeof message.model === "string" ? message.model : "";
     const viaConnection = message.engine === "llm" && typeof message.connectionId === "string";
     const connectionName = [typeof message.connectionLabel === "string" ? message.connectionLabel : "", model].filter(Boolean).join(" · ");
-    const advanced = message.engine === "llm" && !viaConnection && message.advanced === true;
-    const engineNote = message.engine === "llm" && !advanced && (message.engineNote === "quota" || message.engineNote === "unavailable") ? message.engineNote : null;
     const badgeTitle = viaConnection
         ? tx(C.ownTitle, { name: connectionName || tx(C.own) })
-        : advanced ? tx(C.advancedTitle, { model: model || "Claude" })
-            : message.engine === "llm" ? (model ? tx(C.llmModelTitle, { model }) : tx(C.llmTitle)) : tx(C.coreTitle);
+        : message.engine === "llm" ? (model ? tx(C.llmModelTitle, { model }) : tx(C.llmTitle)) : tx(C.coreTitle);
+    const cutNote = !isStreaming && message.cut ? (message.cut === "length" ? C.cutLength : message.cut === "timeout" ? C.cutTimeout : C.cutError) : null;
+    const live = isStreaming && props.live ? { ...props.live, answering: Boolean(content) } : undefined;
     const copy = async () => {
         try {
             await navigator.clipboard.writeText(message.content);
@@ -171,16 +177,11 @@ export default function ChatMessage(props: ChatMessageProps) {
                         <Cpu className="me-1.5 inline h-3 w-3 align-[-1px]" aria-hidden />
                         {message.notice}
                         {message.noticeAction === "plans" ? <> <Link href="/plans" onClick={props.onNavigate} className="whitespace-nowrap font-bold text-violet-700 underline underline-offset-2 dark:text-violet-300" data-notice-plans>{tx(CHAT_COPY.upgrade)}</Link></> : null}
+                        {message.noticeAction === "signin" ? <> <Link href="/login?callbackUrl=%2Fai" onClick={props.onNavigate} className="whitespace-nowrap font-bold text-violet-700 underline underline-offset-2 dark:text-violet-300" data-notice-signin>{tx(CHAT_COPY.signIn)}</Link></> : null}
                     </p>
                 ) : null}
-                {engineNote && !isStreaming ? (
-                    <p className="w-fit max-w-full rounded-lg bg-zinc-500/10 px-2 py-1 text-[11.5px] font-semibold leading-relaxed text-zinc-600 dark:text-zinc-300" data-ai-engine-note={engineNote}>
-                        <Gauge className="me-1.5 inline h-3 w-3 align-[-1px]" aria-hidden />
-                        {tx(engineNote === "quota" ? C.engineQuota : C.engineUnavailable)}
-                        {engineNote === "quota" ? <> <Link href="/plans" onClick={props.onNavigate} className="whitespace-nowrap font-bold text-violet-700 underline underline-offset-2 dark:text-violet-300">{tx(CHAT_COPY.upgrade)}</Link></> : null}
-                    </p>
-                ) : null}
-                {content || !isStreaming ? (
+                <ThinkingPanel thinking={isStreaming ? undefined : message.thinking} live={live} variant={variant} />
+                {content || !isStreaming || live ? (
                     <div className={cx("leading-relaxed text-zinc-800 dark:text-zinc-100", variant === "page" ? "text-[15px]" : "text-[13.5px]", message.error && "text-red-600 dark:text-red-400")}>
                         {content ? <Markdown text={content} onNavigate={props.onNavigate} onOpenInEditor={props.onOpenInEditor} onOpenArtifact={props.onOpenArtifact} /> : null}
                         {isStreaming && content ? <span className="ms-0.5 inline-block h-4 w-1.5 animate-pulse rounded-sm bg-violet-500 align-text-bottom" aria-hidden /> : null}
@@ -190,6 +191,17 @@ export default function ChatMessage(props: ChatMessageProps) {
                         {[0, 1, 2].map((dot) => <motion.span key={dot} className="h-2 w-2 rounded-full bg-violet-500" animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.9, repeat: Infinity, delay: dot * 0.15 }} />)}
                     </span>
                 )}
+                {cutNote ? (
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-500/[0.07] px-3 py-2 text-[12px] text-amber-800 dark:text-amber-200" data-ai-cut={message.cut}>
+                        <Scissors className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        <span className="min-w-0 flex-1">{tx(cutNote)}</span>
+                        {isLastAssistant && props.onContinue ? (
+                            <button type="button" onClick={props.onContinue} disabled={busy} title={tx(C.continueHint)} className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-1 font-bold text-amber-900 transition hover:bg-amber-500/25 disabled:opacity-50 dark:text-amber-100" data-ai-continue>
+                                <Play className="h-3 w-3" aria-hidden />{tx(C.continue)}
+                            </button>
+                        ) : null}
+                    </div>
+                ) : null}
                 {message.agent?.calls.length ? (
                     <div className="space-y-2">
                         {message.agent.calls.map((call) => (
@@ -207,9 +219,9 @@ export default function ChatMessage(props: ChatMessageProps) {
                 ) : null}
                 {!isStreaming && message.content ? (
                     <div className="flex flex-wrap items-center gap-1 text-[11px] text-zinc-400">
-                        <span className={cx("me-1 inline-flex max-w-[14rem] items-center gap-1 rounded-full px-2 py-0.5 font-bold", viaConnection ? "bg-sky-500/10 text-sky-700 dark:text-sky-300" : advanced ? "bg-gradient-to-r from-amber-500/15 to-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300" : message.engine === "llm" ? "bg-violet-500/10 text-violet-600 dark:text-violet-300" : "bg-zinc-500/10 text-zinc-500")} title={badgeTitle} data-ai-engine={advanced ? "advanced" : message.engine === "llm" && !viaConnection ? "standard" : undefined}>
-                            {viaConnection ? <KeyRound className="h-3 w-3 shrink-0" aria-hidden /> : advanced ? <Zap className="h-3 w-3 shrink-0" aria-hidden /> : message.engine === "llm" ? <Sparkles className="h-3 w-3 shrink-0" aria-hidden /> : <Cpu className="h-3 w-3 shrink-0" aria-hidden />}
-                            <span className="truncate">{viaConnection ? model || tx(C.own) : advanced ? tx(C.advanced) : tx(message.engine === "llm" ? C.llm : C.core)}</span>
+                        <span className={cx("me-1 inline-flex max-w-[14rem] items-center gap-1 rounded-full px-2 py-0.5 font-bold", viaConnection ? "bg-sky-500/10 text-sky-700 dark:text-sky-300" : message.engine === "llm" ? "bg-violet-500/10 text-violet-600 dark:text-violet-300" : "bg-zinc-500/10 text-zinc-500")} title={badgeTitle} data-ai-engine={message.engine === "llm" && !viaConnection ? "hanogt" : undefined}>
+                            {viaConnection ? <KeyRound className="h-3 w-3 shrink-0" aria-hidden /> : message.engine === "llm" ? <Sparkles className="h-3 w-3 shrink-0" aria-hidden /> : <Cpu className="h-3 w-3 shrink-0" aria-hidden />}
+                            <span className="truncate">{viaConnection ? model || tx(C.own) : tx(message.engine === "llm" ? C.llm : C.core)}</span>
                         </span>
                         {message.sources?.map((source) => (
                             <Link key={source.href} href={source.href} onClick={props.onNavigate} className="rounded-full border border-zinc-200 px-2 py-0.5 font-semibold text-zinc-500 transition hover:border-violet-400 hover:text-violet-600 dark:border-white/10 dark:hover:text-violet-300">{source.title}</Link>

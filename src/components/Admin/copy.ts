@@ -218,7 +218,7 @@ export const DETAIL_KEY_COPY: Record<string, Copy> = {
     maxUses: { TR: "En çok kullanım", EN: "Max uses" },
     expiresAt: { TR: "Bitiş", EN: "Expires" },
     days: { TR: "Gün", EN: "Days" },
-    extraDaily: { TR: "Günlük ek mesaj", EN: "Extra daily messages" },
+    extraDaily: { TR: "Pencere başına ek mesaj", EN: "Extra messages a window" },
     role: { TR: "Rol", EN: "Role" },
     reason: { TR: "Gerekçe", EN: "Reason" },
     from: { TR: "Önceki", EN: "From" },

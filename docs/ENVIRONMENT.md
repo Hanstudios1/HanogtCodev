@@ -3,8 +3,8 @@
 Every variable below is read on the server unless its name starts with
 `NEXT_PUBLIC_`, which is exposed to the browser. The app is designed to degrade
 gracefully: with none of these set, code still runs in the browser and Hanogt
-AI answers with its offline Core; features that need a backend simply report
-that they are not configured.
+AI answers signed-in people with its offline Core; features that need a
+backend simply report that they are not configured.
 
 ## Authentication (NextAuth)
 
@@ -187,19 +187,33 @@ blocked, no audio arriving, a silent microphone).
 
 ## Hanogt AI
 
-See [docs/HANOGT_AI.md](./HANOGT_AI.md) for the full picture.
+See [docs/HANOGT_AI.md](./HANOGT_AI.md) for the full picture. Hanogt AI's
+language model is the owner's own OpenAI-compatible endpoint, set only by the
+three required `HANOGT_AI_*` variables below: there are no defaults and no
+fallbacks.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `HANOGT_AI_API_KEY` | – | API key (falls back to `GROQ_API_KEY`). |
-| `HANOGT_AI_BASE_URL` | `https://api.groq.com/openai/v1` | OpenAI-compatible endpoint. http allowed only to loopback. |
-| `HANOGT_AI_MODEL` | `llama-3.3-70b-versatile` | Model id (falls back to `GROQ_MODEL`). |
-| `HANOGT_AI_EXTRA_BODY` | – | Optional JSON object added to every request to Hanogt AI's own model (chat and `/api/v1`), for a self-hosted server: e.g. `{"chat_template_kwargs":{"enable_thinking":false}}` for a Qwen model on vLLM (see training/README.md). The request's own fields (model, messages, tools, max_tokens…) always win; an invalid value is ignored. |
-| `ANTHROPIC_API_KEY` | – | **Secret.** Turns on the advanced code engine (Claude): code and security questions in the chat go to it, up to each plan's daily allowance (Admin › Subscriptions › Hanogt AI engine). Without it the standard engine answers everything. |
-| `HANOGT_AI_CLAUDE_MODEL` | `DEFAULT_ENGINE_MODEL` in `src/lib/ai/engine.ts` | The advanced engine's default model, an Anthropic model ID (the admin card overrides it). |
-| `HANOGT_AI_CLAUDE_EFFORT` | `medium` | Its default effort: `low`, `medium`, `high`, `xhigh` or `max`. Higher thinks deeper, answers slower and costs more; the chat stops answers after 55 seconds. |
-| `ANTHROPIC_BASE_URL` | – | Only for tests or a proxy: another address for the Anthropic API (https, or http to this machine). |
+| `HANOGT_AI_BASE_URL` | – (required) | OpenAI-compatible base URL of Hanogt AI's own model: the Hugging Face router (`https://router.huggingface.co/v1`), a Hugging Face Inference Endpoint or your own vLLM server. https; plain http only to this machine (`localhost`, `127.0.0.1`, `[::1]`). |
+| `HANOGT_AI_MODEL` | – (required) | Model id at that endpoint. On the Hugging Face router it must pin a provider, e.g. `Qwen/Qwen3-…:<provider>`; routing policies (`:fastest`, `:cheapest`, `:preferred`, `:auto`) and `:groq` are refused. |
+| `HANOGT_AI_API_KEY` | – (required) | **Secret.** The endpoint's key (for Hugging Face, an access token that may call it). |
+| `HANOGT_AI_EXTRA_BODY` | – | Optional JSON object (at most 4,000 characters) added to every request to Hanogt AI's own model (chat and `/api/v1`), for options your server understands, e.g. `{"top_k":20}`. The request's own fields (model, messages, tools, max_tokens, temperature…) always win; Hanogt AI sets Qwen3's `chat_template_kwargs.enable_thinking` itself and keeps any other `chat_template_kwargs` from here. An invalid value is ignored. |
+| `HANOGT_AI_THINKING` | – | `preopened` when the model's chat template opens the `<think>` block itself: answers then start inside it and the thinking ends at `</think>` (an answer that ends normally without it was the answer, not thinking). Leave it unset otherwise. |
 | `AI_KEYS_ENCRYPTION_KEY` | – | **Secret.** Encrypts (AES-256-GCM) the API keys Plus/Pro members connect in Hanogt AI (`ai_connections/{email}`; Plus 2, Pro 5 connections). Falls back to `TOTP_ENCRYPTION_KEY`, then `NEXTAUTH_SECRET`/`AUTH_SECRET`. Set a dedicated value before launch and don't change it: stored keys become unreadable and people have to add their connections again. |
+
+Groq and Anthropic hosts (`groq.com`, `anthropic.com`) are refused as Hanogt
+AI's model, and so is a model ending in `:groq`. When the variables are
+missing or refused, `/api/ai` answers `503 not_configured` without counting
+anything and the browser's Hanogt AI Core answers signed-in people; `/api/v1`
+answers `503 service_unavailable`. Training and serving your own model:
+[training/README.md](../training/README.md).
+
+**No longer read — delete them from Vercel** (Settings → Environment
+Variables): `GROQ_API_KEY` and `GROQ_MODEL` (the old fallbacks),
+`ANTHROPIC_API_KEY` (it only switched on the removed advanced code engine;
+people's own Anthropic keys are stored encrypted per account, not in a
+variable), `HANOGT_AI_CLAUDE_MODEL`, `HANOGT_AI_CLAUDE_EFFORT` and
+`ANTHROPIC_BASE_URL`.
 
 ## Payments (Paddle Billing)
 

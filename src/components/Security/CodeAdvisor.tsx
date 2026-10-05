@@ -98,7 +98,7 @@ export default function CodeAdvisor() {
                         spellCheck={false}
                         dir="ltr"
                         placeholder={tx({ TR: "Kodunu buraya yapıştır… (analiz tamamen tarayıcında yapılır)", EN: "Paste your code here… (analysis runs entirely in your browser)" })}
-                        className="scrollbar-thin h-full min-h-[360px] w-full resize-y bg-transparent p-4 font-mono text-[12.5px] leading-relaxed text-zinc-100 outline-none placeholder:text-zinc-500"
+                        className="scrollbar-thin h-full min-h-[360px] w-full resize-y bg-transparent p-4 font-mono text-[12.5px] leading-relaxed text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400/50 placeholder:text-zinc-500"
                         aria-label={tx({ TR: "Analiz edilecek kod", EN: "Code to analyze" })}
                     />
                     {code ? (

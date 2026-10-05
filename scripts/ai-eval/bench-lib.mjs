@@ -394,7 +394,19 @@ export function comparisonReport(runs) {
     ].join("\n");
 }
 
-/** An OpenAI-compatible chat completions endpoint (Groq, vLLM, Ollama, the Hanogt AI API…). */
+/**
+ * The answer without the thinking a thinking model may put in its text: a
+ * <think> block, or everything up to </think> when the template opened the
+ * block in the prompt. Only the answer is graded.
+ */
+export function answerText(content) {
+    let text = String(content ?? "");
+    const close = text.indexOf("</think>");
+    if (close >= 0 && !text.slice(0, close).includes("<think>")) text = text.slice(close + "</think>".length);
+    return text.replace(/<think>[\s\S]*?(?:<\/think>|$)/g, "").trim();
+}
+
+/** An OpenAI-compatible chat completions endpoint (Hanogt AI's own model, vLLM, Ollama, the Hanogt AI API…). */
 export function openAiEngine({ name, baseUrl, apiKey, model, extra = {}, temperature = 0.2, maxTokens = 4000, fetchImpl = fetch, timeoutMs = 180_000 }) {
     const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
     return {
@@ -412,25 +424,7 @@ export function openAiEngine({ name, baseUrl, apiKey, model, extra = {}, tempera
                 throw error;
             }
             const data = await response.json();
-            return { text: String(data?.choices?.[0]?.message?.content ?? ""), stopReason: data?.choices?.[0]?.finish_reason ?? null, usage: data?.usage ?? null };
-        },
-    };
-}
-
-/** Claude through the official SDK (a client made by the caller), streamed, with the effort the caller picks. */
-export function anthropicEngine({ client, model, effort, maxTokens = 16_000 }) {
-    return {
-        name: `anthropic:${model}${effort ? `:${effort}` : ""}`,
-        async complete({ system, prompt }) {
-            const message = await client.messages.stream({
-                model,
-                max_tokens: maxTokens,
-                system,
-                messages: [{ role: "user", content: prompt }],
-                ...(effort ? { output_config: { effort } } : {}),
-            }).finalMessage();
-            const text = message.content.filter((block) => block.type === "text").map((block) => block.text).join("");
-            return { text, stopReason: message.stop_reason, usage: message.usage };
+            return { text: answerText(data?.choices?.[0]?.message?.content), stopReason: data?.choices?.[0]?.finish_reason ?? null, usage: data?.usage ?? null };
         },
     };
 }

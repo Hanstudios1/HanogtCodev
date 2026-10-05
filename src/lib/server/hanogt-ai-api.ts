@@ -3,8 +3,10 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { API_INPUT_CHARS_MAX, API_KEY_PATTERN, API_MESSAGES_MAX, API_MODEL_ID, API_SYSTEM_MAX, type ApiErrorCode } from "@/lib/ai/api-keys";
 import { PLAN_AI_FEATURES, effectivePlan, type PlanId, type UserSubscription } from "@/lib/plans";
+import { createThinkingSplitter, reasoningOf, splitThinkingText, stripThinkBlocks, type ThinkingPart } from "@/lib/ai/thinking";
+import type { WindowQuota } from "@/lib/ai/usage";
 import { activeKeyIds, findApiKey, storedApiKeys } from "./ai-api-keys";
-import { enforceApiRequests } from "./ai-usage";
+import { enforceHanogtAi, type QuotaPass } from "./ai-usage";
 import type { HealOptions } from "./entitlements";
 import { featureAllowed } from "./features";
 import { getServerDocument } from "./firebase-rest";
@@ -92,28 +94,35 @@ export async function authenticateApiCaller(authorization: string | null, ip: st
     return { ok: true, caller: { email: found.email, keyId: found.id, key: { hash: found.hash, lastUsedAt: found.lastUsedAt }, plan, staff, subscription } };
 }
 
-/** The x-ratelimit-* headers of a counted request (OpenAI's names for the minute, ours for the day). */
-export function apiRateHeaders(minute: { limit: number; remaining: number; resetsAt: string }, day: { limit: number; remaining: number; resetsAt: string | null }, now = Date.now()): Record<string, string> {
+/**
+ * The rate-limit headers of a counted request: OpenAI's names for the minute
+ * guard, ours for Hanogt AI's window (shared with the chat; a week or two
+ * weeks depending on the plan).
+ */
+export function apiRateHeaders(minute: { limit: number; remaining: number; resetsAt: string }, window: Pick<WindowQuota, "limit" | "remaining" | "resetsAt" | "windowDays">, now = Date.now()): Record<string, string> {
     const seconds = Math.max(0, Math.ceil((Date.parse(minute.resetsAt) - now) / 1000));
     return {
         "x-ratelimit-limit-requests": String(minute.limit),
         "x-ratelimit-remaining-requests": String(minute.remaining),
         "x-ratelimit-reset-requests": `${Number.isFinite(seconds) ? seconds : 60}s`,
-        "x-hanogt-ratelimit-limit-day": String(day.limit),
-        "x-hanogt-ratelimit-remaining-day": String(day.remaining),
-        ...(day.resetsAt ? { "x-hanogt-ratelimit-reset-day": day.resetsAt } : {}),
+        "x-hanogt-ratelimit-limit-window": String(window.limit),
+        "x-hanogt-ratelimit-remaining-window": String(window.remaining),
+        "x-hanogt-ratelimit-window-days": String(window.windowDays),
+        ...(window.resetsAt ? { "x-hanogt-ratelimit-reset-window": window.resetsAt } : {}),
     };
 }
 
-/** Counts one request in the account's minute and day windows (Plus 10 / 250, Pro 30 / 1,000). */
-export async function countApiRequest(caller: ApiCaller, options: HealOptions = {}): Promise<{ ok: true; headers: Record<string, string> } | { ok: false; failure: ApiFailure }> {
-    const counted = await enforceApiRequests(caller.email, caller.subscription, options);
-    if (counted.ok) return { ok: true, headers: apiRateHeaders(counted.minute, counted.quota) };
-    if (counted.code === "connection_unavailable") return failure(403, "plan_required", "The Hanogt AI API needs the Plus or Pro plan.");
-    const perMinute = counted.code === "rate_limited";
-    const message = perMinute
+/**
+ * Counts one request as one Hanogt AI message: the same minute guard and
+ * window as the chat (Free has no API; Plus 750 in 14 days, Pro 2,000 in 7).
+ * The pass lets the route give the message back when the model answers nothing.
+ */
+export async function countApiRequest(caller: ApiCaller, options: HealOptions = {}): Promise<{ ok: true; headers: Record<string, string>; pass: QuotaPass } | { ok: false; failure: ApiFailure }> {
+    const counted = await enforceHanogtAi(caller.email, { ...options, source: "api", subscription: caller.subscription });
+    if (counted.ok) return { ok: true, headers: apiRateHeaders(counted.minute, counted.quota), pass: counted };
+    const message = counted.code === "rate_limited"
         ? `Rate limit reached: ${counted.limit} requests per minute on your plan. Try again in ${counted.retryAfterSeconds} s.`
-        : `Daily limit reached: ${counted.limit} requests in 24 hours on your plan. It renews at ${counted.resetsAt}.`;
+        : `Your Hanogt AI messages are used up: ${counted.limit} every ${counted.windowDays} days on your plan, shared by the chat and the API. They renew at ${counted.resetsAt}.`;
     return failure(429, "rate_limit_exceeded", message, { headers: { "Retry-After": String(counted.retryAfterSeconds) } });
 }
 
@@ -134,6 +143,8 @@ export type CompletionRequest = {
     maxTokens: number;
     mode: AiAnswerMode;
     language: string;
+    /** Send the model's thinking back as reasoning_content (include_reasoning: true, or reasoning: true / { exclude: false }). */
+    includeReasoning: boolean;
 };
 
 /** Parameters that would need tools or several answers: refused rather than silently ignored. */
@@ -211,11 +222,15 @@ export function parseCompletionRequest(body: Record<string, unknown> | null, pla
         const clean = text.replace(/\0/g, "");
         characters += clean.length;
         if (role === "system" || role === "developer") system.push(clean.trim());
-        else messages.push({ role, content: clean });
+        // Thinking is never sent back to the model.
+        else messages.push({ role, content: role === "assistant" ? stripThinkBlocks(clean) : clean });
     }
     if (characters > API_INPUT_CHARS_MAX) return failure(413, "context_length_exceeded", `The messages are longer than ${API_INPUT_CHARS_MAX.toLocaleString("en-US")} characters.`, { param: "messages" });
     const systemText = system.filter(Boolean).join("\n\n");
     if (systemText.length > API_SYSTEM_MAX) return failure(413, "context_length_exceeded", `The system text is longer than ${API_SYSTEM_MAX.toLocaleString("en-US")} characters.`, { param: "messages" });
+    const reasoning = body.reasoning;
+    if (body.include_reasoning !== undefined && body.include_reasoning !== null && typeof body.include_reasoning !== "boolean") return failure(400, "invalid_request", "\"include_reasoning\" must be true or false.", { param: "include_reasoning" });
+    const includeReasoning = body.include_reasoning === true || reasoning === true || Boolean(reasoning && typeof reasoning === "object" && !Array.isArray(reasoning) && (reasoning as { exclude?: unknown }).exclude !== true);
     if (!messages.length || messages[messages.length - 1].role !== "user" || !messages[messages.length - 1].content.trim()) {
         return failure(400, "invalid_request", "The last message must be the user's, with text.", { param: "messages" });
     }
@@ -231,6 +246,7 @@ export function parseCompletionRequest(body: Record<string, unknown> | null, pla
             maxTokens: Math.min(tokens.value ?? planMax, planMax),
             mode,
             language,
+            includeReasoning,
         },
     };
 }
@@ -263,18 +279,19 @@ function usageOf(value: unknown) {
 }
 
 /** A non-streamed answer from the provider's JSON, in OpenAI's chat.completion shape; null when it holds no text. */
-export function completionBody(upstream: unknown, meta: { id: string; created: number }) {
-    const data = upstream && typeof upstream === "object" ? upstream as { choices?: Array<{ message?: { content?: unknown }; finish_reason?: unknown }>; usage?: unknown } : null;
+export function completionBody(upstream: unknown, meta: { id: string; created: number }, options: { includeReasoning?: boolean; preopened?: boolean } = {}) {
+    const data = upstream && typeof upstream === "object" ? upstream as { choices?: Array<{ message?: { content?: unknown; reasoning_content?: unknown; reasoning?: unknown }; finish_reason?: unknown }>; usage?: unknown } : null;
     const choice = data?.choices?.[0];
-    const content = typeof choice?.message?.content === "string" ? choice.message.content : "";
-    if (!content.trim()) return null;
+    const raw = typeof choice?.message?.content === "string" ? choice.message.content : "";
+    const { thinking, text } = splitThinkingText(raw, reasoningOf(choice?.message), { preopened: options.preopened, complete: choice?.finish_reason !== "length" });
+    if (!text.trim()) return null;
     const usage = usageOf(data?.usage);
     return {
         id: meta.id,
         object: "chat.completion",
         created: meta.created,
         model: API_MODEL_ID,
-        choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: finishReasonOf(choice?.finish_reason) }],
+        choices: [{ index: 0, message: { role: "assistant", content: text, ...(options.includeReasoning && thinking ? { reasoning_content: thinking } : {}) }, finish_reason: finishReasonOf(choice?.finish_reason) }],
         ...(usage ? { usage } : {}),
     };
 }
@@ -283,28 +300,55 @@ function chunk(meta: { id: string; created: number }, delta: Record<string, stri
     return `data: ${JSON.stringify({ id: meta.id, object: "chat.completion.chunk", created: meta.created, model: API_MODEL_ID, choices: [{ index: 0, delta, finish_reason: finishReason }] })}\n\n`;
 }
 
+export type CompletionStreamHooks = {
+    /** The stream ended; `answered` is false when the model sent no text (the route gives the message back). */
+    onEnd?: (result: { answered: boolean }) => void | Promise<void>;
+    onCancel?: () => void;
+    /** Send the model's thinking as reasoning_content deltas. */
+    includeReasoning?: boolean;
+    /** The model's template opens the thinking block itself (HANOGT_AI_THINKING=preopened). */
+    preopened?: boolean;
+};
+
 /**
  * The provider's server-sent events re-told as our own chat.completion.chunk
  * events (never the provider's ids, model name or extra fields): a first
- * chunk with the role, one per piece of text, a last one with the finish
- * reason, then `data: [DONE]`. A provider failure midway becomes an error
- * event before [DONE], as OpenAI's SDKs expect.
+ * chunk with the role, one per piece of text (and of thinking, when asked
+ * for), a last one with the finish reason, then `data: [DONE]`. A provider
+ * failure midway, or an answer with no text, becomes an error event before
+ * [DONE], as OpenAI's SDKs expect.
  */
-export function completionStream(upstream: ReadableStream<Uint8Array>, meta: { id: string; created: number }, hooks: { onEnd?: () => void; onCancel?: () => void } = {}): ReadableStream<Uint8Array> {
+export function completionStream(upstream: ReadableStream<Uint8Array>, meta: { id: string; created: number }, hooks: CompletionStreamHooks = {}): ReadableStream<Uint8Array> {
     const reader = upstream.getReader();
     const decoder = new TextDecoder();
     const encoder = new TextEncoder();
+    const splitter = createThinkingSplitter({ preopened: hooks.preopened });
     let started = false;
     let finish: FinishReason = "stop";
     let buffer = "";
     let ended = false;
-    const end = (controller: ReadableStreamDefaultController<Uint8Array>, tail: string) => {
+    let answered = false;
+    const piecesOf = (parts: ThinkingPart[]) => {
+        let out = "";
+        for (const part of parts) {
+            if (part.kind === "think") {
+                if (hooks.includeReasoning) out += chunk(meta, { reasoning_content: part.text }, null);
+                continue;
+            }
+            // "unthink" (a block the template opened never closed) is the answer: it follows as content.
+            if (part.text.trim()) answered = true;
+            out += chunk(meta, { content: part.text }, null);
+        }
+        return out;
+    };
+    const end = async (controller: ReadableStreamDefaultController<Uint8Array>, tail: string) => {
         if (ended) return;
         ended = true;
+        await hooks.onEnd?.({ answered });
         controller.enqueue(encoder.encode(`${tail}data: [DONE]\n\n`));
         controller.close();
-        hooks.onEnd?.();
     };
+    const emptyAnswer = () => `data: ${JSON.stringify(apiErrorBody({ status: 424, code: "upstream_error", message: "The model sent an empty answer. Try again." }))}\n\n`;
     return new ReadableStream<Uint8Array>({
         start(controller) {
             started = true;
@@ -316,7 +360,8 @@ export function completionStream(upstream: ReadableStream<Uint8Array>, meta: { i
                 for (;;) {
                     const { value, done } = await reader.read();
                     if (done) {
-                        end(controller, chunk(meta, {}, finish));
+                        const rest = piecesOf(splitter.end({ complete: finish === "stop" }));
+                        await end(controller, answered ? `${rest}${chunk(meta, {}, finish)}` : `${rest}${emptyAnswer()}`);
                         return;
                     }
                     buffer += decoder.decode(value, { stream: true });
@@ -330,9 +375,10 @@ export function completionStream(upstream: ReadableStream<Uint8Array>, meta: { i
                         const payload = line.slice(5).trim();
                         if (payload === "[DONE]") continue;
                         try {
-                            const parsed = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: unknown }; finish_reason?: unknown }> };
+                            const parsed = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: unknown; reasoning_content?: unknown; reasoning?: unknown }; finish_reason?: unknown }> };
                             const choice = parsed.choices?.[0];
-                            if (typeof choice?.delta?.content === "string" && choice.delta.content) out += chunk(meta, { content: choice.delta.content }, null);
+                            const delta = choice?.delta;
+                            if (delta) out += piecesOf(splitter.push({ reasoning: reasoningOf(delta), content: typeof delta.content === "string" ? delta.content : null }));
                             if (choice?.finish_reason) finish = finishReasonOf(choice.finish_reason);
                         } catch {
                             // Keep-alive comments and partial frames are skipped.
@@ -345,11 +391,11 @@ export function completionStream(upstream: ReadableStream<Uint8Array>, meta: { i
                 }
             } catch (error) {
                 if (error instanceof Error && error.name === "AbortError") {
-                    end(controller, "");
+                    await end(controller, answered ? "" : emptyAnswer());
                     return;
                 }
                 const body = apiErrorBody({ status: 424, code: "upstream_error", message: "The model stopped answering. Try again." });
-                end(controller, `data: ${JSON.stringify(body)}\n\n`);
+                await end(controller, `data: ${JSON.stringify(body)}\n\n`);
             }
         },
         cancel() {

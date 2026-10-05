@@ -9,8 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { agentUserKey } from "@/lib/ai/agent-settings";
-import type { AiEngineNote } from "@/lib/ai/engine";
-import { readAiUsage, windowAfter, type AiUsage, type DayQuota, type LimitDetails, type QuotaKind, type UsageWindow } from "@/lib/ai/usage";
+import { readAiUsage, windowAfter, type AiUsage, type LimitDetails, type QuotaKind, type UsageWindow, type WindowQuota } from "@/lib/ai/usage";
 import { onPlanChange } from "@/lib/plan-signal";
 
 const EVENT = "hanogt-ai:usage";
@@ -49,11 +48,10 @@ async function loadUsage(owner: string, force = false) {
     }
 }
 
-/** Replaces the day window of `quota`. */
-function withDay(usage: AiUsage, quota: QuotaKind, day: UsageWindow): AiUsage {
-    if (quota === "hanogt") return { ...usage, hanogt: { ...usage.hanogt, day } };
-    if (quota === "own") return usage.own ? { ...usage, own: { ...usage.own, day } } : usage;
-    return usage.api ? { ...usage, api: { ...usage.api, day } } : usage;
+/** Replaces the counting window of `quota`: Hanogt AI's plan window, or the own connections' day. */
+function withWindow(usage: AiUsage, quota: QuotaKind, window: UsageWindow): AiUsage {
+    if (quota === "hanogt") return { ...usage, hanogt: { ...usage.hanogt, window } };
+    return usage.own ? { ...usage, own: { ...usage.own, day: window } } : usage;
 }
 
 export type AiUsageHandle = {
@@ -63,12 +61,10 @@ export type AiUsageHandle = {
     loading: boolean;
     failed: boolean;
     refresh: () => void;
-    /** An answer's day window (from its headers). */
-    applyQuota: (quota: DayQuota | undefined) => void;
-    /** A daily limit refused a message: that window is full until it resets. */
+    /** An answer's window (from its headers). */
+    applyQuota: (quota: WindowQuota | undefined) => void;
+    /** A limit refused a message: that window is full until it resets. */
     applyLimit: (limit: LimitDetails | undefined) => void;
-    /** The advanced engine's window after an answer, or its allowance ran out (the standard engine answered). */
-    applyEngine: (window: UsageWindow | undefined, note: AiEngineNote | undefined) => void;
 };
 
 export function useAiUsage(email: string | null): AiUsageHandle {
@@ -97,19 +93,19 @@ export function useAiUsage(email: string | null): AiUsageHandle {
         if (owner) void loadUsage(owner, true);
     }, [owner]);
 
-    const applyQuota = useCallback((quota: DayQuota | undefined) => {
+    const applyQuota = useCallback((quota: WindowQuota | undefined) => {
         if (!owner || !quota) return;
         if (snapshot.owner !== owner || !snapshot.usage) {
             void loadUsage(owner, true);
             return;
         }
-        const window = quota.quota === "hanogt" ? snapshot.usage.hanogt.day : quota.quota === "own" ? snapshot.usage.own?.day : snapshot.usage.api?.day;
-        // Own connections the stored usage doesn't know about (the plan changed): ask again.
-        if (!window) {
+        const window = quota.quota === "hanogt" ? snapshot.usage.hanogt.window : snapshot.usage.own?.day;
+        // Own connections the stored usage doesn't know about, or a window of another length (the plan changed): ask again.
+        if (!window || (quota.quota === "hanogt" && quota.windowDays !== snapshot.usage.hanogt.windowDays)) {
             void loadUsage(owner, true);
             return;
         }
-        setSnapshot({ ...snapshot, usage: withDay(snapshot.usage, quota.quota, windowAfter(window, quota)) });
+        setSnapshot({ ...snapshot, usage: withWindow(snapshot.usage, quota.quota, windowAfter(window, quota)) });
     }, [owner]);
 
     const applyLimit = useCallback((limit: LimitDetails | undefined) => {
@@ -119,26 +115,12 @@ export function useAiUsage(email: string | null): AiUsageHandle {
             return;
         }
         const full: UsageWindow = { limit: limit.limit, used: Math.max(limit.used, limit.limit), remaining: 0, resetsAt: limit.resetsAt };
-        setSnapshot({ ...snapshot, usage: withDay(snapshot.usage, limit.quota, full) });
-    }, [owner]);
-
-    const applyEngine = useCallback((window: UsageWindow | undefined, note: AiEngineNote | undefined) => {
-        if (!owner || (!window && note !== "quota")) return;
-        if (snapshot.owner !== owner || !snapshot.usage) {
-            void loadUsage(owner, true);
-            return;
-        }
-        const engine = window ?? (snapshot.usage.engine ? { ...snapshot.usage.engine, used: Math.max(snapshot.usage.engine.used, snapshot.usage.engine.limit), remaining: 0 } : null);
-        if (!engine) {
-            void loadUsage(owner, true);
-            return;
-        }
-        setSnapshot({ ...snapshot, usage: { ...snapshot.usage, engine } });
+        setSnapshot({ ...snapshot, usage: withWindow(snapshot.usage, limit.quota, full) });
     }, [owner]);
 
     const mine = Boolean(owner) && current.owner === owner;
     const usage = mine ? current.usage : null;
     const loading = mine ? current.status === "loading" : Boolean(owner);
     const failed = mine && current.status === "error";
-    return useMemo(() => ({ available: Boolean(owner), usage, loading, failed, refresh, applyQuota, applyLimit, applyEngine }), [owner, usage, loading, failed, refresh, applyQuota, applyLimit, applyEngine]);
+    return useMemo(() => ({ available: Boolean(owner), usage, loading, failed, refresh, applyQuota, applyLimit }), [owner, usage, loading, failed, refresh, applyQuota, applyLimit]);
 }

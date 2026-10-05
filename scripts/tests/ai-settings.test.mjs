@@ -16,10 +16,10 @@ const { DEFAULT_AI_SETTINGS, normalizeAiSettings, parseAiSettingsInput } = setti
 test("stored settings: broken or unknown fields fall back to the defaults", () => {
     assert.deepEqual(normalizeAiSettings(null, "free"), DEFAULT_AI_SETTINGS);
     assert.deepEqual(normalizeAiSettings([1, 2], "pro"), DEFAULT_AI_SETTINGS);
-    const read = normalizeAiSettings({ tone: "angry", length: 3, language: "tr", defaultMode: "hack", defaultModel: "x", attachEditorFile: "yes", agentMode: "always", secret: "x" }, "plus");
+    const read = normalizeAiSettings({ tone: "angry", length: 3, language: "tr", defaultMode: "hack", defaultModel: "x", attachEditorFile: "yes", agentMode: "always", thinking: "always", showThinking: "no", secret: "x" }, "plus");
     assert.deepEqual(read, DEFAULT_AI_SETTINGS);
     assert.ok(!("secret" in read));
-    const good = { about: "  Öğrenciyim\r\nPython öğreniyorum \u0007", style: "Kısa yaz.", tone: "friendly", length: "short", language: "EN", defaultMode: "code", defaultModel: "conn_12345678", attachEditorFile: false, agentMode: "auto_safe" };
+    const good = { about: "  Öğrenciyim\r\nPython öğreniyorum \u0007", style: "Kısa yaz.", tone: "friendly", length: "short", language: "EN", defaultMode: "code", defaultModel: "conn_12345678", attachEditorFile: false, agentMode: "auto_safe", thinking: "off", showThinking: false };
     assert.deepEqual(normalizeAiSettings(good, "plus"), { ...good, about: "Öğrenciyim\nPython öğreniyorum" });
 });
 
@@ -44,6 +44,11 @@ test("a save is checked strictly: unknown fields, wrong values and too-long text
     const partial = parseAiSettingsInput({ tone: "professional", language: "DE" }, "free");
     assert.deepEqual(partial, { ok: true, settings: { ...DEFAULT_AI_SETTINGS, tone: "professional", language: "DE" } }, "missing fields keep their defaults");
     assert.equal(parseAiSettingsInput({ defaultModel: "hanogt", agentMode: "off", attachEditorFile: false }, "free").ok, true);
+    // Thinking: auto (the default), on or off, and whether it is shown.
+    assert.deepEqual([DEFAULT_AI_SETTINGS.thinking, DEFAULT_AI_SETTINGS.showThinking], ["auto", true]);
+    assert.deepEqual(parseAiSettingsInput({ thinking: "on", showThinking: false }, "free"), { ok: true, settings: { ...DEFAULT_AI_SETTINGS, thinking: "on", showThinking: false } });
+    assert.deepEqual(parseAiSettingsInput({ thinking: "max" }, "pro"), { ok: false, code: "invalid_value", field: "thinking" });
+    assert.deepEqual(parseAiSettingsInput({ showThinking: "yes" }, "pro"), { ok: false, code: "invalid_value", field: "showThinking" });
 });
 
 test("the agent can open the settings page", () => {

@@ -43,6 +43,7 @@ import { mediaPostPath, ownerTag, parseMediaPublication, type MediaPublication }
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
 import { storedPublication, useMediaPublication } from "@/components/Editor/useMediaPublication";
 import { useFirebaseBridge, useRawSession } from "@/components/Provider";
+import { publishAiContext } from "@/lib/ai/context-store";
 import { COLLAB_COPY, COLLAB_ERROR_COPY, COLLAB_NOTICE_COPY, collabNoticeToast } from "@/lib/collab/copy";
 import type { CollabFileContent } from "@/lib/collab/doc";
 import type { CollabClosed } from "@/lib/collab/session-client";
@@ -432,6 +433,16 @@ function EditorContent() {
     const activeLanguage: LanguageInfo = (activeTab && getLanguage(activeTab.lang)) || PLAINTEXT_LANGUAGE;
     const isWebProject = tabs.some((tab) => tab.lang === "html");
     const modShortcut = (key: string, shift = false) => formatShortcut(shift ? ["Mod", "Shift", key] : ["Mod", key], mac);
+
+    // The open file goes to Hanogt AI (the dock and its "attach the open file" switch), a moment after typing stops.
+    const aiCode = activeTab?.code;
+    const aiLanguage = activeTab?.lang;
+    const aiFileName = activeTab?.name;
+    useEffect(() => {
+        const timer = window.setTimeout(() => publishAiContext(aiFileName === undefined ? { path: "/editor" } : { code: aiCode, language: aiLanguage, fileName: aiFileName, path: "/editor" }), 300);
+        return () => window.clearTimeout(timer);
+    }, [aiCode, aiLanguage, aiFileName]);
+    useEffect(() => () => publishAiContext(null), []);
 
     // ------------------------------------------------------------------ loading
     useEffect(() => {

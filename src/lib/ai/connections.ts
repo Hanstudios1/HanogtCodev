@@ -12,8 +12,19 @@ import { PLAN_AI_CONNECTIONS, type PlanId } from "@/lib/plans";
 
 export { PLAN_AI_CONNECTIONS };
 
-export const AI_PROVIDER_IDS = ["openai", "anthropic", "gemini", "groq", "mistral", "openrouter", "deepseek", "xai", "together"] as const;
+export const AI_PROVIDER_IDS = ["openai", "anthropic", "gemini", "mistral", "openrouter", "deepseek", "xai", "together"] as const;
 export type AiProviderId = (typeof AI_PROVIDER_IDS)[number];
+
+/**
+ * Providers that can no longer be connected. Connections people made with
+ * them are still listed ("no longer supported") so they can be deleted, but
+ * they are never used and don't take up the plan's allowance.
+ */
+export const RETIRED_PROVIDER_IDS = ["groq"] as const;
+export type RetiredProviderId = (typeof RETIRED_PROVIDER_IDS)[number];
+/** A provider a stored connection may name: a current one or a retired one. */
+export type StoredProviderId = AiProviderId | RetiredProviderId;
+const RETIRED_NAMES: Record<RetiredProviderId, string> = { groq: "Groq" };
 
 /**
  * How a key is checked before it is stored:
@@ -75,16 +86,6 @@ export const AI_PROVIDERS: readonly AiProvider[] = [
         modelPrefix: "models/",
     },
     {
-        id: "groq",
-        name: "Groq",
-        baseUrl: "https://api.groq.com/openai/v1",
-        check: "models",
-        keyUrl: "https://console.groq.com/keys",
-        keyPlaceholder: "gsk_…",
-        keyFormat: { TR: "gsk_ ile başlar", EN: "Starts with gsk_" },
-        exampleModel: "llama-3.3-70b-versatile",
-    },
-    {
         id: "mistral",
         name: "Mistral AI",
         baseUrl: "https://api.mistral.ai/v1",
@@ -144,6 +145,19 @@ export function isAiProviderId(value: unknown): value is AiProviderId {
     return typeof value === "string" && (AI_PROVIDER_IDS as readonly string[]).includes(value);
 }
 
+export function isRetiredProviderId(value: unknown): value is RetiredProviderId {
+    return typeof value === "string" && (RETIRED_PROVIDER_IDS as readonly string[]).includes(value);
+}
+
+export function isStoredProviderId(value: unknown): value is StoredProviderId {
+    return isAiProviderId(value) || isRetiredProviderId(value);
+}
+
+/** A provider's display name, retired ones included. */
+export function providerName(id: StoredProviderId): string {
+    return isRetiredProviderId(id) ? RETIRED_NAMES[id] : aiProvider(id).name;
+}
+
 export function aiProvider(id: AiProviderId): AiProvider {
     return AI_PROVIDERS.find((provider) => provider.id === id) ?? AI_PROVIDERS[0];
 }
@@ -180,10 +194,10 @@ export function keyHintOf(key: string) {
 const MODEL_PATTERN = /^[^\s"'`\\<>\u0000-\u001f\u007f]+$/;
 
 /** A model id as stored and sent (Gemini's "models/" prefix removed); "" when unusable. */
-export function normalizeModelId(provider: AiProviderId, value: unknown): string {
+export function normalizeModelId(provider: StoredProviderId, value: unknown): string {
     if (typeof value !== "string") return "";
     let model = value.trim();
-    const prefix = aiProvider(provider).modelPrefix;
+    const prefix = isAiProviderId(provider) ? aiProvider(provider).modelPrefix : undefined;
     if (prefix && model.startsWith(prefix)) model = model.slice(prefix.length);
     return model.length > 0 && model.length <= CONNECTION_MODEL_MAX && MODEL_PATTERN.test(model) ? model : "";
 }
@@ -218,6 +232,8 @@ export function ownKeyRequestParams(provider: AiProviderId, model: string, tempe
     if (provider === "openai") {
         return isOpenAiReasoningModel(model) ? { max_completion_tokens: 8_000 } : { max_completion_tokens: 4_000, temperature };
     }
+    // Anthropic's newer models reject a temperature next to their own sampling defaults: none is sent.
+    if (provider === "anthropic") return { max_tokens: 4_000 };
     return { max_tokens: 4_000, temperature };
 }
 
@@ -243,7 +259,8 @@ export function providerInfo(provider: AiProvider): AiProviderInfo {
 /** A connection as the browser sees it: never the key, only its last four characters. */
 export type AiConnectionView = {
     id: string;
-    provider: AiProviderId;
+    /** A retired provider's connection (RETIRED_PROVIDER_IDS) is listed only so it can be deleted. */
+    provider: StoredProviderId;
     label: string;
     model: string;
     keyHint: string;
@@ -254,6 +271,8 @@ export type AiConnectionView = {
     consentAt: string | null;
     /** Within the plan's allowance (the oldest connections first); inactive ones are kept but can't be used. */
     active: boolean;
+    /** Its provider is no longer supported: it can only be deleted, and it doesn't count toward the plan's allowance. */
+    retired: boolean;
 };
 
 /** GET /api/ai/connections and the result of add, update and delete. */

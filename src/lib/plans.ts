@@ -42,12 +42,23 @@ export const DEFAULT_PLAN_CATALOG: PlanCatalog = {
 
 export const PRICE_MAX = 100_000;
 
-/** Hanogt AI messages per minute and per day for each plan. */
-export const PLAN_AI_LIMITS: Record<PlanId, { perMinute: number; perDay: number }> = {
-    free: { perMinute: 12, perDay: 250 },
-    plus: { perMinute: 20, perDay: 750 },
-    pro: { perMinute: 30, perDay: 2000 },
+export const DAY_MS = 24 * 60 * 60_000;
+
+/**
+ * Hanogt AI messages: a short guard a minute, and an allowance for a window
+ * of `windowDays` days that opens with the first message (Free 50 in 7 days,
+ * Plus 750 in 14 days, Pro 2,000 in 7 days). The chat, the developer API and
+ * Hanogt AI in Social groups all count in the same window.
+ */
+export type AiPlanLimits = { perMinute: number; perWindow: number; windowDays: number };
+export const PLAN_AI_LIMITS: Record<PlanId, AiPlanLimits> = {
+    free: { perMinute: 5, perWindow: 50, windowDays: 7 },
+    plus: { perMinute: 20, perWindow: 750, windowDays: 14 },
+    pro: { perMinute: 30, perWindow: 2000, windowDays: 7 },
 };
+
+/** A window of `days` days in milliseconds. */
+export const aiWindowMs = (days: number) => Math.max(1, days) * DAY_MS;
 
 /**
  * Cloud code projects (editor) and game projects (Hanogt Engine) a person
@@ -88,20 +99,22 @@ export type PlanAiFeatures = {
     contextChars: number;
     /** Characters of each personal instruction in the Hanogt AI settings. */
     instructionsChars: number;
+    /** Extra tokens the model may spend thinking before it answers, on top of maxTokens. */
+    thinkingTokens: number;
     /** Messages through the person's own connections; null when the plan has none. */
     ownKey: { perMinute: number; perDay: number } | null;
-    /** The developer Hanogt AI API: keys and requests; null when the plan has none. */
-    api: { keys: number; perMinute: number; perDay: number } | null;
+    /** The developer Hanogt AI API keys; null when the plan has none. Requests count in the plan's Hanogt AI window (PLAN_AI_LIMITS). */
+    api: { keys: number } | null;
 };
 
 /** Hanogt AI features that grow with the plan (the chat route, the settings, own connections and the API). */
 export const PLAN_AI_FEATURES: Record<PlanId, PlanAiFeatures> = {
-    free: { maxTokens: 1_800, contextChars: 12_000, instructionsChars: 500, ownKey: null, api: null },
-    plus: { maxTokens: 3_000, contextChars: 24_000, instructionsChars: 1_500, ownKey: { perMinute: 30, perDay: 3_000 }, api: { keys: 2, perMinute: 10, perDay: 250 } },
-    pro: { maxTokens: 4_000, contextChars: 40_000, instructionsChars: 3_000, ownKey: { perMinute: 60, perDay: 10_000 }, api: { keys: 5, perMinute: 30, perDay: 1_000 } },
+    free: { maxTokens: 1_800, contextChars: 12_000, instructionsChars: 500, thinkingTokens: 1_000, ownKey: null, api: null },
+    plus: { maxTokens: 3_000, contextChars: 24_000, instructionsChars: 1_500, thinkingTokens: 2_000, ownKey: { perMinute: 30, perDay: 3_000 }, api: { keys: 2 } },
+    pro: { maxTokens: 4_000, contextChars: 40_000, instructionsChars: 3_000, thinkingTokens: 3_000, ownKey: { perMinute: 60, perDay: 10_000 }, api: { keys: 5 } },
 };
 
-/** Extra daily Hanogt AI messages staff can grant on top of the plan. */
+/** Extra Hanogt AI messages a window staff can grant on top of the plan (stored as aiBonusDaily, its name from when windows were a day). */
 export const AI_BONUS_MAX = 5000;
 export const GRANT_DAYS_MAX = 365;
 
@@ -204,11 +217,24 @@ export function planSource(subscription: PlanSources, now = Date.now()): "paddle
     return paidPlan(subscription, now) === plan ? "paddle" : "staff";
 }
 
+/** A staff grant's extra messages a window while it hasn't run out (0 otherwise). */
+export function aiBonusOf(subscription: UserSubscription, now = Date.now()) {
+    const active = subscription.aiBonusDaily > 0 && subscription.status !== "blocked" && Boolean(subscription.aiBonusUntil) && future(subscription.aiBonusUntil, now);
+    return active ? subscription.aiBonusDaily : 0;
+}
+
 /** Hanogt AI limits including a staff grant that hasn't run out. */
-export function aiLimitsFor(subscription: UserSubscription, now = Date.now()) {
+export function aiLimitsFor(subscription: UserSubscription, now = Date.now()): AiPlanLimits {
     const base = PLAN_AI_LIMITS[effectivePlan(subscription, now)];
-    const bonusActive = subscription.aiBonusDaily > 0 && subscription.status !== "blocked" && Boolean(subscription.aiBonusUntil) && future(subscription.aiBonusUntil, now);
-    return { perMinute: base.perMinute, perDay: base.perDay + (bonusActive ? subscription.aiBonusDaily : 0) };
+    return { ...base, perWindow: base.perWindow + aiBonusOf(subscription, now) };
+}
+
+/** "every 7 days" style wording of a window, for the plan lines and the usage meter. */
+export function aiWindowCopy(days: number): Copy {
+    if (days === 7) return { TR: "haftada", EN: "a week" };
+    if (days === 14) return { TR: "2 haftada", EN: "every 2 weeks" };
+    if (days === 1) return { TR: "günde", EN: "a day" };
+    return { TR: `${days} günde`, EN: `every ${days} days` };
 }
 
 /** GET /api/plans. */
@@ -216,8 +242,6 @@ export type PlansResponse = {
     catalog: PlanCatalog;
     /** Set when plans can be bought (Paddle connected and prices published). */
     checkout: PaddleCheckoutConfig | null;
-    /** Each plan's advanced code engine answers a day, when the server has the engine and it is on (src/lib/ai/engine.ts). */
-    engine?: { daily: Record<PlanId, number> } | null;
     me: {
         /** The plan whose benefits apply now. */
         plan: PlanId;
@@ -235,8 +259,9 @@ export type PlansResponse = {
         paddleCustomerId: string | null;
         /** A checkout was opened lately and no subscription unlocks a plan yet: the page offers "check my payment". */
         checkoutPending: boolean;
-        aiLimits: { perMinute: number; perDay: number };
-        aiUsedToday: number;
+        aiLimits: AiPlanLimits;
+        /** Hanogt AI messages used in the current window. */
+        aiUsed: number;
         /** Every benefit with a number: used out of the plan's limit (src/lib/ai/usage.ts). */
         usage: PlanUsage;
         /** The Plus / Pro profile badge: the plan it shows (null on Free), hidden by choice, opened by the team for this account. */
@@ -305,7 +330,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
         tagline: { TR: "Hanogt Codev'in tamamı, her zaman ücretsiz.", EN: "All of Hanogt Codev, free forever." },
         features: [
             { text: { TR: "Kod editörü, Hanogt Engine V3, Arcade, Media ve Hanogt Social", EN: "The code editor, Hanogt Engine V3, the Arcade, Media and Hanogt Social" } },
-            { text: { TR: "Hanogt AI ile günde 250 mesaj", EN: "250 Hanogt AI messages a day" } },
+            { text: { TR: "Hanogt AI ile haftada 50 mesaj", EN: "50 Hanogt AI messages a week" } },
             { text: { TR: "10 kod projesi ve 10 oyun projesi", EN: "10 code projects and 10 game projects" } },
             { text: { TR: "3 Hanogt Social grubu açma", EN: "Create up to 3 Hanogt Social groups" } },
             { text: { TR: "2 kişiyle ekiple düzenleme ve sesli görüşme", EN: "Team editing for 2 people, with voice calls" } },
@@ -316,13 +341,13 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
         tagline: { TR: "Daha çok yapay zekâ ve öncelik isteyenler için.", EN: "For people who want more AI and priority." },
         features: [
             { text: { TR: "Ücretsiz plandaki her şey", EN: "Everything in Free" } },
-            { text: { TR: "Hanogt AI ile günde 750 mesaj", EN: "750 Hanogt AI messages a day" } },
+            { text: { TR: "Hanogt AI ile 2 haftada 750 mesaj", EN: "750 Hanogt AI messages every 2 weeks" } },
             { text: { TR: "40 kod projesi ve 40 oyun projesi", EN: "40 code projects and 40 game projects" } },
             { text: { TR: "10 Hanogt Social grubu açma", EN: "Create up to 10 Hanogt Social groups" } },
             { text: { TR: "5 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 5 people" } },
             { text: { TR: "Daha uzun yapay zekâ yanıtları; açık dosyanın 24.000 karakteri okunur", EN: "Longer AI answers; 24,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası), günde 3.000 mesaj", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more), 3,000 messages a day" } },
-            { text: { TR: "Geliştirici API'si: 2 anahtar, dakikada 10 ve günde 250 istek", EN: "Developer API: 2 keys, 10 requests a minute and 250 a day" } },
+            { text: { TR: "Geliştirici API'si: 2 anahtar; istekler mesaj hakkından düşer", EN: "Developer API: 2 keys; requests use your message allowance" } },
             { text: { TR: "Destek taleplerinde öncelik", EN: "Priority on support tickets" } },
             { text: { TR: "Profilinde Plus rozeti", EN: "A Plus badge on your profile" } },
         ],
@@ -332,13 +357,13 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
         tagline: { TR: "Her gün yoğun çalışan geliştiriciler ve ekipler için.", EN: "For developers and teams who work hard every day." },
         features: [
             { text: { TR: "Plus plandaki her şey", EN: "Everything in Plus" } },
-            { text: { TR: "Hanogt AI ile günde 2.000 mesaj", EN: "2,000 Hanogt AI messages a day" } },
+            { text: { TR: "Hanogt AI ile haftada 2.000 mesaj", EN: "2,000 Hanogt AI messages a week" } },
             { text: { TR: "Sınırsız kod ve oyun projesi", EN: "Unlimited code and game projects" } },
             { text: { TR: "Sınırsız Hanogt Social grubu", EN: "Unlimited Hanogt Social groups" } },
             { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
             { text: { TR: "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur", EN: "The longest AI answers; 40,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı, günde 10.000 mesaj", EN: "Connect 5 AI providers with your own API keys, 10,000 messages a day" } },
-            { text: { TR: "Geliştirici API'si: 5 anahtar, dakikada 30 ve günde 1.000 istek", EN: "Developer API: 5 keys, 30 requests a minute and 1,000 a day" } },
+            { text: { TR: "Geliştirici API'si: 5 anahtar; istekler mesaj hakkından düşer", EN: "Developer API: 5 keys; requests use your message allowance" } },
             { text: { TR: "Destek taleplerinde en yüksek öncelik: talebin Plus taleplerinden önce ele alınır", EN: "Top priority on support tickets: yours are handled before Plus tickets" } },
             { text: { TR: "Profilinde Pro rozeti", EN: "A Pro badge on your profile" } },
             { text: { TR: "Yeni özelliklere erken erişim: ilk olarak sesle yazma ve yanıtları sesli dinleme", EN: "Early access to new features, starting with dictation and answers read aloud" } },

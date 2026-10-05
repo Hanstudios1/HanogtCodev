@@ -2,8 +2,8 @@ import "server-only";
 
 import { createHash, randomBytes } from "node:crypto";
 import { API_KEYS_MAX_STORED, API_KEY_NAME_MAX, API_KEY_PATTERN, type ApiKeyView, type ApiKeysState } from "@/lib/ai/api-keys";
-import { PLAN_AI_FEATURES, effectivePlan, type PlanId } from "@/lib/plans";
-import { apiUsageFor } from "./ai-usage";
+import { PLAN_AI_FEATURES, aiLimitsFor, effectivePlan, type PlanId } from "@/lib/plans";
+import { hanogtUsageFor } from "./ai-usage";
 import { featureAllowed } from "./features";
 import { commitServerMutations, getServerDocument, isMissingDocument, isWriteConflict, patchServerDocument, runServerQuery } from "./firebase-rest";
 import { getSubscription } from "./plans";
@@ -230,23 +230,23 @@ export async function touchApiKey(found: { hash: string; lastUsedAt: string | nu
 }
 
 /**
- * GET /api/ai/keys: the account's keys, what the plan allows and today's
- * requests. `allowed` says whether the team opened the API for the account
- * (keys can be made only then).
+ * GET /api/ai/keys: the account's keys, what the plan allows and the Hanogt AI
+ * messages used (the API shares them with the chat). `allowed` says whether
+ * the team opened the API for the account (keys can be made only then).
  */
 export async function apiKeysStateFor(email: string, staff: boolean): Promise<ApiKeysState> {
     const subscription = await getSubscription(email);
     const plan = effectivePlan(subscription);
+    const api = PLAN_AI_FEATURES[plan].api;
     const [keys, allowed, usage] = await Promise.all([
         listApiKeys(email, plan),
         featureAllowed("ai_api", { staff, plan }),
-        apiUsageFor(email, subscription),
+        api ? hanogtUsageFor(email, subscription) : null,
     ]);
-    const api = PLAN_AI_FEATURES[plan].api;
     return {
         plan,
         limit: apiKeyAllowance(plan),
-        limits: api ? { perMinute: api.perMinute, perDay: api.perDay } : null,
+        limits: api ? aiLimitsFor(subscription) : null,
         keys,
         usage,
         allowed,

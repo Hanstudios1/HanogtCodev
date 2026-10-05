@@ -10,6 +10,9 @@ import {
     PLAN_AI_CONNECTIONS,
     aiProvider,
     isAiProviderId,
+    isRetiredProviderId,
+    isStoredProviderId,
+    providerName,
     isConnectionError,
     isConnectionId,
     isLikelyChatModel,
@@ -24,6 +27,7 @@ import {
     type AiKeyTestFailure,
     type AiKeyTestResult,
     type AiProviderId,
+    type StoredProviderId,
 } from "@/lib/ai/connections";
 import { FREE_SUBSCRIPTION, effectivePlan, type PlanId } from "@/lib/plans";
 import { commitServerMutations, getServerDocument, isWriteConflict } from "./firebase-rest";
@@ -44,7 +48,8 @@ import { aiKeyAssociatedData, isSecretBoxConfigured, openSecret, sealSecret } fr
 /** One stored connection; `keySealed` never leaves the server. */
 export type StoredConnection = {
     id: string;
-    provider: AiProviderId;
+    /** A retired provider (RETIRED_PROVIDER_IDS) is kept so the person can delete the connection; it is never used. */
+    provider: StoredProviderId;
     label: string;
     model: string;
     keySealed: string;
@@ -92,12 +97,12 @@ function isoOf(value: unknown): string | null {
 function storedConnectionOf(value: unknown): StoredConnection | null {
     if (!value || typeof value !== "object") return null;
     const record = value as Record<string, unknown>;
-    if (!isConnectionId(record.id) || !isAiProviderId(record.provider) || typeof record.keySealed !== "string" || !record.keySealed) return null;
+    if (!isConnectionId(record.id) || !isStoredProviderId(record.provider) || typeof record.keySealed !== "string" || !record.keySealed) return null;
     const provider = record.provider;
     return {
         id: record.id,
         provider,
-        label: normalizeConnectionLabel(record.label, aiProvider(provider).name),
+        label: normalizeConnectionLabel(record.label, providerName(provider)),
         model: normalizeModelId(provider, record.model),
         keySealed: record.keySealed,
         keyHint: typeof record.keyHint === "string" ? record.keyHint.slice(0, 8) : "",
@@ -178,6 +183,9 @@ export async function connectionAllowance(email: string): Promise<ConnectionAllo
     return allowanceOf(effectivePlan(subscription));
 }
 
+/** Connections of providers that are still supported: the ones the plan's allowance counts. */
+const usable = (items: StoredConnection[]) => items.filter((item) => !isRetiredProviderId(item.provider));
+
 function viewOf(item: StoredConnection, active: boolean): AiConnectionView {
     return {
         id: item.id,
@@ -190,16 +198,19 @@ function viewOf(item: StoredConnection, active: boolean): AiConnectionView {
         lastError: item.lastError,
         consentAt: item.consentAt,
         active,
+        retired: isRetiredProviderId(item.provider),
     };
 }
 
 function stateOf(allowance: ConnectionAllowance, items: StoredConnection[]): AiConnectionsState {
+    // The allowance covers the oldest connections of supported providers; retired ones are never active.
+    let slot = 0;
     return {
         plan: allowance.plan,
         limit: allowance.limit,
         canStore: isSecretBoxConfigured(),
         providers: AI_PROVIDERS.map(providerInfo),
-        items: oldestFirst(items).map((item, index) => viewOf(item, index < allowance.limit)),
+        items: oldestFirst(items).map((item) => viewOf(item, !isRetiredProviderId(item.provider) && slot++ < allowance.limit)),
     };
 }
 
@@ -339,7 +350,7 @@ export async function canAddConnection(email: string): Promise<{ ok: true } | { 
     if (!isSecretBoxConfigured()) return { ok: false, code: "encryption_unavailable" };
     const [allowance, record] = await Promise.all([connectionAllowance(email), readRecord(email)]);
     if (allowance.limit <= 0) return { ok: false, code: "plan_required" };
-    if (record.items.length >= allowance.limit) return { ok: false, code: "limit_reached" };
+    if (usable(record.items).length >= allowance.limit) return { ok: false, code: "limit_reached" };
     return { ok: true };
 }
 
@@ -368,7 +379,7 @@ export async function addConnection(email: string, input: AddConnectionInput, op
 
     const [allowance, before] = await Promise.all([connectionAllowance(email), readRecord(email)]);
     if (allowance.limit <= 0) return { ok: false, code: "plan_required" };
-    if (before.items.length >= allowance.limit) return { ok: false, code: "limit_reached" };
+    if (usable(before.items).length >= allowance.limit) return { ok: false, code: "limit_reached" };
 
     const check = await testKey(provider, apiKey, options);
     if (!check.ok) return { ok: false, code: check.reason };
@@ -383,7 +394,7 @@ export async function addConnection(email: string, input: AddConnectionInput, op
     const now = new Date().toISOString();
     const item: StoredConnection = { id, provider, label, model, keySealed, keyHint: keyHintOf(apiKey), createdAt: now, lastUsedAt: null, lastError: null, consentAt: now };
     return mutateRecord<AddConnectionResult>(email, (record) => {
-        if (record.items.length >= allowance.limit) return { result: { ok: false, code: "limit_reached" } };
+        if (usable(record.items).length >= allowance.limit) return { result: { ok: false, code: "limit_reached" } };
         const items = [...record.items, item];
         return { items, result: { ok: true, state: stateOf(allowance, items), id } };
     }, before);
@@ -399,9 +410,11 @@ export async function updateConnection(email: string, id: unknown, patch: { labe
     return mutateRecord<ConnectionResult>(email, (record) => {
         const current = record.items.find((item) => item.id === id);
         if (!current) return { result: { ok: false, code: "not_found" } };
+        // A retired provider's connection can only be deleted.
+        if (isRetiredProviderId(current.provider)) return { result: { ok: false, code: "invalid_request" } };
         const model = changesModel ? normalizeModelId(current.provider, patch.model) : current.model;
         if (!model) return { result: { ok: false, code: "invalid_request" } };
-        const label = changesLabel ? normalizeConnectionLabel(patch.label, aiProvider(current.provider).name) : current.label;
+        const label = changesLabel ? normalizeConnectionLabel(patch.label, providerName(current.provider)) : current.label;
         if (label === current.label && model === current.model) return { result: { ok: true, state: stateOf(allowance, record.items) } };
         // A new model starts afresh: an old "model not found" no longer applies.
         const next: StoredConnection = { ...current, label, model, lastError: model === current.model ? current.lastError : null };
@@ -434,7 +447,7 @@ export async function exportAiConnections(email: string) {
     const record = await readRecord(email);
     return record.items.map((item) => ({
         provider: item.provider,
-        providerName: aiProvider(item.provider).name,
+        providerName: providerName(item.provider),
         label: item.label,
         model: item.model,
         keyHint: item.keyHint,
@@ -473,10 +486,11 @@ function allowanceOf(plan: PlanId): ConnectionAllowance {
 export async function resolveConnectionForChat(email: string, id: unknown, plan?: PlanId): Promise<ResolvedConnection | null> {
     if (!isConnectionId(id)) return null;
     const [record, allowance] = await Promise.all([readRecord(email), plan ? allowanceOf(plan) : connectionAllowance(email)]);
-    const position = record.items.findIndex((item) => item.id === id);
+    const supported = usable(record.items);
+    const position = supported.findIndex((item) => item.id === id);
     if (position < 0 || position >= allowance.limit) return null;
-    const item = record.items[position];
-    if (!item.model) return null;
+    const item = supported[position];
+    if (!item.model || isRetiredProviderId(item.provider)) return null;
     let apiKey: string;
     try {
         apiKey = openSecret(item.keySealed, aiKeyAssociatedData(email, item.id));

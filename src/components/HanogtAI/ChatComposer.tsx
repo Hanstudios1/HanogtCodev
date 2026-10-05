@@ -3,7 +3,7 @@
 import { ArrowUp, FileCode2, KeyRound, Mic, MicOff, Paperclip, Settings2, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, type RefObject } from "react";
 import type { AgentMode } from "@/lib/ai/agent-tools";
-import { aiProvider, DEFAULT_CONNECTION, type AiConnectionView } from "@/lib/ai/connections";
+import { DEFAULT_CONNECTION, providerName, type AiConnectionView } from "@/lib/ai/connections";
 import type { AiContext, AiMode } from "@/lib/ai/local-engine";
 import { useI18n } from "@/lib/i18n";
 import { languageDisplayName } from "@/lib/runtimes/languages";
@@ -30,8 +30,8 @@ const C = {
     model: { TR: "Model", EN: "Model" },
     hanogt: { TR: "Hanogt AI (varsayılan)", EN: "Hanogt AI (default)" },
     hanogtShort: { TR: "Hanogt AI", EN: "Hanogt AI" },
-    hanogtDescription: { TR: "Hanogt'un kendi dil modeli; günlük mesaj hakkını kullanır.", EN: "Hanogt's own language model; uses your daily messages." },
-    hanogtLeft: { TR: "Bugün {count} mesaj kaldı.", EN: "{count} messages left today." },
+    hanogtDescription: { TR: "Hanogt'un kendi modeli; planının mesaj hakkını kullanır.", EN: "Hanogt's own model; uses your plan's messages." },
+    hanogtLeft: { TR: "Bu dönem {count} mesaj kaldı.", EN: "{count} messages left this period." },
     ownLeft: { TR: "bugün {count} mesaj kaldı", EN: "{count} messages left today" },
     ownConnection: { TR: "Kendi bağlantın", EN: "Your connection" },
     notInPlan: { TR: "Planın kapsamıyor", EN: "Not in your plan" },
@@ -103,8 +103,9 @@ function ModelPicker({ connections, variant }: { connections: ComposerConnection
             description: hanogtLeft === null ? tx(C.hanogtDescription) : `${tx(C.hanogtDescription)} ${tx(C.hanogtLeft, { count: hanogtLeft.toLocaleString(locale) })}`,
             icon: <Sparkles className="h-4 w-4" aria-hidden />,
         },
-        ...items.map((item) => {
-            const provider = aiProvider(item.provider).name;
+        // Connections of retired providers can't be picked: they are only listed in the settings to be deleted.
+        ...items.filter((item) => !item.retired).map((item) => {
+            const provider = providerName(item.provider);
             return {
                 id: item.id,
                 label: `${item.label} · ${item.model}`,

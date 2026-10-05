@@ -2,7 +2,6 @@ import { NextResponse, after, type NextRequest } from "next/server";
 import { billingView, paddleEntitles, type PaddleCheckoutConfig } from "@/lib/paddle";
 import { PAID_PLAN_IDS, effectivePlan, isPaidPlanId, isRecentCheckout, planSource, type PaidPlanId, type PlanCatalog, type PlansResponse } from "@/lib/plans";
 import { getActiveSession } from "@/lib/server/active-session";
-import { engineAllowances } from "@/lib/server/ai-engine";
 import { getStaffSession } from "@/lib/server/admin";
 import { planUsageFor } from "@/lib/server/ai-usage";
 import { featureAllowed } from "@/lib/server/features";
@@ -53,27 +52,23 @@ async function checkoutOf(catalog: PlanCatalog, request: NextRequest, email: str
 export async function GET(request: NextRequest) {
     if (!isFirebaseServerConfigured()) return json({ error: "unavailable" }, 503);
     try {
-        const [catalog, active, daily] = await Promise.all([getPlanCatalog(), getActiveSession(), engineAllowances()]);
+        const [catalog, active] = await Promise.all([getPlanCatalog(), getActiveSession()]);
         const staff = active ? Boolean(await getStaffSession().catch(() => null)) : false;
         const checkout = await checkoutOf(catalog, request, active?.email ?? null, staff);
-        // The advanced code engine's answers a day on each plan card, when the server has the engine and it is on.
-        const engine = daily ? { daily } : null;
-        if (!active) return json({ catalog: publicCatalog(catalog), checkout, engine, me: null } satisfies PlansResponse);
+        if (!active) return json({ catalog: publicCatalog(catalog), checkout, me: null } satisfies PlansResponse);
         const [stored, waitlist] = await Promise.all([getSubscription(active.email), waitlistOf(active.email)]);
         // What Paddle knows but no notification told us (selfHealReason), asked once every ten minutes at most;
         // a slow Paddle finishes after the answer and counts next time.
         const subscription = await refreshSubscriptionFromPaddle(active.email, stored, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
-        // Every benefit with a number, used out of the plan's limit (Hanogt AI today, projects, games, groups, connections).
-        // The developer API's requests and keys are listed once the team opened it for the account.
-        // The advanced code engine's answers too, when the server has it and the team keeps it on.
+        // Every benefit with a number, used out of the plan's limit (Hanogt AI's window, projects, games, groups, connections).
+        // The developer API's keys are listed once the team opened it for the account.
         const api = await featureAllowed("ai_api", { staff, plan: effectivePlan(subscription) }).catch(() => false);
-        const [usage, badge] = await Promise.all([planUsageFor(active.email, subscription, { api, engine: daily }), planBadgeStateFor(active.email, subscription, staff)]);
+        const [usage, badge] = await Promise.all([planUsageFor(active.email, subscription, { api }), planBadgeStateFor(active.email, subscription, staff)]);
         // The profile's Plus / Pro badge catches up with the plan now and then (a lost notification, an ended grant).
         after(() => syncPlanBadgeThrottled(active.email, { subscription, staff }).then(() => undefined));
         return json({
             catalog: publicCatalog(catalog),
             checkout,
-            engine,
             me: {
                 plan: effectivePlan(subscription),
                 source: planSource(subscription),
@@ -85,8 +80,8 @@ export async function GET(request: NextRequest) {
                 canManageBilling: Boolean(subscription.paddle && (subscription.paddleCustomerId ?? subscription.paddle.customerId) && isPaddleConfigured(getPaddleConfig())),
                 paddleCustomerId: subscription.paddleCustomerId ?? subscription.paddle?.customerId ?? null,
                 checkoutPending: Boolean(subscription.paddleCustomerId) && !paddleEntitles(subscription.paddle) && isRecentCheckout(subscription.paddleCheckout),
-                aiLimits: { perMinute: usage.hanogt.minute.limit, perDay: usage.hanogt.day.limit },
-                aiUsedToday: usage.hanogt.day.used,
+                aiLimits: { perMinute: usage.hanogt.minute.limit, perWindow: usage.hanogt.window.limit, windowDays: usage.hanogt.windowDays },
+                aiUsed: usage.hanogt.window.used,
                 usage,
                 badge,
                 waitlist,

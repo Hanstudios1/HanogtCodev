@@ -467,8 +467,6 @@ export type AdminPlansResponse = {
     waitlist: { plus: number | null; pro: number | null };
     /** Who sees each feature that is opened step by step (src/lib/features.ts). */
     features: { audiences: import("@/lib/features").FeatureFlags; updatedAt: string | null; updatedBy: string | null };
-    /** The advanced code engine (src/lib/ai/engine.ts): its settings, whether the server has ANTHROPIC_API_KEY, the last change. */
-    engine: { settings: import("@/lib/ai/engine").AiEngineSettings; configured: boolean; updatedAt: string | null; updatedBy: string | null };
 };
 
 /** POST /api/admin/plans { action: "restoreCoupon" }: the overview plus what happened in Paddle. */
@@ -481,8 +479,8 @@ export type AdminUserPlanResponse = {
     effectivePlan: import("@/lib/plans").PlanId;
     /** Where the plan in effect comes from: the Paddle subscription or a staff assignment (null for Free). */
     planSource: "paddle" | "staff" | null;
-    aiLimits: { perMinute: number; perDay: number };
-    aiUsage: { minute: { count: number; resetsAt: string } | null; day: { count: number; resetsAt: string } | null };
+    aiLimits: import("@/lib/plans").AiPlanLimits;
+    aiUsage: { minute: { count: number; resetsAt: string } | null; window: { count: number; resetsAt: string } | null };
     /** Hanogt AI API keys the account keeps; null when they couldn't be read. */
     apiKeys: number | null;
     /** The environment Paddle is set up for; `subscription` only holds Paddle data from it. */
