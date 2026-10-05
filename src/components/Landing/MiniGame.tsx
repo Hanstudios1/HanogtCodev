@@ -1,6 +1,7 @@
 "use client";
 
 import { Magnet, Play, RotateCcw, Shield, Trophy } from "lucide-react";
+import { prefersReducedMotion } from "@/lib/appearance";
 import { useEffect, useRef, useState } from "react";
 import { RUNNER } from "./runner-rules";
 
@@ -63,7 +64,7 @@ export default function MiniGame({ labels, onEvent }: {
         const canvas = canvasRef.current;
         const context = canvas?.getContext("2d");
         if (!canvas || !context) return;
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const reduceMotion = prefersReducedMotion();
         let width = 0, height = 0, ground = 0;
         let frame = 0;
         let last = performance.now();

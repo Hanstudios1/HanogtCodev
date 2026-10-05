@@ -50,6 +50,7 @@ test("the server's answer is read defensively", () => {
         twoFactor: { enabled: false, recoveryCodesLeft: 7 },
         lastLoginAt: "not a date",
         sessionSince: "2026-10-05T09:30:00Z",
+        loginHistory: [{ at: "2026-10-05T09:30:00Z", method: "google", device: "Safari · iPhone", country: "TR" }, { at: "bad", method: "google" }],
     }), {
         provider: null,
         hasPassword: false,
@@ -57,7 +58,10 @@ test("the server's answer is read defensively", () => {
         twoFactor: { enabled: false, recoveryCodesLeft: 0 },
         lastLoginAt: null,
         sessionSince: "2026-10-05T09:30:00.000Z",
+        // Recent sign-ins: valid entries only.
+        loginHistory: [{ at: "2026-10-05T09:30:00.000Z", method: "google", device: "Safari · iPhone", country: "TR" }],
     });
+    assert.deepEqual(readSecuritySummary({ hasPassword: true, twoFactor: { enabled: false } }).loginHistory, [], "an older server without the history");
     assert.equal(readSecuritySummary({ provider: "google", hasPassword: true, twoFactor: { enabled: true, recoveryCodesLeft: -2 } }).twoFactor.recoveryCodesLeft, 0);
     assert.equal(readSecuritySummary({ provider: "google", hasPassword: true, twoFactor: { enabled: true, recoveryCodesLeft: 1e9 } }).twoFactor.recoveryCodesLeft, 99);
 });

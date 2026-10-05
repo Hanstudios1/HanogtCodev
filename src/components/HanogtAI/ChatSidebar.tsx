@@ -185,7 +185,7 @@ export default function ChatSidebar({ conversations, activeId, streamingId, onSe
         <aside className="flex h-full w-[17.5rem] shrink-0 flex-col border-e border-ai-line bg-ai-sidebar" aria-label={tx(C.chats)}>
             <div className="flex items-center gap-2 px-3 pb-2 pt-3">
                 <AiAvatar size={28} />
-                <span className="flex-1 truncate text-[15px] font-black tracking-tight text-ai-ink">Hanogt AI</span>
+                <span className="flex-1 truncate text-[15px] font-black tracking-tight text-ai-ink">Hanogt <span className="text-gradient">AI</span></span>
                 {onCollapse ? <button type="button" onClick={onCollapse} className={ICON_BUTTON} title={tx(C.collapse)} aria-label={tx(C.collapse)}><PanelLeftClose className="h-4.5 w-4.5" /></button> : null}
                 {onClose ? <button type="button" onClick={onClose} className={ICON_BUTTON} title={tx(C.close)} aria-label={tx(C.close)}><X className="h-5 w-5" /></button> : null}
             </div>

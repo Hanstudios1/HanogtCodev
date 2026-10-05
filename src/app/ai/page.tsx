@@ -5,7 +5,7 @@ import HanogtAIChat from "@/components/HanogtAI/HanogtAIChat";
 
 export default function HanogtAIPage() {
     return (
-        <main className="min-h-dvh bg-[#fbfaf8] dark:bg-zinc-950">
+        <main className="min-h-dvh bg-ai-paper">
             <Header />
             <div className="pt-16">
                 <HanogtAIChat variant="page" />

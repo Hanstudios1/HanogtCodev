@@ -1,6 +1,7 @@
 "use client";
 
-import { MotionConfig, motion } from "framer-motion";
+import { motion } from "framer-motion";
+import { prefersReducedMotion } from "@/lib/appearance";
 import { Building2, Check, ChevronDown, Clock, ExternalLink, FileText, History, Languages, Link2, ListOrdered, Printer, Scale, Search, ShieldCheck, X } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
@@ -219,10 +220,6 @@ function sectionText(section: LegalSection, show: (value: LegalCell) => string) 
 
 const turkish = (value: LegalCell) => (typeof value === "string" ? value : value.TR);
 
-function prefersReducedMotion() {
-    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 /** Plain left click: let the page handle it. Modified clicks keep the browser's behaviour (new tab…). */
 function isPlainClick(event: MouseEvent) {
     return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
@@ -388,7 +385,7 @@ export default function LegalPage({
         : [];
 
     return (
-        <MotionConfig reducedMotion="user">
+        <>
             <div className="hanogt-legal min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
                 <style href="hanogt-legal-print" precedence="default">{PRINT_CSS}</style>
                 <div className="print:hidden"><Header /></div>
@@ -665,7 +662,7 @@ export default function LegalPage({
                 <p role="status" className="sr-only">{copied ? tx(copied.ok ? UI.copied : UI.copyFallback) : ""}</p>
                 <div className="print:hidden"><SiteFooter /></div>
             </div>
-        </MotionConfig>
+        </>
     );
 }
 

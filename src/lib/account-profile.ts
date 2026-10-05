@@ -20,7 +20,6 @@ export const PROFILE_TEXT_LIMITS = {
     bio: 600,
     customStatus: 120,
     social: 200,
-    timezone: 64,
     dndSchedule: 40,
 } as const;
 
@@ -58,7 +57,6 @@ export interface PrivateSettingsFields {
     emailNotifications: boolean;
     newFeatureAlerts: boolean;
     showOnlineStatus: boolean;
-    timezone: string;
     typingIndicator: boolean;
     readReceipts: boolean;
     msgFontSize: "small" | "medium" | "large";
@@ -80,11 +78,9 @@ export interface PrivateSettingsFields {
     notifSound: boolean;
     dndSchedule: string;
     bubbleColor: string;
-    compactMode: boolean;
+    /** Applied on every page (src/lib/appearance.tsx). */
     reduceAnimations: boolean;
     highContrast: boolean;
-    uiFontSize: "small" | "medium" | "large";
-    emojiStyle: "native" | "twemoji" | "noto";
     /** Online (with auto idle), Idle, Do Not Disturb or Invisible (lib/presence.ts). */
     statusPreference: StatusPreference;
 }
@@ -160,7 +156,6 @@ export const DEFAULT_ACCOUNT_FIELDS: EditableAccountFields = {
     emailNotifications: true,
     newFeatureAlerts: true,
     showOnlineStatus: true,
-    timezone: "Europe/Istanbul",
     typingIndicator: true,
     readReceipts: true,
     msgFontSize: "medium",
@@ -182,11 +177,8 @@ export const DEFAULT_ACCOUNT_FIELDS: EditableAccountFields = {
     notifSound: true,
     dndSchedule: "",
     bubbleColor: "#3B82F6",
-    compactMode: false,
     reduceAnimations: false,
     highContrast: false,
-    uiFontSize: "medium",
-    emojiStyle: "native",
     statusPreference: "auto",
 };
 
@@ -200,10 +192,12 @@ export const EDITABLE_ACCOUNT_KEYS = Object.keys(DEFAULT_ACCOUNT_FIELDS) as Read
 
 /**
  * Fields that are no longer part of the profile. A save that sends one is
- * still accepted (the value is ignored), and saving the custom status deletes
- * the stored statusEmoji (the status is text only now).
+ * still accepted (the value is ignored) and every save deletes stored values:
+ * the status emoji (the status is text only now) and appearance settings that
+ * never did anything (compact mode, interface font size, time zone, emoji
+ * style).
  */
-export const RETIRED_ACCOUNT_KEYS: readonly string[] = ["statusEmoji"];
+export const RETIRED_ACCOUNT_KEYS: readonly string[] = ["statusEmoji", "compactMode", "uiFontSize", "timezone", "emojiStyle"];
 
 // Own-key lookups only: `key in object` is also true for "toString",
 // "constructor" or "__proto__", which would slip past the unknown-field check.
@@ -225,8 +219,6 @@ const ENUMS: Partial<Record<keyof EditableAccountFields, readonly string[]>> = {
     whoCanAdd: ["everyone", "friends_of_friends", "nobody"],
     photoVisibility: ["everyone", "friends", "nobody"],
     bioVisibility: ["everyone", "friends", "nobody"],
-    uiFontSize: ["small", "medium", "large"],
-    emojiStyle: ["native", "twemoji", "noto"],
     statusPreference: STATUS_PREFERENCES,
 };
 
@@ -243,7 +235,6 @@ const TEXT_LIMITS: Partial<Record<keyof EditableAccountFields, number>> = {
     socialTiktok: PROFILE_TEXT_LIMITS.social,
     socialInstagram: PROFILE_TEXT_LIMITS.social,
     socialFacebook: PROFILE_TEXT_LIMITS.social,
-    timezone: PROFILE_TEXT_LIMITS.timezone,
     dndSchedule: PROFILE_TEXT_LIMITS.dndSchedule,
 };
 
@@ -353,8 +344,6 @@ export function sanitizeAccountPatch(input: unknown): { ok: true; patch: Account
         } else if (field === "username" || field === "nickname") {
             if (!value) return { ok: false, error: { field, code: "required" } };
             if (/[<>]/.test(value)) return { ok: false, error: { field, code: "invalid" } };
-        } else if (field === "timezone") {
-            if (!isTimeZoneName(value)) return { ok: false, error: { field, code: "invalid" } };
         } else if (SOCIAL_KEYS.has(field)) {
             if (!isSafeSocialLink(value)) return { ok: false, error: { field, code: "invalid" } };
         }

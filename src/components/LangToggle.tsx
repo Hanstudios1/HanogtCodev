@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent, useReducedMotionConfig } from "framer-motion";
 import { Check, Globe, Search } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
@@ -198,7 +198,7 @@ function LanguageMenu({ uid, initial, autoFocus, viaKeyboard, placement, trigger
 }) {
     const { language, setLanguage, t } = useI18n();
     const present = useIsPresent();
-    const reduceMotion = useReducedMotion();
+    const reduceMotion = useReducedMotionConfig();
     const [position, setPosition] = useState(initial);
     const [query, setQuery] = useState("");
     const [activeCode, setActiveCode] = useState<Language | null>(language);

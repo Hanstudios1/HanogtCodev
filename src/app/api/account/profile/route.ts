@@ -299,8 +299,8 @@ export async function PATCH(request: NextRequest) {
                     force: true,
                 });
             }
-            // The status is text only now: saving it deletes an emoji stored with it before.
-            const retired = "customStatus" in patch ? RETIRED_ACCOUNT_KEYS : [];
+            // Retired fields still stored (an old status emoji, appearance settings that did nothing) go with any save.
+            const retired = RETIRED_ACCOUNT_KEYS;
             const userData = { ...patch, email, updatedAt: now, ...presence?.user.data };
             const writes: Parameters<typeof commitServerPatches>[0] = [{ path: `users/${email}`, data: userData, updateFields: maskOf(userData, [...presence?.user.mask ?? [], ...retired]) }];
             let profileData: Record<string, unknown> | null = null;

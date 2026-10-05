@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { announceAccountSecurityChange } from "@/components/Security/account-security-store";
 import { AlertTriangle, Check, Copy as CopyIcon, Download, KeyRound, LoaderCircle, RefreshCw, ShieldCheck, ShieldOff, Smartphone } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
@@ -43,7 +44,7 @@ export default function TwoFactorSettings() {
             case "invalid_code": return tx({ TR: "Kod geçersiz, süresi dolmuş ya da zaten kullanılmış. Uygulamadaki güncel kodu girin.", EN: "The code is invalid, expired or already used. Enter the current code from your app." });
             case "setup_expired": return tx({ TR: "Kurulumun süresi doldu (15 dakika). Baştan başlayın.", EN: "Setup expired (15 minutes). Start again." });
             case "rate_limited": return tx({ TR: "Çok fazla deneme yapıldı. 15 dakika sonra tekrar deneyin.", EN: "Too many attempts. Try again in 15 minutes." });
-            case "no_password": return tx({ TR: "İki adımlı doğrulama, e-posta ve şifreyle girişi korur. Önce yukarıdan bir şifre oluşturun.", EN: "Two-step verification protects e-mail and password sign-in. Create a password above first." });
+            case "no_password": return tx({ TR: "İki adımlı doğrulama, e-posta ve şifreyle girişi korur. Önce bu sayfadaki Şifre bölümünden bir şifre oluşturun.", EN: "Two-step verification protects e-mail and password sign-in. Create a password in the Password section of this page first." });
             case "already_enabled": return tx({ TR: "İki adımlı doğrulama zaten açık.", EN: "Two-step verification is already on." });
             case "not_enabled": return tx({ TR: "İki adımlı doğrulama kapalı.", EN: "Two-step verification is off." });
             case "conflict": return tx({ TR: "Ayar başka bir oturumda değişti. Sayfayı yenileyin.", EN: "The setting changed in another session. Reload the page." });
@@ -52,6 +53,8 @@ export default function TwoFactorSettings() {
         }
     }, [tx]);
 
+    // Read again when the account's security changes elsewhere on the page (a password was set) and on "Try again".
+    const [attempt, setAttempt] = useState(0);
     useEffect(() => {
         let cancelled = false;
         fetch("/api/account/2fa", { cache: "no-store", credentials: "same-origin" })
@@ -59,9 +62,18 @@ export default function TwoFactorSettings() {
                 if (!response.ok) throw new Error(String(response.status));
                 return response.json() as Promise<Status>;
             })
-            .then((data) => { if (!cancelled) setStatus(data); })
+            .then((data) => {
+                if (cancelled) return;
+                setStatus(data);
+                setLoadFailed(false);
+            })
             .catch(() => { if (!cancelled) setLoadFailed(true); });
         return () => { cancelled = true; };
+    }, [attempt]);
+    useEffect(() => {
+        const onChange = () => setAttempt((value) => value + 1);
+        window.addEventListener("hanogt:account-security-changed", onChange);
+        return () => window.removeEventListener("hanogt:account-security-changed", onChange);
     }, []);
 
     const call = async (action: string, fields: Record<string, string> = {}) => {
@@ -80,6 +92,7 @@ export default function TwoFactorSettings() {
                 return null;
             }
             if (typeof data.enabled === "boolean") {
+                if (action !== "setup") announceAccountSecurityChange();
                 setStatus({
                     enabled: data.enabled,
                     hasPassword: Boolean(data.hasPassword),
@@ -187,8 +200,15 @@ export default function TwoFactorSettings() {
         />
     );
 
-    if (loadFailed) {
-        return <p className="text-sm text-zinc-500">{tx({ TR: "İki adımlı doğrulama durumu yüklenemedi. Sayfayı yenileyin.", EN: "Couldn't load the two-step verification status. Reload the page." })}</p>;
+    if (loadFailed && !status) {
+        return (
+            <p className="flex flex-wrap items-center gap-2 text-sm text-zinc-500" role="alert">
+                {tx({ TR: "İki adımlı doğrulama durumu yüklenemedi.", EN: "Couldn't load the two-step verification status." })}
+                <button type="button" onClick={() => { setLoadFailed(false); setAttempt((value) => value + 1); }} className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400" data-2fa-retry>
+                    {tx({ TR: "Tekrar dene", EN: "Try again" })}
+                </button>
+            </p>
+        );
     }
     if (!status) {
         return <div className="flex items-center gap-2 text-sm text-zinc-500"><LoaderCircle className="h-4 w-4 animate-spin" /> {tx({ TR: "Yükleniyor…", EN: "Loading…" })}</div>;

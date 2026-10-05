@@ -1,3 +1,5 @@
+import { readLoginHistory, type LoginRecord } from "@/lib/login-history";
+
 /**
  * The signed-in account's security at a glance (GET /api/account/security),
  * shown on the Security page: how it signs in, the password, two-step
@@ -14,6 +16,8 @@ export interface AccountSecuritySummary {
     lastLoginAt: string | null;
     /** When this browser last proved who it is (ISO); null for a session from before that was recorded. */
     sessionSince: string | null;
+    /** The last sign-ins, newest first (at most ten). */
+    loginHistory: LoginRecord[];
 }
 
 export type SecurityCheckId = "password" | "twoFactor" | "recovery" | "sessions";
@@ -63,5 +67,6 @@ export function readSecuritySummary(value: unknown): AccountSecuritySummary | nu
         twoFactor: { enabled: twoFactor.enabled, recoveryCodesLeft: twoFactor.enabled && Number.isInteger(left) && left > 0 ? Math.min(left, 99) : 0 },
         lastLoginAt: isoOrNull(data.lastLoginAt),
         sessionSince: isoOrNull(data.sessionSince),
+        loginHistory: readLoginHistory(data.loginHistory),
     };
 }

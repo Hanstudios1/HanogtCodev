@@ -5,7 +5,7 @@ import AiSettingsPage from "@/components/HanogtAI/AiSettingsPage";
 
 export default function HanogtAISettingsPage() {
     return (
-        <main className="min-h-dvh bg-[#fbfaf8] dark:bg-zinc-950">
+        <main className="min-h-dvh bg-ai-paper">
             <Header />
             <div className="pt-16">
                 <AiSettingsPage />

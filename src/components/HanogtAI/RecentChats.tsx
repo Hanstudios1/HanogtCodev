@@ -107,7 +107,8 @@ export default function RecentChats({ conversations, activeId, title, onSelect, 
                         ) : (
                             <p className="px-2.5 py-3 text-[12.5px] text-ai-muted">{tx(C.none)}</p>
                         )}
-                        <Link href="/ai" onClick={onNavigate} className="mt-1 flex items-center gap-2 rounded-xl border-t border-ai-line px-2.5 pb-1.5 pt-2.5 text-[12.5px] font-semibold text-ai-ink/80 transition hover:text-ai-ink">
+                        <div className="mx-2.5 my-1 h-px bg-ai-line" aria-hidden />
+                        <Link href="/ai" onClick={onNavigate} className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-[12.5px] font-semibold text-ai-ink/80 transition hover:bg-ai-ink/[0.04] hover:text-ai-ink">
                             <MessagesSquare className="h-3.5 w-3.5" aria-hidden />{tx(C.all)}
                         </Link>
                     </motion.div>

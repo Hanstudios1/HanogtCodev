@@ -11,6 +11,7 @@ import VoiceCallProvider from "@/components/VoiceCallProvider";
 import HanogtAIDock from "@/components/HanogtAI/HanogtAIDock";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import CloudStatusBanner from "@/components/CloudStatusBanner";
+import { APPEARANCE_INIT_SCRIPT } from "@/lib/appearance-script";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -61,7 +62,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         // The theme class is decided by the inline script before hydration.
         <html lang="tr" data-scroll-behavior="smooth" suppressHydrationWarning>
             <head>
-                <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+                <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT + APPEARANCE_INIT_SCRIPT }} />
             </head>
             <body className="min-h-dvh antialiased">
                 {/*

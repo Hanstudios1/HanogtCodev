@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, MotionConfig, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useReducedMotionConfig, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Check, Code2, FlaskConical, Gamepad2, LogIn, Play, Radio, Rocket, UsersRound, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -11,6 +11,7 @@ import { CountUp, formatCount, usePublicStats, type PublicStatKey } from "@/comp
 import ProductLogo from "@/components/ProductLogo";
 import SiteFooter from "@/components/SiteFooter";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
+import { prefersReducedMotion } from "@/lib/appearance";
 import { LANGUAGES, formatCopy, useI18n, type Copy } from "@/lib/i18n";
 import { PLAN_AI_LIMITS } from "@/lib/plans";
 import { PRODUCTS, type LogoId } from "@/lib/products";
@@ -157,7 +158,7 @@ function RotatingWord() {
     const count = words.length;
     const [index, setIndex] = useState(0);
     useEffect(() => {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        if (prefersReducedMotion()) return;
         const timer = window.setInterval(() => setIndex((value) => (value + 1) % count), 2600);
         return () => window.clearInterval(timer);
     }, [count]);
@@ -196,7 +197,7 @@ function Reveal({ children, delay = 0, className }: { children: ReactNode; delay
 
 /** A preview that leans toward the pointer (not with reduced motion or touch). */
 function TiltCard({ children }: { children: ReactNode }) {
-    const still = useReducedMotion();
+    const still = useReducedMotionConfig();
     const x = useMotionValue(0);
     const y = useMotionValue(0);
     const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [5, -5]), { stiffness: 200, damping: 20 });
@@ -399,7 +400,6 @@ export default function LandingPage() {
     const trust: string[] = [t("f_free"), t("f_no_ads"), t("f_setup"), t("lp_ui_languages").replace("{count}", String(LANGUAGES.length))].filter(Boolean);
 
     return (
-        <MotionConfig reducedMotion="user">
         <div className="min-h-dvh overflow-x-clip bg-white text-zinc-900 dark:bg-zinc-950 dark:text-white">
             <Header />
 
@@ -530,6 +530,5 @@ export default function LandingPage() {
 
             <SiteFooter />
         </div>
-        </MotionConfig>
     );
 }

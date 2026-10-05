@@ -6,6 +6,7 @@ import { SessionContext, SessionProvider, signOut, useSession } from "next-auth/
 import { signInWithCustomToken, signOut as signOutFirebase } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { startPresenceReports, useOwnProfile } from "@/lib/account-profile-client";
+import { AppearanceProvider } from "@/lib/appearance";
 import { STEP_UP_EXPIRED } from "@/lib/auth-client";
 import { auth, db, firebaseClientDiagnostics, hasFirebaseClientConfig } from "@/lib/firebase";
 import { STEP_UP_PATH, readSessionStepUp, stepUpExpired } from "@/lib/step-up";
@@ -360,7 +361,7 @@ function FirebaseSessionBridge({ children }: { children: React.ReactNode }) {
         <FirebaseBridgeContext.Provider value={bridgeState}>
             <RawSessionContext.Provider value={session}>
                 <SessionContext.Provider value={gatedValue}>
-                    {children}
+                    <AppearanceProvider email={gatedValue.status === "authenticated" ? gatedValue.data?.user?.email ?? null : null}>{children}</AppearanceProvider>
                     <PresenceHeartbeat />
                     <StepUpGuard />
                 </SessionContext.Provider>

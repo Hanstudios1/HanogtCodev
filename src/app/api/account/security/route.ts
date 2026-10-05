@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { AccountSecuritySummary } from "@/lib/account-security";
+import { readLoginHistory } from "@/lib/login-history";
 import { getActiveSession } from "@/lib/server/active-session";
 import { toIso } from "@/lib/server/admin";
 import { getServerDocument } from "@/lib/server/firebase-rest";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
 /**
  * GET: the signed-in account's security at a glance for the Security page
  * (src/lib/account-security.ts). Facts only: no secret, hash or code leaves
- * the server, just whether they exist and how many recovery codes are left.
+ * the server, just whether they exist and how many recovery codes are left,
+ * and the account's last sign-ins (when, how, device family, country).
  */
 
 const READS_PER_MINUTE = 60;
@@ -38,6 +40,7 @@ export async function GET() {
             twoFactor: { enabled: twoFactor, recoveryCodesLeft: twoFactor && Array.isArray(credential?.recoveryCodes) ? credential.recoveryCodes.length : 0 },
             lastLoginAt: toIso(user.lastLoginAt ?? user.lastLoginDate),
             sessionSince: typeof session.authTime === "number" && session.authTime > 0 ? toIso(session.authTime) : null,
+            loginHistory: readLoginHistory(user.loginHistory),
         };
         return json(summary);
     } catch (error) {

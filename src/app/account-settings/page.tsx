@@ -9,6 +9,9 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowLeft, Bell, ChevronRight, CircleDot, Clock, Code2, Copy as CopyIcon, Database, Download, ExternalLink, Eye, EyeOff, Gem, Github, Globe2, Hash, Image as ImageIcon, KeyRound, Laptop, Link2, Linkedin, LoaderCircle, Lock, LogOut, Mail, Megaphone, MessageCircle, Monitor, Moon, Paintbrush, Palette, RefreshCw, Save, Shield, Shuffle, Sparkles, Star, Sun, Trash2, Twitter, Undo2, User, UserRound, Users, type LucideIcon } from "lucide-react";
 import Header from "@/components/Header";
 import TwoFactorSettings from "@/components/Account/TwoFactorSettings";
+import AccountSecurityCard from "@/components/Security/AccountSecurityCard";
+import { announceAccountSecurityChange } from "@/components/Security/account-security-store";
+import RecentSignIns from "@/components/Security/RecentSignIns";
 import { ToastViewport, useToasts } from "@/components/Editor/Toasts";
 import PlanBadge from "@/components/PlanBadge";
 import PlanBadgeSetting from "@/components/Plans/PlanBadgeSetting";
@@ -43,13 +46,6 @@ const ACCENT_COLORS = [
 ];
 
 const BUBBLE_COLORS = ["#3B82F6", "#22C55E", "#EF4444", "#F97316", "#8B5CF6", "#EC4899"];
-
-const TIMEZONES = [
-    "Europe/Istanbul", "Europe/London", "Europe/Berlin", "Europe/Moscow",
-    "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
-    "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Asia/Kolkata",
-    "Australia/Sydney", "Pacific/Auckland",
-];
 
 const C = {
     title: { TR: "Hesap Ayarları", EN: "Account Settings" },
@@ -130,8 +126,10 @@ const C = {
     chat: { TR: "Sohbet", EN: "Chat" },
     chatLook: { TR: "Sohbet görünümü", EN: "Chat look" },
     language: { TR: "Dil", EN: "Language" },
-    accessibility: { TR: "Erişilebilirlik ve yoğunluk", EN: "Accessibility and density" },
-    region: { TR: "Bölge", EN: "Region" },
+    accessibility: { TR: "Erişilebilirlik", EN: "Accessibility" },
+    accessibilityHint: { TR: "Hesabına bağlıdır; giriş yaptığın her cihazda geçerli olur.", EN: "Kept with your account; it applies on every device you sign in on." },
+    reduceAnimationsHint: { TR: "Geçişler, kayan yazılar ve renk akışları durur. Cihazının “hareketi azalt” ayarı da her zaman dikkate alınır.", EN: "Transitions, moving text and flowing colours stop. Your device's “reduce motion” setting is always respected too." },
+    highContrastHint: { TR: "İkincil yazılar ve çizgiler daha belirgin olur.", EN: "Secondary text and lines get stronger." },
     editorTitle: { TR: "Kod editörü", EN: "Code editor" },
     editorHint: { TR: "Yazı tipi, tema, kısayollar ve çalıştırma ayarları editörün kendi sayfasında.", EN: "Font, theme, shortcuts and run settings are on the editor's own page." },
     openEditorSettings: { TR: "Editör ayarlarını aç", EN: "Open editor settings" },
@@ -205,7 +203,6 @@ const FIELD_LABELS: Partial<Record<keyof EditableAccountFields, Copy>> = {
     socialTiktok: { TR: "TikTok", EN: "TikTok" },
     socialInstagram: { TR: "Instagram", EN: "Instagram" },
     socialFacebook: { TR: "Facebook", EN: "Facebook" },
-    timezone: { TR: "Saat dilimi", EN: "Time zone" },
     dndSchedule: { TR: "Sessiz saatler", EN: "Quiet hours" },
 };
 
@@ -222,7 +219,7 @@ const SECTIONS: SectionDefinition[] = [
     { id: "privacy", icon: Shield, label: { TR: "Gizlilik ve Güvenlik", EN: "Privacy & Security" }, hint: { TR: "Görünürlük, iki adımlı doğrulama, şifre, oturumlar", EN: "Visibility, two-step verification, password, sessions" }, group: "user", tint: "from-sky-500 to-blue-600" },
     { id: "notifications", icon: Bell, label: { TR: "Bildirimler", EN: "Notifications" }, hint: { TR: "Mesaj, arama, istek ve e-posta bildirimleri", EN: "Message, call, request and e-mail notifications" }, group: "app", tint: "from-amber-500 to-orange-500" },
     { id: "messaging", icon: MessageCircle, label: { TR: "Mesajlaşma", EN: "Messaging" }, hint: { TR: "Yazıyor göstergesi, okundu bilgisi, sohbet görünümü", EN: "Typing indicator, read receipts, chat look" }, group: "app", tint: "from-blue-500 to-cyan-500" },
-    { id: "appearance", icon: Palette, label: { TR: "Görünüm", EN: "Appearance" }, hint: { TR: "Tema, dil, yazı boyutu, erişilebilirlik", EN: "Theme, language, text size, accessibility" }, group: "app", tint: "from-rose-500 to-fuchsia-500" },
+    { id: "appearance", icon: Palette, label: { TR: "Görünüm", EN: "Appearance" }, hint: { TR: "Tema, dil, erişilebilirlik", EN: "Theme, language, accessibility" }, group: "app", tint: "from-rose-500 to-fuchsia-500" },
     { id: "editor", icon: Code2, label: { TR: "Editör", EN: "Editor" }, hint: { TR: "Kod editörü ayarları", EN: "Code editor settings" }, group: "app", tint: "from-zinc-600 to-zinc-800" },
     { id: "ai", icon: Sparkles, label: { TR: "Hanogt AI", EN: "Hanogt AI" }, hint: { TR: "Talimatlar, üslup, varsayılanlar, kullanım", EN: "Instructions, tone, defaults, usage" }, group: "app", tint: "from-violet-500 to-fuchsia-500" },
     { id: "data", icon: Database, label: { TR: "Veri", EN: "Data" }, hint: { TR: "Verileri indirme, hesabı silme", EN: "Download data, delete account" }, group: "data", tint: "from-cyan-600 to-teal-600" },
@@ -241,7 +238,7 @@ const FIELD_SECTIONS: Partial<Record<keyof EditableAccountFields, SectionId>> = 
     socialGithub: "profile", socialLinkedin: "profile", socialTwitter: "profile", socialWebsite: "profile",
     socialYoutube: "profile", socialTiktok: "profile", socialInstagram: "profile", socialFacebook: "profile",
     customStatus: "status", statusPreference: "status",
-    dndSchedule: "notifications", bubbleColor: "messaging", timezone: "appearance",
+    dndSchedule: "notifications", bubbleColor: "messaging",
 };
 
 /** Fields the status menu and the visibility switches save on their own (outside the save bar). */
@@ -819,6 +816,8 @@ export default function AccountSettingsPage() {
             setNewPassword("");
             setConfirmPassword("");
             toast({ tone: "success", message: result.otherSessionsSignedOut ? tx(C.passwordSavedOthersOut) : t("password_set_success") });
+            // The 2FA card and the security summary read the account again (a first password unlocks 2FA).
+            announceAccountSecurityChange();
             // The other sessions' data connections were cut, this browser's too: connect again.
             if (result.otherSessionsSignedOut) void bridge.reconnect();
         } catch (error) {
@@ -843,6 +842,7 @@ export default function AccountSettingsPage() {
             }
             if (!response.ok) throw new Error(String(response.status));
             toast({ tone: "success", message: tx(C.signOutOthersDone) });
+            announceAccountSecurityChange();
             void bridge.reconnect();
         } catch {
             toast({ tone: "error", message: tx(C.signOutOthersFailed) });
@@ -861,16 +861,6 @@ export default function AccountSettingsPage() {
         return () => document.removeEventListener("keydown", onKey);
     }, [busyAction, showDeleteConfirm]);
 
-    const timezoneLabel = (zone: string) => {
-        try {
-            const parts = new Intl.DateTimeFormat(locale, { timeZone: zone, timeZoneName: "short" }).formatToParts(new Date());
-            const name = parts.find((part) => part.type === "timeZoneName")?.value || "";
-            return [zone.split("/").pop()?.replace(/_/g, " ") ?? zone, name ? ["(", name, ")"].join("") : ""].filter(Boolean).join(" ");
-        } catch {
-            return zone;
-        }
-    };
-    const timezoneOptions = form && !TIMEZONES.includes(form.timezone) ? [form.timezone, ...TIMEZONES] : TIMEZONES;
 
     if (auth.status !== "authenticated" || !email) {
         return (
@@ -1197,23 +1187,8 @@ export default function AccountSettingsPage() {
             case "privacy":
                 return (
                     <div className="space-y-4">
-                        {profileGate(form ? (
-                            <>
-                                <Card icon={form.publicProfile ? Eye : EyeOff} title={tx(C.profileVisibility)}>
-                                    <ToggleRow label={t("public_profile")} description={t("public_profile_desc")} checked={form.publicProfile} onChange={(value) => setField("publicProfile", value)} />
-                                    <ToggleRow label={t("public_projects_setting")} checked={form.publicProjects} onChange={(value) => setField("publicProjects", value)} />
-                                    <ToggleRow label={t("hide_friend_list")} checked={form.hideFriendList} onChange={(value) => setField("hideFriendList", value)} />
-                                </Card>
-                                <Card icon={Users} title={tx(C.whoSees)}>
-                                    <SelectRow label={t("who_can_add")} value={form.whoCanAdd} onChange={(value) => setField("whoCanAdd", value)} options={[{ value: "everyone", label: t("everyone") }, { value: "friends_of_friends", label: t("friends_of_friends") }, { value: "nobody", label: t("nobody") }]} />
-                                    <SelectRow label={t("photo_visibility")} value={form.photoVisibility} onChange={(value) => setField("photoVisibility", value)} options={[{ value: "everyone", label: t("everyone") }, { value: "friends", label: t("friends_only") }, { value: "nobody", label: t("nobody") }]} />
-                                    <SelectRow label={t("bio_visibility")} value={form.bioVisibility} onChange={(value) => setField("bioVisibility", value)} options={[{ value: "everyone", label: t("everyone") }, { value: "friends", label: t("friends_only") }, { value: "nobody", label: t("nobody") }]} />
-                                </Card>
-                            </>
-                        ) : null)}
-                        <Card icon={Shield} title={tx(C.twoFactor)}>
-                            <div className="pt-2"><TwoFactorSettings /></div>
-                        </Card>
+                        <AccountSecurityCard onAction={(check) => document.getElementById(check === "password" || (check === "twoFactor" && !hasPassword) ? "security-password" : check === "sessions" ? "security-sessions" : "security-2fa")?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+                        <div id="security-password" className="scroll-mt-24" />
                         <Card icon={Lock} title={tx(C.passwordTitle)}>
                             {hasPassword ? (
                                 <p className="pt-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">✅ {t("password_already_set")}</p>
@@ -1233,12 +1208,32 @@ export default function AccountSettingsPage() {
                                 {hasPassword ? t("change_password") : t("set_password")}
                             </button>
                         </Card>
+                        <div id="security-2fa" className="scroll-mt-24" />
+                        <Card icon={Shield} title={tx(C.twoFactor)}>
+                            <div className="pt-2"><TwoFactorSettings /></div>
+                        </Card>
+                        <div id="security-sessions" className="scroll-mt-24" />
                         <Card icon={Monitor} title={tx(C.sessionsTitle)} description={tx(C.sessionsHint)}>
                             <button type="button" onClick={() => void handleSignOutOthers()} disabled={busyAction === "sessions"} className={`mt-3 inline-flex items-center gap-2 rounded-xl bg-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600 ${FOCUS}`}>
                                 {busyAction === "sessions" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LogOut className="h-4 w-4" aria-hidden="true" />}
                                 {tx(C.signOutOthers)}
                             </button>
+                            <RecentSignIns />
                         </Card>
+                        {profileGate(form ? (
+                            <>
+                                <Card icon={form.publicProfile ? Eye : EyeOff} title={tx(C.profileVisibility)}>
+                                    <ToggleRow label={t("public_profile")} description={t("public_profile_desc")} checked={form.publicProfile} onChange={(value) => setField("publicProfile", value)} />
+                                    <ToggleRow label={t("public_projects_setting")} checked={form.publicProjects} onChange={(value) => setField("publicProjects", value)} />
+                                    <ToggleRow label={t("hide_friend_list")} checked={form.hideFriendList} onChange={(value) => setField("hideFriendList", value)} />
+                                </Card>
+                                <Card icon={Users} title={tx(C.whoSees)}>
+                                    <SelectRow label={t("who_can_add")} value={form.whoCanAdd} onChange={(value) => setField("whoCanAdd", value)} options={[{ value: "everyone", label: t("everyone") }, { value: "friends_of_friends", label: t("friends_of_friends") }, { value: "nobody", label: t("nobody") }]} />
+                                    <SelectRow label={t("photo_visibility")} value={form.photoVisibility} onChange={(value) => setField("photoVisibility", value)} options={[{ value: "everyone", label: t("everyone") }, { value: "friends", label: t("friends_only") }, { value: "nobody", label: t("nobody") }]} />
+                                    <SelectRow label={t("bio_visibility")} value={form.bioVisibility} onChange={(value) => setField("bioVisibility", value)} options={[{ value: "everyone", label: t("everyone") }, { value: "friends", label: t("friends_only") }, { value: "nobody", label: t("nobody") }]} />
+                                </Card>
+                            </>
+                        ) : null)}
                     </div>
                 );
 
@@ -1343,23 +1338,9 @@ export default function AccountSettingsPage() {
                         </Card>
                         {profileGate(form ? (
                             <>
-                                <Card icon={Clock} title={tx(C.region)}>
-                                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                                        <div className="min-w-0">
-                                            <label htmlFor="field-timezone" className="text-[14px] font-medium">{t("timezone")}</label>
-                                            <span className="block text-[12.5px] text-zinc-500">{t("timezone_desc")}</span>
-                                        </div>
-                                        <select id="field-timezone" value={form.timezone} onChange={(event) => setField("timezone", event.target.value)} aria-invalid={fieldInvalid("timezone")} className={SELECT}>
-                                            {timezoneOptions.map((zone) => <option key={zone} value={zone}>{timezoneLabel(zone)}</option>)}
-                                        </select>
-                                    </div>
-                                </Card>
-                                <Card icon={Paintbrush} title={tx(C.accessibility)}>
-                                    <ToggleRow label={t("compact_mode")} checked={form.compactMode} onChange={(value) => setField("compactMode", value)} />
-                                    <ToggleRow label={t("reduce_animations")} checked={form.reduceAnimations} onChange={(value) => setField("reduceAnimations", value)} />
-                                    <ToggleRow label={t("high_contrast")} checked={form.highContrast} onChange={(value) => setField("highContrast", value)} />
-                                    <SelectRow label={t("ui_font_size")} value={form.uiFontSize} onChange={(value) => setField("uiFontSize", value)} options={[{ value: "small", label: t("small") }, { value: "medium", label: t("medium") }, { value: "large", label: t("large") }]} />
-                                    <SelectRow label={t("emoji_style")} value={form.emojiStyle} onChange={(value) => setField("emojiStyle", value)} options={[{ value: "native", label: t("native") }, { value: "twemoji", label: "Twemoji" }, { value: "noto", label: "Noto" }]} />
+                                <Card icon={Paintbrush} title={tx(C.accessibility)} description={tx(C.accessibilityHint)}>
+                                    <ToggleRow label={t("reduce_animations")} description={tx(C.reduceAnimationsHint)} checked={form.reduceAnimations} onChange={(value) => setField("reduceAnimations", value)} />
+                                    <ToggleRow label={t("high_contrast")} description={tx(C.highContrastHint)} checked={form.highContrast} onChange={(value) => setField("highContrast", value)} />
                                 </Card>
                             </>
                         ) : null)}

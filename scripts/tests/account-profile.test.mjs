@@ -45,6 +45,18 @@ test("types, enums and text limits", () => {
     assert.deepEqual(clean({ bio: "  Merhaba\u0000 dünya\u0007  " }), { bio: "Merhaba dünya" });
 });
 
+test("retired appearance settings: sent by an open tab, dropped; stored values aren't read back", () => {
+    for (const key of ["compactMode", "uiFontSize", "timezone", "emojiStyle"]) {
+        assert.ok(profile.RETIRED_ACCOUNT_KEYS.includes(key), key);
+        assert.equal(key in DEFAULT_ACCOUNT_FIELDS, false, key);
+    }
+    assert.deepEqual(clean({ compactMode: true, uiFontSize: "large", timezone: "Europe/../x", emojiStyle: "noto", reduceAnimations: true }), { reduceAnimations: true });
+    const stored = normalizeStoredAccount({ compactMode: true, timezone: "UTC", highContrast: true });
+    assert.equal("compactMode" in stored, false);
+    assert.equal("timezone" in stored, false);
+    assert.equal(stored.highContrast, true);
+});
+
 test("the status emoji is retired: an open tab may still send it, and it is dropped", () => {
     assert.deepEqual(clean({ statusEmoji: "🎮", customStatus: "Kod yazıyorum" }), { customStatus: "Kod yazıyorum" });
     assert.deepEqual(clean({ statusEmoji: 42 }), {});
@@ -84,7 +96,6 @@ test("colours, tags, time zones and social links", () => {
 
     for (const zone of ["Europe/Istanbul", "America/Argentina/Buenos_Aires", "UTC", "Etc/GMT+3", "America/Port-au-Prince"]) assert.ok(isTimeZoneName(zone), zone);
     for (const zone of ["", "Europe/../x", "Europe/Istanbul/", "<script>", "Europe Istanbul"]) assert.equal(isTimeZoneName(zone), false, zone);
-    assert.deepEqual(fieldError({ timezone: "Europe/../x" }), { field: "timezone", code: "invalid" });
 
     for (const link of ["", "github.com/ada", "@ada", "https://x.com/ada", "http://example.com", "youtube.com/@kanal"]) assert.ok(isSafeSocialLink(link), link);
     for (const link of ["javascript:alert(1)", "data:text/html,x", "a\"b", "x.com/<script>", "vbscript:x"]) assert.equal(isSafeSocialLink(link), false, link);
@@ -111,7 +122,7 @@ test("stored documents are normalized leniently", () => {
         avatarUrl: "http://insecure.example/a.png",
         msgFontSize: "gigantic",
         favoriteLangs: ["Rust", 7, "Rust", "", "x".repeat(50), "Go", "C", "Lua", "Zig", "Elm"],
-        timezone: "America/Argentina/Buenos_Aires",
+        dndSchedule: "22:00-07:00",
         socialGithub: "javascript:alert(1)",
         role: "admin",
         friends: ["x@example.com"],
@@ -125,7 +136,7 @@ test("stored documents are normalized leniently", () => {
     assert.equal(legacy.avatarUrl, "");
     assert.equal(legacy.msgFontSize, "medium");
     assert.deepEqual(legacy.favoriteLangs, ["Rust", "Go", "C", "Lua", "Zig"]);
-    assert.equal(legacy.timezone, "America/Argentina/Buenos_Aires");
+    assert.equal(legacy.dndSchedule, "22:00-07:00");
     assert.equal(legacy.socialGithub, "");
     assert.deepEqual(Object.keys(legacy).sort(), [...EDITABLE_ACCOUNT_KEYS].sort());
     assert.equal("role" in legacy, false);
@@ -134,14 +145,14 @@ test("stored documents are normalized leniently", () => {
 });
 
 test("diff, split and nickname helpers", () => {
-    const base = normalizeStoredAccount({ username: "Ada", favoriteLangs: ["Rust"], timezone: "UTC" });
+    const base = normalizeStoredAccount({ username: "Ada", favoriteLangs: ["Rust"], dndSchedule: "22:00-07:00" });
     assert.deepEqual(diffAccountFields(base, { ...base }), {});
     assert.deepEqual(diffAccountFields(base, { ...base, favoriteLangs: ["Rust"] }), {});
-    assert.deepEqual(diffAccountFields(base, { ...base, favoriteLangs: ["Rust", "Go"], bio: "Hi", compactMode: true }), { bio: "Hi", favoriteLangs: ["Rust", "Go"], compactMode: true });
+    assert.deepEqual(diffAccountFields(base, { ...base, favoriteLangs: ["Rust", "Go"], bio: "Hi", highContrast: true }), { bio: "Hi", favoriteLangs: ["Rust", "Go"], highContrast: true });
 
-    const { publicPatch, privatePatch } = splitAccountPatch({ bio: "Hi", compactMode: true, nicknameTag: "1234", timezone: "UTC" });
+    const { publicPatch, privatePatch } = splitAccountPatch({ bio: "Hi", highContrast: true, nicknameTag: "1234", dndSchedule: "23:00-08:00" });
     assert.deepEqual(publicPatch, { bio: "Hi", nicknameTag: "1234" });
-    assert.deepEqual(privatePatch, { compactMode: true, timezone: "UTC" });
+    assert.deepEqual(privatePatch, { highContrast: true, dndSchedule: "23:00-08:00" });
     assert.ok(Object.keys(publicPatch).every((key) => PUBLIC_PROFILE_KEYS.includes(key)));
 
     assert.ok(sameNickname("Ada", " ada "));
@@ -158,8 +169,8 @@ test("diff, split and nickname helpers", () => {
 
 test("users/{email} wins over public_profiles/{email}, which fills the gaps", () => {
     const merged = mergeStoredAccount(
-        { username: "Ada", nickname: "", bio: "", avatarUrl: "http://old.example/a.png", publicProfile: false, compactMode: true, favoriteLangs: [] },
-        { username: "Someone else", nickname: "ada", nicknameTag: "0420", bio: "Merhaba", avatarUrl: "https://cdn.example/a.png", publicProfile: true, favoriteLangs: ["Rust"], compactMode: false, staffRole: "owner" },
+        { username: "Ada", nickname: "", bio: "", avatarUrl: "http://old.example/a.png", publicProfile: false, reduceAnimations: true, favoriteLangs: [] },
+        { username: "Someone else", nickname: "ada", nicknameTag: "0420", bio: "Merhaba", avatarUrl: "https://cdn.example/a.png", publicProfile: true, favoriteLangs: ["Rust"], reduceAnimations: false, staffRole: "owner" },
     );
     assert.equal(merged.username, "Ada");
     assert.equal(merged.nickname, "ada");
@@ -170,7 +181,7 @@ test("users/{email} wins over public_profiles/{email}, which fills the gaps", ()
     assert.equal(merged.publicProfile, false);
     assert.deepEqual(merged.favoriteLangs, ["Rust"]);
     // Private settings never come from the public profile.
-    assert.equal(merged.compactMode, true);
+    assert.equal(merged.reduceAnimations, true);
     assert.equal("staffRole" in merged, false);
     assert.deepEqual(mergeStoredAccount(null, null), { ...DEFAULT_ACCOUNT_FIELDS });
     assert.equal(mergeStoredAccount({ nicknameTag: 7 }, { nicknameTag: "1234" }).nicknameTag, "0007");

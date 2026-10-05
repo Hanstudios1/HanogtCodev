@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { animate, motion, useInView, useMotionValue, useReducedMotionConfig, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 export type PublicStatKey = "users" | "projects" | "gameProjects" | "arcadeGames" | "mediaPosts" | "groups";
@@ -68,7 +68,7 @@ export function formatCount(value: number, locale: string, compact: boolean) {
 export function CountUp({ value, locale }: { value: number; locale: string }) {
     const ref = useRef<HTMLSpanElement | null>(null);
     const inView = useInView(ref, { once: true, margin: "-40px" });
-    const reduceMotion = useReducedMotion();
+    const reduceMotion = useReducedMotionConfig();
     const progress = useMotionValue(0);
     const compact = value >= 10_000;
     const text = useTransform(progress, (latest) => formatCount(Math.round(latest), locale, compact));

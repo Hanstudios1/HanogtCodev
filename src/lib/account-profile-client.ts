@@ -41,6 +41,9 @@ export type OwnProfile = {
     /** Privacy settings (users/{email}); the server publishes presence accordingly. */
     showOnlineStatus: boolean;
     showLastSeen: boolean;
+    /** Accessibility settings (users/{email}), applied to every page (src/lib/appearance.tsx). */
+    reduceAnimations: boolean;
+    highContrast: boolean;
 };
 
 /** Read again after this long, so a change made on another device or tab is picked up. */
@@ -90,6 +93,8 @@ function readProfile(email: string, payload: unknown): OwnProfile | null {
         // Anything unexpected counts as hidden: presence is only shared when the settings allow it.
         showOnlineStatus: fields.showOnlineStatus === true,
         showLastSeen: fields.showLastSeen === true,
+        reduceAnimations: fields.reduceAnimations === true,
+        highContrast: fields.highContrast === true,
     };
 }
 
@@ -176,6 +181,8 @@ function onProfileUpdated(event: Event) {
         if (typeof detail.nickname === "string") next.nickname = text(detail.nickname, PROFILE_TEXT_LIMITS.nickname);
         if (typeof detail.nicknameTag === "string") next.nicknameTag = tag(detail.nicknameTag);
         if (typeof detail.customStatus === "string") next.customStatus = text(detail.customStatus, PROFILE_TEXT_LIMITS.customStatus);
+        if (typeof detail.reduceAnimations === "boolean") next.reduceAnimations = detail.reduceAnimations;
+        if (typeof detail.highContrast === "boolean") next.highContrast = detail.highContrast;
         current.profile = settings ? { ...next, ...settings } : next;
         if (isPresenceStatus(detail.presence)) current.status = detail.presence;
         emit();

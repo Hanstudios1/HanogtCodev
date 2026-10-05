@@ -9,6 +9,7 @@ import { issueAppealToken, issueTwoFactorRecoveryToken } from "@/lib/server/appe
 import { recordAuthError } from "@/lib/server/auth-diagnostics";
 import { cachedAuthVersion, revokeDataSessions } from "@/lib/server/auth-version";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { withLogin } from "@/lib/login-history";
 import { clientIpFromHeaders } from "@/lib/server/request-security";
 import { normalizeEmail } from "@/lib/server/validate";
 import { commitServerPatches, createServerDocument, getServerDocument, patchServerDocument } from "@/lib/server/firebase-rest";
@@ -139,13 +140,23 @@ async function removeUnverifiedPassword(email: string, existing: { authVersion?:
     await createServerDocument("security_events", { actor: email, action: "unverified_password_removed", risk: "medium", createdAt: now, reviewStatus: "none" }).catch(() => undefined);
 }
 
+/** The request's headers inside the NextAuth route (for the sign-in history); null outside a request. */
+async function requestHeaders(): Promise<Headers | null> {
+    try {
+        const { headers } = await import("next/headers");
+        return new Headers(await headers());
+    } catch {
+        return null;
+    }
+}
+
 /**
  * Server-side part of every sign-in: blocks suspended accounts and creates or
  * completes the Firestore profile of Google users. Throws when Firestore is
  * unreachable or not configured; the signIn callback turns that into a code.
  */
 async function completeSignIn(email: string, user: { name?: string | null; image?: string | null }, provider: string | undefined, emailVerified = false): Promise<true | string> {
-    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown; emailVerifiedAt?: unknown; provider?: unknown; hasPassword?: unknown; password?: unknown; authVersion?: unknown }>(`users/${email}`);
+    const existing = await getServerDocument<{ suspended?: boolean; banned?: boolean; role?: unknown; emailVerifiedAt?: unknown; provider?: unknown; hasPassword?: unknown; password?: unknown; authVersion?: unknown; loginHistory?: unknown }>(`users/${email}`);
     if (existing?.suspended || existing?.banned) {
         // The provider (Google) or authorize() has verified the address, so the person may appeal.
         const token = issueAppealToken(email);
@@ -174,13 +185,16 @@ async function completeSignIn(email: string, user: { name?: string | null; image
             updatedAt: new Date(),
         };
         await patchServerDocument(`public_profiles/${email}`, profile);
+        const now = new Date();
         await patchServerDocument(`users/${email}`, {
             ...profile,
             provider: existing ? undefined : "google",
             // Google confirmed the address: billing may link a Paddle customer that already has it (ensureCustomer).
             emailVerifiedAt: emailVerified && !existing?.emailVerifiedAt ? new Date() : undefined,
-            lastLoginAt: new Date(),
-            createdAt: existing ? undefined : new Date(),
+            lastLoginAt: now,
+            // The owner's own record of recent sign-ins (src/lib/login-history.ts).
+            loginHistory: withLogin(existing?.loginHistory, { at: now, method: "google", headers: await requestHeaders() }),
+            createdAt: existing ? undefined : now,
         });
         knownProfile = existingProfile ?? {};
     }
@@ -289,6 +303,7 @@ export const authOptions: NextAuthOptions = {
                     suspended?: boolean;
                     banned?: boolean;
                     password?: string;
+                    loginHistory?: unknown;
                 } | null;
                 let credential: CredentialRecord | null;
                 try {
@@ -334,8 +349,12 @@ export const authOptions: NextAuthOptions = {
 
                 // Ownership is proven: report the suspension with an appeal token.
                 if (user.suspended || user.banned) throw new Error(suspendedCode(email));
-                // Best effort: shown in Account Settings and to the team.
-                await patchServerDocument(`users/${email}`, { lastLoginAt: new Date() }).catch(() => undefined);
+                // Best effort: shown in Account Settings (with the recent sign-ins) and to the team.
+                const now = new Date();
+                await patchServerDocument(`users/${email}`, {
+                    lastLoginAt: now,
+                    loginHistory: withLogin(user.loginHistory, { at: now, method: "password", headers: req?.headers as Record<string, string> | undefined }),
+                }).catch(() => undefined);
 
                 return {
                     id: email,

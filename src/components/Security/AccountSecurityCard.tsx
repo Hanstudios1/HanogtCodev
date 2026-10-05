@@ -2,10 +2,10 @@
 
 import { CheckCircle2, CircleAlert, Info, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
 import { useRawSession } from "@/components/Provider";
-import { openActions, readSecuritySummary, securityChecks, type AccountSecuritySummary, type SecurityCheck } from "@/lib/account-security";
+import { openActions, securityChecks, type SecurityCheck, type SecurityCheckId } from "@/lib/account-security";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { useAccountSecurity, type SecurityLoad } from "./account-security-store";
 
 const C = {
     title: { TR: "Hesabının güvenliği", EN: "Your account's security" },
@@ -42,7 +42,6 @@ const C = {
 
 const SETTINGS = "/account-settings#privacy";
 
-type Load = { state: "loading" } | { state: "ready"; summary: AccountSecuritySummary } | { state: "failed" } | { state: "signedOut" };
 
 function StateIcon({ state }: { state: SecurityCheck["state"] }) {
     if (state === "ok") return <CheckCircle2 className="h-5 w-5 shrink-0 text-brand-green" aria-hidden />;
@@ -54,35 +53,16 @@ function StateIcon({ state }: { state: SecurityCheck["state"] }) {
  * The account's security at a glance (GET /api/account/security), with a
  * link to the setting behind each suggestion. Signed out: a sign-in prompt.
  */
-export default function AccountSecurityCard() {
+export default function AccountSecurityCard({ onAction }: {
+    /** In Account Settings: go to the setting on this page instead of following the link. */
+    onAction?: (check: SecurityCheckId) => void;
+} = {}) {
     const { tx, locale } = useI18n();
     const auth = useRawSession();
-    const [load, setLoad] = useState<Load>({ state: "loading" });
-    const [attempt, setAttempt] = useState(0);
-    const signedIn = auth.status === "authenticated";
+    const owner = auth.status === "authenticated" ? auth.data?.user?.email ?? null : null;
+    const { load, retry } = useAccountSecurity(owner);
 
-    useEffect(() => {
-        if (!signedIn) return;
-        let cancelled = false;
-        fetch("/api/account/security", { cache: "no-store", credentials: "same-origin", headers: { Accept: "application/json" } })
-            .then(async (response) => {
-                if (response.status === 401) return { state: "signedOut" } as const;
-                const summary = response.ok ? readSecuritySummary(await response.json().catch(() => null)) : null;
-                return summary ? { state: "ready", summary } as const : { state: "failed" } as const;
-            })
-            .catch(() => ({ state: "failed" }) as const)
-            .then((next) => {
-                if (!cancelled) setLoad(next);
-            });
-        return () => { cancelled = true; };
-    }, [signedIn, attempt]);
-
-    const retry = useCallback(() => {
-        setLoad({ state: "loading" });
-        setAttempt((value) => value + 1);
-    }, []);
-
-    const shown: Load = auth.status === "unauthenticated" ? { state: "signedOut" } : auth.status === "loading" ? { state: "loading" } : load;
+    const shown: SecurityLoad = auth.status === "unauthenticated" ? { state: "signedOut" } : auth.status === "loading" ? { state: "loading" } : load;
     const date = (iso: string) => {
         try {
             return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
@@ -166,9 +146,15 @@ export default function AccountSecurityCard() {
                                 <p className="mt-0.5 text-[13px] leading-snug text-zinc-600 dark:text-zinc-400">{detail}</p>
                             </div>
                             {action ? (
-                                <Link href={SETTINGS} className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${check.state === "action" ? "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200" : "text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"}`}>
-                                    {tx(action)}
-                                </Link>
+                                onAction ? (
+                                    <button type="button" onClick={() => onAction(check.id)} className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${check.state === "action" ? "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200" : "text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"}`} data-security-action={check.id}>
+                                        {tx(action)}
+                                    </button>
+                                ) : (
+                                    <Link href={SETTINGS} className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${check.state === "action" ? "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200" : "text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"}`}>
+                                        {tx(action)}
+                                    </Link>
+                                )
                             ) : null}
                         </li>
                     );

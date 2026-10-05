@@ -390,6 +390,47 @@ code, kbd, pre, samp {
   animation-delay: var(--glyph-delay, 0s);
 }
 
+/* Account setting "Reduce animations" (src/lib/appearance.tsx): the same as the system setting. */
+html[data-motion="reduce"] {
+  scroll-behavior: auto;
+}
+
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
+html[data-motion="reduce"] .text-gradient.animate-gradient {
+  background-size: 100% auto;
+}
+
+html[data-motion="reduce"] .text-shimmer {
+  background-image: none;
+  color: var(--ai-muted);
+}
+
+/* Account setting "High contrast": darker secondary text and stronger lines in light mode, lighter in dark mode. */
+html[data-contrast="more"]:not(.dark) {
+  --color-zinc-400: oklch(44.2% 0.017 285.786);
+  --color-zinc-500: oklch(37% 0.013 285.805);
+  --color-zinc-600: oklch(27.4% 0.006 286.033);
+  --color-zinc-200: oklch(80% 0.006 286.033);
+  --ai-muted: #47433b;
+  --ai-line: #c4bdad;
+}
+
+html.dark[data-contrast="more"] {
+  --color-zinc-400: oklch(87.1% 0.006 286.286);
+  --color-zinc-500: oklch(80% 0.01 286);
+  --color-zinc-600: oklch(70.5% 0.015 286.067);
+  --ai-muted: #d6d0c2;
+  --ai-line: #59544a;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
