@@ -183,6 +183,20 @@ test("knowledge notes and analyzer notes ground the answer", () => {
     assert.ok(tools.some((note) => note.startsWith("Hanogt Link Check")));
 });
 
+test("every knowledge entry has its {placeholders} filled in both languages", async () => {
+    const knowledge = await load("lib/ai/knowledge.ts");
+    const left = [];
+    for (const entry of knowledge.allKnowledge()) {
+        for (const turkish of [true, false]) {
+            for (const copy of [entry.title, entry.body]) {
+                const missing = knowledge.knowledgeText(copy, turkish).match(/\{[a-zA-Z][a-zA-Z0-9_]*\}/g);
+                if (missing) left.push(`${entry.id} ${turkish ? "TR" : "EN"}: ${missing.join(" ")}`);
+            }
+        }
+    }
+    assert.deepEqual(left, []);
+});
+
 test("the prompt in two parts: the stable rules and what changes with each message", () => {
     const options = { ...base, mode: "code", path: "/editor", agent: "requested", knowledge: ["### Kod editörü\nNotlar"], tools: ["Hanogt error explainer: ..."], file: { name: "main.py", language: "python", code: "print(1)" }, personal: PERSONAL, personalMax: 500 };
     const { stable, dynamic } = core.systemPromptParts(options);

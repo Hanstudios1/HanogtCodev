@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "4.8";
+export const LEGAL_VERSION = "4.9";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "5 Ekim 2026", EN: "5 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "4.8-2026-10-05";
+export const LEGAL_NOTICE_ID = "4.9-2026-10-05";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,15 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "4.9",
+        date: { TR: "5 Ekim 2026", EN: "5 October 2026" },
+        items: [
+            { TR: "Son girişler: Hesabınıza yapılan son 10 girişin zamanı, yöntemi (parola ya da Google), tarayıcı ve işletim sistemi türü ile ülkesi kaydedilir ve Hesap Ayarları'nda yalnızca size gösterilir; IP adresi bu kayıtta tutulmaz. Kayıtlar verilerinizi indirdiğinizde yer alır ve hesabınızı sildiğinizde silinir.", EN: "Recent sign-ins: the time, method (password or Google), browser and operating system family and country of the last 10 sign-ins to your account are recorded and shown only to you in Account Settings; no IP address is kept in this record. The records are included when you download your data and deleted when you delete your account." },
+            { TR: "Hanogt AI: Açık editör dosyası hakkında sorduğunuzda, ayarlarınıza göre dosyanın son çalıştırmasının hata çıktısı (en fazla 3.000 karakter; varsayılan olarak açık) ve projedeki diğer dosyaların yalnızca adları (varsayılan olarak kapalı) da dil modeline iletilir. Yeni kod tercihleriniz (uzmanlık, yorum dili, kod stili, tercih ettiğiniz diller, tam dosya ya da fark) her mesajla iletilir. Önerilen değişikliği gösterebilmek için dosyanın sorulduğu andaki hâli son üç yanıtta tarayıcınızda tutulur; sohbetlerin tarayıcınızda ne kadar saklanacağını seçebilirsiniz.", EN: "Hanogt AI: when you ask about the open editor file, depending on your settings the error output of the file's last run (up to 3,000 characters; on by default) and only the names of the project's other files (off by default) are also passed to the language model. Your new code preferences (experience, comment language, code style, preferred languages, whole file or diff) are passed with every message. To show a proposed change, the file as it was when you asked is kept in your browser for the last three answers; you can choose how long chats are kept in your browser." },
+            { TR: "Görünüm: “Animasyonları azalt” ve “Yüksek kontrast” artık her sayfada uygulanır ve sayfa açılırken hemen uygulanabilmeleri için tarayıcınızda da hatırlanır. Hiçbir işlevi olmayan sıkı görünüm, arayüz yazı boyutu, saat dilimi ve emoji stili ayarları kaldırıldı; kayıtlı değerleri silinir.", EN: "Appearance: “Reduce animations” and “High contrast” now apply on every page and are also remembered in your browser so they apply as soon as a page opens. The compact mode, interface font size, time zone and emoji style settings, which did nothing, were removed and their stored values are deleted." },
+        ],
+    },
     {
         version: "4.8",
         date: { TR: "5 Ekim 2026", EN: "5 October 2026" },

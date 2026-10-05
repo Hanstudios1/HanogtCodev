@@ -12,7 +12,7 @@ import HanogtAIDock from "@/components/HanogtAI/HanogtAIDock";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import CloudStatusBanner from "@/components/CloudStatusBanner";
 import { APPEARANCE_INIT_SCRIPT } from "@/lib/appearance-script";
-import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {

@@ -18,6 +18,9 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 ## Kimlik, veri ve hesap yaşam döngüsü
 
+- Son girişler (0.3.21): her başarılı girişte `users/{email}.loginHistory` son 10 kaydı tutar (zaman, yöntem, tarayıcı ve sistem türü, ülke; IP adresi yok). Yalnızca hesap sahibine `/api/account/security` ile döner; dışa aktarımda yer alır, hesap silinince silinir.
+- Görünüm: "Animasyonları azalt" ve "Yüksek kontrast" `<html>` niteliği olarak her sayfada uygulanır (`src/lib/appearance.tsx`); işlevsiz sıkı görünüm, arayüz yazı boyutu, saat dilimi ve emoji stili emekli edildi.
+
 - NextAuth oturumları aktif kullanıcı ve oturum sürümü (`users/{email}.authVersion`) kontrolleriyle desteklenir. "Diğer tüm oturumları kapat", şifre değişikliği ve doğrulanmamış şifrenin kaldırılması bu sürümü artırır; eski sürümlü oturumlar her istekte reddedilir ve Firebase oturumları da kapatılır.
 - Hesapta şifre varsa Google ile her girişten sonra `/login/verify`'da şifre (2FA açıksa kod) istenir; o zamana kadar oturum sunucuda kapalı sayılır ve 15 dakikada düşer (`src/lib/step-up.ts`). Şifresini unutan talep açar; yönetici "Şifreyi kaldır" ile şartı kaldırır.
 - Google `email_verified` olmadan giriş yapılamaz; doğrulanmamış şifreli hesaba ilk doğrulanmış Google girişi o şifreyi ve 2FA'yı siler (önceden ele geçirme koruması). İlk şifreyi koymak ve hesabı silmek son 30 dakikada giriş ister.
@@ -59,7 +62,10 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 - Hanogt AI yalnızca giriş yapmış kişilere açıktır: oturumsuz istek 401 `auth_required` alır, arayüz giriş/kayıt kapısı gösterir. Mesaj hakları ilk mesajla başlayan plan penceresinde sayılır: Ücretsiz dakikada 5 ve 7 günde 50, Plus dakikada 20 ve 14 günde 750, Pro dakikada 30 ve 7 günde 2.000. Sohbet ve geliştirici API'si aynı haktan düşer; model hiç yanıt veremezse mesaj geri verilir. Kendi API anahtarı bağlantılarının günlük sınırı ayrıdır ve Groq bu bağlantılardan kaldırılmıştır.
 - Düşünme: model zor sorularda yanıt vermeden önce düşünebilir; düşünme yanıtın üstündeki panelde gösterilir, yalnızca tarayıcıda saklanır ve modele geri gönderilmez.
 - Çevrimdışı Hanogt AI Çekirdeği, dil modeli yanıt veremediğinde giriş yapmış kişilere yanıt verir; tarayıcıda çalışan, 52 niyet ve 10.135 örnekle eğitilmiş bir sınıflandırıcıdır (test doğruluğu %89,9, kör test %95,9).
+- Arayüz (0.3.21): kâğıt ve mürekkep tema, Sohbetler/Görevler sekmeli kenar çubuğu, Çalışma adımları, açık dosya için Değişiklikler kartı ve "Editöre uygula" (aynı sayfadaki editöre eşzamanlı olayla, tek düzenleme, Ctrl+Z ile geri alınır). Ayarlara göre modele son çalıştırmanın hata çıktısı (≤ 3.000 karakter) ve projedeki diğer dosyaların adları da gider; kod tercihleri (uzmanlık, yorum dili, kod stili, tercih edilen diller, tam dosya ya da fark) isteme eklenir.
 - Ajan modu: profil okuma, grup oluşturma, kodu editörde açma, oyun oluşturma, gezinme ve arama. Her işlem kullanıcının izin kartıyla ve kendi oturumuyla mevcut API'lerden yapılır; araç adları/argümanları sunucuda yeniden denetlenir. Silme, şifre, 2FA, yönetim ve başkalarına mesaj yapılmaz.
+
+- Eğitim: `train_lora.py` ara kayıtları özel model deposuna yükler (`--hub-checkpoints`), süre sınırında durur ve sonraki oturumda sürer; `training/kaggle/hanogt_train_kaggle.ipynb` Kaggle'ın ücretsiz GPU'suyla eğitir.
 
 ## Tarayıcı tabanlı oyun motoru (Hanogt Engine V3)
 

@@ -12,6 +12,7 @@ import { cx } from "./ui";
 const C = {
     title: { TR: "Hanogt AI kullanımın", EN: "Your Hanogt AI usage" },
     pill: { TR: "{period} {used} / {limit}", EN: "{period} {used} / {limit}" },
+    pillShort: { TR: "{used} / {limit}", EN: "{used} / {limit}" },
     pillLabel: { TR: "{period} {limit} mesajın {used} tanesini kullandın. Ayrıntılar için aç.", EN: "{period}: you've used {used} of {limit} messages. Open for details." },
     week: { TR: "Bu hafta", EN: "This week" },
     twoWeeks: { TR: "Bu 2 hafta", EN: "These 2 weeks" },
@@ -109,7 +110,10 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
     const nextPlan = nextPlanUp(usage.plan);
     const days = usage.hanogt.windowDays;
     const period = tx(days === 7 ? C.week : days === 14 ? C.twoWeeks : C.days, { days });
-    const pillText = tx(C.pill, { period, used: day.used.toLocaleString(locale), limit: day.limit.toLocaleString(locale) });
+    const counts = { used: day.used.toLocaleString(locale), limit: day.limit.toLocaleString(locale) };
+    const pillText = tx(C.pill, { period, ...counts });
+    // The floating panel's header is narrow: the numbers only (the label and the card say which period).
+    const shownText = variant === "panel" ? tx(C.pillShort, counts) : pillText;
 
     return (
         <div ref={root} className="relative flex shrink-0">
@@ -120,6 +124,7 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                 aria-haspopup="dialog"
                 aria-expanded={open}
                 aria-label={tx(C.pillLabel, { period, used: day.used, limit: day.limit })}
+                title={variant === "panel" ? pillText : undefined}
                 data-usage-meter={level}
                 className={cx(
                     "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11.5px] font-semibold tabular-nums transition hover:bg-ai-ink/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai-ink/30",
@@ -127,7 +132,7 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                 )}
             >
                 <Gauge className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span className={cx(variant === "panel" && "max-[380px]:hidden")}>{pillText}</span>
+                <span className={cx(variant === "panel" && "max-[380px]:hidden")}>{shownText}</span>
             </button>
             {open ? (
                 <div

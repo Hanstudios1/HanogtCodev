@@ -1,5 +1,104 @@
 # Değişiklik Günlüğü
 
+## 0.3.21 — 2026-10-05
+
+### Hanogt AI'ın yeni arayüzü, ayarlar ve renkli yazılar
+
+- **Hanogt AI arayüzü (Claude + Codex):**
+  - Kâğıt ve mürekkep tema jetonları (`--ai-paper`, `--ai-ink` …) ve Source
+    Serif 4 yazı tipi.
+  - Serif selamlama, kişinin adı mor-mavi-sarı geçişle; yanıtlar baloncuksuz
+    ve avatarsız.
+  - Kenar çubuğunda Sohbetler ve Görevler sekmeleri. Görevler, editördeki bir
+    dosya hakkındaki sohbetlerdir: Hazır (+/− satır), Uygulandı, Yoksayıldı,
+    Yanıtlandı, Çalışıyor.
+  - "Çalışma adımları" zaman çizelgesi ve parlayan "Düşünüyor…".
+  - Kompakt panelde son sohbetler arasında geçiş.
+  - Uzun kod ve web sayfaları yanıt bitince yan panelde kendiliğinden açılır
+    (ayar).
+- **Değişiklikler kartı:**
+  - `src/lib/ai/diff.ts`: Myers satır farkı, bağlamlı bölümler ve esnek
+    unified diff uygulaması.
+  - `file-edit.ts`: yanıttaki tam dosya bloğundan ya da `diff` bloğundan
+    önerilen değişiklik.
+  - "Editöre uygula" (`editor-apply.ts`): aynı sayfadaki editörle eşzamanlı
+    olay. Tek düzenleme olarak uygulanır, Ctrl+Z ile geri alınır. Dosya
+    Hanogt AI okuduktan sonra değiştiyse önce sorulur.
+  - Değişiklik için dosyanın soru anındaki hâli son üç yanıtta tarayıcıda
+    tutulur (en fazla 40.000 karakter).
+- **Hanogt AI ayarları:**
+  - Yeni: uzmanlık düzeyi, kod yorumlarının dili, kod stili, tercih edilen
+    diller (en fazla 5), tam dosya ya da fark, gönderme kısayolu
+    (Enter / Ctrl+Enter), yanıt yazı tipi, yan panelin kendiliğinden
+    açılması.
+  - Ses: dikte dili, yanıt sesi ve hızı, dinleyerek deneme.
+  - Sohbetlerin tarayıcıda saklanma süresi (süresiz / 7 / 30 / 90 gün).
+  - Açık dosya gönderildiğinde son çalıştırmanın hata çıktısı (≤ 3.000
+    karakter, `<console_output>` verisi olarak) ve istenirse projedeki diğer
+    dosyaların adları da modele gider.
+  - İstem: uzmanlık, yorum dili, tercih edilen diller ve kod stili satırları;
+    tam dosya ya da fark yönergesi.
+- **Renkli ve canlı site (sahibin isteği):**
+  - Eski mor → mavi → sarımsı geçişli yazı geri geldi (`--text-gradient`;
+    koyu yüzeylerde `--text-gradient-bright`; `.text-gradient`,
+    `.hover-text-gradient`, `.text-shimmer`).
+  - Nerede: marka yazısı, ana sayfa başlığı ve bölüm başlıkları, ürün
+    başlıkları (News, Security, Media, Engine), fiyatlandırma, panel
+    selamlaması.
+  - Ana sayfada kademeli giriş, kaydırınca beliren satırlar, imlece eğilen
+    önizlemeler ve hareketli kartlar.
+  - Hareket azaltıldığında (cihazda ya da hesapta) hepsi durur.
+- **Hesap ayarları:**
+  - Gizlilik ve Güvenlik sırası: önce güvenlik özeti, sonra Şifre, iki
+    adımlı doğrulama ve oturumlar.
+  - Şifre eklenince 2FA kartı ve özet kendini yeniler
+    (`hanogt:account-security-changed`); 2FA durumu yüklenemezse
+    "Tekrar dene".
+  - Son 10 giriş (`users/{email}.loginHistory`): zaman, yöntem, tarayıcı ve
+    sistem türü, ülke. IP adresi saklanmaz; `/api/account/security` ile
+    yalnızca hesap sahibine döner.
+  - "Animasyonları azalt" (`html[data-motion=reduce]` ve framer-motion
+    `MotionConfig`) ve "Yüksek kontrast" (`html[data-contrast=more]`)
+    uygulanıyor. Sayfa açılmadan uygulanmaları için tarayıcıda
+    `hanogt-appearance:v1` tutulur.
+  - İşlevsiz sıkı görünüm, arayüz yazı boyutu, saat dilimi ve emoji stili
+    kaldırıldı (`RETIRED_ACCOUNT_KEYS`, kayıtlı değerler silinir).
+- **Editör ayarları:**
+  - Kaydetme: kaydederken biçimlendir, kaydedince çalıştır, kaydedilmemiş
+    sekmeyi kapatırken sorma seçeneği.
+  - Yeni çalışma alanının dili ve dile göre sekme boyutu.
+  - Görünüm: Unicode vurgusu, kontrol karakterleri, çoklu imleç tuşu, yazı
+    kalınlığı, harf aralığı, mini haritanın yeri.
+  - Öneriler: Enter ile öneriyi kabul.
+  - Konsol yazı boyutu ve satır kaydırma.
+  - Vim ve Emacs kısayolları Parti 18'de.
+- **Eğitim:**
+  - `train_lora.py`: `--hub-checkpoints`, `--resume-from-hub`,
+    `--time-budget-hours`. Kesilen oturum özel model deposundaki
+    `last-checkpoint`'ten sürer.
+  - `training/kaggle/hanogt_train_kaggle.ipynb`: Kaggle'ın ücretsiz
+    GPU'sunda (2× T4) eğitim.
+- **Yasal 4.9:** son girişler, Hanogt AI'a giden yeni bağlam (konsol hataları,
+  dosya adları, kod tercihleri), tarayıcıda tutulan dosya hâli ve saklama
+  süresi, görünüm ayarları.
+- **Düzeltmeler:**
+  - Tema ve görünüm betiği `<head>`'e tek betik olarak yazılırken istemci
+    modülündeki değer metne çevriliyordu; sayfalar hata veriyor, koyu tema
+    açılmıyordu. Betikler artık düz modüllerde (`theme-script.ts`,
+    `appearance-script.ts`).
+  - `/plans#usage` bağlantıları (kullanım sayacı, AI ve hesap ayarları)
+    katlanmış kullanım panelini açar ve oraya kaydırır.
+  - Hanogt AI'ın planlar bilgisinde geliştirici API'si için eski günlük
+    istek sayıları kalmıştı; artık her isteğin sohbetle aynı haktan düştüğü
+    yazıyor. Bilgi tabanında doldurulmamış yer tutucu kalmadığını bir test
+    denetler.
+  - Kompakt paneldeki kullanım sayacı yalnızca sayıları gösterir; sohbet
+    başlığına yer kalır.
+- **Testler:**
+  - Yeni: `ai-diff`, `login-history`.
+  - Genişletilen: `ai-settings`, `hanogt-ai`, `account-profile`,
+    `account-security-summary`, `editor-settings`.
+
 ## 0.3.20 — 2026-10-05
 
 ### Marka ve sayfalar: logolar, ana sayfa, fiyatlandırma, Security

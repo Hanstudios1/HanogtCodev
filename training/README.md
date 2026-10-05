@@ -124,6 +124,19 @@ HF_TOKEN=... python3 training/hf_job.py launch --dataset-repo HanStudios/hanogt-
 
 **Google Colab:** `training/colab/hanogt_train.ipynb`. GPU çalışma zamanını seç, Gizli anahtarlar'a `HF_TOKEN` ekle ve hücreleri sırayla çalıştır.
 
+**Kaggle (ücretsiz):** `training/kaggle/hanogt_train_kaggle.ipynb`.
+- **Ne verir:** haftada yaklaşık 30 saat GPU (2× T4 ya da P100). Bir oturum en fazla 12 saat sürer.
+- **Hazırlık:**
+  1. Telefon doğrulaması yap.
+  2. *Session options* panelinde *GPU T4 x2* ve *Internet: On* seç.
+  3. *Add-ons → Secrets* altına `HF_TOKEN` ekle.
+- **Çalıştırma:** *Save Version → Save & Run All*.
+- **Kesintiye dayanıklıdır:**
+  - Her ara kayıt `MODEL_REPO`'nun `last-checkpoint` klasörüne yüklenir (`--hub-checkpoints`).
+  - 11 saatte kendisi durur (`--time-budget-hours`).
+  - Bir sonraki çalıştırma kaldığı yerden sürer (`--resume-from-hub`).
+- **Süre:** T4 A100'den yavaştır. Qwen3-8B saniyede ~500–1.000 token işler; 2× T4 bunun yaklaşık iki katıdır. Mevcut ~13 milyon token bir oturumda biter, tam set birkaç hafta sürer.
+
 **Kendi GPU'n ya da RunPod / Lambda / vast.ai:**
 
 ```bash

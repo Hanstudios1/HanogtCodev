@@ -20,6 +20,13 @@ Base models (the model is a parameter; "Qwen 2.7" doesn't exist):
   python training/train_lora.py --dry-run          # data and token counts only, no GPU
   python training/train_lora.py --preset small --push-to-hub HanStudios/hanogt-ai-qwen3-8b-lora
 
+Runs in time-limited sessions (Kaggle's 12 hours, training/kaggle/): upload
+each checkpoint with --hub-checkpoints, stop in time with --time-budget-hours
+and continue in the next session with --resume-from-hub.
+
+  python training/train_lora.py --preset small --hub-checkpoints HanStudios/hanogt-ai-qwen3-8b-lora \
+      --resume-from-hub --time-budget-hours 11 --push-to-hub HanStudios/hanogt-ai-qwen3-8b-lora
+
 The adapter goes to --output (training/output/<name>/adapter) and, with
 --push-to-hub, to a private Hugging Face model repository (HF_TOKEN). Merge it
 with training/merge_and_export.py or serve it directly with vLLM (--enable-lora).
@@ -80,6 +87,9 @@ def parse_args(argv=None):
     parser.add_argument("--dry-run", action="store_true", help="tokenize the data and print the counts; no model is loaded")
     parser.add_argument("--push-to-hub", metavar="REPO", help="also upload the adapter to this Hugging Face model repository (private; needs HF_TOKEN)")
     parser.add_argument("--hub-public", action="store_true", help="create the --push-to-hub repository as public instead of private")
+    parser.add_argument("--hub-checkpoints", metavar="REPO", help="upload every checkpoint to this private model repository (folder last-checkpoint), so a run cut short can continue elsewhere")
+    parser.add_argument("--resume-from-hub", action="store_true", help="download last-checkpoint from --hub-checkpoints first and continue from it when there is one")
+    parser.add_argument("--time-budget-hours", type=float, default=0.0, help="save a checkpoint and stop after this many hours (0: no limit); continue later with --resume-from-hub")
     args = parser.parse_args(argv)
     preset = PRESETS[args.preset]
     args.base_model = args.base_model or preset["base_model"]
@@ -176,7 +186,7 @@ def main(argv=None):
     import torch
     import transformers
     from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-    from transformers import AutoConfig, AutoModelForCausalLM, Trainer, TrainingArguments
+    from transformers import AutoConfig, AutoModelForCausalLM, Trainer, TrainerCallback, TrainingArguments
 
     torch.manual_seed(args.seed)
     cuda = torch.cuda.is_available()
@@ -274,6 +284,12 @@ def main(argv=None):
         "seed": args.seed,
         "use_cpu": not cuda,
     }
+    if int(os.environ.get("WORLD_SIZE", "1")) > 1:
+        # Several GPUs (torchrun): LoRA with gradient checkpointing leaves the frozen weights without gradients.
+        options["ddp_find_unused_parameters"] = False
+    if args.hub_checkpoints:
+        # Every save also goes to the hub (last-checkpoint), so the next session can continue.
+        options.update({"push_to_hub": True, "hub_model_id": args.hub_checkpoints, "hub_strategy": "checkpoint", "hub_private_repo": True, "hub_token": os.environ.get("HF_TOKEN")})
     # Batches of similar length waste less padding.
     if "train_sampling_strategy" in fields:
         options["train_sampling_strategy"] = "group_by_length"
@@ -283,9 +299,32 @@ def main(argv=None):
     if skipped:
         print(f"note: this transformers version has no {', '.join(skipped)}; left out")
     training = TrainingArguments(**{key: value for key, value in options.items() if key in fields})
-    trainer = Trainer(model=model, args=training, train_dataset=Items(train_items), eval_dataset=Items(eval_items) if eval_items else None, data_collator=collate)
+
+    class TimeBudget(TrainerCallback):
+        """Saves and stops once the session's time is nearly up (the next session resumes)."""
+
+        def __init__(self, hours):
+            self.deadline = time.time() + hours * 3600 if hours > 0 else None
+            self.stopped = False
+
+        def on_step_end(self, _args, _state, control, **_kwargs):
+            if self.deadline is not None and time.time() >= self.deadline:
+                self.stopped = True
+                control.should_save = True
+                control.should_training_stop = True
+            return control
+
+    budget = TimeBudget(args.time_budget_hours)
+    trainer = Trainer(model=model, args=training, train_dataset=Items(train_items), eval_dataset=Items(eval_items) if eval_items else None, data_collator=collate, callbacks=[budget])
+    resume = True if args.resume else None
+    if args.resume_from_hub and args.hub_checkpoints:
+        resume = hub_checkpoint(args.hub_checkpoints, output) or resume
     started = time.time()
-    result = trainer.train(resume_from_checkpoint=True if args.resume else None)
+    result = trainer.train(resume_from_checkpoint=resume)
+    if budget.stopped:
+        print(f"time budget of {args.time_budget_hours} hours reached at step {trainer.state.global_step}: the checkpoint is saved"
+              + (f" and uploaded to {args.hub_checkpoints}; run again with --resume-from-hub to continue." if args.hub_checkpoints else "; run again with --resume to continue."))
+        return 0
     metrics = dict(result.metrics)
     if eval_items:
         metrics.update(trainer.evaluate())
@@ -310,6 +349,27 @@ def main(argv=None):
     if args.push_to_hub:
         push_adapter(adapter, args.push_to_hub, private=not args.hub_public)
     return 0
+
+
+def hub_checkpoint(repo, output):
+    """Downloads last-checkpoint of `repo`; its folder, or None when there is none yet.
+
+    With several GPUs every process downloads its own copy (no process waits for another).
+    """
+    rank = int(os.environ.get("LOCAL_RANK", "-1"))
+    local = Path(output) / ("hub" if rank <= 0 else f"hub-rank{rank}")
+    try:
+        from huggingface_hub import snapshot_download
+
+        snapshot_download(repo_id=repo, repo_type="model", allow_patterns=["last-checkpoint/*"], local_dir=str(local), token=os.environ.get("HF_TOKEN"))
+    except Exception as error:  # no repository or no checkpoint yet: start from the beginning
+        print(f"no checkpoint to continue from in {repo} ({type(error).__name__})")
+        return None
+    folder = local / "last-checkpoint"
+    if (folder / "trainer_state.json").exists():
+        print(f"continuing from {folder}")
+        return str(folder)
+    return None
 
 
 def push_adapter(adapter, repo, private=True):

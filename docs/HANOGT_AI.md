@@ -30,14 +30,19 @@ mid-chat, the answer is a notice with a *Sign in* link, not a Core answer.
 
 ## The chat
 
-The full page **`/ai`** works like Claude.ai:
+The full page **`/ai`** mixes Claude.ai and Codex on a paper-and-ink theme
+(`--ai-paper`, `--ai-ink`, … in `globals.css`; answers in Source Serif 4):
 
-- **Sidebar** – New chat, search (titles and message text), the history grouped
-  by date (Today, Yesterday, Previous 7 days, Older) with rename and delete.
-  It can be hidden on desktop and becomes a drawer on phones.
+- **Sidebar** – New chat, search (titles and message text) and two tabs:
+  **Chats**, the history grouped by date (Today, Yesterday, Previous 7 days,
+  Older) with rename and delete, and **Tasks**, the conversations about a file
+  in the editor with where they stand (Ready +a −b, Applied, Dismissed,
+  Answered, Working; `src/components/HanogtAI/proposals.ts`). It can be hidden
+  on desktop and becomes a drawer on phones.
 - **Conversation** – a calm centered column: questions in a soft bubble,
-  answers as plain text with a quiet action row (copy, 👍/👎 stored locally,
-  regenerate the last answer) and the thinking panel above them
+  answers as plain text without a bubble or an avatar, with a quiet action
+  row (copy, 👍/👎 stored locally, regenerate the last answer; the logo marks
+  the newest answer) and the work steps and thinking above them
   ([Thinking](#thinking)). The last question can be edited and re-sent. An
   answer that was cut (its length, the time limit or a dropped connection)
   says so and offers *Continue* ([Answer stream](#answer-stream-wire-protocol-v2)).
@@ -49,8 +54,25 @@ The full page **`/ai`** works like Claude.ai:
   editor publishes it (name, language, code) 300 ms after typing stops
   (`publishAiContext`, `src/lib/ai/context-store.ts`) and clears it when you
   leave the editor; the server reads up to the plan's length.
-- **Welcome screen** – a time-of-day greeting with the user's first name, the
-  composer in the middle and suggestion chips for the current mode.
+- **Welcome screen** – a serif time-of-day greeting with the user's first name
+  in the accent gradient, the composer in the middle and suggestion chips for
+  the current mode, arriving one after another.
+- **Changes card** – when a question carried the open editor file, the answer's
+  change to it (a whole-file block or a `diff` block, `src/lib/ai/file-edit.ts`)
+  is shown as a line diff (`src/lib/ai/diff.ts`, Myers) with *Apply to editor*.
+  The chat asks the editor on the same page through a synchronous window event
+  (`src/lib/ai/editor-apply.ts`); the editor applies it as one edit (Ctrl+Z
+  undoes it) or answers "changed" when the file differs from what Hanogt AI read
+  (the card then asks before applying anyway). The file as it was asked about is
+  kept on the three newest such answers (`AiEdit`, ≤ 40,000 characters each).
+  Without an editor on the page the change opens in a new editor tab. With the
+  *codeOutput* setting on "diff" the model answers with a unified diff, which
+  is applied by its context lines.
+- **Context from the editor** – besides the open file, the editor publishes the
+  error output of the file's last failed run and the names of the project's
+  other tabs; they reach the model as `<console_output>` data (≤ 3,000
+  characters) and a file list (≤ 50 names) when the settings allow it
+  (*attachConsoleErrors* on by default, *attachProjectTree* off).
 - **Code** – fenced code blocks show the language, Copy and *Editörde aç*.
   Long code (24+ lines) and whole web pages become **artifact cards** that open
   a side panel with line numbers, Copy, *Editörde aç* and, for HTML, a live
@@ -58,7 +80,8 @@ The full page **`/ai`** works like Claude.ai:
   origin, strict CSP, no network, no access to the site's storage).
 
 The floating panel (**`HanogtAIDock`**, opened from anywhere with
-`openHanogtAI()`) is the compact version of the same chat. It shares the
+`openHanogtAI()`) is the compact version of the same chat; its title opens a
+list of recent chats to switch to (`RecentChats.tsx`). It shares the
 conversations (they live in `localStorage`, never on the server) and its
 *Tam ekranda aç* button opens the same conversation on `/ai`. The panel's code
 is a separate chunk that loads on first open or when the browser is idle.
@@ -487,7 +510,14 @@ person's own instructions ("about me" and "how to answer", each cut to the
 plan's length), tone, answer length, a fixed answer language, thinking
 (`thinking` and `showThinking`, see [Thinking](#thinking)) and the defaults a
 device starts with: answer mode, model (Hanogt AI or a connection), agent
-mode, attaching the open file. The chat reads them from
+mode, attaching the open file. Since 0.3.21 they also hold the person's
+experience level, the language of code comments, code style, up to five
+preferred languages and whether file changes come whole or as a diff (all
+added to the prompt), the send shortcut (Enter or Ctrl/Cmd+Enter), the answer
+font (serif or sans), opening long code in the side panel automatically,
+attaching the last run's errors and the project's file names, the dictation
+language, the answer voice and its speed, and how many days chats stay in this
+browser (0, 7, 30 or 90; older ones are pruned). The chat reads them from
 the user document the session check already loaded (no extra read); the
 instructions go into the prompt after the rules as tagged data. The
 developer API never uses them. A choice made on a device (agent mode, model)

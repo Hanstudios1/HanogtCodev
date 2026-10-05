@@ -1,7 +1,7 @@
 "use client";
 
 import { Code2, FolderCode, Gamepad2, KeyRound, Sparkles, UsersRound } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { currentWindow, formatResetTime, usageLevel, type CountedLimit, type PlanUsage, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
 
@@ -48,15 +48,11 @@ function WindowBar({ window, label }: { window: UsageWindow; label: string }) {
 /**
  * Every benefit of the plan with a number, as "used / limit": Hanogt AI
  * messages in the plan's window (when they renew), own-connection messages, code and game
- * projects, groups and AI connections. On the Plans page's account box
+ * projects, groups and AI connections. In the Plans page's usage panel
  * (#usage, linked from the Hanogt AI usage meter).
  */
 export default function UsageList({ usage }: { usage: PlanUsage }) {
     const { tx, locale } = useI18n();
-    // Linked as /plans#usage: the list appears after the page loads, so it is scrolled to once it's there.
-    useEffect(() => {
-        if (window.location.hash === "#usage") document.getElementById("usage")?.scrollIntoView({ block: "center" });
-    }, []);
     const number = (value: number) => value.toLocaleString(locale);
     const counted = (item: CountedLimit) => {
         if (item.limit === 0) return tx(C.notInPlan);
@@ -69,7 +65,7 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
     const icon = "h-3.5 w-3.5 shrink-0";
 
     return (
-        <div id="usage" className="w-full max-w-sm scroll-mt-24 text-start">
+        <div className="w-full max-w-sm text-start" data-usage-list>
             <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">{tx(C.title)}</p>
             <ul className="mt-1 divide-y divide-zinc-200/70 dark:divide-white/[0.06]">
                 <Row icon={<Sparkles className={`${icon} text-violet-500`} aria-hidden />} label={tx(C.aiWindow, { days })} value={`${number(day.used)} / ${number(day.limit)}`}>

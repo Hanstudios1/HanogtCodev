@@ -131,7 +131,8 @@
     "tr": "En yeni",
     "files": [
       "src/app/about/page.tsx",
-      "src/components/ChangelogModal.tsx"
+      "src/components/ChangelogModal.tsx",
+      "src/components/Security/RecentSignIns.tsx"
     ]
   },
   "mpcz8qurng": {
@@ -535,6 +536,7 @@
       "src/app/account-settings/page.tsx",
       "src/app/feedback/page.tsx",
       "src/app/settings/page.tsx",
+      "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
       "src/components/CloudStatusBanner.tsx",
       "src/components/Editor/CollabFriendPicker.tsx",
@@ -548,6 +550,7 @@
       "src/components/News/MarketsStrip.tsx",
       "src/components/NotificationCenter.tsx",
       "src/components/Security/AccountSecurityCard.tsx",
+      "src/components/Security/RecentSignIns.tsx",
       "src/components/Social/FriendsView.tsx",
       "src/components/Social/group/GroupView.tsx"
     ]
@@ -792,7 +795,8 @@
     "en": "Light",
     "tr": "Açık",
     "files": [
-      "src/app/account-settings/page.tsx"
+      "src/app/account-settings/page.tsx",
+      "src/app/settings/page.tsx"
     ]
   },
   "5visy0kfrp": {
@@ -1089,16 +1093,30 @@
       "src/components/Security/CodeAdvisor.tsx"
     ]
   },
-  "z67b6ge2rh": {
-    "en": "Accessibility and density",
-    "tr": "Erişilebilirlik ve yoğunluk",
+  "wn0cao3c9f": {
+    "en": "Accessibility",
+    "tr": "Erişilebilirlik",
     "files": [
       "src/app/account-settings/page.tsx"
     ]
   },
-  "2asxyag5h3o": {
-    "en": "Region",
-    "tr": "Bölge",
+  "tun1fp2u70": {
+    "en": "Kept with your account; it applies on every device you sign in on.",
+    "tr": "Hesabına bağlıdır; giriş yaptığın her cihazda geçerli olur.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "1pani13ocyx": {
+    "en": "Transitions, moving text and flowing colours stop. Your device's “reduce motion” setting is always respected too.",
+    "tr": "Geçişler, kayan yazılar ve renk akışları durur. Cihazının “hareketi azalt” ayarı da her zaman dikkate alınır.",
+    "files": [
+      "src/app/account-settings/page.tsx"
+    ]
+  },
+  "xd4umuf5zi": {
+    "en": "Secondary text and lines get stronger.",
+    "tr": "İkincil yazılar ve çizgiler daha belirgin olur.",
     "files": [
       "src/app/account-settings/page.tsx"
     ]
@@ -1528,13 +1546,6 @@
       "src/app/account-settings/page.tsx"
     ]
   },
-  "1wwvaz2fvcz": {
-    "en": "Time zone",
-    "tr": "Saat dilimi",
-    "files": [
-      "src/app/account-settings/page.tsx"
-    ]
-  },
   "2dbwyrhl3w7": {
     "en": "My Account",
     "tr": "Hesabım",
@@ -1637,9 +1648,9 @@
       "src/app/settings/page.tsx"
     ]
   },
-  "2bslfwxvpg8": {
-    "en": "Theme, language, text size, accessibility",
-    "tr": "Tema, dil, yazı boyutu, erişilebilirlik",
+  "17t4771boqx": {
+    "en": "Theme, language, accessibility",
+    "tr": "Tema, dil, erişilebilirlik",
     "files": [
       "src/app/account-settings/page.tsx"
     ]
@@ -1742,6 +1753,13 @@
   "1rox5idbngm": {
     "en": "Welcome back",
     "tr": "Tekrar hoş geldin",
+    "files": [
+      "src/app/dashboard/page.tsx"
+    ]
+  },
+  "105cueagvb5": {
+    "en": "Welcome back, {name}",
+    "tr": "Tekrar hoş geldin, {name}",
     "files": [
       "src/app/dashboard/page.tsx"
     ]
@@ -2024,6 +2042,7 @@
       "src/components/Groups/workspace/FilesPanel.tsx",
       "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/HanogtAI/ApiKeysPanel.tsx",
+      "src/components/HanogtAI/ChangesCard.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/HanogtAI/ConnectionsManager.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
@@ -2325,9 +2344,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1rcsggvpkyq": {
-    "en": "Password hash, encrypted two-step verification records, session data (sign-in time, sign-in provider, session version), rate-limit keys derived from IP addresses or accounts, security events, audit records, hosting logs",
-    "tr": "Parola karması, şifreli iki adımlı doğrulama kayıtları, oturum bilgileri (giriş zamanı, giriş sağlayıcısı, oturum sürümü), IP adresinden veya hesaptan türetilen hız sınırı anahtarları, güvenlik olayları, denetim kayıtları, barındırma günlükleri",
+  "bxkty2s31b": {
+    "en": "Password hash, encrypted two-step verification records, session data (sign-in time, sign-in provider, session version), a record of the last 10 sign-ins (time, method, browser and operating system family, country; without the IP address), rate-limit keys derived from IP addresses or accounts, security events, audit records, hosting logs",
+    "tr": "Parola karması, şifreli iki adımlı doğrulama kayıtları, oturum bilgileri (giriş zamanı, giriş sağlayıcısı, oturum sürümü), son 10 girişin kaydı (zaman, yöntem, tarayıcı ve işletim sistemi türü, ülke; IP adresi olmadan), IP adresinden veya hesaptan türetilen hız sınırı anahtarları, güvenlik olayları, denetim kayıtları, barındırma günlükleri",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2381,9 +2400,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1a7bqhn4l5s": {
-    "en": "Messages and context sent to Hanogt AI (Hanogt AI is open to signed-in people only); personal instructions and preferences in the Hanogt AI settings (thinking preferences included); permissions given in agent mode; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters); if you created them, your Hanogt AI API key records (only the key's SHA-256 digest, its name, first and last characters and dates) and requests sent to the API",
-    "tr": "Hanogt AI'a gönderilen mesajlar ve bağlam (Hanogt AI yalnızca giriş yapmış kişilere açıktır); Hanogt AI ayarlarındaki kişisel talimatlar ve tercihler (düşünme tercihleri dahil); ajan modunda verilen izinler; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri); oluşturduysanız Hanogt AI API anahtar kayıtlarınız (anahtarın yalnızca SHA-256 özeti, adı, ilk ve son karakterleri, tarihleri) ve API'ye gönderilen istekler",
+  "1cdrv6qyiel": {
+    "en": "Messages and context sent to Hanogt AI (Hanogt AI is open to signed-in people only); personal instructions and preferences in the Hanogt AI settings (thinking, code and voice preferences included); when asking about the open editor file, depending on the settings, the error output of its last run and the names of the project's other files; permissions given in agent mode; if you added them, your own AI connections (provider, connection name, model, the encrypted API key and its last four characters); if you created them, your Hanogt AI API key records (only the key's SHA-256 digest, its name, first and last characters and dates) and requests sent to the API",
+    "tr": "Hanogt AI'a gönderilen mesajlar ve bağlam (Hanogt AI yalnızca giriş yapmış kişilere açıktır); Hanogt AI ayarlarındaki kişisel talimatlar ve tercihler (düşünme, kod ve ses tercihleri dahil); açık editör dosyası hakkında sorulduğunda, ayarlara göre son çalıştırmanın hata çıktısı ve projedeki diğer dosyaların adları; ajan modunda verilen izinler; eklediyseniz kendi yapay zekâ bağlantılarınız (sağlayıcı, bağlantı adı, model, şifreli API anahtarı ve son dört karakteri); oluşturduysanız Hanogt AI API anahtar kayıtlarınız (anahtarın yalnızca SHA-256 özeti, adı, ilk ve son karakterleri, tarihleri) ve API'ye gönderilen istekler",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -3264,6 +3283,7 @@
       "src/components/Editor/Console.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/Social/dm/DmMessages.tsx"
     ]
@@ -3287,6 +3307,7 @@
     "tr": "Konsol",
     "files": [
       "src/app/editor/page.tsx",
+      "src/app/settings/page.tsx",
       "src/components/Editor/WebPreview.tsx",
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -6741,9 +6762,9 @@
       "src/components/Landing/ProductPreviews.tsx"
     ]
   },
-  "25t3vn4hwy7": {
-    "en": "scrypt hash of your password, encrypted two-step verification secret and recovery-code digests, session cookie (with the sign-in time, sign-in provider and session version), account creation and last sign-in time, account security events",
-    "tr": "Parolanın scrypt karması, şifreli iki adımlı doğrulama anahtarı ve kurtarma kodu özetleri, oturum çerezi (giriş zamanı, giriş sağlayıcısı ve oturum sürümüyle), hesap oluşturma ve son giriş zamanı, hesap güvenliği olayları",
+  "6f27qp1c0c": {
+    "en": "scrypt hash of your password, encrypted two-step verification secret and recovery-code digests, session cookie (with the sign-in time, sign-in provider and session version), account creation and last sign-in time, a record of your last 10 sign-ins (time, sign-in method, browser and operating system family, country; no IP address is kept in it and only you can see it), account security events",
+    "tr": "Parolanın scrypt karması, şifreli iki adımlı doğrulama anahtarı ve kurtarma kodu özetleri, oturum çerezi (giriş zamanı, giriş sağlayıcısı ve oturum sürümüyle), hesap oluşturma ve son giriş zamanı, son 10 girişinizin kaydı (zaman, giriş yöntemi, tarayıcı ve işletim sistemi türü, ülke; IP adresi bu kayıtta tutulmaz ve kayıtları yalnızca siz görürsünüz), hesap güvenliği olayları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7150,9 +7171,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "24clfj7zujj": {
-    "en": "The provider receives: your question and the most recent messages of the same chat (up to about 28,000 characters in total, including actions proposed in agent mode and their results, but not the model's thinking in earlier answers); the mode you chose (General, Code or Security) and your interface language; the personal instructions and preferences in your Hanogt AI settings (tone, answer length, answer language); the path of the page you are on; notes selected from the Hanogt knowledge base; and the results of Hanogt's analysis tools for any link or code in your message. In the code editor, while the option to attach the open file is on (it is on by default and can be switched off with one tap), the open file's name, language and, depending on your plan, up to 12,000 (Free), 24,000 (Plus) or 40,000 (Pro) characters of its content are also sent.",
-    "tr": "Sağlayıcıya şunlar gönderilir: sorunuz ve aynı sohbetteki son mesajlar (toplam en fazla yaklaşık 28.000 karakter; ajan modunda önerilen işlemler ve sonuçları dahil, modelin önceki yanıtlardaki düşünme metni hariç); seçtiğiniz mod (Genel, Kod veya Güvenlik) ve arayüz diliniz; Hanogt AI ayarlarınızdaki kişisel talimatlar ve tercihler (üslup, yanıt uzunluğu, yanıt dili); bulunduğunuz sayfanın yolu; Hanogt bilgi tabanından seçilen notlar ve mesajınızdaki bağlantı veya kod için Hanogt analiz araçlarının sonuçları. Kod editöründeyken, açık dosyayı ekleme seçeneği açık kaldıkça (varsayılan olarak açıktır ve tek dokunuşla kapatılabilir) açık dosyanın adı, dili ve planınıza göre en fazla 12.000 (Ücretsiz), 24.000 (Plus) veya 40.000 (Pro) karakterlik içeriği de gönderilir.",
+  "110mcqne84a": {
+    "en": "The provider receives: your question and the most recent messages of the same chat (up to about 28,000 characters in total, including actions proposed in agent mode and their results, but not the model's thinking in earlier answers); the mode you chose (General, Code or Security) and your interface language; the personal instructions and preferences in your Hanogt AI settings (tone, answer length, answer language, experience level, the language of code comments, your code style, the programming languages you prefer and whether file changes come as the whole file or as a diff); the path of the page you are on; notes selected from the Hanogt knowledge base; and the results of Hanogt's analysis tools for any link or code in your message. In the code editor, while the option to attach the open file is on (it is on by default and can be switched off with one tap), the open file's name, language and, depending on your plan, up to 12,000 (Free), 24,000 (Plus) or 40,000 (Pro) characters of its content are also sent. When the open file is sent, your settings may add: up to 3,000 characters of the console output when the file's last run failed (on by default), and only the names, without contents, of up to 50 other files of the project (off by default).",
+    "tr": "Sağlayıcıya şunlar gönderilir: sorunuz ve aynı sohbetteki son mesajlar (toplam en fazla yaklaşık 28.000 karakter; ajan modunda önerilen işlemler ve sonuçları dahil, modelin önceki yanıtlardaki düşünme metni hariç); seçtiğiniz mod (Genel, Kod veya Güvenlik) ve arayüz diliniz; Hanogt AI ayarlarınızdaki kişisel talimatlar ve tercihler (üslup, yanıt uzunluğu, yanıt dili, uzmanlık düzeyi, kod yorumlarının dili, kod stiliniz, tercih ettiğiniz programlama dilleri ve dosya değişikliklerinin tam dosya ya da fark olarak istenmesi); bulunduğunuz sayfanın yolu; Hanogt bilgi tabanından seçilen notlar ve mesajınızdaki bağlantı veya kod için Hanogt analiz araçlarının sonuçları. Kod editöründeyken, açık dosyayı ekleme seçeneği açık kaldıkça (varsayılan olarak açıktır ve tek dokunuşla kapatılabilir) açık dosyanın adı, dili ve planınıza göre en fazla 12.000 (Ücretsiz), 24.000 (Plus) veya 40.000 (Pro) karakterlik içeriği de gönderilir. Açık dosya gönderildiğinde, ayarlarınıza göre şunlar da eklenir: dosyanın son çalıştırması hata verdiyse konsol çıktısının en fazla 3.000 karakteri (varsayılan olarak açıktır) ve projedeki diğer dosyaların yalnızca adları, içerikleri olmadan, en fazla 50 dosya (varsayılan olarak kapalıdır).",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7178,9 +7199,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "2o6sm2rar7": {
-    "en": "Hanogt AI settings: the personal instructions (about you and about the style of answers), tone, answer length, answer language, chat defaults (default mode and model, attaching the open file, agent mode) and thinking preferences (whether the model thinks before answering and whether the thinking is shown) you save on the [Hanogt AI settings](/ai/settings) page are stored in your account record, so the same settings apply on every device. Your instructions and preferences are passed to the language model provider with every message you send while signed in; they are not added to Hanogt AI API requests. You can change or delete your settings at any time; they are included in your account data export and deleted when you delete your account. The “Delete chats when I sign out” setting and the choices you make on this device (for example the selected model) are kept only in your browser.",
-    "tr": "Hanogt AI ayarları: [Hanogt AI ayarları](/ai/settings) sayfasında kaydettiğiniz kişisel talimatlar (kendiniz hakkında ve yanıtların tarzı için), üslup, yanıt uzunluğu, yanıt dili, sohbet varsayılanları (varsayılan mod ve model, açık dosyanın eklenmesi, ajan modu) ve düşünme tercihleriniz (modelin yanıt vermeden önce düşünmesi ve düşünmenin gösterilmesi) hesap kaydınızda saklanır; böylece her cihazda aynı ayarlar kullanılır. Talimatlarınız ve tercihleriniz, giriş yapmışken gönderdiğiniz her mesajla birlikte dil modeli sağlayıcısına iletilir; Hanogt AI API isteklerine eklenmez. Ayarlarınızı istediğiniz zaman değiştirebilir veya silebilirsiniz; hesap verilerinizin dışa aktarımında yer alırlar ve hesabınızı sildiğinizde silinirler. “Çıkışta sohbetleri sil” ayarı ve bu cihazdaki seçimleriniz (ör. seçili model) yalnızca tarayıcınızda tutulur.",
+  "1f3kc4rt1y8": {
+    "en": "Hanogt AI settings: the personal instructions (about you and about the style of answers), tone, answer length, answer language, chat defaults (default mode and model, attaching the open file, the last run's errors and the names of the project's files, agent mode, the send shortcut, the answer font, opening long code in the side panel automatically), code preferences, thinking preferences (whether the model thinks before answering and whether the thinking is shown), voice preferences (dictation language, answer voice and reading speed) and how long chats are kept in this browser that you save on the [Hanogt AI settings](/ai/settings) page are stored in your account record, so the same settings apply on every device. Your instructions and preferences are passed to the language model provider with every message you send while signed in; they are not added to Hanogt AI API requests. You can change or delete your settings at any time; they are included in your account data export and deleted when you delete your account. The “Delete chats when I sign out” setting and the choices you make on this device (for example the selected model) are kept only in your browser.",
+    "tr": "Hanogt AI ayarları: [Hanogt AI ayarları](/ai/settings) sayfasında kaydettiğiniz kişisel talimatlar (kendiniz hakkında ve yanıtların tarzı için), üslup, yanıt uzunluğu, yanıt dili, sohbet varsayılanları (varsayılan mod ve model, açık dosyanın, son çalıştırmanın hatalarının ve proje dosyalarının adlarının eklenmesi, ajan modu, gönderme kısayolu, yanıt yazı tipi, uzun kodun yan panelde kendiliğinden açılması), kod tercihleriniz, düşünme tercihleriniz (modelin yanıt vermeden önce düşünmesi ve düşünmenin gösterilmesi), ses tercihleriniz (dikte dili, yanıt sesi ve okuma hızı) ve sohbetlerin bu tarayıcıda ne kadar saklanacağı hesap kaydınızda saklanır; böylece her cihazda aynı ayarlar kullanılır. Talimatlarınız ve tercihleriniz, giriş yapmışken gönderdiğiniz her mesajla birlikte dil modeli sağlayıcısına iletilir; Hanogt AI API isteklerine eklenmez. Ayarlarınızı istediğiniz zaman değiştirebilir veya silebilirsiniz; hesap verilerinizin dışa aktarımında yer alırlar ve hesabınızı sildiğinizde silinirler. “Çıkışta sohbetleri sil” ayarı ve bu cihazdaki seçimleriniz (ör. seçili model) yalnızca tarayıcınızda tutulur.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7199,9 +7220,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1c2byczbydx": {
-    "en": "Your chat history, including any thumbs-up or thumbs-down you give and the model's thinking and steps, is kept only in this browser's local storage; it is not synced to other devices and can be deleted on the Hanogt AI page. The thinking is never sent back to the language model with later messages.",
-    "tr": "Sohbet geçmişiniz, yanıtlara verdiğiniz beğeni işaretleri ile modelin düşünme metni ve adımları dahil, yalnızca bu tarayıcının yerel depolamasında tutulur; başka cihazlarla eşitlenmez ve Hanogt AI sayfasından silinebilir. Düşünme metni sonraki mesajlarla dil modeline geri gönderilmez.",
+  "2e1fn575xa3": {
+    "en": "Your chat history, including any thumbs-up or thumbs-down you give and the model's thinking and steps, is kept only in this browser's local storage; it is not synced to other devices and can be deleted on the Hanogt AI page. For answers about the open file, the file as it was when you asked is also kept there for the three most recent such answers (up to 40,000 characters each), so the proposed change can be shown and applied to the editor. If you choose a retention period in your Hanogt AI settings (7, 30 or 90 days), older chats are deleted from this browser automatically. The thinking is never sent back to the language model with later messages.",
+    "tr": "Sohbet geçmişiniz, yanıtlara verdiğiniz beğeni işaretleri ile modelin düşünme metni ve adımları dahil, yalnızca bu tarayıcının yerel depolamasında tutulur; başka cihazlarla eşitlenmez ve Hanogt AI sayfasından silinebilir. Açık dosya hakkındaki yanıtlarda, önerilen değişikliği gösterip editöre uygulayabilmek için dosyanın sorulduğu andaki hâli de en son üç yanıtta (her biri en fazla 40.000 karakter) bu depolamada tutulur. Hanogt AI ayarlarınızda bir saklama süresi seçerseniz (7, 30 ya da 90 gün) daha eski sohbetler bu tarayıcıdan kendiliğinden silinir. Düşünme metni sonraki mesajlarla dil modeline geri gönderilmez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8954,6 +8975,20 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "10aqzym727x": {
+    "en": "Applying the “Reduce animations” and “High contrast” settings of your account as soon as a page opens",
+    "tr": "Hesabınızdaki “Animasyonları azalt” ve “Yüksek kontrast” ayarlarını sayfa açılırken hemen uygulamak",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "27ha4mz7npc": {
+    "en": "Until you delete it; updated when you change the setting",
+    "tr": "Siz silene kadar; ayarı değiştirdiğinizde güncellenir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "1m5p5nvpedq": {
     "en": "Editor settings and output panel width",
     "tr": "Editör ayarları ve çıktı paneli genişliği",
@@ -9871,9 +9906,30 @@
       "src/app/settings/page.tsx"
     ]
   },
-  "rmdw4o4g4k": {
-    "en": "Shows a small overview of the code on the right edge.",
-    "tr": "Sağ kenarda kodun küçük bir özetini gösterir.",
+  "1k7jq875fae": {
+    "en": "Shows a small overview of the code at the edge.",
+    "tr": "Kenarda kodun küçük bir özetini gösterir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "26eh3zogm58": {
+    "en": "Minimap side",
+    "tr": "Mini haritanın yeri",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "10qgoh7fpcr": {
+    "en": "Right",
+    "tr": "Sağda",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1kmxz3amydy": {
+    "en": "Left",
+    "tr": "Solda",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -10068,6 +10124,34 @@
       "src/app/settings/page.tsx"
     ]
   },
+  "cdgjvniwtn": {
+    "en": "Highlight invisible and look-alike characters",
+    "tr": "Görünmez ve benzer karakterleri vurgula",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "8a4eueprk0": {
+    "en": "Boxes zero-width spaces and characters that look like Latin letters (e.g. Cyrillic \"а\"); catches hidden mistakes in copied code.",
+    "tr": "Sıfır genişlikli boşlukları ve Latin harflerine benzeyen karakterleri (ör. Kiril \"а\") çerçeveler; kopyalanan koddaki gizli hataları yakalar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2egm5wwm2le": {
+    "en": "Show control characters",
+    "tr": "Kontrol karakterlerini göster",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "oni9eckadx": {
+    "en": "Draws invisible control characters in the text as symbols.",
+    "tr": "Metindeki görünmeyen kontrol karakterlerini simgeyle çizer.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
   "1yt83l8faj6": {
     "en": "Font",
     "tr": "Yazı tipi",
@@ -10127,6 +10211,55 @@
   "1xvn6lddphi": {
     "en": "{value}×",
     "tr": "{value}×",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "4h4oqnz2xl": {
+    "en": "Font weight",
+    "tr": "Yazı kalınlığı",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1yqnq4foavx": {
+    "en": "Normal",
+    "tr": "Normal",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/Plans/PricingSections.tsx",
+      "src/lib/support.ts"
+    ]
+  },
+  "25dyckone7a": {
+    "en": "Medium",
+    "tr": "Orta",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/Editor/PublishDialog.tsx",
+      "src/components/Security/CodeAdvisor.tsx",
+      "src/lib/support.ts"
+    ]
+  },
+  "1ubcyn2pae": {
+    "en": "Semibold",
+    "tr": "Yarı kalın",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2c7s6or8vm9": {
+    "en": "Bold",
+    "tr": "Kalın",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "22t2e65cymu": {
+    "en": "Letter spacing",
+    "tr": "Harf aralığı",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -10266,6 +10399,34 @@
       "src/app/settings/page.tsx"
     ]
   },
+  "1lab1z6fz7j": {
+    "en": "Multi-cursor key",
+    "tr": "Çoklu imleç tuşu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "sxwf0ax6zz": {
+    "en": "The key you hold to add a cursor with the mouse. The other one opens links and definitions.",
+    "tr": "Fareyle yeni imleç eklerken basılı tutulan tuş. Diğer tuş bağlantıyı ve tanımı açar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2cjk9g375gh": {
+    "en": "Alt",
+    "tr": "Alt",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25lbasgi4f3": {
+    "en": "Ctrl / Cmd",
+    "tr": "Ctrl / Cmd",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
   "yajpbevz39": {
     "en": "Smooth caret animation",
     "tr": "Yumuşak imleç hareketi",
@@ -10339,6 +10500,20 @@
   "3g3cb2bcnb": {
     "en": "{value} columns",
     "tr": "{value} sütun",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "y49v9fom4n": {
+    "en": "Tab size per language",
+    "tr": "Dile göre sekme boyutu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "ebtmu0p32d": {
+    "en": "Used instead of the size above for the languages you pick (e.g. Python 4, JavaScript 2).",
+    "tr": "Seçtiğin dillerde yukarıdaki boyutun yerine bu kullanılır (ör. Python 4, JavaScript 2).",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -10519,6 +10694,20 @@
       "src/app/settings/page.tsx"
     ]
   },
+  "24b3ng0njkr": {
+    "en": "Language of a new workspace",
+    "tr": "Yeni çalışma alanının dili",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1ohu5obxt6h": {
+    "en": "When the editor opens empty, the first file starts in this language.",
+    "tr": "Editör boş açıldığında ilk dosya bu dilde başlar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
   "57r7b8eo6n": {
     "en": "Linked editing",
     "tr": "Bağlantılı düzenleme",
@@ -10603,6 +10792,27 @@
       "src/app/settings/page.tsx"
     ]
   },
+  "7r5ld2eqr4": {
+    "en": "Accept a suggestion with Enter",
+    "tr": "Enter ile öneriyi kabul et",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "pln7dkinpr": {
+    "en": "\"Smart\": only when the suggestion changes the text; otherwise Enter starts a new line. Tab always accepts.",
+    "tr": "\"Akıllı\": yalnızca öneri metni değiştirdiğinde; aksi hâlde Enter yeni satır açar. Tab her zaman kabul eder.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1sdzyyp9px5": {
+    "en": "Smart",
+    "tr": "Akıllı",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
   "1f1ptxln893": {
     "en": "Hover information",
     "tr": "Üzerine gelince bilgi",
@@ -10681,6 +10891,41 @@
       "src/components/Editor/Console.tsx"
     ]
   },
+  "dzcauikzc8": {
+    "en": "Format on save",
+    "tr": "Kaydederken biçimlendir",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "27aij1xq25u": {
+    "en": "When you save, formats the file first with the language's formatter (JavaScript, TypeScript, JSON, HTML, CSS).",
+    "tr": "Kendin kaydettiğinde dosyayı önce dilin biçimlendiricisiyle düzenler (JavaScript, TypeScript, JSON, HTML, CSS).",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "89ft64pxdf": {
+    "en": "Run on save",
+    "tr": "Kaydedince çalıştır",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2330sihjmxe": {
+    "en": "Runs the project right after you save.",
+    "tr": "Kendin kaydettiğinde projeyi hemen çalıştırır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2fjxa2kxwgk": {
+    "en": "Ask before closing an unsaved tab",
+    "tr": "Kaydedilmemiş sekmeyi kapatırken sor",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
   "q4x37m6z5m": {
     "en": "Trim trailing whitespace",
     "tr": "Satır sonu boşluklarını sil",
@@ -10705,6 +10950,62 @@
   "14q90331744": {
     "en": "Makes sure the file ends with a line break when saving.",
     "tr": "Kaydederken dosyanın bir satır sonuyla bitmesini sağlar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "28vwp9b6nuj": {
+    "en": "How your programs' output looks.",
+    "tr": "Programların çıktısının görünümü.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1pprmixj4hg": {
+    "en": "Console font size",
+    "tr": "Konsol yazı boyutu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "rk0asvr5w5": {
+    "en": "Wrap long lines",
+    "tr": "Uzun satırları kaydır",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "84iwr2v7jo": {
+    "en": "When off, long output lines scroll sideways.",
+    "tr": "Kapalıyken uzun çıktı satırları yatay kaydırılır.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "edha5rl45w": {
+    "en": "{language} tab size",
+    "tr": "{language} sekme boyutu",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1zjjqithuiz": {
+    "en": "Remove the separate tab size for {language}",
+    "tr": "{language} için ayrı sekme boyutunu kaldır",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "fdvod7z078": {
+    "en": "Choose a language…",
+    "tr": "Dil seç…",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1r54hpt6rac": {
+    "en": "Add",
+    "tr": "Ekle",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -12823,9 +13124,9 @@
       "src/components/Account/TwoFactorSettings.tsx"
     ]
   },
-  "1bj0yavyz6u": {
-    "en": "Two-step verification protects e-mail and password sign-in. Create a password above first.",
-    "tr": "İki adımlı doğrulama, e-posta ve şifreyle girişi korur. Önce yukarıdan bir şifre oluşturun.",
+  "1p5r6fyzxs4": {
+    "en": "Two-step verification protects e-mail and password sign-in. Create a password in the Password section of this page first.",
+    "tr": "İki adımlı doğrulama, e-posta ve şifreyle girişi korur. Önce bu sayfadaki Şifre bölümünden bir şifre oluşturun.",
     "files": [
       "src/components/Account/TwoFactorSettings.tsx"
     ]
@@ -12891,9 +13192,9 @@
       "src/components/Account/TwoFactorSettings.tsx"
     ]
   },
-  "nq03fvtuv2": {
-    "en": "Couldn't load the two-step verification status. Reload the page.",
-    "tr": "İki adımlı doğrulama durumu yüklenemedi. Sayfayı yenileyin.",
+  "hftkt6tlir": {
+    "en": "Couldn't load the two-step verification status.",
+    "tr": "İki adımlı doğrulama durumu yüklenemedi.",
     "files": [
       "src/components/Account/TwoFactorSettings.tsx"
     ]
@@ -16123,16 +16424,6 @@
       "src/lib/support.ts"
     ]
   },
-  "25dyckone7a": {
-    "en": "Medium",
-    "tr": "Orta",
-    "files": [
-      "src/components/Admin/copy.ts",
-      "src/components/Editor/PublishDialog.tsx",
-      "src/components/Security/CodeAdvisor.tsx",
-      "src/lib/support.ts"
-    ]
-  },
   "w9hquv6zhr": {
     "en": "Low",
     "tr": "Düşük",
@@ -16964,6 +17255,7 @@
     "tr": "Yanıtlandı",
     "files": [
       "src/components/Admin/FeedbackSection.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx",
       "src/lib/support.ts"
     ]
   },
@@ -18474,7 +18766,8 @@
     "tr": "Yoksay",
     "files": [
       "src/components/Admin/PaddleCard.tsx",
-      "src/components/Admin/ReportsPanel.tsx"
+      "src/components/Admin/ReportsPanel.tsx",
+      "src/components/HanogtAI/ChangesCard.tsx"
     ]
   },
   "208mnkj69et": {
@@ -19503,6 +19796,7 @@
       "src/components/Admin/PlansSection.tsx",
       "src/components/Admin/copy.ts",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
       "src/components/HanogtAI/ApiDocs.tsx",
       "src/components/HanogtAI/ArtifactPanel.tsx",
       "src/components/HanogtAI/chat-copy.ts"
@@ -20134,7 +20428,9 @@
     "en": "Dismissed",
     "tr": "Reddedildi",
     "files": [
-      "src/components/Admin/ReportsPanel.tsx"
+      "src/components/Admin/ReportsPanel.tsx",
+      "src/components/HanogtAI/ChangesCard.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx"
     ]
   },
   "246wv9efx9h": {
@@ -21935,6 +22231,69 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
+  "n6ym3byrt7": {
+    "en": "A new Hanogt AI and a colourful site",
+    "tr": "Yeni Hanogt AI ve renkli bir site",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "4hrbauni8h": {
+    "en": "Hanogt AI got a calm, paper-like interface, tasks and an \"Apply to editor\" button; the purple-blue-yellow text and lively animations are back.",
+    "tr": "Hanogt AI kâğıt gibi sade bir arayüze, görevlere ve \"Editöre uygula\" düğmesine kavuştu; mor-mavi-sarı yazılar ve canlı animasyonlar geri geldi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1nouocvs6qn": {
+    "en": "Hanogt AI: a serif greeting, answers without bubbles, Chats and Tasks tabs, Work steps and a Changes card showing your code's changes line by line; apply them to the editor with one button and undo with Ctrl+Z.",
+    "tr": "Hanogt AI: serif selamlama, baloncuksuz yanıtlar, Sohbetler ve Görevler sekmeleri, Çalışma adımları ve kodundaki değişikliği satır satır gösteren Değişiklikler kartı; tek tuşla editöre uygula, Ctrl+Z ile geri al.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1mz33dqrfc7": {
+    "en": "Hanogt AI settings: your experience level, the language of code comments, your code style, your favourite languages, the whole file or just the diff, the send shortcut, the answer voice and speed, and how long chats are kept.",
+    "tr": "Hanogt AI ayarları: uzmanlık düzeyin, kod yorumlarının dili, kod stilin, sevdiğin diller, tam dosya ya da yalnızca fark, gönderme kısayolu, yanıt sesi ve hızı, sohbetlerin ne kadar saklanacağı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "4vmp8c3l1w": {
+    "en": "Purple-blue-yellow text across the site and a livelier home page: a sliding headline, products that appear as you scroll and previews that lean toward your pointer.",
+    "tr": "Sitede mor-mavi-sarı geçişli yazılar ve daha canlı bir ana sayfa: kayan başlık, kaydırınca beliren ürünler, imlece eğilen önizlemeler.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1lnx3wspt3l": {
+    "en": "Account Settings: a security summary, your last 10 sign-ins (device and country), two-step verification that refreshes when you add a password; \"Reduce animations\" and \"High contrast\" now work on every page.",
+    "tr": "Hesap Ayarları: güvenlik özeti, son 10 girişin (cihaz ve ülke), şifre eklenince kendini yenileyen iki adımlı doğrulama; \"Animasyonları azalt\" ve \"Yüksek kontrast\" artık her sayfada çalışıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "22lagb28y4h": {
+    "en": "Editor settings: format on save, run on save, tab size per language, the language of a new workspace, the console font size, warnings for invisible characters and more.",
+    "tr": "Editör ayarları: kaydederken biçimlendir, kaydedince çalıştır, dile göre sekme boyutu, yeni çalışma alanının dili, konsol yazı boyutu, görünmez karakter uyarısı ve daha fazlası.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "zqcjgey7zz": {
+    "en": "Fixes: the dark theme opens correctly on every page again, and \"All your plan benefits\" on the usage meter opens the usage panel on Pricing.",
+    "tr": "Düzeltmeler: koyu tema her sayfada yeniden doğru açılıyor; kullanım sayacındaki \"Tüm plan hakların\" bağlantısı Fiyatlandırma'daki kullanım panelini açıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1l77b0cgpey": {
+    "en": "Privacy Policy and KVKK Information Notice 4.9.",
+    "tr": "Gizlilik Politikası ve KVKK Aydınlatma Metni 4.9.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
   "2dkj50u19cw": {
     "en": "New logos, new pages",
     "tr": "Yeni logolar, yeni sayfalar",
@@ -23541,6 +23900,7 @@
       "src/components/HanogtAI/ApiDocs.tsx",
       "src/components/HanogtAI/ApiKeysPanel.tsx",
       "src/components/HanogtAI/ArtifactPanel.tsx",
+      "src/components/HanogtAI/ChangesCard.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/HanogtAI/Markdown.tsx",
       "src/components/Security/PasswordLab.tsx"
@@ -33188,7 +33548,8 @@
     "en": "Thinking",
     "tr": "Düşünme",
     "files": [
-      "src/components/HanogtAI/AiSettingsPage.tsx"
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/ThinkingPanel.tsx"
     ]
   },
   "21gwemlzf6c": {
@@ -33384,6 +33745,322 @@
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
   },
+  "mcv53j21dy": {
+    "en": "Your experience",
+    "tr": "Uzmanlık düzeyin",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "120jo219t5r": {
+    "en": "How Hanogt AI writes code and works with the file in your editor.",
+    "tr": "Hanogt AI'ın yazdığı kod ve editördeki dosyanla nasıl çalışacağı.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "20xxqeifi02": {
+    "en": "Language of code comments",
+    "tr": "Kod yorumlarının dili",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2p7wgjynqy": {
+    "en": "Same as the answer",
+    "tr": "Yanıtla aynı dil",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "21m6oxazzxo": {
+    "en": "Programming languages you prefer",
+    "tr": "Tercih ettiğin programlama dilleri",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "n1k8tduqff": {
+    "en": "Used when a question names no language (up to {max}).",
+    "tr": "Soruda dil belirtmediğinde bunlar kullanılır (en fazla {max}).",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "26kus5qgeoz": {
+    "en": "Add a language…",
+    "tr": "Dil ekle…",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "ygq5si8ner": {
+    "en": "Remove {name}",
+    "tr": "{name} dilini kaldır",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "17evrgknj7j": {
+    "en": "Your code style",
+    "tr": "Kod stilin",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1lrou575tz5": {
+    "en": "E.g. 4 spaces, single quotes, descriptive names",
+    "tr": "Örn. 4 boşluk, tek tırnak, açıklayıcı değişken adları",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1txf3e5zak1": {
+    "en": "Changes to the file in your editor",
+    "tr": "Editördeki dosyada değişiklik",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1h58s9qhfz4": {
+    "en": "Attach errors from the last run",
+    "tr": "Son çalıştırmanın hatalarını ekle",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "942td7vf9y": {
+    "en": "When your code failed, Hanogt AI also reads the console output (up to 3,000 characters).",
+    "tr": "Kodun hata verdiyse Hanogt AI konsol çıktısını da okur (en fazla 3.000 karakter).",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "11ub3tbngci": {
+    "en": "Attach the names of the project's other files",
+    "tr": "Projedeki diğer dosyaların adlarını ekle",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "25la135w2sz": {
+    "en": "Only file names are sent, not their contents.",
+    "tr": "Yalnızca dosya adları gider, içerikleri gitmez.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2bk4kybex7f": {
+    "en": "Send shortcut",
+    "tr": "Gönderme kısayolu",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2b1bqgce5u5": {
+    "en": "Open long code and web pages in the side panel automatically",
+    "tr": "Uzun kodu ve web sayfalarını yan panelde kendiliğinden aç",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "kgen2h18dw": {
+    "en": "On wide screens, when the answer finishes.",
+    "tr": "Geniş ekranlarda, yanıt bitince.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "djaoa91mmm": {
+    "en": "Answer font",
+    "tr": "Yanıt yazı tipi",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "r5hh4ahz0p": {
+    "en": "Voice",
+    "tr": "Ses",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1bci6yycp3i": {
+    "en": "Dictation and listening to answers; recognition and reading use your browser's own voices.",
+    "tr": "Sesle yazma ve yanıtları sesli dinleme; tanıma ve okuma tarayıcının kendi sesleriyle yapılır.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "28ku2kjdgdr": {
+    "en": "Voice features are in early access; your settings apply once they open to you.",
+    "tr": "Sesli özellikler şu an erken erişimde; ayarların sana açıldığında geçerli olur.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "nnaby20na": {
+    "en": "Dictation language",
+    "tr": "Dikte dili",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "mydkmj3hy": {
+    "en": "The site's language",
+    "tr": "Sitenin dili",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "14x0k4tssp6": {
+    "en": "Answer voice",
+    "tr": "Yanıt sesi",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1x7vwpfn002": {
+    "en": "Automatic (by the answer's language)",
+    "tr": "Otomatik (yanıtın diline göre)",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1cbz4t19wyz": {
+    "en": "No reading voices were found in this browser.",
+    "tr": "Bu tarayıcıda okuma sesi bulunamadı.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2e0oiuxkd3b": {
+    "en": "Reading speed: {rate}×",
+    "tr": "Okuma hızı: {rate}×",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "25moigaye9e": {
+    "en": "Listen",
+    "tr": "Dinle",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "26vlf3jrbc2": {
+    "en": "Hello! I'm Hanogt AI. I'll read my answers in this voice and at this speed.",
+    "tr": "Merhaba! Ben Hanogt AI. Yanıtlarımı bu sesle ve bu hızda okuyacağım.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1fq4u0j44v3": {
+    "en": "Keep chats in this browser",
+    "tr": "Sohbetleri bu tarayıcıda sakla",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2auba6ge4t8": {
+    "en": "Older chats are deleted from this browser automatically.",
+    "tr": "Daha eski sohbetler bu tarayıcıdan kendiliğinden silinir.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1wwp757gfv7": {
+    "en": "Forever",
+    "tr": "Süresiz",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "bel04o6r4": {
+    "en": "{days} days",
+    "tr": "{days} gün",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
+  "kmnrvrfbdr": {
+    "en": "I'm a beginner",
+    "tr": "Yeni başlıyorum",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "26zjh6fzkdi": {
+    "en": "Intermediate",
+    "tr": "Orta düzey",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "fj9i7lq3zt": {
+    "en": "Experienced",
+    "tr": "Deneyimliyim",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2egfrk3pvgv": {
+    "en": "Whole file",
+    "tr": "Tam dosya",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "2amg65sl0dd": {
+    "en": "The file as it should be; easiest for short files.",
+    "tr": "Dosyanın son hâli gelir; kısa dosyalarda en kolayı.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1j6ny8avjxo": {
+    "en": "Just the diff",
+    "tr": "Yalnızca fark",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "21h2pvn2xq4": {
+    "en": "Only the changed lines; faster for long files.",
+    "tr": "Yalnızca değişen satırlar gelir; uzun dosyalarda daha hızlı.",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "ufqyaphrvz": {
+    "en": "Enter sends (Shift+Enter for a new line)",
+    "tr": "Enter ile gönder (Shift+Enter yeni satır)",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1uywf615pr4": {
+    "en": "Ctrl+Enter sends (Cmd+Enter on a Mac)",
+    "tr": "Ctrl+Enter ile gönder (Mac'te Cmd+Enter)",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1olim6pphj2": {
+    "en": "Serif (like paper)",
+    "tr": "Serif (kâğıt gibi)",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
+  "1eto53cddmq": {
+    "en": "Sans-serif",
+    "tr": "Sans-serif",
+    "files": [
+      "src/components/HanogtAI/AiSettingsPage.tsx"
+    ]
+  },
   "jy5ya4dnaf": {
     "en": "Balanced",
     "tr": "Dengeli",
@@ -33417,15 +34094,6 @@
     "tr": "Kısa",
     "files": [
       "src/components/HanogtAI/AiSettingsPage.tsx"
-    ]
-  },
-  "1yqnq4foavx": {
-    "en": "Normal",
-    "tr": "Normal",
-    "files": [
-      "src/components/HanogtAI/AiSettingsPage.tsx",
-      "src/components/Plans/PricingSections.tsx",
-      "src/lib/support.ts"
     ]
   },
   "12uxoxlp49g": {
@@ -33924,6 +34592,7 @@
     "tr": "Editörde aç",
     "files": [
       "src/components/HanogtAI/ArtifactPanel.tsx",
+      "src/components/HanogtAI/ChangesCard.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
       "src/components/HanogtAI/Markdown.tsx"
     ]
@@ -33963,6 +34632,112 @@
     "tr": "Sayfa korumalı bir çerçevede çalışır; ağ istekleri ve sitenin verilerine erişim engellidir.",
     "files": [
       "src/components/HanogtAI/ArtifactPanel.tsx"
+    ]
+  },
+  "1v1qldxvke7": {
+    "en": "Changes",
+    "tr": "Değişiklikler",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "1m95g634fya": {
+    "en": "came as a diff",
+    "tr": "fark olarak geldi",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "1asqf9yx7h0": {
+    "en": "Show the diff",
+    "tr": "Farkı göster",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "9e8gbewasp": {
+    "en": "Hide the diff",
+    "tr": "Farkı gizle",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "1lsun40ayhm": {
+    "en": "Apply to editor",
+    "tr": "Editöre uygula",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "21qxqv2fq33": {
+    "en": "Applied",
+    "tr": "Uygulandı",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "gr4zuv842k": {
+    "en": "Undo it in the editor with Ctrl+Z (Cmd+Z on a Mac).",
+    "tr": "Editörde Ctrl+Z (Mac'te Cmd+Z) ile geri alabilirsin.",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "o8s01cvqql": {
+    "en": "Copy the file",
+    "tr": "Dosyayı kopyala",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "1v1kx008kyf": {
+    "en": "{file} changed after Hanogt AI read it. Applying overwrites your later changes.",
+    "tr": "{file}, Hanogt AI okuduktan sonra değişti. Uygularsan sonraki değişikliklerin kaybolur.",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "jsjxabdd4r": {
+    "en": "Apply anyway",
+    "tr": "Yine de uygula",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "13uua288pf7": {
+    "en": "This file isn't open in an editor on this page; you can open the change in a new tab.",
+    "tr": "Bu dosya bu sayfadaki editörde açık değil; değişikliği yeni bir sekmede açabilirsin.",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "22emt7w9l1u": {
+    "en": "Line {line}",
+    "tr": "Satır {line}",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "2a5i6619xy7": {
+    "en": "{count} more changed sections",
+    "tr": "{count} değişiklik bölümü daha",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "28larmptxaj": {
+    "en": "{count} lines added",
+    "tr": "{count} satır eklendi",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
+    ]
+  },
+  "1aw54960rc": {
+    "en": "{count} lines removed",
+    "tr": "{count} satır silindi",
+    "files": [
+      "src/components/HanogtAI/ChangesCard.tsx"
     ]
   },
   "2h4zwodyf8": {
@@ -34510,6 +35285,13 @@
       "src/components/HanogtAI/ChatComposer.tsx"
     ]
   },
+  "1ztwabg8xt2": {
+    "en": "{mod}+Enter: send · Enter: new line",
+    "tr": "{mod}+Enter: gönder · Enter: yeni satır",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
   "ylq328hxx7": {
     "en": "Dictate (early access)",
     "tr": "Sesle yaz (erken erişim)",
@@ -34690,7 +35472,8 @@
     "tr": "Yeni sohbet",
     "files": [
       "src/components/HanogtAI/ChatSidebar.tsx",
-      "src/components/HanogtAI/HanogtAIChat.tsx"
+      "src/components/HanogtAI/HanogtAIChat.tsx",
+      "src/components/HanogtAI/RecentChats.tsx"
     ]
   },
   "ajx7a22yg2": {
@@ -34704,7 +35487,8 @@
     "en": "No chats yet.",
     "tr": "Henüz sohbet yok.",
     "files": [
-      "src/components/HanogtAI/ChatSidebar.tsx"
+      "src/components/HanogtAI/ChatSidebar.tsx",
+      "src/components/HanogtAI/RecentChats.tsx"
     ]
   },
   "2dh7drw46wd": {
@@ -34738,6 +35522,62 @@
   "2a6t4xzeei8": {
     "en": "Hide sidebar",
     "tr": "Kenar çubuğunu gizle",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "26k5j93b7e5": {
+    "en": "View",
+    "tr": "Görünüm",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "1w03d7laqpa": {
+    "en": "Tasks",
+    "tr": "Görevler",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "1vr23tgjqhf": {
+    "en": "When you ask about a file open in the editor, the changes Hanogt AI works on are listed here as tasks.",
+    "tr": "Editörde açık bir dosya hakkında sorduğunda, Hanogt AI'ın üzerinde çalıştığı değişiklikler burada görev olarak listelenir.",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "qgn89e3wnz": {
+    "en": "No matching tasks.",
+    "tr": "Eşleşen görev yok.",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "281telp4xu3": {
+    "en": "{count} changes waiting",
+    "tr": "{count} değişiklik bekliyor",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "22o1vyt2tje": {
+    "en": "Working",
+    "tr": "Çalışıyor",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "1khhcrvnay3": {
+    "en": "Ready",
+    "tr": "Hazır",
+    "files": [
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "1b9ckj7n4x7": {
+    "en": "{added} lines added, {removed} removed",
+    "tr": "{added} satır eklendi, {removed} satır silindi",
     "files": [
       "src/components/HanogtAI/ChatSidebar.tsx"
     ]
@@ -35183,6 +36023,20 @@
       "src/components/HanogtAI/Markdown.tsx"
     ]
   },
+  "2353tbonga7": {
+    "en": "Recent chats",
+    "tr": "Son sohbetler",
+    "files": [
+      "src/components/HanogtAI/RecentChats.tsx"
+    ]
+  },
+  "zmkp9epu7j": {
+    "en": "All chats",
+    "tr": "Tüm sohbetler",
+    "files": [
+      "src/components/HanogtAI/RecentChats.tsx"
+    ]
+  },
   "aofo7lo308": {
     "en": "Sign in to use Hanogt AI",
     "tr": "Hanogt AI için giriş yap",
@@ -35235,6 +36089,13 @@
   "x8wkgos3xi": {
     "en": "{count} steps",
     "tr": "{count} adım",
+    "files": [
+      "src/components/HanogtAI/ThinkingPanel.tsx"
+    ]
+  },
+  "gdc17frds1": {
+    "en": "Work steps",
+    "tr": "Çalışma adımları",
     "files": [
       "src/components/HanogtAI/ThinkingPanel.tsx"
     ]
@@ -35337,6 +36198,13 @@
       "src/components/HanogtAI/UsageMeter.tsx"
     ]
   },
+  "k7i22svc9i": {
+    "en": "{used} / {limit}",
+    "tr": "{used} / {limit}",
+    "files": [
+      "src/components/HanogtAI/UsageMeter.tsx"
+    ]
+  },
   "1d622pjbtmc": {
     "en": "{period}: you've used {used} of {limit} messages. Open for details.",
     "tr": "{period} {limit} mesajın {used} tanesini kullandın. Ayrıntılar için aç.",
@@ -35354,13 +36222,6 @@
   "1k3pa08jeho": {
     "en": "These 2 weeks",
     "tr": "Bu 2 hafta",
-    "files": [
-      "src/components/HanogtAI/UsageMeter.tsx"
-    ]
-  },
-  "bel04o6r4": {
-    "en": "{days} days",
-    "tr": "{days} gün",
     "files": [
       "src/components/HanogtAI/UsageMeter.tsx"
     ]
@@ -39012,6 +39873,62 @@
     "tr": "Hanogt ekibi senden asla parola veya doğrulama kodu istemez.",
     "files": [
       "src/components/Security/PasswordLab.tsx"
+    ]
+  },
+  "7g8avqotpb": {
+    "en": "Recent sign-ins",
+    "tr": "Son girişler",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
+    ]
+  },
+  "r3s6kn7mb2": {
+    "en": "The last {count} sign-ins to your account. If you see one you don't recognise, change your password and sign the other sessions out.",
+    "tr": "Hesabına son {count} giriş. Tanımadığın bir giriş görürsen şifreni değiştir ve diğer oturumları kapat.",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
+    ]
+  },
+  "xohn2gglii": {
+    "en": "No sign-ins recorded yet; they're listed here from your next sign-in.",
+    "tr": "Henüz kayıtlı bir giriş yok; bir sonraki girişinden itibaren burada listelenir.",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
+    ]
+  },
+  "1v1ob1rwnpl": {
+    "en": "Sign-ins couldn't be loaded right now.",
+    "tr": "Girişler şu anda alınamadı.",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
+    ]
+  },
+  "6lqcbbm2pd": {
+    "en": "With a password",
+    "tr": "Şifreyle",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
+    ]
+  },
+  "wn3au79vc2": {
+    "en": "With Google",
+    "tr": "Google ile",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
+    ]
+  },
+  "2dd3zk3x5aj": {
+    "en": "Unknown device",
+    "tr": "Bilinmeyen cihaz",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
+    ]
+  },
+  "1eiy990zkqh": {
+    "en": "Your IP address isn't stored; only the country and the kind of browser are.",
+    "tr": "IP adresin saklanmaz; yalnızca ülke ve tarayıcı türü tutulur.",
+    "files": [
+      "src/components/Security/RecentSignIns.tsx"
     ]
   },
   "1svzg4n7sbu": {
@@ -43697,9 +44614,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "h2hafyih57": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys and send {ownDayPlus} messages a day on Plus, or {connectionsPro} providers and {ownDayPro} messages a day on Pro.\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys and {apiDayPlus} requests in 24 hours on Plus, {apiKeysPro} keys and {apiDayPro} requests on Pro: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus} sağlayıcı bağlayıp günde {ownDayPlus}, Pro'da {connectionsPro} sağlayıcı bağlayıp günde {ownDayPro} mesaj gönderebilirsin.\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus} anahtar ve 24 saatte {apiDayPlus} istek, Pro'da {apiKeysPro} anahtar ve {apiDayPro} istek: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "12j8ah34kfl": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys and send {ownDayPlus} messages a day on Plus, or {connectionsPro} providers and {ownDayPro} messages a day on Pro.\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus} sağlayıcı bağlayıp günde {ownDayPlus}, Pro'da {connectionsPro} sağlayıcı bağlayıp günde {ownDayPro} mesaj gönderebilirsin.\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -46337,6 +47254,27 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1ay1f9f0tmg": {
+    "en": "Recent sign-ins: the time, method (password or Google), browser and operating system family and country of the last 10 sign-ins to your account are recorded and shown only to you in Account Settings; no IP address is kept in this record. The records are included when you download your data and deleted when you delete your account.",
+    "tr": "Son girişler: Hesabınıza yapılan son 10 girişin zamanı, yöntemi (parola ya da Google), tarayıcı ve işletim sistemi türü ile ülkesi kaydedilir ve Hesap Ayarları'nda yalnızca size gösterilir; IP adresi bu kayıtta tutulmaz. Kayıtlar verilerinizi indirdiğinizde yer alır ve hesabınızı sildiğinizde silinir.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "rhzqcyty3m": {
+    "en": "Hanogt AI: when you ask about the open editor file, depending on your settings the error output of the file's last run (up to 3,000 characters; on by default) and only the names of the project's other files (off by default) are also passed to the language model. Your new code preferences (experience, comment language, code style, preferred languages, whole file or diff) are passed with every message. To show a proposed change, the file as it was when you asked is kept in your browser for the last three answers; you can choose how long chats are kept in your browser.",
+    "tr": "Hanogt AI: Açık editör dosyası hakkında sorduğunuzda, ayarlarınıza göre dosyanın son çalıştırmasının hata çıktısı (en fazla 3.000 karakter; varsayılan olarak açık) ve projedeki diğer dosyaların yalnızca adları (varsayılan olarak kapalı) da dil modeline iletilir. Yeni kod tercihleriniz (uzmanlık, yorum dili, kod stili, tercih ettiğiniz diller, tam dosya ya da fark) her mesajla iletilir. Önerilen değişikliği gösterebilmek için dosyanın sorulduğu andaki hâli son üç yanıtta tarayıcınızda tutulur; sohbetlerin tarayıcınızda ne kadar saklanacağını seçebilirsiniz.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "etod4ptqnq": {
+    "en": "Appearance: “Reduce animations” and “High contrast” now apply on every page and are also remembered in your browser so they apply as soon as a page opens. The compact mode, interface font size, time zone and emoji style settings, which did nothing, were removed and their stored values are deleted.",
+    "tr": "Görünüm: “Animasyonları azalt” ve “Yüksek kontrast” artık her sayfada uygulanır ve sayfa açılırken hemen uygulanabilmeleri için tarayıcınızda da hatırlanır. Hiçbir işlevi olmayan sıkı görünüm, arayüz yazı boyutu, saat dilimi ve emoji stili ayarları kaldırıldı; kayıtlı değerleri silinir.",
     "files": [
       "src/lib/legal.ts"
     ]

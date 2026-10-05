@@ -24,6 +24,22 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.21",
+        version: "v0.3.21",
+        date: "2026-10-05",
+        title: { TR: "Yeni Hanogt AI ve renkli bir site", EN: "A new Hanogt AI and a colourful site" },
+        desc: { TR: "Hanogt AI kâğıt gibi sade bir arayüze, görevlere ve \"Editöre uygula\" düğmesine kavuştu; mor-mavi-sarı yazılar ve canlı animasyonlar geri geldi.", EN: "Hanogt AI got a calm, paper-like interface, tasks and an \"Apply to editor\" button; the purple-blue-yellow text and lively animations are back." },
+        items: [
+            { TR: "Hanogt AI: serif selamlama, baloncuksuz yanıtlar, Sohbetler ve Görevler sekmeleri, Çalışma adımları ve kodundaki değişikliği satır satır gösteren Değişiklikler kartı; tek tuşla editöre uygula, Ctrl+Z ile geri al.", EN: "Hanogt AI: a serif greeting, answers without bubbles, Chats and Tasks tabs, Work steps and a Changes card showing your code's changes line by line; apply them to the editor with one button and undo with Ctrl+Z." },
+            { TR: "Hanogt AI ayarları: uzmanlık düzeyin, kod yorumlarının dili, kod stilin, sevdiğin diller, tam dosya ya da yalnızca fark, gönderme kısayolu, yanıt sesi ve hızı, sohbetlerin ne kadar saklanacağı.", EN: "Hanogt AI settings: your experience level, the language of code comments, your code style, your favourite languages, the whole file or just the diff, the send shortcut, the answer voice and speed, and how long chats are kept." },
+            { TR: "Sitede mor-mavi-sarı geçişli yazılar ve daha canlı bir ana sayfa: kayan başlık, kaydırınca beliren ürünler, imlece eğilen önizlemeler.", EN: "Purple-blue-yellow text across the site and a livelier home page: a sliding headline, products that appear as you scroll and previews that lean toward your pointer." },
+            { TR: "Hesap Ayarları: güvenlik özeti, son 10 girişin (cihaz ve ülke), şifre eklenince kendini yenileyen iki adımlı doğrulama; \"Animasyonları azalt\" ve \"Yüksek kontrast\" artık her sayfada çalışıyor.", EN: "Account Settings: a security summary, your last 10 sign-ins (device and country), two-step verification that refreshes when you add a password; \"Reduce animations\" and \"High contrast\" now work on every page." },
+            { TR: "Editör ayarları: kaydederken biçimlendir, kaydedince çalıştır, dile göre sekme boyutu, yeni çalışma alanının dili, konsol yazı boyutu, görünmez karakter uyarısı ve daha fazlası.", EN: "Editor settings: format on save, run on save, tab size per language, the language of a new workspace, the console font size, warnings for invisible characters and more." },
+            { TR: "Düzeltmeler: koyu tema her sayfada yeniden doğru açılıyor; kullanım sayacındaki \"Tüm plan hakların\" bağlantısı Fiyatlandırma'daki kullanım panelini açıyor.", EN: "Fixes: the dark theme opens correctly on every page again, and \"All your plan benefits\" on the usage meter opens the usage panel on Pricing." },
+            { TR: "Gizlilik Politikası ve KVKK Aydınlatma Metni 4.9.", EN: "Privacy Policy and KVKK Information Notice 4.9." },
+        ],
+    },
+    {
         id: "v0.3.20",
         version: "v0.3.20",
         date: "2026-10-05",

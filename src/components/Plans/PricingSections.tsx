@@ -2,6 +2,7 @@
 
 import { Bell, BellRing, Check, ChevronDown, Clock, CreditCard, Crown, LoaderCircle, Minus, PartyPopper, RefreshCw, ShieldCheck, Ticket, Zap } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import PlanBadgeSetting from "@/components/Plans/PlanBadgeSetting";
 import UsageList from "@/components/Plans/UsageList";
 import type { Copy } from "@/lib/i18n";
@@ -440,9 +441,26 @@ export function PlanCards({ billing }: { billing: PlansBilling }) {
 
 export function UsagePanel({ billing }: { billing: PlansBilling }) {
     const { tx, me } = billing;
+    const panel = useRef<HTMLDetailsElement>(null);
+    const ready = Boolean(me);
+
+    // Linked as /plans#usage (the usage meter, AI and account settings): opened and scrolled to
+    // once the account has loaded, and again when the link is followed on this page.
+    useEffect(() => {
+        if (!ready) return;
+        const reveal = () => {
+            if (window.location.hash !== "#usage" || !panel.current) return;
+            panel.current.open = true;
+            panel.current.scrollIntoView({ block: "start" });
+        };
+        reveal();
+        window.addEventListener("hashchange", reveal);
+        return () => window.removeEventListener("hashchange", reveal);
+    }, [ready]);
+
     if (!me) return null;
     return (
-        <details className="group mx-auto mt-6 max-w-6xl px-4 sm:px-6" data-usage-panel>
+        <details ref={panel} id="usage" className="group mx-auto mt-6 max-w-6xl scroll-mt-24 px-4 sm:px-6" data-usage-panel>
             <summary className="flex cursor-pointer list-none items-center justify-between rounded-2xl border border-zinc-200 px-4 py-3 text-[14px] font-bold marker:hidden dark:border-white/10">
                 {tx(P.yourUsage)}
                 <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
