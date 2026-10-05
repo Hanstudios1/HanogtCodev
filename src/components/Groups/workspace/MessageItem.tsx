@@ -128,7 +128,7 @@ type MessageItemProps = {
     onOpenUser?: (email: string, trigger: HTMLElement) => void;
 };
 
-const ROLE_NAME = { owner: "text-amber-600 dark:text-amber-400", admin: "text-indigo-600 dark:text-indigo-300", member: "text-zinc-900 dark:text-white" } as const;
+const ROLE_NAME = { owner: "text-amber-600 dark:text-amber-400", admin: "text-indigo-600 dark:text-indigo-300", moderator: "text-emerald-600 dark:text-emerald-400", member: "text-zinc-900 dark:text-white" } as const;
 
 function MessageItemView(props: MessageItemProps) {
     const { message, compact, pinned, mentionsMe, needle, active, playing, loadingVoice, reactionOverrides, onActivate, onToggleVoice, onReact, onTogglePin, onDelete, onReply, onCopy, onTopic, editing, onOpenUser } = props;

@@ -25,6 +25,7 @@ import {
     roleOf,
     type InviteLinkRecord,
 } from "../_shared";
+import { postWelcomeMessage } from "../_messages";
 
 /**
  * Loads an invite link and its group. Members always get through (opening an
@@ -107,7 +108,9 @@ export async function POST(request: NextRequest) {
         if (outcome.joined) {
             // A friend invitation to the same group is obsolete now.
             await deleteServerDocument(`group_invites/${inviteDocumentId(outcome.groupId, email)}`).catch(() => undefined);
-            await postSystemMessage(outcome.groupId, outcome.group, "member_joined", { name: await ownDisplayName(user) });
+            const name = await ownDisplayName(user);
+            await postSystemMessage(outcome.groupId, outcome.group, "member_joined", { name });
+            await postWelcomeMessage(outcome.groupId, outcome.group, name);
         }
         return groupJson({ success: true, groupId: outcome.groupId, alreadyMember: !outcome.joined });
     } catch (error) {

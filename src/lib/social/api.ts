@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
+import type { GifSearchResult, MessageGif } from "./gif";
 import {
     dmMessageFromData,
     type DmConversationResponse,
@@ -18,7 +19,7 @@ export type SocialErrorCode =
     | "message_not_found" | "empty_message" | "message_too_long" | "invalid_tag" | "user_not_found"
     | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error"
     | "network" | "send_failed" | "voice_failed" | "voice_too_large" | "voice_unavailable" | "voice_format" | "voice_storage" | "mic_denied"
-    | "mic_missing" | "mic_busy";
+    | "mic_missing" | "mic_busy" | "not_configured" | "unavailable" | "muted";
 
 export class SocialRequestError extends Error {
     readonly code: SocialErrorCode;
@@ -58,6 +59,9 @@ export const SOCIAL_ERROR_COPY: Record<SocialErrorCode, Copy> = {
     network: { TR: "Sunucuya ulaşılamadı. Bağlantını kontrol et.", EN: "Couldn't reach the server. Check your connection." },
     send_failed: { TR: "Mesaj gönderilemedi.", EN: "The message couldn't be sent." },
     voice_failed: { TR: "Sesli mesaj gönderilemedi.", EN: "The voice message couldn't be sent." },
+    not_configured: { TR: "GIF araması henüz açılmadı.", EN: "GIF search isn't switched on yet." },
+    muted: { TR: "Bu grupta susturuldun; şimdilik mesaj gönderemezsin.", EN: "You're muted in this group; you can't send messages for now." },
+    unavailable: { TR: "GIF'ler şu anda yüklenemiyor. Biraz sonra tekrar dene.", EN: "GIFs can't be loaded right now. Try again in a moment." },
     voice_too_large: { TR: "Sesli mesaj 3 MB sınırını aşıyor.", EN: "The voice message exceeds the 3 MB limit." },
     voice_unavailable: { TR: "Sesli mesaj açılamadı veya silinmiş.", EN: "The voice message couldn't be opened or was deleted." },
     voice_format: { TR: "Bu ses biçimi desteklenmiyor. Tarayıcını güncelleyip tekrar dene.", EN: "This audio format isn't supported. Update your browser and try again." },
@@ -147,11 +151,13 @@ export const socialApi = {
         const data = await request<DmConversationResponse>(`/api/social/dm?${query.toString()}`);
         return { ...data, messages: messages(data.messages) };
     },
-    send: async (email: string, body: { text: string; type?: "text" | "sticker"; replyTo?: { id: string } | null }) => {
+    send: async (email: string, body: { text: string; type?: "text" | "sticker" | "gif"; gif?: MessageGif | null; replyTo?: { id: string } | null; forwarded?: boolean }) => {
         const data = await request<{ message?: unknown }>("/api/social/dm", { action: "send", with: email, ...body });
         return messages([data.message])[0] ?? null;
     },
-    dmAction: (body: Record<string, unknown>, keepalive = false) => request<{ success: true }>("/api/social/dm", body, { keepalive }),
+    dmAction: (body: Record<string, unknown>, keepalive = false) => request<{ success: true; pinnedMessageIds?: string[] }>("/api/social/dm", body, { keepalive }),
+    /** A page of GIFs from KLIPY or GIPHY through the server (empty text: trending). */
+    gifs: (query: string, page: number, language: "tr" | "en") => request<GifSearchResult>(`/api/social/gifs?${new URLSearchParams({ q: query, page: String(page), lang: language }).toString()}`),
     friendAction: (body: Record<string, unknown>) => request<{ success: true; accepted?: boolean; sent?: boolean }>("/api/friends", body),
     sendDmVoice: async (email: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => messages([await uploadVoice({ with: email }, blob, options)])[0] ?? null,
     sendGroupVoice: (groupId: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => uploadVoice({ group: groupId }, blob, options),

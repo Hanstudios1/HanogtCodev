@@ -6,7 +6,8 @@
  * data hooks and components (client) and the plain-Node tests, so it must stay
  * free of React, Firebase and Node imports (type-only imports are fine).
  */
-import { mentionsUser, tokenizeMessage } from "@/lib/groups";
+import { GROUP_REACTIONS, isReactionKey, mentionsUser, tokenizeMessage, type GroupReactionKey } from "@/lib/groups";
+import { readMessageGif, type MessageGif } from "./gif";
 import type { PlanBadge } from "@/lib/plan-badge";
 import type { PresenceStatus } from "@/lib/presence";
 
@@ -97,8 +98,10 @@ export type FriendsOverview = {
     blocked: BlockedItem[];
 };
 
-export type DmMessageType = "text" | "sticker" | "voice";
+export type DmMessageType = "text" | "sticker" | "voice" | "gif";
 export type DmReply = { id: string; text: string; fromEmail: string };
+/** Who reacted with what (e-mails of the two participants). */
+export type DmReactions = Partial<Record<GroupReactionKey, string[]>>;
 
 export type DmMessage = {
     id: string;
@@ -112,6 +115,11 @@ export type DmMessage = {
     edited: boolean;
     deleted: boolean;
     replyTo: DmReply | null;
+    /** A GIF from the picker (type "gif"); its title is the text. */
+    gif: MessageGif | null;
+    reactions: DmReactions;
+    /** Sent on from another conversation. */
+    forwarded: boolean;
     /** Written locally, not confirmed by the server yet. */
     pending: boolean;
 };
@@ -138,6 +146,8 @@ export type DmConversationResponse = {
     isFriend: boolean;
     /** The signed-in user blocked the partner. */
     blocked: boolean;
+    /** Pinned messages of the conversation, newest first. */
+    pinnedMessageIds: string[];
     now: number;
 };
 
@@ -250,8 +260,34 @@ export function foldText(value: string) {
 /* Direct messages                                                            */
 /* -------------------------------------------------------------------------- */
 
-const MESSAGE_TYPES: readonly DmMessageType[] = ["text", "sticker", "voice"];
+const MESSAGE_TYPES: readonly DmMessageType[] = ["text", "sticker", "voice", "gif"];
 const DOC_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const EMAIL_LIKE = /^[^\s@/]{1,64}@[^\s@/]{1,190}$/;
+
+/** Stored reactions, checked: known keys, e-mail-like entries, at most two people each. */
+export function readDmReactions(value: unknown): DmReactions {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    const reactions: DmReactions = {};
+    for (const [key, people] of Object.entries(value as Record<string, unknown>)) {
+        if (!isReactionKey(key) || !Array.isArray(people)) continue;
+        const list = [...new Set(people.filter((person): person is string => typeof person === "string" && EMAIL_LIKE.test(person)).map((person) => person.toLowerCase()))].slice(0, 2);
+        if (list.length) reactions[key] = list;
+    }
+    return reactions;
+}
+
+/** Reactions in display order with counts and whether `me` reacted. */
+export function reactionSummary(reactions: Partial<Record<GroupReactionKey, readonly string[]>>, me: string) {
+    return GROUP_REACTIONS.flatMap((reaction) => {
+        const people = reactions[reaction.key] ?? [];
+        return people.length ? [{ ...reaction, count: people.length, mine: people.includes(me) }] : [];
+    });
+}
+
+/** Pinned ids from a chat document: valid ids only, at most 25. */
+export function readPinnedIds(value: unknown, max = 25) {
+    return Array.isArray(value) ? [...new Set(value.filter((id): id is string => typeof id === "string" && DOC_ID.test(id)))].slice(0, max) : [];
+}
 
 function str(value: unknown, max: number) {
     return typeof value === "string" ? value.slice(0, max) : "";
@@ -280,6 +316,9 @@ export function dmMessageFromData(id: string, data: Record<string, unknown>, pen
         replyTo: reply && typeof reply.id === "string" && DOC_ID.test(reply.id)
             ? { id: reply.id, text: str(reply.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: str(reply.fromEmail, 254).toLowerCase() }
             : null,
+        gif: !deleted && type === "gif" ? readMessageGif(data.gif) : null,
+        reactions: deleted ? {} : readDmReactions(data.reactions),
+        forwarded: data.forwarded === true,
         pending,
     };
 }
@@ -409,21 +448,21 @@ export function channelUnreadState(
     return result;
 }
 
-export type MemberLike = { email: string; username: string; role: "owner" | "admin" | "member"; status: PresenceStatus };
-export type MemberSectionId = "owner" | "admin" | "member" | "offline";
+export type MemberLike = { email: string; username: string; role: "owner" | "admin" | "moderator" | "member"; status: PresenceStatus };
+export type MemberSectionId = "owner" | "admin" | "moderator" | "member" | "offline";
 export type MemberSection<T> = { id: MemberSectionId; members: T[] };
 
 export const STATUS_RANK: Record<PresenceStatus, number> = { online: 0, idle: 1, dnd: 2, offline: 3 };
 
 /**
  * Discord-style member list: people who are around grouped by role (owner,
- * admins, members), then everyone offline. Within a section: online before
+ * admins, moderators, members), then everyone offline. Within a section: online before
  * idle before do-not-disturb, then by name.
  */
 export function sectionMembers<T extends MemberLike>(members: readonly T[], locale = "tr"): Array<MemberSection<T>> {
     const byName = (a: T, b: T) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || a.username.localeCompare(b.username, locale);
     const sections: Array<MemberSection<T>> = [];
-    for (const role of ["owner", "admin", "member"] as const) {
+    for (const role of ["owner", "admin", "moderator", "member"] as const) {
         const list = members.filter((member) => member.role === role && member.status !== "offline").sort(byName);
         if (list.length) sections.push({ id: role, members: list });
     }

@@ -1,5 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { burstLimit } from "@/lib/server/burst-limit";
+import { notifyDirectMessage } from "@/lib/server/social-notify";
+import { dmChatId } from "@/lib/social/model";
 import { jsonSecurityHeaders } from "@/lib/server/request-security";
 import { VOICE_LIMITS, VoiceApiError, openVoiceMessage, readLimitedBody, readVoiceTarget, sendVoiceMessage } from "@/lib/server/social-voice";
 import { SocialApiError, assertRateLimit, assertSameOrigin, requireSocialUser, socialErrorResponse, socialJson } from "@/lib/social/server";
@@ -46,6 +48,7 @@ export async function POST(request: NextRequest) {
         const target = readVoiceTarget(params, user.email);
         const bytes = await readLimitedBody(request.body, VOICE_LIMITS.maxBytes, Number(request.headers.get("content-length") || 0));
         const sent = await sendVoiceMessage(user, target, { bytes, seconds: params.get("duration"), label: params.get("label") });
+        if (target.kind === "dm") after(() => notifyDirectMessage(target.partner, user.email, dmChatId(user.email, target.partner), "🎤 Sesli mesaj"));
         return socialJson({ success: true, message: sent.message }, 201);
     } catch (error) {
         return voiceErrorResponse(error, "send");

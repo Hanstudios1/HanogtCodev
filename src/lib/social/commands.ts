@@ -3,10 +3,11 @@
  * the Hanogt Security Bot), who may use them and how their arguments are
  * read. Framework-free: the composer suggests from it, the server runs it.
  */
+import type { GroupRole } from "@/lib/groups";
 import type { Copy } from "@/lib/i18n";
 
-/** A member's standing in a group, lowest first. */
-export type GroupRank = "member" | "moderator" | "admin" | "owner";
+/** A member's standing in a group (the group role), lowest first. */
+export type GroupRank = GroupRole;
 
 export const RANK_ORDER: Record<GroupRank, number> = { member: 0, moderator: 1, admin: 2, owner: 3 };
 
@@ -93,6 +94,9 @@ export const GROUP_COMMANDS: readonly CommandSpec[] = [
         description: { TR: "Bu kanalda iki mesaj arasında beklenecek süreyi ayarlar.", EN: "Sets how long people wait between messages in this channel." },
     },
 ];
+
+/** Names a custom command may not take (every built-in name and alias). */
+export const RESERVED_COMMAND_NAMES: readonly string[] = GROUP_COMMANDS.flatMap((command) => command.aliases);
 
 const TURKISH_FOLD: Record<string, string> = { ç: "c", ğ: "g", ı: "i", İ: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u" };
 

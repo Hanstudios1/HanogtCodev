@@ -37,21 +37,6 @@ service cloud.firestore {
         );
     }
 
-    // Voice files must live in the owning chat/group folder: `<prefix>/<id>/<file>`.
-    // The server deletes these paths when chats, groups or accounts are removed.
-    function validVoicePath(path, prefix, containerId) {
-      return path is string
-        && path.split('/').size() == 3
-        && path.split('/')[0] == prefix
-        && path.split('/')[1] == containerId
-        && path.split('/')[2].size() > 0
-        && path.split('/')[2].size() <= 200;
-    }
-
-    function voicePathOk(data, prefix, containerId) {
-      return !("voicePath" in data) || data.voicePath == null || validVoicePath(data.voicePath, prefix, containerId);
-    }
-
     match /credentials/{id} {
       allow read, write: if false;
     }
@@ -145,17 +130,11 @@ service cloud.firestore {
         allow delete: if groupManager(groupId);
       }
 
+      // Every message is written by the server (/api/groups/chat): mutes, AutoMod,
+      // slow mode and the bots apply to all of them. Members only read.
       match /messages/{messageId} {
         allow read: if groupMember(groupId);
-        allow create: if groupMember(groupId)
-          && request.resource.data.fromEmail == email()
-          && request.resource.data.type in ["text", "voice"]
-          && request.resource.data.text is string
-          && request.resource.data.text.size() <= 4000
-          && request.resource.data.keys().hasOnly(["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt"])
-          && voicePathOk(request.resource.data, "group-voice-messages", groupId);
-        allow update: if false;
-        allow delete: if groupMember(groupId) && resource.data.fromEmail == email();
+        allow create, update, delete: if false;
       }
     }
 
@@ -187,60 +166,15 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // Direct messages are written by the server (/api/social/dm, /api/social/voice):
+    // friendship, blocks, limits and text cleaning apply to every message. Participants only read.
     match /chats/{chatId} {
       allow read: if signedIn() && email() in resource.data.participants;
-      allow create: if signedIn()
-        && email() in request.resource.data.participants
-        && request.resource.data.participants.size() == 2
-        && (
-          (request.resource.data.participants[0] == email() && request.resource.data.participants[1] in get(/databases/$(database)/documents/users/$(email())).data.friends)
-          || (request.resource.data.participants[1] == email() && request.resource.data.participants[0] in get(/databases/$(database)/documents/users/$(email())).data.friends)
-        );
-      allow update: if chatParticipant(chatId)
-        && request.resource.data.participants == resource.data.participants
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "lastMessage", "lastMessageAt", "lastSender", "typingUser", "updatedAt"
-        ])
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["lastSender"])
-          || request.resource.data.lastSender == email())
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(["lastMessage"])
-          || (request.resource.data.lastMessage is string && request.resource.data.lastMessage.size() <= 4100))
-        && (!request.resource.data.keys().hasAny(["typingUser"])
-          || request.resource.data.typingUser == null
-          || request.resource.data.typingUser == email());
-      allow delete: if false;
+      allow create, update, delete: if false;
 
       match /messages/{messageId} {
         allow read: if chatParticipant(chatId);
-        allow create: if chatParticipant(chatId)
-          && request.resource.data.fromEmail == email()
-          && request.resource.data.type in ["text", "sticker", "voice"]
-          && request.resource.data.text is string
-          && request.resource.data.text.size() <= 4000
-          && request.resource.data.keys().hasOnly([
-            "fromEmail", "text", "type", "stickerUrl", "voicePath", "voiceDuration", "createdAt", "read", "replyTo"
-          ])
-          && (!("read" in request.resource.data) || request.resource.data.read == false)
-          && voicePathOk(request.resource.data, "voice-messages", chatId);
-        allow update: if chatParticipant(chatId)
-          && request.resource.data.fromEmail == resource.data.fromEmail
-          && (
-            (
-              resource.data.fromEmail == email()
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                "text", "edited", "deleted", "voicePath", "voiceDuration"
-              ])
-              && request.resource.data.text is string
-              && request.resource.data.text.size() <= 4000
-              && voicePathOk(request.resource.data, "voice-messages", chatId)
-            )
-            || (
-              request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read"])
-              && resource.data.fromEmail != email()
-              && request.resource.data.read == true
-            )
-          );
-        allow delete: if chatParticipant(chatId) && resource.data.fromEmail == email();
+        allow create, update, delete: if false;
       }
     }
 
@@ -380,6 +314,15 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 1000;
       allow delete: if signedIn() && resource.data.email == email();
     }
+
+    // Hanogt Social's server-only records (listed so a reader of these rules sees them):
+    // the Security Bot's mutes, warnings and reports, AutoMod settings and stops, starred messages.
+    match /group_mutes/{id} { allow read, write: if false; }
+    match /group_warnings/{id} { allow read, write: if false; }
+    match /group_reports/{id} { allow read, write: if false; }
+    match /group_automod/{id} { allow read, write: if false; }
+    match /automod_events/{id} { allow read, write: if false; }
+    match /message_stars/{id} { allow read, write: if false; }
 
     match /{document=**} {
       allow read, write: if false;

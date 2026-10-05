@@ -27,6 +27,7 @@ import {
     listServerCollection,
     queryServerCollection,
 } from "./firebase-rest";
+import { notifyMissedCall } from "./social-notify";
 import { normalizeEmail } from "./validate";
 
 /*
@@ -109,7 +110,11 @@ export async function sweepCalls(email: string, now = Date.now(), records?: Call
             return record ? [record] : [];
         });
     const stale = list.filter((record) => isCallStale(record, now)).slice(0, 20);
-    await Promise.all(stale.map((record) => deleteServerDocument(callPath(record.id)).catch(() => undefined)));
+    await Promise.all(stale.map(async (record) => {
+        await deleteServerDocument(callPath(record.id)).catch(() => undefined);
+        // A call that rang out without anyone tidying up was never answered.
+        if (record.status === "ringing") await notifyMissedCall(record.callee, record.caller, record.id);
+    }));
     return stale.length;
 }
 
@@ -201,6 +206,8 @@ export async function declineCall(user: CallUser, input: Record<string, unknown>
         if ((error as { status?: number }).status === 404) return { success: true };
         throw error;
     }
+    // Busy in another call or unavailable (do not disturb): the callee never saw it ring.
+    if (reason !== "declined") await notifyMissedCall(record.callee, record.caller, record.id);
     return { success: true };
 }
 
@@ -227,12 +234,16 @@ export async function setCallMuted(user: CallUser, input: Record<string, unknown
  */
 export async function deleteCall(email: string, callId: unknown) {
     if (!isCallId(callId)) throw new CallApiError(400, "invalid_id", "Geçersiz arama kimliği.");
-    const stored = await getServerDocument<{ participants?: unknown; caller?: unknown; callee?: unknown }>(callPath(callId));
+    const stored = await getServerDocument<{ participants?: unknown; caller?: unknown; callee?: unknown; status?: unknown }>(callPath(callId));
     if (!stored) return { success: true };
     const participants = emails(stored.participants);
     if (!participants.includes(email) && normalizeEmail(stored.caller) !== email && normalizeEmail(stored.callee) !== email) {
         throw new CallApiError(404, "not_found", "Arama bulunamadı veya sona erdi.");
     }
+    // The caller hung up (or the ringing timed out) before anyone answered: a missed call.
+    const caller = normalizeEmail(stored.caller);
+    const callee = normalizeEmail(stored.callee);
+    if (stored.status === "ringing" && caller === email && callee) await notifyMissedCall(callee, caller, callId);
     for (const collection of ["callerCandidates", "calleeCandidates"]) {
         const candidates = await listServerCollection<Record<string, unknown>>(`${callPath(callId)}/${collection}`).catch(() => []);
         await Promise.all(candidates.map((candidate) => deleteServerDocument(candidate._path).catch(() => undefined)));

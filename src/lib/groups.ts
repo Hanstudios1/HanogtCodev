@@ -39,6 +39,17 @@ export const GROUP_EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{
 export const MEMBER_KEY_PATTERN = /^k[0-9a-f]{20}$/;
 /** `fromEmail` of messages written by the platform itself. */
 export const SYSTEM_SENDER = "system";
+/**
+ * `fromEmail` of messages written by Hanogt's group bots: the Hanogt Security
+ * Bot (moderation, rules, custom commands; in every group) and Hanogt AI.
+ */
+export const BOT_SENDERS = { security: "bot:security", ai: "bot:ai" } as const;
+export type GroupBot = keyof typeof BOT_SENDERS;
+export const BOT_NAMES: Record<GroupBot, string> = { security: "Hanogt Security Bot", ai: "Hanogt AI" };
+
+export function botOfSender(value: unknown): GroupBot | null {
+    return value === BOT_SENDERS.security ? "security" : value === BOT_SENDERS.ai ? "ai" : null;
+}
 /** Document id of the pinned welcome message every new group starts with. */
 export const WELCOME_MESSAGE_ID = "welcome";
 /** How long a presence heartbeat counts as "online" (the heartbeat runs every 45 s). */
@@ -118,17 +129,80 @@ export function toMillis(value: unknown): number {
 /* Roles, palette, emoji, reactions                                           */
 /* -------------------------------------------------------------------------- */
 
-export type GroupRole = "owner" | "admin" | "member";
+/**
+ * owner › admin › moderator › member. Admins manage the group (settings,
+ * pins, invite links, bans, AutoMod); moderators keep the chat in order
+ * (delete messages, warn, mute, remove, purge, slow mode).
+ */
+export type GroupRole = "owner" | "admin" | "moderator" | "member";
+
+export const ROLE_RANK: Record<GroupRole, number> = { member: 0, moderator: 1, admin: 2, owner: 3 };
 
 export function isManagerRole(role: GroupRole | null | undefined) {
     return role === "owner" || role === "admin";
 }
 
+/** Owners, admins and moderators. */
+export function canModerate(role: GroupRole | null | undefined) {
+    return role === "owner" || role === "admin" || role === "moderator";
+}
+
+/** Moderation reaches only people of a lower rank (the owner is never a target). */
+export function outranks(actor: GroupRole, target: GroupRole) {
+    return ROLE_RANK[actor] > ROLE_RANK[target];
+}
+
 export const GROUP_ROLE_COPY: Record<GroupRole, Copy> = {
     owner: { TR: "Sahip", EN: "Owner" },
     admin: { TR: "Yönetici", EN: "Admin" },
+    moderator: { TR: "Moderatör", EN: "Moderator" },
     member: { TR: "Üye", EN: "Member" },
 };
+
+/** An admin-defined command answered by the Hanogt Security Bot ("/kurulum" → the text). */
+export type CustomCommand = { name: string; description: string; response: string };
+
+export const CUSTOM_COMMAND_LIMITS = { count: 20, description: 80, response: 1_000 } as const;
+export const WELCOME_MESSAGE_MAX = 500;
+/** At most six hours between two messages of one person in slow mode. */
+export const SLOWMODE_MAX_SECONDS = 21_600;
+
+const COMMAND_NAME = /^[a-z][a-z0-9_-]{0,23}$/;
+
+/** Stored or sent custom commands, checked: valid unique names (lower case), clipped texts, at most 20. */
+export function sanitizeCustomCommands(value: unknown, reserved: readonly string[] = []): CustomCommand[] {
+    if (!Array.isArray(value)) return [];
+    const seen = new Set<string>(reserved);
+    const commands: CustomCommand[] = [];
+    for (const entry of value) {
+        if (!entry || typeof entry !== "object") continue;
+        const raw = entry as Record<string, unknown>;
+        const name = typeof raw.name === "string" ? raw.name.trim().replace(/^\//, "").toLowerCase() : "";
+        const response = cleanMultiLine(raw.response, CUSTOM_COMMAND_LIMITS.response);
+        if (!COMMAND_NAME.test(name) || seen.has(name) || !response) continue;
+        seen.add(name);
+        commands.push({ name, description: cleanSingleLine(raw.description, CUSTOM_COMMAND_LIMITS.description), response });
+        if (commands.length >= CUSTOM_COMMAND_LIMITS.count) break;
+    }
+    return commands;
+}
+
+/** The key of a channel in `slowmode`: "" for the main channel, the topic otherwise. */
+export function channelKey(topic: string | null | undefined) {
+    return (topic ?? "").trim().toLocaleLowerCase("tr").slice(0, 24);
+}
+
+/** Stored slow-mode settings, checked: known-looking channel keys, 1 s to 6 h. */
+export function readSlowmode(value: unknown): Record<string, number> {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    const result: Record<string, number> = {};
+    for (const [key, seconds] of Object.entries(value as Record<string, unknown>)) {
+        if (key.length > 24 || typeof seconds !== "number" || !Number.isFinite(seconds)) continue;
+        const clamped = Math.min(SLOWMODE_MAX_SECONDS, Math.max(0, Math.round(seconds)));
+        if (clamped > 0) result[key] = clamped;
+    }
+    return result;
+}
 
 export type GroupColor = "indigo" | "violet" | "fuchsia" | "rose" | "amber" | "emerald" | "sky" | "slate";
 
@@ -433,7 +507,8 @@ export type GroupErrorCode =
     | "invites_disabled" | "invite_not_found" | "banned" | "target_banned" | "target_not_member"
     | "cannot_remove_owner" | "cannot_remove_admin" | "owner_cannot_leave" | "confirm_mismatch"
     | "link_not_found" | "link_expired" | "link_exhausted" | "link_limit" | "invalid_expiry" | "invalid_max_uses"
-    | "message_not_found" | "pin_limit" | "invalid_reaction" | "conflict" | "server_error";
+    | "message_not_found" | "pin_limit" | "invalid_reaction" | "conflict" | "server_error"
+    | "muted" | "slowmode" | "automod_blocked" | "cannot_moderate" | "invalid_command";
 
 export type GroupLanguage = "tr" | "en";
 
@@ -488,6 +563,14 @@ export type GroupInfo = {
     pinnedMessageIds: string[];
     allowMemberInvites: boolean;
     onboarding: { dismissed: boolean; callStarted: boolean };
+    moderators: string[];
+    /** Seconds between two messages of one person, per channel ("" is the main channel). */
+    slowmode: Record<string, number>;
+    /** Hanogt AI answers /ai and @Hanogt AI in this group. */
+    aiBot: boolean;
+    /** Posted by the Hanogt Security Bot when someone joins ("{name}" is replaced); empty: none. */
+    welcomeMessage: string;
+    customCommands: CustomCommand[];
 };
 
 export type GroupMemberInfo = {

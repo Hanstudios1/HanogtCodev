@@ -12,27 +12,23 @@
  */
 import {
     Timestamp,
-    addDoc,
     collection,
     doc,
     limit,
     onSnapshot,
     orderBy,
     query,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
     where,
-    writeBatch,
     type DocumentData,
     type FirestoreError,
 } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { db } from "@/lib/firebase";
-import { mentionsUser, type GroupInvitationItem, type GroupListItem, type GroupListResponse } from "@/lib/groups";
+import { mentionsUser, type GroupInvitationItem, type GroupListItem, type GroupListResponse, type GroupReactionKey } from "@/lib/groups";
 import { readPlanBadge } from "@/lib/plan-badge";
 import { effectiveStatus, lastSeenTime } from "@/lib/presence";
 import { SocialRequestError, socialApi, type VoiceTarget } from "./api";
+import type { MessageGif } from "./gif";
 import { readAudioDevices } from "./local-state";
 import {
     SOCIAL_LIMITS,
@@ -43,8 +39,10 @@ import {
     groupUnreadState,
     mergeMessages,
     previewText,
+    readPinnedIds,
     timeOf,
     type DmMessage,
+    type DmReactions,
     type DmReply,
     type FriendsOverview,
     type GroupUnread,
@@ -463,33 +461,47 @@ type ConversationOptions = {
     chatExists: boolean;
     /** The conversation is on screen: messages from the partner are marked read. */
     active: boolean;
+    /** "Typing indicator" in the messaging settings: off sends nothing and shows nothing. */
+    typingIndicator?: boolean;
     onError: (error: unknown) => void;
 };
 
 const TYPING_REFRESH_MS = 3_000;
 const TYPING_IDLE_MS = 4_000;
 
+export type DmSendInput = { text: string; type: "text" | "sticker" | "gif"; gif?: MessageGif | null; replyTo: DmReply | null; forwarded?: boolean };
+
+let pendingSerial = 0;
+/** A local id for a message on its way (never a server id: those have no "~"). */
+const pendingId = () => `pending~${Date.now().toString(36)}${(pendingSerial += 1).toString(36)}`;
+
 /**
- * Messages of one direct conversation with sending, editing, deleting, read
- * receipts and the typing indicator, through the client SDK (live) or the
- * /api/social/dm endpoint (fallback).
+ * Messages of one direct conversation with sending, editing, deleting,
+ * reactions, pins, read receipts and the typing indicator. Everything is
+ * written by /api/social/dm (the browser only reads: live through the client
+ * SDK, or by polling the same endpoint), and a message shows at once as
+ * "sending" until the server confirms it.
  */
-export function useConversation({ me, partner, mode, chatExists, active, onError }: ConversationOptions) {
+export function useConversation({ me, partner, mode, chatExists, active, typingIndicator = true, onError }: ConversationOptions) {
     const chatId = dmChatId(me, partner);
     const live = mode === "live";
     const [liveMessages, setLiveMessages] = useState<DmMessage[]>([]);
     const [liveLoaded, setLiveLoaded] = useState(false);
+    const [livePinned, setLivePinned] = useState<string[]>([]);
     const [windowSize, setWindowSize] = useState<number>(SOCIAL_LIMITS.dmPage);
     const [liveHasMore, setLiveHasMore] = useState(false);
     const [optimistic, setOptimistic] = useState<DmMessage[]>([]);
-    const [server, setServer] = useState<{ messages: DmMessage[]; hasMore: boolean; loaded: boolean; typing: boolean; canSend: boolean | null; exists: boolean }>({ messages: [], hasMore: false, loaded: false, typing: false, canSend: null, exists: false });
+    const [server, setServer] = useState<{ messages: DmMessage[]; hasMore: boolean; loaded: boolean; typing: boolean; canSend: boolean | null; exists: boolean; pinned: string[] }>({ messages: [], hasMore: false, loaded: false, typing: false, canSend: null, exists: false, pinned: [] });
     const [typingSeen, setTypingSeen] = useState(0);
-    /** Deleted here, until the listener reports it (deleting goes through the server). */
+    /** Changes made here, shown until the listener or the next poll reports them. */
     const [removed, setRemoved] = useState<Record<string, true>>({});
+    const [edits, setEdits] = useState<Record<string, string>>({});
+    const [reactionEdits, setReactionEdits] = useState<Record<string, DmReactions>>({});
+    const [pinnedEdit, setPinnedEdit] = useState<string[] | null>(null);
     const onErrorRef = useLatest(onError);
     const visible = usePageVisible();
 
-    /* ---- live: messages and typing ---- */
+    /* ---- live: messages, typing and pins ---- */
 
     useEffect(() => {
         if (!live || !chatExists) return;
@@ -502,6 +514,9 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
             setLiveHasMore(snapshot.size >= windowSize);
             setLiveLoaded(true);
             setOptimistic((current) => (current.length ? current.filter((entry) => !next.some((message) => message.id === entry.id)) : current));
+            // What the server stored is the truth from here on.
+            setEdits({});
+            setReactionEdits({});
         }, (failure) => {
             setLiveLoaded(true);
             onErrorRef.current(failure);
@@ -520,6 +535,8 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
             else if (primed && signature !== previous) setTypingSeen(Date.now());
             previous = signature;
             primed = true;
+            setLivePinned(readPinnedIds(data.pinnedMessageIds));
+            setPinnedEdit(null);
         }, () => undefined);
     }, [chatExists, chatId, live, partner]);
 
@@ -539,7 +556,13 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
             typing: data.typing,
             canSend: data.canSend,
             exists: data.exists,
+            pinned: Array.isArray(data.pinnedMessageIds) ? readPinnedIds(data.pinnedMessageIds) : state.pinned,
         }));
+        if (kind !== "since") {
+            setEdits({});
+            setReactionEdits({});
+            setPinnedEdit(null);
+        }
     }, [partner, serverRef]);
 
     useEffect(() => {
@@ -565,13 +588,21 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
     const baseMessages = live ? liveMessages : server.messages;
     const messages = useMemo(() => {
         const merged = optimistic.length ? mergeMessages(baseMessages, optimistic) : baseMessages;
-        if (!Object.keys(removed).length) return merged;
-        return merged.map((message) => (removed[message.id] && !message.deleted ? { ...message, deleted: true, text: "", voicePath: null, replyTo: null } : message));
-    }, [baseMessages, optimistic, removed]);
+        if (!Object.keys(removed).length && !Object.keys(edits).length && !Object.keys(reactionEdits).length) return merged;
+        return merged.map((message) => {
+            if (removed[message.id] && !message.deleted) return { ...message, deleted: true, text: "", voicePath: null, replyTo: null, gif: null, reactions: {} };
+            let next = message;
+            if (edits[message.id] !== undefined && edits[message.id] !== message.text) next = { ...next, text: edits[message.id], edited: true };
+            if (reactionEdits[message.id]) next = { ...next, reactions: reactionEdits[message.id] };
+            return next;
+        });
+    }, [baseMessages, edits, optimistic, reactionEdits, removed]);
+    const pinnedMessageIds = pinnedEdit ?? (live ? livePinned : server.pinned);
     const loaded = live ? (!chatExists || liveLoaded) : server.loaded;
     const hasMore = live ? liveHasMore : server.hasMore;
     const clock = useExpiryClock([typingSeen], TYPING_SHOW_MS);
-    const typing = live ? typingSeen > 0 && typingSeen + TYPING_SHOW_MS > clock : server.typing;
+    const partnerTyping = live ? typingSeen > 0 && typingSeen + TYPING_SHOW_MS > clock : server.typing;
+    const typing = typingIndicator && partnerTyping;
 
     const loadOlder = useCallback(() => {
         if (live) {
@@ -585,37 +616,29 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
             .catch((failure: unknown) => onErrorRef.current(failure));
     }, [live, onErrorRef, partner, serverRef]);
 
-    /* ---- read receipts ---- */
+    /* ---- read receipts (the server also clears the bell item, and skips receipts when they're turned off) ---- */
 
     const unreadIds = useMemo(() => messages.filter((message) => message.fromEmail === partner && !message.read && !message.deleted && !message.pending).map((message) => message.id), [messages, partner]);
     const unreadKey = unreadIds.join(",");
     const markedRef = useRef("");
     useEffect(() => {
-        if (!active || !visible || !unreadKey || markedRef.current === unreadKey) return;
+        if (!active || !visible || !unreadKey || markedRef.current === unreadKey || mode === "connecting") return;
         markedRef.current = unreadKey;
-        if (live) {
-            const batch = writeBatch(db);
-            unreadKey.split(",").slice(0, 100).forEach((id) => batch.update(doc(db, "chats", chatId, "messages", id), { read: true }));
-            void batch.commit().catch(() => { markedRef.current = ""; });
-        } else if (mode === "fallback") {
-            void socialApi.dmAction({ action: "read", with: partner })
-                .then(() => setServer((state) => ({ ...state, messages: state.messages.map((message) => (message.fromEmail === partner ? { ...message, read: true } : message)) })))
-                .catch(() => { markedRef.current = ""; });
-        }
-    }, [active, chatId, live, mode, partner, unreadKey, visible]);
+        void socialApi.dmAction({ action: "read", with: partner })
+            .then(() => {
+                if (mode === "fallback") setServer((state) => ({ ...state, messages: state.messages.map((message) => (message.fromEmail === partner ? { ...message, read: true } : message)) }));
+            })
+            .catch(() => { markedRef.current = ""; });
+    }, [active, mode, partner, unreadKey, visible]);
 
     /* ---- typing (outgoing) ---- */
 
     const typingRef = useRef({ active: false, sentAt: 0, timer: 0 });
     const exists = live ? chatExists : server.exists;
     const writeTyping = useCallback((on: boolean) => {
-        if (!exists) return;
-        if (live) {
-            void updateDoc(doc(db, "chats", chatId), on ? { typingUser: me, updatedAt: serverTimestamp() } : { typingUser: null }).catch(() => undefined);
-        } else if (mode === "fallback") {
-            void socialApi.dmAction({ action: "typing", with: partner, active: on }, !on).catch(() => undefined);
-        }
-    }, [chatId, exists, live, me, mode, partner]);
+        if (!exists || mode === "connecting") return;
+        void socialApi.dmAction({ action: "typing", with: partner, active: on }, !on).catch(() => undefined);
+    }, [exists, mode, partner]);
 
     const stopTyping = useCallback(() => {
         const state = typingRef.current;
@@ -627,6 +650,7 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
     }, [writeTyping]);
 
     const notifyTyping = useCallback((draft: string) => {
+        if (!typingIndicator) return;
         const state = typingRef.current;
         if (!draft.trim()) {
             stopTyping();
@@ -639,42 +663,51 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
         state.active = true;
         state.sentAt = stamp;
         writeTyping(true);
-    }, [stopTyping, writeTyping]);
+    }, [stopTyping, typingIndicator, writeTyping]);
 
     useEffect(() => () => stopTyping(), [stopTyping]);
 
     /* ---- sending ---- */
 
-    const ensureChat = useCallback(async () => {
-        if (chatExists) return;
-        await setDoc(doc(db, "chats", chatId), { participants: [me, partner].sort(), updatedAt: serverTimestamp() }, { merge: true });
-    }, [chatExists, chatId, me, partner]);
-
-    // Shown until the listener delivers the message (a brand-new chat subscribes only after its first message).
-    const addOptimistic = useCallback((id: string, data: Partial<DmMessage>) => {
-        const message = dmMessageFromData(id, { fromEmail: me, read: false, ...data }, true, Date.now());
-        setOptimistic((current) => [...current.filter((entry) => entry.id !== id), message]);
-    }, [me]);
-
-    const sendMessage = useCallback(async (body: { text: string; type: "text" | "sticker"; replyTo: DmReply | null }) => {
+    /**
+     * Shown at once with a local id ("sending"); the server's copy replaces it,
+     * and stays until the listener (live) or the next poll has it.
+     */
+    const sendMessage = useCallback(async (body: DmSendInput) => {
         stopTyping();
-        if (!live) {
-            const message = await socialApi.send(partner, { text: body.text, type: body.type, replyTo: body.replyTo ? { id: body.replyTo.id } : null });
-            if (message) setServer((state) => ({ ...state, exists: true, messages: mergeMessages(state.messages, [message]) }));
-            return;
+        const localId = pendingId();
+        const draft = dmMessageFromData(localId, {
+            fromEmail: me,
+            read: false,
+            text: body.text,
+            type: body.type,
+            gif: body.gif ?? null,
+            replyTo: body.replyTo,
+            forwarded: body.forwarded === true,
+        }, true, Date.now());
+        setOptimistic((current) => [...current, draft]);
+        try {
+            const message = await socialApi.send(partner, {
+                text: body.text,
+                type: body.type,
+                gif: body.gif ?? null,
+                replyTo: body.replyTo ? { id: body.replyTo.id } : null,
+                forwarded: body.forwarded === true,
+            });
+            setOptimistic((current) => {
+                const rest = current.filter((entry) => entry.id !== localId);
+                return message && live ? [...rest, { ...message, pending: true }] : rest;
+            });
+            if (message && !live) setServer((state) => ({ ...state, exists: true, messages: mergeMessages(state.messages, [message]) }));
+        } catch (error) {
+            setOptimistic((current) => current.filter((entry) => entry.id !== localId));
+            throw error;
         }
-        await ensureChat();
-        const data: Record<string, unknown> = { fromEmail: me, text: body.text, type: body.type, createdAt: serverTimestamp(), read: false };
-        if (body.replyTo) data.replyTo = { id: body.replyTo.id, text: body.replyTo.text.slice(0, SOCIAL_LIMITS.replyExcerptMax), fromEmail: body.replyTo.fromEmail };
-        const created = await addDoc(collection(db, "chats", chatId, "messages"), data);
-        addOptimistic(created.id, { text: body.text, type: body.type, replyTo: body.replyTo });
-        await updateDoc(doc(db, "chats", chatId), { lastMessage: previewText(body.text), lastMessageAt: serverTimestamp(), lastSender: me, typingUser: null, updatedAt: serverTimestamp() }).catch(() => undefined);
-    }, [addOptimistic, chatId, ensureChat, live, me, partner, stopTyping]);
+    }, [live, me, partner, stopTyping]);
 
     /**
      * Voice messages always go through POST /api/social/voice (the server
-     * stores the recording and writes the message), with or without the
-     * Firebase bridge and whatever the Storage rules allow.
+     * stores the recording and writes the message).
      */
     const sendVoice = useCallback(async (blob: Blob, mimeType: string, seconds: number, label: string) => {
         stopTyping();
@@ -685,26 +718,45 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
         else setServer((state) => ({ ...state, exists: true, messages: mergeMessages(state.messages, [message]) }));
     }, [live, partner, stopTyping]);
 
-    const isNewest = useCallback((message: DmMessage) => {
-        const newest = messages[messages.length - 1];
-        return Boolean(newest && newest.id === message.id);
-    }, [messages]);
-
     const editMessage = useCallback(async (message: DmMessage, nextText: string) => {
-        if (!live) {
-            await socialApi.dmAction({ action: "edit", with: partner, messageId: message.id, text: nextText });
-            setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, text: nextText, edited: true } : entry)) }));
-            return;
-        }
-        await updateDoc(doc(db, "chats", chatId, "messages", message.id), { text: nextText, edited: true });
-        if (isNewest(message)) await updateDoc(doc(db, "chats", chatId), { lastMessage: previewText(nextText) }).catch(() => undefined);
-    }, [chatId, isNewest, live, partner]);
+        await socialApi.dmAction({ action: "edit", with: partner, messageId: message.id, text: nextText });
+        if (live) setEdits((current) => ({ ...current, [message.id]: nextText }));
+        else setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, text: nextText, edited: true } : entry)) }));
+    }, [live, partner]);
 
     // Deleting goes through the server, which also removes a voice recording (voice_clips, or Storage for older ones).
     const deleteMessage = useCallback(async (message: DmMessage) => {
         await socialApi.dmAction({ action: "delete", with: partner, messageId: message.id });
         setRemoved((current) => ({ ...current, [message.id]: true }));
-        if (!live) setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, deleted: true, text: "", voicePath: null } : entry)) }));
+        if (!live) setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, deleted: true, text: "", voicePath: null, gif: null, reactions: {} } : entry)) }));
+    }, [live, partner]);
+
+    /** Adds or takes back my reaction; shown at once. */
+    const react = useCallback(async (message: DmMessage, reaction: GroupReactionKey) => {
+        const people = message.reactions[reaction] ?? [];
+        const next: DmReactions = { ...message.reactions, [reaction]: people.includes(me) ? people.filter((person) => person !== me) : [...people, me] };
+        if (!next[reaction]?.length) delete next[reaction];
+        setReactionEdits((current) => ({ ...current, [message.id]: next }));
+        try {
+            await socialApi.dmAction({ action: "react", with: partner, messageId: message.id, reaction });
+            if (!live) setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, reactions: next } : entry)) }));
+        } catch (error) {
+            setReactionEdits((current) => {
+                const rest = { ...current };
+                delete rest[message.id];
+                return rest;
+            });
+            throw error;
+        }
+    }, [live, me, partner]);
+
+    const setPinned = useCallback(async (message: DmMessage, pinned: boolean) => {
+        const data = await socialApi.dmAction({ action: pinned ? "pin" : "unpin", with: partner, messageId: message.id });
+        const next = Array.isArray(data.pinnedMessageIds) ? readPinnedIds(data.pinnedMessageIds) : null;
+        if (next) {
+            setPinnedEdit(next);
+            if (!live) setServer((state) => ({ ...state, pinned: next }));
+        }
     }, [live, partner]);
 
     return {
@@ -717,10 +769,13 @@ export function useConversation({ me, partner, mode, chatExists, active, onError
         /** From the server in fallback mode; null when the caller decides from the friends list. */
         canSend: live ? null : server.canSend,
         exists,
+        pinnedMessageIds,
         sendMessage,
         sendVoice,
         editMessage,
         deleteMessage,
+        react,
+        setPinned,
         notifyTyping,
         stopTyping,
     };

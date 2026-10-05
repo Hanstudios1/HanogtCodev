@@ -31,9 +31,21 @@ export class GroupRequestError extends Error {
     }
 }
 
-/** The plan limit an answer carried ("∞" never comes: unlimited plans aren't refused). */
-function limitVars(data: { limit?: unknown; plan?: unknown }): Record<string, string | number> {
-    return typeof data.limit === "number" ? { limit: data.limit, ...(typeof data.plan === "string" ? { plan: data.plan } : {}) } : {};
+/**
+ * Numbers an answer carried for its message: the plan limit ("∞" never comes:
+ * unlimited plans aren't refused), how long a mute or slow mode lasts, and
+ * which AutoMod rule stopped a message.
+ */
+function limitVars(data: { limit?: unknown; plan?: unknown; minutes?: unknown; seconds?: unknown; rule?: unknown }): Record<string, string | number> {
+    const vars: Record<string, string | number> = {};
+    if (typeof data.limit === "number") {
+        vars.limit = data.limit;
+        if (typeof data.plan === "string") vars.plan = data.plan;
+    }
+    if (typeof data.minutes === "number") vars.minutes = data.minutes;
+    if (typeof data.seconds === "number") vars.seconds = data.seconds;
+    if (typeof data.rule === "string") vars.rule = data.rule;
+    return vars;
 }
 
 export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
@@ -102,6 +114,11 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     clipboard_failed: { TR: "Panoya kopyalanamadı.", EN: "Couldn't copy to the clipboard." },
     message_failed: { TR: "Mesaj gönderilemedi.", EN: "The message couldn't be sent." },
     offline: { TR: "Bu özellik için bulut bağlantısı gerekiyor; bağlantı kurulunca tekrar dene.", EN: "This needs the cloud connection; try again once it's back." },
+    muted: { TR: "Bu grupta susturuldun; {minutes} dakika sonra yeniden yazabilirsin.", EN: "You're muted in this group; you can write again in {minutes} minutes." },
+    slowmode: { TR: "Bu kanalda yavaş mod açık; {seconds} saniye sonra yeniden yazabilirsin.", EN: "Slow mode is on in this channel; you can write again in {seconds} seconds." },
+    automod_blocked: { TR: "Mesajın grubun AutoMod kurallarına takıldı ve gönderilmedi.", EN: "Your message hit the group's AutoMod rules and wasn't sent." },
+    cannot_moderate: { TR: "Bu kişiye bu işlemi uygulayamazsın; rütbesi seninkiyle aynı ya da daha yüksek.", EN: "You can't do that to this person; their rank is the same as yours or higher." },
+    invalid_command: { TR: "Komut anlaşılamadı. Kullanabileceğin komutları /yardim ile görebilirsin.", EN: "The command couldn't be read. See the commands you can use with /help." },
 };
 
 function isClientCode(value: unknown): value is GroupClientErrorCode {
@@ -117,7 +134,7 @@ async function request<T>(url: string, options: { body?: Record<string, unknown>
     } catch {
         throw new GroupRequestError("network");
     }
-    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown; limit?: unknown; plan?: unknown };
+    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown; limit?: unknown; plan?: unknown; minutes?: unknown; seconds?: unknown; rule?: unknown };
     if (!response.ok) {
         const fallback: GroupClientErrorCode = response.status === 429 ? "rate_limited" : response.status === 401 ? "unauthorized" : "server_error";
         throw new GroupRequestError(isClientCode(data.code) ? data.code : fallback, typeof data.error === "string" ? data.error : "", response.status, limitVars(data));

@@ -10,6 +10,7 @@ import {
     runServerQuery,
 } from "@/lib/server/firebase-rest";
 import { planQuota } from "@/lib/server/entitlements";
+import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
 import {
     GROUP_LIMITS,
     SYSTEM_SENDER,
@@ -28,11 +29,14 @@ import {
     isManagerRole,
     languageFromFileName,
     normalizeTopics,
+    sanitizeCustomCommands,
     seedLanguageFor,
     toMillis,
+    WELCOME_MESSAGE_MAX,
     type GroupDetailResponse,
     type GroupListResponse,
 } from "@/lib/groups";
+import { postWelcomeMessage } from "./_messages";
 import {
     GroupApiError,
     assertRateLimit,
@@ -44,6 +48,7 @@ import {
     groupJson,
     groupLanguage,
     groupMembers,
+    groupModerators,
     inviteDocumentId,
     isBanned,
     isInvitePending,
@@ -64,6 +69,7 @@ import {
     readEmail,
     readId,
     readJsonBody,
+    removeGroupMember,
     requireGroupMember,
     requireGroupUser,
     requireManager,
@@ -410,7 +416,11 @@ async function acceptInvite(body: Record<string, unknown>, user: GroupUser) {
         ]);
         return { group, joined: true };
     });
-    if (outcome.joined) await postSystemMessage(groupId, outcome.group, "member_joined", { name: await ownDisplayName(user) });
+    if (outcome.joined) {
+        const name = await ownDisplayName(user);
+        await postSystemMessage(groupId, outcome.group, "member_joined", { name });
+        await postWelcomeMessage(groupId, outcome.group, name);
+    }
     return { success: true, groupId };
 }
 
@@ -473,30 +483,8 @@ async function cancelInvite(body: Record<string, unknown>, user: GroupUser) {
 /* -------------------------------------------------------------------------- */
 
 async function removeMember(body: Record<string, unknown>, user: GroupUser) {
-    const { email } = user;
     const groupId = readId(body.groupId, "Grup kimliği");
-    const targetEmail = readEmail(body.targetEmail);
-    const ban = body.ban === true;
-    if (targetEmail === email) throw new GroupApiError(400, "self_action", "Kendinizi çıkaramazsınız; bunun yerine gruptan ayrılın.");
-    await retryOnConflict(async () => {
-        const { group, role } = await requireGroupMember(groupId, email);
-        requireManager(role);
-        if (targetEmail === group.ownerEmail) throw new GroupApiError(403, "cannot_remove_owner", "Grup sahibi gruptan çıkarılamaz.");
-        const targetRole = roleOf(group, targetEmail);
-        if (!targetRole) throw new GroupApiError(404, "target_not_member", "Bu kullanıcı grubun üyesi değil.");
-        if (targetRole === "admin" && role !== "owner") throw new GroupApiError(403, "cannot_remove_admin", "Yöneticileri yalnızca grup sahibi çıkarabilir.");
-        const now = new Date();
-        await commitServerPatches([
-            {
-                path: `groups/${groupId}`,
-                data: { members: groupMembers(group).filter((entry) => entry !== targetEmail), admins: groupAdmins(group).filter((entry) => entry !== targetEmail), updatedAt: now },
-                updateFields: ["members", "admins", "updatedAt", `typing.${memberKey(groupId, targetEmail)}`],
-                updateTime: group._updateTime,
-            },
-            ...(ban ? [{ path: `group_bans/${banDocumentId(groupId, targetEmail)}`, data: { groupId, email: targetEmail, bannedBy: email, createdAt: now } }] : []),
-        ]);
-    });
-    await deleteServerDocument(`group_invites/${inviteDocumentId(groupId, targetEmail)}`).catch(() => undefined);
+    await removeGroupMember(groupId, user.email, readEmail(body.targetEmail), body.ban === true);
     return { success: true };
 }
 
@@ -521,7 +509,28 @@ async function setAdmin(body: Record<string, unknown>, user: GroupUser) {
         const admins = groupAdmins(group);
         if (admins.includes(targetEmail) === enabled) return;
         const next = enabled ? [...admins, targetEmail] : admins.filter((entry) => entry !== targetEmail);
-        await patchServerDocument(`groups/${groupId}`, { admins: next, updatedAt: new Date() }, { updateFields: ["admins", "updatedAt"], updateTime: group._updateTime });
+        // An admin is no longer counted as a moderator.
+        const moderators = groupModerators(group).filter((entry) => entry !== targetEmail);
+        await patchServerDocument(`groups/${groupId}`, { admins: next, moderators, updatedAt: new Date() }, { updateFields: ["admins", "moderators", "updatedAt"], updateTime: group._updateTime });
+    });
+    return { success: true };
+}
+
+/** Owners and admins name moderators among the members (admins and the owner already moderate). */
+async function setModerator(body: Record<string, unknown>, user: GroupUser) {
+    const groupId = readId(body.groupId, "Grup kimliği");
+    const targetEmail = readEmail(body.targetEmail);
+    const enabled = body.enabled === true;
+    await retryOnConflict(async () => {
+        const { group, role } = await requireGroupMember(groupId, user.email);
+        requireManager(role);
+        const targetRole = roleOf(group, targetEmail);
+        if (!targetRole) throw new GroupApiError(404, "target_not_member", "Bu kullanıcı grubun üyesi değil.");
+        if (targetRole !== "member" && targetRole !== "moderator") throw new GroupApiError(400, "invalid_request", "Grup sahibi ve yöneticiler zaten moderatördür.");
+        const moderators = groupModerators(group);
+        if (moderators.includes(targetEmail) === enabled) return;
+        const next = enabled ? [...moderators, targetEmail] : moderators.filter((entry) => entry !== targetEmail);
+        await patchServerDocument(`groups/${groupId}`, { moderators: next, updatedAt: new Date() }, { updateFields: ["moderators", "updatedAt"], updateTime: group._updateTime });
     });
     return { success: true };
 }
@@ -551,7 +560,8 @@ async function transferOwnership(body: Record<string, unknown>, user: GroupUser)
         if (!roleOf(current, targetEmail)) throw new GroupApiError(404, "target_not_member", "Bu kullanıcı grubun üyesi değil.");
         // The previous owner stays an admin so the hand-over never locks them out.
         const admins = [...new Set([...groupAdmins(current), targetEmail, user.email])];
-        await patchServerDocument(`groups/${groupId}`, { ownerEmail: targetEmail, admins, updatedAt: new Date() }, { updateFields: ["ownerEmail", "admins", "updatedAt"], updateTime: current._updateTime });
+        const moderators = groupModerators(current).filter((entry) => entry !== targetEmail);
+        await patchServerDocument(`groups/${groupId}`, { ownerEmail: targetEmail, admins, moderators, updatedAt: new Date() }, { updateFields: ["ownerEmail", "admins", "moderators", "updatedAt"], updateTime: current._updateTime });
         return current;
     });
     const profiles = await loadProfiles([targetEmail]);
@@ -568,8 +578,9 @@ async function leaveGroup(body: Record<string, unknown>, user: GroupUser) {
         await patchServerDocument(`groups/${groupId}`, {
             members: groupMembers(current).filter((entry) => entry !== email),
             admins: groupAdmins(current).filter((entry) => entry !== email),
+            moderators: groupModerators(current).filter((entry) => entry !== email),
             updatedAt: new Date(),
-        }, { updateFields: ["members", "admins", "updatedAt", `typing.${memberKey(groupId, email)}`], updateTime: current._updateTime });
+        }, { updateFields: ["members", "admins", "moderators", "updatedAt", `typing.${memberKey(groupId, email)}`], updateTime: current._updateTime });
         return current;
     });
     await postSystemMessage(groupId, group, "member_left", { name: await ownDisplayName(user) });
@@ -620,6 +631,15 @@ async function updateSettings(body: Record<string, unknown>, user: GroupUser) {
             if (typeof body.allowMemberInvites !== "boolean") throw new GroupApiError(400, "invalid_request", "Geçersiz davet ayarı.");
             data.allowMemberInvites = body.allowMemberInvites;
         }
+        if (body.aiBot !== undefined) {
+            if (typeof body.aiBot !== "boolean") throw new GroupApiError(400, "invalid_request", "Geçersiz Hanogt AI ayarı.");
+            data.aiBot = body.aiBot;
+        }
+        if (body.welcomeMessage !== undefined) data.welcomeMessage = cleanMultiLine(body.welcomeMessage, WELCOME_MESSAGE_MAX);
+        if (body.customCommands !== undefined) {
+            if (!Array.isArray(body.customCommands)) throw new GroupApiError(400, "invalid_request", "Geçersiz komut listesi.");
+            data.customCommands = sanitizeCustomCommands(body.customCommands, RESERVED_COMMAND_NAMES);
+        }
         const fields = Object.keys(data);
         if (!fields.length) return;
         await patchServerDocument(`groups/${groupId}`, { ...data, updatedAt: new Date() }, { updateFields: [...fields, "updatedAt"], updateTime: group._updateTime });
@@ -669,6 +689,7 @@ export async function POST(request: NextRequest) {
             case "remove-member": return groupJson(await removeMember(body, user));
             case "unban": return groupJson(await unbanMember(body, user));
             case "set-admin": return groupJson(await setAdmin(body, user));
+            case "set-moderator": return groupJson(await setModerator(body, user));
             case "rename":
             case "update-settings": return groupJson(await updateSettings(body, user));
             case "transfer-ownership": return groupJson(await transferOwnership(body, user));

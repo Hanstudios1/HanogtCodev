@@ -11,6 +11,7 @@ import {
     runServerQuery,
     serverStorageBucket,
 } from "./firebase-rest";
+import { activeMute } from "./group-moderation";
 import { isDocId, isOwnedStoragePath, normalizeEmail } from "./validate";
 
 /*
@@ -36,7 +37,7 @@ export const VOICE_LIMITS = {
 
 export type VoiceErrorCode =
     | "invalid_request" | "invalid_email" | "invalid_id" | "self_action" | "not_found" | "not_friend" | "blocked"
-    | "voice_too_large" | "voice_format" | "voice_unavailable" | "voice_failed";
+    | "voice_too_large" | "voice_format" | "voice_unavailable" | "voice_failed" | "muted";
 
 /** Expected failures: the message is Turkish (primary language), the interface translates the code. */
 export class VoiceApiError extends Error {
@@ -366,6 +367,8 @@ export async function sendVoiceMessage(
 
     const groupId = target.groupId;
     await requireGroupMember(groupId, user.email);
+    // A muted member can't talk either (Hanogt Security Bot's /sustur).
+    if (await activeMute(groupId, user.email, now)) throw new VoiceApiError(403, "muted", "Bu grupta susturuldunuz.");
     const profile = await getServerDocument<StoredProfile>(`public_profiles/${user.email}`).catch(() => null);
     const username = typeof profile?.username === "string" ? profile.username.trim() : "";
     const author = (username || user.sessionName?.trim() || user.email.split("@")[0]).slice(0, 80);

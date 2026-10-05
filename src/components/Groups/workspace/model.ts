@@ -2,11 +2,14 @@ import type { OnMount } from "@monaco-editor/react";
 import type { DocumentData } from "firebase/firestore";
 import {
     GROUP_REACTIONS,
+    WELCOME_MESSAGE_MAX,
     isGroupId,
     isGroupTemplateId,
     isMemberKey,
     isSystemEvent,
     languageFromFileName,
+    readSlowmode,
+    sanitizeCustomCommands,
     toMillis,
     type GroupInfo,
     type GroupMemberInfo,
@@ -15,6 +18,7 @@ import {
     type GroupSystemEvent,
     type GroupTemplateId,
 } from "@/lib/groups";
+import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
 
 export type MonacoEditor = Parameters<OnMount>[0];
 
@@ -59,7 +63,7 @@ export type SaveState = "idle" | "saving" | "saved" | "error";
 export type WorkspaceMember = GroupMemberInfo;
 
 /** Live fields of the group document that clients may read directly (members only). */
-export type LiveGroupFields = Partial<Pick<GroupInfo, "name" | "description" | "emoji" | "color" | "rules" | "topics" | "ownerEmail" | "admins" | "members" | "pinnedMessageIds" | "allowMemberInvites" | "onboarding">> & {
+export type LiveGroupFields = Partial<Pick<GroupInfo, "name" | "description" | "emoji" | "color" | "rules" | "topics" | "ownerEmail" | "admins" | "members" | "pinnedMessageIds" | "allowMemberInvites" | "onboarding" | "moderators" | "slowmode" | "aiBot" | "welcomeMessage" | "customCommands">> & {
     typing: Record<string, number>;
 };
 
@@ -132,13 +136,20 @@ export function liveGroupFromData(data: DocumentData): LiveGroupFields {
         pinnedMessageIds: stringList(data.pinnedMessageIds),
         allowMemberInvites: typeof data.allowMemberInvites === "boolean" ? data.allowMemberInvites : undefined,
         onboarding: onboarding ? { dismissed: Boolean(onboarding.dismissed), callStarted: Boolean(onboarding.callStarted) } : undefined,
+        moderators: stringList(data.moderators) ?? (data.members ? [] : undefined),
+        slowmode: data.slowmode !== undefined ? readSlowmode(data.slowmode) : data.members ? {} : undefined,
+        aiBot: typeof data.aiBot === "boolean" ? data.aiBot : data.members ? true : undefined,
+        welcomeMessage: typeof data.welcomeMessage === "string" ? data.welcomeMessage.slice(0, WELCOME_MESSAGE_MAX) : data.members ? "" : undefined,
+        customCommands: data.customCommands !== undefined ? sanitizeCustomCommands(data.customCommands, RESERVED_COMMAND_NAMES) : data.members ? [] : undefined,
         typing,
     };
 }
 
-export function roleFor(email: string, ownerEmail: string, admins: readonly string[]): GroupRole {
+export function roleFor(email: string, ownerEmail: string, admins: readonly string[], moderators: readonly string[] = []): GroupRole {
     if (email === ownerEmail) return "owner";
-    return admins.includes(email) ? "admin" : "member";
+    if (admins.includes(email)) return "admin";
+    if (moderators.includes(email)) return "moderator";
+    return "member";
 }
 
 /** Sanitised download name; "/" folders are flattened for single-file downloads. */

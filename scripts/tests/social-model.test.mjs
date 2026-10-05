@@ -8,7 +8,8 @@ const groups = await load("lib/groups.ts");
 const {
     SOCIAL_LIMITS, badgeLabel, cleanMessageText, compareMessages, cutText, dmChatId, dmHref, dmMessageFromData, dmUnreadCount, dmUnreadTotal,
     filterFriends, foldText, formatFriendTag, groupHref, groupUnreadState, homeBadgeCount, isDmVoicePath, isFriendsTab, isGroupNotifyLevel, isSticker,
-    mergeMessages, parseFriendTag, parseSocialRoute, personMatches, previewText, railBadge, rankSwitcher, sectionMembers, sortDms, timeOf, visibleDms,
+    mergeMessages, parseFriendTag, parseSocialRoute, personMatches, previewText, railBadge, rankSwitcher, reactionSummary, readDmReactions, readPinnedIds,
+    sectionMembers, sortDms, timeOf, visibleDms,
 } = model;
 
 const RLO = String.fromCharCode(0x202e);
@@ -91,7 +92,7 @@ test("direct messages from stored data are checked field by field", () => {
     });
     assert.deepEqual(message, {
         id: "m1", fromEmail: "ali@example.com", text: "selam", type: "text", voicePath: null, voiceDuration: 600, createdAt: 100_000,
-        read: false, edited: false, deleted: false, replyTo: null, pending: false,
+        read: false, edited: false, deleted: false, replyTo: null, gif: null, reactions: {}, forwarded: false, pending: false,
     });
     const deleted = dmMessageFromData("m2", { fromEmail: "a@example.com", text: "secret", type: "voice", voicePath: "voice-messages/c/f.webm", deleted: true }, false, 77);
     assert.equal(deleted.text, "");
@@ -100,6 +101,45 @@ test("direct messages from stored data are checked field by field", () => {
     const reply = dmMessageFromData("m3", { replyTo: { id: "abc_DEF-1", text: "y".repeat(500), fromEmail: "B@example.com" } }, true);
     assert.deepEqual(reply.replyTo, { id: "abc_DEF-1", text: "y".repeat(SOCIAL_LIMITS.replyExcerptMax), fromEmail: "b@example.com" });
     assert.equal(reply.pending, true);
+});
+
+test("GIF messages keep only an allowed GIF, and reactions and forwards are read safely", () => {
+    const gif = { provider: "giphy", id: "abc123", title: "Kedi", url: "https://media.giphy.com/media/abc123/giphy.webp", still: "https://media.giphy.com/media/abc123/giphy_s.gif", width: 480, height: 270 };
+    const message = dmMessageFromData("g1", {
+        fromEmail: "a@example.com",
+        type: "gif",
+        text: "Kedi",
+        gif,
+        forwarded: true,
+        reactions: { like: ["A@example.com", "a@example.com", "b@example.com", "c@example.com"], nope: ["a@example.com"], love: "x", laugh: ["not an address"] },
+    });
+    assert.equal(message.type, "gif");
+    assert.equal(message.gif?.url, gif.url);
+    assert.equal(message.forwarded, true);
+    // Two people at most in a direct message, addresses lowercased and unique; unknown keys and bad values dropped.
+    assert.deepEqual(message.reactions, { like: ["a@example.com", "b@example.com"] });
+    // A GIF from an address outside the allow-list is dropped.
+    const outside = dmMessageFromData("g2", { type: "gif", gif: { ...gif, url: "https://evil.example.com/a.gif" } });
+    assert.equal(outside.gif, null);
+    // A text message never carries a GIF; a deleted one keeps neither the GIF nor its reactions.
+    assert.equal(dmMessageFromData("g3", { type: "text", gif }).gif, null);
+    const deleted = dmMessageFromData("g4", { type: "gif", gif, deleted: true, reactions: { like: ["a@example.com"] } });
+    assert.equal(deleted.gif, null);
+    assert.deepEqual(deleted.reactions, {});
+    assert.deepEqual(readDmReactions(null), {});
+    assert.deepEqual(readDmReactions(["like"]), {});
+});
+
+test("reaction summaries keep the display order and mark one's own", () => {
+    const summary = reactionSummary({ love: ["b@example.com"], like: ["a@example.com", "b@example.com"] }, "a@example.com");
+    assert.deepEqual(summary.map((item) => [item.key, item.count, item.mine]), [["like", 2, true], ["love", 1, false]]);
+    assert.deepEqual(reactionSummary({}, "a@example.com"), []);
+});
+
+test("pinned ids are valid, unique and capped", () => {
+    assert.deepEqual(readPinnedIds(["a1", "a1", "../x", 5, "b2"]), ["a1", "b2"]);
+    assert.equal(readPinnedIds(Array.from({ length: 40 }, (_, index) => `m${index}`)).length, 25);
+    assert.deepEqual(readPinnedIds("a1"), []);
 });
 
 test("voice paths must stay inside the conversation's folder", () => {

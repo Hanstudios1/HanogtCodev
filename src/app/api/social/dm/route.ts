@@ -1,8 +1,11 @@
 import { randomBytes } from "node:crypto";
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
+import { isReactionKey } from "@/lib/groups";
 import { commitServerMutations, commitServerPatches, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { clearDirectMessageNotification, notifyDirectMessage } from "@/lib/server/social-notify";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { isDocId, isOwnedStoragePath } from "@/lib/server/validate";
+import { readMessageGif } from "@/lib/social/gif";
 import {
     SOCIAL_LIMITS,
     cleanMessageText,
@@ -10,6 +13,8 @@ import {
     dmMessageFromData,
     isSticker,
     previewText,
+    readDmReactions,
+    readPinnedIds,
     timeOf,
     type DmConversationResponse,
     type DmMessage,
@@ -33,20 +38,21 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /*
- * Direct messages through the server, for browsers whose Firebase connection
- * is unavailable (Hanogt Social then polls GET with a `since` cursor). The
- * documents look exactly like the ones the client SDK writes (chats/{a_b} and
- * chats/{a_b}/messages), so both kinds of clients see the same conversation.
+ * Direct messages: every write goes through here (the browser only reads,
+ * live through the client SDK or by polling GET with a `since` cursor), so
+ * friendship, blocks, limits and text cleaning apply to every message.
+ * Documents: chats/{a_b} and chats/{a_b}/messages.
  */
 
-type StoredChat = { participants?: unknown; lastMessage?: unknown; lastMessageAt?: unknown; lastSender?: unknown; typingUser?: unknown; updatedAt?: unknown };
-type StoredMessage = Record<string, unknown> & { fromEmail?: unknown; text?: unknown; type?: unknown; voicePath?: unknown; createdAt?: unknown; deleted?: unknown };
+type StoredChat = { participants?: unknown; lastMessage?: unknown; lastMessageAt?: unknown; lastSender?: unknown; typingUser?: unknown; updatedAt?: unknown; pinnedMessageIds?: unknown };
+type StoredMessage = Record<string, unknown> & { fromEmail?: unknown; text?: unknown; type?: unknown; voicePath?: unknown; createdAt?: unknown; deleted?: unknown; reactions?: unknown };
 type PartnerRecord = { friends?: unknown; blockedUsers?: unknown; banned?: unknown; suspended?: unknown };
 
 const PAGE_DEFAULT = SOCIAL_LIMITS.dmPage;
 const PAGE_MAX = 100;
 const TYPING_FRESH_MS = 8_000;
 const READ_BATCH = 200;
+const PINNED_MAX = 25;
 const ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 /** 20 random characters, like the client SDK's automatic document ids. */
@@ -117,6 +123,7 @@ async function conversation(user: SocialUser, request: NextRequest): Promise<DmC
         canSend: isFriend && !blocked,
         isFriend,
         blocked,
+        pinnedMessageIds: readPinnedIds(chat?.pinnedMessageIds, PINNED_MAX),
         now,
     };
 }
@@ -134,14 +141,24 @@ async function readReply(value: unknown, chatId: string): Promise<DmReply | null
     return { id, text: previewText(quoted.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: quoted.fromEmail };
 }
 
+/** What the chat list and the notification show for a message. */
+function previewOf(type: string, text: string) {
+    if (type === "gif") return text ? `GIF · ${previewText(text, 80)}` : "GIF";
+    return previewText(text);
+}
+
 async function send(user: SocialUser, partner: string, body: Record<string, unknown>) {
     await assertRateLimit(`social:dm-send:${user.email}`, 40);
     await requireFriendship(user, partner);
-    const type = body.type === "sticker" ? "sticker" : "text";
+    const type = body.type === "sticker" ? "sticker" : body.type === "gif" ? "gif" : "text";
     let text: string;
+    const gif = type === "gif" ? readMessageGif(body.gif) : null;
     if (type === "sticker") {
         if (!isSticker(body.text)) throw new SocialApiError(400, "invalid_request", "Geçersiz çıkartma.");
         text = body.text;
+    } else if (type === "gif") {
+        if (!gif) throw new SocialApiError(400, "invalid_request", "Geçersiz GIF.");
+        text = gif.title;
     } else {
         const full = cleanMessageText(body.text, SOCIAL_LIMITS.messageMax * 2);
         if (!full) throw new SocialApiError(400, "empty_message", "Mesaj boş olamaz.");
@@ -154,16 +171,21 @@ async function send(user: SocialUser, partner: string, body: Record<string, unkn
     const id = newMessageId();
     const message: Record<string, unknown> = { fromEmail: user.email, text, type, createdAt: now, read: false };
     if (replyTo) message.replyTo = replyTo;
+    if (gif) message.gif = gif;
+    if (body.forwarded === true) message.forwarded = true;
+    const preview = previewOf(type, text);
     // One commit: the chat document (created on the first message) and the message appear together.
     await commitServerMutations([
         {
             type: "update",
             path: chatPath(chatId),
-            data: { participants: [user.email, partner].sort(), updatedAt: now, lastMessage: previewText(text), lastMessageAt: now, lastSender: user.email, typingUser: null },
+            data: { participants: [user.email, partner].sort(), updatedAt: now, lastMessage: preview, lastMessageAt: now, lastSender: user.email, typingUser: null },
             updateFields: ["participants", "updatedAt", "lastMessage", "lastMessageAt", "lastSender", "typingUser"],
         },
         { type: "create", path: messagePath(chatId, id), data: message },
     ]);
+    // The bell, after the answer (the sender doesn't wait for it).
+    after(() => notifyDirectMessage(partner, user.email, chatId, preview));
     return { success: true, message: dmMessageFromData(id, { ...message, createdAt: now.getTime() }) };
 }
 
@@ -202,23 +224,74 @@ async function edit(user: SocialUser, partner: string, body: Record<string, unkn
 
 async function remove(user: SocialUser, partner: string, body: Record<string, unknown>) {
     await assertRateLimit(`social:dm-write:${user.email}`, 60);
-    const { chatId, id, message, newest } = await ownMessage(user, partner, body.messageId);
+    const { chatId, chat, id, message, newest } = await ownMessage(user, partner, body.messageId);
     if (message.deleted === true) return { success: true };
     // Voice paths are written by clients: only recordings inside this chat's folder are removed.
     if (isOwnedStoragePath(message.voicePath, "voice-messages", chatId)) await deleteVoiceRecording(message.voicePath);
+    const pinned = readPinnedIds(chat.pinnedMessageIds, PINNED_MAX);
+    const chatFields: Record<string, unknown> = {};
+    if (newest) chatFields.lastMessage = "";
+    if (pinned.includes(id)) chatFields.pinnedMessageIds = pinned.filter((entry) => entry !== id);
     // Fields named in the mask without a value are removed: the text is gone, not only hidden.
     await commitServerPatches([
-        { path: messagePath(chatId, id), data: { deleted: true, text: "" }, updateFields: ["deleted", "text", "voicePath", "voiceDuration", "replyTo"], updateTime: message._updateTime },
-        ...(newest ? [{ path: chatPath(chatId), data: { lastMessage: "" }, updateFields: ["lastMessage"], exists: true }] : []),
+        { path: messagePath(chatId, id), data: { deleted: true, text: "" }, updateFields: ["deleted", "text", "voicePath", "voiceDuration", "replyTo", "gif", "reactions"], updateTime: message._updateTime },
+        ...(Object.keys(chatFields).length ? [{ path: chatPath(chatId), data: chatFields, updateFields: Object.keys(chatFields), exists: true }] : []),
     ]);
     return { success: true };
 }
 
-/** Marks the partner's messages read (the read receipts the client SDK path writes as well). */
-async function markRead(user: SocialUser, partner: string) {
+/** A message of the conversation either participant may act on (reactions, pins). */
+async function anyMessage(user: SocialUser, partner: string, value: unknown) {
+    const { chatId, chat } = await loadChat(user.email, partner);
+    if (!chat) throw new SocialApiError(404, "message_not_found", "Mesaj bulunamadı.");
+    const id = readMessageId(value);
+    const message = await getServerDocument<StoredMessage>(messagePath(chatId, id));
+    if (!message || message.deleted === true) throw new SocialApiError(404, "message_not_found", "Mesaj bulunamadı.");
+    return { chatId, chat, id, message };
+}
+
+/** Adds or takes back the caller's reaction (one of the group reactions). */
+async function react(user: SocialUser, partner: string, body: Record<string, unknown>) {
+    await assertRateLimit(`social:dm-react:${user.email}`, 90);
+    if (!isReactionKey(body.reaction)) throw new SocialApiError(400, "invalid_request", "Geçersiz tepki.");
+    const reaction = body.reaction;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+        const { chatId, id, message } = await anyMessage(user, partner, body.messageId);
+        const people = readDmReactions(message.reactions)[reaction] ?? [];
+        const next = people.includes(user.email) ? people.filter((person) => person !== user.email) : [...people, user.email];
+        try {
+            await commitServerPatches([{ path: messagePath(chatId, id), data: next.length ? { reactions: { [reaction]: next } } : {}, updateFields: [`reactions.${reaction}`], updateTime: message._updateTime }]);
+            return { success: true, reaction, reacted: next.includes(user.email), count: next.length };
+        } catch (error) {
+            if (attempt === 2 || ![400, 409, 412].includes(Number((error as { status?: unknown }).status))) throw error;
+        }
+    }
+    throw new SocialApiError(409, "conflict", "Tekrar deneyin.");
+}
+
+/** Pins live on the chat document (newest first, at most 25); either participant may pin. */
+async function setPinned(user: SocialUser, partner: string, body: Record<string, unknown>, pinned: boolean) {
     await assertRateLimit(`social:dm-write:${user.email}`, 60);
+    const { chatId, chat, id } = await anyMessage(user, partner, body.messageId);
+    const current = readPinnedIds(chat.pinnedMessageIds, PINNED_MAX);
+    if (current.includes(id) === pinned) return { success: true, pinnedMessageIds: current };
+    if (pinned && current.length >= PINNED_MAX) throw new SocialApiError(409, "conflict", "En fazla 25 mesaj sabitlenebilir.");
+    const next = pinned ? [id, ...current] : current.filter((entry) => entry !== id);
+    await patchServerDocument(chatPath(chatId), { pinnedMessageIds: next }, { updateFields: ["pinnedMessageIds"], exists: true });
+    return { success: true, pinnedMessageIds: next };
+}
+
+/**
+ * Marks the partner's messages read and clears the conversation's bell item.
+ * With read receipts turned off (Account Settings › Messaging) nothing is
+ * marked, so the partner doesn't see "Seen".
+ */
+async function markRead(user: SocialUser, partner: string) {
+    await assertRateLimit(`social:dm-read-receipt:${user.email}`, 120);
     const { chatId, chat } = await loadChat(user.email, partner);
     if (!chat) return { success: true, changed: 0 };
+    await clearDirectMessageNotification(user.email, chatId);
+    if (user.record.readReceipts === false) return { success: true, changed: 0 };
     const unread = await runServerQuery<{ fromEmail?: unknown }>({
         collectionId: "messages",
         parentPath: chatPath(chatId),
@@ -239,7 +312,8 @@ async function typing(user: SocialUser, partner: string, active: boolean) {
     if (!chat) return { success: true };
     const mine = chat.typingUser === user.email;
     if (active) {
-        if (!user.friends.includes(partner)) return { success: true };
+        // "Typing indicator" off in the messaging settings: the partner never sees it.
+        if (!user.friends.includes(partner) || user.record.typingIndicator === false) return { success: true };
         if (mine && Date.now() - timeOf(chat.updatedAt) < 2_500) return { success: true };
         await patchServerDocument(chatPath(chatId), { typingUser: user.email, updatedAt: new Date() }, { updateFields: ["typingUser", "updatedAt"], exists: true });
     } else if (mine) {
@@ -270,6 +344,9 @@ export async function POST(request: NextRequest) {
             case "delete": return socialJson(await remove(user, partner, body));
             case "read": return socialJson(await markRead(user, partner));
             case "typing": return socialJson(await typing(user, partner, body.active === true));
+            case "react": return socialJson(await react(user, partner, body));
+            case "pin": return socialJson(await setPinned(user, partner, body, true));
+            case "unpin": return socialJson(await setPinned(user, partner, body, false));
             default: throw new SocialApiError(400, "invalid_request", "Geçersiz işlem.");
         }
     } catch (error) {

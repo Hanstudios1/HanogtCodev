@@ -309,7 +309,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
 
     const members: WorkspaceMember[] = useMemo(() => {
         if (!detail || !group) return [];
-        const rank = { owner: 0, admin: 1, member: 2 } as const;
+        const rank = { owner: 0, admin: 1, moderator: 2, member: 3 } as const;
         return detail.members
             .filter((member) => group.members.includes(member.email))
             .map((member) => {
@@ -322,7 +322,7 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
                     customStatus: realtime ? realtime.customStatus : member.customStatus,
                     status,
                     online: status !== "offline",
-                    role: roleFor(member.email, group.ownerEmail, group.admins),
+                    role: roleFor(member.email, group.ownerEmail, group.admins, group.moderators),
                 };
             })
             .sort((a, b) => rank[a.role] - rank[b.role]);

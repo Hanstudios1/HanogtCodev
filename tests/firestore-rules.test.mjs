@@ -88,23 +88,32 @@ await check("a request can't be sent from the browser", assertFails(setDoc(doc(a
 await check("a request can't be accepted from the browser", assertFails(updateDoc(doc(as(A), "friendRequests", `${C}_${A}_1`), { status: "accepted" })));
 
 console.log("chats/");
-await check("friend can open chat", assertSucceeds(setDoc(doc(as(A), "chats", chatId), { participants: [A, B].sort(), updatedAt: serverTimestamp() }, { merge: true })));
-await check("non-friend cannot open chat", assertFails(setDoc(doc(as(C), "chats", [A, C].sort().join("_")), { participants: [A, C].sort(), updatedAt: serverTimestamp() })));
-await check("sender updates lastMessage + lastSender", assertSucceeds(setDoc(doc(as(A), "chats", chatId), { participants: [A, B].sort(), lastMessage: "hi", lastMessageAt: serverTimestamp(), lastSender: A }, { merge: true })));
-await check("cannot spoof lastSender", assertFails(setDoc(doc(as(A), "chats", chatId), { participants: [A, B].sort(), lastSender: B }, { merge: true })));
-await check("text message", assertSucceeds(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: A, text: "hello", type: "text", createdAt: serverTimestamp(), read: false })));
-await check("reply message", assertSucceeds(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: A, text: "re", type: "text", createdAt: serverTimestamp(), read: false, replyTo: { id: "x", text: "hello", fromEmail: B } })));
-await check("voice message in own chat folder", assertSucceeds(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: A, text: "", type: "voice", voicePath: `voice-messages/${chatId}/abc.webm`, voiceDuration: 3, createdAt: serverTimestamp(), read: false })));
-await check("voice path outside chat rejected", assertFails(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: A, text: "", type: "voice", voicePath: "group-voice-messages/g2/victim.webm", createdAt: serverTimestamp(), read: false })));
-await check("extra fields rejected", assertFails(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: A, text: "x", type: "text", createdAt: serverTimestamp(), read: false, admin: true })));
-await check("pre-read message rejected", assertFails(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: A, text: "x", type: "text", createdAt: serverTimestamp(), read: true })));
-await check("spoofed sender rejected", assertFails(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: B, text: "x", type: "text", createdAt: serverTimestamp(), read: false })));
+// Direct messages are written by /api/social/dm and /api/social/voice (friendship, blocks, limits).
+await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "chats", chatId), { participants: [A, B].sort(), updatedAt: new Date(), lastMessage: "hi", lastSender: A });
+    await setDoc(doc(ctx.firestore(), "chats", chatId, "messages", "m1"), { fromEmail: A, text: "hello", type: "text", createdAt: new Date(), read: false });
+});
+await check("participants read the chat", assertSucceeds(getDoc(doc(as(B), "chats", chatId))));
+await check("participants read its messages", assertSucceeds(getDocs(collection(as(B), "chats", chatId, "messages"))));
+await check("others can't read the chat", assertFails(getDoc(doc(as(C), "chats", chatId))));
+await check("others can't read its messages", assertFails(getDocs(collection(as(C), "chats", chatId, "messages"))));
+await check("a chat can't be opened from the browser", assertFails(setDoc(doc(as(A), "chats", [A, C].sort().join("_")), { participants: [A, C].sort(), updatedAt: serverTimestamp() })));
+await check("typing can't be written from the browser", assertFails(updateDoc(doc(as(A), "chats", chatId), { typingUser: A, updatedAt: serverTimestamp() })));
+await check("a message can't be sent from the browser", assertFails(addDoc(collection(as(A), "chats", chatId, "messages"), { fromEmail: A, text: "hello", type: "text", createdAt: serverTimestamp(), read: false })));
+await check("read receipts can't be written from the browser", assertFails(updateDoc(doc(as(B), "chats", chatId, "messages", "m1"), { read: true })));
+await check("an edit can't be written from the browser", assertFails(updateDoc(doc(as(A), "chats", chatId, "messages", "m1"), { text: "edited", edited: true })));
+await check("a message can't be deleted from the browser", assertFails(deleteDoc(doc(as(A), "chats", chatId, "messages", "m1"))));
 
 console.log("groups/");
-await check("member posts text", assertSucceeds(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "text", text: "yo", createdAt: serverTimestamp() })));
-await check("member posts voice in own group folder", assertSucceeds(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "voice", text: "", voicePath: "group-voice-messages/g1/v.webm", voiceDuration: 2, createdAt: serverTimestamp() })));
-await check("voice path of another group rejected", assertFails(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "voice", text: "", voicePath: "group-voice-messages/g2/v.webm", createdAt: serverTimestamp() })));
+// Group messages are written by /api/groups/chat (mutes, AutoMod, slow mode, the bots).
+await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "groups", "g1", "messages", "m1"), { fromEmail: B, author: "bob", type: "text", text: "yo", createdAt: new Date() });
+});
+await check("members read the messages", assertSucceeds(getDocs(collection(as(B), "groups", "g1", "messages"))));
+await check("a member can't post from the browser", assertFails(addDoc(collection(as(B), "groups", "g1", "messages"), { fromEmail: B, author: "bob", type: "text", text: "yo", createdAt: serverTimestamp() })));
+await check("a member can't delete from the browser", assertFails(deleteDoc(doc(as(B), "groups", "g1", "messages", "m1"))));
 await check("non-member cannot read group", assertFails(getDoc(doc(as(C), "groups", "g1"))));
+await check("non-member cannot read its messages", assertFails(getDocs(collection(as(C), "groups", "g1", "messages"))));
 
 console.log("calls/");
 // /api/calls writes calls with the service account; browsers with the Firebase bridge only listen.
@@ -133,7 +142,7 @@ await check("owner can't hand it to someone else", assertFails(updateDoc(doc(as(
 console.log("server-only collections/");
 await check("hiding the plan badge goes through the server only", assertFails(setDoc(doc(as(A), "subscriptions", A), { planBadgeHidden: true }, { merge: true })));
 await check("API keys can't be made from the browser", assertFails(setDoc(doc(as(A), "ai_api_key_index", "f".repeat(64)), { email: A, id: "key_0000000000000000" })));
-for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "site_config/features", "ai_connections/" + A, "ai_api_keys/" + A, "ai_api_key_index/0123abcd", "voice_clips/x"]) {
+for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "site_config/features", "ai_connections/" + A, "ai_api_keys/" + A, "ai_api_key_index/0123abcd", "voice_clips/x", "group_bans/x", "group_mutes/x", "group_warnings/x", "group_reports/x", "group_automod/x", "automod_events/x", "message_stars/x"]) {
     const [collectionName, id] = path.split("/");
     await check(`${collectionName} is closed`, assertFails(getDoc(doc(as(A), collectionName, id))));
 }

@@ -1,44 +1,45 @@
 import { NextRequest } from "next/server";
-import { createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { deleteServerDocument, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
-import { previewText } from "@/lib/social/model";
-import { GROUP_LIMITS, SYSTEM_SENDER, cleanMultiLine, isGroupId, isManagerRole, isMemberKey, isReactionKey, safeGroupVoicePath } from "@/lib/groups";
+import { GROUP_LIMITS, SYSTEM_SENDER, botOfSender, canModerate, isGroupId, isManagerRole, isMemberKey, isReactionKey, outranks, safeGroupVoicePath } from "@/lib/groups";
+import { editGroupMessage, sendGroupMessage } from "../_messages";
 import {
     GroupApiError,
     assertRateLimit,
     assertSameOrigin,
     groupErrorResponse,
     groupJson,
-    loadProfiles,
     memberKey,
-    ownDisplayName,
-    profileAvatar,
     readId,
     readJsonBody,
     requireGroupMember,
     requireGroupUser,
-    requireManager,
     retryOnConflict,
+    roleOf,
     staleTypingFields,
     strings,
 } from "../_shared";
+
+export const runtime = "nodejs";
+// Hanogt AI's answer to /ai is written after the response, within this time.
+export const maxDuration = 60;
 
 type StoredMessage = { fromEmail?: string; type?: string; text?: unknown; voicePath?: unknown; reactions?: Record<string, unknown> };
 
 const messagePath = (groupId: string, messageId: string) => `groups/${groupId}/messages/${messageId}`;
 
 /** Message fields a member may read; everything else on the document stays on the server. */
-const WIRE_FIELDS = ["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt", "event", "vars", "template", "reactions", "replyTo", "edited"] as const;
+const WIRE_FIELDS = ["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt", "event", "vars", "template", "reactions", "replyTo", "edited", "gif", "bot", "botEvent", "botState", "forwarded"] as const;
 const PAGE_DEFAULT = 120;
 const PAGE_MAX = 200;
 /** Typing entries older than this are not reported (the live view uses 7 s as well). */
 const TYPING_FRESH_MS = 7_000;
 
-/** Pins live on the group document (`pinnedMessageIds`, newest first); owners and admins only. */
+/** Pins live on the group document (`pinnedMessageIds`, newest first); moderators and up. */
 async function setPinned(groupId: string, messageId: string, email: string, pinned: boolean) {
     await retryOnConflict(async () => {
         const { group, role } = await requireGroupMember(groupId, email);
-        requireManager(role);
+        if (!canModerate(role)) throw new GroupApiError(403, "forbidden", "Mesajları moderatörler sabitler.");
         const current = strings(group.pinnedMessageIds).filter(isGroupId);
         if (current.includes(messageId) === pinned) return;
         if (pinned) {
@@ -71,14 +72,19 @@ async function toggleReaction(groupId: string, messageId: string, reaction: stri
     return { success: true, reaction, count: reactions.length, reacted: reactions.includes(key) };
 }
 
-/** Authors can delete their own messages; owners and admins can delete any (including system notices). */
+/**
+ * Authors delete their own messages; moderators delete the messages of
+ * people below them and the bots'; owners and admins any (system notices too).
+ */
 async function deleteMessage(groupId: string, messageId: string, email: string) {
-    const { role } = await requireGroupMember(groupId, email);
+    const { group, role } = await requireGroupMember(groupId, email);
     const path = messagePath(groupId, messageId);
     const message = await getServerDocument<StoredMessage>(path);
     if (!message) return { success: true };
     const own = message.fromEmail === email && message.fromEmail !== SYSTEM_SENDER;
-    if (!own && !isManagerRole(role)) throw new GroupApiError(403, "forbidden", "Bu mesajı silme yetkiniz yok.");
+    const authorRole = typeof message.fromEmail === "string" ? roleOf(group, message.fromEmail) : null;
+    const moderated = role === "moderator" && (botOfSender(message.fromEmail) !== null || (message.fromEmail !== SYSTEM_SENDER && (!authorRole || outranks(role, authorRole))));
+    if (!own && !isManagerRole(role) && !moderated) throw new GroupApiError(403, "forbidden", "Bu mesajı silme yetkiniz yok.");
     // Voice paths are written by clients: only recordings inside this group's folder are removed.
     const voicePath = safeGroupVoicePath(message.voicePath, groupId);
     if (voicePath) await deleteVoiceRecording(voicePath);
@@ -112,64 +118,6 @@ function wireMessage(record: Record<string, unknown> & { _id: string }) {
     const data: Record<string, unknown> = { id: record._id };
     for (const field of WIRE_FIELDS) if (record[field] !== undefined) data[field] = record[field];
     return data;
-}
-
-/**
- * The message a reply points to, read from the group itself (so a reply can't
- * put words in someone's mouth); null for anything that can't be replied to.
- * Only the id and an excerpt are copied, never who wrote it: deleting an
- * account anonymises that person's messages, and a copy must not undo that.
- */
-async function readReply(groupId: string, value: unknown) {
-    const id = value && typeof value === "object" ? (value as { id?: unknown }).id : null;
-    if (!isGroupId(id)) return null;
-    const quoted = await getServerDocument<StoredMessage>(messagePath(groupId, id));
-    if (!quoted || quoted.type === "system" || typeof quoted.fromEmail !== "string" || quoted.fromEmail === SYSTEM_SENDER) return null;
-    return { id, text: quoted.type === "voice" ? "🎤" : previewText(quoted.text, 100) };
-}
-
-/**
- * Text messages written through the server: replies (browsers may not write
- * that field themselves) and everything sent by browsers whose Firebase
- * connection is unavailable (Hanogt Social falls back to polling). Without a
- * reply the document has exactly the fields a direct client write may have.
- */
-async function sendMessage(groupId: string, text: unknown, replyTo: unknown, user: Awaited<ReturnType<typeof requireGroupUser>>) {
-    const body = cleanMultiLine(text, GROUP_LIMITS.messageMax * 2);
-    if (!body) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
-    if (body.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
-    await requireGroupMember(groupId, user.email);
-    const [author, profiles, reply] = await Promise.all([ownDisplayName(user), loadProfiles([user.email]), readReply(groupId, replyTo)]);
-    const createdAt = new Date();
-    const data: Record<string, unknown> = {
-        fromEmail: user.email,
-        author: author.slice(0, 80),
-        authorAvatar: profileAvatar(profiles.get(user.email)),
-        type: "text",
-        text: body,
-        createdAt,
-    };
-    if (reply) data.replyTo = reply;
-    const created = await createServerDocument(`groups/${groupId}/messages`, data);
-    const id = created.name.split("/").pop() || "";
-    return { success: true, message: { ...data, id, createdAt: createdAt.toISOString() } };
-}
-
-/** Authors edit their own text messages (messages are read-only for browsers). */
-async function editMessage(groupId: string, messageId: string, text: unknown, email: string) {
-    const body = cleanMultiLine(text, GROUP_LIMITS.messageMax * 2);
-    if (!body) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
-    if (body.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
-    await requireGroupMember(groupId, email);
-    const path = messagePath(groupId, messageId);
-    await retryOnConflict(async () => {
-        const message = await getServerDocument<StoredMessage>(path);
-        if (!message) throw new GroupApiError(404, "message_not_found", "Mesaj bulunamadı.");
-        if (message.fromEmail !== email || message.type !== "text") throw new GroupApiError(403, "forbidden", "Yalnızca kendi metin mesajlarınızı düzenleyebilirsiniz.");
-        if (message.text === body) return;
-        await patchServerDocument(path, { text: body, edited: true, editedAt: new Date() }, { updateFields: ["text", "edited", "editedAt"], updateTime: message._updateTime });
-    });
-    return { success: true };
 }
 
 /** Milliseconds from a query parameter; anything else (or a time far in the future) is ignored. */
@@ -236,11 +184,11 @@ export async function POST(request: NextRequest) {
         }
         if (action === "send") {
             await assertRateLimit(`groups:send:${user.email}`, 40, 60_000);
-            return groupJson(await sendMessage(groupId, body.text, body.replyTo, user), 201);
+            return groupJson(await sendGroupMessage(user, groupId, body), 201);
         }
         if (action === "edit") {
             await assertRateLimit(`groups:edit:${user.email}`, 40, 60_000);
-            return groupJson(await editMessage(groupId, readId(body.messageId, "Mesaj kimliği"), body.text, user.email));
+            return groupJson(await editGroupMessage(user, groupId, readId(body.messageId, "Mesaj kimliği"), body.text));
         }
         await assertRateLimit(`groups:${user.email}`, 40, 60_000);
         if (action === "pin" || action === "unpin") return groupJson(await setPinned(groupId, readId(body.messageId, "Mesaj kimliği"), user.email, action === "pin"));

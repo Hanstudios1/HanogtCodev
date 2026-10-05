@@ -454,11 +454,12 @@ async function deleteOwnedGroup(ctx: Context, group: StoredDocument) {
     const voice = (message: StoredDocument) => deleteVoiceFile(ctx, message.voicePath, "group-voice-messages", group._id);
     let complete = await deleteSubcollection(ctx, "groups", "groupMessages", `${group._path}/messages`, voice);
     if (!(await deleteSubcollection(ctx, "groups", "groupFiles", `${group._path}/files`))) complete = false;
-    for (const collectionId of ["group_invites", "group_invite_links", "group_bans"]) {
+    for (const collectionId of ["group_invites", "group_invite_links", "group_bans", "group_mutes", "group_warnings", "group_reports", "automod_events"]) {
         if (!(await drain(ctx, "groups", query(collectionId, "groupId", "EQUAL", group._id), deleting(ctx, "groups", "groupRecords")))) complete = false;
     }
     // Kept until its content is gone, so a later run finds the group again.
     if (!complete) return false;
+    await deleteServerDocument(`group_automod/${group._id}`);
     await deleteServerDocument(group._path);
     ctx.tally.count("groups");
     // Members could still post until the group document disappeared (the rules check it).
@@ -516,6 +517,21 @@ async function anonymizeRemainingGroupMessages(ctx: Context) {
     await drain(ctx, "groupMessages", query("messages", "fromEmail", "EQUAL", ctx.email, { allDescendants: true }), eachDocument(ctx, "groupMessages", async (message) => {
         if (GROUP_MESSAGE_PATH.test(message._path)) await anonymizeGroupMessage(ctx, message);
     }));
+}
+
+/**
+ * Hanogt Social's own records about this account: starred messages, mutes,
+ * warnings, reports by or about it and AutoMod stops. Warnings it gave as a
+ * moderator stay in force but no longer name it.
+ */
+async function deleteSocialRecords(ctx: Context) {
+    await runStep(ctx, "starredMessages", () => drain(ctx, "starredMessages", query("message_stars", "owner", "EQUAL", ctx.email), deleting(ctx, "starredMessages", "starredMessages")));
+    for (const [collectionId, field] of [["group_mutes", "email"], ["group_warnings", "email"], ["group_reports", "reporter"], ["group_reports", "target"], ["automod_events", "email"]] as const) {
+        await runStep(ctx, "groupRecords", () => drain(ctx, "groupRecords", query(collectionId, field, "EQUAL", ctx.email), deleting(ctx, "groupRecords", "groupRecords")));
+    }
+    await runStep(ctx, "groupRecords", () => drain(ctx, "groupRecords", query("group_warnings", "by", "EQUAL", ctx.email), eachDocument(ctx, "groupRecords", async (warning) => {
+        if (await patchExisting(warning._path, { by: null })) ctx.tally.count("groupWarningsAnonymized");
+    })));
 }
 
 async function deleteRequestsAndInvites(ctx: Context) {
@@ -682,6 +698,7 @@ const STEPS: readonly Step[] = [
     { id: "groups", scopes: BOTH, run: handleGroups },
     { id: "groupRecords", scopes: ALL, run: cleanGroupRecords },
     { id: "groupMessages", scopes: BOTH, run: anonymizeRemainingGroupMessages },
+    { id: "socialRecords", scopes: ALL, run: deleteSocialRecords },
     { id: "requests", scopes: ALL, run: deleteRequestsAndInvites },
     { id: "friendLists", scopes: ALL, run: cleanFriendLists },
     { id: "feedback", scopes: BOTH, run: cleanFeedback },

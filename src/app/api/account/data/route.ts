@@ -22,6 +22,8 @@ export const maxDuration = 60;
 const CHAT_MESSAGE_BUDGET = 2_000;
 const CHAT_LIMIT = 500;
 const EXPORTS_PER_HOUR = 10;
+/** Starred messages and group bot records included at most, per kind. */
+const SOCIAL_RECORD_LIMIT = 500;
 
 type Stored = Record<string, unknown> & { _id: string };
 
@@ -107,6 +109,46 @@ async function participantNames(emails: string[]) {
     return names;
 }
 
+/**
+ * Hanogt Social records about the user: their starred messages, the warnings
+ * and mutes the group bots recorded, and the reports they made. Who issued a
+ * warning or mute and whom a report named are other people's data, so only
+ * the group, the reason and the dates are exported.
+ */
+function exportSocialRecords(records: { stars: Stored[]; warnings: Stored[]; mutes: Stored[]; reportsMade: Stored[] }) {
+    const newestFirst = <T extends { createdAt: string | null }>(items: T[]) => items.sort((a, b) => time(b.createdAt) - time(a.createdAt));
+    return {
+        starredMessages: newestFirst(records.stars.map((star) => ({
+            scope: star.scope === "group" ? "group" : "dm",
+            // A direct message's partner is named by their display name in the app; the export keeps only the group id.
+            groupId: star.scope === "group" ? stringOr(star.target, "", 100) || null : null,
+            excerpt: stringOr(star.excerpt, "", 400),
+            author: stringOr(star.author, "", 80),
+            messageAt: toIso(star.messageAt),
+            createdAt: toIso(star.createdAt),
+        }))),
+        warnings: newestFirst(records.warnings.map((warning) => ({
+            groupId: stringOr(warning.groupId, "", 100) || null,
+            reason: stringOr(warning.reason, "", 300),
+            byAutoMod: warning.auto === true,
+            createdAt: toIso(warning.createdAt),
+        }))),
+        mutes: newestFirst(records.mutes.map((mute) => ({
+            groupId: stringOr(mute.groupId, "", 100) || null,
+            reason: stringOr(mute.reason, "", 300),
+            byAutoMod: mute.by === "automod",
+            until: toIso(mute.until),
+            createdAt: toIso(mute.createdAt),
+        }))),
+        reportsMade: newestFirst(records.reportsMade.map((report) => ({
+            groupId: stringOr(report.groupId, "", 100) || null,
+            reason: stringOr(report.reason, "", 300),
+            status: report.status === "resolved" ? "resolved" : "open",
+            createdAt: toIso(report.createdAt),
+        }))),
+    };
+}
+
 type ChatMessageRecord = { text?: unknown; type?: unknown; createdAt?: unknown };
 
 /** The user's own messages in one chat, oldest first (without the other person's messages or quoted replies). */
@@ -120,7 +162,7 @@ async function ownChatMessages(chatId: string, email: string, limit: number) {
     });
     return records
         .map((message) => ({
-            type: message.type === "voice" || message.type === "sticker" ? message.type : "text",
+            type: message.type === "voice" || message.type === "sticker" || message.type === "gif" ? message.type : "text",
             text: stringOr(message.text, "", 4_000),
             createdAt: toIso(message.createdAt),
         }))
@@ -172,7 +214,7 @@ export async function GET() {
             return NextResponse.json({ error: "Çok fazla dışa aktarma isteği. Biraz sonra tekrar deneyin." }, { status: 429, headers: jsonSecurityHeaders({ "Retry-After": String(rate.retryAfterSeconds) }) });
         }
 
-        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats, subscription, waitlist, aiConnections, aiApiKeys] = await Promise.all([
+        const [user, projects, gameProjects, mediaPosts, groups, arcadeGames, newsComments, arcadeLikes, arenaVotes, supportTickets, notifications, chats, subscription, waitlist, aiConnections, aiApiKeys, stars, warnings, mutes, reportsMade] = await Promise.all([
             getServerDocument<Record<string, unknown>>(`users/${email}`),
             queryServerCollection<Record<string, unknown>>("projects", "email", "EQUAL", email),
             queryServerCollection<Record<string, unknown>>("game_projects", "ownerEmail", "EQUAL", email),
@@ -191,6 +233,11 @@ export async function GET() {
             exportAiConnections(email).catch(() => []),
             // Hanogt AI API keys: names, first and last characters and dates (never a key or its hash).
             exportApiKeys(email).catch(() => []),
+            // Hanogt Social: starred messages, and what the group bots recorded about the user.
+            queryServerCollection<Record<string, unknown>>("message_stars", "owner", "EQUAL", email, { limit: SOCIAL_RECORD_LIMIT }).catch(() => []),
+            queryServerCollection<Record<string, unknown>>("group_warnings", "email", "EQUAL", email, { limit: SOCIAL_RECORD_LIMIT }).catch(() => []),
+            queryServerCollection<Record<string, unknown>>("group_mutes", "email", "EQUAL", email, { limit: SOCIAL_RECORD_LIMIT }).catch(() => []),
+            queryServerCollection<Record<string, unknown>>("group_reports", "reporter", "EQUAL", email, { limit: SOCIAL_RECORD_LIMIT }).catch(() => []),
         ]);
         const exportedProjects = await Promise.all(projects.map(async (project) => ({
             ...publicAccountData(project),
@@ -234,8 +281,9 @@ export async function GET() {
             aiConnections,
             aiApiKeys,
             privateChats,
+            social: exportSocialRecords({ stars, warnings, mutes, reportsMade }),
             exportedAt: new Date().toISOString(),
-            note: "Kimlik bilgileri ve parola özetleri bu dosyaya dahil edilmez. Hanogt AI bağlantılarınızın ve Hanogt AI API'sinin anahtarları da eklenmez; yalnızca baştaki ve sondaki birkaç karakter gösterilir. Özel sohbetlerde yalnızca sizin yazdığınız mesajlar yer alır; diğer katılımcılar görünen adlarıyla gösterilir.",
+            note: "Kimlik bilgileri ve parola özetleri bu dosyaya dahil edilmez. Hanogt AI bağlantılarınızın ve Hanogt AI API'sinin anahtarları da eklenmez; yalnızca baştaki ve sondaki birkaç karakter gösterilir. Özel sohbetlerde yalnızca sizin yazdığınız mesajlar yer alır; diğer katılımcılar görünen adlarıyla gösterilir. Hanogt Social kayıtlarında (uyarılar, susturmalar, raporlarınız) başka kişilerin adresleri yer almaz.",
         }, { headers: jsonSecurityHeaders() });
     } catch (error) {
         console.error("[account:export]", error instanceof Error ? error.message : error);

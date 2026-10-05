@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActiveSession } from "@/lib/server/active-session";
 import {
     commitServerMutations,
+    commitServerPatches,
     createServerDocument,
     deleteServerDocument,
     getServerDocument,
@@ -19,15 +20,21 @@ import {
     GROUP_LIMITS,
     GROUP_SYSTEM_EVENT_COPY,
     SYSTEM_SENDER,
+    WELCOME_MESSAGE_MAX,
+    cleanMultiLine,
     fillVars,
     groupColor,
     groupEmoji,
     isGroupId,
     isGroupTemplateId,
     isInviteToken,
+    isManagerRole,
     isMemberKey,
     normalizeGroupEmail,
+    outranks,
+    readSlowmode,
     safeGroupVoicePath,
+    sanitizeCustomCommands,
     toMillis,
     type GroupErrorCode,
     type GroupInfo,
@@ -35,6 +42,7 @@ import {
     type GroupRole,
     type GroupSystemEvent,
 } from "@/lib/groups";
+import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
 
 /* -------------------------------------------------------------------------- */
 /* Errors and responses                                                       */
@@ -179,6 +187,11 @@ export type StoredGroup = {
     allowMemberInvites?: boolean;
     onboarding?: { dismissed?: boolean; callStarted?: boolean };
     typing?: Record<string, unknown>;
+    moderators?: unknown;
+    slowmode?: unknown;
+    aiBot?: boolean;
+    welcomeMessage?: string;
+    customCommands?: unknown;
 };
 
 export type GroupDocument = StoredGroup & { _updateTime?: string };
@@ -199,18 +212,24 @@ export function groupAdmins(group: StoredGroup) {
     return strings(group.admins);
 }
 
+export function groupModerators(group: StoredGroup) {
+    return strings(group.moderators);
+}
+
 export function roleOf(group: StoredGroup, email: string): GroupRole | null {
     if (!email || !groupMembers(group).includes(email)) return null;
     if (group.ownerEmail === email) return "owner";
     if (groupAdmins(group).includes(email)) return "admin";
+    if (groupModerators(group).includes(email)) return "moderator";
     return "member";
 }
 
-/** Owner first, then admins, then members in join order. */
+/** Owner first, then admins, moderators and members in join order. */
 export function orderedMembers(group: StoredGroup) {
     const members = groupMembers(group);
     const admins = new Set(groupAdmins(group));
-    const rank = (email: string) => (email === group.ownerEmail ? 0 : admins.has(email) ? 1 : 2);
+    const moderators = new Set(groupModerators(group));
+    const rank = (email: string) => (email === group.ownerEmail ? 0 : admins.has(email) ? 1 : moderators.has(email) ? 2 : 3);
     return members.map((email, index) => ({ email, index })).sort((a, b) => rank(a.email) - rank(b.email) || a.index - b.index).map((entry) => entry.email);
 }
 
@@ -229,6 +248,10 @@ export async function requireGroupMember(groupId: string, email: string) {
 
 export function requireManager(role: GroupRole) {
     if (role !== "owner" && role !== "admin") throw new GroupApiError(403, "forbidden", "Bu işlem için yönetici yetkisi gerekiyor.");
+}
+
+export function requireModerator(role: GroupRole) {
+    if (role !== "owner" && role !== "admin" && role !== "moderator") throw new GroupApiError(403, "forbidden", "Bu işlem için moderatör yetkisi gerekiyor.");
 }
 
 export function requireOwner(role: GroupRole) {
@@ -261,6 +284,11 @@ export function publicGroup(groupId: string, group: StoredGroup): GroupInfo {
         allowMemberInvites: group.allowMemberInvites !== false,
         // Groups created before the checklist existed start with it hidden (it can be reopened in settings).
         onboarding: group.onboarding ? { dismissed: Boolean(group.onboarding.dismissed), callStarted: Boolean(group.onboarding.callStarted) } : { dismissed: true, callStarted: false },
+        moderators: groupModerators(group),
+        slowmode: readSlowmode(group.slowmode),
+        aiBot: group.aiBot !== false,
+        welcomeMessage: cleanMultiLine(group.welcomeMessage, WELCOME_MESSAGE_MAX),
+        customCommands: sanitizeCustomCommands(group.customCommands, RESERVED_COMMAND_NAMES),
     };
 }
 
@@ -384,6 +412,50 @@ export async function ownDisplayName(user: GroupUser) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Members                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Removes a member (and with `ban` keeps them from rejoining): moderators
+ * remove people below them, only owners and admins block, nobody touches
+ * the owner. Used by Members › Remove and the Security Bot's /at, /yasakla.
+ */
+export async function removeGroupMember(groupId: string, actorEmail: string, targetEmail: string, ban: boolean) {
+    if (targetEmail === actorEmail) throw new GroupApiError(400, "self_action", "Kendinizi çıkaramazsınız; bunun yerine gruptan ayrılın.");
+    const result = await retryOnConflict(async () => {
+        const { group, role } = await requireGroupMember(groupId, actorEmail);
+        if (ban && !isManagerRole(role)) throw new GroupApiError(403, "forbidden", "Engellemeyi yalnızca grup sahibi ve yöneticiler yapabilir.");
+        requireModerator(role);
+        if (targetEmail === group.ownerEmail) throw new GroupApiError(403, "cannot_remove_owner", "Grup sahibi gruptan çıkarılamaz.");
+        const targetRole = roleOf(group, targetEmail);
+        if (!targetRole) throw new GroupApiError(404, "target_not_member", "Bu kullanıcı grubun üyesi değil.");
+        if (!outranks(role, targetRole)) {
+            throw targetRole === "admin"
+                ? new GroupApiError(403, "cannot_remove_admin", "Yöneticileri yalnızca grup sahibi çıkarabilir.")
+                : new GroupApiError(403, "cannot_moderate", "Bu kişiye bu işlemi uygulayamazsınız.");
+        }
+        const now = new Date();
+        await commitServerPatches([
+            {
+                path: `groups/${groupId}`,
+                data: {
+                    members: groupMembers(group).filter((entry) => entry !== targetEmail),
+                    admins: groupAdmins(group).filter((entry) => entry !== targetEmail),
+                    moderators: groupModerators(group).filter((entry) => entry !== targetEmail),
+                    updatedAt: now,
+                },
+                updateFields: ["members", "admins", "moderators", "updatedAt", `typing.${memberKey(groupId, targetEmail)}`],
+                updateTime: group._updateTime,
+            },
+            ...(ban ? [{ path: `group_bans/${banDocumentId(groupId, targetEmail)}`, data: { groupId, email: targetEmail, bannedBy: actorEmail, createdAt: now } }] : []),
+        ]);
+        return { group, targetRole };
+    });
+    await deleteServerDocument(`group_invites/${inviteDocumentId(groupId, targetEmail)}`).catch(() => undefined);
+    return result;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Side effects                                                               */
 /* -------------------------------------------------------------------------- */
 
@@ -435,12 +507,9 @@ async function deleteGroupContent(groupId: string) {
  */
 export async function deleteGroupCascade(groupId: string) {
     await deleteGroupContent(groupId);
-    const [invites, links, bans] = await Promise.all([
-        queryServerCollection("group_invites", "groupId", "EQUAL", groupId, { limit: 1000 }),
-        queryServerCollection("group_invite_links", "groupId", "EQUAL", groupId, { limit: 1000 }),
-        queryServerCollection("group_bans", "groupId", "EQUAL", groupId, { limit: 1000 }),
-    ]);
-    await deleteInBatches([...invites, ...links, ...bans].map((document) => document._path));
+    const records = await Promise.all(["group_invites", "group_invite_links", "group_bans", "group_mutes", "group_warnings", "group_reports", "automod_events"]
+        .map((collectionId) => queryServerCollection(collectionId, "groupId", "EQUAL", groupId, { limit: 1000 })));
+    await deleteInBatches([...records.flat().map((document) => document._path), `group_automod/${groupId}`]);
     await deleteServerDocument(`groups/${groupId}`);
     // Members could still write until the group document disappeared (the rules check it).
     await deleteGroupContent(groupId).catch(() => undefined);
