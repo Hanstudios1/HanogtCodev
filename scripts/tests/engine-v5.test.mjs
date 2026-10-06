@@ -897,3 +897,34 @@ test("SaveSystem: slot names are checked, sizes are limited, a broken slot reads
     broken.world.resolveGlobal("SaveSystem").callMember("DeleteAll", [], [], []);
     assert.equal(storage.store.has("hanogt-engine:save:game_save_test:slot1"), false);
 });
+
+// ---------------------------------------------------------------------------
+// GLB models
+// ---------------------------------------------------------------------------
+
+test("models: GLB assets are validated, Mesh Renderers keep only models the project has", () => {
+    const project = createBlankProject("Modeller", "3d");
+    const hash = "a".repeat(64);
+    project.models = [
+        { id: "model_robot", name: "Robot\u0007", hash, size: 120_000, triangles: 2400 },
+        { id: "model_robot", name: "Duplicate", hash, size: 1, triangles: 1 },
+        { id: "model_bad", name: "Bad", hash: "not-a-hash", size: 1, triangles: 1 },
+    ];
+    project.scenes[0].objects.push(
+        { id: "entity_robot", name: "Robot", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createMeshRenderer({ modelId: "model_robot" })] },
+        { id: "entity_gone", name: "Gone", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createMeshRenderer({ modelId: "model_bad" })] },
+    );
+    const clean = normalizeProject(project);
+    assert.deepEqual(clean.models, [{ id: "model_robot", name: "Robot", hash, size: 120_000, triangles: 2400 }]);
+    const meshOf = (name) => clean.scenes[0].objects.find((item) => item.name === name).components.find((item) => item.type === "meshRenderer");
+    assert.equal(meshOf("Robot").modelId, "model_robot");
+    assert.equal(meshOf("Gone").modelId, null, "a model the project doesn't have falls back to the primitive");
+
+    const v4 = JSON.parse(JSON.stringify(clean));
+    v4.version = 4;
+    delete v4.models;
+    for (const entity of v4.scenes[0].objects) for (const component of entity.components) delete component.modelId;
+    const migrated = normalizeProject(v4);
+    assert.deepEqual(migrated.models, []);
+    assert.equal(migrated.scenes[0].objects.find((item) => item.name === "Robot").components.find((item) => item.type === "meshRenderer").modelId, null);
+});

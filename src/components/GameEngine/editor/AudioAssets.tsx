@@ -258,7 +258,8 @@ function AudioLibraryDialog({ onClose }: { onClose: () => void }) {
         let alive = true;
         listAccountAudio().then((result) => {
             if (!alive) return;
-            setFiles(result.files);
+            // The library holds models too (V5); this list is the sounds.
+            setFiles(result.files.filter((file) => file.contentType.startsWith("audio/")));
             setUsage(result.usage);
         }, (reason: unknown) => alive && setError(reason instanceof Error ? reason.message : t("audioUploadFailed")));
         return () => {

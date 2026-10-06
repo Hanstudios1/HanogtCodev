@@ -1,15 +1,70 @@
 /** Shared GPU resources: primitive geometries, sprite shapes, textures and editor icons. */
 import * as THREE from "three";
-import type { PrimitiveMesh, SpriteShape, TextureAsset } from "../types";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { loadAudioBytes } from "../audio-store";
+import { inspectGlb } from "../glb";
+import type { ModelAsset, PrimitiveMesh, SpriteShape, TextureAsset } from "../types";
+
+/** A parsed GLB model: clone `scene` per object (geometries and materials are shared). */
+export interface LoadedModel {
+    scene: THREE.Group;
+    /** Size and center of the model's bounds in its own space. */
+    size: THREE.Vector3;
+    center: THREE.Vector3;
+}
+
+type ModelEntry = { status: "loading" | "failed" } | { status: "ready"; model: LoadedModel };
 
 export class RenderAssets {
     private readonly geometries = new Map<string, THREE.BufferGeometry>();
     private readonly textures = new Map<string, { texture: THREE.Texture; dataUrl: string; filter: string }>();
     private readonly icons = new Map<string, THREE.Texture>();
     private textureAssets = new Map<string, TextureAsset>();
+    private modelAssets = new Map<string, ModelAsset>();
+    private readonly models = new Map<string, ModelEntry>();
     pixelArt = false;
     /** Called when an async texture finished decoding so the host can re-render. */
     onTextureLoaded: (() => void) | null = null;
+    /** Called when a model finished loading (or failed), so objects waiting for it rebuild. */
+    onModelLoaded: ((hash: string) => void) | null = null;
+
+    setModelAssets(assets: readonly ModelAsset[]) {
+        this.modelAssets = new Map(assets.map((asset) => [asset.id, asset]));
+    }
+
+    modelAsset(id: string | null | undefined): ModelAsset | null {
+        return id ? this.modelAssets.get(id) ?? null : null;
+    }
+
+    /**
+     * A project model ready to show, or null while it loads (or when it can't
+     * be shown). The file is checked again before parsing: a model must not
+     * reach for other files.
+     */
+    model(hash: string): LoadedModel | null {
+        const entry = this.models.get(hash);
+        if (entry) return entry.status === "ready" ? entry.model : null;
+        this.models.set(hash, { status: "loading" });
+        void (async () => {
+            const bytes = await loadAudioBytes({ hash });
+            if (!bytes || !inspectGlb(new Uint8Array(bytes)).ok) throw new Error("model");
+            const gltf = await new GLTFLoader().parseAsync(bytes.slice(0), "");
+            const scene = gltf.scene;
+            scene.traverse((child) => {
+                const mesh = child as THREE.Mesh;
+                if (mesh.geometry) mesh.geometry.userData.shared = true;
+                const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
+                for (const material of materials) material.userData.shared = true;
+            });
+            const box = new THREE.Box3().setFromObject(scene);
+            const size = box.isEmpty() ? new THREE.Vector3(1, 1, 1) : box.getSize(new THREE.Vector3());
+            const center = box.isEmpty() ? new THREE.Vector3() : box.getCenter(new THREE.Vector3());
+            this.models.set(hash, { status: "ready", model: { scene, size, center } });
+        })().catch(() => {
+            this.models.set(hash, { status: "failed" });
+        }).finally(() => this.onModelLoaded?.(hash));
+        return null;
+    }
 
     setTextureAssets(assets: readonly TextureAsset[]) {
         this.textureAssets = new Map(assets.map((asset) => [asset.id, asset]));
@@ -240,8 +295,21 @@ export class RenderAssets {
         for (const geometry of this.geometries.values()) geometry.dispose();
         for (const entry of this.textures.values()) entry.texture.dispose();
         for (const texture of this.icons.values()) texture.dispose();
+        for (const entry of this.models.values()) {
+            if (entry.status !== "ready") continue;
+            entry.model.scene.traverse((child) => {
+                const mesh = child as THREE.Mesh;
+                mesh.geometry?.dispose();
+                const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
+                for (const material of materials) {
+                    for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
+                    material.dispose();
+                }
+            });
+        }
         this.geometries.clear();
         this.textures.clear();
         this.icons.clear();
+        this.models.clear();
     }
 }

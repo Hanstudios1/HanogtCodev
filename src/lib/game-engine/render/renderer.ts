@@ -25,9 +25,10 @@ import type {
     TextureAsset,
     TilemapComponent,
     Vector3,
+    ModelAsset,
 } from "../types";
 import type { ParticleEmitter } from "../runtime/particles";
-import { RenderAssets } from "./assets";
+import { RenderAssets, type LoadedModel } from "./assets";
 import { applyTRS, readTRS, toThreePosition, toThreeQuaternion } from "./convert";
 
 export interface RenderEntity {
@@ -284,9 +285,10 @@ function disposeObject(object: THREE.Object3D) {
         const mesh = child as THREE.Mesh;
         // Sprites share one module-level geometry inside three.js; never dispose it.
         if (mesh.geometry && !(mesh.geometry.userData?.shared) && !(child instanceof THREE.Sprite)) mesh.geometry.dispose();
+        // Model materials are shared by every copy of the model (the assets cache disposes them).
         const material = (mesh as { material?: THREE.Material | THREE.Material[] }).material;
-        if (Array.isArray(material)) material.forEach((item) => item.dispose());
-        else material?.dispose();
+        if (Array.isArray(material)) material.forEach((item) => { if (!item.userData?.shared) item.dispose(); });
+        else if (material && !material.userData?.shared) material.dispose();
     });
 }
 
@@ -377,6 +379,7 @@ export class SceneRenderer {
             this.assets.pixelArt = true;
         }
         container.appendChild(this.canvas);
+        this.assets.onModelLoaded = (hash) => this.modelLoaded(hash);
         this.scene.add(this.root);
         this.scene.add(this.hemi);
         this.fallbackSun.position.set(6, 12, 8);
@@ -623,6 +626,11 @@ export class SceneRenderer {
     setGridVisible(visible: boolean) {
         this.showGrid = visible;
         if (this.gridGroup) this.gridGroup.visible = visible;
+    }
+
+    /** The project's GLB models (V5). */
+    setModels(models: readonly ModelAsset[]) {
+        this.assets.setModelAssets(models);
     }
 
     setTextures(textures: readonly TextureAsset[]) {
@@ -1159,12 +1167,58 @@ export class SceneRenderer {
         if (!object.visual) return;
         object.group.remove(object.visual);
         (object.visual.material as THREE.Material).dispose();
+        // A model's bounds box is its own; the model under it shares the cached geometry.
+        if (object.visual.geometry.userData.ownBounds) object.visual.geometry.dispose();
         object.visual = null;
         object.visualKey = "";
     }
 
+    /** Objects whose model just loaded rebuild with it (the primitive stood in meanwhile). */
+    private modelLoaded(hash: string) {
+        for (const object of this.objects.values()) {
+            if (object.visualKey.endsWith(`|wait:${hash}`)) object.version = -1;
+        }
+    }
+
+    /**
+     * A Mesh Renderer with a model (V5): an invisible box the size of the model
+     * takes picking, selection and bounds; a copy of the model hangs under it.
+     */
+    private ensureModel(object: EntityObject, component: MeshRendererComponent, hash: string, model: LoadedModel) {
+        const key = `model:${hash}`;
+        if (!object.visual || object.visualKey !== key) {
+            this.removeVisual(object);
+            const bounds = new THREE.BoxGeometry(Math.max(model.size.x, 0.01), Math.max(model.size.y, 0.01), Math.max(model.size.z, 0.01)).translate(model.center.x, model.center.y, model.center.z);
+            bounds.userData.ownBounds = true;
+            const proxy = new THREE.Mesh(bounds, new THREE.MeshBasicMaterial({ visible: false }));
+            proxy.userData.entityId = object.id;
+            const copy = model.scene.clone(true);
+            copy.traverse((child) => { child.userData.entityId = object.id; });
+            proxy.add(copy);
+            object.visual = proxy;
+            object.visualKey = key;
+            object.group.add(proxy);
+        }
+        object.visual.traverse((child) => {
+            if (!(child as THREE.Mesh).isMesh || child === object.visual) return;
+            child.castShadow = component.castShadows;
+            child.receiveShadow = component.receiveShadows;
+        });
+        object.visual.scale.set(1, 1, 1);
+        object.visual.renderOrder = 0;
+    }
+
     private ensureMesh(object: EntityObject, component: MeshRendererComponent) {
-        const key = `mesh:${component.mesh}`;
+        const asset = this.assets.modelAsset(component.modelId);
+        if (asset) {
+            const model = this.assets.model(asset.hash);
+            if (model) {
+                this.ensureModel(object, component, asset.hash, model);
+                return;
+            }
+        }
+        // The primitive shows while a model loads (and when it can't).
+        const key = `mesh:${component.mesh}${asset ? `|wait:${asset.hash}` : ""}`;
         if (!object.visual || object.visualKey !== key) {
             this.removeVisual(object);
             const geometry = this.assets.mesh(component.mesh);

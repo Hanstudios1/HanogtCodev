@@ -1,13 +1,14 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { GLB_CONTENT_TYPE, inspectGlb, looksLikeGlb } from "@/lib/game-engine/glb";
 import { effectivePlan, FREE_SUBSCRIPTION, GAME_AUDIO_MAX_BYTES, PLAN_GAME_AUDIO_LIMITS, type PlanGameAudioLimits, type PlanId } from "@/lib/plans";
 import { healBeforeRefusing, type HealOptions } from "./entitlements";
 import { commitServerMutations, getServerDocument, isWriteConflict, runServerQuery } from "./firebase-rest";
 import { getSubscription } from "./plans";
 
 /*
- * Audio files of Hanogt Engine games (V4).
+ * Audio files (V4) and GLB models (V5) of Hanogt Engine games.
  *
  * Files are stored once, by the SHA-256 of their bytes, in game_assets/<hash>
  * (immutable; at most 300 KB, so one Firestore document holds one file).
@@ -25,8 +26,9 @@ const USAGE = "game_asset_usage";
 const HASH = /^[0-9a-f]{64}$/;
 
 export type GameAudioType = "audio/wav" | "audio/mpeg" | "audio/ogg";
+export type GameAssetType = GameAudioType | typeof GLB_CONTENT_TYPE;
 
-export type GameAssetErrorCode = "not_found" | "unsupported_audio" | "too_large" | "empty" | "audio_quota" | "invalid_hash";
+export type GameAssetErrorCode = "not_found" | "unsupported_audio" | "unsupported_model" | "too_large" | "empty" | "audio_quota" | "invalid_hash";
 
 export class GameAssetError extends Error {
     readonly status: number;
@@ -53,6 +55,13 @@ export function sniffGameAudio(bytes: Uint8Array): GameAudioType | null {
     if (ascii(0, 4) === "OggS") return "audio/ogg";
     if (ascii(0, 3) === "ID3" || (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0)) return "audio/mpeg";
     return null;
+}
+
+/** An audio file, or a GLB model the player can show; null for anything else. */
+export function sniffGameAsset(bytes: Uint8Array): GameAssetType | null {
+    const audio = sniffGameAudio(bytes);
+    if (audio) return audio;
+    return looksLikeGlb(bytes) && inspectGlb(bytes).ok ? GLB_CONTENT_TYPE : null;
 }
 
 export function assertAudioHash(value: unknown): string {
@@ -93,14 +102,21 @@ export function gameAudioUsageFor(email: string, plan: PlanId): Promise<GameAudi
     return usageOf(email.toLowerCase(), plan);
 }
 
-export type UploadedGameAudio = { hash: string; contentType: GameAudioType; size: number; name: string; duplicate: boolean; usage: GameAudioUsage };
+export type UploadedGameAudio = { hash: string; contentType: GameAssetType; size: number; name: string; duplicate: boolean; usage: GameAudioUsage };
 
-/** Stores an audio file for an account (or finds the one it already has) within the plan's audio storage. */
+/**
+ * Stores an audio file or a GLB model for an account (or finds the one it
+ * already has) within the plan's game file storage.
+ */
 export async function uploadGameAudio(email: string, bytes: Uint8Array, name: unknown, options: HealOptions = {}): Promise<UploadedGameAudio> {
-    if (!bytes.byteLength) throw new GameAssetError(400, "empty", "Ses dosyası boş.");
-    if (bytes.byteLength > GAME_AUDIO_MAX_BYTES) throw new GameAssetError(413, "too_large", `Ses dosyası en fazla ${Math.round(GAME_AUDIO_MAX_BYTES / 1024)} KB olabilir.`);
-    const contentType = sniffGameAudio(bytes);
-    if (!contentType) throw new GameAssetError(415, "unsupported_audio", "Yalnızca WAV, MP3 ve OGG ses dosyaları yüklenebilir.");
+    if (!bytes.byteLength) throw new GameAssetError(400, "empty", "Dosya boş.");
+    if (bytes.byteLength > GAME_AUDIO_MAX_BYTES) throw new GameAssetError(413, "too_large", `Ses ve model dosyaları en fazla ${Math.round(GAME_AUDIO_MAX_BYTES / 1024)} KB olabilir.`);
+    if (looksLikeGlb(bytes)) {
+        const check = inspectGlb(bytes);
+        if (!check.ok) throw new GameAssetError(415, "unsupported_model", check.message);
+    }
+    const contentType = sniffGameAsset(bytes);
+    if (!contentType) throw new GameAssetError(415, "unsupported_audio", "Yalnızca WAV, MP3 ve OGG ses dosyaları ile GLB modeller yüklenebilir.");
     const hash = createHash("sha256").update(bytes).digest("hex");
     const owner = email.toLowerCase();
     const label = cleanName(name);
@@ -113,7 +129,7 @@ export async function uploadGameAudio(email: string, bytes: Uint8Array, name: un
         const healed = await healBeforeRefusing(owner, null, options);
         if (healed.upgraded) usage = await usageOf(owner, healed.plan);
         if (!fits(usage)) {
-            throw new GameAssetError(409, "audio_quota", "Planının ses depolama alanı doldu. Kullanmadığın sesleri sil ya da planını yükselt: /plans", {
+            throw new GameAssetError(409, "audio_quota", "Planının oyun dosyası (ses ve model) depolama alanı doldu. Kullanmadığın dosyaları sil ya da planını yükselt: /plans", {
                 plan: usage.plan, limitBytes: usage.limit.bytes, limitFiles: usage.limit.files, usedBytes: usage.bytes, usedFiles: usage.files,
             });
         }
@@ -139,13 +155,13 @@ export async function uploadGameAudio(email: string, bytes: Uint8Array, name: un
     return { hash, contentType, size: bytes.byteLength, name: label, duplicate: false, usage: { ...usage, bytes: usage.bytes + bytes.byteLength, files: usage.files + 1 } };
 }
 
-/** The bytes of a stored file. */
-export async function readGameAudio(hashValue: unknown): Promise<{ bytes: Uint8Array; contentType: GameAudioType }> {
+/** The bytes of a stored file (re-checked, so only audio and models are ever served). */
+export async function readGameAudio(hashValue: unknown): Promise<{ bytes: Uint8Array; contentType: GameAssetType }> {
     const hash = assertAudioHash(hashValue);
     const record = await getServerDocument<AssetRecord>(`${ASSETS}/${hash}`);
-    if (!record || !(record.data instanceof Uint8Array) || !record.data.byteLength) throw new GameAssetError(404, "not_found", "Ses dosyası bulunamadı.");
-    const contentType = sniffGameAudio(record.data);
-    if (!contentType) throw new GameAssetError(404, "not_found", "Ses dosyası bulunamadı.");
+    if (!record || !(record.data instanceof Uint8Array) || !record.data.byteLength) throw new GameAssetError(404, "not_found", "Dosya bulunamadı.");
+    const contentType = sniffGameAsset(record.data);
+    if (!contentType) throw new GameAssetError(404, "not_found", "Dosya bulunamadı.");
     return { bytes: record.data, contentType };
 }
 

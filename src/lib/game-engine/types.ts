@@ -83,6 +83,8 @@ export interface MaterialData {
 export interface MeshRendererComponent extends ComponentBase {
     type: "meshRenderer";
     mesh: PrimitiveMesh;
+    /** A model of the project shown instead of the primitive mesh (V5); null = the primitive. */
+    modelId: string | null;
     material: MaterialData;
     castShadows: boolean;
     receiveShadows: boolean;
@@ -783,6 +785,18 @@ export interface AudioAsset {
     duration: number;
 }
 
+/** A static 3D model of a project (V5): a GLB file kept in the asset store under `hash`. */
+export interface ModelAsset {
+    id: string;
+    /** Name scripts and the inspector use. */
+    name: string;
+    /** SHA-256 of the file (hex); the same file is stored once. */
+    hash: string;
+    size: number;
+    /** Triangles in the file (shown in the editor). */
+    triangles: number;
+}
+
 export interface ScriptAsset {
     id: string;
     name: string;
@@ -839,6 +853,8 @@ export interface GameProjectDocument {
     textures: TextureAsset[];
     /** Uploaded sound effects and music (V4). */
     audio: AudioAsset[];
+    /** Uploaded GLB models (V5). */
+    models: ModelAsset[];
     scripts: ScriptAsset[];
     settings: ProjectSettings;
     metadata: { createdAt: string; updatedAt: string };

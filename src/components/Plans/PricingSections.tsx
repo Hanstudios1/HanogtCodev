@@ -55,7 +55,7 @@ const P = {
     groupCommands: { TR: "Özel bot komutu (grup başına)", EN: "Custom bot commands (per group)" },
     groupWords: { TR: "AutoMod yasaklı kelime (grup başına)", EN: "AutoMod banned words (per group)" },
     stars: { TR: "Yıldızlı mesaj", EN: "Starred messages" },
-    gameAudio: { TR: "Oyun ses depolaması", EN: "Game audio storage" },
+    gameAudio: { TR: "Oyun dosyaları (ses ve model)", EN: "Game files (sounds and models)" },
     gameAudioCell: { TR: "{size} MB · {count} dosya", EN: "{size} MB · {count} files" },
     sectionAi: { TR: "Hanogt AI", EN: "Hanogt AI" },
     sectionBuild: { TR: "Kod, oyun ve ekip", EN: "Code, games and teams" },

@@ -12,7 +12,7 @@ const C = {
     gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
     groups: { TR: "Sahibi olduğun Hanogt Social grubu", EN: "Hanogt Social groups you own" },
     stars: { TR: "Yıldızlı mesaj", EN: "Starred messages" },
-    gameAudio: { TR: "Oyun ses depolaması", EN: "Game audio storage" },
+    gameAudio: { TR: "Oyun dosyaları (ses ve model)", EN: "Game files (sounds and models)" },
     gameAudioFiles: { TR: "{count} / {limit} dosya", EN: "{count} / {limit} files" },
     connections: { TR: "Yapay zekâ bağlantısı (kendi anahtarın)", EN: "AI connections (your own key)" },
     apiKeys: { TR: "Hanogt AI API anahtarı", EN: "Hanogt AI API keys" },

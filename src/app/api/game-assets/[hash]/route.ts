@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
             },
         });
     } catch (error) {
-        return assetError(error, "Ses dosyası yüklenemedi.");
+        return assetError(error, "Dosya yüklenemedi.");
     }
 }
 
@@ -47,6 +47,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         const result = await releaseGameAudio(email, (await context.params).hash);
         return apiJson(result, 200, rateHeaders(rate));
     } catch (error) {
-        return assetError(error, "Ses dosyası silinemedi.");
+        return assetError(error, "Dosya silinemedi.");
     }
 }

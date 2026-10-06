@@ -87,6 +87,7 @@ export function createMeshRenderer(overrides: Omit<Overrides<MeshRendererCompone
         type: "meshRenderer",
         enabled: overrides.enabled ?? true,
         mesh: overrides.mesh ?? "cube",
+        modelId: overrides.modelId ?? null,
         material: defaultMaterial(overrides.material),
         castShadows: overrides.castShadows ?? true,
         receiveShadows: overrides.receiveShadows ?? true,

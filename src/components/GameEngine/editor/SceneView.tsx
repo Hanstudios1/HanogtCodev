@@ -7,6 +7,7 @@ import { createEngineId } from "@/lib/game-engine/ids";
 import { SceneRenderer, type GizmoMode, type SnapSettings } from "@/lib/game-engine/render/renderer";
 import { sceneFrame } from "@/lib/game-engine/render/scene-frame";
 import { uniqueName } from "@/lib/game-engine/scene";
+import { addModelObject, MODEL_DRAG_TYPE } from "./ModelAssets";
 import { localPointToCell, tileKeyAt } from "@/lib/game-engine/tilemap";
 import type { TilemapComponent, Vector3 } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
@@ -157,6 +158,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
         }
         rendererRef.current = renderer;
         renderer.setTextures(store.getState().project.textures);
+        renderer.setModels(store.getState().project.models);
         renderer.setSnap(viewRef.current.snap);
         renderer.setEffectsVisible(viewRef.current.effects);
         renderer.setPaintMode(viewRef.current.painting);
@@ -187,6 +189,10 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
     useEffect(() => {
         rendererRef.current?.setTextures(project.textures);
     }, [project.textures]);
+
+    useEffect(() => {
+        rendererRef.current?.setModels(project.models);
+    }, [project.models]);
 
     useEffect(() => {
         const renderer = rendererRef.current;
@@ -335,6 +341,27 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
         const point = renderer.groundPoint(event.clientX, event.clientY);
         const prefabId = event.dataTransfer.getData("application/x-hanogt-prefab");
         const textureId = event.dataTransfer.getData("application/x-hanogt-texture");
+        const modelId = event.dataTransfer.getData(MODEL_DRAG_TYPE);
+        if (modelId) {
+            // On an object with a Mesh Renderer the model replaces its mesh; elsewhere a new object shows it.
+            const project = store.getState().project;
+            const model = (project.models ?? []).find((item) => item.id === modelId);
+            if (!model) return;
+            const target = renderer.pick(event.clientX, event.clientY);
+            const entity = target ? findEntity(project, target) : undefined;
+            if (entity?.components.some((component) => component.type === "meshRenderer")) {
+                store.update(t("hAssignModel"), (draft) => {
+                    for (const component of findEntity(draft, entity.id)?.components ?? []) if (component.type === "meshRenderer") component.modelId = model.id;
+                    touch(draft);
+                });
+                store.setSelection([entity.id]);
+                return;
+            }
+            let created = "";
+            store.update(t("hAddModelObject"), (draft) => { created = addModelObject(draft, model, point); });
+            if (created) store.setSelection([created]);
+            return;
+        }
         if (prefabId) {
             let id: string | null = null;
             store.update("Prefab ekle", (draft) => { id = instantiatePrefab(draft, prefabId, point); });
@@ -394,7 +421,7 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
                 }}
                 onDragOver={(event) => {
                     const types = event.dataTransfer.types;
-                    if (types.includes("application/x-hanogt-prefab") || types.includes("application/x-hanogt-texture")) {
+                    if (types.includes("application/x-hanogt-prefab") || types.includes("application/x-hanogt-texture") || types.includes(MODEL_DRAG_TYPE)) {
                         event.preventDefault();
                         event.dataTransfer.dropEffect = "copy";
                         setDragOver(true);

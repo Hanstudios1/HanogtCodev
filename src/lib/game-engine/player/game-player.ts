@@ -91,7 +91,13 @@ export class GamePlayer {
 
         this.renderer = new SceneRenderer(this.stage, { mode: "game", antialias: settings.antialias, shadows: settings.shadows, pixelArt: settings.pixelArt });
         this.renderer.setTextures(options.project.textures);
+        this.renderer.setModels(options.project.models ?? []);
         this.renderer.assets.onTextureLoaded = () => {
+            if (this.state !== "running") this.renderFrame();
+        };
+        const onModelLoaded = this.renderer.assets.onModelLoaded;
+        this.renderer.assets.onModelLoaded = (hash) => {
+            onModelLoaded?.(hash);
             if (this.state !== "running") this.renderFrame();
         };
         this.overlay = new GameOverlay(this.stage, {

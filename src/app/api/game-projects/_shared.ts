@@ -236,6 +236,7 @@ export function projectDocumentFields(project: GameProjectDocument) {
         prefabs: project.prefabs,
         textures: project.textures,
         audio: project.audio,
+        models: project.models,
         settings: project.settings,
     });
     return {

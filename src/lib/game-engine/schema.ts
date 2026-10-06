@@ -51,6 +51,7 @@ import {
     type GameEntity,
     type GameProjectDocument,
     type LocalizationEntry,
+    type ModelAsset,
     type LocalizationSettings,
     type PrefabAsset,
     type ProjectSettings,
@@ -78,6 +79,9 @@ export const ENGINE_LIMITS = {
     /** Uploaded audio files per project (the bytes live in the asset store, outside the project). */
     maxAudio: 40,
     maxAudioBytes: 300 * 1024,
+    /** Uploaded GLB models per project (V5; the bytes live in the asset store too). */
+    maxModels: 40,
+    maxModelBytes: 300 * 1024,
     maxScripts: 64,
     maxScriptBytes: 160 * 1024,
     /** Scenes + prefabs + textures + settings, serialised. Firestore documents cap at 1 MiB. */
@@ -499,6 +503,7 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 type,
                 enabled,
                 mesh: enumOf(meshValue, PRIMITIVE_MESHES, "cube"),
+                modelId: refId(source.modelId),
                 material: {
                     color: normalizeColor(material.color, "#ffffff"),
                     metallic: num(material.metallic, 0.05, 0, 1),
@@ -1084,6 +1089,18 @@ export function normalizeAudioAsset(value: unknown): AudioAsset | null {
     };
 }
 
+export function normalizeModelAsset(value: unknown): ModelAsset | null {
+    const source = rec(value);
+    if (typeof source.hash !== "string" || !AUDIO_HASH.test(source.hash)) return null;
+    return {
+        id: idOr(source.id, "model"),
+        name: str(source.name, "Model", ENGINE_LIMITS.maxNameLength),
+        hash: source.hash,
+        size: int(source.size, 0, 0, ENGINE_LIMITS.maxModelBytes),
+        triangles: int(source.triangles, 0, 0, 10_000_000),
+    };
+}
+
 export function normalizeTexture(value: unknown): TextureAsset | null {
     const source = rec(value);
     const dataUrl = typeof source.dataUrl === "string" ? source.dataUrl.trim() : "";
@@ -1156,13 +1173,14 @@ export type NormalizeProjectOptions = {
     dimension?: GameDimension;
 };
 
-export function projectContentBytes(project: Pick<GameProjectDocument, "scenes" | "prefabs" | "textures" | "settings" | "activeSceneId"> & { audio?: AudioAsset[] }): number {
+export function projectContentBytes(project: Pick<GameProjectDocument, "scenes" | "prefabs" | "textures" | "settings" | "activeSceneId"> & { audio?: AudioAsset[]; models?: ModelAsset[] }): number {
     const content = JSON.stringify({
         activeSceneId: project.activeSceneId,
         scenes: project.scenes,
         prefabs: project.prefabs,
         textures: project.textures,
         audio: project.audio ?? [],
+        models: project.models ?? [],
         settings: project.settings,
     });
     return new TextEncoder().encode(content).byteLength;
@@ -1204,10 +1222,19 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
         audioIds.add(asset.id);
         return true;
     });
-    // Audio Sources keep only files the project still has (else they play their built-in sound).
+    const rawModels = Array.isArray(source.models) ? source.models.slice(0, ENGINE_LIMITS.maxModels) : [];
+    const modelIds = new Set<string>();
+    const models = rawModels.map(normalizeModelAsset).filter((asset): asset is ModelAsset => {
+        if (!asset || modelIds.has(asset.id)) return false;
+        modelIds.add(asset.id);
+        return true;
+    });
+    // Audio Sources keep only files the project still has (else they play their built-in sound);
+    // Mesh Renderers whose model is gone show their primitive again.
     for (const entity of [...scenes.flatMap((scene) => scene.objects), ...prefabs.flatMap((prefab) => prefab.entities)]) {
         for (const component of entity.components) {
             if (component.type === "audioSource" && component.audioId && !audioIds.has(component.audioId)) component.audioId = null;
+            if (component.type === "meshRenderer" && component.modelId && !modelIds.has(component.modelId)) component.modelId = null;
         }
     }
 
@@ -1234,6 +1261,7 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
         prefabs,
         textures,
         audio,
+        models,
         scripts: [...scripts.values()],
         settings: normalizeProjectSettings(source.settings, [...sceneIds], typeof source.version === "number" ? source.version : 1),
         metadata: {

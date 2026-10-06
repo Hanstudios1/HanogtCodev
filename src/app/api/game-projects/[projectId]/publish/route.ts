@@ -53,12 +53,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
             if (blocking.length) throw new GameApiError(400, `${script.name} güvenlik taramasından geçemedi: ${blocking[0].message}.`);
         }
 
-        // Audio files must be in the store; the published game keeps its own copies of them.
-        const audioHashes = project.audio.map((asset) => asset.hash);
-        const missing = await missingGameAudio(audioHashes);
+        // Audio and model files must be in the store; the published game keeps its own copies of them.
+        const files = [...project.audio, ...project.models];
+        const assetHashes = files.map((asset) => asset.hash);
+        const missing = await missingGameAudio(assetHashes);
         if (missing.length) {
-            const names = project.audio.filter((asset) => missing.includes(asset.hash)).map((asset) => asset.name);
-            throw new GameApiError(400, `Bazı ses dosyaları sunucuda yok (${names.slice(0, 3).join(", ")}). Projeyi kaydedip tekrar deneyin ya da bu sesleri yeniden yükleyin.`);
+            const names = files.filter((asset) => missing.includes(asset.hash)).map((asset) => asset.name);
+            throw new GameApiError(400, `Bazı ses ya da model dosyaları sunucuda yok (${names.slice(0, 3).join(", ")}). Projeyi kaydedip tekrar deneyin ya da bu dosyaları yeniden yükleyin.`);
         }
 
         project.name = title;
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             updatedAt: now,
         };
         await commitServerMutations([{ type: existing ? "update" : "create", path: `arcade_games/${projectId}`, data: data as Record<string, unknown>, ...(existing ? { updateTime: existing._updateTime } : {}) }]);
-        await syncArcadeAudio(projectId, audioHashes);
+        await syncArcadeAudio(projectId, assetHashes);
         return apiJson({ success: true, arcadeId: projectId }, 200, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Oyun yayınlanamadı.");

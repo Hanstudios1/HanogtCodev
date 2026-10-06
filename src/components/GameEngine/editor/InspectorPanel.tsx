@@ -62,6 +62,7 @@ import {
 import AnimationEditor from "./AnimationEditor";
 import AnimatorEditor from "./AnimatorEditor";
 import { AudioInspector } from "./AudioAssets";
+import { ModelInspector } from "./ModelAssets";
 import { useEditor } from "./context";
 import { MultiEditContext } from "./inspector-fields";
 import { sharedComponents } from "./multi-edit";
@@ -643,6 +644,7 @@ function AssetInspector() {
     }
 
     if (asset.kind === "audio") return <AudioInspector id={asset.id} />;
+    if (asset.kind === "model") return <ModelInspector id={asset.id} />;
 
     if (asset.kind === "texture") {
         const texture = project.textures.find((item) => item.id === asset.id);

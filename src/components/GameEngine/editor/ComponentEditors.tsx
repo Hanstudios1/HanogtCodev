@@ -141,10 +141,16 @@ export function SpriteEditor({ entity, component, disabled }: Editor<SpriteRende
 }
 
 export function MeshEditor({ entity, component, disabled }: Editor<MeshRendererComponent>) {
+    const { store, t } = useEditor();
+    const models = useEditorState(store, (state) => state.project.models ?? []);
     const edit = useComponentEdit(entity.id, component);
     const material = component.material;
     return (
         <div className="space-y-0.5">
+            <FieldRow label="Model" title={t("modelFieldHint")}>
+                <SelectInput value={component.modelId ?? ""} disabled={disabled} onChange={(value) => edit("model", (draft) => { draft.modelId = value || null; })} options={[{ value: "", label: t("modelNone") }, ...models.map((model) => ({ value: model.id, label: model.name }))]} />
+            </FieldRow>
+            {component.modelId ? <p className="pb-1 text-[11px] leading-snug text-zinc-500">{t("modelMaterialHint")}</p> : null}
             <FieldRow label="Mesh">
                 <SelectInput value={component.mesh} disabled={disabled} onChange={(mesh) => edit("mesh", (draft) => { draft.mesh = mesh; })} options={PRIMITIVE_MESHES.map((mesh) => ({ value: mesh, label: mesh }))} />
             </FieldRow>

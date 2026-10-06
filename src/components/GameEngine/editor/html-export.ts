@@ -24,9 +24,10 @@ export async function buildStandaloneHtml(project: GameProjectDocument): Promise
     if (!response.ok) throw new Error("Oynatıcı paketi indirilemedi. Sayfayı yenileyip tekrar deneyin.");
     const runtime = (await response.text()).replace(/<\/script/gi, "<\\/script");
     const title = escapeHtml(project.name);
-    // Uploaded sounds go inside the file so the exported game plays offline.
-    const audio = await embedProjectAudio(project.audio ?? []);
-    if (audio.missing.length) throw new Error(`Bazı ses dosyaları indirilemedi (${audio.missing.slice(0, 3).join(", ")}). İnternet bağlantınızı kontrol edip tekrar deneyin.`);
+    // Uploaded sounds and models go inside the file so the exported game plays offline.
+    // Models (V5) travel the same way: the player reads every file by its hash.
+    const audio = await embedProjectAudio([...(project.audio ?? []), ...(project.models ?? [])]);
+    if (audio.missing.length) throw new Error(`Bazı ses ya da model dosyaları indirilemedi (${audio.missing.slice(0, 3).join(", ")}). İnternet bağlantınızı kontrol edip tekrar deneyin.`);
     // The page speaks the game's main language (V5 localization); games without languages stay Turkish.
     const localization = project.settings.localization;
     const pageLanguage = (localization.startLanguage !== "auto" ? localization.startLanguage : localization.languages[0]) ?? "tr";

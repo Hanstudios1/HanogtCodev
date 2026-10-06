@@ -1,6 +1,6 @@
 "use client";
 
-import {
+import { Box,
     ChevronDown,
     ChevronRight,
     Clapperboard,
@@ -18,6 +18,7 @@ import {
 import { useRef, useState, type ReactNode } from "react";
 import { ENGINE_LIMITS } from "@/lib/game-engine/schema";
 import { AudioGroupActions, AudioGroupItems } from "./AudioAssets";
+import { ModelGroupActions, ModelGroupItems } from "./ModelAssets";
 import { useEditor } from "./context";
 import { addScene, createScript, instantiatePrefab, textureFromFile, touch } from "./operations";
 import { useEditorState } from "./store";
@@ -221,6 +222,9 @@ export default function ProjectPanel() {
                 </Group>
                 <Group title={t("audioGroup")} icon={Music} count={(project.audio ?? []).length} action={<AudioGroupActions />}>
                     <AudioGroupItems matches={matches} Tile={AssetTile} />
+                </Group>
+                <Group title={t("modelsGroup")} icon={Box} count={(project.models ?? []).length} action={<ModelGroupActions />}>
+                    <ModelGroupItems matches={matches} Tile={AssetTile} />
                 </Group>
             </div>
         </div>

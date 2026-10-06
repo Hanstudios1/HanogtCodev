@@ -107,6 +107,7 @@ export function GamePreview({ project, scene }: { project: GameProjectDocument; 
     const frameRef = useRef(frame);
     const { shadows, antialias, pixelArt } = project.settings;
     const textures = project.textures;
+    const models = project.models;
 
     useEffect(() => {
         frameRef.current = frame;
@@ -117,6 +118,7 @@ export function GamePreview({ project, scene }: { project: GameProjectDocument; 
         if (!stage) return;
         const renderer = new SceneRenderer(stage, { mode: "game", shadows, antialias, pixelArt });
         renderer.setTextures(textures);
+        renderer.setModels(models);
         const overlay = new GameOverlay(stage, { showFps: false, touchControls: false, textures });
         let raf = 0;
         const loop = () => {
@@ -132,7 +134,7 @@ export function GamePreview({ project, scene }: { project: GameProjectDocument; 
             overlay.dispose();
             renderer.dispose();
         };
-    }, [shadows, antialias, pixelArt, textures]);
+    }, [shadows, antialias, pixelArt, textures, models]);
 
     return <div ref={stageRef} className="absolute inset-0 bg-black" />;
 }

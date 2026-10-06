@@ -16,6 +16,7 @@ import {
 } from "../../../game-projects/_shared";
 import { planQuota } from "@/lib/server/entitlements";
 import { claimGameAudio } from "@/lib/server/game-assets";
+import { GLB_CONTENT_TYPE } from "@/lib/game-engine/glb";
 
 export const runtime = "nodejs";
 
@@ -71,8 +72,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 data: scriptRecord(script, projectId, email, order, now),
             })),
         ]);
-        // The copy's sounds join the remixer's library (as far as their audio storage allows).
-        if (project.audio.length) await claimGameAudio(email, project.audio).catch(() => undefined);
+        // The copy's sounds and models join the remixer's library (as far as their storage allows).
+        const files = [...project.audio, ...project.models.map((model) => ({ hash: model.hash, name: model.name, size: model.size, contentType: GLB_CONTENT_TYPE }))];
+        if (files.length) await claimGameAudio(email, files).catch(() => undefined);
         return apiJson({ success: true, projectId }, 201, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Remix oluşturulamadı.");

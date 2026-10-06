@@ -184,8 +184,8 @@ export function loadAudioBytes(asset: Pick<AudioAsset, "hash">): Promise<ArrayBu
     return pending;
 }
 
-/** Embeds the bytes of every audio file of a project (exported HTML games play offline). */
-export async function embedProjectAudio(assets: readonly AudioAsset[]): Promise<{ files: Record<string, string>; missing: string[] }> {
+/** Embeds the bytes of every audio file (and model, V5) of a project (exported HTML games play offline). */
+export async function embedProjectAudio(assets: ReadonlyArray<Pick<AudioAsset, "hash" | "name">>): Promise<{ files: Record<string, string>; missing: string[] }> {
     const files: Record<string, string> = {};
     const missing: string[] = [];
     for (const asset of assets) {

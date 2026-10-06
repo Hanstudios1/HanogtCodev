@@ -138,3 +138,41 @@ test("published games keep their own copies; unpublishing and account deletion c
         assert.deepEqual(ownerDocs(db), []);
     });
 });
+
+// ---------------------------------------------------------------------------
+// GLB models (V5)
+// ---------------------------------------------------------------------------
+
+const glb = await load("lib/game-engine/glb.ts");
+
+test("GLB models: a self-contained glTF 2.0 file is stored and served; compressed or linked ones are refused", async () => {
+    const model = glb.sampleGlb();
+    const check = glb.inspectGlb(model);
+    assert.equal(check.ok, true);
+    assert.deepEqual(check.info, { meshes: 1, materials: 0, textures: 0, animations: 0, nodes: 1, triangles: 1 });
+    assert.equal(assets.sniffGameAsset(model), "model/gltf-binary");
+    assert.equal(sniffGameAudio(model), null, "a model is no audio file");
+
+    const draco = glb.sampleGlb({ extensionsUsed: ["KHR_draco_mesh_compression"], extensionsRequired: ["KHR_draco_mesh_compression"] });
+    assert.equal(glb.inspectGlb(draco).reason, "compressed");
+    assert.equal(glb.inspectGlb(glb.sampleGlb({ extensionsUsed: ["EXT_meshopt_compression"] })).reason, "compressed");
+    assert.equal(glb.inspectGlb(glb.sampleGlb({ extensionsUsed: ["KHR_texture_basisu"] })).reason, "compressed");
+    const linked = glb.sampleGlb({ buffers: [{ byteLength: 36, uri: "https://evil.example/mesh.bin" }] });
+    assert.equal(glb.inspectGlb(linked).reason, "external");
+    assert.equal(glb.inspectGlb(glb.sampleGlb({ images: [{ uri: "data:image/png;base64,AAAA" }] })).reason, "external");
+    assert.equal(glb.inspectGlb(glb.sampleGlb({ asset: { version: "1.0" } })).reason, "version");
+    const truncated = model.slice(0, 30);
+    assert.equal(glb.inspectGlb(truncated).ok, false);
+    assert.equal(glb.inspectGlb(new TextEncoder().encode("glTF but not really, just text")).ok, false);
+
+    await withBackend({}, {}, async () => {
+        const uploaded = await uploadGameAudio(ALI, model, "Robot");
+        assert.deepEqual([uploaded.contentType, uploaded.name, uploaded.usage.files], ["model/gltf-binary", "Robot", 1]);
+        const read = await readGameAudio(uploaded.hash);
+        assert.equal(read.contentType, "model/gltf-binary");
+        await rejects(uploadGameAudio(ALI, draco, "Draco"), "unsupported_model");
+        await rejects(uploadGameAudio(ALI, linked, "Linked"), "unsupported_model");
+        const listed = await listGameAudio(ALI);
+        assert.deepEqual(listed.files.map((item) => item.contentType), ["model/gltf-binary"], "models share the game file library and quota");
+    });
+});
