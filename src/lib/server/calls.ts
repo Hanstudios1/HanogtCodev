@@ -7,6 +7,8 @@ import {
     callFromData,
     callRoleOf,
     callWire,
+    canShareScreen,
+    hasVideoSection,
     isCallId,
     isCallStale,
     readCandidates,
@@ -133,6 +135,8 @@ export async function startCall(user: CallUser, input: Record<string, unknown>, 
         participants: [user.email, callee],
         status: "ringing",
         offer,
+        // The caller's offer reserves a video track for screen sharing (newer clients say so).
+        callerVideo: input.video === true && hasVideoSection(offer.sdp),
         callerCandidates: [],
         calleeCandidates: [],
         createdAt: new Date(now),
@@ -152,11 +156,13 @@ export async function answerCall(user: CallUser, input: Record<string, unknown>,
         const { record, role, updateTime } = await loadCall(input.callId, user.email);
         if (role !== "callee") throw new CallApiError(403, "forbidden", "Bu aramayı yalnızca aranan kişi yanıtlayabilir.");
         if (record.status !== "ringing" || !record.offer) throw new CallApiError(409, "call_inactive", "Arama artık etkin değil.");
+        // Screen sharing needs a video track on both sides: only when the offer had one too.
+        const calleeVideo = input.video === true && record.callerVideo && hasVideoSection(answer.sdp);
         await commitServerMutations([{
             type: "update",
             path: callPath(record.id),
-            data: { status: "active", answer, answeredAt: new Date(now), expiresAt: new Date(now + CALL_LIMITS.activeTtlMs) },
-            updateFields: ["status", "answer", "answeredAt", "expiresAt"],
+            data: { status: "active", answer, calleeVideo, answeredAt: new Date(now), expiresAt: new Date(now + CALL_LIMITS.activeTtlMs) },
+            updateFields: ["status", "answer", "calleeVideo", "answeredAt", "expiresAt"],
             ...(updateTime ? { updateTime } : {}),
         }]);
     });
@@ -220,6 +226,29 @@ export async function setCallMuted(user: CallUser, input: Record<string, unknown
     try {
         // `exists`: a call that ended meanwhile must not come back as a stub.
         await commitServerPatches([{ path: callPath(record.id), data: { [field]: input.muted }, updateFields: [field], exists: true }]);
+    } catch (error) {
+        if ((error as { status?: number }).status === 404) throw new CallApiError(404, "not_found", "Arama bulunamadı veya sona erdi.");
+        throw error;
+    }
+    return { success: true };
+}
+
+/**
+ * A participant starts or stops sharing their screen. Only answered calls
+ * whose two sides reserved a video track can share; the video itself flows
+ * peer to peer like the audio, this only tells the other side to show it.
+ */
+export async function setCallSharing(user: CallUser, input: Record<string, unknown>) {
+    if (typeof input.sharing !== "boolean") throw new CallApiError(400, "invalid_request", "Geçersiz istek.");
+    const { record, role } = await loadCall(input.callId, user.email);
+    if (record.status !== "active") {
+        if (!input.sharing) return { success: true };
+        throw new CallApiError(409, "call_inactive", "Ekran paylaşımı yalnızca bağlı bir aramada başlatılabilir.");
+    }
+    if (!canShareScreen(record)) throw new CallApiError(409, "call_inactive", "Bu aramada ekran paylaşılamıyor; iki tarafın da sayfayı yenilemesi gerekebilir.");
+    const field = role === "caller" ? "callerSharing" : "calleeSharing";
+    try {
+        await commitServerPatches([{ path: callPath(record.id), data: { [field]: input.sharing }, updateFields: [field], exists: true }]);
     } catch (error) {
         if ((error as { status?: number }).status === 404) throw new CallApiError(404, "not_found", "Arama bulunamadı veya sona erdi.");
         throw error;

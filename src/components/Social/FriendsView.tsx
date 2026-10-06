@@ -163,7 +163,9 @@ export default function FriendsView() {
                         onClick={() => setView("add")}
                         aria-pressed={view === "add"}
                         className={cx(
-                            "ms-1 inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[15px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+                            // relative: keeps the screen-reader label inside the scrolling tab row (an absolute
+                            // sr-only element positioned further out widened the whole page on phones).
+                            "relative ms-1 inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[15px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                             view === "add" ? "bg-transparent text-emerald-600 dark:text-emerald-400" : "bg-emerald-600 text-white hover:bg-emerald-500",
                         )}
                     >

@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { addCandidates, answerCall, declineCall, deleteCall, readCall, setCallMuted, startCall } from "@/lib/server/calls";
+import { addCandidates, answerCall, declineCall, deleteCall, readCall, setCallMuted, setCallSharing, startCall } from "@/lib/server/calls";
 import { SocialApiError, assertRateLimit, assertSameOrigin, readBody, requireSocialUser, socialJson } from "@/lib/social/server";
 import { assertBurst, callErrorResponse } from "./_shared";
 
@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic";
  *        { action: "decline", callId, reason }     declined / busy / unavailable (callee)
  *        { action: "end", callId }                 hang up or cancel (either side; deletes the call)
  *        { action: "mute", callId, muted }         microphone switched off/on (the other side shows it)
+ *        { action: "share", callId, sharing }      screen sharing started/stopped (the video flows peer to peer)
+ * "start" and "answer" take `video: true` when the description reserves a video track for screen sharing.
  */
 
 export async function GET(request: NextRequest) {
@@ -54,6 +56,9 @@ export async function POST(request: NextRequest) {
             case "mute":
                 await assertBurst(`calls:mute:${user.email}`, 2, 10, 600);
                 return socialJson(await setCallMuted(user, body));
+            case "share":
+                await assertBurst(`calls:share:${user.email}`, 2, 10, 600);
+                return socialJson(await setCallSharing(user, body));
             case "candidates":
                 await assertBurst(`calls:ice:${user.email}`, 5, 20, 1_500);
                 return socialJson(await addCandidates(user, body));

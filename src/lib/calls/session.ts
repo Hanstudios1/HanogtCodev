@@ -7,9 +7,14 @@
  * (muted microphone, blocked playback, no audio arriving, a silent input
  * device). The React provider (components/VoiceCallProvider.tsx) creates one
  * per call and renders its state.
+ *
+ * Screen sharing: the offer and the answer each reserve a video track that
+ * carries nothing until someone shares; sharing swaps the screen in with
+ * replaceTrack, so it never needs another round of signalling. Calls with an
+ * older client on the other end simply can't share.
  */
 import { CallRequestError, callsApi, watchCall, type CallView } from "./client";
-import { CALL_LIMITS, CALL_POLL, type CallDescription, type CallRole, type DeclineReason } from "./model";
+import { CALL_LIMITS, CALL_POLL, hasVideoSection, type CallDescription, type CallRole, type DeclineReason } from "./model";
 
 export type CallPhase = "preparing" | "ringing" | "incoming" | "connecting" | "active" | "ended";
 
@@ -21,6 +26,9 @@ export type CallNotice =
 
 /** How the audio travels: straight between the two browsers, or through the TURN relay. */
 export type CallRoute = "direct" | "relay";
+
+/** Why a screen couldn't be shared: no screen capture here (phones), it failed, or the call can't carry it. */
+export type ShareProblem = "unsupported" | "failed" | "not_ready";
 
 export type CallSessionState = {
     phase: CallPhase;
@@ -45,6 +53,17 @@ export type CallSessionState = {
     micSilent: boolean;
     /** Audio received so far, in kilobytes. */
     receivedKb: number;
+    /** Both sides reserved a video track and the call is connected: a screen can be shared. */
+    canShare: boolean;
+    /** This side is sharing its screen. */
+    sharing: boolean;
+    /** The other side is sharing its screen. */
+    remoteSharing: boolean;
+    /** Frames of the other side's screen are arriving. */
+    remoteVideoLive: boolean;
+    shareProblem: ShareProblem | null;
+    /** Changes whenever the local or remote screen stream changes (so views pick up the new one). */
+    screenVersion: number;
 };
 
 type SessionOptions = {
@@ -76,6 +95,9 @@ const SLOW_AFTER_MS = 8_000;
 const STATS_EVERY_MS = 500;
 /** Connected but no audio packets for this long: tell the user. */
 const NO_AUDIO_AFTER_MS = 5_000;
+/** Shared screens: frames per second and resolution the capture is asked for, and the bitrate cap. */
+const SCREEN_CAPTURE: MediaStreamConstraints = { video: { frameRate: { ideal: 24, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false };
+const SCREEN_BITRATE = { direct: 2_500_000, relay: 1_200_000 } as const;
 /** The microphone has delivered digital silence for this long: tell the user. */
 const MIC_SILENT_AFTER_MS = 8_000;
 const MIC_SILENT_LEVEL = 0.0004;
@@ -173,6 +195,14 @@ export class CallSession {
     private lastEnergy: { energy: number; duration: number } | null = null;
     private received = { bytes: 0, changedAt: 0 };
     private micQuietSince = 0;
+    /** The video track reserved for screen sharing (null when the other side's client can't). */
+    private video: RTCRtpTransceiver | null = null;
+    private screen: MediaStream | null = null;
+    private remoteVideo: MediaStream | null = null;
+    /** The server says both sides reserved video. */
+    private shareReady = false;
+    /** What the server last heard about this side's screen sharing. */
+    private shareSent = false;
 
     constructor(options: SessionOptions) {
         this.options = options;
@@ -197,7 +227,28 @@ export class CallSession {
             noIncomingAudio: false,
             micSilent: false,
             receivedKb: 0,
+            canShare: false,
+            sharing: false,
+            remoteSharing: false,
+            remoteVideoLive: false,
+            shareProblem: null,
+            screenVersion: 0,
         };
+    }
+
+    /** Whether this browser can capture a screen at all (desktop browsers; phones can't). */
+    static screenShareSupported() {
+        return typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
+    }
+
+    /** The other side's screen (one video track), once the call negotiated it. */
+    get remoteScreen() {
+        return this.remoteVideo;
+    }
+
+    /** This side's shared screen while sharing (for the preview). */
+    get localScreen() {
+        return this.screen;
     }
 
     get current() {
@@ -325,10 +376,28 @@ export class CallSession {
         this.pc = pc;
         const local = this.local;
         local?.getTracks().forEach((track) => pc.addTrack(track, local));
+        // The caller reserves a video track for screen sharing; the callee answers with one
+        // when the offer has it (accept()). Sharing later only swaps the track in.
+        if (this.role === "caller" && typeof pc.addTransceiver === "function") {
+            try {
+                this.video = pc.addTransceiver("video", { direction: "sendrecv" });
+            } catch {
+                this.video = null;
+            }
+        }
         const remote = new MediaStream();
         this.remoteStream = remote;
         const audio = this.ensureAudio();
         pc.ontrack = (event) => {
+            if (event.track.kind === "video") {
+                // The other side's screen: its own stream, shown by the call stage (not the <audio>).
+                const track = event.track;
+                this.remoteVideo = new MediaStream([track]);
+                track.onunmute = () => this.set({ remoteVideoLive: true });
+                track.onmute = () => this.set({ remoteVideoLive: false });
+                this.set({ remoteVideoLive: !track.muted, screenVersion: this.state.screenVersion + 1 });
+                return;
+            }
             if (!remote.getTracks().includes(event.track)) remote.addTrack(event.track);
             // Attached only once the track is in the stream: some browsers never
             // play tracks added to a stream that was already attached empty.
@@ -416,7 +485,7 @@ export class CallSession {
             const offer = await this.pc.createOffer();
             await this.pc.setLocalDescription(offer);
             if (this.closed) return;
-            ({ callId } = await callsApi.start(this.peer, { type: "offer", sdp: offer.sdp ?? "" }));
+            ({ callId } = await callsApi.start(this.peer, { type: "offer", sdp: offer.sdp ?? "" }, Boolean(this.video) && hasVideoSection(offer.sdp ?? "")));
         } catch (error) {
             if (!this.closed) this.finish(requestNotice(error, "start_failed"), "none");
             return;
@@ -455,11 +524,12 @@ export class CallSession {
             }
             if (!offer) throw new CallRequestError("call_inactive", 409);
             await this.pc.setRemoteDescription(offer);
+            this.claimVideo();
             await this.flushRemote();
             const answer = await this.pc.createAnswer();
             await this.pc.setLocalDescription(answer);
             if (this.closed) return;
-            await callsApi.answer(callId, { type: "answer", sdp: answer.sdp ?? "" });
+            await callsApi.answer(callId, { type: "answer", sdp: answer.sdp ?? "" }, Boolean(this.video) && hasVideoSection(answer.sdp ?? ""));
         } catch (error) {
             if (!this.closed) this.finish(requestNotice(error, "inactive"), "none");
             return;
@@ -469,6 +539,20 @@ export class CallSession {
         void this.flushCandidates();
         this.reportMute();
         this.connecting();
+    }
+
+    /** The caller's offer reserved a video track: answer with one too, so either side can share a screen. */
+    private claimVideo() {
+        const pc = this.pc;
+        if (!pc || typeof pc.getTransceivers !== "function") return;
+        const transceiver = pc.getTransceivers().find((item) => item.receiver?.track?.kind === "video" && !(item as RTCRtpTransceiver & { stopped?: boolean }).stopped);
+        if (!transceiver) return;
+        try {
+            transceiver.direction = "sendrecv";
+            this.video = transceiver;
+        } catch {
+            this.video = null;
+        }
     }
 
     async decline(reason: DeclineReason = "declined") {
@@ -516,7 +600,12 @@ export class CallSession {
             this.finish(null, "none");
             return;
         }
-        this.set({ remoteMuted: view.remoteMuted === true });
+        this.shareReady = view.shareReady === true && Boolean(this.video);
+        this.set({
+            remoteMuted: view.remoteMuted === true,
+            canShare: this.shareReady && this.state.phase === "active",
+            remoteSharing: this.shareReady && view.remoteSharing === true,
+        });
         if (this.role === "caller" && view.answer && !this.answerApplied && this.pc) {
             this.answerApplied = true;
             this.clear("ring");
@@ -589,6 +678,108 @@ export class CallSession {
         });
     }
 
+    /** Tells the other side when this screen starts or stops being shared (debounced; the last state wins). */
+    private reportShare() {
+        const callId = this.state.callId;
+        if (!callId || !this.canSend || this.closed || this.shareSent === this.state.sharing) return;
+        this.later("share", 150, () => {
+            const sharing = this.state.sharing;
+            if (this.shareSent === sharing) return;
+            this.shareSent = sharing;
+            void callsApi.share(callId, sharing).catch(() => {
+                // Try again with the next change.
+                this.shareSent = !sharing;
+            });
+        });
+    }
+
+    /* --------------------------- screen sharing ------------------------ */
+
+    /**
+     * Shares a screen, window or tab (the browser asks which). Call it from a
+     * click. Using the browser's own "stop sharing" button stops it too.
+     */
+    async startShare(): Promise<boolean> {
+        const pc = this.pc;
+        const video = this.video;
+        if (!pc || this.closed || this.state.sharing) return this.state.sharing;
+        if (!CallSession.screenShareSupported()) {
+            this.set({ shareProblem: "unsupported" });
+            return false;
+        }
+        if (!this.state.canShare || !video) {
+            this.set({ shareProblem: "not_ready" });
+            return false;
+        }
+        let stream: MediaStream;
+        try {
+            stream = await navigator.mediaDevices.getDisplayMedia(SCREEN_CAPTURE);
+        } catch (error) {
+            // Closing the browser's picker isn't a problem worth a message.
+            const name = (error as { name?: string } | null)?.name ?? "";
+            this.set({ shareProblem: name === "NotAllowedError" || name === "AbortError" ? null : "failed" });
+            return false;
+        }
+        const track = stream.getVideoTracks()[0];
+        if (!track || this.closed || this.pc !== pc || this.state.phase !== "active") {
+            stream.getTracks().forEach((item) => item.stop());
+            return false;
+        }
+        try {
+            // Text and code stay sharp; the frame rate gives way first.
+            track.contentHint = "detail";
+        } catch {
+            // Older browsers don't know content hints.
+        }
+        try {
+            await video.sender.replaceTrack(track);
+        } catch {
+            stream.getTracks().forEach((item) => item.stop());
+            this.set({ shareProblem: "failed" });
+            return false;
+        }
+        this.screen = stream;
+        track.onended = () => void this.stopShare();
+        void this.limitShareBitrate();
+        this.set({ sharing: true, shareProblem: null, screenVersion: this.state.screenVersion + 1 });
+        this.reportShare();
+        return true;
+    }
+
+    /** Stops sharing (the reserved video track goes back to carrying nothing). */
+    async stopShare() {
+        const stream = this.screen;
+        if (!stream) return;
+        this.screen = null;
+        stream.getTracks().forEach((track) => {
+            track.onended = null;
+            track.stop();
+        });
+        await this.video?.sender.replaceTrack(null).catch(() => undefined);
+        if (this.closed) return;
+        this.set({ sharing: false, screenVersion: this.state.screenVersion + 1 });
+        this.reportShare();
+    }
+
+    /** The user read why sharing didn't work. */
+    clearShareProblem() {
+        this.set({ shareProblem: null });
+    }
+
+    /** Caps the screen's bitrate: lower through the TURN relay, where every byte is paid for. */
+    private async limitShareBitrate() {
+        const sender = this.video?.sender;
+        if (!sender || !this.screen || typeof sender.getParameters !== "function") return;
+        try {
+            const parameters = sender.getParameters();
+            if (!parameters.encodings?.length) parameters.encodings = [{}];
+            parameters.encodings[0].maxBitrate = SCREEN_BITRATE[this.state.route ?? "relay"];
+            await sender.setParameters(parameters);
+        } catch {
+            // The browser keeps its own limits.
+        }
+    }
+
     /* ---------------------------- connection --------------------------- */
 
     private connecting() {
@@ -611,7 +802,7 @@ export class CallSession {
             if (this.state.phase !== "active") {
                 const now = Date.now();
                 this.received = { bytes: 0, changedAt: now };
-                this.set({ phase: "active", connectedAt: now, slow: false });
+                this.set({ phase: "active", connectedAt: now, slow: false, canShare: this.shareReady });
             }
             this.playRemote();
             this.startStats();
@@ -648,7 +839,7 @@ export class CallSession {
         if (callId && this.state.phase !== "incoming") callsApi.beacon(callId);
         this.closed = true;
         this.teardown();
-        this.set({ phase: "ended", notice: null, slow: false, remoteSpeaking: false, localSpeaking: false, audioBlocked: false, noIncomingAudio: false, micSilent: false });
+        this.set({ phase: "ended", notice: null, slow: false, remoteSpeaking: false, localSpeaking: false, audioBlocked: false, noIncomingAudio: false, micSilent: false, canShare: false, sharing: false, remoteSharing: false, remoteVideoLive: false });
     }
 
     /**
@@ -663,7 +854,7 @@ export class CallSession {
         this.teardown();
         if (callId && server === "remove") void callsApi.end(callId, true).catch(() => undefined);
         if (callId && server === "decline") void callsApi.decline(callId, "unavailable").catch(() => undefined);
-        this.set({ phase: "ended", notice, slow: false, remoteSpeaking: false, localSpeaking: false, audioBlocked: false, noIncomingAudio: false, micSilent: false });
+        this.set({ phase: "ended", notice, slow: false, remoteSpeaking: false, localSpeaking: false, audioBlocked: false, noIncomingAudio: false, micSilent: false, canShare: false, sharing: false, remoteSharing: false, remoteVideoLive: false });
     }
 
     private stopLocal() {
@@ -677,6 +868,13 @@ export class CallSession {
         this.stopWatch?.();
         this.stopWatch = null;
         this.stopLocal();
+        this.screen?.getTracks().forEach((track) => {
+            track.onended = null;
+            track.stop();
+        });
+        this.screen = null;
+        this.remoteVideo = null;
+        this.video = null;
         const pc = this.pc;
         if (pc) {
             pc.ontrack = null;
@@ -804,6 +1002,8 @@ export class CallSession {
             this.analysers.remote = this.analyse(this.remoteStream);
         }
         if (stats.bytes > this.received.bytes) this.received = { bytes: stats.bytes, changedAt: now };
+        // The route became known or changed while sharing: the bitrate cap follows it.
+        if (stats.route && stats.route !== this.state.route && this.screen) queueMicrotask(() => void this.limitShareBitrate());
         const active = this.state.phase === "active";
         this.set({
             route: stats.route ?? this.state.route,

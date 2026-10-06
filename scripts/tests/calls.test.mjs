@@ -211,6 +211,52 @@ test("muting: each side's switch, seen by the other side only", async () => {
     });
 });
 
+test("screen sharing: both sides must reserve video; each side's switch is seen by the other side only", async () => {
+    const VIDEO_OFFER = { type: "offer", sdp: `${OFFER.sdp}m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=sendrecv\r\n` };
+    const VIDEO_ANSWER = { type: "answer", sdp: `${ANSWER.sdp}m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=sendrecv\r\n` };
+    const REJECTED_VIDEO = { type: "answer", sdp: `${ANSWER.sdp}m=video 0 UDP/TLS/RTP/SAVPF 96\r\n` };
+    assert.equal(model.hasVideoSection(VIDEO_OFFER.sdp), true);
+    assert.equal(model.hasVideoSection(OFFER.sdp), false);
+    assert.equal(model.hasVideoSection(REJECTED_VIDEO.sdp), false, "port 0 is a rejected section");
+    await withBackend(seed(), {}, async (db) => {
+        const { callId } = await calls.startCall(ali, { callee: BERK, offer: VIDEO_OFFER, video: true });
+        const path = `calls/${callId}`;
+        assert.equal(db.get(path).callerVideo, true);
+        await rejects(calls.setCallSharing(ali, { callId, sharing: true }), "call_inactive");
+        assert.deepEqual(await calls.setCallSharing(ali, { callId, sharing: false }), { success: true }, "stopping is always fine");
+        await calls.answerCall(berk, { callId, answer: VIDEO_ANSWER, video: true });
+        assert.equal(db.get(path).calleeVideo, true);
+        assert.equal((await calls.readCall(ali, callId)).call.shareReady, true);
+        assert.equal((await calls.readCall(berk, callId)).call.shareReady, true);
+
+        await calls.setCallSharing(ali, { callId, sharing: true });
+        assert.equal(db.get(path).callerSharing, true);
+        assert.equal((await calls.readCall(berk, callId)).call.remoteSharing, true, "the callee sees the caller's screen");
+        assert.equal((await calls.readCall(ali, callId)).call.remoteSharing, false, "the caller's own screen isn't 'remote'");
+        await calls.setCallSharing(berk, { callId, sharing: true });
+        assert.equal((await calls.readCall(ali, callId)).call.remoteSharing, true);
+        await calls.setCallSharing(ali, { callId, sharing: false });
+        assert.equal((await calls.readCall(berk, callId)).call.remoteSharing, false);
+        await rejects(calls.setCallSharing(ali, { callId, sharing: "on" }), "invalid_request");
+        await rejects(calls.setCallSharing(user(CEM), { callId, sharing: true }), "not_found");
+        await calls.deleteCall(ALI, callId);
+        await rejects(calls.setCallSharing(ali, { callId, sharing: true }), "not_found");
+        assert.equal(db.has(path), false, "sharing on a finished call doesn't bring it back");
+
+        // An older callee answers without video (or rejects the section): nobody can share.
+        const old = await calls.startCall(ali, { callee: BERK, offer: VIDEO_OFFER, video: true });
+        await calls.answerCall(berk, { callId: old.callId, answer: REJECTED_VIDEO, video: true });
+        assert.equal(db.get(`calls/${old.callId}`).calleeVideo, false);
+        assert.equal((await calls.readCall(ali, old.callId)).call.shareReady, false);
+        await rejects(calls.setCallSharing(ali, { callId: old.callId, sharing: true }), "call_inactive");
+        // An older caller (no video flag): the callee can't claim video either.
+        const older = await calls.startCall(ali, { callee: BERK, offer: OFFER });
+        await calls.answerCall(berk, { callId: older.callId, answer: VIDEO_ANSWER, video: true });
+        assert.equal(db.get(`calls/${older.callId}`).callerVideo, false);
+        assert.equal(db.get(`calls/${older.callId}`).calleeVideo, false);
+    });
+});
+
 test("candidates per side are capped", async () => {
     await withBackend(seed(), {}, async (db) => {
         const { callId } = await calls.startCall(ali, { callee: BERK, offer: OFFER });

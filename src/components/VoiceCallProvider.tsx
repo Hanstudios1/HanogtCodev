@@ -1,9 +1,9 @@
 "use client";
 
 import { doc, getDoc } from "firebase/firestore";
-import { HeadphoneOff, Headphones, Mic, MicOff, Phone, PhoneOff, Settings2, ShieldCheck, Volume2, X } from "lucide-react";
+import { Expand, HeadphoneOff, Headphones, LoaderCircle, Maximize2, Mic, MicOff, Minimize2, MonitorOff, MonitorUp, Phone, PhoneOff, PictureInPicture2, Settings2, ShieldCheck, Shrink, Volume2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from "react";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import { useFirebaseBridge } from "@/components/Provider";
 import AudioSettingsDialog from "@/components/Social/AudioSettings";
@@ -11,7 +11,7 @@ import StaffBadge, { parseStaffRole } from "@/components/StaffBadge";
 import { useOwnProfile } from "@/lib/account-profile-client";
 import { callsApi, watchIncoming } from "@/lib/calls/client";
 import type { IncomingCall } from "@/lib/calls/model";
-import { CallSession, type CallNotice, type CallSessionState } from "@/lib/calls/session";
+import { CallSession, type CallNotice, type CallSessionState, type ShareProblem } from "@/lib/calls/session";
 import { startTone } from "@/lib/calls/sounds";
 import { db } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -52,7 +52,7 @@ const C = {
     deafen: { TR: "Sesi kapat", EN: "Deafen" },
     undeafen: { TR: "Sesi aç", EN: "Undeafen" },
     close: { TR: "Kapat", EN: "Close" },
-    privacy: { TR: "Ses kaydedilmez; geçici bağlantı verisi arama bitince silinir.", EN: "Audio is never recorded; temporary connection data is deleted when the call ends." },
+    privacy: { TR: "Ses ve paylaşılan ekran kaydedilmez; geçici bağlantı verisi arama bitince silinir.", EN: "Audio and shared screens are never recorded; temporary connection data is deleted when the call ends." },
     slow: { TR: "Bağlantı uzun sürüyor. Bazı ağlar (mobil veri, kurumsal veya okul ağları) doğrudan bağlantıyı engeller; bu ağlarda aramanın kurulması için sitenin bir TURN sunucusu kullanması gerekir.", EN: "Connecting is taking a while. Some networks (mobile data, company or school networks) block direct connections; on them the site needs a TURN server for calls to connect." },
     slowTurn: { TR: "Bağlantı uzun sürüyor; ağ bağlantını kontrol et.", EN: "Connecting is taking a while; check your network connection." },
     routeDirect: { TR: "Doğrudan bağlantı", EN: "Direct connection" },
@@ -66,7 +66,28 @@ const C = {
     startAudio: { TR: "Sesi başlat", EN: "Start audio" },
     noIncomingAudio: { TR: "Karşı taraftan ses verisi gelmiyor; bağlantı kopmuş olabilir. Sorun sürerse aramayı bitirip yeniden dene.", EN: "No audio data is arriving from the other person; the connection may have dropped. If it continues, end the call and try again." },
     micSilent: { TR: "Mikrofonundan hiç ses gelmiyor gibi görünüyor. Doğru mikrofon seçili mi?", EN: "No sound seems to be coming from your microphone. Is the right one selected?" },
+    expand: { TR: "Büyük görünüm", EN: "Full view" },
+    minimize: { TR: "Küçült", EN: "Minimize" },
+    fullscreen: { TR: "Tam ekran", EN: "Fullscreen" },
+    exitFullscreen: { TR: "Tam ekrandan çık", EN: "Exit fullscreen" },
+    pip: { TR: "Pencere içinde pencere", EN: "Picture in picture" },
+    share: { TR: "Ekranını paylaş", EN: "Share your screen" },
+    stopShare: { TR: "Paylaşımı durdur", EN: "Stop sharing" },
+    sharingYou: { TR: "Ekranını paylaşıyorsun", EN: "You're sharing your screen" },
+    sharingYouHint: { TR: "{name} ekranını görüyor. Ekran sesi paylaşılmaz; mikrofonun açık kalır.", EN: "{name} can see your screen. Screen audio isn't shared; your microphone stays on." },
+    sharingRemote: { TR: "{name} ekranını paylaşıyor", EN: "{name} is sharing their screen" },
+    watch: { TR: "İzle", EN: "Watch" },
+    streamStarting: { TR: "Yayın başlıyor…", EN: "The stream is starting…" },
+    you: { TR: "Sen", EN: "You" },
+    ok: { TR: "Tamam", EN: "OK" },
+    stage: { TR: "{name} ile arama", EN: "Call with {name}" },
 } satisfies Record<string, Copy>;
+
+const SHARE_PROBLEMS: Record<ShareProblem, Copy> = {
+    not_ready: { TR: "Bu aramada ekran paylaşılamıyor: karşı tarafın uygulaması eski. İkiniz de sayfayı yenileyip yeniden arayın.", EN: "Screens can't be shared in this call: the other person's app is out of date. Both of you reload the page and call again." },
+    unsupported: { TR: "Bu cihaz ekran paylaşamıyor (telefon tarayıcıları ekran paylaşımını desteklemez).", EN: "This device can't share its screen (phone browsers don't support screen sharing)." },
+    failed: { TR: "Ekran paylaşılamadı. Tarayıcının ve işletim sisteminin ekran kaydı iznini kontrol edip tekrar dene.", EN: "The screen couldn't be shared. Check the browser's and the system's screen recording permission and try again." },
+};
 
 const NOTICES: Record<CallNotice, Copy> = {
     declined: { TR: "{name} aramayı reddetti.", EN: "{name} declined the call." },
@@ -131,9 +152,12 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
     const audio = useSocialAudio();
     const devices = useAudioDevices();
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const ownProfile = useOwnProfile(email || null);
     // Do Not Disturb declines incoming calls without ringing; the caller sees "unavailable".
-    const doNotDisturb = useOwnProfile(email || null)?.statusPreference === "dnd";
+    const doNotDisturb = ownProfile?.statusPreference === "dnd";
     const [call, setCall] = useState<ActiveCall | null>(null);
+    /** The full call view (the bar is the minimised one). */
+    const [expanded, setExpanded] = useState(false);
     const sessionRef = useRef<CallSession | null>(null);
     const keyRef = useRef(0);
     const handledRef = useRef(new Set<string>());
@@ -161,6 +185,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
         });
         sessionRef.current = created;
         setCall({ key, session: created, peer, state: created.current });
+        setExpanded(false);
         return created;
     }, []);
 
@@ -185,6 +210,9 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
     }, []);
 
     const hangUp = useCallback(() => sessionRef.current?.hangUp(), []);
+    // From a click: the browser shows its screen picker only after a user gesture.
+    const startShare = useCallback(() => void sessionRef.current?.startShare(), []);
+    const stopShare = useCallback(() => void sessionRef.current?.stopShare(), []);
 
     /* -------------------------------- ringing -------------------------------- */
 
@@ -282,6 +310,8 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
     }, []);
 
     const status = publicStatus(call);
+    const stageOpen = expanded && call !== null && call.state.phase !== "incoming" && call.state.phase !== "ended";
+    const me = { name: ownProfile?.username || session?.user?.name || email.split("@")[0] || "", avatarUrl: ownProfile?.avatarUrl || session?.user?.image || null };
     const value = useMemo<CallContextValue>(() => ({
         startCall,
         hangUp,
@@ -301,7 +331,7 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
                     onDecline={() => void call.session.decline("declined")}
                 />
             )}
-            {call && call.state.phase !== "incoming" && (
+            {call && call.state.phase !== "incoming" && !stageOpen && (
                 <CallBar
                     call={call}
                     micOff={audio.micOff}
@@ -309,6 +339,22 @@ export default function VoiceCallProvider({ children }: { children: React.ReactN
                     onHangUp={() => call.session.hangUp()}
                     onClose={() => setCall((current) => (current?.key === call.key ? null : current))}
                     onSettings={() => setSettingsOpen(true)}
+                    onExpand={() => setExpanded(true)}
+                    onShare={startShare}
+                    onStopShare={stopShare}
+                />
+            )}
+            {call && stageOpen && (
+                <CallStage
+                    call={call}
+                    me={me}
+                    micOff={audio.micOff}
+                    deafened={audio.deafened}
+                    onHangUp={() => call.session.hangUp()}
+                    onMinimize={() => setExpanded(false)}
+                    onSettings={() => setSettingsOpen(true)}
+                    onShare={startShare}
+                    onStopShare={stopShare}
                 />
             )}
             {settingsOpen && <AudioSettingsDialog onClose={() => setSettingsOpen(false)} />}
@@ -368,30 +414,72 @@ function useClock(active: boolean) {
     return now;
 }
 
-/** The running call: a floating bar at the top that leaves the page usable. */
-function CallBar({ call, micOff, deafened, onHangUp, onClose, onSettings }: { call: ActiveCall; micOff: boolean; deafened: boolean; onHangUp: () => void; onClose: () => void; onSettings: () => void }) {
+type Problem = { text: string; action: string | null; run: (() => void) | null; danger: boolean; icon?: boolean };
+
+/** Why nobody hears anything (or why sharing failed), most actionable first; one line at a time. */
+function useCallProblem(call: ActiveCall, micOff: boolean, deafened: boolean, onSettings: () => void): Problem | null {
+    const { tx } = useI18n();
+    const { state, peer, session } = call;
+    const ended = state.phase === "ended";
+    const active = state.phase === "active";
+    if (ended) return null;
+    if (micOff) return { text: tx(C.mutedWarning), action: tx(C.turnOn), run: () => toggleMic(true), danger: true };
+    if (deafened) return { text: tx(C.deafenedWarning), action: tx(C.turnOn), run: () => toggleDeafen(true), danger: true };
+    if (state.audioBlocked) return { text: tx(C.audioBlocked), action: tx(C.startAudio), run: () => session.resumeAudio(), danger: true, icon: true };
+    if (state.shareProblem) return { text: tx(SHARE_PROBLEMS[state.shareProblem]), action: tx(C.ok), run: () => session.clearShareProblem(), danger: false };
+    if (active && state.micSilent) return { text: tx(C.micSilent), action: tx(C.settings), run: onSettings, danger: false };
+    if (active && state.noIncomingAudio) return { text: tx(C.noIncomingAudio), action: null, run: null, danger: false };
+    if (active && state.remoteMuted) return { text: tx(C.remoteMuted, { name: peer.username }), action: null, run: null, danger: false };
+    return null;
+}
+
+function useStatusText(call: ActiveCall) {
     const { tx } = useI18n();
     const { state, peer } = call;
     const now = useClock(state.phase === "active");
-    const ended = state.phase === "ended";
-    const active = state.phase === "active";
-    const statusText = active
+    return state.phase === "active"
         ? tx(C.connected, { time: duration(now - state.connectedAt) })
         : state.phase === "connecting" ? tx(C.connecting)
             : state.phase === "ringing" ? tx(C.ringing)
                 : state.phase === "preparing" ? tx(C.preparing)
                     : state.notice ? tx(NOTICES[state.notice], { name: peer.username }) : tx(NOTICES.ended);
+}
+
+function ProblemLine({ problem, className = "" }: { problem: Problem; className?: string }) {
+    return (
+        <div role="status" className={`flex items-center gap-2 px-3 py-2 text-xs leading-5 ${problem.danger ? "bg-red-500/15 text-red-200" : "bg-amber-500/10 text-amber-200"} ${className}`}>
+            {problem.icon ? <Volume2 className="h-4 w-4 shrink-0" aria-hidden /> : null}
+            <span className="min-w-0 flex-1">{problem.text}</span>
+            {problem.action && problem.run ? (
+                <button type="button" onClick={problem.run} className="shrink-0 rounded-lg bg-white/15 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
+                    {problem.action}
+                </button>
+            ) : null}
+        </div>
+    );
+}
+
+/** The running call: a floating bar at the top that leaves the page usable. */
+function CallBar({ call, micOff, deafened, onHangUp, onClose, onSettings, onExpand, onShare, onStopShare }: {
+    call: ActiveCall;
+    micOff: boolean;
+    deafened: boolean;
+    onHangUp: () => void;
+    onClose: () => void;
+    onSettings: () => void;
+    onExpand: () => void;
+    onShare: () => void;
+    onStopShare: () => void;
+}) {
+    const { tx } = useI18n();
+    const { state, peer } = call;
+    const ended = state.phase === "ended";
+    const active = state.phase === "active";
+    const statusText = useStatusText(call);
     const hint = !ended && state.slow ? tx(state.turnConfigured ? C.slowTurn : C.slow) : "";
     const longNotice = ended && state.notice && LONG_NOTICES.has(state.notice);
-    // Why nobody hears anything, most actionable first; one line at a time.
-    const problem = ended ? null
-        : micOff ? { text: tx(C.mutedWarning), action: tx(C.turnOn), run: () => toggleMic(true), danger: true }
-            : deafened ? { text: tx(C.deafenedWarning), action: tx(C.turnOn), run: () => toggleDeafen(true), danger: true }
-                : state.audioBlocked ? { text: tx(C.audioBlocked), action: tx(C.startAudio), run: () => call.session.resumeAudio(), danger: true }
-                    : active && state.micSilent ? { text: tx(C.micSilent), action: tx(C.settings), run: onSettings, danger: false }
-                        : active && state.noIncomingAudio ? { text: tx(C.noIncomingAudio), action: null, run: null, danger: false }
-                            : active && state.remoteMuted ? { text: tx(C.remoteMuted, { name: peer.username }), action: null, run: null, danger: false }
-                                : null;
+    const problem = useCallProblem(call, micOff, deafened, onSettings);
+    const canCapture = CallSession.screenShareSupported();
 
     return (
         // Below the site header (64 px) and Social's channel header (48 px), clear of the composer and the AI dock.
@@ -403,6 +491,8 @@ function CallBar({ call, micOff, deafened, onHangUp, onClose, onSettings }: { ca
                 data-call-received-kb={state.receivedKb}
                 data-remote-speaking={state.remoteSpeaking ? "true" : "false"}
                 data-mic-off={micOff ? "true" : "false"}
+                data-sharing={state.sharing ? "true" : "false"}
+                data-remote-sharing={state.remoteSharing ? "true" : "false"}
                 className="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/95 text-white shadow-2xl shadow-black/30 backdrop-blur"
             >
                 <div className="flex items-center gap-3 px-3 py-2">
@@ -429,7 +519,15 @@ function CallBar({ call, micOff, deafened, onHangUp, onClose, onSettings }: { ca
                             <BarButton label={tx(deafened ? C.undeafen : C.deafen)} pressed={deafened} danger={deafened} onClick={() => toggleDeafen(deafened)}>
                                 {deafened ? <HeadphoneOff className="h-[18px] w-[18px]" aria-hidden /> : <Headphones className="h-[18px] w-[18px]" aria-hidden />}
                             </BarButton>
-                            <BarButton label={tx(C.settings)} pressed={false} danger={false} onClick={onSettings}>
+                            {active && canCapture ? (
+                                <BarButton label={tx(state.sharing ? C.stopShare : C.share)} pressed={state.sharing} danger={false} highlight={state.sharing} onClick={state.sharing ? onStopShare : onShare}>
+                                    {state.sharing ? <MonitorOff className="h-[18px] w-[18px]" aria-hidden /> : <MonitorUp className="h-[18px] w-[18px]" aria-hidden />}
+                                </BarButton>
+                            ) : null}
+                            <BarButton label={tx(C.expand)} pressed={false} danger={false} onClick={onExpand}>
+                                <Maximize2 className="h-[18px] w-[18px]" aria-hidden />
+                            </BarButton>
+                            <BarButton label={tx(C.settings)} pressed={false} danger={false} onClick={onSettings} className="max-[400px]:hidden">
                                 <Settings2 className="h-[18px] w-[18px]" aria-hidden />
                             </BarButton>
                             <button type="button" onClick={onHangUp} className="flex h-9 w-11 items-center justify-center rounded-full bg-red-500 transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/50" aria-label={tx(state.phase === "active" || state.phase === "connecting" ? C.hangUp : C.cancel)} title={tx(state.phase === "active" || state.phase === "connecting" ? C.hangUp : C.cancel)}>
@@ -438,17 +536,14 @@ function CallBar({ call, micOff, deafened, onHangUp, onClose, onSettings }: { ca
                         </div>
                     )}
                 </div>
-                {problem && (
-                    <div role="status" className={`flex items-center gap-2 border-t border-white/10 px-3 py-2 text-xs leading-5 ${problem.danger ? "bg-red-500/15 text-red-200" : "bg-amber-500/10 text-amber-200"}`}>
-                        {state.audioBlocked && !micOff && !deafened ? <Volume2 className="h-4 w-4 shrink-0" aria-hidden /> : null}
-                        <span className="min-w-0 flex-1">{problem.text}</span>
-                        {problem.action && problem.run ? (
-                            <button type="button" onClick={problem.run} className="shrink-0 rounded-lg bg-white/15 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
-                                {problem.action}
-                            </button>
-                        ) : null}
+                {active && state.remoteSharing ? (
+                    <div className="flex items-center gap-2 border-t border-white/10 bg-indigo-500/15 px-3 py-2 text-xs leading-5 text-indigo-100">
+                        <MonitorUp className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="min-w-0 flex-1 truncate">{tx(C.sharingRemote, { name: peer.username })}</span>
+                        <button type="button" onClick={onExpand} className="shrink-0 rounded-lg bg-white/15 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">{tx(C.watch)}</button>
                     </div>
-                )}
+                ) : null}
+                {problem ? <ProblemLine problem={problem} className="border-t border-white/10" /> : null}
                 {(hint || longNotice) && (
                     <p role={longNotice ? "alert" : "status"} className="border-t border-white/10 bg-amber-500/10 px-3 py-2 text-xs leading-5 text-amber-200">
                         {longNotice && state.notice ? tx(NOTICES[state.notice], { name: peer.username }) : hint}
@@ -459,7 +554,188 @@ function CallBar({ call, micOff, deafened, onHangUp, onClose, onSettings }: { ca
     );
 }
 
-function BarButton({ label, pressed, danger, onClick, children }: { label: string; pressed: boolean; danger: boolean; onClick: () => void; children: React.ReactNode }) {
+/** Plays a screen stream; muted (the call's sound comes through the page's <audio>). */
+function ScreenVideo({ stream, version, label, videoRef, className }: { stream: MediaStream | null; version: number; label: string; videoRef?: RefObject<HTMLVideoElement | null>; className: string }) {
+    const own = useRef<HTMLVideoElement | null>(null);
+    const ref = videoRef ?? own;
+    useEffect(() => {
+        const video = ref.current;
+        if (!video) return;
+        if (video.srcObject !== stream) video.srcObject = stream;
+        if (stream) void video.play().catch(() => undefined);
+    }, [ref, stream, version]);
+    return <video ref={ref} autoPlay playsInline muted aria-label={label} className={className} />;
+}
+
+function PersonTile({ name, avatarUrl, speaking, muted, caption, compact = false }: { name: string; avatarUrl: string | null; speaking: boolean; muted: boolean; caption?: string; compact?: boolean }) {
+    return (
+        <div data-call-tile={name} data-speaking={speaking ? "true" : "false"} className={`flex flex-col items-center justify-center rounded-2xl bg-zinc-900 ring-1 ring-white/10 ${compact ? "h-24 w-36 gap-1.5" : "aspect-video w-full max-w-xl gap-3"}`}>
+            <span className={`relative rounded-full transition-shadow duration-150 motion-reduce:transition-none ${speaking ? "shadow-[0_0_0_4px_rgb(16,185,129)]" : ""}`}>
+                <PresenceAvatar src={avatarUrl} name={name} size={compact ? "md" : "xl"} ring="bg-zinc-900" />
+                {muted ? (
+                    <span className={`absolute flex items-center justify-center rounded-full bg-red-500 ring-2 ring-zinc-900 ${compact ? "-bottom-1 -end-1 h-4 w-4" : "bottom-0 end-0 h-7 w-7"}`}><MicOff className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} aria-hidden /></span>
+                ) : null}
+            </span>
+            <span className={`flex max-w-full items-center gap-1.5 px-2 font-semibold ${compact ? "text-xs" : "text-base"}`}>
+                <span className="truncate">{name}</span>
+                {caption ? <span className="shrink-0 text-xs font-medium text-zinc-400">{caption}</span> : null}
+            </span>
+        </div>
+    );
+}
+
+/**
+ * The full call view: the two people (with speaking rings) or a shared
+ * screen, and the controls. Minimising goes back to the bar; the call
+ * keeps running either way.
+ */
+function CallStage({ call, me, micOff, deafened, onHangUp, onMinimize, onSettings, onShare, onStopShare }: {
+    call: ActiveCall;
+    me: { name: string; avatarUrl: string | null };
+    micOff: boolean;
+    deafened: boolean;
+    onHangUp: () => void;
+    onMinimize: () => void;
+    onSettings: () => void;
+    onShare: () => void;
+    onStopShare: () => void;
+}) {
+    const { tx } = useI18n();
+    const { state, peer, session } = call;
+    const stageRef = useRef<HTMLDivElement | null>(null);
+    const remoteRef = useRef<HTMLVideoElement | null>(null);
+    const [fullscreen, setFullscreen] = useState(false);
+    const statusText = useStatusText(call);
+    const problem = useCallProblem(call, micOff, deafened, onSettings);
+    const active = state.phase === "active";
+    const canCapture = CallSession.screenShareSupported();
+    const pipSupported = typeof document !== "undefined" && document.pictureInPictureEnabled === true;
+    const youLabel = tx(C.you);
+
+    useEffect(() => {
+        const stage = stageRef.current;
+        stage?.focus();
+        const onChange = () => setFullscreen(Boolean(stage) && document.fullscreenElement === stage);
+        document.addEventListener("fullscreenchange", onChange);
+        return () => {
+            document.removeEventListener("fullscreenchange", onChange);
+            // Minimising (or the call ending) leaves the browser's fullscreen too.
+            if (stage && document.fullscreenElement === stage) void document.exitFullscreen().catch(() => undefined);
+        };
+    }, []);
+
+    const onKeyDown = (event: ReactKeyboardEvent) => {
+        // Escape leaves the browser's fullscreen first; then it minimises.
+        if (event.key === "Escape" && !document.fullscreenElement) {
+            event.preventDefault();
+            onMinimize();
+        }
+    };
+    const toggleFullscreen = () => {
+        if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+        else void stageRef.current?.requestFullscreen?.().catch(() => undefined);
+    };
+    const pictureInPicture = () => {
+        const video = remoteRef.current;
+        if (video && document.pictureInPictureElement !== video) void video.requestPictureInPicture().catch(() => undefined);
+    };
+
+    const peerTile = (compact: boolean) => <PersonTile name={peer.username} avatarUrl={peer.avatarUrl ?? null} speaking={state.remoteSpeaking} muted={active && state.remoteMuted} compact={compact} />;
+    const meTile = (compact: boolean) => <PersonTile name={me.name} avatarUrl={me.avatarUrl} speaking={state.localSpeaking} muted={micOff} caption={`(${youLabel})`} compact={compact} />;
+
+    return (
+        <div
+            ref={stageRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={tx(C.stage, { name: peer.username })}
+            onKeyDown={onKeyDown}
+            data-call-stage={state.phase}
+            data-sharing={state.sharing ? "true" : "false"}
+            data-remote-sharing={state.remoteSharing ? "true" : "false"}
+            className="fixed inset-0 z-[145] flex flex-col bg-zinc-950 text-white outline-none"
+        >
+            <header className="flex items-center gap-3 border-b border-white/10 px-3 py-2.5 sm:px-5">
+                <span className={`relative shrink-0 rounded-full transition-shadow ${state.remoteSpeaking ? "shadow-[0_0_0_3px_rgb(16,185,129)]" : ""}`}>
+                    <PresenceAvatar src={peer.avatarUrl ?? null} name={peer.username} size="sm" ring="bg-zinc-950" />
+                </span>
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{peer.username}</p>
+                    <p aria-live="polite" className={`truncate text-xs ${active ? "font-semibold text-emerald-400" : "text-zinc-400"}`}>
+                        {statusText}
+                        {active && state.route ? <span className="ms-1.5 font-normal text-zinc-400">· {tx(state.route === "relay" ? C.routeRelay : C.routeDirect)}</span> : null}
+                    </p>
+                </div>
+                {state.remoteSharing && pipSupported ? (
+                    <BarButton label={tx(C.pip)} pressed={false} danger={false} onClick={pictureInPicture}><PictureInPicture2 className="h-[18px] w-[18px]" aria-hidden /></BarButton>
+                ) : null}
+                <BarButton label={tx(fullscreen ? C.exitFullscreen : C.fullscreen)} pressed={fullscreen} danger={false} onClick={toggleFullscreen}>
+                    {fullscreen ? <Shrink className="h-[18px] w-[18px]" aria-hidden /> : <Expand className="h-[18px] w-[18px]" aria-hidden />}
+                </BarButton>
+                <BarButton label={tx(C.minimize)} pressed={false} danger={false} onClick={onMinimize}><Minimize2 className="h-[18px] w-[18px]" aria-hidden /></BarButton>
+            </header>
+
+            <main className="relative min-h-0 flex-1 overflow-hidden p-3 sm:p-5">
+                {state.remoteSharing ? (
+                    <div className="relative h-full w-full overflow-hidden rounded-2xl bg-black ring-1 ring-white/10">
+                        <ScreenVideo stream={session.remoteScreen} version={state.screenVersion} label={tx(C.sharingRemote, { name: peer.username })} videoRef={remoteRef} className="h-full w-full object-contain" />
+                        <p className="absolute start-3 top-3 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 truncate rounded-lg bg-zinc-950/80 px-2.5 py-1 text-xs font-semibold"><MonitorUp className="h-3.5 w-3.5 shrink-0" aria-hidden />{tx(C.sharingRemote, { name: peer.username })}</p>
+                        {!state.remoteVideoLive ? (
+                            <p role="status" className="absolute inset-0 m-auto flex h-fit w-fit items-center gap-2 rounded-xl bg-zinc-900/90 px-4 py-2.5 text-sm text-zinc-200"><LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden />{tx(C.streamStarting)}</p>
+                        ) : null}
+                        <div className="absolute bottom-3 end-3 hidden gap-2 sm:flex">
+                            {peerTile(true)}
+                            {meTile(true)}
+                        </div>
+                    </div>
+                ) : state.sharing ? (
+                    <div className="relative grid h-full w-full place-items-center overflow-hidden rounded-2xl bg-black ring-1 ring-white/10">
+                        <ScreenVideo stream={session.localScreen} version={state.screenVersion} label={tx(C.sharingYou)} className="absolute inset-0 h-full w-full object-contain opacity-40" />
+                        <div className="relative mx-4 max-w-sm rounded-2xl bg-zinc-900/95 p-5 text-center ring-1 ring-white/10">
+                            <MonitorUp className="mx-auto h-8 w-8 text-indigo-300" aria-hidden />
+                            <p className="mt-2 font-semibold">{tx(C.sharingYou)}</p>
+                            <p className="mt-1 text-sm text-zinc-400">{tx(C.sharingYouHint, { name: peer.username })}</p>
+                            <button type="button" onClick={onStopShare} className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-red-500 px-4 text-sm font-bold transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/50"><MonitorOff className="h-4 w-4" aria-hidden />{tx(C.stopShare)}</button>
+                        </div>
+                        <div className="absolute bottom-3 end-3 hidden gap-2 sm:flex">
+                            {peerTile(true)}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mx-auto grid h-full max-w-5xl content-center gap-3 sm:grid-cols-2 sm:gap-5">
+                        <div className="flex justify-center">{peerTile(false)}</div>
+                        <div className="flex justify-center">{meTile(false)}</div>
+                    </div>
+                )}
+            </main>
+
+            {problem ? <ProblemLine problem={problem} className="mx-3 mb-2 rounded-xl sm:mx-auto sm:w-full sm:max-w-xl" /> : null}
+
+            <footer className="flex items-center justify-center gap-2.5 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:gap-3">
+                <StageButton label={tx(micOff ? C.unmute : C.mute)} pressed={micOff} danger={micOff} onClick={() => toggleMic(micOff)}>
+                    {micOff ? <MicOff className="h-5 w-5" aria-hidden /> : <Mic className={`h-5 w-5 ${state.localSpeaking ? "text-emerald-400" : ""}`} aria-hidden />}
+                </StageButton>
+                <StageButton label={tx(deafened ? C.undeafen : C.deafen)} pressed={deafened} danger={deafened} onClick={() => toggleDeafen(deafened)}>
+                    {deafened ? <HeadphoneOff className="h-5 w-5" aria-hidden /> : <Headphones className="h-5 w-5" aria-hidden />}
+                </StageButton>
+                {canCapture ? (
+                    <StageButton label={tx(state.sharing ? C.stopShare : C.share)} pressed={state.sharing} danger={false} highlight={state.sharing} disabled={!active} onClick={state.sharing ? onStopShare : onShare}>
+                        {state.sharing ? <MonitorOff className="h-5 w-5" aria-hidden /> : <MonitorUp className="h-5 w-5" aria-hidden />}
+                    </StageButton>
+                ) : null}
+                <StageButton label={tx(C.settings)} pressed={false} danger={false} onClick={onSettings}>
+                    <Settings2 className="h-5 w-5" aria-hidden />
+                </StageButton>
+                <button type="button" onClick={onHangUp} className="flex h-12 w-16 items-center justify-center rounded-full bg-red-500 transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/50" aria-label={tx(active || state.phase === "connecting" ? C.hangUp : C.cancel)} title={tx(active || state.phase === "connecting" ? C.hangUp : C.cancel)}>
+                    <PhoneOff className="h-5 w-5" aria-hidden />
+                </button>
+            </footer>
+        </div>
+    );
+}
+
+function BarButton({ label, pressed, danger, highlight = false, onClick, className = "", children }: { label: string; pressed: boolean; danger: boolean; highlight?: boolean; onClick: () => void; className?: string; children: React.ReactNode }) {
     return (
         <button
             type="button"
@@ -467,7 +743,23 @@ function BarButton({ label, pressed, danger, onClick, children }: { label: strin
             aria-label={label}
             title={label}
             aria-pressed={pressed}
-            className={`flex h-9 w-9 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${danger ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : "bg-white/10 text-zinc-200 hover:bg-white/20"}`}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${danger ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : highlight ? "bg-indigo-500 text-white hover:bg-indigo-400" : "bg-white/10 text-zinc-200 hover:bg-white/20"} ${className}`}
+        >
+            {children}
+        </button>
+    );
+}
+
+function StageButton({ label, pressed, danger, highlight = false, disabled = false, onClick, children }: { label: string; pressed: boolean; danger: boolean; highlight?: boolean; disabled?: boolean; onClick: () => void; children: React.ReactNode }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            title={label}
+            aria-pressed={pressed}
+            className={`flex h-12 w-12 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-40 ${danger ? "bg-red-500/15 text-red-400 hover:bg-red-500/25" : highlight ? "bg-indigo-500 text-white hover:bg-indigo-400" : "bg-white/10 text-zinc-100 hover:bg-white/20"}`}
         >
             {children}
         </button>

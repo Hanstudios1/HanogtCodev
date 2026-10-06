@@ -2,7 +2,10 @@
  * Voice calls (1:1, Hanogt Social) — shared, framework-free building blocks.
  *
  * A call is one `calls/{id}` document: the caller's offer, the callee's
- * answer, both sides' ICE candidates (arrays) and the status. The server
+ * answer, both sides' ICE candidates (arrays) and the status. Newer clients
+ * also reserve a video track for screen sharing in the offer and answer and
+ * say so (`callerVideo` / `calleeVideo`); `callerSharing` / `calleeSharing`
+ * tell the other side a screen is on. The server
  * (/api/calls, service account) writes it; browsers with a working Firebase
  * bridge read it with a realtime listener, the others poll /api/calls.
  * Audio itself flows peer to peer (or through a TURN relay) and is never
@@ -39,6 +42,12 @@ export type CallRecord = {
     /** Each side's microphone switch, so the other side can show "muted". */
     callerMuted: boolean;
     calleeMuted: boolean;
+    /** The side reserved a video track for screen sharing (older clients didn't). */
+    callerVideo: boolean;
+    calleeVideo: boolean;
+    /** The side is sharing its screen right now. */
+    callerSharing: boolean;
+    calleeSharing: boolean;
 };
 
 export const CALL_LIMITS = {
@@ -146,7 +155,21 @@ export function callFromData(id: string, data: Record<string, unknown> | null | 
         endReason: DECLINE_REASONS.find((entry) => entry === data.endReason) ?? null,
         callerMuted: data.callerMuted === true,
         calleeMuted: data.calleeMuted === true,
+        callerVideo: data.callerVideo === true,
+        calleeVideo: data.calleeVideo === true,
+        callerSharing: data.callerSharing === true,
+        calleeSharing: data.calleeSharing === true,
     };
+}
+
+/** Whether an offer or answer carries a video section that isn't rejected (port 0). */
+export function hasVideoSection(sdp: string) {
+    return /(?:^|\r?\n)m=video [1-9]\d* /.test(sdp);
+}
+
+/** Both sides reserved a video track: either may share a screen without renegotiating. */
+export function canShareScreen(record: Pick<CallRecord, "callerVideo" | "calleeVideo">) {
+    return record.callerVideo && record.calleeVideo;
 }
 
 export function callRoleOf(record: Pick<CallRecord, "caller" | "callee">, who: string): CallRole | null {
@@ -201,6 +224,10 @@ export type CallWire = {
     endReason: DeclineReason | null;
     /** The other side switched its microphone off. */
     remoteMuted: boolean;
+    /** Both sides can show a shared screen (newer clients on both ends). */
+    shareReady: boolean;
+    /** The other side is sharing its screen. */
+    remoteSharing: boolean;
     createdAt: number;
     answeredAt: number;
 };
@@ -220,6 +247,8 @@ export function callWire(record: CallRecord, role: CallRole, have = 0): CallWire
         candidateCount: remote.length,
         endReason: record.endReason,
         remoteMuted: role === "caller" ? record.calleeMuted : record.callerMuted,
+        shareReady: canShareScreen(record),
+        remoteSharing: canShareScreen(record) && (role === "caller" ? record.calleeSharing : record.callerSharing),
         createdAt: record.createdAt,
         answeredAt: record.answeredAt,
     };

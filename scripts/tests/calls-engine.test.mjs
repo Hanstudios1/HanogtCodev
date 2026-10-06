@@ -14,11 +14,25 @@ setFakeEmulatorEnv();
 globalThis.window = globalThis;
 if (!globalThis.navigator) globalThis.navigator = {};
 globalThis.document = { visibilityState: "visible", addEventListener() {}, removeEventListener() {} };
-Object.defineProperty(globalThis.navigator, "mediaDevices", { configurable: true, value: { getUserMedia: async () => new FakeStream([new FakeTrack()]) } });
+Object.defineProperty(globalThis.navigator, "mediaDevices", { configurable: true, value: { getUserMedia: async () => new FakeStream([new FakeTrack()]), getDisplayMedia: (...args) => getDisplayMedia(...args) } });
 Object.defineProperty(globalThis.navigator, "sendBeacon", { configurable: true, value: () => true });
 
-class FakeTrack { constructor() { this.enabled = true; this.stopped = false; } stop() { this.stopped = true; } }
-class FakeStream { constructor(tracks = []) { this.tracks = [...tracks]; } getTracks() { return this.tracks; } getAudioTracks() { return this.tracks; } addTrack(track) { this.tracks.push(track); } }
+class FakeTrack { constructor(kind = "audio") { this.kind = kind; this.enabled = true; this.stopped = false; this.muted = false; } stop() { this.stopped = true; } }
+class FakeStream {
+    constructor(tracks = []) { this.tracks = [...tracks]; }
+    getTracks() { return this.tracks; }
+    getAudioTracks() { return this.tracks.filter((track) => track.kind !== "video"); }
+    getVideoTracks() { return this.tracks.filter((track) => track.kind === "video"); }
+    addTrack(track) { this.tracks.push(track); }
+}
+/** Screen capture: a fresh video track, or the error the next call should throw. */
+const display = { error: null, streams: [] };
+const getDisplayMedia = async () => {
+    if (display.error) throw display.error;
+    const stream = new FakeStream([new FakeTrack("video")]);
+    display.streams.push(stream);
+    return stream;
+};
 globalThis.MediaStream = FakeStream;
 globalThis.Audio = class { constructor() { this.muted = false; this.srcObject = null; } play() { return Promise.resolve(); } pause() {} };
 
@@ -87,6 +101,57 @@ class FakePeer {
 }
 globalThis.RTCPeerConnection = FakePeer;
 
+/**
+ * A browser with transceivers (screen sharing): the caller's offer and the
+ * answer carry a video section, the receiving side gets the video track as
+ * soon as the remote description arrives (muted until frames come).
+ * People listed in `olderClients` run a browser of the old client instead.
+ */
+class FakeSender {
+    constructor() { this.track = null; this.parameters = { encodings: [] }; }
+    async replaceTrack(track) { this.track = track; }
+    getParameters() { return JSON.parse(JSON.stringify(this.parameters)); }
+    async setParameters(parameters) { this.parameters = parameters; }
+}
+class FakeTransceiver {
+    constructor(direction) { this.receiver = { track: Object.assign(new FakeTrack("video"), { muted: true }) }; this.sender = new FakeSender(); this.direction = direction; }
+}
+const olderClients = new Set();
+class FakeVideoPeer extends FakePeer {
+    constructor(...args) {
+        super(...args);
+        this.transceivers = [];
+        if (olderClients.has(identity.getStore())) {
+            this.addTransceiver = undefined;
+            this.getTransceivers = undefined;
+        }
+    }
+    addTransceiver(_kind, init) {
+        const transceiver = new FakeTransceiver(init?.direction ?? "sendrecv");
+        this.transceivers.push(transceiver);
+        return transceiver;
+    }
+    getTransceivers() { return this.transceivers; }
+    async createOffer() {
+        const offer = await super.createOffer();
+        return this.transceivers.length ? { ...offer, sdp: `${offer.sdp}m=video 9 UDP/TLS/RTP/SAVPF 96\r\n` } : offer;
+    }
+    async createAnswer() {
+        const answer = await super.createAnswer();
+        return this.transceivers.some((item) => item.direction === "sendrecv") ? { ...answer, sdp: `${answer.sdp}m=video 9 UDP/TLS/RTP/SAVPF 96\r\n` } : answer;
+    }
+    async setRemoteDescription(description) {
+        await super.setRemoteDescription(description);
+        // The callee's transceiver is created by the offer (receive only until the answer claims it).
+        if (this.getTransceivers && /m=video [1-9]/.test(description.sdp) && !this.transceivers.length) this.transceivers.push(new FakeTransceiver("recvonly"));
+        const video = this.transceivers[0];
+        if (video && /m=video [1-9]/.test(description.sdp) && !this.announced) {
+            this.announced = true;
+            this.ontrack?.({ track: video.receiver.track, streams: [] });
+        }
+    }
+}
+
 const identity = new AsyncLocalStorage();
 const model = await load("lib/calls/model.ts");
 const server = await load("lib/server/calls.ts");
@@ -127,6 +192,7 @@ async function api(url, init = {}) {
                 case "end": return reply(200, await server.deleteCall(me, body.callId));
                 case "candidates": return reply(200, await server.addCandidates(user, body));
                 case "mute": return reply(200, await server.setCallMuted(user, body));
+                case "share": return reply(200, await server.setCallSharing(user, body));
             }
         }
         return reply(404, { code: "not_found" });
@@ -380,4 +446,98 @@ test("readCallStats: Chrome and Firefox shaped reports", () => {
     ]));
     assert.deepEqual(firefox, { bytes: 300, level: null, energy: { energy: 0.5, duration: 10 }, route: "direct" });
     assert.deepEqual(readCallStats(new Map()), { bytes: 0, level: null, energy: null, route: null });
+});
+
+test("screen sharing: the reserved video track carries the screen; the other side is told; the browser's stop ends it", async () => {
+    globalThis.RTCPeerConnection = FakeVideoPeer;
+    try {
+        await withWorld(async (db) => {
+            const b = callee((created) => created.accept());
+            const a = session(A, { role: "caller", peer: B, callId: null });
+            await identity.run(A, () => a.created.startOutgoing());
+            await until(() => a.last().phase === "active" && b.sessions[0]?.last().phase === "active");
+            const callId = a.last().callId;
+            assert.equal(db.get(`calls/${callId}`).callerVideo, true);
+            assert.equal(db.get(`calls/${callId}`).calleeVideo, true);
+            await until(() => a.last().canShare && b.sessions[0].last().canShare && a.last().route === "direct");
+            const caller = connections.find((pc) => pc.transceivers?.length && pc.transceivers[0].direction === "sendrecv" && pc.localDescription?.type === "offer");
+            const answerer = connections.find((pc) => pc.transceivers?.length && pc.localDescription?.type === "answer");
+            assert.ok(caller && answerer, "both sides reserved a video transceiver");
+            assert.equal(answerer.transceivers[0].direction, "sendrecv", "the answer claims the offer's video track");
+
+            assert.equal(await identity.run(A, () => a.created.startShare()), true);
+            const screen = display.streams.at(-1).getVideoTracks()[0];
+            assert.equal(caller.transceivers[0].sender.track, screen, "the screen is swapped in, no new offer");
+            assert.equal(caller.transceivers[0].sender.parameters.encodings[0].maxBitrate, 2_500_000, "a direct route allows the higher bitrate");
+            assert.equal(a.last().sharing, true);
+            assert.ok(a.created.localScreen, "the sharer sees a preview");
+            await until(() => b.sessions[0].last().remoteSharing === true);
+            assert.equal(db.get(`calls/${callId}`).callerSharing, true);
+            const remoteTrack = b.sessions[0].created.remoteScreen.getVideoTracks()[0];
+            assert.equal(remoteTrack, answerer.transceivers[0].receiver.track);
+            assert.equal(b.sessions[0].last().remoteVideoLive, false, "no frames yet");
+            remoteTrack.onunmute();
+            assert.equal(b.sessions[0].last().remoteVideoLive, true);
+
+            // The browser's own "stop sharing" button (in A's browser).
+            identity.run(A, () => screen.onended());
+            await until(() => a.last().sharing === false);
+            assert.equal(caller.transceivers[0].sender.track, null);
+            assert.equal(screen.stopped, true);
+            await until(() => b.sessions[0].last().remoteSharing === false);
+
+            // Closing the picker isn't an error; a failing capture is.
+            display.error = Object.assign(new Error("cancelled"), { name: "NotAllowedError" });
+            assert.equal(await identity.run(B, () => b.sessions[0].created.startShare()), false);
+            assert.equal(b.sessions[0].last().shareProblem, null);
+            display.error = Object.assign(new Error("broken"), { name: "NotReadableError" });
+            assert.equal(await identity.run(B, () => b.sessions[0].created.startShare()), false);
+            assert.equal(b.sessions[0].last().shareProblem, "failed");
+            display.error = null;
+
+            // The callee shares too; hanging up stops the capture.
+            assert.equal(await identity.run(B, () => b.sessions[0].created.startShare()), true);
+            const second = display.streams.at(-1).getVideoTracks()[0];
+            await until(() => a.last().remoteSharing === true);
+            identity.run(A, () => a.created.hangUp());
+            await until(() => b.sessions[0].last().phase === "ended");
+            assert.equal(second.stopped, true, "the callee's capture stops with the call");
+            assert.equal(b.sessions[0].last().sharing, false);
+            b.stop();
+        });
+    } finally {
+        globalThis.RTCPeerConnection = FakePeer;
+    }
+});
+
+test("screen sharing with an older client on the other end, or without screen capture, explains why it can't", async () => {
+    globalThis.RTCPeerConnection = FakeVideoPeer;
+    olderClients.add(B);
+    try {
+        await withWorld(async (db) => {
+            const b = callee((created) => created.accept());
+            const a = session(A, { role: "caller", peer: B, callId: null });
+            await identity.run(A, () => a.created.startOutgoing());
+            await until(() => a.last().phase === "active" && b.sessions[0]?.last().phase === "active");
+            const callId = a.last().callId;
+            assert.equal(db.get(`calls/${callId}`).callerVideo, true);
+            assert.equal(db.get(`calls/${callId}`).calleeVideo, false, "the older answer has no video");
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            assert.equal(a.last().canShare, false);
+            assert.equal(await identity.run(A, () => a.created.startShare()), false);
+            assert.equal(a.last().shareProblem, "not_ready");
+
+            const capture = navigator.mediaDevices.getDisplayMedia;
+            delete navigator.mediaDevices.getDisplayMedia;
+            assert.equal(await identity.run(A, () => a.created.startShare()), false);
+            assert.equal(a.last().shareProblem, "unsupported", "phones can't capture a screen");
+            navigator.mediaDevices.getDisplayMedia = capture;
+            identity.run(A, () => a.created.hangUp());
+            await until(() => b.sessions[0].last().phase === "ended");
+            b.stop();
+        });
+    } finally {
+        olderClients.clear();
+        globalThis.RTCPeerConnection = FakePeer;
+    }
 });
