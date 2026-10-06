@@ -320,7 +320,7 @@ export function createBlankProject(name: string, dimension: GameDimension, id = 
             pixelArt: false,
             showFps: false,
             touchControls: true,
-            rules: 4,
+            rules: 5,
             input: defaultInputSettings(),
         },
         metadata: { createdAt: timestamp, updatedAt: timestamp },

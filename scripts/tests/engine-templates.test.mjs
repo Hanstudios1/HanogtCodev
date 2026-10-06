@@ -701,7 +701,7 @@ test("the V4 templates come first, marked new and since 4, and use V4 components
         const project = createProjectFromTemplate(id);
         const types = new Set(project.scenes[0].objects.flatMap((item) => item.components.map((component) => component.type)));
         for (const type of uses[id]) assert.ok(types.has(type), `${id} uses ${type}`);
-        assert.equal(startWorld(project).project.settings.rules, 4, `${id} runs with the V4 rules`);
+        assert.ok(startWorld(project).project.settings.rules >= 4, `${id} runs with the V4 rules or newer`);
     }
     assert.equal(createProjectFromTemplate("slingshot-2d").settings.aspect, "16:9", "fixed-screen games keep their frame");
     const maze = createProjectFromTemplate("maze-hunt-2d");

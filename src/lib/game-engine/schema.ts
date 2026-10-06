@@ -17,6 +17,7 @@ import {
     ANIMATION_PROPERTIES,
     ANIMATION_WRAP_MODES,
     EASINGS,
+    ENGINE_RULES,
     GAME_ENGINE_SCHEMA_VERSION,
     INPUT_CONTENT_TYPES,
     PRIMITIVE_MESHES,
@@ -31,6 +32,7 @@ import {
     type AnimationProperty,
     type AnimationTrack,
     type AnimationValue,
+    type EngineRules,
     type ColliderComponent,
     type GameComponent,
     type AudioAsset,
@@ -962,7 +964,7 @@ function normalizeProjectSettings(value: unknown, sceneIds: string[], documentVe
         showFps: bool(source.showFps, false),
         touchControls: bool(source.touchControls, true),
         // Documents saved before V4 have no rules field: they keep V3 behavior.
-        rules: source.rules === 3 || source.rules === 4 ? source.rules : documentVersion >= 4 ? 4 : 3,
+        rules: ENGINE_RULES.includes(source.rules as EngineRules) ? source.rules as EngineRules : documentVersion >= 5 ? 5 : documentVersion >= 4 ? 4 : 3,
         input: normalizeInputSettings(source.input),
     };
 }

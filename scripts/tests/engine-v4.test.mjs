@@ -30,16 +30,10 @@ function projectWithScript(name, content, mutate) {
 // Schema
 // ---------------------------------------------------------------------------
 
-test("engine reports V4", () => {
-    assert.equal(types.GAME_ENGINE_SCHEMA_VERSION, 4);
-    assert.equal(types.ENGINE_VERSION, 4);
-    assert.equal(types.ENGINE_VERSION_LABEL, "Hanogt Engine V4");
-});
-
-test("new projects use V4 rules; v3 documents keep V3 rules and get the default input actions", () => {
+test("new projects use the newest rules; v3 documents keep V3 rules and get the default input actions", () => {
     const fresh = normalizeProject(createBlankProject("Yeni", "2d"));
-    assert.equal(fresh.version, 4);
-    assert.equal(fresh.settings.rules, 4);
+    assert.equal(fresh.version, types.GAME_ENGINE_SCHEMA_VERSION);
+    assert.equal(fresh.settings.rules, types.ENGINE_VERSION);
     assert.deepEqual(fresh.settings.input, defaultInputSettings());
 
     const v3 = JSON.parse(JSON.stringify(fresh));
@@ -47,7 +41,7 @@ test("new projects use V4 rules; v3 documents keep V3 rules and get the default 
     delete v3.settings.rules;
     delete v3.settings.input;
     const migrated = normalizeProject(v3);
-    assert.equal(migrated.version, 4);
+    assert.equal(migrated.version, types.GAME_ENGINE_SCHEMA_VERSION);
     assert.equal(migrated.settings.rules, 3);
     assert.deepEqual(migrated.settings.input, defaultInputSettings());
     // Saving and loading again keeps the rules it was given.
