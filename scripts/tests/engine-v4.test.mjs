@@ -888,6 +888,25 @@ test("UI Slider: dragging sets the value, calls the Inspector method and listene
     assert.deepEqual(game.problems(), []);
 });
 
+test("UI Slider: a quick tap released within the same frame still sets the value once", () => {
+    const game = startWorld(uiProject(MENU_SCRIPT));
+    game.step(1);
+    const slider = game.find("Menu").components.find((component) => component.type === "uiSlider");
+    const input = game.world.input;
+    // The slider spans x 330…630 (value 0…10); x 405 is a quarter of the way.
+    input.mouseX = 405;
+    input.mouseY = 540 - 190;
+    input.pendingMouseDown.add(0);
+    input.pendingMouseUp.add(0);
+    const before = game.messages("info").length;
+    game.step(1);
+    assert.equal(slider.value, 2.5);
+    assert.deepEqual(game.messages("info").slice(before), ["volume 2.5", "listener 2.5"]);
+    game.step(2);
+    assert.equal(game.messages("info").length, before + 2, "no more events after the tap");
+    assert.deepEqual(game.problems(), []);
+});
+
 test("UI Toggle flips on click; UI InputField filters typing and reports changes, end of editing and submit", () => {
     const game = startWorld(uiProject(MENU_SCRIPT));
     game.step(1);
@@ -1231,4 +1250,34 @@ test("multi-edit: shared components, selection roots and hierarchy search", () =
     assert.deepEqual(find("t:Rigidbody2D wall"), ["e3"]);
     assert.deepEqual(find("t:spin"), ["e1", "e2", "e3"], "scripts by class name");
     assert.deepEqual(find("tag:coin b"), ["e2"]);
+});
+
+// ---------------------------------------------------------------------------
+// Exported-HTML player
+// ---------------------------------------------------------------------------
+
+test("the exported-HTML player carries the V4 runtime and stays within its size budget", async () => {
+    // Same settings as scripts/build-player.mjs, kept in memory (public/engine is generated, not committed).
+    const { build } = await import("esbuild");
+    const { fileURLToPath } = await import("node:url");
+    const result = await build({
+        entryPoints: [fileURLToPath(new URL("../../src/lib/game-engine/player/standalone.ts", import.meta.url))],
+        bundle: true,
+        minify: true,
+        write: false,
+        format: "iife",
+        target: ["es2019"],
+        platform: "browser",
+        legalComments: "none",
+        logLevel: "silent",
+        define: { "process.env.NODE_ENV": '"production"' },
+    });
+    assert.deepEqual(result.errors, []);
+    const bundle = result.outputFiles[0].text;
+    for (const marker of ["characterController2D", "cameraFollow", "navAgent2D", "FindPath", "uiSlider", "uiToggle", "uiInputField", "PlayMusic", "GetButtonDown"]) {
+        assert.ok(bundle.includes(marker), marker);
+    }
+    // About 1.1 MB with V4; a jump past the budget usually means a library got bundled by mistake.
+    const kilobytes = Buffer.byteLength(bundle) / 1024;
+    assert.ok(kilobytes < 1300, `player.js is ${Math.round(kilobytes)} KB`);
 });

@@ -305,10 +305,10 @@ export const FAQS: Faq[] = [
     {
         id: "engine-v3",
         category: CATEGORY.engine,
-        question: { TR: "Hanogt Engine V3'te neler var?", EN: "What's new in Hanogt Engine V3?" },
+        question: { TR: "Hanogt Engine V4'te neler var?", EN: "What's new in Hanogt Engine V4?" },
         answer: {
-            TR: "Hanogt Engine V3 sprite sayfaları ve kare seçimi, karo haritaları (tilemap), yumuşatma eğrili anahtar kare animasyonları ve düğme, panel ve ilerleme çubuğu gibi ekran arayüzü bileşenleri getiriyor. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V3'e taşınır; mevcut ayarlarınız korunur ve yeni alanlar varsayılan değerleriyle eklenir.",
-            EN: "Hanogt Engine V3 brings sprite sheets with frame selection, tilemaps, keyframe animation with easing curves and on-screen UI components such as buttons, panels and progress bars. Projects saved with earlier versions are moved to V3 automatically when you open them; your settings are kept and the new fields get their defaults.",
+            TR: "Hanogt Engine V4 giriş eylemleri ve gamepad desteği, kod yazmadan platform karakteri yapan Character Controller 2D, yumuşak kamera takibi ve sarsıntı, A* yol bulma ve Nav Agent 2D, Distance ve Spring eklemleri, Slider, Toggle ve Input Field arayüz kontrolleri, ses dosyaları ve müzik, editörde çoklu seçim ve değerleri canlı gösteren İzle paneli getiriyor; Gök Kulesi, Labirent Avı ve Sapan Ustası şablonları da yeni. Ses dosyaları en çok 300 KB olabilir; toplam ses alanı Ücretsiz'de 5 MB, Plus'ta 25 MB, Pro'da 100 MB. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V4'e taşınır ve V4 öncesi oyunlar eskisi gibi çalışır.",
+            EN: "Hanogt Engine V4 brings input actions and gamepad support, Character Controller 2D for platformer characters without code, smooth camera follow and shake, A* path finding and Nav Agent 2D, Distance and Spring joints, Slider, Toggle and Input Field UI controls, audio files and music, multi-select in the editor and the Watch panel that shows values live; the Sky Tower, Maze Hunt and Slingshot Master templates are new too. Audio files can be up to 300 KB; total audio storage is 5 MB on Free, 25 MB on Plus and 100 MB on Pro. Projects saved with earlier versions are moved to V4 automatically when you open them, and games made before V4 play as they did.",
         },
     },
     {

@@ -1,15 +1,22 @@
-/** Hanogt Engine V3 feature list and the later template update, shown in the hub and in the docs. */
+/** Hanogt Engine V4 and V3 feature lists and the October template update, shown in the hub and in the docs. */
 import {
     Activity,
     ArrowRightLeft,
     Clapperboard,
     CloudFog,
+    Eye,
+    Footprints,
     Gamepad2,
     Grid3x3,
     LayoutTemplate,
+    Link2,
     MousePointerClick,
+    Music,
+    Navigation,
     ScrollText,
+    SlidersHorizontal,
     Timer,
+    Video,
     Waypoints,
     type LucideIcon,
 } from "lucide-react";
@@ -22,6 +29,90 @@ export interface WhatsNewItem {
     /** Docs section that explains the feature. */
     section: string;
 }
+
+export const V4_FEATURES: WhatsNewItem[] = [
+    {
+        icon: Gamepad2,
+        title: { TR: "Giriş eylemleri ve gamepad", EN: "Input actions and gamepads" },
+        text: {
+            TR: "Zıpla, Ateş et gibi eylemleri tuşlara, fare düğmelerine ve gamepad'e bağla; Input.GetButton ve GetAxis hepsini birlikte okur. Ölü bölge, ters eksen ve kendi eylemlerin Ayarlar → Girdi'de.",
+            EN: "Bind actions such as Jump and Fire to keys, mouse buttons and gamepads; Input.GetButton and GetAxis read them all. Dead zone, inverted axes and your own actions are in Settings → Input.",
+        },
+        section: "girdi",
+    },
+    {
+        icon: Footprints,
+        title: { TR: "Character Controller 2D", EN: "Character Controller 2D" },
+        text: {
+            TR: "Kod yazmadan platform karakteri: hızlanma, çift zıplama, coyote süresi, zıplama tamponu, kısa zıplama, eğimler ve hareketli platformlar. OnJump ve OnLand olaylarıyla.",
+            EN: "A platformer character without code: acceleration, double jump, coyote time, jump buffering, short hops, slopes and moving platforms, with OnJump and OnLand events.",
+        },
+        section: "karakter",
+    },
+    {
+        icon: Video,
+        title: { TR: "Kamera takibi ve sarsıntı", EN: "Camera follow and shake" },
+        text: {
+            TR: "Camera Follow hedefi yumuşakça izler: ölü bölge, ileri bakış ve seviye sınırları. Camera.Shake ile çarpışmalara ve patlamalara his kat.",
+            EN: "Camera Follow tracks a target smoothly, with a dead zone, look-ahead and level bounds. Camera.Shake adds punch to hits and explosions.",
+        },
+        section: "kamera",
+    },
+    {
+        icon: Navigation,
+        title: { TR: "Yol bulma ve Nav Agent 2D", EN: "Path finding and Nav Agent 2D" },
+        text: {
+            TR: "Düşmanlar duvarların etrafından A* ile en kısa yolu bulur. Nav Agent 2D bir hedefi kovalar ya da SetDestination ile gider; Pathfinding.FindPath yolu kendin kullanman için verir.",
+            EN: "Enemies find the shortest way around walls with A*. Nav Agent 2D chases a target or goes where SetDestination says; Pathfinding.FindPath hands you the path itself.",
+        },
+        section: "yol-bulma",
+    },
+    {
+        icon: Link2,
+        title: { TR: "Distance ve Spring eklemleri", EN: "Distance and Spring joints" },
+        text: {
+            TR: "Sarkaçlar, ipler, zincirler, yaylar ve sapanlar: iki nesneyi sabit mesafede ya da yayla bağla.",
+            EN: "Pendulums, ropes, chains, springs and slingshots: tie two objects at a fixed distance or with a spring.",
+        },
+        section: "eklemler",
+    },
+    {
+        icon: SlidersHorizontal,
+        title: { TR: "Kaydırıcı, anahtar ve metin kutusu", EN: "Slider, toggle and input field" },
+        text: {
+            TR: "Ayarlar menüleri ve skor tabloları için yeni arayüz kontrolleri; onValueChanged ve onEndEdit olayları, telefonda ekran klavyesi.",
+            EN: "New UI controls for settings menus and high score tables, with onValueChanged and onEndEdit events and the on-screen keyboard on phones.",
+        },
+        section: "ui-kontroller",
+    },
+    {
+        icon: Music,
+        title: { TR: "Ses dosyaları ve müzik", EN: "Audio files and music" },
+        text: {
+            TR: "WAV, MP3 ve OGG yükle; Audio.Play ile efekt, Audio.PlayMusic ile geçişli müzik çal. Müzik ve efekt sesleri ayrı, Audio Source döngüyle çalabilir.",
+            EN: "Upload WAV, MP3 and OGG files; play effects with Audio.Play and music with fades with Audio.PlayMusic. Music and effects have separate volumes and Audio Sources can loop.",
+        },
+        section: "ses-dosyalari",
+    },
+    {
+        icon: Eye,
+        title: { TR: "Çoklu seçim ve İzle paneli", EN: "Multi-select and the Watch panel" },
+        text: {
+            TR: "Birden çok nesneyi birlikte taşı ve düzenle, Shift ile kutu seçimi yap, hiyerarşide t:Tür ile ara. İzle paneli oyun çalışırken değerleri canlı gösterir.",
+            EN: "Move and edit several objects together, box-select with Shift and search the hierarchy with t:Type. The Watch panel shows values live while the game runs.",
+        },
+        section: "editor",
+    },
+    {
+        icon: LayoutTemplate,
+        title: { TR: "Üç yeni şablon", EN: "Three new templates" },
+        text: {
+            TR: "Gök Kulesi, Labirent Avı ve Sapan Ustası: V4 özellikleriyle yapılmış, baştan sona oynanabilir oyunlar.",
+            EN: "Sky Tower, Maze Hunt and Slingshot Master: games built with the V4 features, playable end to end.",
+        },
+        section: "baslarken",
+    },
+];
 
 export const V3_FEATURES: WhatsNewItem[] = [
     {

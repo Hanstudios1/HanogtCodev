@@ -174,12 +174,13 @@ export const PAGES: BookPage[] = [
         chapter: "engine",
         title: { TR: "Oyun motoru", EN: "The game engine" },
         blocks: [
-            { type: "p", text: { TR: "Hanogt Engine V3, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.", EN: "Hanogt Engine V3 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components." } },
+            { type: "p", text: { TR: "Hanogt Engine V4, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.", EN: "Hanogt Engine V4 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components." } },
             { type: "p", text: { TR: "Oyun Motoru sayfasında bir şablonla başla:", EN: "Start from a template on the Game Engine page:" } },
             {
                 type: "list",
                 items: [
-                    { TR: "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++) (yeni)", EN: "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++) (new)" },
+                    { TR: "Gök Kulesi, Labirent Avı ve Sapan Ustası (V4 ile yeni)", EN: "Sky Tower, Maze Hunt and Slingshot Master (new in V4)" },
+                    { TR: "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++)", EN: "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++)" },
                     { TR: "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile gelenler)", EN: "Tilemap Adventure, Clicker Factory and Foggy Runner (from V3)" },
                     { TR: "2D Platform Oyunu", EN: "2D Platformer" },
                     { TR: "3D Top Yuvarlama", EN: "3D Roll-a-Ball" },
@@ -194,10 +195,10 @@ export const PAGES: BookPage[] = [
         chapter: "engine",
         title: { TR: "Editör pencereleri", EN: "Editor windows" },
         blocks: [
-            { type: "item", icon: "🌳", name: { TR: "Hiyerarşi", EN: "Hierarchy" }, text: { TR: "Sahnedeki nesnelerin ağacı. Sürükle, grupla, yeniden adlandır.", EN: "The tree of objects in the scene. Drag, group, rename." } },
+            { type: "item", icon: "🌳", name: { TR: "Hiyerarşi", EN: "Hierarchy" }, text: { TR: "Sahnedeki nesnelerin ağacı. Sürükle, grupla, yeniden adlandır; t:Tür ile ara, Shift ile birden çok nesne seç.", EN: "The tree of objects in the scene. Drag, group, rename; search with t:Type and select several objects with Shift." } },
             { type: "item", icon: "🎬", name: { TR: "Sahne", EN: "Scene" }, text: { TR: "Nesneleri taşı (W), döndür (E), ölçekle (R).", EN: "Move (W), rotate (E), scale (R) objects." } },
             { type: "item", icon: "🔍", name: { TR: "Inspector", EN: "Inspector" }, text: { TR: "Seçili nesnenin bileşenleri ve script alanları.", EN: "Components and script fields of the selection." } },
-            { type: "item", icon: "📦", name: { TR: "Proje ve Konsol", EN: "Project & Console" }, text: { TR: "Scriptler, prefablar, dokular; Debug.Log çıktıları.", EN: "Scripts, prefabs, textures; Debug.Log output." } },
+            { type: "item", icon: "📦", name: { TR: "Proje, Konsol ve İzle", EN: "Project, Console & Watch" }, text: { TR: "Scriptler, prefablar, dokular ve sesler; Debug.Log çıktıları; oyun çalışırken değerleri canlı gösteren İzle paneli.", EN: "Scripts, prefabs, textures and sounds; Debug.Log output; the Watch panel that shows values live while the game runs." } },
             { type: "item", icon: "▶️", name: { TR: "Oyun", EN: "Game" }, text: { TR: "Oynat, duraklat, adım adım ilerlet (Ctrl+P).", EN: "Play, pause, step (Ctrl+P)." } },
         ],
     },
@@ -218,7 +219,7 @@ export const PAGES: BookPage[] = [
                 items: [
                     { TR: "Rigidbody ve Collider: yerçekimi, çarpışma, sekme.", EN: "Rigidbody and Collider: gravity, collisions, bounce." },
                     { TR: "Tetikleyiciler: OnTriggerEnter ile coin topla.", EN: "Triggers: collect coins with OnTriggerEnter." },
-                    { TR: "Input: klavye, fare, dokunmatik ve eksenler.", EN: "Input: keyboard, mouse, touch and axes." },
+                    { TR: "Input: klavye, fare, dokunmatik, gamepad ve Jump, Fire gibi eylemler.", EN: "Input: keyboard, mouse, touch, gamepads and actions such as Jump and Fire." },
                     { TR: "Coroutine, Invoke, Raycast, Instantiate, Destroy.", EN: "Coroutines, Invoke, Raycast, Instantiate, Destroy." },
                     { TR: "PlayerPrefs ile en yüksek skoru sakla.", EN: "Keep the high score with PlayerPrefs." },
                 ],
@@ -228,13 +229,16 @@ export const PAGES: BookPage[] = [
     },
     {
         chapter: "engine",
-        title: { TR: "V3'ün yeni blokları", EN: "The new blocks of V3" },
+        title: { TR: "V4'ün yeni blokları", EN: "The new blocks of V4" },
         blocks: [
-            { type: "item", icon: "🧱", name: { TR: "Tilemap", EN: "Tilemap" }, text: { TR: "Paletten karo seç ve ızgaraya fırçayla boya. Katı karolar çarpışır; tetikleyici karolar diken ya da bitiş çizgisi olur.", EN: "Pick a tile from the palette and paint the grid with a brush. Solid tiles collide; trigger tiles become spikes or finish lines." } },
-            { type: "item", icon: "🎞️", name: { TR: "Animasyon", EN: "Animation" }, text: { TR: "Anahtar kareli klipler ve 18 yumuşatma eğrisi; scriptten Tween ve Timer.", EN: "Keyframed clips and 18 easing curves; Tween and Timer from scripts." } },
-            { type: "item", icon: "🖲️", name: { TR: "Arayüz", EN: "UI" }, text: { TR: "UI Button, Panel, Progress Bar ve Text ile menüler, can barları ve skor tabelaları.", EN: "Menus, health bars and scoreboards with UI Button, Panel, Progress Bar and Text." } },
-            { type: "item", icon: "🌫️", name: { TR: "Ekran efektleri", EN: "Screen effects" }, text: { TR: "Sis, parlama (bloom), vinyet ve pozlama.", EN: "Fog, bloom, vignette and exposure." } },
-            { type: "link", href: "/game-engine/docs#yenilikler", label: { TR: "V3'te yenilikler", EN: "What's new in V3" } },
+            { type: "item", icon: "🏃", name: { TR: "Character Controller 2D", EN: "Character Controller 2D" }, text: { TR: "Kod yazmadan koşan, çift zıplayan, eğimlerde yürüyen platform karakteri; coyote süresi ve zıplama tamponu hazır.", EN: "A platformer character that runs, double jumps and walks up slopes without code, with coyote time and jump buffering built in." } },
+            { type: "item", icon: "🎥", name: { TR: "Kamera takibi", EN: "Camera follow" }, text: { TR: "Camera Follow oyuncuyu yumuşakça izler; Camera.Shake çarpışmalara his katar.", EN: "Camera Follow tracks the player smoothly; Camera.Shake adds punch to hits." } },
+            { type: "item", icon: "🧭", name: { TR: "Yol bulma", EN: "Path finding" }, text: { TR: "Nav Agent 2D duvarların etrafından dolaşarak hedefini kovalar; Pathfinding.FindPath yolu verir.", EN: "Nav Agent 2D chases its target around walls; Pathfinding.FindPath hands you the path." } },
+            { type: "item", icon: "🔗", name: { TR: "Eklemler", EN: "Joints" }, text: { TR: "Distance ve Spring eklemleriyle sarkaç, ip ve sapan.", EN: "Pendulums, ropes and slingshots with Distance and Spring joints." } },
+            { type: "item", icon: "🎵", name: { TR: "Ses ve müzik", EN: "Sound and music" }, text: { TR: "WAV, MP3 ve OGG yükle; Audio.PlayMusic ile müzik, Audio Source ile döngülü sesler.", EN: "Upload WAV, MP3 and OGG; music with Audio.PlayMusic and looping sounds with Audio Source." } },
+            { type: "item", icon: "🎚️", name: { TR: "Ayar menüleri", EN: "Settings menus" }, text: { TR: "Slider, Toggle ve Input Field ile ses ayarı, seçenekler ve skor tablosuna isim yazma.", EN: "Volume settings, options and name entry for high scores with Slider, Toggle and Input Field." } },
+            { type: "p", text: { TR: "V3'ün blokları da yerinde: tilemap, animasyon ve Tween, UI Button/Panel/Progress Bar, sis ve ekran efektleri.", EN: "The V3 blocks are still there: tilemaps, animation and Tween, UI Button/Panel/Progress Bar, fog and screen effects." } },
+            { type: "link", href: "/game-engine/docs#yenilikler", label: { TR: "V4'te yenilikler", EN: "What's new in V4" } },
         ],
     },
     {

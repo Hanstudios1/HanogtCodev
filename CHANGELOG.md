@@ -1,5 +1,82 @@
 # Değişiklik Günlüğü
 
+## 0.3.26 — 2026-10-06
+
+### Hanogt Engine V4
+
+Proje şeması v4'e geçti (`ENGINE_VERSION` 4). Eski projeler açılırken
+otomatik taşınır; v4 öncesi belgeler `settings.rules: 3` ile kaydedilir ve
+davranışı değişen her yerde V3 kurallarıyla, eskisi gibi çalışır.
+
+- **Giriş eylemleri ve gamepad** (Unity'nin Input Manager'ı gibi):
+  - adlı düğmeler ve eksenler tuşlara, fare düğmelerine, gamepad
+    düğmelerine ve çubuklara bağlanır; ölü bölge ve ters eksen;
+  - `Input.GetButton/GetButtonDown/GetAxis` hepsini birlikte okur, bilinmeyen
+    adlar eskisi gibi tuşu okur; `Input.GetJoystickNames`;
+  - Proje Ayarları'na **Girdi** sekmesi; dokunmatik düğmeler eşleşen gamepad
+    düğmelerine de basar.
+- **Character Controller 2D:** hızlanma, hava kontrolü, yerçekiminden
+  hesaplanan zıplama yüksekliği, coyote süresi, zıplama tamponu, kısa ve çok
+  katlı zıplama, eğimler ve hareketli platformlar; `OnJump()` ve
+  `OnLand(float hız)` olayları, scriptten `Move`, `Jump`, `CancelJump`.
+- **Camera Follow** (yumuşatma, ölü bölge, ileri bakış, sınırlar, 3D'de
+  hedefe bakma) ve **`Camera.Shake` / `StopShake`**.
+- **Yol bulma:** `Pathfinding.FindPath/HasPath/IsWalkable` (statik
+  çarpıştırıcılar ve katı karolardan kurulan ızgarada A*, köşe kesmeden sekiz
+  yön, açıklık yarıçapı, köşelere kısaltılmış yol; karolar ya da
+  çarpıştırıcılar değişince ızgara yenilenir) ve hedefi duvarların etrafından
+  kovalayan **Nav Agent 2D** (`SetDestination`, `OnDestinationReached`,
+  NavMeshAgent'a benzer API).
+- **Distance ve Spring eklemleri** (2D ve 3D): bir nesneye ya da dünyadaki
+  bir noktaya bağlama, otomatik ya da sabit uzunluk, ip kipi, yay frekansı ve
+  sönümü; zincirler dağılmaz.
+- **Yeni UI kontrolleri:** Slider, Toggle ve Input Field (gerçek metin kutusu,
+  telefon klavyesi, içerik türleri, yazarken oyun tuşları durur);
+  Inspector'dan metot bağlama ya da `onValueChanged` / `onEndEdit` /
+  `onSubmit`. Kaydırıcıya basmak değeri hemen ayarlar; aynı karede biten hızlı
+  bir dokunuş da sayılır.
+- **Ses dosyaları ve müzik:**
+  - WAV, MP3 ve OGG (dosya başına en çok 300 KB); giriş yapanların ses
+    kitaplığı SHA-256 ile dosya başına bir kez saklanır (`game_assets`,
+    `game_asset_owners`, `game_asset_usage`);
+  - plana göre ses alanı: Ücretsiz 5 MB / 30 dosya, Plus 25 MB / 150, Pro
+    100 MB / 600; yayınlanan Arcade oyunları kullandıkları dosyaların kendi
+    kopyasını tutar, kimsenin kullanmadığı dosyalar silinir;
+  - `Audio.Play` dosya adıyla, `Audio.PlayMusic/StopMusic` geçişli müzik,
+    ayrı müzik ve efekt sesi, döngülü Audio Source, `AudioClip` alanları,
+    `AudioSource.PlayClipAtPoint`; HTML dışa aktarma dosyaları gömer;
+  - Kullanım Şartları, Gizlilik Politikası ve KVKK metni 5.2.
+- **Editör:**
+  - çoklu seçim: grup gizmosu seçimin ortasından taşır, döndürür ve ölçekler;
+    Shift + sürükle ile kutu seçimi, Ctrl/Cmd + A ile hepsini seç;
+  - birden çok nesne birlikte düzenlenir: farklı değerler "—" görünür,
+    yalnızca değişen değer diğer nesnelere kopyalanır; bileşen hepsine
+    eklenir, sıfırlanır ya da kaldırılır;
+  - hiyerarşide ad, `t:Tür` ve `tag:Etiket` araması, sonuç sayısı ve
+    "sonuçların hepsini seç";
+  - **İzle** paneli: oyun çalışırken `Player.score`,
+    `Player.transform.position`, `Time.time` gibi değerler canlı, sayılar
+    için kısa geçmiş çizgisi; script alanlarındaki göz düğmesiyle eklenir,
+    okumak oyun kodunu çalıştırmaz.
+- **Üç yeni şablon** (`templates/v4.ts`), V4 özellikleriyle yapıldı:
+  - **Gök Kulesi** (2D, C#): Character Controller 2D ile çift zıplama, Camera
+    Follow, ekran sarsıntısı, hareketli platform, dikenler, kontrol noktası,
+    kaydırıcı ve anahtarlı ayarlar menüsü (PlayerPrefs'e kaydedilir), en iyi
+    süre;
+  - **Labirent Avı** (2D, C#): tilemap labirent, Nav Agent 2D ile kovalayan,
+    pusu kuran ve devriye gezen üç hayalet, onları kaçıran kristaller, ipucu
+    tuşu (`Pathfinding.FindPath` en yakın gem'e yolu çizer), can ve rekor;
+  - **Sapan Ustası** (2D, C#): Spring Joint 2D sapan, Distance Joint 2D'ye
+    asılı yıkım topu, kasalar ve balçıklar, güç kaydırıcısı, nişan çizgisi
+    anahtarı, Input Field ile adını yazdığın ilk 3 rekor tablosu;
+  - `engine-templates.test.mjs` üçünü de sanal girdi ve otomatik pilotla
+    baştan sona oynatır.
+- Engine tanıtım sayfasında "V4 ile gelenler", motor belgelerinde yeni
+  bölümler (karakter, kamera, eklemler, yol bulma, UI kontrolleri, ses
+  dosyaları) ve güncellenen başlangıç, editör, bileşenler, girdi ve
+  yayınlama bölümleri; kılavuz, SSS, AI bilgi tabanı ve Hanogt AI ajanı
+  ("labirent", "sapan", "gök kulesi") V4'ü anlatır.
+
 ## 0.3.25 — 2026-10-06
 
 ### Hanogt Engine: yeni tanıtım sayfası ve sekiz yeni şablon

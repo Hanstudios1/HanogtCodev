@@ -137,6 +137,9 @@ export function extractGroupName(text: string): string {
 
 // ------------------------------------------------------------------ games
 const GAME_WORDS: Array<[RegExp, string]> = [
+    [/\b(?:gok kule\w*|sky tower|kule tirman\w*|tower climb\w*)\b/, "sky-tower-2d"],
+    [/\b(?:labirent\w*|maze|pac ?man|hayalet\w*|ghost\w*)\b/, "maze-hunt-2d"],
+    [/\b(?:sapan\w*|slingshot|angry birds)\b/, "slingshot-2d"],
     [/\b(?:tilemap|tile|karo\w*|bolum editor\w*|level editor)\b/, "tilemap-platformer-2d"],
     [/\b(?:flappy|kanat\w*|kus oyun\w*|bird)\b/, "flappy-2d"],
     [/\b(?:rpg|macera\w*|adventure|zindan\w*|dungeon|zelda|kilic\w*|sword)\b/, "rpg-topdown-2d"],

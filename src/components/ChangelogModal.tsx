@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.26",
+        version: "v0.3.26",
+        date: "2026-10-06",
+        title: { TR: "Hanogt Engine V4", EN: "Hanogt Engine V4" },
+        desc: { TR: "Motorun yeni sürümü: gamepad, hazır platform karakteri, kamera takibi, yol bulma, eklemler, yeni arayüz kontrolleri, ses dosyaları ve müzik, çoklu seçim ve İzle paneli. Üç yeni şablon da hazır.", EN: "A new version of the engine: gamepads, a ready-made platformer character, camera follow, path finding, joints, new UI controls, audio files and music, multi-select and the Watch panel. Three new templates are ready too." },
+        items: [
+            { TR: "Giriş eylemleri: Zıpla, Ateş et gibi eylemleri klavyeye, fareye ve gamepad'e bağla; Input.GetButton ve GetAxis hepsini okur.", EN: "Input actions: bind actions such as Jump and Fire to the keyboard, the mouse and gamepads; Input.GetButton and GetAxis read them all." },
+            { TR: "Character Controller 2D ile kod yazmadan çift zıplama, coyote süresi ve eğimler; Camera Follow ve Camera.Shake ile akıcı kamera.", EN: "Double jumps, coyote time and slopes without code with Character Controller 2D; a smooth camera with Camera Follow and Camera.Shake." },
+            { TR: "Nav Agent 2D düşmanları duvarların etrafından kovalatır; Distance ve Spring eklemleriyle sarkaç, ip ve sapan yap.", EN: "Nav Agent 2D sends enemies after you around walls; build pendulums, ropes and slingshots with Distance and Spring joints." },
+            { TR: "Slider, Toggle ve Input Field ile ayar menüleri ve rekor tabloları; WAV, MP3 ve OGG dosyalarıyla ses ve müzik (Ücretsiz 5 MB, Plus 25 MB, Pro 100 MB).", EN: "Settings menus and high score tables with Slider, Toggle and Input Field; sound and music from WAV, MP3 and OGG files (Free 5 MB, Plus 25 MB, Pro 100 MB)." },
+            { TR: "Editörde çoklu seçim ve kutu seçimi, hiyerarşide t:Tür araması ve değerleri canlı gösteren İzle paneli.", EN: "Multi-select and box selection in the editor, t:Type search in the hierarchy and the Watch panel that shows values live." },
+            { TR: "Yeni şablonlar: Gök Kulesi, Labirent Avı ve Sapan Ustası.", EN: "New templates: Sky Tower, Maze Hunt and Slingshot Master." },
+        ],
+    },
+    {
         id: "v0.3.25",
         version: "v0.3.25",
         date: "2026-10-06",

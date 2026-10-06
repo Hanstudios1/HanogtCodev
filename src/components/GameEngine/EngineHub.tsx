@@ -52,7 +52,7 @@ import LivePreview from "./hub/LivePreview";
 import SceneSketch from "./hub/SceneSketch";
 import { DIFFICULTY_LABEL, TemplateBadges } from "./hub/TemplateBadges";
 import TemplateDrawer from "./hub/TemplateDrawer";
-import { TEMPLATE_UPDATE, V3_FEATURES } from "./whats-new";
+import { TEMPLATE_UPDATE, V3_FEATURES, V4_FEATURES } from "./whats-new";
 
 /*
  * Hanogt Engine's home: a hero with a game running live in the real engine,
@@ -99,7 +99,8 @@ const C = {
     start: { TR: "Başla", EN: "Start" },
     previewOf: { TR: "{name} önizlemesi", EN: "{name} preview" },
     newsTitle: { TR: "Yenilikler", EN: "What's new" },
-    newsUpdate: { TR: "Ekim güncellemesi", EN: "October update" },
+    newsV4: { TR: "V4 ile gelenler", EN: "New in V4" },
+    newsUpdate: { TR: "Ekim şablon güncellemesi", EN: "October template update" },
     newsV3: { TR: "V3 ile gelenler", EN: "Shipped with V3" },
     projectsText: { TR: "Bulutta ve bu tarayıcıda kayıtlı oyun projelerin.", EN: "Your game projects in the cloud and in this browser." },
     sortRecent: { TR: "Son düzenlenen", EN: "Recently edited" },
@@ -341,7 +342,7 @@ function TemplateGallery({ locale, onPreview, onStart }: { locale: "tr" | "en"; 
 function WhatsNew() {
     const { tx } = useI18n();
     const t = useEngineText();
-    const item = (feature: (typeof V3_FEATURES)[number], index: number, highlight: boolean) => {
+    const item = (feature: (typeof V4_FEATURES)[number], index: number, highlight: boolean) => {
         const Icon = feature.icon;
         return (
             <Reveal key={feature.section + feature.title.EN} delay={Math.min(index, 8) * 0.04} y={16}>
@@ -362,8 +363,10 @@ function WhatsNew() {
                 <h2 id="whats-new-title" className="text-3xl font-black tracking-tight sm:text-4xl">{tx(C.newsTitle)}</h2>
                 <Link href="/game-engine/docs#yenilikler" className="inline-flex items-center gap-1.5 text-[14px] font-bold text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"><BookOpen className="h-4 w-4" aria-hidden />{t("docs")}</Link>
             </Reveal>
-            <h3 className="mt-8 flex items-center gap-2 text-[13px] font-black uppercase tracking-wider text-zinc-500"><Sparkles className="h-4 w-4" aria-hidden />{tx(C.newsUpdate)}</h3>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">{TEMPLATE_UPDATE.map((feature, index) => item(feature, index, true))}</div>
+            <h3 className="mt-8 flex items-center gap-2 text-[13px] font-black uppercase tracking-wider text-zinc-500"><Sparkles className="h-4 w-4" aria-hidden />{tx(C.newsV4)}</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{V4_FEATURES.map((feature, index) => item(feature, index, true))}</div>
+            <h3 className="mt-8 text-[13px] font-black uppercase tracking-wider text-zinc-500">{tx(C.newsUpdate)}</h3>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">{TEMPLATE_UPDATE.map((feature, index) => item(feature, index, false))}</div>
             <h3 className="mt-8 text-[13px] font-black uppercase tracking-wider text-zinc-500">{tx(C.newsV3)}</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{V3_FEATURES.map((feature, index) => item(feature, index, false))}</div>
         </section>

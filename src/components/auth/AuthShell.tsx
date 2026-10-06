@@ -20,17 +20,17 @@ type Props = {
 
 const C = {
     brandText: {
-        TR: "Kod editörü, Hanogt Engine V3, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
-        EN: "Code editor, Hanogt Engine V3, Hanogt AI and the community: all in one account, nothing to install.",
+        TR: "Kod editörü, Hanogt Engine V4, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
+        EN: "Code editor, Hanogt Engine V4, Hanogt AI and the community: all in one account, nothing to install.",
     },
     codeText: {
         TR: "Tarayıcıda, kurulum olmadan. JavaScript, Python, SQL ve Lua anında çalışır.",
         EN: "In your browser, nothing to install. JavaScript, Python, SQL and Lua run instantly.",
     },
-    engineTitle: { TR: "Hanogt Engine V3 ile oyun yap", EN: "Build games with Hanogt Engine V3" },
+    engineTitle: { TR: "Hanogt Engine V4 ile oyun yap", EN: "Build games with Hanogt Engine V4" },
     engineText: {
-        TR: "Tilemap, arayüz bileşenleri ve animasyon. C# ve C++ ile script yaz, Arcade'de yayınla.",
-        EN: "Tilemaps, UI components and animation. Script in C# and C++, then publish to Arcade.",
+        TR: "Gamepad, karakter denetleyici, yol bulma, eklemler ve müzik. C# ve C++ ile script yaz, Arcade'de yayınla.",
+        EN: "Gamepads, a character controller, path finding, joints and music. Script in C# and C++, then publish to Arcade.",
     },
     aiTitle: { TR: "Hanogt AI yanında", EN: "Hanogt AI by your side" },
     aiText: {

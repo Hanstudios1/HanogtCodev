@@ -192,16 +192,17 @@
       "src/app/about/page.tsx"
     ]
   },
-  "24tur9ccra4": {
-    "en": "Hanogt Engine V3",
-    "tr": "Hanogt Engine V3",
+  "faf6fs6b0c": {
+    "en": "Hanogt Engine V4",
+    "tr": "Hanogt Engine V4",
     "files": [
-      "src/app/about/page.tsx"
+      "src/app/about/page.tsx",
+      "src/components/ChangelogModal.tsx"
     ]
   },
-  "ngalj9shes": {
-    "en": "A Unity-like 2D/3D game engine that runs in your browser. V3 adds tilemaps, UI components and animation; you script in C# and C++.",
-    "tr": "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V3 ile tilemap, arayüz bileşenleri ve animasyon geldi; C# ve C++ ile script yazarsın.",
+  "1pp51x1gmh0": {
+    "en": "A Unity-like 2D/3D game engine that runs in your browser. V4 adds gamepads, a character controller, camera follow, path finding, joints and audio files; you script in C# and C++.",
+    "tr": "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V4 ile gamepad, karakter denetleyici, kamera takibi, yol bulma, eklemler ve ses dosyaları geldi; C# ve C++ ile script yazarsın.",
     "files": [
       "src/app/about/page.tsx"
     ]
@@ -11841,9 +11842,9 @@
       "src/app/settings/page.tsx"
     ]
   },
-  "h68zg15du3": {
-    "en": "With a free account you can write code in {count} languages, build games with Hanogt Engine V3 and create with Hanogt AI and the community.",
-    "tr": "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V3 ile oyun yap, Hanogt AI ve toplulukla üret.",
+  "1slhi5fkdui": {
+    "en": "With a free account you can write code in {count} languages, build games with Hanogt Engine V4 and create with Hanogt AI and the community.",
+    "tr": "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V4 ile oyun yap, Hanogt AI ve toplulukla üret.",
     "files": [
       "src/app/signup/page.tsx"
     ]
@@ -22586,9 +22587,9 @@
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
-  "2bt016did4v": {
-    "en": "Code editor, Hanogt Engine V3, Hanogt AI and the community: all in one account, nothing to install.",
-    "tr": "Kod editörü, Hanogt Engine V3, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
+  "yp19ctkqlo": {
+    "en": "Code editor, Hanogt Engine V4, Hanogt AI and the community: all in one account, nothing to install.",
+    "tr": "Kod editörü, Hanogt Engine V4, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
@@ -22600,16 +22601,16 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
-  "dav9ys5u33": {
-    "en": "Build games with Hanogt Engine V3",
-    "tr": "Hanogt Engine V3 ile oyun yap",
+  "g4od64v7s7": {
+    "en": "Build games with Hanogt Engine V4",
+    "tr": "Hanogt Engine V4 ile oyun yap",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
   },
-  "1vv6o0g46m0": {
-    "en": "Tilemaps, UI components and animation. Script in C# and C++, then publish to Arcade.",
-    "tr": "Tilemap, arayüz bileşenleri ve animasyon. C# ve C++ ile script yaz, Arcade'de yayınla.",
+  "1kl3cio0w0u": {
+    "en": "Gamepads, a character controller, path finding, joints and music. Script in C# and C++, then publish to Arcade.",
+    "tr": "Gamepad, karakter denetleyici, yol bulma, eklemler ve müzik. C# ve C++ ile script yaz, Arcade'de yayınla.",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
@@ -22647,6 +22648,55 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "jclu51lrtn": {
+    "en": "A new version of the engine: gamepads, a ready-made platformer character, camera follow, path finding, joints, new UI controls, audio files and music, multi-select and the Watch panel. Three new templates are ready too.",
+    "tr": "Motorun yeni sürümü: gamepad, hazır platform karakteri, kamera takibi, yol bulma, eklemler, yeni arayüz kontrolleri, ses dosyaları ve müzik, çoklu seçim ve İzle paneli. Üç yeni şablon da hazır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1k72ez1red3": {
+    "en": "Input actions: bind actions such as Jump and Fire to the keyboard, the mouse and gamepads; Input.GetButton and GetAxis read them all.",
+    "tr": "Giriş eylemleri: Zıpla, Ateş et gibi eylemleri klavyeye, fareye ve gamepad'e bağla; Input.GetButton ve GetAxis hepsini okur.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "142dlftklsx": {
+    "en": "Double jumps, coyote time and slopes without code with Character Controller 2D; a smooth camera with Camera Follow and Camera.Shake.",
+    "tr": "Character Controller 2D ile kod yazmadan çift zıplama, coyote süresi ve eğimler; Camera Follow ve Camera.Shake ile akıcı kamera.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1k42qv7z0dx": {
+    "en": "Nav Agent 2D sends enemies after you around walls; build pendulums, ropes and slingshots with Distance and Spring joints.",
+    "tr": "Nav Agent 2D düşmanları duvarların etrafından kovalatır; Distance ve Spring eklemleriyle sarkaç, ip ve sapan yap.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "64z6g7vx1u": {
+    "en": "Settings menus and high score tables with Slider, Toggle and Input Field; sound and music from WAV, MP3 and OGG files (Free 5 MB, Plus 25 MB, Pro 100 MB).",
+    "tr": "Slider, Toggle ve Input Field ile ayar menüleri ve rekor tabloları; WAV, MP3 ve OGG dosyalarıyla ses ve müzik (Ücretsiz 5 MB, Plus 25 MB, Pro 100 MB).",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1cbrjal73fs": {
+    "en": "Multi-select and box selection in the editor, t:Type search in the hierarchy and the Watch panel that shows values live.",
+    "tr": "Editörde çoklu seçim ve kutu seçimi, hiyerarşide t:Tür araması ve değerleri canlı gösteren İzle paneli.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2fwhkvh1msy": {
+    "en": "New templates: Sky Tower, Maze Hunt and Slingshot Master.",
+    "tr": "Yeni şablonlar: Gök Kulesi, Labirent Avı ve Sapan Ustası.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "1pwlv9sc3yu": {
@@ -25466,7 +25516,6 @@
     "tr": "Girdi",
     "files": [
       "src/components/Editor/Console.tsx",
-      "src/components/GameEngine/docs/EngineDocs.tsx",
       "src/components/GameEngine/editor/text.ts"
     ]
   },
@@ -27118,9 +27167,9 @@
       "src/components/Editor/WebPreview.tsx"
     ]
   },
-  "e88n1crfw1": {
-    "en": "What's new in V3",
-    "tr": "V3'te yenilikler",
+  "1t40mmx2pqk": {
+    "en": "What's new in V4",
+    "tr": "V4'te yenilikler",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
       "src/components/GameEngine/editor/text.ts",
@@ -27178,6 +27227,13 @@
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
+  "16v3iguigbz": {
+    "en": "Input, input actions and gamepads",
+    "tr": "Girdi, giriş eylemleri ve gamepad",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
   "20lujwite2q": {
     "en": "Physics and collisions",
     "tr": "Fizik ve çarpışmalar",
@@ -27185,9 +27241,41 @@
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
+  "1odzycq1865": {
+    "en": "Character Controller 2D",
+    "tr": "Character Controller 2D",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts",
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "12d4tdqdcru": {
+    "en": "Camera follow and shake",
+    "tr": "Kamera takibi ve sarsıntı",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "xhphx1w4bk": {
+    "en": "Joints: Distance and Spring",
+    "tr": "Eklemler: Distance ve Spring",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
   "24dncqlqwzz": {
     "en": "Tilemaps and tile painting",
     "tr": "Tilemap ve karo boyama",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "gu65jqjugv": {
+    "en": "Path finding and Nav Agent 2D",
+    "tr": "Yol bulma ve Nav Agent 2D",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
       "src/components/GameEngine/whats-new.ts"
@@ -27227,6 +27315,21 @@
     "tr": "UI, HUD ve ses",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "1l2f4ddddmq": {
+    "en": "Sliders, toggles and input fields",
+    "tr": "Kaydırıcı, anahtar ve metin kutusu",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "rup1swm6q1": {
+    "en": "Audio files and music",
+    "tr": "Ses dosyaları ve müzik",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts"
     ]
   },
   "1nx8e42mir8": {
@@ -29271,8 +29374,7 @@
     "en": "Screen effects",
     "tr": "Ekran efektleri",
     "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Guide/book-content.ts"
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "1xz29lyxpqf": {
@@ -30285,9 +30387,16 @@
       "src/lib/nav.ts"
     ]
   },
-  "25wyl9ztcu9": {
-    "en": "October update",
-    "tr": "Ekim güncellemesi",
+  "n4m4bkr9h3": {
+    "en": "New in V4",
+    "tr": "V4 ile gelenler",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "cwmc3i3qju": {
+    "en": "October template update",
+    "tr": "Ekim şablon güncellemesi",
     "files": [
       "src/components/GameEngine/EngineHub.tsx"
     ]
@@ -30482,6 +30591,104 @@
       "src/components/GameEngine/hub/TemplateDrawer.tsx"
     ]
   },
+  "gl2bl023aj": {
+    "en": "Input actions and gamepads",
+    "tr": "Giriş eylemleri ve gamepad",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "40gm4n5ng4": {
+    "en": "Bind actions such as Jump and Fire to keys, mouse buttons and gamepads; Input.GetButton and GetAxis read them all. Dead zone, inverted axes and your own actions are in Settings → Input.",
+    "tr": "Zıpla, Ateş et gibi eylemleri tuşlara, fare düğmelerine ve gamepad'e bağla; Input.GetButton ve GetAxis hepsini birlikte okur. Ölü bölge, ters eksen ve kendi eylemlerin Ayarlar → Girdi'de.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "22k4pdfvw8c": {
+    "en": "A platformer character without code: acceleration, double jump, coyote time, jump buffering, short hops, slopes and moving platforms, with OnJump and OnLand events.",
+    "tr": "Kod yazmadan platform karakteri: hızlanma, çift zıplama, coyote süresi, zıplama tamponu, kısa zıplama, eğimler ve hareketli platformlar. OnJump ve OnLand olaylarıyla.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1adczwz78uk": {
+    "en": "Camera Follow tracks a target smoothly, with a dead zone, look-ahead and level bounds. Camera.Shake adds punch to hits and explosions.",
+    "tr": "Camera Follow hedefi yumuşakça izler: ölü bölge, ileri bakış ve seviye sınırları. Camera.Shake ile çarpışmalara ve patlamalara his kat.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1a76wm5h4dw": {
+    "en": "Enemies find the shortest way around walls with A*. Nav Agent 2D chases a target or goes where SetDestination says; Pathfinding.FindPath hands you the path itself.",
+    "tr": "Düşmanlar duvarların etrafından A* ile en kısa yolu bulur. Nav Agent 2D bir hedefi kovalar ya da SetDestination ile gider; Pathfinding.FindPath yolu kendin kullanman için verir.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "fx2q06uflj": {
+    "en": "Distance and Spring joints",
+    "tr": "Distance ve Spring eklemleri",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "z83o7h5jk5": {
+    "en": "Pendulums, ropes, chains, springs and slingshots: tie two objects at a fixed distance or with a spring.",
+    "tr": "Sarkaçlar, ipler, zincirler, yaylar ve sapanlar: iki nesneyi sabit mesafede ya da yayla bağla.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "163jptcv4k0": {
+    "en": "Slider, toggle and input field",
+    "tr": "Kaydırıcı, anahtar ve metin kutusu",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "n0697xmdhq": {
+    "en": "New UI controls for settings menus and high score tables, with onValueChanged and onEndEdit events and the on-screen keyboard on phones.",
+    "tr": "Ayarlar menüleri ve skor tabloları için yeni arayüz kontrolleri; onValueChanged ve onEndEdit olayları, telefonda ekran klavyesi.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1osml4dzrtv": {
+    "en": "Upload WAV, MP3 and OGG files; play effects with Audio.Play and music with fades with Audio.PlayMusic. Music and effects have separate volumes and Audio Sources can loop.",
+    "tr": "WAV, MP3 ve OGG yükle; Audio.Play ile efekt, Audio.PlayMusic ile geçişli müzik çal. Müzik ve efekt sesleri ayrı, Audio Source döngüyle çalabilir.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1eik5nss4x8": {
+    "en": "Multi-select and the Watch panel",
+    "tr": "Çoklu seçim ve İzle paneli",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1vwrfbiuqrx": {
+    "en": "Move and edit several objects together, box-select with Shift and search the hierarchy with t:Type. The Watch panel shows values live while the game runs.",
+    "tr": "Birden çok nesneyi birlikte taşı ve düzenle, Shift ile kutu seçimi yap, hiyerarşide t:Tür ile ara. İzle paneli oyun çalışırken değerleri canlı gösterir.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "mcftq0ghc0": {
+    "en": "Three new templates",
+    "tr": "Üç yeni şablon",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1mc2fl8g7fu": {
+    "en": "Sky Tower, Maze Hunt and Slingshot Master: games built with the V4 features, playable end to end.",
+    "tr": "Gök Kulesi, Labirent Avı ve Sapan Ustası: V4 özellikleriyle yapılmış, baştan sona oynanabilir oyunlar.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
   "q397uz0abf": {
     "en": "Paint 2D levels right in the scene with brush, rectangle, eraser and picker tools. Per-tile collision, atlas images and Tilemap.SetTile from scripts.",
     "tr": "2D seviyeleri sahnede fırça, dikdörtgen, silgi ve damlalıkla boya. Karo başına çarpışma, atlas görselleri ve script'ten Tilemap.SetTile.",
@@ -30576,13 +30783,6 @@
   "1vavlbnihsr": {
     "en": "Grid snapping for move, rotate and scale, live FPS, object and draw-call stats while playing, and sprite sheet frame picking.",
     "tr": "Taşıma, dönüş ve ölçekte ızgaraya yakalama; oynatırken FPS, nesne ve çizim istatistikleri; sprite sheet kare seçimi.",
-    "files": [
-      "src/components/GameEngine/whats-new.ts"
-    ]
-  },
-  "mcftq0ghc0": {
-    "en": "Three new templates",
-    "tr": "Üç yeni şablon",
     "files": [
       "src/components/GameEngine/whats-new.ts"
     ]
@@ -33817,9 +34017,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "15rkdhtqdzj": {
-    "en": "Hanogt Engine V3 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
-    "tr": "Hanogt Engine V3, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
+  "1qhwuozb2dt": {
+    "en": "Hanogt Engine V4 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
+    "tr": "Hanogt Engine V4, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -33831,9 +34031,16 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "mo3ak54t54": {
-    "en": "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++) (new)",
-    "tr": "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++) (yeni)",
+  "23mq1np1lm2": {
+    "en": "Sky Tower, Maze Hunt and Slingshot Master (new in V4)",
+    "tr": "Gök Kulesi, Labirent Avı ve Sapan Ustası (V4 ile yeni)",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2d24oin79jr": {
+    "en": "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++)",
+    "tr": "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++)",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -33890,9 +34097,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1fcmqzkhjd0": {
-    "en": "The tree of objects in the scene. Drag, group, rename.",
-    "tr": "Sahnedeki nesnelerin ağacı. Sürükle, grupla, yeniden adlandır.",
+  "gg0pkw6xcy": {
+    "en": "The tree of objects in the scene. Drag, group, rename; search with t:Type and select several objects with Shift.",
+    "tr": "Sahnedeki nesnelerin ağacı. Sürükle, grupla, yeniden adlandır; t:Tür ile ara, Shift ile birden çok nesne seç.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -33911,16 +34118,16 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "q9skczp0h7": {
-    "en": "Project & Console",
-    "tr": "Proje ve Konsol",
+  "17zn864n42h": {
+    "en": "Project, Console & Watch",
+    "tr": "Proje, Konsol ve İzle",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1w8c9tctkdd": {
-    "en": "Scripts, prefabs, textures; Debug.Log output.",
-    "tr": "Scriptler, prefablar, dokular; Debug.Log çıktıları.",
+  "1rjb5t9bwef": {
+    "en": "Scripts, prefabs, textures and sounds; Debug.Log output; the Watch panel that shows values live while the game runs.",
+    "tr": "Scriptler, prefablar, dokular ve sesler; Debug.Log çıktıları; oyun çalışırken değerleri canlı gösteren İzle paneli.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -33967,9 +34174,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1dakgcmfmmy": {
-    "en": "Input: keyboard, mouse, touch and axes.",
-    "tr": "Input: klavye, fare, dokunmatik ve eksenler.",
+  "1l89vqycu9r": {
+    "en": "Input: keyboard, mouse, touch, gamepads and actions such as Jump and Fire.",
+    "tr": "Input: klavye, fare, dokunmatik, gamepad ve Jump, Fire gibi eylemler.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -33995,58 +34202,93 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "29uve2r7opj": {
-    "en": "The new blocks of V3",
-    "tr": "V3'ün yeni blokları",
+  "1ep9ked2dgo": {
+    "en": "The new blocks of V4",
+    "tr": "V4'ün yeni blokları",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1isavhoy91p": {
-    "en": "Tilemap",
-    "tr": "Tilemap",
+  "1m4kmawzu8v": {
+    "en": "A platformer character that runs, double jumps and walks up slopes without code, with coyote time and jump buffering built in.",
+    "tr": "Kod yazmadan koşan, çift zıplayan, eğimlerde yürüyen platform karakteri; coyote süresi ve zıplama tamponu hazır.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "r0az5cljhy": {
-    "en": "Pick a tile from the palette and paint the grid with a brush. Solid tiles collide; trigger tiles become spikes or finish lines.",
-    "tr": "Paletten karo seç ve ızgaraya fırçayla boya. Katı karolar çarpışır; tetikleyici karolar diken ya da bitiş çizgisi olur.",
+  "1khfqs4l5nt": {
+    "en": "Camera follow",
+    "tr": "Kamera takibi",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "2dsw4h91rem": {
-    "en": "Animation",
-    "tr": "Animasyon",
+  "1rt8mz3ddf4": {
+    "en": "Camera Follow tracks the player smoothly; Camera.Shake adds punch to hits.",
+    "tr": "Camera Follow oyuncuyu yumuşakça izler; Camera.Shake çarpışmalara his katar.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "ep080ctj8j": {
-    "en": "Keyframed clips and 18 easing curves; Tween and Timer from scripts.",
-    "tr": "Anahtar kareli klipler ve 18 yumuşatma eğrisi; scriptten Tween ve Timer.",
+  "18reb2b76r7": {
+    "en": "Path finding",
+    "tr": "Yol bulma",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "7319jtrt7d": {
-    "en": "UI",
-    "tr": "Arayüz",
+  "22we8mi3wpt": {
+    "en": "Nav Agent 2D chases its target around walls; Pathfinding.FindPath hands you the path.",
+    "tr": "Nav Agent 2D duvarların etrafından dolaşarak hedefini kovalar; Pathfinding.FindPath yolu verir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1n9ncgkvag5": {
-    "en": "Menus, health bars and scoreboards with UI Button, Panel, Progress Bar and Text.",
-    "tr": "UI Button, Panel, Progress Bar ve Text ile menüler, can barları ve skor tabelaları.",
+  "ytwmfwfskc": {
+    "en": "Joints",
+    "tr": "Eklemler",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1o28hl0sria": {
-    "en": "Fog, bloom, vignette and exposure.",
-    "tr": "Sis, parlama (bloom), vinyet ve pozlama.",
+  "by473e3nmr": {
+    "en": "Pendulums, ropes and slingshots with Distance and Spring joints.",
+    "tr": "Distance ve Spring eklemleriyle sarkaç, ip ve sapan.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "17rcdncv65s": {
+    "en": "Sound and music",
+    "tr": "Ses ve müzik",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2igahshz9i": {
+    "en": "Upload WAV, MP3 and OGG; music with Audio.PlayMusic and looping sounds with Audio Source.",
+    "tr": "WAV, MP3 ve OGG yükle; Audio.PlayMusic ile müzik, Audio Source ile döngülü sesler.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "296ainr0trj": {
+    "en": "Settings menus",
+    "tr": "Ayar menüleri",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "3i4cxuaaiy": {
+    "en": "Volume settings, options and name entry for high scores with Slider, Toggle and Input Field.",
+    "tr": "Slider, Toggle ve Input Field ile ses ayarı, seçenekler ve skor tablosuna isim yazma.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1ic36qce6ho": {
+    "en": "The V3 blocks are still there: tilemaps, animation and Tween, UI Button/Panel/Progress Bar, fog and screen effects.",
+    "tr": "V3'ün blokları da yerinde: tilemap, animasyon ve Tween, UI Button/Panel/Progress Bar, sis ve ekran efektleri.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -48265,24 +48507,24 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "22j6kqigx62": {
-    "en": "[Game Engine](/game-engine) (Hanogt Engine V3) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense, Neon Arena (C++), Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Camera, Light, Tilemap, Animation, UI and Script components in the **Inspector**.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. Test with **Play** and read errors with line numbers in the console.\n5. **Publish to the Arcade** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
-    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V3) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması, Neon Arena (C++), Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Kamera, Işık, Tilemap, Animasyon, UI ve Script bileşenlerini düzenle.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör.\n5. **Arcade'de yayınla** ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
+  "14804shm6hc": {
+    "en": "[Game Engine](/game-engine) (Hanogt Engine V4) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Sky Tower, Maze Hunt, Slingshot Master, Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense, Neon Arena (C++), Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, joints, Camera, Light, Tilemap, Animation, Audio Source, UI and Script components in the **Inspector**. Select several objects (Shift + drag or Ctrl+A) to edit them together.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `PlayerPrefs`…\n4. Test with **Play**, read errors with line numbers in the console and follow variables live in the **Watch** panel.\n5. **Publish to the Arcade** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
+    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V4) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Gök Kulesi, Labirent Avı, Sapan Ustası, Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması, Neon Arena (C++), Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, eklemler, Kamera, Işık, Tilemap, Animasyon, Ses Kaynağı, UI ve Script bileşenlerini düzenle. Birden çok nesneyi seçip (Shift + sürükle ya da Ctrl+A) birlikte düzenleyebilirsin.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `PlayerPrefs`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör, **İzle** panelinde değişkenleri canlı takip et.\n5. **Arcade'de yayınla** ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "296a3t59zvh": {
-    "en": "What's new in Hanogt Engine V3?",
-    "tr": "Hanogt Engine V3'te neler var?",
+  "61a26874zg": {
+    "en": "What's new in Hanogt Engine V4?",
+    "tr": "Hanogt Engine V4'te neler var?",
     "files": [
       "src/lib/ai/knowledge.ts",
       "src/lib/faq.ts"
     ]
   },
-  "96cv016lbe": {
-    "en": "**Hanogt Engine V3** (project schema v3) adds new building blocks; older projects are migrated automatically when opened:\n• **Tilemaps:** pick a palette and paint levels on a grid; solid tiles collide and tiles can be drawn from a sprite atlas.\n• **Animation:** keyframed clips (position, rotation, scale, color, opacity, sprite frame), 18 easing curves, once / loop / ping-pong playback and **Tween** from scripts.\n• **Sprite sheets:** split a texture into columns × rows and animate through the frames.\n• **UI components:** UI Button (calls a script method on click, optional hotkey), UI Panel, UI Progress Bar (health bars, loading bars) and drawing order.\n• **Visual effects:** linear/exponential fog plus screen effects such as bloom, vignette and exposure.\nSee the [Engine docs](/game-engine/docs) or try a template in the [Game Engine](/game-engine).",
-    "tr": "**Hanogt Engine V3** (proje şeması v3) motora yeni yapı taşları getirir; eski projeler açılırken otomatik taşınır:\n• **Tilemap:** palet seçip ızgaraya boyayarak seviye çiz; katı karolar çarpışır, karolar bir sprite atlasından çizilebilir.\n• **Animasyon:** anahtar kareli klipler (konum, dönüş, ölçek, renk, saydamlık, sprite karesi), 18 yumuşatma eğrisi, bir kez / döngü / ileri-geri oynatma ve scriptten **Tween**.\n• **Sprite sayfaları:** bir dokuyu sütun × satır karelere bölüp karelerle animasyon yap.\n• **Arayüz bileşenleri:** UI Button (tıklayınca script metodu çağırır, kısayol tuşu), UI Panel, UI Progress Bar (can barı, yükleme çubuğu) ve katman sırası.\n• **Görsel efektler:** doğrusal/üstel sis ve bloom, vinyet, pozlama gibi ekran efektleri.\nDetaylar için [Motor belgeleri](/game-engine/docs)'ne bak ya da [Oyun Motoru](/game-engine)'nda bir şablonla dene.",
+  "19c59haupln": {
+    "en": "**Hanogt Engine V4** (project schema v4) adds building blocks that make games faster to build. Older projects are migrated automatically when opened, and games made before V4 keep playing exactly as before.\n• **Input actions and gamepads:** bind actions such as Jump and Fire to keys, mouse buttons and gamepads; `Input.GetButtonDown(\"Jump\")` and `Input.GetAxis(\"Horizontal\")` read them all. Your own actions, dead zone and inverted axes are in Settings → Input.\n• **Character Controller 2D:** a platformer character without code, with acceleration, double jump, coyote time, jump buffering, slopes and moving platforms, plus `OnJump()` and `OnLand()` events.\n• **Camera Follow and shake:** smooth tracking, a dead zone, look-ahead, level bounds and `Camera.Shake()`.\n• **Path finding:** the shortest way around walls with A*; **Nav Agent 2D** chases a target or goes where `SetDestination` says, and `Pathfinding.FindPath()` hands you the path.\n• **Distance and Spring joints:** pendulums, ropes, chains, springs and slingshots.\n• **New UI controls:** Slider, Toggle and Input Field, with `onValueChanged` and `onEndEdit` events and the on-screen keyboard on phones.\n• **Audio files and music:** upload WAV, MP3 and OGG files (up to 300 KB each); play effects with `Audio.Play` and music with fades with `Audio.PlayMusic`; Audio Sources can loop. Total audio storage is 5 MB on Free, 25 MB on Plus and 100 MB on Pro.\n• **Editor:** multi-select, box selection with Shift + drag, editing objects together, `t:Type` and `tag:Tag` hierarchy search and the **Watch** panel that shows values live while the game runs.\n• **Three new templates:** Sky Tower, Maze Hunt and Slingshot Master.\nEverything V3 brought (tilemaps, animation and Tween, sprite sheets, UI Button/Panel/Progress Bar, fog and screen effects) is still there. See the [Engine docs](/game-engine/docs) or try a template in the [Game Engine](/game-engine).",
+    "tr": "**Hanogt Engine V4** (proje şeması v4) oyun yapmayı hızlandıran yeni yapı taşları getirir. Eski projeler açılırken otomatik taşınır; V4 öncesi oyunlar eski kurallarla aynı şekilde çalışmaya devam eder.\n• **Giriş eylemleri ve gamepad:** Zıpla, Ateş et gibi eylemleri tuşlara, fare düğmelerine ve gamepad'e bağla; `Input.GetButtonDown(\"Jump\")` ve `Input.GetAxis(\"Horizontal\")` hepsini birlikte okur. Kendi eylemlerin, ölü bölge ve ters eksen Ayarlar → Girdi'de.\n• **Character Controller 2D:** kod yazmadan platform karakteri; hızlanma, çift zıplama, coyote süresi, zıplama tamponu, eğimler ve hareketli platformlar, `OnJump()` ve `OnLand()` olaylarıyla.\n• **Camera Follow ve sarsıntı:** yumuşak takip, ölü bölge, ileri bakış, seviye sınırları ve `Camera.Shake()`.\n• **Yol bulma:** A* ile duvarların etrafından en kısa yol; **Nav Agent 2D** hedefi kovalar ya da `SetDestination` ile gider, `Pathfinding.FindPath()` yolu sana verir.\n• **Distance ve Spring eklemleri:** sarkaç, ip, zincir, yay ve sapan.\n• **Yeni UI kontrolleri:** Slider, Toggle ve Input Field; `onValueChanged` ve `onEndEdit` olayları, telefonda ekran klavyesi.\n• **Ses dosyaları ve müzik:** WAV, MP3 ve OGG yükle (dosya başına en çok 300 KB); `Audio.Play` ile efekt, `Audio.PlayMusic` ile geçişli müzik; Audio Source döngüyle çalabilir. Toplam ses alanı Ücretsiz'de 5 MB, Plus'ta 25 MB, Pro'da 100 MB.\n• **Editör:** çoklu seçim, Shift + sürükle ile kutu seçimi, birlikte düzenleme, hiyerarşide `t:Tür` ve `tag:Etiket` araması ve değerleri oyun çalışırken canlı gösteren **İzle** paneli.\n• **Üç yeni şablon:** Gök Kulesi, Labirent Avı ve Sapan Ustası.\nV3'ün getirdikleri (tilemap, animasyon ve Tween, sprite sayfaları, UI Button/Panel/Progress Bar, sis ve ekran efektleri) aynen sürüyor. Detaylar için [Motor belgeleri](/game-engine/docs)'ne bak ya da [Oyun Motoru](/game-engine)'nda bir şablonla dene.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -50448,9 +50690,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "1fn5pat1wyy": {
-    "en": "Hanogt Engine V3 brings sprite sheets with frame selection, tilemaps, keyframe animation with easing curves and on-screen UI components such as buttons, panels and progress bars. Projects saved with earlier versions are moved to V3 automatically when you open them; your settings are kept and the new fields get their defaults.",
-    "tr": "Hanogt Engine V3 sprite sayfaları ve kare seçimi, karo haritaları (tilemap), yumuşatma eğrili anahtar kare animasyonları ve düğme, panel ve ilerleme çubuğu gibi ekran arayüzü bileşenleri getiriyor. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V3'e taşınır; mevcut ayarlarınız korunur ve yeni alanlar varsayılan değerleriyle eklenir.",
+  "28uwydjx5kn": {
+    "en": "Hanogt Engine V4 brings input actions and gamepad support, Character Controller 2D for platformer characters without code, smooth camera follow and shake, A* path finding and Nav Agent 2D, Distance and Spring joints, Slider, Toggle and Input Field UI controls, audio files and music, multi-select in the editor and the Watch panel that shows values live; the Sky Tower, Maze Hunt and Slingshot Master templates are new too. Audio files can be up to 300 KB; total audio storage is 5 MB on Free, 25 MB on Plus and 100 MB on Pro. Projects saved with earlier versions are moved to V4 automatically when you open them, and games made before V4 play as they did.",
+    "tr": "Hanogt Engine V4 giriş eylemleri ve gamepad desteği, kod yazmadan platform karakteri yapan Character Controller 2D, yumuşak kamera takibi ve sarsıntı, A* yol bulma ve Nav Agent 2D, Distance ve Spring eklemleri, Slider, Toggle ve Input Field arayüz kontrolleri, ses dosyaları ve müzik, editörde çoklu seçim ve değerleri canlı gösteren İzle paneli getiriyor; Gök Kulesi, Labirent Avı ve Sapan Ustası şablonları da yeni. Ses dosyaları en çok 300 KB olabilir; toplam ses alanı Ücretsiz'de 5 MB, Plus'ta 25 MB, Pro'da 100 MB. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V4'e taşınır ve V4 öncesi oyunlar eskisi gibi çalışır.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -50621,6 +50863,69 @@
     "tr": "Erken erişim (Pro ve ekip)",
     "files": [
       "src/lib/features.ts"
+    ]
+  },
+  "y91igfxf4x": {
+    "en": "Sky Tower",
+    "tr": "Gök Kulesi",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "gp3txxoe3u": {
+    "en": "A V4 platformer: double jump, coyote time and jump buffering with Character Controller 2D, a Camera Follow that tracks you, screen shake, a moving platform, a checkpoint and a settings menu with a slider and a toggle.",
+    "tr": "V4 platform oyunu: Character Controller 2D ile çift zıplama, coyote süresi ve zıplama tamponu; seni izleyen Camera Follow, ekran sarsıntısı, hareketli platform, kontrol noktası ve kaydırıcıyla anahtarlı ayarlar menüsü.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "2clgkvo0juw": {
+    "en": "← → / A D / left stick: run  •  Space / gamepad A: jump (once more in the air)  •  Esc: settings",
+    "tr": "← → / A D / sol çubuk: koş  •  Space / gamepad A: zıpla (havada bir kez daha)  •  Esc: ayarlar",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1ezn6u45sqw": {
+    "en": "Maze Hunt",
+    "tr": "Labirent Avı",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1l8b9hnlfek": {
+    "en": "Collect the gems and dodge the ghosts: Nav Agent 2D ghosts chase you with A* path finding, lie in wait or patrol, and a crystal sends them running. The hint button draws the shortest path to the nearest gem.",
+    "tr": "Gem'leri topla, hayaletlerden kaç: Nav Agent 2D hayaletler A* yol bulmayla seni kovalar, pusu kurar ya da devriye gezer; kristal onları kaçırır. İpucu tuşu en yakın gem'e en kısa yolu çizer.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "p7q6m0oszp": {
+    "en": "WASD / arrow keys / left stick: walk  •  H / gamepad Y: hint",
+    "tr": "WASD / ok tuşları / sol çubuk: yürü  •  H / gamepad Y: ipucu",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1rktupeox1l": {
+    "en": "Slingshot Master",
+    "tr": "Sapan Ustası",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "ouz7ap073s": {
+    "en": "A physics puzzle: pull the ball back and a Spring Joint 2D launches it. A wrecking ball on a Distance Joint 2D, crates, a power slider, an aim line toggle and a high score table you sign with your name.",
+    "tr": "Fizik bulmacası: topu geri çek, Spring Joint 2D bırakınca fırlatır. Distance Joint 2D'ye asılı yıkım topu, kasalar, güç kaydırıcısı, nişan çizgisi anahtarı ve adını yazdığın rekor tablosu.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "22arcpfwezn": {
+    "en": "Mouse / finger: pull the ball back and let go  •  R: restart",
+    "tr": "Fare / parmak: topu geri çek ve bırak  •  R: yeniden başla",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "15bp3ek1joe": {
@@ -51933,9 +52238,9 @@
       "src/lib/plans.ts"
     ]
   },
-  "jbcqfhzg08": {
-    "en": "The code editor, Hanogt Engine V3, the Arcade, Media and Hanogt Social",
-    "tr": "Kod editörü, Hanogt Engine V3, Arcade, Media ve Hanogt Social",
+  "g01qu7dozd": {
+    "en": "The code editor, Hanogt Engine V4, the Arcade, Media and Hanogt Social",
+    "tr": "Kod editörü, Hanogt Engine V4, Arcade, Media ve Hanogt Social",
     "files": [
       "src/lib/plans.ts"
     ]

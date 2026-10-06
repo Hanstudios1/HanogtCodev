@@ -231,16 +231,29 @@ function sketch2d(scene: SceneDocument): SceneSketchData {
             if (component.type === "tilemap") {
                 const tilemap = component as TilemapComponent;
                 const palette = new Map(tilemap.palette.map((tile) => [tile.key, tile.color]));
+                // Tiles drawn from an atlas image are pictures (gems, coins…), not full blocks: a small diamond per cell.
+                const pictures = new Set(tilemap.atlas.textureId ? tilemap.palette.filter((tile) => tile.frame >= 0).map((tile) => tile.key) : []);
                 const height = tilemap.rows.length;
                 const cell = tilemap.cellSize;
                 tilemap.rows.forEach((row, rowIndex) => {
                     const y = tilemap.origin.y + height - 1 - rowIndex;
+                    for (let column = 0; column < row.length; column += 1) {
+                        if (!pictures.has(row[column])) continue;
+                        const cx = toX(world.position.x + (tilemap.origin.x + column + 0.5) * cell * world.scale.x);
+                        const cy = toY(world.position.y + (y + 0.5) * cell * world.scale.y);
+                        const r = Math.abs(cell * world.scale.x) * unit * 0.22;
+                        layered.push({
+                            layer: tilemap.sortingLayer,
+                            order: order++,
+                            shape: { kind: "polygon", points: `${round(cx)},${round(cy - r)} ${round(cx + r)},${round(cy)} ${round(cx)},${round(cy + r)} ${round(cx - r)},${round(cy)}`, fill: palette.get(row[column]) as string, opacity: 1 },
+                        });
+                    }
                     let start = 0;
                     // Neighbouring cells of the same tile become one rectangle.
                     for (let column = 1; column <= row.length; column += 1) {
                         if (column < row.length && row[column] === row[start]) continue;
                         const key = row[start];
-                        if (key !== "." && palette.has(key)) {
+                        if (key !== "." && palette.has(key) && !pictures.has(key)) {
                             const x0 = world.position.x + (tilemap.origin.x + start) * cell * world.scale.x;
                             const x1 = world.position.x + (tilemap.origin.x + column) * cell * world.scale.x;
                             const y0 = world.position.y + y * cell * world.scale.y;

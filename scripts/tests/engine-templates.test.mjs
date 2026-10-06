@@ -10,7 +10,8 @@ const { PROJECT_TEMPLATES, createProjectFromTemplate } = await load("lib/game-en
 const { createBlankProject, createEmptyScene } = await load("lib/game-engine/scene.ts");
 const { createScriptComponent, createTransform } = await load("lib/game-engine/components.ts");
 
-const NEW_TEMPLATES = ["runner-2d", "flappy-2d", "pong-2d", "snake-2d", "rpg-topdown-2d", "obstacle-course-3d", "tower-defense-2d", "arena-2d"];
+const V4_TEMPLATES = ["sky-tower-2d", "maze-hunt-2d", "slingshot-2d"];
+const NEW_TEMPLATES = [...V4_TEMPLATES, "runner-2d", "flappy-2d", "pong-2d", "snake-2d", "rpg-topdown-2d", "obstacle-course-3d", "tower-defense-2d", "arena-2d"];
 
 /** Deterministic Math.random for one test (the engine's Random uses it unless a script seeds it). */
 function seeded(seed, run) {
@@ -574,6 +575,394 @@ test("neon arena (C++): the arrow keys also shoot", () => {
     assert.ok(bullets.length > 0, "bullets fly");
     assert.ok(bullets.every((bullet) => bullet.body.velocity.x > 10), "to the right");
     game.hold("RightArrow", false);
+});
+
+// ---------------------------------------------------------------------------
+// V4 templates: Sky Tower, Maze Hunt, Slingshot Master
+// ---------------------------------------------------------------------------
+
+const { countTiles, fillTiles, setTileKey, tileKeyAt } = await load("lib/game-engine/tilemap.ts");
+
+/** The PlayerPrefs a game saved (one JSON object per project). */
+function savedPrefs(storage) {
+    const raw = [...storage.store.entries()].find(([key]) => key.startsWith("hanogt-engine:prefs:"))?.[1];
+    return raw ? JSON.parse(raw) : {};
+}
+
+const componentOf = (entity, type) => entity.components.find((component) => component.type === type);
+
+/** Sky Tower's platforms from the floor up: x range, top, and where to land. */
+const TOWER_ROUTE = [
+    { x0: 3, x1: 8, top: -2, land: 4.5 },
+    { x0: -6, x1: -1, top: 1, land: -3.5 },
+    { mover: true, top: 4 },
+    { x0: 5, x1: 9, top: 7, land: 6.5 },
+    { x0: -1, x1: 3, top: 10, land: 1 },
+    { x0: -7, x1: -4, top: 13, land: -5.5 },
+    { x0: 0, x1: 4, top: 16, land: 1.5 },
+    { x0: 5, x1: 9, top: 19, land: 6.5 },
+    { x0: -3, x1: 2, top: 22, land: -1 },
+];
+
+/** Whether a world point is inside the main camera's view (tests run on a 960 × 540 screen). */
+function inCameraView(game, point, size) {
+    const camera = xy(game.find("Main Camera"));
+    return Math.abs(point.x - camera.x) <= (size * 960) / 540 && Math.abs(point.y - camera.y) <= size;
+}
+
+/**
+ * Climbs Sky Tower with the arrow keys and Space like a player would: run to
+ * the edge of the current platform, jump, jump again on the way down, steer to
+ * the landing spot. Returns how many platforms it stood on and where the
+ * camera lost sight of the climber.
+ */
+function climbTower(game) {
+    const player = game.find("Player");
+    const input = game.world.input;
+    const steer = (dir) => {
+        input.setVirtualKey("RightArrow", dir > 0);
+        input.setVirtualKey("LeftArrow", dir < 0);
+    };
+    const won = () => game.find("WinPanel").activeSelf;
+    let from = { x0: -10, x1: 10 };
+    let landed = 0;
+    const outOfView = [];
+    for (const target of TOWER_ROUTE) {
+        let jumpFrames = 0;
+        let released = true;
+        let frames = 0;
+        for (; frames < 600 && !won(); frames += 1) {
+            const p = xy(player);
+            const feet = p.y - 0.45;
+            const grounded = player.motor.grounded;
+            let { x0, x1, land } = target;
+            if (target.mover) {
+                const middle = xy(game.find("MovingPlatform")).x;
+                [x0, x1, land] = [middle - 1.5, middle + 1.5, middle];
+            }
+            if (grounded && Math.abs(feet - target.top) < 0.2 && p.x > x0 && p.x < x1) break;
+            let space = false;
+            let dir = 0;
+            if (grounded) {
+                // Take off from the edge nearest the target (but stay on this platform).
+                let takeoff = land < p.x ? x1 + 1.3 : x0 - 1.3;
+                if (!from.mover) takeoff = Math.min(from.x1 - 0.45, Math.max(from.x0 + 0.45, takeoff));
+                const ready = target.mover ? Math.abs(p.x - takeoff) < 0.5 || (p.x >= -1.6 && takeoff > p.x) : Math.abs(p.x - takeoff) < 0.3;
+                if (!ready) dir = Math.abs(takeoff - p.x) > 0.05 ? Math.sign(takeoff - p.x) : 0;
+                if (target.mover && p.x > -1.7 && takeoff > p.x) dir = 0;
+                if (ready && released) {
+                    space = true;
+                    jumpFrames = 20;
+                    dir = Math.sign(land - p.x);
+                }
+            } else {
+                dir = Math.abs(land - p.x) > 0.25 ? Math.sign(land - p.x) : 0;
+                if (jumpFrames > 0) space = true;
+                else if (player.body.velocity.y < 0 && player.motor.jumpsLeft > 0 && feet < target.top + 0.6 && released) {
+                    space = true;
+                    jumpFrames = 20;
+                }
+            }
+            if (jumpFrames > 0) jumpFrames -= 1;
+            steer(dir);
+            input.setVirtualKey("Space", space);
+            released = !space;
+            game.step(1);
+        }
+        if (won() || frames >= 600) break;
+        landed += 1;
+        if (!inCameraView(game, xy(player), 5.4)) outOfView.push(landed);
+        steer(0);
+        input.setVirtualKey("Space", false);
+        game.step(2);
+        from = target;
+    }
+    // The star sits on the last platform.
+    const star = game.find("Summit");
+    for (let frame = 0; frame < 120 && !won(); frame += 1) {
+        steer(Math.sign(xy(star).x - xy(player).x));
+        input.setVirtualKey("Space", frame % 30 < 15);
+        game.step(1);
+    }
+    steer(0);
+    input.setVirtualKey("Space", false);
+    return { landed, outOfView };
+}
+
+test("the V4 templates come first, marked new and since 4, and use V4 components", () => {
+    const v4 = PROJECT_TEMPLATES.filter((info) => info.since === 4).map((info) => info.id);
+    assert.deepEqual(v4, V4_TEMPLATES);
+    const uses = {
+        "sky-tower-2d": ["characterController2D", "cameraFollow", "uiSlider", "uiToggle"],
+        "maze-hunt-2d": ["navAgent2D", "tilemap"],
+        "slingshot-2d": ["joint", "uiSlider", "uiToggle", "uiInputField"],
+    };
+    for (const id of V4_TEMPLATES) {
+        const project = createProjectFromTemplate(id);
+        const types = new Set(project.scenes[0].objects.flatMap((item) => item.components.map((component) => component.type)));
+        for (const type of uses[id]) assert.ok(types.has(type), `${id} uses ${type}`);
+        assert.equal(startWorld(project).project.settings.rules, 4, `${id} runs with the V4 rules`);
+    }
+    assert.equal(createProjectFromTemplate("slingshot-2d").settings.aspect, "16:9", "fixed-screen games keep their frame");
+    const maze = createProjectFromTemplate("maze-hunt-2d");
+    assert.equal(maze.settings.aspect, "16:9");
+    assert.ok(maze.settings.input.actions.some((action) => action.name === "Hint" && action.positive.includes("H") && action.gamepadPositive.includes("Y")), "a custom input action");
+    assert.equal(maze.textures.length, 1, "the gem image");
+});
+
+test("sky tower: the autopilot climbs every platform to the summit and the best time is saved", () => {
+    const storage = memoryStorage();
+    const game = startWorld(createProjectFromTemplate("sky-tower-2d"), { storage });
+    game.step(10);
+    const player = game.find("Player");
+    assert.ok(inCameraView(game, xy(player), 5.4), "the camera shows the climber at the start");
+    assert.ok(inCameraView(game, { x: xy(player).x, y: -5 }, 5.4), "and the floor");
+    const { landed, outOfView } = climbTower(game);
+    assert.ok(landed >= TOWER_ROUTE.length - 1, `stood on ${landed} platforms`);
+    assert.deepEqual(outOfView, [], "the camera follows the climber up the tower");
+    assert.ok(inCameraView(game, xy(game.find("Summit")), 5.4), "the summit is in view at the end");
+    assert.equal(game.find("WinPanel").activeSelf, true, "reached the star");
+    assert.equal(game.text("LivesText"), "Can: 3", "the route is safe");
+    assert.ok(Number(/Coin: (\d+)/.exec(game.text("CoinText"))[1]) >= 6, game.text("CoinText"));
+    assert.match(game.text("WinText"), /Süre: \d+\.\d sn .*Rekor: \d+\.\d sn/s);
+    assert.ok(savedPrefs(storage)["tower.best"] > 5, "the best time is saved");
+    assert.equal(game.find("Player").components.find((component) => component.type === "characterController2D").enabled, false, "the climber stops at the top");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("sky tower: spikes cost a life with a grace period, the checkpoint moves the respawn point, the last life ends the game", () => {
+    const game = startWorld(createProjectFromTemplate("sky-tower-2d"));
+    game.step(10);
+    const player = game.find("Player");
+    const onSpikes = () => {
+        player.setWorldPosition({ x: 7.5, y: -4.4, z: 0 });
+        game.step(2);
+    };
+    onSpikes();
+    assert.equal(game.text("LivesText"), "Can: 2");
+    assert.ok(Math.abs(xy(player).x + 7.5) < 0.3, "back at the start");
+    onSpikes();
+    assert.equal(game.text("LivesText"), "Can: 2", "no second hit while blinking");
+    game.step(80);
+    player.setWorldPosition({ x: 6.5, y: 7.6, z: 0 });
+    game.step(3);
+    onSpikes();
+    assert.equal(game.text("LivesText"), "Can: 1");
+    assert.ok(Math.hypot(xy(player).x - 6.5, xy(player).y - 7.8) < 0.5, `respawned at the checkpoint (${xy(player).x}, ${xy(player).y})`);
+    game.step(80);
+    onSpikes();
+    assert.equal(game.text("LivesText"), "Can: 0");
+    assert.equal(game.find("GameOverPanel").activeSelf, true);
+    assert.match(game.text("ResultText"), /Coin: \d+\/12/);
+    const timeBefore = game.text("TimeText");
+    game.step(30);
+    assert.equal(game.text("TimeText"), timeBefore, "the clock stops");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("sky tower: the settings menu pauses; the shake toggle and the speed slider apply and are remembered", () => {
+    const storage = memoryStorage();
+    const project = createProjectFromTemplate("sky-tower-2d");
+    const game = startWorld(project, { storage });
+    game.step(5);
+    game.press("Escape");
+    assert.equal(game.find("SettingsPanel").activeSelf, true);
+    assert.equal(game.world.timeScale, 0, "paused");
+    const toggle = game.find("ShakeToggle");
+    const slider = game.find("SpeedSlider");
+    game.world.componentHandle(toggle, componentOf(toggle, "uiToggle")).set("isOn", false);
+    game.world.componentHandle(slider, componentOf(slider, "uiSlider")).set("value", 0.75);
+    assert.equal(game.world.timeScale, 0, "still paused while the menu is open");
+    game.press("Escape");
+    assert.equal(game.find("SettingsPanel").activeSelf, false);
+    assert.equal(game.world.timeScale, 0.75);
+    game.find("Player").setWorldPosition({ x: 7.5, y: -4.4, z: 0 });
+    game.step(2);
+    assert.equal(game.text("LivesText"), "Can: 2");
+    assert.equal(game.world.cameraShakeOffset(), null, "no shake when it is turned off");
+    assert.deepEqual([savedPrefs(storage)["tower.shake"], savedPrefs(storage)["tower.speed"]], [0, 0.75]);
+
+    const again = startWorld(project, { storage });
+    again.step(2);
+    const toggleAgain = again.find("ShakeToggle");
+    assert.equal(componentOf(toggleAgain, "uiToggle").isOn, false, "the menu shows the saved settings");
+    assert.equal(componentOf(again.find("SpeedSlider"), "uiSlider").value, 0.75);
+    assert.equal(again.world.timeScale, 0.75);
+    again.world.componentHandle(toggleAgain, componentOf(toggleAgain, "uiToggle")).set("isOn", true);
+    again.step(1);
+    assert.notEqual(again.world.cameraShakeOffset(), null, "turning shake on shakes the camera");
+    assert.deepEqual([...game.problems(), ...again.problems()], []);
+});
+
+test("maze hunt: gems are tiles you walk over, the hint draws the A* path, and the chaser catches a player who stands still", () => {
+    const game = startWorld(createProjectFromTemplate("maze-hunt-2d"));
+    game.step(5);
+    const gems = componentOf(game.find("Gems"), "tilemap");
+    const walls = componentOf(game.find("Maze"), "tilemap");
+    const total = countTiles(gems, "o");
+    assert.equal(total, 130);
+    assert.equal(game.text("GemsText"), `Gem: ${total}`);
+    const player = game.find("Player");
+    assert.deepEqual([xy(player).x, xy(player).y], [2.5, -4.5]);
+    game.hold("A", true);
+    game.step(15);
+    game.hold("A", false);
+    game.step(1);
+    assert.equal(game.text("ScoreText"), "Puan: 10");
+    assert.equal(game.text("GemsText"), `Gem: ${total - 1}`);
+    assert.equal(countTiles(gems, "o"), total - 1, "the gem tile is gone");
+    game.press("H");
+    assert.ok(game.world.debugLines.length >= 1, "the hint draws the path");
+    let caught = -1;
+    for (let frame = 0; frame < 60 * 30 && caught < 0; frame += 1) {
+        game.step(1);
+        for (const name of ["Kızıl", "Mor", "Turuncu"]) {
+            const ghost = xy(game.find(name));
+            assert.notEqual(tileKeyAt(walls, Math.floor(ghost.x), Math.floor(ghost.y)), "#", `${name} never walks into a wall`);
+        }
+        if (game.text("LivesText") !== "Can: 3") caught = frame;
+    }
+    assert.ok(caught > 60, `caught after ${caught} frames, not straight away`);
+    assert.equal(game.text("LivesText"), "Can: 2");
+    game.step(1);
+    assert.ok(Math.hypot(xy(player).x - 2.5, xy(player).y + 4.5) < 0.2, "back at the start");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("maze hunt: a crystal frightens the ghosts, eating one scores 200, and clearing the gems wins and saves the record", () => {
+    const storage = memoryStorage();
+    const game = startWorld(createProjectFromTemplate("maze-hunt-2d"), { storage });
+    game.step(5);
+    const player = game.find("Player");
+    player.setWorldPosition({ x: -8.5, y: -4.5, z: 0 });
+    game.step(3);
+    assert.equal(game.text("ScoreText"), "Puan: 50");
+    assert.equal(game.findAll("Crystal").filter((item) => !item.destroyed).length, 3);
+    for (const name of ["Kızıl", "Mor", "Turuncu"]) assert.equal(game.fields(name, "Ghost").frightened, true, `${name} runs away`);
+    const red = game.find("Kızıl");
+    red.setWorldPosition({ x: -8.5, y: -4.5, z: 0 });
+    game.step(3);
+    assert.equal(game.text("ScoreText"), "Puan: 250", "a frightened ghost is eaten");
+    assert.equal(game.text("LivesText"), "Can: 3");
+    assert.ok(Math.hypot(xy(red).x - 0.5, xy(red).y - 0.5) < 0.8, "the eaten ghost goes home");
+    assert.equal(game.fields("Kızıl", "Ghost").frightened, false);
+    // Leave one gem next to the player and take it.
+    const gems = componentOf(game.find("Gems"), "tilemap");
+    fillTiles(gems, -10, -6, 10, 6, ".");
+    setTileKey(gems, -8, -5, "o");
+    game.hold("D", true);
+    game.step(15);
+    game.hold("D", false);
+    game.step(2);
+    assert.equal(game.find("WinPanel").activeSelf, true);
+    assert.equal(game.text("WinText"), "Puan: 260   •   Rekor: 260");
+    assert.equal(savedPrefs(storage)["maze.best"], 260);
+    const stop = xy(player);
+    game.hold("A", true);
+    game.step(20);
+    game.hold("A", false);
+    assert.deepEqual(xy(player), stop, "the explorer stops when the game is over");
+    assert.deepEqual(game.problems(), []);
+});
+
+/** Slingshot Master's camera: (4, 0.6), orthographic size 6.2. */
+function slingScreen(x, y) {
+    const pixelsPerUnit = 540 / 12.4;
+    return { x: 480 + (x - 4) * pixelsPerUnit, y: 270 + (y - 0.6) * pixelsPerUnit };
+}
+
+/** Pulls the ball back by `distance` at `angle` degrees below the horizontal (behind the sling) and lets go. */
+function slingShot(game, { power, angle, distance = 2.2 }, onDrag = () => {}) {
+    const input = game.world.input;
+    const slider = game.find("PowerSlider");
+    if (power !== undefined) game.world.componentHandle(slider, componentOf(slider, "uiSlider")).set("value", power);
+    const radians = (angle * Math.PI) / 180;
+    const pull = { x: -distance * Math.cos(radians), y: -distance * Math.sin(radians) };
+    let point = slingScreen(-5, -2.2);
+    input.mouseX = point.x;
+    input.mouseY = point.y;
+    game.step(1);
+    input.pendingMouseDown.add(0);
+    input.mouseHeld.add(0);
+    game.step(1);
+    for (let index = 1; index <= 8; index += 1) {
+        point = slingScreen(-5 + (pull.x * index) / 8, -2.2 + (pull.y * index) / 8);
+        input.mouseX = point.x;
+        input.mouseY = point.y;
+        game.step(1);
+    }
+    onDrag();
+    input.mouseHeld.delete(0);
+    input.pendingMouseUp.add(0);
+    game.step(1);
+    // Wait for the ball to come back to the sling (or for the level to end).
+    let frames = 0;
+    do {
+        game.step(1);
+        frames += 1;
+    } while (frames < 60 * 9 && !(xy(game.find("Ball")).x === -5 && frames > 20) && !game.find("EndPanel").activeSelf);
+}
+
+test("slingshot: three shots pop every slime, the shot left is a bonus and the name goes on the high score table", () => {
+    const storage = memoryStorage();
+    const project = createProjectFromTemplate("slingshot-2d");
+    const game = startWorld(project, { storage });
+    game.step(5);
+    assert.equal(game.text("ShotsText"), "Atış: 4   •   Balçık: 5");
+    // The rope and the spring are drawn as lines too.
+    const jointLines = game.world.debugLines.length;
+    let aimLines = 0;
+    slingShot(game, { power: 1.2, angle: 25 }, () => {
+        aimLines = game.world.debugLines.length;
+    });
+    assert.ok(aimLines - jointLines >= 18, `the aim line is drawn while pulling (${aimLines - jointLines} dashes)`);
+    assert.match(game.text("ShotsText"), /^Atış: 3/);
+    slingShot(game, { power: 1.4, angle: 55 });
+    slingShot(game, { power: 1.2, angle: 35 });
+    game.step(90);
+    assert.equal(game.findAll("Slime").length, 0);
+    assert.equal(game.find("EndPanel").activeSelf, true);
+    assert.equal(game.text("EndTitle"), "Hepsi patladı!");
+    assert.equal(game.text("ScoreText"), "Puan: 2800", "5 slimes × 500 + 1 shot left × 300");
+    assert.equal(game.text("BoardText"), "Rekor tablosu boş: ilk sen ol!");
+    const field = componentOf(game.find("NameField"), "uiInputField");
+    assert.equal(game.world.inputFocus.id, field.id, "the name field asks for the keyboard");
+    game.world.uiInput(field.id, "Ada", "submit");
+    assert.equal(game.text("BoardText"), "1. Ada — 2800\n");
+    assert.equal(savedPrefs(storage)["sling.board"], "Ada:2800");
+    game.world.uiInput(field.id, "Ada again", "submit");
+    assert.equal(savedPrefs(storage)["sling.board"], "Ada:2800", "one entry per game");
+    assert.deepEqual(game.problems(), []);
+
+    // A weak game with the aim line off: no slime pops and the name lands below.
+    const weak = startWorld(project, { storage });
+    weak.step(5);
+    const toggle = weak.find("AimToggle");
+    weak.world.componentHandle(toggle, componentOf(toggle, "uiToggle")).set("isOn", false);
+    let weakLines = -1;
+    for (let shot = 0; shot < 4; shot += 1) {
+        slingShot(weak, { angle: 10, distance: 0.4 }, () => {
+            if (shot === 0) weakLines = weak.world.debugLines.length;
+        });
+    }
+    assert.equal(weakLines, jointLines, "no aim line when it is turned off");
+    weak.step(60);
+    assert.equal(weak.find("EndPanel").activeSelf, true);
+    assert.equal(weak.text("EndTitle"), "Atış kalmadı");
+    weak.world.uiInput(componentOf(weak.find("NameField"), "uiInputField").id, "Bo", "end");
+    assert.equal(weak.text("BoardText"), "1. Ada — 2800\n2. Bo — 0\n");
+    assert.deepEqual(weak.problems(), []);
+});
+
+test("slingshot: R restarts while playing", () => {
+    const game = startWorld(createProjectFromTemplate("slingshot-2d"));
+    game.step(5);
+    slingShot(game, { angle: 10, distance: 0.4 });
+    assert.match(game.text("ShotsText"), /^Atış: 3/);
+    game.press("R");
+    game.step(2);
+    assert.match(game.text("ShotsText"), /^Atış: 4/, "a fresh level");
+    assert.deepEqual(game.problems(), []);
 });
 
 // ---------------------------------------------------------------------------

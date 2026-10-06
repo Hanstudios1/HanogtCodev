@@ -240,7 +240,7 @@ const TEXT = {
     projectLoading: ["Proje yükleniyor…", "Loading project…"],
     retry: ["Tekrar dene", "Try again"],
     // V3: editor tools
-    whatsNew: ["V3'te yenilikler", "What's new in V3"],
+    whatsNew: ["V4'te yenilikler", "What's new in V4"],
     snapping: ["Yakalama", "Snapping"],
     snapToggle: ["Izgaraya yakala", "Snap to grid"],
     snapMove: ["Taşıma adımı", "Move step"],

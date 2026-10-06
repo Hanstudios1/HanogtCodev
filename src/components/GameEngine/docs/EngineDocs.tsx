@@ -5,14 +5,14 @@ import Link from "next/link";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { API_MEMBERS, TYPE_MEMBERS } from "@/components/GameEngine/editor/completions";
 import { engineLocale } from "@/components/GameEngine/editor/text";
-import { V3_FEATURES } from "@/components/GameEngine/whats-new";
+import { V3_FEATURES, V4_FEATURES, type WhatsNewItem } from "@/components/GameEngine/whats-new";
 import { FIRST_GAME } from "./first-game";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { useI18n } from "@/lib/i18n";
 
 /** Section anchors stay the same in every language so shared links keep working. */
 const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
-    { id: "yenilikler", tr: "V3'te yenilikler", en: "What's new in V3" },
+    { id: "yenilikler", tr: "V4'te yenilikler", en: "What's new in V4" },
     { id: "baslarken", tr: "Başlarken", en: "Getting started" },
     { id: "ilk-oyun", tr: "İlk oyunun: adım adım", en: "Your first game, step by step" },
     { id: "editor", tr: "Editör", en: "The editor" },
@@ -20,14 +20,20 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "csharp", tr: "C# ile script", en: "Scripting in C#" },
     { id: "cpp", tr: "C++ ile script", en: "Scripting in C++" },
     { id: "yasam-dongusu", tr: "Yaşam döngüsü", en: "Lifecycle" },
-    { id: "girdi", tr: "Girdi (Input)", en: "Input" },
+    { id: "girdi", tr: "Girdi, giriş eylemleri ve gamepad", en: "Input, input actions and gamepads" },
     { id: "fizik", tr: "Fizik ve çarpışmalar", en: "Physics and collisions" },
+    { id: "karakter", tr: "Character Controller 2D", en: "Character Controller 2D" },
+    { id: "kamera", tr: "Kamera takibi ve sarsıntı", en: "Camera follow and shake" },
+    { id: "eklemler", tr: "Eklemler: Distance ve Spring", en: "Joints: Distance and Spring" },
     { id: "tilemap", tr: "Tilemap ve karo boyama", en: "Tilemaps and tile painting" },
+    { id: "yol-bulma", tr: "Yol bulma ve Nav Agent 2D", en: "Path finding and Nav Agent 2D" },
     { id: "prefab", tr: "Prefab, Instantiate, Destroy", en: "Prefabs, Instantiate, Destroy" },
     { id: "coroutine", tr: "Coroutine ve Invoke", en: "Coroutines and Invoke" },
     { id: "animasyon", tr: "Animasyon, Tween ve Timer", en: "Animation, Tween and Timer" },
     { id: "sahneler", tr: "Sahneler", en: "Scenes" },
     { id: "ui-ses", tr: "UI, HUD ve ses", en: "UI, HUD and sound" },
+    { id: "ui-kontroller", tr: "Kaydırıcı, anahtar ve metin kutusu", en: "Sliders, toggles and input fields" },
+    { id: "ses-dosyalari", tr: "Ses dosyaları ve müzik", en: "Audio files and music" },
     { id: "ortam", tr: "Ortam ve ekran efektleri", en: "Environment and screen effects" },
     { id: "kayit", tr: "Kayıt (PlayerPrefs)", en: "Saving (PlayerPrefs)" },
     { id: "yayinlama", tr: "Yayınlama ve dışa aktarma", en: "Publishing and exporting" },
@@ -110,10 +116,10 @@ function Tip({ children }: { children: ReactNode }) {
     return <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4 text-[14px] text-zinc-700 dark:text-zinc-300">💡 {children}</div>;
 }
 
-function WhatsNewList({ tr }: { tr: boolean }) {
+function WhatsNewList({ tr, items = V4_FEATURES }: { tr: boolean; items?: WhatsNewItem[] }) {
     return (
         <ul className="grid gap-3 sm:grid-cols-2">
-            {V3_FEATURES.map((feature) => {
+            {items.map((feature) => {
                 const Icon = feature.icon;
                 return (
                     <li key={feature.section + feature.title.EN} className="flex gap-3 rounded-xl border border-zinc-200 p-4 dark:border-white/10">
@@ -148,14 +154,16 @@ function ApiReference() {
 function DocsTR() {
     return (
         <>
-                            <Section id="yenilikler" title="V3'te yenilikler">
-                                <p>Hanogt Engine V3; karo tabanlı seviyeler, gerçek arayüz bileşenleri, anahtar kare animasyonu ve kodla hareket (tween) sistemleriyle geliyor. V1 ve V2 ile kaydedilmiş projeler açıldığında otomatik olarak V3 biçimine taşınır; verileriniz korunur. Kaydedilen projeler V3 biçiminde saklanır.</p>
+                            <Section id="yenilikler" title="V4'te yenilikler">
+                                <p>Hanogt Engine V4; gamepad destekli giriş eylemleri, hazır karakter denetleyicisi, kamera takibi, A* yol bulma, eklemler, yeni arayüz kontrolleri, ses dosyaları ve müzik, çoklu seçim ve İzle paneliyle geliyor. Önceki sürümlerle kaydedilen projeler açıldığında V4 biçimine taşınır ve verileriniz korunur; davranışı değişen yerlerde (ör. bilinmeyen ses adları için uyarı, <K>AddComponent&lt;Slider&gt;()</K>) eski oyunlar V3 kurallarıyla çalışmaya devam eder.</p>
                                 <WhatsNewList tr />
+                                <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">V3 ile gelenler</h3>
+                                <WhatsNewList tr items={V3_FEATURES} />
                             </Section>
 
                             <Section id="baslarken" title="Başlarken">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: yeni Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++); V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu; ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
+                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: V4 ile gelen Gök Kulesi, Labirent Avı ve Sapan Ustası; Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++); V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu; ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
                                     <li>Giriş yaptıysanız proje hesabınıza (bulut) kaydedilir; misafir olarak oluşturulan projeler bu tarayıcıda (IndexedDB) saklanır.</li>
                                     <li>Üstteki <b>▶ Oynat</b> düğmesi (Ctrl+P) oyunu editörün içinde çalıştırır. Durdurduğunuzda sahne oynatmadan önceki haline döner.</li>
                                     <li>Scriptlere çift tıklayarak kod editörünü açın; değişiklikler otomatik derlenir, hatalar satır satır gösterilir.</li>
@@ -194,12 +202,16 @@ function DocsTR() {
                                     ["Inspector", "Seçili nesnenin bileşenlerini düzenler. Script'lerdeki public alanlar burada otomatik görünür."],
                                     ["Proje (Assets)", "Sahneler, scriptler, prefab'lar ve dokular. Görsel yükleme, yeni C#/C++ script, yeni sahne."],
                                     ["Konsol", "Debug.Log çıktıları, uyarılar, çalışma zamanı hataları ve derleme hataları. Kaynağa tıklayınca ilgili satır açılır."],
+                                    ["İzle", "Oyun çalışırken değerleri canlı gösterir: Player.score, Player.transform.position, Enemy.Rigidbody2D.velocity, GameManager.highScore, Time.time… Sayılar için küçük bir geçmiş çizgisi çizer. Inspector'daki script alanlarının yanındaki göz düğmesiyle de eklenir."],
                                 ]} />
                                 <Table head={["Kısayol", "Eylem"]} rows={[
                                     ["W / E / R", "Taşı / Döndür / Ölçekle gizmosu"],
                                     ["F", "Seçili nesneye odaklan"],
                                     ["Ctrl+Z · Ctrl+Y", "Geri al · Yinele"],
                                     ["Ctrl+D", "Çoğalt"],
+                                    ["Ctrl+A", "Sahnedeki tüm nesneleri seç"],
+                                    ["Ctrl / Shift + tık", "Seçime ekle · aralığı seç (hiyerarşide)"],
+                                    ["Shift + sürükle", "Sahne görünümünde kutu ile seç (Ctrl ile seçime ekle)"],
                                     ["Ctrl+C · Ctrl+V", "Kopyala · Yapıştır"],
                                     ["Delete", "Sil"],
                                     ["F2", "Yeniden adlandır"],
@@ -207,6 +219,7 @@ function DocsTR() {
                                     ["Ctrl+P", "Oynat / Durdur"],
                                     ["Esc", "Karo boyamayı bitir · seçimi kaldır"],
                                 ]} />
+                                <p>Birden çok nesne seçiliyken gizmo seçimin ortasına yerleşir ve hepsini birlikte taşır, döndürür ve ölçekler. Inspector ortak bileşenleri gösterir: nesnelerde farklı olan değerler &quot;—&quot; ya da <b>Farklı</b> olarak görünür; değiştirdiğiniz alan hepsine uygulanır, öteki alanlar korunur. Hiyerarşi aramasında <K>t:Camera</K>, <K>t:Rigidbody2D</K> ya da bir script sınıfının adı bileşene göre, <K>tag:Enemy</K> etikete göre süzer; <b>Sonuçların hepsini seç</b> bulunanları seçer.</p>
                                 <p>Sayı alanlarının etiketini (X, Y, Z) yatay sürükleyerek değeri kaydırabilirsiniz; Shift ile 10 kat, Alt ile 0,1 kat hızlı. Alanlara <K>2*3</K> gibi ifadeler yazılabilir.</p>
                                 <p>Üst araç çubuğundaki <b>mıknatıs</b> düğmesi gizmolarla düzenlerken ızgaraya yakalamayı açar; yanındaki ok menüsünden taşıma, döndürme ve ölçek adımları ayarlanır (varsayılan 0,5 birim, 15°, 0,1). Sahne görünümündeki ✨ düğmesi sis ve parlama gibi ekran efektlerini düzenlerken de gösterir. Oynatırken <b>İstatistikler</b> düğmesi oyun görünümünün köşesinde FPS, kare süresi, nesne, script, fizik gövdesi, tween/zamanlayıcı, parçacık, çizim çağrısı ve üçgen sayılarını gösterir.</p>
                             </Section>
@@ -223,13 +236,18 @@ function DocsTR() {
                                     ["Collider", "Kutu, küre (3D) veya daire (2D) çarpıştırıcı; tetikleyici (Is Trigger), sürtünme ve sekme."],
                                     ["Script", "C# veya C++ MonoBehaviour sınıfı. Public alanlar Inspector'da düzenlenir."],
                                     ["Particle System", "GPU'da çizilen parçacıklar: oran, patlama, ömür, hız, koni açısı, boyut ve renk geçişi, yerçekimi."],
-                                    ["Audio Source", "Prosedürel ses efektleri: coin, jump, hit, explosion, laser, powerup, click, blip, lose, win, step, shoot."],
+                                    ["Audio Source", "Hazır ses efektleri (coin, jump, hit, explosion, laser, powerup, click, blip, lose, win, step, shoot) ya da yüklenen WAV/MP3/OGG dosyaları; ses, perde ve döngü."],
                                     ["UI Text", "Ekrana sabitlenen metin (skor, can). 9 çapa noktası, ofset, yazı boyutu, gölge ve çizim sırası."],
                                     ["UI Button", "Tıklanabilir buton: yazı, renkler, köşe yuvarlaklığı, Tıklanınca (On Click) metodu ve kısayol tuşu."],
                                     ["UI Panel / Image", "Renkli veya görselli dikdörtgen; arka plan, menü kutusu ya da tam ekran karartma. Altındaki tıklamaları engelleyebilir."],
                                     ["UI Progress Bar", "Can, yükleme veya ilerleme çubuğu: değer, en küçük/en büyük, yön, renkler ve yüzde etiketi."],
                                     ["Tilemap", "Karo ızgarası: palet, karo başına çarpışma, tetikleyici modu ve doku atlası. Sahnede fırçayla boyanır."],
                                     ["Animation", "Anahtar kare klipleri: konum, dönüş, ölçek, renk, saydamlık ve sprite karesi; yumuşatma eğrileri ve tekrar modları."],
+                                    ["Character Controller 2D", "Hazır platform karakteri: koşma, çift zıplama, coyote süresi, zıplama tamponu, eğimler ve hareketli platformlar."],
+                                    ["Camera Follow", "Kamerayı bir hedefin peşinden yumuşakça götürür; ölü bölge, ileri bakış ve sınırlar."],
+                                    ["Nav Agent 2D", "Duvarların etrafından A* yoluyla bir hedefe ya da noktaya yürür."],
+                                    ["Distance / Spring Joint", "İki nesneyi sabit mesafede ya da yayla bağlar."],
+                                    ["UI Slider · UI Toggle · UI Input Field", "Sürüklenen kaydırıcı, açma-kapama anahtarı ve gerçek metin kutusu."],
                                 ]} />
                             </Section>
 
@@ -311,7 +329,7 @@ button->onClick.AddListener([this]() { Debug::Log("Tıklandı"); });`}</Code>
                                 <p>Çarpışma ve fare olayları: <K>OnCollisionEnter/Stay/Exit</K>, <K>OnTriggerEnter/Stay/Exit</K> (2D için sonuna <K>2D</K> ekleyin), <K>OnMouseDown/Up/Enter/Exit/Over/Drag</K>.</p>
                             </Section>
 
-                            <Section id="girdi" title="Girdi (Input)">
+                            <Section id="girdi" title="Girdi, giriş eylemleri ve gamepad">
                                 <Code>{`if (Input.GetKey(KeyCode.W)) { /* basılı tutuluyor */ }
 if (Input.GetKeyDown(KeyCode.Space)) { /* bu karede basıldı */ }
 float h = Input.GetAxis("Horizontal");     // A/D veya ←/→ (yumuşatılmış)
@@ -320,7 +338,20 @@ if (Input.GetButtonDown("Jump")) { }       // Space
 if (Input.GetMouseButton(0)) { }           // sol tık / dokunma
 Vector3 mouse = Input.mousePosition;       // piksel, sol-alt köşe (0,0)
 Vector3 world = Camera.main.ScreenToWorldPoint(mouse);`}</Code>
-                                <p>Mobil cihazlarda, proje ayarlarında açıksa ekranda yön tuşları ve A (Space) / B (LeftControl) düğmeleri gösterilir; bunlar normal tuşlar gibi okunur.</p>
+                                <p>V4 ile girdiler <b>giriş eylemleriyle</b> tanımlanır (Unity&apos;nin Input Manager&apos;ı gibi). <b>Ayarlar → Girdi</b> sekmesinde her eylemin klavye tuşlarını, fare düğmelerini ve gamepad düğmelerini ya da çubuğunu seçebilir, kendi eylemlerinizi ekleyebilirsiniz. Script eylemi adıyla okur: oyuncu klavye de kullansa gamepad de, kod aynı kalır.</p>
+                                <Table head={["Eylem", "Varsayılan bağlar"]} rows={[
+                                    ["Horizontal · Vertical", "A/D ve W/S, ok tuşları, d-pad, sol çubuk"],
+                                    ["Jump", "Space, gamepad A"],
+                                    ["Fire1 · Fire2 · Fire3", "Sol Ctrl / sol tık / RT, X · Sol Alt / sağ tık / LT · Sol Shift / orta tık / Y"],
+                                    ["Submit · Cancel", "Enter, Space / A, Start · Esc / B, Back"],
+                                    ["LookX · LookY", "Sağ çubuk"],
+                                ]} />
+                                <Code>{`float move = Input.GetAxis("Horizontal");   // klavyede yumuşak, çubukta anında
+if (Input.GetButtonDown("Jump")) Jump();     // Space ya da gamepad A
+if (Input.GetButton("Fire1")) Shoot();
+if (Input.GetButtonDown("Dash")) Dash();     // Ayarlar → Girdi'de eklediğiniz eylem
+string[] pads = Input.GetJoystickNames();    // bağlı gamepad'ler`}</Code>
+                                <p>Gamepad&apos;ler tarayıcının Gamepad API&apos;siyle okunur (Xbox ve PlayStation düzeni); tarayıcı bir gamepad&apos;i ancak bir düğmesine basılınca bildirir. Çubukların <b>ölü bölgesi</b> Girdi sekmesinden ayarlanır. Mobilde, proje ayarlarında açıksa ekranda yön tuşları ve A/B düğmeleri gösterilir; bunlar gamepad&apos;in d-pad&apos;i ve A/X düğmeleri gibi davranır, eylemleri değiştirseniz de çalışmaya devam eder.</p>
                             </Section>
 
                             <Section id="fizik" title="Fizik ve çarpışmalar">
@@ -356,6 +387,58 @@ void FixedUpdate()
 }`}</Code>
                             </Section>
 
+                            <Section id="karakter" title="Character Controller 2D">
+                                <p>Platform oyunları için hazır karakter denetleyicisi. Nesnede <b>Dynamic bir Rigidbody 2D</b> ve bir <b>Collider 2D</b> olmalıdır (eksikse Inspector tek tıkla ekler). Koşma ve zıplama giriş eylemlerinden (<K>Horizontal</K>, <K>Jump</K>) okunur; klavye, dokunmatik düğmeler ve gamepad kendiliğinden çalışır.</p>
+                                <Table head={["Ayar", "Ne yapar?"]} rows={[
+                                    ["Move Speed · Acceleration · Deceleration", "En yüksek koşu hızı ve bu hıza ne kadar çabuk çıkılıp durulduğu."],
+                                    ["Air Control", "Havadayken yön değiştirme gücü (0–1)."],
+                                    ["Jump Height · Max Jumps", "Zıplama yüksekliği (birim) ve yere değmeden yapılabilecek zıplama sayısı (2: çift zıplama)."],
+                                    ["Coyote Time", "Kenardan düştükten sonra zıplamanın hâlâ çalıştığı süre."],
+                                    ["Jump Buffer", "Yere inmeden hemen önce basılan zıplamanın hatırlandığı süre."],
+                                    ["Variable Jump · Fall Gravity", "Tuş erken bırakılınca kısa zıplama; düşerken artan yerçekimi."],
+                                    ["Max Slope", "Hâlâ zemin sayılan en dik eğim. Hareketli platformlar karakteri kendiliğinden taşır."],
+                                    ["Use Input", "Kapalıyken karakteri script Move, Jump ve CancelJump ile yönetir (yapay zekâ, ara sahne)."],
+                                ]} />
+                                <Code>{`CharacterController2D controller;
+
+void Start() { controller = GetComponent<CharacterController2D>(); }
+
+void Update()
+{
+    if (controller.isGrounded && controller.velocity.x != 0) Audio.Play("step", 0.2f);
+}
+
+// Denetleyici zıplayınca ve yere inince bu metotları çağırır.
+void OnJump() { Audio.Play("jump"); }
+void OnLand(float speed) { if (speed > 12f) Camera.Shake(0.2f, 0.2f); }`}</Code>
+                                <Tip><b>Gök Kulesi</b> şablonu bu bileşenle yapılmış eksiksiz bir platform oyunudur: çift zıplama, hareketli platform, kontrol noktası ve ayarlar menüsü.</Tip>
+                            </Section>
+
+                            <Section id="kamera" title="Kamera takibi ve sarsıntı">
+                                <p>Kameraya <b>Camera Follow</b> ekleyin ve <b>Target</b> alanında izlenecek nesneyi seçin (boşsa Player etiketli nesneyi izler). Kamera hedefe yumuşakça yetişir. <b>Dead Zone</b> hedefin kamerayı kımıldatmadan dolaşabildiği kutudur, <b>Look Ahead</b> hareket yönünde öne bakar, <b>Bounds</b> görüntüyü seviyenin içinde tutar. 3D&apos;de kamera hedefin arkasından ona bakar.</p>
+                                <Code>{`CameraFollow follow = Camera.main.GetComponent<CameraFollow>();
+follow.target = boss.transform;                 // hedefi değiştir
+follow.SetBounds(new Vector2(-10, -5), new Vector2(60, 20));
+follow.SnapToTarget();                          // yumuşatmadan hemen yetiş
+
+Camera.Shake(0.3f, 0.25f);                      // güç, süre (saniye)`}</Code>
+                                <p>Sarsıntı yalnızca çizilen görüntüyü kaydırır; kameranın konumu, <K>ScreenToWorldPoint</K> ve fizik etkilenmez. Oyununuzda bir &quot;Ekran sarsıntısı&quot; ayarı sunmak iyi bir alışkanlıktır (Gök Kulesi şablonundaki gibi).</p>
+                            </Section>
+
+                            <Section id="eklemler" title="Eklemler: Distance ve Spring">
+                                <p><b>Bileşen ekle → Physics</b> menüsündeki eklemler iki nesneyi ya da bir nesneyi dünyadaki bir noktaya bağlar. <b>Distance Joint</b> mesafeyi sabit tutar: sarkaç, zincir, köprü. <b>Max Distance Only</b> açıkken ip gibi yalnızca gerilir. <b>Spring Joint</b> yay gibi geri çeker: <b>Frequency</b> sertliği, <b>Damping Ratio</b> zıplamayı belirler.</p>
+                                <Code>{`SpringJoint2D spring = GetComponent<SpringJoint2D>();
+spring.frequency = 3f;           // daha sert
+spring.dampingRatio = 0.5f;
+spring.connectedBody = hook;     // başka bir Rigidbody2D'ye bağla
+spring.enabled = false;          // bırak: sapan gibi fırlar
+
+DistanceJoint2D rope = gameObject.AddComponent<DistanceJoint2D>();
+rope.connectedAnchor = new Vector2(0, 5);    // dünyadaki bir nokta
+rope.maxDistanceOnly = true;`}</Code>
+                                <p>Eklemin bir şeyi hareket ettirebilmesi için iki uçtan en az birinde Dynamic bir Rigidbody olmalı. Oynarken eklemler sahnede çizgiyle gösterilir (<b>Show Line</b>). <b>Sapan Ustası</b> şablonu bir sapan ve sallanan bir yıkım topuyla iki eklemi de kullanır.</p>
+                            </Section>
+
                             <Section id="tilemap" title="Tilemap ve karo boyama">
                                 <p>Tilemap, seviyeyi kare hücrelerden oluşan bir ızgaraya boyamanızı sağlar. Hiyerarşide <b>Oluştur → Tilemap</b> ile ekleyin (3D projelerde <b>Oluştur → 2D → Tilemap</b>), Inspector&apos;daki <b>Sahnede boya</b> düğmesine basın ve paletten bir karo seçin.</p>
                                 <Table head={["Araç", "Kullanım"]} rows={[
@@ -378,6 +461,25 @@ void Start()
     Debug.Log(ground.CountTiles("Tuğla") + " tuğla");
 }`}</Code>
                                 <p>Hücre koordinatları Unity&apos;deki gibidir: X sağa, Y yukarı doğru artar. Bir tilemap en fazla 512 × 256 hücre ve 48 palet karosu içerebilir. Tilemap&apos;ler 2D oyunlar için tasarlanmıştır; 3D&apos;de nesnenin XY düzleminde çizilir.</p>
+                            </Section>
+
+                            <Section id="yol-bulma" title="Yol bulma ve Nav Agent 2D">
+                                <p>2D projelerde motor, statik çarpıştırıcılardan ve katı karolardan bir gezinme ızgarası kurar ve A* algoritmasıyla duvarların etrafından en kısa yolu bulur. Karolar ya da engeller oyun sırasında değişince ızgara kendiliğinden güncellenir.</p>
+                                <p><b>Nav Agent 2D</b> eklenen nesne hedefine bu yolla yürür. <b>Target</b> alanında bir nesne seçerseniz onu sürekli kovalar (<b>Repath Interval</b> aralıklarla yeni yol hesaplanır); boşsa <K>SetDestination</K> ile verilen noktaya gider. Rigidbody&apos;si varsa hızla, yoksa doğrudan hareket eder. <b>Show Path</b> oynarken yolu çizer.</p>
+                                <Code>{`NavAgent2D agent = GetComponent<NavAgent2D>();
+agent.SetDestination(new Vector2(8, 3));
+agent.target = player;                  // kovala
+agent.speed = 4f;
+agent.isStopped = true;                 // dur; Resume() ile devam
+
+// Hedefe varınca çağrılır.
+void OnDestinationReached() { agent.SetDestination(nextPoint); }
+
+// Yalnızca yol: köşe noktalarının listesi (yol yoksa boş).
+var path = Pathfinding.FindPath(transform.position, target.position);
+for (int i = 1; i < path.Count; i++) Debug.DrawLine(path[i - 1], path[i], Color.yellow, 1f);
+bool open = Pathfinding.IsWalkable(point);`}</Code>
+                                <Tip><b>Labirent Avı</b> şablonunda üç hayalet aynı bileşeni farklı kullanır: biri oyuncuyu kovalar, biri önünü keser, biri köşeler arasında devriye gezer.</Tip>
                             </Section>
 
                             <Section id="prefab" title="Prefab, Instantiate ve Destroy">
@@ -459,7 +561,8 @@ DontDestroyOnLoad(gameObject);             // sahneler arası koru`}</Code>
                                     ["UI Text", <K key="t">Text</K>],
                                     ["UI Button", <K key="b">Button</K>],
                                     ["UI Panel / Image", <K key="p">Image</K>],
-                                    ["UI Progress Bar", <K key="s">Slider</K>],
+                                    ["UI Progress Bar", <K key="s">ProgressBar · Slider</K>],
+                                    ["UI Slider · UI Toggle · UI Input Field", <K key="v">Slider · Toggle · InputField</K>],
                                 ]} />
                                 <p>Butona tıklanınca Inspector&apos;daki <b>Tıklanınca</b> alanında seçilen hedef nesnenin script&apos;lerinde, yazılan adlı metot çalışır (Unity&apos;deki On Click listesi gibi). Kodla dinleyici de eklenebilir. Butona bir <b>kısayol tuşu</b> atanırsa tuşa basmak tıklamakla aynı işi yapar.</p>
                                 <Code>{`public Text scoreText;       // Inspector'da bir UI Text nesnesi seçin
@@ -487,6 +590,47 @@ Audio.Play("coin");                                  // hazır ses efekti
 GetComponent<AudioSource>().Play();`}</Code>
                             </Section>
 
+                            <Section id="ui-kontroller" title="Kaydırıcı, anahtar ve metin kutusu">
+                                <p><b>Oluştur → UI</b> menüsünde üç kontrol daha var. Oyuncu fareyle ya da parmakla kullanır; değer değişince Inspector&apos;daki olay alanında seçilen metot çalışır (Unity&apos;deki On Value Changed gibi). Kodla dinleyici de eklenebilir.</p>
+                                <Table head={["Bileşen", "Script türü ve olaylar"]} rows={[
+                                    ["UI Slider", <span key="s"><K>Slider</K> · value, minValue, maxValue, wholeNumbers · onValueChanged(float)</span>],
+                                    ["UI Toggle", <span key="t"><K>Toggle</K> · isOn · onValueChanged(bool); anahtar ya da onay kutusu görünümü</span>],
+                                    ["UI Input Field", <span key="i"><K>InputField</K> · text, characterLimit, contentType · onValueChanged, onEndEdit, onSubmit (string)</span>],
+                                ]} />
+                                <Code>{`public Slider volume;
+public Toggle shake;
+public InputField playerName;
+
+void Start()
+{
+    volume.onValueChanged.AddListener(v => Audio.SetMusicVolume(v));
+    shake.SetIsOnWithoutNotify(PlayerPrefs.GetBool("shake", true));   // olay tetiklemeden
+    playerName.onEndEdit.AddListener(name => PlayerPrefs.SetString("name", name));
+    playerName.ActivateInputField();      // yazmaya başlat (telefonda klavye açılır)
+}`}</Code>
+                                <p>Metin kutusu gerçek bir yazı alanıdır: telefonda ekran klavyesi açılır, yazarken oyunun tuşları çalışmaz, Enter yazmayı bitirir. <b>Content Type</b> yalnızca rakam, harf ve rakam ya da e-posta gibi sınırlar koyar (<K>IntegerNumber</K>, <K>Alphanumeric</K>, <K>EmailAddress</K>…). Eski projelerdeki Progress Bar da script&apos;te <K>Slider</K> olarak bulunur; V4 kurallarıyla <K>AddComponent&lt;Slider&gt;()</K> gerçek bir kaydırıcı ekler.</p>
+                            </Section>
+
+                            <Section id="ses-dosyalari" title="Ses dosyaları ve müzik">
+                                <p>Proje panelindeki <b>Sesler</b> grubuna WAV, MP3 ya da OGG dosyası yükleyin (dosya başına en fazla 300 KB, projede en fazla 40 dosya). Giriş yaptıysanız dosyalar hesabınızın <b>ses kitaplığına</b> kaydedilir ve planınızın ses depolama alanına sayılır (Ücretsiz 5 MB, Plus 25 MB, Pro 100 MB; aynı dosya birden çok projede bir kez sayılır). Misafir projelerinin sesleri bu tarayıcıda saklanır.</p>
+                                <Code>{`Audio.Play("Patlama");                  // yüklenen dosya, adıyla
+Audio.Play("coin");                     // hazır ses efekti
+Audio.PlayMusic("Tema", 0.7f, 1f);      // döngüyle çalan müzik: ses, geçiş süresi
+Audio.StopMusic(0.5f);
+Audio.musicVolume = 0.5f;               // müzik ve efektlerin sesi ayrı ayrı
+Audio.sfxVolume = 0.8f;
+
+public AudioClip hit;                   // Inspector'da bir ses seçin
+void OnCollisionEnter2D(Collision2D c) { Audio.Play(hit); }
+
+AudioSource source = GetComponent<AudioSource>();
+source.clip = "Rüzgâr";                 // yüklenen dosyanın adı
+source.loop = true;
+source.Play();`}</Code>
+                                <p><b>Audio Source</b> bileşeninin <b>Clip</b> listesinde hazır sesler ve yüklenen dosyalar birlikte görünür; yüklenen bir dosya için <b>Loop</b> açılabilir. Hazır bir sesle aynı adı taşıyan dosya o sesin yerine çalar (ör. <K>coin</K> adıyla yüklenen bir dosya). Arcade&apos;de yayınlanan oyunların sesleri yayınla birlikte saklanır; <b>Oynanabilir HTML</b> sesleri dosyanın içine koyar ve internetsiz de çalar.</p>
+                                <Tip>Yalnızca kullanma hakkınız olan sesleri yükleyin: kendi kayıtlarınız ya da lisansı buna izin veren müzik ve efektler. Kitaplığınızı Sesler grubundaki kitaplık düğmesinden yönetebilir, kullanmadığınız dosyaları silip yer açabilirsiniz.</Tip>
+                            </Section>
+
                             <Section id="ortam" title="Ortam ve ekran efektleri">
                                 <p><b>Ayarlar → Sahne ayarları</b> penceresinde her sahnenin arka planı (düz renk veya gökyüzü geçişi), ortam ışığı, sisi ve ekran efektleri ayarlanır.</p>
                                 <Table head={["Ayar", "Etkisi"]} rows={[
@@ -511,8 +655,8 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 
                             <Section id="yayinlama" title="Yayınlama ve dışa aktarma">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir ve beğenebilir; <b>Remikslemelere izin ver</b>&apos;i açarsanız kopyasını alıp kendi sürümlerini de yapabilirler (remiksin sayfasında oyununuza bağlantı görünür). Oyun kartında oyunun yapıldığı motor sürümü (ör. V3) görünür. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
-                                    <li><b>Oynanabilir HTML:</b> Oyunu ve motoru tek bir .html dosyasına paketler; internet olmadan açılır, istediğiniz yerde barındırabilirsiniz.</li>
+                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir ve beğenebilir; <b>Remikslemelere izin ver</b>&apos;i açarsanız kopyasını alıp kendi sürümlerini de yapabilirler (remiksin sayfasında oyununuza bağlantı görünür). Oyun kartında oyunun yapıldığı motor sürümü (ör. V4) görünür; oyunun ses dosyaları yayınla birlikte saklanır. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
+                                    <li><b>Oynanabilir HTML:</b> Oyunu, motoru ve ses dosyalarını tek bir .html dosyasına paketler; internet olmadan açılır, istediğiniz yerde barındırabilirsiniz.</li>
                                     <li><b>Proje dosyası (.json):</b> Yedekleme ve başka hesaba/tarayıcıya taşıma için.</li>
                                 </ul>
                             </Section>
@@ -524,10 +668,11 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 
                             <Section id="farklar" title="Unity'den farklar">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li>Ses efektleri dosya yerine prosedürel olarak üretilir (<K>Audio.Play(&quot;coin&quot;)</K>).</li>
+                                    <li>Hazır ses efektleri prosedüreldir (<K>Audio.Play(&quot;coin&quot;)</K>); kendi seslerinizi WAV, MP3 ya da OGG olarak yükleyebilirsiniz. <K>AudioClip</K> bir ses adı gibi çalışır ve konumsal (3D) ses yoktur.</li>
                                     <li>Kapsül/mesh çarpıştırıcılar kutu olarak yaklaştırılır; açısal fizik basitleştirilmiştir (küreler görsel olarak yuvarlanır).</li>
                                     <li>Katman maskeleri (LayerMask) ve <K>IgnoreCollision</K> yok sayılır; bunun yerine etiket ve tetikleyici kullanın.</li>
-                                    <li>UI olarak Text, Button, Panel/Image ve Progress Bar (Slider) vardır; Canvas düzen bileşenleri (Layout Group, Scroll View, Input Field) yoktur. Sahnedeki nesneleri tıklanabilir yapmak için <K>OnMouseDown</K> kullanın.</li>
+                                    <li>UI olarak Text, Button, Panel/Image, Progress Bar, Slider, Toggle ve Input Field vardır; Canvas düzen bileşenleri (Layout Group, Scroll View, Dropdown) yoktur. Sahnedeki nesneleri tıklanabilir yapmak için <K>OnMouseDown</K> kullanın.</li>
+                                    <li>NavMesh yerine 2D ızgarada A* kullanılır (Nav Agent 2D); 3D projelerde ajanlar hedefe düz çizgide yürür. Eklemlerden Distance ve Spring vardır; Hinge, Slider ve Wheel eklemleri yoktur.</li>
                                     <li>Animation bileşeni, Animator durum makinesi yerine basit bir klip oynatıcısıdır; <K>SetTrigger(&quot;Zıpla&quot;)</K> aynı adlı klibi oynatır.</li>
                                     <li>Scriptler gerçek .NET/C++ derleyicisi yerine güvenli bir yorumlayıcıda çalışır; ağ, dosya ve tarayıcı API&apos;lerine erişemez.</li>
                                 </ul>
@@ -537,6 +682,7 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>Script yorumlayıcısı DOM&apos;a, ağa, çerezlere veya dosyalara erişemez; her çağrının komut bütçesi vardır. Sonsuz döngüler oyunu dondurmaz, ilgili script devre dışı bırakılır ve konsola yazılır.</li>
                                     <li>Proje içeriği en fazla 900 KB (dokular dahil), script başına 160 KB, 64 script, 24 sahne ve sahne başına 1000 nesne olabilir; bir tilemap en fazla 512 × 256 hücre içerir. Yüklenen görseller otomatik küçültülür.</li>
+                                    <li>Ses dosyaları dosya başına en fazla 300 KB ve projede en fazla 40 dosya olabilir; hesabınızdaki toplam ses depolama alanı planınıza göredir (Ücretsiz 5 MB / 30 dosya, Plus 25 MB / 150 dosya, Pro 100 MB / 600 dosya).</li>
                                     <li>Arcade&apos;e yayınlanan oyunlar herkese açıktır. Kişisel veri, parola veya gizli anahtar paylaşmayın; kurallara aykırı içerik kaldırılır.</li>
                                 </ul>
                             </Section>
@@ -549,6 +695,8 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     ["Karakter zeminin içinden düşüyor.", "Zeminde etkin bir çarpıştırıcı (ör. Box Collider 2D) olmalı. Zemine dinamik Rigidbody eklemeyin; eklerseniz o da düşer."],
                                     ["Konsolda “NullReferenceException: … null veya yok edilmiş bir nesneye erişildi.”", "Inspector'daki bir public alan boş kalmış ya da nesne Destroy ile silinmiş. Alanı Inspector'dan atayın veya kullanmadan önce if (hedef != null) ile kontrol edin."],
                                     ["“Script komut bütçesini aştı (olası sonsuz döngü).”", "Bir while ya da for döngüsü bitmiyor. Oyun donmaz, yalnızca o script devre dışı kalır. Döngünün çıkış koşulunu düzeltin; beklemek için coroutine (yield return) kullanın."],
+                                    ["Ses çalmıyor.", "Tarayıcılar sesi sayfadaki ilk tıklamadan sonra açar; oyuna bir kez tıklayın. Yüklenen bir dosyayı adıyla çağırıyorsanız adı Proje panelindekiyle aynı yazın; bulunamayan adlar için Konsol'da “Ses bulunamadı” uyarısı görünür."],
+                                    ["Gamepad algılanmıyor.", "Gamepad'i bağlayıp bir düğmesine basın; tarayıcılar gamepad'i ancak bir düğmeye basılınca bildirir. Ayarlar → Girdi'de eylemin gamepad bağlarını kontrol edin."],
                                     ["Tuşlar oyunda çalışmıyor.", "Odak bir yazı alanında (ör. script editöründe) olabilir. Oyun görünümüne bir kez tıklayın."],
                                     ["Arcade'de yayınla düğmesi kullanılamıyor.", "Yayınlamak için giriş yapıp projeyi buluta kaydetmeniz gerekir; misafir projeleri yalnızca bu tarayıcıda durur."],
                                     ["“Proje başka bir sekmede/cihazda değişti” uyarısı.", "Sayfayı yenileyip güncel sürümü yükleyin. Bu sekmedeki değişiklikleri kaybetmemek için önce Dışa aktar → Proje dosyası (.json) ile yedek alın."],
@@ -562,14 +710,16 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 function DocsEN() {
     return (
         <>
-                            <Section id="yenilikler" title="What's new in V3">
-                                <p>Hanogt Engine V3 brings tile-based levels, real UI components, keyframe animation and code-driven motion (tweens). Projects saved with V1 or V2 are migrated to the V3 format automatically when you open them, and none of your data is lost. Saved projects are stored in the V3 format.</p>
+                            <Section id="yenilikler" title="What's new in V4">
+                                <p>Hanogt Engine V4 brings input actions with gamepad support, a ready-made character controller, camera follow, A* path finding, joints, new UI controls, audio files and music, multi-selection and the Watch panel. Projects saved with earlier versions are migrated to the V4 format when you open them and none of your data is lost; where behavior changed (for example the warning for unknown sound names, or <K>AddComponent&lt;Slider&gt;()</K>), older games keep running with the V3 rules.</p>
                                 <WhatsNewList tr={false} />
+                                <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">Shipped with V3</h3>
+                                <WhatsNewList tr={false} items={V3_FEATURES} />
                             </Section>
 
                             <Section id="baslarken" title="Getting started">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: the new Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++); Tilemap Adventure, Clicker Factory and Foggy Runner from V3; or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
+                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: Sky Tower, Maze Hunt and Slingshot Master from V4; Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++); Tilemap Adventure, Clicker Factory and Foggy Runner from V3; or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
                                     <li>When you are signed in, the project is saved to your account (cloud); projects created as a guest are stored in this browser (IndexedDB).</li>
                                     <li>The <b>▶ Play</b> button at the top (Ctrl+P) runs the game inside the editor. When you stop, the scene returns to how it was before you pressed Play.</li>
                                     <li>Double-click a script to open the code editor; changes are compiled automatically and errors are shown line by line.</li>
@@ -608,12 +758,16 @@ function DocsEN() {
                                     ["Inspector", "Edits the components of the selected object. Public fields of your scripts show up here automatically."],
                                     ["Project (Assets)", "Scenes, scripts, prefabs and textures. Upload images, create new C#/C++ scripts and new scenes."],
                                     ["Console", "Debug.Log output, warnings, runtime errors and compile errors. Clicking the source opens the matching line."],
+                                    ["Watch", "Shows values live while the game runs: Player.score, Player.transform.position, Enemy.Rigidbody2D.velocity, GameManager.highScore, Time.time… Numbers get a small history line. You can also add one with the eye button next to script fields in the Inspector."],
                                 ]} />
                                 <Table head={["Shortcut", "Action"]} rows={[
                                     ["W / E / R", "Move / Rotate / Scale gizmo"],
                                     ["F", "Focus the selected object"],
                                     ["Ctrl+Z · Ctrl+Y", "Undo · Redo"],
                                     ["Ctrl+D", "Duplicate"],
+                                    ["Ctrl+A", "Select every object in the scene"],
+                                    ["Ctrl / Shift + click", "Add to the selection · select a range (hierarchy)"],
+                                    ["Shift + drag", "Box select in the Scene view (Ctrl adds to the selection)"],
                                     ["Ctrl+C · Ctrl+V", "Copy · Paste"],
                                     ["Delete", "Delete"],
                                     ["F2", "Rename"],
@@ -621,6 +775,7 @@ function DocsEN() {
                                     ["Ctrl+P", "Play / Stop"],
                                     ["Esc", "Stop painting tiles · clear the selection"],
                                 ]} />
+                                <p>With several objects selected, the gizmo sits on their center and moves, rotates and scales them together. The Inspector shows the components they share: values that differ show as &quot;—&quot; or <b>Mixed</b>, and a field you change is applied to all of them while their other fields stay as they are. In the hierarchy search, <K>t:Camera</K>, <K>t:Rigidbody2D</K> or a script class name filters by component and <K>tag:Enemy</K> by tag; <b>Select all results</b> selects what was found.</p>
                                 <p>Drag the label of a number field (X, Y, Z) sideways to scrub its value; hold Shift for 10× and Alt for 0.1× speed. Fields also accept expressions such as <K>2*3</K>.</p>
                                 <p>The <b>magnet</b> button in the top toolbar turns on grid snapping for the gizmos; the arrow next to it sets the move, rotate and scale steps (0.5 units, 15° and 0.1 by default). The ✨ button in the Scene view shows screen effects such as fog and bloom while you edit. While playing, the <b>Stats</b> button shows FPS, frame time and the number of objects, scripts, physics bodies, tweens/timers, particles, draw calls and triangles in the corner of the Game view.</p>
                             </Section>
@@ -637,13 +792,18 @@ function DocsEN() {
                                     ["Collider", "Box, sphere (3D) or circle (2D) collider; trigger (Is Trigger), friction and bounciness."],
                                     ["Script", "A C# or C++ MonoBehaviour class. Public fields are edited in the Inspector."],
                                     ["Particle System", "GPU-drawn particles: rate, bursts, lifetime, speed, cone angle, size and color over lifetime, gravity."],
-                                    ["Audio Source", "Procedural sound effects: coin, jump, hit, explosion, laser, powerup, click, blip, lose, win, step, shoot."],
+                                    ["Audio Source", "Built-in sound effects (coin, jump, hit, explosion, laser, powerup, click, blip, lose, win, step, shoot) or uploaded WAV/MP3/OGG files; volume, pitch and looping."],
                                     ["UI Text", "Text pinned to the screen (score, lives). 9 anchor points, offset, font size, shadow and draw order."],
                                     ["UI Button", "A clickable button: label, colors, corner radius, an On Click method and a hotkey."],
                                     ["UI Panel / Image", "A colored or textured rectangle: backgrounds, menu boxes or a full-screen dim. It can block clicks to whatever is below."],
                                     ["UI Progress Bar", "Health, loading or progress bars: value, min/max, direction, colors and a percentage label."],
                                     ["Tilemap", "A grid of tiles: palette, per-tile collision, trigger mode and a texture atlas. Painted with a brush in the scene."],
                                     ["Animation", "Keyframe clips for position, rotation, scale, color, opacity and sprite frame, with easing curves and wrap modes."],
+                                    ["Character Controller 2D", "A ready-made platformer character: running, double jump, coyote time, jump buffering, slopes and moving platforms."],
+                                    ["Camera Follow", "Moves the camera after a target smoothly, with a dead zone, look-ahead and bounds."],
+                                    ["Nav Agent 2D", "Walks to a target or a point along an A* path around walls."],
+                                    ["Distance / Spring Joint", "Ties two objects at a fixed distance or with a spring."],
+                                    ["UI Slider · UI Toggle · UI Input Field", "A draggable slider, an on/off switch and a real text box."],
                                 ]} />
                             </Section>
 
@@ -725,7 +885,7 @@ button->onClick.AddListener([this]() { Debug::Log("Clicked"); });`}</Code>
                                 <p>Collision and mouse events: <K>OnCollisionEnter/Stay/Exit</K>, <K>OnTriggerEnter/Stay/Exit</K> (add <K>2D</K> at the end for 2D), <K>OnMouseDown/Up/Enter/Exit/Over/Drag</K>.</p>
                             </Section>
 
-                            <Section id="girdi" title="Input">
+                            <Section id="girdi" title="Input, input actions and gamepads">
                                 <Code>{`if (Input.GetKey(KeyCode.W)) { /* held down */ }
 if (Input.GetKeyDown(KeyCode.Space)) { /* pressed this frame */ }
 float h = Input.GetAxis("Horizontal");     // A/D or ←/→ (smoothed)
@@ -734,7 +894,20 @@ if (Input.GetButtonDown("Jump")) { }       // Space
 if (Input.GetMouseButton(0)) { }           // left click / touch
 Vector3 mouse = Input.mousePosition;       // pixels, bottom-left is (0,0)
 Vector3 world = Camera.main.ScreenToWorldPoint(mouse);`}</Code>
-                                <p>On mobile devices, when enabled in the project settings, on-screen arrow keys and A (Space) / B (LeftControl) buttons are shown; they are read just like regular keys.</p>
+                                <p>In V4, input is defined with <b>input actions</b> (like Unity&apos;s Input Manager). In <b>Settings → Input</b> you choose the keys, mouse buttons and gamepad buttons or sticks of each action and add your own actions. Scripts read an action by its name, so the same code works whether the player uses a keyboard or a gamepad.</p>
+                                <Table head={["Action", "Default bindings"]} rows={[
+                                    ["Horizontal · Vertical", "A/D and W/S, arrow keys, d-pad, left stick"],
+                                    ["Jump", "Space, gamepad A"],
+                                    ["Fire1 · Fire2 · Fire3", "Left Ctrl / left click / RT, X · Left Alt / right click / LT · Left Shift / middle click / Y"],
+                                    ["Submit · Cancel", "Enter, Space / A, Start · Esc / B, Back"],
+                                    ["LookX · LookY", "Right stick"],
+                                ]} />
+                                <Code>{`float move = Input.GetAxis("Horizontal");   // smoothed on keys, immediate on sticks
+if (Input.GetButtonDown("Jump")) Jump();     // Space or gamepad A
+if (Input.GetButton("Fire1")) Shoot();
+if (Input.GetButtonDown("Dash")) Dash();     // an action you added in Settings → Input
+string[] pads = Input.GetJoystickNames();    // connected gamepads`}</Code>
+                                <p>Gamepads are read with the browser&apos;s Gamepad API (Xbox and PlayStation layouts); browsers only report a gamepad once one of its buttons is pressed. The sticks&apos; <b>dead zone</b> is set in the Input tab. On phones, when enabled in the project settings, on-screen arrow keys and A/B buttons are shown; they act as the gamepad&apos;s d-pad and A/X buttons and keep working when you change the actions.</p>
                             </Section>
 
                             <Section id="fizik" title="Physics and collisions">
@@ -770,6 +943,58 @@ void FixedUpdate()
 }`}</Code>
                             </Section>
 
+                            <Section id="karakter" title="Character Controller 2D">
+                                <p>A ready-made character controller for platformers. The object needs a <b>Dynamic Rigidbody 2D</b> and a <b>Collider 2D</b> (the Inspector adds them with one click when they are missing). Running and jumping read the input actions (<K>Horizontal</K>, <K>Jump</K>), so the keyboard, the touch buttons and gamepads work out of the box.</p>
+                                <Table head={["Setting", "What it does"]} rows={[
+                                    ["Move Speed · Acceleration · Deceleration", "Top running speed and how quickly it is reached and lost."],
+                                    ["Air Control", "How much the character can steer in the air (0–1)."],
+                                    ["Jump Height · Max Jumps", "Jump height in units and how many jumps are allowed before landing (2: double jump)."],
+                                    ["Coyote Time", "How long a jump still works after walking off a ledge."],
+                                    ["Jump Buffer", "How long a jump pressed just before landing is remembered."],
+                                    ["Variable Jump · Fall Gravity", "Letting go early makes a short hop; falling uses stronger gravity."],
+                                    ["Max Slope", "The steepest slope that still counts as ground. Moving platforms carry the character."],
+                                    ["Use Input", "When off, a script drives the character with Move, Jump and CancelJump (AI, cutscenes)."],
+                                ]} />
+                                <Code>{`CharacterController2D controller;
+
+void Start() { controller = GetComponent<CharacterController2D>(); }
+
+void Update()
+{
+    if (controller.isGrounded && controller.velocity.x != 0) Audio.Play("step", 0.2f);
+}
+
+// The controller calls these when it jumps and when it lands.
+void OnJump() { Audio.Play("jump"); }
+void OnLand(float speed) { if (speed > 12f) Camera.Shake(0.2f, 0.2f); }`}</Code>
+                                <Tip>The <b>Sky Tower</b> template is a complete platformer built with this component: double jump, a moving platform, a checkpoint and a settings menu.</Tip>
+                            </Section>
+
+                            <Section id="kamera" title="Camera follow and shake">
+                                <p>Add <b>Camera Follow</b> to the camera and pick what to follow in <b>Target</b> (when empty it follows the object tagged Player). The camera catches up smoothly. <b>Dead Zone</b> is the box the target can move in without moving the camera, <b>Look Ahead</b> leads in the direction of movement and <b>Bounds</b> keeps the view inside the level. In 3D the camera looks at the target from behind.</p>
+                                <Code>{`CameraFollow follow = Camera.main.GetComponent<CameraFollow>();
+follow.target = boss.transform;                 // follow something else
+follow.SetBounds(new Vector2(-10, -5), new Vector2(60, 20));
+follow.SnapToTarget();                          // catch up without smoothing
+
+Camera.Shake(0.3f, 0.25f);                      // strength, seconds`}</Code>
+                                <p>Shake only moves the rendered view; the camera&apos;s position, <K>ScreenToWorldPoint</K> and physics are not affected. Offering a &quot;Screen shake&quot; setting in your game is good practice (as the Sky Tower template does).</p>
+                            </Section>
+
+                            <Section id="eklemler" title="Joints: Distance and Spring">
+                                <p>The joints in <b>Add component → Physics</b> tie two objects together, or an object to a point in the world. A <b>Distance Joint</b> keeps the distance fixed: pendulums, chains, bridges. With <b>Max Distance Only</b> it only goes taut, like a rope. A <b>Spring Joint</b> pulls back like a spring: <b>Frequency</b> sets the stiffness and <b>Damping Ratio</b> the bounce.</p>
+                                <Code>{`SpringJoint2D spring = GetComponent<SpringJoint2D>();
+spring.frequency = 3f;           // stiffer
+spring.dampingRatio = 0.5f;
+spring.connectedBody = hook;     // tie it to another Rigidbody2D
+spring.enabled = false;          // let go: it flies like a slingshot
+
+DistanceJoint2D rope = gameObject.AddComponent<DistanceJoint2D>();
+rope.connectedAnchor = new Vector2(0, 5);    // a point in the world
+rope.maxDistanceOnly = true;`}</Code>
+                                <p>For a joint to move anything, at least one of its ends needs a Dynamic Rigidbody. While playing, joints are drawn as lines in the scene (<b>Show Line</b>). The <b>Slingshot Master</b> template uses both joints for a slingshot and a swinging wrecking ball.</p>
+                            </Section>
+
                             <Section id="tilemap" title="Tilemaps and tile painting">
                                 <p>A tilemap lets you paint a level onto a grid of square cells. Add one with <b>Create → Tilemap</b> in the Hierarchy (<b>Create → 2D → Tilemap</b> in 3D projects), press <b>Paint in scene</b> in the Inspector and pick a tile from the palette.</p>
                                 <Table head={["Tool", "How to use it"]} rows={[
@@ -792,6 +1017,25 @@ void Start()
     Debug.Log(ground.CountTiles("Brick") + " bricks");
 }`}</Code>
                                 <p>Cell coordinates work like Unity&apos;s: X grows to the right and Y grows upwards. A tilemap can hold up to 512 × 256 cells and 48 palette tiles. Tilemaps are made for 2D games; in 3D they are drawn on the object&apos;s XY plane.</p>
+                            </Section>
+
+                            <Section id="yol-bulma" title="Path finding and Nav Agent 2D">
+                                <p>In 2D projects the engine builds a navigation grid from static colliders and solid tiles and finds the shortest way around walls with the A* algorithm. When tiles or obstacles change during the game, the grid updates by itself.</p>
+                                <p>An object with a <b>Nav Agent 2D</b> walks to its destination along that path. Pick an object in <b>Target</b> and it keeps chasing it (a new path is found every <b>Repath Interval</b>); when empty it goes to the point given with <K>SetDestination</K>. With a Rigidbody it moves by velocity, otherwise directly. <b>Show Path</b> draws the path while playing.</p>
+                                <Code>{`NavAgent2D agent = GetComponent<NavAgent2D>();
+agent.SetDestination(new Vector2(8, 3));
+agent.target = player;                  // chase
+agent.speed = 4f;
+agent.isStopped = true;                 // stop; Resume() goes on
+
+// Called when the destination is reached.
+void OnDestinationReached() { agent.SetDestination(nextPoint); }
+
+// Just the path: a list of corner points (empty when there is none).
+var path = Pathfinding.FindPath(transform.position, target.position);
+for (int i = 1; i < path.Count; i++) Debug.DrawLine(path[i - 1], path[i], Color.yellow, 1f);
+bool open = Pathfinding.IsWalkable(point);`}</Code>
+                                <Tip>In the <b>Maze Hunt</b> template three ghosts use the same component in different ways: one chases the player, one cuts them off and one patrols the corners.</Tip>
                             </Section>
 
                             <Section id="prefab" title="Prefabs, Instantiate and Destroy">
@@ -873,7 +1117,8 @@ DontDestroyOnLoad(gameObject);             // keep across scenes`}</Code>
                                     ["UI Text", <K key="t">Text</K>],
                                     ["UI Button", <K key="b">Button</K>],
                                     ["UI Panel / Image", <K key="p">Image</K>],
-                                    ["UI Progress Bar", <K key="s">Slider</K>],
+                                    ["UI Progress Bar", <K key="s">ProgressBar · Slider</K>],
+                                    ["UI Slider · UI Toggle · UI Input Field", <K key="v">Slider · Toggle · InputField</K>],
                                 ]} />
                                 <p>When a button is clicked, the method named in its <b>On Click</b> field runs on the scripts of the chosen target object (like Unity&apos;s On Click list). You can add listeners from code too. Give a button a <b>hotkey</b> and pressing that key does the same as clicking it.</p>
                                 <Code>{`public Text scoreText;       // pick a UI Text object in the Inspector
@@ -901,6 +1146,47 @@ Audio.Play("coin");                               // built-in sound effect
 GetComponent<AudioSource>().Play();`}</Code>
                             </Section>
 
+                            <Section id="ui-kontroller" title="Sliders, toggles and input fields">
+                                <p><b>Create → UI</b> has three more controls. Players use them with the mouse or a finger; when the value changes, the method chosen in the Inspector&apos;s event field runs (like Unity&apos;s On Value Changed). Listeners can be added in code too.</p>
+                                <Table head={["Component", "Script type and events"]} rows={[
+                                    ["UI Slider", <span key="s"><K>Slider</K> · value, minValue, maxValue, wholeNumbers · onValueChanged(float)</span>],
+                                    ["UI Toggle", <span key="t"><K>Toggle</K> · isOn · onValueChanged(bool); switch or checkbox style</span>],
+                                    ["UI Input Field", <span key="i"><K>InputField</K> · text, characterLimit, contentType · onValueChanged, onEndEdit, onSubmit (string)</span>],
+                                ]} />
+                                <Code>{`public Slider volume;
+public Toggle shake;
+public InputField playerName;
+
+void Start()
+{
+    volume.onValueChanged.AddListener(v => Audio.SetMusicVolume(v));
+    shake.SetIsOnWithoutNotify(PlayerPrefs.GetBool("shake", true));   // without firing the event
+    playerName.onEndEdit.AddListener(name => PlayerPrefs.SetString("name", name));
+    playerName.ActivateInputField();      // start typing (phones open their keyboard)
+}`}</Code>
+                                <p>The input field is a real text box: phones open their on-screen keyboard, game keys pause while typing and Enter finishes editing. <b>Content Type</b> limits what can be typed (<K>IntegerNumber</K>, <K>Alphanumeric</K>, <K>EmailAddress</K>…). The Progress Bar of older projects is also found as a <K>Slider</K> in scripts; under V4 rules <K>AddComponent&lt;Slider&gt;()</K> adds a real slider.</p>
+                            </Section>
+
+                            <Section id="ses-dosyalari" title="Audio files and music">
+                                <p>Upload WAV, MP3 or OGG files to the <b>Audio</b> group of the Project panel (up to 300 KB each and 40 per project). When you are signed in, files are saved to your account&apos;s <b>audio library</b> and count against your plan&apos;s audio storage (Free 5 MB, Plus 25 MB, Pro 100 MB; a file used in several projects counts once). Guest projects keep their sounds in this browser.</p>
+                                <Code>{`Audio.Play("Explosion1");               // an uploaded file, by name
+Audio.Play("coin");                     // a built-in sound effect
+Audio.PlayMusic("Theme", 0.7f, 1f);     // looping music: volume, fade time
+Audio.StopMusic(0.5f);
+Audio.musicVolume = 0.5f;               // separate music and effect volumes
+Audio.sfxVolume = 0.8f;
+
+public AudioClip hit;                   // pick a sound in the Inspector
+void OnCollisionEnter2D(Collision2D c) { Audio.Play(hit); }
+
+AudioSource source = GetComponent<AudioSource>();
+source.clip = "Wind";                   // an uploaded file's name
+source.loop = true;
+source.Play();`}</Code>
+                                <p>The <b>Clip</b> list of an <b>Audio Source</b> shows the built-in sounds and your uploaded files together; <b>Loop</b> can be turned on for an uploaded file. A file with the same name as a built-in sound plays instead of it (for example a file uploaded as <K>coin</K>). The sounds of games published on the Arcade are kept with the publication, and <b>Playable HTML</b> puts them inside the file so they play offline.</p>
+                                <Tip>Only upload sounds you have the right to use: your own recordings, or music and effects whose license allows it. Manage your library with the library button of the Audio group and delete files you don&apos;t use to free space.</Tip>
+                            </Section>
+
                             <Section id="ortam" title="Environment and screen effects">
                                 <p>Under <b>Settings → Scene settings</b> you set each scene&apos;s background (a solid color or a sky gradient), ambient light, fog and screen effects.</p>
                                 <Table head={["Setting", "Effect"]} rows={[
@@ -925,8 +1211,8 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 
                             <Section id="yayinlama" title="Publishing and exporting">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play and like it, and remix it if you turn on <b>Allow remixes</b>. The game card shows the engine version it was made with (for example V3). You can unpublish it any time.</li>
-                                    <li><b>Playable HTML:</b> packs the game and the engine into a single .html file that opens without an internet connection; host it anywhere you like.</li>
+                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play and like it, and remix it if you turn on <b>Allow remixes</b>. The game card shows the engine version it was made with (for example V4), and the game&apos;s audio files are kept with the publication. You can unpublish it any time.</li>
+                                    <li><b>Playable HTML:</b> packs the game, the engine and its audio files into a single .html file that opens without an internet connection; host it anywhere you like.</li>
                                     <li><b>Project file (.json):</b> for backups and for moving a project to another account or browser.</li>
                                 </ul>
                             </Section>
@@ -938,10 +1224,11 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 
                             <Section id="farklar" title="Differences from Unity">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li>Sound effects are generated procedurally instead of loaded from files (<K>Audio.Play(&quot;coin&quot;)</K>).</li>
+                                    <li>The built-in sound effects are procedural (<K>Audio.Play(&quot;coin&quot;)</K>); you can upload your own sounds as WAV, MP3 or OGG files. An <K>AudioClip</K> works like the name of a sound, and there is no positional (3D) audio.</li>
                                     <li>Capsule/mesh colliders are approximated as boxes, and angular physics is simplified (spheres roll visually).</li>
                                     <li>Layer masks (LayerMask) and <K>IgnoreCollision</K> are ignored; use tags and triggers instead.</li>
-                                    <li>The UI has Text, Button, Panel/Image and Progress Bar (Slider) components; there are no Canvas layout components (Layout Group, Scroll View, Input Field). Use <K>OnMouseDown</K> to make scene objects clickable.</li>
+                                    <li>The UI has Text, Button, Panel/Image, Progress Bar, Slider, Toggle and Input Field components; there are no Canvas layout components (Layout Group, Scroll View, Dropdown). Use <K>OnMouseDown</K> to make scene objects clickable.</li>
+                                    <li>Path finding uses A* on a 2D grid instead of a NavMesh (Nav Agent 2D); in 3D projects agents walk to their target in a straight line. Distance and Spring joints are available; Hinge, Slider and Wheel joints are not.</li>
                                     <li>The Animation component is a simple clip player rather than an Animator state machine; <K>SetTrigger(&quot;Jump&quot;)</K> plays the clip with the same name.</li>
                                     <li>Scripts run in a safe interpreter instead of a real .NET/C++ compiler; they cannot reach the network, files or browser APIs.</li>
                                 </ul>
@@ -951,6 +1238,7 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>The script interpreter cannot reach the DOM, the network, cookies or files, and every call has an instruction budget. Infinite loops don&apos;t freeze the game: the script is disabled and the problem is logged to the console.</li>
                                     <li>Project content can be up to 900 KB (including textures), 160 KB per script, 64 scripts, 24 scenes and 1000 objects per scene; a tilemap holds up to 512 × 256 cells. Uploaded images are downscaled automatically.</li>
+                                    <li>Audio files can be up to 300 KB each and 40 per project; your account&apos;s total audio storage depends on your plan (Free 5 MB / 30 files, Plus 25 MB / 150 files, Pro 100 MB / 600 files).</li>
                                     <li>Games published on the Arcade are public. Don&apos;t share personal data, passwords or secret keys; content that breaks the rules is removed.</li>
                                 </ul>
                             </Section>
@@ -963,6 +1251,8 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     ["The character falls through the ground.", "The ground needs an enabled collider (for example a Box Collider 2D). Don't give the ground a dynamic Rigidbody, or it falls too."],
                                     ["The Console shows a NullReferenceException.", "A public field in the Inspector is empty, or the object was removed with Destroy. Assign the field in the Inspector or check it with if (target != null) before using it."],
                                     ["The Console says the script exceeded its instruction budget (possible infinite loop).", "A while or for loop never ends. The game doesn't freeze; only that script is disabled. Fix the loop's exit condition, and use a coroutine (yield return) to wait."],
+                                    ["No sound plays.", "Browsers only turn sound on after the first click on the page; click the game once. When you play an uploaded file by name, write the name exactly as in the Project panel; names that can't be found show a “Ses bulunamadı” (sound not found) warning in the Console."],
+                                    ["The gamepad isn't detected.", "Connect it and press one of its buttons; browsers only report a gamepad once a button is pressed. Check the action's gamepad bindings in Settings → Input."],
                                     ["Keys don't work in the game.", "The focus may be in a text field (such as the script editor). Click the game view once."],
                                     ["Publish to Arcade is unavailable.", "Sign in and save the project to the cloud to publish it; guest projects only live in this browser."],
                                     ["“This project changed in another tab or on another device.”", "Reload to get the latest version. To keep the changes made in this tab, first back them up with Export → Project file (.json)."],

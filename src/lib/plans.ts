@@ -376,7 +376,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
         name: { TR: "Ücretsiz", EN: "Free" },
         tagline: { TR: "Hanogt Codev'in tamamı, her zaman ücretsiz.", EN: "All of Hanogt Codev, free forever." },
         features: [
-            { text: { TR: "Kod editörü, Hanogt Engine V3, Arcade, Media ve Hanogt Social", EN: "The code editor, Hanogt Engine V3, the Arcade, Media and Hanogt Social" } },
+            { text: { TR: "Kod editörü, Hanogt Engine V4, Arcade, Media ve Hanogt Social", EN: "The code editor, Hanogt Engine V4, the Arcade, Media and Hanogt Social" } },
             { text: { TR: "Hanogt AI ile haftada 50 mesaj", EN: "50 Hanogt AI messages a week" } },
             { text: { TR: "10 kod projesi ve 10 oyun projesi", EN: "10 code projects and 10 game projects" } },
             { text: { TR: "Tek seferde 8 dosya çalıştırma", EN: "Run 8 files at once" } },

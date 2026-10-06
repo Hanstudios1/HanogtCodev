@@ -2670,7 +2670,12 @@ export class RuntimeWorld implements ScriptHost {
         this.uiHover = control ? control.component.id : null;
         if (this.input.getMouseButtonDown(0) && control) {
             this.uiPressed = control.component.id;
-            if (control.component.type === "uiSlider") this.uiDragging = control.component.id;
+            if (control.component.type === "uiSlider") {
+                // The press itself sets the value (a quick tap can be released within the same frame).
+                this.uiDragging = control.component.id;
+                const rect = this.uiRectOf(control.entity, control.component);
+                if (rect) this.setSliderValue(control.entity, control.component, this.sliderValueAt(control.component, rect, x, y), true);
+            }
             if (control.component.type === "uiInputField") this.requestInputFocus(control.component.id);
         }
         // Dragging a slider follows the mouse even outside its rectangle.

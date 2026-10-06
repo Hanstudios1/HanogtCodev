@@ -11,8 +11,12 @@ import { flappy, pong, runner2d, snake } from "./arcade";
 import { finishProject } from "./builders";
 import { breakout, platformer, rollABall, spaceShooter } from "./classic";
 import { clickerUi, runner3d, tilemapPlatformer } from "./v3";
+import { mazeHunt, skyTower, slingshot } from "./v4";
 
 export type TemplateId =
+    | "sky-tower-2d"
+    | "maze-hunt-2d"
+    | "slingshot-2d"
     | "runner-2d"
     | "flappy-2d"
     | "pong-2d"
@@ -43,12 +47,51 @@ export interface TemplateInfo {
     /** How the game is played (shown in the template details). */
     controls: { tr: string; en: string };
     /** Engine version that introduced the template (shown as a badge). */
-    since?: 3;
+    since?: 3 | 4;
     /** Added in the latest template update (shown as "Yeni"). */
     isNew?: boolean;
 }
 
 export const PROJECT_TEMPLATES: TemplateInfo[] = [
+    {
+        id: "sky-tower-2d",
+        dimension: "2d",
+        name: { tr: "Gök Kulesi", en: "Sky Tower" },
+        description: { tr: "V4 platform oyunu: Character Controller 2D ile çift zıplama, coyote süresi ve zıplama tamponu; seni izleyen Camera Follow, ekran sarsıntısı, hareketli platform, kontrol noktası ve kaydırıcıyla anahtarlı ayarlar menüsü.", en: "A V4 platformer: double jump, coyote time and jump buffering with Character Controller 2D, a Camera Follow that tracks you, screen shake, a moving platform, a checkpoint and a settings menu with a slider and a toggle." },
+        languages: ["C#"],
+        gradient: ["#a855f7", "#f59e0b"],
+        emoji: "🗼",
+        difficulty: "easy",
+        controls: { tr: "← → / A D / sol çubuk: koş  •  Space / gamepad A: zıpla (havada bir kez daha)  •  Esc: ayarlar", en: "← → / A D / left stick: run  •  Space / gamepad A: jump (once more in the air)  •  Esc: settings" },
+        since: 4,
+        isNew: true,
+    },
+    {
+        id: "maze-hunt-2d",
+        dimension: "2d",
+        name: { tr: "Labirent Avı", en: "Maze Hunt" },
+        description: { tr: "Gem'leri topla, hayaletlerden kaç: Nav Agent 2D hayaletler A* yol bulmayla seni kovalar, pusu kurar ya da devriye gezer; kristal onları kaçırır. İpucu tuşu en yakın gem'e en kısa yolu çizer.", en: "Collect the gems and dodge the ghosts: Nav Agent 2D ghosts chase you with A* path finding, lie in wait or patrol, and a crystal sends them running. The hint button draws the shortest path to the nearest gem." },
+        languages: ["C#"],
+        gradient: ["#4c1d95", "#facc15"],
+        emoji: "👻",
+        difficulty: "medium",
+        controls: { tr: "WASD / ok tuşları / sol çubuk: yürü  •  H / gamepad Y: ipucu", en: "WASD / arrow keys / left stick: walk  •  H / gamepad Y: hint" },
+        since: 4,
+        isNew: true,
+    },
+    {
+        id: "slingshot-2d",
+        dimension: "2d",
+        name: { tr: "Sapan Ustası", en: "Slingshot Master" },
+        description: { tr: "Fizik bulmacası: topu geri çek, Spring Joint 2D bırakınca fırlatır. Distance Joint 2D'ye asılı yıkım topu, kasalar, güç kaydırıcısı, nişan çizgisi anahtarı ve adını yazdığın rekor tablosu.", en: "A physics puzzle: pull the ball back and a Spring Joint 2D launches it. A wrecking ball on a Distance Joint 2D, crates, a power slider, an aim line toggle and a high score table you sign with your name." },
+        languages: ["C#"],
+        gradient: ["#f43f5e", "#7c3aed"],
+        emoji: "💥",
+        difficulty: "easy",
+        controls: { tr: "Fare / parmak: topu geri çek ve bırak  •  R: yeniden başla", en: "Mouse / finger: pull the ball back and let go  •  R: restart" },
+        since: 4,
+        isNew: true,
+    },
     {
         id: "runner-2d",
         dimension: "2d",
@@ -257,6 +300,9 @@ export function createProjectFromTemplate(templateId: TemplateId, name?: string)
     const info = PROJECT_TEMPLATES.find((template) => template.id === templateId) ?? PROJECT_TEMPLATES[PROJECT_TEMPLATES.length - 1];
     const projectName = (name?.trim() || info.name.tr).slice(0, 80);
     switch (info.id) {
+        case "sky-tower-2d": return skyTower(projectName);
+        case "maze-hunt-2d": return mazeHunt(projectName);
+        case "slingshot-2d": return slingshot(projectName);
         case "runner-2d": return runner2d(projectName);
         case "flappy-2d": return flappy(projectName);
         case "pong-2d": return pong(projectName);
