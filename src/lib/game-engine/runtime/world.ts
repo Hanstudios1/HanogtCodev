@@ -432,6 +432,7 @@ export class RuntimeWorld implements ScriptHost {
         };
         this.physics = new PhysicsWorld(adapter, options.project.dimension);
         this.input = options.input ?? new InputManager();
+        this.input.configure(options.project.settings.input);
         this.audio = options.audio === undefined ? null : options.audio;
         this.prefs = new PlayerPrefsStore(options.storage ?? null, `hanogt-engine:prefs:${options.project.id}`);
         this.scene = this.findScene(options.sceneId ?? options.project.settings.startSceneId) ?? options.project.scenes[0];
@@ -440,6 +441,11 @@ export class RuntimeWorld implements ScriptHost {
 
     get isEditor() {
         return Boolean(this.options.isEditor);
+    }
+
+    /** Engine rules of the game (3 for projects made before V4). */
+    get rules() {
+        return this.options.project.settings.rules;
     }
 
     // -------------------------------------------------------------------

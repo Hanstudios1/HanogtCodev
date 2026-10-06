@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { GameProjectDocument, ProjectSettings } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { activeScene, touch } from "./operations";
+import { InputSettingsPanel } from "./InputSettings";
 import { publishProject, unpublishProject } from "./persistence";
 import { useEditorState } from "./store";
 import { Button, ColorInput, FieldRow, Modal, NumberInput, SelectInput, SliderInput, TabButton, TextInput, Toggle, VectorInput } from "./ui";
@@ -14,7 +15,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
     const { store, t, playing } = useEditor();
     const project = useEditorState(store, (state) => state.project);
     const scene = activeScene(project);
-    const [tab, setTab] = useState<"project" | "scene">("project");
+    const [tab, setTab] = useState<"project" | "input" | "scene">("project");
     const disabled = playing;
 
     const setProject = (label: string, recipe: (draft: GameProjectDocument) => void, key: string) => store.update(label, (draft) => {
@@ -23,14 +24,18 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
     }, { mergeKey: `settings:${key}` });
     const setSetting = <K extends keyof ProjectSettings>(key: K, value: ProjectSettings[K]) => setProject(t("projectSettings"), (draft) => { draft.settings[key] = value; }, key);
     const setScene = (key: string, recipe: (settings: GameProjectDocument["scenes"][number]["settings"]) => void) => setProject(t("sceneSettings"), (draft) => { recipe(activeScene(draft).settings); }, `scene:${key}`);
+    const setInput = (key: string, recipe: (input: ProjectSettings["input"]) => void) => setProject(t("inputSettings"), (draft) => { recipe(draft.settings.input); }, `input:${key}`);
 
     return (
         <Modal open={open} onClose={onClose} title={t("settings")} icon={Settings2} width="max-w-xl" footer={<Button variant="primary" onClick={onClose}>{t("ok")}</Button>}>
             <div className="mb-3 flex gap-1">
                 <TabButton active={tab === "project"} onClick={() => setTab("project")}>{t("projectSettings")}</TabButton>
+                <TabButton active={tab === "input"} onClick={() => setTab("input")}>{t("inputSettings")}</TabButton>
                 <TabButton active={tab === "scene"} onClick={() => setTab("scene")}>{t("sceneSettings")} · {scene.name}</TabButton>
             </div>
-            {tab === "project" ? (
+            {tab === "input" ? (
+                <InputSettingsPanel input={project.settings.input} disabled={disabled} onEdit={setInput} />
+            ) : tab === "project" ? (
                 <div className="space-y-1">
                     <FieldRow label={t("projectName")}><TextInput value={project.name} maxLength={80} disabled={disabled} onChange={(value) => value.trim() && setProject(t("projectName"), (draft) => { draft.name = value.trim().slice(0, 80); }, "name")} /></FieldRow>
                     <FieldRow label={t("description")}><TextInput multiline value={project.description} maxLength={500} disabled={disabled} onChange={(value) => setProject(t("description"), (draft) => { draft.description = value.slice(0, 500); }, "description")} /></FieldRow>

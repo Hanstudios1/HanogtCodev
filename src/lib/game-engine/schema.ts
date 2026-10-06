@@ -10,6 +10,7 @@
  */
 import { defaultTilePalette } from "./components";
 import { createEngineId, isEngineId, nowIso } from "./ids";
+import { normalizeInputSettings } from "./input-actions";
 import { isKeyCode } from "./key-codes";
 import { isTileKey, TILEMAP_LIMITS } from "./tilemap";
 import {
@@ -778,7 +779,7 @@ export function normalizeTexture(value: unknown): TextureAsset | null {
     };
 }
 
-function normalizeProjectSettings(value: unknown, sceneIds: string[]): ProjectSettings {
+function normalizeProjectSettings(value: unknown, sceneIds: string[], documentVersion: number): ProjectSettings {
     const source = rec(value);
     const startSceneId = typeof source.startSceneId === "string" && sceneIds.includes(source.startSceneId) ? source.startSceneId : sceneIds[0];
     return {
@@ -789,6 +790,9 @@ function normalizeProjectSettings(value: unknown, sceneIds: string[]): ProjectSe
         pixelArt: bool(source.pixelArt, false),
         showFps: bool(source.showFps, false),
         touchControls: bool(source.touchControls, true),
+        // Documents saved before V4 have no rules field: they keep V3 behavior.
+        rules: source.rules === 3 || source.rules === 4 ? source.rules : documentVersion >= 4 ? 4 : 3,
+        input: normalizeInputSettings(source.input),
     };
 }
 
@@ -868,7 +872,7 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
         prefabs,
         textures,
         scripts: [...scripts.values()],
-        settings: normalizeProjectSettings(source.settings, [...sceneIds]),
+        settings: normalizeProjectSettings(source.settings, [...sceneIds], typeof source.version === "number" ? source.version : 1),
         metadata: {
             createdAt: iso(metadata.createdAt ?? source.createdAt, now),
             updatedAt: iso(metadata.updatedAt ?? source.updatedAt, now),

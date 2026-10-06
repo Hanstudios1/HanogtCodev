@@ -478,6 +478,7 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         GetMouseButtonDown: (args) => input.getMouseButtonDown(Math.trunc(toNumber(args[0] ?? 0))),
         GetMouseButtonUp: (args) => input.getMouseButtonUp(Math.trunc(toNumber(args[0] ?? 0))),
         GetTouch: (args) => touchAt(Math.trunc(toNumber(args[0] ?? 0))),
+        GetJoystickNames: () => new VMList([...input.gamepadNames], "Array"),
         ResetInputAxes: () => {
             input.reset();
             return undefined;

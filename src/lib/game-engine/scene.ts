@@ -13,6 +13,7 @@ import {
     createUIProgressBar,
     createUIText,
 } from "./components";
+import { defaultInputSettings } from "./input-actions";
 import { createEngineId, nowIso } from "./ids";
 import { combineTRS, IDENTITY_TRS, quatFromEulerDeg, type TRS } from "./math";
 import { cloneJson, defaultSceneSettings } from "./schema";
@@ -306,6 +307,8 @@ export function createBlankProject(name: string, dimension: GameDimension, id = 
             pixelArt: false,
             showFps: false,
             touchControls: true,
+            rules: 4,
+            input: defaultInputSettings(),
         },
         metadata: { createdAt: timestamp, updatedAt: timestamp },
     };

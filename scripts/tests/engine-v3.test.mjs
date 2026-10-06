@@ -76,6 +76,9 @@ function script(name, content) {
 function downgradeToV2(project) {
     const doc = JSON.parse(JSON.stringify(project));
     doc.version = 2;
+    // V4 project settings did not exist yet.
+    delete doc.settings.rules;
+    delete doc.settings.input;
     const strip = (item) => {
         for (const component of item.components) {
             if (component.type === "spriteRenderer") {
@@ -100,19 +103,15 @@ function downgradeToV2(project) {
 // Schema
 // ---------------------------------------------------------------------------
 
-test("engine reports V3", () => {
-    assert.equal(types.GAME_ENGINE_SCHEMA_VERSION, 3);
-    assert.equal(types.ENGINE_VERSION, 3);
-    assert.equal(types.ENGINE_VERSION_LABEL, "Hanogt Engine V3");
-});
-
-test("v2 projects migrate to v3 without losing data", () => {
+test("v2 projects migrate to the current schema without losing data", () => {
     for (const templateId of ["platformer-2d", "rollaball-3d", "space-shooter-2d", "breakout-2d"]) {
         const original = normalizeProject(JSON.parse(JSON.stringify(createProjectFromTemplate(templateId))));
         const v2 = downgradeToV2(original);
         const migrated = normalizeProject(v2);
-        assert.equal(migrated.version, 3);
-        assert.deepEqual(migrated, original, `${templateId} migrates losslessly`);
+        assert.equal(migrated.version, types.GAME_ENGINE_SCHEMA_VERSION);
+        // Projects from before V4 keep V3 rules; everything else comes back as it was.
+        assert.equal(migrated.settings.rules, 3);
+        assert.deepEqual(migrated, { ...original, settings: { ...original.settings, rules: 3 } }, `${templateId} migrates losslessly`);
         const sprite = migrated.scenes[0].objects.flatMap((item) => item.components).find((component) => component.type === "spriteRenderer");
         if (sprite) assert.deepEqual([sprite.sheet, sprite.frame], [{ columns: 1, rows: 1 }, 0]);
         assert.equal(migrated.scenes[0].settings.postProcessing.bloom.enabled, false);
@@ -150,7 +149,8 @@ test("schema v1 documents still load", () => {
         },
     };
     const project = normalizeProject(v1);
-    assert.equal(project.version, 3);
+    assert.equal(project.version, types.GAME_ENGINE_SCHEMA_VERSION);
+    assert.equal(project.settings.rules, 3);
     assert.equal(project.scenes[0].objects[0].name, "Top");
     const collider = project.scenes[0].objects[0].components.find((component) => component.type === "collider");
     assert.equal(collider.bounciness, 0.7);
@@ -161,7 +161,7 @@ test("schema v1 documents still load", () => {
 
 test("projects saved by a newer engine are refused instead of being truncated", () => {
     const project = normalizeProject(createProjectFromTemplate("empty-2d"));
-    assert.throws(() => normalizeProject({ ...project, version: 4 }), SchemaError);
+    assert.throws(() => normalizeProject({ ...project, version: types.GAME_ENGINE_SCHEMA_VERSION + 1 }), SchemaError);
 });
 
 test("V3 components are validated and clamped", () => {
@@ -470,7 +470,7 @@ public class ApiProbe : MonoBehaviour
     const storage = memoryStorage();
     const { world, step, find, messages, problems } = startWorld(project, { storage });
     step(1);
-    assert.deepEqual(messages("info").slice(0, 4), ["clicks 12", "bar 10 1", "prefs True True", "engine 3.0 ui False"]);
+    assert.deepEqual(messages("info").slice(0, 4), ["clicks 12", "bar 10 1", "prefs True True", `engine ${types.ENGINE_VERSION}.0 ui False`]);
     assert.equal(find("Label").uiAlpha < 1, true);
     step(40);
     assert.ok(messages("info").includes("moved 4"));
@@ -682,7 +682,7 @@ test("foggy runner: obstacles end the run and the panel restarts it", () => {
     assert.deepEqual(problems(), []);
 });
 
-test("the exported-HTML player bundle builds with the V3 runtime", async () => {
+test("the exported-HTML player bundle builds with the current runtime", async () => {
     // Same settings as scripts/build-player.mjs, kept in memory (public/engine is generated, not committed).
     const { build } = await import("esbuild");
     const result = await build({
@@ -698,7 +698,7 @@ test("the exported-HTML player bundle builds with the V3 runtime", async () => {
     });
     assert.deepEqual(result.errors, []);
     const bundle = result.outputFiles[0].text;
-    for (const marker of ["Hanogt Engine V3", "FadeToScene", "uiButton", "tilemap", "PunchScale"]) assert.ok(bundle.includes(marker), marker);
+    for (const marker of [types.ENGINE_VERSION_LABEL, "FadeToScene", "uiButton", "tilemap", "PunchScale"]) assert.ok(bundle.includes(marker), marker);
 });
 
 test("cloud project errors carry the server's code, plan and limit (game_limit)", async () => {

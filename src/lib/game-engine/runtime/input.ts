@@ -1,7 +1,9 @@
 /**
- * Input state for play mode (keyboard, mouse, touch and on-screen buttons).
- * Key names follow Unity's KeyCode names ("Space", "A", "LeftArrow"…).
+ * Input state for play mode (keyboard, mouse, touch, on-screen buttons and
+ * gamepads). Key names follow Unity's KeyCode names ("Space", "A",
+ * "LeftArrow"…); buttons and axes come from the project's input actions.
  */
+import { defaultInputSettings, GAMEPAD_AXES, GAMEPAD_BUTTONS, type GamepadButtonName, type InputAction, type InputSettings } from "../input-actions";
 
 const CODE_TO_KEY: Record<string, string> = {
     Space: "Space", Enter: "Return", NumpadEnter: "KeypadEnter", Escape: "Escape", Backspace: "Backspace", Tab: "Tab", Delete: "Delete",
@@ -45,6 +47,9 @@ interface AxisState {
     value: number;
 }
 
+/** On-screen touch buttons also press these gamepad buttons, so actions whose keys were rebound still answer them. */
+const TOUCH_PAD: Record<string, GamepadButtonName> = { LeftArrow: "DpadLeft", RightArrow: "DpadRight", UpArrow: "DpadUp", DownArrow: "DpadDown", Space: "A", LeftControl: "X" };
+
 export class InputManager {
     private readonly held = new Set<string>();
     private readonly pressedFrame = new Set<string>();
@@ -57,7 +62,18 @@ export class InputManager {
     private readonly pendingMouseDown = new Set<number>();
     private readonly pendingMouseUp = new Set<number>();
     private readonly virtualHeld = new Set<string>();
+    private readonly touchPad = new Set<GamepadButtonName>();
     private readonly axes = new Map<string, AxisState>();
+    private actions = new Map<string, InputAction>();
+    private deadZone = 0.2;
+    /** Gamepad buttons held this frame and the edges since the last one (any connected pad counts). */
+    private padHeld = new Set<GamepadButtonName>();
+    private padPressed = new Set<GamepadButtonName>();
+    private padReleased = new Set<GamepadButtonName>();
+    private padAxes = [0, 0, 0, 0];
+    private padNames: string[] = [];
+    /** Gamepad state injected by tests or on-screen controls instead of navigator.getGamepads(). */
+    private virtualPad: { buttons: GamepadButtonName[]; axes: number[] } | null = null;
     private cleanup: Array<() => void> = [];
     /** Mouse position in pixels, origin bottom-left (Unity convention). */
     mouseX = 0;
@@ -73,6 +89,22 @@ export class InputManager {
     private pendingString = "";
     enabled = true;
     private element: HTMLElement | null = null;
+
+    constructor(settings: InputSettings = defaultInputSettings()) {
+        this.configure(settings);
+    }
+
+    /** Uses a project's input actions (called whenever a game starts). */
+    configure(settings: InputSettings) {
+        this.actions = new Map(settings.actions.map((action) => [action.name, action]));
+        this.deadZone = settings.deadZone;
+        this.axes.clear();
+    }
+
+    /** Presses gamepad buttons and moves sticks without a real pad (tests, virtual controls); null releases it. */
+    setVirtualGamepad(state: { buttons?: GamepadButtonName[]; axes?: number[] } | null) {
+        this.virtualPad = state ? { buttons: [...(state.buttons ?? [])], axes: [...(state.axes ?? [])] } : null;
+    }
 
     attach(element: HTMLElement, keyboardTarget: Window | HTMLElement = window) {
         this.detach();
@@ -171,11 +203,16 @@ export class InputManager {
         this.pendingMouseDown.clear();
         this.pendingMouseUp.clear();
         this.virtualHeld.clear();
+        this.touchPad.clear();
         this.axes.clear();
+        this.padHeld.clear();
+        this.padPressed.clear();
+        this.padReleased.clear();
+        this.padAxes = [0, 0, 0, 0];
         this.touchCount = 0;
     }
 
-    /** On-screen touch buttons map onto regular keys. */
+    /** On-screen touch buttons map onto regular keys (and the matching gamepad buttons). */
     setVirtualKey(key: string, down: boolean) {
         if (down) {
             if (!this.held.has(key) && !this.virtualHeld.has(key)) this.pendingPressed.add(key);
@@ -184,6 +221,9 @@ export class InputManager {
             this.virtualHeld.delete(key);
             if (!this.held.has(key)) this.pendingReleased.add(key);
         }
+        const pad = TOUCH_PAD[key];
+        if (pad && down) this.touchPad.add(pad);
+        else if (pad) this.touchPad.delete(pad);
     }
 
     /** Called once at the start of every frame. */
@@ -208,16 +248,87 @@ export class InputManager {
         this.pendingScroll = 0;
         this.inputString = this.pendingString;
         this.pendingString = "";
-        // Smoothed axes (Unity: sensitivity 3, gravity 3, snap).
-        for (const name of ["Horizontal", "Vertical"]) {
-            const target = this.getAxisRaw(name);
-            const state = this.axes.get(name) ?? { value: 0 };
+        this.pollGamepads();
+        // Keyboard axes are smoothed like Unity's (sensitivity 3, gravity 3, snap); sticks are read as they are.
+        for (const action of this.actions.values()) {
+            if (action.kind !== "axis") continue;
+            const target = this.keyAxis(action);
+            const state = this.axes.get(action.name) ?? { value: 0 };
             if (target !== 0 && Math.sign(target) !== Math.sign(state.value) && state.value !== 0) state.value = 0;
             const speed = 3 * deltaTime;
             if (state.value < target) state.value = Math.min(target, state.value + speed);
             else if (state.value > target) state.value = Math.max(target, state.value - speed);
-            this.axes.set(name, state);
+            this.axes.set(action.name, state);
         }
+    }
+
+    private pollGamepads() {
+        const held = new Set<GamepadButtonName>();
+        const axes = [0, 0, 0, 0];
+        const names: string[] = [];
+        const take = (buttons: ArrayLike<{ pressed: boolean; value: number } | boolean>, sticks: ArrayLike<number>) => {
+            for (let index = 0; index < Math.min(buttons.length, GAMEPAD_BUTTONS.length); index += 1) {
+                const button = buttons[index];
+                const pressed = typeof button === "boolean" ? button : button.pressed || button.value > 0.5;
+                if (pressed) held.add(GAMEPAD_BUTTONS[index]);
+            }
+            for (let index = 0; index < Math.min(sticks.length, GAMEPAD_AXES.length); index += 1) {
+                const value = Number(sticks[index]) || 0;
+                if (Math.abs(value) > Math.abs(axes[index])) axes[index] = value;
+            }
+        };
+        if (this.virtualPad) {
+            take(GAMEPAD_BUTTONS.map((name) => this.virtualPad?.buttons.includes(name) ?? false), this.virtualPad.axes);
+            names.push("Virtual Gamepad");
+        } else if (this.enabled && typeof navigator !== "undefined" && typeof navigator.getGamepads === "function") {
+            for (const pad of navigator.getGamepads()) {
+                if (!pad || !pad.connected) continue;
+                names.push(pad.id);
+                take(pad.buttons, pad.axes);
+            }
+        }
+        for (const name of this.touchPad) held.add(name);
+        this.padPressed = new Set([...held].filter((name) => !this.padHeld.has(name)));
+        this.padReleased = new Set([...this.padHeld].filter((name) => !held.has(name)));
+        this.padHeld = held;
+        this.padAxes = axes;
+        this.padNames = names;
+    }
+
+    /** −1…1 from the action's keys and d-pad buttons. */
+    private keyAxis(action: InputAction): number {
+        const positive = action.positive.some((key) => this.keyHeld(key)) || action.gamepadPositive.some((name) => this.padHeld.has(name));
+        const negative = action.negative.some((key) => this.keyHeld(key)) || action.gamepadNegative.some((name) => this.padHeld.has(name));
+        return (positive ? 1 : 0) - (negative ? 1 : 0);
+    }
+
+    /** The action's analog stick after the dead zone (rescaled so it starts at 0). */
+    private stickAxis(action: InputAction): number {
+        if (!action.gamepadAxis) return 0;
+        const raw = this.padAxes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0;
+        if (Math.abs(raw) <= this.deadZone) return 0;
+        const scaled = (Math.abs(raw) - this.deadZone) / (1 - this.deadZone);
+        return Math.sign(raw) * Math.min(1, scaled) * (action.invert ? -1 : 1);
+    }
+
+    private keyHeld(key: string) {
+        if (key.startsWith("Mouse")) return this.mouseHeld.has(Number(key.slice(5)));
+        return this.isHeld(key);
+    }
+
+    private keyPressed(key: string) {
+        if (key.startsWith("Mouse")) return this.mouseDownFrame.has(Number(key.slice(5)));
+        return this.pressedFrame.has(key);
+    }
+
+    private keyReleased(key: string) {
+        if (key.startsWith("Mouse")) return this.mouseUpFrame.has(Number(key.slice(5)));
+        return this.releasedFrame.has(key);
+    }
+
+    /** Names of the connected gamepads (Input.GetJoystickNames). */
+    get gamepadNames(): readonly string[] {
+        return this.padNames;
     }
 
     isHeld(key: string) {
@@ -264,57 +375,48 @@ export class InputManager {
 
     getAxisRaw(name: string): number {
         switch (name) {
-            case "Horizontal":
-                return (this.isHeld("D") || this.isHeld("RightArrow") ? 1 : 0) - (this.isHeld("A") || this.isHeld("LeftArrow") ? 1 : 0);
-            case "Vertical":
-                return (this.isHeld("W") || this.isHeld("UpArrow") ? 1 : 0) - (this.isHeld("S") || this.isHeld("DownArrow") ? 1 : 0);
             case "Mouse X":
                 return this.mouseDeltaX * 0.1;
             case "Mouse Y":
                 return this.mouseDeltaY * 0.1;
             case "Mouse ScrollWheel":
                 return this.scrollDelta * 0.1;
-            case "Jump":
-                return this.isHeld("Space") ? 1 : 0;
-            case "Fire1":
-                return this.isHeld("LeftControl") || this.mouseHeld.has(0) ? 1 : 0;
-            default:
-                return 0;
         }
+        const action = this.actions.get(name);
+        if (!action) return 0;
+        if (action.kind === "button") return this.getButton(name) ? 1 : 0;
+        const keys = this.keyAxis(action);
+        const stick = this.stickAxis(action);
+        return Math.abs(stick) > Math.abs(keys) ? stick : keys;
     }
 
     getAxis(name: string): number {
-        const state = this.axes.get(name);
-        return state ? state.value : this.getAxisRaw(name);
-    }
-
-    private buttonKeys(name: string): { keys: string[]; mouse?: number } {
-        switch (name) {
-            case "Jump": return { keys: ["Space"] };
-            case "Fire1": return { keys: ["LeftControl"], mouse: 0 };
-            case "Fire2": return { keys: ["LeftAlt"], mouse: 1 };
-            case "Fire3": return { keys: ["LeftShift"], mouse: 2 };
-            case "Submit": return { keys: ["Return", "KeypadEnter", "Space"] };
-            case "Cancel": return { keys: ["Escape"] };
-            case "Horizontal": return { keys: ["A", "D", "LeftArrow", "RightArrow"] };
-            case "Vertical": return { keys: ["W", "S", "UpArrow", "DownArrow"] };
-            default: return { keys: [normalizeKeyName(name)] };
-        }
+        const action = this.actions.get(name);
+        if (!action || action.kind !== "axis") return this.getAxisRaw(name);
+        const smoothed = this.axes.get(name)?.value ?? this.keyAxis(action);
+        const stick = this.stickAxis(action);
+        return Math.abs(stick) > Math.abs(smoothed) ? stick : smoothed;
     }
 
     getButton(name: string) {
-        const { keys, mouse } = this.buttonKeys(name);
-        return keys.some((key) => this.isHeld(key)) || (mouse !== undefined && this.mouseHeld.has(mouse));
+        const action = this.actions.get(name);
+        if (!action) return this.getKey(name);
+        return [...action.positive, ...action.negative].some((key) => this.keyHeld(key))
+            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padHeld.has(button));
     }
 
     getButtonDown(name: string) {
-        const { keys, mouse } = this.buttonKeys(name);
-        return keys.some((key) => this.pressedFrame.has(key)) || (mouse !== undefined && this.mouseDownFrame.has(mouse));
+        const action = this.actions.get(name);
+        if (!action) return this.getKeyDown(name);
+        return [...action.positive, ...action.negative].some((key) => this.keyPressed(key))
+            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padPressed.has(button));
     }
 
     getButtonUp(name: string) {
-        const { keys, mouse } = this.buttonKeys(name);
-        return keys.some((key) => this.releasedFrame.has(key)) || (mouse !== undefined && this.mouseUpFrame.has(mouse));
+        const action = this.actions.get(name);
+        if (!action) return this.getKeyUp(name);
+        return [...action.positive, ...action.negative].some((key) => this.keyReleased(key))
+            || [...action.gamepadPositive, ...action.gamepadNegative].some((button) => this.padReleased.has(button));
     }
 
     get attached() {

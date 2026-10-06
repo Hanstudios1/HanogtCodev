@@ -1,16 +1,17 @@
 /**
- * Hanogt Engine data model (schema v3).
+ * Hanogt Engine data model (schema v4).
  *
  * Everything in this file is plain JSON so projects can be saved to the
  * cloud, exported, published to the Arcade and loaded by the standalone
  * player. Runtime-only state lives in `runtime/`.
  */
+import type { InputSettings } from "./input-actions";
 
-export const GAME_ENGINE_SCHEMA_VERSION = 3 as const;
+export const GAME_ENGINE_SCHEMA_VERSION = 4 as const;
 
 /** Engine release shown in the UI, exported games and the Arcade. */
-export const ENGINE_VERSION = 3 as const;
-export const ENGINE_VERSION_LABEL = "Hanogt Engine V3";
+export const ENGINE_VERSION = 4 as const;
+export const ENGINE_VERSION_LABEL = "Hanogt Engine V4";
 
 export const SUPPORTED_SCRIPT_LANGUAGES = ["csharp", "cpp"] as const;
 
@@ -461,6 +462,13 @@ export interface ProjectSettings {
     pixelArt: boolean;
     showFps: boolean;
     touchControls: boolean;
+    /**
+     * Engine rules the game was made with. Projects from before V4 keep V3
+     * behavior wherever a later engine changed it; new projects use 4.
+     */
+    rules: 3 | 4;
+    /** Named buttons and axes for keyboard, mouse and gamepad (V4). */
+    input: InputSettings;
 }
 
 export interface GameProjectDocument {
