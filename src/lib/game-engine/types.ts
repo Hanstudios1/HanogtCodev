@@ -255,6 +255,74 @@ export interface UIProgressBarComponent extends ComponentBase, UIRectFields {
     showLabel: boolean;
 }
 
+/** Inspector event of a V4 UI control: a method called on the target object's scripts with the new value. */
+export interface UIEventTarget {
+    /** null = this object. */
+    targetId: string | null;
+    method: string;
+}
+
+/** Draggable slider (Unity's Slider) (V4). */
+export interface UISliderComponent extends ComponentBase, UIRectFields {
+    type: "uiSlider";
+    value: number;
+    min: number;
+    max: number;
+    /** Snaps the value to whole numbers. */
+    wholeNumbers: boolean;
+    direction: ProgressDirection;
+    fillColor: string;
+    backgroundColor: string;
+    handleColor: string;
+    /** Shows the value next to the handle. */
+    showValue: boolean;
+    interactable: boolean;
+    /** Called with the new value (float). */
+    onValueChanged: UIEventTarget;
+}
+
+export const TOGGLE_STYLES = ["checkbox", "switch"] as const;
+export type ToggleStyle = (typeof TOGGLE_STYLES)[number];
+
+/** On/off control with a label (Unity's Toggle) (V4). */
+export interface UIToggleComponent extends ComponentBase, UIRectFields {
+    type: "uiToggle";
+    isOn: boolean;
+    label: string;
+    fontSize: number;
+    textColor: string;
+    /** Box or track color when off. */
+    color: string;
+    /** Check or track color when on. */
+    checkColor: string;
+    style: ToggleStyle;
+    interactable: boolean;
+    /** Called with the new value (bool). */
+    onValueChanged: UIEventTarget;
+}
+
+export const INPUT_CONTENT_TYPES = ["standard", "integer", "decimal", "alphanumeric", "name", "email", "password"] as const;
+export type InputContentType = (typeof INPUT_CONTENT_TYPES)[number];
+
+/** Text box the player can type in (Unity's InputField) (V4). */
+export interface UIInputFieldComponent extends ComponentBase, UIRectFields {
+    type: "uiInputField";
+    text: string;
+    placeholder: string;
+    fontSize: number;
+    textColor: string;
+    backgroundColor: string;
+    borderColor: string;
+    /** Maximum characters (1–200). */
+    characterLimit: number;
+    contentType: InputContentType;
+    interactable: boolean;
+    /** Called with the text on every change. */
+    onValueChanged: UIEventTarget;
+    /** Called with the text when editing ends (Enter or leaving the box). */
+    onEndEdit: UIEventTarget;
+}
+
 /** One kind of tile in a tilemap palette. */
 export interface TileDefinition {
     /** Single printable character used in `rows` ("." means an empty cell). */
@@ -459,7 +527,10 @@ export type GameComponent =
     | CharacterController2DComponent
     | CameraFollowComponent
     | NavAgent2DComponent
-    | JointComponent;
+    | JointComponent
+    | UISliderComponent
+    | UIToggleComponent
+    | UIInputFieldComponent;
 
 export type ComponentType = GameComponent["type"];
 export type ComponentOfType<T extends ComponentType> = Extract<GameComponent, { type: T }>;
@@ -485,10 +556,13 @@ export const COMPONENT_TYPES: readonly ComponentType[] = [
     "cameraFollow",
     "navAgent2D",
     "joint",
+    "uiSlider",
+    "uiToggle",
+    "uiInputField",
 ];
 
 /** Screen-space UI components (drawn by the overlay, not the WebGL renderer). */
-export const UI_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set(["uiText", "uiButton", "uiPanel", "uiProgressBar"]);
+export const UI_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set(["uiText", "uiButton", "uiPanel", "uiProgressBar", "uiSlider", "uiToggle", "uiInputField"]);
 
 /** Components that may appear at most once per entity. */
 export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
@@ -509,6 +583,9 @@ export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
     "characterController2D",
     "cameraFollow",
     "navAgent2D",
+    "uiSlider",
+    "uiToggle",
+    "uiInputField",
 ]);
 
 export interface GameEntity {

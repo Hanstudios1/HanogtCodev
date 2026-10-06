@@ -46,6 +46,10 @@ import type {
     ScriptFieldValue,
     SceneDocument,
     UIButtonComponent,
+    UIEventTarget,
+    UIInputFieldComponent,
+    UISliderComponent,
+    UIToggleComponent,
     Vector3,
 } from "../types";
 import { UNIQUE_COMPONENT_TYPES } from "../types";
@@ -95,7 +99,7 @@ import { InputManager } from "./input";
 import { ParticleEmitter } from "./particles";
 import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity, type RaycastResult } from "./physics";
 import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
-import { ButtonHandle, ButtonLabelHandle, PanelHandle, ProgressBarHandle, sameCallable } from "./ui-handles";
+import { ButtonHandle, ButtonLabelHandle, InputFieldHandle, PanelHandle, ProgressBarHandle, SliderHandle, ToggleHandle, sameCallable } from "./ui-handles";
 import { CameraFollowHandle, CharacterController2DHandle, JointHandle, NavAgent2DHandle } from "./v4-handles";
 
 export type LogLevel = "info" | "warning" | "error";
@@ -210,6 +214,9 @@ const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "scr
     CinemachineVirtualCamera: { type: "cameraFollow", userFirst: true },
     NavAgent2D: { type: "navAgent2D", userFirst: true },
     NavMeshAgent: { type: "navAgent2D", userFirst: true },
+    Toggle: { type: "uiToggle", userFirst: true },
+    InputField: { type: "uiInputField", userFirst: true },
+    TMP_InputField: { type: "uiInputField", userFirst: true },
     Joint: { type: "joint", userFirst: true },
     Joint2D: { type: "joint", userFirst: true },
     DistanceJoint2D: { type: "joint", joint: "distance", userFirst: true },
@@ -427,6 +434,14 @@ export class RuntimeWorld implements ScriptHost {
     private uiHover: string | null = null;
     private uiPressed: string | null = null;
     private readonly buttonListeners = new Map<string, VMValue[]>();
+    /** Script listeners of V4 UI events, keyed "componentId:event". */
+    private readonly uiListeners = new Map<string, VMValue[]>();
+    /** Slider being dragged with the mouse. */
+    private uiDragging: string | null = null;
+    /** Input field that has the keyboard (reported by the overlay). */
+    focusedInput: string | null = null;
+    /** Latest request to focus an input field (id) or to let go of the keyboard (null); the overlay acts on new serials. */
+    inputFocus: { id: string | null; serial: number } = { id: null, serial: 0 };
     private fade: FadeState | null = null;
     /** Screen shakes added to the rendered camera (Camera.Shake). */
     readonly shaker = new CameraShaker();
@@ -1445,6 +1460,9 @@ export class RuntimeWorld implements ScriptHost {
                 case "cameraFollow": handle = new CameraFollowHandle(this, entity, component); break;
                 case "navAgent2D": handle = new NavAgent2DHandle(this, entity, component); break;
                 case "joint": handle = new JointHandle(this, entity, component); break;
+                case "uiSlider": handle = new SliderHandle(this, entity, component); break;
+                case "uiToggle": handle = new ToggleHandle(this, entity, component); break;
+                case "uiInputField": handle = new InputFieldHandle(this, entity, component); break;
             }
             if (handle) entity.handles.set(component.id, handle);
         }
@@ -1468,9 +1486,13 @@ export class RuntimeWorld implements ScriptHost {
                 return component.type === "uiPanel" || component.type === "uiProgressBar";
             case "Graphic":
             case "MaskableGraphic":
-                return component.type === "uiText" || component.type === "uiPanel" || component.type === "uiButton" || component.type === "uiProgressBar";
+                return component.type === "uiText" || component.type === "uiPanel" || component.type === "uiButton" || component.type === "uiProgressBar"
+                    || component.type === "uiSlider" || component.type === "uiToggle" || component.type === "uiInputField";
             case "Selectable":
-                return component.type === "uiButton";
+                return component.type === "uiButton" || component.type === "uiSlider" || component.type === "uiToggle" || component.type === "uiInputField";
+            case "Slider":
+            case "Scrollbar":
+                return component.type === "uiSlider" || component.type === "uiProgressBar";
             default: {
                 const alias = this.builtInAlias(typeName);
                 if (alias) {
@@ -1570,7 +1592,8 @@ export class RuntimeWorld implements ScriptHost {
 
     addComponent(entity: RuntimeEntity, typeName: string): VMValue {
         if (entity.destroyed) hostError("Yok edilmiş bir nesneye bileşen eklenemez.", "MissingReferenceException");
-        const alias = this.builtInAlias(typeName);
+        // V4 rules: AddComponent<Slider>() makes a draggable slider (V3 made a progress bar).
+        const alias = typeName === "Slider" && this.rules >= 4 ? { type: "uiSlider" as const } : this.builtInAlias(typeName);
         if (alias) {
             const existing = UNIQUE_COMPONENT_TYPES.has(alias.type) ? entity.components.find((component) => component.type === alias.type) : undefined;
             if (existing) {
@@ -2496,13 +2519,24 @@ export class RuntimeWorld implements ScriptHost {
     uiRectOf(entity: RuntimeEntity, component: GameComponent): ScreenRect | null {
         const screen = this.screenSize();
         if (component.type === "uiPanel" && component.fullScreen) return { left: 0, top: 0, width: screen.width, height: screen.height };
-        if (component.type !== "uiButton" && component.type !== "uiPanel" && component.type !== "uiProgressBar") return null;
+        if (component.type !== "uiButton" && component.type !== "uiPanel" && component.type !== "uiProgressBar"
+            && component.type !== "uiSlider" && component.type !== "uiToggle" && component.type !== "uiInputField") return null;
         const scale = entity.world.scale;
         return scaleRect(uiRect(component, screen), scale.x, scale.y);
     }
 
-    uiState(): { hover: string | null; pressed: string | null } {
-        return { hover: this.uiHover, pressed: this.uiPressed };
+    uiState(): { hover: string | null; pressed: string | null; focus: { id: string | null; serial: number } } {
+        return { hover: this.uiHover, pressed: this.uiPressed, focus: this.inputFocus };
+    }
+
+    /** Gives the keyboard to an input field (ActivateInputField) or takes it back (null). */
+    requestInputFocus(id: string | null) {
+        this.inputFocus = { id, serial: this.inputFocus.serial + 1 };
+    }
+
+    /** The overlay reports which input field has the keyboard. */
+    setFocusedInput(id: string | null) {
+        this.focusedInput = id;
     }
 
     private processUIEvents() {
@@ -2517,27 +2551,164 @@ export class RuntimeWorld implements ScriptHost {
             if (!entity.activeInHierarchy) continue;
             for (const component of entity.components) {
                 if (!component.enabled) continue;
-                const interactive = component.type === "uiButton" || (component.type === "uiPanel" && component.blocksClicks);
+                const interactive = component.type === "uiButton" || (component.type === "uiPanel" && component.blocksClicks)
+                    || component.type === "uiSlider" || component.type === "uiToggle" || component.type === "uiInputField";
                 if (!interactive) continue;
                 if (component.type === "uiButton" && component.interactable && component.hotkey !== "None") hotkeys.push({ entity, component });
                 const rect = this.uiRectOf(entity, component);
                 if (!rect || !rectContains(rect, x, y)) continue;
-                const order = component.type === "uiButton" || component.type === "uiPanel" ? component.order : 0;
+                const order = "order" in component ? component.order : 0;
                 if (!top || order > top.order || (order === top.order && index >= top.index)) top = { component, entity, order, index };
             }
         }
-        this.pointerOverUI = top !== null;
-        const hovered = top && top.component.type === "uiButton" && top.component.interactable ? top : null;
-        this.uiHover = hovered ? hovered.component.id : null;
-        if (this.input.getMouseButtonDown(0) && hovered) this.uiPressed = hovered.component.id;
+        const control = top && (top.component.type === "uiButton" || top.component.type === "uiSlider" || top.component.type === "uiToggle" || top.component.type === "uiInputField")
+            && top.component.interactable ? top : null;
+        this.uiHover = control ? control.component.id : null;
+        if (this.input.getMouseButtonDown(0) && control) {
+            this.uiPressed = control.component.id;
+            if (control.component.type === "uiSlider") this.uiDragging = control.component.id;
+            if (control.component.type === "uiInputField") this.requestInputFocus(control.component.id);
+        }
+        // Dragging a slider follows the mouse even outside its rectangle.
+        if (this.uiDragging) {
+            const dragged = this.findUIComponent(this.uiDragging);
+            if (dragged && dragged.component.type === "uiSlider" && this.input.getMouseButton(0)) {
+                const rect = this.uiRectOf(dragged.entity, dragged.component);
+                if (rect) this.setSliderValue(dragged.entity, dragged.component, this.sliderValueAt(dragged.component, rect, x, y), true);
+            }
+        }
         if (this.input.getMouseButtonUp(0)) {
             const pressed = this.uiPressed;
             this.uiPressed = null;
-            if (pressed && hovered && pressed === hovered.component.id) this.clickButton(hovered.entity, hovered.component as UIButtonComponent);
+            this.uiDragging = null;
+            if (pressed && control && pressed === control.component.id) {
+                if (control.component.type === "uiButton") this.clickButton(control.entity, control.component);
+                else if (control.component.type === "uiToggle") this.setToggle(control.entity, control.component, !control.component.isOn, true);
+            }
         }
+        this.pointerOverUI = top !== null || this.uiDragging !== null;
         for (const { entity, component } of hotkeys) {
             if (!entity.destroyed && this.input.getKeyDown(component.hotkey)) this.clickButton(entity, component);
         }
+    }
+
+    private findUIComponent(id: string): { entity: RuntimeEntity; component: GameComponent } | null {
+        for (const entity of this.entities.values()) {
+            if (entity.destroyed || !entity.activeInHierarchy) continue;
+            const component = entity.components.find((item) => item.id === id);
+            if (component) return component.enabled ? { entity, component } : null;
+        }
+        return null;
+    }
+
+    private sliderValueAt(component: UISliderComponent, rect: ScreenRect, x: number, y: number): number {
+        const across = component.direction === "leftToRight" ? (x - rect.left) / Math.max(1, rect.width)
+            : component.direction === "rightToLeft" ? 1 - (x - rect.left) / Math.max(1, rect.width)
+                : component.direction === "bottomToTop" ? (rect.top + rect.height - y) / Math.max(1, rect.height)
+                    : (y - rect.top) / Math.max(1, rect.height);
+        const t = Math.max(0, Math.min(1, across));
+        return component.min + (component.max - component.min) * t;
+    }
+
+    /** Sets a slider's value (clamped, snapped for whole numbers); `notify` runs onValueChanged when it changes. */
+    setSliderValue(entity: RuntimeEntity, component: UISliderComponent, value: number, notify: boolean) {
+        const low = Math.min(component.min, component.max);
+        const high = Math.max(component.min, component.max);
+        let next = Number.isFinite(value) ? Math.max(low, Math.min(high, value)) : low;
+        if (component.wholeNumbers) next = Math.max(low, Math.min(high, Math.round(next)));
+        if (next === component.value) return;
+        component.value = next;
+        this.markRender(entity);
+        if (notify) this.fireUIEvent(entity, component, "onValueChanged", component.onValueChanged, next);
+    }
+
+    setToggle(entity: RuntimeEntity, component: UIToggleComponent, isOn: boolean, notify: boolean) {
+        if (component.isOn === isOn) return;
+        component.isOn = isOn;
+        this.markRender(entity);
+        if (notify) this.fireUIEvent(entity, component, "onValueChanged", component.onValueChanged, isOn);
+    }
+
+    /** Keeps only the characters an input field accepts, cut to its limit. */
+    filterInputText(component: UIInputFieldComponent, text: string): string {
+        let value = String(text ?? "").replace(/[\r\n\t]+/g, " ");
+        switch (component.contentType) {
+            case "integer":
+                value = value.replace(/[^0-9-]/g, "").replace(/(?!^)-/g, "");
+                break;
+            case "decimal": {
+                value = value.replace(/[^0-9.,-]/g, "").replace(/(?!^)-/g, "").replace(",", ".");
+                const dot = value.indexOf(".");
+                if (dot >= 0) value = value.slice(0, dot + 1) + value.slice(dot + 1).replace(/\./g, "");
+                break;
+            }
+            case "alphanumeric":
+                value = value.replace(/[^\p{L}\p{N}]/gu, "");
+                break;
+            case "name":
+                value = value.replace(/[^\p{L} '\-]/gu, "");
+                break;
+            case "email":
+                value = value.replace(/\s/g, "");
+                break;
+        }
+        return [...value].slice(0, Math.max(1, component.characterLimit)).join("");
+    }
+
+    /**
+     * Text typed into an input field (from the overlay, or tests): "change" while typing,
+     * "end" when editing ends, "submit" on Enter (which also ends editing).
+     */
+    uiInput(componentId: string, text: string, phase: "change" | "end" | "submit") {
+        const found = this.findUIComponent(componentId);
+        if (!found || found.component.type !== "uiInputField" || !found.component.interactable) return;
+        const { entity, component } = found;
+        const value = this.filterInputText(component, text);
+        if (value !== component.text) {
+            component.text = value;
+            this.markRender(entity);
+            this.fireUIEvent(entity, component, "onValueChanged", component.onValueChanged, value);
+        }
+        if (phase === "submit") this.fireUIEvent(entity, component, "onSubmit", null, component.text);
+        if (phase !== "change") this.fireUIEvent(entity, component, "onEndEdit", component.onEndEdit, component.text);
+    }
+
+    /** Calls a UI event: the Inspector method (with the value) and the script listeners. */
+    fireUIEvent(entity: RuntimeEntity, component: GameComponent, event: string, target: UIEventTarget | null, value: VMValue) {
+        if (entity.destroyed) return;
+        if (target?.method) {
+            const receiver = target.targetId ? this.entities.get(target.targetId) ?? null : entity;
+            if (!receiver) this.warnOnce(`ui-target:${component.id}:${event}`, `'${entity.name}' ${event} hedef nesnesi sahnede yok.`);
+            else this.guard(null, `${entity.name} ${event}`, () => this.sendMessage(receiver, target.method, value, "SendMessage"));
+        }
+        for (const listener of [...(this.uiListeners.get(`${component.id}:${event}`) ?? [])]) {
+            if (entity.destroyed) break;
+            this.runCallback(this.currentBehaviour, `${entity.name} ${event}`, listener, [value]);
+        }
+    }
+
+    addUIListener(componentId: string, event: string, listener: VMValue) {
+        const key = `${componentId}:${event}`;
+        const list = this.uiListeners.get(key) ?? [];
+        if (list.length >= 64) hostError("Bir olaya en fazla 64 dinleyici eklenebilir.", "InvalidOperationException");
+        list.push(listener);
+        this.uiListeners.set(key, list);
+    }
+
+    removeUIListener(componentId: string, event: string, listener: VMValue | null) {
+        const key = `${componentId}:${event}`;
+        if (listener === null) {
+            this.uiListeners.delete(key);
+            return;
+        }
+        const list = this.uiListeners.get(key);
+        if (!list) return;
+        const index = list.findIndex((item) => sameCallable(item, listener));
+        if (index >= 0) list.splice(index, 1);
+    }
+
+    uiListenerCount(componentId: string, event: string) {
+        return this.uiListeners.get(`${componentId}:${event}`)?.length ?? 0;
     }
 
     /** Runs a button's Inspector method and its script listeners. */

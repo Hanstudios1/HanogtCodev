@@ -23,9 +23,12 @@ import type {
     TilemapComponent,
     TransformComponent,
     UIButtonComponent,
+    UIInputFieldComponent,
     UIPanelComponent,
     UIProgressBarComponent,
+    UISliderComponent,
     UITextComponent,
+    UIToggleComponent,
 } from "./types";
 
 type Overrides<T> = Partial<Omit<T, "type">>;
@@ -390,6 +393,76 @@ export function createJoint(overrides: Overrides<JointComponent> = {}): JointCom
     };
 }
 
+export function createUISlider(overrides: Overrides<UISliderComponent> = {}): UISliderComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "uiSlider",
+        enabled: overrides.enabled ?? true,
+        value: overrides.value ?? 0.5,
+        min: overrides.min ?? 0,
+        max: overrides.max ?? 1,
+        wholeNumbers: overrides.wholeNumbers ?? false,
+        direction: overrides.direction ?? "leftToRight",
+        fillColor: overrides.fillColor ?? "#8b5cf6",
+        backgroundColor: overrides.backgroundColor ?? "#1e293b",
+        handleColor: overrides.handleColor ?? "#ffffff",
+        showValue: overrides.showValue ?? false,
+        interactable: overrides.interactable ?? true,
+        onValueChanged: { targetId: null, method: "", ...overrides.onValueChanged },
+        anchor: overrides.anchor ?? "center",
+        offset: { x: 0, y: 0, ...overrides.offset },
+        width: overrides.width ?? 260,
+        height: overrides.height ?? 28,
+        order: overrides.order ?? 10,
+    };
+}
+
+export function createUIToggle(overrides: Overrides<UIToggleComponent> = {}): UIToggleComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "uiToggle",
+        enabled: overrides.enabled ?? true,
+        isOn: overrides.isOn ?? false,
+        label: overrides.label ?? "Toggle",
+        fontSize: overrides.fontSize ?? 20,
+        textColor: overrides.textColor ?? "#ffffff",
+        color: overrides.color ?? "#334155",
+        checkColor: overrides.checkColor ?? "#8b5cf6",
+        style: overrides.style ?? "switch",
+        interactable: overrides.interactable ?? true,
+        onValueChanged: { targetId: null, method: "", ...overrides.onValueChanged },
+        anchor: overrides.anchor ?? "center",
+        offset: { x: 0, y: 0, ...overrides.offset },
+        width: overrides.width ?? 220,
+        height: overrides.height ?? 36,
+        order: overrides.order ?? 10,
+    };
+}
+
+export function createUIInputField(overrides: Overrides<UIInputFieldComponent> = {}): UIInputFieldComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "uiInputField",
+        enabled: overrides.enabled ?? true,
+        text: overrides.text ?? "",
+        placeholder: overrides.placeholder ?? "Enter text…",
+        fontSize: overrides.fontSize ?? 20,
+        textColor: overrides.textColor ?? "#ffffff",
+        backgroundColor: overrides.backgroundColor ?? "#0f172a",
+        borderColor: overrides.borderColor ?? "#475569",
+        characterLimit: overrides.characterLimit ?? 40,
+        contentType: overrides.contentType ?? "standard",
+        interactable: overrides.interactable ?? true,
+        onValueChanged: { targetId: null, method: "", ...overrides.onValueChanged },
+        onEndEdit: { targetId: null, method: "", ...overrides.onEndEdit },
+        anchor: overrides.anchor ?? "center",
+        offset: { x: 0, y: 0, ...overrides.offset },
+        width: overrides.width ?? 300,
+        height: overrides.height ?? 48,
+        order: overrides.order ?? 10,
+    };
+}
+
 /** Creates a component with sensible defaults for the given scene dimension. */
 export function createComponentOfType(type: Exclude<ComponentType, "script" | "transform">, dimension: GameDimension): GameComponent {
     switch (type) {
@@ -411,6 +484,9 @@ export function createComponentOfType(type: Exclude<ComponentType, "script" | "t
         case "cameraFollow": return createCameraFollow({}, dimension);
         case "navAgent2D": return createNavAgent2D();
         case "joint": return createJoint();
+        case "uiSlider": return createUISlider();
+        case "uiToggle": return createUIToggle();
+        case "uiInputField": return createUIInputField();
     }
 }
 
@@ -435,4 +511,7 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
     cameraFollow: "Camera Follow",
     navAgent2D: "Nav Agent 2D",
     joint: "Joint",
+    uiSlider: "UI Slider",
+    uiToggle: "UI Toggle",
+    uiInputField: "UI Input Field",
 };

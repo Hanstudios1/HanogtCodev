@@ -93,6 +93,8 @@ export class GamePlayer {
             touchControls: options.touchControls ?? (settings.touchControls ? "auto" : false),
             onVirtualKey: (key, down) => this.input.setVirtualKey(key, down),
             textures: options.project.textures,
+            onInput: (id, text, phase) => this.world.uiInput(id, text, phase),
+            onFocusChange: (id) => this.world.setFocusedInput(id),
         });
         this.input.attach(this.renderer.canvas, typeof window !== "undefined" ? window : this.root);
         // Keys are only captured once the game runs (so the page can still scroll before "Play").

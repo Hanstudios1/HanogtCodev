@@ -17,9 +17,12 @@ import {
     createSpriteRenderer,
     createTilemap,
     createUIButton,
+    createUIInputField,
     createUIPanel,
     createUIProgressBar,
+    createUISlider,
     createUIText,
+    createUIToggle,
 } from "@/lib/game-engine/components";
 import { describeBehaviour } from "@/lib/game-engine/script/compiler";
 import { KEY_CODES } from "@/lib/game-engine/script/stdlib";
@@ -452,7 +455,8 @@ const COMPONENT_REFERENCE_TYPES: Record<string, GameComponent["type"][]> = {
     Rigidbody: ["rigidBody"], Rigidbody2D: ["rigidBody"], Collider: ["collider"], Collider2D: ["collider"], BoxCollider: ["collider"], BoxCollider2D: ["collider"],
     SphereCollider: ["collider"], CircleCollider2D: ["collider"], SpriteRenderer: ["spriteRenderer"], MeshRenderer: ["meshRenderer"], Renderer: ["spriteRenderer", "meshRenderer"],
     Camera: ["camera"], Light: ["light"], ParticleSystem: ["particleSystem"], AudioSource: ["audioSource"], Text: ["uiText"], TextMeshProUGUI: ["uiText"], TMP_Text: ["uiText"], TextMeshPro: ["uiText"],
-    Button: ["uiButton"], Image: ["uiPanel", "uiProgressBar"], Panel: ["uiPanel"], RawImage: ["uiPanel"], Slider: ["uiProgressBar"], ProgressBar: ["uiProgressBar"],
+    Button: ["uiButton"], Image: ["uiPanel", "uiProgressBar"], Panel: ["uiPanel"], RawImage: ["uiPanel"], Slider: ["uiSlider", "uiProgressBar"], ProgressBar: ["uiProgressBar"],
+    Toggle: ["uiToggle"], InputField: ["uiInputField"], TMP_InputField: ["uiInputField"],
     Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animation"],
     CharacterController2D: ["characterController2D"], CameraFollow: ["cameraFollow"], CinemachineCamera: ["cameraFollow"], CinemachineVirtualCamera: ["cameraFollow"],
     NavAgent2D: ["navAgent2D"], NavMeshAgent: ["navAgent2D"],
@@ -653,6 +657,9 @@ export function defaultComponentFor(component: GameComponent, dimension: GameDim
         case "cameraFollow": return { ...createCameraFollow({ targetId: component.targetId }, dimension), ...base };
         case "navAgent2D": return { ...createNavAgent2D({ targetId: component.targetId }), ...base };
         case "joint": return { ...createJoint({ kind: component.kind, connectedId: component.connectedId }), ...base };
+        case "uiSlider": return { ...createUISlider(), ...base };
+        case "uiToggle": return { ...createUIToggle({ label: component.label }), ...base };
+        case "uiInputField": return { ...createUIInputField({ placeholder: component.placeholder }), ...base };
         case "script": return { ...component, fields: {} };
     }
 }

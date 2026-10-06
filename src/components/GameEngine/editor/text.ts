@@ -415,6 +415,15 @@ const TEXT = {
     jointRope: ["Yalnızca en uzun mesafeyi korur (ip gibi; yaklaşabilir).", "Only keeps the longest distance (like a rope; the ends may come closer)."],
     jointFrequency: ["Saniyedeki salınım; büyüdükçe yay sertleşir.", "Oscillations per second; higher is stiffer."],
     jointDamping: ["0 uzun süre zıplar, 1 zıplamadan durur.", "0 keeps bouncing, 1 settles without bouncing."],
+    // V4: UI Slider, Toggle and Input Field
+    uiShowValue: ["Değeri göster", "Show value"],
+    uiOnValueChanged: ["Değer değişince", "On value changed"],
+    uiOnEndEdit: ["Yazma bitince", "On end edit"],
+    uiToggleStyle: ["Görünüm", "Style"],
+    uiStyleSwitch: ["Anahtar", "Switch"],
+    uiStyleCheckbox: ["Onay kutusu", "Checkbox"],
+    uiSliderHint: ["Oyuncu fareyle ya da parmakla sürükler. Betikte: slider.onValueChanged.AddListener(v => { ... });", "The player drags it with the mouse or a finger. In a script: slider.onValueChanged.AddListener(v => { ... });"],
+    uiInputHint: ["Oyuncu gerçek bir metin kutusuna yazar (telefonda klavye açılır); yazarken oyun tuşları çalışmaz. Enter yazmayı bitirir.", "The player types in a real text box (phones open their keyboard); game keys pause while typing. Enter finishes editing."],
 } as const;
 
 export type TextKey = keyof typeof TEXT;

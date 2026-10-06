@@ -130,6 +130,12 @@ export function cloneEntitiesWithNewIds(entities: GameEntity[], rootParentId: st
             if (cloned.type === "joint" && cloned.connectedId && idMap.has(cloned.connectedId)) {
                 cloned.connectedId = idMap.get(cloned.connectedId) as string;
             }
+            const remap = (event: { targetId: string | null; method: string }) => (event.targetId && idMap.has(event.targetId) ? { ...event, targetId: idMap.get(event.targetId) as string } : event);
+            if (cloned.type === "uiSlider" || cloned.type === "uiToggle") cloned.onValueChanged = remap(cloned.onValueChanged);
+            if (cloned.type === "uiInputField") {
+                cloned.onValueChanged = remap(cloned.onValueChanged);
+                cloned.onEndEdit = remap(cloned.onEndEdit);
+            }
             if (cloned.type === "script") {
                 // Entity references inside the subtree follow the clone.
                 const fields = { ...cloned.fields };

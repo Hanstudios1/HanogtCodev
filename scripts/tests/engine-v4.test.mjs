@@ -805,3 +805,144 @@ public class Rigger : MonoBehaviour
     const joint = normalized.scenes[0].objects.find((item) => item.name === "X").components.find((component) => component.type === "joint");
     assert.deepEqual([joint.frequency, joint.dampingRatio, joint.kind], [60, 0, "distance"]);
 });
+
+// ---------------------------------------------------------------------------
+// UI: Slider, Toggle, InputField
+// ---------------------------------------------------------------------------
+
+/** A 2D scene with a slider, a toggle and an input field stacked in the middle of a 960 × 540 screen. */
+function uiProject(script, rules) {
+    const project = createBlankProject("UI", "2d");
+    if (rules) project.settings.rules = rules;
+    const scene = project.scenes[0];
+    scene.objects.push(objectOf("entity_ui", "Menu", [
+        C.createTransform(),
+        C.createUISlider({ offset: { x: 0, y: -80 }, width: 300, height: 30, min: 0, max: 10, value: 5, onValueChanged: { targetId: null, method: "OnVolume" } }),
+    ]));
+    scene.objects.push(objectOf("entity_toggle", "Sound", [C.createTransform(), C.createUIToggle({ offset: { x: 0, y: 0 }, label: "Sound", onValueChanged: { targetId: "entity_ui", method: "OnSound" } })]));
+    scene.objects.push(objectOf("entity_input", "Name", [C.createTransform(), C.createUIInputField({ offset: { x: 0, y: 80 }, contentType: "integer", characterLimit: 4, onEndEdit: { targetId: "entity_ui", method: "OnName" } })]));
+    if (script) {
+        project.scripts = [{ id: "script_ui", name: "Menu.cs", language: "csharp", content: script }];
+        scene.objects[scene.objects.length - 3].components.push(createScriptComponent("script_ui", "Menu"));
+    }
+    return project;
+}
+
+const MENU_SCRIPT = `using UnityEngine;
+using UnityEngine.UI;
+public class Menu : MonoBehaviour
+{
+    void Start()
+    {
+        Slider slider = GetComponent<Slider>();
+        slider.onValueChanged.AddListener(v => Debug.Log("listener " + v));
+        GameObject.Find("Name").GetComponent<InputField>().onSubmit.AddListener(text => Debug.Log("submit " + text));
+        GameObject.Find("Sound").GetComponent<Toggle>().onValueChanged.AddListener(on => Debug.Log("toggle listener " + on));
+    }
+    void OnVolume(float value) { Debug.Log("volume " + value); }
+    void OnSound(bool on) { Debug.Log("sound " + on); }
+    void OnName(string text) { Debug.Log("name " + text); }
+}`;
+
+/** Presses, optionally drags, and releases the left mouse button at screen pixels (origin top-left). */
+function mouse(game, points) {
+    const input = game.world.input;
+    const [first, ...rest] = points;
+    input.mouseX = first.x;
+    input.mouseY = 540 - first.y;
+    input.pendingMouseDown.add(0);
+    input.mouseHeld.add(0);
+    game.step(1);
+    for (const point of rest) {
+        input.mouseX = point.x;
+        input.mouseY = 540 - point.y;
+        game.step(1);
+    }
+    input.mouseHeld.delete(0);
+    input.pendingMouseUp.add(0);
+    game.step(1);
+}
+
+test("UI Slider: dragging sets the value, calls the Inspector method and listeners; whole numbers snap", () => {
+    const game = startWorld(uiProject(MENU_SCRIPT));
+    game.step(1);
+    const slider = game.find("Menu").components.find((component) => component.type === "uiSlider");
+    // The slider spans x 330…630 at y 175…205 (center 190).
+    mouse(game, [{ x: 480, y: 190 }, { x: 600, y: 190 }, { x: 700, y: 190 }]);
+    assert.equal(slider.value, 10, "dragging past the end clamps to the maximum");
+    const info = game.messages("info");
+    assert.ok(info.includes("volume 10") && info.includes("listener 10"), info.join(" | "));
+    const handle = game.world.componentHandle(game.find("Menu"), slider);
+    handle.set("wholeNumbers", true);
+    handle.call("SetValueWithoutNotify", [3.4], []);
+    assert.equal(slider.value, 3);
+    const before = game.messages("info").length;
+    handle.set("value", 7.6);
+    assert.equal(slider.value, 8);
+    assert.deepEqual(game.messages("info").slice(before), ["volume 8", "listener 8"]);
+    assert.equal(game.world.pointerOverUI, false);
+    game.world.input.mouseX = 480;
+    game.world.input.mouseY = 540 - 190;
+    game.step(1);
+    assert.equal(game.world.pointerOverUI, true, "the pointer over a slider counts as over the UI");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("UI Toggle flips on click; UI InputField filters typing and reports changes, end of editing and submit", () => {
+    const game = startWorld(uiProject(MENU_SCRIPT));
+    game.step(1);
+    const toggle = game.find("Sound").components.find((component) => component.type === "uiToggle");
+    mouse(game, [{ x: 400, y: 270 }]);
+    assert.equal(toggle.isOn, true);
+    assert.ok(game.messages("info").includes("sound True") && game.messages("info").includes("toggle listener True"));
+
+    const field = game.find("Name").components.find((component) => component.type === "uiInputField");
+    const start = game.messages("info").length;
+    game.world.uiInput(field.id, "a1b2c3d4e5", "change");
+    assert.equal(field.text, "1234", "integer fields keep digits, cut to the character limit");
+    game.world.uiInput(field.id, "1234", "submit");
+    assert.deepEqual(game.messages("info").slice(start), ["submit 1234", "name 1234"]);
+    const handle = game.world.componentHandle(game.find("Name"), field);
+    handle.set("contentType", "Alphanumeric");
+    handle.set("text", "hi there!");
+    assert.equal(field.text, "hith", "alphanumeric, still four characters");
+    const serial = game.world.inputFocus.serial;
+    handle.call("ActivateInputField", [], []);
+    assert.deepEqual(game.world.inputFocus, { id: field.id, serial: serial + 1 });
+    game.world.setFocusedInput(field.id);
+    assert.equal(handle.get("isFocused"), true);
+    // A click on the field (when the canvas gets it) asks for the keyboard too.
+    mouse(game, [{ x: 480, y: 350 }]);
+    assert.equal(game.world.inputFocus.id, field.id);
+    assert.deepEqual(game.problems(), []);
+});
+
+test("Slider lookups: V4 rules add real sliders, V3 rules keep progress bars; GetComponent<Slider> finds either", () => {
+    const script = `using UnityEngine;
+using UnityEngine.UI;
+public class Menu : MonoBehaviour
+{
+    void Start()
+    {
+        GameObject made = new GameObject("Made");
+        Slider added = made.AddComponent<Slider>();
+        Debug.Log("added " + (added != null) + " interactable " + added.interactable);
+    }
+}`;
+    const v4 = startWorld(uiProject(script));
+    v4.step(1);
+    assert.deepEqual(v4.messages("info"), ["added True interactable True"]);
+    assert.equal(v4.find("Made").components.some((component) => component.type === "uiSlider"), true);
+    const v3 = startWorld(uiProject(script, 3));
+    v3.step(1);
+    assert.equal(v3.find("Made").components.some((component) => component.type === "uiProgressBar"), true, "V3 games keep their progress bar");
+    assert.deepEqual(v3.messages("info"), ["added True interactable False"]);
+
+    const normalized = normalizeProject(uiProject());
+    const slider = normalized.scenes[0].objects.find((item) => item.name === "Menu").components.find((component) => component.type === "uiSlider");
+    assert.equal(slider.value, 5);
+    const input = normalized.scenes[0].objects.find((item) => item.name === "Name").components.find((component) => component.type === "uiInputField");
+    assert.equal(input.onEndEdit.targetId, "entity_ui");
+    const [copy] = cloneEntitiesWithNewIds([normalized.scenes[0].objects.find((item) => item.name === "Sound")]);
+    assert.equal(copy.components.find((component) => component.type === "uiToggle").onValueChanged.targetId, "entity_ui", "targets outside the copy stay");
+});

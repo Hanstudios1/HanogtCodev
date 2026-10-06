@@ -144,6 +144,40 @@ function sketchUi(items: Array<{ entity: GameEntity; world: TRS }>): SketchShape
                         { kind: "rect", x: round(rect.left), y: round(rect.top), width: round(rect.width * fraction), height: round(rect.height), rx: round(bar.cornerRadius * ui), rotate: 0, fill: bar.fillColor, opacity: 1 },
                     ],
                 });
+            } else if (component.type === "uiSlider") {
+                const rect = uiRect(component, screen, ui);
+                const fraction = progressFraction(component);
+                const track = Math.max(1, rect.height * 0.36);
+                const knob = Math.max(2, rect.height * 0.9);
+                layered.push({
+                    order: component.order,
+                    shapes: [
+                        { kind: "rect", x: round(rect.left), y: round(rect.top + (rect.height - track) / 2), width: round(rect.width), height: round(track), rx: round(track / 2), rotate: 0, fill: component.backgroundColor, opacity: 1 },
+                        { kind: "rect", x: round(rect.left), y: round(rect.top + (rect.height - track) / 2), width: round(rect.width * fraction), height: round(track), rx: round(track / 2), rotate: 0, fill: component.fillColor, opacity: 1 },
+                        { kind: "ellipse", cx: round(rect.left + (rect.width - knob) * fraction + knob / 2), cy: round(rect.top + rect.height / 2), rx: round(knob / 2), ry: round(knob / 2), rotate: 0, fill: component.handleColor, opacity: 1 },
+                    ],
+                });
+            } else if (component.type === "uiToggle") {
+                const rect = uiRect(component, screen, ui);
+                const height = Math.max(2, rect.height * 0.72);
+                const width = component.style === "switch" ? height * 1.8 : height;
+                const top = rect.top + (rect.height - height) / 2;
+                layered.push({
+                    order: component.order,
+                    shapes: [
+                        { kind: "rect", x: round(rect.left), y: round(top), width: round(width), height: round(height), rx: round(component.style === "switch" ? height / 2 : height * 0.24), rotate: 0, fill: component.isOn ? component.checkColor : component.color, opacity: 1 },
+                        { kind: "text", x: round(rect.left + width + height * 0.4), y: round(rect.top + rect.height / 2), text: component.label.slice(0, 40), size: round(component.fontSize * ui), fill: component.textColor, anchor: "start", baseline: "central", bold: true },
+                    ],
+                });
+            } else if (component.type === "uiInputField") {
+                const rect = uiRect(component, screen, ui);
+                layered.push({
+                    order: component.order,
+                    shapes: [
+                        { kind: "rect", x: round(rect.left), y: round(rect.top), width: round(rect.width), height: round(rect.height), rx: round(10 * ui), rotate: 0, fill: component.backgroundColor, opacity: 1 },
+                        { kind: "text", x: round(rect.left + 8 * ui), y: round(rect.top + rect.height / 2), text: (component.text || component.placeholder).slice(0, 40), size: round(component.fontSize * ui), fill: component.textColor, anchor: "start", baseline: "central", bold: false },
+                    ],
+                });
             } else if (component.type === "uiText") {
                 const text = component as UITextComponent;
                 const line = text.text.split("\n")[0].trim();

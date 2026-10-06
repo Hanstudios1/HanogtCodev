@@ -18,10 +18,12 @@ import {
     ANIMATION_WRAP_MODES,
     EASINGS,
     GAME_ENGINE_SCHEMA_VERSION,
+    INPUT_CONTENT_TYPES,
     PRIMITIVE_MESHES,
     PROGRESS_DIRECTIONS,
     SOUND_PRESETS,
     SPRITE_SHAPES,
+    TOGGLE_STYLES,
     UI_ANCHORS,
     UNIQUE_COMPONENT_TYPES,
     type AnimationClip,
@@ -662,9 +664,75 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 showLine: bool(source.showLine, true),
                 lineColor: normalizeColor(source.lineColor, "#e2e8f0"),
             };
+        case "uiSlider": {
+            const min = num(source.min, 0, -1_000_000, 1_000_000);
+            const max = num(source.max, 1, -1_000_000, 1_000_000);
+            return {
+                id,
+                type,
+                enabled,
+                value: num(source.value, 0.5, Math.min(min, max), Math.max(min, max)),
+                min,
+                max,
+                wholeNumbers: bool(source.wholeNumbers, false),
+                direction: enumOf(source.direction, PROGRESS_DIRECTIONS, "leftToRight"),
+                fillColor: normalizeColor(source.fillColor, "#8b5cf6"),
+                backgroundColor: normalizeColor(source.backgroundColor, "#1e293b"),
+                handleColor: normalizeColor(source.handleColor, "#ffffff"),
+                showValue: bool(source.showValue, false),
+                interactable: bool(source.interactable, true),
+                onValueChanged: uiEventTarget(source.onValueChanged),
+                ...uiRectFields(source, { anchor: "center", offset: { x: 0, y: 0 }, width: 260, height: 28, order: 10 }),
+            };
+        }
+        case "uiToggle":
+            return {
+                id,
+                type,
+                enabled,
+                isOn: bool(source.isOn, false),
+                label: text(source.label, "", ENGINE_LIMITS.maxUiLabelLength),
+                fontSize: num(source.fontSize, 20, 6, 120),
+                textColor: normalizeColor(source.textColor, "#ffffff"),
+                color: normalizeColor(source.color, "#334155"),
+                checkColor: normalizeColor(source.checkColor, "#8b5cf6"),
+                style: enumOf(source.style, TOGGLE_STYLES, "switch"),
+                interactable: bool(source.interactable, true),
+                onValueChanged: uiEventTarget(source.onValueChanged),
+                ...uiRectFields(source, { anchor: "center", offset: { x: 0, y: 0 }, width: 220, height: 36, order: 10 }),
+            };
+        case "uiInputField": {
+            const characterLimit = int(source.characterLimit, 40, 1, 200);
+            return {
+                id,
+                type,
+                enabled,
+                text: text(source.text, "", characterLimit),
+                placeholder: text(source.placeholder, "", ENGINE_LIMITS.maxUiLabelLength),
+                fontSize: num(source.fontSize, 20, 6, 120),
+                textColor: normalizeColor(source.textColor, "#ffffff"),
+                backgroundColor: normalizeColor(source.backgroundColor, "#0f172a"),
+                borderColor: normalizeColor(source.borderColor, "#475569"),
+                characterLimit,
+                contentType: enumOf(source.contentType, INPUT_CONTENT_TYPES, "standard"),
+                interactable: bool(source.interactable, true),
+                onValueChanged: uiEventTarget(source.onValueChanged),
+                onEndEdit: uiEventTarget(source.onEndEdit),
+                ...uiRectFields(source, { anchor: "center", offset: { x: 0, y: 0 }, width: 300, height: 48, order: 10 }),
+            };
+        }
         default:
             return null;
     }
+}
+
+/** Inspector event of a UI control (target object and method name). */
+function uiEventTarget(value: unknown): { targetId: string | null; method: string } {
+    const source = rec(value);
+    return {
+        targetId: refId(source.targetId),
+        method: typeof source.method === "string" && FIELD_NAME.test(source.method) ? source.method : "",
+    };
 }
 
 /** Input action names in components (same rule as the project's input actions). */

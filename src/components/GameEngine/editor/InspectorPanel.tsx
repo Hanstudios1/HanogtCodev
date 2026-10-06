@@ -15,6 +15,9 @@ import {
     Footprints,
     Gauge,
     Grid3x3,
+    SlidersHorizontal,
+    TextCursorInput,
+    ToggleRight,
     Image as ImageIcon,
     Info,
     LayoutTemplate,
@@ -55,7 +58,7 @@ import {
 import AnimationEditor from "./AnimationEditor";
 import { useEditor } from "./context";
 import TilemapEditor from "./TilemapEditor";
-import { UIButtonEditor, UIPanelEditor, UIProgressBarEditor } from "./UIEditors";
+import { UIButtonEditor, UIInputFieldEditor, UIPanelEditor, UIProgressBarEditor, UISliderEditor, UIToggleEditor } from "./UIEditors";
 import { CameraFollowEditor, CharacterController2DEditor, JointEditor, NavAgent2DEditor } from "./V4Editors";
 import {
     activeScene,
@@ -98,6 +101,9 @@ const COMPONENT_ICONS: Record<ComponentType, { icon: typeof Box; className: stri
     cameraFollow: { icon: Video, className: "text-sky-300" },
     navAgent2D: { icon: Navigation, className: "text-cyan-300" },
     joint: { icon: Link2, className: "text-orange-300" },
+    uiSlider: { icon: SlidersHorizontal, className: "text-violet-300" },
+    uiToggle: { icon: ToggleRight, className: "text-violet-300" },
+    uiInputField: { icon: TextCursorInput, className: "text-violet-300" },
 };
 
 const COMMON_TAGS = ["Untagged", "Player", "Enemy", "Ground", "PickUp", "Coin", "Wall", "Bullet", "Finish", "Respawn", "MainCamera", "GameController", "EditorOnly"];
@@ -124,6 +130,9 @@ function ComponentBody({ entity, component, disabled }: { entity: GameEntity; co
         case "cameraFollow": return <CameraFollowEditor entity={entity} component={component} disabled={disabled} />;
         case "navAgent2D": return <NavAgent2DEditor entity={entity} component={component} disabled={disabled} />;
         case "joint": return <JointEditor entity={entity} component={component} disabled={disabled} />;
+        case "uiSlider": return <UISliderEditor entity={entity} component={component} disabled={disabled} />;
+        case "uiToggle": return <UIToggleEditor entity={entity} component={component} disabled={disabled} />;
+        case "uiInputField": return <UIInputFieldEditor entity={entity} component={component} disabled={disabled} />;
     }
 }
 
@@ -200,7 +209,7 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
             ...(is2D ? [{ label: "Navigation", icon: Navigation, items: [builtIn("navAgent2D", "Nav Agent 2D")] }] : []),
             { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System"), builtIn("animation", "Animation")] },
             { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },
-            { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar")] },
+            { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar"), builtIn("uiSlider", "UI Slider"), builtIn("uiToggle", "UI Toggle"), builtIn("uiInputField", "UI Input Field")] },
             { separator: true, label: "" },
             { label: t("scripts"), icon: FileCode, items: behaviourItems.length ? behaviourItems : [{ label: "—", disabled: true }] },
             { label: `${t("newScript")}…`, icon: FilePlus, onSelect: () => setNewScriptName("") },
