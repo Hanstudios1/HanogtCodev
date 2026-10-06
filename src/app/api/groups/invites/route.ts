@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextRequest } from "next/server";
 import { commitServerMutations, deleteServerDocument, getServerDocument, queryServerCollection } from "@/lib/server/firebase-rest";
+import { groupLimitsFor } from "@/lib/server/group-limits";
 import {
     GROUP_LIMITS,
     INVITE_LINK_EXPIRY_MS,
@@ -137,7 +138,8 @@ async function createLink(groupId: string, email: string, body: Record<string, u
     if (!isInviteLinkExpiry(body.expiry)) throw new GroupApiError(400, "invalid_expiry", "Geçersiz geçerlilik süresi.");
     if (body.expiry === "never" && role !== "owner") throw new GroupApiError(403, "forbidden", "Süresiz bağlantıyı yalnızca grup sahibi oluşturabilir.");
     if (!isInviteLinkMaxUses(body.maxUses)) throw new GroupApiError(400, "invalid_max_uses", "Geçersiz kullanım sınırı.");
-    if (groupMembers(group).length >= GROUP_LIMITS.membersMax) throw new GroupApiError(409, "group_full", "Grup 25 üye sınırına ulaştı.");
+    const { limits } = await groupLimitsFor(group.ownerEmail);
+    if (groupMembers(group).length >= limits.members) throw new GroupApiError(409, "group_full", `Grup ${limits.members} üye sınırına ulaştı.`, { limit: limits.members });
     const existing = await queryServerCollection<InviteLinkRecord>("group_invite_links", "groupId", "EQUAL", groupId, { limit: 100 });
     const now = Date.now();
     if (existing.filter((link) => isLinkActive(link, now)).length >= GROUP_LIMITS.activeLinksMax) {

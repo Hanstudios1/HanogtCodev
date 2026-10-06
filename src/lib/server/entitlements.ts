@@ -1,6 +1,6 @@
 import "server-only";
 
-import { FREE_SUBSCRIPTION, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, effectivePlan, planRank, type PlanId, type UserSubscription } from "@/lib/plans";
+import { FREE_SUBSCRIPTION, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, PLAN_STAR_LIMITS, effectivePlan, planRank, type PlanId, type UserSubscription } from "@/lib/plans";
 import { refreshSubscriptionFromPaddle } from "./paddle-sync";
 import { getSubscription } from "./plans";
 
@@ -37,10 +37,11 @@ export async function healBeforeRefusing(email: string, subscription: UserSubscr
     return { upgraded: planRank(plan) > planRank(was), plan, subscription: after };
 }
 
-export type QuotaKind = "code" | "game" | "group";
+export type QuotaKind = "code" | "game" | "group" | "stars";
 
 /** How many of `kind` the plan allows; null is unlimited. */
 export function quotaLimit(kind: QuotaKind, plan: PlanId): number | null {
+    if (kind === "stars") return PLAN_STAR_LIMITS[plan];
     return kind === "group" ? PLAN_GROUP_LIMITS[plan] : PLAN_PROJECT_LIMITS[plan][kind];
 }
 

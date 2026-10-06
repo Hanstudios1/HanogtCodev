@@ -16,7 +16,7 @@ import { limitDetailsOf, quotaFromHeaders, type LimitDetails, type WindowQuota }
 export type AiFailure =
     | "auth_required" | "not_configured" | "rate_limited" | "usage_limit" | "network" | "timeout" | "upstream" | "aborted"
     // The person's own provider connection (src/lib/ai/connections.ts):
-    | "connection_invalid" | "connection_unavailable" | "connection_quota" | "connection_model" | "connection_rate_limited" | "connection_daily_limit";
+    | "connection_invalid" | "connection_unavailable" | "connection_quota" | "connection_model" | "connection_rate_limited";
 
 /** Error codes of /api/ai that name their failure directly. */
 const CODE_FAILURES = new Map<string, AiFailure>([
@@ -29,7 +29,8 @@ const CODE_FAILURES = new Map<string, AiFailure>([
     ["connection_unavailable", "connection_unavailable"],
     ["connection_quota", "connection_quota"],
     ["connection_model", "connection_model"],
-    ["connection_daily_limit", "connection_daily_limit"],
+    // Servers before 0.3.24 had a separate day for own connections; it is Hanogt AI's window now.
+    ["connection_daily_limit", "usage_limit"],
 ]);
 
 /** "tools": the model may call tools · "unsupported": the provider rejected tools (the Core proposes actions instead) · "off": not requested. */

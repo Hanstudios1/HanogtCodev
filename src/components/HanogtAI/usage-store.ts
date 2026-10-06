@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { agentUserKey } from "@/lib/ai/agent-settings";
-import { readAiUsage, windowAfter, type AiUsage, type LimitDetails, type QuotaKind, type UsageWindow, type WindowQuota } from "@/lib/ai/usage";
+import { readAiUsage, windowAfter, type AiUsage, type LimitDetails, type UsageWindow, type WindowQuota } from "@/lib/ai/usage";
 import { onPlanChange } from "@/lib/plan-signal";
 
 const EVENT = "hanogt-ai:usage";
@@ -48,10 +48,9 @@ async function loadUsage(owner: string, force = false) {
     }
 }
 
-/** Replaces the counting window of `quota`: Hanogt AI's plan window, or the own connections' day. */
-function withWindow(usage: AiUsage, quota: QuotaKind, window: UsageWindow): AiUsage {
-    if (quota === "hanogt") return { ...usage, hanogt: { ...usage.hanogt, window } };
-    return usage.own ? { ...usage, own: { ...usage.own, day: window } } : usage;
+/** Replaces Hanogt AI's plan window (every message counts in it, own connections included). */
+function withWindow(usage: AiUsage, window: UsageWindow): AiUsage {
+    return { ...usage, hanogt: { ...usage.hanogt, window } };
 }
 
 export type AiUsageHandle = {
@@ -99,13 +98,12 @@ export function useAiUsage(email: string | null): AiUsageHandle {
             void loadUsage(owner, true);
             return;
         }
-        const window = quota.quota === "hanogt" ? snapshot.usage.hanogt.window : snapshot.usage.own?.day;
-        // Own connections the stored usage doesn't know about, or a window of another length (the plan changed): ask again.
-        if (!window || (quota.quota === "hanogt" && quota.windowDays !== snapshot.usage.hanogt.windowDays)) {
+        // A window of another length (the plan changed): ask again.
+        if (quota.windowDays !== snapshot.usage.hanogt.windowDays) {
             void loadUsage(owner, true);
             return;
         }
-        setSnapshot({ ...snapshot, usage: withWindow(snapshot.usage, quota.quota, windowAfter(window, quota)) });
+        setSnapshot({ ...snapshot, usage: withWindow(snapshot.usage, windowAfter(snapshot.usage.hanogt.window, quota)) });
     }, [owner]);
 
     const applyLimit = useCallback((limit: LimitDetails | undefined) => {
@@ -115,7 +113,7 @@ export function useAiUsage(email: string | null): AiUsageHandle {
             return;
         }
         const full: UsageWindow = { limit: limit.limit, used: Math.max(limit.used, limit.limit), remaining: 0, resetsAt: limit.resetsAt };
-        setSnapshot({ ...snapshot, usage: withWindow(snapshot.usage, limit.quota, full) });
+        setSnapshot({ ...snapshot, usage: withWindow(snapshot.usage, full) });
     }, [owner]);
 
     const mine = Boolean(owner) && current.owner === owner;

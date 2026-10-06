@@ -175,9 +175,9 @@ export default function HanogtAIChat({ variant, onClose, launch }: { variant: "p
         window.setTimeout(() => inputRef.current?.focus(), 0);
     }, []);
 
-    // Messages left in the plan's window (and today's own-connection ones), for the model picker.
+    // Messages left in the plan's window (own connections use it too), for the model picker.
     const usageNow = chat.usage.usage;
-    const remaining = usageNow ? { hanogt: currentWindow(usageNow.hanogt.window).remaining, own: usageNow.own ? currentWindow(usageNow.own.day).remaining : null } : null;
+    const remaining = usageNow ? { hanogt: currentWindow(usageNow.hanogt.window).remaining } : null;
     // Signed-out visitors see the sign-in gate instead of the chat (once the session is known).
     const gated = chat.status === "unauthenticated";
     const meter = <UsageMeter handle={chat.usage} variant={variant} onNavigate={closePanelOnNavigate} />;

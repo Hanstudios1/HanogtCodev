@@ -328,9 +328,9 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
             const reply = await answerLocally(text, { tx, locale, mode: currentMode, signedIn, context, agentMode: latest.current.agentMode });
             const retryable = failure === "rate_limited" || failure === "connection_rate_limited";
             // A used-up window says when it renews, and how to get more.
-            const usedUp = limit && (failure === "usage_limit" || failure === "connection_daily_limit") ? limit : null;
+            const usedUp = limit && failure === "usage_limit" ? limit : null;
             const notice = !failure || failure === "aborted" ? undefined
-                : usedUp ? tx(usedUp.quota === "own" ? CHAT_COPY.ownDailyLimitAt : CHAT_COPY.usageLimitAt, { limit: usedUp.limit.toLocaleString(locale), days: usedUp.windowDays, time: usedUp.resetsAt ? formatResetTime(usedUp.resetsAt, locale) : "—" })
+                : usedUp ? tx(connectionId ? CHAT_COPY.ownUsageLimitAt : CHAT_COPY.usageLimitAt, { limit: usedUp.limit.toLocaleString(locale), days: usedUp.windowDays, time: usedUp.resetsAt ? formatResetTime(usedUp.resetsAt, locale) : "—" })
                     : [tx(NOTICES[failure]), retryable && retryAfterSeconds ? tx(CHAT_COPY.retryIn, { seconds: retryAfterSeconds }) : "", refunded ? tx(CHAT_COPY.refunded) : ""].filter(Boolean).join(" ");
             const agent = reply.actions?.length ? coreAgentState(reply.actions) : undefined;
             // The Core shows how it answered in the thinking panel: the intent it recognized and how sure it was.
@@ -482,7 +482,7 @@ export function useHanogtChat({ variant, onClose, launch }: { variant: "panel" |
                 finish(conversationId, messageId, { content: joined, cut: result.ok && result.cut && result.failure !== "aborted" ? result.cut : undefined, notice: undefined, noticeAction: undefined });
             } else if (!result.ok && result.failure !== "aborted") {
                 // Nothing was added (the Core doesn't continue a model's answer): say why, and the button stays.
-                const usedUp = result.limit && (result.failure === "usage_limit" || result.failure === "connection_daily_limit") ? result.limit : null;
+                const usedUp = result.limit && result.failure === "usage_limit" ? result.limit : null;
                 const retry = (result.failure === "rate_limited" || result.failure === "connection_rate_limited") && result.retryAfterSeconds ? result.retryAfterSeconds : null;
                 const notice = result.failure === "auth_required" ? tx(NOTICES.auth_required)
                     : usedUp ? tx(CHAT_COPY.continueUsedUp, { time: usedUp.resetsAt ? formatResetTime(usedUp.resetsAt, locale) : "—" })

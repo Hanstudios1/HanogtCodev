@@ -1,5 +1,46 @@
 # Değişiklik Günlüğü
 
+## 0.3.24 — 2026-10-06
+
+### Abonelikler: ortak Hanogt AI hakkı ve yeni plan avantajları
+
+- **Kendi API anahtarınla bağlantılar ayrı sınırla değil, Hanogt AI hakkından
+  düşer** (bütün planlarda; Ücretsiz planda bağlantı yok):
+  - `PLAN_AI_FEATURES.ownKey` kalktı; `enforceOwnKeys` planın bağlantı
+    içerdiğini denetler (önce Paddle'a bir kez sorulur) ve mesajı sohbetle
+    aynı dakika ve plan penceresinde sayar.
+  - Sağlayıcı yanıt vermezse (geçersiz anahtar, kredi bitmiş, model yok,
+    sağlayıcı hatası ya da hız sınırı, bağlantı okunamadı) mesaj hakka geri
+    eklenir.
+  - Kullanım sayacından, plan kullanım listesinden ve model seçiciden ayrı
+    "bugün" sayacı kalktı; bağlantılar ekranı ortak hakkı anlatır.
+    `X-Hanogt-AI-Quota` her zaman `hanogt`.
+- **Kod çalıştırma plana göre** (`PLAN_RUN_LIMITS`): tek seferde Ücretsiz 8,
+  Plus 25, Pro 75 dosya. Derlenen diller sunucuya sekizer dosyalık gruplar
+  hâlinde sırayla gider, sonuçlar grup grup gelir. Sunucu dakikada 40 / 150 /
+  400 dosya sayar (`src/lib/server/run-limits.ts`); sınır dolunca konsol planın
+  sınırını ve bir üst planı gösterir.
+- **Grubun sahibinin planına göre gruplar** (`PLAN_GROUP_FEATURES`):
+  - üye 25 / 100 / 250, sabitlenmiş mesaj 25 / 50 / 100, özel bot komutu
+    20 / 50 / 100, AutoMod yasaklı kelime 100 / 300 / 1.000;
+  - plan düşünce hiçbir şey silinmez, yalnızca sınırın altına inene kadar
+    yenisi eklenemez;
+  - üye listesi, sabitlemeler, Botlar ve Güvenlik ekranları grubun sınırını
+    gösterir;
+  - moderatörlerin @herkes bahsetmesi bütün gruba ulaşır; büyük gruplarda
+    canlı durum en fazla 50 üye için dinlenir.
+- **Yıldızlı mesajlar plana göre** (`PLAN_STAR_LIMITS`): 200 / 500 / 1.000;
+  sınıra gelince "yıldız sınırı" iletisi çıkar; plan kullanım listesinde yeni
+  satır.
+- **Fiyatlandırma:** kartlarda yeni avantajlar; karşılaştırma tablosu dört
+  bölüme ayrıldı (Hanogt AI; Kod, oyun ve ekip; Hanogt Social; Destek ve
+  profil) ve düşünme payı, kişisel talimat, çalıştırma, grup ve yıldız
+  satırları eklendi; SSS'ye iki soru eklendi.
+- **Yasal 5.1:** Kullanım Şartları'ndaki plan listesi, Gizlilik Politikası
+  (ortak sayaç, yıldız sınırı, grup sınırlarının sahibin plan seviyesini
+  dolaylı olarak göstermesi) ve sürüm notu.
+- Hanogt AI'ın bilgi tabanı, kılavuz ve `docs/HANOGT_AI*.md` güncellendi.
+
 ## 0.3.23 — 2026-10-06
 
 ### Mor-pembe-sarı yazılar, ızgara ve "Tek hesap, hepsi bir arada"

@@ -8,6 +8,7 @@
  * group (README, rules, task list, template files and the welcome message).
  */
 import type { Copy } from "@/lib/i18n";
+import { GROUP_FEATURES_MAX, type GroupPlanLimits } from "@/lib/plans";
 import type { PresenceStatus } from "@/lib/presence";
 
 /* -------------------------------------------------------------------------- */
@@ -22,9 +23,7 @@ export const GROUP_LIMITS = {
     fileNameMax: 120,
     fileContentMax: 500_000,
     filesMax: 50,
-    membersMax: 25,
     messageMax: 4000,
-    pinnedMax: 25,
     topicsMax: 12,
     topicMax: 24,
     activeLinksMax: 20,
@@ -162,14 +161,15 @@ export const GROUP_ROLE_COPY: Record<GroupRole, Copy> = {
 /** An admin-defined command answered by the Hanogt Security Bot ("/kurulum" → the text). */
 export type CustomCommand = { name: string; description: string; response: string };
 
-export const CUSTOM_COMMAND_LIMITS = { count: 20, description: 80, response: 1_000 } as const;
+/** `count` is the most any plan allows (Pro); a group's own limit is its owner's plan's (PLAN_GROUP_FEATURES). */
+export const CUSTOM_COMMAND_LIMITS = { count: GROUP_FEATURES_MAX.commands, description: 80, response: 1_000 } as const;
 export const WELCOME_MESSAGE_MAX = 500;
 /** At most six hours between two messages of one person in slow mode. */
 export const SLOWMODE_MAX_SECONDS = 21_600;
 
 const COMMAND_NAME = /^[a-z][a-z0-9_-]{0,23}$/;
 
-/** Stored or sent custom commands, checked: valid unique names (lower case), clipped texts, at most 20. */
+/** Stored or sent custom commands, checked: valid unique names (lower case), clipped texts, at most 100 (the most any plan allows). */
 export function sanitizeCustomCommands(value: unknown, reserved: readonly string[] = []): CustomCommand[] {
     if (!Array.isArray(value)) return [];
     const seen = new Set<string>(reserved);
@@ -515,7 +515,8 @@ export type GroupErrorCode =
     | "cannot_remove_owner" | "cannot_remove_admin" | "owner_cannot_leave" | "confirm_mismatch"
     | "link_not_found" | "link_expired" | "link_exhausted" | "link_limit" | "invalid_expiry" | "invalid_max_uses"
     | "message_not_found" | "pin_limit" | "invalid_reaction" | "conflict" | "server_error"
-    | "muted" | "slowmode" | "automod_blocked" | "cannot_moderate" | "invalid_command";
+    | "muted" | "slowmode" | "automod_blocked" | "cannot_moderate" | "invalid_command"
+    | "commands_limit" | "words_limit";
 
 export type GroupLanguage = "tr" | "en";
 
@@ -607,6 +608,8 @@ export type GroupDetailResponse = {
     /** Only for owners/admins. */
     stats: { pendingInvites: number; activeLinks: number } | null;
     banned: Array<{ email: string; username: string }>;
+    /** What the group holds by its owner's plan (members, pins, commands, banned words); the plan itself isn't sent. */
+    limits: GroupPlanLimits;
 };
 
 export type GroupInviteLinkInfo = {

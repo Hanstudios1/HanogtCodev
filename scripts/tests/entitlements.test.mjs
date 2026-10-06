@@ -177,3 +177,39 @@ test("quota limits come from the plan tables", () => {
         assert.equal(entitlements.quotaLimit("group", plan), plans.PLAN_GROUP_LIMITS[plan]);
     }
 });
+
+// ---------------------------------------------------------------------------
+// Code runs on the server (lib/server/run-limits.ts)
+// ---------------------------------------------------------------------------
+
+const runLimits = await load("lib/server/run-limits.ts");
+
+test("runs: the plans start 8, 25 and 75 files at once and the server runs 40, 150 and 400 files a minute", () => {
+    assert.deepEqual(plans.PLAN_RUN_LIMITS, { free: { files: 8, perMinute: 40 }, plus: { files: 25, perMinute: 150 }, pro: { files: 75, perMinute: 400 } });
+    assert.equal(plans.RUN_FILES_PER_REQUEST, 8);
+    for (const plan of plans.PLAN_IDS) assert.ok(plans.PLAN_RUN_LIMITS[plan].perMinute >= plans.PLAN_RUN_LIMITS[plan].files, `${plan}: a full run fits in a minute`);
+});
+
+test("runs: every request counts its files in the plan's minute; the refusal names the limit and the next plan", async () => {
+    await withPaddle(seed({ plan: "free", status: "active" }), [], async (db, api) => {
+        for (let index = 0; index < 5; index += 1) assert.equal((await runLimits.enforceRunQuota(ALI, 8)).allowed, true, `request ${index + 1}`);
+        const refused = await runLimits.enforceRunQuota(ALI, 1);
+        assert.deepEqual([refused.allowed, refused.plan, refused.limit, refused.upgrade], [false, "free", 40, "plus"]);
+        assert.ok(refused.retryAfterSeconds >= 1 && refused.retryAfterSeconds <= 60);
+        assert.deepEqual(api.calls, [], "nothing at Paddle could change it");
+    });
+    await withPaddle(seed({ plan: "pro", status: "active" }), [], async () => {
+        const counted = await runLimits.enforceRunQuota(ALI, 8);
+        assert.deepEqual([counted.allowed, counted.plan, counted.limit, counted.remaining], [true, "pro", 400, 392]);
+    });
+});
+
+test("runs: a Plus purchase Paddle never reported raises the minute before refusing", async () => {
+    await withPaddle(seed(UNRECORDED), [PLUS], async (db, api) => {
+        for (let index = 0; index < 5; index += 1) await runLimits.enforceRunQuota(ALI, 8);
+        assert.deepEqual(api.calls, [], "allowed runs don't ask Paddle");
+        const counted = await runLimits.enforceRunQuota(ALI, 8);
+        assert.deepEqual([counted.allowed, counted.plan, counted.limit, counted.remaining], [true, "plus", 150, 150 - 48]);
+        assert.ok(api.calls.length > 0);
+    });
+});

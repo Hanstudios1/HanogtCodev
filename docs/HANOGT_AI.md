@@ -442,14 +442,16 @@ with the first message.
 | Window | 7 days | 14 days | 7 days |
 
 A staff grant adds messages to the window until it ends (stored as
-`aiBonusDaily` for historical reasons). The chat, the developer API (source
-`api`) and, once it ships, Hanogt AI in Social groups (source `group`) share
-this one allowance. Each tool follow-up round and each *Continue* is one
+`aiBonusDaily` for historical reasons). The chat, the person's own connections
+(source `own`, `enforceOwnKeys`), the developer API (source `api`) and Hanogt
+AI in Social groups (source `group`) share this one allowance and its minute
+guard. Each tool follow-up round and each *Continue* is one
 message. On a limit the Core answers with a notice (when the window renews,
 or the seconds to wait); a purchase Paddle hasn't reported yet is looked up
 first (`src/lib/server/entitlements.ts`). Messages through the person's own
-connections have their own per-day limits (`PLAN_AI_FEATURES.ownKey`, below)
-and never use the window.
+connections have no allowance of their own since 0.3.24: `enforceOwnKeys`
+checks that the plan includes connections (Plus 2, Pro 5; Free none) and then
+counts the message in this window like any other.
 
 ### Refunds
 
@@ -459,7 +461,10 @@ without text or tool calls) is given back: `refundHanogtAi` →
 `releaseFromWindow` (`src/lib/server/rate-limit.ts`) takes one count off the
 window that counted it, only while that same window is still open (same
 start), never below zero, in Firestore or in the in-memory fallback. It is
-best effort; the minute guard and own connections are not refunded. JSON
+best effort; the minute guard is not refunded. A message through the person's
+own connection is given back the same way when the provider answered nothing
+(a refused key, no credit, a missing model, a provider error or rate limit, no
+connection). JSON
 failures carry `refunded: true | false` and the version 2 stream an `error`
 event with `refunded`; the browser then reads the usage again. The developer
 API gives messages back the same way.
@@ -475,7 +480,6 @@ browser, the settings and the API):
 | Thinking budget on top of it (`thinkingTokens`) | 1,000 | 2,000 | 3,000 |
 | Open editor file read (characters) | 12,000 | 24,000 | 40,000 |
 | Each personal instruction (Hanogt AI settings) | 500 | 1,500 | 3,000 |
-| Messages through own connections (day / minute) | – | 3,000 / 30 | 10,000 / 60 |
 | Developer API keys (requests count in the window above) | – | 2 | 5 |
 
 The browser sends at most the plan's share of the file and the server clips it
@@ -584,9 +588,10 @@ the window; a request that fails validation counts nothing. The counters are
 `src/lib/server/plans.ts`) in `security_rate_limits`, whose document ids are
 salted SHA-256 hashes of the keys; while Firestore can't be reached, each
 server instance counts in memory. Messages through the person's own
-connections have their own windows (`ai-own:` / `ai-own-day:`,
-`enforceOwnKeys`) and never touch Hanogt AI's window. Staff "reset Hanogt AI
-limit" resets both.
+connections count in the same two keys (`enforceOwnKeys`); the separate
+`ai-own:` / `ai-own-day:` windows of older versions are no longer written, and
+staff "reset Hanogt AI limit" still clears what is left of them. The
+`X-Hanogt-AI-Quota` header is always `hanogt`.
 
 Every answer of `/api/ai` (also a failed one that was counted) reports the
 window it counted in (`QUOTA_HEADERS` in `src/lib/ai/usage.ts`). These headers

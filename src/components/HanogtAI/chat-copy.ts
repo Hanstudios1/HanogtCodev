@@ -75,7 +75,6 @@ export const NOTICES: Record<AiFailure, Copy> = {
     connection_quota: { TR: "Sağlayıcı hesabının kotası ya da kredisi bitmiş; sağlayıcının panelinden kontrol et. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "Your provider account is out of quota or credit; check the provider's dashboard. Hanogt AI Core answered." },
     connection_model: { TR: "Seçtiğin model sağlayıcıda bulunamadı; modeli bağlantı ayarlarından değiştir. Yanıtı Hanogt AI Çekirdeği verdi.", EN: "The provider couldn't find the model you chose; change it in the connection settings. Hanogt AI Core answered." },
     connection_rate_limited: { TR: "Sağlayıcının istek sınırına takıldın; yanıtı Hanogt AI Çekirdeği verdi.", EN: "You hit the provider's rate limit; Hanogt AI Core answered." },
-    connection_daily_limit: { TR: "Kendi bağlantıların için günlük mesaj hakkın doldu; ilk mesajından 24 saat sonra yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used the day's messages for your own connections; they renew 24 hours after your first one. Until then Hanogt AI Core answers." },
 };
 
 /** Failures caused by the person's own connection: the connection list is refreshed afterwards. */
@@ -86,8 +85,8 @@ export const CHAT_COPY = {
     retryIn: { TR: "{seconds} sn sonra tekrar dene.", EN: "Try again in {seconds} s." },
     usageLimitAt: { TR: "{days} günlük {limit} mesajlık Hanogt AI hakkının hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} Hanogt AI messages of this {days}-day period. Renews: {time}. Until then Hanogt AI Core answers." },
     signIn: { TR: "Giriş yap", EN: "Sign in" },
-    refunded: { TR: "Model yanıt veremediği için bu mesaj hakkından düşülmedi.", EN: "The model couldn't answer, so this message wasn't counted." },
-    ownDailyLimitAt: { TR: "Kendi bağlantıların için günlük {limit} mesajın hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "You've used all {limit} of the day's messages for your own connections. Renews: {time}. Until then Hanogt AI Core answers." },
+    refunded: { TR: "Yanıt alınamadığı için bu mesaj hakkından düşülmedi.", EN: "No answer came back, so this message wasn't counted." },
+    ownUsageLimitAt: { TR: "Kendi bağlantınla gönderdiğin mesajlar da Hanogt AI hakkından düşer ve {days} günlük {limit} mesajın hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.", EN: "Messages through your own connection use your Hanogt AI messages too, and you've used all {limit} of this {days}-day period. Renews: {time}. Until then Hanogt AI Core answers." },
     upgrade: { TR: "Planını yükselt", EN: "Upgrade your plan" },
     continueFailed: { TR: "Yanıt şu anda devam ettirilemedi; biraz sonra yeniden “Devam et”e bas.", EN: "The answer couldn't be continued right now; press “Continue” again in a moment." },
     continueRetryIn: { TR: "Dakikalık sınır doldu; {seconds} sn sonra yeniden “Devam et”e bas.", EN: "The per-minute limit is reached; press “Continue” again in {seconds} s." },

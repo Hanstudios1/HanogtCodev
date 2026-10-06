@@ -4,7 +4,7 @@ import test from "node:test";
 import { load } from "./setup.mjs";
 
 const plans = await load("lib/plans.ts");
-const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, aiLimitsFor, aiWindowCopy, aiWindowMs, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
+const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_FEATURES, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, PLAN_RUN_LIMITS, PLAN_STAR_LIMITS, aiLimitsFor, aiWindowCopy, aiWindowMs, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
 
 const NOW = Date.UTC(2026, 9, 2, 12);
 const DAY = 24 * 60 * 60_000;
@@ -93,10 +93,29 @@ test("the numbers on the Plans page are the limits the server enforces", () => {
                 assert.equal(projects, expected);
             }
 
-            const groups = line(lang === "TR" ? /grub/ : /groups/);
+            const groups = line(lang === "TR" ? /grub/ : /Hanogt Social groups/);
             const groupLimit = PLAN_GROUP_LIMITS[plan];
             if (groupLimit === null) assert.match(groups, unlimited);
             else assert.ok(` ${groups} `.includes(` ${number(groupLimit, lang)} `), `${plan}/${lang}: "${groups}" shows ${groupLimit}`);
+
+            // Runs: files at once, and the server's files a minute on the paid plans.
+            const runs = line(lang === "TR" ? /dosya çalıştırma/ : /files at once/);
+            const run = PLAN_RUN_LIMITS[plan];
+            assert.ok(runs.includes(lang === "TR" ? `Tek seferde ${number(run.files, lang)} dosya` : `Run ${number(run.files, lang)} files at once`), `${plan}/${lang}: "${runs}"`);
+            if (plan !== "free") assert.ok(runs.includes(lang === "TR" ? `dakikada ${number(run.perMinute, lang)} dosya` : `${number(run.perMinute, lang)} files a minute`), `${plan}/${lang}: "${runs}"`);
+
+            // A group's room by its owner's plan: members and pins everywhere, commands and banned words on paid plans.
+            const room = line(lang === "TR" ? /Gruplarında/ : /in your groups/);
+            const features = PLAN_GROUP_FEATURES[plan];
+            assert.ok(room.includes(lang === "TR" ? `${number(features.members, lang)} üye` : `${number(features.members, lang)} members`), `${plan}/${lang}: "${room}"`);
+            assert.ok(room.includes(lang === "TR" ? `${number(features.pinned, lang)} sabitlenmiş mesaj` : `${number(features.pinned, lang)} pinned messages`), `${plan}/${lang}: "${room}"`);
+            if (plan !== "free") {
+                assert.ok(room.includes(lang === "TR" ? `${number(features.commands, lang)} özel bot komutu` : `${number(features.commands, lang)} custom bot commands`), `${plan}/${lang}: "${room}"`);
+                assert.ok(room.includes(lang === "TR" ? `${number(features.bannedWords, lang)} yasaklı kelime` : `${number(features.bannedWords, lang)} banned words`), `${plan}/${lang}: "${room}"`);
+            }
+
+            const starred = line(lang === "TR" ? /yıldızlı mesaj/ : /starred messages/);
+            assert.equal(starred, lang === "TR" ? `${number(PLAN_STAR_LIMITS[plan], lang)} yıldızlı mesaj` : `${number(PLAN_STAR_LIMITS[plan], lang)} starred messages`);
 
             const team = line(lang === "TR" ? /ekiple düzenleme/ : /Team editing/);
             const people = number(PLAN_COLLAB_LIMITS[plan].people, lang);
@@ -107,8 +126,9 @@ test("the numbers on the Plans page are the limits the server enforces", () => {
             else {
                 assert.equal(keys.length, 1);
                 assert.ok(keys[0].includes(lang === "TR" ? `${PLAN_AI_CONNECTIONS[plan]} yapay zekâ bağlantısı` : `Connect ${PLAN_AI_CONNECTIONS[plan]} AI providers`), `${plan}/${lang}: "${keys[0]}"`);
-                const perDay = number(PLAN_AI_FEATURES[plan].ownKey.perDay, lang);
-                assert.ok(keys[0].includes(lang === "TR" ? `günde ${perDay} mesaj` : `${perDay} messages a day`), `${plan}/${lang}: "${keys[0]}" shows ${perDay} a day`);
+                // No allowance of their own: they use Hanogt AI's messages.
+                assert.ok(keys[0].includes(lang === "TR" ? "mesajlar Hanogt AI hakkından düşer" : "messages use your Hanogt AI allowance"), `${plan}/${lang}: "${keys[0]}"`);
+                assert.doesNotMatch(keys[0], lang === "TR" ? /günde/ : /a day/);
             }
 
             // The developer API: its keys; requests use the same messages as the chat.

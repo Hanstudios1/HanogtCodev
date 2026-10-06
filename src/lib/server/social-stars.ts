@@ -2,9 +2,12 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { isGroupId } from "@/lib/groups";
+import { FREE_SUBSCRIPTION, PLAN_STAR_LIMITS, effectivePlan, type PlanId } from "@/lib/plans";
 import { dmChatId, dmHref, groupHref, messagePreview, previewText } from "@/lib/social/model";
 import { STARS_MAX, type StarScope, type StarredMessage } from "@/lib/social/stars";
-import { commitServerMutations, commitServerPatches, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection } from "./firebase-rest";
+import { planQuota, type HealOptions } from "./entitlements";
+import { commitServerMutations, commitServerPatches, countServerQuery, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection } from "./firebase-rest";
+import { getSubscription } from "./plans";
 import { isDocId, normalizeEmail } from "./validate";
 
 /*
@@ -15,7 +18,8 @@ import { isDocId, normalizeEmail } from "./validate";
  * The excerpt is a copy of someone's words, so it follows the message: it is
  * updated when the message is edited and removed when the message, its
  * conversation or group, or the account that wrote it is deleted, and when
- * the person leaves the group.
+ * the person leaves the group. How many a person keeps is their plan's
+ * (PLAN_STAR_LIMITS: Free 200, Plus 500, Pro 1,000); stars above it stay.
  */
 
 export type { StarScope, StarredMessage };
@@ -38,13 +42,25 @@ const iso = (value: unknown) => {
 
 export class StarError extends Error {
     readonly status: number;
-    readonly code: "invalid_request" | "not_found" | "conflict";
-    constructor(status: number, code: "invalid_request" | "not_found" | "conflict") {
+    readonly code: "invalid_request" | "not_found" | "limit";
+    /** The plan's limit, for "limit". */
+    readonly limit: number | null;
+    readonly plan: PlanId | null;
+    constructor(status: number, code: "invalid_request" | "not_found" | "limit", limit: { limit: number; plan: PlanId } | null = null) {
         super(code);
         this.name = "StarError";
         this.status = status;
         this.code = code;
+        this.limit = limit?.limit ?? null;
+        this.plan = limit?.plan ?? null;
     }
+}
+
+/** How many stars the account's plan keeps. */
+export async function starLimitFor(email: string): Promise<{ plan: PlanId; limit: number }> {
+    const subscription = await getSubscription(email).catch(() => FREE_SUBSCRIPTION);
+    const plan = effectivePlan(subscription);
+    return { plan, limit: PLAN_STAR_LIMITS[plan] };
 }
 
 export function starExcerpt(message: StoredMessage) {
@@ -75,16 +91,19 @@ async function readableMessage(email: string, scope: StarScope, target: string, 
     return { message, target };
 }
 
-export async function starMessage(email: string, scope: StarScope, target: string, messageId: string, starred: boolean) {
+export async function starMessage(email: string, scope: StarScope, target: string, messageId: string, starred: boolean, options: HealOptions = {}) {
     const path = (to: string) => `message_stars/${starDocumentId(email, scope, to, messageId)}`;
     if (!starred) {
         const partner = scope === "dm" ? normalizeEmail(target) ?? target : target;
         await deleteServerDocument(path(partner));
         return { success: true, starred: false };
     }
-    const existing = await queryServerCollection<StoredStar>("message_stars", "owner", "EQUAL", email, { limit: STARS_MAX + 1 });
     const { message, target: to } = await readableMessage(email, scope, target, messageId);
-    if (existing.length >= STARS_MAX && !existing.some((star) => star._id === starDocumentId(email, scope, to, messageId))) throw new StarError(409, "conflict");
+    // A message starred again doesn't add one; a new star must fit the plan (a purchase Paddle hasn't reported is looked up first).
+    if (!(await getServerDocument(path(to)))) {
+        const quota = await planQuota(email, "stars", (upTo) => countServerQuery({ collectionId: "message_stars", where: [{ field: "owner", op: "EQUAL", value: email }], upTo }), options);
+        if (!quota.allowed) throw new StarError(409, "limit", { limit: quota.limit ?? STARS_MAX, plan: quota.plan });
+    }
     const author = typeof message.author === "string" ? message.author : typeof message.fromEmail === "string" ? message.fromEmail.split("@")[0] : "";
     const place = scope === "dm" ? dmChatId(email, to) : to;
     await patchServerDocument(path(to), {

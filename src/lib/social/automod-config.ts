@@ -6,6 +6,7 @@
  * a group's own banned words are kept where members can't read them.
  */
 import type { Copy } from "@/lib/i18n";
+import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import type { GroupRank } from "./commands";
 
 export type AutoModLinks = "allow" | "block" | "allowlist";
@@ -37,7 +38,8 @@ export interface AutoModConfig {
 }
 
 export const AUTOMOD_LIMITS = {
-    customWords: 100,
+    /** The most any plan allows (Pro); a group's own limit is its owner's plan's (PLAN_GROUP_FEATURES). */
+    customWords: GROUP_FEATURES_MAX.bannedWords,
     customWordLength: 40,
     allowlist: 20,
     maxMentions: 25,
@@ -105,7 +107,7 @@ export function sanitizeAutoMod(value: unknown): AutoModConfig {
     };
 }
 
-/** A group's own banned words: trimmed, lower case, no duplicates, at most 100 of at most 40 characters. */
+/** A group's own banned words: trimmed, lower case, no duplicates, at most 1,000 (the most any plan allows) of at most 40 characters. */
 export function sanitizeCustomWords(value: unknown): string[] {
     if (!Array.isArray(value)) return [];
     const words = new Set<string>();

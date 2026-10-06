@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { PLAN_RUN_LIMITS, RUN_FILES_PER_REQUEST } from "@/lib/plans";
 import { normalizeLanguageId } from "@/lib/runtimes/languages";
 import { RunnerError, SERVER_LANGUAGES, runFiles, runnerName, type RunFile } from "@/lib/server/code-runner";
 import { createServerDocument, getServerDocument, isFirebaseServerConfigured } from "@/lib/server/firebase-rest";
-import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
+import { memoryRateLimit } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
+import { enforceRunQuota } from "@/lib/server/run-limits";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
 import { getSignedInSession } from "@/lib/server/active-session";
 
@@ -12,8 +14,11 @@ export const maxDuration = 60;
 
 const MAX_CODE_LENGTH = 50_000;
 const MAX_PROJECT_LENGTH = 150_000;
-const MAX_RUNNABLE_FILES = 8;
+/** Files one request runs; the editor splits a bigger run (up to the plan's PLAN_RUN_LIMITS) into several requests. */
+const MAX_RUNNABLE_FILES = RUN_FILES_PER_REQUEST;
 const MAX_STDIN_LENGTH = 10_000;
+/** Requests a minute from one person on one server instance, before anything is read: the plan's file count is the real limit. */
+const REQUESTS_PER_MINUTE = Math.ceil(Math.max(...Object.values(PLAN_RUN_LIMITS).map((limits) => limits.perMinute)) / 2);
 
 type ErrorCode =
     | "auth_required" | "suspended" | "rate_limited" | "invalid_request" | "unsupported_language"
@@ -58,9 +63,10 @@ export async function POST(request: NextRequest) {
     if ("error" in runner) return fail(runner.error, runner.status, runner.code);
     const { email } = runner;
 
-    const rate = await enforceRateLimitWithFallback(`execute:${email}`, 20, 60_000);
-    if (!rate.allowed) {
-        return fail("Çalıştırma sınırına ulaştınız (dakikada 20). Kısa süre sonra tekrar deneyin.", 429, "rate_limited", {}, { "Retry-After": String(rate.retryAfterSeconds) });
+    // A cheap guard against floods; the plan's files a minute are counted once the request is known to be valid.
+    const burst = memoryRateLimit(`execute:${email}`, REQUESTS_PER_MINUTE, 60_000);
+    if (!burst.allowed) {
+        return fail("Çok sık çalıştırma isteği gönderildi. Kısa süre sonra tekrar deneyin.", 429, "rate_limited", {}, { "Retry-After": String(burst.retryAfterSeconds) });
     }
 
     let body: { language?: unknown; code?: unknown; files?: unknown; stdin?: unknown };
@@ -81,7 +87,7 @@ export async function POST(request: NextRequest) {
         : [{ name: "main", language: normalizeLanguage(body.language), code: typeof body.code === "string" ? body.code : "" }];
     const stdin = typeof body.stdin === "string" ? body.stdin : "";
 
-    if (!requestedFiles.length || requestedFiles.length > MAX_RUNNABLE_FILES) return fail("Tek çalıştırmada 1-8 yürütülebilir dosya kullanılabilir.", 400, "invalid_request");
+    if (!requestedFiles.length || requestedFiles.length > MAX_RUNNABLE_FILES) return fail(`Bir istekte 1-${MAX_RUNNABLE_FILES} yürütülebilir dosya gönderilebilir.`, 400, "invalid_request");
     const unsupported = requestedFiles.find((file) => !SERVER_LANGUAGES.has(file.language));
     if (unsupported) return fail(`"${unsupported.language || "?"}" dili çalıştırılamıyor.`, 400, "unsupported_language", { language: unsupported.language.slice(0, 40) });
     if (requestedFiles.some((file) => !file.code.trim())) return fail("Çalıştırılacak dosyalar boş olamaz.", 400, "empty_file");
@@ -89,6 +95,12 @@ export async function POST(request: NextRequest) {
         return fail("Çalıştırma, dosya başına 50.000 ve toplam 150.000 karakter sınırını aşıyor.", 413, "too_large");
     }
     if (stdin.length > MAX_STDIN_LENGTH) return fail("Program girdisi (stdin) en fazla 10.000 karakter olabilir.", 413, "too_large");
+
+    // Every file counts in the plan's minute (Free 40, Plus 150, Pro 400 files); a purchase Paddle hasn't reported is looked up first.
+    const quota = await enforceRunQuota(email, requestedFiles.length, { onLate: (work) => after(() => work.then(() => undefined, () => undefined)) });
+    if (!quota.allowed) {
+        return fail(`Planınızın çalıştırma sınırına ulaştınız (dakikada ${quota.limit} dosya). Kısa süre sonra tekrar deneyin.`, 429, "rate_limited", { limit: quota.limit, plan: quota.plan, upgrade: quota.upgrade }, { "Retry-After": String(quota.retryAfterSeconds) });
+    }
     const combinedCode = requestedFiles.map((file) => `// ${file.name} (${file.language})\n${file.code}`).join("\n");
 
     const scan = scanUntrustedCode(combinedCode);
@@ -124,7 +136,7 @@ export async function POST(request: NextRequest) {
             jobs,
             project: jobs.length > 1,
             security: { blocked: false, risk: scan.risk },
-        }, { headers: jsonSecurityHeaders({ "X-RateLimit-Remaining": String(rate.remaining) }) });
+        }, { headers: jsonSecurityHeaders({ "X-RateLimit-Limit": String(quota.limit), "X-RateLimit-Remaining": String(quota.remaining) }) });
     } catch (error) {
         if (error instanceof RunnerError) return fail(error.message, 400, "no_compiler");
         const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");

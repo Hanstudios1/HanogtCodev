@@ -23,7 +23,7 @@ const C = {
     joining: { TR: "Katılınıyor…", EN: "Joining…" },
     open: { TR: "Gruba git", EN: "Open the group" },
     alreadyMember: { TR: "Zaten bu grubun üyesisin.", EN: "You're already a member of this group." },
-    full: { TR: "Bu grup 25 üye sınırına ulaştı; şu anda katılamazsın.", EN: "This group has reached its 25-member limit, so you can't join right now." },
+    full: { TR: "Bu grup {max} üye sınırına ulaştı; şu anda katılamazsın.", EN: "This group has reached its {max}-member limit, so you can't join right now." },
     banned: { TR: "Bu gruba katılman yöneticiler tarafından engellenmiş.", EN: "The admins have blocked you from joining this group." },
     privacy: { TR: "Katıldığında grup üyeleri kullanıcı adını, profil fotoğrafını ve e-posta adresini görebilir.", EN: "When you join, group members can see your username, profile photo and e-mail address." },
     signInTitle: { TR: "Daveti görmek için giriş yap", EN: "Sign in to see the invitation" },
@@ -119,7 +119,7 @@ export default function JoinGroupView({ token }: { token: string }) {
                     </div>
                     {preview.alreadyMember && <p className="rounded-2xl bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-800 dark:text-emerald-300">{tx(C.alreadyMember)}</p>}
                     {preview.banned && <p className="flex items-center justify-center gap-2 rounded-2xl bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-700 dark:text-red-300"><Ban className="h-4 w-4" aria-hidden />{tx(C.banned)}</p>}
-                    {!preview.banned && preview.full && !preview.alreadyMember && <p className="flex items-center justify-center gap-2 rounded-2xl bg-amber-500/10 px-4 py-3 text-center text-sm font-semibold text-amber-800 dark:text-amber-300"><AlertTriangle className="h-4 w-4" aria-hidden />{tx(C.full)}</p>}
+                    {!preview.banned && preview.full && !preview.alreadyMember && <p className="flex items-center justify-center gap-2 rounded-2xl bg-amber-500/10 px-4 py-3 text-center text-sm font-semibold text-amber-800 dark:text-amber-300"><AlertTriangle className="h-4 w-4" aria-hidden />{tx(C.full, { max: preview.membersMax })}</p>}
                     {joinError && <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-center text-sm text-red-700 dark:text-red-300" role="alert">{joinError}</p>}
                     {preview.alreadyMember ? (
                         <Link href={groupHref(preview.groupId)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-5 py-3.5 font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">{tx(C.open)}<ArrowRight className="h-5 w-5 rtl:rotate-180" aria-hidden /></Link>

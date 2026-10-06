@@ -119,5 +119,7 @@ test("custom commands: valid unique names, Hanogt's own names refused, texts cli
     assert.deepEqual(result.map((command) => command.name), ["kurulum", "uzun"]);
     assert.equal(result[1].description.length, CUSTOM_COMMAND_LIMITS.description);
     assert.equal(result[1].response.length, CUSTOM_COMMAND_LIMITS.response);
-    assert.equal(sanitizeCustomCommands(Array.from({ length: 40 }, (_, index) => ({ name: `k${index}`, response: "x" }))).length, CUSTOM_COMMAND_LIMITS.count);
+    // Read up to the most any plan allows (Pro's 100); each group's own limit is its owner's plan's.
+    assert.equal(CUSTOM_COMMAND_LIMITS.count, 100);
+    assert.equal(sanitizeCustomCommands(Array.from({ length: 150 }, (_, index) => ({ name: `k${index}`, response: "x" }))).length, CUSTOM_COMMAND_LIMITS.count);
 });

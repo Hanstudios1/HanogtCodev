@@ -32,7 +32,8 @@ const C = {
     hanogtShort: { TR: "Hanogt AI", EN: "Hanogt AI" },
     hanogtDescription: { TR: "Hanogt'un kendi modeli; planının mesaj hakkını kullanır.", EN: "Hanogt's own model; uses your plan's messages." },
     hanogtLeft: { TR: "Bu dönem {count} mesaj kaldı.", EN: "{count} messages left this period." },
-    ownLeft: { TR: "bugün {count} mesaj kaldı", EN: "{count} messages left today" },
+    ownLeft: { TR: "Hanogt AI hakkından düşer · {count} mesaj kaldı", EN: "uses your Hanogt AI messages · {count} left" },
+    ownUses: { TR: "Hanogt AI hakkından düşer", EN: "uses your Hanogt AI messages" },
     ownConnection: { TR: "Kendi bağlantın", EN: "Your connection" },
     notInPlan: { TR: "Planın kapsamıyor", EN: "Not in your plan" },
     manage: { TR: "Bağlantıları yönet…", EN: "Manage connections…" },
@@ -90,8 +91,8 @@ export interface ComposerConnections {
     selectedId: string | null;
     onSelect: (id: string | null) => void;
     onManage: () => void;
-    /** Messages left today for Hanogt AI and for own connections (null: not known yet). */
-    remaining?: { hanogt: number | null; own: number | null } | null;
+    /** Messages left in the plan's Hanogt AI window, which own connections use too (null: not known yet). */
+    remaining?: { hanogt: number | null } | null;
 }
 
 /** Hanogt AI or one of the person's own connections; connections outside the plan are listed but can't be chosen. */
@@ -100,7 +101,6 @@ function ModelPicker({ connections, variant }: { connections: ComposerConnection
     const { items, selectedId, remaining } = connections;
     const selected = selectedId ? items.find((item) => item.id === selectedId) ?? null : null;
     const hanogtLeft = remaining?.hanogt ?? null;
-    const ownLeft = remaining?.own ?? null;
     const options: Array<MenuOption<string>> = [
         {
             id: DEFAULT_CONNECTION,
@@ -114,7 +114,7 @@ function ModelPicker({ connections, variant }: { connections: ComposerConnection
             return {
                 id: item.id,
                 label: `${item.label} · ${item.model}`,
-                description: !item.active ? `${provider} · ${tx(C.notInPlan)}` : ownLeft === null ? provider : `${provider} · ${tx(C.ownLeft, { count: ownLeft.toLocaleString(locale) })}`,
+                description: !item.active ? `${provider} · ${tx(C.notInPlan)}` : `${provider} · ${hanogtLeft === null ? tx(C.ownUses) : tx(C.ownLeft, { count: hanogtLeft.toLocaleString(locale) })}`,
                 icon: <KeyRound className="h-4 w-4" aria-hidden />,
                 disabled: !item.active,
             };

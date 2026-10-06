@@ -524,7 +524,9 @@ export function usePlansBilling() {
     const savings = checkout ? Math.max(yearlySavingsPercent(checkout.prices.plus.month, checkout.prices.plus.year), yearlySavingsPercent(checkout.prices.pro.month, checkout.prices.pro.year)) : 0;
     const showPeriodToggle = anyOnSale && (onSale("plus").length > 1 || onSale("pro").length > 1);
     // A subscriber gets the answers about billing even while sales are closed ("nothing is charged" isn't true for them).
-    const faq: Array<[Copy, Copy]> = anyOnSale || liveSubscription ? [[C.bq1, C.ba1], [C.bq2, C.ba2], [C.bq3, C.ba3], [C.bq4, C.ba4], [C.bq5, C.ba5], [C.q2, C.a2]] : [[C.q1, C.a1], [C.q2, C.a2], [C.q3, C.a3], [C.q4, C.a4]];
+    const faq: Array<[Copy, Copy]> = anyOnSale || liveSubscription
+        ? [[C.bq1, C.ba1], [C.bq2, C.ba2], [C.bq3, C.ba3], [C.bq4, C.ba4], [C.bq5, C.ba5], [C.q5, C.a5], [C.q6, C.a6], [C.q2, C.a2]]
+        : [[C.q1, C.a1], [C.q2, C.a2], [C.q5, C.a5], [C.q6, C.a6], [C.q3, C.a3], [C.q4, C.a4]];
 
     return {
         tx, locale, signedIn, data, setData, failed, catalog, checkout, me, billing, liveSubscription, anyOnSale, diagnostics,

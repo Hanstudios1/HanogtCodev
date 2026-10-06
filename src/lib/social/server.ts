@@ -22,20 +22,23 @@ export type SocialErrorCode =
     | "invalid_email" | "invalid_id" | "not_found" | "not_friend" | "blocked" | "forbidden"
     | "message_not_found" | "empty_message" | "message_too_long" | "invalid_tag" | "user_not_found"
     | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error"
-    | "not_configured" | "unavailable";
+    | "not_configured" | "unavailable" | "stars_limit";
 
 /** Expected failures: the message is Turkish (primary language), the code is translated by the interface. */
 export class SocialApiError extends Error {
     readonly status: number;
     readonly code: SocialErrorCode;
     readonly headers: Record<string, string>;
+    /** Machine-readable fields next to the code (e.g. the plan and limit of stars_limit). */
+    readonly extra: Record<string, unknown>;
 
-    constructor(status: number, code: SocialErrorCode, message: string, headers: Record<string, string> = {}) {
+    constructor(status: number, code: SocialErrorCode, message: string, headers: Record<string, string> = {}, extra: Record<string, unknown> = {}) {
         super(message);
         this.name = "SocialApiError";
         this.status = status;
         this.code = code;
         this.headers = headers;
+        this.extra = extra;
     }
 }
 
@@ -45,7 +48,7 @@ export function socialJson(data: unknown, status = 200) {
 
 export function socialErrorResponse(error: unknown, scope = "social") {
     if (error instanceof SocialApiError) {
-        return NextResponse.json({ error: error.message, code: error.code }, { status: error.status, headers: jsonSecurityHeaders(error.headers) });
+        return NextResponse.json({ ...error.extra, error: error.message, code: error.code }, { status: error.status, headers: jsonSecurityHeaders(error.headers) });
     }
     // Only the message is logged: request bodies and message texts stay out of the logs.
     console.error(`[${scope}] request failed:`, error instanceof Error ? error.message : "unknown error");

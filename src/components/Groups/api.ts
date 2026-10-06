@@ -85,7 +85,7 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     project_not_found: { TR: "Başlangıç projesi bulunamadı.", EN: "The starting project wasn't found." },
     group_limit: { TR: "Planınla en fazla {limit} grubun sahibi olabilirsin. Yeni grup için bir grubu sil, sahipliğini devret ya da planını yükselt (Fiyatlandırma).", EN: "Your plan lets you own up to {limit} groups. To create another, delete one, hand one over or upgrade your plan (Pricing)." },
     target_group_limit: { TR: "Bu üyenin planı en fazla {limit} grubun sahibi olmasına izin veriyor; sahiplik devredilemedi.", EN: "This member's plan lets them own up to {limit} groups, so ownership couldn't be handed over." },
-    group_full: { TR: "Grup 25 üye sınırına ulaştı.", EN: "The group has reached its 25-member limit." },
+    group_full: { TR: "Grup {limit} üye sınırına ulaştı. Grup sahibinin planı yükseldikçe grup büyür (Fiyatlandırma).", EN: "The group has reached its {limit}-member limit. Groups grow with their owner's plan (Pricing)." },
     not_friend: { TR: "Yalnızca arkadaşlarınızı davet edebilirsiniz.", EN: "You can only invite your friends." },
     user_not_found: { TR: "Kullanıcı bulunamadı.", EN: "User not found." },
     invites_disabled: { TR: "Bu grupta yalnızca yöneticiler davet gönderebilir.", EN: "Only admins can send invitations in this group." },
@@ -104,7 +104,9 @@ export const GROUP_ERROR_COPY: Record<GroupClientErrorCode, Copy> = {
     invalid_expiry: { TR: "Geçersiz süre.", EN: "Invalid expiry." },
     invalid_max_uses: { TR: "Geçersiz kullanım sınırı.", EN: "Invalid use limit." },
     message_not_found: { TR: "Mesaj bulunamadı; silinmiş olabilir.", EN: "The message wasn't found; it may have been deleted." },
-    pin_limit: { TR: "En fazla 25 mesaj sabitlenebilir.", EN: "You can pin at most 25 messages." },
+    pin_limit: { TR: "Bu grupta en fazla {limit} mesaj sabitlenebilir; önce bir mesajın sabitlemesini kaldırın.", EN: "This group can pin at most {limit} messages; unpin one first." },
+    commands_limit: { TR: "Bu grupta en fazla {limit} özel komut olabilir. Grup sahibinin planı yükseldikçe sınır artar.", EN: "This group can have at most {limit} custom commands. The limit grows with the group owner's plan." },
+    words_limit: { TR: "Bu grupta en fazla {limit} yasaklı kelime olabilir. Grup sahibinin planı yükseldikçe sınır artar.", EN: "This group can have at most {limit} banned words. The limit grows with the group owner's plan." },
     invalid_reaction: { TR: "Geçersiz tepki.", EN: "Invalid reaction." },
     conflict: { TR: "Grup başka bir yerde güncellendi; tekrar deneyin.", EN: "The group was updated elsewhere; please try again." },
     server_error: { TR: "Bir sorun oluştu. Lütfen tekrar deneyin.", EN: "Something went wrong. Please try again." },
@@ -176,13 +178,23 @@ export const groupsApi = {
     join: (token: string) => request<{ success: true; groupId: string; alreadyMember: boolean }>("/api/groups/join", { body: { token } }),
 };
 
+/** Limit messages for an answer without its number (an older server). */
+const LIMIT_WITHOUT_NUMBER: Partial<Record<GroupClientErrorCode, Copy>> = {
+    group_limit: GROUP_ERROR_COPY.server_error,
+    target_group_limit: GROUP_ERROR_COPY.server_error,
+    group_full: { TR: "Grup üye sınırına ulaştı.", EN: "The group has reached its member limit." },
+    pin_limit: { TR: "Sabitlenebilecek mesaj sınırına ulaşıldı; önce bir mesajın sabitlemesini kaldırın.", EN: "The pin limit is reached; unpin a message first." },
+    commands_limit: { TR: "Bu grubun özel komut sınırına ulaşıldı.", EN: "This group's custom command limit is reached." },
+    words_limit: { TR: "Bu grubun yasaklı kelime sınırına ulaşıldı.", EN: "This group's banned word limit is reached." },
+};
+
 /** Turns any thrown value into localized text (API codes and client codes alike). */
 export function useGroupErrorText() {
     const { tx } = useI18n();
     return useCallback((error: unknown, fallback: Copy = GROUP_ERROR_COPY.server_error) => {
         if (error instanceof GroupRequestError) {
-            // A limit message without its number (an older server) falls back to the generic text.
-            if ((error.code === "group_limit" || error.code === "target_group_limit") && error.vars.limit === undefined) return tx(GROUP_ERROR_COPY.server_error);
+            const withoutNumber = LIMIT_WITHOUT_NUMBER[error.code];
+            if (withoutNumber && error.vars.limit === undefined) return tx(withoutNumber);
             return tx(GROUP_ERROR_COPY[error.code] ?? fallback, error.vars);
         }
         if (isClientCode(error)) return tx(GROUP_ERROR_COPY[error]);

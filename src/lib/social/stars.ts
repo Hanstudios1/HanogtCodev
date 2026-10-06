@@ -3,6 +3,7 @@
  * keeps them in message_stars; src/lib/server/social-stars.ts).
  * Framework-free.
  */
+import { PLAN_STAR_LIMITS } from "@/lib/plans";
 
 export type StarScope = "dm" | "group";
 
@@ -19,8 +20,8 @@ export type StarredMessage = {
     messageAt: string | null;
 };
 
-/** One person keeps at most this many stars. */
-export const STARS_MAX = 200;
+/** The most stars any plan keeps (Pro); a person's own limit is their plan's (PLAN_STAR_LIMITS). */
+export const STARS_MAX = PLAN_STAR_LIMITS.pro;
 
 /** The key of a star in a set: scope, conversation and message. */
 export const starKey = (scope: StarScope, target: string, messageId: string) => `${scope}:${target}:${messageId}`;

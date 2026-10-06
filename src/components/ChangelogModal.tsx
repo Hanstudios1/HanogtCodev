@@ -24,6 +24,20 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.24",
+        version: "v0.3.24",
+        date: "2026-10-06",
+        title: { TR: "Daha dolu abonelikler", EN: "Plans with more in them" },
+        desc: { TR: "Kendi API anahtarınla gönderdiğin mesajlar artık Hanogt AI hakkından düşüyor; planlara kod çalıştırma, daha büyük gruplar ve daha çok yıldızlı mesaj eklendi.", EN: "Messages through your own API key now use your Hanogt AI allowance; plans gain more files per run, bigger groups and more starred messages." },
+        items: [
+            { TR: "Kendi API anahtarınla bağlantıların ayrı bir günlük sınırı kalmadı: mesajlar Hanogt AI hakkından düşüyor, sağlayıcı yanıt vermezse geri ekleniyor.", EN: "Connections with your own API key no longer have a separate daily limit: messages use your Hanogt AI allowance and come back if the provider doesn't answer." },
+            { TR: "Kod editöründe tek seferde Ücretsiz'de 8, Plus'ta 25, Pro'da 75 dosya çalıştırabilirsin; sonuçlar geldikçe görünür.", EN: "Run 8 files at once on Free, 25 on Plus and 75 on Pro in the code editor; results show up as they arrive." },
+            { TR: "Grupların sahibinin planıyla büyüyor: 25, 100 ya da 250 üye; daha çok sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelimesi.", EN: "Groups grow with their owner's plan: 25, 100 or 250 members, with more pinned messages, custom bot commands and AutoMod banned words." },
+            { TR: "Yıldızlı mesajlar: Ücretsiz'de 200, Plus'ta 500, Pro'da 1.000.", EN: "Starred messages: 200 on Free, 500 on Plus and 1,000 on Pro." },
+            { TR: "Fiyatlandırma sayfasında yeni avantajlar ve bölümlere ayrılmış karşılaştırma tablosu; Kullanım Şartları ve Gizlilik Politikası 5.1.", EN: "New benefits and a comparison table in sections on the Pricing page; Terms of Use and Privacy Policy 5.1." },
+        ],
+    },
+    {
         id: "v0.3.23",
         version: "v0.3.23",
         date: "2026-10-06",

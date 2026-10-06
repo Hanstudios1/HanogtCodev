@@ -127,12 +127,16 @@ export async function aiUsage(email: string, plan: PlanId) {
     return { minute, window };
 }
 
-/** Rate-limit keys of messages sent through the person's own AI connections: a minute and a day (src/app/api/ai/route.ts). */
-export const OWN_KEY_LIMIT_KEYS = (email: string) => ({ minute: `ai-own:${email}`, window: `ai-own-day:${email}` });
+/**
+ * Rate-limit keys of the separate own-connection allowance (a minute and a
+ * day) that existed before 0.3.24; nothing counts in them any more, staff
+ * resets still clear what is left.
+ */
+const RETIRED_OWN_KEY_LIMIT_KEYS = (email: string) => ({ minute: `ai-own:${email}`, window: `ai-own-day:${email}` });
 
-/** Staff "reset Hanogt AI limit": Hanogt AI's counters and the own-key ones. */
+/** Staff "reset Hanogt AI limit": Hanogt AI's counters (own connections count in them too). */
 export async function resetAiLimits(email: string) {
-    const keys = [AI_LIMIT_KEYS(email), OWN_KEY_LIMIT_KEYS(email)];
+    const keys = [AI_LIMIT_KEYS(email), RETIRED_OWN_KEY_LIMIT_KEYS(email)];
     await Promise.all(keys.flatMap((pair) => [resetRateLimit(pair.minute), resetRateLimit(pair.window)]));
 }
 

@@ -9,7 +9,9 @@ import {
     queryServerCollection,
     runServerQuery,
 } from "@/lib/server/firebase-rest";
+import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import { planQuota } from "@/lib/server/entitlements";
+import { fitsGroupLimit, groupLimitsFor } from "@/lib/server/group-limits";
 import { forgetMemberStars } from "@/lib/server/social-stars";
 import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
 import {
@@ -195,10 +197,11 @@ async function groupDetail(groupId: string, user: GroupUser): Promise<GroupDetai
     const memberEmails = orderedMembers(group);
     const manager = isManagerRole(role);
     const friends = new Set(strings(user.user.friends));
-    const [profiles, stats, banned] = await Promise.all([
-        loadProfiles(memberEmails),
+    const [profiles, stats, banned, owner] = await Promise.all([
+        loadProfiles(memberEmails, GROUP_FEATURES_MAX.members),
         manager ? groupStats(groupId) : Promise.resolve(null),
         manager ? bannedMembers(groupId) : Promise.resolve([]),
+        groupLimitsFor(group.ownerEmail),
     ]);
     const now = Date.now();
     return {
@@ -224,6 +227,7 @@ async function groupDetail(groupId: string, user: GroupUser): Promise<GroupDetai
         me: { email, role, key: memberKey(groupId, email) },
         stats,
         banned,
+        limits: owner.limits,
     };
 }
 
@@ -409,7 +413,9 @@ async function acceptInvite(body: Record<string, unknown>, user: GroupUser) {
             await patchServerDocument(`group_invites/${inviteId}`, { status: "accepted", resolvedAt: new Date() }, { updateFields: ["status", "resolvedAt"], exists: true }).catch(() => undefined);
             return { group, joined: false };
         }
-        if (members.length >= GROUP_LIMITS.membersMax) throw new GroupApiError(409, "group_full", "Grup 25 üye sınırına ulaştı.");
+        // The group's size is its owner's plan's (Free 25, Plus 100, Pro 250 members).
+        const { limits } = await groupLimitsFor(group.ownerEmail);
+        if (members.length >= limits.members) throw new GroupApiError(409, "group_full", `Grup ${limits.members} üye sınırına ulaştı.`, { limit: limits.members });
         const now = new Date();
         await commitServerPatches([
             { path: `groups/${groupId}`, data: { members: [...members, email], updatedAt: now }, updateFields: ["members", "updatedAt"], updateTime: group._updateTime },
@@ -448,7 +454,8 @@ async function inviteFriend(body: Record<string, unknown>, user: GroupUser) {
     if (!strings(user.user.friends).includes(targetEmail)) throw new GroupApiError(403, "not_friend", "Yalnızca arkadaşlarınızı gruba davet edebilirsiniz.");
     const members = groupMembers(group);
     if (members.includes(targetEmail)) return { success: true, alreadyMember: true };
-    if (members.length >= GROUP_LIMITS.membersMax) throw new GroupApiError(409, "group_full", "Grup 25 üye sınırına ulaştı.");
+    const { limits } = await groupLimitsFor(group.ownerEmail);
+    if (members.length >= limits.members) throw new GroupApiError(409, "group_full", `Grup ${limits.members} üye sınırına ulaştı.`, { limit: limits.members });
     if (await isBanned(groupId, targetEmail)) throw new GroupApiError(403, "target_banned", "Bu kullanıcının gruba katılması engellenmiş.");
     const target = await getServerDocument(`users/${targetEmail}`);
     if (!target) throw new GroupApiError(404, "user_not_found", "Kullanıcı bulunamadı.");
@@ -641,7 +648,14 @@ async function updateSettings(body: Record<string, unknown>, user: GroupUser) {
         if (body.welcomeMessage !== undefined) data.welcomeMessage = cleanMultiLine(body.welcomeMessage, WELCOME_MESSAGE_MAX).slice(0, WELCOME_MESSAGE_MAX).trim();
         if (body.customCommands !== undefined) {
             if (!Array.isArray(body.customCommands)) throw new GroupApiError(400, "invalid_request", "Geçersiz komut listesi.");
-            data.customCommands = sanitizeCustomCommands(body.customCommands, RESERVED_COMMAND_NAMES);
+            const commands = sanitizeCustomCommands(body.customCommands, RESERVED_COMMAND_NAMES);
+            // As many as the owner's plan allows (Free 20, Plus 50, Pro 100); a group above it can still edit and remove.
+            const { limits } = await groupLimitsFor(group.ownerEmail);
+            const before = sanitizeCustomCommands(group.customCommands, RESERVED_COMMAND_NAMES).length;
+            if (!fitsGroupLimit(commands.length, before, limits.commands)) {
+                throw new GroupApiError(409, "commands_limit", `Bu grupta en fazla ${limits.commands} özel komut olabilir.`, { limit: limits.commands });
+            }
+            data.customCommands = commands;
         }
         const fields = Object.keys(data);
         if (!fields.length) return;

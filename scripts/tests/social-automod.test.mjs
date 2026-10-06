@@ -33,9 +33,9 @@ test("settings: defaults, limits and the owner always exempt", () => {
     assert.equal(normalizeDomain("WWW.Example.co.uk"), "example.co.uk");
 });
 
-test("custom words: trimmed, lower case, no duplicates, at most 100", () => {
+test("custom words: trimmed, lower case, no duplicates, at most 1,000 (the most any plan allows)", () => {
     assert.deepEqual(sanitizeCustomWords(["  Kötü  Söz ", "kötü söz", "a", 5, "ÇİRKİN"]), ["kötü söz", "çirkin"]);
-    assert.equal(sanitizeCustomWords(Array.from({ length: 150 }, (_, i) => `kelime${i}`)).length, 100);
+    assert.equal(sanitizeCustomWords(Array.from({ length: 1500 }, (_, i) => `kelime${i}`)).length, 1000);
     assert.equal(sanitizeCustomWords(["x".repeat(80)])[0].length, 40);
 });
 

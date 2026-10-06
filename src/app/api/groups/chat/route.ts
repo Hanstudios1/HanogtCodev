@@ -1,8 +1,10 @@
 import { after, type NextRequest } from "next/server";
 import { deleteServerDocument, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { groupLimitsFor } from "@/lib/server/group-limits";
 import { clearMessageTraces } from "@/lib/server/message-traces";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
-import { GROUP_LIMITS, SYSTEM_SENDER, botOfSender, canModerate, isGroupId, isManagerRole, isMemberKey, isReactionKey, outranks, safeGroupVoicePath } from "@/lib/groups";
+import { SYSTEM_SENDER, botOfSender, canModerate, isGroupId, isManagerRole, isMemberKey, isReactionKey, outranks, safeGroupVoicePath } from "@/lib/groups";
+import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import { editGroupMessage, sendGroupMessage } from "../_messages";
 import {
     GroupApiError,
@@ -44,7 +46,9 @@ async function setPinned(groupId: string, messageId: string, email: string, pinn
         const current = strings(group.pinnedMessageIds).filter(isGroupId);
         if (current.includes(messageId) === pinned) return;
         if (pinned) {
-            if (current.length >= GROUP_LIMITS.pinnedMax) throw new GroupApiError(409, "pin_limit", "En fazla 25 mesaj sabitlenebilir; önce bir mesajın sabitlemesini kaldırın.");
+            // As many pins as the owner's plan allows (Free 25, Plus 50, Pro 100).
+            const { limits } = await groupLimitsFor(group.ownerEmail);
+            if (current.length >= limits.pinned) throw new GroupApiError(409, "pin_limit", `En fazla ${limits.pinned} mesaj sabitlenebilir; önce bir mesajın sabitlemesini kaldırın.`, { limit: limits.pinned });
             const message = await getServerDocument<StoredMessage>(messagePath(groupId, messageId));
             if (!message) throw new GroupApiError(404, "message_not_found", "Mesaj bulunamadı.");
         }
@@ -66,7 +70,7 @@ async function toggleReaction(groupId: string, messageId: string, reaction: stri
         const message = await getServerDocument<StoredMessage>(path);
         if (!message) throw new GroupApiError(404, "message_not_found", "Mesaj bulunamadı.");
         const current = strings(message.reactions?.[reaction]).filter(isMemberKey);
-        const next = current.includes(key) ? current.filter((entry) => entry !== key) : [...current, key].slice(-GROUP_LIMITS.membersMax * 2);
+        const next = current.includes(key) ? current.filter((entry) => entry !== key) : [...current, key].slice(-GROUP_FEATURES_MAX.members * 2);
         await patchServerDocument(path, next.length ? { reactions: { [reaction]: next } } : {}, { updateFields: [`reactions.${reaction}`], updateTime: message._updateTime });
         return next;
     });
@@ -161,7 +165,7 @@ export async function GET(request: NextRequest) {
             messages: records.map(wireMessage),
             hasMore: !since && records.length >= limit,
             typing,
-            pinnedMessageIds: strings(group.pinnedMessageIds).filter(isGroupId).slice(0, GROUP_LIMITS.pinnedMax),
+            pinnedMessageIds: strings(group.pinnedMessageIds).filter(isGroupId).slice(0, GROUP_FEATURES_MAX.pinned),
             now,
         });
     } catch (error) {

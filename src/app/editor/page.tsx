@@ -53,6 +53,8 @@ import { EDITOR_IMPORT_PARAM, consumeEditorImportBundle, type EditorImportError 
 import { readEditorSettings, useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type { MonacoApi } from "@/lib/monaco";
+import { useMyPlan } from "@/lib/plan-client";
+import { PLAN_COPY, PLAN_RUN_LIMITS, nextPlanUp } from "@/lib/plans";
 import {
     BROWSER_LANGUAGES, PLAINTEXT_LANGUAGE, ensureFileExtension, fileExtensionFor, getLanguage, isProgramLanguage,
     languageFromFileName, normalizeLanguageId, type LanguageInfo,
@@ -88,7 +90,6 @@ const RECOVERY_KEY = "hanogt_unsaved_tabs";
  */
 const RECOVERY_PROJECT_KEY = "hanogt_unsaved_project";
 const PANEL_WIDTH_KEY = "hanogt_editor_panel_width";
-const MAX_RUNNABLE_FILES = 8;
 const GAME_LANGUAGES = ["csharp", "cpp"] as const;
 
 let tabSequence = 0;
@@ -220,7 +221,8 @@ const C = {
     nameTaken: { TR: "Bu adla açık bir dosya zaten var.", EN: "A file with this name is already open." },
     languageChanged: { TR: "Dil {language} olarak değiştirildi.", EN: "Language changed to {language}." },
     tooManyTabs: { TR: "En fazla {count} dosya açık olabilir.", EN: "At most {count} files can be open." },
-    tooManyRuns: { TR: "Tek seferde en fazla 8 dosya çalışır; ilk 8 dosya çalıştırıldı.", EN: "At most 8 files run at once; the first 8 were run." },
+    tooManyRuns: { TR: "Planında tek seferde en fazla {count} dosya çalışır; ilk {count} dosya çalıştırıldı.", EN: "Your plan runs at most {count} files at once; the first {count} were run." },
+    tooManyRunsUpgrade: { TR: "Planında tek seferde en fazla {count} dosya çalışır; ilk {count} dosya çalıştırıldı. {plan} ile {more} dosyaya kadar çalıştırabilirsin.", EN: "Your plan runs at most {count} files at once; the first {count} were run. {plan} runs up to {more}." },
     uploadIssues: { TR: "{count} dosya açılamadı: {list}", EN: "{count} files couldn't be opened: {list}" },
     uploaded: { TR: "{count} dosya açıldı.", EN: "{count} files opened." },
     gameNoFiles: { TR: "Oyun scripti düzenlenirken yeni dosya açılamaz.", EN: "New files can't be opened while editing a game script." },
@@ -323,6 +325,9 @@ function EditorContent() {
     const isGameMode = Boolean(gameProjectId);
     const { data: session, status: sessionStatus } = useSession();
     const sessionEmail = session?.user?.email || "";
+    // How many files one run starts at once: Free 8, Plus 25, Pro 75 (the server counts its own files a minute).
+    const plan = useMyPlan(sessionEmail || null);
+    const maxRunFiles = PLAN_RUN_LIMITS[plan].files;
     const { tx, language: uiLanguage, dir } = useI18n();
     const { theme: siteTheme, toggle: toggleSiteTheme } = useTheme();
     const settings = useEditorSettings();
@@ -869,8 +874,15 @@ function EditorContent() {
 
     const startRun = useCallback(async (targets: EditorTab[]) => {
         if (!targets.length || abortRef.current) return;
-        const limited = targets.slice(0, MAX_RUNNABLE_FILES);
-        if (targets.length > MAX_RUNNABLE_FILES) toast({ tone: "warning", message: tx(C.tooManyRuns) });
+        const limited = targets.slice(0, maxRunFiles);
+        if (targets.length > maxRunFiles) {
+            const upgrade = nextPlanUp(plan);
+            toast({
+                tone: "warning",
+                message: upgrade ? tx(C.tooManyRunsUpgrade, { count: maxRunFiles, plan: tx(PLAN_COPY[upgrade].name), more: PLAN_RUN_LIMITS[upgrade].files }) : tx(C.tooManyRuns, { count: maxRunFiles }),
+                ...(upgrade ? { action: { label: tx(C.seePlans), href: "/plans" } } : {}),
+            });
+        }
         const id = (runCounter.current += 1);
         const controller = new AbortController();
         abortRef.current = controller;
@@ -905,7 +917,7 @@ function EditorContent() {
         } finally {
             if (abortRef.current === controller) abortRef.current = null;
         }
-    }, [settings.tabSize, stdin, toast, tx, uiLanguage]);
+    }, [maxRunFiles, plan, settings.tabSize, stdin, toast, tx, uiLanguage]);
 
     const handleRun = useCallback(() => {
         if (isRunning) return;
@@ -914,7 +926,7 @@ function EditorContent() {
             return;
         }
         if (runMode === "programs") {
-            // The active file runs first when there are more than eight.
+            // The active file runs first when there are more than the plan runs at once.
             const ordered = activeIsProgram && activeTab ? [activeTab, ...programTabs.filter((tab) => tab.id !== activeTab.id)] : programTabs;
             if (isWebProject) setPreviewKey((key) => key + 1);
             void startRun(ordered);
@@ -1563,7 +1575,7 @@ function EditorContent() {
         const toPalette = (group: string) => ({ id, label, hint, shortcut, icon, disabled, keywords, run }: EditorCommand): PaletteCommand => ({ id, group, label, hint, shortcut, icon, disabled, keywords, run });
         const commands: PaletteCommand[] = [
             {
-                id: "run", group: actions, label: runMode === "validate" ? tx(C.validate) : runMode === "preview" ? tx(C.preview) : programTabs.length > 1 ? tx(C.runAll, { count: Math.min(programTabs.length, MAX_RUNNABLE_FILES) }) : tx(C.run),
+                id: "run", group: actions, label: runMode === "validate" ? tx(C.validate) : runMode === "preview" ? tx(C.preview) : programTabs.length > 1 ? tx(C.runAll, { count: Math.min(programTabs.length, maxRunFiles) }) : tx(C.run),
                 shortcut: modShortcut("Enter"), icon: <Play className="h-4 w-4" aria-hidden />, disabled: runMode === "none" || isRunning, hint: notRunnableReason ?? undefined, keywords: "run çalıştır execute", run: handleRun,
             },
             { id: "run-active", group: actions, label: tx(C.runActive), shortcut: modShortcut("Enter", true), icon: <Play className="h-4 w-4" aria-hidden />, disabled: isRunning || !(activeIsProgram || activeIsValidator), keywords: "run file", run: handleRunActive },
@@ -1602,7 +1614,7 @@ function EditorContent() {
         return commands;
         // modShortcut only depends on `mac`.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tx, runMode, programTabs.length, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, isGameMode, mac, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile, fileCommands, editCommands, teamCommands, mediaCommands]);
+    }, [tx, runMode, programTabs.length, maxRunFiles, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, isGameMode, mac, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile, fileCommands, editCommands, teamCommands, mediaCommands]);
 
     // ------------------------------------------------------------------ render helpers
     // In a live session "saved" means the server has every local change.
@@ -1620,7 +1632,7 @@ function EditorContent() {
         ? tx(C.running)
         : runMode === "validate" ? tx(C.validate)
             : runMode === "preview" ? tx(C.preview)
-                : programTabs.length > 1 ? tx(C.runAll, { count: Math.min(programTabs.length, MAX_RUNNABLE_FILES) }) : tx(C.run);
+                : programTabs.length > 1 ? tx(C.runAll, { count: Math.min(programTabs.length, maxRunFiles) }) : tx(C.run);
     const existingNames = tabs.map((tab) => tab.name);
     const dark = siteTheme === "dark";
 

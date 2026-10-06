@@ -19,6 +19,7 @@ import {
     type GroupBot,
     type GroupRole,
 } from "@/lib/groups";
+import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import { enforceHanogtAi, refundHanogtAi, type QuotaPass } from "@/lib/server/ai-usage";
 import { repeatKey, scanMessage, SPAM_LIMITS } from "@/lib/server/automod";
 import { commitServerMutations, createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
@@ -48,6 +49,7 @@ import {
     strings,
     type GroupDocument,
     type GroupUser,
+    type PublicProfile,
 } from "./_shared";
 
 /*
@@ -97,12 +99,22 @@ function wire(id: string, data: Record<string, unknown>) {
     return { ...data, id, createdAt };
 }
 
-/** Names (as others see them) of the group's members, by e-mail. */
-async function memberDirectory(group: GroupDocument) {
+type MemberDirectory = { byEmail: Map<string, string>; profiles: Map<string, PublicProfile | null> };
+const directoryCache = new Map<string, { at: number; members: string; directory: MemberDirectory }>();
+/** A group of up to 250 members isn't read again for every message with an @ in it. */
+const DIRECTORY_CACHE_MS = 60_000;
+
+/** Names (as others see them) of the group's members, by e-mail; kept for a minute while the members stay the same. */
+async function memberDirectory(groupId: string, group: GroupDocument): Promise<MemberDirectory> {
     const members = groupMembers(group);
-    const profiles = await loadProfiles(members);
-    const byEmail = new Map(members.map((email) => [email, profileName(email, profiles.get(email))]));
-    return { byEmail, profiles };
+    const key = members.join(",");
+    const cached = directoryCache.get(groupId);
+    if (cached && cached.members === key && Date.now() - cached.at < DIRECTORY_CACHE_MS) return cached.directory;
+    const profiles = await loadProfiles(members, GROUP_FEATURES_MAX.members);
+    const directory = { byEmail: new Map(members.map((email) => [email, profileName(email, profiles.get(email))])), profiles };
+    directoryCache.set(groupId, { at: Date.now(), members: key, directory });
+    if (directoryCache.size > 200) directoryCache.delete(directoryCache.keys().next().value!);
+    return directory;
 }
 
 function emailForName(directory: Map<string, string>, username: string) {
@@ -392,7 +404,7 @@ async function notifyModerators(ctx: Ctx, reporter: string, target: string) {
 async function runBuiltIn(ctx: Ctx, spec: CommandSpec, rest: string, name: string, channel: string): Promise<CommandOutcome> {
     if (!rankAtLeast(ctx.role, spec.minRank)) return commandError("forbidden");
     // Commands that name someone need the members' names.
-    const directory = spec.id === "help" || spec.id === "rules" || spec.id === "ai" || spec.id === "slowmode" ? null : await memberDirectory(ctx.group);
+    const directory = spec.id === "help" || spec.id === "rules" || spec.id === "ai" || spec.id === "slowmode" ? null : await memberDirectory(ctx.groupId, ctx.group);
     const parsed = parseCommand(spec, rest, directory ? [...directory.byEmail.values()] : []);
     if (!parsed.ok) return commandError(parsed.problem);
     const command = parsed.command;
@@ -543,7 +555,7 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
 
     // Mentions: who is named (for the bell and AutoMod's limit) and whether Hanogt AI is asked.
     const mentionsSomeone = !forwarded && text.includes("@");
-    const directory = mentionsSomeone ? await memberDirectory(group) : null;
+    const directory = mentionsSomeone ? await memberDirectory(groupId, group) : null;
     const segments = mentionsSomeone ? tokenizeMessage(text, [...(directory?.byEmail.values() ?? []), AI_NAME]).filter((segment) => segment.kind === "mention") : [];
     const people = segments.filter((segment) => segment.kind === "mention" && segment.username !== AI_NAME);
     const asksAi = question === null && segments.some((segment) => segment.kind === "mention" && segment.username === AI_NAME);
@@ -574,7 +586,9 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
         const named = everyone
             ? groupMembers(group)
             : people.flatMap((segment) => (segment.kind === "mention" ? [emailForName(directory.byEmail, segment.username)] : [])).filter((email): email is string => Boolean(email));
-        after(() => notifyMentions(named, user.email, { id: groupId, name: typeof group.name === "string" ? group.name : "Hanogt" }, messagePreview(text, 160), everyone));
+        // @everyone from moderators and up reaches the whole group (up to 250 people); anyone else's reaches at most 30.
+        const reach = everyone && canModerate(role) ? GROUP_FEATURES_MAX.members : undefined;
+        after(() => notifyMentions(named, user.email, { id: groupId, name: typeof group.name === "string" ? group.name : "Hanogt" }, messagePreview(text, 160), everyone, reach));
     }
     if (question !== null) {
         const refusal = await startAiAnswer(ctx, question, { id, text }, channel);

@@ -11,6 +11,7 @@ import { linkifyOutput, stripAnsi } from "@/components/Editor/output-links";
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
 import { useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy as CopyText } from "@/lib/i18n";
+import { PLAN_COPY, PLAN_RUN_LIMITS } from "@/lib/plans";
 import { LANGUAGES, languageDisplayName } from "@/lib/runtimes/languages";
 import type { RunFailure, RunNotice } from "@/services/piston";
 
@@ -35,6 +36,8 @@ interface ConsoleProps {
 }
 
 const C = {
+    runLimit: { TR: "Planının çalıştırma sınırına ulaştın: derlenen dillerde dakikada {count} dosya.", EN: "You reached your plan's run limit: {count} files a minute for compiled languages." },
+    runLimitUpgrade: { TR: "{plan} ile dakikada {count} dosya", EN: "{count} files a minute with {plan}" },
     output: { TR: "Çıktı", EN: "Output" },
     input: { TR: "Girdi", EN: "Input" },
     history: { TR: "Geçmiş", EN: "History" },
@@ -73,7 +76,7 @@ const C = {
 const FAILURES: Record<RunFailure["code"], CopyText> = {
     auth_required: { TR: "Bu dili çalıştırmak için giriş yapın. Tarayıcıda çalışan diller (JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS ve diğerleri) ile YAML, TOML, XML ve JSON doğrulayıcıları girişsiz de çalışır.", EN: "Sign in to run this language. Browser languages (JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS and more) and the YAML, TOML, XML and JSON validators run without signing in." },
     suspended: { TR: "Hesabınız askıya alındığı için kod çalıştıramazsınız.", EN: "Your account is suspended, so you can't run code." },
-    rate_limited: { TR: "Çalıştırma sınırına ulaştınız (dakikada 20). Kısa süre sonra tekrar deneyin.", EN: "You reached the run limit (20 per minute). Try again shortly." },
+    rate_limited: { TR: "Çalıştırma sınırına ulaştınız. Kısa süre sonra tekrar deneyin.", EN: "You reached the run limit. Try again shortly." },
     invalid_request: { TR: "Çalıştırma isteği geçersiz.", EN: "The run request was invalid." },
     unsupported_language: { TR: "Bu dil sunucuda çalıştırılamıyor.", EN: "This language can't run on the server." },
     too_large: { TR: "Kod çok büyük: dosya başına 50.000, toplamda 150.000 karakter ve 10.000 karakter girdi sınırı var.", EN: "The code is too large: the limits are 50,000 characters per file, 150,000 in total and 10,000 characters of input." },
@@ -402,8 +405,11 @@ function EntryCard({ entry, running, formatDuration, onGoToLine }: { entry: RunE
                 {!job && !running && <p className="text-xs text-zinc-500 dark:text-zinc-400">{tx(C.notRunHint)}</p>}
                 {failure && (
                     <div className="space-y-1 text-xs text-red-700 dark:text-red-300">
-                        <p>{tx(FAILURES[failure.code])}</p>
+                        <p>{failure.code === "rate_limited" && failure.limit ? tx(C.runLimit, { count: failure.limit.perMinute }) : tx(FAILURES[failure.code])}</p>
                         {failure.code === "rate_limited" && failure.retryAfterSeconds ? <p className="text-zinc-500">{tx({ TR: "{seconds} saniye sonra tekrar deneyin.", EN: "Try again in {seconds} seconds." }, { seconds: failure.retryAfterSeconds })}</p> : null}
+                        {failure.code === "rate_limited" && failure.limit?.upgrade ? (
+                            <Link href="/plans" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline dark:text-indigo-300">{tx(C.runLimitUpgrade, { plan: tx(PLAN_COPY[failure.limit.upgrade].name), count: PLAN_RUN_LIMITS[failure.limit.upgrade].perMinute })}</Link>
+                        ) : null}
                         {failure.code === "auth_required" && (
                             <Link href="/login?callbackUrl=%2Feditor" className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:underline dark:text-indigo-300"><LogIn className="h-3.5 w-3.5" aria-hidden />{tx(C.signIn)}</Link>
                         )}

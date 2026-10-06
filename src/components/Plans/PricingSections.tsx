@@ -14,9 +14,12 @@ import {
     PLAN_AI_LIMITS,
     PLAN_COLLAB_LIMITS,
     PLAN_COPY,
+    PLAN_GROUP_FEATURES,
     PLAN_GROUP_LIMITS,
     PLAN_IDS,
     PLAN_PROJECT_LIMITS,
+    PLAN_RUN_LIMITS,
+    PLAN_STAR_LIMITS,
     couponAmount,
     discountedPrice,
     normalizeCouponCode,
@@ -41,6 +44,21 @@ const P = {
     fileContext: { TR: "Okunan dosya", EN: "File read" },
     chars: { TR: "{count} karakter", EN: "{count} characters" },
     ownKeys: { TR: "Kendi API anahtarınla bağlantı", EN: "Own API key connections" },
+    ownKeysCell: { TR: "{count} · Hanogt AI hakkından", EN: "{count} · uses Hanogt AI messages" },
+    thinking: { TR: "Düşünme payı", EN: "Thinking budget" },
+    instructions: { TR: "Kişisel talimat", EN: "Personal instructions" },
+    runFiles: { TR: "Tek seferde çalışan dosya", EN: "Files run at once" },
+    runMinute: { TR: "Derlenen dillerde dakikada dosya", EN: "Compiled-language files a minute" },
+    groupMembers: { TR: "Grup başına üye", EN: "Members per group" },
+    groupPins: { TR: "Grup başına sabitlenmiş mesaj", EN: "Pinned messages per group" },
+    groupCommands: { TR: "Özel bot komutu (grup başına)", EN: "Custom bot commands (per group)" },
+    groupWords: { TR: "AutoMod yasaklı kelime (grup başına)", EN: "AutoMod banned words (per group)" },
+    stars: { TR: "Yıldızlı mesaj", EN: "Starred messages" },
+    sectionAi: { TR: "Hanogt AI", EN: "Hanogt AI" },
+    sectionBuild: { TR: "Kod, oyun ve ekip", EN: "Code, games and teams" },
+    sectionSocial: { TR: "Hanogt Social", EN: "Hanogt Social" },
+    sectionExtras: { TR: "Destek ve profil", EN: "Support and profile" },
+    groupNote: { TR: "Grup sınırları grubun sahibinin planına göredir.", EN: "Group limits follow the group owner's plan." },
     apiKeys: { TR: "Geliştirici API anahtarı", EN: "Developer API keys" },
     codeProjects: { TR: "Kod projesi", EN: "Code projects" },
     gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
@@ -479,25 +497,57 @@ export function UsagePanel({ billing }: { billing: PlansBilling }) {
 }
 
 type Cell = string | boolean;
+type ComparisonRow = { label: Copy; values: Record<PlanId, Cell> };
 
 export function PlanComparison({ billing }: { billing: PlansBilling }) {
     const { tx, locale } = billing;
     const number = (value: number) => new Intl.NumberFormat(locale).format(value);
     const limit = (value: number | null) => (value === null ? tx(P.unlimited) : number(value));
-    const rows: Array<{ label: Copy; values: Record<PlanId, Cell> }> = [
-        { label: P.aiMessages, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, tx(P.aiWindow, { count: number(PLAN_AI_LIMITS[plan].perWindow), days: PLAN_AI_LIMITS[plan].windowDays })])) as Record<PlanId, Cell> },
-        { label: P.aiMinute, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, number(PLAN_AI_LIMITS[plan].perMinute)])) as Record<PlanId, Cell> },
-        { label: P.answerLength, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, tx(P.tokens, { count: number(PLAN_AI_FEATURES[plan].maxTokens) })])) as Record<PlanId, Cell> },
-        { label: P.fileContext, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, tx(P.chars, { count: number(PLAN_AI_FEATURES[plan].contextChars) })])) as Record<PlanId, Cell> },
-        { label: P.ownKeys, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, PLAN_AI_CONNECTIONS[plan] ? number(PLAN_AI_CONNECTIONS[plan]) : false])) as Record<PlanId, Cell> },
-        { label: P.apiKeys, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, PLAN_AI_FEATURES[plan].api ? number(PLAN_AI_FEATURES[plan].api!.keys) : false])) as Record<PlanId, Cell> },
-        { label: P.codeProjects, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, limit(PLAN_PROJECT_LIMITS[plan].code)])) as Record<PlanId, Cell> },
-        { label: P.gameProjects, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, limit(PLAN_PROJECT_LIMITS[plan].game)])) as Record<PlanId, Cell> },
-        { label: P.groups, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, limit(PLAN_GROUP_LIMITS[plan])])) as Record<PlanId, Cell> },
-        { label: P.team, values: Object.fromEntries(PLAN_IDS.map((plan) => [plan, tx(P.people, { count: number(PLAN_COLLAB_LIMITS[plan].people) })])) as Record<PlanId, Cell> },
-        { label: P.support, values: { free: tx(P.supportNormal), plus: tx(P.supportHigh), pro: tx(P.supportTop) } },
-        { label: P.badge, values: { free: false, plus: true, pro: true } },
-        { label: P.early, values: { free: false, plus: false, pro: true } },
+    const each = (value: (plan: PlanId) => Cell) => Object.fromEntries(PLAN_IDS.map((plan) => [plan, value(plan)])) as Record<PlanId, Cell>;
+    const sections: Array<{ title: Copy; note?: Copy; rows: ComparisonRow[] }> = [
+        {
+            title: P.sectionAi,
+            rows: [
+                { label: P.aiMessages, values: each((plan) => tx(P.aiWindow, { count: number(PLAN_AI_LIMITS[plan].perWindow), days: PLAN_AI_LIMITS[plan].windowDays })) },
+                { label: P.aiMinute, values: each((plan) => number(PLAN_AI_LIMITS[plan].perMinute)) },
+                { label: P.answerLength, values: each((plan) => tx(P.tokens, { count: number(PLAN_AI_FEATURES[plan].maxTokens) })) },
+                { label: P.thinking, values: each((plan) => tx(P.tokens, { count: number(PLAN_AI_FEATURES[plan].thinkingTokens) })) },
+                { label: P.fileContext, values: each((plan) => tx(P.chars, { count: number(PLAN_AI_FEATURES[plan].contextChars) })) },
+                { label: P.instructions, values: each((plan) => tx(P.chars, { count: number(PLAN_AI_FEATURES[plan].instructionsChars) })) },
+                { label: P.ownKeys, values: each((plan) => (PLAN_AI_CONNECTIONS[plan] ? tx(P.ownKeysCell, { count: number(PLAN_AI_CONNECTIONS[plan]) }) : false)) },
+                { label: P.apiKeys, values: each((plan) => (PLAN_AI_FEATURES[plan].api ? number(PLAN_AI_FEATURES[plan].api!.keys) : false)) },
+            ],
+        },
+        {
+            title: P.sectionBuild,
+            rows: [
+                { label: P.codeProjects, values: each((plan) => limit(PLAN_PROJECT_LIMITS[plan].code)) },
+                { label: P.gameProjects, values: each((plan) => limit(PLAN_PROJECT_LIMITS[plan].game)) },
+                { label: P.runFiles, values: each((plan) => number(PLAN_RUN_LIMITS[plan].files)) },
+                { label: P.runMinute, values: each((plan) => number(PLAN_RUN_LIMITS[plan].perMinute)) },
+                { label: P.team, values: each((plan) => tx(P.people, { count: number(PLAN_COLLAB_LIMITS[plan].people) })) },
+            ],
+        },
+        {
+            title: P.sectionSocial,
+            note: P.groupNote,
+            rows: [
+                { label: P.groups, values: each((plan) => limit(PLAN_GROUP_LIMITS[plan])) },
+                { label: P.groupMembers, values: each((plan) => number(PLAN_GROUP_FEATURES[plan].members)) },
+                { label: P.groupPins, values: each((plan) => number(PLAN_GROUP_FEATURES[plan].pinned)) },
+                { label: P.groupCommands, values: each((plan) => number(PLAN_GROUP_FEATURES[plan].commands)) },
+                { label: P.groupWords, values: each((plan) => number(PLAN_GROUP_FEATURES[plan].bannedWords)) },
+                { label: P.stars, values: each((plan) => number(PLAN_STAR_LIMITS[plan])) },
+            ],
+        },
+        {
+            title: P.sectionExtras,
+            rows: [
+                { label: P.support, values: { free: tx(P.supportNormal), plus: tx(P.supportHigh), pro: tx(P.supportTop) } },
+                { label: P.badge, values: { free: false, plus: true, pro: true } },
+                { label: P.early, values: { free: false, plus: false, pro: true } },
+            ],
+        },
     ];
     const cell = (value: Cell) => (value === true ? <Check className="mx-auto h-4.5 w-4.5 text-brand-green" strokeWidth={3} aria-label="✓" /> : value === false ? <Minus className="mx-auto h-4 w-4 text-zinc-400" aria-label="—" /> : value);
     return (
@@ -511,14 +561,22 @@ export function PlanComparison({ billing }: { billing: PlansBilling }) {
                             {PLAN_IDS.map((plan) => <th key={plan} scope="col" className={`px-4 py-3 text-center font-black ${plan === "pro" ? "text-brand-green" : ""}`}>{tx(PLAN_COPY[plan].name)}</th>)}
                         </tr>
                     </thead>
-                    <tbody>
-                        {rows.map((row) => (
-                            <tr key={row.label.EN} className="border-b border-zinc-100 last:border-b-0 dark:border-white/[0.06]">
-                                <th scope="row" className="sticky start-0 bg-white px-4 py-3 text-start font-semibold text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">{tx(row.label)}</th>
-                                {PLAN_IDS.map((plan) => <td key={plan} className="px-4 py-3 text-center tabular-nums text-zinc-700 dark:text-zinc-300">{cell(row.values[plan])}</td>)}
+                    {sections.map((section) => (
+                        <tbody key={section.title.EN}>
+                            <tr className="border-b border-zinc-200 bg-zinc-50/70 dark:border-white/10 dark:bg-white/[0.02]">
+                                <th scope="colgroup" colSpan={PLAN_IDS.length + 1} className="px-4 pb-2 pt-4 text-start">
+                                    <span className="text-[13px] font-black tracking-wide text-gradient">{tx(section.title)}</span>
+                                    {section.note ? <span className="ms-2 text-[12px] font-medium text-zinc-500 dark:text-zinc-400">{tx(section.note)}</span> : null}
+                                </th>
                             </tr>
-                        ))}
-                    </tbody>
+                            {section.rows.map((row) => (
+                                <tr key={row.label.EN} className="border-b border-zinc-100 last:border-b-0 dark:border-white/[0.06]">
+                                    <th scope="row" className="sticky start-0 bg-white px-4 py-3 text-start font-semibold text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">{tx(row.label)}</th>
+                                    {PLAN_IDS.map((plan) => <td key={plan} className="px-4 py-3 text-center tabular-nums text-zinc-700 dark:text-zinc-300">{cell(row.values[plan])}</td>)}
+                                </tr>
+                            ))}
+                        </tbody>
+                    ))}
                 </table>
             </div>
         </section>

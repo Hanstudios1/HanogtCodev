@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { canModerate, isManagerRole } from "@/lib/groups";
 import { deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection } from "@/lib/server/firebase-rest";
+import { fitsGroupLimit, groupLimitsFor } from "@/lib/server/group-limits";
 import { mutePath } from "@/lib/server/group-moderation";
 import { AUTOMOD_LIMITS, sanitizeAutoMod, sanitizeCustomWords } from "@/lib/social/automod-config";
 import { forgetAutoMod, loadAutoMod } from "../_messages";
@@ -81,15 +82,22 @@ export async function POST(request: NextRequest) {
         assertSameOrigin(request);
         const user = await requireGroupUser();
         await assertRateLimit(`groups:moderation:${user.email}`, 30, 60_000);
-        const body = await readJsonBody(request, 16_384);
+        // Up to 1,000 banned words of 40 characters each (Pro) fit with room to spare.
+        const body = await readJsonBody(request, 96_000);
         const groupId = readId(body.groupId, "Grup kimliği");
-        const { role } = await requireGroupMember(groupId, user.email);
+        const { group, role } = await requireGroupMember(groupId, user.email);
         switch (body.action) {
             case "save-automod": {
                 if (!isManagerRole(role)) throw new GroupApiError(403, "forbidden", "AutoMod'u grup sahibi ve yöneticiler değiştirir.");
                 const config = sanitizeAutoMod(body.config);
-                const words = Array.isArray(body.customWords) ? sanitizeCustomWords(body.customWords) : (await loadAutoMod(groupId, true)).words;
                 if (Array.isArray(body.customWords) && body.customWords.length > AUTOMOD_LIMITS.customWords * 2) throw new GroupApiError(400, "invalid_request", "Çok fazla kelime.");
+                const stored = await loadAutoMod(groupId, true);
+                const words = Array.isArray(body.customWords) ? sanitizeCustomWords(body.customWords) : stored.words;
+                // As many banned words as the owner's plan allows (Free 100, Plus 300, Pro 1,000); a list above it can still shrink.
+                const { limits } = await groupLimitsFor(group.ownerEmail);
+                if (!fitsGroupLimit(words.length, stored.words.length, limits.bannedWords)) {
+                    throw new GroupApiError(409, "words_limit", `Bu grupta en fazla ${limits.bannedWords} yasaklı kelime olabilir.`, { limit: limits.bannedWords });
+                }
                 await patchServerDocument(`group_automod/${groupId}`, { groupId, config, customWords: words, updatedAt: new Date(), updatedBy: user.email });
                 forgetAutoMod(groupId);
                 return groupJson({ success: true, automod: config, customWords: words });

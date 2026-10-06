@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.0";
-export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "5 Ekim 2026", EN: "5 October 2026" };
+export const LEGAL_VERSION = "5.1";
+export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.0-2026-10-05";
+export const LEGAL_NOTICE_ID = "5.1-2026-10-06";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,15 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.1",
+        date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
+        items: [
+            { TR: "Kendi API anahtarınızla bağlantılar: Plus ve Pro'da bu bağlantılarla gönderdiğiniz mesajların ayrı bir günlük sınırı kalmadı; sohbet, geliştirici API'si ve gruplardaki Hanogt AI ile aynı Hanogt AI mesaj hakkından düşüyor ve aynı sayaçla sayılıyor. Sağlayıcı yanıt vermezse mesaj hakkınıza geri ekleniyor.", EN: "Connections with your own API key: on Plus and Pro, messages through these connections no longer have a separate daily limit; they use the same Hanogt AI allowance as the chat, the developer API and Hanogt AI in groups and are counted by the same counter. If the provider doesn't answer, the message is given back." },
+            { TR: "Yeni plan avantajları: kod editöründe tek seferde 8, 25 ya da 75 dosya çalıştırma (derlenen dillerde dakikada 40, 150 ya da 400 dosya); grubun sahibinin planına göre grup başına 25, 100 ya da 250 üye ile daha fazla sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelimesi; 200, 500 ya da 1.000 yıldızlı mesaj. Plan düştüğünde hiçbir şey silinmiyor; yalnızca sınırın altına inene kadar yenisi eklenemiyor.", EN: "New plan benefits: running 8, 25 or 75 files at once in the code editor (40, 150 or 400 files a minute for compiled languages); depending on the group owner's plan, 25, 100 or 250 members per group with more pinned messages, custom bot commands and AutoMod banned words; and 200, 500 or 1,000 starred messages. Nothing is removed when a plan goes down; nothing new can be added until you are under the limit." },
+            { TR: "Grup sınırları ve gizlilik: Bir grubun sınırları için yalnızca sahibinin plan seviyesi okunuyor ve plan bilgisi üyelere gönderilmiyor; ancak sınırlar üyelere ve davet önizlemesinde gösterildiğinden sahibin plan seviyesi bu sayılardan anlaşılabilir. Gizlilik Politikası ve Kullanım Şartları buna göre güncellendi.", EN: "Group limits and privacy: only the owner's plan level is read for a group's limits and the plan isn't sent to members; because the limits are shown to members and in invite previews, though, the owner's plan level can be inferred from them. The Privacy Policy and the Terms of Use are updated accordingly." },
+        ],
+    },
     {
         version: "5.0",
         date: { TR: "5 Ekim 2026", EN: "5 October 2026" },

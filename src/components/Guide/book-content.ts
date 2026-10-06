@@ -1,7 +1,7 @@
 import type { Copy } from "@/lib/i18n";
 import { COLLAB_LIMITS } from "@/lib/collab/protocol";
 import { GROUP_LIMITS } from "@/lib/groups";
-import { LIST_PRICES, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
+import { LIST_PRICES, PLAN_AI_CONNECTIONS, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_FEATURES, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { STATUS_PREFERENCE_COPY } from "@/lib/presence";
 import { BROWSER_LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
@@ -481,7 +481,7 @@ export const PAGES: BookPage[] = [
                     { TR: "Kanallarda yazış; Dosyalar'da ortak dosyaları birlikte düzenle ve editörde aç.", EN: "Chat in channels; edit shared files together under Files and open them in the editor." },
                 ],
             },
-            { type: "p", text: { TR: "Roller: sahip, yönetici ve üye. Grup başına {members} üye ve {files} dosya.", EN: "Roles: owner, admin and member. {members} members and {files} files per group.", vars: { members: GROUP_LIMITS.membersMax, files: GROUP_LIMITS.filesMax } } },
+            { type: "p", text: { TR: "Roller: sahip, yönetici, moderatör ve üye. Grup başına {files} dosya. Grubun büyüklüğü sahibinin planına göredir: Ücretsiz {free}, Plus {plus}, Pro {pro} üye.", EN: "Roles: owner, admin, moderator and member. {files} files per group. A group's size follows its owner's plan: {free} members on Free, {plus} on Plus, {pro} on Pro.", vars: { files: GROUP_LIMITS.filesMax, free: PLAN_GROUP_FEATURES.free.members, plus: PLAN_GROUP_FEATURES.plus.members, pro: PLAN_GROUP_FEATURES.pro.members } } },
         ],
     },
     {

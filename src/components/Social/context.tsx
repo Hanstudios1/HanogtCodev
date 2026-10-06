@@ -86,6 +86,8 @@ export type SocialContextValue = {
     stars: {
         list: StarredMessage[];
         loaded: boolean;
+        /** How many the plan keeps (Free 200, Plus 500, Pro 1,000). */
+        limit: number;
         has: (scope: StarScope, target: string, messageId: string) => boolean;
         toggle: (scope: StarScope, target: string, messageId: string) => Promise<void>;
         refresh: () => Promise<void>;

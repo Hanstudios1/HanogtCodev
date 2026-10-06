@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Modal, ModalHeader, Spinner, fullDateTime } from "@/components/Groups/ui";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { STARS_MAX, type StarredMessage } from "@/lib/social/stars";
+import { PLAN_STAR_LIMITS } from "@/lib/plans";
+import type { StarredMessage } from "@/lib/social/stars";
 import { useSocial } from "./context";
 
 const C = {
     title: { TR: "Yıldızlı mesajlar", EN: "Starred messages" },
-    description: { TR: "Yıldızladığın mesajlar yalnızca sana görünür ({count}/{max}).", EN: "Only you can see the messages you star ({count}/{max})." },
+    description: { TR: "Yıldızladığın mesajlar yalnızca sana görünür ({count}/{max}; Ücretsiz {free}, Plus {plus}, Pro {pro}).", EN: "Only you can see the messages you star ({count}/{max}; Free {free}, Plus {plus}, Pro {pro})." },
     empty: { TR: "Henüz yıldızlı mesajın yok. Bir mesajın üzerine gelip ☆ simgesine bas.", EN: "No starred messages yet. Hover a message and press ☆." },
     open: { TR: "Mesaja git", EN: "Go to message" },
     remove: { TR: "Yıldızı kaldır", EN: "Unstar" },
@@ -37,7 +38,7 @@ export default function StarredDialog({ open, onClose }: { open: boolean; onClos
 
     return (
         <Modal open={open} onClose={onClose} labelledBy="starred-title" size="md">
-            <ModalHeader id="starred-title" title={tx(C.title)} description={tx(C.description, { count: stars.list.length, max: STARS_MAX })} icon={<Star className="mt-1 h-5 w-5 fill-amber-400 text-amber-500" aria-hidden />} onClose={onClose} />
+            <ModalHeader id="starred-title" title={tx(C.title)} description={tx(C.description, { count: stars.list.length, max: stars.limit, free: PLAN_STAR_LIMITS.free, plus: PLAN_STAR_LIMITS.plus, pro: PLAN_STAR_LIMITS.pro })} icon={<Star className="mt-1 h-5 w-5 fill-amber-400 text-amber-500" aria-hidden />} onClose={onClose} />
             <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:max-h-[65dvh]">
                 {!stars.loaded ? (
                     <div className="flex justify-center py-10"><Spinner className="h-6 w-6 text-indigo-500" /></div>

@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { Copy } from "@/lib/i18n";
 import type { GroupDetailResponse, GroupInfo, GroupRole } from "@/lib/groups";
+import type { GroupPlanLimits } from "@/lib/plans";
 import type { ConfirmOptions, ToastTone } from "../ui";
 import type { WorkspaceMember } from "./model";
 
@@ -21,6 +22,8 @@ export type WorkspaceContextValue = {
     usernames: string[];
     stats: GroupDetailResponse["stats"];
     banned: GroupDetailResponse["banned"];
+    /** What the group holds by its owner's plan (members, pins, commands, banned words). */
+    limits: GroupPlanLimits;
     /** Wall clock that ticks every 30 s for relative times. */
     now: number;
     /**

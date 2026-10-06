@@ -1,3 +1,4 @@
+import { RUN_FILES_PER_REQUEST } from "@/lib/plans";
 import { BROWSER_LANGUAGES, runInBrowser, type BrowserRunNotice, type BrowserStatusCode } from "@/lib/runtimes/browser-runner";
 
 export interface SecurityFinding {
@@ -21,6 +22,8 @@ export interface RunFailure {
     message: string;
     status?: number;
     retryAfterSeconds?: number;
+    /** A plan's run limit refused it: the files a minute it allows, and the plan that allows more (null after Pro). */
+    limit?: { perMinute: number; upgrade: "plus" | "pro" | null };
 }
 
 export type RunNotice = BrowserRunNotice;
@@ -85,6 +88,8 @@ function failureFromResponse(status: number, body: Record<string, unknown>, head
     const message = typeof body.error === "string" ? body.error : "";
     const declared = typeof body.code === "string" && KNOWN_CODES.has(body.code as RunErrorCode) ? body.code as RunErrorCode : null;
     const retryAfter = Number.parseInt(headers.get("Retry-After") ?? "", 10);
+    const perMinute = typeof body.limit === "number" && Number.isInteger(body.limit) && body.limit > 0 ? body.limit : null;
+    const upgrade = body.upgrade === "plus" || body.upgrade === "pro" ? body.upgrade : null;
     const code: RunErrorCode = declared ?? (
         status === 401 ? "auth_required"
             : status === 429 ? "rate_limited"
@@ -94,13 +99,16 @@ function failureFromResponse(status: number, body: Record<string, unknown>, head
                             : status === 400 ? "invalid_request"
                                 : "unknown"
     );
-    return { code, message, status, ...(Number.isFinite(retryAfter) ? { retryAfterSeconds: retryAfter } : {}) };
+    return { code, message, status, ...(Number.isFinite(retryAfter) ? { retryAfterSeconds: retryAfter } : {}), ...(code === "rate_limited" && perMinute ? { limit: { perMinute, upgrade } } : {}) };
 }
 
 type ServerOutcome =
     | { kind: "jobs"; jobs: ExecuteJob[] }
     | { kind: "blocked"; security: SecurityCheck }
     | { kind: "failed"; failure: RunFailure; durationMs: number };
+
+/** Failures the next group of the same run would meet too: it isn't sent. */
+const STOPPING_FAILURES: ReadonlySet<RunErrorCode> = new Set(["auth_required", "suspended", "rate_limited", "invalid_origin", "aborted"]);
 
 async function executeOnServer(files: RunFile[], stdin: string, signal?: AbortSignal): Promise<ServerOutcome> {
     const started = performance.now();
@@ -147,8 +155,11 @@ async function executeOnServer(files: RunFile[], stdin: string, signal?: AbortSi
  * Runs one or more files. Browser languages (engine "browser" in
  * lib/runtimes/languages.ts: JavaScript, TypeScript, Python, SQL, Lua, Prolog,
  * BASIC, Forth, MIPS, the validators…) execute in the visitor's browser; every
- * other language goes to /api/execute (security scan + sandboxed runner).
- * Both start at once; results keep the order of `files`.
+ * other language goes to /api/execute (security scan + sandboxed runner),
+ * eight files a request, one request after another, so results arrive as each
+ * group finishes. Both start at once; results keep the order of `files`. How
+ * many files a run may hold is the plan's (PLAN_RUN_LIMITS): the caller cuts
+ * the list.
  */
 export async function executeProjectSecure(files: RunFile[], options: ExecuteOptions = {}): Promise<SecureExecuteResult> {
     if (!files.length) throw new Error("No files to run.");
@@ -158,20 +169,26 @@ export async function executeProjectSecure(files: RunFile[], options: ExecuteOpt
     let security: SecurityCheck | undefined;
 
     const serverTask = (async () => {
-        if (!serverIndexes.length) return;
-        const outcome = await executeOnServer(serverIndexes.map((index) => files[index]), stdin, options.signal);
-        if (outcome.kind === "blocked") {
-            security = outcome.security;
-            return;
+        /** A failure that stops the groups after it (sign-in, limits, a stopped run): they get the same failure without a request. */
+        let stopped: ServerOutcome & { kind: "failed" } | null = null;
+        for (let start = 0; start < serverIndexes.length; start += RUN_FILES_PER_REQUEST) {
+            const group = serverIndexes.slice(start, start + RUN_FILES_PER_REQUEST);
+            const outcome: ServerOutcome = stopped ?? await executeOnServer(group.map((index) => files[index]), stdin, options.signal);
+            if (outcome.kind === "blocked") {
+                // The security scan refused this group: nothing more is sent.
+                security = outcome.security;
+                return;
+            }
+            group.forEach((fileIndex, position) => {
+                const file = files[fileIndex];
+                const job: ExecuteJob = outcome.kind === "jobs"
+                    ? outcome.jobs[position] ?? { name: file.name, language: file.language, version: "", run: { stdout: "", stderr: "", code: 1, output: "" }, engine: "server", durationMs: 0, failure: { code: "invalid_response", message: "" } }
+                    : { name: file.name, language: file.language, version: "", run: { stdout: "", stderr: outcome.failure.message, code: -1, output: outcome.failure.message }, engine: "server", durationMs: outcome.durationMs, failure: outcome.failure };
+                results[fileIndex] = { ...job, name: file.name, language: file.language };
+                options.onJob?.(results[fileIndex]!, fileIndex);
+            });
+            if (outcome.kind === "failed" && STOPPING_FAILURES.has(outcome.failure.code)) stopped = outcome;
         }
-        serverIndexes.forEach((fileIndex, position) => {
-            const file = files[fileIndex];
-            const job: ExecuteJob = outcome.kind === "jobs"
-                ? outcome.jobs[position] ?? { name: file.name, language: file.language, version: "", run: { stdout: "", stderr: "", code: 1, output: "" }, engine: "server", durationMs: 0, failure: { code: "invalid_response", message: "" } }
-                : { name: file.name, language: file.language, version: "", run: { stdout: "", stderr: outcome.failure.message, code: -1, output: outcome.failure.message }, engine: "server", durationMs: outcome.durationMs, failure: outcome.failure };
-            results[fileIndex] = { ...job, name: file.name, language: file.language };
-            options.onJob?.(results[fileIndex]!, fileIndex);
-        });
     })();
 
     const browserTask = (async () => {

@@ -112,3 +112,22 @@ test("deleting an account takes everyone's stars on its messages", async () => {
         assert.deepEqual(starPaths(db).map((path) => db.get(path).messageId), ["g2"]);
     });
 });
+
+test("stars follow the plan: Free keeps 200, Plus 500, Pro 1,000; starring one again never counts twice", async () => {
+    const plans = await load("lib/plans.ts");
+    assert.deepEqual(plans.PLAN_STAR_LIMITS, { free: 200, plus: 500, pro: 1000 });
+    const full = (count) => Object.fromEntries(Array.from({ length: count }, (_, index) => [`message_stars/x${index}`, { owner: ALI, scope: "dm", target: BERK, messageId: `old${index}` }]));
+    // Free at 200: a new star is refused with the limit; m1 already starred is fine.
+    await withBackend({ ...seed(), ...full(199) }, {}, async () => {
+        await stars.starMessage(ALI, "dm", BERK, "m1", true);
+        await stars.starMessage(ALI, "dm", BERK, "m1", true);
+        await assert.rejects(stars.starMessage(ALI, "dm", BERK, "m2", true), (error) => error.code === "limit" && error.limit === 200 && error.plan === "free");
+        assert.deepEqual(await stars.starLimitFor(ALI), { plan: "free", limit: 200 });
+    });
+    // The same 200 fit easily on Plus.
+    await withBackend({ ...seed(), ...full(200), [`subscriptions/${ALI}`]: { plan: "plus", status: "active" } }, {}, async (db) => {
+        await stars.starMessage(ALI, "dm", BERK, "m2", true);
+        assert.equal(db.paths().filter((path) => path.startsWith("message_stars/")).length, 201);
+        assert.deepEqual(await stars.starLimitFor(ALI), { plan: "plus", limit: 500 });
+    });
+});

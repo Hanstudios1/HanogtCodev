@@ -8,7 +8,8 @@ messages with the person's key to OpenAI, Anthropic Claude, Google Gemini,
 Mistral AI, OpenRouter, DeepSeek, xAI Grok or Together AI. Groq is no longer
 supported there: Groq connections made earlier are listed as *No longer
 supported* and can only be deleted (they don't count toward the plan's
-connections).
+connections). Messages through those connections use the same Hanogt AI
+allowance as the chat and this API (no separate limit since 0.3.24).
 
 The API is behind the `ai_api` feature (Admin › Subscriptions › Features and
 early access), open to everyone by default: every Plus and Pro account can

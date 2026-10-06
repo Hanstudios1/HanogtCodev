@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { API_KEY_MAX, CONNECTION_LABEL_MAX, CONNECTION_MODEL_MAX, PLAN_AI_CONNECTIONS, aiProvider, isConnectionsState, isPlausibleApiKey, type AiConnectionError, type AiConnectionView, type AiConnectionsState, type AiProviderId, type AiProviderInfo, isAiProviderId, providerName } from "@/lib/ai/connections";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { PLAN_AI_FEATURES, PLAN_COPY } from "@/lib/plans";
+import { PLAN_AI_LIMITS, PLAN_COPY, aiWindowCopy } from "@/lib/plans";
 import { connectionsRequest, type AiConnectionsHandle } from "./connections-store";
 import { cx } from "./ui";
 
@@ -15,7 +15,7 @@ const C = {
     retry: { TR: "Tekrar dene", EN: "Try again" },
     planLine: { TR: "Planın: {plan} · en fazla {limit} bağlantı", EN: "Your plan: {plan} · up to {limit} connections" },
     planLimits: { TR: "Plus: {plus} bağlantı, Pro: {pro} bağlantı", EN: "Plus: {plus} connections, Pro: {pro} connections" },
-    ownLimit: { TR: "Kendi bağlantılarınla günde en fazla {perDay} mesaj gönderebilirsin.", EN: "You can send up to {perDay} messages a day through your own connections." },
+    ownLimit: { TR: "Kendi bağlantılarınla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer ({period} {limit} mesaj). Sağlayıcı yanıt vermezse mesaj hakkına geri eklenir.", EN: "Messages through your own connections don't have a separate limit: they use your Hanogt AI messages ({limit} {period}). If the provider doesn't answer, the message is given back." },
     planRequired: { TR: "Kendi API anahtarınla bağlantı eklemek için Plus ya da Pro plan gerekir.", EN: "Connecting your own API keys needs the Plus or Pro plan." },
     limitReached: { TR: "Planındaki bağlantı sınırına ulaştın; yeni bir bağlantı eklemek için önce birini sil.", EN: "You've reached your plan's connection limit; delete one to add another." },
     inactiveNote: { TR: "Planının kapsamadığı bağlantılar silinmez; planını yükseltirsen yeniden kullanabilirsin.", EN: "Connections outside your plan aren't deleted; you can use them again if you upgrade." },
@@ -551,8 +551,8 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
         // Retired providers' connections don't take up the plan's allowance.
         const count = state.items.filter((item) => !item.retired).length;
         const planName = PLAN_COPY[state.plan] ? tx(PLAN_COPY[state.plan].name) : state.plan;
-        // Messages a day through own connections (Plus 3,000, Pro 10,000).
-        const ownKey = PLAN_AI_FEATURES[state.plan]?.ownKey ?? null;
+        // Own connections use the plan's Hanogt AI window (Plus 750 in 14 days, Pro 2,000 a week).
+        const window = PLAN_AI_LIMITS[state.plan] ?? null;
         const full = state.limit > 0 && count >= state.limit;
         const canAdd = state.canStore && state.limit > 0 && !full;
         const showPlans = state.limit === 0 || (full && state.plan !== "pro");
@@ -566,7 +566,7 @@ export default function ConnectionsManager({ connections, onUse, onNavigate, onB
                         <span>{tx(C.planLimits, { plus: PLAN_AI_CONNECTIONS.plus, pro: PLAN_AI_CONNECTIONS.pro })}</span>
                         {showPlans ? plansLink : null}
                     </p>
-                    {state.limit > 0 && ownKey ? <p className="mt-0.5 text-[12px] text-ai-muted">{tx(C.ownLimit, { perDay: new Intl.NumberFormat(locale).format(ownKey.perDay) })}</p> : null}
+                    {state.limit > 0 && window ? <p className="mt-0.5 text-[12px] text-ai-muted">{tx(C.ownLimit, { limit: new Intl.NumberFormat(locale).format(window.perWindow), period: tx(aiWindowCopy(window.windowDays)) })}</p> : null}
                     {full ? <p className="mt-1.5 font-semibold text-amber-700 dark:text-amber-300">{tx(C.limitReached)}</p> : null}
                     {count > state.limit ? <p className="mt-1 text-[12px] text-ai-muted">{tx(C.inactiveNote)}</p> : null}
                     {!state.canStore && state.limit > 0 ? <p className="mt-1.5 font-semibold text-amber-700 dark:text-amber-300">{tx(C.encryptionOff)}</p> : null}

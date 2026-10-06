@@ -102,24 +102,31 @@ export async function POST(request: NextRequest) {
     let quota: WindowQuota;
     // The plan the message was counted under: it sets the answer's length and how much of the file is read.
     let plan: PlanId;
-    // Hanogt AI's own model: what refund needs when the model answers nothing.
+    // What refund needs to give the message back when nothing was answered.
     let hanogtPass: QuotaPass | null = null;
     if (connectionId) {
-        // Own keys have their own allowance and never use Hanogt AI's window.
+        // Own connections (Plus and Pro) count in Hanogt AI's window like any other message.
         const counted = await enforceOwnKeys(email, { onLate: keepRunning });
         if (!counted.ok) {
             if (counted.code === "connection_unavailable") return errorResponse(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.");
-            return limitResponse(counted, "Kendi bağlantılarınızla istek sınırına ulaştınız. Biraz sonra tekrar deneyin.");
+            const error = counted.code === "usage_limit" ? "Hanogt AI mesaj hakkınız doldu; kendi bağlantılarınızla gönderdiğiniz mesajlar da bu haktan düşer." : "Çok hızlı mesaj gönderiyorsunuz. Biraz sonra tekrar deneyin.";
+            return limitResponse(counted, error);
         }
+        hanogtPass = counted;
         quota = counted.quota;
         plan = counted.plan;
+        /** The connection can't be used: the message is given back, then the error. */
+        const unusable = async (status: number, code: string, error: string) => {
+            const refunded = await refundHanogtAi(counted);
+            return NextResponse.json({ error, code, refunded }, { status, headers: jsonSecurityHeaders(quotaHeaders(counted.quota)) });
+        };
         let connection: ResolvedConnection | null;
         try {
             connection = await resolveConnectionForChat(email, connectionId, plan);
         } catch {
-            return errorResponse(503, "unavailable", "Bağlantı bilgileri şu anda okunamadı. Biraz sonra tekrar deneyin.", quotaHeaders(quota));
+            return unusable(503, "unavailable", "Bağlantı bilgileri şu anda okunamadı. Biraz sonra tekrar deneyin.");
         }
-        if (!connection) return errorResponse(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.", quotaHeaders(quota));
+        if (!connection) return unusable(409, "connection_unavailable", "Bu bağlantı kullanılamıyor: silinmiş olabilir ya da planınız kapsamıyor olabilir.");
         target = { apiKey: connection.apiKey, baseUrl: connection.baseUrl, model: connection.model, connection, extraBody: {} };
     } else {
         const config = providerConfig();
@@ -159,7 +166,7 @@ export async function POST(request: NextRequest) {
     const recordUse = (error: AiConnectionError | null) => {
         if (ownConnection && shouldRecordUse(ownConnection, error)) after(() => markUsed(email, ownConnection.id, error));
     };
-    /** Gives the message back to Hanogt AI's window when the model answered nothing. */
+    /** Gives the message back to Hanogt AI's window when nothing was answered (by its model or the person's connection). */
     const refund = async () => (hanogtPass ? refundHanogtAi(hanogtPass) : false);
     /** A failure before any answer: the message is given back, then the error. */
     const failed = async (status: number, code: string, error: string, extra: Record<string, string> = {}) => {
@@ -256,7 +263,8 @@ export async function POST(request: NextRequest) {
             if (upstream.ok) await upstream.body?.cancel().catch(() => undefined);
             recordUse(failure);
             const reply = CONNECTION_FAILURES[failure];
-            return errorResponse(reply.status, reply.code, reply.error, { ...counted, ...(failure === "rate_limited" ? retryAfterOf(upstream) : {}) });
+            // The provider answered nothing: the message is given back to Hanogt AI's window.
+            return failed(reply.status, reply.code, reply.error, failure === "rate_limited" ? retryAfterOf(upstream) : {});
         }
         await upstream.body?.cancel().catch(() => undefined);
         const code = upstream.status === 429 ? "upstream_rate_limited" : upstream.status === 401 || upstream.status === 403 ? "not_configured" : "upstream_error";

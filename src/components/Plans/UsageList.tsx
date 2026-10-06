@@ -1,6 +1,6 @@
 "use client";
 
-import { Code2, FolderCode, Gamepad2, KeyRound, Sparkles, UsersRound } from "lucide-react";
+import { Code2, FolderCode, Gamepad2, KeyRound, Sparkles, Star, UsersRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { currentWindow, formatResetTime, usageLevel, type CountedLimit, type PlanUsage, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -8,17 +8,17 @@ import { useI18n, type Copy } from "@/lib/i18n";
 const C = {
     title: { TR: "Planının kullanımı", EN: "Your plan's usage" },
     aiWindow: { TR: "Hanogt AI mesajı ({days} gün)", EN: "Hanogt AI messages ({days} days)" },
-    ownToday: { TR: "Kendi bağlantılarınla mesaj (bugün)", EN: "Messages through your own connections (today)" },
     codeProjects: { TR: "Kod projesi", EN: "Code projects" },
     gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
     groups: { TR: "Sahibi olduğun Hanogt Social grubu", EN: "Hanogt Social groups you own" },
+    stars: { TR: "Yıldızlı mesaj", EN: "Starred messages" },
     connections: { TR: "Yapay zekâ bağlantısı (kendi anahtarın)", EN: "AI connections (your own key)" },
     apiKeys: { TR: "Hanogt AI API anahtarı", EN: "Hanogt AI API keys" },
     unlimited: { TR: "sınırsız", EN: "unlimited" },
     notInPlan: { TR: "planında yok", EN: "not in your plan" },
     unknown: { TR: "okunamadı", EN: "couldn't be read" },
     resets: { TR: "Yenilenme: {time}", EN: "Renews: {time}" },
-    window: { TR: "İlk mesajından itibaren {days} gün sayılır; sohbet ve geliştirici API'si birlikte.", EN: "Counted for {days} days from your first message; the chat and the developer API together." },
+    window: { TR: "İlk mesajından itibaren {days} gün sayılır; sohbet, kendi bağlantıların ve geliştirici API'si birlikte.", EN: "Counted for {days} days from your first message; the chat, your own connections and the developer API together." },
     bonus: { TR: "+{count} ek mesaj dahil", EN: "includes +{count} extra messages" },
 } satisfies Record<string, Copy>;
 
@@ -47,8 +47,9 @@ function WindowBar({ window, label }: { window: UsageWindow; label: string }) {
 
 /**
  * Every benefit of the plan with a number, as "used / limit": Hanogt AI
- * messages in the plan's window (when they renew), own-connection messages, code and game
- * projects, groups and AI connections. In the Plans page's usage panel
+ * messages in the plan's window (when they renew; own connections count in
+ * it too), code and game projects, groups, starred messages and AI
+ * connections. In the Plans page's usage panel
  * (#usage, linked from the Hanogt AI usage meter).
  */
 export default function UsageList({ usage }: { usage: PlanUsage }) {
@@ -61,7 +62,6 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
     };
     const day = currentWindow(usage.hanogt.window);
     const days = usage.hanogt.windowDays;
-    const ownDay = usage.own ? currentWindow(usage.own.day) : null;
     const icon = "h-3.5 w-3.5 shrink-0";
 
     return (
@@ -75,14 +75,10 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
                         {usage.hanogt.bonus > 0 ? ` · ${tx(C.bonus, { count: number(usage.hanogt.bonus) })}` : ""}
                     </p>
                 </Row>
-                {ownDay ? (
-                    <Row icon={<KeyRound className={`${icon} text-sky-500`} aria-hidden />} label={tx(C.ownToday)} value={`${number(ownDay.used)} / ${number(ownDay.limit)}`}>
-                        <WindowBar window={ownDay} label={tx(C.ownToday)} />
-                    </Row>
-                ) : null}
                 <Row icon={<FolderCode className={`${icon} text-emerald-500`} aria-hidden />} label={tx(C.codeProjects)} value={counted(usage.counts.codeProjects)} />
                 <Row icon={<Gamepad2 className={`${icon} text-indigo-500`} aria-hidden />} label={tx(C.gameProjects)} value={counted(usage.counts.gameProjects)} />
                 <Row icon={<UsersRound className={`${icon} text-amber-500`} aria-hidden />} label={tx(C.groups)} value={counted(usage.counts.groups)} />
+                {usage.counts.stars ? <Row icon={<Star className={`${icon} text-amber-400`} aria-hidden />} label={tx(C.stars)} value={counted(usage.counts.stars)} /> : null}
                 <Row icon={<KeyRound className={`${icon} text-zinc-400`} aria-hidden />} label={tx(C.connections)} value={counted(usage.counts.connections)} />
                 {usage.counts.apiKeys ? <Row icon={<Code2 className={`${icon} text-zinc-400`} aria-hidden />} label={tx(C.apiKeys)} value={counted(usage.counts.apiKeys)} /> : null}
             </ul>

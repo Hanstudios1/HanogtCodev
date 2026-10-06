@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BOT_LABEL, BotAvatar, BotTag } from "@/components/Social/chat/bots";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { CUSTOM_COMMAND_LIMITS, WELCOME_MESSAGE_MAX, sanitizeCustomCommands, type CustomCommand } from "@/lib/groups";
+import { PLAN_GROUP_FEATURES } from "@/lib/plans";
 import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
 import { groupsApi } from "../api";
 import { Spinner, cx } from "../ui";
@@ -19,7 +20,7 @@ const C = {
     welcomeHint: { TR: "Yeni bir üye katıldığında Hanogt Security Bot bu mesajı gönderir. {name} yeni üyenin adıyla değiştirilir. Boş bırakırsan mesaj gönderilmez.", EN: "When someone joins, Hanogt Security Bot sends this message. {name} is replaced with the newcomer's name. Leave it empty to send nothing." },
     welcomePlaceholder: { TR: "Hoş geldin {name}! Kurallara göz atmak için /kurallar yaz.", EN: "Welcome {name}! Type /rules to read the rules." },
     commands: { TR: "Özel komutlar", EN: "Custom commands" },
-    commandsHint: { TR: "Bir üye /komut yazdığında Hanogt Security Bot buradaki yanıtı gönderir (en fazla {max} komut). Hanogt'un kendi komut adları kullanılamaz.", EN: "When a member types /command, Hanogt Security Bot posts the answer you write here (up to {max} commands). Hanogt's own command names can't be used." },
+    commandsHint: { TR: "Bir üye /komut yazdığında Hanogt Security Bot buradaki yanıtı gönderir ({count}/{max} komut; sınır grup sahibinin planına göredir: Ücretsiz {free}, Plus {plus}, Pro {pro}). Hanogt'un kendi komut adları kullanılamaz.", EN: "When a member types /command, Hanogt Security Bot posts the answer you write here ({count}/{max} commands; the limit follows the group owner's plan: Free {free}, Plus {plus}, Pro {pro}). Hanogt's own command names can't be used." },
     name: { TR: "Komut adı", EN: "Command name" },
     description: { TR: "Açıklama (isteğe bağlı)", EN: "Description (optional)" },
     response: { TR: "Yanıt", EN: "Answer" },
@@ -41,7 +42,7 @@ const NAME = /^[a-z][a-z0-9_-]{0,23}$/;
 /** Group settings › Bots: Hanogt Security Bot, Hanogt AI on or off, the welcome message and custom commands. */
 export default function BotSettings() {
     const { tx } = useI18n();
-    const { groupId, group, isManager, notify, errorText, refresh } = useWorkspace();
+    const { groupId, group, isManager, notify, errorText, refresh, limits } = useWorkspace();
     const [aiBot, setAiBot] = useState(group.aiBot !== false);
     const [welcome, setWelcome] = useState(group.welcomeMessage);
     const [commands, setCommands] = useState<CustomCommand[]>(group.customCommands);
@@ -107,7 +108,7 @@ export default function BotSettings() {
             </section>
             <section className="rounded-2xl border border-zinc-200 p-4 dark:border-white/10">
                 <h3 className="flex items-center gap-2 text-sm font-black"><Terminal className="h-4 w-4 text-indigo-500" aria-hidden />{tx(C.commands)}</h3>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.commandsHint, { max: CUSTOM_COMMAND_LIMITS.count })}</p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.commandsHint, { count: commands.length, max: limits.commands, free: PLAN_GROUP_FEATURES.free.commands, plus: PLAN_GROUP_FEATURES.plus.commands, pro: PLAN_GROUP_FEATURES.pro.commands })}</p>
                 {commands.length ? (
                     <ul className="mt-3 space-y-2">
                         {commands.map((command) => (
@@ -124,7 +125,7 @@ export default function BotSettings() {
                         ))}
                     </ul>
                 ) : <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{tx(C.none)}</p>}
-                {isManager && commands.length < CUSTOM_COMMAND_LIMITS.count && (
+                {isManager && commands.length < limits.commands && (
                     <div className="mt-3 grid gap-2 rounded-xl border border-dashed border-zinc-300 p-3 dark:border-white/15">
                         <div className="grid gap-2 sm:grid-cols-2">
                             <label className="text-xs font-semibold">{tx(C.name)}

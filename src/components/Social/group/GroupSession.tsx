@@ -36,12 +36,16 @@ import {
     type GroupDetailResponse,
     type GroupInfo,
 } from "@/lib/groups";
+import { PLAN_GROUP_FEATURES } from "@/lib/plans";
 import { useLiveProfiles, usePoll } from "@/lib/social/hooks";
 import { getGroupReadAt } from "@/lib/social/local-state";
 import { SOCIAL_POLL, channelUnreadState, groupHref } from "@/lib/social/model";
 import { useSocial } from "../context";
 import { nextPopout, type PopoutState } from "../UserPopout";
 import { useGroupNav, type GroupNavState } from "./nav";
+
+/** Members whose presence is watched live in one group (a listener each); a 250-member group doesn't open 250. */
+const LIVE_PROFILES_MAX = 50;
 
 const C = {
     fileCreated: { TR: "{name} oluşturuldu.", EN: "{name} was created." },
@@ -312,7 +316,10 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
     }, [detailMembersKey, liveMembersKey, refresh]);
 
     const memberEmails = useMemo(() => detail?.members.map((member) => member.email) ?? [], [detail]);
-    const liveProfiles = useLiveProfiles(memberEmails, live && ready, markBroken);
+    // One listener per member up to LIVE_PROFILES_MAX (the owner and the team come first); a bigger group's
+    // other members show the presence of the last detail read.
+    const liveEmails = useMemo(() => memberEmails.slice(0, LIVE_PROFILES_MAX), [memberEmails]);
+    const liveProfiles = useLiveProfiles(liveEmails, live && ready, markBroken);
 
     const members: WorkspaceMember[] = useMemo(() => {
         if (!detail || !group) return [];
@@ -408,6 +415,8 @@ export default function GroupSessionProvider({ groupId, children }: { groupId: s
             usernames: members.map((member) => member.username),
             stats: detail.stats,
             banned: detail.banned,
+            // A server from before plan-based groups sends no limits: Free's.
+            limits: detail.limits ?? PLAN_GROUP_FEATURES.free,
             now,
             live,
             notify,

@@ -9,7 +9,7 @@ import type { WorkspaceMember } from "@/components/Groups/workspace/model";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StaffBadge from "@/components/StaffBadge";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { GROUP_LIMITS, ROLE_RANK, canModerate, isManagerRole } from "@/lib/groups";
+import { ROLE_RANK, canModerate, isManagerRole } from "@/lib/groups";
 import { LAST_SEEN_COPY } from "@/lib/presence";
 import { sectionMembers, type MemberSectionId } from "@/lib/social/model";
 import { BOT_LABEL, BotAvatar, BotTag } from "../chat/bots";
@@ -64,7 +64,7 @@ type MemberAction = "make-admin" | "remove-admin" | "make-moderator" | "remove-m
 /** Right column inside a group: people grouped by role while they're around, then everyone offline. */
 export default function MemberList() {
     const { tx, locale } = useI18n();
-    const { members, me, canInvite, group } = useWorkspace();
+    const { members, me, canInvite, group, limits } = useWorkspace();
     const session = useGroupSession();
     const sections = sectionMembers(members, locale);
     const openEmail = session.userCard?.person.email ?? "";
@@ -95,7 +95,7 @@ export default function MemberList() {
         <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200 px-3 dark:border-black/40">
                 <UsersRound className="h-4 w-4 text-zinc-500" aria-hidden />
-                <h2 className="flex-1 text-sm font-bold">{tx(C.title)} <span className="font-medium tabular-nums text-zinc-400">{tx(C.count, { count: members.length, max: GROUP_LIMITS.membersMax })}</span></h2>
+                <h2 className="flex-1 text-sm font-bold">{tx(C.title)} <span className="font-medium tabular-nums text-zinc-400">{tx(C.count, { count: members.length, max: limits.members })}</span></h2>
                 {canInvite && <button type="button" onClick={session.openInvite} className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-500"><UserPlus className="h-3.5 w-3.5" aria-hidden />{tx(C.invite)}</button>}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">

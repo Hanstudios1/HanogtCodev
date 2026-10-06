@@ -20,17 +20,20 @@ export type SocialErrorCode =
     | "message_not_found" | "empty_message" | "message_too_long" | "invalid_tag" | "user_not_found"
     | "already_friends" | "request_exists" | "self_action" | "cannot_add" | "conflict" | "server_error"
     | "network" | "send_failed" | "voice_failed" | "voice_too_large" | "voice_unavailable" | "voice_format" | "voice_storage" | "mic_denied"
-    | "mic_missing" | "mic_busy" | "not_configured" | "unavailable" | "muted";
+    | "mic_missing" | "mic_busy" | "not_configured" | "unavailable" | "muted" | "stars_limit";
 
 export class SocialRequestError extends Error {
     readonly code: SocialErrorCode;
     readonly status: number;
+    /** Numbers the server sent with the code (the plan's limit), for the translated text. */
+    readonly vars: Record<string, string | number>;
 
-    constructor(code: SocialErrorCode, message = "", status = 0) {
+    constructor(code: SocialErrorCode, message = "", status = 0, vars: Record<string, string | number> = {}) {
         super(message || code);
         this.name = "SocialRequestError";
         this.code = code;
         this.status = status;
+        this.vars = vars;
     }
 }
 
@@ -70,6 +73,7 @@ export const SOCIAL_ERROR_COPY: Record<SocialErrorCode, Copy> = {
     mic_denied: { TR: "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin verip tekrar dene.", EN: "Microphone access was denied. Allow the microphone from the lock icon in the address bar and try again." },
     mic_missing: { TR: "Mikrofon bulunamadı. Bir mikrofon bağlayıp tekrar dene.", EN: "No microphone was found. Connect one and try again." },
     mic_busy: { TR: "Mikrofon başlatılamadı; başka bir uygulama kullanıyor olabilir. Onu kapatıp tekrar dene.", EN: "The microphone couldn't be started; another app may be using it. Close it and try again." },
+    stars_limit: { TR: "Planınla en fazla {limit} mesaj yıldızlayabilirsin. Yer açmak için bir yıldızı kaldır ya da planını yükselt (Fiyatlandırma).", EN: "Your plan keeps up to {limit} starred messages. Unstar one to make room, or upgrade your plan (Pricing)." },
 };
 
 function isCode(value: unknown): value is SocialErrorCode {
@@ -85,10 +89,11 @@ async function request<T>(url: string, body?: Record<string, unknown>, options: 
     } catch {
         throw new SocialRequestError("network");
     }
-    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown };
+    const data = await response.json().catch(() => ({})) as T & { error?: unknown; code?: unknown; limit?: unknown };
     if (!response.ok) {
         const fallback: SocialErrorCode = response.status === 429 ? "rate_limited" : response.status === 401 ? "unauthorized" : response.status === 404 ? "not_found" : "server_error";
-        throw new SocialRequestError(isCode(data.code) ? data.code : fallback, typeof data.error === "string" ? data.error : "", response.status);
+        const vars: Record<string, number> = typeof data.limit === "number" ? { limit: data.limit } : {};
+        throw new SocialRequestError(isCode(data.code) ? data.code : fallback, typeof data.error === "string" ? data.error : "", response.status, vars);
     }
     return data;
 }
@@ -161,7 +166,7 @@ export const socialApi = {
     gifs: (query: string, page: number, language: "tr" | "en") => request<GifSearchResult>(`/api/social/gifs?${new URLSearchParams({ q: query, page: String(page), lang: language }).toString()}`),
     friendAction: (body: Record<string, unknown>) => request<{ success: true; accepted?: boolean; sent?: boolean }>("/api/friends", body),
     /** The signed-in person's starred messages, newest star first. */
-    stars: () => request<{ stars: StarredMessage[] }>("/api/social/stars"),
+    stars: () => request<{ stars: StarredMessage[]; limit?: number }>("/api/social/stars"),
     star: (body: { scope: StarScope; target: string; messageId: string; starred: boolean }) => request<{ success: true; starred: boolean }>("/api/social/stars", body),
     sendDmVoice: async (email: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => messages([await uploadVoice({ with: email }, blob, options)])[0] ?? null,
     sendGroupVoice: (groupId: string, blob: Blob, options: { seconds: number; label: string; type?: string }) => uploadVoice({ group: groupId }, blob, options),
@@ -187,7 +192,11 @@ export const socialApi = {
 export function useSocialErrorText() {
     const { tx } = useI18n();
     return useCallback((error: unknown, fallback: Copy = SOCIAL_ERROR_COPY.server_error) => {
-        if (error instanceof SocialRequestError) return tx(SOCIAL_ERROR_COPY[error.code] ?? fallback);
+        if (error instanceof SocialRequestError) {
+            // The star limit without its number (an older server) reads as a generic failure.
+            if (error.code === "stars_limit" && error.vars.limit === undefined) return tx(fallback);
+            return tx(SOCIAL_ERROR_COPY[error.code] ?? fallback, error.vars);
+        }
         if (isCode(error)) return tx(SOCIAL_ERROR_COPY[error]);
         return tx(fallback);
     }, [tx]);

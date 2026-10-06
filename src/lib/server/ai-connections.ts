@@ -66,9 +66,6 @@ type StoredRecord = { items: StoredConnection[]; exists: boolean; updateTime: st
 export const AI_CONNECTIONS_COLLECTION = "ai_connections";
 export const aiConnectionsPath = (email: string) => `${AI_CONNECTIONS_COLLECTION}/${email}`;
 
-/** Rate-limit keys of messages sent through the person's own connections (defined in ./plans next to Hanogt AI's). */
-export { OWN_KEY_LIMIT_KEYS } from "./plans";
-
 export const KEY_TEST_TIMEOUT_MS = 10_000;
 /** OpenRouter's public model list is the largest (a few MB with descriptions). */
 const MODEL_LIST_BYTES = 8_000_000;

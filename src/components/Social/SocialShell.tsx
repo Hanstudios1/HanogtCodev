@@ -37,6 +37,7 @@ import {
     type DmSummary,
     type SocialPerson,
 } from "@/lib/social/model";
+import { PLAN_STAR_LIMITS } from "@/lib/plans";
 import { DEFAULT_SOCIAL_PREFS } from "@/lib/social/prefs";
 import { starKey, type StarScope, type StarredMessage } from "@/lib/social/stars";
 import ForwardDialog, { type ForwardPayload } from "./chat/ForwardDialog";
@@ -217,11 +218,11 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
 
     /* ------------------------------ starred messages ------------------------------ */
 
-    const [stars, setStars] = useState<{ list: StarredMessage[]; loaded: boolean }>({ list: [], loaded: false });
+    const [stars, setStars] = useState<{ list: StarredMessage[]; loaded: boolean; limit: number }>({ list: [], loaded: false, limit: PLAN_STAR_LIMITS.free });
     const refreshStars = useCallback(async () => {
         try {
             const data = await socialApi.stars();
-            setStars({ list: data.stars, loaded: true });
+            setStars((current) => ({ list: data.stars, loaded: true, limit: data.limit ?? current.limit }));
         } catch {
             setStars((current) => ({ ...current, loaded: true }));
         }
@@ -229,7 +230,7 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
     useEffect(() => {
         let active = true;
         socialApi.stars()
-            .then((data) => { if (active) setStars({ list: data.stars, loaded: true }); })
+            .then((data) => { if (active) setStars((current) => ({ list: data.stars, loaded: true, limit: data.limit ?? current.limit })); })
             .catch(() => { if (active) setStars((current) => ({ ...current, loaded: true })); });
         return () => { active = false; };
     }, []);
@@ -392,7 +393,7 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
         },
         homeBadge,
         prefs,
-        stars: { list: stars.list, loaded: stars.loaded, has: hasStar, toggle: toggleStar, refresh: refreshStars },
+        stars: { list: stars.list, loaded: stars.loaded, limit: stars.limit, has: hasStar, toggle: toggleStar, refresh: refreshStars },
         forward: setForwarding,
         friendAction,
         notify,
@@ -418,7 +419,7 @@ function SocialApp({ email, sessionName, children }: { email: string; sessionNam
         asideCollapsed, asideOpen, audio, blockedSet, closeAside, confirm, desktop, dmList.loaded, dmSummaries, errorText, friendAction, friendSet, friendsData.data,
         friendsData.error, friendsData.loaded, friendsList, groupUnread, groupsList.error, groupsList.groups, groupsList.invites, groupsList.loaded, groupsList.patchGroup,
         groupsList.refresh, hasStar, homeBadge, levels, live, markBroken, me, mode, navOpen, notify, now, openCreateGroup, openJoin, openSettings, openStars, openSwitcher, person, prefs,
-        refreshDms, refreshFriends, refreshStars, route, setNavOpen, stars.list, stars.loaded, toggleAside, toggleDeafen, toggleMic, toggleStar, unreadTotal, visibleDmList, wide,
+        refreshDms, refreshFriends, refreshStars, route, setNavOpen, stars.limit, stars.list, stars.loaded, toggleAside, toggleDeafen, toggleMic, toggleStar, unreadTotal, visibleDmList, wide,
     ]);
 
     const frame = (

@@ -16,6 +16,7 @@ import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { forgetMemberStars, forgetPlaceStars } from "@/lib/server/social-stars";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
+import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import { effectiveStatus, type PresenceStatus } from "@/lib/presence";
 import {
     GROUP_LIMITS,
@@ -281,7 +282,7 @@ export function publicGroup(groupId: string, group: StoredGroup): GroupInfo {
         projectName: group.projectName || "",
         createdAt: group.createdAt || null,
         updatedAt: group.updatedAt || group.createdAt || null,
-        pinnedMessageIds: strings(group.pinnedMessageIds).filter(isGroupId).slice(0, GROUP_LIMITS.pinnedMax),
+        pinnedMessageIds: strings(group.pinnedMessageIds).filter(isGroupId).slice(0, GROUP_FEATURES_MAX.pinned),
         allowMemberInvites: group.allowMemberInvites !== false,
         // Groups created before the checklist existed start with it hidden (it can be reopened in settings).
         onboarding: group.onboarding ? { dismissed: Boolean(group.onboarding.dismissed), callStarted: Boolean(group.onboarding.callStarted) } : { dismissed: true, callStarted: false },

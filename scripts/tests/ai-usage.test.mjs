@@ -1,9 +1,10 @@
 // Run: node --test scripts/tests/*.test.mjs
 // Hanogt AI usage (lib/server/ai-usage.ts, lib/ai/usage.ts): what the meter
 // shows, how a message is counted (minute first, then the plan's window,
-// shared by the chat, the developer API and Social groups; a purchase Paddle
-// never reported is looked up before refusing; a message the model never
-// answered is given back), the 429 details and the X-Hanogt-AI-* headers.
+// shared by the chat, the person's own connections, the developer API and
+// Social groups; a purchase Paddle never reported is looked up before
+// refusing; a message nothing answered is given back), the 429 details and
+// the X-Hanogt-AI-* headers.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
@@ -39,8 +40,6 @@ const SETTINGS = {
     production: { prices: {}, products: {} },
 };
 const FREE = plans.PLAN_AI_LIMITS.free;
-const OWN_PLUS = plans.PLAN_AI_FEATURES.plus.ownKey;
-const OWN_PRO = plans.PLAN_AI_FEATURES.pro.ownKey;
 const PLUS = plans.PLAN_AI_LIMITS.plus;
 const PRO = plans.PLAN_AI_LIMITS.pro;
 
@@ -100,7 +99,7 @@ test("no window yet: nothing used; an ended window counts as none", async () => 
         assert.equal(read.plan, "free");
         assert.deepEqual(read.hanogt.window, { limit: FREE.perWindow, used: 0, remaining: FREE.perWindow, resetsAt: null }, "the week is over");
         assert.deepEqual([read.hanogt.minute.limit, read.hanogt.windowDays, read.hanogt.bonus], [FREE.perMinute, FREE.windowDays, 0]);
-        assert.equal(read.own, null, "Free has no own connections");
+        assert.equal("own" in read, false, "own connections have no window of their own");
     });
 });
 
@@ -125,14 +124,15 @@ test("an open window shows what is used and when it resets; Plus's lasts two wee
     });
 });
 
-test("a staff grant is part of the window's limit and shown as the bonus; own connections appear with Plus", async () => {
+test("a staff grant is part of the window's limit and shown as the bonus; the old own-connection day is ignored", async () => {
     const granted = { plan: "plus", status: "active", aiBonusDaily: 100, aiBonusUntil: iso(DAY) };
     await withPaddle(seed(granted, { [windowPath(KEYS.ownDay)]: windowDoc(7) }), [], async () => {
         const read = await usage.aiUsageFor(ALI);
         assert.equal(read.plan, "plus");
         assert.equal(read.hanogt.window.limit, PLUS.perWindow + 100);
         assert.equal(read.hanogt.bonus, 100);
-        assert.deepEqual([read.own.day.used, read.own.day.limit, read.own.minute.limit], [7, OWN_PLUS.perDay, OWN_PLUS.perMinute]);
+        assert.equal(read.hanogt.window.used, 0, "what the old own-connection day counted isn't Hanogt AI's");
+        assert.equal(read.own, undefined);
     });
 });
 
@@ -213,30 +213,58 @@ test("paid but not reported: the window refusing asks Paddle once, and the messa
     });
 });
 
-test("own connections: Free has none (connection_unavailable, nothing counted); Plus counts its own windows", async () => {
+test("own connections: Free has none (connection_unavailable, nothing counted); Plus and Pro count in Hanogt AI's window", async () => {
     await withPaddle(seed(), [], async (db) => {
         const refused = await usage.enforceOwnKeys(ALI);
         assert.deepEqual(refused, { ok: false, code: "connection_unavailable", plan: "free" });
-        assert.equal(db.get(windowPath(KEYS.ownMinute)), null);
+        assert.equal(db.get(windowPath(KEYS.minute)), null);
+        assert.equal(db.get(windowPath(KEYS.window)), null);
     });
-    await withPaddle(seed({ plan: "plus", status: "active" }, { [windowPath(KEYS.ownDay)]: windowDoc(OWN_PLUS.perDay) }), [], async (db) => {
+    await withPaddle(seed({ plan: "plus", status: "active" }), [], async (db) => {
+        const chat = await usage.enforceHanogtAi(ALI, { source: "chat" });
+        const own = await usage.enforceOwnKeys(ALI);
+        assert.deepEqual([own.ok, own.plan, own.quota.quota, own.quota.limit, own.quota.remaining, own.quota.windowDays], [true, "plus", "hanogt", PLUS.perWindow, PLUS.perWindow - 2, PLUS.windowDays]);
+        assert.equal(chat.ok, true);
+        assert.equal(db.get(windowPath(KEYS.window)).count, 2, "one window for both");
+        assert.equal(db.get(windowPath(KEYS.minute)).count, 2, "one minute guard for both");
+        assert.equal(db.get(windowPath(KEYS.ownDay)), null, "the old own-connection day isn't used");
+        // The provider answered nothing: the message goes back to the same window.
+        assert.equal(await usage.refundHanogtAi(own), true);
+        assert.equal(db.get(windowPath(KEYS.window)).count, 1);
+    });
+    // A full Hanogt AI window refuses own connections too, with Hanogt AI's limit.
+    await withPaddle(seed({ plan: "pro", status: "active" }, { [windowPath(KEYS.window)]: windowDoc(PRO.perWindow) }), [], async () => {
         const refused = await usage.enforceOwnKeys(ALI);
-        assert.equal(refused.code, "connection_daily_limit");
-        assert.equal(refused.quota, "own");
-        assert.equal(shared.limitDetailsOf({ code: refused.code, ...usage.refusalDetails(refused) }).quota, "own");
-        assert.equal(db.get(windowPath(KEYS.window)), null, "Hanogt AI's own window is untouched");
+        assert.deepEqual([refused.ok, refused.code, refused.quota, refused.limit, refused.upgrade], [false, "usage_limit", "hanogt", PRO.perWindow, null]);
+        assert.equal(shared.limitDetailsOf({ code: refused.code, ...usage.refusalDetails(refused) }).quota, "hanogt");
     });
-    await withPaddle(seed({ plan: "pro", status: "active" }), [], async () => {
-        const counted = await usage.enforceOwnKeys(ALI);
-        assert.deepEqual([counted.ok, counted.quota.quota, counted.quota.limit], [true, "own", OWN_PRO.perDay]);
+    // So does its minute guard (Plus 20 a minute, not the 30 own connections used to have).
+    await withPaddle(seed({ plan: "plus", status: "active" }, { [windowPath(KEYS.minute)]: windowDoc(PLUS.perMinute, NOW - 10_000) }), [], async (db) => {
+        const refused = await usage.enforceOwnKeys(ALI);
+        assert.deepEqual([refused.ok, refused.code, refused.limit], [false, "rate_limited", PLUS.perMinute]);
+        assert.equal(db.get(windowPath(KEYS.window)), null, "the window wasn't counted");
     });
 });
 
-test("planUsageFor counts projects, games, groups and connections against the plan", async () => {
+test("own connections: a Plus purchase Paddle never reported is looked up once, then counted in Hanogt AI's window", async () => {
+    await withPaddle(seed(UNRECORDED, PADDLE_CUSTOMER), [PLUS_AT_PADDLE], async (db, api) => {
+        const counted = await usage.enforceOwnKeys(ALI);
+        assert.equal(counted.ok, true, JSON.stringify(counted));
+        assert.deepEqual([counted.plan, counted.quota.limit], ["plus", PLUS.perWindow]);
+        assert.equal(db.get(windowPath(KEYS.window)).count, 1);
+        const asked = api.calls.length;
+        assert.ok(asked > 0);
+        // Paddle isn't asked again in the same check (the plan is known now).
+        assert.equal(db.get(`subscriptions/${ALI}`).paddle.subscriptionId, SUB);
+    });
+});
+
+test("planUsageFor counts projects, games, groups, stars and connections against the plan", async () => {
     const data = seed(undefined, {
         "projects/p1": { email: ALI }, "projects/p2": { email: ALI }, "projects/other": { email: "bob@example.com" },
         "game_projects/g1": { ownerEmail: ALI },
         "groups/a": { ownerEmail: ALI }, "groups/b": { ownerEmail: ALI }, "groups/c": { ownerEmail: ALI },
+        "message_stars/s1": { owner: ALI }, "message_stars/s2": { owner: ALI }, "message_stars/s3": { owner: "bob@example.com" },
     });
     await withPaddle(data, [], async () => {
         const read = await usage.planUsageFor(ALI);
@@ -244,6 +272,7 @@ test("planUsageFor counts projects, games, groups and connections against the pl
             codeProjects: { used: 2, limit: plans.PLAN_PROJECT_LIMITS.free.code },
             gameProjects: { used: 1, limit: plans.PLAN_PROJECT_LIMITS.free.game },
             groups: { used: 3, limit: plans.PLAN_GROUP_LIMITS.free },
+            stars: { used: 2, limit: plans.PLAN_STAR_LIMITS.free },
             connections: { used: 0, limit: 0 },
             apiKeys: null,
         });
@@ -262,16 +291,17 @@ test("planUsageFor counts projects, games, groups and connections against the pl
 test("the browser side: usage answers and headers are checked, windows move on", () => {
     assert.equal(shared.readAiUsage({ plan: "gold", hanogt: {} }), null);
     assert.equal(shared.readAiUsage({ plan: "free", hanogt: { window: { limit: -1, used: 0, remaining: 0 }, minute: { limit: 1, used: 0, remaining: 1 } } }), null);
-    const valid = { plan: "plus", hanogt: { window: { limit: 750, used: 10, remaining: 740, resetsAt: iso(HOUR) }, minute: { limit: 20, used: 1, remaining: 19, resetsAt: null }, windowDays: 14, bonus: 0 }, own: null };
+    const valid = { plan: "plus", hanogt: { window: { limit: 750, used: 10, remaining: 740, resetsAt: iso(HOUR) }, minute: { limit: 20, used: 1, remaining: 19, resetsAt: null }, windowDays: 14, bonus: 0 } };
     assert.deepEqual(shared.readAiUsage(valid), valid);
     assert.equal(shared.readAiUsage({ ...valid, hanogt: { ...valid.hanogt, windowDays: "x" } }).hanogt.windowDays, 7, "a broken window length falls back to a week");
+    // An older server's separate own-connection day is left out.
     const withOwn = { ...valid, own: { day: { limit: 3000, used: 3, remaining: 2997, resetsAt: iso(HOUR) }, minute: { limit: 30, used: 1, remaining: 29, resetsAt: null } } };
-    assert.deepEqual(shared.readAiUsage(withOwn), withOwn);
-    assert.equal(shared.readAiUsage({ ...valid, own: { day: { limit: 1 } } }).own, null, "a broken own part is dropped, the rest stays");
+    assert.deepEqual(shared.readAiUsage(withOwn), valid);
     assert.equal(shared.quotaFromHeaders(new Headers({ "X-Hanogt-AI-Quota": "other", "X-Hanogt-AI-Window-Limit": "1", "X-Hanogt-AI-Window-Remaining": "1" })), null);
     assert.deepEqual(shared.quotaFromHeaders(new Headers({ "X-Hanogt-AI-Quota": "hanogt", "X-Hanogt-AI-Window-Limit": "750", "X-Hanogt-AI-Window-Remaining": "739" })), { quota: "hanogt", limit: 750, remaining: 739, resetsAt: null, windowDays: 7 }, "a week when the days are missing");
-    assert.equal(shared.quotaFromHeaders(new Headers({ "X-Hanogt-AI-Quota": "own", "X-Hanogt-AI-Window-Limit": "3000", "X-Hanogt-AI-Window-Remaining": "2" })).windowDays, 1, "own connections count by the day");
+    assert.equal(shared.quotaFromHeaders(new Headers({ "X-Hanogt-AI-Quota": "own", "X-Hanogt-AI-Window-Limit": "3000", "X-Hanogt-AI-Window-Remaining": "2" })), null, "an older server's own-connection day isn't Hanogt AI's window");
     assert.equal(shared.limitDetailsOf({ code: "rate_limited", plan: "free", limit: 5 }), null, "only used-up windows carry details");
+    assert.equal(shared.limitDetailsOf({ code: "connection_daily_limit", plan: "plus", limit: 3000 }), null, "nor an older server's own-connection day");
     const after = shared.windowAfter(valid.hanogt.window, { quota: "hanogt", limit: 750, remaining: 739, resetsAt: null, windowDays: 14 });
     assert.deepEqual(after, { limit: 750, used: 11, remaining: 739, resetsAt: valid.hanogt.window.resetsAt });
     assert.deepEqual(shared.currentWindow({ limit: 750, used: 750, remaining: 0, resetsAt: iso(-1) }), { limit: 750, used: 0, remaining: 750, resetsAt: null });

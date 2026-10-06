@@ -265,6 +265,7 @@
       "src/app/privacy-policy/page.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
+      "src/components/Plans/PricingSections.tsx",
       "src/components/SiteFooter.tsx",
       "src/components/Social/SocialSettings.tsx",
       "src/components/Social/chat/bots.tsx",
@@ -295,6 +296,7 @@
     "files": [
       "src/app/about/page.tsx",
       "src/components/Guide/book-content.ts",
+      "src/components/Plans/PricingSections.tsx",
       "src/components/auth/AuthShell.tsx",
       "src/lib/ai/knowledge.ts",
       "src/lib/nav.ts"
@@ -3666,9 +3668,16 @@
       "src/app/editor/page.tsx"
     ]
   },
-  "n2f7q7g9m5": {
-    "en": "At most 8 files run at once; the first 8 were run.",
-    "tr": "Tek seferde en fazla 8 dosya çalışır; ilk 8 dosya çalıştırıldı.",
+  "1kejzmpxe6w": {
+    "en": "Your plan runs at most {count} files at once; the first {count} were run.",
+    "tr": "Planında tek seferde en fazla {count} dosya çalışır; ilk {count} dosya çalıştırıldı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "106ayx1xiyn": {
+    "en": "Your plan runs at most {count} files at once; the first {count} were run. {plan} runs up to {more}.",
+    "tr": "Planında tek seferde en fazla {count} dosya çalışır; ilk {count} dosya çalıştırıldı. {plan} ile {more} dosyaya kadar çalıştırabilirsin.",
     "files": [
       "src/app/editor/page.tsx"
     ]
@@ -7252,9 +7261,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1tt1z1he8du": {
-    "en": "Your own AI connections: on the Plus and Pro plans you can connect an AI provider to Hanogt AI with your own API key (for example OpenAI, Anthropic, Google, Mistral, OpenRouter, DeepSeek, xAI or Together; 2 connections on Plus, 5 on Pro). Groq connections are no longer supported: ones added earlier can't be used, don't count toward your connections and are listed as “no longer supported” until you delete them. When you add a key, a request is sent to the provider with your key to check that it is valid and to get the list of models. When you use such a connection, your messages and the context you send go through our server, with your key, directly to the provider you chose; how that provider processes this data and how long it keeps it are governed by the terms between you and that provider.",
-    "tr": "Kendi yapay zekâ bağlantılarınız: Plus ve Pro planlarında Hanogt AI'a kendi API anahtarınızla bir yapay zekâ sağlayıcısı (ör. OpenAI, Anthropic, Google, Mistral, OpenRouter, DeepSeek, xAI veya Together) bağlayabilirsiniz (Plus'ta 2, Pro'da 5 bağlantı). Groq bağlantıları artık desteklenmez: daha önce eklenmiş olanlar kullanılamaz, bağlantı hakkınızdan düşmez ve siz silene kadar “artık desteklenmiyor” olarak listelenir. Bir anahtar eklediğinizde, geçerli olduğunu doğrulamak ve model listesini almak için anahtarınızla sağlayıcıya bir istek gönderilir. Böyle bir bağlantıyı kullandığınızda mesajlarınız ve gönderdiğiniz bağlam, sunucumuz üzerinden ve sizin anahtarınızla doğrudan seçtiğiniz sağlayıcıya iletilir; sağlayıcının bu verileri nasıl işlediği ve ne kadar sakladığı, sizinle o sağlayıcı arasındaki koşullara tabidir.",
+  "1uaj2fg5pcc": {
+    "en": "Your own AI connections: on the Plus and Pro plans you can connect an AI provider to Hanogt AI with your own API key (for example OpenAI, Anthropic, Google, Mistral, OpenRouter, DeepSeek, xAI or Together; 2 connections on Plus, 5 on Pro). Groq connections are no longer supported: ones added earlier can't be used, don't count toward your connections and are listed as “no longer supported” until you delete them. When you add a key, a request is sent to the provider with your key to check that it is valid and to get the list of models. When you use such a connection, your messages and the context you send go through our server, with your key, directly to the provider you chose; how that provider processes this data and how long it keeps it are governed by the terms between you and that provider. These messages aren't counted separately: they count in Hanogt AI's plan-window message counter.",
+    "tr": "Kendi yapay zekâ bağlantılarınız: Plus ve Pro planlarında Hanogt AI'a kendi API anahtarınızla bir yapay zekâ sağlayıcısı (ör. OpenAI, Anthropic, Google, Mistral, OpenRouter, DeepSeek, xAI veya Together) bağlayabilirsiniz (Plus'ta 2, Pro'da 5 bağlantı). Groq bağlantıları artık desteklenmez: daha önce eklenmiş olanlar kullanılamaz, bağlantı hakkınızdan düşmez ve siz silene kadar “artık desteklenmiyor” olarak listelenir. Bir anahtar eklediğinizde, geçerli olduğunu doğrulamak ve model listesini almak için anahtarınızla sağlayıcıya bir istek gönderilir. Böyle bir bağlantıyı kullandığınızda mesajlarınız ve gönderdiğiniz bağlam, sunucumuz üzerinden ve sizin anahtarınızla doğrudan seçtiğiniz sağlayıcıya iletilir; sağlayıcının bu verileri nasıl işlediği ve ne kadar sakladığı, sizinle o sağlayıcı arasındaki koşullara tabidir. Bu mesajlar ayrı bir sayaçla değil, Hanogt AI'ın plan penceresindeki mesaj sayacınızla sayılır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7540,9 +7549,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1rdij98tbw3": {
-    "en": "Messages you star (up to 200) are kept in a list that only you can see and browsers can't read. Each record holds the chat or group the message is in, the message's ID and date, its author's display name, an excerpt of up to 200 characters and, so we know whose words the excerpt holds, the author's account. Removing the star deletes the record; the related stars are also deleted automatically when the message, the chat or the group is deleted, when you leave or are removed from the group, and when the message's author deletes their account. Your starred messages are included when you download your data (without other people's e-mail addresses) and deleted when you delete your account.",
-    "tr": "Yıldızladığınız mesajlar (en fazla 200) yalnızca sizin görebildiğiniz ve tarayıcıların okuyamadığı bir listede saklanır. Her kayıtta mesajın bulunduğu sohbet veya grup, mesajın kimliği ve tarihi, yazarının görünen adı, mesajdan en fazla 200 karakterlik bir alıntı ve alıntının kime ait olduğunu bilmek için yazarın hesabı tutulur. Yıldızı kaldırdığınızda kayıt silinir; ayrıca mesaj, sohbet veya grup silindiğinde, gruptan ayrıldığınızda ya da çıkarıldığınızda ve mesajın yazarı hesabını sildiğinde ilgili yıldızlar kendiliğinden silinir. Yıldızlı mesajlarınız verilerinizi indirdiğinizde (başka kişilerin e-posta adresleri olmadan) yer alır ve hesabınızı sildiğinizde silinir.",
+  "1owm73wt58l": {
+    "en": "Messages you star (up to 200, 500 or 1,000 depending on your plan) are kept in a list that only you can see and browsers can't read. Each record holds the chat or group the message is in, the message's ID and date, its author's display name, an excerpt of up to 200 characters and, so we know whose words the excerpt holds, the author's account. Removing the star deletes the record; the related stars are also deleted automatically when the message, the chat or the group is deleted, when you leave or are removed from the group, and when the message's author deletes their account. Your starred messages are included when you download your data (without other people's e-mail addresses) and deleted when you delete your account.",
+    "tr": "Yıldızladığınız mesajlar (planınıza göre en fazla 200, 500 ya da 1.000) yalnızca sizin görebildiğiniz ve tarayıcıların okuyamadığı bir listede saklanır. Her kayıtta mesajın bulunduğu sohbet veya grup, mesajın kimliği ve tarihi, yazarının görünen adı, mesajdan en fazla 200 karakterlik bir alıntı ve alıntının kime ait olduğunu bilmek için yazarın hesabı tutulur. Yıldızı kaldırdığınızda kayıt silinir; ayrıca mesaj, sohbet veya grup silindiğinde, gruptan ayrıldığınızda ya da çıkarıldığınızda ve mesajın yazarı hesabını sildiğinde ilgili yıldızlar kendiliğinden silinir. Yıldızlı mesajlarınız verilerinizi indirdiğinizde (başka kişilerin e-posta adresleri olmadan) yer alır ve hesabınızı sildiğinizde silinir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1bgowq6u7dr": {
+    "en": "A group's limits for members, pinned messages, custom bot commands and AutoMod banned words follow its owner's plan; only the owner's plan level (Free, Plus or Pro) is read for this, and the plan itself isn't sent to the group's members. Because these limits are shown to the group's members and in an invite link's preview, though, the owner's plan level can be inferred from them even if the owner has hidden their profile badge.",
+    "tr": "Bir grubun üye, sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelime sınırları grubun sahibinin planına göre belirlenir; bunun için yalnızca sahibin plan seviyesi (Ücretsiz, Plus ya da Pro) okunur ve plan bilgisi grubun üyelerine gönderilmez. Ancak bu sınırlar grubun üyelerine ve davet bağlantısının önizlemesinde gösterildiği için, profil rozetini gizlemiş olsa bile grup sahibinin plan seviyesi bu sayılardan anlaşılabilir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7736,9 +7752,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "26ul65k0u1j": {
-    "en": "Hanogt AI's per-minute and plan-window (7- or 14-day) message counters are kept as rate-limit records. Staff may reset your counter after a support ticket or a mistaken block; this is written to the audit log. Your subscription and waitlist records are included in your account data export and deleted when you delete your account; the exception for your Paddle customer ID is explained in [Payments and subscriptions](/privacy-policy#payments).",
-    "tr": "Hanogt AI'ın dakikalık ve plan penceresi (7 ya da 14 günlük) mesaj sayaçları hız sınırı kaydı olarak tutulur. Ekip, bir destek talebi veya hatalı bir engelleme üzerine sayacınızı sıfırlayabilir; bu işlem denetim kaydına yazılır. Abonelik ve bekleme kayıtlarınız hesap verilerinizin dışa aktarımında yer alır ve hesabınızı sildiğinizde silinir; Paddle müşteri kimliğine ilişkin istisna [Ödemeler ve abonelikler](/privacy-policy#payments) bölümünde açıklanır.",
+  "vb9glfv70m": {
+    "en": "Hanogt AI's per-minute and plan-window (7- or 14-day) message counters (including messages through your own API key connections) and the per-minute file counter of code runs are kept as rate-limit records. Staff may reset your counter after a support ticket or a mistaken block; this is written to the audit log. Your subscription and waitlist records are included in your account data export and deleted when you delete your account; the exception for your Paddle customer ID is explained in [Payments and subscriptions](/privacy-policy#payments).",
+    "tr": "Hanogt AI'ın dakikalık ve plan penceresi (7 ya da 14 günlük) mesaj sayaçları (kendi API anahtarınızla bağlantılarla gönderilenler dahil) ve kod çalıştırmada dakikalık dosya sayacı hız sınırı kaydı olarak tutulur. Ekip, bir destek talebi veya hatalı bir engelleme üzerine sayacınızı sıfırlayabilir; bu işlem denetim kaydına yazılır. Abonelik ve bekleme kayıtlarınız hesap verilerinizin dışa aktarımında yer alır ve hesabınızı sildiğinizde silinir; Paddle müşteri kimliğine ilişkin istisna [Ödemeler ve abonelikler](/privacy-policy#payments) bölümünde açıklanır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -12614,9 +12630,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "eufyc2pyo9": {
-    "en": "You need to be signed in to use Hanogt AI. Usage limits depend on your plan: 5 messages a minute and 50 in 7 days on Free, 20 a minute and 750 in 14 days on Plus, and 30 a minute and 2,000 in 7 days on Pro (see [Paid plans](/terms-of-use#paid-services)). The window starts with your first message; the chat, the Hanogt AI API and the questions you ask Hanogt AI in groups share the allowance. When the model can't answer at all, that message doesn't count. When you reach a limit, the Core answers instead.",
-    "tr": "Hanogt AI'ı kullanmak için giriş yapmanız gerekir. Kullanım sınırları planınıza göre uygulanır: Ücretsiz planda dakikada 5 ve 7 günde 50, Plus'ta dakikada 20 ve 14 günde 750, Pro'da dakikada 30 ve 7 günde 2.000 mesaj (bkz. [Ücretli planlar](/terms-of-use#paid-services)). Pencere ilk mesajınızla başlar; sohbet, Hanogt AI API'si ve gruplarda Hanogt AI'a sorduğunuz sorular aynı hakkı kullanır. Model hiç yanıt veremediğinde o mesaj hakkınızdan düşmez. Sınıra ulaştığınızda yanıtları Çekirdek verir.",
+  "2evedqc8onl": {
+    "en": "You need to be signed in to use Hanogt AI. Usage limits depend on your plan: 5 messages a minute and 50 in 7 days on Free, 20 a minute and 750 in 14 days on Plus, and 30 a minute and 2,000 in 7 days on Pro (see [Paid plans](/terms-of-use#paid-services)). The window starts with your first message; the chat, the messages you send through providers connected with your own API key, the Hanogt AI API and the questions you ask Hanogt AI in groups share the allowance. When no answer comes back at all (the model or the provider you connected can't answer), that message doesn't count. When you reach a limit, the Core answers instead.",
+    "tr": "Hanogt AI'ı kullanmak için giriş yapmanız gerekir. Kullanım sınırları planınıza göre uygulanır: Ücretsiz planda dakikada 5 ve 7 günde 50, Plus'ta dakikada 20 ve 14 günde 750, Pro'da dakikada 30 ve 7 günde 2.000 mesaj (bkz. [Ücretli planlar](/terms-of-use#paid-services)). Pencere ilk mesajınızla başlar; sohbet, kendi API anahtarınızla bağladığınız sağlayıcılarla gönderdiğiniz mesajlar, Hanogt AI API'si ve gruplarda Hanogt AI'a sorduğunuz sorular aynı hakkı kullanır. Hiç yanıt alınamadığında (model ya da bağladığınız sağlayıcı yanıt veremediğinde) o mesaj hakkınızdan düşmez. Sınıra ulaştığınızda yanıtları Çekirdek verir.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12763,9 +12779,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "1kh12acmn6j": {
-    "en": "a higher Hanogt AI message limit: 50 messages in 7 days on Free, 750 in 14 days on Plus and 2,000 in 7 days on Pro (with per-minute limits of 5, 20 and 30 respectively; the chat and the Hanogt AI API together);",
-    "tr": "Hanogt AI ile daha yüksek mesaj sınırı: Ücretsiz planda 7 günde 50, Plus'ta 14 günde 750, Pro'da 7 günde 2.000 mesaj (dakikalık sınırlar sırasıyla 5, 20 ve 30; sohbet ve Hanogt AI API'si birlikte);",
+  "1xb56wr28n1": {
+    "en": "a higher Hanogt AI message limit: 50 messages in 7 days on Free, 750 in 14 days on Plus and 2,000 in 7 days on Pro (with per-minute limits of 5, 20 and 30 respectively; the chat, your own API key connections, the Hanogt AI API and Hanogt AI in groups together);",
+    "tr": "Hanogt AI ile daha yüksek mesaj sınırı: Ücretsiz planda 7 günde 50, Plus'ta 14 günde 750, Pro'da 7 günde 2.000 mesaj (dakikalık sınırlar sırasıyla 5, 20 ve 30; sohbet, kendi API anahtarınızla bağlantılar, Hanogt AI API'si ve gruplardaki Hanogt AI birlikte);",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12784,9 +12800,30 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "ukyg49xbzu": {
+    "en": "running more files at once in the code editor: 8 on Free, 25 on Plus and 75 on Pro; for languages compiled on the server (C, C++, Java, Go and the like), up to 40, 150 and 400 files a minute respectively;",
+    "tr": "kod editöründe tek seferde daha çok dosya çalıştırma: Ücretsiz planda 8, Plus'ta 25, Pro'da 75 dosya; sunucuda derlenen dillerde (C, C++, Java, Go ve benzerleri) dakikada sırasıyla en fazla 40, 150 ve 400 dosya;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
   "1h5swqr0hbq": {
     "en": "creating and owning more Hanogt Social groups: 3 on Free, 10 on Plus and no limit on the number on Pro;",
     "tr": "daha fazla Hanogt Social grubu açma ve yönetme: Ücretsiz planda 3, Plus'ta 10, Pro'da sayı sınırı olmadan;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "2c75r6gqxb8": {
+    "en": "bigger groups that you own: per group up to 25 (Free), 100 (Plus) or 250 (Pro) members; 25, 50 or 100 pinned messages; 20, 50 or 100 custom commands for the Hanogt Security Bot; and 100, 300 or 1,000 banned words in AutoMod. These limits follow the plan of the group's current owner;",
+    "tr": "sahibi olduğunuz grupların daha büyük olması: grup başına en fazla 25 (Ücretsiz), 100 (Plus) veya 250 (Pro) üye; 25, 50 veya 100 sabitlenmiş mesaj; Hanogt Security Bot için 20, 50 veya 100 özel komut ve AutoMod'da 100, 300 veya 1.000 yasaklı kelime. Bu sınırlar grubun o anki sahibinin planına göre uygulanır;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "2exzy9zpsmn": {
+    "en": "more starred messages in Hanogt Social: 200 on Free, 500 on Plus and 1,000 on Pro;",
+    "tr": "Hanogt Social'da daha çok yıldızlı mesaj: Ücretsiz planda 200, Plus'ta 500, Pro'da 1.000;",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12798,9 +12835,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "1te9kgbf5al": {
-    "en": "connecting AI providers to Hanogt AI with your own API keys: 2 connections with 30 messages a minute and 3,000 a day on Plus, and 5 connections with 60 messages a minute and 10,000 a day on Pro (the provider's charges are yours);",
-    "tr": "Hanogt AI'a kendi API anahtarınızla yapay zekâ sağlayıcısı bağlama: Plus'ta 2 bağlantı ile dakikada 30 ve günde 3.000 mesaj, Pro'da 5 bağlantı ile dakikada 60 ve günde 10.000 mesaj (sağlayıcının ücretleri size aittir);",
+  "1gmr10hlkm4": {
+    "en": "connecting AI providers to Hanogt AI with your own API keys: 2 connections on Plus and 5 on Pro. Messages through these connections have no limit of their own: they use your Hanogt AI messages and are given back when the provider doesn't answer (the provider's charges are yours);",
+    "tr": "Hanogt AI'a kendi API anahtarınızla yapay zekâ sağlayıcısı bağlama: Plus'ta 2, Pro'da 5 bağlantı. Bu bağlantılarla gönderdiğiniz mesajların ayrı bir sınırı yoktur; Hanogt AI mesaj hakkınızdan düşer ve sağlayıcı yanıt vermezse hakkınıza geri eklenir (sağlayıcının ücretleri size aittir);",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12833,16 +12870,16 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "f121rnnpxy": {
-    "en": "Daily limits are counted over 24 hours starting with your first message or request; you can see what is left and when the limit resets in the Hanogt AI tab and on the Plans page. A feature shown as “Planned” on the Plans page is not offered yet and is not part of the benefits you buy.",
-    "tr": "Günlük sınırlar, ilk mesajınızla veya isteğinizle başlayan 24 saatlik süre içinde sayılır; kalan hakkınızı ve sınırın ne zaman yenileneceğini Hanogt AI sekmesinde ve Planlar sayfasında görebilirsiniz. Planlar sayfasında “Planlanıyor” olarak gösterilen bir özellik henüz sunulmaz ve satın aldığınız avantajlara dahil değildir.",
+  "23dj184blx1": {
+    "en": "Hanogt AI's allowance is counted over 7 days (14 on Plus) starting with your first message or request; you can see what is left and when it renews in the Hanogt AI tab and on the Plans page. A feature shown as “Planned” on the Plans page is not offered yet and is not part of the benefits you buy.",
+    "tr": "Hanogt AI'ın mesaj hakkı, ilk mesajınızla veya isteğinizle başlayan 7 günlük (Plus'ta 14 günlük) süre içinde sayılır; kalan hakkınızı ve ne zaman yenileneceğini Hanogt AI sekmesinde ve Planlar sayfasında görebilirsiniz. Planlar sayfasında “Planlanıyor” olarak gösterilen bir özellik henüz sunulmaz ve satın aldığınız avantajlara dahil değildir.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "191vf5d707a": {
-    "en": "When you move to a lower plan or your subscription ends, your existing projects, groups, connections, keys and settings aren't deleted: if you have more projects or groups than the new plan allows, you can't create new ones; AI connections over the limit are switched off; only as many of your Hanogt AI API keys as the new plan allows, the oldest ones, keep working (none on Free); only the part of your personal instructions within the new plan's limit is used; and the plan badge and early access end.",
-    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz, gruplarınız, bağlantılarınız, anahtarlarınız ve ayarlarınız silinmez: yeni planın sınırından fazla projeniz veya grubunuz varsa yenisini oluşturamazsınız; sınırı aşan yapay zekâ bağlantılarınız kapatılır; Hanogt AI API anahtarlarınızdan yalnızca yeni planın izin verdiği sayıda, en eski olanlar çalışmaya devam eder (Ücretsiz planda hiçbiri çalışmaz); kişisel talimatlarınızın yalnızca yeni planın sınırına kadar olan kısmı kullanılır; plan rozeti ve erken erişim sona erer.",
+  "2go75m07h1g": {
+    "en": "When you move to a lower plan or your subscription ends, your existing projects, groups, connections, keys and settings aren't deleted: if you have more projects or groups than the new plan allows, you can't create new ones; AI connections over the limit are switched off; only as many of your Hanogt AI API keys as the new plan allows, the oldest ones, keep working (none on Free); only the part of your personal instructions within the new plan's limit is used; the members, pinned messages, custom commands and banned words of groups you own and your starred messages aren't removed, but nothing new can be added until they are under the new plan's limit; and the plan badge and early access end.",
+    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz, gruplarınız, bağlantılarınız, anahtarlarınız ve ayarlarınız silinmez: yeni planın sınırından fazla projeniz veya grubunuz varsa yenisini oluşturamazsınız; sınırı aşan yapay zekâ bağlantılarınız kapatılır; Hanogt AI API anahtarlarınızdan yalnızca yeni planın izin verdiği sayıda, en eski olanlar çalışmaya devam eder (Ücretsiz planda hiçbiri çalışmaz); kişisel talimatlarınızın yalnızca yeni planın sınırına kadar olan kısmı kullanılır; sahibi olduğunuz gruplardaki üyeler, sabitlenmiş mesajlar, özel komutlar ve yasaklı kelimeler ile yıldızlı mesajlarınız silinmez, ancak yeni planın sınırının altına inene kadar yenisi eklenemez; plan rozeti ve erken erişim sona erer.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -22541,6 +22578,55 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
+  "8byki2czjw": {
+    "en": "Plans with more in them",
+    "tr": "Daha dolu abonelikler",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1q47l5ln4q9": {
+    "en": "Messages through your own API key now use your Hanogt AI allowance; plans gain more files per run, bigger groups and more starred messages.",
+    "tr": "Kendi API anahtarınla gönderdiğin mesajlar artık Hanogt AI hakkından düşüyor; planlara kod çalıştırma, daha büyük gruplar ve daha çok yıldızlı mesaj eklendi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1yai6uspga9": {
+    "en": "Connections with your own API key no longer have a separate daily limit: messages use your Hanogt AI allowance and come back if the provider doesn't answer.",
+    "tr": "Kendi API anahtarınla bağlantıların ayrı bir günlük sınırı kalmadı: mesajlar Hanogt AI hakkından düşüyor, sağlayıcı yanıt vermezse geri ekleniyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1zyzddvudtt": {
+    "en": "Run 8 files at once on Free, 25 on Plus and 75 on Pro in the code editor; results show up as they arrive.",
+    "tr": "Kod editöründe tek seferde Ücretsiz'de 8, Plus'ta 25, Pro'da 75 dosya çalıştırabilirsin; sonuçlar geldikçe görünür.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1njb83uv7i4": {
+    "en": "Groups grow with their owner's plan: 25, 100 or 250 members, with more pinned messages, custom bot commands and AutoMod banned words.",
+    "tr": "Grupların sahibinin planıyla büyüyor: 25, 100 ya da 250 üye; daha çok sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelimesi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "27vgwbbngf2": {
+    "en": "Starred messages: 200 on Free, 500 on Plus and 1,000 on Pro.",
+    "tr": "Yıldızlı mesajlar: Ücretsiz'de 200, Plus'ta 500, Pro'da 1.000.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "bj51442mkj": {
+    "en": "New benefits and a comparison table in sections on the Pricing page; Terms of Use and Privacy Policy 5.1.",
+    "tr": "Fiyatlandırma sayfasında yeni avantajlar ve bölümlere ayrılmış karşılaştırma tablosu; Kullanım Şartları ve Gizlilik Politikası 5.1.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
   "17kcmwyy7qe": {
     "en": "Purple, pink and yellow",
     "tr": "Mor, pembe ve sarı",
@@ -25233,6 +25319,20 @@
       "src/components/Editor/CommandPalette.tsx"
     ]
   },
+  "1nqs1d74pb8": {
+    "en": "You reached your plan's run limit: {count} files a minute for compiled languages.",
+    "tr": "Planının çalıştırma sınırına ulaştın: derlenen dillerde dakikada {count} dosya.",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1tt4nc7j813": {
+    "en": "{count} files a minute with {plan}",
+    "tr": "{plan} ile dakikada {count} dosya",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
   "1yhvi4i25oj": {
     "en": "Output",
     "tr": "Çıktı",
@@ -25411,9 +25511,9 @@
       "src/components/Editor/Console.tsx"
     ]
   },
-  "rapm9r95mq": {
-    "en": "You reached the run limit (20 per minute). Try again shortly.",
-    "tr": "Çalıştırma sınırına ulaştınız (dakikada 20). Kısa süre sonra tekrar deneyin.",
+  "3bokcgip9o": {
+    "en": "You reached the run limit. Try again shortly.",
+    "tr": "Çalıştırma sınırına ulaştınız. Kısa süre sonra tekrar deneyin.",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
@@ -29376,9 +29476,9 @@
       "src/components/Groups/api.ts"
     ]
   },
-  "1jj4ol1uwis": {
-    "en": "The group has reached its 25-member limit.",
-    "tr": "Grup 25 üye sınırına ulaştı.",
+  "29knwe812wt": {
+    "en": "The group has reached its {limit}-member limit. Groups grow with their owner's plan (Pricing).",
+    "tr": "Grup {limit} üye sınırına ulaştı. Grup sahibinin planı yükseldikçe grup büyür (Fiyatlandırma).",
     "files": [
       "src/components/Groups/api.ts"
     ]
@@ -29504,9 +29604,23 @@
       "src/lib/social/api.ts"
     ]
   },
-  "k5czzj2d8z": {
-    "en": "You can pin at most 25 messages.",
-    "tr": "En fazla 25 mesaj sabitlenebilir.",
+  "2o1xy3ovfu": {
+    "en": "This group can pin at most {limit} messages; unpin one first.",
+    "tr": "Bu grupta en fazla {limit} mesaj sabitlenebilir; önce bir mesajın sabitlemesini kaldırın.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "198llegmfa": {
+    "en": "This group can have at most {limit} custom commands. The limit grows with the group owner's plan.",
+    "tr": "Bu grupta en fazla {limit} özel komut olabilir. Grup sahibinin planı yükseldikçe sınır artar.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1irx98wf0mr": {
+    "en": "This group can have at most {limit} banned words. The limit grows with the group owner's plan.",
+    "tr": "Bu grupta en fazla {limit} yasaklı kelime olabilir. Grup sahibinin planı yükseldikçe sınır artar.",
     "files": [
       "src/components/Groups/api.ts"
     ]
@@ -29701,6 +29815,34 @@
   "9rh5qhub0a": {
     "en": "The command couldn't be read. See the commands you can use with /help.",
     "tr": "Komut anlaşılamadı. Kullanabileceğin komutları /yardim ile görebilirsin.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1eblbaq06xh": {
+    "en": "The group has reached its member limit.",
+    "tr": "Grup üye sınırına ulaştı.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "19hn8f6vyx9": {
+    "en": "The pin limit is reached; unpin a message first.",
+    "tr": "Sabitlenebilecek mesaj sınırına ulaşıldı; önce bir mesajın sabitlemesini kaldırın.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "vjpi8agkvj": {
+    "en": "This group's custom command limit is reached.",
+    "tr": "Bu grubun özel komut sınırına ulaşıldı.",
+    "files": [
+      "src/components/Groups/api.ts"
+    ]
+  },
+  "1itult39ixf": {
+    "en": "This group's banned word limit is reached.",
+    "tr": "Bu grubun yasaklı kelime sınırına ulaşıldı.",
     "files": [
       "src/components/Groups/api.ts"
     ]
@@ -29970,9 +30112,9 @@
       "src/components/Groups/JoinGroupView.tsx"
     ]
   },
-  "1rt57m8sphv": {
-    "en": "This group has reached its 25-member limit, so you can't join right now.",
-    "tr": "Bu grup 25 üye sınırına ulaştı; şu anda katılamazsın.",
+  "t9qqq83bbv": {
+    "en": "This group has reached its {max}-member limit, so you can't join right now.",
+    "tr": "Bu grup {max} üye sınırına ulaştı; şu anda katılamazsın.",
     "files": [
       "src/components/Groups/JoinGroupView.tsx"
     ]
@@ -30130,9 +30272,9 @@
       "src/components/Groups/workspace/BotSettings.tsx"
     ]
   },
-  "298tdm08hdw": {
-    "en": "When a member types /command, Hanogt Security Bot posts the answer you write here (up to {max} commands). Hanogt's own command names can't be used.",
-    "tr": "Bir üye /komut yazdığında Hanogt Security Bot buradaki yanıtı gönderir (en fazla {max} komut). Hanogt'un kendi komut adları kullanılamaz.",
+  "2g9clodvmhw": {
+    "en": "When a member types /command, Hanogt Security Bot posts the answer you write here ({count}/{max} commands; the limit follows the group owner's plan: Free {free}, Plus {plus}, Pro {pro}). Hanogt's own command names can't be used.",
+    "tr": "Bir üye /komut yazdığında Hanogt Security Bot buradaki yanıtı gönderir ({count}/{max} komut; sınır grup sahibinin planına göredir: Ücretsiz {free}, Plus {plus}, Pro {pro}). Hanogt'un kendi komut adları kullanılamaz.",
     "files": [
       "src/components/Groups/workspace/BotSettings.tsx"
     ]
@@ -31300,9 +31442,9 @@
       "src/components/Groups/workspace/SafetySettings.tsx"
     ]
   },
-  "11i9brgogem": {
-    "en": "Separate with commas or new lines (up to {max}). Members can't see this list.",
-    "tr": "Virgülle ya da satır satır yaz (en fazla {max}). Bu listeyi üyeler göremez.",
+  "imwsrth8h4": {
+    "en": "Separate with commas or new lines ({count}/{max}; the limit follows the group owner's plan: Free {free}, Plus {plus}, Pro {pro}). Members can't see this list.",
+    "tr": "Virgülle ya da satır satır yaz ({count}/{max}; sınır grup sahibinin planına göredir: Ücretsiz {free}, Plus {plus}, Pro {pro}). Bu listeyi üyeler göremez.",
     "files": [
       "src/components/Groups/workspace/SafetySettings.tsx"
     ]
@@ -33426,9 +33568,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "11xx5s1qtra": {
-    "en": "Roles: owner, admin and member. {members} members and {files} files per group.",
-    "tr": "Roller: sahip, yönetici ve üye. Grup başına {members} üye ve {files} dosya.",
+  "2eaihfn91y3": {
+    "en": "Roles: owner, admin, moderator and member. {files} files per group. A group's size follows its owner's plan: {free} members on Free, {plus} on Plus, {pro} on Pro.",
+    "tr": "Roller: sahip, yönetici, moderatör ve üye. Grup başına {files} dosya. Grubun büyüklüğü sahibinin planına göredir: Ücretsiz {free}, Plus {plus}, Pro {pro} üye.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -36056,13 +36198,6 @@
       "src/components/HanogtAI/chat-copy.ts"
     ]
   },
-  "1kohhndqs7x": {
-    "en": "You've used the day's messages for your own connections; they renew 24 hours after your first one. Until then Hanogt AI Core answers.",
-    "tr": "Kendi bağlantıların için günlük mesaj hakkın doldu; ilk mesajından 24 saat sonra yenilenir. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.",
-    "files": [
-      "src/components/HanogtAI/chat-copy.ts"
-    ]
-  },
   "2dzmn3tbxtb": {
     "en": "Try again in {seconds} s.",
     "tr": "{seconds} sn sonra tekrar dene.",
@@ -36077,16 +36212,16 @@
       "src/components/HanogtAI/chat-copy.ts"
     ]
   },
-  "fu1kuqznvu": {
-    "en": "The model couldn't answer, so this message wasn't counted.",
-    "tr": "Model yanıt veremediği için bu mesaj hakkından düşülmedi.",
+  "1d6a6cgjp9k": {
+    "en": "No answer came back, so this message wasn't counted.",
+    "tr": "Yanıt alınamadığı için bu mesaj hakkından düşülmedi.",
     "files": [
       "src/components/HanogtAI/chat-copy.ts"
     ]
   },
-  "11rhli8jvwz": {
-    "en": "You've used all {limit} of the day's messages for your own connections. Renews: {time}. Until then Hanogt AI Core answers.",
-    "tr": "Kendi bağlantıların için günlük {limit} mesajın hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.",
+  "2bfi1odnh2v": {
+    "en": "Messages through your own connection use your Hanogt AI messages too, and you've used all {limit} of this {days}-day period. Renews: {time}. Until then Hanogt AI Core answers.",
+    "tr": "Kendi bağlantınla gönderdiğin mesajlar da Hanogt AI hakkından düşer ve {days} günlük {limit} mesajın hepsini kullandın. Yenilenme: {time}. O zamana kadar Hanogt AI Çekirdeği yanıt veriyor.",
     "files": [
       "src/components/HanogtAI/chat-copy.ts"
     ]
@@ -36225,9 +36360,16 @@
       "src/components/HanogtAI/ChatComposer.tsx"
     ]
   },
-  "24pcv9xun2c": {
-    "en": "{count} messages left today",
-    "tr": "bugün {count} mesaj kaldı",
+  "25z3vfzdi5s": {
+    "en": "uses your Hanogt AI messages · {count} left",
+    "tr": "Hanogt AI hakkından düşer · {count} mesaj kaldı",
+    "files": [
+      "src/components/HanogtAI/ChatComposer.tsx"
+    ]
+  },
+  "4vzaysedta": {
+    "en": "uses your Hanogt AI messages",
+    "tr": "Hanogt AI hakkından düşer",
     "files": [
       "src/components/HanogtAI/ChatComposer.tsx"
     ]
@@ -36628,9 +36770,9 @@
       "src/components/HanogtAI/ConnectionsManager.tsx"
     ]
   },
-  "fo5ehr3drb": {
-    "en": "You can send up to {perDay} messages a day through your own connections.",
-    "tr": "Kendi bağlantılarınla günde en fazla {perDay} mesaj gönderebilirsin.",
+  "1wc1q6zpmtf": {
+    "en": "Messages through your own connections don't have a separate limit: they use your Hanogt AI messages ({limit} {period}). If the provider doesn't answer, the message is given back.",
+    "tr": "Kendi bağlantılarınla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer ({period} {limit} mesaj). Sağlayıcı yanıt vermezse mesaj hakkına geri eklenir.",
     "files": [
       "src/components/HanogtAI/ConnectionsManager.tsx"
     ]
@@ -37223,9 +37365,9 @@
       "src/components/HanogtAI/UsageMeter.tsx"
     ]
   },
-  "kjwdmv3al2": {
-    "en": "The count starts with your first message and lasts {days} days. The chat, the developer API and Hanogt AI in groups share it.",
-    "tr": "Sayaç ilk mesajınla başlar ve {days} gün sürer. Sohbet, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer.",
+  "24u6gvrpexa": {
+    "en": "The count starts with your first message and lasts {days} days. The chat, your own API key connections, the developer API and Hanogt AI in groups share it.",
+    "tr": "Sayaç ilk mesajınla başlar ve {days} gün sürer. Sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer.",
     "files": [
       "src/components/HanogtAI/UsageMeter.tsx"
     ]
@@ -37240,20 +37382,6 @@
   "nlihjz3vvz": {
     "en": "Includes +{count} extra messages from the Hanogt team",
     "tr": "Hanogt ekibinden +{count} ek mesaj dahil",
-    "files": [
-      "src/components/HanogtAI/UsageMeter.tsx"
-    ]
-  },
-  "2be057ld1yq": {
-    "en": "Your own connections (today)",
-    "tr": "Kendi bağlantıların (bugün)",
-    "files": [
-      "src/components/HanogtAI/UsageMeter.tsx"
-    ]
-  },
-  "1yt5vnlq2wd": {
-    "en": "Messages sent with your own API key don't use your Hanogt AI messages.",
-    "tr": "Kendi API anahtarınla gönderdiklerin Hanogt AI hakkından düşmez.",
     "files": [
       "src/components/HanogtAI/UsageMeter.tsx"
     ]
@@ -40464,9 +40592,9 @@
       "src/components/Plans/plans-copy.ts"
     ]
   },
-  "hnyl1nou3f": {
-    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit and longer answers, more projects and groups, bigger team sessions, your own API key connections, the developer API, a profile badge, priority support and, on Pro, early access.",
-    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı ve daha uzun yanıtlar, daha fazla proje ve grup, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar, geliştirici API'si, profil rozeti, destekte öncelik ve Pro'da erken erişim.",
+  "901m0kri11": {
+    "en": "The team can assign a plan by hand to testers, contributors and contest winners. An assigned plan has the same benefits as a bought one: a higher Hanogt AI limit and longer answers, more projects and groups, more files run at once, bigger groups, more starred messages, larger team sessions, connections with your own API keys, the developer API, the profile badge, support priority and, on Pro, early access.",
+    "tr": "Ekip; testçilere, katkı verenlere ve yarışma kazananlarına planı elle tanımlayabilir. Tanımlanan planın avantajları satın alınanla aynıdır: daha yüksek Hanogt AI sınırı ve daha uzun yanıtlar, daha fazla proje ve grup, tek seferde daha çok dosya çalıştırma, daha büyük gruplar, daha çok yıldızlı mesaj, daha kalabalık ekip oturumları, kendi API anahtarınla bağlantılar, geliştirici API'si, profil rozeti, destekte öncelik ve Pro'da erken erişim.",
     "files": [
       "src/components/Plans/plans-copy.ts"
     ]
@@ -40524,6 +40652,34 @@
   "14vhgkgomp5": {
     "en": "Yes. You can move between Plus and Pro, or between monthly and yearly billing. The difference for the rest of your period is prorated and shown before you confirm.",
     "tr": "Evet. Plus ile Pro arasında ya da aylık ile yıllık ödeme arasında geçebilirsin. Kalan süren için fark orantılı hesaplanır ve onaylamadan önce gösterilir.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "2cuvecsgu3g": {
+    "en": "Do messages through my own API key use my allowance?",
+    "tr": "Kendi API anahtarımla gönderdiğim mesajlar hakkımdan düşer mi?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "bk4fvlvjz": {
+    "en": "Yes. On Plus and Pro, messages through the providers you connect with your own key have no limit of their own: they use the same Hanogt AI allowance as the chat, the developer API and Hanogt AI in groups. If the provider doesn't answer, the message is given back; the provider's charges are yours.",
+    "tr": "Evet. Plus ve Pro'da kendi anahtarınla bağladığın sağlayıcılarla gönderdiğin mesajların ayrı bir sınırı yoktur: sohbet, geliştirici API'si ve gruplardaki Hanogt AI ile aynı Hanogt AI mesaj hakkından düşer. Sağlayıcı yanıt vermezse mesaj hakkına geri eklenir; sağlayıcının ücretleri sana aittir.",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "78yfyjyph8": {
+    "en": "Whose plan sets a group's limits?",
+    "tr": "Grup sınırları kimin planına göre?",
+    "files": [
+      "src/components/Plans/plans-copy.ts"
+    ]
+  },
+  "a6s6cnhiaw": {
+    "en": "The group owner's: 25 members on Free, 100 on Plus and 250 on Pro, and the limits for pinned messages, custom bot commands and AutoMod banned words grow too. If the owner's plan goes down nothing in the group is removed; nothing new can be added until it is under the limit.",
+    "tr": "Grubun sahibinin planına göre: üye sayısı Ücretsiz'de 25, Plus'ta 100, Pro'da 250; sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelime sınırları da büyür. Sahibin planı düşerse grupta hiçbir şey silinmez; yalnızca sınırın altına inene kadar yenisi eklenemez.",
     "files": [
       "src/components/Plans/plans-copy.ts"
     ]
@@ -40605,6 +40761,101 @@
       "src/components/Plans/PricingSections.tsx"
     ]
   },
+  "2bd1llzxq94": {
+    "en": "{count} · uses Hanogt AI messages",
+    "tr": "{count} · Hanogt AI hakkından",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "uweywsqgx9": {
+    "en": "Thinking budget",
+    "tr": "Düşünme payı",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "27oc1ugb9ac": {
+    "en": "Personal instructions",
+    "tr": "Kişisel talimat",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1qju1j8bapk": {
+    "en": "Files run at once",
+    "tr": "Tek seferde çalışan dosya",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1upsw2nsvbr": {
+    "en": "Compiled-language files a minute",
+    "tr": "Derlenen dillerde dakikada dosya",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "gxk8g8b7ay": {
+    "en": "Members per group",
+    "tr": "Grup başına üye",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1l8p957exc4": {
+    "en": "Pinned messages per group",
+    "tr": "Grup başına sabitlenmiş mesaj",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "igvv5e8tcf": {
+    "en": "Custom bot commands (per group)",
+    "tr": "Özel bot komutu (grup başına)",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1v8djvoo3zv": {
+    "en": "AutoMod banned words (per group)",
+    "tr": "AutoMod yasaklı kelime (grup başına)",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1rige9q5jum": {
+    "en": "Starred messages",
+    "tr": "Yıldızlı mesaj",
+    "files": [
+      "src/components/Plans/PricingSections.tsx",
+      "src/components/Plans/UsageList.tsx",
+      "src/components/Social/HomeSidebar.tsx",
+      "src/components/Social/StarredDialog.tsx",
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "1m65zqml7fw": {
+    "en": "Code, games and teams",
+    "tr": "Kod, oyun ve ekip",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "uurxqin9h2": {
+    "en": "Support and profile",
+    "tr": "Destek ve profil",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "hexo0wzrtu": {
+    "en": "Group limits follow the group owner's plan.",
+    "tr": "Grup sınırları grubun sahibinin planına göredir.",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
   "1sbb9804z4y": {
     "en": "Developer API keys",
     "tr": "Geliştirici API anahtarı",
@@ -40661,13 +40912,6 @@
       "src/components/Plans/UsageList.tsx"
     ]
   },
-  "u66expsskd": {
-    "en": "Messages through your own connections (today)",
-    "tr": "Kendi bağlantılarınla mesaj (bugün)",
-    "files": [
-      "src/components/Plans/UsageList.tsx"
-    ]
-  },
   "sme7a582ft": {
     "en": "Hanogt Social groups you own",
     "tr": "Sahibi olduğun Hanogt Social grubu",
@@ -40710,9 +40954,9 @@
       "src/components/Plans/UsageList.tsx"
     ]
   },
-  "mwure5uv6e": {
-    "en": "Counted for {days} days from your first message; the chat and the developer API together.",
-    "tr": "İlk mesajından itibaren {days} gün sayılır; sohbet ve geliştirici API'si birlikte.",
+  "1fqy60zql0": {
+    "en": "Counted for {days} days from your first message; the chat, your own connections and the developer API together.",
+    "tr": "İlk mesajından itibaren {days} gün sayılır; sohbet, kendi bağlantıların ve geliştirici API'si birlikte.",
     "files": [
       "src/components/Plans/UsageList.tsx"
     ]
@@ -43370,15 +43614,6 @@
       "src/components/Social/HomeSidebar.tsx"
     ]
   },
-  "1rige9q5jum": {
-    "en": "Starred messages",
-    "tr": "Yıldızlı mesajlar",
-    "files": [
-      "src/components/Social/HomeSidebar.tsx",
-      "src/components/Social/StarredDialog.tsx",
-      "src/components/Social/dm/DmView.tsx"
-    ]
-  },
   "mdx29rfjqb": {
     "en": "Start a direct message",
     "tr": "Direkt mesaj başlat",
@@ -43993,9 +44228,9 @@
       "src/components/Social/SocialShell.tsx"
     ]
   },
-  "en7rvkvkjk": {
-    "en": "Only you can see the messages you star ({count}/{max}).",
-    "tr": "Yıldızladığın mesajlar yalnızca sana görünür ({count}/{max}).",
+  "22vv7rcyna7": {
+    "en": "Only you can see the messages you star ({count}/{max}; Free {free}, Plus {plus}, Pro {pro}).",
+    "tr": "Yıldızladığın mesajlar yalnızca sana görünür ({count}/{max}; Ücretsiz {free}, Plus {plus}, Pro {pro}).",
     "files": [
       "src/components/Social/StarredDialog.tsx"
     ]
@@ -46417,9 +46652,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "jq3x5lzp51": {
-    "en": "You can call Hanogt AI from your own app (a bot, a site, a script) through an **OpenAI-compatible** API. Create a key on the [API and connections](/ai/api) page (the 🔑 button above the chat); keys start with `hnk_` and are shown **only once**, and we keep only a hash.\n• **Address:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI's official libraries work by changing the base URL. Streaming is supported; tool calls and images aren't.\n• **Plans:** {plusKeys} keys on Plus, {proKeys} on Pro. The API has no limit of its own: every request uses one of your plan's Hanogt AI messages ({plusWindow} every 2 weeks on Plus, {proWindow} a week on Pro; at most {plusMinute} a minute on Plus, {proMinute} on Pro). A request the model can't answer at all isn't counted.\n• **Thinking:** send `include_reasoning: true` and the model thinks first; its thinking comes back in `reasoning_content`.\n• **Safety:** don't use your key in a browser, a mobile app or a public repository; if it leaks, revoke it on the page at once. Other sites can't call the API from a browser.\n• On the same page's **Your own keys** tab you connect providers such as OpenAI, Claude or Gemini to the Hanogt AI chat with your own key.\nThe API is open on the Plus and Pro plans; if the team switches it off for an account or for everyone, the page says so.",
-    "tr": "Hanogt AI'ı kendi uygulamandan (bot, site, betik) **OpenAI uyumlu** bir API ile çağırabilirsin. [API ve bağlantılar](/ai/api) sayfasından (sohbetin üstündeki 🔑 düğmesi) anahtar oluşturursun; anahtar `hnk_` ile başlar ve **yalnızca bir kez** gösterilir, biz yalnızca özetini saklarız.\n• **Adres:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI'ın resmî kütüphaneleri temel adresi değiştirerek çalışır. Akışlı yanıt (stream) desteklenir; araç çağrısı (tools) ve görseller desteklenmez.\n• **Planlar:** Plus'ta {plusKeys}, Pro'da {proKeys} anahtar. API'nin ayrı bir sınırı yoktur: her istek planının Hanogt AI mesaj hakkından bir mesaj düşer (Plus 2 haftada {plusWindow}, Pro haftada {proWindow}; dakikada en fazla Plus {plusMinute}, Pro {proMinute}). Model hiç yanıt veremezse mesaj düşülmez.\n• **Düşünme:** istekte `include_reasoning: true` gönderirsen model önce düşünür ve düşüncesi `reasoning_content` alanında gelir.\n• **Güvenlik:** anahtarını tarayıcıda, mobil uygulamada ya da herkese açık depoda kullanma; sızdıysa sayfadan hemen iptal et. Başka sitelerin tarayıcıdan çağırmasına izin verilmez.\n• Aynı sayfanın **Kendi anahtarların** sekmesinde OpenAI, Claude, Gemini gibi sağlayıcıları kendi anahtarınla Hanogt AI sohbetine bağlarsın.\nAPI, Plus ve Pro planlarında açık; ekip bir hesabın ya da herkesin erişimini kapatırsa sayfa bunu söyler.",
+  "121p9s0t68d": {
+    "en": "You can call Hanogt AI from your own app (a bot, a site, a script) through an **OpenAI-compatible** API. Create a key on the [API and connections](/ai/api) page (the 🔑 button above the chat); keys start with `hnk_` and are shown **only once**, and we keep only a hash.\n• **Address:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI's official libraries work by changing the base URL. Streaming is supported; tool calls and images aren't.\n• **Plans:** {plusKeys} keys on Plus, {proKeys} on Pro. The API has no limit of its own: every request uses one of your plan's Hanogt AI messages ({plusWindow} every 2 weeks on Plus, {proWindow} a week on Pro; at most {plusMinute} a minute on Plus, {proMinute} on Pro). A request the model can't answer at all isn't counted.\n• **Thinking:** send `include_reasoning: true` and the model thinks first; its thinking comes back in `reasoning_content`.\n• **Safety:** don't use your key in a browser, a mobile app or a public repository; if it leaks, revoke it on the page at once. Other sites can't call the API from a browser.\n• On the same page's **Your own keys** tab you connect providers such as OpenAI, Claude or Gemini to the Hanogt AI chat with your own key; messages through them use the same Hanogt AI allowance.\nThe API is open on the Plus and Pro plans; if the team switches it off for an account or for everyone, the page says so.",
+    "tr": "Hanogt AI'ı kendi uygulamandan (bot, site, betik) **OpenAI uyumlu** bir API ile çağırabilirsin. [API ve bağlantılar](/ai/api) sayfasından (sohbetin üstündeki 🔑 düğmesi) anahtar oluşturursun; anahtar `hnk_` ile başlar ve **yalnızca bir kez** gösterilir, biz yalnızca özetini saklarız.\n• **Adres:** `/api/v1/chat/completions`, model `hanogt-ai`; OpenAI'ın resmî kütüphaneleri temel adresi değiştirerek çalışır. Akışlı yanıt (stream) desteklenir; araç çağrısı (tools) ve görseller desteklenmez.\n• **Planlar:** Plus'ta {plusKeys}, Pro'da {proKeys} anahtar. API'nin ayrı bir sınırı yoktur: her istek planının Hanogt AI mesaj hakkından bir mesaj düşer (Plus 2 haftada {plusWindow}, Pro haftada {proWindow}; dakikada en fazla Plus {plusMinute}, Pro {proMinute}). Model hiç yanıt veremezse mesaj düşülmez.\n• **Düşünme:** istekte `include_reasoning: true` gönderirsen model önce düşünür ve düşüncesi `reasoning_content` alanında gelir.\n• **Güvenlik:** anahtarını tarayıcıda, mobil uygulamada ya da herkese açık depoda kullanma; sızdıysa sayfadan hemen iptal et. Başka sitelerin tarayıcıdan çağırmasına izin verilmez.\n• Aynı sayfanın **Kendi anahtarların** sekmesinde OpenAI, Claude, Gemini gibi sağlayıcıları kendi anahtarınla Hanogt AI sohbetine bağlarsın; bu bağlantılarla gönderdiğin mesajlar da aynı Hanogt AI hakkından düşer.\nAPI, Plus ve Pro planlarında açık; ekip bir hesabın ya da herkesin erişimini kapatırsa sayfa bunu söyler.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -46789,9 +47024,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1e93v98eyo3": {
-    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, #channels, /commands, GIFs, Markdown, search, voice messages and voice calls. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin, moderator and member; owners and admins manage members, settings and AutoMod, and moderators warn, mute, delete messages and remove members. See “Bots and AutoMod in groups” for Hanogt Security Bot and AutoMod.\nLimits: 25 members and 50 files per group. How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
-    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, #kanal, /komutlar, GIF, Markdown, arama, sesli mesaj ve sesli arama var. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici, moderatör ve üye; sahip ve yöneticiler üyeleri, ayarları ve AutoMod'u yönetir, moderatörler uyarır, susturur, mesaj siler ve gruptan çıkarır. Hanogt Security Bot ve AutoMod için “Gruplarda botlar ve AutoMod” notuna bak.\nSınırlar: grup başına 25 üye ve 50 dosya. Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
+  "1yvl1zwb3rk": {
+    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, #channels, /commands, GIFs, Markdown, search, voice messages and voice calls. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin, moderator and member; owners and admins manage members, settings and AutoMod, and moderators warn, mute, delete messages and remove members. See “Bots and AutoMod in groups” for Hanogt Security Bot and AutoMod.\nLimits: 50 files per group; a group's size follows its owner's plan: {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro (the limits for pinned messages, custom bot commands and AutoMod banned words grow with the plan too). How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
+    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, #kanal, /komutlar, GIF, Markdown, arama, sesli mesaj ve sesli arama var. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici, moderatör ve üye; sahip ve yöneticiler üyeleri, ayarları ve AutoMod'u yönetir, moderatörler uyarır, susturur, mesaj siler ve gruptan çıkarır. Hanogt Security Bot ve AutoMod için “Gruplarda botlar ve AutoMod” notuna bak.\nSınırlar: grup başına 50 dosya; grubun büyüklüğü sahibinin planına göredir: Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye (sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelime sınırları da planla büyür). Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -46901,9 +47136,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "12j8ah34kfl": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys and send {ownDayPlus} messages a day on Plus, or {connectionsPro} providers and {ownDayPro} messages a day on Pro.\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus} sağlayıcı bağlayıp günde {ownDayPlus}, Pro'da {connectionsPro} sağlayıcı bağlayıp günde {ownDayPro} mesaj gönderebilirsin.\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "dbvlb2lnr5": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, your own API key connections, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Group size (by the group owner's plan):** {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro; {pinsPlus} pinned messages on Plus and {pinsPro} on Pro, {commandsPlus} / {commandsPro} custom bot commands and {wordsPlus} / {wordsPro} AutoMod banned words. Nothing is removed when the plan goes down; nothing new can be added.\n• **Running code:** {runFree} files at once on Free, {runPlus} on Plus and {runPro} on Pro; for compiled languages {runMinutePlus} files a minute on Plus and {runMinutePro} on Pro.\n• **Starred messages:** {starsFree} on Free, {starsPlus} on Plus and {starsPro} on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys on Plus and {connectionsPro} on Pro; messages through them have no separate limit and use your Hanogt AI messages (given back when the provider doesn't answer).\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Grup büyüklüğü (grubun sahibinin planına göre):** Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye; Plus'ta {pinsPlus}, Pro'da {pinsPro} sabitlenmiş mesaj, {commandsPlus} / {commandsPro} özel bot komutu ve {wordsPlus} / {wordsPro} AutoMod yasaklı kelimesi. Plan düşerse hiçbir şey silinmez, yalnızca yenisi eklenemez.\n• **Kod çalıştırma:** tek seferde Ücretsiz'de {runFree}, Plus'ta {runPlus}, Pro'da {runPro} dosya; derlenen dillerde dakikada Plus'ta {runMinutePlus}, Pro'da {runMinutePro} dosya.\n• **Yıldızlı mesajlar:** Ücretsiz'de {starsFree}, Plus'ta {starsPlus}, Pro'da {starsPro}.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin; bu bağlantılarla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer (sağlayıcı yanıt vermezse geri eklenir).\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -49482,9 +49717,9 @@
       "src/lib/language-detect.ts"
     ]
   },
-  "16u0dwsunnp": {
-    "en": "5 October 2026",
-    "tr": "5 Ekim 2026",
+  "zdnic8e1pj": {
+    "en": "6 October 2026",
+    "tr": "6 Ekim 2026",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -49534,6 +49769,34 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "24ma1v4px4r": {
+    "en": "Connections with your own API key: on Plus and Pro, messages through these connections no longer have a separate daily limit; they use the same Hanogt AI allowance as the chat, the developer API and Hanogt AI in groups and are counted by the same counter. If the provider doesn't answer, the message is given back.",
+    "tr": "Kendi API anahtarınızla bağlantılar: Plus ve Pro'da bu bağlantılarla gönderdiğiniz mesajların ayrı bir günlük sınırı kalmadı; sohbet, geliştirici API'si ve gruplardaki Hanogt AI ile aynı Hanogt AI mesaj hakkından düşüyor ve aynı sayaçla sayılıyor. Sağlayıcı yanıt vermezse mesaj hakkınıza geri ekleniyor.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "2gljhd0r018": {
+    "en": "New plan benefits: running 8, 25 or 75 files at once in the code editor (40, 150 or 400 files a minute for compiled languages); depending on the group owner's plan, 25, 100 or 250 members per group with more pinned messages, custom bot commands and AutoMod banned words; and 200, 500 or 1,000 starred messages. Nothing is removed when a plan goes down; nothing new can be added until you are under the limit.",
+    "tr": "Yeni plan avantajları: kod editöründe tek seferde 8, 25 ya da 75 dosya çalıştırma (derlenen dillerde dakikada 40, 150 ya da 400 dosya); grubun sahibinin planına göre grup başına 25, 100 ya da 250 üye ile daha fazla sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelimesi; 200, 500 ya da 1.000 yıldızlı mesaj. Plan düştüğünde hiçbir şey silinmiyor; yalnızca sınırın altına inene kadar yenisi eklenemiyor.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "9q8aokt32c": {
+    "en": "Group limits and privacy: only the owner's plan level is read for a group's limits and the plan isn't sent to members; because the limits are shown to members and in invite previews, though, the owner's plan level can be inferred from them. The Privacy Policy and the Terms of Use are updated accordingly.",
+    "tr": "Grup sınırları ve gizlilik: Bir grubun sınırları için yalnızca sahibinin plan seviyesi okunuyor ve plan bilgisi üyelere gönderilmiyor; ancak sınırlar üyelere ve davet önizlemesinde gösterildiğinden sahibin plan seviyesi bu sayılardan anlaşılabilir. Gizlilik Politikası ve Kullanım Şartları buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "16u0dwsunnp": {
+    "en": "5 October 2026",
+    "tr": "5 Ekim 2026",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -50141,9 +50404,30 @@
       "src/lib/plans.ts"
     ]
   },
+  "1adms2ljotm": {
+    "en": "Run 8 files at once",
+    "tr": "Tek seferde 8 dosya çalıştırma",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
   "won8nauqu4": {
     "en": "Create up to 3 Hanogt Social groups",
     "tr": "3 Hanogt Social grubu açma",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "a6g8mgpwup": {
+    "en": "25 members and 25 pinned messages in your groups",
+    "tr": "Gruplarında 25 üye ve 25 sabitlenmiş mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "iul678q85a": {
+    "en": "200 starred messages",
+    "tr": "200 yıldızlı mesaj",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -50190,9 +50474,30 @@
       "src/lib/plans.ts"
     ]
   },
+  "qsuwdy3tle": {
+    "en": "Run 25 files at once; 150 files a minute for compiled languages",
+    "tr": "Tek seferde 25 dosya çalıştırma; derlenen dillerde dakikada 150 dosya",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
   "9zy9i7cmco": {
     "en": "Create up to 10 Hanogt Social groups",
     "tr": "10 Hanogt Social grubu açma",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1yjfyxd8bjr": {
+    "en": "100 members, 50 pinned messages, 50 custom bot commands and 300 banned words in your groups",
+    "tr": "Gruplarında 100 üye, 50 sabitlenmiş mesaj, 50 özel bot komutu ve 300 yasaklı kelime",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1vfkt2gnoe5": {
+    "en": "500 starred messages",
+    "tr": "500 yıldızlı mesaj",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -50211,9 +50516,9 @@
       "src/lib/plans.ts"
     ]
   },
-  "3pjn4mhavs": {
-    "en": "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more), 3,000 messages a day",
-    "tr": "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası), günde 3.000 mesaj",
+  "x4yhpk3s5v": {
+    "en": "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more); messages use your Hanogt AI allowance",
+    "tr": "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası); mesajlar Hanogt AI hakkından düşer",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -50274,9 +50579,30 @@
       "src/lib/plans.ts"
     ]
   },
+  "1vyunytu6vw": {
+    "en": "Run 75 files at once; 400 files a minute for compiled languages",
+    "tr": "Tek seferde 75 dosya çalıştırma; derlenen dillerde dakikada 400 dosya",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
   "29srxodtl72": {
     "en": "Unlimited Hanogt Social groups",
     "tr": "Sınırsız Hanogt Social grubu",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1nrdkprzf9y": {
+    "en": "250 members, 100 pinned messages, 100 custom bot commands and 1,000 banned words in your groups",
+    "tr": "Gruplarında 250 üye, 100 sabitlenmiş mesaj, 100 özel bot komutu ve 1.000 yasaklı kelime",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "ow2lb6r27f": {
+    "en": "1,000 starred messages",
+    "tr": "1.000 yıldızlı mesaj",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -50295,9 +50621,9 @@
       "src/lib/plans.ts"
     ]
   },
-  "2aarv22a2xb": {
-    "en": "Connect 5 AI providers with your own API keys, 10,000 messages a day",
-    "tr": "Kendi API anahtarınla 5 yapay zekâ bağlantısı, günde 10.000 mesaj",
+  "1vawcxhmxpi": {
+    "en": "Connect 5 AI providers with your own API keys; messages use your Hanogt AI allowance",
+    "tr": "Kendi API anahtarınla 5 yapay zekâ bağlantısı; mesajlar Hanogt AI hakkından düşer",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -53872,6 +54198,13 @@
   "1pa736ymka9": {
     "en": "Voice messages are unavailable right now (storage isn't configured).",
     "tr": "Sesli mesajlar şu anda kullanılamıyor (depolama yapılandırılmamış).",
+    "files": [
+      "src/lib/social/api.ts"
+    ]
+  },
+  "1dxeiliqxsn": {
+    "en": "Your plan keeps up to {limit} starred messages. Unstar one to make room, or upgrade your plan (Pricing).",
+    "tr": "Planınla en fazla {limit} mesaj yıldızlayabilirsin. Yer açmak için bir yıldızı kaldır ya da planını yükselt (Fiyatlandırma).",
     "files": [
       "src/lib/social/api.ts"
     ]

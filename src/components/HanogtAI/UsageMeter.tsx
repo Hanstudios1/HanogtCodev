@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Gauge, KeyRound, Sparkles } from "lucide-react";
+import { ArrowUpRight, Gauge, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { currentWindow, formatResetTime, usageLevel, type UsageWindow } from "@/lib/ai/usage";
@@ -21,11 +21,9 @@ const C = {
     left: { TR: "{count} mesaj kaldı", EN: "{count} messages left" },
     none: { TR: "Bu dönemin hakkı doldu", EN: "This period's messages are used up" },
     resets: { TR: "Yenilenme: {time}", EN: "Renews: {time}" },
-    window: { TR: "Sayaç ilk mesajınla başlar ve {days} gün sürer. Sohbet, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer.", EN: "The count starts with your first message and lasts {days} days. The chat, the developer API and Hanogt AI in groups share it." },
+    window: { TR: "Sayaç ilk mesajınla başlar ve {days} gün sürer. Sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer.", EN: "The count starts with your first message and lasts {days} days. The chat, your own API key connections, the developer API and Hanogt AI in groups share it." },
     perMinute: { TR: "Dakikada en fazla {count} mesaj", EN: "Up to {count} messages a minute" },
     bonus: { TR: "Hanogt ekibinden +{count} ek mesaj dahil", EN: "Includes +{count} extra messages from the Hanogt team" },
-    own: { TR: "Kendi bağlantıların (bugün)", EN: "Your own connections (today)" },
-    ownHint: { TR: "Kendi API anahtarınla gönderdiklerin Hanogt AI hakkından düşmez.", EN: "Messages sent with your own API key don't use your Hanogt AI messages." },
     upgrade: { TR: "Planını yükselt", EN: "Upgrade your plan" },
     upgradeHint: { TR: "{plan} ile {period} {count} mesaj", EN: "{count} messages {period} with {plan}" },
     details: { TR: "Tüm plan hakların", EN: "All your plan benefits" },
@@ -65,7 +63,7 @@ function Bar({ window: shown, label }: { window: UsageWindow; label: string }) {
  * "This week 12 / 50": Hanogt AI messages used in the plan's window, in the
  * /ai top bar and the floating panel's header. Amber from 80 %, red when
  * nothing is left; opens a card with when the count renews, the minute limit,
- * a staff grant, the person's own connections and a way to a bigger plan.
+ * a staff grant and a way to a bigger plan.
  */
 export default function UsageMeter({ handle, variant, onNavigate }: { handle: AiUsageHandle; variant: "panel" | "page"; onNavigate?: () => void }) {
     const { tx, locale } = useI18n();
@@ -106,7 +104,6 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
 
     const day = currentWindow(usage.hanogt.window, now);
     const level = usageLevel(day);
-    const ownDay = usage.own ? currentWindow(usage.own.day, now) : null;
     const nextPlan = nextPlanUp(usage.plan);
     const days = usage.hanogt.windowDays;
     const period = tx(days === 7 ? C.week : days === 14 ? C.twoWeeks : C.days, { days });
@@ -158,17 +155,6 @@ export default function UsageMeter({ handle, variant, onNavigate }: { handle: Ai
                         <p className="mt-1 text-[11px] leading-snug text-ai-muted">{tx(C.window, { days })} {tx(C.perMinute, { count: usage.hanogt.minute.limit })}.</p>
                         {usage.hanogt.bonus > 0 ? <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">{tx(C.bonus, { count: usage.hanogt.bonus.toLocaleString(locale) })}</p> : null}
                     </div>
-
-                    {ownDay ? (
-                        <div className="mt-3 border-t border-ai-line pt-3">
-                            <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-ai-ink/85"><KeyRound className="h-3.5 w-3.5 text-sky-500" aria-hidden />{tx(C.own)}</span>
-                                <span className="font-bold tabular-nums text-ai-ink">{ownDay.used.toLocaleString(locale)} / {ownDay.limit.toLocaleString(locale)}</span>
-                            </div>
-                            <Bar window={ownDay} label={tx(C.own)} />
-                            <p className="mt-1.5 text-[11px] leading-snug text-ai-muted">{tx(C.ownHint)}</p>
-                        </div>
-                    ) : null}
 
                     <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-ai-line pt-3 text-[12px] font-semibold">
                         {nextPlan ? (

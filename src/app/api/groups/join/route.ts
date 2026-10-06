@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { commitServerMutations, deleteServerDocument, getServerDocument } from "@/lib/server/firebase-rest";
+import { groupLimitsFor } from "@/lib/server/group-limits";
 import { getClientKey } from "@/lib/server/request-security";
-import { GROUP_LIMITS, groupColor, groupEmoji, isGroupId, isGroupTemplateId, type GroupJoinPreview } from "@/lib/groups";
+import { groupColor, groupEmoji, isGroupId, isGroupTemplateId, type GroupJoinPreview } from "@/lib/groups";
 import {
     GroupApiError,
     assertRateLimit,
@@ -60,7 +61,10 @@ export async function GET(request: NextRequest) {
         const { link, group, groupId, member } = await resolveLink(token, user.email);
         const members = groupMembers(group);
         const inviterEmail = link.createdBy || "";
-        const inviter = (await loadProfiles([inviterEmail])).get(inviterEmail) ?? null;
+        const [inviter, { limits }] = await Promise.all([
+            loadProfiles([inviterEmail]).then((profiles) => profiles.get(inviterEmail) ?? null),
+            groupLimitsFor(group.ownerEmail),
+        ]);
         const preview: GroupJoinPreview = {
             groupId,
             name: group.name || "Hanogt",
@@ -69,11 +73,12 @@ export async function GET(request: NextRequest) {
             color: groupColor(group.color),
             template: isGroupTemplateId(group.template) ? group.template : null,
             memberCount: members.length,
-            membersMax: GROUP_LIMITS.membersMax,
+            // The group's size is its owner's plan's (Free 25, Plus 100, Pro 250 members).
+            membersMax: limits.members,
             inviter: { username: profileName(inviterEmail, inviter), avatarUrl: profileAvatar(inviter) },
             expiresAt: link.expiresAt || null,
             alreadyMember: member,
-            full: members.length >= GROUP_LIMITS.membersMax,
+            full: members.length >= limits.members,
             banned: await isBanned(groupId, user.email),
         };
         return groupJson({ preview });
@@ -96,7 +101,8 @@ export async function POST(request: NextRequest) {
             if (member) return { groupId, group, joined: false };
             const members = groupMembers(group);
             if (await isBanned(groupId, email)) throw new GroupApiError(403, "banned", "Bu gruba katılmanız engellenmiş.");
-            if (members.length >= GROUP_LIMITS.membersMax) throw new GroupApiError(409, "group_full", "Grup 25 üye sınırına ulaştı.");
+            const { limits } = await groupLimitsFor(group.ownerEmail);
+            if (members.length >= limits.members) throw new GroupApiError(409, "group_full", `Grup ${limits.members} üye sınırına ulaştı.`, { limit: limits.members });
             const now = new Date();
             // Membership and the use counter change atomically, so a link can never be used more often than allowed.
             await commitServerMutations([

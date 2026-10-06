@@ -3,6 +3,7 @@
 import { Ban, Check, Flag, Gavel, Link2, MicOff, RefreshCw, Save, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { PLAN_GROUP_FEATURES } from "@/lib/plans";
 import { AUTOMOD_LIMITS, AUTOMOD_RULE_COPY, DEFAULT_AUTOMOD, isAutoModRule, normalizeDomain, type AutoModConfig } from "@/lib/social/automod-config";
 import { groupsApi, type GroupModerationResponse } from "../api";
 import { Spinner, cx, fullDateTime } from "../ui";
@@ -19,7 +20,7 @@ const C = {
     slang: { TR: "Argo ve hakaret", EN: "Slang and insults" },
     slangHint: { TR: "\"salak\", \"aptal\", \"stupid\" gibi daha hafif sözler.", EN: "Milder words like \"stupid\" or \"idiot\"." },
     customWords: { TR: "Grubun yasaklı kelimeleri", EN: "The group's banned words" },
-    customWordsHint: { TR: "Virgülle ya da satır satır yaz (en fazla {max}). Bu listeyi üyeler göremez.", EN: "Separate with commas or new lines (up to {max}). Members can't see this list." },
+    customWordsHint: { TR: "Virgülle ya da satır satır yaz ({count}/{max}; sınır grup sahibinin planına göredir: Ücretsiz {free}, Plus {plus}, Pro {pro}). Bu listeyi üyeler göremez.", EN: "Separate with commas or new lines ({count}/{max}; the limit follows the group owner's plan: Free {free}, Plus {plus}, Pro {pro}). Members can't see this list." },
     customWordsHidden: { TR: "Grubun yasaklı kelimelerini yalnızca sahip ve yöneticiler görür.", EN: "Only the owner and admins can see the group's banned words." },
     spam: { TR: "Spam: aynı mesajın tekrarı ve seri mesaj", EN: "Spam: repeated messages and bursts" },
     maxMentions: { TR: "Bir mesajdaki en fazla bahsetme", EN: "Most mentions in one message" },
@@ -93,7 +94,7 @@ function Check2({ label, hint, checked, disabled, onChange }: { label: string; h
 /** Group settings › Safety: AutoMod (owners and admins change it), reports, mutes and the latest AutoMod stops (moderators and up). */
 export default function SafetySettings() {
     const { tx, locale } = useI18n();
-    const { groupId, notify, errorText } = useWorkspace();
+    const { groupId, notify, errorText, limits } = useWorkspace();
     const [data, setData] = useState<GroupModerationResponse | null>(null);
     const [failed, setFailed] = useState(false);
     const [attempt, setAttempt] = useState(0);
@@ -128,6 +129,8 @@ export default function SafetySettings() {
     if (!data) return <div className="flex justify-center py-12"><Spinner className="h-6 w-6 text-indigo-500" /></div>;
 
     const editable = data.canEdit;
+    // Distinct words as the server counts them (case and repeats don't count twice).
+    const wordCount = new Set(words.split(/[\n,]/).map((word) => word.trim().toLocaleLowerCase("tr")).filter((word) => word.length >= 2)).size;
     const set = <K extends keyof AutoModConfig>(key: K, value: AutoModConfig[K]) => setConfig((current) => ({ ...current, [key]: value }));
     const person = (entry: { name: string } | null) => entry?.name ?? tx(C.unknown);
     const when = (iso: string | null) => (iso ? fullDateTime(Date.parse(iso), locale) : "");
@@ -244,7 +247,7 @@ export default function SafetySettings() {
                             ) : (
                                 <>
                                     <textarea value={words} disabled={!editable || off} onChange={(event) => setWords(event.target.value)} rows={3} className="mt-1.5 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:opacity-60 dark:border-white/10 dark:bg-zinc-950" aria-label={tx(C.customWords)} />
-                                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.customWordsHint, { max: AUTOMOD_LIMITS.customWords })}</p>
+                                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{tx(C.customWordsHint, { count: wordCount, max: limits.bannedWords, free: PLAN_GROUP_FEATURES.free.bannedWords, plus: PLAN_GROUP_FEATURES.plus.bannedWords, pro: PLAN_GROUP_FEATURES.pro.bannedWords })}</p>
                                 </>
                             )}
                         </div>

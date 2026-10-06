@@ -649,7 +649,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
 /** Pinned messages (newest pin first); messages outside the loaded window are fetched one by one. */
 export function PinnedPanel({ messages, onJump, onClose }: { messages: GroupChatMessage[]; onJump: (messageId: string) => void; onClose?: () => void }) {
     const { tx, locale } = useI18n();
-    const { groupId, group, role, memberByEmail, now, live } = useWorkspace();
+    const { groupId, group, role, memberByEmail, now, live, limits } = useWorkspace();
     const pinToggle = usePinToggle();
     const [extra, setExtra] = useState<Record<string, GroupChatMessage | null>>({});
     const byId = useMemo(() => new Map(messages.map((message) => [message.id, message])), [messages]);
@@ -672,7 +672,7 @@ export function PinnedPanel({ messages, onJump, onClose }: { messages: GroupChat
     return (
         <div className="flex h-full min-h-0 w-full flex-col">
             <div className="border-b border-zinc-200 px-4 py-3 dark:border-white/10">
-                <h2 className="flex items-center gap-2 text-sm font-black"><Pin className="h-4 w-4 text-amber-500" aria-hidden />{tx(C.pinnedTitle)}<span className="text-xs font-semibold text-zinc-400">{pinned.length}/{GROUP_LIMITS.pinnedMax}</span>
+                <h2 className="flex items-center gap-2 text-sm font-black"><Pin className="h-4 w-4 text-amber-500" aria-hidden />{tx(C.pinnedTitle)}<span className="text-xs font-semibold text-zinc-400">{pinned.length}/{limits.pinned}</span>
                     {onClose && <button type="button" onClick={onClose} className="ms-auto rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label={tx(UI_COPY.close)}><X className="h-4 w-4" aria-hidden /></button>}
                 </h2>
             </div>

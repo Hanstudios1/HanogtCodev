@@ -63,14 +63,14 @@ export function clearDirectMessageNotification(reader: string, chatId: string) {
     return quiet(deleteServerDocument(itemPath(reader, dmNotificationId(chatId))));
 }
 
-/** "Ali mentioned you in Study group": one item per group for each person mentioned. */
-export function notifyMentions(recipients: readonly string[], from: string, group: { id: string; name: string }, preview: string, everyone: boolean) {
-    const people = [...new Set(recipients)].filter((email) => email && email !== from).slice(0, 30);
+/** "Ali mentioned you in Study group": one item per group for each person mentioned (at most `max`, 30 unless a moderator's @everyone). */
+export function notifyMentions(recipients: readonly string[], from: string, group: { id: string; name: string }, preview: string, everyone: boolean, max = 30) {
+    const people = [...new Set(recipients)].filter((email) => email && email !== from).slice(0, max);
     if (!people.length) return Promise.resolve();
     return quiet((async () => {
         const sender = await senderOf(from);
         const name = group.name.slice(0, 60) || "Hanogt";
-        await Promise.all(people.map(async (email) => {
+        const notify = async (email: string) => {
             if (!(await wants(email, "mentionNotifications"))) return;
             await patchServerDocument(itemPath(email, mentionNotificationId(group.id)), {
                 type: "message",
@@ -81,7 +81,9 @@ export function notifyMentions(recipients: readonly string[], from: string, grou
                 read: false,
                 createdAt: new Date(),
             }).catch(() => undefined);
-        }));
+        };
+        // Ten at a time: a big group's @everyone doesn't open hundreds of requests at once.
+        for (let start = 0; start < people.length; start += 10) await Promise.all(people.slice(start, start + 10).map(notify));
     })());
 }
 

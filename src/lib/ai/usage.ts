@@ -5,7 +5,7 @@
  */
 import { isPlanId, type PaidPlanId, type PlanId } from "@/lib/plans";
 
-/** One counting window (the plan's window, a day or a minute). */
+/** One counting window (the plan's window or a minute). */
 export type UsageWindow = {
     limit: number;
     used: number;
@@ -17,13 +17,12 @@ export type UsageWindow = {
 export type AiUsage = {
     plan: PlanId;
     /**
-     * Hanogt AI's own model: messages in the plan's window (Free 50 in 7 days,
-     * Plus 750 in 14, Pro 2,000 in 7; a staff grant included) and a minute.
-     * The chat, the developer API and Hanogt AI in Social groups share it.
+     * Messages in the plan's window (Free 50 in 7 days, Plus 750 in 14, Pro
+     * 2,000 in 7; a staff grant included) and a minute. The chat, the
+     * person's own connections, the developer API and Hanogt AI in Social
+     * groups all share it.
      */
     hanogt: { window: UsageWindow; minute: UsageWindow; windowDays: number; bonus: number };
-    /** Messages through the person's own provider connections (a day); null when the plan has none. */
-    own: { day: UsageWindow; minute: UsageWindow } | null;
 };
 
 /** Something the plan counts: how many there are (null: couldn't be counted) out of the limit (null: unlimited). */
@@ -35,6 +34,8 @@ export type PlanUsage = AiUsage & {
         codeProjects: CountedLimit;
         gameProjects: CountedLimit;
         groups: CountedLimit;
+        /** Starred messages in Hanogt Social. */
+        stars: CountedLimit;
         connections: CountedLimit;
         /** Developer API keys; null while the API isn't open to the account. */
         apiKeys: CountedLimit | null;
@@ -42,7 +43,7 @@ export type PlanUsage = AiUsage & {
 };
 
 export const QUOTA_HEADERS = {
-    /** "hanogt" (Hanogt AI's window) or "own" (the person's own connections, a day). */
+    /** "hanogt": Hanogt AI's window (the only one since own connections count in it too). */
     quota: "X-Hanogt-AI-Quota",
     limit: "X-Hanogt-AI-Window-Limit",
     remaining: "X-Hanogt-AI-Window-Remaining",
@@ -52,8 +53,12 @@ export const QUOTA_HEADERS = {
     days: "X-Hanogt-AI-Window-Days",
 } as const;
 
-/** "hanogt": Hanogt AI's own model (chat, developer API, Social bots) · "own": the person's own connections. */
-export type QuotaKind = "hanogt" | "own";
+/**
+ * The window a message counted in: always Hanogt AI's, whether its own model
+ * answered or the person's own connection did (servers before 0.3.24 also
+ * reported a separate "own" day; such answers are ignored).
+ */
+export type QuotaKind = "hanogt";
 
 /** A window as an answer reports it. */
 export type WindowQuota = { quota: QuotaKind; limit: number; remaining: number; resetsAt: string | null; windowDays: number };
@@ -78,14 +83,6 @@ function readWindow(value: unknown): UsageWindow | null {
     return { limit, used, remaining, resetsAt: isoOrNull(record.resetsAt) };
 }
 
-/** A day and a minute window together; null unless both are valid. */
-function readPair(value: unknown): { day: UsageWindow; minute: UsageWindow } | null {
-    if (!value || typeof value !== "object") return null;
-    const day = readWindow((value as Record<string, unknown>).day);
-    const minute = readWindow((value as Record<string, unknown>).minute);
-    return day && minute ? { day, minute } : null;
-}
-
 /** A GET /api/ai/usage answer, checked before the browser trusts it. */
 export function readAiUsage(value: unknown): AiUsage | null {
     if (!value || typeof value !== "object") return null;
@@ -95,17 +92,16 @@ export function readAiUsage(value: unknown): AiUsage | null {
     const window = readWindow(hanogt.window);
     const minute = readWindow(hanogt.minute);
     if (!window || !minute) return null;
-    return { plan: record.plan, hanogt: { window, minute, windowDays: daysOf(hanogt.windowDays, 7), bonus: count(hanogt.bonus) ?? 0 }, own: readPair(record.own) };
+    return { plan: record.plan, hanogt: { window, minute, windowDays: daysOf(hanogt.windowDays, 7), bonus: count(hanogt.bonus) ?? 0 } };
 }
 
 /** The window an /api/ai answer reports in its headers; null when it sent none. */
 export function quotaFromHeaders(headers: { get(name: string): string | null }): WindowQuota | null {
-    const quota = headers.get(QUOTA_HEADERS.quota);
-    if (quota !== "hanogt" && quota !== "own") return null;
+    if (headers.get(QUOTA_HEADERS.quota) !== "hanogt") return null;
     const limit = count(Number(headers.get(QUOTA_HEADERS.limit) ?? "x"));
     const remaining = count(Number(headers.get(QUOTA_HEADERS.remaining) ?? "x"));
     if (limit === null || remaining === null) return null;
-    return { quota, limit, remaining, resetsAt: isoOrNull(headers.get(QUOTA_HEADERS.reset)), windowDays: daysOf(Number(headers.get(QUOTA_HEADERS.days) ?? "x"), quota === "own" ? 1 : 7) };
+    return { quota: "hanogt", limit, remaining, resetsAt: isoOrNull(headers.get(QUOTA_HEADERS.reset)), windowDays: daysOf(Number(headers.get(QUOTA_HEADERS.days) ?? "x"), 7) };
 }
 
 /** The limit details of a refused message; null for any other answer. */
@@ -113,12 +109,11 @@ export function limitDetailsOf(payload: unknown): LimitDetails | null {
     if (!payload || typeof payload !== "object") return null;
     const record = payload as Record<string, unknown>;
     // "daily_limit" is what servers before the weekly windows sent.
-    const quota = record.code === "usage_limit" || record.code === "daily_limit" ? "hanogt" : record.code === "connection_daily_limit" ? "own" : null;
     const limit = count(record.limit);
-    if (!quota || !isPlanId(record.plan) || limit === null) return null;
+    if ((record.code !== "usage_limit" && record.code !== "daily_limit") || !isPlanId(record.plan) || limit === null) return null;
     const upgrade = record.upgrade === "plus" || record.upgrade === "pro" ? record.upgrade : null;
-    // Without windowDays: Hanogt AI's window is a week; the own connections' and an older server's "daily_limit" a day.
-    return { quota, plan: record.plan, limit, used: count(record.used) ?? limit, resetsAt: isoOrNull(record.resetsAt), upgrade, windowDays: daysOf(record.windowDays, record.code === "usage_limit" ? 7 : 1) };
+    // Without windowDays: Hanogt AI's window is a week; an older server's "daily_limit" a day.
+    return { quota: "hanogt", plan: record.plan, limit, used: count(record.used) ?? limit, resetsAt: isoOrNull(record.resetsAt), upgrade, windowDays: daysOf(record.windowDays, record.code === "usage_limit" ? 7 : 1) };
 }
 
 /** "ok", "high" from 80 %, "full" when nothing is left. */
