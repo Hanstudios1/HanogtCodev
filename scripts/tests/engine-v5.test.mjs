@@ -746,3 +746,154 @@ public class PlayerInput : MonoBehaviour
     assert.deepEqual(game.messages("info"), ["mine 3"]);
     assert.deepEqual(game.problems(), []);
 });
+
+// ---------------------------------------------------------------------------
+// SaveSystem and JsonUtility
+// ---------------------------------------------------------------------------
+
+const { memoryStorage } = await import("./engine-helpers.mjs");
+
+const SAVE_SCRIPT = `using UnityEngine;
+using System.Collections.Generic;
+
+[System.Serializable]
+public class Item
+{
+    public string name;
+    public int count;
+}
+
+[System.Serializable]
+public class SaveData
+{
+    public int level = 1;
+    public float health = 100f;
+    public string hero = "Ada";
+    public bool hard;
+    public Vector3 spawn;
+    public Vector2 look;
+    public Color tint = Color.white;
+    public List<Item> items = new List<Item>();
+    public Dictionary<string, int> best = new Dictionary<string, int>();
+    public int[] keys = new int[0];
+    private int secret = 7;
+    public GameObject owner;
+    public int Secret() { return secret; }
+}
+
+public class Saver : MonoBehaviour
+{
+    public int coins = 3;
+    public void Store()
+    {
+        SaveData data = new SaveData();
+        data.level = 4;
+        data.health = 62.5f;
+        data.hard = true;
+        data.spawn = new Vector3(1, 2, 3);
+        data.look = new Vector2(0.5f, -1);
+        data.tint = new Color(1, 0, 0, 0.5f);
+        Item sword = new Item();
+        sword.name = "Kılıç";
+        sword.count = 1;
+        data.items.Add(sword);
+        data.best["forest"] = 120;
+        data.best["cave"] = 95;
+        data.keys = new int[] { 3, 1, 4 };
+        data.owner = gameObject;
+        Debug.Log("saved " + SaveSystem.Save("slot1", data) + " " + SaveSystem.Exists("slot1") + " " + SaveSystem.slotCount);
+    }
+    public void Restore()
+    {
+        SaveData data = SaveSystem.Load<SaveData>("slot1");
+        Debug.Log("loaded " + data.level + " " + data.health + " " + data.hero + " " + data.hard + " " + data.spawn + " " + data.look + " " + data.tint.a + " " + data.items[0].name + "x" + data.items[0].count + " " + data.best["cave"] + " " + data.keys.Length + data.keys[2] + " " + data.Secret() + " " + (data.owner == null));
+        var raw = SaveSystem.Load("slot1");
+        Debug.Log("raw " + raw["level"] + " " + raw["items"].Count);
+        Debug.Log("missing " + (SaveSystem.Load<SaveData>("nope") == null) + " " + SaveSystem.Load("nope", 5));
+    }
+    public void Json()
+    {
+        string json = JsonUtility.ToJson(this);
+        Debug.Log(json);
+        coins = 0;
+        JsonUtility.FromJsonOverwrite("{\\"coins\\":9}", this);
+        Item item = JsonUtility.FromJson<Item>("{\\"name\\":\\"Kalkan\\",\\"count\\":2}");
+        Debug.Log("json " + coins + " " + item.name + item.count);
+    }
+    public void Bad() { SaveSystem.Save("../hack", 1); }
+}`;
+
+function saverProject() {
+    const project = createBlankProject("Kayıt", "2d");
+    project.id = "game_save_test";
+    project.scripts = [{ id: "script_saver", name: "Saver.cs", language: "csharp", content: SAVE_SCRIPT }];
+    project.scenes[0].objects.push({ id: "entity_saver", name: "Saver", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createScriptComponent("script_saver", "Saver")] });
+    return project;
+}
+
+test("SaveSystem: a class with lists, dictionaries, vectors and colors saves and loads; scene objects are left out", () => {
+    const storage = memoryStorage();
+    const game = startWorld(saverProject(), { storage });
+    game.step(1);
+    const saver = game.find("Saver");
+    game.world.sendMessage(saver, "Store", undefined, "SendMessage");
+    assert.deepEqual(game.messages("info"), ["saved True True 1"]);
+    assert.equal(game.problems().filter((message) => message.includes("Kaydedilemeyen")).length, 1, "the GameObject field is skipped with one warning");
+    const stored = JSON.parse(storage.store.get("hanogt-engine:save:game_save_test:slot1"));
+    assert.deepEqual(stored.spawn, { x: 1, y: 2, z: 3 });
+    assert.deepEqual(stored.look, { x: 0.5, y: -1 });
+    assert.equal(stored.owner, null);
+    assert.equal("secret" in stored, false, "private fields stay out (like Unity)");
+    assert.deepEqual(JSON.parse(storage.store.get("hanogt-engine:save:game_save_test")).map((slot) => slot.name), ["slot1"]);
+
+    // A new session reads it back.
+    const next = startWorld(saverProject(), { storage });
+    next.step(1);
+    next.world.sendMessage(next.find("Saver"), "Restore", undefined, "SendMessage");
+    const lines = next.messages("info");
+    assert.equal(lines[0], "loaded 4 62.5 Ada True (1.00, 2.00, 3.00) (0.50, -1.00) 0.5 Kılıçx1 95 34 7 True");
+    assert.equal(lines[1], "raw 4 1");
+    assert.equal(lines[2], "missing True 5");
+    assert.deepEqual(next.problems(), []);
+});
+
+test("JsonUtility: ToJson writes public fields, FromJsonOverwrite fills a component, FromJson<T> builds a class", () => {
+    const game = startWorld(saverProject());
+    game.step(1);
+    game.world.sendMessage(game.find("Saver"), "Json", undefined, "SendMessage");
+    assert.deepEqual(game.messages("info"), ['{"coins":3}', "json 9 Kalkan2"]);
+});
+
+const SAVES = await load("lib/game-engine/runtime/save-system.ts");
+
+test("SaveSystem: slot names are checked, sizes are limited, a broken slot reads as missing", () => {
+    const game = startWorld(saverProject());
+    game.step(1);
+    assert.throws(() => game.world.sendMessage(game.find("Saver"), "Bad", undefined, "SendMessage"), /kayıt yuvası adı/, "a path-like name is refused");
+
+    const storage = memoryStorage();
+    const store = new SAVES.SaveStore(storage, "game_limits");
+    const now = "2026-10-06T10:00:00.000Z";
+    assert.equal(store.write("big", "x".repeat(SAVES.SAVE_LIMITS.slotBytes + 1), now) !== null, true, "one slot is at most 256 KB");
+    assert.equal(store.write("a", "x".repeat(200 * 1024), now), null);
+    assert.equal(store.write("b", "x".repeat(200 * 1024), now), null);
+    assert.match(store.write("c", "x".repeat(200 * 1024), now), /512 KB/, "all slots together stay under 512 KB");
+    assert.equal(store.write("a", "x".repeat(10), now), null, "rewriting a slot frees its old size");
+    for (let index = 0; index < 18; index += 1) assert.equal(store.write(`s${index}`, "1", now), null);
+    assert.match(store.write("one-too-many", "1", now), /20/);
+    assert.equal(store.delete("s0"), true);
+    assert.equal(store.delete("s0"), false);
+    assert.equal(new SAVES.SaveStore(storage, "game_limits").list().length, 19, "the index survives a reload");
+
+    // A slot whose JSON is broken comes back as the fallback, with one warning.
+    storage.store.set("hanogt-engine:save:game_save_test", JSON.stringify([{ name: "slot1", savedAt: now, bytes: 5 }]));
+    storage.store.set("hanogt-engine:save:game_save_test:slot1", "{oops");
+    const broken = startWorld(saverProject(), { storage });
+    broken.step(1);
+    const load = broken.world.resolveGlobal("SaveSystem").callMember("Load", ["slot1", 42], [], []);
+    assert.equal(load, 42);
+    assert.ok(broken.problems().some((message) => message.includes("bozuk")));
+    assert.equal(broken.world.resolveGlobal("SaveSystem").callMember("Exists", ["slot1"], [], []), true);
+    broken.world.resolveGlobal("SaveSystem").callMember("DeleteAll", [], [], []);
+    assert.equal(storage.store.has("hanogt-engine:save:game_save_test:slot1"), false);
+});

@@ -220,7 +220,12 @@ export class Parser {
             this.next();
             do {
                 if (this.isIdent() && this.is(":", 1)) { this.next(); this.next(); } // [field: SerializeField]
-                const name = this.expectIdent("Öznitelik adı bekleniyordu.").value;
+                let name = this.expectIdent("Öznitelik adı bekleniyordu.").value;
+                // [System.Serializable], [UnityEngine.SerializeField]: the last part names the attribute.
+                while (this.is(".") && this.isIdent(1)) {
+                    this.next();
+                    name = this.expectIdent("Öznitelik adı bekleniyordu.").value;
+                }
                 const args: Expr[] = [];
                 if (this.accept("(")) {
                     if (!this.is(")")) {

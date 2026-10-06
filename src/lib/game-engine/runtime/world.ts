@@ -73,6 +73,7 @@ import type { CameraView } from "./camera-math";
 import { screenRay, screenToWorld } from "./camera-math";
 import { BehaviourState, RuntimeEntity, type CoroutineState, type WaitState } from "./entity";
 import { createHostGlobals, PlayerPrefsStore } from "./globals";
+import { SaveStore } from "./save-system";
 import { LocalizationTable, startLanguageOf } from "../localization";
 import {
     AnimationHandle,
@@ -392,6 +393,8 @@ export class RuntimeWorld implements ScriptHost {
     readonly input: InputManager;
     readonly audio: SoundEngine | null;
     readonly prefs: PlayerPrefsStore;
+    /** SaveSystem slots (V5). */
+    readonly saves: SaveStore;
     readonly is2D: boolean;
     scene: SceneDocument;
     /** Screen effects of the running scene (V5: scripts change them through ScreenEffects; the scene data stays as it is). */
@@ -508,6 +511,7 @@ export class RuntimeWorld implements ScriptHost {
         this.input.configure(options.project.settings.input);
         this.audio = options.audio === undefined ? null : options.audio;
         this.prefs = new PlayerPrefsStore(options.storage ?? null, `hanogt-engine:prefs:${options.project.id}`);
+        this.saves = new SaveStore(options.storage ?? null, options.project.id);
         this.scene = this.findScene(options.sceneId ?? options.project.settings.startSceneId) ?? options.project.scenes[0];
         this.effects = cloneJson(this.scene.settings.postProcessing);
         this.localization = new LocalizationTable(options.project.settings.localization);

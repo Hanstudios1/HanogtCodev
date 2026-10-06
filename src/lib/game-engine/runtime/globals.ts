@@ -1,8 +1,9 @@
 /** Engine namespaces visible to scripts (Debug, Time, Input, Physics, SceneManager, Tween, Timer…). */
 import { compositeFormat } from "../script/stdlib";
-import { NOT_FOUND, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMRef, Vec3, type VMValue } from "../script/values";
+import { NOT_FOUND, ScriptObject, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMRef, Vec3, type VMValue } from "../script/values";
 import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, MAX_LOCAL_PLAYERS, type Vector3 } from "../types";
 import { languageName } from "../localization";
+import { fromJsonValue, overwriteFields, SaveStore, toJsonValue, typeFromArgument } from "./save-system";
 import { animatorHash } from "./animator-controller";
 import type { RuntimeEntity } from "./entity";
 import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, colorToVM, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toVector, typeNameFrom, vec } from "./handles";
@@ -874,6 +875,77 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         },
     }));
     globals.set("SystemLanguage", enumNamespace("SystemLanguage", SYSTEM_LANGUAGE_NAMES));
+
+    // SaveSystem (V5): save slots that hold any data a script has; JsonUtility turns objects into JSON and back.
+    const jsonContext = () => ({
+        path: new Set<object>(),
+        depth: 0,
+        skip: (kind: string) => world.warnOnce(`save-skip:${kind}`, `Kaydedilemeyen bir değer (${kind}) null olarak yazıldı: sahnedeki nesneler ve bileşenler kaydedilemez; adlarını, sayılarını ya da konumlarını kaydedin.`),
+    });
+    const toJson = (value: VMValue, pretty = false) => JSON.stringify(toJsonValue(value, jsonContext()), null, pretty ? 4 : undefined) ?? "null";
+    const parseJson = (text: VMValue, method: string): unknown => {
+        try {
+            return JSON.parse(String(text ?? ""));
+        } catch {
+            return hostError(`${method}: metin geçerli bir JSON değil.`, "ArgumentException");
+        }
+    };
+    const latestSlot = () => [...world.saves.list()].sort((a, b) => b.savedAt.localeCompare(a.savedAt))[0]?.name ?? "";
+    globals.set("SaveSystem", ns("SaveSystem", {
+        slots: () => new VMList(world.saves.list().map((slot) => slot.name), "Array"),
+        slotCount: () => world.saves.list().length,
+        latestSlot,
+    }, {
+        Save: (args) => {
+            const name = SaveStore.checkName(args[0]);
+            const problem = world.saves.write(name, toJson(args[1] ?? null), new Date().toISOString());
+            if (!problem) return true;
+            world.log("error", `SaveSystem.Save: ${problem}`);
+            return false;
+        },
+        // Load("slot") gives dictionaries and lists; Load<SaveData>("slot") an object of the class. A missing slot
+        // returns the second argument (or null).
+        Load: (args, _refs, typeArgs) => {
+            const name = SaveStore.checkName(args[0]);
+            const fallback = args.length > 1 ? args[1] ?? null : null;
+            const raw = world.saves.read(name);
+            if (raw === null) return fallback;
+            let json: unknown;
+            try {
+                json = JSON.parse(raw);
+            } catch {
+                world.warnOnce(`save-broken:${name}`, `SaveSystem.Load: '${name}' kaydı okunamadı (bozuk).`);
+                return fallback;
+            }
+            return fromJsonValue(json, typeFromArgument(typeArgs), world.interpreter);
+        },
+        Exists: (args) => world.saves.info(SaveStore.checkName(args[0])) !== null,
+        HasSave: (args) => world.saves.info(SaveStore.checkName(args[0])) !== null,
+        Delete: (args) => world.saves.delete(SaveStore.checkName(args[0])),
+        DeleteAll: () => {
+            world.saves.clear();
+            return undefined;
+        },
+        GetSlots: () => new VMList(world.saves.list().map((slot) => slot.name), "Array"),
+        GetSaveTime: (args) => world.saves.info(SaveStore.checkName(args[0]))?.savedAt ?? "",
+        GetLatestSlot: () => latestSlot(),
+    }));
+    globals.set("JsonUtility", ns("JsonUtility", {}, {
+        ToJson: (args) => toJson(args[0] ?? null, toBool(args[1] ?? false)),
+        FromJson: (args, _refs, typeArgs) => {
+            const json = parseJson(args[0], "JsonUtility.FromJson");
+            const type = typeFromArgument(typeArgs);
+            if (!type) hostError("JsonUtility.FromJson<T>(json): okunacak türü verin, ör. FromJson<SaveData>(json).", "ArgumentException");
+            return fromJsonValue(json, type, world.interpreter);
+        },
+        FromJsonOverwrite: (args) => {
+            const json = parseJson(args[0], "JsonUtility.FromJsonOverwrite");
+            const target = args[1];
+            if (!(target instanceof ScriptObject)) hostError("JsonUtility.FromJsonOverwrite(json, nesne): ikinci değer bir betik nesnesi olmalı.", "ArgumentException");
+            if (json && typeof json === "object" && !Array.isArray(json)) overwriteFields(target as ScriptObject, json as Record<string, unknown>, world.interpreter);
+            return undefined;
+        },
+    }));
 
     // PlayerInput (V5 local multiplayer): the players in the scene and the connected gamepads.
     const playerHandle = (entity: RuntimeEntity) => {

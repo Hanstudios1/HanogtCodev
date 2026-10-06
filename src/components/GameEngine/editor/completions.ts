@@ -30,6 +30,8 @@ export const API_MEMBERS: Record<string, string[]> = {
     Animator: ["StringToHash(\"speed\")"],
     ScreenEffects: ["saturation", "contrast", "brightness", "hue", "tint", "chromaticAberration", "pixelate", "crt", "scanlines", "curvature", "bloom", "vignette", "exposure", "Reset()"],
     PlayerInput: ["all", "GetPlayerByIndex(0)", "gamepadCount", "maxPlayers"],
+    SaveSystem: ["Save(\"slot1\", data)", "Load<SaveData>(\"slot1\")", "Load(\"slot1\")", "Exists(\"slot1\")", "Delete(\"slot1\")", "DeleteAll()", "GetSlots()", "GetSaveTime(\"slot1\")", "GetLatestSlot()", "slotCount"],
+    JsonUtility: ["ToJson(obj)", "ToJson(obj, true)", "FromJson<SaveData>(json)", "FromJsonOverwrite(json, obj)"],
     Localization: ["Get(\"key\")", "Get(\"key\", value)", "Has(\"key\")", "language", "languages", "defaultLanguage", "count", "SetLanguage(\"en\")", "HasLanguage(\"en\")", "GetLanguageName(\"tr\")"],
     SystemLanguage: ["Turkish", "English", "German", "French", "Spanish", "Italian", "Portuguese", "Russian", "Arabic", "Japanese", "Korean", "ChineseSimplified", "Unknown"],
     EventSystem: ["current"],
@@ -102,5 +104,5 @@ export const GLOBAL_SUGGESTIONS = [
     "Debug", "Time", "Input", "Physics", "Physics2D", "GameObject", "SceneManager", "Application", "Screen", "Camera", "Mathf", "Random", "Pathfinding",
     "Vector2", "Vector3", "Quaternion", "Color", "PlayerPrefs", "Audio", "HUD", "Resources", "KeyCode", "ForceMode", "ForceMode2D", "Space",
     "WaitForSeconds", "WaitUntil", "Instantiate", "Destroy", "StartCoroutine", "Invoke", "InvokeRepeating", "GetComponent", "transform", "gameObject",
-    "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem", "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput",
+    "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem", "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput", "SaveSystem", "JsonUtility",
 ];
