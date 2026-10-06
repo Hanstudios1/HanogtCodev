@@ -3,6 +3,7 @@
 import { Bell, BellRing, Check, ChevronDown, Clock, CreditCard, Crown, LoaderCircle, Minus, PartyPopper, RefreshCw, ShieldCheck, Ticket, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import GridBackdrop from "@/components/GridBackdrop";
 import PlanBadgeSetting from "@/components/Plans/PlanBadgeSetting";
 import UsageList from "@/components/Plans/UsageList";
 import type { Copy } from "@/lib/i18n";
@@ -66,26 +67,29 @@ function primaryButton(highlight: boolean) {
 export function PricingHero({ billing }: { billing: PlansBilling }) {
     const { tx, checkout, anyOnSale, liveSubscription, failed } = billing;
     return (
-        <section className="mx-auto max-w-4xl px-4 pb-8 pt-28 text-center sm:px-6">
-            {anyOnSale ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-green/30 px-3 py-1 text-[12px] font-black uppercase tracking-wider text-brand-green">
-                    <ShieldCheck className="h-3.5 w-3.5" aria-hidden />{tx(C.badgeOpen)}
-                </span>
-            ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 px-3 py-1 text-[12px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                    <Clock className="h-3.5 w-3.5" aria-hidden />{tx(C.badge)}
-                </span>
-            )}
-            {checkout && anyOnSale && (checkout.testMode || checkout.environment === "sandbox") ? (
-                <div className="mx-auto mt-4 flex max-w-xl flex-col gap-1 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-[12.5px] font-semibold text-amber-800 dark:text-amber-200" role="note">
-                    {checkout.testMode ? <p>{tx(C.testMode)}</p> : null}
-                    {checkout.environment === "sandbox" ? <p>{tx(C.sandbox)}</p> : null}
-                </div>
-            ) : null}
-            <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl"><span className="text-gradient animate-gradient">{tx(C.title)}</span></h1>
-            <p className="mx-auto mt-4 max-w-2xl text-[16.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(anyOnSale ? C.subtitleOpen : liveSubscription ? C.subtitleSubscriber : C.subtitle)}</p>
-            <BillingToggle billing={billing} />
-            {failed ? <p className="mx-auto mt-5 max-w-xl text-[13px] text-zinc-500">{tx(C.unavailable)}</p> : null}
+        <section className="relative isolate">
+            <GridBackdrop fade="bottom" />
+            <div className="mx-auto max-w-4xl px-4 pb-8 pt-28 text-center sm:px-6">
+                {anyOnSale ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-green/30 px-3 py-1 text-[12px] font-black uppercase tracking-wider text-brand-green">
+                        <ShieldCheck className="h-3.5 w-3.5" aria-hidden />{tx(C.badgeOpen)}
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 px-3 py-1 text-[12px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                        <Clock className="h-3.5 w-3.5" aria-hidden />{tx(C.badge)}
+                    </span>
+                )}
+                {checkout && anyOnSale && (checkout.testMode || checkout.environment === "sandbox") ? (
+                    <div className="mx-auto mt-4 flex max-w-xl flex-col gap-1 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-[12.5px] font-semibold text-amber-800 dark:text-amber-200" role="note">
+                        {checkout.testMode ? <p>{tx(C.testMode)}</p> : null}
+                        {checkout.environment === "sandbox" ? <p>{tx(C.sandbox)}</p> : null}
+                    </div>
+                ) : null}
+                <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl"><span className="text-gradient animate-gradient">{tx(C.title)}</span></h1>
+                <p className="mx-auto mt-4 max-w-2xl text-[16.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(anyOnSale ? C.subtitleOpen : liveSubscription ? C.subtitleSubscriber : C.subtitle)}</p>
+                <BillingToggle billing={billing} />
+                {failed ? <p className="mx-auto mt-5 max-w-xl text-[13px] text-zinc-500">{tx(C.unavailable)}</p> : null}
+            </div>
         </section>
     );
 }

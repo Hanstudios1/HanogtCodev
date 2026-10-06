@@ -1,5 +1,32 @@
 # Değişiklik Günlüğü
 
+## 0.3.23 — 2026-10-06
+
+### Mor-pembe-sarı yazılar, ızgara ve "Tek hesap, hepsi bir arada"
+
+- **Renkler:** `--text-gradient` yeniden Parti 13 öncesindeki gibi indigo ve
+  mordan pembeye, sonra sarıya (#6366f1 → #a855f7 → #ec4899 → #f59e0b; koyu
+  temada açık tonları). `--accent-*` jetonları; "Düşünüyor…" parıltısı da bu
+  renklerde.
+- **Mini oyun ve kod vitrini:** koşucu pembe, engeller mor degrade, altınlar
+  sarı, kalkan indigo, mıknatıs mor; gökyüzü lavanttan pembeye, zemin çizgisi
+  başlıklarla aynı degrade. Runner.cs'de anahtar sözcükler mor, türler pembe,
+  vurgulanan satırlar pembe.
+- **Izgara süsü geri geldi** (`GridBackdrop`): ana sayfa, fiyatlandırma,
+  News, Security ve son çağrı kartında; yavaşça kayar, fareyle çizgiler
+  imlecin çevresinde vurgu rengine döner (dokunmatikte ve azaltılmış
+  harekette durur).
+- **"Tek hesap, hepsi bir arada" baştan yazıldı** (`Landing/AllInOne.tsx`):
+  - tek hesabın altı avantajı ve ürün, dil, arayüz dili sayıları;
+  - hesabın çevresinde sekiz ürünün yer aldığı canlı şema;
+  - kendiliğinden ilerleyen, klavyeyle gezilebilen ürün gezgini (sekmeler,
+    özellikler, sayılar, önizleme); seçince durur;
+  - Arcade ve Media için yeni önizlemeler;
+  - "Birlikte daha güçlü": ürünlerin birlikte çalıştığı üç akış.
+- **Animasyonlar:** sayfa ilerleme çubuğu, butonlarda ışık süzülmesi, menü
+  bağlantılarında renkli alt çizgi, bölümlerin kayarak belirmesi.
+  `usePrefersReducedMotion` ile hareket hesabın ve sistemin ayarına uyar.
+
 ## 0.3.22 — 2026-10-05
 
 ### Hanogt Social A: mesajlaşma, GIF, botlar, AutoMod ve Social ayarları

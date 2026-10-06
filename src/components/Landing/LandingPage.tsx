@@ -1,26 +1,25 @@
 "use client";
 
-import { AnimatePresence, motion, useMotionValue, useReducedMotionConfig, useSpring, useTransform } from "framer-motion";
-import { ArrowRight, Check, Code2, FlaskConical, Gamepad2, LogIn, Play, Radio, Rocket, UsersRound, X, type LucideIcon } from "lucide-react";
+import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
+import { ArrowRight, Check, Code2, FlaskConical, Gamepad2, LogIn, Radio, Rocket, UsersRound, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useEffect, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import Comparison from "@/components/Comparison";
+import GridBackdrop from "@/components/GridBackdrop";
 import Header from "@/components/Header";
 import { CountUp, formatCount, usePublicStats, type PublicStatKey } from "@/components/PublicStats";
-import ProductLogo from "@/components/ProductLogo";
 import SiteFooter from "@/components/SiteFooter";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
 import { prefersReducedMotion } from "@/lib/appearance";
+import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { LANGUAGES, formatCopy, useI18n, type Copy } from "@/lib/i18n";
-import { PLAN_AI_LIMITS } from "@/lib/plans";
-import { PRODUCTS, type LogoId } from "@/lib/products";
 import { LANGUAGE_STATS, LANGUAGES as CODE_LANGUAGE_REGISTRY } from "@/lib/runtimes/languages";
+import AllInOne from "./AllInOne";
 import CodeShowcase from "./CodeShowcase";
 import DownloadMenu from "./DownloadMenu";
 import GuideTeaser from "./GuideTeaser";
-import LiveNewsMini from "./LiveNewsMini";
-import { AiPreview, EditorPreview, EnginePreview, SecurityPreview, SocialPreview } from "./ProductPreviews";
+import { Reveal } from "./motion";
 
 // Every language that can be run or previewed (the number the copy quotes), popular ones first.
 const CODE_LANGUAGES = CODE_LANGUAGE_REGISTRY
@@ -36,14 +35,6 @@ const COPY = {
     over: { TR: "Oyun bitti", EN: "Game over" },
     best: { TR: "En iyi", EN: "Best" },
     score: { TR: "Skor", EN: "Score" },
-    whatKicker: { TR: "Hanogt'ta neler var", EN: "What's in Hanogt" },
-    whatTitle: { TR: "Tek hesap, hepsi bir arada", EN: "One account, all of it" },
-    whatSub: { TR: "Kod yazmaktan oyun yayınlamaya, arkadaşlarla konuşmaktan hesabını korumaya kadar her şey aynı yerde.", EN: "From writing code to publishing games, from talking with friends to protecting your account, it's all in one place." },
-    editorName: { TR: "Kod Editörü", EN: "Code Editor" },
-    editorTagline: { TR: "Kurulum olmadan, tarayıcında kod yaz ve çalıştır", EN: "Write and run code in your browser, nothing to install" },
-    tryIt: { TR: "Hemen dene", EN: "Try it now" },
-    arcadeTitle: { TR: "Arcade ve Media", EN: "Arcade and Media" },
-    arcadeText: { TR: "Topluluğun oyunlarını oyna, beğen ve remiksle; kodunu Media'da paylaş, yorumları oku.", EN: "Play, like and remix the community's games; share your code on Media and read the comments." },
     cta: {
         TR: "Ücretsiz başla, kurulum yok",
         EN: "Free to start, nothing to install",
@@ -59,98 +50,6 @@ const COPY = {
     factInterface: { TR: "Arayüz dili", EN: "Interface languages" },
     factEngine: { TR: "Hanogt Engine sürümü", EN: "Hanogt Engine version" },
 } satisfies Record<string, Copy>;
-
-type Row = {
-    logo: LogoId | null;
-    icon?: LucideIcon;
-    name: Copy | string;
-    tagline: Copy;
-    points: Copy[];
-    href: string;
-    preview: React.ReactNode;
-};
-
-function rows(languageCount: number): Row[] {
-    const free = PLAN_AI_LIMITS.free;
-    return [
-        {
-            logo: "hanogt",
-            name: COPY.editorName,
-            tagline: COPY.editorTagline,
-            points: [
-                { TR: "{count} dili tek tıkla çalıştır", EN: "Run {count} languages in one click", vars: { count: languageCount } },
-                { TR: "Monaco, sekmeler, projeler ve ekiple düzenleme", EN: "Monaco, tabs, projects and editing together" },
-                { TR: "Kodunu Media'da yayınla", EN: "Publish your code to Media" },
-            ],
-            href: "/editor",
-            preview: <EditorPreview />,
-        },
-        {
-            logo: "ai",
-            name: PRODUCTS.ai.name,
-            tagline: PRODUCTS.ai.tagline,
-            points: [
-                { TR: "Zor sorularda yanıtlamadan önce düşünür", EN: "Thinks before answering hard questions" },
-                { TR: "Editörde açık dosyanı görür, kodunu düzeltir", EN: "Sees the file open in your editor and fixes your code" },
-                { TR: "Ücretsiz planda {days} günde {count} mesaj", EN: "{count} messages per {days} days on Free", vars: { count: free.perWindow, days: free.windowDays } },
-            ],
-            href: PRODUCTS.ai.href,
-            preview: <AiPreview />,
-        },
-        {
-            logo: "engine",
-            name: PRODUCTS.engine.name,
-            tagline: PRODUCTS.engine.tagline,
-            points: [
-                { TR: "Hiyerarşi, Inspector, sahne ve oyun görünümü", EN: "Hierarchy, Inspector, scene and game views" },
-                { TR: "Fizik, parçacıklar, ses ve WebGL", EN: "Physics, particles, sound and WebGL" },
-                { TR: "Tek dosya HTML olarak dışa aktar, Arcade'de yayınla", EN: "Export one HTML file, publish it to Arcade" },
-            ],
-            href: PRODUCTS.engine.href,
-            preview: <EnginePreview />,
-        },
-        {
-            logo: "social",
-            name: PRODUCTS.social.name,
-            tagline: PRODUCTS.social.tagline,
-            points: [
-                { TR: "Arkadaşlar, direkt mesajlar ve gruplar", EN: "Friends, direct messages and groups" },
-                { TR: "Sesli arama ve sesli mesaj", EN: "Voice calls and voice messages" },
-                { TR: "Çevrimiçi durumu ve özel durum", EN: "Online status and a custom status" },
-            ],
-            href: PRODUCTS.social.href,
-            preview: <SocialPreview />,
-        },
-        {
-            logo: "news",
-            name: PRODUCTS.news.name,
-            tagline: PRODUCTS.news.tagline,
-            points: [
-                { TR: "Yapay zekâ, yazılım, oyun ve piyasalar", EN: "AI, software, gaming and markets" },
-                { TR: "Yorumlar ve yapay zekâ arenası", EN: "Comments and the AI arena" },
-                { TR: "Dakika dakika güncellenir", EN: "Updated by the minute" },
-            ],
-            href: PRODUCTS.news.href,
-            preview: (
-                <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-zinc-900">
-                    <LiveNewsMini />
-                </div>
-            ),
-        },
-        {
-            logo: "security",
-            name: PRODUCTS.security.name,
-            tagline: PRODUCTS.security.tagline,
-            points: [
-                { TR: "Google ile girişten sonra şifre adımı", EN: "A password step after a Google sign-in" },
-                { TR: "İki adımlı doğrulama ve her yerden çıkış", EN: "Two-step verification and signing out everywhere" },
-                { TR: "Kod çalıştırılmadan önce güvenlik taraması", EN: "A security scan before code runs" },
-            ],
-            href: PRODUCTS.security.href,
-            preview: <SecurityPreview />,
-        },
-    ];
-}
 
 function RotatingWord() {
     const { t } = useI18n();
@@ -177,82 +76,6 @@ function RotatingWord() {
                 </motion.span>
             </AnimatePresence>
         </span>
-    );
-}
-
-/** Rises into view once, when it scrolls in. */
-function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
-            className={className}
-        >
-            {children}
-        </motion.div>
-    );
-}
-
-/** A preview that leans toward the pointer (not with reduced motion or touch). */
-function TiltCard({ children }: { children: ReactNode }) {
-    const still = useReducedMotionConfig();
-    const x = useMotionValue(0);
-    const y = useMotionValue(0);
-    const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [5, -5]), { stiffness: 200, damping: 20 });
-    const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-6, 6]), { stiffness: 200, damping: 20 });
-    const move = (event: ReactPointerEvent<HTMLDivElement>) => {
-        if (still || event.pointerType !== "mouse") return;
-        const box = event.currentTarget.getBoundingClientRect();
-        x.set((event.clientX - box.left) / box.width - 0.5);
-        y.set((event.clientY - box.top) / box.height - 0.5);
-    };
-    const leave = () => {
-        x.set(0);
-        y.set(0);
-    };
-    return (
-        <div style={{ perspective: 1100 }} onPointerMove={move} onPointerLeave={leave}>
-            <motion.div style={still ? undefined : { rotateX, rotateY }} whileHover={still ? undefined : { scale: 1.015 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
-                {children}
-            </motion.div>
-        </div>
-    );
-}
-
-function ProductRow({ row, index }: { row: Row; index: number }) {
-    const { tx } = useI18n();
-    const name = typeof row.name === "string" ? row.name : tx(row.name);
-    const flip = index % 2 === 1;
-    return (
-        <article className="group grid items-center gap-8 border-t border-zinc-200 py-14 first:border-t-0 lg:grid-cols-2 lg:gap-16 dark:border-white/[0.08]">
-            <Reveal className={flip ? "lg:order-2" : ""}>
-                <div className="flex items-center gap-3">
-                    {row.logo ? <span className="inline-flex transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"><ProductLogo product={row.logo} size={44} /></span> : null}
-                    <h3 className="hover-text-gradient text-2xl font-black tracking-tight sm:text-3xl">{name}</h3>
-                </div>
-                <p className="mt-3 text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(row.tagline)}</p>
-                <ul className="mt-5 space-y-2.5">
-                    {row.points.map((point, pointIndex) => (
-                        <motion.li
-                            key={point.EN}
-                            initial={{ opacity: 0, x: flip ? 16 : -16 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true, amount: 0.6 }}
-                            transition={{ duration: 0.45, delay: 0.15 + pointIndex * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                            className="flex items-start gap-2.5 text-[15px] text-zinc-700 dark:text-zinc-300"
-                        >
-                            <Check className="mt-0.5 h-4.5 w-4.5 shrink-0 text-brand-green" strokeWidth={2.5} aria-hidden="true" />{tx(point)}
-                        </motion.li>
-                    ))}
-                </ul>
-                <Link href={row.href} aria-label={`${name}: ${tx(COPY.tryIt)}`} className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-bold text-zinc-900 underline decoration-zinc-300 decoration-2 underline-offset-4 transition hover:decoration-brand-green dark:text-white dark:decoration-zinc-600">
-                    {tx(COPY.tryIt)}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" aria-hidden="true" />
-                </Link>
-            </Reveal>
-            <Reveal delay={0.1} className={`min-w-0 ${flip ? "lg:order-1" : ""}`}><TiltCard>{row.preview}</TiltCard></Reveal>
-        </article>
     );
 }
 
@@ -286,7 +109,7 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
     const facts: Array<{ label: Copy; value: number | string }> = [
         { label: COPY.factLanguages, value: languageCount },
         { label: COPY.factInterface, value: LANGUAGES.length },
-        { label: COPY.factEngine, value: "V3" },
+        { label: COPY.factEngine, value: `V${ENGINE_VERSION}` },
     ];
 
     const tileClass = "flex flex-col rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 text-center";
@@ -295,7 +118,8 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
 
     return (
         <section aria-labelledby="final-cta-title" className="px-4 py-24 sm:px-6">
-            <div className="mx-auto max-w-6xl rounded-[2rem] bg-zinc-950 px-5 py-14 text-white [--text-gradient:var(--text-gradient-bright)] sm:px-10 lg:px-14 lg:py-16 dark:border dark:border-white/10">
+            <Reveal className="relative isolate mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-zinc-950 px-5 py-14 text-white [--border-subtle:rgba(255,255,255,0.07)] [--grid-accent:rgba(192,132,252,0.3)] [--text-gradient:var(--text-gradient-bright)] sm:px-10 lg:px-14 lg:py-16 dark:border dark:border-white/10">
+                <GridBackdrop fade="bottom" />
                 <div className="mx-auto max-w-3xl text-center">
                     <span className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3.5 py-1.5 text-[12.5px] font-bold text-zinc-200">
                         <Rocket className="h-3.5 w-3.5 text-brand-crescent" aria-hidden="true" />{tx(COPY.cta)}
@@ -356,7 +180,7 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
                 </div>
 
                 <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-                    <Link href={signedIn ? "/dashboard" : "/signup"} className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-bold text-zinc-900 transition hover:bg-zinc-100">
+                    <Link href={signedIn ? "/dashboard" : "/signup"} className="btn-sheen inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-6 text-[15px] font-bold text-zinc-900 transition hover:-translate-y-0.5 hover:bg-zinc-100 [--sheen:rgba(168,85,247,0.25)]">
                         <Rocket className="h-4.5 w-4.5" aria-hidden="true" />{signedIn ? t("go_to_dashboard") : t("lp_start_free")}
                     </Link>
                     <Link href={signedIn ? "/arcade" : "/login"} className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/25 px-6 text-[15px] font-bold text-white transition hover:bg-white/10">
@@ -364,9 +188,16 @@ function FinalCta({ signedIn }: { signedIn: boolean }) {
                         {signedIn ? t("lp_browse_arcade") : t("login")}
                     </Link>
                 </div>
-            </div>
+            </Reveal>
         </section>
     );
+}
+
+/** How far down the page the visitor is, as a thin bar in the accent gradient under the header. */
+function ScrollProgress() {
+    const { scrollYProgress } = useScroll();
+    const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 26, restDelta: 0.001 });
+    return <motion.div aria-hidden="true" className="fixed inset-x-0 top-16 z-40 h-0.5 origin-left bg-[image:var(--text-gradient)] rtl:origin-right" style={{ scaleX }} />;
 }
 
 export default function LandingPage() {
@@ -402,6 +233,7 @@ export default function LandingPage() {
     return (
         <div className="min-h-dvh overflow-x-clip bg-white text-zinc-900 dark:bg-zinc-950 dark:text-white">
             <Header />
+            <ScrollProgress />
 
             <AnimatePresence>
                 {bannerVisible ? (
@@ -421,7 +253,8 @@ export default function LandingPage() {
 
             <main id="main-content">
                 {/* ------------------------------------------------------------ Hero */}
-                <section className="pt-16">
+                <section className="relative isolate pt-16">
+                    <GridBackdrop />
                     <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:pb-24 lg:pt-20">
                         <div className="min-w-0">
                             <Link href="/news" className="group inline-flex animate-fade-up items-center gap-2 rounded-full border border-zinc-200 py-1 pe-3 ps-1 text-[12.5px] font-semibold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:text-zinc-200 dark:hover:border-white/30">
@@ -447,7 +280,7 @@ export default function LandingPage() {
 
                             {/* z-10: the download menu opens over the showcase below on narrow screens. */}
                             <div className="relative z-10 mt-8 flex animate-fade-up flex-wrap items-center gap-3" style={{ animationDelay: "240ms" }}>
-                                <Link href={signedIn ? "/dashboard" : "/signup"} className="group inline-flex h-12 items-center gap-2 rounded-2xl bg-zinc-900 px-6 text-[15px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-zinc-700 hover:shadow-lg active:translate-y-0 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+                                <Link href={signedIn ? "/dashboard" : "/signup"} className="btn-sheen group inline-flex h-12 items-center gap-2 rounded-2xl bg-zinc-900 px-6 text-[15px] font-bold text-white transition hover:-translate-y-0.5 hover:bg-zinc-700 hover:shadow-lg active:translate-y-0 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 dark:[--sheen:rgba(168,85,247,0.25)]">
                                     <Rocket className="h-4.5 w-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
                                     {signedIn ? t("go_to_dashboard") : t("lp_start_free")}
                                 </Link>
@@ -492,37 +325,18 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                {/* ------------------------------------------------------------ What's in Hanogt */}
-                <section aria-labelledby="products-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-                    <div className="max-w-2xl">
-                        <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-brand-green">{tx(COPY.whatKicker)}</p>
-                        <h2 id="products-title" className="mt-3 text-4xl font-black tracking-tight sm:text-5xl"><span className="text-gradient animate-gradient">{tx(COPY.whatTitle)}</span></h2>
-                        <p className="mt-4 text-[17px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(COPY.whatSub)}</p>
-                    </div>
-                    <div className="mt-6">
-                        {rows(languageCount).map((row, index) => <ProductRow key={row.href} row={row} index={index} />)}
-                    </div>
-                    <div className="mt-2 grid gap-4 border-t border-zinc-200 pt-10 sm:grid-cols-[1fr_auto] sm:items-center dark:border-white/[0.08]">
-                        <div>
-                            <h3 className="text-xl font-black">{tx(COPY.arcadeTitle)}</h3>
-                            <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(COPY.arcadeText)}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <Link href="/arcade" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-zinc-300 px-4 text-[14px] font-bold transition hover:border-zinc-500 dark:border-white/15 dark:hover:border-white/40"><Play className="h-4 w-4" aria-hidden="true" />Arcade</Link>
-                            <Link href="/media" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-zinc-300 px-4 text-[14px] font-bold transition hover:border-zinc-500 dark:border-white/15 dark:hover:border-white/40">Media</Link>
-                        </div>
-                    </div>
-                </section>
+                {/* ------------------------------------------------------------ One account, all of it */}
+                <AllInOne />
 
                 <GuideTeaser />
 
                 {/* ------------------------------------------------------------ Comparison */}
                 <section className="bg-zinc-50 py-24 dark:bg-white/[0.02]">
-                    <div className="mx-auto mb-10 max-w-2xl px-4 text-center">
-                        <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{t("why_hanogt")}</h2>
+                    <Reveal className="mx-auto mb-10 max-w-2xl px-4 text-center">
+                        <h2 className="text-3xl font-black tracking-tight sm:text-4xl"><span className="text-gradient animate-gradient">{t("why_hanogt")}</span></h2>
                         <p className="mt-3 text-[15px] text-zinc-600 dark:text-zinc-400">{t("comparison_quote")}</p>
-                    </div>
-                    <div className="px-4"><Comparison /></div>
+                    </Reveal>
+                    <Reveal delay={0.08} className="px-4"><Comparison /></Reveal>
                 </section>
 
                 <FinalCta signedIn={signedIn} />

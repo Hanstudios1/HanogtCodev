@@ -17,10 +17,27 @@ const BEST_KEY = "hanogt_runner_best";
 /** Back to the self-playing intro after this long on the game-over screen. */
 const OVER_TIMEOUT = 10;
 
+/**
+ * The site's accent colors (indigo and purple into pink, then amber; globals.css
+ * --text-gradient): the runner is pink, coins amber, obstacles purple and the
+ * power-ups indigo and purple, over a lavender-to-pink sky.
+ */
 const PALETTE = {
-    light: { sky: "#f6f7fb", far: "#e6e9f1", near: "#d6dbe7", ground: "#e4e4e7", line: "#18181b", ink: "#18181b", obstacle: "#27272a", eye: "#ffffff" },
-    dark: { sky: "#0c0d12", far: "#141821", near: "#1b202b", ground: "#1f2128", line: "#a1a1aa", ink: "#0a0a0f", obstacle: "#d4d4d8", eye: "#0a0a0f" },
+    light: {
+        skyTop: "#f5f3ff", skyBottom: "#fdf2f8", far: "#ede9fe", near: "#fce7f3", ground: "#faf5ff", ink: "#1e1b4b", eye: "#ffffff",
+        obstacle: ["#6366f1", "#a855f7"], runner: "#ec4899", coin: "#f59e0b", shield: "#6366f1", magnet: "#a855f7",
+        line: ["#6366f1", "#a855f7", "#ec4899", "#f59e0b"],
+    },
+    dark: {
+        skyTop: "#0c0a1d", skyBottom: "#1a0b1f", far: "#1d1736", near: "#2a1433", ground: "#120d20", ink: "#07060f", eye: "#07060f",
+        obstacle: ["#818cf8", "#c084fc"], runner: "#f472b6", coin: "#fbbf24", shield: "#818cf8", magnet: "#c084fc",
+        line: ["#818cf8", "#c084fc", "#f472b6", "#fbbf24"],
+    },
 };
+
+/** "#rrggbb" with an alpha, for the particles. */
+const alpha = (hex: string, value: number) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${value})`;
+const paletteNow = () => (document.documentElement.classList.contains("dark") ? PALETTE.dark : PALETTE.light);
 
 function readBest() {
     try {
@@ -174,7 +191,7 @@ export default function MiniGame({ labels, onEvent }: {
                 player.vy = -RUNNER.doubleJumpSpeed;
                 jumpsLeft = 0;
                 emit("doubleJump");
-                burst(player.x + player.size / 2, player.y + player.size, "rgba(51,185,96,0.9)", 8);
+                burst(player.x + player.size / 2, player.y + player.size, alpha(paletteNow().runner, 0.9), 8);
             } else {
                 return;
             }
@@ -279,7 +296,7 @@ export default function MiniGame({ labels, onEvent }: {
                     score += multiplier();
                     if (mode === "intro" && score > 99) score = 0;
                     emit("coin");
-                    burst(coin.x, coin.y, "rgba(245,179,1,1)", 12);
+                    burst(coin.x, coin.y, alpha(paletteNow().coin, 1), 12);
                     publish();
                 }
             }
@@ -290,7 +307,7 @@ export default function MiniGame({ labels, onEvent }: {
                     if (power.kind === "shield") shield = true;
                     else magnetFor = RUNNER.magnetSeconds;
                     emit(power.kind);
-                    burst(power.x, power.y, power.kind === "shield" ? "rgba(0,149,233,1)" : "rgba(239,68,68,1)", 12);
+                    burst(power.x, power.y, alpha(power.kind === "shield" ? paletteNow().shield : paletteNow().magnet, 1), 12);
                     publish();
                 }
             }
@@ -319,22 +336,28 @@ export default function MiniGame({ labels, onEvent }: {
         };
 
         function draw() {
-            const colors = document.documentElement.classList.contains("dark") ? PALETTE.dark : PALETTE.light;
+            const colors = paletteNow();
             context!.save();
             if (shake > 0) context!.translate((Math.random() - 0.5) * shake * 18, (Math.random() - 0.5) * shake * 18);
-            context!.fillStyle = colors.sky;
+            const sky = context!.createLinearGradient(0, 0, 0, ground);
+            sky.addColorStop(0, colors.skyTop);
+            sky.addColorStop(1, colors.skyBottom);
+            context!.fillStyle = sky;
             context!.fillRect(-20, -20, width + 40, height + 40);
             // Parallax: far blocks drift slowly, near ones faster.
             layer(colors.far, 0.15, ground, 70, [46, 70, 38, 88, 56, 64]);
             layer(colors.near, 0.4, ground, 54, [22, 34, 18, 40, 28]);
             context!.fillStyle = colors.ground;
             context!.fillRect(0, ground, width, height - ground);
-            context!.fillStyle = colors.line;
-            context!.fillRect(0, ground, width, 2);
+            // The ground line in the accent gradient, like the headings.
+            const line = context!.createLinearGradient(0, 0, width, 0);
+            colors.line.forEach((color, index) => line.addColorStop(index / (colors.line.length - 1), color));
+            context!.fillStyle = line;
+            context!.fillRect(0, ground, width, 2.5);
 
             for (const coin of coins) {
                 const squeeze = Math.abs(Math.cos(coin.spin));
-                context!.fillStyle = "#f5b301";
+                context!.fillStyle = colors.coin;
                 context!.strokeStyle = colors.ink;
                 context!.lineWidth = 1.5;
                 context!.beginPath();
@@ -343,7 +366,7 @@ export default function MiniGame({ labels, onEvent }: {
                 context!.stroke();
             }
             for (const power of powers) {
-                context!.fillStyle = power.kind === "shield" ? "#0095e9" : "#ef4444";
+                context!.fillStyle = power.kind === "shield" ? colors.shield : colors.magnet;
                 context!.strokeStyle = colors.ink;
                 context!.lineWidth = 2;
                 context!.beginPath();
@@ -357,25 +380,29 @@ export default function MiniGame({ labels, onEvent }: {
                 context!.fillText(power.kind === "shield" ? "S" : "M", power.x, power.y + 0.5);
             }
             for (const obstacle of obstacles) {
-                context!.fillStyle = colors.obstacle;
+                const top = ground - obstacle.h;
+                const fill = context!.createLinearGradient(0, top, 0, ground);
+                fill.addColorStop(0, colors.obstacle[1]);
+                fill.addColorStop(1, colors.obstacle[0]);
+                context!.fillStyle = fill;
                 context!.beginPath();
-                context!.roundRect(obstacle.x, ground - obstacle.h, obstacle.w, obstacle.h, 5);
+                context!.roundRect(obstacle.x, top, obstacle.w, obstacle.h, 5);
                 context!.fill();
             }
-            // The runner: a green sticker block with an ink outline, squashed on landing.
+            // The runner: a pink sticker block with an ink outline, squashed on landing.
             const size = player.size;
             const sx = size * (1 + player.squash * 0.6);
             const sy = size * (1 - player.squash * 0.6);
             const bx = player.x + (size - sx) / 2;
             const by = player.y + (size - sy);
             if (shield) {
-                context!.strokeStyle = "rgba(0,149,233,0.85)";
+                context!.strokeStyle = alpha(colors.shield, 0.85);
                 context!.lineWidth = 3;
                 context!.beginPath();
                 context!.arc(bx + sx / 2, by + sy / 2, size * 0.9, 0, Math.PI * 2);
                 context!.stroke();
             }
-            context!.fillStyle = "#33b960";
+            context!.fillStyle = colors.runner;
             context!.strokeStyle = colors.ink;
             context!.lineWidth = 2.5;
             context!.beginPath();
@@ -438,15 +465,15 @@ export default function MiniGame({ labels, onEvent }: {
                 }}
                 // pan-y: a vertical swipe on the game still scrolls the page on phones.
                 style={{ touchAction: "pan-y" }}
-                className="block h-[210px] w-full cursor-pointer rounded-b-2xl outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-green"
+                className="block h-[210px] w-full cursor-pointer rounded-b-2xl outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-500"
             />
             <div className="pointer-events-none absolute inset-x-3 top-2.5 flex items-center justify-between gap-2 text-[11px] font-bold">
                 <span className="inline-flex items-center gap-2 rounded-md bg-zinc-900/80 px-2 py-1 text-white tabular-nums">
                     <span>{labels.score} {hud.score}</span>
                     {hud.multiplier > 1 ? <span className="rounded bg-amber-400 px-1 text-zinc-900">×{hud.multiplier}</span> : null}
                     <span className="inline-flex items-center gap-1 text-white/70"><Trophy className="h-3 w-3" aria-hidden="true" />{labels.best} {hud.best}</span>
-                    {hud.shield ? <Shield className="h-3.5 w-3.5 text-sky-300" aria-hidden="true" /> : null}
-                    {hud.magnet ? <Magnet className="h-3.5 w-3.5 text-red-300" aria-hidden="true" /> : null}
+                    {hud.shield ? <Shield className="h-3.5 w-3.5 text-indigo-300" aria-hidden="true" /> : null}
+                    {hud.magnet ? <Magnet className="h-3.5 w-3.5 text-purple-300" aria-hidden="true" /> : null}
                 </span>
                 {still ? null : <span className="truncate rounded-md bg-zinc-900/80 px-2 py-1 text-white/85">{hintText}</span>}
             </div>
@@ -455,7 +482,7 @@ export default function MiniGame({ labels, onEvent }: {
                     <div className="rounded-xl bg-white px-4 py-3 text-center text-zinc-900 shadow-lg dark:bg-zinc-900 dark:text-white">
                         <p className="text-[13px] font-black">{labels.over}</p>
                         <p className="mt-0.5 text-[12px] tabular-nums text-zinc-600 dark:text-zinc-300">{labels.score} {hud.score} · {labels.best} {hud.best}</p>
-                        <p className="mt-1.5 inline-flex items-center gap-1 text-[11.5px] font-bold text-brand-green"><RotateCcw className="h-3 w-3" aria-hidden="true" />{labels.again}</p>
+                        <p className="mt-1.5 inline-flex items-center gap-1 text-[11.5px] font-bold text-pink-600 dark:text-pink-400"><RotateCcw className="h-3 w-3" aria-hidden="true" />{labels.again}</p>
                     </div>
                 </div>
             ) : null}

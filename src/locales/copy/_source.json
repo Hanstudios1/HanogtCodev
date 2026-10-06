@@ -1683,7 +1683,8 @@
     "tr": "Editör",
     "files": [
       "src/app/account-settings/page.tsx",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Landing/AllInOne.tsx"
     ]
   },
   "2b89w97b2by": {
@@ -11299,7 +11300,8 @@
     "en": "Open the editor",
     "tr": "Editörü aç",
     "files": [
-      "src/app/settings/page.tsx"
+      "src/app/settings/page.tsx",
+      "src/components/Landing/AllInOne.tsx"
     ]
   },
   "emgrphowgv": {
@@ -22305,7 +22307,8 @@
     "en": "Make a game",
     "tr": "Oyun yap",
     "files": [
-      "src/components/Arcade/ArcadeGallery.tsx"
+      "src/components/Arcade/ArcadeGallery.tsx",
+      "src/components/Landing/AllInOne.tsx"
     ]
   },
   "fnlohi6jqd": {
@@ -22377,7 +22380,8 @@
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
       "src/components/GameEngine/editor/text.ts",
-      "src/components/Landing/LandingPage.tsx"
+      "src/components/Landing/LandingPage.tsx",
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "fzkk21l74h": {
@@ -22535,6 +22539,48 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "17kcmwyy7qe": {
+    "en": "Purple, pink and yellow",
+    "tr": "Mor, pembe ve sarı",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1xvtpc7wk8k": {
+    "en": "Text flows from purple to pink and yellow again, the grid is back and the home page's \"One account, all of it\" section was redesigned.",
+    "tr": "Yazılar yeniden mordan pembeye ve sarıya akıyor; ızgara süsü geri geldi ve ana sayfadaki \"Tek hesap, hepsi bir arada\" bölümü baştan tasarlandı.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1lz19f39il8": {
+    "en": "Headings and highlights go from purple to pink, then yellow; the mini game on the home page uses these colors too.",
+    "tr": "Başlıklar ve vurgular mordan pembeye, sonra sarıya geçiyor; ana sayfadaki mini oyun da bu renklerde.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1sesskh0o6u": {
+    "en": "The grid at the top of pages is back: it drifts slowly and lights up around your pointer.",
+    "tr": "Sayfaların üstündeki ızgara geri geldi: yavaşça kayıyor ve farenin çevresinde renkleniyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "24i7pqjujmv": {
+    "en": "\"One account, all of it\": the eight products around your account, a product explorer that moves on by itself, previews and the ways the products work together.",
+    "tr": "\"Tek hesap, hepsi bir arada\": hesabının çevresindeki sekiz ürün, kendi kendine ilerleyen ürün gezgini, önizlemeler ve ürünlerin birlikte çalıştığı akışlar.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "bckege53ft": {
+    "en": "More animation: a progress bar, light sweeping over buttons and a colored underline in the menu. All of it stops while \"Reduce animations\" is on.",
+    "tr": "Daha çok animasyon: ilerleme çubuğu, butonlarda ışık, menüde renkli alt çizgi. \"Animasyonları azalt\" açıkken hepsi durur.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "lpxj4otuuk": {
@@ -24438,6 +24484,7 @@
     "files": [
       "src/components/Editor/AIAssistant.tsx",
       "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Landing/AllInOne.tsx",
       "src/components/Security/SecurityCenter.tsx"
     ]
   },
@@ -31867,7 +31914,7 @@
     "tr": "Kod Editörü",
     "files": [
       "src/components/Guide/book-content.ts",
-      "src/components/Landing/LandingPage.tsx",
+      "src/components/Landing/AllInOne.tsx",
       "src/lib/ai/agent-tools.ts",
       "src/lib/ai/knowledge.ts",
       "src/lib/nav.ts"
@@ -35522,7 +35569,8 @@
       "src/components/HanogtAI/ArtifactPanel.tsx",
       "src/components/HanogtAI/ChangesCard.tsx",
       "src/components/HanogtAI/ChatMessage.tsx",
-      "src/components/HanogtAI/Markdown.tsx"
+      "src/components/HanogtAI/Markdown.tsx",
+      "src/components/Landing/ProductPreviews.tsx"
     ]
   },
   "22sun4k2hwd": {
@@ -37337,6 +37385,650 @@
       "src/components/Header.tsx"
     ]
   },
+  "1ifrffqdikv": {
+    "en": "What's in Hanogt",
+    "tr": "Hanogt'ta neler var",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "oyjei6g6k2": {
+    "en": "One account, all of it",
+    "tr": "Tek hesap, hepsi bir arada",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "17xf31s6j6u": {
+    "en": "You don't need separate accounts to write code, make games, ask AI, talk with friends and keep your account safe. Hanogt's eight products work with one sign-in and one plan, and they're connected to each other.",
+    "tr": "Kod yazmak, oyun yapmak, yapay zekâya danışmak, arkadaşlarınla konuşmak ve hesabını korumak için ayrı ayrı hesap açman gerekmez. Hanogt'un sekiz ürünü tek girişle, tek planla ve birbirine bağlı olarak çalışır.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2erkuzrjb5u": {
+    "en": "products",
+    "tr": "ürün",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "f69c9nb65z": {
+    "en": "programming languages",
+    "tr": "programlama dili",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "288x8tkwk37": {
+    "en": "interface languages",
+    "tr": "arayüz dili",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1km5mzt2ytb": {
+    "en": "account",
+    "tr": "hesap",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "249j3p10lhx": {
+    "en": "Your Hanogt account",
+    "tr": "Hanogt hesabın",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "22f48jdjq0": {
+    "en": "Products linked to your account; pick one to see its details below",
+    "tr": "Hesabına bağlı ürünler; birini seçince aşağıda ayrıntıları açılır",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "k1todosmib": {
+    "en": "Explore the products",
+    "tr": "Ürünleri keşfet",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "22henwalkzl": {
+    "en": "Stronger together",
+    "tr": "Birlikte daha güçlü",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "15nplbis81l": {
+    "en": "Because the products are connected, you finish a job from start to end in one place.",
+    "tr": "Ürünler birbirine bağlı olduğu için bir işi baştan sona tek yerde bitirirsin.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1s4ve7vxy4a": {
+    "en": "One sign-in",
+    "tr": "Tek giriş",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "t34oi2n7hn": {
+    "en": "Sign in with Google or a password; two-step verification protects all eight products.",
+    "tr": "Google ya da şifreyle gir; iki adımlı doğrulama sekiz ürünün hepsini korur.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "139ocz3siar": {
+    "en": "The same on every device",
+    "tr": "Her cihazda aynı",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "rvbqd440d4": {
+    "en": "Your projects, games, settings and Hanogt AI preferences come with your account.",
+    "tr": "Projelerin, oyunların, ayarların ve Hanogt AI tercihlerin hesabınla birlikte gelir.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "3hlqwqmr8s": {
+    "en": "One plan, everywhere",
+    "tr": "Tek plan, her yerde",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "21dx08bimpa": {
+    "en": "Plus and Pro benefits apply in every product, from the editor to Engine and from Social to Hanogt AI.",
+    "tr": "Plus ve Pro avantajları editörden Engine'e, Social'dan Hanogt AI'a her üründe geçerli.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "gyzu2pazrx": {
+    "en": "Connected",
+    "tr": "Birbirine bağlı",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1crkq2klq84": {
+    "en": "Hanogt AI sees the file open in your editor; your game goes to Arcade and your code to Media in one click.",
+    "tr": "Hanogt AI editördeki dosyanı görür; oyunun Arcade'e, kodun Media'ya tek tıkla gider.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1mzzlgibwu4": {
+    "en": "One notification center",
+    "tr": "Tek bildirim merkezi",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2387rnnbw0c": {
+    "en": "Messages, mentions, missed calls and announcements gather in one bell.",
+    "tr": "Mesajlar, bahsetmeler, cevapsız aramalar ve duyurular tek zilde toplanır.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "d7lxphux52": {
+    "en": "Your data is yours",
+    "tr": "Verilerin senin",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "sgr8me6pkb": {
+    "en": "No ads or tracking cookies; download or delete your data in one click.",
+    "tr": "Reklam ve takip çerezi yok; verilerini tek tıkla indirir ya da silersin.",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "74hkp8psp3": {
+    "en": "Write and run code in your browser, nothing to install",
+    "tr": "Kurulum olmadan, tarayıcında kod yaz ve çalıştır",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1uptfdhgrul": {
+    "en": "Run {count} languages in one click",
+    "tr": "{count} dili tek tıkla çalıştır",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1zk2yxg318b": {
+    "en": "Tabs, projects, autocomplete and formatting",
+    "tr": "Sekmeler, projeler, otomatik tamamlama ve biçimlendirme",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "25zmckjyeat": {
+    "en": "Edit together: one file, in real time, with voice chat",
+    "tr": "Ekiple düzenle: aynı dosyada gerçek zamanlı, sesli sohbetle",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "29bnrip9k94": {
+    "en": "Your projects are in the cloud; pick up on any device",
+    "tr": "Projelerin bulutta; kaldığın yerden her cihazda devam et",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "vv4p9pj2nx": {
+    "en": "Hanogt AI reads your open file, explains errors and fixes them",
+    "tr": "Hanogt AI açık dosyanı okur, hatayı açıklar ve düzeltir",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1w51pt1xzoo": {
+    "en": "Publish your code to Media in one click",
+    "tr": "Kodunu tek tıkla Media'da yayınla",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "270hr5vo35x": {
+    "en": "languages that run",
+    "tr": "çalışan dil",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1fz72t0iwh3": {
+    "en": "people editing together (Pro)",
+    "tr": "kişiyle birlikte düzenleme (Pro)",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1kgrpuhex42": {
+    "en": "Thinks before answering hard questions and shows its thinking",
+    "tr": "Zor sorularda yanıtlamadan önce düşünür, düşünmesini gösterir",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1vmrma55qc3": {
+    "en": "Shows the change to your code line by line and applies it to the editor in one click",
+    "tr": "Kodundaki değişikliği satır satır gösterir, editöre tek tuşla uygular",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "cvbltbo4wb": {
+    "en": "Agent mode: with your permission it creates groups, opens the editor and starts game projects",
+    "tr": "Ajan modu: iznine göre grup kurar, editörü açar, oyun projesi oluşturur",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "tzvlrkalec": {
+    "en": "Personal instructions, tone and code style settings",
+    "tr": "Kişisel talimatlar, üslup ve kod stili ayarları",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "152iznybfkc": {
+    "en": "Answers everyone's questions in groups with /ai",
+    "tr": "Gruplarda /ai ile herkesin sorusunu yanıtlar",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "x1sfqtkcgw": {
+    "en": "A developer API and your own-key connections on Plus and Pro",
+    "tr": "Plus ve Pro'da geliştirici API'si ve kendi anahtarınla bağlantılar",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "rjil63mop2": {
+    "en": "messages / {days} days (Free)",
+    "tr": "mesaj / {days} gün (Ücretsiz)",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2emev92k2nr": {
+    "en": "messages / {days} days (Pro)",
+    "tr": "mesaj / {days} gün (Pro)",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1vbr36uqw0p": {
+    "en": "Hierarchy, Inspector, scene and game views",
+    "tr": "Hiyerarşi, Inspector, sahne ve oyun görünümü",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1ilw8vmhjml": {
+    "en": "C# and C++ scripts in a safe virtual machine",
+    "tr": "C# ve C++ scriptleri, güvenli bir sanal makinede",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1hz79dk6f70": {
+    "en": "2D and 3D, physics, particles, tilemaps, UI and animation",
+    "tr": "2D ve 3D, fizik, parçacıklar, tilemap, arayüz ve animasyon",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "148nib994z9": {
+    "en": "Your first game in minutes with ready templates",
+    "tr": "Hazır şablonlarla dakikalar içinde ilk oyunun",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "266ty8cncfm": {
+    "en": "Export one HTML file or publish to Arcade",
+    "tr": "Tek dosya HTML olarak dışa aktar ya da Arcade'de yayınla",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1otcls9eeqr": {
+    "en": "engine version",
+    "tr": "motor sürümü",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "23s8ndq5moh": {
+    "en": "in one editor",
+    "tr": "tek editörde",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "rkxqyv7jcf": {
+    "en": "Friends, direct messages and Discord-style groups",
+    "tr": "Arkadaşlar, direkt mesajlar ve Discord benzeri gruplar",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "c4vpixoqev": {
+    "en": "Markdown, GIFs, emoji, reactions, starred and pinned messages",
+    "tr": "Markdown, GIF, emoji, tepkiler, yıldızlı ve sabitlenmiş mesajlar",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1b7y2ipcmuq": {
+    "en": "Voice calls and voice messages",
+    "tr": "Sesli arama ve sesli mesaj",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1u6ri8tp8hv": {
+    "en": "Hanogt Security Bot and AutoMod protect your groups",
+    "tr": "Hanogt Security Bot ve AutoMod gruplarını korur",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "fzp9cdq90e": {
+    "en": "Hanogt AI, slash commands and shared files in groups",
+    "tr": "Gruplarda Hanogt AI, eğik çizgi komutları ve ortak dosyalar",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "17in4hsgx6u": {
+    "en": "bots in every group",
+    "tr": "bot her grupta",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2751qzxn1a7": {
+    "en": "AutoMod rules",
+    "tr": "AutoMod kuralı",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "18ej6nqxx9e": {
+    "en": "Open Social",
+    "tr": "Social'a gir",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "fhqw9bfo5f": {
+    "en": "AI, software, gaming, security and markets",
+    "tr": "Yapay zekâ, yazılım, oyun, güvenlik ve piyasalar",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "nilxgl4zrn": {
+    "en": "A live market strip: currencies, gold and crypto",
+    "tr": "Canlı piyasa şeridi: döviz, altın ve kripto",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "wqscm4oxb7": {
+    "en": "Comment on stories and vote in the AI arena",
+    "tr": "Haberlere yorum yap, yapay zekâ arenasında oy ver",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2490b6xcxnz": {
+    "en": "A read-later list and updates by the minute",
+    "tr": "Sonra oku listesi ve dakika dakika güncelleme",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "28pv51adfm": {
+    "en": "live feed",
+    "tr": "canlı akış",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2dnb4wnd4qd": {
+    "en": "Read the news",
+    "tr": "Haberleri oku",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "140l26bcjvh": {
+    "en": "A password step after Google sign-in and two-step verification",
+    "tr": "Google ile girişten sonra şifre adımı ve iki adımlı doğrulama",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2b4fankpnrq": {
+    "en": "Your recent sign-ins and signing out everywhere",
+    "tr": "Son girişlerin ve her yerden çıkış",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "ki6m6lm9qw": {
+    "en": "A Security Bot scan before your code runs",
+    "tr": "Kodun çalışmadan önce Security Bot taraması",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1e4gri16d79": {
+    "en": "Password strength, breach and link checks",
+    "tr": "Parola gücü, sızıntı ve bağlantı kontrolü",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "107z8rr7gsm": {
+    "en": "The Code Advisor finds leaked keys",
+    "tr": "Kod Danışmanı sızmış anahtarları bulur",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "ckidu88r2m": {
+    "en": "recent sign-ins listed",
+    "tr": "son giriş kaydı",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "21b06p7ityr": {
+    "en": "Check your security",
+    "tr": "Güvenliğini kontrol et",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "103ppukgcxl": {
+    "en": "Play, like and remix the community's games",
+    "tr": "Topluluğun oyunlarını oyna, beğen ve remiksle",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "17u00c95tvi": {
+    "en": "Play in the browser, nothing to download",
+    "tr": "Tarayıcıda, indirmeden oyna",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "235fnl84tr": {
+    "en": "Like, remix and make your own version",
+    "tr": "Beğen, remiksle ve kendi sürümünü yap",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "g0hb0w1zpn": {
+    "en": "Publish from Hanogt Engine in one click",
+    "tr": "Hanogt Engine'den tek tıkla yayınla",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1k9bv3loci9": {
+    "en": "A Security Bot scan before publishing",
+    "tr": "Yayından önce Security Bot taraması",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1chpl017bk5": {
+    "en": "Open Arcade",
+    "tr": "Arcade'i aç",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "cfcvpwjimx": {
+    "en": "Share your code and improve it with the community",
+    "tr": "Kodunu paylaş, toplulukla geliştir",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1gzrpqqontm": {
+    "en": "Publish code projects with a description",
+    "tr": "Kod projelerini açıklamasıyla yayınla",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "5944ejt9im": {
+    "en": "Comments and likes",
+    "tr": "Yorumlar ve beğeniler",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "hn7gskh8tp": {
+    "en": "Open any project in the editor and try it",
+    "tr": "Bir projeyi editörde açıp dene",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "9x5rnok7dq": {
+    "en": "An optional Security Bot contribution programme",
+    "tr": "İsteğe bağlı Security Bot katkı programı",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "e4c18hrv7x": {
+    "en": "Browse Media",
+    "tr": "Media'ya göz at",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "27b17xljnn": {
+    "en": "From idea to launch",
+    "tr": "Fikirden yayına",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1yofjfc3mh6": {
+    "en": "Write and run it in the editor",
+    "tr": "Editörde yaz ve çalıştır",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "vaj8aqcqp0": {
+    "en": "Share it on Media",
+    "tr": "Media'da paylaş",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "205ewqlbn9t": {
+    "en": "From game to community",
+    "tr": "Oyundan topluluğa",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "6co1qowuz0": {
+    "en": "Build the game in Hanogt Engine",
+    "tr": "Hanogt Engine'de oyunu yap",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2435qo39pm1": {
+    "en": "Publish it on Arcade",
+    "tr": "Arcade'de yayınla",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1wvjj7s3k8k": {
+    "en": "Play it with friends",
+    "tr": "Arkadaşlarınla oyna",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "28fdqa8ti52": {
+    "en": "Safe at every step",
+    "tr": "Her adımda güvende",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "27ygmeb2krk": {
+    "en": "Turn on two-step verification",
+    "tr": "İki adımlı doğrulamayı aç",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "2cu0cea8j61": {
+    "en": "Your code is scanned before it runs",
+    "tr": "Kodun çalışmadan önce taranır",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
+  "1oxbhmp1agp": {
+    "en": "AutoMod protects your group",
+    "tr": "AutoMod grubunu korur",
+    "files": [
+      "src/components/Landing/AllInOne.tsx"
+    ]
+  },
   "u92waignax": {
     "en": "Download the app",
     "tr": "Uygulamayı indir",
@@ -37436,55 +38128,6 @@
       "src/components/Landing/LandingPage.tsx"
     ]
   },
-  "1ifrffqdikv": {
-    "en": "What's in Hanogt",
-    "tr": "Hanogt'ta neler var",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "oyjei6g6k2": {
-    "en": "One account, all of it",
-    "tr": "Tek hesap, hepsi bir arada",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "60x1g646wu": {
-    "en": "From writing code to publishing games, from talking with friends to protecting your account, it's all in one place.",
-    "tr": "Kod yazmaktan oyun yayınlamaya, arkadaşlarla konuşmaktan hesabını korumaya kadar her şey aynı yerde.",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "74hkp8psp3": {
-    "en": "Write and run code in your browser, nothing to install",
-    "tr": "Kurulum olmadan, tarayıcında kod yaz ve çalıştır",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1apgl6f78hn": {
-    "en": "Try it now",
-    "tr": "Hemen dene",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "b4ssn4t1h8": {
-    "en": "Arcade and Media",
-    "tr": "Arcade ve Media",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "11bze2trcig": {
-    "en": "Play, like and remix the community's games; share your code on Media and read the comments.",
-    "tr": "Topluluğun oyunlarını oyna, beğen ve remiksle; kodunu Media'da paylaş, yorumları oku.",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
   "2bznff8lnzj": {
     "en": "Free to start, nothing to install",
     "tr": "Ücretsiz başla, kurulum yok",
@@ -37523,132 +38166,6 @@
   "6cry2sptrd": {
     "en": "Hanogt Engine version",
     "tr": "Hanogt Engine sürümü",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1uptfdhgrul": {
-    "en": "Run {count} languages in one click",
-    "tr": "{count} dili tek tıkla çalıştır",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "156r2p838lh": {
-    "en": "Monaco, tabs, projects and editing together",
-    "tr": "Monaco, sekmeler, projeler ve ekiple düzenleme",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1cql5ydp4o9": {
-    "en": "Publish your code to Media",
-    "tr": "Kodunu Media'da yayınla",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1i7r8mgrb0q": {
-    "en": "Thinks before answering hard questions",
-    "tr": "Zor sorularda yanıtlamadan önce düşünür",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1kfhjnd0dz7": {
-    "en": "Sees the file open in your editor and fixes your code",
-    "tr": "Editörde açık dosyanı görür, kodunu düzeltir",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "u1mds8lwol": {
-    "en": "{count} messages per {days} days on Free",
-    "tr": "Ücretsiz planda {days} günde {count} mesaj",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1vbr36uqw0p": {
-    "en": "Hierarchy, Inspector, scene and game views",
-    "tr": "Hiyerarşi, Inspector, sahne ve oyun görünümü",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "goqs3vwilm": {
-    "en": "Physics, particles, sound and WebGL",
-    "tr": "Fizik, parçacıklar, ses ve WebGL",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1b4hw2lvstu": {
-    "en": "Export one HTML file, publish it to Arcade",
-    "tr": "Tek dosya HTML olarak dışa aktar, Arcade'de yayınla",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "10edhwg1bwb": {
-    "en": "Friends, direct messages and groups",
-    "tr": "Arkadaşlar, direkt mesajlar ve gruplar",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1b7y2ipcmuq": {
-    "en": "Voice calls and voice messages",
-    "tr": "Sesli arama ve sesli mesaj",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "nqhgy45pnh": {
-    "en": "Online status and a custom status",
-    "tr": "Çevrimiçi durumu ve özel durum",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "5yjfq81o80": {
-    "en": "AI, software, gaming and markets",
-    "tr": "Yapay zekâ, yazılım, oyun ve piyasalar",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "16uj68kxv4p": {
-    "en": "Comments and the AI arena",
-    "tr": "Yorumlar ve yapay zekâ arenası",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "uh8qtr6ffb": {
-    "en": "Updated by the minute",
-    "tr": "Dakika dakika güncellenir",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1u8kvxsv3r0": {
-    "en": "A password step after a Google sign-in",
-    "tr": "Google ile girişten sonra şifre adımı",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "227y2lbcl0x": {
-    "en": "Two-step verification and signing out everywhere",
-    "tr": "İki adımlı doğrulama ve her yerden çıkış",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "75ijqengik": {
-    "en": "A security scan before code runs",
-    "tr": "Kod çalıştırılmadan önce güvenlik taraması",
     "files": [
       "src/components/Landing/LandingPage.tsx"
     ]
@@ -37782,6 +38299,55 @@
   "1lxasud95ah": {
     "en": "Sessions: this device",
     "tr": "Oturumlar: bu cihaz",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "14vbqb81j0r": {
+    "en": "Remix",
+    "tr": "Remiksle",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "7rzbifio7k": {
+    "en": "Neon Runner",
+    "tr": "Neon Koşucu",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1pg4tnr5bnu": {
+    "en": "Castle Defense",
+    "tr": "Kale Savunması",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "1b58jv8hyb3": {
+    "en": "Star Hunter",
+    "tr": "Yıldız Avcısı",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "27zq6v4iaze": {
+    "en": "Maze",
+    "tr": "Labirent",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "7ibbdtwlef": {
+    "en": "A weather bot in Python",
+    "tr": "Python ile hava durumu botu",
+    "files": [
+      "src/components/Landing/ProductPreviews.tsx"
+    ]
+  },
+  "w3gk4qyt6h": {
+    "en": "Ece · 2 hours ago",
+    "tr": "Ece · 2 saat önce",
     "files": [
       "src/components/Landing/ProductPreviews.tsx"
     ]

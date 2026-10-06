@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import GridBackdrop from "@/components/GridBackdrop";
 import Header from "@/components/Header";
 import ProductLogo from "@/components/ProductLogo";
 import SiteFooter from "@/components/SiteFooter";
@@ -481,7 +482,8 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
             <Header />
             <main id="main-content" dir={contentDir}>
                 {/* Hero */}
-                <section className="border-b border-zinc-200/70 bg-white dark:border-white/[0.06] dark:bg-zinc-950">
+                <section className="relative isolate border-b border-zinc-200/70 bg-white dark:border-white/[0.06] dark:bg-zinc-950">
+                    <GridBackdrop fade="bottom" />
                     <div className="mx-auto max-w-7xl px-4 pb-8 pt-28 sm:pt-32">
                         <div className="flex flex-wrap items-center gap-2 animate-fade-up">
                             <span className="inline-flex items-center gap-2 rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1 text-[12px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">

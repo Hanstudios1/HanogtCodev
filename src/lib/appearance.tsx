@@ -48,6 +48,25 @@ export function prefersReducedMotion() {
     return document.documentElement.dataset.motion === "reduce" || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function subscribeMotion(listener: () => void) {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    query.addEventListener("change", listener);
+    window.addEventListener(EVENT, listener);
+    return () => {
+        query.removeEventListener("change", listener);
+        window.removeEventListener(EVENT, listener);
+    };
+}
+
+/**
+ * prefersReducedMotion() kept up to date for rendering: the account's setting
+ * or the system's. Still while rendering on the server, so nothing that moves
+ * is in the first HTML.
+ */
+export function usePrefersReducedMotion() {
+    return useSyncExternalStore(subscribeMotion, prefersReducedMotion, () => true);
+}
+
 /** The account's "Reduce animations" setting as it applies on this page. */
 export function useReduceAnimationsSetting() {
     return useSyncExternalStore(subscribe, () => document.documentElement.dataset.motion === "reduce", () => false);

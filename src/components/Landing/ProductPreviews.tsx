@@ -1,6 +1,6 @@
 "use client";
 
-import { Brain, Check, CircleAlert, Lock, Mic, Play, ShieldCheck, Smartphone } from "lucide-react";
+import { Brain, Check, CircleAlert, Code2, Heart, Lock, MessageCircle, Mic, Play, Repeat2, ShieldCheck, Smartphone } from "lucide-react";
 import { useI18n, type Copy } from "@/lib/i18n";
 import ProductLogo from "@/components/ProductLogo";
 
@@ -48,6 +48,15 @@ const P: Record<string, Copy> = {
     password: { TR: "Şifre", EN: "Password" },
     twoStep: { TR: "İki adımlı doğrulama", EN: "Two-step verification" },
     sessions: { TR: "Oturumlar: bu cihaz", EN: "Sessions: this device" },
+    play: { TR: "Oyna", EN: "Play" },
+    remix: { TR: "Remiksle", EN: "Remix" },
+    game1: { TR: "Neon Koşucu", EN: "Neon Runner" },
+    game2: { TR: "Kale Savunması", EN: "Castle Defense" },
+    game3: { TR: "Yıldız Avcısı", EN: "Star Hunter" },
+    game4: { TR: "Labirent", EN: "Maze" },
+    postTitle: { TR: "Python ile hava durumu botu", EN: "A weather bot in Python" },
+    postAuthor: { TR: "Ece · 2 saat önce", EN: "Ece · 2 hours ago" },
+    openEditor: { TR: "Editörde aç", EN: "Open in editor" },
 };
 
 export function EditorPreview() {
@@ -167,6 +176,91 @@ export function SecurityPreview() {
                             <Check className="h-4 w-4 text-brand-green" />
                         </p>
                     ))}
+                </div>
+            </div>
+        </Frame>
+    );
+}
+
+/** Little scenes in the accent's colors standing in for game thumbnails. */
+function GameThumb({ variant }: { variant: 0 | 1 | 2 | 3 }) {
+    return (
+        <div className="relative h-16 overflow-hidden rounded-lg bg-indigo-950">
+            {variant === 0 ? (
+                <>
+                    <div className="absolute inset-x-0 bottom-0 h-3 bg-fuchsia-500/70" />
+                    <div className="absolute bottom-3 left-[18%] h-4 w-4 rounded-sm bg-pink-400" />
+                    <div className="absolute bottom-3 left-[55%] h-6 w-3 rounded-sm bg-violet-400" />
+                    <div className="absolute bottom-9 left-[75%] h-2.5 w-2.5 rounded-full bg-amber-400" />
+                </>
+            ) : variant === 1 ? (
+                <>
+                    <div className="absolute inset-x-0 bottom-0 h-4 bg-violet-700" />
+                    <div className="absolute bottom-4 left-[38%] h-8 w-7 rounded-t-md bg-indigo-400" />
+                    <div className="absolute bottom-4 left-[12%] h-3 w-3 rounded-full bg-pink-400" />
+                    <div className="absolute bottom-4 left-[78%] h-3 w-3 rounded-full bg-pink-400" />
+                </>
+            ) : variant === 2 ? (
+                <>
+                    {[[15, 20], [70, 35], [40, 60], [85, 70], [25, 75]].map(([x, y]) => <span key={`${x}-${y}`} className="absolute h-1 w-1 rounded-full bg-white/70" style={{ left: `${x}%`, top: `${y}%` }} />)}
+                    <div className="absolute left-[45%] top-[40%] h-0 w-0 border-x-[7px] border-b-[12px] border-x-transparent border-b-pink-400" />
+                    <div className="absolute left-[20%] top-[20%] h-3 w-3 rounded-full bg-amber-400" />
+                </>
+            ) : (
+                <div className="absolute inset-2 grid grid-cols-6 gap-0.5">
+                    {Array.from({ length: 18 }, (_, index) => <span key={index} className={`rounded-[2px] ${[1, 2, 4, 7, 9, 10, 13, 15, 16].includes(index) ? "bg-violet-400/80" : index === 17 ? "bg-amber-400" : index === 0 ? "bg-pink-400" : "bg-transparent"}`} />)}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export function ArcadePreview() {
+    const { tx } = useI18n();
+    const games: Array<{ title: Copy; likes: number; variant: 0 | 1 | 2 | 3 }> = [
+        { title: P.game1, likes: 128, variant: 0 },
+        { title: P.game2, likes: 96, variant: 1 },
+        { title: P.game3, likes: 74, variant: 2 },
+        { title: P.game4, likes: 51, variant: 3 },
+    ];
+    return (
+        <Frame title="Hanogt Arcade">
+            <div className="grid grid-cols-2 gap-3 p-4">
+                {games.map((game) => (
+                    <div key={game.title.EN} className="rounded-xl border border-zinc-200 p-2 dark:border-white/10">
+                        <GameThumb variant={game.variant} />
+                        <p className="mt-2 truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">{tx(game.title)}</p>
+                        <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500">
+                            <span className="inline-flex items-center gap-1"><Heart className="h-3 w-3 text-pink-500" />{game.likes}</span>
+                            <span className="inline-flex items-center gap-1 font-bold text-violet-600 dark:text-violet-300"><Play className="h-3 w-3" />{tx(P.play)}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <p className="flex items-center gap-1.5 border-t border-zinc-200 px-4 py-2 text-[11.5px] font-semibold text-zinc-500 dark:border-white/10"><Repeat2 className="h-3.5 w-3.5" />{tx(P.remix)}</p>
+        </Frame>
+    );
+}
+
+export function MediaPreview() {
+    const { tx } = useI18n();
+    return (
+        <Frame title="Hanogt Media">
+            <div className="p-4 text-[13px]">
+                <div className="flex items-center gap-2.5">
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-pink-500 text-[12px] font-bold text-white">E</span>
+                    <span className="min-w-0">
+                        <span className="block truncate font-bold text-zinc-900 dark:text-white">{tx(P.postTitle)}</span>
+                        <span className="block text-[11.5px] text-zinc-500">{tx(P.postAuthor)}</span>
+                    </span>
+                </div>
+                <pre className="mt-3 overflow-hidden rounded-lg bg-zinc-950 px-3 py-2 font-mono text-[11.5px] leading-relaxed text-zinc-200" dir="ltr">
+                    <span className="text-violet-300">import</span> requests{"\n"}city = <span className="text-pink-300">&quot;Ankara&quot;</span>{"\n"}<span className="text-amber-200">print</span>(weather(city))
+                </pre>
+                <div className="mt-3 flex items-center gap-4 text-[12px] text-zinc-500">
+                    <span className="inline-flex items-center gap-1"><Heart className="h-3.5 w-3.5 text-pink-500" />42</span>
+                    <span className="inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" />7</span>
+                    <span className="ms-auto inline-flex items-center gap-1 rounded-md bg-violet-600 px-2 py-1 text-[11px] font-bold text-white"><Code2 className="h-3 w-3" />{tx(P.openEditor)}</span>
                 </div>
             </div>
         </Frame>

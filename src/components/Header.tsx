@@ -265,10 +265,11 @@ export default function Header() {
                                         key={item.href}
                                         href={item.href}
                                         aria-current={active ? "page" : undefined}
-                                        className={`relative flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13.5px] font-semibold transition-colors ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
+                                        className={`group relative flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13.5px] font-semibold transition-colors ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
                                     >
                                         {active ? <motion.span layoutId="nav-active" className="absolute inset-0 rounded-xl bg-zinc-900/[0.06] ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.08] dark:ring-white/10" transition={{ type: "spring", stiffness: 420, damping: 36 }} /> : null}
-                                        <span className="relative">{tx(item.label)}</span>
+                                        {/* The accent underline draws in on hover (the current page has its pill instead). */}
+                                        <span className={`relative pb-0.5 ${active ? "" : "underline-accent"}`}>{tx(item.label)}</span>
                                         {item.live ? <span className="relative ms-0.5 flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" /></span> : null}
                                     </Link>
                                 );

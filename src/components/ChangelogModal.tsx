@@ -24,6 +24,19 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.23",
+        version: "v0.3.23",
+        date: "2026-10-06",
+        title: { TR: "Mor, pembe ve sarı", EN: "Purple, pink and yellow" },
+        desc: { TR: "Yazılar yeniden mordan pembeye ve sarıya akıyor; ızgara süsü geri geldi ve ana sayfadaki \"Tek hesap, hepsi bir arada\" bölümü baştan tasarlandı.", EN: "Text flows from purple to pink and yellow again, the grid is back and the home page's \"One account, all of it\" section was redesigned." },
+        items: [
+            { TR: "Başlıklar ve vurgular mordan pembeye, sonra sarıya geçiyor; ana sayfadaki mini oyun da bu renklerde.", EN: "Headings and highlights go from purple to pink, then yellow; the mini game on the home page uses these colors too." },
+            { TR: "Sayfaların üstündeki ızgara geri geldi: yavaşça kayıyor ve farenin çevresinde renkleniyor.", EN: "The grid at the top of pages is back: it drifts slowly and lights up around your pointer." },
+            { TR: "\"Tek hesap, hepsi bir arada\": hesabının çevresindeki sekiz ürün, kendi kendine ilerleyen ürün gezgini, önizlemeler ve ürünlerin birlikte çalıştığı akışlar.", EN: "\"One account, all of it\": the eight products around your account, a product explorer that moves on by itself, previews and the ways the products work together." },
+            { TR: "Daha çok animasyon: ilerleme çubuğu, butonlarda ışık, menüde renkli alt çizgi. \"Animasyonları azalt\" açıkken hepsi durur.", EN: "More animation: a progress bar, light sweeping over buttons and a colored underline in the menu. All of it stops while \"Reduce animations\" is on." },
+        ],
+    },
+    {
         id: "v0.3.22",
         version: "v0.3.22",
         date: "2026-10-05",

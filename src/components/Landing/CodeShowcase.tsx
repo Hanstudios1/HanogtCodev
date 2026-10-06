@@ -72,9 +72,10 @@ const LINES: Array<{ text: string; on?: RunnerEvent[] }> = [
 type Kind = "kw" | "type" | "num" | "fn" | "cm" | "plain";
 const KEYWORDS = new Set(["using", "public", "private", "sealed", "class", "const", "float", "int", "bool", "void", "if", "else", "return", "get", "set", "true", "false"]);
 const TYPES = new Set(["Runner", "Math", "System"]);
+// The site's accent colors: keywords purple, types pink, numbers amber.
 const COLORS: Record<Kind, string> = {
-    kw: "text-sky-300",
-    type: "text-emerald-300",
+    kw: "text-violet-300",
+    type: "text-pink-300",
     num: "text-amber-200",
     fn: "text-yellow-100",
     cm: "text-zinc-500",
@@ -135,9 +136,9 @@ export default function CodeShowcase({ labels }: { labels: ShowcaseLabels }) {
     return (
         <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-xl" dir="ltr">
             <div className="flex items-center gap-2 border-b border-white/10 bg-zinc-900 px-4 py-2.5">
-                <span className="h-3 w-3 rounded-full bg-zinc-700" />
-                <span className="h-3 w-3 rounded-full bg-zinc-700" />
-                <span className="h-3 w-3 rounded-full bg-zinc-700" />
+                <span className="h-3 w-3 rounded-full bg-indigo-400/70" />
+                <span className="h-3 w-3 rounded-full bg-pink-400/70" />
+                <span className="h-3 w-3 rounded-full bg-amber-400/70" />
                 <span className="ms-3 rounded-md bg-white/10 px-2 py-0.5 font-mono text-[11.5px] text-zinc-300">{labels.file}</span>
                 <span className="ms-auto rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-bold text-zinc-300">C# · .NET</span>
             </div>
@@ -146,8 +147,8 @@ export default function CodeShowcase({ labels }: { labels: ShowcaseLabels }) {
                     {TOKENIZED.map((line, index) => {
                         const lit = Boolean(active && line.on?.includes(active));
                         return (
-                            <span key={index} className={`flex pe-4 transition-colors duration-200 ${lit ? "bg-brand-crescent/20" : ""}`}>
-                                <span className={`w-10 shrink-0 select-none pe-3 text-end ${lit ? "text-brand-crescent" : "text-zinc-600"}`} aria-hidden="true">{index + 1}</span>
+                            <span key={index} className={`flex pe-4 transition-colors duration-200 ${lit ? "bg-fuchsia-500/20" : ""}`}>
+                                <span className={`w-10 shrink-0 select-none pe-3 text-end ${lit ? "text-pink-300" : "text-zinc-600"}`} aria-hidden="true">{index + 1}</span>
                                 <span>{line.tokens.length ? line.tokens.map((token, position) => <span key={position} className={COLORS[token.kind]}>{token.text}</span>) : " "}</span>
                             </span>
                         );
@@ -155,7 +156,7 @@ export default function CodeShowcase({ labels }: { labels: ShowcaseLabels }) {
                 </code>
             </pre>
             <div className="flex items-center gap-2 border-t border-white/10 bg-zinc-900 px-4 py-1.5 text-[11px] font-semibold text-zinc-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-crescent" aria-hidden="true" />
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-pink-400" aria-hidden="true" />
                 <span className="truncate">{labels.runs}</span>
             </div>
             <MiniGame labels={labels} onEvent={onEvent} />

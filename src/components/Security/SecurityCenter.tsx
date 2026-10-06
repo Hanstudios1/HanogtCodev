@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import GridBackdrop from "@/components/GridBackdrop";
 import Header from "@/components/Header";
 import ProductLogo from "@/components/ProductLogo";
 import SiteFooter from "@/components/SiteFooter";
@@ -114,7 +115,8 @@ export default function SecurityCenter() {
         <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
             <Header />
             <main id="main-content">
-                <section className="border-b border-zinc-200/70 bg-white dark:border-white/[0.06] dark:bg-zinc-950">
+                <section className="relative isolate border-b border-zinc-200/70 bg-white dark:border-white/[0.06] dark:bg-zinc-950">
+                    <GridBackdrop fade="bottom" />
                     <div className="mx-auto grid max-w-7xl items-start gap-10 px-4 pb-14 pt-28 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:pt-32">
                         <div>
                             <div className="flex items-center gap-3">
