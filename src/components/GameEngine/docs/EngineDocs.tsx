@@ -99,7 +99,8 @@ function K({ children }: { children: ReactNode }) {
 
 function Table({ rows, head }: { rows: Array<[ReactNode, ReactNode]>; head: [string, string] }) {
     return (
-        <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-white/10">
+        // Long words (NullReferenceException, MonoBehaviour'dan) may break on phones; the box scrolls if a row still can't fit.
+        <div className="scrollbar-thin overflow-x-auto rounded-xl border border-zinc-200 dark:border-white/10">
             <table className="w-full text-start text-[14px]">
                 <thead className="bg-zinc-50 text-[12px] uppercase tracking-wider text-zinc-500 dark:bg-white/[0.04]">
                     <tr><th className="px-4 py-2 text-start font-semibold">{head[0]}</th><th className="px-4 py-2 text-start font-semibold">{head[1]}</th></tr>
@@ -107,8 +108,8 @@ function Table({ rows, head }: { rows: Array<[ReactNode, ReactNode]>; head: [str
                 <tbody>
                     {rows.map(([a, b], index) => (
                         <tr key={index} className="border-t border-zinc-200 dark:border-white/[0.06]">
-                            <td className="px-4 py-2 align-top font-medium text-zinc-800 dark:text-zinc-200">{a}</td>
-                            <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">{b}</td>
+                            <td className="px-4 py-2 align-top font-medium text-zinc-800 max-sm:px-3 max-sm:[overflow-wrap:anywhere] dark:text-zinc-200">{a}</td>
+                            <td className="px-4 py-2 text-zinc-600 max-sm:px-3 max-sm:[overflow-wrap:anywhere] dark:text-zinc-400">{b}</td>
                         </tr>
                     ))}
                 </tbody>
