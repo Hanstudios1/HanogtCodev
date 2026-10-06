@@ -4,7 +4,7 @@ import test from "node:test";
 import { load } from "./setup.mjs";
 
 const plans = await load("lib/plans.ts");
-const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_FEATURES, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, PLAN_RUN_LIMITS, PLAN_STAR_LIMITS, aiLimitsFor, aiWindowCopy, aiWindowMs, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
+const { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_ATTACHMENT_LIMITS, PLAN_COLLAB_LIMITS, PLAN_COPY, PLAN_GROUP_FEATURES, PLAN_GROUP_LIMITS, PLAN_IDS, PLAN_PROJECT_LIMITS, PLAN_RUN_LIMITS, PLAN_STAR_LIMITS, aiLimitsFor, aiWindowCopy, aiWindowMs, discountedPrice, effectivePlan, isPaidPlanId, normalizeCouponCode, planRank } = plans;
 
 const NOW = Date.UTC(2026, 9, 2, 12);
 const DAY = 24 * 60 * 60_000;
@@ -116,6 +116,14 @@ test("the numbers on the Plans page are the limits the server enforces", () => {
 
             const starred = line(lang === "TR" ? /yıldızlı mesaj/ : /starred messages/);
             assert.equal(starred, lang === "TR" ? `${number(PLAN_STAR_LIMITS[plan], lang)} yıldızlı mesaj` : `${number(PLAN_STAR_LIMITS[plan], lang)} starred messages`);
+
+            // Files in messages: the largest file and how much they may take up in all.
+            const files = PLAN_ATTACHMENT_LIMITS[plan];
+            const size = (bytes) => (bytes >= 1024 ** 3 ? `${bytes / 1024 ** 3} GB` : `${bytes / 1024 ** 2} MB`);
+            assert.equal(line(lang === "TR" ? /Mesajlarda/ : /in messages/), lang === "TR"
+                ? `Mesajlarda ${size(files.fileBytes)}'a kadar dosya; toplam ${size(files.storageBytes)}`
+                : `Files up to ${size(files.fileBytes)} in messages; ${size(files.storageBytes)} in all`);
+            assert.ok(files.fileBytes <= files.storageBytes);
 
             const team = line(lang === "TR" ? /ekiple düzenleme/ : /Team editing/);
             const people = number(PLAN_COLLAB_LIMITS[plan].people, lang);

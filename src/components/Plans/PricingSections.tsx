@@ -8,12 +8,14 @@ import PlanBadgeSetting from "@/components/Plans/PlanBadgeSetting";
 import UsageList from "@/components/Plans/UsageList";
 import type { Copy } from "@/lib/i18n";
 import { formatMoney } from "@/lib/paddle";
+import { formatBytes } from "@/lib/social/attachments";
 import {
     PLAN_AI_CONNECTIONS,
     PLAN_AI_FEATURES,
     PLAN_AI_LIMITS,
     PLAN_COLLAB_LIMITS,
     PLAN_COPY,
+    PLAN_ATTACHMENT_LIMITS,
     PLAN_GAME_AUDIO_LIMITS,
     PLAN_GROUP_FEATURES,
     PLAN_GROUP_LIMITS,
@@ -57,6 +59,8 @@ const P = {
     stars: { TR: "Yıldızlı mesaj", EN: "Starred messages" },
     gameAudio: { TR: "Oyun dosyaları (ses ve model)", EN: "Game files (sounds and models)" },
     gameAudioCell: { TR: "{size} MB · {count} dosya", EN: "{size} MB · {count} files" },
+    attachments: { TR: "Mesajlarda dosya gönderme", EN: "Files in messages" },
+    attachmentsCell: { TR: "Dosya başına {file} · toplam {total}", EN: "{file} per file · {total} in all" },
     sectionAi: { TR: "Hanogt AI", EN: "Hanogt AI" },
     sectionBuild: { TR: "Kod, oyun ve ekip", EN: "Code, games and teams" },
     sectionSocial: { TR: "Hanogt Social", EN: "Hanogt Social" },
@@ -504,6 +508,7 @@ type ComparisonRow = { label: Copy; values: Record<PlanId, Cell> };
 
 export function PlanComparison({ billing }: { billing: PlansBilling }) {
     const { tx, locale } = billing;
+    const language = locale.toLowerCase().startsWith("tr") ? "TR" : "EN";
     const number = (value: number) => new Intl.NumberFormat(locale).format(value);
     const limit = (value: number | null) => (value === null ? tx(P.unlimited) : number(value));
     const each = (value: (plan: PlanId) => Cell) => Object.fromEntries(PLAN_IDS.map((plan) => [plan, value(plan)])) as Record<PlanId, Cell>;
@@ -542,6 +547,7 @@ export function PlanComparison({ billing }: { billing: PlansBilling }) {
                 { label: P.groupCommands, values: each((plan) => number(PLAN_GROUP_FEATURES[plan].commands)) },
                 { label: P.groupWords, values: each((plan) => number(PLAN_GROUP_FEATURES[plan].bannedWords)) },
                 { label: P.stars, values: each((plan) => number(PLAN_STAR_LIMITS[plan])) },
+                { label: P.attachments, values: each((plan) => tx(P.attachmentsCell, { file: formatBytes(PLAN_ATTACHMENT_LIMITS[plan].fileBytes, language), total: formatBytes(PLAN_ATTACHMENT_LIMITS[plan].storageBytes, language) })) },
             ],
         },
         {

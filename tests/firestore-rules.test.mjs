@@ -115,6 +115,19 @@ await check("a member can't delete from the browser", assertFails(deleteDoc(doc(
 await check("non-member cannot read group", assertFails(getDoc(doc(as(C), "groups", "g1"))));
 await check("non-member cannot read its messages", assertFails(getDocs(collection(as(C), "groups", "g1", "messages"))));
 
+console.log("group_voice/");
+await env.withSecurityRulesDisabled(async (ctx) => {
+    // As the voice channel routes write them (lib/server/group-voice.ts).
+    await setDoc(doc(ctx.firestore(), "group_voice", "g1"), { participants: { t1: { email: A, joinedAt: 1 } }, updatedAt: new Date() });
+    await setDoc(doc(ctx.firestore(), "group_voice", "g1", "signals", "s1"), { toEmail: B, fromEmail: A, kind: "offer", expiresAt: new Date(Date.now() + 60_000) });
+});
+await check("members follow the voice channel", assertSucceeds(getDoc(doc(as(B), "group_voice", "g1"))));
+await check("non-members can't see who is in it", assertFails(getDoc(doc(as(C), "group_voice", "g1"))));
+await check("nobody joins from the browser", assertFails(setDoc(doc(as(A), "group_voice", "g1"), { participants: {} })));
+await check("a signal is read by the person it is for", assertSucceeds(getDocs(query(collection(as(B), "group_voice", "g1", "signals"), where("toEmail", "==", B)))));
+await check("nobody else reads it", assertFails(getDoc(doc(as(A), "group_voice", "g1", "signals", "s1"))));
+await check("signals aren't sent from the browser", assertFails(setDoc(doc(as(A), "group_voice", "g1", "signals", "s2"), { toEmail: B, fromEmail: A })));
+
 console.log("calls/");
 // /api/calls writes calls with the service account; browsers with the Firebase bridge only listen.
 const callId = "0b9a7c1e-3f2d-4a8b-9c6d-5e4f3a2b1c0d";
@@ -142,10 +155,11 @@ await check("owner can't hand it to someone else", assertFails(updateDoc(doc(as(
 console.log("server-only collections/");
 await check("hiding the plan badge goes through the server only", assertFails(setDoc(doc(as(A), "subscriptions", A), { planBadgeHidden: true }, { merge: true })));
 await check("API keys can't be made from the browser", assertFails(setDoc(doc(as(A), "ai_api_key_index", "f".repeat(64)), { email: A, id: "key_0000000000000000" })));
-for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "arcade_scores/x", "arcade_achievements/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "site_config/features", "ai_connections/" + A, "ai_api_keys/" + A, "ai_api_key_index/0123abcd", "voice_clips/x", "group_bans/x", "group_mutes/x", "group_warnings/x", "group_reports/x", "group_automod/x", "automod_events/x", "message_stars/x"]) {
+for (const path of ["credentials/" + A, "security_rate_limits/x", "media_posts/x", "arcade_games/x", "arcade_scores/x", "arcade_achievements/x", "admin_audit_log/x", "site_announcements/x", "group_invite_links/x", "friendRequests_x/y", "feedback/x", "support_tickets/x", "subscriptions/" + A, "paddle_customers/ctm_x", "paddle_unlinked/sub_x", "paddle_cleanup/sub_x", "site_config/paddle", "site_config/features", "ai_connections/" + A, "ai_api_keys/" + A, "ai_api_key_index/0123abcd", "voice_clips/x", "group_bans/x", "group_mutes/x", "group_warnings/x", "group_reports/x", "group_automod/x", "automod_events/x", "message_stars/x", "message_files/x", "message_file_usage/" + A]) {
     const [collectionName, id] = path.split("/");
     await check(`${collectionName} is closed`, assertFails(getDoc(doc(as(A), collectionName, id))));
 }
+await check("a file's parts are closed", assertFails(getDoc(doc(as(A), "message_files", "x", "parts", "0"))));
 
 await env.cleanup();
 console.log(`\n${passed} passed, ${failed} failed`);

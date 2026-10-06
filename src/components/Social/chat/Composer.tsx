@@ -1,11 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { AtSign, Hash, MicOff, Mic, Send, Smile, Sticker, Trash2, X } from "lucide-react";
+import { AtSign, FileArchive, FileAudio, FileText, FileVideo, Hash, MicOff, Mic, Paperclip, Send, Smile, Sticker, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Spinner, UserAvatar, cx } from "@/components/Groups/ui";
 import { useVoiceRecorder, type MicErrorCode } from "@/components/Groups/workspace/hooks";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { guessKind } from "@/lib/social/attachment-client";
+import { ATTACHMENT_LIMITS, formatBytes } from "@/lib/social/attachments";
 import { applySuggestion, findTrigger, type ComposerTrigger } from "@/lib/social/composer";
 import { searchEmoji } from "@/lib/social/emoji";
 import type { GifItem } from "@/lib/social/gif";
@@ -32,7 +34,20 @@ const C = {
     emojiMatches: { TR: "\":{query}\" ile eşleşen emojiler", EN: "Emoji matching \":{query}\"" },
     suggestions: { TR: "Öneriler", EN: "Suggestions" },
     ctrlEnter: { TR: "Göndermek için Ctrl+Enter", EN: "Ctrl+Enter to send" },
+    attach: { TR: "Dosya ekle", EN: "Attach files" },
+    attached: { TR: "Eklenecek dosyalar", EN: "Files to send" },
+    removeFile: { TR: "{name} dosyasını çıkar", EN: "Remove {name}" },
+    dropHere: { TR: "Dosyaları buraya bırak", EN: "Drop files here" },
+    caption: { TR: "Açıklama ekle…", EN: "Add a caption…" },
+    fileTooBig: { TR: "{name} çok büyük: planında bir dosya en fazla {limit} olabilir.", EN: "{name} is too big: your plan allows files up to {limit}." },
+    fileEmpty: { TR: "{name} boş.", EN: "{name} is empty." },
+    tooManyFiles: { TR: "Bir seferde en fazla {max} dosya gönderebilirsin.", EN: "You can send at most {max} files at once." },
 } satisfies Record<string, Copy>;
+
+/** A file picked for the next message, with a small picture when it is one. */
+type PickedFile = { key: string; file: File; preview: string | null };
+
+let pickCounter = 0;
 
 export type ComposerSuggestion = {
     key: string;
@@ -76,6 +91,13 @@ export type ComposerProps = {
     suggest?: (trigger: ComposerTrigger) => ComposerSuggestion[];
     /** Keeps an unsent text per conversation while Hanogt Social is open. */
     draftKey: string;
+    /**
+     * Sends picked files (each as its own message; the text is the first
+     * one's caption). Resolves to false when they should stay in the box.
+     */
+    onFiles?: (files: File[], caption: string) => Promise<boolean>;
+    /** The largest file the person's plan allows (checked as files are picked). */
+    fileMaxBytes?: number;
 };
 
 const drafts = new Map<string, string>();
@@ -98,8 +120,22 @@ function SuggestionIcon({ suggestion }: { suggestion: ComposerSuggestion }) {
  * and a draft per conversation.
  */
 export default function Composer(props: ComposerProps) {
-    const { placeholder, label, maxLength, disabled, status, footer, reply, onCancelReply, onSend, onGif, onSticker, onVoice, onVoiceError, onTyping, onEditLast, focusNonce, prefs, suggest, draftKey } = props;
-    const { tx } = useI18n();
+    const { placeholder, label, maxLength: textMax, disabled, status, footer, reply, onCancelReply, onSend, onGif, onSticker, onVoice, onVoiceError, onTyping, onEditLast, focusNonce, prefs, suggest, draftKey, onFiles, fileMaxBytes = ATTACHMENT_LIMITS.maxBytes } = props;
+    const { tx, language } = useI18n();
+    const [files, setFiles] = useState<PickedFile[]>([]);
+    const [fileNotice, setFileNotice] = useState("");
+    const [dragging, setDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const filesRef = useRef<PickedFile[]>([]);
+    useEffect(() => {
+        filesRef.current = files;
+    });
+    // Pictures of picked files are let go when the box goes away.
+    useEffect(() => () => {
+        for (const entry of filesRef.current) if (entry.preview) URL.revokeObjectURL(entry.preview);
+    }, []);
+    // With files the text is a caption, which is shorter than a message.
+    const maxLength = files.length ? Math.min(textMax, ATTACHMENT_LIMITS.captionMax) : textMax;
     const [draft, setDraftState] = useState(() => drafts.get(draftKey) ?? "");
     const [sending, setSending] = useState(false);
     const [trigger, setTrigger] = useState<ComposerTrigger | null>(null);
@@ -181,8 +217,74 @@ export default function Composer(props: ComposerProps) {
         element?.focus();
     };
 
+    /** Adds picked, pasted or dropped files (checked against the plan's file size at once). */
+    const addFiles = (list: FileList | File[] | null) => {
+        if (!onFiles || !list) return;
+        const incoming = Array.from(list);
+        if (!incoming.length) return;
+        const room = ATTACHMENT_LIMITS.pickMax - files.length;
+        const notices: string[] = [];
+        const accepted: PickedFile[] = [];
+        for (const file of incoming) {
+            if (accepted.length >= room) {
+                notices.push(tx(C.tooManyFiles, { max: ATTACHMENT_LIMITS.pickMax }));
+                break;
+            }
+            if (!file.size) {
+                notices.push(tx(C.fileEmpty, { name: file.name }));
+                continue;
+            }
+            // Big photos are made smaller before sending, so only other files are measured here.
+            if (file.size > fileMaxBytes && guessKind(file) !== "image") {
+                notices.push(tx(C.fileTooBig, { name: file.name, limit: formatBytes(fileMaxBytes, language) }));
+                continue;
+            }
+            pickCounter += 1;
+            accepted.push({ key: `f${pickCounter}`, file, preview: guessKind(file) === "image" ? URL.createObjectURL(file) : null });
+        }
+        setFileNotice(notices[0] ?? "");
+        if (accepted.length) setFiles((current) => [...current, ...accepted]);
+        textareaRef.current?.focus();
+    };
+
+    const removeFile = (key: string) => {
+        setFiles((current) => current.filter((entry) => {
+            if (entry.key === key && entry.preview) URL.revokeObjectURL(entry.preview);
+            return entry.key !== key;
+        }));
+        setFileNotice("");
+    };
+
+    const sendFiles = async (text: string) => {
+        if (!onFiles) return;
+        const picked = files;
+        setSending(true);
+        setDraft("");
+        setTrigger(null);
+        setFiles([]);
+        setFileNotice("");
+        const sent = await onFiles(picked.map((entry) => entry.file), text).catch(() => false);
+        if (sent) {
+            for (const entry of picked) if (entry.preview) URL.revokeObjectURL(entry.preview);
+        } else {
+            // Not sent: the files and the caption go back into the box.
+            setFiles((current) => [...picked, ...current]);
+            setDraftState((current) => {
+                if (current || !text) return current;
+                drafts.set(draftKey, text);
+                return text;
+            });
+        }
+        setSending(false);
+        window.requestAnimationFrame(() => textareaRef.current?.focus());
+    };
+
     const send = async () => {
         const text = draft.trim();
+        if (files.length) {
+            if (!sending && text.length <= maxLength) await sendFiles(text);
+            return;
+        }
         if (!text || sending || text.length > maxLength) return;
         setSending(true);
         setDraft("");
@@ -245,9 +347,28 @@ export default function Composer(props: ComposerProps) {
 
     const tooLong = draft.trim().length > maxLength;
     const hasText = Boolean(draft.trim());
+    const canSend = hasText || files.length > 0;
+    const acceptsFiles = Boolean(onFiles) && !recorder.recording;
 
     return (
-        <div className="shrink-0 px-3 pb-3 pt-1 sm:px-4 sm:pb-4">
+        <div
+            className="shrink-0 px-3 pb-3 pt-1 sm:px-4 sm:pb-4"
+            onDragOver={acceptsFiles ? (event) => {
+                if (!Array.from(event.dataTransfer.types).includes("Files")) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                if (!dragging) setDragging(true);
+            } : undefined}
+            onDragLeave={acceptsFiles ? (event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+            } : undefined}
+            onDrop={acceptsFiles ? (event) => {
+                if (!event.dataTransfer.files.length) return;
+                event.preventDefault();
+                setDragging(false);
+                addFiles(event.dataTransfer.files);
+            } : undefined}
+        >
             <div className="mb-1 h-4 truncate px-1 text-[12px] font-medium text-zinc-500 dark:text-zinc-400" aria-live="polite">{status}</div>
             <div className="relative">
                 <AnimatePresence>
@@ -299,6 +420,16 @@ export default function Composer(props: ComposerProps) {
                         {onCancelReply && <button type="button" onClick={onCancelReply} className="rounded-full p-0.5 text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label={tx(C.cancelReply)}><X className="h-4 w-4" aria-hidden /></button>}
                     </div>
                 )}
+                {dragging && (
+                    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-indigo-400 bg-indigo-50/90 text-sm font-bold text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-200" aria-hidden>
+                        <Paperclip className="me-2 h-5 w-5" />{tx(C.dropHere)}
+                    </div>
+                )}
+                {files.length > 0 && !recorder.recording && (
+                    <ul aria-label={tx(C.attached)} className={cx("scrollbar-thin flex gap-2 overflow-x-auto border border-b-0 border-zinc-200 bg-zinc-100 px-2 pb-1 pt-2 dark:border-white/10 dark:bg-zinc-950", reply ? "" : "rounded-t-xl")}>
+                        {files.map((entry) => <FileChip key={entry.key} entry={entry} language={language} onRemove={() => removeFile(entry.key)} removeLabel={tx(C.removeFile, { name: entry.file.name })} />)}
+                    </ul>
+                )}
                 {recorder.recording ? (
                     <div className={cx("flex items-center gap-2 bg-red-500/10 px-3 py-2", reply ? "rounded-b-xl" : "rounded-xl")}>
                         <span className="relative flex h-3 w-3"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60" /><span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" /></span>
@@ -307,7 +438,26 @@ export default function Composer(props: ComposerProps) {
                         <button type="button" onClick={() => recorder.stop(false)} className="rounded-lg bg-red-600 p-2.5 text-white hover:bg-red-500" aria-label={tx(C.stopRecord)} title={tx(C.stopRecord)}><MicOff className="h-5 w-5" aria-hidden /></button>
                     </div>
                 ) : (
-                    <div className={cx("flex items-end gap-0.5 border bg-zinc-100 px-1.5 py-1.5 transition focus-within:border-indigo-400 dark:bg-zinc-950 dark:focus-within:border-indigo-400/60", tooLong ? "border-red-400" : "border-zinc-200 dark:border-white/10", reply ? "rounded-b-xl" : "rounded-xl")}>
+                    <div className={cx("flex items-end gap-0.5 border bg-zinc-100 px-1.5 py-1.5 transition focus-within:border-indigo-400 dark:bg-zinc-950 dark:focus-within:border-indigo-400/60", tooLong ? "border-red-400" : "border-zinc-200 dark:border-white/10", reply || files.length ? "rounded-b-xl" : "rounded-xl")}>
+                        {onFiles && (
+                            <>
+                                <button type="button" onClick={() => fileInputRef.current?.click()} className="shrink-0 rounded-lg p-2 text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" aria-label={tx(C.attach)} title={tx(C.attach)}>
+                                    <Paperclip className="h-5 w-5" aria-hidden />
+                                </button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    multiple
+                                    tabIndex={-1}
+                                    aria-hidden
+                                    className="hidden"
+                                    onChange={(event) => {
+                                        addFiles(event.target.files);
+                                        event.target.value = "";
+                                    }}
+                                />
+                            </>
+                        )}
                         <textarea
                             ref={textareaRef}
                             value={draft}
@@ -327,7 +477,13 @@ export default function Composer(props: ComposerProps) {
                             onKeyDown={onKeyDown}
                             onClick={(event) => refreshTrigger(event.currentTarget.value, event.currentTarget.selectionStart ?? 0)}
                             onBlur={() => window.setTimeout(() => setTrigger(null), 150)}
-                            placeholder={placeholder}
+                            onPaste={onFiles ? (event) => {
+                                // A pasted screenshot or file joins the message (pasted text stays text).
+                                if (!event.clipboardData.files.length) return;
+                                event.preventDefault();
+                                addFiles(event.clipboardData.files);
+                            } : undefined}
+                            placeholder={files.length ? tx(C.caption) : placeholder}
                             className="max-h-[220px] min-h-10 min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-[15px] leading-6 outline-none placeholder:text-zinc-400"
                         />
                         <div className="flex shrink-0 items-center">
@@ -336,8 +492,8 @@ export default function Composer(props: ComposerProps) {
                             </PickerButton>
                             {onSticker && <span className="hidden sm:contents"><PickerButton label={tx(C.sticker)} active={picker.open && picker.tab === "sticker"} onClick={() => togglePicker("sticker")}><Sticker className="h-5 w-5" aria-hidden /></PickerButton></span>}
                             <PickerButton label={tx(C.emoji)} active={picker.open && picker.tab === "emoji"} onClick={() => togglePicker("emoji")}><Smile className="h-5 w-5" aria-hidden /></PickerButton>
-                            {hasText || !onVoice ? (
-                                <button type="button" onClick={() => void send()} disabled={sending || !hasText || tooLong} className="ms-0.5 rounded-lg bg-indigo-600 p-2 text-white transition hover:bg-indigo-500 disabled:opacity-50" aria-label={tx(C.send)} title={prefs.enterToSend ? tx(C.send) : tx(C.ctrlEnter)}>
+                            {canSend || !onVoice ? (
+                                <button type="button" onClick={() => void send()} disabled={sending || !canSend || tooLong} className="ms-0.5 rounded-lg bg-indigo-600 p-2 text-white transition hover:bg-indigo-500 disabled:opacity-50" aria-label={tx(C.send)} title={prefs.enterToSend ? tx(C.send) : tx(C.ctrlEnter)}>
                                     {sending ? <Spinner className="h-5 w-5" /> : <Send className="h-5 w-5 rtl:-scale-x-100" aria-hidden />}
                                 </button>
                             ) : (
@@ -349,13 +505,34 @@ export default function Composer(props: ComposerProps) {
                     </div>
                 )}
             </div>
-            {(draft.length > maxLength - 300 || footer) && (
+            {(draft.length > maxLength - 300 || footer || fileNotice) && (
                 <div className="mt-1 flex items-center gap-2 px-1 text-[11px]">
-                    <span className="min-w-0 flex-1 truncate text-zinc-500 dark:text-zinc-400">{tooLong ? <span className="font-semibold text-red-600 dark:text-red-400">{tx(C.tooLong, { max: maxLength })}</span> : footer}</span>
+                    <span className="min-w-0 flex-1 truncate text-zinc-500 dark:text-zinc-400" role={fileNotice ? "alert" : undefined}>{tooLong ? <span className="font-semibold text-red-600 dark:text-red-400">{tx(C.tooLong, { max: maxLength })}</span> : fileNotice ? <span className="font-semibold text-amber-700 dark:text-amber-400">{fileNotice}</span> : footer}</span>
                     {draft.length > maxLength - 300 && <span className={cx("shrink-0 tabular-nums", tooLong ? "font-bold text-red-600 dark:text-red-400" : "text-amber-600")}>{tx(C.chars, { count: draft.trim().length, max: maxLength })}</span>}
                 </div>
             )}
         </div>
+    );
+}
+
+/** A picked file above the box: its picture or an icon, name, size and a remove button. */
+function FileChip({ entry, language, onRemove, removeLabel }: { entry: PickedFile; language: string; onRemove: () => void; removeLabel: string }) {
+    const kind = guessKind(entry.file);
+    const Icon = kind === "video" ? FileVideo : kind === "audio" ? FileAudio : kind === "archive" ? FileArchive : FileText;
+    return (
+        <li className="relative flex w-44 shrink-0 items-center gap-2 rounded-lg border border-zinc-200 bg-white p-1.5 pe-7 dark:border-white/10 dark:bg-zinc-900">
+            {entry.preview
+                // eslint-disable-next-line @next/next/no-img-element -- a local picture (blob: URL) the image optimiser can't load
+                ? <img src={entry.preview} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+                : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-300"><Icon className="h-5 w-5" aria-hidden /></span>}
+            <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12px] font-semibold text-zinc-800 dark:text-zinc-100" title={entry.file.name}>{entry.file.name}</span>
+                <span className="block text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">{formatBytes(entry.file.size, language)}</span>
+            </span>
+            <button type="button" onClick={onRemove} className="absolute end-1 top-1 rounded-full p-0.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800 dark:hover:text-white" aria-label={removeLabel} title={removeLabel}>
+                <X className="h-3.5 w-3.5" aria-hidden />
+            </button>
+        </li>
     );
 }
 

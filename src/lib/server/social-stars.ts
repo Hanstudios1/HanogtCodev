@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { isGroupId } from "@/lib/groups";
 import { FREE_SUBSCRIPTION, PLAN_STAR_LIMITS, effectivePlan, type PlanId } from "@/lib/plans";
+import { attachmentPreview, readMessageAttachment } from "@/lib/social/attachments";
 import { dmChatId, dmHref, groupHref, messagePreview, previewText } from "@/lib/social/model";
 import { STARS_MAX, type StarScope, type StarredMessage } from "@/lib/social/stars";
 import { planQuota, type HealOptions } from "./entitlements";
@@ -66,6 +67,11 @@ export async function starLimitFor(email: string): Promise<{ plan: PlanId; limit
 export function starExcerpt(message: StoredMessage) {
     if (message.type === "voice") return "🎤";
     if (message.type === "gif") return typeof message.text === "string" && message.text ? `GIF · ${previewText(message.text, 80)}` : "GIF";
+    if (message.type === "file") {
+        const attachment = readMessageAttachment((message as { file?: unknown }).file);
+        const caption = messagePreview(message.text, 160);
+        if (attachment) return previewText(caption ? `${attachmentPreview(attachment)} · ${caption}` : attachmentPreview(attachment), 200);
+    }
     return messagePreview(message.text, 200);
 }
 

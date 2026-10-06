@@ -22,7 +22,7 @@ import {
 import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import { enforceHanogtAi, refundHanogtAi, type QuotaPass } from "@/lib/server/ai-usage";
 import { repeatKey, scanMessage, SPAM_LIMITS } from "@/lib/server/automod";
-import { commitServerMutations, createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
+import { autoDocumentId, commitServerMutations, createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
 import { askGroupModel, groupHistoryText, GROUP_AI_HISTORY } from "@/lib/server/group-ai-bot";
 import { activeMute, minutesLeft, moderationSubject, mutePath } from "@/lib/server/group-moderation";
 import { removeFromVoice } from "@/lib/server/group-voice";
@@ -30,10 +30,12 @@ import { providerConfig } from "@/lib/server/hanogt-ai";
 import { clearMessageTraces, refreshMessageTraces } from "@/lib/server/message-traces";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { notifyMentions } from "@/lib/server/social-notify";
+import { attachmentField, commitWithFile, deleteMessageFiles, fileWrites, type PreparedFile } from "@/lib/server/message-files";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { sanitizeAutoMod, sanitizeCustomWords, type AutoModConfig, type AutoModRule } from "@/lib/social/automod-config";
 import { BOT_EVENT_COPY, formatDuration, type BotEvent, type EphemeralReply } from "@/lib/social/bots";
 import { findCommand, parseCommand, rankAtLeast, readCommandLine, RESERVED_COMMAND_NAMES, type CommandSpec } from "@/lib/social/commands";
+import { ATTACHMENT_LIMITS, attachmentPreview, readMessageAttachment } from "@/lib/social/attachments";
 import { readMessageGif } from "@/lib/social/gif";
 import { messagePreview } from "@/lib/social/model";
 import {
@@ -76,7 +78,7 @@ type Ctx = {
     now: number;
 };
 
-type StoredMessage = Record<string, unknown> & { fromEmail?: unknown; type?: unknown; text?: unknown; voicePath?: unknown; createdAt?: unknown; bot?: unknown };
+type StoredMessage = Record<string, unknown> & { fromEmail?: unknown; type?: unknown; text?: unknown; voicePath?: unknown; file?: unknown; createdAt?: unknown; bot?: unknown };
 
 /** The answer of a send: the stored message, a bot reply, and/or what only the sender sees. */
 export type GroupSendResult = { success: true; message?: Record<string, unknown>; ephemeral?: EphemeralReply };
@@ -239,14 +241,17 @@ const bursts = new Map<string, number[]>();
 const repeats = new Map<string, Array<{ key: string; at: number }>>();
 
 /** Many messages in a few seconds, or the same text again and again (per server instance). */
-function looksLikeSpam(groupId: string, email: string, text: string, now: number) {
+function looksLikeSpam(groupId: string, email: string, text: string, now: number, burst = true) {
     const id = `${groupId}:${email}`;
     if (bursts.size > 5_000) bursts.clear();
     if (repeats.size > 5_000) repeats.clear();
-    const times = (bursts.get(id) ?? []).filter((time) => now - time < SPAM_LIMITS.burstWindowMs);
-    times.push(now);
-    bursts.set(id, times);
-    if (times.length > SPAM_LIMITS.burstMessages) return true;
+    // Files picked together arrive one after another; their uploads have their own rate limit.
+    if (burst) {
+        const times = (bursts.get(id) ?? []).filter((time) => now - time < SPAM_LIMITS.burstWindowMs);
+        times.push(now);
+        bursts.set(id, times);
+        if (times.length > SPAM_LIMITS.burstMessages) return true;
+    }
     const key = repeatKey(text);
     if (!key) return false;
     const recent = (repeats.get(id) ?? []).filter((entry) => now - entry.at < SPAM_LIMITS.repeatWindowMs);
@@ -266,13 +271,17 @@ async function stoppedByAutoMod(ctx: Ctx, name: string, rule: AutoModRule, confi
 }
 
 /** AutoMod (unless the person's rank is exempt) and slow mode (moderators write freely). */
-async function guard(ctx: Ctx, name: string, text: string, mentions: number, channel: string) {
+/** `fileName`: a file's message (its caption is checked; the name and caption make up its repeat key). */
+async function guard(ctx: Ctx, name: string, text: string, mentions: number, channel: string, fileName: string | null = null) {
     const automod = await loadAutoMod(ctx.groupId);
     const exempt = automod.config.exempt.includes(ctx.role);
     if (automod.config.enabled && !exempt) {
         const verdict = scanMessage({ text, mentions }, automod.config, automod.words);
         if (!verdict.ok) await stoppedByAutoMod(ctx, name, verdict.rule, automod.config);
-        if (automod.config.spam && looksLikeSpam(ctx.groupId, ctx.user.email, text, ctx.now)) await stoppedByAutoMod(ctx, name, "spam", automod.config);
+        const spam = fileName === null
+            ? looksLikeSpam(ctx.groupId, ctx.user.email, text, ctx.now)
+            : looksLikeSpam(ctx.groupId, ctx.user.email, `${fileName} ${text}`, ctx.now, false);
+        if (automod.config.spam && spam) await stoppedByAutoMod(ctx, name, "spam", automod.config);
     }
     const seconds = readSlowmode(ctx.group.slowmode)[channelKey(channel)] ?? 0;
     if (seconds > 0 && !canModerate(ctx.role)) {
@@ -364,6 +373,8 @@ async function deleteRecent(ctx: Ctx, channel: string, count: number, targetEmai
     for (const record of chosen) {
         if (typeof record.voicePath === "string" && record.voicePath.startsWith(`group-voice-messages/${ctx.groupId}/`)) await deleteVoiceRecording(record.voicePath).catch(() => undefined);
     }
+    // Their files go too (and free their senders' space).
+    await deleteMessageFiles(chosen.map((record) => (record.file && typeof record.file === "object" ? (record.file as { id?: unknown }).id : null))).catch(() => undefined);
     for (let index = 0; index < chosen.length; index += 400) {
         await commitServerMutations(chosen.slice(index, index + 400).map((record) => ({ type: "delete" as const, path: messagePath(ctx.groupId, record._id) })));
     }
@@ -528,21 +539,31 @@ async function readReply(groupId: string, value: unknown) {
     if (!isGroupId(id)) return null;
     const quoted = await getServerDocument<StoredMessage>(messagePath(groupId, id));
     if (!quoted || quoted.type === "system" || typeof quoted.fromEmail !== "string" || quoted.fromEmail === "system") return null;
+    if (quoted.type === "file") {
+        const attachment = readMessageAttachment(quoted.file);
+        const caption = messagePreview(quoted.text, 100);
+        return { id, text: attachment ? messagePreview(caption ? `${attachmentPreview(attachment)} · ${caption}` : attachmentPreview(attachment), 100) : caption };
+    }
     return { id, text: quoted.type === "voice" ? "🎤" : quoted.type === "gif" ? "GIF" : messagePreview(quoted.text, 100) };
 }
 
-export async function sendGroupMessage(user: GroupUser, groupId: string, body: Record<string, unknown>): Promise<GroupSendResult> {
+/** Sends a group message: text, a GIF or (with `file`) a file and its caption, written in one commit. */
+export async function sendGroupMessage(user: GroupUser, groupId: string, body: Record<string, unknown>, file: PreparedFile | null = null): Promise<GroupSendResult> {
     const { group, role } = await requireGroupMember(groupId, user.email);
     const now = Date.now();
     const ctx: Ctx = { groupId, group, role, user, language: body.language === "EN" ? "EN" : groupLanguageOf(group), now };
     const mute = await activeMute(groupId, user.email, now);
     if (mute) throw new GroupApiError(403, "muted", "Bu grupta susturuldunuz.", { minutes: minutesLeft(mute.until, now) });
 
-    const gif = body.type === "gif" ? readMessageGif(body.gif) : null;
-    if (body.type === "gif" && !gif) throw new GroupApiError(400, "invalid_request", "Geçersiz GIF.");
+    const gif = !file && body.type === "gif" ? readMessageGif(body.gif) : null;
+    if (!file && body.type === "gif" && !gif) throw new GroupApiError(400, "invalid_request", "Geçersiz GIF.");
     // A GIF's text is a short caption (the #channel it was sent in) and its title: channels, search and notifications read it.
-    const text = gif ? [cleanSingleLine(body.text, 100).slice(0, 100), gif.title].filter(Boolean).join(" ") : cleanMultiLine(body.text, GROUP_LIMITS.messageMax * 2);
-    if (!gif && !text) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
+    // A file's text is its caption (it may be empty or just the #channel).
+    const text = file
+        ? cleanMultiLine(body.text, ATTACHMENT_LIMITS.captionMax * 2)
+        : gif ? [cleanSingleLine(body.text, 100).slice(0, 100), gif.title].filter(Boolean).join(" ") : cleanMultiLine(body.text, GROUP_LIMITS.messageMax * 2);
+    if (!gif && !file && !text) throw new GroupApiError(400, "invalid_request", "Mesaj boş olamaz.");
+    if (file && text.length > ATTACHMENT_LIMITS.captionMax) throw new GroupApiError(413, "payload_too_large", "Açıklama en fazla 2000 karakter olabilir.");
     if (text.length > GROUP_LIMITS.messageMax) throw new GroupApiError(413, "payload_too_large", "Mesaj en fazla 4000 karakter olabilir.");
 
     const name = (await ownDisplayName(user)).slice(0, 80);
@@ -550,7 +571,7 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
     // A forwarded message is passed on as it is: no commands, no Hanogt AI, no notifications.
     const forwarded = body.forwarded === true;
     let question: string | null = null;
-    if (!gif && !forwarded && text.startsWith("/")) {
+    if (!gif && !file && !forwarded && text.startsWith("/")) {
         const outcome = await runCommand(ctx, text, name, channel);
         if (outcome?.kind === "done") return outcome.result;
         if (outcome?.kind === "ask") question = outcome.question;
@@ -561,10 +582,10 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
     const directory = mentionsSomeone ? await memberDirectory(groupId, group) : null;
     const segments = mentionsSomeone ? tokenizeMessage(text, [...(directory?.byEmail.values() ?? []), AI_NAME]).filter((segment) => segment.kind === "mention") : [];
     const people = segments.filter((segment) => segment.kind === "mention" && segment.username !== AI_NAME);
-    const asksAi = question === null && segments.some((segment) => segment.kind === "mention" && segment.username === AI_NAME);
+    const asksAi = !file && question === null && segments.some((segment) => segment.kind === "mention" && segment.username === AI_NAME);
     if (asksAi) question = text.replace(new RegExp(`@${AI_NAME}`, "gi"), "").trim() || text;
 
-    await guard(ctx, name, text, people.length, channel);
+    await guard(ctx, name, text, people.length, channel, file ? file.attachment.name : null);
 
     const profile = directory?.profiles.get(user.email) ?? (await loadProfiles([user.email])).get(user.email);
     const createdAt = new Date(now);
@@ -572,16 +593,28 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
         fromEmail: user.email,
         author: name,
         authorAvatar: profileAvatar(profile),
-        type: gif ? "gif" : "text",
+        type: file ? "file" : gif ? "gif" : "text",
         text,
         createdAt,
     };
     if (gif) data.gif = gif;
+    if (file) data.file = attachmentField(file);
     const reply = await readReply(groupId, body.replyTo);
     if (reply) data.replyTo = reply;
-    if (forwarded) data.forwarded = true;
-    const created = await createServerDocument(messagesPath(groupId), data);
-    const id = created.name.split("/").pop() || "";
+    if (forwarded && !file) data.forwarded = true;
+    let id: string;
+    if (file) {
+        // The message and its file in one commit.
+        id = autoDocumentId();
+        const path = messagePath(groupId, id);
+        await commitWithFile(file, path, [
+            ...fileWrites(file, { sender: user.email, container: `group:${groupId}`, messagePath: path }, createdAt),
+            { type: "create", path, data },
+        ]);
+    } else {
+        const created = await createServerDocument(messagesPath(groupId), data);
+        id = created.name.split("/").pop() || "";
+    }
     const result: GroupSendResult = { success: true, message: wire(id, data) };
 
     if (people.length && directory) {
@@ -591,7 +624,8 @@ export async function sendGroupMessage(user: GroupUser, groupId: string, body: R
             : people.flatMap((segment) => (segment.kind === "mention" ? [emailForName(directory.byEmail, segment.username)] : [])).filter((email): email is string => Boolean(email));
         // @everyone from moderators and up reaches the whole group (up to 250 people); anyone else's reaches at most 30.
         const reach = everyone && canModerate(role) ? GROUP_FEATURES_MAX.members : undefined;
-        after(() => notifyMentions(named, user.email, { id: groupId, name: typeof group.name === "string" ? group.name : "Hanogt" }, messagePreview(text, 160), everyone, reach));
+        const preview = file ? messagePreview(text ? `${attachmentPreview(file.attachment)} · ${text}` : attachmentPreview(file.attachment), 160) : messagePreview(text, 160);
+        after(() => notifyMentions(named, user.email, { id: groupId, name: typeof group.name === "string" ? group.name : "Hanogt" }, preview, everyone, reach));
     }
     if (question !== null) {
         const refusal = await startAiAnswer(ctx, question, { id, text }, channel);

@@ -7,6 +7,7 @@
  * free of React, Firebase and Node imports (type-only imports are fine).
  */
 import { GROUP_REACTIONS, isReactionKey, mentionsUser, tokenizeMessage, type GroupReactionKey } from "@/lib/groups";
+import { readMessageAttachment, type MessageAttachment } from "./attachments";
 import { readMessageGif, type MessageGif } from "./gif";
 import { markdownToPlain } from "./markdown";
 import type { PlanBadge } from "@/lib/plan-badge";
@@ -99,7 +100,7 @@ export type FriendsOverview = {
     blocked: BlockedItem[];
 };
 
-export type DmMessageType = "text" | "sticker" | "voice" | "gif";
+export type DmMessageType = "text" | "sticker" | "voice" | "gif" | "file";
 /** The quoted message; `deleted` once it has been deleted (the quote is emptied then). */
 export type DmReply = { id: string; text: string; fromEmail: string; deleted?: boolean };
 /** Who reacted with what (e-mails of the two participants). */
@@ -119,12 +120,19 @@ export type DmMessage = {
     replyTo: DmReply | null;
     /** A GIF from the picker (type "gif"); its title is the text. */
     gif: MessageGif | null;
+    /** A file (type "file"); the text is its caption. */
+    file: MessageAttachment | null;
     reactions: DmReactions;
     /** Sent on from another conversation. */
     forwarded: boolean;
     /** Written locally, not confirmed by the server yet. */
     pending: boolean;
+    /** A file still on its way up (only on the sender's local copy). */
+    upload?: MessageUpload | null;
 };
+
+/** A file being sent: how much has gone up (0–1) and a local picture to show meanwhile. */
+export type MessageUpload = { progress: number; preview: string | null };
 
 export type DmSummary = {
     chatId: string;
@@ -267,7 +275,7 @@ export function foldText(value: string) {
 /* Direct messages                                                            */
 /* -------------------------------------------------------------------------- */
 
-const MESSAGE_TYPES: readonly DmMessageType[] = ["text", "sticker", "voice", "gif"];
+const MESSAGE_TYPES: readonly DmMessageType[] = ["text", "sticker", "voice", "gif", "file"];
 const DOC_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const EMAIL_LIKE = /^[^\s@/]{1,64}@[^\s@/]{1,190}$/;
 
@@ -324,6 +332,7 @@ export function dmMessageFromData(id: string, data: Record<string, unknown>, pen
             ? { id: reply.id, text: reply.deleted === true ? "" : str(reply.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: str(reply.fromEmail, 254).toLowerCase(), deleted: reply.deleted === true }
             : null,
         gif: !deleted && type === "gif" ? readMessageGif(data.gif) : null,
+        file: !deleted && type === "file" ? readMessageAttachment(data.file) : null,
         reactions: deleted ? {} : readDmReactions(data.reactions),
         forwarded: data.forwarded === true,
         pending,

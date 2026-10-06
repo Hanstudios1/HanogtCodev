@@ -22,7 +22,9 @@ import {
 } from "@/lib/groups";
 import { BOT_EVENT_COPY, type BotEvent } from "@/lib/social/bots";
 import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
+import { readMessageAttachment, type MessageAttachment } from "@/lib/social/attachments";
 import { readMessageGif, type MessageGif } from "@/lib/social/gif";
+import type { MessageUpload } from "@/lib/social/model";
 
 export type MonacoEditor = Parameters<OnMount>[0];
 
@@ -48,7 +50,7 @@ export type GroupChatMessage = {
     fromEmail: string;
     author: string;
     authorAvatar: string | null;
-    type: "text" | "voice" | "system" | "gif";
+    type: "text" | "voice" | "system" | "gif" | "file";
     text: string;
     voicePath: string | null;
     voiceDuration: number;
@@ -61,6 +63,10 @@ export type GroupChatMessage = {
     replyTo: GroupReply | null;
     edited: boolean;
     gif: MessageGif | null;
+    /** A file (type "file"); the text is its caption. */
+    file: MessageAttachment | null;
+    /** A file still on its way up (only on the sender's local copy). */
+    upload?: MessageUpload | null;
     /** Messages of the Hanogt Security Bot or Hanogt AI (only the server writes them). */
     bot: GroupBot | null;
     /** A bot notice shown in each reader's language (with `vars`). */
@@ -109,7 +115,9 @@ export function messageFromData(id: string, data: DocumentData, pending: boolean
         ? Object.fromEntries(Object.entries(data.vars as Record<string, unknown>).filter((entry): entry is [string, string] => typeof entry[1] === "string").slice(0, 12).map(([key, value]) => [key, value.slice(0, key === "reason" ? 300 : 80)]))
         : {};
     const gif = data.type === "gif" ? readMessageGif(data.gif) : null;
-    const type = data.type === "voice" || data.type === "system" ? data.type : gif ? "gif" : "text";
+    const file = data.type === "file" ? readMessageAttachment(data.file) : null;
+    // A file message whose file is gone (deleted with its sender's account) shows its caption as text.
+    const type = data.type === "voice" || data.type === "system" ? data.type : gif ? "gif" : file ? "file" : "text";
     const reply = data.replyTo && typeof data.replyTo === "object" ? data.replyTo as Record<string, unknown> : null;
     // Only the server writes as a bot; the bot field must match the sender.
     const bot = botOfSender(data.fromEmail);
@@ -131,6 +139,7 @@ export function messageFromData(id: string, data: DocumentData, pending: boolean
         replyTo: reply && isGroupId(reply.id) ? { id: reply.id, text: reply.deleted === true ? "" : text(reply.text).slice(0, 120), deleted: reply.deleted === true } : null,
         edited: data.edited === true,
         gif,
+        file,
         bot: bot && data.bot === bot ? bot : null,
         botEvent: bot && isBotEvent(data.botEvent) ? data.botEvent : null,
         botState: bot === "ai" && (data.botState === "thinking" || data.botState === "done" || data.botState === "failed") ? data.botState : null,

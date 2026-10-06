@@ -2,6 +2,7 @@ import { after, type NextRequest } from "next/server";
 import { deleteServerDocument, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 import { groupLimitsFor } from "@/lib/server/group-limits";
 import { clearMessageTraces } from "@/lib/server/message-traces";
+import { deleteMessageFiles } from "@/lib/server/message-files";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { SYSTEM_SENDER, botOfSender, canModerate, isGroupId, isManagerRole, isMemberKey, isReactionKey, outranks, safeGroupVoicePath } from "@/lib/groups";
 import { GROUP_FEATURES_MAX } from "@/lib/plans";
@@ -27,12 +28,12 @@ export const runtime = "nodejs";
 // Hanogt AI's answer to /ai is written after the response, within this time.
 export const maxDuration = 60;
 
-type StoredMessage = { fromEmail?: string; type?: string; text?: unknown; voicePath?: unknown; reactions?: Record<string, unknown> };
+type StoredMessage = { fromEmail?: string; type?: string; text?: unknown; voicePath?: unknown; file?: unknown; reactions?: Record<string, unknown> };
 
 const messagePath = (groupId: string, messageId: string) => `groups/${groupId}/messages/${messageId}`;
 
 /** Message fields a member may read; everything else on the document stays on the server. */
-const WIRE_FIELDS = ["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "createdAt", "event", "vars", "template", "reactions", "replyTo", "edited", "gif", "bot", "botEvent", "botState", "forwarded"] as const;
+const WIRE_FIELDS = ["fromEmail", "author", "authorAvatar", "type", "text", "voicePath", "voiceDuration", "file", "createdAt", "event", "vars", "template", "reactions", "replyTo", "edited", "gif", "bot", "botEvent", "botState", "forwarded"] as const;
 const PAGE_DEFAULT = 120;
 const PAGE_MAX = 200;
 /** Typing entries older than this are not reported (the live view uses 7 s as well). */
@@ -93,6 +94,8 @@ async function deleteMessage(groupId: string, messageId: string, email: string) 
     // Voice paths are written by clients: only recordings inside this group's folder are removed.
     const voicePath = safeGroupVoicePath(message.voicePath, groupId);
     if (voicePath) await deleteVoiceRecording(voicePath);
+    // A file goes with its message (and frees its sender's space).
+    if (message.file && typeof message.file === "object") await deleteMessageFiles([(message.file as { id?: unknown }).id]);
     await deleteServerDocument(path);
     // Replies stop quoting it and stars on it go.
     after(() => clearMessageTraces({ scope: "group", place: groupId, parentPath: `groups/${groupId}` }, [messageId]));

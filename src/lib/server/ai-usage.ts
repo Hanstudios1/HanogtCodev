@@ -1,11 +1,12 @@
 import "server-only";
 
 import { QUOTA_HEADERS, type AiUsage, type CountedLimit, type PlanUsage, type QuotaKind, type UsageWindow, type WindowQuota } from "@/lib/ai/usage";
-import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_GAME_AUDIO_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, PLAN_STAR_LIMITS, aiBonusOf, aiLimitsFor, aiWindowMs, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
+import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_ATTACHMENT_LIMITS, PLAN_GAME_AUDIO_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, PLAN_STAR_LIMITS, aiBonusOf, aiLimitsFor, aiWindowMs, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
 import { RETIRED_PROVIDER_IDS } from "@/lib/ai/connections";
 import { healBeforeRefusing, type HealOptions } from "./entitlements";
 import { countServerQuery, getServerDocument } from "./firebase-rest";
 import { gameAudioUsageFor } from "./game-assets";
+import { attachmentUsageOf } from "./message-files";
 import { AI_LIMIT_KEYS, getSubscription } from "./plans";
 import { enforceRateLimitWithFallback, readRateLimit, releaseFromWindow, type RateLimitResult } from "./rate-limit";
 
@@ -71,7 +72,8 @@ export async function planUsageFor(email: string, subscription: UserSubscription
     const record = subscription ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
     const plan = effectivePlan(record);
     const audioLimit = PLAN_GAME_AUDIO_LIMITS[plan];
-    const [usage, codeProjects, gameProjects, groups, stars, connections, apiKeys, gameAudio] = await Promise.all([
+    const fileLimit = PLAN_ATTACHMENT_LIMITS[plan].storageBytes;
+    const [usage, codeProjects, gameProjects, groups, stars, connections, apiKeys, gameAudio, messageFiles] = await Promise.all([
         aiUsageFor(email, record),
         countOf("projects", "email", email, PLAN_PROJECT_LIMITS[plan].code),
         countOf("game_projects", "ownerEmail", email, PLAN_PROJECT_LIMITS[plan].game),
@@ -82,8 +84,11 @@ export async function planUsageFor(email: string, subscription: UserSubscription
         gameAudioUsageFor(email, plan)
             .then((stored) => ({ used: stored.bytes, limit: audioLimit.bytes, files: stored.files, fileLimit: audioLimit.files }))
             .catch(() => ({ used: null, limit: audioLimit.bytes, files: null, fileLimit: audioLimit.files })),
+        attachmentUsageOf(email)
+            .then((stored) => ({ used: stored.bytes, limit: fileLimit, files: stored.files }))
+            .catch(() => ({ used: null, limit: fileLimit, files: null })),
     ]);
-    return { ...usage, counts: { codeProjects, gameProjects, groups, stars, connections, apiKeys, gameAudio } };
+    return { ...usage, counts: { codeProjects, gameProjects, groups, stars, connections, apiKeys, gameAudio, messageFiles } };
 }
 
 /** Where a Hanogt AI message came from: the chat, the person's own connection, the developer API or a Social group's bot. */

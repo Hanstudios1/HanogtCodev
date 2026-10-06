@@ -9,6 +9,7 @@ import StaffBadge from "@/components/StaffBadge";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { GROUP_REACTIONS, tokenizeMessage, type GroupReactionKey } from "@/lib/groups";
 import { SOCIAL_LIMITS, formatFriendTag, reactionSummary, type DmMessage, type SocialPerson } from "@/lib/social/model";
+import AttachmentView from "../chat/AttachmentView";
 import { ChatMarkdown } from "../chat/ChatMarkdown";
 import GifView from "../chat/GifView";
 
@@ -388,6 +389,13 @@ function RowView(props: RowProps) {
         body = <p className="text-5xl leading-tight" role="img" aria-label={message.text}>{message.text}</p>;
     } else if (message.type === "gif" && message.gif) {
         body = <GifView gif={message.gif} autoplay={gifAutoplay} />;
+    } else if (message.type === "file" && message.file) {
+        body = (
+            <>
+                <AttachmentView file={message.file} upload={message.upload} className="mt-0.5" />
+                {message.text && <ChatMarkdown text={message.text} renderText={renderLinks} className={cx("mt-1 text-zinc-800 dark:text-zinc-100", fontClass)} />}
+            </>
+        );
     } else if (message.type === "voice") {
         body = (
             <button type="button" onClick={() => props.onToggleVoice(message)} className={cx("mt-0.5 inline-flex items-center gap-2.5 rounded-2xl border px-3 py-2 text-sm transition", playing ? "border-indigo-500/50 bg-indigo-500/10" : "border-zinc-200 bg-white hover:border-indigo-500/40 dark:border-white/10 dark:bg-zinc-950")} aria-label={playing ? tx(C.stop) : `${tx(C.play)} (${formatDuration(message.voiceDuration)})`}>

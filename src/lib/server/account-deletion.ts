@@ -15,6 +15,7 @@ import {
 } from "./firebase-rest";
 import { deleteGroupVoice, removeFromVoice } from "./group-voice";
 import { deleteAccountGameAudio, releaseArcadeAudio } from "./game-assets";
+import { deleteContainerFiles, deleteMessageFiles, deleteSenderFiles } from "./message-files";
 import { deleteVoiceRecording } from "./social-voice";
 import { isOwnedStoragePath, normalizeEmail } from "./validate";
 
@@ -86,6 +87,7 @@ const NEWS_ID = /^[a-f0-9]{20}$/;
 const GROUP_MESSAGE_PATH = /^groups\/[^/]+\/messages\/[^/]+$/;
 const DELETED_AUTHOR = "Silinmiş kullanıcı";
 const DELETED_VOICE_TEXT = "Silinmiş sesli mesaj";
+const DELETED_FILE_TEXT = "Silinmiş dosya";
 
 // ---------------------------------------------------------------------------
 // Summary
@@ -337,7 +339,15 @@ async function deleteVoiceFile(ctx: Context, voicePath: unknown, prefix: string,
     ctx.tally.count("voiceFiles");
 }
 
-/** Removes the author from a group message; text messages keep their text, voice messages lose the recording. */
+/** The id of a message's file, if it has one. */
+function messageFileId(message: StoredDocument) {
+    return message.file && typeof message.file === "object" ? (message.file as { id?: unknown }).id : null;
+}
+
+/**
+ * Removes the author from a group message; text messages keep their text,
+ * voice messages lose the recording, file messages the file (their caption stays).
+ */
 async function anonymizeGroupMessage(ctx: Context, message: StoredDocument) {
     const groupId = message._path.split("/")[1] || "";
     try {
@@ -346,13 +356,24 @@ async function anonymizeGroupMessage(ctx: Context, message: StoredDocument) {
         // The message is anonymised anyway: keeping the name to retry the file is the worse trade.
         ctx.tally.fail("voiceFiles", error);
     }
+    const file = message.type === "file";
+    if (file) {
+        try {
+            const removed = await deleteMessageFiles([messageFileId(message)]);
+            if (removed) ctx.tally.count("messageFiles", removed);
+        } catch (error) {
+            ctx.tally.fail("messageFiles", error);
+        }
+    }
+    const caption = typeof message.text === "string" ? message.text : "";
     const anonymized = await patchExisting(message._path, {
         fromEmail: anonymousSender(ctx.email),
         author: DELETED_AUTHOR,
         authorAvatar: null,
-        text: message.type === "voice" ? DELETED_VOICE_TEXT : message.text,
+        text: message.type === "voice" ? DELETED_VOICE_TEXT : file ? caption || DELETED_FILE_TEXT : message.text,
         voicePath: null,
         voiceDuration: null,
+        ...(file ? { file: null } : {}),
     });
     if (anonymized) ctx.tally.count("groupMessagesAnonymized");
 }
@@ -365,11 +386,20 @@ async function deleteChats(ctx: Context) {
     await drain(ctx, "chats", query("chats", "participants", "ARRAY_CONTAINS", ctx.email), eachDocument(ctx, "chats", async (chat) => {
         const messagesGone = await deleteSubcollection(ctx, "chats", "chatMessages", `${chat._path}/messages`, (message) => deleteVoiceFile(ctx, message.voicePath, "voice-messages", chat._id));
         if (!messagesGone) return false;
+        // Both people's files in the conversation (each frees its sender's space).
+        const files = await deleteContainerFiles(`dm:${chat._id}`);
+        if (files) ctx.tally.count("messageFiles", files);
         // Both people's stars in the chat keep a few words of its messages.
         if (!(await drain(ctx, "chats", query("message_stars", "placeRef", "EQUAL", `dm:${chat._id}`), deleting(ctx, "chats", "starCopies")))) return false;
         await deleteServerDocument(chat._path);
         ctx.tally.count("chats");
     }));
+}
+
+/** Files the person sent that the steps above didn't reach, and their usage record. */
+async function deleteSentFiles(ctx: Context) {
+    const files = await deleteSenderFiles(ctx.email);
+    if (files) ctx.tally.count("messageFiles", files);
 }
 
 async function deleteCalls(ctx: Context) {
@@ -484,6 +514,13 @@ async function deleteOwnedGroup(ctx: Context, group: StoredDocument) {
     const voice = (message: StoredDocument) => deleteVoiceFile(ctx, message.voicePath, "group-voice-messages", group._id);
     let complete = await deleteSubcollection(ctx, "groups", "groupMessages", `${group._path}/messages`, voice);
     if (!(await deleteSubcollection(ctx, "groups", "groupFiles", `${group._path}/files`))) complete = false;
+    try {
+        const files = await deleteContainerFiles(`group:${group._id}`);
+        if (files) ctx.tally.count("messageFiles", files);
+    } catch (error) {
+        ctx.tally.fail("messageFiles", error);
+        complete = false;
+    }
     for (const collectionId of ["group_invites", "group_invite_links", "group_bans", "group_mutes", "group_warnings", "group_reports", "automod_events"]) {
         if (!(await drain(ctx, "groups", query(collectionId, "groupId", "EQUAL", group._id), deleting(ctx, "groups", "groupRecords")))) complete = false;
     }
@@ -740,6 +777,7 @@ const STEPS: readonly Step[] = [
     { id: "groupRecords", scopes: ALL, run: cleanGroupRecords },
     { id: "groupMessages", scopes: BOTH, run: anonymizeRemainingGroupMessages },
     { id: "socialRecords", scopes: ALL, run: deleteSocialRecords },
+    { id: "messageFiles", scopes: ALL, run: deleteSentFiles },
     { id: "requests", scopes: ALL, run: deleteRequestsAndInvites },
     { id: "friendLists", scopes: ALL, run: cleanFriendLists },
     { id: "feedback", scopes: BOTH, run: cleanFeedback },

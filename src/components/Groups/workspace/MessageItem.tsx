@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Clock3, Copy as CopyIcon, CornerUpLeft, CornerUpRight, Forward, LoaderCircle, Mic, Pause, Pencil, Pin, PinOff, Smile, Sparkles, Star, Trash2 } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { BOT_LABEL, BotAvatar, BotTag, ThinkingDots, customCommandLine, noticeOf } from "@/components/Social/chat/bots";
+import AttachmentView from "@/components/Social/chat/AttachmentView";
 import { ChatMarkdown } from "@/components/Social/chat/ChatMarkdown";
 import GifView from "@/components/Social/chat/GifView";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -261,6 +262,15 @@ function MessageItemView(props: MessageItemProps) {
         );
     } else if (message.type === "gif" && message.gif) {
         body = <GifView gif={message.gif} autoplay={gifAutoplay} />;
+    } else if (message.type === "file" && message.file) {
+        // A caption that is only the channel's #topic isn't repeated under every file.
+        const caption = message.text.trim();
+        body = (
+            <>
+                <AttachmentView file={message.file} upload={message.upload} className="mt-1" />
+                {caption && !/^#\S+$/u.test(caption) && <RichText text={message.text} needle={needle} onTopic={onTopic} className={cx("mt-1 text-zinc-800 dark:text-zinc-100", fontClass)} />}
+            </>
+        );
     } else if (message.botState === "thinking") {
         body = <div className="mt-0.5"><ThinkingDots /></div>;
     } else if (message.botState === "failed" || message.botEvent === "ai_failed") {

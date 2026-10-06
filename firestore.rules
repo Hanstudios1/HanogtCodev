@@ -352,6 +352,11 @@ service cloud.firestore {
     match /game_asset_owners/{id} { allow read, write: if false; }
     match /game_asset_usage/{id} { allow read, write: if false; }
 
+    // Files in Hanogt Social messages (with their parts) and each sender's
+    // space: only the server reads and writes them (/api/social/files).
+    match /message_files/{id} { allow read, write: if false; }
+    match /message_file_usage/{email} { allow read, write: if false; }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -28,6 +28,7 @@ import { mentionsUser, type GroupInvitationItem, type GroupListItem, type GroupL
 import { readPlanBadge } from "@/lib/plan-badge";
 import { effectiveStatus, lastSeenTime } from "@/lib/presence";
 import { SocialRequestError, socialApi, type VoiceTarget } from "./api";
+import { guessKind, pendingAttachment, prepareUpload, uploadMessageFile } from "./attachment-client";
 import type { MessageGif } from "./gif";
 import { readAudioDevices } from "./local-state";
 import {
@@ -590,7 +591,7 @@ export function useConversation({ me, partner, mode, chatExists, active, typingI
         const merged = optimistic.length ? mergeMessages(baseMessages, optimistic) : baseMessages;
         if (!Object.keys(removed).length && !Object.keys(edits).length && !Object.keys(reactionEdits).length) return merged;
         return merged.map((message) => {
-            if (removed[message.id] && !message.deleted) return { ...message, deleted: true, text: "", voicePath: null, replyTo: null, gif: null, reactions: {} };
+            if (removed[message.id] && !message.deleted) return { ...message, deleted: true, text: "", voicePath: null, replyTo: null, gif: null, file: null, reactions: {} };
             let next = message;
             if (edits[message.id] !== undefined && edits[message.id] !== message.text) next = { ...next, text: edits[message.id], edited: true };
             if (reactionEdits[message.id]) next = { ...next, reactions: reactionEdits[message.id] };
@@ -718,6 +719,40 @@ export function useConversation({ me, partner, mode, chatExists, active, typingI
         else setServer((state) => ({ ...state, exists: true, messages: mergeMessages(state.messages, [message]) }));
     }, [live, partner, stopTyping]);
 
+    /**
+     * A file goes through POST /api/social/files (the server stores it with
+     * its message). It shows at once as "sending", with how much has gone up
+     * and a local picture for photos, until the server's copy replaces it.
+     */
+    const sendFile = useCallback(async (file: File, caption: string, replyTo: DmReply | null) => {
+        stopTyping();
+        const localId = pendingId();
+        const preview = guessKind(file) === "image" ? URL.createObjectURL(file) : null;
+        const draft: DmMessage = {
+            ...dmMessageFromData(localId, { fromEmail: me, read: false, text: caption, type: "file", replyTo }, true, Date.now()),
+            file: pendingAttachment(file, localId),
+            upload: { progress: 0, preview },
+        };
+        setOptimistic((current) => [...current, draft]);
+        const progress = (fraction: number) => setOptimistic((current) => current.map((entry) => (entry.id === localId ? { ...entry, upload: { progress: fraction, preview } } : entry)));
+        try {
+            const ready = await prepareUpload(file);
+            const stored = await uploadMessageFile({ with: partner }, ready, { caption, replyTo: replyTo?.id ?? null, language: "TR" }, progress);
+            const message = typeof stored.id === "string" ? dmMessageFromData(stored.id, stored) : null;
+            setOptimistic((current) => {
+                const rest = current.filter((entry) => entry.id !== localId);
+                return message && live ? [...rest, { ...message, pending: true }] : rest;
+            });
+            if (message && !live) setServer((state) => ({ ...state, exists: true, messages: mergeMessages(state.messages, [message]) }));
+        } catch (error) {
+            setOptimistic((current) => current.filter((entry) => entry.id !== localId));
+            throw error;
+        } finally {
+            // The picture stays a little longer than the upload: the server's copy loads meanwhile.
+            if (preview) window.setTimeout(() => URL.revokeObjectURL(preview), 60_000);
+        }
+    }, [live, me, partner, stopTyping]);
+
     const editMessage = useCallback(async (message: DmMessage, nextText: string) => {
         await socialApi.dmAction({ action: "edit", with: partner, messageId: message.id, text: nextText });
         if (live) setEdits((current) => ({ ...current, [message.id]: nextText }));
@@ -728,7 +763,7 @@ export function useConversation({ me, partner, mode, chatExists, active, typingI
     const deleteMessage = useCallback(async (message: DmMessage) => {
         await socialApi.dmAction({ action: "delete", with: partner, messageId: message.id });
         setRemoved((current) => ({ ...current, [message.id]: true }));
-        if (!live) setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, deleted: true, text: "", voicePath: null, gif: null, reactions: {} } : entry)) }));
+        if (!live) setServer((state) => ({ ...state, messages: state.messages.map((entry) => (entry.id === message.id ? { ...entry, deleted: true, text: "", voicePath: null, gif: null, file: null, reactions: {} } : entry)) }));
     }, [live, partner]);
 
     /** Adds or takes back my reaction; shown at once. */
@@ -772,6 +807,7 @@ export function useConversation({ me, partner, mode, chatExists, active, typingI
         pinnedMessageIds,
         sendMessage,
         sendVoice,
+        sendFile,
         editMessage,
         deleteMessage,
         react,

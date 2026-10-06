@@ -1,32 +1,26 @@
-import { randomBytes } from "node:crypto";
 import { after, type NextRequest } from "next/server";
 import { isReactionKey } from "@/lib/groups";
-import { commitServerMutations, commitServerPatches, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { commitServerPatches, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { deleteMessageFiles } from "@/lib/server/message-files";
 import { clearMessageTraces, refreshMessageTraces } from "@/lib/server/message-traces";
-import { clearDirectMessageNotification, notifyDirectMessage } from "@/lib/server/social-notify";
+import { clearDirectMessageNotification } from "@/lib/server/social-notify";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { isDocId, isOwnedStoragePath } from "@/lib/server/validate";
-import { readMessageGif } from "@/lib/social/gif";
 import {
     SOCIAL_LIMITS,
     cleanMessageText,
-    dmChatId,
     dmMessageFromData,
-    isSticker,
     messagePreview,
-    previewText,
     readDmReactions,
     readPinnedIds,
     timeOf,
     type DmConversationResponse,
     type DmMessage,
-    type DmReply,
 } from "@/lib/social/model";
 import {
     SocialApiError,
     assertRateLimit,
     assertSameOrigin,
-    emailList,
     readBody,
     readCursor,
     readPartner,
@@ -35,6 +29,7 @@ import {
     socialJson,
     type SocialUser,
 } from "@/lib/social/server";
+import { chatPath, loadChat, messagePath, sendDirect, type StoredMessage } from "../_dm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,51 +41,14 @@ export const dynamic = "force-dynamic";
  * Documents: chats/{a_b} and chats/{a_b}/messages.
  */
 
-type StoredChat = { participants?: unknown; lastMessage?: unknown; lastMessageAt?: unknown; lastSender?: unknown; typingUser?: unknown; updatedAt?: unknown; pinnedMessageIds?: unknown };
-type StoredMessage = Record<string, unknown> & { fromEmail?: unknown; text?: unknown; type?: unknown; voicePath?: unknown; createdAt?: unknown; deleted?: unknown; reactions?: unknown };
-type PartnerRecord = { friends?: unknown; blockedUsers?: unknown; banned?: unknown; suspended?: unknown };
-
 const PAGE_DEFAULT = SOCIAL_LIMITS.dmPage;
 const PAGE_MAX = 100;
 const TYPING_FRESH_MS = 8_000;
 const READ_BATCH = 200;
 const PINNED_MAX = 25;
-const ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-/** 20 random characters, like the client SDK's automatic document ids. */
-function newMessageId() {
-    return Array.from(randomBytes(20), (byte) => ID_ALPHABET[byte % ID_ALPHABET.length]).join("");
-}
-
-const chatPath = (chatId: string) => `chats/${chatId}`;
-const messagePath = (chatId: string, messageId: string) => `chats/${chatId}/messages/${messageId}`;
-
-/** The conversation of the caller and `partner`; a document with other participants is never used. */
-async function loadChat(email: string, partner: string) {
-    const chatId = dmChatId(email, partner);
-    const chat = await getServerDocument<StoredChat>(chatPath(chatId));
-    if (chat) {
-        const participants = emailList(chat.participants, 3);
-        if (participants.length !== 2 || !participants.includes(email) || !participants.includes(partner)) {
-            throw new SocialApiError(404, "not_found", "Sohbet bulunamadı.");
-        }
-    }
-    return { chatId, chat };
-}
-
 function readMessageId(value: unknown) {
     if (!isDocId(value)) throw new SocialApiError(400, "invalid_id", "Geçersiz mesaj.");
     return value;
-}
-
-/** Sending needs a friendship in both directions and no block on either side. */
-async function requireFriendship(user: SocialUser, partner: string) {
-    if (user.blockedUsers.includes(partner)) throw new SocialApiError(403, "blocked", "Bu kullanıcıyı engellediniz.");
-    if (!user.friends.includes(partner)) throw new SocialApiError(403, "not_friend", "Yalnızca arkadaşlarınıza mesaj gönderebilirsiniz.");
-    const record = await getServerDocument<PartnerRecord>(`users/${partner}`);
-    if (!record || record.banned === true || record.suspended === true || !emailList(record.friends).includes(user.email) || emailList(record.blockedUsers).includes(user.email)) {
-        throw new SocialApiError(403, "not_friend", "Bu kullanıcıya mesaj gönderilemiyor.");
-    }
 }
 
 function wire(record: StoredMessage & { _id: string }): DmMessage {
@@ -128,67 +86,6 @@ async function conversation(user: SocialUser, request: NextRequest): Promise<DmC
         pinnedMessageIds: readPinnedIds(chat?.pinnedMessageIds, PINNED_MAX),
         now,
     };
-}
-
-/**
- * The quoted message is read from the conversation itself, so a reply can't
- * put words in the other person's mouth.
- */
-async function readReply(value: unknown, chatId: string): Promise<DmReply | null> {
-    if (!value || typeof value !== "object") return null;
-    const id = (value as { id?: unknown }).id;
-    if (!isDocId(id)) return null;
-    const quoted = await getServerDocument<StoredMessage>(messagePath(chatId, id));
-    if (!quoted || quoted.deleted === true || typeof quoted.fromEmail !== "string") return null;
-    return { id, text: messagePreview(quoted.text, SOCIAL_LIMITS.replyExcerptMax), fromEmail: quoted.fromEmail };
-}
-
-/** What the chat list and the notification show for a message. */
-function previewOf(type: string, text: string) {
-    if (type === "gif") return text ? `GIF · ${previewText(text, 80)}` : "GIF";
-    return messagePreview(text);
-}
-
-async function send(user: SocialUser, partner: string, body: Record<string, unknown>) {
-    await assertRateLimit(`social:dm-send:${user.email}`, 40);
-    await requireFriendship(user, partner);
-    const type = body.type === "sticker" ? "sticker" : body.type === "gif" ? "gif" : "text";
-    let text: string;
-    const gif = type === "gif" ? readMessageGif(body.gif) : null;
-    if (type === "sticker") {
-        if (!isSticker(body.text)) throw new SocialApiError(400, "invalid_request", "Geçersiz çıkartma.");
-        text = body.text;
-    } else if (type === "gif") {
-        if (!gif) throw new SocialApiError(400, "invalid_request", "Geçersiz GIF.");
-        text = gif.title;
-    } else {
-        const full = cleanMessageText(body.text, SOCIAL_LIMITS.messageMax * 2);
-        if (!full) throw new SocialApiError(400, "empty_message", "Mesaj boş olamaz.");
-        if (full.length > SOCIAL_LIMITS.messageMax) throw new SocialApiError(413, "message_too_long", "Mesaj en fazla 4000 karakter olabilir.");
-        text = full;
-    }
-    const chatId = dmChatId(user.email, partner);
-    const replyTo = await readReply(body.replyTo, chatId);
-    const now = new Date();
-    const id = newMessageId();
-    const message: Record<string, unknown> = { fromEmail: user.email, text, type, createdAt: now, read: false };
-    if (replyTo) message.replyTo = replyTo;
-    if (gif) message.gif = gif;
-    if (body.forwarded === true) message.forwarded = true;
-    const preview = previewOf(type, text);
-    // One commit: the chat document (created on the first message) and the message appear together.
-    await commitServerMutations([
-        {
-            type: "update",
-            path: chatPath(chatId),
-            data: { participants: [user.email, partner].sort(), updatedAt: now, lastMessage: preview, lastMessageAt: now, lastSender: user.email, typingUser: null },
-            updateFields: ["participants", "updatedAt", "lastMessage", "lastMessageAt", "lastSender", "typingUser"],
-        },
-        { type: "create", path: messagePath(chatId, id), data: message },
-    ]);
-    // The bell, after the answer (the sender doesn't wait for it).
-    after(() => notifyDirectMessage(partner, user.email, chatId, preview));
-    return { success: true, message: dmMessageFromData(id, { ...message, createdAt: now.getTime() }) };
 }
 
 /** The caller's own message in the conversation (edits and deletions). */
@@ -232,13 +129,15 @@ async function remove(user: SocialUser, partner: string, body: Record<string, un
     if (message.deleted === true) return { success: true };
     // Voice paths are written by clients: only recordings inside this chat's folder are removed.
     if (isOwnedStoragePath(message.voicePath, "voice-messages", chatId)) await deleteVoiceRecording(message.voicePath);
+    // A file goes with its message (and frees its sender's space).
+    if (message.file && typeof message.file === "object") await deleteMessageFiles([(message.file as { id?: unknown }).id]);
     const pinned = readPinnedIds(chat.pinnedMessageIds, PINNED_MAX);
     const chatFields: Record<string, unknown> = {};
     if (newest) chatFields.lastMessage = "";
     if (pinned.includes(id)) chatFields.pinnedMessageIds = pinned.filter((entry) => entry !== id);
     // Fields named in the mask without a value are removed: the text is gone, not only hidden.
     await commitServerPatches([
-        { path: messagePath(chatId, id), data: { deleted: true, text: "" }, updateFields: ["deleted", "text", "voicePath", "voiceDuration", "replyTo", "gif", "reactions"], updateTime: message._updateTime },
+        { path: messagePath(chatId, id), data: { deleted: true, text: "" }, updateFields: ["deleted", "text", "voicePath", "voiceDuration", "replyTo", "gif", "file", "reactions"], updateTime: message._updateTime },
         ...(Object.keys(chatFields).length ? [{ path: chatPath(chatId), data: chatFields, updateFields: Object.keys(chatFields), exists: true }] : []),
     ]);
     // Replies stop quoting it and stars on it go.
@@ -345,7 +244,7 @@ export async function POST(request: NextRequest) {
         const body = await readBody(request, 24_576);
         const partner = readPartner(body.with, user.email);
         switch (body.action) {
-            case "send": return socialJson(await send(user, partner, body), 201);
+            case "send": return socialJson(await sendDirect(user, partner, body), 201);
             case "edit": return socialJson(await edit(user, partner, body));
             case "delete": return socialJson(await remove(user, partner, body));
             case "read": return socialJson(await markRead(user, partner));

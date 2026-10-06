@@ -9,8 +9,12 @@ import { PresenceMark } from "@/components/PresenceAvatar";
 import { useVoiceCall } from "@/components/VoiceCallProvider";
 import type { GroupReactionKey } from "@/lib/groups";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { useMyPlan } from "@/lib/plan-client";
+import { PLAN_ATTACHMENT_LIMITS } from "@/lib/plans";
 import { PRESENCE_STATUS_COPY } from "@/lib/presence";
 import { SocialRequestError } from "@/lib/social/api";
+import { ATTACHMENT_ERROR_COPY, FileUploadError, isAttachmentErrorCode, isRetryableFileError } from "@/lib/social/attachment-client";
+import { attachmentPreview } from "@/lib/social/attachments";
 import type { GifItem } from "@/lib/social/gif";
 import { useConversation, useVoiceMessagePlayer } from "@/lib/social/hooks";
 import { SOCIAL_LIMITS, dmChatId, messagePreview, type DmMessage, type SocialPerson, type SocialProfileResponse } from "@/lib/social/model";
@@ -159,7 +163,18 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
     const canSend = !blocked && (conversation.canSend ?? friend);
     const notFound = profileMissing && !summary && !friend && !conversation.messages.length && conversation.loaded;
 
-    const replyRef = (message: DmMessage | null) => (message ? { id: message.id, text: message.type === "gif" ? tx(C.gif) : messagePreview(message.text, 100), fromEmail: message.fromEmail } : null);
+    /** A message in a reply line: "🎤", "GIF", "📎 name · caption" or its words. */
+    const excerptOf = (message: DmMessage, max: number) => {
+        if (message.type === "voice") return "🎤";
+        if (message.type === "gif") return tx(C.gif);
+        if (message.type === "file" && message.file) {
+            const caption = messagePreview(message.text, max);
+            return messagePreview(caption ? `${attachmentPreview(message.file)} · ${caption}` : attachmentPreview(message.file), max);
+        }
+        return messagePreview(message.text, max);
+    };
+    const replyRef = (message: DmMessage | null) => (message ? { id: message.id, text: excerptOf(message, 100), fromEmail: message.fromEmail } : null);
+    const plan = useMyPlan(meState.email);
 
     const send = async (text: string) => {
         const reply = replyTo;
@@ -185,6 +200,36 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
 
     const sendSticker = (emoji: string) => {
         void conversation.sendMessage({ text: emoji, type: "sticker", replyTo: null }).catch((error: unknown) => notify(errorText(error), "error"));
+    };
+
+    /**
+     * Files go one after another, each as its own message: the caption and
+     * the reply go with the first one that goes through.
+     */
+    const sendFiles = async (picked: File[], caption: string) => {
+        const reply = replyTo;
+        setReplyTo(null);
+        let words = caption;
+        let quoted = replyRef(reply);
+        let sent = 0;
+        let retry = false;
+        for (const file of picked) {
+            try {
+                await conversation.sendFile(file, words, quoted);
+                sent += 1;
+                words = "";
+                quoted = null;
+            } catch (error) {
+                const code = error instanceof FileUploadError ? error.code : "";
+                notify(error instanceof FileUploadError && isAttachmentErrorCode(code) ? tx(ATTACHMENT_ERROR_COPY[code], error.vars) : errorText(error instanceof FileUploadError ? code : error, C.sendFailed), "error");
+                retry = isRetryableFileError(error);
+                // Nothing after it would go either (full space, no friendship, no connection).
+                if (!["attachment_type", "attachment_too_large", "attachment_image", "attachment_empty"].includes(code)) break;
+            }
+        }
+        if (!sent) setReplyTo(reply);
+        // Nothing went for a reason that may pass (connection, speed, space): the files and the caption go back into the box.
+        return sent > 0 || !retry;
     };
 
     const sendVoice = (blob: Blob, mimeType: string, seconds: number) => {
@@ -369,13 +414,15 @@ function Conversation({ partnerEmail }: { partnerEmail: string }) {
                     maxLength={SOCIAL_LIMITS.messageMax}
                     disabled={disabledNotice}
                     status={conversation.typing && friend ? <><span className="me-1 inline-flex gap-0.5 align-middle" aria-hidden>{[0, 150, 300].map((delay) => <span key={delay} className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: `${delay}ms` }} />)}</span>{tx(C.typing, { name: partner.username })}</> : null}
-                    reply={replyTo ? { author: replyTo.fromEmail === meState.email ? meState.username : partner.username, excerpt: replyTo.type === "voice" ? "🎤" : replyTo.type === "gif" ? tx(C.gif) : messagePreview(replyTo.text, 80) } : null}
+                    reply={replyTo ? { author: replyTo.fromEmail === meState.email ? meState.username : partner.username, excerpt: excerptOf(replyTo, 80) } : null}
                     onCancelReply={() => setReplyTo(null)}
                     onSend={send}
                     onGif={sendGif}
                     onSticker={sendSticker}
                     onVoice={sendVoice}
                     onVoiceError={(code) => notify(errorText(code), "error")}
+                    onFiles={sendFiles}
+                    fileMaxBytes={PLAN_ATTACHMENT_LIMITS[plan].fileBytes}
                     onTyping={conversation.notifyTyping}
                     onEditLast={editLast}
                     focusNonce={focusNonce}
@@ -407,7 +454,7 @@ function PinnedList({ ids, messages, me, partner, onJump, onUnpin }: { ids: read
                             {message ? (
                                 <>
                                     <p className="text-xs font-bold">{message.fromEmail === me.email ? me.username : partner.username}</p>
-                                    <p className={cx("mt-0.5 line-clamp-3 whitespace-pre-wrap break-words text-sm text-zinc-700 dark:text-zinc-200", message.deleted && "italic text-zinc-400")}>{message.type === "voice" ? tx(C.voice) : message.type === "gif" ? `${tx(C.gif)}${message.gif?.title ? ` · ${message.gif.title}` : ""}` : message.text}</p>
+                                    <p className={cx("mt-0.5 line-clamp-3 whitespace-pre-wrap break-words text-sm text-zinc-700 dark:text-zinc-200", message.deleted && "italic text-zinc-400")}>{message.type === "voice" ? tx(C.voice) : message.type === "gif" ? `${tx(C.gif)}${message.gif?.title ? ` · ${message.gif.title}` : ""}` : message.type === "file" && message.file ? `${attachmentPreview(message.file)}${message.text ? ` · ${message.text}` : ""}` : message.text}</p>
                                 </>
                             ) : <p className="text-sm italic text-zinc-500">{tx(C.notLoaded)}</p>}
                             <div className="mt-1.5 flex justify-end gap-1">

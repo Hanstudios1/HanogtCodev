@@ -1,9 +1,10 @@
 "use client";
 
-import { Code2, FolderCode, Gamepad2, KeyRound, Music, Sparkles, Star, UsersRound } from "lucide-react";
+import { Code2, FolderCode, Gamepad2, KeyRound, Music, Paperclip, Sparkles, Star, UsersRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { currentWindow, formatResetTime, usageLevel, type CountedLimit, type PlanUsage, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { formatBytes } from "@/lib/social/attachments";
 
 const C = {
     title: { TR: "Planının kullanımı", EN: "Your plan's usage" },
@@ -14,6 +15,8 @@ const C = {
     stars: { TR: "Yıldızlı mesaj", EN: "Starred messages" },
     gameAudio: { TR: "Oyun dosyaları (ses ve model)", EN: "Game files (sounds and models)" },
     gameAudioFiles: { TR: "{count} / {limit} dosya", EN: "{count} / {limit} files" },
+    messageFiles: { TR: "Mesajlarda gönderdiğin dosyalar", EN: "Files you sent in messages" },
+    messageFileCount: { TR: "{count} dosya", EN: "{count} files" },
     connections: { TR: "Yapay zekâ bağlantısı (kendi anahtarın)", EN: "AI connections (your own key)" },
     apiKeys: { TR: "Hanogt AI API anahtarı", EN: "Hanogt AI API keys" },
     unlimited: { TR: "sınırsız", EN: "unlimited" },
@@ -55,7 +58,7 @@ function WindowBar({ window, label }: { window: UsageWindow; label: string }) {
  * (#usage, linked from the Hanogt AI usage meter).
  */
 export default function UsageList({ usage }: { usage: PlanUsage }) {
-    const { tx, locale } = useI18n();
+    const { tx, locale, language } = useI18n();
     const number = (value: number) => value.toLocaleString(locale);
     const megabytes = (bytes: number) => (bytes / 1024 / 1024).toLocaleString(locale, { maximumFractionDigits: 1 });
     const counted = (item: CountedLimit) => {
@@ -85,6 +88,11 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
                 {usage.counts.gameAudio ? (
                     <Row icon={<Music className={`${icon} text-teal-500`} aria-hidden />} label={tx(C.gameAudio)} value={usage.counts.gameAudio.used === null ? tx(C.unknown) : `${megabytes(usage.counts.gameAudio.used)} / ${megabytes(usage.counts.gameAudio.limit)} MB`}>
                         {usage.counts.gameAudio.files !== null ? <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">{tx(C.gameAudioFiles, { count: number(usage.counts.gameAudio.files), limit: number(usage.counts.gameAudio.fileLimit) })}</p> : null}
+                    </Row>
+                ) : null}
+                {usage.counts.messageFiles ? (
+                    <Row icon={<Paperclip className={`${icon} text-sky-500`} aria-hidden />} label={tx(C.messageFiles)} value={usage.counts.messageFiles.used === null ? tx(C.unknown) : `${formatBytes(usage.counts.messageFiles.used, language)} / ${formatBytes(usage.counts.messageFiles.limit, language)}`}>
+                        {usage.counts.messageFiles.files !== null ? <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">{tx(C.messageFileCount, { count: number(usage.counts.messageFiles.files) })}</p> : null}
                     </Row>
                 ) : null}
                 <Row icon={<KeyRound className={`${icon} text-zinc-400`} aria-hidden />} label={tx(C.connections)} value={counted(usage.counts.connections)} />

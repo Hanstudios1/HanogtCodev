@@ -17,6 +17,7 @@ import {
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { forgetMemberStars, forgetPlaceStars } from "@/lib/server/social-stars";
+import { deleteContainerFiles } from "@/lib/server/message-files";
 import { deleteVoiceRecording } from "@/lib/server/social-voice";
 import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import { effectiveStatus, type PresenceStatus } from "@/lib/presence";
@@ -486,7 +487,7 @@ async function deleteInBatches(paths: string[]) {
     }
 }
 
-/** Deletes files and messages (with their voice recordings) of a group. */
+/** Deletes files and messages (with their voice recordings and message files) of a group. */
 async function deleteGroupContent(groupId: string) {
     const [files, messages] = await Promise.all([
         listServerCollection(`groups/${groupId}/files`, 300),
@@ -498,6 +499,8 @@ async function deleteGroupContent(groupId: string) {
         const path = safeGroupVoicePath(message.voicePath, groupId);
         if (path) await deleteVoiceRecording(path);
     });
+    // Files sent in the group's messages (they free their senders' space).
+    await deleteContainerFiles(`group:${groupId}`);
     await deleteInBatches([...files, ...messages].map((document) => document._path));
 }
 

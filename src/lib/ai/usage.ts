@@ -41,6 +41,8 @@ export type PlanUsage = AiUsage & {
         apiKeys: CountedLimit | null;
         /** Audio storage of game projects in bytes (Hanogt Engine V4); used is null when it can't be read. */
         gameAudio?: { used: number | null; limit: number; files: number | null; fileLimit: number };
+        /** What the files sent in Hanogt Social messages take up, in bytes; used is null when it can't be read. */
+        messageFiles?: { used: number | null; limit: number; files: number | null };
     };
 };
 

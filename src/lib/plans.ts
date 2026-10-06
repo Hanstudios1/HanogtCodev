@@ -119,6 +119,21 @@ export const PLAN_GROUP_FEATURES: Record<PlanId, GroupPlanLimits> = {
 /** The most of each any plan allows: what stored lists are read up to. */
 export const GROUP_FEATURES_MAX: GroupPlanLimits = PLAN_GROUP_FEATURES.pro;
 
+/**
+ * Files sent in Hanogt Social messages (direct messages and groups): the
+ * largest file and how much the files a person sent may take up in all
+ * (ATTACHMENT_LIMITS.maxBytes is the most any plan allows for one file).
+ * Deleting a message, a conversation's files or a group frees the space;
+ * when the plan goes down nothing is deleted, new files wait until there is
+ * room again.
+ */
+export type PlanAttachmentLimits = { fileBytes: number; storageBytes: number };
+export const PLAN_ATTACHMENT_LIMITS: Record<PlanId, PlanAttachmentLimits> = {
+    free: { fileBytes: 2 * 1024 * 1024, storageBytes: 25 * 1024 * 1024 },
+    plus: { fileBytes: 4 * 1024 * 1024, storageBytes: 250 * 1024 * 1024 },
+    pro: { fileBytes: 4 * 1024 * 1024, storageBytes: 1024 * 1024 * 1024 },
+};
+
 /** Messages a person can star in Hanogt Social (a private bookmark list). Stars above the limit stay; new ones wait. */
 export const PLAN_STAR_LIMITS: Record<PlanId, number> = { free: 200, plus: 500, pro: 1_000 };
 
@@ -383,6 +398,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "3 Hanogt Social grubu açma", EN: "Create up to 3 Hanogt Social groups" } },
             { text: { TR: "Gruplarında 25 üye ve 25 sabitlenmiş mesaj", EN: "25 members and 25 pinned messages in your groups" } },
             { text: { TR: "200 yıldızlı mesaj", EN: "200 starred messages" } },
+            { text: { TR: "Mesajlarda 2 MB'a kadar dosya; toplam 25 MB", EN: "Files up to 2 MB in messages; 25 MB in all" } },
             { text: { TR: "Oyunların için 5 MB ses ve 3D model depolaması", EN: "5 MB of storage for your games' sounds and 3D models" } },
             { text: { TR: "2 kişiyle ekiple düzenleme ve sesli görüşme", EN: "Team editing for 2 people, with voice calls" } },
         ],
@@ -398,6 +414,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "10 Hanogt Social grubu açma", EN: "Create up to 10 Hanogt Social groups" } },
             { text: { TR: "Gruplarında 100 üye, 50 sabitlenmiş mesaj, 50 özel bot komutu ve 300 yasaklı kelime", EN: "100 members, 50 pinned messages, 50 custom bot commands and 300 banned words in your groups" } },
             { text: { TR: "500 yıldızlı mesaj", EN: "500 starred messages" } },
+            { text: { TR: "Mesajlarda 4 MB'a kadar dosya; toplam 250 MB", EN: "Files up to 4 MB in messages; 250 MB in all" } },
             { text: { TR: "Oyunların için 25 MB ses ve 3D model depolaması", EN: "25 MB of storage for your games' sounds and 3D models" } },
             { text: { TR: "5 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 5 people" } },
             { text: { TR: "Daha uzun yapay zekâ yanıtları; açık dosyanın 24.000 karakteri okunur", EN: "Longer AI answers; 24,000 characters of your open file are read" } },
@@ -418,6 +435,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Sınırsız Hanogt Social grubu", EN: "Unlimited Hanogt Social groups" } },
             { text: { TR: "Gruplarında 250 üye, 100 sabitlenmiş mesaj, 100 özel bot komutu ve 1.000 yasaklı kelime", EN: "250 members, 100 pinned messages, 100 custom bot commands and 1,000 banned words in your groups" } },
             { text: { TR: "1.000 yıldızlı mesaj", EN: "1,000 starred messages" } },
+            { text: { TR: "Mesajlarda 4 MB'a kadar dosya; toplam 1 GB", EN: "Files up to 4 MB in messages; 1 GB in all" } },
             { text: { TR: "Oyunların için 100 MB ses ve 3D model depolaması", EN: "100 MB of storage for your games' sounds and 3D models" } },
             { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
             { text: { TR: "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur", EN: "The longest AI answers; 40,000 characters of your open file are read" } },

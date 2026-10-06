@@ -24,6 +24,14 @@ const ALI = "ali@example.com";
 const BERK = "berk@example.com";
 const CEM = "cem@example.com";
 const NEWS_ID = "0123456789abcdef0123";
+// Files sent in messages: Ali's in the chat, in a group that stays and one whose message is gone; Berk's in Ali's group and with Cem.
+const FILE_DM = "11111111-1111-4111-8111-111111111111";
+const FILE_GROUP = "22222222-2222-4222-8222-222222222222";
+const FILE_ORPHAN = "33333333-3333-4333-8333-333333333333";
+const FILE_OWNED_GROUP = "44444444-4444-4444-8444-444444444444";
+const FILE_BYSTANDER = "55555555-5555-4555-8555-555555555555";
+const attachment = (id, name, size) => ({ id, name, size, contentType: "text/plain", kind: "text", width: null, height: null });
+const fileRecord = (id, sender, container, messagePath, size, parts = 0) => ({ fileId: id, name: "x.txt", size, contentType: "text/plain", kind: "text", sender, container, messagePath, parts });
 
 function seed() {
     return {
@@ -117,6 +125,20 @@ function seed() {
         "message_stars/s3": { owner: BERK, scope: "group", target: "grpB", messageId: "gm4", messageRef: "group:grpB:gm4", placeRef: "group:grpB", authorEmail: BERK, excerpt: "yo", author: "Berk" },
         "message_stars/s4": { owner: BERK, scope: "group", target: "grpA", messageId: "gm1", messageRef: "group:grpA:gm1", placeRef: "group:grpA", authorEmail: BERK, excerpt: "hey", author: "Berk" },
         "message_stars/s5": { owner: ALI, scope: "dm", target: BERK, messageId: "m2", messageRef: "dm:chat1:m2", placeRef: "dm:chat1", authorEmail: BERK, excerpt: "hi", author: "Berk" },
+
+        "chats/chat1/messages/m3": { fromEmail: ALI, type: "file", text: "", file: attachment(FILE_DM, "not.txt", 10) },
+        [`message_files/${FILE_DM}`]: fileRecord(FILE_DM, ALI, "dm:chat1", "chats/chat1/messages/m3", 10),
+        "groups/grpB/messages/gm6": { fromEmail: ALI, type: "file", text: "plan", author: "Ali", file: attachment(FILE_GROUP, "plan.txt", 1_400_000) },
+        [`message_files/${FILE_GROUP}`]: fileRecord(FILE_GROUP, ALI, "group:grpB", "groups/grpB/messages/gm6", 1_400_000, 2),
+        [`message_files/${FILE_GROUP}/parts/0`]: { size: 700_000 },
+        [`message_files/${FILE_GROUP}/parts/1`]: { size: 700_000 },
+        [`message_files/${FILE_ORPHAN}`]: fileRecord(FILE_ORPHAN, ALI, "group:grpC", "groups/grpC/messages/gone", 5),
+        "groups/grpA/messages/gm7": { fromEmail: BERK, type: "file", text: "", author: "Berk", file: attachment(FILE_OWNED_GROUP, "b.txt", 20) },
+        [`message_files/${FILE_OWNED_GROUP}`]: fileRecord(FILE_OWNED_GROUP, BERK, "group:grpA", "groups/grpA/messages/gm7", 20),
+        "chats/chat2/messages/m2": { fromEmail: BERK, type: "file", text: "", file: attachment(FILE_BYSTANDER, "c.txt", 30) },
+        [`message_files/${FILE_BYSTANDER}`]: fileRecord(FILE_BYSTANDER, BERK, "dm:chat2", "chats/chat2/messages/m2", 30),
+        [`message_file_usage/${ALI}`]: { bytes: 1_400_015, files: 3 },
+        [`message_file_usage/${BERK}`]: { bytes: 50, files: 2 },
     };
 }
 
@@ -124,6 +146,7 @@ const BYSTANDER_DATA = [
     `users/${BERK}`, `users/${CEM}`, `public_profiles/${BERK}`, "chats/chat2", "chats/chat2/messages/m1", "projects/p2", "arcade_games/game2", "arcade_scores/sc3",
     "news_comments/nc2", "media_posts/mp2", "groups/grpB", "groups/grpB/messages/gm4", "groups/grpC", "feedback/fb2",
     "changelog_comments/v1/comments/cc2", "support_tickets/t2", "message_stars/s3",
+    "chats/chat2/messages/m2", `message_files/${FILE_BYSTANDER}`,
 ];
 
 // ---------------------------------------------------------------------------
@@ -200,6 +223,10 @@ test('"all" deletes the account and everything it left behind', async () => {
             "feedback/fb1", "changelog_comments/v1/comments/cc1", `notifications/${ALI}/items/n1`, `notifications/${ALI}/items/n2`, "support_tickets/t1",
             // Stars on the account's messages, in its chats and its group, and its own.
             "message_stars/s1", "message_stars/s2", "message_stars/s4", "message_stars/s5",
+            // Files: the chat's, the owned group's (also another member's), the account's in other groups and any left over.
+            "chats/chat1/messages/m3", `message_files/${FILE_DM}`, `message_files/${FILE_OWNED_GROUP}`, "groups/grpA/messages/gm7",
+            `message_files/${FILE_GROUP}`, `message_files/${FILE_GROUP}/parts/0`, `message_files/${FILE_GROUP}/parts/1`, `message_files/${FILE_ORPHAN}`,
+            `message_file_usage/${ALI}`,
         ]) {
             assert.equal(db.has(path), false, `${path} should be deleted`);
         }
@@ -231,6 +258,12 @@ test('"all" deletes the account and everything it left behind', async () => {
         assert.equal(db.get("groups/grpB/messages/gm3").text, "Silinmiş sesli mesaj");
         assert.equal(db.get("groups/grpB/messages/gm3").voicePath, null);
         assert.equal(db.get("groups/grpB/messages/gm4").fromEmail, BERK);
+        // A file message keeps its caption and loses the file.
+        assert.equal(db.get("groups/grpB/messages/gm6").fromEmail, anonymousSender(ALI));
+        assert.equal(db.get("groups/grpB/messages/gm6").text, "plan");
+        assert.equal(db.get("groups/grpB/messages/gm6").file, null);
+        // Berk gets the space of his file in the deleted group back; his other file stays counted.
+        assert.deepEqual(db.get(`message_file_usage/${BERK}`), { bytes: 30, files: 1 });
 
         assert.deepEqual(db.storageDeleted.sort(), ["group-voice-messages/grpB/v.webm", "voice-messages/chat1/a.webm"]);
         assert.deepEqual(db.authDeleted, [createHash("sha256").update(ALI).digest("hex").slice(0, 64)]);
@@ -238,10 +271,11 @@ test('"all" deletes the account and everything it left behind', async () => {
 
         assert.equal(summary.deleted.account, 1);
         assert.equal(summary.deleted.chats, 1);
-        assert.equal(summary.deleted.chatMessages, 2);
+        assert.equal(summary.deleted.chatMessages, 3);
         assert.equal(summary.deleted.groups, 1);
         assert.equal(summary.deleted.groupMemberships, 1);
-        assert.equal(summary.deleted.groupMessagesAnonymized, 3);
+        assert.equal(summary.deleted.groupMessagesAnonymized, 4);
+        assert.equal(summary.deleted.messageFiles, 4);
         assert.equal(summary.deleted.friendLinks, 1);
         assert.equal(summary.deleted.blockLinks, 1);
         assert.equal(summary.deleted.supportTickets, 1);
@@ -262,6 +296,8 @@ test('"content" removes public content and keeps the account, friends, chats and
             "media_comments/mc2", "feedback/fb1", "changelog_comments/v1/comments/cc1",
             // Other people's stars on the account's group messages go with them.
             "message_stars/s1",
+            // A file in a group message goes with the account's name on it.
+            `message_files/${FILE_GROUP}`, `message_files/${FILE_GROUP}/parts/0`, `message_files/${FILE_GROUP}/parts/1`,
         ]) {
             assert.equal(db.has(path), false, `${path} should be deleted`);
         }
@@ -271,6 +307,8 @@ test('"content" removes public content and keeps the account, friends, chats and
             "group_invite_links/link2", "group_bans/b2", "friendRequests/fr1", "group_invites/i2", `notifications/${ALI}/items/n1`, "support_tickets/t1",
             // Private chats stay, and with them the stars on them; so do the group and the account's own stars.
             "message_stars/s2", "message_stars/s4", "message_stars/s5",
+            // Files in private chats and in the account's group stay, and so does the space record.
+            "chats/chat1/messages/m3", `message_files/${FILE_DM}`, `message_files/${FILE_OWNED_GROUP}`, `message_files/${FILE_ORPHAN}`, `message_file_usage/${ALI}`,
             ...BYSTANDER_DATA,
         ]) {
             assert.equal(db.has(path), true, `${path} must stay`);
@@ -289,6 +327,8 @@ test('"content" removes public content and keeps the account, friends, chats and
             assert.equal(db.get(path).fromEmail, anonymousSender(ALI), path);
         }
         assert.equal(db.get("chats/chat1/messages/m1").fromEmail, ALI, "private chats stay as they are");
+        assert.equal(db.get("groups/grpB/messages/gm6").file, null);
+        assert.deepEqual(db.get(`message_file_usage/${ALI}`), { bytes: 15, files: 2 }, "the deleted file's space is free again");
         assert.deepEqual(db.storageDeleted, ["group-voice-messages/grpB/v.webm"]);
         assert.deepEqual(db.authDeleted, []);
         assert.equal(summary.deleted.account, undefined);

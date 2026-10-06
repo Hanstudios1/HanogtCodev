@@ -9,10 +9,12 @@ import { getServerDocument, listServerCollection, queryServerCollection, runServ
 import { voterHash } from "@/lib/server/ai-rankings";
 import { likerHash } from "@/lib/server/arcade";
 import { listGameAudio } from "@/lib/server/game-assets";
+import { listSenderFiles } from "@/lib/server/message-files";
 import { enforceRateLimit, enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { TICKETS_COLLECTION, readTicketMessages, readTicketMeta, ticketCategory, ticketPriority, ticketStatus, type TicketRecord } from "@/lib/server/support";
 import { normalizeEmail } from "@/lib/server/validate";
+import { readMessageAttachment } from "@/lib/social/attachments";
 import { isRecentAuth } from "@/lib/step-up";
 import { TICKET_LIMITS, ticketReference } from "@/lib/support";
 
@@ -150,7 +152,7 @@ function exportSocialRecords(records: { stars: Stored[]; warnings: Stored[]; mut
     };
 }
 
-type ChatMessageRecord = { text?: unknown; type?: unknown; createdAt?: unknown };
+type ChatMessageRecord = { text?: unknown; type?: unknown; file?: unknown; createdAt?: unknown };
 
 /** The user's own messages in one chat, oldest first (without the other person's messages or quoted replies). */
 async function ownChatMessages(chatId: string, email: string, limit: number) {
@@ -158,15 +160,19 @@ async function ownChatMessages(chatId: string, email: string, limit: number) {
         collectionId: "messages",
         parentPath: `chats/${chatId}`,
         where: [{ field: "fromEmail", op: "EQUAL", value: email }],
-        select: ["text", "type", "createdAt"],
+        select: ["text", "type", "file", "createdAt"],
         limit,
     });
     return records
-        .map((message) => ({
-            type: message.type === "voice" || message.type === "sticker" || message.type === "gif" ? message.type : "text",
-            text: stringOr(message.text, "", 4_000),
-            createdAt: toIso(message.createdAt),
-        }))
+        .map((message) => {
+            const file = message.type === "file" ? readMessageAttachment(message.file) : null;
+            return {
+                type: message.type === "voice" || message.type === "sticker" || message.type === "gif" || message.type === "file" ? message.type : "text",
+                text: stringOr(message.text, "", 4_000),
+                ...(file ? { file: { name: file.name, size: file.size, contentType: file.contentType } } : {}),
+                createdAt: toIso(message.createdAt),
+            };
+        })
         .sort((a, b) => time(a.createdAt) - time(b.createdAt));
 }
 
@@ -257,6 +263,7 @@ export async function GET() {
                 .map((script) => publicAccountData(script)),
         })));
         const privateChats = await exportPrivateChats(email, chats);
+        const messageFiles = await listSenderFiles(email);
 
         return NextResponse.json({
             user: publicAccountData(user),
@@ -292,6 +299,9 @@ export async function GET() {
             aiConnections,
             aiApiKeys,
             privateChats,
+            // Files sent in messages: names, sizes and where (a conversation or a group), with the address that
+            // downloads each one while its message is there.
+            messageFiles: messageFiles.map((file) => ({ ...file, url: `/api/social/files/${file.id}?download=1` })),
             social: exportSocialRecords({ stars, warnings, mutes, reportsMade }),
             exportedAt: new Date().toISOString(),
             note: "Kimlik bilgileri ve parola özetleri bu dosyaya dahil edilmez. Hanogt AI bağlantılarınızın ve Hanogt AI API'sinin anahtarları da eklenmez; yalnızca baştaki ve sondaki birkaç karakter gösterilir. Özel sohbetlerde yalnızca sizin yazdığınız mesajlar yer alır; diğer katılımcılar görünen adlarıyla gösterilir. Hanogt Social kayıtlarında (uyarılar, susturmalar, raporlarınız) başka kişilerin adresleri yer almaz.",

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createSign, createHash, generateKeyPairSync } from "node:crypto";
+import { createSign, createHash, generateKeyPairSync, randomBytes } from "node:crypto";
 import { CREDENTIAL_VARIABLES, credentialSources, MISSING_CREDENTIALS_MESSAGE, resolveServiceAccount, type CredentialResolution, type ServerCredentialLayout, type ServiceAccount } from "./service-account";
 
 /** Where the service account came from (Cloud Health shows it; never the key itself). */
@@ -603,6 +603,13 @@ export async function deleteServerDocument(path: string) {
     if (!response.ok && response.status !== 404) {
         throw new Error(`Firestore silme hatası (${response.status}).`);
     }
+}
+
+const AUTO_ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+/** 20 random characters, like the client SDK's automatic document ids (for documents created in a commit). */
+export function autoDocumentId() {
+    return Array.from(randomBytes(20), (byte) => AUTO_ID_ALPHABET[byte % AUTO_ID_ALPHABET.length]).join("");
 }
 
 export async function createServerDocument(collectionPath: string, data: Record<string, unknown>, documentId?: string) {

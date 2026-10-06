@@ -92,7 +92,7 @@ test("direct messages from stored data are checked field by field", () => {
     });
     assert.deepEqual(message, {
         id: "m1", fromEmail: "ali@example.com", text: "selam", type: "text", voicePath: null, voiceDuration: 600, createdAt: 100_000,
-        read: false, edited: false, deleted: false, replyTo: null, gif: null, reactions: {}, forwarded: false, pending: false,
+        read: false, edited: false, deleted: false, replyTo: null, gif: null, file: null, reactions: {}, forwarded: false, pending: false,
     });
     const deleted = dmMessageFromData("m2", { fromEmail: "a@example.com", text: "secret", type: "voice", voicePath: "voice-messages/c/f.webm", deleted: true }, false, 77);
     assert.equal(deleted.text, "");
@@ -131,6 +131,18 @@ test("GIF messages keep only an allowed GIF, and reactions and forwards are read
     assert.deepEqual(deleted.reactions, {});
     assert.deepEqual(readDmReactions(null), {});
     assert.deepEqual(readDmReactions(["like"]), {});
+});
+
+test("file messages keep a checked attachment and lose it when deleted", () => {
+    const file = { id: "123e4567-e89b-42d3-a456-426614174000", name: "../rapor.pdf", size: 2048, contentType: "application/pdf", kind: "pdf", width: 10, height: 10, path: "x" };
+    const message = dmMessageFromData("f1", { fromEmail: "a@example.com", type: "file", text: "Rapor", file });
+    assert.equal(message.type, "file");
+    assert.equal(message.text, "Rapor", "the caption is the text");
+    assert.deepEqual(message.file, { id: file.id, name: "rapor.pdf", size: 2048, contentType: "application/pdf", kind: "pdf", width: 10, height: 10 });
+    assert.equal(dmMessageFromData("f2", { type: "text", file }).file, null, "a text message never carries a file");
+    assert.equal(dmMessageFromData("f3", { type: "file", file, deleted: true }).file, null);
+    assert.equal(dmMessageFromData("f4", { type: "file", file: { ...file, id: "../../x" } }).file, null);
+    assert.equal(dmMessageFromData("f5", { type: "file", file: { ...file, contentType: "text/html; x" } }).file, null);
 });
 
 test("reaction summaries keep the display order and mark one's own", () => {

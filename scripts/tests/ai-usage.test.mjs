@@ -259,13 +259,14 @@ test("own connections: a Plus purchase Paddle never reported is looked up once, 
     });
 });
 
-test("planUsageFor counts projects, games, groups, stars, game audio and connections against the plan", async () => {
+test("planUsageFor counts projects, games, groups, stars, game audio, message files and connections against the plan", async () => {
     const data = seed(undefined, {
         "projects/p1": { email: ALI }, "projects/p2": { email: ALI }, "projects/other": { email: "bob@example.com" },
         "game_projects/g1": { ownerEmail: ALI },
         "groups/a": { ownerEmail: ALI }, "groups/b": { ownerEmail: ALI }, "groups/c": { ownerEmail: ALI },
         "message_stars/s1": { owner: ALI }, "message_stars/s2": { owner: ALI }, "message_stars/s3": { owner: "bob@example.com" },
         [`game_asset_usage/${createHash("sha256").update(ALI).digest("hex").slice(0, 32)}`]: { owner: ALI, bytes: 1_234_567, files: 4 },
+        [`message_file_usage/${ALI}`]: { bytes: 3_000_000, files: 5 },
     });
     await withPaddle(data, [], async () => {
         const read = await usage.planUsageFor(ALI);
@@ -277,6 +278,7 @@ test("planUsageFor counts projects, games, groups, stars, game audio and connect
             connections: { used: 0, limit: 0 },
             apiKeys: null,
             gameAudio: { used: 1_234_567, limit: plans.PLAN_GAME_AUDIO_LIMITS.free.bytes, files: 4, fileLimit: plans.PLAN_GAME_AUDIO_LIMITS.free.files },
+            messageFiles: { used: 3_000_000, limit: plans.PLAN_ATTACHMENT_LIMITS.free.storageBytes, files: 5 },
         });
         assert.equal(read.hanogt.window.limit, FREE.perWindow);
     });
@@ -288,6 +290,7 @@ test("planUsageFor counts projects, games, groups, stars, game audio and connect
         assert.deepEqual(read.counts.connections, { used: 1, limit: plans.PLAN_AI_CONNECTIONS.pro }, "a retired provider's connection doesn't count");
         assert.equal(read.api, undefined, "the API has no window of its own: it uses Hanogt AI's");
         assert.deepEqual(read.counts.gameAudio, { used: 0, limit: plans.PLAN_GAME_AUDIO_LIMITS.pro.bytes, files: 0, fileLimit: plans.PLAN_GAME_AUDIO_LIMITS.pro.files });
+        assert.deepEqual(read.counts.messageFiles, { used: 0, limit: plans.PLAN_ATTACHMENT_LIMITS.pro.storageBytes, files: 0 });
     });
 });
 

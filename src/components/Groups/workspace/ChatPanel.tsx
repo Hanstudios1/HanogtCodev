@@ -9,7 +9,11 @@ import Composer, { type ComposerSuggestion } from "@/components/Social/chat/Comp
 import { useSocial } from "@/components/Social/context";
 import { db } from "@/lib/firebase";
 import { useI18n, type Copy } from "@/lib/i18n";
+import { useMyPlan } from "@/lib/plan-client";
+import { PLAN_ATTACHMENT_LIMITS } from "@/lib/plans";
 import { SocialRequestError, socialApi } from "@/lib/social/api";
+import { ATTACHMENT_ERROR_COPY, FileUploadError, guessKind, isAttachmentErrorCode, isRetryableFileError, pendingAttachment, prepareUpload, uploadMessageFile } from "@/lib/social/attachment-client";
+import { ATTACHMENT_LIMITS, attachmentPreview } from "@/lib/social/attachments";
 import { AUTOMOD_BLOCKED_COPY, AUTOMOD_RULE_COPY, isAutoModRule } from "@/lib/social/automod-config";
 import { formatDuration, type EphemeralReply } from "@/lib/social/bots";
 import { suggestCommands } from "@/lib/social/commands";
@@ -30,7 +34,7 @@ import {
     tokenizeMessage,
     type GroupReactionKey,
 } from "@/lib/groups";
-import { GroupRequestError, groupsApi } from "../api";
+import { GroupRequestError, groupsApi, type GroupClientErrorCode } from "../api";
 import { Spinner, UI_COPY, UserAvatar, clockTime, copyText, cx, dayKey } from "../ui";
 import { useWorkspace } from "./context";
 import { useVoicePlayer } from "./hooks";
@@ -150,6 +154,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
     const { groupId, group, me, role, members, usernames, now, notify, confirm, errorText, live } = useWorkspace();
     const social = useSocial();
     const { prefs } = social;
+    const plan = useMyPlan(me.email);
     const lang = language === "TR" ? "TR" : "EN";
     const [activeMessage, setActiveMessage] = useState("");
     const [replyTo, setReplyTo] = useState<GroupChatMessage | null>(null);
@@ -288,6 +293,17 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
         atBottomRef.current = true;
     }, [channel]);
 
+    /** A message in a reply line: "🎤", "GIF", "📎 name · caption" or its words. */
+    const excerptOf = useCallback((message: GroupChatMessage, max: number) => {
+        if (message.type === "voice") return "🎤";
+        if (message.type === "gif") return "GIF";
+        if (message.type === "file" && message.file) {
+            const caption = messagePreview(renderedText(message), max);
+            return messagePreview(caption ? `${attachmentPreview(message.file)} · ${caption}` : attachmentPreview(message.file), max);
+        }
+        return messagePreview(renderedText(message), max);
+    }, [renderedText]);
+
     const sendFailed = useCallback((error: unknown) => {
         if (error instanceof GroupRequestError && error.code === "automod_blocked") {
             const rule = error.vars.rule;
@@ -315,9 +331,10 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             vars: {},
             template: null,
             reactions: {},
-            replyTo: reply ? { id: reply.id, text: messagePreview(renderedText(reply), 120) } : null,
+            replyTo: reply ? { id: reply.id, text: excerptOf(reply, 120) } : null,
             edited: false,
             gif: body.gif ?? null,
+            file: null,
             bot: null,
             botEvent: null,
             botState: null,
@@ -347,7 +364,7 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             sendFailed(error);
             return false;
         }
-    }, [addEphemeral, groupId, knownIds, lang, live, me.avatarUrl, me.email, me.username, onServerChange, renderedText, sendFailed]);
+    }, [addEphemeral, excerptOf, groupId, knownIds, lang, live, me.avatarUrl, me.email, me.username, onServerChange, sendFailed]);
 
     const sendText = useCallback(async (value: string) => {
         let text = value.slice(0, GROUP_LIMITS.messageMax);
@@ -379,6 +396,104 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
             notify(errorText(code === "voice_too_large" || code === "voice_format" || code === "rate_limited" || code === "network" || code === "not_found" || code === "unauthorized" || code === "muted" ? code : "voice_failed"), "error");
         }
     }, [errorText, groupId, live, notify, onServerChange, topic, tx]);
+
+    /** A file that didn't go: the attachment's own reason, or the group's (muted, slow mode, AutoMod…). */
+    const fileFailed = useCallback((error: unknown) => {
+        if (error instanceof FileUploadError) {
+            if (isAttachmentErrorCode(error.code)) {
+                notify(tx(ATTACHMENT_ERROR_COPY[error.code], error.vars), "error");
+                return;
+            }
+            sendFailed(new GroupRequestError(error.code as GroupClientErrorCode, error.message, error.status, error.vars));
+            return;
+        }
+        sendFailed(error);
+    }, [notify, sendFailed, tx]);
+
+    /**
+     * Files go one after another, each as its own message (the caption with
+     * the first one that goes through, the #topic with every one in a topic
+     * channel). All of them show at once as "sending" with their progress.
+     */
+    const sendFiles = useCallback(async (picked: File[], caption: string) => {
+        onStopTyping();
+        const reply = replyTo;
+        setReplyTo(null);
+        const tagged = (text: string) => (topic && !hasTopic(text, topic) ? `#${topic}${text ? ` ${text}` : ""}` : text).slice(0, ATTACHMENT_LIMITS.captionMax);
+        const started = Date.now();
+        const locals: GroupChatMessage[] = picked.map((file, index) => {
+            const id = localId();
+            return {
+                id,
+                fromEmail: me.email,
+                author: me.username,
+                authorAvatar: me.avatarUrl || null,
+                type: "file",
+                text: tagged(index === 0 ? caption : ""),
+                voicePath: null,
+                voiceDuration: 0,
+                createdAt: started + index,
+                pending: true,
+                event: null,
+                vars: {},
+                template: null,
+                reactions: {},
+                replyTo: index === 0 && reply ? { id: reply.id, text: excerptOf(reply, 120) } : null,
+                edited: false,
+                gif: null,
+                file: pendingAttachment(file, id),
+                upload: { progress: 0, preview: guessKind(file) === "image" ? URL.createObjectURL(file) : null },
+                bot: null,
+                botEvent: null,
+                botState: null,
+                forwarded: false,
+            };
+        });
+        setOutbox((current) => [...current.filter((entry) => !knownIds.has(entry.id)), ...locals]);
+        atBottomRef.current = true;
+        let words = caption;
+        let quoted = reply;
+        let sent = 0;
+        let retry = false;
+        for (const [index, file] of picked.entries()) {
+            const local = locals[index];
+            const text = tagged(words);
+            try {
+                const ready = await prepareUpload(file);
+                const stored = await uploadMessageFile({ group: groupId }, ready, { caption: text, replyTo: quoted?.id ?? null, language: lang }, (progress) => {
+                    setOutbox((current) => current.map((entry) => (entry.id === local.id ? { ...entry, text, upload: { progress, preview: entry.upload?.preview ?? null } } : entry)));
+                });
+                const message = typeof stored.id === "string" ? messageFromData(stored.id, stored, true, Date.now()) : null;
+                setOutbox((current) => {
+                    const rest = current.filter((entry) => entry.id !== local.id);
+                    return message ? [...rest, message] : rest;
+                });
+                sent += 1;
+                words = "";
+                quoted = null;
+            } catch (error) {
+                setOutbox((current) => current.filter((entry) => entry.id !== local.id));
+                fileFailed(error);
+                retry = isRetryableFileError(error);
+                const code = error instanceof FileUploadError ? error.code : "";
+                // A caption AutoMod stopped isn't tried again with the next file.
+                if (code === "automod_blocked") words = "";
+                // Nothing after it would go either (full space, time-out, slow mode, no access, no connection).
+                if (!["attachment_type", "attachment_too_large", "attachment_image", "attachment_empty", "automod_blocked"].includes(code)) {
+                    setOutbox((current) => current.filter((entry) => !locals.some((other) => other.id === entry.id)));
+                    break;
+                }
+            } finally {
+                const preview = local.upload?.preview;
+                if (preview) window.setTimeout(() => URL.revokeObjectURL(preview), 60_000);
+            }
+        }
+        if (!live && sent) onServerChange?.();
+        if (!sent && reply) setReplyTo(reply);
+        // Nothing went for a reason that may pass (connection, slow mode, space, AutoMod's word on the caption):
+        // the files and the caption go back into the box.
+        return sent > 0 || !retry;
+    }, [excerptOf, fileFailed, groupId, knownIds, lang, live, me.avatarUrl, me.email, me.username, onServerChange, onStopTyping, replyTo, topic]);
 
     /* ---------------------------- suggestions ---------------------------- */
 
@@ -630,12 +745,14 @@ export default function ChatPanel({ messages, loaded, hasMore, onLoadOlder, last
                 maxLength={GROUP_LIMITS.messageMax}
                 status={status}
                 footer={footer}
-                reply={replyTo ? { author: authorName(replyTo), excerpt: replyTo.type === "voice" ? "🎤" : replyTo.type === "gif" ? "GIF" : messagePreview(renderedText(replyTo), 80) } : null}
+                reply={replyTo ? { author: authorName(replyTo), excerpt: excerptOf(replyTo, 80) } : null}
                 onCancelReply={() => setReplyTo(null)}
                 onSend={sendText}
                 onGif={sendGif}
                 onVoice={(blob, mimeType, seconds) => void sendVoice(blob, mimeType, seconds)}
                 onVoiceError={(code) => notify(errorText(code), "error")}
+                onFiles={sendFiles}
+                fileMaxBytes={PLAN_ATTACHMENT_LIMITS[plan].fileBytes}
                 onTyping={prefs.typingIndicator ? onTyping : () => undefined}
                 onEditLast={editLast}
                 focusNonce={focusNonce}
@@ -699,9 +816,11 @@ export function PinnedPanel({ messages, onJump, onClose }: { messages: GroupChat
                                     </div>
                                     {message.type === "voice"
                                         ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{tx(C.voiceMessage)}</p>
-                                        : message.type === "gif"
-                                            ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{tx(C.gifMessage)}{message.gif?.title ? ` · ${message.gif.title}` : ""}</p>
-                                            : <RichText className="mt-1.5 line-clamp-6 text-zinc-700 dark:text-zinc-200" text={welcome || message.text} needle="" onTopic={() => undefined} />}
+                                        : message.type === "file" && message.file
+                                            ? <p className="mt-2 truncate text-sm text-zinc-600 dark:text-zinc-300">{attachmentPreview(message.file)}{message.text ? ` · ${messagePreview(message.text, 80)}` : ""}</p>
+                                            : message.type === "gif"
+                                                ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{tx(C.gifMessage)}{message.gif?.title ? ` · ${message.gif.title}` : ""}</p>
+                                                : <RichText className="mt-1.5 line-clamp-6 text-zinc-700 dark:text-zinc-200" text={welcome || message.text} needle="" onTopic={() => undefined} />}
                                 </>
                             ) : (
                                 <p className="text-sm italic text-zinc-500">{id in extra ? tx(C.missing) : !live ? tx(C.unavailable) : <Spinner className="h-4 w-4" />}</p>
