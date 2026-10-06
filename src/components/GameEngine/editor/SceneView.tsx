@@ -10,6 +10,7 @@ import { uniqueName } from "@/lib/game-engine/scene";
 import { localPointToCell, tileKeyAt } from "@/lib/game-engine/tilemap";
 import type { TilemapComponent, Vector3 } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
+import { selectionRoots } from "./multi-edit";
 import { activeScene, fillTilemapRect, findEntity, instantiatePrefab, paintTilemap, setWorldTransform, touch } from "./operations";
 import { useEditorState } from "./store";
 import { useTilePainter } from "./tile-painter";
@@ -135,6 +136,20 @@ export default function SceneView({ apiRef, gizmoMode, gizmoSpace, hidden, snap 
                     }, { mergeKey: `gizmo:${id}` });
                 },
                 onGizmoEnd: () => store.breakMerge(),
+                onGizmoChangeMany: (changes) => {
+                    if (playingRef.current) return;
+                    store.update(textRef.current("hTransform"), (draft) => {
+                        const scene = activeScene(draft);
+                        // Children of selected parents move with them.
+                        const roots = new Set(selectionRoots(scene.objects, changes.map((change) => change.id)));
+                        for (const change of changes) if (roots.has(change.id)) setWorldTransform(scene, change.id, change.world, draft.dimension === "2d");
+                        touch(draft);
+                    }, { mergeKey: "gizmo:multi" });
+                },
+                onMarquee: (ids, additive) => {
+                    const current = store.getState().selection;
+                    store.setSelection(additive ? [...current, ...ids.filter((id) => !current.includes(id))] : ids);
+                },
             });
         } catch {
             container.textContent = textRef.current("webglFailed");

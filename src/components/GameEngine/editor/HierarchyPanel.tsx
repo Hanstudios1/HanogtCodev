@@ -21,8 +21,10 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import type { EntityPreset } from "@/lib/game-engine/scene";
-import type { GameEntity } from "@/lib/game-engine/types";
+import { COMPONENT_LABELS } from "@/lib/game-engine/components";
+import type { GameComponent, GameEntity } from "@/lib/game-engine/types";
 import { createMenuItems, entityIcon, useEditor } from "./context";
+import { matchesSearch } from "./multi-edit";
 import { activeScene, addEntity, createPrefabFromEntity, deleteEntities, duplicateEntities, reparent } from "./operations";
 import { useEditorState } from "./store";
 import { ContextMenu, Dropdown, IconButton, PanelHeader, cx, inputClass, type MenuItem } from "./ui";
@@ -54,8 +56,24 @@ export function copyEntitiesToClipboard(entities: GameEntity[], ids: string[]) {
     }
 }
 
+/** Unity names that also find a component with "t:" (t:Rigidbody2D, t:BoxCollider2D, t:Text…). */
+const SEARCH_ALIASES: Partial<Record<GameComponent["type"], string[]>> = {
+    rigidBody: ["Rigidbody2D"],
+    collider: ["Collider2D", "BoxCollider", "BoxCollider2D", "SphereCollider", "CircleCollider2D"],
+    uiText: ["Text", "TextMeshPro"],
+    uiButton: ["Button"],
+    uiPanel: ["Image", "Panel"],
+    uiProgressBar: ["ProgressBar"],
+    uiSlider: ["Slider"],
+    uiToggle: ["Toggle"],
+    uiInputField: ["InputField"],
+    animation: ["Animator"],
+    joint: ["DistanceJoint2D", "SpringJoint2D", "DistanceJoint", "SpringJoint"],
+    navAgent2D: ["NavMeshAgent"],
+};
+
 export default function HierarchyPanel() {
-    const { store, t, playing, focusEntity, createAt, toast } = useEditor();
+    const { store, t, playing, focusEntity, createAt, toast, program } = useEditor();
     const project = useEditorState(store, (state) => state.project);
     const selection = useEditorState(store, (state) => state.selection);
     const scene = activeScene(project);
@@ -86,10 +104,11 @@ export default function HierarchyPanel() {
             children.set(key, list);
         }
         const output: TreeRow[] = [];
-        const needle = query.trim().toLocaleLowerCase();
-        if (needle) {
+        if (query.trim()) {
+            const scriptClass = (component: GameComponent) => component.type === "script" ? component.className ?? (program.behavioursByScript.get(component.scriptId) ?? [])[0] ?? null : null;
+            const typeLabel = (component: GameComponent) => [COMPONENT_LABELS[component.type], ...(SEARCH_ALIASES[component.type] ?? [])];
             for (const entity of scene.objects) {
-                if (entity.name.toLocaleLowerCase().includes(needle) || entity.tag.toLocaleLowerCase().includes(needle)) output.push({ entity, depth: 0, hasChildren: false });
+                if (matchesSearch(entity, query, scriptClass, typeLabel)) output.push({ entity, depth: 0, hasChildren: false });
             }
             return output;
         }
@@ -102,7 +121,7 @@ export default function HierarchyPanel() {
         };
         visit(null, 0);
         return output;
-    }, [scene.objects, collapsed, query]);
+    }, [scene.objects, collapsed, query, program]);
 
     const select = (id: string, event: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => {
         if (event.ctrlKey || event.metaKey) {
@@ -252,9 +271,15 @@ export default function HierarchyPanel() {
             <div className="px-2 pt-2">
                 <div className="relative">
                     <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
-                    <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search")} className={cx(inputClass, "pl-7")} />
+                    <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search")} title={t("multiSearchHint")} aria-label={t("search")} className={cx(inputClass, "pl-7")} />
                     {query ? <button type="button" onClick={() => setQuery("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200" aria-label={t("clear")}><X className="h-3.5 w-3.5" /></button> : null}
                 </div>
+                {query.trim() ? (
+                    <div className="flex items-center justify-between gap-2 px-1 pt-1 text-[11px] text-zinc-500" aria-live="polite">
+                        <span>{rows.length}</span>
+                        {rows.length > 1 ? <button type="button" onClick={() => store.setSelection(rows.map((row) => row.entity.id))} className="font-semibold text-indigo-300 hover:text-indigo-200">{t("multiSelectResults")}</button> : null}
+                    </div>
+                ) : null}
             </div>
             <div
                 role="tree"

@@ -38,9 +38,11 @@ import {
     Type,
     Video,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { COMPONENT_LABELS } from "@/lib/game-engine/components";
-import { UNIQUE_COMPONENT_TYPES, type ComponentType, type GameComponent, type GameEntity } from "@/lib/game-engine/types";
+import { getTransform } from "@/lib/game-engine/scene";
+import type { CompiledProgram } from "@/lib/game-engine/script/compiler";
+import { UNIQUE_COMPONENT_TYPES, type ComponentType, type GameComponent, type GameEntity, type GameProjectDocument } from "@/lib/game-engine/types";
 import {
     AudioEditor,
     CameraEditor,
@@ -58,6 +60,8 @@ import {
 import AnimationEditor from "./AnimationEditor";
 import { AudioInspector } from "./AudioAssets";
 import { useEditor } from "./context";
+import { MultiEditContext } from "./inspector-fields";
+import { sharedComponents } from "./multi-edit";
 import TilemapEditor from "./TilemapEditor";
 import { UIButtonEditor, UIInputFieldEditor, UIPanelEditor, UIProgressBarEditor, UISliderEditor, UIToggleEditor } from "./UIEditors";
 import { CameraFollowEditor, CharacterController2DEditor, JointEditor, NavAgent2DEditor } from "./V4Editors";
@@ -78,8 +82,9 @@ import {
     removeComponent,
     touch,
 } from "./operations";
-import { useEditorState } from "./store";
-import { Button, Checkbox, Dropdown, FieldRow, IconButton, PanelHeader, Section, SelectInput, TextInput, cx, inputClass, type MenuItem } from "./ui";
+import { useEditorState, type EditorStore } from "./store";
+import type { TextKey } from "./text";
+import { Button, Checkbox, Dropdown, FieldRow, IconButton, NumberInput, PanelHeader, Section, SelectInput, TextInput, cx, inputClass, type MenuItem } from "./ui";
 
 const COMPONENT_ICONS: Record<ComponentType, { icon: typeof Box; className: string }> = {
     transform: { icon: Move3d, className: "text-zinc-300" },
@@ -137,11 +142,83 @@ function ComponentBody({ entity, component, disabled }: { entity: GameEntity; co
     }
 }
 
+/** "PlayerController (Script)": the class the component runs, else the file's name. */
+function scriptTitle(scripts: GameProjectDocument["scripts"], program: CompiledProgram, scriptId: string, className: string | null) {
+    const script = scripts.find((item) => item.id === scriptId);
+    const classes = program.behavioursByScript.get(scriptId) ?? [];
+    const name = className && classes.includes(className) ? className : classes[0] ?? script?.name.replace(/\.(cs|cpp)$/, "") ?? "Missing Script";
+    return `${name} (Script)`;
+}
+
 function componentTitle(component: GameComponent, scriptName: (id: string, className: string | null) => string, is2D: boolean) {
     if (component.type === "script") return scriptName(component.scriptId, component.className);
     if (component.type === "collider") return is2D ? (component.shape === "box" ? "Box Collider 2D" : "Circle Collider 2D") : component.shape === "box" ? "Box Collider" : "Sphere Collider";
     if (component.type === "rigidBody") return is2D ? "Rigidbody 2D" : "Rigidbody";
     return COMPONENT_LABELS[component.type];
+}
+
+/** The Add Component menu for one object or for every selected object (each gets what it can take). */
+function buildAddMenu({ entities, scripts, program, store, t, is2D, onNewScript }: {
+    entities: readonly GameEntity[];
+    scripts: GameProjectDocument["scripts"];
+    program: CompiledProgram;
+    store: EditorStore;
+    t: (key: TextKey) => string;
+    is2D: boolean;
+    onNewScript?: () => void;
+}): MenuItem[] {
+    const ids = entities.map((item) => item.id);
+    const has = (entity: GameEntity, type: ComponentType) => entity.components.some((component) => component.type === type);
+    const takes = (entity: GameEntity, type: ComponentType) => !(UNIQUE_COMPONENT_TYPES.has(type) && has(entity, type));
+    const addTo = (label: string, type: Exclude<ComponentType, "script" | "transform">, after?: (component: GameComponent) => void) => store.update(`${label} ekle`, (draft) => {
+        for (const entity of entities) {
+            if (!takes(entity, type)) continue;
+            const component = addComponent(draft, entity.id, type);
+            if (component && after) after(component);
+        }
+    });
+    const builtIn = (type: Exclude<ComponentType, "script" | "transform">, label: string): MenuItem => {
+        const icon = COMPONENT_ICONS[type];
+        return { label, icon: icon.icon, disabled: !entities.some((entity) => takes(entity, type)), onSelect: () => addTo(label, type) };
+    };
+    const behaviourItems: MenuItem[] = [];
+    for (const script of scripts) {
+        const classes = program.behavioursByScript.get(script.id) ?? [];
+        for (const className of classes.length ? classes : [null]) {
+            behaviourItems.push({
+                label: className ?? script.name,
+                icon: FileCode,
+                disabled: !className,
+                onSelect: () => store.update("Script ekle", (draft) => {
+                    for (const id of ids) addScriptComponent(draft, id, script.id, className);
+                }),
+            });
+        }
+    }
+    const springLabel = is2D ? "Spring Joint 2D" : "Spring Joint";
+    return [
+        { label: "Rendering", icon: ImageIcon, items: [builtIn("spriteRenderer", "Sprite Renderer"), builtIn("meshRenderer", "Mesh Renderer"), builtIn("tilemap", "Tilemap"), builtIn("camera", "Camera"), builtIn("cameraFollow", "Camera Follow"), builtIn("light", "Light")] },
+        { label: "Physics", icon: Gauge, items: [
+            builtIn("rigidBody", is2D ? "Rigidbody 2D" : "Rigidbody"),
+            builtIn("collider", is2D ? "Collider 2D" : "Collider"),
+            ...(is2D ? [builtIn("characterController2D", "Character Controller 2D")] : []),
+            builtIn("joint", is2D ? "Distance Joint 2D" : "Distance Joint"),
+            {
+                label: springLabel,
+                icon: Link2,
+                onSelect: () => addTo(springLabel, "joint", (joint) => {
+                    if (joint.type === "joint") joint.kind = "spring";
+                }),
+            },
+        ] },
+        ...(is2D ? [{ label: "Navigation", icon: Navigation, items: [builtIn("navAgent2D", "Nav Agent 2D")] }] : []),
+        { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System"), builtIn("animation", "Animation")] },
+        { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },
+        { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar"), builtIn("uiSlider", "UI Slider"), builtIn("uiToggle", "UI Toggle"), builtIn("uiInputField", "UI Input Field")] },
+        { separator: true, label: "" },
+        { label: t("scripts"), icon: FileCode, items: behaviourItems.length ? behaviourItems : [{ label: "—", disabled: true }] },
+        ...(onNewScript ? [{ label: `${t("newScript")}…`, icon: FilePlus, onSelect: onNewScript }] : []),
+    ];
 }
 
 function EntityInspector({ entity }: { entity: GameEntity }) {
@@ -161,61 +238,12 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
         }, { mergeKey });
     };
 
-    const scriptName = (scriptId: string, className: string | null) => {
-        const script = project.scripts.find((item) => item.id === scriptId);
-        const classes = program.behavioursByScript.get(scriptId) ?? [];
-        const name = className && classes.includes(className) ? className : classes[0] ?? script?.name.replace(/\.(cs|cpp)$/, "") ?? "Missing Script";
-        return `${name} (Script)`;
-    };
+    const scriptName = (scriptId: string, className: string | null) => scriptTitle(project.scripts, program, scriptId, className);
 
-    const addMenu = useMemo<MenuItem[]>(() => {
-        const has = (type: ComponentType) => entity.components.some((component) => component.type === type);
-        const builtIn = (type: Exclude<ComponentType, "script" | "transform">, label: string): MenuItem => {
-            const icon = COMPONENT_ICONS[type];
-            return {
-                label,
-                icon: icon.icon,
-                disabled: UNIQUE_COMPONENT_TYPES.has(type) && has(type),
-                onSelect: () => store.update(`${label} ekle`, (draft) => { addComponent(draft, entity.id, type); }),
-            };
-        };
-        const behaviourItems: MenuItem[] = [];
-        for (const script of project.scripts) {
-            const classes = program.behavioursByScript.get(script.id) ?? [];
-            for (const className of classes.length ? classes : [null]) {
-                behaviourItems.push({
-                    label: className ?? script.name,
-                    icon: FileCode,
-                    disabled: !className,
-                    onSelect: () => store.update("Script ekle", (draft) => { addScriptComponent(draft, entity.id, script.id, className); }),
-                });
-            }
-        }
-        return [
-            { label: "Rendering", icon: ImageIcon, items: [builtIn("spriteRenderer", "Sprite Renderer"), builtIn("meshRenderer", "Mesh Renderer"), builtIn("tilemap", "Tilemap"), builtIn("camera", "Camera"), builtIn("cameraFollow", "Camera Follow"), builtIn("light", "Light")] },
-            { label: "Physics", icon: Gauge, items: [
-                builtIn("rigidBody", is2D ? "Rigidbody 2D" : "Rigidbody"),
-                builtIn("collider", is2D ? "Collider 2D" : "Collider"),
-                ...(is2D ? [builtIn("characterController2D", "Character Controller 2D")] : []),
-                builtIn("joint", is2D ? "Distance Joint 2D" : "Distance Joint"),
-                {
-                    label: is2D ? "Spring Joint 2D" : "Spring Joint",
-                    icon: Link2,
-                    onSelect: () => store.update(`${is2D ? "Spring Joint 2D" : "Spring Joint"} ekle`, (draft) => {
-                        const joint = addComponent(draft, entity.id, "joint");
-                        if (joint?.type === "joint") joint.kind = "spring";
-                    }),
-                },
-            ] },
-            ...(is2D ? [{ label: "Navigation", icon: Navigation, items: [builtIn("navAgent2D", "Nav Agent 2D")] }] : []),
-            { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System"), builtIn("animation", "Animation")] },
-            { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },
-            { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar"), builtIn("uiSlider", "UI Slider"), builtIn("uiToggle", "UI Toggle"), builtIn("uiInputField", "UI Input Field")] },
-            { separator: true, label: "" },
-            { label: t("scripts"), icon: FileCode, items: behaviourItems.length ? behaviourItems : [{ label: "—", disabled: true }] },
-            { label: `${t("newScript")}…`, icon: FilePlus, onSelect: () => setNewScriptName("") },
-        ];
-    }, [entity.id, entity.components, project.scripts, program, store, t, is2D]);
+    const addMenu = useMemo<MenuItem[]>(
+        () => buildAddMenu({ entities: [entity], scripts: project.scripts, program, store, t, is2D, onNewScript: () => setNewScriptName("") }),
+        [entity, project.scripts, program, store, t, is2D],
+    );
 
     const createAndAttach = (language: "csharp" | "cpp") => {
         const name = (newScriptName ?? "").trim() || `${entity.name.replace(/[^A-Za-z0-9]/g, "")}Controller`;
@@ -322,6 +350,188 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
                         )}
                     />
                 )}
+            </div>
+        </div>
+    );
+}
+
+const AXIS_COLORS = { x: "text-red-400", y: "text-emerald-400", z: "text-sky-400" } as const;
+
+/** A checkbox that also shows "some" (several objects disagree). */
+function MixedCheckbox({ checked, mixed, onChange, disabled, label }: { checked: boolean; mixed: boolean; onChange: (value: boolean) => void; disabled?: boolean; label: string }) {
+    const ref = useRef<HTMLInputElement | null>(null);
+    useEffect(() => {
+        if (ref.current) ref.current.indeterminate = mixed;
+    }, [mixed]);
+    return <input ref={ref} type="checkbox" aria-label={label} checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-indigo-400" />;
+}
+
+/** Transform of several objects: an axis that differs shows "—"; editing an axis sets only that axis on every object. */
+function MultiTransformEditor({ entities, disabled }: { entities: readonly GameEntity[]; disabled: boolean }) {
+    const { store, t } = useEditor();
+    const is2D = useEditorState(store, (state) => state.project.dimension === "2d");
+    const transforms = entities.map((entity) => getTransform(entity));
+    const primary = transforms[0];
+    type Key = "position" | "rotation" | "scale";
+    const mixed = (key: Key, axis: "x" | "y" | "z") => transforms.some((transform) => transform[key][axis] !== primary[key][axis]);
+    const setAxis = (key: Key, axis: "x" | "y" | "z", value: number) => store.update(t("hTransform"), (draft) => {
+        for (const entity of entities) {
+            const transform = findEntity(draft, entity.id)?.components.find((component) => component.type === "transform");
+            if (transform?.type === "transform") transform[key] = { ...transform[key], [axis]: value };
+        }
+        touch(draft);
+    }, { mergeKey: `multi:${key}:${axis}` });
+    const row = (key: Key, label: string, axes: Array<"x" | "y" | "z">, step: number, precision = 3) => (
+        <FieldRow label={label}>
+            <div className="grid grid-cols-3 gap-1">
+                {axes.map((axis) => (
+                    <div key={axis} className={axes.length === 1 ? "col-start-3" : undefined}>
+                        <NumberInput label={axis.toUpperCase()} labelClassName={AXIS_COLORS[axis]} value={primary[key][axis]} mixed={mixed(key, axis)} step={step} precision={precision} disabled={disabled} onChange={(value) => setAxis(key, axis, value)} />
+                    </div>
+                ))}
+            </div>
+        </FieldRow>
+    );
+    return (
+        <div className="space-y-0.5">
+            {row("position", t("position"), ["x", "y", "z"], 0.1)}
+            {row("rotation", t("rotation"), is2D ? ["z"] : ["x", "y", "z"], 1, 2)}
+            {row("scale", t("scaleLabel"), is2D ? ["x", "y"] : ["x", "y", "z"], 0.1)}
+        </div>
+    );
+}
+
+/** Several selected objects: what they share can be edited together. */
+function MultiEntityInspector({ entities }: { entities: GameEntity[] }) {
+    const { store, t, playing, program } = useEditor();
+    const project = useEditorState(store, (state) => state.project);
+    const disabled = playing;
+    const is2D = project.dimension === "2d";
+    const ids = entities.map((entity) => entity.id);
+    const { shared, partial } = useMemo(() => sharedComponents(entities), [entities]);
+    const others = useMemo(() => new Map(shared.map((item) => [item.component.id, item.others])), [shared]);
+    const primary = entities[0];
+    const allActive = entities.every((entity) => entity.active);
+    const someActive = entities.some((entity) => entity.active);
+    const tags = [...new Set(entities.map((entity) => entity.tag))];
+    const addMenu = useMemo(() => buildAddMenu({ entities, scripts: project.scripts, program, store, t, is2D }), [entities, project.scripts, program, store, t, is2D]);
+
+    const updateAll = (label: string, recipe: (target: GameEntity) => void) => store.update(label, (draft) => {
+        for (const id of ids) {
+            const target = findEntity(draft, id);
+            if (target) recipe(target);
+        }
+        touch(draft);
+    });
+    const scriptName = (scriptId: string, className: string | null) => scriptTitle(project.scripts, program, scriptId, className);
+    const title = (component: GameComponent) => componentTitle(component, scriptName, is2D);
+
+    return (
+        <div data-multi-inspector>
+            <div className="space-y-2 border-b border-white/[0.06] p-3">
+                <div className="flex items-center gap-2">
+                    <MixedCheckbox checked={allActive} mixed={someActive && !allActive} disabled={disabled} label={t("active")} onChange={(value) => updateAll("Aktiflik", (target) => { target.active = value; })} />
+                    <p className="text-[13px] font-semibold text-zinc-100">{entities.length} {t("multiSelection")}</p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                    {entities.slice(0, 8).map((entity) => (
+                        <button key={entity.id} type="button" onClick={() => store.setSelection([entity.id])} className="max-w-[9rem] truncate rounded-md bg-white/[0.05] px-1.5 py-0.5 text-[11px] text-zinc-300 hover:bg-white/10">{entity.name}</button>
+                    ))}
+                    {entities.length > 8 ? <span className="px-1 text-[11px] text-zinc-500">+{entities.length - 8}</span> : null}
+                </div>
+                <FieldRow label={t("tag")}>
+                    <input
+                        list="hanogt-tags"
+                        defaultValue={tags.length === 1 ? tags[0] : ""}
+                        key={tags.join("|")}
+                        placeholder={tags.length > 1 ? "—" : undefined}
+                        disabled={disabled}
+                        maxLength={40}
+                        onBlur={(event) => {
+                            const tag = event.target.value.trim().slice(0, 40);
+                            if (tag && (tags.length > 1 || tag !== tags[0])) updateAll("Etiket", (target) => { target.tag = tag; });
+                        }}
+                        onKeyDown={(event) => { if (event.key === "Enter") (event.target as HTMLInputElement).blur(); }}
+                        className={inputClass}
+                    />
+                </FieldRow>
+                <div className="grid grid-cols-2 gap-2">
+                    <Button disabled={disabled} onClick={() => {
+                        let created: string[] = [];
+                        store.update(t("duplicateLabel"), (draft) => { created = duplicateEntities(draft, ids); });
+                        store.setSelection(created);
+                    }}><CopyPlus className="h-4 w-4" />{t("duplicateLabel")}</Button>
+                    <Button variant="danger" disabled={disabled} onClick={() => store.update("Sil", (draft) => deleteEntities(draft, ids), { selection: [] })}><Trash2 className="h-4 w-4" />{t("deleteLabel")}</Button>
+                </div>
+                <p className="text-[11px] leading-snug text-zinc-500">{t("multiPrimaryNote")}</p>
+            </div>
+            <MultiEditContext.Provider value={others}>
+                {shared.map(({ component, others: targets, mixed }) => {
+                    const icon = COMPONENT_ICONS[component.type];
+                    const isTransform = component.type === "transform";
+                    const all = [{ entityId: primary.id, componentId: component.id }, ...targets];
+                    const enabledValues = isTransform ? [] : all.map((item) => entities.find((entity) => entity.id === item.entityId)?.components.find((candidate) => candidate.id === item.componentId)?.enabled ?? true);
+                    return (
+                        <Section
+                            key={component.id}
+                            title={title(component)}
+                            subtitle={mixed && !isTransform ? <span className="rounded bg-amber-400/10 px-1 text-[10px] font-semibold text-amber-200/90">{t("multiMixed")}</span> : undefined}
+                            icon={icon.icon}
+                            iconClassName={icon.className}
+                            enabled={isTransform ? undefined : enabledValues.every(Boolean)}
+                            onEnabledChange={isTransform || disabled ? undefined : (value) => store.update(t("hComponentEnabled"), (draft) => {
+                                for (const item of all) {
+                                    const target = findEntity(draft, item.entityId)?.components.find((candidate) => candidate.id === item.componentId);
+                                    if (target) target.enabled = value;
+                                }
+                            })}
+                            actions={disabled || isTransform ? null : (
+                                <Dropdown
+                                    align="right"
+                                    trigger={({ toggle }) => <IconButton icon={MoreHorizontal} label={t("componentMenu")} size="sm" onClick={toggle} />}
+                                    items={[
+                                        { label: t("resetComponent"), icon: RotateCcw, onSelect: () => store.update(t("hResetComponent"), (draft) => {
+                                            for (const item of all) {
+                                                const target = findEntity(draft, item.entityId);
+                                                const position = target?.components.findIndex((candidate) => candidate.id === item.componentId) ?? -1;
+                                                if (target && position >= 0) target.components[position] = defaultComponentFor(target.components[position], draft.dimension);
+                                            }
+                                        }) },
+                                        { separator: true, label: "" },
+                                        { label: t("multiRemoveComponent"), icon: Trash2, danger: true, onSelect: () => store.update(t("hRemoveComponent"), (draft) => {
+                                            for (const item of all) removeComponent(draft, item.entityId, item.componentId);
+                                        }) },
+                                    ]}
+                                />
+                            )}
+                        >
+                            {isTransform ? <MultiTransformEditor entities={entities} disabled={disabled} />
+                                : component.type === "tilemap" || component.type === "animation" ? <p className="text-[11.5px] text-zinc-500">{t("multiOneAtATime")}</p>
+                                    : <ComponentBody entity={primary} component={component} disabled={disabled} />}
+                        </Section>
+                    );
+                })}
+            </MultiEditContext.Provider>
+            {partial.length ? (
+                <div className="space-y-1.5 border-b border-white/[0.06] p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{t("multiOnlySome")}</p>
+                    <div className="flex flex-wrap gap-1">
+                        {partial.map((component) => {
+                            const icon = COMPONENT_ICONS[component.type];
+                            return <span key={component.id} className="inline-flex items-center gap-1 rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[11px] text-zinc-400"><icon.icon className={cx("h-3 w-3", icon.className)} />{title(component)}</span>;
+                        })}
+                    </div>
+                </div>
+            ) : null}
+            <div className="p-3">
+                <Dropdown
+                    items={addMenu}
+                    trigger={({ toggle }) => (
+                        <button type="button" disabled={disabled} onClick={toggle} className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-[12.5px] font-semibold text-zinc-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white disabled:opacity-40">
+                            <Plus className="h-4 w-4" />{t("multiAddComponent")}
+                        </button>
+                    )}
+                />
             </div>
         </div>
     );
@@ -477,6 +687,7 @@ export default function InspectorPanel() {
     const selectedAsset = useEditorState(store, (state) => state.selectedAsset);
     const scene = activeScene(project);
     const entity = selection.length === 1 ? scene.objects.find((item) => item.id === selection[0]) : undefined;
+    const selected = useMemo(() => selection.map((id) => scene.objects.find((item) => item.id === id)).filter((item): item is GameEntity => Boolean(item)), [selection, scene.objects]);
 
     return (
         <div className="flex h-full min-h-0 flex-col">
@@ -486,18 +697,8 @@ export default function InspectorPanel() {
             </PanelHeader>
             {playing ? <div className="border-b border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-200">{t("readOnlyPlaying")}</div> : null}
             <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
-                {selectedAsset && !selection.length ? <AssetInspector /> : entity ? <EntityInspector key={entity.id} entity={entity} /> : selection.length > 1 ? (
-                    <div className="space-y-3 p-4">
-                        <p className="text-[13px] font-semibold text-zinc-200">{selection.length} {t("multiSelection")}</p>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button disabled={playing} onClick={() => {
-                                let created: string[] = [];
-                                store.update(t("duplicateLabel"), (draft) => { created = duplicateEntities(draft, selection); });
-                                store.setSelection(created);
-                            }}><CopyPlus className="h-4 w-4" />{t("duplicateLabel")}</Button>
-                            <Button variant="danger" disabled={playing} onClick={() => store.update("Sil", (draft) => deleteEntities(draft, selection), { selection: [] })}><Trash2 className="h-4 w-4" />{t("deleteLabel")}</Button>
-                        </div>
-                    </div>
+                {selectedAsset && !selection.length ? <AssetInspector /> : entity ? <EntityInspector key={entity.id} entity={entity} /> : selected.length > 1 ? (
+                    <MultiEntityInspector entities={selected} />
                 ) : (
                     <div className="grid h-full place-items-center p-6 text-center">
                         <div>

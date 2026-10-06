@@ -1140,3 +1140,95 @@ public class Sounds : MonoBehaviour
     assert.deepEqual(v3.messages("warning").filter((message) => message.includes("Boom")), [], "V3 games keep their quiet fallback");
     assert.ok(v3.world.audioEvents.some((event) => event.name === "Explosion"), "V3 rules keep the old name");
 });
+
+// ---------------------------------------------------------------------------
+// Editor: Watch panel and multi-selection
+// ---------------------------------------------------------------------------
+
+const { readWatch, parseWatchPath, watchSuggestions } = await load("lib/game-engine/runtime/watch.ts");
+const multi = await load("components/GameEngine/editor/multi-edit.ts");
+
+test("watches read script fields, statics, lists, vectors, components and engine values without running game code", () => {
+    const game = startWorld(projectWithScript("Hero.cs", `using UnityEngine;
+using System.Collections.Generic;
+public class Hero : MonoBehaviour
+{
+    public static int highScore = 7;
+    public int score;
+    float speed = 2.5f;
+    public List<int> items = new List<int>();
+    public Vector2 dir = new Vector2(1f, 2f);
+    public string title = "hi";
+    public float Speed { get { Debug.Log("getter ran"); return speed; } }
+    void Start() { items.Add(3); items.Add(4); }
+    void Update() { score += 1; }
+}`, (project) => {
+        project.scenes[0].objects.find((item) => item.name === "Probe").name = "Hero";
+    }));
+    game.step(3);
+    const read = (path) => readWatch(game.world, path);
+    assert.deepEqual(read("Hero.score"), { ok: true, text: "3", kind: "number", number: 3 });
+    assert.equal(read("Hero.speed").text, "2.5", "private fields too");
+    assert.equal(read("Hero.items").text, "List(2) [3, 4]");
+    assert.equal(read("Hero.items.Count").number, 2);
+    assert.equal(read("Hero.items[1]").text, "4");
+    assert.equal(read("Hero.dir").text, "(1, 2)");
+    assert.equal(read("Hero.dir.x").number, 1);
+    assert.equal(read("Hero.title").text, "\"hi\"");
+    assert.equal(read("Hero.tag").text, "\"Untagged\"");
+    assert.equal(read("Hero.highScore").text, "7", "a static field through the object");
+    assert.equal(read("Hero.Hero.score").text, "3", "a script by its class name");
+    assert.equal(read("Main Camera.Camera.orthographicSize").kind, "number", "names with spaces and built-in components");
+    assert.equal(read("Time.frameCount").number, 3);
+    assert.equal(read("Hero.Speed").ok, false, "properties are not run");
+    assert.match(read("Hero.items[5]").error, /dışında/);
+    assert.match(read("Nobody.x").error, /Nobody/);
+    assert.match(read("Hero.Rigidbody2D").error, /Rigidbody2D/);
+    assert.equal(read("a..b").ok, false);
+    assert.equal(parseWatchPath("Spawner.enemies[0].name").length, 3);
+    assert.ok(watchSuggestions(game.world).includes("Hero.score"));
+    assert.deepEqual(game.problems(), [], "reading watches writes nothing to the console");
+    assert.equal(game.messages("info").includes("getter ran"), false);
+});
+
+test("multi-edit: only changed values reach the other objects, and a re-entered value still does", () => {
+    const before = { id: "a", type: "collider", size: { x: 1, y: 2, z: 3 }, isTrigger: false, fields: { speed: 1, jump: 2 } };
+    const after = { ...JSON.parse(JSON.stringify(before)), size: { x: 5, y: 2, z: 3 } };
+    delete after.fields.jump;
+    const changes = multi.diffValues(before, after);
+    assert.deepEqual(changes, [{ path: ["size", "x"], value: 5 }, { path: ["fields", "jump"], value: undefined, deleted: true }]);
+    const other = { id: "b", type: "collider", size: { x: 9, y: 8, z: 7 }, isTrigger: true, fields: { speed: 4, jump: 6 } };
+    multi.applyValueChanges(other, [...changes, { path: ["id"], value: "x" }]);
+    assert.deepEqual(other, { id: "b", type: "collider", size: { x: 5, y: 8, z: 7 }, isTrigger: true, fields: { speed: 4 } });
+    // Setting the value this object already has: the one written value is found.
+    assert.deepEqual(multi.writtenLeaf({ volume: 0.8, pitch: 1 }, (draft) => { draft.volume = 0.8; }), ["volume"]);
+    assert.equal(multi.writtenLeaf({ size: { x: 1, y: 2 } }, (draft) => { draft.size = { x: 1, y: 2 }; }), null, "a whole vector is ambiguous");
+    assert.deepEqual(multi.writtenLeaf({ sheet: { columns: 2, rows: 3 } }, (draft) => { draft.sheet = { ...draft.sheet, columns: 2 }; }), ["sheet", "columns"]);
+});
+
+test("multi-edit: shared components, selection roots and hierarchy search", () => {
+    const transform = (id) => ({ id, type: "transform", position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } });
+    const body = (id, mass) => ({ id, type: "rigidBody", enabled: true, mass });
+    const script = (id, className) => ({ id, type: "script", enabled: true, scriptId: "s1", className, fields: {} });
+    const entities = [
+        { id: "e1", name: "Coin A", tag: "Coin", parentId: null, active: true, components: [transform("t1"), body("b1", 1), script("c1", "Spin")] },
+        { id: "e2", name: "Coin B", tag: "Coin", parentId: "e1", active: true, components: [transform("t2"), body("b2", 2), script("c2", "Spin"), { id: "a2", type: "audioSource", enabled: true }] },
+        { id: "e3", name: "Wall", tag: "Untagged", parentId: null, active: true, components: [transform("t3"), body("b3", 1), script("c3", "Spin")] },
+    ];
+    const { shared, partial } = multi.sharedComponents(entities);
+    assert.deepEqual(shared.map((item) => [item.component.id, item.others.map((other) => other.componentId), item.mixed]), [
+        ["t1", ["t2", "t3"], false],
+        ["b1", ["b2", "b3"], true],
+        ["c1", ["c2", "c3"], false],
+    ]);
+    assert.deepEqual(partial.map((component) => component.type), ["audioSource"]);
+    assert.deepEqual(multi.selectionRoots(entities, ["e2", "e1", "e3"]), ["e1", "e3"], "a child of a selected parent moves with it");
+    const scriptClass = (component) => (component.type === "script" ? component.className : null);
+    const typeLabel = (component) => [component.type === "rigidBody" ? "Rigidbody" : component.type, ...(component.type === "rigidBody" ? ["Rigidbody2D"] : [])];
+    const find = (query) => entities.filter((entity) => multi.matchesSearch(entity, query, scriptClass, typeLabel)).map((entity) => entity.id);
+    assert.deepEqual(find("coin"), ["e1", "e2"]);
+    assert.deepEqual(find("t:audiosource"), ["e2"]);
+    assert.deepEqual(find("t:Rigidbody2D wall"), ["e3"]);
+    assert.deepEqual(find("t:spin"), ["e1", "e2", "e3"], "scripts by class name");
+    assert.deepEqual(find("tag:coin b"), ["e2"]);
+});

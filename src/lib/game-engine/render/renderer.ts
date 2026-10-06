@@ -92,7 +92,14 @@ export interface SceneRendererOptions {
     onGizmoStart?: (entityId: string) => void;
     onGizmoChange?: (entityId: string, world: TRS) => void;
     onGizmoEnd?: (entityId: string) => void;
+    /** Several selected objects moved, turned or scaled together by the gizmo (new world transforms). */
+    onGizmoChangeMany?: (changes: Array<{ id: string; world: TRS }>) => void;
+    /** Shift + drag in the Scene view: the objects inside the box. */
+    onMarquee?: (entityIds: string[], additive: boolean) => void;
 }
+
+/** The gizmo is on the selection's center when several objects are selected. */
+const MULTI_GIZMO = "\u0000multi";
 
 interface ParticleVisual {
     object: THREE.Points;
@@ -215,6 +222,10 @@ export class SceneRenderer {
     private selectionHelpers = new Map<string, THREE.BoxHelper>();
     private attachedId: string | null = null;
     private dragging = false;
+    /** Stand-in the gizmo moves while several objects are selected, and where it and they started. */
+    private readonly multiPivot = new THREE.Object3D();
+    private multiStart: { position: THREE.Vector3; quaternion: THREE.Quaternion; scale: THREE.Vector3; objects: Array<{ id: string; position: THREE.Vector3; quaternion: THREE.Quaternion; scale: THREE.Vector3 }> } | null = null;
+    private marquee: { pointerId: number; x0: number; y0: number; x1: number; y1: number; additive: boolean; element: HTMLDivElement } | null = null;
     private gizmoMode: GizmoMode = "translate";
     private gizmoSpace: "world" | "local" = "world";
     showColliders = false;
@@ -321,6 +332,10 @@ export class SceneRenderer {
             const dragging = Boolean((event as unknown as { value: boolean }).value);
             this.dragging = dragging;
             if (this.orbit) this.orbit.enabled = !dragging;
+            if (this.attachedId === MULTI_GIZMO) {
+                if (dragging) this.beginMultiDrag();
+                else this.multiStart = null;
+            }
             if (this.attachedId) {
                 if (dragging) this.options.onGizmoStart?.(this.attachedId);
                 else this.options.onGizmoEnd?.(this.attachedId);
@@ -328,6 +343,10 @@ export class SceneRenderer {
         });
         this.transform.addEventListener("objectChange", () => {
             if (!this.attachedId) return;
+            if (this.attachedId === MULTI_GIZMO) {
+                this.applyMultiDrag();
+                return;
+            }
             const object = this.objects.get(this.attachedId);
             if (!object) return;
             if (this.dimension === "2d") {
@@ -336,8 +355,12 @@ export class SceneRenderer {
             this.options.onGizmoChange?.(this.attachedId, readTRS(object.group));
         });
         this.scene.add(this.transform.getHelper());
-        this.canvas.addEventListener("pointerdown", this.handlePointerDown);
+        this.scene.add(this.multiPivot);
+        // Capture phase: Shift + drag starts a box selection before the view controls see the press.
+        this.canvas.addEventListener("pointerdown", this.handlePointerDown, { capture: true });
+        this.canvas.addEventListener("pointermove", this.handlePointerMove);
         this.canvas.addEventListener("pointerup", this.handlePointerUp);
+        this.canvas.addEventListener("pointercancel", this.handlePointerCancel);
         this.applyEditorDimension();
     }
 
@@ -571,7 +594,21 @@ export class SceneRenderer {
 
     private refreshAttachment() {
         if (!this.transform) return;
-        const id = this.gizmoEnabled && !this.paintMode ? this.selection[0] ?? null : null;
+        const usable = this.gizmoEnabled && !this.paintMode ? this.selection.filter((item) => this.objects.has(item)) : [];
+        if (usable.length > 1) {
+            if (!this.dragging) this.placeMultiPivot(usable);
+            if (this.attachedId !== MULTI_GIZMO) {
+                this.transform.attach(this.multiPivot);
+                this.attachedId = MULTI_GIZMO;
+            }
+            return;
+        }
+        if (this.attachedId === MULTI_GIZMO) {
+            this.transform.detach();
+            this.attachedId = null;
+            this.multiStart = null;
+        }
+        const id = usable[0] ?? null;
         const object = id ? this.objects.get(id) : undefined;
         if (object && id) {
             if (this.attachedId !== id) {
@@ -584,11 +621,145 @@ export class SceneRenderer {
         }
     }
 
+    /** Puts the multi-object gizmo on the selection's center (turned like the first object in local space). */
+    private placeMultiPivot(ids: readonly string[]) {
+        const center = new THREE.Vector3();
+        for (const id of ids) center.add(this.objects.get(id)!.group.position);
+        center.divideScalar(ids.length);
+        this.multiPivot.position.copy(center);
+        const first = this.objects.get(ids[0])!.group;
+        if (this.gizmoSpace === "local" || this.gizmoMode === "scale") this.multiPivot.quaternion.copy(first.quaternion);
+        else this.multiPivot.quaternion.identity();
+        this.multiPivot.scale.set(1, 1, 1);
+        this.multiPivot.updateMatrixWorld(true);
+    }
+
+    private beginMultiDrag() {
+        const ids = this.selection.filter((id) => this.objects.has(id));
+        this.multiStart = {
+            position: this.multiPivot.position.clone(),
+            quaternion: this.multiPivot.quaternion.clone(),
+            scale: this.multiPivot.scale.clone(),
+            objects: ids.map((id) => {
+                const group = this.objects.get(id)!.group;
+                return { id, position: group.position.clone(), quaternion: group.quaternion.clone(), scale: group.scale.clone() };
+            }),
+        };
+    }
+
+    /** The objects follow the stand-in as one group: moved, turned around and scaled from the center. */
+    private applyMultiDrag() {
+        const start = this.multiStart;
+        if (!start) return;
+        const pivot = this.multiPivot;
+        if (this.dimension === "2d") pivot.position.z = Math.round(pivot.position.z * 1000) / 1000;
+        const move = pivot.position.clone().sub(start.position);
+        const turn = pivot.quaternion.clone().multiply(start.quaternion.clone().invert());
+        const ratio = new THREE.Vector3(pivot.scale.x / (start.scale.x || 1), pivot.scale.y / (start.scale.y || 1), pivot.scale.z / (start.scale.z || 1));
+        const inverseFrame = start.quaternion.clone().invert();
+        const temp = new THREE.Object3D();
+        const changes = start.objects.map((item) => {
+            temp.position.copy(item.position);
+            temp.quaternion.copy(item.quaternion);
+            temp.scale.copy(item.scale);
+            if (this.gizmoMode === "translate") temp.position.add(move);
+            else if (this.gizmoMode === "rotate") {
+                temp.position.sub(start.position).applyQuaternion(turn).add(start.position);
+                temp.quaternion.premultiply(turn);
+            } else {
+                const offset = item.position.clone().sub(start.position).applyQuaternion(inverseFrame).multiply(ratio).applyQuaternion(start.quaternion);
+                temp.position.copy(start.position).add(offset);
+                temp.scale.set(item.scale.x * ratio.x, item.scale.y * ratio.y, item.scale.z * ratio.z);
+            }
+            return { id: item.id, world: readTRS(temp) };
+        });
+        this.options.onGizmoChangeMany?.(changes);
+    }
+
     private handlePointerDown = (event: PointerEvent) => {
         this.pointerDown = { x: event.clientX, y: event.clientY, time: performance.now() };
+        const onGizmo = Boolean((this.transform as unknown as { axis?: string | null } | null)?.axis);
+        if (this.options.mode !== "editor" || !this.options.onMarquee || event.button !== 0 || !event.shiftKey || this.paintMode || onGizmo) return;
+        // Shift + drag: box selection instead of moving the view.
+        event.stopImmediatePropagation();
+        event.preventDefault();
+        const element = document.createElement("div");
+        element.setAttribute("data-scene-marquee", "");
+        Object.assign(element.style, { position: "absolute", pointerEvents: "none", zIndex: "6", border: "1px solid rgba(129,140,248,0.9)", background: "rgba(99,102,241,0.12)", borderRadius: "2px", display: "none" });
+        this.container.appendChild(element);
+        this.marquee = { pointerId: event.pointerId, x0: event.clientX, y0: event.clientY, x1: event.clientX, y1: event.clientY, additive: event.ctrlKey || event.metaKey, element };
+        try {
+            this.canvas.setPointerCapture(event.pointerId);
+        } catch {
+            // The pointer may already be gone.
+        }
     };
 
+    private handlePointerMove = (event: PointerEvent) => {
+        const marquee = this.marquee;
+        if (!marquee || event.pointerId !== marquee.pointerId) return;
+        marquee.x1 = event.clientX;
+        marquee.y1 = event.clientY;
+        const bounds = this.container.getBoundingClientRect();
+        const left = Math.min(marquee.x0, marquee.x1) - bounds.left;
+        const top = Math.min(marquee.y0, marquee.y1) - bounds.top;
+        Object.assign(marquee.element.style, { display: "block", left: `${left}px`, top: `${top}px`, width: `${Math.abs(marquee.x1 - marquee.x0)}px`, height: `${Math.abs(marquee.y1 - marquee.y0)}px` });
+    };
+
+    private handlePointerCancel = () => {
+        this.endMarquee();
+    };
+
+    private endMarquee() {
+        const marquee = this.marquee;
+        if (!marquee) return null;
+        this.marquee = null;
+        marquee.element.remove();
+        try {
+            this.canvas.releasePointerCapture(marquee.pointerId);
+        } catch {
+            // Already released.
+        }
+        return marquee;
+    }
+
+    /** Objects whose drawn center falls inside a box given in page coordinates. */
+    objectsInBox(left: number, top: number, right: number, bottom: number): string[] {
+        const camera = this.activeCamera();
+        camera.updateMatrixWorld();
+        const rect = this.canvas.getBoundingClientRect();
+        const box = new THREE.Box3();
+        const center = new THREE.Vector3();
+        const ids: string[] = [];
+        for (const object of this.objects.values()) {
+            if (!object.group.visible) continue;
+            object.group.updateMatrixWorld(true);
+            if (object.visual) box.setFromObject(object.visual);
+            else box.makeEmpty();
+            if (box.isEmpty()) object.group.getWorldPosition(center);
+            else box.getCenter(center);
+            center.project(camera);
+            if (center.z < -1 || center.z > 1) continue;
+            const x = rect.left + ((center.x + 1) / 2) * rect.width;
+            const y = rect.top + ((1 - center.y) / 2) * rect.height;
+            if (x >= left && x <= right && y >= top && y <= bottom) ids.push(object.id);
+        }
+        return ids;
+    }
+
     private handlePointerUp = (event: PointerEvent) => {
+        if (this.marquee && event.pointerId === this.marquee.pointerId) {
+            const marquee = this.endMarquee()!;
+            this.pointerDown = null;
+            if (Math.hypot(marquee.x1 - marquee.x0, marquee.y1 - marquee.y0) <= 5) {
+                // A Shift-click, not a drag: add or remove the object under the pointer.
+                this.options.onPick?.(this.pick(event.clientX, event.clientY), true);
+                return;
+            }
+            const ids = this.objectsInBox(Math.min(marquee.x0, marquee.x1), Math.min(marquee.y0, marquee.y1), Math.max(marquee.x0, marquee.x1), Math.max(marquee.y0, marquee.y1));
+            this.options.onMarquee?.(ids, marquee.additive);
+            return;
+        }
         const down = this.pointerDown;
         this.pointerDown = null;
         if (!down || event.button !== 0 || this.dragging || this.paintMode) return;
@@ -1468,8 +1639,11 @@ export class SceneRenderer {
         if (this.disposed) return;
         this.disposed = true;
         this.resizeObserver?.disconnect();
-        this.canvas.removeEventListener("pointerdown", this.handlePointerDown);
+        this.endMarquee();
+        this.canvas.removeEventListener("pointerdown", this.handlePointerDown, { capture: true });
+        this.canvas.removeEventListener("pointermove", this.handlePointerMove);
         this.canvas.removeEventListener("pointerup", this.handlePointerUp);
+        this.canvas.removeEventListener("pointercancel", this.handlePointerCancel);
         this.transform?.detach();
         this.transform?.dispose();
         this.orbit?.dispose();

@@ -9,6 +9,7 @@ import {
     Cloud,
     CloudOff,
     Download,
+    Eye,
     FileJson,
     FolderTree,
     Globe,
@@ -57,6 +58,7 @@ import ProjectPanel from "./ProjectPanel";
 import SceneView, { type SceneViewApi } from "./SceneView";
 import ScriptEditorPanel from "./ScriptEditorPanel";
 import { EditorStore, useEditorState } from "./store";
+import WatchPanel, { SHOW_WATCH_EVENT } from "./WatchPanel";
 import { engineLocale, useEngineText, type TextKey } from "./text";
 import { TilePainterStore } from "./tile-painter";
 import { Dropdown, IconButton, NumberInput, TabButton, Toasts, Toggle, cx, useToasts } from "./ui";
@@ -205,7 +207,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     }, []);
     const [gameLogs, setGameLogs] = useState<ConsoleEntry[]>([]);
     const logBuffer = useRef<{ entries: Map<number, ConsoleEntry>; timer: number }>({ entries: new Map(), timer: 0 });
-    const [bottomTab, setBottomTab] = useState<"project" | "console">("project");
+    const [bottomTab, setBottomTab] = useState<"project" | "console" | "watch">("project");
     const [scriptTabs, setScriptTabs] = useState<string[]>([]);
     const [activeScript, setActiveScript] = useState<string | null>(null);
     const [showScripts, setShowScripts] = useState(false);
@@ -220,7 +222,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const [layout, setLayout] = useState({ left: 260, right: 320, bottom: 230 });
     const [snapPrefs, setSnapPrefs] = useState<SnapPreferences>(DEFAULT_SNAP);
     const [showStats, setShowStats] = useState(false);
-    const [mobilePanel, setMobilePanel] = useState<null | "hierarchy" | "inspector" | "project" | "console">(null);
+    const [mobilePanel, setMobilePanel] = useState<null | "hierarchy" | "inspector" | "project" | "console" | "watch">(null);
     const importInput = useRef<HTMLInputElement | null>(null);
     const playing = session !== null;
     const dirty = revision !== savedRevision;
@@ -403,6 +405,16 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const openScriptTabs = scriptTabs.filter((id) => scriptIds.has(id));
     const currentScript = activeScript && scriptIds.has(activeScript) ? activeScript : null;
 
+    // The Inspector's eye buttons add a watch and bring the Watch panel up.
+    useEffect(() => {
+        const onShowWatch = () => {
+            setBottomTab("watch");
+            if (!window.matchMedia("(min-width: 1024px)").matches) setMobilePanel("watch");
+        };
+        window.addEventListener(SHOW_WATCH_EVENT, onShowWatch);
+        return () => window.removeEventListener(SHOW_WATCH_EVENT, onShowWatch);
+    }, []);
+
     // ------------------------------------------------------------------
     // Keyboard shortcuts
     // ------------------------------------------------------------------
@@ -440,6 +452,9 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                 copyEntitiesToClipboard(activeScene(store.getState().project).objects, selection);
             } else if (mod && key === "v") {
                 window.dispatchEvent(new CustomEvent("hanogt-engine:paste"));
+            } else if (mod && key === "a") {
+                event.preventDefault();
+                store.setSelection(activeScene(store.getState().project).objects.map((entity) => entity.id));
             } else if ((event.key === "Delete" || event.key === "Backspace") && selection.length) {
                 event.preventDefault();
                 store.update("Sil", (draft) => deleteEntities(draft, selection), { selection: [] });
@@ -552,9 +567,10 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             <div className="flex h-9 shrink-0 items-center gap-1 border-b border-white/[0.06] px-2">
                 <TabButton active={bottomTab === "project"} onClick={() => setBottomTab("project")}><Package className="h-3.5 w-3.5" />{t("project")}</TabButton>
                 <TabButton active={bottomTab === "console"} onClick={() => setBottomTab("console")} count={errorCount}><Terminal className="h-3.5 w-3.5" />{t("console")}</TabButton>
+                <TabButton active={bottomTab === "watch"} onClick={() => setBottomTab("watch")}><Eye className="h-3.5 w-3.5" />{t("watch")}</TabButton>
             </div>
             <div className="min-h-0 flex-1">
-                {bottomTab === "project" ? panel(<ProjectPanel />, "project") : panel(<ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />, "console")}
+                {bottomTab === "project" ? panel(<ProjectPanel />, "project") : bottomTab === "watch" ? panel(<WatchPanel controlRef={playerRef} />, "watch") : panel(<ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />, "console")}
             </div>
         </div>
     );
@@ -714,22 +730,23 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                 {mobilePanel ? (
                     <div className="fixed inset-x-0 bottom-14 top-12 z-40 flex flex-col border-t border-white/10 bg-zinc-900/98 backdrop-blur-xl lg:hidden animate-fade-up">
                         <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/[0.06] px-3">
-                            <span className="text-[13px] font-semibold">{mobilePanel === "hierarchy" ? t("hierarchy") : mobilePanel === "inspector" ? t("inspector") : mobilePanel === "project" ? t("project") : t("console")}</span>
+                            <span className="text-[13px] font-semibold">{mobilePanel === "hierarchy" ? t("hierarchy") : mobilePanel === "inspector" ? t("inspector") : mobilePanel === "project" ? t("project") : mobilePanel === "watch" ? t("watch") : t("console")}</span>
                             <IconButton icon={X} label={t("close")} size="sm" onClick={() => setMobilePanel(null)} />
                         </div>
                         <div className="min-h-0 flex-1">
-                            {mobilePanel === "hierarchy" ? <HierarchyPanel /> : mobilePanel === "inspector" ? <InspectorPanel /> : mobilePanel === "project" ? <ProjectPanel /> : <ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />}
+                            {mobilePanel === "hierarchy" ? <HierarchyPanel /> : mobilePanel === "inspector" ? <InspectorPanel /> : mobilePanel === "project" ? <ProjectPanel /> : mobilePanel === "watch" ? <WatchPanel controlRef={playerRef} /> : <ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />}
                         </div>
                     </div>
                 ) : null}
-                <nav className="grid h-14 shrink-0 grid-cols-5 border-t border-white/[0.07] bg-zinc-900 lg:hidden" aria-label={t("editorPanels")}>
+                <nav className="grid h-14 shrink-0 grid-cols-6 border-t border-white/[0.07] bg-zinc-900 lg:hidden" aria-label={t("editorPanels")}>
                     {([
                         ["hierarchy", FolderTree, t("hierarchy")],
                         ["inspector", SlidersHorizontal, t("inspector")],
                         ["project", Package, t("project")],
                         ["console", Terminal, t("console")],
+                        ["watch", Eye, t("watch")],
                     ] as const).map(([key, Icon, label]) => (
-                        <button key={key} type="button" onClick={() => setMobilePanel(mobilePanel === key ? null : key)} className={cx("flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold", mobilePanel === key ? "text-indigo-300" : "text-zinc-400")}>
+                        <button key={key} type="button" onClick={() => setMobilePanel(mobilePanel === key ? null : key)} className={cx("flex min-w-0 flex-col items-center justify-center gap-0.5 truncate px-0.5 text-[10px] font-semibold", mobilePanel === key ? "text-indigo-300" : "text-zinc-400")}>
                             <Icon className="h-4 w-4" />{label}
                             {key === "console" && errorCount ? <span className="absolute mt-[-26px] ml-6 h-2 w-2 rounded-full bg-red-500" /> : null}
                         </button>

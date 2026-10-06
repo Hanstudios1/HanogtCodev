@@ -4011,7 +4011,8 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/components/Editor/PublishDialog.tsx",
-      "src/components/Editor/ShortcutsDialog.tsx"
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "1frs013c4wh": {
@@ -4169,6 +4170,7 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/components/Editor/CollabPanel.tsx",
+      "src/components/GameEngine/editor/text.ts",
       "src/components/Plans/plans-copy.ts"
     ]
   },
@@ -28415,16 +28417,16 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
-  "z1avkb7fmu": {
-    "en": "Left click: select · Drag: pan · Wheel: zoom · F: focus",
-    "tr": "Sol tık: seç · Sürükle: kaydır · Tekerlek: yakınlaş · F: odakla",
+  "1ieu2b9qbum": {
+    "en": "Left click: select · Shift + drag: box select · Drag: pan · Wheel: zoom · F: focus",
+    "tr": "Sol tık: seç · Shift + sürükle: kutu ile seç · Sürükle: kaydır · Tekerlek: yakınlaş · F: odakla",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
   },
-  "1jqy9o4ljff": {
-    "en": "Left click: select · Left drag: orbit · Right drag: pan · Wheel: zoom · F: focus",
-    "tr": "Sol tık: seç · Sol sürükle: döndür · Sağ sürükle: kaydır · Tekerlek: yakınlaş · F: odakla",
+  "2a9r9lxf9gp": {
+    "en": "Left click: select · Shift + drag: box select · Left drag: orbit · Right drag: pan · Wheel: zoom · F: focus",
+    "tr": "Sol tık: seç · Shift + sürükle: kutu ile seç · Sol sürükle: döndür · Sağ sürükle: kaydır · Tekerlek: yakınlaş · F: odakla",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -29997,6 +29999,111 @@
   "ma24eht788": {
     "en": "In a script: GetComponent<AudioSource>().Play(); For music, Audio.PlayMusic(\"name\") fits better.",
     "tr": "Betikte: GetComponent<AudioSource>().Play(); Müzik için Audio.PlayMusic(\"ad\") daha uygundur.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1tq6wkax4s7": {
+    "en": "Watch",
+    "tr": "İzle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "rjehiu7l5f": {
+    "en": "Add watch",
+    "tr": "İzlemeye ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1i0mdukxcqe": {
+    "en": "Player.score, Player.transform.position…",
+    "tr": "Player.score, Player.transform.position…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "8gpdtwsnj0": {
+    "en": "Remove all",
+    "tr": "Hepsini kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "qnq3jrk8no": {
+    "en": "Type a path to follow a value live while the game runs: the object's name, then a field or property. You can also add one with the eye button in the Inspector.",
+    "tr": "Oyun çalışırken bir değeri canlı izlemek için yolunu yazın: nesnenin adı, ardından alan veya özellik. Inspector'daki göz düğmesiyle de ekleyebilirsiniz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "s5jg7bt1ym": {
+    "en": "Values show while the game runs.",
+    "tr": "Değerler oyun çalışırken görünür.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "bfqab2ry00": {
+    "en": "Watch this field",
+    "tr": "Bu alanı izle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1j8caicyh3t": {
+    "en": "Fields show the first selected object's values; a field you change is applied to every selected object that has this component.",
+    "tr": "Alanlar ilk seçilen nesnenin değerlerini gösterir; değiştirdiğiniz alan bu bileşene sahip tüm seçili nesnelere uygulanır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1t1uwbxogfe": {
+    "en": "Components only some objects have",
+    "tr": "Yalnızca bazı nesnelerde olan bileşenler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "7uy1ukdwgj": {
+    "en": "Mixed",
+    "tr": "Farklı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1f4ttfwebs5": {
+    "en": "Select one object at a time to edit this component.",
+    "tr": "Bu bileşen nesneler tek tek seçilerek düzenlenir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1lzq9i2dzc6": {
+    "en": "Add component to all",
+    "tr": "Hepsine bileşen ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "n9zh15cq2l": {
+    "en": "Remove from all",
+    "tr": "Hepsinden kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "4xdgwcob1x": {
+    "en": "Select all results",
+    "tr": "Sonuçların hepsini seç",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "mtap0gtz4y": {
+    "en": "Searches names and tags. By component: t:Camera, t:Rigidbody2D, t:PlayerController",
+    "tr": "Ada veya etikete göre arar. Bileşene göre: t:Camera, t:Rigidbody2D, t:PlayerController",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]

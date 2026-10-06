@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Play, RotateCcw, Scaling } from "lucide-react";
+import { ExternalLink, Eye, Play, RotateCcw, Scaling } from "lucide-react";
 import {
     createAnimation,
     createAudioSource,
@@ -55,6 +55,7 @@ import { useEditor } from "./context";
 import { AnchorInput, TextureSelect, useComponentEdit, type Editor } from "./inspector-fields";
 import { activeScene } from "./operations";
 import { useEditorState } from "./store";
+import { addWatch, SHOW_WATCH_EVENT } from "./WatchPanel";
 import { Button, Checkbox, ColorInput, FieldRow, NumberInput, SelectInput, SliderInput, TextInput, Toggle, VectorInput } from "./ui";
 
 // ---------------------------------------------------------------------------
@@ -602,6 +603,7 @@ function ScriptFieldInput({ field, value, onChange, disabled }: { field: FieldIn
 export function ScriptEditor({ entity, component, disabled }: Editor<ScriptComponent>) {
     const { store, program, t, openScript } = useEditor();
     const scripts = useEditorState(store, (state) => state.project.scripts);
+    const projectId = useEditorState(store, (state) => state.project.id);
     const edit = useComponentEdit(entity.id, component);
     const script = scripts.find((item) => item.id === component.scriptId);
     const classes = program.behavioursByScript.get(component.scriptId) ?? [];
@@ -660,6 +662,12 @@ export function ScriptEditor({ entity, component, disabled }: Editor<ScriptCompo
                                                     <RotateCcw className="h-2.5 w-2.5" />
                                                 </button>
                                             ) : null}
+                                            <button type="button" title={t("watchField")} aria-label={`${t("watchField")}: ${field.name}`} onClick={() => {
+                                                addWatch(projectId, `${entity.name}.${field.name}`);
+                                                window.dispatchEvent(new CustomEvent(SHOW_WATCH_EVENT));
+                                            }} className="text-zinc-600 opacity-0 transition hover:text-teal-300 focus-visible:opacity-100 group-hover/field:opacity-100 [@media(hover:none)]:opacity-100">
+                                                <Eye className="h-2.5 w-2.5" />
+                                            </button>
                                         </span>
                                     )}
                                     title={field.tooltip ?? `${field.typeName} ${field.name}`}

@@ -90,7 +90,7 @@ export function Button({ children, onClick, variant = "secondary", disabled, cla
 
 export function FieldRow({ label, children, title, wide }: { label: ReactNode; children: ReactNode; title?: string; wide?: boolean }) {
     return (
-        <div className={cx("grid items-center gap-2 py-[3px]", wide ? "grid-cols-1" : "grid-cols-[minmax(84px,38%)_1fr]")}>
+        <div className={cx("group/field grid items-center gap-2 py-[3px]", wide ? "grid-cols-1" : "grid-cols-[minmax(84px,38%)_1fr]")}>
             <span className="truncate text-[11.5px] text-zinc-400" title={title ?? (typeof label === "string" ? label : undefined)}>{label}</span>
             <div className="min-w-0">{children}</div>
         </div>
@@ -159,7 +159,7 @@ function formatNumber(value: number, precision: number) {
  * Number input with a draggable label (like Unity): drag horizontally on the
  * label to scrub the value, type to set it exactly. Expressions like "2*3" work.
  */
-export function NumberInput({ value, onChange, step = 0.1, min, max, precision = 3, label, labelClassName, disabled, integer }: {
+export function NumberInput({ value, onChange, step = 0.1, min, max, precision = 3, label, labelClassName, disabled, integer, mixed }: {
     value: number;
     onChange: (value: number) => void;
     step?: number;
@@ -170,11 +170,13 @@ export function NumberInput({ value, onChange, step = 0.1, min, max, precision =
     labelClassName?: string;
     disabled?: boolean;
     integer?: boolean;
+    /** Several selected objects hold different values: shows "—" until edited. */
+    mixed?: boolean;
 }) {
     // `draft` holds the text while the field is focused; otherwise the prop is shown.
     const [draft, setDraft] = useState<string | null>(null);
     const drag = useRef<{ x: number; start: number; moved: boolean } | null>(null);
-    const text = draft ?? formatNumber(value, precision);
+    const text = draft ?? (mixed ? "" : formatNumber(value, precision));
 
     const clampValue = useCallback((next: number) => {
         let result = next;
@@ -235,8 +237,9 @@ export function NumberInput({ value, onChange, step = 0.1, min, max, precision =
                 value={text}
                 disabled={disabled}
                 inputMode="decimal"
+                placeholder={mixed ? "—" : undefined}
                 onFocus={(event) => {
-                    setDraft(formatNumber(value, precision));
+                    setDraft(mixed ? "" : formatNumber(value, precision));
                     event.target.select();
                 }}
                 onChange={(event) => setDraft(event.target.value)}
@@ -261,20 +264,22 @@ export function NumberInput({ value, onChange, step = 0.1, min, max, precision =
     );
 }
 
-export function VectorInput({ value, onChange, step = 0.1, hideZ, disabled, precision = 3 }: {
+export function VectorInput({ value, onChange, step = 0.1, hideZ, disabled, precision = 3, mixed }: {
     value: { x: number; y: number; z?: number };
     onChange: (value: { x: number; y: number; z: number }) => void;
     step?: number;
     hideZ?: boolean;
     disabled?: boolean;
     precision?: number;
+    /** Axes that differ between selected objects. */
+    mixed?: { x?: boolean; y?: boolean; z?: boolean };
 }) {
     const z = value.z ?? 0;
     return (
         <div className={cx("grid gap-1", hideZ ? "grid-cols-2" : "grid-cols-3")}>
-            <NumberInput label="X" labelClassName="text-red-400" value={value.x} step={step} precision={precision} disabled={disabled} onChange={(x) => onChange({ x, y: value.y, z })} />
-            <NumberInput label="Y" labelClassName="text-emerald-400" value={value.y} step={step} precision={precision} disabled={disabled} onChange={(y) => onChange({ x: value.x, y, z })} />
-            {!hideZ ? <NumberInput label="Z" labelClassName="text-sky-400" value={z} step={step} precision={precision} disabled={disabled} onChange={(nextZ) => onChange({ x: value.x, y: value.y, z: nextZ })} /> : null}
+            <NumberInput label="X" labelClassName="text-red-400" value={value.x} step={step} precision={precision} disabled={disabled} mixed={mixed?.x} onChange={(x) => onChange({ x, y: value.y, z })} />
+            <NumberInput label="Y" labelClassName="text-emerald-400" value={value.y} step={step} precision={precision} disabled={disabled} mixed={mixed?.y} onChange={(y) => onChange({ x: value.x, y, z })} />
+            {!hideZ ? <NumberInput label="Z" labelClassName="text-sky-400" value={z} step={step} precision={precision} disabled={disabled} mixed={mixed?.z} onChange={(nextZ) => onChange({ x: value.x, y: value.y, z: nextZ })} /> : null}
         </div>
     );
 }

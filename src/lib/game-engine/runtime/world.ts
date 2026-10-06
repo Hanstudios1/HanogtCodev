@@ -1549,7 +1549,8 @@ export class RuntimeWorld implements ScriptHost {
         return this.getComponents(entity, typeName)[0] ?? null;
     }
 
-    private isKnownComponentType(typeName: string) {
+    /** A built-in component type, an engine base type or a script class (GetComponent<T> and the editor's Watch panel). */
+    isKnownComponentType(typeName: string) {
         return typeName in COMPONENT_TYPE_ALIASES
             || ["Transform", "RectTransform", "Component", "Object", "Behaviour", "MonoBehaviour", "Renderer", "Graphic", "MaskableGraphic", "Selectable"].includes(typeName)
             || this.program.classes.has(typeName);

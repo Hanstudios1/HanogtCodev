@@ -1,10 +1,12 @@
 "use client";
 
 /** Building blocks shared by the component editors in the Inspector. */
+import { createContext, useContext } from "react";
 import { KEY_CODES } from "@/lib/game-engine/script/stdlib";
 import { UI_ANCHORS, type GameComponent, type GameEntity, type UIAnchor } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
-import { updateComponent } from "./operations";
+import { applyValueChanges, diffValues, valueAt, writtenLeaf } from "./multi-edit";
+import { findEntity, updateComponent } from "./operations";
 import { useEditorState } from "./store";
 import { SelectInput, cx } from "./ui";
 
@@ -13,11 +15,38 @@ export type Editor<T extends GameComponent> = { entity: GameEntity; component: T
 /** Undoable edit of one component field; quick successive edits of the same field merge into one undo step. */
 export type ComponentEdit<T extends GameComponent> = (field: string, recipe: (draft: T) => void, label?: string) => void;
 
-/** Returns an updater that writes to the component inside an undoable store update. */
+/**
+ * While several objects are selected: for a component shown in the Inspector,
+ * the same component on the other selected objects (see multi-edit.ts).
+ */
+export const MultiEditContext = createContext<ReadonlyMap<string, ReadonlyArray<{ entityId: string; componentId: string }>> | null>(null);
+
+/** Returns an updater that writes to the component inside an undoable store update (and to the same component of every other selected object). */
 export function useComponentEdit<T extends GameComponent>(entityId: string, component: T): ComponentEdit<T> {
     const { store, t } = useEditor();
+    const multi = useContext(MultiEditContext);
     return (field: string, recipe: (draft: T) => void, label = t("hEditComponent")) => {
-        store.update(label, (draft) => updateComponent<T>(draft, entityId, component.id, recipe), { mergeKey: `${component.id}:${field}` });
+        const others = multi?.get(component.id) ?? [];
+        if (!others.length) {
+            store.update(label, (draft) => updateComponent<T>(draft, entityId, component.id, recipe), { mergeKey: `${component.id}:${field}` });
+            return;
+        }
+        // Only what the recipe changed on this object is copied to the others.
+        const current = findEntity(store.getState().project, entityId)?.components.find((item) => item.id === component.id);
+        if (!current) return;
+        const before = JSON.parse(JSON.stringify(current)) as T;
+        const after = JSON.parse(JSON.stringify(current)) as T;
+        recipe(after);
+        const changes = diffValues(before, after);
+        if (!changes.length) {
+            // Same value as this object's: still make the others match.
+            const leaf = writtenLeaf(current as T, recipe);
+            if (leaf) changes.push({ path: leaf, value: valueAt(after, leaf) });
+        }
+        store.update(label, (draft) => {
+            updateComponent<T>(draft, entityId, component.id, recipe);
+            for (const other of others) updateComponent<GameComponent>(draft, other.entityId, other.componentId, (target) => applyValueChanges(target as unknown as Record<string, unknown>, changes));
+        }, { mergeKey: `${component.id}:${field}:all` });
     };
 }
 
