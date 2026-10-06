@@ -168,6 +168,7 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "arcade.unpublish": { TR: "Oyun yayından kaldırıldı", EN: "Game unpublished" },
     "arcade.feature": { TR: "Oyun öne çıkarıldı", EN: "Game featured" },
     "arcade.unfeature": { TR: "Öne çıkarma kaldırıldı", EN: "Game unfeatured" },
+    "arcade.remove_scores": { TR: "Skor tablosundan kayıt silindi", EN: "Leaderboard entries removed" },
     "feedback.set_status": { TR: "Geri bildirim durumu değişti", EN: "Feedback status changed" },
     "feedback.reply": { TR: "Resmî yanıt gönderildi", EN: "Official reply posted" },
     "feedback.delete": { TR: "Geri bildirim silindi", EN: "Feedback deleted" },

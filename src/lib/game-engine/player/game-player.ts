@@ -9,6 +9,7 @@ import { sceneFrame, sceneRenderEntities } from "../render/scene-frame";
 import { loadAudioBytes } from "../audio-store";
 import type { AudioBytesLoader } from "../runtime/audio";
 import { SoundEngine } from "../runtime/audio";
+import { ArcadeRuntime, type ArcadeServices } from "../runtime/arcade-runtime";
 import { InputManager } from "../runtime/input";
 import { RuntimeWorld, type LogEntry, type WorldStats } from "../runtime/world";
 import type { GameProjectDocument, ProjectSettings } from "../types";
@@ -40,6 +41,8 @@ export interface GamePlayerOptions {
     loadAudio?: AudioBytesLoader;
     /** The player's language (the site's language); games with that language start in it (V5). */
     locale?: string | null;
+    /** Where leaderboard scores and achievements go (the Arcade page); none in the editor (V5). */
+    arcadeServices?: ArcadeServices | null;
 }
 
 const ASPECTS: Record<ProjectSettings["aspect"], number | null> = {
@@ -66,6 +69,8 @@ export class GamePlayer {
     readonly input = new InputManager();
     readonly audio = new SoundEngine();
     readonly program: CompiledProgram;
+    /** Leaderboards and achievements of this player (V5): the host merges what the server knows. */
+    readonly arcade: ArcadeRuntime;
     world: RuntimeWorld;
     private state: PlayerState = "idle";
     private raf = 0;
@@ -80,6 +85,8 @@ export class GamePlayer {
     constructor(readonly container: HTMLElement, options: GamePlayerOptions) {
         this.options = options;
         this.program = options.program ?? compileScripts(options.project.scripts);
+        // Shared by every world of this player, so a restart keeps the bests and unlocks.
+        this.arcade = new ArcadeRuntime(options.project.settings.arcade, options.arcadeServices ?? null);
         const settings = options.project.settings;
 
         this.root = document.createElement("div");
@@ -136,6 +143,7 @@ export class GamePlayer {
             getScreenSize: () => this.renderer.size,
             onLog: this.options.onLog,
             locale: this.options.locale,
+            arcade: this.arcade,
             onQuit: () => {
                 this.setState("stopped");
                 this.options.onQuit?.();

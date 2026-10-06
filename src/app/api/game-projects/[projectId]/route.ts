@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { nowIso } from "@/lib/game-engine/ids";
+import { removeArcadeGame } from "@/lib/server/arcade-scores";
 import { commitServerMutations, getServerDocument, listServerCollection } from "@/lib/server/firebase-rest";
 import {
     apiError,
@@ -131,14 +132,13 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         const projectId = await routeProjectId(context);
         const record = await loadOwnedProject(projectId, email);
         const scripts = await listServerCollection<GameScriptRecord>(`game_projects/${projectId}/scripts`, 500);
-        const arcade = await getServerDocument<{ ownerEmail?: string }>(`arcade_games/${projectId}`).catch(() => null);
+        const arcade = await getServerDocument<{ ownerEmail?: string }>(`arcade_games/${projectId}`, { fields: ["ownerEmail"] });
+        // The published game goes first, with its likes, scores and unlocks; a failure keeps the project for a retry.
+        if (arcade && arcade.ownerEmail === email) await removeArcadeGame(projectId);
         for (let index = 0; index < scripts.length; index += 400) {
             await commitServerMutations(scripts.slice(index, index + 400).map((script) => ({ type: "delete" as const, path: script._path })));
         }
-        await commitServerMutations([
-            { type: "delete", path: `game_projects/${projectId}`, updateTime: record._updateTime },
-            ...(arcade && arcade.ownerEmail === email ? [{ type: "delete" as const, path: `arcade_games/${projectId}` }] : []),
-        ]);
+        await commitServerMutations([{ type: "delete", path: `game_projects/${projectId}`, updateTime: record._updateTime }]);
         return apiJson({ success: true }, 200, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Oyun projesi silinemedi.");

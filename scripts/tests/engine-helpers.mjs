@@ -27,6 +27,8 @@ export function startWorld(project, options = {}) {
         audio: options.audio,
         getScreenSize: () => ({ width: 960, height: 540 }),
         locale: options.locale,
+        isEditor: options.isEditor,
+        arcade: options.arcade,
         onLog: (entry, updated) => {
             if (!updated) logs.push(entry);
         },

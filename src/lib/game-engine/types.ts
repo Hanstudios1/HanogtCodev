@@ -822,6 +822,8 @@ export interface ProjectSettings {
     input: InputSettings;
     /** Languages and the string table (V5). */
     localization: LocalizationSettings;
+    /** Leaderboards and achievements the Arcade keeps for players (V5). */
+    arcade: ArcadeSettings;
 }
 
 /** One text of the string table in every language of the game (V5). */
@@ -839,6 +841,37 @@ export interface LocalizationSettings {
     /** "auto": the player's language when the game has it, else the first; or a fixed language code. */
     startLanguage: string;
     entries: LocalizationEntry[];
+}
+
+/** A score table of the game in the Arcade (V5). */
+export interface ArcadeLeaderboard {
+    /** What scripts use: Leaderboard.Submit("main", score). */
+    id: string;
+    name: string;
+    /** "desc": higher is better (points); "asc": lower is better (a finishing time). */
+    order: "desc" | "asc";
+    /** "time" shows seconds as 1:23.45. */
+    format: "number" | "time";
+    /** Scores outside these bounds are refused. */
+    minScore: number;
+    maxScore: number;
+    /** A score counts only after the player has played this long (seconds). */
+    minPlaySeconds: number;
+}
+
+/** Something a player can unlock (V5). */
+export interface ArcadeAchievement {
+    /** What scripts use: Achievements.Unlock("first-win"). */
+    id: string;
+    name: string;
+    description: string;
+    /** Its name and description stay hidden until it is unlocked. */
+    hidden: boolean;
+}
+
+export interface ArcadeSettings {
+    leaderboards: ArcadeLeaderboard[];
+    achievements: ArcadeAchievement[];
 }
 
 export interface GameProjectDocument {

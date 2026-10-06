@@ -297,8 +297,11 @@ async function firestoreFetch(url: string, init: RequestInit = {}) {
     });
 }
 
-export async function getServerDocument<T extends Record<string, unknown>>(path: string): Promise<(T & { _updateTime?: string }) | null> {
-    const response = await firestoreFetch(documentUrl(path));
+/** One document, or null when it doesn't exist; `fields` reads only those fields (a field mask). */
+export async function getServerDocument<T extends Record<string, unknown>>(path: string, options: { fields?: string[] } = {}): Promise<(T & { _updateTime?: string }) | null> {
+    const url = new URL(documentUrl(path));
+    for (const field of options.fields ?? []) url.searchParams.append("mask.fieldPaths", field);
+    const response = await firestoreFetch(url.toString());
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`Firestore okuma hatası (${response.status}).`);
     const document = await response.json() as FirestoreDocument;

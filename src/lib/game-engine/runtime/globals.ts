@@ -947,6 +947,38 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         },
     }));
 
+    // Leaderboards and achievements (V5): the Arcade keeps them for signed-in players.
+    const arcadeId = (value: VMValue, method: string) => {
+        if (typeof value !== "string" || !value.trim()) hostError(`${method}: tablo ya da başarım kimliğini metin olarak verin, ör. "main".`, "ArgumentException");
+        return String(value);
+    };
+    globals.set("Leaderboard", ns("Leaderboard", {
+        count: () => world.arcade.boards.length,
+        isOnline: () => world.arcade.online,
+    }, {
+        Submit: (args) => world.submitScore(arcadeId(args[0], "Leaderboard.Submit"), toNumber(args[1] ?? null, "Leaderboard.Submit skoru")),
+        GetBest: (args) => world.arcade.bestOf(arcadeId(args[0], "Leaderboard.GetBest")) ?? 0,
+        HasBest: (args) => world.arcade.bestOf(arcadeId(args[0], "Leaderboard.HasBest")) !== null,
+        GetName: (args) => world.arcade.board(arcadeId(args[0], "Leaderboard.GetName"))?.name ?? "",
+        Show: (args) => {
+            world.showArcadePanel("leaderboard", args.length && args[0] !== null ? arcadeId(args[0], "Leaderboard.Show") : null);
+            return undefined;
+        },
+    }));
+    globals.set("Achievements", ns("Achievements", {
+        count: () => world.arcade.achievements.length,
+        unlockedCount: () => world.arcade.unlockedCount,
+        isOnline: () => world.arcade.online,
+    }, {
+        Unlock: (args) => world.unlockAchievement(arcadeId(args[0], "Achievements.Unlock")),
+        IsUnlocked: (args) => world.arcade.isUnlocked(arcadeId(args[0], "Achievements.IsUnlocked")),
+        GetName: (args) => world.arcade.achievement(arcadeId(args[0], "Achievements.GetName"))?.name ?? "",
+        Show: () => {
+            world.showArcadePanel("achievements", null);
+            return undefined;
+        },
+    }));
+
     // PlayerInput (V5 local multiplayer): the players in the scene and the connected gamepads.
     const playerHandle = (entity: RuntimeEntity) => {
         const component = entity.playerInput;

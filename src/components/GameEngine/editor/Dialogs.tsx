@@ -6,13 +6,14 @@ import { useEffect, useState } from "react";
 import type { GameProjectDocument, ProjectSettings } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { activeScene, touch } from "./operations";
+import { ArcadeSettingsPanel } from "./ArcadeSettingsPanel";
 import { InputSettingsPanel } from "./InputSettings";
 import { LocalizationPanel } from "./LocalizationPanel";
 import { publishProject, unpublishProject } from "./persistence";
 import { useEditorState } from "./store";
 import { Button, ColorInput, FieldRow, Modal, NumberInput, SelectInput, SliderInput, TabButton, TextInput, Toggle, VectorInput } from "./ui";
 
-export type SettingsTab = "project" | "input" | "languages" | "scene";
+export type SettingsTab = "project" | "input" | "languages" | "arcade" | "scene";
 
 export function SettingsDialog({ open, onClose, tab, onTabChange }: { open: boolean; onClose: () => void; tab: SettingsTab; onTabChange: (tab: SettingsTab) => void }) {
     const { store, t, playing } = useEditor();
@@ -32,17 +33,20 @@ export function SettingsDialog({ open, onClose, tab, onTabChange }: { open: bool
     const setInput = (key: string, recipe: (input: ProjectSettings["input"]) => void) => setProject(t("inputSettings"), (draft) => { recipe(draft.settings.input); }, `input:${key}`);
 
     return (
-        <Modal open={open} onClose={onClose} title={t("settings")} icon={Settings2} width={tab === "languages" ? "max-w-4xl" : "max-w-xl"} footer={<Button variant="primary" onClick={onClose}>{t("ok")}</Button>}>
+        <Modal open={open} onClose={onClose} title={t("settings")} icon={Settings2} width={tab === "languages" ? "max-w-4xl" : tab === "arcade" ? "max-w-3xl" : "max-w-xl"} footer={<Button variant="primary" onClick={onClose}>{t("ok")}</Button>}>
             <div className="mb-3 flex flex-wrap gap-1">
                 <TabButton active={tab === "project"} onClick={() => setTab("project")}>{t("projectSettings")}</TabButton>
                 <TabButton active={tab === "input"} onClick={() => setTab("input")}>{t("inputSettings")}</TabButton>
                 <TabButton active={tab === "languages"} onClick={() => setTab("languages")} count={project.settings.localization.languages.length || undefined}>{t("languagesTab")}</TabButton>
+                <TabButton active={tab === "arcade"} onClick={() => setTab("arcade")} count={project.settings.arcade.leaderboards.length + project.settings.arcade.achievements.length || undefined}>{t("arcadeTab")}</TabButton>
                 <TabButton active={tab === "scene"} onClick={() => setTab("scene")}>{t("sceneSettings")} · {scene.name}</TabButton>
             </div>
             {tab === "input" ? (
                 <InputSettingsPanel input={project.settings.input} disabled={disabled} onEdit={setInput} />
             ) : tab === "languages" ? (
                 <LocalizationPanel disabled={disabled} />
+            ) : tab === "arcade" ? (
+                <ArcadeSettingsPanel disabled={disabled} />
             ) : tab === "project" ? (
                 <div className="space-y-1">
                     <FieldRow label={t("projectName")}><TextInput value={project.name} maxLength={80} disabled={disabled} onChange={(value) => value.trim() && setProject(t("projectName"), (draft) => { draft.name = value.trim().slice(0, 80); }, "name")} /></FieldRow>

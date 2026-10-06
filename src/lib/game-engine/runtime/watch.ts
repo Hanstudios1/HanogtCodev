@@ -20,7 +20,7 @@ export type WatchResult =
 
 type Segment = { name: string; index: number[] };
 
-const NAMESPACES = new Set(["Time", "Screen", "Input", "Audio", "Physics", "Physics2D", "Application", "Camera", "Cursor", "SceneManager", "Pathfinding", "ScreenEffects", "Localization", "PlayerInput", "SaveSystem"]);
+const NAMESPACES = new Set(["Time", "Screen", "Input", "Audio", "Physics", "Physics2D", "Application", "Camera", "Cursor", "SceneManager", "Pathfinding", "ScreenEffects", "Localization", "PlayerInput", "SaveSystem", "Leaderboard", "Achievements"]);
 
 /** Splits "Spawner.enemies[0].name" into parts; null when it can't be read. */
 export function parseWatchPath(path: string): Segment[] | null {

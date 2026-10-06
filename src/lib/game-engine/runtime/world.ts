@@ -74,6 +74,8 @@ import { screenRay, screenToWorld } from "./camera-math";
 import { BehaviourState, RuntimeEntity, type CoroutineState, type WaitState } from "./entity";
 import { createHostGlobals, PlayerPrefsStore } from "./globals";
 import { SaveStore } from "./save-system";
+import { ArcadeRuntime, type ArcadePanel } from "./arcade-runtime";
+import { formatArcadeScore, roundScore, scoreInRange } from "../arcade";
 import { LocalizationTable, startLanguageOf } from "../localization";
 import {
     AnimationHandle,
@@ -150,6 +152,8 @@ export interface WorldOptions {
     scriptBudget?: number;
     /** The player's language ("tr", "en-US"): a game with that language starts in it (V5). */
     locale?: string | null;
+    /** Leaderboards and achievements shared by the player's worlds (V5); a world makes its own when missing. */
+    arcade?: ArcadeRuntime | null;
 }
 
 type DestroyItem =
@@ -403,6 +407,8 @@ export class RuntimeWorld implements ScriptHost {
     readonly localization: LocalizationTable;
     /** The language texts are shown in; null while the game has no languages. */
     language: string | null;
+    /** Leaderboards and achievements (V5). */
+    readonly arcade: ArcadeRuntime;
     readonly entities = new Map<string, RuntimeEntity>();
     behaviours: BehaviourState[] = [];
     readonly logs: LogEntry[] = [];
@@ -516,6 +522,7 @@ export class RuntimeWorld implements ScriptHost {
         this.effects = cloneJson(this.scene.settings.postProcessing);
         this.localization = new LocalizationTable(options.project.settings.localization);
         this.language = startLanguageOf(options.project.settings.localization, this.locale);
+        this.arcade = options.arcade ?? new ArcadeRuntime(options.project.settings.arcade);
         this.globals = createHostGlobals(this);
     }
 
@@ -946,6 +953,63 @@ export class RuntimeWorld implements ScriptHost {
         }
         this.broadcast("OnLanguageChanged", [language]);
         return true;
+    }
+
+    // -------------------------------------------------------------------
+    // Leaderboards and achievements (V5)
+    // -------------------------------------------------------------------
+
+    private readonly arcadeReported = new Map<string, number>();
+
+    /** Tells the author what happened where nothing is stored (the editor, an exported game). */
+    private reportArcade(key: string, message: string) {
+        if (this.arcade.services) return;
+        if (!this.isEditor) {
+            this.warnOnce("arcade-offline", "Skor tabloları ve başarımlar yalnızca Hanogt Arcade'de kaydedilir; burada oyun açık kaldıkça tutulur.");
+            return;
+        }
+        // At most one line per board or achievement a second: a score sent every frame doesn't flood the console.
+        const last = this.arcadeReported.get(key);
+        if (last !== undefined && this.realtime - last < 1) return;
+        this.arcadeReported.set(key, this.realtime);
+        this.log("info", `${message} (Editörde kaydedilmez; Arcade'de giriş yapan oyuncular için kaydedilir.)`);
+    }
+
+    /** Leaderboard.Submit: true when the score is the player's new best on the board. */
+    submitScore(id: string, score: number): boolean {
+        const board = this.arcade.board(id);
+        if (!board) {
+            const known = this.arcade.boards.map((item) => item.id).join(", ") || "yok";
+            this.warnOnce(`leaderboard:${id}`, `Leaderboard.Submit: '${id}' adında bir skor tablosu yok (tablolar: ${known}). Proje ayarları → Arcade'den ekleyin.`);
+            return false;
+        }
+        if (!scoreInRange(board, score)) {
+            this.warnOnce(`leaderboard-range:${board.id}`, `Leaderboard.Submit('${board.id}', ${score}): skor tablonun sınırlarının dışında (${board.minScore} – ${board.maxScore}); sayılmadı.`);
+            return false;
+        }
+        const best = this.arcade.submit(board, score);
+        if (best) this.reportArcade(`board:${board.id}`, `Skor tablosu '${board.name}': ${formatArcadeScore(roundScore(score), board.format, this.locale ?? "en")} (yeni en iyi skor).`);
+        return best;
+    }
+
+    /** Achievements.Unlock: true when it was locked until now; scripts get OnAchievementUnlocked(id). */
+    unlockAchievement(id: string): boolean {
+        const achievement = this.arcade.achievement(id);
+        if (!achievement) {
+            const known = this.arcade.achievements.map((item) => item.id).slice(0, 12).join(", ") || "yok";
+            this.warnOnce(`achievement:${id}`, `Achievements.Unlock: '${id}' adında bir başarım yok (başarımlar: ${known}). Proje ayarları → Arcade'den ekleyin.`);
+            return false;
+        }
+        if (!this.arcade.unlock(achievement)) return false;
+        this.reportArcade(`achievement:${achievement.id}`, `Başarım açıldı: ${achievement.name}.`);
+        this.broadcast("OnAchievementUnlocked", [achievement.id]);
+        return true;
+    }
+
+    /** Leaderboard.Show / Achievements.Show: the Arcade opens its panel. */
+    showArcadePanel(panel: ArcadePanel, boardId: string | null) {
+        if (this.arcade.services) this.arcade.services.show(panel, boardId);
+        else if (this.isEditor) this.warnOnce(`arcade-show:${panel}`, `${panel === "leaderboard" ? "Leaderboard" : "Achievements"}.Show(): Arcade'de oyunun yanında ${panel === "leaderboard" ? "skor tablosu" : "başarımlar"} açılır; editörde bir şey göstermez.`);
     }
 
     sceneIndex(scene: SceneDocument = this.scene) {

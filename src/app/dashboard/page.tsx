@@ -231,9 +231,11 @@ export default function DashboardPage() {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 if (!cancelled) setGameProjects(payload.projects || []);
             } catch (error) {
+                // Leaving the page mid-request aborts it: nothing to report then.
+                if (cancelled) return;
                 console.error("Error loading game projects:", error);
                 // "load" is replaced with the localized message while rendering.
-                if (!cancelled) setGameError("load");
+                setGameError("load");
             } finally {
                 if (!cancelled) setIsGameLoading(false);
             }

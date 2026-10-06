@@ -24,7 +24,8 @@ import { isOwnedStoragePath, normalizeEmail } from "./validate";
  *
  * scope "all" removes the account and everything it left behind: private
  * chats with their voice messages, calls, code and game projects, published
- * Arcade games, news comments, Arcade likes and arena votes, Media posts and
+ * Arcade games, news comments, Arcade likes, leaderboard scores, unlocked
+ * achievements and arena votes, Media posts and
  * every like, comment, report and security-training contribution, groups it
  * owns (in other groups it leaves and its messages are anonymised), group
  * bans and invite links, friend requests, group invites, its place in other
@@ -34,10 +35,12 @@ import { isOwnedStoragePath, normalizeEmail } from "./validate";
  *
  * scope "content" removes only what other people can see: Media posts with
  * everything attached and the user's comments on other posts, published
- * Arcade games with their likes, news and changelog comments, feedback items
- * the user wrote and their comments on other items; their group messages are
+ * Arcade games with their likes and scores, the user's entries on other
+ * games' leaderboards, news and changelog comments, feedback items the user
+ * wrote and their comments on other items; their group messages are
  * anonymised. The account and sign-in, friends, private chats and calls, code
- * and game projects, likes, votes, reports and support tickets stay.
+ * and game projects, likes, achievements, votes, reports and support tickets
+ * stay.
  *
  * Every step and document is handled on its own: a failure is recorded in the
  * summary and the rest carries on, so one broken record (or a missing index)
@@ -386,10 +389,14 @@ async function deleteGameProjects(ctx: Context) {
     )));
 }
 
+/** Records other players left on a published game: likes, leaderboard scores and unlocked achievements. */
+const GAME_RECORDS = [["arcade_likes", "arcadeLikes"], ["arcade_scores", "arcadeScores"], ["arcade_achievements", "arcadeAchievements"]] as const;
+
 async function deleteArcadeGames(ctx: Context) {
     await drain(ctx, "arcadeGames", query("arcade_games", "ownerEmail", "EQUAL", ctx.email), eachDocument(ctx, "arcadeGames", async (game) => {
-        const likesGone = await drain(ctx, "arcadeGames", query("arcade_likes", "gameId", "EQUAL", game._id), deleting(ctx, "arcadeGames", "arcadeLikes"));
-        if (!likesGone) return false;
+        for (const [collectionId, kind] of GAME_RECORDS) {
+            if (!(await drain(ctx, "arcadeGames", query(collectionId, "gameId", "EQUAL", game._id), deleting(ctx, "arcadeGames", kind)))) return false;
+        }
         await deleteServerDocument(game._path);
         ctx.tally.count("arcadeGames");
         // The game's own copies of its audio files go too (unless another game or account keeps them).
@@ -418,6 +425,18 @@ async function deleteArcadeLikesAndVotes(ctx: Context) {
         ctx.tally.count("arcadeLikes");
     })));
     await runStep(ctx, "arenaVotes", () => drain(ctx, "arenaVotes", query("arena_votes", "voter", "EQUAL", voterHash(ctx.email)), deleting(ctx, "arenaVotes", "arenaVotes")));
+}
+
+/**
+ * The user's entries on other games' leaderboards (everyone sees them, so
+ * both scopes) and, with the account, the achievements they unlocked.
+ */
+async function deleteArcadePlayerRecords(ctx: Context) {
+    const player = likerHash(ctx.email);
+    await runStep(ctx, "arcadeScores", () => drain(ctx, "arcadeScores", query("arcade_scores", "player", "EQUAL", player), deleting(ctx, "arcadeScores", "arcadeScores")));
+    if (ctx.scope === "all") {
+        await runStep(ctx, "arcadeAchievements", () => drain(ctx, "arcadeAchievements", query("arcade_achievements", "player", "EQUAL", player), deleting(ctx, "arcadeAchievements", "arcadeAchievements")));
+    }
 }
 
 const POST_RECORDS = [["media_likes", "mediaLikes"], ["media_comments", "mediaComments"], ["media_reports", "mediaReports"]] as const;
@@ -711,6 +730,7 @@ const STEPS: readonly Step[] = [
     { id: "gameAudio", scopes: ALL, run: deleteGameAudio },
     { id: "newsComments", scopes: BOTH, run: deleteNewsComments },
     { id: "arcadeLikes", scopes: ALL, run: deleteArcadeLikesAndVotes },
+    { id: "arcadeScores", scopes: BOTH, run: deleteArcadePlayerRecords },
     { id: "mediaPosts", scopes: BOTH, run: deleteMediaPosts },
     { id: "mediaActivity", scopes: BOTH, run: deleteMediaActivity },
     { id: "groups", scopes: BOTH, run: handleGroups },

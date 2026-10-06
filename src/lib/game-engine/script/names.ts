@@ -27,7 +27,7 @@ export const GLOBAL_NAMES = new Set([
     // V4: path finding, one-shot sounds
     "Pathfinding", "AudioSource",
     // V5: Animator.StringToHash, screen effects, localization
-    "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput", "SaveSystem", "JsonUtility",
+    "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput", "SaveSystem", "JsonUtility", "Leaderboard", "Achievements",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",
@@ -49,7 +49,7 @@ export const INT_RESULT_MEMBERS = new Set([
     "GetSiblingIndex", "CompareTo", "layer", "sceneCount", "buildIndex", "width", "height", "RandomRangeInt",
     "tileCount", "CountTiles", "clipCount",
     "GetInteger", "StringToHash", "shortNameHash", "fullPathHash", "nameHash", "tagHash", "parameterCount", "layerCount", "pixelate",
-    "playerIndex", "playerNumber", "gamepadCount", "maxPlayers", "slotCount",
+    "playerIndex", "playerNumber", "gamepadCount", "maxPlayers", "slotCount", "unlockedCount",
 ]);
 
 /** API members returning float. */
@@ -62,6 +62,7 @@ export const FLOAT_RESULT_MEMBERS = new Set([
     "fieldOfView", "orthographicSize", "volume", "pitch", "GetFloat", "NextDouble", "stof", "stod", "SignedAngle", "distance",
     "SmoothDamp", "PerlinNoise", "Sign", "fillAmount", "normalizedValue", "normalizedTime", "cellSize", "minValue", "maxValue",
     "saturation", "contrast", "brightness", "hue", "chromaticAberration", "scanlines", "curvature", "exposure", "bloom", "vignette",
+    "GetBest",
 ]);
 
 /** Functions whose numeric result follows their arguments (int if all args are int). */

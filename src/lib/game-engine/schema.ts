@@ -8,6 +8,7 @@
  * every v2 field is kept and the V3 fields get their defaults. Unknown keys are
  * dropped so untrusted input cannot smuggle extra data into storage.
  */
+import { normalizeArcadeSettings } from "./arcade";
 import { defaultTilePalette } from "./components";
 import { createEngineId, isEngineId, nowIso } from "./ids";
 import { ACTION_NAME, normalizeInputSettings } from "./input-actions";
@@ -1130,6 +1131,7 @@ function normalizeProjectSettings(value: unknown, sceneIds: string[], documentVe
         rules: ENGINE_RULES.includes(source.rules as EngineRules) ? source.rules as EngineRules : documentVersion >= 5 ? 5 : documentVersion >= 4 ? 4 : 3,
         input: normalizeInputSettings(source.input),
         localization: normalizeLocalization(source.localization),
+        arcade: normalizeArcadeSettings(source.arcade),
     };
 }
 

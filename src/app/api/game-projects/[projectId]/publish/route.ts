@@ -3,8 +3,9 @@ import { nowIso } from "@/lib/game-engine/ids";
 import { compileScripts } from "@/lib/game-engine/script/compiler";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { MAX_ARCADE_GAME_BYTES, remixSourceOf, type ArcadeRecord } from "@/lib/server/arcade";
-import { commitServerMutations, getServerDocument, listServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
-import { missingGameAudio, releaseArcadeAudio, syncArcadeAudio } from "@/lib/server/game-assets";
+import { clearChangedBoards, removeArcadeGame } from "@/lib/server/arcade-scores";
+import { commitServerMutations, getServerDocument, listServerCollection } from "@/lib/server/firebase-rest";
+import { missingGameAudio, syncArcadeAudio } from "@/lib/server/game-assets";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
 import {
     apiError,
@@ -90,11 +91,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
             // Remixing stays off unless the author turns it on; republishing keeps the last choice.
             allowRemix: typeof body.allowRemix === "boolean" ? body.allowRemix : existing?.allowRemix === true,
             remixOf: remixSourceOf(record.remixOf),
+            // Leaderboards and achievements (V5): scores are checked against this copy without reading the game.
+            arcade: project.settings.arcade,
             createdAt: existing?.createdAt || now,
             updatedAt: now,
         };
         await commitServerMutations([{ type: existing ? "update" : "create", path: `arcade_games/${projectId}`, data: data as Record<string, unknown>, ...(existing ? { updateTime: existing._updateTime } : {}) }]);
         await syncArcadeAudio(projectId, assetHashes);
+        // Boards that were removed, or now rank the other way, start empty.
+        if (existing) {
+            await clearChangedBoards(projectId, existing.arcade, project.settings.arcade).catch((error: unknown) => {
+                console.warn("[arcade] stale leaderboard cleanup failed:", error instanceof Error ? error.message : error);
+            });
+        }
         return apiJson({ success: true, arcadeId: projectId }, 200, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Oyun yayınlanamadı.");
@@ -105,14 +114,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     try {
         const { email, rate } = await authorizeGameRequest(request, { mutation: true, bucket: "write" });
         const projectId = assertProjectId((await context.params).projectId);
-        const existing = await getServerDocument<ArcadeRecord>(`arcade_games/${projectId}`);
+        const existing = await getServerDocument<ArcadeRecord>(`arcade_games/${projectId}`, { fields: ["ownerEmail"] });
         if (!existing || existing.ownerEmail !== email) throw new GameApiError(404, "Yayınlanmış oyun bulunamadı.");
-        const likes = await runServerQuery<{ gameId?: string }>({ collectionId: "arcade_likes", where: [{ field: "gameId", op: "EQUAL", value: projectId }], select: ["gameId"], limit: 450 }).catch(() => []);
-        await commitServerMutations([
-            { type: "delete", path: `arcade_games/${projectId}` },
-            ...likes.map((like) => ({ type: "delete" as const, path: like._path })),
-        ]);
-        await releaseArcadeAudio(projectId).catch(() => 0);
+        // Likes, scores and unlocks go with the game, and its own copies of audio and model files are released.
+        await removeArcadeGame(projectId);
         return apiJson({ success: true }, 200, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Yayından kaldırılamadı.");

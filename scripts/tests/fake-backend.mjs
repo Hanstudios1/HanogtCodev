@@ -197,7 +197,28 @@ export function createBackend(seed, options = {}) {
             const segments = path.slice(prefix.length).split("/");
             return allDescendants ? segments.length >= 2 && segments.length % 2 === 0 && segments[segments.length - 2] === collectionId : segments.length === 2 && segments[0] === collectionId;
         }).filter((path) => matches(docs.get(path).data, query.where)).sort();
-        return json(200, found.slice(0, query.limit ?? found.length).map((path) => ({ document: documentJson(path) })));
+        // orderBy, like Firestore: by each field in turn (numbers before strings), then by path.
+        const orders = query.orderBy ?? [];
+        if (orders.length) {
+            const rank = (value) => (value === undefined || value === null ? 0 : typeof value === "boolean" ? 1 : typeof value === "number" ? 2 : 3);
+            found.sort((a, b) => {
+                for (const order of orders) {
+                    const x = lookup(docs.get(a).data, order.field.fieldPath).value;
+                    const y = lookup(docs.get(b).data, order.field.fieldPath).value;
+                    const difference = rank(x) - rank(y) || (x < y ? -1 : x > y ? 1 : 0);
+                    if (difference) return order.direction === "DESCENDING" ? -difference : difference;
+                }
+                return a < b ? -1 : a > b ? 1 : 0;
+            });
+        }
+        // select: only the named fields come back (the document name always does).
+        const fields = query.select?.fields?.map((field) => field.fieldPath);
+        const project = (path) => {
+            const document = documentJson(path);
+            if (!fields) return document;
+            return { ...document, fields: Object.fromEntries(Object.entries(document.fields).filter(([key]) => fields.includes(key))) };
+        };
+        return json(200, found.slice(0, query.limit ?? found.length).map((path) => ({ document: project(path) })));
     }
 
     function headerOf(init, name) {

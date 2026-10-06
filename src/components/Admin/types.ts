@@ -316,6 +316,7 @@ export type AdminAuditAction =
     | "arcade.unpublish"
     | "arcade.feature"
     | "arcade.unfeature"
+    | "arcade.remove_scores"
     | "feedback.set_status"
     | "feedback.reply"
     | "feedback.delete"

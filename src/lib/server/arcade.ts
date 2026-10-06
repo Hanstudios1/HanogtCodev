@@ -24,6 +24,8 @@ export type ArcadeRecord = {
     allowRemix?: boolean;
     /** Set when the game was made from someone else's remix; shown as attribution. */
     remixOf?: unknown;
+    /** Leaderboard and achievement definitions copied from the game when it was published (V5). */
+    arcade?: unknown;
     createdAt?: string;
     updatedAt?: string;
     _id?: string;

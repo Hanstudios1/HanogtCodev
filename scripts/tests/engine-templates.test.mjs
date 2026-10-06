@@ -257,6 +257,12 @@ test("snake (C++): turns, eats, grows, speeds up and dies at the wall", () => {
     const game = startWorld(createProjectFromTemplate("snake-2d"), { storage });
     game.step(2);
     const state = game.fields("Snake");
+    // Apples land on random cells, sometimes right in the snake's way: the test places them itself.
+    const noApple = () => {
+        state.foodX = -99;
+        state.foodY = -99;
+    };
+    noApple();
     assert.equal(state.xs.items.length, 4);
     assert.equal(game.findAll("Segment").length, 4);
     const startY = state.ys.items[0];
@@ -270,6 +276,7 @@ test("snake (C++): turns, eats, grows, speeds up and dies at the wall", () => {
     assert.equal(state.xs.items.length, 5);
     assert.equal(game.findAll("Segment").length, 5);
     assert.ok(state.delay < 0.16, "eating speeds the snake up");
+    noApple();
     game.step(60 * 10);
     assert.equal(state.over, true);
     assert.equal(game.find("GameOverPanel").activeInHierarchy, true);

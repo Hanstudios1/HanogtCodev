@@ -13,6 +13,7 @@ import {
     createUIProgressBar,
     createUIText,
 } from "./components";
+import { emptyArcadeSettings } from "./arcade";
 import { defaultInputSettings } from "./input-actions";
 import { emptyLocalization } from "./localization";
 import { createEngineId, nowIso } from "./ids";
@@ -325,6 +326,7 @@ export function createBlankProject(name: string, dimension: GameDimension, id = 
             rules: 5,
             input: defaultInputSettings(),
             localization: emptyLocalization(),
+            arcade: emptyArcadeSettings(),
         },
         metadata: { createdAt: timestamp, updatedAt: timestamp },
     };

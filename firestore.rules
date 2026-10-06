@@ -91,6 +91,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Leaderboard entries and unlocked achievements (V5): only the Arcade
+    // routes write them, after checking the play token and the game's rules.
+    match /arcade_scores/{entryId} {
+      allow read, write: if false;
+    }
+
+    match /arcade_achievements/{recordId} {
+      allow read, write: if false;
+    }
+
     match /news_comments/{commentId} {
       allow read, write: if false;
     }

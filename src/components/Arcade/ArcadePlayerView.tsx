@@ -1,17 +1,21 @@
 "use client";
 
-import { ArrowLeft, Copy, ExternalLink, GitFork, Heart, Keyboard, LoaderCircle, Lock, Maximize2, Pencil, Play, RotateCcw, Share2, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, GitFork, Heart, Keyboard, LoaderCircle, Lock, Maximize2, Medal, Pencil, Play, RotateCcw, Share2, Trophy, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import { useI18n, type Copy as CopyText } from "@/lib/i18n";
+import { formatArcadeScore } from "@/lib/game-engine/arcade";
 import { createEngineId } from "@/lib/game-engine/ids";
 import type { GamePlayer } from "@/lib/game-engine/player/game-player";
+import type { ArcadeState } from "@/lib/game-engine/runtime/arcade-runtime";
 import type { GameProjectDocument } from "@/lib/game-engine/types";
 import { saveLocalProject } from "@/components/GameEngine/editor/persistence";
 import { compactNumber, type ArcadeGameSummary } from "./ArcadeGallery";
+import { ArcadeHost, readShareScores, type ArcadeHostEvent } from "./arcade-host";
+import { ARCADE_TOAST_COPY, AchievementsCard, ArcadeToastStack, LeaderboardCard, type ArcadeToast } from "./ArcadeProgress";
 
 type GameInfo = ArcadeGameSummary & { isOwner: boolean; liked: boolean };
 
@@ -25,11 +29,20 @@ const C = {
     remixAllowed: { TR: "Yapımcı remikslemeye izin veriyor; remiksini yayımlarsan ona atıf yapılır.", EN: "The author allows remixes; if you publish yours, they're credited." },
     linkCopied: { TR: "Bağlantı kopyalandı.", EN: "Link copied." },
     pricing: { TR: "Fiyatlandırma", EN: "Pricing" },
+    scoreFailed: { TR: "Skor kaydedilemedi", EN: "Score not saved" },
+    scoreFailedDetail: { TR: "Bağlantıyı kontrol edip yeniden oynayın.", EN: "Check your connection and play again." },
+    hasLeaderboard: { TR: "Skor tablosu", EN: "Leaderboard" },
+    hasAchievements: { TR: "{count} başarım", EN: "{count} achievements" },
 } satisfies Record<string, CopyText>;
+
+const TOAST_MS = 4500;
 
 export default function ArcadePlayerView({ gameId }: { gameId: string }) {
     const router = useRouter();
-    const { data: session } = useSession();
+    const { data: session, status: sessionStatus } = useSession();
+    const signedIn = Boolean(session?.user);
+    // The player waits for the session, so leaderboards know whose progress to load.
+    const sessionReady = sessionStatus !== "loading";
     const { tx, locale, language } = useI18n();
     // Server messages are written in Turkish; other languages get the localized fallback.
     const serverText = (message: string | undefined | null, fallback: CopyText) => (language === "TR" && message ? message : tx(fallback));
@@ -44,10 +57,57 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
     const [project, setProject] = useState<GameProjectDocument | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [started, setStarted] = useState(false);
+    // The project whose player is ready: Play shows once it is (a click before that would do nothing).
+    const [readyProject, setReadyProject] = useState<GameProjectDocument | null>(null);
     const [muted, setMuted] = useState(false);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
     const [limitReached, setLimitReached] = useState(false);
+    // Leaderboards and achievements (V5).
+    const hostRef = useRef<ArcadeHost | null>(null);
+    const signedInRef = useRef(signedIn);
+    const [arcadeState, setArcadeState] = useState<ArcadeState>({ best: {}, unlocked: [] });
+    const [shareScores, setShareScores] = useState(() => readShareScores());
+    const [boardId, setBoardId] = useState("");
+    const [boardRefresh, setBoardRefresh] = useState(0);
+    const [toasts, setToasts] = useState<ArcadeToast[]>([]);
+    const toastSeq = useRef(0);
+    const progressRef = useRef<HTMLDivElement | null>(null);
+    const arcadeEventRef = useRef<(event: ArcadeHostEvent) => void>(() => undefined);
+
+    useEffect(() => {
+        signedInRef.current = signedIn;
+        hostRef.current?.setSignedIn(signedIn);
+    }, [signedIn]);
+
+    useEffect(() => {
+        const toast = (kind: ArcadeToast["kind"], title: string, detail: string) => {
+            toastSeq.current += 1;
+            const id = toastSeq.current;
+            setToasts((current) => [...current.slice(-2), { id, kind, title, detail }]);
+            window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), TOAST_MS);
+        };
+        arcadeEventRef.current = (event) => {
+            if (event.kind === "state") {
+                setArcadeState(event.state);
+                // The running game learns the server's bests and unlocks too (Leaderboard.GetBest).
+                playerRef.current?.arcade.merge(event.state);
+            } else if (event.kind === "achievement") {
+                toast("achievement", tx(ARCADE_TOAST_COPY.unlocked), event.achievement.name);
+            } else if (event.kind === "best") {
+                const score = formatArcadeScore(event.score, event.board.format, locale);
+                toast("best", tx(ARCADE_TOAST_COPY.newBest), `${event.board.name}: ${score}${event.saved ? ` · ${tx(ARCADE_TOAST_COPY.savedOnBoard)}` : ""}`);
+                if (event.saved) setBoardRefresh((value) => value + 1);
+            } else if (event.kind === "error") {
+                toast("error", tx(C.scoreFailed), language === "TR" && event.message ? event.message : tx(C.scoreFailedDetail));
+            } else if (event.kind === "show") {
+                if (event.panel === "leaderboard" && event.boardId) setBoardId(event.boardId);
+                if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+                const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+                window.setTimeout(() => progressRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }), 50);
+            }
+        };
+    }, [tx, locale, language]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -67,26 +127,40 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
 
     useEffect(() => {
         const stage = stageRef.current;
-        if (!stage || !project) return;
+        if (!stage || !project || !sessionReady) return;
         let disposed = false;
         let instance: GamePlayer | null = null;
+        const arcade = project.settings.arcade;
+        const host = arcade.leaderboards.length || arcade.achievements.length
+            ? new ArcadeHost(gameId, arcade, (event) => arcadeEventRef.current(event), signedInRef.current, readShareScores())
+            : null;
+        hostRef.current = host;
+        // A signed-in player sees what they already reached before pressing Play.
+        if (host && signedInRef.current) void host.loadProgress();
         void import("@/lib/game-engine/player/game-player").then(({ GamePlayer }) => {
             if (disposed) return;
-            instance = new GamePlayer(stage, { project, touchControls: project.settings.touchControls ? "auto" : false, locale: localeRef.current });
+            instance = new GamePlayer(stage, { project, touchControls: project.settings.touchControls ? "auto" : false, locale: localeRef.current, arcadeServices: host });
+            // Progress kept on this device (guests) is there from the first frame.
+            if (host) instance.arcade.merge(host.state);
             playerRef.current = instance;
+            setReadyProject(project);
         });
         return () => {
             disposed = true;
+            host?.dispose();
             instance?.dispose();
             playerRef.current = null;
+            hostRef.current = null;
         };
-    }, [project]);
+    }, [project, sessionReady, gameId]);
 
     const start = () => {
         const player = playerRef.current;
         if (!player) return;
         player.start();
         setStarted(true);
+        // Signed-in players get a play token: scores count from now.
+        void hostRef.current?.begin();
         void fetch(`/api/arcade/${encodeURIComponent(gameId)}/play`, { method: "POST" })
             .then((response) => response.json())
             .then((payload: { plays?: number }) => {
@@ -111,6 +185,13 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
     };
 
     const canRemix = Boolean(game && (game.allowRemix || game.isOwner));
+    const arcadeSettings = project?.settings.arcade ?? null;
+    const boards = arcadeSettings?.leaderboards ?? [];
+    const achievements = arcadeSettings?.achievements ?? [];
+    const changeShareScores = (value: boolean) => {
+        setShareScores(value);
+        hostRef.current?.setShare(value);
+    };
 
     const remix = async () => {
         if (!project || !game || !canRemix) return;
@@ -175,9 +256,10 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                     <div>
                         <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-black shadow-2xl shadow-indigo-500/10 dark:border-white/10">
                             <div ref={stageRef} className="aspect-video w-full" />
+                            <ArcadeToastStack toasts={toasts} onDismiss={(id) => setToasts((current) => current.filter((item) => item.id !== id))} />
                             {!started ? (
                                 <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-black/30 via-black/50 to-black/80">
-                                    {project ? (
+                                    {project && readyProject === project ? (
                                         <button type="button" onClick={start} className="group flex flex-col items-center gap-3 text-white">
                                             <span className="grid h-20 w-20 place-items-center rounded-full bg-white text-zinc-900 shadow-2xl shadow-white/20 transition group-hover:scale-110 animate-pulse-ring"><Play className="h-8 w-8 translate-x-0.5 fill-current" /></span>
                                             <span className="text-lg font-black">{game?.title ?? tx({ TR: "Oyna", EN: "Play" })}</span>
@@ -193,6 +275,29 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                             <button type="button" onClick={() => playerRef.current?.toggleFullscreen()} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 text-[13px] font-semibold text-zinc-700 transition hover:bg-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-white/10"><Maximize2 className="h-4 w-4" />{tx({ TR: "Tam ekran", EN: "Fullscreen" })}</button>
                             <span className="ms-auto inline-flex items-center gap-1.5 text-[12px] text-zinc-500"><Keyboard className="h-4 w-4" />{tx({ TR: "Klavye · fare · dokunmatik", EN: "Keyboard · mouse · touch" })}</span>
                         </div>
+                        {boards.length || achievements.length ? (
+                            <div ref={progressRef} id="arcade-progress" className={`mt-5 grid scroll-mt-24 gap-4 ${boards.length && achievements.length ? "md:grid-cols-2" : ""}`}>
+                                {boards.length ? (
+                                    <LeaderboardCard
+                                        gameId={gameId}
+                                        boards={boards}
+                                        boardId={boardId || boards[0].id}
+                                        onBoardChange={setBoardId}
+                                        signedIn={signedIn}
+                                        share={shareScores}
+                                        onShareChange={changeShareScores}
+                                        localBest={arcadeState.best}
+                                        refreshKey={boardRefresh}
+                                        onOwnRemoved={(id) => {
+                                            // The next score on this board counts as a new best again.
+                                            hostRef.current?.forgetBest(id);
+                                            playerRef.current?.arcade.forgetBest(id);
+                                        }}
+                                    />
+                                ) : null}
+                                <AchievementsCard achievements={achievements} unlocked={arcadeState.unlocked} signedIn={signedIn} />
+                            </div>
+                        ) : null}
                     </div>
                     <aside className="space-y-4">
                         <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-white/10 dark:bg-zinc-900/70">
@@ -217,6 +322,8 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
                                         <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold uppercase text-zinc-600 dark:bg-white/10 dark:text-zinc-300">{game.dimension}</span>
                                         {game.languages.map((language) => <span key={language} className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-300">{language}</span>)}
                                         {game.engineVersion ? <span className="rounded-full bg-fuchsia-500/10 px-2.5 py-1 text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-300">Hanogt Engine V{game.engineVersion}</span> : null}
+                                        {boards.length ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300"><Trophy className="h-3 w-3" aria-hidden />{tx(C.hasLeaderboard)}</span> : null}
+                                        {achievements.length ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300"><Medal className="h-3 w-3" aria-hidden />{tx(C.hasAchievements, { count: achievements.length })}</span> : null}
                                     </div>
                                     <div className="mt-5 grid grid-cols-2 gap-2">
                                         <div className="rounded-xl bg-zinc-50 p-3 text-center dark:bg-white/[0.04]"><p className="text-xl font-black text-zinc-900 dark:text-white">{compactNumber(game.plays, locale)}</p><p className="text-[11px] text-zinc-500">{tx({ TR: "oynanma", EN: "plays" })}</p></div>

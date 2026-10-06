@@ -548,6 +548,7 @@
       "src/app/settings/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadeProgress.tsx",
       "src/components/CloudStatusBanner.tsx",
       "src/components/Editor/CollabFriendPicker.tsx",
       "src/components/Editor/PublishDialog.tsx",
@@ -4680,6 +4681,7 @@
     "files": [
       "src/app/feedback/page.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/Arcade/ArcadeProgress.tsx",
       "src/components/Editor/WebPreview.tsx",
       "src/components/Groups/workspace/SafetySettings.tsx",
       "src/components/News/AiRankings.tsx"
@@ -6766,9 +6768,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "15dqr67y0k8": {
-    "en": "Pseudonymisation: arena votes, Arcade likes and rate-limit records use non-reversible keys derived with a secret salt instead of your e-mail or IP address.",
-    "tr": "Takma adlandırma: Arena oyları, Arcade beğenileri ve hız sınırı kayıtlarında e-posta veya IP adresi yerine, gizli bir tuzla türetilen ve geri çevrilemeyen anahtarlar kullanılır.",
+  "28rb1lggx1t": {
+    "en": "Pseudonymisation: arena votes, Arcade likes, leaderboard entries, unlocked achievements and rate-limit records use non-reversible keys derived with a secret salt instead of your e-mail or IP address.",
+    "tr": "Takma adlandırma: Arena oyları, Arcade beğenileri, skor tablosu kayıtları, açılan başarımlar ve hız sınırı kayıtlarında e-posta veya IP adresi yerine, gizli bir tuzla türetilen ve geri çevrilemeyen anahtarlar kullanılır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6889,9 +6891,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "gonmfjojjc": {
-    "en": "Media comments, likes and content reports; news comments; Arcade likes and arena votes (pseudonymous); feedback board posts, comments and likes",
-    "tr": "Media yorumları, beğenileri ve içerik bildirimleri; haber yorumları; Arcade beğenileri ve arena oyları (takma kimlikle); geri bildirim panosu gönderileri, yorumları ve beğenileri",
+  "w45s25pezh": {
+    "en": "Media comments, likes and content reports; news comments; Arcade likes, leaderboard entries, unlocked achievements and arena votes (pseudonymous); feedback board posts, comments and likes",
+    "tr": "Media yorumları, beğenileri ve içerik bildirimleri; haber yorumları; Arcade beğenileri, skor tablosu kayıtları, açılan başarımlar ve arena oyları (takma kimlikle); geri bildirim panosu gönderileri, yorumları ve beğenileri",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7460,6 +7462,20 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "4ovh9rwv91": {
+    "en": "Leaderboards and achievements: a game's author can define leaderboards and achievements. When you play signed in, your best score the game reports is kept as one entry per leaderboard: your salted pseudonymous ID, your nickname (or else your user name) as it was when the score was saved, the score and the date. The leaderboard is public, including to visitors who aren't signed in, and shows your name with your score; your e-mail address is never shown and isn't part of the entry. Achievements you unlock are also kept under your pseudonymous ID with the time they were unlocked, and are shown only to you. When you start a game, the server gives you a short-lived signed play token that records when play began; scores are checked with this token and with the minimum play time and bounds the author set. The token isn't stored.",
+    "tr": "Skor tabloları ve başarımlar: Bir oyunun yapımcısı skor tabloları ve başarımlar tanımlayabilir. Giriş yapmış olarak oynadığınızda oyunun bildirdiği en iyi skorunuz her tablo için bir kayıt olarak saklanır: tuzlanmış takma kimliğiniz, skorun kaydedildiği andaki takma adınız (yoksa kullanıcı adınız), skor ve tarih. Bu tablo, giriş yapmamış ziyaretçiler dahil herkese açıktır ve adınızı skorunuzla birlikte gösterir; e-posta adresiniz hiçbir zaman gösterilmez ve kayıtta yer almaz. Açtığınız başarımlar da takma kimliğinizle, açıldıkları zamanla birlikte saklanır ve yalnızca size gösterilir. Oyunu başlattığınızda sunucu, oynamanın ne zaman başladığını gösteren kısa ömürlü imzalı bir oyun jetonu verir; skorlar bu jetonla ve yapımcının belirlediği en kısa oynama süresi ve sınırlarla denetlenir. Jeton saklanmaz.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2oanmaz3ft": {
+    "en": "You can turn off sharing your scores on the game's page (the choice is kept in your browser) and remove your own entry from a leaderboard at any time. The game's author and the Hanogt team can delete entries that break the rules. When you play without signing in, your best scores and achievements are kept only in this browser.",
+    "tr": "Skorlarınızı tabloda paylaşmayı oyun sayfasından kapatabilir (bu seçim tarayıcınızda tutulur) ve kendi kaydınızı istediğiniz zaman tablodan kaldırabilirsiniz. Oyunun yapımcısı ve Hanogt ekibi kuralları çiğneyen kayıtları silebilir. Giriş yapmadan oynadığınızda en iyi skorlarınız ve başarımlarınız yalnızca bu tarayıcıda tutulur.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "27lbqfzlf00": {
     "en": "Scripts are scanned by Security Bot before publishing; games with high-risk code are not published.",
     "tr": "Yayından önce scriptler Security Bot ile taranır; yüksek riskli kod içeren oyunlar yayımlanmaz.",
@@ -7481,9 +7497,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1qvskg6plxr": {
-    "en": "You can unpublish a game at any time, but copies others have already exported or remixed can't be deleted remotely.",
-    "tr": "Yayını istediğiniz zaman kaldırabilirsiniz; başkalarının daha önce dışa aktardığı veya remikslediği kopyaların uzaktan silinmesi mümkün değildir.",
+  "2c0uro4sphs": {
+    "en": "You can unpublish a game at any time; its likes, leaderboard entries and unlocked achievements are deleted with it. Copies others have already exported or remixed can't be deleted remotely.",
+    "tr": "Yayını istediğiniz zaman kaldırabilirsiniz; oyunla birlikte beğenileri, skor tablosu kayıtları ve açılan başarımları da silinir. Başkalarının daha önce dışa aktardığı veya remikslediği kopyaların uzaktan silinmesi mümkün değildir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8742,6 +8758,20 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "211a04hhikr": {
+    "en": "Leaderboard entries and unlocked achievements (pseudonymous)",
+    "tr": "Skor tablosu kayıtları ve açılan başarımlar (takma kimlikle)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1zby0estczr": {
+    "en": "Until you remove your entry, the author clears the board, the game is unpublished or your account is deleted; deleting your content removes your leaderboard entries too",
+    "tr": "Kaydınızı kaldırana, yapımcı tabloyu temizleyene ya da oyun yayından kalkana veya hesabınız silinene kadar; içerik silmede skor kayıtlarınız da silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "aw06ks8c8c": {
     "en": "One-to-one messages and voice messages",
     "tr": "Birebir mesajlar ve sesli mesajlar",
@@ -9550,6 +9580,13 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "2bpw5fwhh5x": {
+    "en": "Best scores and achievements in Arcade games played without signing in; your choice to share your scores on leaderboards",
+    "tr": "Giriş yapmadan oynanan Arcade oyunlarındaki en iyi skorlar ve başarımlar; skorlarınızı skor tablolarında paylaşma seçiminiz",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "1hr07fsc9js": {
     "en": "Copy and paste inside the game engine",
     "tr": "Oyun motorunda kopyala/yapıştır",
@@ -9683,9 +9720,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1jujhdiptd": {
-    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account record (including your friends list), code and game projects, audio library (file names with download links), Arcade games, Media posts, group records, news comments, Arcade likes and arena votes as a JSON file, and “Delete My Account” deletes your account and the related data. You can correct your profile in Account Settings. For data not included in the file, such as messages, you can make a request.",
-    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap kaydınızı (arkadaş listesi dahil), kod ve oyun projelerinizi, ses kitaplığınızı (dosya adları ve indirme bağlantılarıyla), Arcade oyunlarınızı, Media yayınlarınızı, grup kayıtlarınızı, haber yorumlarınızı, Arcade beğenilerinizi ve arena oylarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler. Profil bilgilerinizi Hesap Ayarları'ndan düzeltebilirsiniz. Mesajlar gibi bu dosyada yer almayan veriler için başvuru yapabilirsiniz.",
+  "f6z6jyhubh": {
+    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account record (including your friends list), code and game projects, audio library (file names with download links), Arcade games, Media posts, group records, news comments, Arcade likes, leaderboard entries, achievements and arena votes as a JSON file, and “Delete My Account” deletes your account and the related data. You can correct your profile in Account Settings. For data not included in the file, such as messages, you can make a request.",
+    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap kaydınızı (arkadaş listesi dahil), kod ve oyun projelerinizi, ses kitaplığınızı (dosya adları ve indirme bağlantılarıyla), Arcade oyunlarınızı, Media yayınlarınızı, grup kayıtlarınızı, haber yorumlarınızı, Arcade beğenilerinizi, skor tablosu kayıtlarınızı, başarımlarınızı ve arena oylarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler. Profil bilgilerinizi Hesap Ayarları'ndan düzeltebilirsiniz. Mesajlar gibi bu dosyada yer almayan veriler için başvuru yapabilirsiniz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -12518,6 +12555,20 @@
   "1dw3ct6gq45": {
     "en": "Like and play counts are not a guarantee of quality or safety.",
     "tr": "Beğeni ve oynanma sayıları kalite veya güvenlik garantisi değildir.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1hp5vw40gu3": {
+    "en": "Leaderboards and achievements: scores come from inside the game, in the player's browser. The server checks the play token, the bounds the author set and the minimum play time, but can't prove a score was earned; so leaderboards are shown as “unverified”, and rankings don't give rise to any prize, title or other right.",
+    "tr": "Skor tabloları ve başarımlar: Skorlar oyunun içinden, oyuncunun tarayıcısından gelir. Sunucu oyun jetonunu, yapımcının belirlediği sınırları ve en kısa oynama süresini denetler ama skorun gerçekten kazanıldığını kanıtlayamaz; bu yüzden tablolar “doğrulanmamış” olarak gösterilir ve sıralamalar bir ödül, unvan veya başka bir hak doğurmaz.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "jc2q4sh5z4": {
+    "en": "You may not obtain scores or achievements by cheating (modifying the game, sending requests by hand or with automated tools, or using another account's session), or appear on leaderboards with offensive or misleading names. A game's author can delete entries on their game's leaderboards and reset them; the Hanogt team can remove entries that break the rules, and a breach of this section is treated like any other breach of these Terms.",
+    "tr": "Skorları veya başarımları hileyle (oyunu değiştirerek, istekleri elle ya da otomatik araçlarla göndererek veya başka bir hesabın oturumunu kullanarak) elde edemez, tablolara saldırgan ya da yanıltıcı adlarla giremezsiniz. Oyunun yapımcısı kendi oyununun tablolarındaki kayıtları silebilir ve tabloları sıfırlayabilir; Hanogt ekibi kurallara aykırı kayıtları kaldırabilir ve bu bölümün ihlali de Şartların diğer ihlalleri gibi değerlendirilir.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -16991,6 +17042,13 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "tafh73pojq": {
+    "en": "Leaderboard entries removed",
+    "tr": "Skor tablosundan kayıt silindi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "19y2s5s5w43": {
     "en": "Feedback status changed",
     "tr": "Geri bildirim durumu değişti",
@@ -19196,6 +19254,7 @@
     "files": [
       "src/components/Admin/PaddleCard.tsx",
       "src/components/Admin/ReportsPanel.tsx",
+      "src/components/Arcade/ArcadeProgress.tsx",
       "src/components/HanogtAI/ChangesCard.tsx",
       "src/lib/social/bots.ts"
     ]
@@ -20068,7 +20127,8 @@
     "tr": "Görünür",
     "files": [
       "src/components/Admin/PlansSection.tsx",
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "1tbdssrmbr7": {
@@ -22484,6 +22544,36 @@
       "src/components/Arcade/ArcadePlayerView.tsx"
     ]
   },
+  "17a1yrah39d": {
+    "en": "Score not saved",
+    "tr": "Skor kaydedilemedi",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "1kpasor2hia": {
+    "en": "Check your connection and play again.",
+    "tr": "Bağlantıyı kontrol edip yeniden oynayın.",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "gv9o3j4dfs": {
+    "en": "Leaderboard",
+    "tr": "Skor tablosu",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Arcade/ArcadeProgress.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1nw2z29ql8e": {
+    "en": "{count} achievements",
+    "tr": "{count} başarım",
+    "files": [
+      "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
   "by63y63lnb": {
     "en": "Couldn't open the game",
     "tr": "Oyun açılamadı",
@@ -22603,6 +22693,177 @@
     "tr": "Bu oyun nasıl yapıldı? Belgeler",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx"
+    ]
+  },
+  "1blt6z7jpbj": {
+    "en": "Unverified",
+    "tr": "Doğrulanmamış",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1wjunqmtmtl": {
+    "en": "Scores come from inside the game, in the player's browser. The server checks the minimum play time and the author's bounds but can't rule out cheating.",
+    "tr": "Skorlar oyunun içinden, oyuncunun tarayıcısından gelir. Sunucu en kısa oynama süresini ve yapımcının sınırlarını denetler ama hileyi tamamen engelleyemez.",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "w4hzdy256k": {
+    "en": "No scores yet. Be the first!",
+    "tr": "Henüz skor yok. İlk sen ol!",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "19y16nvuua0": {
+    "en": "you",
+    "tr": "sen",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx",
+      "src/components/Editor/CollabPanel.tsx",
+      "src/lib/collab/copy.ts"
+    ]
+  },
+  "a9eo6xdwwn": {
+    "en": "Your best",
+    "tr": "Senin en iyin",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "2447rj9dyua": {
+    "en": "outside the top {count}",
+    "tr": "ilk {count} dışında",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1355n0x5r1e": {
+    "en": "Your best on this device",
+    "tr": "Bu cihazdaki en iyin",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "ktb1kelyyv": {
+    "en": "Sign in to put your score on the board",
+    "tr": "Skorunu tabloya eklemek için giriş yap",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1d3jerl7clw": {
+    "en": "Share my scores on the board",
+    "tr": "Skorlarımı tabloda paylaş",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "2bh6hj87scw": {
+    "en": "Sharing is off: your scores are only kept while you play.",
+    "tr": "Paylaşım kapalı: skorların yalnızca bu oyun sırasında tutulur.",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "15oj25g9mxs": {
+    "en": "Remove my score",
+    "tr": "Skorumu kaldır",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "228qhrsmkz9": {
+    "en": "Remove entry",
+    "tr": "Kaydı sil",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "5e8tmn6r8k": {
+    "en": "Remove {name}'s entry?",
+    "tr": "{name} adlı oyuncunun kaydı silinsin mi?",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "4ay65uags6": {
+    "en": "Clear board",
+    "tr": "Tabloyu temizle",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "4tgearhz5h": {
+    "en": "Delete every score on \"{board}\"? This can't be undone.",
+    "tr": "\"{board}\" tablosundaki bütün skorlar silinsin mi? Bu geri alınamaz.",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1ej5xmx9nh9": {
+    "en": "The leaderboard couldn't be loaded.",
+    "tr": "Skor tablosu yüklenemedi.",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "16vqtes7oev": {
+    "en": "The entry couldn't be removed.",
+    "tr": "Kayıt silinemedi.",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "11u4mtuntuz": {
+    "en": "Achievements",
+    "tr": "Başarımlar",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "wweaigyr14": {
+    "en": "Hidden achievement",
+    "tr": "Gizli başarım",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1afhkw6ahyd": {
+    "en": "Unlock it to see what it is.",
+    "tr": "Açınca ne olduğu görünür.",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1yp6kr4kcie": {
+    "en": "Kept on this device. Sign in to keep them on your account.",
+    "tr": "Bu cihazda saklanıyor. Giriş yaparsan hesabına kaydedilir.",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1myeg3784xz": {
+    "en": "Achievement unlocked",
+    "tr": "Başarım açıldı",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "spey1b8mw1": {
+    "en": "New best",
+    "tr": "Yeni rekor",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
+    ]
+  },
+  "1xelyl163t8": {
+    "en": "saved on the leaderboard",
+    "tr": "skor tablosuna kaydedildi",
+    "files": [
+      "src/components/Arcade/ArcadeProgress.tsx"
     ]
   },
   "yp19ctkqlo": {
@@ -25219,14 +25480,6 @@
     "tr": "Kendi açık dosyalarına dönersin. Ayrıldıktan sonra kodun bir kopyasını saklayabilirsin.",
     "files": [
       "src/components/Editor/CollabPanel.tsx"
-    ]
-  },
-  "19y16nvuua0": {
-    "en": "you",
-    "tr": "sen",
-    "files": [
-      "src/components/Editor/CollabPanel.tsx",
-      "src/lib/collab/copy.ts"
     ]
   },
   "anzypp6ns6": {
@@ -29547,6 +29800,189 @@
   "l4sl9sjze6": {
     "en": "Scripts can change these with ScreenEffects while the game runs; reloading the scene brings these values back.",
     "tr": "Betikler oyun sırasında ScreenEffects ile değiştirebilir; sahne yeniden yüklenince bu değerlere döner.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1a931upl19v": {
+    "en": "Leaderboards and achievements are kept in the Arcade for signed-in players. Report to them from scripts:",
+    "tr": "Skor tabloları ve başarımlar Arcade'de giriş yapan oyuncular için saklanır. Betiklerden şöyle bildirin:",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2b255jah9dk": {
+    "en": "Leaderboards",
+    "tr": "Skor tabloları",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "omza7ue5oi": {
+    "en": "Add leaderboard",
+    "tr": "Tablo ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zlhuufi2nl": {
+    "en": "Add achievement",
+    "tr": "Başarım ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "24sgn65dmqu": {
+    "en": "No leaderboards yet. Add one and send scores with Leaderboard.Submit in a script.",
+    "tr": "Henüz skor tablosu yok. Bir tane ekleyin ve betikte Leaderboard.Submit ile skor gönderin.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "11vmwvcnqkv": {
+    "en": "No achievements yet. Scripts unlock them with Achievements.Unlock.",
+    "tr": "Henüz başarım yok. Betikte Achievements.Unlock ile açılırlar.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "sy8sa1dddz": {
+    "en": "Id",
+    "tr": "Kimlik",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2bify8p8yqb": {
+    "en": "Ranking",
+    "tr": "Sıralama",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "mhuwvxtqxh": {
+    "en": "Higher is better (points)",
+    "tr": "Yüksek skor önde (puan)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zsrovuq7vb": {
+    "en": "Lower is better (time)",
+    "tr": "Düşük skor önde (süre)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1omirkgtuyz": {
+    "en": "Shown as",
+    "tr": "Gösterim",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1j0xshcydpb": {
+    "en": "Number (12,500)",
+    "tr": "Sayı (12.500)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1goi2h47uh4": {
+    "en": "Time (1:23.45)",
+    "tr": "Süre (1:23.45)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1irs84btntn": {
+    "en": "Lowest score",
+    "tr": "En düşük skor",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1cauy5ek2qa": {
+    "en": "Highest score",
+    "tr": "En yüksek skor",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "oolh41vjk9": {
+    "en": "Min. play (s)",
+    "tr": "En az oynama (sn)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "lrkt8pbz5o": {
+    "en": "Remove leaderboard",
+    "tr": "Tabloyu kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "28bh9qua6f3": {
+    "en": "Remove achievement",
+    "tr": "Başarımı kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "25bgxdmwto4": {
+    "en": "Hidden: its name shows once unlocked",
+    "tr": "Gizli: açılana kadar adı görünmez",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "29cq0nsb061": {
+    "en": "An id uses lowercase letters, digits, - or _ and starts with a letter or digit.",
+    "tr": "Kimlik küçük harf, rakam, - ya da _ içerir ve harf ya da rakamla başlar.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2685rt16oqe": {
+    "en": "The id '{id}' is already used.",
+    "tr": "'{id}' kimliği zaten kullanılıyor.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "22ims6c7jfc": {
+    "en": "New leaderboard",
+    "tr": "Yeni tablo",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1kkkmzzlb29": {
+    "en": "Score",
+    "tr": "Skor",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Landing/LandingPage.tsx"
+    ]
+  },
+  "tofajmvbo8": {
+    "en": "New achievement",
+    "tr": "Yeni başarım",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1fmndh2rs7c": {
+    "en": "The server checks every score against these bounds and the minimum play time. Scores still come from the player's browser, so leaderboards say \"unverified\" and the author can remove entries. Removing a leaderboard or changing its ranking and republishing clears its scores.",
+    "tr": "Sunucu her skoru buradaki sınırlara ve en kısa oynama süresine göre denetler. Skorlar yine de oyuncunun tarayıcısından geldiği için tablolarda \"doğrulanmamış\" yazar ve yapımcı kayıtları silebilir. Bir tabloyu kaldırıp ya da sıralamasını değiştirip yeniden yayınlarsanız o tablonun skorları sıfırlanır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "28em411t7o2": {
+    "en": "Achievement",
+    "tr": "Başarım",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -40687,13 +41123,6 @@
   "17atojakb5g": {
     "en": "Best",
     "tr": "En iyi",
-    "files": [
-      "src/components/Landing/LandingPage.tsx"
-    ]
-  },
-  "1kkkmzzlb29": {
-    "en": "Score",
-    "tr": "Skor",
     "files": [
       "src/components/Landing/LandingPage.tsx"
     ]

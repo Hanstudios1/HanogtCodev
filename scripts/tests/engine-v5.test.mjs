@@ -928,3 +928,127 @@ test("models: GLB assets are validated, Mesh Renderers keep only models the proj
     assert.deepEqual(migrated.models, []);
     assert.equal(migrated.scenes[0].objects.find((item) => item.name === "Robot").components.find((item) => item.type === "meshRenderer").modelId, null);
 });
+
+// ---------------------------------------------------------------------------
+// Leaderboards and achievements
+// ---------------------------------------------------------------------------
+
+const { ArcadeRuntime } = await load("lib/game-engine/runtime/arcade-runtime.ts");
+
+const SCORER_SCRIPT = `using UnityEngine;
+
+public class Scorer : MonoBehaviour
+{
+    public int unlocks;
+    void OnAchievementUnlocked(string id) { unlocks++; Debug.Log("unlocked " + id); }
+    public void Play()
+    {
+        Debug.Log("submit " + Leaderboard.Submit("main", 120) + " " + Leaderboard.Submit("Main", 80) + " " + Leaderboard.Submit("main", 150) + " " + Leaderboard.GetBest("main") + " " + Leaderboard.HasBest("speed"));
+        Debug.Log("time " + Leaderboard.Submit("speed", 42.5f) + " " + Leaderboard.Submit("speed", 40) + " " + Leaderboard.GetBest("speed") + " " + Leaderboard.GetName("speed"));
+        Debug.Log("refused " + Leaderboard.Submit("main", 5000) + " " + Leaderboard.Submit("nope", 1));
+        Debug.Log("ach " + Achievements.Unlock("win") + " " + Achievements.Unlock("win") + " " + Achievements.IsUnlocked("win") + " " + Achievements.unlockedCount + "/" + Achievements.count + " " + Achievements.Unlock("ghost"));
+        Leaderboard.Show("main");
+        Achievements.Show();
+        Debug.Log("online " + Leaderboard.isOnline + " " + Leaderboard.count);
+    }
+}`;
+
+function scorerProject() {
+    const project = createBlankProject("Skorlar", "2d");
+    project.id = "game_scorer_test";
+    project.settings.arcade = {
+        leaderboards: [
+            { id: "main", name: "Puan", order: "desc", format: "number", minScore: 0, maxScore: 1000, minPlaySeconds: 10 },
+            { id: "speed", name: "En hızlı", order: "asc", format: "time", minScore: 1, maxScore: 600, minPlaySeconds: 0 },
+        ],
+        achievements: [{ id: "win", name: "İlk zafer", description: "", hidden: false }, { id: "secret", name: "Gizli", description: "", hidden: true }],
+    };
+    project.scripts = [{ id: "script_scorer", name: "Scorer.cs", language: "csharp", content: SCORER_SCRIPT }];
+    project.scenes[0].objects.push({ id: "entity_scorer", name: "Scorer", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createScriptComponent("script_scorer", "Scorer")] });
+    return project;
+}
+
+test("Leaderboard and Achievements: new bests and unlocks reach the host once; scripts get OnAchievementUnlocked", () => {
+    const calls = [];
+    const services = {
+        online: true,
+        submitScore: (board, score) => calls.push(["score", board.id, score]),
+        unlockAchievement: (achievement) => calls.push(["unlock", achievement.id]),
+        show: (panel, board) => calls.push(["show", panel, board]),
+    };
+    const project = normalizeProject(scorerProject());
+    const arcade = new ArcadeRuntime(project.settings.arcade, services, { best: { main: 100, nope: 5 }, unlocked: ["secret", "ghost"] });
+    const game = startWorld(project, { arcade });
+    game.step(1);
+    game.world.sendMessage(game.find("Scorer"), "Play", undefined, "SendMessage");
+    assert.deepEqual(game.messages("info"), [
+        "submit True False True 150 False",
+        "time True True 40 En hızlı",
+        "refused False False",
+        "unlocked win",
+        "ach True False True 2/2 False",
+        "online True 2",
+    ]);
+    assert.deepEqual(calls, [
+        ["score", "main", 120], ["score", "main", 150], ["score", "speed", 42.5], ["score", "speed", 40],
+        ["unlock", "win"], ["show", "leaderboard", "main"], ["show", "achievements", null],
+    ]);
+    assert.equal(game.fields("Scorer").unlocks, 1);
+    // Unknown boards and achievements and scores out of bounds warn once each; nothing else is logged for players.
+    const problems = game.problems();
+    assert.equal(problems.length, 3, problems.join("\n"));
+    assert.ok(problems.some((message) => message.includes("'nope'") && message.includes("main, speed")));
+    assert.ok(problems.some((message) => message.includes("sınırlarının dışında")));
+    assert.ok(problems.some((message) => message.includes("'ghost'")));
+
+    // A restart shares the runtime: the bests and unlocks stay.
+    const again = startWorld(project, { arcade });
+    again.step(1);
+    assert.equal(again.world.resolveGlobal("Leaderboard").callMember("GetBest", ["main"], [], []), 150);
+    assert.deepEqual(arcade.snapshot(), { best: { main: 150, speed: 40 }, unlocked: ["secret", "win"] });
+    arcade.merge({ best: { main: 900, speed: 50 }, unlocked: ["win"] });
+    assert.deepEqual(arcade.snapshot().best, { main: 900, speed: 40 }, "a merge only ever improves a best");
+});
+
+test("Leaderboard in the editor: logged for the author, never sent; exported games warn once", () => {
+    const editor = startWorld(scorerProject(), { isEditor: true });
+    editor.step(1);
+    editor.world.sendMessage(editor.find("Scorer"), "Play", undefined, "SendMessage");
+    const info = editor.messages("info");
+    assert.ok(info.some((message) => message.startsWith("Skor tablosu 'Puan': 120 (yeni en iyi skor)") && message.includes("Editörde kaydedilmez")));
+    assert.equal(info.filter((message) => message.startsWith("Skor tablosu 'Puan'")).length, 1, "one line a second per board");
+    assert.ok(info.some((message) => message.startsWith("Skor tablosu 'En hızlı': 0:42.50")));
+    assert.ok(info.some((message) => message.startsWith("Başarım açıldı: İlk zafer.")));
+    assert.ok(info.includes("online False 2"));
+    assert.ok(editor.problems().some((message) => message.includes("Leaderboard.Show()")));
+
+    const exported = startWorld(scorerProject());
+    exported.step(1);
+    exported.world.sendMessage(exported.find("Scorer"), "Play", undefined, "SendMessage");
+    assert.equal(exported.problems().filter((message) => message.includes("yalnızca Hanogt Arcade'de kaydedilir")).length, 1);
+    assert.ok(!exported.messages("info").some((message) => message.startsWith("Skor tablosu")));
+});
+
+test("Leaderboard arguments are checked like C#: ids are text, scores are numbers", () => {
+    const project = scorerProject();
+    project.scripts[0].content = `using UnityEngine;
+public class Scorer : MonoBehaviour
+{
+    public void Play() { Leaderboard.Submit("main", "lots"); }
+    public void Empty() { Achievements.Unlock(""); }
+}`;
+    const game = startWorld(project);
+    game.step(1);
+    assert.throws(() => game.world.sendMessage(game.find("Scorer"), "Play", undefined, "SendMessage"), /sayı olmalı/);
+    assert.throws(() => game.world.sendMessage(game.find("Scorer"), "Empty", undefined, "SendMessage"), /metin olarak/);
+});
+
+test("arcade definitions live in the project settings; older documents get none", () => {
+    const fresh = normalizeProject(createBlankProject("Yeni", "2d"));
+    assert.deepEqual(fresh.settings.arcade, { leaderboards: [], achievements: [] });
+    const v4 = JSON.parse(JSON.stringify(fresh));
+    v4.version = 4;
+    delete v4.settings.arcade;
+    assert.deepEqual(normalizeProject(v4).settings.arcade, { leaderboards: [], achievements: [] });
+    assert.equal(normalizeProject(scorerProject()).settings.arcade.leaderboards[1].format, "time");
+});

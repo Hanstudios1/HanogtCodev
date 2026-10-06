@@ -8,7 +8,6 @@ import {
     auditLogMutation,
     auditLogPatch,
     authorizeAdminRequest,
-    deleteDocumentsInChunks,
     httpsUrlOrNull,
     numberOr,
     readAdminBody,
@@ -18,7 +17,8 @@ import {
     toIso,
 } from "@/lib/server/admin";
 import { assertGameId, type ArcadeRecord } from "@/lib/server/arcade";
-import { commitServerMutations, commitServerPatches, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { removeArcadeGame } from "@/lib/server/arcade-scores";
+import { commitServerPatches, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 
 export const runtime = "nodejs";
 
@@ -27,7 +27,6 @@ type AdminArcadeRecord = ArcadeRecord & { featured?: unknown };
 const ACTIONS = ["unpublish", "feature", "unfeature"] as const;
 const LIST_FIELDS = ["title", "description", "dimension", "thumbnail", "authorName", "ownerEmail", "plays", "likes", "featured", "createdAt", "updatedAt"];
 const THUMBNAIL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
-const LIKE_BATCH = 400;
 
 function thumbnail(value: unknown) {
     if (typeof value !== "string" || value.length > 80_000) return null;
@@ -72,7 +71,8 @@ export async function GET(request: NextRequest) {
 /**
  * "feature"/"unfeature" toggle the `featured` flag the gallery can highlight.
  * "unpublish" removes the game from the Arcade the same way its owner would
- * (the game record and its likes); the owner's engine project stays intact.
+ * (the game record with its likes, scores and unlocks, and its own copies of
+ * audio and model files); the owner's engine project stays intact.
  */
 export async function POST(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "moderator", mutation: true });
@@ -109,16 +109,8 @@ export async function POST(request: NextRequest) {
             return adminJson(response);
         }
 
-        const likes = await runServerQuery<{ gameId?: string }>({
-            collectionId: "arcade_likes",
-            where: [{ field: "gameId", op: "EQUAL", value: gameId }],
-            select: ["gameId"],
-            limit: 1_000,
-        }).catch(() => []);
-        const likePaths = likes.map((like) => like._path);
-        await commitServerMutations([
-            { type: "delete", path },
-            ...likePaths.slice(0, LIKE_BATCH).map((likePath) => ({ type: "delete" as const, path: likePath })),
+        // The same removal as the author's: likes, scores and unlocks, the game with the audit entry, then its files.
+        await removeArcadeGame(gameId, [
             auditLogMutation(actor, "arcade.unpublish", path, {
                 ...summary,
                 plays: numberOr(record.plays),
@@ -126,11 +118,6 @@ export async function POST(request: NextRequest) {
                 reason: reason || null,
             }),
         ]);
-        if (likePaths.length > LIKE_BATCH) {
-            await deleteDocumentsInChunks(likePaths.slice(LIKE_BATCH)).catch((error: unknown) => {
-                console.warn("[admin:arcade] like cleanup failed:", error instanceof Error ? error.message : error);
-            });
-        }
         const response: AdminArcadeActionResponse = { gameId, unpublished: true, changed: true };
         return adminJson(response);
     } catch (error) {

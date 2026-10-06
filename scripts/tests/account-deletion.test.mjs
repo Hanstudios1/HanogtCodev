@@ -53,6 +53,12 @@ function seed() {
         "arcade_likes/l1": { gameId: "game1", liker: likerHash(BERK) },
         "arcade_games/game2": { ownerEmail: BERK, likes: 1 },
         "arcade_likes/l2": { gameId: "game2", liker: likerHash(ALI) },
+        // Leaderboards and achievements (V5): Berk's score and unlock on Ali's game, Ali's on Berk's.
+        "arcade_scores/sc1": { gameId: "game1", boardId: "main", player: likerHash(BERK), name: "berk", score: 10 },
+        "arcade_achievements/ac1": { gameId: "game1", player: likerHash(BERK), unlocked: { win: "2026-10-01T00:00:00.000Z" } },
+        "arcade_scores/sc2": { gameId: "game2", boardId: "main", player: likerHash(ALI), name: "ali", score: 7 },
+        "arcade_achievements/ac2": { gameId: "game2", player: likerHash(ALI), unlocked: { win: "2026-10-01T00:00:00.000Z" } },
+        "arcade_scores/sc3": { gameId: "game2", boardId: "main", player: likerHash(CEM), name: "cem", score: 5 },
         "arena_votes/v1": { voter: voterHash(ALI), category: "code" },
 
         "news_comments/nc1": { authorEmail: ALI, newsId: NEWS_ID, text: "first" },
@@ -115,7 +121,7 @@ function seed() {
 }
 
 const BYSTANDER_DATA = [
-    `users/${BERK}`, `users/${CEM}`, `public_profiles/${BERK}`, "chats/chat2", "chats/chat2/messages/m1", "projects/p2", "arcade_games/game2",
+    `users/${BERK}`, `users/${CEM}`, `public_profiles/${BERK}`, "chats/chat2", "chats/chat2/messages/m1", "projects/p2", "arcade_games/game2", "arcade_scores/sc3",
     "news_comments/nc2", "media_posts/mp2", "groups/grpB", "groups/grpB/messages/gm4", "groups/grpC", "feedback/fb2",
     "changelog_comments/v1/comments/cc2", "support_tickets/t2", "message_stars/s3",
 ];
@@ -185,6 +191,8 @@ test('"all" deletes the account and everything it left behind', async () => {
             "chats/chat1", "chats/chat1/messages/m1", "chats/chat1/messages/m2", "calls/call1", "calls/call1/callerCandidates/c1", "calls/call1/calleeCandidates/c2",
             "projects/p1", "projects/p1/files/f1", "game_projects/g1", "game_projects/g1/scripts/s1",
             "arcade_games/game1", "arcade_likes/l1", "arcade_likes/l2", "arena_votes/v1", "news_comments/nc1",
+            // Scores and unlocks on the account's game, and its own on other games.
+            "arcade_scores/sc1", "arcade_achievements/ac1", "arcade_scores/sc2", "arcade_achievements/ac2",
             "media_posts/mp1", "media_posts/mp1/files/000", "media_likes/mp1_berk", "media_comments/mc1", "media_reports/r1", "security_training_contributions/mp1",
             "media_likes/mp2_ali", "media_comments/mc2", "media_reports/r2",
             "groups/grpA", "groups/grpA/messages/gm0", "groups/grpA/messages/gm1", "groups/grpA/files/f1", "group_invites/i1", "group_invite_links/link1", "group_bans/b1",
@@ -248,6 +256,8 @@ test('"content" removes public content and keeps the account, friends, chats and
 
         for (const path of [
             "arcade_games/game1", "arcade_likes/l1", "news_comments/nc1",
+            // Leaderboard entries are public: the account's game loses all of them, and its own entries go.
+            "arcade_scores/sc1", "arcade_achievements/ac1", "arcade_scores/sc2",
             "media_posts/mp1", "media_posts/mp1/files/000", "media_likes/mp1_berk", "media_comments/mc1", "media_reports/r1", "security_training_contributions/mp1",
             "media_comments/mc2", "feedback/fb1", "changelog_comments/v1/comments/cc1",
             // Other people's stars on the account's group messages go with them.
@@ -257,7 +267,7 @@ test('"content" removes public content and keeps the account, friends, chats and
         }
         for (const path of [
             `users/${ALI}`, `credentials/${ALI}`, `public_profiles/${ALI}`, "chats/chat1", "chats/chat1/messages/m1", "calls/call1", "projects/p1", "projects/p1/files/f1",
-            "game_projects/g1", "arcade_likes/l2", "arena_votes/v1", "media_likes/mp2_ali", "media_reports/r2", "groups/grpA", "groups/grpA/files/f1",
+            "game_projects/g1", "arcade_likes/l2", "arcade_achievements/ac2", "arena_votes/v1", "media_likes/mp2_ali", "media_reports/r2", "groups/grpA", "groups/grpA/files/f1",
             "group_invite_links/link2", "group_bans/b2", "friendRequests/fr1", "group_invites/i2", `notifications/${ALI}/items/n1`, "support_tickets/t1",
             // Private chats stay, and with them the stars on them; so do the group and the account's own stars.
             "message_stars/s2", "message_stars/s4", "message_stars/s5",
