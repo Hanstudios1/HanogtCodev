@@ -1052,3 +1052,152 @@ test("arcade definitions live in the project settings; older documents get none"
     assert.deepEqual(normalizeProject(v4).settings.arcade, { leaderboards: [], achievements: [] });
     assert.equal(normalizeProject(scorerProject()).settings.arcade.leaderboards[1].format, "time");
 });
+
+// ---------------------------------------------------------------------------
+// Web package (ZIP · PWA)
+// ---------------------------------------------------------------------------
+
+const web = await load("lib/game-engine/web-export.ts");
+const { default: JSZip } = await import("jszip");
+const vm = await import("node:vm");
+
+function webProject() {
+    const project = normalizeProject(createBlankProject("Uzay <Koşusu> & dostları", "2d"));
+    project.id = "game_web_test";
+    project.description = "Bir \"test\" oyunu";
+    project.audio = [
+        { id: "audio_a", name: "Zıpla", hash: "a".repeat(64), contentType: "audio/wav", size: 4, duration: 0.1 },
+        { id: "audio_b", name: "Müzik", hash: "b".repeat(64), contentType: "audio/mpeg", size: 4, duration: 1 },
+        { id: "audio_c", name: "Aynı", hash: "a".repeat(64), contentType: "audio/wav", size: 4, duration: 0.1 },
+    ];
+    project.models = [{ id: "model_r", name: "Robot", hash: "c".repeat(64), size: 4, triangles: 12 }];
+    return project;
+}
+
+test("web package: files by type, the manifest follows the game, the page is escaped and waits for the game", () => {
+    const project = webProject();
+    assert.deepEqual(web.packageAssets(project), {
+        ["a".repeat(64)]: `assets/${"a".repeat(64)}.wav`,
+        ["b".repeat(64)]: `assets/${"b".repeat(64)}.mp3`,
+        ["c".repeat(64)]: `assets/${"c".repeat(64)}.glb`,
+    });
+    for (const [aspect, orientation] of [["9:16", "portrait"], ["16:9", "landscape"], ["4:3", "landscape"], ["1:1", "any"], ["free", "any"]]) {
+        assert.equal(web.orientationOf(aspect), orientation);
+    }
+    const manifest = web.webManifest(project);
+    assert.equal(manifest.name, project.name);
+    assert.equal(manifest.short_name, "Uzay <Koşus…");
+    assert.equal(manifest.start_url, "./");
+    assert.equal(manifest.lang, "tr");
+    assert.deepEqual(manifest.icons.map((icon) => [icon.src, icon.purpose]), [["icons/icon-192.png", "any"], ["icons/icon-512.png", "any"], ["icons/icon-maskable-512.png", "maskable"]]);
+
+    const html = web.webIndexHtml(project, "https://example.test");
+    assert.ok(html.includes("<title>Uzay &lt;Koşusu&gt; &amp; dostları</title>"), "the title is escaped");
+    assert.ok(!html.includes("<Koşusu>"));
+    assert.ok(html.includes('content="Bir &quot;test&quot; oyunu"'));
+    assert.ok(html.includes('<link rel="manifest" href="manifest.webmanifest">'));
+    assert.ok(html.includes('navigator.serviceWorker.register("sw.js")'));
+    assert.ok(html.includes('<button type="button" id="play" disabled>'), "Play waits for game.json");
+    assert.ok(html.includes('<html lang="tr">'));
+    assert.ok(html.includes("location.protocol === \"file:\""), "explains file:// pages");
+
+    project.settings.localization = { languages: ["en", "tr"], startLanguage: "auto", entries: [] };
+    assert.ok(web.webIndexHtml(project, "https://example.test").includes("▶ Play"), "games made in English get an English page");
+    assert.ok(web.webReadme(project).includes("npx serve ."));
+});
+
+/** Runs sw.js in a sandbox with fake caches; returns the caches and the registered listeners. */
+function runServiceWorker(source, existing = {}) {
+    const stores = new Map(Object.entries(existing).map(([name, entries]) => [name, new Map(entries.map((url) => [url, `cached ${url}`]))]));
+    const listeners = {};
+    const scope = "https://games.example/uzay/";
+    const resolve = (url) => new URL(url, scope).href;
+    const store = (name) => {
+        if (!stores.has(name)) stores.set(name, new Map());
+        const map = stores.get(name);
+        return {
+            addAll: async (urls) => { for (const url of urls) map.set(resolve(url), `fetched ${resolve(url)}`); },
+            match: async (request) => map.get(typeof request === "string" ? resolve(request) : request.url.split("?")[0]),
+            put: async (request, response) => { map.set(request.url, response.body); },
+        };
+    };
+    const caches = {
+        open: async (name) => store(name),
+        keys: async () => [...stores.keys()],
+        delete: async (name) => stores.delete(name),
+    };
+    const self = {
+        location: new URL(scope),
+        registration: { scope },
+        addEventListener: (type, listener) => { listeners[type] = listener; },
+        skipWaiting: async () => undefined,
+        clients: { claim: async () => undefined },
+    };
+    const fetch = async (request) => ({ ok: true, type: "basic", body: `network ${request.url}`, clone() { return this; } });
+    vm.runInNewContext(source, { self, caches, fetch, URL, Promise, JSON });
+    const dispatch = async (type, extra = {}) => {
+        let pending = null;
+        let response = null;
+        listeners[type]({ ...extra, waitUntil: (promise) => { pending = promise; }, respondWith: (promise) => { response = promise; } });
+        await pending;
+        return response ? await response : null;
+    };
+    return { stores, listeners, dispatch, scope };
+}
+
+test("web package: the service worker caches the game, drops its old versions and answers offline", async () => {
+    const project = webProject();
+    const files = web.packageFiles(project);
+    assert.deepEqual(files.slice(0, 5), ["./", "index.html", "player.js", "game.json", "manifest.webmanifest"]);
+    const source = web.serviceWorkerSource(project.id, "abc123", files);
+    const worker = runServiceWorker(source, { "hanogt-game-game_web_test-old": ["x"], "hanogt-game-other_game-v1": ["y"], "unrelated": ["z"] });
+    await worker.dispatch("install");
+    const cache = worker.stores.get("hanogt-game-game_web_test-abc123");
+    assert.ok(cache, "a cache named after the game and the version");
+    assert.equal(cache.size, files.length);
+    assert.ok(cache.has(`${worker.scope}assets/${"c".repeat(64)}.glb`));
+    await worker.dispatch("activate");
+    assert.deepEqual([...worker.stores.keys()].sort(), ["hanogt-game-game_web_test-abc123", "hanogt-game-other_game-v1", "unrelated"], "only this game's old cache goes");
+
+    const fromCache = await worker.dispatch("fetch", { request: { method: "GET", url: `${worker.scope}player.js?v=2` } });
+    assert.equal(fromCache, `fetched ${worker.scope}player.js`, "cached files answer offline (query strings ignored)");
+    const fresh = await worker.dispatch("fetch", { request: { method: "GET", url: `${worker.scope}extra.png` } });
+    assert.equal(fresh.body, `network ${worker.scope}extra.png`);
+    assert.ok(cache.has(`${worker.scope}extra.png`), "new files of the game are kept too");
+    assert.equal(await worker.dispatch("fetch", { request: { method: "GET", url: "https://games.example/other/page.html" } }), null, "other pages of the site are left alone");
+    assert.equal(await worker.dispatch("fetch", { request: { method: "POST", url: `${worker.scope}game.json` } }), null);
+});
+
+test("web package: the ZIP has every file the page and the service worker need", async () => {
+    const project = webProject();
+    const bytes = (text) => new TextEncoder().encode(text);
+    const assets = new Map([["a".repeat(64), bytes("wav!")], ["b".repeat(64), bytes("mp3!")], ["c".repeat(64), bytes("glb!")]]);
+    const icons = new Map(web.WEB_ICONS.map((path) => [path, bytes(`png ${path}`)]));
+    const files = await web.webPackageFiles({ project, playerJs: "console.log('player')", assets, icons, siteUrl: "https://example.test" });
+    const zipped = await web.zipWebPackage(files);
+    const zip = await JSZip.loadAsync(zipped);
+    const names = Object.keys(zip.files).filter((name) => !zip.files[name].dir).sort();
+    assert.deepEqual(names, [
+        "README.txt", `assets/${"a".repeat(64)}.wav`, `assets/${"b".repeat(64)}.mp3`, `assets/${"c".repeat(64)}.glb`, "game.json",
+        "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "index.html", "manifest.webmanifest", "player.js", "sw.js",
+    ]);
+    const game = JSON.parse(await zip.file("game.json").async("string"));
+    assert.equal(game.format, "hanogt-engine-project");
+    assert.equal(game.project.name, project.name);
+    assert.deepEqual(game.files, web.packageAssets(project));
+    assert.equal(await zip.file(`assets/${"c".repeat(64)}.glb`).async("string"), "glb!");
+    const sw = await zip.file("sw.js").async("string");
+    const listed = JSON.parse(/const FILES = (\[.*\]);/.exec(sw)[1]);
+    for (const path of listed) if (path !== "./") assert.ok(names.includes(path), `${path} is in the ZIP`);
+    assert.match(sw, /const CACHE = PREFIX \+ "[0-9a-f]{16}"/);
+
+    // A changed game gets a new cache version; the same game the same one.
+    const again = await web.webPackageFiles({ project, playerJs: "console.log('player')", assets, icons, siteUrl: "https://example.test" });
+    assert.equal(again.get("sw.js"), sw);
+    project.name = "Başka";
+    const changed = await web.webPackageFiles({ project, playerJs: "console.log('player')", assets, icons, siteUrl: "https://example.test" });
+    assert.notEqual(changed.get("sw.js"), sw);
+
+    await assert.rejects(web.webPackageFiles({ project, playerJs: "", assets: new Map(), icons, siteUrl: "" }), (error) => error.code === "missing_files" && error.names.includes("Robot"));
+    await assert.rejects(web.webPackageFiles({ project, playerJs: "", assets, icons: new Map(), siteUrl: "" }), (error) => error.code === "missing_icons");
+});

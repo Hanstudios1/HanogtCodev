@@ -7441,9 +7441,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "yrkisy9y7l": {
-    "en": "Game scripts run in Hanogt's C#/C++ script virtual machine and can only use the interfaces the engine provides; they have no access to the file system or the network. “Export as HTML” turns your project into a single file inside your browser.",
-    "tr": "Oyun scriptleri Hanogt'un C#/C++ script sanal makinesinde çalışır ve yalnızca motorun sunduğu arayüzlere erişebilir; dosya sistemine veya ağa erişemez. “HTML olarak dışa aktar” özelliği projenizi tarayıcınızda tek bir dosyaya dönüştürür.",
+  "cch6cxpc9v": {
+    "en": "Game scripts run in Hanogt's C#/C++ script virtual machine and can only use the interfaces the engine provides; they have no access to the file system or the network. “Export as HTML” turns your project into a single file inside your browser, and “Web package (ZIP)” into a folder you can upload to a web host that installs as an app and plays offline; neither sends anything to the server.",
+    "tr": "Oyun scriptleri Hanogt'un C#/C++ script sanal makinesinde çalışır ve yalnızca motorun sunduğu arayüzlere erişebilir; dosya sistemine veya ağa erişemez. “HTML olarak dışa aktar” özelliği projenizi tarayıcınızda tek bir dosyaya, “Web paketi (ZIP)” ise bir web sunucusuna yüklenebilen, uygulama olarak kurulabilen ve çevrimdışı çalışan bir klasöre dönüştürür; ikisi de sunucuya bir şey göndermez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -27775,6 +27775,13 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "1ytcksiq1s3": {
+    "en": "Web package (ZIP · PWA)",
+    "tr": "Web paketi (ZIP · PWA)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
   "20jrjizztly": {
     "en": "Import project",
     "tr": "Proje içe aktar",
@@ -28712,6 +28719,27 @@
   "rw9zeuyx93": {
     "en": "Playable HTML file downloaded.",
     "tr": "Oynanabilir HTML dosyası indirildi.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "12iuyj6quyk": {
+    "en": "Web package downloaded. Upload it to a web host; the README.txt inside explains how.",
+    "tr": "Web paketi indirildi. Bir web sunucusuna yükleyin; içindeki README.txt nasıl yapılacağını anlatır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "216ssskh9pu": {
+    "en": "The player couldn't be downloaded. Reload the page and try again.",
+    "tr": "Oynatıcı paketi indirilemedi. Sayfayı yenileyip tekrar deneyin.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "s1srwwkx7k": {
+    "en": "Some sound or model files couldn't be downloaded ({names}). Check your connection and try again.",
+    "tr": "Bazı ses ya da model dosyaları indirilemedi ({names}). İnternet bağlantınızı kontrol edip tekrar deneyin.",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]

@@ -14,6 +14,7 @@ import {
     FileJson,
     FolderTree,
     Globe,
+    PackageOpen,
     HardDrive,
     Info,
     LoaderCircle,
@@ -52,6 +53,7 @@ import { PublishDialog, SettingsDialog, captureThumbnail, type SettingsTab } fro
 import { GamePreview, GameView } from "./GameView";
 import HierarchyPanel, { CLIPBOARD_KEY, copyEntitiesToClipboard } from "./HierarchyPanel";
 import { exportStandaloneHtml } from "./html-export";
+import { exportWebPackage } from "./web-package";
 import InspectorPanel from "./InspectorPanel";
 import { activeScene, deleteEntities, duplicateEntities, pasteEntities } from "./operations";
 import { exportProjectJson, importProjectFile, saveCloudProject, saveLocalProject, PersistenceError, type ProjectSource } from "./persistence";
@@ -538,6 +540,24 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         }
     };
 
+    const exportWeb = async () => {
+        window.dispatchEvent(new CustomEvent("hanogt-engine:flush-scripts"));
+        const compiled = compileScripts(store.getState().project.scripts);
+        if (!compiled.ok) {
+            toast(t("playBlocked"), "error");
+            setBottomTab("console");
+            return;
+        }
+        try {
+            const failure = await exportWebPackage(store.getState().project, snapshotScene);
+            if (!failure) toast(t("webZipExported"), "success");
+            else if (failure.kind === "player") toast(t("webZipPlayerFailed"), "error");
+            else toast(t("webZipMissingFiles").replace("{names}", failure.names.slice(0, 3).join(", ")), "error");
+        } catch (error) {
+            toast(error instanceof Error && error.message ? `${t("exportFailed")} ${error.message}` : t("exportFailed"), "error");
+        }
+    };
+
     const importProject = async (file: File | undefined) => {
         if (!file) return;
         try {
@@ -666,6 +686,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                             align="right"
                             items={[
                                 { label: t("exportHtml"), icon: Globe, onSelect: () => void exportHtml() },
+                                { label: t("exportWebZip"), icon: PackageOpen, onSelect: () => void exportWeb() },
                                 { label: t("exportJson"), icon: FileJson, onSelect: () => exportProjectJson(store.getState().project) },
                                 { separator: true, label: "" },
                                 { label: t("importProject"), icon: Upload, disabled: playing, onSelect: () => importInput.current?.click() },

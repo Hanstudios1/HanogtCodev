@@ -4,7 +4,8 @@
  * Signed-in people upload files to the asset store (/api/game-assets), which
  * keeps each file once by its SHA-256. Guests keep files on this device
  * (IndexedDB). For playing, bytes come from memory, then files embedded in an
- * exported HTML game, then this device, then the asset store.
+ * exported HTML game or next to an exported web package, then this device,
+ * then the asset store.
  */
 import type { AudioAsset } from "./types";
 
@@ -147,10 +148,16 @@ export async function deleteAccountAudio(hash: string): Promise<{ removed: boole
 
 const memory = new Map<string, Promise<ArrayBuffer | null>>();
 let embedded: Record<string, string> = {};
+let packaged: Record<string, string> = {};
 
 /** Files embedded in an exported HTML game ({ hash: base64 }). */
 export function registerEmbeddedAudio(files: Record<string, string>) {
     embedded = { ...embedded, ...files };
+}
+
+/** Files next to the page in an exported web package ({ hash: "assets/<hash>.wav" }, V5). */
+export function registerPackagedFiles(files: Record<string, string>) {
+    packaged = { ...packaged, ...files };
 }
 
 function fromBase64(value: string): ArrayBuffer {
@@ -168,6 +175,10 @@ export function loadAudioBytes(asset: Pick<AudioAsset, "hash">): Promise<ArrayBu
     if (!pending) {
         pending = (async () => {
             if (embedded[hash]) return fromBase64(embedded[hash]);
+            if (packaged[hash]) {
+                const response = await fetch(packaged[hash]).catch(() => null);
+                return response?.ok ? response.arrayBuffer() : null;
+            }
             const local = await readLocalAudio(hash);
             if (local) return local;
             if (typeof fetch === "undefined" || typeof location === "undefined" || location.protocol === "file:") return null;
