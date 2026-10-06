@@ -37,7 +37,9 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 - STUN/TURN yapılandırması desteklenir; güvenilir NAT geçişi için üretimde `TURN_SERVER_URL` ve `TURN_SHARED_SECRET` zorunludur.
 - Çağrı bittiğinde sinyalleşme/ICE belgeleri ve geçici çağrı kayıtları temizlenir. Yarım kalan kayıtlar için sunucu temizleme ucu vardır.
 - Sesli mesajlar boyut ve süre sınırlarına tabidir; sahiplik/katılımcı kontrolüyle saklanır ve silinebilir.
-- Bire bir aramaların yanında, kod editöründeki "Ekiple düzenle" oturumlarında en fazla 5 kişilik mesh sesli görüşme vardır. Büyük gruplar için SFU altyapısı yoktur.
+- Bire bir aramalar büyük görünümde (tam ekran) açılabilir ve birebir aramada ekran paylaşılabilir: yalnızca görüntü gider (en çok 1080p, 30 fps), bilgisayarın sesi gitmez; telefon tarayıcılarında ekran paylaşımı yoktur. Masaüstü uygulaması paylaşılacak ekranı ya da pencereyi kendi seçicisiyle seçtirir.
+- Her grubun en fazla 5 kişilik bir sesli kanalı vardır (mesh WebRTC, `/api/groups/voice`); kanalda kimlerin olduğunu yalnızca grup üyeleri görür, ses kaydedilmez. Kod editöründeki "Ekiple düzenle" oturumlarında da en fazla 5 kişilik mesh sesli görüşme vardır. Büyük gruplar için SFU altyapısı yoktur.
+- Birebir ve grup mesajlarıyla dosya gönderilebilir (görsel, video, ses, PDF, arşiv, ofis belgesi, metin ve kod; programlar reddedilir). Dosyalar Firestore'da sunucuya özel `message_files` koleksiyonunda saklanır, yalnızca mesajı görebilenler açar; görsellerdeki konum ve cihaz bilgileri silinir. Plan sınırları: dosya başına 2 / 4 / 4 MB, toplam 25 MB / 250 MB / 1 GB (Ücretsiz / Plus / Pro).
 
 ## Hanogt Media
 

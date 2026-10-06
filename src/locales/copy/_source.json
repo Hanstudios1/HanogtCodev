@@ -890,6 +890,7 @@
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/HanogtAI/ArtifactPanel.tsx",
       "src/components/Social/SocialSettings.tsx",
+      "src/components/Social/chat/AttachmentView.tsx",
       "src/lib/runtimes/languages.ts"
     ]
   },
@@ -1973,6 +1974,7 @@
       "src/components/GameEngine/EngineHub.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/GameEngine/hub/TemplateDrawer.tsx",
+      "src/components/GroupVoiceProvider.tsx",
       "src/components/Groups/ui.tsx",
       "src/components/HanogtAI/ChatSidebar.tsx",
       "src/components/HanogtAI/ConnectionsDialog.tsx",
@@ -1982,6 +1984,7 @@
       "src/components/NotificationCenter.tsx",
       "src/components/Plans/ChangePlanDialog.tsx",
       "src/components/ProfileModal.tsx",
+      "src/components/Social/chat/AttachmentView.tsx",
       "src/components/Social/chat/ExpressionPicker.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -2412,9 +2415,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "270ih5n4rri": {
-    "en": "One-to-one and group messages (including GIFs and forwarded messages), reactions, pinned and starred messages, voice messages, friend and group records, notifications, online status; temporary connection data for voice calls (calls are not recorded)",
-    "tr": "Birebir ve grup mesajları (GIF'ler ve iletilen mesajlar dahil), tepkiler, sabitlenen ve yıldızlanan mesajlar, sesli mesajlar, arkadaşlık ve grup kayıtları, bildirimler, çevrimiçi durum; sesli aramalarda geçici bağlantı verileri (aramalar kaydedilmez)",
+  "28wojw49yg6": {
+    "en": "One-to-one and group messages (including GIFs and forwarded messages), reactions, pinned and starred messages, voice messages, files sent in messages and the file space used, friend and group records, notifications, online status; temporary connection data for voice calls, screen sharing and groups' voice channels, and presence in voice channels (calls, voice channels and shared screens are not recorded)",
+    "tr": "Birebir ve grup mesajları (GIF'ler ve iletilen mesajlar dahil), tepkiler, sabitlenen ve yıldızlanan mesajlar, sesli mesajlar, mesajlarla gönderilen dosyalar ve dosya alanı kullanımı, arkadaşlık ve grup kayıtları, bildirimler, çevrimiçi durum; sesli aramalarda, ekran paylaşımında ve grupların sesli kanallarında geçici bağlantı verileri ile sesli kanaldaki katılım durumu (aramalar, sesli kanallar ve paylaşılan ekranlar kaydedilmez)",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2524,9 +2527,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1e7txjw9zbj": {
-    "en": "providing services such as the code editor, code execution, Hanogt Engine, the Arcade, Media, News, the arena, groups, chats, starred messages, GIF search and calls;",
-    "tr": "Kod editörü, kod çalıştırma, Hanogt Engine, Arcade, Media, News, arena, gruplar, sohbetler, yıldızlı mesajlar, GIF araması ve aramalar gibi hizmetlerin sunulması,",
+  "1hcjrtzs40d": {
+    "en": "providing services such as the code editor, code execution, Hanogt Engine, the Arcade, Media, News, the arena, groups, chats, starred messages, GIF search, files in messages, calls, screen sharing and voice channels;",
+    "tr": "Kod editörü, kod çalıştırma, Hanogt Engine, Arcade, Media, News, arena, gruplar, sohbetler, yıldızlı mesajlar, GIF araması, mesajlarda dosya paylaşımı, aramalar, ekran paylaşımı ve sesli kanallar gibi hizmetlerin sunulması,",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2771,9 +2774,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "actu4v0jmz": {
-    "en": "from temporary connection data during voice calls;",
-    "tr": "Sesli arama sırasında geçici bağlantı verilerinden,",
+  "xy6s4w4nys": {
+    "en": "from temporary connection data during voice calls, screen sharing and voice channels;",
+    "tr": "Sesli arama, ekran paylaşımı ve sesli kanal sırasında geçici bağlantı verilerinden,",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -2975,9 +2978,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "22zb6xiken8": {
-    "en": "Connecting voice calls",
-    "tr": "Sesli arama bağlantısı",
+  "tsi4epf4mq": {
+    "en": "Connecting voice calls, screen sharing and voice channels",
+    "tr": "Sesli arama, ekran paylaşımı ve sesli kanal bağlantısı",
     "files": [
       "src/app/disclosure/page.tsx",
       "src/app/privacy-policy/page.tsx"
@@ -4659,7 +4662,8 @@
       "src/components/Admin/copy.ts",
       "src/components/Editor/CollabChat.tsx",
       "src/components/Groups/ui.tsx",
-      "src/components/Social/dm/DmMessages.tsx"
+      "src/components/Social/dm/DmMessages.tsx",
+      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "1ymxd8tl8uu": {
@@ -4838,7 +4842,8 @@
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
       "src/components/GameEngine/editor/text.ts",
-      "src/components/HanogtAI/AiApiPage.tsx"
+      "src/components/HanogtAI/AiApiPage.tsx",
+      "src/components/Social/chat/AttachmentView.tsx"
     ]
   },
   "7ows7hozjq": {
@@ -6062,7 +6067,8 @@
     "files": [
       "src/app/media/page.tsx",
       "src/components/Admin/ReportsPanel.tsx",
-      "src/components/Groups/workspace/FilesPanel.tsx"
+      "src/components/Groups/workspace/FilesPanel.tsx",
+      "src/components/Social/chat/AttachmentView.tsx"
     ]
   },
   "1dkepq6fukd": {
@@ -6692,9 +6698,9 @@
       "src/lib/ai/concepts.ts"
     ]
   },
-  "4pejbpjzk3": {
-    "en": "This Privacy Policy explains how your personal data is processed in the services offered on the Hanogt Codev website and its desktop and mobile apps: the code editor and code execution, Hanogt Engine and Hanogt Arcade, Hanogt Media, Hanogt News and the AI arena, friends, chats, groups, voice messages and calls, the Security Center, Hanogt AI, plans and subscriptions, support tickets and the feedback board.",
-    "tr": "Bu Gizlilik Politikası; Hanogt Codev web sitesi ile masaüstü ve mobil uygulamalarında sunulan hizmetlerde (kod editörü ve kod çalıştırma, Hanogt Engine ve Hanogt Arcade, Hanogt Media, Hanogt News ve yapay zekâ arenası, arkadaşlar, sohbetler, gruplar, sesli mesajlar ve aramalar, Güvenlik Merkezi, Hanogt AI, planlar ve abonelikler, destek talepleri ve geri bildirim panosu) kişisel verilerinizin nasıl işlendiğini açıklar.",
+  "1koi6vi8fxo": {
+    "en": "This Privacy Policy explains how your personal data is processed in the services offered on the Hanogt Codev website and its desktop and mobile apps: the code editor and code execution, Hanogt Engine and Hanogt Arcade, Hanogt Media, Hanogt News and the AI arena, friends, chats, groups, voice messages, files in messages, calls, screen sharing and voice channels, the Security Center, Hanogt AI, plans and subscriptions, support tickets and the feedback board.",
+    "tr": "Bu Gizlilik Politikası; Hanogt Codev web sitesi ile masaüstü ve mobil uygulamalarında sunulan hizmetlerde (kod editörü ve kod çalıştırma, Hanogt Engine ve Hanogt Arcade, Hanogt Media, Hanogt News ve yapay zekâ arenası, arkadaşlar, sohbetler, gruplar, sesli mesajlar, mesajlardaki dosyalar, aramalar, ekran paylaşımı ve sesli kanallar, Güvenlik Merkezi, Hanogt AI, planlar ve abonelikler, destek talepleri ve geri bildirim panosu) kişisel verilerinizin nasıl işlendiğini açıklar.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6913,9 +6919,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "25nq6ox97r1": {
-    "en": "Friend requests, friend and block lists, one-to-one and group messages (including GIFs and forwarded messages), reactions, pinned and starred messages, voice message files, group memberships, roles and invitations, group moderation records (warnings, mutes, reports and AutoMod records), notifications",
-    "tr": "Arkadaşlık istekleri, arkadaş ve engel listeleri, birebir ve grup mesajları (GIF'ler ve iletilen mesajlar dahil), tepkiler, sabitlenen ve yıldızlanan mesajlar, sesli mesaj dosyaları, grup üyelikleri, rolleri ve davetler, grup moderasyon kayıtları (uyarılar, susturmalar, raporlar ve AutoMod kayıtları), bildirimler",
+  "lxxhc5p0dn": {
+    "en": "Friend requests, friend and block lists, one-to-one and group messages (including GIFs and forwarded messages), reactions, pinned and starred messages, voice message files, the files you send in messages and the file space you use, group memberships, roles and invitations, group moderation records (warnings, mutes, reports and AutoMod records), notifications",
+    "tr": "Arkadaşlık istekleri, arkadaş ve engel listeleri, birebir ve grup mesajları (GIF'ler ve iletilen mesajlar dahil), tepkiler, sabitlenen ve yıldızlanan mesajlar, sesli mesaj dosyaları, mesajlarla gönderdiğiniz dosyalar ve kullandığınız dosya alanı, grup üyelikleri, rolleri ve davetler, grup moderasyon kayıtları (uyarılar, susturmalar, raporlar ve AutoMod kayıtları), bildirimler",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6948,18 +6954,23 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1picjb70ay": {
-    "en": "Voice calls",
-    "tr": "Sesli aramalar",
+  "1f7vszn7qij": {
+    "en": "Calls and voice channels",
+    "tr": "Aramalar ve sesli kanallar",
     "files": [
-      "src/app/privacy-policy/page.tsx",
-      "src/components/Guide/book-content.ts",
-      "src/lib/ai/knowledge.ts"
+      "src/app/privacy-policy/page.tsx"
     ]
   },
-  "158hhjhpetx": {
-    "en": "Connection set-up data (network details including IP addresses) and call status; audio is not recorded",
-    "tr": "Bağlantı kurulum verileri (IP adresleri dahil ağ bilgileri) ve arama durumu; ses kaydedilmez",
+  "62vk8lp0nw": {
+    "en": "Connection set-up data (network details including IP addresses), call status, the time you spend in a voice channel and whether your microphone or headphones are off; audio and shared screens are not recorded",
+    "tr": "Bağlantı kurulum verileri (IP adresleri dahil ağ bilgileri), arama durumu, sesli kanalda bulunduğunuz süre ve mikrofonunuzun ya da kulaklığınızın kapalı olup olmadığı; ses ve paylaşılan ekran kaydedilmez",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "pq1mvxvv00": {
+    "en": "Voice calls, screen sharing, groups' voice channels",
+    "tr": "Sesli arama, ekran paylaşımı, grupların sesli kanalları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7582,9 +7593,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1xm1i6ntm9f": {
-    "en": "One-to-one messages and voice messages can be read only by the participants of the chat. Voice messages are stored in Firebase Storage as audio files of up to 3 MB and can be deleted by the sender. Reactions to one-to-one messages are stored on the message together with the account of the participant who reacted; both participants can pin up to 25 messages in a chat. While read receipts are on, the other person sees that you read their message; when you turn them off, no read receipts are sent and you don't see theirs either. While the typing indicator is on, the fact that you are typing is shown in the chat or group for a few seconds; when you turn it off, it isn't sent and you don't see other people typing either.",
-    "tr": "Birebir mesajlarınızı ve sesli mesajlarınızı yalnızca sohbetin katılımcıları okuyabilir. Sesli mesajlar en fazla 3 MB'lık ses dosyaları olarak Firebase Storage'da saklanır ve gönderen tarafından silinebilir. Birebir mesajlara verilen tepkiler, tepkiyi veren katılımcının hesabıyla birlikte mesajda saklanır; iki katılımcı da bir sohbette en fazla 25 mesajı sabitleyebilir. Okundu bilgisi açıkken karşı taraf mesajını okuduğunuzu görür; kapattığınızda okundu bilgisi gönderilmez ve siz de karşı tarafınkini görmezsiniz. Yazıyor göstergesi açıkken yazdığınız, sohbette veya grupta birkaç saniyeliğine gösterilir; kapattığınızda gönderilmez ve başkalarınınkini de görmezsiniz.",
+  "1uglghzu4a5": {
+    "en": "One-to-one messages and voice messages can be read only by the participants of the chat. Voice messages are stored as recordings of up to 3 MB in Cloud Firestore, in a collection browsers can't read directly (those saved to Firebase Storage earlier stay there until they are deleted); our server plays them only to the chat's participants, or in groups to the group's members, and the sender can delete them. Reactions to one-to-one messages are stored on the message together with the account of the participant who reacted; both participants can pin up to 25 messages in a chat. While read receipts are on, the other person sees that you read their message; when you turn them off, no read receipts are sent and you don't see theirs either. While the typing indicator is on, the fact that you are typing is shown in the chat or group for a few seconds; when you turn it off, it isn't sent and you don't see other people typing either.",
+    "tr": "Birebir mesajlarınızı ve sesli mesajlarınızı yalnızca sohbetin katılımcıları okuyabilir. Sesli mesajlar en fazla 3 MB'lık kayıtlar olarak Cloud Firestore'da, tarayıcıların doğrudan okuyamadığı bir koleksiyonda saklanır (daha önce Firebase Storage'a kaydedilenler silinene kadar orada kalır); sunucumuz bunları yalnızca sohbetin katılımcılarına, gruplarda grubun üyelerine dinletir ve gönderen bunları silebilir. Birebir mesajlara verilen tepkiler, tepkiyi veren katılımcının hesabıyla birlikte mesajda saklanır; iki katılımcı da bir sohbette en fazla 25 mesajı sabitleyebilir. Okundu bilgisi açıkken karşı taraf mesajını okuduğunuzu görür; kapattığınızda okundu bilgisi gönderilmez ve siz de karşı tarafınkini görmezsiniz. Yazıyor göstergesi açıkken yazdığınız, sohbette veya grupta birkaç saniyeliğine gösterilir; kapattığınızda gönderilmez ve başkalarınınkini de görmezsiniz.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1ub86iyw2a9": {
+    "en": "You can send files with your messages: pictures (PNG, JPEG, GIF, WebP), video (MP4, WebM, MOV), sound, PDFs, archives (ZIP, GZ, 7z), office documents and text or code files; one file per message with an optional caption. Our server decides a file's type from its contents; programs and scripts that run when opened (for example .exe, .bat, .apk) are not accepted, and archives are not unpacked or checked. Files are stored with their message in Cloud Firestore, in a collection browsers can't read directly; each record holds the file's name, size and type, the sending account, the chat or group it is in, and the message. A file can be opened through our server only by the people who can see the message (the two participants in a one-to-one chat, the group's members in a group) and only while the message is there. Location, device, date, name and similar details embedded in JPEG, PNG and WebP pictures (EXIF, XMP, IPTC and text fields) are removed before they are stored, while the picture's orientation is kept; big photos are made smaller in your browser before they are sent. Details inside GIF, video, sound, document and archive files (for example an author's name or where a video was shot) are not changed; check them before you send. Files are not scanned for viruses; only open files from people you trust. In groups, a file's caption goes through AutoMod. The largest file you can send and your total file space depend on your plan (Free 2 MB and 25 MB in all, Plus 4 MB and 250 MB, Pro 4 MB and 1 GB); the space you use is kept in a counter for your account. When you delete a message with a file, the file is deleted too and its space is yours again; when a chat or a group is deleted, its files are deleted. The list of files you sent (name, size, type and date) is included when you download your data.",
+    "tr": "Mesajlarınızla dosya gönderebilirsiniz: görseller (PNG, JPEG, GIF, WebP), video (MP4, WebM, MOV), ses, PDF, arşivler (ZIP, GZ, 7z), ofis belgeleri ve metin veya kod dosyaları; her mesajda bir dosya ve isteğe bağlı bir açıklama. Dosyanın türü sunucumuzda içeriğine bakılarak belirlenir; açıldığında çalışan programlar ve betikler (ör. .exe, .bat, .apk) kabul edilmez, arşivlerin içi ise açılıp denetlenmez. Dosyalar mesajla birlikte Cloud Firestore'da, tarayıcıların doğrudan okuyamadığı bir koleksiyonda saklanır; her kayıtta dosyanın adı, boyutu ve türü, gönderen hesap, dosyanın bulunduğu sohbet veya grup ve mesaj tutulur. Bir dosyayı yalnızca mesajı görebilenler (birebir sohbette iki katılımcı, grupta grubun üyeleri) ve yalnızca mesaj durdukça sunucumuz üzerinden açabilir. JPEG, PNG ve WebP görsellerdeki konum, cihaz, tarih ve ad gibi gömülü bilgiler (EXIF, XMP, IPTC ve metin alanları) saklanmadan önce silinir, görselin yönü korunur; büyük fotoğraflar gönderilmeden önce tarayıcınızda küçültülür. GIF, video, ses, belge ve arşiv dosyalarının içindeki bilgiler (ör. yazar adı veya çekim yeri) değiştirilmez; göndermeden önce bunları kontrol edin. Dosyalar virüs taramasından geçirilmez; yalnızca güvendiğiniz kişilerden gelen dosyaları açın. Gruplarda dosyanın açıklaması AutoMod'dan geçer. Gönderebileceğiniz en büyük dosya ve toplam dosya alanınız planınıza göre belirlenir (Ücretsiz 2 MB ve toplam 25 MB, Plus 4 MB ve 250 MB, Pro 4 MB ve 1 GB); kullandığınız alan hesabınız için bir sayaçta tutulur. Dosyalı bir mesajı sildiğinizde dosya da silinir ve alanı size geri döner; sohbet veya grup silindiğinde içindeki dosyalar da silinir. Gönderdiğiniz dosyaların listesi (ad, boyut, tür ve tarih) verilerinizi indirdiğinizde yer alır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7617,9 +7635,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "26vuhsqpm02": {
-    "en": "Group members can see the group's name, the member list and members' profile details and roles, the shared files and who changed them, the chat, pinned messages, reactions and voice messages. Reactions to group messages are stored with a pseudonymous key derived for each member instead of an e-mail address. You join a group by invitation or through invite links that can expire or have a use limit; you can't see a group's content before accepting. Groups have owner, admin and moderator roles: owners and admins manage the group's settings, roles and AutoMod and can ban members; moderators can delete the messages of members with a lower role and warn, mute and remove them. Changes to shared files sync in real time; when people edit at the same time, the last saved version may win.",
-    "tr": "Grup üyeleri grubun adını, üye listesini ve üyelerin profil bilgilerini ve rollerini, ortak dosyaları ve değişikliği yapan üyeyi, sohbeti, sabitlenen mesajları, tepkileri ve sesli mesajları görebilir. Grup mesajlarındaki tepkiler, e-posta adresi yerine her üye için türetilen takma bir anahtarla saklanır. Gruplara davetle ya da süreli veya kullanım sınırlı davet bağlantılarıyla katılınır; davet kabul edilmeden grup içeriğine erişilemez. Gruplarda sahip, yönetici ve moderatör rolleri vardır: sahip ve yöneticiler grubun ayarlarını, rollerini ve AutoMod'u yönetir ve üyeleri engelleyebilir; moderatörler kendilerinden düşük roldeki üyelerin mesajlarını silebilir, onları uyarabilir, susturabilir ve gruptan çıkarabilir. Ortak dosyalardaki değişiklikler gerçek zamanlı eşitlenir; aynı anda yapılan düzenlemelerde son kaydedilen sürüm geçerli olabilir.",
+  "27zr7ag38a5": {
+    "en": "Group members can see the group's name, the member list and members' profile details and roles, the shared files and who changed them, the chat, pinned messages, reactions, voice messages, files in messages and who is in the group's voice channel. Reactions to group messages are stored with a pseudonymous key derived for each member instead of an e-mail address. You join a group by invitation or through invite links that can expire or have a use limit; you can't see a group's content before accepting. Groups have owner, admin and moderator roles: owners and admins manage the group's settings, roles and AutoMod and can ban members; moderators can delete the messages of members with a lower role and warn, mute and remove them. Changes to shared files sync in real time; when people edit at the same time, the last saved version may win.",
+    "tr": "Grup üyeleri grubun adını, üye listesini ve üyelerin profil bilgilerini ve rollerini, ortak dosyaları ve değişikliği yapan üyeyi, sohbeti, sabitlenen mesajları, tepkileri, sesli mesajları, mesajlardaki dosyaları ve grubun sesli kanalında kimlerin bulunduğunu görebilir. Grup mesajlarındaki tepkiler, e-posta adresi yerine her üye için türetilen takma bir anahtarla saklanır. Gruplara davetle ya da süreli veya kullanım sınırlı davet bağlantılarıyla katılınır; davet kabul edilmeden grup içeriğine erişilemez. Gruplarda sahip, yönetici ve moderatör rolleri vardır: sahip ve yöneticiler grubun ayarlarını, rollerini ve AutoMod'u yönetir ve üyeleri engelleyebilir; moderatörler kendilerinden düşük roldeki üyelerin mesajlarını silebilir, onları uyarabilir, susturabilir ve gruptan çıkarabilir. Ortak dosyalardaki değişiklikler gerçek zamanlı eşitlenir; aynı anda yapılan düzenlemelerde son kaydedilen sürüm geçerli olabilir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7659,16 +7677,38 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "3hjeiewlhd": {
-    "en": "When you delete your account, the one-to-one chats you were part of (including the other person's messages) and their voice message files are deleted. Groups you own are deleted with all their content and moderation records; in other groups you belonged to, your messages are anonymised as “Deleted user” and your voice messages are deleted. Your starred messages, the warning, mute, report and AutoMod records about you and the reports you made are deleted, and so are other people's stars on your messages. Warnings you gave as a moderator stay in force but no longer show you.",
-    "tr": "Hesabınızı sildiğinizde katıldığınız birebir sohbetler (karşı tarafın mesajları dahil) ve sesli mesaj dosyaları silinir. Sahibi olduğunuz gruplar tüm içerikleri ve moderasyon kayıtlarıyla silinir; üyesi olduğunuz diğer gruplarda mesajlarınız “Silinmiş kullanıcı” adıyla anonimleştirilir ve sesli mesajlarınız silinir. Yıldızlı mesaj listeniz, hakkınızdaki uyarı, susturma, rapor ve AutoMod kayıtları ve yaptığınız raporlar silinir; başkalarının mesajlarınıza verdiği yıldızlar da silinir. Moderatör olarak verdiğiniz uyarılar geçerli kalır, ancak artık sizi göstermez.",
+  "pqfcf4zb05": {
+    "en": "When you delete your account, the one-to-one chats you were part of (including the other person's messages and files), their voice message files, the files you sent in messages and your file space counter are deleted, and you are taken out of any voice channel you are in. Groups you own are deleted with all their content and moderation records; in other groups you belonged to, your messages are anonymised as “Deleted user”, and your voice messages and the files you sent are deleted (a file message keeps its caption). Your starred messages, the warning, mute, report and AutoMod records about you and the reports you made are deleted, and so are other people's stars on your messages. Warnings you gave as a moderator stay in force but no longer show you.",
+    "tr": "Hesabınızı sildiğinizde katıldığınız birebir sohbetler (karşı tarafın mesajları ve dosyaları dahil), sesli mesaj dosyaları, mesajlarda gönderdiğiniz dosyalar ve dosya alanı sayacınız silinir ve bulunduğunuz sesli kanallardan çıkarılırsınız. Sahibi olduğunuz gruplar tüm içerikleri ve moderasyon kayıtlarıyla silinir; üyesi olduğunuz diğer gruplarda mesajlarınız “Silinmiş kullanıcı” adıyla anonimleştirilir, sesli mesajlarınız ve gönderdiğiniz dosyalar silinir (dosyalı mesajın açıklaması kalır). Yıldızlı mesaj listeniz, hakkınızdaki uyarı, susturma, rapor ve AutoMod kayıtları ve yaptığınız raporlar silinir; başkalarının mesajlarınıza verdiği yıldızlar da silinir. Moderatör olarak verdiğiniz uyarılar geçerli kalır, ancak artık sizi göstermez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1velo6gm4is": {
-    "en": "One-to-one voice calls are set up with WebRTC. Audio travels directly between devices where possible, protected by WebRTC's mandatory encryption (DTLS-SRTP); Hanogt does not record calls or keep a separate call history.",
-    "tr": "Birebir sesli aramalar WebRTC ile kurulur. Ses, mümkün olduğunda doğrudan cihazlar arasında ve WebRTC'nin zorunlu şifrelemesiyle (DTLS-SRTP) taşınır; Hanogt aramaları kaydetmez ve ayrıca bir arama geçmişi tutmaz.",
+  "1u3xgrdhwhf": {
+    "en": "Voice calls, screen sharing and voice channels",
+    "tr": "Sesli aramalar, ekran paylaşımı ve sesli kanallar",
+    "files": [
+      "src/app/privacy-policy/page.tsx",
+      "src/lib/ai/knowledge.ts"
+    ]
+  },
+  "1379r8tclyr": {
+    "en": "One-to-one voice calls and groups' voice channels are set up with WebRTC. Audio and shared screens travel directly between devices where possible, protected by WebRTC's mandatory encryption (DTLS-SRTP); Hanogt does not record calls, voice channels or shared screens, and keeps no separate call history.",
+    "tr": "Birebir sesli aramalar ve grupların sesli kanalları WebRTC ile kurulur. Ses ve paylaşılan ekran, mümkün olduğunda doğrudan cihazlar arasında ve WebRTC'nin zorunlu şifrelemesiyle (DTLS-SRTP) taşınır; Hanogt aramaları, sesli kanalları ve paylaşılan ekranları kaydetmez ve ayrıca bir arama geçmişi tutmaz.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "s9ebx59if3": {
+    "en": "In a one-to-one call you can share your screen. You choose what to share (a screen, a window or a tab) in your browser's or the desktop app's picker; sharing carries only the picture (up to 1080p at 30 frames a second), not your computer's sound, and lasts until you stop it or the call ends. The shared screen is shown only to the other person in the call and travels over the same encrypted connection as the audio. Before sharing, make sure there are no passwords, personal data or other people's private information on your screen.",
+    "tr": "Birebir bir aramada ekranınızı paylaşabilirsiniz. Neyi paylaşacağınızı (bir ekran, pencere veya sekme) tarayıcınızın ya da masaüstü uygulamasının seçicisinde siz seçersiniz; paylaşım yalnızca görüntüyü (en çok 1080p ve saniyede 30 kare) içerir, bilgisayarınızın sesini içermez ve siz durdurana ya da arama bitene kadar sürer. Paylaşılan ekran yalnızca aramadaki karşı tarafa gösterilir ve sesle aynı şifreli bağlantıdan geçer. Paylaşmadan önce ekranınızda parola, kişisel veri veya başkalarına ait özel bilgi bulunmadığından emin olun.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1a4lnba0o0n": {
+    "en": "Up to 5 people can be in a group's voice channel at a time, and each participant connects directly to the others. While you are in the channel, your account (with its e-mail address), display name and avatar, when you joined and whether your microphone or headphones are off are shown to the group's members; who is speaking is worked out from the sound on each device and isn't recorded. This information is kept in the group's voice channel record in Firestore and is deleted when you leave the channel, when your connection is lost for more than 30 seconds, when you leave or are removed from the group, or when you are muted in it. The details needed to connect (network addresses included) are passed through temporary records only their recipient can read; they are deleted once read or when their recipient leaves the channel, and unread ones expire after 2 minutes. If you join from another tab or device, your earlier connection is closed and a note saying so is kept for 3 minutes.",
+    "tr": "Bir grubun sesli kanalında aynı anda en fazla 5 kişi bulunabilir ve her katılımcı diğerleriyle doğrudan bağlanır. Kanalda bulunduğunuz sürece hesabınız (e-posta adresiyle), görünen adınız ve avatarınız, katılma zamanınız ve mikrofonunuzun ya da kulaklığınızın kapalı olup olmadığı grubun üyelerine gösterilir; kimin konuştuğu her cihazda sesten anlaşılır ve kaydedilmez. Bu bilgiler Firestore'da grubun sesli kanal kaydında tutulur ve kanaldan çıktığınızda, bağlantınız 30 saniyeden uzun koptuğunda, gruptan ayrıldığınızda ya da çıkarıldığınızda veya grupta susturulduğunuzda silinir. Bağlantıyı kurmak için gereken bilgiler (ağ adresleri dahil) yalnızca alıcısının okuyabildiği geçici kayıtlarla iletilir; bu kayıtlar okununca ya da alıcısı kanaldan çıkınca silinir, okunmayanların süresi 2 dakikada dolar. Kanala başka bir sekme veya cihazdan katılırsanız önceki bağlantınız kapatılır ve bunu belirten bir işaret 3 dakika tutulur.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7680,16 +7720,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1fymo6ew4gs": {
-    "en": "If a direct connection can't be made, audio is relayed through a TURN server, if one is configured. The TURN server forwards encrypted audio packets and cannot decrypt them, but it does see your IP address and a temporary username valid for one hour. That username doesn't contain your e-mail address; it carries a non-reversible pseudonymous ID derived from it with a secret salt.",
-    "tr": "Doğrudan bağlantı kurulamadığında ses, yapılandırılmışsa bir TURN aktarma sunucusu üzerinden iletilir. TURN sunucusu şifreli ses paketlerini aktarır ve içeriğini çözemez; ancak IP adresinizi ve bir saat geçerli olan geçici bir kullanıcı adını görür. Bu kullanıcı adı e-posta adresinizi içermez; ondan gizli bir tuzla türetilen, geri çevrilemeyen bir takma kimlik taşır.",
+  "2ico2cje9w": {
+    "en": "If a direct connection can't be made, audio and shared screens are relayed through a TURN server, if one is configured. The TURN server forwards encrypted audio and video packets and cannot decrypt them, but it does see your IP address and a temporary username valid for one hour. That username doesn't contain your e-mail address; it carries a non-reversible pseudonymous ID derived from it with a secret salt.",
+    "tr": "Doğrudan bağlantı kurulamadığında ses ve paylaşılan ekran, yapılandırılmışsa bir TURN aktarma sunucusu üzerinden iletilir. TURN sunucusu şifreli ses ve görüntü paketlerini aktarır ve içeriğini çözemez; ancak IP adresinizi ve bir saat geçerli olan geçici bir kullanıcı adını görür. Bu kullanıcı adı e-posta adresinizi içermez; ondan gizli bir tuzla türetilen, geri çevrilemeyen bir takma kimlik taşır.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "wrr077clex": {
-    "en": "The call record and connection data are deleted when the call ends; after an unexpected disconnect they are cleaned up automatically using a short expiry marker. You must not record a call without the other person's knowledge and consent.",
-    "tr": "Arama kaydı ve bağlantı verileri arama bittiğinde silinir; beklenmedik kopmalarda kısa süreli bir son kullanım işaretiyle otomatik temizlenir. Bir aramayı karşı tarafın bilgisi ve rızası olmadan kaydetmemelisiniz.",
+  "1n31i90fhsh": {
+    "en": "The call record and connection data are deleted when the call ends; after an unexpected disconnect they are cleaned up automatically using a short expiry marker. You must not record a call, a voice channel or a screen shown to you without the other participants' knowledge and consent.",
+    "tr": "Arama kaydı ve bağlantı verileri arama bittiğinde silinir; beklenmedik kopmalarda kısa süreli bir son kullanım işaretiyle otomatik temizlenir. Bir aramayı, sesli kanalı veya size gösterilen bir ekranı diğer katılımcıların bilgisi ve rızası olmadan kaydetmemelisiniz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8044,16 +8084,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "m8tb6c9fid": {
-    "en": "Friends, chats, groups, starred messages, GIF search, calls, online status and notifications",
-    "tr": "Arkadaşlar, sohbetler, gruplar, yıldızlı mesajlar, GIF araması, aramalar, çevrimiçi durum ve bildirimler",
+  "nt6ib4ow3y": {
+    "en": "Friends, chats, files in messages, groups, starred messages, GIF search, calls, screen sharing, voice channels, online status and notifications",
+    "tr": "Arkadaşlar, sohbetler, mesajlardaki dosyalar, gruplar, yıldızlı mesajlar, GIF araması, aramalar, ekran paylaşımı, sesli kanallar, çevrimiçi durum ve bildirimler",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "d6rhwavgug": {
-    "en": "Communication, online status, voice calls",
-    "tr": "İletişim, çevrimiçi durum, sesli aramalar",
+  "277z0sfbktd": {
+    "en": "Communication, online status, calls and voice channels",
+    "tr": "İletişim, çevrimiçi durum, aramalar ve sesli kanallar",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8310,9 +8350,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1hykyhdj9d6": {
-    "en": "Account, profile, project, message, voice message, comment, ticket and other service data",
-    "tr": "Hesap, profil, proje, mesaj, sesli mesaj, yorum, talep ve diğer hizmet verileri",
+  "x5mxuwvcnm": {
+    "en": "Account, profile, project, message, voice message, files in messages, comment, ticket and other service data",
+    "tr": "Hesap, profil, proje, mesaj, sesli mesaj, mesajlardaki dosya, yorum, talep ve diğer hizmet verileri",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8472,9 +8512,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1i3p591or68": {
-    "en": "During a voice call",
-    "tr": "Sesli arama sırasında",
+  "u7yl9ka0ig": {
+    "en": "During a call or a voice channel",
+    "tr": "Arama veya sesli kanal sırasında",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8783,6 +8823,34 @@
   "24uymgj4k2n": {
     "en": "Until the sender deletes them or either participant's account is deleted",
     "tr": "Gönderen silene veya katılımcılardan birinin hesabı silinene kadar",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1dtp9nqwfb6": {
+    "en": "Files in messages and the file space counter",
+    "tr": "Mesajlardaki dosyalar ve dosya alanı sayacı",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "5mlksak87n": {
+    "en": "A file until its message, its chat or group, or the sender's account is deleted (in one-to-one chats also when either participant's account is deleted); the counter until your account is deleted",
+    "tr": "Dosya, mesajı, sohbeti veya grubu ya da gönderenin hesabı silinene kadar (birebir sohbetlerde katılımcılardan birinin hesabı silindiğinde de silinir); sayaç hesabınız silinene kadar",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "e79owgvr35": {
+    "en": "Voice channel presence and connection records",
+    "tr": "Sesli kanal katılımı ve bağlantı kayıtları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1vjr8r0wrhy": {
+    "en": "Until you leave the channel (a participant whose connection is lost for more than 30 seconds is removed); connection records until they are read, at most 2 minutes; the note about switching devices 3 minutes",
+    "tr": "Kanaldan çıkana kadar (bağlantısı 30 saniyeden uzun kopan katılımcı kaldırılır); bağlantı kayıtları okunana kadar, en çok 2 dakika; başka cihaza geçiş işareti 3 dakika",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9721,9 +9789,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "f6z6jyhubh": {
-    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account record (including your friends list), code and game projects, audio library (file names with download links), Arcade games, Media posts, group records, news comments, Arcade likes, leaderboard entries, achievements and arena votes as a JSON file, and “Delete My Account” deletes your account and the related data. You can correct your profile in Account Settings. For data not included in the file, such as messages, you can make a request.",
-    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap kaydınızı (arkadaş listesi dahil), kod ve oyun projelerinizi, ses kitaplığınızı (dosya adları ve indirme bağlantılarıyla), Arcade oyunlarınızı, Media yayınlarınızı, grup kayıtlarınızı, haber yorumlarınızı, Arcade beğenilerinizi, skor tablosu kayıtlarınızı, başarımlarınızı ve arena oylarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler. Profil bilgilerinizi Hesap Ayarları'ndan düzeltebilirsiniz. Mesajlar gibi bu dosyada yer almayan veriler için başvuru yapabilirsiniz.",
+  "2fg4vw7m7e8": {
+    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account record (including your friends list), code and game projects, audio library (file names with download links), the list of files you sent in messages (name, size, type, date and download link), Arcade games, Media posts, group records, news comments, Arcade likes, leaderboard entries, achievements and arena votes as a JSON file, and “Delete My Account” deletes your account and the related data. You can correct your profile in Account Settings. For data not included in the file, such as messages, you can make a request.",
+    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap kaydınızı (arkadaş listesi dahil), kod ve oyun projelerinizi, ses kitaplığınızı (dosya adları ve indirme bağlantılarıyla), mesajlarda gönderdiğiniz dosyaların listesini (ad, boyut, tür, tarih ve indirme bağlantısıyla), Arcade oyunlarınızı, Media yayınlarınızı, grup kayıtlarınızı, haber yorumlarınızı, Arcade beğenilerinizi, skor tablosu kayıtlarınızı, başarımlarınızı ve arena oylarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler. Profil bilgilerinizi Hesap Ayarları'ndan düzeltebilirsiniz. Mesajlar gibi bu dosyada yer almayan veriler için başvuru yapabilirsiniz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -12623,9 +12691,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "ytpgfd18g0": {
-    "en": "Hanogt Social: groups, chats and calls",
-    "tr": "Hanogt Social: gruplar, sohbetler ve aramalar",
+  "4zpu8o2m8c": {
+    "en": "Hanogt Social: groups, chats, calls and voice channels",
+    "tr": "Hanogt Social: gruplar, sohbetler, aramalar ve sesli kanallar",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12637,9 +12705,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "13ifn7y7i8d": {
-    "en": "Group members may not use profiles, code, messages or voice messages they see in a group outside the group's purpose, or publish them without permission.",
-    "tr": "Grup üyeleri, grupta gördükleri profil, kod, mesaj ve sesli mesajları grup amacı dışında kullanamaz veya izinsiz yayımlayamaz.",
+  "fcp9nqsjfp": {
+    "en": "Group members may not use profiles, code, messages, voice messages or files they see in a group outside the group's purpose, or publish them without permission.",
+    "tr": "Grup üyeleri, grupta gördükleri profil, kod, mesaj, sesli mesaj ve dosyaları grup amacı dışında kullanamaz veya izinsiz yayımlayamaz.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12693,9 +12761,16 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "1qzpxbudjmr": {
-    "en": "You may not record voice calls without the other person's knowledge and consent; Hanogt does not record calls. You can block and report users who bother you.",
-    "tr": "Sesli aramaları karşı tarafın bilgisi ve rızası olmadan kaydedemezsiniz; Hanogt aramaları kaydetmez. Sizi rahatsız eden kullanıcıları engelleyebilir ve bize bildirebilirsiniz.",
+  "vt44pyngv6": {
+    "en": "Only send files in messages that you have the right to send. Sending malware, files with other people's personal data or pictures taken of them without their consent, files that infringe copyright or contain unlawful content, and trying to get around the file type check (for example by sending a program under another extension or hiding it in an archive) are not allowed. Files are not scanned for viruses; before you open a file, make sure you trust the sender. Files in messages are not a backup or file hosting service: when the message, the chat or the group is deleted, the file is deleted too, so keep your own copy of important files. We may delete files reported or found to break these Terms.",
+    "tr": "Mesajlarla yalnızca göndermeye hakkınız olan dosyaları gönderin. Zararlı yazılım; başkalarının kişisel verilerini ya da rızası olmadan çekilmiş görüntülerini, telif hakkını ihlal eden veya hukuka aykırı içerikleri taşıyan dosyalar göndermek ve dosya türü denetimini atlatmaya çalışmak (ör. bir programı başka bir uzantıyla göndermek veya bir arşivin içine gizlemek) yasaktır. Dosyalar virüs taramasından geçirilmez; bir dosyayı açmadan önce gönderene güvendiğinizden emin olun. Mesajlardaki dosyalar bir yedekleme veya dosya barındırma hizmeti değildir: mesaj, sohbet veya grup silindiğinde dosya da silinir, önemli dosyaların kopyasını kendiniz saklayın. Bu Şartlara aykırı olduğu bildirilen ya da tespit edilen dosyaları silebiliriz.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1hrdnaqo4ps": {
+    "en": "You may not record or publish voice calls, groups' voice channels or screens shared with you without the other participants' knowledge and consent; Hanogt does not record them. Before you share your screen, make sure it shows no personal data or confidential information belonging to others. You can block and report users who bother you.",
+    "tr": "Sesli aramaları, grupların sesli kanallarını ve size gösterilen ekran paylaşımlarını diğer katılımcıların bilgisi ve rızası olmadan kaydedemez veya yayımlayamazsınız; Hanogt bunları kaydetmez. Ekranınızı paylaşmadan önce ekranda başkalarına ait kişisel veri veya gizli bilgi bulunmadığından emin olun. Sizi rahatsız eden kullanıcıları engelleyebilir ve bize bildirebilirsiniz.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -12954,6 +13029,13 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "1yg2k1cwsgd": {
+    "en": "bigger files and more space in Hanogt Social messages: up to 2 MB per file (Free) or 4 MB (Plus and Pro), and 25 MB (Free), 250 MB (Plus) or 1 GB (Pro) in all for the files you send. Deleting messages with files gives the space back;",
+    "tr": "Hanogt Social mesajlarında daha büyük dosyalar ve daha fazla alan: dosya başına en fazla 2 MB (Ücretsiz) veya 4 MB (Plus ve Pro); gönderdiğiniz dosyalar için toplam 25 MB (Ücretsiz), 250 MB (Plus) veya 1 GB (Pro). Dosyalı mesajları sildiğinizde alan geri döner;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
   "22ay5ll2voo": {
     "en": "more storage for the sounds and 3D models of Hanogt Engine games: 5 MB and 30 files on Free, 25 MB and 150 files on Plus and 100 MB and 600 files on Pro (up to 300 KB per file; a file used in several projects counts once);",
     "tr": "Hanogt Engine oyunlarının sesleri ve 3D modelleri için daha fazla depolama: Ücretsiz planda 5 MB ve 30 dosya, Plus'ta 25 MB ve 150 dosya, Pro'da 100 MB ve 600 dosya (dosya başına en fazla 300 KB; aynı dosya birden çok projede kullanılsa da bir kez sayılır);",
@@ -13010,9 +13092,9 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
-  "2go75m07h1g": {
-    "en": "When you move to a lower plan or your subscription ends, your existing projects, groups, connections, keys and settings aren't deleted: if you have more projects or groups than the new plan allows, you can't create new ones; AI connections over the limit are switched off; only as many of your Hanogt AI API keys as the new plan allows, the oldest ones, keep working (none on Free); only the part of your personal instructions within the new plan's limit is used; the members, pinned messages, custom commands and banned words of groups you own and your starred messages aren't removed, but nothing new can be added until they are under the new plan's limit; and the plan badge and early access end.",
-    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz, gruplarınız, bağlantılarınız, anahtarlarınız ve ayarlarınız silinmez: yeni planın sınırından fazla projeniz veya grubunuz varsa yenisini oluşturamazsınız; sınırı aşan yapay zekâ bağlantılarınız kapatılır; Hanogt AI API anahtarlarınızdan yalnızca yeni planın izin verdiği sayıda, en eski olanlar çalışmaya devam eder (Ücretsiz planda hiçbiri çalışmaz); kişisel talimatlarınızın yalnızca yeni planın sınırına kadar olan kısmı kullanılır; sahibi olduğunuz gruplardaki üyeler, sabitlenmiş mesajlar, özel komutlar ve yasaklı kelimeler ile yıldızlı mesajlarınız silinmez, ancak yeni planın sınırının altına inene kadar yenisi eklenemez; plan rozeti ve erken erişim sona erer.",
+  "1smcq6easq2": {
+    "en": "When you move to a lower plan or your subscription ends, your existing projects, groups, connections, keys and settings aren't deleted: if you have more projects or groups than the new plan allows, you can't create new ones; AI connections over the limit are switched off; only as many of your Hanogt AI API keys as the new plan allows, the oldest ones, keep working (none on Free); only the part of your personal instructions within the new plan's limit is used; the members, pinned messages, custom commands and banned words of groups you own and your starred messages aren't removed, but nothing new can be added until they are under the new plan's limit; the files you sent in messages aren't removed, but you can't send new files until the space you use is under the new plan's limit, and new files must fit the new plan's file size limit; and the plan badge and early access end.",
+    "tr": "Daha düşük bir plana geçtiğinizde veya aboneliğiniz sona erdiğinde mevcut projeleriniz, gruplarınız, bağlantılarınız, anahtarlarınız ve ayarlarınız silinmez: yeni planın sınırından fazla projeniz veya grubunuz varsa yenisini oluşturamazsınız; sınırı aşan yapay zekâ bağlantılarınız kapatılır; Hanogt AI API anahtarlarınızdan yalnızca yeni planın izin verdiği sayıda, en eski olanlar çalışmaya devam eder (Ücretsiz planda hiçbiri çalışmaz); kişisel talimatlarınızın yalnızca yeni planın sınırına kadar olan kısmı kullanılır; sahibi olduğunuz gruplardaki üyeler, sabitlenmiş mesajlar, özel komutlar ve yasaklı kelimeler ile yıldızlı mesajlarınız silinmez, ancak yeni planın sınırının altına inene kadar yenisi eklenemez; mesajlarda gönderdiğiniz dosyalar silinmez, ancak kullandığınız alan yeni planın sınırının altına inene kadar yeni dosya gönderemezsiniz ve yeni dosyalar yeni planın dosya boyutu sınırına uymalıdır; plan rozeti ve erken erişim sona erer.",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -14525,7 +14607,8 @@
     "tr": "Sorunsuz",
     "files": [
       "src/components/Admin/CloudHealthSection.tsx",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "h8pe5i2ub7": {
@@ -20993,7 +21076,8 @@
       "src/components/Admin/ReportsPanel.tsx",
       "src/components/Admin/SecurityEventsSection.tsx",
       "src/components/Editor/CollabDialogs.tsx",
-      "src/components/Editor/Console.tsx"
+      "src/components/Editor/Console.tsx",
+      "src/components/Plans/UsageList.tsx"
     ]
   },
   "2y1y6y9a3m": {
@@ -22622,6 +22706,7 @@
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/GroupVoiceProvider.tsx",
       "src/components/Groups/workspace/SafetySettings.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -22633,6 +22718,7 @@
       "src/components/Arcade/ArcadePlayerView.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/GameEngine/hub/LivePreview.tsx",
+      "src/components/GroupVoiceProvider.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -22641,7 +22727,8 @@
     "tr": "Tam ekran",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
-      "src/components/Editor/WebPreview.tsx"
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "13dr3zju3ou": {
@@ -22723,6 +22810,7 @@
     "files": [
       "src/components/Arcade/ArcadeProgress.tsx",
       "src/components/Editor/CollabPanel.tsx",
+      "src/components/Social/VoiceChannel.tsx",
       "src/lib/collab/copy.ts"
     ]
   },
@@ -22928,6 +23016,62 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "1qhvoi8p9oj": {
+    "en": "Hanogt Social: screen sharing, voice channels and files",
+    "tr": "Hanogt Social: ekran paylaşımı, sesli kanallar ve dosyalar",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "hb76fpgier": {
+    "en": "Calls open in a full view and you can share your screen; every group has a voice channel for 5 people; and you can send files in messages.",
+    "tr": "Aramalar büyük görünümde açılıyor ve ekranını paylaşabiliyorsun; her grubun 5 kişilik bir sesli kanalı var; mesajlarla dosya gönderebiliyorsun.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "200nayakhti": {
+    "en": "Full call view: speaking rings, full screen and every control; the call goes on when you minimize it.",
+    "tr": "Büyük arama görünümü: konuşma halkaları, tam ekran ve tüm denetimler; küçültünce arama sürer.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2a5c2e6x19f": {
+    "en": "Screen sharing: share a screen, window or tab in a one-to-one call; the other person watches full screen or picture in picture.",
+    "tr": "Ekran paylaşımı: birebir aramada bir ekran, pencere ya da sekme paylaş; karşı taraf tam ekranda ya da pencere içinde pencere izler.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "168dr3xou5q": {
+    "en": "Groups' voice channel: join with one click, up to 5 people; manage your microphone and sound from the voice bar while you browse.",
+    "tr": "Grupların sesli kanalı: tek tıkla katıl, en fazla 5 kişi; sitede gezinirken ses çubuğundan mikrofonu ve sesi yönet.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "pirnnyvkpa": {
+    "en": "Files in messages: send pictures, video, sound, PDFs, archives and code files with the paperclip, a paste or drag and drop.",
+    "tr": "Mesajlarda dosyalar: görsel, video, ses, PDF, arşiv ve kod dosyası gönder; ataç, yapıştırma ya da sürükle-bırak ile.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2bcxoqtvvgi": {
+    "en": "File limits by plan: 2 / 4 / 4 MB per file, 25 MB / 250 MB / 1 GB in all; location details are removed from pictures.",
+    "tr": "Dosya sınırları planına göre: dosya başına 2 / 4 / 4 MB, toplam 25 MB / 250 MB / 1 GB; görsellerdeki konum bilgisi silinir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1titk12l5ue": {
+    "en": "Privacy Policy, KVKK Information Notice and Terms of Use 5.4.",
+    "tr": "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 5.4.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "wqj2w049nw": {
@@ -25735,6 +25879,7 @@
     "tr": "Sesi kapat (sağırlaştır)",
     "files": [
       "src/components/Editor/CollabVoice.tsx",
+      "src/components/GroupVoiceProvider.tsx",
       "src/components/Social/UserPanel.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -25744,6 +25889,7 @@
     "tr": "Sesi aç",
     "files": [
       "src/components/Editor/CollabVoice.tsx",
+      "src/components/GroupVoiceProvider.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -27281,7 +27427,8 @@
     "en": "Exit fullscreen",
     "tr": "Tam ekrandan çık",
     "files": [
-      "src/components/Editor/WebPreview.tsx"
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "24z2dffbxaw": {
@@ -31092,7 +31239,8 @@
     "en": "Audio",
     "tr": "Sesler",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Social/chat/AttachmentView.tsx"
     ]
   },
   "agczg7fga1": {
@@ -31309,7 +31457,8 @@
     "en": "Watch",
     "tr": "İzle",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "rjehiu7l5f": {
@@ -32731,16 +32880,6 @@
       "src/components/Groups/api.ts"
     ]
   },
-  "ipj5r8beo0": {
-    "en": "Couldn't reach the server. Check your connection.",
-    "tr": "Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.",
-    "files": [
-      "src/components/Groups/api.ts",
-      "src/components/VoiceCallProvider.tsx",
-      "src/lib/collab/copy.ts",
-      "src/lib/social/api.ts"
-    ]
-  },
   "15yo6xqz121": {
     "en": "Access to the shared files was lost.",
     "tr": "Ortak dosyalara erişim kesildi.",
@@ -33187,14 +33326,6 @@
     "tr": "Katılınıyor…",
     "files": [
       "src/components/Groups/JoinGroupView.tsx"
-    ]
-  },
-  "78n0rpx4td": {
-    "en": "Open the group",
-    "tr": "Gruba git",
-    "files": [
-      "src/components/Groups/JoinGroupView.tsx",
-      "src/components/HanogtAI/AgentCard.tsx"
     ]
   },
   "2bznpxl55jy": {
@@ -35129,6 +35260,176 @@
       "src/components/Groups/workspace/SettingsDialog.tsx"
     ]
   },
+  "23sgite0i54": {
+    "en": "Voice channel",
+    "tr": "Sesli kanal",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "1t8gr6tnsvl": {
+    "en": "Voice connected",
+    "tr": "Ses bağlantısı kuruldu",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/Social/UserPanel.tsx"
+    ]
+  },
+  "1swxts8zix1": {
+    "en": "Connecting…",
+    "tr": "Bağlanıyor…",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/News/NewsPage.tsx",
+      "src/components/Social/UserPanel.tsx",
+      "src/components/VoiceCallProvider.tsx",
+      "src/lib/collab/copy.ts"
+    ]
+  },
+  "qt1rgthlj3": {
+    "en": "Disconnect",
+    "tr": "Bağlantıyı kes",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/Social/UserPanel.tsx"
+    ]
+  },
+  "78n0rpx4td": {
+    "en": "Open the group",
+    "tr": "Gruba git",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/Groups/JoinGroupView.tsx",
+      "src/components/HanogtAI/AgentCard.tsx"
+    ]
+  },
+  "15t3mo46djy": {
+    "en": "Your browser didn't start the audio by itself.",
+    "tr": "Tarayıcın sesi otomatik başlatmadı.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1cxnwf2h2ut": {
+    "en": "Start audio",
+    "tr": "Sesi başlat",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "17ep0pa1e4u": {
+    "en": "{name} is speaking",
+    "tr": "{name} konuşuyor",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "bfve5nmsx4": {
+    "en": "The voice channel is full (5 people at most).",
+    "tr": "Sesli kanal dolu (en fazla 5 kişi).",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "10ndf0mdzea": {
+    "en": "You're timed out in this group, so you can't join its voice channel.",
+    "tr": "Bu grupta susturulduğun için sesli kanala katılamazsın.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "183nqa1gcj6": {
+    "en": "You no longer have access to this group's voice channel.",
+    "tr": "Bu grubun sesli kanalına artık erişimin yok.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "flewhfqbhe": {
+    "en": "You joined the voice channel from another tab or device, so this one disconnected.",
+    "tr": "Sesli kanala başka bir sekmeden veya cihazdan katıldın; buradaki bağlantı kapandı.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "1n5rdqh74f7": {
+    "en": "Microphone access was denied. Allow the microphone from the lock icon in the address bar and try again.",
+    "tr": "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin verip tekrar dene.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/VoiceCallProvider.tsx",
+      "src/lib/social/api.ts"
+    ]
+  },
+  "wp5cb29fm5": {
+    "en": "No microphone was found or it couldn't be opened. Connect one and try again.",
+    "tr": "Mikrofon bulunamadı veya açılamadı. Bir mikrofon bağlayıp tekrar dene.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "50nxkpj3sc": {
+    "en": "This browser doesn't support voice channels (a secure connection and an up-to-date browser are needed).",
+    "tr": "Bu tarayıcı sesli kanalları desteklemiyor (güvenli bağlantı ve güncel bir tarayıcı gerekir).",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "fhx2kmuqc9": {
+    "en": "The voice connection couldn't be prepared. Try again in a moment.",
+    "tr": "Ses bağlantısı hazırlanamadı. Biraz sonra tekrar dene.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "2bubqh84r40": {
+    "en": "You're trying too often. Wait a bit and try again.",
+    "tr": "Çok sık deniyorsun. Biraz bekleyip tekrar dene.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "ipj5r8beo0": {
+    "en": "Couldn't reach the server. Check your connection.",
+    "tr": "Sunucuya ulaşılamadı. Bağlantını kontrol et.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx",
+      "src/components/Groups/api.ts",
+      "src/components/VoiceCallProvider.tsx",
+      "src/lib/collab/copy.ts",
+      "src/lib/social/api.ts"
+    ]
+  },
+  "1y4hhik3pbp": {
+    "en": "The voice channel connection dropped. Try joining again.",
+    "tr": "Sesli kanal bağlantısı koptu. Tekrar katılmayı dene.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "23kj1goxu1n": {
+    "en": "You left the voice channel because a call started.",
+    "tr": "Bir arama başladığı için sesli kanaldan ayrıldın.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "2bano0kp95k": {
+    "en": "End your call first to join the voice channel.",
+    "tr": "Sesli kanala katılmak için önce aramayı bitir.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
+  "1pz64f9n8et": {
+    "en": "You're timed out in this group; you can join its voice channel in {minutes} min.",
+    "tr": "Bu grupta susturuldun; {minutes} dakika sonra sesli kanala katılabilirsin.",
+    "files": [
+      "src/components/GroupVoiceProvider.tsx"
+    ]
+  },
   "f2rpl437vo": {
     "en": "Compass",
     "tr": "Pusula",
@@ -36792,6 +37093,13 @@
       "src/components/Guide/book-content.ts"
     ]
   },
+  "1picjb70ay": {
+    "en": "Voice calls",
+    "tr": "Sesli arama",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "2133tpwkyvn": {
     "en": "Call a friend from the direct message screen and group members from the group chat.",
     "tr": "Arkadaşını direkt mesaj ekranından, grup üyelerini grup sohbetinden ara.",
@@ -38118,7 +38426,8 @@
     "en": "Remove {name}",
     "tr": "{name} dilini kaldır",
     "files": [
-      "src/components/HanogtAI/AiSettingsPage.tsx"
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/Social/chat/Composer.tsx"
     ]
   },
   "17evrgknj7j": {
@@ -42336,16 +42645,6 @@
       "src/components/News/NewsPage.tsx"
     ]
   },
-  "1swxts8zix1": {
-    "en": "Connecting…",
-    "tr": "Bağlanıyor…",
-    "files": [
-      "src/components/News/NewsPage.tsx",
-      "src/components/Social/UserPanel.tsx",
-      "src/components/VoiceCallProvider.tsx",
-      "src/lib/collab/copy.ts"
-    ]
-  },
   "2d0kap7f54k": {
     "en": "The latest from AI, software, games, apps, science and finance in one stream. The feed refreshes itself and new stories drop in live; a markets strip tracks currencies, gold and stocks; comment, save and vote in the AI arena.",
     "tr": "Yapay zeka, yazılım, oyun, uygulama, bilim ve ekonomi dünyasından güncel haberler tek akışta. Akış kendiliğinden yenilenir, yeni haberler canlı olarak düşer; döviz, altın ve borsa için piyasa şeridi var; yorum yap, kaydet, yapay zeka arenasında oy ver.",
@@ -44040,6 +44339,20 @@
       "src/components/Plans/PricingSections.tsx"
     ]
   },
+  "1u520zk80f9": {
+    "en": "Files in messages",
+    "tr": "Mesajlarda dosya gönderme",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "25op4cpzecj": {
+    "en": "{file} per file · {total} in all",
+    "tr": "Dosya başına {file} · toplam {total}",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
   "1m65zqml7fw": {
     "en": "Code, games and teams",
     "tr": "Kod, oyun ve ekip",
@@ -44127,6 +44440,13 @@
   "oanq4e3bz0": {
     "en": "{count} / {limit} files",
     "tr": "{count} / {limit} dosya",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "1sa6m76yf09": {
+    "en": "Files you sent in messages",
+    "tr": "Mesajlarda gönderdiğin dosyalar",
     "files": [
       "src/components/Plans/UsageList.tsx"
     ]
@@ -45488,6 +45808,97 @@
       "src/components/Social/AudioSettings.tsx"
     ]
   },
+  "1goh86jrhco": {
+    "en": "Open the picture {name}",
+    "tr": "{name} görselini büyüt",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "4qkr4ad4p6": {
+    "en": "Download {name}",
+    "tr": "{name} dosyasını indir",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "22w6htnp68a": {
+    "en": "Picture: {name}",
+    "tr": "Görsel: {name}",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "4dbn23mzpa": {
+    "en": "Sending {percent}%",
+    "tr": "Gönderiliyor %{percent}",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "106gs84y0fn": {
+    "en": "Hide preview",
+    "tr": "Önizlemeyi gizle",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "1gb5r4zn17r": {
+    "en": "The preview couldn't be opened.",
+    "tr": "Önizleme açılamadı.",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "2fbqp8eqp3k": {
+    "en": "Showing the first {lines} lines; download the file for all of it.",
+    "tr": "İlk {lines} satır gösteriliyor; tamamı için dosyayı indir.",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "pximiap0zz": {
+    "en": "The file couldn't be opened or was deleted.",
+    "tr": "Dosya açılamadı veya silinmiş.",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "20iyvdwezxi": {
+    "en": "PDF",
+    "tr": "PDF",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "4gl99tzers": {
+    "en": "Archive",
+    "tr": "Arşiv",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "27fsqzn54nu": {
+    "en": "Text",
+    "tr": "Metin",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "mdoelpfzut": {
+    "en": "Video",
+    "tr": "Video",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
+  "5g7bmgw51u": {
+    "en": "Picture",
+    "tr": "Görsel",
+    "files": [
+      "src/components/Social/chat/AttachmentView.tsx"
+    ]
+  },
   "xa38n1ocp2": {
     "en": "Hanogt's verified bot",
     "tr": "Hanogt'un doğrulanmış botu",
@@ -45596,6 +46007,55 @@
   "5tw2ciuptl": {
     "en": "Ctrl+Enter to send",
     "tr": "Göndermek için Ctrl+Enter",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "69ziwhlc1g": {
+    "en": "Attach files",
+    "tr": "Dosya ekle",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "j6rx4i0jlv": {
+    "en": "Files to send",
+    "tr": "Eklenecek dosyalar",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "bl5o7xm8vn": {
+    "en": "Drop files here",
+    "tr": "Dosyaları buraya bırak",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "21dq9owrddl": {
+    "en": "Add a caption…",
+    "tr": "Açıklama ekle…",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "1l8oqplejnl": {
+    "en": "{name} is too big: your plan allows files up to {limit}.",
+    "tr": "{name} çok büyük: planında bir dosya en fazla {limit} olabilir.",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "gkam01bzp9": {
+    "en": "{name} is empty.",
+    "tr": "{name} boş.",
+    "files": [
+      "src/components/Social/chat/Composer.tsx"
+    ]
+  },
+  "154bt9fpyfb": {
+    "en": "You can send at most {max} files at once.",
+    "tr": "Bir seferde en fazla {max} dosya gönderebilirsin.",
     "files": [
       "src/components/Social/chat/Composer.tsx"
     ]
@@ -47496,13 +47956,6 @@
       "src/components/Social/UserPanel.tsx"
     ]
   },
-  "1t8gr6tnsvl": {
-    "en": "Voice connected",
-    "tr": "Ses bağlantısı kuruldu",
-    "files": [
-      "src/components/Social/UserPanel.tsx"
-    ]
-  },
   "19yvg5u1n4": {
     "en": "Calling…",
     "tr": "Aranıyor…",
@@ -47513,13 +47966,6 @@
   "qabm6avyki": {
     "en": "Incoming call…",
     "tr": "Gelen arama…",
-    "files": [
-      "src/components/Social/UserPanel.tsx"
-    ]
-  },
-  "qt1rgthlj3": {
-    "en": "Disconnect",
-    "tr": "Bağlantıyı kes",
     "files": [
       "src/components/Social/UserPanel.tsx"
     ]
@@ -47601,6 +48047,104 @@
     "tr": "{count} ortak grup",
     "files": [
       "src/components/Social/UserPopout.tsx"
+    ]
+  },
+  "1wof6pznepo": {
+    "en": "Voice channels",
+    "tr": "Sesli kanallar",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "1v2wksjrzmj": {
+    "en": "Join the {name} voice channel",
+    "tr": "{name} sesli kanalına katıl",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "2dadhv0fbkm": {
+    "en": "People in the {name} voice channel",
+    "tr": "{name} sesli kanalındakiler",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "166x14o926r": {
+    "en": "You're in the {name} voice channel",
+    "tr": "{name} sesli kanalındasın",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "11kzw884n2t": {
+    "en": "Full",
+    "tr": "Dolu",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "138rqq91gjk": {
+    "en": "The channel is full ({max} people at most).",
+    "tr": "Kanal dolu (en fazla {max} kişi).",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "1ckkflqsb8a": {
+    "en": "End your call first.",
+    "tr": "Önce aramayı bitir.",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "veegk3frgn": {
+    "en": "{count} of {max} people",
+    "tr": "{count}/{max} kişi",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "1on5nbavue4": {
+    "en": "muted",
+    "tr": "mikrofonu kapalı",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "1wofkvjsfp9": {
+    "en": "deafened",
+    "tr": "sesi kapalı",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "26c5ld36774": {
+    "en": "connecting",
+    "tr": "bağlanıyor",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "1zl1bh0y33k": {
+    "en": "couldn't connect",
+    "tr": "bağlantı kurulamadı",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "182imk3x7cy": {
+    "en": "Audio is never recorded; only group members can see who is in the channel.",
+    "tr": "Ses kaydedilmez; kanalda kimlerin olduğunu yalnızca grup üyeleri görür.",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
+    ]
+  },
+  "dwktewptlh": {
+    "en": "Someone couldn't be connected. Some networks (mobile data, company or school networks) block direct connections; on them the site needs a TURN server.",
+    "tr": "Biriyle bağlantı kurulamadı. Bazı ağlar (mobil veri, kurumsal veya okul ağları) doğrudan bağlantıyı engeller; bu ağlarda sitenin bir TURN sunucusu kullanması gerekir.",
+    "files": [
+      "src/components/Social/VoiceChannel.tsx"
     ]
   },
   "gboap0vyh3": {
@@ -47743,9 +48287,9 @@
       "src/components/VoiceCallProvider.tsx"
     ]
   },
-  "1nubk86l7v2": {
-    "en": "Audio is never recorded; temporary connection data is deleted when the call ends.",
-    "tr": "Ses kaydedilmez; geçici bağlantı verisi arama bitince silinir.",
+  "1r4dkmewlka": {
+    "en": "Audio and shared screens are never recorded; temporary connection data is deleted when the call ends.",
+    "tr": "Ses ve paylaşılan ekran kaydedilmez; geçici bağlantı verisi arama bitince silinir.",
     "files": [
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -47799,20 +48343,6 @@
       "src/components/VoiceCallProvider.tsx"
     ]
   },
-  "15t3mo46djy": {
-    "en": "Your browser didn't start the audio by itself.",
-    "tr": "Tarayıcın sesi otomatik başlatmadı.",
-    "files": [
-      "src/components/VoiceCallProvider.tsx"
-    ]
-  },
-  "1cxnwf2h2ut": {
-    "en": "Start audio",
-    "tr": "Sesi başlat",
-    "files": [
-      "src/components/VoiceCallProvider.tsx"
-    ]
-  },
   "fe0a70q4yv": {
     "en": "No audio data is arriving from the other person; the connection may have dropped. If it continues, end the call and try again.",
     "tr": "Karşı taraftan ses verisi gelmiyor; bağlantı kopmuş olabilir. Sorun sürerse aramayı bitirip yeniden dene.",
@@ -47823,6 +48353,97 @@
   "bybzk6sejy": {
     "en": "No sound seems to be coming from your microphone. Is the right one selected?",
     "tr": "Mikrofonundan hiç ses gelmiyor gibi görünüyor. Doğru mikrofon seçili mi?",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1heqo4grwxu": {
+    "en": "Full view",
+    "tr": "Büyük görünüm",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1fhq5raijdw": {
+    "en": "Minimize",
+    "tr": "Küçült",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "4lq9m0m2wo": {
+    "en": "Picture in picture",
+    "tr": "Pencere içinde pencere",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "qb8c2eg2yl": {
+    "en": "Share your screen",
+    "tr": "Ekranını paylaş",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1tbkpavsuxr": {
+    "en": "Stop sharing",
+    "tr": "Paylaşımı durdur",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1t7hsxpxe4e": {
+    "en": "You're sharing your screen",
+    "tr": "Ekranını paylaşıyorsun",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1as1obs2dg9": {
+    "en": "{name} can see your screen. Screen audio isn't shared; your microphone stays on.",
+    "tr": "{name} ekranını görüyor. Ekran sesi paylaşılmaz; mikrofonun açık kalır.",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "eu261oriql": {
+    "en": "{name} is sharing their screen",
+    "tr": "{name} ekranını paylaşıyor",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "227t8nyhsbu": {
+    "en": "The stream is starting…",
+    "tr": "Yayın başlıyor…",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1vd29jyg73v": {
+    "en": "Call with {name}",
+    "tr": "{name} ile arama",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "1sdopz3x9uy": {
+    "en": "Screens can't be shared in this call: the other person's app is out of date. Both of you reload the page and call again.",
+    "tr": "Bu aramada ekran paylaşılamıyor: karşı tarafın uygulaması eski. İkiniz de sayfayı yenileyip yeniden arayın.",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "2cajwm5esv9": {
+    "en": "This device can't share its screen (phone browsers don't support screen sharing).",
+    "tr": "Bu cihaz ekran paylaşamıyor (telefon tarayıcıları ekran paylaşımını desteklemez).",
+    "files": [
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "owjwgx3bmt": {
+    "en": "The screen couldn't be shared. Check the browser's and the system's screen recording permission and try again.",
+    "tr": "Ekran paylaşılamadı. Tarayıcının ve işletim sisteminin ekran kaydı iznini kontrol edip tekrar dene.",
     "files": [
       "src/components/VoiceCallProvider.tsx"
     ]
@@ -47881,14 +48502,6 @@
     "tr": "Bağlantı kurulamadı: ağın (ör. mobil veri, kurumsal veya okul ağı) doğrudan bağlantıya izin vermiyor olabilir. Bu ağlarda aramaların çalışması için site yönetiminin bir TURN sunucusu yapılandırması gerekir; şimdilik başka bir ağla (ör. ev Wi-Fi'ı) dene.",
     "files": [
       "src/components/VoiceCallProvider.tsx"
-    ]
-  },
-  "1n5rdqh74f7": {
-    "en": "Microphone access was denied. Allow the microphone from the lock icon in the address bar and try again.",
-    "tr": "Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden mikrofona izin verip tekrar dene.",
-    "files": [
-      "src/components/VoiceCallProvider.tsx",
-      "src/lib/social/api.ts"
     ]
   },
   "2ceh49hbm7c": {
@@ -50018,9 +50631,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "2731mvtk3ux": {
-    "en": "In [Hanogt Social](/social), call friends from their direct message and group members from the group chat. Calls are **peer-to-peer via WebRTC** and are **never recorded** by Hanogt; temporary signaling documents are deleted when the call ends.\n• Allow microphone access; check it via the lock icon in the address bar.\n• Every call starts with the microphone and sound on; if no sound gets through, the call bar says why (your microphone is off, the other person muted, no audio is arriving…).\n• **Voice settings** (the sliders icon in the Social panel or the settings button in the call bar): pick your microphone and speaker and test the microphone.\n• Some mobile and corporate networks need a TURN server to connect; the call screen tells you if it's missing.\n• Voice messages are limited to 60 seconds and 3 MB.",
-    "tr": "[Hanogt Social](/social)'de arkadaşlarını direkt mesaj ekranından, grup üyelerini grup sohbetinden arayabilirsin. Aramalar **WebRTC ile eşten eşe** kurulur ve Hanogt tarafından **kaydedilmez**; geçici bağlantı belgeleri görüşme bitince silinir.\n• Mikrofon izni ver; tarayıcı adres çubuğundaki kilit simgesinden kontrol edebilirsin.\n• Her arama mikrofon ve ses açık başlar; ses gitmiyorsa arama çubuğu nedenini yazar (mikrofonun kapalı, karşı taraf mikrofonunu kapattı, ses verisi gelmiyor…).\n• **Ses ayarları** (Sosyal paneldeki kaydırıcı simgesi ya da arama çubuğundaki ayar düğmesi): mikrofon ve hoparlör seçimi, mikrofon testi.\n• Bazı mobil ve kurumsal ağlarda bağlantı için TURN sunucusu gerekir; yoksa arama ekranı bunu belirtir.\n• Sesli mesajlar en fazla 60 saniye ve 3 MB'tır.",
+  "j9h00tp5im": {
+    "en": "In [Hanogt Social](/social), call friends from their direct message and group members from the group chat. Calls are **peer-to-peer via WebRTC** and are **never recorded** by Hanogt; temporary signaling documents are deleted when the call ends.\n• Allow microphone access; check it via the lock icon in the address bar.\n• Every call starts with the microphone and sound on; if no sound gets through, the call bar says why (your microphone is off, the other person muted, no audio is arriving…).\n• **Voice settings** (the sliders icon in the Social panel or the settings button in the call bar): pick your microphone and speaker and test the microphone.\n• **Full view:** the “Full view” button in the call bar opens the call full page; from there you can go full screen or minimize it.\n• **Screen sharing:** in a one-to-one call, press “Share your screen” and pick a screen, window or tab. Only the picture is sent (your computer's sound isn't, and your microphone stays on); the other person watches it in the full view, full screen or picture in picture. Phone browsers don't support it, so the button doesn't appear there.\n• **Voice channels:** every group has a voice channel in its sidebar; click it to join, and up to 5 people can talk at a time. A ring lights up around whoever is speaking, the connection stays up while you move to other pages of the site, and you can mute your microphone or your sound, or leave, from the channel or the voice bar. Only the group's members can see who is in the channel; someone muted in the group can't join.\n• Some mobile and corporate networks need a TURN server to connect; the call screen tells you if it's missing.\n• Voice messages are limited to 60 seconds and 3 MB.",
+    "tr": "[Hanogt Social](/social)'de arkadaşlarını direkt mesaj ekranından, grup üyelerini grup sohbetinden arayabilirsin. Aramalar **WebRTC ile eşten eşe** kurulur ve Hanogt tarafından **kaydedilmez**; geçici bağlantı belgeleri görüşme bitince silinir.\n• Mikrofon izni ver; tarayıcı adres çubuğundaki kilit simgesinden kontrol edebilirsin.\n• Her arama mikrofon ve ses açık başlar; ses gitmiyorsa arama çubuğu nedenini yazar (mikrofonun kapalı, karşı taraf mikrofonunu kapattı, ses verisi gelmiyor…).\n• **Ses ayarları** (Sosyal paneldeki kaydırıcı simgesi ya da arama çubuğundaki ayar düğmesi): mikrofon ve hoparlör seçimi, mikrofon testi.\n• **Büyük görünüm:** arama çubuğundaki “Büyük görünüm” düğmesi aramayı tam sayfa açar; oradan tam ekrana geçebilir ya da küçültebilirsin.\n• **Ekran paylaşımı:** birebir aramada “Ekranını paylaş”a bas ve bir ekran, pencere ya da sekme seç. Yalnızca görüntü gider (bilgisayarın sesi gitmez, mikrofonun açık kalır); karşı taraf büyük görünümde, tam ekranda ya da pencere içinde pencere olarak izler. Telefon tarayıcıları desteklemediği için orada düğme görünmez.\n• **Sesli kanallar:** her grubun kenar çubuğunda bir sesli kanal vardır; tıklayınca katılırsın ve aynı anda en fazla 5 kişi konuşabilir. Konuşanın adının çevresinde halka yanar, sitede başka sayfalara geçince bağlantı sürer; mikrofonunu ve sesini kanaldan ya da ses çubuğundan kapatabilir, oradan çıkabilirsin. Kanalda kimlerin olduğunu yalnızca grubun üyeleri görür; grupta susturulan kişi katılamaz.\n• Bazı mobil ve kurumsal ağlarda bağlantı için TURN sunucusu gerekir; yoksa arama ekranı bunu belirtir.\n• Sesli mesajlar en fazla 60 saniye ve 3 MB'tır.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -50229,9 +50842,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1yvl1zwb3rk": {
-    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, #channels, /commands, GIFs, Markdown, search, voice messages and voice calls. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin, moderator and member; owners and admins manage members, settings and AutoMod, and moderators warn, mute, delete messages and remove members. See “Bots and AutoMod in groups” for Hanogt Security Bot and AutoMod.\nLimits: 50 files per group; a group's size follows its owner's plan: {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro (the limits for pinned messages, custom bot commands and AutoMod banned words grow with the plan too). How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
-    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, #kanal, /komutlar, GIF, Markdown, arama, sesli mesaj ve sesli arama var. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici, moderatör ve üye; sahip ve yöneticiler üyeleri, ayarları ve AutoMod'u yönetir, moderatörler uyarır, susturur, mesaj siler ve gruptan çıkarır. Hanogt Security Bot ve AutoMod için “Gruplarda botlar ve AutoMod” notuna bak.\nSınırlar: grup başına 50 dosya; grubun büyüklüğü sahibinin planına göredir: Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye (sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelime sınırları da planla büyür). Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
+  "24zzb37jrm4": {
+    "en": "Groups are Discord-style team spaces in [Hanogt Social](/social) (old /groups addresses redirect there):\n1. Use **Create a group** in the group rail on the left (a 3-step wizard) and pick a template: Blank group, Study group, Game dev (Game jam), Open-source project, Classroom, Hackathon team. The group opens with starter files like a README, rules and a task list, chat topics and a pinned welcome message; you can also import files from one of your projects.\n2. **Invite:** invite friends directly or share an **invite link** that expires (1 hour, 24 hours, 7 days or never), can be use-limited and revoked.\n3. **Work together:** channels (#general and topics), **Files** and pinned messages; edit shared files with auto-save and open them in the editor; the chat has reactions, @mentions, #channels, /commands, GIFs, Markdown, search, voice messages, files and voice calls, and up to 5 people at a time can join the **voice channel** in the sidebar. The member list on the right is grouped by role and status, and unread and mention counters show in the rail. Ctrl/⌘+K switches quickly.\n4. **Roles:** owner, admin, moderator and member; owners and admins manage members, settings and AutoMod, and moderators warn, mute, delete messages and remove members. See “Bots and AutoMod in groups” for Hanogt Security Bot and AutoMod.\nLimits: 50 files per group; a group's size follows its owner's plan: {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro (the limits for pinned messages, custom bot commands and AutoMod banned words grow with the plan too). How many groups you can own depends on your plan: {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro ([Plans](/plans)). Groups are private; only invited people can join. In Agent mode I can create a group for you.",
+    "tr": "Gruplar [Hanogt Social](/social)'de Discord benzeri ekip alanlarıdır (eski /groups adresleri buraya yönlenir):\n1. Soldaki grup rayında **Grup oluştur** sihirbazıyla (3 adım) bir şablon seç: Boş grup, Çalışma grubu, Oyun geliştirme (Game jam), Açık kaynak proje, Sınıf, Hackathon takımı. Grup README, kurallar, görev listesi gibi başlangıç dosyaları, sohbet konuları ve sabitlenmiş bir karşılama mesajıyla açılır; istersen kendi projenin dosyalarını aktarabilirsin.\n2. **Davet et:** arkadaşlarını doğrudan davet et ya da süreli (1 saat, 24 saat, 7 gün, süresiz) ve kullanım sınırlı, iptal edilebilir bir **davet bağlantısı** paylaş.\n3. **Birlikte çalış:** kanallar (#genel ve konular), **Dosyalar** ve sabitlenenler; ortak dosyaları otomatik kaydederek düzenleyin, editörde açın; sohbette tepkiler, @bahsetme, #kanal, /komutlar, GIF, Markdown, arama, sesli mesaj, dosya gönderme ve sesli arama var; kenar çubuğundaki **sesli kanala** aynı anda 5 kişi katılabilir. Sağdaki üye listesi role ve duruma göre gruplanır; okunmamış ve bahsetme sayaçları rayda görünür. Ctrl/⌘+K ile hızlı geçiş yapabilirsin.\n4. **Roller:** sahip, yönetici, moderatör ve üye; sahip ve yöneticiler üyeleri, ayarları ve AutoMod'u yönetir, moderatörler uyarır, susturur, mesaj siler ve gruptan çıkarır. Hanogt Security Bot ve AutoMod için “Gruplarda botlar ve AutoMod” notuna bak.\nSınırlar: grup başına 50 dosya; grubun büyüklüğü sahibinin planına göredir: Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye (sabitlenmiş mesaj, özel bot komutu ve AutoMod yasaklı kelime sınırları da planla büyür). Sahibi olabileceğin grup sayısı planına bağlı: Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus}, Pro'da sınırsız ([Planlar](/plans)). Gruplar gizlidir; yalnızca davet edilenler katılır. Ajan modunda senin için grup kurabilirim.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -50257,9 +50870,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "19xh7jil9fa": {
-    "en": "Direct messages live in [Hanogt Social](/social) (the old /messages address redirects there): pick a chat from the **Direct messages** list on the left, or press the message button on a friend in the Friends screen. The other person's profile card shows on the right.\n• Send text, emoji, GIFs, stickers and **voice messages** (up to 60 s); reply to, edit, delete, forward, star and pin messages, and react to them. Your starred messages are in the side menu.\n• **Markdown:** `**bold**`, `*italic*`, `__underline__`, `~~strikethrough~~`, `||spoiler||`, `` `code` `` and code blocks with ```.\n• The typing indicator, read receipts, Enter to send, font size, background and GIF playback are in **Hanogt Social settings → Messages** (the gear at the bottom left).\n• You can only message friends; people you block can't write to you.\nHanogt AI never sends messages to other people on your behalf.",
-    "tr": "Direkt mesajlar [Hanogt Social](/social)'dedir (eski /messages adresi buraya yönlenir): soldaki **Direkt mesajlar** listesinden bir sohbet seç ya da Arkadaşlar ekranında arkadaşının mesaj düğmesine bas. Sağda karşındaki kişinin profil kartı görünür.\n• Metin, emoji, GIF, çıkartma ve **sesli mesaj** (en fazla 60 sn) gönderebilir; mesajı yanıtlayabilir, düzenleyebilir, silebilir, iletebilir, yıldızlayabilir ve sabitleyebilir, tepki verebilirsin. Yıldızlı mesajların sol menüde.\n• **Markdown:** `**kalın**`, `*italik*`, `__altı çizili__`, `~~üstü çizili~~`, `||spoiler||`, `` `kod` `` ve ``` ile kod blokları.\n• Yazıyor göstergesi, okundu bilgisi, Enter ile gönderme, yazı boyutu, arka plan ve GIF oynatma **Hanogt Social ayarları → Mesajlar**'dadır (sol alttaki dişli).\n• Yalnızca arkadaşlarınla mesajlaşabilirsin; engellediğin kişiler sana yazamaz.\nHanogt AI senin adına başkalarına mesaj göndermez.",
+  "1qnisq98hig": {
+    "en": "Direct messages live in [Hanogt Social](/social) (the old /messages address redirects there): pick a chat from the **Direct messages** list on the left, or press the message button on a friend in the Friends screen. The other person's profile card shows on the right.\n• Send text, emoji, GIFs, stickers and **voice messages** (up to 60 s); reply to, edit, delete, forward, star and pin messages, and react to them. Your starred messages are in the side menu.\n• **Files:** use the paperclip button in the message box, paste or drag and drop to send pictures, video, sound, PDFs, archives, office documents and code files; each file is a message and you can add a caption. Up to {attachFree} per file on Free, {attachPlus} on Plus and {attachPro} on Pro, and {attachSpaceFree}, {attachSpacePlus} and {attachSpacePro} in all for the files you send. Programs (.exe, .bat, .apk…) aren't accepted, and location and device details are removed from pictures. Files aren't scanned for viruses, so only open ones from people you trust. The same goes for groups.\n• **Markdown:** `**bold**`, `*italic*`, `__underline__`, `~~strikethrough~~`, `||spoiler||`, `` `code` `` and code blocks with ```.\n• The typing indicator, read receipts, Enter to send, font size, background and GIF playback are in **Hanogt Social settings → Messages** (the gear at the bottom left).\n• You can only message friends; people you block can't write to you.\nHanogt AI never sends messages to other people on your behalf.",
+    "tr": "Direkt mesajlar [Hanogt Social](/social)'dedir (eski /messages adresi buraya yönlenir): soldaki **Direkt mesajlar** listesinden bir sohbet seç ya da Arkadaşlar ekranında arkadaşının mesaj düğmesine bas. Sağda karşındaki kişinin profil kartı görünür.\n• Metin, emoji, GIF, çıkartma ve **sesli mesaj** (en fazla 60 sn) gönderebilir; mesajı yanıtlayabilir, düzenleyebilir, silebilir, iletebilir, yıldızlayabilir ve sabitleyebilir, tepki verebilirsin. Yıldızlı mesajların sol menüde.\n• **Dosyalar:** yazma kutusundaki ataç düğmesiyle, yapıştırarak ya da sürükleyip bırakarak görsel, video, ses, PDF, arşiv, ofis belgesi ve kod dosyası gönderebilirsin; her dosya bir mesajdır ve açıklama ekleyebilirsin. Dosya başına Ücretsiz'de {attachFree}, Plus'ta {attachPlus}, Pro'da {attachPro}; gönderdiğin dosyalar için toplam {attachSpaceFree}, {attachSpacePlus} ve {attachSpacePro}. Programlar (.exe, .bat, .apk…) kabul edilmez; görsellerdeki konum ve cihaz bilgileri silinir. Dosyaları virüs taramasından geçmediği için yalnızca güvendiğin kişilerden geleni aç. Aynısı gruplarda da geçerlidir.\n• **Markdown:** `**kalın**`, `*italik*`, `__altı çizili__`, `~~üstü çizili~~`, `||spoiler||`, `` `kod` `` ve ``` ile kod blokları.\n• Yazıyor göstergesi, okundu bilgisi, Enter ile gönderme, yazı boyutu, arka plan ve GIF oynatma **Hanogt Social ayarları → Mesajlar**'dadır (sol alttaki dişli).\n• Yalnızca arkadaşlarınla mesajlaşabilirsin; engellediğin kişiler sana yazamaz.\nHanogt AI senin adına başkalarına mesaj göndermez.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -50341,9 +50954,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "2cr13a4ece6": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, your own API key connections, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Group size (by the group owner's plan):** {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro; {pinsPlus} pinned messages on Plus and {pinsPro} on Pro, {commandsPlus} / {commandsPro} custom bot commands and {wordsPlus} / {wordsPro} AutoMod banned words. Nothing is removed when the plan goes down; nothing new can be added.\n• **Running code:** {runFree} files at once on Free, {runPlus} on Plus and {runPro} on Pro; for compiled languages {runMinutePlus} files a minute on Plus and {runMinutePro} on Pro.\n• **Starred messages:** {starsFree} on Free, {starsPlus} on Plus and {starsPro} on Pro.\n• **Game file storage:** for sounds and 3D models (GLB) uploaded to Hanogt Engine games, {audioFree} MB on Free, {audioPlus} MB on Plus and {audioPro} MB on Pro (up to 300 KB per file; the same file counts once).\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys on Plus and {connectionsPro} on Pro; messages through them have no separate limit and use your Hanogt AI messages (given back when the provider doesn't answer).\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Grup büyüklüğü (grubun sahibinin planına göre):** Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye; Plus'ta {pinsPlus}, Pro'da {pinsPro} sabitlenmiş mesaj, {commandsPlus} / {commandsPro} özel bot komutu ve {wordsPlus} / {wordsPro} AutoMod yasaklı kelimesi. Plan düşerse hiçbir şey silinmez, yalnızca yenisi eklenemez.\n• **Kod çalıştırma:** tek seferde Ücretsiz'de {runFree}, Plus'ta {runPlus}, Pro'da {runPro} dosya; derlenen dillerde dakikada Plus'ta {runMinutePlus}, Pro'da {runMinutePro} dosya.\n• **Yıldızlı mesajlar:** Ücretsiz'de {starsFree}, Plus'ta {starsPlus}, Pro'da {starsPro}.\n• **Oyun dosyası depolaması:** Hanogt Engine oyunlarına yüklenen sesler ve 3D modeller (GLB) için Ücretsiz planda {audioFree} MB, Plus'ta {audioPlus} MB, Pro'da {audioPro} MB (dosya başına en fazla 300 KB; aynı dosya bir kez sayılır).\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin; bu bağlantılarla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer (sağlayıcı yanıt vermezse geri eklenir).\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "1ib8ydveg48": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, your own API key connections, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Group size (by the group owner's plan):** {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro; {pinsPlus} pinned messages on Plus and {pinsPro} on Pro, {commandsPlus} / {commandsPro} custom bot commands and {wordsPlus} / {wordsPro} AutoMod banned words. Nothing is removed when the plan goes down; nothing new can be added.\n• **Running code:** {runFree} files at once on Free, {runPlus} on Plus and {runPro} on Pro; for compiled languages {runMinutePlus} files a minute on Plus and {runMinutePro} on Pro.\n• **Starred messages:** {starsFree} on Free, {starsPlus} on Plus and {starsPro} on Pro.\n• **Files in messages:** up to {attachFree} per file on Free, {attachPlus} on Plus and {attachPro} on Pro, and {attachSpaceFree}, {attachSpacePlus} and {attachSpacePro} in all for the files you send. Deleting messages with files gives the space back.\n• **Game file storage:** for sounds and 3D models (GLB) uploaded to Hanogt Engine games, {audioFree} MB on Free, {audioPlus} MB on Plus and {audioPro} MB on Pro (up to 300 KB per file; the same file counts once).\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys on Plus and {connectionsPro} on Pro; messages through them have no separate limit and use your Hanogt AI messages (given back when the provider doesn't answer).\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Grup büyüklüğü (grubun sahibinin planına göre):** Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye; Plus'ta {pinsPlus}, Pro'da {pinsPro} sabitlenmiş mesaj, {commandsPlus} / {commandsPro} özel bot komutu ve {wordsPlus} / {wordsPro} AutoMod yasaklı kelimesi. Plan düşerse hiçbir şey silinmez, yalnızca yenisi eklenemez.\n• **Kod çalıştırma:** tek seferde Ücretsiz'de {runFree}, Plus'ta {runPlus}, Pro'da {runPro} dosya; derlenen dillerde dakikada Plus'ta {runMinutePlus}, Pro'da {runMinutePro} dosya.\n• **Yıldızlı mesajlar:** Ücretsiz'de {starsFree}, Plus'ta {starsPlus}, Pro'da {starsPro}.\n• **Mesajlarda dosyalar:** dosya başına Ücretsiz'de {attachFree}, Plus'ta {attachPlus}, Pro'da {attachPro}; gönderdiğin dosyalar için toplam {attachSpaceFree}, {attachSpacePlus} ve {attachSpacePro}. Dosyalı mesajları silince alan geri döner.\n• **Oyun dosyası depolaması:** Hanogt Engine oyunlarına yüklenen sesler ve 3D modeller (GLB) için Ücretsiz planda {audioFree} MB, Plus'ta {audioPlus} MB, Pro'da {audioPro} MB (dosya başına en fazla 300 KB; aynı dosya bir kez sayılır).\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin; bu bağlantılarla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer (sağlayıcı yanıt vermezse geri eklenir).\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -52110,9 +52723,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "oeer9wtumq": {
-    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} Hanogt AI messages every {aiPlusDays} days on Plus or {aiPro} every {aiProDays} days on Pro instead of {aiFree} every {aiFreeDays} days on Free (the chat and the developer API share them); {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; longer Hanogt AI answers and more of the file open in the editor read; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; {apiKeysPlus} (Plus) or {apiKeysPro} (Pro) API keys to call Hanogt AI from your own app; a Plus or Pro badge on your profile, which you can hide; priority on support tickets (Pro before Plus); and, on Pro, early access to new features. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
-    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile Ücretsiz plandaki {aiFreeDays} günde {aiFree} mesaj yerine Plus'ta {aiPlusDays} günde {aiPlus}, Pro'da {aiProDays} günde {aiPro} mesaj (sohbet ve geliştirici API'si aynı haktan düşer); Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; daha uzun Hanogt AI yanıtları ve editörde açık dosyanın daha fazlasının okunması; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama; Hanogt AI'ı kendi uygulamanızdan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} API anahtarı; profilinizde gizlenebilir bir Plus veya Pro rozeti; destek taleplerinde öncelik (Pro talepleri Plus'tan önce) ve Pro'da yeni özelliklere erken erişim. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
+  "1edbsbe8hyp": {
+    "en": "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} Hanogt AI messages every {aiPlusDays} days on Plus or {aiPro} every {aiProDays} days on Pro instead of {aiFree} every {aiFreeDays} days on Free (the chat and the developer API share them); {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; files of up to {filePlus} and {filesPlus} in all (Plus) or {filePro} and {filesPro} (Pro) in Hanogt Social messages instead of {fileFree} and {filesFree}; longer Hanogt AI answers and more of the file open in the editor read; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; {apiKeysPlus} (Plus) or {apiKeysPro} (Pro) API keys to call Hanogt AI from your own app; a Plus or Pro badge on your profile, which you can hide; priority on support tickets (Pro before Plus); and, on Pro, early access to new features. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
+    "tr": "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile Ücretsiz plandaki {aiFreeDays} günde {aiFree} mesaj yerine Plus'ta {aiPlusDays} günde {aiPlus}, Pro'da {aiProDays} günde {aiPro} mesaj (sohbet ve geliştirici API'si aynı haktan düşer); Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; Hanogt Social mesajlarında Ücretsiz'deki dosya başına {fileFree} ve toplam {filesFree} yerine Plus'ta {filePlus} ve {filesPlus}, Pro'da {filePro} ve {filesPro}; daha uzun Hanogt AI yanıtları ve editörde açık dosyanın daha fazlasının okunması; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama; Hanogt AI'ı kendi uygulamanızdan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} API anahtarı; profilinizde gizlenebilir bir Plus veya Pro rozeti; destek taleplerinde öncelik (Pro talepleri Plus'tan önce) ve Pro'da yeni özelliklere erken erişim. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -52404,9 +53017,51 @@
       "src/lib/faq.ts"
     ]
   },
-  "1pxfwb5jmg7": {
-    "en": "No. WebRTC call audio is never recorded. Temporary SDP/ICE connection documents are deleted when the call ends and carry a short expiry.",
-    "tr": "Hayır. WebRTC arama sesi kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır.",
+  "e2190oze4u": {
+    "en": "No. WebRTC call audio is never recorded, and neither are shared screens or groups' voice channels. Temporary SDP/ICE connection documents are deleted when the call ends and carry a short expiry.",
+    "tr": "Hayır. WebRTC arama sesi kaydedilmez; ekran paylaşımı ve grupların sesli kanalları da kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "1w133zjv79t": {
+    "en": "How do I share my screen in a call?",
+    "tr": "Aramada ekranımı nasıl paylaşırım?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "21gox9adfmp": {
+    "en": "In a one-to-one call, press “Share your screen” on the call screen and pick a screen, window or tab in the window that opens; in the desktop app you pick it in the app's own window. The other person can watch it in the full view, full screen or picture in picture. Only the picture is shared (your computer's sound isn't, and your microphone stays on), and nothing is recorded. Phone browsers don't support screen sharing, so the button doesn't appear there.",
+    "tr": "Birebir bir aramada arama ekranındaki “Ekranını paylaş” düğmesine basın ve açılan pencerede bir ekran, pencere ya da sekme seçin; masaüstü uygulamasında seçimi uygulamanın kendi penceresinde yaparsınız. Karşı taraf paylaşımı büyük görünümde, tam ekranda ya da pencere içinde pencere olarak izleyebilir. Yalnızca görüntü paylaşılır (bilgisayarın sesi gitmez, mikrofonunuz açık kalır) ve hiçbir şey kaydedilmez. Telefon tarayıcıları ekran paylaşımını desteklemediği için düğme orada görünmez.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "1c99zrbr7dw": {
+    "en": "How do groups' voice channels work?",
+    "tr": "Grupların sesli kanalı nasıl çalışır?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "1k062odax1h": {
+    "en": "Click the voice channel in the group's sidebar to join; up to 5 people can talk at a time, and a ring around a name shows who is speaking. You can mute your microphone or your sound and pick your microphone and speaker in the voice settings; the connection stays up while you move to other pages of the site. Joining from another tab or device closes the earlier connection. Nothing is recorded and only the group's members can see who is in the channel; someone muted in the group can't join. On some networks the site's TURN server is needed to connect.",
+    "tr": "Grubun kenar çubuğundaki sesli kanala tıklayarak katılırsınız; kanalda aynı anda en fazla 5 kişi konuşabilir ve kimin konuştuğu adının çevresindeki halkadan anlaşılır. Mikrofonunuzu ve sesinizi kapatabilir, mikrofon ve hoparlörünüzü ses ayarlarından seçebilirsiniz; sitede başka sayfalara geçtiğinizde bağlantı sürer. Başka bir sekmeden ya da cihazdan katılırsanız önceki bağlantı kapanır. Konuşmalar kaydedilmez ve kanalda kimlerin olduğunu yalnızca grubun üyeleri görür; grupta susturulan kişi kanala katılamaz. Bazı ağlarda bağlantı için sitenin TURN sunucusu gerekir.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "kb0uo29khe": {
+    "en": "Can I send files in messages?",
+    "tr": "Mesajlarda dosya gönderebilir miyim?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "1bu8w7gu8rc": {
+    "en": "Yes. In one-to-one chats and groups, use the paperclip button in the message box, paste or drag and drop to send pictures, video, sound, PDFs, archives (ZIP, GZ, 7z), office documents and text or code files; each file goes as its own message, with a caption if you like. Programs and scripts that run when opened (such as .exe, .bat, .apk) are not accepted. Location and device details are removed from pictures, and big photos are made smaller before they are sent. The limit per file is {fileFree} on Free, {filePlus} on Plus and {filePro} on Pro, and the total space for the files you send is {filesFree}, {filesPlus} and {filesPro} respectively. You can see the space you use in the usage list on the Plans page and make room by deleting messages with files. Only the chat's or the group's members can open the files; files aren't scanned for viruses, so only open those from people you trust.",
+    "tr": "Evet. Birebir sohbetlerde ve gruplarda yazma kutusundaki ataç düğmesiyle, yapıştırarak ya da sürükleyip bırakarak görsel, video, ses, PDF, arşiv (ZIP, GZ, 7z), ofis belgesi ve metin veya kod dosyası gönderebilirsiniz; her dosya ayrı bir mesaj olarak, isterseniz bir açıklamayla gider. Açıldığında çalışan programlar ve betikler (.exe, .bat, .apk gibi) kabul edilmez. Görsellerdeki konum ve cihaz bilgileri silinir, büyük fotoğraflar gönderilmeden önce küçültülür. Dosya başına sınır Ücretsiz planda {fileFree}, Plus'ta {filePlus}, Pro'da {filePro}; gönderdiğiniz dosyalar için toplam alan sırasıyla {filesFree}, {filesPlus} ve {filesPro}. Kullandığınız alanı Planlar sayfasındaki kullanım listesinde görebilir, dosyalı mesajları silerek yer açabilirsiniz. Dosyaları yalnızca sohbetin ya da grubun üyeleri açabilir; dosyalar virüs taramasından geçmediği için yalnızca güvendiğiniz kişilerden gelenleri açın.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -53349,6 +54004,20 @@
       "src/lib/legal.ts"
     ]
   },
+  "1ws8f72vstl": {
+    "en": "Files in messages: in Hanogt Social you can send pictures, video, sound, PDFs, archives, office documents and text or code files in one-to-one and group messages. Files are stored with their message in Cloud Firestore, in a collection browsers can't read, and can be opened only by people who can see the message, while it is there. Location, device and similar details embedded in pictures are removed before they are stored; details inside other files are not changed and files are not scanned for viruses. Up to 2 MB per file (Free) or 4 MB (Plus and Pro), and 25 MB, 250 MB or 1 GB of space in all; files are deleted with their message, chat, group or account. Rules for files were added to the Terms of Use and file space to the list of plan benefits.",
+    "tr": "Mesajlarda dosyalar: Hanogt Social'da birebir ve grup mesajlarıyla görsel, video, ses, PDF, arşiv, ofis belgesi ve metin veya kod dosyası gönderebilirsiniz. Dosyalar mesajla birlikte Cloud Firestore'da tarayıcıların okuyamadığı bir koleksiyonda saklanır ve yalnızca mesajı görebilenler tarafından, mesaj durdukça açılabilir. Görsellerdeki konum ve cihaz gibi gömülü bilgiler saklanmadan önce silinir; diğer dosyaların içindeki bilgiler değiştirilmez ve dosyalar virüs taramasından geçirilmez. Dosya başına en fazla 2 MB (Ücretsiz) veya 4 MB (Plus ve Pro), toplam 25 MB, 250 MB veya 1 GB alan; mesaj, sohbet, grup veya hesap silindiğinde dosyalar da silinir. Kullanım Şartları'na dosyalarla ilgili kurallar, plan avantajları listesine dosya alanı eklendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "7vykjvp803": {
+    "en": "Screen sharing and voice channels: in one-to-one calls you can share your screen (picture only, no sound) with the other person, and you can talk with up to 5 people in a group's voice channel. Audio and video travel directly and encrypted between devices where possible and are not recorded. Who is in a voice channel, when they joined and whether their microphone or headphones are off are shown to the group's members and deleted when they leave; connection records are kept for at most 2 minutes. We also corrected that voice messages are now stored in Cloud Firestore.",
+    "tr": "Ekran paylaşımı ve sesli kanallar: Birebir aramalarda ekranınızı (yalnızca görüntü, ses olmadan) karşı tarafla paylaşabilir, grupların sesli kanalında en fazla 5 kişiyle konuşabilirsiniz. Ses ve görüntü mümkün olduğunda cihazlar arasında doğrudan ve şifreli taşınır, kaydedilmez. Sesli kanalda kimlerin bulunduğu, katılma zamanları ve mikrofon ya da kulaklık durumları grubun üyelerine gösterilir ve kanaldan çıkıldığında silinir; bağlantı kayıtları en çok 2 dakika tutulur. Sesli mesajların artık Cloud Firestore'da saklandığı da düzeltildi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
   "1lir03l8hk0": {
     "en": "Leaderboards and achievements (Hanogt Engine V5): in games you play on the Arcade while signed in, your best score on each leaderboard is kept with your salted pseudonymous ID, your nickname at the time (or your username), the score and the date, and the leaderboard is shown publicly. Your e-mail address is never shown and isn't part of the entry. Achievements you unlock are shown only to you. You can turn sharing off and remove your entry at any time; these records are covered by account deletion and “Download my data”. The Terms of Use now say that scores are unverified, that rankings carry no prize or right, and that cheating is not allowed.",
     "tr": "Skor tabloları ve başarımlar (Hanogt Engine V5): Arcade'de giriş yapmış olarak oynadığınız oyunlarda her tablo için en iyi skorunuz; tuzlanmış takma kimliğiniz, o anki takma adınız (yoksa kullanıcı adınız), skor ve tarihle saklanır ve tablo herkese açık gösterilir. E-posta adresiniz gösterilmez ve kayıtta yer almaz. Açtığınız başarımlar yalnızca size gösterilir. Paylaşımı kapatabilir ve kaydınızı istediğiniz zaman kaldırabilirsiniz; bu kayıtlar hesap silmeye ve “Verilerimi İndir”e dahildir. Kullanım Şartları'na skorların doğrulanmadığı, sıralamaların ödül ya da hak doğurmadığı ve hile yasağı eklendi.",
@@ -54036,6 +54705,13 @@
       "src/lib/plans.ts"
     ]
   },
+  "1kmk6gs0290": {
+    "en": "Files up to 2 MB in messages; 25 MB in all",
+    "tr": "Mesajlarda 2 MB'a kadar dosya; toplam 25 MB",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
   "16fkzjiu3qy": {
     "en": "5 MB of storage for your games' sounds and 3D models",
     "tr": "Oyunların için 5 MB ses ve 3D model depolaması",
@@ -54109,6 +54785,13 @@
   "1vfkt2gnoe5": {
     "en": "500 starred messages",
     "tr": "500 yıldızlı mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "1qy6ncn7ww0": {
+    "en": "Files up to 4 MB in messages; 250 MB in all",
+    "tr": "Mesajlarda 4 MB'a kadar dosya; toplam 250 MB",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -54221,6 +54904,13 @@
   "ow2lb6r27f": {
     "en": "1,000 starred messages",
     "tr": "1.000 yıldızlı mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "v4v412sgex": {
+    "en": "Files up to 4 MB in messages; 1 GB in all",
+    "tr": "Mesajlarda 4 MB'a kadar dosya; toplam 1 GB",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -57832,6 +58522,55 @@
     "tr": "Planınla en fazla {limit} mesaj yıldızlayabilirsin. Yer açmak için bir yıldızı kaldır ya da planını yükselt (Fiyatlandırma).",
     "files": [
       "src/lib/social/api.ts"
+    ]
+  },
+  "xgwn8934np": {
+    "en": "The file is empty.",
+    "tr": "Dosya boş.",
+    "files": [
+      "src/lib/social/attachment-client.ts"
+    ]
+  },
+  "1nkolv842bp": {
+    "en": "This file is too big: your plan allows files up to {limit}.",
+    "tr": "Bu dosya çok büyük: planında bir dosya en fazla {limit} olabilir.",
+    "files": [
+      "src/lib/social/attachment-client.ts"
+    ]
+  },
+  "2bwc28w129w": {
+    "en": "This kind of file can't be sent. You can send pictures, video, sound, PDFs, archives, office documents and text or code files.",
+    "tr": "Bu dosya türü gönderilemez. Görsel, video, ses, PDF, arşiv, ofis belgesi ya da metin ve kod dosyası gönderebilirsin.",
+    "files": [
+      "src/lib/social/attachment-client.ts"
+    ]
+  },
+  "sohaykt9uy": {
+    "en": "The picture's dimensions are too large.",
+    "tr": "Görselin boyutları çok büyük.",
+    "files": [
+      "src/lib/social/attachment-client.ts"
+    ]
+  },
+  "guvl21wzq": {
+    "en": "The space for files you send is full ({limit}). Delete old messages with files to make room, or upgrade your plan.",
+    "tr": "Gönderdiğin dosyalar için ayrılan alan doldu ({limit}). Dosyalı eski mesajlarını silerek yer açabilir ya da planını yükseltebilirsin.",
+    "files": [
+      "src/lib/social/attachment-client.ts"
+    ]
+  },
+  "21bo0zzn7g8": {
+    "en": "The file wasn't found or was deleted.",
+    "tr": "Dosya bulunamadı veya silinmiş.",
+    "files": [
+      "src/lib/social/attachment-client.ts"
+    ]
+  },
+  "e8461z0lhs": {
+    "en": "The file couldn't be sent. Please try again.",
+    "tr": "Dosya gönderilemedi. Lütfen tekrar dene.",
+    "files": [
+      "src/lib/social/attachment-client.ts"
     ]
   },
   "84rjxlg6n4": {

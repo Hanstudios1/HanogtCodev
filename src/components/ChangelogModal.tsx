@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.28",
+        version: "v0.3.28",
+        date: "2026-10-06",
+        title: { TR: "Hanogt Social: ekran paylaşımı, sesli kanallar ve dosyalar", EN: "Hanogt Social: screen sharing, voice channels and files" },
+        desc: { TR: "Aramalar büyük görünümde açılıyor ve ekranını paylaşabiliyorsun; her grubun 5 kişilik bir sesli kanalı var; mesajlarla dosya gönderebiliyorsun.", EN: "Calls open in a full view and you can share your screen; every group has a voice channel for 5 people; and you can send files in messages." },
+        items: [
+            { TR: "Büyük arama görünümü: konuşma halkaları, tam ekran ve tüm denetimler; küçültünce arama sürer.", EN: "Full call view: speaking rings, full screen and every control; the call goes on when you minimize it." },
+            { TR: "Ekran paylaşımı: birebir aramada bir ekran, pencere ya da sekme paylaş; karşı taraf tam ekranda ya da pencere içinde pencere izler.", EN: "Screen sharing: share a screen, window or tab in a one-to-one call; the other person watches full screen or picture in picture." },
+            { TR: "Grupların sesli kanalı: tek tıkla katıl, en fazla 5 kişi; sitede gezinirken ses çubuğundan mikrofonu ve sesi yönet.", EN: "Groups' voice channel: join with one click, up to 5 people; manage your microphone and sound from the voice bar while you browse." },
+            { TR: "Mesajlarda dosyalar: görsel, video, ses, PDF, arşiv ve kod dosyası gönder; ataç, yapıştırma ya da sürükle-bırak ile.", EN: "Files in messages: send pictures, video, sound, PDFs, archives and code files with the paperclip, a paste or drag and drop." },
+            { TR: "Dosya sınırları planına göre: dosya başına 2 / 4 / 4 MB, toplam 25 MB / 250 MB / 1 GB; görsellerdeki konum bilgisi silinir.", EN: "File limits by plan: 2 / 4 / 4 MB per file, 25 MB / 250 MB / 1 GB in all; location details are removed from pictures." },
+            { TR: "Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları 5.4.", EN: "Privacy Policy, KVKK Information Notice and Terms of Use 5.4." },
+        ],
+    },
+    {
         id: "v0.3.27",
         version: "v0.3.27",
         date: "2026-10-06",

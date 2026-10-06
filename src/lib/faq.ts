@@ -1,6 +1,7 @@
 import type { Copy } from "@/lib/i18n";
-import { PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
+import { PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_AI_LIMITS, PLAN_ATTACHMENT_LIMITS, PLAN_COLLAB_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS } from "@/lib/plans";
 import { LANGUAGES, LANGUAGE_STATS } from "@/lib/runtimes/languages";
+import { formatBytes } from "@/lib/social/attachments";
 
 export type Faq = { id: string; category: Copy; question: Copy; answer: Copy };
 
@@ -53,6 +54,13 @@ const PLAN_NUMBERS = {
     collabPro: PLAN_COLLAB_LIMITS.pro.people,
     apiKeysPlus: PLAN_AI_FEATURES.plus.api?.keys ?? 0,
     apiKeysPro: PLAN_AI_FEATURES.pro.api?.keys ?? 0,
+    // Whole megabytes and gigabytes: the same in every language.
+    fileFree: formatBytes(PLAN_ATTACHMENT_LIMITS.free.fileBytes, "EN"),
+    filePlus: formatBytes(PLAN_ATTACHMENT_LIMITS.plus.fileBytes, "EN"),
+    filePro: formatBytes(PLAN_ATTACHMENT_LIMITS.pro.fileBytes, "EN"),
+    filesFree: formatBytes(PLAN_ATTACHMENT_LIMITS.free.storageBytes, "EN"),
+    filesPlus: formatBytes(PLAN_ATTACHMENT_LIMITS.plus.storageBytes, "EN"),
+    filesPro: formatBytes(PLAN_ATTACHMENT_LIMITS.pro.storageBytes, "EN"),
 };
 
 /** Frequently asked questions: shown on /feedback and used by Hanogt AI's knowledge base. */
@@ -152,8 +160,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.billing,
         question: { TR: "Plus ve Pro planlarında neler var?", EN: "What do the Plus and Pro plans include?" },
         answer: {
-            TR: "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile Ücretsiz plandaki {aiFreeDays} günde {aiFree} mesaj yerine Plus'ta {aiPlusDays} günde {aiPlus}, Pro'da {aiProDays} günde {aiPro} mesaj (sohbet ve geliştirici API'si aynı haktan düşer); Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; daha uzun Hanogt AI yanıtları ve editörde açık dosyanın daha fazlasının okunması; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama; Hanogt AI'ı kendi uygulamanızdan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} API anahtarı; profilinizde gizlenebilir bir Plus veya Pro rozeti; destek taleplerinde öncelik (Pro talepleri Plus'tan önce) ve Pro'da yeni özelliklere erken erişim. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
-            EN: "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} Hanogt AI messages every {aiPlusDays} days on Plus or {aiPro} every {aiProDays} days on Pro instead of {aiFree} every {aiFreeDays} days on Free (the chat and the developer API share them); {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; longer Hanogt AI answers and more of the file open in the editor read; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; {apiKeysPlus} (Plus) or {apiKeysPro} (Pro) API keys to call Hanogt AI from your own app; a Plus or Pro badge on your profile, which you can hide; priority on support tickets (Pro before Plus); and, on Pro, early access to new features. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
+            TR: "Hanogt Codev'in tamamı Ücretsiz planda kullanılabilir; Plus ve Pro daha yüksek sınırlar ve öncelik getirir: Hanogt AI ile Ücretsiz plandaki {aiFreeDays} günde {aiFree} mesaj yerine Plus'ta {aiPlusDays} günde {aiPlus}, Pro'da {aiProDays} günde {aiPro} mesaj (sohbet ve geliştirici API'si aynı haktan düşer); Ücretsiz plandaki {codeFree} kod ve {gameFree} oyun projesi yerine Plus'ta {codePlus} kod ve {gamePlus} oyun projesi, Pro'da sınırsız proje; Ücretsiz plandaki {groupsFree} grup yerine Plus'ta {groupsPlus}, Pro'da sınırsız grup; ekiple düzenleme oturumlarında (siz dahil) Ücretsiz'deki {collabFree} kişi yerine Plus'ta {collabPlus}, Pro'da {collabPro} kişi; Hanogt Social mesajlarında Ücretsiz'deki dosya başına {fileFree} ve toplam {filesFree} yerine Plus'ta {filePlus} ve {filesPlus}, Pro'da {filePro} ve {filesPro}; daha uzun Hanogt AI yanıtları ve editörde açık dosyanın daha fazlasının okunması; Hanogt AI'a kendi API anahtarınızla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} yapay zekâ sağlayıcısı bağlama; Hanogt AI'ı kendi uygulamanızdan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} API anahtarı; profilinizde gizlenebilir bir Plus veya Pro rozeti; destek taleplerinde öncelik (Pro talepleri Plus'tan önce) ve Pro'da yeni özelliklere erken erişim. “Planlanıyor” olarak işaretli özellikler henüz sunulmaz. Güncel liste ve fiyatlar Planlar sayfasındadır (/plans).",
+            EN: "All of Hanogt Codev is available on the Free plan; Plus and Pro add higher limits and priority: {aiPlus} Hanogt AI messages every {aiPlusDays} days on Plus or {aiPro} every {aiProDays} days on Pro instead of {aiFree} every {aiFreeDays} days on Free (the chat and the developer API share them); {codePlus} code and {gamePlus} game projects on Plus and unlimited projects on Pro, instead of {codeFree} and {gameFree} on Free; {groupsPlus} groups on Plus and unlimited on Pro instead of {groupsFree}; team editing sessions of {collabPlus} (Plus) or {collabPro} (Pro) people instead of {collabFree}, you included; files of up to {filePlus} and {filesPlus} in all (Plus) or {filePro} and {filesPro} (Pro) in Hanogt Social messages instead of {fileFree} and {filesFree}; longer Hanogt AI answers and more of the file open in the editor read; up to {connectionsPlus} (Plus) or {connectionsPro} (Pro) AI providers connected to Hanogt AI with your own API keys; {apiKeysPlus} (Plus) or {apiKeysPro} (Pro) API keys to call Hanogt AI from your own app; a Plus or Pro badge on your profile, which you can hide; priority on support tickets (Pro before Plus); and, on Pro, early access to new features. Features marked “Planned” aren't offered yet. The current list and prices are on the Plans page (/plans).",
             vars: PLAN_NUMBERS,
         },
     },
@@ -352,8 +360,36 @@ export const FAQS: Faq[] = [
         category: CATEGORY.community,
         question: { TR: "Sesli aramalar kaydediliyor mu?", EN: "Are voice calls recorded?" },
         answer: {
-            TR: "Hayır. WebRTC arama sesi kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır.",
-            EN: "No. WebRTC call audio is never recorded. Temporary SDP/ICE connection documents are deleted when the call ends and carry a short expiry.",
+            TR: "Hayır. WebRTC arama sesi kaydedilmez; ekran paylaşımı ve grupların sesli kanalları da kaydedilmez. Geçici SDP/ICE bağlantı belgeleri görüşme bitince silinir ve kısa süreli sona erme bilgisi taşır.",
+            EN: "No. WebRTC call audio is never recorded, and neither are shared screens or groups' voice channels. Temporary SDP/ICE connection documents are deleted when the call ends and carry a short expiry.",
+        },
+    },
+    {
+        id: "screen-share",
+        category: CATEGORY.community,
+        question: { TR: "Aramada ekranımı nasıl paylaşırım?", EN: "How do I share my screen in a call?" },
+        answer: {
+            TR: "Birebir bir aramada arama ekranındaki “Ekranını paylaş” düğmesine basın ve açılan pencerede bir ekran, pencere ya da sekme seçin; masaüstü uygulamasında seçimi uygulamanın kendi penceresinde yaparsınız. Karşı taraf paylaşımı büyük görünümde, tam ekranda ya da pencere içinde pencere olarak izleyebilir. Yalnızca görüntü paylaşılır (bilgisayarın sesi gitmez, mikrofonunuz açık kalır) ve hiçbir şey kaydedilmez. Telefon tarayıcıları ekran paylaşımını desteklemediği için düğme orada görünmez.",
+            EN: "In a one-to-one call, press “Share your screen” on the call screen and pick a screen, window or tab in the window that opens; in the desktop app you pick it in the app's own window. The other person can watch it in the full view, full screen or picture in picture. Only the picture is shared (your computer's sound isn't, and your microphone stays on), and nothing is recorded. Phone browsers don't support screen sharing, so the button doesn't appear there.",
+        },
+    },
+    {
+        id: "voice-channels",
+        category: CATEGORY.community,
+        question: { TR: "Grupların sesli kanalı nasıl çalışır?", EN: "How do groups' voice channels work?" },
+        answer: {
+            TR: "Grubun kenar çubuğundaki sesli kanala tıklayarak katılırsınız; kanalda aynı anda en fazla 5 kişi konuşabilir ve kimin konuştuğu adının çevresindeki halkadan anlaşılır. Mikrofonunuzu ve sesinizi kapatabilir, mikrofon ve hoparlörünüzü ses ayarlarından seçebilirsiniz; sitede başka sayfalara geçtiğinizde bağlantı sürer. Başka bir sekmeden ya da cihazdan katılırsanız önceki bağlantı kapanır. Konuşmalar kaydedilmez ve kanalda kimlerin olduğunu yalnızca grubun üyeleri görür; grupta susturulan kişi kanala katılamaz. Bazı ağlarda bağlantı için sitenin TURN sunucusu gerekir.",
+            EN: "Click the voice channel in the group's sidebar to join; up to 5 people can talk at a time, and a ring around a name shows who is speaking. You can mute your microphone or your sound and pick your microphone and speaker in the voice settings; the connection stays up while you move to other pages of the site. Joining from another tab or device closes the earlier connection. Nothing is recorded and only the group's members can see who is in the channel; someone muted in the group can't join. On some networks the site's TURN server is needed to connect.",
+        },
+    },
+    {
+        id: "files-in-messages",
+        category: CATEGORY.community,
+        question: { TR: "Mesajlarda dosya gönderebilir miyim?", EN: "Can I send files in messages?" },
+        answer: {
+            TR: "Evet. Birebir sohbetlerde ve gruplarda yazma kutusundaki ataç düğmesiyle, yapıştırarak ya da sürükleyip bırakarak görsel, video, ses, PDF, arşiv (ZIP, GZ, 7z), ofis belgesi ve metin veya kod dosyası gönderebilirsiniz; her dosya ayrı bir mesaj olarak, isterseniz bir açıklamayla gider. Açıldığında çalışan programlar ve betikler (.exe, .bat, .apk gibi) kabul edilmez. Görsellerdeki konum ve cihaz bilgileri silinir, büyük fotoğraflar gönderilmeden önce küçültülür. Dosya başına sınır Ücretsiz planda {fileFree}, Plus'ta {filePlus}, Pro'da {filePro}; gönderdiğiniz dosyalar için toplam alan sırasıyla {filesFree}, {filesPlus} ve {filesPro}. Kullandığınız alanı Planlar sayfasındaki kullanım listesinde görebilir, dosyalı mesajları silerek yer açabilirsiniz. Dosyaları yalnızca sohbetin ya da grubun üyeleri açabilir; dosyalar virüs taramasından geçmediği için yalnızca güvendiğiniz kişilerden gelenleri açın.",
+            EN: "Yes. In one-to-one chats and groups, use the paperclip button in the message box, paste or drag and drop to send pictures, video, sound, PDFs, archives (ZIP, GZ, 7z), office documents and text or code files; each file goes as its own message, with a caption if you like. Programs and scripts that run when opened (such as .exe, .bat, .apk) are not accepted. Location and device details are removed from pictures, and big photos are made smaller before they are sent. The limit per file is {fileFree} on Free, {filePlus} on Plus and {filePro} on Pro, and the total space for the files you send is {filesFree}, {filesPlus} and {filesPro} respectively. You can see the space you use in the usage list on the Plans page and make room by deleting messages with files. Only the chat's or the group's members can open the files; files aren't scanned for viruses, so only open those from people you trust.",
+            vars: PLAN_NUMBERS,
         },
     },
     {

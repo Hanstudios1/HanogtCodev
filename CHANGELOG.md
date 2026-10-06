@@ -1,5 +1,63 @@
 # Değişiklik Günlüğü
 
+## 0.3.28 — 2026-10-06
+
+### Hanogt Social B: tam ekran arama, ekran paylaşımı, sesli kanallar ve dosyalar
+
+- **Büyük arama görünümü:** birebir arama tam sayfa açılabilir; iki kişi
+  konuşma halkaları ve mikrofon işaretleriyle kutularda görünür, bağlantı
+  durumu ve yolu (doğrudan ya da TURN) yazar. Tam ekran, küçültme (Esc) ve
+  denetim çubuğu (mikrofon, ses, ekran paylaşımı, ses ayarları, kapat);
+  arama iki görünümde de sürer.
+- **Ekran paylaşımı:** teklif ve yanıt baştan boş bir video kanalı ayırır;
+  paylaşım `replaceTrack` ile başlar, yeniden anlaşma gerekmez. Karşı tarafa
+  “ekranını paylaşıyor” satırı ve İzle düğmesi çıkar; büyük görünümde, tam
+  ekranda ya da pencere içinde pencere izlenir. Yalnızca görüntü gider (en
+  çok 1080p, 30 fps; TURN üzerinden daha düşük bit hızı); tarayıcının kendi
+  durdurma düğmesi paylaşımı bitirir. Telefonlarda düğme görünmez; eski
+  istemcili aramalarda neden paylaşılamadığı yazar.
+- **Masaüstü ve mobil:** masaüstü uygulaması yalnızca kendi sitelerimize
+  mikrofon ve ekran yakalama izni verir ve paylaşılacak ekranı ya da
+  pencereyi seçtirir; Android ve iOS uygulamaları mikrofon iznini bildirir
+  (uygulamalar yeniden derlenmeli).
+- **Grupların sesli kanalları:** her grupta en fazla 5 kişilik, herkesin
+  herkese bağlandığı (mesh) bir sesli kanal. Sunucu kanalda kimlerin
+  olduğunu tutar ve bağlantı sinyallerini taşır; ses tarayıcılar arasında
+  gider, kaydedilmez. Üyeler kanalı Firestore dinleyicileriyle izler (köprü
+  yoksa yoklama); yalnızca sunucu yazar.
+  - Kişi başına tek yer: başka sekmeden ya da cihazdan katılınca önceki
+    bağlantı kapanır; yerini kaybeden sekme etkin bir yeri almadan kendiliğinden
+    yeniden katılır.
+  - Kenar çubuğunda konuşma halkaları, mikrofon ve ses işaretleri; kullanıcı
+    panelinde ya da diğer sayfalarda küçük bir ses çubuğunda denetimler;
+    katılma ve ayrılma sesleri.
+  - 30 sn kopan, gruptan ayrılan ya da çıkarılan, susturulan kişi ve hesabını
+    silen kanaldan çıkar; grup silinince kanal da silinir. Başlayan birebir
+    arama kanaldan çıkarır.
+- **Mesajlarda dosyalar:** birebir ve grup mesajlarında görsel, video, ses,
+  PDF, arşiv, ofis belgesi ve metin veya kod dosyası; her mesajda bir dosya ve
+  isteğe bağlı açıklama.
+  - Ataç düğmesi, yapıştırma ve sürükle-bırak; büyük fotoğraflar tarayıcıda
+    küçültülür (1,5 MB ya da 2.560 px üstü); yükleme ilerlemesi gösterilir.
+  - Sunucu türü dosyanın baytlarından belirler, uzantıyı ona göre düzeltir,
+    çalıştırılabilir dosyaları reddeder; JPEG, PNG ve WebP'den EXIF, XMP,
+    IPTC ve metin alanlarını siler (JPEG yönü korunur).
+  - Dosya Firestore'da mesajla aynı işlemde yazılır (700 KB üstü parçalara
+    bölünür). Yalnızca mesajı görebilenler açar; görsel, video ve ses sayfada
+    (bayt aralıklarıyla), diğerleri indirme olarak; `nosniff` ve betiksiz
+    sandbox politikası.
+  - Plan sınırları: dosya başına 2 / 4 / 4 MB, toplam 25 MB / 250 MB / 1 GB
+    (Ücretsiz / Plus / Pro); Planlar sayfasında ve kullanım listesinde.
+  - Mesaj, sohbet, grup ya da hesap silinince dosyalar silinir ve alan geri
+    döner; “Verilerimi indir” gönderilen dosyaları listeler.
+- **Kurallar ve testler:** `message_files`, `message_file_usage` ve sesli
+  kanal kuralları; kural testleri, birim testleri (dosyalar, ekler, sesli
+  kanal motoru, hesap silme) ve tarayıcı uçtan uca testleri.
+- **Yasal 5.4:** Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım
+  Şartları ekran paylaşımı, sesli kanallar ve dosyalar için güncellendi;
+  sesli mesajların Cloud Firestore'da saklandığı düzeltildi. SSS ve Hanogt
+  AI'ın bilgi tabanı da güncellendi.
+
 ## 0.3.27 — 2026-10-06
 
 ### Hanogt Engine V5

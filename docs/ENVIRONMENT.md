@@ -230,6 +230,51 @@ always starts with the microphone and sound on; the call bar names the reason
 when nobody can be heard (microphone off, the other side muted, playback
 blocked, no audio arriving, a silent microphone).
 
+**Screen sharing (1:1 calls, since 0.3.28).** The offer and the answer each
+reserve a video track that carries nothing until someone shares; sharing
+swaps the screen in with `replaceTrack`, so no renegotiation is needed, and
+`POST /api/calls { action: "share" }` records who is sharing. Only the picture
+goes (at most 1080p and 30 fps; 2.5 Mbit/s directly, 1.2 Mbit/s through TURN),
+never the computer's sound. Phones have no screen capture, so they don't show
+the button. The desktop app (`electron/main.js`) gives the microphone and
+screen capture only to our own origins and shows a picker for the screen or
+window; the Android (`RECORD_AUDIO`) and iOS (`NSMicrophoneUsageDescription`)
+apps declare the microphone, so **rebuild the desktop and mobile apps** to
+ship these.
+
+**Group voice channels (since 0.3.28).** Every group has a voice channel for
+up to 5 people, everyone connected to everyone (WebRTC mesh, the same TURN
+settings). `/api/groups/voice` (`join`, `heartbeat`, `leave`, `signal`) keeps
+who is in the channel in `group_voice/{groupId}` and passes offers, answers
+and candidates through `group_voice/{groupId}/signals`, which only the
+recipient can read; members follow both with Firestore listeners (polling
+without the bridge) and only the server writes. Signals carry `expiresAt`:
+the existing TTL policy on the `signals` collection group in
+`firestore.indexes.json` removes the ones nobody read. A tab that stops
+checking in for 30 seconds is dropped; leaving or being removed from the
+group, a mute, account deletion and group deletion take people out.
+
+## Hanogt Social: files in messages
+
+Since 0.3.28 direct messages and group chats can carry one file each
+(`POST /api/social/files`, served by `GET /api/social/files/{id}` to people
+who can see the message). Files are stored in **Firestore**, not Cloud
+Storage: `message_files/{id}` holds the file (in `parts/{n}` of 700 KB when
+it is bigger) and `message_file_usage/{email}` each sender's total, both
+server-only. Plans allow 2 / 4 / 4 MB a file and 25 MB / 250 MB / 1 GB in all
+(Free / Plus / Pro, `PLAN_ATTACHMENT_LIMITS`).
+
+- **Storage:** these files count towards the Firestore database's stored
+  data. The Spark (free) plan includes 1 GiB for the whole database; beyond
+  that the project needs Blaze, where storage is billed per GiB. Watch
+  Firestore usage in the Firebase console as people start sending files.
+- **Deploy the rules and indexes:** the rules close `message_files` and
+  `message_file_usage`; `firestore.indexes.json` turns off indexing of the
+  `data` field of `message_files` (index entries can't hold large byte
+  values).
+- Deleting a message, a chat, a group or an account deletes its files and
+  gives the space back; “Download my data” lists the files a person sent.
+
 ## Hanogt Social: GIFs, bots and AutoMod
 
 GIF search goes through `/api/social/gifs` (`src/lib/server/gifs.ts`), so the

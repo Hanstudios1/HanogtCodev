@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.3";
+export const LEGAL_VERSION = "5.4";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.3-2026-10-06";
+export const LEGAL_NOTICE_ID = "5.4-2026-10-06";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,14 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.4",
+        date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
+        items: [
+            { TR: "Mesajlarda dosyalar: Hanogt Social'da birebir ve grup mesajlarıyla görsel, video, ses, PDF, arşiv, ofis belgesi ve metin veya kod dosyası gönderebilirsiniz. Dosyalar mesajla birlikte Cloud Firestore'da tarayıcıların okuyamadığı bir koleksiyonda saklanır ve yalnızca mesajı görebilenler tarafından, mesaj durdukça açılabilir. Görsellerdeki konum ve cihaz gibi gömülü bilgiler saklanmadan önce silinir; diğer dosyaların içindeki bilgiler değiştirilmez ve dosyalar virüs taramasından geçirilmez. Dosya başına en fazla 2 MB (Ücretsiz) veya 4 MB (Plus ve Pro), toplam 25 MB, 250 MB veya 1 GB alan; mesaj, sohbet, grup veya hesap silindiğinde dosyalar da silinir. Kullanım Şartları'na dosyalarla ilgili kurallar, plan avantajları listesine dosya alanı eklendi.", EN: "Files in messages: in Hanogt Social you can send pictures, video, sound, PDFs, archives, office documents and text or code files in one-to-one and group messages. Files are stored with their message in Cloud Firestore, in a collection browsers can't read, and can be opened only by people who can see the message, while it is there. Location, device and similar details embedded in pictures are removed before they are stored; details inside other files are not changed and files are not scanned for viruses. Up to 2 MB per file (Free) or 4 MB (Plus and Pro), and 25 MB, 250 MB or 1 GB of space in all; files are deleted with their message, chat, group or account. Rules for files were added to the Terms of Use and file space to the list of plan benefits." },
+            { TR: "Ekran paylaşımı ve sesli kanallar: Birebir aramalarda ekranınızı (yalnızca görüntü, ses olmadan) karşı tarafla paylaşabilir, grupların sesli kanalında en fazla 5 kişiyle konuşabilirsiniz. Ses ve görüntü mümkün olduğunda cihazlar arasında doğrudan ve şifreli taşınır, kaydedilmez. Sesli kanalda kimlerin bulunduğu, katılma zamanları ve mikrofon ya da kulaklık durumları grubun üyelerine gösterilir ve kanaldan çıkıldığında silinir; bağlantı kayıtları en çok 2 dakika tutulur. Sesli mesajların artık Cloud Firestore'da saklandığı da düzeltildi.", EN: "Screen sharing and voice channels: in one-to-one calls you can share your screen (picture only, no sound) with the other person, and you can talk with up to 5 people in a group's voice channel. Audio and video travel directly and encrypted between devices where possible and are not recorded. Who is in a voice channel, when they joined and whether their microphone or headphones are off are shown to the group's members and deleted when they leave; connection records are kept for at most 2 minutes. We also corrected that voice messages are now stored in Cloud Firestore." },
+        ],
+    },
     {
         version: "5.3",
         date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
