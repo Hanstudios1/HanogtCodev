@@ -28,6 +28,7 @@ export const API_MEMBERS: Record<string, string[]> = {
     UI: ["IsPointerOverUI()"],
     Pathfinding: ["FindPath(from, to)", "HasPath(from, to)", "IsWalkable(point)", "Rebuild()", "cellSize", "agentRadius"],
     Animator: ["StringToHash(\"speed\")"],
+    ScreenEffects: ["saturation", "contrast", "brightness", "hue", "tint", "chromaticAberration", "pixelate", "crt", "scanlines", "curvature", "bloom", "vignette", "exposure", "Reset()"],
     EventSystem: ["current"],
     Audio: ["Play(\"coin\")", "Play(\"jump\", volume, pitch)", "volume", "mute"],
     HUD: ["Show(\"Mesaj\", seconds)", "Hide()"],
@@ -96,5 +97,5 @@ export const GLOBAL_SUGGESTIONS = [
     "Debug", "Time", "Input", "Physics", "Physics2D", "GameObject", "SceneManager", "Application", "Screen", "Camera", "Mathf", "Random", "Pathfinding",
     "Vector2", "Vector3", "Quaternion", "Color", "PlayerPrefs", "Audio", "HUD", "Resources", "KeyCode", "ForceMode", "ForceMode2D", "Space",
     "WaitForSeconds", "WaitUntil", "Instantiate", "Destroy", "StartCoroutine", "Invoke", "InvokeRepeating", "GetComponent", "transform", "gameObject",
-    "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem", "Animator",
+    "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem", "Animator", "ScreenEffects",
 ];

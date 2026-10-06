@@ -4,20 +4,23 @@ import { NOT_FOUND, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, V
 import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, type Vector3 } from "../types";
 import { animatorHash } from "./animator-controller";
 import type { RuntimeEntity } from "./entity";
-import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toVector, typeNameFrom, vec } from "./handles";
+import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, colorToVM, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toVector, typeNameFrom, vec } from "./handles";
 import { scaleTarget, TimerHandle, TweenHandle, type TweenKind } from "./tweens";
 import type { RuntimeWorld } from "./world";
 
 type Getter = () => VMValue;
 type Fn = (args: VMValue[], refs: Array<VMRef | null>, typeArgs: string[]) => VMValue;
 
+const own = (record: object, key: string) => Object.prototype.hasOwnProperty.call(record, key);
+
 function ns(name: string, members: Record<string, Getter>, functions: Record<string, Fn>, setters: Record<string, (value: VMValue) => void> = {}) {
+    // Own properties only, so names like "constructor" or "toString" are not members.
     return new StaticNamespace(
         name,
-        (member) => (member in members ? members[member]() : NOT_FOUND),
-        (member, args, typeArgs, refs) => (member in functions ? functions[member](args, refs, typeArgs) : NOT_FOUND),
+        (member) => (own(members, member) ? members[member]() : NOT_FOUND),
+        (member, args, typeArgs, refs) => (own(functions, member) ? functions[member](args, refs, typeArgs) : NOT_FOUND),
         (member, value) => {
-            const setter = setters[member];
+            const setter = own(setters, member) ? setters[member] : undefined;
             if (!setter) return false;
             setter(value);
             return true;
@@ -756,6 +759,71 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             if (args[0] !== null && args[0] !== undefined) world.playSound(String(args[0]), typeof args[2] === "number" ? args[2] : 1);
             return undefined;
         },
+    }));
+
+    // ScreenEffects (V5): change the running scene's screen effects from scripts; Reset() goes back to the scene's own.
+    const clamp = (value: VMValue, min: number, max: number) => Math.min(max, Math.max(min, toNumber(value)));
+    const grading = (recipe: (settings: typeof world.effects.colorGrading) => void) => {
+        world.effects.colorGrading.enabled = true;
+        recipe(world.effects.colorGrading);
+    };
+    globals.set("ScreenEffects", ns("ScreenEffects", {
+        saturation: () => world.effects.colorGrading.enabled ? world.effects.colorGrading.saturation : 0,
+        contrast: () => world.effects.colorGrading.enabled ? world.effects.colorGrading.contrast : 0,
+        brightness: () => world.effects.colorGrading.enabled ? world.effects.colorGrading.brightness : 0,
+        hue: () => world.effects.colorGrading.enabled ? world.effects.colorGrading.hue : 0,
+        tint: () => {
+            const grading = world.effects.colorGrading;
+            return colorToVM(grading.tint, grading.enabled ? grading.tintAmount : 0);
+        },
+        chromaticAberration: () => world.effects.chromaticAberration.enabled ? world.effects.chromaticAberration.intensity : 0,
+        pixelate: () => world.effects.pixelate.enabled ? world.effects.pixelate.size : 1,
+        crt: () => world.effects.crt.enabled,
+        scanlines: () => world.effects.crt.scanlines,
+        curvature: () => world.effects.crt.curvature,
+        bloom: () => world.effects.bloom.enabled ? world.effects.bloom.intensity : 0,
+        vignette: () => world.effects.vignette.enabled ? world.effects.vignette.intensity : 0,
+        exposure: () => world.effects.exposure,
+    }, {
+        Reset: () => {
+            world.resetEffects();
+            return undefined;
+        },
+    }, {
+        saturation: (value) => grading((settings) => { settings.saturation = clamp(value, -1, 1); }),
+        contrast: (value) => grading((settings) => { settings.contrast = clamp(value, -1, 1); }),
+        brightness: (value) => grading((settings) => { settings.brightness = clamp(value, -1, 1); }),
+        hue: (value) => grading((settings) => { settings.hue = clamp(value, -180, 180); }),
+        // The color's alpha is how strongly it tints (Color.clear removes the tint).
+        tint: (value) => grading((settings) => {
+            const color = toColor(value);
+            settings.tint = color.toHex();
+            settings.tintAmount = Math.min(1, Math.max(0, color.a));
+        }),
+        chromaticAberration: (value) => {
+            const intensity = clamp(value, 0, 1);
+            world.effects.chromaticAberration.enabled = intensity > 0;
+            if (intensity > 0) world.effects.chromaticAberration.intensity = intensity;
+        },
+        pixelate: (value) => {
+            const size = Math.round(clamp(value, 1, 32));
+            world.effects.pixelate.enabled = size > 1;
+            if (size > 1) world.effects.pixelate.size = size;
+        },
+        crt: (value) => { world.effects.crt.enabled = toBool(value); },
+        scanlines: (value) => { world.effects.crt.scanlines = clamp(value, 0, 1); },
+        curvature: (value) => { world.effects.crt.curvature = clamp(value, 0, 1); },
+        bloom: (value) => {
+            const intensity = clamp(value, 0, 5);
+            world.effects.bloom.enabled = intensity > 0;
+            if (intensity > 0) world.effects.bloom.intensity = intensity;
+        },
+        vignette: (value) => {
+            const intensity = clamp(value, 0, 1);
+            world.effects.vignette.enabled = intensity > 0;
+            if (intensity > 0) world.effects.vignette.intensity = intensity;
+        },
+        exposure: (value) => { world.effects.exposure = clamp(value, 0.1, 4); },
     }));
 
     // Animator.StringToHash(name): a number Animator methods accept instead of the name (V5).

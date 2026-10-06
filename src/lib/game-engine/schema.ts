@@ -936,6 +936,10 @@ export function defaultSceneSettings(dimension: GameDimension): SceneSettings {
             bloom: { enabled: false, intensity: 0.8, threshold: 0.85, radius: 0.4 },
             vignette: { enabled: false, intensity: 0.35 },
             exposure: 1,
+            colorGrading: { enabled: false, saturation: 0, contrast: 0, brightness: 0, hue: 0, tint: "#ffffff", tintAmount: 0 },
+            chromaticAberration: { enabled: false, intensity: 0.4 },
+            pixelate: { enabled: false, size: 4 },
+            crt: { enabled: false, scanlines: 0.5, curvature: 0.3 },
         },
         physics: { gravity: { x: 0, y: -9.81, z: 0 }, fixedTimeStep: 1 / 60, maxSubSteps: 6 },
     };
@@ -949,6 +953,11 @@ function normalizeSceneSettings(value: unknown, dimension: GameDimension): Scene
     const post = rec(source.postProcessing);
     const bloom = rec(post.bloom);
     const vignette = rec(post.vignette);
+    const grading = rec(post.colorGrading);
+    const aberration = rec(post.chromaticAberration);
+    const pixelate = rec(post.pixelate);
+    const crt = rec(post.crt);
+    const effects = defaults.postProcessing;
     const physics = rec(source.physics);
     const legacyBackground = typeof source.backgroundColor === "string" ? source.backgroundColor : undefined;
     return {
@@ -979,6 +988,22 @@ function normalizeSceneSettings(value: unknown, dimension: GameDimension): Scene
                 intensity: num(vignette.intensity, defaults.postProcessing.vignette.intensity, 0, 1),
             },
             exposure: num(post.exposure, defaults.postProcessing.exposure, 0.1, 4),
+            colorGrading: {
+                enabled: bool(grading.enabled, false),
+                saturation: num(grading.saturation, effects.colorGrading.saturation, -1, 1),
+                contrast: num(grading.contrast, effects.colorGrading.contrast, -1, 1),
+                brightness: num(grading.brightness, effects.colorGrading.brightness, -1, 1),
+                hue: num(grading.hue, effects.colorGrading.hue, -180, 180),
+                tint: normalizeColor(grading.tint, effects.colorGrading.tint),
+                tintAmount: num(grading.tintAmount, effects.colorGrading.tintAmount, 0, 1),
+            },
+            chromaticAberration: { enabled: bool(aberration.enabled, false), intensity: num(aberration.intensity, effects.chromaticAberration.intensity, 0, 1) },
+            pixelate: { enabled: bool(pixelate.enabled, false), size: int(pixelate.size, effects.pixelate.size, 2, 32) },
+            crt: {
+                enabled: bool(crt.enabled, false),
+                scanlines: num(crt.scanlines, effects.crt.scanlines, 0, 1),
+                curvature: num(crt.curvature, effects.crt.curvature, 0, 1),
+            },
         },
         physics: {
             gravity: vec3(physics.gravity ?? source.gravity, defaults.physics.gravity, -1000, 1000),

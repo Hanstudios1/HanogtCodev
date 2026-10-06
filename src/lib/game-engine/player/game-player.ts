@@ -172,7 +172,7 @@ export class GamePlayer {
         if (world.status === "idle") return sceneFrame(world.scene, this.options.project.dimension);
         return {
             dimension: this.options.project.dimension,
-            settings: world.scene.settings,
+            settings: world.renderSettings,
             entities: world.entities.values(),
             debugLines: world.debugLines,
             cameraShake: world.cameraShakeOffset(),

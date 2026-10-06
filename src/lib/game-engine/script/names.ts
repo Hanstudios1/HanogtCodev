@@ -26,8 +26,8 @@ export const GLOBAL_NAMES = new Set([
     "Tween", "Timer", "Ease", "LoopType", "UI", "EventSystem",
     // V4: path finding, one-shot sounds
     "Pathfinding", "AudioSource",
-    // V5: Animator.StringToHash
-    "Animator",
+    // V5: Animator.StringToHash, screen effects
+    "Animator", "ScreenEffects",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",
@@ -48,7 +48,7 @@ export const INT_RESULT_MEMBERS = new Set([
     "RoundToInt", "CeilToInt", "Parse", "ToInt32", "Next", "GetInt", "touchCount", "count", "find", "stoi", "stol", "Sign_int",
     "GetSiblingIndex", "CompareTo", "layer", "sceneCount", "buildIndex", "width", "height", "RandomRangeInt",
     "tileCount", "CountTiles", "clipCount",
-    "GetInteger", "StringToHash", "shortNameHash", "fullPathHash", "nameHash", "tagHash", "parameterCount", "layerCount",
+    "GetInteger", "StringToHash", "shortNameHash", "fullPathHash", "nameHash", "tagHash", "parameterCount", "layerCount", "pixelate",
 ]);
 
 /** API members returning float. */
@@ -60,6 +60,7 @@ export const FLOAT_RESULT_MEMBERS = new Set([
     "Exp", "Log", "Log10", "Asin", "Acos", "Atan", "mass", "drag", "angularDrag", "gravityScale", "intensity", "range",
     "fieldOfView", "orthographicSize", "volume", "pitch", "GetFloat", "NextDouble", "stof", "stod", "SignedAngle", "distance",
     "SmoothDamp", "PerlinNoise", "Sign", "fillAmount", "normalizedValue", "normalizedTime", "cellSize", "minValue", "maxValue",
+    "saturation", "contrast", "brightness", "hue", "chromaticAberration", "scanlines", "curvature", "exposure", "bloom", "vignette",
 ]);
 
 /** Functions whose numeric result follows their arguments (int if all args are int). */

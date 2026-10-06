@@ -692,12 +692,22 @@ export interface SceneSettings {
     /** Linear fog fades between `near` and `far`; exponential fog uses `density`. */
     fog: { enabled: boolean; mode: "linear" | "exponential"; color: string; near: number; far: number; density: number };
     /** Screen effects applied to the game view. */
-    postProcessing: {
-        bloom: { enabled: boolean; intensity: number; threshold: number; radius: number };
-        vignette: { enabled: boolean; intensity: number };
-        exposure: number;
-    };
+    postProcessing: PostProcessingSettings;
     physics: { gravity: Vector3; fixedTimeStep: number; maxSubSteps: number };
+}
+
+export interface PostProcessingSettings {
+    bloom: { enabled: boolean; intensity: number; threshold: number; radius: number };
+    vignette: { enabled: boolean; intensity: number };
+    exposure: number;
+    /** V5: saturation, contrast and brightness (-1…1), a hue shift in degrees and a tint (amount 0…1). */
+    colorGrading: { enabled: boolean; saturation: number; contrast: number; brightness: number; hue: number; tint: string; tintAmount: number };
+    /** V5: red and blue split toward the edges (0…1). */
+    chromaticAberration: { enabled: boolean; intensity: number };
+    /** V5: big square pixels (size in screen pixels). */
+    pixelate: { enabled: boolean; size: number };
+    /** V5: an old TV: scanlines (0…1) and a curved screen (0…1). */
+    crt: { enabled: boolean; scanlines: number; curvature: number };
 }
 
 export interface SceneDocument {

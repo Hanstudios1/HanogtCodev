@@ -179,6 +179,101 @@ void main() {
 }`,
 };
 
+/**
+ * Screen effects V2 in one pass: CRT curvature, pixelation, chromatic
+ * aberration, color grading (in gamma space, so contrast and brightness feel
+ * as they do in image editors) and CRT scanlines.
+ */
+const V5_EFFECTS_SHADER = {
+    uniforms: {
+        tDiffuse: { value: null },
+        resolution: { value: new THREE.Vector2(1, 1) },
+        pixelRatio: { value: 1 },
+        pixelSize: { value: 1 },
+        aberration: { value: 0 },
+        curvature: { value: 0 },
+        scanlines: { value: 0 },
+        grading: { value: 0 },
+        saturation: { value: 0 },
+        contrast: { value: 0 },
+        brightness: { value: 0 },
+        hue: { value: 0 },
+        tint: { value: new THREE.Vector3(1, 1, 1) },
+        tintAmount: { value: 0 },
+        exposure: { value: 1 },
+    },
+    vertexShader: /* glsl */ `
+varying vec2 vUv;
+void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`,
+    fragmentShader: /* glsl */ `
+uniform sampler2D tDiffuse;
+uniform vec2 resolution;
+uniform float pixelRatio;
+uniform float pixelSize;
+uniform float aberration;
+uniform float curvature;
+uniform float scanlines;
+uniform float grading;
+uniform float saturation;
+uniform float contrast;
+uniform float brightness;
+uniform float hue;
+uniform vec3 tint;
+uniform float tintAmount;
+uniform float exposure;
+varying vec2 vUv;
+
+vec3 hueShift(vec3 color, float angle) {
+    vec3 k = vec3(0.57735);
+    float c = cos(angle);
+    return color * c + cross(k, color) * sin(angle) + k * dot(k, color) * (1.0 - c);
+}
+
+void main() {
+    vec2 uv = vUv;
+    if (curvature > 0.0) {
+        vec2 centered = uv * 2.0 - 1.0;
+        centered *= 1.0 + dot(centered, centered) * curvature * 0.12;
+        uv = centered * 0.5 + 0.5;
+        if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            return;
+        }
+    }
+    if (pixelSize > 1.0) {
+        vec2 cell = vec2(pixelSize * pixelRatio) / resolution;
+        uv = (floor(uv / cell) + 0.5) * cell;
+    }
+    vec4 color = texture2D(tDiffuse, uv);
+    if (aberration > 0.0) {
+        vec2 offset = (uv - 0.5) * aberration * 0.02;
+        color.r = texture2D(tDiffuse, uv + offset).r;
+        color.b = texture2D(tDiffuse, uv - offset).b;
+    }
+    color.rgb *= exposure;
+    if (grading > 0.5) {
+        vec3 c = pow(max(color.rgb, 0.0), vec3(1.0 / 2.2));
+        c += brightness * 0.35;
+        c = (c - 0.5) * (1.0 + contrast) + 0.5;
+        float grey = dot(c, vec3(0.2126, 0.7152, 0.0722));
+        c = mix(vec3(grey), c, 1.0 + saturation);
+        if (hue != 0.0) c = hueShift(c, hue);
+        c = mix(c, c * tint, tintAmount);
+        color.rgb = pow(max(c, 0.0), vec3(2.2));
+    }
+    if (scanlines > 0.0) {
+        float line = 0.5 + 0.5 * sin(vUv.y * resolution.y / pixelRatio * 2.0943951);
+        color.rgb *= mix(1.0, 0.6 + 0.4 * line, scanlines);
+        vec2 d = vUv - 0.5;
+        color.rgb *= 1.0 - dot(d, d) * scanlines * 0.8;
+    }
+    gl_FragColor = color;
+}`,
+};
+
 /** Unlit, double-sided material shared by sprites and tilemaps. */
 function flatMaterial(parameters: THREE.MeshBasicMaterialParameters = {}) {
     return new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false, toneMapped: false, ...parameters });
@@ -249,6 +344,7 @@ export class SceneRenderer {
     private renderPass: RenderPass | null = null;
     private bloomPass: UnrealBloomPass | null = null;
     private vignettePass: ShaderPass | null = null;
+    private effectsPass: ShaderPass | null = null;
     private effects: SceneSettings["postProcessing"] | null = null;
     /** Shows bloom/vignette in the editor's Scene view too. */
     showEffects = false;
@@ -548,6 +644,7 @@ export class SceneRenderer {
         this.height = height;
         this.renderer.setSize(width, height, false);
         this.composer?.setSize(width, height);
+        this.updateEffectsResolution();
         this.updateEditorProjection();
     }
 
@@ -870,10 +967,23 @@ export class SceneRenderer {
         else this.scene.fog = new THREE.Fog(settings.fog.color, settings.fog.near, Math.max(settings.fog.near + 0.1, settings.fog.far));
     }
 
+    private updateEffectsResolution() {
+        if (!this.effectsPass) return;
+        const ratio = this.renderer.getPixelRatio();
+        this.effectsPass.uniforms.resolution.value.set(this.width * ratio, this.height * ratio);
+        this.effectsPass.uniforms.pixelRatio.value = ratio;
+    }
+
     /** Creates, updates or drops the post-processing chain for the current settings. */
     private configureEffects() {
         const effects = this.effects;
-        const wanted = Boolean(effects && (effects.bloom.enabled || effects.vignette.enabled) && (this.options.mode === "game" || this.showEffects));
+        const screenEffects = Boolean(effects && (effects.colorGrading?.enabled || effects.chromaticAberration?.enabled || effects.pixelate?.enabled || effects.crt?.enabled));
+        const wanted = Boolean(effects && (effects.bloom.enabled || effects.vignette.enabled || screenEffects) && (this.options.mode === "game" || this.showEffects));
+        // The composer tone maps the whole frame. 2D scenes are unlit sprites, so without bloom's
+        // bright highlights that would only shift their colors from the plain look; exposure is then
+        // a plain multiplier in the effects pass.
+        const flat2D = Boolean(wanted && effects && this.dimension === "2d" && !effects.bloom.enabled);
+        this.renderer.toneMapping = flat2D ? THREE.NoToneMapping : THREE.NeutralToneMapping;
         if (!wanted || !effects) {
             if (this.composer) {
                 this.composer.dispose();
@@ -882,6 +992,7 @@ export class SceneRenderer {
                 this.renderPass = null;
                 this.bloomPass = null;
                 this.vignettePass = null;
+                this.effectsPass = null;
             }
             return;
         }
@@ -892,10 +1003,13 @@ export class SceneRenderer {
             this.renderPass = new RenderPass(this.scene, this.activeCamera());
             this.bloomPass = new UnrealBloomPass(new THREE.Vector2(this.width, this.height), effects.bloom.intensity, effects.bloom.radius, effects.bloom.threshold);
             this.vignettePass = new ShaderPass(VIGNETTE_SHADER);
+            this.effectsPass = new ShaderPass(V5_EFFECTS_SHADER);
             this.composer.addPass(this.renderPass);
             this.composer.addPass(this.bloomPass);
             this.composer.addPass(this.vignettePass);
+            this.composer.addPass(this.effectsPass);
             this.composer.addPass(new OutputPass());
+            this.updateEffectsResolution();
         }
         if (this.bloomPass) {
             this.bloomPass.enabled = effects.bloom.enabled;
@@ -906,6 +1020,27 @@ export class SceneRenderer {
         if (this.vignettePass) {
             this.vignettePass.enabled = effects.vignette.enabled;
             this.vignettePass.uniforms.intensity.value = effects.vignette.intensity;
+        }
+        if (this.effectsPass) {
+            const uniforms = this.effectsPass.uniforms;
+            const grading = effects.colorGrading;
+            const crt = effects.crt;
+            this.effectsPass.enabled = screenEffects || (flat2D && effects.exposure !== 1);
+            uniforms.exposure.value = flat2D ? effects.exposure : 1;
+            uniforms.pixelSize.value = effects.pixelate?.enabled ? effects.pixelate.size : 1;
+            uniforms.aberration.value = effects.chromaticAberration?.enabled ? effects.chromaticAberration.intensity : 0;
+            uniforms.curvature.value = crt?.enabled ? crt.curvature : 0;
+            uniforms.scanlines.value = crt?.enabled ? crt.scanlines : 0;
+            uniforms.grading.value = grading?.enabled ? 1 : 0;
+            if (grading) {
+                uniforms.saturation.value = grading.saturation;
+                uniforms.contrast.value = grading.contrast;
+                uniforms.brightness.value = grading.brightness;
+                uniforms.hue.value = (grading.hue * Math.PI) / 180;
+                const tint = new THREE.Color(grading.tint).convertLinearToSRGB();
+                uniforms.tint.value.set(tint.r, tint.g, tint.b);
+                uniforms.tintAmount.value = grading.tintAmount;
+            }
         }
     }
 

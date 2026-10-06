@@ -752,6 +752,7 @@ export function runner3d(name: string): GameProjectDocument {
     settings.ambientIntensity = 0.55;
     settings.fog = { ...settings.fog, enabled: true, mode: "exponential", color: "#4c1d95", density: 0.03 };
     settings.postProcessing = {
+        ...settings.postProcessing,
         bloom: { enabled: true, intensity: 0.9, threshold: 0.55, radius: 0.55 },
         vignette: { enabled: true, intensity: 0.45 },
         exposure: 1.1,

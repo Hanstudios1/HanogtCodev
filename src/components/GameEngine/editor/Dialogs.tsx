@@ -15,6 +15,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
     const { store, t, playing } = useEditor();
     const project = useEditorState(store, (state) => state.project);
     const scene = activeScene(project);
+    const effects = scene.settings.postProcessing;
+    const grading = effects.colorGrading;
     const [tab, setTab] = useState<"project" | "input" | "scene">("project");
     const disabled = playing;
 
@@ -108,6 +110,37 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
                         <FieldRow label={t("vignetteIntensity")}><SliderInput value={scene.settings.postProcessing.vignette.intensity} min={0} max={1} disabled={disabled} onChange={(value) => setScene("vignetteIntensity", (settings) => { settings.postProcessing.vignette.intensity = value; })} /></FieldRow>
                     ) : null}
                     <FieldRow label={t("exposure")}><SliderInput value={scene.settings.postProcessing.exposure} min={0.2} max={3} disabled={disabled} onChange={(value) => setScene("exposure", (settings) => { settings.postProcessing.exposure = value; })} /></FieldRow>
+                    <FieldRow label={t("colorGrading")}><Toggle checked={grading.enabled} disabled={disabled} onChange={(value) => setScene("grading", (settings) => { settings.postProcessing.colorGrading.enabled = value; })} /></FieldRow>
+                    {grading.enabled ? (
+                        <>
+                            <FieldRow label={t("saturation")}><SliderInput value={grading.saturation} min={-1} max={1} disabled={disabled} onChange={(value) => setScene("saturation", (settings) => { settings.postProcessing.colorGrading.saturation = value; })} /></FieldRow>
+                            <FieldRow label={t("contrast")}><SliderInput value={grading.contrast} min={-1} max={1} disabled={disabled} onChange={(value) => setScene("contrast", (settings) => { settings.postProcessing.colorGrading.contrast = value; })} /></FieldRow>
+                            <FieldRow label={t("brightness")}><SliderInput value={grading.brightness} min={-1} max={1} disabled={disabled} onChange={(value) => setScene("brightness", (settings) => { settings.postProcessing.colorGrading.brightness = value; })} /></FieldRow>
+                            <FieldRow label={t("hue")}><SliderInput value={grading.hue} min={-180} max={180} step={1} disabled={disabled} onChange={(value) => setScene("hue", (settings) => { settings.postProcessing.colorGrading.hue = value; })} /></FieldRow>
+                            <FieldRow label={t("tint")}>
+                                <div className="grid grid-cols-[1fr_1fr] gap-2">
+                                    <ColorInput value={grading.tint} disabled={disabled} onChange={(value) => setScene("tint", (settings) => { settings.postProcessing.colorGrading.tint = value; })} />
+                                    <SliderInput value={grading.tintAmount} min={0} max={1} disabled={disabled} onChange={(value) => setScene("tintAmount", (settings) => { settings.postProcessing.colorGrading.tintAmount = value; })} />
+                                </div>
+                            </FieldRow>
+                        </>
+                    ) : null}
+                    <FieldRow label={t("chromaticAberration")}><Toggle checked={effects.chromaticAberration.enabled} disabled={disabled} onChange={(value) => setScene("aberration", (settings) => { settings.postProcessing.chromaticAberration.enabled = value; })} /></FieldRow>
+                    {effects.chromaticAberration.enabled ? (
+                        <FieldRow label={t("effectIntensity")}><SliderInput value={effects.chromaticAberration.intensity} min={0} max={1} disabled={disabled} onChange={(value) => setScene("aberrationIntensity", (settings) => { settings.postProcessing.chromaticAberration.intensity = value; })} /></FieldRow>
+                    ) : null}
+                    <FieldRow label={t("pixelate")}><Toggle checked={effects.pixelate.enabled} disabled={disabled} onChange={(value) => setScene("pixelate", (settings) => { settings.postProcessing.pixelate.enabled = value; })} /></FieldRow>
+                    {effects.pixelate.enabled ? (
+                        <FieldRow label={t("pixelSize")}><SliderInput value={effects.pixelate.size} min={2} max={32} integer disabled={disabled} onChange={(value) => setScene("pixelSize", (settings) => { settings.postProcessing.pixelate.size = Math.round(value); })} /></FieldRow>
+                    ) : null}
+                    <FieldRow label={t("crt")}><Toggle checked={effects.crt.enabled} disabled={disabled} onChange={(value) => setScene("crt", (settings) => { settings.postProcessing.crt.enabled = value; })} /></FieldRow>
+                    {effects.crt.enabled ? (
+                        <>
+                            <FieldRow label={t("scanlines")}><SliderInput value={effects.crt.scanlines} min={0} max={1} disabled={disabled} onChange={(value) => setScene("scanlines", (settings) => { settings.postProcessing.crt.scanlines = value; })} /></FieldRow>
+                            <FieldRow label={t("curvature")}><SliderInput value={effects.crt.curvature} min={0} max={1} disabled={disabled} onChange={(value) => setScene("curvature", (settings) => { settings.postProcessing.crt.curvature = value; })} /></FieldRow>
+                        </>
+                    ) : null}
+                    <p className="pt-1 text-[11px] leading-snug text-zinc-500">{t("screenEffectsHint")}</p>
                     <p className="pb-0.5 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-zinc-500">Physics</p>
                     <FieldRow label={t("gravity")}>
                         <VectorInput value={scene.settings.physics.gravity} hideZ={project.dimension === "2d"} disabled={disabled} onChange={(value) => setScene("gravity", (settings) => { settings.physics.gravity = project.dimension === "2d" ? { ...value, z: 0 } : value; })} />

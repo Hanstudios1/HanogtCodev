@@ -265,3 +265,113 @@ test("Animator data is validated: unique names, live references, modes that fit 
     assert.equal(self.hasExitTime, true, "no conditions: it waits for the clip");
     assert.deepEqual(animator.layout, { entry: { x: 40, y: 160 }, any: { x: 40, y: 40 } });
 });
+
+// ---------------------------------------------------------------------------
+// Screen effects V2
+// ---------------------------------------------------------------------------
+
+const { NOT_FOUND } = await load("lib/game-engine/script/values.ts");
+
+test("screen effects V2: off by default, clamped, and V4 scenes get them switched off", () => {
+    const fresh = normalizeProject(createBlankProject("Efekt", "2d"));
+    const effects = fresh.scenes[0].settings.postProcessing;
+    assert.deepEqual(effects.colorGrading, { enabled: false, saturation: 0, contrast: 0, brightness: 0, hue: 0, tint: "#ffffff", tintAmount: 0 });
+    assert.deepEqual(effects.chromaticAberration, { enabled: false, intensity: 0.4 });
+    assert.deepEqual(effects.pixelate, { enabled: false, size: 4 });
+    assert.deepEqual(effects.crt, { enabled: false, scanlines: 0.5, curvature: 0.3 });
+
+    const wild = JSON.parse(JSON.stringify(fresh));
+    wild.scenes[0].settings.postProcessing = {
+        ...effects,
+        colorGrading: { enabled: true, saturation: 5, contrast: -9, brightness: "x", hue: 720, tint: "not a color", tintAmount: 3 },
+        chromaticAberration: { enabled: 1, intensity: 2 },
+        pixelate: { enabled: true, size: 100.7 },
+        crt: { enabled: true, scanlines: -1, curvature: 9 },
+    };
+    const clamped = normalizeProject(wild).scenes[0].settings.postProcessing;
+    assert.deepEqual(clamped.colorGrading, { enabled: true, saturation: 1, contrast: -1, brightness: 0, hue: 180, tint: "#ffffff", tintAmount: 1 });
+    assert.deepEqual(clamped.chromaticAberration, { enabled: false, intensity: 1 }, "only a real true switches it on");
+    assert.deepEqual(clamped.pixelate, { enabled: true, size: 32 });
+    assert.deepEqual(clamped.crt, { enabled: true, scanlines: 0, curvature: 1 });
+
+    const v4 = JSON.parse(JSON.stringify(fresh));
+    v4.version = 4;
+    for (const name of ["colorGrading", "chromaticAberration", "pixelate", "crt"]) delete v4.scenes[0].settings.postProcessing[name];
+    const migrated = normalizeProject(v4).scenes[0].settings.postProcessing;
+    assert.equal(migrated.colorGrading.enabled || migrated.chromaticAberration.enabled || migrated.pixelate.enabled || migrated.crt.enabled, false);
+});
+
+test("ScreenEffects: scripts change the running effects, not the scene; Reset and scene loads bring the scene's back", () => {
+    const project = createBlankProject("Efekt", "2d");
+    project.scenes[0].settings.postProcessing.vignette = { enabled: true, intensity: 0.3 };
+    const second = JSON.parse(JSON.stringify(project.scenes[0]));
+    second.id = "scene_two";
+    second.name = "Two";
+    second.objects = [];
+    project.scenes.push(second);
+    project.scripts = [{ id: "script_fx", name: "Fx.cs", language: "csharp", content: `using UnityEngine;
+using UnityEngine.SceneManagement;
+public class Fx : MonoBehaviour
+{
+    public void Hit()
+    {
+        ScreenEffects.saturation = -2f;
+        ScreenEffects.contrast = 0.25f;
+        ScreenEffects.hue = 30f;
+        ScreenEffects.tint = new Color(1f, 0f, 0f, 0.5f);
+        ScreenEffects.chromaticAberration = 0.8f;
+        ScreenEffects.pixelate = 6;
+        ScreenEffects.crt = true;
+        ScreenEffects.scanlines = 0.7f;
+        ScreenEffects.vignette = 0f;
+        ScreenEffects.exposure = 9f;
+        Debug.Log("fx " + ScreenEffects.saturation + " " + ScreenEffects.pixelate + " " + ScreenEffects.crt + " " + ScreenEffects.vignette + " " + ScreenEffects.exposure + " " + ScreenEffects.tint.a);
+    }
+    public void Calm()
+    {
+        ScreenEffects.Reset();
+        Debug.Log("calm " + ScreenEffects.saturation + " " + ScreenEffects.pixelate + " " + ScreenEffects.vignette);
+    }
+    public void Next() { SceneManager.LoadScene("Two"); }
+}` }];
+    project.scenes[0].objects.push({ id: "entity_fx", name: "Fx", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createScriptComponent("script_fx", "Fx")] });
+    const game = startWorld(project);
+    game.step(1);
+    const fx = game.find("Fx");
+    const scene = game.world.scene.settings.postProcessing;
+    const before = JSON.stringify(scene);
+
+    game.world.sendMessage(fx, "Hit", undefined, "SendMessage");
+    assert.deepEqual(game.messages("info"), ["fx -1 6 True 0 4 0.5"]);
+    const running = game.world.renderSettings.postProcessing;
+    assert.equal(running, game.world.effects);
+    assert.equal(running.colorGrading.enabled, true, "setting a grading value switches grading on");
+    assert.equal(running.colorGrading.tint, "#ff0000");
+    assert.equal(running.colorGrading.tintAmount, 0.5);
+    assert.equal(running.colorGrading.hue, 30);
+    assert.deepEqual(running.chromaticAberration, { enabled: true, intensity: 0.8 });
+    assert.deepEqual(running.pixelate, { enabled: true, size: 6 });
+    assert.equal(running.crt.enabled, true);
+    assert.equal(running.vignette.enabled, false, "0 switches the vignette off");
+    assert.equal(JSON.stringify(scene), before, "the scene data is untouched");
+    assert.equal(game.world.renderSettings.background, game.world.scene.settings.background, "the rest of the settings are the scene's");
+
+    game.world.sendMessage(fx, "Calm", undefined, "SendMessage");
+    assert.equal(game.messages("info")[1], "calm 0 1 0.3");
+    assert.deepEqual(game.world.effects, scene);
+    assert.notEqual(game.world.effects, scene, "a copy, so scripts never write into the scene");
+
+    game.world.sendMessage(fx, "Hit", undefined, "SendMessage");
+    game.world.sendMessage(fx, "Next", undefined, "SendMessage");
+    game.step(1);
+    assert.equal(game.world.scene.name, "Two");
+    assert.equal(game.world.effects.pixelate.enabled, false, "a new scene starts with its own effects");
+    assert.deepEqual(game.problems(), []);
+
+    // Only the namespace's own members exist (no "constructor", "toString" from the JavaScript object).
+    const namespace = game.world.resolveGlobal("ScreenEffects");
+    assert.equal(namespace.getMember("constructor"), NOT_FOUND);
+    assert.equal(namespace.callMember("toString", [], [], []), NOT_FOUND);
+    assert.equal(namespace.callMember("hasOwnProperty", ["Reset"], [], []), NOT_FOUND);
+    assert.equal(namespace.setMember("__proto__", 1), false);
+});

@@ -37,6 +37,8 @@ import {
 import type {
     AnimatorState,
     AnimatorTransition,
+    PostProcessingSettings,
+    SceneSettings,
     AudioAsset,
     AudioSourceComponent,
     CameraComponent,
@@ -386,6 +388,8 @@ export class RuntimeWorld implements ScriptHost {
     readonly prefs: PlayerPrefsStore;
     readonly is2D: boolean;
     scene: SceneDocument;
+    /** Screen effects of the running scene (V5: scripts change them through ScreenEffects; the scene data stays as it is). */
+    effects: PostProcessingSettings;
     readonly entities = new Map<string, RuntimeEntity>();
     behaviours: BehaviourState[] = [];
     readonly logs: LogEntry[] = [];
@@ -495,6 +499,7 @@ export class RuntimeWorld implements ScriptHost {
         this.audio = options.audio === undefined ? null : options.audio;
         this.prefs = new PlayerPrefsStore(options.storage ?? null, `hanogt-engine:prefs:${options.project.id}`);
         this.scene = this.findScene(options.sceneId ?? options.project.settings.startSceneId) ?? options.project.scenes[0];
+        this.effects = cloneJson(this.scene.settings.postProcessing);
         this.globals = createHostGlobals(this);
     }
 
@@ -857,6 +862,16 @@ export class RuntimeWorld implements ScriptHost {
             ?? scenes.find((scene) => scene.name.toLowerCase() === text.toLowerCase());
     }
 
+    /** The scene's settings as the renderer should draw them (with the effects scripts changed). */
+    get renderSettings(): SceneSettings {
+        return { ...this.scene.settings, postProcessing: this.effects };
+    }
+
+    /** ScreenEffects.Reset(): back to the scene's own effects. */
+    resetEffects() {
+        this.effects = cloneJson(this.scene.settings.postProcessing);
+    }
+
     sceneIndex(scene: SceneDocument = this.scene) {
         return Math.max(0, this.project.scenes.findIndex((candidate) => candidate.id === scene.id));
     }
@@ -886,6 +901,7 @@ export class RuntimeWorld implements ScriptHost {
         for (const entity of this.entities.values()) entity.follower?.snap();
         this.scene = scene;
         const settings = scene.settings;
+        this.effects = cloneJson(settings.postProcessing);
         this.physics.gravity = { ...settings.physics.gravity };
         this.fixedDeltaTime = Math.min(0.1, Math.max(1 / 240, settings.physics.fixedTimeStep || 1 / 60));
         this.maxSubSteps = Math.max(1, Math.min(10, Math.trunc(settings.physics.maxSubSteps || 5)));
