@@ -31,6 +31,8 @@ export const ERROR_COPY: Record<string, Copy> = {
     invalid_level: { TR: "Geçersiz duyuru seviyesi.", EN: "Invalid announcement level." },
     invalid_link: { TR: "Bağlantı / ile başlayan bir yol veya https adresi olmalıdır.", EN: "The link must be a path starting with / or an https URL." },
     invalid_dates: { TR: "Tarihler geçersiz: bitiş, başlangıçtan sonra ve etkin duyurularda gelecekte olmalıdır.", EN: "Invalid dates: the end must follow the start and, for active announcements, lie in the future." },
+    invalid_expiry: { TR: "Son kullanma tarihi bugünden sonra ve en çok 5 yıl içinde olmalıdır.", EN: "The expiry date must be after today and at most 5 years ahead." },
+    coupon_expired: { TR: "Süresi dolmuş bir kupon Paddle'a gönderilemez; önce yeni bir son kullanma tarihiyle geri yükleyin.", EN: "An expired coupon can't be sent to Paddle; restore it with a new expiry date first." },
     invalid_query: { TR: "Arama ifadesi geçersiz.", EN: "Invalid search." },
     invalid_cursor: { TR: "Sayfa bilgisi geçersiz; aramayı yenileyin.", EN: "Invalid page cursor; refresh the search." },
     invalid_boolean: { TR: "Açık/kapalı değeri geçersiz.", EN: "Invalid on/off value." },
@@ -152,6 +154,8 @@ export const PADDLE_STATUS_COPY: Record<PaddleStatus, Copy> = {
 
 export const SECURITY_ACTION_COPY: Record<string, Copy> = {
     execution_blocked: { TR: "Kod çalıştırma engellendi", EN: "Code run blocked" },
+    two_factor_attempts_exceeded: { TR: "Çok sayıda hatalı doğrulama kodu", EN: "Too many wrong verification codes" },
+    unverified_password_removed: { TR: "Doğrulanmamış şifre kaldırıldı", EN: "Unverified password removed" },
 };
 
 export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
@@ -162,6 +166,7 @@ export const AUDIT_ACTION_COPY: Record<AdminAuditAction, Copy> = {
     "user.remove_password": { TR: "Hesabın şifresi kaldırıldı", EN: "Account password removed" },
     "report.resolve": { TR: "Bildirim çözüldü", EN: "Report resolved" },
     "report.dismiss": { TR: "Bildirim reddedildi", EN: "Report dismissed" },
+    "report.reopen": { TR: "Bildirim yeniden açıldı", EN: "Report reopened" },
     "report.remove_content": { TR: "İçerik kaldırıldı", EN: "Content removed" },
     "media.cleanup_incomplete": { TR: "Media temizliği yarım kaldı", EN: "Media cleanup incomplete" },
     "news_comment.delete": { TR: "Haber yorumu silindi", EN: "News comment deleted" },

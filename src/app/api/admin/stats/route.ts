@@ -7,6 +7,7 @@ import {
     adminJson,
     authorizeAdminRequest,
     countDocuments,
+    countOpenFeedback,
     httpsUrlOrNull,
     stringOr,
     toIso,
@@ -15,15 +16,9 @@ import { runServerQuery } from "@/lib/server/firebase-rest";
 
 export const runtime = "nodejs";
 
+/* The overview's totals and newest sign-ups; kept 30 seconds, ?fresh=1 (Refresh) counts again. */
 const CACHE_TTL_MS = 30_000;
 let cache: { at: number; payload: AdminStatsResponse } | null = null;
-
-/** Feedback without a status field predates the admin panel and counts as open. */
-async function countOpenFeedback() {
-    const items = await runServerQuery<{ status?: unknown }>({ collectionId: "feedback", select: ["status"], limit: COUNT_CAP });
-    const open = items.filter((item) => item.status === undefined || item.status === null || item.status === "open").length;
-    return { count: open, capped: items.length >= COUNT_CAP };
-}
 
 async function recentSignups(): Promise<RecentSignup[]> {
     // Only timestamp-typed createdAt values (every current sign-up path writes one).
@@ -47,7 +42,7 @@ export async function GET(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "moderator" });
     if (!guard.ok) return guard.response;
     try {
-        if (cache && Date.now() - cache.at < CACHE_TTL_MS) return adminJson(cache.payload);
+        if (request.nextUrl.searchParams.get("fresh") !== "1" && cache && Date.now() - cache.at < CACHE_TTL_MS) return adminJson(cache.payload);
 
         const since = new Date(Date.now() - 7 * 24 * 60 * 60_000);
         const tasks: Record<StatKey, () => Promise<StatCount>> = {

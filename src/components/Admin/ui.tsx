@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Info, LoaderCircle, RefreshCw, Search, X, type LucideIcon } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Info, LoaderCircle, RefreshCw, Search, X, type LucideIcon } from "lucide-react";
 import {
     createContext,
     useCallback,
@@ -304,6 +304,33 @@ export function EmptyState({ icon: Icon, title, description, action }: { icon: L
 }
 
 /** Skeleton rows shown while a list loads. */
+/**
+ * "Load more" under a paged list (useAdminPages): the button while there is a
+ * next page, how many are shown out of how many when the total is known, and
+ * the error of the last attempt with a retry.
+ */
+export function LoadMore({ pages, shown, total }: {
+    pages: { canLoadMore: boolean; loadingMore: boolean; moreError: ApiFailure | null; loadMore: () => Promise<void> };
+    shown: number;
+    total?: number | null;
+}) {
+    const { tx, locale } = useI18n();
+    if (!pages.canLoadMore && !pages.moreError) return null;
+    return (
+        <div className="flex flex-col items-center gap-2 pt-1">
+            {pages.moreError ? <ErrorNotice error={pages.moreError} onRetry={() => void pages.loadMore()} className="w-full" /> : null}
+            {pages.canLoadMore ? (
+                <Button icon={ChevronDown} busy={pages.loadingMore} onClick={() => void pages.loadMore()}>{tx({ TR: "Daha fazla yükle", EN: "Load more" })}</Button>
+            ) : null}
+            {typeof total === "number" ? (
+                <span className="text-[12px] text-zinc-500 dark:text-zinc-400">
+                    {tx({ TR: "{shown} / {total} gösteriliyor", EN: "Showing {shown} of {total}" }, { shown: shown.toLocaleString(locale), total: total.toLocaleString(locale) })}
+                </span>
+            ) : null}
+        </div>
+    );
+}
+
 export function LoadingRows({ rows = 4, className }: { rows?: number; className?: string }) {
     const { tx } = useI18n();
     return (
@@ -593,18 +620,21 @@ export function TextArea({ label, value, onChange, max, rows = 3, placeholder, h
 // ---------------------------------------------------------------------------
 
 type ToastTone = "success" | "error" | "info";
-type ToastItem = { id: number; tone: ToastTone; message: string };
+/** A button in a toast (e.g. "Undo"); the toast closes when it is pressed. */
+export type ToastAction = { label: string; onClick: () => void };
+type ToastItem = { id: number; tone: ToastTone; message: string; action?: ToastAction };
 
-const ToastContext = createContext<(tone: ToastTone, message: string) => void>(() => undefined);
+const ToastContext = createContext<(tone: ToastTone, message: string, action?: ToastAction) => void>(() => undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<ToastItem[]>([]);
     const counter = useRef(0);
-    const push = useCallback((tone: ToastTone, message: string) => {
+    const push = useCallback((tone: ToastTone, message: string, action?: ToastAction) => {
         counter.current += 1;
         const id = counter.current;
-        setToasts((current) => [...current.slice(-3), { id, tone, message }]);
-        window.setTimeout(() => setToasts((current) => current.filter((toast) => toast.id !== id)), 4_500);
+        setToasts((current) => [...current.slice(-3), { id, tone, message, action }]);
+        // Longer when there is something to press.
+        window.setTimeout(() => setToasts((current) => current.filter((toast) => toast.id !== id)), action ? 8_000 : 4_500);
     }, []);
     const dismiss = (id: number) => setToasts((current) => current.filter((toast) => toast.id !== id));
     const { tx } = useI18n();
@@ -628,6 +658,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             >
                                 <Icon className={cx("mt-0.5 h-4.5 w-4.5 shrink-0", toast.tone === "success" ? "text-emerald-500" : toast.tone === "error" ? "text-red-500" : "text-indigo-500")} aria-hidden="true" />
                                 <p className="min-w-0 flex-1 leading-snug">{toast.message}</p>
+                                {toast.action ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => { dismiss(toast.id); toast.action?.onClick(); }}
+                                        className={cx("shrink-0 rounded-lg px-2 py-0.5 text-[13px] font-bold text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-white/[0.06]", FOCUS_RING)}
+                                    >
+                                        {toast.action.label}
+                                    </button>
+                                ) : null}
                                 <button type="button" onClick={() => dismiss(toast.id)} aria-label={tx(COMMON.close)} className={cx("rounded-md p-0.5 text-zinc-400 transition hover:text-zinc-700 dark:hover:text-zinc-200", FOCUS_RING)}>
                                     <X className="h-4 w-4" aria-hidden="true" />
                                 </button>

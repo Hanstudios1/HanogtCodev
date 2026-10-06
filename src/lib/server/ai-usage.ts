@@ -6,6 +6,7 @@ import { RETIRED_PROVIDER_IDS } from "@/lib/ai/connections";
 import { healBeforeRefusing, type HealOptions } from "./entitlements";
 import { countServerQuery, getServerDocument } from "./firebase-rest";
 import { gameAudioUsageFor } from "./game-assets";
+import { recordAiUsage, type AiUsageSource } from "./ai-usage-stats";
 import { attachmentUsageOf } from "./message-files";
 import { AI_LIMIT_KEYS, getSubscription } from "./plans";
 import { enforceRateLimitWithFallback, readRateLimit, releaseFromWindow, type RateLimitResult } from "./rate-limit";
@@ -92,11 +93,13 @@ export async function planUsageFor(email: string, subscription: UserSubscription
 }
 
 /** Where a Hanogt AI message came from: the chat, the person's own connection, the developer API or a Social group's bot. */
-export type HanogtAiSource = "chat" | "own" | "api" | "group";
+export type HanogtAiSource = AiUsageSource;
 
 export type QuotaPass = {
     ok: true;
     plan: PlanId;
+    /** Where the message came from (the admin panel's daily totals count it by source). */
+    source: HanogtAiSource;
     /** The window this request counted in. */
     quota: WindowQuota;
     /** The minute window it counted in (the developer API reports it as x-ratelimit-*). */
@@ -125,6 +128,15 @@ export type QuotaNoPlan = { ok: false; code: "connection_unavailable"; plan: Pla
 const resetsAtOf = (result: RateLimitResult) => new Date(Date.now() + result.retryAfterSeconds * 1000).toISOString();
 
 /**
+ * Work that may finish after the answer (routes pass after() as onLate) and
+ * whose failure never matters to the person, like the admin panel's daily totals.
+ */
+function inBackground(work: Promise<unknown>, onLate?: (work: Promise<unknown>) => void) {
+    const settled = work.catch(() => undefined);
+    onLate?.(settled);
+}
+
+/**
  * Counts one message in the minute guard and then the plan's window. The
  * window is counted only once the minute let the message through, so a
  * refused burst never uses it up. Before refusing, Paddle is asked once
@@ -132,7 +144,7 @@ const resetsAtOf = (result: RateLimitResult) => new Date(Date.now() + result.ret
  * already asked): a purchase no notification reported raises the limit, and
  * only the check that refused is made again.
  */
-async function enforceWindows(email: string, initial: UserSubscription, options: HealOptions, alreadyAsked = false): Promise<QuotaPass | QuotaRefusal> {
+async function enforceWindows(email: string, initial: UserSubscription, options: HealOptions, source: HanogtAiSource, alreadyAsked = false): Promise<QuotaPass | QuotaRefusal> {
     let subscription = initial;
     let asked = alreadyAsked;
     const keys = AI_LIMIT_KEYS(email);
@@ -159,9 +171,12 @@ async function enforceWindows(email: string, initial: UserSubscription, options:
     if (!window.allowed && (await heal())) window = await enforceRateLimitWithFallback(keys.window, current().perWindow, windowMs());
     if (!window.allowed) return refuse("usage_limit", window, current().perWindow);
 
+    const plan = effectivePlan(subscription);
+    inBackground(recordAiUsage({ source, plan }), options.onLate);
     return {
         ok: true,
-        plan: effectivePlan(subscription),
+        plan,
+        source,
         quota: { quota: "hanogt", limit: current().perWindow, remaining: window.remaining, resetsAt: resetsAtOf(window), windowDays: current().windowDays },
         minute: { limit: current().perMinute, remaining: minute.remaining, resetsAt: resetsAtOf(minute) },
         counted: { key: keys.window, windowMs: windowMs(), startedAt: window.windowStartedAt, memory: window.memory === true },
@@ -177,17 +192,19 @@ export type HanogtAiOptions = HealOptions & {
 
 /** One message to Hanogt AI's own model, from the chat, the developer API or a Social group. */
 export async function enforceHanogtAi(email: string, options: HanogtAiOptions = {}): Promise<QuotaPass | QuotaRefusal> {
-    const { subscription: known, ...heal } = options;
+    const { subscription: known, source = "chat", ...heal } = options;
     const subscription = known ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
-    return enforceWindows(email, subscription, heal);
+    return enforceWindows(email, subscription, heal, source);
 }
 
 /**
  * Gives a counted message back when the model answered nothing (it failed,
  * timed out or sent an empty answer). Best effort and never throws: only the
- * window that counted it is changed, and only while it is still open.
+ * window that counted it is changed, and only while it is still open. The
+ * daily totals count it as unanswered either way.
  */
-export async function refundHanogtAi(pass: QuotaPass): Promise<boolean> {
+export async function refundHanogtAi(pass: QuotaPass, onLate?: (work: Promise<unknown>) => void): Promise<boolean> {
+    inBackground(recordAiUsage({ source: pass.source, plan: pass.plan, refund: true }), onLate);
     return releaseFromWindow(pass.counted.key, pass.counted.windowMs, pass.counted.startedAt, 1, pass.counted.memory).catch(() => false);
 }
 
@@ -207,7 +224,7 @@ export async function enforceOwnKeys(email: string, options: HealOptions = {}): 
         if (healed?.upgraded) subscription = healed.subscription;
         if (PLAN_AI_CONNECTIONS[effectivePlan(subscription)] <= 0) return { ok: false, code: "connection_unavailable", plan: effectivePlan(subscription) };
     }
-    return enforceWindows(email, subscription, options, asked);
+    return enforceWindows(email, subscription, options, "own", asked);
 }
 
 /** The headers an answer reports its window with (src/lib/ai/usage.ts QUOTA_HEADERS). */

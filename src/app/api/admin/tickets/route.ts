@@ -165,11 +165,13 @@ async function queryInbox(filters: AdminQueryFilter[], cursor: Cursor | null, li
     try {
         const records = await runServerQuery<TicketRecord>({
             collectionId: TICKETS_COLLECTION,
-            where: cursor ? [...filters, { field: "lastMessageAt", op: "LESS_THAN_OR_EQUAL", value: new Date(cursor.time) }] : filters,
-            orderBy: [{ field: "lastMessageAt", direction: "DESCENDING" }],
+            where: filters,
+            // Ties by document, so tickets with the same time are never skipped or repeated across pages.
+            orderBy: [{ field: "lastMessageAt", direction: "DESCENDING" }, { field: "__name__", direction: "DESCENDING" }],
+            ...(cursor ? { startAfter: [new Date(cursor.time), `${TICKETS_COLLECTION}/${cursor.id}`] } : {}),
             select: TICKET_LIST_FIELDS,
-            // Extra room for records that share the cursor's timestamp.
-            limit: limit + (cursor ? 10 : 0),
+            // A time stored finer than the cursor's milliseconds can bring the cursor's own ticket back (dropped below).
+            limit: limit + (cursor ? 1 : 0),
         });
         return afterCursor(records, cursor).slice(0, limit);
     } catch (error) {

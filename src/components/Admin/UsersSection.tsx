@@ -5,9 +5,9 @@ import { Ban, Crown, History, KeyRound, Lock, RefreshCw, RotateCcw, ShieldCheck,
 import { useEffect, useId, useRef, useState } from "react";
 import type { AccountDeletionResult, DeletionScope } from "@/lib/server/account-deletion";
 import { useI18n, type Copy } from "@/lib/i18n";
-import { adminPost, adminRequest, type ApiFailure } from "./api";
+import { adminPost, type ApiFailure } from "./api";
 import { COMMON, ROLE_COPY, ROLE_DESCRIPTION_COPY } from "./copy";
-import { formatNumber, useAdminResource, useDebouncedValue } from "./hooks";
+import { formatNumber, useAdminPages, useDebouncedValue } from "./hooks";
 import {
     SUSPEND_REASON_MAX,
     type AdminUser,
@@ -17,8 +17,8 @@ import {
     type UserRole,
 } from "./types";
 import {
-    Avatar, Badge, Button, ConfirmDialog, Dialog, EmptyState, ErrorNotice, FOCUS_RING, INPUT_CLASS, LoadingRows, Notice, Panel, RelativeTime, SearchInput,
-    SectionHeader, Spinner, TextArea, cx, useErrorText, useToast,
+    Avatar, Badge, Button, ConfirmDialog, Dialog, EmptyState, ErrorNotice, FOCUS_RING, INPUT_CLASS, LoadMore, LoadingRows, Notice, Panel, RelativeTime, SearchInput,
+    SectionHeader, Spinner, TextArea, cx, useToast,
 } from "./ui";
 import { ROLE_TONES } from "./tones";
 
@@ -415,6 +415,8 @@ function DeleteDataDialog({ open, user, onClose, onDeleted }: {
     );
 }
 
+const userId = (user: AdminUser) => user.email;
+
 /** A search handed over in the address (#users?q=…): no control characters, within the API's 120 characters. */
 function prefilledQuery(value: string) {
     return value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 120);
@@ -427,13 +429,10 @@ function prefilledQuery(value: string) {
 export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEmail: string; initialQuery?: string }) {
     const { tx } = useI18n();
     const toast = useToast();
-    const errorText = useErrorText();
     const [query, setQuery] = useState(() => prefilledQuery(initialQuery));
     const debounced = useDebouncedValue(query.trim(), 350);
     const path = `/api/admin/users?query=${encodeURIComponent(debounced)}`;
-    const users = useAdminResource<AdminUsersResponse>(path);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [moreError, setMoreError] = useState<ApiFailure | null>(null);
+    const users = useAdminPages<AdminUser, AdminUsersResponse>(path, userId);
     const [dialog, setDialog] = useState<DialogState | null>(null);
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
@@ -457,7 +456,7 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
     };
     const onDataDeleted = (result: AccountDeletionResult) => {
         if (result.accountDeleted) {
-            users.mutate((current) => ({ ...current, users: current.users.filter((user) => user.email !== result.email) }));
+            users.mutate((current) => ({ ...current, items: current.items.filter((user) => user.email !== result.email) }));
         }
         toast(result.errors.length ? "error" : "success", result.errors.length
             ? tx({ TR: "{email}: bazı veriler silinemedi.", EN: "{email}: some data couldn't be deleted." }, { email: result.email })
@@ -466,24 +465,6 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
     const closeDeleteData = (ran: boolean) => {
         setDeleteOpen(false);
         if (ran) users.reload();
-    };
-
-    const loadMore = async () => {
-        const cursor = users.data?.nextCursor;
-        if (!cursor) return;
-        const forKey = users.dataKey;
-        setLoadingMore(true);
-        setMoreError(null);
-        const result = await adminRequest<AdminUsersResponse>(`${path}&cursor=${encodeURIComponent(cursor)}`);
-        setLoadingMore(false);
-        if (!result.ok) {
-            setMoreError(result);
-            return;
-        }
-        users.mutate((current) => ({
-            ...result.data,
-            users: [...current.users, ...result.data.users.filter((user) => !current.users.some((existing) => existing.email === user.email))],
-        }), forKey);
     };
 
     const submit = async () => {
@@ -501,7 +482,7 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
             return;
         }
         const updated = result.data.user;
-        users.mutate((current) => ({ ...current, users: current.users.map((user) => (user.email === updated.email ? updated : user)) }));
+        users.mutate((current) => ({ ...current, items: current.items.map((user) => (user.email === updated.email ? updated : user)) }));
         setDialog(null);
         if (dialog.kind === "suspend") {
             toast("success", result.data.sessionsRevoked
@@ -518,8 +499,10 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
         }
     };
 
-    const list = users.data?.users ?? [];
-    const mode = users.data?.mode ?? "recent";
+    // Rows of an earlier search are only shown (dimmed) while the new one loads, never under its error.
+    const showRows = !users.stale || users.loading;
+    const list = showRows ? users.data?.items ?? [] : [];
+    const mode = showRows ? users.data?.mode ?? "recent" : debounced.includes("@") ? "email" : debounced ? "username" : "recent";
     const roleChanged = dialog?.kind === "role" && dialog.role !== assignableRole(dialog.user);
 
     return (
@@ -551,7 +534,7 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
 
                 {!users.data && users.loading ? (
                     <LoadingRows rows={6} className="p-4" />
-                ) : list.length === 0 && !users.loading ? (
+                ) : users.error && !showRows ? null : list.length === 0 && !users.loading ? (
                     <div className="p-4">
                         <EmptyState
                             icon={Users}
@@ -576,10 +559,9 @@ export default function UsersSection({ selfEmail, initialQuery = "" }: { selfEma
                         >
                             {list.map((user) => <UserRow key={user.email} user={user} self={user.email === selfEmail} onAction={openDialog} onDeleteData={openDeleteData} />)}
                         </motion.ul>
-                        {users.data?.nextCursor || moreError ? (
-                            <div className="flex flex-col items-center gap-2 border-t border-zinc-100 p-4 dark:border-white/[0.06]">
-                                {moreError ? <p className="text-sm text-red-600 dark:text-red-400" role="alert">{errorText(moreError)}</p> : null}
-                                {users.data?.nextCursor ? <Button size="sm" busy={loadingMore} onClick={() => void loadMore()}>{tx(COMMON.loadMore)}</Button> : null}
+                        {users.canLoadMore || users.moreError ? (
+                            <div className="border-t border-zinc-100 p-4 dark:border-white/[0.06]">
+                                <LoadMore pages={users} shown={list.length} />
                             </div>
                         ) : null}
                     </>

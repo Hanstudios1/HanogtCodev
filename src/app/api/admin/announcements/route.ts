@@ -5,7 +5,6 @@ import {
     ANNOUNCEMENT_TEXT_MAX,
     MAX_ACTIVE_ANNOUNCEMENTS,
     isSafeAnnouncementLink,
-    type AdminAnnouncement,
     type AdminAnnouncementActionResponse,
     type AdminAnnouncementsResponse,
     type AnnouncementLevel,
@@ -16,7 +15,9 @@ import {
     adminJson,
     auditLogMutation,
     authorizeAdminRequest,
+    claimAnnouncementSlot,
     isFirestoreConflict,
+    listAnnouncements,
     normalizeAnnouncement,
     occupiesActiveSlot,
     readAdminBody,
@@ -25,7 +26,7 @@ import {
     requireDocId,
     requireEnum,
 } from "@/lib/server/admin";
-import { commitServerMutations, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { commitServerMutations, getServerDocument } from "@/lib/server/firebase-rest";
 
 export const runtime = "nodejs";
 
@@ -82,24 +83,6 @@ function readInput(body: Record<string, unknown>): AnnouncementInput {
     return input;
 }
 
-async function listAnnouncements(options: { activeOnly?: boolean } = {}) {
-    const records = await runServerQuery<Record<string, unknown>>({
-        collectionId: "site_announcements",
-        ...(options.activeOnly
-            ? { where: [{ field: "active", op: "EQUAL" as const, value: true }] }
-            : { orderBy: [{ field: "createdAt", direction: "DESCENDING" as const }] }),
-        limit: 100,
-    });
-    return records.map(normalizeAnnouncement).filter((item): item is AdminAnnouncement => Boolean(item));
-}
-
-/** Keeps at most MAX_ACTIVE_ANNOUNCEMENTS live or scheduled announcements. */
-async function assertActiveSlot(excludeId?: string) {
-    const now = Date.now();
-    const occupied = (await listAnnouncements({ activeOnly: true })).filter((item) => item.id !== excludeId && occupiesActiveSlot(item, now));
-    if (occupied.length >= MAX_ACTIVE_ANNOUNCEMENTS) throw new AdminHttpError(409, "too_many_active");
-}
-
 async function loadAnnouncement(id: string) {
     const record = await getServerDocument<Record<string, unknown>>(`site_announcements/${id}`);
     const announcement = record ? normalizeAnnouncement({ ...record, _id: id }) : null;
@@ -134,12 +117,13 @@ export async function POST(request: NextRequest) {
         if (action === "create") {
             if (body.id !== undefined) throw new AdminHttpError(400, "unknown_field");
             const input = readInput(body);
-            if (input.active) await assertActiveSlot();
+            const slot = input.active ? await claimAnnouncementSlot() : null;
             const id = randomUUID();
             const path = `site_announcements/${id}`;
             const data = { id, ...input, createdBy: actor, createdAt: now };
             await commitServerMutations([
                 { type: "create", path, data },
+                ...(slot ? [slot] : []),
                 auditLogMutation(actor, "announcement.create", path, auditSummary(input)),
             ]);
             const response: AdminAnnouncementActionResponse = { id, announcement: normalizeAnnouncement({ ...data, _id: id }) ?? undefined };
@@ -152,7 +136,7 @@ export async function POST(request: NextRequest) {
 
         if (action === "update") {
             const input = readInput(body);
-            if (input.active && !occupiesActiveSlot(announcement)) await assertActiveSlot(id);
+            const slot = input.active && !occupiesActiveSlot(announcement) ? await claimAnnouncementSlot(id) : null;
             const data = { ...input, updatedBy: actor, updatedAt: now };
             await commitServerMutations([
                 {
@@ -163,6 +147,7 @@ export async function POST(request: NextRequest) {
                     // Two admins editing at once: the second save is refused, not merged.
                     ...(record._updateTime ? { updateTime: record._updateTime } : {}),
                 },
+                ...(slot ? [slot] : []),
                 auditLogMutation(actor, "announcement.update", path, auditSummary(input)),
             ]);
             const response: AdminAnnouncementActionResponse = { id, announcement: normalizeAnnouncement({ ...record, ...data, _id: id }) ?? undefined };
@@ -174,13 +159,12 @@ export async function POST(request: NextRequest) {
         if (action === "setActive") {
             const active = requireBoolean(body.active);
             if (active === announcement.active) throw new AdminHttpError(409, "no_change");
-            if (active) {
-                if (announcement.endsAt && Date.parse(announcement.endsAt) <= now.getTime()) throw new AdminHttpError(400, "invalid_dates");
-                await assertActiveSlot(id);
-            }
+            if (active && announcement.endsAt && Date.parse(announcement.endsAt) <= now.getTime()) throw new AdminHttpError(400, "invalid_dates");
+            const slot = active ? await claimAnnouncementSlot(id) : null;
             const data = { active, updatedBy: actor, updatedAt: now };
             await commitServerMutations([
                 { type: "update", path, data, updateFields: Object.keys(data), ...(record._updateTime ? { updateTime: record._updateTime } : {}) },
+                ...(slot ? [slot] : []),
                 auditLogMutation(actor, "announcement.set_active", path, { active, level: announcement.level, textTR: announcement.text.TR.slice(0, 120) }),
             ]);
             const response: AdminAnnouncementActionResponse = { id, announcement: normalizeAnnouncement({ ...record, ...data, _id: id }) ?? undefined };

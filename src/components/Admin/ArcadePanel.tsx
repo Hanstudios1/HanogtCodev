@@ -1,16 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { EyeOff, Gamepad2, Heart, Play, SquareArrowOutUpRight, Star } from "lucide-react";
+import { EyeOff, Gamepad2, Heart, Play, RefreshCw, SquareArrowOutUpRight, Star } from "lucide-react";
 import { useState } from "react";
 import OptimizedImage from "@/components/OptimizedImage";
 import { useI18n } from "@/lib/i18n";
 import { adminPost, type ApiFailure } from "./api";
 import { COMMON } from "./copy";
-import { formatNumber, useAdminResource } from "./hooks";
+import { formatNumber, useAdminPages, useDebouncedValue } from "./hooks";
 import type { AdminArcadeActionResponse, AdminArcadeGame, AdminArcadeResponse } from "./types";
 import {
-    Badge, Button, ConfirmDialog, EmptyState, ErrorNotice, FilterChips, IconButton, LoadingRows, RelativeTime, SearchInput, TextArea,
+    Badge, Button, ConfirmDialog, EmptyState, ErrorNotice, FilterChips, IconButton, LoadMore, LoadingRows, RelativeTime, SearchInput, TextArea,
     cx, useErrorText, useToast,
 } from "./ui";
 
@@ -20,26 +20,30 @@ export default function ArcadePanel() {
     const { tx, locale } = useI18n();
     const toast = useToast();
     const errorText = useErrorText();
-    const games = useAdminResource<AdminArcadeResponse>("/api/admin/arcade");
     const [filter, setFilter] = useState<"all" | "featured">("all");
     const [query, setQuery] = useState("");
+    const search = useDebouncedValue(query.trim());
+    const params = new URLSearchParams();
+    if (filter === "featured") params.set("filter", "featured");
+    if (search) params.set("q", search);
+    const games = useAdminPages<AdminArcadeGame, AdminArcadeResponse>(`/api/admin/arcade${params.size ? `?${params}` : ""}`);
     const [pendingIds, setPendingIds] = useState<readonly string[]>([]);
     const [target, setTarget] = useState<AdminArcadeGame | null>(null);
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<ApiFailure | null>(null);
 
-    const list = games.data?.games ?? [];
-    const needle = query.trim().toLocaleLowerCase(locale);
-    const visible = list
-        .filter((game) => filter === "all" || game.featured)
-        .filter((game) => !needle || `${game.title} ${game.authorName} ${game.ownerEmail}`.toLocaleLowerCase(locale).includes(needle));
+    // An answer for an earlier filter stays only while the new one loads (dimmed).
+    const showRows = !games.stale || games.loading;
+    const visible = showRows ? games.data?.items ?? [] : [];
+    const filtered = filter !== "all" || Boolean(search);
 
     const toggleFeatured = async (game: AdminArcadeGame) => {
         const featured = !game.featured;
         const forKey = games.dataKey;
         const setFlag = (value: boolean) => games.mutate((current) => ({
-            games: current.games.map((item) => (item.id === game.id ? { ...item, featured: value } : item)),
+            ...current,
+            items: current.items.map((item) => (item.id === game.id ? { ...item, featured: value } : item)),
         }), forKey);
         setPendingIds((ids) => [...ids, game.id]);
         setFlag(featured);
@@ -70,7 +74,7 @@ export default function ArcadePanel() {
             return;
         }
         const removedId = target.id;
-        games.mutate((current) => ({ games: current.games.filter((game) => game.id !== removedId) }));
+        games.mutate((current) => ({ ...current, items: current.items.filter((game) => game.id !== removedId) }));
         toast("success", tx({ TR: "\"{title}\" Arcade'den kaldırıldı.", EN: "\"{title}\" was removed from the Arcade." }, { title: target.title }));
         setTarget(null);
     };
@@ -83,8 +87,8 @@ export default function ArcadePanel() {
                     value={filter}
                     onChange={setFilter}
                     options={[
-                        { value: "all", label: tx(COMMON.all), count: list.length },
-                        { value: "featured", label: tx({ TR: "Öne çıkanlar", EN: "Featured" }), count: list.filter((game) => game.featured).length },
+                        { value: "all", label: tx(COMMON.all) },
+                        { value: "featured", label: tx({ TR: "Öne çıkanlar", EN: "Featured" }) },
                     ]}
                 />
                 <SearchInput
@@ -94,20 +98,21 @@ export default function ArcadePanel() {
                     label={tx({ TR: "Oyunlarda ara", EN: "Search games" })}
                     placeholder={tx({ TR: "Başlık, geliştirici veya e-posta…", EN: "Title, developer or e-mail…" })}
                 />
+                <Button size="sm" icon={RefreshCw} busy={games.loading && Boolean(games.data)} onClick={games.reload}>{tx(COMMON.refresh)}</Button>
             </div>
 
             {games.error ? <ErrorNotice error={games.error} onRetry={games.reload} /> : null}
 
             {!games.data && games.loading ? (
                 <LoadingRows rows={3} />
-            ) : visible.length === 0 ? (
+            ) : games.error && !showRows ? null : visible.length === 0 ? (
                 <EmptyState
                     icon={Gamepad2}
-                    title={list.length ? tx(COMMON.noResults) : tx({ TR: "Yayında oyun yok", EN: "No published games" })}
-                    action={list.length ? <Button size="sm" onClick={() => { setFilter("all"); setQuery(""); }}>{tx(COMMON.clearFilters)}</Button> : undefined}
+                    title={filtered ? tx(COMMON.noResults) : tx({ TR: "Yayında oyun yok", EN: "No published games" })}
+                    action={filtered ? <Button size="sm" onClick={() => { setFilter("all"); setQuery(""); }}>{tx(COMMON.clearFilters)}</Button> : undefined}
                 />
             ) : (
-                <ul className={cx("grid gap-3 sm:grid-cols-2 2xl:grid-cols-3", games.loading && "opacity-60")}>
+                <ul className={cx("grid gap-3 sm:grid-cols-2 2xl:grid-cols-3 transition-opacity", games.loading && games.stale && "opacity-60")}>
                     <AnimatePresence initial={false}>
                         {visible.map((game) => (
                             <motion.li
@@ -171,6 +176,7 @@ export default function ArcadePanel() {
                     </AnimatePresence>
                 </ul>
             )}
+            {showRows ? <LoadMore pages={games} shown={visible.length} /> : null}
 
             <ConfirmDialog
                 open={Boolean(target)}

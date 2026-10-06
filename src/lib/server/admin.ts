@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
     ANNOUNCEMENT_LEVELS,
     ANNOUNCEMENT_TEXT_MAX,
+    MAX_ACTIVE_ANNOUNCEMENTS,
     isSafeAnnouncementLink,
     type AdminAnnouncement,
     type AdminAuditAction,
@@ -18,7 +19,7 @@ import {
     type UserRole,
 } from "@/components/Admin/types";
 import { getActiveSession } from "./active-session";
-import { commitServerMutations, countServerQuery, getServerDocument, patchServerDocument, runServerQuery } from "./firebase-rest";
+import { commitServerMutations, countServerQuery, getServerDocument, isWriteConflict, patchServerDocument, runServerQuery, type ServerMutation } from "./firebase-rest";
 import { enforceRateLimitWithFallback } from "./rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "./request-security";
 import { resolveUserRole } from "./roles";
@@ -168,6 +169,8 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
     invalid_level: "Geçersiz duyuru seviyesi.",
     invalid_link: "Bağlantı göreli bir yol (/...) veya https adresi olmalıdır.",
     invalid_dates: "Tarih aralığı geçersiz.",
+    invalid_expiry: "Son kullanma tarihi bugünden sonra ve en çok 5 yıl içinde olmalıdır.",
+    coupon_expired: "Süresi dolmuş kupon Paddle'a gönderilemez.",
     invalid_query: "Arama ifadesi geçersiz.",
     invalid_cursor: "Sayfa imleci geçersiz.",
     invalid_boolean: "Açık/kapalı değeri geçersiz.",
@@ -202,9 +205,14 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
 };
 
 export class AdminHttpError extends Error {
-    constructor(public readonly status: number, public readonly code: AdminErrorCode) {
+    readonly status: number;
+    readonly code: AdminErrorCode;
+
+    constructor(status: number, code: AdminErrorCode) {
         super(ERROR_MESSAGES[code]);
         this.name = "AdminHttpError";
+        this.status = status;
+        this.code = code;
     }
 }
 
@@ -223,10 +231,13 @@ export function firestoreStatus(error: unknown) {
     return Number.isFinite(status) ? status : 0;
 }
 
-/** Failed write precondition (stale updateTime, document already exists, aborted transaction). */
+/**
+ * Failed write precondition (stale updateTime, document already exists,
+ * aborted transaction), by Firestore's own status code: any other 400 (an
+ * invalid argument, a document too large) would only fail again.
+ */
 export function isFirestoreConflict(error: unknown) {
-    const status = firestoreStatus(error);
-    return status === 400 || status === 409 || status === 412;
+    return !(error instanceof AdminHttpError) && isWriteConflict(error);
 }
 
 /**
@@ -418,6 +429,21 @@ export async function countDocuments(collectionId: string, where: AdminQueryFilt
     return { count, capped: count >= COUNT_CAP };
 }
 
+/** Feedback statuses that mean someone has looked at it; anything else (or no status) is open. */
+const HANDLED_FEEDBACK = ["planned", "in-progress", "done", "closed"];
+
+/**
+ * Open feedback: every item but the handled ones (items older than the admin
+ * panel have no status and count as open). Two aggregations, no document read.
+ */
+export async function countOpenFeedback() {
+    const [all, handled] = await Promise.all([
+        countServerQuery({ collectionId: "feedback", upTo: COUNT_CAP }),
+        countServerQuery({ collectionId: "feedback", where: [{ field: "status", op: "IN", value: HANDLED_FEEDBACK }], upTo: COUNT_CAP }),
+    ]);
+    return { count: Math.max(0, all - handled), capped: all >= COUNT_CAP };
+}
+
 /** Deletes documents in atomic batches below Firestore's 500-write commit limit. */
 export async function deleteDocumentsInChunks(paths: readonly string[], chunkSize = 400) {
     for (let index = 0; index < paths.length; index += chunkSize) {
@@ -464,6 +490,38 @@ export function isAnnouncementLive(announcement: Pick<AdminAnnouncement, "active
 /** Counts toward the limit of simultaneously active announcements (scheduled ones included). */
 export function occupiesActiveSlot(announcement: Pick<AdminAnnouncement, "active" | "endsAt">, now = Date.now()) {
     return announcement.active && (!announcement.endsAt || Date.parse(announcement.endsAt) > now);
+}
+
+export async function listAnnouncements(options: { activeOnly?: boolean } = {}) {
+    const records = await runServerQuery<Record<string, unknown>>({
+        collectionId: "site_announcements",
+        ...(options.activeOnly
+            ? { where: [{ field: "active", op: "EQUAL" as const, value: true }] }
+            : { orderBy: [{ field: "createdAt", direction: "DESCENDING" as const }] }),
+        limit: 100,
+    });
+    return records.map(normalizeAnnouncement).filter((item): item is AdminAnnouncement => Boolean(item));
+}
+
+/** Touched by every write that takes an active slot (see claimAnnouncementSlot). */
+export const ANNOUNCEMENT_SLOTS_PATH = "site_config/announcement_slots";
+
+/**
+ * Keeps at most MAX_ACTIVE_ANNOUNCEMENTS live or scheduled announcements
+ * (`excludeId`: the one being switched on). The slot record is read before
+ * the count, and the write that takes a slot must commit the returned
+ * mutation with it: when two admins switch announcements on at once, the
+ * later commit is refused (a write conflict) instead of both passing the
+ * same count.
+ */
+export async function claimAnnouncementSlot(excludeId?: string, now = Date.now()): Promise<ServerMutation> {
+    const slots = await getServerDocument<Record<string, unknown>>(ANNOUNCEMENT_SLOTS_PATH);
+    const occupied = (await listAnnouncements({ activeOnly: true })).filter((item) => item.id !== excludeId && occupiesActiveSlot(item, now));
+    if (occupied.length >= MAX_ACTIVE_ANNOUNCEMENTS) throw new AdminHttpError(409, "too_many_active");
+    const data = { changedAt: new Date(now) };
+    return typeof slots?._updateTime === "string"
+        ? { type: "update", path: ANNOUNCEMENT_SLOTS_PATH, data, updateTime: slots._updateTime }
+        : { type: "create", path: ANNOUNCEMENT_SLOTS_PATH, data };
 }
 
 /** Most important first: level, then the most recent start. */

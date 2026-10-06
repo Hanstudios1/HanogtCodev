@@ -75,11 +75,12 @@ function readInteger(value: unknown, min: number, max: number, optional = false)
     return value;
 }
 
+/** A coupon's expiry: after now and at most five years ahead (its own message, not the announcements' one). */
 function readFutureDate(value: unknown): Date | null {
     if (value === null || value === undefined || value === "") return null;
-    if (typeof value !== "string" || value.length > 40) throw new AdminHttpError(400, "invalid_dates");
+    if (typeof value !== "string" || value.length > 40) throw new AdminHttpError(400, "invalid_expiry");
     const time = Date.parse(value);
-    if (!Number.isFinite(time) || time <= Date.now() || time > Date.now() + 5 * 365 * DAY_MS) throw new AdminHttpError(400, "invalid_dates");
+    if (!Number.isFinite(time) || time <= Date.now() || time > Date.now() + 5 * 365 * DAY_MS) throw new AdminHttpError(400, "invalid_expiry");
     return new Date(time);
 }
 

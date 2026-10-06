@@ -2,11 +2,13 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, HelpCircle, Inbox, MessageCircle, MessageSquareText, RefreshCw, Send, ShieldCheck, ThumbsUp, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { adminPost, type ApiFailure } from "./api";
 import { COMMON, FEEDBACK_STATUS_COPY } from "./copy";
-import { useAdminResource } from "./hooks";
+import { useCounters } from "./counters";
+import { useAdminPages, useDebouncedValue } from "./hooks";
+import { setAdminParams } from "./navigation";
 import {
     FEEDBACK_REPLY_MAX,
     FEEDBACK_STATUSES,
@@ -14,15 +16,29 @@ import {
     type AdminFeedbackActionResponse,
     type AdminFeedbackItem,
     type AdminFeedbackResponse,
+    type FeedbackCounts,
     type FeedbackStatus,
 } from "./types";
 import {
-    Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorNotice, FOCUS_RING, FilterChips, LoadingRows, Panel, RelativeTime, SearchInput, SectionHeader,
-    TextArea, cx, useErrorText, useToast,
+    Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorNotice, FOCUS_RING, FilterChips, LoadMore, LoadingRows, Panel, RelativeTime, SearchInput,
+    SectionHeader, TextArea, cx, useErrorText, useToast,
 } from "./ui";
 import { FEEDBACK_STATUS_TONES as STATUS_TONES } from "./tones";
 
 type TypeFilter = "all" | "feedback" | "question";
+type StatusFilter = "all" | FeedbackStatus;
+
+const isStatusFilter = (value: string | null): value is StatusFilter => value === "all" || (FEEDBACK_STATUSES as readonly (string | null)[]).includes(value);
+const isTypeFilter = (value: string | null): value is TypeFilter => value === "all" || value === "feedback" || value === "question";
+
+/** Moves one item between the status counts (or out of them, with `next` null). */
+function recount(counts: FeedbackCounts | null, from: FeedbackStatus, next: FeedbackStatus | null): FeedbackCounts | null {
+    if (!counts) return counts;
+    const result = { ...counts, [from]: Math.max(0, counts[from] - 1) };
+    if (next) result[next] += 1;
+    else result.all = Math.max(0, result.all - 1);
+    return result;
+}
 
 function FeedbackDetail({ item, onStatus, onReplied, onDelete, onBack, statusBusy }: {
     item: AdminFeedbackItem;
@@ -160,44 +176,58 @@ function FeedbackDetail({ item, onStatus, onReplied, onDelete, onBack, statusBus
     );
 }
 
-export default function FeedbackSection() {
-    const { tx, locale } = useI18n();
+export default function FeedbackSection({ params }: { params: URLSearchParams }) {
+    const { tx } = useI18n();
     const toast = useToast();
     const errorText = useErrorText();
-    const feedback = useAdminResource<AdminFeedbackResponse>("/api/admin/feedback");
-    const [status, setStatus] = useState<"all" | FeedbackStatus>("open");
-    const [type, setType] = useState<TypeFilter>("all");
+    const { refresh: refreshCounters } = useCounters();
+    // The filters live in the address (#feedback?status=done&type=question), so a reload or a link keeps them.
+    const rawStatus = params.get("status");
+    const status: StatusFilter = isStatusFilter(rawStatus) ? rawStatus : "open";
+    const rawType = params.get("type");
+    const type: TypeFilter = isTypeFilter(rawType) ? rawType : "all";
     const [query, setQuery] = useState("");
+    const search = useDebouncedValue(query.trim());
+    const request = new URLSearchParams({ status });
+    if (type !== "all") request.set("type", type);
+    if (search) request.set("q", search);
+    const feedback = useAdminPages<AdminFeedbackItem, AdminFeedbackResponse>(`/api/admin/feedback?${request}`);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [statusBusy, setStatusBusy] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<AdminFeedbackItem | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<ApiFailure | null>(null);
 
-    const items = useMemo(() => feedback.data?.items ?? [], [feedback.data]);
-    const counts = useMemo(() => {
-        const result: Record<FeedbackStatus, number> = { open: 0, planned: 0, "in-progress": 0, done: 0, closed: 0 };
-        for (const item of items) result[item.status] += 1;
-        return result;
-    }, [items]);
-    const needle = query.trim().toLocaleLowerCase(locale);
-    const visible = items.filter((item) => (status === "all" || item.status === status)
-        && (type === "all" || item.type === type)
-        && (!needle || `${item.content} ${item.description ?? ""} ${item.author} ${item.authorEmail}`.toLocaleLowerCase(locale).includes(needle)));
+    const setStatus = (next: StatusFilter) => { setSelectedId(null); setAdminParams({ status: next === "open" ? null : next }); };
+    const setType = (next: TypeFilter) => { setSelectedId(null); setAdminParams({ type: next === "all" ? null : next }); };
+    const clearFilters = () => { setQuery(""); setSelectedId(null); setAdminParams({ status: "all", type: null }); };
+
+    // An answer for earlier filters stays only while the new one loads (dimmed).
+    const showRows = !feedback.stale || feedback.loading;
+    const items = showRows ? feedback.data?.items ?? [] : [];
+    const counts = feedback.data?.counts ?? null;
+    const filtered = status !== "all" || type !== "all" || Boolean(search);
     const selected = items.find((item) => item.id === selectedId) ?? null;
 
-    const replaceItem = (next: AdminFeedbackItem) => feedback.mutate((current) => ({ items: current.items.map((item) => (item.id === next.id ? next : item)) }));
+    // A changed item stays in view until the next refresh, even if it no longer matches the filter.
+    const replaceItem = (next: AdminFeedbackItem, previous?: AdminFeedbackItem) => feedback.mutate((current) => ({
+        ...current,
+        items: current.items.map((item) => (item.id === next.id ? next : item)),
+        counts: previous && previous.status !== next.status ? recount(current.counts, previous.status, next.status) : current.counts,
+    }));
 
     const changeStatus = async (item: AdminFeedbackItem, next: FeedbackStatus) => {
         setStatusBusy(true);
-        replaceItem({ ...item, status: next });
+        const changed = { ...item, status: next };
+        replaceItem(changed, item);
         const result = await adminPost<AdminFeedbackActionResponse>("/api/admin/feedback", { action: "setStatus", id: item.id, status: next });
         setStatusBusy(false);
         if (!result.ok) {
-            replaceItem(item);
+            replaceItem(item, changed);
             toast("error", errorText(result));
             return;
         }
+        refreshCounters();
         toast("success", tx({ TR: "Durum: {status}", EN: "Status: {status}" }, { status: tx(FEEDBACK_STATUS_COPY[next]) }));
     };
 
@@ -211,10 +241,15 @@ export default function FeedbackSection() {
             setDeleteError(result);
             return;
         }
-        const removedId = deleteTarget.id;
-        feedback.mutate((current) => ({ items: current.items.filter((item) => item.id !== removedId) }));
+        const removed = deleteTarget;
+        feedback.mutate((current) => ({
+            ...current,
+            items: current.items.filter((item) => item.id !== removed.id),
+            counts: recount(current.counts, removed.status, null),
+        }));
         setSelectedId(null);
         setDeleteTarget(null);
+        refreshCounters();
         toast("success", tx({ TR: "Kayıt silindi.", EN: "Item deleted." }));
     };
 
@@ -223,7 +258,7 @@ export default function FeedbackSection() {
             <SectionHeader
                 title={tx({ TR: "Geri Bildirim", EN: "Feedback" })}
                 description={tx({ TR: "Kullanıcı önerileri ve soruları: durum belirleyin, resmî yanıt verin.", EN: "User suggestions and questions: set a status and reply officially." })}
-                actions={<Button size="sm" icon={RefreshCw} busy={feedback.loading && Boolean(feedback.data)} onClick={feedback.reload}>{tx(COMMON.refresh)}</Button>}
+                actions={<Button size="sm" icon={RefreshCw} busy={feedback.loading && Boolean(feedback.data)} onClick={() => { feedback.reload(); refreshCounters(); }}>{tx(COMMON.refresh)}</Button>}
             />
 
             <div className="mb-4 space-y-3">
@@ -232,8 +267,8 @@ export default function FeedbackSection() {
                     value={status}
                     onChange={setStatus}
                     options={[
-                        { value: "all", label: tx(COMMON.all), count: items.length },
-                        ...FEEDBACK_STATUSES.map((value) => ({ value, label: tx(FEEDBACK_STATUS_COPY[value]), count: counts[value] })),
+                        { value: "all", label: tx(COMMON.all), count: counts?.all },
+                        ...FEEDBACK_STATUSES.map((value) => ({ value, label: tx(FEEDBACK_STATUS_COPY[value]), count: counts?.[value] })),
                     ]}
                 />
                 <div className="flex flex-wrap items-center gap-3">
@@ -261,19 +296,19 @@ export default function FeedbackSection() {
 
             {!feedback.data && feedback.loading ? (
                 <LoadingRows rows={5} />
-            ) : (
+            ) : feedback.error && !showRows ? null : (
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
                     <div className={cx(selected && "hidden lg:block")}>
-                        {visible.length === 0 ? (
+                        {items.length === 0 ? (
                             <EmptyState
                                 icon={Inbox}
-                                title={items.length ? tx(COMMON.noResults) : tx({ TR: "Gelen kutusu boş", EN: "The inbox is empty" })}
-                                action={items.length ? <Button size="sm" onClick={() => { setStatus("all"); setType("all"); setQuery(""); }}>{tx(COMMON.clearFilters)}</Button> : undefined}
+                                title={filtered ? tx(COMMON.noResults) : tx({ TR: "Gelen kutusu boş", EN: "The inbox is empty" })}
+                                action={filtered ? <Button size="sm" onClick={clearFilters}>{tx(COMMON.clearFilters)}</Button> : undefined}
                             />
                         ) : (
-                            <ul className="space-y-2" aria-label={tx({ TR: "Geri bildirim listesi", EN: "Feedback list" })}>
+                            <ul className={cx("space-y-2 transition-opacity", feedback.loading && feedback.stale && "opacity-60")} aria-label={tx({ TR: "Geri bildirim listesi", EN: "Feedback list" })}>
                                 <AnimatePresence initial={false}>
-                                    {visible.map((item) => {
+                                    {items.map((item) => {
                                         const active = item.id === selectedId;
                                         const answered = item.comments.some((comment) => comment.official);
                                         return (
@@ -311,6 +346,7 @@ export default function FeedbackSection() {
                                 </AnimatePresence>
                             </ul>
                         )}
+                        <LoadMore pages={feedback} shown={items.length} />
                     </div>
 
                     <div className={cx(!selected && "hidden lg:block")}>
@@ -321,7 +357,7 @@ export default function FeedbackSection() {
                                     item={selected}
                                     statusBusy={statusBusy}
                                     onStatus={(next) => void changeStatus(selected, next)}
-                                    onReplied={replaceItem}
+                                    onReplied={(next) => replaceItem(next)}
                                     onDelete={() => { setDeleteTarget(selected); setDeleteError(null); }}
                                     onBack={() => setSelectedId(null)}
                                 />

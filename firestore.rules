@@ -357,6 +357,10 @@ service cloud.firestore {
     match /message_files/{id} { allow read, write: if false; }
     match /message_file_usage/{email} { allow read, write: if false; }
 
+    // Hanogt AI's daily message totals (by source and plan, no account in
+    // them) for the admin panel's usage summary: only the server reads and writes them.
+    match /ai_usage_daily/{day} { allow read, write: if false; }
+
     match /{document=**} {
       allow read, write: if false;
     }

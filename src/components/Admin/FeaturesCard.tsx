@@ -7,7 +7,7 @@ import { useI18n, type Copy } from "@/lib/i18n";
 import { adminPost, type ApiFailure } from "./api";
 import { formatDateTime } from "./hooks";
 import type { AdminPlansResponse } from "./types";
-import { Badge, ErrorNotice, INPUT_CLASS, Panel, useToast } from "./ui";
+import { Badge, ConfirmDialog, ErrorNotice, INPUT_CLASS, Panel, useToast } from "./ui";
 
 const C = {
     title: { TR: "Özellikler ve erken erişim", EN: "Features and early access" },
@@ -26,6 +26,8 @@ export default function FeaturesCard({ features, onChanged }: { features: AdminP
     const toast = useToast();
     const [busy, setBusy] = useState<FeatureId | null>(null);
     const [error, setError] = useState<ApiFailure | null>(null);
+    // Switching a feature off for everyone who has it is asked first.
+    const [turningOff, setTurningOff] = useState<FeatureId | null>(null);
 
     const change = async (feature: FeatureId, audience: FeatureAudience) => {
         setBusy(feature);
@@ -62,7 +64,11 @@ export default function FeaturesCard({ features, onChanged }: { features: AdminP
                                 disabled={busy !== null}
                                 aria-label={tx(C.audience, { feature: tx(FEATURES[id].title) })}
                                 data-feature={id}
-                                onChange={(event) => void change(id, event.target.value as FeatureAudience)}
+                                onChange={(event) => {
+                                    const next = event.target.value as FeatureAudience;
+                                    if (next === "off" && audience !== "off") setTurningOff(id);
+                                    else void change(id, next);
+                                }}
                             >
                                 {FEATURE_AUDIENCES.map((option) => <option key={option} value={option}>{tx(FEATURE_AUDIENCE_COPY[option])}</option>)}
                             </select>
@@ -70,6 +76,22 @@ export default function FeaturesCard({ features, onChanged }: { features: AdminP
                     );
                 })}
             </ul>
+            <ConfirmDialog
+                open={turningOff !== null}
+                onClose={() => {
+                    if (busy === null) setTurningOff(null);
+                }}
+                onConfirm={async () => {
+                    if (!turningOff) return;
+                    await change(turningOff, "off");
+                    setTurningOff(null);
+                }}
+                title={tx({ TR: "{feature} kapatılsın mı?", EN: "Switch {feature} off?" }, { feature: turningOff ? tx(FEATURES[turningOff].title) : "" })}
+                description={tx({ TR: "Özellik, şu an kullananlar dahil herkes için bir dakika içinde kapanır. İstediğiniz zaman yeniden açabilirsiniz.", EN: "The feature switches off within a minute for everyone, including people using it now. You can open it again at any time." })}
+                confirmLabel={tx({ TR: "Kapat", EN: "Switch off" })}
+                tone="default"
+                busy={busy !== null}
+            />
             <p className="mt-2 text-[12px] text-zinc-500">
                 {features.updatedAt ? tx(C.updated, { by: features.updatedBy ?? "—", at: formatDateTime(features.updatedAt, locale) }) : tx(C.never)}
             </p>

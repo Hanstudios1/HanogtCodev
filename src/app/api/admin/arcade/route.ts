@@ -18,7 +18,8 @@ import {
 } from "@/lib/server/admin";
 import { assertGameId, type ArcadeRecord } from "@/lib/server/arcade";
 import { removeArcadeGame } from "@/lib/server/arcade-scores";
-import { commitServerPatches, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { matchesSearch, newestPage, readPageCursor, readSearch } from "@/lib/server/admin-pages";
+import { commitServerPatches, getServerDocument } from "@/lib/server/firebase-rest";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,8 @@ type AdminArcadeRecord = ArcadeRecord & { featured?: unknown };
 const ACTIONS = ["unpublish", "feature", "unfeature"] as const;
 const LIST_FIELDS = ["title", "description", "dimension", "thumbnail", "authorName", "ownerEmail", "plays", "likes", "featured", "createdAt", "updatedAt"];
 const THUMBNAIL = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+/** Thumbnails can be large data URLs, so pages stay small. */
+const PAGE_SIZE = 24;
 
 function thumbnail(value: unknown) {
     if (typeof value !== "string" || value.length > 80_000) return null;
@@ -50,18 +53,33 @@ function toAdminGame(record: AdminArcadeRecord & { _id: string }): AdminArcadeGa
     };
 }
 
-/** The most recently published or updated Arcade games (without game content). */
+/**
+ * Arcade games, most recently published or updated first (without game
+ * content), a page at a time (`?cursor=`). `?filter=featured` keeps the
+ * featured ones; `?q=` searches the title and the developer. Their times are
+ * ISO text.
+ */
 export async function GET(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "moderator" });
     if (!guard.ok) return guard.response;
     try {
-        const records = await runServerQuery<AdminArcadeRecord>({
+        const params = request.nextUrl.searchParams;
+        const cursor = readPageCursor(params, "arcade_games");
+        const needle = readSearch(params);
+        const featuredOnly = params.get("filter") === "featured";
+        const page = await newestPage<AdminArcadeRecord>({
             collectionId: "arcade_games",
+            field: "updatedAt",
+            text: true,
             select: LIST_FIELDS,
-            orderBy: [{ field: "updatedAt", direction: "DESCENDING" }],
-            limit: 60,
+            limit: PAGE_SIZE,
+            cursor,
+            ...(needle || featuredOnly ? {
+                keep: (record: AdminArcadeRecord) => (!featuredOnly || record.featured === true)
+                    && (!needle || matchesSearch(needle, [record.title, record.authorName, record.ownerEmail].map((value) => (typeof value === "string" ? value : null)))),
+            } : {}),
         });
-        const payload: AdminArcadeResponse = { games: records.map(toAdminGame) };
+        const payload: AdminArcadeResponse = { items: page.items.map(toAdminGame), nextCursor: page.nextCursor };
         return adminJson(payload);
     } catch (error) {
         return adminFailure(error, "arcade:get");

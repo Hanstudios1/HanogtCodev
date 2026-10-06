@@ -8,6 +8,7 @@ import {
     type AdminFeedbackComment,
     type AdminFeedbackItem,
     type AdminFeedbackResponse,
+    type FeedbackCounts,
     type FeedbackStatus,
 } from "@/components/Admin/types";
 import {
@@ -26,7 +27,8 @@ import {
     toIso,
     withConflictRetry,
 } from "@/lib/server/admin";
-import { commitServerMutations, commitServerPatches, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { matchesSearch, newestPage, readPageCursor, readSearch } from "@/lib/server/admin-pages";
+import { commitServerMutations, commitServerPatches, countServerQuery, getServerDocument } from "@/lib/server/firebase-rest";
 
 export const runtime = "nodejs";
 
@@ -46,6 +48,8 @@ type FeedbackRecord = {
 };
 
 const ACTIONS = ["setStatus", "reply", "delete"] as const;
+const PAGE_SIZE = 40;
+const TYPES = ["feedback", "question"] as const;
 
 /** Items created before the admin panel have no status and count as open. */
 function feedbackStatus(value: unknown): FeedbackStatus {
@@ -84,17 +88,57 @@ function toAdminFeedback(record: FeedbackRecord & { _id: string }): AdminFeedbac
     };
 }
 
-/** The 300 newest feedback items and questions with their comments. */
+/** How many items there are in all and by status; items without a status count as open. */
+async function feedbackCounts(): Promise<FeedbackCounts> {
+    const [all, ...explicit] = await Promise.all([
+        countServerQuery({ collectionId: "feedback" }),
+        ...FEEDBACK_STATUSES.filter((status) => status !== "open").map((status) => countServerQuery({
+            collectionId: "feedback",
+            where: [{ field: "status", op: "EQUAL", value: status }],
+        }).then((count) => [status, count] as const)),
+    ]);
+    const counts = { all, open: all, planned: 0, "in-progress": 0, done: 0, closed: 0 } as FeedbackCounts;
+    for (const [status, count] of explicit) {
+        counts[status] = count;
+        counts.open -= count;
+    }
+    counts.open = Math.max(0, counts.open);
+    return counts;
+}
+
+/**
+ * Feedback items and questions with their comments, newest first, a page at
+ * a time (`?cursor=`). `?status=` and `?type=` filter them and `?q=` searches
+ * the text and the author; an item without a status (from before the admin
+ * panel) is open, which a query can't ask for, so the filters are applied
+ * while reading. The counts come with the first page.
+ */
 export async function GET(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "moderator" });
     if (!guard.ok) return guard.response;
     try {
-        const records = await runServerQuery<FeedbackRecord>({
-            collectionId: "feedback",
-            orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
-            limit: 300,
-        });
-        const payload: AdminFeedbackResponse = { items: records.map(toAdminFeedback) };
+        const params = request.nextUrl.searchParams;
+        const cursor = readPageCursor(params, "feedback");
+        const needle = readSearch(params);
+        const rawStatus = params.get("status");
+        const status = rawStatus && rawStatus !== "all" ? requireEnum(rawStatus, FEEDBACK_STATUSES, "invalid_status") : null;
+        const rawType = params.get("type");
+        const type = rawType && rawType !== "all" ? requireEnum(rawType, TYPES, "invalid_query") : null;
+        const [page, counts] = await Promise.all([
+            newestPage<FeedbackRecord>({
+                collectionId: "feedback",
+                field: "createdAt",
+                limit: PAGE_SIZE,
+                cursor,
+                ...(status || type || needle ? {
+                    keep: (record: FeedbackRecord) => (!status || feedbackStatus(record.status) === status)
+                        && (!type || (record.type === "question" ? "question" : "feedback") === type)
+                        && (!needle || matchesSearch(needle, [record.content, record.description, record.author, record.authorEmail].map((value) => (typeof value === "string" ? value : null)))),
+                } : {}),
+            }),
+            cursor ? Promise.resolve(null) : feedbackCounts().catch(() => null),
+        ]);
+        const payload: AdminFeedbackResponse = { items: page.items.map(toAdminFeedback), nextCursor: page.nextCursor, counts };
         return adminJson(payload);
     } catch (error) {
         return adminFailure(error, "feedback:get");

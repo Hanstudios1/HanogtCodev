@@ -1,29 +1,28 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ExternalLink, MessagesSquare, Trash2 } from "lucide-react";
+import { ExternalLink, MessagesSquare, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { adminPost, type ApiFailure } from "./api";
 import { COMMON } from "./copy";
-import { useAdminResource } from "./hooks";
+import { useAdminPages, useDebouncedValue } from "./hooks";
 import type { AdminNewsComment, AdminNewsCommentsResponse } from "./types";
-import { Avatar, Button, ConfirmDialog, EmptyState, ErrorNotice, IconButton, LoadingRows, RelativeTime, SearchInput, cx, useToast } from "./ui";
+import { Avatar, Button, ConfirmDialog, EmptyState, ErrorNotice, IconButton, LoadMore, LoadingRows, RelativeTime, SearchInput, cx, useToast } from "./ui";
 
 export default function NewsCommentsPanel() {
-    const { tx, locale } = useI18n();
+    const { tx } = useI18n();
     const toast = useToast();
-    const comments = useAdminResource<AdminNewsCommentsResponse>("/api/admin/news-comments");
     const [filter, setFilter] = useState("");
+    const search = useDebouncedValue(filter.trim());
+    const comments = useAdminPages<AdminNewsComment, AdminNewsCommentsResponse>(`/api/admin/news-comments${search ? `?q=${encodeURIComponent(search)}` : ""}`);
     const [target, setTarget] = useState<AdminNewsComment | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<ApiFailure | null>(null);
 
-    const needle = filter.trim().toLocaleLowerCase(locale);
-    const list = comments.data?.comments ?? [];
-    const visible = needle
-        ? list.filter((comment) => `${comment.text} ${comment.authorName} ${comment.authorEmail} ${comment.newsTitle}`.toLocaleLowerCase(locale).includes(needle))
-        : list;
+    // An answer for an earlier search stays only while the new one loads (dimmed).
+    const showRows = !comments.stale || comments.loading;
+    const visible = showRows ? comments.data?.items ?? [] : [];
 
     const confirmDelete = async () => {
         if (!target) return;
@@ -36,7 +35,7 @@ export default function NewsCommentsPanel() {
             return;
         }
         const removedId = target.id;
-        comments.mutate((current) => ({ comments: current.comments.filter((comment) => comment.id !== removedId) }));
+        comments.mutate((current) => ({ ...current, items: current.items.filter((comment) => comment.id !== removedId) }));
         setTarget(null);
         toast(result.ok ? "success" : "info", result.ok
             ? tx({ TR: "Yorum silindi.", EN: "Comment deleted." })
@@ -53,21 +52,21 @@ export default function NewsCommentsPanel() {
                     label={tx({ TR: "Yorumlarda ara", EN: "Search comments" })}
                     placeholder={tx({ TR: "Metin, yazar veya haber başlığı…", EN: "Text, author or headline…" })}
                 />
-                <p className="text-[12px] text-zinc-500">{tx({ TR: "En yeni 100 yorum", EN: "The 100 newest comments" })}</p>
+                <Button size="sm" icon={RefreshCw} busy={comments.loading && Boolean(comments.data)} onClick={comments.reload}>{tx(COMMON.refresh)}</Button>
             </div>
 
             {comments.error ? <ErrorNotice error={comments.error} onRetry={comments.reload} /> : null}
 
             {!comments.data && comments.loading ? (
                 <LoadingRows rows={4} />
-            ) : visible.length === 0 ? (
+            ) : comments.error && !showRows ? null : visible.length === 0 ? (
                 <EmptyState
                     icon={MessagesSquare}
-                    title={needle ? tx(COMMON.noResults) : tx({ TR: "Henüz haber yorumu yok", EN: "No news comments yet" })}
-                    action={needle ? <Button size="sm" onClick={() => setFilter("")}>{tx(COMMON.clearFilters)}</Button> : undefined}
+                    title={search ? tx(COMMON.noResults) : tx({ TR: "Henüz haber yorumu yok", EN: "No news comments yet" })}
+                    action={search ? <Button size="sm" onClick={() => setFilter("")}>{tx(COMMON.clearFilters)}</Button> : undefined}
                 />
             ) : (
-                <ul className={cx("space-y-2.5 transition-opacity", comments.loading && "opacity-60")}>
+                <ul className={cx("space-y-2.5 transition-opacity", comments.loading && comments.stale && "opacity-60")}>
                     <AnimatePresence initial={false}>
                         {visible.map((comment) => (
                             <motion.li
@@ -104,6 +103,7 @@ export default function NewsCommentsPanel() {
                     </AnimatePresence>
                 </ul>
             )}
+            {showRows ? <LoadMore pages={comments} shown={visible.length} /> : null}
 
             <ConfirmDialog
                 open={Boolean(target)}

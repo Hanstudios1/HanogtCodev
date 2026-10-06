@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.29",
+        version: "v0.3.29",
+        date: "2026-10-06",
+        title: { TR: "Yönetici Paneli yenilendi", EN: "A renewed Admin Panel" },
+        desc: { TR: "Ekibin paneli yeni bir görünüm, grafikler ve Hanogt Social ile Hanogt AI için özet sayfaları aldı; listeler sayfa sayfa yükleniyor ve birçok hata düzeltildi.", EN: "The team's panel has a new look, charts and summary pages for Hanogt Social and Hanogt AI; lists load page by page and many bugs are fixed." },
+        items: [
+            { TR: "Ürün logolu kenar çubuğu ve bekleyen işler için canlı rozetler; bölüm, sekme ve filtreler adreste kalır.", EN: "A sidebar with product logos and live badges for waiting work; sections, tabs and filters stay in the address." },
+            { TR: "Genel bakışta grafikler: kayıtlar, Hanogt AI mesajları, güvenlik olayları ve AutoMod; 7, 30 ve 90 gün.", EN: "Charts on the overview: sign-ups, Hanogt AI messages, security events and AutoMod; 7, 30 and 90 days." },
+            { TR: "Hanogt Social ve Hanogt AI sayfaları: yalnızca toplamlar, kimseyi göstermeden.", EN: "Hanogt Social and Hanogt AI pages: totals only, without showing anyone." },
+            { TR: "Her listede “Daha fazla yükle” ve “Yenile”; aramalar eski kayıtlarda da bulur.", EN: "“Load more” and “Refresh” in every list; searches find older records too." },
+            { TR: "Onay pencereleri, kupon tarihi, kişi araması ve duyuru sınırı gibi hatalar düzeltildi.", EN: "Fixes for confirmations, coupon dates, people search, the announcement limit and more." },
+            { TR: "Gizlilik Politikası 5.5.", EN: "Privacy Policy 5.5." },
+        ],
+    },
+    {
         id: "v0.3.28",
         version: "v0.3.28",
         date: "2026-10-06",

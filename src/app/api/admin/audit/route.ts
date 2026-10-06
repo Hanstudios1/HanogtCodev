@@ -1,9 +1,12 @@
 import type { NextRequest } from "next/server";
 import type { AdminAuditEntry, AdminAuditResponse, AuditDetailValue } from "@/components/Admin/types";
-import { adminFailure, adminJson, authorizeAdminRequest, stringOr, toIso } from "@/lib/server/admin";
-import { runServerQuery } from "@/lib/server/firebase-rest";
+import { AdminHttpError, adminFailure, adminJson, authorizeAdminRequest, stringOr, toIso } from "@/lib/server/admin";
+import { matchesSearch, newestPage, readPageCursor, readSearch } from "@/lib/server/admin-pages";
 
 export const runtime = "nodejs";
+
+const PAGE_SIZE = 50;
+const ACTION = /^[a-z0-9_.-]{1,60}$/;
 
 function details(value: unknown) {
     const result: Record<string, AuditDetailValue> = {};
@@ -26,17 +29,35 @@ function toAuditEntry(record: Record<string, unknown> & { _id: string }): AdminA
     };
 }
 
-/** The 200 newest audit entries (read-only; entries are written by the admin routes). */
+/**
+ * Audit entries, newest first (read-only; the admin routes write them), a
+ * page at a time (`?cursor=`). `?action=` keeps one kind and `?q=` searches
+ * the staff member, the target and the details.
+ */
 export async function GET(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "moderator" });
     if (!guard.ok) return guard.response;
     try {
-        const records = await runServerQuery<Record<string, unknown>>({
+        const params = request.nextUrl.searchParams;
+        const cursor = readPageCursor(params, "admin_audit_log");
+        const needle = readSearch(params);
+        const rawAction = params.get("action");
+        const action = rawAction && rawAction !== "all" ? rawAction : null;
+        if (action && !ACTION.test(action)) throw new AdminHttpError(400, "invalid_query");
+        const page = await newestPage<Record<string, unknown>>({
             collectionId: "admin_audit_log",
-            orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
-            limit: 200,
+            field: "createdAt",
+            limit: PAGE_SIZE,
+            cursor,
+            ...(action || needle ? {
+                keep: (record: Record<string, unknown> & { _id: string }) => {
+                    const entry = toAuditEntry(record);
+                    return (!action || entry.action === action)
+                        && (!needle || matchesSearch(needle, [entry.actor, entry.target, ...Object.values(entry.details).map((value) => (value === null ? null : String(value)))]));
+                },
+            } : {}),
         });
-        const payload: AdminAuditResponse = { entries: records.map(toAuditEntry) };
+        const payload: AdminAuditResponse = { items: page.items.map(toAuditEntry), nextCursor: page.nextCursor };
         return adminJson(payload);
     } catch (error) {
         return adminFailure(error, "audit:get");

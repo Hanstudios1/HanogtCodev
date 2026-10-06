@@ -30,7 +30,7 @@ export type AdminPermissions = {
     managePlans: boolean;
 };
 
-export type AdminSectionId = "overview" | "users" | "moderation" | "tickets" | "feedback" | "announcements" | "plans" | "security" | "cloud" | "audit";
+export type AdminSectionId = "overview" | "users" | "moderation" | "social" | "ai" | "tickets" | "feedback" | "announcements" | "plans" | "security" | "cloud" | "audit";
 
 export type AdminIdentity = { isAdmin: true; email: string; role: StaffRole; permissions: AdminPermissions };
 export type AdminMeResponse = { isAdmin: false } | AdminIdentity;
@@ -56,6 +56,8 @@ export type AdminErrorCode =
     | "invalid_level"
     | "invalid_link"
     | "invalid_dates"
+    | "invalid_expiry"
+    | "coupon_expired"
     | "invalid_query"
     | "invalid_cursor"
     | "invalid_boolean"
@@ -126,6 +128,69 @@ export type AdminStatsResponse = {
     generatedAt: string;
 };
 
+/** The work waiting in each section, for the side bar (counted on every request, never cached). */
+export type AdminCountersResponse = { reportsOpen: StatCount; ticketsOpen: StatCount; feedbackOpen: StatCount; generatedAt: string };
+
+/** Days shown on the overview: 7 and 30 day by day, 90 week by week. */
+export type ActivityRange = 7 | 30 | 90;
+export type ActivitySeriesKey = "signups" | "aiMessages" | "securityEvents" | "automodStops";
+
+/** One day or week; a null value couldn't be counted. Times are ISO strings (days start at midnight in Türkiye). */
+export type ActivityBucket = { start: string; end: string; values: Record<ActivitySeriesKey, number | null> };
+
+export type AdminActivityResponse = {
+    range: ActivityRange;
+    unit: "day" | "week";
+    buckets: ActivityBucket[];
+    /** The whole range, and the same length just before it (for the change). */
+    totals: Record<ActivitySeriesKey, number | null>;
+    previous: Record<ActivitySeriesKey, number | null>;
+    generatedAt: string;
+};
+
+// ---------------------------------------------------------------------------
+// Hanogt AI usage (daily totals, never per person)
+// ---------------------------------------------------------------------------
+
+export type AiUsageSourceKey = "chat" | "own" | "api" | "group";
+export type AiUsagePlanKey = "free" | "plus" | "pro";
+
+export type AdminAiUsageResponse = {
+    range: ActivityRange;
+    unit: "day" | "week";
+    buckets: Array<{ start: string; end: string; messages: number; refunds: number }>;
+    totals: { messages: number; refunds: number; sources: Record<AiUsageSourceKey, number>; plans: Record<AiUsagePlanKey, number> };
+    previous: { messages: number; refunds: number };
+    /** The first day with stored totals (counting started with this release), or null. */
+    firstDay: string | null;
+    model: { configured: boolean; name: string | null };
+    limits: Record<AiUsagePlanKey, { perWindow: number; windowDays: number; perMinute: number }>;
+    generatedAt: string;
+};
+
+// ---------------------------------------------------------------------------
+// Hanogt Social (aggregate numbers only: no message, reporter or reported person)
+// ---------------------------------------------------------------------------
+
+export type AdminSocialResponse = {
+    counts: {
+        groups: StatCount;
+        directChats: StatCount;
+        voiceChannelsLive: StatCount;
+        reportsOpen: StatCount;
+        reportsTotal: StatCount;
+        automodStops: StatCount;
+        files: StatCount;
+    };
+    /** Bytes of every file in messages (null when the sum couldn't be read). */
+    fileBytes: number | null;
+    /** AutoMod stops per rule over the records kept (90 days). */
+    automodByRule: Array<{ rule: string; count: number }> | null;
+    /** Groups with the most open /report records (name and count only). */
+    reportedGroups: Array<{ id: string; name: string; open: number }> | null;
+    generatedAt: string;
+};
+
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
@@ -156,7 +221,7 @@ export type AdminUser = {
     assignableRoles: AssignableRole[];
 };
 
-export type AdminUsersResponse = { users: AdminUser[]; nextCursor: string | null; mode: "recent" | "email" | "username" };
+export type AdminUsersResponse = { items: AdminUser[]; nextCursor: string | null; mode: "recent" | "email" | "username" };
 export type AdminUserActionResponse = { user: AdminUser; sessionsRevoked?: boolean };
 export const SUSPEND_REASON_MAX = 500;
 
@@ -197,7 +262,16 @@ export type AdminReport = {
     post: AdminReportPost | null;
 };
 
-export type AdminReportsResponse = { reports: AdminReport[] };
+/** A page of reports (open: newest first; closed: last closed first) and how many each tab holds. */
+export type AdminReportsResponse = { items: AdminReport[]; nextCursor: string | null; counts: { open: number | null; closed: number | null } };
+
+/** The reported post's files for the moderators' viewer (any status, read-only). */
+export type AdminReportPostFiles = {
+    postId: string;
+    title: string;
+    status: string;
+    files: Array<{ name: string; language: string; code: string; truncated: boolean }>;
+};
 export type AdminReportActionResponse = {
     reportId: string;
     status: ReportStatus;
@@ -217,7 +291,7 @@ export type AdminNewsComment = {
     text: string;
     createdAt: string | null;
 };
-export type AdminNewsCommentsResponse = { comments: AdminNewsComment[] };
+export type AdminNewsCommentsResponse = { items: AdminNewsComment[]; nextCursor: string | null };
 
 export type AdminArcadeGame = {
     id: string;
@@ -233,7 +307,7 @@ export type AdminArcadeGame = {
     createdAt: string | null;
     updatedAt: string | null;
 };
-export type AdminArcadeResponse = { games: AdminArcadeGame[] };
+export type AdminArcadeResponse = { items: AdminArcadeGame[]; nextCursor: string | null };
 export type AdminArcadeActionResponse = { gameId: string; featured?: boolean; unpublished?: boolean; changed: boolean };
 
 // ---------------------------------------------------------------------------
@@ -270,7 +344,9 @@ export type AdminFeedbackItem = {
     statusUpdatedAt: string | null;
 };
 
-export type AdminFeedbackResponse = { items: AdminFeedbackItem[] };
+/** `counts` (every item, by status) comes with the first page only. */
+export type AdminFeedbackResponse = { items: AdminFeedbackItem[]; nextCursor: string | null; counts: FeedbackCounts | null };
+export type FeedbackCounts = Record<"all" | FeedbackStatus, number>;
 export type AdminFeedbackActionResponse = {
     id: string;
     status?: FeedbackStatus;
@@ -300,7 +376,9 @@ export type AdminSecurityEvent = {
     /** Other small scalar fields of the event. */
     details: Record<string, string | number | boolean>;
 };
-export type AdminSecurityEventsResponse = { events: AdminSecurityEvent[] };
+/** `counts` (every event, by risk) comes with the first page only. */
+export type AdminSecurityEventsResponse = { items: AdminSecurityEvent[]; nextCursor: string | null; counts: SecurityEventCounts | null };
+export type SecurityEventCounts = Record<"all" | SecurityRisk, number>;
 
 export type AdminAuditAction =
     | "user.suspend"
@@ -310,6 +388,7 @@ export type AdminAuditAction =
     | "user.remove_password"
     | "report.resolve"
     | "report.dismiss"
+    | "report.reopen"
     | "report.remove_content"
     | "media.cleanup_incomplete"
     | "news_comment.delete"
@@ -364,7 +443,7 @@ export type AdminAuditEntry = {
     details: Record<string, AuditDetailValue>;
     createdAt: string | null;
 };
-export type AdminAuditResponse = { entries: AdminAuditEntry[] };
+export type AdminAuditResponse = { items: AdminAuditEntry[]; nextCursor: string | null };
 
 // ---------------------------------------------------------------------------
 // Announcements

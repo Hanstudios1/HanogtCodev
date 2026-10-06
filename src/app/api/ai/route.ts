@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         plan = counted.plan;
         /** The connection can't be used: the message is given back, then the error. */
         const unusable = async (status: number, code: string, error: string) => {
-            const refunded = await refundHanogtAi(counted);
+            const refunded = await refundHanogtAi(counted, keepRunning);
             return NextResponse.json({ error, code, refunded }, { status, headers: jsonSecurityHeaders(quotaHeaders(counted.quota)) });
         };
         let connection: ResolvedConnection | null;
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
         if (ownConnection && shouldRecordUse(ownConnection, error)) after(() => markUsed(email, ownConnection.id, error));
     };
     /** Gives the message back to Hanogt AI's window when nothing was answered (by its model or the person's connection). */
-    const refund = async () => (hanogtPass ? refundHanogtAi(hanogtPass) : false);
+    const refund = async () => (hanogtPass ? refundHanogtAi(hanogtPass, keepRunning) : false);
     /** A failure before any answer: the message is given back, then the error. */
     const failed = async (status: number, code: string, error: string, extra: Record<string, string> = {}) => {
         const refunded = await refund();

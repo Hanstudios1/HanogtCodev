@@ -1,5 +1,61 @@
 # Değişiklik Günlüğü
 
+## 0.3.29 — 2026-10-06
+
+### Yönetici Paneli: yeni görünüm, grafikler, Social ve Hanogt AI sayfaları, hatalar
+
+- **Yeni kabuk:** kenar çubuğu Genel, Topluluk, Ürünler ve Sistem olarak
+  gruplanır; ürün bölümleri (Social, Hanogt AI, Security) kendi logolarıyla
+  görünür. Bekleyen bildirim, destek talebi ve geri bildirim sayıları kenar
+  çubuğunda canlı rozetlerdir (dakikada bir, sekmeye dönünce ve bir işlemden
+  sonra yenilenir). Bölüm, sekme ve filtreler adreste durur
+  (`/admin#moderation?tab=reports&status=closed`): yenileme, paylaşılan
+  bağlantı ve geri düğmesi aynı yeri açar.
+- **Genel bakışta grafikler:** kayıtlar, Hanogt AI mesajları, güvenlik olayları
+  ve AutoMod'un durdurduğu mesajlar 7 ve 30 gün için günlük, 90 gün için
+  haftalık sütunlarla; önceki döneme göre değişim, üzerine gelince değerler ve
+  tablo görünümü. Sayılar sayım sorgularıyla alınır, veriyle birlikte
+  maliyeti büyümez.
+- **Hanogt Social sayfası:** gruplar, sohbetler, açık sesli kanallar, raporlar,
+  AutoMod durdurmaları (kurallara göre dağılımıyla), dosyalar ve kapladıkları
+  alan; en çok açık raporu olan gruplar. Yalnızca toplamlar: raporlayan,
+  raporlanan ya da mesaj gösterilmez.
+- **Hanogt AI sayfası:** günlük mesaj toplamları (Türkiye saatiyle), kaynağa
+  (sohbet, kendi bağlantılar, API, gruplar) ve plana göre dağılım, iadeler,
+  modelin bağlı olup olmadığı ve plan sınırları. Toplamlar yeni,
+  sunucuya özel `ai_usage_daily` koleksiyonunda kişi bilgisi olmadan tutulur
+  ve 400 gün sonra TTL ile silinir.
+- **Her listede “Daha fazla yükle” ve “Yenile”:** kişiler, bildirimler, haber
+  yorumları, Arcade, geri bildirim, güvenlik olayları, denetim kaydı ve destek
+  talepleri. Sayfalar zaman ve belge yoluyla ilerler; aynı anda oluşan kayıtlar
+  artık atlanmaz ya da iki kez gelmez. Arama ve filtreler sunucuda uygulanır,
+  böylece eski kayıtlarda da bulur; geri bildirim ve güvenlik olaylarında
+  sekme sayıları tüm kayıtları sayar.
+- **Bildirimler:** açık ve kapanan sekmeleri sıralı sorgu ve dizinle gelir;
+  kapanan bildirim yeniden açılabilir, karar geri alınabilir (bildirimdeki
+  “Geri al”); bildirilen gönderinin dosyaları ayrı bir uç noktadan, durumuna
+  bakılmadan açılır.
+- **Düzeltmeler:**
+  - Kişi aramasında yeni arama yüklenirken ya da başarısız olunca eski
+    sonuçlar yeni sonuçmuş gibi kalmaz; geçersiz bir e-postayla aramada ne
+    olduğu yazılır.
+  - Plan kaldırma ve engelleme, kuponu kapatma, satışları kapatma, bağlantısız
+    aboneliği gizleme ve bir özelliği kapatma onay penceresi ister.
+  - Kuponun bitiş tarihi geçmiş bir gün olamaz; süresi dolmuş kupon Paddle'a
+    eşitlenmez; geri yüklemede tarih korunur.
+  - Destek talebini okundu saymak her yeni mesajda bir kez yapılır (gereksiz
+    yazma yok).
+  - Açık geri bildirim sayısı belgeler taranmadan sayılır; “Yenile” istatistikleri
+    sunucuda yeniden sayar.
+  - Aynı anda iki yönetici duyuru açtığında 5 etkin duyuru sınırı aşılamaz
+    (sonraki kayıt çakışma olarak reddedilir).
+- **Gizlilik Politikası 5.5:** Hanogt AI'ın günlük kullanım toplamları ve
+  Yönetici Paneli'nin Social özetinde ekibin ne gördüğü.
+- **Sahibin yapması gereken:** `firestore.rules` ve `firestore.indexes.json`
+  yeniden yüklenir (`media_reports` için iki bileşik dizin ve
+  `ai_usage_daily.expiresAt` TTL kuralı). Ayrıntılar `docs/ENVIRONMENT.md`
+  içinde.
+
 ## 0.3.28 — 2026-10-06
 
 ### Hanogt Social B: tam ekran arama, ekran paylaşımı, sesli kanallar ve dosyalar

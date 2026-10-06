@@ -13,7 +13,8 @@ import {
     toIso,
     withConflictRetry,
 } from "@/lib/server/admin";
-import { commitServerMutations, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
+import { matchesSearch, newestPage, readPageCursor, readSearch } from "@/lib/server/admin-pages";
+import { commitServerMutations, getServerDocument } from "@/lib/server/firebase-rest";
 
 export const runtime = "nodejs";
 
@@ -28,6 +29,7 @@ type CommentRecord = {
 };
 
 const NEWS_ID = /^[a-f0-9]{20}$/;
+const PAGE_SIZE = 40;
 
 function articleLink(value: unknown) {
     return typeof value === "string" && value.length <= 2_048 && /^https?:\/\/[^\s"'<>`]+$/.test(value) ? value : null;
@@ -46,17 +48,28 @@ function toAdminComment(record: CommentRecord & { _id: string }): AdminNewsComme
     };
 }
 
-/** The 100 newest Hanogt News comments. */
+/**
+ * Hanogt News comments, newest first, a page at a time (`?cursor=`); `?q=`
+ * searches the text, the author and the headline. Their times are ISO text.
+ */
 export async function GET(request: NextRequest) {
     const guard = await authorizeAdminRequest(request, { minRole: "moderator" });
     if (!guard.ok) return guard.response;
     try {
-        const records = await runServerQuery<CommentRecord>({
+        const params = request.nextUrl.searchParams;
+        const cursor = readPageCursor(params, "news_comments");
+        const needle = readSearch(params);
+        const page = await newestPage<CommentRecord>({
             collectionId: "news_comments",
-            orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
-            limit: 100,
+            field: "createdAt",
+            text: true,
+            limit: PAGE_SIZE,
+            cursor,
+            ...(needle ? {
+                keep: (record: CommentRecord) => matchesSearch(needle, [record.text, record.authorName, record.authorEmail, record.newsTitle].map((value) => (typeof value === "string" ? value : null))),
+            } : {}),
         });
-        const payload: AdminNewsCommentsResponse = { comments: records.map(toAdminComment) };
+        const payload: AdminNewsCommentsResponse = { items: page.items.map(toAdminComment), nextCursor: page.nextCursor };
         return adminJson(payload);
     } catch (error) {
         return adminFailure(error, "news-comments:get");

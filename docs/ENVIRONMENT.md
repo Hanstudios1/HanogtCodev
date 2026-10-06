@@ -597,6 +597,32 @@ so subscribers see a note instead of coupon prices.
 | `ADMIN_EMAILS` | Comma/semicolon/space-separated list of **owner** e-mails. Owners get the full Admin Panel (`/admin`) and can grant the `admin`/`moderator` roles (stored server-side in `users/{email}.role`, never writable by clients). |
 | `HEALTH_CHECK_TOKEN` | If set (≥16 chars), `/api/health/auth?token=…` returns the full auth diagnostics. Signed-in owners (built-in or `ADMIN_EMAILS`) can also see it. Without either, the endpoint returns only a bare ok/not-ok. Owners get the complete diagnosis in Admin Panel → Cloud Health. |
 
+**Admin Panel data (since 0.3.29, no variables).** The overview's charts and
+the Hanogt AI and Social pages only count: aggregation queries over
+`users`, `security_events`, `automod_events`, `group_reports`, `groups`,
+`chats`, `group_voice` and `message_files` (single-field indexes), plus
+Hanogt AI's daily totals in the server-only collection
+`ai_usage_daily/{YYYY-MM-DD}` (Türkiye days). Every counted Hanogt AI message
+adds one to that day's `messages`, `source_<chat|own|api|group>` and
+`plan_<free|plus|pro>`; a message given back adds to `refunds` and
+`refund_<source>`. No account or message is stored there, and `expiresAt`
+(400 days) lets a TTL policy remove old days. Lists are read page by page
+with a cursor of the time and the document, so rows with the same time are
+never skipped. Deploy `firestore.rules` and `firestore.indexes.json` after
+updating:
+
+- the composite indexes on `media_reports` (`status` + `createdAt`, `status` +
+  `resolvedAt`) that the open and closed report tabs need; until they are
+  built, the reports page shows an error;
+- the TTL policy on `ai_usage_daily.expiresAt` (without it the daily totals
+  stay beyond the 13 months the Privacy Policy states);
+- the rule that keeps `ai_usage_daily` server-only (the catch-all rule already
+  denies it; the explicit rule documents it).
+
+Switching an announcement on also touches `site_config/announcement_slots`,
+so two admins can't pass the limit of 5 active announcements at once (the
+later save is refused as a conflict and can simply be retried).
+
 ## Code runner (optional)
 
 | Variable | Meaning |

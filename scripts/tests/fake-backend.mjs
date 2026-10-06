@@ -176,6 +176,29 @@ export function createBackend(seed, options = {}) {
         return { writeResults: results.map((result) => ({ ...result, updateTime: stamp() })), commitTime: stamp() };
     }
 
+    /**
+     * The two sides of a range filter, or null when Firestore wouldn't compare
+     * them: only values of one type are compared. A timestamp filter matches
+     * times (a seeded Date, or the ISO text a write leaves here); a string or
+     * number filter matches strings or numbers.
+     */
+    function comparable(actual, raw) {
+        if ("timestampValue" in raw) {
+            const time = actual instanceof Date ? actual.getTime() : typeof actual === "string" && /^\d{4}-\d\d-\d\dT/.test(actual) ? Date.parse(actual) : Number.NaN;
+            return Number.isFinite(time) ? [time, Date.parse(raw.timestampValue)] : null;
+        }
+        if ("stringValue" in raw) return typeof actual === "string" ? [actual, raw.stringValue] : null;
+        if ("integerValue" in raw || "doubleValue" in raw) return typeof actual === "number" ? [actual, decode(raw)] : null;
+        return null;
+    }
+
+    const RANGE = {
+        LESS_THAN: (a, b) => a < b,
+        LESS_THAN_OR_EQUAL: (a, b) => a <= b,
+        GREATER_THAN: (a, b) => a > b,
+        GREATER_THAN_OR_EQUAL: (a, b) => a >= b,
+    };
+
     function matches(data, where) {
         if (!where) return true;
         if (where.compositeFilter) return where.compositeFilter.filters.every((filter) => matches(data, filter));
@@ -184,6 +207,11 @@ export function createBackend(seed, options = {}) {
         const expected = decode(value);
         if (op === "EQUAL") return actual !== undefined && same(actual, expected);
         if (op === "ARRAY_CONTAINS") return Array.isArray(actual) && actual.some((entry) => same(entry, expected));
+        if (op === "IN") return actual !== undefined && expected.some((entry) => same(actual, entry));
+        if (op in RANGE) {
+            const sides = actual === undefined ? null : comparable(actual, value);
+            return Boolean(sides) && RANGE[op](sides[0], sides[1]);
+        }
         throw new Error(`Unsupported operator ${op}`);
     }
 
@@ -192,24 +220,40 @@ export function createBackend(seed, options = {}) {
         const status = options.failQuery?.({ collectionId, allDescendants: Boolean(allDescendants), parent });
         if (status) return failure(status, "FAILED_PRECONDITION");
         const prefix = parent ? `${parent}/` : "";
-        const found = [...docs.keys()].filter((path) => {
+        let found = [...docs.keys()].filter((path) => {
             if (!path.startsWith(prefix)) return false;
             const segments = path.slice(prefix.length).split("/");
             return allDescendants ? segments.length >= 2 && segments.length % 2 === 0 && segments[segments.length - 2] === collectionId : segments.length === 2 && segments[0] === collectionId;
         }).filter((path) => matches(docs.get(path).data, query.where)).sort();
-        // orderBy, like Firestore: by each field in turn (numbers before strings), then by path.
+        // orderBy, like Firestore: by each field in turn (numbers before strings; "__name__" is the
+        // document path), then by path in the direction of the last ordering.
         const orders = query.orderBy ?? [];
+        const rank = (value) => (value === undefined || value === null ? 0 : typeof value === "boolean" ? 1 : typeof value === "number" ? 2 : 3);
+        const compare = (x, y) => rank(x) - rank(y) || (x < y ? -1 : x > y ? 1 : 0);
+        const valueAt = (path, fieldPath) => (fieldPath === "__name__" ? path : lookup(docs.get(path).data, fieldPath).value);
         if (orders.length) {
-            const rank = (value) => (value === undefined || value === null ? 0 : typeof value === "boolean" ? 1 : typeof value === "number" ? 2 : 3);
+            const lastDescending = orders[orders.length - 1].direction === "DESCENDING";
             found.sort((a, b) => {
                 for (const order of orders) {
-                    const x = lookup(docs.get(a).data, order.field.fieldPath).value;
-                    const y = lookup(docs.get(b).data, order.field.fieldPath).value;
-                    const difference = rank(x) - rank(y) || (x < y ? -1 : x > y ? 1 : 0);
+                    const difference = compare(valueAt(a, order.field.fieldPath), valueAt(b, order.field.fieldPath));
                     if (difference) return order.direction === "DESCENDING" ? -difference : difference;
                 }
-                return a < b ? -1 : a > b ? 1 : 0;
+                const byPath = a < b ? -1 : a > b ? 1 : 0;
+                return lastDescending ? -byPath : byPath;
             });
+        }
+        // startAt: a cursor over the orderBy fields; before: false starts just after it.
+        if (query.startAt?.values?.length) {
+            const cursor = query.startAt.values.map((value) => ("referenceValue" in value ? value.referenceValue.split("/documents/")[1] : decode(value)));
+            const position = (path) => {
+                for (let index = 0; index < cursor.length && index < orders.length; index += 1) {
+                    const order = orders[index];
+                    const difference = compare(valueAt(path, order.field.fieldPath), cursor[index]);
+                    if (difference) return order.direction === "DESCENDING" ? -difference : difference;
+                }
+                return 0;
+            };
+            found = found.filter((path) => (query.startAt.before ? position(path) >= 0 : position(path) > 0));
         }
         // select: only the named fields come back (the document name always does).
         const fields = query.select?.fields?.map((field) => field.fieldPath);
@@ -288,12 +332,23 @@ export function createBackend(seed, options = {}) {
                 return runQuery(parent, body.structuredQuery);
             }
             if (rest.endsWith(":runAggregationQuery")) {
-                // count() with an optional upTo, like countServerQuery sends it.
+                // count() with an optional upTo, or sum() of a field.
                 const parent = rest.slice(0, -":runAggregationQuery".length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
                 const { structuredQuery, aggregations } = body.structuredAggregationQuery;
                 const listed = await runQuery(parent, { ...structuredQuery, limit: undefined }).json();
                 if (!Array.isArray(listed)) return failure(400, "FAILED_PRECONDITION");
                 const [aggregation] = aggregations;
+                if (aggregation.sum) {
+                    // sum() over a field, like sumServerQuery sends it: non-numbers count as nothing.
+                    let total = 0;
+                    for (const item of listed) {
+                        const value = item.document?.fields?.[aggregation.sum.field.fieldPath];
+                        const number = value ? decode(value) : null;
+                        if (typeof number === "number" && Number.isFinite(number)) total += number;
+                    }
+                    const encoded = Number.isInteger(total) ? { integerValue: String(total) } : { doubleValue: total };
+                    return json(200, [{ result: { aggregateFields: { [aggregation.alias]: encoded } } }]);
+                }
                 const upTo = aggregation.count?.upTo ? Number(aggregation.count.upTo) : Infinity;
                 return json(200, [{ result: { aggregateFields: { [aggregation.alias]: { integerValue: String(Math.min(listed.length, upTo)) } } } }]);
             }

@@ -393,6 +393,11 @@ export async function runServerQuery<T extends Record<string, unknown>>(options:
     orderBy?: Array<{ field: string; direction?: "ASCENDING" | "DESCENDING" }>;
     select?: string[];
     limit?: number;
+    /**
+     * Starts just after these values of the orderBy fields (a page cursor). A
+     * "__name__" ordering takes the document's path ("support_tickets/abc").
+     */
+    startAfter?: unknown[];
 }) {
     const url = `${databaseDocumentsUrl(options.parentPath || "")}:runQuery`;
     const filters = (options.where || []).map((filter) => ({
@@ -405,6 +410,12 @@ export async function runServerQuery<T extends Record<string, unknown>>(options:
     if (filters.length === 1) structuredQuery.where = filters[0];
     if (filters.length > 1) structuredQuery.where = { compositeFilter: { op: "AND", filters } };
     if (options.orderBy?.length) structuredQuery.orderBy = options.orderBy.map((order) => ({ field: { fieldPath: order.field }, direction: order.direction || "ASCENDING" }));
+    if (options.orderBy?.length && options.startAfter?.length) {
+        structuredQuery.startAt = {
+            before: false,
+            values: options.startAfter.map((value, index) => (options.orderBy?.[index]?.field === "__name__" ? { referenceValue: documentName(String(value)) } : toFirestoreValue(value))),
+        };
+    }
     if (options.select?.length) structuredQuery.select = { fields: options.select.map((fieldPath) => ({ fieldPath })) };
     const response = await firestoreFetch(url, { method: "POST", body: JSON.stringify({ structuredQuery }) });
     if (!response.ok) {
@@ -422,7 +433,8 @@ export async function runServerQuery<T extends Record<string, unknown>>(options:
  * COUNT() aggregation (billed per 1000 index entries); `upTo` stops early.
  * Used by the admin dashboard instead of reading document ids.
  */
-export async function countServerQuery(options: { collectionId: string; where?: QueryFilter[]; upTo?: number }) {
+/** One aggregation over a query's documents (count or sum): no document is read. */
+async function aggregateServerQuery(options: { collectionId: string; where?: QueryFilter[] }, aggregation: Record<string, unknown>) {
     const filters = (options.where || []).map((filter) => ({
         fieldFilter: { field: { fieldPath: filter.field }, op: filter.op, value: toFirestoreValue(filter.value) },
     }));
@@ -431,20 +443,25 @@ export async function countServerQuery(options: { collectionId: string; where?: 
     if (filters.length > 1) structuredQuery.where = { compositeFilter: { op: "AND", filters } };
     const response = await firestoreFetch(`${databaseDocumentsUrl()}:runAggregationQuery`, {
         method: "POST",
-        body: JSON.stringify({
-            structuredAggregationQuery: {
-                structuredQuery,
-                aggregations: [{ alias: "total", count: options.upTo ? { upTo: String(options.upTo) } : {} }],
-            },
-        }),
+        body: JSON.stringify({ structuredAggregationQuery: { structuredQuery, aggregations: [{ alias: "total", ...aggregation }] } }),
     });
     if (!response.ok) {
         const error = new Error(`Firestore sayım hatası (${response.status}).`) as Error & { status?: number };
         error.status = response.status;
         throw error;
     }
-    const payload = await response.json() as Array<{ result?: { aggregateFields?: Record<string, { integerValue?: string }> } }>;
-    return Number(payload[0]?.result?.aggregateFields?.total?.integerValue ?? 0);
+    const payload = await response.json() as Array<{ result?: { aggregateFields?: Record<string, { integerValue?: string; doubleValue?: number }> } }>;
+    const total = payload[0]?.result?.aggregateFields?.total;
+    return Number(total?.integerValue ?? total?.doubleValue ?? 0);
+}
+
+export async function countServerQuery(options: { collectionId: string; where?: QueryFilter[]; upTo?: number }) {
+    return aggregateServerQuery(options, { count: options.upTo ? { upTo: String(options.upTo) } : {} });
+}
+
+/** The sum of a numeric field over a query's documents (missing or non-numeric values count as nothing). */
+export async function sumServerQuery(options: { collectionId: string; field: string; where?: QueryFilter[] }) {
+    return aggregateServerQuery(options, { sum: { field: { fieldPath: options.field } } });
 }
 
 type FirestoreHttpError = Error & { status?: number; reason?: string };
@@ -528,7 +545,7 @@ export async function commitServerPatches(writes: Array<{
     if (!response.ok) throw await firestoreHttpError(response, "Firestore atomik yazma hatası");
 }
 
-type ServerMutation =
+export type ServerMutation =
     | { type: "create" | "update"; path: string; data: Record<string, unknown>; updateFields?: string[]; updateTime?: string }
     | { type: "delete"; path: string; updateTime?: string }
     /** Adds to numeric fields (missing ones count as 0); with mustExist, a deleted document isn't brought back. */

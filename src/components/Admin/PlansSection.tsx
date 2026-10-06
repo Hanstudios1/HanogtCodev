@@ -117,6 +117,12 @@ const C = {
     unblock: { TR: "Engeli kaldır", EN: "Lift the block" },
     blockPaddle: { TR: "Engellemek ücretli plan avantajlarını da kapatır, ancak Paddle ödeme almaya devam eder. Gerekirse aboneliği Paddle panelinden iptal edin ya da iade yapın.", EN: "Blocking also switches off paid benefits, but Paddle keeps charging. If needed, cancel or refund the subscription in the Paddle dashboard." },
     blockedNow: { TR: "Plan kullanımı engellendi.", EN: "Plan use blocked." },
+    blockTitle: { TR: "{email} için plan kullanımı engellensin mi?", EN: "Block plan use for {email}?" },
+    blockBody: { TR: "Plan avantajları, ücretli olanlar dahil, engel kaldırılana kadar kapanır. Kişiye gerekçesi bildirilmeli ve itiraz yolu açık tutulmalıdır.", EN: "Plan benefits, paid ones included, are switched off until the block is lifted. Tell the person why and keep the appeal route open." },
+    freeTitle: { TR: "{email} Ücretsiz plana alınsın mı?", EN: "Move {email} to Free?" },
+    freeBody: { TR: "Ekibin tanımladığı plan kaldırılır ve kişi Ücretsiz plan sınırlarına döner. Ücretli bir Paddle aboneliği varsa o etkilenmez.", EN: "The plan the team assigned is removed and they go back to Free plan limits. A paid Paddle subscription, if any, isn't affected." },
+    couponOffTitle: { TR: "{code} kuponu kapatılsın mı?", EN: "Switch off the {code} coupon?" },
+    couponOffBody: { TR: "Kupon yeni satın almalarda geçersiz olur ve Paddle'daki indirimi arşivlenir. İstediğiniz zaman yeniden açabilirsiniz.", EN: "The coupon stops working for new purchases and its Paddle discount is archived. You can switch it back on at any time." },
     unblockedNow: { TR: "Engel kaldırıldı.", EN: "Block lifted." },
     remove: { TR: "Planı kaldır", EN: "Remove plan" },
     removeTitle: { TR: "{email} için plan kaldırılsın mı?", EN: "Remove the plan for {email}?" },
@@ -230,6 +236,25 @@ function recurLabel(recur: CouponRecur, tx: (copy: Copy, vars?: Record<string, s
     return recur === "first" ? tx(C.recurBadgeFirst) : recur === "all" ? tx(C.recurBadgeAll) : tx(C.recurBadgeCount, { count: recur });
 }
 
+/** Today as a local yyyy-mm-dd (the earliest expiry a date input offers). */
+function todayInputValue() {
+    return dateInputValue(new Date().toISOString());
+}
+
+/**
+ * The end of a chosen day in the browser's time zone, or null for an empty
+ * field; undefined when the value isn't a date (browsers without a date input
+ * let people type anything).
+ */
+function endOfDay(value: string): string | null | undefined {
+    if (!value) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+    const date = new Date(`${value}T23:59:59`);
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+const DATE_FORMAT_ERROR: ApiFailure = { ok: false, status: 400, code: "invalid_expiry", retryAfter: null };
+
 function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => void }) {
     const { tx } = useI18n();
     const toast = useToast();
@@ -240,6 +265,11 @@ function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => vo
 
     const create = async (event: FormEvent) => {
         event.preventDefault();
+        const expiresAt = endOfDay(draft.expiresAt);
+        if (expiresAt === undefined) {
+            setError(DATE_FORMAT_ERROR);
+            return;
+        }
         setBusy(true);
         setError(null);
         const result = await adminPost<AdminPlansResponse>("/api/admin/plans", {
@@ -248,7 +278,7 @@ function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => vo
             percentOff: Number(draft.percentOff),
             plan: draft.plan,
             maxUses: draft.maxUses.trim() ? Number(draft.maxUses) : null,
-            expiresAt: draft.expiresAt ? new Date(`${draft.expiresAt}T23:59:59`).toISOString() : null,
+            expiresAt,
             recur: draft.recur === "count" ? Number(draft.recurCount) : draft.recur,
             note: draft.note,
         });
@@ -274,7 +304,7 @@ function CouponForm({ onCreated }: { onCreated: (data: AdminPlansResponse) => vo
                 </select>
             </label>
             <label className={field}>{tx(C.maxUses)}<input type="number" min={1} value={draft.maxUses} onChange={(event) => setDraft({ ...draft, maxUses: event.target.value })} placeholder={tx(C.unlimited)} className={cx(INPUT_CLASS, "mt-1")} /></label>
-            <label className={field}>{tx(C.expires)}<input type="date" value={draft.expiresAt} onChange={(event) => setDraft({ ...draft, expiresAt: event.target.value })} className={cx(INPUT_CLASS, "mt-1")} /></label>
+            <label className={field}>{tx(C.expires)}<input type="date" min={todayInputValue()} value={draft.expiresAt} onChange={(event) => setDraft({ ...draft, expiresAt: event.target.value })} className={cx(INPUT_CLASS, "mt-1")} /></label>
             <label className={field}>{tx(C.recur)}
                 <span className="mt-1 flex gap-2">
                     <select value={draft.recur} onChange={(event) => setDraft({ ...draft, recur: event.target.value })} className={cx(INPUT_CLASS, "min-w-0 flex-1")} data-coupon-recur>
@@ -311,16 +341,23 @@ function DeletedCouponRow({ coupon, onRestored }: { coupon: AdminDeletedCoupon; 
     const [open, setOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<ApiFailure | null>(null);
-    const [expiresAt, setExpiresAt] = useState(coupon.expiresAt && !expired ? dateInputValue(coupon.expiresAt) : "");
+    // The stored expiry shown as a local date; sent back unchanged when nobody edits it (no time-zone shift).
+    const storedDate = coupon.expiresAt && !expired ? dateInputValue(coupon.expiresAt) : "";
+    const [expiresAt, setExpiresAt] = useState(storedDate);
     const [maxUses, setMaxUses] = useState(coupon.maxUses === null ? "" : String(coupon.maxUses));
 
     const restore = async () => {
+        const expiry = endOfDay(expiresAt);
+        if (expiry === undefined) {
+            setError(DATE_FORMAT_ERROR);
+            return;
+        }
         setBusy(true);
         setError(null);
         const result = await adminPost<AdminCouponRestoreResponse>("/api/admin/plans", {
             action: "restoreCoupon",
             code: coupon.code,
-            expiresAt: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : null,
+            expiresAt: expiresAt && expiresAt === storedDate ? coupon.expiresAt : expiry,
             maxUses: maxUses.trim() ? Number(maxUses) : null,
         });
         setBusy(false);
@@ -360,7 +397,7 @@ function DeletedCouponRow({ coupon, onRestored }: { coupon: AdminDeletedCoupon; 
                 error={error}
             >
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <label className={field}>{tx(C.expires)}<input type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className={cx(INPUT_CLASS, "mt-1")} data-restore-expires /></label>
+                    <label className={field}>{tx(C.expires)}<input type="date" min={todayInputValue()} value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className={cx(INPUT_CLASS, "mt-1")} data-restore-expires /></label>
                     <label className={field}>{tx(C.maxUses)}<input type="number" min={1} value={maxUses} onChange={(event) => setMaxUses(event.target.value)} placeholder={tx(C.unlimited)} className={cx(INPUT_CLASS, "mt-1")} data-restore-uses /></label>
                 </div>
                 {expired && coupon.expiresAt ? <p className="text-[12.5px] font-semibold text-amber-700 dark:text-amber-300">{tx(C.restoreExpiredNote, { date: formatDateTime(coupon.expiresAt, locale) })}</p> : null}
@@ -378,6 +415,7 @@ function CouponRow({ coupon, paddleReady, onChanged, onSynced }: { coupon: Admin
     const [busy, setBusy] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [confirming, setConfirming] = useState(false);
+    const [confirmingOff, setConfirmingOff] = useState(false);
     const [error, setError] = useState<ApiFailure | null>(null);
 
     const run = async (body: Record<string, unknown>) => {
@@ -421,8 +459,30 @@ function CouponRow({ coupon, paddleReady, onChanged, onSynced }: { coupon: Admin
             {!coupon.paddleDiscountId && paddleReady && coupon.active ? (
                 <Button size="sm" variant="ghost" icon={Upload} busy={syncing} onClick={() => void sync()}>{tx(C.syncCoupon)}</Button>
             ) : null}
-            <Switch checked={coupon.active} busy={busy} onChange={(active) => void run({ action: "setCouponActive", active })} label={tx(C.couponActive)} />
+            <Switch
+                checked={coupon.active}
+                busy={busy}
+                onChange={(active) => {
+                    // Switching off archives the Paddle discount: ask first.
+                    if (!active && coupon.paddleDiscountId) setConfirmingOff(true);
+                    else void run({ action: "setCouponActive", active });
+                }}
+                label={tx(C.couponActive)}
+            />
             <IconButton label={tx(C.deleteCoupon)} icon={Trash2} tone="danger" onClick={() => setConfirming(true)} />
+            <ConfirmDialog
+                open={confirmingOff}
+                onClose={() => setConfirmingOff(false)}
+                onConfirm={async () => {
+                    if (await run({ action: "setCouponActive", active: false })) setConfirmingOff(false);
+                }}
+                title={tx(C.couponOffTitle, { code: coupon.code })}
+                description={tx(C.couponOffBody)}
+                confirmLabel={tx({ TR: "Kuponu kapat", EN: "Switch off" })}
+                tone="default"
+                busy={busy}
+                error={error}
+            />
             <ConfirmDialog
                 open={confirming}
                 onClose={() => setConfirming(false)}
@@ -511,6 +571,8 @@ function PersonPlan() {
     const [extra, setExtra] = useState("100");
     const [grantDays, setGrantDays] = useState("7");
     const [confirmRemove, setConfirmRemove] = useState(false);
+    const [confirmFree, setConfirmFree] = useState(false);
+    const [confirmBlock, setConfirmBlock] = useState(false);
     const [confirmRevokeKeys, setConfirmRevokeKeys] = useState(false);
 
     const find = async (event?: FormEvent) => {
@@ -605,11 +667,20 @@ function PersonPlan() {
                         <label className={label}>{tx(C.note)}<input value={note} onChange={(event) => setNote(event.target.value)} maxLength={300} placeholder={tx(COMMON.optional)} className={cx(INPUT_CLASS, "mt-1")} /></label>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <Button variant="primary" size="sm" icon={Crown} busy={busy === "plan"} onClick={() => void act("plan", { action: "setPlan", plan, days: Number(days || 0), note }, C.planSaved)}>{tx(C.setPlan)}</Button>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            icon={Crown}
+                            busy={busy === "plan"}
+                            // Free takes the assigned plan away: ask first.
+                            onClick={() => (plan === "free" ? setConfirmFree(true) : void act("plan", { action: "setPlan", plan, days: Number(days || 0), note }, C.planSaved))}
+                        >
+                            {tx(C.setPlan)}
+                        </Button>
                         {subscription.status === "blocked" ? (
                             <Button size="sm" busy={busy === "block"} onClick={() => void act("block", { action: "setBlocked", blocked: false, note }, C.unblockedNow)}>{tx(C.unblock)}</Button>
                         ) : (
-                            <Button size="sm" icon={Ban} busy={busy === "block"} onClick={() => void act("block", { action: "setBlocked", blocked: true, note }, C.blockedNow)}>{tx(C.block)}</Button>
+                            <Button size="sm" icon={Ban} busy={busy === "block"} onClick={() => setConfirmBlock(true)}>{tx(C.block)}</Button>
                         )}
                         <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setConfirmRemove(true)}>{tx(C.remove)}</Button>
                     </div>
@@ -632,6 +703,28 @@ function PersonPlan() {
                         description={tx(C.revokeKeysBody)}
                         confirmLabel={tx(C.revokeKeys)}
                         busy={busy === "revokeKeys"}
+                    />
+                    <ConfirmDialog
+                        open={confirmFree}
+                        onClose={() => setConfirmFree(false)}
+                        onConfirm={async () => {
+                            if (await act("plan", { action: "setPlan", plan: "free", days: Number(days || 0), note }, C.planSaved)) setConfirmFree(false);
+                        }}
+                        title={tx(C.freeTitle, { email: result.email })}
+                        description={tx(C.freeBody)}
+                        confirmLabel={tx(C.setPlan)}
+                        busy={busy === "plan"}
+                    />
+                    <ConfirmDialog
+                        open={confirmBlock}
+                        onClose={() => setConfirmBlock(false)}
+                        onConfirm={async () => {
+                            if (await act("block", { action: "setBlocked", blocked: true, note }, C.blockedNow)) setConfirmBlock(false);
+                        }}
+                        title={tx(C.blockTitle, { email: result.email })}
+                        description={`${tx(C.blockBody)}${paying ? ` ${tx(C.blockPaddle)}` : ""}`}
+                        confirmLabel={tx(C.block)}
+                        busy={busy === "block"}
                     />
                     <ConfirmDialog
                         open={confirmRemove}

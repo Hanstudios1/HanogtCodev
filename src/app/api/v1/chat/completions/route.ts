@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         signal: upstreamAbort.signal,
         cache: "no-store",
     });
-    const giveBack = () => refundHanogtAi(pass);
+    const giveBack = () => refundHanogtAi(pass, keepRunning);
     let upstream: Response;
     try {
         upstream = await send(true);

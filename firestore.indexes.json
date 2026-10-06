@@ -117,6 +117,22 @@
         { "fieldPath": "score", "order": "ASCENDING" },
         { "fieldPath": "achievedAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "media_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "media_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "resolvedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -190,6 +206,12 @@
     },
     {
       "collectionGroup": "automod_events",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "ai_usage_daily",
       "fieldPath": "expiresAt",
       "ttl": true,
       "indexes": []

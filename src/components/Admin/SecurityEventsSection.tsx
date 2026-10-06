@@ -2,42 +2,52 @@
 
 import { motion } from "framer-motion";
 import { FileCode2, Fingerprint, RefreshCw, ShieldCheck, Siren } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useId, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { COMMON, RISK_COPY, SECURITY_ACTION_COPY } from "./copy";
-import { formatNumber, useAdminResource } from "./hooks";
+import { formatNumber, useAdminPages, useDebouncedValue } from "./hooks";
+import { setAdminParams } from "./navigation";
 import { RISK_TONES } from "./tones";
-import type { AdminSecurityEventsResponse, SecurityRisk } from "./types";
-import { Badge, Button, EmptyState, ErrorNotice, FilterChips, INPUT_CLASS, LoadingRows, Panel, RelativeTime, SearchInput, SectionHeader, cx } from "./ui";
+import type { AdminSecurityEvent, AdminSecurityEventsResponse, SecurityRisk } from "./types";
+import { Badge, Button, EmptyState, ErrorNotice, FilterChips, INPUT_CLASS, LoadMore, LoadingRows, Panel, RelativeTime, SearchInput, SectionHeader, cx } from "./ui";
 
 const RISK_ORDER: SecurityRisk[] = ["critical", "high", "medium", "low", "unknown"];
+const ACTION_PATTERN = /^[a-z0-9_.-]{1,60}$/;
 
-export default function SecurityEventsSection() {
+export default function SecurityEventsSection({ params }: { params: URLSearchParams }) {
     const { tx, locale } = useI18n();
     const selectId = useId();
-    const events = useAdminResource<AdminSecurityEventsResponse>("/api/admin/security-events");
-    const [risk, setRisk] = useState<"all" | SecurityRisk>("all");
-    const [action, setAction] = useState("all");
+    // The filters live in the address (#security?risk=high), so a reload or a link keeps them.
+    const rawRisk = params.get("risk");
+    const risk: "all" | SecurityRisk = rawRisk && (RISK_ORDER as string[]).includes(rawRisk) ? rawRisk as SecurityRisk : "all";
+    const rawAction = params.get("action");
+    const action = rawAction && ACTION_PATTERN.test(rawAction) ? rawAction : "all";
     const [query, setQuery] = useState("");
+    const search = useDebouncedValue(query.trim());
+    const request = new URLSearchParams();
+    if (risk !== "all") request.set("risk", risk);
+    if (action !== "all") request.set("action", action);
+    if (search) request.set("q", search);
+    const events = useAdminPages<AdminSecurityEvent, AdminSecurityEventsResponse>(`/api/admin/security-events${request.size ? `?${request}` : ""}`);
 
-    const list = useMemo(() => events.data?.events ?? [], [events.data]);
-    const counts = useMemo(() => {
-        const result: Record<SecurityRisk, number> = { critical: 0, high: 0, medium: 0, low: 0, unknown: 0 };
-        for (const event of list) result[event.risk] += 1;
-        return result;
-    }, [list]);
-    const actions = useMemo(() => [...new Set(list.map((event) => event.action))].sort(), [list]);
-    const needle = query.trim().toLocaleLowerCase(locale);
-    const visible = list.filter((event) => (risk === "all" || event.risk === risk)
-        && (action === "all" || event.action === action)
-        && (!needle || `${event.actor} ${event.findingIds.join(" ")} ${event.codeHash ?? ""}`.toLocaleLowerCase(locale).includes(needle)));
+    const setRisk = (next: "all" | SecurityRisk) => setAdminParams({ risk: next === "all" ? null : next });
+    const setAction = (next: string) => setAdminParams({ action: next === "all" ? null : next });
+    const clearFilters = () => { setQuery(""); setAdminParams({ risk: null, action: null }); };
+
+    // An answer for earlier filters stays only while the new one loads (dimmed).
+    const showRows = !events.stale || events.loading;
+    const visible = showRows ? events.data?.items ?? [] : [];
+    const counts = events.data?.counts ?? null;
+    const filtered = risk !== "all" || action !== "all" || Boolean(search);
+    // Every known kind, plus any other the loaded events carry.
+    const actions = [...new Set([...Object.keys(SECURITY_ACTION_COPY), ...visible.map((event) => event.action), ...(action !== "all" ? [action] : [])])].sort();
     const actionLabel = (value: string) => (SECURITY_ACTION_COPY[value] ? tx(SECURITY_ACTION_COPY[value]) : value);
 
     return (
         <div>
             <SectionHeader
                 title={tx({ TR: "Güvenlik Olayları", EN: "Security Events" })}
-                description={tx({ TR: "Güvenlik taramasının engellediği istekler (salt okunur, en yeni 200 kayıt).", EN: "Requests blocked by the security scanner (read-only, newest 200)." })}
+                description={tx({ TR: "Güvenlik taramasının engellediği istekler ve hesap güvenliği uyarıları (salt okunur, en yeniler önce).", EN: "Requests blocked by the security scanner and account security alerts (read-only, newest first)." })}
                 actions={<Button size="sm" icon={RefreshCw} busy={events.loading && Boolean(events.data)} onClick={events.reload}>{tx(COMMON.refresh)}</Button>}
             />
 
@@ -47,8 +57,8 @@ export default function SecurityEventsSection() {
                     value={risk}
                     onChange={setRisk}
                     options={[
-                        { value: "all", label: tx(COMMON.all), count: list.length },
-                        ...RISK_ORDER.filter((item) => counts[item] > 0).map((item) => ({ value: item, label: tx(RISK_COPY[item]), count: counts[item] })),
+                        { value: "all", label: tx(COMMON.all), count: counts?.all },
+                        ...RISK_ORDER.filter((item) => !counts || counts[item] > 0 || item === risk).map((item) => ({ value: item, label: tx(RISK_COPY[item]), count: counts?.[item] })),
                     ]}
                 />
                 <div className="flex flex-wrap items-center gap-3">
@@ -69,20 +79,20 @@ export default function SecurityEventsSection() {
 
             {events.error ? <ErrorNotice error={events.error} onRetry={events.reload} className="mb-4" /> : null}
 
-            <Panel bodyClassName="p-0">
+            {events.error && !showRows ? null : (<Panel bodyClassName="p-0">
                 {!events.data && events.loading ? (
                     <LoadingRows rows={5} className="p-4" />
                 ) : visible.length === 0 ? (
                     <div className="p-4">
                         <EmptyState
-                            icon={list.length ? Siren : ShieldCheck}
-                            title={list.length ? tx(COMMON.noResults) : tx({ TR: "Kayıtlı güvenlik olayı yok", EN: "No security events recorded" })}
-                            description={list.length ? undefined : tx({ TR: "Riskli bir kod çalıştırma isteği engellendiğinde burada listelenir.", EN: "Listed here whenever a risky code run is blocked." })}
-                            action={list.length ? <Button size="sm" onClick={() => { setRisk("all"); setAction("all"); setQuery(""); }}>{tx(COMMON.clearFilters)}</Button> : undefined}
+                            icon={filtered ? Siren : ShieldCheck}
+                            title={filtered ? tx(COMMON.noResults) : tx({ TR: "Kayıtlı güvenlik olayı yok", EN: "No security events recorded" })}
+                            description={filtered ? undefined : tx({ TR: "Riskli bir kod çalıştırma isteği engellendiğinde burada listelenir.", EN: "Listed here whenever a risky code run is blocked." })}
+                            action={filtered ? <Button size="sm" onClick={clearFilters}>{tx(COMMON.clearFilters)}</Button> : undefined}
                         />
                     </div>
                 ) : (
-                    <ul className={cx("divide-y divide-zinc-100 dark:divide-white/[0.06]", events.loading && "opacity-60")}>
+                    <ul className={cx("divide-y divide-zinc-100 transition-opacity dark:divide-white/[0.06]", events.loading && events.stale && "opacity-60")}>
                         {visible.map((event, index) => (
                             <motion.li
                                 key={event.id}
@@ -120,7 +130,8 @@ export default function SecurityEventsSection() {
                         ))}
                     </ul>
                 )}
-            </Panel>
+            </Panel>)}
+            {showRows ? <div className="mt-4"><LoadMore pages={events} shown={visible.length} total={risk === "all" && action === "all" && !search ? counts?.all : undefined} /></div> : null}
         </div>
     );
 }

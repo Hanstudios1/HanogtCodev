@@ -311,7 +311,7 @@ export async function POST(request: NextRequest) {
         // A switched-off coupon is turned on first (which then has nothing to mirror).
         if (record.active !== true) throw new AdminHttpError(409, "invalid_status");
         const expiresAt = toIso(record.expiresAt);
-        if (expiresAt && Date.parse(expiresAt) <= Date.now()) throw new AdminHttpError(409, "invalid_dates");
+        if (expiresAt && Date.parse(expiresAt) <= Date.now()) throw new AdminHttpError(409, "coupon_expired");
         const percentOff = typeof record.percentOff === "number" && Number.isInteger(record.percentOff) && record.percentOff >= 1 && record.percentOff <= 100 ? record.percentOff : null;
         if (percentOff === null) throw new AdminHttpError(409, "invalid_number");
         const discountId = await createPaddleDiscount({

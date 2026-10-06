@@ -37,6 +37,7 @@ import {
     largestCounts,
     type AccountDeletionResult,
 } from "@/lib/server/account-deletion";
+import { decodeCursor, newestPage } from "@/lib/server/admin-pages";
 import { commitServerPatches, deleteFirebaseAuthUser, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { TWO_FACTOR_FIELDS } from "@/lib/server/two-factor";
@@ -52,6 +53,8 @@ const ONLINE_WINDOW_MS = 2 * 60_000;
 const USER_FIELDS = [
     "email", "username", "nickname", "nicknameTag", "avatarUrl", "provider", "createdAt", "lastLoginAt", "lastSeenAt",
     "isOnline", "suspended", "banned", "suspendedAt", "suspendedBy", "suspendReason", "unsuspendedAt", "role", "twoFactorEnabled",
+    // A flag, not the credential: the "Remove password" action needs it in lists too.
+    "hasPassword",
 ];
 const ACTIONS = ["suspend", "unsuspend", "setRole", "reset2fa", "removePassword", "deleteData"] as const;
 const DELETE_DATA_PER_HOUR = 10;
@@ -130,22 +133,12 @@ async function searchByUsername(query: string, cursor: string | null) {
     return { records: page, nextCursor: lastName };
 }
 
-async function listRecent(cursor: string | null) {
-    const where: AdminQueryFilter[] = [{ field: "createdAt", op: "GREATER_THAN", value: new Date(0) }];
-    if (cursor) {
-        const time = Date.parse(cursor);
-        if (!Number.isFinite(time)) throw new AdminHttpError(400, "invalid_cursor");
-        where.push({ field: "createdAt", op: "LESS_THAN", value: new Date(time) });
-    }
-    const records = await runServerQuery<Record<string, unknown>>({
-        collectionId: "users",
-        where,
-        orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
-        select: USER_FIELDS,
-        limit: PAGE_SIZE + 1,
-    });
-    const page = records.slice(0, PAGE_SIZE);
-    return { records: page, nextCursor: records.length > PAGE_SIZE ? toIso(page[page.length - 1]?.createdAt) : null };
+/** Newest accounts first; the cursor holds the time and the document, so equal times never skip anyone. */
+async function listRecent(rawCursor: string | null) {
+    const cursor = rawCursor ? decodeCursor(rawCursor, "users") : null;
+    if (rawCursor && !cursor) throw new AdminHttpError(400, "invalid_cursor");
+    const { items, nextCursor } = await newestPage<Record<string, unknown>>({ collectionId: "users", field: "createdAt", select: USER_FIELDS, limit: PAGE_SIZE, cursor });
+    return { records: items, nextCursor };
 }
 
 /** Users by exact e-mail, username prefix, or newest first (no query). */
@@ -162,14 +155,16 @@ export async function GET(request: NextRequest) {
         let payload: AdminUsersResponse;
         if (query.includes("@")) {
             const email = normalizeEmail(query);
-            const record = email ? await getServerDocument<Record<string, unknown>>(`users/${email}`) : null;
-            payload = { users: record ? [toAdminUser(record, email, guard.admin)] : [], nextCursor: null, mode: "email" };
+            // An "@" means an e-mail search: say when it isn't one rather than "no matching users".
+            if (!email) throw new AdminHttpError(400, "invalid_email");
+            const record = await getServerDocument<Record<string, unknown>>(`users/${email}`);
+            payload = { items: record ? [toAdminUser(record, email, guard.admin)] : [], nextCursor: null, mode: "email" };
         } else if (query) {
             const { records, nextCursor } = await searchByUsername(query, cursor);
-            payload = { users: records.map((record) => toAdminUser(record, record._id, guard.admin)), nextCursor, mode: "username" };
+            payload = { items: records.map((record) => toAdminUser(record, record._id, guard.admin)), nextCursor, mode: "username" };
         } else {
             const { records, nextCursor } = await listRecent(cursor);
-            payload = { users: records.map((record) => toAdminUser(record, record._id, guard.admin)), nextCursor, mode: "recent" };
+            payload = { items: records.map((record) => toAdminUser(record, record._id, guard.admin)), nextCursor, mode: "recent" };
         }
         return adminJson(payload);
     } catch (error) {

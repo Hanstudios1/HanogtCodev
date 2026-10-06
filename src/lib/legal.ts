@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.4";
+export const LEGAL_VERSION = "5.5";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.4-2026-10-06";
+export const LEGAL_NOTICE_ID = "5.5-2026-10-06";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,14 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.5",
+        date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
+        items: [
+            { TR: "Hanogt AI'ın günlük kullanım toplamları: Ekibin hizmetin kapasitesini planlayabilmesi için her gün sayılan Hanogt AI mesajlarının toplamı, kaynağa (sohbet, kendi bağlantılarınız, API, gruplar) ve plana göre sayıları ve yanıt alınamadığı için iade edilen mesaj sayısı tutulur. Bu toplamlar kimin mesaj gönderdiğini ve mesajların içeriğini içermez; yaklaşık 13 ay sonra otomatik silinir.", EN: "Hanogt AI's daily usage totals: so the team can plan the service's capacity, the number of Hanogt AI messages counted each day, the counts by source (chat, your own connections, the API, groups) and by plan, and the number of messages given back because no answer came are kept. These totals don't include who sent a message or what it said; they are deleted automatically after about 13 months." },
+            { TR: "Yönetici Paneli'nde Hanogt Social: Ekip, Social için yalnızca toplam sayıları (gruplar, sohbetler, açık sesli kanallar, raporlar, AutoMod'un durdurduğu mesajlar ve kurallara göre dağılımı, dosyalar) ve en çok açık raporu olan grupların adlarını görür; bu özette raporlayan, raporlanan veya mesaj gösterilmez.", EN: "Hanogt Social in the Admin Panel: for Social, staff see only totals (groups, chats, live voice channels, reports, messages AutoMod stopped and their split by rule, files) and the names of the groups with the most open reports; no reporter, reported person or message is shown in this summary." },
+        ],
+    },
     {
         version: "5.4",
         date: { TR: "6 Ekim 2026", EN: "6 October 2026" },

@@ -39,6 +39,8 @@ import {
 import { adminPost, adminRequest, type ApiFailure } from "./api";
 import { COMMON } from "./copy";
 import { useAdminResource, useDebouncedValue } from "./hooks";
+import { setAdminParams } from "./navigation";
+import { useCounters } from "./counters";
 import {
     ADMIN_TICKET_QUERY_MAX,
     TICKET_STATUS_FILTERS,
@@ -104,9 +106,24 @@ function noTicket() {
     return null;
 }
 
+const isStatusFilter = (value: string | null): value is TicketStatusFilter => value !== null && (TICKET_STATUS_FILTERS as readonly string[]).includes(value);
+
+/** The status filter lives in the address too (#tickets?status=all), so a reload keeps it. */
+function statusFromHash(): TicketStatusFilter {
+    const hash = window.location.hash.slice(1);
+    const index = hash.indexOf("?");
+    const value = index === -1 ? null : new URLSearchParams(hash.slice(index + 1)).get("status");
+    return isStatusFilter(value) ? value : "active";
+}
+
+function defaultStatus(): TicketStatusFilter {
+    return "active";
+}
+
 function showTicket(id: string | null) {
     if (ticketFromHash() === id) return;
-    window.history.replaceState(null, "", id ? `#tickets?id=${id}` : "#tickets");
+    // Keeps the section's other parameters (its filter) in the address.
+    setAdminParams({ id });
     hashListeners.forEach((listener) => listener());
 }
 
@@ -177,6 +194,7 @@ function toListItem(ticket: AdminTicketDetail): AdminTicketListItem {
         unreadForUser: ticket.unreadForUser,
         appeal: ticket.appeal,
         twoFactorRecovery: ticket.twoFactorRecovery,
+        passwordRecovery: ticket.passwordRecovery,
     };
 }
 
@@ -578,7 +596,9 @@ export default function TicketsSection() {
     const { tx } = useI18n();
     const toast = useToast();
     const errorText = useTicketErrorText();
-    const [status, setStatus] = useState<TicketStatusFilter>("active");
+    const { refresh: refreshCounters } = useCounters();
+    const status = useSyncExternalStore(subscribeHash, statusFromHash, defaultStatus);
+    const setStatus = (next: TicketStatusFilter) => setAdminParams({ status: next === "active" ? null : next, id: null });
     const [category, setCategory] = useState<"all" | StoredTicketCategory>("all");
     const [priority, setPriority] = useState<"all" | TicketPriority>("all");
     const [unreadOnly, setUnreadOnly] = useState(false);
@@ -591,8 +611,9 @@ export default function TicketsSection() {
     const inbox = useAdminResource<AdminTicketsResponse>(path);
     const selectedId = useSyncExternalStore(subscribeHash, ticketFromHash, noTicket);
     const detail = useAdminResource<AdminTicketDetailResponse>(selectedId ? `/api/admin/tickets?id=${selectedId}` : null);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [moreError, setMoreError] = useState<ApiFailure | null>(null);
+    const [more, setMore] = useState<{ key: string | null; busy: boolean; error: ApiFailure | null }>({ key: null, busy: false, error: null });
+    const loadingMore = more.busy && more.key === inbox.dataKey;
+    const moreError = more.key === inbox.dataKey ? more.error : null;
     const [deleteTarget, setDeleteTarget] = useState<AdminTicketListItem | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<ApiFailure | null>(null);
@@ -602,20 +623,26 @@ export default function TicketsSection() {
 
     // Unread tickets first; otherwise the inbox order (latest activity first).
     // Unread first, then priority, then the author's plan (Pro, Plus, Free), then the latest message.
-    const tickets = useMemo(() => [...(inbox.data?.tickets ?? [])].sort(compareInboxTickets), [inbox.data]);
+    // Rows of an earlier filter are only shown (dimmed) while the new one loads, never under its error.
+    const showRows = !inbox.stale || inbox.loading;
+    const tickets = useMemo(() => (showRows ? [...(inbox.data?.tickets ?? [])].sort(compareInboxTickets) : []), [inbox.data, showRows]);
     const selected = detail.data && detail.data.ticket.id === selectedId ? detail.data : null;
     const filtersActive = status !== "active" || category !== "all" || priority !== "all" || unreadOnly || Boolean(query.trim());
 
     const applyTicket = useCallback((ticket: AdminTicketDetail) => {
         mutateDetail((current) => (current.ticket.id === ticket.id ? { ...current, ticket } : current));
         mutateInbox((current) => ({ ...current, tickets: current.tickets.map((item) => (item.id === ticket.id ? toListItem(ticket) : item)) }));
-    }, [mutateDetail, mutateInbox]);
+        // Replies, status changes and reading change what the side bar counts.
+        refreshCounters();
+    }, [mutateDetail, mutateInbox, refreshCounters]);
 
-    // Opening a ticket the author updated marks it as seen by the team.
+    // Opening a ticket the author updated marks it as seen by the team; a newer message
+    // from the author (seen after a refresh) marks it again.
     useEffect(() => {
         const ticket = selected?.ticket;
-        if (!ticket?.unreadForStaff || markedRead.current === ticket.id) return;
-        markedRead.current = ticket.id;
+        const seen = ticket ? `${ticket.id}|${ticket.lastMessageAt ?? ""}` : null;
+        if (!ticket?.unreadForStaff || markedRead.current === seen) return;
+        markedRead.current = seen;
         void adminPost<AdminTicketActionResponse>("/api/admin/tickets", { action: "markRead", id: ticket.id }).then((result) => {
             if (result.ok && result.data.ticket) applyTicket(result.data.ticket);
         });
@@ -623,16 +650,13 @@ export default function TicketsSection() {
 
     const loadMore = async () => {
         const cursor = inbox.data?.nextCursor;
-        if (!cursor) return;
+        // Only a page of the list on screen: not while a new filter loads, nor after it failed.
+        if (!cursor || inbox.loading || inbox.stale) return;
         const forKey = inbox.dataKey;
-        setLoadingMore(true);
-        setMoreError(null);
+        setMore({ key: forKey, busy: true, error: null });
         const result = await adminRequest<AdminTicketsResponse>(`${path}&cursor=${encodeURIComponent(cursor)}`);
-        setLoadingMore(false);
-        if (!result.ok) {
-            setMoreError(result);
-            return;
-        }
+        setMore({ key: forKey, busy: false, error: result.ok ? null : result });
+        if (!result.ok) return;
         mutateInbox((current) => ({
             ...result.data,
             tickets: [...current.tickets, ...result.data.tickets.filter((ticket) => !current.tickets.some((existing) => existing.id === ticket.id))],
@@ -651,6 +675,7 @@ export default function TicketsSection() {
         }
         const removedId = deleteTarget.id;
         mutateInbox((current) => ({ ...current, tickets: current.tickets.filter((ticket) => ticket.id !== removedId) }));
+        refreshCounters();
         showTicket(null);
         setDeleteTarget(null);
         toast("success", tx({ TR: "Talep silindi.", EN: "Ticket deleted." }));
@@ -733,7 +758,7 @@ export default function TicketsSection() {
             ) : (
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
                     <div className={cx(selectedId && "hidden lg:block")}>
-                        {tickets.length === 0 ? (
+                        {inbox.error && !showRows ? null : tickets.length === 0 ? (
                             <EmptyState
                                 icon={Inbox}
                                 title={filtersActive ? tx(COMMON.noResults) : tx({ TR: "Bekleyen talep yok", EN: "No tickets waiting" })}

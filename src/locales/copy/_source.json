@@ -266,6 +266,7 @@
       "src/app/about/page.tsx",
       "src/app/account-settings/page.tsx",
       "src/app/privacy-policy/page.tsx",
+      "src/components/Admin/AdminPanel.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/ChatComposer.tsx",
       "src/components/Plans/PricingSections.tsx",
@@ -298,6 +299,7 @@
     "tr": "Hanogt Social",
     "files": [
       "src/app/about/page.tsx",
+      "src/components/Admin/AdminPanel.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/Plans/PricingSections.tsx",
       "src/components/auth/AuthShell.tsx",
@@ -476,6 +478,7 @@
       "src/app/about/page.tsx",
       "src/app/account-settings/page.tsx",
       "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/SocialSection.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/HanogtAI/AgentCard.tsx",
       "src/components/Social/chat/ForwardDialog.tsx",
@@ -826,7 +829,8 @@
     "tr": "Sistem",
     "files": [
       "src/app/account-settings/page.tsx",
-      "src/app/settings/page.tsx"
+      "src/app/settings/page.tsx",
+      "src/components/Admin/AdminPanel.tsx"
     ]
   },
   "l3cfyvuhz6": {
@@ -1105,6 +1109,7 @@
     "tr": "Sohbet",
     "files": [
       "src/app/account-settings/page.tsx",
+      "src/components/Admin/AiUsageSection.tsx",
       "src/components/Editor/CollabChat.tsx",
       "src/components/HanogtAI/AiSettingsPage.tsx"
     ]
@@ -2336,7 +2341,6 @@
       "src/app/disclosure/page.tsx",
       "src/app/feedback/page.tsx",
       "src/app/privacy-policy/page.tsx",
-      "src/components/Admin/ReportsPanel.tsx",
       "src/components/Admin/TicketsSection.tsx",
       "src/components/Admin/copy.ts",
       "src/components/News/AiRankings.tsx"
@@ -3965,6 +3969,7 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/app/settings/page.tsx",
+      "src/components/Admin/ReportsPanel.tsx",
       "src/components/Editor/ShortcutsDialog.tsx",
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -4763,7 +4768,8 @@
     "en": "Reopen",
     "tr": "Yeniden aç",
     "files": [
-      "src/app/feedback/page.tsx"
+      "src/app/feedback/page.tsx",
+      "src/components/Admin/ReportsPanel.tsx"
     ]
   },
   "1yv7pplw2ui": {
@@ -7656,6 +7662,13 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "gqdilofieu": {
+    "en": "In the Admin Panel's Hanogt Social summary, Hanogt staff see only totals: the numbers of groups, chats, live voice channels, reports, messages AutoMod stopped and files, how AutoMod's stops split by rule, and the names of the groups with the most open reports with their open report counts. This summary doesn't show who reported, who was reported or stopped, or any message content; reports are handled by the group's own owner, admins and moderators.",
+    "tr": "Hanogt ekibi, Yönetici Paneli'nin Hanogt Social özetinde yalnızca toplam sayıları görür: grup, sohbet, açık sesli kanal, rapor, AutoMod'un durdurduğu mesaj ve dosya sayıları, AutoMod durdurmalarının kurallara göre dağılımı ve en çok açık raporu olan grupların adları ile açık rapor sayıları. Bu özette raporlayan, raporlanan veya durdurulan kişi ve mesaj içeriği gösterilmez; raporları grubun kendi sahibi, yöneticileri ve moderatörleri ele alır.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "mlw3622oa6": {
     "en": "Hanogt AI can be used in groups too: when you ask with the /ai command or by mentioning @Hanogt AI in your message, the question (up to 2,000 characters) is passed through our server to Hanogt AI's language model together with the last 12 text messages of the channel you asked in (up to 400 characters each, with their authors' display names; see [Hanogt AI](/privacy-policy#hanogt-ai)). These messages may belong to other members of the group; e-mail addresses are not sent. The question counts against the asker's Hanogt AI message allowance on their plan; if the model can't answer, it is given back. The question and Hanogt AI's answer appear to all members in the group chat and are kept there like other messages. Group owners and admins can switch the Hanogt AI bot off in the group settings; while it is off, none of the group's messages are sent to Hanogt AI. Group messages are not used to train models.",
     "tr": "Hanogt AI gruplarda da kullanılabilir: /ai komutuyla ya da mesajınızda @Hanogt AI diye sorduğunuzda soru (en fazla 2.000 karakter), sorduğunuz kanaldaki son 12 metin mesajıyla birlikte (her biri en fazla 400 karakter, yazarlarının görünen adlarıyla) sunucumuz üzerinden Hanogt AI'ın dil modeline iletilir (bkz. [Hanogt AI](/privacy-policy#hanogt-ai)). Bu mesajlar grubun diğer üyelerine ait olabilir; e-posta adresleri gönderilmez. Soru, soranın planındaki Hanogt AI mesaj hakkından düşer; model yanıt veremezse hak geri verilir. Soru ve Hanogt AI'ın yanıtı grubun sohbetinde, diğer mesajlar gibi tüm üyelere görünür ve orada saklanır. Grup sahibi ve yöneticileri Hanogt AI botunu grup ayarlarından kapatabilir; kapalıyken grubun hiçbir mesajı Hanogt AI'a gönderilmez. Grup mesajları model eğitmek için kullanılmaz.",
@@ -7835,6 +7848,13 @@
   "wssztorikw": {
     "en": "If you press “Notify me when it opens” on the Plans page, which plan you're waiting for (Plus and/or Pro) and the date are recorded and used only to send you an in-app notification about it when plans open. You can withdraw with the same button at any time; this doesn't count as consent to commercial electronic messages.",
     "tr": "Planlar sayfasında “Açılınca haber ver”e basarsanız hangi planı (Plus ve/veya Pro) beklediğiniz ve tarih kaydedilir; planlar açıldığında yalnızca bu konuda uygulama içi bildirim göndermek için kullanılır. Kaydı aynı düğmeyle istediğiniz zaman geri alabilirsiniz; bu, ticari elektronik ileti onayı yerine geçmez.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "2fjbvuhh4gr": {
+    "en": "Hanogt AI's daily usage totals: to plan the service's capacity, we keep the number of Hanogt AI messages counted each day (Türkiye time), how many of them came from each source (chat, your own connections, the API, groups) and plan (Free, Plus, Pro), and how many were given back because the model couldn't answer. These totals don't include who sent a message, any account ID or what a message said; they are statistics that can't be linked to a person and are deleted automatically after about 13 months. Staff see them as daily and weekly charts in the Admin Panel.",
+    "tr": "Hanogt AI'ın günlük kullanım toplamları: Hizmetin kapasitesini planlayabilmek için her gün (Türkiye saatiyle) sayılan Hanogt AI mesajlarının toplamını, bunların kaynağa (sohbet, kendi bağlantılarınız, API, gruplar) ve plana (Ücretsiz, Plus, Pro) göre sayılarını ve model yanıt veremediği için iade edilen mesajların sayısını tutarız. Bu toplamlar kimin mesaj gönderdiğini, hesap kimliğini veya mesajların içeriğini içermez; kişiyle ilişkilendirilemeyen istatistiklerdir ve yaklaşık 13 ay sonra otomatik silinir. Ekip bunları Yönetici Paneli'nde günlük ve haftalık grafikler olarak görür.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -9118,6 +9138,20 @@
   "118u7a1i6ow": {
     "en": "Not stored on our servers; kept in your browser until you delete them",
     "tr": "Sunucularımızda saklanmaz; tarayıcınızda siz silene kadar",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "1o0x7z994q": {
+    "en": "Hanogt AI's daily usage totals (without anyone's details)",
+    "tr": "Hanogt AI'ın günlük kullanım toplamları (kişi bilgisi olmadan)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "19nlku7td6j": {
+    "en": "About 13 months (400 days), then deleted automatically",
+    "tr": "Yaklaşık 13 ay (400 gün); ardından otomatik silinir",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -13957,6 +13991,15 @@
       "src/components/Account/TwoFactorSettings.tsx"
     ]
   },
+  "19sr3wbk9yi": {
+    "en": "General",
+    "tr": "Genel",
+    "files": [
+      "src/components/Admin/AdminPanel.tsx",
+      "src/components/Groups/workspace/SettingsDialog.tsx",
+      "src/components/HanogtAI/chat-copy.ts"
+    ]
+  },
   "18tpci2jt91": {
     "en": "Overview",
     "tr": "Genel Bakış",
@@ -13965,11 +14008,20 @@
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
-  "6qi1qrb2sq": {
-    "en": "Numbers and recent activity",
-    "tr": "Sayılar ve son hareketler",
+  "r6ikv6qaka": {
+    "en": "Trends and waiting work",
+    "tr": "Gidişat ve bekleyen işler",
     "files": [
       "src/components/Admin/AdminPanel.tsx"
+    ]
+  },
+  "101uqdfz74n": {
+    "en": "Community",
+    "tr": "Topluluk",
+    "files": [
+      "src/components/Admin/AdminPanel.tsx",
+      "src/lib/faq.ts",
+      "src/lib/nav.ts"
     ]
   },
   "1h22cey1h7i": {
@@ -13996,9 +14048,16 @@
       "src/components/Admin/ModerationSection.tsx"
     ]
   },
-  "1rsadncjo1k": {
-    "en": "Reports, comments, Arcade",
-    "tr": "Bildirimler, yorumlar, Arcade",
+  "h1hm7dgeju": {
+    "en": "Media, news comments, Arcade",
+    "tr": "Media, haber yorumları, Arcade",
+    "files": [
+      "src/components/Admin/AdminPanel.tsx"
+    ]
+  },
+  "kx2eh2usdu": {
+    "en": "Groups, reports, AutoMod",
+    "tr": "Gruplar, raporlar, AutoMod",
     "files": [
       "src/components/Admin/AdminPanel.tsx"
     ]
@@ -14025,17 +14084,16 @@
       "src/components/Admin/AdminPanel.tsx"
     ]
   },
-  "6i0c9om4at": {
-    "en": "Announcements",
-    "tr": "Duyurular",
+  "1ygjyqc7vxk": {
+    "en": "Products",
+    "tr": "Ürünler",
     "files": [
-      "src/components/Admin/AdminPanel.tsx",
-      "src/components/Admin/AnnouncementsSection.tsx"
+      "src/components/Admin/AdminPanel.tsx"
     ]
   },
-  "1yfgwau5xsa": {
-    "en": "Site-wide notice bar",
-    "tr": "Site geneli bildirim çubuğu",
+  "7bnuee1vxk": {
+    "en": "Usage and limits",
+    "tr": "Kullanım ve sınırlar",
     "files": [
       "src/components/Admin/AdminPanel.tsx"
     ]
@@ -14051,6 +14109,21 @@
   "193hn9tlr7d": {
     "en": "Prices, coupons, plans, AI limits",
     "tr": "Fiyat, kupon, plan ve AI sınırı",
+    "files": [
+      "src/components/Admin/AdminPanel.tsx"
+    ]
+  },
+  "6i0c9om4at": {
+    "en": "Announcements",
+    "tr": "Duyurular",
+    "files": [
+      "src/components/Admin/AdminPanel.tsx",
+      "src/components/Admin/AnnouncementsSection.tsx"
+    ]
+  },
+  "1yfgwau5xsa": {
+    "en": "Site-wide notice bar",
+    "tr": "Site geneli bildirim çubuğu",
     "files": [
       "src/components/Admin/AdminPanel.tsx"
     ]
@@ -14135,6 +14208,268 @@
     "tr": "Panelden yapılan her değişiklik denetim kaydına yazılır.",
     "files": [
       "src/components/Admin/AdminPanel.tsx"
+    ]
+  },
+  "112bg1d1935": {
+    "en": "Last 7 days",
+    "tr": "Son 7 gün",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "xmleln5thn": {
+    "en": "Last 30 days",
+    "tr": "Son 30 gün",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "146ul6l9afw": {
+    "en": "Last 13 weeks",
+    "tr": "Son 13 hafta",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "2g2n2dqwhe2": {
+    "en": "Own connections",
+    "tr": "Kendi bağlantılar",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "kdazrvuj31": {
+    "en": "Developer API",
+    "tr": "Geliştirici API'si",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "1wduogczyvk": {
+    "en": "Bot in groups",
+    "tr": "Gruplardaki bot",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "223uphejabz": {
+    "en": "Free",
+    "tr": "Ücretsiz",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/lib/plans.ts"
+    ]
+  },
+  "1iz6qm1wzqj": {
+    "en": "Plus",
+    "tr": "Plus",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/lib/plans.ts"
+    ]
+  },
+  "jbd3t30gtm": {
+    "en": "Pro",
+    "tr": "Pro",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/lib/plans.ts"
+    ]
+  },
+  "272jv2h6tl": {
+    "en": "Message counts, unanswered messages, sources and plans. Only totals are kept.",
+    "tr": "Mesaj sayıları, yanıt verilemeyenler, kaynaklar ve planlar. Yalnızca toplamlar tutulur.",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "263tj1nqm5u": {
+    "en": "Time range",
+    "tr": "Zaman aralığı",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "53zdxleh2m": {
+    "en": "Days in Türkiye time",
+    "tr": "Günler Türkiye saatine göre",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "251zpl7g0he": {
+    "en": "Hanogt AI's model is connected",
+    "tr": "Hanogt AI modeli bağlı",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "sr72flgb1f": {
+    "en": "No model connected",
+    "tr": "Model bağlı değil",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "1zys8icc0h6": {
+    "en": "Until HANOGT_AI_* is set, the Core in the browser answers signed-in people; those answers aren't counted.",
+    "tr": "HANOGT_AI_* ayarlanana kadar giriş yapan kişilere tarayıcıdaki Çekirdek yanıt veriyor; bu yanıtlar sayılmaz.",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "oubiuwypyk": {
+    "en": "Daily totals started with this release; they will show up here with the first messages.",
+    "tr": "Günlük toplamlar bu sürümle tutulmaya başladı; ilk mesajlarla burada görünecek.",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "20sgm41acdc": {
+    "en": "Messages",
+    "tr": "Mesajlar",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Social/SocialSettings.tsx",
+      "src/lib/nav.ts"
+    ]
+  },
+  "nrkn3p5pjf": {
+    "en": "No messages in the period before",
+    "tr": "Önceki dönemde mesaj yok",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "2b9dnvp4nis": {
+    "en": "vs the period before",
+    "tr": "önceki döneme göre",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "1ik4x08e5tq": {
+    "en": "Couldn't be answered",
+    "tr": "Yanıt verilemeyen",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "yqeqlzbcdw": {
+    "en": "{rate}% of messages; given back",
+    "tr": "Mesajların %{rate}'i; hakları geri verildi",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "g3gc0ufpxw": {
+    "en": "They are given back",
+    "tr": "Hakları geri verilir",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "1hjn7a3i2hn": {
+    "en": "Daily average",
+    "tr": "Günlük ortalama",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "23lz87ihnki": {
+    "en": "Busiest week",
+    "tr": "En yoğun hafta",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "1vk5b1xse2n": {
+    "en": "Busiest day",
+    "tr": "En yoğun gün",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "aabqoy9y4p": {
+    "en": "Chat, own connections, the API and the bot in groups together.",
+    "tr": "Sohbet, kendi bağlantılar, API ve gruplardaki bot birlikte.",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "1itj1hbpw57": {
+    "en": "By source",
+    "tr": "Kaynaklara göre",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "224ycchzwj7": {
+    "en": "No messages in this period.",
+    "tr": "Bu dönemde mesaj yok.",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "cpug37mdpl": {
+    "en": "By plan",
+    "tr": "Planlara göre",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "1vu1zewqqnz": {
+    "en": "Plan limits",
+    "tr": "Plan sınırları",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "3ai6y7ke86": {
+    "en": "The chat, own connections, the API and groups share one allowance.",
+    "tr": "Sohbet, kendi bağlantılar, API ve gruplar aynı haktan düşer.",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "vctgr5r3d9": {
+    "en": "Plan",
+    "tr": "Plan",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/Admin/PaddleCard.tsx",
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "6g6dmrn9ev": {
+    "en": "Window",
+    "tr": "Süre",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "w4s5a23ay4": {
+    "en": "Per minute",
+    "tr": "Dakikada",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx"
+    ]
+  },
+  "bel04o6r4": {
+    "en": "{days} days",
+    "tr": "{days} gün",
+    "files": [
+      "src/components/Admin/AiUsageSection.tsx",
+      "src/components/HanogtAI/AiSettingsPage.tsx",
+      "src/components/HanogtAI/UsageMeter.tsx"
     ]
   },
   "1lb17duvreh": {
@@ -14389,7 +14724,9 @@
     "en": "Switch off",
     "tr": "Duyuruyu kapat",
     "files": [
-      "src/components/Admin/AnnouncementsSection.tsx"
+      "src/components/Admin/AnnouncementsSection.tsx",
+      "src/components/Admin/FeaturesCard.tsx",
+      "src/components/Admin/PlansSection.tsx"
     ]
   },
   "1k51gmed2wc": {
@@ -14553,9 +14890,9 @@
       "src/components/Admin/AuditLogSection.tsx"
     ]
   },
-  "ilvv6yyb5z": {
-    "en": "Every change made by staff: who changed what, and when (newest 200).",
-    "tr": "Ekibin yaptığı her değişiklik: kim, ne zaman, neyi değiştirdi (en yeni 200 kayıt).",
+  "t6anpgnj1c": {
+    "en": "Every change made by staff: who changed what, and when (newest first).",
+    "tr": "Ekibin yaptığı her değişiklik: kim, ne zaman, neyi değiştirdi (en yeniler önce).",
     "files": [
       "src/components/Admin/AuditLogSection.tsx"
     ]
@@ -14600,6 +14937,41 @@
     "tr": "Panelden yapılan her değişiklik burada kalıcı olarak listelenir.",
     "files": [
       "src/components/Admin/AuditLogSection.tsx"
+    ]
+  },
+  "26j39q6aidc": {
+    "en": "Show as a table",
+    "tr": "Tablo olarak göster",
+    "files": [
+      "src/components/Admin/charts.tsx"
+    ]
+  },
+  "1xyg54inl0n": {
+    "en": "Show as a chart",
+    "tr": "Grafik olarak göster",
+    "files": [
+      "src/components/Admin/charts.tsx"
+    ]
+  },
+  "71odggiyli": {
+    "en": "This data couldn't be read right now.",
+    "tr": "Bu veri şu an okunamadı.",
+    "files": [
+      "src/components/Admin/charts.tsx"
+    ]
+  },
+  "2dbh8x9y8de": {
+    "en": "Period",
+    "tr": "Dönem",
+    "files": [
+      "src/components/Admin/charts.tsx"
+    ]
+  },
+  "2ecwogqlveu": {
+    "en": "Use the arrow keys to move between columns.",
+    "tr": "Sütunlar arasında ok tuşlarıyla gezinebilirsiniz.",
+    "files": [
+      "src/components/Admin/charts.tsx"
     ]
   },
   "knxual5uhc": {
@@ -16563,6 +16935,20 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "llm29uic5": {
+    "en": "The expiry date must be after today and at most 5 years ahead.",
+    "tr": "Son kullanma tarihi bugünden sonra ve en çok 5 yıl içinde olmalıdır.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "16bz2f8jxm7": {
+    "en": "An expired coupon can't be sent to Paddle; restore it with a new expiry date first.",
+    "tr": "Süresi dolmuş bir kupon Paddle'a gönderilemez; önce yeni bir son kullanma tarihiyle geri yükleyin.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "2gk2f3ip3pv": {
     "en": "Invalid search.",
     "tr": "Arama ifadesi geçersiz.",
@@ -16801,6 +17187,7 @@
     "tr": "Daha fazla yükle",
     "files": [
       "src/components/Admin/copy.ts",
+      "src/components/Admin/ui.tsx",
       "src/components/Social/chat/ExpressionPicker.tsx"
     ]
   },
@@ -17042,6 +17429,20 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "83m6wcrvfr": {
+    "en": "Too many wrong verification codes",
+    "tr": "Çok sayıda hatalı doğrulama kodu",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "paotuiodk7": {
+    "en": "Unverified password removed",
+    "tr": "Doğrulanmamış şifre kaldırıldı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "r2ymocpw9z": {
     "en": "Account suspended",
     "tr": "Hesap askıya alındı",
@@ -17087,6 +17488,13 @@
   "96acgqhc4l": {
     "en": "Report dismissed",
     "tr": "Bildirim reddedildi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "2cew0iduyso": {
+    "en": "Report reopened",
+    "tr": "Bildirim yeniden açıldı",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -17522,16 +17930,6 @@
       "src/components/Admin/copy.ts"
     ]
   },
-  "20sgm41acdc": {
-    "en": "Messages",
-    "tr": "Mesaj sayısı",
-    "files": [
-      "src/components/Admin/copy.ts",
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Social/SocialSettings.tsx",
-      "src/lib/nav.ts"
-    ]
-  },
   "27qxkrzaey0": {
     "en": "Paddle customer",
     "tr": "Paddle müşterisi",
@@ -17697,6 +18095,20 @@
   "1t5eheg4pyb": {
     "en": "Not changed yet; the defaults apply.",
     "tr": "Henüz değiştirilmedi; varsayılanlar geçerli.",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "100gxbpu8xq": {
+    "en": "Switch {feature} off?",
+    "tr": "{feature} kapatılsın mı?",
+    "files": [
+      "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "14rc0a1xfmi": {
+    "en": "The feature switches off within a minute for everyone, including people using it now. You can open it again at any time.",
+    "tr": "Özellik, şu an kullananlar dahil herkes için bir dakika içinde kapanır. İstediğiniz zaman yeniden açabilirsiniz.",
     "files": [
       "src/components/Admin/FeaturesCard.tsx"
     ]
@@ -17915,13 +18327,6 @@
       "src/components/Admin/NewsCommentsPanel.tsx"
     ]
   },
-  "8ponq469z5": {
-    "en": "The 100 newest comments",
-    "tr": "En yeni 100 yorum",
-    "files": [
-      "src/components/Admin/NewsCommentsPanel.tsx"
-    ]
-  },
   "uri8hsdnc6": {
     "en": "No news comments yet",
     "tr": "Henüz haber yorumu yok",
@@ -17936,59 +18341,137 @@
       "src/components/Admin/NewsCommentsPanel.tsx"
     ]
   },
-  "z4o2dy26a5": {
-    "en": "Open reports",
-    "tr": "Açık bildirimler",
+  "1c1vabm7v3c": {
+    "en": "New sign-ups",
+    "tr": "Yeni kayıtlar",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "1t5ftgnaugi": {
+    "en": "Hanogt AI messages",
+    "tr": "Hanogt AI mesajları",
     "files": [
       "src/components/Admin/OverviewSection.tsx",
-      "src/components/Groups/workspace/SafetySettings.tsx"
+      "src/components/Plans/PricingSections.tsx"
     ]
   },
-  "uz7l298ea4": {
-    "en": "Media moderation queue",
-    "tr": "Media moderasyon kuyruğu",
+  "yrmedwl0cq": {
+    "en": "Messages AutoMod stopped",
+    "tr": "AutoMod'un durdurduğu mesajlar",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "cvnw8q0qzf": {
+    "en": "vs the 7 days before",
+    "tr": "önceki 7 güne göre",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
-  "1r9q51q4uob": {
-    "en": "Open feedback",
-    "tr": "Açık geri bildirimler",
+  "2ds1fzovgqj": {
+    "en": "vs the 30 days before",
+    "tr": "önceki 30 güne göre",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
-  "gu6aixnytd": {
-    "en": "Waiting for an answer",
-    "tr": "Yanıt bekleyenler",
+  "o900y29yyu": {
+    "en": "vs the 13 weeks before",
+    "tr": "önceki 13 haftaya göre",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
-  "10z5a5i6jmz": {
-    "en": "Security events",
-    "tr": "Güvenlik olayları",
+  "1qxa5hruezt": {
+    "en": "Open content reports",
+    "tr": "Açık içerik bildirimleri",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
-  "112bg1d1935": {
-    "en": "Last 7 days",
-    "tr": "Son 7 gün",
+  "2cmssrg0nb4": {
+    "en": "Open support tickets",
+    "tr": "Açık destek talepleri",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
-  "tzpouapk0w": {
-    "en": "Registered accounts",
-    "tr": "Kayıtlı hesaplar",
+  "14gxlqxognc": {
+    "en": "Feedback waiting for an answer",
+    "tr": "Yanıt bekleyen geri bildirimler",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
   },
-  "1hajn6vog2k": {
-    "en": "The platform at a glance: pending work and recent activity.",
-    "tr": "Platformun anlık durumu, bekleyen işler ve son hareketler.",
+  "24nwnk2hmel": {
+    "en": "How the platform is moving, pending work and recent activity.",
+    "tr": "Platformun gidişatı, bekleyen işler ve son hareketler.",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "y2q9kdek7f": {
+    "en": "Pick a measure",
+    "tr": "Gösterge seç",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "2190dvtwaz7": {
+    "en": "Week by week, {range}",
+    "tr": "Hafta hafta, {range}",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "1hv3p0rzbnw": {
+    "en": "Day by day, {range}",
+    "tr": "Gün gün, {range}",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "f0cn3vm3ng": {
+    "en": "Chat, own connections, the API and groups together; details in the Hanogt AI section.",
+    "tr": "Sohbet, kendi bağlantılar, API ve gruplar birlikte; ayrıntı Hanogt AI bölümünde.",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "wiglclxi9o": {
+    "en": "Group messages that broke an AutoMod rule and weren't sent.",
+    "tr": "Grupların AutoMod kurallarına takılıp gönderilmeyen mesajlar.",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "7q5enyo990": {
+    "en": "Code runs and publications the security scan blocked.",
+    "tr": "Güvenlik taramasının engellediği kod çalıştırma ve yayın istekleri.",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "8m2q0t122w": {
+    "en": "New accounts opened.",
+    "tr": "Açılan yeni hesaplar.",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "ud5z9newcw": {
+    "en": "Waiting for you",
+    "tr": "Bekleyen işler",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "29pr4hypno6": {
+    "en": "Totals",
+    "tr": "Toplamlar",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
@@ -18038,6 +18521,13 @@
   "5aaxj2gyik": {
     "en": "Recent security events",
     "tr": "Son güvenlik olayları",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
+  "205za8atz1q": {
+    "en": "Blocked risky requests and account alerts",
+    "tr": "Engellenen riskli istekler ve hesap uyarıları",
     "files": [
       "src/components/Admin/OverviewSection.tsx"
     ]
@@ -18537,15 +19027,6 @@
     "tr": "Canlıya geçerken her sandbox fiyatının canlıdaki karşılığını buradan izleyin. Salt okunur: düzenleme yalnızca etkin ortam ({env}) için yapılır.",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
-    ]
-  },
-  "vctgr5r3d9": {
-    "en": "Plan",
-    "tr": "Plan",
-    "files": [
-      "src/components/Admin/PaddleCard.tsx",
-      "src/components/Admin/PlansSection.tsx",
-      "src/components/Admin/copy.ts"
     ]
   },
   "1x7ciqoejyj": {
@@ -20072,6 +20553,27 @@
       "src/components/Admin/PaddleCard.tsx"
     ]
   },
+  "kwtgpcyj40": {
+    "en": "Close sales?",
+    "tr": "Satışlar kapatılsın mı?",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "ihw7az7thy": {
+    "en": "The buy buttons leave the Plans page and no new checkout can start. Existing subscriptions and renewals aren't affected; you can open sales again at any time.",
+    "tr": "Planlar sayfasında satın alma düğmeleri kalkar ve yeni ödeme başlatılamaz. Mevcut abonelikler ve yenilemeler etkilenmez; satışları istediğiniz zaman yeniden açabilirsiniz.",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "48mkzedvz": {
+    "en": "Close sales",
+    "tr": "Satışları kapat",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
   "1lfulyfqc4d": {
     "en": "Legal name",
     "tr": "Yasal ad",
@@ -20159,6 +20661,20 @@
   "12twreaz2mw": {
     "en": "name@hs01.kep.tr",
     "tr": "ornek@hs01.kep.tr",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "2721ttdqv3n": {
+    "en": "Remove this subscription from the list?",
+    "tr": "Bu abonelik listeden kaldırılsın mı?",
+    "files": [
+      "src/components/Admin/PaddleCard.tsx"
+    ]
+  },
+  "266bx9cye0r": {
+    "en": "Only this record is deleted; the subscription and its payments in Paddle don't change. Its benefits go to no one unless it is linked to an account.",
+    "tr": "Yalnızca buradaki kayıt silinir; Paddle'daki abonelik ve ödemeleri değişmez. Bir hesaba bağlanmadıkça avantajları kimseye verilmez.",
     "files": [
       "src/components/Admin/PaddleCard.tsx"
     ]
@@ -20855,6 +21371,48 @@
       "src/components/Admin/PlansSection.tsx"
     ]
   },
+  "1bljj3bw3p7": {
+    "en": "Block plan use for {email}?",
+    "tr": "{email} için plan kullanımı engellensin mi?",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "gmr66lfh21": {
+    "en": "Plan benefits, paid ones included, are switched off until the block is lifted. Tell the person why and keep the appeal route open.",
+    "tr": "Plan avantajları, ücretli olanlar dahil, engel kaldırılana kadar kapanır. Kişiye gerekçesi bildirilmeli ve itiraz yolu açık tutulmalıdır.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "11vghkwj5qr": {
+    "en": "Move {email} to Free?",
+    "tr": "{email} Ücretsiz plana alınsın mı?",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "1jatm9vdmj2": {
+    "en": "The plan the team assigned is removed and they go back to Free plan limits. A paid Paddle subscription, if any, isn't affected.",
+    "tr": "Ekibin tanımladığı plan kaldırılır ve kişi Ücretsiz plan sınırlarına döner. Ücretli bir Paddle aboneliği varsa o etkilenmez.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "13z2v5hzq0t": {
+    "en": "Switch off the {code} coupon?",
+    "tr": "{code} kuponu kapatılsın mı?",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
+  "rebl2oknn5": {
+    "en": "The coupon stops working for new purchases and its Paddle discount is archived. You can switch it back on at any time.",
+    "tr": "Kupon yeni satın almalarda geçersiz olur ve Paddle'daki indirimi arşivlenir. İstediğiniz zaman yeniden açabilirsiniz.",
+    "files": [
+      "src/components/Admin/PlansSection.tsx"
+    ]
+  },
   "1tokq5gpwdk": {
     "en": "Block lifted.",
     "tr": "Engel kaldırıldı.",
@@ -21016,6 +21574,28 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "st4gsntvyz": {
+    "en": "Published",
+    "tr": "Yayında",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "4z1wt245nn": {
+    "en": "Hidden",
+    "tr": "Gizli",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "1jaraasa6f2": {
+    "en": "Draft",
+    "tr": "Taslak",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
   "gu65yno1pw": {
     "en": "Post code",
     "tr": "Gönderi kodu",
@@ -21048,9 +21628,23 @@
       "src/components/Social/group/GroupView.tsx"
     ]
   },
-  "1908nr52vqa": {
-    "en": "{count} reports on this post",
-    "tr": "Bu gönderiye {count} bildirim",
+  "1f87xxmlmo6": {
+    "en": "Only the start of the file is shown.",
+    "tr": "Dosyanın yalnızca başı gösteriliyor.",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "2a8m766j2wl": {
+    "en": "{count} reports on this post in all",
+    "tr": "Bu gönderiye toplam {count} bildirim",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "211rr1kygof": {
+    "en": "{count} open reports on this post",
+    "tr": "Bu gönderiye {count} açık bildirim",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
     ]
@@ -21108,6 +21702,13 @@
       "src/components/Admin/ReportsPanel.tsx"
     ]
   },
+  "1lctm0w3t9g": {
+    "en": "Report reopened and back in the queue.",
+    "tr": "Bildirim yeniden açıldı ve kuyruğa döndü.",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
   "1ng9bbd7w2l": {
     "en": "Report closed as resolved.",
     "tr": "Bildirim çözüldü olarak kapatıldı.",
@@ -21139,6 +21740,13 @@
   "8f3r9aw75y": {
     "en": "Report status",
     "tr": "Bildirim durumu",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "1n5gthcpfk5": {
+    "en": "Category (loaded)",
+    "tr": "Kategori (yüklenenler)",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
     ]
@@ -21206,9 +21814,9 @@
       "src/components/Admin/ReportsPanel.tsx"
     ]
   },
-  "24kasjt0264": {
-    "en": "Requests blocked by the security scanner (read-only, newest 200).",
-    "tr": "Güvenlik taramasının engellediği istekler (salt okunur, en yeni 200 kayıt).",
+  "13ftc6sip42": {
+    "en": "Requests blocked by the security scanner and account security alerts (read-only, newest first).",
+    "tr": "Güvenlik taramasının engellediği istekler ve hesap güvenliği uyarıları (salt okunur, en yeniler önce).",
     "files": [
       "src/components/Admin/SecurityEventsSection.tsx"
     ]
@@ -21285,6 +21893,119 @@
     "tr": "İnceleme bekliyor",
     "files": [
       "src/components/Admin/SecurityEventsSection.tsx"
+    ]
+  },
+  "3vnvfc3l6b": {
+    "en": "Direct chats",
+    "tr": "Birebir sohbetler",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "1v7y9y3rb9q": {
+    "en": "Voice channels live now",
+    "tr": "Şu an açık sesli kanallar",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "1y78493mftq": {
+    "en": "Open group reports",
+    "tr": "Açık grup raporları",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "1a82bu69voe": {
+    "en": "{count} in all (kept 180 days)",
+    "tr": "Toplam {count} (180 gün saklanır)",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "1uylayi2lrl": {
+    "en": "Last 90 days",
+    "tr": "Son 90 gün",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "1u520zk80f9": {
+    "en": "Files in messages",
+    "tr": "Mesajlardaki dosyalar",
+    "files": [
+      "src/components/Admin/SocialSection.tsx",
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
+  "1wvm5kzq7xq": {
+    "en": "{size} in all (in Firestore)",
+    "tr": "Toplam {size} (Firestore'da)",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "100dg2lphe2": {
+    "en": "Groups, voice channels, reports, AutoMod and files: numbers only.",
+    "tr": "Gruplar, sesli kanallar, raporlar, AutoMod ve dosyalar: yalnızca sayılar.",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "3ay5xnxzr2": {
+    "en": "Group reports and AutoMod records belong to each group's own moderators. Only the numbers show here; no message, reporter or reported person is shown.",
+    "tr": "Grup raporları ve AutoMod kayıtları grupların kendi moderatörlerine aittir. Burada yalnızca sayılar görünür; mesajlar, raporlayan ve raporlanan kişiler gösterilmez.",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "r5xfdh7pff": {
+    "en": "By AutoMod rule",
+    "tr": "AutoMod kurallarına göre",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "v1m4hx8zl3": {
+    "en": "Messages stopped in the last 90 days",
+    "tr": "Son 90 günde durdurulan mesajlar",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "2b818invzb7": {
+    "en": "AutoMod stopped no messages in the last 90 days.",
+    "tr": "AutoMod son 90 günde mesaj durdurmadı.",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "mndgj0eniv": {
+    "en": "Groups with the most reports",
+    "tr": "En çok rapor alan gruplar",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "1wnaln4436c": {
+    "en": "Open /report records",
+    "tr": "Açık /rapor kayıtları",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "lcil84cxq": {
+    "en": "No open group reports",
+    "tr": "Açık grup raporu yok",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "15xf54sj7ko": {
+    "en": "Numbers are cached for a minute; Refresh counts again.",
+    "tr": "Sayılar bir dakikalığına önbellekte tutulur; Yenile yeniden sayar.",
+    "files": [
+      "src/components/Admin/SocialSection.tsx"
     ]
   },
   "6lm0aioqad": {
@@ -21662,6 +22383,13 @@
     "tr": "Talep ve tüm konuşması kalıcı olarak silinir; kullanıcı da artık göremez. Silme işlemi denetim kaydına yazılır.",
     "files": [
       "src/components/Admin/TicketsSection.tsx"
+    ]
+  },
+  "2gn0mf36b10": {
+    "en": "Showing {shown} of {total}",
+    "tr": "{shown} / {total} gösteriliyor",
+    "files": [
+      "src/components/Admin/ui.tsx"
     ]
   },
   "hgmxk33r1w": {
@@ -23016,6 +23744,62 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "ubizwndx2d": {
+    "en": "A renewed Admin Panel",
+    "tr": "Yönetici Paneli yenilendi",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "cryxbgdzmz": {
+    "en": "The team's panel has a new look, charts and summary pages for Hanogt Social and Hanogt AI; lists load page by page and many bugs are fixed.",
+    "tr": "Ekibin paneli yeni bir görünüm, grafikler ve Hanogt Social ile Hanogt AI için özet sayfaları aldı; listeler sayfa sayfa yükleniyor ve birçok hata düzeltildi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1mna8tf01r0": {
+    "en": "A sidebar with product logos and live badges for waiting work; sections, tabs and filters stay in the address.",
+    "tr": "Ürün logolu kenar çubuğu ve bekleyen işler için canlı rozetler; bölüm, sekme ve filtreler adreste kalır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1t6a1uy7tch": {
+    "en": "Charts on the overview: sign-ups, Hanogt AI messages, security events and AutoMod; 7, 30 and 90 days.",
+    "tr": "Genel bakışta grafikler: kayıtlar, Hanogt AI mesajları, güvenlik olayları ve AutoMod; 7, 30 ve 90 gün.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2f0s712bc9l": {
+    "en": "Hanogt Social and Hanogt AI pages: totals only, without showing anyone.",
+    "tr": "Hanogt Social ve Hanogt AI sayfaları: yalnızca toplamlar, kimseyi göstermeden.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "e3rorgt91k": {
+    "en": "“Load more” and “Refresh” in every list; searches find older records too.",
+    "tr": "Her listede “Daha fazla yükle” ve “Yenile”; aramalar eski kayıtlarda da bulur.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1jaj8d72tuy": {
+    "en": "Fixes for confirmations, coupon dates, people search, the announcement limit and more.",
+    "tr": "Onay pencereleri, kupon tarihi, kişi araması ve duyuru sınırı gibi hatalar düzeltildi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1izuhud7puv": {
+    "en": "Privacy Policy 5.5.",
+    "tr": "Gizlilik Politikası 5.5.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "1qhvoi8p9oj": {
@@ -28046,13 +28830,6 @@
   "13q4vf0hyjw": {
     "en": "Publish to Arcade",
     "tr": "Arcade'de yayınla",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "st4gsntvyz": {
-    "en": "Published",
-    "tr": "Yayında",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -34854,6 +35631,13 @@
       "src/components/Groups/workspace/SafetySettings.tsx"
     ]
   },
+  "z4o2dy26a5": {
+    "en": "Open reports",
+    "tr": "Açık raporlar",
+    "files": [
+      "src/components/Groups/workspace/SafetySettings.tsx"
+    ]
+  },
   "ly8uu3n8nz": {
     "en": "No open reports. Members can report with /report @person reason.",
     "tr": "Açık rapor yok. Üyeler /rapor @kişi sebep ile bildirebilir.",
@@ -34945,14 +35729,6 @@
     "files": [
       "src/components/Groups/workspace/SettingsDialog.tsx",
       "src/components/Social/GroupSidebar.tsx"
-    ]
-  },
-  "19sr3wbk9yi": {
-    "en": "General",
-    "tr": "Genel",
-    "files": [
-      "src/components/Groups/workspace/SettingsDialog.tsx",
-      "src/components/HanogtAI/chat-copy.ts"
     ]
   },
   "6ncr4z9dl3": {
@@ -38603,14 +39379,6 @@
     "tr": "Süresiz",
     "files": [
       "src/components/HanogtAI/AiSettingsPage.tsx"
-    ]
-  },
-  "bel04o6r4": {
-    "en": "{days} days",
-    "tr": "{days} gün",
-    "files": [
-      "src/components/HanogtAI/AiSettingsPage.tsx",
-      "src/components/HanogtAI/UsageMeter.tsx"
     ]
   },
   "kmnrvrfbdr": {
@@ -44201,13 +44969,6 @@
       "src/components/Plans/PricingSections.tsx"
     ]
   },
-  "1t5ftgnaugi": {
-    "en": "Hanogt AI messages",
-    "tr": "Hanogt AI mesajı",
-    "files": [
-      "src/components/Plans/PricingSections.tsx"
-    ]
-  },
   "2daew7kvlno": {
     "en": "{count} / {days} days",
     "tr": "{count} / {days} gün",
@@ -44335,13 +45096,6 @@
   "1x666s4prat": {
     "en": "{size} MB · {count} files",
     "tr": "{size} MB · {count} dosya",
-    "files": [
-      "src/components/Plans/PricingSections.tsx"
-    ]
-  },
-  "1u520zk80f9": {
-    "en": "Files in messages",
-    "tr": "Mesajlarda dosya gönderme",
     "files": [
       "src/components/Plans/PricingSections.tsx"
     ]
@@ -50919,9 +51673,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "104jypgxa61": {
-    "en": "The **Admin Panel** is only for the Hanogt team; the menu shows it to staff only, and every action is authorised on the server and written to an **audit log**:\n• **Moderator:** moderation queues (reported content, news comments), feedback, support tickets, statistics, security events and the audit log.\n• **Admin:** additionally user management (suspension, roles), site announcements and reasoned 2FA resets for locked-out users.\n• **Owner:** the founder accounts; full access, they grant and revoke admins.\nStaff show a role badge on their profile. Roles are stored on the server and nobody can give themselves one; Hanogt AI never performs admin actions either. To reach the team, open a [support ticket](/feedback).",
-    "tr": "**Yönetici Paneli** yalnızca Hanogt ekibine açıktır; menüde yalnızca yetkililere görünür ve her işlem sunucuda yetki denetiminden geçip **denetim kaydına** yazılır:\n• **Moderatör:** moderasyon kuyrukları (bildirilen içerik, haber yorumları), geri bildirimler, destek talepleri, istatistikler, güvenlik olayları ve denetim kaydı.\n• **Yönetici:** bunlara ek olarak kullanıcı yönetimi (askıya alma, rol), site duyuruları ve kilitlenen kullanıcılar için gerekçeli 2FA sıfırlama.\n• **Sahip:** kurucu hesaplar; tüm yetkiler, yöneticileri atar veya alır.\nYetkililerin profilinde rol rozeti görünür. Roller sunucuda saklanır, kimse kendine rol veremez; Hanogt AI da yönetici işlemi yapmaz. Bir sorunu ekibe iletmek için [destek talebi](/feedback) aç.",
+  "2dx10qppbn2": {
+    "en": "The **Admin Panel** is only for the Hanogt team; the menu shows it to staff only, and every action is authorised on the server and written to an **audit log**:\n• **Moderator:** moderation queues (reported content, news comments), feedback, support tickets, statistics and charts, the Hanogt Social and Hanogt AI summaries (totals only, without showing anyone), security events and the audit log.\n• **Admin:** additionally user management (suspension, roles), site announcements and reasoned 2FA resets for locked-out users.\n• **Owner:** the founder accounts; full access, they grant and revoke admins.\nStaff show a role badge on their profile. Roles are stored on the server and nobody can give themselves one; Hanogt AI never performs admin actions either. To reach the team, open a [support ticket](/feedback).",
+    "tr": "**Yönetici Paneli** yalnızca Hanogt ekibine açıktır; menüde yalnızca yetkililere görünür ve her işlem sunucuda yetki denetiminden geçip **denetim kaydına** yazılır:\n• **Moderatör:** moderasyon kuyrukları (bildirilen içerik, haber yorumları), geri bildirimler, destek talepleri, istatistikler ve grafikler, Hanogt Social ve Hanogt AI özetleri (yalnızca toplam sayılar, kimseyi göstermeden), güvenlik olayları ve denetim kaydı.\n• **Yönetici:** bunlara ek olarak kullanıcı yönetimi (askıya alma, rol), site duyuruları ve kilitlenen kullanıcılar için gerekçeli 2FA sıfırlama.\n• **Sahip:** kurucu hesaplar; tüm yetkiler, yöneticileri atar veya alır.\nYetkililerin profilinde rol rozeti görünür. Roller sunucuda saklanır, kimse kendine rol veremez; Hanogt AI da yönetici işlemi yapmaz. Bir sorunu ekibe iletmek için [destek talebi](/feedback) aç.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -52553,14 +53307,6 @@
       "src/lib/faq.ts"
     ]
   },
-  "101uqdfz74n": {
-    "en": "Community",
-    "tr": "Topluluk",
-    "files": [
-      "src/lib/faq.ts",
-      "src/lib/nav.ts"
-    ]
-  },
   "vd83zgv4rm": {
     "en": "Privacy & KVKK",
     "tr": "Gizlilik ve KVKK",
@@ -54004,6 +54750,20 @@
       "src/lib/legal.ts"
     ]
   },
+  "1klnudgib1n": {
+    "en": "Hanogt AI's daily usage totals: so the team can plan the service's capacity, the number of Hanogt AI messages counted each day, the counts by source (chat, your own connections, the API, groups) and by plan, and the number of messages given back because no answer came are kept. These totals don't include who sent a message or what it said; they are deleted automatically after about 13 months.",
+    "tr": "Hanogt AI'ın günlük kullanım toplamları: Ekibin hizmetin kapasitesini planlayabilmesi için her gün sayılan Hanogt AI mesajlarının toplamı, kaynağa (sohbet, kendi bağlantılarınız, API, gruplar) ve plana göre sayıları ve yanıt alınamadığı için iade edilen mesaj sayısı tutulur. Bu toplamlar kimin mesaj gönderdiğini ve mesajların içeriğini içermez; yaklaşık 13 ay sonra otomatik silinir.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "aerv1dj5fg": {
+    "en": "Hanogt Social in the Admin Panel: for Social, staff see only totals (groups, chats, live voice channels, reports, messages AutoMod stopped and their split by rule, files) and the names of the groups with the most open reports; no reporter, reported person or message is shown in this summary.",
+    "tr": "Yönetici Paneli'nde Hanogt Social: Ekip, Social için yalnızca toplam sayıları (gruplar, sohbetler, açık sesli kanallar, raporlar, AutoMod'un durdurduğu mesajlar ve kurallara göre dağılımı, dosyalar) ve en çok açık raporu olan grupların adlarını görür; bu özette raporlayan, raporlanan veya mesaj gösterilmez.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
   "1ws8f72vstl": {
     "en": "Files in messages: in Hanogt Social you can send pictures, video, sound, PDFs, archives, office documents and text or code files in one-to-one and group messages. Files are stored with their message in Cloud Firestore, in a collection browsers can't read, and can be opened only by people who can see the message, while it is there. Location, device and similar details embedded in pictures are removed before they are stored; details inside other files are not changed and files are not scanned for viruses. Up to 2 MB per file (Free) or 4 MB (Plus and Pro), and 25 MB, 250 MB or 1 GB of space in all; files are deleted with their message, chat, group or account. Rules for files were added to the Terms of Use and file space to the list of plan benefits.",
     "tr": "Mesajlarda dosyalar: Hanogt Social'da birebir ve grup mesajlarıyla görsel, video, ses, PDF, arşiv, ofis belgesi ve metin veya kod dosyası gönderebilirsiniz. Dosyalar mesajla birlikte Cloud Firestore'da tarayıcıların okuyamadığı bir koleksiyonda saklanır ve yalnızca mesajı görebilenler tarafından, mesaj durdukça açılabilir. Görsellerdeki konum ve cihaz gibi gömülü bilgiler saklanmadan önce silinir; diğer dosyaların içindeki bilgiler değiştirilmez ve dosyalar virüs taramasından geçirilmez. Dosya başına en fazla 2 MB (Ücretsiz) veya 4 MB (Plus ve Pro), toplam 25 MB, 250 MB veya 1 GB alan; mesaj, sohbet, grup veya hesap silindiğinde dosyalar da silinir. Kullanım Şartları'na dosyalarla ilgili kurallar, plan avantajları listesine dosya alanı eklendi.",
@@ -54642,13 +55402,6 @@
       "src/lib/plans.ts"
     ]
   },
-  "223uphejabz": {
-    "en": "Free",
-    "tr": "Ücretsiz",
-    "files": [
-      "src/lib/plans.ts"
-    ]
-  },
   "20z6bma8uyt": {
     "en": "All of Hanogt Codev, free forever.",
     "tr": "Hanogt Codev'in tamamı, her zaman ücretsiz.",
@@ -54722,13 +55475,6 @@
   "19qwv1hpvh1": {
     "en": "Team editing for 2 people, with voice calls",
     "tr": "2 kişiyle ekiple düzenleme ve sesli görüşme",
-    "files": [
-      "src/lib/plans.ts"
-    ]
-  },
-  "1iz6qm1wzqj": {
-    "en": "Plus",
-    "tr": "Plus",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -54841,13 +55587,6 @@
   "lii2tymfcr": {
     "en": "A Plus badge on your profile",
     "tr": "Profilinde Plus rozeti",
-    "files": [
-      "src/lib/plans.ts"
-    ]
-  },
-  "jbd3t30gtm": {
-    "en": "Pro",
-    "tr": "Pro",
     "files": [
       "src/lib/plans.ts"
     ]

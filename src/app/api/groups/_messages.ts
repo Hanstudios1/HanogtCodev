@@ -270,8 +270,11 @@ async function stoppedByAutoMod(ctx: Ctx, name: string, rule: AutoModRule, confi
     throw new GroupApiError(422, "automod_blocked", "Mesaj grubun AutoMod kurallarına takıldı.", { rule });
 }
 
-/** AutoMod (unless the person's rank is exempt) and slow mode (moderators write freely). */
-/** `fileName`: a file's message (its caption is checked; the name and caption make up its repeat key). */
+/**
+ * AutoMod (unless the person's rank is exempt) and slow mode (moderators write
+ * freely). `fileName`: a file's message (its caption is checked; the name and
+ * caption make up its repeat key).
+ */
 async function guard(ctx: Ctx, name: string, text: string, mentions: number, channel: string, fileName: string | null = null) {
     const automod = await loadAutoMod(ctx.groupId);
     const exempt = automod.config.exempt.includes(ctx.role);
@@ -318,10 +321,10 @@ async function channelHistory(groupId: string, channel: string, beforeId: string
 async function startAiAnswer(ctx: Ctx, question: string, asked: { id: string; text: string }, channel: string): Promise<EphemeralReply | null> {
     if (ctx.group.aiBot === false) return { kind: "ai_off" };
     if (!providerConfig()) return { kind: "ai_unavailable" };
-    const pass = await enforceHanogtAi(ctx.user.email, { source: "group" });
+    const pass = await enforceHanogtAi(ctx.user.email, { source: "group", onLate: keepRunning });
     if (!pass.ok) return { kind: "ai_limit", resetsAt: pass.code === "usage_limit" ? pass.resetsAt : null };
     const placeholder = await postBotMessage(ctx.groupId, "ai", { botState: "thinking", replyTo: { id: asked.id, text: messagePreview(asked.text, 100) } }).catch(async (error: unknown) => {
-        await refundHanogtAi(pass);
+        await refundHanogtAi(pass, keepRunning);
         throw error;
     });
     const placeholderId = String(placeholder.id);
@@ -342,8 +345,15 @@ async function answerInBackground(ctx: Ctx, pass: QuotaPass, question: string, a
         console.warn("[groups/ai] answer failed:", error instanceof Error ? error.message : "unknown error");
     }
     // Nothing came back: the message is given back and the placeholder says so.
-    await refundHanogtAi(pass);
+    const late: Promise<unknown>[] = [];
+    await refundHanogtAi(pass, (work) => late.push(work));
     await patchServerDocument(path, { botState: "failed", botEvent: "ai_failed", vars: {}, text: BOT_EVENT_COPY.ai_failed.TR }, { updateFields: ["botState", "botEvent", "vars", "text"], exists: true }).catch(() => undefined);
+    await Promise.all(late);
+}
+
+/** Work the reply doesn't wait for (the function stays alive for it after responding). */
+function keepRunning(work: Promise<unknown>) {
+    after(() => work.then(() => undefined, () => undefined));
 }
 
 /* -------------------------------------------------------------------------- */

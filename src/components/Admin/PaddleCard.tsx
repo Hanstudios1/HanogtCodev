@@ -905,6 +905,7 @@ function SalesGate({ data, onChanged }: { data: AdminPaddleResponse; onChanged: 
     const toast = useToast();
     const errorText = useErrorText();
     const [confirming, setConfirming] = useState(false);
+    const [closing, setClosing] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<ApiFailure | null>(null);
     const open = data.salesOpen;
@@ -940,12 +941,10 @@ function SalesGate({ data, onChanged }: { data: AdminPaddleResponse; onChanged: 
                         busy={busy}
                         label={tx(C.salesSwitch)}
                         onChange={(next) => {
-                            if (next) {
-                                setError(null);
-                                setConfirming(true);
-                            } else {
-                                void submit(false);
-                            }
+                            setError(null);
+                            // Both directions are asked first: closing stops every new purchase at once.
+                            if (next) setConfirming(true);
+                            else setClosing(true);
                         }}
                     />
                 ) : (
@@ -970,6 +969,21 @@ function SalesGate({ data, onChanged }: { data: AdminPaddleResponse; onChanged: 
                 confirmLabel={tx(C.openConfirm)}
                 icon={Store}
                 tone={sandbox ? "danger" : "default"}
+                busy={busy}
+                error={error}
+            />
+            <ConfirmDialog
+                open={closing}
+                onClose={() => {
+                    if (!busy) setClosing(false);
+                }}
+                onConfirm={async () => {
+                    if (await submit(false)) setClosing(false);
+                }}
+                title={tx({ TR: "Satışlar kapatılsın mı?", EN: "Close sales?" })}
+                description={tx({ TR: "Planlar sayfasında satın alma düğmeleri kalkar ve yeni ödeme başlatılamaz. Mevcut abonelikler ve yenilemeler etkilenmez; satışları istediğiniz zaman yeniden açabilirsiniz.", EN: "The buy buttons leave the Plans page and no new checkout can start. Existing subscriptions and renewals aren't affected; you can open sales again at any time." })}
+                confirmLabel={tx({ TR: "Satışları kapat", EN: "Close sales" })}
+                icon={Store}
                 busy={busy}
                 error={error}
             />
@@ -1462,6 +1476,7 @@ function UnlinkedRow({ entry, base, onChanged }: { entry: AdminPaddleUnlinked; b
     const when = useWhen();
     const [email, setEmail] = useState(entry.customerEmail ?? "");
     const [busy, setBusy] = useState<"link" | "dismiss" | null>(null);
+    const [confirmDismiss, setConfirmDismiss] = useState(false);
     const inputId = `paddle-unlinked-${entry.subscriptionId}`;
 
     const act = async (kind: "link" | "dismiss") => {
@@ -1472,10 +1487,11 @@ function UnlinkedRow({ entry, base, onChanged }: { entry: AdminPaddleUnlinked; b
         setBusy(null);
         if (!result.ok) {
             toast("error", errorText(result));
-            return;
+            return false;
         }
         toast("success", tx(kind === "link" ? C.linked : C.dismissed));
         onChanged(result.data);
+        return true;
     };
 
     return (
@@ -1506,8 +1522,23 @@ function UnlinkedRow({ entry, base, onChanged }: { entry: AdminPaddleUnlinked; b
                 <label className="sr-only" htmlFor={inputId}>{tx(C.accountEmail)}</label>
                 <input id={inputId} type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder={tx(C.accountEmail)} required dir="ltr" className={cx(INPUT_CLASS, "h-8 min-w-[12rem] flex-1 py-1 text-[13px]")} />
                 <Button type="submit" size="sm" icon={Link2} busy={busy === "link"} disabled={!email.trim() || busy !== null}>{tx(C.link)}</Button>
-                <Button size="sm" variant="ghost" icon={EyeOff} busy={busy === "dismiss"} disabled={busy !== null} onClick={() => void act("dismiss")}>{tx(C.dismiss)}</Button>
+                <Button size="sm" variant="ghost" icon={EyeOff} busy={busy === "dismiss"} disabled={busy !== null} onClick={() => setConfirmDismiss(true)}>{tx(C.dismiss)}</Button>
             </form>
+            <ConfirmDialog
+                open={confirmDismiss}
+                onClose={() => {
+                    if (busy === null) setConfirmDismiss(false);
+                }}
+                onConfirm={async () => {
+                    if (await act("dismiss")) setConfirmDismiss(false);
+                }}
+                title={tx({ TR: "Bu abonelik listeden kaldırılsın mı?", EN: "Remove this subscription from the list?" })}
+                description={tx({ TR: "Yalnızca buradaki kayıt silinir; Paddle'daki abonelik ve ödemeleri değişmez. Bir hesaba bağlanmadıkça avantajları kimseye verilmez.", EN: "Only this record is deleted; the subscription and its payments in Paddle don't change. Its benefits go to no one unless it is linked to an account." })}
+                confirmLabel={tx(C.dismiss)}
+                icon={EyeOff}
+                tone="default"
+                busy={busy === "dismiss"}
+            />
         </li>
     );
 }
