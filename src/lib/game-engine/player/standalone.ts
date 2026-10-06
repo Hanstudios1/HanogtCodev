@@ -3,10 +3,20 @@
  * by exported HTML builds. Reads the embedded project and starts it after the
  * player presses "Play" (browsers only allow audio after a user gesture).
  */
+import { registerEmbeddedAudio } from "../audio-store";
 import { normalizeProject } from "../schema";
 import { GamePlayer } from "./game-player";
 
 function boot() {
+    // Audio files travel inside the HTML file ({ hash: base64 }), so the game plays offline.
+    try {
+        const audio = JSON.parse(document.getElementById("hanogt-audio")?.textContent || "{}") as unknown;
+        if (audio && typeof audio === "object" && !Array.isArray(audio)) {
+            registerEmbeddedAudio(Object.fromEntries(Object.entries(audio as Record<string, unknown>).filter((entry): entry is [string, string] => /^[0-9a-f]{64}$/.test(entry[0]) && typeof entry[1] === "string")));
+        }
+    } catch {
+        // A game without sounds still plays.
+    }
     const data = document.getElementById("hanogt-game")?.textContent;
     const root = document.getElementById("game");
     if (!data || !root) return;

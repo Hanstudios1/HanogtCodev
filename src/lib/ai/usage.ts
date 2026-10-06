@@ -39,6 +39,8 @@ export type PlanUsage = AiUsage & {
         connections: CountedLimit;
         /** Developer API keys; null while the API isn't open to the account. */
         apiKeys: CountedLimit | null;
+        /** Audio storage of game projects in bytes (Hanogt Engine V4); used is null when it can't be read. */
+        gameAudio?: { used: number | null; limit: number; files: number | null; fileLimit: number };
     };
 };
 

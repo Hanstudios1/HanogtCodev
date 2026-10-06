@@ -58,6 +58,8 @@ export interface ScriptHost {
     resolveGlobal(name: string): VMValue | typeof NOT_FOUND;
     /** `new GameObject("x")` and other engine constructors. */
     construct(typeName: string, args: VMValue[]): VMValue | typeof NOT_FOUND;
+    /** Name of the sound an AudioClip field set in the Inspector points to (V4). */
+    audioClipName?(ref: string): string;
 }
 
 const NORMAL = 0;
@@ -294,6 +296,8 @@ export class Interpreter {
         if (type === "bool" && typeof value === "boolean") return value;
         if (type === "string" && typeof value === "string") return value;
         if (type === "KeyCode" && typeof value === "string") return value;
+        // V4: sounds are passed around by name (Audio.Play(clip), source.PlayOneShot(clip)).
+        if (type === "AudioClip" && typeof value === "string") return value ? this.host.audioClipName?.(value) ?? value : null;
         if (this.program.enums.has(type) && typeof value === "number") return value;
         return NOT_FOUND;
     }

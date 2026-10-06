@@ -51,6 +51,8 @@ export interface EditorContextValue {
     focusEntity: (id: string) => void;
     createAt: () => { x: number; y: number; z: number };
     tilePainter: TilePainterStore;
+    /** Cloud projects upload audio to the account's library; local ones keep it on this device. */
+    projectSource: "cloud" | "local";
 }
 
 export const EditorContext = createContext<EditorContextValue | null>(null);

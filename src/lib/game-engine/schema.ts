@@ -33,6 +33,7 @@ import {
     type AnimationValue,
     type ColliderComponent,
     type GameComponent,
+    type AudioAsset,
     type GameDimension,
     type GameEntity,
     type GameProjectDocument,
@@ -59,6 +60,9 @@ export const ENGINE_LIMITS = {
     maxPrefabEntities: 200,
     maxTextures: 40,
     maxTextureDataUrlLength: 360_000,
+    /** Uploaded audio files per project (the bytes live in the asset store, outside the project). */
+    maxAudio: 40,
+    maxAudioBytes: 300 * 1024,
     maxScripts: 64,
     maxScriptBytes: 160 * 1024,
     /** Scenes + prefabs + textures + settings, serialised. Firestore documents cap at 1 MiB. */
@@ -512,9 +516,11 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 type,
                 enabled,
                 clip: enumOf(source.clip, SOUND_PRESETS, "coin"),
+                audioId: refId(source.audioId),
                 volume: num(source.volume, 0.8, 0, 1),
                 pitch: num(source.pitch, 1, 0.1, 4),
                 playOnStart: bool(source.playOnStart, false),
+                loop: bool(source.loop, false),
             };
         case "uiText":
             return {
@@ -912,6 +918,24 @@ export function normalizePrefab(value: unknown, context: MigrationContext = { re
     return { id: idOr(source.id, "prefab"), name: str(source.name, entities[0].name, ENGINE_LIMITS.maxNameLength), entities };
 }
 
+const AUDIO_HASH = /^[0-9a-f]{64}$/;
+export const AUDIO_CONTENT_TYPES = ["audio/wav", "audio/mpeg", "audio/ogg"] as const;
+
+/** An uploaded audio file's entry in the project (the bytes are in the asset store). */
+export function normalizeAudioAsset(value: unknown): AudioAsset | null {
+    const source = rec(value);
+    if (typeof source.hash !== "string" || !AUDIO_HASH.test(source.hash)) return null;
+    const contentType = enumOf(source.contentType, AUDIO_CONTENT_TYPES, "audio/mpeg");
+    return {
+        id: idOr(source.id, "audio"),
+        name: str(source.name, "Sound", ENGINE_LIMITS.maxNameLength),
+        hash: source.hash,
+        contentType,
+        size: int(source.size, 0, 0, ENGINE_LIMITS.maxAudioBytes),
+        duration: num(source.duration, 0, 0, 3600),
+    };
+}
+
 export function normalizeTexture(value: unknown): TextureAsset | null {
     const source = rec(value);
     const dataUrl = typeof source.dataUrl === "string" ? source.dataUrl.trim() : "";
@@ -955,12 +979,13 @@ export type NormalizeProjectOptions = {
     dimension?: GameDimension;
 };
 
-export function projectContentBytes(project: Pick<GameProjectDocument, "scenes" | "prefabs" | "textures" | "settings" | "activeSceneId">): number {
+export function projectContentBytes(project: Pick<GameProjectDocument, "scenes" | "prefabs" | "textures" | "settings" | "activeSceneId"> & { audio?: AudioAsset[] }): number {
     const content = JSON.stringify({
         activeSceneId: project.activeSceneId,
         scenes: project.scenes,
         prefabs: project.prefabs,
         textures: project.textures,
+        audio: project.audio ?? [],
         settings: project.settings,
     });
     return new TextEncoder().encode(content).byteLength;
@@ -995,6 +1020,19 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
     const prefabs = rawPrefabs.map((raw) => normalizePrefab(raw, context)).filter((prefab): prefab is PrefabAsset => Boolean(prefab));
     const rawTextures = Array.isArray(source.textures) ? source.textures.slice(0, ENGINE_LIMITS.maxTextures) : [];
     const textures = rawTextures.map(normalizeTexture).filter((texture): texture is TextureAsset => Boolean(texture));
+    const rawAudio = Array.isArray(source.audio) ? source.audio.slice(0, ENGINE_LIMITS.maxAudio) : [];
+    const audioIds = new Set<string>();
+    const audio = rawAudio.map(normalizeAudioAsset).filter((asset): asset is AudioAsset => {
+        if (!asset || audioIds.has(asset.id)) return false;
+        audioIds.add(asset.id);
+        return true;
+    });
+    // Audio Sources keep only files the project still has (else they play their built-in sound).
+    for (const entity of [...scenes.flatMap((scene) => scene.objects), ...prefabs.flatMap((prefab) => prefab.entities)]) {
+        for (const component of entity.components) {
+            if (component.type === "audioSource" && component.audioId && !audioIds.has(component.audioId)) component.audioId = null;
+        }
+    }
 
     const scripts = new Map<string, ScriptAsset>();
     for (const asset of context.recoveredScripts.values()) scripts.set(asset.id, asset);
@@ -1018,6 +1056,7 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
         scenes,
         prefabs,
         textures,
+        audio,
         scripts: [...scripts.values()],
         settings: normalizeProjectSettings(source.settings, [...sceneIds], typeof source.version === "number" ? source.version : 1),
         metadata: {

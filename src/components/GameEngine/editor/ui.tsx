@@ -348,12 +348,19 @@ export function ColorInput({ value, onChange, disabled, allowAlpha, alpha, onAlp
 export function SelectInput<T extends string>({ value, onChange, options, disabled }: {
     value: T;
     onChange: (value: T) => void;
-    options: Array<{ value: T; label: string }>;
+    /** Options with a group are listed under that heading (in the order the groups first appear). */
+    options: Array<{ value: T; label: string; group?: string }>;
     disabled?: boolean;
 }) {
+    const item = (option: { value: T; label: string }) => <option key={option.value} value={option.value} className="bg-zinc-900">{option.label}</option>;
+    const groups = [...new Set(options.map((option) => option.group))];
     return (
         <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value as T)} className={cx(inputClass, "cursor-pointer pr-6")}>
-            {options.map((option) => <option key={option.value} value={option.value} className="bg-zinc-900">{option.label}</option>)}
+            {groups.length === 1 && groups[0] === undefined
+                ? options.map(item)
+                : groups.map((group) => group === undefined
+                    ? options.filter((option) => option.group === undefined).map(item)
+                    : <optgroup key={group} label={group} className="bg-zinc-900">{options.filter((option) => option.group === group).map(item)}</optgroup>)}
         </select>
     );
 }

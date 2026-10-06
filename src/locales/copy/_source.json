@@ -2394,9 +2394,9 @@
       "src/app/disclosure/page.tsx"
     ]
   },
-  "1vee4w6xr46": {
-    "en": "Code and game projects, scripts, Media posts, Arcade games, comments, likes, content reports, arena votes (pseudonymous), feedback",
-    "tr": "Kod ve oyun projeleri, scriptler, Media yayınları, Arcade oyunları, yorumlar, beğeniler, içerik bildirimleri, arena oyları (takma kimlikle), geri bildirimler",
+  "1osf49xx4ln": {
+    "en": "Code and game projects, scripts, audio files uploaded to games, Media posts, Arcade games, comments, likes, content reports, arena votes (pseudonymous), feedback",
+    "tr": "Kod ve oyun projeleri, scriptler, oyunlara yüklenen ses dosyaları, Media yayınları, Arcade oyunları, yorumlar, beğeniler, içerik bildirimleri, arena oyları (takma kimlikle), geri bildirimler",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -3149,9 +3149,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "266bb8iw8k7": {
-    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account, project, game, Media, group, comment, like and vote records, your starred messages and the group moderation records about you as a JSON file, and “Delete My Account” deletes your account and the related data.",
-    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap, proje, oyun, Media, grup, yorum, beğeni ve oy kayıtlarınızı, yıldızlı mesajlarınızı ve hakkınızdaki grup moderasyon kayıtlarını JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler.",
+  "4rsjxajk6a": {
+    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account, project, game, audio library, Media, group, comment, like and vote records, your starred messages and the group moderation records about you as a JSON file, and “Delete My Account” deletes your account and the related data.",
+    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap, proje, oyun, ses kitaplığı, Media, grup, yorum, beğeni ve oy kayıtlarınızı, yıldızlı mesajlarınızı ve hakkınızdaki grup moderasyon kayıtlarını JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler.",
     "files": [
       "src/app/disclosure/page.tsx"
     ]
@@ -3499,7 +3499,8 @@
     "tr": "İşlemler",
     "files": [
       "src/app/editor/page.tsx",
-      "src/components/Admin/UsersSection.tsx"
+      "src/components/Admin/UsersSection.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "hi7hv45plm": {
@@ -6863,9 +6864,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "hgef3ywym3": {
-    "en": "Code projects and files; game projects, scenes and C#/C++ scripts; Media posts, Arcade games, group files",
-    "tr": "Kod projeleri ve dosyaları; oyun projeleri, sahneleri ve C#/C++ scriptleri; Media yayınları, Arcade oyunları, grup dosyaları",
+  "26ei49l1us": {
+    "en": "Code projects and files; game projects, scenes, C#/C++ scripts and audio files uploaded to games; Media posts, Arcade games, group files",
+    "tr": "Kod projeleri ve dosyaları; oyun projeleri, sahneleri, C#/C++ scriptleri ve oyunlara yüklenen ses dosyaları; Media yayınları, Arcade oyunları, grup dosyaları",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -7441,6 +7442,13 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "qidww93wih": {
+    "en": "You can upload audio files (WAV, MP3 or OGG; up to 300 KB each) to your games. When you are signed in, a file is saved to your account's audio library: its content is stored once under an identifier derived from it (SHA-256) and linked to your account with the name you give it; the total size of the files in your library counts against your plan's audio storage. So that games and the Arcade can play it, the file can be downloaded by anyone who knows this identifier; who the file belongs to can't be told from this address. Files you upload without signing in are kept only in your browser. Files are also kept in your browser so they play at once and offline; “Export as HTML” puts the sounds inside the file.",
+    "tr": "Oyunlarınıza ses dosyası (WAV, MP3 veya OGG; dosya başına en fazla 300 KB) yükleyebilirsiniz. Giriş yaptığınızda dosya hesabınızın ses kitaplığına kaydedilir: içerik, içeriğinden türetilen bir kimlikle (SHA-256) bir kez saklanır ve verdiğiniz adla hesabınıza bağlanır; kitaplığınızdaki dosyaların toplam boyutu planınızın ses depolama sınırına sayılır. Oyunların ve Arcade'in çalabilmesi için dosya, bu kimliği bilen herkes tarafından indirilebilir; dosyanın kime ait olduğu bu adresten anlaşılmaz. Giriş yapmadan yüklediğiniz dosyalar yalnızca tarayıcınızda saklanır. Dosyalar ayrıca hemen ve çevrimdışı çalabilmesi için tarayıcınızda da tutulur; “HTML olarak dışa aktar” sesleri dosyanın içine ekler.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "1glu68s5plp": {
     "en": "Publishing on the Arcade is a separate, explicit action of yours. A published game's title, description, cover image, displayed author name and avatar, the languages used, and its play and like counts are public; others can play the game and, if you turned on “Allow remixes”, remix it; a remix carries the original game's title and your displayed author name as attribution. Your e-mail address is not published.",
     "tr": "Arcade'de yayımlamak sizin açık ve ayrı eyleminizle olur. Yayımlanan oyunun başlığı, açıklaması, kapak görseli, görünen yazar adı ve avatarı, kullanılan diller, oynanma ve beğeni sayıları herkese açıktır; oyun başkaları tarafından oynanabilir; “Remikslemelere izin ver” seçeneğini açtıysanız remikslenebilir ve remiks, orijinal oyunun adını ve görünen yazar adınızı atıf olarak taşır. E-posta adresiniz yayımlanmaz.",
@@ -7472,6 +7480,13 @@
   "1qvskg6plxr": {
     "en": "You can unpublish a game at any time, but copies others have already exported or remixed can't be deleted remotely.",
     "tr": "Yayını istediğiniz zaman kaldırabilirsiniz; başkalarının daha önce dışa aktardığı veya remikslediği kopyaların uzaktan silinmesi mümkün değildir.",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "sw2ua2bln4": {
+    "en": "The audio files of a published game are also kept with the publication; deleting a file from your library doesn't affect the published game. When a game is remixed, its sounds are added to the library of the person who remixed it. Audio files that no account or publication uses any more are deleted.",
+    "tr": "Yayımlanan bir oyunun ses dosyaları yayına bağlı olarak ayrıca saklanır; dosyayı kitaplığınızdan silmeniz yayımlanmış oyunu etkilemez. Bir oyun remikslendiğinde sesleri remiksleyen kişinin kitaplığına eklenir. Hiçbir hesabın ve yayının kullanmadığı ses dosyaları silinir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8674,6 +8689,20 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "1j685bfhoii": {
+    "en": "Audio files uploaded to games",
+    "tr": "Oyunlara yüklenen ses dosyaları",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "12oe5jme51f": {
+    "en": "Until you delete them from your library or your account is deleted; a published game's sounds until it is unpublished. Files that no account or publication uses are deleted",
+    "tr": "Kitaplığınızdan silene veya hesabınız silinene kadar; yayımlanmış bir oyunun sesleri yayın kaldırılana kadar. Hiçbir hesabın ve yayının kullanmadığı dosyalar silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "ssu3jp3yi": {
     "en": "Media posts and Arcade games, with their likes, comments and reports",
     "tr": "Media yayınları ve Arcade oyunları ile bunlara bağlı beğeni, yorum ve bildirimler",
@@ -9489,6 +9518,13 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "14iiksq8ufy": {
+    "en": "Copies of audio files uploaded to or played in games (so they play at once and offline)",
+    "tr": "Oyunlara yüklenen ve oynatılan ses dosyalarının kopyası (hemen ve çevrimdışı çalabilmesi için)",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "w4bkrxdlzo": {
     "en": "Games' PlayerPrefs data (for example high scores)",
     "tr": "Oyunların PlayerPrefs kayıtları (ör. en yüksek skor)",
@@ -9629,9 +9665,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "243xwliyzrn": {
-    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account record (including your friends list), code and game projects, Arcade games, Media posts, group records, news comments, Arcade likes and arena votes as a JSON file, and “Delete My Account” deletes your account and the related data. You can correct your profile in Account Settings. For data not included in the file, such as messages, you can make a request.",
-    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap kaydınızı (arkadaş listesi dahil), kod ve oyun projelerinizi, Arcade oyunlarınızı, Media yayınlarınızı, grup kayıtlarınızı, haber yorumlarınızı, Arcade beğenilerinizi ve arena oylarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler. Profil bilgilerinizi Hesap Ayarları'ndan düzeltebilirsiniz. Mesajlar gibi bu dosyada yer almayan veriler için başvuru yapabilirsiniz.",
+  "1jujhdiptd": {
+    "en": "You can use some rights directly: “Download My Data” in [Account Settings](/account-settings) downloads your account record (including your friends list), code and game projects, audio library (file names with download links), Arcade games, Media posts, group records, news comments, Arcade likes and arena votes as a JSON file, and “Delete My Account” deletes your account and the related data. You can correct your profile in Account Settings. For data not included in the file, such as messages, you can make a request.",
+    "tr": "Bazı haklarınızı doğrudan kullanabilirsiniz: [Hesap Ayarları](/account-settings)'ndaki “Verilerimi İndir” seçeneği hesap kaydınızı (arkadaş listesi dahil), kod ve oyun projelerinizi, ses kitaplığınızı (dosya adları ve indirme bağlantılarıyla), Arcade oyunlarınızı, Media yayınlarınızı, grup kayıtlarınızı, haber yorumlarınızı, Arcade beğenilerinizi ve arena oylarınızı JSON dosyası olarak indirir; “Hesabımı Sil” hesabınızı ve ilişkili verileri siler. Profil bilgilerinizi Hesap Ayarları'ndan düzeltebilirsiniz. Mesajlar gibi bu dosyada yer almayan veriler için başvuru yapabilirsiniz.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -11307,7 +11343,8 @@
     "en": "Add",
     "tr": "Ekle",
     "files": [
-      "src/app/settings/page.tsx"
+      "src/app/settings/page.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "d6m37pl1pg": {
@@ -12439,6 +12476,13 @@
       "src/app/terms-of-use/page.tsx"
     ]
   },
+  "1x0uvi4yz81": {
+    "en": "You may only upload audio files you have the right to use (your own recordings, or music and effects whose license allows it) to your games. Uploaded files can be downloaded by anyone who knows the file's identifier so games can play them; the sounds of a game you publish are public. Files uploaded without the right to do so can be reported with a Complaint ticket and removed.",
+    "tr": "Oyunlarınıza yalnızca kullanma hakkına sahip olduğunuz ses dosyalarını (kendi kayıtlarınız, lisansı buna izin veren müzik ve efektler) yükleyebilirsiniz. Yüklenen dosyalar, oyunların çalabilmesi için dosyanın kimliğini bilen herkes tarafından indirilebilir; yayımladığınız oyunun sesleri herkese açıktır. Hakkı olmadan yüklenen dosyalar Şikayet talebiyle bildirilebilir ve kaldırılabilir.",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
   "1qnmzm2vua1": {
     "en": "You may not use misleading titles or covers, publish spam games for advertising or artificially inflate play or like counts.",
     "tr": "Yanıltıcı başlık veya kapak kullanamaz, reklam amaçlı spam oyunlar yayımlayamaz, oynanma veya beğeni sayılarını yapay olarak artıramazsınız.",
@@ -12836,6 +12880,13 @@
   "2exzy9zpsmn": {
     "en": "more starred messages in Hanogt Social: 200 on Free, 500 on Plus and 1,000 on Pro;",
     "tr": "Hanogt Social'da daha çok yıldızlı mesaj: Ücretsiz planda 200, Plus'ta 500, Pro'da 1.000;",
+    "files": [
+      "src/app/terms-of-use/page.tsx"
+    ]
+  },
+  "1b16hrbq1e1": {
+    "en": "more audio storage for Hanogt Engine games: 5 MB and 30 files on Free, 25 MB and 150 files on Plus and 100 MB and 600 files on Pro (up to 300 KB per file; a file used in several projects counts once);",
+    "tr": "Hanogt Engine oyunları için daha fazla ses depolaması: Ücretsiz planda 5 MB ve 30 dosya, Plus'ta 25 MB ve 150 dosya, Pro'da 100 MB ve 600 dosya (dosya başına en fazla 300 KB; aynı dosya birden çok projede kullanılsa da bir kez sayılır);",
     "files": [
       "src/app/terms-of-use/page.tsx"
     ]
@@ -22596,6 +22647,55 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
+  "1pwlv9sc3yu": {
+    "en": "Eight new games in Hanogt Engine",
+    "tr": "Hanogt Engine'de sekiz yeni oyun",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "16p7xztmokq": {
+    "en": "Engine's home page was redesigned: a live demo running in the real engine, a template gallery with filters and playable previews. Eight new templates are ready too.",
+    "tr": "Engine'in tanıtım sayfası baştan tasarlandı: gerçek motorda çalışan canlı demo, filtreli şablon galerisi ve oynanabilir önizlemeler. Sekiz yeni şablon da hazır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "nccb7ohbe3": {
+    "en": "New templates: Neon Run, Flap, Pong, Snake (C++), Little Adventure (RPG), Obstacle Course (3D), Castle Defense and Neon Arena (C++).",
+    "tr": "Yeni şablonlar: Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera (RPG), Engel Parkuru (3D), Kale Savunması ve Neon Arena (C++).",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1oigai7j38z": {
+    "en": "A live demo on the home page: four games take turns in the real engine; press \"Take control\" to play right away.",
+    "tr": "Tanıtım sayfasında canlı demo: dört oyun gerçek motorda dönüyor; \"Kontrolü al\" ile hemen oyna.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "15wvhhuw1mu": {
+    "en": "Template gallery: 2D/3D, C#/C++, difficulty and \"New\" filters; every card shows the game's first frame.",
+    "tr": "Şablon galerisi: 2D/3D, C#/C++, zorluk ve \"Yeniler\" filtreleri; her kartta oyunun ilk karesi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1kr02li728j": {
+    "en": "Details drawer: play the game, see its controls, the components it uses and the start of its code, then start with one click.",
+    "tr": "Ayrıntı çekmecesi: oyunu oyna, kontrolleri, kullanılan bileşenleri ve kodun başını gör, sonra tek tıkla başla.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "2osn4wjc16": {
+    "en": "Scripts closer to Unity: destroyed scripts equal null, and Timers and Tweens started by a method another script calls belong to that method's script.",
+    "tr": "Unity'ye daha yakın betikler: yok edilen betikler null ile eşit, başka betikten çağrılan metodun Timer ve Tween'leri o betiğe ait.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
   "8byki2czjw": {
     "en": "Plans with more in them",
     "tr": "Daha dolu abonelikler",
@@ -25364,7 +25464,8 @@
     "tr": "Girdi",
     "files": [
       "src/components/Editor/Console.tsx",
-      "src/components/GameEngine/docs/EngineDocs.tsx"
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "22wi4adg3sl": {
@@ -26983,7 +27084,8 @@
     "en": "Button",
     "tr": "Düğme",
     "files": [
-      "src/components/Editor/WebPreview.tsx"
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "uhq2wcexwy": {
@@ -29216,6 +29318,685 @@
   "z459pob2qe": {
     "en": "Exposure",
     "tr": "Pozlama",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1rx42aa97nj": {
+    "en": "Scripts read actions by name: Input.GetButtonDown(\"Jump\"), Input.GetAxis(\"Horizontal\"). Keyboard, mouse, gamepad and touch buttons all work at once.",
+    "tr": "Betikler eylemleri adıyla okur: Input.GetButtonDown(\"Jump\"), Input.GetAxis(\"Horizontal\"). Klavye, fare, gamepad ve dokunmatik düğmeler aynı anda çalışır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2bcwxbyfjhk": {
+    "en": "Stick dead zone",
+    "tr": "Çubuk ölü bölgesi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2c3d15yj1l9": {
+    "en": "Kind",
+    "tr": "Tür",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1hd3fx8n1uz": {
+    "en": "Axis",
+    "tr": "Eksen",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "8233lasho0": {
+    "en": "Keys",
+    "tr": "Tuşlar",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "9c2vtqmb1t": {
+    "en": "Positive keys (+1)",
+    "tr": "Artı tuşlar (+1)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "15qbx213nj1": {
+    "en": "Negative keys (−1)",
+    "tr": "Eksi tuşlar (−1)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1c6faeoq6ju": {
+    "en": "Gamepad buttons",
+    "tr": "Gamepad düğmeleri",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "27d0vn09gjk": {
+    "en": "Gamepad positive (+1)",
+    "tr": "Gamepad artı (+1)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "mr3bl5z0zw": {
+    "en": "Gamepad negative (−1)",
+    "tr": "Gamepad eksi (−1)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ng56efj74a": {
+    "en": "Analog stick",
+    "tr": "Analog çubuk",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1m306mssrpr": {
+    "en": "Invert stick",
+    "tr": "Çubuğu ters çevir",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "mxeeoumfk6": {
+    "en": "Add…",
+    "tr": "Ekle…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1pnty4l8qhf": {
+    "en": "Remove binding",
+    "tr": "Atamayı kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "u5ei631y0u": {
+    "en": "Not bound",
+    "tr": "Atanmadı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "658czlof32": {
+    "en": "Add action",
+    "tr": "Eylem ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "e6twd96dsv": {
+    "en": "Delete action",
+    "tr": "Eylemi sil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2f1hqr4mbso": {
+    "en": "Reset to defaults",
+    "tr": "Varsayılanlara dön",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "i8m0k4bn1v": {
+    "en": "A name starts with a letter and uses only letters, digits, spaces and _ (up to 32 characters).",
+    "tr": "Ad bir harfle başlar; yalnızca harf, rakam, boşluk ve _ içerir (en çok 32 karakter).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1dlmr8qj3pp": {
+    "en": "An action with this name already exists.",
+    "tr": "Bu adda bir eylem zaten var.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1tfxgccrd4g": {
+    "en": "Touch buttons press the arrow keys, Space and LeftControl, and the gamepad's d-pad, A and X.",
+    "tr": "Dokunmatik düğmeler ok tuşlarına, Space'e ve LeftControl'e, gamepad'de de d-pad'e, A'ya ve X'e basar.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "14cy38rx6pp": {
+    "en": "Running, jumping, slopes and moving platforms are built in. Direction and jump come from the input actions; OnJump() runs on a jump and OnLand(float speed) on landing.",
+    "tr": "Koşma, zıplama, eğimler ve hareketli platformlar hazır. Yön ve zıplama Girdi eylemlerinden okunur; zıplayınca OnJump(), yere inince OnLand(float hız) çağrılır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "eani0shi8r": {
+    "en": "This component needs a Dynamic Rigidbody 2D and a Collider 2D on the same object.",
+    "tr": "Bu bileşen aynı nesnede Dynamic bir Rigidbody 2D ve bir Collider 2D ister.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "14nivqkvn7w": {
+    "en": "Add Rigidbody 2D and Collider 2D",
+    "tr": "Rigidbody 2D ve Collider 2D ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "yh5wb34c70": {
+    "en": "Character Controller 2D only works in 2D projects.",
+    "tr": "Character Controller 2D yalnızca 2D projelerde çalışır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ge8uy598s9": {
+    "en": "Jumping",
+    "tr": "Zıplama",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ngs9iurvtz": {
+    "en": "Set it to 2 for one more jump in the air (double jump).",
+    "tr": "2 yaparsan havada bir kez daha zıplanır (çift zıplama).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1iedgf11v3h": {
+    "en": "Seconds after walking off a ledge during which a jump still works.",
+    "tr": "Kenardan düştükten sonra zıplamanın hâlâ çalıştığı süre (saniye).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1pmfxepcg4n": {
+    "en": "Seconds a jump pressed just before landing is remembered.",
+    "tr": "Yere inmeden hemen önce basılan zıplamanın hatırlandığı süre (saniye).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "e940lzkg5b": {
+    "en": "Letting go of the button early makes the jump shorter.",
+    "tr": "Tuşu erken bırakınca zıplama kısalır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1cszl7bpdti": {
+    "en": "Steepest slope that still counts as ground (degrees).",
+    "tr": "Hâlâ zemin sayılan en dik eğim (derece).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "27ie2bzmyv9": {
+    "en": "When off, a script drives it with Move(direction), Jump() and CancelJump().",
+    "tr": "Kapalıyken betik Move(yön), Jump() ve CancelJump() ile yönetir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "l79ynb4re4": {
+    "en": "From a script: GetComponent<CharacterController2D>().Move(1f); Jump(); CancelJump();",
+    "tr": "Betikten: GetComponent<CharacterController2D>().Move(1f); Jump(); CancelJump();",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1vafvmkcqwq": {
+    "en": "The camera follows its target smoothly. For screen shake, call Camera.Shake(0.3f, 0.25f) in a script.",
+    "tr": "Kamera hedefi yumuşakça izler. Ekran sarsıntısı için betikte Camera.Shake(0.3f, 0.25f) yazın.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1uq9gcwlj6a": {
+    "en": "Add Camera Follow to the object that has the Camera component.",
+    "tr": "Camera Follow'u Camera bileşeni olan nesneye ekleyin.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "c8kfl2nqso": {
+    "en": "(Object tagged \"Player\")",
+    "tr": "(\"Player\" etiketli nesne)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "7w4a1jq36u": {
+    "en": "Seconds the camera takes to catch up; 0 sticks to the target.",
+    "tr": "Kameranın hedefe yetişme süresi (saniye); 0 hemen yapışır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "g71q8yup2x": {
+    "en": "Size of the box the target can move in without moving the camera.",
+    "tr": "Hedefin kamerayı kımıldatmadan dolaşabildiği kutunun boyutu.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "14qzt2xvwke": {
+    "en": "How far the camera leads in the direction of movement.",
+    "tr": "Kameranın hareket yönünde öne kaydığı mesafe.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ire54tcrzt": {
+    "en": "Keeps the view inside this rectangle.",
+    "tr": "Görüntüyü bu dikdörtgenin içinde tutar.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1vp6ix0hp5v": {
+    "en": "Walks to its destination around walls (static colliders and solid tiles). In a script: agent.SetDestination(point); OnDestinationReached() runs on arrival.",
+    "tr": "Duvarların (statik collider'lar ve katı karolar) etrafından dolaşarak hedefe yürür. Betikte: agent.SetDestination(nokta); varınca OnDestinationReached() çağrılır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "137k4mp28tx": {
+    "en": "Nav Agent 2D only steers around obstacles in 2D projects.",
+    "tr": "Nav Agent 2D engellerin etrafından yalnızca 2D projelerde dolaşır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "23zjudbggeb": {
+    "en": "Keeps chasing the chosen object; when empty it goes where SetDestination() says.",
+    "tr": "Seçilen nesneyi sürekli kovalar; boşsa SetDestination() ile verilen noktaya gider.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "wo2jqpflh6": {
+    "en": "(None — SetDestination)",
+    "tr": "(Yok — SetDestination)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1l356ccz8xf": {
+    "en": "How far it keeps from walls (half the agent's width).",
+    "tr": "Duvarlardan uzak durulan mesafe (ajanın yarı genişliği).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "m3q690hxmz": {
+    "en": "Seconds between new paths while chasing a moving target.",
+    "tr": "Hareket eden bir hedef kovalanırken yeni yol hesaplama aralığı (saniye).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zg3wyqpbwl": {
+    "en": "Draws the path while playing (for learning and debugging).",
+    "tr": "Oynarken yolu çizgiyle gösterir (öğrenmek ve hata ayıklamak için).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1cyjvgygqhi": {
+    "en": "Keeps two objects at a fixed distance; with \"Max Distance Only\" it only goes taut, like a rope.",
+    "tr": "İki nesneyi sabit bir uzaklıkta tutar; \"Max Distance Only\" açıkken ip gibi yalnızca gerilir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2ck7swymqw6": {
+    "en": "Pulls the object back like a spring. Frequency sets the stiffness, damping the bounce.",
+    "tr": "Nesneyi yay gibi geri çeker. Frekans sertliği, sönüm zıplamayı belirler.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "nai672kf9f": {
+    "en": "For the joint to move anything, this object or the connected one needs a Dynamic Rigidbody.",
+    "tr": "Eklemin bir şeyi hareket ettirebilmesi için bu nesnede ya da bağlı nesnede Dynamic bir Rigidbody olmalı.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "10m7j617vi": {
+    "en": "The object it is tied to; when empty it is tied to a point in the world.",
+    "tr": "Bağlanılan nesne; boşsa dünyadaki bir noktaya bağlanır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "t2y67lxogz": {
+    "en": "(A point in the world)",
+    "tr": "(Dünyadaki bir nokta)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "rm83zbfmp8": {
+    "en": "World point",
+    "tr": "Dünya noktası",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "29xzpi0e59g": {
+    "en": "Uses the distance at the start of the game.",
+    "tr": "Oyun başladığındaki uzaklığı kullanır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "9ls5b07hh5": {
+    "en": "Only keeps the longest distance (like a rope; the ends may come closer).",
+    "tr": "Yalnızca en uzun mesafeyi korur (ip gibi; yaklaşabilir).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1yk6cxgnuzh": {
+    "en": "Oscillations per second; higher is stiffer.",
+    "tr": "Saniyedeki salınım; büyüdükçe yay sertleşir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1qlyv04qhd2": {
+    "en": "0 keeps bouncing, 1 settles without bouncing.",
+    "tr": "0 uzun süre zıplar, 1 zıplamadan durur.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "dn2rxcnit1": {
+    "en": "Show value",
+    "tr": "Değeri göster",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1lf4kw3qyxk": {
+    "en": "On value changed",
+    "tr": "Değer değişince",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1chtw877c6a": {
+    "en": "On end edit",
+    "tr": "Yazma bitince",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ak38k6pv5b": {
+    "en": "Style",
+    "tr": "Görünüm",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "220573nujv7": {
+    "en": "Switch",
+    "tr": "Anahtar",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1wayqmecmjs": {
+    "en": "Checkbox",
+    "tr": "Onay kutusu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1q0sc1svphe": {
+    "en": "The player drags it with the mouse or a finger. In a script: slider.onValueChanged.AddListener(v => { ... });",
+    "tr": "Oyuncu fareyle ya da parmakla sürükler. Betikte: slider.onValueChanged.AddListener(v => { ... });",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "r42a72js94": {
+    "en": "The player types in a real text box (phones open their keyboard); game keys pause while typing. Enter finishes editing.",
+    "tr": "Oyuncu gerçek bir metin kutusuna yazar (telefonda klavye açılır); yazarken oyun tuşları çalışmaz. Enter yazmayı bitirir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1f1b6kad1vp": {
+    "en": "Audio",
+    "tr": "Sesler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "agczg7fga1": {
+    "en": "Upload audio",
+    "tr": "Ses dosyası yükle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "nej0p93uea": {
+    "en": "Uploading…",
+    "tr": "Yükleniyor…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1jpdrc5wup9": {
+    "en": "Upload a WAV, MP3 or OGG file (up to 300 KB). Play it by name in a script: Audio.Play(\"name\");",
+    "tr": "WAV, MP3 ya da OGG yükleyin (en fazla 300 KB). Betikte adıyla çalın: Audio.Play(\"ad\");",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ykm6i179lb": {
+    "en": "A project can have up to {count} audio files.",
+    "tr": "Bir projede en fazla {count} ses dosyası olabilir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "21pt7n55a1i": {
+    "en": "\"{name}\" is too large; the limit is {size}.",
+    "tr": "\"{name}\" çok büyük; en fazla {size} olabilir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1vky0oy8ik": {
+    "en": "\"{name}\" is not a WAV, MP3 or OGG file.",
+    "tr": "\"{name}\" bir WAV, MP3 ya da OGG dosyası değil.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "qr66en1r95": {
+    "en": "This file is already in the project: {name}",
+    "tr": "Bu dosya projede zaten var: {name}",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "u2472gzb8a": {
+    "en": "Added: {name}",
+    "tr": "Eklendi: {name}",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "jv6jvrfg06": {
+    "en": "Your audio storage is full. Delete files you don't use from the library or upgrade your plan.",
+    "tr": "Ses depolama alanınız doldu. Kitaplıktan kullanmadığınız dosyaları silin ya da planınızı yükseltin.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "24kuz1gk6r2": {
+    "en": "The audio file couldn't be uploaded.",
+    "tr": "Ses dosyası yüklenemedi.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "geu8m5qwcm": {
+    "en": "Add audio file",
+    "tr": "Ses dosyası ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "22fdihqqpyd": {
+    "en": "Rename audio file",
+    "tr": "Ses dosyasını yeniden adlandır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1yh5qytjz6l": {
+    "en": "Remove audio file",
+    "tr": "Ses dosyasını kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "xk61ejy7so": {
+    "en": "In your account's audio library",
+    "tr": "Hesabınızın ses kitaplığında",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2e784di2u9k": {
+    "en": "Kept on this device (local project)",
+    "tr": "Bu cihazda saklanıyor (yerel proje)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1pd3qgturmn": {
+    "en": "To use it in a script:",
+    "tr": "Betikte kullanmak için:",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "if99wgkdra": {
+    "en": "will be removed from this project. The file stays in your library.",
+    "tr": "bu projeden kaldırılsın mı? Dosya kitaplığınızda kalır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "qrc2wqw8r2": {
+    "en": "Audio Source components that use this file go back to the built-in sounds.",
+    "tr": "Bu dosyayı kullanan Audio Source bileşenleri hazır seslere döner.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1tz43qvaf9z": {
+    "en": "Remove from project",
+    "tr": "Projeden kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "24j42jgye8v": {
+    "en": "Audio library",
+    "tr": "Ses kitaplığı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2bo9dtzuvch": {
+    "en": "Audio storage",
+    "tr": "Ses depolama alanı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2fy97idqm5l": {
+    "en": "A file used in several projects counts once. Sounds of published games are kept separately.",
+    "tr": "Aynı dosya birden çok projede kullanılsa da bir kez sayılır. Yayımlanan oyunların sesleri ayrıca saklanır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "149ky6dldio": {
+    "en": "You haven't uploaded any audio files yet.",
+    "tr": "Henüz ses dosyası yüklemediniz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1wsppss304j": {
+    "en": "In project",
+    "tr": "Projede",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2dcau42wkjj": {
+    "en": "Add to project",
+    "tr": "Projeye ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zb5we6ker4": {
+    "en": "Delete from account",
+    "tr": "Hesaptan sil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "213i1lw71jb": {
+    "en": "will be deleted from your account. Projects that use it lose the sound; published games keep it.",
+    "tr": "hesabınızdan silinsin mi? Bu dosyayı kullanan projelerde ses çalmaz; yayımlanan oyunlar etkilenmez.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "26veux9ivxk": {
+    "en": "Clip",
+    "tr": "Ses",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "13z7vb7ckec": {
+    "en": "Built-in sounds",
+    "tr": "Hazır sesler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "e88tcci88s": {
+    "en": "Uploaded sounds",
+    "tr": "Yüklenen sesler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ma24eht788": {
+    "en": "In a script: GetComponent<AudioSource>().Play(); For music, Audio.PlayMusic(\"name\") fits better.",
+    "tr": "Betikte: GetComponent<AudioSource>().Play(); Müzik için Audio.PlayMusic(\"ad\") daha uygundur.",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -41244,6 +42025,21 @@
       "src/components/Social/dm/DmView.tsx"
     ]
   },
+  "208xyu0vi0k": {
+    "en": "Game audio storage",
+    "tr": "Oyun ses depolaması",
+    "files": [
+      "src/components/Plans/PricingSections.tsx",
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "1x666s4prat": {
+    "en": "{size} MB · {count} files",
+    "tr": "{size} MB · {count} dosya",
+    "files": [
+      "src/components/Plans/PricingSections.tsx"
+    ]
+  },
   "1m65zqml7fw": {
     "en": "Code, games and teams",
     "tr": "Kod, oyun ve ekip",
@@ -41324,6 +42120,13 @@
   "sme7a582ft": {
     "en": "Hanogt Social groups you own",
     "tr": "Sahibi olduğun Hanogt Social grubu",
+    "files": [
+      "src/components/Plans/UsageList.tsx"
+    ]
+  },
+  "oanq4e3bz0": {
+    "en": "{count} / {limit} files",
+    "tr": "{count} / {limit} dosya",
     "files": [
       "src/components/Plans/UsageList.tsx"
     ]
@@ -47545,9 +48348,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "dbvlb2lnr5": {
-    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, your own API key connections, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Group size (by the group owner's plan):** {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro; {pinsPlus} pinned messages on Plus and {pinsPro} on Pro, {commandsPlus} / {commandsPro} custom bot commands and {wordsPlus} / {wordsPro} AutoMod banned words. Nothing is removed when the plan goes down; nothing new can be added.\n• **Running code:** {runFree} files at once on Free, {runPlus} on Plus and {runPro} on Pro; for compiled languages {runMinutePlus} files a minute on Plus and {runMinutePro} on Pro.\n• **Starred messages:** {starsFree} on Free, {starsPlus} on Plus and {starsPro} on Pro.\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys on Plus and {connectionsPro} on Pro; messages through them have no separate limit and use your Hanogt AI messages (given back when the provider doesn't answer).\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
-    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Grup büyüklüğü (grubun sahibinin planına göre):** Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye; Plus'ta {pinsPlus}, Pro'da {pinsPro} sabitlenmiş mesaj, {commandsPlus} / {commandsPro} özel bot komutu ve {wordsPlus} / {wordsPro} AutoMod yasaklı kelimesi. Plan düşerse hiçbir şey silinmez, yalnızca yenisi eklenemez.\n• **Kod çalıştırma:** tek seferde Ücretsiz'de {runFree}, Plus'ta {runPlus}, Pro'da {runPro} dosya; derlenen dillerde dakikada Plus'ta {runMinutePlus}, Pro'da {runMinutePro} dosya.\n• **Yıldızlı mesajlar:** Ücretsiz'de {starsFree}, Plus'ta {starsPlus}, Pro'da {starsPro}.\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin; bu bağlantılarla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer (sağlayıcı yanıt vermezse geri eklenir).\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
+  "1lr1p47epn4": {
+    "en": "All of Hanogt Codev is available on the **Free** plan, with no ads. For people who want more, **Plus** and **Pro** are monthly or yearly subscriptions on the [Plans](/plans) page:\n• **Hanogt AI:** {aiFree} messages a week on Free, {aiPlus} every 2 weeks on Plus and {aiPro} a week on Pro. The period counts from your first message; the chat, your own API key connections, the developer API and Hanogt AI in groups share it. The meter at the top of Hanogt AI shows what you've used and when it renews.\n• **Longer answers:** a Hanogt AI answer can be up to {tokensFree} tokens on Free, {tokensPlus} on Plus and {tokensPro} on Pro; {fileFree} characters of the file open in the editor are read on Free, {filePlus} on Plus and {filePro} on Pro.\n• **Projects:** {codeFree} code and {gameFree} game projects on Free; {codePlus} and {gamePlus} on Plus, unlimited on Pro.\n• **Groups:** create {groupsFree} on Free, {groupsPlus} on Plus, unlimited on Pro.\n• **Group size (by the group owner's plan):** {membersFree} members on Free, {membersPlus} on Plus and {membersPro} on Pro; {pinsPlus} pinned messages on Plus and {pinsPro} on Pro, {commandsPlus} / {commandsPro} custom bot commands and {wordsPlus} / {wordsPro} AutoMod banned words. Nothing is removed when the plan goes down; nothing new can be added.\n• **Running code:** {runFree} files at once on Free, {runPlus} on Plus and {runPro} on Pro; for compiled languages {runMinutePlus} files a minute on Plus and {runMinutePro} on Pro.\n• **Starred messages:** {starsFree} on Free, {starsPlus} on Plus and {starsPro} on Pro.\n• **Game audio storage:** for sounds uploaded to Hanogt Engine games, {audioFree} MB on Free, {audioPlus} MB on Plus and {audioPro} MB on Pro (up to 300 KB per file; the same file counts once).\n• **Team editing:** a session holds {collabFree} people on Free, {collabPlus} on Plus and {collabPro} on Pro (you included).\n• **Your own AI connections:** connect up to {connectionsPlus} providers to Hanogt AI with your own API keys on Plus and {connectionsPro} on Pro; messages through them have no separate limit and use your Hanogt AI messages (given back when the provider doesn't answer).\n• **Developer API:** to call Hanogt AI from your own app, {apiKeysPlus} keys on Plus and {apiKeysPro} on Pro; every request counts against the same Hanogt AI allowance as the chat: [API and connections](/ai/api).\n• **Profile badge:** on Plus and Pro your profile shows your plan's badge; you can hide it on the Plans page or in Account Settings › Profile.\n• **Early access (Pro):** try new features before everyone else; right now, dictation and answers read aloud.\n• **Support priority:** your tickets are queued with high priority, and Pro tickets come before Plus tickets; if you upgrade later, an open ticket moves up when you write in it (not a promise of a response time).\nEvery benefit is listed as \"used / limit\" in the account box of the [Plans](/plans#usage) page. Prices, including taxes, are shown on the Plans page and at checkout. Payments are taken in US dollars by **Paddle**, our Merchant of Record, which also issues the invoice; your card details never reach us. If a plan shows no price, it isn't on sale yet; use \"Notify me when it opens\" to hear when it is. You can ask for a refund within 14 days of the first payment: [Refund Policy](/refund-policy).",
+    "tr": "Hanogt Codev'in tamamı **Ücretsiz** planda kullanılabilir; sitede reklam gösterilmez. Daha fazlasını isteyenler için **Plus** ve **Pro**, [Planlar](/plans) sayfasından aylık veya yıllık abonelikle alınır:\n• **Hanogt AI:** Ücretsiz planda haftada {aiFree}, Plus'ta 2 haftada {aiPlus}, Pro'da haftada {aiPro} mesaj. Süre ilk mesajından itibaren sayılır; sohbet, kendi API anahtarınla bağlantıların, geliştirici API'si ve gruplardaki Hanogt AI aynı haktan düşer. Hanogt AI sekmesinin üstündeki sayaç kullandığını ve ne zaman yenileneceğini gösterir.\n• **Daha uzun yanıtlar:** Hanogt AI'ın bir yanıtı Ücretsiz'de en fazla {tokensFree}, Plus'ta {tokensPlus}, Pro'da {tokensPro} token olabilir; editörde açık dosyanın Ücretsiz'de {fileFree}, Plus'ta {filePlus}, Pro'da {filePro} karakteri okunur.\n• **Projeler:** Ücretsiz planda {codeFree} kod ve {gameFree} oyun projesi; Plus'ta {codePlus} ve {gamePlus}, Pro'da sınırsız.\n• **Gruplar:** Ücretsiz planda {groupsFree}, Plus'ta {groupsPlus} grup açabilirsin, Pro'da sınırsız.\n• **Grup büyüklüğü (grubun sahibinin planına göre):** Ücretsiz'de {membersFree}, Plus'ta {membersPlus}, Pro'da {membersPro} üye; Plus'ta {pinsPlus}, Pro'da {pinsPro} sabitlenmiş mesaj, {commandsPlus} / {commandsPro} özel bot komutu ve {wordsPlus} / {wordsPro} AutoMod yasaklı kelimesi. Plan düşerse hiçbir şey silinmez, yalnızca yenisi eklenemez.\n• **Kod çalıştırma:** tek seferde Ücretsiz'de {runFree}, Plus'ta {runPlus}, Pro'da {runPro} dosya; derlenen dillerde dakikada Plus'ta {runMinutePlus}, Pro'da {runMinutePro} dosya.\n• **Yıldızlı mesajlar:** Ücretsiz'de {starsFree}, Plus'ta {starsPlus}, Pro'da {starsPro}.\n• **Oyun ses depolaması:** Hanogt Engine oyunlarına yüklenen sesler için Ücretsiz planda {audioFree} MB, Plus'ta {audioPlus} MB, Pro'da {audioPro} MB (dosya başına en fazla 300 KB; aynı dosya bir kez sayılır).\n• **Ekiple düzenleme:** bir oturuma (sen dahil) Ücretsiz'de {collabFree}, Plus'ta {collabPlus}, Pro'da {collabPro} kişi katılabilir.\n• **Kendi yapay zekâ bağlantıların:** Hanogt AI'a kendi API anahtarınla Plus'ta en fazla {connectionsPlus}, Pro'da {connectionsPro} sağlayıcı bağlayabilirsin; bu bağlantılarla gönderdiğin mesajlar ayrı bir sınırla değil, Hanogt AI mesaj hakkından düşer (sağlayıcı yanıt vermezse geri eklenir).\n• **Geliştirici API'si:** Hanogt AI'ı kendi uygulamandan çağırmak için Plus'ta {apiKeysPlus}, Pro'da {apiKeysPro} anahtar; her istek sohbetle aynı Hanogt AI hakkından düşer: [API ve bağlantılar](/ai/api).\n• **Profil rozeti:** Plus ve Pro'da profilinde planının rozeti görünür; istersen Planlar sayfasından ya da Hesap Ayarları › Profil'den gizleyebilirsin.\n• **Erken erişim (Pro):** yeni özellikleri herkesten önce denersin; şu an sesle yazma ve yanıtları sesli dinleme.\n• **Destek önceliği:** taleplerin yüksek öncelikle sıraya alınır, Pro talepleri Plus taleplerinden önce gelir; sonradan yükseltirsen açık talebine yazdığında o da yükselir (belirli bir yanıt süresi taahhüdü değildir).\nBütün hakların \"kullanılan / sınır\" olarak [Planlar](/plans#usage) sayfasındaki hesap kutusunda listelenir. Fiyatlar vergiler dahil Planlar sayfasında ve ödeme ekranında gösterilir. Ödemeleri Kayıtlı Satıcımız (Merchant of Record) **Paddle** ABD doları cinsinden alır ve faturayı o keser; kart bilgilerin bize ulaşmaz. Bir planda fiyat görünmüyorsa henüz satışta değildir; \"Açılınca haber ver\" ile haber alabilirsin. İlk ödemeden sonraki 14 gün içinde iade isteyebilirsin: [İade Politikası](/refund-policy).",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -50399,6 +51202,20 @@
       "src/lib/legal.ts"
     ]
   },
+  "28783jghnt0": {
+    "en": "Audio files in games: with Hanogt Engine V4 you can upload WAV, MP3 or OGG files (up to 300 KB each) to your games. When you are signed in, files are saved to your account's audio library; each file is stored once under an identifier derived from its content and can be downloaded by anyone who knows that identifier so games can play it. The sounds of published games are kept with the publication; files that no account or publication uses are deleted. Your audio library is included in the “Download My Data” file.",
+    "tr": "Oyunlarda ses dosyaları: Hanogt Engine V4 ile oyunlarınıza WAV, MP3 veya OGG dosyası (dosya başına en fazla 300 KB) yükleyebilirsiniz. Giriş yaptığınızda dosyalar hesabınızın ses kitaplığına kaydedilir; her dosya içeriğinden türetilen bir kimlikle bir kez saklanır ve oyunların çalabilmesi için bu kimliği bilen herkes tarafından indirilebilir. Yayımlanan oyunların sesleri yayınla birlikte saklanır; hiçbir hesabın ve yayının kullanmadığı dosyalar silinir. Ses kitaplığınız “Verilerimi İndir” dosyasında yer alır.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "nspq133tz0": {
+    "en": "New plan benefit and usage rule: audio storage for games is 5 MB (30 files) on Free, 25 MB (150 files) on Plus and 100 MB (600 files) on Pro. You may only upload sounds you have the right to use; the Terms of Use were updated accordingly.",
+    "tr": "Yeni plan avantajı ve kullanım kuralı: oyunlar için ses depolaması Ücretsiz planda 5 MB (30 dosya), Plus'ta 25 MB (150 dosya), Pro'da 100 MB (600 dosya). Yalnızca kullanma hakkına sahip olduğunuz sesleri yükleyebilirsiniz; Kullanım Şartları buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
   "24ma1v4px4r": {
     "en": "Connections with your own API key: on Plus and Pro, messages through these connections no longer have a separate daily limit; they use the same Hanogt AI allowance as the chat, the developer API and Hanogt AI in groups and are counted by the same counter. If the provider doesn't answer, the message is given back.",
     "tr": "Kendi API anahtarınızla bağlantılar: Plus ve Pro'da bu bağlantılarla gönderdiğiniz mesajların ayrı bir günlük sınırı kalmadı; sohbet, geliştirici API'si ve gruplardaki Hanogt AI ile aynı Hanogt AI mesaj hakkından düşüyor ve aynı sayaçla sayılıyor. Sağlayıcı yanıt vermezse mesaj hakkınıza geri ekleniyor.",
@@ -51058,6 +51875,13 @@
       "src/lib/plans.ts"
     ]
   },
+  "2bh9uustvkl": {
+    "en": "5 MB of audio storage for your games",
+    "tr": "Oyunların için 5 MB ses depolaması",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
   "19qwv1hpvh1": {
     "en": "Team editing for 2 people, with voice calls",
     "tr": "2 kişiyle ekiple düzenleme ve sesli görüşme",
@@ -51124,6 +51948,13 @@
   "1vfkt2gnoe5": {
     "en": "500 starred messages",
     "tr": "500 yıldızlı mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "5xjidu3iv5": {
+    "en": "25 MB of audio storage for your games",
+    "tr": "Oyunların için 25 MB ses depolaması",
     "files": [
       "src/lib/plans.ts"
     ]
@@ -51229,6 +52060,13 @@
   "ow2lb6r27f": {
     "en": "1,000 starred messages",
     "tr": "1.000 yıldızlı mesaj",
+    "files": [
+      "src/lib/plans.ts"
+    ]
+  },
+  "mh38p31ymj": {
+    "en": "100 MB of audio storage for your games",
+    "tr": "Oyunların için 100 MB ses depolaması",
     "files": [
       "src/lib/plans.ts"
     ]

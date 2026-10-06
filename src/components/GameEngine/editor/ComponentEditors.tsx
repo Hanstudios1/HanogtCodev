@@ -27,7 +27,8 @@ import {
 import { describeBehaviour } from "@/lib/game-engine/script/compiler";
 import { KEY_CODES } from "@/lib/game-engine/script/stdlib";
 import type { FieldInfo } from "@/lib/game-engine/script/values";
-import { SoundEngine } from "@/lib/game-engine/runtime/audio";
+import { loadAudioBytes } from "@/lib/game-engine/audio-store";
+import { SoundEngine, type SoundHandle } from "@/lib/game-engine/runtime/audio";
 import {
     PRIMITIVE_MESHES,
     SOUND_PRESETS,
@@ -44,6 +45,7 @@ import {
     type RigidBodyComponent,
     type ScriptComponent,
     type ScriptFieldValue,
+    type SoundPreset,
     type SpriteRendererComponent,
     type TransformComponent,
     type UITextComponent,
@@ -399,25 +401,51 @@ export function ParticleEditor({ entity, component, disabled }: Editor<ParticleS
 
 let previewEngine: SoundEngine | null = null;
 
+let previewHandle: SoundHandle | null = null;
+
 export function AudioEditor({ entity, component, disabled }: Editor<AudioSourceComponent>) {
-    const { t } = useEditor();
+    const { t, store } = useEditor();
+    const audio = useEditorState(store, (state) => state.project.audio ?? []);
     const edit = useComponentEdit(entity.id, component);
+    const uploaded = component.audioId ? audio.find((item) => item.id === component.audioId) ?? null : null;
     const preview = () => {
         previewEngine ??= new SoundEngine();
         previewEngine.unlock();
-        previewEngine.play(component.clip, component.volume, component.pitch);
+        previewHandle?.stop(0.05);
+        previewHandle = null;
+        if (!uploaded) {
+            previewEngine.play(component.clip, component.volume, component.pitch);
+            return;
+        }
+        const engine = previewEngine;
+        void engine.load(uploaded, loadAudioBytes).then((ready) => {
+            if (ready) previewHandle = engine.playClip(uploaded.hash, component.volume, component.pitch);
+        });
     };
+    const options = [
+        ...SOUND_PRESETS.map((preset) => ({ value: preset as string, label: preset, group: t("audioClipBuiltIn") })),
+        ...audio.map((item) => ({ value: `audio:${item.id}`, label: item.name, group: t("audioClipUploaded") })),
+    ];
     return (
         <div className="space-y-0.5">
             <FieldRow label="Clip">
                 <div className="flex items-center gap-1">
-                    <SelectInput value={component.clip} disabled={disabled} onChange={(clip) => edit("clip", (draft) => { draft.clip = clip; })} options={SOUND_PRESETS.map((preset) => ({ value: preset, label: preset }))} />
+                    <SelectInput value={uploaded ? `audio:${uploaded.id}` : component.clip} disabled={disabled} options={options} onChange={(value) => edit("clip", (draft) => {
+                        if (value.startsWith("audio:")) {
+                            draft.audioId = value.slice(6);
+                        } else {
+                            draft.audioId = null;
+                            draft.clip = value as SoundPreset;
+                        }
+                    })} />
                     <button type="button" onClick={preview} title={t("previewSound")} aria-label={t("previewSound")} className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-emerald-300 hover:bg-white/10"><Play className="h-3.5 w-3.5" /></button>
                 </div>
             </FieldRow>
             <FieldRow label="Volume"><SliderInput value={component.volume} min={0} max={1} disabled={disabled} onChange={(value) => edit("volume", (draft) => { draft.volume = value; })} /></FieldRow>
             <FieldRow label="Pitch"><SliderInput value={component.pitch} min={0.1} max={3} disabled={disabled} onChange={(value) => edit("pitch", (draft) => { draft.pitch = value; })} /></FieldRow>
             <FieldRow label="Play On Awake"><Toggle checked={component.playOnStart} disabled={disabled} onChange={(value) => edit("playOnStart", (draft) => { draft.playOnStart = value; })} /></FieldRow>
+            {uploaded ? <FieldRow label={t("audioLoop")}><Toggle checked={component.loop} disabled={disabled} onChange={(value) => edit("loop", (draft) => { draft.loop = value; })} /></FieldRow> : null}
+            <p className="px-1 pt-1 text-[11px] leading-snug text-zinc-500">{t("audioSourceHint")}</p>
         </div>
     );
 }
@@ -502,6 +530,25 @@ function ScriptFieldInput({ field, value, onChange, disabled }: { field: FieldIn
     }
     if (type === "Color") return <ColorInput value={typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value) ? value : "#ffffff"} disabled={disabled} onChange={onChange} />;
     if (type === "KeyCode") return <SelectInput value={typeof value === "string" ? value : "None"} disabled={disabled} onChange={onChange} options={KEY_CODES.map((key) => ({ value: key, label: key }))} />;
+    if (type === "AudioClip") {
+        // An uploaded file is kept by id (renaming it keeps the link), a built-in sound by name.
+        const audio = project.audio ?? [];
+        const current = typeof value === "string" ? value : "";
+        const known = !current || (SOUND_PRESETS as readonly string[]).includes(current) || audio.some((item) => item.id === current);
+        return (
+            <SelectInput
+                value={current}
+                disabled={disabled}
+                onChange={(next) => onChange(next || null)}
+                options={[
+                    { value: "", label: `${t("none")} — AudioClip` },
+                    ...(known ? [] : [{ value: current, label: t("missing") }]),
+                    ...audio.map((item) => ({ value: item.id, label: item.name, group: t("audioClipUploaded") })),
+                    ...SOUND_PRESETS.map((preset) => ({ value: preset as string, label: preset, group: t("audioClipBuiltIn") })),
+                ]}
+            />
+        );
+    }
     const enumInfo = program.enums.get(type);
     if (enumInfo) {
         const options = [...enumInfo.values.entries()].map(([name, number]) => ({ value: String(number), label: name }));

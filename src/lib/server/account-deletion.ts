@@ -13,6 +13,7 @@ import {
     listServerCollection,
     queryServerCollection,
 } from "./firebase-rest";
+import { deleteAccountGameAudio, releaseArcadeAudio } from "./game-assets";
 import { deleteVoiceRecording } from "./social-voice";
 import { isOwnedStoragePath, normalizeEmail } from "./validate";
 
@@ -391,7 +392,14 @@ async function deleteArcadeGames(ctx: Context) {
         if (!likesGone) return false;
         await deleteServerDocument(game._path);
         ctx.tally.count("arcadeGames");
+        // The game's own copies of its audio files go too (unless another game or account keeps them).
+        await releaseArcadeAudio(game._id);
     }));
+}
+
+/** Audio files uploaded for games (files nobody else keeps are deleted from the store). */
+async function deleteGameAudio(ctx: Context) {
+    ctx.tally.count("gameAudio", await deleteAccountGameAudio(ctx.email));
 }
 
 async function deleteNewsComments(ctx: Context) {
@@ -700,6 +708,7 @@ const STEPS: readonly Step[] = [
     { id: "projects", scopes: ALL, run: deleteProjects },
     { id: "gameProjects", scopes: ALL, run: deleteGameProjects },
     { id: "arcadeGames", scopes: BOTH, run: deleteArcadeGames },
+    { id: "gameAudio", scopes: ALL, run: deleteGameAudio },
     { id: "newsComments", scopes: BOTH, run: deleteNewsComments },
     { id: "arcadeLikes", scopes: ALL, run: deleteArcadeLikesAndVotes },
     { id: "mediaPosts", scopes: BOTH, run: deleteMediaPosts },

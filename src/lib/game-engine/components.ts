@@ -191,9 +191,11 @@ export function createAudioSource(overrides: Overrides<AudioSourceComponent> = {
         type: "audioSource",
         enabled: overrides.enabled ?? true,
         clip: overrides.clip ?? "coin",
+        audioId: overrides.audioId ?? null,
         volume: overrides.volume ?? 0.8,
         pitch: overrides.pitch ?? 1,
         playOnStart: overrides.playOnStart ?? false,
+        loop: overrides.loop ?? false,
     };
 }
 

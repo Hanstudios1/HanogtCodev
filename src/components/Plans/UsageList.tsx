@@ -1,6 +1,6 @@
 "use client";
 
-import { Code2, FolderCode, Gamepad2, KeyRound, Sparkles, Star, UsersRound } from "lucide-react";
+import { Code2, FolderCode, Gamepad2, KeyRound, Music, Sparkles, Star, UsersRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { currentWindow, formatResetTime, usageLevel, type CountedLimit, type PlanUsage, type UsageWindow } from "@/lib/ai/usage";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -12,6 +12,8 @@ const C = {
     gameProjects: { TR: "Oyun projesi", EN: "Game projects" },
     groups: { TR: "Sahibi olduğun Hanogt Social grubu", EN: "Hanogt Social groups you own" },
     stars: { TR: "Yıldızlı mesaj", EN: "Starred messages" },
+    gameAudio: { TR: "Oyun ses depolaması", EN: "Game audio storage" },
+    gameAudioFiles: { TR: "{count} / {limit} dosya", EN: "{count} / {limit} files" },
     connections: { TR: "Yapay zekâ bağlantısı (kendi anahtarın)", EN: "AI connections (your own key)" },
     apiKeys: { TR: "Hanogt AI API anahtarı", EN: "Hanogt AI API keys" },
     unlimited: { TR: "sınırsız", EN: "unlimited" },
@@ -48,13 +50,14 @@ function WindowBar({ window, label }: { window: UsageWindow; label: string }) {
 /**
  * Every benefit of the plan with a number, as "used / limit": Hanogt AI
  * messages in the plan's window (when they renew; own connections count in
- * it too), code and game projects, groups, starred messages and AI
- * connections. In the Plans page's usage panel
+ * it too), code and game projects, groups, starred messages, game audio
+ * storage and AI connections. In the Plans page's usage panel
  * (#usage, linked from the Hanogt AI usage meter).
  */
 export default function UsageList({ usage }: { usage: PlanUsage }) {
     const { tx, locale } = useI18n();
     const number = (value: number) => value.toLocaleString(locale);
+    const megabytes = (bytes: number) => (bytes / 1024 / 1024).toLocaleString(locale, { maximumFractionDigits: 1 });
     const counted = (item: CountedLimit) => {
         if (item.limit === 0) return tx(C.notInPlan);
         const used = item.used === null ? tx(C.unknown) : number(item.used);
@@ -79,6 +82,11 @@ export default function UsageList({ usage }: { usage: PlanUsage }) {
                 <Row icon={<Gamepad2 className={`${icon} text-indigo-500`} aria-hidden />} label={tx(C.gameProjects)} value={counted(usage.counts.gameProjects)} />
                 <Row icon={<UsersRound className={`${icon} text-amber-500`} aria-hidden />} label={tx(C.groups)} value={counted(usage.counts.groups)} />
                 {usage.counts.stars ? <Row icon={<Star className={`${icon} text-amber-400`} aria-hidden />} label={tx(C.stars)} value={counted(usage.counts.stars)} /> : null}
+                {usage.counts.gameAudio ? (
+                    <Row icon={<Music className={`${icon} text-teal-500`} aria-hidden />} label={tx(C.gameAudio)} value={usage.counts.gameAudio.used === null ? tx(C.unknown) : `${megabytes(usage.counts.gameAudio.used)} / ${megabytes(usage.counts.gameAudio.limit)} MB`}>
+                        {usage.counts.gameAudio.files !== null ? <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">{tx(C.gameAudioFiles, { count: number(usage.counts.gameAudio.files), limit: number(usage.counts.gameAudio.fileLimit) })}</p> : null}
+                    </Row>
+                ) : null}
                 <Row icon={<KeyRound className={`${icon} text-zinc-400`} aria-hidden />} label={tx(C.connections)} value={counted(usage.counts.connections)} />
                 {usage.counts.apiKeys ? <Row icon={<Code2 className={`${icon} text-zinc-400`} aria-hidden />} label={tx(C.apiKeys)} value={counted(usage.counts.apiKeys)} /> : null}
             </ul>

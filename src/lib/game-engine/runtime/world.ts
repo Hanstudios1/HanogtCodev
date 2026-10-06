@@ -35,6 +35,8 @@ import {
     type VMValue,
 } from "../script/values";
 import type {
+    AudioAsset,
+    AudioSourceComponent,
     CameraComponent,
     ColliderComponent,
     JointComponent,
@@ -52,10 +54,10 @@ import type {
     UIToggleComponent,
     Vector3,
 } from "../types";
-import { UNIQUE_COMPONENT_TYPES } from "../types";
+import { SOUND_PRESETS, UNIQUE_COMPONENT_TYPES } from "../types";
 import { rectContains, scaleRect, uiRect, type ScreenRect } from "../ui-layout";
 import { AnimationPlayer } from "./animator";
-import { SoundEngine } from "./audio";
+import { SoundEngine, type SoundHandle } from "./audio";
 import { CameraFollower, CameraShaker } from "./camera-follow";
 import { CharacterMotor } from "./character";
 import { jointCorrection, solveJointVelocity, type JointEnd } from "./joints";
@@ -445,6 +447,11 @@ export class RuntimeWorld implements ScriptHost {
     private fade: FadeState | null = null;
     /** Screen shakes added to the rendered camera (Camera.Shake). */
     readonly shaker = new CameraShaker();
+    /** What the game asked to play (newest last, at most 100): the console and tests read it. */
+    readonly audioEvents: Array<{ kind: "sfx" | "loop" | "music" | "stopMusic"; name: string }> = [];
+    /** Uploaded sounds playing from AudioSource components (Stop, isPlaying, loops). */
+    private readonly sourceSounds = new Map<string, SoundHandle>();
+    private musicName: string | null = null;
     /** Pathfinding.cellSize (null: the first tilemap's cell size, else 0.5). */
     navCellSize: number | null = null;
     /** Pathfinding.agentRadius: clearance kept by Pathfinding.FindPath. */
@@ -534,6 +541,9 @@ export class RuntimeWorld implements ScriptHost {
         if (!wasRunning) return;
         this.broadcast("OnApplicationQuit", []);
         for (const entity of this.rootEntities()) this.destroyEntityNow(entity);
+        this.audio?.stopAll();
+        this.sourceSounds.clear();
+        this.musicName = null;
         this.tweens.killAll();
         this.timers.cancelAll();
         this.interpreter.flushAllStreams();
@@ -944,7 +954,7 @@ export class RuntimeWorld implements ScriptHost {
             this.activateBehaviours(entity);
             if (entity.destroyed) continue;
             for (const component of entity.components) {
-                if (component.type === "audioSource" && component.enabled && component.playOnStart) this.playSound(component.clip, component.volume, component.pitch);
+                if (component.type === "audioSource" && component.enabled && component.playOnStart) this.playSource(component);
             }
         }
         this.structureVersion += 1;
@@ -1370,6 +1380,7 @@ export class RuntimeWorld implements ScriptHost {
             if (this.hoverEntity === node) this.hoverEntity = null;
             if (this.pressedEntity === node) this.pressedEntity = null;
             for (const component of node.components) {
+                if (component.type === "audioSource") this.stopSource(component, 0.05);
                 if (component.type !== "uiButton") continue;
                 this.buttonListeners.delete(component.id);
                 if (this.uiHover === component.id) this.uiHover = null;
@@ -1674,9 +1685,101 @@ export class RuntimeWorld implements ScriptHost {
         }
     }
 
+    private recordAudio(kind: "sfx" | "loop" | "music" | "stopMusic", name: string) {
+        this.audioEvents.push({ kind, name });
+        if (this.audioEvents.length > 100) this.audioEvents.shift();
+    }
+
+    /** ScriptHost: an AudioClip field holds an uploaded file's id or a built-in sound's name. */
+    audioClipName(ref: string): string {
+        return (this.project.audio ?? []).find((item) => item.id === ref)?.name ?? ref;
+    }
+
+    /** An uploaded audio file by name (exact, then ignoring case) or id. */
+    audioAsset(ref: string | null | undefined): AudioAsset | null {
+        if (!ref) return null;
+        const list = this.project.audio ?? [];
+        const lower = ref.toLocaleLowerCase();
+        return list.find((item) => item.name === ref) ?? list.find((item) => item.id === ref) ?? list.find((item) => item.name.toLocaleLowerCase() === lower) ?? null;
+    }
+
+    /**
+     * What a sound name plays: an uploaded file with exactly that name (so a
+     * file can replace a built-in sound), a built-in sound, then a file whose
+     * name matches ignoring case. V4 rules also accept "Explosion" for "explosion".
+     */
+    resolveSound(clip: string): { asset: AudioAsset | null; preset: string | null } {
+        const list = this.project.audio ?? [];
+        const presets = SOUND_PRESETS as readonly string[];
+        const exact = list.find((item) => item.name === clip) ?? list.find((item) => item.id === clip);
+        if (exact) return { asset: exact, preset: null };
+        if (presets.includes(clip)) return { asset: null, preset: clip };
+        const lower = clip.toLocaleLowerCase();
+        const loose = list.find((item) => item.name.toLocaleLowerCase() === lower);
+        if (loose) return { asset: loose, preset: null };
+        if (this.rules >= 4 && presets.includes(lower)) return { asset: null, preset: lower };
+        return { asset: null, preset: null };
+    }
+
+    /** Audio.Play / PlayOneShot: a built-in sound or an uploaded file (by name). */
     playSound(clip: string, volume = 1, pitch = 1) {
+        const { asset, preset } = this.resolveSound(clip);
+        if (!preset && !asset && this.rules >= 4) {
+            const uploaded = (this.project.audio ?? []).map((item) => item.name);
+            this.warnOnce(`audio:${clip}`, `Ses bulunamadı: "${clip}". Hazır sesler: ${SOUND_PRESETS.join(", ")}${uploaded.length ? `; yüklenenler: ${uploaded.slice(0, 8).join(", ")}` : ""}.`);
+        }
+        this.recordAudio("sfx", asset?.name ?? preset ?? clip);
         if (this.audioMuted) return;
-        this.audio?.play(clip, volume, pitch);
+        if (asset) this.audio?.playClip(asset.hash, volume, pitch);
+        else this.audio?.play(preset ?? clip, volume, pitch);
+    }
+
+    /** Audio.PlayMusic: loops an uploaded file on the music channel (one track at a time). */
+    playMusic(name: string, volume = 1, fade = 0.5) {
+        const asset = this.audioAsset(name);
+        if (!asset) {
+            this.warnOnce(`music:${name}`, `Audio.PlayMusic("${name}"): bu adda yüklenmiş bir ses yok. Proje panelinden bir müzik dosyası yükleyin.`);
+            return;
+        }
+        this.musicName = asset.name;
+        this.recordAudio("music", asset.name);
+        this.audio?.playMusic(asset.hash, volume, fade);
+    }
+
+    stopMusic(fade = 0.5) {
+        this.musicName = null;
+        this.recordAudio("stopMusic", "");
+        this.audio?.stopMusic(fade);
+    }
+
+    get currentMusic(): string | null {
+        return this.musicName;
+    }
+
+    /** AudioSource.Play: its uploaded file (looping when set), else its built-in sound. */
+    playSource(component: AudioSourceComponent, clipOverride?: string) {
+        const asset = clipOverride !== undefined ? this.resolveSound(clipOverride).asset : component.audioId ? (this.project.audio ?? []).find((item) => item.id === component.audioId) ?? null : null;
+        if (!asset) {
+            this.playSound(clipOverride ?? component.clip, component.volume, component.pitch);
+            return;
+        }
+        const loop = clipOverride === undefined && component.loop;
+        this.recordAudio(loop ? "loop" : "sfx", asset.name);
+        if (clipOverride === undefined) this.stopSource(component, 0);
+        if (this.audioMuted && !loop) return;
+        const handle = this.audio?.playClip(asset.hash, component.volume, component.pitch, loop) ?? null;
+        if (handle && clipOverride === undefined) this.sourceSounds.set(component.id, handle);
+    }
+
+    stopSource(component: AudioSourceComponent, fade = 0.05) {
+        const handle = this.sourceSounds.get(component.id);
+        if (!handle) return;
+        handle.stop(fade);
+        this.sourceSounds.delete(component.id);
+    }
+
+    sourcePlaying(component: AudioSourceComponent): boolean {
+        return Boolean(this.sourceSounds.get(component.id)?.playing);
     }
 
     sendMessage(entity: RuntimeEntity, method: string, arg: VMValue, mode: string) {

@@ -73,6 +73,19 @@ export const PLAN_PROJECT_LIMITS: Record<PlanId, { code: number | null; game: nu
 };
 
 /**
+ * Audio files uploaded for Hanogt Engine games (V4): total size and number of
+ * files an account may store. Each file is at most GAME_AUDIO_MAX_BYTES; a
+ * file used by several projects counts once.
+ */
+export type PlanGameAudioLimits = { bytes: number; files: number };
+export const PLAN_GAME_AUDIO_LIMITS: Record<PlanId, PlanGameAudioLimits> = {
+    free: { bytes: 5 * 1024 * 1024, files: 30 },
+    plus: { bytes: 25 * 1024 * 1024, files: 150 },
+    pro: { bytes: 100 * 1024 * 1024, files: 600 },
+};
+export const GAME_AUDIO_MAX_BYTES = 300 * 1024;
+
+/**
  * Running code in the editor: how many files one run may start at once
  * (browser and server languages together) and how many files a minute the
  * server compiles and runs (C, C++, Java, Go…; browser languages never reach
@@ -370,6 +383,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "3 Hanogt Social grubu açma", EN: "Create up to 3 Hanogt Social groups" } },
             { text: { TR: "Gruplarında 25 üye ve 25 sabitlenmiş mesaj", EN: "25 members and 25 pinned messages in your groups" } },
             { text: { TR: "200 yıldızlı mesaj", EN: "200 starred messages" } },
+            { text: { TR: "Oyunların için 5 MB ses depolaması", EN: "5 MB of audio storage for your games" } },
             { text: { TR: "2 kişiyle ekiple düzenleme ve sesli görüşme", EN: "Team editing for 2 people, with voice calls" } },
         ],
     },
@@ -384,6 +398,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "10 Hanogt Social grubu açma", EN: "Create up to 10 Hanogt Social groups" } },
             { text: { TR: "Gruplarında 100 üye, 50 sabitlenmiş mesaj, 50 özel bot komutu ve 300 yasaklı kelime", EN: "100 members, 50 pinned messages, 50 custom bot commands and 300 banned words in your groups" } },
             { text: { TR: "500 yıldızlı mesaj", EN: "500 starred messages" } },
+            { text: { TR: "Oyunların için 25 MB ses depolaması", EN: "25 MB of audio storage for your games" } },
             { text: { TR: "5 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 5 people" } },
             { text: { TR: "Daha uzun yapay zekâ yanıtları; açık dosyanın 24.000 karakteri okunur", EN: "Longer AI answers; 24,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 2 yapay zekâ bağlantısı (OpenAI, Claude, Gemini ve daha fazlası); mesajlar Hanogt AI hakkından düşer", EN: "Connect 2 AI providers with your own API keys (OpenAI, Claude, Gemini and more); messages use your Hanogt AI allowance" } },
@@ -403,6 +418,7 @@ export const PLAN_COPY: Record<PlanId, PlanCopy> = {
             { text: { TR: "Sınırsız Hanogt Social grubu", EN: "Unlimited Hanogt Social groups" } },
             { text: { TR: "Gruplarında 250 üye, 100 sabitlenmiş mesaj, 100 özel bot komutu ve 1.000 yasaklı kelime", EN: "250 members, 100 pinned messages, 100 custom bot commands and 1,000 banned words in your groups" } },
             { text: { TR: "1.000 yıldızlı mesaj", EN: "1,000 starred messages" } },
+            { text: { TR: "Oyunların için 100 MB ses depolaması", EN: "100 MB of audio storage for your games" } },
             { text: { TR: "30 kişiye kadar ekiple düzenleme", EN: "Team editing with up to 30 people" } },
             { text: { TR: "En uzun yapay zekâ yanıtları; açık dosyanın 40.000 karakteri okunur", EN: "The longest AI answers; 40,000 characters of your open file are read" } },
             { text: { TR: "Kendi API anahtarınla 5 yapay zekâ bağlantısı; mesajlar Hanogt AI hakkından düşer", EN: "Connect 5 AI providers with your own API keys; messages use your Hanogt AI allowance" } },

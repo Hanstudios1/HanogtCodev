@@ -533,7 +533,8 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
             return project.dimension === "2d" ? { x: Math.round(point.x), y: Math.round(point.y), z: 0 } : { x: Math.round(point.x), y: Math.max(0, Math.round(point.y)), z: Math.round(point.z) };
         },
         tilePainter,
-    }), [store, t, language, toast, program, playing, openScript, project.dimension, tilePainter]);
+        projectSource: source,
+    }), [store, t, language, toast, program, playing, openScript, project.dimension, tilePainter, source]);
 
     const scene = activeScene(project);
 

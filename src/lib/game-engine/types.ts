@@ -177,10 +177,15 @@ export type SoundPreset = (typeof SOUND_PRESETS)[number];
 
 export interface AudioSourceComponent extends ComponentBase {
     type: "audioSource";
+    /** Built-in sound, used when no uploaded audio is chosen. */
     clip: SoundPreset;
+    /** Uploaded audio (AudioAsset id) played instead of the built-in sound (V4). */
+    audioId: string | null;
     volume: number;
     pitch: number;
     playOnStart: boolean;
+    /** Repeats the uploaded audio until stopped (V4). */
+    loop: boolean;
 }
 
 export const UI_ANCHORS = ["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"] as const;
@@ -643,6 +648,19 @@ export interface TextureAsset {
     filter: "linear" | "nearest";
 }
 
+/** Audio file of a project (V4); the bytes live in the asset store under `hash`. */
+export interface AudioAsset {
+    id: string;
+    /** Name scripts use: Audio.Play("Name"), Audio.PlayMusic("Name"). */
+    name: string;
+    /** SHA-256 of the file (hex); the same file is stored once. */
+    hash: string;
+    contentType: "audio/wav" | "audio/mpeg" | "audio/ogg";
+    size: number;
+    /** Length in seconds (0 when unknown). */
+    duration: number;
+}
+
 export interface ScriptAsset {
     id: string;
     name: string;
@@ -677,6 +695,8 @@ export interface GameProjectDocument {
     scenes: SceneDocument[];
     prefabs: PrefabAsset[];
     textures: TextureAsset[];
+    /** Uploaded sound effects and music (V4). */
+    audio: AudioAsset[];
     scripts: ScriptAsset[];
     settings: ProjectSettings;
     metadata: { createdAt: string; updatedAt: string };

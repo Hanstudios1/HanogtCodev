@@ -5,6 +5,7 @@
  * The player runtime (public/engine/player.js, built from
  * src/lib/game-engine/player/standalone.ts) is inlined into the page.
  */
+import { embedProjectAudio } from "@/lib/game-engine/audio-store";
 import { ENGINE_VERSION, ENGINE_VERSION_LABEL, GAME_ENGINE_SCHEMA_VERSION, type GameProjectDocument } from "@/lib/game-engine/types";
 import { SITE_URL } from "@/lib/site";
 import { downloadBlob, safeFileName } from "./persistence";
@@ -23,6 +24,9 @@ export async function buildStandaloneHtml(project: GameProjectDocument): Promise
     if (!response.ok) throw new Error("Oynatıcı paketi indirilemedi. Sayfayı yenileyip tekrar deneyin.");
     const runtime = (await response.text()).replace(/<\/script/gi, "<\\/script");
     const title = escapeHtml(project.name);
+    // Uploaded sounds go inside the file so the exported game plays offline.
+    const audio = await embedProjectAudio(project.audio ?? []);
+    if (audio.missing.length) throw new Error(`Bazı ses dosyaları indirilemedi (${audio.missing.slice(0, 3).join(", ")}). İnternet bağlantınızı kontrol edip tekrar deneyin.`);
     return `<!doctype html>
 <html lang="tr">
 <head>
@@ -46,6 +50,7 @@ html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,
 <div id="start"><div class="card"><h1>${title}</h1><p>${ENGINE_VERSION_LABEL} ile yapıldı</p><button type="button" id="play">▶ Oyna</button></div></div>
 <a id="badge" href="${escapeHtml(SITE_URL)}/arcade" target="_blank" rel="noopener">Made with ${ENGINE_VERSION_LABEL}</a>
 <script type="application/json" id="hanogt-game">${embedJson({ format: "hanogt-engine-project", version: GAME_ENGINE_SCHEMA_VERSION, project })}</script>
+<script type="application/json" id="hanogt-audio">${embedJson(audio.files)}</script>
 <script>${runtime}</script>
 </body>
 </html>`;

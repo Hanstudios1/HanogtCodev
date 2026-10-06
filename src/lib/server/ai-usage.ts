@@ -1,10 +1,11 @@
 import "server-only";
 
 import { QUOTA_HEADERS, type AiUsage, type CountedLimit, type PlanUsage, type QuotaKind, type UsageWindow, type WindowQuota } from "@/lib/ai/usage";
-import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, PLAN_STAR_LIMITS, aiBonusOf, aiLimitsFor, aiWindowMs, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
+import { FREE_SUBSCRIPTION, PLAN_AI_CONNECTIONS, PLAN_AI_FEATURES, PLAN_GAME_AUDIO_LIMITS, PLAN_GROUP_LIMITS, PLAN_PROJECT_LIMITS, PLAN_STAR_LIMITS, aiBonusOf, aiLimitsFor, aiWindowMs, effectivePlan, nextPlanUp, type PaidPlanId, type PlanId, type UserSubscription } from "@/lib/plans";
 import { RETIRED_PROVIDER_IDS } from "@/lib/ai/connections";
 import { healBeforeRefusing, type HealOptions } from "./entitlements";
 import { countServerQuery, getServerDocument } from "./firebase-rest";
+import { gameAudioUsageFor } from "./game-assets";
 import { AI_LIMIT_KEYS, getSubscription } from "./plans";
 import { enforceRateLimitWithFallback, readRateLimit, releaseFromWindow, type RateLimitResult } from "./rate-limit";
 
@@ -69,7 +70,8 @@ const countsAsConnection = (item: unknown) => !(item && typeof item === "object"
 export async function planUsageFor(email: string, subscription: UserSubscription | null = null, options: UsageOptions = {}): Promise<PlanUsage> {
     const record = subscription ?? (await getSubscription(email).catch(() => FREE_SUBSCRIPTION));
     const plan = effectivePlan(record);
-    const [usage, codeProjects, gameProjects, groups, stars, connections, apiKeys] = await Promise.all([
+    const audioLimit = PLAN_GAME_AUDIO_LIMITS[plan];
+    const [usage, codeProjects, gameProjects, groups, stars, connections, apiKeys, gameAudio] = await Promise.all([
         aiUsageFor(email, record),
         countOf("projects", "email", email, PLAN_PROJECT_LIMITS[plan].code),
         countOf("game_projects", "ownerEmail", email, PLAN_PROJECT_LIMITS[plan].game),
@@ -77,8 +79,11 @@ export async function planUsageFor(email: string, subscription: UserSubscription
         countOf("message_stars", "owner", email, PLAN_STAR_LIMITS[plan]),
         listCount(`ai_connections/${email}`, PLAN_AI_CONNECTIONS[plan], countsAsConnection),
         options.api ? listCount(`ai_api_keys/${email}`, PLAN_AI_FEATURES[plan].api?.keys ?? 0) : null,
+        gameAudioUsageFor(email, plan)
+            .then((stored) => ({ used: stored.bytes, limit: audioLimit.bytes, files: stored.files, fileLimit: audioLimit.files }))
+            .catch(() => ({ used: null, limit: audioLimit.bytes, files: null, fileLimit: audioLimit.files })),
     ]);
-    return { ...usage, counts: { codeProjects, gameProjects, groups, stars, connections, apiKeys } };
+    return { ...usage, counts: { codeProjects, gameProjects, groups, stars, connections, apiKeys, gameAudio } };
 }
 
 /** Where a Hanogt AI message came from: the chat, the person's own connection, the developer API or a Social group's bot. */

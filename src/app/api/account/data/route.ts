@@ -8,6 +8,7 @@ import { exportAiConnections } from "@/lib/server/ai-connections";
 import { getServerDocument, listServerCollection, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
 import { voterHash } from "@/lib/server/ai-rankings";
 import { likerHash } from "@/lib/server/arcade";
+import { listGameAudio } from "@/lib/server/game-assets";
 import { enforceRateLimit, enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
 import { isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 import { TICKETS_COLLECTION, readTicketMessages, readTicketMeta, ticketCategory, ticketPriority, ticketStatus, type TicketRecord } from "@/lib/server/support";
@@ -245,6 +246,7 @@ export async function GET() {
             files: (await listServerCollection<Record<string, unknown>>(`projects/${project._id}/files`))
                 .map((file) => publicAccountData(file)),
         })));
+        const gameAudio = await listGameAudio(email).catch(() => ({ files: [] as Array<{ hash: string }> }));
         const exportedGameProjects = await Promise.all(gameProjects.map(async (project) => ({
             ...publicAccountData(project),
             id: project._id,
@@ -257,6 +259,8 @@ export async function GET() {
             user: publicAccountData(user),
             projects: exportedProjects,
             gameProjects: exportedGameProjects,
+            // Uploaded game audio: names and sizes, with the address each file can be downloaded from.
+            gameAudio: gameAudio.files.map((file) => ({ ...file, url: `/api/game-assets/${file.hash}` })),
             arcadeGames: arcadeGames.map((game) => ({ ...publicAccountData(game), id: game._id })),
             newsComments: newsComments.map((comment) => publicAccountData(comment)),
             arcadeLikes: arcadeLikes.map((like) => ({ gameId: like.gameId, createdAt: like.createdAt })),

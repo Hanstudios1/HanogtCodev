@@ -9,6 +9,7 @@ import {
     Flag,
     FolderOpen,
     Image as ImageIcon,
+    Music,
     Package,
     Plus,
     Search,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { ENGINE_LIMITS } from "@/lib/game-engine/schema";
+import { AudioGroupActions, AudioGroupItems } from "./AudioAssets";
 import { useEditor } from "./context";
 import { addScene, createScript, instantiatePrefab, textureFromFile, touch } from "./operations";
 import { useEditorState } from "./store";
@@ -216,6 +218,9 @@ export default function ProjectPanel() {
                         />
                     ))}
                     {!project.textures.length ? <p className="col-span-full px-2 py-1 text-[11.5px] text-zinc-500">{t("texturesHint")}</p> : null}
+                </Group>
+                <Group title={t("audioGroup")} icon={Music} count={(project.audio ?? []).length} action={<AudioGroupActions />}>
+                    <AudioGroupItems matches={matches} Tile={AssetTile} />
                 </Group>
             </div>
         </div>

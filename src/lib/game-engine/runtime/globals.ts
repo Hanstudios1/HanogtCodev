@@ -704,6 +704,11 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
     globals.set("Audio", ns("Audio", {
         volume: () => world.audio?.volume ?? 0,
         mute: () => world.audioMuted,
+        // V4: music channel and volumes of the two channels.
+        musicVolume: () => world.audio?.musicVolume ?? 1,
+        sfxVolume: () => world.audio?.sfxVolume ?? 1,
+        isMusicPlaying: () => world.currentMusic !== null,
+        currentMusic: () => world.currentMusic,
     }, {
         Play: (args) => {
             world.playSound(String(args[0] ?? "blip"), typeof args[1] === "number" ? args[1] : 1, typeof args[2] === "number" ? args[2] : 1);
@@ -713,11 +718,42 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             world.playSound(String(args[0] ?? "blip"), typeof args[1] === "number" ? args[1] : 1, typeof args[2] === "number" ? args[2] : 1);
             return undefined;
         },
+        PlayMusic: (args) => {
+            world.playMusic(String(args[0] ?? ""), typeof args[1] === "number" ? args[1] : 1, typeof args[2] === "number" ? args[2] : 0.5);
+            return undefined;
+        },
+        StopMusic: (args) => {
+            world.stopMusic(typeof args[0] === "number" ? args[0] : 0.5);
+            return undefined;
+        },
+        IsMusicPlaying: () => world.currentMusic !== null,
+        SetVolume: (args) => {
+            world.audio?.setVolume(toNumber(args[0] ?? 1));
+            return undefined;
+        },
+        SetMusicVolume: (args) => {
+            world.audio?.setMusicVolume(toNumber(args[0] ?? 1));
+            return undefined;
+        },
+        SetSfxVolume: (args) => {
+            world.audio?.setSfxVolume(toNumber(args[0] ?? 1));
+            return undefined;
+        },
     }, {
         volume: (value) => world.audio?.setVolume(toNumber(value)),
         mute: (value) => {
             world.audioMuted = toBool(value);
             world.audio?.setMuted(world.audioMuted);
+        },
+        musicVolume: (value) => world.audio?.setMusicVolume(toNumber(value)),
+        sfxVolume: (value) => world.audio?.setSfxVolume(toNumber(value)),
+    }));
+
+    // AudioSource.PlayClipAtPoint(clip, position[, volume]): a one-shot sound (no 3D audio, so the position is ignored).
+    globals.set("AudioSource", ns("AudioSource", {}, {
+        PlayClipAtPoint: (args) => {
+            if (args[0] !== null && args[0] !== undefined) world.playSound(String(args[0]), typeof args[2] === "number" ? args[2] : 1);
+            return undefined;
         },
     }));
 

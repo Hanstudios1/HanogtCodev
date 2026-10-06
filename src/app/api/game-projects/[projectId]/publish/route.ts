@@ -4,6 +4,7 @@ import { compileScripts } from "@/lib/game-engine/script/compiler";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { MAX_ARCADE_GAME_BYTES, remixSourceOf, type ArcadeRecord } from "@/lib/server/arcade";
 import { commitServerMutations, getServerDocument, listServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
+import { missingGameAudio, releaseArcadeAudio, syncArcadeAudio } from "@/lib/server/game-assets";
 import { scanUntrustedCode } from "@/lib/server/security-scanner";
 import {
     apiError,
@@ -52,6 +53,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
             if (blocking.length) throw new GameApiError(400, `${script.name} güvenlik taramasından geçemedi: ${blocking[0].message}.`);
         }
 
+        // Audio files must be in the store; the published game keeps its own copies of them.
+        const audioHashes = project.audio.map((asset) => asset.hash);
+        const missing = await missingGameAudio(audioHashes);
+        if (missing.length) {
+            const names = project.audio.filter((asset) => missing.includes(asset.hash)).map((asset) => asset.name);
+            throw new GameApiError(400, `Bazı ses dosyaları sunucuda yok (${names.slice(0, 3).join(", ")}). Projeyi kaydedip tekrar deneyin ya da bu sesleri yeniden yükleyin.`);
+        }
+
         project.name = title;
         project.description = description;
         const game = JSON.stringify(project);
@@ -84,6 +93,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             updatedAt: now,
         };
         await commitServerMutations([{ type: existing ? "update" : "create", path: `arcade_games/${projectId}`, data: data as Record<string, unknown>, ...(existing ? { updateTime: existing._updateTime } : {}) }]);
+        await syncArcadeAudio(projectId, audioHashes);
         return apiJson({ success: true, arcadeId: projectId }, 200, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Oyun yayınlanamadı.");
@@ -101,6 +111,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
             { type: "delete", path: `arcade_games/${projectId}` },
             ...likes.map((like) => ({ type: "delete" as const, path: like._path })),
         ]);
+        await releaseArcadeAudio(projectId).catch(() => 0);
         return apiJson({ success: true }, 200, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Yayından kaldırılamadı.");

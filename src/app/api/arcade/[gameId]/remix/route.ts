@@ -15,6 +15,7 @@ import {
     type GameProjectRecord,
 } from "../../../game-projects/_shared";
 import { planQuota } from "@/lib/server/entitlements";
+import { claimGameAudio } from "@/lib/server/game-assets";
 
 export const runtime = "nodejs";
 
@@ -70,6 +71,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 data: scriptRecord(script, projectId, email, order, now),
             })),
         ]);
+        // The copy's sounds join the remixer's library (as far as their audio storage allows).
+        if (project.audio.length) await claimGameAudio(email, project.audio).catch(() => undefined);
         return apiJson({ success: true, projectId }, 201, rateHeaders(rate));
     } catch (error) {
         return apiError(error, "Remix oluşturulamadı.");

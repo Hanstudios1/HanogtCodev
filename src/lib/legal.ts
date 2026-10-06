@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.1";
+export const LEGAL_VERSION = "5.2";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.1-2026-10-06";
+export const LEGAL_NOTICE_ID = "5.2-2026-10-06";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,14 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.2",
+        date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
+        items: [
+            { TR: "Oyunlarda ses dosyaları: Hanogt Engine V4 ile oyunlarınıza WAV, MP3 veya OGG dosyası (dosya başına en fazla 300 KB) yükleyebilirsiniz. Giriş yaptığınızda dosyalar hesabınızın ses kitaplığına kaydedilir; her dosya içeriğinden türetilen bir kimlikle bir kez saklanır ve oyunların çalabilmesi için bu kimliği bilen herkes tarafından indirilebilir. Yayımlanan oyunların sesleri yayınla birlikte saklanır; hiçbir hesabın ve yayının kullanmadığı dosyalar silinir. Ses kitaplığınız “Verilerimi İndir” dosyasında yer alır.", EN: "Audio files in games: with Hanogt Engine V4 you can upload WAV, MP3 or OGG files (up to 300 KB each) to your games. When you are signed in, files are saved to your account's audio library; each file is stored once under an identifier derived from its content and can be downloaded by anyone who knows that identifier so games can play it. The sounds of published games are kept with the publication; files that no account or publication uses are deleted. Your audio library is included in the “Download My Data” file." },
+            { TR: "Yeni plan avantajı ve kullanım kuralı: oyunlar için ses depolaması Ücretsiz planda 5 MB (30 dosya), Plus'ta 25 MB (150 dosya), Pro'da 100 MB (600 dosya). Yalnızca kullanma hakkına sahip olduğunuz sesleri yükleyebilirsiniz; Kullanım Şartları buna göre güncellendi.", EN: "New plan benefit and usage rule: audio storage for games is 5 MB (30 files) on Free, 25 MB (150 files) on Plus and 100 MB (600 files) on Pro. You may only upload sounds you have the right to use; the Terms of Use were updated accordingly." },
+        ],
+    },
     {
         version: "5.1",
         date: { TR: "6 Ekim 2026", EN: "6 October 2026" },

@@ -20,7 +20,7 @@ export type GameProjectRecord = {
     description?: string;
     dimension?: "2d" | "3d";
     schemaVersion?: number;
-    /** v2 and later: JSON of { activeSceneId, scenes, prefabs, textures, settings }. */
+    /** v2 and later: JSON of { activeSceneId, scenes, prefabs, textures, audio (v4), settings }. */
     content?: string;
     /** v1: single scene document. */
     scene?: unknown;
@@ -235,6 +235,7 @@ export function projectDocumentFields(project: GameProjectDocument) {
         scenes: project.scenes,
         prefabs: project.prefabs,
         textures: project.textures,
+        audio: project.audio,
         settings: project.settings,
     });
     return {

@@ -24,6 +24,7 @@ export function startWorld(project, options = {}) {
         program,
         sceneId: options.sceneId ?? null,
         storage: options.storage ?? memoryStorage(),
+        audio: options.audio,
         getScreenSize: () => ({ width: 960, height: 540 }),
         onLog: (entry, updated) => {
             if (!updated) logs.push(entry);

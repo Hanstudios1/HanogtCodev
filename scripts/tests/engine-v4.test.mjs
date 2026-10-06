@@ -946,3 +946,197 @@ public class Menu : MonoBehaviour
     const [copy] = cloneEntitiesWithNewIds([normalized.scenes[0].objects.find((item) => item.name === "Sound")]);
     assert.equal(copy.components.find((component) => component.type === "uiToggle").onValueChanged.targetId, "entity_ui", "targets outside the copy stay");
 });
+
+// ---------------------------------------------------------------------------
+// Audio files and music
+// ---------------------------------------------------------------------------
+
+const JUMP_HASH = "a".repeat(64);
+const THEME_HASH = "b".repeat(64);
+
+/** Records what the game asks the sound engine to do. */
+function fakeSound() {
+    const calls = [];
+    const engine = {
+        volume: 0.7,
+        musicVolume: 1,
+        sfxVolume: 1,
+        muted: false,
+        play: (preset) => calls.push(["preset", preset]),
+        playClip: (hash, volume, pitch, loop = false) => {
+            const handle = {
+                playing: true,
+                stop: () => {
+                    if (!handle.playing) return;
+                    handle.playing = false;
+                    calls.push(["stopClip", hash]);
+                },
+            };
+            calls.push(["clip", hash, Math.round(volume * 100) / 100, loop]);
+            return handle;
+        },
+        playMusic: (hash, volume, fade) => calls.push(["music", hash, volume, fade]),
+        stopMusic: (fade) => calls.push(["stopMusic", fade]),
+        setVolume: (value) => { engine.volume = value; },
+        setMusicVolume: (value) => { engine.musicVolume = value; },
+        setSfxVolume: (value) => { engine.sfxVolume = value; },
+        setMuted: (value) => { engine.muted = value; },
+        stopAll: () => calls.push(["stopAll"]),
+    };
+    return { engine, calls };
+}
+
+function audioProject(script, mutate, rules) {
+    return projectWithScript("Sounds.cs", script, (project) => {
+        project.audio = [
+            { id: "audio_jump", name: "Jump", hash: JUMP_HASH, contentType: "audio/wav", size: 2048, duration: 0.3 },
+            { id: "audio_theme", name: "Theme", hash: THEME_HASH, contentType: "audio/mpeg", size: 200_000, duration: 42 },
+        ];
+        if (rules) project.settings.rules = rules;
+        mutate?.(project);
+    });
+}
+
+test("project audio files are validated; Audio Sources lose links to files that are gone", () => {
+    const project = audioProject("", (draft) => {
+        draft.audio.push(
+            { id: "audio_bad", name: "Bad", hash: "not-a-hash", contentType: "audio/wav", size: 10 },
+            { id: "audio_jump", name: "Copy", hash: "c".repeat(64), contentType: "audio/wav", size: 10 },
+            { id: "audio_odd", name: "  Odd  ", hash: "d".repeat(64), contentType: "text/html", size: 10_000_000, duration: -3 },
+        );
+        draft.scenes[0].objects.push({
+            id: "entity_speaker", name: "Speaker", tag: "Untagged", parentId: null, active: true,
+            components: [createTransform(), C.createAudioSource({ audioId: "audio_theme", loop: true }), C.createAudioSource({ audioId: "audio_gone" })],
+        });
+    });
+    const normalized = normalizeProject(project);
+    assert.deepEqual(normalized.audio.map((item) => item.id), ["audio_jump", "audio_theme", "audio_odd"], "bad hashes and repeated ids are dropped");
+    const odd = normalized.audio[2];
+    assert.equal(odd.name, "Odd");
+    assert.equal(odd.contentType, "audio/mpeg");
+    assert.equal(odd.size, 300 * 1024);
+    assert.equal(odd.duration, 0);
+    const sources = normalized.scenes[0].objects.find((item) => item.name === "Speaker").components.filter((component) => component.type === "audioSource");
+    assert.equal(sources[0].audioId, "audio_theme");
+    assert.equal(sources[0].loop, true);
+    assert.equal(sources[1].audioId, null, "a file that is gone falls back to the built-in sound");
+    assert.ok(normalizeProject({ ...project, audio: Array.from({ length: 60 }, (_, index) => ({ id: `audio_${index}`, name: `S${index}`, hash: index.toString(16).padStart(64, "0"), contentType: "audio/ogg", size: 100 })) }).audio.length <= 40);
+});
+
+test("Audio.Play plays uploaded files by name, PlayMusic loops one track, volumes and StopMusic work", () => {
+    const sound = fakeSound();
+    const game = startWorld(audioProject(`using UnityEngine;
+public class Sounds : MonoBehaviour
+{
+    void Start()
+    {
+        Audio.Play("Jump");
+        Audio.Play("JUMP", 0.5f);
+        Audio.Play("jump");
+        Audio.Play("Coin");
+        Audio.PlayMusic("Theme", 0.6f, 1f);
+        Debug.Log("music " + Audio.IsMusicPlaying() + " " + Audio.currentMusic);
+        Audio.SetMusicVolume(0.5f);
+        Audio.sfxVolume = 0.25f;
+        Debug.Log("volumes " + Audio.musicVolume + " " + Audio.sfxVolume);
+    }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Audio.StopMusic(0f);
+            Debug.Log("stopped " + Audio.isMusicPlaying);
+        }
+    }
+}`), { audio: sound.engine });
+    game.step(1);
+    // Exact names first ("jump" is a built-in sound), then a file ignoring case, then V4's "Coin" for "coin".
+    assert.deepEqual(sound.calls, [["clip", JUMP_HASH, 1, false], ["clip", JUMP_HASH, 0.5, false], ["preset", "jump"], ["preset", "coin"], ["music", THEME_HASH, 0.6, 1]]);
+    assert.deepEqual(game.world.audioEvents, [{ kind: "sfx", name: "Jump" }, { kind: "sfx", name: "Jump" }, { kind: "sfx", name: "jump" }, { kind: "sfx", name: "coin" }, { kind: "music", name: "Theme" }]);
+    game.press("Space");
+    assert.deepEqual(sound.calls.at(-1), ["stopMusic", 0]);
+    assert.deepEqual(game.messages("info"), ["music True Theme", "volumes 0.5 0.25", "stopped False"]);
+    assert.deepEqual(game.problems(), []);
+    game.world.stop();
+    assert.deepEqual(sound.calls.at(-1), ["stopAll"], "stopping the game stops every sound");
+});
+
+test("Audio Sources play their file (looping until stopped), AudioClip fields and PlayClipAtPoint; destroyed sources go quiet", () => {
+    const sound = fakeSound();
+    const project = audioProject(`using UnityEngine;
+public class Sounds : MonoBehaviour
+{
+    public AudioClip hit;
+    public AudioClip fallback;
+    AudioSource ambience;
+    void Start()
+    {
+        ambience = GameObject.Find("Ambience").GetComponent<AudioSource>();
+        Debug.Log("ambience " + ambience.clip + " loop " + ambience.loop + " playing " + ambience.isPlaying);
+        Debug.Log("fields " + hit + " " + fallback);
+        AudioSource.PlayClipAtPoint(hit, transform.position, 0.5f);
+        ambience.PlayOneShot(fallback);
+    }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            ambience.Stop();
+            Debug.Log("after stop " + ambience.isPlaying);
+            ambience.clip = "Jump";
+            ambience.loop = false;
+            ambience.Play();
+            Debug.Log("now " + ambience.clip);
+        }
+        if (Input.GetKeyDown(KeyCode.D)) Destroy(ambience.gameObject);
+    }
+}`, (draft) => {
+        draft.scenes[0].objects.find((item) => item.name === "Probe").components[1].fields = { hit: "audio_jump", fallback: "laser" };
+        draft.scenes[0].objects.push({
+            id: "entity_ambience", name: "Ambience", tag: "Untagged", parentId: null, active: true,
+            components: [createTransform(), C.createAudioSource({ audioId: "audio_theme", loop: true, playOnStart: true, volume: 0.4 })],
+        });
+    });
+    const game = startWorld(project, { audio: sound.engine });
+    game.step(1);
+    assert.deepEqual(sound.calls, [["clip", THEME_HASH, 0.4, true], ["clip", JUMP_HASH, 0.5, false], ["preset", "laser"]]);
+    assert.deepEqual(game.messages("info"), ["ambience Theme loop True playing True", "fields Jump laser"]);
+    game.press("S");
+    assert.deepEqual(sound.calls.slice(3), [["stopClip", THEME_HASH], ["clip", JUMP_HASH, 0.4, false]]);
+    assert.deepEqual(game.messages("info").slice(2), ["after stop False", "now Jump"]);
+    const source = game.find("Ambience").components.find((component) => component.type === "audioSource");
+    assert.equal(source.audioId, "audio_jump", "assigning a file's name links the file");
+    game.hold("D", true);
+    game.step(1);
+    game.hold("D", false);
+    game.step(1);
+    assert.equal(game.find("Ambience"), undefined);
+    assert.deepEqual(sound.calls.at(-1), ["stopClip", JUMP_HASH], "a destroyed object stops its sound");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("unknown sound names warn once under V4 rules and stay quiet under V3 rules; PlayMusic needs an uploaded file", () => {
+    const script = `using UnityEngine;
+public class Sounds : MonoBehaviour
+{
+    void Update()
+    {
+        Audio.Play("Boom");
+        Audio.Play("Explosion");
+        Audio.PlayMusic("Missing");
+    }
+}`;
+    const v4 = startWorld(audioProject(script));
+    v4.step(5);
+    const warnings = v4.messages("warning");
+    assert.equal(warnings.length, 2, warnings.join(" | "));
+    assert.ok(warnings[0].includes("Boom") && warnings[0].includes("Jump"), warnings[0]);
+    assert.ok(warnings[1].includes("PlayMusic") && warnings[1].includes("Missing"), warnings[1]);
+    assert.equal(v4.world.currentMusic, null);
+    assert.ok(v4.world.audioEvents.some((event) => event.name === "explosion"), "V4 plays the built-in explosion for \"Explosion\"");
+
+    const v3 = startWorld(audioProject(script, null, 3));
+    v3.step(5);
+    assert.deepEqual(v3.messages("warning").filter((message) => message.includes("Boom")), [], "V3 games keep their quiet fallback");
+    assert.ok(v3.world.audioEvents.some((event) => event.name === "Explosion"), "V3 rules keep the old name");
+});

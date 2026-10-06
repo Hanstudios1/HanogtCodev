@@ -324,6 +324,12 @@ service cloud.firestore {
     match /automod_events/{id} { allow read, write: if false; }
     match /message_stars/{id} { allow read, write: if false; }
 
+    // Hanogt Engine audio files (V4), served by /api/game-assets only: the files
+    // by their SHA-256, who keeps each file, and each account's audio storage.
+    match /game_assets/{hash} { allow read, write: if false; }
+    match /game_asset_owners/{id} { allow read, write: if false; }
+    match /game_asset_usage/{id} { allow read, write: if false; }
+
     match /{document=**} {
       allow read, write: if false;
     }

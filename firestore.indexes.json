@@ -111,6 +111,11 @@
       "indexes": []
     },
     {
+      "collectionGroup": "game_assets",
+      "fieldPath": "data",
+      "indexes": []
+    },
+    {
       "collectionGroup": "calls",
       "fieldPath": "expiresAt",
       "ttl": true,

@@ -12,7 +12,7 @@ import type { GameProjectDocument, SceneDocument } from "@/lib/game-engine/types
 // keystroke costs more than it protects here.
 setAutoFreeze(false);
 
-export type AssetRef = { kind: "script" | "prefab" | "texture" | "scene"; id: string };
+export type AssetRef = { kind: "script" | "prefab" | "texture" | "scene" | "audio"; id: string };
 
 export interface EditorState {
     project: GameProjectDocument;

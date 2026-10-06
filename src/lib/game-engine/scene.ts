@@ -310,6 +310,7 @@ export function createBlankProject(name: string, dimension: GameDimension, id = 
         scenes: [scene],
         prefabs: [],
         textures: [],
+        audio: [],
         scripts: [],
         settings: {
             startSceneId: scene.id,

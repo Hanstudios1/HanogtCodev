@@ -1541,16 +1541,22 @@ export class AudioSourceHandle extends ComponentHandle<AudioSourceComponent> {
     readonly hostType = "AudioSource";
     private playedAt = -Infinity;
 
+    /** Name of the uploaded file the source plays, if any. */
+    private uploaded() {
+        const id = this.component.audioId;
+        return id ? (this.world.project.audio ?? []).find((item) => item.id === id) ?? null : null;
+    }
+
     get(name: string): VMValue {
         const c = this.component;
         switch (name) {
             case "volume": return c.volume;
             case "pitch": return c.pitch;
-            case "clip": return c.clip;
-            case "isPlaying": return this.world.realtime - this.playedAt < 0.35;
+            case "clip": return this.uploaded()?.name ?? c.clip;
+            case "isPlaying": return this.world.sourcePlaying(c) || this.world.realtime - this.playedAt < 0.35;
             case "playOnAwake": return c.playOnStart;
             case "mute": return this.world.audioMuted;
-            case "loop": return false;
+            case "loop": return c.loop;
             default: {
                 const common = this.componentGet(name);
                 if (common !== undefined) return common;
@@ -1568,14 +1574,24 @@ export class AudioSourceHandle extends ComponentHandle<AudioSourceComponent> {
             case "pitch":
                 c.pitch = Math.max(0.1, Math.min(3, toNumber(value)));
                 return;
-            case "clip":
-                c.clip = String(value ?? c.clip) as AudioSourceComponent["clip"];
+            case "clip": {
+                // An uploaded file's name (or id), else a built-in sound.
+                const ref = String(value ?? "");
+                const { asset, preset } = this.world.resolveSound(ref);
+                if (asset) c.audioId = asset.id;
+                else {
+                    c.audioId = null;
+                    c.clip = (preset ?? (ref || c.clip)) as AudioSourceComponent["clip"];
+                }
                 return;
+            }
             case "playOnAwake":
                 c.playOnStart = toBool(value);
                 return;
-            case "mute":
             case "loop":
+                c.loop = toBool(value);
+                return;
+            case "mute":
                 return;
             default:
                 if (this.componentSet(name, value)) return;
@@ -1589,19 +1605,22 @@ export class AudioSourceHandle extends ComponentHandle<AudioSourceComponent> {
             case "Play":
             case "PlayDelayed":
                 if (c.enabled) {
-                    this.world.playSound(c.clip, c.volume, c.pitch);
+                    this.world.playSource(c);
                     this.playedAt = this.world.realtime;
                 }
                 return undefined;
             case "PlayOneShot": {
-                const clip = typeof args[0] === "string" ? args[0] : c.clip;
+                const clip = typeof args[0] === "string" ? args[0] : this.uploaded()?.name ?? c.clip;
                 const scale = typeof args[1] === "number" ? args[1] : 1;
-                this.world.playSound(clip, c.volume * scale, c.pitch);
+                this.world.playSource({ ...c, volume: c.volume * scale }, clip);
                 this.playedAt = this.world.realtime;
                 return undefined;
             }
             case "Stop":
             case "Pause":
+                this.world.stopSource(c, 0.05);
+                this.playedAt = -Infinity;
+                return undefined;
             case "UnPause":
                 return undefined;
             default:

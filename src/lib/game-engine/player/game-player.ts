@@ -6,6 +6,8 @@
 import { compileScripts, type CompiledProgram } from "../script/compiler";
 import { SceneRenderer, type RenderFrame } from "../render/renderer";
 import { sceneFrame, sceneRenderEntities } from "../render/scene-frame";
+import { loadAudioBytes } from "../audio-store";
+import type { AudioBytesLoader } from "../runtime/audio";
 import { SoundEngine } from "../runtime/audio";
 import { InputManager } from "../runtime/input";
 import { RuntimeWorld, type LogEntry, type WorldStats } from "../runtime/world";
@@ -34,6 +36,8 @@ export interface GamePlayerOptions {
     onStateChange?: (state: PlayerState) => void;
     onQuit?: () => void;
     storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
+    /** Where uploaded audio files come from (default: embedded files, this device, the asset store). */
+    loadAudio?: AudioBytesLoader;
 }
 
 const ASPECTS: Record<ProjectSettings["aspect"], number | null> = {
@@ -100,6 +104,8 @@ export class GamePlayer {
         // Keys are only captured once the game runs (so the page can still scroll before "Play").
         this.input.enabled = false;
         if (options.muted) this.audio.setMuted(true);
+        // Uploaded sounds and music decode in the background, ready by the time the game starts.
+        if (options.project.audio?.length) this.audio.preload(options.project.audio, options.loadAudio ?? loadAudioBytes);
         this.world = this.createWorld();
 
         if (typeof ResizeObserver !== "undefined") {
@@ -263,6 +269,7 @@ export class GamePlayer {
 
     restart() {
         this.world.stop();
+        this.audio.stopAll();
         this.world = this.createWorld();
         this.state = "idle";
         this.start();

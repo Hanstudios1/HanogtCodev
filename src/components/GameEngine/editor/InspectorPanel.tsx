@@ -56,6 +56,7 @@ import {
     defaultComponentFor,
 } from "./ComponentEditors";
 import AnimationEditor from "./AnimationEditor";
+import { AudioInspector } from "./AudioAssets";
 import { useEditor } from "./context";
 import TilemapEditor from "./TilemapEditor";
 import { UIButtonEditor, UIInputFieldEditor, UIPanelEditor, UIProgressBarEditor, UISliderEditor, UIToggleEditor } from "./UIEditors";
@@ -405,6 +406,8 @@ function AssetInspector() {
             </div>
         );
     }
+
+    if (asset.kind === "audio") return <AudioInspector id={asset.id} />;
 
     if (asset.kind === "texture") {
         const texture = project.textures.find((item) => item.id === asset.id);
