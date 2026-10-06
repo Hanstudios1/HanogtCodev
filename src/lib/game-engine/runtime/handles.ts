@@ -1362,6 +1362,16 @@ export class CameraHandle extends ComponentHandle<CameraComponent> {
                 return new RayHandle(screenRay(this.view(), toVector(args[0], "ekran noktası")));
             case "ViewportPointToRay":
                 return new RayHandle(viewportRay(this.view(), toVector(args[0], "viewport noktası")));
+            case "Shake":
+                this.world.shaker.add(
+                    args[0] === undefined ? 0.3 : toNumber(args[0], "güç"),
+                    args[1] === undefined ? 0.3 : toNumber(args[1], "süre"),
+                    args[2] === undefined ? 25 : toNumber(args[2], "frekans"),
+                );
+                return undefined;
+            case "StopShake":
+                this.world.shaker.stop();
+                return undefined;
             default:
                 return super.call(name, args, typeArgs, refs);
         }

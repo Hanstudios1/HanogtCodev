@@ -167,6 +167,7 @@ export class GamePlayer {
             settings: world.scene.settings,
             entities: world.entities.values(),
             debugLines: world.debugLines,
+            cameraShake: world.cameraShakeOffset(),
         };
     }
 

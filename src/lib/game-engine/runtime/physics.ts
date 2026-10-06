@@ -16,6 +16,8 @@ export interface BodyRuntime {
     grounded: boolean;
     /** Ground normal of the last supporting contact. */
     groundNormal: Vector3;
+    /** Velocity of what the body stands on (moving platforms); zero in the air. */
+    groundVelocity: Vector3;
     /** Accumulated force for the next step (AddForce with ForceMode.Force/Acceleration). */
     force: Vector3;
     sleeping?: boolean;
@@ -31,6 +33,8 @@ export interface PhysicsEntity {
     tilemapRevision?: number;
     activeInHierarchy: boolean;
     body: BodyRuntime;
+    /** Contacts of this body have no friction (character controllers set their own speed). */
+    frictionless?: boolean;
 }
 
 export interface PhysicsAdapter {
@@ -252,7 +256,7 @@ export class PhysicsWorld {
                 type,
                 invMass: type === "dynamic" && rb ? 1 / Math.max(0.001, rb.mass) : 0,
                 trigger: collider.isTrigger,
-                friction: collider.friction,
+                friction: entity.frictionless ? 0 : collider.friction,
                 bounciness: collider.bounciness,
                 hasBody: Boolean(rb && rb.enabled),
             });
@@ -415,6 +419,7 @@ export class PhysicsWorld {
             if (!entity.activeInHierarchy || !rb || !rb.enabled) continue;
             const body = entity.body;
             body.grounded = false;
+            body.groundVelocity = { x: 0, y: 0, z: 0 };
             if (rb.bodyType === "static") {
                 body.velocity.x = body.velocity.y = body.velocity.z = 0;
                 continue;
@@ -553,10 +558,12 @@ export class PhysicsWorld {
         if (moverA && -normal.y > 0.55) {
             a.entity.body.grounded = true;
             a.entity.body.groundNormal = scale(normal, -1);
+            a.entity.body.groundVelocity = b.type === "static" ? v() : { ...b.entity.body.velocity };
         }
         if (moverB && normal.y > 0.55) {
             b.entity.body.grounded = true;
             b.entity.body.groundNormal = { ...normal };
+            b.entity.body.groundVelocity = a.type === "static" ? v() : { ...a.entity.body.velocity };
         }
 
         // Positional correction.
@@ -694,7 +701,7 @@ export class PhysicsWorld {
 
     overlapSphere(center: Vector3, radius: number, includeTriggers = true): string[] {
         const probe: ShapeEntry = {
-            entity: { id: "__probe__", rigidBody: null, collider: null, tilemap: null, activeInHierarchy: true, body: { velocity: v(), angularVelocity: v(), grounded: false, groundNormal: v(0, 1, 0), force: v() } },
+            entity: { id: "__probe__", rigidBody: null, collider: null, tilemap: null, activeInHierarchy: true, body: { velocity: v(), angularVelocity: v(), grounded: false, groundNormal: v(0, 1, 0), groundVelocity: v(), force: v() } },
             shape: { kind: "sphere", center: this.dimension === "2d" ? v(center.x, center.y, 0) : { ...center }, radius },
             min: v(), max: v(), type: "static", invMass: 0, trigger: false, friction: 0, bounciness: 0, hasBody: false,
         };
@@ -729,6 +736,7 @@ export function createBodyRuntime(rb: RigidBodyComponent | null): BodyRuntime {
         angularVelocity: { x: rb?.angularVelocity.x ?? 0, y: rb?.angularVelocity.y ?? 0, z: rb?.angularVelocity.z ?? 0 },
         grounded: false,
         groundNormal: { x: 0, y: 1, z: 0 },
+        groundVelocity: { x: 0, y: 0, z: 0 },
         force: { x: 0, y: 0, z: 0 },
     };
 }

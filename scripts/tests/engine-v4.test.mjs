@@ -9,6 +9,7 @@ const { normalizeProject } = await load("lib/game-engine/schema.ts");
 const { createBlankProject } = await load("lib/game-engine/scene.ts");
 const { createScriptComponent, createTransform } = await load("lib/game-engine/components.ts");
 const { defaultInputSettings, normalizeInputSettings } = await load("lib/game-engine/input-actions.ts");
+const mathModule = await load("lib/game-engine/math.ts");
 
 function projectWithScript(name, content, mutate) {
     const project = createBlankProject("V4", "2d");
@@ -158,4 +159,353 @@ test("touch buttons press the matching gamepad buttons, so rebound actions still
     game.world.input.setVirtualKey("Space", false);
     game.step(1);
     assert.match(last(), /jump False/);
+});
+
+// ---------------------------------------------------------------------------
+// Character Controller 2D
+// ---------------------------------------------------------------------------
+
+const C = await load("lib/game-engine/components.ts");
+const { cloneEntitiesWithNewIds } = await load("lib/game-engine/scene.ts");
+
+const objectOf = (id, name, components, tag = "Untagged") => ({ id, name, tag, parentId: null, active: true, components });
+const block = (name, x, y, width, height, rotation = 0, extra = []) => objectOf(`entity_${name.toLowerCase()}`, name, [
+    C.createTransform({ position: { x, y, z: 0 }, rotation: { x: 0, y: 0, z: rotation }, scale: { x: width, y: height, z: 1 } }),
+    C.createSpriteRenderer(),
+    C.createCollider(),
+    ...extra,
+]);
+
+/** A 2D scene with the default camera, the given blocks and a player with a Character Controller 2D. */
+function platformer(objects, { at = { x: 0, y: 0.2 }, controller = {}, scripts = [], mutate } = {}) {
+    const project = createBlankProject("CC", "2d");
+    const scene = project.scenes[0];
+    scene.objects = scene.objects.filter((item) => item.components.some((component) => component.type === "camera"));
+    scene.objects.push(...objects);
+    project.scripts = scripts.map((script, index) => ({ id: `script_cc${index}`, name: script.name, language: "csharp", content: script.content }));
+    scene.objects.push(objectOf("entity_player", "Player", [
+        C.createTransform({ position: { x: at.x, y: at.y, z: 0 } }),
+        C.createSpriteRenderer(),
+        C.createRigidBody({ freezePosition: { x: false, y: false, z: true } }),
+        C.createCollider({ size: { x: 0.8, y: 1, z: 1 } }),
+        C.createCharacterController2D(controller),
+        ...scripts.map((script, index) => createScriptComponent(`script_cc${index}`, script.name.replace(/\.cs$/, ""))),
+    ], "Player"));
+    mutate?.(project);
+    return project;
+}
+
+test("Character Controller 2D runs at its top speed, stops, and jumps to its jump height (shorter when tapped)", () => {
+    const game = startWorld(platformer([block("Ground", 0, -1, 40, 1)]));
+    const player = game.find("Player");
+    game.step(30);
+    assert.equal(player.motor.grounded, true);
+    game.hold("D", true);
+    game.step(60);
+    assert.ok(Math.abs(player.body.velocity.x - 7) < 0.05, `top speed ${player.body.velocity.x}`);
+    assert.equal(player.components.find((component) => component.type === "spriteRenderer").flipX, false);
+    game.hold("D", false);
+    game.hold("A", true);
+    game.step(30);
+    assert.equal(player.components.find((component) => component.type === "spriteRenderer").flipX, true, "the sprite faces left");
+    game.hold("A", false);
+    game.step(30);
+    assert.equal(player.body.velocity.x, 0);
+
+    const apex = (holdFrames) => {
+        const start = player.world.position.y;
+        let top = start;
+        game.hold("Space", true);
+        for (let frame = 0; frame < 90; frame += 1) {
+            if (frame === holdFrames) game.hold("Space", false);
+            game.step(1);
+            top = Math.max(top, player.world.position.y);
+        }
+        game.hold("Space", false);
+        game.step(30);
+        return top - start;
+    };
+    const full = apex(90);
+    assert.ok(full > 2.8 && full < 3.2, `full jump ${full}`);
+    const tap = apex(1);
+    assert.ok(tap < full * 0.4, `a tapped jump is shorter (${tap})`);
+    assert.deepEqual(game.problems(), []);
+});
+
+test("coyote time, the jump buffer and double jumps", () => {
+    // Coyote time: a jump a few frames after running off a ledge still works; much later it doesn't.
+    for (const [wait, jumps] of [[3, true], [20, false]]) {
+        const game = startWorld(platformer([block("Ledge", -8, -1, 20, 1)]));
+        const player = game.find("Player");
+        game.step(30);
+        game.hold("D", true);
+        for (let frame = 0; frame < 300 && player.motor.grounded; frame += 1) game.step(1);
+        game.hold("D", false);
+        game.step(wait);
+        game.hold("Space", true);
+        game.step(1);
+        assert.equal(player.body.velocity.y > 0, jumps, `jump ${wait} frames after leaving the ledge`);
+    }
+
+    // Jump buffer (0.12 s): a press 4 frames before landing jumps on landing; 12 frames before doesn't.
+    const drop = () => startWorld(platformer([block("Ground", 0, -1, 40, 1)], { at: { x: 0, y: 3 } }));
+    const probe = drop();
+    let landing = 0;
+    for (let frame = 1; frame < 200 && !landing; frame += 1) {
+        probe.step(1);
+        if (probe.find("Player").motor?.grounded) landing = frame;
+    }
+    for (const [early, jumps] of [[4, true], [12, false]]) {
+        const game = drop();
+        const player = game.find("Player");
+        game.step(landing - early - 1);
+        game.hold("Space", true);
+        game.step(1);
+        game.hold("Space", false);
+        let rising = false;
+        for (let frame = 0; frame < early + 10; frame += 1) {
+            game.step(1);
+            if (player.body.velocity.y > 1) rising = true;
+        }
+        assert.equal(rising, jumps, `pressed ${early} frames before landing`);
+    }
+
+    // Double jump.
+    const game = startWorld(platformer([block("Ground", 0, -1, 40, 1)], { controller: { maxJumps: 2 } }));
+    const player = game.find("Player");
+    game.step(30);
+    game.press("Space");
+    game.step(14);
+    game.press("Space");
+    assert.ok(player.body.velocity.y > 2, "the second jump works in the air");
+    assert.equal(player.motor.jumpsLeft, 0);
+    game.step(5);
+    const before = player.body.velocity.y;
+    game.press("Space");
+    assert.ok(player.body.velocity.y < before, "a third press does nothing");
+});
+
+test("slopes, moving platforms and walls: no bouncing downhill, carried by platforms, no sticking to walls", () => {
+    const ramp = startWorld(platformer([block("Ramp", 0, 0, 14, 1, -20)], { at: { x: -4.5, y: 2.6 } }));
+    const player = ramp.find("Player");
+    ramp.step(40);
+    assert.equal(player.motor.grounded, true);
+    const walk = (key, done) => {
+        ramp.hold(key, true);
+        let grounded = 0;
+        let frames = 0;
+        while (!done() && frames < 200) {
+            ramp.step(1);
+            frames += 1;
+            if (player.motor.grounded) grounded += 1;
+        }
+        ramp.hold(key, false);
+        return grounded / frames;
+    };
+    assert.equal(walk("D", () => player.world.position.x > 4), 1, "stays on the ground walking downhill");
+    assert.equal(walk("A", () => player.world.position.x < -4), 1, "stays on the ground walking uphill");
+    ramp.step(30);
+    const x = player.world.position.x;
+    ramp.step(120);
+    assert.ok(Math.abs(player.world.position.x - x) < 0.02, `doesn't slide down when idle (${player.world.position.x - x})`);
+
+    const platform = block("Platform", 0, -1, 4, 1, 0, [C.createRigidBody({ bodyType: "kinematic", velocity: { x: 2, y: 0, z: 0 }, useGravity: false })]);
+    const ride = startWorld(platformer([platform]));
+    const rider = ride.find("Player");
+    ride.step(20);
+    const offset = rider.world.position.x - ride.find("Platform").world.position.x;
+    ride.step(60);
+    assert.ok(Math.abs(rider.world.position.x - ride.find("Platform").world.position.x - offset) < 0.05, "rides along with the platform");
+
+    const airtime = (wall) => {
+        const game = startWorld(platformer(wall ? [block("Ground", 0, -1, 40, 1), block("Wall", 1, 3, 0.6, 8)] : [block("Ground", 0, -1, 40, 1)]));
+        const body = game.find("Player");
+        game.step(30);
+        game.hold("Space", true);
+        game.hold("D", true);
+        game.step(2);
+        let frames = 0;
+        while (!body.motor.grounded && frames < 400) {
+            game.step(1);
+            frames += 1;
+        }
+        return frames;
+    };
+    assert.equal(airtime(true), airtime(false), "pushing into a wall doesn't slow the fall");
+});
+
+test("scripts drive the controller with Move/Jump, hear OnJump and OnLand, and their own CharacterController2D class wins", () => {
+    const driver = {
+        name: "Driver.cs",
+        content: `using UnityEngine;
+public class Driver : MonoBehaviour
+{
+    CharacterController2D controller;
+    int frames;
+    void Start() { controller = GetComponent<CharacterController2D>(); }
+    void Update()
+    {
+        frames++;
+        controller.Move(1f);
+        if (frames == 40) controller.Jump();
+    }
+    void OnJump() { Debug.Log("jump, jumps left " + controller.jumpsLeft); }
+    void OnLand(float speed) { Debug.Log("land " + (speed > 3f)); }
+}`,
+    };
+    // Standing exactly on the ground, so the only landing is the one after the jump.
+    const game = startWorld(platformer([block("Ground", 0, -1, 40, 1)], { at: { x: 0, y: 0 }, controller: { useInput: false }, scripts: [driver] }));
+    game.step(150);
+    const player = game.find("Player");
+    assert.ok(player.world.position.x > 10, `moved by Move(1f): ${player.world.position.x}`);
+    assert.deepEqual(game.messages("info"), ["jump, jumps left 0", "land True"]);
+    assert.deepEqual(game.problems(), []);
+
+    // A project that wrote its own CharacterController2D keeps using it.
+    const own = {
+        name: "CharacterController2D.cs",
+        content: `using UnityEngine;
+public class CharacterController2D : MonoBehaviour
+{
+    public void Move(float move, bool crouch, bool jump) { Debug.Log("own Move " + move); }
+}`,
+    };
+    const user = {
+        name: "PlayerMovement.cs",
+        content: `using UnityEngine;
+public class PlayerMovement : MonoBehaviour
+{
+    void Start() { GetComponent<CharacterController2D>().Move(0.5f, false, false); }
+}`,
+    };
+    const legacy = startWorld(platformer([block("Ground", 0, -1, 40, 1)], {
+        scripts: [own, user],
+        mutate: (project) => {
+            const player = project.scenes[0].objects.find((item) => item.name === "Player");
+            player.components = player.components.filter((component) => component.type !== "characterController2D");
+        },
+    }));
+    legacy.step(2);
+    assert.deepEqual(legacy.messages("info"), ["own Move 0.5"]);
+    assert.deepEqual(legacy.problems(), []);
+});
+
+test("Character Controller 2D settings are clamped and warn when the body is missing", () => {
+    const project = platformer([block("Ground", 0, -1, 40, 1)], {
+        controller: { moveSpeed: 9999, maxJumps: 99, airControl: 4, horizontalAction: "1 bad", jumpAction: "Dash" },
+        mutate: (draft) => {
+            const player = draft.scenes[0].objects.find((item) => item.name === "Player");
+            player.components = player.components.filter((component) => component.type !== "rigidBody");
+        },
+    });
+    const normalized = normalizeProject(project);
+    const controller = normalized.scenes[0].objects.find((item) => item.name === "Player").components.find((component) => component.type === "characterController2D");
+    assert.deepEqual([controller.moveSpeed, controller.maxJumps, controller.airControl, controller.horizontalAction, controller.jumpAction], [200, 10, 1, "Horizontal", "Dash"]);
+    const game = startWorld(project);
+    game.step(5);
+    assert.equal(game.problems().filter((message) => message.includes("Character Controller 2D")).length, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Camera Follow and Camera.Shake
+// ---------------------------------------------------------------------------
+
+/** 2D scene with a camera that has Camera Follow and a plain target tagged Player. */
+function followScene(follow = {}, { dimension = "2d", script } = {}) {
+    const project = createBlankProject("Follow", dimension);
+    const scene = project.scenes[0];
+    const camera = scene.objects.find((item) => item.components.some((component) => component.type === "camera"));
+    camera.components.push(C.createCameraFollow(follow, dimension));
+    scene.objects = [camera, objectOf("entity_target", "Hero", [C.createTransform(), C.createSpriteRenderer()], "Player")];
+    if (script) {
+        project.scripts = [{ id: "script_follow", name: "Shaker.cs", language: "csharp", content: script }];
+        scene.objects[1].components.push(createScriptComponent("script_follow", "Shaker"));
+    }
+    return project;
+}
+
+test("Camera Follow snaps to the target, keeps a dead zone, eases, leads and stays inside its bounds", () => {
+    const game = startWorld(followScene({ smoothTime: 0, lookAhead: 0, deadZone: { x: 2, y: 2 } }));
+    const camera = game.find("Main Camera") ?? [...game.world.entities.values()].find((item) => item.cameraFollow);
+    const hero = game.find("Hero");
+    const z = camera.world.position.z;
+    game.step(1);
+    assert.deepEqual([camera.world.position.x, camera.world.position.y, camera.world.position.z], [0, 1, z], "starts on the target plus the offset and keeps its Z");
+    hero.setWorldPosition({ x: 0.8, y: -0.5, z: 0 });
+    game.step(1);
+    assert.deepEqual([camera.world.position.x, camera.world.position.y], [0, 1], "inside the dead zone the camera stays");
+    hero.setWorldPosition({ x: 4, y: 0, z: 0 });
+    game.step(1);
+    assert.ok(Math.abs(camera.world.position.x - 3) < 1e-9, "outside it the camera moves just enough");
+
+    const smooth = startWorld(followScene({ smoothTime: 0.3, lookAhead: 0, deadZone: { x: 0, y: 0 } }));
+    const smoothCamera = [...smooth.world.entities.values()].find((item) => item.cameraFollow);
+    smooth.step(1);
+    smooth.find("Hero").setWorldPosition({ x: 10, y: 0, z: 0 });
+    smooth.step(1);
+    assert.ok(smoothCamera.world.position.x > 0 && smoothCamera.world.position.x < 3, "eases towards the target");
+    smooth.step(120);
+    assert.ok(Math.abs(smoothCamera.world.position.x - 10) < 0.01, "and arrives");
+
+    const lead = startWorld(followScene({ smoothTime: 0, lookAhead: 2, deadZone: { x: 0, y: 0 } }));
+    const leadCamera = [...lead.world.entities.values()].find((item) => item.cameraFollow);
+    const runner = lead.find("Hero");
+    for (let frame = 0; frame < 120; frame += 1) {
+        runner.setWorldPosition({ x: frame * 0.1, y: 0, z: 0 });
+        lead.step(1);
+    }
+    assert.ok(Math.abs(leadCamera.world.position.x - runner.world.position.x - 2) < 0.05, "leads by lookAhead in the direction of travel");
+
+    const bounded = startWorld(followScene({ smoothTime: 0, lookAhead: 0, useBounds: true, boundsMin: { x: -10, y: -5 }, boundsMax: { x: 10, y: 5 } }));
+    const boundedCamera = [...bounded.world.entities.values()].find((item) => item.cameraFollow);
+    const halfWidth = boundedCamera.components.find((component) => component.type === "camera").orthographicSize * (960 / 540);
+    bounded.find("Hero").setWorldPosition({ x: 50, y: 50, z: 0 });
+    bounded.step(1);
+    assert.ok(Math.abs(boundedCamera.world.position.x - (10 - halfWidth)) < 1e-9, "the view's right edge stops at the bounds");
+    assert.deepEqual(bounded.problems(), []);
+});
+
+test("Camera Follow in 3D looks at its target; Camera.Shake moves only the rendered camera and fades out", () => {
+    const game = startWorld(followScene({ smoothTime: 0 }, { dimension: "3d" }));
+    const camera = [...game.world.entities.values()].find((item) => item.cameraFollow);
+    game.find("Hero").setWorldPosition({ x: 5, y: 0, z: 5 });
+    game.step(1);
+    assert.deepEqual([camera.world.position.x, camera.world.position.y, camera.world.position.z], [5, 4, -4]);
+    const { rotateVec3 } = mathModule;
+    const forward = rotateVec3(camera.world.rotation, { x: 0, y: 0, z: 1 });
+    const toTarget = { x: 0, y: -4, z: 9 };
+    const length = Math.hypot(toTarget.x, toTarget.y, toTarget.z);
+    assert.ok(Math.abs(forward.x * toTarget.x / length + forward.y * toTarget.y / length + forward.z * toTarget.z / length - 1) < 1e-6, "the camera faces the target");
+
+    const shaking = startWorld(followScene({ smoothTime: 0, lookAhead: 0 }, {
+        script: `using UnityEngine;
+public class Shaker : MonoBehaviour
+{
+    void Start() { Camera.Shake(0.5f, 0.25f); Camera.main.Shake(0.2f, 0.1f); }
+}`,
+    }));
+    const shakeCamera = [...shaking.world.entities.values()].find((item) => item.cameraFollow);
+    shaking.step(3);
+    const offset = shaking.world.cameraShakeOffset();
+    assert.ok(offset && (Math.abs(offset.x) > 0.001 || Math.abs(offset.y) > 0.001), "shaking");
+    assert.deepEqual([shakeCamera.world.position.x, shakeCamera.world.position.y], [0, 1], "the camera object itself doesn't move");
+    shaking.step(20);
+    assert.equal(shaking.world.cameraShakeOffset(), null, "the shake is over after its duration");
+    assert.deepEqual(shaking.problems(), []);
+});
+
+test("Camera Follow targets follow duplicated objects and are validated", () => {
+    const camera = objectOf("entity_cam", "Cam", [C.createTransform(), C.createCamera(), C.createCameraFollow({ targetId: "entity_hero" })]);
+    const hero = objectOf("entity_hero", "Hero", [C.createTransform()]);
+    hero.parentId = null;
+    camera.parentId = null;
+    const [cameraCopy, heroCopy] = cloneEntitiesWithNewIds([camera, hero]);
+    assert.equal(cameraCopy.components.find((component) => component.type === "cameraFollow").targetId, heroCopy.id);
+    const outside = cloneEntitiesWithNewIds([camera]);
+    assert.equal(outside[0].components.find((component) => component.type === "cameraFollow").targetId, "entity_hero", "a target outside the copy stays");
+
+    const project = followScene({ smoothTime: 99, lookAhead: -3, offset: { x: 1e9, y: 0, z: 0 } });
+    const normalized = normalizeProject(project);
+    const follow = normalized.scenes[0].objects[0].components.find((component) => component.type === "cameraFollow");
+    assert.deepEqual([follow.smoothTime, follow.lookAhead, follow.offset.x], [5, 0, 10_000]);
 });

@@ -655,7 +655,21 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             return camera ? world.componentHandle(camera.entity, camera.component) : null;
         },
         allCamerasCount: () => [...world.entities.values()].filter((entity) => entity.components.some((component) => component.type === "camera")).length,
-    }, {}));
+    }, {
+        // V4: screen shake on the rendered camera (amount in world units, seconds, shakes per second).
+        Shake: (args) => {
+            world.shaker.add(
+                args[0] === undefined ? 0.3 : toNumber(args[0], "güç"),
+                args[1] === undefined ? 0.3 : toNumber(args[1], "süre"),
+                args[2] === undefined ? 25 : toNumber(args[2], "frekans"),
+            );
+            return undefined;
+        },
+        StopShake: () => {
+            world.shaker.stop();
+            return undefined;
+        },
+    }));
 
     globals.set("Audio", ns("Audio", {
         volume: () => world.audio?.volume ?? 0,

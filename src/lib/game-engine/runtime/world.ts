@@ -49,6 +49,8 @@ import type {
 import { rectContains, scaleRect, uiRect, type ScreenRect } from "../ui-layout";
 import { AnimationPlayer } from "./animator";
 import { SoundEngine } from "./audio";
+import { CameraFollower, CameraShaker } from "./camera-follow";
+import { CharacterMotor } from "./character";
 import type { CameraView } from "./camera-math";
 import { screenRay, screenToWorld } from "./camera-math";
 import { BehaviourState, RuntimeEntity, type CoroutineState, type WaitState } from "./entity";
@@ -88,6 +90,7 @@ import { ParticleEmitter } from "./particles";
 import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity, type RaycastResult } from "./physics";
 import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
 import { ButtonHandle, ButtonLabelHandle, PanelHandle, ProgressBarHandle, sameCallable } from "./ui-handles";
+import { CameraFollowHandle, CharacterController2DHandle } from "./v4-handles";
 
 export type LogLevel = "info" | "warning" | "error";
 
@@ -154,7 +157,11 @@ const TEXT_TYPE_NAMES = new Set(["Text", "UIText", "TextMeshProUGUI", "TextMeshP
 
 const MOUSE_METHODS = ["OnMouseDown", "OnMouseUp", "OnMouseUpAsButton", "OnMouseEnter", "OnMouseExit", "OnMouseOver", "OnMouseDrag"];
 
-const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "script" | "transform">; shape?: ColliderComponent["shape"] }> = {
+/**
+ * Script type names of built-in components. `userFirst` names (V4 additions) give way to a
+ * script class of the same name, so older projects that wrote their own keep working.
+ */
+const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "script" | "transform">; shape?: ColliderComponent["shape"]; userFirst?: boolean }> = {
     Rigidbody: { type: "rigidBody" },
     Rigidbody2D: { type: "rigidBody" },
     Collider: { type: "collider" },
@@ -191,6 +198,10 @@ const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "scr
     TilemapRenderer: { type: "tilemap" },
     Animation: { type: "animation" },
     Animator: { type: "animation" },
+    CharacterController2D: { type: "characterController2D", userFirst: true },
+    CameraFollow: { type: "cameraFollow", userFirst: true },
+    CinemachineCamera: { type: "cameraFollow", userFirst: true },
+    CinemachineVirtualCamera: { type: "cameraFollow", userFirst: true },
 };
 
 function pairKey(a: string, b: string) {
@@ -404,6 +415,8 @@ export class RuntimeWorld implements ScriptHost {
     private uiPressed: string | null = null;
     private readonly buttonListeners = new Map<string, VMValue[]>();
     private fade: FadeState | null = null;
+    /** Screen shakes added to the rendered camera (Camera.Shake). */
+    readonly shaker = new CameraShaker();
     /** Runs timer/tween/button callbacks with error isolation. */
     readonly runCallback: CallbackRunner = (owner, label, callback, args) => {
         if (owner?.destroyed || owner?.failed) return;
@@ -506,6 +519,7 @@ export class RuntimeWorld implements ScriptHost {
         this.input.beginFrame(clamped);
 
         this.flushStarts();
+        this.sampleMotors(clamped);
 
         // Fixed timestep: FixedUpdate → physics → collision callbacks.
         if (this.timeScale > 0) {
@@ -540,6 +554,8 @@ export class RuntimeWorld implements ScriptHost {
         for (const state of this.behaviours.slice()) {
             if (state.has.LateUpdate && state.started && state.live) this.callMethod(state, "LateUpdate", [this.deltaTime]);
         }
+        this.updateFollowers(this.deltaTime);
+        this.shaker.update(this.deltaTime);
         this.updateParticles(this.deltaTime);
 
         this.phase = "endOfFrame";
@@ -577,6 +593,7 @@ export class RuntimeWorld implements ScriptHost {
         for (const state of this.behaviours.slice()) {
             if (state.has.FixedUpdate && state.started && state.live) this.callMethod(state, "FixedUpdate", [dt]);
         }
+        this.updateMotors(dt);
         const events = this.physics.step(dt);
         this.fixedTime += dt;
         this.fixedStepCount += 1;
@@ -812,6 +829,8 @@ export class RuntimeWorld implements ScriptHost {
         this.uiHover = null;
         this.uiPressed = null;
         this.pointerOverUI = false;
+        this.shaker.stop();
+        for (const entity of this.entities.values()) entity.follower?.snap();
         this.scene = scene;
         const settings = scene.settings;
         this.physics.gravity = { ...settings.physics.gravity };
@@ -1398,6 +1417,8 @@ export class RuntimeWorld implements ScriptHost {
                 case "uiProgressBar": handle = new ProgressBarHandle(this, entity, component); break;
                 case "tilemap": handle = new TilemapHandle(this, entity, component); break;
                 case "animation": handle = new AnimationHandle(this, entity, component); break;
+                case "characterController2D": handle = new CharacterController2DHandle(this, entity, component); break;
+                case "cameraFollow": handle = new CameraFollowHandle(this, entity, component); break;
             }
             if (handle) entity.handles.set(component.id, handle);
         }
@@ -1425,7 +1446,7 @@ export class RuntimeWorld implements ScriptHost {
             case "Selectable":
                 return component.type === "uiButton";
             default: {
-                const alias = COMPONENT_TYPE_ALIASES[typeName];
+                const alias = this.builtInAlias(typeName);
                 if (alias) {
                     if (component.type !== alias.type) return false;
                     if (component.type === "collider" && alias.shape && alias.shape !== "box") return component.shape !== "box";
@@ -1513,9 +1534,16 @@ export class RuntimeWorld implements ScriptHost {
         return output;
     }
 
+    /** The built-in component a script type name means (a script class of the same name wins for V4 names). */
+    private builtInAlias(typeName: string) {
+        const alias = COMPONENT_TYPE_ALIASES[typeName];
+        if (!alias || (alias.userFirst && this.program.classes.has(typeName))) return undefined;
+        return alias;
+    }
+
     addComponent(entity: RuntimeEntity, typeName: string): VMValue {
         if (entity.destroyed) hostError("Yok edilmiş bir nesneye bileşen eklenemez.", "MissingReferenceException");
-        const alias = COMPONENT_TYPE_ALIASES[typeName];
+        const alias = this.builtInAlias(typeName);
         if (alias) {
             const existing = entity.components.find((component) => component.type === alias.type);
             if (existing) {
@@ -1983,6 +2011,102 @@ export class RuntimeWorld implements ScriptHost {
     // -------------------------------------------------------------------
     // Animation component
     // -------------------------------------------------------------------
+
+    // -------------------------------------------------------------------
+    // Character Controller 2D and Camera Follow (V4)
+    // -------------------------------------------------------------------
+
+    /** Runtime state of an entity's Character Controller 2D (made on first use). */
+    motorOf(entity: RuntimeEntity): CharacterMotor | null {
+        const component = entity.characterController;
+        if (!component) return null;
+        if (!entity.motor || entity.motor.component !== component) entity.motor = new CharacterMotor(component);
+        return entity.motor;
+    }
+
+    followerOf(entity: RuntimeEntity): CameraFollower | null {
+        const component = entity.cameraFollow;
+        if (!component) return null;
+        if (!entity.follower || entity.follower.component !== component) entity.follower = new CameraFollower(component);
+        return entity.follower;
+    }
+
+    private sampleMotors(frameDelta: number) {
+        const input = this.input;
+        const source = {
+            axis: (name: string) => input.getAxisRaw(name),
+            down: (name: string) => input.getButtonDown(name),
+            held: (name: string) => input.getButton(name),
+        };
+        for (const entity of this.entities.values()) {
+            if (!entity.characterController?.enabled || !entity.activeInHierarchy) continue;
+            this.motorOf(entity)?.sample(source, this.frameCount, frameDelta);
+        }
+    }
+
+    private updateMotors(dt: number) {
+        for (const entity of this.entities.values()) {
+            const component = entity.characterController;
+            if (!component?.enabled || !entity.activeInHierarchy) continue;
+            const rb = entity.rigidBody;
+            if (!rb || !rb.enabled || rb.bodyType !== "dynamic") {
+                this.warnOnce(`cc2d:${entity.id}`, `${entity.name}: Character Controller 2D çalışmak için aynı nesnede Dynamic bir Rigidbody 2D ve bir Collider 2D ister.`);
+                continue;
+            }
+            const motor = this.motorOf(entity);
+            if (!motor) continue;
+            motor.fixedUpdate(dt, entity.body, this.physics.gravity, rb.gravityScale, rb.useGravity);
+            if (component.flipSprite) {
+                const sprite = entity.components.find((item) => item.type === "spriteRenderer");
+                if (sprite && sprite.type === "spriteRenderer" && sprite.flipX !== (motor.facing < 0)) {
+                    sprite.flipX = motor.facing < 0;
+                    this.markRender(entity);
+                }
+            }
+            if (motor.events.length) {
+                const events = motor.events.splice(0);
+                for (const event of events) {
+                    const method = event.kind === "jump" ? "OnJump" : "OnLand";
+                    for (const state of entity.behaviours.slice()) {
+                        if (state.live && state.awoken && this.hasMethod(state, method)) this.callMethod(state, method, event.kind === "land" ? [event.speed] : []);
+                    }
+                    if (entity.destroyed) break;
+                }
+            }
+        }
+    }
+
+    /** The object a Camera Follow tracks: its target, else the first object tagged "Player". */
+    private followTarget(component: { targetId: string | null }): RuntimeEntity | null {
+        if (component.targetId) {
+            const target = this.entities.get(component.targetId);
+            return target && !target.destroyed ? target : null;
+        }
+        return this.findWithTag("Player")[0] ?? null;
+    }
+
+    private updateFollowers(deltaTime: number) {
+        for (const entity of this.entities.values()) {
+            const component = entity.cameraFollow;
+            if (!component?.enabled || !entity.activeInHierarchy) continue;
+            const target = this.followTarget(component);
+            const follower = this.followerOf(entity);
+            if (!target || !target.activeInHierarchy || !follower) continue;
+            const camera = entity.components.find((item): item is CameraComponent => item.type === "camera");
+            const size = this.screenSize();
+            const halfExtents = camera && camera.projection === "orthographic"
+                ? { x: camera.orthographicSize * (size.width / Math.max(1, size.height)), y: camera.orthographicSize }
+                : null;
+            const result = follower.update(deltaTime, entity.world.position, target.world.position, this.is2D, { halfExtents });
+            entity.setWorldPosition(result.position);
+            if (result.rotation) entity.setWorldRotation(result.rotation);
+        }
+    }
+
+    /** Camera-space offset of the active shakes for the renderer (null when still). */
+    cameraShakeOffset(): { x: number; y: number; roll: number } | null {
+        return this.shaker.offset();
+    }
 
     animatorOf(entity: RuntimeEntity): AnimationPlayer | null {
         const component = entity.components.find((candidate) => candidate.type === "animation");

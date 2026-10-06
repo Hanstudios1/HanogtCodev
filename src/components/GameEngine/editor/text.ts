@@ -375,6 +375,27 @@ const TEXT = {
     actionNameInvalid: ["Ad bir harfle başlar; yalnızca harf, rakam, boşluk ve _ içerir (en çok 32 karakter).", "A name starts with a letter and uses only letters, digits, spaces and _ (up to 32 characters)."],
     actionNameTaken: ["Bu adda bir eylem zaten var.", "An action with this name already exists."],
     touchMapsTo: ["Dokunmatik düğmeler ok tuşlarına, Space'e ve LeftControl'e, gamepad'de de d-pad'e, A'ya ve X'e basar.", "Touch buttons press the arrow keys, Space and LeftControl, and the gamepad's d-pad, A and X."],
+    // V4: Character Controller 2D and Camera Follow
+    ccHint: ["Koşma, zıplama, eğimler ve hareketli platformlar hazır. Yön ve zıplama Girdi eylemlerinden okunur; zıplayınca OnJump(), yere inince OnLand(float hız) çağrılır.", "Running, jumping, slopes and moving platforms are built in. Direction and jump come from the input actions; OnJump() runs on a jump and OnLand(float speed) on landing."],
+    ccNeedsBody: ["Bu bileşen aynı nesnede Dynamic bir Rigidbody 2D ve bir Collider 2D ister.", "This component needs a Dynamic Rigidbody 2D and a Collider 2D on the same object."],
+    ccFix: ["Rigidbody 2D ve Collider 2D ekle", "Add Rigidbody 2D and Collider 2D"],
+    ccFixShort: ["Ekle", "Add"],
+    ccOnly2D: ["Character Controller 2D yalnızca 2D projelerde çalışır.", "Character Controller 2D only works in 2D projects."],
+    ccJumping: ["Zıplama", "Jumping"],
+    ccMaxJumps: ["2 yaparsan havada bir kez daha zıplanır (çift zıplama).", "Set it to 2 for one more jump in the air (double jump)."],
+    ccCoyote: ["Kenardan düştükten sonra zıplamanın hâlâ çalıştığı süre (saniye).", "Seconds after walking off a ledge during which a jump still works."],
+    ccBuffer: ["Yere inmeden hemen önce basılan zıplamanın hatırlandığı süre (saniye).", "Seconds a jump pressed just before landing is remembered."],
+    ccVariable: ["Tuşu erken bırakınca zıplama kısalır.", "Letting go of the button early makes the jump shorter."],
+    ccSlope: ["Hâlâ zemin sayılan en dik eğim (derece).", "Steepest slope that still counts as ground (degrees)."],
+    ccUseInput: ["Kapalıyken betik Move(yön), Jump() ve CancelJump() ile yönetir.", "When off, a script drives it with Move(direction), Jump() and CancelJump()."],
+    ccScripted: ["Betikten: GetComponent<CharacterController2D>().Move(1f); Jump(); CancelJump();", "From a script: GetComponent<CharacterController2D>().Move(1f); Jump(); CancelJump();"],
+    followHint: ["Kamera hedefi yumuşakça izler. Ekran sarsıntısı için betikte Camera.Shake(0.3f, 0.25f) yazın.", "The camera follows its target smoothly. For screen shake, call Camera.Shake(0.3f, 0.25f) in a script."],
+    followNeedsCamera: ["Camera Follow'u Camera bileşeni olan nesneye ekleyin.", "Add Camera Follow to the object that has the Camera component."],
+    followPlayerTag: ["(\"Player\" etiketli nesne)", "(Object tagged \"Player\")"],
+    followSmooth: ["Kameranın hedefe yetişme süresi (saniye); 0 hemen yapışır.", "Seconds the camera takes to catch up; 0 sticks to the target."],
+    followDeadZone: ["Hedefin kamerayı kımıldatmadan dolaşabildiği kutunun boyutu.", "Size of the box the target can move in without moving the camera."],
+    followLookAhead: ["Kameranın hareket yönünde öne kaydığı mesafe.", "How far the camera leads in the direction of movement."],
+    followBounds: ["Görüntüyü bu dikdörtgenin içinde tutar.", "Keeps the view inside this rectangle."],
 } as const;
 
 export type TextKey = keyof typeof TEXT;

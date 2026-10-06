@@ -4,6 +4,8 @@ import type {
     AnimationComponent,
     AudioSourceComponent,
     CameraComponent,
+    CameraFollowComponent,
+    CharacterController2DComponent,
     ColliderComponent,
     ComponentType,
     GameComponent,
@@ -309,6 +311,49 @@ export function createAnimation(overrides: Overrides<AnimationComponent> = {}): 
     };
 }
 
+export function createCharacterController2D(overrides: Overrides<CharacterController2DComponent> = {}): CharacterController2DComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "characterController2D",
+        enabled: overrides.enabled ?? true,
+        moveSpeed: overrides.moveSpeed ?? 7,
+        acceleration: overrides.acceleration ?? 70,
+        deceleration: overrides.deceleration ?? 60,
+        airControl: overrides.airControl ?? 0.65,
+        jumpHeight: overrides.jumpHeight ?? 3,
+        maxJumps: overrides.maxJumps ?? 1,
+        coyoteTime: overrides.coyoteTime ?? 0.1,
+        jumpBuffer: overrides.jumpBuffer ?? 0.12,
+        variableJump: overrides.variableJump ?? true,
+        fallGravity: overrides.fallGravity ?? 1.6,
+        maxFallSpeed: overrides.maxFallSpeed ?? 20,
+        maxSlope: overrides.maxSlope ?? 50,
+        useInput: overrides.useInput ?? true,
+        horizontalAction: overrides.horizontalAction ?? "Horizontal",
+        jumpAction: overrides.jumpAction ?? "Jump",
+        flipSprite: overrides.flipSprite ?? true,
+    };
+}
+
+export function createCameraFollow(overrides: Overrides<CameraFollowComponent> = {}, dimension: GameDimension = "2d"): CameraFollowComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "cameraFollow",
+        enabled: overrides.enabled ?? true,
+        targetId: overrides.targetId ?? null,
+        offset: { ...(dimension === "2d" ? { x: 0, y: 1, z: 0 } : { x: 0, y: 4, z: -9 }), ...overrides.offset },
+        smoothTime: overrides.smoothTime ?? 0.18,
+        deadZone: { x: 0.6, y: 0.8, ...overrides.deadZone },
+        lookAhead: overrides.lookAhead ?? (dimension === "2d" ? 1.5 : 0),
+        followX: overrides.followX ?? true,
+        followY: overrides.followY ?? true,
+        useBounds: overrides.useBounds ?? false,
+        boundsMin: { x: -20, y: -10, ...overrides.boundsMin },
+        boundsMax: { x: 20, y: 10, ...overrides.boundsMax },
+        lookAtTarget: overrides.lookAtTarget ?? dimension === "3d",
+    };
+}
+
 /** Creates a component with sensible defaults for the given scene dimension. */
 export function createComponentOfType(type: Exclude<ComponentType, "script" | "transform">, dimension: GameDimension): GameComponent {
     switch (type) {
@@ -326,6 +371,8 @@ export function createComponentOfType(type: Exclude<ComponentType, "script" | "t
         case "uiProgressBar": return createUIProgressBar();
         case "tilemap": return createTilemap();
         case "animation": return createAnimation();
+        case "characterController2D": return createCharacterController2D();
+        case "cameraFollow": return createCameraFollow({}, dimension);
     }
 }
 
@@ -346,4 +393,6 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
     uiProgressBar: "UI Progress Bar",
     tilemap: "Tilemap",
     animation: "Animation",
+    characterController2D: "Character Controller 2D",
+    cameraFollow: "Camera Follow",
 };

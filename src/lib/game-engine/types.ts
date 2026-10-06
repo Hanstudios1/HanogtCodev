@@ -331,6 +331,66 @@ export interface AnimationComponent extends ComponentBase {
     speed: number;
 }
 
+/**
+ * Platformer movement on a dynamic Rigidbody 2D (V4): acceleration, jumps with
+ * coyote time and a jump buffer, slopes and moving platforms.
+ */
+export interface CharacterController2DComponent extends ComponentBase {
+    type: "characterController2D";
+    /** Top running speed in units per second. */
+    moveSpeed: number;
+    /** Speed gained per second while a direction is held (on the ground). */
+    acceleration: number;
+    /** Speed lost per second when no direction is held (on the ground). */
+    deceleration: number;
+    /** Multiplies acceleration and deceleration in the air (0–1). */
+    airControl: number;
+    /** Height of a full jump in units; the jump speed follows from gravity. */
+    jumpHeight: number;
+    /** 2 allows a double jump. */
+    maxJumps: number;
+    /** Seconds after walking off a ledge during which a jump still works. */
+    coyoteTime: number;
+    /** Seconds a jump press is remembered before landing. */
+    jumpBuffer: number;
+    /** Letting go of jump early cuts the jump short. */
+    variableJump: boolean;
+    /** Gravity multiplier while falling (1 = same as rising). */
+    fallGravity: number;
+    maxFallSpeed: number;
+    /** Steepest slope in degrees that still counts as ground. */
+    maxSlope: number;
+    /** Reads the input actions below; when off, scripts call Move() and Jump(). */
+    useInput: boolean;
+    horizontalAction: string;
+    jumpAction: string;
+    /** Mirrors the Sprite Renderer to face the direction of movement. */
+    flipSprite: boolean;
+}
+
+/** Smooth camera that follows a target (V4); add it to the camera object. */
+export interface CameraFollowComponent extends ComponentBase {
+    type: "cameraFollow";
+    /** Object to follow; null follows the first object tagged "Player". */
+    targetId: string | null;
+    /** Camera position relative to the target (2D keeps the camera's own Z). */
+    offset: Vector3;
+    /** Seconds the camera takes to catch up; 0 sticks to the target. */
+    smoothTime: number;
+    /** Box around the screen center (world units) inside which the target can move without the camera moving (2D). */
+    deadZone: Vector2;
+    /** Units the camera leads in the direction the target moves. */
+    lookAhead: number;
+    followX: boolean;
+    followY: boolean;
+    /** Keeps the view inside the rectangle below. */
+    useBounds: boolean;
+    boundsMin: Vector2;
+    boundsMax: Vector2;
+    /** 3D: turns the camera towards the target. */
+    lookAtTarget: boolean;
+}
+
 export type GameComponent =
     | TransformComponent
     | SpriteRendererComponent
@@ -347,7 +407,9 @@ export type GameComponent =
     | UIPanelComponent
     | UIProgressBarComponent
     | TilemapComponent
-    | AnimationComponent;
+    | AnimationComponent
+    | CharacterController2DComponent
+    | CameraFollowComponent;
 
 export type ComponentType = GameComponent["type"];
 export type ComponentOfType<T extends ComponentType> = Extract<GameComponent, { type: T }>;
@@ -369,6 +431,8 @@ export const COMPONENT_TYPES: readonly ComponentType[] = [
     "uiProgressBar",
     "tilemap",
     "animation",
+    "characterController2D",
+    "cameraFollow",
 ];
 
 /** Screen-space UI components (drawn by the overlay, not the WebGL renderer). */
@@ -390,6 +454,8 @@ export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
     "uiProgressBar",
     "tilemap",
     "animation",
+    "characterController2D",
+    "cameraFollow",
 ]);
 
 export interface GameEntity {

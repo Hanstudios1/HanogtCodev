@@ -10,7 +10,7 @@
  */
 import { defaultTilePalette } from "./components";
 import { createEngineId, isEngineId, nowIso } from "./ids";
-import { normalizeInputSettings } from "./input-actions";
+import { ACTION_NAME, normalizeInputSettings } from "./input-actions";
 import { isKeyCode } from "./key-codes";
 import { isTileKey, TILEMAP_LIMITS } from "./tilemap";
 import {
@@ -294,6 +294,8 @@ type MigrationContext = {
     recoveredScripts: Map<string, ScriptAsset>;
     /** v1 kept restitution on the rigidbody; v2 keeps bounciness on the collider. */
     pendingBounciness?: number;
+    /** Dimension of the project (component defaults differ in 2D and 3D). */
+    dimension?: GameDimension;
 };
 
 function normalizeScriptFields(value: unknown): Record<string, ScriptFieldValue> {
@@ -589,9 +591,55 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 speed: num(source.speed, 1, 0, 10),
             };
         }
+        case "characterController2D":
+            return {
+                id,
+                type,
+                enabled,
+                moveSpeed: num(source.moveSpeed, 7, 0, 200),
+                acceleration: num(source.acceleration, 70, 0, 10_000),
+                deceleration: num(source.deceleration, 60, 0, 10_000),
+                airControl: num(source.airControl, 0.65, 0, 1),
+                jumpHeight: num(source.jumpHeight, 3, 0, 200),
+                maxJumps: int(source.maxJumps, 1, 0, 10),
+                coyoteTime: num(source.coyoteTime, 0.1, 0, 1),
+                jumpBuffer: num(source.jumpBuffer, 0.12, 0, 1),
+                variableJump: bool(source.variableJump, true),
+                fallGravity: num(source.fallGravity, 1.6, 0.1, 10),
+                maxFallSpeed: num(source.maxFallSpeed, 20, 0.5, 500),
+                maxSlope: num(source.maxSlope, 50, 0, 89),
+                useInput: bool(source.useInput, true),
+                horizontalAction: actionName(source.horizontalAction, "Horizontal"),
+                jumpAction: actionName(source.jumpAction, "Jump"),
+                flipSprite: bool(source.flipSprite, true),
+            };
+        case "cameraFollow": {
+            const defaults = context.dimension === "3d" ? { offset: { x: 0, y: 4, z: -9 }, lookAhead: 0, lookAtTarget: true } : { offset: { x: 0, y: 1, z: 0 }, lookAhead: 1.5, lookAtTarget: false };
+            return {
+                id,
+                type,
+                enabled,
+                targetId: refId(source.targetId),
+                offset: vec3(source.offset, defaults.offset, -10_000, 10_000),
+                smoothTime: num(source.smoothTime, 0.18, 0, 5),
+                deadZone: vec2(source.deadZone, { x: 0.6, y: 0.8 }, 0, 1000),
+                lookAhead: num(source.lookAhead, defaults.lookAhead, 0, 100),
+                followX: bool(source.followX, true),
+                followY: bool(source.followY, true),
+                useBounds: bool(source.useBounds, false),
+                boundsMin: vec2(source.boundsMin, { x: -20, y: -10 }),
+                boundsMax: vec2(source.boundsMax, { x: 20, y: 10 }),
+                lookAtTarget: bool(source.lookAtTarget, defaults.lookAtTarget),
+            };
+        }
         default:
             return null;
     }
+}
+
+/** Input action names in components (same rule as the project's input actions). */
+function actionName(value: unknown, fallback: string): string {
+    return typeof value === "string" && ACTION_NAME.test(value.trim()) ? value.trim() : fallback;
 }
 
 // ---------------------------------------------------------------------------
@@ -735,6 +783,7 @@ function normalizeSceneSettings(value: unknown, dimension: GameDimension): Scene
 
 export function normalizeScene(value: unknown, dimension: GameDimension, context: MigrationContext = { recoveredScripts: new Map() }): SceneDocument {
     const source = rec(value);
+    context.dimension ??= dimension;
     const rawObjects = Array.isArray(source.objects) ? source.objects : Array.isArray(source.entities) ? source.entities : [];
     if (rawObjects.length > ENGINE_LIMITS.maxEntitiesPerScene) {
         throw new SchemaError(`Bir sahnede en fazla ${ENGINE_LIMITS.maxEntitiesPerScene} nesne bulunabilir.`);
@@ -830,7 +879,7 @@ export function normalizeProject(value: unknown, options: NormalizeProjectOption
     assertSafeTree(source);
 
     const dimension: GameDimension = options.dimension ?? (source.dimension === "2d" ? "2d" : "3d");
-    const context: MigrationContext = { recoveredScripts: new Map() };
+    const context: MigrationContext = { recoveredScripts: new Map(), dimension };
 
     const rawScenes = Array.isArray(source.scenes) && source.scenes.length
         ? source.scenes

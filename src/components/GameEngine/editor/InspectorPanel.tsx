@@ -12,6 +12,7 @@ import {
     FileCode,
     FilePlus,
     Film,
+    Footprints,
     Gauge,
     Grid3x3,
     Image as ImageIcon,
@@ -30,6 +31,7 @@ import {
     Square,
     Trash2,
     Type,
+    Video,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { COMPONENT_LABELS } from "@/lib/game-engine/components";
@@ -52,6 +54,7 @@ import AnimationEditor from "./AnimationEditor";
 import { useEditor } from "./context";
 import TilemapEditor from "./TilemapEditor";
 import { UIButtonEditor, UIPanelEditor, UIProgressBarEditor } from "./UIEditors";
+import { CameraFollowEditor, CharacterController2DEditor } from "./V4Editors";
 import {
     activeScene,
     addComponent,
@@ -89,6 +92,8 @@ const COMPONENT_ICONS: Record<ComponentType, { icon: typeof Box; className: stri
     uiProgressBar: { icon: LayoutTemplate, className: "text-violet-300" },
     tilemap: { icon: Grid3x3, className: "text-lime-300" },
     animation: { icon: Film, className: "text-fuchsia-300" },
+    characterController2D: { icon: Footprints, className: "text-orange-300" },
+    cameraFollow: { icon: Video, className: "text-sky-300" },
 };
 
 const COMMON_TAGS = ["Untagged", "Player", "Enemy", "Ground", "PickUp", "Coin", "Wall", "Bullet", "Finish", "Respawn", "MainCamera", "GameController", "EditorOnly"];
@@ -111,6 +116,8 @@ function ComponentBody({ entity, component, disabled }: { entity: GameEntity; co
         case "uiProgressBar": return <UIProgressBarEditor entity={entity} component={component} disabled={disabled} />;
         case "tilemap": return <TilemapEditor entity={entity} component={component} disabled={disabled} />;
         case "animation": return <AnimationEditor entity={entity} component={component} disabled={disabled} />;
+        case "characterController2D": return <CharacterController2DEditor entity={entity} component={component} disabled={disabled} />;
+        case "cameraFollow": return <CameraFollowEditor entity={entity} component={component} disabled={disabled} />;
     }
 }
 
@@ -169,8 +176,8 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
             }
         }
         return [
-            { label: "Rendering", icon: ImageIcon, items: [builtIn("spriteRenderer", "Sprite Renderer"), builtIn("meshRenderer", "Mesh Renderer"), builtIn("tilemap", "Tilemap"), builtIn("camera", "Camera"), builtIn("light", "Light")] },
-            { label: "Physics", icon: Gauge, items: [builtIn("rigidBody", is2D ? "Rigidbody 2D" : "Rigidbody"), builtIn("collider", is2D ? "Collider 2D" : "Collider")] },
+            { label: "Rendering", icon: ImageIcon, items: [builtIn("spriteRenderer", "Sprite Renderer"), builtIn("meshRenderer", "Mesh Renderer"), builtIn("tilemap", "Tilemap"), builtIn("camera", "Camera"), builtIn("cameraFollow", "Camera Follow"), builtIn("light", "Light")] },
+            { label: "Physics", icon: Gauge, items: [builtIn("rigidBody", is2D ? "Rigidbody 2D" : "Rigidbody"), builtIn("collider", is2D ? "Collider 2D" : "Collider"), ...(is2D ? [builtIn("characterController2D", "Character Controller 2D")] : [])] },
             { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System"), builtIn("animation", "Animation")] },
             { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },
             { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar")] },
@@ -241,7 +248,7 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
                                         const target = findEntity(draft, entity.id);
                                         if (!target) return;
                                         const position = target.components.findIndex((item) => item.id === component.id);
-                                        if (position >= 0) target.components[position] = defaultComponentFor(target.components[position]);
+                                        if (position >= 0) target.components[position] = defaultComponentFor(target.components[position], draft.dimension);
                                     }) },
                                     ...(!isTransform ? [
                                         { label: t("moveUp"), icon: ArrowUp, disabled: index <= 1, onSelect: () => store.update(t("hMoveComponent"), (draft) => moveComponent(draft, entity.id, component.id, -1)) },

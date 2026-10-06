@@ -3,6 +3,8 @@
 import { combineTRS, conjugateQuat, eulerDegFromQuat, mulQuat, normalizeQuat, quatFromEulerDeg, worldToLocalPoint, type Quat, type TRS } from "../math";
 import type { ClassInfo, HostObject, ScriptObject, VMCoroutine, VMValue } from "../script/values";
 import type {
+    CameraFollowComponent,
+    CharacterController2DComponent,
     ColliderComponent,
     GameComponent,
     GameEntity,
@@ -13,6 +15,8 @@ import type {
     Vector3,
 } from "../types";
 import type { AnimatedTarget, AnimationPlayer } from "./animator";
+import type { CameraFollower } from "./camera-follow";
+import type { CharacterMotor } from "./character";
 import type { ParticleEmitter } from "./particles";
 import { createBodyRuntime, type BodyRuntime, type PhysicsEntity } from "./physics";
 
@@ -105,6 +109,11 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     /** Bumped when scripts change tiles so physics rebuilds the tile shapes. */
     tilemapRevision = 0;
     animator: AnimationPlayer | null = null;
+    characterController: CharacterController2DComponent | null = null;
+    cameraFollow: CameraFollowComponent | null = null;
+    /** Runtime state of the Character Controller 2D and Camera Follow components (V4). */
+    motor: CharacterMotor | null = null;
+    follower: CameraFollower | null = null;
     /** Runtime opacity of this object's UI components (fades, tweens). */
     uiAlpha = 1;
     body: BodyRuntime;
@@ -145,7 +154,14 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
         this.rigidBody = (this.components.find((component) => component.type === "rigidBody") as RigidBodyComponent | undefined) ?? null;
         this.collider = (this.components.find((component) => component.type === "collider") as ColliderComponent | undefined) ?? null;
         this.tilemap = (this.components.find((component) => component.type === "tilemap") as TilemapComponent | undefined) ?? null;
+        this.characterController = (this.components.find((component) => component.type === "characterController2D") as CharacterController2DComponent | undefined) ?? null;
+        this.cameraFollow = (this.components.find((component) => component.type === "cameraFollow") as CameraFollowComponent | undefined) ?? null;
         this.renderVersion += 1;
+    }
+
+    /** Physics: a Character Controller 2D drives the speed itself, so its contacts have no friction. */
+    get frictionless(): boolean {
+        return Boolean(this.characterController?.enabled);
     }
 
     get transformComponent(): TransformComponent | undefined {

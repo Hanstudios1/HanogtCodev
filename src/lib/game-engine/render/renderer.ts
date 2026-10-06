@@ -53,6 +53,8 @@ export interface RenderFrame {
     settings: SceneSettings;
     entities: Iterable<RenderEntity>;
     debugLines?: readonly RenderDebugLine[];
+    /** Camera shake: offset along the camera's right/up in world units and a roll in degrees. */
+    cameraShake?: { x: number; y: number; roll: number } | null;
 }
 
 export type GizmoMode = "translate" | "rotate" | "scale";
@@ -225,6 +227,7 @@ export class SceneRenderer {
     // Game
     private gameCamera: THREE.PerspectiveCamera | THREE.OrthographicCamera | null = null;
     private primary: { entity: EntityObject; component: CameraComponent; world: TRS } | null = null;
+    private cameraShake: { x: number; y: number; roll: number } | null = null;
     hasCamera = false;
 
     private debugLines: THREE.LineSegments | null = null;
@@ -785,6 +788,7 @@ export class SceneRenderer {
             this.objects.delete(id);
         }
         this.primary = primary ?? tagged ?? fallback;
+        this.cameraShake = frame.cameraShake ?? null;
         this.hasCamera = Boolean(this.primary);
         this.fallbackSun.visible = this.dimension === "3d" && !hasDirectional;
         this.applySettings(frame.settings, this.options.mode === "game" ? this.primary?.component.backgroundColor ?? null : null);
@@ -1359,6 +1363,13 @@ export class SceneRenderer {
             toThreeQuaternion(primary.world.rotation, camera.quaternion);
             camera.near = Math.max(0.001, primary.component.nearClip);
             camera.far = Math.max(camera.near + 0.1, primary.component.farClip);
+            const shake = this.cameraShake;
+            if (shake) {
+                // Along the camera's own right and up, so the shake reads the same at any angle.
+                camera.translateX(shake.x);
+                camera.translateY(shake.y);
+                camera.rotateZ((shake.roll * Math.PI) / 180);
+            }
         } else {
             camera.position.set(0, this.dimension === "2d" ? 0 : 3, 10);
             camera.quaternion.identity();

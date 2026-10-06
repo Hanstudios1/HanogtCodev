@@ -5,6 +5,8 @@ import {
     createAnimation,
     createAudioSource,
     createCamera,
+    createCameraFollow,
+    createCharacterController2D,
     createCollider,
     createLight,
     createMeshRenderer,
@@ -29,6 +31,7 @@ import {
     type CameraComponent,
     type ColliderComponent,
     type GameComponent,
+    type GameDimension,
     type GameEntity,
     type LightComponent,
     type MeshRendererComponent,
@@ -449,6 +452,7 @@ const COMPONENT_REFERENCE_TYPES: Record<string, GameComponent["type"][]> = {
     Camera: ["camera"], Light: ["light"], ParticleSystem: ["particleSystem"], AudioSource: ["audioSource"], Text: ["uiText"], TextMeshProUGUI: ["uiText"], TMP_Text: ["uiText"], TextMeshPro: ["uiText"],
     Button: ["uiButton"], Image: ["uiPanel", "uiProgressBar"], Panel: ["uiPanel"], RawImage: ["uiPanel"], Slider: ["uiProgressBar"], ProgressBar: ["uiProgressBar"],
     Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animation"],
+    CharacterController2D: ["characterController2D"], CameraFollow: ["cameraFollow"], CinemachineCamera: ["cameraFollow"], CinemachineVirtualCamera: ["cameraFollow"],
 };
 
 function defaultFieldValue(field: FieldInfo): ScriptFieldValue {
@@ -623,7 +627,7 @@ export function prettifyFieldName(name: string) {
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-export function defaultComponentFor(component: GameComponent): GameComponent {
+export function defaultComponentFor(component: GameComponent, dimension: GameDimension = "3d"): GameComponent {
     const base = { id: component.id, enabled: component.enabled };
     switch (component.type) {
         case "transform": return { ...component, position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } };
@@ -641,6 +645,8 @@ export function defaultComponentFor(component: GameComponent): GameComponent {
         case "uiProgressBar": return { ...createUIProgressBar(), ...base };
         case "tilemap": return { ...createTilemap({ rows: component.rows, origin: component.origin, palette: component.palette }), ...base };
         case "animation": return { ...createAnimation({ clips: component.clips, defaultClip: component.defaultClip }), ...base };
+        case "characterController2D": return { ...createCharacterController2D(), ...base };
+        case "cameraFollow": return { ...createCameraFollow({ targetId: component.targetId }, dimension), ...base };
         case "script": return { ...component, fields: {} };
     }
 }
