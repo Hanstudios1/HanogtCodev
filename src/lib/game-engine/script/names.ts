@@ -24,6 +24,8 @@ export const GLOBAL_NAMES = new Set([
     "RigidbodyType2D", "Ray", "AudioListener", "SendMessageOptions", "RuntimePlatform", "DestroyImmediate",
     // V3: tweens, timers, UI events
     "Tween", "Timer", "Ease", "LoopType", "UI", "EventSystem",
+    // V4: path finding
+    "Pathfinding",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",

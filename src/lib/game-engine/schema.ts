@@ -632,6 +632,19 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 lookAtTarget: bool(source.lookAtTarget, defaults.lookAtTarget),
             };
         }
+        case "navAgent2D":
+            return {
+                id,
+                type,
+                enabled,
+                speed: num(source.speed, 3.5, 0, 200),
+                stoppingDistance: num(source.stoppingDistance, 0.1, 0, 100),
+                radius: num(source.radius, 0.3, 0, 50),
+                targetId: refId(source.targetId),
+                repathInterval: num(source.repathInterval, 0.4, 0.05, 10),
+                flipSprite: bool(source.flipSprite, true),
+                showPath: bool(source.showPath, false),
+            };
         default:
             return null;
     }

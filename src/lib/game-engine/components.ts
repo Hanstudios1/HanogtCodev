@@ -13,6 +13,7 @@ import type {
     LightComponent,
     MaterialData,
     MeshRendererComponent,
+    NavAgent2DComponent,
     ParticleSystemComponent,
     RigidBodyComponent,
     ScriptComponent,
@@ -354,6 +355,21 @@ export function createCameraFollow(overrides: Overrides<CameraFollowComponent> =
     };
 }
 
+export function createNavAgent2D(overrides: Overrides<NavAgent2DComponent> = {}): NavAgent2DComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "navAgent2D",
+        enabled: overrides.enabled ?? true,
+        speed: overrides.speed ?? 3.5,
+        stoppingDistance: overrides.stoppingDistance ?? 0.1,
+        radius: overrides.radius ?? 0.3,
+        targetId: overrides.targetId ?? null,
+        repathInterval: overrides.repathInterval ?? 0.4,
+        flipSprite: overrides.flipSprite ?? true,
+        showPath: overrides.showPath ?? false,
+    };
+}
+
 /** Creates a component with sensible defaults for the given scene dimension. */
 export function createComponentOfType(type: Exclude<ComponentType, "script" | "transform">, dimension: GameDimension): GameComponent {
     switch (type) {
@@ -373,6 +389,7 @@ export function createComponentOfType(type: Exclude<ComponentType, "script" | "t
         case "animation": return createAnimation();
         case "characterController2D": return createCharacterController2D();
         case "cameraFollow": return createCameraFollow({}, dimension);
+        case "navAgent2D": return createNavAgent2D();
     }
 }
 
@@ -395,4 +412,5 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
     animation: "Animation",
     characterController2D: "Character Controller 2D",
     cameraFollow: "Camera Follow",
+    navAgent2D: "Nav Agent 2D",
 };

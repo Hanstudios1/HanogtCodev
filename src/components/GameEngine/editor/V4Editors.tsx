@@ -3,7 +3,7 @@
 /** Inspector editors of the V4 components: Character Controller 2D and Camera Follow. */
 import { Wrench } from "lucide-react";
 import { createCollider, createRigidBody } from "@/lib/game-engine/components";
-import type { CameraFollowComponent, CharacterController2DComponent, GameEntity } from "@/lib/game-engine/types";
+import type { CameraFollowComponent, CharacterController2DComponent, GameEntity, NavAgent2DComponent } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { useComponentEdit, type Editor } from "./inspector-fields";
 import { activeScene, findEntity, touch } from "./operations";
@@ -124,6 +124,35 @@ export function CameraFollowEditor({ entity, component, disabled }: Editor<Camer
                     <FieldRow label={is2D ? "Bounds Max (X, Y)" : "Bounds Max (X, Z)"}><VectorInput value={vector2(component.boundsMax)} hideZ disabled={disabled} onChange={(value) => edit("boundsMax", (draft) => { draft.boundsMax = { x: value.x, y: value.y }; })} /></FieldRow>
                 </>
             ) : null}
+        </div>
+    );
+}
+
+export function NavAgent2DEditor({ entity, component, disabled }: Editor<NavAgent2DComponent>) {
+    const { store, t } = useEditor();
+    const project = useEditorState(store, (state) => state.project);
+    const scene = activeScene(project);
+    const edit = useComponentEdit(entity.id, component);
+    const targets = scene.objects.filter((item: GameEntity) => item.id !== entity.id);
+    const missing = component.targetId !== null && !targets.some((item) => item.id === component.targetId);
+
+    return (
+        <div className="space-y-0.5" data-nav-agent-editor>
+            {project.dimension === "3d" ? <Warning>{t("navOnly2D")}</Warning> : <Hint>{t("navHint")}</Hint>}
+            <FieldRow label="Target" title={t("navTarget")}>
+                <SelectInput
+                    value={missing ? "" : component.targetId ?? ""}
+                    disabled={disabled}
+                    onChange={(value) => edit("target", (draft) => { draft.targetId = value || null; })}
+                    options={[{ value: "", label: t("navNoTarget") }, ...targets.map((item) => ({ value: item.id, label: item.name }))]}
+                />
+            </FieldRow>
+            <FieldRow label="Speed"><NumberInput value={component.speed} min={0} max={200} step={0.25} disabled={disabled} onChange={(value) => edit("speed", (draft) => { draft.speed = value; })} /></FieldRow>
+            <FieldRow label="Stopping Distance"><NumberInput value={component.stoppingDistance} min={0} max={100} step={0.05} disabled={disabled} onChange={(value) => edit("stoppingDistance", (draft) => { draft.stoppingDistance = value; })} /></FieldRow>
+            <FieldRow label="Radius" title={t("navRadius")}><NumberInput value={component.radius} min={0} max={50} step={0.05} disabled={disabled} onChange={(value) => edit("radius", (draft) => { draft.radius = value; })} /></FieldRow>
+            <FieldRow label="Repath Interval" title={t("navRepath")}><NumberInput value={component.repathInterval} min={0.05} max={10} step={0.05} disabled={disabled} onChange={(value) => edit("repathInterval", (draft) => { draft.repathInterval = value; })} /></FieldRow>
+            <FieldRow label="Flip Sprite"><Toggle checked={component.flipSprite} disabled={disabled} onChange={(value) => edit("flipSprite", (draft) => { draft.flipSprite = value; })} /></FieldRow>
+            <FieldRow label="Show Path" title={t("navShowPath")}><Toggle checked={component.showPath} disabled={disabled} onChange={(value) => edit("showPath", (draft) => { draft.showPath = value; })} /></FieldRow>
         </div>
     );
 }

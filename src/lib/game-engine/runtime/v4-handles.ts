@@ -1,6 +1,6 @@
 /** Script handles of the V4 components: CharacterController2D and CameraFollow. */
-import { VMRef, type VMValue } from "../script/values";
-import type { CameraFollowComponent, CharacterController2DComponent } from "../types";
+import { VMList, VMRef, type VMValue } from "../script/values";
+import type { CameraFollowComponent, CharacterController2DComponent, NavAgent2DComponent } from "../types";
 import { ComponentHandle, liveEntityOf, toBool, toNumber, toVector, vec } from "./handles";
 
 const clampNumber = (value: VMValue, min: number, max: number, what: string) => Math.min(max, Math.max(min, toNumber(value, what)));
@@ -208,6 +208,108 @@ export class CameraFollowHandle extends ComponentHandle<CameraFollowComponent> {
                 this.component.boundsMax = { x: max.x, y: max.y };
                 this.component.useBounds = true;
                 return undefined;
+            }
+            default:
+                return super.call(name, args, typeArgs, refs);
+        }
+    }
+}
+
+const PATH_STATUS = { complete: "PathComplete", partial: "PathPartial", invalid: "PathInvalid" } as const;
+
+/** Nav Agent 2D, with the members of Unity's NavMeshAgent that make sense in 2D. */
+export class NavAgent2DHandle extends ComponentHandle<NavAgent2DComponent> {
+    readonly hostType = "NavAgent2D";
+
+    protected typeNames(): string[] {
+        return ["NavAgent2D", "NavMeshAgent", "Behaviour", "Component", "Object", "UnityEngine.Object"];
+    }
+
+    private get agent() {
+        return this.world.navAgentOf(this.entity);
+    }
+
+    get(name: string): VMValue {
+        const c = this.component;
+        const agent = this.agent;
+        switch (name) {
+            case "speed": return c.speed;
+            case "stoppingDistance": return c.stoppingDistance;
+            case "radius": return c.radius;
+            case "repathInterval": return c.repathInterval;
+            case "destination": return agent?.destination ? vec({ x: agent.destination.x, y: agent.destination.y, z: 0 }, true) : vec(this.entity.world.position, true);
+            case "isStopped": return Boolean(agent?.stopped);
+            case "hasPath": return Boolean(agent && agent.path.length > 1 && agent.corner < agent.path.length);
+            case "pathPending": return false;
+            case "pathStatus": return PATH_STATUS[agent?.status ?? "complete"];
+            case "remainingDistance": return agent ? agent.remainingDistance(this.entity.world.position) : 0;
+            case "velocity": return vec({ x: agent?.velocity.x ?? 0, y: agent?.velocity.y ?? 0, z: 0 }, true);
+            case "path":
+            case "corners":
+                return new VMList((agent?.path ?? []).slice(agent?.corner ? agent.corner - 1 : 0).map((point) => vec({ x: point.x, y: point.y, z: 0 }, true)), "List", "Vector2");
+            case "target": {
+                const target = c.targetId ? this.world.entities.get(c.targetId) : null;
+                return target && !target.destroyed ? this.world.transformHandle(target) : null;
+            }
+            case "flipSprite": return c.flipSprite;
+            case "showPath": return c.showPath;
+            default: {
+                const common = this.componentGet(name);
+                if (common !== undefined) return common;
+                return this.unknown(name);
+            }
+        }
+    }
+
+    set(name: string, value: VMValue): void {
+        const c = this.component;
+        const agent = this.agent;
+        switch (name) {
+            case "speed": c.speed = clampNumber(value, 0, 200, name); return;
+            case "stoppingDistance": c.stoppingDistance = clampNumber(value, 0, 100, name); return;
+            case "radius": c.radius = clampNumber(value, 0, 50, name); return;
+            case "repathInterval": c.repathInterval = clampNumber(value, 0.05, 10, name); return;
+            case "destination": agent?.setDestination(toVector(value, "destination")); return;
+            case "isStopped": if (agent) agent.stopped = toBool(value); return;
+            case "target": {
+                const target = value === null || value === undefined ? null : liveEntityOf(value);
+                c.targetId = target ? target.id : null;
+                if (!target) agent?.clear();
+                return;
+            }
+            case "flipSprite": c.flipSprite = toBool(value); return;
+            case "showPath": c.showPath = toBool(value); return;
+            default:
+                if (this.componentSet(name, value)) return;
+                this.unknown(name);
+        }
+    }
+
+    call(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue {
+        const agent = this.agent;
+        switch (name) {
+            case "SetDestination":
+                if (!agent) return false;
+                agent.setDestination(toVector(args[0], "hedef"));
+                agent.stopped = false;
+                return true;
+            case "Stop":
+                if (agent) agent.stopped = true;
+                return undefined;
+            case "Resume":
+                if (agent) agent.stopped = false;
+                return undefined;
+            case "ResetPath":
+                agent?.clear();
+                return undefined;
+            case "Warp": {
+                const point = toVector(args[0], "konum");
+                this.entity.setWorldPosition({ x: point.x, y: point.y, z: this.entity.world.position.z });
+                if (agent) {
+                    agent.path = [];
+                    agent.pathGoal = null;
+                }
+                return true;
             }
             default:
                 return super.call(name, args, typeArgs, refs);

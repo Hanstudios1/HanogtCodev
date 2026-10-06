@@ -7,6 +7,7 @@ import type {
     CharacterController2DComponent,
     ColliderComponent,
     GameComponent,
+    NavAgent2DComponent,
     GameEntity,
     RigidBodyComponent,
     ScriptComponent,
@@ -17,6 +18,7 @@ import type {
 import type { AnimatedTarget, AnimationPlayer } from "./animator";
 import type { CameraFollower } from "./camera-follow";
 import type { CharacterMotor } from "./character";
+import type { NavAgentState } from "./nav-agent";
 import type { ParticleEmitter } from "./particles";
 import { createBodyRuntime, type BodyRuntime, type PhysicsEntity } from "./physics";
 
@@ -111,9 +113,11 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     animator: AnimationPlayer | null = null;
     characterController: CharacterController2DComponent | null = null;
     cameraFollow: CameraFollowComponent | null = null;
-    /** Runtime state of the Character Controller 2D and Camera Follow components (V4). */
+    navAgent: NavAgent2DComponent | null = null;
+    /** Runtime state of the Character Controller 2D, Camera Follow and Nav Agent 2D components (V4). */
     motor: CharacterMotor | null = null;
     follower: CameraFollower | null = null;
+    nav: NavAgentState | null = null;
     /** Runtime opacity of this object's UI components (fades, tweens). */
     uiAlpha = 1;
     body: BodyRuntime;
@@ -156,6 +160,7 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
         this.tilemap = (this.components.find((component) => component.type === "tilemap") as TilemapComponent | undefined) ?? null;
         this.characterController = (this.components.find((component) => component.type === "characterController2D") as CharacterController2DComponent | undefined) ?? null;
         this.cameraFollow = (this.components.find((component) => component.type === "cameraFollow") as CameraFollowComponent | undefined) ?? null;
+        this.navAgent = (this.components.find((component) => component.type === "navAgent2D") as NavAgent2DComponent | undefined) ?? null;
         this.renderVersion += 1;
     }
 

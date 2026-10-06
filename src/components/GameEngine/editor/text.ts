@@ -396,6 +396,14 @@ const TEXT = {
     followDeadZone: ["Hedefin kamerayı kımıldatmadan dolaşabildiği kutunun boyutu.", "Size of the box the target can move in without moving the camera."],
     followLookAhead: ["Kameranın hareket yönünde öne kaydığı mesafe.", "How far the camera leads in the direction of movement."],
     followBounds: ["Görüntüyü bu dikdörtgenin içinde tutar.", "Keeps the view inside this rectangle."],
+    // V4: Nav Agent 2D
+    navHint: ["Duvarların (statik collider'lar ve katı karolar) etrafından dolaşarak hedefe yürür. Betikte: agent.SetDestination(nokta); varınca OnDestinationReached() çağrılır.", "Walks to its destination around walls (static colliders and solid tiles). In a script: agent.SetDestination(point); OnDestinationReached() runs on arrival."],
+    navOnly2D: ["Nav Agent 2D engellerin etrafından yalnızca 2D projelerde dolaşır.", "Nav Agent 2D only steers around obstacles in 2D projects."],
+    navTarget: ["Seçilen nesneyi sürekli kovalar; boşsa SetDestination() ile verilen noktaya gider.", "Keeps chasing the chosen object; when empty it goes where SetDestination() says."],
+    navNoTarget: ["(Yok — SetDestination)", "(None — SetDestination)"],
+    navRadius: ["Duvarlardan uzak durulan mesafe (ajanın yarı genişliği).", "How far it keeps from walls (half the agent's width)."],
+    navRepath: ["Hareket eden bir hedef kovalanırken yeni yol hesaplama aralığı (saniye).", "Seconds between new paths while chasing a moving target."],
+    navShowPath: ["Oynarken yolu çizgiyle gösterir (öğrenmek ve hata ayıklamak için).", "Draws the path while playing (for learning and debugging)."],
 } as const;
 
 export type TextKey = keyof typeof TEXT;

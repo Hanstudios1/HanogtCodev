@@ -509,3 +509,178 @@ test("Camera Follow targets follow duplicated objects and are validated", () => 
     const follow = normalized.scenes[0].objects[0].components.find((component) => component.type === "cameraFollow");
     assert.deepEqual([follow.smoothTime, follow.lookAhead, follow.offset.x], [5, 0, 10_000]);
 });
+
+// ---------------------------------------------------------------------------
+// Path finding and Nav Agent 2D
+// ---------------------------------------------------------------------------
+
+const { NavGrid, pathLength } = await load("lib/game-engine/runtime/pathfinding.ts");
+
+test("NavGrid: A* goes around walls through gaps, never cuts corners, and reports unreachable goals", () => {
+    const wall = (x, y, width, height, angle = 0) => ({ kind: "box", x, y, halfX: width / 2, halfY: height / 2, angle, radius: 0 });
+    const bounds = { minX: -10, minY: -10, maxX: 10, maxY: 10 };
+    // A wall with a gap at the top: the path climbs over it, keeping the agent's radius from the wall.
+    const gap = new NavGrid([wall(0, -2, 0.2, 16)], { cellSize: 0.5, radius: 0.3, bounds }).findPath({ x: -5, y: 0 }, { x: 5, y: 0 });
+    assert.equal(gap.complete, true);
+    assert.deepEqual(gap.points[0], { x: -5, y: 0 });
+    assert.deepEqual(gap.points.at(-1), { x: 5, y: 0 });
+    assert.ok(gap.points.some((point) => point.y > 6.3), "goes over the top of the wall");
+    assert.ok(gap.points.length <= 5, `shortened to its corners (${gap.points.length})`);
+
+    // A wall thinner than a cell still blocks; partial paths stop at the closest reachable point.
+    const sealed = new NavGrid([wall(0, 0, 0.1, 30)], { cellSize: 0.5, radius: 0, bounds });
+    assert.equal(sealed.findPath({ x: -5, y: 0 }, { x: 5, y: 0 }), null);
+    const partial = sealed.findPath({ x: -5, y: 0 }, { x: 5, y: 0 }, true);
+    assert.equal(partial.complete, false);
+    assert.ok(partial.points.at(-1).x < 0 && partial.points.at(-1).x > -1);
+
+    // Two blocks touching at a corner: no squeezing diagonally between them.
+    const pinch = new NavGrid([wall(-0.5, 0.5, 1, 1), wall(0.5, -0.5, 1, 1)], { cellSize: 0.5, radius: 0, bounds: { minX: -3, minY: -3, maxX: 3, maxY: 3 } });
+    const around = pinch.findPath({ x: -1.5, y: -1.5 }, { x: 1.5, y: 1.5 });
+    assert.ok(pathLength(around.points) > Math.hypot(3, 3) + 0.5, "goes around the pinch");
+
+    // Open ground is a straight line; rotated walls block along their length.
+    assert.equal(new NavGrid([wall(8, 8, 1, 1)], { cellSize: 0.5, radius: 0.3, bounds }).findPath({ x: -5, y: -3 }, { x: 4, y: 2 }).points.length, 2);
+    const rotated = new NavGrid([wall(0, 0, 8, 0.4, Math.PI / 4)], { cellSize: 0.5, radius: 0.2, bounds });
+    assert.ok(pathLength(rotated.findPath({ x: -3, y: 3 }, { x: 3, y: -3 }).points) > Math.hypot(6, 6) + 1);
+    assert.equal(rotated.isWalkable({ x: 0, y: 0 }), false);
+    assert.equal(rotated.isWalkable({ x: 3, y: -3 }), true);
+});
+
+/** A 2D maze: a tilemap with walls and a solid block collider; the hero is the target. */
+function mazeProject({ agent = {}, script, agentBody = false } = {}) {
+    const project = createBlankProject("Maze", "2d");
+    const scene = project.scenes[0];
+    scene.settings.physics.gravity = { x: 0, y: 0, z: 0 };
+    const camera = scene.objects.find((item) => item.components.some((component) => component.type === "camera"));
+    const rows = [
+        "############",
+        "#..........#",
+        "#.########.#",
+        "#.#......#.#",
+        "#.#.####.#.#",
+        "#...#..#...#",
+        "######.#####",
+    ];
+    const tilemap = C.createTilemap({ rows, palette: [{ key: "#", name: "Wall", color: "#334155", solid: true, frame: -1 }], origin: { x: 0, y: 0 } });
+    scene.objects = [
+        camera,
+        objectOf("entity_maze", "Maze", [C.createTransform(), tilemap]),
+        objectOf("entity_hero", "Hero", [C.createTransform({ position: { x: 6.5, y: 3.5, z: 0 } }), C.createSpriteRenderer()], "Player"),
+        objectOf("entity_goblin", "Goblin", [
+            C.createTransform({ position: { x: 1.5, y: 1.5, z: 0 } }),
+            C.createSpriteRenderer(),
+            ...(agentBody ? [C.createRigidBody({ useGravity: false, freezePosition: { x: false, y: false, z: true } }), C.createCollider({ shape: "circle", radius: 0.3 })] : []),
+            C.createNavAgent2D({ targetId: "entity_hero", speed: 4, ...agent }),
+        ]),
+    ];
+    if (script) {
+        project.scripts = [{ id: "script_nav", name: `${script.name}.cs`, language: "csharp", content: script.content }];
+        scene.objects.find((item) => item.name === script.on).components.push(createScriptComponent("script_nav", script.name));
+    }
+    return project;
+}
+
+test("Nav Agent 2D chases its target through a tilemap maze without entering walls and says when it arrives", () => {
+    const game = startWorld(mazeProject({
+        script: {
+            name: "Goblin",
+            on: "Goblin",
+            content: `using UnityEngine;
+public class Goblin : MonoBehaviour
+{
+    void OnDestinationReached() { Debug.Log("caught at " + Time.frameCount); }
+}`,
+        },
+    }));
+    const goblin = game.find("Goblin");
+    const maze = game.find("Maze").tilemap;
+    const solidAt = (x, y) => {
+        const column = Math.floor(x);
+        const row = maze.rows.length - 1 - Math.floor(y);
+        return maze.rows[row]?.[column] === "#";
+    };
+    let worst = 0;
+    for (let frame = 0; frame < 600 && !game.messages("info").length; frame += 1) {
+        game.step(1);
+        const { x, y } = goblin.world.position;
+        if (solidAt(x, y)) worst += 1;
+    }
+    assert.equal(worst, 0, "never stands inside a wall tile");
+    assert.equal(game.messages("info").length, 1, "OnDestinationReached ran once");
+    const hero = game.find("Hero").world.position;
+    assert.ok(Math.hypot(goblin.world.position.x - hero.x, goblin.world.position.y - hero.y) <= 0.11);
+    const handle = game.world.componentHandle(goblin, goblin.navAgent);
+    assert.equal(handle.get("pathStatus"), "PathComplete");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("scripts use Pathfinding.FindPath and SetDestination; agents with a body move by velocity; walls removed at runtime reopen the way", () => {
+    const game = startWorld(mazeProject({
+        agent: { targetId: null },
+        agentBody: true,
+        script: {
+            name: "Director",
+            on: "Hero",
+            content: `using UnityEngine;
+using System.Collections.Generic;
+public class Director : MonoBehaviour
+{
+    public NavAgent2D goblin;
+    void Start()
+    {
+        List<Vector2> path = Pathfinding.FindPath(new Vector2(1.5f, 1.5f), new Vector2(6.5f, 3.5f));
+        Debug.Log("corners " + path.Count + " walkable " + Pathfinding.IsWalkable(new Vector2(0.5f, 0.5f)) + " " + Pathfinding.IsWalkable(new Vector2(1.5f, 1.5f)));
+        List<Vector2> none = Pathfinding.FindPath(new Vector2(1.5f, 1.5f), new Vector2(5.5f, 1.5f));
+        Debug.Log("sealed " + none.Count + " " + Pathfinding.HasPath(new Vector2(1.5f, 1.5f), new Vector2(5.5f, 1.5f)));
+        goblin = GameObject.Find("Goblin").GetComponent<NavAgent2D>();
+        goblin.SetDestination(new Vector2(10.5f, 5.5f));
+    }
+}`,
+        },
+    }));
+    game.step(1);
+    const [corners, sealed] = game.messages("info");
+    assert.match(corners, /^corners [4-9] walkable False True$/);
+    assert.equal(sealed, "sealed 0 False", "the room inside the walls can't be reached");
+    const goblin = game.find("Goblin");
+    game.step(10);
+    assert.ok(Math.hypot(goblin.body.velocity.x, goblin.body.velocity.y) > 3.9, "moves by setting its body's velocity");
+    const handle = game.world.componentHandle(goblin, goblin.navAgent);
+    const remaining = handle.get("remainingDistance");
+    game.step(30);
+    assert.ok(handle.get("remainingDistance") < remaining - 1);
+    handle.call("Stop", [], []);
+    game.step(2);
+    const stopped = { ...goblin.world.position };
+    game.step(10);
+    assert.deepEqual(goblin.world.position, stopped);
+    assert.equal(handle.get("isStopped"), true);
+    handle.call("Resume", [], []);
+    game.step(240);
+    assert.ok(Math.hypot(goblin.world.position.x - 10.5, goblin.world.position.y - 5.5) < 0.2, "arrives");
+
+    // Opening the sealed room at runtime: the cached grid notices the tile change.
+    const maze = game.find("Maze");
+    const tilemapHandle = game.world.componentHandle(maze, maze.tilemap);
+    assert.equal(game.world.findPath({ x: 1.5, y: 1.5 }, { x: 5.5, y: 1.5 }, 0.25, false).status, "invalid");
+    tilemapHandle.call("SetTile", [7, 1, null], []);
+    assert.equal(game.world.findPath({ x: 1.5, y: 1.5 }, { x: 5.5, y: 1.5 }, 0.25, false).status, "complete");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("Nav Agent 2D settings are clamped, targets follow copies, and 3D falls back to straight paths with a warning", () => {
+    const project = mazeProject({ agent: { speed: 999, radius: -1, repathInterval: 0 } });
+    const agent = normalizeProject(project).scenes[0].objects.find((item) => item.name === "Goblin").components.find((component) => component.type === "navAgent2D");
+    assert.deepEqual([agent.speed, agent.radius, agent.repathInterval], [200, 0, 0.05]);
+    const hero = objectOf("entity_a", "A", [C.createTransform()]);
+    const chaser = objectOf("entity_b", "B", [C.createTransform(), C.createNavAgent2D({ targetId: "entity_a" })]);
+    const [heroCopy, chaserCopy] = cloneEntitiesWithNewIds([hero, chaser]);
+    assert.equal(chaserCopy.components.find((component) => component.type === "navAgent2D").targetId, heroCopy.id);
+
+    const flat = createBlankProject("3D", "3d");
+    const game = startWorld(flat);
+    const result = game.world.findPath({ x: 0, y: 0, z: 0 }, { x: 4, y: 0, z: 0 }, 0.3, false);
+    assert.equal(result.points.length, 2);
+    assert.equal(game.problems().filter((message) => message.includes("2D")).length, 1);
+});

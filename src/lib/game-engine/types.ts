@@ -391,6 +391,25 @@ export interface CameraFollowComponent extends ComponentBase {
     lookAtTarget: boolean;
 }
 
+/** Walks to a destination around static colliders and solid tiles (V4, 2D). */
+export interface NavAgent2DComponent extends ComponentBase {
+    type: "navAgent2D";
+    /** Units per second. */
+    speed: number;
+    /** Stops this close to the destination. */
+    stoppingDistance: number;
+    /** Keeps this far from walls (half the agent's width). */
+    radius: number;
+    /** Object to chase; null waits for SetDestination(). */
+    targetId: string | null;
+    /** Seconds between new paths while chasing a moving target. */
+    repathInterval: number;
+    /** Mirrors the Sprite Renderer to face the direction of travel. */
+    flipSprite: boolean;
+    /** Draws the current path while playing. */
+    showPath: boolean;
+}
+
 export type GameComponent =
     | TransformComponent
     | SpriteRendererComponent
@@ -409,7 +428,8 @@ export type GameComponent =
     | TilemapComponent
     | AnimationComponent
     | CharacterController2DComponent
-    | CameraFollowComponent;
+    | CameraFollowComponent
+    | NavAgent2DComponent;
 
 export type ComponentType = GameComponent["type"];
 export type ComponentOfType<T extends ComponentType> = Extract<GameComponent, { type: T }>;
@@ -433,6 +453,7 @@ export const COMPONENT_TYPES: readonly ComponentType[] = [
     "animation",
     "characterController2D",
     "cameraFollow",
+    "navAgent2D",
 ];
 
 /** Screen-space UI components (drawn by the overlay, not the WebGL renderer). */
@@ -456,6 +477,7 @@ export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
     "animation",
     "characterController2D",
     "cameraFollow",
+    "navAgent2D",
 ]);
 
 export interface GameEntity {

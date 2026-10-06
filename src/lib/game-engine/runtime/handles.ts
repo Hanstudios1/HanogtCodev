@@ -1698,6 +1698,7 @@ export class TilemapHandle extends ComponentHandle<TilemapComponent> {
 
     private changedTiles() {
         this.entity.tilemapRevision += 1;
+        this.world.obstaclesChanged();
         this.changed();
     }
 

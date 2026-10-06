@@ -26,6 +26,7 @@ export const API_MEMBERS: Record<string, string[]> = {
     LoopType: ["Restart", "Yoyo"],
     Timer: ["After(seconds, () => { })", "Every(seconds, () => { })", "Cancel(timer)", "CancelAll()", "activeCount"],
     UI: ["IsPointerOverUI()"],
+    Pathfinding: ["FindPath(from, to)", "HasPath(from, to)", "IsWalkable(point)", "Rebuild()", "cellSize", "agentRadius"],
     EventSystem: ["current"],
     Audio: ["Play(\"coin\")", "Play(\"jump\", volume, pitch)", "volume", "mute"],
     HUD: ["Show(\"Mesaj\", seconds)", "Hide()"],
@@ -54,6 +55,7 @@ export const TYPE_MEMBERS: Record<string, string[]> = {
     Camera: ["fieldOfView", "orthographicSize", "orthographic", "backgroundColor", "ScreenToWorldPoint(position)", "WorldToScreenPoint(position)", "ScreenPointToRay(position)", "ViewportToWorldPoint(position)", "Shake(0.3f, 0.25f)", "StopShake()"],
     CharacterController2D: ["Move(direction)", "Jump()", "CancelJump()", "Stop()", "isGrounded", "isJumping", "isFalling", "velocity", "facing", "jumpsLeft", "moveSpeed", "jumpHeight", "maxJumps", "acceleration", "airControl", "coyoteTime", "jumpBuffer", "useInput"],
     CameraFollow: ["target", "offset", "smoothTime", "deadZone", "lookAhead", "useBounds", "SetBounds(min, max)", "SnapToTarget()", "Shake(0.3f, 0.25f)"],
+    NavAgent2D: ["SetDestination(point)", "Stop()", "Resume()", "ResetPath()", "Warp(position)", "destination", "target", "speed", "stoppingDistance", "remainingDistance", "hasPath", "pathStatus", "isStopped", "velocity", "path"],
     Light: ["color", "intensity", "range", "spotAngle", "enabled"],
     Collision: ["gameObject", "transform", "collider", "rigidbody", "relativeVelocity", "contacts", "contactCount", "GetContact(0)"],
     RaycastHit: ["point", "normal", "distance", "collider", "transform", "rigidbody", "gameObject"],
@@ -74,6 +76,7 @@ export const LIFECYCLE_SNIPPETS: Array<{ label: string; detail: string; csharp: 
     { label: "OnDestroy", detail: "Nesne yok edilirken", csharp: "void OnDestroy()\n{\n    $0\n}", cpp: "void OnDestroy() {\n    $0\n}" },
     { label: "OnJump", detail: "Character Controller 2D zıpladı", csharp: "void OnJump()\n{\n    $0\n}", cpp: "void OnJump() {\n    $0\n}" },
     { label: "OnLand", detail: "Character Controller 2D yere indi", csharp: "void OnLand(float speed)\n{\n    $0\n}", cpp: "void OnLand(float speed) {\n    $0\n}" },
+    { label: "OnDestinationReached", detail: "Nav Agent 2D hedefe vardı", csharp: "void OnDestinationReached()\n{\n    $0\n}", cpp: "void OnDestinationReached() {\n    $0\n}" },
     { label: "OnAnimationComplete", detail: "Bir kez oynayan klip bitti", csharp: "void OnAnimationComplete(string clip)\n{\n    $0\n}", cpp: "void OnAnimationComplete(std::string clip) {\n    $0\n}" },
     { label: "Button listener", detail: "Butona tıklanınca", csharp: "${1:button}.onClick.AddListener(() =>\n{\n    $0\n});", cpp: "${1:button}->onClick->AddListener([&]() {\n    $0\n});" },
     { label: "Timer.Every", detail: "Belirli aralıkla tekrar", csharp: "Timer.Every(${1:1f}, () =>\n{\n    $0\n});", cpp: "Timer::Every(${1:1.0f}, [&]() {\n    $0\n});" },
@@ -81,7 +84,7 @@ export const LIFECYCLE_SNIPPETS: Array<{ label: string; detail: string; csharp: 
 ];
 
 export const GLOBAL_SUGGESTIONS = [
-    "Debug", "Time", "Input", "Physics", "Physics2D", "GameObject", "SceneManager", "Application", "Screen", "Camera", "Mathf", "Random",
+    "Debug", "Time", "Input", "Physics", "Physics2D", "GameObject", "SceneManager", "Application", "Screen", "Camera", "Mathf", "Random", "Pathfinding",
     "Vector2", "Vector3", "Quaternion", "Color", "PlayerPrefs", "Audio", "HUD", "Resources", "KeyCode", "ForceMode", "ForceMode2D", "Space",
     "WaitForSeconds", "WaitUntil", "Instantiate", "Destroy", "StartCoroutine", "Invoke", "InvokeRepeating", "GetComponent", "transform", "gameObject",
     "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem",

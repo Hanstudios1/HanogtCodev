@@ -10,6 +10,7 @@ import {
     createCollider,
     createLight,
     createMeshRenderer,
+    createNavAgent2D,
     createParticleSystem,
     createRigidBody,
     createSpriteRenderer,
@@ -453,6 +454,7 @@ const COMPONENT_REFERENCE_TYPES: Record<string, GameComponent["type"][]> = {
     Button: ["uiButton"], Image: ["uiPanel", "uiProgressBar"], Panel: ["uiPanel"], RawImage: ["uiPanel"], Slider: ["uiProgressBar"], ProgressBar: ["uiProgressBar"],
     Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animation"],
     CharacterController2D: ["characterController2D"], CameraFollow: ["cameraFollow"], CinemachineCamera: ["cameraFollow"], CinemachineVirtualCamera: ["cameraFollow"],
+    NavAgent2D: ["navAgent2D"], NavMeshAgent: ["navAgent2D"],
 };
 
 function defaultFieldValue(field: FieldInfo): ScriptFieldValue {
@@ -647,6 +649,7 @@ export function defaultComponentFor(component: GameComponent, dimension: GameDim
         case "animation": return { ...createAnimation({ clips: component.clips, defaultClip: component.defaultClip }), ...base };
         case "characterController2D": return { ...createCharacterController2D(), ...base };
         case "cameraFollow": return { ...createCameraFollow({ targetId: component.targetId }, dimension), ...base };
+        case "navAgent2D": return { ...createNavAgent2D({ targetId: component.targetId }), ...base };
         case "script": return { ...component, fields: {} };
     }
 }

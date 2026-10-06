@@ -671,6 +671,36 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         },
     }));
 
+    // V4: grid path finding around static colliders and solid tiles (2D).
+    const pathPoints = (points: Array<{ x: number; y: number }>) => new VMList(points.map((point) => vec({ x: point.x, y: point.y, z: 0 }, true)), "List", "Vector2");
+    globals.set("Pathfinding", ns("Pathfinding", {
+        cellSize: () => world.navCellSize ?? 0,
+        agentRadius: () => world.navRadius,
+    }, {
+        FindPath: (args) => {
+            const from = toVector(args[0], "başlangıç");
+            const to = toVector(args[1], "hedef");
+            const radius = typeof args[2] === "number" ? Math.max(0, args[2]) : world.navRadius;
+            const result = world.findPath(from, to, radius, false);
+            return pathPoints(result.status === "complete" ? result.points : []);
+        },
+        HasPath: (args) => world.findPath(toVector(args[0], "başlangıç"), toVector(args[1], "hedef"), typeof args[2] === "number" ? Math.max(0, args[2]) : world.navRadius, false).status === "complete",
+        IsWalkable: (args) => world.isWalkable(toVector(args[0], "nokta"), typeof args[1] === "number" ? Math.max(0, args[1]) : world.navRadius),
+        Rebuild: () => {
+            world.resetNavigation();
+            return undefined;
+        },
+    }, {
+        cellSize: (value) => {
+            const size = toNumber(value, "cellSize");
+            world.navCellSize = size > 0 ? Math.min(10, Math.max(0.1, size)) : null;
+            world.resetNavigation();
+        },
+        agentRadius: (value) => {
+            world.navRadius = Math.min(50, Math.max(0, toNumber(value, "agentRadius")));
+        },
+    }));
+
     globals.set("Audio", ns("Audio", {
         volume: () => world.audio?.volume ?? 0,
         mute: () => world.audioMuted,

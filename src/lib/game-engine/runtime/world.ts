@@ -11,6 +11,7 @@ import { createComponentOfType, createScriptComponent, createTransform } from ".
 import { createEngineId } from "../ids";
 import { conjugateQuat, rotateVec3, subVec3, type Quat } from "../math";
 import { cloneEntitiesWithNewIds } from "../scene";
+import { tilemapSize } from "../tilemap";
 import { cloneJson } from "../schema";
 import type { CompiledProgram } from "../script/compiler";
 import { Interpreter, type ScriptHost } from "../script/interpreter";
@@ -51,6 +52,8 @@ import { AnimationPlayer } from "./animator";
 import { SoundEngine } from "./audio";
 import { CameraFollower, CameraShaker } from "./camera-follow";
 import { CharacterMotor } from "./character";
+import { NavAgentState, type NavPathStatus } from "./nav-agent";
+import { NavGrid, type NavBounds, type NavObstacle, type NavPoint } from "./pathfinding";
 import type { CameraView } from "./camera-math";
 import { screenRay, screenToWorld } from "./camera-math";
 import { BehaviourState, RuntimeEntity, type CoroutineState, type WaitState } from "./entity";
@@ -90,7 +93,7 @@ import { ParticleEmitter } from "./particles";
 import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity, type RaycastResult } from "./physics";
 import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
 import { ButtonHandle, ButtonLabelHandle, PanelHandle, ProgressBarHandle, sameCallable } from "./ui-handles";
-import { CameraFollowHandle, CharacterController2DHandle } from "./v4-handles";
+import { CameraFollowHandle, CharacterController2DHandle, NavAgent2DHandle } from "./v4-handles";
 
 export type LogLevel = "info" | "warning" | "error";
 
@@ -202,6 +205,8 @@ const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "scr
     CameraFollow: { type: "cameraFollow", userFirst: true },
     CinemachineCamera: { type: "cameraFollow", userFirst: true },
     CinemachineVirtualCamera: { type: "cameraFollow", userFirst: true },
+    NavAgent2D: { type: "navAgent2D", userFirst: true },
+    NavMeshAgent: { type: "navAgent2D", userFirst: true },
 };
 
 function pairKey(a: string, b: string) {
@@ -417,6 +422,13 @@ export class RuntimeWorld implements ScriptHost {
     private fade: FadeState | null = null;
     /** Screen shakes added to the rendered camera (Camera.Shake). */
     readonly shaker = new CameraShaker();
+    /** Pathfinding.cellSize (null: the first tilemap's cell size, else 0.5). */
+    navCellSize: number | null = null;
+    /** Pathfinding.agentRadius: clearance kept by Pathfinding.FindPath. */
+    navRadius = 0.25;
+    private readonly navGrids = new Map<number, { frame: number; structure: number; key: string; grid: NavGrid | null }>();
+    /** Bumped when tiles or colliders change, so path finding rescans within the same frame. */
+    private obstacleRevision = 0;
     /** Runs timer/tween/button callbacks with error isolation. */
     readonly runCallback: CallbackRunner = (owner, label, callback, args) => {
         if (owner?.destroyed || owner?.failed) return;
@@ -545,6 +557,7 @@ export class RuntimeWorld implements ScriptHost {
         }
         this.runInvokes();
         this.runCoroutines("frame");
+        this.updateNavAgents(this.deltaTime);
         this.updateAnimations(this.deltaTime);
         this.tweens.update(this.deltaTime, this.runCallback);
         this.timers.update(this.deltaTime, this.runCallback);
@@ -1419,6 +1432,7 @@ export class RuntimeWorld implements ScriptHost {
                 case "animation": handle = new AnimationHandle(this, entity, component); break;
                 case "characterController2D": handle = new CharacterController2DHandle(this, entity, component); break;
                 case "cameraFollow": handle = new CameraFollowHandle(this, entity, component); break;
+                case "navAgent2D": handle = new NavAgent2DHandle(this, entity, component); break;
             }
             if (handle) entity.handles.set(component.id, handle);
         }
@@ -1594,6 +1608,7 @@ export class RuntimeWorld implements ScriptHost {
     componentChanged(entity: RuntimeEntity) {
         entity.refreshComponentCache();
         this.registerPhysics(entity);
+        this.obstaclesChanged();
     }
 
     markRender(entity: RuntimeEntity) {
@@ -2100,6 +2115,250 @@ export class RuntimeWorld implements ScriptHost {
             const result = follower.update(deltaTime, entity.world.position, target.world.position, this.is2D, { halfExtents });
             entity.setWorldPosition(result.position);
             if (result.rotation) entity.setWorldRotation(result.rotation);
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // Path finding and Nav Agent 2D (V4)
+    // -------------------------------------------------------------------
+
+    navAgentOf(entity: RuntimeEntity): NavAgentState | null {
+        const component = entity.navAgent;
+        if (!component) return null;
+        if (!entity.nav || entity.nav.component !== component) entity.nav = new NavAgentState(component);
+        return entity.nav;
+    }
+
+    /** Static colliders and solid tiles, as path finding obstacles, plus a key that changes when they do. */
+    private navObstacles() {
+        const obstacles: NavObstacle[] = [];
+        const parts: string[] = [];
+        let bounds: NavBounds | null = null;
+        let anchor: NavPoint | null = null;
+        let tileCell: number | null = null;
+        const grow = (x: number, y: number, extent: number) => {
+            bounds = bounds
+                ? { minX: Math.min(bounds.minX, x - extent), minY: Math.min(bounds.minY, y - extent), maxX: Math.max(bounds.maxX, x + extent), maxY: Math.max(bounds.maxY, y + extent) }
+                : { minX: x - extent, minY: y - extent, maxX: x + extent, maxY: y + extent };
+        };
+        for (const entity of this.entities.values()) {
+            if (entity.destroyed || !entity.activeInHierarchy) continue;
+            // Moving things (players, enemies, agents) are not walls.
+            if (entity.characterController || entity.navAgent) continue;
+            const rb = entity.rigidBody;
+            if (rb && rb.enabled && rb.bodyType !== "static") continue;
+            const collider = entity.collider;
+            const tilemap = entity.tilemap;
+            const solidCollider = Boolean(collider?.enabled && !collider.isTrigger);
+            const solidTilemap = Boolean(tilemap?.enabled && !tilemap.isTrigger);
+            if (!solidCollider && !solidTilemap) continue;
+            const trs = entity.world;
+            const angle = 2 * Math.atan2(trs.rotation.z, trs.rotation.w);
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            const sx = Math.abs(trs.scale.x);
+            const sy = Math.abs(trs.scale.y);
+            if (solidCollider && collider) {
+                const ox = collider.offset.x * trs.scale.x;
+                const oy = collider.offset.y * trs.scale.y;
+                const x = trs.position.x + ox * cos - oy * sin;
+                const y = trs.position.y + ox * sin + oy * cos;
+                if (collider.shape === "box") {
+                    const halfX = (collider.size.x * sx) / 2;
+                    const halfY = (collider.size.y * sy) / 2;
+                    obstacles.push({ kind: "box", x, y, halfX, halfY, angle, radius: 0 });
+                    grow(x, y, Math.hypot(halfX, halfY));
+                } else {
+                    const radius = collider.radius * Math.max(sx, sy);
+                    obstacles.push({ kind: "circle", x, y, halfX: 0, halfY: 0, angle: 0, radius });
+                    grow(x, y, radius);
+                }
+                parts.push(`${entity.id}:${x.toFixed(3)},${y.toFixed(3)},${angle.toFixed(4)},${sx.toFixed(3)},${sy.toFixed(3)},${collider.shape},${collider.size.x},${collider.size.y},${collider.radius}`);
+            }
+            if (solidTilemap && tilemap) {
+                const cell = tilemap.cellSize;
+                const solid = new Set(tilemap.palette.filter((tile) => tile.solid).map((tile) => tile.key));
+                const { height } = tilemapSize(tilemap);
+                anchor ??= { x: trs.position.x, y: trs.position.y };
+                tileCell ??= cell * sx;
+                for (let row = 0; row < height; row += 1) {
+                    const text = tilemap.rows[row];
+                    for (let column = 0; column < text.length; column += 1) {
+                        if (!solid.has(text[column])) continue;
+                        const lx = (tilemap.origin.x + column + 0.5) * cell * trs.scale.x;
+                        const ly = (tilemap.origin.y + height - 1 - row + 0.5) * cell * trs.scale.y;
+                        const x = trs.position.x + lx * cos - ly * sin;
+                        const y = trs.position.y + lx * sin + ly * cos;
+                        obstacles.push({ kind: "box", x, y, halfX: (cell * sx) / 2, halfY: (cell * sy) / 2, angle, radius: 0 });
+                        grow(x, y, cell * Math.max(sx, sy));
+                    }
+                }
+                parts.push(`${entity.id}:t${entity.tilemapRevision}:${trs.position.x.toFixed(3)},${trs.position.y.toFixed(3)},${angle.toFixed(4)},${sx},${sy},${cell}`);
+            }
+        }
+        return { obstacles, key: parts.join("|"), bounds: bounds as NavBounds | null, anchor: anchor as NavPoint | null, tileCell: tileCell as number | null };
+    }
+
+    /** The path finding grid for an agent radius (null when the scene has no obstacles). Rebuilt when obstacles change. */
+    navGrid(radius: number): NavGrid | null {
+        const cached = this.navGrids.get(radius);
+        if (cached && cached.frame === this.frameCount && cached.structure === this.structureVersion + this.obstacleRevision * 1e6) return cached.grid;
+        const scan = this.navObstacles();
+        const cellSize = this.navCellSize ?? scan.tileCell ?? 0.5;
+        const key = `${cellSize}|${scan.key}`;
+        const structure = this.structureVersion + this.obstacleRevision * 1e6;
+        if (cached && cached.key === key) {
+            cached.frame = this.frameCount;
+            cached.structure = structure;
+            return cached.grid;
+        }
+        let grid: NavGrid | null = null;
+        if (scan.bounds) {
+            const margin = Math.max(cellSize * 4, 2 + radius);
+            const bounds = { minX: scan.bounds.minX - margin, minY: scan.bounds.minY - margin, maxX: scan.bounds.maxX + margin, maxY: scan.bounds.maxY + margin };
+            grid = new NavGrid(scan.obstacles, { cellSize, radius, bounds, anchor: scan.anchor ?? undefined });
+        }
+        if (this.navGrids.size >= 8) this.navGrids.clear();
+        this.navGrids.set(radius, { frame: this.frameCount, structure, key, grid });
+        return grid;
+    }
+
+    /** Tiles or colliders changed (path finding rescans the obstacles). */
+    obstaclesChanged() {
+        this.obstacleRevision += 1;
+    }
+
+    /** Forgets cached grids (Pathfinding.Rebuild, cell size changes). */
+    resetNavigation() {
+        this.navGrids.clear();
+    }
+
+    /** A path around the scene's static obstacles; `partial` falls back to the closest reachable point. */
+    findPath(from: NavPoint, to: NavPoint, radius: number, partial: boolean): { points: NavPoint[]; status: NavPathStatus } {
+        if (!this.is2D) {
+            this.warnOnce("nav-3d", "Pathfinding ve Nav Agent 2D yalnızca 2D projelerde engellerin etrafından dolaşır; 3D'de düz bir yol döner.");
+            return { points: [{ x: from.x, y: from.y }, { x: to.x, y: to.y }], status: "complete" };
+        }
+        const grid = this.navGrid(Math.max(0, radius));
+        if (!grid) return { points: [{ x: from.x, y: from.y }, { x: to.x, y: to.y }], status: "complete" };
+        const result = grid.findPath(from, to, partial);
+        if (!result || result.points.length < 2) return { points: [], status: "invalid" };
+        return { points: result.points, status: result.complete ? "complete" : "partial" };
+    }
+
+    /** Whether a point is free for an agent of `radius`. */
+    isWalkable(point: NavPoint, radius: number): boolean {
+        const grid = this.is2D ? this.navGrid(Math.max(0, radius)) : null;
+        return grid ? grid.isWalkable(point) : true;
+    }
+
+    private updateNavAgents(deltaTime: number) {
+        if (deltaTime <= 0) return;
+        // A few new paths per frame at most; other agents get theirs next frame.
+        let budget = 8;
+        for (const entity of this.entities.values()) {
+            const component = entity.navAgent;
+            if (!component?.enabled || !entity.activeInHierarchy) continue;
+            const agent = this.navAgentOf(entity);
+            if (!agent) continue;
+            const position = entity.world.position;
+            if (component.targetId) {
+                const target = this.entities.get(component.targetId);
+                if (target && !target.destroyed && target.activeInHierarchy) {
+                    const goal = target.world.position;
+                    if (!agent.destination || Math.hypot(goal.x - agent.destination.x, goal.y - agent.destination.y) > 1e-4) {
+                        const far = !agent.destination || Math.hypot(goal.x - agent.destination.x, goal.y - agent.destination.y) > component.stoppingDistance + 0.25;
+                        agent.destination = { x: goal.x, y: goal.y };
+                        if (far) agent.arrived = false;
+                    }
+                }
+            }
+            const halt = () => {
+                agent.velocity = { x: 0, y: 0 };
+                const rb = entity.rigidBody;
+                if (rb?.enabled && rb.bodyType !== "static") {
+                    entity.body.velocity.x = 0;
+                    entity.body.velocity.y = 0;
+                }
+            };
+            if (!agent.destination || agent.stopped) {
+                halt();
+                continue;
+            }
+            agent.repathTimer -= deltaTime;
+            const moved = agent.pathGoal ? Math.hypot(agent.destination.x - agent.pathGoal.x, agent.destination.y - agent.pathGoal.y) : Infinity;
+            const stale = !agent.pathGoal || (agent.repathTimer <= 0 && (moved > 0.2 || agent.status !== "complete"));
+            if (stale && budget > 0) {
+                budget -= 1;
+                const result = this.findPath(position, agent.destination, component.radius, true);
+                agent.path = result.points;
+                agent.corner = 1;
+                agent.status = result.status;
+                agent.pathGoal = { ...agent.destination };
+                agent.repathTimer = component.repathInterval;
+            }
+            if (agent.path.length < 2) {
+                halt();
+                continue;
+            }
+            if (component.showPath) {
+                let previous: Vector3 = { x: position.x, y: position.y, z: 0 };
+                for (let index = agent.corner; index < agent.path.length; index += 1) {
+                    const next = { x: agent.path[index].x, y: agent.path[index].y, z: 0 };
+                    this.drawLine(previous, next, agent.status === "complete" ? "#22d3ee" : "#f59e0b", 0);
+                    previous = next;
+                }
+            }
+            if (agent.remainingDistance(position) <= component.stoppingDistance + 1e-6) {
+                halt();
+                if (!agent.arrived && agent.status === "complete") {
+                    agent.arrived = true;
+                    for (const state of entity.behaviours.slice()) {
+                        if (state.live && state.awoken && this.hasMethod(state, "OnDestinationReached")) this.callMethod(state, "OnDestinationReached");
+                    }
+                }
+                continue;
+            }
+            let step = component.speed * deltaTime;
+            let x = position.x;
+            let y = position.y;
+            while (step > 1e-9 && agent.corner < agent.path.length) {
+                const corner = agent.path[agent.corner];
+                const dx = corner.x - x;
+                const dy = corner.y - y;
+                const distance = Math.hypot(dx, dy);
+                const last = agent.corner === agent.path.length - 1;
+                const usable = last ? Math.max(0, distance - component.stoppingDistance) : distance;
+                if (usable <= step) {
+                    if (distance > 1e-9) {
+                        x += (dx / distance) * usable;
+                        y += (dy / distance) * usable;
+                    }
+                    step -= usable;
+                    if (last) break;
+                    agent.corner += 1;
+                } else {
+                    x += (dx / distance) * step;
+                    y += (dy / distance) * step;
+                    step = 0;
+                }
+            }
+            agent.velocity = { x: (x - position.x) / deltaTime, y: (y - position.y) / deltaTime };
+            const rb = entity.rigidBody;
+            if (rb?.enabled && rb.bodyType !== "static") {
+                // Bodies move with the physics step so they still collide.
+                entity.body.velocity.x = agent.velocity.x;
+                entity.body.velocity.y = agent.velocity.y;
+            } else {
+                entity.setWorldPosition({ x, y, z: position.z });
+            }
+            if (component.flipSprite && Math.abs(agent.velocity.x) > 0.01) {
+                const sprite = entity.components.find((item) => item.type === "spriteRenderer");
+                if (sprite && sprite.type === "spriteRenderer" && sprite.flipX !== agent.velocity.x < 0) {
+                    sprite.flipX = agent.velocity.x < 0;
+                    this.markRender(entity);
+                }
+            }
         }
     }
 
