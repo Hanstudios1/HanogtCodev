@@ -72,7 +72,7 @@ export default function AuditLogSection({ params }: { params: URLSearchParams })
                 <SearchInput
                     value={query}
                     onChange={setQuery}
-                    className="min-w-0 flex-1"
+                    className="min-w-48 flex-1"
                     label={tx({ TR: "Denetim kaydında ara", EN: "Search the audit log" })}
                     placeholder={tx({ TR: "Ekip üyesi, hedef veya ayrıntı…", EN: "Staff member, target or detail…" })}
                 />

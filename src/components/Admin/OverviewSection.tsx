@@ -34,7 +34,7 @@ type Series = {
 const SERIES: Series[] = [
     { key: "signups", icon: UserPlus, label: { TR: "Yeni kayıtlar", EN: "New sign-ups" }, upIsGood: true },
     { key: "aiMessages", icon: Sparkles, label: { TR: "Hanogt AI mesajları", EN: "Hanogt AI messages" }, upIsGood: true },
-    { key: "securityEvents", icon: Siren, label: { TR: "Engellenen riskli istekler", EN: "Blocked risky requests" }, upIsGood: false },
+    { key: "securityEvents", icon: Siren, label: { TR: "Güvenlik olayları", EN: "Security events" }, upIsGood: false },
     { key: "automodStops", icon: ShieldBan, label: { TR: "AutoMod'un durdurduğu mesajlar", EN: "Messages AutoMod stopped" }, upIsGood: null },
 ];
 

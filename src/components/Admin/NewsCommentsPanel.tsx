@@ -48,7 +48,7 @@ export default function NewsCommentsPanel() {
                 <SearchInput
                     value={filter}
                     onChange={setFilter}
-                    className="min-w-0 flex-1"
+                    className="min-w-48 flex-1"
                     label={tx({ TR: "Yorumlarda ara", EN: "Search comments" })}
                     placeholder={tx({ TR: "Metin, yazar veya haber başlığı…", EN: "Text, author or headline…" })}
                 />

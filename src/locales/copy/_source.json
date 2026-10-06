@@ -14136,12 +14136,11 @@
       "src/components/Admin/SecurityEventsSection.tsx"
     ]
   },
-  "1jg5btk51u0": {
-    "en": "Blocked risky requests",
-    "tr": "Engellenen riskli istekler",
+  "jullp36ew1": {
+    "en": "Blocked requests and account alerts",
+    "tr": "Engellenen istekler ve hesap uyarıları",
     "files": [
-      "src/components/Admin/AdminPanel.tsx",
-      "src/components/Admin/OverviewSection.tsx"
+      "src/components/Admin/AdminPanel.tsx"
     ]
   },
   "wwcucixjvw": {
@@ -18356,6 +18355,13 @@
       "src/components/Plans/PricingSections.tsx"
     ]
   },
+  "10z5a5i6jmz": {
+    "en": "Security events",
+    "tr": "Güvenlik olayları",
+    "files": [
+      "src/components/Admin/OverviewSection.tsx"
+    ]
+  },
   "yrmedwl0cq": {
     "en": "Messages AutoMod stopped",
     "tr": "AutoMod'un durdurduğu mesajlar",
@@ -21698,6 +21704,13 @@
   "6agecrxdgv": {
     "en": "Remove content",
     "tr": "İçeriği kaldır",
+    "files": [
+      "src/components/Admin/ReportsPanel.tsx"
+    ]
+  },
+  "1permqm5uhf": {
+    "en": "Undone: the report is open again.",
+    "tr": "Geri alındı: bildirim yeniden açık.",
     "files": [
       "src/components/Admin/ReportsPanel.tsx"
     ]

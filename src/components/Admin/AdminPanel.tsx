@@ -68,7 +68,7 @@ const GROUPS: SectionGroup[] = [
     {
         label: { TR: "Sistem", EN: "System" },
         sections: [
-            { id: "security", logo: "security", label: { TR: "Güvenlik Olayları", EN: "Security Events" }, hint: { TR: "Engellenen riskli istekler", EN: "Blocked risky requests" }, permission: "viewSecurityEvents" },
+            { id: "security", logo: "security", label: { TR: "Güvenlik Olayları", EN: "Security Events" }, hint: { TR: "Engellenen istekler ve hesap uyarıları", EN: "Blocked requests and account alerts" }, permission: "viewSecurityEvents" },
             { id: "cloud", icon: Cloud, label: { TR: "Bulut Sağlığı", EN: "Cloud Health" }, hint: { TR: "Firebase bağlantısı ve kurallar", EN: "Firebase connection and rules" }, permission: "cloudHealth" },
             { id: "audit", icon: ScrollText, label: { TR: "Denetim Kaydı", EN: "Audit Log" }, hint: { TR: "Ekip işlemlerinin kaydı", EN: "Record of staff actions" }, permission: "viewAuditLog" },
         ],

@@ -70,7 +70,7 @@ export default function SecurityEventsSection({ params }: { params: URLSearchPar
                     <SearchInput
                         value={query}
                         onChange={setQuery}
-                        className="min-w-0 flex-1"
+                        className="min-w-48 flex-1"
                         label={tx({ TR: "Olaylarda ara", EN: "Search events" })}
                         placeholder={tx({ TR: "Kullanıcı, bulgu kimliği veya kod parmak izi…", EN: "User, finding id or code fingerprint…" })}
                     />

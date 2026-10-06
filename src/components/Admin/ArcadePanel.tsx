@@ -94,7 +94,7 @@ export default function ArcadePanel() {
                 <SearchInput
                     value={query}
                     onChange={setQuery}
-                    className="min-w-0 flex-1"
+                    className="min-w-48 flex-1"
                     label={tx({ TR: "Oyunlarda ara", EN: "Search games" })}
                     placeholder={tx({ TR: "Başlık, geliştirici veya e-posta…", EN: "Title, developer or e-mail…" })}
                 />

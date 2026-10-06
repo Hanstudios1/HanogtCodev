@@ -225,6 +225,7 @@ export default function ReportsPanel({ view, onViewChange }: { view: "open" | "c
         }
         refreshCounters();
         reports.reload();
+        toast("info", tx({ TR: "Geri alındı: bildirim yeniden açık.", EN: "Undone: the report is open again." }));
     };
 
     const setStatus = async (report: AdminReport, action: "resolve" | "dismiss" | "reopen") => {
