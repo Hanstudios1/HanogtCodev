@@ -12,8 +12,12 @@ import { finishProject } from "./builders";
 import { breakout, platformer, rollABall, spaceShooter } from "./classic";
 import { clickerUi, runner3d, tilemapPlatformer } from "./v3";
 import { mazeHunt, skyTower, slingshot } from "./v4";
+import { dungeonEscape, meteorStorm, starDuel } from "./v5";
 
 export type TemplateId =
+    | "star-duel-2d"
+    | "dungeon-escape-2d"
+    | "meteor-retro-2d"
     | "sky-tower-2d"
     | "maze-hunt-2d"
     | "slingshot-2d"
@@ -47,12 +51,51 @@ export interface TemplateInfo {
     /** How the game is played (shown in the template details). */
     controls: { tr: string; en: string };
     /** Engine version that introduced the template (shown as a badge). */
-    since?: 3 | 4;
-    /** Added in the latest template update (shown as "Yeni"). */
+    since?: 3 | 4 | 5;
+    /** Added in the latest release (shown as "Yeni"): the V5 templates. */
     isNew?: boolean;
 }
 
 export const PROJECT_TEMPLATES: TemplateInfo[] = [
+    {
+        id: "star-duel-2d",
+        dimension: "2d",
+        name: { tr: "Yıldız Düellosu", en: "Star Duel" },
+        description: { tr: "Tek klavyede iki kişilik V5 düellosu: Player Input her oyuncuya kendi tuşlarını ve gamepad'ini verir, Animator koşma ve atılmayı oynatır. Türkçe ve İngilizce, SaveSystem ile galibiyet kaydı, Arcade'de en hızlı zafer tablosu ve başarımlar.", en: "A V5 duel for two on one keyboard: Player Input gives each player their own keys and gamepad, and an Animator plays running and dashing. Turkish and English, wins kept with SaveSystem, and a fastest-win leaderboard and achievements on the Arcade." },
+        languages: ["C#"],
+        gradient: ["#6366f1", "#ec4899"],
+        emoji: "⭐",
+        difficulty: "easy",
+        controls: { tr: "Mavi: WASD + Space (atıl)  •  Pembe: oklar + Enter  •  Gamepad'ler sırayla  •  R: yeniden", en: "Blue: WASD + Space (dash)  •  Pink: arrows + Enter  •  Gamepads in turn  •  R: again" },
+        since: 5,
+        isNew: true,
+    },
+    {
+        id: "dungeon-escape-2d",
+        dimension: "2d",
+        name: { tr: "Zindan Kaçışı", en: "Dungeon Escape" },
+        description: { tr: "V5 platform oyunu: kahramanın Idle, Run, Jump, Fall ve Hurt durumlarını Animator durum makinesi parametrelere bakarak seçer. Bayraklar ilerlemeni SaveSystem ile kaydeder, hasarda ekran efektleri parlar; Arcade'de iki skor tablosu ve dört başarım.", en: "A V5 platformer: an Animator state machine picks the hero's Idle, Run, Jump, Fall and Hurt states from its parameters. Flags save your progress with SaveSystem and screen effects flare when you're hit; two leaderboards and four achievements on the Arcade." },
+        languages: ["C#"],
+        gradient: ["#292524", "#f59e0b"],
+        emoji: "🗝️",
+        difficulty: "medium",
+        controls: { tr: "← → / A D / sol çubuk: koş  •  Space / gamepad A: zıpla  •  N: yeni oyun", en: "← → / A D / left stick: run  •  Space / gamepad A: jump  •  N: new game" },
+        since: 5,
+        isNew: true,
+    },
+    {
+        id: "meteor-retro-2d",
+        dimension: "2d",
+        name: { tr: "Meteor Yağmuru", en: "Meteor Storm" },
+        description: { tr: "Retro V5 nişancısı: CRT tarama çizgileri, kavis ve renk ayarıyla ekran efektleri V2; seçeneklerden CRT ve piksel görünüm SaveSystem ile kaydedilir, vurulunca renk kayması. Animator'lı gemi, Türkçe ve İngilizce, puan tablosu ve gizli başarım.", en: "A retro V5 shooter: screen effects V2 with CRT scanlines, curvature and color grading; switch CRT and the pixel look in the options, kept with SaveSystem, and a color fringe when you're hit. An Animator-driven ship, Turkish and English, a score leaderboard and a hidden achievement." },
+        languages: ["C#"],
+        gradient: ["#1e1b4b", "#22d3ee"],
+        emoji: "☄️",
+        difficulty: "starter",
+        controls: { tr: "← → / A D: hareket  •  Space / Ctrl / tık: ateş  •  O: seçenekler  •  R: yeniden", en: "← → / A D: move  •  Space / Ctrl / click: fire  •  O: options  •  R: again" },
+        since: 5,
+        isNew: true,
+    },
     {
         id: "sky-tower-2d",
         dimension: "2d",
@@ -64,7 +107,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         difficulty: "easy",
         controls: { tr: "← → / A D / sol çubuk: koş  •  Space / gamepad A: zıpla (havada bir kez daha)  •  Esc: ayarlar", en: "← → / A D / left stick: run  •  Space / gamepad A: jump (once more in the air)  •  Esc: settings" },
         since: 4,
-        isNew: true,
     },
     {
         id: "maze-hunt-2d",
@@ -77,7 +119,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         difficulty: "medium",
         controls: { tr: "WASD / ok tuşları / sol çubuk: yürü  •  H / gamepad Y: ipucu", en: "WASD / arrow keys / left stick: walk  •  H / gamepad Y: hint" },
         since: 4,
-        isNew: true,
     },
     {
         id: "slingshot-2d",
@@ -90,7 +131,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         difficulty: "easy",
         controls: { tr: "Fare / parmak: topu geri çek ve bırak  •  R: yeniden başla", en: "Mouse / finger: pull the ball back and let go  •  R: restart" },
         since: 4,
-        isNew: true,
     },
     {
         id: "runner-2d",
@@ -102,7 +142,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🏃‍♀️",
         difficulty: "starter",
         controls: { tr: "Space / ↑ / tıkla: zıpla, havada bir kez daha", en: "Space / ↑ / click: jump, once more in the air" },
-        isNew: true,
     },
     {
         id: "flappy-2d",
@@ -114,7 +153,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🐤",
         difficulty: "starter",
         controls: { tr: "Space / ↑ / tıkla: kanat çırp", en: "Space / ↑ / click: flap" },
-        isNew: true,
     },
     {
         id: "pong-2d",
@@ -126,7 +164,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🏓",
         difficulty: "starter",
         controls: { tr: "W / S: sol raket  •  ↑ / ↓: ikinci oyuncu", en: "W / S: left paddle  •  ↑ / ↓: second player" },
-        isNew: true,
     },
     {
         id: "snake-2d",
@@ -138,7 +175,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🐍",
         difficulty: "easy",
         controls: { tr: "Ok tuşları / WASD: yön", en: "Arrow keys / WASD: steer" },
-        isNew: true,
     },
     {
         id: "rpg-topdown-2d",
@@ -150,7 +186,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🗡️",
         difficulty: "medium",
         controls: { tr: "WASD: yürü  •  Space: kılıç  •  E: konuş", en: "WASD: walk  •  Space: sword  •  E: talk" },
-        isNew: true,
     },
     {
         id: "obstacle-course-3d",
@@ -162,7 +197,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🏁",
         difficulty: "medium",
         controls: { tr: "WASD: koş  •  Space: zıpla", en: "WASD: run  •  Space: jump" },
-        isNew: true,
     },
     {
         id: "tower-defense-2d",
@@ -174,7 +208,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🏰",
         difficulty: "medium",
         controls: { tr: "Fare: kule kur ve yükselt  •  Space: dalgayı başlat", en: "Mouse: build and upgrade towers  •  Space: start the wave" },
-        isNew: true,
     },
     {
         id: "arena-2d",
@@ -186,7 +219,6 @@ export const PROJECT_TEMPLATES: TemplateInfo[] = [
         emoji: "🎯",
         difficulty: "medium",
         controls: { tr: "WASD: hareket  •  Fare ya da ok tuşları: ateş", en: "WASD: move  •  Mouse or arrow keys: shoot" },
-        isNew: true,
     },
     {
         id: "tilemap-platformer-2d",
@@ -300,6 +332,9 @@ export function createProjectFromTemplate(templateId: TemplateId, name?: string)
     const info = PROJECT_TEMPLATES.find((template) => template.id === templateId) ?? PROJECT_TEMPLATES[PROJECT_TEMPLATES.length - 1];
     const projectName = (name?.trim() || info.name.tr).slice(0, 80);
     switch (info.id) {
+        case "star-duel-2d": return starDuel(projectName);
+        case "dungeon-escape-2d": return dungeonEscape(projectName);
+        case "meteor-retro-2d": return meteorStorm(projectName);
         case "sky-tower-2d": return skyTower(projectName);
         case "maze-hunt-2d": return mazeHunt(projectName);
         case "slingshot-2d": return slingshot(projectName);

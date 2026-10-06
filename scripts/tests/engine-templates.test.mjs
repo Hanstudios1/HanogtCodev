@@ -10,8 +10,10 @@ const { PROJECT_TEMPLATES, createProjectFromTemplate } = await load("lib/game-en
 const { createBlankProject, createEmptyScene } = await load("lib/game-engine/scene.ts");
 const { createScriptComponent, createTransform } = await load("lib/game-engine/components.ts");
 
+const V5_TEMPLATES = ["star-duel-2d", "dungeon-escape-2d", "meteor-retro-2d"];
 const V4_TEMPLATES = ["sky-tower-2d", "maze-hunt-2d", "slingshot-2d"];
-const NEW_TEMPLATES = [...V4_TEMPLATES, "runner-2d", "flappy-2d", "pong-2d", "snake-2d", "rpg-topdown-2d", "obstacle-course-3d", "tower-defense-2d", "arena-2d"];
+/** The newest templates first: V5, V4, then the October 2026 games. */
+const RECENT_TEMPLATES = [...V5_TEMPLATES, ...V4_TEMPLATES, "runner-2d", "flappy-2d", "pong-2d", "snake-2d", "rpg-topdown-2d", "obstacle-course-3d", "tower-defense-2d", "arena-2d"];
 
 /** Deterministic Math.random for one test (the engine's Random uses it unless a script seeds it). */
 function seeded(seed, run) {
@@ -75,11 +77,11 @@ function projectWithScripts(scripts, dimension = "2d") {
 // Catalog
 // ---------------------------------------------------------------------------
 
-test("the new templates are in the catalog, marked new, and listed first", () => {
+test("the recent templates are in the catalog and listed first; the V5 ones are marked new", () => {
     const ids = PROJECT_TEMPLATES.map((info) => info.id);
-    assert.deepEqual(ids.slice(0, NEW_TEMPLATES.length), NEW_TEMPLATES);
-    assert.deepEqual(PROJECT_TEMPLATES.filter((info) => info.isNew).map((info) => info.id), NEW_TEMPLATES);
-    for (const id of NEW_TEMPLATES) {
+    assert.deepEqual(ids.slice(0, RECENT_TEMPLATES.length), RECENT_TEMPLATES);
+    assert.deepEqual(PROJECT_TEMPLATES.filter((info) => info.isNew).map((info) => info.id), V5_TEMPLATES);
+    for (const id of RECENT_TEMPLATES) {
         const info = PROJECT_TEMPLATES.find((item) => item.id === id);
         assert.ok(info.name.tr && info.name.en && info.description.tr && info.description.en, `${id} has copy`);
         const project = createProjectFromTemplate(id);
@@ -696,7 +698,7 @@ function climbTower(game) {
     return { landed, outOfView };
 }
 
-test("the V4 templates come first, marked new and since 4, and use V4 components", () => {
+test("the V4 templates follow the V5 ones, marked since 4, and use V4 components", () => {
     const v4 = PROJECT_TEMPLATES.filter((info) => info.since === 4).map((info) => info.id);
     assert.deepEqual(v4, V4_TEMPLATES);
     const uses = {
@@ -1012,4 +1014,283 @@ test("template facts come from the project itself", () => {
     const course = templateFacts(createProjectFromTemplate("obstacle-course-3d"));
     assert.ok(course.components.includes("Rigidbody") && course.components.includes("Mesh Renderer"));
     assert.ok(!course.components.includes("Tilemap"));
+});
+
+// ---------------------------------------------------------------------------
+// V5 templates
+// ---------------------------------------------------------------------------
+
+const { ArcadeRuntime } = await load("lib/game-engine/runtime/arcade-runtime.ts");
+const { DUNGEON_JUMPS, METEOR_LANES } = await load("lib/game-engine/templates/v5.ts");
+const { normalizeProject } = await load("lib/game-engine/schema.ts");
+
+/**
+ * Starts a template as the Arcade would: with leaderboard and achievement services that record what they get.
+ * Pass the earlier game's project to play "the same game" again (save slots are per project).
+ */
+function playOnArcade(id, options = {}) {
+    const project = options.project ?? normalizeProject(createProjectFromTemplate(id));
+    const sent = { scores: [], unlocks: [] };
+    const services = {
+        online: true,
+        submitScore: (board, score) => sent.scores.push([board.id, score]),
+        unlockAchievement: (achievement) => sent.unlocks.push(achievement.id),
+        show: () => undefined,
+    };
+    const arcade = new ArcadeRuntime(project.settings.arcade, services);
+    const game = startWorld(project, { storage: options.storage ?? memoryStorage(), locale: options.locale ?? "tr-TR", arcade });
+    return { game, sent, arcade };
+}
+
+const stateOf = (game, name) => game.world.animatorControllerOf(game.find(name)).state.name;
+const saveSlot = (storage, projectId, slot) => {
+    const raw = storage.store.get(`hanogt-engine:save:${projectId}:${slot}`);
+    return raw ? JSON.parse(raw) : null;
+};
+
+test("the V5 templates speak Turkish and English, report to the Arcade and use V5 features", () => {
+    const uses = {
+        "star-duel-2d": ["playerInput", "animator"],
+        "dungeon-escape-2d": ["animator", "characterController2D", "cameraFollow"],
+        "meteor-retro-2d": ["animator", "uiToggle"],
+    };
+    for (const id of V5_TEMPLATES) {
+        const info = PROJECT_TEMPLATES.find((item) => item.id === id);
+        assert.equal(info.since, 5);
+        const project = normalizeProject(createProjectFromTemplate(id));
+        assert.equal(project.settings.rules, 5, `${id} runs with the V5 rules`);
+        assert.deepEqual(project.settings.localization.languages, ["tr", "en"]);
+        for (const entry of project.settings.localization.entries) assert.ok(entry.values.tr && entry.values.en, `${id}: ${entry.key} in both languages`);
+        assert.ok(project.settings.arcade.leaderboards.length >= 1 && project.settings.arcade.achievements.length >= 3, `${id} has leaderboards and achievements`);
+        const types = new Set(project.scenes[0].objects.flatMap((item) => item.components.map((component) => component.type)));
+        for (const type of uses[id]) assert.ok(types.has(type), `${id} uses ${type}`);
+        assert.ok(project.scripts.some((script) => script.content.includes("SaveSystem.")), `${id} saves with SaveSystem`);
+        assert.ok(project.scripts.some((script) => script.content.includes("Leaderboard.Submit")) && project.scripts.some((script) => script.content.includes("Achievements.Unlock")));
+        const keyed = project.scenes[0].objects.flatMap((item) => item.components).filter((component) => component.localizationKey);
+        assert.ok(keyed.length >= 2, `${id} has UI texts that follow the language`);
+        for (const component of keyed) assert.ok(project.settings.localization.entries.some((entry) => entry.key === component.localizationKey), `${id}: '${component.localizationKey}' is in the table`);
+    }
+    assert.equal(createProjectFromTemplate("meteor-retro-2d").scenes[0].settings.postProcessing.crt.enabled, true, "the retro shooter starts with the CRT look");
+});
+
+test("star duel: each player moves with their own keys, dashes, and the first to ten stars wins", () => {
+    const storage = memoryStorage();
+    const { game, sent, arcade } = playOnArcade("star-duel-2d", { storage });
+    game.step(5);
+    const blue = game.find("Blue");
+    const pink = game.find("Pink");
+    const input = game.world.input;
+    const start = { blue: xy(blue).x, pink: xy(pink).x };
+    input.setKeyboardKey("D", true);
+    game.step(20);
+    assert.equal(stateOf(game, "Blue"), "Run", "the Animator runs while moving");
+    input.setKeyboardKey("D", false);
+    assert.ok(xy(blue).x > start.blue + 1, "D moves blue");
+    assert.ok(Math.abs(xy(pink).x - start.pink) < 0.01, "but not pink");
+    input.setKeyboardKey("LeftArrow", true);
+    game.step(20);
+    input.setKeyboardKey("LeftArrow", false);
+    assert.ok(xy(pink).x < start.pink - 1, "the arrows move pink");
+    game.step(20);
+    assert.equal(stateOf(game, "Blue"), "Idle");
+    const before = xy(blue).x;
+    input.setKeyboardKey("D", true);
+    input.setKeyboardKey("Space", true);
+    game.step(2);
+    input.setKeyboardKey("Space", false);
+    game.step(6);
+    input.setKeyboardKey("D", false);
+    assert.equal(game.fields("Blue", "Duelist").dashes, 1, "Space dashes");
+    assert.ok(xy(blue).x - before > 1.4, `a dash covers ground (${(xy(blue).x - before).toFixed(2)})`);
+
+    // Blue reaches every star first (the dash may already have taken the first one); a real
+    // match takes a while, and the leaderboard does not take impossible times.
+    game.step(60 * 3);
+    const star = game.find("Star");
+    assert.equal(game.text("PinkScore"), "0");
+    for (let count = Number(game.text("BlueScore")) + 1; count <= 10; count += 1) {
+        blue.setWorldPosition({ ...star.world.position });
+        zeroVelocity(blue);
+        game.step(2);
+        assert.equal(game.text("BlueScore"), String(count));
+    }
+    assert.equal(game.find("WinPanel").activeSelf, true);
+    assert.match(game.text("WinText"), /Mavi kazandı!\nSüre: \d+\.\d sn · Rekor: \d+\.\d sn/);
+    assert.equal(game.text("PinkScore"), "0");
+    assert.deepEqual(sent.unlocks.sort(), ["first-duel", "shutout"]);
+    assert.equal(sent.scores[0][0], "fastest");
+    assert.ok(arcade.bestOf("fastest") > 0);
+    const stats = saveSlot(storage, game.project.id, "duel");
+    assert.equal(stats.blueWins, 1);
+    assert.equal(stats.pinkWins, 0);
+    assert.deepEqual(game.problems(), []);
+
+    // The next match remembers the wins.
+    const next = playOnArcade("star-duel-2d", { storage, project: game.project });
+    next.game.step(2);
+    assert.equal(next.game.text("StatsText"), "Galibiyetler · Mavi 1 – 0 Pembe");
+});
+
+test("star duel: an English player gets English texts and the language button switches", () => {
+    const { game } = playOnArcade("star-duel-2d", { locale: "en-GB" });
+    game.step(3);
+    assert.match(game.text("HintText"), /^Blue: WASD \+ Space/);
+    assert.equal(game.text("StatsText"), "Wins · Blue 0 – 0 Pink");
+    game.world.sendMessage(game.find("GameManager"), "ToggleLanguage", undefined, "SendMessage");
+    game.step(1);
+    assert.match(game.text("HintText"), /^Mavi: WASD/);
+    assert.equal(game.text("StatsText"), "Galibiyetler · Mavi 0 – 0 Pembe", "the script's own texts follow (OnLanguageChanged)");
+    assert.deepEqual(game.problems(), []);
+});
+
+/** Holds right and jumps (holding Space for a full jump) before every pit and spike. */
+function escapeDungeon(game, lead = 1.7) {
+    const hero = game.find("Hero");
+    const input = game.world.input;
+    const states = new Set();
+    const used = new Set();
+    let hold = 0;
+    input.setVirtualKey("RightArrow", true);
+    for (let frame = 0; frame < 60 * 30 && !game.find("EndPanel").activeSelf; frame += 1) {
+        const x = xy(hero).x;
+        const next = DUNGEON_JUMPS.find((start) => !used.has(start) && x > start - lead && x < start);
+        if (next !== undefined) {
+            used.add(next);
+            hold = 14;
+        }
+        input.setVirtualKey("Space", hold > 0);
+        hold -= 1;
+        game.step(1);
+        states.add(stateOf(game, "Hero"));
+    }
+    input.setVirtualKey("RightArrow", false);
+    input.setVirtualKey("Space", false);
+    return states;
+}
+
+test("dungeon escape: the Animator follows the hero, and an escape without a scratch fills the boards", () => {
+    const { game, sent } = playOnArcade("dungeon-escape-2d");
+    game.step(10);
+    assert.equal(stateOf(game, "Hero"), "Idle");
+    const states = escapeDungeon(game);
+    for (const state of ["Run", "Jump", "Fall", "Idle"]) assert.ok(states.has(state), `${state} was played (${[...states].join(", ")})`);
+    assert.ok(!states.has("Hurt"), "no damage on the way");
+    assert.equal(game.text("EndTitle"), "Kaçtın!");
+    assert.match(game.text("EndText"), /Süre: \d+\.\d sn {2}• {2}Altın: \d+\/12/);
+    assert.equal(game.text("LivesText"), "Can: 3");
+    assert.deepEqual(sent.scores.map(([board]) => board).sort(), ["escape-time", "gold"]);
+    assert.ok(sent.unlocks.includes("escaped") && sent.unlocks.includes("untouched"));
+    assert.ok(!sent.unlocks.includes("all-gold"), "the route skips the ledges");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("dungeon escape: flags save the run, a new session continues there, spikes hurt with effects, and the end clears the save", () => {
+    const storage = memoryStorage();
+    const { game } = playOnArcade("dungeon-escape-2d", { storage });
+    game.step(5);
+    const hero = game.find("Hero");
+    // Two gold pieces, then the first flag.
+    for (const name of ["Gold 1", "Gold 2"]) {
+        hero.setWorldPosition({ ...game.find(name).world.position });
+        game.step(2);
+    }
+    assert.equal(game.text("CoinText"), "Altın: 2/12");
+    hero.setWorldPosition({ ...game.find("Flag 1").world.position });
+    game.step(3);
+    const saved = saveSlot(storage, game.project.id, "dungeon");
+    assert.deepEqual(saved.taken.sort(), ["Gold 1", "Gold 2"]);
+    assert.equal(saved.checkpoint.x, 14);
+
+    // Spikes: a life, the Hurt state and a moment of colour fringe.
+    hero.setWorldPosition({ x: 17.5, y: -2.4, z: 0 });
+    game.step(2);
+    assert.equal(game.text("LivesText"), "Can: 2");
+    assert.equal(stateOf(game, "Hero"), "Hurt");
+    assert.equal(game.world.effects.chromaticAberration.enabled, true);
+    game.step(40);
+    assert.equal(game.world.effects.chromaticAberration.enabled, false, "the scene's own effects come back");
+    assert.ok(Math.abs(xy(hero).x - 14) < 0.5, "back at the flag");
+
+    // A new session starts at the flag with the gold already taken.
+    const next = playOnArcade("dungeon-escape-2d", { storage, project: game.project });
+    next.game.step(3);
+    assert.ok(Math.abs(xy(next.game.find("Hero")).x - 14) < 0.5, "continues from the flag");
+    assert.equal(next.game.text("CoinText"), "Altın: 2/12");
+    assert.equal(next.game.find("Gold 1"), undefined, "taken gold stays taken");
+    // Losing the remaining lives ends the run and clears the save.
+    const nextHero = next.game.find("Hero");
+    for (let hit = 0; hit < 3; hit += 1) {
+        nextHero.setWorldPosition({ x: 17.5, y: -2.4, z: 0 });
+        next.game.step(80);
+    }
+    assert.equal(next.game.text("EndTitle"), "Zindanda kaldın");
+    assert.equal(saveSlot(storage, game.project.id, "dungeon"), null);
+});
+
+test("meteor storm: shots break meteors, a hit costs a life with a colour fringe, three hits end the game on the leaderboard", () => {
+    const { game, sent, arcade } = playOnArcade("meteor-retro-2d");
+    game.step(5);
+    const ship = game.find("Ship");
+    const input = game.world.input;
+    ship.setWorldPosition({ x: METEOR_LANES[0], y: -4.2, z: 0 });
+    input.setVirtualKey("Space", true);
+    game.step(90);
+    input.setVirtualKey("Space", false);
+    assert.equal(game.text("ScoreText"), "Puan: 10");
+    assert.ok(sent.unlocks.includes("first-blood"));
+
+    // Stand under the next lanes without firing.
+    let hits = 0;
+    for (let lane = 1; lane < METEOR_LANES.length && hits < 3; lane += 1) {
+        ship.setWorldPosition({ x: METEOR_LANES[lane], y: -4.2, z: 0 });
+        for (let frame = 0; frame < 240; frame += 1) {
+            game.step(1);
+            const lives = Number(/\d+/.exec(game.text("LivesText"))[0]);
+            if (3 - lives > hits) {
+                hits = 3 - lives;
+                if (hits === 1) {
+                    assert.equal(stateOf(game, "Ship"), "Hit");
+                    assert.equal(game.world.effects.chromaticAberration.enabled, true);
+                    game.step(30);
+                    assert.equal(game.world.effects.chromaticAberration.enabled, false);
+                    assert.equal(game.world.effects.crt.enabled, true, "the CRT look stays");
+                }
+                break;
+            }
+        }
+    }
+    assert.equal(hits, 3);
+    assert.equal(game.find("OverPanel").activeSelf, true);
+    assert.match(game.text("OverText"), /^Puan: 10 {2}• {2}Süre: \d+ sn$/);
+    assert.deepEqual(sent.scores, [["score", 10]]);
+    assert.equal(arcade.bestOf("score"), 10);
+    assert.deepEqual(game.problems(), []);
+});
+
+test("meteor storm: the options switch the CRT and pixel look, pause the game and are remembered", () => {
+    const storage = memoryStorage();
+    const { game } = playOnArcade("meteor-retro-2d", { storage });
+    game.step(5);
+    const manager = game.find("GameManager");
+    game.world.input.setVirtualKey("O", true);
+    game.step(1);
+    game.world.input.setVirtualKey("O", false);
+    game.step(1);
+    assert.equal(game.find("OptionsPanel").activeSelf, true);
+    assert.equal(game.world.timeScale, 0, "the game pauses");
+    game.world.sendMessage(manager, "SetCrt", false, "SendMessage");
+    game.world.sendMessage(manager, "SetPixel", true, "SendMessage");
+    assert.equal(game.world.effects.crt.enabled, false);
+    assert.equal(game.world.effects.pixelate.enabled, true);
+    assert.equal(game.world.effects.pixelate.size, 3);
+    assert.deepEqual(saveSlot(storage, game.project.id, "settings"), { crt: false, pixel: true });
+    game.world.sendMessage(manager, "ToggleOptions", undefined, "SendMessage");
+    assert.equal(game.world.timeScale, 1);
+
+    const next = playOnArcade("meteor-retro-2d", { storage, project: game.project });
+    next.game.step(2);
+    assert.equal(next.game.world.effects.crt.enabled, false, "the choice is remembered");
+    assert.equal(next.game.world.effects.pixelate.enabled, true);
+    assert.equal(next.game.find("CrtToggle").components.find((component) => component.type === "uiToggle").isOn, false, "and shown in the menu");
+    assert.deepEqual(next.game.problems(), []);
 });
