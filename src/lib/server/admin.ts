@@ -200,6 +200,9 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
     invalid_price_id: "Geçersiz Paddle fiyat kimliği.",
     price_mismatch: "Seçilen Paddle fiyatı bu plana veya faturalama aralığına uymuyor.",
     already_linked: "Bu Paddle müşterisi başka bir hesaba bağlı.",
+    admins_only: "Bunu yalnızca yöneticiler ve sahipler yapabilir.",
+    pin_limit: "Panoda aynı anda en fazla 5 sabitlenmiş gönderi olabilir. Önce birinin sabitlemesini kaldırın.",
+    comment_not_found: "Yorum bulunamadı.",
     too_many_active: "Aynı anda en fazla 5 etkin duyuru olabilir.",
     unavailable: "Yönetim hizmeti şu anda kullanılamıyor.",
 };

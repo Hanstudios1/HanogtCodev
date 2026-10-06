@@ -1,5 +1,43 @@
 # Değişiklik Günlüğü
 
+## 0.3.30 — 2026-10-06
+
+### Hanogt News son 24 saati tutar, üst menüde her zaman Panel, sabitlemeyi yalnızca yöneticiler yapar
+
+- **Hanogt News yalnızca son 24 saati tutar:** canlı akış ve paylaşılan yedek
+  anlık görüntü bir günden eski haberleri bırakır; sınırsız arşiv
+  (`news_items`) artık yazılmaz ve "Daha eski haberleri yükle" kalktı. Arşivden
+  kalanlar, 24 saatten eski haber yorumları ve bir gündür dokunulmayan yorum
+  sayaçları her haber yenilemesinden sonra (örnek başına en çok 10 dakikada
+  bir, 400 belge) parça parça silinir. Tarihi olmayan haberler ilk
+  görüldükleri andan itibaren yaşlanır, her yenilemede yeniymiş gibi görünmez.
+  Akış artık kaynak başına 25 haber okur (en çok 300 haber, kategori başına
+  60), açık kalan sekmeler de bir günden eski haberleri kendiliğinden düşürür.
+  Yorum listesi okumaları veritabanına yazmayan bellek içi hız sınırı kullanır.
+- **Depolama kartı (Yönetici Paneli → Bulut Sağlığı):** sahipler en çok yer
+  kaplayan koleksiyonların belge sayılarını, mesaj dosyaları, sesli mesajlar
+  ve oyun dosyalarının boyutunu ve süresi dolan kayıtları görür; "Eski
+  haberleri şimdi temizle" (tıklama başına 2.000 belge) ve "Süresi dolan
+  kayıtları sil" düğmeleri denetim kaydına yazılır. Not: site Vercel'in
+  depolamasını kullanmaz; bütün veriler Firestore'dadır (Spark planında
+  toplam 1 GiB).
+- **Üst menüde Panel:** menü artık tümüyle menü düğmesine çökmez; sığmayan
+  bağlantılar "Daha fazla" listesine geçer, ilk bağlantı (giriş yapmış
+  kişilerde Panel) her zaman çubukta kalır. Telefonda ve tablette üst çubukta
+  ayrı bir Panel düğmesi var. Oturum yüklenirken, son giriş bu tarayıcıda
+  yapıldıysa Panel hemen görünür.
+- **Geri Bildirim / SSS'de sabitleme yalnızca yöneticilerde:** yöneticiler ve
+  sahipler panodaki gönderileri (en çok 5) ve gönderinin bir yorumunu
+  sabitleyebilir; moderatörler ve kullanıcılar sabitleyemez (sunucu
+  `admins_only` ile reddeder). Sabitlenen gönderiler her sıralamada en üstte
+  durur, en yeni 300 gönderinin dışında kalsalar da panoda görünür. Her işlem
+  denetim kaydına yazılır.
+- **Hanogt Team çevirileri:** ekip adı, resmî yanıt, "Ekip yanıtladı",
+  personel rozetleri, sabitleme ve yeni haber metinleri 48 dilin paketine
+  eklendi; Yönetici Paneli'nde resmî yanıtlar artık "Hanogt Team" yerine
+  arayüz dilinde ("Hanogt Ekibi") görünür.
+- Gizlilik Politikası 5.6 (haber yorumlarının saklama süresi).
+
 ## 0.3.29 — 2026-10-06
 
 ### Yönetici Paneli: yeni görünüm, grafikler, Social ve Hanogt AI sayfaları, hatalar

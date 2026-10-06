@@ -39,6 +39,7 @@ export const NAV_LABELS = {
     community: { TR: "Topluluk", EN: "Community", RU: "Сообщество", AZ: "İcma", ES: "Comunidad", KZ: "Қауымдастық", JP: "コミュニティ", CN: "社区", KR: "커뮤니티", HI: "समुदाय", DE: "Community", NG: "Community", FR: "Communauté", BE: "Community", NL: "Community", PL: "Społeczność", NO: "Fellesskap", FI: "Yhteisö", SV: "Gemenskap", EL: "Κοινότητα", AR: "المجتمع", PT: "Comunidade", IT: "Community", UK: "Спільнота", ID: "Komunitas", VI: "Cộng đồng", CS: "Komunita", RO: "Comunitate", HU: "Közösség", UZ: "Hamjamiyat" },
     resources: { TR: "Kaynaklar", EN: "Resources", RU: "Ресурсы", AZ: "Resurslar", ES: "Recursos", KZ: "Ресурстар", JP: "リソース", CN: "资源", KR: "리소스", HI: "संसाधन", DE: "Ressourcen", NG: "Resources", FR: "Ressources", BE: "Bronnen", NL: "Bronnen", PL: "Zasoby", NO: "Ressurser", FI: "Resurssit", SV: "Resurser", EL: "Πόροι", AR: "الموارد", PT: "Recursos", IT: "Risorse", UK: "Ресурси", ID: "Sumber daya", VI: "Tài nguyên", CS: "Zdroje", RO: "Resurse", HU: "Források", UZ: "Resurslar" },
     legal: { TR: "Yasal", EN: "Legal", RU: "Правовая информация", AZ: "Hüquqi", ES: "Legal", KZ: "Құқықтық", JP: "法的情報", CN: "法律", KR: "법적 고지", HI: "कानूनी", DE: "Rechtliches", NG: "Legal", FR: "Mentions légales", BE: "Juridisch", NL: "Juridisch", PL: "Informacje prawne", NO: "Juridisk", FI: "Oikeudelliset", SV: "Juridiskt", EL: "Νομικά", AR: "المعلومات القانونية", PT: "Jurídico", IT: "Note legali", UK: "Правова інформація", ID: "Hukum", VI: "Pháp lý", CS: "Právní informace", RO: "Informații legale", HU: "Jogi információk", UZ: "Huquqiy maʼlumot" },
+    more: { TR: "Daha fazla", EN: "More", RU: "Ещё", AZ: "Daha çox", ES: "Más", KZ: "Тағы", JP: "その他", CN: "更多", KR: "더보기", HI: "और", DE: "Mehr", NG: "More", FR: "Plus", BE: "Meer", NL: "Meer", PL: "Więcej", NO: "Mer", FI: "Lisää", SV: "Mer", EL: "Περισσότερα", AR: "المزيد", PT: "Mais", IT: "Altro", UK: "Ще", ID: "Lainnya", VI: "Thêm", CS: "Více", RO: "Mai mult", HU: "Több", UZ: "Yana" },
     editor: { TR: "Kod Editörü", EN: "Code Editor", RU: "Редактор кода", AZ: "Kod redaktoru", ES: "Editor de código", KZ: "Код редакторы", JP: "コードエディター", CN: "代码编辑器", KR: "코드 에디터", HI: "कोड एडिटर", DE: "Code-Editor", NG: "Code Editor", FR: "Éditeur de code", BE: "Code-editor", NL: "Code-editor", PL: "Edytor kodu", NO: "Koderedigerer", FI: "Koodieditori", SV: "Kodredigerare", EL: "Επεξεργαστής κώδικα", AR: "محرر الأكواد", PT: "Editor de código", IT: "Editor di codice", UK: "Редактор коду", ID: "Editor kode", VI: "Trình soạn thảo mã", CS: "Editor kódu", RO: "Editor de cod", HU: "Kódszerkesztő", UZ: "Kod muharriri" },
 } satisfies Record<string, Copy>;
 
@@ -83,4 +84,22 @@ export function isActivePath(pathname: string | null, href: string) {
     if (href === "/") return pathname === "/";
     if (href === "/game-engine") return pathname === "/game-engine";
     return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * How many top-bar items fit in `available` pixels: all of them, or as many
+ * as fit next to the "More" button, which takes the rest. The first item (the
+ * Panel for signed-in people) always stays in the bar.
+ */
+export function fitNavItems(widths: readonly number[], available: number, moreWidth: number) {
+    const total = widths.reduce((sum, width) => sum + width, 0);
+    if (total <= available + 1) return widths.length;
+    let used = moreWidth;
+    let count = 0;
+    for (const width of widths) {
+        if (used + width > available + 1) break;
+        used += width;
+        count += 1;
+    }
+    return Math.max(1, count);
 }

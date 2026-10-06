@@ -240,6 +240,7 @@
     "tr": "Hanogt News",
     "files": [
       "src/app/about/page.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Guide/book-content.ts",
       "src/lib/ai/agent-tools.ts",
       "src/lib/ai/knowledge.ts"
@@ -429,6 +430,7 @@
       "src/app/about/page.tsx",
       "src/app/dashboard/page.tsx",
       "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/UsersSection.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/Landing/LandingPage.tsx",
@@ -444,6 +446,7 @@
       "src/app/account-settings/page.tsx",
       "src/app/dashboard/page.tsx",
       "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/UsersSection.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/Landing/LandingPage.tsx",
@@ -458,6 +461,7 @@
       "src/app/about/page.tsx",
       "src/components/Admin/ModerationSection.tsx",
       "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/UsersSection.tsx",
       "src/components/Landing/LandingPage.tsx"
     ]
@@ -468,6 +472,7 @@
     "files": [
       "src/app/about/page.tsx",
       "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/UsersSection.tsx"
     ]
   },
@@ -4690,6 +4695,7 @@
     "tr": "Yenile",
     "files": [
       "src/app/feedback/page.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Arcade/ArcadeProgress.tsx",
       "src/components/Editor/WebPreview.tsx",
@@ -4895,6 +4901,61 @@
       "src/components/Admin/TicketsSection.tsx"
     ]
   },
+  "1iz7nsfjlgb": {
+    "en": "Pinned",
+    "tr": "Sabitlendi",
+    "files": [
+      "src/app/feedback/page.tsx",
+      "src/components/Admin/FeedbackSection.tsx",
+      "src/components/Admin/copy.ts",
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
+    ]
+  },
+  "212t81x3y7x": {
+    "en": "Pinned post",
+    "tr": "Sabitlenmiş gönderi",
+    "files": [
+      "src/app/feedback/page.tsx"
+    ]
+  },
+  "1qvyn4kd7xa": {
+    "en": "Pin",
+    "tr": "Sabitle",
+    "files": [
+      "src/app/feedback/page.tsx",
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx"
+    ]
+  },
+  "rizei5ryz7": {
+    "en": "Unpin",
+    "tr": "Sabitlemeyi kaldır",
+    "files": [
+      "src/app/feedback/page.tsx",
+      "src/components/Admin/FeedbackSection.tsx",
+      "src/components/Groups/workspace/ChatPanel.tsx",
+      "src/components/Groups/workspace/MessageItem.tsx",
+      "src/components/Social/dm/DmMessages.tsx",
+      "src/components/Social/dm/DmView.tsx"
+    ]
+  },
+  "s6gy1q8em1": {
+    "en": "Pin comment",
+    "tr": "Yorumu sabitle",
+    "files": [
+      "src/app/feedback/page.tsx",
+      "src/components/Admin/FeedbackSection.tsx"
+    ]
+  },
+  "2dkrwq15nyv": {
+    "en": "Unpin comment",
+    "tr": "Yorumun sabitlemesini kaldır",
+    "files": [
+      "src/app/feedback/page.tsx",
+      "src/components/Admin/FeedbackSection.tsx"
+    ]
+  },
   "1gdybt8q0vg": {
     "en": "Official reply",
     "tr": "Resmî yanıt",
@@ -4941,6 +5002,7 @@
     "tr": "Sil",
     "files": [
       "src/app/feedback/page.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
       "src/components/GameEngine/editor/text.ts",
@@ -4958,6 +5020,7 @@
     "files": [
       "src/app/feedback/page.tsx",
       "src/app/privacy-policy/page.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/lib/support.ts"
     ]
   },
@@ -6497,6 +6560,7 @@
     "tr": "Yorumlar",
     "files": [
       "src/app/media/page.tsx",
+      "src/components/Admin/copy.ts",
       "src/components/Guide/book-content.ts",
       "src/components/News/CommentsDrawer.tsx"
     ]
@@ -7550,9 +7614,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "2bt7yoi1ija": {
-    "en": "For news comments we store the article's ID, headline and link, your e-mail address (only to check ownership and deletion; it is not published), your display name, avatar, the comment text and the time. Other users see only your name, avatar, the text and the time. Comments are checked automatically for profanity, spam, lots of links and personal data (e-mail addresses, phone numbers, Turkish ID numbers, card numbers, IBANs); unsuitable comments are not saved.",
-    "tr": "Haber yorumları için haberin kimliği, başlığı ve bağlantısı, e-posta adresiniz (yalnızca sahiplik ve silme kontrolü için; yayımlanmaz), görünen adınız, avatarınız, yorum metni ve zamanı saklanır. Diğer kullanıcılar yalnızca adınızı, avatarınızı, metni ve zamanı görür. Yorumlar otomatik olarak küfür, spam, çok sayıda bağlantı ve kişisel veri (e-posta, telefon, T.C. kimlik numarası, kart numarası, IBAN) içeriğine karşı denetlenir; uygun olmayan yorum kaydedilmez.",
+  "1nt13ay0hcp": {
+    "en": "For news comments we store the article's ID, headline and link, your e-mail address (only to check ownership and deletion; it is not published), your display name, avatar, the comment text and the time. Other users see only your name, avatar, the text and the time. Comments are checked automatically for profanity, spam, lots of links and personal data (e-mail addresses, phone numbers, Turkish ID numbers, card numbers, IBANs); unsuitable comments are not saved. Hanogt News keeps only the last 24 hours of stories: stories older than a day, and comments 24 hours after they were written, are deleted from our server automatically.",
+    "tr": "Haber yorumları için haberin kimliği, başlığı ve bağlantısı, e-posta adresiniz (yalnızca sahiplik ve silme kontrolü için; yayımlanmaz), görünen adınız, avatarınız, yorum metni ve zamanı saklanır. Diğer kullanıcılar yalnızca adınızı, avatarınızı, metni ve zamanı görür. Yorumlar otomatik olarak küfür, spam, çok sayıda bağlantı ve kişisel veri (e-posta, telefon, T.C. kimlik numarası, kart numarası, IBAN) içeriğine karşı denetlenir; uygun olmayan yorum kaydedilmez. Hanogt News yalnızca son 24 saatin haberlerini tutar: bir günden eski haberler ve yazıldıktan 24 saat sonra yorumlar sunucumuzdan kendiliğinden silinir.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8798,9 +8862,27 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1z8f794rvv": {
-    "en": "News comments and feedback board posts",
-    "tr": "Haber yorumları ve geri bildirim panosu gönderileri",
+  "o4hguenext": {
+    "en": "News comments",
+    "tr": "Haber yorumları",
+    "files": [
+      "src/app/privacy-policy/page.tsx",
+      "src/components/Admin/ModerationSection.tsx",
+      "src/components/Admin/OverviewSection.tsx",
+      "src/components/Admin/StoragePanel.tsx",
+      "src/components/Admin/UsersSection.tsx"
+    ]
+  },
+  "1ge3pf1lqcs": {
+    "en": "At most 24 hours (when a story leaves the feed its comments are deleted too); you can delete them sooner",
+    "tr": "En fazla 24 saat (haber akıştan çıkınca yorumları da silinir); daha önce silebilirsiniz",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "9zqiik2z78": {
+    "en": "Feedback board posts",
+    "tr": "Geri bildirim panosu gönderileri",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -14482,7 +14564,8 @@
     "en": "Expired",
     "tr": "Süresi doldu",
     "files": [
-      "src/components/Admin/AnnouncementsSection.tsx"
+      "src/components/Admin/AnnouncementsSection.tsx",
+      "src/components/Admin/StoragePanel.tsx"
     ]
   },
   "voxf06009p": {
@@ -15002,7 +15085,8 @@
     "en": "Skipped",
     "tr": "Atlandı",
     "files": [
-      "src/components/Admin/CloudHealthSection.tsx"
+      "src/components/Admin/CloudHealthSection.tsx",
+      "src/components/Admin/copy.ts"
     ]
   },
   "1o37me7nkl": {
@@ -17159,6 +17243,27 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "1xhjhrs6mgz": {
+    "en": "Only admins and owners can do this.",
+    "tr": "Bunu yalnızca yöneticiler ve sahipler yapabilir.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "34ajxlyzau": {
+    "en": "At most 5 posts can be pinned on the board at once. Unpin one first.",
+    "tr": "Panoda aynı anda en fazla 5 sabitlenmiş gönderi olabilir. Önce birinin sabitlemesini kaldırın.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1cpqktb2qt1": {
+    "en": "The comment couldn't be found.",
+    "tr": "Yorum bulunamadı.",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "3zgg5tlt00": {
     "en": "The admin service is unavailable right now.",
     "tr": "Yönetim hizmetine şu anda ulaşılamıyor.",
@@ -17561,6 +17666,20 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "2aziaql6yx3": {
+    "en": "Feedback pinned",
+    "tr": "Geri bildirim sabitlendi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "ifr4exw9p7": {
+    "en": "Feedback unpinned",
+    "tr": "Sabitleme kaldırıldı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "jaqj4xoak5": {
     "en": "Announcement created",
     "tr": "Duyuru oluşturuldu",
@@ -17627,6 +17746,20 @@
   "17moc810zn5": {
     "en": "Security rules deployed",
     "tr": "Güvenlik kuralları yayımlandı",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1gur93dwg": {
+    "en": "Old news cleaned up",
+    "tr": "Eski haberler temizlendi",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "2vk0e4k8sh": {
+    "en": "Expired records deleted",
+    "tr": "Süresi dolan kayıtlar silindi",
     "files": [
       "src/components/Admin/copy.ts"
     ]
@@ -18056,6 +18189,34 @@
       "src/components/Admin/copy.ts"
     ]
   },
+  "mgyg7sv0cm": {
+    "en": "Old archive",
+    "tr": "Eski arşiv",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1szr0xfcrhy": {
+    "en": "Counters",
+    "tr": "Sayaç",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "vcjbyczz5h": {
+    "en": "Finished",
+    "tr": "Bitti",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
+  "1of6zykbag4": {
+    "en": "Deleted",
+    "tr": "Silinen",
+    "files": [
+      "src/components/Admin/copy.ts"
+    ]
+  },
   "1dss933ab3i": {
     "en": "Features and early access",
     "tr": "Özellikler ve erken erişim",
@@ -18110,6 +18271,41 @@
     "tr": "Özellik, şu an kullananlar dahil herkes için bir dakika içinde kapanır. İstediğiniz zaman yeniden açabilirsiniz.",
     "files": [
       "src/components/Admin/FeaturesCard.tsx"
+    ]
+  },
+  "5udyw6db0x": {
+    "en": "Pin to the board",
+    "tr": "Panoya sabitle",
+    "files": [
+      "src/components/Admin/FeedbackSection.tsx"
+    ]
+  },
+  "2e0lapwzz36": {
+    "en": "Only admins and owners can pin.",
+    "tr": "Yalnızca yöneticiler ve sahipler sabitleyebilir.",
+    "files": [
+      "src/components/Admin/FeedbackSection.tsx"
+    ]
+  },
+  "2d3fck8d4kd": {
+    "en": "The post is pinned to the top of the board.",
+    "tr": "Gönderi panonun en üstüne sabitlendi.",
+    "files": [
+      "src/components/Admin/FeedbackSection.tsx"
+    ]
+  },
+  "sk1ytrd1dj": {
+    "en": "Unpinned.",
+    "tr": "Sabitleme kaldırıldı.",
+    "files": [
+      "src/components/Admin/FeedbackSection.tsx"
+    ]
+  },
+  "2ck93q0rkib": {
+    "en": "The comment is pinned above the post's other comments.",
+    "tr": "Yorum, gönderinin yorumlarının en üstüne sabitlendi.",
+    "files": [
+      "src/components/Admin/FeedbackSection.tsx"
     ]
   },
   "1f54l1xukqa": {
@@ -18272,15 +18468,6 @@
     "tr": "Media bildirimleri",
     "files": [
       "src/components/Admin/ModerationSection.tsx",
-      "src/components/Admin/UsersSection.tsx"
-    ]
-  },
-  "o4hguenext": {
-    "en": "News comments",
-    "tr": "Haber yorumları",
-    "files": [
-      "src/components/Admin/ModerationSection.tsx",
-      "src/components/Admin/OverviewSection.tsx",
       "src/components/Admin/UsersSection.tsx"
     ]
   },
@@ -21628,6 +21815,7 @@
     "tr": "Dosyalar",
     "files": [
       "src/components/Admin/ReportsPanel.tsx",
+      "src/components/Admin/StoragePanel.tsx",
       "src/components/Editor/PublishDialog.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx",
       "src/components/Social/GroupSidebar.tsx",
@@ -22019,6 +22207,261 @@
     "tr": "Sayılar bir dakikalığına önbellekte tutulur; Yenile yeniden sayar.",
     "files": [
       "src/components/Admin/SocialSection.tsx"
+    ]
+  },
+  "1ydzdzmi2sf": {
+    "en": "Storage",
+    "tr": "Depolama",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "14wfct8efrz": {
+    "en": "The Firestore collections that take the most space",
+    "tr": "Firestore'da en çok yer kaplayan koleksiyonlar",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "ik8rkwmfqq": {
+    "en": "The site doesn't use Vercel's storage: all data (files included) is in Firestore. The Spark (free) plan has 1 GiB for the whole database; Firebase console → Firestore → Usage shows the exact size.",
+    "tr": "Site Vercel'in depolamasını kullanmaz: bütün veriler (dosyalar dahil) Firestore'dadır. Spark (ücretsiz) planında veritabanının tamamı için 1 GiB vardır; tam boyutu Firebase konsolu → Firestore → Kullanım bölümünde görürsünüz.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "145j082biv4": {
+    "en": "Hanogt News keeps only the last 24 hours. The old news archive is no longer written; what is left of it, comments older than a day and their counters are deleted bit by bit on every feed refresh.",
+    "tr": "Hanogt News yalnızca son 24 saatin haberlerini tutar. Eski haber arşivi artık yazılmaz; arşivde kalanlar, bir günden eski yorumlar ve sayaçları her haber yenilemesinde parça parça silinir.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "won65zsyfu": {
+    "en": "Collection",
+    "tr": "Koleksiyon",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "g1uruo8ku7": {
+    "en": "Documents",
+    "tr": "Belge",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "1czpi6e2j2z": {
+    "en": "Size",
+    "tr": "Boyut",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2587l1zj3tc": {
+    "en": "Firestore deletes",
+    "tr": "Firestore siliyor",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "289nauzvee": {
+    "en": "Couldn't be counted: if the TTL policy is deployed, Firestore deletes these itself.",
+    "tr": "Sayılamadı: TTL kuralı yüklüyse bu kayıtları Firestore kendisi siler.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "nj6yjjcm7q": {
+    "en": "Couldn't count",
+    "tr": "Sayılamadı",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "cmgaykuji6": {
+    "en": "Clean up old news now",
+    "tr": "Eski haberleri şimdi temizle",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "1qb3wd9xed": {
+    "en": "Delete expired records",
+    "tr": "Süresi dolan kayıtları sil",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "1kdcq6drdyb": {
+    "en": "Clean up old news?",
+    "tr": "Eski haberler temizlensin mi?",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "wc8xzw0ln6": {
+    "en": "The old news archive, news comments older than a day and their counters are deleted (at most 2,000 documents at a time). The last 24 hours of stories and comments stay. This can't be undone.",
+    "tr": "Eski haber arşivi, bir günden eski haber yorumları ve sayaçları silinir (bir seferde en çok 2.000 belge). Son 24 saatin haberleri ve yorumları kalır. Bu işlem geri alınamaz.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "w4hg2dpp49": {
+    "en": "Delete expired records?",
+    "tr": "Süresi dolan kayıtlar silinsin mi?",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "118qfivihp0": {
+    "en": "Expired rate-limit windows, call records, invites, mutes, warnings, reports, AutoMod events and daily AI usage records are deleted (at most 2,000 documents at a time). If Firestore's TTL policy is deployed it deletes these itself anyway. This can't be undone.",
+    "tr": "Süresi geçmiş hız sınırı pencereleri, arama kayıtları, davetler, susturmalar, uyarılar, bildirimler, AutoMod olayları ve günlük AI kullanım kayıtları silinir (bir seferde en çok 2.000 belge). Firestore'un TTL kuralı yüklüyse bunları zaten kendisi siler. Bu işlem geri alınamaz.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "k8zng0jhai": {
+    "en": "Deleted {archive} archive documents, {comments} comments and {counters} counters.",
+    "tr": "{archive} arşiv belgesi, {comments} yorum ve {counters} sayaç silindi.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "1a1dj4o0bxu": {
+    "en": "Deleted {count} expired records.",
+    "tr": "Süresi dolan {count} kayıt silindi.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "1pmro1d2lt7": {
+    "en": "There is more to delete; press the button again or let the automatic cleanup continue.",
+    "tr": "Silinecek daha çok belge var; düğmeye yeniden basın ya da otomatik temizliği bekleyin.",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "y001c2huax": {
+    "en": "Collections that couldn't be queried (their TTL policy may be deployed): {list}",
+    "tr": "Sorgulanamayan koleksiyonlar (TTL kuralı yüklü olabilir): {list}",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "85bkxovgxy": {
+    "en": "Counted",
+    "tr": "Sayım",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "kkoof1shb1": {
+    "en": "Expiring records",
+    "tr": "Süresi dolan kayıtlar",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "29as815ghiy": {
+    "en": "Old news archive (no longer kept)",
+    "tr": "Eski haber arşivi (artık tutulmuyor)",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "2frk29wpcb0": {
+    "en": "Comment counters",
+    "tr": "Yorum sayaçları",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "j04kls7a73": {
+    "en": "Message files",
+    "tr": "Mesaj dosyaları",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "1sy1xaa8c9b": {
+    "en": "Voice messages",
+    "tr": "Sesli mesajlar",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1rfdav9iy1e": {
+    "en": "Game sounds and models",
+    "tr": "Oyun sesleri ve modelleri",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "q6jnjac6of": {
+    "en": "Rate-limit windows",
+    "tr": "Hız sınırı pencereleri",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "1311bhgh8x1": {
+    "en": "Call records",
+    "tr": "Arama kayıtları",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "yff9ug5hax": {
+    "en": "Daily Hanogt AI usage",
+    "tr": "Günlük Hanogt AI kullanımı",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "90laststtv": {
+    "en": "AutoMod events",
+    "tr": "AutoMod olayları",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "ogq0013rz9": {
+    "en": "Group reports",
+    "tr": "Grup bildirimleri",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "rmyi1em7gu": {
+    "en": "Group warnings",
+    "tr": "Grup uyarıları",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "16t1nqba8g3": {
+    "en": "Mutes",
+    "tr": "Susturmalar",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "rptwj4k7xe": {
+    "en": "Group invites",
+    "tr": "Grup davetleri",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx"
+    ]
+  },
+  "244hxm44h15": {
+    "en": "Invite links",
+    "tr": "Davet bağlantıları",
+    "files": [
+      "src/components/Admin/StoragePanel.tsx",
+      "src/components/Groups/workspace/InviteDialog.tsx"
     ]
   },
   "6lm0aioqad": {
@@ -23757,6 +24200,62 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "29af80jxzb7": {
+    "en": "Hanogt News keeps 24 hours, Panel always on top",
+    "tr": "Hanogt News son 24 saat, üstte her zaman Panel",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1m1o3s4mvh8": {
+    "en": "News now covers the last 24 hours and older stories are deleted; the top bar never hides the Panel; only admins pin on the feedback board.",
+    "tr": "Haberler artık son 24 saati kapsıyor ve eski haberler siliniyor; üst menü Panel'i hiç gizlemiyor; geri bildirim panosunda sabitlemeyi yalnızca yöneticiler yapıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "t3impsajoh": {
+    "en": "Hanogt News shows only the last 24 hours; stories older than a day and their comments are deleted automatically.",
+    "tr": "Hanogt News yalnızca son 24 saatin haberlerini gösterir; bir günden eski haberler ve yorumları kendiliğinden silinir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "5sx31dfhal": {
+    "en": "Links that don't fit in the top bar move into “More”; once you're signed in the Panel is always visible, on phones too.",
+    "tr": "Üst menüde sığmayan bağlantılar “Daha fazla” listesine geçer; giriş yapınca Panel her zaman görünür, telefonda da.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "23ebocqyuk9": {
+    "en": "On the Feedback / FAQ board only admins can pin posts and comments; pinned ones stay on top.",
+    "tr": "Geri Bildirim / SSS panosunda gönderileri ve yorumları yalnızca yöneticiler sabitleyebilir; sabitlenenler en üstte durur.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "29l19jhdjc1": {
+    "en": "A storage card in the Admin Panel: collection sizes and old-news cleanup in one click.",
+    "tr": "Yönetici Paneli'nde depolama kartı: koleksiyon boyutları ve tek tıkla eski haber temizliği.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "13vugumgg0z": {
+    "en": "“Hanogt Team” and related text translated into 48 languages.",
+    "tr": "“Hanogt Ekibi” ve ilgili metinler 48 dile çevrildi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "20wfj3p3ivb": {
+    "en": "Privacy Policy 5.6.",
+    "tr": "Gizlilik Politikası 5.6.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "ubizwndx2d": {
@@ -30595,13 +31094,6 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
-  "1czpi6e2j2z": {
-    "en": "Size",
-    "tr": "Boyut",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
   "jbzanzvmqy": {
     "en": "Draw order",
     "tr": "Çizim sırası",
@@ -34528,16 +35020,6 @@
       "src/components/Social/dm/DmView.tsx"
     ]
   },
-  "rizei5ryz7": {
-    "en": "Unpin",
-    "tr": "Sabitlemeyi kaldır",
-    "files": [
-      "src/components/Groups/workspace/ChatPanel.tsx",
-      "src/components/Groups/workspace/MessageItem.tsx",
-      "src/components/Social/dm/DmMessages.tsx",
-      "src/components/Social/dm/DmView.tsx"
-    ]
-  },
   "htce00lorc": {
     "en": "Message pinned.",
     "tr": "Mesaj sabitlendi.",
@@ -34969,13 +35451,6 @@
       "src/components/Groups/workspace/InviteDialog.tsx"
     ]
   },
-  "244hxm44h15": {
-    "en": "Invite links",
-    "tr": "Davet bağlantıları",
-    "files": [
-      "src/components/Groups/workspace/InviteDialog.tsx"
-    ]
-  },
   "2dx23b8fquq": {
     "en": "Search your friends…",
     "tr": "Arkadaşlarında ara…",
@@ -35304,22 +35779,6 @@
     "files": [
       "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/Social/StarredDialog.tsx",
-      "src/components/Social/dm/DmMessages.tsx"
-    ]
-  },
-  "1qvyn4kd7xa": {
-    "en": "Pin",
-    "tr": "Sabitle",
-    "files": [
-      "src/components/Groups/workspace/MessageItem.tsx",
-      "src/components/Social/dm/DmMessages.tsx"
-    ]
-  },
-  "1iz7nsfjlgb": {
-    "en": "Pinned",
-    "tr": "Sabitlendi",
-    "files": [
-      "src/components/Groups/workspace/MessageItem.tsx",
       "src/components/Social/dm/DmMessages.tsx"
     ]
   },
@@ -37328,9 +37787,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "27hpyteyllk": {
-    "en": "The live feed holds the newest 240 stories of the last 21 days; older ones are kept in the archive and read with \"Load older stories\".",
-    "tr": "Canlı akışta son 21 günün en yeni 240 haberi durur; daha eskileri arşivde saklanır ve \"Daha eski haberleri yükle\" ile okunur.",
+  "1i2llazkiwm": {
+    "en": "The feed holds only the last 24 hours of stories; stories older than a day and their comments are deleted automatically.",
+    "tr": "Akışta yalnızca son 24 saatin haberleri durur; bir günden eski haberler ve yorumları kendiliğinden silinir.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -43433,9 +43892,9 @@
       "src/components/News/NewsPage.tsx"
     ]
   },
-  "1kuxvinn4dn": {
-    "en": "stories",
-    "tr": "haber",
+  "15mylfi2lio": {
+    "en": "stories (last 24 hours)",
+    "tr": "haber (son 24 saat)",
     "files": [
       "src/components/News/NewsPage.tsx"
     ]
@@ -43545,30 +44004,9 @@
       "src/components/News/NewsPage.tsx"
     ]
   },
-  "zvew27444o": {
-    "en": "Loading older stories…",
-    "tr": "Eski haberler yükleniyor…",
-    "files": [
-      "src/components/News/NewsPage.tsx"
-    ]
-  },
-  "26xxculagm3": {
-    "en": "Load older stories",
-    "tr": "Daha eski haberleri yükle",
-    "files": [
-      "src/components/News/NewsPage.tsx"
-    ]
-  },
-  "2b5fx4ow851": {
-    "en": "The archive can't be reached right now. Try again shortly.",
-    "tr": "Arşive şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.",
-    "files": [
-      "src/components/News/NewsPage.tsx"
-    ]
-  },
-  "19v0m520np": {
-    "en": "You've reached the end of the archive.",
-    "tr": "Arşivin sonuna ulaştınız.",
+  "ds34g7dwo9": {
+    "en": "Hanogt News shows the last 24 hours of stories; older ones are removed automatically.",
+    "tr": "Hanogt News son 24 saatin haberlerini gösterir; daha eskileri kendiliğinden kaldırılır.",
     "files": [
       "src/components/News/NewsPage.tsx"
     ]
@@ -43632,6 +44070,13 @@
   "y5j7fa4qmt": {
     "en": "Sources",
     "tr": "Kaynaklar",
+    "files": [
+      "src/components/News/NewsPage.tsx"
+    ]
+  },
+  "1kuxvinn4dn": {
+    "en": "stories",
+    "tr": "haber",
     "files": [
       "src/components/News/NewsPage.tsx"
     ]
@@ -48413,13 +48858,6 @@
       "src/components/Social/SocialSettings.tsx"
     ]
   },
-  "1sy1xaa8c9b": {
-    "en": "Voice messages",
-    "tr": "Sesli mesajlar",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
   "1kglpjqdei2": {
     "en": "Recording quality",
     "tr": "Kayıt kalitesi",
@@ -51581,9 +52019,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1yb97m0mkj7": {
-    "en": "[Hanogt News](/news) collects AI, software, gaming, app and science stories from the public RSS/Atom feeds of 20+ trusted sources; only the headline, a short excerpt and a link to the source are shown.\n• The feed refreshes itself; there's a breaking-news ticker, category and language filters, search (`/` shortcut), trending topics and a **Read later** list.\n• Comments need sign-in; abuse, spam and personal data are blocked automatically.\n• **AI Arena:** compare two assistants and vote; rankings come only from community votes via Elo.",
-    "tr": "[Hanogt News](/news) yapay zeka, yazılım, oyun, uygulama ve bilim haberlerini 20'yi aşkın güvenilir kaynağın herkese açık RSS/Atom akışlarından toplar; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir.\n• Akış kendiliğinden yenilenir; son dakika bandı, kategori ve dil filtresi, arama (`/` kısayolu), gündem konuları ve **Sonra oku** listesi vardır.\n• Yorumlar giriş gerektirir; hakaret, spam ve kişisel veri otomatik engellenir.\n• **Yapay Zeka Arenası:** iki asistanı karşılaştırıp oy verirsin; sıralama yalnızca topluluk oylarından Elo ile hesaplanır.",
+  "1wiez78z733": {
+    "en": "[Hanogt News](/news) collects AI, software, gaming, app and science stories from the public RSS/Atom feeds of 20+ trusted sources; only the headline, a short excerpt and a link to the source are shown.\n• The feed refreshes itself and shows only the **last 24 hours**; stories older than a day and their comments are deleted automatically. There's a breaking-news ticker, category and language filters, search (`/` shortcut), trending topics and a **Read later** list.\n• Comments need sign-in; abuse, spam and personal data are blocked automatically.\n• **AI Arena:** compare two assistants and vote; rankings come only from community votes via Elo.",
+    "tr": "[Hanogt News](/news) yapay zeka, yazılım, oyun, uygulama ve bilim haberlerini 20'yi aşkın güvenilir kaynağın herkese açık RSS/Atom akışlarından toplar; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir.\n• Akış kendiliğinden yenilenir ve yalnızca **son 24 saatin** haberlerini gösterir; bir günden eski haberler ve yorumları kendiliğinden silinir. Son dakika bandı, kategori ve dil filtresi, arama (`/` kısayolu), gündem konuları ve **Sonra oku** listesi vardır.\n• Yorumlar giriş gerektirir; hakaret, spam ve kişisel veri otomatik engellenir.\n• **Yapay Zeka Arenası:** iki asistanı karşılaştırıp oy verirsin; sıralama yalnızca topluluk oylarından Elo ile hesaplanır.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -53888,9 +54326,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "qv7zsn160q": {
-    "en": "Stories are collected from trusted publishers' public RSS/Atom feeds; only the headline, a short excerpt and a link to the source are shown. The AI leaderboard is computed from community votes only.",
-    "tr": "Haberler güvenilir yayıncıların herkese açık RSS/Atom akışlarından toplanır; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir. Yapay zeka sıralaması yalnızca topluluk oylarından hesaplanır.",
+  "1jmta93ux3t": {
+    "en": "Stories are collected from trusted publishers' public RSS/Atom feeds; only the headline, a short excerpt and a link to the source are shown. The feed covers the last 24 hours: stories older than a day and their comments are deleted automatically. The AI leaderboard is computed from community votes only.",
+    "tr": "Haberler güvenilir yayıncıların herkese açık RSS/Atom akışlarından toplanır; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir. Akış son 24 saati kapsar: bir günden eski haberler ve yorumları kendiliğinden silinir. Yapay zeka sıralaması yalnızca topluluk oylarından hesaplanır.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -54763,6 +55201,13 @@
       "src/lib/legal.ts"
     ]
   },
+  "j1xxzzlwzq": {
+    "en": "Hanogt News keeps only the last 24 hours: the old news archive has been removed. Stories older than a day, and news comments 24 hours after they were written, are deleted from our server automatically; you can still delete your comment sooner. The retention table in the Privacy Policy was updated accordingly.",
+    "tr": "Hanogt News yalnızca son 24 saati tutar: Eski haber arşivi kaldırıldı. Bir günden eski haberler ve haber yorumları, yazıldıktan 24 saat sonra sunucumuzdan kendiliğinden silinir; yorumunuzu daha önce de silebilirsiniz. Gizlilik Politikası'ndaki saklama süreleri tablosu buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
   "1klnudgib1n": {
     "en": "Hanogt AI's daily usage totals: so the team can plan the service's capacity, the number of Hanogt AI messages counted each day, the counts by source (chat, your own connections, the API, groups) and by plan, and the number of messages given back because no answer came are kept. These totals don't include who sent a message or what it said; they are deleted automatically after about 13 months.",
     "tr": "Hanogt AI'ın günlük kullanım toplamları: Ekibin hizmetin kapasitesini planlayabilmesi için her gün sayılan Hanogt AI mesajlarının toplamı, kaynağa (sohbet, kendi bağlantılarınız, API, gruplar) ve plana göre sayıları ve yanıt alınamadığı için iade edilen mesaj sayısı tutulur. Bu toplamlar kimin mesaj gönderdiğini ve mesajların içeriğini içermez; yaklaşık 13 ay sonra otomatik silinir.",
@@ -55319,6 +55764,13 @@
   "1iozpbsmt9q": {
     "en": "Legal",
     "tr": "Yasal",
+    "files": [
+      "src/lib/nav.ts"
+    ]
+  },
+  "5ko7d20n8t": {
+    "en": "More",
+    "tr": "Daha fazla",
     "files": [
       "src/lib/nav.ts"
     ]
@@ -60441,6 +60893,20 @@
   "khs4tcnhl5": {
     "en": "The comment wasn't found or was deleted.",
     "tr": "Yorum bulunamadı ya da silinmiş.",
+    "files": [
+      "src/lib/support.ts"
+    ]
+  },
+  "2f0q96bcqna": {
+    "en": "Only admins and owners can pin messages.",
+    "tr": "Mesajları yalnızca yöneticiler ve sahipler sabitleyebilir.",
+    "files": [
+      "src/lib/support.ts"
+    ]
+  },
+  "17p7zrismo1": {
+    "en": "At most {max} posts can be pinned on the board at once. Unpin one first.",
+    "tr": "Panoda aynı anda en fazla {max} sabitlenmiş gönderi olabilir. Önce birinin sabitlemesini kaldırın.",
     "files": [
       "src/lib/support.ts"
     ]

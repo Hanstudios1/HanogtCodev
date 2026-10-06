@@ -18,6 +18,7 @@ import type {
 } from "@/lib/server/cloud-health";
 import { adminPost, type ApiFailure } from "./api";
 import { useAdminResource } from "./hooks";
+import StoragePanel from "./StoragePanel";
 import { Badge, Button, ConfirmDialog, ErrorNotice, IconButton, LoadingRows, Notice, Panel, RelativeTime, SectionHeader, cx, useToast, type Tone } from "./ui";
 
 // ---------------------------------------------------------------------------
@@ -732,6 +733,8 @@ export default function CloudHealthSection() {
             />
 
             {report.error ? <ErrorNotice error={report.error} onRetry={report.reload} /> : null}
+
+            <StoragePanel />
 
             {!data && report.loading ? (
                 <Panel>

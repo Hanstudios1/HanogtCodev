@@ -81,7 +81,7 @@ export function balanceFeed<T extends { category: string }>(items: readonly T[],
 }
 
 /** Newest first, unique by id, capped. */
-export function mergeNewsItems(incoming: NewsItemView[], current: NewsItemView[], cap = 240) {
+export function mergeNewsItems(incoming: NewsItemView[], current: NewsItemView[], cap = 300) {
     const seen = new Set<string>();
     const merged: NewsItemView[] = [];
     for (const item of [...incoming, ...current]) {

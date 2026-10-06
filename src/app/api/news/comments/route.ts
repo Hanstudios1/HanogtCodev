@@ -4,7 +4,7 @@ import { getActiveSession } from "@/lib/server/active-session";
 import { commitServerMutations, getServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 import { moderateText } from "@/lib/server/moderation";
 import { findNewsItem } from "@/lib/server/news";
-import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { enforceRateLimit, memoryRateLimit } from "@/lib/server/rate-limit";
 import { getClientKey, isSameOrigin, jsonSecurityHeaders } from "@/lib/server/request-security";
 
 export const runtime = "nodejs";
@@ -45,7 +45,8 @@ function publicComment(record: CommentRecord, viewerEmail: string | null) {
 export async function GET(request: NextRequest) {
     const newsId = validId(request.nextUrl.searchParams.get("newsId"));
     if (!newsId) return json({ error: "Geçersiz haber." }, 400);
-    const rate = await enforceRateLimit(`news-comments:read:${getClientKey(request)}`, 120, 60_000).catch(() => ({ allowed: true }));
+    // Reading is limited in memory: a stored counter would cost a database write per read.
+    const rate = memoryRateLimit(`news-comments:read:${getClientKey(request)}`, 120, 60_000);
     if (!rate.allowed) return json({ error: "Çok fazla istek." }, 429);
     try {
         const active = await getActiveSession();

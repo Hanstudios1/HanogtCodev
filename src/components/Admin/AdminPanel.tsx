@@ -237,7 +237,7 @@ function Shell({ me }: { me: AdminIdentity }) {
                         ) : active === "tickets" ? (
                             <TicketsSection />
                         ) : active === "feedback" ? (
-                            <FeedbackSection params={params} />
+                            <FeedbackSection params={params} role={me.role} />
                         ) : active === "announcements" ? (
                             <AnnouncementsSection />
                         ) : active === "plans" ? (

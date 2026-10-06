@@ -166,6 +166,31 @@ from the Firebase Management API, ready to paste into Vercel. `/api/health/auth`
 remains as a lightweight, secret-free sign-in check (details for owners or with
 `?token=HEALTH_CHECK_TOKEN`).
 
+## Storage and Hanogt News retention
+
+The site uses no Vercel storage (no Blob, KV or Edge Config): every record,
+files included, is in **Firestore**. On the Spark (free) plan the whole
+database has 1 GiB, so a "storage full" warning means Firestore's stored data.
+
+- **Hanogt News keeps only the last 24 hours** (`NEWS_RETENTION_MS` in
+  `src/lib/news/retention.ts`). The live feed and the shared fallback
+  snapshot (`news_cache/latest`) drop older stories; the unlimited archive
+  (`news_items`) is no longer written. Stories whose feed gives no date age
+  from the first time they were seen (kept in `news_cache/latest.undated`).
+- **Automatic cleanup** (`src/lib/server/news-retention.ts`): after a feed
+  refresh, at most every 10 minutes per server instance, up to 400 documents
+  are deleted: what is left of `news_items` (then `news_cache/archive_state`),
+  `news_comments` older than 24 hours and `news_meta` counters no comment has
+  touched for a day. Deletes stay well inside the free tier's 20,000 a day.
+- **Admin Panel → Cloud Health → Storage** (`GET /api/admin/storage`, owners)
+  counts the collections that grow the most (and the bytes of message files,
+  voice messages and game assets) and offers two buttons
+  (`POST /api/admin/storage`): **Clean up old news now** (up to 2,000
+  documents a click) and **Delete expired records** (documents whose
+  `expiresAt` has passed in the TTL collections of `firestore.indexes.json`;
+  Firestore deletes those by itself once the TTL policies are deployed). Both
+  are written to the audit log.
+
 ## Security rules deployment
 
 `firestore.rules` and `storage.rules` are not deployed by Vercel. Deploy them

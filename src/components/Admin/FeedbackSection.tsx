@@ -1,9 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, HelpCircle, Inbox, MessageCircle, MessageSquareText, RefreshCw, Send, ShieldCheck, ThumbsUp, Trash2 } from "lucide-react";
+import { ArrowLeft, HelpCircle, Inbox, MessageCircle, MessageSquareText, Pin, PinOff, RefreshCw, Send, ShieldCheck, ThumbsUp, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
+import { TEAM_NAME, canPinFeedback } from "@/lib/support";
 import { adminPost, type ApiFailure } from "./api";
 import { COMMON, FEEDBACK_STATUS_COPY } from "./copy";
 import { useCounters } from "./counters";
@@ -12,12 +13,12 @@ import { setAdminParams } from "./navigation";
 import {
     FEEDBACK_REPLY_MAX,
     FEEDBACK_STATUSES,
-    OFFICIAL_AUTHOR,
     type AdminFeedbackActionResponse,
     type AdminFeedbackItem,
     type AdminFeedbackResponse,
     type FeedbackCounts,
     type FeedbackStatus,
+    type StaffRole,
 } from "./types";
 import {
     Avatar, Badge, Button, ConfirmDialog, EmptyState, ErrorNotice, FOCUS_RING, FilterChips, LoadMore, LoadingRows, Panel, RelativeTime, SearchInput,
@@ -40,20 +41,63 @@ function recount(counts: FeedbackCounts | null, from: FeedbackStatus, next: Feed
     return result;
 }
 
-function FeedbackDetail({ item, onStatus, onReplied, onDelete, onBack, statusBusy }: {
+const PIN_COPY = {
+    pin: { TR: "Panoya sabitle", EN: "Pin to the board" },
+    unpin: { TR: "Sabitlemeyi kaldır", EN: "Unpin" },
+    pinned: { TR: "Sabitlendi", EN: "Pinned" },
+    pinComment: { TR: "Yorumu sabitle", EN: "Pin comment" },
+    unpinComment: { TR: "Yorumun sabitlemesini kaldır", EN: "Unpin comment" },
+    adminsOnly: { TR: "Yalnızca yöneticiler ve sahipler sabitleyebilir.", EN: "Only admins and owners can pin." },
+    pinnedDone: { TR: "Gönderi panonun en üstüne sabitlendi.", EN: "The post is pinned to the top of the board." },
+    unpinnedDone: { TR: "Sabitleme kaldırıldı.", EN: "Unpinned." },
+    commentPinnedDone: { TR: "Yorum, gönderinin yorumlarının en üstüne sabitlendi.", EN: "The comment is pinned above the post's other comments." },
+};
+
+function FeedbackDetail({ item, canPin, onStatus, onReplied, onPinned, onDelete, onBack, statusBusy }: {
     item: AdminFeedbackItem;
+    canPin: boolean;
     onStatus: (status: FeedbackStatus) => void;
     onReplied: (item: AdminFeedbackItem) => void;
+    onPinned: (item: AdminFeedbackItem) => void;
     onDelete: () => void;
     onBack: () => void;
     statusBusy: boolean;
 }) {
     const { tx } = useI18n();
     const toast = useToast();
+    const errorText = useErrorText();
     const [reply, setReply] = useState("");
     const [sending, setSending] = useState(false);
+    const [pinBusy, setPinBusy] = useState<string | null>(null);
     const [error, setError] = useState<ApiFailure | null>(null);
     const tooLong = reply.length > FEEDBACK_REPLY_MAX;
+    const teamName = tx(TEAM_NAME);
+
+    const togglePin = async () => {
+        setPinBusy("post");
+        const result = await adminPost<AdminFeedbackActionResponse>("/api/admin/feedback", { action: item.pinned ? "unpin" : "pin", id: item.id });
+        setPinBusy(null);
+        if (!result.ok) {
+            toast("error", errorText(result));
+            return;
+        }
+        const pinned = result.data.pinned ?? !item.pinned;
+        onPinned({ ...item, pinned, pinnedAt: pinned ? new Date().toISOString() : null });
+        toast("success", tx(pinned ? PIN_COPY.pinnedDone : PIN_COPY.unpinnedDone));
+    };
+
+    const toggleCommentPin = async (commentId: string, pinned: boolean) => {
+        setPinBusy(commentId);
+        const result = await adminPost<AdminFeedbackActionResponse>("/api/admin/feedback", { action: pinned ? "unpinComment" : "pinComment", id: item.id, commentId });
+        setPinBusy(null);
+        if (!result.ok) {
+            toast("error", errorText(result));
+            return;
+        }
+        const pinnedId = result.data.pinnedCommentId ?? null;
+        onPinned({ ...item, comments: item.comments.map((comment) => ({ ...comment, pinned: comment.id === pinnedId })) });
+        toast("success", tx(pinnedId ? PIN_COPY.commentPinnedDone : PIN_COPY.unpinnedDone));
+    };
 
     const send = async () => {
         const text = reply.trim();
@@ -83,9 +127,16 @@ function FeedbackDetail({ item, onStatus, onReplied, onDelete, onBack, statusBus
                         {item.type === "question" ? tx({ TR: "Soru", EN: "Question" }) : tx({ TR: "Geri bildirim", EN: "Feedback" })}
                     </Badge>
                     <Badge tone={STATUS_TONES[item.status]}>{tx(FEEDBACK_STATUS_COPY[item.status])}</Badge>
+                    {item.pinned ? <Badge tone="amber" icon={Pin}>{tx(PIN_COPY.pinned)}</Badge> : null}
                     <RelativeTime iso={item.createdAt} />
                     <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3.5 w-3.5" aria-hidden="true" />{item.likeCount}</span>
+                    <span className="ms-auto" title={canPin ? undefined : tx(PIN_COPY.adminsOnly)}>
+                        <Button size="sm" icon={item.pinned ? PinOff : Pin} busy={pinBusy === "post"} disabled={!canPin || pinBusy !== null} onClick={() => void togglePin()}>
+                            {tx(item.pinned ? PIN_COPY.unpin : PIN_COPY.pin)}
+                        </Button>
+                    </span>
                 </div>
+                {!canPin ? <p className="mt-2 text-[11.5px] text-zinc-500">{tx(PIN_COPY.adminsOnly)}</p> : null}
                 <h3 className="mt-3 whitespace-pre-wrap break-words text-lg font-black leading-snug text-zinc-900 dark:text-white" dir="auto">{item.content}</h3>
                 {item.description ? <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-600 dark:text-zinc-300" dir="auto">{item.description}</p> : null}
                 <div className="mt-4 flex items-center gap-3">
@@ -137,9 +188,22 @@ function FeedbackDetail({ item, onStatus, onReplied, onDelete, onBack, statusBus
                                 )}
                             >
                                 <div className="flex flex-wrap items-center gap-2 text-[12px] text-zinc-500">
-                                    <span className="font-bold text-zinc-800 dark:text-zinc-100">{comment.official ? OFFICIAL_AUTHOR : comment.author || "—"}</span>
+                                    <span className="font-bold text-zinc-800 dark:text-zinc-100">{comment.official ? teamName : comment.author || "—"}</span>
                                     {comment.official ? <Badge tone="indigo" icon={ShieldCheck}>{tx({ TR: "Resmî yanıt", EN: "Official reply" })}</Badge> : null}
+                                    {comment.pinned ? <Badge tone="amber" icon={Pin}>{tx(PIN_COPY.pinned)}</Badge> : null}
                                     <RelativeTime iso={comment.createdAt} />
+                                    {canPin ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => void toggleCommentPin(comment.id, comment.pinned)}
+                                            disabled={pinBusy !== null}
+                                            className={cx("ms-auto inline-flex h-7 items-center gap-1 rounded-lg px-2 font-semibold text-zinc-500 transition hover:bg-zinc-200/70 hover:text-zinc-900 disabled:opacity-50 dark:hover:bg-white/10 dark:hover:text-white", FOCUS_RING)}
+                                            aria-label={tx(comment.pinned ? PIN_COPY.unpinComment : PIN_COPY.pinComment)}
+                                            title={tx(comment.pinned ? PIN_COPY.unpinComment : PIN_COPY.pinComment)}
+                                        >
+                                            {comment.pinned ? <PinOff className="h-3.5 w-3.5" aria-hidden="true" /> : <Pin className="h-3.5 w-3.5" aria-hidden="true" />}
+                                        </button>
+                                    ) : null}
                                 </div>
                                 {comment.replyToContent ? <p className="mt-1.5 line-clamp-2 border-s-2 border-zinc-300 ps-2 text-[12px] text-zinc-500 dark:border-white/20" dir="auto">{comment.replyToContent}</p> : null}
                                 <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-800 dark:text-zinc-200" dir="auto">{comment.content}</p>
@@ -159,7 +223,7 @@ function FeedbackDetail({ item, onStatus, onReplied, onDelete, onBack, statusBus
                         rows={3}
                         disabled={sending}
                         placeholder={tx({ TR: "Kullanıcıya ekip adına yanıt yazın…", EN: "Write a reply on behalf of the team…" })}
-                        hint={tx({ TR: "\"{name}\" adıyla, giriş yapmış herkese görünür.", EN: "Shown as \"{name}\" to everyone who is signed in." }, { name: OFFICIAL_AUTHOR })}
+                        hint={tx({ TR: "\"{name}\" adıyla, giriş yapmış herkese görünür.", EN: "Shown as \"{name}\" to everyone who is signed in." }, { name: teamName })}
                     />
                     {error ? <ErrorNotice error={error} /> : null}
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -176,7 +240,7 @@ function FeedbackDetail({ item, onStatus, onReplied, onDelete, onBack, statusBus
     );
 }
 
-export default function FeedbackSection({ params }: { params: URLSearchParams }) {
+export default function FeedbackSection({ params, role }: { params: URLSearchParams; role: StaffRole }) {
     const { tx } = useI18n();
     const toast = useToast();
     const errorText = useErrorText();
@@ -331,6 +395,7 @@ export default function FeedbackSection({ params }: { params: URLSearchParams })
                                                             : <MessageSquareText className="h-3.5 w-3.5 text-fuchsia-500" role="img" aria-label={tx({ TR: "Geri bildirim", EN: "Feedback" })} />}
                                                         <Badge tone={STATUS_TONES[item.status]}>{tx(FEEDBACK_STATUS_COPY[item.status])}</Badge>
                                                         {answered ? <Badge tone="indigo" icon={ShieldCheck}>{tx({ TR: "Yanıtlandı", EN: "Answered" })}</Badge> : null}
+                                                        {item.pinned ? <Badge tone="amber" icon={Pin}>{tx(PIN_COPY.pinned)}</Badge> : null}
                                                         <span className="ms-auto"><RelativeTime iso={item.createdAt} /></span>
                                                     </div>
                                                     <p className="mt-1.5 line-clamp-2 text-sm font-bold text-zinc-900 dark:text-white" dir="auto">{item.content}</p>
@@ -355,9 +420,11 @@ export default function FeedbackSection({ params }: { params: URLSearchParams })
                                 <FeedbackDetail
                                     key={selected.id}
                                     item={selected}
+                                    canPin={canPinFeedback(role)}
                                     statusBusy={statusBusy}
                                     onStatus={(next) => void changeStatus(selected, next)}
                                     onReplied={(next) => replaceItem(next)}
+                                    onPinned={(next) => replaceItem(next)}
                                     onDelete={() => { setDeleteTarget(selected); setDeleteError(null); }}
                                     onBack={() => setSelectedId(null)}
                                 />

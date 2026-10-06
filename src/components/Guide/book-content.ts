@@ -341,7 +341,7 @@ export const PAGES: BookPage[] = [
                     { TR: "Yalnızca başlık, kısa özet, görsel bağlantısı ve tarih alınır.", EN: "Only the headline, a short excerpt, the image link and the date are taken." },
                     { TR: "HTML temizlenir, düz metne çevrilir.", EN: "HTML is stripped to plain text." },
                     { TR: "Aynı haber iki kaynaktan gelirse bir kez gösterilir.", EN: "A story from two sources is shown once." },
-                    { TR: "Canlı akışta son 21 günün en yeni 240 haberi durur; daha eskileri arşivde saklanır ve \"Daha eski haberleri yükle\" ile okunur.", EN: "The live feed holds the newest 240 stories of the last 21 days; older ones are kept in the archive and read with \"Load older stories\"." },
+                    { TR: "Akışta yalnızca son 24 saatin haberleri durur; bir günden eski haberler ve yorumları kendiliğinden silinir.", EN: "The feed holds only the last 24 hours of stories; stories older than a day and their comments are deleted automatically." },
                 ],
             },
         ],

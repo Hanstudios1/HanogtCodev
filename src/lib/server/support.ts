@@ -91,6 +91,8 @@ const ERROR_MESSAGES: Record<SupportErrorCode, string> = {
     comment_required: "Yorum boş olamaz.",
     comment_too_long: "Yorum çok uzun.",
     comment_not_found: "Yorum bulunamadı.",
+    admins_only: "Mesajları yalnızca yöneticiler ve sahipler sabitleyebilir.",
+    pin_limit: "Panoda aynı anda en fazla 5 sabitlenmiş gönderi olabilir.",
     too_many_comments: "Yorum sınırına ulaşıldı.",
     profanity: "Metin topluluk kurallarına aykırı ifadeler içeriyor.",
     personal_data: "Herkese açık metinlerde kişisel veri paylaşmayın.",

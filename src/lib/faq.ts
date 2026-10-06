@@ -433,8 +433,8 @@ export const FAQS: Faq[] = [
         category: CATEGORY.news,
         question: { TR: "Hanogt News haberleri nereden geliyor?", EN: "Where does Hanogt News get its stories?" },
         answer: {
-            TR: "Haberler güvenilir yayıncıların herkese açık RSS/Atom akışlarından toplanır; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir. Yapay zeka sıralaması yalnızca topluluk oylarından hesaplanır.",
-            EN: "Stories are collected from trusted publishers' public RSS/Atom feeds; only the headline, a short excerpt and a link to the source are shown. The AI leaderboard is computed from community votes only.",
+            TR: "Haberler güvenilir yayıncıların herkese açık RSS/Atom akışlarından toplanır; yalnızca başlık, kısa özet ve kaynağa bağlantı gösterilir. Akış son 24 saati kapsar: bir günden eski haberler ve yorumları kendiliğinden silinir. Yapay zeka sıralaması yalnızca topluluk oylarından hesaplanır.",
+            EN: "Stories are collected from trusted publishers' public RSS/Atom feeds; only the headline, a short excerpt and a link to the source are shown. The feed covers the last 24 hours: stories older than a day and their comments are deleted automatically. The AI leaderboard is computed from community votes only.",
         },
     },
     {

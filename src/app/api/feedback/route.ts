@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { FEEDBACK_STATUSES, type FeedbackStatus } from "@/components/Admin/types";
 import { getActiveSession } from "@/lib/server/active-session";
-import { isOwnerEmail, toIso } from "@/lib/server/admin";
+import { isOwnerEmail, resolveUserRole, toIso } from "@/lib/server/admin";
 import { createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, runServerQuery } from "@/lib/server/firebase-rest";
 import { moderateText } from "@/lib/server/moderation";
 import { getClientKey, isSameOrigin } from "@/lib/server/request-security";
@@ -17,6 +17,8 @@ import {
     type BoardResponse,
     type BoardStaffRole,
     type SupportErrorCode,
+    canPinFeedback,
+    sortBoardItems,
 } from "@/lib/support";
 
 export const runtime = "nodejs";
@@ -33,6 +35,7 @@ type StoredComment = {
     createdAt?: unknown;
     editedAt?: unknown;
     official?: unknown;
+    pinned?: unknown;
 };
 
 type FeedbackRecord = {
@@ -47,6 +50,8 @@ type FeedbackRecord = {
     likes?: unknown;
     comments?: unknown;
     status?: unknown;
+    pinned?: unknown;
+    pinnedAt?: unknown;
 };
 
 type CommentEntry = StoredComment & { id: string };
@@ -153,7 +158,7 @@ function boardAuthor(id: string, email: string | null, profile: Record<string, u
     };
 }
 
-function buildBoard(records: Array<FeedbackRecord & { _id: string }>, profiles: Map<string, Record<string, unknown>>, viewer: string | null): BoardResponse {
+function buildBoard(records: Array<FeedbackRecord & { _id: string }>, profiles: Map<string, Record<string, unknown>>, viewer: string | null, canPin = false): BoardResponse {
     const authors: Record<string, BoardAuthor> = {};
     const authorFor = (rawEmail: unknown, fallbackName: unknown, fallbackPhoto: unknown, fallbackKey: string) => {
         const email = normalizeEmail(rawEmail) || null;
@@ -179,6 +184,7 @@ function buildBoard(records: Array<FeedbackRecord & { _id: string }>, profiles: 
                 createdAt: toIso(comment.createdAt),
                 editedAt: toIso(comment.editedAt),
                 own: Boolean(viewer && !official && comment.authorEmail === viewer),
+                pinned: comment.pinned === true,
             };
         });
         return {
@@ -194,11 +200,11 @@ function buildBoard(records: Array<FeedbackRecord & { _id: string }>, profiles: 
             own: Boolean(viewer && record.authorEmail === viewer),
             status: feedbackStatus(record.status),
             comments,
+            pinned: record.pinned === true,
+            pinnedAt: record.pinned === true ? toIso(record.pinnedAt) : null,
         };
     });
-    const time = (item: BoardItem) => Date.parse(item.createdAt ?? "") || 0;
-    items.sort((a, b) => b.likeCount - a.likeCount || time(b) - time(a));
-    return { items, authors, viewer: { signedIn: Boolean(viewer) } };
+    return { items: sortBoardItems(items), authors, viewer: { signedIn: Boolean(viewer), canPin: Boolean(viewer) && canPin } };
 }
 
 /** The public board: anyone may read it; likes, ownership and profile cards depend on the viewer. */
@@ -208,11 +214,21 @@ export async function GET(request: NextRequest) {
         const active = await getActiveSession();
         const viewer = active?.email ?? null;
         if (!viewer && anonymousCache && Date.now() - anonymousCache.at < ANONYMOUS_CACHE_MS) return supportJson(anonymousCache.payload);
-        const records = await runServerQuery<FeedbackRecord>({
-            collectionId: "feedback",
-            orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
-            limit: BOARD_LIMITS.items,
-        });
+        const [newest, pinned] = await Promise.all([
+            runServerQuery<FeedbackRecord>({
+                collectionId: "feedback",
+                orderBy: [{ field: "createdAt", direction: "DESCENDING" }],
+                limit: BOARD_LIMITS.items,
+            }),
+            // Pinned posts stay on the board even when they are older than the newest page.
+            runServerQuery<FeedbackRecord>({
+                collectionId: "feedback",
+                where: [{ field: "pinned", op: "EQUAL", value: true }],
+                limit: BOARD_LIMITS.pinned * 2,
+            }).catch(() => []),
+        ]);
+        const seen = new Set(newest.map((record) => record._id));
+        const records = [...newest, ...pinned.filter((record) => !seen.has(record._id))];
         const emails = new Set<string>();
         for (const record of records) {
             const author = normalizeEmail(record.authorEmail);
@@ -222,7 +238,8 @@ export async function GET(request: NextRequest) {
                 if (commenter) emails.add(commenter);
             }
         }
-        const payload = buildBoard(records, await loadProfiles([...emails]), viewer);
+        const role = active ? resolveUserRole(active.email, (active.user as Record<string, unknown>).role) : "user";
+        const payload = buildBoard(records, await loadProfiles([...emails]), viewer, canPinFeedback(role));
         if (!viewer) anonymousCache = { at: Date.now(), payload };
         return supportJson(payload);
     } catch (error) {

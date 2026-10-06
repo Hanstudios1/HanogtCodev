@@ -12,6 +12,7 @@ import Header from "@/components/Header";
 import ProductLogo from "@/components/ProductLogo";
 import SiteFooter from "@/components/SiteFooter";
 import { useI18n } from "@/lib/i18n";
+import { dropExpiredStories } from "@/lib/news/retention";
 import { NEWS_CATEGORIES, type NewsCategory } from "@/lib/news/sources";
 import AiRankings from "./AiRankings";
 import CommentsDrawer from "./CommentsDrawer";
@@ -240,7 +241,6 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const [cycle, setCycle] = useState(0);
     const [toast, setToast] = useState<string | null>(null);
     const [showAllSources, setShowAllSources] = useState(false);
-    const [archive, setArchive] = useState<{ loading: boolean; done: boolean; failed: boolean }>({ loading: false, done: false, failed: false });
 
     const initialRef = useRef(initial);
     const knownIds = useRef<Set<string> | null>(null);
@@ -250,6 +250,8 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const feedRef = useRef<HTMLDivElement | null>(null);
 
     const now = useSyncExternalStore(subscribeClock, clockSnapshot, () => serverNow);
+    // Hanogt News keeps a story for a day; a tab left open drops older ones as the clock moves on.
+    const liveItems = useMemo(() => (now ? dropExpiredStories(items, now) : items), [items, now]);
     const saved = useSyncExternalStore(subscribeSaved, readSaved, () => EMPTY_SAVED);
     const savedIds = new Set(saved.map((item) => item.id));
     const markets = useMarkets();
@@ -362,10 +364,10 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
 
     // Derived lists
     const needle = query.trim().toLocaleLowerCase("tr");
-    const languageFiltered = useMemo(() => items.filter((item) => lang === "all" || item.language === lang), [items, lang]);
+    const languageFiltered = useMemo(() => liveItems.filter((item) => lang === "all" || item.language === lang), [liveItems, lang]);
     // The mixed views (All, the ticker, trending topics) interleave categories so a busy one cannot bury the rest.
     const balanced = useMemo(() => balanceFeed(languageFiltered), [languageFiltered]);
-    const tickerItems = useMemo(() => balanceFeed(items).slice(0, 14), [items]);
+    const tickerItems = useMemo(() => balanceFeed(liveItems).slice(0, 14), [liveItems]);
     const pool = category === "saved" ? saved.filter((item) => lang === "all" || item.language === lang) : category === "all" && !needle ? balanced : languageFiltered;
     const filtered = pool.filter((item) => (category === "all" || category === "saved" || item.category === category || item.tags.includes(category))
         && (!needle || `${item.title} ${item.summary} ${item.source.name}`.toLocaleLowerCase("tr").includes(needle)));
@@ -376,29 +378,6 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const trending = trendingTopics(balanced, 14);
     const okSources = sources.filter((source) => source.ok).length;
     const countKey = [featured, ...visible.slice(0, 29)].filter((item): item is NewsItemView => Boolean(item)).map((item) => item.id).join(",");
-
-    // Older headlines from the archive (the live feed holds only the newest ones).
-    const loadOlder = async () => {
-        if (archive.loading || !items.length) return;
-        const oldest = items.reduce((min, item) => (item.publishedAt < min ? item.publishedAt : min), items[0].publishedAt);
-        setArchive((state) => ({ ...state, loading: true, failed: false }));
-        try {
-            const params = new URLSearchParams({ before: oldest, limit: "40" });
-            if (category !== "all" && category !== "saved") params.set("category", category);
-            const response = await fetch(`/api/news?${params.toString()}`, { cache: "no-store" });
-            const data = await response.json() as { items?: NewsItemView[]; done?: boolean };
-            if (!response.ok || !Array.isArray(data.items)) throw new Error("archive");
-            const known = knownIds.current ?? new Set<string>();
-            const older = data.items.filter((item) => !known.has(item.id));
-            for (const item of older) known.add(item.id);
-            knownIds.current = known;
-            setItems((existing) => [...existing, ...older]);
-            setLimit((value) => value + older.length);
-            setArchive({ loading: false, done: Boolean(data.done) || older.length === 0, failed: false });
-        } catch {
-            setArchive({ loading: false, done: false, failed: true });
-        }
-    };
 
     useEffect(() => {
         if (!countKey) return;
@@ -457,7 +436,6 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
     const openFinance = () => {
         setCategory("finance");
         setLimit(PAGE_SIZE);
-        setArchive({ loading: false, done: false, failed: false });
     };
     // The strip belongs to the general stream and to the Finance view; topic views stay uncluttered.
     const showMarkets = category === "all" || category === "finance";
@@ -466,7 +444,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
         <button
             key={id}
             type="button"
-            onClick={() => { setCategory(id); setLimit(PAGE_SIZE); setArchive({ loading: false, done: false, failed: false }); }}
+            onClick={() => { setCategory(id); setLimit(PAGE_SIZE); }}
             aria-pressed={category === id}
             className={`relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition ${category === id ? "text-white dark:text-zinc-900" : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/10"}`}
         >
@@ -504,7 +482,7 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                         </p>
                         <div className="mt-6 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: "180ms" }}>
                             {[
-                                { icon: Newspaper, value: items.length, label: tx({ TR: "haber", EN: "stories" }) },
+                                { icon: Newspaper, value: liveItems.length, label: tx({ TR: "haber (son 24 saat)", EN: "stories (last 24 hours)" }) },
                                 { icon: Radio, value: sources.length ? `${okSources}/${sources.length}` : "—", label: tx({ TR: "kaynak aktif", EN: "sources live" }) },
                                 { icon: Clock, value: `${Math.round(REFRESH_MS / 1000)}${tx({ TR: " sn", EN: "s" })}`, label: tx({ TR: "yenileme aralığı", EN: "refresh interval" }) },
                                 { icon: Bookmark, value: saved.length, label: tx({ TR: "kaydedilen", EN: "saved" }) },
@@ -647,17 +625,11 @@ export default function NewsPage({ initial }: { initial: NewsSnapshotView | null
                             </div>
                         ) : null}
 
-                        {!loading && items.length > 0 && rest.length <= limit && category !== "saved" && !needle && !archive.done ? (
-                            <div className="mt-6 flex flex-col items-center gap-2">
-                                <button type="button" onClick={() => void loadOlder()} disabled={archive.loading} className="inline-flex h-11 items-center gap-2 rounded-full border border-zinc-200 bg-white px-6 text-[14px] font-bold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100">
-                                    <Newspaper className={`h-4 w-4 ${archive.loading ? "animate-pulse" : ""}`} />
-                                    {archive.loading ? tx({ TR: "Eski haberler yükleniyor…", EN: "Loading older stories…" }) : tx({ TR: "Daha eski haberleri yükle", EN: "Load older stories" })}
-                                </button>
-                                {archive.failed ? <p className="text-[12px] text-rose-500">{tx({ TR: "Arşive şu anda ulaşılamıyor. Biraz sonra tekrar deneyin.", EN: "The archive can't be reached right now. Try again shortly." })}</p> : null}
-                            </div>
-                        ) : null}
-                        {!loading && archive.done && category !== "saved" && !needle ? (
-                            <p className="mt-6 text-center text-[12.5px] text-zinc-500">{tx({ TR: "Arşivin sonuna ulaştınız.", EN: "You've reached the end of the archive." })}</p>
+                        {!loading && liveItems.length > 0 && rest.length <= limit && category !== "saved" && !needle ? (
+                            <p className="mt-6 flex items-center justify-center gap-2 text-center text-[12.5px] text-zinc-500">
+                                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                {tx({ TR: "Hanogt News son 24 saatin haberlerini gösterir; daha eskileri kendiliğinden kaldırılır.", EN: "Hanogt News shows the last 24 hours of stories; older ones are removed automatically." })}
+                            </p>
                         ) : null}
                     </div>
 

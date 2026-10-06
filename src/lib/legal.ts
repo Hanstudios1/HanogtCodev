@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.5";
+export const LEGAL_VERSION = "5.6";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.5-2026-10-06";
+export const LEGAL_NOTICE_ID = "5.6-2026-10-06";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,13 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.6",
+        date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
+        items: [
+            { TR: "Hanogt News yalnızca son 24 saati tutar: Eski haber arşivi kaldırıldı. Bir günden eski haberler ve haber yorumları, yazıldıktan 24 saat sonra sunucumuzdan kendiliğinden silinir; yorumunuzu daha önce de silebilirsiniz. Gizlilik Politikası'ndaki saklama süreleri tablosu buna göre güncellendi.", EN: "Hanogt News keeps only the last 24 hours: the old news archive has been removed. Stories older than a day, and news comments 24 hours after they were written, are deleted from our server automatically; you can still delete your comment sooner. The retention table in the Privacy Policy was updated accordingly." },
+        ],
+    },
     {
         version: "5.5",
         date: { TR: "6 Ekim 2026", EN: "6 October 2026" },

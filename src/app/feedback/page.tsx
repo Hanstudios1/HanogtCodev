@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
     AlertTriangle, ArrowLeft, Bug, Check, CheckCircle2, ChevronDown, ClipboardList, Edit3, Gavel, HelpCircle, Inbox, LifeBuoy, LoaderCircle, Lock, LogIn,
-    MessageCircle, MessageSquareText, MessageSquareWarning, MessagesSquare, Monitor, Plus, RefreshCw, Reply, RotateCcw, Search, Send, ShieldAlert,
+    MessageCircle, MessageSquareText, MessageSquareWarning, MessagesSquare, Monitor, Pin, PinOff, Plus, RefreshCw, Reply, RotateCcw, Search, Send, ShieldAlert,
     ShieldCheck, Sparkles, ThumbsUp, Trash2, UserCog, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -37,6 +37,7 @@ import {
     TICKET_STATUS_COPY,
     canUserClose,
     canUserReopen,
+    sortBoardItems,
     isTicketId,
     matchesSearch,
     validateTicketDraft,
@@ -1172,14 +1173,25 @@ function AuthorName({ author, onOpen, size = "md" }: { author: BoardAuthor | und
     );
 }
 
-function BoardCommentView({ comment, author, signedIn, busy, onReply, onEdit, onDelete, onOpenAuthor }: {
+const PIN_TEXT = {
+    pinned: { TR: "Sabitlendi", EN: "Pinned" },
+    pinnedPost: { TR: "Sabitlenmiş gönderi", EN: "Pinned post" },
+    pin: { TR: "Sabitle", EN: "Pin" },
+    unpin: { TR: "Sabitlemeyi kaldır", EN: "Unpin" },
+    pinComment: { TR: "Yorumu sabitle", EN: "Pin comment" },
+    unpinComment: { TR: "Yorumun sabitlemesini kaldır", EN: "Unpin comment" },
+} satisfies Record<string, Copy>;
+
+function BoardCommentView({ comment, author, signedIn, busy, canPin, onReply, onEdit, onDelete, onPin, onOpenAuthor }: {
     comment: BoardComment;
     author: BoardAuthor | undefined;
     signedIn: boolean;
     busy: boolean;
+    canPin: boolean;
     onReply: () => void;
     onEdit: (content: string) => Promise<boolean>;
     onDelete: () => void;
+    onPin: () => void;
     onOpenAuthor: (author: BoardAuthor) => void;
 }) {
     const { tx } = useI18n();
@@ -1192,7 +1204,13 @@ function BoardCommentView({ comment, author, signedIn, busy, onReply, onEdit, on
         <li className={cx(
             "rounded-2xl border p-3",
             comment.official ? "border-violet-200 bg-violet-50/70 dark:border-violet-500/30 dark:bg-violet-500/10" : "border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40",
+            comment.pinned && "ring-1 ring-amber-300/70 dark:ring-amber-400/30",
         )}>
+            {comment.pinned ? (
+                <p className="mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                    <Pin className="h-3 w-3" aria-hidden="true" />{tx(PIN_TEXT.pinned)}
+                </p>
+            ) : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
                 {comment.official ? (
                     <span className="flex items-center gap-1.5 text-[13px] font-bold text-violet-700 dark:text-violet-300">
@@ -1210,6 +1228,11 @@ function BoardCommentView({ comment, author, signedIn, busy, onReply, onEdit, on
                     {signedIn ? (
                         <button type="button" onClick={onReply} className={cx("rounded-md p-1.5 text-zinc-400 transition hover:bg-zinc-200/60 hover:text-emerald-600 dark:hover:bg-zinc-800", FOCUS)} aria-label={tx({ TR: "Yanıtla", EN: "Reply" })} title={tx({ TR: "Yanıtla", EN: "Reply" })}>
                             <Reply className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                    ) : null}
+                    {canPin ? (
+                        <button type="button" onClick={onPin} disabled={busy} className={cx("rounded-md p-1.5 text-zinc-400 transition hover:bg-zinc-200/60 hover:text-amber-600 dark:hover:bg-zinc-800", FOCUS)} aria-label={tx(comment.pinned ? PIN_TEXT.unpinComment : PIN_TEXT.pinComment)} title={tx(comment.pinned ? PIN_TEXT.unpinComment : PIN_TEXT.pinComment)}>
+                            {comment.pinned ? <PinOff className="h-3.5 w-3.5" aria-hidden="true" /> : <Pin className="h-3.5 w-3.5" aria-hidden="true" />}
                         </button>
                     ) : null}
                     {comment.own ? (
@@ -1248,11 +1271,14 @@ function BoardCommentView({ comment, author, signedIn, busy, onReply, onEdit, on
     );
 }
 
-function BoardPost({ item, authors, signedIn, onMutate, onDelete, onOpenAuthor }: {
+function BoardPost({ item, authors, signedIn, canPin, onMutate, onPin, onDelete, onOpenAuthor }: {
     item: BoardItem;
     authors: Record<string, BoardAuthor>;
     signedIn: boolean;
+    /** The viewer is an admin or owner: pins go through the admin API. */
+    canPin: boolean;
     onMutate: (payload: Record<string, unknown>) => Promise<ApiFailure | null>;
+    onPin: (payload: Record<string, unknown>) => Promise<ApiFailure | null>;
     onDelete: (target: DeleteTarget) => void;
     onOpenAuthor: (author: BoardAuthor) => void;
 }) {
@@ -1278,6 +1304,16 @@ function BoardPost({ item, authors, signedIn, onMutate, onDelete, onOpenAuthor }
         return !error;
     };
 
+    const pin = async (payload: Record<string, unknown>) => {
+        setBusy(true);
+        setFailure(null);
+        const error = await onPin({ id: item.id, ...payload });
+        setBusy(false);
+        if (error) setFailure(error);
+    };
+    // The pinned comment comes first; the rest keep their order.
+    const comments = [...item.comments].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+
     const sendComment = async () => {
         if (!comment.trim()) return;
         if (await run({ action: "comment", content: comment, replyTo: replyTo?.id ?? null })) {
@@ -1293,7 +1329,12 @@ function BoardPost({ item, authors, signedIn, onMutate, onDelete, onOpenAuthor }
     const replyAuthor = (target: BoardComment) => (target.official ? tx(TEAM_NAME) : authors[target.authorId ?? ""]?.name || tx({ TR: "Hanogt kullanıcısı", EN: "Hanogt user" }));
 
     return (
-        <article className={cx(CARD, "p-4 sm:p-5")} aria-labelledby={`${uid}-content`}>
+        <article className={cx(CARD, "p-4 sm:p-5", item.pinned && "ring-1 ring-amber-300/80 dark:ring-amber-400/30")} aria-labelledby={`${uid}-content`}>
+            {item.pinned ? (
+                <p className="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                    <Pin className="h-3.5 w-3.5" aria-hidden="true" />{tx(PIN_TEXT.pinnedPost)}
+                </p>
+            ) : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <AuthorName author={author} onOpen={onOpenAuthor} />
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -1367,6 +1408,12 @@ function BoardPost({ item, authors, signedIn, onMutate, onDelete, onOpenAuthor }
                     <span>{tx({ TR: "Yorumlar ({count})", EN: "Comments ({count})" }, { count: item.comments.length })}</span>
                 </button>
                 {item.comments.some((entry) => entry.official) ? <Badge tone="violet" icon={ShieldCheck}>{tx({ TR: "Ekip yanıtladı", EN: "Team replied" })}</Badge> : null}
+                {canPin ? (
+                    <button type="button" onClick={() => void pin({ action: item.pinned ? "unpin" : "pin" })} disabled={busy} className={cx(GHOST_BUTTON, FOCUS, "hover:text-amber-600")} aria-pressed={item.pinned}>
+                        {item.pinned ? <PinOff className="h-3.5 w-3.5" aria-hidden="true" /> : <Pin className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {tx(item.pinned ? PIN_TEXT.unpin : PIN_TEXT.pin)}
+                    </button>
+                ) : null}
                 {item.own && !editing ? (
                     <span className="ms-auto flex items-center gap-1">
                         <button type="button" onClick={() => { setContent(item.content); setDescription(item.description ?? ""); setEditing(true); }} disabled={busy} className={cx(GHOST_BUTTON, FOCUS)}>
@@ -1381,18 +1428,20 @@ function BoardPost({ item, authors, signedIn, onMutate, onDelete, onOpenAuthor }
 
             {showComments ? (
                 <div id={`${uid}-comments`} className="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                    {item.comments.length ? (
+                    {comments.length ? (
                         <ul className="space-y-2.5">
-                            {item.comments.map((entry) => (
+                            {comments.map((entry) => (
                                 <BoardCommentView
                                     key={entry.id}
                                     comment={entry}
                                     author={entry.authorId ? authors[entry.authorId] : undefined}
                                     signedIn={signedIn}
                                     busy={busy}
+                                    canPin={canPin}
                                     onReply={() => { setReplyTo(entry); document.getElementById(`${uid}-comment-input`)?.focus(); }}
                                     onEdit={(text) => run({ action: "edit-comment", commentId: entry.id, content: text })}
                                     onDelete={() => onDelete({ itemId: item.id, commentId: entry.id, excerpt: entry.content })}
+                                    onPin={() => void pin({ action: entry.pinned ? "unpinComment" : "pinComment", commentId: entry.id })}
                                     onOpenAuthor={onOpenAuthor}
                                 />
                             ))}
@@ -1547,11 +1596,9 @@ function CommunityBoard({ board, signedIn, authPending, onOpenAuthor, onPrivate 
     const items = useMemo(() => board.data?.items ?? [], [board.data]);
     const authors = board.data?.authors ?? {};
     const counts = { question: items.filter((item) => item.type === "question").length, feedback: items.filter((item) => item.type === "feedback").length };
-    const visible = useMemo(() => {
-        const list = items.filter((item) => item.type === tab);
-        if (sort === "new") list.sort((a, b) => (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0));
-        return list;
-    }, [items, sort, tab]);
+    const canPin = board.data?.viewer.canPin === true;
+    // Pinned posts stay on top in both orders.
+    const visible = useMemo(() => sortBoardItems(items.filter((item) => item.type === tab), sort), [items, sort, tab]);
 
     const mutateBoard = useCallback(async (payload: Record<string, unknown>) => {
         if (payload.action === "like") {
@@ -1567,6 +1614,13 @@ function CommunityBoard({ board, signedIn, authPending, onOpenAuthor, onPrivate 
         reload();
         return result.ok ? null : result;
     }, [mutate, reload]);
+
+    // Only admins and owners see the pin buttons; the admin API checks the role again.
+    const pinBoard = useCallback(async (payload: Record<string, unknown>) => {
+        const result = await post<{ changed: boolean }>("/api/admin/feedback", payload);
+        reload();
+        return result.ok ? null : result;
+    }, [reload]);
 
     const confirmDelete = async () => {
         if (!deleteTarget) return;
@@ -1672,7 +1726,7 @@ function CommunityBoard({ board, signedIn, authPending, onOpenAuthor, onPrivate 
                         <AnimatePresence initial={false}>
                             {visible.slice(0, limit).map((item) => (
                                 <motion.div key={item.id} layout="position" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                                    <BoardPost item={item} authors={authors} signedIn={signedIn} onMutate={mutateBoard} onDelete={(target) => { setDeleteTarget(target); setDeleteFailure(null); }} onOpenAuthor={onOpenAuthor} />
+                                    <BoardPost item={item} authors={authors} signedIn={signedIn} canPin={canPin} onMutate={mutateBoard} onPin={pinBoard} onDelete={(target) => { setDeleteTarget(target); setDeleteFailure(null); }} onOpenAuthor={onOpenAuthor} />
                                 </motion.div>
                             ))}
                         </AnimatePresence>

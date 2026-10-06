@@ -24,6 +24,21 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.30",
+        version: "v0.3.30",
+        date: "2026-10-06",
+        title: { TR: "Hanogt News son 24 saat, üstte her zaman Panel", EN: "Hanogt News keeps 24 hours, Panel always on top" },
+        desc: { TR: "Haberler artık son 24 saati kapsıyor ve eski haberler siliniyor; üst menü Panel'i hiç gizlemiyor; geri bildirim panosunda sabitlemeyi yalnızca yöneticiler yapıyor.", EN: "News now covers the last 24 hours and older stories are deleted; the top bar never hides the Panel; only admins pin on the feedback board." },
+        items: [
+            { TR: "Hanogt News yalnızca son 24 saatin haberlerini gösterir; bir günden eski haberler ve yorumları kendiliğinden silinir.", EN: "Hanogt News shows only the last 24 hours; stories older than a day and their comments are deleted automatically." },
+            { TR: "Üst menüde sığmayan bağlantılar “Daha fazla” listesine geçer; giriş yapınca Panel her zaman görünür, telefonda da.", EN: "Links that don't fit in the top bar move into “More”; once you're signed in the Panel is always visible, on phones too." },
+            { TR: "Geri Bildirim / SSS panosunda gönderileri ve yorumları yalnızca yöneticiler sabitleyebilir; sabitlenenler en üstte durur.", EN: "On the Feedback / FAQ board only admins can pin posts and comments; pinned ones stay on top." },
+            { TR: "Yönetici Paneli'nde depolama kartı: koleksiyon boyutları ve tek tıkla eski haber temizliği.", EN: "A storage card in the Admin Panel: collection sizes and old-news cleanup in one click." },
+            { TR: "“Hanogt Ekibi” ve ilgili metinler 48 dile çevrildi.", EN: "“Hanogt Team” and related text translated into 48 languages." },
+            { TR: "Gizlilik Politikası 5.6.", EN: "Privacy Policy 5.6." },
+        ],
+    },
+    {
         id: "v0.3.29",
         version: "v0.3.29",
         date: "2026-10-06",

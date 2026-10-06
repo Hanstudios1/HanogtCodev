@@ -380,3 +380,32 @@ test("staff notifications: one item per ticket, linked to the admin inbox", () =
     assert.equal(STAFF_TICKET_NOTIFICATION_COPY.created.TR, STAFF_TICKET_NOTIFICATION_TITLES.created);
     assert.equal(STAFF_TICKET_NOTIFICATION_COPY.reply.TR, STAFF_TICKET_NOTIFICATION_TITLES.reply);
 });
+
+// ---------------------------------------------------------------------------
+// Pinning on the feedback board
+// ---------------------------------------------------------------------------
+
+test("only admins and owners pin on the feedback board", async () => {
+    const { canPinFeedback, BOARD_LIMITS } = await load("lib/support.ts");
+    assert.equal(canPinFeedback("owner"), true);
+    assert.equal(canPinFeedback("admin"), true);
+    assert.equal(canPinFeedback("moderator"), false);
+    assert.equal(canPinFeedback("user"), false);
+    assert.equal(canPinFeedback(null), false);
+    assert.equal(BOARD_LIMITS.pinned, 5);
+});
+
+test("pinned posts come first, the latest pin on top, in both orders", async () => {
+    const { sortBoardItems } = await load("lib/support.ts");
+    const post = (id, likeCount, createdAt, pinnedAt = null) => ({ id, likeCount, createdAt, pinned: pinnedAt !== null, pinnedAt });
+    const items = [
+        post("popular", 9, "2026-10-01T10:00:00.000Z"),
+        post("fresh", 0, "2026-10-06T10:00:00.000Z"),
+        post("pinned-old", 1, "2026-09-01T10:00:00.000Z", "2026-10-02T10:00:00.000Z"),
+        post("pinned-new", 0, "2026-09-02T10:00:00.000Z", "2026-10-05T10:00:00.000Z"),
+    ];
+    assert.deepEqual(sortBoardItems(items).map((item) => item.id), ["pinned-new", "pinned-old", "popular", "fresh"]);
+    assert.deepEqual(sortBoardItems(items, "new").map((item) => item.id), ["pinned-new", "pinned-old", "fresh", "popular"]);
+    // The input is left alone.
+    assert.equal(items[0].id, "popular");
+});

@@ -9,7 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { prepareSignOut } from "@/lib/ai/sign-out";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { StaffRole } from "@/components/Admin/types";
 import NotificationCenter, { useUnreadNotifications } from "@/components/NotificationCenter";
 import ProductLogo from "@/components/ProductLogo";
@@ -20,7 +20,7 @@ import StatusMenu from "@/components/StatusMenu";
 import { reportPresenceOffline, useOwnProfile, useOwnStatus } from "@/lib/account-profile-client";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PRESENCE_STATUS_COPY, STATUS_PREFERENCE_COPY, resolvePresence } from "@/lib/presence";
-import { ADMIN_NAV, isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon } from "@/lib/nav";
+import { ADMIN_NAV, fitNavItems, isActivePath, NAV_LABELS, PRIMARY_NAV, SECONDARY_NAV, type NavIcon, type NavItem } from "@/lib/nav";
 import ChangelogModal from "./ChangelogModal";
 import LangToggle from "./LangToggle";
 import ThemeToggle from "./ThemeToggle";
@@ -54,6 +54,41 @@ const C = {
 } satisfies Record<string, Copy>;
 
 type StaffAccess = { email: string; role: StaffRole | null; checkedAt: number };
+
+/**
+ * Remembers in this browser that someone was signed in, so while the session
+ * is still loading after a page load the bar already shows their links (the
+ * Panel) instead of jumping once it arrives. Only a hint for what to draw:
+ * every page checks the session itself.
+ */
+const SIGNED_IN_HINT = "hanogt:signed-in";
+
+function readSignedInHint() {
+    try {
+        return window.localStorage.getItem(SIGNED_IN_HINT) === "1";
+    } catch {
+        return false;
+    }
+}
+
+function writeSignedInHint(signedIn: boolean) {
+    try {
+        if (signedIn) window.localStorage.setItem(SIGNED_IN_HINT, "1");
+        else window.localStorage.removeItem(SIGNED_IN_HINT);
+    } catch {
+        // Storage can be blocked; the bar then waits for the session.
+    }
+}
+
+function subscribeNothing() {
+    return () => undefined;
+}
+
+const NAV_ITEM_CLASS = "group relative flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13.5px] font-semibold transition-colors";
+
+function LiveDot() {
+    return <span className="relative ms-0.5 flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" /></span>;
+}
 
 const STAFF_ACCESS_TTL_MS = 5 * 60_000;
 // The server also answers "not staff" when it could not check (database
@@ -103,6 +138,27 @@ export function useStaffRole(email: string | null): StaffRole | null {
     return current?.role ?? null;
 }
 
+function MoreItem({ item, active, onPick }: { item: NavItem; active: boolean; onPick: () => void }) {
+    const { t, tx } = useI18n();
+    const Icon = NAV_ICONS[item.icon];
+    const description = item.desc ? tx(item.desc) : item.descKey ? t(item.descKey) : "";
+    return (
+        <Link
+            role="menuitem"
+            href={item.href}
+            onClick={onPick}
+            aria-current={active ? "page" : undefined}
+            className={`flex items-center gap-3 rounded-xl px-3 py-2 transition ${active ? "bg-zinc-900/[0.05] dark:bg-white/[0.06]" : "hover:bg-zinc-100 dark:hover:bg-white/[0.06]"}`}
+        >
+            {item.product ? <ProductLogo product={item.product} size={28} /> : <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-zinc-100 text-zinc-600 dark:bg-white/10 dark:text-zinc-300"><Icon className="h-4 w-4" aria-hidden="true" /></span>}
+            <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1 text-[14px] font-semibold text-zinc-900 dark:text-white">{tx(item.label)}{item.live ? <LiveDot /> : null}</span>
+                {description ? <span className="block truncate text-[12px] text-zinc-500 dark:text-zinc-400">{description}</span> : null}
+            </span>
+        </Link>
+    );
+}
+
 export default function Header() {
     const { t, tx } = useI18n();
     const pathname = usePathname();
@@ -121,10 +177,13 @@ export default function Header() {
     const navRef = useRef<HTMLElement>(null);
     const navListRef = useRef<HTMLDivElement>(null);
     const menuButtonRef = useRef<HTMLButtonElement>(null);
-    // The menu bar shows when all of it fits on one line between the logo and
-    // the controls; how wide it is depends on the language. Otherwise the menu
-    // button takes over, as on phones.
-    const [navFits, setNavFits] = useState(true);
+    // The menu bar shows as many items as fit between the logo and the
+    // controls (how wide they are depends on the language); the rest go into
+    // "More". The first item, the Panel for signed-in people, always stays.
+    const measureRef = useRef<HTMLDivElement>(null);
+    const moreRef = useRef<HTMLDivElement>(null);
+    const [visibleCount, setVisibleCount] = useState(Number.POSITIVE_INFINITY);
+    const [moreOpen, setMoreOpen] = useState(false);
     const { scrollYProgress } = useScroll();
     const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 });
     // The header reflects the NextAuth cookie right away; waiting for the Firebase
@@ -133,6 +192,9 @@ export default function Header() {
     const account = auth.status === "authenticated" ? auth.data?.user : undefined;
     const signedIn = Boolean(account);
     const sessionLoading = auth.status === "loading";
+    const signedInHint = useSyncExternalStore(subscribeNothing, readSignedInHint, () => false);
+    // Someone signed in last time sees their links while the session is still loading.
+    const showMemberLinks = signedIn || (sessionLoading && signedInHint);
     const email = account?.email?.toLowerCase() || null;
     // Name, avatar and status come from /api/account/profile and /api/presence
     // (cached for the session, updated by Account Settings and the status menu).
@@ -156,24 +218,42 @@ export default function Header() {
     }, []);
 
     useEffect(() => {
+        if (auth.status !== "loading") writeSignedInHint(auth.status === "authenticated");
+    }, [auth.status]);
+
+    useEffect(() => {
         const nav = navRef.current;
-        const list = navListRef.current;
-        if (!nav || !list || typeof ResizeObserver === "undefined") return;
+        const measure = measureRef.current;
+        if (!nav || !measure || typeof ResizeObserver === "undefined") return;
         // Observing reports the sizes right away, and again whenever the space or the labels change.
         const observer = new ResizeObserver(() => {
-            if (getComputedStyle(nav).display === "none") return; // Below lg the menu button shows anyway.
-            // While the menu button shows, the bar would also get its place.
-            const button = menuButtonRef.current;
-            const buttonSpace = button && getComputedStyle(button).display !== "none" ? button.offsetWidth + (parseFloat(getComputedStyle(button.parentElement ?? button).columnGap) || 0) : 0;
-            // offsetWidth: the list's own width (w-max), not the active pill's animation.
-            const fits = list.offsetWidth <= nav.clientWidth + buttonSpace + 1;
-            setNavFits(fits);
-            if (fits) setMenuOpen(false);
+            if (getComputedStyle(nav).display === "none") return; // Below lg the menu button shows instead.
+            // The hidden copy holds every item and, last, the "More" button.
+            const widths = Array.from(measure.children, (child) => (child as HTMLElement).offsetWidth);
+            const moreWidth = widths.pop() ?? 0;
+            setVisibleCount(fitNavItems(widths, nav.clientWidth, moreWidth));
         });
         observer.observe(nav);
-        observer.observe(list);
+        observer.observe(measure);
         return () => observer.disconnect();
     }, []);
+
+    // "More" closes on a click outside, on Escape or when one of its links is picked.
+    useEffect(() => {
+        if (!moreOpen) return;
+        const onPointer = (event: MouseEvent) => {
+            if (moreRef.current && !moreRef.current.contains(event.target as Node)) setMoreOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setMoreOpen(false);
+        };
+        document.addEventListener("mousedown", onPointer);
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.removeEventListener("mousedown", onPointer);
+            document.removeEventListener("keydown", onKey);
+        };
+    }, [moreOpen]);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
@@ -222,7 +302,9 @@ export default function Header() {
 
     const displayName = profile?.username || account?.name || t("user");
     const displayAvatar = profile?.avatarUrl || account?.image;
-    const primary = PRIMARY_NAV.filter((item) => !item.auth || signedIn);
+    const primary = PRIMARY_NAV.filter((item) => !item.auth || showMemberLinks);
+    const shown = primary.slice(0, visibleCount);
+    const overflow = primary.slice(shown.length);
     const secondary = SECONDARY_NAV.filter((item) => !item.auth || signedIn);
     const notificationsLabel = t("notifications") || "Bildirimler";
     const bellLabel = unread > 0 ? tx(C.notificationsWithUnread, { label: notificationsLabel, count: unread }) : notificationsLabel;
@@ -238,6 +320,7 @@ export default function Header() {
     };
 
     const signOutNow = () => {
+        writeSignedInHint(false);
         reportPresenceOffline();
         prepareSignOut();
         void signOut({ callbackUrl: "/" });
@@ -256,24 +339,65 @@ export default function Header() {
                         </span>
                     </Link>
 
-                    <nav ref={navRef} className={`hidden min-w-0 flex-1 justify-center overflow-hidden lg:flex ${navFits ? "" : "invisible"}`} aria-label={t("hd_main_nav")}>
+                    <nav ref={navRef} className="relative hidden min-w-0 flex-1 justify-center lg:flex" aria-label={t("hd_main_nav")}>
+                        {/* A hidden copy of every item and of "More": its widths decide how many items the bar shows. */}
+                        <div className="pointer-events-none invisible absolute inset-x-0 top-0 h-0 overflow-hidden" aria-hidden="true">
+                            <div ref={measureRef} className="flex w-max items-center">
+                                {primary.map((item) => (
+                                    <span key={item.href} className={NAV_ITEM_CLASS}>
+                                        <span className="pb-0.5">{tx(item.label)}</span>
+                                        {item.live ? <span className="ms-0.5 h-1.5 w-1.5" /> : null}
+                                    </span>
+                                ))}
+                                <span className={NAV_ITEM_CLASS}>{tx(NAV_LABELS.more)}<ChevronDown className="h-3.5 w-3.5" /></span>
+                            </div>
+                        </div>
                         <div ref={navListRef} className="flex w-max items-center">
-                            {primary.map((item) => {
+                            {shown.map((item) => {
                                 const active = isActivePath(pathname, item.href);
                                 return (
                                     <Link
                                         key={item.href}
                                         href={item.href}
                                         aria-current={active ? "page" : undefined}
-                                        className={`group relative flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13.5px] font-semibold transition-colors ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
+                                        className={`${NAV_ITEM_CLASS} ${active ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
                                     >
                                         {active ? <motion.span layoutId="nav-active" className="absolute inset-0 rounded-xl bg-zinc-900/[0.06] ring-1 ring-zinc-900/[0.06] dark:bg-white/[0.08] dark:ring-white/10" transition={{ type: "spring", stiffness: 420, damping: 36 }} /> : null}
                                         {/* The accent underline draws in on hover (the current page has its pill instead). */}
                                         <span className={`relative pb-0.5 ${active ? "" : "underline-accent"}`}>{tx(item.label)}</span>
-                                        {item.live ? <span className="relative ms-0.5 flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" /></span> : null}
+                                        {item.live ? <LiveDot /> : null}
                                     </Link>
                                 );
                             })}
+                            {overflow.length ? (
+                                <div ref={moreRef} className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setMoreOpen((value) => !value)}
+                                        aria-haspopup="menu"
+                                        aria-expanded={moreOpen}
+                                        className={`${NAV_ITEM_CLASS} ${moreOpen || overflow.some((item) => isActivePath(pathname, item.href)) ? "text-zinc-950 dark:text-white" : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"}`}
+                                    >
+                                        {tx(NAV_LABELS.more)}
+                                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+                                    </button>
+                                    <AnimatePresence>
+                                        {moreOpen ? (
+                                            <motion.div
+                                                role="menu"
+                                                aria-label={tx(NAV_LABELS.more)}
+                                                initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                                                transition={{ duration: 0.14 }}
+                                                className="absolute end-0 top-full z-[70] mt-2 w-64 origin-top-right rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-2xl shadow-black/10 dark:border-white/10 dark:bg-zinc-900"
+                                            >
+                                                {overflow.map((item) => <MoreItem key={item.href} item={item} active={isActivePath(pathname, item.href)} onPick={() => setMoreOpen(false)} />)}
+                                            </motion.div>
+                                        ) : null}
+                                    </AnimatePresence>
+                                </div>
+                            ) : null}
                         </div>
                     </nav>
 
@@ -299,7 +423,21 @@ export default function Header() {
                             <ProductLogo product="ai" size={24} />
                         </button>
                         <div className="hidden sm:block"><LangToggle compact /></div>
-                        <ThemeToggle />
+                        {/* On phones the theme switch lives in the menu, which leaves room for the Panel. */}
+                        <div className="hidden sm:block"><ThemeToggle /></div>
+
+                        {showMemberLinks ? (
+                            <Link
+                                href="/dashboard"
+                                aria-current={isActivePath(pathname, "/dashboard") ? "page" : undefined}
+                                aria-label={tx(NAV_LABELS.dashboard)}
+                                title={tx(NAV_LABELS.dashboard)}
+                                className={`flex h-9 items-center gap-1.5 rounded-xl px-2 text-[13.5px] font-semibold transition lg:hidden ${isActivePath(pathname, "/dashboard") ? "bg-zinc-900/[0.06] text-zinc-950 dark:bg-white/10 dark:text-white" : "text-zinc-700 hover:bg-zinc-900/5 dark:text-zinc-200 dark:hover:bg-white/10"}`}
+                            >
+                                <LayoutDashboard className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+                                <span className="max-w-[5.5rem] truncate">{tx(NAV_LABELS.dashboard)}</span>
+                            </Link>
+                        ) : null}
 
                         {signedIn ? (
                             <button
@@ -412,7 +550,7 @@ export default function Header() {
                             ref={menuButtonRef}
                             type="button"
                             onClick={() => setMenuOpen((value) => !value)}
-                            className={`grid h-9 w-9 place-items-center rounded-xl text-zinc-700 transition hover:bg-zinc-900/5 dark:text-zinc-200 dark:hover:bg-white/10 ${navFits ? "lg:hidden" : ""}`}
+                            className="grid h-9 w-9 place-items-center rounded-xl text-zinc-700 transition hover:bg-zinc-900/5 lg:hidden dark:text-zinc-200 dark:hover:bg-white/10"
                             aria-expanded={menuOpen}
                             aria-controls="mobile-menu"
                             aria-label={tx(NAV_LABELS.menu)}
@@ -432,7 +570,7 @@ export default function Header() {
                 {menuOpen ? (
                     <motion.div
                         id="mobile-menu"
-                        className={`fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-white/95 backdrop-blur-xl dark:bg-zinc-950/95 ${navFits ? "lg:hidden" : ""}`}
+                        className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-white/95 backdrop-blur-xl lg:hidden dark:bg-zinc-950/95"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}

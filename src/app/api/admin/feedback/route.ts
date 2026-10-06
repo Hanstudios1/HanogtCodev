@@ -19,6 +19,7 @@ import {
     auditLogPatch,
     authorizeAdminRequest,
     httpsUrlOrNull,
+    roleAtLeast,
     readAdminBody,
     readText,
     requireDocId,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/server/admin";
 import { matchesSearch, newestPage, readPageCursor, readSearch } from "@/lib/server/admin-pages";
 import { commitServerMutations, commitServerPatches, countServerQuery, getServerDocument } from "@/lib/server/firebase-rest";
+import { BOARD_LIMITS } from "@/lib/support";
 
 export const runtime = "nodejs";
 
@@ -45,9 +47,13 @@ type FeedbackRecord = {
     comments?: unknown;
     status?: unknown;
     statusUpdatedAt?: unknown;
+    pinned?: unknown;
+    pinnedAt?: unknown;
 };
 
-const ACTIONS = ["setStatus", "reply", "delete"] as const;
+const ACTIONS = ["setStatus", "reply", "delete", "pin", "unpin", "pinComment", "unpinComment"] as const;
+/** Pinning is for admins and owners; moderators keep every other action. */
+const PIN_ACTIONS: ReadonlySet<string> = new Set(["pin", "unpin", "pinComment", "unpinComment"]);
 const PAGE_SIZE = 40;
 const TYPES = ["feedback", "question"] as const;
 
@@ -66,6 +72,7 @@ function toAdminComment(value: unknown, index: number): AdminFeedbackComment | n
         createdAt: toIso(comment.createdAt),
         official: comment.official === true,
         replyToContent: typeof comment.replyToContent === "string" ? comment.replyToContent.slice(0, 200) : null,
+        pinned: comment.pinned === true,
     };
 }
 
@@ -85,6 +92,8 @@ function toAdminFeedback(record: FeedbackRecord & { _id: string }): AdminFeedbac
         comments: comments.map(toAdminComment).filter((comment): comment is AdminFeedbackComment => Boolean(comment)),
         status: feedbackStatus(record.status),
         statusUpdatedAt: toIso(record.statusUpdatedAt),
+        pinned: record.pinned === true,
+        pinnedAt: record.pinned === true ? toIso(record.pinnedAt) : null,
     };
 }
 
@@ -150,13 +159,62 @@ export async function POST(request: NextRequest) {
     if (!guard.ok) return guard.response;
     const actor = guard.admin.email;
     try {
-        const body = await readAdminBody(request, ["action", "id", "status", "text"], 24_576);
+        const body = await readAdminBody(request, ["action", "id", "status", "text", "commentId"], 24_576);
         const action = requireEnum(body.action, ACTIONS, "invalid_action");
         const id = requireDocId(body.id, 64);
-        if ((action !== "setStatus" && body.status !== undefined) || (action !== "reply" && body.text !== undefined)) {
+        const commentAction = action === "pinComment" || action === "unpinComment";
+        if ((action !== "setStatus" && body.status !== undefined) || (action !== "reply" && body.text !== undefined) || (!commentAction && body.commentId !== undefined)) {
             throw new AdminHttpError(400, "unknown_field");
         }
+        if (PIN_ACTIONS.has(action) && !roleAtLeast(guard.admin.role, "admin")) throw new AdminHttpError(403, "admins_only");
         const path = `feedback/${id}`;
+
+        if (action === "pin" || action === "unpin") {
+            const pin = action === "pin";
+            const record = await getServerDocument<FeedbackRecord>(path);
+            if (!record) throw new AdminHttpError(404, "not_found");
+            if ((record.pinned === true) === pin) {
+                const unchanged: AdminFeedbackActionResponse = { id, pinned: pin, changed: false };
+                return adminJson(unchanged);
+            }
+            if (pin) {
+                const pinnedNow = await countServerQuery({ collectionId: "feedback", where: [{ field: "pinned", op: "EQUAL", value: true }], upTo: BOARD_LIMITS.pinned });
+                if (pinnedNow >= BOARD_LIMITS.pinned) throw new AdminHttpError(409, "pin_limit");
+            }
+            await commitServerPatches([
+                { path, data: { pinned: pin, pinnedAt: pin ? new Date() : null }, updateFields: ["pinned", "pinnedAt"], exists: true },
+                auditLogPatch(actor, pin ? "feedback.pin" : "feedback.unpin", path, { excerpt: stringOr(record.content, "", 120) }),
+            ]);
+            const response: AdminFeedbackActionResponse = { id, pinned: pin, changed: true };
+            return adminJson(response);
+        }
+
+        if (commentAction) {
+            const commentId = requireDocId(body.commentId, 100);
+            const pin = action === "pinComment";
+            // One pinned comment per post: pinning one unpins the others.
+            const pinnedCommentId = await withConflictRetry(async () => {
+                const record = await getServerDocument<FeedbackRecord>(path);
+                if (!record) throw new AdminHttpError(404, "not_found");
+                const comments = Array.isArray(record.comments) ? record.comments as Array<Record<string, unknown>> : [];
+                const target = comments.find((comment) => comment && comment.id === commentId);
+                if (!target) throw new AdminHttpError(404, "comment_not_found");
+                const updated = comments.map((comment) => {
+                    if (!comment || typeof comment !== "object") return comment;
+                    const next = { ...comment };
+                    if (comment.id === commentId) next.pinned = pin;
+                    else if (pin) delete next.pinned;
+                    return next;
+                });
+                await commitServerMutations([
+                    { type: "update", path, data: { comments: updated }, updateFields: ["comments"], ...(record._updateTime ? { updateTime: record._updateTime } : {}) },
+                    auditLogMutation(actor, pin ? "feedback.pin" : "feedback.unpin", path, { commentId, excerpt: stringOr(target.content, "", 120) }),
+                ]);
+                return pin ? commentId : null;
+            });
+            const response: AdminFeedbackActionResponse = { id, pinnedCommentId, changed: true };
+            return adminJson(response);
+        }
 
         if (action === "setStatus") {
             const status = requireEnum(body.status, FEEDBACK_STATUSES, "invalid_status");

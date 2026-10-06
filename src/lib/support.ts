@@ -88,7 +88,25 @@ export const BOARD_LIMITS = {
     comments: 200,
     /** Newest posts read for the board. */
     items: 300,
+    /** Posts pinned to the top of the board at once (only admins and owners pin). */
+    pinned: 5,
 } as const;
+
+/** Pinning on the feedback board is for admins and owners; moderators can't. */
+export function canPinFeedback(role: BoardStaffRole | "user" | null | undefined) {
+    return role === "owner" || role === "admin";
+}
+
+/** Pinned posts first (the latest pin on top), then the most liked, then the newest. */
+export function sortBoardItems<T extends { pinned: boolean; pinnedAt: string | null; likeCount: number; createdAt: string | null }>(items: T[], order: "top" | "new" = "top") {
+    const time = (value: string | null) => Date.parse(value ?? "") || 0;
+    return [...items].sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        if (a.pinned) return time(b.pinnedAt) - time(a.pinnedAt);
+        if (order === "top" && a.likeCount !== b.likeCount) return b.likeCount - a.likeCount;
+        return time(b.createdAt) - time(a.createdAt);
+    });
+}
 
 /** Name shown for every staff message; a staff member's own name or e-mail is never stored. */
 export const TEAM_AUTHOR_NAME = "Hanogt Ekibi";
@@ -380,6 +398,9 @@ export type SupportErrorCode =
     | "comment_required"
     | "comment_too_long"
     | "comment_not_found"
+    // Pinning on the board (admins and owners only)
+    | "admins_only"
+    | "pin_limit"
     | "too_many_comments"
     | "profanity"
     | "personal_data"
@@ -423,6 +444,8 @@ export const SUPPORT_ERROR_COPY: Record<SupportErrorCode | "network" | "unknown"
     comment_required: { TR: "Yorum boş olamaz.", EN: "The comment can't be empty." },
     comment_too_long: { TR: "Yorum en fazla {max} karakter olabilir.", EN: "A comment can have at most {max} characters.", vars: { max: BOARD_LIMITS.comment } },
     comment_not_found: { TR: "Yorum bulunamadı ya da silinmiş.", EN: "The comment wasn't found or was deleted." },
+    admins_only: { TR: "Mesajları yalnızca yöneticiler ve sahipler sabitleyebilir.", EN: "Only admins and owners can pin messages." },
+    pin_limit: { TR: "Panoda aynı anda en fazla {max} sabitlenmiş gönderi olabilir. Önce birinin sabitlemesini kaldırın.", EN: "At most {max} posts can be pinned on the board at once. Unpin one first.", vars: { max: BOARD_LIMITS.pinned } },
     too_many_comments: { TR: "Bu gönderi yorum sınırına ulaştı.", EN: "This post reached its comment limit." },
     profanity: { TR: "Metin topluluk kurallarına aykırı ifadeler içeriyor.", EN: "The text contains language that breaks the community rules." },
     personal_data: { TR: "Herkese açık panoda e-posta, telefon veya kimlik numarası gibi kişisel veriler paylaşmayın. Bunlar için destek talebi oluşturun.", EN: "Don't share personal data such as e-mail addresses, phone or ID numbers on the public board. Open a support ticket for that." },
@@ -759,6 +782,8 @@ export type BoardComment = {
     createdAt: string | null;
     editedAt: string | null;
     own: boolean;
+    /** Pinned to the top of the post's comments by an admin (one per post). */
+    pinned: boolean;
 };
 
 export type BoardItem = {
@@ -774,12 +799,16 @@ export type BoardItem = {
     own: boolean;
     status: FeedbackStatus;
     comments: BoardComment[];
+    /** Pinned to the top of the board by an admin. */
+    pinned: boolean;
+    pinnedAt: string | null;
 };
 
 export type BoardResponse = {
     items: BoardItem[];
     authors: Record<string, BoardAuthor>;
-    viewer: { signedIn: boolean };
+    /** canPin: the viewer is an admin or owner (pins go through /api/admin/feedback). */
+    viewer: { signedIn: boolean; canPin: boolean };
 };
 
 // ---------------------------------------------------------------------------

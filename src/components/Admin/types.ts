@@ -89,6 +89,10 @@ export type AdminErrorCode =
     | "invalid_price_id"
     | "price_mismatch"
     | "already_linked"
+    // Pinning on the feedback board.
+    | "admins_only"
+    | "pin_limit"
+    | "comment_not_found"
     | "unavailable";
 
 export type AdminErrorBody = { error: string; code: AdminErrorCode };
@@ -326,6 +330,7 @@ export type AdminFeedbackComment = {
     createdAt: string | null;
     official: boolean;
     replyToContent: string | null;
+    pinned: boolean;
 };
 
 export type AdminFeedbackItem = {
@@ -342,6 +347,8 @@ export type AdminFeedbackItem = {
     comments: AdminFeedbackComment[];
     status: FeedbackStatus;
     statusUpdatedAt: string | null;
+    pinned: boolean;
+    pinnedAt: string | null;
 };
 
 /** `counts` (every item, by status) comes with the first page only. */
@@ -352,6 +359,10 @@ export type AdminFeedbackActionResponse = {
     status?: FeedbackStatus;
     comment?: AdminFeedbackComment;
     deleted?: boolean;
+    /** After pin/unpin: whether the post is pinned now. */
+    pinned?: boolean;
+    /** After pinComment/unpinComment: the comment pinned now (null: none). */
+    pinnedCommentId?: string | null;
     changed: boolean;
 };
 
@@ -399,6 +410,8 @@ export type AdminAuditAction =
     | "feedback.set_status"
     | "feedback.reply"
     | "feedback.delete"
+    | "feedback.pin"
+    | "feedback.unpin"
     | "announcement.create"
     | "announcement.update"
     | "announcement.set_active"
@@ -409,6 +422,8 @@ export type AdminAuditAction =
     | "ticket.delete"
     | "user.delete_data"
     | "cloud.deploy_rules"
+    | "storage.purge_news"
+    | "storage.purge_expired"
     | "plan.set_price"
     | "coupon.create"
     | "coupon.set_active"
