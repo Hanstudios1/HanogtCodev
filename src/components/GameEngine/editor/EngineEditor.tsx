@@ -10,6 +10,7 @@ import {
     CloudOff,
     Download,
     Eye,
+    GitBranch,
     FileJson,
     FolderTree,
     Globe,
@@ -59,6 +60,8 @@ import SceneView, { type SceneViewApi } from "./SceneView";
 import ScriptEditorPanel from "./ScriptEditorPanel";
 import { EditorStore, useEditorState } from "./store";
 import WatchPanel, { SHOW_WATCH_EVENT } from "./WatchPanel";
+import AnimatorPanel from "./AnimatorPanel";
+import { SHOW_ANIMATOR_EVENT } from "./AnimatorEditor";
 import { engineLocale, useEngineText, type TextKey } from "./text";
 import { TilePainterStore } from "./tile-painter";
 import { Dropdown, IconButton, NumberInput, TabButton, Toasts, Toggle, cx, useToasts } from "./ui";
@@ -207,7 +210,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     }, []);
     const [gameLogs, setGameLogs] = useState<ConsoleEntry[]>([]);
     const logBuffer = useRef<{ entries: Map<number, ConsoleEntry>; timer: number }>({ entries: new Map(), timer: 0 });
-    const [bottomTab, setBottomTab] = useState<"project" | "console" | "watch">("project");
+    const [bottomTab, setBottomTab] = useState<"project" | "console" | "watch" | "animator">("project");
     const [scriptTabs, setScriptTabs] = useState<string[]>([]);
     const [activeScript, setActiveScript] = useState<string | null>(null);
     const [showScripts, setShowScripts] = useState(false);
@@ -222,7 +225,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const [layout, setLayout] = useState({ left: 260, right: 320, bottom: 230 });
     const [snapPrefs, setSnapPrefs] = useState<SnapPreferences>(DEFAULT_SNAP);
     const [showStats, setShowStats] = useState(false);
-    const [mobilePanel, setMobilePanel] = useState<null | "hierarchy" | "inspector" | "project" | "console" | "watch">(null);
+    const [mobilePanel, setMobilePanel] = useState<null | "hierarchy" | "inspector" | "project" | "console" | "watch" | "animator">(null);
     const importInput = useRef<HTMLInputElement | null>(null);
     const playing = session !== null;
     const dirty = revision !== savedRevision;
@@ -415,6 +418,16 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         return () => window.removeEventListener(SHOW_WATCH_EVENT, onShowWatch);
     }, []);
 
+    // The Animator inspector's "Open the state graph" button.
+    useEffect(() => {
+        const onShowAnimator = () => {
+            setBottomTab("animator");
+            if (!window.matchMedia("(min-width: 1024px)").matches) setMobilePanel("animator");
+        };
+        window.addEventListener(SHOW_ANIMATOR_EVENT, onShowAnimator);
+        return () => window.removeEventListener(SHOW_ANIMATOR_EVENT, onShowAnimator);
+    }, []);
+
     // ------------------------------------------------------------------
     // Keyboard shortcuts
     // ------------------------------------------------------------------
@@ -568,9 +581,13 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                 <TabButton active={bottomTab === "project"} onClick={() => setBottomTab("project")}><Package className="h-3.5 w-3.5" />{t("project")}</TabButton>
                 <TabButton active={bottomTab === "console"} onClick={() => setBottomTab("console")} count={errorCount}><Terminal className="h-3.5 w-3.5" />{t("console")}</TabButton>
                 <TabButton active={bottomTab === "watch"} onClick={() => setBottomTab("watch")}><Eye className="h-3.5 w-3.5" />{t("watch")}</TabButton>
+                <TabButton active={bottomTab === "animator"} onClick={() => setBottomTab("animator")}><GitBranch className="h-3.5 w-3.5" />{t("animatorPanel")}</TabButton>
             </div>
             <div className="min-h-0 flex-1">
-                {bottomTab === "project" ? panel(<ProjectPanel />, "project") : bottomTab === "watch" ? panel(<WatchPanel controlRef={playerRef} />, "watch") : panel(<ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />, "console")}
+                {bottomTab === "project" ? panel(<ProjectPanel />, "project")
+                    : bottomTab === "watch" ? panel(<WatchPanel controlRef={playerRef} />, "watch")
+                        : bottomTab === "animator" ? panel(<AnimatorPanel controlRef={playerRef} />, "animator")
+                            : panel(<ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />, "console")}
             </div>
         </div>
     );
@@ -730,21 +747,22 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                 {mobilePanel ? (
                     <div className="fixed inset-x-0 bottom-14 top-12 z-40 flex flex-col border-t border-white/10 bg-zinc-900/98 backdrop-blur-xl lg:hidden animate-fade-up">
                         <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/[0.06] px-3">
-                            <span className="text-[13px] font-semibold">{mobilePanel === "hierarchy" ? t("hierarchy") : mobilePanel === "inspector" ? t("inspector") : mobilePanel === "project" ? t("project") : mobilePanel === "watch" ? t("watch") : t("console")}</span>
+                            <span className="text-[13px] font-semibold">{mobilePanel === "hierarchy" ? t("hierarchy") : mobilePanel === "inspector" ? t("inspector") : mobilePanel === "project" ? t("project") : mobilePanel === "watch" ? t("watch") : mobilePanel === "animator" ? t("animatorPanel") : t("console")}</span>
                             <IconButton icon={X} label={t("close")} size="sm" onClick={() => setMobilePanel(null)} />
                         </div>
                         <div className="min-h-0 flex-1">
-                            {mobilePanel === "hierarchy" ? <HierarchyPanel /> : mobilePanel === "inspector" ? <InspectorPanel /> : mobilePanel === "project" ? <ProjectPanel /> : mobilePanel === "watch" ? <WatchPanel controlRef={playerRef} /> : <ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />}
+                            {mobilePanel === "hierarchy" ? <HierarchyPanel /> : mobilePanel === "inspector" ? <InspectorPanel /> : mobilePanel === "project" ? <ProjectPanel /> : mobilePanel === "watch" ? <WatchPanel controlRef={playerRef} /> : mobilePanel === "animator" ? <AnimatorPanel controlRef={playerRef} /> : <ConsolePanel entries={consoleEntries} onClear={() => setGameLogs([])} />}
                         </div>
                     </div>
                 ) : null}
-                <nav className="grid h-14 shrink-0 grid-cols-6 border-t border-white/[0.07] bg-zinc-900 lg:hidden" aria-label={t("editorPanels")}>
+                <nav className="grid h-14 shrink-0 grid-cols-7 border-t border-white/[0.07] bg-zinc-900 lg:hidden" aria-label={t("editorPanels")}>
                     {([
                         ["hierarchy", FolderTree, t("hierarchy")],
                         ["inspector", SlidersHorizontal, t("inspector")],
                         ["project", Package, t("project")],
                         ["console", Terminal, t("console")],
                         ["watch", Eye, t("watch")],
+                        ["animator", GitBranch, t("animatorPanel")],
                     ] as const).map(([key, Icon, label]) => (
                         <button key={key} type="button" onClick={() => setMobilePanel(mobilePanel === key ? null : key)} className={cx("flex min-w-0 flex-col items-center justify-center gap-0.5 truncate px-0.5 text-[10px] font-semibold", mobilePanel === key ? "text-indigo-300" : "text-zinc-400")}>
                             <Icon className="h-4 w-4" />{label}

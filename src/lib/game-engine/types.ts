@@ -407,6 +407,78 @@ export interface AnimationComponent extends ComponentBase {
     speed: number;
 }
 
+// ---------------------------------------------------------------------------
+// Animator (V5): a state machine over the clips of the object's Animation component
+// ---------------------------------------------------------------------------
+
+export const ANIMATOR_PARAMETER_TYPES = ["bool", "float", "int", "trigger"] as const;
+export type AnimatorParameterType = (typeof ANIMATOR_PARAMETER_TYPES)[number];
+
+/** if / ifNot test bools and triggers; greater / less test numbers; equals / notEqual test ints. */
+export const ANIMATOR_CONDITION_MODES = ["if", "ifNot", "greater", "less", "equals", "notEqual"] as const;
+export type AnimatorConditionMode = (typeof ANIMATOR_CONDITION_MODES)[number];
+
+/** Condition modes that make sense for each parameter type (the first is the default). */
+export const ANIMATOR_CONDITION_MODES_FOR: Record<AnimatorParameterType, readonly AnimatorConditionMode[]> = {
+    bool: ["if", "ifNot"],
+    trigger: ["if"],
+    float: ["greater", "less"],
+    int: ["equals", "notEqual", "greater", "less"],
+};
+
+/** `from` of a transition that can start from any state (Unity's Any State). */
+export const ANIMATOR_ANY_STATE = "any";
+
+export interface AnimatorParameter {
+    name: string;
+    type: AnimatorParameterType;
+    /** Starting value; bools and triggers use 0 or 1. */
+    value: number;
+}
+
+export interface AnimatorCondition {
+    parameter: string;
+    mode: AnimatorConditionMode;
+    threshold: number;
+}
+
+export interface AnimatorState {
+    id: string;
+    name: string;
+    /** Clip of the object's Animation component; null plays nothing. */
+    clip: string | null;
+    speed: number;
+    /** Node position in the Animator panel. */
+    x: number;
+    y: number;
+}
+
+export interface AnimatorTransition {
+    id: string;
+    /** Source state id, or ANIMATOR_ANY_STATE. */
+    from: string;
+    to: string;
+    /** All must hold; a transition without conditions needs an exit time. */
+    conditions: AnimatorCondition[];
+    /** Leave only once the current clip reached `exitTime` (normalized: 1 = one full play). */
+    hasExitTime: boolean;
+    exitTime: number;
+    /** Blend time in seconds. */
+    duration: number;
+}
+
+export interface AnimatorComponent extends ComponentBase {
+    type: "animator";
+    parameters: AnimatorParameter[];
+    states: AnimatorState[];
+    transitions: AnimatorTransition[];
+    /** State entered first (the first state when null). */
+    defaultState: string | null;
+    speed: number;
+    /** Panel positions of the Entry and Any State nodes. */
+    layout: { entry: { x: number; y: number }; any: { x: number; y: number } };
+}
+
 /**
  * Platformer movement on a dynamic Rigidbody 2D (V4): acceleration, jumps with
  * coyote time and a jump buffer, slopes and moving platforms.
@@ -532,6 +604,7 @@ export type GameComponent =
     | UIProgressBarComponent
     | TilemapComponent
     | AnimationComponent
+    | AnimatorComponent
     | CharacterController2DComponent
     | CameraFollowComponent
     | NavAgent2DComponent
@@ -560,6 +633,7 @@ export const COMPONENT_TYPES: readonly ComponentType[] = [
     "uiProgressBar",
     "tilemap",
     "animation",
+    "animator",
     "characterController2D",
     "cameraFollow",
     "navAgent2D",
@@ -588,6 +662,7 @@ export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
     "uiProgressBar",
     "tilemap",
     "animation",
+    "animator",
     "characterController2D",
     "cameraFollow",
     "navAgent2D",

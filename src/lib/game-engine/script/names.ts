@@ -26,6 +26,8 @@ export const GLOBAL_NAMES = new Set([
     "Tween", "Timer", "Ease", "LoopType", "UI", "EventSystem",
     // V4: path finding, one-shot sounds
     "Pathfinding", "AudioSource",
+    // V5: Animator.StringToHash
+    "Animator",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",
@@ -46,6 +48,7 @@ export const INT_RESULT_MEMBERS = new Set([
     "RoundToInt", "CeilToInt", "Parse", "ToInt32", "Next", "GetInt", "touchCount", "count", "find", "stoi", "stol", "Sign_int",
     "GetSiblingIndex", "CompareTo", "layer", "sceneCount", "buildIndex", "width", "height", "RandomRangeInt",
     "tileCount", "CountTiles", "clipCount",
+    "GetInteger", "StringToHash", "shortNameHash", "fullPathHash", "nameHash", "tagHash", "parameterCount", "layerCount",
 ]);
 
 /** API members returning float. */

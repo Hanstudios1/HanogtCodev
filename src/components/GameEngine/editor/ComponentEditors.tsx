@@ -3,6 +3,7 @@
 import { ExternalLink, Eye, Play, RotateCcw, Scaling } from "lucide-react";
 import {
     createAnimation,
+    createAnimator,
     createAudioSource,
     createCamera,
     createCameraFollow,
@@ -486,7 +487,7 @@ const COMPONENT_REFERENCE_TYPES: Record<string, GameComponent["type"][]> = {
     Camera: ["camera"], Light: ["light"], ParticleSystem: ["particleSystem"], AudioSource: ["audioSource"], Text: ["uiText"], TextMeshProUGUI: ["uiText"], TMP_Text: ["uiText"], TextMeshPro: ["uiText"],
     Button: ["uiButton"], Image: ["uiPanel", "uiProgressBar"], Panel: ["uiPanel"], RawImage: ["uiPanel"], Slider: ["uiSlider", "uiProgressBar"], ProgressBar: ["uiProgressBar"],
     Toggle: ["uiToggle"], InputField: ["uiInputField"], TMP_InputField: ["uiInputField"],
-    Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animation"],
+    Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animator", "animation"],
     CharacterController2D: ["characterController2D"], CameraFollow: ["cameraFollow"], CinemachineCamera: ["cameraFollow"], CinemachineVirtualCamera: ["cameraFollow"],
     NavAgent2D: ["navAgent2D"], NavMeshAgent: ["navAgent2D"],
     Joint: ["joint"], Joint2D: ["joint"], DistanceJoint2D: ["joint"], SpringJoint2D: ["joint"], SpringJoint: ["joint"],
@@ -708,6 +709,8 @@ export function defaultComponentFor(component: GameComponent, dimension: GameDim
         case "uiProgressBar": return { ...createUIProgressBar(), ...base };
         case "tilemap": return { ...createTilemap({ rows: component.rows, origin: component.origin, palette: component.palette }), ...base };
         case "animation": return { ...createAnimation({ clips: component.clips, defaultClip: component.defaultClip }), ...base };
+        // Reset keeps the state machine itself (like Animation keeps its clips).
+        case "animator": return { ...createAnimator({ parameters: component.parameters, states: component.states, transitions: component.transitions, defaultState: component.defaultState }), ...base };
         case "characterController2D": return { ...createCharacterController2D(), ...base };
         case "cameraFollow": return { ...createCameraFollow({ targetId: component.targetId }, dimension), ...base };
         case "navAgent2D": return { ...createNavAgent2D({ targetId: component.targetId }), ...base };

@@ -1895,8 +1895,18 @@ export class AnimationHandle extends ComponentHandle<AnimationComponent> {
     call(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue {
         const player = this.player;
         switch (name) {
-            case "Play":
             case "CrossFade":
+                // V5 rules: a real blend over fadeLength seconds (0.3 by default); before, it played the clip.
+                if (this.world.rules >= 5 && player) {
+                    const fade = args.length > 1 ? Math.max(0, toNumber(args[1], "fadeLength")) : 0.3;
+                    if (player.crossFade(this.entity, args[0] === undefined || args[0] === null ? null : String(args[0]), fade)) {
+                        player.autoPlayed = true;
+                        return true;
+                    }
+                }
+                this.play(args[0]);
+                return true;
+            case "Play":
             case "PlayQueued":
                 this.play(args[0]);
                 return true;

@@ -35,6 +35,8 @@ import {
     type VMValue,
 } from "../script/values";
 import type {
+    AnimatorState,
+    AnimatorTransition,
     AudioAsset,
     AudioSourceComponent,
     CameraComponent,
@@ -57,6 +59,7 @@ import type {
 import { SOUND_PRESETS, UNIQUE_COMPONENT_TYPES } from "../types";
 import { rectContains, scaleRect, uiRect, type ScreenRect } from "../ui-layout";
 import { AnimationPlayer } from "./animator";
+import { AnimatorController } from "./animator-controller";
 import { SoundEngine, type SoundHandle } from "./audio";
 import { CameraFollower, CameraShaker } from "./camera-follow";
 import { CharacterMotor } from "./character";
@@ -103,6 +106,7 @@ import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity
 import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
 import { ButtonHandle, ButtonLabelHandle, InputFieldHandle, PanelHandle, ProgressBarHandle, SliderHandle, ToggleHandle, sameCallable } from "./ui-handles";
 import { CameraFollowHandle, CharacterController2DHandle, JointHandle, NavAgent2DHandle } from "./v4-handles";
+import { AnimatorHandle } from "./v5-handles";
 
 export type LogLevel = "info" | "warning" | "error";
 
@@ -1055,7 +1059,8 @@ export class RuntimeWorld implements ScriptHost {
         }
         if (entity.emitter && entity.emitter.component.playOnStart && entity.emitter.component.enabled && !entity.emitter.playing && entity.emitter.count === 0) entity.emitter.play();
         const animator = entity.animator;
-        if (animator && !animator.autoPlayed && animator.component.enabled && animator.component.playOnStart) {
+        const stateMachine = entity.animatorComponent;
+        if (animator && !animator.autoPlayed && animator.component.enabled && animator.component.playOnStart && !(stateMachine?.enabled && stateMachine.states.length)) {
             animator.autoPlayed = true;
             animator.play(entity);
         }
@@ -1467,6 +1472,7 @@ export class RuntimeWorld implements ScriptHost {
                 case "uiProgressBar": handle = new ProgressBarHandle(this, entity, component); break;
                 case "tilemap": handle = new TilemapHandle(this, entity, component); break;
                 case "animation": handle = new AnimationHandle(this, entity, component); break;
+                case "animator": handle = new AnimatorHandle(this, entity, component); break;
                 case "characterController2D": handle = new CharacterController2DHandle(this, entity, component); break;
                 case "cameraFollow": handle = new CameraFollowHandle(this, entity, component); break;
                 case "navAgent2D": handle = new NavAgent2DHandle(this, entity, component); break;
@@ -1504,6 +1510,13 @@ export class RuntimeWorld implements ScriptHost {
             case "Slider":
             case "Scrollbar":
                 return component.type === "uiSlider" || component.type === "uiProgressBar";
+            case "Animator":
+                // V5 rules: the Animator state machine; an object without one still answers with its
+                // Animation component, like V4 did.
+                if (this.rules >= 5 && !this.program.classes.has("Animator")) {
+                    return component.type === "animator" || (component.type === "animation" && !entity.animatorComponent);
+                }
+                return component.type === "animation";
             default: {
                 const alias = this.builtInAlias(typeName);
                 if (alias) {
@@ -1604,8 +1617,11 @@ export class RuntimeWorld implements ScriptHost {
 
     addComponent(entity: RuntimeEntity, typeName: string): VMValue {
         if (entity.destroyed) hostError("Yok edilmiş bir nesneye bileşen eklenemez.", "MissingReferenceException");
-        // V4 rules: AddComponent<Slider>() makes a draggable slider (V3 made a progress bar).
-        const alias = typeName === "Slider" && this.rules >= 4 ? { type: "uiSlider" as const } : this.builtInAlias(typeName);
+        // V4 rules: AddComponent<Slider>() makes a draggable slider (V3 made a progress bar);
+        // V5 rules: AddComponent<Animator>() adds the state machine.
+        const alias = typeName === "Slider" && this.rules >= 4 ? { type: "uiSlider" as const }
+            : typeName === "Animator" && this.rules >= 5 && !this.program.classes.has("Animator") ? { type: "animator" as const }
+                : this.builtInAlias(typeName);
         if (alias) {
             const existing = UNIQUE_COMPONENT_TYPES.has(alias.type) ? entity.components.find((component) => component.type === alias.type) : undefined;
             if (existing) {
@@ -2602,16 +2618,83 @@ export class RuntimeWorld implements ScriptHost {
         if (animator) animator.stop(entity);
     }
 
+    /** The Animator state machine of an object (V5), created on first use. */
+    animatorControllerOf(entity: RuntimeEntity): AnimatorController | null {
+        const component = entity.animatorComponent;
+        if (!component) return null;
+        if (!entity.animatorController || entity.animatorController.component !== component) {
+            entity.animatorController = new AnimatorController(component);
+            entity.animatorStateTime = 0;
+        }
+        return entity.animatorController;
+    }
+
+    /** Seconds the object's Animator has been in its current state. */
+    animatorStateTime(entity: RuntimeEntity) {
+        return entity.animatorStateTime;
+    }
+
+    /** Enters an Animator state: its clip plays (or blends in) and scripts get OnStateExit / OnStateEnter. */
+    enterAnimatorState(entity: RuntimeEntity, controller: AnimatorController, state: AnimatorState, duration: number, transition: AnimatorTransition | null) {
+        const previous = controller.state;
+        const player = this.animatorOf(entity);
+        if (player) player.autoPlayed = true;
+        // A state entered from Start() (Animator.Play) replaces the default state.
+        controller.started = true;
+        entity.animatorStateTime = 0;
+        if (!controller.enter(state, player, entity, duration, transition)) {
+            this.warnOnce(`animator-clip:${entity.id}:${state.clip ?? ""}`, player
+                ? `Animator '${entity.name}': '${state.name}' durumu '${state.clip}' klibini bulamadı; Animation bileşenine bu adda bir klip ekleyin.`
+                : `Animator '${entity.name}': klipleri oynatmak için nesneye bir Animation bileşeni ekleyin.`);
+        }
+        for (const behaviour of entity.behaviours.slice()) {
+            if (!behaviour.live) continue;
+            if (previous && this.interpreter.hasMethod(behaviour.object, "OnStateExit", false)) this.callMethod(behaviour, "OnStateExit", [previous.name]);
+            if (behaviour.live && this.interpreter.hasMethod(behaviour.object, "OnStateEnter", false)) this.callMethod(behaviour, "OnStateEnter", [state.name]);
+        }
+    }
+
+    /** Runs the state machine for a frame: the first state on the first frame, then the transitions whose time has come. */
+    private stepAnimator(entity: RuntimeEntity, controller: AnimatorController, deltaTime: number) {
+        if (!controller.started) {
+            controller.started = true;
+            const first = controller.defaultState;
+            if (first && !controller.state) this.enterAnimatorState(entity, controller, first, 0, null);
+            return;
+        }
+        if (!controller.state) return;
+        entity.animatorStateTime += deltaTime * controller.state.speed * controller.component.speed * controller.speed;
+        const player = entity.animator;
+        if (controller.transition && !player?.blending) controller.transition = null;
+        // Instant transitions may chain within a frame; a few hops at most so a loop can't hang the game.
+        for (let hop = 0; hop < 4 && !entity.destroyed && controller.state; hop += 1) {
+            const state: AnimatorState = controller.state;
+            const normalizedTime = state.clip && player?.clip ? player.normalizedTime : entity.animatorStateTime;
+            const transition = controller.pick(normalizedTime);
+            const next = transition ? controller.targetOf(transition) : null;
+            if (!transition || !next) break;
+            controller.consume(transition);
+            this.enterAnimatorState(entity, controller, next, transition.duration, transition);
+            if (transition.duration > 0) break;
+        }
+    }
+
     private updateAnimations(deltaTime: number) {
         for (const entity of this.entities.values()) {
+            if (entity.destroyed || !entity.activeInHierarchy) continue;
             const animator = entity.animator;
-            if (!animator || !animator.playing || !animator.component.enabled || !entity.activeInHierarchy) continue;
-            const finished = animator.update(entity, deltaTime);
-            if (!finished) continue;
-            // Scripts on the object can react without a warning when nobody listens.
-            for (const state of entity.behaviours.slice()) {
-                if (state.live && this.interpreter.hasMethod(state.object, "OnAnimationComplete", false)) this.callMethod(state, "OnAnimationComplete", [finished]);
+            if (animator && animator.playing && animator.component.enabled) {
+                const finished = animator.update(entity, deltaTime);
+                if (finished) {
+                    // Scripts on the object can react without a warning when nobody listens.
+                    for (const state of entity.behaviours.slice()) {
+                        if (state.live && this.interpreter.hasMethod(state.object, "OnAnimationComplete", false)) this.callMethod(state, "OnAnimationComplete", [finished]);
+                    }
+                }
             }
+            if (entity.destroyed || !entity.animatorComponent?.enabled) continue;
+            const controller = this.animatorControllerOf(entity);
+            if (controller) this.stepAnimator(entity, controller, deltaTime);
         }
     }
 

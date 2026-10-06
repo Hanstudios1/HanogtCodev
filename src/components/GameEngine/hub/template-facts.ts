@@ -31,6 +31,7 @@ const COMPONENT_NAMES: Partial<Record<ComponentType, [string, string]>> = {
     audioSource: ["Audio Source", "Audio Source"],
     tilemap: ["Tilemap", "Tilemap"],
     animation: ["Animation", "Animation"],
+    animator: ["Animator", "Animator"],
     uiText: ["Text", "Text"],
     uiButton: ["Button", "Button"],
     uiPanel: ["Panel", "Panel"],

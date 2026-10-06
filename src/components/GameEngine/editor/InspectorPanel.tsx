@@ -14,6 +14,7 @@ import {
     Film,
     Footprints,
     Gauge,
+    GitBranch,
     Grid3x3,
     SlidersHorizontal,
     TextCursorInput,
@@ -58,6 +59,7 @@ import {
     defaultComponentFor,
 } from "./ComponentEditors";
 import AnimationEditor from "./AnimationEditor";
+import AnimatorEditor from "./AnimatorEditor";
 import { AudioInspector } from "./AudioAssets";
 import { useEditor } from "./context";
 import { MultiEditContext } from "./inspector-fields";
@@ -103,6 +105,7 @@ const COMPONENT_ICONS: Record<ComponentType, { icon: typeof Box; className: stri
     uiProgressBar: { icon: LayoutTemplate, className: "text-violet-300" },
     tilemap: { icon: Grid3x3, className: "text-lime-300" },
     animation: { icon: Film, className: "text-fuchsia-300" },
+    animator: { icon: GitBranch, className: "text-fuchsia-300" },
     characterController2D: { icon: Footprints, className: "text-orange-300" },
     cameraFollow: { icon: Video, className: "text-sky-300" },
     navAgent2D: { icon: Navigation, className: "text-cyan-300" },
@@ -132,6 +135,7 @@ function ComponentBody({ entity, component, disabled }: { entity: GameEntity; co
         case "uiProgressBar": return <UIProgressBarEditor entity={entity} component={component} disabled={disabled} />;
         case "tilemap": return <TilemapEditor entity={entity} component={component} disabled={disabled} />;
         case "animation": return <AnimationEditor entity={entity} component={component} disabled={disabled} />;
+        case "animator": return <AnimatorEditor entity={entity} component={component} disabled={disabled} />;
         case "characterController2D": return <CharacterController2DEditor entity={entity} component={component} disabled={disabled} />;
         case "cameraFollow": return <CameraFollowEditor entity={entity} component={component} disabled={disabled} />;
         case "navAgent2D": return <NavAgent2DEditor entity={entity} component={component} disabled={disabled} />;
@@ -212,7 +216,23 @@ function buildAddMenu({ entities, scripts, program, store, t, is2D, onNewScript 
             },
         ] },
         ...(is2D ? [{ label: "Navigation", icon: Navigation, items: [builtIn("navAgent2D", "Nav Agent 2D")] }] : []),
-        { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System"), builtIn("animation", "Animation")] },
+        { label: "Effects", icon: Sparkles, items: [
+            builtIn("particleSystem", "Particle System"),
+            builtIn("animation", "Animation"),
+            {
+                // The Animator plays the Animation component's clips, so it brings one along.
+                label: "Animator",
+                icon: GitBranch,
+                disabled: !entities.some((entity) => takes(entity, "animator")),
+                onSelect: () => store.update("Animator ekle", (draft) => {
+                    for (const entity of entities) {
+                        if (!takes(entity, "animator")) continue;
+                        if (!has(entity, "animation")) addComponent(draft, entity.id, "animation");
+                        addComponent(draft, entity.id, "animator");
+                    }
+                }),
+            },
+        ] },
         { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },
         { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar"), builtIn("uiSlider", "UI Slider"), builtIn("uiToggle", "UI Toggle"), builtIn("uiInputField", "UI Input Field")] },
         { separator: true, label: "" },
@@ -506,7 +526,7 @@ function MultiEntityInspector({ entities }: { entities: GameEntity[] }) {
                             )}
                         >
                             {isTransform ? <MultiTransformEditor entities={entities} disabled={disabled} />
-                                : component.type === "tilemap" || component.type === "animation" ? <p className="text-[11.5px] text-zinc-500">{t("multiOneAtATime")}</p>
+                                : component.type === "tilemap" || component.type === "animation" || component.type === "animator" ? <p className="text-[11.5px] text-zinc-500">{t("multiOneAtATime")}</p>
                                     : <ComponentBody entity={primary} component={component} disabled={disabled} />}
                         </Section>
                     );

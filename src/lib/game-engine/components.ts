@@ -2,6 +2,9 @@ import { createEngineId } from "./ids";
 import type {
     AnimationClip,
     AnimationComponent,
+    AnimatorComponent,
+    AnimatorState,
+    AnimatorTransition,
     AudioSourceComponent,
     CameraComponent,
     CameraFollowComponent,
@@ -318,6 +321,50 @@ export function createAnimation(overrides: Overrides<AnimationComponent> = {}): 
     };
 }
 
+/**
+ * An Animator state machine (V5). It plays the clips of the object's Animation
+ * component: build states with createAnimatorState and link them with
+ * createAnimatorTransition.
+ */
+export function createAnimator(overrides: Overrides<AnimatorComponent> = {}): AnimatorComponent {
+    const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+    const states = overrides.states ? copy(overrides.states) : [];
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "animator",
+        enabled: overrides.enabled ?? true,
+        parameters: overrides.parameters ? copy(overrides.parameters) : [],
+        states,
+        transitions: overrides.transitions ? copy(overrides.transitions) : [],
+        defaultState: overrides.defaultState !== undefined ? overrides.defaultState : states[0]?.id ?? null,
+        speed: overrides.speed ?? 1,
+        layout: overrides.layout ? copy(overrides.layout) : { entry: { x: 40, y: 160 }, any: { x: 40, y: 40 } },
+    };
+}
+
+/** A state that plays `clip` (a clip name of the Animation component). */
+export function createAnimatorState(name: string, clip: string | null, position: { x: number; y: number } = { x: 260, y: 160 }, speed = 1): AnimatorState {
+    return { id: createEngineId("state"), name, clip, speed, x: position.x, y: position.y };
+}
+
+/**
+ * A transition between two states (or from "any"). Without conditions it waits
+ * for the clip to finish (exit time 1); with conditions it leaves as soon as
+ * they hold, unless `hasExitTime` says otherwise.
+ */
+export function createAnimatorTransition(from: string, to: string, overrides: Partial<Omit<AnimatorTransition, "id" | "from" | "to">> = {}): AnimatorTransition {
+    const conditions = overrides.conditions ? JSON.parse(JSON.stringify(overrides.conditions)) as AnimatorTransition["conditions"] : [];
+    return {
+        id: createEngineId("transition"),
+        from,
+        to,
+        conditions,
+        hasExitTime: overrides.hasExitTime ?? conditions.length === 0,
+        exitTime: overrides.exitTime ?? 1,
+        duration: overrides.duration ?? 0.1,
+    };
+}
+
 export function createCharacterController2D(overrides: Overrides<CharacterController2DComponent> = {}): CharacterController2DComponent {
     return {
         id: overrides.id ?? createEngineId("cmp"),
@@ -482,6 +529,7 @@ export function createComponentOfType(type: Exclude<ComponentType, "script" | "t
         case "uiProgressBar": return createUIProgressBar();
         case "tilemap": return createTilemap();
         case "animation": return createAnimation();
+        case "animator": return createAnimator();
         case "characterController2D": return createCharacterController2D();
         case "cameraFollow": return createCameraFollow({}, dimension);
         case "navAgent2D": return createNavAgent2D();
@@ -509,6 +557,7 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
     uiProgressBar: "UI Progress Bar",
     tilemap: "Tilemap",
     animation: "Animation",
+    animator: "Animator",
     characterController2D: "Character Controller 2D",
     cameraFollow: "Camera Follow",
     navAgent2D: "Nav Agent 2D",

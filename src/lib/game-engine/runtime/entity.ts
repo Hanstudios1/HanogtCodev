@@ -3,6 +3,7 @@
 import { combineTRS, conjugateQuat, eulerDegFromQuat, mulQuat, normalizeQuat, quatFromEulerDeg, worldToLocalPoint, type Quat, type TRS } from "../math";
 import type { ClassInfo, HostObject, ScriptObject, VMCoroutine, VMValue } from "../script/values";
 import type {
+    AnimatorComponent,
     CameraFollowComponent,
     CharacterController2DComponent,
     ColliderComponent,
@@ -17,6 +18,7 @@ import type {
     Vector3,
 } from "../types";
 import type { AnimatedTarget, AnimationPlayer } from "./animator";
+import type { AnimatorController } from "./animator-controller";
 import type { CameraFollower } from "./camera-follow";
 import type { CharacterMotor } from "./character";
 import type { NavAgentState } from "./nav-agent";
@@ -112,6 +114,11 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     /** Bumped when scripts change tiles so physics rebuilds the tile shapes. */
     tilemapRevision = 0;
     animator: AnimationPlayer | null = null;
+    /** The Animator component (V5) and its state machine, created on first use. */
+    animatorComponent: AnimatorComponent | null = null;
+    animatorController: AnimatorController | null = null;
+    /** Seconds in the current Animator state (states without a clip use it as their time). */
+    animatorStateTime = 0;
     characterController: CharacterController2DComponent | null = null;
     cameraFollow: CameraFollowComponent | null = null;
     navAgent: NavAgent2DComponent | null = null;
@@ -163,6 +170,7 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
         this.characterController = (this.components.find((component) => component.type === "characterController2D") as CharacterController2DComponent | undefined) ?? null;
         this.cameraFollow = (this.components.find((component) => component.type === "cameraFollow") as CameraFollowComponent | undefined) ?? null;
         this.navAgent = (this.components.find((component) => component.type === "navAgent2D") as NavAgent2DComponent | undefined) ?? null;
+        this.animatorComponent = (this.components.find((component) => component.type === "animator") as AnimatorComponent | undefined) ?? null;
         this.joints = this.components.filter((component): component is JointComponent => component.type === "joint");
         this.renderVersion += 1;
     }

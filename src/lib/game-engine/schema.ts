@@ -16,6 +16,9 @@ import { isTileKey, TILEMAP_LIMITS } from "./tilemap";
 import {
     ANIMATION_PROPERTIES,
     ANIMATION_WRAP_MODES,
+    ANIMATOR_ANY_STATE,
+    ANIMATOR_CONDITION_MODES_FOR,
+    ANIMATOR_PARAMETER_TYPES,
     EASINGS,
     ENGINE_RULES,
     GAME_ENGINE_SCHEMA_VERSION,
@@ -32,6 +35,11 @@ import {
     type AnimationProperty,
     type AnimationTrack,
     type AnimationValue,
+    type AnimatorComponent,
+    type AnimatorCondition,
+    type AnimatorParameter,
+    type AnimatorState,
+    type AnimatorTransition,
     type EngineRules,
     type ColliderComponent,
     type GameComponent,
@@ -82,6 +90,10 @@ export const ENGINE_LIMITS = {
     maxAnimationClips: 16,
     maxAnimationTracks: 12,
     maxAnimationKeys: 120,
+    maxAnimatorParameters: 32,
+    maxAnimatorStates: 32,
+    maxAnimatorTransitions: 96,
+    maxAnimatorConditions: 8,
 } as const;
 
 export class SchemaError extends Error {
@@ -197,6 +209,93 @@ function assertSafeTree(value: unknown) {
 // ---------------------------------------------------------------------------
 // V3 component helpers
 // ---------------------------------------------------------------------------
+
+/** "Run" → "Run 2" while the (case-insensitive) name is taken. */
+function uniqueName(name: string, taken: Set<string>, max: number) {
+    let candidate = name;
+    for (let index = 2; taken.has(candidate.toLowerCase()); index += 1) candidate = `${name.slice(0, max - String(index).length - 1)} ${index}`;
+    taken.add(candidate.toLowerCase());
+    return candidate;
+}
+
+/**
+ * The Animator's parameters, states and transitions (V5): names are unique,
+ * transitions point at existing states and conditions at existing parameters
+ * with a mode their type supports.
+ */
+function normalizeAnimator(source: AnyRecord): Omit<AnimatorComponent, "id" | "type" | "enabled"> {
+    const parameters: AnimatorParameter[] = [];
+    const parameterNames = new Set<string>();
+    for (const raw of Array.isArray(source.parameters) ? source.parameters.slice(0, ENGINE_LIMITS.maxAnimatorParameters) : []) {
+        const item = rec(raw);
+        const name = str(item.name, "", 40);
+        if (!name || parameterNames.has(name.toLowerCase())) continue;
+        parameterNames.add(name.toLowerCase());
+        const type = enumOf(item.type, ANIMATOR_PARAMETER_TYPES, "bool");
+        const value = type === "bool" || type === "trigger" ? (num(item.value, 0) ? 1 : 0) : type === "int" ? int(item.value, 0, -1_000_000, 1_000_000) : num(item.value, 0);
+        parameters.push({ name, type, value });
+    }
+    const states: AnimatorState[] = [];
+    const stateIds = new Set<string>();
+    const stateNames = new Set<string>();
+    for (const raw of Array.isArray(source.states) ? source.states.slice(0, ENGINE_LIMITS.maxAnimatorStates) : []) {
+        const item = rec(raw);
+        let id = idOr(item.id, "state");
+        if (stateIds.has(id) || id === ANIMATOR_ANY_STATE) id = createEngineId("state");
+        stateIds.add(id);
+        const clip = str(item.clip, "", ENGINE_LIMITS.maxNameLength);
+        states.push({
+            id,
+            name: uniqueName(str(item.name, "State", 40), stateNames, 40),
+            clip: clip || null,
+            speed: num(item.speed, 1, 0, 10),
+            x: num(item.x, 260, -10_000, 10_000),
+            y: num(item.y, 160, -10_000, 10_000),
+        });
+    }
+    const transitions: AnimatorTransition[] = [];
+    const transitionIds = new Set<string>();
+    for (const raw of Array.isArray(source.transitions) ? source.transitions.slice(0, ENGINE_LIMITS.maxAnimatorTransitions) : []) {
+        const item = rec(raw);
+        const from = item.from === ANIMATOR_ANY_STATE ? ANIMATOR_ANY_STATE : typeof item.from === "string" && stateIds.has(item.from) ? item.from : null;
+        const to = typeof item.to === "string" && stateIds.has(item.to) ? item.to : null;
+        if (!from || !to) continue;
+        let id = idOr(item.id, "transition");
+        if (transitionIds.has(id)) id = createEngineId("transition");
+        transitionIds.add(id);
+        const conditions: AnimatorCondition[] = [];
+        for (const rawCondition of Array.isArray(item.conditions) ? item.conditions.slice(0, ENGINE_LIMITS.maxAnimatorConditions) : []) {
+            const condition = rec(rawCondition);
+            const parameter = parameters.find((candidate) => candidate.name === condition.parameter);
+            if (!parameter) continue;
+            const modes = ANIMATOR_CONDITION_MODES_FOR[parameter.type];
+            conditions.push({
+                parameter: parameter.name,
+                mode: enumOf(condition.mode, modes, modes[0]),
+                threshold: parameter.type === "int" ? int(condition.threshold, 0, -1_000_000, 1_000_000) : num(condition.threshold, 0),
+            });
+        }
+        transitions.push({
+            id,
+            from,
+            to,
+            conditions,
+            // A transition with nothing to wait for would fire every frame: it waits for the clip instead.
+            hasExitTime: conditions.length === 0 ? true : bool(item.hasExitTime, false),
+            exitTime: num(item.exitTime, 1, 0, 100),
+            duration: num(item.duration, 0.1, 0, 10),
+        });
+    }
+    const layout = rec(source.layout);
+    return {
+        parameters,
+        states,
+        transitions,
+        defaultState: typeof source.defaultState === "string" && stateIds.has(source.defaultState) ? source.defaultState : states[0]?.id ?? null,
+        speed: num(source.speed, 1, 0, 10),
+        layout: { entry: vec2(layout.entry, { x: 40, y: 160 }, -10_000, 10_000), any: vec2(layout.any, { x: 40, y: 40 }, -10_000, 10_000) },
+    };
+}
 
 function uiRectFields(source: AnyRecord, defaults: UIRectFields): UIRectFields {
     return {
@@ -601,6 +700,8 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 speed: num(source.speed, 1, 0, 10),
             };
         }
+        case "animator":
+            return { id, type, enabled, ...normalizeAnimator(source) };
         case "characterController2D":
             return {
                 id,

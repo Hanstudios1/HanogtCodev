@@ -2,6 +2,7 @@
 import { compositeFormat } from "../script/stdlib";
 import { NOT_FOUND, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMRef, Vec3, type VMValue } from "../script/values";
 import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, type Vector3 } from "../types";
+import { animatorHash } from "./animator-controller";
 import type { RuntimeEntity } from "./entity";
 import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toVector, typeNameFrom, vec } from "./handles";
 import { scaleTarget, TimerHandle, TweenHandle, type TweenKind } from "./tweens";
@@ -755,6 +756,11 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
             if (args[0] !== null && args[0] !== undefined) world.playSound(String(args[0]), typeof args[2] === "number" ? args[2] : 1);
             return undefined;
         },
+    }));
+
+    // Animator.StringToHash(name): a number Animator methods accept instead of the name (V5).
+    globals.set("Animator", ns("Animator", {}, {
+        StringToHash: (args) => animatorHash(String(args[0] ?? "")),
     }));
 
     globals.set("AudioListener", ns("AudioListener", {
