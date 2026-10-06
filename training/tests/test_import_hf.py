@@ -307,6 +307,74 @@ class ConverterTests(unittest.TestCase):
             self.assertEqual(calls[0][0], "json")
             self.assertEqual(calls[0][3], {"train": ["hf://datasets/x/two@abc/data/train.jsonl"]})
 
+    def test_tool_use_conversations_keep_calls_results_and_definitions(self):
+        tools = [{"type": "function", "function": {"name": "get_bitcoin_balance", "parameters": {"type": "object", "properties": {"address": {"type": "string"}}}}}]
+        # Nemotron-Agentic-v1: arguments and tool results as objects, tools at the top level.
+        agentic = {"uuid": "u1", "tools": tools, "messages": [
+            {"role": "system", "content": ""},
+            {"role": "user", "content": "Check the balance of 1A1zP1."},
+            {"role": "assistant", "content": "", "reasoning_content": "Use the balance tool.", "tool_calls": [{"id": "c1", "type": "function", "function": {"name": "get_bitcoin_balance", "arguments": {"address": "1A1zP1"}}}]},
+            {"role": "tool", "content": {"balance": "0.5"}},
+            {"role": "assistant", "content": "The balance is 0.5 BTC.", "tool_calls": None, "reasoning_content": "Report it."},
+        ]}
+        source = {"id": "hf-tools", "license": "CC-BY-4.0", "family": ["tool-use"], "hf": {"converter": "tools", "lang": "EN"}}
+        item, reason = import_hf.convert_row(source, agentic, import_hf.spec_of(source))
+        self.assertIsNone(reason)
+        self.assertEqual([message["role"] for message in item["messages"]], ["user", "assistant", "tool", "assistant"])
+        self.assertEqual(item["messages"][1]["tool_calls"][0]["function"], {"name": "get_bitcoin_balance", "arguments": {"address": "1A1zP1"}})
+        self.assertEqual(json.loads(item["messages"][2]["content"]), {"balance": "0.5"})
+        self.assertEqual((item["family"], item["tools"]), ("tool-use", tools))
+        # Nemotron v1: arguments as JSON strings, tools inside the metadata JSON string.
+        nemotron = {"uuid": "u2", "metadata": json.dumps({"tools": tools}), "messages": [
+            {"role": "user", "content": "Balance of 1A1zP1?", "tool_calls": []},
+            {"role": "assistant", "content": "<think>\nCall it.\n</think>", "tool_calls": [{"id": "c2", "type": "function", "function": {"name": "get_bitcoin_balance", "arguments": "{\"address\": \"1A1zP1\"}"}}]},
+            {"role": "tool", "content": "{\"balance\": 0.5}", "tool_calls": []},
+            {"role": "assistant", "content": "It holds 0.5 BTC.", "tool_calls": []},
+        ]}
+        source_v1 = {"id": "hf-tools-v1", "license": "CC-BY-4.0", "family": ["tool-use"], "hf": {"converter": "tools", "toolsField": "metadata.tools", "lang": "EN"}}
+        item, reason = import_hf.convert_row(source_v1, nemotron, import_hf.spec_of(source_v1))
+        self.assertIsNone(reason)
+        self.assertEqual(item["messages"][1]["tool_calls"][0]["function"]["arguments"], {"address": "1A1zP1"})
+        self.assertEqual(item["tools"], tools)
+        # No tool definitions, a call with broken arguments, or no call at all: not a tool-use sample.
+        self.assertEqual(import_hf.convert_row(source_v1, {**nemotron, "metadata": "{}"}, import_hf.spec_of(source_v1)), (None, "no_tools"))
+        broken = json.loads(json.dumps(nemotron))
+        broken["messages"][1]["tool_calls"][0]["function"]["arguments"] = "{not json"
+        self.assertEqual(import_hf.convert_row(source_v1, broken, import_hf.spec_of(source_v1)), (None, "shape"))
+        # Tool definitions count toward the size limit.
+        small = {"id": "hf-tools-small", "license": "CC-BY-4.0", "family": ["tool-use"], "hf": {"converter": "tools", "lang": "EN", "maxChars": 300}}
+        self.assertEqual(import_hf.convert_row(small, {**agentic, "tools": tools * 5}, import_hf.spec_of(small)), (None, "too_long"))
+        # Without keep_tools, tool turns still make a conversation unusable for the other converters.
+        self.assertIsNone(import_hf.normalize_messages(agentic["messages"]))
+
+    def test_json_lines_reader_reads_the_files_line_by_line(self):
+        lines = [b'{"a": 1}\n', b"\n", b'{"a": {"nested": true}}\n']
+
+        class File:
+            def __init__(self, *_args, **_kwargs):
+                pass
+
+            def __enter__(self):
+                return iter(lines)
+
+            def __exit__(self, *_args):
+                return False
+
+        class FileSystem:
+            opened = []
+
+            def __init__(self, token=None):
+                pass
+
+            def open(self, path, mode, block_size=None):
+                FileSystem.opened.append(path)
+                return File()
+
+        with mock.patch.dict(sys.modules, {"huggingface_hub": types.SimpleNamespace(HfFileSystem=FileSystem)}):
+            rows = list(import_hf.jsonl_rows("nvidia/x", ["data/a.jsonl"], revision="abc"))
+        self.assertEqual(rows, [{"a": 1}, {"a": {"nested": True}}])
+        self.assertEqual(FileSystem.opened, ["datasets/nvidia/x@abc/data/a.jsonl"])
+
     def test_source_selection_respects_status(self):
         registry = {"sources": [
             {"id": "a", "kind": "hf", "status": "allowed"},

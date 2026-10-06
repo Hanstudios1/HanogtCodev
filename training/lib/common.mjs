@@ -30,6 +30,8 @@ export const FAMILIES = [
     "knowledge",
     "security",
     "judge",
+    // Calling tools as an agent (imported tool-use conversations; the site's own tool calls stay "agent").
+    "tool-use",
 ];
 export const VERIFIED = ["executed", "doctest", "upstream-ci", "knowledge", "human", "none"];
 const ROLES = new Set(["system", "user", "assistant", "tool"]);

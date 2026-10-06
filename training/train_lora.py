@@ -10,10 +10,17 @@ message with "reasoning_content" is rendered by Qwen3's chat template as a
 <think> block, so the model learns to show its thinking on those samples.
 
 Base models (the model is a parameter; "Qwen 2.7" doesn't exist):
-  --preset 27b    Qwen/Qwen3.6-27B (default; Apache-2.0, text + vision, hybrid
-                  Gated DeltaNet + attention). QLoRA needs one 80 GB GPU.
+  --preset 27b    Qwen/Qwen3.8-27B (default; Apache-2.0, text + vision, hybrid
+                  Gated DeltaNet + attention). 16-bit LoRA needs one 80 GB GPU.
+  --preset 4b     Qwen/Qwen3.5-4B (same family, 4B). 16-bit LoRA fits a 16 GB
+                  GPU: Kaggle's T4s.
   --preset small  Qwen/Qwen3-8B (text only). QLoRA fits a 24 GB GPU.
   --base-model    any other Hugging Face model with a ChatML chat template.
+
+The Qwen3.5 family (qwen3_5: Qwen3.5, 3.6 and 3.8) is trained with 16-bit LoRA:
+4-bit QLoRA shifts its outputs more than usual (--force-4bit when 16 bits
+don't fit). The loss is computed on the learned tokens only, so the logits of
+the 248K-token vocabulary are never made for the whole prompt.
 
   python training/train_lora.py --preset 27b
   python training/train_lora.py --preset small --epochs 3
@@ -51,7 +58,8 @@ import time
 from pathlib import Path
 
 PRESETS = {
-    "27b": {"base_model": "Qwen/Qwen3.6-27B", "lr": 1e-4, "grad_accum": 16},
+    "27b": {"base_model": "Qwen/Qwen3.8-27B", "lr": 1e-4, "grad_accum": 16},
+    "4b": {"base_model": "Qwen/Qwen3.5-4B", "lr": 1e-4, "grad_accum": 8},
     "small": {"base_model": "Qwen/Qwen3-8B", "lr": 2e-4, "grad_accum": 8},
 }
 
@@ -62,6 +70,9 @@ PRESETS = {
 TARGET_MODULES = r"^(?!.*(?:visual|vision|mtp)).*\.(?:q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|in_proj_b|in_proj_a|out_proj|gate_proj|up_proj|down_proj)$"
 
 EMPTY_THINK = re.compile(r"<think>\s*</think>\s*")
+# Hybrid Gated DeltaNet models change more than usual when quantized to 4 bits, so an adapter trained
+# on the 4-bit model fits the served 16-bit model less well: they get plain LoRA unless --force-4bit.
+LORA_16BIT_TYPES = {"qwen3_5", "qwen3_5_moe", "qwen3_next"}
 
 
 def parse_args(argv=None):
@@ -81,6 +92,7 @@ def parse_args(argv=None):
     parser.add_argument("--lora-alpha", type=int, default=32)
     parser.add_argument("--lora-dropout", type=float, default=0.05)
     parser.add_argument("--no-4bit", dest="load_in_4bit", action="store_false", help="plain LoRA on bf16 weights instead of QLoRA")
+    parser.add_argument("--force-4bit", action="store_true", help="QLoRA even for architectures that are trained in 16 bits by default (Qwen3.5/3.6/3.8): only when 16 bits don't fit")
     parser.add_argument("--text-only", action="store_true", help="for a vision-language base: load the language model only (less memory; the adapter then fits the text-only model)")
     parser.add_argument("--attn", default="sdpa", help="attention implementation: sdpa, flash_attention_2, eager")
     parser.add_argument("--enable-thinking", action="store_true", help="render the chat template in thinking mode (default: non-thinking, as Hanogt answers)")
@@ -199,11 +211,13 @@ def main(argv=None):
     torch.manual_seed(args.seed)
     cuda = torch.cuda.is_available()
     bf16 = cuda and torch.cuda.is_bf16_supported()
-    if args.load_in_4bit and not cuda:
-        sys.exit("QLoRA (4-bit) needs an NVIDIA GPU; on a CPU or Apple machine use --no-4bit with a small model.")
-
     config = AutoConfig.from_pretrained(args.base_model)
     vision = getattr(config, "vision_config", None) is not None
+    if args.load_in_4bit and config.model_type in LORA_16BIT_TYPES and not args.force_4bit:
+        print(f"note: {config.model_type} is trained with 16-bit LoRA (4-bit QLoRA shifts this architecture's outputs); --force-4bit overrides")
+        args.load_in_4bit = False
+    if args.load_in_4bit and not cuda:
+        sys.exit("QLoRA (4-bit) needs an NVIDIA GPU; on a CPU or Apple machine use --no-4bit with a small model.")
     model_class = AutoModelForCausalLM
     if vision and not args.text_only:
         # Keep the whole vision-language model so the merged result is served exactly like the original.
@@ -295,6 +309,8 @@ def main(argv=None):
         "gradient_checkpointing_kwargs": {"use_reentrant": False},
         "optim": "paged_adamw_8bit" if args.load_in_4bit else "adamw_torch",
         "remove_unused_columns": False,
+        "prediction_loss_only": True,
+        "label_names": ["labels"],
         "report_to": args.report_to,
         "seed": args.seed,
         "use_cpu": not cuda,
@@ -329,8 +345,35 @@ def main(argv=None):
                 control.should_training_stop = True
             return control
 
+    class LearnedTokensTrainer(Trainer):
+        """The next-token loss of the learned (assistant) tokens only. The vocabulary-wide logits are made for
+        those positions alone (logits_to_keep), not for the whole prompt: with Qwen3.5's 248K-token vocabulary
+        that is the difference between fitting a 16 GB GPU and not."""
+
+        def __init__(self, *more, **options):
+            super().__init__(*more, **options)
+            # Each micro-batch returns its mean loss; the trainer averages over gradient accumulation.
+            self.model_accepts_loss_kwargs = False
+
+        def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+            targets = inputs["labels"][:, 1:]
+            positions = (targets != -100).any(dim=0).nonzero(as_tuple=True)[0]
+            if positions.numel() == 0:
+                positions = torch.zeros(1, dtype=torch.long, device=targets.device)
+            try:
+                outputs = model(input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"], logits_to_keep=positions)
+            except TypeError:  # an older model class without logits_to_keep
+                outputs = model(input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"])
+            logits = outputs.logits
+            if logits.size(1) != positions.numel():  # a model without logits_to_keep returned every position
+                logits = logits[:, positions]
+            chosen = targets[:, positions]
+            total = torch.nn.functional.cross_entropy(logits.float().reshape(-1, logits.size(-1)), chosen.reshape(-1), ignore_index=-100, reduction="sum")
+            loss = total / (chosen != -100).sum().clamp(min=1)
+            return (loss, outputs) if return_outputs else loss
+
     budget = TimeBudget(args.time_budget_hours)
-    trainer = Trainer(model=model, args=training, train_dataset=Items(train_items), eval_dataset=Items(eval_items) if eval_items else None, data_collator=collate, callbacks=[budget])
+    trainer = LearnedTokensTrainer(model=model, args=training, train_dataset=Items(train_items), eval_dataset=Items(eval_items) if eval_items else None, data_collator=collate, callbacks=[budget])
     resume = True if args.resume else None
     if args.resume_from_hub and args.hub_checkpoints:
         resume = hub_checkpoint(args.hub_checkpoints, output) or resume

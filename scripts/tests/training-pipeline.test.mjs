@@ -210,7 +210,7 @@ test("the source registry allows only permissive licenses and attributes what it
 
 test("every Hugging Face source says how it is read, in the languages and families the mix knows", () => {
     const legacy = new Set(["hf-aya-dataset", "hf-oasst2", "hf-self-oss-instruct", "hf-opencodeinstruct", "hf-openthoughts-114k"]);
-    const converters = new Set(["messages", "fields", "template", "verified-generation", "cvss", "aya", "oasst", "self-oss", "opencodeinstruct", "openthoughts", "helpsteer", "helpsteer3", "generic"]);
+    const converters = new Set(["messages", "fields", "template", "verified-generation", "cvss", "aya", "oasst", "self-oss", "opencodeinstruct", "openthoughts", "helpsteer", "helpsteer3", "tools", "generic"]);
     for (const source of registry.sources) {
         // Sources still in review are read only once their card is checked; they get their "hf" block then.
         if (source.kind !== "hf" || source.status !== "allowed") continue;

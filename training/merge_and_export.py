@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Merge a LoRA adapter from train_lora.py into its base model and export it.
 
-  python training/merge_and_export.py --adapter training/output/hanogt-qwen3.6-27b/adapter
+  python training/merge_and_export.py --adapter training/output/hanogt-qwen3.8-27b/adapter
   python training/merge_and_export.py --adapter … --llama-cpp ~/llama.cpp --gguf-type q8_0 --quantize Q4_K_M
 
 The base model and whether it was loaded text-only come from the adapter's

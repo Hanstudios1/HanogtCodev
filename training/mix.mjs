@@ -44,7 +44,7 @@ import {
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 export const TARGET_SAMPLES = 140_000;
-const CODE_FAMILIES = new Set(["code-solve", "code-explain", "code-algorithm", "math-reasoning"]);
+const CODE_FAMILIES = new Set(["code-solve", "code-explain", "code-algorithm", "math-reasoning", "tool-use"]);
 const SITE_LICENSE = "Proprietary (Hanogt Codev)";
 
 export const IDENTITY_PROMPT = {

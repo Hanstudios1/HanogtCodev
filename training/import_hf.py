@@ -11,7 +11,7 @@ dataset usually needs a registry entry and no code:
 
     "hf": {
       "config": null, "split": "train", "keep": 1.0,      # dataset config (or "configs": [...] read in turn), split, share of rows kept
-      "converter": "messages",                          # messages | fields | template | verified-generation | cvss | helpsteer | helpsteer3 | aya | oasst | …
+      "converter": "messages",                          # messages | fields | template | verified-generation | tools | cvss | helpsteer | helpsteer3 | aya | oasst | …
       "fields": {"user": "question", "assistant": "answer", "reasoning": "thinking"},   # for "fields"
       "where": [{"field": "language", "in": ["tr"]}],   # row filters: equals, in, notIn, min, max, truthy, matches, notContains, equalsField
       "lang": "TR",                                     # or "langField" + "langMap" ({"tur": "TR"})
@@ -19,7 +19,8 @@ dataset usually needs a registry entry and no code:
       "uniqueBy": "problem_id",                         # one sample per value ("$prompt": per first user message)
       "dropSystem": true, "wrapAnswer": "```bash\n{answer}\n```", "minUserChars": 20,
       "importCap": 60000,                               # rows kept here when the mix's "cap" applies after language filtering
-      "format": "json", "dataFiles": ["data/train.jsonl"]   # read files of the repo directly (no loading script)
+      "format": "json", "dataFiles": ["data/train.jsonl"]   # read files of the repo directly (no loading script);
+                                                        # "jsonl-lines" reads them line by line (rows of mixed types)
     }
 
     pip install datasets huggingface_hub
@@ -65,16 +66,37 @@ def text_of(value):
     return str(value)
 
 
-def normalize_messages(raw):
-    """Messages in role/content form, or None when the conversation can't be used (tool turns, bad roles)."""
+TOOL_ROLES = {"tool": "tool", "function": "tool", "observation": "tool", "ipython": "tool"}
+
+
+def tool_call(raw):
+    """A tool call as the chat templates expect it ({"type": "function", "function": {"name", "arguments": {...}}}), or None."""
+    if not isinstance(raw, dict):
+        return None
+    function = raw.get("function") if isinstance(raw.get("function"), dict) else raw
+    name, arguments = function.get("name"), function.get("arguments", {})
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments) if arguments.strip() else {}
+        except ValueError:
+            return None
+    if not isinstance(name, str) or not name.strip() or not isinstance(arguments, dict):
+        return None
+    return {"id": str(raw.get("id") or f"call_{digest(name + json.dumps(arguments, sort_keys=True))}"), "type": "function", "function": {"name": name, "arguments": arguments}}
+
+
+def normalize_messages(raw, keep_tools=False):
+    """Messages in role/content form, or None when the conversation can't be used (bad roles; tool turns unless keep_tools)."""
     messages = []
     for item in raw or []:
         if not isinstance(item, dict):
             return None
-        role = ROLE_NAMES.get(str(item.get("role", item.get("from", ""))).lower())
+        name = str(item.get("role", item.get("from", ""))).lower()
+        role = ROLE_NAMES.get(name) or (TOOL_ROLES.get(name) if keep_tools else None)
         if role is None:
             return None
-        content = text_of(item.get("content", item.get("value")))
+        value = item.get("content", item.get("value"))
+        content = json.dumps(value, ensure_ascii=False) if role == "tool" and isinstance(value, (dict, list)) else text_of(value)
         if role == "system" and not content.strip():
             continue
         message = {"role": role, "content": content}
@@ -84,9 +106,16 @@ def normalize_messages(raw):
                 message["reasoning_content"] = reasoning
                 break
         if item.get("tool_calls"):
-            return None
+            if not keep_tools or role != "assistant":
+                return None
+            calls = [tool_call(call) for call in item["tool_calls"]]
+            if not calls or any(call is None for call in calls):
+                return None
+            message["tool_calls"] = calls
         messages.append(message)
     if len(messages) < 2 or messages[-1]["role"] != "assistant":
+        return None
+    if not messages[-1]["content"].strip() and not messages[-1].get("tool_calls"):
         return None
     if not any(message["role"] == "user" and message["content"].strip() for message in messages):
         return None
@@ -366,6 +395,42 @@ def convert_helpsteer(source, row, spec):
     return item, None
 
 
+def json_field(row, path):
+    """field(), reading through values stored as JSON strings ("metadata.tools" where metadata is a JSON string)."""
+    value = row
+    for part in str(path).split("."):
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except ValueError:
+                return None
+        if isinstance(value, dict) and part in value:
+            value = value[part]
+        else:
+            return None
+    if isinstance(value, str) and value.strip()[:1] in "[{":
+        try:
+            return json.loads(value)
+        except ValueError:
+            return None
+    return value
+
+
+def convert_tools(source, row, spec):
+    """A tool-use conversation: tool calls, tool results and the tool definitions (sample["tools"])."""
+    messages = normalize_messages(field(row, spec.get("messagesField") or "messages"), keep_tools=True)
+    if not messages:
+        return None, "shape"
+    tools = json_field(row, spec.get("toolsField") or "tools") or []
+    tools = [tool if "function" in tool else {"type": "function", "function": tool} for tool in tools if isinstance(tool, dict)]
+    if not tools or not any(message.get("tool_calls") for message in messages):
+        return None, "no_tools"
+    key = str(row.get("uuid") or row.get("id") or digest(json.dumps(messages, ensure_ascii=False)))
+    item = sample(source, key, messages, family="tool-use")
+    item["tools"] = tools
+    return item, None
+
+
 PLACEHOLDER = re.compile(r"\{([A-Za-z_][\w.]*)\}")
 
 
@@ -539,6 +604,7 @@ CONVERTERS = {
     "template": convert_template,
     "verified-generation": convert_verified_generation,
     "cvss": convert_cvss,
+    "tools": convert_tools,
 }
 # Sources registered before the "hf" blocks existed keep their converters.
 LEGACY = {
@@ -584,12 +650,18 @@ def convert_row(source, row, spec):
     if spec.get("wrapAnswer"):
         messages[-1] = {**messages[-1], "content": spec["wrapAnswer"].replace("{answer}", messages[-1]["content"].strip())}
     item["messages"] = messages
-    if spec.get("maxChars") and sum(len(message["content"]) + len(message.get("reasoning_content", "")) for message in messages) > spec["maxChars"]:
+    if spec.get("maxChars") and sample_chars(item) > spec["maxChars"]:
         return None, "too_long"
     if repetitive("\n".join(f"{message['content']}\n{message.get('reasoning_content', '')}" for message in messages if message["role"] == "assistant")):
         return None, "repetitive"
     item.pop("judgeLanguage", None)
     return item, None
+
+
+def sample_chars(item):
+    """What a sample costs in the training context: its messages, tool calls and tool definitions."""
+    chars = sum(len(message["content"]) + len(message.get("reasoning_content", "")) + (len(json.dumps(message["tool_calls"])) if message.get("tool_calls") else 0) for message in item["messages"])
+    return chars + (len(json.dumps(item["tools"])) if item.get("tools") else 0)
 
 
 LOOPED_WORD = re.compile(r"\b([^\W\d_]{2,})(?:\W{1,3}\1\b){29,}")
@@ -620,8 +692,24 @@ def unique_key(row, item, spec):
     return None if value is None else digest(value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, sort_keys=True, default=str))
 
 
+def jsonl_rows(repo, files, revision=None, token=None):
+    """The rows of JSON-lines files of a dataset repository, read line by line over the network."""
+    from huggingface_hub import HfFileSystem
+
+    filesystem = HfFileSystem(token=token)
+    for name in files:
+        path = f"datasets/{repo}@{revision}/{name}" if revision else f"datasets/{repo}/{name}"
+        with filesystem.open(path, "rb", block_size=8 * 1024 * 1024) as handle:
+            for raw in handle:
+                if raw.strip():
+                    yield json.loads(raw)
+
+
 def open_stream(load_dataset, repo, spec, config, options, seed):
     """The rows of one config: from the dataset's own configs, or from its files when spec["format"] is set."""
+    if spec.get("format") == "jsonl-lines":
+        files = spec.get("dataFiles") or []
+        return jsonl_rows(repo, [files] if isinstance(files, str) else files, spec.get("revision"), options.get("token"))
     if spec.get("format"):
         files = spec.get("dataFiles") or []
         files = [files] if isinstance(files, str) else files

@@ -19,7 +19,14 @@ Every run does what is due, then stops before the session ends:
    state/rounds.json and state/seen.txt.gz, the adapter at its root and a
    copy per round under rounds/.
 
-    python3 training/kaggle_run.py --data-repo HanStudios/hanogt-sft-pool --model-repo HanStudios/hanogt-ai-qwen3-8b-lora
+The base model (--base-model, Qwen3.5-4B by default) decides how a round
+trains: Qwen3.5-family models with 16-bit LoRA, one copy per GPU when it fits
+or split over the GPUs when it doesn't, others with 4-bit QLoRA. Before the
+first round on a base, a short trial on the round's longest samples checks
+the plan; when every plan fails, training continues with --fallback-base.
+Each base has its own model repository (adapters don't carry over).
+
+    python3 training/kaggle_run.py --data-repo HanStudios/hanogt-sft-pool --base-model Qwen/Qwen3.5-4B
 
 Messages are Turkish: they are read by the site's owner in Kaggle's log.
 """
@@ -113,6 +120,48 @@ def finish_round(state, status):
     done = {**active, "finished": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "steps": status.get("step"), "metrics": status.get("metrics", {})}
     done.pop("file", None)
     return {**state, "rounds": [*state.get("rounds", []), done], "active": None}
+
+
+# Architectures trained with 16-bit LoRA (training/train_lora.py: LORA_16BIT_TYPES).
+LORA_16BIT_TYPES = {"qwen3_5", "qwen3_5_moe", "qwen3_next"}
+
+
+def model_repo_for(base_model, owner):
+    """The model repository of a base: adapters of different bases never share one."""
+    return f"{owner}/hanogt-ai-{base_model.rstrip('/').split('/')[-1].lower()}-lora"
+
+
+def training_plans(model_type, params, memory):
+    """The ways a round can train on these GPUs, best first: {"processes", "bits"}.
+
+    16-bit LoRA needs the weights (2 bytes a parameter) plus about a third for activations and the
+    optimizer; one copy per GPU (DDP) is fastest, the model split over all GPUs (one process) fits
+    larger models, and 4-bit QLoRA fits nearly anything.
+    """
+    gpus = len(memory)
+    qlora = {"processes": gpus, "bits": 4}
+    if model_type not in LORA_16BIT_TYPES or not params or not gpus:
+        return [qlora]
+    weights = params * 2
+    plans = []
+    if weights * 1.3 + 3e9 <= min(memory):
+        plans.append({"processes": gpus, "bits": 16})
+    if gpus > 1 and weights * 1.15 + 3e9 * gpus <= sum(memory):
+        plans.append({"processes": 1, "bits": 16})
+    plans.append(qlora)
+    return plans
+
+
+def plan_name(plan):
+    copies = "her GPU'da bir kopya" if plan["processes"] > 1 else "tek süreç (GPU'lara bölünmüş)" if plan["bits"] == 16 else "tek GPU"
+    return f"{plan['bits']}-bit LoRA, {copies}"
+
+
+def longest_samples(path, count=8):
+    """The `count` longest lines of a JSONL file: a short trial run on them meets the round's peak memory."""
+    with open(path, encoding="utf-8") as handle:
+        lines = [line for line in handle if line.strip()]
+    return sorted(lines, key=len, reverse=True)[:count]
 
 
 # ---------------------------------------------------------------- hub helpers
@@ -313,12 +362,126 @@ def prepare_data(args, work):
 
 # ---------------------------------------------------------------- training
 
-def gpu_count():
+def gpu_memory():
+    """Total memory of each GPU in bytes (empty without a GPU)."""
     try:
         import torch
     except ImportError:
-        return 0
-    return torch.cuda.device_count() if torch.cuda.is_available() else 0
+        return []
+    if not torch.cuda.is_available():
+        return []
+    return [torch.cuda.get_device_properties(index).total_memory for index in range(torch.cuda.device_count())]
+
+
+def model_facts(base_model, folder):
+    """(model_type, parameter count) of a Hub model, from its config and its safetensors metadata."""
+    from huggingface_hub import hf_hub_download
+
+    token = os.environ.get("HF_TOKEN")
+    with open(hf_hub_download(base_model, "config.json", token=token, local_dir=str(folder)), encoding="utf-8") as handle:
+        model_type = json.load(handle).get("model_type")
+    params = None
+    try:
+        info = api().model_info(base_model)
+        params = info.safetensors.total if getattr(info, "safetensors", None) else None
+    except Exception:  # noqa: BLE001 - the index below says it too
+        params = None
+    if not params:
+        try:
+            with open(hf_hub_download(base_model, "model.safetensors.index.json", token=token, local_dir=str(folder)), encoding="utf-8") as handle:
+                params = json.load(handle)["metadata"]["total_size"] // 2
+        except Exception:  # noqa: BLE001 - unknown size: QLoRA, which fits nearly anything
+            params = None
+    return model_type, params
+
+
+def trial_samples(pool_gz, target, count=8):
+    """Long but typical samples of the pool (around its 90th length percentile): a short run on them meets
+    a round's peak memory without picking samples the trainer leaves out as too long."""
+    with gzip.open(pool_gz, "rt", encoding="utf-8") as handle:
+        lengths = sorted(len(line) for line in handle if line.strip())
+    if not lengths:
+        return False
+    low, high = lengths[int(len(lengths) * 0.9)], lengths[min(len(lengths) - 1, int(len(lengths) * 0.95))]
+    chosen = []
+    with gzip.open(pool_gz, "rt", encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip() and low <= len(line) <= high:
+                chosen.append(line)
+                if len(chosen) >= count:
+                    break
+    Path(target).write_text("".join(chosen), encoding="utf-8")
+    return bool(chosen)
+
+
+def rounds_folder(args):
+    """Where a model repository's rounds live in the data repository (each base has its own rounds)."""
+    return f"rounds/{args.model_repo.split('/')[-1]}"
+
+
+def trainer_command(args, plan, data, eval_data, output):
+    """train_lora.py for this base model and plan (options of the run go after it)."""
+    launcher = ["torchrun", f"--nproc_per_node={plan['processes']}"] if plan["processes"] > 1 else [sys.executable]
+    return launcher + [
+        "training/train_lora.py", "--preset", "small", "--base-model", args.base_model,
+        "--data", data, "--eval-data", eval_data, "--output", output, "--max-seq-len", args.max_seq_len,
+        "--no-4bit" if plan["bits"] == 16 else "--force-4bit",
+    ]
+
+
+def fast_kernels_installed():
+    """Whether flash-linear-attention (fast Gated DeltaNet kernels for the Qwen3.5 family) is installed."""
+    import importlib.util
+
+    return importlib.util.find_spec("fla") is not None
+
+
+def settle_trainer(args, work, pool_gz, owner):
+    """The base model, model repository, state and plan this session trains with.
+
+    A base checked before keeps its plan. Otherwise its plans are tried, best first, with a two-step run
+    on long samples; when none works the fallback base takes over (with its own repository).
+    """
+    trial = Path(work) / "trial.jsonl"
+    for attempt in range(2):
+        api().create_repo(args.model_repo, repo_type="model", private=True, exist_ok=True)
+        folder = Path(work) / "state" / args.model_repo.split("/")[-1]
+        folder.mkdir(parents=True, exist_ok=True)
+        state, seen = load_state(args, folder)
+        saved = state.get("trainer") or {}
+        if saved.get("base") == args.base_model and saved.get("plan"):
+            say(f"✓ Taban model {args.base_model}: {plan_name(saved['plan'])}.")
+            return saved["plan"], state, seen, folder
+        if not trial.exists() and not trial_samples(pool_gz, trial):
+            say("✗ Deneme için örnek bulunamadı.")
+            return None, state, seen, folder
+        model_type, params = model_facts(args.base_model, Path(work) / "base-config" / args.model_repo.split("/")[-1])
+        size = f"{params / 1e9:.1f} milyar parametre" if params else "boyutu bilinmiyor"
+        say(f"▶ {args.base_model} ({model_type}, {size}) bu GPU'larda deneniyor…")
+        # The fast Gated DeltaNet kernels are tried first; when nothing works with them, once more without.
+        kernel_rounds = [True, False] if model_type in LORA_16BIT_TYPES and fast_kernels_installed() else [None]
+        for kernels in kernel_rounds:
+            if kernels is False:
+                say("  ↻ Hızlı çekirdekler (flash-linear-attention) bu GPU'da olmadı; onlarsız yeniden deneniyor (daha yavaş ama doğru).")
+                subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", "-q", "flash-linear-attention", "fla-core"], check=False)
+            for plan in training_plans(model_type, params, gpu_memory()):
+                output = Path(work) / "trial-out"
+                shutil.rmtree(output, ignore_errors=True)
+                command = trainer_command(args, plan, trial, "", output) + ["--max-steps", 2, "--grad-accum", 1, "--save-steps", 1000]
+                say(f"  · {plan_name(plan)}")
+                if subprocess.run([str(part) for part in command], cwd=str(ROOT)).returncode == 0:
+                    state["trainer"] = {"base": args.base_model, "plan": plan, "checked": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                    save_state(args, state, folder)
+                    say(f"✓ {args.base_model} eğitilebiliyor: {plan_name(plan)}.")
+                    return plan, state, seen, folder
+                say(f"  ✗ olmadı: {plan_name(plan)}")
+        if attempt or args.base_model == args.fallback_base:
+            break
+        say(f"⚠ {args.base_model} bu oturumun GPU'larında eğitilemedi; {args.fallback_base} ile devam ediliyor (ayrı model deposu).")
+        args.base_model = args.fallback_base
+        args.model_repo = model_repo_for(args.fallback_base, owner)
+    say("✗ Hiçbir taban model bu GPU'larda eğitilemedi; yukarıdaki hata satırlarına bak.")
+    return None, None, None, None
 
 
 def load_state(args, folder):
@@ -357,16 +520,18 @@ def eval_subset(source_gz, target, size=300):
 
 
 def train(args, work, version):
-    gpus = gpu_count()
-    if not gpus:
+    if not gpu_memory():
         say("ℹ GPU yok: veri hazırlandı. Eğitim için sağ panelde Accelerator → GPU T4 x2 seçip yeniden çalıştır.")
         return
     deadline = START + args.hours * 3600
-    folder = Path(work) / "state"
-    folder.mkdir(parents=True, exist_ok=True)
-    api().create_repo(args.model_repo, repo_type="model", private=True, exist_ok=True)
-    state, seen = load_state(args, folder)
     pool_dir = Path(work) / "pool-remote"
+    pool_train = download(args.data_repo, "pool/train.jsonl.gz", "dataset", pool_dir)
+    if not pool_train:
+        say("✗ Veri havuzu yok: önce veri hazırlanmalı (Accelerator: None ile çalıştır).")
+        return
+    plan, state, seen, folder = settle_trainer(args, work, pool_train, args.data_repo.split("/")[0])
+    if plan is None:
+        return
     eval_path = Path(work) / "eval.jsonl"
     if not eval_path.exists():
         path = download(args.data_repo, "pool/eval.jsonl.gz", "dataset", pool_dir)
@@ -389,10 +554,6 @@ def train(args, work, version):
                 continue
         else:
             number = next_round_number(state)
-            pool_train = download(args.data_repo, "pool/train.jsonl.gz", "dataset", pool_dir)
-            if not pool_train:
-                say("✗ Veri havuzu yok: önce veri hazırlanmalı.")
-                return
             seen_path = Path(work) / "seen.txt"
             seen_path.write_text("".join(item + "\n" for item in sorted(seen)), encoding="utf-8")
             local_gz = Path(work) / "rounds" / f"round-{number:03d}.jsonl.gz"
@@ -402,7 +563,7 @@ def train(args, work, version):
             if summary["new"] < args.min_new:
                 say(f"✓ Havuzdaki bütün yeni veriler öğrenildi ({summary['poolUnseen']} yeni örnek kaldı). Kayda yeni kaynak eklenince yeni tur başlar.")
                 return
-            upload(args.data_repo, local_gz, f"rounds/round-{number:03d}.jsonl.gz", "dataset", f"Tur {number} verisi")
+            upload(args.data_repo, local_gz, f"{rounds_folder(args)}/round-{number:03d}.jsonl.gz", "dataset", f"Tur {number} verisi")
             # The previous round's checkpoint must not be resumed by this one.
             try:
                 api().delete_folder(path_in_repo="last-checkpoint", repo_id=args.model_repo, repo_type="model", commit_message=f"Tur {number} başlıyor")
@@ -411,7 +572,7 @@ def train(args, work, version):
             state["active"] = {
                 "round": number,
                 "pool": version,
-                "file": f"rounds/round-{number:03d}.jsonl.gz",
+                "file": f"{rounds_folder(args)}/round-{number:03d}.jsonl.gz",
                 "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "samples": summary["samples"],
                 "new": summary["new"],
@@ -421,7 +582,7 @@ def train(args, work, version):
                 "byFamily": summary["byFamily"],
                 "initFrom": args.model_repo if (state.get("rounds") or has_adapter(args)) else None,
             }
-            state["active"]["newIdsFile"] = f"rounds/round-{number:03d}.json"
+            state["active"]["newIdsFile"] = f"{rounds_folder(args)}/round-{number:03d}.json"
             upload(args.data_repo, Path(str(local_gz).replace(".jsonl.gz", ".json")), state["active"]["newIdsFile"], "dataset", f"Tur {number} özeti")
             save_state(args, state, folder)
             say(f"▶ Tur {number} başlıyor: {summary['samples']} örnek ({summary['new']} yeni, {summary['replay']} tekrar, {summary['own']} Hanogt). Diller: {summary['byLanguage']}")
@@ -434,11 +595,8 @@ def train(args, work, version):
         status_path = Path(work) / f"status-round-{active['round']:03d}.json"
         out.mkdir(parents=True, exist_ok=True)
         status_path.unlink(missing_ok=True)
-        launcher = ["torchrun", f"--nproc_per_node={gpus}"] if gpus > 1 else [sys.executable]
-        command = launcher + [
-            "training/train_lora.py", "--preset", "small", "--base-model", args.base_model,
-            "--data", data_path, "--eval-data", eval_path if eval_path.exists() else "",
-            "--output", out, "--epochs", 1, "--max-seq-len", args.max_seq_len,
+        command = trainer_command(args, plan, data_path, eval_path if eval_path.exists() else "", out) + [
+            "--epochs", 1,
             "--lr", args.lr if active["round"] == 1 else args.lr_next,
             "--save-steps", args.save_steps,
             "--hub-checkpoints", args.model_repo, "--push-to-hub", args.model_repo,
@@ -471,16 +629,17 @@ START = time.time()
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--data-repo", default="HanStudios/hanogt-sft-pool")
-    parser.add_argument("--model-repo", default="HanStudios/hanogt-ai-qwen3-8b-lora")
-    parser.add_argument("--base-model", default="Qwen/Qwen3-8B")
+    parser.add_argument("--base-model", default="Qwen/Qwen3.5-4B", help="Qwen3.5-4B fits Kaggle's T4s with 16-bit LoRA")
+    parser.add_argument("--fallback-base", default="Qwen/Qwen3-8B", help="trained instead when no plan works for --base-model")
+    parser.add_argument("--model-repo", default="", help="default: <data repo owner>/hanogt-ai-<base model>-lora")
     parser.add_argument("--hours", type=float, default=11.0, help="time this session may use (Kaggle: 12 hours)")
     parser.add_argument("--rebuild", choices=["auto", "always", "never"], default="auto", help="auto: refresh the data when it changed")
     parser.add_argument("--round-samples", type=int, default=20000)
     parser.add_argument("--min-new", type=int, default=2000, help="no round starts with fewer new samples than this")
     parser.add_argument("--eval-samples", type=int, default=300)
     parser.add_argument("--max-seq-len", type=int, default=4096)
-    parser.add_argument("--lr", type=float, default=2e-4, help="first round")
-    parser.add_argument("--lr-next", type=float, default=1e-4, help="later rounds")
+    parser.add_argument("--lr", type=float, default=1e-4, help="first round (gentle: the base model is already strong)")
+    parser.add_argument("--lr-next", type=float, default=5e-5, help="later rounds")
     parser.add_argument("--save-steps", type=int, default=250)
     parser.add_argument("--min-round-hours", type=float, default=1.0)
     parser.add_argument("--upload-margin-hours", type=float, default=0.5)
@@ -489,6 +648,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not os.environ.get("HF_TOKEN"):
         sys.exit("HF_TOKEN yok: Kaggle'da Add-ons → Secrets → HF_TOKEN ekleyip bu deftere bağla.")
+    if not args.model_repo:
+        args.model_repo = model_repo_for(args.base_model, args.data_repo.split("/")[0])
     work = Path(args.work)
     work.mkdir(parents=True, exist_ok=True)
     version = None

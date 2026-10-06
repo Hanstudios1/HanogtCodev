@@ -371,7 +371,8 @@ measuring real engines needs their keys, so the owner runs it.
 
 `training/` builds a supervised fine-tuning set from this repository (no user
 data; the code-bench stays out), trains a LoRA/QLoRA adapter on a Qwen model
-(default `Qwen/Qwen3.6-27B`, smaller preset `Qwen/Qwen3-8B`; the model is a
+(presets `Qwen/Qwen3.5-4B`, the Kaggle default with vision; `Qwen/Qwen3.8-27B`,
+which needs an 80 GB GPU; and `Qwen/Qwen3-8B`, the fallback; the model is a
 parameter) and merges/exports it for vLLM or Ollama. A self-hosted model
 becomes Hanogt AI's model with `HANOGT_AI_BASE_URL`, `HANOGT_AI_API_KEY` and
 `HANOGT_AI_MODEL` ([Configuration and limits](#configuration-and-limits));

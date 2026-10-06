@@ -1,4 +1,4 @@
-# Hanogt AI'ı eğitmek: veri havuzu v3, sürekli eğitim ve Qwen3 ince ayarı
+# Hanogt AI'ı eğitmek: veri havuzu v3, sürekli eğitim ve Qwen ince ayarı
 
 Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 
@@ -11,7 +11,7 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 
 **Diller:** Türkçe, İngilizce, Almanca, Azerbaycanca ve Rusça (`lib/common.mjs` → `LANGS`). Bir turun yeni örnekleri dillere ağırlıkla dağıtılır: TR %32, EN %36, DE %11, AZ %10, RU %11.
 
-**Konular** (aile, `FAMILIES`): sohbet ve talimat, düşünerek problem çözme, matematik, fen (fizik, kimya, biyoloji), genel kültür (tarih, coğrafya, din, toplum bilgisi), kod (birçok programlama dili), savunma odaklı siber güvenlik, yanıtları puanlama ve sıralama (`judge`), Hanogt'un kendi bilgisi ve ajan işlemleri.
+**Konular** (aile, `FAMILIES`): sohbet ve talimat, düşünerek problem çözme, matematik, fen (fizik, kimya, biyoloji), genel kültür (tarih, coğrafya, din, toplum bilgisi), kod (birçok programlama dili), araç kullanan ajan görevleri (`tool-use`), savunma odaklı siber güvenlik, yanıtları puanlama ve sıralama (`judge`), Hanogt'un kendi bilgisi ve ajan işlemleri.
 
 ## Kurallar: hangi veri girer?
 
@@ -49,7 +49,7 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 | Matematik | OpenMathReasoning | EN | CC BY 4.0 | AoPS problemleri, beklenen yanıta ulaşan R1/QwQ çözümleri |
 | Matematik | Nemotron Post-Training v1 (`math`) | EN | CC BY 4.0 | DeepSeek-R1-0528 çözümleri, problem başına bir |
 | Matematik | MATH (train) | EN | MIT | İnsan yazımı yarışma çözümleri |
-| Fen | OpenScience (`OS-Q3-235B-4`) | EN | CC BY 4.0 | Qwen3-235B'nin yazdığı fen soruları, DeepSeek-R1'in düşünmeli yanıtları |
+| Fen | OpenScience (`OS-Q3-235B-4`, `OS-Q2.5-32B-4`) | EN | CC BY 4.0 | Qwen3-235B ve Qwen2.5-32B'nin yazdığı fen soruları, DeepSeek-R1'in düşünmeli yanıtları |
 | Fen | QASC (train) | EN | CC BY 4.0 | İki bilgiyi birleştirerek yanıtlanan fen soruları (insan yazımı) |
 | Genel kültür | Cosmopedia (OpenStax, Stanford, Khan Academy) | EN | Apache-2.0 | Tarih, toplum, ekonomi, felsefe ve fen ders metinleri (Mixtral-8x7B) |
 | Kod | Exercism (61 dil izi) | — | MIT | Alıştırma ve örnek çözüm; Python ve JS çözümleri testleriyle çalıştırılır |
@@ -61,6 +61,9 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 | Kod | SQaLe | EN | MIT | Gerçek şemalarda SQL, çalıştırılarak doğrulanmış |
 | Kod | Bash Instruct III | EN | MIT | Linux'ta çalıştırılarak doğrulanmış Bash |
 | Düşünme | OpenThoughts-114k | EN | Apache-2.0 | Matematik ve kod için DeepSeek-R1 izleri (fen ve bulmaca kısmı çıkarıldı) |
+| Ajan / araç kullanma | Nemotron-Agentic-v1 (`tool_calling`) | EN | CC BY 4.0 | Araç tanımları, araç çağrıları ve sonuçlarıyla çok turlu görevler (Qwen3-235B-2507) |
+| Ajan / araç kullanma | Nemotron Post-Training v1 (`tool_calling`) | EN | CC BY 4.0 | Tek ve çok adımlı araç çağırma (DeepSeek-R1-0528, Qwen3-235B) |
+| Kod | OpenCodeReasoning (`split_0`) | EN | CC BY 4.0 | Yarışma sorularına DeepSeek-R1 çözümleri, soru başına bir |
 | Siber güvenlik | CVE→CWE Consensus | EN | CC BY 4.0 | NVD ile CNA'nın uzlaştığı zayıflık (CWE) etiketleri |
 | Siber güvenlik | CIRCL vulnerability-scores | EN, TR | CC BY 4.0 | Açıklamadan önem derecesi (CVSS) tahmini |
 | Puanlama | HelpSteer2 | EN, TR | CC BY 4.0 | İnsan puanları: yardımseverlik, doğruluk, tutarlılık, karmaşıklık, ayrıntı |
@@ -69,11 +72,24 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 - **İncelemede (review):** T-Wix (RU), GrandMaster-Qwen3 (RU), resh.edu.ru dersleri (RU, dönüştürücü bekliyor), SYNTHETIC-1, Dolci-Think, Nemotron v2 (kapılı), gpt-oss ile üretilmiş setler, Türkçe ve Azerbaycanca bilgi setleri (üretici belirtilmemiş), Arena tercihleri, Türkçe Atlas, smoltalk2. Her birinin eksiği `sources.json`'da yazılıdır.
 - **Dışlananlar:** gerekçeleriyle kayıtta (`excluded`); örneğin OpenThoughts3 (Llama/Gemini/GPT kaynaklı sorular), WildChat (GPT yanıtları), MetaMathQA, Magicoder, UltraFeedback, InstrucTurca (SA), Aya Collection çevirileri (NC çeviri modeli), Wikipedia (SA).
 - **Azerbaycanca:** kuralların tümünü geçen bir veri seti bulunamadı (Aya'da da yok). Şimdilik model Azerbaycancayı Türkçe ve kendi bilgisinden öğrenir; sonraki adım izinli Türkçe/İngilizce verinin açık bir modelle çevrilmesi.
-- **Görsel:** Qwen3-8B yalnızca metin anlar. Görsel anlamak için görsel-dil tabanına (ör. Qwen3-VL-8B) ve görselli veri toplayıcısına geçmek gerekir; bu ayrı bir adımdır.
+- **Görsel:** varsayılan taban Qwen3.5-4B görsel ve video anlar; eğitim yalnızca metinle yapılır ve görme kısmına dokunmaz. Yedek Qwen3-8B ise yalnızca metin anlar.
 
 ## Sürekli eğitim (Kaggle)
 
-`kaggle/hanogt_train_kaggle.ipynb` yalnızca bir başlatıcıdır: depoyu GitHub'dan klonlar ve `kaggle_run.py`'yi çalıştırır. Her çalıştırma sırasıyla şunları yapar:
+`kaggle/hanogt_train_kaggle.ipynb` yalnızca bir başlatıcıdır: depoyu GitHub'dan klonlar ve `kaggle_run.py`'yi çalıştırır.
+
+**Taban model:** varsayılan **Qwen3.5-4B** (Apache-2.0; metin, görsel ve video anlar). Defterdeki `BASE_MODEL` ile değişir:
+- `Qwen/Qwen3.5-9B`: daha büyük (güncel endekste 4B'den yüksek değil); T4'lerde iki GPU'ya bölünerek, daha yavaş eğitilir.
+- `Qwen/Qwen3.8-27B`: en güçlüsü; ücretli 80 GB GPU ister, Kaggle'da olmaz.
+
+İlk turdan önce çalıştırıcı modeli birkaç adımlık bir denemeyle sınar ve en hızlı yolu seçer:
+1. her GPU'da bir kopya (16-bit LoRA);
+2. olmazsa model iki GPU'ya bölünür;
+3. o da olmazsa 4-bit QLoRA.
+
+Hızlı Gated DeltaNet çekirdekleri (`flash-linear-attention`) çalışmazsa onlarsız yeniden denenir. Hiçbiri olmazsa eğitim Qwen3-8B ile sürer. Her tabanın kendi model deposu vardır (`HanStudios/hanogt-ai-<taban>-lora`), çünkü bağdaştırıcılar tabanlar arasında taşınmaz.
+
+Her çalıştırma sırasıyla şunları yapar:
 
 1. **Veri** (`kaggle_run.py` → `prepare_data`):
    - GitHub kaynakları, kayıttaki girdileri ya da içe aktarıcı değiştiyse yeniden alınır.
@@ -87,7 +103,7 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
      - henüz öğrenilmemiş örnekler: dillere ve konulara dengeli dağılır, her kaynaktan sırayla alınır;
      - %15 tekrar: daha önce öğrenilmiş örneklerden;
      - %15 Hanogt'un kendi örnekleri.
-   - Tur bir önceki turun bağdaştırıcısından başlar (`--init-adapter`). İlk turda öğrenme oranı 2e-4'tür, sonraki turlarda 1e-4.
+   - Tur bir önceki turun bağdaştırıcısından başlar (`--init-adapter`). Öğrenme oranı ilk turda 1e-4, sonraki turlarda 5e-5'tir. Oran düşük tutulur, çünkü taban model zaten güçlüdür ve bu yeteneği bozmamak gerekir.
    - Oturumun süresi bitene kadar turlar arka arkaya çalışır.
    - Durum özel model deposunda tutulur:
      - `state/rounds.json`: biten turlar, ölçümleri ve süren tur;
@@ -96,6 +112,14 @@ Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
    - Havuzda yeni örnek kalmadıysa eğitim durur ve bunu yazar; kayda yeni kaynak eklenince yeni turlar başlar.
 
 **Bir tur ne kadar sürer?** Varsayılan tur 20.000 örnektir. v3'te düşünmeli örnekler uzun olduğundan örnek başına kabaca 1.000–1.500 token düşer, yani tur 20–30 milyon token eder. 2× T4'te bu kabaca 10–20 saattir; tur birden çok oturuma bölünür ve her oturum son ara kayıttan sürer. Kaggle haftada ~30 saat GPU verir: haftada yaklaşık bir-iki tur. Gerçek süre ilk turun kaydında (`state/rounds.json`) görünür.
+
+**Artificial Analysis puanı:** Artificial Analysis yalnızca herkese açık modelleri ölçer; özel ince ayarlı modelimizin resmi puanı olmaz. Bu yüzden puanı belirleyen asıl şey taban modeldir:
+- **Endeksin içeriği:** endeksin üçte biri ajan görevleri (araç kullanma, terminal), kalanı kodlama, ileri bilim ve uzun bağlamdır. Sohbet verisiyle yapılan ince ayar bunları az kımıldatır.
+- **Taban modellerin puanları** (endeks sürüm sürüm zorlaşır; aynı güncel ölçekte karşılaştırma):
+  - Qwen3-8B: 7.
+  - Qwen3.5-4B: 13; Qwen3.5-9B: 11. Çıktıklarında kullanılan ölçekte 27 ve 32 almışlardı.
+  - Qwen3.6-27B: 37; Qwen3.8-27B: 43–52 (düşünme düzeyine göre). Güncel ölçekte 25'i geçen açık modeller bu sınıftadır; ücretli 80 GB GPU ister (`--preset 27b`).
+- **Eğitimin hedefi:** taban yeteneği korumak, Türkçe ve site bilgisini eklemek. Araç kullanma verisi (Nemotron-Agentic) ajan kategorisine yöneliktir.
 
 **Yeni veri seti eklemek:**
 1. `sources.json`'a bir girdi eklenir: lisans, üretim kaynağı (`provenance`), atıf, üst sınır (`cap`) ve nasıl okunacağı (`hf` bloğu).
@@ -178,11 +202,15 @@ node training/mix.mjs
 
 ## 4. Eğit
 
-İki model önayarı vardır:
-- **`--preset small`:** Qwen3-8B; ilk eğitim için önerilir.
-- **`--preset 27b`:** Qwen3.6-27B; 80 GB GPU ister.
+Üç model önayarı vardır:
+- **`--preset 4b`:** Qwen3.5-4B; Kaggle'da varsayılan. Görsel de anlar; 16-bit LoRA ile T4'e sığar.
+- **`--preset small`:** Qwen3-8B; Qwen3.5 bir GPU'da eğitilemezse yedek.
+- **`--preset 27b`:** Qwen3.8-27B; en güçlüsü, 16-bit LoRA için 80 GB GPU ister (ücretli).
 
-İkisi de Apache-2.0 lisanslıdır; türetilmiş modeli ticari olarak kullanabilirsin.
+Hepsi Apache-2.0 lisanslıdır; türetilmiş modeli ticari olarak kullanabilirsin.
+
+- **Qwen3.5 ailesi** (Qwen3.5, 3.6, 3.8) 16-bit LoRA ile eğitilir: 4-bit QLoRA bu mimarinin çıktısını alışılmıştan çok kaydırır (`--force-4bit` ile yine de seçilebilir).
+- **Kayıp yalnızca öğrenilen yanıt token'larında hesaplanır:** 248 bin kelimelik sözlüğün logit'leri istemin tamamı için üretilmez; 16 GB'lık bir GPU'ya sığmanın farkı budur.
 
 **Hugging Face Jobs** (PRO hesap ya da Team/Enterprise organizasyon ve kredi gerekir):
 
@@ -228,9 +256,11 @@ Kaba maliyet: tam set ~140 bin örnek ve ~170 milyon token olduğunda Qwen3-8B'n
 ## 5. Birleştir ve dışa aktar
 
 ```bash
-python training/merge_and_export.py --adapter training/output/hanogt-qwen3-8b/adapter
+python training/merge_and_export.py --adapter training/output/hanogt-qwen3.5-4b/adapter
 python training/merge_and_export.py --adapter … --llama-cpp ~/llama.cpp --gguf-type q8_0 --quantize Q4_K_M
 ```
+
+Kaggle'da eğitilen bağdaştırıcı `HanStudios/hanogt-ai-qwen3.5-4b-lora` deposundadır (yedek tabanla eğitildiyse `…-qwen3-8b-lora`).
 
 Birleştirme modelin iki katı kadar RAM ister; GPU şart değildir. `--llama-cpp` ile GGUF dosyası ve Ollama `Modelfile`'ı da yazılır.
 
@@ -239,12 +269,14 @@ Birleştirme modelin iki katı kadar RAM ister; GPU şart değildir. `--llama-cp
 vLLM (OpenAI uyumlu). Düşünmeyi ayrı alanda (`reasoning_content`) döndürmek için düşünme ayrıştırıcısını aç:
 
 ```bash
-vllm serve training/output/hanogt-qwen3-8b/merged --served-model-name hanogt-ai \
-  --max-model-len 32768 --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser hermes \
+vllm serve training/output/hanogt-qwen3.5-4b/merged --served-model-name hanogt-ai \
+  --max-model-len 32768 --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_coder \
   --api-key GUCLU_BIR_ANAHTAR
-# ya da birleştirmeden:
-vllm serve Qwen/Qwen3-8B --enable-lora --max-lora-rank 16 --lora-modules hanogt-ai=training/output/hanogt-qwen3-8b/adapter --reasoning-parser qwen3
+# ya da birleştirmeden (bağdaştırıcı doğrudan Hugging Face'ten):
+vllm serve Qwen/Qwen3.5-4B --enable-lora --max-lora-rank 16 --lora-modules hanogt-ai=HanStudios/hanogt-ai-qwen3.5-4b-lora --reasoning-parser qwen3
 ```
+
+Qwen3.5 araç çağrılarını XML biçiminde yazar (`<tool_call><function=…>`), bu yüzden `qwen3_coder` ayrıştırıcısı kullanılır. Yedek Qwen3-8B JSON biçimi kullanır; onunla `--tool-call-parser hermes` seçilir.
 
 Hugging Face'te barındırmak için iki yol var:
 - **Inference Endpoints:** modeli özel bir uç noktada açar (saatlik ücret).

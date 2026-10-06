@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import kaggle_run  # noqa: E402
@@ -128,6 +129,110 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(done["rounds"][0]["steps"], 120)
         self.assertNotIn("file", done["rounds"][0])
         self.assertEqual(kaggle_run.next_round_number(done), 2)
+
+    def test_training_plans_follow_model_size_and_gpus(self):
+        t4 = 15.8e9
+        # Qwen3.5-4B: 16-bit LoRA fits one T4, so each GPU gets a copy; QLoRA stays as the last resort.
+        self.assertEqual(kaggle_run.training_plans("qwen3_5", 4.66e9, [t4, t4]), [{"processes": 2, "bits": 16}, {"processes": 1, "bits": 16}, {"processes": 2, "bits": 4}])
+        # Qwen3.5-9B: too big for one T4 in 16 bits, fits split over two.
+        self.assertEqual(kaggle_run.training_plans("qwen3_5", 9.65e9, [t4, t4]), [{"processes": 1, "bits": 16}, {"processes": 2, "bits": 4}])
+        # 27B on two T4s: only QLoRA; on one 80 GB GPU: 16-bit.
+        self.assertEqual(kaggle_run.training_plans("qwen3_5", 27.4e9, [t4, t4]), [{"processes": 2, "bits": 4}])
+        self.assertEqual(kaggle_run.training_plans("qwen3_5", 27.4e9, [80e9])[0], {"processes": 1, "bits": 16})
+        # Other architectures keep QLoRA; an unknown size too.
+        self.assertEqual(kaggle_run.training_plans("qwen3", 8.2e9, [t4, t4]), [{"processes": 2, "bits": 4}])
+        self.assertEqual(kaggle_run.training_plans("qwen3_5", None, [t4]), [{"processes": 1, "bits": 4}])
+
+    def test_each_base_has_its_own_repository_and_rounds(self):
+        self.assertEqual(kaggle_run.model_repo_for("Qwen/Qwen3.5-4B", "HanStudios"), "HanStudios/hanogt-ai-qwen3.5-4b-lora")
+        self.assertEqual(kaggle_run.model_repo_for("Qwen/Qwen3-8B", "HanStudios"), "HanStudios/hanogt-ai-qwen3-8b-lora", "the earlier repository name")
+
+        class Args:
+            model_repo = "HanStudios/hanogt-ai-qwen3.5-4b-lora"
+
+        self.assertEqual(kaggle_run.rounds_folder(Args), "rounds/hanogt-ai-qwen3.5-4b-lora")
+
+    def test_trial_samples_are_long_but_typical(self):
+        with tempfile.TemporaryDirectory() as folder:
+            pool_path = os.path.join(folder, "train.jsonl.gz")
+            with gzip.open(pool_path, "wt", encoding="utf-8") as handle:
+                for index in range(200):
+                    handle.write(json.dumps({"id": str(index), "messages": [{"role": "user", "content": "x" * (index * 10)}]}) + "\n")
+            target = os.path.join(folder, "trial.jsonl")
+            self.assertTrue(kaggle_run.trial_samples(pool_path, target, count=5))
+            with open(target, encoding="utf-8") as handle:
+                lengths = [len(json.loads(line)["messages"][0]["content"]) for line in handle]
+            self.assertEqual(len(lengths), 5)
+            self.assertTrue(all(1800 <= length <= 1900 for length in lengths), lengths)
+
+    def test_trainer_command_carries_the_plan(self):
+        class Args:
+            base_model = "Qwen/Qwen3.5-4B"
+            max_seq_len = 4096
+
+        ddp = kaggle_run.trainer_command(Args, {"processes": 2, "bits": 16}, "d.jsonl", "", "out")
+        self.assertEqual(ddp[:2], ["torchrun", "--nproc_per_node=2"])
+        self.assertIn("--no-4bit", ddp)
+        single = kaggle_run.trainer_command(Args, {"processes": 1, "bits": 4}, "d.jsonl", "", "out")
+        self.assertEqual(single[0], sys.executable)
+        self.assertIn("--force-4bit", single)
+
+    def settle(self, returncodes, saved=None, kernels=False, memory=(15.8e9, 15.8e9)):
+        """settle_trainer() with the hub, the GPUs and the trial runs replaced: (plan, args, commands, saved states)."""
+
+        class Args:
+            base_model = "Qwen/Qwen3.5-4B"
+            fallback_base = "Qwen/Qwen3-8B"
+            model_repo = "HanStudios/hanogt-ai-qwen3.5-4b-lora"
+            max_seq_len = 4096
+
+        commands, saves = [], []
+        codes = iter(returncodes)
+
+        def fake_run(command, cwd=None, check=None):
+            commands.append([str(part) for part in command])
+            code = 0 if "uninstall" in command else next(codes)
+            return mock.Mock(returncode=code)
+
+        facts = {"Qwen/Qwen3.5-4B": ("qwen3_5", 4.66e9), "Qwen/Qwen3-8B": ("qwen3", 8.2e9)}
+        with tempfile.TemporaryDirectory() as folder, \
+                mock.patch.object(kaggle_run, "api"), \
+                mock.patch.object(kaggle_run, "load_state", side_effect=lambda args, _folder: ({**kaggle_run.empty_state(), **({"trainer": saved} if saved else {})}, set())), \
+                mock.patch.object(kaggle_run, "save_state", side_effect=lambda args, state, _folder, seen=None: saves.append((args.model_repo, dict(state)))), \
+                mock.patch.object(kaggle_run, "model_facts", side_effect=lambda base, _folder: facts[base]), \
+                mock.patch.object(kaggle_run, "gpu_memory", return_value=list(memory)), \
+                mock.patch.object(kaggle_run, "trial_samples", return_value=True), \
+                mock.patch.object(kaggle_run, "fast_kernels_installed", return_value=kernels), \
+                mock.patch.object(kaggle_run.subprocess, "run", side_effect=fake_run), \
+                mock.patch.object(kaggle_run, "say"):
+            plan, state, seen, _ = kaggle_run.settle_trainer(Args, folder, "pool.jsonl.gz", "HanStudios")
+        return plan, Args, commands, saves
+
+    def test_a_saved_plan_is_reused_without_a_trial(self):
+        plan, _args, commands, _saves = self.settle([], saved={"base": "Qwen/Qwen3.5-4B", "plan": {"processes": 2, "bits": 16}})
+        self.assertEqual(plan, {"processes": 2, "bits": 16})
+        self.assertEqual(commands, [])
+
+    def test_the_first_plan_that_survives_the_trial_is_kept(self):
+        plan, args, commands, saves = self.settle([1, 0])
+        self.assertEqual(plan, {"processes": 1, "bits": 16}, "two copies didn't fit; the split model did")
+        self.assertEqual(commands[0][:2], ["torchrun", "--nproc_per_node=2"])
+        self.assertIn("--max-steps", commands[0])
+        self.assertEqual(saves[-1][1]["trainer"]["plan"], plan)
+        self.assertEqual(args.base_model, "Qwen/Qwen3.5-4B")
+
+    def test_without_fast_kernels_then_the_fallback_base(self):
+        # Three plans fail with the fast kernels, three without them, then Qwen3-8B's QLoRA works.
+        plan, args, commands, saves = self.settle([1, 1, 1, 1, 1, 1, 0], kernels=True)
+        self.assertTrue(any("uninstall" in command for command in commands))
+        self.assertEqual(plan, {"processes": 2, "bits": 4})
+        self.assertEqual(args.base_model, "Qwen/Qwen3-8B")
+        self.assertEqual(args.model_repo, "HanStudios/hanogt-ai-qwen3-8b-lora", "the fallback keeps its adapters apart")
+        self.assertEqual(saves[-1][0], "HanStudios/hanogt-ai-qwen3-8b-lora")
+
+    def test_nothing_trains(self):
+        plan, _args, _commands, _saves = self.settle([1, 1, 1, 1])
+        self.assertIsNone(plan)
 
     def test_files_hash_changes_with_content(self):
         with tempfile.TemporaryDirectory() as folder:

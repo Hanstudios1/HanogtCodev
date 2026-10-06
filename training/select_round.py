@@ -37,8 +37,9 @@ FAMILY_GROUPS = {
     "code-solve": "code", "code-explain": "code", "code-algorithm": "code",
     "security": "security",
     "judge": "judge",
+    "tool-use": "agents",
 }
-GROUP_WEIGHTS = {"conversation": 0.20, "reasoning": 0.10, "math": 0.13, "science": 0.10, "knowledge": 0.12, "code": 0.20, "security": 0.08, "judge": 0.07}
+GROUP_WEIGHTS = {"conversation": 0.18, "reasoning": 0.09, "math": 0.12, "science": 0.10, "knowledge": 0.11, "code": 0.18, "security": 0.07, "judge": 0.07, "agents": 0.08}
 OWN_FAMILIES = {"site", "agent"}
 
 

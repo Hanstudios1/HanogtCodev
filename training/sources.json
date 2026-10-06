@@ -1673,11 +1673,10 @@
       "languages": [
         "EN"
       ],
-      "cap": 12000,
-      "provenance": "Four-choice STEM questions written by Qwen3-235B-A22B (Apache-2.0) and answered with reasoning by DeepSeek-R1 (majority vote); the configs whose questions came from Qwen2.5-72B are left out.",
+      "cap": 18000,
+      "provenance": "Four-choice STEM questions written by Qwen3-235B-A22B and Qwen2.5-32B-Instruct (both Apache-2.0) and answered with reasoning by DeepSeek-R1 (majority vote); the ten-choice configs, one of them made with Qwen2.5-72B, are left out.",
       "attribution": "OpenScience (NVIDIA, 2025), https://huggingface.co/datasets/nvidia/OpenScience (CC BY 4.0)",
       "hf": {
-        "config": "OS-Q3-235B-4",
         "converter": "fields",
         "fields": {
           "user": "input",
@@ -1685,7 +1684,11 @@
         },
         "lang": "EN",
         "uniqueBy": "input",
-        "maxChars": 12000
+        "maxChars": 12000,
+        "configs": [
+          "OS-Q3-235B-4",
+          "OS-Q2.5-32B-4"
+        ]
       }
     },
     {
@@ -1956,6 +1959,94 @@
       }
     },
     {
+      "id": "hf-agentic-tool-calling",
+      "kind": "hf",
+      "repo": "nvidia/Nemotron-Agentic-v1",
+      "status": "allowed",
+      "license": "CC-BY-4.0",
+      "family": [
+        "tool-use"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 10000,
+      "provenance": "Multi-turn tool-use conversations simulated over public tool sets with Qwen3-235B-A22B-Thinking-2507 and -Instruct-2507 (Apache-2.0) and filtered by a judge model; the agent decides when to call tools and answers from their results. The interactive-agent subset, which also used gpt-oss-120b, is left out.",
+      "attribution": "Nemotron-Agentic-v1 (NVIDIA, 2025), https://huggingface.co/datasets/nvidia/Nemotron-Agentic-v1 (CC BY 4.0)",
+      "hf": {
+        "format": "jsonl-lines",
+        "dataFiles": [
+          "data/tool_calling.jsonl"
+        ],
+        "converter": "tools",
+        "toolsField": "tools",
+        "lang": "EN",
+        "keep": 0.15,
+        "maxScan": 250000,
+        "maxChars": 12000
+      }
+    },
+    {
+      "id": "hf-nemotron-tool-calling",
+      "kind": "hf",
+      "repo": "nvidia/Nemotron-Post-Training-Dataset-v1",
+      "status": "allowed",
+      "license": "CC-BY-4.0",
+      "family": [
+        "tool-use"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 8000,
+      "provenance": "Single-turn, multi-turn and multi-step tool calling answered by DeepSeek-R1-0528 and Qwen3-235B-A22B, with the tool definitions from each row's metadata; one conversation per request.",
+      "attribution": "Nemotron-Post-Training-Dataset-v1 (NVIDIA, 2025), https://huggingface.co/datasets/nvidia/Nemotron-Post-Training-Dataset-v1 (CC BY 4.0)",
+      "hf": {
+        "split": "tool_calling",
+        "converter": "tools",
+        "toolsField": "metadata.tools",
+        "lang": "EN",
+        "uniqueBy": "$prompt",
+        "maxChars": 12000
+      }
+    },
+    {
+      "id": "hf-opencodereasoning",
+      "kind": "hf",
+      "repo": "nvidia/OpenCodeReasoning",
+      "status": "allowed",
+      "license": "CC-BY-4.0",
+      "family": [
+        "code-algorithm"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 8000,
+      "provenance": "Competitive programming questions (TACO, APPS, CodeContests, Codeforces train splits) solved in Python with reasoning by DeepSeek-R1; one solution per question.",
+      "attribution": "OpenCodeReasoning (Ahmad et al., 2025), https://huggingface.co/datasets/nvidia/OpenCodeReasoning (CC BY 4.0)",
+      "hf": {
+        "config": "split_0",
+        "split": "split_0",
+        "converter": "fields",
+        "fields": {
+          "user": "input",
+          "assistant": "output"
+        },
+        "where": [
+          {
+            "field": "split",
+            "equals": "train"
+          }
+        ],
+        "lang": "EN",
+        "uniqueBy": "input",
+        "minUserChars": 40,
+        "maxChars": 12000,
+        "maxScan": 400000
+      }
+    },
+    {
       "id": "hf-turkish-chat-max-25k",
       "kind": "hf",
       "repo": "cisimcik/turkish-chat-max-25k",
@@ -2091,6 +2182,38 @@
       "languages": [],
       "cap": 0,
       "provenance": "Evaluation benchmark: kept out of training.",
+      "attribution": null
+    },
+    {
+      "id": "review-nemotron-sft-agentic-v2",
+      "kind": "hf",
+      "repo": "nvidia/Nemotron-SFT-Agentic-v2",
+      "status": "review",
+      "license": "CC-BY-4.0",
+      "family": [
+        "tool-use"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 0,
+      "provenance": "Review: 707K tool-calling trajectories made with DeepSeek-V3.2 and GLM-4.6 (MIT), but they include a subsample of Toucan-1.5M (made partly with gpt-oss-120b) that rows don't mark; the search subset's model isn't named.",
+      "attribution": null
+    },
+    {
+      "id": "review-nemotron-agentic-v1-interactive",
+      "kind": "hf",
+      "repo": "nvidia/Nemotron-Agentic-v1",
+      "status": "review",
+      "license": "CC-BY-4.0",
+      "family": [
+        "tool-use"
+      ],
+      "languages": [
+        "EN"
+      ],
+      "cap": 0,
+      "provenance": "Review: the interactive-agent subset mixes Qwen3 models with gpt-oss-120b: waits for the owner's decision on gpt-oss (its tool_calling subset is allowed as hf-agentic-tool-calling).",
       "attribution": null
     },
     {

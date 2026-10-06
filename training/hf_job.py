@@ -29,7 +29,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "training" / "data" / "v2"
 CODE_FILES = ["training/train_lora.py", "training/merge_and_export.py", "training/requirements.txt"]
 
-# US dollars an hour (approximate) and QLoRA training speed in tokens a second (rough estimates).
+# US dollars an hour (approximate) and training speed in tokens a second (rough estimates: QLoRA for
+# "small", 16-bit LoRA for the Qwen3.5-family presets).
 FLAVORS = {
     "l4x1": {"usdPerHour": 0.8, "memoryGb": 24},
     "a10g-large": {"usdPerHour": 1.5, "memoryGb": 24},
@@ -41,6 +42,10 @@ SPEED = {
     ("small", "a10g-large"): 1200,
     ("small", "a100-large"): 3500,
     ("small", "h100"): 7000,
+    ("4b", "l4x1"): 1500,
+    ("4b", "a10g-large"): 1800,
+    ("4b", "a100-large"): 6000,
+    ("4b", "h100"): 11000,
     ("27b", "a100-large"): 1000,
     ("27b", "h100"): 2000,
 }
@@ -137,7 +142,7 @@ def main(argv=None):
         if name in ("upload", "launch"):
             command.add_argument("--dataset-repo", required=True, help="e.g. HanStudios/hanogt-sft-v2 (private)")
         if name in ("plan", "launch"):
-            command.add_argument("--preset", choices=["small", "27b"], default="small", help="small = Qwen3-8B, 27b = Qwen3.6-27B")
+            command.add_argument("--preset", choices=["small", "4b", "27b"], default="small", help="small = Qwen3-8B, 4b = Qwen3.5-4B, 27b = Qwen3.8-27B (80 GB GPU)")
             command.add_argument("--flavor", choices=sorted(FLAVORS), default="a100-large")
             command.add_argument("--epochs", type=float, default=1.0)
         if name == "launch":
