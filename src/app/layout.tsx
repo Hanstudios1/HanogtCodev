@@ -7,6 +7,7 @@ import "./globals.css";
 import Provider from "@/components/Provider";
 import { I18nProvider } from "@/lib/i18n";
 import SkipLink from "@/components/SkipLink";
+import GroupVoiceProvider from "@/components/GroupVoiceProvider";
 import VoiceCallProvider from "@/components/VoiceCallProvider";
 import HanogtAIDock from "@/components/HanogtAI/HanogtAIDock";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
@@ -76,7 +77,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                         <SkipLink />
                         <AnnouncementBanner />
                         <VoiceCallProvider>
-                            {children}
+                            <GroupVoiceProvider>
+                                {children}
+                            </GroupVoiceProvider>
                         </VoiceCallProvider>
                         <HanogtAIDock />
                         {/* Inside the I18nProvider: Provider (bridge state) wraps it but can't translate. */}

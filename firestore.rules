@@ -148,6 +148,18 @@ service cloud.firestore {
       }
     }
 
+    // Group voice channels: members see who is in the channel; each browser reads only
+    // the connection signals addressed to its own account. The server writes everything.
+    match /group_voice/{groupId} {
+      allow read: if groupMember(groupId);
+      allow write: if false;
+
+      match /signals/{signalId} {
+        allow read: if signedIn() && resource.data.toEmail == email();
+        allow write: if false;
+      }
+    }
+
     match /group_invites/{inviteId} {
       allow read, write: if false;
     }

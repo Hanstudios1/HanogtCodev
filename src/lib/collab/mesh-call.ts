@@ -23,9 +23,11 @@ export type MeshCallState = {
     error: "mic_denied" | "mic_unavailable" | "ice" | "unsupported" | null;
     /** False when no TURN server is configured (some networks then can't connect). */
     turnConfigured: boolean;
+    /** The browser refused to start the incoming audio by itself (resumeAudio() from a click fixes it). */
+    audioBlocked: boolean;
 };
 
-export const IDLE_CALL: MeshCallState = { status: "idle", muted: false, deafened: false, speaking: [], connections: {}, error: null, turnConfigured: true };
+export const IDLE_CALL: MeshCallState = { status: "idle", muted: false, deafened: false, speaking: [], connections: {}, error: null, turnConfigured: true, audioBlocked: false };
 
 export const SELF_PEER = "self";
 
@@ -33,13 +35,18 @@ type MeshOptions = {
     selfId: MeshPeerId;
     send: (to: MeshPeerId, kind: MeshSignalKind, data: string) => void;
     onChange: (state: MeshCallState) => void;
+    /** Microphone and speaker picked in the voice settings (null: the system default). */
+    inputDeviceId?: string | null;
+    outputDeviceId?: string | null;
 };
+
+type SinkAudio = HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
 
 type Peer = {
     id: MeshPeerId;
     pc: RTCPeerConnection;
     initiator: boolean;
-    audio: HTMLAudioElement;
+    audio: SinkAudio;
     stream: MediaStream;
     pendingRemote: RTCIceCandidateInit[];
     outgoing: RTCIceCandidateInit[];
@@ -97,9 +104,13 @@ export class MeshCall {
     private readonly lastLoud = new Map<string, number>();
     private mutedBeforeDeafen = false;
     private closed = false;
+    private inputDeviceId: string | null;
+    private outputDeviceId: string | null;
 
     constructor(options: MeshOptions) {
         this.options = options;
+        this.inputDeviceId = options.inputDeviceId ?? null;
+        this.outputDeviceId = options.outputDeviceId ?? null;
     }
 
     get current() {
@@ -120,7 +131,7 @@ export class MeshCall {
         }
         this.update({ status: "joining", error: null });
         try {
-            this.local = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+            this.local = await navigator.mediaDevices.getUserMedia({ audio: this.audioConstraints(), video: false });
         } catch (error) {
             const name = error instanceof DOMException ? error.name : "";
             this.update({ status: "idle", error: name === "NotFoundError" || name === "OverconstrainedError" ? "mic_unavailable" : "mic_denied" });
@@ -148,6 +159,62 @@ export class MeshCall {
         return true;
     }
 
+    private audioConstraints(): MediaTrackConstraints {
+        const constraints: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 };
+        // `ideal`: a microphone that was unplugged falls back to the default one instead of failing.
+        if (this.inputDeviceId) constraints.deviceId = { ideal: this.inputDeviceId };
+        return constraints;
+    }
+
+    private play(audio: HTMLAudioElement) {
+        void audio.play().catch((error: unknown) => {
+            if (error instanceof DOMException && error.name === "NotAllowedError" && !this.closed) this.update({ audioBlocked: true });
+        });
+    }
+
+    /** Starts audio the browser held back (call from a click). */
+    resumeAudio() {
+        void this.audioContext?.resume().catch(() => undefined);
+        for (const peer of this.peers.values()) void peer.audio.play().catch(() => undefined);
+        this.update({ audioBlocked: false });
+    }
+
+    private applySink(audio: SinkAudio) {
+        // "" is the system default; a speaker that is gone keeps the current one.
+        if (typeof audio.setSinkId === "function") void audio.setSinkId(this.outputDeviceId ?? "").catch(() => undefined);
+    }
+
+    /** Speaker chosen in the voice settings (applies at once). */
+    setOutputDevice(id: string | null) {
+        if (id === this.outputDeviceId) return;
+        this.outputDeviceId = id;
+        for (const peer of this.peers.values()) this.applySink(peer.audio);
+    }
+
+    /** Microphone chosen in the voice settings: every connection switches to it without renegotiating. */
+    async setInputDevice(id: string | null) {
+        if (id === this.inputDeviceId) return;
+        this.inputDeviceId = id;
+        if (this.state.status !== "active" || !this.local) return;
+        try {
+            const next = await navigator.mediaDevices.getUserMedia({ audio: this.audioConstraints(), video: false });
+            const track = next.getAudioTracks()[0];
+            if (!track || this.closed || !this.local) {
+                next.getTracks().forEach((entry) => entry.stop());
+                return;
+            }
+            track.enabled = !this.state.muted;
+            for (const peer of this.peers.values()) {
+                await peer.pc.getSenders().find((sender) => sender.track?.kind === "audio")?.replaceTrack(track).catch(() => undefined);
+            }
+            this.local.getTracks().forEach((old) => old.stop());
+            this.local = next;
+            this.localAnalyser = this.analyse(next);
+        } catch {
+            // The other microphone couldn't be opened: the call keeps the current one.
+        }
+    }
+
     /** The peers that should be connected (participants whose awareness says they're in the call). */
     setPeers(ids: readonly MeshPeerId[]) {
         this.wanted = new Set(ids.filter((id) => id !== this.options.selfId).slice(0, MAX_PEERS));
@@ -166,16 +233,17 @@ export class MeshCall {
 
     private createPeer(id: MeshPeerId, initiator: boolean): Peer {
         const pc = new RTCPeerConnection({ iceServers: this.iceServers, iceCandidatePoolSize: 4 });
-        const audio = new Audio();
+        const audio: SinkAudio = new Audio();
         audio.autoplay = true;
         audio.muted = this.state.deafened;
+        this.applySink(audio);
         const stream = new MediaStream();
         audio.srcObject = stream;
         const peer: Peer = { id, pc, initiator, audio, stream, pendingRemote: [], outgoing: [], candidateTimer: null, restartTimer: null, restarts: 0, analyser: null };
         this.local?.getTracks().forEach((track) => pc.addTrack(track, this.local as MediaStream));
         pc.ontrack = (event) => {
             for (const track of event.streams[0]?.getTracks() ?? [event.track]) if (!stream.getTracks().includes(track)) stream.addTrack(track);
-            void audio.play().catch(() => undefined);
+            this.play(audio);
             peer.analyser = this.analyse(stream);
         };
         pc.onicecandidate = (event) => {

@@ -1,14 +1,16 @@
 "use client";
 
-import { HeadphoneOff, Headphones, Mic, MicOff, PhoneOff, Settings, Signal, SlidersHorizontal } from "lucide-react";
+import { HeadphoneOff, Headphones, Mic, MicOff, PhoneOff, Settings, Signal, SlidersHorizontal, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { cx } from "@/components/Groups/ui";
+import { VOICE_COPY, useGroupVoice, useVoiceNoticeText } from "@/components/GroupVoiceProvider";
 import PresenceAvatar from "@/components/PresenceAvatar";
 import StatusMenu from "@/components/StatusMenu";
 import { useVoiceCall } from "@/components/VoiceCallProvider";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { PRESENCE_STATUS_COPY } from "@/lib/presence";
-import { formatFriendTag } from "@/lib/social/model";
+import { formatFriendTag, groupHref } from "@/lib/social/model";
 import { useSocial } from "./context";
 
 const C = {
@@ -36,6 +38,9 @@ export default function UserPanel() {
     const { tx } = useI18n();
     const { me, audio, ui } = useSocial();
     const call = useVoiceCall();
+    const voice = useGroupVoice();
+    const noticeText = useVoiceNoticeText();
+    const voiceConnected = voice.state?.phase === "connected";
     const [open, setOpen] = useState(false);
     const menuId = useId();
     const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -82,6 +87,39 @@ export default function UserPanel() {
                         </button>
                     )}
                 </div>
+            )}
+            {voice.group && voice.state && call.status === "idle" && (
+                // The voice channel the tab is in, like Discord's "Voice Connected" panel.
+                <div className="border-t border-zinc-200 bg-zinc-200/70 dark:border-white/5 dark:bg-black/40" role="status" data-voice-phase={voice.state.phase}>
+                    <div className="flex items-center gap-2 px-2.5 py-2">
+                        <span className="min-w-0 flex-1">
+                            <span className={cx("flex items-center gap-1.5 text-[13px] font-bold", voiceConnected ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>
+                                <Signal className={cx("h-4 w-4 shrink-0", !voiceConnected && "motion-safe:animate-pulse")} aria-hidden />
+                                {tx(voiceConnected ? VOICE_COPY.connected : VOICE_COPY.joining)}
+                            </span>
+                            <Link href={groupHref(voice.group.id)} className="block truncate text-xs text-zinc-500 hover:text-zinc-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400 dark:hover:text-zinc-200">
+                                {voice.group.channel} / {voice.group.name}
+                            </Link>
+                        </span>
+                        <button type="button" onClick={voice.leave} aria-label={tx(VOICE_COPY.disconnect)} title={tx(VOICE_COPY.disconnect)} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 transition hover:bg-red-500/10 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-zinc-400">
+                            <PhoneOff className="h-[18px] w-[18px]" aria-hidden />
+                        </button>
+                    </div>
+                    {voice.state.audioBlocked && (
+                        <p className="flex items-center gap-2 px-2.5 pb-2 text-[11px] leading-4 text-amber-700 dark:text-amber-300">
+                            <span className="min-w-0 flex-1">{tx(VOICE_COPY.audioBlocked)}</span>
+                            <button type="button" onClick={voice.resumeAudio} className="shrink-0 rounded-md bg-amber-500/15 px-2 py-1 font-bold transition hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{tx(VOICE_COPY.startAudio)}</button>
+                        </p>
+                    )}
+                </div>
+            )}
+            {voice.notice && (
+                <p role="alert" className="flex items-start gap-2 border-t border-amber-500/20 bg-amber-500/10 px-2.5 py-2 text-xs leading-4 text-amber-800 dark:text-amber-200">
+                    <span className="min-w-0 flex-1">{noticeText(voice.notice)}</span>
+                    <button type="button" onClick={voice.dismissNotice} aria-label={tx(VOICE_COPY.close)} title={tx(VOICE_COPY.close)} className="-me-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition hover:bg-amber-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <X className="h-4 w-4" aria-hidden />
+                    </button>
+                </p>
             )}
             <div className="flex h-[52px] items-center gap-0.5 bg-zinc-200/70 px-1.5 dark:bg-black/40">
                 <button

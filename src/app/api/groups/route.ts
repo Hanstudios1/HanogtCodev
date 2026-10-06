@@ -13,6 +13,7 @@ import { GROUP_FEATURES_MAX } from "@/lib/plans";
 import { planQuota } from "@/lib/server/entitlements";
 import { fitsGroupLimit, groupLimitsFor } from "@/lib/server/group-limits";
 import { forgetMemberStars } from "@/lib/server/social-stars";
+import { removeFromVoice } from "@/lib/server/group-voice";
 import { RESERVED_COMMAND_NAMES } from "@/lib/social/commands";
 import {
     GROUP_LIMITS,
@@ -594,6 +595,7 @@ async function leaveGroup(body: Record<string, unknown>, user: GroupUser) {
     await postSystemMessage(groupId, group, "member_left", { name: await ownDisplayName(user) });
     // Stars here kept a few words of messages the person can no longer open.
     after(() => forgetMemberStars(email, groupId).catch(() => undefined));
+    after(() => removeFromVoice(groupId, email).catch(() => undefined));
     return { success: true };
 }
 

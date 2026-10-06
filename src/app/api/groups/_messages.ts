@@ -25,6 +25,7 @@ import { repeatKey, scanMessage, SPAM_LIMITS } from "@/lib/server/automod";
 import { commitServerMutations, createServerDocument, deleteServerDocument, getServerDocument, patchServerDocument, queryServerCollection, runServerQuery } from "@/lib/server/firebase-rest";
 import { askGroupModel, groupHistoryText, GROUP_AI_HISTORY } from "@/lib/server/group-ai-bot";
 import { activeMute, minutesLeft, moderationSubject, mutePath } from "@/lib/server/group-moderation";
+import { removeFromVoice } from "@/lib/server/group-voice";
 import { providerConfig } from "@/lib/server/hanogt-ai";
 import { clearMessageTraces, refreshMessageTraces } from "@/lib/server/message-traces";
 import { enforceRateLimitWithFallback } from "@/lib/server/rate-limit";
@@ -199,6 +200,8 @@ async function setMute(groupId: string, email: string, durationMs: number, by: s
         createdAt: new Date(now),
         expiresAt: until,
     });
+    // A time-out silences voice too: out of the channel at once (rejoining is refused while it lasts).
+    await removeFromVoice(groupId, email, now).catch(() => undefined);
     return until;
 }
 

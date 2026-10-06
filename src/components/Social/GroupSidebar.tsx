@@ -10,6 +10,7 @@ import { badgeLabel, groupHref, type ChannelUnread, type GroupNotifyLevel } from
 import { useSocial } from "./context";
 import { useGroupNav } from "./group/nav";
 import { DropdownMenu, SectionLabel } from "./ui";
+import VoiceChannelSection from "./VoiceChannel";
 
 const C = {
     menu: { TR: "{name} grubu menüsü", EN: "{name} group menu" },
@@ -141,6 +142,7 @@ export default function GroupSidebar() {
                                 <li key={entry}><ChannelLink href={groupHref(groupId, { topic: entry })} active={view === "chat" && topic === entry} label={entry} onClick={close} state={markers(entry.toLocaleLowerCase(), view === "chat" && topic === entry)} /></li>
                             ))}
                         </ul>
+                        <VoiceChannelSection groupId={groupId} groupName={name} emoji={group.emoji} channel={group.contentLanguage === "en" ? "General" : "Genel"} />
                         <SectionLabel>{tx(C.more)}</SectionLabel>
                         <ul className="space-y-0.5">
                             <li>

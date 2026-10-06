@@ -3,6 +3,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getActiveSession } from "@/lib/server/active-session";
+import { memberKey } from "@/lib/server/group-keys";
+import { deleteGroupVoice, removeFromVoice } from "@/lib/server/group-voice";
 import {
     commitServerMutations,
     commitServerPatches,
@@ -294,14 +296,8 @@ export function publicGroup(groupId: string, group: StoredGroup): GroupInfo {
     };
 }
 
-/**
- * Pseudonymous, per-group member key used for reactions and typing state, so
- * message documents never store e-mail addresses of the people who reacted.
- */
-export function memberKey(groupId: string, email: string) {
-    const salt = process.env.RATE_LIMIT_SALT || process.env.NEXTAUTH_SECRET || "hanogt";
-    return `k${createHash("sha256").update(`${salt}:group-member:${groupId}:${email}`).digest("hex").slice(0, 20)}`;
-}
+/** The per-group member key (reactions, typing, voice channels): see lib/server/group-keys.ts. */
+export { memberKey };
 
 /** Field paths of typing entries that are older than `maxAgeMs` (or malformed), for clean-up. */
 export function staleTypingFields(group: StoredGroup, now: number, keep: string[] = [], maxAgeMs = 30_000) {
@@ -456,6 +452,7 @@ export async function removeGroupMember(groupId: string, actorEmail: string, tar
     await deleteServerDocument(`group_invites/${inviteDocumentId(groupId, targetEmail)}`).catch(() => undefined);
     // Their stars here kept a few words of messages they can no longer open.
     await forgetMemberStars(targetEmail, groupId).catch(() => undefined);
+    await removeFromVoice(groupId, targetEmail).catch(() => undefined);
     return result;
 }
 
@@ -514,6 +511,7 @@ export async function deleteGroupCascade(groupId: string) {
     const records = await Promise.all(["group_invites", "group_invite_links", "group_bans", "group_mutes", "group_warnings", "group_reports", "automod_events"]
         .map((collectionId) => queryServerCollection(collectionId, "groupId", "EQUAL", groupId, { limit: 1000 })));
     await deleteInBatches([...records.flat().map((document) => document._path), `group_automod/${groupId}`]);
+    await deleteGroupVoice(groupId);
     // Members' stars here kept a few words of the group's messages.
     await forgetPlaceStars("group", groupId);
     await deleteServerDocument(`groups/${groupId}`);

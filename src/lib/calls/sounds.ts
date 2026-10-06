@@ -47,3 +47,34 @@ export function startTone(kind: "incoming" | "outgoing"): () => void {
         context = null;
     };
 }
+
+/**
+ * A short cue for voice channels: two rising notes when someone joins
+ * (yourself included), two falling ones when someone leaves.
+ */
+export function playCue(kind: "join" | "leave") {
+    try {
+        const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) return;
+        const context = new AudioContextClass();
+        void context.resume().catch(() => undefined);
+        const notes: Array<[frequency: number, start: number]> = kind === "join" ? [[523.25, 0], [783.99, 0.09]] : [[783.99, 0], [523.25, 0.09]];
+        const now = context.currentTime + 0.02;
+        for (const [frequency, start] of notes) {
+            const oscillator = context.createOscillator();
+            const envelope = context.createGain();
+            oscillator.type = "sine";
+            oscillator.frequency.value = frequency;
+            envelope.gain.setValueAtTime(0, now + start);
+            envelope.gain.linearRampToValueAtTime(0.07, now + start + 0.02);
+            envelope.gain.linearRampToValueAtTime(0, now + start + 0.16);
+            oscillator.connect(envelope);
+            envelope.connect(context.destination);
+            oscillator.start(now + start);
+            oscillator.stop(now + start + 0.2);
+        }
+        window.setTimeout(() => void context.close().catch(() => undefined), 600);
+    } catch {
+        // No audio: the cue is simply silent.
+    }
+}

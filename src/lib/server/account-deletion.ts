@@ -13,6 +13,7 @@ import {
     listServerCollection,
     queryServerCollection,
 } from "./firebase-rest";
+import { deleteGroupVoice, removeFromVoice } from "./group-voice";
 import { deleteAccountGameAudio, releaseArcadeAudio } from "./game-assets";
 import { deleteVoiceRecording } from "./social-voice";
 import { isOwnedStoragePath, normalizeEmail } from "./validate";
@@ -490,6 +491,7 @@ async function deleteOwnedGroup(ctx: Context, group: StoredDocument) {
     if (!(await drain(ctx, "groups", query("message_stars", "placeRef", "EQUAL", `group:${group._id}`), deleting(ctx, "groups", "starCopies")))) complete = false;
     // Kept until its content is gone, so a later run finds the group again.
     if (!complete) return false;
+    await deleteGroupVoice(group._id);
     await deleteServerDocument(`group_automod/${group._id}`);
     await deleteServerDocument(group._path);
     ctx.tally.count("groups");
@@ -509,6 +511,7 @@ async function leaveGroup(ctx: Context, group: StoredDocument) {
         };
     });
     if (left) ctx.tally.count("groupMemberships");
+    await removeFromVoice(group._id, ctx.email).catch(() => undefined);
 }
 
 /**
