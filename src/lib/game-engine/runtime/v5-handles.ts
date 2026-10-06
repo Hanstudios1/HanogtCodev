@@ -1,6 +1,6 @@
-/** Script handles of the V5 components: Animator (and its AnimatorStateInfo). */
+/** Script handles of the V5 components: Animator (and its AnimatorStateInfo) and PlayerInput. */
 import { VMList, type HostObject, type VMRef, type VMValue } from "../script/values";
-import type { AnimatorComponent, AnimatorParameter, AnimatorParameterType } from "../types";
+import { MAX_LOCAL_PLAYERS, type AnimatorComponent, type AnimatorParameter, type AnimatorParameterType, type PlayerInputComponent, type PlayerInputScheme } from "../types";
 import { animatorHash } from "./animator-controller";
 import { ComponentHandle, hostError, toBool, toNumber } from "./handles";
 
@@ -230,6 +230,145 @@ export class AnimatorHandle extends ComponentHandle<AnimatorComponent> {
                 return 1;
             case "SetLayerWeight":
             case "Rebind":
+                return undefined;
+            default:
+                return super.call(name, args, typeArgs, refs);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PlayerInput (local multiplayer)
+// ---------------------------------------------------------------------------
+
+const SCHEME_NAMES: Record<PlayerInputScheme, string> = {
+    auto: "Auto",
+    keyboard: "Keyboard&Mouse",
+    keyboardLeft: "Keyboard Left",
+    keyboardRight: "Keyboard Right",
+    gamepad: "Gamepad",
+};
+
+/** A control scheme by its name ("Gamepad", "Keyboard Left", Unity's "Keyboard&Mouse"…). */
+function schemeFrom(value: VMValue): PlayerInputScheme | null {
+    switch (String(value ?? "").replace(/[\s_&+-]/g, "").toLowerCase()) {
+        case "auto": return "auto";
+        case "keyboard":
+        case "keyboardmouse":
+        case "keyboardandmouse": return "keyboard";
+        case "keyboardleft":
+        case "left":
+        case "wasd": return "keyboardLeft";
+        case "keyboardright":
+        case "right":
+        case "arrows": return "keyboardRight";
+        case "gamepad":
+        case "joystick":
+        case "controller": return "gamepad";
+        default: return null;
+    }
+}
+
+export class PlayerInputHandle extends ComponentHandle<PlayerInputComponent> {
+    readonly hostType = "PlayerInput";
+
+    protected typeNames(): string[] {
+        return ["PlayerInput", "Behaviour", "Component", "Object", "UnityEngine.Object"];
+    }
+
+    /** This player's input; null while the component is off (everything reads as released). */
+    private get view() {
+        return this.component.enabled ? this.world.input.view(this.world.inputSpecOf(this.component)) : null;
+    }
+
+    private get pad() {
+        const spec = this.world.inputSpecOf(this.component);
+        return spec.pad === null ? null : this.world.input.padSlot(spec.pad);
+    }
+
+    private devices(): string[] {
+        const spec = this.world.inputSpecOf(this.component);
+        const names: string[] = [];
+        if (spec.keyboard === "all") names.push("Keyboard");
+        if (spec.keyboard === "left") names.push("Keyboard (left)");
+        if (spec.keyboard === "right") names.push("Keyboard (right)");
+        if (spec.mouse) names.push("Mouse");
+        if (spec.touch) names.push("Touchscreen");
+        const pad = this.pad;
+        if (pad?.connected) names.push(pad.name || `Gamepad ${this.component.gamepad}`);
+        return names;
+    }
+
+    get(name: string): VMValue {
+        const c = this.component;
+        switch (name) {
+            case "playerIndex": return c.player - 1;
+            case "player":
+            case "playerNumber": return c.player;
+            case "currentControlScheme": return SCHEME_NAMES[c.scheme];
+            case "scheme": return c.scheme;
+            case "gamepad": return c.gamepad;
+            case "hasGamepad":
+            case "isGamepadConnected": return Boolean(this.pad?.connected);
+            case "gamepadName": return this.pad?.connected ? this.pad.name : "";
+            case "devices": return new VMList(this.devices(), "Array");
+            case "inputIsActive": return c.enabled;
+            default: {
+                const common = this.componentGet(name);
+                if (common !== undefined) return common;
+                return this.unknown(name);
+            }
+        }
+    }
+
+    set(name: string, value: VMValue): void {
+        const c = this.component;
+        switch (name) {
+            case "player":
+            case "playerNumber":
+                c.player = Math.max(1, Math.min(MAX_LOCAL_PLAYERS, Math.trunc(toNumber(value, name))));
+                return;
+            case "playerIndex":
+                c.player = Math.max(1, Math.min(MAX_LOCAL_PLAYERS, Math.trunc(toNumber(value, name)) + 1));
+                return;
+            case "scheme":
+            case "currentControlScheme": {
+                const scheme = schemeFrom(value);
+                if (!scheme) hostError(`'${String(value)}' bir kontrol şeması değil. Seçenekler: Auto, Keyboard, Keyboard Left, Keyboard Right, Gamepad.`, "ArgumentException");
+                c.scheme = scheme as PlayerInputScheme;
+                return;
+            }
+            case "gamepad":
+                c.gamepad = Math.max(1, Math.min(MAX_LOCAL_PLAYERS, Math.trunc(toNumber(value, name))));
+                return;
+            default:
+                if (this.componentSet(name, value)) return;
+                this.unknown(name);
+        }
+    }
+
+    call(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue {
+        const view = this.view;
+        const action = String(args[0] ?? "");
+        switch (name) {
+            case "GetAxis": return view ? view.getAxis(action) : 0;
+            case "GetAxisRaw": return view ? view.getAxisRaw(action) : 0;
+            case "GetButton": return view ? view.getButton(action) : false;
+            case "GetButtonDown": return view ? view.getButtonDown(action) : false;
+            case "GetButtonUp": return view ? view.getButtonUp(action) : false;
+            case "GetKey": return view ? view.key(args[0], "held") : false;
+            case "GetKeyDown": return view ? view.key(args[0], "pressed") : false;
+            case "GetKeyUp": return view ? view.key(args[0], "released") : false;
+            case "SwitchCurrentControlScheme": {
+                this.set("scheme", args[0] ?? "");
+                if (typeof args[1] === "number") this.set("gamepad", args[1]);
+                return undefined;
+            }
+            case "ActivateInput":
+                this.component.enabled = true;
+                return undefined;
+            case "DeactivateInput":
+                this.component.enabled = false;
                 return undefined;
             default:
                 return super.call(name, args, typeArgs, refs);

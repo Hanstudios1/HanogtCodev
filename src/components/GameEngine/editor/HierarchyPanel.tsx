@@ -71,6 +71,7 @@ const SEARCH_ALIASES: Partial<Record<GameComponent["type"], string[]>> = {
     animator: ["Animator", "StateMachine"],
     joint: ["DistanceJoint2D", "SpringJoint2D", "DistanceJoint", "SpringJoint"],
     navAgent2D: ["NavMeshAgent"],
+    playerInput: ["PlayerInput", "Gamepad"],
 };
 
 export default function HierarchyPanel() {

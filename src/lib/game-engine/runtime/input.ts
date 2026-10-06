@@ -3,7 +3,9 @@
  * gamepads). Key names follow Unity's KeyCode names ("Space", "A",
  * "LeftArrow"…); buttons and axes come from the project's input actions.
  */
-import { defaultInputSettings, GAMEPAD_AXES, GAMEPAD_BUTTONS, type GamepadButtonName, type InputAction, type InputSettings } from "../input-actions";
+import { defaultInputSettings, GAMEPAD_AXES, GAMEPAD_BUTTONS, keyboardHalfOf, playerKeys, type GamepadButtonName, type InputAction, type InputSettings, type InputSourceSpec } from "../input-actions";
+
+export type { InputSourceSpec } from "../input-actions";
 
 const CODE_TO_KEY: Record<string, string> = {
     Space: "Space", Enter: "Return", NumpadEnter: "KeypadEnter", Escape: "Escape", Backspace: "Backspace", Tab: "Tab", Delete: "Delete",
@@ -47,6 +49,21 @@ interface AxisState {
     value: number;
 }
 
+type EdgeKind = "held" | "pressed" | "released";
+
+/** One gamepad slot (or the on-screen buttons) for one frame. */
+interface PadSlot {
+    held: Set<GamepadButtonName>;
+    pressed: Set<GamepadButtonName>;
+    released: Set<GamepadButtonName>;
+    axes: number[];
+    connected: boolean;
+    name: string;
+}
+
+const emptySlot = (): PadSlot => ({ held: new Set(), pressed: new Set(), released: new Set(), axes: [0, 0, 0, 0], connected: false, name: "" });
+const MAX_PADS = 4;
+
 /** On-screen touch buttons also press these gamepad buttons, so actions whose keys were rebound still answer them. */
 const TOUCH_PAD: Record<string, GamepadButtonName> = { LeftArrow: "DpadLeft", RightArrow: "DpadRight", UpArrow: "DpadUp", DownArrow: "DpadDown", Space: "A", LeftControl: "X" };
 
@@ -62,6 +79,15 @@ export class InputManager {
     private readonly pendingMouseDown = new Set<number>();
     private readonly pendingMouseUp = new Set<number>();
     private readonly virtualHeld = new Set<string>();
+    /** Key edges from the physical keyboard and from the on-screen buttons, kept apart for player views. */
+    private keyPressedFrame = new Set<string>();
+    private keyReleasedFrame = new Set<string>();
+    private touchPressedFrame = new Set<string>();
+    private touchReleasedFrame = new Set<string>();
+    private readonly pendingKeyPressed = new Set<string>();
+    private readonly pendingKeyReleased = new Set<string>();
+    private readonly pendingTouchPressed = new Set<string>();
+    private readonly pendingTouchReleased = new Set<string>();
     private readonly touchPad = new Set<GamepadButtonName>();
     private readonly axes = new Map<string, AxisState>();
     private actions = new Map<string, InputAction>();
@@ -72,8 +98,12 @@ export class InputManager {
     private padReleased = new Set<GamepadButtonName>();
     private padAxes = [0, 0, 0, 0];
     private padNames: string[] = [];
-    /** Gamepad state injected by tests or on-screen controls instead of navigator.getGamepads(). */
-    private virtualPad: { buttons: GamepadButtonName[]; axes: number[] } | null = null;
+    /** Each gamepad slot on its own (local multiplayer), and the on-screen buttons as a pad. */
+    private pads: PadSlot[] = Array.from({ length: MAX_PADS }, emptySlot);
+    private touchSlot: PadSlot = emptySlot();
+    /** Gamepad state injected by tests or on-screen controls instead of navigator.getGamepads(), per slot. */
+    private virtualPads: Array<{ buttons: GamepadButtonName[]; axes: number[] } | null> = Array.from({ length: MAX_PADS }, () => null);
+    private readonly views = new Map<string, PlayerInputView>();
     private cleanup: Array<() => void> = [];
     /** Mouse position in pixels, origin bottom-left (Unity convention). */
     mouseX = 0;
@@ -102,8 +132,20 @@ export class InputManager {
     }
 
     /** Presses gamepad buttons and moves sticks without a real pad (tests, virtual controls); null releases it. */
-    setVirtualGamepad(state: { buttons?: GamepadButtonName[]; axes?: number[] } | null) {
-        this.virtualPad = state ? { buttons: [...(state.buttons ?? [])], axes: [...(state.axes ?? [])] } : null;
+    setVirtualGamepad(state: { buttons?: GamepadButtonName[]; axes?: number[] } | null, slot = 0) {
+        if (slot < 0 || slot >= MAX_PADS) return;
+        this.virtualPads[slot] = state ? { buttons: [...(state.buttons ?? [])], axes: [...(state.axes ?? [])] } : null;
+    }
+
+    /** The input of one player (local multiplayer): only the devices of its source. */
+    view(spec: InputSourceSpec): PlayerInputView {
+        const key = `${spec.keyboard}|${spec.mouse ? 1 : 0}|${spec.touch ? 1 : 0}|${spec.pad ?? "-"}`;
+        let view = this.views.get(key);
+        if (!view) {
+            view = new PlayerInputView(this, spec);
+            this.views.set(key, view);
+        }
+        return view;
     }
 
     attach(element: HTMLElement, keyboardTarget: Window | HTMLElement = window) {
@@ -119,7 +161,10 @@ export class InputManager {
             const key = keyFromEvent(keyboardEvent);
             if (!key) return;
             if (["Space", "UpArrow", "DownArrow", "LeftArrow", "RightArrow", "Tab"].includes(key)) keyboardEvent.preventDefault();
-            if (!this.held.has(key)) this.pendingPressed.add(key);
+            if (!this.held.has(key)) {
+                this.pendingPressed.add(key);
+                this.pendingKeyPressed.add(key);
+            }
             this.held.add(key);
             if (keyboardEvent.key.length === 1) this.pendingString += keyboardEvent.key;
         };
@@ -128,9 +173,13 @@ export class InputManager {
             if (!key) return;
             this.held.delete(key);
             this.pendingReleased.add(key);
+            this.pendingKeyReleased.add(key);
         };
         const onBlur = () => {
-            for (const key of this.held) this.pendingReleased.add(key);
+            for (const key of this.held) {
+                this.pendingReleased.add(key);
+                this.pendingKeyReleased.add(key);
+            }
             this.held.clear();
             for (const button of this.mouseHeld) this.pendingMouseUp.add(button);
             this.mouseHeld.clear();
@@ -203,21 +252,49 @@ export class InputManager {
         this.pendingMouseDown.clear();
         this.pendingMouseUp.clear();
         this.virtualHeld.clear();
+        this.keyPressedFrame.clear();
+        this.keyReleasedFrame.clear();
+        this.touchPressedFrame.clear();
+        this.touchReleasedFrame.clear();
+        this.pendingKeyPressed.clear();
+        this.pendingKeyReleased.clear();
+        this.pendingTouchPressed.clear();
+        this.pendingTouchReleased.clear();
         this.touchPad.clear();
         this.axes.clear();
         this.padHeld.clear();
         this.padPressed.clear();
         this.padReleased.clear();
         this.padAxes = [0, 0, 0, 0];
+        this.pads = Array.from({ length: MAX_PADS }, emptySlot);
+        this.touchSlot = emptySlot();
+        for (const view of this.views.values()) view.reset();
         this.touchCount = 0;
+    }
+
+    /** Presses or releases a key as if on the physical keyboard (tests; the on-screen buttons use setVirtualKey). */
+    setKeyboardKey(key: string, down: boolean) {
+        if (down) {
+            if (!this.held.has(key)) {
+                this.pendingPressed.add(key);
+                this.pendingKeyPressed.add(key);
+            }
+            this.held.add(key);
+        } else if (this.held.has(key)) {
+            this.held.delete(key);
+            this.pendingReleased.add(key);
+            this.pendingKeyReleased.add(key);
+        }
     }
 
     /** On-screen touch buttons map onto regular keys (and the matching gamepad buttons). */
     setVirtualKey(key: string, down: boolean) {
         if (down) {
             if (!this.held.has(key) && !this.virtualHeld.has(key)) this.pendingPressed.add(key);
+            if (!this.virtualHeld.has(key)) this.pendingTouchPressed.add(key);
             this.virtualHeld.add(key);
         } else {
+            if (this.virtualHeld.has(key)) this.pendingTouchReleased.add(key);
             this.virtualHeld.delete(key);
             if (!this.held.has(key)) this.pendingReleased.add(key);
         }
@@ -234,6 +311,14 @@ export class InputManager {
         for (const key of this.pendingReleased) this.releasedFrame.add(key);
         this.pendingPressed.clear();
         this.pendingReleased.clear();
+        this.keyPressedFrame = new Set(this.pendingKeyPressed);
+        this.keyReleasedFrame = new Set(this.pendingKeyReleased);
+        this.touchPressedFrame = new Set(this.pendingTouchPressed);
+        this.touchReleasedFrame = new Set(this.pendingTouchReleased);
+        this.pendingKeyPressed.clear();
+        this.pendingKeyReleased.clear();
+        this.pendingTouchPressed.clear();
+        this.pendingTouchReleased.clear();
         this.mouseDownFrame.clear();
         this.mouseUpFrame.clear();
         for (const button of this.pendingMouseDown) this.mouseDownFrame.add(button);
@@ -260,31 +345,44 @@ export class InputManager {
             else if (state.value > target) state.value = Math.max(target, state.value - speed);
             this.axes.set(action.name, state);
         }
+        for (const view of this.views.values()) view.update(deltaTime);
     }
 
     private pollGamepads() {
         const held = new Set<GamepadButtonName>();
         const axes = [0, 0, 0, 0];
         const names: string[] = [];
-        const take = (buttons: ArrayLike<{ pressed: boolean; value: number } | boolean>, sticks: ArrayLike<number>) => {
+        const slots = Array.from({ length: MAX_PADS }, emptySlot);
+        const take = (slot: number, name: string, buttons: ArrayLike<{ pressed: boolean; value: number } | boolean>, sticks: ArrayLike<number>) => {
+            const own = slot >= 0 && slot < MAX_PADS ? slots[slot] : null;
+            if (own) {
+                own.connected = true;
+                own.name = name;
+            }
             for (let index = 0; index < Math.min(buttons.length, GAMEPAD_BUTTONS.length); index += 1) {
                 const button = buttons[index];
                 const pressed = typeof button === "boolean" ? button : button.pressed || button.value > 0.5;
-                if (pressed) held.add(GAMEPAD_BUTTONS[index]);
+                if (!pressed) continue;
+                held.add(GAMEPAD_BUTTONS[index]);
+                own?.held.add(GAMEPAD_BUTTONS[index]);
             }
             for (let index = 0; index < Math.min(sticks.length, GAMEPAD_AXES.length); index += 1) {
                 const value = Number(sticks[index]) || 0;
                 if (Math.abs(value) > Math.abs(axes[index])) axes[index] = value;
+                if (own) own.axes[index] = value;
             }
         };
-        if (this.virtualPad) {
-            take(GAMEPAD_BUTTONS.map((name) => this.virtualPad?.buttons.includes(name) ?? false), this.virtualPad.axes);
-            names.push("Virtual Gamepad");
+        if (this.virtualPads.some(Boolean)) {
+            this.virtualPads.forEach((pad, slot) => {
+                if (!pad) return;
+                take(slot, "Virtual Gamepad", GAMEPAD_BUTTONS.map((name) => pad.buttons.includes(name)), pad.axes);
+                names.push("Virtual Gamepad");
+            });
         } else if (this.enabled && typeof navigator !== "undefined" && typeof navigator.getGamepads === "function") {
             for (const pad of navigator.getGamepads()) {
                 if (!pad || !pad.connected) continue;
                 names.push(pad.id);
-                take(pad.buttons, pad.axes);
+                take(pad.index, pad.id, pad.buttons, pad.axes);
             }
         }
         for (const name of this.touchPad) held.add(name);
@@ -293,6 +391,54 @@ export class InputManager {
         this.padHeld = held;
         this.padAxes = axes;
         this.padNames = names;
+        const withEdges = (next: PadSlot, previous: PadSlot): PadSlot => ({
+            ...next,
+            pressed: new Set([...next.held].filter((name) => !previous.held.has(name))),
+            released: new Set([...previous.held].filter((name) => !next.held.has(name))),
+        });
+        this.pads = slots.map((slot, index) => withEdges(slot, this.pads[index]));
+        this.touchSlot = withEdges({ ...emptySlot(), held: new Set(this.touchPad), connected: true, name: "Touch" }, this.touchSlot);
+    }
+
+    // -- Read by player views (local multiplayer) --------------------------------
+
+    /** A physical keyboard key (not the on-screen buttons). */
+    keyboardKey(key: string, kind: EdgeKind) {
+        return (kind === "held" ? this.held : kind === "pressed" ? this.keyPressedFrame : this.keyReleasedFrame).has(key);
+    }
+
+    /** A key pressed through the on-screen touch buttons. */
+    touchKey(key: string, kind: EdgeKind) {
+        return (kind === "held" ? this.virtualHeld : kind === "pressed" ? this.touchPressedFrame : this.touchReleasedFrame).has(key);
+    }
+
+    mouseButton(button: number, kind: EdgeKind) {
+        return (kind === "held" ? this.mouseHeld : kind === "pressed" ? this.mouseDownFrame : this.mouseUpFrame).has(button);
+    }
+
+    /** Gamepad slot 0–3, or "touch" for the on-screen buttons. */
+    padSlot(slot: number | "touch"): PadSlot {
+        return slot === "touch" ? this.touchSlot : this.pads[slot] ?? emptySlot();
+    }
+
+    /** How many gamepads are connected. */
+    get gamepadCount() {
+        return this.pads.filter((pad) => pad.connected).length;
+    }
+
+    action(name: string): InputAction | undefined {
+        return this.actions.get(name);
+    }
+
+    actionList(): Iterable<InputAction> {
+        return this.actions.values();
+    }
+
+    /** A stick value after the dead zone (rescaled so it starts at 0). */
+    deadZoned(raw: number, invert: boolean) {
+        if (Math.abs(raw) <= this.deadZone) return 0;
+        const scaled = (Math.abs(raw) - this.deadZone) / (1 - this.deadZone);
+        return Math.sign(raw) * Math.min(1, scaled) * (invert ? -1 : 1);
     }
 
     /** −1…1 from the action's keys and d-pad buttons. */
@@ -305,10 +451,7 @@ export class InputManager {
     /** The action's analog stick after the dead zone (rescaled so it starts at 0). */
     private stickAxis(action: InputAction): number {
         if (!action.gamepadAxis) return 0;
-        const raw = this.padAxes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0;
-        if (Math.abs(raw) <= this.deadZone) return 0;
-        const scaled = (Math.abs(raw) - this.deadZone) / (1 - this.deadZone);
-        return Math.sign(raw) * Math.min(1, scaled) * (action.invert ? -1 : 1);
+        return this.deadZoned(this.padAxes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0, action.invert);
     }
 
     private keyHeld(key: string) {
@@ -421,5 +564,123 @@ export class InputManager {
 
     get attached() {
         return this.element !== null;
+    }
+}
+
+/**
+ * One player's input (local multiplayer, V5): the project's actions read from
+ * that player's devices only — a half of the keyboard, a gamepad slot, the
+ * mouse and the on-screen buttons as its source says.
+ */
+export class PlayerInputView {
+    readonly spec: InputSourceSpec;
+    private readonly manager: InputManager;
+    private readonly axes = new Map<string, number>();
+
+    constructor(manager: InputManager, spec: InputSourceSpec) {
+        this.manager = manager;
+        this.spec = spec;
+    }
+
+    reset() {
+        this.axes.clear();
+    }
+
+    private keys(list: readonly string[], kind: EdgeKind): boolean {
+        for (const key of playerKeys(list, this.spec)) {
+            if (key.startsWith("Mouse") ? this.manager.mouseButton(Number(key.slice(5)), kind) : this.manager.keyboardKey(key, kind)) return true;
+        }
+        // The on-screen buttons press the binding's own keys, whatever half they are on.
+        return this.spec.touch && list.some((key) => !key.startsWith("Mouse") && this.manager.touchKey(key, kind));
+    }
+
+    private buttons(list: readonly GamepadButtonName[], kind: EdgeKind): boolean {
+        const pad = this.spec.pad === null ? null : this.manager.padSlot(this.spec.pad);
+        const touch = this.spec.touch ? this.manager.padSlot("touch") : null;
+        return list.some((button) => Boolean(pad?.[kind].has(button) || touch?.[kind].has(button)));
+    }
+
+    private keyAxis(action: InputAction): number {
+        const positive = this.keys(action.positive, "held") || this.buttons(action.gamepadPositive, "held");
+        const negative = this.keys(action.negative, "held") || this.buttons(action.gamepadNegative, "held");
+        return (positive ? 1 : 0) - (negative ? 1 : 0);
+    }
+
+    private stickAxis(action: InputAction): number {
+        if (!action.gamepadAxis || this.spec.pad === null) return 0;
+        return this.manager.deadZoned(this.manager.padSlot(this.spec.pad).axes[GAMEPAD_AXES.indexOf(action.gamepadAxis)] ?? 0, action.invert);
+    }
+
+    /** Smooths keyboard axes like the shared input does (once per frame). */
+    update(deltaTime: number) {
+        for (const action of this.manager.actionList()) {
+            if (action.kind !== "axis") continue;
+            const target = this.keyAxis(action);
+            const value = this.axes.get(action.name) ?? 0;
+            let next = target !== 0 && Math.sign(target) !== Math.sign(value) && value !== 0 ? 0 : value;
+            const speed = 3 * deltaTime;
+            if (next < target) next = Math.min(target, next + speed);
+            else if (next > target) next = Math.max(target, next - speed);
+            this.axes.set(action.name, next);
+        }
+    }
+
+    getAxisRaw(name: string): number {
+        switch (name) {
+            case "Mouse X":
+                return this.spec.mouse ? this.manager.mouseDeltaX * 0.1 : 0;
+            case "Mouse Y":
+                return this.spec.mouse ? this.manager.mouseDeltaY * 0.1 : 0;
+            case "Mouse ScrollWheel":
+                return this.spec.mouse ? this.manager.scrollDelta * 0.1 : 0;
+        }
+        const action = this.manager.action(name);
+        if (!action) return 0;
+        if (action.kind === "button") return this.getButton(name) ? 1 : 0;
+        const keys = this.keyAxis(action);
+        const stick = this.stickAxis(action);
+        return Math.abs(stick) > Math.abs(keys) ? stick : keys;
+    }
+
+    getAxis(name: string): number {
+        const action = this.manager.action(name);
+        if (!action || action.kind !== "axis") return this.getAxisRaw(name);
+        const smoothed = this.axes.get(name) ?? this.keyAxis(action);
+        const stick = this.stickAxis(action);
+        return Math.abs(stick) > Math.abs(smoothed) ? stick : smoothed;
+    }
+
+    private button(name: string, kind: EdgeKind): boolean {
+        const action = this.manager.action(name);
+        if (!action) return this.key(name, kind);
+        return this.keys([...action.positive, ...action.negative], kind) || this.buttons([...action.gamepadPositive, ...action.gamepadNegative], kind);
+    }
+
+    getButton(name: string) {
+        return this.button(name, "held");
+    }
+
+    getButtonDown(name: string) {
+        return this.button(name, "pressed");
+    }
+
+    getButtonUp(name: string) {
+        return this.button(name, "released");
+    }
+
+    /** A raw key, if it is one of this player's (no mirroring). */
+    key(value: unknown, kind: EdgeKind): boolean {
+        const key = normalizeKeyName(value);
+        if (key.startsWith("Mouse")) return this.spec.mouse && this.manager.mouseButton(Number(key.slice(5)), kind);
+        const keyboard = this.spec.keyboard;
+        const half = keyboardHalfOf(key);
+        const allowed = keyboard === "all" || (keyboard !== "none" && (half === keyboard || half === null));
+        return (allowed && this.manager.keyboardKey(key, kind)) || (this.spec.touch && this.manager.touchKey(key, kind));
+    }
+
+    /** The gamepad of this player is connected (keyboard players: true). */
+    get connected(): boolean {
+        if (this.spec.pad === null) return true;
+        return this.manager.padSlot(this.spec.pad).connected || this.spec.keyboard !== "none";
     }
 }

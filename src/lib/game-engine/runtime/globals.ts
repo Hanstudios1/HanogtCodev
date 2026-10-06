@@ -1,7 +1,7 @@
 /** Engine namespaces visible to scripts (Debug, Time, Input, Physics, SceneManager, Tween, Timer…). */
 import { compositeFormat } from "../script/stdlib";
 import { NOT_FOUND, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMRef, Vec3, type VMValue } from "../script/values";
-import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, type Vector3 } from "../types";
+import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, MAX_LOCAL_PLAYERS, type Vector3 } from "../types";
 import { languageName } from "../localization";
 import { animatorHash } from "./animator-controller";
 import type { RuntimeEntity } from "./entity";
@@ -874,6 +874,24 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         },
     }));
     globals.set("SystemLanguage", enumNamespace("SystemLanguage", SYSTEM_LANGUAGE_NAMES));
+
+    // PlayerInput (V5 local multiplayer): the players in the scene and the connected gamepads.
+    const playerHandle = (entity: RuntimeEntity) => {
+        const component = entity.playerInput;
+        return component ? world.componentHandle(entity, component) : null;
+    };
+    globals.set("PlayerInput", ns("PlayerInput", {
+        all: () => new VMList(world.players().map(playerHandle).filter((handle): handle is NonNullable<typeof handle> => handle !== null), "Array"),
+        gamepadCount: () => world.input.gamepadCount,
+        maxPlayers: () => MAX_LOCAL_PLAYERS,
+    }, {
+        // Index 0 is player 1, like Unity's playerIndex.
+        GetPlayerByIndex: (args) => {
+            const index = Math.trunc(toNumber(args[0] ?? 0));
+            const entity = world.players().find((candidate) => (candidate.playerInput?.player ?? 0) - 1 === index);
+            return entity ? playerHandle(entity) : null;
+        },
+    }));
 
     // Animator.StringToHash(name): a number Animator methods accept instead of the name (V5).
     globals.set("Animator", ns("Animator", {}, {

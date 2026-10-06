@@ -21,6 +21,7 @@ import {
     createUIInputField,
     createUIPanel,
     createUIProgressBar,
+    createPlayerInput,
     createUISlider,
     createUIText,
     createUIToggle,
@@ -493,7 +494,7 @@ const COMPONENT_REFERENCE_TYPES: Record<string, GameComponent["type"][]> = {
     Toggle: ["uiToggle"], InputField: ["uiInputField"], TMP_InputField: ["uiInputField"],
     Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animator", "animation"],
     CharacterController2D: ["characterController2D"], CameraFollow: ["cameraFollow"], CinemachineCamera: ["cameraFollow"], CinemachineVirtualCamera: ["cameraFollow"],
-    NavAgent2D: ["navAgent2D"], NavMeshAgent: ["navAgent2D"],
+    NavAgent2D: ["navAgent2D"], NavMeshAgent: ["navAgent2D"], PlayerInput: ["playerInput"],
     Joint: ["joint"], Joint2D: ["joint"], DistanceJoint2D: ["joint"], SpringJoint2D: ["joint"], SpringJoint: ["joint"],
 };
 
@@ -720,6 +721,7 @@ export function defaultComponentFor(component: GameComponent, dimension: GameDim
         case "navAgent2D": return { ...createNavAgent2D({ targetId: component.targetId }), ...base };
         case "joint": return { ...createJoint({ kind: component.kind, connectedId: component.connectedId }), ...base };
         case "uiSlider": return { ...createUISlider(), ...base };
+        case "playerInput": return { ...createPlayerInput({ player: component.player }), ...base };
         case "uiToggle": return { ...createUIToggle({ label: component.label }), ...base };
         case "uiInputField": return { ...createUIInputField({ placeholder: component.placeholder }), ...base };
         case "script": return { ...component, fields: {} };

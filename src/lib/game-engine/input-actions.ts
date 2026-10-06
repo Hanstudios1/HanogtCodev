@@ -4,6 +4,7 @@
  * Input.GetButton / GetButtonDown / GetButtonUp / GetAxis / GetAxisRaw.
  */
 import { isKeyCode } from "./key-codes";
+import type { PlayerInputComponent } from "./types";
 
 /** Standard Gamepad API button order (index = position in this list). */
 export const GAMEPAD_BUTTONS = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "Back", "Start", "LS", "RS", "DpadUp", "DpadDown", "DpadLeft", "DpadRight"] as const;
@@ -99,4 +100,84 @@ export function normalizeInputSettings(value: unknown): InputSettings {
         if (actions.length >= INPUT_LIMITS.maxActions) break;
     }
     return { actions, deadZone };
+}
+
+// ---------------------------------------------------------------------------
+// Split keyboard (local multiplayer, V5)
+// ---------------------------------------------------------------------------
+
+export type KeyboardHalf = "left" | "right";
+
+const LEFT_KEYS = new Set([
+    "Q", "W", "E", "R", "T", "A", "S", "D", "F", "G", "Z", "X", "C", "V", "B",
+    "Alpha1", "Alpha2", "Alpha3", "Alpha4", "Alpha5", "Space", "LeftShift", "LeftControl", "LeftAlt", "Tab", "CapsLock", "BackQuote",
+    // The player on the left keeps the mouse.
+    "Mouse0", "Mouse1", "Mouse2",
+]);
+
+const RIGHT_KEYS = new Set([
+    "Y", "U", "I", "O", "P", "H", "J", "K", "L", "N", "M",
+    "Alpha6", "Alpha7", "Alpha8", "Alpha9", "Alpha0", "UpArrow", "DownArrow", "LeftArrow", "RightArrow",
+    "RightShift", "RightControl", "RightAlt", "Return", "KeypadEnter", "Backspace", "Insert", "Delete", "Home", "End", "PageUp", "PageDown",
+    "Minus", "Equals", "LeftBracket", "RightBracket", "Backslash", "Semicolon", "Quote", "Comma", "Period", "Slash",
+    "Keypad0", "Keypad1", "Keypad2", "Keypad3", "Keypad4", "Keypad5", "Keypad6", "Keypad7", "Keypad8", "Keypad9",
+    "KeypadPlus", "KeypadMinus", "KeypadMultiply", "KeypadDivide", "KeypadPeriod",
+]);
+
+/** Keys that stand in on the other half when an action has none there (WASD ↔ arrows, Space ↔ Enter…). */
+const MIRROR: Record<string, string> = {
+    W: "UpArrow", A: "LeftArrow", S: "DownArrow", D: "RightArrow", Space: "Return",
+    LeftShift: "RightShift", LeftControl: "RightControl", LeftAlt: "RightAlt",
+    UpArrow: "W", LeftArrow: "A", DownArrow: "S", RightArrow: "D", Return: "Space", KeypadEnter: "Space",
+    RightShift: "LeftShift", RightControl: "LeftControl", RightAlt: "LeftAlt",
+};
+
+/** The half of the keyboard a key is on; null for keys both players share (Escape, F1…). */
+export function keyboardHalfOf(key: string): KeyboardHalf | null {
+    return LEFT_KEYS.has(key) ? "left" : RIGHT_KEYS.has(key) ? "right" : null;
+}
+
+/**
+ * The keys a split-keyboard player presses for a binding: those on its half
+ * (and shared ones); when the binding has none there, the mirrored keys.
+ */
+export function keysForHalf(keys: readonly string[], half: KeyboardHalf): string[] {
+    const own = keys.filter((key) => {
+        const side = keyboardHalfOf(key);
+        return side === half || side === null;
+    });
+    if (own.length || !keys.length) return own;
+    return [...new Set(keys.map((key) => MIRROR[key]).filter((key): key is string => Boolean(key) && keyboardHalfOf(key) === half))];
+}
+
+/** Which devices a player's input comes from (local multiplayer, V5). */
+export interface InputSourceSpec {
+    /** Keyboard keys the player reads: all, one half of the keyboard, or none. */
+    keyboard: "all" | KeyboardHalf | "none";
+    mouse: boolean;
+    /** The on-screen touch buttons. */
+    touch: boolean;
+    /** Gamepad slot 0–3, or null. */
+    pad: number | null;
+}
+
+/** The devices of a Player Input component's scheme. */
+export function inputSourceOf(component: Pick<PlayerInputComponent, "player" | "scheme" | "gamepad">): InputSourceSpec {
+    const pad = Math.max(0, Math.min(4, Math.trunc(component.gamepad) || 1) - 1);
+    switch (component.scheme) {
+        case "keyboard": return { keyboard: "all", mouse: true, touch: true, pad };
+        case "keyboardLeft": return { keyboard: "left", mouse: true, touch: component.player === 1, pad: null };
+        case "keyboardRight": return { keyboard: "right", mouse: false, touch: false, pad: null };
+        case "gamepad": return { keyboard: "none", mouse: false, touch: false, pad };
+        case "auto":
+        default:
+            // Player 1 keeps everything single-player games use; the others get their gamepad.
+            return component.player === 1 ? { keyboard: "all", mouse: true, touch: true, pad } : { keyboard: "none", mouse: false, touch: false, pad };
+    }
+}
+
+/** The keys of a binding a player presses (a split keyboard keeps its half, mirroring when needed). */
+export function playerKeys(keys: readonly string[], spec: InputSourceSpec): string[] {
+    const usable = spec.keyboard === "all" ? [...keys] : spec.keyboard === "none" ? keys.filter((key) => key.startsWith("Mouse")) : keysForHalf(keys, spec.keyboard);
+    return spec.mouse ? usable : usable.filter((key) => !key.startsWith("Mouse"));
 }

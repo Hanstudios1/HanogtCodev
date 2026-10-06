@@ -13,6 +13,7 @@ import {
     FilePlus,
     Film,
     Footprints,
+    Gamepad2,
     Gauge,
     GitBranch,
     Grid3x3,
@@ -65,6 +66,7 @@ import { useEditor } from "./context";
 import { MultiEditContext } from "./inspector-fields";
 import { sharedComponents } from "./multi-edit";
 import TilemapEditor from "./TilemapEditor";
+import { PlayerInputEditor } from "./PlayerInputEditor";
 import { UIButtonEditor, UIInputFieldEditor, UIPanelEditor, UIProgressBarEditor, UISliderEditor, UIToggleEditor } from "./UIEditors";
 import { CameraFollowEditor, CharacterController2DEditor, JointEditor, NavAgent2DEditor } from "./V4Editors";
 import {
@@ -113,6 +115,7 @@ const COMPONENT_ICONS: Record<ComponentType, { icon: typeof Box; className: stri
     uiSlider: { icon: SlidersHorizontal, className: "text-violet-300" },
     uiToggle: { icon: ToggleRight, className: "text-violet-300" },
     uiInputField: { icon: TextCursorInput, className: "text-violet-300" },
+    playerInput: { icon: Gamepad2, className: "text-sky-300" },
 };
 
 const COMMON_TAGS = ["Untagged", "Player", "Enemy", "Ground", "PickUp", "Coin", "Wall", "Bullet", "Finish", "Respawn", "MainCamera", "GameController", "EditorOnly"];
@@ -143,6 +146,7 @@ function ComponentBody({ entity, component, disabled }: { entity: GameEntity; co
         case "uiSlider": return <UISliderEditor entity={entity} component={component} disabled={disabled} />;
         case "uiToggle": return <UIToggleEditor entity={entity} component={component} disabled={disabled} />;
         case "uiInputField": return <UIInputFieldEditor entity={entity} component={component} disabled={disabled} />;
+        case "playerInput": return <PlayerInputEditor entity={entity} component={component} disabled={disabled} />;
     }
 }
 
@@ -233,6 +237,7 @@ function buildAddMenu({ entities, scripts, program, store, t, is2D, onNewScript 
                 }),
             },
         ] },
+        { label: "Input", icon: Gamepad2, items: [builtIn("playerInput", "Player Input")] },
         { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },
         { label: "UI", icon: Type, items: [builtIn("uiText", "UI Text"), builtIn("uiButton", "UI Button"), builtIn("uiPanel", "UI Panel / Image"), builtIn("uiProgressBar", "UI Progress Bar"), builtIn("uiSlider", "UI Slider"), builtIn("uiToggle", "UI Toggle"), builtIn("uiInputField", "UI Input Field")] },
         { separator: true, label: "" },

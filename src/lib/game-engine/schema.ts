@@ -24,6 +24,8 @@ import {
     ENGINE_RULES,
     GAME_ENGINE_SCHEMA_VERSION,
     INPUT_CONTENT_TYPES,
+    MAX_LOCAL_PLAYERS,
+    PLAYER_INPUT_SCHEMES,
     PRIMITIVE_MESHES,
     PROGRESS_DIRECTIONS,
     SOUND_PRESETS,
@@ -707,6 +709,17 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
         }
         case "animator":
             return { id, type, enabled, ...normalizeAnimator(source) };
+        case "playerInput": {
+            const player = int(source.player, 1, 1, MAX_LOCAL_PLAYERS);
+            return {
+                id,
+                type,
+                enabled,
+                player,
+                scheme: enumOf(source.scheme, PLAYER_INPUT_SCHEMES, "auto"),
+                gamepad: int(source.gamepad, player, 1, MAX_LOCAL_PLAYERS),
+            };
+        }
         case "characterController2D":
             return {
                 id,

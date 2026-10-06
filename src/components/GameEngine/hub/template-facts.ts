@@ -43,6 +43,7 @@ const COMPONENT_NAMES: Partial<Record<ComponentType, [string, string]>> = {
     uiSlider: ["Slider", "Slider"],
     uiToggle: ["Toggle", "Toggle"],
     uiInputField: ["InputField", "InputField"],
+    playerInput: ["PlayerInput", "PlayerInput"],
 };
 
 const ORDER = Object.keys(COMPONENT_NAMES) as ComponentType[];

@@ -19,6 +19,7 @@ import type {
     MeshRendererComponent,
     NavAgent2DComponent,
     ParticleSystemComponent,
+    PlayerInputComponent,
     RigidBodyComponent,
     ScriptComponent,
     SpriteRendererComponent,
@@ -344,6 +345,19 @@ export function createAnimator(overrides: Overrides<AnimatorComponent> = {}): An
     };
 }
 
+/** Local multiplayer (V5): player 1–4 and the devices it uses; the gamepad slot follows the player number. */
+export function createPlayerInput(overrides: Overrides<PlayerInputComponent> = {}): PlayerInputComponent {
+    const player = overrides.player ?? 1;
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "playerInput",
+        enabled: overrides.enabled ?? true,
+        player,
+        scheme: overrides.scheme ?? "auto",
+        gamepad: overrides.gamepad ?? player,
+    };
+}
+
 /** A state that plays `clip` (a clip name of the Animation component). */
 export function createAnimatorState(name: string, clip: string | null, position: { x: number; y: number } = { x: 260, y: 160 }, speed = 1): AnimatorState {
     return { id: createEngineId("state"), name, clip, speed, x: position.x, y: position.y };
@@ -541,6 +555,7 @@ export function createComponentOfType(type: Exclude<ComponentType, "script" | "t
         case "uiSlider": return createUISlider();
         case "uiToggle": return createUIToggle();
         case "uiInputField": return createUIInputField();
+        case "playerInput": return createPlayerInput();
     }
 }
 
@@ -569,4 +584,5 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
     uiSlider: "UI Slider",
     uiToggle: "UI Toggle",
     uiInputField: "UI Input Field",
+    playerInput: "Player Input",
 };

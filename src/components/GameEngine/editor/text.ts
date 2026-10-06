@@ -409,6 +409,18 @@ const TEXT = {
     openLanguages: ["Dilleri aç", "Open languages"],
     noTranslationYet: ["henüz metin yok", "no text yet"],
     missingIn: ["Eksik", "Missing in"],
+    // V5: local multiplayer
+    playerNumber: ["Oyuncu", "Player"],
+    playerLabel: ["Oyuncu {n}", "Player {n}"],
+    controlScheme: ["Kontrol şeması", "Control scheme"],
+    schemeAuto: ["Otomatik (1. oyuncu klavye, diğerleri gamepad)", "Auto (player 1 keyboard, others gamepad)"],
+    schemeKeyboard: ["Bütün klavye ve fare", "Whole keyboard and mouse"],
+    schemeKeyboardLeft: ["Klavyenin solu (WASD)", "Left of the keyboard (WASD)"],
+    schemeKeyboardRight: ["Klavyenin sağı (oklar)", "Right of the keyboard (arrows)"],
+    schemeGamepad: ["Yalnızca gamepad", "Gamepad only"],
+    playerBindings: ["Bu oyuncunun kontrolleri", "This player's controls"],
+    noBinding: ["tuş yok", "no key"],
+    playerInputHint: ["Bu nesnedeki Character Controller 2D ve betiklerdeki GetComponent<PlayerInput>().GetAxis(...) yalnızca bu oyuncunun girdisini okur. Bir eylemin bu yarıda tuşu yoksa karşılığı kullanılır (WASD ↔ oklar, Space ↔ Enter, sol ↔ sağ Shift/Ctrl/Alt); tuşları Ayarlar → Girdi'den değiştirebilirsin.", "This object's Character Controller 2D and GetComponent<PlayerInput>().GetAxis(...) in scripts read only this player's input. When an action has no key on this half, its counterpart is used (WASD ↔ arrows, Space ↔ Enter, left ↔ right Shift/Ctrl/Alt); change keys in Settings → Input."],
     // V4: input actions
     inputSettings: ["Girdi", "Input"],
     inputHint: ["Betikler eylemleri adıyla okur: Input.GetButtonDown(\"Jump\"), Input.GetAxis(\"Horizontal\"). Klavye, fare, gamepad ve dokunmatik düğmeler aynı anda çalışır.", "Scripts read actions by name: Input.GetButtonDown(\"Jump\"), Input.GetAxis(\"Horizontal\"). Keyboard, mouse, gamepad and touch buttons all work at once."],

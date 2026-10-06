@@ -27391,7 +27391,8 @@
     "en": "Player",
     "tr": "Oyuncu",
     "files": [
-      "src/components/GameEngine/docs/first-game.ts"
+      "src/components/GameEngine/docs/first-game.ts",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "1knpt4y4z2i": {
@@ -29812,6 +29813,76 @@
   "wl21l6bjxo": {
     "en": "Missing in",
     "tr": "Eksik",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2enmo1uxsb5": {
+    "en": "Player {n}",
+    "tr": "Oyuncu {n}",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "of2nwbpawy": {
+    "en": "Control scheme",
+    "tr": "Kontrol şeması",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "51mk9ldx79": {
+    "en": "Auto (player 1 keyboard, others gamepad)",
+    "tr": "Otomatik (1. oyuncu klavye, diğerleri gamepad)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "oiqvidkfut": {
+    "en": "Whole keyboard and mouse",
+    "tr": "Bütün klavye ve fare",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "18mk9i7lkq9": {
+    "en": "Left of the keyboard (WASD)",
+    "tr": "Klavyenin solu (WASD)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "17ig66yymiq": {
+    "en": "Right of the keyboard (arrows)",
+    "tr": "Klavyenin sağı (oklar)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1kcani2jc64": {
+    "en": "Gamepad only",
+    "tr": "Yalnızca gamepad",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zxyfiz3hwz": {
+    "en": "This player's controls",
+    "tr": "Bu oyuncunun kontrolleri",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "o3whchiqsn": {
+    "en": "no key",
+    "tr": "tuş yok",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "10u9bdaegcj": {
+    "en": "This object's Character Controller 2D and GetComponent<PlayerInput>().GetAxis(...) in scripts read only this player's input. When an action has no key on this half, its counterpart is used (WASD ↔ arrows, Space ↔ Enter, left ↔ right Shift/Ctrl/Alt); change keys in Settings → Input.",
+    "tr": "Bu nesnedeki Character Controller 2D ve betiklerdeki GetComponent<PlayerInput>().GetAxis(...) yalnızca bu oyuncunun girdisini okur. Bir eylemin bu yarıda tuşu yoksa karşılığı kullanılır (WASD ↔ oklar, Space ↔ Enter, sol ↔ sağ Shift/Ctrl/Alt); tuşları Ayarlar → Girdi'den değiştirebilirsin.",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]

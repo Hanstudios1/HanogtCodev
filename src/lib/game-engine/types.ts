@@ -487,6 +487,29 @@ export interface AnimatorComponent extends ComponentBase {
     layout: { entry: { x: number; y: number }; any: { x: number; y: number } };
 }
 
+export const PLAYER_INPUT_SCHEMES = ["auto", "keyboard", "keyboardLeft", "keyboardRight", "gamepad"] as const;
+export type PlayerInputScheme = (typeof PLAYER_INPUT_SCHEMES)[number];
+export const MAX_LOCAL_PLAYERS = 4;
+
+/**
+ * Local multiplayer (V5): the player (1–4) an object belongs to and the
+ * devices that player uses. Its Character Controller 2D and scripts reading
+ * GetComponent<PlayerInput>() get only that player's input.
+ */
+export interface PlayerInputComponent extends ComponentBase {
+    type: "playerInput";
+    /** Player number, 1–4. */
+    player: number;
+    /**
+     * auto: player 1 gets the keyboard, mouse, touch buttons and its gamepad,
+     * other players their gamepad; keyboardLeft: WASD side; keyboardRight:
+     * arrow side; gamepad: only the gamepad.
+     */
+    scheme: PlayerInputScheme;
+    /** Gamepad slot (1–4) of the auto, keyboard and gamepad schemes. */
+    gamepad: number;
+}
+
 /**
  * Platformer movement on a dynamic Rigidbody 2D (V4): acceleration, jumps with
  * coyote time and a jump buffer, slopes and moving platforms.
@@ -613,6 +636,7 @@ export type GameComponent =
     | TilemapComponent
     | AnimationComponent
     | AnimatorComponent
+    | PlayerInputComponent
     | CharacterController2DComponent
     | CameraFollowComponent
     | NavAgent2DComponent
@@ -649,6 +673,7 @@ export const COMPONENT_TYPES: readonly ComponentType[] = [
     "uiSlider",
     "uiToggle",
     "uiInputField",
+    "playerInput",
 ];
 
 /** Screen-space UI components (drawn by the overlay, not the WebGL renderer). */
@@ -677,6 +702,7 @@ export const UNIQUE_COMPONENT_TYPES: ReadonlySet<ComponentType> = new Set([
     "uiSlider",
     "uiToggle",
     "uiInputField",
+    "playerInput",
 ]);
 
 export interface GameEntity {

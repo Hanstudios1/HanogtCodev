@@ -38,6 +38,7 @@ import type {
     AnimatorState,
     AnimatorTransition,
     PostProcessingSettings,
+    PlayerInputComponent,
     SceneSettings,
     AudioAsset,
     AudioSourceComponent,
@@ -103,13 +104,14 @@ import {
     toVector,
     typeNameFrom,
 } from "./handles";
-import { InputManager } from "./input";
+import { InputManager, type PlayerInputView } from "./input";
+import { inputSourceOf, type InputSourceSpec } from "../input-actions";
 import { ParticleEmitter } from "./particles";
 import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity, type RaycastResult } from "./physics";
 import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
 import { ButtonHandle, ButtonLabelHandle, InputFieldHandle, PanelHandle, ProgressBarHandle, SliderHandle, ToggleHandle, sameCallable } from "./ui-handles";
 import { CameraFollowHandle, CharacterController2DHandle, JointHandle, NavAgent2DHandle } from "./v4-handles";
-import { AnimatorHandle } from "./v5-handles";
+import { AnimatorHandle, PlayerInputHandle } from "./v5-handles";
 
 export type LogLevel = "info" | "warning" | "error";
 
@@ -233,6 +235,7 @@ const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "scr
     DistanceJoint2D: { type: "joint", joint: "distance", userFirst: true },
     SpringJoint2D: { type: "joint", joint: "spring", userFirst: true },
     SpringJoint: { type: "joint", joint: "spring", userFirst: true },
+    PlayerInput: { type: "playerInput", userFirst: true },
 };
 
 function pairKey(a: string, b: string) {
@@ -1559,6 +1562,7 @@ export class RuntimeWorld implements ScriptHost {
                 case "tilemap": handle = new TilemapHandle(this, entity, component); break;
                 case "animation": handle = new AnimationHandle(this, entity, component); break;
                 case "animator": handle = new AnimatorHandle(this, entity, component); break;
+                case "playerInput": handle = new PlayerInputHandle(this, entity, component); break;
                 case "characterController2D": handle = new CharacterController2DHandle(this, entity, component); break;
                 case "cameraFollow": handle = new CameraFollowHandle(this, entity, component); break;
                 case "navAgent2D": handle = new NavAgent2DHandle(this, entity, component); break;
@@ -2291,15 +2295,41 @@ export class RuntimeWorld implements ScriptHost {
 
     private sampleMotors(frameDelta: number) {
         const input = this.input;
-        const source = {
+        const shared = {
             axis: (name: string) => input.getAxisRaw(name),
             down: (name: string) => input.getButtonDown(name),
             held: (name: string) => input.getButton(name),
         };
         for (const entity of this.entities.values()) {
             if (!entity.characterController?.enabled || !entity.activeInHierarchy) continue;
+            // A Player Input on the object (V5) gives its controller only that player's devices.
+            const view = this.playerInputView(entity);
+            const source = view ? { axis: (name: string) => view.getAxisRaw(name), down: (name: string) => view.getButtonDown(name), held: (name: string) => view.getButton(name) } : shared;
             this.motorOf(entity)?.sample(source, this.frameCount, frameDelta);
         }
+    }
+
+    // -------------------------------------------------------------------
+    // Local multiplayer (V5)
+    // -------------------------------------------------------------------
+
+    /** The devices a Player Input reads. */
+    inputSpecOf(component: PlayerInputComponent): InputSourceSpec {
+        return inputSourceOf(component);
+    }
+
+    /** The input of the player an object belongs to; null without an enabled Player Input. */
+    playerInputView(entity: RuntimeEntity): PlayerInputView | null {
+        const component = entity.playerInput;
+        if (!component?.enabled) return null;
+        return this.input.view(this.inputSpecOf(component));
+    }
+
+    /** Live objects with an enabled Player Input, by player number. */
+    players(): RuntimeEntity[] {
+        return [...this.entities.values()]
+            .filter((entity) => !entity.destroyed && entity.playerInput?.enabled)
+            .sort((a, b) => (a.playerInput?.player ?? 0) - (b.playerInput?.player ?? 0));
     }
 
     private updateMotors(dt: number) {

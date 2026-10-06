@@ -590,3 +590,159 @@ test("string table CSV: spreadsheet-safe export, round trip, separators and merg
     assert.deepEqual(noLanguages.languages, []);
     assert.deepEqual(noLanguages.ignoredColumns, ["a", "header"]);
 });
+
+// ---------------------------------------------------------------------------
+// Local multiplayer (PlayerInput)
+// ---------------------------------------------------------------------------
+
+const IA = await load("lib/game-engine/input-actions.ts");
+
+test("Player Input data: player 1–4, a known scheme, the gamepad follows the player", () => {
+    assert.deepEqual({ ...C.createPlayerInput({ player: 3 }), id: "x" }, { id: "x", type: "playerInput", enabled: true, player: 3, scheme: "auto", gamepad: 3 });
+    const project = createBlankProject("MP", "2d");
+    project.scenes[0].objects.push({ id: "entity_p", name: "P", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), { id: "cmp_p", type: "playerInput", enabled: true, player: 9, scheme: "joystick", gamepad: "x" }] });
+    const component = normalizeProject(project).scenes[0].objects.at(-1).components.find((item) => item.type === "playerInput");
+    assert.deepEqual({ player: component.player, scheme: component.scheme, gamepad: component.gamepad }, { player: 4, scheme: "auto", gamepad: 4 });
+});
+
+test("split keyboard: each half keeps its keys, and actions without keys on a half use their counterparts", () => {
+    const actions = Object.fromEntries(IA.defaultInputSettings().actions.map((action) => [action.name, action]));
+    assert.deepEqual(IA.keysForHalf(actions.Horizontal.positive, "left"), ["D"]);
+    assert.deepEqual(IA.keysForHalf(actions.Horizontal.positive, "right"), ["RightArrow"]);
+    assert.deepEqual(IA.keysForHalf(actions.Jump.positive, "right"), ["Return"], "Space mirrors to Enter");
+    assert.deepEqual(IA.keysForHalf(actions.Fire1.positive, "right"), ["RightControl"]);
+    assert.deepEqual(IA.keysForHalf(actions.Fire1.positive, "left"), ["LeftControl", "Mouse0"]);
+    assert.deepEqual(IA.keysForHalf(actions.Cancel.positive, "right"), ["Escape"], "shared keys work for both");
+    const right = IA.inputSourceOf({ player: 2, scheme: "keyboardRight", gamepad: 2 });
+    assert.deepEqual(right, { keyboard: "right", mouse: false, touch: false, pad: null });
+    assert.deepEqual(IA.playerKeys(actions.Fire1.positive, right), ["RightControl"]);
+    assert.deepEqual(IA.inputSourceOf({ player: 2, scheme: "auto", gamepad: 2 }), { keyboard: "none", mouse: false, touch: false, pad: 1 });
+    assert.deepEqual(IA.inputSourceOf({ player: 1, scheme: "auto", gamepad: 1 }), { keyboard: "all", mouse: true, touch: true, pad: 0 });
+});
+
+/** Two (or more) platformer players side by side, each with a Player Input. */
+function versusProject(players, script) {
+    const project = createBlankProject("Versus", "2d");
+    const scene = project.scenes[0];
+    scene.objects = scene.objects.filter((item) => item.components.some((component) => component.type === "camera"));
+    scene.objects.push({ id: "entity_ground", name: "Ground", tag: "Untagged", parentId: null, active: true, components: [C.createTransform({ position: { x: 0, y: -1, z: 0 }, scale: { x: 60, y: 1, z: 1 } }), C.createSpriteRenderer(), C.createCollider()] });
+    if (script) project.scripts = [{ id: "script_mp", name: "Mp.cs", language: "csharp", content: script }];
+    players.forEach((input, index) => {
+        scene.objects.push({
+            id: `entity_p${index + 1}`,
+            name: `P${index + 1}`,
+            tag: "Player",
+            parentId: null,
+            active: true,
+            components: [
+                C.createTransform({ position: { x: index * 10 - 15, y: 0.2, z: 0 } }),
+                C.createSpriteRenderer(),
+                C.createRigidBody({ freezePosition: { x: false, y: false, z: true } }),
+                C.createCollider({ size: { x: 0.8, y: 1, z: 1 } }),
+                C.createCharacterController2D(),
+                C.createPlayerInput(input),
+                ...(script && index === 0 ? [C.createScriptComponent("script_mp", "Mp")] : []),
+            ],
+        });
+    });
+    return project;
+}
+
+test("Player Input: two players share a keyboard; each controller moves only with its own keys", () => {
+    const game = startWorld(versusProject([{ player: 1, scheme: "keyboardLeft" }, { player: 2, scheme: "keyboardRight" }]));
+    const key = (name, down) => game.world.input.setKeyboardKey(name, down);
+    game.step(30);
+    const [p1, p2] = [game.find("P1"), game.find("P2")];
+    const start = [p1.world.position.x, p2.world.position.x];
+    key("D", true);
+    game.step(30);
+    key("D", false);
+    assert.ok(p1.world.position.x > start[0] + 1, "D moves player 1");
+    assert.ok(Math.abs(p2.world.position.x - start[1]) < 1e-6, "player 2 doesn't move");
+    key("LeftArrow", true);
+    game.step(30);
+    key("LeftArrow", false);
+    assert.ok(p2.world.position.x < start[1] - 1, "the left arrow moves player 2");
+    game.step(40);
+    const ground = p2.world.position.y;
+    key("Return", true);
+    game.step(12);
+    key("Return", false);
+    assert.ok(p2.world.position.y > ground + 0.5, "Enter is player 2's jump (Space's counterpart)");
+    assert.ok(Math.abs(p1.world.position.y - ground) < 0.05, "player 1 stays down");
+    // Touch buttons belong to player 1 only, on any half.
+    game.step(60);
+    game.hold("RightArrow", true);
+    const before = [p1.world.position.x, p2.world.position.x];
+    game.step(20);
+    game.hold("RightArrow", false);
+    assert.ok(p1.world.position.x > before[0] + 0.5, "the on-screen arrow moves player 1");
+    assert.ok(Math.abs(p2.world.position.x - before[1]) < 1e-6);
+    assert.deepEqual(game.problems(), []);
+});
+
+test("Player Input: gamepads per slot; scripts read their player, list the players and switch schemes", () => {
+    const script = `using UnityEngine;
+public class Mp : MonoBehaviour
+{
+    PlayerInput input;
+    void Start()
+    {
+        input = GetComponent<PlayerInput>();
+        Debug.Log("me " + input.playerIndex + " " + input.currentControlScheme + " players " + PlayerInput.all.Count + " third " + PlayerInput.GetPlayerByIndex(2).gameObject.name + " none " + (PlayerInput.GetPlayerByIndex(3) == null));
+    }
+    void Update()
+    {
+        if (input.GetButtonDown("Jump")) Debug.Log("p1 jump " + Time.frameCount);
+    }
+    public void Report() { Debug.Log("pads " + PlayerInput.gamepadCount + " has " + input.hasGamepad + " x " + input.GetAxisRaw("Horizontal") + " global " + Input.GetButton("Jump")); }
+    public void UsePad() { input.SwitchCurrentControlScheme("Gamepad", 3); }
+}`;
+    const game = startWorld(versusProject([{ player: 1, scheme: "auto" }, { player: 2, scheme: "auto" }, { player: 3, scheme: "gamepad", gamepad: 2 }], script));
+    game.step(30);
+    const [p1, p2, p3] = [game.find("P1"), game.find("P2"), game.find("P3")];
+    assert.deepEqual(game.messages("info"), ["me 0 Auto players 3 third P3 none True"]);
+
+    // Gamepad 2 belongs to players 2 and 3 (player 2's auto slot is its own number).
+    const ground = p3.world.position.y;
+    game.world.input.setVirtualGamepad({ buttons: ["A"] }, 1);
+    game.step(10);
+    game.world.input.setVirtualGamepad(null, 1);
+    assert.ok(p3.world.position.y > ground + 0.3, "gamepad 2 jumps player 3");
+    assert.ok(p2.world.position.y > ground + 0.3, "and player 2 (auto: its own gamepad)");
+    assert.ok(Math.abs(p1.world.position.y - ground) < 0.05, "player 1 doesn't jump");
+    assert.equal(game.messages("info").filter((line) => line.startsWith("p1 jump")).length, 0);
+
+    game.step(60);
+    game.world.input.setVirtualGamepad({ axes: [-1, 0, 0, 0] }, 0);
+    game.step(2);
+    game.world.sendMessage(p1, "Report", undefined, "SendMessage");
+    assert.equal(game.messages("info").at(-1), "pads 1 has True x -1 global False");
+    game.world.input.setVirtualGamepad(null, 0);
+    game.world.sendMessage(p1, "UsePad", undefined, "SendMessage");
+    assert.equal(p1.playerInput.scheme, "gamepad");
+    assert.equal(p1.playerInput.gamepad, 3);
+    game.world.input.setKeyboardKey("Space", true);
+    game.step(2);
+    game.world.input.setKeyboardKey("Space", false);
+    assert.equal(game.messages("info").filter((line) => line.startsWith("p1 jump")).length, 0, "the keyboard no longer reaches player 1");
+    game.world.input.setVirtualGamepad({ buttons: ["A"] }, 2);
+    game.step(2);
+    assert.equal(game.messages("info").filter((line) => line.startsWith("p1 jump")).length, 1, "gamepad 3 does");
+    assert.deepEqual(game.problems(), []);
+});
+
+test("a game's own PlayerInput script keeps working", () => {
+    const project = createBlankProject("Own input", "2d");
+    project.scripts = [{ id: "script_pi", name: "PlayerInput.cs", language: "csharp", content: `using UnityEngine;
+public class PlayerInput : MonoBehaviour
+{
+    public float speed = 3f;
+    void Start() { Debug.Log("mine " + GetComponent<PlayerInput>().speed); }
+}` }];
+    project.scenes[0].objects.push({ id: "entity_pi", name: "Pi", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createScriptComponent("script_pi", "PlayerInput")] });
+    const game = startWorld(project);
+    game.step(1);
+    assert.deepEqual(game.messages("info"), ["mine 3"]);
+    assert.deepEqual(game.problems(), []);
+});

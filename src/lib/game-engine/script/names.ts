@@ -27,7 +27,7 @@ export const GLOBAL_NAMES = new Set([
     // V4: path finding, one-shot sounds
     "Pathfinding", "AudioSource",
     // V5: Animator.StringToHash, screen effects, localization
-    "Animator", "ScreenEffects", "Localization", "SystemLanguage",
+    "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput",
     // .NET / std
     "List", "Dictionary", "HashSet", "Queue", "Stack", "string", "String", "int", "float", "double", "bool", "long", "short", "byte",
     "Int32", "Single", "Double", "Convert", "Console", "Exception", "ArgumentException", "InvalidOperationException",
@@ -49,6 +49,7 @@ export const INT_RESULT_MEMBERS = new Set([
     "GetSiblingIndex", "CompareTo", "layer", "sceneCount", "buildIndex", "width", "height", "RandomRangeInt",
     "tileCount", "CountTiles", "clipCount",
     "GetInteger", "StringToHash", "shortNameHash", "fullPathHash", "nameHash", "tagHash", "parameterCount", "layerCount", "pixelate",
+    "playerIndex", "playerNumber", "gamepadCount", "maxPlayers",
 ]);
 
 /** API members returning float. */

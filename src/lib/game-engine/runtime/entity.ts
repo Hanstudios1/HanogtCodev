@@ -16,6 +16,7 @@ import type {
     TilemapComponent,
     TransformComponent,
     Vector3,
+    PlayerInputComponent,
 } from "../types";
 import type { AnimatedTarget, AnimationPlayer } from "./animator";
 import type { AnimatorController } from "./animator-controller";
@@ -122,6 +123,8 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     characterController: CharacterController2DComponent | null = null;
     cameraFollow: CameraFollowComponent | null = null;
     navAgent: NavAgent2DComponent | null = null;
+    /** Local multiplayer (V5): the player this object belongs to. */
+    playerInput: PlayerInputComponent | null = null;
     joints: JointComponent[] = [];
     /** Runtime state of the Character Controller 2D, Camera Follow and Nav Agent 2D components (V4). */
     motor: CharacterMotor | null = null;
@@ -171,6 +174,7 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
         this.cameraFollow = (this.components.find((component) => component.type === "cameraFollow") as CameraFollowComponent | undefined) ?? null;
         this.navAgent = (this.components.find((component) => component.type === "navAgent2D") as NavAgent2DComponent | undefined) ?? null;
         this.animatorComponent = (this.components.find((component) => component.type === "animator") as AnimatorComponent | undefined) ?? null;
+        this.playerInput = (this.components.find((component) => component.type === "playerInput") as PlayerInputComponent | undefined) ?? null;
         this.joints = this.components.filter((component): component is JointComponent => component.type === "joint");
         this.renderVersion += 1;
     }

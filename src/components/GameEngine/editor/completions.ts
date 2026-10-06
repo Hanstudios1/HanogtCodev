@@ -29,6 +29,7 @@ export const API_MEMBERS: Record<string, string[]> = {
     Pathfinding: ["FindPath(from, to)", "HasPath(from, to)", "IsWalkable(point)", "Rebuild()", "cellSize", "agentRadius"],
     Animator: ["StringToHash(\"speed\")"],
     ScreenEffects: ["saturation", "contrast", "brightness", "hue", "tint", "chromaticAberration", "pixelate", "crt", "scanlines", "curvature", "bloom", "vignette", "exposure", "Reset()"],
+    PlayerInput: ["all", "GetPlayerByIndex(0)", "gamepadCount", "maxPlayers"],
     Localization: ["Get(\"key\")", "Get(\"key\", value)", "Has(\"key\")", "language", "languages", "defaultLanguage", "count", "SetLanguage(\"en\")", "HasLanguage(\"en\")", "GetLanguageName(\"tr\")"],
     SystemLanguage: ["Turkish", "English", "German", "French", "Spanish", "Italian", "Portuguese", "Russian", "Arabic", "Japanese", "Korean", "ChineseSimplified", "Unknown"],
     EventSystem: ["current"],
@@ -57,6 +58,7 @@ export const TYPE_MEMBERS: Record<string, string[]> = {
     Animation: ["Play(\"Clip\")", "Stop()", "Pause()", "Resume()", "IsPlaying(\"Clip\")", "Rewind()", "HasClip(\"Clip\")", "GetClipNames()", "isPlaying", "clip", "time", "normalizedTime", "speed"],
     Animator: ["SetBool(\"isGrounded\", true)", "SetFloat(\"speed\", value)", "SetInteger(\"count\", value)", "SetTrigger(\"jump\")", "ResetTrigger(\"jump\")", "GetBool(\"isGrounded\")", "GetFloat(\"speed\")", "GetInteger(\"count\")", "Play(\"State\")", "CrossFade(\"State\", 0.25f)", "CrossFadeInFixedTime(\"State\", 0.2f)", "GetCurrentAnimatorStateInfo(0)", "IsInTransition(0)", "HasState(0, hash)", "speed", "currentState", "parameterCount"],
     AnimatorStateInfo: ["IsName(\"State\")", "normalizedTime", "length", "loop", "speed", "shortNameHash"],
+    PlayerInput: ["GetAxis(\"Horizontal\")", "GetAxisRaw(\"Horizontal\")", "GetButton(\"Jump\")", "GetButtonDown(\"Jump\")", "GetButtonUp(\"Jump\")", "GetKey(KeyCode.Space)", "playerIndex", "player", "currentControlScheme", "gamepad", "hasGamepad", "devices", "SwitchCurrentControlScheme(\"Gamepad\")", "ActivateInput()", "DeactivateInput()"],
     Tweener: ["SetEase(Ease.OutQuad)", "SetDelay(seconds)", "SetLoops(-1, LoopType.Yoyo)", "OnComplete(() => { })", "OnUpdate(() => { })", "Pause()", "Play()", "Restart()", "Kill()", "Complete()", "WaitForCompletion()", "isPlaying", "isComplete"],
     AudioSource: ["Play()", "PlayOneShot(clip)", "Stop()", "volume", "pitch", "clip", "isPlaying"],
     ParticleSystem: ["Play()", "Stop()", "Pause()", "Clear()", "Emit(count)", "isPlaying", "particleCount", "main"],
@@ -100,5 +102,5 @@ export const GLOBAL_SUGGESTIONS = [
     "Debug", "Time", "Input", "Physics", "Physics2D", "GameObject", "SceneManager", "Application", "Screen", "Camera", "Mathf", "Random", "Pathfinding",
     "Vector2", "Vector3", "Quaternion", "Color", "PlayerPrefs", "Audio", "HUD", "Resources", "KeyCode", "ForceMode", "ForceMode2D", "Space",
     "WaitForSeconds", "WaitUntil", "Instantiate", "Destroy", "StartCoroutine", "Invoke", "InvokeRepeating", "GetComponent", "transform", "gameObject",
-    "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem", "Animator", "ScreenEffects", "Localization", "SystemLanguage",
+    "Tween", "Ease", "LoopType", "Timer", "UI", "EventSystem", "Animator", "ScreenEffects", "Localization", "SystemLanguage", "PlayerInput",
 ];
