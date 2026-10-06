@@ -19,6 +19,7 @@ import {
     Info,
     LayoutTemplate,
     Lightbulb,
+    Link2,
     MousePointerClick,
     Move3d,
     MoreHorizontal,
@@ -55,7 +56,7 @@ import AnimationEditor from "./AnimationEditor";
 import { useEditor } from "./context";
 import TilemapEditor from "./TilemapEditor";
 import { UIButtonEditor, UIPanelEditor, UIProgressBarEditor } from "./UIEditors";
-import { CameraFollowEditor, CharacterController2DEditor, NavAgent2DEditor } from "./V4Editors";
+import { CameraFollowEditor, CharacterController2DEditor, JointEditor, NavAgent2DEditor } from "./V4Editors";
 import {
     activeScene,
     addComponent,
@@ -96,6 +97,7 @@ const COMPONENT_ICONS: Record<ComponentType, { icon: typeof Box; className: stri
     characterController2D: { icon: Footprints, className: "text-orange-300" },
     cameraFollow: { icon: Video, className: "text-sky-300" },
     navAgent2D: { icon: Navigation, className: "text-cyan-300" },
+    joint: { icon: Link2, className: "text-orange-300" },
 };
 
 const COMMON_TAGS = ["Untagged", "Player", "Enemy", "Ground", "PickUp", "Coin", "Wall", "Bullet", "Finish", "Respawn", "MainCamera", "GameController", "EditorOnly"];
@@ -121,6 +123,7 @@ function ComponentBody({ entity, component, disabled }: { entity: GameEntity; co
         case "characterController2D": return <CharacterController2DEditor entity={entity} component={component} disabled={disabled} />;
         case "cameraFollow": return <CameraFollowEditor entity={entity} component={component} disabled={disabled} />;
         case "navAgent2D": return <NavAgent2DEditor entity={entity} component={component} disabled={disabled} />;
+        case "joint": return <JointEditor entity={entity} component={component} disabled={disabled} />;
     }
 }
 
@@ -180,7 +183,20 @@ function EntityInspector({ entity }: { entity: GameEntity }) {
         }
         return [
             { label: "Rendering", icon: ImageIcon, items: [builtIn("spriteRenderer", "Sprite Renderer"), builtIn("meshRenderer", "Mesh Renderer"), builtIn("tilemap", "Tilemap"), builtIn("camera", "Camera"), builtIn("cameraFollow", "Camera Follow"), builtIn("light", "Light")] },
-            { label: "Physics", icon: Gauge, items: [builtIn("rigidBody", is2D ? "Rigidbody 2D" : "Rigidbody"), builtIn("collider", is2D ? "Collider 2D" : "Collider"), ...(is2D ? [builtIn("characterController2D", "Character Controller 2D")] : [])] },
+            { label: "Physics", icon: Gauge, items: [
+                builtIn("rigidBody", is2D ? "Rigidbody 2D" : "Rigidbody"),
+                builtIn("collider", is2D ? "Collider 2D" : "Collider"),
+                ...(is2D ? [builtIn("characterController2D", "Character Controller 2D")] : []),
+                builtIn("joint", is2D ? "Distance Joint 2D" : "Distance Joint"),
+                {
+                    label: is2D ? "Spring Joint 2D" : "Spring Joint",
+                    icon: Link2,
+                    onSelect: () => store.update(`${is2D ? "Spring Joint 2D" : "Spring Joint"} ekle`, (draft) => {
+                        const joint = addComponent(draft, entity.id, "joint");
+                        if (joint?.type === "joint") joint.kind = "spring";
+                    }),
+                },
+            ] },
             ...(is2D ? [{ label: "Navigation", icon: Navigation, items: [builtIn("navAgent2D", "Nav Agent 2D")] }] : []),
             { label: "Effects", icon: Sparkles, items: [builtIn("particleSystem", "Particle System"), builtIn("animation", "Animation")] },
             { label: "Audio", icon: AudioLines, items: [builtIn("audioSource", "Audio Source")] },

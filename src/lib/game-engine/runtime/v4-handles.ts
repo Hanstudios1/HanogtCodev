@@ -1,7 +1,7 @@
 /** Script handles of the V4 components: CharacterController2D and CameraFollow. */
 import { VMList, VMRef, type VMValue } from "../script/values";
-import type { CameraFollowComponent, CharacterController2DComponent, NavAgent2DComponent } from "../types";
-import { ComponentHandle, liveEntityOf, toBool, toNumber, toVector, vec } from "./handles";
+import type { CameraFollowComponent, CharacterController2DComponent, JointComponent, NavAgent2DComponent } from "../types";
+import { colorToVM, ComponentHandle, liveEntityOf, toBool, toColor, toNumber, toVector, vec } from "./handles";
 
 const clampNumber = (value: VMValue, min: number, max: number, what: string) => Math.min(max, Math.max(min, toNumber(value, what)));
 
@@ -313,6 +313,80 @@ export class NavAgent2DHandle extends ComponentHandle<NavAgent2DComponent> {
             }
             default:
                 return super.call(name, args, typeArgs, refs);
+        }
+    }
+}
+
+/** Distance and spring joints (DistanceJoint2D, SpringJoint2D, SpringJoint). */
+export class JointHandle extends ComponentHandle<JointComponent> {
+    get hostType() {
+        if (this.world.is2D) return this.component.kind === "spring" ? "SpringJoint2D" : "DistanceJoint2D";
+        return this.component.kind === "spring" ? "SpringJoint" : "Joint";
+    }
+
+    protected typeNames(): string[] {
+        const kind = this.component.kind === "spring" ? ["SpringJoint2D", "SpringJoint"] : ["DistanceJoint2D"];
+        return [...kind, "Joint", "Joint2D", "Behaviour", "Component", "Object", "UnityEngine.Object"];
+    }
+
+    get(name: string): VMValue {
+        const c = this.component;
+        const is2D = this.world.is2D;
+        switch (name) {
+            case "connectedBody": {
+                const other = c.connectedId ? this.world.entities.get(c.connectedId) : null;
+                if (!other || other.destroyed) return null;
+                return other.rigidBody ? this.world.componentHandle(other, other.rigidBody) : this.world.gameObjectHandle(other);
+            }
+            case "connectedObject": {
+                const other = c.connectedId ? this.world.entities.get(c.connectedId) : null;
+                return other && !other.destroyed ? this.world.gameObjectHandle(other) : null;
+            }
+            case "distance": return this.world.jointRestLength(this.entity, c);
+            case "autoConfigureDistance": return c.autoDistance;
+            case "maxDistanceOnly": return c.maxDistanceOnly;
+            case "frequency": return c.frequency;
+            case "dampingRatio": return c.dampingRatio;
+            case "anchor": return vec(c.anchor, is2D);
+            case "connectedAnchor": return vec(c.connectedAnchor, is2D);
+            case "showLine": return c.showLine;
+            case "lineColor": return colorToVM(c.lineColor);
+            default: {
+                const common = this.componentGet(name);
+                if (common !== undefined) return common;
+                return this.unknown(name);
+            }
+        }
+    }
+
+    set(name: string, value: VMValue): void {
+        const c = this.component;
+        switch (name) {
+            case "connectedBody":
+            case "connectedObject": {
+                const other = value === null || value === undefined ? null : liveEntityOf(value);
+                c.connectedId = other ? other.id : null;
+                this.world.resetJointLength(c);
+                return;
+            }
+            case "distance":
+                c.distance = clampNumber(value, 0, 10_000, name);
+                c.autoDistance = false;
+                return;
+            case "autoConfigureDistance":
+                c.autoDistance = toBool(value);
+                this.world.resetJointLength(c);
+                return;
+            case "maxDistanceOnly": c.maxDistanceOnly = toBool(value); return;
+            case "frequency": c.frequency = clampNumber(value, 0.01, 60, name); return;
+            case "dampingRatio": c.dampingRatio = clampNumber(value, 0, 10, name); return;
+            case "anchor": c.anchor = toVector(value, "anchor"); return;
+            case "connectedAnchor": c.connectedAnchor = toVector(value, "connectedAnchor"); return;
+            case "showLine": c.showLine = toBool(value); return;
+            case "lineColor": c.lineColor = toColor(value).toHex(); return;
+            default:
+                if (this.componentSet(name, value)) return;
+                this.unknown(name);
         }
     }
 }

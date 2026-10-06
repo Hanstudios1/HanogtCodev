@@ -10,6 +10,7 @@ import type {
     ComponentType,
     GameComponent,
     GameDimension,
+    JointComponent,
     LightComponent,
     MaterialData,
     MeshRendererComponent,
@@ -370,6 +371,25 @@ export function createNavAgent2D(overrides: Overrides<NavAgent2DComponent> = {})
     };
 }
 
+export function createJoint(overrides: Overrides<JointComponent> = {}): JointComponent {
+    return {
+        id: overrides.id ?? createEngineId("cmp"),
+        type: "joint",
+        enabled: overrides.enabled ?? true,
+        kind: overrides.kind ?? "distance",
+        connectedId: overrides.connectedId ?? null,
+        anchor: { x: 0, y: 0, z: 0, ...overrides.anchor },
+        connectedAnchor: { x: 0, y: 0, z: 0, ...overrides.connectedAnchor },
+        distance: overrides.distance ?? 2,
+        autoDistance: overrides.autoDistance ?? true,
+        maxDistanceOnly: overrides.maxDistanceOnly ?? false,
+        frequency: overrides.frequency ?? 2,
+        dampingRatio: overrides.dampingRatio ?? 0.2,
+        showLine: overrides.showLine ?? true,
+        lineColor: overrides.lineColor ?? "#e2e8f0",
+    };
+}
+
 /** Creates a component with sensible defaults for the given scene dimension. */
 export function createComponentOfType(type: Exclude<ComponentType, "script" | "transform">, dimension: GameDimension): GameComponent {
     switch (type) {
@@ -390,6 +410,7 @@ export function createComponentOfType(type: Exclude<ComponentType, "script" | "t
         case "characterController2D": return createCharacterController2D();
         case "cameraFollow": return createCameraFollow({}, dimension);
         case "navAgent2D": return createNavAgent2D();
+        case "joint": return createJoint();
     }
 }
 
@@ -413,4 +434,5 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
     characterController2D: "Character Controller 2D",
     cameraFollow: "Camera Follow",
     navAgent2D: "Nav Agent 2D",
+    joint: "Joint",
 };

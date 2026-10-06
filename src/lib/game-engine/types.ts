@@ -410,6 +410,35 @@ export interface NavAgent2DComponent extends ComponentBase {
     showPath: boolean;
 }
 
+/**
+ * Ties this object to another one or to a point in the world (V4): a distance
+ * joint keeps the length (a rope when only the maximum is kept), a spring
+ * joint pulls back and bounces. Joints pull the objects' centers along the line.
+ */
+export interface JointComponent extends ComponentBase {
+    type: "joint";
+    kind: "distance" | "spring";
+    /** Object this one is tied to; null ties it to `connectedAnchor` in the world. */
+    connectedId: string | null;
+    /** Attachment point on this object (local). */
+    anchor: Vector3;
+    /** Attachment point on the connected object (local), or a world point without one. */
+    connectedAnchor: Vector3;
+    /** Length the joint keeps (or springs back to). */
+    distance: number;
+    /** Uses the length at the start of the game instead of `distance`. */
+    autoDistance: boolean;
+    /** Distance joints: only a maximum length, like a rope. */
+    maxDistanceOnly: boolean;
+    /** Spring joints: oscillations per second. */
+    frequency: number;
+    /** Spring joints: 0 keeps bouncing, 1 settles without bouncing. */
+    dampingRatio: number;
+    /** Draws the joint as a line while playing. */
+    showLine: boolean;
+    lineColor: string;
+}
+
 export type GameComponent =
     | TransformComponent
     | SpriteRendererComponent
@@ -429,7 +458,8 @@ export type GameComponent =
     | AnimationComponent
     | CharacterController2DComponent
     | CameraFollowComponent
-    | NavAgent2DComponent;
+    | NavAgent2DComponent
+    | JointComponent;
 
 export type ComponentType = GameComponent["type"];
 export type ComponentOfType<T extends ComponentType> = Extract<GameComponent, { type: T }>;
@@ -454,6 +484,7 @@ export const COMPONENT_TYPES: readonly ComponentType[] = [
     "characterController2D",
     "cameraFollow",
     "navAgent2D",
+    "joint",
 ];
 
 /** Screen-space UI components (drawn by the overlay, not the WebGL renderer). */

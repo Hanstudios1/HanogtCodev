@@ -38,6 +38,7 @@ const COMPONENT_NAMES: Partial<Record<ComponentType, [string, string]>> = {
     characterController2D: ["CharacterController2D", "CharacterController2D"],
     cameraFollow: ["CameraFollow", "CameraFollow"],
     navAgent2D: ["NavAgent2D", "NavAgent2D"],
+    joint: ["Joint2D", "Joint"],
 };
 
 const ORDER = Object.keys(COMPONENT_NAMES) as ComponentType[];

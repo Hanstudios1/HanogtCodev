@@ -404,6 +404,17 @@ const TEXT = {
     navRadius: ["Duvarlardan uzak durulan mesafe (ajanın yarı genişliği).", "How far it keeps from walls (half the agent's width)."],
     navRepath: ["Hareket eden bir hedef kovalanırken yeni yol hesaplama aralığı (saniye).", "Seconds between new paths while chasing a moving target."],
     navShowPath: ["Oynarken yolu çizgiyle gösterir (öğrenmek ve hata ayıklamak için).", "Draws the path while playing (for learning and debugging)."],
+    // V4: joints
+    jointDistanceHint: ["İki nesneyi sabit bir uzaklıkta tutar; \"Max Distance Only\" açıkken ip gibi yalnızca gerilir.", "Keeps two objects at a fixed distance; with \"Max Distance Only\" it only goes taut, like a rope."],
+    jointSpringHint: ["Nesneyi yay gibi geri çeker. Frekans sertliği, sönüm zıplamayı belirler.", "Pulls the object back like a spring. Frequency sets the stiffness, damping the bounce."],
+    jointNeedsBody: ["Eklemin bir şeyi hareket ettirebilmesi için bu nesnede ya da bağlı nesnede Dynamic bir Rigidbody olmalı.", "For the joint to move anything, this object or the connected one needs a Dynamic Rigidbody."],
+    jointConnected: ["Bağlanılan nesne; boşsa dünyadaki bir noktaya bağlanır.", "The object it is tied to; when empty it is tied to a point in the world."],
+    jointWorldPoint: ["(Dünyadaki bir nokta)", "(A point in the world)"],
+    jointWorldAnchor: ["Dünya noktası", "World point"],
+    jointAuto: ["Oyun başladığındaki uzaklığı kullanır.", "Uses the distance at the start of the game."],
+    jointRope: ["Yalnızca en uzun mesafeyi korur (ip gibi; yaklaşabilir).", "Only keeps the longest distance (like a rope; the ends may come closer)."],
+    jointFrequency: ["Saniyedeki salınım; büyüdükçe yay sertleşir.", "Oscillations per second; higher is stiffer."],
+    jointDamping: ["0 uzun süre zıplar, 1 zıplamadan durur.", "0 keeps bouncing, 1 settles without bouncing."],
 } as const;
 
 export type TextKey = keyof typeof TEXT;

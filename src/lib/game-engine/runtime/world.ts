@@ -9,7 +9,7 @@
  */
 import { createComponentOfType, createScriptComponent, createTransform } from "../components";
 import { createEngineId } from "../ids";
-import { conjugateQuat, rotateVec3, subVec3, type Quat } from "../math";
+import { conjugateQuat, localToWorldPoint, rotateVec3, subVec3, type Quat } from "../math";
 import { cloneEntitiesWithNewIds } from "../scene";
 import { tilemapSize } from "../tilemap";
 import { cloneJson } from "../schema";
@@ -37,6 +37,7 @@ import {
 import type {
     CameraComponent,
     ColliderComponent,
+    JointComponent,
     ComponentType,
     GameComponent,
     GameEntity,
@@ -47,11 +48,13 @@ import type {
     UIButtonComponent,
     Vector3,
 } from "../types";
+import { UNIQUE_COMPONENT_TYPES } from "../types";
 import { rectContains, scaleRect, uiRect, type ScreenRect } from "../ui-layout";
 import { AnimationPlayer } from "./animator";
 import { SoundEngine } from "./audio";
 import { CameraFollower, CameraShaker } from "./camera-follow";
 import { CharacterMotor } from "./character";
+import { jointCorrection, solveJointVelocity, type JointEnd } from "./joints";
 import { NavAgentState, type NavPathStatus } from "./nav-agent";
 import { NavGrid, type NavBounds, type NavObstacle, type NavPoint } from "./pathfinding";
 import type { CameraView } from "./camera-math";
@@ -93,7 +96,7 @@ import { ParticleEmitter } from "./particles";
 import { PhysicsWorld, type ContactInfo, type PhysicsAdapter, type PhysicsEntity, type RaycastResult } from "./physics";
 import { TimerManager, TweenManager, type CallbackRunner } from "./tweens";
 import { ButtonHandle, ButtonLabelHandle, PanelHandle, ProgressBarHandle, sameCallable } from "./ui-handles";
-import { CameraFollowHandle, CharacterController2DHandle, NavAgent2DHandle } from "./v4-handles";
+import { CameraFollowHandle, CharacterController2DHandle, JointHandle, NavAgent2DHandle } from "./v4-handles";
 
 export type LogLevel = "info" | "warning" | "error";
 
@@ -164,7 +167,7 @@ const MOUSE_METHODS = ["OnMouseDown", "OnMouseUp", "OnMouseUpAsButton", "OnMouse
  * Script type names of built-in components. `userFirst` names (V4 additions) give way to a
  * script class of the same name, so older projects that wrote their own keep working.
  */
-const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "script" | "transform">; shape?: ColliderComponent["shape"]; userFirst?: boolean }> = {
+const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "script" | "transform">; shape?: ColliderComponent["shape"]; joint?: JointComponent["kind"]; userFirst?: boolean }> = {
     Rigidbody: { type: "rigidBody" },
     Rigidbody2D: { type: "rigidBody" },
     Collider: { type: "collider" },
@@ -207,6 +210,11 @@ const COMPONENT_TYPE_ALIASES: Record<string, { type: Exclude<ComponentType, "scr
     CinemachineVirtualCamera: { type: "cameraFollow", userFirst: true },
     NavAgent2D: { type: "navAgent2D", userFirst: true },
     NavMeshAgent: { type: "navAgent2D", userFirst: true },
+    Joint: { type: "joint", userFirst: true },
+    Joint2D: { type: "joint", userFirst: true },
+    DistanceJoint2D: { type: "joint", joint: "distance", userFirst: true },
+    SpringJoint2D: { type: "joint", joint: "spring", userFirst: true },
+    SpringJoint: { type: "joint", joint: "spring", userFirst: true },
 };
 
 function pairKey(a: string, b: string) {
@@ -569,6 +577,7 @@ export class RuntimeWorld implements ScriptHost {
         }
         this.updateFollowers(this.deltaTime);
         this.shaker.update(this.deltaTime);
+        this.drawJoints();
         this.updateParticles(this.deltaTime);
 
         this.phase = "endOfFrame";
@@ -607,7 +616,9 @@ export class RuntimeWorld implements ScriptHost {
             if (state.has.FixedUpdate && state.started && state.live) this.callMethod(state, "FixedUpdate", [dt]);
         }
         this.updateMotors(dt);
+        this.solveJoints(dt, "velocity");
         const events = this.physics.step(dt);
+        this.solveJoints(dt, "position");
         this.fixedTime += dt;
         this.fixedStepCount += 1;
         for (const info of events.enter) this.touching.add(pairKey(info.a, info.b));
@@ -1433,6 +1444,7 @@ export class RuntimeWorld implements ScriptHost {
                 case "characterController2D": handle = new CharacterController2DHandle(this, entity, component); break;
                 case "cameraFollow": handle = new CameraFollowHandle(this, entity, component); break;
                 case "navAgent2D": handle = new NavAgent2DHandle(this, entity, component); break;
+                case "joint": handle = new JointHandle(this, entity, component); break;
             }
             if (handle) entity.handles.set(component.id, handle);
         }
@@ -1463,6 +1475,7 @@ export class RuntimeWorld implements ScriptHost {
                 const alias = this.builtInAlias(typeName);
                 if (alias) {
                     if (component.type !== alias.type) return false;
+                    if (component.type === "joint" && alias.joint) return component.kind === alias.joint;
                     if (component.type === "collider" && alias.shape && alias.shape !== "box") return component.shape !== "box";
                     if (component.type === "collider" && alias.shape === "box" && !typeName.startsWith("Capsule") && typeName !== "MeshCollider") return component.shape === "box";
                     return true;
@@ -1559,7 +1572,7 @@ export class RuntimeWorld implements ScriptHost {
         if (entity.destroyed) hostError("Yok edilmiş bir nesneye bileşen eklenemez.", "MissingReferenceException");
         const alias = this.builtInAlias(typeName);
         if (alias) {
-            const existing = entity.components.find((component) => component.type === alias.type);
+            const existing = UNIQUE_COMPONENT_TYPES.has(alias.type) ? entity.components.find((component) => component.type === alias.type) : undefined;
             if (existing) {
                 this.log("warning", `'${entity.name}' nesnesinde zaten bir ${typeName} var; mevcut bileşen döndürüldü.`);
                 return this.componentHandle(entity, existing);
@@ -1569,6 +1582,7 @@ export class RuntimeWorld implements ScriptHost {
                 component.shape = alias.shape;
                 if (alias.shape !== "box") component.radius = 0.5;
             }
+            if (component.type === "joint" && alias.joint) component.kind = alias.joint;
             entity.components = [...entity.components, component];
             entity.refreshComponentCache();
             if (component.type === "rigidBody") entity.body = { ...entity.body };
@@ -2358,6 +2372,81 @@ export class RuntimeWorld implements ScriptHost {
                     sprite.flipX = agent.velocity.x < 0;
                     this.markRender(entity);
                 }
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // Joints (V4)
+    // -------------------------------------------------------------------
+
+    /** Rest lengths measured at the start for joints with autoDistance. */
+    private readonly jointLengths = new WeakMap<JointComponent, number>();
+
+    /** Both ends of a joint, or null when its connected object is gone. */
+    private jointEnds(entity: RuntimeEntity, joint: JointComponent): { a: JointEnd; b: JointEnd; other: RuntimeEntity | null } | null {
+        const endOf = (target: RuntimeEntity, local: Vector3): JointEnd => {
+            const rb = target.rigidBody;
+            const moving = Boolean(rb?.enabled && rb.bodyType !== "static");
+            return {
+                point: localToWorldPoint(target.world, local),
+                velocity: moving ? target.body.velocity : { x: 0, y: 0, z: 0 },
+                invMass: rb?.enabled && rb.bodyType === "dynamic" ? 1 / Math.max(0.001, rb.mass) : 0,
+            };
+        };
+        const a = endOf(entity, joint.anchor);
+        if (!joint.connectedId) return { a, b: { point: { ...joint.connectedAnchor }, velocity: { x: 0, y: 0, z: 0 }, invMass: 0 }, other: null };
+        const other = this.entities.get(joint.connectedId);
+        if (!other || other.destroyed || !other.activeInHierarchy) return null;
+        return { a, b: endOf(other, joint.connectedAnchor), other };
+    }
+
+    /** Measures an auto-distance joint again (its connection changed). */
+    resetJointLength(joint: JointComponent) {
+        this.jointLengths.delete(joint);
+    }
+
+    jointRestLength(entity: RuntimeEntity, joint: JointComponent): number {
+        if (!joint.autoDistance) return joint.distance;
+        let length = this.jointLengths.get(joint);
+        if (length === undefined) {
+            const ends = this.jointEnds(entity, joint);
+            length = ends ? Math.hypot(ends.b.point.x - ends.a.point.x, ends.b.point.y - ends.a.point.y, this.is2D ? 0 : ends.b.point.z - ends.a.point.z) : joint.distance;
+            this.jointLengths.set(joint, length);
+        }
+        return length;
+    }
+
+    private solveJoints(dt: number, phase: "velocity" | "position") {
+        for (let pass = 0; pass < (phase === "velocity" ? 4 : 2); pass += 1) {
+            for (const entity of this.entities.values()) {
+                if (!entity.joints.length || !entity.activeInHierarchy) continue;
+                for (const joint of entity.joints) {
+                    // Distance joints converge over a few passes (chains); a spring's force applies once per step.
+                    if (!joint.enabled || (joint.kind === "spring" && pass > 0)) continue;
+                    const ends = this.jointEnds(entity, joint);
+                    if (!ends) continue;
+                    const rest = this.jointRestLength(entity, joint);
+                    if (phase === "velocity") {
+                        solveJointVelocity(joint, ends.a, ends.b, rest, dt, this.is2D);
+                    } else {
+                        const move = jointCorrection(joint, ends.a, ends.b, rest, this.is2D);
+                        if (!move) continue;
+                        if (ends.a.invMass > 0) this.translate(entity, move.a);
+                        if (ends.other && ends.b.invMass > 0) this.translate(ends.other, move.b);
+                    }
+                }
+            }
+        }
+    }
+
+    private drawJoints() {
+        for (const entity of this.entities.values()) {
+            if (!entity.joints.length || !entity.activeInHierarchy) continue;
+            for (const joint of entity.joints) {
+                if (!joint.enabled || !joint.showLine) continue;
+                const ends = this.jointEnds(entity, joint);
+                if (ends) this.drawLine(ends.a.point, ends.b.point, joint.lineColor, 0);
             }
         }
     }

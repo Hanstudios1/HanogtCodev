@@ -684,3 +684,124 @@ test("Nav Agent 2D settings are clamped, targets follow copies, and 3D falls bac
     assert.equal(result.points.length, 2);
     assert.equal(game.problems().filter((message) => message.includes("2D")).length, 1);
 });
+
+// ---------------------------------------------------------------------------
+// Joints
+// ---------------------------------------------------------------------------
+
+/** 2D scene with gravity and the given objects (no camera needed for physics). */
+function physicsScene(objects, script) {
+    const project = createBlankProject("Joints", "2d");
+    const scene = project.scenes[0];
+    scene.objects = scene.objects.filter((item) => item.components.some((component) => component.type === "camera"));
+    scene.objects.push(...objects);
+    if (script) {
+        project.scripts = [{ id: "script_joint", name: `${script.name}.cs`, language: "csharp", content: script.content }];
+        scene.objects.find((item) => item.name === script.on).components.push(createScriptComponent("script_joint", script.name));
+    }
+    return project;
+}
+const ball = (name, x, y, extra = []) => objectOf(`entity_${name.toLowerCase()}`, name, [
+    C.createTransform({ position: { x, y, z: 0 } }),
+    C.createSpriteRenderer({ shape: "circle" }),
+    C.createRigidBody({ freezePosition: { x: false, y: false, z: true }, linearDamping: 0 }),
+    C.createCollider({ shape: "circle", radius: 0.25 }),
+    ...extra,
+]);
+
+test("distance joints swing like a pendulum and ropes only go taut", () => {
+    const pendulum = startWorld(physicsScene([ball("Bob", 3, 0, [C.createJoint({ connectedAnchor: { x: 0, y: 0, z: 0 } })])]));
+    const bob = pendulum.find("Bob");
+    let worst = 0;
+    let minX = Infinity;
+    for (let frame = 0; frame < 180; frame += 1) {
+        pendulum.step(1);
+        const { x, y } = bob.world.position;
+        worst = Math.max(worst, Math.abs(Math.hypot(x, y) - 3));
+        minX = Math.min(minX, x);
+    }
+    assert.ok(worst < 0.06, `keeps its length (off by ${worst.toFixed(3)})`);
+    assert.ok(minX < -2, `swings to the other side (${minX.toFixed(2)})`);
+
+    // A 3-unit rope from a point 1 unit above: free fall first, then it holds at 3.
+    const rope = startWorld(physicsScene([ball("Weight", 0, -1, [C.createJoint({ connectedAnchor: { x: 0, y: 0, z: 0 }, autoDistance: false, distance: 3, maxDistanceOnly: true })])]));
+    const weight = rope.find("Weight");
+    rope.step(20);
+    assert.ok(Math.abs(weight.world.position.y - (-1 - 0.5 * 9.81 * (20 / 60) ** 2)) < 0.05, `falls freely while slack (${weight.world.position.y.toFixed(3)})`);
+    let longest = 0;
+    for (let frame = 0; frame < 120; frame += 1) {
+        rope.step(1);
+        longest = Math.max(longest, Math.hypot(weight.world.position.x, weight.world.position.y));
+    }
+    assert.ok(longest < 3.08, `never longer than the rope (${longest.toFixed(3)})`);
+    assert.ok(Math.abs(weight.world.position.y + 3) < 0.05, "hangs at the rope's end");
+    assert.deepEqual(rope.problems(), []);
+});
+
+test("spring joints bounce, settle with damping, and chains keep every link", () => {
+    const hang = (dampingRatio) => {
+        const game = startWorld(physicsScene([ball("Spring", 0, -2, [C.createJoint({ kind: "spring", connectedAnchor: { x: 0, y: 0, z: 0 }, autoDistance: false, distance: 2, frequency: 3, dampingRatio })])]));
+        const body = game.find("Spring");
+        let low = 0;
+        for (let frame = 0; frame < 30; frame += 1) {
+            game.step(1);
+            low = Math.min(low, body.world.position.y);
+        }
+        game.step(150);
+        return { low, y: body.world.position.y, speed: Math.hypot(body.body.velocity.x, body.body.velocity.y) };
+    };
+    const bouncy = hang(0);
+    const settled = hang(1);
+    const sag = 9.81 / (2 * Math.PI * 3) ** 2;
+    assert.ok(bouncy.low < -2 - sag * 1.5, `an undamped spring overshoots (${bouncy.low.toFixed(3)})`);
+    assert.ok(Math.abs(settled.y - (-2 - sag)) < 0.01 && settled.speed < 0.05, `a damped spring settles where gravity balances it (${settled.y.toFixed(4)})`);
+
+    const chain = startWorld(physicsScene([
+        ball("Link1", 1, 0, [C.createJoint({ connectedAnchor: { x: 0, y: 0, z: 0 } })]),
+        ball("Link2", 2, 0, [C.createJoint({ connectedId: "entity_link1" })]),
+        ball("Link3", 3, 0, [C.createJoint({ connectedId: "entity_link2" })]),
+    ]));
+    let stretch = 0;
+    for (let frame = 0; frame < 240; frame += 1) {
+        chain.step(1);
+        const [a, b, c] = ["Link1", "Link2", "Link3"].map((name) => chain.find(name).world.position);
+        stretch = Math.max(stretch, Math.abs(Math.hypot(a.x, a.y) - 1), Math.abs(Math.hypot(b.x - a.x, b.y - a.y) - 1), Math.abs(Math.hypot(c.x - b.x, c.y - b.y) - 1));
+    }
+    assert.ok(stretch < 0.12, `every link keeps its length (${stretch.toFixed(3)})`);
+});
+
+test("joint scripts: SpringJoint2D vs DistanceJoint2D lookups, AddComponent, connectedBody and copies", () => {
+    const game = startWorld(physicsScene([
+        ball("Anchor", 0, 0),
+        ball("Hook", 2, 0, [C.createJoint({ kind: "distance", connectedAnchor: { x: 0, y: 3, z: 0 } }), C.createJoint({ kind: "spring", connectedId: "entity_anchor" })]),
+    ], {
+        name: "Rigger",
+        on: "Hook",
+        content: `using UnityEngine;
+public class Rigger : MonoBehaviour
+{
+    void Start()
+    {
+        SpringJoint2D spring = GetComponent<SpringJoint2D>();
+        DistanceJoint2D distance = GetComponent<DistanceJoint2D>();
+        Debug.Log("spring " + spring.frequency + " to " + spring.connectedBody.gameObject.name + "; distance auto " + distance.autoConfigureDistance + " " + GetComponents<Joint2D>().Length);
+        distance.distance = 1.5f;
+        Debug.Log("distance " + distance.distance + " auto " + distance.autoConfigureDistance);
+        SpringJoint2D extra = gameObject.AddComponent<SpringJoint2D>();
+        extra.connectedBody = GameObject.Find("Anchor").GetComponent<Rigidbody2D>();
+        Debug.Log("added spring " + (extra.connectedBody != null) + " joints " + GetComponents<Joint2D>().Length);
+    }
+}`,
+    }));
+    game.step(1);
+    assert.deepEqual(game.messages("info"), ["spring 2 to Anchor; distance auto True 2", "distance 1.5 auto False", "added spring True joints 3"]);
+    assert.deepEqual(game.problems(), []);
+
+    const anchor = objectOf("entity_a", "A", [C.createTransform()]);
+    const hook = objectOf("entity_b", "B", [C.createTransform(), C.createJoint({ connectedId: "entity_a" })]);
+    const [anchorCopy, hookCopy] = cloneEntitiesWithNewIds([anchor, hook]);
+    assert.equal(hookCopy.components.find((component) => component.type === "joint").connectedId, anchorCopy.id);
+    const normalized = normalizeProject(physicsScene([ball("X", 0, 0, [C.createJoint({ frequency: 999, dampingRatio: -2, kind: "weird" })])]));
+    const joint = normalized.scenes[0].objects.find((item) => item.name === "X").components.find((component) => component.type === "joint");
+    assert.deepEqual([joint.frequency, joint.dampingRatio, joint.kind], [60, 0, "distance"]);
+});

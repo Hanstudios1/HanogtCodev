@@ -645,6 +645,23 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 flipSprite: bool(source.flipSprite, true),
                 showPath: bool(source.showPath, false),
             };
+        case "joint":
+            return {
+                id,
+                type,
+                enabled,
+                kind: enumOf(source.kind, ["distance", "spring"] as const, "distance"),
+                connectedId: refId(source.connectedId),
+                anchor: vec3(source.anchor, { x: 0, y: 0, z: 0 }, -10_000, 10_000),
+                connectedAnchor: vec3(source.connectedAnchor, { x: 0, y: 0, z: 0 }),
+                distance: num(source.distance, 2, 0, 10_000),
+                autoDistance: bool(source.autoDistance, true),
+                maxDistanceOnly: bool(source.maxDistanceOnly, false),
+                frequency: num(source.frequency, 2, 0.01, 60),
+                dampingRatio: num(source.dampingRatio, 0.2, 0, 10),
+                showLine: bool(source.showLine, true),
+                lineColor: normalizeColor(source.lineColor, "#e2e8f0"),
+            };
         default:
             return null;
     }

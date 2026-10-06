@@ -7,6 +7,7 @@ import type {
     CharacterController2DComponent,
     ColliderComponent,
     GameComponent,
+    JointComponent,
     NavAgent2DComponent,
     GameEntity,
     RigidBodyComponent,
@@ -114,6 +115,7 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
     characterController: CharacterController2DComponent | null = null;
     cameraFollow: CameraFollowComponent | null = null;
     navAgent: NavAgent2DComponent | null = null;
+    joints: JointComponent[] = [];
     /** Runtime state of the Character Controller 2D, Camera Follow and Nav Agent 2D components (V4). */
     motor: CharacterMotor | null = null;
     follower: CameraFollower | null = null;
@@ -161,6 +163,7 @@ export class RuntimeEntity implements PhysicsEntity, AnimatedTarget {
         this.characterController = (this.components.find((component) => component.type === "characterController2D") as CharacterController2DComponent | undefined) ?? null;
         this.cameraFollow = (this.components.find((component) => component.type === "cameraFollow") as CameraFollowComponent | undefined) ?? null;
         this.navAgent = (this.components.find((component) => component.type === "navAgent2D") as NavAgent2DComponent | undefined) ?? null;
+        this.joints = this.components.filter((component): component is JointComponent => component.type === "joint");
         this.renderVersion += 1;
     }
 

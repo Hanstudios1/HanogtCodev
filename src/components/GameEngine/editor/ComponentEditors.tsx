@@ -8,6 +8,7 @@ import {
     createCameraFollow,
     createCharacterController2D,
     createCollider,
+    createJoint,
     createLight,
     createMeshRenderer,
     createNavAgent2D,
@@ -455,6 +456,7 @@ const COMPONENT_REFERENCE_TYPES: Record<string, GameComponent["type"][]> = {
     Tilemap: ["tilemap"], TilemapCollider2D: ["tilemap"], Animation: ["animation"], Animator: ["animation"],
     CharacterController2D: ["characterController2D"], CameraFollow: ["cameraFollow"], CinemachineCamera: ["cameraFollow"], CinemachineVirtualCamera: ["cameraFollow"],
     NavAgent2D: ["navAgent2D"], NavMeshAgent: ["navAgent2D"],
+    Joint: ["joint"], Joint2D: ["joint"], DistanceJoint2D: ["joint"], SpringJoint2D: ["joint"], SpringJoint: ["joint"],
 };
 
 function defaultFieldValue(field: FieldInfo): ScriptFieldValue {
@@ -650,6 +652,7 @@ export function defaultComponentFor(component: GameComponent, dimension: GameDim
         case "characterController2D": return { ...createCharacterController2D(), ...base };
         case "cameraFollow": return { ...createCameraFollow({ targetId: component.targetId }, dimension), ...base };
         case "navAgent2D": return { ...createNavAgent2D({ targetId: component.targetId }), ...base };
+        case "joint": return { ...createJoint({ kind: component.kind, connectedId: component.connectedId }), ...base };
         case "script": return { ...component, fields: {} };
     }
 }

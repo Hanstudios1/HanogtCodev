@@ -55,6 +55,8 @@ export const TYPE_MEMBERS: Record<string, string[]> = {
     Camera: ["fieldOfView", "orthographicSize", "orthographic", "backgroundColor", "ScreenToWorldPoint(position)", "WorldToScreenPoint(position)", "ScreenPointToRay(position)", "ViewportToWorldPoint(position)", "Shake(0.3f, 0.25f)", "StopShake()"],
     CharacterController2D: ["Move(direction)", "Jump()", "CancelJump()", "Stop()", "isGrounded", "isJumping", "isFalling", "velocity", "facing", "jumpsLeft", "moveSpeed", "jumpHeight", "maxJumps", "acceleration", "airControl", "coyoteTime", "jumpBuffer", "useInput"],
     CameraFollow: ["target", "offset", "smoothTime", "deadZone", "lookAhead", "useBounds", "SetBounds(min, max)", "SnapToTarget()", "Shake(0.3f, 0.25f)"],
+    DistanceJoint2D: ["connectedBody", "distance", "maxDistanceOnly", "anchor", "connectedAnchor", "autoConfigureDistance", "enabled"],
+    SpringJoint2D: ["connectedBody", "distance", "frequency", "dampingRatio", "anchor", "connectedAnchor", "autoConfigureDistance", "enabled"],
     NavAgent2D: ["SetDestination(point)", "Stop()", "Resume()", "ResetPath()", "Warp(position)", "destination", "target", "speed", "stoppingDistance", "remainingDistance", "hasPath", "pathStatus", "isStopped", "velocity", "path"],
     Light: ["color", "intensity", "range", "spotAngle", "enabled"],
     Collision: ["gameObject", "transform", "collider", "rigidbody", "relativeVelocity", "contacts", "contactCount", "GetContact(0)"],

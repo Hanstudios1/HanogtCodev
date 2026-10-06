@@ -3,12 +3,12 @@
 /** Inspector editors of the V4 components: Character Controller 2D and Camera Follow. */
 import { Wrench } from "lucide-react";
 import { createCollider, createRigidBody } from "@/lib/game-engine/components";
-import type { CameraFollowComponent, CharacterController2DComponent, GameEntity, NavAgent2DComponent } from "@/lib/game-engine/types";
+import type { CameraFollowComponent, CharacterController2DComponent, GameEntity, JointComponent, NavAgent2DComponent } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { useComponentEdit, type Editor } from "./inspector-fields";
 import { activeScene, findEntity, touch } from "./operations";
 import { useEditorState } from "./store";
-import { Button, FieldRow, NumberInput, SelectInput, SliderInput, Toggle, VectorInput } from "./ui";
+import { Button, ColorInput, FieldRow, NumberInput, SelectInput, SliderInput, Toggle, VectorInput } from "./ui";
 
 function Hint({ children }: { children: string }) {
     return <p className="mb-1.5 rounded-md bg-white/[0.03] px-2 py-1.5 text-[11px] leading-relaxed text-zinc-400">{children}</p>;
@@ -153,6 +153,52 @@ export function NavAgent2DEditor({ entity, component, disabled }: Editor<NavAgen
             <FieldRow label="Repath Interval" title={t("navRepath")}><NumberInput value={component.repathInterval} min={0.05} max={10} step={0.05} disabled={disabled} onChange={(value) => edit("repathInterval", (draft) => { draft.repathInterval = value; })} /></FieldRow>
             <FieldRow label="Flip Sprite"><Toggle checked={component.flipSprite} disabled={disabled} onChange={(value) => edit("flipSprite", (draft) => { draft.flipSprite = value; })} /></FieldRow>
             <FieldRow label="Show Path" title={t("navShowPath")}><Toggle checked={component.showPath} disabled={disabled} onChange={(value) => edit("showPath", (draft) => { draft.showPath = value; })} /></FieldRow>
+        </div>
+    );
+}
+
+export function JointEditor({ entity, component, disabled }: Editor<JointComponent>) {
+    const { store, t } = useEditor();
+    const project = useEditorState(store, (state) => state.project);
+    const scene = activeScene(project);
+    const edit = useComponentEdit(entity.id, component);
+    const is2D = project.dimension === "2d";
+    const others = scene.objects.filter((item: GameEntity) => item.id !== entity.id);
+    const missing = component.connectedId !== null && !others.some((item) => item.id === component.connectedId);
+    const body = entity.components.find((item) => item.type === "rigidBody");
+    const moves = body?.type === "rigidBody" && body.enabled && body.bodyType === "dynamic";
+    const other = others.find((item) => item.id === component.connectedId);
+    const otherBody = other?.components.find((item) => item.type === "rigidBody");
+    const otherMoves = otherBody?.type === "rigidBody" && otherBody.enabled && otherBody.bodyType === "dynamic";
+
+    return (
+        <div className="space-y-0.5" data-joint-editor>
+            {!moves && !otherMoves ? <Warning>{t("jointNeedsBody")}</Warning> : <Hint>{component.kind === "spring" ? t("jointSpringHint") : t("jointDistanceHint")}</Hint>}
+            <FieldRow label="Type">
+                <SelectInput value={component.kind} disabled={disabled} onChange={(value) => edit("kind", (draft) => { draft.kind = value; })} options={[{ value: "distance", label: is2D ? "Distance Joint 2D" : "Distance Joint" }, { value: "spring", label: is2D ? "Spring Joint 2D" : "Spring Joint" }]} />
+            </FieldRow>
+            <FieldRow label="Connected" title={t("jointConnected")}>
+                <SelectInput
+                    value={missing ? "" : component.connectedId ?? ""}
+                    disabled={disabled}
+                    onChange={(value) => edit("connected", (draft) => { draft.connectedId = value || null; })}
+                    options={[{ value: "", label: t("jointWorldPoint") }, ...others.map((item) => ({ value: item.id, label: item.name }))]}
+                />
+            </FieldRow>
+            <FieldRow label="Anchor"><VectorInput value={component.anchor} hideZ={is2D} disabled={disabled} onChange={(value) => edit("anchor", (draft) => { draft.anchor = value; })} /></FieldRow>
+            <FieldRow label={component.connectedId ? "Connected Anchor" : t("jointWorldAnchor")}><VectorInput value={component.connectedAnchor} hideZ={is2D} disabled={disabled} onChange={(value) => edit("connectedAnchor", (draft) => { draft.connectedAnchor = value; })} /></FieldRow>
+            <FieldRow label="Auto Distance" title={t("jointAuto")}><Toggle checked={component.autoDistance} disabled={disabled} onChange={(value) => edit("autoDistance", (draft) => { draft.autoDistance = value; })} /></FieldRow>
+            {!component.autoDistance ? <FieldRow label="Distance"><NumberInput value={component.distance} min={0} max={10000} step={0.1} disabled={disabled} onChange={(value) => edit("distance", (draft) => { draft.distance = value; })} /></FieldRow> : null}
+            {component.kind === "distance" ? (
+                <FieldRow label="Max Distance Only" title={t("jointRope")}><Toggle checked={component.maxDistanceOnly} disabled={disabled} onChange={(value) => edit("maxDistanceOnly", (draft) => { draft.maxDistanceOnly = value; })} /></FieldRow>
+            ) : (
+                <>
+                    <FieldRow label="Frequency" title={t("jointFrequency")}><NumberInput value={component.frequency} min={0.01} max={60} step={0.1} disabled={disabled} onChange={(value) => edit("frequency", (draft) => { draft.frequency = value; })} /></FieldRow>
+                    <FieldRow label="Damping Ratio" title={t("jointDamping")}><SliderInput value={component.dampingRatio} min={0} max={1} disabled={disabled} onChange={(value) => edit("dampingRatio", (draft) => { draft.dampingRatio = value; })} /></FieldRow>
+                </>
+            )}
+            <FieldRow label="Show Line"><Toggle checked={component.showLine} disabled={disabled} onChange={(value) => edit("showLine", (draft) => { draft.showLine = value; })} /></FieldRow>
+            {component.showLine ? <FieldRow label="Line Color"><ColorInput value={component.lineColor} disabled={disabled} onChange={(value) => edit("lineColor", (draft) => { draft.lineColor = value; })} /></FieldRow> : null}
         </div>
     );
 }

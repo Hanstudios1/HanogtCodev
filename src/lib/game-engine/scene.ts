@@ -127,6 +127,9 @@ export function cloneEntitiesWithNewIds(entities: GameEntity[], rootParentId: st
             if ((cloned.type === "cameraFollow" || cloned.type === "navAgent2D") && cloned.targetId && idMap.has(cloned.targetId)) {
                 cloned.targetId = idMap.get(cloned.targetId) as string;
             }
+            if (cloned.type === "joint" && cloned.connectedId && idMap.has(cloned.connectedId)) {
+                cloned.connectedId = idMap.get(cloned.connectedId) as string;
+            }
             if (cloned.type === "script") {
                 // Entity references inside the subtree follow the clone.
                 const fields = { ...cloned.fields };
