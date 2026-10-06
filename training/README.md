@@ -1,14 +1,17 @@
-# Hanogt AI'ı eğitmek: veri seti v2 ve Qwen3 ince ayarı
+# Hanogt AI'ı eğitmek: veri havuzu v3, sürekli eğitim ve Qwen3 ince ayarı
 
-Bu klasör Hanogt AI'ın kendi modelini üretir. Hat beş adımdır:
+Bu klasör Hanogt AI'ın kendi modelini üretir. Hat şöyle işler:
 
-1. izinli kaynaklardan veri toplanır;
-2. veri temizlenip karıştırılır;
-3. bir Qwen3 modeli LoRA/QLoRA ile eğitilir;
-4. model sunulur;
-5. Hanogt AI'a bağlanır.
+1. izinli kaynaklardan veri toplanır (Hanogt'un kendi bilgisi, GitHub, Hugging Face);
+2. veri temizlenip tek bir **havuzda** karıştırılır;
+3. model havuzdan seçilen **turlarla** eğitilir: her tur yeni veriyi, unutmamak için eskilerden bir tekrarı ve Hanogt'un kendi örneklerini içerir, bir önceki turun üzerine devam eder;
+4. model sunulur ve Hanogt AI'a bağlanır.
 
-Hedef **140.000+ benzersiz örnek**. Güncel sayılar `ai/reports/finetune-dataset-v2.md` içindedir; veri setinin kendisi depoya girmez.
+**En kolay yol: Kaggle** (`kaggle/hanogt_train_kaggle.ipynb`, aşağıda "Sürekli eğitim"). Defter her çalıştırmada en güncel kodu ve kaynak kaydını GitHub'dan alır; kayda yeni bir veri seti eklendiğinde yalnızca o indirilir, havuz güncellenir ve sonraki turlar onu da öğrenir.
+
+**Diller:** Türkçe, İngilizce, Almanca, Azerbaycanca ve Rusça (`lib/common.mjs` → `LANGS`). Bir turun yeni örnekleri dillere ağırlıkla dağıtılır: TR %32, EN %36, DE %11, AZ %10, RU %11.
+
+**Konular** (aile, `FAMILIES`): sohbet ve talimat, düşünerek problem çözme, matematik, fen (fizik, kimya, biyoloji), genel kültür (tarih, coğrafya, din, toplum bilgisi), kod (birçok programlama dili), savunma odaklı siber güvenlik, yanıtları puanlama ve sıralama (`judge`), Hanogt'un kendi bilgisi ve ajan işlemleri.
 
 ## Kurallar: hangi veri girer?
 
@@ -22,22 +25,83 @@ Hedef **140.000+ benzersiz örnek**. Güncel sayılar `ai/reports/finetune-datas
 - **Alınmayan veri:**
   - ticari olmayan (NC) ya da paylaşımda aynı lisansı şart koşan (SA) lisanslar;
   - lisansı belirsiz veri;
-  - başka modelleri eğitmeyi yasaklayan kapalı modellerin çıktısıyla üretilmiş veri (OpenAI, Gemini, Claude);
-  - değerlendirme setleri (code-bench, HumanEval, GSM8K test bölümü).
+  - kapalı modellerin (OpenAI, Anthropic, Google Gemini/Gemma, xAI, Cohere) ya da Llama modellerinin ürettiği veri. Bu modellerin yazdığı **sorular** da onların çıktısı sayılır; insanların yazdığı sorular sorun değildir;
+  - üreticisi belirtilmeyen veri (kartı netleşene kadar `review`);
+  - değerlendirme setleri (code-bench, HumanEval, GSM8K ve MATH test bölümleri, Aya test bölümü).
+- **Karar bekleyen:** OpenAI'ın açık ağırlıklı `gpt-oss` modellerinin ürettiği veri (Apache-2.0) şimdilik `review`'dadır; sahibi karar verince açılır.
 - **Claude ile eğitim verisi üretilmez.**
 
-| Kaynak | Lisans | Durum | Ne verir |
-| --- | --- | --- | --- |
-| Hanogt'un kendi içeriği | — | allowed | Bilgi tabanı, SSS, kılavuz, ajan işlemleri, kavramlar, hata açıklamaları, çok turlu sohbet |
-| Exercism (61 dil izi) | MIT | allowed | Alıştırma ve örnek çözüm, konu anlatımları; Python ve JS çözümleri burada testleriyle çalıştırılır |
-| TheAlgorithms/Python | MIT | allowed | Doctest'leri burada geçen algoritmalar |
-| GSM8K (train) | MIT | allowed | İnsan yazımı adım adım matematik çözümleri (%70'i düşünme biçiminde) |
-| Aya Dataset | Apache-2.0 | allowed | İnsan yazımı TR/EN soru-yanıt |
-| OpenAssistant oasst2 | Apache-2.0 | allowed | İnsan yazımı sohbetler (en iyi dal) |
-| self-oss-instruct-sc2 | ODC-BY | allowed | Açık modelle üretilmiş, çalıştırılarak elenmiş Python |
-| OpenCodeInstruct | CC BY 4.0 | allowed | Açık Qwen-Coder ile üretilmiş, testten ≥ 0,9 almış kod |
-| OpenThoughts-114k | Apache-2.0 | allowed | DeepSeek-R1 düşünme izleri (kısa olanlar) |
-| turkish-chat-max-25k, Turkish-SFT, Türkçe Atlas, smoltalk2 | Apache/MIT/? | review | Türkçe sohbet ve düşünme; üretim kaynağı kontrol edilecek |
+İzinli kaynaklar (kayıt v3; üst sınır her kaynağın havuza girebilecek en çok örneğidir):
+
+| Konu | Kaynak | Dil | Lisans | Ne verir |
+| --- | --- | --- | --- | --- |
+| Hanogt | Hanogt'un kendi içeriği | TR, EN | — | Bilgi tabanı, SSS, kılavuz, ajan işlemleri, kavramlar, hata açıklamaları, çok turlu sohbet |
+| Sohbet | Aya Dataset | TR, EN, DE, RU | Apache-2.0 | İnsan yazımı soru-yanıt (train bölümü) |
+| Sohbet | OpenAssistant oasst2 | TR, EN, DE, RU | Apache-2.0 | İnsan yazımı sohbetler, her ağacın en iyi dalı |
+| Sohbet | EagleSFT | RU | CC0 | İnsanların sorduğu okul ve üniversite soruları, Mistral-Small-3.1 yanıtları |
+| Talimat | turkish-reasoning-distilled-sft (`ifeval_verified`) | TR | Apache-2.0 | Doğrulanabilir kısıtlı Türkçe talimatlar, düşünmeli yanıtlar |
+| Matematik | GSM8K (train) | EN | MIT | İnsan yazımı adım adım çözümler |
+| Matematik | turkish-reasoning-distilled-sft (`dapo_math`) | TR | Apache-2.0 | Yarışma matematiği; yalnızca referansla eşleşen çözümler |
+| Matematik | ReasonXL, Almanca | DE | Apache-2.0 | OpenMathReasoning problemlerine DeepSeek-R1 çözümlerinin Qwen3-32B çevirisi; döngüye giren çeviriler atılır |
+| Matematik | Gromov-Max | RU | Apache-2.0 | İki bağımsız yanıtı aynı çıkan çözümler |
+| Matematik | mathematics_dataset (RU) | RU | Apache-2.0 | Kural tabanlı üretici; yalnızca eğitim kategorileri |
+| Matematik | OpenR1-Math-220k | EN | Apache-2.0 | Math-Verify'ın doğruladığı en kısa DeepSeek-R1 izi |
+| Matematik | OpenMathReasoning | EN | CC BY 4.0 | AoPS problemleri, beklenen yanıta ulaşan R1/QwQ çözümleri |
+| Matematik | Nemotron Post-Training v1 (`math`) | EN | CC BY 4.0 | DeepSeek-R1-0528 çözümleri, problem başına bir |
+| Matematik | MATH (train) | EN | MIT | İnsan yazımı yarışma çözümleri |
+| Fen | OpenScience (`OS-Q3-235B-4`) | EN | CC BY 4.0 | Qwen3-235B'nin yazdığı fen soruları, DeepSeek-R1'in düşünmeli yanıtları |
+| Fen | QASC (train) | EN | CC BY 4.0 | İki bilgiyi birleştirerek yanıtlanan fen soruları (insan yazımı) |
+| Genel kültür | Cosmopedia (OpenStax, Stanford, Khan Academy) | EN | Apache-2.0 | Tarih, toplum, ekonomi, felsefe ve fen ders metinleri (Mixtral-8x7B) |
+| Kod | Exercism (61 dil izi) | — | MIT | Alıştırma ve örnek çözüm; Python ve JS çözümleri testleriyle çalıştırılır |
+| Kod | TheAlgorithms/Python | — | MIT | Doctest'leri geçen algoritmalar |
+| Kod | self-oss-instruct-sc2 | EN | ODC-BY | Çalıştırılarak elenmiş Python |
+| Kod | OpenCodeInstruct | EN | CC BY 4.0 | Qwen2.5-Coder ile üretilmiş, testten ≥ 0,9 almış kod |
+| Kod | Nemotron Post-Training v1 (`code`) | EN | CC BY 4.0 | DeepSeek-R1-0528 çözümleri, problem başına bir |
+| Kod | CodeForces-CoTs | EN | CC BY 4.0 | Python ve C++ yarışma çözümleri (temizlenmiş bölümler) |
+| Kod | SQaLe | EN | MIT | Gerçek şemalarda SQL, çalıştırılarak doğrulanmış |
+| Kod | Bash Instruct III | EN | MIT | Linux'ta çalıştırılarak doğrulanmış Bash |
+| Düşünme | OpenThoughts-114k | EN | Apache-2.0 | Matematik ve kod için DeepSeek-R1 izleri (fen ve bulmaca kısmı çıkarıldı) |
+| Siber güvenlik | CVE→CWE Consensus | EN | CC BY 4.0 | NVD ile CNA'nın uzlaştığı zayıflık (CWE) etiketleri |
+| Siber güvenlik | CIRCL vulnerability-scores | EN, TR | CC BY 4.0 | Açıklamadan önem derecesi (CVSS) tahmini |
+| Puanlama | HelpSteer2 | EN, TR | CC BY 4.0 | İnsan puanları: yardımseverlik, doğruluk, tutarlılık, karmaşıklık, ayrıntı |
+| Sıralama | HelpSteer3 (`preference`) | EN (DE/RU bağlamlar dahil) | CC BY 4.0 | İki yanıt arasında insan tercihi ve gerekçesi |
+
+- **İncelemede (review):** T-Wix (RU), GrandMaster-Qwen3 (RU), resh.edu.ru dersleri (RU, dönüştürücü bekliyor), SYNTHETIC-1, Dolci-Think, Nemotron v2 (kapılı), gpt-oss ile üretilmiş setler, Türkçe ve Azerbaycanca bilgi setleri (üretici belirtilmemiş), Arena tercihleri, Türkçe Atlas, smoltalk2. Her birinin eksiği `sources.json`'da yazılıdır.
+- **Dışlananlar:** gerekçeleriyle kayıtta (`excluded`); örneğin OpenThoughts3 (Llama/Gemini/GPT kaynaklı sorular), WildChat (GPT yanıtları), MetaMathQA, Magicoder, UltraFeedback, InstrucTurca (SA), Aya Collection çevirileri (NC çeviri modeli), Wikipedia (SA).
+- **Azerbaycanca:** kuralların tümünü geçen bir veri seti bulunamadı (Aya'da da yok). Şimdilik model Azerbaycancayı Türkçe ve kendi bilgisinden öğrenir; sonraki adım izinli Türkçe/İngilizce verinin açık bir modelle çevrilmesi.
+- **Görsel:** Qwen3-8B yalnızca metin anlar. Görsel anlamak için görsel-dil tabanına (ör. Qwen3-VL-8B) ve görselli veri toplayıcısına geçmek gerekir; bu ayrı bir adımdır.
+
+## Sürekli eğitim (Kaggle)
+
+`kaggle/hanogt_train_kaggle.ipynb` yalnızca bir başlatıcıdır: depoyu GitHub'dan klonlar ve `kaggle_run.py`'yi çalıştırır. Her çalıştırma sırasıyla şunları yapar:
+
+1. **Veri** (`kaggle_run.py` → `prepare_data`):
+   - GitHub kaynakları, kayıttaki girdileri ya da içe aktarıcı değiştiyse yeniden alınır.
+   - Hugging Face'ten yalnızca kayıt girdisi değişen, yeni eklenen ya da geçen sefer hata veren kaynaklar indirilir (`import_hf.py --only …`); kayıttan çıkan kaynak havuzdan da çıkar.
+   - Havuz (`mix.mjs`), içe aktarımlardan biri, sitenin bilgisi ya da karıştırma kodu değiştiyse yeniden kurulur. Eğitim bağlamına sığmayan örnekler (`--max-seq-len` × 3,2 karakterden uzun) havuza hiç girmez.
+   - İçe aktarımlar (`raw/`) ve havuz (`pool/`) özel veri deposuna (`HanStudios/hanogt-sft-pool`) yüklenir.
+   - GPU'suz çalıştırma bu adımda biter: veri, GPU kotası harcanmadan hazırlanır.
+2. **Eğitim** (GPU varsa, `train`):
+   - Yarım kalan tur varsa son ara kayıttan sürer (`--resume-from-hub`).
+   - Yoksa sıradaki tur seçilir (`select_round.py`). Tur, şu üç kısımdan oluşur:
+     - henüz öğrenilmemiş örnekler: dillere ve konulara dengeli dağılır, her kaynaktan sırayla alınır;
+     - %15 tekrar: daha önce öğrenilmiş örneklerden;
+     - %15 Hanogt'un kendi örnekleri.
+   - Tur bir önceki turun bağdaştırıcısından başlar (`--init-adapter`). İlk turda öğrenme oranı 2e-4'tür, sonraki turlarda 1e-4.
+   - Oturumun süresi bitene kadar turlar arka arkaya çalışır.
+   - Durum özel model deposunda tutulur:
+     - `state/rounds.json`: biten turlar, ölçümleri ve süren tur;
+     - `state/seen.txt.gz`: öğrenilen örnekler;
+     - bağdaştırıcı deponun kökünde, her turun kopyası `rounds/round-00N/` altında.
+   - Havuzda yeni örnek kalmadıysa eğitim durur ve bunu yazar; kayda yeni kaynak eklenince yeni turlar başlar.
+
+**Bir tur ne kadar sürer?** Varsayılan tur 20.000 örnektir. v3'te düşünmeli örnekler uzun olduğundan örnek başına kabaca 1.000–1.500 token düşer, yani tur 20–30 milyon token eder. 2× T4'te bu kabaca 10–20 saattir; tur birden çok oturuma bölünür ve her oturum son ara kayıttan sürer. Kaggle haftada ~30 saat GPU verir: haftada yaklaşık bir-iki tur. Gerçek süre ilk turun kaydında (`state/rounds.json`) görünür.
+
+**Yeni veri seti eklemek:**
+1. `sources.json`'a bir girdi eklenir: lisans, üretim kaynağı (`provenance`), atıf, üst sınır (`cap`) ve nasıl okunacağı (`hf` bloğu).
+2. `hf` bloğu dönüştürücüyü, alanları, filtreleri ve dili belirtir; ayrıntılar `import_hf.py`'nin başında. Çoğu veri seti için kod yazmak gerekmez.
+3. Testler çalıştırılır, değişiklik `main`'e gönderilir.
+4. Kaggle'da bir sonraki çalıştırma yeni kaynağı indirir ve öğrenir.
 
 ## 1. GitHub kaynakları
 
@@ -68,8 +132,17 @@ HF_TOKEN=... python3 training/import_hf.py --include-review   # kartı okunup ka
 python3 -m unittest discover -s training/tests               # dönüştürücüler, ağ gerekmez
 ```
 
-- **Dönüştürücüler:** her kaynağın kendi dönüştürücüsü vardır. Aya'dan Türkçe ve İngilizce satırlar alınır; oasst2'de her ağacın en iyi dalı; OpenCodeInstruct'ta test puanı ≥ 0,9 olanlar; OpenThoughts'ta düşünme izi olanlar.
-- **Genel dönüştürücü:** bilinmeyen biçimler için `messages`, `conversations`, `instruction/output`, `prompt/response` gibi yaygın düzenleri tanır.
+- **Kayıt nasıl okunur:** her kaynağın `hf` bloğu yapılandırmayı, bölümü, satır süzgeçlerini (`where`), dili ve dönüştürücüyü söyler; yeni bir veri seti çoğu zaman kod gerektirmez, yalnızca kayıt girdisi ister.
+- **Dönüştürücüler:**
+  - `messages`, `fields`: hazır sohbetler ve soru/yanıt sütunları (düşünme sütunu `reasoning_content` olur);
+  - `template`: satırı dile göre şablonla soruya ve yanıta çevirir (SQL, QASC, Rusça matematik);
+  - `verified-generation`: birden çok üretilmiş yanıttan doğrulamaların hepsini geçen en kısasını seçer (OpenR1-Math);
+  - `cvss`: güvenlik açığı açıklamasından önem derecesi sorusu (TR/EN);
+  - `helpsteer`, `helpsteer3`: insan puanları ve iki yanıt arasındaki tercih;
+  - `aya`, `oasst` ve eski kaynakların kendi dönüştürücüleri.
+- **Seçenekler:** `configs` (sırayla okunan yapılandırmalar, üst sınır paylaşılır), `uniqueBy` (problem başına bir örnek), `dropSystem`, `wrapAnswer`, `minUserChars`, `maxChars` (eğitim bağlamına sığmayanlar alınmaz), `format` + `dataFiles` (yükleme betiği olan depolarda dosyayı doğrudan okur).
+- **Döngü süzgeci:** aynı kelimeyi otuz kez üst üste yazan ya da döngü gibi sıkışan yanıtlar her kaynakta atılır (çeviride takılan izler gibi).
+- **Okuma sırası:** veri setinin dosyaları tohumlu bir sırayla okunur; üst sınırlı bir kaynak böylece tek bir dosyadan değil, tüm veri setinden örnek alır.
 - **Çıktılar:** `training/data/hf/<kaynak>.jsonl` ve `manifest.json` (satır sayısı, revizyon).
 
 ## 3. Karıştır
@@ -124,18 +197,19 @@ HF_TOKEN=... python3 training/hf_job.py launch --dataset-repo HanStudios/hanogt-
 
 **Google Colab:** `training/colab/hanogt_train.ipynb`. GPU çalışma zamanını seç, Gizli anahtarlar'a `HF_TOKEN` ekle ve hücreleri sırayla çalıştır.
 
-**Kaggle (ücretsiz):** `training/kaggle/hanogt_train_kaggle.ipynb`.
-- **Ne verir:** haftada yaklaşık 30 saat GPU (2× T4 ya da P100). Bir oturum en fazla 12 saat sürer.
+**Kaggle (ücretsiz):** `training/kaggle/hanogt_train_kaggle.ipynb`. Veri hazırlığını ve tur tur eğitimi kendisi yapar; ayrıntılar yukarıda, "Sürekli eğitim (Kaggle)" bölümünde.
+- **Ne verir:** haftada yaklaşık 30 saat GPU (2× T4). Bir oturum en fazla 12 saat sürer.
 - **Hazırlık:**
   1. Telefon doğrulaması yap.
-  2. *Session options* panelinde *GPU T4 x2* ve *Internet: On* seç.
-  3. *Add-ons → Secrets* altına `HF_TOKEN` ekle.
-- **Çalıştırma:** *Save Version → Save & Run All*.
+  2. *Session options* panelinde *Internet: On* seç.
+  3. *Add-ons → Secrets* altına `HF_TOKEN` (Write) ekle.
+- **Çalıştırma:**
+  - İlk sefer *Accelerator: None* ile *Save & Run All*: veri hazırlanır.
+  - Sonra *GPU T4 x2* ile *Save & Run All*: eğitim başlar.
 - **Kesintiye dayanıklıdır:**
-  - Her ara kayıt `MODEL_REPO`'nun `last-checkpoint` klasörüne yüklenir (`--hub-checkpoints`).
-  - 11 saatte kendisi durur (`--time-budget-hours`).
-  - Bir sonraki çalıştırma kaldığı yerden sürer (`--resume-from-hub`).
-- **Süre:** T4 A100'den yavaştır. Qwen3-8B saniyede ~500–1.000 token işler; 2× T4 bunun yaklaşık iki katıdır. Mevcut ~13 milyon token bir oturumda biter, tam set birkaç hafta sürer.
+  - Her ara kayıt model deposunun `last-checkpoint` klasörüne yüklenir.
+  - Oturum süresine göre kendisi durur.
+  - Sonraki çalıştırma aynı turu kaldığı yerden sürdürür.
 
 **Kendi GPU'n ya da RunPod / Lambda / vast.ai:**
 
@@ -217,6 +291,8 @@ Temel modeli ve ince ayarlı modeli aynı komutla, düşünme açık ve kapalı 
 | `mix.mjs` | Temizleme, tekrar ayıklama, karışım, bölme, rapor |
 | `lib/common.mjs` | Ortak şema ve filtreler |
 | `lib/jest-lite.mjs`, `lib/thealgorithms.py` | Doğrulama yardımcıları |
-| `train_lora.py` | LoRA / QLoRA eğitimi, `--push-to-hub` |
+| `train_lora.py` | LoRA / QLoRA eğitimi, `--push-to-hub`, `--init-adapter` (önceki turdan devam), `--status-file` |
+| `select_round.py` | Sıradaki turun örnekleri: yeni veri (dil ve konuya göre dengeli), tekrar ve Hanogt'un kendi örnekleri |
+| `kaggle_run.py`, `kaggle/hanogt_train_kaggle.ipynb` | Kaggle'da veri hazırlığı ve tur tur sürekli eğitim |
 | `hf_job.py`, `colab/hanogt_train.ipynb` | Hugging Face Jobs ve Colab |
 | `merge_and_export.py` | Birleştirme, GGUF, Ollama |

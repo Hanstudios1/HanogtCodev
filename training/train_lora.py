@@ -24,6 +24,12 @@ Runs in time-limited sessions (Kaggle's 12 hours, training/kaggle/): upload
 each checkpoint with --hub-checkpoints, stop in time with --time-budget-hours
 and continue in the next session with --resume-from-hub.
 
+Training goes on in rounds (training/kaggle_run.py): each round starts from
+the adapter the previous one produced (--init-adapter, a folder or a model
+repository) and learns new data plus a replay of older data
+(training/select_round.py). --status-file records whether the run finished or
+stopped for time.
+
   python training/train_lora.py --preset small --hub-checkpoints HanStudios/hanogt-ai-qwen3-8b-lora \
       --resume-from-hub --time-budget-hours 11 --push-to-hub HanStudios/hanogt-ai-qwen3-8b-lora
 
@@ -90,6 +96,8 @@ def parse_args(argv=None):
     parser.add_argument("--hub-checkpoints", metavar="REPO", help="upload every checkpoint to this private model repository (folder last-checkpoint), so a run cut short can continue elsewhere")
     parser.add_argument("--resume-from-hub", action="store_true", help="download last-checkpoint from --hub-checkpoints first and continue from it when there is one")
     parser.add_argument("--time-budget-hours", type=float, default=0.0, help="save a checkpoint and stop after this many hours (0: no limit); continue later with --resume-from-hub")
+    parser.add_argument("--init-adapter", metavar="PATH_OR_REPO", help="start from this LoRA adapter (a folder or a model repository) instead of a new one: the next round of continued training")
+    parser.add_argument("--status-file", help="write {status: finished|stopped, step, metrics} here when the run ends")
     args = parser.parse_args(argv)
     preset = PRESETS[args.preset]
     args.base_model = args.base_model or preset["base_model"]
@@ -222,8 +230,15 @@ def main(argv=None):
     if args.load_in_4bit:
         model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True, gradient_checkpointing_kwargs={"use_reentrant": False})
 
-    lora = LoraConfig(r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=args.lora_dropout, bias="none", task_type="CAUSAL_LM", target_modules=TARGET_MODULES)
-    model = get_peft_model(model, lora)
+    if args.init_adapter:
+        from peft import PeftModel
+
+        start = adapter_folder(args.init_adapter, output_root=args.output)
+        print(f"continuing the adapter of {args.init_adapter}")
+        model = PeftModel.from_pretrained(model, start, is_trainable=True)
+    else:
+        lora = LoraConfig(r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=args.lora_dropout, bias="none", task_type="CAUSAL_LM", target_modules=TARGET_MODULES)
+        model = get_peft_model(model, lora)
     adapted = sorted({name.split(".")[-1] for name, module in model.named_modules() if hasattr(module, "lora_A") and len(getattr(module, "lora_A", {})) > 0})
     if not adapted:
         sys.exit("LoRA found none of its target layers in this model; check the base model.")
@@ -324,6 +339,7 @@ def main(argv=None):
     if budget.stopped:
         print(f"time budget of {args.time_budget_hours} hours reached at step {trainer.state.global_step}: the checkpoint is saved"
               + (f" and uploaded to {args.hub_checkpoints}; run again with --resume-from-hub to continue." if args.hub_checkpoints else "; run again with --resume to continue."))
+        write_status(args.status_file, "stopped", trainer.state.global_step, {})
         return 0
     metrics = dict(result.metrics)
     if eval_items:
@@ -348,7 +364,33 @@ def main(argv=None):
     print(f"adapter saved to {adapter}")
     if args.push_to_hub:
         push_adapter(adapter, args.push_to_hub, private=not args.hub_public)
+    write_status(args.status_file, "finished", trainer.state.global_step, metrics)
     return 0
+
+
+def write_status(path, status, step, metrics):
+    """How the run ended, for training/kaggle_run.py (only the main process writes it)."""
+    if not path or int(os.environ.get("RANK", "0")) != 0:
+        return
+    clean = {key: value for key, value in (metrics or {}).items() if isinstance(value, (int, float, str))}
+    Path(path).write_text(json.dumps({"status": status, "step": step, "metrics": clean}, indent=2) + "\n", encoding="utf-8")
+
+
+def adapter_folder(source, output_root="."):
+    """A local folder with adapter_config.json: `source` itself, or its download from the hub.
+
+    With several GPUs every process downloads its own copy (no process waits for another).
+    """
+    if os.path.isfile(os.path.join(source, "adapter_config.json")):
+        return source
+    from huggingface_hub import snapshot_download
+
+    rank = int(os.environ.get("LOCAL_RANK", "-1"))
+    local = Path(output_root) / ("_init-adapter" if rank <= 0 else f"_init-adapter-rank{rank}")
+    snapshot_download(repo_id=source, repo_type="model", allow_patterns=["adapter_config.json", "adapter_model.safetensors"], local_dir=str(local), token=os.environ.get("HF_TOKEN"))
+    if not (local / "adapter_config.json").exists():
+        sys.exit(f"{source} has no adapter_config.json to continue from")
+    return str(local)
 
 
 def hub_checkpoint(repo, output):
@@ -357,7 +399,8 @@ def hub_checkpoint(repo, output):
     With several GPUs every process downloads its own copy (no process waits for another).
     """
     rank = int(os.environ.get("LOCAL_RANK", "-1"))
-    local = Path(output) / ("hub" if rank <= 0 else f"hub-rank{rank}")
+    # "_" folders: the trainer's checkpoint uploads skip them.
+    local = Path(output) / ("_hub" if rank <= 0 else f"_hub-rank{rank}")
     try:
         from huggingface_hub import snapshot_download
 

@@ -2,9 +2,13 @@
 
     python3 -m unittest discover -s training/tests
 """
+import json
 import os
 import sys
+import tempfile
+import types
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import import_hf  # noqa: E402
@@ -99,12 +103,217 @@ class ConverterTests(unittest.TestCase):
         no_thought = {"conversations": [{"from": "user", "value": "x"}, {"from": "assistant", "value": "y"}]}
         self.assertEqual(import_hf.convert_openthoughts(SOURCE, no_thought)[1], "no_thought")
 
+    def test_row_filters(self):
+        row = {"lang": "tr", "score": 0.95, "meta": {"ok": True}, "empty": ""}
+        self.assertTrue(import_hf.passes(row, [{"field": "lang", "equals": "tr"}, {"field": "score", "min": 0.9}, {"field": "meta.ok", "truthy": True}]))
+        self.assertFalse(import_hf.passes(row, [{"field": "lang", "in": ["de", "az"]}]))
+        self.assertFalse(import_hf.passes(row, [{"field": "lang", "notIn": ["tr"]}]))
+        self.assertFalse(import_hf.passes(row, [{"field": "score", "max": 0.5}]))
+        self.assertFalse(import_hf.passes(row, [{"field": "missing", "min": 0}]), "no number, no pass")
+        self.assertFalse(import_hf.passes(row, [{"field": "empty", "truthy": True}]))
+
+    def test_fields_converter_and_languages(self):
+        source = {"id": "hf-q", "license": "MIT", "family": ["science"], "hf": {"converter": "fields", "fields": {"user": ["question", "choices"], "assistant": "answer", "reasoning": "explanation"}, "langField": "language", "langMap": {"deu": "DE", "azj": "AZ"}}}
+        spec = import_hf.spec_of(source)
+        item, reason = import_hf.convert_row(source, {"question": "Was ist H2O?", "choices": "A) Wasser B) Salz", "answer": "A) Wasser", "explanation": "H2O ist Wasser.", "language": "deu"}, spec)
+        self.assertIsNone(reason)
+        self.assertEqual(item["lang"], "DE")
+        self.assertEqual(item["family"], "science")
+        self.assertEqual(item["messages"][0]["content"], "Was ist H2O?\n\nA) Wasser B) Salz")
+        self.assertEqual(item["messages"][-1]["reasoning_content"], "H2O ist Wasser.")
+        self.assertEqual(import_hf.convert_row(source, {"question": "x", "answer": "y", "language": "fra"}, spec), (None, "language"))
+        self.assertEqual(import_hf.convert_row(source, {"question": "", "answer": "y", "language": "deu"}, spec), (None, "shape"))
+
+    def test_messages_converter_options(self):
+        source = {"id": "hf-m", "license": "Apache-2.0", "family": ["chat"], "hf": {"converter": "messages", "messagesField": "conversation", "lang": "RU", "verified": "human", "where": [{"field": "quality", "min": 3}], "maxChars": 50}}
+        spec = import_hf.spec_of(source)
+        row = {"quality": 4, "conversation": [{"role": "user", "content": "Привет"}, {"role": "assistant", "content": "Здравствуйте!"}]}
+        item, reason = import_hf.convert_row(source, row, spec)
+        self.assertIsNone(reason)
+        self.assertEqual((item["lang"], item["verified"]), ("RU", "human"))
+        self.assertEqual(import_hf.convert_row(source, {**row, "quality": 1}, spec), (None, "filtered"))
+        long_row = {"quality": 5, "conversation": [{"role": "user", "content": "x" * 40}, {"role": "assistant", "content": "y" * 40}]}
+        self.assertEqual(import_hf.convert_row(source, long_row, spec), (None, "too_long"))
+
+    def test_legacy_sources_keep_their_converters(self):
+        self.assertEqual(import_hf.spec_of({"id": "hf-opencodeinstruct"})["keep"], 0.25)
+        self.assertEqual(import_hf.spec_of({"id": "hf-aya-dataset", "hf": {"langMap": {"deu": "DE"}}})["converter"], "aya")
+        aya = {"id": "hf-aya-dataset", "license": "Apache-2.0", "family": ["chat"]}
+        spec = import_hf.spec_of({**aya, "hf": {"langMap": {"tur": "TR", "deu": "DE", "azj": "AZ", "rus": "RU"}}})
+        item, reason = import_hf.convert_row(aya, {"inputs": "Wie spät ist es?", "targets": "Es ist acht.", "language_code": "deu"}, spec)
+        self.assertIsNone(reason)
+        self.assertEqual(item["lang"], "DE")
+        with self.assertRaises(ValueError):
+            import_hf.convert_row(aya, {}, {"converter": "nope"})
+
+    def test_helpsteer_rows_become_judging_tasks(self):
+        source = {"id": "hf-helpsteer", "license": "CC-BY-4.0", "family": ["judge"]}
+        row = {"prompt": "What is 2+2?", "response": "4", "helpfulness": 4, "correctness": 4, "coherence": 4, "complexity": 0, "verbosity": 1}
+        item, reason = import_hf.convert_helpsteer(source, row, {})
+        self.assertIsNone(reason)
+        self.assertEqual(item["family"], "judge")
+        self.assertEqual(item["verified"], "human")
+        self.assertIn("4/4", item["messages"][-1]["content"])
+        self.assertIn(row["response"], item["messages"][0]["content"])
+        self.assertEqual(import_hf.convert_helpsteer(source, {**row, "correctness": None}, {})[1], "no_score")
+
+    def test_more_row_filters(self):
+        row = {"source": "Aya-Turkish", "prompt": "Hi<extra_id_1>Assistant", "answer_1": " 42", "answer_2": "42", "answer_3": "41"}
+        self.assertTrue(import_hf.passes(row, [{"field": "source", "matches": "(?i)^aya"}]))
+        self.assertFalse(import_hf.passes(row, [{"field": "source", "notMatches": "Turkish$"}]))
+        self.assertFalse(import_hf.passes(row, [{"field": "prompt", "notContains": "<extra_id_1>"}]))
+        self.assertTrue(import_hf.passes(row, [{"field": "prompt", "contains": "Hi"}]))
+        self.assertTrue(import_hf.passes(row, [{"field": "answer_1", "equalsField": "answer_2"}]), "compared after trimming")
+        self.assertFalse(import_hf.passes(row, [{"field": "answer_1", "equalsField": "answer_3"}]))
+        self.assertFalse(import_hf.passes(row, [{"field": "missing", "equalsField": "answer_2"}]))
+
+    def test_template_converter(self):
+        source = {"id": "hf-sql", "license": "MIT", "family": ["code-solve"], "hf": {
+            "converter": "template", "idField": "id",
+            "templates": {
+                "EN": {"user": "Schema:\n{db.schema}\n\nQuestion: {question}", "assistant": "```sql\n{query}\n```"},
+                "TR": {"user": "Şema:\n{db.schema}\n\nSoru: {question}", "assistant": "```sql\n{query}\n```", "system": "Kısa yanıt ver."},
+            },
+            "templateShares": {"EN": 1, "TR": 1},
+        }}
+        spec = import_hf.spec_of(source)
+        langs = set()
+        for index in range(40):
+            row = {"id": f"r{index}", "db": {"schema": "CREATE TABLE t(a INT);"}, "question": "How many rows?", "query": "SELECT COUNT(*) FROM t;"}
+            item, reason = import_hf.convert_row(source, row, spec)
+            self.assertIsNone(reason)
+            self.assertEqual(item, import_hf.convert_row(source, row, spec)[0], "the same row always gets the same language")
+            langs.add(item["lang"])
+            self.assertTrue(item["messages"][-1]["content"].startswith("```sql"))
+            if item["lang"] == "TR":
+                self.assertEqual(item["messages"][0], {"role": "system", "content": "Kısa yanıt ver."})
+        self.assertEqual(langs, {"EN", "TR"})
+        self.assertEqual(import_hf.convert_row(source, {"id": "x", "db": {"schema": "s"}, "question": "", "query": "q"}, spec), (None, "shape"))
+        self.assertEqual(import_hf.render("Choices: {choices.text}", {"choices": {"text": ["water", "salt"]}}), "Choices: water, salt")
+
+    def test_verified_generation_keeps_the_shortest_checked_answer(self):
+        source = {"id": "hf-math", "license": "Apache-2.0", "family": ["math-reasoning"], "hf": {"converter": "verified-generation", "fields": {"user": "problem", "generations": "generations", "checks": ["math_ok", "complete"], "id": "uuid"}}}
+        spec = import_hf.spec_of(source)
+        row = {"uuid": "u1", "problem": "1+1?", "generations": ["<think>long long</think>\n2", "<think>x</think>\n3", "<think>ok</think>\n2"], "math_ok": [True, False, True], "complete": [True, True, True]}
+        item, reason = import_hf.convert_row(source, row, spec)
+        self.assertIsNone(reason)
+        self.assertEqual(item["messages"][-1]["content"], "<think>ok</think>\n2")
+        self.assertEqual(item["verified"], "upstream-ci")
+        self.assertEqual(item["id"], "hf-math:u1")
+        self.assertEqual(import_hf.convert_row(source, {**row, "math_ok": [False, False, False]}, spec), (None, "unverified"))
+        self.assertEqual(import_hf.convert_row(source, {**row, "complete": [True]}, spec)[0]["messages"][-1]["content"], "<think>long long</think>\n2", "a missing check fails that answer")
+
+    def test_cvss_rows_become_severity_questions(self):
+        source = {"id": "hf-cvss", "license": "CC-BY-4.0", "family": ["security"]}
+        description = "A SQL injection in the login form of Example CMS 1.2 lets remote attackers read the user table."
+        cases = [({"cvss_v3_1": 9.8}, ("Critical", "Kritik")), ({"cvss_v3_1": None, "cvss_v3_0": 7.5}, ("High", "Yüksek")), ({"cvss_v4_0": 5.3}, ("Medium", "Orta")), ({"cvss_v3_1": 3.1}, ("Low", "Düşük"))]
+        for scores, names in cases:
+            item, reason = import_hf.convert_cvss(source, {"id": "CVE-1", "description": description, **scores}, {})
+            self.assertIsNone(reason)
+            self.assertIn(names[0] if item["lang"] == "EN" else names[1], item["messages"][-1]["content"])
+            self.assertEqual((item["family"], item["verified"]), ("security", "knowledge"))
+        self.assertEqual(import_hf.convert_cvss(source, {"id": "CVE-2", "description": description, "cvss_v3_1": None}, {})[1], "no_score")
+        self.assertEqual(import_hf.convert_cvss(source, {"id": "CVE-3", "description": "short", "cvss_v3_1": 5.0}, {})[1], "shape")
+        langs = {import_hf.convert_cvss(source, {"id": f"CVE-{index}", "description": description, "cvss_v3_1": 5.0}, {})[0]["lang"] for index in range(30)}
+        self.assertEqual(langs, {"EN", "TR"})
+
+    def test_helpsteer3_preferences_keep_an_agreeing_reason(self):
+        source = {"id": "hf-hs3", "license": "CC-BY-4.0", "family": ["judge"]}
+        row = {
+            "context": [{"role": "user", "content": "Fix the bug."}],
+            "response1": "Here is the full fixed code.", "response2": "Change one line.",
+            "overall_preference": -2,
+            "individual_preference": [{"score": 1, "reasoning": "@Response 2 is shorter."}, {"score": -2, "reasoning": "@Response 1 is better because it is complete."}],
+        }
+        item, reason = import_hf.convert_helpsteer3(source, row, {})
+        self.assertIsNone(reason)
+        answer = item["messages"][-1]["content"]
+        self.assertTrue(answer.startswith("**Verdict:** Response 1 is better than Response 2."))
+        self.assertIn("Response 1 is better because it is complete.", answer)
+        self.assertNotIn("@Response", answer)
+        self.assertIn("### Response 2\nChange one line.", item["messages"][0]["content"])
+        self.assertEqual((item["family"], item["verified"], item["lang"]), ("judge", "human", "EN"))
+        disagreeing = {**row, "individual_preference": [{"score": 2, "reasoning": "Shorter."}]}
+        self.assertEqual(import_hf.convert_helpsteer3(source, disagreeing, {})[1], "no_reason")
+        self.assertEqual(import_hf.convert_helpsteer3(source, {**row, "overall_preference": 7}, {})[1], "shape")
+
+    def test_row_options(self):
+        source = {"id": "hf-bash", "license": "MIT", "family": ["code-solve"], "hf": {"converter": "messages", "dropSystem": True, "wrapAnswer": "```bash\n{answer}\n```", "minUserChars": 10}}
+        spec = import_hf.spec_of(source)
+        row = {"messages": [{"role": "system", "content": "You are a Bash expert."}, {"role": "user", "content": "Show the last 20 lines of error.log."}, {"role": "assistant", "content": "tail -n 20 error.log"}]}
+        item, reason = import_hf.convert_row(source, row, spec)
+        self.assertIsNone(reason)
+        self.assertEqual([message["role"] for message in item["messages"]], ["user", "assistant"])
+        self.assertEqual(item["messages"][-1]["content"], "```bash\ntail -n 20 error.log\n```")
+        short = {"messages": [{"role": "user", "content": "-"}, {"role": "assistant", "content": "ls"}]}
+        self.assertEqual(import_hf.convert_row(source, short, spec), (None, "short_prompt"))
+        blank_system = import_hf.normalize_messages([{"role": "system", "content": " "}, {"role": "user", "content": "Hi"}, {"role": "assistant", "content": "Hello"}])
+        self.assertEqual([message["role"] for message in blank_system], ["user", "assistant"])
+
+    def test_looping_generations_are_dropped(self):
+        self.assertTrue(import_hf.repetitive("Also müssen wir " + "ZUWEILS " * 40))
+        self.assertTrue(import_hf.repetitive("Let me think. " * 400), "a long loop compresses like one")
+        self.assertFalse(import_hf.repetitive("x = [0, 0, 0, 0] " * 10 + "The values 1, 2, 3 repeat."))
+        schema = "\n".join(f"CREATE TABLE t{index} (id INTEGER PRIMARY KEY, name VARCHAR(255) NOT NULL, price DECIMAL(10,2));" for index in range(80))
+        self.assertFalse(import_hf.repetitive(schema), "repeated schema lines aren't a loop")
+        source = {"id": "hf-loop", "license": "MIT", "family": ["chat"], "hf": {"converter": "messages"}}
+        row = {"messages": [{"role": "user", "content": "Finden Sie f."}, {"role": "assistant", "content": "<think>" + "ZUWEILS " * 50 + "</think> f(n) = n"}]}
+        self.assertEqual(import_hf.convert_row(source, row, import_hf.spec_of(source)), (None, "repetitive"))
+
+    def test_repeats_are_found_by_field_or_prompt(self):
+        item = {"messages": [{"role": "user", "content": " Solve x+1=2 "}, {"role": "assistant", "content": "x=1"}]}
+        self.assertIsNone(import_hf.unique_key({}, item, {}))
+        self.assertEqual(import_hf.unique_key({}, item, {"uniqueBy": "$prompt"}), import_hf.unique_key({}, {"messages": [{"role": "user", "content": "Solve x+1=2"}]}, {"uniqueBy": "$prompt"}))
+        self.assertEqual(import_hf.unique_key({"group": "g1"}, item, {"uniqueBy": "group"}), import_hf.digest("g1"))
+        self.assertIsNone(import_hf.unique_key({}, item, {"uniqueBy": "group"}))
+
+    def test_import_reads_configs_in_turn_without_repeats(self):
+        rows = {
+            "a": [{"group": f"g{index // 2}", "question": f"Question {index} about A?", "answer": f"Answer {index}"} for index in range(40)],
+            "b": [{"group": f"h{index}", "question": f"Question {index} about B?", "answer": f"Answer {index}"} for index in range(40)],
+        }
+        calls = []
+
+        class Stream(list):
+            def shuffle(self, seed=None, buffer_size=None):
+                return self
+
+        def load_dataset(repo, config=None, split=None, streaming=False, **options):
+            calls.append((repo, config, split, options.get("data_files")))
+            return Stream(rows.get(config, rows["a"]))
+
+        class HfApi:
+            def __init__(self, token=None):
+                pass
+
+            def dataset_info(self, repo):
+                raise RuntimeError("offline")
+
+        fake = {"datasets": types.SimpleNamespace(load_dataset=load_dataset), "huggingface_hub": types.SimpleNamespace(HfApi=HfApi)}
+        source = {"id": "hf-two", "repo": "x/two", "license": "MIT", "family": ["chat"], "cap": 10, "hf": {"converter": "fields", "fields": {"user": "question", "assistant": "answer"}, "configs": ["a", "b"], "uniqueBy": "group"}}
+        with tempfile.TemporaryDirectory() as folder, mock.patch.dict(sys.modules, fake):
+            stats = import_hf.import_source(source, folder)
+            with open(os.path.join(folder, "hf-two.jsonl"), encoding="utf-8") as handle:
+                lines = [json.loads(line) for line in handle]
+            self.assertEqual(stats["kept"], 10)
+            self.assertEqual(sum("about A" in line["messages"][0]["content"] for line in lines), 5, "each config gets its share")
+            self.assertEqual(stats["skipped"].get("repeat"), 4, "one sample per group")
+            self.assertIsNone(stats["revision"])
+            self.assertEqual([call[1] for call in calls], ["a", "b"])
+            # Files read directly (no loading script).
+            calls.clear()
+            direct = {**source, "id": "hf-files", "hf": {**source["hf"], "configs": None, "format": "json", "dataFiles": ["data/train.jsonl"], "revision": "abc"}}
+            import_hf.import_source(direct, folder)
+            self.assertEqual(calls[0][0], "json")
+            self.assertEqual(calls[0][3], {"train": ["hf://datasets/x/two@abc/data/train.jsonl"]})
+
     def test_source_selection_respects_status(self):
         registry = {"sources": [
             {"id": "a", "kind": "hf", "status": "allowed"},
             {"id": "b", "kind": "hf", "status": "review"},
             {"id": "c", "kind": "hf", "status": "excluded"},
             {"id": "d", "kind": "github", "status": "allowed"},
+            {"id": "e", "kind": "hf", "status": "review", "cap": 0},
         ]}
         self.assertEqual([s["id"] for s in import_hf.selected_sources(registry)], ["a"])
         self.assertEqual([s["id"] for s in import_hf.selected_sources(registry, include_review=True)], ["a", "b"])

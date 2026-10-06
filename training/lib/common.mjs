@@ -13,7 +13,8 @@
 // "doctest", "upstream-ci", "knowledge" or "none").
 import { createHash } from "node:crypto";
 
-export const LANGS = ["TR", "EN"];
+/** Turkish and English first; German, Azerbaijani and Russian since set v3. */
+export const LANGS = ["TR", "EN", "DE", "AZ", "RU"];
 export const FAMILIES = [
     "site",
     "agent",
@@ -24,6 +25,11 @@ export const FAMILIES = [
     "chat",
     "chat-reasoning",
     "instruction",
+    // Set v3: school and general subjects, defensive security, judging answers.
+    "science",
+    "knowledge",
+    "security",
+    "judge",
 ];
 export const VERIFIED = ["executed", "doctest", "upstream-ci", "knowledge", "human", "none"];
 const ROLES = new Set(["system", "user", "assistant", "tool"]);
@@ -47,27 +53,50 @@ export function unitHash(text) {
 
 export const sha256 = (text) => createHash("sha256").update(text).digest("hex");
 
-const TR_CHARS = /[çğışöüÇĞİŞÖÜ]/g;
-const TR_WORDS = /(?:^|[\s"'(])(?:ve|bir|bu|şu|ne|nasıl|neden|nedir|için|ile|ama|çok|daha|gibi|olan|olarak|sonra|kadar|değil|mı|mi|mu|mü|var|yok|bana|beni|benim|sen|sana|biz|onun|şey|lütfen|misin|musun|yap|yaz|göster)(?=[\s.,!?:;)"']|$)/gi;
-const EN_WORDS = /(?:^|[\s"'(])(?:the|and|of|to|is|are|was|were|be|this|that|with|for|you|your|how|what|why|which|can|could|would|should|please|write|it|in|on|an|a|i|my|me|do|does)(?=[\s.,!?:;)"']|$)/gi;
+/** Letters Turkish (and Azerbaijani) use but German and English don't; ö and ü are shared with German. */
+const TR_CHARS = /[çğışÇĞİŞ]/g;
+/** The schwa: everywhere in Azerbaijani, never in Turkish. */
+const AZ_CHARS = /[əƏ]/g;
+/** Letters German uses but Turkish and Azerbaijani don't. */
+const DE_CHARS = /[äÄß]/g;
+const words = (list) => new RegExp(`(?:^|[\\s"'(„“«])(?:${list.join("|")})(?=[\\s.,!?:;)"'“”»]|$)`, "gi");
+const TR_WORDS = words(["ve", "bir", "bu", "şu", "ne", "nasıl", "neden", "nedir", "için", "ile", "ama", "çok", "daha", "gibi", "olan", "olarak", "sonra", "kadar", "değil", "mı", "mi", "mu", "mü", "var", "yok", "bana", "beni", "benim", "sen", "sana", "biz", "onun", "şey", "lütfen", "misin", "musun", "yap", "yaz", "göster"]);
+const AZ_WORDS = words(["və", "üçün", "ilə", "necə", "niyə", "nədir", "deyil", "mən", "mənim", "sən", "sənin", "biz", "kimi", "olan", "olaraq", "sonra", "çox", "daha", "edir", "edən", "olur", "lazımdır", "zəhmət", "xahiş", "yazın", "göstər", "bəli", "xeyr"]);
+const DE_WORDS = words(["der", "die", "das", "und", "ist", "nicht", "ein", "eine", "einen", "ich", "du", "sie", "wir", "mit", "auf", "für", "von", "zu", "den", "dem", "sich", "auch", "wie", "was", "warum", "bitte", "kann", "können", "werden", "wird", "sind", "haben", "hat", "oder", "aber", "wenn", "dass", "diese", "dieser", "noch", "nur", "schreibe", "erkläre"]);
+const EN_WORDS = words(["the", "and", "of", "to", "is", "are", "was", "were", "be", "this", "that", "with", "for", "you", "your", "how", "what", "why", "which", "can", "could", "would", "should", "please", "write", "it", "in", "on", "an", "a", "i", "my", "me", "do", "does"]);
+
+/** Letters Ukrainian uses and Russian doesn't. */
+const UK_CHARS = /[іїєґІЇЄҐ]/g;
 
 /**
- * "TR", "EN" or null for natural-language text. Code and markdown fences are
- * ignored; a text with Turkish letters or mostly Turkish function words is
- * Turkish, a mostly-ASCII text with English function words is English.
+ * "TR", "EN", "DE", "AZ", "RU" or null for natural-language text. Code and
+ * markdown fences are ignored. Mostly Cyrillic text is Russian (unless it has
+ * Ukrainian letters); the schwa (ə) marks Azerbaijani; ğ, ı, ş, ç and İ (or
+ * mostly Turkish function words) mark Turkish; ä and ß (or mostly German
+ * function words) mark German; a mostly-ASCII text with English function
+ * words is English.
  */
 export function detectLanguage(text) {
     const prose = String(text ?? "")
         .replace(/```[\s\S]*?(```|$)/g, " ")
         .replace(/`[^`\n]*`/g, " ")
         .replace(/https?:\/\/\S+/g, " ");
-    const trChars = (prose.match(TR_CHARS) ?? []).length;
-    const trWords = (prose.match(TR_WORDS) ?? []).length;
-    const enWords = (prose.match(EN_WORDS) ?? []).length;
     const letters = (prose.match(/\p{L}/gu) ?? []).length;
     if (!letters) return null;
-    const ascii = (prose.match(/[A-Za-z]/g) ?? []).length / letters;
-    if (trChars >= 2 || trWords > enWords) return trWords + trChars > 0 ? "TR" : null;
+    const count = (pattern) => (prose.match(pattern) ?? []).length;
+    const azChars = count(AZ_CHARS);
+    const trChars = count(TR_CHARS);
+    const deChars = count(DE_CHARS);
+    const azWords = count(AZ_WORDS);
+    const trWords = count(TR_WORDS);
+    const deWords = count(DE_WORDS);
+    const enWords = count(EN_WORDS);
+    const ascii = count(/[A-Za-z]/g) / letters;
+    const cyrillic = count(/\p{Script=Cyrillic}/gu) / letters;
+    if (cyrillic > 0.5) return count(UK_CHARS) >= 2 ? null : "RU";
+    if (azChars >= 2 || (azChars >= 1 && azWords >= trWords)) return "AZ";
+    if (trChars >= 2 || (trWords > enWords && trWords >= deWords)) return trWords + trChars > 0 ? "TR" : null;
+    if ((deChars >= 1 && deWords >= 1) || (deWords >= 2 && deWords > enWords)) return "DE";
     if (enWords >= 1 && ascii > 0.9) return "EN";
     return null;
 }

@@ -29,12 +29,21 @@ const chat = (id, user, answer, extra = {}) => ({
 });
 const NO_FINGERPRINTS = { site: () => false, imported: () => false };
 
-test("language detection: Turkish, English, neither; code is ignored", () => {
+test("language detection: Turkish, English, German, Azerbaijani, Russian, neither; code is ignored", () => {
     assert.equal(common.detectLanguage("Bu fonksiyon neden hata veriyor, nasıl düzeltirim?"), "TR");
     assert.equal(common.detectLanguage("Why does this function throw, and how do I fix it?"), "EN");
     assert.equal(common.detectLanguage("Pourquoi cette fonction échoue-t-elle ?"), null);
     assert.equal(common.detectLanguage("```python\nprint('the and of to is')\n```"), null, "only code");
     assert.equal(common.detectLanguage("Şunu açıkla:\n```js\nconst the = 1;\n```"), "TR");
+    assert.equal(common.detectLanguage("Warum gibt diese Funktion einen Fehler aus, und wie behebe ich ihn?"), "DE");
+    assert.equal(common.detectLanguage("Über die Brücke gehen wir mit dem Hund."), "DE", "ü alone doesn't make it Turkish");
+    assert.equal(common.detectLanguage("Bu funksiya niyə xəta verir və necə düzəldim?"), "AZ");
+    assert.equal(common.detectLanguage("Azərbaycanın paytaxtı Bakıdır."), "AZ");
+    assert.equal(common.detectLanguage("Bakü, Azərbaycan’ın başkentidir ve çok güzel bir şehirdir."), "TR", "a Turkish text naming Azerbaijan");
+    assert.equal(common.detectLanguage("Почему эта функция выдаёт ошибку и как её исправить?"), "RU");
+    assert.equal(common.detectLanguage("Чому ця функція видає помилку і як її виправити? Це її"), null, "Ukrainian isn't Russian");
+    assert.equal(common.detectLanguage("The plants die in winter and the dog was happy."), "EN");
+    for (const lang of ["TR", "EN", "DE", "AZ", "RU"]) assert.ok(mix.IDENTITY_PROMPT[lang], `identity prompt ${lang}`);
 });
 
 test("personal data: e-mails, Turkish phones, IBANs, valid national ids and card numbers", () => {
@@ -197,4 +206,25 @@ test("the source registry allows only permissive licenses and attributes what it
         assert.equal(registry.sources.find((source) => source.repo === repo)?.status, "excluded", repo);
     }
     assert.ok(registry.sources.filter((source) => source.kind === "github" && source.status === "allowed").length >= 60);
+});
+
+test("every Hugging Face source says how it is read, in the languages and families the mix knows", () => {
+    const legacy = new Set(["hf-aya-dataset", "hf-oasst2", "hf-self-oss-instruct", "hf-opencodeinstruct", "hf-openthoughts-114k"]);
+    const converters = new Set(["messages", "fields", "template", "verified-generation", "cvss", "aya", "oasst", "self-oss", "opencodeinstruct", "openthoughts", "helpsteer", "helpsteer3", "generic"]);
+    for (const source of registry.sources) {
+        // Sources still in review are read only once their card is checked; they get their "hf" block then.
+        if (source.kind !== "hf" || source.status !== "allowed") continue;
+        assert.ok(source.repo && /^[\w.-]+\/[\w.-]+$/.test(source.repo), `${source.id}: repo`);
+        assert.ok(source.provenance, `${source.id}: provenance`);
+        const spec = source.hf ?? {};
+        assert.ok(legacy.has(source.id) || source.hf, `${source.id}: an "hf" block says how to read it`);
+        if (spec.converter) assert.ok(converters.has(spec.converter), `${source.id}: converter ${spec.converter}`);
+        if (spec.converter === "fields") assert.ok(spec.fields?.user && spec.fields?.assistant, `${source.id}: fields`);
+        if (spec.converter === "template") assert.ok(Object.values(spec.templates ?? {}).every((template) => template.user && template.assistant) && Object.keys(spec.templates ?? {}).length > 0, `${source.id}: templates`);
+        for (const lang of Object.keys(spec.templates ?? {})) assert.ok(common.LANGS.includes(lang), `${source.id}: template language ${lang}`);
+        for (const condition of spec.where ?? []) assert.ok(condition.field, `${source.id}: every row filter names a field`);
+        for (const lang of [spec.lang, ...Object.values(spec.langMap ?? {}), ...(source.languages ?? [])].filter(Boolean)) assert.ok(common.LANGS.includes(lang), `${source.id}: language ${lang}`);
+        for (const family of [spec.family, ...(source.family ?? [])].filter(Boolean)) assert.ok(common.FAMILIES.includes(family), `${source.id}: family ${family}`);
+        assert.ok(Number.isInteger(source.cap) && source.cap > 0, `${source.id}: cap`);
+    }
 });

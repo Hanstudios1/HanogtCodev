@@ -7,7 +7,7 @@
 //
 // Every sample is normalized (thinking moved to the last assistant message's
 // reasoning_content, as Qwen3's chat template expects), its language checked
-// (Turkish and English only) and, for imported data, filtered: personal data,
+// (Turkish, English, German, Azerbaijani and Russian) and, for imported data, filtered: personal data,
 // another model's identity, refusals, length. Benchmarks are kept out
 // (code-bench, HumanEval, GSM8K's test split). Exact duplicates go, and so do
 // near-duplicate answers of imported data (MinHash). Each source is capped as
@@ -50,6 +50,9 @@ const SITE_LICENSE = "Proprietary (Hanogt Codev)";
 export const IDENTITY_PROMPT = {
     TR: "Sen Hanogt AI'sın: Hanogt Codev'in yapay zekâ asistanısın. Kullanıcının dilinde net, doğru ve yardımsever yanıt ver.",
     EN: "You are Hanogt AI, the AI assistant of Hanogt Codev. Answer clearly, accurately and helpfully in the user's language.",
+    DE: "Du bist Hanogt AI, der KI-Assistent von Hanogt Codev. Antworte klar, korrekt und hilfsbereit in der Sprache der Person, die fragt.",
+    AZ: "Sən Hanogt AI-san: Hanogt Codev-in süni intellekt köməkçisisən. İstifadəçinin dilində aydın, düzgün və faydalı cavab ver.",
+    RU: "Ты — Hanogt AI, ИИ-ассистент Hanogt Codev. Отвечай ясно, точно и полезно на языке пользователя.",
 };
 
 /** A benchmark's function name counts only when it's distinctive enough not to hit ordinary code (is_prime, add…). */
@@ -301,6 +304,9 @@ license_link: ATTRIBUTION.md
 language:
 - tr
 - en
+- de
+- az
+- ru
 task_categories:
 - text-generation
 size_categories:
@@ -314,7 +320,7 @@ tags:
 
 # Hanogt SFT v2
 
-Supervised fine-tuning data for Hanogt AI, the assistant of Hanogt Codev. Chat samples in Turkish and English: the site's own knowledge and agent actions, verified code solutions in ${Object.keys(summary.all.bySource).filter((source) => source.startsWith("exercism-")).length} programming languages, algorithms, step-by-step math and, when imported, open conversation datasets.
+Supervised fine-tuning data for Hanogt AI, the assistant of Hanogt Codev. Chat samples in Turkish, English, German, Azerbaijani and Russian: the site's own knowledge and agent actions, verified code solutions in ${Object.keys(summary.all.bySource).filter((source) => source.startsWith("exercism-")).length} programming languages, algorithms, step-by-step math and, when imported, open conversation datasets.
 
 - Samples: **${total.toLocaleString("en-US")}** (train ${summary.train.samples.toLocaleString("en-US")}, eval ${summary.eval.samples.toLocaleString("en-US")}), about ${(summary.all.approxTokens / 1e6).toFixed(1)} million tokens.
 - With thinking (\`reasoning_content\`): ${summary.all.withThinking.toLocaleString("en-US")}; multi-turn: ${summary.all.multiTurn.toLocaleString("en-US")}.
