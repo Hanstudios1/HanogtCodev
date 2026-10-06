@@ -155,7 +155,7 @@ function DocsTR() {
 
                             <Section id="baslarken" title="Başlarken">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
+                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: yeni Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++); V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu; ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
                                     <li>Giriş yaptıysanız proje hesabınıza (bulut) kaydedilir; misafir olarak oluşturulan projeler bu tarayıcıda (IndexedDB) saklanır.</li>
                                     <li>Üstteki <b>▶ Oynat</b> düğmesi (Ctrl+P) oyunu editörün içinde çalıştırır. Durdurduğunuzda sahne oynatmadan önceki haline döner.</li>
                                     <li>Scriptlere çift tıklayarak kod editörünü açın; değişiklikler otomatik derlenir, hatalar satır satır gösterilir.</li>
@@ -387,6 +387,7 @@ enemy.GetComponent<Enemy>().speed = 4f;
 Destroy(enemy, 3f);                  // 3 saniye sonra yok et
 Destroy(gameObject);                 // bu nesneyi yok et
 GameObject p = Resources.Load<GameObject>("Bullet"); // prefab'ı adıyla yükle`}</Code>
+                                <p>Unity&apos;deki gibi, yok edilen bir nesne ya da betik <K>null</K> ile karşılaştırıldığında eşit sayılır: <K>if (hedef != null)</K> kontrolü, hedef <K>Destroy</K> ile silindiyse <K>false</K> döner. Başka bir betikten çağırdığınız metodun içinde başlattığınız <K>Timer</K> ve <K>Tween</K>&apos;ler o metodun betiğine aittir; çağıran nesne yok olsa da çalışmaya devam ederler.</p>
                             </Section>
 
                             <Section id="coroutine" title="Coroutine ve Invoke">
@@ -568,7 +569,7 @@ function DocsEN() {
 
                             <Section id="baslarken" title="Getting started">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: the new V3 Tilemap Adventure, Clicker Factory and Foggy Runner, or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
+                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: the new Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++); Tilemap Adventure, Clicker Factory and Foggy Runner from V3; or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
                                     <li>When you are signed in, the project is saved to your account (cloud); projects created as a guest are stored in this browser (IndexedDB).</li>
                                     <li>The <b>▶ Play</b> button at the top (Ctrl+P) runs the game inside the editor. When you stop, the scene returns to how it was before you pressed Play.</li>
                                     <li>Double-click a script to open the code editor; changes are compiled automatically and errors are shown line by line.</li>
@@ -800,6 +801,7 @@ enemy.GetComponent<Enemy>().speed = 4f;
 Destroy(enemy, 3f);                  // destroy after 3 seconds
 Destroy(gameObject);                 // destroy this object
 GameObject p = Resources.Load<GameObject>("Bullet"); // load a prefab by name`}</Code>
+                                <p>As in Unity, a destroyed object or script compares equal to <K>null</K>: <K>if (target != null)</K> is <K>false</K> once the target was removed with <K>Destroy</K>. A <K>Timer</K> or <K>Tween</K> started inside a method that another script calls belongs to that method&apos;s script, so it keeps running even if the caller is destroyed.</p>
                             </Section>
 
                             <Section id="coroutine" title="Coroutines and Invoke">

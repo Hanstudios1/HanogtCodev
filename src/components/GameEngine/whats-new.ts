@@ -1,12 +1,14 @@
-/** Hanogt Engine V3 feature list shown in the hub and in the docs. */
+/** Hanogt Engine V3 feature list and the later template update, shown in the hub and in the docs. */
 import {
     Activity,
     ArrowRightLeft,
     Clapperboard,
     CloudFog,
+    Gamepad2,
     Grid3x3,
     LayoutTemplate,
     MousePointerClick,
+    ScrollText,
     Timer,
     Waypoints,
     type LucideIcon,
@@ -102,5 +104,27 @@ export const V3_FEATURES: WhatsNewItem[] = [
             EN: "Tilemap Adventure, Clicker Factory and Foggy Runner: ready-to-play projects built with the V3 features.",
         },
         section: "baslarken",
+    },
+];
+
+/** The October 2026 template update on top of V3: eight new games and the script fixes they brought. */
+export const TEMPLATE_UPDATE: WhatsNewItem[] = [
+    {
+        icon: Gamepad2,
+        title: { TR: "Sekiz yeni oyun şablonu", EN: "Eight new game templates" },
+        text: {
+            TR: "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++). Hepsi baştan sona oynanabilir ve yorumlu kodla gelir.",
+            EN: "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++). Each is playable end to end and comes with commented code.",
+        },
+        section: "baslarken",
+    },
+    {
+        icon: ScrollText,
+        title: { TR: "Unity'ye daha yakın betikler", EN: "Scripts closer to Unity" },
+        text: {
+            TR: "Yok edilen bir betik artık null ile eşit sayılır; başka bir betikten çağrılan metodun başlattığı Timer ve Tween o metodun betiğine ait olur; C++'ta std::vector<GameObject*> alanları boş başlar.",
+            EN: "A destroyed script now compares equal to null; Timers and Tweens started by a method another script calls belong to that method's script; std::vector<GameObject*> fields start empty in C++.",
+        },
+        section: "prefab",
     },
 ];

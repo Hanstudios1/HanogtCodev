@@ -379,6 +379,8 @@ export class Interpreter {
             returnValue: undefined,
             line: method.line,
         };
+        const binding = self?.behaviour ?? null;
+        const previousOwner = binding?.enter ? binding.enter() : undefined;
         try {
             method.params.forEach((param, index) => {
                 if (param.modifier === "params") {
@@ -433,6 +435,7 @@ export class Interpreter {
             return this.wrapError(error, null, frame);
         } finally {
             this.depth -= 1;
+            if (binding?.exit) binding.exit(previousOwner);
         }
     }
 

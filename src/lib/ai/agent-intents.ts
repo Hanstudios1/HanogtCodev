@@ -138,13 +138,23 @@ export function extractGroupName(text: string): string {
 // ------------------------------------------------------------------ games
 const GAME_WORDS: Array<[RegExp, string]> = [
     [/\b(?:tilemap|tile|karo\w*|bolum editor\w*|level editor)\b/, "tilemap-platformer-2d"],
+    [/\b(?:flappy|kanat\w*|kus oyun\w*|bird)\b/, "flappy-2d"],
+    [/\b(?:rpg|macera\w*|adventure|zindan\w*|dungeon|zelda|kilic\w*|sword)\b/, "rpg-topdown-2d"],
+    [/\b(?:parkur\w*|obby|obstacle course|engel parkur\w*|fall guys)\b/, "obstacle-course-3d"],
+    [/\b(?:tower defen[cs]e|kule savunma\w*|kale savunma\w*)\b/, "tower-defense-2d"],
+    [/\b(?:arena\w*|twin ?stick|ikiz cubuk\w*|survivor\w*)\b/, "arena-2d"],
+    [/\b(?:yilan\w*|snake)\b/, "snake-2d"],
+    [/\b(?:pong|ping ?pong)\b/, "pong-2d"],
     [/\b(?:platform\w*|zipla\w*|mario|jump\w*)\b/, "platformer-2d"],
     [/\b(?:clicker|tiklama\w*|idle|cookie)\b/, "clicker-ui-2d"],
+    [/\b(?:2d (?:runner|kosu\w*)|neon (?:kosu\w*|run\w*)|dino\w*)\b/, "runner-2d"],
     [/\b(?:runner|kosu\w*|endless|sonsuz|subway|yaris\w*|racing|race)\b/, "runner-3d"],
     [/\b(?:roll ?a ?ball|rollaball|top|topu|toplu|ball|yuvarla\w*|bilye\w*)\b/, "rollaball-3d"],
     [/\b(?:uzay\w*|space|shooter|nisanci\w*|ates etme\w*|gemi\w*|spaceship|asteroid\w*|shmup)\b/, "space-shooter-2d"],
     [/\b(?:breakout|tugla\w*|brick\w*|arkanoid)\b/, "breakout-2d"],
 ];
+/** Asking for the engine (or C++/C#) picks the engine template even when a browser program exists. */
+const ENGINE_WORDS = /\b(?:oyun motor\w*|motor\w*|engine|unity|sablon\w*|template\w*|c\+\+|c#|csharp|cpp)(?=\s|$|[.,!?])/;
 /** Games that exist as browser programs instead of engine templates. */
 const HTML_GAME_WORDS: Array<[RegExp, string]> = [
     [/\b(?:yilan\w*|snake)\b/, "snake"],
@@ -176,6 +186,7 @@ export function matchGameTemplate(text: string, templates: readonly AgentGameTem
 
 function htmlGameFor(text: string): string | null {
     const value = normalize(text);
+    if (ENGINE_WORDS.test(value)) return null;
     for (const [pattern, id] of HTML_GAME_WORDS) if (pattern.test(value)) return id;
     return null;
 }

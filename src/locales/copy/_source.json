@@ -317,6 +317,8 @@
       "src/app/media/page.tsx",
       "src/components/Admin/TicketsSection.tsx",
       "src/components/Arcade/ArcadeGallery.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
+      "src/components/GameEngine/hub/TemplateBadges.tsx",
       "src/components/News/NewsPage.tsx"
     ]
   },
@@ -880,6 +882,7 @@
       "src/app/editor/page.tsx",
       "src/components/Admin/AnnouncementsSection.tsx",
       "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/HanogtAI/ArtifactPanel.tsx",
       "src/components/Social/SocialSettings.tsx",
@@ -1113,6 +1116,7 @@
     "tr": "Dil",
     "files": [
       "src/app/account-settings/page.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
       "src/components/Security/CodeAdvisor.tsx"
     ]
   },
@@ -1892,7 +1896,8 @@
     "en": "Recently edited",
     "tr": "Son düzenlenen",
     "files": [
-      "src/app/dashboard/page.tsx"
+      "src/app/dashboard/page.tsx",
+      "src/components/GameEngine/EngineHub.tsx"
     ]
   },
   "1a4px1uj0b3": {
@@ -1914,14 +1919,16 @@
     "tr": "nesne",
     "files": [
       "src/app/dashboard/page.tsx",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
     ]
   },
   "10hkhibogon": {
     "en": "scripts",
     "tr": "script",
     "files": [
-      "src/app/dashboard/page.tsx"
+      "src/app/dashboard/page.tsx",
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
     ]
   },
   "3lnbttk8wj": {
@@ -1959,7 +1966,9 @@
       "src/components/Editor/EditorTabs.tsx",
       "src/components/Editor/Modal.tsx",
       "src/components/Editor/PublishDialog.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/hub/TemplateDrawer.tsx",
       "src/components/Groups/ui.tsx",
       "src/components/HanogtAI/ChatSidebar.tsx",
       "src/components/HanogtAI/ConnectionsDialog.tsx",
@@ -2156,7 +2165,8 @@
     "tr": "Sıralama",
     "files": [
       "src/app/dashboard/page.tsx",
-      "src/app/feedback/page.tsx"
+      "src/app/feedback/page.tsx",
+      "src/components/GameEngine/EngineHub.tsx"
     ]
   },
   "45uiucoqjh": {
@@ -4324,6 +4334,7 @@
       "src/components/Admin/copy.ts",
       "src/components/Editor/Console.tsx",
       "src/components/Editor/NewFileDialog.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
       "src/components/News/NewsPage.tsx",
       "src/components/Social/FriendsView.tsx"
     ]
@@ -10526,6 +10537,7 @@
       "src/app/settings/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Editor/PublishDialog.tsx",
+      "src/components/GameEngine/hub/TemplateBadges.tsx",
       "src/components/Security/CodeAdvisor.tsx",
       "src/components/Social/SocialSettings.tsx",
       "src/lib/support.ts"
@@ -16614,7 +16626,8 @@
     "en": "Clear filters",
     "tr": "Filtreleri temizle",
     "files": [
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/EngineHub.tsx"
     ]
   },
   "1phm8lkb2qs": {
@@ -16806,7 +16819,8 @@
     "en": "Paused",
     "tr": "Duraklatıldı",
     "files": [
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/hub/LivePreview.tsx"
     ]
   },
   "23bik9ranic": {
@@ -18376,6 +18390,7 @@
       "src/components/Admin/PaddleCard.tsx",
       "src/components/Admin/ReportsPanel.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/GameEngine/EngineHub.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/lib/support.ts"
     ]
@@ -22417,6 +22432,7 @@
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/hub/LivePreview.tsx",
       "src/components/Landing/LandingPage.tsx",
       "src/components/Landing/ProductPreviews.tsx"
     ]
@@ -22433,7 +22449,8 @@
     "tr": "Yeniden başlat",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/hub/LivePreview.tsx"
     ]
   },
   "24ept28r5ec": {
@@ -22452,6 +22469,7 @@
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
       "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/hub/LivePreview.tsx",
       "src/components/VoiceCallProvider.tsx"
     ]
   },
@@ -25962,6 +25980,7 @@
     "tr": "Şablon",
     "files": [
       "src/components/Editor/NewFileDialog.tsx",
+      "src/components/GameEngine/EngineHub.tsx",
       "src/components/Groups/CreateGroupWizard.tsx",
       "src/components/HanogtAI/AgentCard.tsx"
     ]
@@ -27209,7 +27228,8 @@
     "en": "Resume",
     "tr": "Devam",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/hub/LivePreview.tsx"
     ]
   },
   "1o6cmi6o34y": {
@@ -29041,7 +29061,8 @@
     "en": "Full screen",
     "tr": "Tam ekran",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/hub/LivePreview.tsx"
     ]
   },
   "36xskfrutj": {
@@ -29199,11 +29220,378 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "1c2daictf4j": {
+    "en": "{version} · C# · C++ · 2D · 3D",
+    "tr": "{version} · C# · C++ · 2D · 3D",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "pslanzbj9v": {
+    "en": "Build your game in the browser,",
+    "tr": "Oyununu tarayıcıda yap,",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "36eb4dnypg": {
+    "en": "play it right away.",
+    "tr": "hemen oyna.",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "28xhhq10wln": {
+    "en": "A Unity-like editor, C# and C++ scripts, physics, tilemaps, animation and UI components. Start from a ready game, change it and share it with everyone on the Arcade. Nothing to install.",
+    "tr": "Unity'ye benzeyen editör, C# ve C++ betikleri, fizik, tilemap, animasyon ve arayüz bileşenleri. Hazır bir oyunla başla, değiştir ve Arcade'de herkesle paylaş. Kurulum yok.",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "t145nv90kf": {
+    "en": "Browse templates",
+    "tr": "Şablonları gör",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "d9l25g712n": {
+    "en": "playable templates",
+    "tr": "oynanabilir şablon",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "4pta6mmzmh": {
+    "en": "scripting languages",
+    "tr": "betik dili",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "1km7xkxknfa": {
+    "en": "2D and 3D",
+    "tr": "2D ve 3D",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "gx0zlcov4n": {
+    "en": "1 click",
+    "tr": "1 tık",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "topiy72vyy": {
+    "en": "to publish on the Arcade",
+    "tr": "ile Arcade'de yayınla",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "fspo8za118": {
+    "en": "Game shown in the live preview",
+    "tr": "Canlı önizlemede gösterilen oyun",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "a0ihtubk0a": {
+    "en": "Pick up where you left off",
+    "tr": "Kaldığın yerden devam et",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "2a8lw3h5n62": {
+    "en": "Edited {time} · {objects} objects · {scripts} scripts",
+    "tr": "{time} düzenlendi · {objects} nesne · {scripts} betik",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "1nd5nmmahd2": {
+    "en": "All my projects",
+    "tr": "Tüm projelerim",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "2goe7fiyvh7": {
+    "en": "{count} templates",
+    "tr": "{count} şablon",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "pxayuqa37f": {
+    "en": "Start from a game",
+    "tr": "Bir oyunla başla",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "136zvxwhbfx": {
+    "en": "Every template is a game you can play end to end, with its code explained in comments. Preview one, open the one you like and make it your own.",
+    "tr": "Her şablon baştan sona oynanabilir bir oyundur ve kodu yorum satırlarıyla açıklanmıştır. Önizle, beğendiğini aç ve kendi oyununa dönüştür.",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "7zdr2pz6vu": {
+    "en": "Search templates…",
+    "tr": "Şablon ara…",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "10ucth3ln7a": {
+    "en": "Dimension",
+    "tr": "Boyut",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "colc97a68i": {
+    "en": "Difficulty",
+    "tr": "Zorluk",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "2ffed0g7hmi": {
+    "en": "{count} results",
+    "tr": "{count} sonuç",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "1b0ffc3o23x": {
+    "en": "No template matches these filters.",
+    "tr": "Bu filtrelerle eşleşen şablon yok.",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "1k9urgr2bx8": {
+    "en": "Start",
+    "tr": "Başla",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "1bta7re8i2a": {
+    "en": "{name} preview",
+    "tr": "{name} önizlemesi",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "6zvzomxc6b": {
+    "en": "What's new",
+    "tr": "Yenilikler",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx",
+      "src/components/Guide/book-content.ts",
+      "src/lib/nav.ts"
+    ]
+  },
+  "25wyl9ztcu9": {
+    "en": "October update",
+    "tr": "Ekim güncellemesi",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "k7r8e19zzn": {
+    "en": "Shipped with V3",
+    "tr": "V3 ile gelenler",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "k1a8bzbjhf": {
+    "en": "Your game projects in the cloud and in this browser.",
+    "tr": "Bulutta ve bu tarayıcıda kayıtlı oyun projelerin.",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "1x6t5hn5np8": {
+    "en": "By name",
+    "tr": "Ada göre",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
   "1f4i7c729jg": {
     "en": "You've reached your plan's game project limit ({limit} projects). Delete an old project to make room, or upgrade your plan.",
     "tr": "Planının oyun projesi sınırına ulaştın ({limit} proje). Yer açmak için eski bir projeyi sil ya da planını yükselt.",
     "files": [
       "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "euxslhpeeg": {
+    "en": "Couldn't delete.",
+    "tr": "Silinemedi.",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "22ipifmq7vt": {
+    "en": "Take control",
+    "tr": "Kontrolü al",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "2wxo38d4q3": {
+    "en": "Live demo",
+    "tr": "Canlı demo",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "1x3kbbkrr49": {
+    "en": "You're playing",
+    "tr": "Oynuyorsun",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "1miwi5wnzy9": {
+    "en": "Back to the demo",
+    "tr": "Demoya dön",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "2bvyg84eio": {
+    "en": "Turn sound on",
+    "tr": "Sesi aç",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "267eil6f5e8": {
+    "en": "Loading the engine…",
+    "tr": "Motor yükleniyor…",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "sp87cs44uu": {
+    "en": "The live preview couldn't start on this device (WebGL is required).",
+    "tr": "Bu cihazda canlı önizleme açılamadı (WebGL gerekli).",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "1pm8qq0dadx": {
+    "en": "Controls",
+    "tr": "Kontroller",
+    "files": [
+      "src/components/GameEngine/hub/LivePreview.tsx"
+    ]
+  },
+  "ced0d22hxs": {
+    "en": "Starter: ideal for your first game",
+    "tr": "Başlangıç: ilk oyunun için ideal",
+    "files": [
+      "src/components/GameEngine/hub/TemplateBadges.tsx"
+    ]
+  },
+  "24o64qh2bw3": {
+    "en": "Easy: a few scripts and a clear game loop",
+    "tr": "Kolay: birkaç betik, net bir oyun döngüsü",
+    "files": [
+      "src/components/GameEngine/hub/TemplateBadges.tsx"
+    ]
+  },
+  "voukxtb4cw": {
+    "en": "Medium: several systems working together",
+    "tr": "Orta: birden çok sistem birlikte çalışır",
+    "files": [
+      "src/components/GameEngine/hub/TemplateBadges.tsx"
+    ]
+  },
+  "1u0ps7zqi1n": {
+    "en": "Starter",
+    "tr": "Başlangıç",
+    "files": [
+      "src/components/GameEngine/hub/TemplateBadges.tsx",
+      "src/components/Groups/workspace/FilesPanel.tsx"
+    ]
+  },
+  "qajfujc8kf": {
+    "en": "Easy",
+    "tr": "Kolay",
+    "files": [
+      "src/components/GameEngine/hub/TemplateBadges.tsx"
+    ]
+  },
+  "1i9r1hbjgz0": {
+    "en": "Start with this template",
+    "tr": "Bu şablonla başla",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "hgzet8gi6g": {
+    "en": "How to play",
+    "tr": "Nasıl oynanır",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "1cgcfska2x5": {
+    "en": "In this project",
+    "tr": "Bu projede",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "7lgb13mrpu": {
+    "en": "lines of code",
+    "tr": "satır kod",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "126k61ytjs9": {
+    "en": "prefabs",
+    "tr": "prefab",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "tmj0hy8ofv": {
+    "en": "Components used",
+    "tr": "Kullanılan bileşenler",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "94f6ui843b": {
+    "en": "Script files",
+    "tr": "Betik dosyaları",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "2cikdm1oyfu": {
+    "en": "The start of {file}",
+    "tr": "{file} dosyasının başı",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
+    ]
+  },
+  "1q8m2mkouyt": {
+    "en": "The code is explained with comments; change values and play right away to learn.",
+    "tr": "Kodlar yorum satırlarıyla açıklanmıştır; değerleri değiştirip hemen oynayarak öğrenebilirsin.",
+    "files": [
+      "src/components/GameEngine/hub/TemplateDrawer.tsx"
     ]
   },
   "q397uz0abf": {
@@ -29314,6 +29702,34 @@
   "1m30zn8voil": {
     "en": "Tilemap Adventure, Clicker Factory and Foggy Runner: ready-to-play projects built with the V3 features.",
     "tr": "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu: V3 özelliklerini kullanan, hemen oynanabilir projeler.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1f3hbquerk1": {
+    "en": "Eight new game templates",
+    "tr": "Sekiz yeni oyun şablonu",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "21mzh2apyqm": {
+    "en": "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++). Each is playable end to end and comes with commented code.",
+    "tr": "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++). Hepsi baştan sona oynanabilir ve yorumlu kodla gelir.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1zc4252wp0m": {
+    "en": "Scripts closer to Unity",
+    "tr": "Unity'ye daha yakın betikler",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "2jdowdg3sy": {
+    "en": "A destroyed script now compares equal to null; Timers and Tweens started by a method another script calls belong to that method's script; std::vector<GameObject*> fields start empty in C++.",
+    "tr": "Yok edilen bir betik artık null ile eşit sayılır; başka bir betikten çağrılan metodun başlattığı Timer ve Tween o metodun betiğine ait olur; C++'ta std::vector<GameObject*> alanları boş başlar.",
     "files": [
       "src/components/GameEngine/whats-new.ts"
     ]
@@ -30750,13 +31166,6 @@
   "bactt74pq5": {
     "en": "Pick a starter and name the file. The extension decides the syntax highlighting.",
     "tr": "Bir başlangıç şablonu seç ve dosyaya bir ad ver. Uzantı, söz dizimi vurgulamasını belirler.",
-    "files": [
-      "src/components/Groups/workspace/FilesPanel.tsx"
-    ]
-  },
-  "1u0ps7zqi1n": {
-    "en": "Starter",
-    "tr": "Başlangıç",
     "files": [
       "src/components/Groups/workspace/FilesPanel.tsx"
     ]
@@ -32240,14 +32649,6 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "6zvzomxc6b": {
-    "en": "What's new",
-    "tr": "Yenilikler",
-    "files": [
-      "src/components/Guide/book-content.ts",
-      "src/lib/nav.ts"
-    ]
-  },
   "3b33mlfpi0": {
     "en": "The log of recent updates.",
     "tr": "Son güncellemelerin günlüğü.",
@@ -32542,9 +32943,16 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "6e9dtzp2j0": {
-    "en": "Tilemap Adventure, Clicker Factory and Foggy Runner (new in V3)",
-    "tr": "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile yeni)",
+  "mo3ak54t54": {
+    "en": "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++) (new)",
+    "tr": "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++) (yeni)",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "fnaq5d70hd": {
+    "en": "Tilemap Adventure, Clicker Factory and Foggy Runner (from V3)",
+    "tr": "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile gelenler)",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -32554,7 +32962,7 @@
     "tr": "2D Platform Oyunu",
     "files": [
       "src/components/Guide/book-content.ts",
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1kzdeb6au60": {
@@ -32562,7 +32970,7 @@
     "tr": "3D Top Yuvarlama",
     "files": [
       "src/components/Guide/book-content.ts",
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1ow3vxrqocp": {
@@ -32577,7 +32985,7 @@
     "tr": "Tuğla Kırma",
     "files": [
       "src/components/Guide/book-content.ts",
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1m22l17n34s": {
@@ -38449,7 +38857,8 @@
     "en": "Castle Defense",
     "tr": "Kale Savunması",
     "files": [
-      "src/components/Landing/ProductPreviews.tsx"
+      "src/components/Landing/ProductPreviews.tsx",
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1b58jv8hyb3": {
@@ -46946,9 +47355,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "14erbjufaxe": {
-    "en": "[Game Engine](/game-engine) (Hanogt Engine V3) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Camera, Light, Tilemap, Animation, UI and Script components in the **Inspector**.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. Test with **Play** and read errors with line numbers in the console.\n5. **Publish to the Arcade** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
-    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V3) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Kamera, Işık, Tilemap, Animasyon, UI ve Script bileşenlerini düzenle.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör.\n5. **Arcade'de yayınla** ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
+  "22j6kqigx62": {
+    "en": "[Game Engine](/game-engine) (Hanogt Engine V3) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense, Neon Arena (C++), Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Camera, Light, Tilemap, Animation, UI and Script components in the **Inspector**.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. Test with **Play** and read errors with line numbers in the console.\n5. **Publish to the Arcade** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
+    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V3) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması, Neon Arena (C++), Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Kamera, Işık, Tilemap, Animasyon, UI ve Script bileşenlerini düzenle.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `PlayerPrefs`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör.\n5. **Arcade'de yayınla** ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -49304,109 +49713,326 @@
       "src/lib/features.ts"
     ]
   },
+  "15bp3ek1joe": {
+    "en": "Neon Run",
+    "tr": "Neon Koşu",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1aq7ruerygv": {
+    "en": "The landing page's mini game as a real project: coyote time, jump buffering, double jump, parallax hills, a speeding world and a high score.",
+    "tr": "Ana sayfadaki mini oyunun gerçek projesi: coyote süresi, zıplama tamponu, çift zıplama, paralaks tepeler, hızlanan dünya ve rekor.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "ssg7sdp907": {
+    "en": "Space / ↑ / click: jump, once more in the air",
+    "tr": "Space / ↑ / tıkla: zıpla, havada bir kez daha",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "2t8s99xwwq": {
+    "en": "Flap",
+    "tr": "Kanat Çırp",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "epf2ddb7ij": {
+    "en": "A one-button game: flap through the pipes. An enum state machine, prefab pipe pairs and a narrowing gap.",
+    "tr": "Tek tuşlu oyun: kanat çırp, boruların arasından geç. Durum makinesi (enum), prefab boru çiftleri ve daralan boşluk.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "ctl1suqyi3": {
+    "en": "Space / ↑ / click: flap",
+    "tr": "Space / ↑ / tıkla: kanat çırp",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "79yqdskjk0": {
+    "en": "Pong",
+    "tr": "Pong",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "ipkbgrh62t": {
+    "en": "One or two players: angled returns, speeding rallies and a computer opponent until someone takes the arrow keys.",
+    "tr": "Bir ya da iki oyuncu: vuruş yerine göre açılanan top, hızlanan ralliler ve ok tuşlarına basılmazsa oynayan bilgisayar.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "203m4nw1idi": {
+    "en": "W / S: left paddle  •  ↑ / ↓: second player",
+    "tr": "W / S: sol raket  •  ↑ / ↓: ikinci oyuncu",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1qx3lzbbs0f": {
+    "en": "Snake (C++)",
+    "tr": "Yılan (C++)",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "10xd816vng": {
+    "en": "Classic snake in C++: a std::vector body, step-by-step grid movement, a speeding game and a saved high score.",
+    "tr": "C++ ile klasik yılan: std::vector ile gövde, ızgarada adım adım hareket, hızlanan oyun ve kayıtlı rekor.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "lsumrtz7de": {
+    "en": "Arrow keys / WASD: steer",
+    "tr": "Ok tuşları / WASD: yön",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "2f7j58ru6dr": {
+    "en": "Little Adventure",
+    "tr": "Küçük Macera",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "29sxz6edc5j": {
+    "en": "A top-down RPG: talk to the villager, fight slimes with your sword, find the key, open the gate and reach the treasure.",
+    "tr": "Yukarıdan bakışlı RPG: köylüyle konuş, balçıklarla kılıçla savaş, anahtarı bul, kapıyı aç ve hazineye ulaş.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "29fdannrfv3": {
+    "en": "WASD: walk  •  Space: sword  •  E: talk",
+    "tr": "WASD: yürü  •  Space: kılıç  •  E: konuş",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "16slhn6figo": {
+    "en": "Obstacle Course",
+    "tr": "Engel Parkuru",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "ubsuji9bmn": {
+    "en": "A 3D course: moving platforms, spinning sweepers, vanishing tiles, checkpoints and a best time.",
+    "tr": "3D parkur: hareketli platformlar, dönen süpürgeler, kaybolan karolar, kontrol noktaları ve en iyi süre.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1385j88tz35": {
+    "en": "WASD: run  •  Space: jump",
+    "tr": "WASD: koş  •  Space: zıpla",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "2fuqs6m60i0": {
+    "en": "Tower defense: build and upgrade towers with the mouse and stop enemy waves that follow waypoints, giants included.",
+    "tr": "Kule savunması: fareyle kule kur ve yükselt, yol noktalarını izleyen düşman dalgalarını durdur, dev dalgalarına hazır ol.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "28mk91aqgnq": {
+    "en": "Mouse: build and upgrade towers  •  Space: start the wave",
+    "tr": "Fare: kule kur ve yükselt  •  Space: dalgayı başlat",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "2bdozcsoz5o": {
+    "en": "Neon Arena (C++)",
+    "tr": "Neon Arena (C++)",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1j20acrdpu8": {
+    "en": "A twin-stick shooter: dodge with WASD, shoot with the mouse or arrow keys. Player and enemies in C++, the manager in C#.",
+    "tr": "İkiz çubuk nişancı: WASD ile kaç, fareyle ya da ok tuşlarıyla ateş et. Oyuncu ve düşmanlar C++, yönetici C#.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1pvl0nakibn": {
+    "en": "WASD: move  •  Mouse or arrow keys: shoot",
+    "tr": "WASD: hareket  •  Fare ya da ok tuşları: ateş",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
   "cgatfys38w": {
     "en": "Tilemap Adventure",
     "tr": "Tilemap Macerası",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1hfs49en2oc": {
     "en": "Two tile-painted levels, spikes, a bridge built by keys, a pause menu and scene fades.",
     "tr": "Karo boyanmış iki seviye, dikenler, anahtarla kurulan köprü, duraklatma menüsü ve sahne geçişleri.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1rjlrlu7r52": {
+    "en": "← →: run  •  Space: jump  •  P: pause",
+    "tr": "← →: koş  •  Space: zıpla  •  P: duraklat",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "194pk6ogeib": {
     "en": "Clicker Factory",
     "tr": "Tıklama Fabrikası",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1xqlz282v4j": {
     "en": "Buttons, a progress bar, upgrades, passive income with Timer, tween effects and saved progress.",
     "tr": "Butonlar, ilerleme çubuğu, yükseltmeler, Timer ile pasif gelir, Tween efektleri ve kayıtlı ilerleme.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "25g4wzwbzpq": {
+    "en": "Mouse or Space: produce  •  1 / 2: buy",
+    "tr": "Fare ya da Space: üret  •  1 / 2: satın al",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "t49hbuhtox": {
     "en": "Foggy Runner",
     "tr": "Sisli Koşu",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "25mc5dhivee": {
     "en": "Three-lane endless runner with fog, bloom, vignette, spinning gems and a saved high score.",
     "tr": "Üç şeritli sonsuz koşu: sis, parlama (bloom), vinyet, dönen elmaslar ve rekor kaydı.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "24su6o4zitt": {
+    "en": "← →: change lanes  •  Space: jump",
+    "tr": "← →: şerit değiştir  •  Space: zıpla",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "9222fh9cxk": {
     "en": "Double jump, enemy stomping, coins, camera follow and a goal flag.",
     "tr": "Çift zıplama, düşman ezme, coin toplama, kamera takibi ve bitiş bayrağı.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1opk76gwaqv": {
+    "en": "← →: run  •  Space: jump (twice)",
+    "tr": "← →: koş  •  Space: zıpla (iki kez)",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "2aets5ilxq0": {
     "en": "Unity's classic first tutorial: roll the ball with forces and collect spinning cubes.",
     "tr": "Unity'nin klasik ilk dersi: kuvvetle topu yuvarla, dönen küpleri topla.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "22tkh3ni4cw": {
+    "en": "WASD / arrow keys: roll the ball",
+    "tr": "WASD / ok tuşları: topu yuvarla",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "2ef3vtv5sto": {
     "en": "Space Shooter",
     "tr": "Uzay Nişancısı",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1o461maqau5": {
     "en": "C++ and C# together: shoot, blow up enemy waves and survive in a starfield.",
     "tr": "C++ ve C# birlikte: ateş et, düşman dalgalarını patlat, yıldız alanında hayatta kal.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "xurlj787h0": {
+    "en": "Arrow keys / WASD: move  •  Space or click: shoot",
+    "tr": "Ok tuşları / WASD: hareket  •  Space ya da tıkla: ateş",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "mww5ywba33": {
     "en": "Paddle, bounce physics, a prefab-built brick grid, lives and score.",
     "tr": "Raket, sekme fiziği, prefab ile oluşturulan tuğla ızgarası, can ve skor sistemi.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "15f9efngq7e": {
+    "en": "← → / A D: paddle  •  Space or click: launch the ball",
+    "tr": "← → / A D: raket  •  Space ya da tıkla: topu fırlat",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "a3k6g03ndm": {
     "en": "Empty 3D Project",
     "tr": "Boş 3D Proje",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1d9uxe0ztwj": {
     "en": "A clean start with a camera, a light and a ground plane.",
     "tr": "Kamera, ışık ve zemin ile temiz bir başlangıç.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "26whdodsi33": {
+    "en": "You design the controls",
+    "tr": "Kontrolleri sen tasarlarsın",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "pyhmuc39s1": {
     "en": "Empty 2D Project",
     "tr": "Boş 2D Proje",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "gicay8kb7p": {
     "en": "An empty 2D scene with an orthographic camera.",
     "tr": "Ortografik kameralı boş bir 2D sahne.",
     "files": [
-      "src/lib/game-engine/templates.ts"
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "1g1woulv1ya": {

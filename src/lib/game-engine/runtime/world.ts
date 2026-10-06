@@ -211,6 +211,20 @@ class Binding implements BehaviourBinding {
         return this.world.gameObjectHandle(this.entity);
     }
 
+    isAlive(): boolean {
+        return !this.entity.destroyed && !(this.state?.destroyed ?? false);
+    }
+
+    enter(): unknown {
+        const previous = this.world.currentBehaviour;
+        if (this.state && !this.state.destroyed) this.world.currentBehaviour = this.state;
+        return previous;
+    }
+
+    exit(previous: unknown) {
+        this.world.currentBehaviour = previous as BehaviourState | null;
+    }
+
     getMember(name: string): VMValue | typeof NOT_FOUND {
         switch (name) {
             case "transform": return this.world.transformHandle(this.entity);

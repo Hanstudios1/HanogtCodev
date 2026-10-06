@@ -408,6 +408,14 @@ export class ScriptObject {
 /** What a behaviour instance exposes as inherited members (transform, gameObject, …). */
 export interface BehaviourBinding {
     gameObject: HostObject;
+    /** False once the behaviour or its object was destroyed (Unity "fake null" for scripts). */
+    isAlive?(): boolean;
+    /**
+     * Called around every method of the behaviour (also when another script calls it), so
+     * timers and tweens started inside belong to this behaviour. Returns what exit() restores.
+     */
+    enter?(): unknown;
+    exit?(previous: unknown): void;
     getMember(name: string): VMValue | typeof NOT_FOUND;
     setMember(name: string, value: VMValue): boolean;
     callMember(name: string, args: VMValue[], typeArgs: string[], refs?: Array<VMRef | null>): VMValue | typeof NOT_FOUND;

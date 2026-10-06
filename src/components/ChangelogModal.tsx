@@ -24,6 +24,20 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.25",
+        version: "v0.3.25",
+        date: "2026-10-06",
+        title: { TR: "Hanogt Engine'de sekiz yeni oyun", EN: "Eight new games in Hanogt Engine" },
+        desc: { TR: "Engine'in tanıtım sayfası baştan tasarlandı: gerçek motorda çalışan canlı demo, filtreli şablon galerisi ve oynanabilir önizlemeler. Sekiz yeni şablon da hazır.", EN: "Engine's home page was redesigned: a live demo running in the real engine, a template gallery with filters and playable previews. Eight new templates are ready too." },
+        items: [
+            { TR: "Yeni şablonlar: Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera (RPG), Engel Parkuru (3D), Kale Savunması ve Neon Arena (C++).", EN: "New templates: Neon Run, Flap, Pong, Snake (C++), Little Adventure (RPG), Obstacle Course (3D), Castle Defense and Neon Arena (C++)." },
+            { TR: "Tanıtım sayfasında canlı demo: dört oyun gerçek motorda dönüyor; \"Kontrolü al\" ile hemen oyna.", EN: "A live demo on the home page: four games take turns in the real engine; press \"Take control\" to play right away." },
+            { TR: "Şablon galerisi: 2D/3D, C#/C++, zorluk ve \"Yeniler\" filtreleri; her kartta oyunun ilk karesi.", EN: "Template gallery: 2D/3D, C#/C++, difficulty and \"New\" filters; every card shows the game's first frame." },
+            { TR: "Ayrıntı çekmecesi: oyunu oyna, kontrolleri, kullanılan bileşenleri ve kodun başını gör, sonra tek tıkla başla.", EN: "Details drawer: play the game, see its controls, the components it uses and the start of its code, then start with one click." },
+            { TR: "Unity'ye daha yakın betikler: yok edilen betikler null ile eşit, başka betikten çağrılan metodun Timer ve Tween'leri o betiğe ait.", EN: "Scripts closer to Unity: destroyed scripts equal null, and Timers and Tweens started by a method another script calls belong to that method's script." },
+        ],
+    },
+    {
         id: "v0.3.24",
         version: "v0.3.24",
         date: "2026-10-06",

@@ -1,5 +1,59 @@
 # Değişiklik Günlüğü
 
+## 0.3.25 — 2026-10-06
+
+### Hanogt Engine: yeni tanıtım sayfası ve sekiz yeni şablon
+
+- **Sekiz yeni oyun şablonu** (`src/lib/game-engine/templates/`; şablonlar
+  `arcade.ts`, `adventure.ts` ve `action.ts` dosyalarına bölündü, ortak
+  yardımcılar `builders.ts` içinde):
+  - **Neon Koşu** (2D, C#): ana sayfadaki mini oyunun gerçek projesi; coyote
+    süresi, zıplama tamponu, çift zıplama, paralaks tepeler, mesafeyle
+    hesaplanan engel aralığı (her hızda atlanabilir), rekor.
+  - **Kanat Çırp** (2D, C#): tek tuşlu flappy; enum durum makinesi, prefab
+    boru çiftleri, daralan boşluk, katı zemin ve tavan.
+  - **Pong** (2D, C#): açılı sekme, hızlanan ralliler, ↑/↓ ile ikinci oyuncu,
+    yoksa bilgisayar.
+  - **Yılan (C++)**: `std::vector` gövde, ızgarada adım adım hareket,
+    hızlanma, rekor.
+  - **Küçük Macera** (2D, C#): yukarıdan bakışlı RPG; köylüyle diyalog,
+    kılıç, balçıklar, kalpler, anahtar, kilitli kapı ve sandık.
+  - **Engel Parkuru** (3D, C#): taşıyan platformlar, asansör, dönen
+    süpürgeler, kaybolan karolar, iticiler, kontrol noktaları, en iyi süre.
+  - **Kale Savunması** (2D, C#): fareyle kule kurma ve yükseltme, yol
+    noktalarını izleyen 10 dalga, devler, altın ve can.
+  - **Neon Arena (C++)**: ikiz çubuk nişancı; oyuncu, düşmanlar ve mermiler
+    C++, yönetici C#; dalgalar, kombo çarpanı, can çubuğu.
+  - Her şablonun kontrolleri (`TemplateInfo.controls`) ve "Yeni" işareti
+    (`isNew`) var; `engine-templates.test.mjs` her oyunu sanal girdi ve
+    otomatik pilotla baştan sona oynatır (kule savunmasında aktif oyuncu
+    kazanır, pasif oyuncu kaybeder).
+- **Motor düzeltmeleri** (Unity'ye daha yakın):
+  - yok edilen bir betik `null` ile eşit sayılır (`target != null`);
+  - başka betikten çağrılan bir metodun başlattığı `Timer` ve `Tween` o
+    metodun betiğine aittir (çağıran yok olsa da çalışır);
+  - C++'ta `std::vector<GameObject*>` alanları boş başlar (yalnızca dış tür
+    işaretçiyse `nullptr`);
+  - kapatılan oyun görünümleri WebGL bağlamını hemen bırakır.
+- **Yeni Engine tanıtım sayfası** (`EngineHub` ve `src/components/GameEngine/hub/`):
+  - site başlığı, ızgara arka plan, açık ve koyu tema; bulanık radyal arka
+    plan kalktı;
+  - hero'da gerçek motorda çalışan canlı demo (dört oyun arasında döner,
+    "Kontrolü al" ile oynanır; telefonda, veri tasarrufunda ve azaltılmış
+    harekette kendiliğinden başlamaz);
+  - şablon galerisi: boyut, dil, zorluk ve "Yeniler" filtreleri, arama;
+    kartlar sahnenin ilk karesini sahne verisinden SVG olarak çizer
+    (`scene-sketch.ts`), sayfada en fazla bir WebGL bağlamı olur;
+  - ayrıntı çekmecesi: oynanabilir önizleme, kontroller, betik, satır, nesne
+    ve prefab sayıları, kullanılan bileşenler ve ana betiğin başı;
+  - "Kaldığın yerden devam et" kartı, Yenilikler (Ekim güncellemesi ve V3),
+    sıralanabilen projeler ve tema uyumlu proje oluşturma penceresi.
+- Hanogt AI ajanı yeni şablonları adlarından tanır ("kule savunma", "rpg",
+  "parkur", "flappy", "arena"…); "motor", "engine", "C++" ya da "C#" denince
+  yılan ve pong için tarayıcı programı yerine motor şablonu seçilir.
+- Motor belgeleri, kılavuz, AI bilgi tabanı ve Yenilikler listesi
+  güncellendi.
+
 ## 0.3.24 — 2026-10-06
 
 ### Abonelikler: ortak Hanogt AI hakkı ve yeni plan avantajları

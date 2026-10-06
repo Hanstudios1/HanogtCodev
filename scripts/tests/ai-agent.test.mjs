@@ -10,7 +10,7 @@ const tools = await load("lib/ai/agent-tools.ts");
 const protocol = await load("lib/ai/agent-protocol.ts");
 const intents = await load("lib/ai/agent-intents.ts");
 const programs = await load("lib/ai/programs.ts");
-const { PROJECT_TEMPLATES } = await load("lib/game-engine/templates.ts");
+const { PROJECT_TEMPLATES } = await load("lib/game-engine/templates/index.ts");
 const { GROUP_LIMITS } = await load("lib/groups.ts");
 
 const tx = (copy, vars = {}) => copy.TR.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match));
@@ -250,6 +250,15 @@ test("Core maps sample sentences to the same actions the model would take", () =
     const snake = propose("make_game", "basit bir yılan oyunu oluştur");
     assert.equal(snake.call.name, "open_editor_with_code");
     assert.equal(snake.call.args.language, "html");
+    // Naming the engine (or C++/C#) picks the engine template instead of the browser program.
+    assert.equal(propose("make_game", "C++ ile yılan oyunu yap").call.args.template, "snake-2d");
+    assert.equal(propose("make_game", "oyun motorunda pong yap").call.args.template, "pong-2d");
+    assert.equal(propose("make_game", "bana kule savunma oyunu yap").call.args.template, "tower-defense-2d");
+    assert.equal(propose("make_game", "rpg macera oyunu kur").call.args.template, "rpg-topdown-2d");
+    assert.equal(propose("make_game", "3d parkur oyunu yap").call.args.template, "obstacle-course-3d");
+    assert.equal(propose("make_game", "flappy bird gibi bir oyun").call.args.template, "flappy-2d");
+    assert.equal(propose("make_game", "2d koşu oyunu yap").call.args.template, "runner-2d");
+    assert.equal(propose("make_game", "sonsuz koşu oyunu yap").call.args.template, "runner-3d");
 
     const group = propose("create_group", "React çalışma grubu kur");
     assert.equal(group.call.name, "create_group");

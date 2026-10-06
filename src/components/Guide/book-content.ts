@@ -179,7 +179,8 @@ export const PAGES: BookPage[] = [
             {
                 type: "list",
                 items: [
-                    { TR: "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile yeni)", EN: "Tilemap Adventure, Clicker Factory and Foggy Runner (new in V3)" },
+                    { TR: "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++) (yeni)", EN: "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++) (new)" },
+                    { TR: "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile gelenler)", EN: "Tilemap Adventure, Clicker Factory and Foggy Runner (from V3)" },
                     { TR: "2D Platform Oyunu", EN: "2D Platformer" },
                     { TR: "3D Top Yuvarlama", EN: "3D Roll-a-Ball" },
                     { TR: "Uzay Nişancısı (C++ ve C#)", EN: "Space Shooter (C++ and C#)" },

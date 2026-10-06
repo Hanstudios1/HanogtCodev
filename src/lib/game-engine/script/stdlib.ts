@@ -242,7 +242,9 @@ function perlin(xValue: number, yValue: number): number {
 // Equality, truthiness and string conversion
 // ---------------------------------------------------------------------------
 
+/** Engine objects and behaviour scripts that were destroyed compare equal to null (Unity "fake null"). */
 export function isDeadHost(value: VMValue): boolean {
+    if (value instanceof ScriptObject) return Boolean(value.behaviour?.isAlive && !value.behaviour.isAlive());
     return isHostObject(value) && value.isAlive !== undefined && !value.isAlive();
 }
 
@@ -266,6 +268,7 @@ export function vmTruthy(value: VMValue): boolean {
     if (typeof value === "boolean") return value;
     if (typeof value === "number") return value !== 0 && !Number.isNaN(value);
     if (isHostObject(value)) return !isDeadHost(value) && (value.truthy ? value.truthy() : true);
+    if (value instanceof ScriptObject) return !isDeadHost(value);
     return true;
 }
 
@@ -432,6 +435,11 @@ function printfFormat(template: string, args: VMValue[], interp: Interpreter): s
 // Defaults and construction
 // ---------------------------------------------------------------------------
 
+/** `std::vector<T>* p` is a pointer, `std::vector<GameObject*> v` is not: only the outer type counts. */
+function isPointerType(typeRef?: TypeRef) {
+    return Boolean(typeRef?.raw.replace(/<.*>/, "<>").includes("*"));
+}
+
 export function defaultForTypeName(typeName: string, dialect: Dialect, program: CompiledProgram, typeRef?: TypeRef): VMValue {
     switch (typeName) {
         case "int":
@@ -455,9 +463,9 @@ export function defaultForTypeName(typeName: string, dialect: Dialect, program: 
         case "HashSet":
         case "Queue":
         case "Stack":
-            return dialect === "cpp" && !typeRef?.raw.includes("*") ? new VMList([], typeName as CollectionKind) : null;
+            return dialect === "cpp" && !isPointerType(typeRef) ? new VMList([], typeName as CollectionKind) : null;
         case "Dictionary":
-            return dialect === "cpp" && !typeRef?.raw.includes("*") ? new VMDict() : null;
+            return dialect === "cpp" && !isPointerType(typeRef) ? new VMDict() : null;
         default:
             if (program.enums.has(typeName)) return 0;
             return null;

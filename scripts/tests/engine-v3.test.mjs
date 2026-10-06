@@ -9,7 +9,7 @@ const types = await load("lib/game-engine/types.ts");
 const { normalizeProject, SchemaError } = await load("lib/game-engine/schema.ts");
 const { createBlankProject, createEmptyScene } = await load("lib/game-engine/scene.ts");
 const components = await load("lib/game-engine/components.ts");
-const { PROJECT_TEMPLATES, createProjectFromTemplate } = await load("lib/game-engine/templates.ts");
+const { PROJECT_TEMPLATES, createProjectFromTemplate } = await load("lib/game-engine/templates/index.ts");
 const { ease, easingFromName, wrapClipTime, sampleTrack, sampleClip, animationPreset, lerpColor } = await load("lib/game-engine/animation.ts");
 const { fillTiles, setTileKey, solidTiles, tileAt, tilemapSize, resolveTileKey, trimTilemap } = await load("lib/game-engine/tilemap.ts");
 const { uiRect, progressFraction } = await load("lib/game-engine/ui-layout.ts");
@@ -572,7 +572,7 @@ test("UI layout matches between overlay and hit testing", () => {
 // Templates
 // ---------------------------------------------------------------------------
 
-test("V3 templates are listed first and every template plays without errors", () => {
+test("V3 templates keep their badge and every template plays without errors", () => {
     const ids = PROJECT_TEMPLATES.map((info) => info.id);
     assert.equal(new Set(ids).size, ids.length);
     assert.deepEqual(PROJECT_TEMPLATES.filter((info) => info.since === 3).map((info) => info.id), ["tilemap-platformer-2d", "clicker-ui-2d", "runner-3d"]);

@@ -1471,6 +1471,8 @@ export class SceneRenderer {
         this.bloomPass?.dispose();
         this.assets.dispose();
         this.renderer.dispose();
+        // Free the GPU context now: previews and play sessions create many renderers over time.
+        this.renderer.forceContextLoss();
         this.canvas.remove();
     }
 }
