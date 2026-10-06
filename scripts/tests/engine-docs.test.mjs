@@ -119,3 +119,17 @@ for (const language of ["tr", "en"]) {
         assert.deepEqual(problems(), []);
     });
 }
+
+test("every docs section is listed in the contents once and written in both languages; what's new links land on a section", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const docs = await readFile(new URL("../../src/components/GameEngine/docs/EngineDocs.tsx", import.meta.url), "utf8");
+    const listed = [...docs.matchAll(/\{ id: "([a-z0-9-]+)", tr: "/g)].map((match) => match[1]);
+    assert.equal(new Set(listed).size, listed.length, "no section is listed twice");
+    const written = [...docs.matchAll(/<Section id="([a-z0-9-]+)"/g)].map((match) => match[1]);
+    for (const id of listed) assert.equal(written.filter((item) => item === id).length, 2, `'${id}' is written in Turkish and English`);
+    for (const id of written) assert.ok(listed.includes(id), `'${id}' is in the contents`);
+    const whatsNew = await load("components/GameEngine/whats-new.ts");
+    for (const list of ["V5_FEATURES", "V4_FEATURES", "V3_FEATURES", "TEMPLATE_UPDATE"]) {
+        for (const item of whatsNew[list]) assert.ok(listed.includes(item.section), `${list}: '${item.title.EN}' links to #${item.section}`);
+    }
+});

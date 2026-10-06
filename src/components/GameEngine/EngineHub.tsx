@@ -19,7 +19,7 @@ import {
     X,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
 import GridBackdrop from "@/components/GridBackdrop";
@@ -52,7 +52,7 @@ import LivePreview from "./hub/LivePreview";
 import SceneSketch from "./hub/SceneSketch";
 import { DIFFICULTY_LABEL, TemplateBadges } from "./hub/TemplateBadges";
 import TemplateDrawer from "./hub/TemplateDrawer";
-import { TEMPLATE_UPDATE, V3_FEATURES, V4_FEATURES } from "./whats-new";
+import { TEMPLATE_UPDATE, V3_FEATURES, V4_FEATURES, V5_FEATURES, type WhatsNewItem } from "./whats-new";
 
 /*
  * Hanogt Engine's home: a hero with a game running live in the real engine,
@@ -99,9 +99,16 @@ const C = {
     start: { TR: "Başla", EN: "Start" },
     previewOf: { TR: "{name} önizlemesi", EN: "{name} preview" },
     newsTitle: { TR: "Yenilikler", EN: "What's new" },
-    newsV4: { TR: "V4 ile gelenler", EN: "New in V4" },
-    newsUpdate: { TR: "Ekim şablon güncellemesi", EN: "October template update" },
-    newsV3: { TR: "V3 ile gelenler", EN: "Shipped with V3" },
+    newsText: {
+        TR: "Her sürüm motoru daha yetenekli kılar: önce V5 ile gelenler, sonra önceki sürümler. Kartlar ilgili belge bölümünü açar.",
+        EN: "Every release makes the engine more capable: what V5 brings first, then the earlier releases. Each card opens its section of the docs.",
+    },
+    newsTabs: { TR: "Sürümler", EN: "Releases" },
+    newsV5: { TR: "V5 ile gelenler", EN: "New in V5" },
+    newsV4: { TR: "V4", EN: "V4" },
+    newsUpdate: { TR: "Ekim şablonları", EN: "October templates" },
+    newsV3: { TR: "V3", EN: "V3" },
+    newsCount: { TR: "{count} yenilik", EN: "{count} features" },
     projectsText: { TR: "Bulutta ve bu tarayıcıda kayıtlı oyun projelerin.", EN: "Your game projects in the cloud and in this browser." },
     sortRecent: { TR: "Son düzenlenen", EN: "Recently edited" },
     sortName: { TR: "Ada göre", EN: "By name" },
@@ -339,36 +346,102 @@ function TemplateGallery({ locale, onPreview, onStart }: { locale: "tr" | "en"; 
 // What's new
 // ---------------------------------------------------------------------------
 
+const RELEASES: Array<{ id: string; label: keyof typeof C; items: WhatsNewItem[] }> = [
+    { id: "v5", label: "newsV5", items: V5_FEATURES },
+    { id: "v4", label: "newsV4", items: V4_FEATURES },
+    { id: "october", label: "newsUpdate", items: TEMPLATE_UPDATE },
+    { id: "v3", label: "newsV3", items: V3_FEATURES },
+];
+
 function WhatsNew() {
     const { tx } = useI18n();
     const t = useEngineText();
-    const item = (feature: (typeof V4_FEATURES)[number], index: number, highlight: boolean) => {
-        const Icon = feature.icon;
-        return (
-            <Reveal key={feature.section + feature.title.EN} delay={Math.min(index, 8) * 0.04} y={16}>
-                <Link href={`/game-engine/docs#${feature.section}`} className={`group flex h-full gap-3 rounded-2xl border p-4 transition hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 ${highlight ? "border-zinc-900/10 bg-white hover:border-zinc-900/25 dark:border-white/15 dark:bg-white/[0.04] dark:hover:border-white/30" : "border-zinc-200 bg-white/60 hover:border-zinc-300 dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20"}`}>
-                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${highlight ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "bg-zinc-100 text-zinc-700 dark:bg-white/[0.06] dark:text-zinc-200"}`}><Icon className="h-5 w-5" aria-hidden /></span>
-                    <span className="min-w-0">
-                        <span className="block text-[14.5px] font-bold">{tx(feature.title)}</span>
-                        <span className="mt-1 block text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(feature.text)}</span>
-                        <span className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-bold text-zinc-500 transition group-hover:gap-1.5 group-hover:text-zinc-900 dark:group-hover:text-white">{t("docs")}<ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden /></span>
-                    </span>
-                </Link>
-            </Reveal>
-        );
+    const reduceMotion = useReducedMotion();
+    const [releaseId, setReleaseId] = useState(RELEASES[0].id);
+    const tabs = useRef<Array<HTMLButtonElement | null>>([]);
+    const release = RELEASES.find((item) => item.id === releaseId) ?? RELEASES[0];
+    const latest = release === RELEASES[0];
+    // Arrow keys, Home and End move between the release tabs (WAI-ARIA tabs pattern).
+    const onTabKey = (event: ReactKeyboardEvent, index: number) => {
+        const last = RELEASES.length - 1;
+        const rtl = document.documentElement.dir === "rtl";
+        const next = event.key === "Home" ? 0
+            : event.key === "End" ? last
+                : event.key === (rtl ? "ArrowLeft" : "ArrowRight") ? (index + 1) % RELEASES.length
+                    : event.key === (rtl ? "ArrowRight" : "ArrowLeft") ? (index + last) % RELEASES.length
+                        : null;
+        if (next === null) return;
+        event.preventDefault();
+        setReleaseId(RELEASES[next].id);
+        tabs.current[next]?.focus();
     };
     return (
         <section aria-labelledby="whats-new-title">
             <Reveal className="flex flex-wrap items-end justify-between gap-3">
-                <h2 id="whats-new-title" className="text-3xl font-black tracking-tight sm:text-4xl">{tx(C.newsTitle)}</h2>
+                <div className="max-w-2xl">
+                    <h2 id="whats-new-title" className="text-3xl font-black tracking-tight sm:text-4xl">{tx(C.newsTitle)}</h2>
+                    <p className="mt-2 text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(C.newsText)}</p>
+                </div>
                 <Link href="/game-engine/docs#yenilikler" className="inline-flex items-center gap-1.5 text-[14px] font-bold text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"><BookOpen className="h-4 w-4" aria-hidden />{t("docs")}</Link>
             </Reveal>
-            <h3 className="mt-8 flex items-center gap-2 text-[13px] font-black uppercase tracking-wider text-zinc-500"><Sparkles className="h-4 w-4" aria-hidden />{tx(C.newsV4)}</h3>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{V4_FEATURES.map((feature, index) => item(feature, index, true))}</div>
-            <h3 className="mt-8 text-[13px] font-black uppercase tracking-wider text-zinc-500">{tx(C.newsUpdate)}</h3>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">{TEMPLATE_UPDATE.map((feature, index) => item(feature, index, false))}</div>
-            <h3 className="mt-8 text-[13px] font-black uppercase tracking-wider text-zinc-500">{tx(C.newsV3)}</h3>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{V3_FEATURES.map((feature, index) => item(feature, index, false))}</div>
+            <div role="tablist" aria-label={tx(C.newsTabs)} className="scrollbar-none mt-6 flex gap-1 overflow-x-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-1 dark:border-white/10 dark:bg-white/[0.03] sm:inline-flex">
+                {RELEASES.map((item, index) => {
+                    const selected = item.id === release.id;
+                    return (
+                        <button
+                            key={item.id}
+                            ref={(element) => { tabs.current[index] = element; }}
+                            type="button"
+                            role="tab"
+                            id={`whats-new-tab-${item.id}`}
+                            aria-selected={selected}
+                            aria-controls="whats-new-panel"
+                            tabIndex={selected ? 0 : -1}
+                            onClick={() => setReleaseId(item.id)}
+                            onKeyDown={(event) => onTabKey(event, index)}
+                            className={`relative inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-4 text-[13.5px] font-bold transition ${selected ? "text-white dark:text-zinc-900" : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"}`}
+                        >
+                            {selected ? <motion.span layoutId="whats-new-tab" className="absolute inset-0 rounded-xl bg-zinc-900 dark:bg-white" transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }} aria-hidden /> : null}
+                            <span className="relative inline-flex items-center gap-1.5">{index === 0 ? <Sparkles className="h-4 w-4" aria-hidden /> : null}{tx(C[item.label])}</span>
+                        </button>
+                    );
+                })}
+            </div>
+            <p className="mt-3 text-[12.5px] font-semibold text-zinc-500" aria-live="polite">{tx(C.newsCount, { count: release.items.length })}</p>
+            <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                    key={release.id}
+                    id="whats-new-panel"
+                    role="tabpanel"
+                    aria-labelledby={`whats-new-tab-${release.id}`}
+                    className={`mt-3 grid gap-3 ${release.items.length > 2 ? "sm:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"}`}
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: -6, transition: { duration: 0.15 } }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    {release.items.map((feature, index) => {
+                        const Icon = feature.icon;
+                        return (
+                            <motion.div
+                                key={feature.section + feature.title.EN}
+                                initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.35, delay: reduceMotion ? 0 : Math.min(index, 8) * 0.035, ease: [0.22, 1, 0.36, 1] }}
+                            >
+                                <Link href={`/game-engine/docs#${feature.section}`} className={`group flex h-full gap-3 rounded-2xl border p-4 transition hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 ${latest ? "border-zinc-900/10 bg-white hover:border-zinc-900/25 dark:border-white/15 dark:bg-white/[0.04] dark:hover:border-white/30" : "border-zinc-200 bg-white/60 hover:border-zinc-300 dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20"}`}>
+                                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition group-hover:scale-105 motion-reduce:group-hover:scale-100 ${latest ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "bg-zinc-100 text-zinc-700 dark:bg-white/[0.06] dark:text-zinc-200"}`}><Icon className="h-5 w-5" aria-hidden /></span>
+                                    <span className="min-w-0">
+                                        <span className="block text-[14.5px] font-bold">{tx(feature.title)}</span>
+                                        <span className="mt-1 block text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">{tx(feature.text)}</span>
+                                        <span className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-bold text-zinc-500 transition group-hover:gap-1.5 group-hover:text-zinc-900 dark:group-hover:text-white">{t("docs")}<ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden /></span>
+                                    </span>
+                                </Link>
+                            </motion.div>
+                        );
+                    })}
+                </motion.div>
+            </AnimatePresence>
         </section>
     );
 }

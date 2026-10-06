@@ -1,5 +1,93 @@
 # Değişiklik Günlüğü
 
+## 0.3.27 — 2026-10-06
+
+### Hanogt Engine V5
+
+Proje şeması v5'e geçti (`ENGINE_VERSION` 5). Yeni projeler V5 kurallarıyla
+başlar; V4 projeleri `rules: 4`, daha eskileri `rules: 3` ile kaydedilir ve
+davranışı değişen her yerde (ör. `GetComponent<Animator>()`, `CrossFade`)
+kendi sürümlerinin kurallarıyla, eskisi gibi çalışır.
+
+- **Animator durum makinesi:**
+  - bool, float, int ve trigger parametreleri; nesnenin Animation
+    kliplerini oynatan durumlar; koşullu, çıkış zamanlı ve karışım süreli
+    geçişler (Her Durum'dan da); varsayılan durum; trigger'ı kullanan geçiş
+    onu tüketir;
+  - `SetBool/SetFloat/SetInteger/SetTrigger`, `ResetTrigger`, okuyucular,
+    `Play`, `CrossFade`, `CrossFadeInFixedTime`,
+    `GetCurrentAnimatorStateInfo`, `IsInTransition`, `HasState`,
+    `Animator.StringToHash`; `OnStateEnter` / `OnStateExit` olayları;
+  - Inspector'da parametreler, durumlar ve geçişler; alt panelde sürüklenebilir
+    durum grafiği, oyun çalışırken geçerli durum ve canlı parametreler.
+- **Skor tabloları ve başarımlar:**
+  - Proje ayarlarında **Arcade** sekmesi: en fazla 5 tablo (sıralama,
+    gösterim, en düşük/en yüksek skor, en az oynama) ve 30 başarım (gizli
+    olabilir);
+  - `Leaderboard.Submit/GetBest/HasBest/GetName/Show`,
+    `Achievements.Unlock/IsUnlocked/GetName/Show`, `OnAchievementUnlocked`;
+  - Arcade'de giriş yapan oyuncuya imzalı oyun jetonu; sunucu oyuncu ve tablo
+    başına en iyi skoru tutar, jetonu, sınırları ve en kısa oynama süresini
+    yayın anındaki tanımlara göre denetler, gönderimleri sınırlar
+    (`arcade_scores`, `arcade_achievements`); tablolar "doğrulanmamış"
+    etiketli, takma kimlik ve takma adla;
+  - oyuncu paylaşımı kapatabilir ve kaydını kaldırabilir; yapımcı ve ekip
+    kayıt silebilir ya da tabloyu temizleyebilir; misafirlerin ilerlemesi
+    cihazda kalır;
+  - oyunu yayından kaldırmak, projeyi silmek ve yönetici kaldırması aynı yolu
+    izler (beğeniler, skorlar ve başarımlar, sonra oyun ve dosyaları); hesap
+    silme ve veri indirme skorları ve başarımları kapsar; kurallar ve iki yeni
+    bileşik indeks.
+- **Oyunun dilleri:** dil tablosu (Proje ayarları → Diller), ana dil,
+  başlangıç dili (otomatikte oyuncunun dili), CSV ile dışa ve içe aktarma;
+  UI Text, Button, Toggle ve Input Field'da dil anahtarı;
+  `Localization.Get(key, args)`, `Has`, `language`, `SetLanguage`,
+  `GetLanguageName`, `OnLanguageChanged`, `SystemLanguage`.
+- **Yerel çok oyunculu:** Player Input bileşeni (oyuncu 1–4; otomatik,
+  bütün klavye, klavyenin solu ya da sağı, yalnızca gamepad); her gamepad
+  yuvası ayrı okunur, yarıda tuşu olmayan eylemler karşılığını kullanır;
+  Character Controller 2D yalnızca kendi oyuncusunu izler;
+  `GetComponent<PlayerInput>().GetAxis/GetButton…`, `PlayerInput.all`,
+  `GetPlayerByIndex`, `gamepadCount`.
+- **SaveSystem ve JsonUtility:** oyunun sınıfları, listeler, diziler,
+  sözlükler, vektörler ve renkler kayıt yuvalarına; `Save`, `Load<T>`,
+  `Load`, `Exists`, `Delete`, `DeleteAll`, `GetSlots`, `GetSaveTime`,
+  `GetLatestSlot`; 20 yuva, yuva başına 256 KB, oyun başına 512 KB.
+  `JsonUtility.ToJson/FromJson<T>/FromJsonOverwrite`.
+- **GLB modeller:** 300 KB'a kadar kendi içinde (Draco, meshopt, Basis ve
+  dış bağlantı yok) GLB; Proje panelinde Modeller grubu, sahneye sürükleme ve
+  Mesh Renderer'da Model alanı; sesle aynı depolama ("oyun dosyaları: ses ve
+  model"), Arcade kopyaları, remiksler ve HTML dışa aktarma.
+- **Ekran efektleri V2:** renk düzenleme (doygunluk, karşıtlık, parlaklık,
+  renk tonu, renk filtresi), kromatik sapma, pikselleştirme ve CRT (tarama
+  çizgileri, kavis) tek geçişte; betikten `ScreenEffects`, `Reset()` sahnenin
+  ayarına döner.
+- **Web paketi (ZIP · PWA):** Dışa aktar → Web paketi; index.html, oynatıcı,
+  game.json, `assets/` altında ses ve model dosyaları, manifest, service
+  worker, sahneden çizilen 192/512 px ve maskelenebilir simgeler, Türkçe ve
+  İngilizce README. HTTPS'te uygulama olarak yüklenir ve çevrim dışı oynanır;
+  diskten açılınca nasıl sunulacağını anlatır.
+- **Üç yeni şablon** (`templates/v5.ts`), Türkçe ve İngilizce, skor
+  tabloları ve başarımlarla:
+  - **Yıldız Düellosu** (2D, iki kişilik): Player Input ile tek klavyede iki
+    oyuncu, atılma trigger'ı olan Animator, SaveSystem'de galibiyetler, dil
+    düğmesi;
+  - **Zindan Kaçışı** (2D): Idle, Run, Jump, Fall ve Hurt durumlu Animator,
+    ilerlemeyi kaydeden bayraklar, hasarda ekran efektleri, en hızlı kaçış ve
+    altın tabloları;
+  - **Meteor Yağmuru** (2D, retro): CRT ve piksel seçenekleri (SaveSystem'de
+    hatırlanır, menü oyunu duraklatır), isabette kromatik sapma, puan tablosu;
+  - `engine-templates.test.mjs` üçünü de sanal girdi ve otomatik pilotla
+    oynatır.
+- Engine tanıtım sayfasında sürüm sekmeli "Yenilikler" (V5 · V4 · Ekim
+  şablonları · V3); motor belgelerinde yeni bölümler (yerel çok oyunculu,
+  Animator, oyunun dilleri, 3D modeller, skor tabloları ve başarımlar) ve
+  güncellenen yenilikler, başlangıç, bileşenler, yaşam döngüsü, ekran
+  efektleri, kayıt, yayınlama, Unity'den farklar, sınırlar ve sorunlar
+  bölümleri; kılavuz, SSS, AI bilgi tabanı ve Hanogt AI ajanı ("düello",
+  "zindan", "meteor") V5'i anlatır.
+- Gizlilik Politikası, KVKK metni ve Kullanım Şartları 5.3.
+
 ## 0.3.26 — 2026-10-06
 
 ### Hanogt Engine V4

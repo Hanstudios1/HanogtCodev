@@ -12,8 +12,8 @@ import { LANGUAGE_STATS } from "@/lib/runtimes/languages";
 
 const PAGE_COPY = {
     subtitle: {
-        TR: "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V4 ile oyun yap, Hanogt AI ve toplulukla üret.",
-        EN: "With a free account you can write code in {count} languages, build games with Hanogt Engine V4 and create with Hanogt AI and the community.",
+        TR: "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V5 ile oyun yap, Hanogt AI ve toplulukla üret.",
+        EN: "With a free account you can write code in {count} languages, build games with Hanogt Engine V5 and create with Hanogt AI and the community.",
     },
     passwordRules: {
         TR: "Şifre en az 10 karakter olmalı ve en az bir harf ile bir rakam içermelidir.",

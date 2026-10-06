@@ -1,23 +1,31 @@
-/** Hanogt Engine V4 and V3 feature lists and the October template update, shown in the hub and in the docs. */
+/** Hanogt Engine V5, V4 and V3 feature lists and the October template update, shown in the hub and in the docs. */
 import {
     Activity,
     ArrowRightLeft,
+    Box,
     Clapperboard,
     CloudFog,
     Eye,
     Footprints,
     Gamepad2,
     Grid3x3,
+    Languages,
     LayoutTemplate,
     Link2,
     MousePointerClick,
     Music,
     Navigation,
+    PackageOpen,
+    Save,
     ScrollText,
     SlidersHorizontal,
     Timer,
+    Trophy,
+    Tv,
+    Users,
     Video,
     Waypoints,
+    Workflow,
     type LucideIcon,
 } from "lucide-react";
 import type { Copy } from "@/lib/i18n";
@@ -29,6 +37,90 @@ export interface WhatsNewItem {
     /** Docs section that explains the feature. */
     section: string;
 }
+
+export const V5_FEATURES: WhatsNewItem[] = [
+    {
+        icon: Workflow,
+        title: { TR: "Animator durum makinesi", EN: "Animator state machine" },
+        text: {
+            TR: "Durumlar, parametreler ve geçişlerle karakter animasyonu: Idle, Run, Jump… Betik yalnızca SetFloat, SetBool ve SetTrigger der; hangi klibin oynayacağını grafik seçer. Oyun çalışırken geçerli durum canlı vurgulanır.",
+            EN: "Character animation with states, parameters and transitions: Idle, Run, Jump… Scripts only call SetFloat, SetBool and SetTrigger; the graph picks the clip. The current state lights up live while the game runs.",
+        },
+        section: "animator",
+    },
+    {
+        icon: Trophy,
+        title: { TR: "Skor tabloları ve başarımlar", EN: "Leaderboards and achievements" },
+        text: {
+            TR: "Leaderboard.Submit ve Achievements.Unlock ile Arcade'de oyuncu başına en iyi skor ve açılan başarımlar. Sınırlar, en kısa oynama süresi ve hız sınırı sunucuda denetlenir.",
+            EN: "Leaderboard.Submit and Achievements.Unlock keep each player's best score and unlocked achievements in the Arcade. Bounds, a minimum play time and rate limits are checked on the server.",
+        },
+        section: "skor-tablolari",
+    },
+    {
+        icon: Languages,
+        title: { TR: "Oyununu çevir", EN: "Translate your game" },
+        text: {
+            TR: "Dil tablosu, Localization.Get ve UI öğelerinde dil anahtarı: oyun oyuncunun dilinde açılır. Çevirmenler için CSV ile dışa ve içe aktarma.",
+            EN: "A string table, Localization.Get and localization keys on UI elements: the game opens in the player's language. CSV export and import for translators.",
+        },
+        section: "diller",
+    },
+    {
+        icon: Users,
+        title: { TR: "Yerel çok oyunculu", EN: "Local multiplayer" },
+        text: {
+            TR: "Aynı ekranda en fazla 4 oyuncu: Player Input ile klavyenin iki yarısı ve gamepad'ler. Her oyuncunun karakteri ve betikleri yalnızca kendi tuşlarını okur.",
+            EN: "Up to 4 players on one screen: Player Input splits the keyboard in two halves and adds gamepads. Each player's character and scripts read only their own controls.",
+        },
+        section: "cok-oyunculu",
+    },
+    {
+        icon: Save,
+        title: { TR: "SaveSystem ve JsonUtility", EN: "SaveSystem and JsonUtility" },
+        text: {
+            TR: "Kendi sınıflarını tek satırla kaydet ve geri yükle: listeler, sözlükler ve vektörler dahil. 20 kayıt yuvası, kayıt zamanı ve son kayıt.",
+            EN: "Save and load your own classes in one line, lists, dictionaries and vectors included. 20 save slots, save times and the latest save.",
+        },
+        section: "kayit",
+    },
+    {
+        icon: Box,
+        title: { TR: "3D modeller (GLB)", EN: "3D models (GLB)" },
+        text: {
+            TR: "Blender ya da başka araçlardan GLB modeller yükle; kendi malzemeleri ve dokularıyla sahnede, yayınlanan oyunda ve dışa aktarılan pakette görünür.",
+            EN: "Upload GLB models from Blender or other tools; they show with their own materials and textures in the scene, in published games and in exported packages.",
+        },
+        section: "modeller",
+    },
+    {
+        icon: Tv,
+        title: { TR: "Ekran efektleri V2", EN: "Screen effects V2" },
+        text: {
+            TR: "Renk düzenleme, renk filtresi, kromatik sapma, pikselleştirme ve CRT ekran. ScreenEffects ile oyun sırasında değiştir; ScreenEffects.Reset() sahnenin ayarına döndürür.",
+            EN: "Color grading, tint, chromatic aberration, pixelation and a CRT screen. Change them during the game with ScreenEffects; ScreenEffects.Reset() returns to the scene's own look.",
+        },
+        section: "ortam",
+    },
+    {
+        icon: PackageOpen,
+        title: { TR: "Web paketi (ZIP · PWA)", EN: "Web package (ZIP · PWA)" },
+        text: {
+            TR: "Oyununu kendi sitende yayınla: tek ZIP'te sayfa, oynatıcı, sesler, modeller, simgeler ve uygulama olarak yüklenebilen, çevrim dışı da açılan bir PWA.",
+            EN: "Host your game on your own site: one ZIP with the page, player, sounds, models and icons, an installable PWA that also opens offline.",
+        },
+        section: "yayinlama",
+    },
+    {
+        icon: LayoutTemplate,
+        title: { TR: "Üç yeni şablon", EN: "Three new templates" },
+        text: {
+            TR: "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru: Türkçe ve İngilizce, skor tabloları ve başarımlarla V5 özelliklerini gösteren oyunlar.",
+            EN: "Star Duel (two players), Dungeon Escape and Meteor Storm: games in Turkish and English, with leaderboards and achievements, that show off the V5 features.",
+        },
+        section: "baslarken",
+    },
+];
 
 export const V4_FEATURES: WhatsNewItem[] = [
     {

@@ -5,14 +5,14 @@ import Link from "next/link";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { API_MEMBERS, TYPE_MEMBERS } from "@/components/GameEngine/editor/completions";
 import { engineLocale } from "@/components/GameEngine/editor/text";
-import { V3_FEATURES, V4_FEATURES, type WhatsNewItem } from "@/components/GameEngine/whats-new";
+import { V3_FEATURES, V4_FEATURES, V5_FEATURES, type WhatsNewItem } from "@/components/GameEngine/whats-new";
 import { FIRST_GAME } from "./first-game";
 import { ENGINE_VERSION } from "@/lib/game-engine/types";
 import { useI18n } from "@/lib/i18n";
 
 /** Section anchors stay the same in every language so shared links keep working. */
 const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
-    { id: "yenilikler", tr: "V4'te yenilikler", en: "What's new in V4" },
+    { id: "yenilikler", tr: "V5'te yenilikler", en: "What's new in V5" },
     { id: "baslarken", tr: "Başlarken", en: "Getting started" },
     { id: "ilk-oyun", tr: "İlk oyunun: adım adım", en: "Your first game, step by step" },
     { id: "editor", tr: "Editör", en: "The editor" },
@@ -21,6 +21,7 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "cpp", tr: "C++ ile script", en: "Scripting in C++" },
     { id: "yasam-dongusu", tr: "Yaşam döngüsü", en: "Lifecycle" },
     { id: "girdi", tr: "Girdi, giriş eylemleri ve gamepad", en: "Input, input actions and gamepads" },
+    { id: "cok-oyunculu", tr: "Yerel çok oyunculu", en: "Local multiplayer" },
     { id: "fizik", tr: "Fizik ve çarpışmalar", en: "Physics and collisions" },
     { id: "karakter", tr: "Character Controller 2D", en: "Character Controller 2D" },
     { id: "kamera", tr: "Kamera takibi ve sarsıntı", en: "Camera follow and shake" },
@@ -30,13 +31,17 @@ const SECTIONS: Array<{ id: string; tr: string; en: string }> = [
     { id: "prefab", tr: "Prefab, Instantiate, Destroy", en: "Prefabs, Instantiate, Destroy" },
     { id: "coroutine", tr: "Coroutine ve Invoke", en: "Coroutines and Invoke" },
     { id: "animasyon", tr: "Animasyon, Tween ve Timer", en: "Animation, Tween and Timer" },
+    { id: "animator", tr: "Animator durum makinesi", en: "Animator state machine" },
     { id: "sahneler", tr: "Sahneler", en: "Scenes" },
     { id: "ui-ses", tr: "UI, HUD ve ses", en: "UI, HUD and sound" },
     { id: "ui-kontroller", tr: "Kaydırıcı, anahtar ve metin kutusu", en: "Sliders, toggles and input fields" },
+    { id: "diller", tr: "Oyunun dilleri", en: "Game languages" },
     { id: "ses-dosyalari", tr: "Ses dosyaları ve müzik", en: "Audio files and music" },
+    { id: "modeller", tr: "3D modeller (GLB)", en: "3D models (GLB)" },
     { id: "ortam", tr: "Ortam ve ekran efektleri", en: "Environment and screen effects" },
-    { id: "kayit", tr: "Kayıt (PlayerPrefs)", en: "Saving (PlayerPrefs)" },
+    { id: "kayit", tr: "Kayıt: PlayerPrefs ve SaveSystem", en: "Saving: PlayerPrefs and SaveSystem" },
     { id: "yayinlama", tr: "Yayınlama ve dışa aktarma", en: "Publishing and exporting" },
+    { id: "skor-tablolari", tr: "Skor tabloları ve başarımlar", en: "Leaderboards and achievements" },
     { id: "api", tr: "API referansı", en: "API reference" },
     { id: "farklar", tr: "Unity'den farklar", en: "Differences from Unity" },
     { id: "guvenlik", tr: "Güvenlik ve sınırlar", en: "Security and limits" },
@@ -116,7 +121,7 @@ function Tip({ children }: { children: ReactNode }) {
     return <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4 text-[14px] text-zinc-700 dark:text-zinc-300">💡 {children}</div>;
 }
 
-function WhatsNewList({ tr, items = V4_FEATURES }: { tr: boolean; items?: WhatsNewItem[] }) {
+function WhatsNewList({ tr, items = V5_FEATURES }: { tr: boolean; items?: WhatsNewItem[] }) {
     return (
         <ul className="grid gap-3 sm:grid-cols-2">
             {items.map((feature) => {
@@ -154,20 +159,22 @@ function ApiReference() {
 function DocsTR() {
     return (
         <>
-                            <Section id="yenilikler" title="V4'te yenilikler">
-                                <p>Hanogt Engine V4; gamepad destekli giriş eylemleri, hazır karakter denetleyicisi, kamera takibi, A* yol bulma, eklemler, yeni arayüz kontrolleri, ses dosyaları ve müzik, çoklu seçim ve İzle paneliyle geliyor. Önceki sürümlerle kaydedilen projeler açıldığında V4 biçimine taşınır ve verileriniz korunur; davranışı değişen yerlerde (ör. bilinmeyen ses adları için uyarı, <K>AddComponent&lt;Slider&gt;()</K>) eski oyunlar V3 kurallarıyla çalışmaya devam eder.</p>
+                            <Section id="yenilikler" title="V5'te yenilikler">
+                                <p>Hanogt Engine V5; Animator durum makinesi, Arcade skor tabloları ve başarımlar, oyun içi çeviri, aynı ekranda dört oyuncuya kadar yerel çok oyunculu, SaveSystem ile kayıt yuvaları, GLB 3D modeller, yeni ekran efektleri ve kendi sitenizde yayınlayabileceğiniz web paketiyle geliyor. Önceki sürümlerle kaydedilen projeler açıldığında V5 biçimine taşınır ve verileriniz korunur; davranışı değişen yerlerde (ör. <K>GetComponent&lt;Animator&gt;()</K> ve <K>CrossFade</K>) eski oyunlar kendi sürümlerinin kurallarıyla çalışmaya devam eder.</p>
                                 <WhatsNewList tr />
+                                <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">V4 ile gelenler</h3>
+                                <WhatsNewList tr items={V4_FEATURES} />
                                 <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">V3 ile gelenler</h3>
                                 <WhatsNewList tr items={V3_FEATURES} />
                             </Section>
 
                             <Section id="baslarken" title="Başlarken">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: V4 ile gelen Gök Kulesi, Labirent Avı ve Sapan Ustası; Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++); V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu; ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
+                                    <li><Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Oyun Motoru</Link> sayfasını açın ve bir şablon seçin: V5 ile gelen Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru; V4 ile gelen Gök Kulesi, Labirent Avı ve Sapan Ustası; Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++); V3 ile gelen Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu; ya da 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma veya boş proje.</li>
                                     <li>Giriş yaptıysanız proje hesabınıza (bulut) kaydedilir; misafir olarak oluşturulan projeler bu tarayıcıda (IndexedDB) saklanır.</li>
                                     <li>Üstteki <b>▶ Oynat</b> düğmesi (Ctrl+P) oyunu editörün içinde çalıştırır. Durdurduğunuzda sahne oynatmadan önceki haline döner.</li>
                                     <li>Scriptlere çift tıklayarak kod editörünü açın; değişiklikler otomatik derlenir, hatalar satır satır gösterilir.</li>
-                                    <li>Hazır olduğunuzda <b>Yayınla</b> ile Arcade&apos;e gönderin veya <b>Dışa aktar → Oynanabilir HTML</b> ile tek dosyalık oyun indirin.</li>
+                                    <li>Hazır olduğunuzda <b>Yayınla</b> ile Arcade&apos;e gönderin, <b>Dışa aktar → Web paketi (ZIP · PWA)</b> ile kendi sitenizde yayınlayın ya da <b>Dışa aktar → Oynanabilir HTML</b> ile tek dosyalık oyun indirin.</li>
                                 </ol>
                                 <Tip>Şablonlardaki her script, Unity derslerindeki gibi yazılmıştır ve yorum satırlarıyla açıklanmıştır. Öğrenmenin en hızlı yolu bir şablonu açıp değerleri değiştirmektir.</Tip>
                                 <Tip>Takıldığınızda <Link href="/ai" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Hanogt AI</Link>&apos;a sorun: Hanogt Engine için C# veya C++ script yazar, hata mesajlarını açıklar; Ajan modunda izninizle şablondan oyun projesi de oluşturur.</Tip>
@@ -229,7 +236,7 @@ function DocsTR() {
                                 <Table head={["Bileşen", "Açıklama"]} rows={[
                                     ["Transform", "Konum, dönüş ve ölçek. Ebeveyn-çocuk ilişkisi hiyerarşiden gelir."],
                                     ["Sprite Renderer", "2D şekil (kare, daire, üçgen, yuvarlatılmış kare, elmas, altıgen, yıldız) veya yüklenen görsel; renk, saydamlık, sıralama, çevirme. Görsel bir sprite sheet ise sütun × satır sayısı ve gösterilecek kare seçilir."],
-                                    ["Mesh Renderer", "3D ilkel (küp, küre, düzlem, kapsül, silindir, koni, torus) ve PBR materyal: renk, metalik, pürüzlülük, ışıma, doku ve döşeme."],
+                                    ["Mesh Renderer", "3D ilkel (küp, küre, düzlem, kapsül, silindir, koni, torus) ve PBR materyal: renk, metalik, pürüzlülük, ışıma, doku ve döşeme. Model alanında seçilen GLB modeli ilkel şeklin yerine gösterilir."],
                                     ["Camera", "Perspektif veya ortografik. Main Camera işaretli ve aktif olan kamera oyunu gösterir."],
                                     ["Light", "Yönlü, nokta veya spot ışık; renk, yoğunluk, menzil ve gölgeler."],
                                     ["Rigidbody / Rigidbody 2D", "Dinamik, kinematik veya statik gövde; kütle, yerçekimi, sürtünme, eksen kilitleme."],
@@ -243,11 +250,13 @@ function DocsTR() {
                                     ["UI Progress Bar", "Can, yükleme veya ilerleme çubuğu: değer, en küçük/en büyük, yön, renkler ve yüzde etiketi."],
                                     ["Tilemap", "Karo ızgarası: palet, karo başına çarpışma, tetikleyici modu ve doku atlası. Sahnede fırçayla boyanır."],
                                     ["Animation", "Anahtar kare klipleri: konum, dönüş, ölçek, renk, saydamlık ve sprite karesi; yumuşatma eğrileri ve tekrar modları."],
+                                    ["Animator", "Animation kliplerini durumlara bağlayan durum makinesi: parametreler, geçişler, Her Durum ve çıkış zamanı. Grafiği alt paneldeki Animator sekmesinde düzenlenir."],
                                     ["Character Controller 2D", "Hazır platform karakteri: koşma, çift zıplama, coyote süresi, zıplama tamponu, eğimler ve hareketli platformlar."],
                                     ["Camera Follow", "Kamerayı bir hedefin peşinden yumuşakça götürür; ölü bölge, ileri bakış ve sınırlar."],
                                     ["Nav Agent 2D", "Duvarların etrafından A* yoluyla bir hedefe ya da noktaya yürür."],
                                     ["Distance / Spring Joint", "İki nesneyi sabit mesafede ya da yayla bağlar."],
                                     ["UI Slider · UI Toggle · UI Input Field", "Sürüklenen kaydırıcı, açma-kapama anahtarı ve gerçek metin kutusu."],
+                                    ["Player Input", "Nesnenin hangi oyuncuya (1–4) ait olduğunu ve o oyuncunun klavye yarısını ya da gamepad'ini seçer."],
                                 ]} />
                             </Section>
 
@@ -325,6 +334,9 @@ button->onClick.AddListener([this]() { Debug::Log("Tıklandı"); });`}</Code>
                                     [<K key="g">OnDisable() / OnDestroy()</K>, "Bileşen devre dışı kalınca / nesne yok edilince."],
                                     [<K key="h">OnApplicationQuit()</K>, "Oyun durdurulurken."],
                                     [<K key="i">OnAnimationComplete(string clip)</K>, "Nesnedeki Animation bileşeninde \"Bir kez\" oynayan bir klip bittiğinde."],
+                                    [<K key="j">OnStateEnter(string state) / OnStateExit(string state)</K>, "Nesnenin Animator'ı bir duruma girince / bir durumdan çıkınca."],
+                                    [<K key="k">OnLanguageChanged(string language)</K>, "Oyunun dili değişince (Localization); betiğin yazdığı metinleri yenilemek için."],
+                                    [<K key="l">OnAchievementUnlocked(string id)</K>, "Bir başarım ilk kez açılınca (Achievements.Unlock)."],
                                 ]} />
                                 <p>Çarpışma ve fare olayları: <K>OnCollisionEnter/Stay/Exit</K>, <K>OnTriggerEnter/Stay/Exit</K> (2D için sonuna <K>2D</K> ekleyin), <K>OnMouseDown/Up/Enter/Exit/Over/Drag</K>.</p>
                             </Section>
@@ -352,6 +364,30 @@ if (Input.GetButton("Fire1")) Shoot();
 if (Input.GetButtonDown("Dash")) Dash();     // Ayarlar → Girdi'de eklediğiniz eylem
 string[] pads = Input.GetJoystickNames();    // bağlı gamepad'ler`}</Code>
                                 <p>Gamepad&apos;ler tarayıcının Gamepad API&apos;siyle okunur (Xbox ve PlayStation düzeni); tarayıcı bir gamepad&apos;i ancak bir düğmesine basılınca bildirir. Çubukların <b>ölü bölgesi</b> Girdi sekmesinden ayarlanır. Mobilde, proje ayarlarında açıksa ekranda yön tuşları ve A/B düğmeleri gösterilir; bunlar gamepad&apos;in d-pad&apos;i ve A/X düğmeleri gibi davranır, eylemleri değiştirseniz de çalışmaya devam eder.</p>
+                            </Section>
+
+                            <Section id="cok-oyunculu" title="Yerel çok oyunculu">
+                                <p>Aynı ekranda en fazla dört kişi oynayabilir. Her oyuncunun karakterine <b>Bileşen ekle → Input → Player Input</b> ekleyip oyuncu numarasını seçin. O nesnedeki Character Controller 2D ve betiklerdeki <K>GetComponent&lt;PlayerInput&gt;()</K> yalnızca o oyuncunun girdisini okur; eylemler (Horizontal, Jump, Fire1…) herkes için aynıdır, kod da aynı kalır.</p>
+                                <Table head={["Kontrol şeması", "Oyuncunun kullandıkları"]} rows={[
+                                    ["Otomatik", "1. oyuncu: bütün klavye, fare, dokunmatik düğmeler ve gamepad'i. Diğer oyuncular: yalnızca kendi gamepad'leri."],
+                                    ["Klavyenin solu (WASD)", "WASD, Space, sol Shift/Ctrl/Alt ve fare. Tek klavyede iki kişi oynarken 1. oyuncu."],
+                                    ["Klavyenin sağı (oklar)", "Oklar, Enter ve sağ Shift/Ctrl/Alt. Tek klavyede iki kişi oynarken 2. oyuncu."],
+                                    ["Bütün klavye ve fare", "Klavyenin tamamı, fare, dokunmatik düğmeler ve seçilen gamepad."],
+                                    ["Yalnızca gamepad", "Yalnızca seçilen gamepad (1–4)."],
+                                ]} />
+                                <p>Bir eylemin o yarıda tuşu yoksa karşılığı kullanılır: WASD ↔ oklar, Space ↔ Enter, sol ↔ sağ Shift/Ctrl/Alt. Inspector&apos;daki <b>Bu oyuncunun kontrolleri</b> listesi her eylemin bu oyuncu için hangi tuşa düştüğünü gösterir.</p>
+                                <Code>{`PlayerInput input = GetComponent<PlayerInput>();
+
+void Update()
+{
+    float move = input.GetAxisRaw("Horizontal");   // yalnızca bu oyuncunun tuşları
+    if (input.GetButtonDown("Jump")) Dash();
+    Debug.Log("Oyuncu " + input.player + " · " + input.currentControlScheme);
+}
+
+int pads = PlayerInput.gamepadCount;               // bağlı gamepad sayısı
+PlayerInput second = PlayerInput.GetPlayerByIndex(1);`}</Code>
+                                <p>Projede Player Input yoksa her şey eskisi gibi çalışır: <K>Input.GetAxis</K> bütün aygıtları birlikte okur. Yıldız Düellosu şablonu iki oyuncunun tek klavyede nasıl ayrıldığını gösterir.</p>
                             </Section>
 
                             <Section id="fizik" title="Fizik ve çarpışmalar">
@@ -541,6 +577,36 @@ var income = Timer.Every(1f, () => gold += workers);   // her saniye
 income.Cancel();
 Timer.CancelAll();                                     // bu script'in tüm zamanlayıcıları`}</Code>
                                 <p>Tween&apos;ler ve zamanlayıcılar oyun zamanıyla ilerler; <K>Time.timeScale = 0</K> iken dururlar. Script&apos;in nesnesi yok edilince zamanlayıcıları da iptal edilir.</p>
+                                <p>Klipler arasında parametrelere göre geçiş yapan karakterler için <a href="#animator" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Animator</a> bölümüne bakın.</p>
+                            </Section>
+
+                            <Section id="animator" title="Animator durum makinesi">
+                                <p><b>Animator</b>, nesnenin Animation bileşenindeki klipleri <b>durumlara</b> bağlar ve hangisinin oynayacağına <b>parametrelere</b> bakarak kendisi karar verir. Betik yalnızca &quot;hız şu kadar&quot;, &quot;yerde mi&quot; ya da &quot;saldırdı&quot; der; <K>Play(&quot;Run&quot;)</K> çağırmanız gerekmez. <b>Bileşen ekle → Effects → Animator</b> ile ekleyin (nesnede Animation yoksa o da eklenir); Inspector&apos;daki <b>Kliplerden durum oluştur</b> her klip için bir durum açar. Grafik alt paneldeki <b>Animator</b> sekmesinde düzenlenir: bir durumun kenarındaki noktadan diğerine sürükleyince geçiş oluşur.</p>
+                                <Table head={["Parça", "Ne yapar?"]} rows={[
+                                    ["Parametreler", "bool, float, int ve trigger değerleri. Betik SetBool, SetFloat, SetInteger ve SetTrigger ile değiştirir; bir geçiş trigger'ı kullanınca trigger kendiliğinden sıfırlanır."],
+                                    ["Durumlar", "Her durum bir klibi kendi hızıyla oynatır. Varsayılan durum, oyun başlayınca girilen durumdur."],
+                                    ["Geçişler", "Koşulların hepsi sağlanınca bir durumdan diğerine geçer. Koşulsuz bir geçiş klip çıkış zamanına gelince olur (ör. Hurt bitince Idle). Geçiş süresi iki klibi yumuşakça karıştırır."],
+                                    ["Her Durum (Any State)", "O an hangi durum çalışırsa çalışsın geçebilen geçişler; hasar ya da ölüm gibi her an olabilecek şeyler için. Önce bunlara bakılır."],
+                                ]} />
+                                <Code>{`Animator animator = GetComponent<Animator>();
+
+void Update()
+{
+    animator.SetFloat("speed", Mathf.Abs(body.velocity.x));  // Idle ↔ Run
+    animator.SetBool("grounded", controller.isGrounded);     // Jump / Fall → Idle
+    if (Input.GetButtonDown("Fire1")) animator.SetTrigger("attack");
+}
+
+// Animator yeni bir duruma girince çağrılır (çıkarken OnStateExit).
+void OnStateEnter(string state)
+{
+    if (state == "Hurt") Audio.Play("hit");
+}
+
+bool running = animator.GetCurrentAnimatorStateInfo(0).IsName("Run");
+animator.CrossFade("Victory", 0.2f);   // geçişleri beklemeden bir duruma karışarak geç`}</Code>
+                                <p>Oyun çalışırken Animator sekmesi geçerli durumu canlı vurgular; parametreleri oradan değiştirip geçişleri deneyebilirsiniz. Zindan Kaçışı şablonundaki kahraman Idle, Run, Jump, Fall ve Hurt durumlarıyla eksiksiz bir örnektir.</p>
+                                <Tip>Hasar gibi kısa bir durumun yarıda kesilmemesi için ona Her Durum&apos;dan bir trigger ile girin ve çıkışını koşulsuz bırakın (çıkış zamanıyla); zıplama ve düşme geçişlerini de Her Durum yerine yer durumlarından (Idle, Run) başlatın.</Tip>
                             </Section>
 
                             <Section id="sahneler" title="Sahneler">
@@ -611,6 +677,27 @@ void Start()
                                 <p>Metin kutusu gerçek bir yazı alanıdır: telefonda ekran klavyesi açılır, yazarken oyunun tuşları çalışmaz, Enter yazmayı bitirir. <b>Content Type</b> yalnızca rakam, harf ve rakam ya da e-posta gibi sınırlar koyar (<K>IntegerNumber</K>, <K>Alphanumeric</K>, <K>EmailAddress</K>…). Eski projelerdeki Progress Bar da script&apos;te <K>Slider</K> olarak bulunur; V4 kurallarıyla <K>AddComponent&lt;Slider&gt;()</K> gerçek bir kaydırıcı ekler.</p>
                             </Section>
 
+                            <Section id="diller" title="Oyunun dilleri">
+                                <p><b>Ayarlar → Diller</b> sekmesinde oyuna dil ekleyin (tr, en, de, pt-BR…) ve metinleri bir kez, bir <b>anahtar</b> adıyla yazın. İlk eklenen dil <b>ana dil</b>dir: çevirisi eksik metinlerin yerine o gösterilir. <b>Başlangıç dili</b> otomatikse oyun, oyuncunun site ya da tarayıcı dilinde açılır; oyunda o dil yoksa ana dilde.</p>
+                                <ul className="list-disc space-y-2 ps-5">
+                                    <li>UI Text ve UI Button&apos;daki <b>Dil anahtarı</b> alanına bir anahtar yazınca metin kendiliğinden çevrilir ve dil değişince güncellenir.</li>
+                                    <li>Betikler metni <K>Localization.Get(&quot;anahtar&quot;)</K> ile okur. Metindeki <K>{"{0}"}</K>, <K>{"{1}"}</K> yerlerine verilen değerler yazılır (string.Format gibi).</li>
+                                    <li><b>CSV olarak indir</b> ile tabloyu Excel ya da Google E-Tablolar&apos;da çevirmenlerle paylaşın; <b>CSV yükle</b> var olan anahtarları günceller, yenilerini ekler.</li>
+                                </ul>
+                                <Code>{`// Tabloda: coins = "Altın: {0}/{1}" (tr), "Gold: {0}/{1}" (en)
+coinText.text = Localization.Get("coins", gold, total);
+
+Localization.language = "en";            // ya da Localization.SetLanguage("en")
+string[] codes = Localization.languages; // oyunun dilleri
+
+// Dil değişince betiğin kendi yazdığı metinleri yenileyin.
+void OnLanguageChanged(string language)
+{
+    UpdateTexts();
+}`}</Code>
+                                <p>Bir oyunda en fazla 16 dil ve 2000 anahtar olabilir. V5 şablonlarının üçü de Türkçe ve İngilizce gelir; oyun içi dil düğmesi için Yıldız Düellosu&apos;na bakın.</p>
+                            </Section>
+
                             <Section id="ses-dosyalari" title="Ses dosyaları ve müzik">
                                 <p>Proje panelindeki <b>Sesler</b> grubuna WAV, MP3 ya da OGG dosyası yükleyin (dosya başına en fazla 300 KB, projede en fazla 40 dosya). Giriş yaptıysanız dosyalar hesabınızın <b>ses kitaplığına</b> kaydedilir ve planınızın ses depolama alanına sayılır (Ücretsiz 5 MB, Plus 25 MB, Pro 100 MB; aynı dosya birden çok projede bir kez sayılır). Misafir projelerinin sesleri bu tarayıcıda saklanır.</p>
                                 <Code>{`Audio.Play("Patlama");                  // yüklenen dosya, adıyla
@@ -631,6 +718,17 @@ source.Play();`}</Code>
                                 <Tip>Yalnızca kullanma hakkınız olan sesleri yükleyin: kendi kayıtlarınız ya da lisansı buna izin veren müzik ve efektler. Kitaplığınızı Sesler grubundaki kitaplık düğmesinden yönetebilir, kullanmadığınız dosyaları silip yer açabilirsiniz.</Tip>
                             </Section>
 
+                            <Section id="modeller" title="3D modeller (GLB)">
+                                <p>Proje panelinin <b>Modeller</b> grubundaki <b>Model yükle (.glb)</b> ile Blender ya da başka bir araçtan dışa aktarılmış bir GLB dosyası ekleyin. Modeli sahneye sürükleyin ya da <b>Sahneye ekle</b>&apos;ye basın; var olan bir nesnede Mesh Renderer&apos;ın <b>Model</b> alanından da seçebilirsiniz. Model kendi malzemeleri ve dokularıyla görünür.</p>
+                                <ul className="list-disc space-y-2 ps-5">
+                                    <li>Bir model en fazla 300 KB olabilir ve dokuları dosyanın içinde olmalıdır. Projede en fazla 40 model bulunur.</li>
+                                    <li>Draco, meshopt ve Basis Universal (KTX2) sıkıştırmaları desteklenmez; dışa aktarırken bu seçenekleri kapatın.</li>
+                                    <li>Modeller durağandır: iskelet ve model içindeki animasyonlar oynatılmaz. Hareket için Transform, Tween ya da Animation kullanın; çarpışma için nesneye bir Collider ekleyin.</li>
+                                    <li>Giriş yaptıysanız modeller hesabınızın oyun dosyalarında saklanır ve sesler gibi planınızın depolama alanına sayılır. Arcade&apos;de yayınlanan oyunlarda, Oynanabilir HTML&apos;de ve web paketinde de bulunurlar.</li>
+                                </ul>
+                                <Tip>Modeli küçültmek için Blender&apos;da Decimate değiştiricisini kullanın ve dokuları 512 ya da 1024 piksele indirin.</Tip>
+                            </Section>
+
                             <Section id="ortam" title="Ortam ve ekran efektleri">
                                 <p><b>Ayarlar → Sahne ayarları</b> penceresinde her sahnenin arka planı (düz renk veya gökyüzü geçişi), ortam ışığı, sisi ve ekran efektleri ayarlanır.</p>
                                 <Table head={["Ayar", "Etkisi"]} rows={[
@@ -639,11 +737,23 @@ source.Play();`}</Code>
                                     ["Parlama (bloom)", "Eşiği aşan parlak pikseller (ör. ışıma değeri yüksek materyaller) çevresine ışık saçar. Güç, eşik ve yarıçap ayarlanır."],
                                     ["Vinyet", "Ekran kenarlarını karartarak gözü ortaya çeker."],
                                     ["Pozlama", "Tüm görüntünün parlaklığı."],
+                                    ["Renk düzenleme", "Doygunluk, karşıtlık, parlaklık ve renk tonu kaydırma; renk filtresi bütün görüntüyü seçilen renge boyar."],
+                                    ["Kromatik sapma", "Kenarlara doğru kırmızı ve mavi kanalları ayırır; darbe ve hasar anları için."],
+                                    ["Pikselleştirme", "Görüntüyü iri piksellere böler (2–32 piksel); retro oyunlar için."],
+                                    ["CRT ekran", "Eski tüplü ekran görünümü: tarama çizgileri ve ekran kavisi."],
                                 ]} />
+                                <p>V5 ile betikler bu efektleri oyun sırasında <K>ScreenEffects</K> ile değiştirebilir. Sahne yeniden yüklenince ya da <K>ScreenEffects.Reset()</K> çağrılınca sahnenin kendi ayarları geri gelir.</p>
+                                <Code>{`ScreenEffects.chromaticAberration = 0.8f;              // hasar anı
+ScreenEffects.tint = new Color(1f, 0.1f, 0.1f, 0.35f);  // saydamlık = filtre gücü
+ScreenEffects.saturation = -1f;                        // siyah-beyaz
+ScreenEffects.pixelate = 4;                            // 1 = kapalı
+ScreenEffects.crt = true;
+Timer.After(0.35f, () => ScreenEffects.Reset());       // sahnenin kendi ayarına dön`}</Code>
                                 <Tip>Sis rengini gökyüzü geçişinin alt rengiyle aynı yapın; uzaktaki nesneler ufka karışır. Sahne görünümündeki ✨ düğmesi efektleri düzenlerken de gösterir.</Tip>
                             </Section>
 
-                            <Section id="kayit" title="Kayıt (PlayerPrefs)">
+                            <Section id="kayit" title="Kayıt: PlayerPrefs ve SaveSystem">
+                                <p>Ayarlar ve rekorlar gibi küçük değerler için <b>PlayerPrefs</b>:</p>
                                 <Code>{`int best = PlayerPrefs.GetInt("best", 0);
 if (score > best) PlayerPrefs.SetInt("best", score);
 PlayerPrefs.SetString("name", "Han");
@@ -651,13 +761,58 @@ PlayerPrefs.SetBool("muted", true);
 bool muted = PlayerPrefs.GetBool("muted", false);
 PlayerPrefs.DeleteKey("name");`}</Code>
                                 <p>Değerler oyunu oynayan kişinin tarayıcısında, her proje için ayrı saklanır (en fazla 64 KB).</p>
+                                <p>Oyunun bütün durumunu kaydetmek için <b>SaveSystem</b>: kendi sınıfınızı <K>[System.Serializable]</K> ile işaretleyin, tek satırla bir <b>kayıt yuvasına</b> yazın ve geri okuyun. Public ve <K>[SerializeField]</K> alanlar kaydedilir; listeler, diziler, sözlükler, Vector2/3, Color ve iç içe sınıflar da olur. Sahnedeki nesnelere (GameObject, Transform) olan bağlar kaydedilemez; onların yerine adlarını kaydedin.</p>
+                                <Code>{`[System.Serializable]
+public class SaveData
+{
+    public int level;
+    public Vector3 checkpoint;
+    public List<string> items = new List<string>();
+}
+
+SaveSystem.Save("slot1", data);                                      // JSON olarak yazar
+SaveData loaded = SaveSystem.Load<SaveData>("slot1");                 // yoksa null
+SaveData safe = SaveSystem.Load<SaveData>("slot1", new SaveData());  // yoksa varsayılan
+if (SaveSystem.Exists("slot1")) { }
+string latest = SaveSystem.GetLatestSlot();                           // "Devam et" düğmesi için
+SaveSystem.Delete("slot1");
+
+string json = JsonUtility.ToJson(data, true);                         // okunaklı JSON
+SaveData copy = JsonUtility.FromJson<SaveData>(json);`}</Code>
+                                <p>Bir oyunun en fazla 20 yuvası olabilir; bir yuva en fazla 256 KB, hepsi birlikte 512 KB tutar. Kayıtlar da PlayerPrefs gibi oyuncunun tarayıcısında durur. Zindan Kaçışı ilerlemeyi bayraklarda böyle kaydeder, Meteor Yağmuru da görüntü seçeneklerini.</p>
                             </Section>
 
                             <Section id="yayinlama" title="Yayınlama ve dışa aktarma">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir ve beğenebilir; <b>Remikslemelere izin ver</b>&apos;i açarsanız kopyasını alıp kendi sürümlerini de yapabilirler (remiksin sayfasında oyununuza bağlantı görünür). Oyun kartında oyunun yapıldığı motor sürümü (ör. V4) görünür; oyunun ses dosyaları yayınla birlikte saklanır. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
+                                    <li><b>Arcade&apos;de yayınla:</b> Bulut projeleri için. Oyun derlenir ve güvenlik taramasından geçer; herkese açık bağlantı oluşur. Oyuncular oynayabilir ve beğenebilir; <b>Remikslemelere izin ver</b>&apos;i açarsanız kopyasını alıp kendi sürümlerini de yapabilirler (remiksin sayfasında oyununuza bağlantı görünür). Oyun kartında oyunun yapıldığı motor sürümü (ör. V5) görünür; oyunun ses ve model dosyaları yayınla birlikte saklanır, skor tabloları ve başarımlar oyunun sayfasında görünür. İstediğiniz zaman yayından kaldırabilirsiniz.</li>
                                     <li><b>Oynanabilir HTML:</b> Oyunu, motoru ve ses dosyalarını tek bir .html dosyasına paketler; internet olmadan açılır, istediğiniz yerde barındırabilirsiniz.</li>
+                                    <li><b>Web paketi (ZIP · PWA):</b> Oyunu kendi sitenizde ya da GitHub Pages, Netlify gibi bir statik barındırmada yayınlamak için. ZIP; sayfayı, oynatıcıyı, oyun verisini, ses ve model dosyalarını, simgeleri, uygulama bilgilerini (manifest) ve çevrim dışı oynamayı sağlayan service worker&apos;ı içerir. HTTPS üzerinden açılan oyun telefonda ve bilgisayarda uygulama olarak yüklenebilir, bir kez açıldıktan sonra internetsiz de oynanır. itch.io&apos;da yeni bir HTML oyununa ZIP&apos;i olduğu gibi yükleyebilirsiniz. index.html&apos;e çift tıklamak işe yaramaz; içindeki README.txt bilgisayarınızda nasıl deneyeceğinizi anlatır.</li>
                                     <li><b>Proje dosyası (.json):</b> Yedekleme ve başka hesaba/tarayıcıya taşıma için.</li>
+                                </ul>
+                            </Section>
+
+                            <Section id="skor-tablolari" title="Skor tabloları ve başarımlar">
+                                <p><b>Ayarlar → Arcade</b> sekmesinde oyunun skor tablolarını (en fazla 5) ve başarımlarını (en fazla 30) tanımlayın. Her birinin bir <b>kimliği</b> (ör. <K>score</K>, <K>first-win</K>) ve oyunculara görünen bir adı vardır. Oyun Arcade&apos;de yayınlanınca giriş yapan oyuncuların en iyi skorları ve açtıkları başarımlar saklanır; tablolar oyunun sayfasında, oyunun yanında görünür.</p>
+                                <Code>{`Leaderboard.Submit("score", score);       // oyuncunun en iyisinden iyiyse kaydedilir
+float best = Leaderboard.GetBest("score");
+Achievements.Unlock("first-win");         // ilk seferde açılır, sonra bir şey yapmaz
+if (Achievements.IsUnlocked("collector")) { }
+
+void OnAchievementUnlocked(string id)
+{
+    HUD.Show(Achievements.GetName(id), 2f);
+}`}</Code>
+                                <Table head={["Tablo ayarı", "Anlamı"]} rows={[
+                                    ["Sıralama", "Yüksek skor önde (puan) ya da düşük skor önde (süre)."],
+                                    ["Gösterim", "Sayı (12.500) ya da süre (1:23.45); süreler saniye olarak gönderilir."],
+                                    ["En düşük / en yüksek skor", "Bu aralığın dışındaki skorlar sayılmaz. Oyunda gerçekten ulaşılabilecek sınırları yazın."],
+                                    ["En az oynama", "Oyun başladıktan bu kadar saniye geçmeden gelen skor kabul edilmez."],
+                                ]} />
+                                <ul className="list-disc space-y-2 ps-5">
+                                    <li>Sunucu her skoru tablonun sınırlarına ve en kısa oynama süresine göre denetler, gönderimleri de sınırlar. Skorlar yine de oyuncunun tarayıcısından geldiği için tablolarda <b>doğrulanmamış</b> yazar; yapımcı tek tek kayıtları ya da bütün tabloyu silebilir.</li>
+                                    <li>Giriş yapmamış oyuncuların en iyileri ve başarımları yalnızca o cihazda tutulur. Oyuncular <b>Skorlarımı tabloda paylaş</b> seçimini kapatabilir ya da kendi skorlarını kaldırabilir.</li>
+                                    <li>Editörde ve dışa aktarılan oyunlarda bir şey kaydedilmez: editör olanı Konsol&apos;a yazar, dışa aktarılan oyun değerleri açık kaldığı sürece tutar.</li>
+                                    <li>Bir tabloyu kaldırıp ya da sıralamasını değiştirip yeniden yayınlarsanız o tablonun skorları sıfırlanır.</li>
                                 </ul>
                             </Section>
 
@@ -673,7 +828,10 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     <li>Katman maskeleri (LayerMask) ve <K>IgnoreCollision</K> yok sayılır; bunun yerine etiket ve tetikleyici kullanın.</li>
                                     <li>UI olarak Text, Button, Panel/Image, Progress Bar, Slider, Toggle ve Input Field vardır; Canvas düzen bileşenleri (Layout Group, Scroll View, Dropdown) yoktur. Sahnedeki nesneleri tıklanabilir yapmak için <K>OnMouseDown</K> kullanın.</li>
                                     <li>NavMesh yerine 2D ızgarada A* kullanılır (Nav Agent 2D); 3D projelerde ajanlar hedefe düz çizgide yürür. Eklemlerden Distance ve Spring vardır; Hinge, Slider ve Wheel eklemleri yoktur.</li>
-                                    <li>Animation bileşeni, Animator durum makinesi yerine basit bir klip oynatıcısıdır; <K>SetTrigger(&quot;Zıpla&quot;)</K> aynı adlı klibi oynatır.</li>
+                                    <li>Animator tek katmanlıdır: blend tree, katmanlar, avatar maskeleri ve IK yoktur. Animator&apos;ı olmayan bir nesnede <K>GetComponent&lt;Animator&gt;()</K> Animation bileşenini verir ve <K>SetTrigger(&quot;Zıpla&quot;)</K> aynı adlı klibi oynatır (V4&apos;teki gibi).</li>
+                                    <li>3D modeller yalnızca GLB olarak ve durağan yüklenir: iskelet, morph ve model içindeki animasyonlar oynatılmaz.</li>
+                                    <li>Yerel çok oyunculu için Input System paketinin PlayerInputManager&apos;ı yoktur; oyuncular sahnede Player Input bileşeniyle önceden yerleştirilir. Çevrim içi çok oyunculu yoktur.</li>
+                                    <li>Oyun içi çeviri, Unity&apos;nin Localization paketindeki String Table&apos;ların sade bir karşılığıdır: tek tablo, <K>Localization.Get</K> ve UI&apos;da dil anahtarı. SaveSystem Unity&apos;de olmayan bir kolaylıktır; JsonUtility Unity&apos;dekinden farklı olarak sözlükleri de kaydeder.</li>
                                     <li>Scriptler gerçek .NET/C++ derleyicisi yerine güvenli bir yorumlayıcıda çalışır; ağ, dosya ve tarayıcı API&apos;lerine erişemez.</li>
                                 </ul>
                             </Section>
@@ -682,7 +840,8 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>Script yorumlayıcısı DOM&apos;a, ağa, çerezlere veya dosyalara erişemez; her çağrının komut bütçesi vardır. Sonsuz döngüler oyunu dondurmaz, ilgili script devre dışı bırakılır ve konsola yazılır.</li>
                                     <li>Proje içeriği en fazla 900 KB (dokular dahil), script başına 160 KB, 64 script, 24 sahne ve sahne başına 1000 nesne olabilir; bir tilemap en fazla 512 × 256 hücre içerir. Yüklenen görseller otomatik küçültülür.</li>
-                                    <li>Ses dosyaları dosya başına en fazla 300 KB ve projede en fazla 40 dosya olabilir; hesabınızdaki toplam ses depolama alanı planınıza göredir (Ücretsiz 5 MB / 30 dosya, Plus 25 MB / 150 dosya, Pro 100 MB / 600 dosya).</li>
+                                    <li>Ses dosyaları ve GLB modeller dosya başına en fazla 300 KB olabilir; bir projede en fazla 40 ses ve 40 model bulunur. Hesabınızdaki toplam oyun dosyası depolama alanı (ses ve model) planınıza göredir (Ücretsiz 5 MB / 30 dosya, Plus 25 MB / 150 dosya, Pro 100 MB / 600 dosya).</li>
+                                    <li>SaveSystem oyun başına 20 yuva, yuva başına 256 KB ve toplam 512 KB tutar; bir oyunda en fazla 16 dil ve 2000 dil anahtarı, 5 skor tablosu ve 30 başarım olabilir. Skorlar sunucuda tablonun sınırlarına, en kısa oynama süresine ve gönderim sınırına göre denetlenir.</li>
                                     <li>Arcade&apos;e yayınlanan oyunlar herkese açıktır. Kişisel veri, parola veya gizli anahtar paylaşmayın; kurallara aykırı içerik kaldırılır.</li>
                                 </ul>
                             </Section>
@@ -700,6 +859,10 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     ["Tuşlar oyunda çalışmıyor.", "Odak bir yazı alanında (ör. script editöründe) olabilir. Oyun görünümüne bir kez tıklayın."],
                                     ["Arcade'de yayınla düğmesi kullanılamıyor.", "Yayınlamak için giriş yapıp projeyi buluta kaydetmeniz gerekir; misafir projeleri yalnızca bu tarayıcıda durur."],
                                     ["“Proje başka bir sekmede/cihazda değişti” uyarısı.", "Sayfayı yenileyip güncel sürümü yükleyin. Bu sekmedeki değişiklikleri kaybetmemek için önce Dışa aktar → Proje dosyası (.json) ile yedek alın."],
+                                    ["Animator durum değiştirmiyor.", "Alt paneldeki Animator sekmesini açıp oyunu çalıştırın: geçerli durum ve parametreler canlı görünür. Betikteki parametre adı Animator'dakiyle birebir aynı olmalı (büyük-küçük harf dahil); bilinmeyen adlar Konsol'da uyarı verir."],
+                                    ["Skor tabloya düşmüyor.", "Skorlar yalnızca Arcade'de, giriş yapmış oyuncular için kaydedilir; editörde Konsol'a yazılır. Skor tablonun en düşük–en yüksek aralığında olmalı ve oyun en az oynama süresi kadar açık kalmalı. Konsol'da “skor tablonun sınırlarının dışında” uyarısı varsa aralığı Ayarlar → Arcade'den düzeltin."],
+                                    ["Model yüklenmiyor (“sıkıştırılmış” ya da “çok büyük”).", "Modeli GLB olarak, Draco ya da meshopt sıkıştırması olmadan ve dokuları içinde olacak biçimde yeniden dışa aktarın. 300 KB'ı geçiyorsa Blender'da Decimate ile sadeleştirip dokuları küçültün."],
+                                    ["Web paketindeki index.html çift tıklayınca açılmıyor.", "Tarayıcılar dosyadan (file://) açılan sayfaların oyun dosyalarını yüklemesine izin vermez. Klasörü bir web sunucusuna yükleyin ya da klasörde npx serve . veya python3 -m http.server çalıştırıp gösterilen adresi açın."],
                                 ]} />
                                 <Tip>Çözüm bulamadınız mı? Hata mesajını <Link href="/ai" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Hanogt AI</Link>&apos;a yapıştırın ya da <Link href="/feedback" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Geri Bildirim ve Destek</Link> sayfasından bize yazın.</Tip>
                             </Section>
@@ -710,20 +873,22 @@ PlayerPrefs.DeleteKey("name");`}</Code>
 function DocsEN() {
     return (
         <>
-                            <Section id="yenilikler" title="What's new in V4">
-                                <p>Hanogt Engine V4 brings input actions with gamepad support, a ready-made character controller, camera follow, A* path finding, joints, new UI controls, audio files and music, multi-selection and the Watch panel. Projects saved with earlier versions are migrated to the V4 format when you open them and none of your data is lost; where behavior changed (for example the warning for unknown sound names, or <K>AddComponent&lt;Slider&gt;()</K>), older games keep running with the V3 rules.</p>
+                            <Section id="yenilikler" title="What's new in V5">
+                                <p>Hanogt Engine V5 brings the Animator state machine, Arcade leaderboards and achievements, in-game translations, local multiplayer for up to four players on one screen, save slots with SaveSystem, GLB 3D models, new screen effects and a web package you can host on your own site. Projects saved with earlier versions are migrated to the V5 format when you open them and none of your data is lost; where behavior changed (for example <K>GetComponent&lt;Animator&gt;()</K> and <K>CrossFade</K>), older games keep running with the rules of their own version.</p>
                                 <WhatsNewList tr={false} />
+                                <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">Shipped with V4</h3>
+                                <WhatsNewList tr={false} items={V4_FEATURES} />
                                 <h3 className="pt-4 text-[13px] font-black uppercase tracking-wider text-zinc-500">Shipped with V3</h3>
                                 <WhatsNewList tr={false} items={V3_FEATURES} />
                             </Section>
 
                             <Section id="baslarken" title="Getting started">
                                 <ol className="list-decimal space-y-2 ps-5">
-                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: Sky Tower, Maze Hunt and Slingshot Master from V4; Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++); Tilemap Adventure, Clicker Factory and Foggy Runner from V3; or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
+                                    <li>Open the <Link href="/game-engine" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Game Engine</Link> page and pick a template: Star Duel (two players), Dungeon Escape and Meteor Storm from V5; Sky Tower, Maze Hunt and Slingshot Master from V4; Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++); Tilemap Adventure, Clicker Factory and Foggy Runner from V3; or 2D Platformer, 3D Roll-a-Ball, Space Shooter, Brick Breaker or an empty project.</li>
                                     <li>When you are signed in, the project is saved to your account (cloud); projects created as a guest are stored in this browser (IndexedDB).</li>
                                     <li>The <b>▶ Play</b> button at the top (Ctrl+P) runs the game inside the editor. When you stop, the scene returns to how it was before you pressed Play.</li>
                                     <li>Double-click a script to open the code editor; changes are compiled automatically and errors are shown line by line.</li>
-                                    <li>When you are ready, send it to the Arcade with <b>Publish</b>, or download a single-file game with <b>Export → Playable HTML</b>.</li>
+                                    <li>When you are ready, send it to the Arcade with <b>Publish</b>, host it on your own site with <b>Export → Web package (ZIP · PWA)</b>, or download a single-file game with <b>Export → Playable HTML</b>.</li>
                                 </ol>
                                 <Tip>Every template script is written like a Unity tutorial and explained with comments. The fastest way to learn is to open a template and start changing values.</Tip>
                                 <Tip>Stuck? Ask <Link href="/ai" className="font-semibold text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">Hanogt AI</Link>: it writes C# or C++ scripts for Hanogt Engine and explains error messages, and in Agent mode it can even create a game project from a template with your permission.</Tip>
@@ -785,7 +950,7 @@ function DocsEN() {
                                 <Table head={["Component", "Description"]} rows={[
                                     ["Transform", "Position, rotation and scale. Parent-child relationships come from the hierarchy."],
                                     ["Sprite Renderer", "A 2D shape (square, circle, triangle, rounded square, diamond, hexagon, star) or an uploaded image; color, opacity, sorting order and flipping. When the image is a sprite sheet, set its columns × rows and pick the frame to show."],
-                                    ["Mesh Renderer", "A 3D primitive (cube, sphere, plane, capsule, cylinder, cone, torus) with a PBR material: color, metallic, roughness, emission, texture and tiling."],
+                                    ["Mesh Renderer", "A 3D primitive (cube, sphere, plane, capsule, cylinder, cone, torus) with a PBR material: color, metallic, roughness, emission, texture and tiling. A GLB model picked in its Model field is shown instead of the primitive."],
                                     ["Camera", "Perspective or orthographic. The active camera marked Main Camera shows the game."],
                                     ["Light", "Directional, point or spot light; color, intensity, range and shadows."],
                                     ["Rigidbody / Rigidbody 2D", "Dynamic, kinematic or static body; mass, gravity, drag and axis constraints."],
@@ -799,11 +964,13 @@ function DocsEN() {
                                     ["UI Progress Bar", "Health, loading or progress bars: value, min/max, direction, colors and a percentage label."],
                                     ["Tilemap", "A grid of tiles: palette, per-tile collision, trigger mode and a texture atlas. Painted with a brush in the scene."],
                                     ["Animation", "Keyframe clips for position, rotation, scale, color, opacity and sprite frame, with easing curves and wrap modes."],
+                                    ["Animator", "A state machine that ties Animation clips to states: parameters, transitions, Any State and exit times. Its graph is edited in the Animator tab of the bottom panel."],
                                     ["Character Controller 2D", "A ready-made platformer character: running, double jump, coyote time, jump buffering, slopes and moving platforms."],
                                     ["Camera Follow", "Moves the camera after a target smoothly, with a dead zone, look-ahead and bounds."],
                                     ["Nav Agent 2D", "Walks to a target or a point along an A* path around walls."],
                                     ["Distance / Spring Joint", "Ties two objects at a fixed distance or with a spring."],
                                     ["UI Slider · UI Toggle · UI Input Field", "A draggable slider, an on/off switch and a real text box."],
+                                    ["Player Input", "Picks the player (1–4) an object belongs to and that player's half of the keyboard or gamepad."],
                                 ]} />
                             </Section>
 
@@ -881,6 +1048,9 @@ button->onClick.AddListener([this]() { Debug::Log("Clicked"); });`}</Code>
                                     [<K key="g">OnDisable() / OnDestroy()</K>, "When the component is disabled / the object is destroyed."],
                                     [<K key="h">OnApplicationQuit()</K>, "When the game is stopped."],
                                     [<K key="i">OnAnimationComplete(string clip)</K>, "When a clip that plays \"Once\" in the object's Animation component finishes."],
+                                    [<K key="j">OnStateEnter(string state) / OnStateExit(string state)</K>, "When the object's Animator enters / leaves a state."],
+                                    [<K key="k">OnLanguageChanged(string language)</K>, "When the game's language changes (Localization), to refresh the texts the script writes."],
+                                    [<K key="l">OnAchievementUnlocked(string id)</K>, "When an achievement unlocks for the first time (Achievements.Unlock)."],
                                 ]} />
                                 <p>Collision and mouse events: <K>OnCollisionEnter/Stay/Exit</K>, <K>OnTriggerEnter/Stay/Exit</K> (add <K>2D</K> at the end for 2D), <K>OnMouseDown/Up/Enter/Exit/Over/Drag</K>.</p>
                             </Section>
@@ -908,6 +1078,30 @@ if (Input.GetButton("Fire1")) Shoot();
 if (Input.GetButtonDown("Dash")) Dash();     // an action you added in Settings → Input
 string[] pads = Input.GetJoystickNames();    // connected gamepads`}</Code>
                                 <p>Gamepads are read with the browser&apos;s Gamepad API (Xbox and PlayStation layouts); browsers only report a gamepad once one of its buttons is pressed. The sticks&apos; <b>dead zone</b> is set in the Input tab. On phones, when enabled in the project settings, on-screen arrow keys and A/B buttons are shown; they act as the gamepad&apos;s d-pad and A/X buttons and keep working when you change the actions.</p>
+                            </Section>
+
+                            <Section id="cok-oyunculu" title="Local multiplayer">
+                                <p>Up to four people can play on one screen. Give each player&apos;s character <b>Add component → Input → Player Input</b> and pick its player number. That object&apos;s Character Controller 2D and <K>GetComponent&lt;PlayerInput&gt;()</K> in its scripts read only that player&apos;s input; the actions (Horizontal, Jump, Fire1…) are the same for everyone, and so is the code.</p>
+                                <Table head={["Control scheme", "What the player uses"]} rows={[
+                                    ["Auto", "Player 1: the whole keyboard, the mouse, the touch buttons and their gamepad. Other players: only their own gamepad."],
+                                    ["Left of the keyboard (WASD)", "WASD, Space, left Shift/Ctrl/Alt and the mouse. Player 1 when two people share a keyboard."],
+                                    ["Right of the keyboard (arrows)", "The arrows, Enter and right Shift/Ctrl/Alt. Player 2 when two people share a keyboard."],
+                                    ["Whole keyboard and mouse", "The whole keyboard, the mouse, the touch buttons and the chosen gamepad."],
+                                    ["Gamepad only", "Only the chosen gamepad (1–4)."],
+                                ]} />
+                                <p>When an action has no key on a player&apos;s half, its counterpart is used: WASD ↔ arrows, Space ↔ Enter, left ↔ right Shift/Ctrl/Alt. The <b>This player&apos;s controls</b> list in the Inspector shows which key each action lands on for that player.</p>
+                                <Code>{`PlayerInput input = GetComponent<PlayerInput>();
+
+void Update()
+{
+    float move = input.GetAxisRaw("Horizontal");   // only this player's keys
+    if (input.GetButtonDown("Jump")) Dash();
+    Debug.Log("Player " + input.player + " · " + input.currentControlScheme);
+}
+
+int pads = PlayerInput.gamepadCount;               // connected gamepads
+PlayerInput second = PlayerInput.GetPlayerByIndex(1);`}</Code>
+                                <p>Without a Player Input in the project everything works as before: <K>Input.GetAxis</K> reads every device together. The Star Duel template shows two players sharing one keyboard.</p>
                             </Section>
 
                             <Section id="fizik" title="Physics and collisions">
@@ -1097,6 +1291,36 @@ var income = Timer.Every(1f, () => gold += workers);   // every second
 income.Cancel();
 Timer.CancelAll();                                     // every timer of this script`}</Code>
                                 <p>Tweens and timers run on game time, so they pause while <K>Time.timeScale = 0</K>. A script&apos;s timers are cancelled when its object is destroyed.</p>
+                                <p>For characters that switch clips based on parameters, see the <a href="#animator" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Animator</a> section.</p>
+                            </Section>
+
+                            <Section id="animator" title="Animator state machine">
+                                <p>The <b>Animator</b> ties the clips of the object&apos;s Animation component to <b>states</b> and decides which one plays by looking at its <b>parameters</b>. Scripts only say &quot;the speed is this much&quot;, &quot;on the ground or not&quot; or &quot;attacked&quot;; you don&apos;t call <K>Play(&quot;Run&quot;)</K> yourself. Add it with <b>Add component → Effects → Animator</b> (it brings an Animation component when the object has none); <b>States from clips</b> in the Inspector creates a state for every clip. The graph is edited in the <b>Animator</b> tab of the bottom panel: drag from the dot on a state&apos;s edge to another state to make a transition.</p>
+                                <Table head={["Part", "What it does"]} rows={[
+                                    ["Parameters", "bool, float, int and trigger values. Scripts change them with SetBool, SetFloat, SetInteger and SetTrigger; a trigger resets itself when a transition uses it."],
+                                    ["States", "Each state plays a clip at its own speed. The default state is the one entered when the game starts."],
+                                    ["Transitions", "Move from one state to another once all their conditions hold. A transition without conditions happens when the clip reaches its exit time (for example Idle after Hurt). The blend time cross-fades the two clips."],
+                                    ["Any State", "Transitions that can leave whatever state is playing, for things that can happen at any moment such as getting hit or dying. They are checked first."],
+                                ]} />
+                                <Code>{`Animator animator = GetComponent<Animator>();
+
+void Update()
+{
+    animator.SetFloat("speed", Mathf.Abs(body.velocity.x));  // Idle ↔ Run
+    animator.SetBool("grounded", controller.isGrounded);     // Jump / Fall → Idle
+    if (Input.GetButtonDown("Fire1")) animator.SetTrigger("attack");
+}
+
+// Called when the Animator enters a state (OnStateExit when it leaves one).
+void OnStateEnter(string state)
+{
+    if (state == "Hurt") Audio.Play("hit");
+}
+
+bool running = animator.GetCurrentAnimatorStateInfo(0).IsName("Run");
+animator.CrossFade("Victory", 0.2f);   // blend into a state without waiting for transitions`}</Code>
+                                <p>While the game runs, the Animator tab highlights the current state live; change parameters there to try the transitions. The hero of the Dungeon Escape template, with its Idle, Run, Jump, Fall and Hurt states, is a complete example.</p>
+                                <Tip>To keep a short state such as Hurt from being cut off, enter it from Any State with a trigger and leave it without conditions (on its exit time); start the jump and fall transitions from the ground states (Idle, Run) rather than from Any State.</Tip>
                             </Section>
 
                             <Section id="sahneler" title="Scenes">
@@ -1167,6 +1391,27 @@ void Start()
                                 <p>The input field is a real text box: phones open their on-screen keyboard, game keys pause while typing and Enter finishes editing. <b>Content Type</b> limits what can be typed (<K>IntegerNumber</K>, <K>Alphanumeric</K>, <K>EmailAddress</K>…). The Progress Bar of older projects is also found as a <K>Slider</K> in scripts; under V4 rules <K>AddComponent&lt;Slider&gt;()</K> adds a real slider.</p>
                             </Section>
 
+                            <Section id="diller" title="Game languages">
+                                <p>In <b>Settings → Languages</b>, add languages to the game (tr, en, de, pt-BR…) and write every text once, under a <b>key</b>. The first language is the <b>main language</b>: it stands in for missing translations. When the <b>start language</b> is on auto, the game opens in the player&apos;s site or browser language, or in the main language when the game doesn&apos;t have it.</p>
+                                <ul className="list-disc space-y-2 ps-5">
+                                    <li>Type a key into the <b>Localization key</b> field of a UI Text or UI Button and its text is translated by itself, updating when the language changes.</li>
+                                    <li>Scripts read texts with <K>Localization.Get(&quot;key&quot;)</K>. The values you pass fill <K>{"{0}"}</K>, <K>{"{1}"}</K> in the text (like string.Format).</li>
+                                    <li>Share the table with translators in Excel or Google Sheets with <b>Download as CSV</b>; <b>Import CSV</b> updates existing keys and adds new ones.</li>
+                                </ul>
+                                <Code>{`// In the table: coins = "Altın: {0}/{1}" (tr), "Gold: {0}/{1}" (en)
+coinText.text = Localization.Get("coins", gold, total);
+
+Localization.language = "en";            // or Localization.SetLanguage("en")
+string[] codes = Localization.languages; // the game's languages
+
+// Refresh the texts the script writes itself when the language changes.
+void OnLanguageChanged(string language)
+{
+    UpdateTexts();
+}`}</Code>
+                                <p>A game can have up to 16 languages and 2000 keys. All three V5 templates come in Turkish and English; see Star Duel for an in-game language button.</p>
+                            </Section>
+
                             <Section id="ses-dosyalari" title="Audio files and music">
                                 <p>Upload WAV, MP3 or OGG files to the <b>Audio</b> group of the Project panel (up to 300 KB each and 40 per project). When you are signed in, files are saved to your account&apos;s <b>audio library</b> and count against your plan&apos;s audio storage (Free 5 MB, Plus 25 MB, Pro 100 MB; a file used in several projects counts once). Guest projects keep their sounds in this browser.</p>
                                 <Code>{`Audio.Play("Explosion1");               // an uploaded file, by name
@@ -1187,6 +1432,17 @@ source.Play();`}</Code>
                                 <Tip>Only upload sounds you have the right to use: your own recordings, or music and effects whose license allows it. Manage your library with the library button of the Audio group and delete files you don&apos;t use to free space.</Tip>
                             </Section>
 
+                            <Section id="modeller" title="3D models (GLB)">
+                                <p>Add a GLB file exported from Blender or another tool with <b>Upload model (.glb)</b> in the <b>Models</b> group of the Project panel. Drag the model into the scene or press <b>Add to scene</b>; on an existing object, pick it in the <b>Model</b> field of its Mesh Renderer. The model shows with its own materials and textures.</p>
+                                <ul className="list-disc space-y-2 ps-5">
+                                    <li>A model can be up to 300 KB with its textures inside the file. A project holds up to 40 models.</li>
+                                    <li>Draco, meshopt and Basis Universal (KTX2) compression aren&apos;t supported; turn those options off when you export.</li>
+                                    <li>Models are static: skeletons and animations inside the file aren&apos;t played. Move them with the Transform, Tween or Animation, and add a Collider to the object for collisions.</li>
+                                    <li>When you are signed in, models are kept in your account&apos;s game files and count toward your plan&apos;s storage like sounds. They travel with games published on the Arcade, with Playable HTML and with the web package.</li>
+                                </ul>
+                                <Tip>To shrink a model, use Blender&apos;s Decimate modifier and scale its textures down to 512 or 1024 pixels.</Tip>
+                            </Section>
+
                             <Section id="ortam" title="Environment and screen effects">
                                 <p>Under <b>Settings → Scene settings</b> you set each scene&apos;s background (a solid color or a sky gradient), ambient light, fog and screen effects.</p>
                                 <Table head={["Setting", "Effect"]} rows={[
@@ -1195,11 +1451,23 @@ source.Play();`}</Code>
                                     ["Bloom", "Pixels brighter than the threshold (for example strongly emissive materials) spill light around them. Intensity, threshold and radius are adjustable."],
                                     ["Vignette", "Darkens the edges of the screen to pull the eye to the center."],
                                     ["Exposure", "The brightness of the whole image."],
+                                    ["Color grading", "Saturation, contrast, brightness and hue shift; the tint washes the whole image with a color."],
+                                    ["Chromatic aberration", "Splits the red and blue channels toward the edges, for hits and moments of damage."],
+                                    ["Pixelate", "Breaks the image into big pixels (2–32 pixels), for retro games."],
+                                    ["CRT screen", "The look of an old tube screen: scanlines and a curved screen."],
                                 ]} />
+                                <p>With V5, scripts can change these effects during the game with <K>ScreenEffects</K>. Reloading the scene or calling <K>ScreenEffects.Reset()</K> brings back the scene&apos;s own settings.</p>
+                                <Code>{`ScreenEffects.chromaticAberration = 0.8f;              // a moment of damage
+ScreenEffects.tint = new Color(1f, 0.1f, 0.1f, 0.35f);  // alpha = tint amount
+ScreenEffects.saturation = -1f;                        // black and white
+ScreenEffects.pixelate = 4;                            // 1 = off
+ScreenEffects.crt = true;
+Timer.After(0.35f, () => ScreenEffects.Reset());       // back to the scene's own look`}</Code>
                                 <Tip>Give the fog the same color as the bottom of the sky gradient so far-away objects melt into the horizon. The ✨ button in the Scene view shows the effects while you edit.</Tip>
                             </Section>
 
-                            <Section id="kayit" title="Saving (PlayerPrefs)">
+                            <Section id="kayit" title="Saving: PlayerPrefs and SaveSystem">
+                                <p><b>PlayerPrefs</b> for small values such as settings and high scores:</p>
                                 <Code>{`int best = PlayerPrefs.GetInt("best", 0);
 if (score > best) PlayerPrefs.SetInt("best", score);
 PlayerPrefs.SetString("name", "Han");
@@ -1207,13 +1475,58 @@ PlayerPrefs.SetBool("muted", true);
 bool muted = PlayerPrefs.GetBool("muted", false);
 PlayerPrefs.DeleteKey("name");`}</Code>
                                 <p>Values are stored in the player&apos;s browser, separately for each project (up to 64 KB).</p>
+                                <p><b>SaveSystem</b> saves the whole state of a game: mark your own class with <K>[System.Serializable]</K>, then write it to a <b>save slot</b> and read it back in one line. Public and <K>[SerializeField]</K> fields are saved, including lists, arrays, dictionaries, Vector2/3, Color and nested classes. References to scene objects (GameObject, Transform) can&apos;t be saved; save their names instead.</p>
+                                <Code>{`[System.Serializable]
+public class SaveData
+{
+    public int level;
+    public Vector3 checkpoint;
+    public List<string> items = new List<string>();
+}
+
+SaveSystem.Save("slot1", data);                                      // writes JSON
+SaveData loaded = SaveSystem.Load<SaveData>("slot1");                 // null if missing
+SaveData safe = SaveSystem.Load<SaveData>("slot1", new SaveData());  // default if missing
+if (SaveSystem.Exists("slot1")) { }
+string latest = SaveSystem.GetLatestSlot();                           // for a Continue button
+SaveSystem.Delete("slot1");
+
+string json = JsonUtility.ToJson(data, true);                         // pretty JSON
+SaveData copy = JsonUtility.FromJson<SaveData>(json);`}</Code>
+                                <p>A game can have up to 20 slots; one slot holds up to 256 KB and all of them together 512 KB. Saves live in the player&apos;s browser, like PlayerPrefs. Dungeon Escape saves progress at its flags this way, and Meteor Storm its display options.</p>
                             </Section>
 
                             <Section id="yayinlama" title="Publishing and exporting">
                                 <ul className="list-disc space-y-2 ps-5">
-                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play and like it, and remix it if you turn on <b>Allow remixes</b>. The game card shows the engine version it was made with (for example V4), and the game&apos;s audio files are kept with the publication. You can unpublish it any time.</li>
+                                    <li><b>Publish on the Arcade:</b> for cloud projects. The game is compiled and goes through a security scan, and a public link is created. Players can play and like it, and remix it if you turn on <b>Allow remixes</b>. The game card shows the engine version it was made with (for example V5); the game&apos;s sound and model files are kept with the publication, and its leaderboards and achievements show on its page. You can unpublish it any time.</li>
                                     <li><b>Playable HTML:</b> packs the game, the engine and its audio files into a single .html file that opens without an internet connection; host it anywhere you like.</li>
+                                    <li><b>Web package (ZIP · PWA):</b> for hosting the game on your own site or a static host such as GitHub Pages or Netlify. The ZIP holds the page, the player, the game data, the sound and model files, icons, the app details (manifest) and a service worker for offline play. Served over HTTPS, the game can be installed as an app on phones and computers and plays offline once it has been opened. On itch.io, upload the ZIP as it is to a new HTML game. Double-clicking index.html doesn&apos;t work; the README.txt inside explains how to try it on your computer.</li>
                                     <li><b>Project file (.json):</b> for backups and for moving a project to another account or browser.</li>
+                                </ul>
+                            </Section>
+
+                            <Section id="skor-tablolari" title="Leaderboards and achievements">
+                                <p>In <b>Settings → Arcade</b>, define the game&apos;s leaderboards (up to 5) and achievements (up to 30). Each has an <b>id</b> (for example <K>score</K> or <K>first-win</K>) and a name players see. Once the game is published on the Arcade, the best scores and unlocked achievements of signed-in players are kept, and the leaderboards show next to the game on its page.</p>
+                                <Code>{`Leaderboard.Submit("score", score);       // kept when it beats the player's best
+float best = Leaderboard.GetBest("score");
+Achievements.Unlock("first-win");         // unlocks the first time, then does nothing
+if (Achievements.IsUnlocked("collector")) { }
+
+void OnAchievementUnlocked(string id)
+{
+    HUD.Show(Achievements.GetName(id), 2f);
+}`}</Code>
+                                <Table head={["Leaderboard setting", "Meaning"]} rows={[
+                                    ["Ranking", "Higher is better (points) or lower is better (time)."],
+                                    ["Shown as", "A number (12,500) or a time (1:23.45); times are sent in seconds."],
+                                    ["Lowest / highest score", "Scores outside this range don't count. Write the limits that can really be reached in the game."],
+                                    ["Min. play", "A score sent sooner than this many seconds after the game started isn't accepted."],
+                                ]} />
+                                <ul className="list-disc space-y-2 ps-5">
+                                    <li>The server checks every score against the leaderboard&apos;s bounds and minimum play time, and limits how often scores are sent. Scores still come from the player&apos;s browser, so leaderboards say <b>unverified</b>, and the author can remove single entries or clear a whole board.</li>
+                                    <li>The bests and achievements of players who aren&apos;t signed in are kept on that device only. Players can turn off <b>Share my scores on the board</b> or remove their own scores.</li>
+                                    <li>Nothing is stored in the editor or in exported games: the editor writes what would happen to the Console, and an exported game keeps the values while it stays open.</li>
+                                    <li>Removing a leaderboard or changing its ranking and republishing clears that leaderboard&apos;s scores.</li>
                                 </ul>
                             </Section>
 
@@ -1229,7 +1542,10 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     <li>Layer masks (LayerMask) and <K>IgnoreCollision</K> are ignored; use tags and triggers instead.</li>
                                     <li>The UI has Text, Button, Panel/Image, Progress Bar, Slider, Toggle and Input Field components; there are no Canvas layout components (Layout Group, Scroll View, Dropdown). Use <K>OnMouseDown</K> to make scene objects clickable.</li>
                                     <li>Path finding uses A* on a 2D grid instead of a NavMesh (Nav Agent 2D); in 3D projects agents walk to their target in a straight line. Distance and Spring joints are available; Hinge, Slider and Wheel joints are not.</li>
-                                    <li>The Animation component is a simple clip player rather than an Animator state machine; <K>SetTrigger(&quot;Jump&quot;)</K> plays the clip with the same name.</li>
+                                    <li>The Animator has a single layer: there are no blend trees, layers, avatar masks or IK. On an object without an Animator, <K>GetComponent&lt;Animator&gt;()</K> returns its Animation component and <K>SetTrigger(&quot;Jump&quot;)</K> plays the clip with the same name (as in V4).</li>
+                                    <li>3D models load as static GLB files only: skeletons, morphs and animations inside the file aren&apos;t played.</li>
+                                    <li>Local multiplayer has no PlayerInputManager from the Input System package; players are placed in the scene beforehand with Player Input components. There is no online multiplayer.</li>
+                                    <li>In-game translation is a lean take on the String Tables of Unity&apos;s Localization package: one table, <K>Localization.Get</K> and localization keys on UI. SaveSystem is a convenience Unity doesn&apos;t have, and unlike Unity&apos;s, JsonUtility also saves dictionaries.</li>
                                     <li>Scripts run in a safe interpreter instead of a real .NET/C++ compiler; they cannot reach the network, files or browser APIs.</li>
                                 </ul>
                             </Section>
@@ -1238,7 +1554,8 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                 <ul className="list-disc space-y-2 ps-5">
                                     <li>The script interpreter cannot reach the DOM, the network, cookies or files, and every call has an instruction budget. Infinite loops don&apos;t freeze the game: the script is disabled and the problem is logged to the console.</li>
                                     <li>Project content can be up to 900 KB (including textures), 160 KB per script, 64 scripts, 24 scenes and 1000 objects per scene; a tilemap holds up to 512 × 256 cells. Uploaded images are downscaled automatically.</li>
-                                    <li>Audio files can be up to 300 KB each and 40 per project; your account&apos;s total audio storage depends on your plan (Free 5 MB / 30 files, Plus 25 MB / 150 files, Pro 100 MB / 600 files).</li>
+                                    <li>Audio files and GLB models can be up to 300 KB each, with up to 40 sounds and 40 models per project. Your account&apos;s total game file storage (sounds and models) depends on your plan (Free 5 MB / 30 files, Plus 25 MB / 150 files, Pro 100 MB / 600 files).</li>
+                                    <li>SaveSystem keeps 20 slots per game, 256 KB per slot and 512 KB in total; a game can have up to 16 languages and 2000 localization keys, 5 leaderboards and 30 achievements. The server checks scores against the leaderboard&apos;s bounds, the minimum play time and a sending limit.</li>
                                     <li>Games published on the Arcade are public. Don&apos;t share personal data, passwords or secret keys; content that breaks the rules is removed.</li>
                                 </ul>
                             </Section>
@@ -1256,6 +1573,10 @@ PlayerPrefs.DeleteKey("name");`}</Code>
                                     ["Keys don't work in the game.", "The focus may be in a text field (such as the script editor). Click the game view once."],
                                     ["Publish to Arcade is unavailable.", "Sign in and save the project to the cloud to publish it; guest projects only live in this browser."],
                                     ["“This project changed in another tab or on another device.”", "Reload to get the latest version. To keep the changes made in this tab, first back them up with Export → Project file (.json)."],
+                                    ["The Animator doesn't change state.", "Open the Animator tab of the bottom panel and run the game: the current state and the parameters show live. Parameter names in scripts must match the Animator exactly (case included); unknown names show a warning in the Console."],
+                                    ["A score doesn't reach the leaderboard.", "Scores are only kept on the Arcade, for signed-in players; in the editor they are written to the Console. The score must be within the leaderboard's lowest–highest range and the game must stay open for the minimum play time. If the Console says the score is outside the leaderboard's bounds, fix the range in Settings → Arcade."],
+                                    ["A model won't upload (“compressed” or “too large”).", "Export it again as GLB without Draco or meshopt compression and with its textures inside. If it is over 300 KB, simplify it with Blender's Decimate and shrink its textures."],
+                                    ["The web package's index.html doesn't open when double-clicked.", "Browsers don't let pages opened from a file (file://) load the game's files. Upload the folder to a web host, or run npx serve . or python3 -m http.server in the folder and open the address it shows."],
                                 ]} />
                                 <Tip>Still stuck? Paste the error into <Link href="/ai" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Hanogt AI</Link> or write to us from the <Link href="/feedback" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">Feedback and Support</Link> page.</Tip>
                             </Section>

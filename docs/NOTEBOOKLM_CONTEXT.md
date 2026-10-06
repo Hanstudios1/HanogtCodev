@@ -67,17 +67,14 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 - Eğitim: `train_lora.py` ara kayıtları özel model deposuna yükler (`--hub-checkpoints`), süre sınırında durur ve sonraki oturumda sürer; `training/kaggle/hanogt_train_kaggle.ipynb` Kaggle'ın ücretsiz GPU'suyla eğitir.
 
-## Tarayıcı tabanlı oyun motoru (Hanogt Engine V3)
+## Tarayıcı tabanlı oyun motoru (Hanogt Engine V5)
 
-- V3: tilemap boyama ve karo çarpışmaları, UI bileşenleri, Animation/Tween/Timer, sis/bloom/vinyet ve yeni şablonlar; şema v3 ve eski projelerin kayıpsız taşınması.
-- Gösterge paneli Kod Projeleri ve Oyun Projeleri olarak ayrılmıştır.
-- Oyun projesi oluştururken 2D/3D türü seçilir ve şimdilik yalnız C# ile C++ script desteği açıkça bildirilir.
-- Nesne/bileşen tabanlı sahne modeli; Transform, Sprite/Mesh, Camera, Light, Collider, Rigidbody ve Script bileşenlerini destekler.
-- Hierarchy, Inspector, Assets/Console panelleri; seçme, taşıma, döndürme, ölçekleme, grid/zoom ve geri alma geçmişi vardır.
-- Play/pause/step/stop akışı gerçek `EngineLoop` ve basit fizik/dünya sınırı simülasyonuna bağlıdır.
-- Sahne verisi şema doğrulaması, boyut sınırı, sahiplik kontrolü ve revision tabanlı çakışma korumasıyla Firestore'a kaydedilir.
-- Yeni scriptte C# veya C++ seçilir, kod editörü açılır ve kullanıcı oyun motoruna dönebilir.
-- 3D görünüm WebGL/Unity eşdeğeri değil, Canvas üzerinde izometrik bir MVP'dir. Native build/export, tam asset pipeline, ECS, gerçek zamanlı C#/C++ oyun içi VM/WASM yürütümü ve çok kullanıcılı canlı sahne düzenleme sonraki fazlardır.
+- Unity benzeri 2D/3D motor: WebGL çizim, GameObject/Component modeli, C# ve C++ betikleri tarayıcıdaki güvenli HanogtScript yorumlayıcısında çalışır (eval yok, komut bütçesi var).
+- V3: tilemap boyama, UI bileşenleri, Animation/Tween/Timer, sis/bloom/vinyet. V4: giriş eylemleri ve gamepad, Character Controller 2D, Camera Follow ve sarsıntı, A* yol bulma ve Nav Agent 2D, Distance/Spring eklemleri, Slider/Toggle/Input Field, ses dosyaları ve müzik, çoklu seçim ve İzle paneli.
+- V5: Animator durum makinesi; Arcade'de skor tabloları ve başarımlar (imzalı oyun jetonu, sınır ve en kısa oynama süresi denetimi, "doğrulanmamış" etiketi); dil tablosu ve `Localization.Get`; Player Input ile aynı ekranda 4 oyuncuya kadar yerel çok oyunculu; SaveSystem ve JsonUtility; GLB 3D modeller (300 KB, sıkıştırmasız); renk düzenleme, kromatik sapma, pikselleştirme ve CRT efektleri; web paketi (ZIP · PWA) dışa aktarma.
+- Her proje kaydedildiği sürümün kurallarını (`settings.rules`) taşır; eski oyunlar davranışı değişen yerlerde eskisi gibi çalışır. Şema doğrulaması, boyut sınırı, sahiplik kontrolü ve revizyon tabanlı çakışma koruması vardır.
+- Şablonlar: V5 ile Yıldız Düellosu, Zindan Kaçışı, Meteor Yağmuru; V4 ile Gök Kulesi, Labirent Avı, Sapan Ustası; ayrıca runner, flappy, Pong, Yılan (C++), RPG, 3D engel parkuru, kale savunması, arena ve klasik örnekler. Her şablon testlerde otomatik pilotla oynatılır.
+- Yayınlama: Arcade (güvenlik taraması, remiks izni, beğeniler, skor tabloları), tek dosyalık oynanabilir HTML, web paketi ve proje JSON'u.
 
 ## Arayüz, performans ve yerelleştirme
 

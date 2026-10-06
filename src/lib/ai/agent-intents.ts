@@ -137,12 +137,15 @@ export function extractGroupName(text: string): string {
 
 // ------------------------------------------------------------------ games
 const GAME_WORDS: Array<[RegExp, string]> = [
+    [/\b(?:duel\w*|iki kisilik|2 kisilik|two players?|2 players?|local multiplayer|yerel cok oyuncu\w*)\b/, "star-duel-2d"],
+    [/\b(?:zindan\w*|dungeon\w*|escape game|kacis oyun\w*)\b/, "dungeon-escape-2d"],
+    [/\b(?:meteor\w*|retro shooter|retro nisanci\w*|crt)\b/, "meteor-retro-2d"],
     [/\b(?:gok kule\w*|sky tower|kule tirman\w*|tower climb\w*)\b/, "sky-tower-2d"],
     [/\b(?:labirent\w*|maze|pac ?man|hayalet\w*|ghost\w*)\b/, "maze-hunt-2d"],
     [/\b(?:sapan\w*|slingshot|angry birds)\b/, "slingshot-2d"],
     [/\b(?:tilemap|tile|karo\w*|bolum editor\w*|level editor)\b/, "tilemap-platformer-2d"],
     [/\b(?:flappy|kanat\w*|kus oyun\w*|bird)\b/, "flappy-2d"],
-    [/\b(?:rpg|macera\w*|adventure|zindan\w*|dungeon|zelda|kilic\w*|sword)\b/, "rpg-topdown-2d"],
+    [/\b(?:rpg|macera\w*|adventure|zelda|kilic\w*|sword)\b/, "rpg-topdown-2d"],
     [/\b(?:parkur\w*|obby|obstacle course|engel parkur\w*|fall guys)\b/, "obstacle-course-3d"],
     [/\b(?:tower defen[cs]e|kule savunma\w*|kale savunma\w*)\b/, "tower-defense-2d"],
     [/\b(?:arena\w*|twin ?stick|ikiz cubuk\w*|survivor\w*)\b/, "arena-2d"],

@@ -61,7 +61,8 @@
     "en": "Releases",
     "tr": "Yayınlanan sürüm",
     "files": [
-      "src/app/about/page.tsx"
+      "src/app/about/page.tsx",
+      "src/components/GameEngine/EngineHub.tsx"
     ]
   },
   "lvu21f4bv6": {
@@ -193,17 +194,17 @@
       "src/app/about/page.tsx"
     ]
   },
-  "faf6fs6b0c": {
-    "en": "Hanogt Engine V4",
-    "tr": "Hanogt Engine V4",
+  "ab3fy3gtww": {
+    "en": "Hanogt Engine V5",
+    "tr": "Hanogt Engine V5",
     "files": [
       "src/app/about/page.tsx",
       "src/components/ChangelogModal.tsx"
     ]
   },
-  "1pp51x1gmh0": {
-    "en": "A Unity-like 2D/3D game engine that runs in your browser. V4 adds gamepads, a character controller, camera follow, path finding, joints and audio files; you script in C# and C++.",
-    "tr": "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V4 ile gamepad, karakter denetleyici, kamera takibi, yol bulma, eklemler ve ses dosyaları geldi; C# ve C++ ile script yazarsın.",
+  "2ej0h2m3321": {
+    "en": "A Unity-like 2D/3D game engine that runs in your browser. V5 adds the Animator, Arcade leaderboards and achievements, in-game translations, local multiplayer, save slots, GLB models and the web package; you script in C# and C++.",
+    "tr": "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V5 ile Animator, Arcade skor tabloları ve başarımlar, oyun içi çeviri, yerel çok oyunculu, kayıt yuvaları, GLB modeller ve web paketi geldi; C# ve C++ ile script yazarsın.",
     "files": [
       "src/app/about/page.tsx"
     ]
@@ -11894,9 +11895,9 @@
       "src/app/settings/page.tsx"
     ]
   },
-  "1slhi5fkdui": {
-    "en": "With a free account you can write code in {count} languages, build games with Hanogt Engine V4 and create with Hanogt AI and the community.",
-    "tr": "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V4 ile oyun yap, Hanogt AI ve toplulukla üret.",
+  "1kr7sdp1o1p": {
+    "en": "With a free account you can write code in {count} languages, build games with Hanogt Engine V5 and create with Hanogt AI and the community.",
+    "tr": "Ücretsiz hesabınla {count} dilde kod yaz, Hanogt Engine V5 ile oyun yap, Hanogt AI ve toplulukla üret.",
     "files": [
       "src/app/signup/page.tsx"
     ]
@@ -22866,9 +22867,9 @@
       "src/components/Arcade/ArcadeProgress.tsx"
     ]
   },
-  "yp19ctkqlo": {
-    "en": "Code editor, Hanogt Engine V4, Hanogt AI and the community: all in one account, nothing to install.",
-    "tr": "Kod editörü, Hanogt Engine V4, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
+  "mqwmyzmeuf": {
+    "en": "Code editor, Hanogt Engine V5, Hanogt AI and the community: all in one account, nothing to install.",
+    "tr": "Kod editörü, Hanogt Engine V5, Hanogt AI ve topluluk: hepsi tek hesapta, kurulum yok.",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
@@ -22880,16 +22881,16 @@
       "src/components/auth/AuthShell.tsx"
     ]
   },
-  "g4od64v7s7": {
-    "en": "Build games with Hanogt Engine V4",
-    "tr": "Hanogt Engine V4 ile oyun yap",
+  "1mtd8o91fme": {
+    "en": "Build games with Hanogt Engine V5",
+    "tr": "Hanogt Engine V5 ile oyun yap",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
   },
-  "1kl3cio0w0u": {
-    "en": "Gamepads, a character controller, path finding, joints and music. Script in C# and C++, then publish to Arcade.",
-    "tr": "Gamepad, karakter denetleyici, yol bulma, eklemler ve müzik. C# ve C++ ile script yaz, Arcade'de yayınla.",
+  "2apm7xk29gb": {
+    "en": "An Animator, local multiplayer, in-game translations and 3D models. Script in C# and C++, then publish to Arcade with leaderboards.",
+    "tr": "Animator, yerel çok oyunculu, oyun içi çeviri ve 3D modeller. C# ve C++ ile script yaz, Arcade'de skor tablolarıyla yayınla.",
     "files": [
       "src/components/auth/AuthShell.tsx"
     ]
@@ -22927,6 +22928,69 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "wqj2w049nw": {
+    "en": "A new version of the engine: the Animator state machine, leaderboards and achievements on the Arcade, in-game translations, local multiplayer, SaveSystem, GLB 3D models, new screen effects and a web package for hosting games on your own site. Three new templates are ready too.",
+    "tr": "Motorun yeni sürümü: Animator durum makinesi, Arcade'de skor tabloları ve başarımlar, oyun içi çeviri, yerel çok oyunculu, SaveSystem, GLB 3D modeller, yeni ekran efektleri ve oyunu kendi sitende yayınlamak için web paketi. Üç yeni şablon da hazır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "lrjmg0ll3e": {
+    "en": "Animator: character animation with states, parameters and transitions; the graph shows the current state live while the game runs.",
+    "tr": "Animator: durumlar, parametreler ve geçişlerle karakter animasyonu; grafik oyun çalışırken geçerli durumu canlı gösterir.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "181beje11oz": {
+    "en": "Leaderboards and achievements: best scores on the Arcade with Leaderboard.Submit and Achievements.Unlock; the server checks bounds and the minimum play time.",
+    "tr": "Skor tabloları ve başarımlar: Leaderboard.Submit ve Achievements.Unlock ile Arcade'de en iyi skorlar; sunucu sınırları ve en kısa oynama süresini denetler.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "epssnba594": {
+    "en": "Game languages: a string table, Localization.Get and CSV for translators; games open in the player's language.",
+    "tr": "Oyunun dilleri: dil tablosu, Localization.Get ve CSV ile çeviri; oyun oyuncunun dilinde açılır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "g6g7rpafvg": {
+    "en": "Local multiplayer: up to four players on one screen with Player Input; save slots with SaveSystem.",
+    "tr": "Yerel çok oyunculu: Player Input ile aynı ekranda dört oyuncuya kadar; SaveSystem ile kayıt yuvaları.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "dso9yvhaeh": {
+    "en": "GLB 3D models; color grading, chromatic aberration, pixelation and CRT screen effects.",
+    "tr": "GLB 3D modeller; renk düzenleme, kromatik sapma, pikselleştirme ve CRT ekran efektleri.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1djvqca1vpj": {
+    "en": "Web package (ZIP · PWA): host your game on your own site; it installs as an app and plays offline.",
+    "tr": "Web paketi (ZIP · PWA): oyununu kendi sitende yayınla; uygulama olarak yüklenir, çevrim dışı da oynanır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "ipaxasn1cs": {
+    "en": "New templates: Star Duel (two players), Dungeon Escape and Meteor Storm. Privacy Policy and Terms of Use 5.3.",
+    "tr": "Yeni şablonlar: Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru. Gizlilik Politikası ve Kullanım Şartları 5.3.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "faf6fs6b0c": {
+    "en": "Hanogt Engine V4",
+    "tr": "Hanogt Engine V4",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "jclu51lrtn": {
@@ -27439,12 +27503,11 @@
       "src/components/Editor/WebPreview.tsx"
     ]
   },
-  "1t40mmx2pqk": {
-    "en": "What's new in V4",
-    "tr": "V4'te yenilikler",
+  "111ob4b73v8": {
+    "en": "What's new in V5",
+    "tr": "V5'te yenilikler",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
-      "src/components/GameEngine/editor/text.ts",
       "src/components/Guide/book-content.ts"
     ]
   },
@@ -27504,6 +27567,15 @@
     "tr": "Girdi, giriş eylemleri ve gamepad",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "t3qmutrt0f": {
+    "en": "Local multiplayer",
+    "tr": "Yerel çok oyunculu",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "20lujwite2q": {
@@ -27574,6 +27646,14 @@
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
+  "vfvlnodcty": {
+    "en": "Animator state machine",
+    "tr": "Animator durum makinesi",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
   "23w0exmyhxu": {
     "en": "Scenes",
     "tr": "Sahneler",
@@ -27596,9 +27676,26 @@
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
   },
+  "246cuplu9dq": {
+    "en": "Game languages",
+    "tr": "Oyunun dilleri",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Guide/book-content.ts"
+    ]
+  },
   "rup1swm6q1": {
     "en": "Audio files and music",
     "tr": "Ses dosyaları ve müzik",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "xvo17tseyr": {
+    "en": "3D models (GLB)",
+    "tr": "3D modeller (GLB)",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx",
       "src/components/GameEngine/whats-new.ts"
@@ -27612,9 +27709,9 @@
       "src/components/GameEngine/whats-new.ts"
     ]
   },
-  "6aynqhohei": {
-    "en": "Saving (PlayerPrefs)",
-    "tr": "Kayıt (PlayerPrefs)",
+  "h4bgh4kit1": {
+    "en": "Saving: PlayerPrefs and SaveSystem",
+    "tr": "Kayıt: PlayerPrefs ve SaveSystem",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
     ]
@@ -27624,6 +27721,15 @@
     "tr": "Yayınlama ve dışa aktarma",
     "files": [
       "src/components/GameEngine/docs/EngineDocs.tsx"
+    ]
+  },
+  "19s2ttewo4a": {
+    "en": "Leaderboards and achievements",
+    "tr": "Skor tabloları ve başarımlar",
+    "files": [
+      "src/components/GameEngine/docs/EngineDocs.tsx",
+      "src/components/GameEngine/whats-new.ts",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "1v7j0tnlfnc": {
@@ -27779,7 +27885,8 @@
     "en": "Web package (ZIP · PWA)",
     "tr": "Web paketi (ZIP · PWA)",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/GameEngine/whats-new.ts"
     ]
   },
   "20jrjizztly": {
@@ -28996,6 +29103,13 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "1t40mmx2pqk": {
+    "en": "What's new in V4",
+    "tr": "V4'te yenilikler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
   "2b5iypajwxv": {
     "en": "Snapping",
     "tr": "Yakalama",
@@ -30011,13 +30125,6 @@
   "28em411t7o2": {
     "en": "Achievement",
     "tr": "Başarım",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "246cuplu9dq": {
-    "en": "Game languages",
-    "tr": "Oyunun dilleri",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -31307,7 +31414,8 @@
     "en": "Animator",
     "tr": "Animator",
     "files": [
-      "src/components/GameEngine/editor/text.ts"
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Guide/book-content.ts"
     ]
   },
   "e8otb6ppgq": {
@@ -31762,23 +31870,44 @@
       "src/lib/nav.ts"
     ]
   },
-  "n4m4bkr9h3": {
-    "en": "New in V4",
-    "tr": "V4 ile gelenler",
+  "1aulvvjq00l": {
+    "en": "Every release makes the engine more capable: what V5 brings first, then the earlier releases. Each card opens its section of the docs.",
+    "tr": "Her sürüm motoru daha yetenekli kılar: önce V5 ile gelenler, sonra önceki sürümler. Kartlar ilgili belge bölümünü açar.",
     "files": [
       "src/components/GameEngine/EngineHub.tsx"
     ]
   },
-  "cwmc3i3qju": {
-    "en": "October template update",
-    "tr": "Ekim şablon güncellemesi",
+  "17o1d85xl95": {
+    "en": "New in V5",
+    "tr": "V5 ile gelenler",
     "files": [
       "src/components/GameEngine/EngineHub.tsx"
     ]
   },
-  "k7r8e19zzn": {
-    "en": "Shipped with V3",
-    "tr": "V3 ile gelenler",
+  "2ekglfu8ng8": {
+    "en": "V4",
+    "tr": "V4",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "23crkwnh5n7": {
+    "en": "October templates",
+    "tr": "Ekim şablonları",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "24egmwbrh80": {
+    "en": "V3",
+    "tr": "V3",
+    "files": [
+      "src/components/GameEngine/EngineHub.tsx"
+    ]
+  },
+  "166hjisc2vk": {
+    "en": "{count} features",
+    "tr": "{count} yenilik",
     "files": [
       "src/components/GameEngine/EngineHub.tsx"
     ]
@@ -31966,6 +32095,97 @@
       "src/components/GameEngine/hub/TemplateDrawer.tsx"
     ]
   },
+  "uslgbmj89t": {
+    "en": "Character animation with states, parameters and transitions: Idle, Run, Jump… Scripts only call SetFloat, SetBool and SetTrigger; the graph picks the clip. The current state lights up live while the game runs.",
+    "tr": "Durumlar, parametreler ve geçişlerle karakter animasyonu: Idle, Run, Jump… Betik yalnızca SetFloat, SetBool ve SetTrigger der; hangi klibin oynayacağını grafik seçer. Oyun çalışırken geçerli durum canlı vurgulanır.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "21g98ojt23k": {
+    "en": "Leaderboard.Submit and Achievements.Unlock keep each player's best score and unlocked achievements in the Arcade. Bounds, a minimum play time and rate limits are checked on the server.",
+    "tr": "Leaderboard.Submit ve Achievements.Unlock ile Arcade'de oyuncu başına en iyi skor ve açılan başarımlar. Sınırlar, en kısa oynama süresi ve hız sınırı sunucuda denetlenir.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "21yt4zrxvth": {
+    "en": "Translate your game",
+    "tr": "Oyununu çevir",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "13mv1ki6psy": {
+    "en": "A string table, Localization.Get and localization keys on UI elements: the game opens in the player's language. CSV export and import for translators.",
+    "tr": "Dil tablosu, Localization.Get ve UI öğelerinde dil anahtarı: oyun oyuncunun dilinde açılır. Çevirmenler için CSV ile dışa ve içe aktarma.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1beogg1u4m7": {
+    "en": "Up to 4 players on one screen: Player Input splits the keyboard in two halves and adds gamepads. Each player's character and scripts read only their own controls.",
+    "tr": "Aynı ekranda en fazla 4 oyuncu: Player Input ile klavyenin iki yarısı ve gamepad'ler. Her oyuncunun karakteri ve betikleri yalnızca kendi tuşlarını okur.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "24zpw8druo7": {
+    "en": "SaveSystem and JsonUtility",
+    "tr": "SaveSystem ve JsonUtility",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "vmyzakntba": {
+    "en": "Save and load your own classes in one line, lists, dictionaries and vectors included. 20 save slots, save times and the latest save.",
+    "tr": "Kendi sınıflarını tek satırla kaydet ve geri yükle: listeler, sözlükler ve vektörler dahil. 20 kayıt yuvası, kayıt zamanı ve son kayıt.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "c8ql0eiirh": {
+    "en": "Upload GLB models from Blender or other tools; they show with their own materials and textures in the scene, in published games and in exported packages.",
+    "tr": "Blender ya da başka araçlardan GLB modeller yükle; kendi malzemeleri ve dokularıyla sahnede, yayınlanan oyunda ve dışa aktarılan pakette görünür.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1b356uekwrk": {
+    "en": "Screen effects V2",
+    "tr": "Ekran efektleri V2",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "20w4y8c9uk8": {
+    "en": "Color grading, tint, chromatic aberration, pixelation and a CRT screen. Change them during the game with ScreenEffects; ScreenEffects.Reset() returns to the scene's own look.",
+    "tr": "Renk düzenleme, renk filtresi, kromatik sapma, pikselleştirme ve CRT ekran. ScreenEffects ile oyun sırasında değiştir; ScreenEffects.Reset() sahnenin ayarına döndürür.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "elpf14d8k2": {
+    "en": "Host your game on your own site: one ZIP with the page, player, sounds, models and icons, an installable PWA that also opens offline.",
+    "tr": "Oyununu kendi sitende yayınla: tek ZIP'te sayfa, oynatıcı, sesler, modeller, simgeler ve uygulama olarak yüklenebilen, çevrim dışı da açılan bir PWA.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "mcftq0ghc0": {
+    "en": "Three new templates",
+    "tr": "Üç yeni şablon",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
+  "1ygwl8zwncm": {
+    "en": "Star Duel (two players), Dungeon Escape and Meteor Storm: games in Turkish and English, with leaderboards and achievements, that show off the V5 features.",
+    "tr": "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru: Türkçe ve İngilizce, skor tabloları ve başarımlarla V5 özelliklerini gösteren oyunlar.",
+    "files": [
+      "src/components/GameEngine/whats-new.ts"
+    ]
+  },
   "gl2bl023aj": {
     "en": "Input actions and gamepads",
     "tr": "Giriş eylemleri ve gamepad",
@@ -32046,13 +32266,6 @@
   "1vwrfbiuqrx": {
     "en": "Move and edit several objects together, box-select with Shift and search the hierarchy with t:Type. The Watch panel shows values live while the game runs.",
     "tr": "Birden çok nesneyi birlikte taşı ve düzenle, Shift ile kutu seçimi yap, hiyerarşide t:Tür ile ara. İzle paneli oyun çalışırken değerleri canlı gösterir.",
-    "files": [
-      "src/components/GameEngine/whats-new.ts"
-    ]
-  },
-  "mcftq0ghc0": {
-    "en": "Three new templates",
-    "tr": "Üç yeni şablon",
     "files": [
       "src/components/GameEngine/whats-new.ts"
     ]
@@ -35392,9 +35605,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1qhwuozb2dt": {
-    "en": "Hanogt Engine V4 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
-    "tr": "Hanogt Engine V4, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
+  "1yyprmj0w3y": {
+    "en": "Hanogt Engine V5 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components.",
+    "tr": "Hanogt Engine V5, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -35406,9 +35619,16 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "23mq1np1lm2": {
-    "en": "Sky Tower, Maze Hunt and Slingshot Master (new in V4)",
-    "tr": "Gök Kulesi, Labirent Avı ve Sapan Ustası (V4 ile yeni)",
+  "1ce8zte6byb": {
+    "en": "Star Duel (two players), Dungeon Escape and Meteor Storm (new in V5)",
+    "tr": "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru (V5 ile yeni)",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "sesxl6g3mt": {
+    "en": "Sky Tower, Maze Hunt and Slingshot Master (from V4)",
+    "tr": "Gök Kulesi, Labirent Avı ve Sapan Ustası (V4 ile gelenler)",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -35563,9 +35783,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "iu6tzsk5re": {
-    "en": "Keep the high score with PlayerPrefs.",
-    "tr": "PlayerPrefs ile en yüksek skoru sakla.",
+  "1wbf0hm8w4y": {
+    "en": "Keep the high score with PlayerPrefs and the whole game with SaveSystem.",
+    "tr": "PlayerPrefs ile en yüksek skoru, SaveSystem ile oyunun tamamını sakla.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -35573,6 +35793,76 @@
   "7mdqpgmb4f": {
     "en": "Full script API: Engine Docs",
     "tr": "Tüm script API'si: Motor Belgeleri",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "2dcuav4yd2l": {
+    "en": "The new blocks of V5",
+    "tr": "V5'in yeni blokları",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1f3fq1tprhn": {
+    "en": "States such as Idle, Run and Jump with transitions driven by parameters; scripts only call SetFloat and SetTrigger.",
+    "tr": "Idle, Run, Jump gibi durumlar ve parametrelerle geçişler; betik yalnızca SetFloat ve SetTrigger der.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "4uuewyhsl0": {
+    "en": "Best scores and unlocked achievements on the Arcade with Leaderboard.Submit and Achievements.Unlock.",
+    "tr": "Leaderboard.Submit ve Achievements.Unlock ile Arcade'de en iyi skorlar ve açılan başarımlar.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1xd5n3y34n3": {
+    "en": "A string table and Localization.Get: the game opens in the player's language.",
+    "tr": "Dil tablosu ve Localization.Get: oyun, oyuncunun dilinde açılır.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "l9c3uh4no": {
+    "en": "Up to four players on one screen with Player Input: the two halves of the keyboard and gamepads.",
+    "tr": "Player Input ile aynı ekranda dört oyuncuya kadar: klavyenin iki yarısı ve gamepad'ler.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1fxijvt78cq": {
+    "en": "SaveSystem",
+    "tr": "SaveSystem",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "bq59heyh3w": {
+    "en": "Save your own classes to save slots and load them back in one line.",
+    "tr": "Kendi sınıflarını kayıt yuvalarına tek satırla kaydet ve geri yükle.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "1xf4nbw4jwv": {
+    "en": "3D models and the web package",
+    "tr": "3D modeller ve web paketi",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "x6xbfg7k6s": {
+    "en": "Upload GLB models; host your game on your own site as a ZIP that installs like an app.",
+    "tr": "GLB modeller yükle; oyununu ZIP olarak kendi sitende yayınla, uygulama gibi yüklensin.",
+    "files": [
+      "src/components/Guide/book-content.ts"
+    ]
+  },
+  "wpiuzax6oz": {
+    "en": "New templates: Star Duel, Dungeon Escape and Meteor Storm. Screen effects gained color grading, chromatic aberration, pixelation and CRT.",
+    "tr": "Yeni şablonlar: Yıldız Düellosu, Zindan Kaçışı ve Meteor Yağmuru. Ekran efektlerine renk düzenleme, kromatik sapma, pikselleştirme ve CRT eklendi.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -49861,31 +50151,31 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "14804shm6hc": {
-    "en": "[Game Engine](/game-engine) (Hanogt Engine V4) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Sky Tower, Maze Hunt, Slingshot Master, Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense, Neon Arena (C++), Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, joints, Camera, Light, Tilemap, Animation, Audio Source, UI and Script components in the **Inspector**. Select several objects (Shift + drag or Ctrl+A) to edit them together.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `PlayerPrefs`…\n4. Test with **Play**, read errors with line numbers in the console and follow variables live in the **Watch** panel.\n5. **Publish to the Arcade** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
-    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V4) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Gök Kulesi, Labirent Avı, Sapan Ustası, Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması, Neon Arena (C++), Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, eklemler, Kamera, Işık, Tilemap, Animasyon, Ses Kaynağı, UI ve Script bileşenlerini düzenle. Birden çok nesneyi seçip (Shift + sürükle ya da Ctrl+A) birlikte düzenleyebilirsin.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `PlayerPrefs`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör, **İzle** panelinde değişkenleri canlı takip et.\n5. **Arcade'de yayınla** ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
+  "1vpzeycq2o": {
+    "en": "[Game Engine](/game-engine) (Hanogt Engine V5) is a Unity-like 2D/3D engine that runs in the browser:\n1. Create a **new project**, choose 2D or 3D or start from a template (Star Duel, Dungeon Escape, Meteor Storm, Sky Tower, Maze Hunt, Slingshot Master, Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense, Neon Arena (C++), Tilemap Adventure, Clicker Factory, Foggy Runner, 2D Platformer, 3D Roll-a-Ball, Space Shooter, Breakout, empty 2D/3D).\n2. Add objects in the **Hierarchy** and edit Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, joints, Camera, Light, Tilemap, Animation, Animator, Player Input, Audio Source, UI and Script components in the **Inspector**, and upload GLB 3D models. Select several objects (Shift + drag or Ctrl+A) to edit them together.\n3. Write **C# or C++ scripts**: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `SaveSystem.Save()`, `Localization.Get()`, `Leaderboard.Submit()`…\n4. Test with **Play**, read errors with line numbers in the console and follow variables live in the **Watch** panel.\n5. **Publish to the Arcade** (with leaderboards and achievements), host it on your own site as a **web package (ZIP · PWA)** or export a single-file HTML game.\nNew to it? [Your first game, step by step](/game-engine/docs#ilk-oyun) builds a coin-collecting platformer in 10 minutes. Details: [Engine docs](/game-engine/docs). In Agent mode I can create a game project from a template for you; ask for something like \"jump code\" and I'll give you a sample script.",
+    "tr": "[Oyun Motoru](/game-engine) (Hanogt Engine V5) Unity benzeri, tarayıcıda çalışan bir 2D/3D motordur:\n1. **Yeni proje** oluştur, 2D veya 3D seç ya da hazır şablonla başla (Yıldız Düellosu, Zindan Kaçışı, Meteor Yağmuru, Gök Kulesi, Labirent Avı, Sapan Ustası, Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması, Neon Arena (C++), Tilemap Macerası, Tıklama Fabrikası, Sisli Koşu, 2D Platform, 3D Top Yuvarlama, Uzay Nişancısı, Tuğla Kırma, boş 2D/3D).\n2. **Hiyerarşi**'den nesne ekle, **Inspector**'da Transform, Sprite/Mesh, Collider, Rigidbody, Character Controller 2D, Camera Follow, Nav Agent 2D, eklemler, Kamera, Işık, Tilemap, Animasyon, Animator, Player Input, Ses Kaynağı, UI ve Script bileşenlerini düzenle; GLB 3D model yükleyebilirsin. Birden çok nesneyi seçip (Shift + sürükle ya da Ctrl+A) birlikte düzenleyebilirsin.\n3. **C# veya C++ script** yaz: `Start()`, `Update()`, `OnCollisionEnter2D()`, `Input.GetButtonDown(\"Jump\")`, `Input.GetAxis(\"Horizontal\")`, `Instantiate()`, `Audio.PlayMusic()`, `SaveSystem.Save()`, `Localization.Get()`, `Leaderboard.Submit()`…\n4. **Oynat** ile test et, konsoldaki hataları satır numarasıyla gör, **İzle** panelinde değişkenleri canlı takip et.\n5. **Arcade'de yayınla** (skor tabloları ve başarımlarla), **web paketi (ZIP · PWA)** olarak kendi sitende yayınla ya da tek dosya HTML olarak dışa aktar.\nYeni başlıyorsan [İlk oyunun: adım adım](/game-engine/docs#ilk-oyun) bölümü 10 dakikada coin toplayan bir platform oyunu yaptırır. Ayrıntılar: [Motor belgeleri](/game-engine/docs). Ajan modunda senin için şablondan oyun projesi oluşturabilirim; \"zıplama kodu\" gibi bir şey sorarsan örnek script veririm.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "61a26874zg": {
-    "en": "What's new in Hanogt Engine V4?",
-    "tr": "Hanogt Engine V4'te neler var?",
+  "2d57qvc2xbt": {
+    "en": "What's new in Hanogt Engine V5?",
+    "tr": "Hanogt Engine V5'te neler var?",
     "files": [
       "src/lib/ai/knowledge.ts",
       "src/lib/faq.ts"
     ]
   },
-  "19c59haupln": {
-    "en": "**Hanogt Engine V4** (project schema v4) adds building blocks that make games faster to build. Older projects are migrated automatically when opened, and games made before V4 keep playing exactly as before.\n• **Input actions and gamepads:** bind actions such as Jump and Fire to keys, mouse buttons and gamepads; `Input.GetButtonDown(\"Jump\")` and `Input.GetAxis(\"Horizontal\")` read them all. Your own actions, dead zone and inverted axes are in Settings → Input.\n• **Character Controller 2D:** a platformer character without code, with acceleration, double jump, coyote time, jump buffering, slopes and moving platforms, plus `OnJump()` and `OnLand()` events.\n• **Camera Follow and shake:** smooth tracking, a dead zone, look-ahead, level bounds and `Camera.Shake()`.\n• **Path finding:** the shortest way around walls with A*; **Nav Agent 2D** chases a target or goes where `SetDestination` says, and `Pathfinding.FindPath()` hands you the path.\n• **Distance and Spring joints:** pendulums, ropes, chains, springs and slingshots.\n• **New UI controls:** Slider, Toggle and Input Field, with `onValueChanged` and `onEndEdit` events and the on-screen keyboard on phones.\n• **Audio files and music:** upload WAV, MP3 and OGG files (up to 300 KB each); play effects with `Audio.Play` and music with fades with `Audio.PlayMusic`; Audio Sources can loop. Total audio storage is 5 MB on Free, 25 MB on Plus and 100 MB on Pro.\n• **Editor:** multi-select, box selection with Shift + drag, editing objects together, `t:Type` and `tag:Tag` hierarchy search and the **Watch** panel that shows values live while the game runs.\n• **Three new templates:** Sky Tower, Maze Hunt and Slingshot Master.\nEverything V3 brought (tilemaps, animation and Tween, sprite sheets, UI Button/Panel/Progress Bar, fog and screen effects) is still there. See the [Engine docs](/game-engine/docs) or try a template in the [Game Engine](/game-engine).",
-    "tr": "**Hanogt Engine V4** (proje şeması v4) oyun yapmayı hızlandıran yeni yapı taşları getirir. Eski projeler açılırken otomatik taşınır; V4 öncesi oyunlar eski kurallarla aynı şekilde çalışmaya devam eder.\n• **Giriş eylemleri ve gamepad:** Zıpla, Ateş et gibi eylemleri tuşlara, fare düğmelerine ve gamepad'e bağla; `Input.GetButtonDown(\"Jump\")` ve `Input.GetAxis(\"Horizontal\")` hepsini birlikte okur. Kendi eylemlerin, ölü bölge ve ters eksen Ayarlar → Girdi'de.\n• **Character Controller 2D:** kod yazmadan platform karakteri; hızlanma, çift zıplama, coyote süresi, zıplama tamponu, eğimler ve hareketli platformlar, `OnJump()` ve `OnLand()` olaylarıyla.\n• **Camera Follow ve sarsıntı:** yumuşak takip, ölü bölge, ileri bakış, seviye sınırları ve `Camera.Shake()`.\n• **Yol bulma:** A* ile duvarların etrafından en kısa yol; **Nav Agent 2D** hedefi kovalar ya da `SetDestination` ile gider, `Pathfinding.FindPath()` yolu sana verir.\n• **Distance ve Spring eklemleri:** sarkaç, ip, zincir, yay ve sapan.\n• **Yeni UI kontrolleri:** Slider, Toggle ve Input Field; `onValueChanged` ve `onEndEdit` olayları, telefonda ekran klavyesi.\n• **Ses dosyaları ve müzik:** WAV, MP3 ve OGG yükle (dosya başına en çok 300 KB); `Audio.Play` ile efekt, `Audio.PlayMusic` ile geçişli müzik; Audio Source döngüyle çalabilir. Toplam ses alanı Ücretsiz'de 5 MB, Plus'ta 25 MB, Pro'da 100 MB.\n• **Editör:** çoklu seçim, Shift + sürükle ile kutu seçimi, birlikte düzenleme, hiyerarşide `t:Tür` ve `tag:Etiket` araması ve değerleri oyun çalışırken canlı gösteren **İzle** paneli.\n• **Üç yeni şablon:** Gök Kulesi, Labirent Avı ve Sapan Ustası.\nV3'ün getirdikleri (tilemap, animasyon ve Tween, sprite sayfaları, UI Button/Panel/Progress Bar, sis ve ekran efektleri) aynen sürüyor. Detaylar için [Motor belgeleri](/game-engine/docs)'ne bak ya da [Oyun Motoru](/game-engine)'nda bir şablonla dene.",
+  "vz8stz6jx": {
+    "en": "**Hanogt Engine V5** (project schema v5) adds building blocks for character animation, saving, translating and sharing games. Older projects are migrated automatically when opened, and games made with earlier versions keep playing with their own rules.\n• **Animator state machine:** states such as Idle, Run and Jump, parameters (bool, float, int, trigger), transitions and Any State; scripts only call `animator.SetFloat(\"speed\", speed)` or `SetTrigger(\"attack\")`. The Animator tab of the bottom panel shows the current state live while the game runs.\n• **Leaderboards and achievements:** define them under Settings → Arcade and report with `Leaderboard.Submit(\"score\", score)` and `Achievements.Unlock(\"first-win\")`. The Arcade keeps the best scores of signed-in players; the server checks bounds and the minimum play time, and leaderboards are marked \"unverified\".\n• **Game languages:** a string table under Settings → Languages, `Localization.Get(\"key\")`, localization keys on UI and CSV for translators.\n• **Local multiplayer:** up to four players on one screen with Player Input, using the two halves of the keyboard and gamepads.\n• **SaveSystem and JsonUtility:** save your own classes with `SaveSystem.Save(\"slot1\", data)` and load them with `Load<T>()`; 20 slots.\n• **3D models (GLB):** up to 300 KB, with their own materials and textures; they share storage with audio files.\n• **Screen effects V2:** color grading, tint, chromatic aberration, pixelation and CRT; change them during the game with `ScreenEffects`.\n• **Web package (ZIP · PWA):** host the game on your own site or on itch.io; it installs as an app and plays offline.\n• **Three new templates:** Star Duel (two players), Dungeon Escape and Meteor Storm.\nEverything V4 brought (input actions and gamepads, Character Controller 2D, camera follow, A* path finding, joints, Slider/Toggle/Input Field, audio files and music, the Watch panel) and V3's features (tilemaps, animation and Tween, fog and screen effects) are still there. See the [Engine docs](/game-engine/docs) or try a template in the [Game Engine](/game-engine).",
+    "tr": "**Hanogt Engine V5** (proje şeması v5) oyunlara karakter animasyonu, kayıt, çeviri ve paylaşım için yeni yapı taşları getirir. Eski projeler açılırken otomatik taşınır; önceki sürümlerle yapılan oyunlar kendi kurallarıyla aynı şekilde çalışmaya devam eder.\n• **Animator durum makinesi:** Idle, Run, Jump gibi durumlar, parametreler (bool, float, int, trigger), geçişler ve Her Durum; betik yalnızca `animator.SetFloat(\"speed\", hız)` ya da `SetTrigger(\"attack\")` der. Alt paneldeki Animator sekmesi oyun çalışırken geçerli durumu canlı gösterir.\n• **Skor tabloları ve başarımlar:** Ayarlar → Arcade'de tanımla, `Leaderboard.Submit(\"score\", skor)` ve `Achievements.Unlock(\"first-win\")` ile bildir. Arcade'de giriş yapan oyuncuların en iyi skorları saklanır; sunucu sınırları ve en kısa oynama süresini denetler, tablolar \"doğrulanmamış\" olarak gösterilir.\n• **Oyunun dilleri:** Ayarlar → Diller'de dil tablosu, `Localization.Get(\"anahtar\")`, UI'da dil anahtarı ve CSV ile çeviri.\n• **Yerel çok oyunculu:** Player Input ile aynı ekranda dört oyuncuya kadar; klavyenin iki yarısı ve gamepad'ler.\n• **SaveSystem ve JsonUtility:** kendi sınıflarını `SaveSystem.Save(\"slot1\", veri)` ile kaydet, `Load<T>()` ile geri yükle; 20 yuva.\n• **3D modeller (GLB):** en fazla 300 KB, kendi malzemeleri ve dokularıyla; ses dosyalarıyla aynı depolama alanına sayılır.\n• **Ekran efektleri V2:** renk düzenleme, renk filtresi, kromatik sapma, pikselleştirme ve CRT; `ScreenEffects` ile oyun sırasında değiştir.\n• **Web paketi (ZIP · PWA):** oyunu kendi sitende ya da itch.io'da yayınla; uygulama olarak yüklenir, çevrim dışı da oynanır.\n• **Üç yeni şablon:** Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru.\nV4'ün getirdikleri (giriş eylemleri ve gamepad, Character Controller 2D, kamera takibi, A* yol bulma, eklemler, Slider/Toggle/Input Field, ses dosyaları ve müzik, İzle paneli) ve V3'ünkiler (tilemap, animasyon ve Tween, sis ve ekran efektleri) aynen sürüyor. Detaylar için [Motor belgeleri](/game-engine/docs)'ne bak ya da [Oyun Motoru](/game-engine)'nda bir şablonla dene.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "1sqh9uayfr4": {
-    "en": "The [Arcade](/arcade) showcases games made with Hanogt Engine:\n• **To publish**, press **Publish** in the engine; the game is compiled and screened by Hanogt Security.\n• Players play in the browser, fullscreen and with touch controls, like games and see play counts.\n• **Remix:** if the maker turned on **Allow remixes** when publishing (the card shows a \"Remixable\" icon), you can copy the game into your own project and build on it; the remix's page links back to the original. Without permission a game can only be played.\n• You can unpublish your game any time; inappropriate games are reviewed by staff.",
-    "tr": "[Arcade](/arcade), Hanogt Engine ile yapılan oyunların vitrinidir:\n• **Yayınlamak için** motorda **Yayınla**'ya bas; oyun derlenir ve Hanogt Security taramasından geçer.\n• Oyuncular tarayıcıda, tam ekranda ve dokunmatik kontrollerle oynar; beğenir, oynanma sayısını görür.\n• **Remiks:** yapımcı yayınlarken **Remikslemelere izin ver**'i açtıysa (kartta \"Remikslenebilir\" simgesi) oyunun kopyasını kendi projene alıp geliştirebilirsin; remiksin sayfası asıl oyuna bağlantı verir. İzin yoksa oyun yalnızca oynanır.\n• Yayınladığın oyunu istediğin an yayından kaldırabilirsin; uygunsuz oyunlar yetkili ekip tarafından incelenir.",
+  "1r28hop8kuw": {
+    "en": "The [Arcade](/arcade) showcases games made with Hanogt Engine:\n• **To publish**, press **Publish** in the engine; the game is compiled and screened by Hanogt Security.\n• Players play in the browser, fullscreen and with touch controls, like games and see play counts.\n• **Remix:** if the maker turned on **Allow remixes** when publishing (the card shows a \"Remixable\" icon), you can copy the game into your own project and build on it; the remix's page links back to the original. Without permission a game can only be played.\n• **Leaderboards and achievements:** when the maker defined them, they show next to the game; signed in, your best score goes on the board and your achievements are kept on your account (without signing in they stay on this device). Scores come from the player's browser, so boards say \"unverified\"; you can turn sharing off or remove your score.\n• You can unpublish your game any time; inappropriate games are reviewed by staff.",
+    "tr": "[Arcade](/arcade), Hanogt Engine ile yapılan oyunların vitrinidir:\n• **Yayınlamak için** motorda **Yayınla**'ya bas; oyun derlenir ve Hanogt Security taramasından geçer.\n• Oyuncular tarayıcıda, tam ekranda ve dokunmatik kontrollerle oynar; beğenir, oynanma sayısını görür.\n• **Remiks:** yapımcı yayınlarken **Remikslemelere izin ver**'i açtıysa (kartta \"Remikslenebilir\" simgesi) oyunun kopyasını kendi projene alıp geliştirebilirsin; remiksin sayfası asıl oyuna bağlantı verir. İzin yoksa oyun yalnızca oynanır.\n• **Skor tabloları ve başarımlar:** yapımcı tanımladıysa oyunun yanında görünür; giriş yaptıysan en iyi skorun tabloya, açtığın başarımlar hesabına kaydedilir (giriş yapmadan yalnızca bu cihazda tutulur). Skorlar oyuncunun tarayıcısından geldiği için tablolarda \"doğrulanmamış\" yazar; paylaşımı kapatabilir ya da skorunu kaldırabilirsin.\n• Yayınladığın oyunu istediğin an yayından kaldırabilirsin; uygunsuz oyunlar yetkili ekip tarafından incelenir.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -52044,9 +52334,37 @@
       "src/lib/faq.ts"
     ]
   },
-  "28uwydjx5kn": {
-    "en": "Hanogt Engine V4 brings input actions and gamepad support, Character Controller 2D for platformer characters without code, smooth camera follow and shake, A* path finding and Nav Agent 2D, Distance and Spring joints, Slider, Toggle and Input Field UI controls, audio files and music, multi-select in the editor and the Watch panel that shows values live; the Sky Tower, Maze Hunt and Slingshot Master templates are new too. Audio files can be up to 300 KB; total audio storage is 5 MB on Free, 25 MB on Plus and 100 MB on Pro. Projects saved with earlier versions are moved to V4 automatically when you open them, and games made before V4 play as they did.",
-    "tr": "Hanogt Engine V4 giriş eylemleri ve gamepad desteği, kod yazmadan platform karakteri yapan Character Controller 2D, yumuşak kamera takibi ve sarsıntı, A* yol bulma ve Nav Agent 2D, Distance ve Spring eklemleri, Slider, Toggle ve Input Field arayüz kontrolleri, ses dosyaları ve müzik, editörde çoklu seçim ve değerleri canlı gösteren İzle paneli getiriyor; Gök Kulesi, Labirent Avı ve Sapan Ustası şablonları da yeni. Ses dosyaları en çok 300 KB olabilir; toplam ses alanı Ücretsiz'de 5 MB, Plus'ta 25 MB, Pro'da 100 MB. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V4'e taşınır ve V4 öncesi oyunlar eskisi gibi çalışır.",
+  "1hnf8xy8r9w": {
+    "en": "Hanogt Engine V5 brings the Animator state machine for character animation, leaderboards and achievements on the Arcade, a string table that translates a game into several languages, local multiplayer for up to four players on one screen, SaveSystem with save slots, GLB 3D models, new screen effects such as color grading, chromatic aberration, pixelation and a CRT look, and a web package (ZIP · PWA) for hosting a game on your own site; the Star Duel, Dungeon Escape and Meteor Storm templates are new too. V4 brought gamepads, Character Controller 2D, camera follow, A* path finding, joints and audio files. Projects saved with earlier versions are moved to V5 automatically when you open them, and older games play as they did.",
+    "tr": "Hanogt Engine V5; karakter animasyonu için Animator durum makinesi, Arcade'de skor tabloları ve başarımlar, oyunu birden çok dile çeviren dil tablosu, aynı ekranda dört oyuncuya kadar yerel çok oyunculu, kayıt yuvalarıyla SaveSystem, GLB 3D modeller, renk düzenleme, kromatik sapma, pikselleştirme ve CRT gibi yeni ekran efektleri ve oyunu kendi sitende yayınlamak için web paketi (ZIP · PWA) getiriyor; Yıldız Düellosu, Zindan Kaçışı ve Meteor Yağmuru şablonları da yeni. V4'te gamepad, Character Controller 2D, kamera takibi, A* yol bulma, eklemler ve ses dosyaları gelmişti. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V5'e taşınır ve eski oyunlar eskisi gibi çalışır.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "15duvdm9thj": {
+    "en": "How do I add leaderboards and achievements to my game?",
+    "tr": "Oyunuma skor tablosu ve başarım nasıl eklerim?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "ifdrzl06ri": {
+    "en": "In the game engine, define leaderboards (up to 5) and achievements (up to 30) under Settings → Arcade, then report to them from scripts with Leaderboard.Submit(\"score\", score) and Achievements.Unlock(\"first-win\"). Once the game is published on the Arcade, the best scores of signed-in players show on the leaderboard. The server checks every score against the bounds you set and the minimum play time; scores still come from the player's browser, so leaderboards say “unverified” and the author can remove entries.",
+    "tr": "Oyun motorunda Ayarlar → Arcade sekmesinden skor tablolarını (en fazla 5) ve başarımları (en fazla 30) tanımlayın, betikten Leaderboard.Submit(\"score\", skor) ve Achievements.Unlock(\"first-win\") ile bildirin. Oyun Arcade'de yayınlanınca giriş yapan oyuncuların en iyi skorları tabloda görünür. Sunucu her skoru belirlediğiniz sınırlara ve en kısa oynama süresine göre denetler; skorlar yine de oyuncunun tarayıcısından geldiği için tablolarda “doğrulanmamış” yazar ve yapımcı kayıtları silebilir.",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "1p6q3tfolsx": {
+    "en": "Can I host my game on my own site?",
+    "tr": "Oyunumu kendi sitemde yayınlayabilir miyim?",
+    "files": [
+      "src/lib/faq.ts"
+    ]
+  },
+  "ztckbtzpp8": {
+    "en": "Yes. In the game engine, Export → Web package (ZIP · PWA) downloads the game, the player, its sound and model files, icons and a service worker for offline play in one ZIP. Upload the folder to a static web host such as GitHub Pages, Netlify or your own server; on itch.io you can upload the ZIP as it is to a new HTML game. Served over HTTPS, the game can be installed as an app and plays offline once it has been opened. Leaderboards and achievements are only kept on the Arcade.",
+    "tr": "Evet. Oyun motorunda Dışa aktar → Web paketi (ZIP · PWA) oyunu, oynatıcıyı, ses ve model dosyalarını, simgeleri ve çevrim dışı çalışmayı sağlayan service worker'ı tek ZIP'te indirir. Klasörü GitHub Pages, Netlify ya da kendi sunucunuz gibi bir statik web barındırmaya yükleyin; itch.io'da ZIP'i yeni bir HTML oyununa olduğu gibi yükleyebilirsiniz. HTTPS üzerinden açılan oyun uygulama olarak yüklenebilir ve bir kez açıldıktan sonra internetsiz de oynanır. Skor tabloları ve başarımlar yalnızca Arcade'de kaydedilir.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -52217,6 +52535,69 @@
     "tr": "Erken erişim (Pro ve ekip)",
     "files": [
       "src/lib/features.ts"
+    ]
+  },
+  "dj5ow4qzk6": {
+    "en": "Star Duel",
+    "tr": "Yıldız Düellosu",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1akfpfg8b41": {
+    "en": "A V5 duel for two on one keyboard: Player Input gives each player their own keys and gamepad, and an Animator plays running and dashing. Turkish and English, wins kept with SaveSystem, and a fastest-win leaderboard and achievements on the Arcade.",
+    "tr": "Tek klavyede iki kişilik V5 düellosu: Player Input her oyuncuya kendi tuşlarını ve gamepad'ini verir, Animator koşma ve atılmayı oynatır. Türkçe ve İngilizce, SaveSystem ile galibiyet kaydı, Arcade'de en hızlı zafer tablosu ve başarımlar.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1fp5re2yzve": {
+    "en": "Blue: WASD + Space (dash)  •  Pink: arrows + Enter  •  Gamepads in turn  •  R: again",
+    "tr": "Mavi: WASD + Space (atıl)  •  Pembe: oklar + Enter  •  Gamepad'ler sırayla  •  R: yeniden",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "2g1mo8dra6s": {
+    "en": "Dungeon Escape",
+    "tr": "Zindan Kaçışı",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "t9e8z70bu7": {
+    "en": "A V5 platformer: an Animator state machine picks the hero's Idle, Run, Jump, Fall and Hurt states from its parameters. Flags save your progress with SaveSystem and screen effects flare when you're hit; two leaderboards and four achievements on the Arcade.",
+    "tr": "V5 platform oyunu: kahramanın Idle, Run, Jump, Fall ve Hurt durumlarını Animator durum makinesi parametrelere bakarak seçer. Bayraklar ilerlemeni SaveSystem ile kaydeder, hasarda ekran efektleri parlar; Arcade'de iki skor tablosu ve dört başarım.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "6fr6cm8orr": {
+    "en": "← → / A D / left stick: run  •  Space / gamepad A: jump  •  N: new game",
+    "tr": "← → / A D / sol çubuk: koş  •  Space / gamepad A: zıpla  •  N: yeni oyun",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "13pdrrkf2pe": {
+    "en": "Meteor Storm",
+    "tr": "Meteor Yağmuru",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "ev6l9e160j": {
+    "en": "A retro V5 shooter: screen effects V2 with CRT scanlines, curvature and color grading; switch CRT and the pixel look in the options, kept with SaveSystem, and a color fringe when you're hit. An Animator-driven ship, Turkish and English, a score leaderboard and a hidden achievement.",
+    "tr": "Retro V5 nişancısı: CRT tarama çizgileri, kavis ve renk ayarıyla ekran efektleri V2; seçeneklerden CRT ve piksel görünüm SaveSystem ile kaydedilir, vurulunca renk kayması. Animator'lı gemi, Türkçe ve İngilizce, puan tablosu ve gizli başarım.",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
+    ]
+  },
+  "1abo4urt4i8": {
+    "en": "← → / A D: move  •  Space / Ctrl / click: fire  •  O: options  •  R: again",
+    "tr": "← → / A D: hareket  •  Space / Ctrl / tık: ateş  •  O: seçenekler  •  R: yeniden",
+    "files": [
+      "src/lib/game-engine/templates/index.ts"
     ]
   },
   "y91igfxf4x": {
@@ -52968,6 +53349,20 @@
       "src/lib/legal.ts"
     ]
   },
+  "1lir03l8hk0": {
+    "en": "Leaderboards and achievements (Hanogt Engine V5): in games you play on the Arcade while signed in, your best score on each leaderboard is kept with your salted pseudonymous ID, your nickname at the time (or your username), the score and the date, and the leaderboard is shown publicly. Your e-mail address is never shown and isn't part of the entry. Achievements you unlock are shown only to you. You can turn sharing off and remove your entry at any time; these records are covered by account deletion and “Download my data”. The Terms of Use now say that scores are unverified, that rankings carry no prize or right, and that cheating is not allowed.",
+    "tr": "Skor tabloları ve başarımlar (Hanogt Engine V5): Arcade'de giriş yapmış olarak oynadığınız oyunlarda her tablo için en iyi skorunuz; tuzlanmış takma kimliğiniz, o anki takma adınız (yoksa kullanıcı adınız), skor ve tarihle saklanır ve tablo herkese açık gösterilir. E-posta adresiniz gösterilmez ve kayıtta yer almaz. Açtığınız başarımlar yalnızca size gösterilir. Paylaşımı kapatabilir ve kaydınızı istediğiniz zaman kaldırabilirsiniz; bu kayıtlar hesap silmeye ve “Verilerimi İndir”e dahildir. Kullanım Şartları'na skorların doğrulanmadığı, sıralamaların ödül ya da hak doğurmadığı ve hile yasağı eklendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1sjez6kyky7": {
+    "en": "3D models in games: you can upload GLB models (up to 300 KB each) to your games. Models are kept in the same game file library as sounds, under an identifier derived from their content, and count against your plan's game file storage; models that link to other addresses or are compressed are refused. Games' SaveSystem saves (at most 512 KB per game) are kept only in your browser.",
+    "tr": "Oyunlarda 3D modeller: Oyunlarınıza GLB model (dosya başına en fazla 300 KB) yükleyebilirsiniz. Modeller ses dosyalarıyla aynı oyun dosyası kitaplığında, içeriklerinden türetilen bir kimlikle saklanır ve planınızın oyun dosyası depolamasına sayılır; başka adreslere bağlanan ya da sıkıştırılmış modeller kabul edilmez. Oyunların SaveSystem kayıtları (oyun başına en fazla 512 KB) yalnızca tarayıcınızda tutulur.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
   "28783jghnt0": {
     "en": "Audio files in games: with Hanogt Engine V4 you can upload WAV, MP3 or OGG files (up to 300 KB each) to your games. When you are signed in, files are saved to your account's audio library; each file is stored once under an identifier derived from its content and can be downloaded by anyone who knows that identifier so games can play it. The sounds of published games are kept with the publication; files that no account or publication uses are deleted. Your audio library is included in the “Download My Data” file.",
     "tr": "Oyunlarda ses dosyaları: Hanogt Engine V4 ile oyunlarınıza WAV, MP3 veya OGG dosyası (dosya başına en fazla 300 KB) yükleyebilirsiniz. Giriş yaptığınızda dosyalar hesabınızın ses kitaplığına kaydedilir; her dosya içeriğinden türetilen bir kimlikle bir kez saklanır ve oyunların çalabilmesi için bu kimliği bilen herkes tarafından indirilebilir. Yayımlanan oyunların sesleri yayınla birlikte saklanır; hiçbir hesabın ve yayının kullanmadığı dosyalar silinir. Ses kitaplığınız “Verilerimi İndir” dosyasında yer alır.",
@@ -53592,9 +53987,9 @@
       "src/lib/plans.ts"
     ]
   },
-  "g01qu7dozd": {
-    "en": "The code editor, Hanogt Engine V4, the Arcade, Media and Hanogt Social",
-    "tr": "Kod editörü, Hanogt Engine V4, Arcade, Media ve Hanogt Social",
+  "hjdtd37eh2": {
+    "en": "The code editor, Hanogt Engine V5, the Arcade, Media and Hanogt Social",
+    "tr": "Kod editörü, Hanogt Engine V5, Arcade, Media ve Hanogt Social",
     "files": [
       "src/lib/plans.ts"
     ]

@@ -24,6 +24,22 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.27",
+        version: "v0.3.27",
+        date: "2026-10-06",
+        title: { TR: "Hanogt Engine V5", EN: "Hanogt Engine V5" },
+        desc: { TR: "Motorun yeni sürümü: Animator durum makinesi, Arcade'de skor tabloları ve başarımlar, oyun içi çeviri, yerel çok oyunculu, SaveSystem, GLB 3D modeller, yeni ekran efektleri ve oyunu kendi sitende yayınlamak için web paketi. Üç yeni şablon da hazır.", EN: "A new version of the engine: the Animator state machine, leaderboards and achievements on the Arcade, in-game translations, local multiplayer, SaveSystem, GLB 3D models, new screen effects and a web package for hosting games on your own site. Three new templates are ready too." },
+        items: [
+            { TR: "Animator: durumlar, parametreler ve geçişlerle karakter animasyonu; grafik oyun çalışırken geçerli durumu canlı gösterir.", EN: "Animator: character animation with states, parameters and transitions; the graph shows the current state live while the game runs." },
+            { TR: "Skor tabloları ve başarımlar: Leaderboard.Submit ve Achievements.Unlock ile Arcade'de en iyi skorlar; sunucu sınırları ve en kısa oynama süresini denetler.", EN: "Leaderboards and achievements: best scores on the Arcade with Leaderboard.Submit and Achievements.Unlock; the server checks bounds and the minimum play time." },
+            { TR: "Oyunun dilleri: dil tablosu, Localization.Get ve CSV ile çeviri; oyun oyuncunun dilinde açılır.", EN: "Game languages: a string table, Localization.Get and CSV for translators; games open in the player's language." },
+            { TR: "Yerel çok oyunculu: Player Input ile aynı ekranda dört oyuncuya kadar; SaveSystem ile kayıt yuvaları.", EN: "Local multiplayer: up to four players on one screen with Player Input; save slots with SaveSystem." },
+            { TR: "GLB 3D modeller; renk düzenleme, kromatik sapma, pikselleştirme ve CRT ekran efektleri.", EN: "GLB 3D models; color grading, chromatic aberration, pixelation and CRT screen effects." },
+            { TR: "Web paketi (ZIP · PWA): oyununu kendi sitende yayınla; uygulama olarak yüklenir, çevrim dışı da oynanır.", EN: "Web package (ZIP · PWA): host your game on your own site; it installs as an app and plays offline." },
+            { TR: "Yeni şablonlar: Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru. Gizlilik Politikası ve Kullanım Şartları 5.3.", EN: "New templates: Star Duel (two players), Dungeon Escape and Meteor Storm. Privacy Policy and Terms of Use 5.3." },
+        ],
+    },
+    {
         id: "v0.3.26",
         version: "v0.3.26",
         date: "2026-10-06",

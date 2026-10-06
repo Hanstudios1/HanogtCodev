@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.2";
+export const LEGAL_VERSION = "5.3";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "6 Ekim 2026", EN: "6 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.2-2026-10-06";
+export const LEGAL_NOTICE_ID = "5.3-2026-10-06";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,14 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.3",
+        date: { TR: "6 Ekim 2026", EN: "6 October 2026" },
+        items: [
+            { TR: "Skor tabloları ve başarımlar (Hanogt Engine V5): Arcade'de giriş yapmış olarak oynadığınız oyunlarda her tablo için en iyi skorunuz; tuzlanmış takma kimliğiniz, o anki takma adınız (yoksa kullanıcı adınız), skor ve tarihle saklanır ve tablo herkese açık gösterilir. E-posta adresiniz gösterilmez ve kayıtta yer almaz. Açtığınız başarımlar yalnızca size gösterilir. Paylaşımı kapatabilir ve kaydınızı istediğiniz zaman kaldırabilirsiniz; bu kayıtlar hesap silmeye ve “Verilerimi İndir”e dahildir. Kullanım Şartları'na skorların doğrulanmadığı, sıralamaların ödül ya da hak doğurmadığı ve hile yasağı eklendi.", EN: "Leaderboards and achievements (Hanogt Engine V5): in games you play on the Arcade while signed in, your best score on each leaderboard is kept with your salted pseudonymous ID, your nickname at the time (or your username), the score and the date, and the leaderboard is shown publicly. Your e-mail address is never shown and isn't part of the entry. Achievements you unlock are shown only to you. You can turn sharing off and remove your entry at any time; these records are covered by account deletion and “Download my data”. The Terms of Use now say that scores are unverified, that rankings carry no prize or right, and that cheating is not allowed." },
+            { TR: "Oyunlarda 3D modeller: Oyunlarınıza GLB model (dosya başına en fazla 300 KB) yükleyebilirsiniz. Modeller ses dosyalarıyla aynı oyun dosyası kitaplığında, içeriklerinden türetilen bir kimlikle saklanır ve planınızın oyun dosyası depolamasına sayılır; başka adreslere bağlanan ya da sıkıştırılmış modeller kabul edilmez. Oyunların SaveSystem kayıtları (oyun başına en fazla 512 KB) yalnızca tarayıcınızda tutulur.", EN: "3D models in games: you can upload GLB models (up to 300 KB each) to your games. Models are kept in the same game file library as sounds, under an identifier derived from their content, and count against your plan's game file storage; models that link to other addresses or are compressed are refused. Games' SaveSystem saves (at most 512 KB per game) are kept only in your browser." },
+        ],
+    },
     {
         version: "5.2",
         date: { TR: "6 Ekim 2026", EN: "6 October 2026" },

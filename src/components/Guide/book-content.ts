@@ -174,12 +174,13 @@ export const PAGES: BookPage[] = [
         chapter: "engine",
         title: { TR: "Oyun motoru", EN: "The game engine" },
         blocks: [
-            { type: "p", text: { TR: "Hanogt Engine V4, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.", EN: "Hanogt Engine V4 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components." } },
+            { type: "p", text: { TR: "Hanogt Engine V5, tarayıcıda çalışan Unity benzeri bir 2D/3D oyun motorudur. Dünyan sahnelerden, sahneler GameObject'lerden, onlar da bileşenlerden oluşur.", EN: "Hanogt Engine V5 is a Unity-like 2D/3D engine in your browser. Your world is made of scenes, scenes of GameObjects, and those of components." } },
             { type: "p", text: { TR: "Oyun Motoru sayfasında bir şablonla başla:", EN: "Start from a template on the Game Engine page:" } },
             {
                 type: "list",
                 items: [
-                    { TR: "Gök Kulesi, Labirent Avı ve Sapan Ustası (V4 ile yeni)", EN: "Sky Tower, Maze Hunt and Slingshot Master (new in V4)" },
+                    { TR: "Yıldız Düellosu (iki kişilik), Zindan Kaçışı ve Meteor Yağmuru (V5 ile yeni)", EN: "Star Duel (two players), Dungeon Escape and Meteor Storm (new in V5)" },
+                    { TR: "Gök Kulesi, Labirent Avı ve Sapan Ustası (V4 ile gelenler)", EN: "Sky Tower, Maze Hunt and Slingshot Master (from V4)" },
                     { TR: "Neon Koşu, Kanat Çırp, Pong, Yılan (C++), Küçük Macera, Engel Parkuru, Kale Savunması ve Neon Arena (C++)", EN: "Neon Run, Flap, Pong, Snake (C++), Little Adventure, Obstacle Course, Castle Defense and Neon Arena (C++)" },
                     { TR: "Tilemap Macerası, Tıklama Fabrikası ve Sisli Koşu (V3 ile gelenler)", EN: "Tilemap Adventure, Clicker Factory and Foggy Runner (from V3)" },
                     { TR: "2D Platform Oyunu", EN: "2D Platformer" },
@@ -221,10 +222,24 @@ export const PAGES: BookPage[] = [
                     { TR: "Tetikleyiciler: OnTriggerEnter ile coin topla.", EN: "Triggers: collect coins with OnTriggerEnter." },
                     { TR: "Input: klavye, fare, dokunmatik, gamepad ve Jump, Fire gibi eylemler.", EN: "Input: keyboard, mouse, touch, gamepads and actions such as Jump and Fire." },
                     { TR: "Coroutine, Invoke, Raycast, Instantiate, Destroy.", EN: "Coroutines, Invoke, Raycast, Instantiate, Destroy." },
-                    { TR: "PlayerPrefs ile en yüksek skoru sakla.", EN: "Keep the high score with PlayerPrefs." },
+                    { TR: "PlayerPrefs ile en yüksek skoru, SaveSystem ile oyunun tamamını sakla.", EN: "Keep the high score with PlayerPrefs and the whole game with SaveSystem." },
                 ],
             },
             { type: "link", href: "/game-engine/docs", label: { TR: "Tüm script API'si: Motor Belgeleri", EN: "Full script API: Engine Docs" } },
+        ],
+    },
+    {
+        chapter: "engine",
+        title: { TR: "V5'in yeni blokları", EN: "The new blocks of V5" },
+        blocks: [
+            { type: "item", icon: "🎞️", name: { TR: "Animator", EN: "Animator" }, text: { TR: "Idle, Run, Jump gibi durumlar ve parametrelerle geçişler; betik yalnızca SetFloat ve SetTrigger der.", EN: "States such as Idle, Run and Jump with transitions driven by parameters; scripts only call SetFloat and SetTrigger." } },
+            { type: "item", icon: "🏆", name: { TR: "Skor tabloları ve başarımlar", EN: "Leaderboards and achievements" }, text: { TR: "Leaderboard.Submit ve Achievements.Unlock ile Arcade'de en iyi skorlar ve açılan başarımlar.", EN: "Best scores and unlocked achievements on the Arcade with Leaderboard.Submit and Achievements.Unlock." } },
+            { type: "item", icon: "🌍", name: { TR: "Oyunun dilleri", EN: "Game languages" }, text: { TR: "Dil tablosu ve Localization.Get: oyun, oyuncunun dilinde açılır.", EN: "A string table and Localization.Get: the game opens in the player's language." } },
+            { type: "item", icon: "🎮", name: { TR: "Yerel çok oyunculu", EN: "Local multiplayer" }, text: { TR: "Player Input ile aynı ekranda dört oyuncuya kadar: klavyenin iki yarısı ve gamepad'ler.", EN: "Up to four players on one screen with Player Input: the two halves of the keyboard and gamepads." } },
+            { type: "item", icon: "💾", name: { TR: "SaveSystem", EN: "SaveSystem" }, text: { TR: "Kendi sınıflarını kayıt yuvalarına tek satırla kaydet ve geri yükle.", EN: "Save your own classes to save slots and load them back in one line." } },
+            { type: "item", icon: "🧊", name: { TR: "3D modeller ve web paketi", EN: "3D models and the web package" }, text: { TR: "GLB modeller yükle; oyununu ZIP olarak kendi sitende yayınla, uygulama gibi yüklensin.", EN: "Upload GLB models; host your game on your own site as a ZIP that installs like an app." } },
+            { type: "p", text: { TR: "Yeni şablonlar: Yıldız Düellosu, Zindan Kaçışı ve Meteor Yağmuru. Ekran efektlerine renk düzenleme, kromatik sapma, pikselleştirme ve CRT eklendi.", EN: "New templates: Star Duel, Dungeon Escape and Meteor Storm. Screen effects gained color grading, chromatic aberration, pixelation and CRT." } },
+            { type: "link", href: "/game-engine/docs#yenilikler", label: { TR: "V5'te yenilikler", EN: "What's new in V5" } },
         ],
     },
     {
@@ -238,7 +253,7 @@ export const PAGES: BookPage[] = [
             { type: "item", icon: "🎵", name: { TR: "Ses ve müzik", EN: "Sound and music" }, text: { TR: "WAV, MP3 ve OGG yükle; Audio.PlayMusic ile müzik, Audio Source ile döngülü sesler.", EN: "Upload WAV, MP3 and OGG; music with Audio.PlayMusic and looping sounds with Audio Source." } },
             { type: "item", icon: "🎚️", name: { TR: "Ayar menüleri", EN: "Settings menus" }, text: { TR: "Slider, Toggle ve Input Field ile ses ayarı, seçenekler ve skor tablosuna isim yazma.", EN: "Volume settings, options and name entry for high scores with Slider, Toggle and Input Field." } },
             { type: "p", text: { TR: "V3'ün blokları da yerinde: tilemap, animasyon ve Tween, UI Button/Panel/Progress Bar, sis ve ekran efektleri.", EN: "The V3 blocks are still there: tilemaps, animation and Tween, UI Button/Panel/Progress Bar, fog and screen effects." } },
-            { type: "link", href: "/game-engine/docs#yenilikler", label: { TR: "V4'te yenilikler", EN: "What's new in V4" } },
+            { type: "link", href: "/game-engine/docs#karakter", label: { TR: "Character Controller 2D", EN: "Character Controller 2D" } },
         ],
     },
     {

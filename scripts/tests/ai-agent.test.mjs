@@ -259,6 +259,9 @@ test("Core maps sample sentences to the same actions the model would take", () =
     assert.equal(propose("make_game", "flappy bird gibi bir oyun").call.args.template, "flappy-2d");
     assert.equal(propose("make_game", "2d koşu oyunu yap").call.args.template, "runner-2d");
     assert.equal(propose("make_game", "sonsuz koşu oyunu yap").call.args.template, "runner-3d");
+    assert.equal(propose("make_game", "iki kişilik bir düello oyunu yap").call.args.template, "star-duel-2d");
+    assert.equal(propose("make_game", "zindandan kaçış oyunu yap").call.args.template, "dungeon-escape-2d");
+    assert.equal(propose("make_game", "make a retro meteor shooter").call.args.template, "meteor-retro-2d");
 
     const group = propose("create_group", "React çalışma grubu kur");
     assert.equal(group.call.name, "create_group");

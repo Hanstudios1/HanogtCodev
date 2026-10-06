@@ -305,10 +305,28 @@ export const FAQS: Faq[] = [
     {
         id: "engine-v3",
         category: CATEGORY.engine,
-        question: { TR: "Hanogt Engine V4'te neler var?", EN: "What's new in Hanogt Engine V4?" },
+        question: { TR: "Hanogt Engine V5'te neler var?", EN: "What's new in Hanogt Engine V5?" },
         answer: {
-            TR: "Hanogt Engine V4 giriş eylemleri ve gamepad desteği, kod yazmadan platform karakteri yapan Character Controller 2D, yumuşak kamera takibi ve sarsıntı, A* yol bulma ve Nav Agent 2D, Distance ve Spring eklemleri, Slider, Toggle ve Input Field arayüz kontrolleri, ses dosyaları ve müzik, editörde çoklu seçim ve değerleri canlı gösteren İzle paneli getiriyor; Gök Kulesi, Labirent Avı ve Sapan Ustası şablonları da yeni. Ses dosyaları en çok 300 KB olabilir; toplam ses alanı Ücretsiz'de 5 MB, Plus'ta 25 MB, Pro'da 100 MB. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V4'e taşınır ve V4 öncesi oyunlar eskisi gibi çalışır.",
-            EN: "Hanogt Engine V4 brings input actions and gamepad support, Character Controller 2D for platformer characters without code, smooth camera follow and shake, A* path finding and Nav Agent 2D, Distance and Spring joints, Slider, Toggle and Input Field UI controls, audio files and music, multi-select in the editor and the Watch panel that shows values live; the Sky Tower, Maze Hunt and Slingshot Master templates are new too. Audio files can be up to 300 KB; total audio storage is 5 MB on Free, 25 MB on Plus and 100 MB on Pro. Projects saved with earlier versions are moved to V4 automatically when you open them, and games made before V4 play as they did.",
+            TR: "Hanogt Engine V5; karakter animasyonu için Animator durum makinesi, Arcade'de skor tabloları ve başarımlar, oyunu birden çok dile çeviren dil tablosu, aynı ekranda dört oyuncuya kadar yerel çok oyunculu, kayıt yuvalarıyla SaveSystem, GLB 3D modeller, renk düzenleme, kromatik sapma, pikselleştirme ve CRT gibi yeni ekran efektleri ve oyunu kendi sitende yayınlamak için web paketi (ZIP · PWA) getiriyor; Yıldız Düellosu, Zindan Kaçışı ve Meteor Yağmuru şablonları da yeni. V4'te gamepad, Character Controller 2D, kamera takibi, A* yol bulma, eklemler ve ses dosyaları gelmişti. Önceki sürümlerle kaydedilen projeler açıldığında otomatik olarak V5'e taşınır ve eski oyunlar eskisi gibi çalışır.",
+            EN: "Hanogt Engine V5 brings the Animator state machine for character animation, leaderboards and achievements on the Arcade, a string table that translates a game into several languages, local multiplayer for up to four players on one screen, SaveSystem with save slots, GLB 3D models, new screen effects such as color grading, chromatic aberration, pixelation and a CRT look, and a web package (ZIP · PWA) for hosting a game on your own site; the Star Duel, Dungeon Escape and Meteor Storm templates are new too. V4 brought gamepads, Character Controller 2D, camera follow, A* path finding, joints and audio files. Projects saved with earlier versions are moved to V5 automatically when you open them, and older games play as they did.",
+        },
+    },
+    {
+        id: "engine-leaderboards",
+        category: CATEGORY.engine,
+        question: { TR: "Oyunuma skor tablosu ve başarım nasıl eklerim?", EN: "How do I add leaderboards and achievements to my game?" },
+        answer: {
+            TR: "Oyun motorunda Ayarlar → Arcade sekmesinden skor tablolarını (en fazla 5) ve başarımları (en fazla 30) tanımlayın, betikten Leaderboard.Submit(\"score\", skor) ve Achievements.Unlock(\"first-win\") ile bildirin. Oyun Arcade'de yayınlanınca giriş yapan oyuncuların en iyi skorları tabloda görünür. Sunucu her skoru belirlediğiniz sınırlara ve en kısa oynama süresine göre denetler; skorlar yine de oyuncunun tarayıcısından geldiği için tablolarda “doğrulanmamış” yazar ve yapımcı kayıtları silebilir.",
+            EN: "In the game engine, define leaderboards (up to 5) and achievements (up to 30) under Settings → Arcade, then report to them from scripts with Leaderboard.Submit(\"score\", score) and Achievements.Unlock(\"first-win\"). Once the game is published on the Arcade, the best scores of signed-in players show on the leaderboard. The server checks every score against the bounds you set and the minimum play time; scores still come from the player's browser, so leaderboards say “unverified” and the author can remove entries.",
+        },
+    },
+    {
+        id: "engine-web-package",
+        category: CATEGORY.engine,
+        question: { TR: "Oyunumu kendi sitemde yayınlayabilir miyim?", EN: "Can I host my game on my own site?" },
+        answer: {
+            TR: "Evet. Oyun motorunda Dışa aktar → Web paketi (ZIP · PWA) oyunu, oynatıcıyı, ses ve model dosyalarını, simgeleri ve çevrim dışı çalışmayı sağlayan service worker'ı tek ZIP'te indirir. Klasörü GitHub Pages, Netlify ya da kendi sunucunuz gibi bir statik web barındırmaya yükleyin; itch.io'da ZIP'i yeni bir HTML oyununa olduğu gibi yükleyebilirsiniz. HTTPS üzerinden açılan oyun uygulama olarak yüklenebilir ve bir kez açıldıktan sonra internetsiz de oynanır. Skor tabloları ve başarımlar yalnızca Arcade'de kaydedilir.",
+            EN: "Yes. In the game engine, Export → Web package (ZIP · PWA) downloads the game, the player, its sound and model files, icons and a service worker for offline play in one ZIP. Upload the folder to a static web host such as GitHub Pages, Netlify or your own server; on itch.io you can upload the ZIP as it is to a new HTML game. Served over HTTPS, the game can be installed as an app and plays offline once it has been opened. Leaderboards and achievements are only kept on the Arcade.",
         },
     },
     {

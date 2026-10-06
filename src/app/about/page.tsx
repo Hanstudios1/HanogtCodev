@@ -82,10 +82,10 @@ const PRODUCTS: Product[] = [
     {
         icon: Boxes,
         href: "/game-engine",
-        title: { TR: "Hanogt Engine V4", EN: "Hanogt Engine V4" },
+        title: { TR: "Hanogt Engine V5", EN: "Hanogt Engine V5" },
         text: {
-            TR: "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V4 ile gamepad, karakter denetleyici, kamera takibi, yol bulma, eklemler ve ses dosyaları geldi; C# ve C++ ile script yazarsın.",
-            EN: "A Unity-like 2D/3D game engine that runs in your browser. V4 adds gamepads, a character controller, camera follow, path finding, joints and audio files; you script in C# and C++.",
+            TR: "Tarayıcıda çalışan, Unity benzeri 2D/3D oyun motoru. V5 ile Animator, Arcade skor tabloları ve başarımlar, oyun içi çeviri, yerel çok oyunculu, kayıt yuvaları, GLB modeller ve web paketi geldi; C# ve C++ ile script yazarsın.",
+            EN: "A Unity-like 2D/3D game engine that runs in your browser. V5 adds the Animator, Arcade leaderboards and achievements, in-game translations, local multiplayer, save slots, GLB models and the web package; you script in C# and C++.",
         },
         gradient: "from-violet-500 to-fuchsia-500",
     },
