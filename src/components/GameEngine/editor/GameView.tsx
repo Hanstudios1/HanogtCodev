@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useI18n } from "@/lib/i18n";
 import { GameOverlay } from "@/lib/game-engine/player/overlay";
 import { GamePlayer, type PlayerState, type PlayerStats } from "@/lib/game-engine/player/game-player";
 import { SceneRenderer } from "@/lib/game-engine/render/renderer";
@@ -58,9 +59,13 @@ export function GameView({ project, program, sceneId, controlRef, onLog, onState
 }) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const callbacks = useRef({ onLog, onState });
+    // Games with the site's language start in it; changing the site language doesn't restart play mode.
+    const { locale } = useI18n();
+    const localeRef = useRef(locale);
     useEffect(() => {
         callbacks.current = { onLog, onState };
-    }, [onLog, onState]);
+        localeRef.current = locale;
+    }, [onLog, onState, locale]);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -71,6 +76,7 @@ export function GameView({ project, program, sceneId, controlRef, onLog, onState
             sceneId,
             isEditor: true,
             touchControls: project.settings.touchControls ? "auto" : false,
+            locale: localeRef.current,
             onLog: (entry, updated) => callbacks.current.onLog(entry, updated),
             onStateChange: (state) => callbacks.current.onState(state),
         });

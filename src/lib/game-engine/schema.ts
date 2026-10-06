@@ -12,6 +12,7 @@ import { defaultTilePalette } from "./components";
 import { createEngineId, isEngineId, nowIso } from "./ids";
 import { ACTION_NAME, normalizeInputSettings } from "./input-actions";
 import { isKeyCode } from "./key-codes";
+import { cleanLocalizationKey, LOCALIZATION_LIMITS, normalizeLanguageCode } from "./localization";
 import { isTileKey, TILEMAP_LIMITS } from "./tilemap";
 import {
     ANIMATION_PROPERTIES,
@@ -47,6 +48,8 @@ import {
     type GameDimension,
     type GameEntity,
     type GameProjectDocument,
+    type LocalizationEntry,
+    type LocalizationSettings,
     type PrefabAsset,
     type ProjectSettings,
     type SceneDocument,
@@ -629,6 +632,7 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 type,
                 enabled,
                 text: text(source.text, "", ENGINE_LIMITS.maxUiTextLength),
+                localizationKey: cleanLocalizationKey(source.localizationKey),
                 fontSize: num(source.fontSize, 28, 6, 200),
                 color: normalizeColor(source.color, "#ffffff"),
                 anchor: enumOf(source.anchor, UI_ANCHORS, "top-left"),
@@ -644,6 +648,7 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 type,
                 enabled,
                 text: text(source.text, "", ENGINE_LIMITS.maxUiLabelLength),
+                localizationKey: cleanLocalizationKey(source.localizationKey),
                 fontSize: num(source.fontSize, 22, 6, 120),
                 textColor: normalizeColor(source.textColor, "#ffffff"),
                 color: normalizeColor(source.color, "#6366f1"),
@@ -801,6 +806,7 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 enabled,
                 isOn: bool(source.isOn, false),
                 label: text(source.label, "", ENGINE_LIMITS.maxUiLabelLength),
+                localizationKey: cleanLocalizationKey(source.localizationKey),
                 fontSize: num(source.fontSize, 20, 6, 120),
                 textColor: normalizeColor(source.textColor, "#ffffff"),
                 color: normalizeColor(source.color, "#334155"),
@@ -818,6 +824,7 @@ function normalizeComponent(value: unknown, context: MigrationContext): GameComp
                 enabled,
                 text: text(source.text, "", characterLimit),
                 placeholder: text(source.placeholder, "", ENGINE_LIMITS.maxUiLabelLength),
+                localizationKey: cleanLocalizationKey(source.localizationKey),
                 fontSize: num(source.fontSize, 20, 6, 120),
                 textColor: normalizeColor(source.textColor, "#ffffff"),
                 backgroundColor: normalizeColor(source.backgroundColor, "#0f172a"),
@@ -1092,7 +1099,36 @@ function normalizeProjectSettings(value: unknown, sceneIds: string[], documentVe
         // Documents saved before V4 have no rules field: they keep V3 behavior.
         rules: ENGINE_RULES.includes(source.rules as EngineRules) ? source.rules as EngineRules : documentVersion >= 5 ? 5 : documentVersion >= 4 ? 4 : 3,
         input: normalizeInputSettings(source.input),
+        localization: normalizeLocalization(source.localization),
     };
+}
+
+/** Languages (valid, unique codes) and the string table (unique keys, texts only for those languages). */
+function normalizeLocalization(value: unknown): LocalizationSettings {
+    const source = rec(value);
+    const languages: string[] = [];
+    for (const item of Array.isArray(source.languages) ? source.languages : []) {
+        const code = normalizeLanguageCode(item);
+        if (code && !languages.includes(code) && languages.length < LOCALIZATION_LIMITS.languages) languages.push(code);
+    }
+    const startLanguage = normalizeLanguageCode(source.startLanguage);
+    const entries: LocalizationEntry[] = [];
+    const seen = new Set<string>();
+    for (const item of Array.isArray(source.entries) ? source.entries : []) {
+        if (entries.length >= LOCALIZATION_LIMITS.entries) break;
+        const entry = rec(item);
+        const key = cleanLocalizationKey(entry.key);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        const raw = rec(entry.values);
+        const values: Record<string, string> = {};
+        for (const code of languages) {
+            const textValue = text(raw[code], "", LOCALIZATION_LIMITS.valueLength);
+            if (textValue) values[code] = textValue;
+        }
+        entries.push({ key, values });
+    }
+    return { languages, startLanguage: startLanguage && languages.includes(startLanguage) ? startLanguage : "auto", entries };
 }
 
 // ---------------------------------------------------------------------------

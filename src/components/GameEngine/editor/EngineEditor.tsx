@@ -48,7 +48,7 @@ import type { LogEntry } from "@/lib/game-engine/runtime/world";
 import { ENGINE_VERSION, ENGINE_VERSION_LABEL, type GameEntity, type GameProjectDocument } from "@/lib/game-engine/types";
 import ConsolePanel from "./ConsolePanel";
 import { EditorContext, type ConsoleEntry, type EditorContextValue } from "./context";
-import { PublishDialog, SettingsDialog, captureThumbnail } from "./Dialogs";
+import { PublishDialog, SettingsDialog, captureThumbnail, type SettingsTab } from "./Dialogs";
 import { GamePreview, GameView } from "./GameView";
 import HierarchyPanel, { CLIPBOARD_KEY, copyEntitiesToClipboard } from "./HierarchyPanel";
 import { exportStandaloneHtml } from "./html-export";
@@ -62,6 +62,7 @@ import { EditorStore, useEditorState } from "./store";
 import WatchPanel, { SHOW_WATCH_EVENT } from "./WatchPanel";
 import AnimatorPanel from "./AnimatorPanel";
 import { SHOW_ANIMATOR_EVENT } from "./AnimatorEditor";
+import { OPEN_LOCALIZATION_EVENT } from "./LocalizationPanel";
 import { engineLocale, useEngineText, type TextKey } from "./text";
 import { TilePainterStore } from "./tile-painter";
 import { Dropdown, IconButton, NumberInput, TabButton, Toasts, Toggle, cx, useToasts } from "./ui";
@@ -216,6 +217,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
     const [showScripts, setShowScripts] = useState(false);
     const [gotoRequest, setGotoRequest] = useState<{ id: string; line: number; nonce: number } | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [settingsTab, setSettingsTab] = useState<SettingsTab>("project");
     const [publishOpen, setPublishOpen] = useState(false);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
     const [arcadeId, setArcadeId] = useState(initialArcadeId);
@@ -426,6 +428,16 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
         };
         window.addEventListener(SHOW_ANIMATOR_EVENT, onShowAnimator);
         return () => window.removeEventListener(SHOW_ANIMATOR_EVENT, onShowAnimator);
+    }, []);
+
+    // "Open languages" in a UI inspector's localization key field.
+    useEffect(() => {
+        const onOpenLocalization = () => {
+            setSettingsTab("languages");
+            setSettingsOpen(true);
+        };
+        window.addEventListener(OPEN_LOCALIZATION_EVENT, onOpenLocalization);
+        return () => window.removeEventListener(OPEN_LOCALIZATION_EVENT, onOpenLocalization);
     }, []);
 
     // ------------------------------------------------------------------
@@ -774,7 +786,7 @@ export default function EngineEditor({ initialProject, source, initialRevision, 
                     </button>
                 </nav>
 
-                <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+                <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} tab={settingsTab} onTabChange={setSettingsTab} />
                 <PublishDialog
                     open={publishOpen}
                     onClose={() => setPublishOpen(false)}

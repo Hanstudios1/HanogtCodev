@@ -54,6 +54,7 @@ import {
 } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { AnchorInput, TextureSelect, useComponentEdit, type Editor } from "./inspector-fields";
+import { LocalizationKeyField } from "./LocalizationPanel";
 import { activeScene } from "./operations";
 import { useEditorState } from "./store";
 import { addWatch, SHOW_WATCH_EVENT } from "./WatchPanel";
@@ -459,6 +460,9 @@ export function UITextEditor({ entity, component, disabled }: Editor<UITextCompo
         <div className="space-y-0.5">
             <FieldRow label="Text" wide>
                 <TextInput multiline value={component.text} maxLength={2000} disabled={disabled} onChange={(text) => edit("text", (draft) => { draft.text = text; })} />
+            </FieldRow>
+            <FieldRow label={t("localizationKey")} title={t("localizationKeyHint")}>
+                <LocalizationKeyField value={component.localizationKey} text={component.text} disabled={disabled} onChange={(key, preview) => edit("localizationKey", (draft) => { draft.localizationKey = key; if (preview !== null) draft.text = preview; })} />
             </FieldRow>
             <FieldRow label="Font Size"><NumberInput value={component.fontSize} min={4} max={200} step={1} integer disabled={disabled} onChange={(value) => edit("fontSize", (draft) => { draft.fontSize = value; })} /></FieldRow>
             <FieldRow label="Color"><ColorInput value={component.color} disabled={disabled} onChange={(color) => edit("color", (draft) => { draft.color = color; })} /></FieldRow>

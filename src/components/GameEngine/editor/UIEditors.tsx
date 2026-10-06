@@ -17,6 +17,7 @@ import {
 } from "@/lib/game-engine/types";
 import { useEditor } from "./context";
 import { AnchorInput, KeyCodeSelect, TextureSelect, useComponentEdit, type ComponentEdit, type Editor } from "./inspector-fields";
+import { LocalizationKeyField } from "./LocalizationPanel";
 import { activeScene } from "./operations";
 import { useEditorState } from "./store";
 import { ColorInput, FieldRow, NumberInput, SelectInput, SliderInput, TextInput, Toggle, VectorInput, inputClass } from "./ui";
@@ -76,6 +77,9 @@ export function UIButtonEditor({ entity, component, disabled }: Editor<UIButtonC
         <div className="space-y-0.5">
             <FieldRow label="Text">
                 <TextInput value={component.text} maxLength={200} disabled={disabled} onChange={(text) => edit("text", (draft) => { draft.text = text; })} />
+            </FieldRow>
+            <FieldRow label={t("localizationKey")} title={t("localizationKeyHint")}>
+                <LocalizationKeyField value={component.localizationKey} text={component.text} disabled={disabled} onChange={(key, preview) => edit("localizationKey", (draft) => { draft.localizationKey = key; if (preview !== null) draft.text = preview.slice(0, 200); })} />
             </FieldRow>
             <FieldRow label="Font Size"><NumberInput value={component.fontSize} min={6} max={120} step={1} integer disabled={disabled} onChange={(value) => edit("fontSize", (draft) => { draft.fontSize = value; })} /></FieldRow>
             <FieldRow label={t("textColor")}><ColorInput value={component.textColor} disabled={disabled} onChange={(color) => edit("textColor", (draft) => { draft.textColor = color; })} /></FieldRow>
@@ -276,6 +280,9 @@ export function UIToggleEditor({ entity, component, disabled }: Editor<UIToggleC
         <div className="space-y-0.5" data-ui-toggle-editor>
             <FieldRow label="Is On"><Toggle checked={component.isOn} disabled={disabled} onChange={(value) => edit("isOn", (draft) => { draft.isOn = value; })} /></FieldRow>
             <FieldRow label="Label"><TextInput value={component.label} maxLength={200} disabled={disabled} onChange={(label) => edit("label", (draft) => { draft.label = label; })} /></FieldRow>
+            <FieldRow label={t("localizationKey")} title={t("localizationKeyHint")}>
+                <LocalizationKeyField value={component.localizationKey} text={component.label} disabled={disabled} onChange={(key, preview) => edit("localizationKey", (draft) => { draft.localizationKey = key; if (preview !== null) draft.label = preview.slice(0, 200); })} />
+            </FieldRow>
             <FieldRow label={t("uiToggleStyle")}>
                 <SelectInput value={component.style} disabled={disabled} onChange={(style) => edit("style", (draft) => { draft.style = style; })} options={TOGGLE_STYLES.map((value) => ({ value, label: value === "switch" ? t("uiStyleSwitch") : t("uiStyleCheckbox") }))} />
             </FieldRow>
@@ -297,6 +304,9 @@ export function UIInputFieldEditor({ entity, component, disabled }: Editor<UIInp
         <div className="space-y-0.5" data-ui-input-editor>
             <FieldRow label="Text"><TextInput value={component.text} maxLength={component.characterLimit} disabled={disabled} onChange={(text) => edit("text", (draft) => { draft.text = text.slice(0, draft.characterLimit); })} /></FieldRow>
             <FieldRow label="Placeholder"><TextInput value={component.placeholder} maxLength={200} disabled={disabled} onChange={(placeholder) => edit("placeholder", (draft) => { draft.placeholder = placeholder; })} /></FieldRow>
+            <FieldRow label={t("localizationKey")} title={t("localizationKeyHint")}>
+                <LocalizationKeyField value={component.localizationKey} text={component.placeholder} disabled={disabled} onChange={(key, preview) => edit("localizationKey", (draft) => { draft.localizationKey = key; if (preview !== null) draft.placeholder = preview.slice(0, 200); })} />
+            </FieldRow>
             <FieldRow label="Content Type">
                 <SelectInput value={component.contentType} disabled={disabled} onChange={(contentType) => edit("contentType", (draft) => { draft.contentType = contentType; })} options={INPUT_CONTENT_TYPES.map((value) => ({ value, label: value }))} />
             </FieldRow>

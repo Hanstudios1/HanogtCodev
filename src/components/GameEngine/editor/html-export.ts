@@ -27,8 +27,12 @@ export async function buildStandaloneHtml(project: GameProjectDocument): Promise
     // Uploaded sounds go inside the file so the exported game plays offline.
     const audio = await embedProjectAudio(project.audio ?? []);
     if (audio.missing.length) throw new Error(`Bazı ses dosyaları indirilemedi (${audio.missing.slice(0, 3).join(", ")}). İnternet bağlantınızı kontrol edip tekrar deneyin.`);
+    // The page speaks the game's main language (V5 localization); games without languages stay Turkish.
+    const localization = project.settings.localization;
+    const pageLanguage = (localization.startLanguage !== "auto" ? localization.startLanguage : localization.languages[0]) ?? "tr";
+    const turkish = pageLanguage === "tr" || pageLanguage === "az";
     return `<!doctype html>
-<html lang="tr">
+<html lang="${escapeHtml(pageLanguage)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -47,7 +51,7 @@ html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,
 </head>
 <body>
 <div id="game"></div>
-<div id="start"><div class="card"><h1>${title}</h1><p>${ENGINE_VERSION_LABEL} ile yapıldı</p><button type="button" id="play">▶ Oyna</button></div></div>
+<div id="start"><div class="card"><h1>${title}</h1><p>${turkish ? `${ENGINE_VERSION_LABEL} ile yapıldı` : `Made with ${ENGINE_VERSION_LABEL}`}</p><button type="button" id="play">${turkish ? "▶ Oyna" : "▶ Play"}</button></div></div>
 <a id="badge" href="${escapeHtml(SITE_URL)}/arcade" target="_blank" rel="noopener">Made with ${ENGINE_VERSION_LABEL}</a>
 <script type="application/json" id="hanogt-game">${embedJson({ format: "hanogt-engine-project", version: GAME_ENGINE_SCHEMA_VERSION, project })}</script>
 <script type="application/json" id="hanogt-audio">${embedJson(audio.files)}</script>

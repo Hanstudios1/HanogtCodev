@@ -14,6 +14,7 @@ import {
     createUIText,
 } from "./components";
 import { defaultInputSettings } from "./input-actions";
+import { emptyLocalization } from "./localization";
 import { createEngineId, nowIso } from "./ids";
 import { combineTRS, IDENTITY_TRS, quatFromEulerDeg, type TRS } from "./math";
 import { cloneJson, defaultSceneSettings } from "./schema";
@@ -322,6 +323,7 @@ export function createBlankProject(name: string, dimension: GameDimension, id = 
             touchControls: true,
             rules: 5,
             input: defaultInputSettings(),
+            localization: emptyLocalization(),
         },
         metadata: { createdAt: timestamp, updatedAt: timestamp },
     };

@@ -35,6 +35,7 @@
       "src/components/Admin/AnnouncementsSection.tsx",
       "src/components/Admin/copy.ts",
       "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/editor/text.ts",
       "src/components/News/NewsPage.tsx",
       "src/lib/collab/copy.ts",
       "src/lib/nav.ts"
@@ -14148,6 +14149,7 @@
     "tr": "İngilizce",
     "files": [
       "src/components/Admin/AnnouncementsSection.tsx",
+      "src/lib/game-engine/runtime/globals.ts",
       "src/lib/server/hanogt-ai.ts"
     ]
   },
@@ -17238,14 +17240,16 @@
     "en": "From",
     "tr": "Önceki",
     "files": [
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "14jlwq04qlu": {
     "en": "To",
     "tr": "Yeni",
     "files": [
-      "src/components/Admin/copy.ts"
+      "src/components/Admin/copy.ts",
+      "src/components/GameEngine/editor/text.ts"
     ]
   },
   "a8upir2zdx": {
@@ -26108,6 +26112,7 @@
     "tr": "Diller",
     "files": [
       "src/components/Editor/NewFileDialog.tsx",
+      "src/components/GameEngine/editor/text.ts",
       "src/lib/faq.ts"
     ]
   },
@@ -29426,6 +29431,391 @@
       "src/components/GameEngine/editor/text.ts"
     ]
   },
+  "ns0yvqr1zp": {
+    "en": "Color grading",
+    "tr": "Renk düzenleme",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "10uwzzdar05": {
+    "en": "Saturation",
+    "tr": "Doygunluk",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "29ygwtmq812": {
+    "en": "Contrast",
+    "tr": "Karşıtlık",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "gk0r1rkchv": {
+    "en": "Brightness",
+    "tr": "Parlaklık",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "k8hny79o1o": {
+    "en": "Hue shift",
+    "tr": "Renk tonu kaydırma",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1so38320hsb": {
+    "en": "Tint",
+    "tr": "Renk filtresi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1hy3asmw20j": {
+    "en": "Tint amount",
+    "tr": "Filtre gücü",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "qyyjeprmo6": {
+    "en": "Chromatic aberration",
+    "tr": "Kromatik sapma",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2jh5wbcjyy": {
+    "en": "Intensity",
+    "tr": "Güç",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "7itfx1neq3": {
+    "en": "Pixelate",
+    "tr": "Pikselleştirme",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1no5ern5oee": {
+    "en": "Pixel size",
+    "tr": "Piksel boyutu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2ehj6m2idmy": {
+    "en": "CRT screen",
+    "tr": "CRT ekran",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1bbdhwtm0sl": {
+    "en": "Scanlines",
+    "tr": "Tarama çizgileri",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1njcq2w6keq": {
+    "en": "Curvature",
+    "tr": "Ekran kavisi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "l4sl9sjze6": {
+    "en": "Scripts can change these with ScreenEffects while the game runs; reloading the scene brings these values back.",
+    "tr": "Betikler oyun sırasında ScreenEffects ile değiştirebilir; sahne yeniden yüklenince bu değerlere döner.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "246cuplu9dq": {
+    "en": "Game languages",
+    "tr": "Oyunun dilleri",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "26emmeobxve": {
+    "en": "Write texts once and show them in every language. Scripts read them with Localization.Get(\"key\"); the \"Localization key\" field of UI elements translates their text by itself.",
+    "tr": "Metinleri bir kez yaz, her dilde göster. Betikler Localization.Get(\"anahtar\") ile okur; UI öğelerinin \"Dil anahtarı\" alanı metni kendiliğinden çevirir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1bf01rpnx26": {
+    "en": "The game has no languages yet. Add the first one to start the string table.",
+    "tr": "Oyunun henüz bir dili yok. İlk dili ekleyince dil tablosu açılır.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "rttsxpvixu": {
+    "en": "Add language",
+    "tr": "Dil ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "49gi2odhiy": {
+    "en": "Code: fr, pt-BR…",
+    "tr": "Kod: fr, pt-BR…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "27knpwtm3vl": {
+    "en": "Type a valid language code: tr, en, pt-BR, zh-Hans…",
+    "tr": "Geçerli bir dil kodu yaz: tr, en, pt-BR, zh-Hans…",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "kq7tw9cmm1": {
+    "en": "Main",
+    "tr": "Ana dil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "19fkoaf3msj": {
+    "en": "The main language stands in for missing translations.",
+    "tr": "Ana dil, çevirisi eksik metinlerin yerine gösterilir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1siyxhvx9c9": {
+    "en": "Make main language",
+    "tr": "Ana dil yap",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ll22s92a8k": {
+    "en": "Remove language",
+    "tr": "Dili kaldır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2ew26dmlmj": {
+    "en": "and all of its texts will be removed. Continue?",
+    "tr": "dili ve bu dildeki bütün metinler kaldırılacak. Devam edilsin mi?",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "11ivcpv5nkr": {
+    "en": "Start language",
+    "tr": "Başlangıç dili",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "11puajdiez8": {
+    "en": "Player's language (auto)",
+    "tr": "Oyuncunun dili (otomatik)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "hvttl17kdu": {
+    "en": "On auto the game opens in the player's site or browser language, or in the main language when the game doesn't have it.",
+    "tr": "Otomatikte oyun, oyuncunun site ya da tarayıcı dilinde açılır; oyunda o dil yoksa ana dilde.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1u7u5nkhudu": {
+    "en": "String table",
+    "tr": "Dil tablosu",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zmg1rrr98g": {
+    "en": "The table is empty. Add the first text with \"Add key\" or import a CSV.",
+    "tr": "Tablo boş. \"Anahtar ekle\" ile ilk metni ekle ya da bir CSV yükle.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1l2u63ml48q": {
+    "en": "{count} keys",
+    "tr": "{count} anahtar",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1tjad1wgnnc": {
+    "en": "Add key",
+    "tr": "Anahtar ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zyrdatzouk": {
+    "en": "Search keys or texts",
+    "tr": "Anahtar ya da metin ara",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1u1fv8di1md": {
+    "en": "missing",
+    "tr": "eksik",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2gnl9wolf6e": {
+    "en": "Delete key",
+    "tr": "Anahtarı sil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "10clx7l0sqf": {
+    "en": "This key already exists; pick another name.",
+    "tr": "Bu anahtar zaten var; başka bir ad seç.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1gfgc1gdf74": {
+    "en": "No matching keys.",
+    "tr": "Eşleşen anahtar yok.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "ru9myd7zd2": {
+    "en": "Show more",
+    "tr": "Daha fazla göster",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "n251hfqsog": {
+    "en": "Download as CSV",
+    "tr": "CSV olarak indir",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1bewtvyze34": {
+    "en": "Import CSV",
+    "tr": "CSV yükle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "16s94zatgdj": {
+    "en": "{rows} rows imported.",
+    "tr": "{rows} satır içe aktarıldı.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "d9qfniy403": {
+    "en": "{count} rows skipped (empty or repeated key).",
+    "tr": "{count} satır atlandı (boş ya da tekrarlanan anahtar).",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "u2pu98l3mv": {
+    "en": "Columns that aren't language codes were ignored: {columns}.",
+    "tr": "Dil kodu olmayan sütunlar yok sayıldı: {columns}.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2ev2cs26fyk": {
+    "en": "No language columns found. The first row should look like key,tr,en.",
+    "tr": "Dosyada dil sütunu bulunamadı. İlk satır key,tr,en gibi olmalı.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "t5rgj4rmpy": {
+    "en": "The CSV file must be smaller than 2 MB.",
+    "tr": "CSV dosyası 2 MB'tan küçük olmalı.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "rykgseh3hy": {
+    "en": "Open the CSV in Excel or Google Sheets to share it with translators; the first row holds \"key\" and the language codes. Importing updates existing keys and adds new ones.",
+    "tr": "CSV'yi Excel ya da Google E-Tablolar'da açıp çevirmenlerle paylaşabilirsin; ilk satır \"key\" ve dil kodlarıdır. Yüklenen dosya var olan anahtarları günceller, yenilerini ekler.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "pm9ekpu987": {
+    "en": "Localization key",
+    "tr": "Dil anahtarı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "mgzq7j5d5l": {
+    "en": "e.g. menu.play",
+    "tr": "ör. menu.play",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2c7wvuiupib": {
+    "en": "Add languages to the game to show this text in the player's language.",
+    "tr": "Metni oyuncunun dilinde göstermek için önce oyuna dil ekle.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "v0s9yu1hzn": {
+    "en": "Not in the table",
+    "tr": "Tabloda yok",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1zpvvg18sqw": {
+    "en": "Add to the table with this text",
+    "tr": "Bu metinle tabloya ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1lcy52q6ax2": {
+    "en": "Open languages",
+    "tr": "Dilleri aç",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "sbu9gqsdar": {
+    "en": "no text yet",
+    "tr": "henüz metin yok",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "wl21l6bjxo": {
+    "en": "Missing in",
+    "tr": "Eksik",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
   "1rx42aa97nj": {
     "en": "Scripts read actions by name: Input.GetButtonDown(\"Jump\"), Input.GetAxis(\"Horizontal\"). Keyboard, mouse, gamepad and touch buttons all work at once.",
     "tr": "Betikler eylemleri adıyla okur: Input.GetButtonDown(\"Jump\"), Input.GetAxis(\"Horizontal\"). Klavye, fare, gamepad ve dokunmatik düğmeler aynı anda çalışır.",
@@ -30206,6 +30596,288 @@
   "mtap0gtz4y": {
     "en": "Searches names and tags. By component: t:Camera, t:Rigidbody2D, t:PlayerController",
     "tr": "Ada veya etikete göre arar. Bileşene göre: t:Camera, t:Rigidbody2D, t:PlayerController",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "20ig11r7qnz": {
+    "en": "Animator",
+    "tr": "Animator",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "e8otb6ppgq": {
+    "en": "Edit Animator",
+    "tr": "Animator'ı düzenle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "occ37n2qf3": {
+    "en": "States play the clips of the object's Animation component; transitions change state from parameters and when a clip ends.",
+    "tr": "Durumlar nesnenin Animation bileşenindeki klipleri oynatır; geçişler parametrelere ve klibin bitişine göre durum değiştirir.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ghohza0rp4": {
+    "en": "This object needs an Animation component for its states to play clips.",
+    "tr": "Durumların klip oynatması için bu nesnede bir Animation bileşeni olmalı.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "12y2ywk37oo": {
+    "en": "Add Animation",
+    "tr": "Animation ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1048n441vv2": {
+    "en": "States from clips",
+    "tr": "Kliplerden durum oluştur",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "t49dqm6n07": {
+    "en": "Open the state graph",
+    "tr": "Durum grafiğini aç",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1p9dm5b8mv8": {
+    "en": "Parameters",
+    "tr": "Parametreler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/HanogtAI/ApiDocs.tsx"
+    ]
+  },
+  "1jhwo6f1og1": {
+    "en": "States",
+    "tr": "Durumlar",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "4lhl414ez8": {
+    "en": "Transitions",
+    "tr": "Geçişler",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1nh42achfo4": {
+    "en": "Add parameter",
+    "tr": "Parametre ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1x1qovy6q9i": {
+    "en": "Add state",
+    "tr": "Durum ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1isitse6drp": {
+    "en": "Add transition",
+    "tr": "Geçiş ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "pxdqc38gfr": {
+    "en": "Add condition",
+    "tr": "Koşul ekle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "zri6kr28ll": {
+    "en": "No parameters. Add values scripts change with SetBool, SetFloat, SetInteger and SetTrigger.",
+    "tr": "Parametre yok. Betikten SetBool, SetFloat, SetInteger ve SetTrigger ile değiştirilen değerler ekleyin.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1gyvvkzgtsq": {
+    "en": "No states. You can create a state for every clip.",
+    "tr": "Durum yok. Her klip için bir durum oluşturabilirsiniz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ooqydcszg3": {
+    "en": "No transitions. Drag from the dot on a state's edge to another state in the graph, or add one here.",
+    "tr": "Geçiş yok. Grafikte bir durumun kenarındaki noktadan diğerine sürükleyin ya da buradan ekleyin.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2faaveaf735": {
+    "en": "Default",
+    "tr": "Varsayılan",
+    "files": [
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1c1q31b19ii": {
+    "en": "Set as default",
+    "tr": "Varsayılan yap",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "28i4f0cg33o": {
+    "en": "Any State",
+    "tr": "Her Durum",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "5p496sooaa": {
+    "en": "Entry",
+    "tr": "Giriş",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "eddw9rkqev": {
+    "en": "(no clip)",
+    "tr": "(klip yok)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1elo2nzabxf": {
+    "en": "Exit time",
+    "tr": "Çıkış zamanı",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1cqf5rqbay2": {
+    "en": "Blend (s)",
+    "tr": "Geçiş süresi (sn)",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "gurhyan2ao": {
+    "en": "Conditions",
+    "tr": "Koşullar",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "252ydi2at7w": {
+    "en": "No conditions: it moves on when the clip reaches its exit time.",
+    "tr": "Koşul yok: klip çıkış zamanına gelince geçer.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ncp0psxtys": {
+    "en": "true",
+    "tr": "doğru",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "8hdp51pp62": {
+    "en": "false",
+    "tr": "yanlış",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2aoaodt2ix2": {
+    "en": "triggered",
+    "tr": "tetiklendi",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "15systx5s9j": {
+    "en": "greater",
+    "tr": "büyük",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1943frk96tq": {
+    "en": "less",
+    "tr": "küçük",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "hxjm7su6pz": {
+    "en": "equals",
+    "tr": "eşit",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1yuc800xdt8": {
+    "en": "not equal",
+    "tr": "eşit değil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "pxtzg9v607": {
+    "en": "Select an object with an Animator component. In the Inspector: Add Component → Effects → Animator.",
+    "tr": "Animator bileşeni olan bir nesne seçin. Inspector'da Bileşen Ekle → Effects → Animator.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "16le1nhylci": {
+    "en": "While the game runs the current state is highlighted; change parameters here to try them out.",
+    "tr": "Oyun çalışırken geçerli durum vurgulanır; parametreleri buradan değiştirerek deneyebilirsiniz.",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "hey9lccztq": {
+    "en": "Fit graph",
+    "tr": "Grafiği sığdır",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "7wgl8gq6fw": {
+    "en": "Delete selected",
+    "tr": "Seçileni sil",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "yv8mrlnchw": {
+    "en": "Fire",
+    "tr": "Tetikle",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "1ozeszdbae1": {
+    "en": "{count} states · {transitions} transitions",
+    "tr": "{count} durum · {transitions} geçiş",
+    "files": [
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "2fipvs016oe": {
+    "en": "In a script: GetComponent<Animator>().SetFloat(\"speed\", speed); OnStateEnter(string name) runs when the state changes.",
+    "tr": "Betikte: GetComponent<Animator>().SetFloat(\"speed\", hız); durum değişince OnStateEnter(string ad) çağrılır.",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -36810,13 +37482,6 @@
   "if6wgmiay3": {
     "en": "Your requests in the last minute and 24 hours, and your key count.",
     "tr": "Son dakika ve 24 saatteki isteklerin, anahtar sayın.",
-    "files": [
-      "src/components/HanogtAI/ApiDocs.tsx"
-    ]
-  },
-  "1p9dm5b8mv8": {
-    "en": "Parameters",
-    "tr": "Parametreler",
     "files": [
       "src/components/HanogtAI/ApiDocs.tsx"
     ]
@@ -45489,13 +46154,6 @@
   "n934w09ehz": {
     "en": "Chat background",
     "tr": "Sohbet arka planı",
-    "files": [
-      "src/components/Social/SocialSettings.tsx"
-    ]
-  },
-  "2faaveaf735": {
-    "en": "Default",
-    "tr": "Varsayılan",
     "files": [
       "src/components/Social/SocialSettings.tsx"
     ]

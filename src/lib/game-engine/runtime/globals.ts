@@ -2,6 +2,7 @@
 import { compositeFormat } from "../script/stdlib";
 import { NOT_FOUND, StaticNamespace, VMBoundMethod, VMColor, VMLambda, VMList, VMNativeFunction, VMRef, Vec3, type VMValue } from "../script/values";
 import { EASINGS, ENGINE_VERSION, ENGINE_VERSION_LABEL, type Vector3 } from "../types";
+import { languageName } from "../localization";
 import { animatorHash } from "./animator-controller";
 import type { RuntimeEntity } from "./entity";
 import { PrefabHandle, RayHandle, RaycastHitHandle, TouchHandle, colorToVM, hostError, isVector, liveEntityOf, toBool, toColor, toNumber, toVector, typeNameFrom, vec } from "./handles";
@@ -30,6 +31,24 @@ function ns(name: string, members: Record<string, Getter>, functions: Record<str
 
 function enumNamespace(name: string, values: readonly string[]) {
     return ns(name, Object.fromEntries(values.map((value) => [value, () => value])), {});
+}
+
+/** Unity's SystemLanguage names by language code. */
+const SYSTEM_LANGUAGES: Record<string, string> = {
+    af: "Afrikaans", ar: "Arabic", eu: "Basque", be: "Belarusian", bg: "Bulgarian", ca: "Catalan", cs: "Czech", da: "Danish",
+    nl: "Dutch", en: "English", et: "Estonian", fo: "Faroese", fi: "Finnish", fr: "French", de: "German", el: "Greek",
+    he: "Hebrew", hi: "Hindi", hu: "Hungarian", is: "Icelandic", id: "Indonesian", it: "Italian", ja: "Japanese", ko: "Korean",
+    lv: "Latvian", lt: "Lithuanian", nb: "Norwegian", nn: "Norwegian", no: "Norwegian", pl: "Polish", pt: "Portuguese",
+    ro: "Romanian", ru: "Russian", sr: "SerboCroatian", hr: "SerboCroatian", bs: "SerboCroatian", sk: "Slovak", sl: "Slovenian",
+    es: "Spanish", sv: "Swedish", th: "Thai", tr: "Turkish", uk: "Ukrainian", vi: "Vietnamese",
+};
+const SYSTEM_LANGUAGE_NAMES = [...new Set([...Object.values(SYSTEM_LANGUAGES), "Chinese", "ChineseSimplified", "ChineseTraditional", "Unknown"])];
+
+/** Application.systemLanguage for a locale such as "de-DE" or "zh-TW". */
+export function systemLanguageOf(locale: string | null): string {
+    const parts = (locale ?? "").toLowerCase().replace(/_/g, "-").split("-");
+    if (parts[0] === "zh") return parts.some((part) => part === "hant" || part === "tw" || part === "hk" || part === "mo") ? "ChineseTraditional" : "ChineseSimplified";
+    return SYSTEM_LANGUAGES[parts[0]] ?? "Unknown";
 }
 
 /** Callable global (C++ free function style) that still receives generic type arguments. */
@@ -605,7 +624,8 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         runInBackground: () => false,
         persistentDataPath: () => "/hanogt/persistent",
         dataPath: () => "/hanogt/data",
-        systemLanguage: () => (typeof navigator !== "undefined" && navigator.language.startsWith("tr") ? "Turkish" : "English"),
+        // V5 names the player's language like Unity (German, Japanese…); earlier rules only knew Turkish and English.
+        systemLanguage: () => (world.rules >= 5 ? systemLanguageOf(world.locale) : typeof navigator !== "undefined" && navigator.language.startsWith("tr") ? "Turkish" : "English"),
         internetReachability: () => "ReachableViaLocalAreaNetwork",
     }, {
         Quit: () => {
@@ -825,6 +845,35 @@ export function createHostGlobals(world: RuntimeWorld): Map<string, VMValue> {
         },
         exposure: (value) => { world.effects.exposure = clamp(value, 0.1, 4); },
     }));
+
+    // Localization (V5): texts of the project's string table in the player's language.
+    globals.set("Localization", ns("Localization", {
+        language: () => world.language ?? "",
+        languages: () => new VMList([...world.localization.languages], "Array"),
+        defaultLanguage: () => world.localization.languages[0] ?? "",
+        count: () => world.localization.size,
+    }, {
+        // Get("coins", 5) fills {0} like string.Format; a missing key comes back as the key itself.
+        Get: (args) => {
+            const key = String(args[0] ?? "");
+            const text = world.localize(key) ?? key;
+            const values = args.length === 2 && args[1] instanceof VMList && args[1].kind === "Array" ? args[1].items : args.slice(1);
+            return values.length ? compositeFormat(text, values, "csharp", world.interpreter) : text;
+        },
+        Has: (args) => world.localization.entry(String(args[0] ?? "")) !== null,
+        HasLanguage: (args) => world.localization.language(String(args[0] ?? "")) !== null,
+        SetLanguage: (args) => world.setLanguage(String(args[0] ?? "")),
+        // The language's own name for language menus: "Türkçe", "English", "Deutsch".
+        GetLanguageName: (args) => {
+            const code = args.length ? String(args[0] ?? "") : world.language ?? "";
+            return code ? languageName(world.localization.language(code) ?? code) : "";
+        },
+    }, {
+        language: (value) => {
+            world.setLanguage(String(value ?? ""));
+        },
+    }));
+    globals.set("SystemLanguage", enumNamespace("SystemLanguage", SYSTEM_LANGUAGE_NAMES));
 
     // Animator.StringToHash(name): a number Animator methods accept instead of the name (V5).
     globals.set("Animator", ns("Animator", {}, {

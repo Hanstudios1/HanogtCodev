@@ -1,4 +1,5 @@
 /** Script-facing handles of the UI components (Button, Image/Panel, Slider/ProgressBar; V4 Slider, Toggle, InputField). */
+import { cleanLocalizationKey } from "../localization";
 import { progressFraction } from "../ui-layout";
 import { VMBoundMethod, VMLambda, VMList, VMNativeFunction, Vec3, type HostObject, type VMRef, type VMValue } from "../script/values";
 import type { GameComponent, UIButtonComponent, UIInputFieldComponent, UIPanelComponent, UIProgressBarComponent, UIRectFields, UISliderComponent, UIToggleComponent } from "../types";
@@ -129,6 +130,7 @@ export class ButtonHandle extends ComponentHandle<UIButtonComponent> {
         const c = this.component;
         switch (name) {
             case "text": return c.text;
+            case "localizationKey": return c.localizationKey;
             case "fontSize": return c.fontSize;
             case "textColor": return colorToVM(c.textColor);
             case "color": return colorToVM(c.color, this.entity.uiAlpha);
@@ -152,6 +154,10 @@ export class ButtonHandle extends ComponentHandle<UIButtonComponent> {
         switch (name) {
             case "text":
                 c.text = textOf(this.world, value);
+                break;
+            case "localizationKey":
+                c.localizationKey = cleanLocalizationKey(value === null || value === undefined ? "" : String(value));
+                this.world.localizeComponent(c);
                 break;
             case "fontSize":
                 c.fontSize = Math.max(6, Math.min(120, toNumber(value)));
@@ -581,6 +587,7 @@ export class ToggleHandle extends ComponentHandle<UIToggleComponent> {
             case "text":
             case "label":
                 return c.label;
+            case "localizationKey": return c.localizationKey;
             case "fontSize": return c.fontSize;
             case "textColor": return colorToVM(c.textColor);
             case "color": return colorToVM(c.color);
@@ -606,6 +613,10 @@ export class ToggleHandle extends ComponentHandle<UIToggleComponent> {
             case "text":
             case "label":
                 c.label = textOf(this.world, value);
+                break;
+            case "localizationKey":
+                c.localizationKey = cleanLocalizationKey(value === null || value === undefined ? "" : String(value));
+                this.world.localizeComponent(c);
                 break;
             case "fontSize": c.fontSize = Math.max(6, Math.min(120, toNumber(value))); break;
             case "textColor": c.textColor = toColor(value).toHex(); break;
@@ -651,6 +662,7 @@ export class InputFieldHandle extends ComponentHandle<UIInputFieldComponent> {
         switch (name) {
             case "text": return c.text;
             case "placeholder": return c.placeholder;
+            case "localizationKey": return c.localizationKey;
             case "characterLimit": return c.characterLimit;
             case "contentType": return Object.keys(CONTENT_TYPE_NAMES).find((key) => CONTENT_TYPE_NAMES[key] === c.contentType) ?? "Standard";
             case "interactable": return c.interactable;
@@ -688,6 +700,10 @@ export class InputFieldHandle extends ComponentHandle<UIInputFieldComponent> {
                 return;
             }
             case "placeholder": c.placeholder = textOf(this.world, value); break;
+            case "localizationKey":
+                c.localizationKey = cleanLocalizationKey(value === null || value === undefined ? "" : String(value));
+                this.world.localizeComponent(c);
+                break;
             case "characterLimit": {
                 c.characterLimit = Math.max(1, Math.min(200, Math.trunc(toNumber(value, name))));
                 c.text = this.world.filterInputText(c, c.text);

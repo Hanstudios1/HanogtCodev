@@ -38,6 +38,8 @@ export interface GamePlayerOptions {
     storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
     /** Where uploaded audio files come from (default: embedded files, this device, the asset store). */
     loadAudio?: AudioBytesLoader;
+    /** The player's language (the site's language); games with that language start in it (V5). */
+    locale?: string | null;
 }
 
 const ASPECTS: Record<ProjectSettings["aspect"], number | null> = {
@@ -127,6 +129,7 @@ export class GamePlayer {
             storage: this.options.storage === undefined ? safeStorage() : this.options.storage,
             getScreenSize: () => this.renderer.size,
             onLog: this.options.onLog,
+            locale: this.options.locale,
             onQuit: () => {
                 this.setState("stopped");
                 this.options.onQuit?.();

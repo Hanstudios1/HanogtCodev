@@ -51,7 +51,12 @@ export default function LivePreview({ project, label, controls, autoPlay = false
     touch?: boolean;
     className?: string;
 }) {
-    const { tx } = useI18n();
+    const { tx, locale } = useI18n();
+    // The game starts in the site's language when it has it; a language switch doesn't restart it.
+    const localeRef = useRef(locale);
+    useEffect(() => {
+        localeRef.current = locale;
+    }, [locale]);
     const stageRef = useRef<HTMLDivElement | null>(null);
     const playerRef = useRef<GamePlayer | null>(null);
     const statusRef = useRef<Status>(autoPlay ? "loading" : "poster");
@@ -80,6 +85,7 @@ export default function LivePreview({ project, label, controls, autoPlay = false
                     muted: true,
                     touchControls: touch ? "auto" : false,
                     storage: memoryStorage(),
+                    locale: localeRef.current,
                 });
             } catch {
                 setStatus("error");

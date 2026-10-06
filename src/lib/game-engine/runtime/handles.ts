@@ -23,6 +23,7 @@ import {
     worldToLocalPoint,
     type Quat,
 } from "../math";
+import { cleanLocalizationKey } from "../localization";
 import { countTiles, fillTiles, localPointToCell, resolveTileKey, setTileKey, tileAt, tilemapSize } from "../tilemap";
 import { VMColor, VMError, VMList, VMQuat, VMRef, Vec3, ScriptObject, type HostObject, type VMValue } from "../script/values";
 import type {
@@ -1640,6 +1641,7 @@ export class TextHandle extends ComponentHandle<UITextComponent> {
         const c = this.component;
         switch (name) {
             case "text": return c.text;
+            case "localizationKey": return c.localizationKey;
             case "color": return colorToVM(c.color, this.entity.uiAlpha);
             case "fontSize": return c.fontSize;
             case "fontStyle": return c.bold ? "Bold" : "Normal";
@@ -1658,6 +1660,11 @@ export class TextHandle extends ComponentHandle<UITextComponent> {
         switch (name) {
             case "text":
                 c.text = (value === null || value === undefined ? "" : typeof value === "string" ? value : this.world.display(value)).slice(0, 2000);
+                break;
+            case "localizationKey":
+                // A key shows its text in the current language now and after every language change (V5).
+                c.localizationKey = cleanLocalizationKey(value === null || value === undefined ? "" : String(value));
+                this.world.localizeComponent(c);
                 break;
             case "color": {
                 const color = toColor(value);

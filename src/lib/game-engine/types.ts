@@ -197,6 +197,8 @@ export type UIAnchor = (typeof UI_ANCHORS)[number];
 export interface UITextComponent extends ComponentBase {
     type: "uiText";
     text: string;
+    /** String table key whose text replaces `text` in the player's language (V5); "" = none. */
+    localizationKey: string;
     fontSize: number;
     color: string;
     anchor: UIAnchor;
@@ -223,6 +225,8 @@ export interface UIRectFields {
 export interface UIButtonComponent extends ComponentBase, UIRectFields {
     type: "uiButton";
     text: string;
+    /** String table key whose text replaces `text` (V5); "" = none. */
+    localizationKey: string;
     fontSize: number;
     textColor: string;
     color: string;
@@ -297,6 +301,8 @@ export interface UIToggleComponent extends ComponentBase, UIRectFields {
     type: "uiToggle";
     isOn: boolean;
     label: string;
+    /** String table key whose text replaces `label` (V5); "" = none. */
+    localizationKey: string;
     fontSize: number;
     textColor: string;
     /** Box or track color when off. */
@@ -317,6 +323,8 @@ export interface UIInputFieldComponent extends ComponentBase, UIRectFields {
     type: "uiInputField";
     text: string;
     placeholder: string;
+    /** String table key whose text replaces `placeholder` (V5); "" = none. */
+    localizationKey: string;
     fontSize: number;
     textColor: string;
     backgroundColor: string;
@@ -772,6 +780,25 @@ export interface ProjectSettings {
     rules: EngineRules;
     /** Named buttons and axes for keyboard, mouse and gamepad (V4). */
     input: InputSettings;
+    /** Languages and the string table (V5). */
+    localization: LocalizationSettings;
+}
+
+/** One text of the string table in every language of the game (V5). */
+export interface LocalizationEntry {
+    /** What scripts and UI elements ask for, e.g. Localization.Get("menu.play"). */
+    key: string;
+    /** Text per language code; a missing one falls back to the first language. */
+    values: Record<string, string>;
+}
+
+/** The game's languages and its string table (V5). */
+export interface LocalizationSettings {
+    /** Language codes such as "tr", "en" or "pt-BR"; the first is the fallback for missing texts. */
+    languages: string[];
+    /** "auto": the player's language when the game has it, else the first; or a fixed language code. */
+    startLanguage: string;
+    entries: LocalizationEntry[];
 }
 
 export interface GameProjectDocument {

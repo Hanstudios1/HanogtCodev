@@ -402,7 +402,7 @@ export function Checkbox({ checked, onChange, disabled, label }: { checked: bool
     );
 }
 
-export function TextInput({ value, onChange, placeholder, disabled, commitOnBlur = true, className, multiline, maxLength }: {
+export function TextInput({ value, onChange, placeholder, disabled, commitOnBlur = true, className, multiline, maxLength, list }: {
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
@@ -411,6 +411,8 @@ export function TextInput({ value, onChange, placeholder, disabled, commitOnBlur
     className?: string;
     multiline?: boolean;
     maxLength?: number;
+    /** Id of a <datalist> with suggestions (single-line inputs). */
+    list?: string;
 }) {
     const [draft, setDraft] = useState<string | null>(null);
     const text = draft ?? value;
@@ -441,6 +443,7 @@ export function TextInput({ value, onChange, placeholder, disabled, commitOnBlur
     return (
         <input
             {...shared}
+            list={list}
             onChange={(event) => {
                 setDraft(event.target.value);
                 if (!commitOnBlur) onChange(event.target.value);

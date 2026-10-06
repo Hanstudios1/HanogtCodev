@@ -35,6 +35,11 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
     const serverText = (message: string | undefined | null, fallback: CopyText) => (language === "TR" && message ? message : tx(fallback));
     const stageRef = useRef<HTMLDivElement | null>(null);
     const playerRef = useRef<GamePlayer | null>(null);
+    // The game starts in the site's language when it has it; a language switch doesn't restart it.
+    const localeRef = useRef(locale);
+    useEffect(() => {
+        localeRef.current = locale;
+    }, [locale]);
     const [game, setGame] = useState<GameInfo | null>(null);
     const [project, setProject] = useState<GameProjectDocument | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -67,7 +72,7 @@ export default function ArcadePlayerView({ gameId }: { gameId: string }) {
         let instance: GamePlayer | null = null;
         void import("@/lib/game-engine/player/game-player").then(({ GamePlayer }) => {
             if (disposed) return;
-            instance = new GamePlayer(stage, { project, touchControls: project.settings.touchControls ? "auto" : false });
+            instance = new GamePlayer(stage, { project, touchControls: project.settings.touchControls ? "auto" : false, locale: localeRef.current });
             playerRef.current = instance;
         });
         return () => {

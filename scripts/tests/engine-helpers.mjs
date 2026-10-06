@@ -26,6 +26,7 @@ export function startWorld(project, options = {}) {
         storage: options.storage ?? memoryStorage(),
         audio: options.audio,
         getScreenSize: () => ({ width: 960, height: 540 }),
+        locale: options.locale,
         onLog: (entry, updated) => {
             if (!updated) logs.push(entry);
         },

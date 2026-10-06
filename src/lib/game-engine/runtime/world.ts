@@ -72,6 +72,7 @@ import type { CameraView } from "./camera-math";
 import { screenRay, screenToWorld } from "./camera-math";
 import { BehaviourState, RuntimeEntity, type CoroutineState, type WaitState } from "./entity";
 import { createHostGlobals, PlayerPrefsStore } from "./globals";
+import { LocalizationTable, startLanguageOf } from "../localization";
 import {
     AnimationHandle,
     AudioSourceHandle,
@@ -144,6 +145,8 @@ export interface WorldOptions {
     onSceneLoaded?: (scene: SceneDocument) => void;
     /** Per-callback instruction budget of the script VM. */
     scriptBudget?: number;
+    /** The player's language ("tr", "en-US"): a game with that language starts in it (V5). */
+    locale?: string | null;
 }
 
 type DestroyItem =
@@ -390,6 +393,10 @@ export class RuntimeWorld implements ScriptHost {
     scene: SceneDocument;
     /** Screen effects of the running scene (V5: scripts change them through ScreenEffects; the scene data stays as it is). */
     effects: PostProcessingSettings;
+    /** The game's string table (V5). */
+    readonly localization: LocalizationTable;
+    /** The language texts are shown in; null while the game has no languages. */
+    language: string | null;
     readonly entities = new Map<string, RuntimeEntity>();
     behaviours: BehaviourState[] = [];
     readonly logs: LogEntry[] = [];
@@ -500,11 +507,18 @@ export class RuntimeWorld implements ScriptHost {
         this.prefs = new PlayerPrefsStore(options.storage ?? null, `hanogt-engine:prefs:${options.project.id}`);
         this.scene = this.findScene(options.sceneId ?? options.project.settings.startSceneId) ?? options.project.scenes[0];
         this.effects = cloneJson(this.scene.settings.postProcessing);
+        this.localization = new LocalizationTable(options.project.settings.localization);
+        this.language = startLanguageOf(options.project.settings.localization, this.locale);
         this.globals = createHostGlobals(this);
     }
 
     get isEditor() {
         return Boolean(this.options.isEditor);
+    }
+
+    /** The player's language ("tr", "en-US"): the player's choice, else the browser's. */
+    get locale(): string | null {
+        return this.options.locale || (typeof navigator !== "undefined" ? navigator.language : null) || null;
     }
 
     /** Engine rules of the game (3 for projects made before V4). */
@@ -872,6 +886,61 @@ export class RuntimeWorld implements ScriptHost {
         this.effects = cloneJson(this.scene.settings.postProcessing);
     }
 
+    // -------------------------------------------------------------------
+    // Localization (V5)
+    // -------------------------------------------------------------------
+
+    /** The key's text in the current language; null (after one warning) when the string table has no such key. */
+    localize(key: string, caller = "Localization.Get"): string | null {
+        const text = this.localization.text(key, this.language);
+        if (text === null) this.warnOnce(`localization:${key}`, `${caller}: dil tablosunda '${key}' anahtarı yok (Proje ayarları → Diller).`);
+        return text;
+    }
+
+    /** A UI element with a string table key shows the key's text (its own text stays when the key is missing). */
+    localizeComponent(component: GameComponent) {
+        if (!("localizationKey" in component) || !component.localizationKey) return;
+        const text = this.localize(component.localizationKey, `'${component.localizationKey}' anahtarlı UI öğesi`);
+        if (text === null) return;
+        switch (component.type) {
+            case "uiText":
+            case "uiButton":
+                component.text = text;
+                break;
+            case "uiToggle":
+                component.label = text;
+                break;
+            case "uiInputField":
+                component.placeholder = text;
+                break;
+        }
+    }
+
+    private localizeEntity(entity: RuntimeEntity) {
+        for (const component of entity.components) this.localizeComponent(component);
+    }
+
+    /**
+     * Localization.language = code: every UI element with a key switches to
+     * the language and scripts get OnLanguageChanged(code). False (after a
+     * warning) when the game has no such language.
+     */
+    setLanguage(code: string): boolean {
+        const language = this.localization.language(code);
+        if (!language) {
+            const offered = this.localization.languages.join(", ") || "yok";
+            this.warnOnce(`localization-language:${code}`, `Localization: oyunda '${code}' dili yok (diller: ${offered}).`);
+            return false;
+        }
+        if (language === this.language) return true;
+        this.language = language;
+        for (const entity of this.entities.values()) {
+            if (!entity.destroyed) this.localizeEntity(entity);
+        }
+        this.broadcast("OnLanguageChanged", [language]);
+        return true;
+    }
+
     sceneIndex(scene: SceneDocument = this.scene) {
         return Math.max(0, this.project.scenes.findIndex((candidate) => candidate.id === scene.id));
     }
@@ -954,6 +1023,7 @@ export class RuntimeWorld implements ScriptHost {
         }
         for (const entity of created) {
             this.registerPhysics(entity);
+            this.localizeEntity(entity);
             const particles = entity.components.find((component) => component.type === "particleSystem");
             if (particles && particles.type === "particleSystem") entity.emitter = new ParticleEmitter(particles);
             const animation = entity.components.find((component) => component.type === "animation");

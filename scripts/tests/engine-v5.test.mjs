@@ -375,3 +375,218 @@ public class Fx : MonoBehaviour
     assert.equal(namespace.callMember("hasOwnProperty", ["Reset"], [], []), NOT_FOUND);
     assert.equal(namespace.setMember("__proto__", 1), false);
 });
+
+// ---------------------------------------------------------------------------
+// Localization
+// ---------------------------------------------------------------------------
+
+const L = await load("lib/game-engine/localization.ts");
+
+test("localization data is validated: language codes, unique keys, texts only for the game's languages", () => {
+    const fresh = normalizeProject(createBlankProject("Diller", "2d"));
+    assert.deepEqual(fresh.settings.localization, { languages: [], startLanguage: "auto", entries: [] });
+    assert.equal(C.createUIText().localizationKey, "");
+
+    const wild = JSON.parse(JSON.stringify(fresh));
+    wild.settings.localization = {
+        languages: ["TR", "en", "pt_br", "zh-hans", "english", "en", 5, "x"],
+        startLanguage: "fr",
+        entries: [
+            { key: "  menu.play ", values: { tr: "Oyna", en: "Play", fr: "Jouer", "pt-BR": "Jogar\u0007" } },
+            { key: "menu.play", values: { tr: "İkinci" } },
+            { key: "", values: { tr: "boş" } },
+            { key: "line\nbreak", values: { en: "a\nb" } },
+            "not an entry",
+        ],
+    };
+    const clean = normalizeProject(wild).settings.localization;
+    assert.deepEqual(clean.languages, ["tr", "en", "pt-BR", "zh-Hans"]);
+    assert.equal(clean.startLanguage, "auto", "a start language the game doesn't have falls back to auto");
+    assert.deepEqual(clean.entries, [
+        { key: "menu.play", values: { tr: "Oyna", en: "Play", "pt-BR": "Jogar" } },
+        { key: "line break", values: { en: "a\nb" } },
+    ]);
+
+    const v4 = JSON.parse(JSON.stringify(fresh));
+    v4.version = 4;
+    delete v4.settings.localization;
+    v4.scenes[0].objects.push({ id: "entity_old", name: "Old", tag: "Untagged", parentId: null, active: true, components: [{ id: "cmp_old", type: "uiText", enabled: true, text: "Eski" }] });
+    const migrated = normalizeProject(v4);
+    assert.deepEqual(migrated.settings.localization, { languages: [], startLanguage: "auto", entries: [] });
+    assert.equal(migrated.scenes[0].objects.at(-1).components.find((item) => item.type === "uiText").localizationKey, "");
+});
+
+test("the start language: a fixed one, else the player's (or its base language), else the main one", () => {
+    const settings = (languages, startLanguage = "auto") => ({ languages, startLanguage, entries: [] });
+    assert.equal(L.startLanguageOf(settings(["tr", "en"]), "en-GB"), "en");
+    assert.equal(L.startLanguageOf(settings(["tr", "en"]), "de-DE"), "tr", "a language the game lacks: the main one");
+    assert.equal(L.startLanguageOf(settings(["tr", "en"]), null), "tr");
+    assert.equal(L.startLanguageOf(settings(["tr", "en"], "en"), "tr-TR"), "en", "a fixed start language wins");
+    assert.equal(L.startLanguageOf(settings(["en", "pt-BR"]), "pt-PT"), "pt-BR", "same base language");
+    assert.equal(L.startLanguageOf(settings(["pt", "pt-BR"]), "pt_BR"), "pt-BR", "the exact code before the base");
+    assert.equal(L.startLanguageOf(settings(["zh-Hans", "zh-Hant"]), "zh-Hant-TW"), "zh-Hant");
+    assert.equal(L.startLanguageOf(settings([]), "tr"), null);
+    assert.equal(L.normalizeLanguageCode("PT_br"), "pt-BR");
+    assert.equal(L.normalizeLanguageCode("es-419"), "es-419");
+    assert.equal(L.normalizeLanguageCode("__proto__"), null);
+    assert.equal(L.isKnownLanguage("tr") && L.isKnownLanguage("pt-BR") && L.isKnownLanguage("zh-Hans"), true);
+    assert.equal(L.isKnownLanguage("not") || L.isKnownLanguage("xx"), false, "fits the pattern, isn't a language");
+    assert.equal(L.languageName("tr", "tr"), "Türkçe");
+    assert.equal(L.languageName("de", "de"), "Deutsch");
+    assert.equal(L.languageName("en", "tr"), "İngilizce");
+});
+
+/** A Turkish/English project: a title, a formatted score, a Turkish-only text and keyed UI elements. */
+function languageProject(script) {
+    const project = createBlankProject("Diller", "2d");
+    project.settings.localization = {
+        languages: ["tr", "en"],
+        startLanguage: "auto",
+        entries: [
+            { key: "title", values: { tr: "Merhaba", en: "Hello" } },
+            { key: "score", values: { tr: "Puan: {0}", en: "Score: {0}" } },
+            { key: "onlyTr", values: { tr: "Sadece Türkçe" } },
+            { key: "play", values: { tr: "Oyna", en: "Play" } },
+            { key: "music", values: { tr: "Müzik", en: "Music" } },
+            { key: "name", values: { tr: "Adın", en: "Your name" } },
+        ],
+    };
+    const ui = (id, name, component) => ({ id, name, tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), component] });
+    project.scenes[0].objects.push(
+        ui("entity_title", "Title", C.createUIText({ text: "başlık", localizationKey: "title" })),
+        ui("entity_play", "PlayButton", C.createUIButton({ text: "buton", localizationKey: "play" })),
+        ui("entity_music", "MusicToggle", C.createUIToggle({ label: "toggle", localizationKey: "music" })),
+        ui("entity_name", "NameField", C.createUIInputField({ placeholder: "yer", localizationKey: "name" })),
+        ui("entity_plain", "Plain", C.createUIText({ text: "kendi metni", localizationKey: "missing.key" })),
+    );
+    project.prefabs.push({ id: "prefab_banner", name: "Banner", entities: [{ id: "entity_banner", name: "Banner", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createUIText({ text: "x", localizationKey: "title" })] }] });
+    project.scripts = [{ id: "script_lang", name: "Lang.cs", language: "csharp", content: script }];
+    project.scenes[0].objects.push({ id: "entity_lang", name: "Lang", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createScriptComponent("script_lang", "Lang")] });
+    return project;
+}
+
+const LANG_SCRIPT = `using UnityEngine;
+using UnityEngine.UI;
+public class Lang : MonoBehaviour
+{
+    public GameObject banner;
+    void Start()
+    {
+        Debug.Log(Localization.language + " | " + Localization.Get("score", 5) + " | " + Localization.Get("onlyTr") + " | " + Localization.Get("nope") + " | " + Localization.Has("title") + " " + Localization.languages.Length + " " + Localization.GetLanguageName("en"));
+    }
+    public void Switch() { Localization.language = "EN"; }
+    public void Unknown() { Debug.Log("fr " + Localization.SetLanguage("fr") + " " + Localization.language); }
+    public void Spawn() { Instantiate(Resources.Load("Banner")); }
+    public void Rekey() { GameObject.Find("Plain").GetComponent<Text>().localizationKey = "score"; }
+    void OnLanguageChanged(string language)
+    {
+        Debug.Log("changed " + language + " | " + Localization.Get("score", 7) + " | " + Localization.Get("onlyTr"));
+    }
+}`;
+
+test("Localization: scripts read the table, keyed UI elements follow the language, OnLanguageChanged runs", () => {
+    const game = startWorld(languageProject(LANG_SCRIPT), { locale: "tr-TR" });
+    game.step(1);
+    const lang = game.find("Lang");
+    assert.deepEqual(game.messages("info"), ["tr | Puan: 5 | Sadece Türkçe | nope | True 2 English"]);
+    assert.equal(game.problems().filter((message) => message.includes("'nope'")).length, 1, "a missing key warns once");
+    assert.equal(game.text("Title"), "Merhaba");
+    const uiOf = (name, type) => game.find(name).components.find((item) => item.type === type);
+    assert.equal(uiOf("PlayButton", "uiButton").text, "Oyna");
+    assert.equal(uiOf("MusicToggle", "uiToggle").label, "Müzik");
+    assert.equal(uiOf("NameField", "uiInputField").placeholder, "Adın");
+    assert.equal(game.text("Plain"), "kendi metni", "a key the table lacks keeps the element's own text");
+    assert.ok(game.problems().some((message) => message.includes("'missing.key'")));
+
+    game.world.sendMessage(lang, "Switch", undefined, "SendMessage");
+    assert.equal(game.world.language, "en");
+    assert.equal(game.text("Title"), "Hello");
+    assert.equal(uiOf("PlayButton", "uiButton").text, "Play");
+    assert.equal(uiOf("MusicToggle", "uiToggle").label, "Music");
+    assert.equal(uiOf("NameField", "uiInputField").placeholder, "Your name");
+    assert.equal(game.messages("info")[1], "changed en | Score: 7 | Sadece Türkçe", "a missing translation falls back to the main language");
+
+    game.world.sendMessage(lang, "Unknown", undefined, "SendMessage");
+    assert.equal(game.messages("info")[2], "fr False en");
+    assert.ok(game.problems().some((message) => message.includes("'fr'")));
+
+    game.world.sendMessage(lang, "Spawn", undefined, "SendMessage");
+    game.step(1);
+    assert.equal(game.findAll("Banner")[0].components.find((item) => item.type === "uiText").text, "Hello", "new objects start in the current language");
+    game.world.sendMessage(lang, "Rekey", undefined, "SendMessage");
+    assert.equal(game.text("Plain"), "Score: {0}");
+    assert.equal(game.project.scenes[0].objects.find((item) => item.name === "Title").components[1].text, "başlık", "the project data keeps its own text");
+});
+
+test("Localization: the player's language picks the start language; systemLanguage names it under V5 rules", () => {
+    const script = `using UnityEngine;
+public class Lang : MonoBehaviour
+{
+    void Start() { Debug.Log(Localization.language + " " + Application.systemLanguage + " " + (Application.systemLanguage == SystemLanguage.German)); }
+}`;
+    const german = startWorld(languageProject(script), { locale: "de-DE" });
+    german.step(1);
+    assert.deepEqual(german.messages("info"), ["tr German True"], "German isn't offered: the main language");
+    assert.equal(german.text("Title"), "Merhaba");
+
+    const english = startWorld(languageProject(script), { locale: "en-US" });
+    english.step(1);
+    assert.deepEqual(english.messages("info"), ["en English False"]);
+    assert.equal(english.text("Title"), "Hello");
+
+    const pinned = languageProject(script);
+    pinned.settings.localization.startLanguage = "tr";
+    const pinnedGame = startWorld(pinned, { locale: "en-US" });
+    pinnedGame.step(1);
+    assert.equal(pinnedGame.messages("info")[0].split(" ")[0], "tr", "a fixed start language wins over the player's");
+});
+
+test("a game's own class named Localization keeps working", () => {
+    const project = createBlankProject("Own", "2d");
+    project.scripts = [{ id: "script_own", name: "Own.cs", language: "csharp", content: `using UnityEngine;
+public static class Localization
+{
+    public static string Get(string key) { return "mine:" + key; }
+}
+public class Own : MonoBehaviour
+{
+    void Start() { Debug.Log(Localization.Get("a")); }
+}` }];
+    project.scenes[0].objects.push({ id: "entity_own", name: "Own", tag: "Untagged", parentId: null, active: true, components: [C.createTransform(), C.createScriptComponent("script_own", "Own")] });
+    const game = startWorld(project);
+    game.step(1);
+    assert.deepEqual(game.messages("info"), ["mine:a"]);
+});
+
+test("string table CSV: spreadsheet-safe export, round trip, separators and merge", () => {
+    const settings = {
+        languages: ["tr", "en"],
+        startLanguage: "auto",
+        entries: [
+            { key: "menu.play", values: { tr: "Oyna", en: "Play" } },
+            { key: "quote", values: { tr: "\"Merhaba\", dedi", en: "Two\nlines" } },
+            { key: "formula", values: { tr: "=1+1", en: "@risk" } },
+            { key: "empty", values: { tr: "Boş" } },
+        ],
+    };
+    const csv = L.localizationToCsv(settings);
+    assert.ok(csv.startsWith("key,tr,en\r\n"));
+    assert.ok(csv.includes("'=1+1"), "formula-like texts get an apostrophe so spreadsheets keep them as text");
+    const back = L.localizationFromCsv(`﻿${csv}`);
+    assert.deepEqual(back.languages, ["tr", "en"]);
+    assert.deepEqual(back.entries, settings.entries, "the round trip keeps quotes, commas, line breaks and formulas");
+    assert.equal(back.skipped, 0);
+
+    const excel = L.localizationFromCsv("key;TR;en;not\nmenu.play;Başla;Start;x\n;yok;none;\nmenu.play;tekrar;again;\nnew.key;Yeni;New;");
+    assert.deepEqual(excel.languages, ["tr", "en"]);
+    assert.deepEqual(excel.ignoredColumns, ["not"], "a column named like a code that isn't a language is skipped");
+    assert.equal(excel.skipped, 2, "an empty and a repeated key");
+    const merged = L.mergeLocalization(settings, excel);
+    assert.deepEqual(merged.entries.find((entry) => entry.key === "menu.play").values, { tr: "Başla", en: "Start" });
+    assert.deepEqual(merged.entries.at(-1), { key: "new.key", values: { tr: "Yeni", en: "New" } });
+    assert.equal(merged.entries.length, 5);
+    assert.deepEqual(L.mergeLocalization(settings, { languages: ["de"], entries: [{ key: "menu.play", values: { de: "Spielen" } }] }).languages, ["tr", "en", "de"]);
+    const noLanguages = L.localizationFromCsv("key,a,header\nx,1,2");
+    assert.deepEqual(noLanguages.languages, []);
+    assert.deepEqual(noLanguages.ignoredColumns, ["a", "header"]);
+});
