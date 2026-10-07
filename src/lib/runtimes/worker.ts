@@ -2,13 +2,15 @@
  * In-browser code runner (bundled to /runtimes/worker.js by scripts/copy-runtimes.mjs).
  *
  * Runs JavaScript, TypeScript (sucrase), Python (Pyodide), SQL (sql.js), Lua
- * (wasmoon), Prolog (Tau Prolog) and Hanogt's own interpreters for Scheme,
- * Brainfuck, Forth, BASIC, Befunge-93, Whitespace and MIPS assembly, and
- * validates and formats JSON, YAML, TOML, XML, INI, .env, .properties and CSV
- * inside a dedicated module worker, so learners can execute code without any
- * server-side runner. Runtimes other than the original ones are separate
- * chunks loaded on first use. The worker has no DOM access; the page
- * terminates it when a run exceeds its time limit.
+ * (wasmoon), Prolog (Tau Prolog), Clojure (Scittle), CoffeeScript, jq
+ * (jq-wasm), the WebAssembly text format (wabt) and Hanogt's own interpreters
+ * for Scheme, Brainfuck, Forth, BASIC, Befunge-93, Whitespace and MIPS
+ * assembly; compiles Less and SCSS to CSS; and validates and formats JSON,
+ * YAML, TOML, XML, INI, .env, .properties and CSV inside a dedicated module
+ * worker, so learners can execute code without any server-side runner.
+ * Runtimes other than the original ones are separate chunks loaded on first
+ * use. The worker has no DOM access; the page terminates it when a run
+ * exceeds its time limit.
  */
 import { transform } from "sucrase";
 import initSqlJs from "sql.js/dist/sql-wasm-browser.js";
@@ -33,7 +35,9 @@ type RunRequest = {
     /** Indentation used when formatting JSON. */
     indent?: number;
 };
-export type WorkerStatusCode = "loading_python" | "loading_sqlite" | "loading_lua" | "loading_prolog";
+export type WorkerStatusCode =
+    | "loading_python" | "loading_sqlite" | "loading_lua" | "loading_prolog"
+    | "loading_clojure" | "loading_sass" | "loading_jq" | "loading_wat" | "loading_coffeescript" | "loading_less";
 export type WorkerNoticeCode = "output_truncated";
 type Outgoing =
     | { id: number; type: "stdout" | "stderr"; text: string }
@@ -44,8 +48,23 @@ type Outgoing =
 // A minimal view of the worker global; the project compiles with DOM typings.
 type WorkerScope = { postMessage: (message: Outgoing) => void; onmessage: ((event: MessageEvent<RunRequest>) => void) | null };
 const scope = self as unknown as WorkerScope;
-const BASE = "/runtimes";
 const MAX_OUTPUT = 64_000;
+
+/**
+ * Same-origin URLs of the runtime files, injected by scripts/copy-runtimes.mjs.
+ * Binaries carry a content hash (?v=…) and Pyodide a versioned folder, so a
+ * browser cache that keeps /runtimes/* for a week never pairs a new worker
+ * with an old binary.
+ */
+declare const __HANOGT_RUNTIME_ASSETS__: {
+    pyodide: string;
+    sqlWasm: string;
+    luaWasm: string;
+    jqWasm: string;
+    scittle: string;
+    scittleVersion: string;
+};
+const ASSETS = __HANOGT_RUNTIME_ASSETS__;
 
 let outputBudget = MAX_OUTPUT;
 let truncated = false;
@@ -114,10 +133,16 @@ function inspect(value: unknown, depth = 0, seen = new WeakSet<object>()): strin
 // new Function adds two header lines and our async wrapper adds one more.
 const JS_LINE_OFFSET = 3;
 
-/** "Error: x\n    at f (main.js:2:9)" instead of frames pointing into worker.js. */
-function describeJavaScriptError(error: unknown, source: string, fileName: string) {
+type SourceLocation = (line: number, column: number) => { line: number; column: number } | null;
+
+/**
+ * "Error: x\n    at f (main.js:2:9)" instead of frames pointing into worker.js.
+ * `mapLocation` turns positions in compiled code (CoffeeScript) into source positions.
+ */
+function describeJavaScriptError(error: unknown, source: string, fileName: string, mapLocation?: SourceLocation) {
     if (!(error instanceof Error)) return String(error);
     const header = `${error.name}: ${error.message}`;
+    if (error instanceof SyntaxError && mapLocation) return header;
     if (error instanceof SyntaxError) {
         // V8 reports no position for code compiled by new Function; ask the parser.
         try {
@@ -134,8 +159,10 @@ function describeJavaScriptError(error: unknown, source: string, fileName: strin
         if (!match) return [];
         const lineNumber = Number(match[2]) - JS_LINE_OFFSET;
         if (lineNumber < 1 || lineNumber > lineCount) return [];
+        const position = mapLocation ? mapLocation(lineNumber, Number(match[3])) : { line: lineNumber, column: Number(match[3]) };
+        if (!position) return [];
         const name = match[1] && match[1] !== "eval" ? `${match[1]} ` : "";
-        return [name ? `    at ${name}(${fileName}:${lineNumber}:${match[3]})` : `    at ${fileName}:${lineNumber}:${match[3]}`];
+        return [name ? `    at ${name}(${fileName}:${position.line}:${position.column})` : `    at ${fileName}:${position.line}:${position.column}`];
     });
     return [header, ...frames.slice(0, 10)].join("\n");
 }
@@ -195,9 +222,9 @@ let pyodidePromise: Promise<Pyodide> | null = null;
 async function loadPython(id: number) {
     if (!pyodidePromise) {
         status(id, "loading_python", "Loading the Python runtime (about 12 MB on the first run)…");
-        const moduleUrl = `${BASE}/pyodide/pyodide.mjs`;
+        const moduleUrl = `${ASSETS.pyodide}pyodide.mjs`;
         pyodidePromise = import(/* webpackIgnore: true */ moduleUrl).then((module: { loadPyodide: (options: { indexURL: string }) => Promise<Pyodide> }) =>
-            module.loadPyodide({ indexURL: `${BASE}/pyodide/` }));
+            module.loadPyodide({ indexURL: ASSETS.pyodide }));
         pyodidePromise.catch(() => { pyodidePromise = null; });
     }
     return pyodidePromise;
@@ -270,7 +297,7 @@ function formatTable(result: SqlResult) {
 }
 
 async function runSql(id: number, source: string) {
-    const SQL = await initSqlJs({ locateFile: () => `${BASE}/sql-wasm.wasm` });
+    const SQL = await initSqlJs({ locateFile: () => ASSETS.sqlWasm });
     const db = new SQL.Database();
     try {
         const results = db.exec(source) as SqlResult[];
@@ -287,7 +314,7 @@ async function runSql(id: number, source: string) {
 
 // ------------------------------------------------------------------------- Lua
 async function runLua(id: number, source: string, stdin: string, fileName: string) {
-    const factory = new LuaFactory(`${BASE}/lua-glue.wasm`);
+    const factory = new LuaFactory(ASSETS.luaWasm);
     const lua = await factory.createEngine();
     const read = stdinReader(stdin);
     try {
@@ -489,6 +516,122 @@ async function runPrologProgram(id: number, source: string, stdin: string, fileN
     return VERSIONS.prolog;
 }
 
+// ------------------------------------------- jq, Less, SCSS, WAT, Clojure, CoffeeScript (lazy chunks)
+/** Runtimes that have been downloaded once in this worker (their first run announces the download). */
+const loaded = new Set<string>();
+/** Version labels learnt from the runtimes themselves (used when a run fails before it reports one). */
+const learnedVersions: Record<string, string> = {};
+
+function announce(id: number, language: string, code: WorkerStatusCode, text: string) {
+    if (!loaded.has(language)) status(id, code, text);
+}
+
+/** "message\n    at file:line:column" followed by the code frame of that line. */
+function locatedWithFrame(message: string, source: string, fileName: string, line?: number, column?: number) {
+    return line ? `${located(message, fileName, line, column)}\n\n${codeFrame(source, line, column ?? 1)}` : message;
+}
+
+const emptyCss = () => say({ tr: "(Derlenen CSS boş: bu dosya yalnızca değişken, mixin ya da yorum içeriyor.)", en: "(The compiled CSS is empty: this file only holds variables, mixins or comments.)" });
+
+async function runJqProgram(id: number, source: string, stdin: string, fileName: string) {
+    announce(id, "jq", "loading_jq", "Loading the jq runtime…");
+    const { runJq } = await import("./jq");
+    const result = await runJq(source, { stdin, wasmUrl: ASSETS.jqWasm, fileName, locale });
+    loaded.add("jq");
+    learnedVersions.jq = result.version;
+    emit(id, "stdout", result.stdout);
+    emit(id, "stderr", result.stderr);
+    if (result.exitCode) throw new InterpreterExit("", result.exitCode);
+    return result.version;
+}
+
+async function runLessProgram(id: number, source: string, fileName: string) {
+    announce(id, "less", "loading_less", "Loading the Less compiler…");
+    const { compileLess } = await import("./less");
+    loaded.add("less");
+    const result = await compileLess(source, { fileName });
+    learnedVersions.less = result.version;
+    if (result.error) throw new InterpreterExit(locatedWithFrame(result.error.message, source, fileName, result.error.line, result.error.column), 1);
+    emit(id, "stdout", result.css || `${emptyCss()}\n`);
+    return result.version;
+}
+
+async function runScssProgram(id: number, source: string, fileName: string) {
+    announce(id, "scss", "loading_sass", "Loading the Sass compiler (about 1 MB on the first run)…");
+    const { compileScss } = await import("./scss");
+    loaded.add("scss");
+    const result = compileScss(source);
+    learnedVersions.scss = result.version;
+    for (const notice of result.notices) {
+        const label = notice.kind === "debug" ? "Debug" : notice.kind === "deprecation" ? say({ tr: "Kullanımdan kalkma uyarısı", en: "Deprecation warning" }) : say({ tr: "Uyarı", en: "Warning" });
+        emit(id, "stderr", `${located(`${label}: ${notice.message}`, fileName, notice.line, notice.column)}\n`);
+    }
+    if (result.error) {
+        const frame = result.error.frame ? `\n\n${result.error.frame}` : "";
+        throw new InterpreterExit(`${located(result.error.message, fileName, result.error.line, result.error.column)}${frame}`, 1);
+    }
+    emit(id, "stdout", result.css || `${emptyCss()}\n`);
+    return result.version;
+}
+
+async function runWatProgram(id: number, source: string, stdin: string, fileName: string) {
+    announce(id, "wat", "loading_wat", "Loading the WebAssembly text compiler…");
+    const { runWat, WAT_VERSION } = await import("./wat");
+    loaded.add("wat");
+    learnedVersions.wat = WAT_VERSION;
+    let result: Awaited<ReturnType<typeof runWat>>;
+    try {
+        result = await runWat(source, { stdin, fileName, locale, onOutput: guardedOutput(id) });
+    } catch (error) {
+        if (error instanceof OutputLimitReached) return WAT_VERSION;
+        throw error;
+    }
+    if (result.error || result.exitCode) throw new InterpreterExit(result.error ?? "", result.exitCode || 1);
+    return WAT_VERSION;
+}
+
+let scittleSource: Promise<string> | null = null;
+
+async function runClojureProgram(id: number, source: string, stdin: string, fileName: string) {
+    const version = `Clojure (Scittle ${ASSETS.scittleVersion})`;
+    if (!scittleSource) {
+        status(id, "loading_clojure", "Loading the Clojure interpreter…");
+        const request = fetch(ASSETS.scittle, { credentials: "same-origin" }).then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status} (${ASSETS.scittle})`);
+            return response.text();
+        });
+        scittleSource = request;
+        request.catch(() => {
+            if (scittleSource === request) scittleSource = null;
+        });
+    }
+    const [runtime, { runClojure }] = await Promise.all([scittleSource, import("./clojure")]);
+    loaded.add("clojure");
+    const result = runClojure(source, {
+        runtime,
+        stdin,
+        onOutput: guardedOutput(id),
+        onError: (text) => emit(id, "stderr", text),
+    });
+    // Reaching the output limit stops the program from inside its print function; that is not its error.
+    if (result.error && outputBudget > 0) throw new InterpreterExit(located(result.error.message, fileName, result.error.line, result.error.column), result.exitCode || 1);
+    return version;
+}
+
+async function runCoffeeScriptProgram(id: number, source: string, stdin: string, fileName: string) {
+    announce(id, "coffeescript", "loading_coffeescript", "Loading the CoffeeScript compiler…");
+    const { compileCoffeeScript } = await import("./coffeescript");
+    loaded.add("coffeescript");
+    const compiled = compileCoffeeScript(source);
+    learnedVersions.coffeescript = compiled.version;
+    if (compiled.error) throw new Error(locatedWithFrame(`SyntaxError: ${compiled.error.message}`, source, fileName, compiled.error.line, compiled.error.column));
+    await runJavaScript(id, compiled.js, stdin).catch((error) => {
+        if (error instanceof OutputLimitReached) return;
+        throw new Error(describeJavaScriptError(error, compiled.js, fileName, compiled.sourceLocation));
+    });
+    return compiled.version;
+}
+
 // ------------------------------------------------------------------ validators
 type ValidatorId = "yaml" | "toml" | "xml" | "ini" | "dotenv" | "properties" | "csv";
 
@@ -537,6 +680,7 @@ const DEFAULT_FILE_NAMES: Record<string, string> = {
     brainfuck: "main.bf", scheme: "main.scm", json: "data.json", prolog: "main.pro", forth: "main.fth", basic: "main.bas",
     befunge: "main.b93", whitespace: "main.ws", mips: "main.asm", yaml: "config.yaml", toml: "config.toml", xml: "data.xml",
     ini: "settings.ini", dotenv: ".env", properties: "app.properties", csv: "data.csv",
+    jq: "filter.jq", less: "style.less", scss: "style.scss", wat: "main.wat", clojure: "main.clj", coffeescript: "main.coffee",
 };
 
 const VERSIONS_AS_FALLBACKS: Record<string, () => string> = Object.fromEntries(Object.entries(VERSIONS).map(([language, version]) => [language, () => version]));
@@ -549,6 +693,12 @@ const FALLBACK_VERSIONS: Record<string, () => string> = {
     brainfuck: () => "Brainfuck (Hanogt, 8-bit cells)",
     scheme: () => "Scheme (Hanogt R7RS subset)",
     json: () => say({ tr: "JSON doğrulayıcı", en: "JSON validator" }),
+    jq: () => learnedVersions.jq ?? "jq (WebAssembly)",
+    less: () => learnedVersions.less ?? "Less",
+    scss: () => learnedVersions.scss ?? "Dart Sass",
+    wat: () => learnedVersions.wat ?? "WebAssembly (wabt)",
+    clojure: () => `Clojure (Scittle ${ASSETS.scittleVersion})`,
+    coffeescript: () => learnedVersions.coffeescript ?? "CoffeeScript",
     ...VERSIONS_AS_FALLBACKS,
     ...Object.fromEntries(Object.entries(VALIDATOR_LABELS).map(([language, label]) => [language, () => say(label)])),
 };
@@ -622,6 +772,24 @@ scope.onmessage = async (event: MessageEvent<RunRequest>) => {
                 break;
             case "mips":
                 version = await runMipsProgram(id, code, stdin, fileName, deadline);
+                break;
+            case "jq":
+                version = await runJqProgram(id, code, stdin, fileName);
+                break;
+            case "less":
+                version = await runLessProgram(id, code, fileName);
+                break;
+            case "scss":
+                version = await runScssProgram(id, code, fileName);
+                break;
+            case "wat":
+                version = await runWatProgram(id, code, stdin, fileName);
+                break;
+            case "clojure":
+                version = await runClojureProgram(id, code, stdin, fileName);
+                break;
+            case "coffeescript":
+                version = await runCoffeeScriptProgram(id, code, stdin, fileName);
                 break;
             case "yaml":
             case "toml":

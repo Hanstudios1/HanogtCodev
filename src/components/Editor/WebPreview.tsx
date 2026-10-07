@@ -6,7 +6,7 @@ import { useI18n, type Copy } from "@/lib/i18n";
 import { renderLatex } from "@/lib/runtimes/latex";
 import { renderMarkdown } from "@/lib/runtimes/markdown";
 import {
-    PREVIEW_HOST_SOURCE, buildCssShowcase, buildLiveShell, buildMarkdownDocument, buildSvgDocument, buildWebPreview, createPreviewToken,
+    PREVIEW_HOST_SOURCE, buildCssShowcase, buildLiveShell, buildLogoDocument, buildMarkdownDocument, buildSvgDocument, buildWebPreview, createPreviewToken,
     isLivePreviewKind, parsePreviewMessage, resolvePreviewTarget,
     type LivePreviewKind, type LivePreviewPayload, type PreviewKind, type PreviewLogLevel, type PreviewSourceFile,
 } from "@/lib/runtimes/web-preview";
@@ -43,17 +43,37 @@ const C = {
     console: { TR: "Konsol", EN: "Console" },
     clearConsole: { TR: "Konsolu temizle", EN: "Clear console" },
     noLogs: { TR: "console.log çıktıları burada görünür.", EN: "console.log output appears here." },
-    nothing: { TR: "Önizlenecek dosya yok. HTML, CSS, Markdown, SVG, Mermaid veya LaTeX dosyası ekleyin ya da Web projesi şablonuyla başlayın.", EN: "Nothing to preview. Add an HTML, CSS, Markdown, SVG, Mermaid or LaTeX file, or start from the Web project template." },
+    nothing: { TR: "Önizlenecek dosya yok. HTML, CSS, Markdown, AsciiDoc, SVG, Mermaid, Graphviz, LaTeX, ABC, GLSL ya da Logo dosyası ekleyin veya Web projesi şablonuyla başlayın.", EN: "Nothing to preview. Add an HTML, CSS, Markdown, AsciiDoc, SVG, Mermaid, Graphviz, LaTeX, ABC, GLSL or Logo file, or start from the Web project template." },
     missing: { TR: "Projede bulunmayan dosyalar: {files}", EN: "Files not in this project: {files}" },
     sandboxNote: { TR: "Sayfa korumalı bir çerçevede çalışır: dış betikler, stiller ve ağ istekleri engellenir; resimler https üzerinden yüklenebilir.", EN: "The page runs in a sandboxed frame: external scripts, styles and network requests are blocked; images can load over https." },
     frameTitle: { TR: "Önizleme: {name}", EN: "Preview: {name}" },
     emptyMarkdown: { TR: "Bu Markdown dosyası boş.", EN: "This Markdown file is empty." },
     loadingMermaid: { TR: "Mermaid diyagram motoru yükleniyor…", EN: "Loading the Mermaid diagram engine…" },
     loadingLatex: { TR: "KaTeX matematik motoru yükleniyor…", EN: "Loading the KaTeX math engine…" },
+    loadingGraphviz: { TR: "Graphviz çizge motoru yükleniyor…", EN: "Loading the Graphviz engine…" },
+    loadingAbc: { TR: "ABC nota motoru yükleniyor…", EN: "Loading the ABC notation engine…" },
+    loadingAsciidoc: { TR: "AsciiDoc motoru yükleniyor…", EN: "Loading the AsciiDoc engine…" },
+    loadingGlsl: { TR: "Gölgelendirici önizlemesi hazırlanıyor…", EN: "Preparing the shader preview…" },
+    loadingLogo: { TR: "Logo yorumlayıcısı yükleniyor…", EN: "Loading the Logo interpreter…" },
     loadFailed: { TR: "Önizleme motoru yüklenemedi ({message}).", EN: "The preview engine could not be loaded ({message})." },
     retry: { TR: "Tekrar dene", EN: "Try again" },
     mermaidError: { TR: "Diyagram çizilemedi", EN: "The diagram could not be drawn" },
     latexError: { TR: "Formül işlenemedi", EN: "The formula could not be rendered" },
+    dotError: { TR: "Çizge çizilemedi", EN: "The graph could not be drawn" },
+    abcError: { TR: "Nota yazılamadı", EN: "The music could not be rendered" },
+    asciidocError: { TR: "Belge dönüştürülemedi", EN: "The document could not be converted" },
+    glslError: { TR: "Gölgelendirici derlenemedi", EN: "The shader could not be compiled" },
+    warnings: { TR: "Uyarılar", EN: "Warnings" },
+    pause: { TR: "Duraklat", EN: "Pause" },
+    play: { TR: "Oynat", EN: "Play" },
+    noWebgl: { TR: "Bu tarayıcıda WebGL kullanılamıyor, bu yüzden gölgelendirici gösterilemiyor.", EN: "WebGL is not available in this browser, so the shader can't be shown." },
+    emptyGraph: { TR: "Henüz gösterilecek bir şey yok; çizgenizi DOT diliyle yazmaya başlayın.", EN: "Nothing to show yet; start writing your graph in DOT." },
+    emptyMusic: { TR: "Henüz gösterilecek bir şey yok; ezginizi ABC notasyonuyla yazmaya başlayın.", EN: "Nothing to show yet; start writing your tune in ABC notation." },
+    emptyShader: { TR: "Henüz gösterilecek bir şey yok; bir parça gölgelendiricisi yazmaya başlayın.", EN: "Nothing to show yet; start writing a fragment shader." },
+    logoOutput: { TR: "Çıktı", EN: "Output" },
+    logoError: { TR: "Program bir hatayla durdu", EN: "The program stopped with an error" },
+    logoStats: { TR: "Çizgi: {lines} · Adım: {steps}", EN: "Lines: {lines} · Steps: {steps}" },
+    logoDrawing: { TR: "Kaplumbağanın çizimi", EN: "The turtle's drawing" },
     errorLine: { TR: "{line}. satır", EN: "line {line}" },
     emptyDiagram: { TR: "Henüz gösterilecek bir şey yok; diyagramınızı yazmaya başlayın.", EN: "Nothing to show yet; start writing your diagram." },
     emptyDocument: { TR: "Bu belge boş.", EN: "This document is empty." },
@@ -72,9 +92,16 @@ const SANDBOX: Record<PreviewKind, string> = {
     markdown: "allow-popups allow-popups-to-escape-sandbox",
     css: "",
     svg: "",
-    // Library frames run their own inline script (Mermaid / KaTeX) and nothing else.
+    // Library frames run their own inline script (Mermaid, KaTeX, Graphviz, abcjs, WebGL) and nothing else.
     mermaid: "allow-scripts",
     latex: "allow-scripts",
+    dot: "allow-scripts",
+    abc: "allow-scripts",
+    glsl: "allow-scripts",
+    // AsciiDoc links open in a new tab, like Markdown's; the document's own markup can't run scripts.
+    asciidoc: "allow-scripts allow-popups allow-popups-to-escape-sandbox",
+    // Logo is drawn in the page and shown as a static SVG.
+    logo: "",
 };
 
 const LOG_STYLES: Record<PreviewLogLevel, string> = {
@@ -86,10 +113,23 @@ const LOG_STYLES: Record<PreviewLogLevel, string> = {
 };
 
 // ------------------------------------------------------------ library assets
-/** Same-origin files copied to /public/runtimes by scripts/copy-runtimes.mjs. */
+/** Same-origin files copied to /public/runtimes by scripts/copy-runtimes.mjs (GLSL needs no library). */
 const LIVE_ASSETS: Record<LivePreviewKind, { script: string; css?: string }> = {
     mermaid: { script: "/runtimes/mermaid/mermaid.min.js" },
     latex: { script: "/runtimes/katex/katex.min.js", css: "/runtimes/katex/katex.css" },
+    dot: { script: "/runtimes/graphviz/graphviz.js" },
+    abc: { script: "/runtimes/abcjs/abcjs-basic-min.js" },
+    asciidoc: { script: "/runtimes/asciidoctor/asciidoctor.js" },
+    glsl: { script: "" },
+};
+
+const LIVE_TEXTS: Record<LivePreviewKind, { loading: Copy; error: Copy; empty: Copy }> = {
+    mermaid: { loading: C.loadingMermaid, error: C.mermaidError, empty: C.emptyDiagram },
+    latex: { loading: C.loadingLatex, error: C.latexError, empty: C.emptyDocument },
+    dot: { loading: C.loadingGraphviz, error: C.dotError, empty: C.emptyGraph },
+    abc: { loading: C.loadingAbc, error: C.abcError, empty: C.emptyMusic },
+    asciidoc: { loading: C.loadingAsciidoc, error: C.asciidocError, empty: C.emptyDocument },
+    glsl: { loading: C.loadingGlsl, error: C.glslError, empty: C.emptyShader },
 };
 
 const assetCache = new Map<string, Promise<string>>();
@@ -109,6 +149,7 @@ function loadAsset(url: string): Promise<string> {
 }
 
 type LiveAssets = { kind: LivePreviewKind; script: string; css: string };
+type LogoRuntime = typeof import("@/lib/runtimes/logo");
 type Shown = { doc: BuiltDocument; version: number };
 
 /** Which file a document shows ("" for none). */
@@ -116,13 +157,13 @@ function identityOf(doc: BuiltDocument) {
     return doc ? `${doc.kind}:${doc.name}` : "";
 }
 
-/** Same frame (only the Mermaid/LaTeX source changed) keeps the version, so the iframe is not recreated. */
+/** Same frame (only the source of a live preview changed) keeps the version, so the iframe is not recreated. */
 function advance(current: Shown, next: BuiltDocument): Shown {
     const sameFrame = Boolean(current.doc && next && current.doc.payload && next.payload && current.doc.html === next.html);
     return { doc: next, version: sameFrame ? current.version : current.version + 1 };
 }
 
-/** Loads the library of a Mermaid or LaTeX preview only when such a file is previewed. */
+/** Loads the library of a live preview (Mermaid, LaTeX, Graphviz…) only when such a file is previewed. */
 function useLiveAssets(kind: PreviewKind | null) {
     const [state, setState] = useState<{ kind: LivePreviewKind | null; assets: LiveAssets | null; error: string | null }>({ kind: null, assets: null, error: null });
     const [attempt, setAttempt] = useState(0);
@@ -130,7 +171,7 @@ function useLiveAssets(kind: PreviewKind | null) {
         if (!isLivePreviewKind(kind)) return;
         let cancelled = false;
         const urls = LIVE_ASSETS[kind];
-        Promise.all([loadAsset(urls.script), urls.css ? loadAsset(urls.css) : Promise.resolve("")]).then(
+        Promise.all([urls.script ? loadAsset(urls.script) : Promise.resolve(""), urls.css ? loadAsset(urls.css) : Promise.resolve("")]).then(
             ([script, css]) => {
                 if (!cancelled) setState({ kind, assets: { kind, script, css }, error: null });
             },
@@ -148,6 +189,32 @@ function useLiveAssets(kind: PreviewKind | null) {
         setAttempt((value) => value + 1);
     }, []);
     return { assets: current?.assets ?? null, error: current?.error ?? null, retry };
+}
+
+/** Loads the Logo interpreter (a separate chunk) the first time a Logo file is previewed. */
+function useLogoRuntime(active: boolean) {
+    const [state, setState] = useState<{ runtime: LogoRuntime | null; error: string | null }>({ runtime: null, error: null });
+    const [attempt, setAttempt] = useState(0);
+    useEffect(() => {
+        if (!active || state.runtime) return;
+        let cancelled = false;
+        import("@/lib/runtimes/logo").then(
+            (runtime) => {
+                if (!cancelled) setState({ runtime, error: null });
+            },
+            (error: unknown) => {
+                if (!cancelled) setState({ runtime: null, error: error instanceof Error ? error.message : String(error) });
+            },
+        );
+        return () => {
+            cancelled = true;
+        };
+    }, [active, state.runtime, attempt]);
+    const retry = useCallback(() => {
+        setState({ runtime: null, error: null });
+        setAttempt((value) => value + 1);
+    }, []);
+    return { ...state, retry };
 }
 
 export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }: WebPreviewProps) {
@@ -178,18 +245,32 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
         note: tx(C.svgNote),
     }), [tx]);
     const emptyMarkdown = tx(C.emptyMarkdown);
+    const logoLabels = useMemo(() => ({
+        output: tx(C.logoOutput),
+        error: tx(C.logoError),
+        location: tx(C.svgLocation),
+        stats: tx(C.logoStats),
+        drawing: tx(C.logoDrawing),
+    }), [tx]);
 
     const target = useMemo(() => resolvePreviewTarget(files, activeFile), [files, activeFile]);
     const liveKind: LivePreviewKind | null = target && isLivePreviewKind(target.kind) ? target.kind : null;
-    const { assets, error: assetError, retry } = useLiveAssets(target?.kind ?? null);
+    const { assets, error: liveAssetError, retry: retryLiveAssets } = useLiveAssets(target?.kind ?? null);
+    const logo = useLogoRuntime(target?.kind === "logo");
+    const assetError = target?.kind === "logo" ? logo.error : liveAssetError;
+    const retry = target?.kind === "logo" ? logo.retry : retryLiveAssets;
     const liveLabels = useMemo(() => ({
-        error: tx(liveKind === "latex" ? C.latexError : C.mermaidError),
+        error: tx(LIVE_TEXTS[liveKind ?? "mermaid"].error),
         line: tx(C.errorLine),
-        empty: tx(liveKind === "latex" ? C.emptyDocument : C.emptyDiagram),
+        empty: tx(LIVE_TEXTS[liveKind ?? "mermaid"].empty),
         unsupported: tx(C.unsupported),
+        warnings: tx(C.warnings),
+        pause: tx(C.pause),
+        play: tx(C.play),
+        noWebgl: tx(C.noWebgl),
     }), [tx, liveKind]);
-    // The frame of a Mermaid/LaTeX preview is rebuilt only when the library, theme or labels change;
-    // edits to the file are sent to the running frame instead.
+    // The frame of a live preview (Mermaid, LaTeX, Graphviz…) is rebuilt only when the library, theme
+    // or labels change; edits to the file are sent to the running frame instead.
     const shell = useMemo(() => {
         if (!liveKind || !assets || assets.kind !== liveKind) return null;
         const token = createPreviewToken();
@@ -200,17 +281,24 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
     // Rebuilding is cheap string work; applying it to the frame is debounced.
     const live = useMemo<BuiltDocument>(() => {
         if (!target) return null;
-        if (target.kind === "mermaid" || target.kind === "latex") {
+        if (isLivePreviewKind(target.kind)) {
             if (!shell) return null;
-            const payload: LivePreviewPayload = target.kind === "mermaid"
-                ? { kind: "mermaid", code: target.file.code }
-                : (() => {
+            const payload: LivePreviewPayload = target.kind === "latex"
+                ? (() => {
                     const rendered = renderLatex(target.file.code, { locale: latexLocale });
                     return { kind: "latex", html: rendered.html, macros: rendered.macros, warnings: rendered.warnings };
-                })();
+                })()
+                : { kind: target.kind, code: target.file.code };
             return { kind: target.kind, html: shell.html, token: shell.token, name: target.file.name, missing: [], payload };
         }
         const token = createPreviewToken();
+        if (target.kind === "logo") {
+            if (!logo.runtime) return null;
+            // RANDOM draws the same picture while typing; Run / Preview rolls new numbers.
+            const result = logo.runtime.runLogo(target.file.code, { locale: latexLocale, seed: reloadKey + 1 });
+            const svg = logo.runtime.renderLogoSvg(result, { title: logoLabels.drawing });
+            return { html: buildLogoDocument(result, target.file.code, { dark, labels: logoLabels, svg }), token, kind: "logo", name: target.file.name, missing: [] };
+        }
         if (target.kind === "web") {
             const result = buildWebPreview(files, target.file, { token, stdin, dark });
             return { html: result.html, token, kind: "web", name: target.file.name, missing: result.missing };
@@ -222,7 +310,7 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
             return { html: buildSvgDocument(target.file.code, { dark, labels: svgLabels }), token, kind: "svg", name: target.file.name, missing: [] };
         }
         return { html: buildCssShowcase(target.file.code, { dark, labels }), token, kind: "css", name: target.file.name, missing: [] };
-    }, [target, shell, files, stdin, dark, labels, svgLabels, emptyMarkdown, latexLocale]);
+    }, [target, shell, files, stdin, dark, labels, svgLabels, emptyMarkdown, latexLocale, logoLabels, reloadKey, logo.runtime]);
 
     const [shown, setShown] = useState<Shown>(() => ({ doc: live, version: 0 }));
     const liveRef = useRef(live);
@@ -258,7 +346,7 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
         shownRef.current = shown;
     }, [doc, shown]);
 
-    /** Sends the current Mermaid/LaTeX source to the live frame once it is listening. */
+    /** Sends the current source of a live preview to its frame once the frame is listening. */
     const postPayload = useCallback(() => {
         const current = shownRef.current.doc;
         const frame = iframeRef.current?.contentWindow;
@@ -303,7 +391,7 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
     }, [postPayload]);
 
     const errorCount = logs.filter((log) => log.level === "error").length;
-    const loadingLive = Boolean(liveKind && !shell);
+    const loadingLive = Boolean((liveKind && !shell) || (target?.kind === "logo" && !logo.runtime));
     const deviceButton = (id: Device, label: Copy, Icon: typeof Monitor) => (
         <button type="button" onClick={() => setDevice(id)} aria-pressed={device === id} className={`rounded-lg p-1.5 transition ${device === id ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"}`} title={tx(label)} aria-label={tx(label)}>
             <Icon className="h-4 w-4" aria-hidden />
@@ -354,7 +442,7 @@ export default function WebPreview({ files, activeFile, stdin, dark, reloadKey }
                         ) : (
                             <>
                                 <LoaderCircle className="h-8 w-8 animate-spin" aria-hidden />
-                                <p>{tx(liveKind === "latex" ? C.loadingLatex : C.loadingMermaid)}</p>
+                                <p>{tx(liveKind ? LIVE_TEXTS[liveKind].loading : C.loadingLogo)}</p>
                             </>
                         )}
                     </div>

@@ -8,7 +8,9 @@ import { BROWSER_LANGUAGES } from "./languages";
 
 export { BROWSER_LANGUAGES };
 
-export type BrowserStatusCode = "loading_python" | "loading_sqlite" | "loading_lua" | "loading_prolog";
+export type BrowserStatusCode =
+    | "loading_python" | "loading_sqlite" | "loading_lua" | "loading_prolog"
+    | "loading_clojure" | "loading_sass" | "loading_jq" | "loading_wat" | "loading_coffeescript" | "loading_less";
 
 export type BrowserRunNotice =
     | { code: "timeout"; seconds: number }
@@ -48,7 +50,16 @@ type WorkerMessage =
 
 let worker: Worker | null = null;
 let nextId = 1;
-let pythonLoaded = false;
+/** Languages whose runtime the current worker has already downloaded. */
+const loadedLanguages = new Set<string>();
+
+/**
+ * Hard limits of a language's first run, which downloads its runtime: Python
+ * boots ~12 MB of WebAssembly, Sass is a ~1 MB chunk, the others are smaller.
+ */
+const FIRST_RUN_TIMEOUTS: Readonly<Record<string, number>> = {
+    python: 90_000, scss: 60_000, clojure: 45_000, jq: 45_000, wat: 30_000, coffeescript: 30_000, less: 30_000,
+};
 /** Runs are serialised: the worker keeps per-run state such as the output budget. */
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -61,13 +72,13 @@ function getWorker() {
 function resetWorker() {
     worker?.terminate();
     worker = null;
-    pythonLoaded = false;
+    loadedLanguages.clear();
 }
 
 /** The hard limit after which the worker is terminated. */
 export function browserTimeoutMs(language: string) {
-    // The first Python run downloads and boots ~12 MB of WebAssembly.
-    return language === "python" && !pythonLoaded ? 90_000 : 15_000;
+    const firstRun = FIRST_RUN_TIMEOUTS[language];
+    return firstRun && !loadedLanguages.has(language) ? firstRun : 15_000;
 }
 
 function execute(language: string, code: string, options: BrowserRunOptions): Promise<BrowserRunResult> {
@@ -119,7 +130,7 @@ function execute(language: string, code: string, options: BrowserRunOptions): Pr
             else if (message.type === "status") options.onStatus?.({ code: message.code, text: message.text });
             else if (message.type === "notice") notices.push({ code: message.code });
             else if (message.type === "done") {
-                if (language === "python") pythonLoaded = true;
+                loadedLanguages.add(language);
                 finish({ stdout, stderr, code: message.exitCode, version: message.version });
             }
         };

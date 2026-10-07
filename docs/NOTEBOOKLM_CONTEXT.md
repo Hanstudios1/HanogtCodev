@@ -51,7 +51,7 @@ Hanogt Codev; web tabanlı kod düzenleme/çalıştırma, arkadaşlar ve gruplar
 
 ## Kod editörü
 
-- Dil kaydı (`src/lib/runtimes/languages.ts`) 122 dil içerir; 57'si çalışır ya da önizlenir. Tarayıcıda (Web Worker/WebAssembly): JavaScript, TypeScript, Python (Pyodide), SQL (sql.js), Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace, MIPS; YAML, TOML, XML, INI, .env, .properties, CSV ve JSON doğrulayıcıları; SVG, Mermaid ve LaTeX önizlemesi.
+- Dil kaydı (`src/lib/runtimes/languages.ts`) 129 dil içerir; 67'si çalışır ya da önizlenir. Tarayıcıda (Web Worker/WebAssembly): JavaScript, TypeScript, Python (Pyodide), SQL (sql.js), Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace, MIPS, Clojure (Scittle), CoffeeScript, jq (jq-wasm), WebAssembly metin biçimi (WAT, wabt); Less ve SCSS (Dart Sass) CSS'e derlenir; YAML, TOML, XML, INI, .env, .properties, CSV ve JSON doğrulayıcıları; SVG, Mermaid, LaTeX, Graphviz DOT, ABC notası (abcjs), AsciiDoc (Asciidoctor), GLSL (WebGL) ve Logo (Hanogt'un kendi kaplumbağa yorumlayıcısı) önizlemesi.
 - "Ekiple düzenle": Yjs tabanlı canlı ortak düzenleme (en fazla 5 arkadaş), renkli imleçler, sohbet ve ses; tüm yazmalar `/api/collab` üzerinden, Firestore kuralları yalnızca katılımcılara okuma verir, süresi dolan oturumlar silinir.
 - Editörden doğrudan Hanogt Media'da yayınlama, Düzenle menüsü ve komut paleti.
 - Monaco tabanlı editör çoklu dosya/sekmeyi ve birden fazla desteklenen dilin tek çalıştırma eyleminde paralel yürütülmesini destekler.

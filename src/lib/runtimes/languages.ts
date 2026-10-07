@@ -8,7 +8,8 @@
  * - `engine: "browser"`  runs in the visitor's browser (src/lib/runtimes/worker.ts);
  *                        `tool: "validator"` languages are checked and formatted instead of executed.
  * - `engine: "server"`   runs through /api/execute (CODE_RUNNER_URL, Wandbox or Kotlin Playground).
- * - `engine: "preview"`  is rendered in the live preview panel (HTML, CSS, Markdown, SVG, Mermaid, LaTeX).
+ * - `engine: "preview"`  is rendered in the live preview panel (HTML, CSS, Markdown, SVG, Mermaid,
+ *                        LaTeX, Graphviz DOT, ABC notation, AsciiDoc, GLSL and Logo).
  * - `engine: "none"`     is edit-only: syntax highlighting without a Run button.
  */
 
@@ -196,6 +197,41 @@ export const LANGUAGES: readonly LanguageInfo[] = [
         template: "# Hanogt Codev · .properties\napp.name=Hanogt\ngreeting=Hello World from Hanogt!\nserver.port=8080\n",
     },
     {
+        id: "clojure", name: "Clojure", monaco: "clojure", extensions: ["clj", "cljs", "cljc", "edn"],
+        aliases: ["clj", "cljs", "clojurescript", "scittle"], engine: "browser",
+        category: "functional", color: "#5881D8", icon: svg("clojure"), defaultFileName: "main.clj",
+        template: ";; Hanogt Codev · Clojure (ClojureScript interpreter)\n(defn greet [name]\n  (str \"Hello World from \" name \"!\"))\n\n(println (greet \"Hanogt\"))\n\n(def languages\n  [{:name \"Lisp\" :year 1958}\n   {:name \"Scheme\" :year 1975}\n   {:name \"Clojure\" :year 2007}])\n\n(doseq [{:keys [name year]} (sort-by :year > languages)]\n  (println (format \"%-8s %d\" name year)))\n\n(println \"Squares:\" (map #(* % %) (range 1 6)))\n",
+    },
+    {
+        id: "coffeescript", name: "CoffeeScript", monaco: "coffeescript", extensions: ["coffee"],
+        aliases: ["coffee"], engine: "browser",
+        category: "web", color: "#244776", icon: svg("coffeescript"), defaultFileName: "main.coffee",
+        template: "# Hanogt Codev · CoffeeScript\ngreet = (name) -> \"Hello World from #{name}!\"\nconsole.log greet \"Hanogt\"\n\nsquares = (n * n for n in [1..5])\nconsole.log \"Squares:\", squares.join \", \"\n\nclass Animal\n  constructor: (@name) ->\n  speak: -> \"#{@name} says hello\"\n\nconsole.log new Animal(\"Rex\").speak()\n",
+    },
+    {
+        id: "jq", name: "jq", monaco: "jq", extensions: ["jq"],
+        aliases: ["jqlang", "jq filter"], engine: "browser",
+        category: "data", color: "#475569", icon: svg("jq"), defaultFileName: "filter.jq",
+        // The Input tab holds the JSON the filter reads; an empty Input tab is null, which `//` replaces.
+        template: "# Hanogt Codev · jq\n# The filter reads the JSON in the Input tab (an empty Input tab is null).\n(. // {\n  \"users\": [\n    {\"name\": \"Ada\", \"age\": 36, \"languages\": [\"Python\", \"Scheme\"]},\n    {\"name\": \"Linus\", \"age\": 28, \"languages\": [\"C\"]},\n    {\"name\": \"Grace\", \"age\": 45, \"languages\": [\"COBOL\", \"Fortran\"]}\n  ]\n})\n| \"Hello World from Hanogt!\",\n  (.users | map(.name) | join(\", \")),\n  (.users | map(select(.age > 30) | {name, languages: (.languages | length)}))\n",
+    },
+    {
+        id: "less", name: "Less", monaco: "less", extensions: ["less"],
+        engine: "browser", category: "web", color: "#1D365D", icon: svg("less"), defaultFileName: "style.less",
+        template: "// Hanogt Codev · Less (Run prints the compiled CSS)\n@primary: #6366f1;\n@radius: 12px;\n\n.rounded(@r: @radius) {\n  border-radius: @r;\n}\n\n.card {\n  .rounded();\n  padding: (@radius * 2);\n  border: 1px solid fade(@primary, 30%);\n\n  h1 {\n    color: @primary;\n    &::after { content: \" · Hello World from Hanogt!\"; }\n  }\n\n  &:hover { background: lighten(@primary, 30%); }\n}\n",
+    },
+    {
+        id: "scss", name: "SCSS", monaco: "scss", extensions: ["scss"],
+        aliases: ["sass"], engine: "browser", category: "web", color: "#CC6699", icon: svg("scss"), defaultFileName: "style.scss",
+        template: "// Hanogt Codev · SCSS (Run prints the compiled CSS)\n@use \"sass:math\";\n@use \"sass:color\";\n\n$primary: #6366f1;\n$sizes: (small: 12px, medium: 16px, large: 24px);\n\n@mixin rounded($radius: 12px) {\n  border-radius: $radius;\n}\n\n.card {\n  @include rounded;\n  padding: math.div(48px, 2);\n  border: 1px solid color.change($primary, $alpha: 0.3);\n\n  h1 {\n    color: $primary;\n    &::after { content: \" · Hello World from Hanogt!\"; }\n  }\n}\n\n@each $name, $size in $sizes {\n  .text-#{$name} { font-size: $size; }\n}\n",
+    },
+    {
+        id: "wat", name: "WebAssembly (WAT)", monaco: "wat", extensions: ["wat", "wast"],
+        aliases: ["webassembly", "wasm", "webassembly text", "wast"], engine: "browser",
+        category: "assembly", color: "#654FF0", icon: svg("wat"), defaultFileName: "main.wat",
+        template: ";; Hanogt Codev · WebAssembly text format\n;; \"env\" provides print, print_i32, print_i64, print_f32 and print_f64;\n;; the exported main (or _start) runs and its result is printed.\n(module\n  (import \"env\" \"print\" (func $print (param i32 i32)))\n  (import \"env\" \"print_i32\" (func $print_i32 (param i32)))\n  (memory (export \"memory\") 1)\n  (data (i32.const 0) \"Hello World from Hanogt!\\n\")\n\n  ;; n! with a loop\n  (func $factorial (param $n i64) (result i64)\n    (local $result i64)\n    (local.set $result (i64.const 1))\n    (block $done\n      (loop $next\n        (br_if $done (i64.le_s (local.get $n) (i64.const 1)))\n        (local.set $result (i64.mul (local.get $result) (local.get $n)))\n        (local.set $n (i64.sub (local.get $n) (i64.const 1)))\n        (br $next)))\n    (local.get $result))\n\n  (func (export \"main\") (result i64)\n    (call $print (i32.const 0) (i32.const 25))\n    (call $print_i32 (i32.add (i32.const 40) (i32.const 2)))\n    (call $factorial (i64.const 20))))\n",
+    },
+    {
         id: "csv", name: "CSV", monaco: "csv", extensions: ["csv", "tsv"],
         aliases: ["tsv", "comma-separated values"], engine: "browser", tool: "validator",
         category: "data", color: "#237346", icon: svg("csv"), defaultFileName: "data.csv",
@@ -233,6 +269,32 @@ export const LANGUAGES: readonly LanguageInfo[] = [
         id: "latex", name: "LaTeX", monaco: "latex", extensions: ["tex", "latex", "ltx"],
         aliases: ["tex", "katex"], engine: "preview", category: "docs", color: "#008080", icon: svg("latex"), defaultFileName: "document.tex",
         template: "\\documentclass{article}\n\\title{Hello World from Hanogt!}\n\\begin{document}\n\\maketitle\n\n\\section{Formulas}\nThe roots of $ax^2 + bx + c = 0$ are\n\\[\n  x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}.\n\\]\n\n\\begin{itemize}\n  \\item Euler: $e^{i\\pi} + 1 = 0$\n  \\item Sum: $\\sum_{k=1}^{n} k = \\frac{n(n+1)}{2}$\n\\end{itemize}\n\\end{document}\n",
+    },
+
+    {
+        id: "dot", name: "Graphviz DOT", monaco: "dot", extensions: ["dot", "gv"],
+        aliases: ["graphviz", "gv"], engine: "preview", category: "docs", color: "#3E7CB1", icon: svg("dot"), defaultFileName: "graph.dot",
+        template: "// Hanogt Codev · Graphviz DOT\ndigraph Hanogt {\n  rankdir=LR;\n  node [shape=box, style=\"rounded,filled\", fillcolor=\"#eef2ff\", color=\"#6366f1\", fontname=\"Helvetica\"];\n  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=10];\n\n  hello [label=\"Hello World from Hanogt!\", fillcolor=\"#c7d2fe\"];\n  hello -> write -> run;\n  run -> fix [label=\"error\"];\n  fix -> run;\n  run -> share [label=\"works\"];\n}\n",
+    },
+    {
+        id: "abc", name: "ABC notation", monaco: "abc", extensions: ["abc"],
+        aliases: ["abc music", "abcjs", "abc notation"], engine: "preview", category: "docs", color: "#B45309", icon: svg("abc"), defaultFileName: "tune.abc",
+        template: "X:1\nT:Hello World from Hanogt!\nC:Twinkle, Twinkle, Little Star (traditional)\nM:4/4\nL:1/4\nQ:1/4=100\nK:C\nCC GG | AA G2 | FF EE | DD C2 |\nGG FF | EE D2 | GG FF | EE D2 |\nCC GG | AA G2 | FF EE | DD C2 |]\n",
+    },
+    {
+        id: "asciidoc", name: "AsciiDoc", monaco: "asciidoc", extensions: ["adoc", "asciidoc"],
+        aliases: ["adoc", "asciidoctor"], engine: "preview", category: "docs", color: "#E40046", icon: svg("asciidoc"), defaultFileName: "README.adoc",
+        template: "= Hello World from Hanogt!\n:toc:\n\nThis is an *AsciiDoc* document. The _Preview_ panel renders it live.\n\n== Features\n\n* Headings, lists and tables\n* `inline code` and source blocks\n* Admonitions such as notes and tips\n\n[source,python]\n----\nprint(\"Hello World from Hanogt!\")\n----\n\nNOTE: Press Ctrl+K for quick actions.\n\n|===\n| Language | Runs in\n\n| Python | Browser\n| Rust | Server\n|===\n",
+    },
+    {
+        id: "glsl", name: "GLSL", monaco: "glsl", extensions: ["glsl", "frag", "fsh"],
+        aliases: ["shader", "fragment shader", "webgl"], engine: "preview", category: "web", color: "#5586A4", icon: svg("glsl"), defaultFileName: "shader.glsl",
+        template: "// Hanogt Codev · GLSL fragment shader\n// Uniforms: iResolution (pixels), iTime (seconds) and iMouse (pixels).\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord) {\n    vec2 uv = fragCoord / iResolution.xy;\n    vec3 color = 0.5 + 0.5 * cos(iTime + uv.xyx + vec3(0.0, 2.0, 4.0));\n    float glow = length(fragCoord - iMouse.xy) / iResolution.y;\n    color += 0.25 * smoothstep(0.15, 0.0, glow);\n    fragColor = vec4(color, 1.0);\n}\n",
+    },
+    {
+        id: "logo", name: "Logo", monaco: "logo", extensions: ["logo", "lgo"],
+        aliases: ["ucblogo", "turtle", "turtle graphics"], engine: "preview", category: "general", color: "#2E7D32", icon: svg("logo"), defaultFileName: "main.logo",
+        template: "; Hanogt Codev · Logo (the turtle draws in the Preview panel)\nto square :size\n  repeat 4 [fd :size rt 90]\nend\n\nsetpencolor \"indigo\nrepeat 12 [square 80 rt 30]\n\npenup setxy -95 -125 pendown\nsetpencolor [236 72 153]\nlabel [Hello World from Hanogt!]\npenup home pendown\nprint [12 squares, one every 30 degrees]\n",
     },
 
     // ------------------------------------------------------------ server
@@ -406,12 +468,6 @@ export const LANGUAGES: readonly LanguageInfo[] = [
         template: "let name = \"Hanogt\"\nprintfn \"Hello World from %s!\" name\n",
     },
     {
-        id: "coffeescript", name: "CoffeeScript", monaco: "coffeescript", extensions: ["coffee"],
-        aliases: ["coffee"], engine: "server", server: true, wandbox: { names: ["coffeescript"], prefer: ["coffeescript"] },
-        category: "web", color: "#244776", icon: svg("coffeescript"), defaultFileName: "main.coffee",
-        template: "name = \"Hanogt\"\nconsole.log \"Hello World from #{name}!\"\n",
-    },
-    {
         id: "pony", name: "Pony", monaco: "pony", extensions: ["pony"],
         aliases: ["ponylang", "ponyc"], engine: "server", server: true, wandbox: { names: ["pony"], prefer: ["pony"] },
         category: "systems", color: "#9C4D1B", icon: svg("pony"), defaultFileName: "main.pony",
@@ -431,16 +487,6 @@ export const LANGUAGES: readonly LanguageInfo[] = [
         aliases: ["text", "txt", "plain"], engine: "none",
         category: "docs", color: "#71717A", icon: svg("plaintext"), defaultFileName: "notes.txt",
         template: "",
-    },
-    {
-        id: "scss", name: "SCSS", monaco: "scss", extensions: ["scss"],
-        aliases: ["sass"], engine: "none", category: "web", color: "#CC6699", icon: svg("scss"), defaultFileName: "style.scss",
-        template: "$primary: #6366f1;\n\n.button {\n  background: $primary;\n  border-radius: 0.75rem;\n\n  &:hover {\n    background: darken($primary, 10%);\n  }\n}\n",
-    },
-    {
-        id: "less", name: "Less", monaco: "less", extensions: ["less"],
-        engine: "none", category: "web", color: "#1D365D", icon: svg("less"), defaultFileName: "style.less",
-        template: "@primary: #6366f1;\n\n.button {\n  background: @primary;\n  &:hover { background: darken(@primary, 10%); }\n}\n",
     },
     {
         id: "dockerfile", name: "Dockerfile", monaco: "dockerfile", extensions: ["dockerfile"],
@@ -502,11 +548,6 @@ export const LANGUAGES: readonly LanguageInfo[] = [
         id: "vb", name: "Visual Basic", monaco: "vb", extensions: ["vb"],
         aliases: ["vb.net", "vbnet", "visual basic"], engine: "none", category: "dotnet", color: "#945DB7", icon: svg("vb"), defaultFileName: "Program.vb",
         template: "Module Program\n    Sub Main()\n        Console.WriteLine(\"Hello World from Hanogt!\")\n    End Sub\nEnd Module\n",
-    },
-    {
-        id: "clojure", name: "Clojure", monaco: "clojure", extensions: ["clj", "cljs", "cljc", "edn"],
-        aliases: ["clj"], engine: "none", category: "functional", color: "#5881D8", icon: svg("clojure"), defaultFileName: "main.clj",
-        template: "(defn greet [name]\n  (str \"Hello World from \" name \"!\"))\n\n(println (greet \"Hanogt\"))\n",
     },
     {
         id: "solidity", name: "Solidity", monaco: "sol", extensions: ["sol"],
@@ -924,13 +965,13 @@ export const TOOL_LABELS: Readonly<Record<NonNullable<LanguageInfo["tool"]>, { s
 };
 
 /**
- * Counts used by marketing copy ("57 languages"), derived from the registry so
+ * Counts used by marketing copy ("67 languages"), derived from the registry so
  * they never go stale. Translations of those sentences are written for the
- * current `usable` value (57) and the plural form it takes: RU "57 языков",
- * UK "57 мов", SR/HR "57 језика"/"57 jezika" (genitive plural), LT
- * "57 programavimo kalbos" (plural, as for 2–9) and RO "57 de limbaje" (20+).
- * Other numbers may need other forms (61 takes the singular, 62–64 the paucal,
- * 60 the genitive plural in LT), so re-check the keys about_purpose_text,
+ * current `usable` value (67) and the plural form it takes: RU "67 языков",
+ * UK "67 мов", SR/HR "67 језика"/"67 jezika" (genitive plural), LT
+ * "67 programavimo kalbos" (plural, as for 2–9) and RO "67 de limbaje" (20+).
+ * Other numbers may need other forms (71 takes the singular, 72–74 the paucal,
+ * 70 the genitive plural in LT), so re-check the keys about_purpose_text,
  * auth_feature_code, lp_hero_sub, lp_marquee and ab_editor_text in
  * src/locales/{RU,UK,SR,HR,LT,RO}.json whenever this number changes.
  */

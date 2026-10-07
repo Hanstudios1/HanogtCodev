@@ -123,10 +123,10 @@ test("templates reference known languages", () => {
     }
 });
 
-test("Hanogt offers at least 55 usable and 100 languages in total", () => {
+test("Hanogt offers at least 67 usable and 129 languages in total", () => {
     const { LANGUAGE_STATS } = registry;
-    assert.ok(LANGUAGE_STATS.usable >= 55, `usable: ${LANGUAGE_STATS.usable}`);
-    assert.ok(LANGUAGES.length >= 100, `total: ${LANGUAGES.length}`);
+    assert.ok(LANGUAGE_STATS.usable >= 67, `usable: ${LANGUAGE_STATS.usable}`);
+    assert.ok(LANGUAGES.length >= 129, `total: ${LANGUAGES.length}`);
     assert.equal(LANGUAGE_STATS.usable, LANGUAGE_STATS.runnable + LANGUAGE_STATS.preview);
     assert.equal(LANGUAGE_STATS.highlighted, LANGUAGES.length - 1);
 });
@@ -141,12 +141,27 @@ test("validators check files instead of running programs", () => {
         assert.ok(!SERVER_LANGUAGE_IDS.includes(language.id), `${language.id} never reaches the server`);
         assert.match(worker, new RegExp(`case "${language.id}":`), `the worker has no validator for ${language.id}`);
     }
-    for (const id of ["prolog", "forth", "basic", "befunge", "whitespace", "mips"]) {
+    for (const id of ["prolog", "forth", "basic", "befunge", "whitespace", "mips", "jq", "less", "scss", "wat", "clojure", "coffeescript"]) {
         assert.ok(BROWSER_LANGUAGES.has(id), id);
         assert.equal(isProgramLanguage(id), true, id);
         assert.ok(!SERVER_LANGUAGE_IDS.includes(id), `${id} runs in the browser only`);
     }
-    for (const id of ["svg", "mermaid", "latex"]) assert.equal(registry.getLanguage(id).engine, "preview", id);
+    for (const id of ["svg", "mermaid", "latex", "dot", "abc", "asciidoc", "glsl", "logo"]) assert.equal(registry.getLanguage(id).engine, "preview", id);
+});
+
+test("languages added in the browser have their file names, version labels and loading states", () => {
+    const worker = read("src/lib/runtimes/worker.ts");
+    const runner = read("src/lib/runtimes/browser-runner.ts");
+    for (const id of ["jq", "less", "scss", "wat", "clojure", "coffeescript"]) {
+        const language = registry.getLanguage(id);
+        assert.match(worker, new RegExp(`\\b${id}: "${language.defaultFileName.replace(".", "\\.")}"`), `DEFAULT_FILE_NAMES.${id}`);
+        assert.match(worker, new RegExp(`\\b${id}: \\(\\) =>`), `FALLBACK_VERSIONS.${id}`);
+    }
+    for (const code of ["loading_clojure", "loading_sass", "loading_jq", "loading_wat", "loading_coffeescript", "loading_less"]) {
+        assert.match(worker, new RegExp(`"${code}"`), code);
+        assert.match(runner, new RegExp(`"${code}"`), `${code} is a BrowserStatusCode`);
+    }
+    assert.ok(!registry.getLanguage("coffeescript").wandbox, "CoffeeScript runs in the browser, not on Wandbox");
 });
 
 test("new extensions and well-known file names resolve", () => {
@@ -158,12 +173,17 @@ test("new extensions and well-known file names resolve", () => {
         "words.fth": "forth", "GAME.BAS": "basic", "maze.b93": "befunge", "hello.ws": "whitespace", "sum.asm": "mips", "boot.nasm": "nasm",
         "solver.f90": "fortran", "PAYROLL.cbl": "cobol", "main.adb": "ada", "counter.vhd": "vhdl", "alu.v": "verilog", "top.sv": "systemverilog",
         "schema.prisma": "prisma", "Main.elm": "elm", "app.gleam": "gleam", "main.odin": "odin", "page.twig": "twig", "index.pug": "pug",
+        "filter.jq": "jq", "module.wat": "wat", "spec.wast": "wat", "flow.dot": "dot", "deps.gv": "dot", "tune.abc": "abc", "README.adoc": "asciidoc",
+        "guide.asciidoc": "asciidoc", "fx.glsl": "glsl", "shader.frag": "glsl", "turtle.logo": "logo", "app.coffee": "coffeescript", "core.cljs": "clojure",
+        "theme.scss": "scss", "site.less": "less",
     };
     for (const [name, expected] of Object.entries(names)) assert.equal(languageFromFileName(name)?.id, expected, name);
     assert.equal(ensureFileExtension("Makefile", "makefile"), "Makefile");
     assert.equal(ensureFileExtension(".env", "dotenv"), ".env");
     assert.equal(normalizeLanguageId("asm"), "mips");
     assert.equal(normalizeLanguageId("Vlang"), "vlang");
+    const aliases = { graphviz: "dot", webassembly: "wat", wasm: "wat", adoc: "asciidoc", coffee: "coffeescript", cljs: "clojure", sass: "scss", shader: "glsl", turtle: "logo", "ABC notation": "abc", jqlang: "jq" };
+    for (const [alias, id] of Object.entries(aliases)) assert.equal(normalizeLanguageId(alias), id, alias);
 });
 
 test("monaco.ts registers a grammar for every custom Monaco id", () => {
@@ -174,15 +194,15 @@ test("monaco.ts registers a grammar for every custom Monaco id", () => {
         if (fs.existsSync(file)) for (const match of fs.readFileSync(file, "utf8").matchAll(/id:\s*["']([^"']+)["']/g)) builtin.add(match[1]);
     }
     const monaco = read("src/lib/monaco.ts");
-    for (const id of ["prolog", "forth", "basic", "befunge", "whitespace", "mermaid", "latex", "toml", "dotenv", "csv", "makefile", "cmake", "nginx", "prisma", "nasm", "fortran", "cobol", "ada", "vhdl", "odin", "vlang", "gleam", "elm"]) {
+    for (const id of ["prolog", "forth", "basic", "befunge", "whitespace", "mermaid", "latex", "toml", "dotenv", "csv", "makefile", "cmake", "nginx", "prisma", "nasm", "fortran", "cobol", "ada", "vhdl", "odin", "vlang", "gleam", "elm", "jq", "wat", "dot", "abc", "asciidoc", "glsl", "logo"]) {
         assert.ok(!builtin.has(id), `${id} is a Monaco built-in`);
         assert.match(monaco, new RegExp(`\\bid: "${id}"`), `${id} grammar`);
     }
 });
 
 test("language-count sentences match the plural form of the current number", () => {
-    // Written for LANGUAGE_STATS.usable (see the comment above it in languages.ts). When the
-    // number moves to another plural category, rewrite these keys in the listed locales.
+    // Written for LANGUAGE_STATS.usable = 67 (see the comment above it in languages.ts; 57 took the same
+    // forms). When the number moves to another plural category, rewrite these keys in the listed locales.
     const writtenFor = { RU: "many", UK: "many", SR: "other", HR: "other", LT: "few", RO: "other" };
     const keys = ["about_purpose_text", "auth_feature_code", "lp_hero_sub", "lp_marquee", "ab_editor_text"];
     for (const [locale, category] of Object.entries(writtenFor)) {

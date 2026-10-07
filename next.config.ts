@@ -53,19 +53,34 @@ const nextConfig: NextConfig = {
       `connect-src 'self' blob: https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com ${paddle} ${retainApi}${emulatorSources ? ` ${emulatorSources}` : ""}`,
       "upgrade-insecure-requests",
     ].join("; ");
-    return [{
-      source: "/:path*",
-      headers: [
-        { key: "Content-Security-Policy", value: contentSecurityPolicy },
-        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-        { key: "X-Content-Type-Options", value: "nosniff" },
-        { key: "X-Frame-Options", value: "DENY" },
-        // Payment Request (Apple Pay, Google Pay) is allowed for Paddle's checkout frame only.
-        { key: "Permissions-Policy", value: 'camera=(), microphone=(self), geolocation=(), payment=(self "https://buy.paddle.com" "https://sandbox-buy.paddle.com"), usb=()' },
-        { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
-        { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-      ],
-    }];
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          // Payment Request (Apple Pay, Google Pay) is allowed for Paddle's checkout frame only.
+          { key: "Permissions-Policy", value: 'camera=(), microphone=(self), geolocation=(), payment=(self "https://buy.paddle.com" "https://sandbox-buy.paddle.com"), usb=()' },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+        ],
+      },
+      // The code runtimes and preview libraries (public/runtimes, scripts/copy-runtimes.mjs) are large
+      // and only change when a dependency is upgraded, so browsers keep them for a week.
+      {
+        source: "/runtimes/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=2592000" }],
+      },
+      // worker.js names the content-hashed chunks and binaries of the current build, so it is always
+      // revalidated (a 304 when unchanged); a stale copy could ask for files a new deployment no longer has.
+      // When two rules set the same header, the later one wins.
+      {
+        source: "/runtimes/worker.js",
+        headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }],
+      },
+    ];
   },
 };
 

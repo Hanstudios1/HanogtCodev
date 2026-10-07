@@ -10,11 +10,16 @@
  * and a per-render token).
  *
  * SVG files are shown as an image (scripts inside them never run). Mermaid
- * diagrams and LaTeX math use "live" frames: the page fetches the library
+ * diagrams, LaTeX math, Graphviz DOT graphs, ABC sheet music, AsciiDoc
+ * documents and GLSL shaders use "live" frames: the page fetches the library
  * once from /runtimes (same origin), inlines it into a frame that has no
  * network access, and then sends each new version of the file to that frame
- * with postMessage, so editing does not reload the library.
+ * with postMessage, so editing does not reload the library. The newer live
+ * frames only run scripts that carry the frame's nonce, so markup a document
+ * produces (AsciiDoc passthrough, a graph's links) can never run code. Logo
+ * runs in the page (src/lib/runtimes/logo.ts) and is shown as a static SVG.
  */
+import type { LogoResult } from "./logo";
 import { analyzeXml } from "./xml-tools";
 
 export interface PreviewSourceFile {
@@ -23,21 +28,26 @@ export interface PreviewSourceFile {
     code: string;
 }
 
-export type PreviewKind = "web" | "css" | "markdown" | "svg" | "mermaid" | "latex";
+export type PreviewKind = "web" | "css" | "markdown" | "svg" | "mermaid" | "latex" | "dot" | "abc" | "asciidoc" | "glsl" | "logo";
 
-/** Kinds rendered by a library inside a long-lived frame that receives updates by postMessage. */
-export type LivePreviewKind = "mermaid" | "latex";
+/** Kinds rendered by a library (or, for GLSL, WebGL) inside a long-lived frame that receives updates by postMessage. */
+export type LivePreviewKind = "mermaid" | "latex" | "dot" | "abc" | "asciidoc" | "glsl";
+
+const LIVE_KINDS: ReadonlySet<string> = new Set(["mermaid", "latex", "dot", "abc", "asciidoc", "glsl"]);
 
 export function isLivePreviewKind(kind: PreviewKind | null | undefined): kind is LivePreviewKind {
-    return kind === "mermaid" || kind === "latex";
+    return typeof kind === "string" && LIVE_KINDS.has(kind);
 }
 
 /** Files of these languages preview themselves when they are the active tab. */
-const SELF_PREVIEW: ReadonlySet<string> = new Set(["markdown", "svg", "mermaid", "latex"]);
+const SELF_PREVIEW: ReadonlySet<string> = new Set(["markdown", "svg", "mermaid", "latex", "dot", "abc", "asciidoc", "glsl", "logo"]);
+
+/** When no previewable file is active, the first of these found in the project is shown. */
+const FALLBACK_ORDER = ["markdown", "asciidoc", "latex", "mermaid", "dot", "abc", "logo", "glsl", "svg"] as const;
 
 export interface PreviewTarget {
     kind: PreviewKind;
-    /** The file that is rendered (entry HTML, a stylesheet, or a Markdown, SVG, Mermaid or LaTeX file). */
+    /** The file that is rendered (entry HTML, a stylesheet, or a file that previews itself). */
     file: PreviewSourceFile;
 }
 
@@ -112,7 +122,7 @@ export function resolvePreviewTarget(files: PreviewSourceFile[], active: Preview
         return { kind: "web", file: entry };
     }
     if (active?.language === "css") return { kind: "css", file: active };
-    for (const language of ["markdown", "latex", "mermaid", "svg"] as const) {
+    for (const language of FALLBACK_ORDER) {
         const file = files.find((item) => item.language === language);
         if (file) return { kind: language, file };
     }
@@ -477,11 +487,18 @@ export interface LivePreviewLabels {
     empty: string;
     /** "Not supported in the preview: {list}" */
     unsupported: string;
+    /** "Warnings" (ABC notation, AsciiDoc) */
+    warnings?: string;
+    /** GLSL controls and the message shown without WebGL. */
+    pause?: string;
+    play?: string;
+    noWebgl?: string;
 }
 
 export type LivePreviewPayload =
     | { kind: "mermaid"; code: string }
-    | { kind: "latex"; html: string; macros: Record<string, string>; warnings: string[] };
+    | { kind: "latex"; html: string; macros: Record<string, string>; warnings: string[] }
+    | { kind: "dot" | "abc" | "asciidoc" | "glsl"; code: string };
 
 const LIVE_STYLE = `
 :root { color-scheme: light; --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --soft: #f6f8fa; --border: #d1d9e0; --error: #b91c1c; --error-bg: #fef2f2; --link: #0969da; }
@@ -555,14 +572,332 @@ function liveBootstrap(kind: LivePreviewKind, token: string, dark: boolean, labe
 }
 
 /**
- * A long-lived preview frame for Mermaid or LaTeX. `library` is the library's
- * JavaScript (mermaid.min.js or katex.min.js) and `css` extra CSS (KaTeX's,
- * with embedded fonts); both are inlined because the frame cannot fetch.
+ * A long-lived preview frame. `library` is the library's JavaScript
+ * (mermaid.min.js, katex.min.js, graphviz.js, abcjs or asciidoctor.js; GLSL
+ * needs none) and `css` extra CSS (KaTeX's, with embedded fonts); both are
+ * inlined because the frame cannot fetch. Frames other than Mermaid and
+ * LaTeX run only scripts that carry `nonce` (a fresh random one by default).
  */
-export function buildLiveShell(kind: LivePreviewKind, options: { token: string; dark?: boolean; library: string; css?: string; labels: LivePreviewLabels }): string {
+export function buildLiveShell(kind: LivePreviewKind, options: { token: string; dark?: boolean; library: string; css?: string; labels: LivePreviewLabels; nonce?: string }): string {
     const dark = Boolean(options.dark);
+    if (kind !== "mermaid" && kind !== "latex") return buildStrictShell(kind, { ...options, dark, nonce: options.nonce ?? createPreviewToken() });
     const style = `${LIVE_STYLE}${kind === "mermaid" ? MERMAID_STYLE : LATEX_STYLE}`;
     return `<!DOCTYPE html><html${dark ? " data-theme=\"dark\"" : ""}><head><meta http-equiv="Content-Security-Policy" content="${LIVE_PREVIEW_CSP}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">`
         + `${options.css ? `<style>${protect(options.css, "style")}</style>` : ""}<style>${style}</style></head><body><main id="out" aria-live="polite"></main>`
         + `<script>${protect(options.library, "script")}</script>${liveBootstrap(kind, options.token, dark, options.labels)}</body></html>`;
+}
+
+// ------------------------------------------------------------------ live frames (DOT, ABC, AsciiDoc, GLSL)
+type StrictKind = Exclude<LivePreviewKind, "mermaid" | "latex">;
+
+/**
+ * Policy of the newer live frames: only scripts with the frame's nonce run, so
+ * neither inline event handlers nor javascript: links in rendered markup can.
+ * Graphviz compiles WebAssembly ('unsafe-eval'); AsciiDoc documents may show
+ * images over https, like Markdown.
+ */
+export function strictPreviewCsp(kind: StrictKind, nonce: string): string {
+    return [
+        "default-src 'none'",
+        `script-src 'nonce-${nonce}'${kind === "dot" ? " 'unsafe-eval'" : ""}`,
+        "style-src 'unsafe-inline'",
+        `img-src data: blob:${kind === "asciidoc" ? " https:" : ""}`,
+        "font-src data:",
+        "connect-src 'none'",
+        "form-action 'none'",
+        "base-uri 'none'",
+        "frame-src 'none'",
+        "worker-src 'none'",
+        "manifest-src 'none'",
+    ].join("; ");
+}
+
+const PAPER_STYLE = `
+#out { padding: 16px; }
+.paper { box-sizing: border-box; background: #ffffff; color: #111827; border-radius: 10px; padding: 12px; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); overflow: auto; }
+:root[data-theme="dark"] .paper { box-shadow: none; }
+.paper + .paper { margin-top: 16px; }
+.paper svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.hanogt-note { margin: 16px 0 0; white-space: pre-wrap; }
+`;
+
+const ASCIIDOC_STYLE = `
+#out { max-width: 860px; margin: 0 auto; padding: 24px 28px 48px; overflow-wrap: break-word; }
+h1, h2, h3, h4, h5, h6 { margin: 24px 0 12px; font-weight: 600; line-height: 1.25; }
+h1 { font-size: 2em; padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+h2 { font-size: 1.5em; padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1.25em; } h4 { font-size: 1em; } h5 { font-size: .875em; } h6 { font-size: .85em; color: var(--muted); }
+p, ul, ol, dl, blockquote, table, pre { margin: 0 0 16px; } li > p { margin: 0 0 4px; }
+a { color: var(--link); text-decoration: none; } a:hover { text-decoration: underline; }
+code { font: .875em/1.5 ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace; background: var(--soft); border-radius: 6px; padding: .2em .4em; }
+pre { background: var(--soft); border-radius: 8px; padding: 16px; overflow: auto; } pre code { background: none; padding: 0; font-size: .85em; }
+.title { font-weight: 600; margin: 0 0 6px; color: var(--muted); }
+.paragraph, .ulist, .olist, .dlist, .listingblock, .literalblock, .imageblock, .quoteblock, .verseblock, .exampleblock, .sidebarblock, .admonitionblock, .tableblock { margin: 0 0 16px; }
+.quoteblock blockquote, .verseblock pre { margin: 0; padding: 0 1em; color: var(--muted); border-left: .25em solid var(--border); background: none; }
+.quoteblock .attribution, .verseblock .attribution { color: var(--muted); font-size: .9em; margin-top: 4px; }
+.exampleblock > .content { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+.sidebarblock { background: var(--soft); border-radius: 8px; padding: 12px 16px; }
+.admonitionblock > table { border-collapse: collapse; width: 100%; border: 0; display: table; }
+.admonitionblock td { border: 0; padding: 8px 12px; vertical-align: top; }
+.admonitionblock td.icon { width: 1%; white-space: nowrap; font-weight: 700; border-right: 3px solid var(--link); }
+.admonitionblock.tip td.icon { border-color: #16a34a; } .admonitionblock.warning td.icon, .admonitionblock.caution td.icon { border-color: #d97706; } .admonitionblock.important td.icon { border-color: #dc2626; }
+.admonitionblock td.icon .title { color: var(--fg); margin: 0; text-transform: uppercase; font-size: .8em; letter-spacing: .04em; }
+table.tableblock { border-collapse: collapse; display: block; overflow: auto; }
+table.tableblock th, table.tableblock td { padding: 6px 13px; border: 1px solid var(--border); } table.tableblock p { margin: 0; }
+img { max-width: 100%; border-radius: 6px; }
+#toc { margin: 0 0 24px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; } #toctitle { font-weight: 600; margin-bottom: 6px; }
+#toc ul { list-style: none; padding-left: 1em; margin: 0; } #toc > ul { padding-left: 0; }
+.checklist { list-style: none; padding-left: 1.25em; } .conum { font-weight: 700; color: var(--link); }
+.footnotes { margin-top: 32px; padding-top: 8px; border-top: 1px solid var(--border); font-size: .9em; }
+kbd { font: 11px ui-monospace, monospace; padding: 3px 5px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; background: var(--soft); }
+mark { background: #fde68a; color: #111827; } hr { height: .25em; padding: 0; margin: 24px 0; background: var(--border); border: 0; }
+`;
+
+const GLSL_STYLE = `
+html, body { height: 100%; }
+body { display: flex; flex-direction: column; }
+#out:empty { display: none; }
+.stage { position: relative; flex: 1; min-height: 160px; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #000; touch-action: none; }
+.bar { display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-top: 1px solid var(--border); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); }
+.bar button { font: 600 12px system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--soft); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; cursor: pointer; }
+.bar button:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+`;
+
+const STRICT_STYLES: Record<StrictKind, string> = { dot: PAPER_STYLE, abc: PAPER_STYLE, asciidoc: ASCIIDOC_STYLE, glsl: GLSL_STYLE };
+
+/** Keeps only inert markup: no scripts, frames, forms, meta refreshes, event handlers or script URLs. */
+const SANITIZE = String.raw`
+function clean(root){
+  var bad=root.querySelectorAll('script,iframe,frame,frameset,object,embed,applet,meta,base,link,form,portal');
+  for(var i=0;i<bad.length;i++){bad[i].remove();}
+  var all=root.querySelectorAll('*');
+  for(var j=0;j<all.length;j++){
+    var el=all[j],at=el.attributes;
+    for(var k=at.length-1;k>=0;k--){
+      var n=at[k].name.toLowerCase(),v=at[k].value;
+      if(n.indexOf('on')===0||((n==='href'||n==='src'||n==='xlink:href'||n==='action'||n==='formaction'||n==='srcdoc')&&/^\s*(javascript|vbscript|data:text)/i.test(v))){el.removeAttribute(at[k].name);}
+    }
+  }
+}
+function show(html){var tpl=document.createElement('template');tpl.innerHTML=html;clean(tpl.content);return tpl.content;}
+function links(external){
+  document.addEventListener('click',function(e){
+    var a=e.target&&e.target.closest?e.target.closest('a'):null;if(!a)return;
+    var h=a.getAttribute('href')||a.getAttributeNS('http://www.w3.org/1999/xlink','href')||'';
+    if(h.charAt(0)==='#'){e.preventDefault();var t=document.getElementById(decodeURIComponent(h.slice(1)));if(t)t.scrollIntoView();return;}
+    if(external&&/^https?:\/\//i.test(h)){a.setAttribute('target','_blank');a.setAttribute('rel','noopener noreferrer');return;}
+    e.preventDefault();
+  });
+}
+`;
+
+const STRICT_RENDERERS: Record<StrictKind, string> = {
+    // Graphviz: the layout engine comes from a layout=… attribute (dot by default).
+    dot: String.raw`
+links(false);
+function engineOf(code){var m=/\blayout\s*=\s*"?(dot|neato|fdp|sfdp|circo|twopi|osage|patchwork)\b/.exec(code);return m?m[1]:'dot';}
+function render(p){
+  var id=++seq,code=String(p&&p.code||'');
+  if(!code.trim()){out.replaceChildren(box(L.empty,'hanogt-empty'));return;}
+  HanogtGraphviz.Graphviz.load().then(function(g){
+    if(id!==seq)return;
+    var svg;
+    try{svg=g.layout(code,'svg',engineOf(code));}
+    catch(e){var msg=(e&&e.message)?e.message:String(e),n=Math.min(lineOf(msg),code.split('\n').length);out.replaceChildren(box(L.error+(n?' ('+L.line.replace('{line}',n)+')':'')+'\n\n'+msg,'hanogt-error'));return;}
+    var paper=document.createElement('div');paper.className='paper';
+    var at=svg.indexOf('<svg');paper.appendChild(show(at>=0?svg.slice(at):svg));
+    out.replaceChildren(paper);
+  },function(e){if(id!==seq)return;out.replaceChildren(box(L.error+'\n\n'+((e&&e.message)||e),'hanogt-error'));});
+}
+`,
+    // abcjs: every tune (X: header) gets its own sheet; parser warnings are listed below.
+    abc: String.raw`
+links(false);
+function text(html){return new DOMParser().parseFromString(String(html),'text/html').body.textContent||'';}
+function render(p){
+  seq++;var code=String(p&&p.code||'');
+  if(!code.trim()){out.replaceChildren(box(L.empty,'hanogt-empty'));return;}
+  var count=Math.max(1,Math.min(50,ABCJS.numberOfTunes(code)||1)),targets=[];
+  out.replaceChildren();
+  for(var i=0;i<count;i++){var d=document.createElement('div');d.className='paper';out.appendChild(d);targets.push(d);}
+  var tunes=ABCJS.renderAbc(targets,code,{responsive:'resize',add_classes:true,foregroundColor:'#111827'})||[],warnings=[];
+  for(var t=0;t<tunes.length;t++){var w=tunes[t].warnings||[];for(var k=0;k<w.length&&warnings.length<20;k++){warnings.push(text(w[k]));}}
+  if(warnings.length){out.appendChild(box(L.warnings+'\n'+warnings.join('\n'),'hanogt-note'));}
+}
+`,
+    // Asciidoctor in secure mode (no includes); its log becomes a list of warnings with line numbers.
+    asciidoc: String.raw`
+links(true);
+var A=HanogtAsciidoctor,logger=A.MemoryLogger.create();A.LoggerManager.setLogger(logger);
+function render(p){
+  var id=++seq,code=String(p&&p.code||'');
+  if(!code.trim()){out.replaceChildren(box(L.empty,'hanogt-empty'));return;}
+  logger.clear();
+  A.convert(code,{safe:'secure',standalone:false,attributes:{showtitle:''}}).then(function(html){
+    if(id!==seq)return;
+    out.replaceChildren(show(String(html)));
+    var m=logger.getMessages(),w=[];
+    for(var i=0;i<m.length&&w.length<20;i++){var loc=m[i].getSourceLocation(),n=loc&&loc.getLineNumber?loc.getLineNumber():0;w.push((n?L.line.replace('{line}',n)+': ':'')+m[i].getText());}
+    if(w.length){out.appendChild(box(L.warnings+'\n'+w.join('\n'),'hanogt-note'));}
+  },function(e){if(id!==seq)return;out.replaceChildren(box(L.error+'\n\n'+((e&&e.message)||e),'hanogt-error'));});
+}
+`,
+    // WebGL fragment shaders: Shadertoy-style mainImage(out vec4, in vec2) or a complete shader with main().
+    glsl: String.raw`
+var stage=document.createElement('div'),canvas=document.createElement('canvas'),bar=document.createElement('div'),button=document.createElement('button'),clock=document.createElement('span');
+stage.className='stage';bar.className='bar';button.type='button';stage.appendChild(canvas);bar.appendChild(button);bar.appendChild(clock);
+document.body.appendChild(stage);document.body.appendChild(bar);
+var gl=canvas.getContext('webgl2',{alpha:false,antialias:false}),gl2=true;
+if(!gl){gl=canvas.getContext('webgl',{alpha:false,antialias:false})||canvas.getContext('experimental-webgl');gl2=false;}
+var reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var program=null,uniforms={},paused=reduce,elapsed=0,last=0,frame=0,raf=0,mouse=[0,0,0,0],down=false;
+function label(){button.textContent=paused?L.play:L.pause;button.setAttribute('aria-pressed',paused?'true':'false');}
+function tick(){clock.textContent='iTime '+(elapsed/1000).toFixed(2)+' s';}
+function resize(){var r=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.round(canvas.clientWidth*r)),h=Math.max(1,Math.round(canvas.clientHeight*r));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}}
+function compile(type,source){var s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){var log=gl.getShaderInfoLog(s)||'';gl.deleteShader(s);throw {log:log};}return s;}
+function describe(log,offset,total){
+  var lines=String(log).split('\n'),found=[],first=0;
+  for(var i=0;i<lines.length;i++){
+    var t=lines[i].replace(/\u0000/g,'').trim();if(!t)continue;
+    var m=/^(?:ERROR|WARNING):\s*\d+:(\d+):\s*(.*)$/.exec(t);
+    if(m){var n=Number(m[1])-offset;if(n<1||n>total){found.push(m[2]);continue;}if(!first)first=n;found.push(L.line.replace('{line}',n)+': '+m[2]);}
+    else if(!/compilation errors?\.\s*No code generated/i.test(t))found.push(t);
+  }
+  return {first:first,text:found.join('\n')};
+}
+function build(code){
+  var total=code.split('\n').length,toy=/\bmainImage\s*\(/.test(code)&&!/\bvoid\s+main\s*\(\s*(void)?\s*\)/.test(code),es3=/^\s*#version\s+300\s+es\b/m.test(code),offset=0,fragment;
+  if(toy){
+    var u='uniform vec3 iResolution;\nuniform float iTime;\nuniform float iTimeDelta;\nuniform int iFrame;\nuniform vec4 iMouse;\nuniform vec4 iDate;\n',header;
+    if(gl2){header='#version 300 es\nprecision highp float;\nprecision highp int;\n'+u+'out vec4 hanogtFragColor;\n';fragment=header+code+'\nvoid main(){vec4 c=vec4(0.0,0.0,0.0,1.0);mainImage(c,gl_FragCoord.xy);hanogtFragColor=c;}';}
+    else{header='precision highp float;\n'+u;fragment=header+code+'\nvoid main(){vec4 c=vec4(0.0,0.0,0.0,1.0);mainImage(c,gl_FragCoord.xy);gl_FragColor=c;}';}
+    offset=header.split('\n').length-1;es3=gl2;
+  }else if(/\bprecision\s+(lowp|mediump|highp)\s+float\b/.test(code)){fragment=code;}
+  else if(es3){
+    var v=/^\s*#version\s+300\s+es\b[^\n]*\n/m.exec(code),cut=v?v.index+v[0].length:0;
+    fragment=code.slice(0,cut)+'precision highp float;\n'+code.slice(cut);offset=-1;
+  }else{fragment='precision highp float;\n'+code;offset=1;}
+  var vertex=es3?'#version 300 es\nin vec2 hanogtPosition;\nvoid main(){gl_Position=vec4(hanogtPosition,0.0,1.0);}':'attribute vec2 hanogtPosition;\nvoid main(){gl_Position=vec4(hanogtPosition,0.0,1.0);}';
+  var versionLine=es3&&offset===-1?code.slice(0,code.search(/#version/)).split('\n').length:0;
+  var vs=compile(gl.VERTEX_SHADER,vertex),fs;
+  try{fs=compile(gl.FRAGMENT_SHADER,fragment);}
+  catch(e){gl.deleteShader(vs);var d=offset===-1?describeAfter(e.log,versionLine,total):describe(e.log,offset,total);throw {line:d.first,text:d.text};}
+  var p=gl.createProgram();gl.attachShader(p,vs);gl.attachShader(p,fs);gl.bindAttribLocation(p,0,'hanogtPosition');gl.linkProgram(p);gl.deleteShader(vs);gl.deleteShader(fs);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){var log=gl.getProgramInfoLog(p)||'';gl.deleteProgram(p);throw {line:0,text:log};}
+  return p;
+}
+function describeAfter(log,versionLine,total){
+  var shifted=String(log).replace(/^((?:ERROR|WARNING):\s*\d+:)(\d+)/gm,function(all,head,n){n=Number(n);return head+(n>versionLine?n-1:n);});
+  return describe(shifted,0,total);
+}
+function draw(){
+  if(!gl||!program)return;resize();gl.viewport(0,0,canvas.width,canvas.height);gl.useProgram(program);
+  var u=uniforms,now=new Date();
+  if(u.iResolution)gl.uniform3f(u.iResolution,canvas.width,canvas.height,1);
+  if(u.iTime)gl.uniform1f(u.iTime,elapsed/1000);
+  if(u.iTimeDelta)gl.uniform1f(u.iTimeDelta,1/60);
+  if(u.iFrame)gl.uniform1i(u.iFrame,frame);
+  if(u.iMouse)gl.uniform4f(u.iMouse,mouse[0],mouse[1],mouse[2],mouse[3]);
+  if(u.iDate)gl.uniform4f(u.iDate,now.getFullYear(),now.getMonth(),now.getDate(),now.getHours()*3600+now.getMinutes()*60+now.getSeconds());
+  if(u.u_resolution)gl.uniform2f(u.u_resolution,canvas.width,canvas.height);
+  if(u.u_time)gl.uniform1f(u.u_time,elapsed/1000);
+  if(u.u_mouse)gl.uniform2f(u.u_mouse,mouse[0],mouse[1]);
+  gl.drawArrays(gl.TRIANGLES,0,3);frame++;tick();
+}
+function loop(now){raf=0;if(paused)return;if(last)elapsed+=Math.min(250,now-last);last=now;draw();raf=requestAnimationFrame(loop);}
+function start(){if(!raf&&!paused){last=0;raf=requestAnimationFrame(loop);}}
+function stop(){if(raf){cancelAnimationFrame(raf);raf=0;}}
+button.addEventListener('click',function(){paused=!paused;label();if(paused){stop();draw();}else{start();}});
+function point(e){var r=canvas.getBoundingClientRect(),s=canvas.width/Math.max(1,r.width);return [(e.clientX-r.left)*s,(r.bottom-e.clientY)*s];}
+canvas.addEventListener('pointerdown',function(e){down=true;var q=point(e);mouse=[q[0],q[1],q[0],q[1]];if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);if(paused)draw();});
+canvas.addEventListener('pointermove',function(e){if(!down)return;var q=point(e);mouse[0]=q[0];mouse[1]=q[1];if(paused)draw();});
+canvas.addEventListener('pointerup',function(){down=false;mouse[2]=-Math.abs(mouse[2]);mouse[3]=-Math.abs(mouse[3]);if(paused)draw();});
+if(window.ResizeObserver){new ResizeObserver(function(){if(paused)draw();}).observe(canvas);}
+if(gl){var buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);}
+label();tick();
+function render(p){
+  seq++;var code=String(p&&p.code||'');
+  if(!gl){out.replaceChildren(box(L.noWebgl,'hanogt-error'));return;}
+  if(!code.trim()){stop();if(program){gl.deleteProgram(program);program=null;}out.replaceChildren(box(L.empty,'hanogt-empty'));return;}
+  var next;
+  try{next=build(code);}
+  catch(e){stop();if(program){gl.deleteProgram(program);program=null;}out.replaceChildren(box(L.error+(e&&e.line?' ('+L.line.replace('{line}',e.line)+')':'')+'\n\n'+((e&&e.text)||String(e)),'hanogt-error'));return;}
+  if(program){gl.deleteProgram(program);}
+  program=next;uniforms={};
+  var names=['iResolution','iTime','iTimeDelta','iFrame','iMouse','iDate','u_resolution','u_time','u_mouse'];
+  for(var i=0;i<names.length;i++){var loc=gl.getUniformLocation(program,names[i]);if(loc){uniforms[names[i]]=loc;}}
+  out.replaceChildren();draw();start();
+}
+`,
+};
+
+/** The bootstrap of a strict live frame: the shared helpers, the kind's renderer and the message listener. */
+function strictBootstrap(kind: StrictKind, token: string, labels: LivePreviewLabels) {
+    const json = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+    const common = `var T=${json(token)},S=${json(PREVIEW_MESSAGE_SOURCE)},H=${json(PREVIEW_HOST_SOURCE)},L=${json(labels)},P=window.parent,out=document.getElementById('out'),seq=0;`
+        + "function post(type){try{P.postMessage({source:S,token:T,type:type},'*')}catch(e){}}"
+        + "function box(text,cls){var d=document.createElement('div');d.className=cls;d.textContent=text;return d}"
+        + "function lineOf(message){var m=/line (\\d+)/i.exec(String(message||''));return m?Number(m[1]):0}";
+    // Indentation and line breaks are layout only (every statement ends with ; or }).
+    const body = (SANITIZE + STRICT_RENDERERS[kind]).replace(/\n\s*/g, "");
+    return `(function(){${common}${body}`
+        + "window.addEventListener('message',function(e){if(e.source!==P)return;var d=e.data;if(!d||d.source!==H||d.token!==T||d.type!=='render')return;try{render(d.payload)}catch(err){out.replaceChildren(box(L.error+'\\n\\n'+(err&&err.message||err),'hanogt-error'))}});"
+        + "post('ready')})();";
+}
+
+function buildStrictShell(kind: StrictKind, options: { token: string; dark: boolean; library: string; css?: string; labels: LivePreviewLabels; nonce: string }): string {
+    const nonce = options.nonce.replace(/[^A-Za-z0-9+/=_-]/g, "");
+    const library = options.library ? `<script nonce="${nonce}">${protect(options.library, "script")}</script>` : "";
+    return `<!DOCTYPE html><html${options.dark ? " data-theme=\"dark\"" : ""}><head><meta http-equiv="Content-Security-Policy" content="${strictPreviewCsp(kind, nonce)}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">`
+        + `${options.css ? `<style>${protect(options.css, "style")}</style>` : ""}<style>${LIVE_STYLE}${STRICT_STYLES[kind]}</style></head><body><main id="out" aria-live="polite"></main>`
+        + `${library}<script nonce="${nonce}">${protect(strictBootstrap(kind, options.token, options.labels), "script")}</script></body></html>`;
+}
+
+// ------------------------------------------------------------------ Logo
+export interface LogoPreviewLabels {
+    /** "Output" */
+    output: string;
+    /** "The program stopped with an error" */
+    error: string;
+    /** "line {line}, column {column}" */
+    location: string;
+    /** "Lines: {lines} · Steps: {steps}" */
+    stats: string;
+    /** "The turtle's drawing" (the SVG's accessible name) */
+    drawing: string;
+}
+
+const LOGO_STYLE = `
+:root { color-scheme: light; --fg: #27272a; --muted: #71717a; --bg: #f4f4f5; --border: #e4e4e7; --soft: #ffffff; --error: #b91c1c; --error-bg: #fef2f2; }
+:root[data-theme="dark"] { color-scheme: dark; --fg: #e4e4e7; --muted: #a1a1aa; --bg: #18181b; --border: #3f3f46; --soft: #27272a; --error: #f87171; --error-bg: #2a1215; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { padding: 16px; display: grid; gap: 12px; }
+.paper { border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+.paper svg { display: block; width: 100%; height: auto; max-height: calc(100vh - 32px); }
+h2 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+pre { margin: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--soft); white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.error { padding: 12px 14px; border: 1px solid var(--error); border-radius: 10px; background: var(--error-bg); color: var(--error); }
+.error pre { margin-top: 8px; border: 0; padding: 0; background: none; color: var(--fg); }
+footer { color: var(--muted); font-size: 12px; }
+`;
+
+/**
+ * A static (script-free) page with a Logo program's drawing (`svg`, from
+ * renderLogoSvg; the interpreter is loaded only when a Logo file is
+ * previewed), its printed text and its error.
+ */
+export function buildLogoDocument(result: LogoResult, source: string, options: { dark?: boolean; labels: LogoPreviewLabels; svg: string }): string {
+    const { labels, svg } = options;
+    const output = result.output ? `<section><h2>${escapeText(labels.output)}</h2><pre>${escapeText(result.output.replace(/\n$/, ""))}</pre></section>` : "";
+    let error = "";
+    if (result.error) {
+        const { line, column } = result.error;
+        const where = line ? ` (${escapeText(labels.location.replace("{line}", String(line)).replace("{column}", String(column ?? 1)))})` : "";
+        const frame = line ? `<pre>${escapeText(source.split("\n")[line - 1] ?? "")}\n${" ".repeat(Math.max(0, (column ?? 1) - 1))}^</pre>` : "";
+        error = `<div class="error" role="alert"><strong>${escapeText(labels.error)}</strong>${where}<br>${escapeText(result.error.message)}${frame}</div>`;
+    }
+    const stats = escapeText(labels.stats.replace("{lines}", String(result.segments.length)).replace("{steps}", String(result.steps)));
+    return `<!DOCTYPE html><html${options.dark ? " data-theme=\"dark\"" : ""}><head><meta http-equiv="Content-Security-Policy" content="${STATIC_PREVIEW_CSP}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${LOGO_STYLE}</style></head><body>`
+        + `<main>${error}<div class="paper" style="background:${/^#[0-9A-F]{6}$/i.test(result.background) ? result.background : "#FFFFFF"}">${svg}</div>${output}<footer>${stats}</footer></main></body></html>`;
 }
