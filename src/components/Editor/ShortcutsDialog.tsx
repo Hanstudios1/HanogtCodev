@@ -2,7 +2,7 @@
 
 import { Keyboard } from "lucide-react";
 import Modal from "@/components/Editor/Modal";
-import { EDIT_SHORTCUTS, formatShortcut } from "@/components/Editor/keyboard";
+import { EDIT_SHORTCUTS, VIEW_SHORTCUTS, formatShortcut } from "@/components/Editor/keyboard";
 import { useI18n, type Copy } from "@/lib/i18n";
 
 interface Shortcut {
@@ -10,8 +10,21 @@ interface Shortcut {
     keys: readonly string[];
     /** Different keys on Apple platforms. */
     mac?: readonly string[];
+    /** The second step of a two-step shortcut (Ctrl+K, then Z). */
+    then?: readonly string[];
     note?: Copy;
 }
+
+const FROM_QUICK_ACTIONS: Copy = { TR: "Hızlı işlemler'den", EN: "from Quick actions" };
+
+const VIEW: Shortcut[] = [
+    { label: { TR: "Satır kaydırmayı aç/kapat", EN: "Toggle word wrap" }, ...VIEW_SHORTCUTS.wordWrap },
+    { label: { TR: "Mini haritayı aç/kapat", EN: "Toggle minimap" }, keys: ["Mod", "K"], note: FROM_QUICK_ACTIONS },
+    { label: { TR: "Yapışkan kaydırmayı aç/kapat", EN: "Toggle sticky scroll" }, keys: ["Mod", "K"], note: FROM_QUICK_ACTIONS },
+    { label: { TR: "Zen modu", EN: "Zen mode" }, ...VIEW_SHORTCUTS.zen, note: { TR: "Esc ile çıkılır", EN: "Esc exits" } },
+    { label: { TR: "Sorunlar paneli", EN: "Problems panel" }, ...VIEW_SHORTCUTS.problems },
+    { label: { TR: "Dosyalarda ara ve değiştir", EN: "Search and replace in files" }, ...VIEW_SHORTCUTS.search },
+];
 
 const HANOGT: Shortcut[] = [
     { label: { TR: "Tüm dosyaları çalıştır / önizle", EN: "Run all files / preview" }, keys: ["Mod", "Enter"] },
@@ -56,8 +69,9 @@ export default function ShortcutsDialog({ open, onClose, mac }: { open: boolean;
                             <span className="text-zinc-700 dark:text-zinc-200">{tx(item.label)}</span>
                             {item.note && <span className="ms-1 text-xs text-zinc-400">({tx(item.note)})</span>}
                         </dt>
-                        <dd>
+                        <dd className="flex shrink-0 items-center gap-1">
                             <kbd className="whitespace-nowrap rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-xs text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">{formatShortcut(mac && item.mac ? item.mac : item.keys, mac)}</kbd>
+                            {item.then && <kbd className="whitespace-nowrap rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-xs text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">{formatShortcut(item.then, mac)}</kbd>}
                         </dd>
                     </div>
                 ))}
@@ -67,7 +81,10 @@ export default function ShortcutsDialog({ open, onClose, mac }: { open: boolean;
     return (
         <Modal open={open} onClose={onClose} size="lg" icon={<Keyboard className="h-5 w-5" aria-hidden />} title={tx({ TR: "Klavye kısayolları", EN: "Keyboard shortcuts" })} description={tx({ TR: "Editör dışındayken de çalışan Hanogt kısayolları ve Monaco editörünün en kullanışlı kısayolları.", EN: "Hanogt shortcuts that also work outside the editor, and the most useful Monaco editor shortcuts." })}>
             <div className="grid gap-5 md:grid-cols-2">
-                {section("Hanogt", HANOGT)}
+                <div className="space-y-5">
+                    {section("Hanogt", HANOGT)}
+                    {section(tx({ TR: "Görünüm", EN: "View" }), VIEW)}
+                </div>
                 {section(tx({ TR: "Kod editörü", EN: "Code editor" }), EDITOR)}
             </div>
         </Modal>

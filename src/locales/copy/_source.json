@@ -731,6 +731,7 @@
       "src/components/ChangelogModal.tsx",
       "src/components/Editor/CollabDialogs.tsx",
       "src/components/Editor/EditorTabs.tsx",
+      "src/components/Editor/HistoryDiffDialog.tsx",
       "src/components/Editor/Modal.tsx",
       "src/components/Editor/PublishDialog.tsx",
       "src/components/GameEngine/EngineHub.tsx",
@@ -2108,6 +2109,7 @@
     "files": [
       "src/app/editor/page.tsx",
       "src/components/Editor/Console.tsx",
+      "src/components/Editor/HistoryPanel.tsx",
       "src/components/Guide/book-content.ts",
       "src/components/Landing/ProductPreviews.tsx"
     ]
@@ -2581,6 +2583,7 @@
       "src/app/settings/page.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
+      "src/components/Editor/HistoryPanel.tsx",
       "src/components/Editor/SaveDialog.tsx",
       "src/components/Editor/ShortcutsDialog.tsx",
       "src/components/Editor/Sidebar.tsx",
@@ -2752,7 +2755,8 @@
     "en": "File",
     "tr": "Dosya",
     "files": [
-      "src/app/editor/page.tsx"
+      "src/app/editor/page.tsx",
+      "src/components/Editor/HistoryPanel.tsx"
     ]
   },
   "1psqx18py82": {
@@ -3009,6 +3013,259 @@
   "ibp1nwdx7x": {
     "en": "Live session: changes are shared instantly",
     "tr": "Canlı oturum: değişiklikler anında paylaşılır",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "26k5j93b7e5": {
+    "en": "View",
+    "tr": "Görünüm",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/HanogtAI/ChatSidebar.tsx"
+    ]
+  },
+  "1avlsi61o53": {
+    "en": "Toggle word wrap",
+    "tr": "Satır kaydırmayı aç/kapat",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1fb5wvcjgeo": {
+    "en": "Toggle minimap",
+    "tr": "Mini haritayı aç/kapat",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "2g21zbby9j4": {
+    "en": "Toggle sticky scroll",
+    "tr": "Yapışkan kaydırmayı aç/kapat",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "14iuhwxgl04": {
+    "en": "Toggle Zen mode",
+    "tr": "Zen modunu aç/kapat",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1g39v2zo5ag": {
+    "en": "Hides the panels and centres the editor",
+    "tr": "Paneller gizlenir, editör ortalanır",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1ai68acv5o4": {
+    "en": "Exit Zen mode",
+    "tr": "Zen modundan çık",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "gajou0hbsx": {
+    "en": "Currently on",
+    "tr": "Şu an açık",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "19ov1w0jrqk": {
+    "en": "Currently off",
+    "tr": "Şu an kapalı",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1kjdjul618x": {
+    "en": "Word wrap",
+    "tr": "Satır kaydırma",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "25bdx0lravw": {
+    "en": "Minimap",
+    "tr": "Mini harita",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1uoddeyid0n": {
+    "en": "Sticky scroll",
+    "tr": "Yapışkan kaydırma",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "24i4s5ygl7r": {
+    "en": "Zen mode",
+    "tr": "Zen modu",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/ShortcutsDialog.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "1djpjei9v9z": {
+    "en": "{name} is on.",
+    "tr": "{name} açıldı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1yuri826mbv": {
+    "en": "{name} is off.",
+    "tr": "{name} kapatıldı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "o7n9ihzrew": {
+    "en": "The program is running; its output is in the console.",
+    "tr": "Program çalışıyor; çıktısı konsolda.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "ds3q13z9hf": {
+    "en": "Show the console",
+    "tr": "Konsolu göster",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1271dgcia6k": {
+    "en": "Hanogt: Toggle word wrap",
+    "tr": "Hanogt: Satır kaydırmayı aç/kapat",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1gzof4xejgb": {
+    "en": "Toggle the Problems panel",
+    "tr": "Sorunlar panelini aç/kapat",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "pm48bxhwzn": {
+    "en": "{errors} errors, {warnings} warnings, {infos} infos",
+    "tr": "{errors} hata, {warnings} uyarı, {infos} bilgi",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "9whngjkfm1": {
+    "en": "Hanogt: Problems",
+    "tr": "Hanogt: Sorunlar",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "zsnlhwuuek": {
+    "en": "Search in files",
+    "tr": "Dosyalarda ara",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/SearchPanel.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "l5ghtvj0sd": {
+    "en": "Find and replace in all open files",
+    "tr": "Tüm açık dosyalarda bul ve değiştir",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1gxnlffzke1": {
+    "en": "Hanogt: Search in files",
+    "tr": "Hanogt: Dosyalarda ara",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "14knop3q7h7": {
+    "en": "Replaced {count} matches in {files} files. Use {undo} in a file to undo its change.",
+    "tr": "{files} dosyada {count} eşleşme değiştirildi. Geri almak için ilgili dosyada {undo} kullanın.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "29tiq5773nk": {
+    "en": "You can't edit files in this live session.",
+    "tr": "Bu canlı oturumda düzenleme izniniz yok.",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "20y979a9mv3": {
+    "en": "Local history",
+    "tr": "Yerel geçmiş",
+    "files": [
+      "src/app/editor/page.tsx",
+      "src/app/settings/page.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "rseuluishf": {
+    "en": "Snapshots of your files in this browser",
+    "tr": "Dosyaların bu tarayıcıdaki anlık görüntüleri",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1kykbhcl46d": {
+    "en": "{name} was restored to the version from {time}. Press {undo} to undo.",
+    "tr": "{name}, {time} tarihli sürümüne döndürüldü. Geri almak için {undo}.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1gid991ekl6": {
+    "en": "The snapshot wasn't found, or the file isn't open anymore.",
+    "tr": "Anlık görüntü bulunamadı ya da dosya artık açık değil.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "y9ijd1zz6k": {
+    "en": "The file is already the same as this version.",
+    "tr": "Dosya zaten bu sürümle aynı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "957uaoqvm": {
+    "en": "A snapshot of {name} was taken.",
+    "tr": "{name} için anlık görüntü alındı.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1cjq20bvbui": {
+    "en": "{name} hasn't changed since its last snapshot.",
+    "tr": "{name}, son anlık görüntüden beri değişmedi.",
+    "files": [
+      "src/app/editor/page.tsx"
+    ]
+  },
+  "1scrg4gp7n6": {
+    "en": "The Vim keybindings couldn't be loaded; the editor uses its default keys.",
+    "tr": "Vim tuşları yüklenemedi; editör varsayılan tuşlarla çalışıyor.",
     "files": [
       "src/app/editor/page.tsx"
     ]
@@ -3670,6 +3927,7 @@
       "src/app/feedback/page.tsx",
       "src/components/Account/TwoFactorSettings.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/Editor/HistoryPanel.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/HanogtAI/AiApiPage.tsx",
       "src/components/Social/chat/AttachmentView.tsx"
@@ -3819,9 +4077,11 @@
     "tr": "Sil",
     "files": [
       "src/app/feedback/page.tsx",
+      "src/app/settings/page.tsx",
       "src/components/Admin/StoragePanel.tsx",
       "src/components/Admin/copy.ts",
       "src/components/ChangelogModal.tsx",
+      "src/components/Editor/HistoryPanel.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/Groups/workspace/FilesPanel.tsx",
       "src/components/Groups/workspace/MessageItem.tsx",
@@ -6124,9 +6384,9 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1ndjhgpmcnf": {
-    "en": "JavaScript, TypeScript, Python, SQL, Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace and MIPS code, and the validation of YAML, TOML, XML, INI, .env, .properties, CSV and JSON files, run in your browser in a separate Web Worker (with WebAssembly where needed); SVG, Mermaid and LaTeX previews are also rendered in your browser, in a sandboxed frame. For these languages your code and program input are never sent to any server, and you don't need to sign in.",
-    "tr": "JavaScript, TypeScript, Python, SQL, Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace ve MIPS kodu ile YAML, TOML, XML, INI, .env, .properties, CSV ve JSON dosyalarının doğrulanması tarayıcınızda, ayrı bir Web Worker içinde (gerektiğinde WebAssembly ile) çalışır; SVG, Mermaid ve LaTeX önizlemeleri de tarayıcıda, korumalı bir çerçevede oluşturulur. Bu dillerde kodunuz ve program girdiniz hiçbir sunucuya gönderilmez ve giriş yapmanız gerekmez.",
+  "2d29pog95wm": {
+    "en": "JavaScript, TypeScript, CoffeeScript, Python, SQL, Lua, Scheme, Clojure, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace, MIPS, WebAssembly text (WAT) and jq code, Less and SCSS compilation, and the validation of YAML, TOML, XML, INI, .env, .properties, CSV and JSON files, run in your browser in a separate Web Worker (with WebAssembly where needed); SVG, Mermaid, LaTeX, Graphviz DOT, ABC notation, AsciiDoc, GLSL and Logo previews are also rendered in your browser, in a sandboxed frame. For these languages your code and program input are never sent to any server, and you don't need to sign in.",
+    "tr": "JavaScript, TypeScript, CoffeeScript, Python, SQL, Lua, Scheme, Clojure, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace, MIPS, WebAssembly metni (WAT) ve jq kodu, Less ve SCSS derlemesi ile YAML, TOML, XML, INI, .env, .properties, CSV ve JSON dosyalarının doğrulanması tarayıcınızda, ayrı bir Web Worker içinde (gerektiğinde WebAssembly ile) çalışır; SVG, Mermaid, LaTeX, Graphviz DOT, ABC nota, AsciiDoc, GLSL ve Logo önizlemeleri de tarayıcıda, korumalı bir çerçevede oluşturulur. Bu dillerde kodunuz ve program girdiniz hiçbir sunucuya gönderilmez ve giriş yapmanız gerekmez.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -6159,16 +6419,16 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "dw5mx2c9pp": {
-    "en": "In that case your source code, file names and the program input you type in the Input tab (up to 10,000 characters) are passed to that runner; your e-mail address and account details are not. Public compilers are third-party services outside Hanogt's control and have their own terms of use and privacy policies, so don't put passwords, access keys or personal data in code you run in these languages.",
-    "tr": "Bu durumda kaynak kodunuz, dosya adlarınız ve Girdi sekmesine yazdığınız program girdisi (en fazla 10.000 karakter) ilgili çalıştırıcıya iletilir; e-posta adresiniz veya hesap bilgileriniz iletilmez. Herkese açık derleyiciler Hanogt'un kontrolünde olmayan üçüncü taraf hizmetlerdir ve kendi kullanım ve gizlilik koşullarına tabidir. Bu nedenle bu dillerde çalıştırdığınız koda parola, erişim anahtarı veya kişisel veri yazmayın.",
+  "283457civhy": {
+    "en": "In that case your source code, file names and the program input you type in the Input tab (up to 10,000, 50,000 or 100,000 characters depending on your plan) are passed to that runner; your e-mail address and account details are not. Public compilers are third-party services outside Hanogt's control and have their own terms of use and privacy policies, so don't put passwords, access keys or personal data in code you run in these languages.",
+    "tr": "Bu durumda kaynak kodunuz, dosya adlarınız ve Girdi sekmesine yazdığınız program girdisi (planınıza göre en fazla 10.000, 50.000 veya 100.000 karakter) ilgili çalıştırıcıya iletilir; e-posta adresiniz veya hesap bilgileriniz iletilmez. Herkese açık derleyiciler Hanogt'un kontrolünde olmayan üçüncü taraf hizmetlerdir ve kendi kullanım ve gizlilik koşullarına tabidir. Bu nedenle bu dillerde çalıştırdığınız koda parola, erişim anahtarı veya kişisel veri yazmayın.",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
   },
-  "1ic5d6z4oto": {
-    "en": "Before being sent to a runner, the code goes through the [Hanogt Security Bot](/privacy-policy#security-bot) pre-screen. To prevent abuse, runs are limited to 20 per minute per account.",
-    "tr": "Kod, çalıştırıcıya gönderilmeden önce [Hanogt Security Bot](/privacy-policy#security-bot) ön elemesinden geçer. Kötüye kullanımı önlemek için hesap başına dakikada 20 çalıştırma sınırı uygulanır.",
+  "1bh58vn35wu": {
+    "en": "Before being sent to a runner, the code goes through the [Hanogt Security Bot](/privacy-policy#security-bot) pre-screen. To prevent abuse, the number of files an account can run per minute is limited by plan (40 on Free, 150 on Plus, 400 on Pro).",
+    "tr": "Kod, çalıştırıcıya gönderilmeden önce [Hanogt Security Bot](/privacy-policy#security-bot) ön elemesinden geçer. Kötüye kullanımı önlemek için hesap başına dakikada çalıştırılabilen dosya sayısı planınıza göre sınırlıdır (Ücretsiz 40, Plus 150, Pro 400).",
     "files": [
       "src/app/privacy-policy/page.tsx"
     ]
@@ -8448,6 +8708,20 @@
       "src/app/privacy-policy/page.tsx"
     ]
   },
+  "18w8rdkwx56": {
+    "en": "Your files' local history in the code editor: snapshots taken when you save, when you run and every few minutes while you edit (up to 30 per file and 25 MB in all); matched to your account by a short tag derived from your e-mail address rather than the address itself, and never sent to the server",
+    "tr": "Kod editöründe dosyalarınızın yerel geçmişi: kaydettiğinizde, çalıştırdığınızda ve düzenlerken birkaç dakikada bir alınan anlık görüntüler (dosya başına en fazla 30, toplam en fazla 25 MB); hesabınıza e-posta adresinizin kendisi yerine ondan türetilen kısa bir etiketle bağlanır ve sunucuya gönderilmez",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
+  "7n16wvl6x8": {
+    "en": "Until you delete it; the oldest are deleted when a limit is reached",
+    "tr": "Siz silene kadar; sınır aşılınca en eskiler silinir",
+    "files": [
+      "src/app/privacy-policy/page.tsx"
+    ]
+  },
   "29bjbrphcaq": {
     "en": "Local backup of projects when the cloud can't be reached",
     "tr": "Buluta ulaşılamadığında yerel proje yedeği",
@@ -9368,13 +9642,6 @@
       "src/app/settings/page.tsx"
     ]
   },
-  "25bdx0lravw": {
-    "en": "Minimap",
-    "tr": "Mini harita",
-    "files": [
-      "src/app/settings/page.tsx"
-    ]
-  },
   "1k7jq875fae": {
     "en": "Shows a small overview of the code at the edge.",
     "tr": "Kenarda kodun küçük bir özetini gösterir.",
@@ -9927,13 +10194,6 @@
       "src/app/settings/page.tsx"
     ]
   },
-  "1uoddeyid0n": {
-    "en": "Sticky scroll",
-    "tr": "Yapışkan kaydırma",
-    "files": [
-      "src/app/settings/page.tsx"
-    ]
-  },
   "1kbdoxen03f": {
     "en": "Keeps the headers of the class and function you are in pinned to the top while scrolling.",
     "tr": "Kaydırırken içinde bulunduğunuz sınıf ve fonksiyon başlıklarını üstte sabit tutar.",
@@ -10028,13 +10288,6 @@
   "1icr4l9yff": {
     "en": "An opened file's existing indentation overrides the two settings above.",
     "tr": "Açılan dosyanın mevcut girintisi yukarıdaki iki ayarın önüne geçer.",
-    "files": [
-      "src/app/settings/page.tsx"
-    ]
-  },
-  "1kjdjul618x": {
-    "en": "Word wrap",
-    "tr": "Satır kaydırma",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -10197,6 +10450,64 @@
   "jq61pa3wvg": {
     "en": "In HTML, renaming an opening tag also renames the closing tag.",
     "tr": "HTML'de açılış etiketini değiştirince kapanış etiketi de değişir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "24qs4e8kx8l": {
+    "en": "Emmet abbreviations",
+    "tr": "Emmet kısaltmaları",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "17m740wpt29": {
+    "en": "In HTML, CSS, SCSS, Less, JSX and TSX files, shows the expansion of abbreviations such as ul>li*3 or m10 in the suggestion list; Tab or Enter inserts it.",
+    "tr": "HTML, CSS, SCSS, Less, JSX ve TSX dosyalarında ul>li*3 veya m10 gibi kısaltmaların açılımını öneri listesinde gösterir; Tab ya da Enter ile eklenir.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1as4wb0td7q": {
+    "en": "Keyboard",
+    "tr": "Klavye",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1vmqqsaj10f": {
+    "en": "How the editor responds to the keyboard.",
+    "tr": "Editörün tuş düzeni.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1sumx97bfvj": {
+    "en": "Keybindings",
+    "tr": "Tuş düzeni",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1c4w8klitfe": {
+    "en": "Vim: normal, insert and visual modes and : commands (:w saves). The current mode shows in the editor's status bar; Quick actions (Ctrl/⌘+K) and the other Hanogt shortcuts keep working.",
+    "tr": "Vim: normal, ekleme ve görsel kipler ile : komutları (:w kaydeder). Geçerli kip editörün durum çubuğunda görünür; Hızlı işlemler (Ctrl/⌘+K) ve diğer Hanogt kısayolları çalışmaya devam eder.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "2faaveaf735": {
+    "en": "Default",
+    "tr": "Varsayılan",
+    "files": [
+      "src/app/settings/page.tsx",
+      "src/components/GameEngine/editor/text.ts",
+      "src/components/Social/SocialSettings.tsx"
+    ]
+  },
+  "1p3tczq2i1c": {
+    "en": "Vim",
+    "tr": "Vim",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -10429,6 +10740,13 @@
   "14q90331744": {
     "en": "Makes sure the file ends with a line break when saving.",
     "tr": "Kaydederken dosyanın bir satır sonuyla bitmesini sağlar.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "jynf0rtubc": {
+    "en": "Keeps snapshots of your files in this browser only (up to 30 per file): when you save, when you run and every 3 minutes while you edit. Compare and restore them from the History panel in the editor.",
+    "tr": "Dosyalarınızın anlık görüntülerini yalnızca bu tarayıcıda saklar (dosya başına en fazla 30): kaydettiğinizde, çalıştırdığınızda ve düzenlerken 3 dakikada bir. Editördeki Geçmiş panelinden karşılaştırıp geri yükleyebilirsiniz.",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -11031,6 +11349,41 @@
   "l9gvameg6d": {
     "en": "Load",
     "tr": "Yükle",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1e1bu3igqt3": {
+    "en": "Clear local history",
+    "tr": "Yerel geçmişi temizle",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "vyayxv2hzd": {
+    "en": "Clear local history?",
+    "tr": "Yerel geçmiş silinsin mi?",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1b5iakwwk8d": {
+    "en": "Every snapshot in this browser will be deleted. Your files and projects don't change.",
+    "tr": "Bu tarayıcıdaki tüm anlık görüntüler silinecek. Dosyalarınız ve projeleriniz değişmez.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1908eljl7gc": {
+    "en": "Local history was cleared.",
+    "tr": "Yerel geçmiş temizlendi.",
+    "files": [
+      "src/app/settings/page.tsx"
+    ]
+  },
+  "1abp6o3gyxu": {
+    "en": "Local history isn't available in this browser.",
+    "tr": "Bu tarayıcıda yerel geçmiş kullanılamıyor.",
     "files": [
       "src/app/settings/page.tsx"
     ]
@@ -15488,6 +15841,7 @@
     "files": [
       "src/components/Admin/CloudHealthSection.tsx",
       "src/components/Admin/copy.ts",
+      "src/components/Editor/ProblemsPanel.tsx",
       "src/lib/runtimes/worker.ts"
     ]
   },
@@ -17724,6 +18078,7 @@
     "tr": "Ara",
     "files": [
       "src/components/Admin/copy.ts",
+      "src/components/Editor/SearchPanel.tsx",
       "src/components/HanogtAI/AgentCard.tsx",
       "src/components/Social/FriendsView.tsx"
     ]
@@ -17845,6 +18200,7 @@
     "files": [
       "src/components/Admin/copy.ts",
       "src/components/Editor/Console.tsx",
+      "src/components/Editor/ProblemsPanel.tsx",
       "src/components/Editor/PublishDialog.tsx",
       "src/components/Security/CodeAdvisor.tsx"
     ]
@@ -18469,6 +18825,7 @@
     "tr": "Hata",
     "files": [
       "src/components/Admin/copy.ts",
+      "src/components/Editor/ProblemsPanel.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/HanogtAI/ApiDocs.tsx"
     ]
@@ -21664,7 +22021,8 @@
     "en": "Restore",
     "tr": "Geri yükle",
     "files": [
-      "src/components/Admin/PlansSection.tsx"
+      "src/components/Admin/PlansSection.tsx",
+      "src/components/Editor/HistoryPanel.tsx"
     ]
   },
   "hxs6kud5ad": {
@@ -24285,6 +24643,7 @@
     "tr": "Oyna",
     "files": [
       "src/components/Arcade/ArcadePlayerView.tsx",
+      "src/components/Editor/WebPreview.tsx",
       "src/components/GameEngine/editor/text.ts",
       "src/components/GameEngine/hub/LivePreview.tsx",
       "src/components/Landing/LandingPage.tsx",
@@ -24623,6 +24982,69 @@
     "tr": "İki adımlı doğrulama ve çok katmanlı güvenlikle korunur",
     "files": [
       "src/components/auth/AuthShell.tsx"
+    ]
+  },
+  "2531dq09bsr": {
+    "en": "10 new languages and new tools in the code editor",
+    "tr": "Kod editörüne 10 yeni dil ve yeni araçlar",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "j1ghofr556": {
+    "en": "jq, Less, SCSS, WebAssembly text, Clojure and five new preview languages run in your browser; the editor gained a problems panel, project search, local history, Emmet, Zen mode and Vim keys.",
+    "tr": "jq, Less, SCSS, WebAssembly metni, Clojure ve beş yeni önizleme dili tarayıcıda çalışıyor; editöre sorunlar paneli, projede arama, yerel geçmiş, Emmet, Zen modu ve Vim tuşları geldi.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "66kyegv7b8": {
+    "en": "New languages that run in your browser: jq, Less, SCSS, WebAssembly text (WAT) and Clojure; CoffeeScript now runs in the browser instead of on a server.",
+    "tr": "Tarayıcıda çalışan yeni diller: jq, Less, SCSS, WebAssembly metni (WAT) ve Clojure; CoffeeScript artık sunucuya gitmeden tarayıcıda çalışıyor.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "zl1ov4np4n": {
+    "en": "New previews: Graphviz DOT, ABC notation, AsciiDoc, GLSL shaders and Logo turtle drawings.",
+    "tr": "Yeni önizlemeler: Graphviz DOT, ABC nota, AsciiDoc, GLSL gölgelendiricileri ve Logo kaplumbağa çizimleri.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1n7dx5bswry": {
+    "en": "ANSI colours in the console; error links work in coloured output too.",
+    "tr": "Konsolda ANSI renkleri; hata bağlantıları renkli çıktıda da çalışır.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "mxjjbbk1s0": {
+    "en": "A problems panel (Ctrl/⌘+Shift+M) and search and replace across the project (Ctrl/⌘+Shift+F).",
+    "tr": "Sorunlar paneli (Ctrl/⌘+Shift+M) ve projede ara ve değiştir (Ctrl/⌘+Shift+F).",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "1drsrhnh70e": {
+    "en": "Local history: snapshots of your files are kept only in this browser; compare and restore them.",
+    "tr": "Yerel geçmiş: dosyalarının anlık görüntüleri yalnızca bu tarayıcıda tutulur; farkı görüp geri yükleyebilirsin.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "28lnczqr4vq": {
+    "en": "Emmet, Zen mode (Ctrl/⌘+K Z), Alt+Z for word wrap and optional Vim keys.",
+    "tr": "Emmet, Zen modu (Ctrl/⌘+K Z), kelime kaydırma için Alt+Z ve isteğe bağlı Vim tuşları.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
+    ]
+  },
+  "26x0zbidqpo": {
+    "en": "Privacy Policy 5.9.",
+    "tr": "Gizlilik Politikası 5.9.",
+    "files": [
+      "src/components/ChangelogModal.tsx"
     ]
   },
   "286soz819cg": {
@@ -27841,6 +28263,7 @@
     "tr": "Çıktı",
     "files": [
       "src/components/Editor/Console.tsx",
+      "src/components/Editor/WebPreview.tsx",
       "src/components/Landing/ProductPreviews.tsx"
     ]
   },
@@ -27856,7 +28279,8 @@
     "en": "History",
     "tr": "Geçmiş",
     "files": [
-      "src/components/Editor/Console.tsx"
+      "src/components/Editor/Console.tsx",
+      "src/components/Editor/HistoryPanel.tsx"
     ]
   },
   "1lubggzvnrg": {
@@ -27996,6 +28420,62 @@
   "l8w3m3gcvj": {
     "en": "The run could not be completed: {message}",
     "tr": "Çalıştırma tamamlanamadı: {message}",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "40b95b2oze": {
+    "en": "Loading the Python runtime (about 12 MB on the first run)…",
+    "tr": "Python çalışma zamanı yükleniyor (ilk çalıştırmada yaklaşık 12 MB)…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1bjzp9vi29c": {
+    "en": "Loading the Prolog runtime…",
+    "tr": "Prolog çalışma zamanı yükleniyor…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "l5jo652tc0": {
+    "en": "Loading the Clojure interpreter…",
+    "tr": "Clojure yorumlayıcısı yükleniyor…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1zrzn0a1pvm": {
+    "en": "Loading the Sass compiler (about 1 MB on the first run)…",
+    "tr": "Sass derleyicisi yükleniyor (ilk çalıştırmada yaklaşık 1 MB)…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1w4p22cfbcv": {
+    "en": "Loading the jq runtime…",
+    "tr": "jq çalışma zamanı yükleniyor…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "152c2fx5k1x": {
+    "en": "Loading the WebAssembly text compiler…",
+    "tr": "WebAssembly metin derleyicisi yükleniyor…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "1wtzhjt2xa9": {
+    "en": "Loading the CoffeeScript compiler…",
+    "tr": "CoffeeScript derleyicisi yükleniyor…",
+    "files": [
+      "src/components/Editor/Console.tsx"
+    ]
+  },
+  "17qk6s1l2pk": {
+    "en": "Loading the Less compiler…",
+    "tr": "Less derleyicisi yükleniyor…",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
@@ -28140,20 +28620,6 @@
       "src/components/Editor/Console.tsx"
     ]
   },
-  "40b95b2oze": {
-    "en": "Loading the Python runtime (about 12 MB on the first run)…",
-    "tr": "Python çalışma zamanı yükleniyor (ilk çalıştırmada yaklaşık 12 MB)…",
-    "files": [
-      "src/components/Editor/Console.tsx"
-    ]
-  },
-  "1bjzp9vi29c": {
-    "en": "Loading the Prolog runtime…",
-    "tr": "Prolog çalışma zamanı yükleniyor…",
-    "files": [
-      "src/components/Editor/Console.tsx"
-    ]
-  },
   "2b89aklqkrx": {
     "en": "Runs in your browser: {list}. Your code runs on your device in an isolated Web Worker; no sign-in is needed and nothing is sent to a server. Python downloads about 12 MB on its first run.",
     "tr": "Tarayıcıda çalışanlar: {list}. Kodunuz cihazınızda izole bir Web Worker içinde çalışır; giriş gerekmez ve hiçbir sunucuya gönderilmez. Python ilk çalıştırmada yaklaşık 12 MB indirir.",
@@ -28161,9 +28627,9 @@
       "src/components/Editor/Console.tsx"
     ]
   },
-  "1ewhmiavrln": {
-    "en": "Runs on the server: {list}. Runs on an isolated remote compiler after a Hanogt Security Bot scan (sign-in required, 20 runs per minute, 25 seconds max).",
-    "tr": "Sunucuda çalışanlar: {list}. Hanogt Security Bot taramasından sonra izole bir uzak derleyicide çalışır (giriş gerekir, dakikada 20 çalıştırma, en fazla 25 saniye).",
+  "1h0e7xn3jsk": {
+    "en": "Runs on the server: {list}. Runs on an isolated remote compiler after a Hanogt Security Bot scan (sign-in required, 40, 150 or 400 files a minute depending on your plan, 25 seconds max).",
+    "tr": "Sunucuda çalışanlar: {list}. Hanogt Security Bot taramasından sonra izole bir uzak derleyicide çalışır (giriş gerekir, planınıza göre dakikada 40, 150 veya 400 dosya, en fazla 25 saniye).",
     "files": [
       "src/components/Editor/Console.tsx"
     ]
@@ -28249,6 +28715,211 @@
     "files": [
       "src/components/Editor/EditorTabs.tsx",
       "src/components/Groups/workspace/FilesPanel.tsx"
+    ]
+  },
+  "jhgo56h5yt": {
+    "en": "{name}: {time} vs now",
+    "tr": "{name}: {time} ile şimdiki hâli",
+    "files": [
+      "src/components/Editor/HistoryDiffDialog.tsx"
+    ]
+  },
+  "mgqhiu38mc": {
+    "en": "The snapshot on the left, the file as it is now on the right. A restore is a single change you can undo in the editor.",
+    "tr": "Solda anlık görüntü, sağda dosyanın şimdiki hâli. Geri yüklemek tek bir değişiklik olarak eklenir; editörde geri alınabilir.",
+    "files": [
+      "src/components/Editor/HistoryDiffDialog.tsx"
+    ]
+  },
+  "9y5ugka4ge": {
+    "en": "Restore this version",
+    "tr": "Bu sürümü geri yükle",
+    "files": [
+      "src/components/Editor/HistoryDiffDialog.tsx"
+    ]
+  },
+  "1deo5iskfv0": {
+    "en": "Differences between the snapshot and the current file",
+    "tr": "Anlık görüntü ile şimdiki hâlin farkları",
+    "files": [
+      "src/components/Editor/HistoryDiffDialog.tsx"
+    ]
+  },
+  "19xurjl2wh3": {
+    "en": "Take a snapshot now",
+    "tr": "Şimdi anlık görüntü al",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "1cdodjzyi37": {
+    "en": "Clear this file's history",
+    "tr": "Bu dosyanın geçmişini sil",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "1a4zdzd9sp4": {
+    "en": "Clear all local history",
+    "tr": "Tüm yerel geçmişi sil",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "1l54g9fb42h": {
+    "en": "Compare",
+    "tr": "Karşılaştır",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "fmo41i43xe": {
+    "en": "Compare the snapshot from {time} with the current file",
+    "tr": "{time} tarihli anlık görüntüyü şimdiki hâliyle karşılaştır",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "13wwgmci1ac": {
+    "en": "Restore the snapshot from {time}",
+    "tr": "{time} tarihli anlık görüntüyü geri yükle",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "4ixvp9utv8": {
+    "en": "Delete the snapshot from {time}",
+    "tr": "{time} tarihli anlık görüntüyü sil",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "137sttl374x": {
+    "en": "Snapshots of {name}",
+    "tr": "{name} için anlık görüntüler",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "vo1wdukyq0": {
+    "en": "There are no snapshots of {name} yet.",
+    "tr": "{name} için henüz anlık görüntü yok.",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "vbbvwte2ce": {
+    "en": "Changed files get a snapshot when you save, when you run and every 3 minutes while you edit (up to 30 per file).",
+    "tr": "Kaydettiğinizde, çalıştırdığınızda ve düzenlerken 3 dakikada bir, değişen dosyaların anlık görüntüsü alınır (dosya başına en fazla 30).",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "aqnf3cxol6": {
+    "en": "Kept only in this browser; never sent to a server.",
+    "tr": "Yalnızca bu tarayıcıda saklanır, hiçbir sunucuya gönderilmez.",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "6mojd6kwdj": {
+    "en": "Local history is off; no new snapshots are taken.",
+    "tr": "Yerel geçmiş kapalı; yeni anlık görüntü alınmıyor.",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "1szo4wvkawl": {
+    "en": "Turn on",
+    "tr": "Aç",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx",
+      "src/components/Security/AccountSecurityCard.tsx",
+      "src/components/VoiceCallProvider.tsx"
+    ]
+  },
+  "13374pqbhix": {
+    "en": "Local history isn't available in this browser (browser storage may be blocked).",
+    "tr": "Bu tarayıcıda yerel geçmiş kullanılamıyor (tarayıcı depolaması engellenmiş olabilir).",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "6fz0o2yxl0": {
+    "en": "No open files.",
+    "tr": "Açık dosya yok.",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "1vi3egdkrg0": {
+    "en": "Clear the file's history?",
+    "tr": "Dosyanın geçmişi silinsin mi?",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "25ax3e9zuep": {
+    "en": "Every snapshot of {name} in this browser will be deleted. The file itself doesn't change.",
+    "tr": "{name} için bu tarayıcıdaki tüm anlık görüntüler silinecek. Dosyanın kendisi değişmez.",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "2eodvjq0wpn": {
+    "en": "Clear all local history?",
+    "tr": "Tüm yerel geçmiş silinsin mi?",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "nlxc7rnqnb": {
+    "en": "The snapshots of every project and file in this browser will be deleted. Your open files don't change.",
+    "tr": "Bu tarayıcıdaki tüm projelerin ve dosyaların anlık görüntüleri silinecek. Açık dosyalarınız değişmez.",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "1hiuv0o4l7z": {
+    "en": "{value} B",
+    "tr": "{value} B",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "44gbp5av5s": {
+    "en": "{value} KB",
+    "tr": "{value} KB",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "13810ln83bx": {
+    "en": "{value} MB",
+    "tr": "{value} MB",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "omqxcrm29i": {
+    "en": "Automatic",
+    "tr": "Otomatik",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "1h0qg9y2b98": {
+    "en": "Manual",
+    "tr": "El ile",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
+    ]
+  },
+  "o1qer81nt7": {
+    "en": "Before a restore",
+    "tr": "Geri yüklemeden önce",
+    "files": [
+      "src/components/Editor/HistoryPanel.tsx"
     ]
   },
   "1neqvz0hdx": {
@@ -28562,6 +29233,94 @@
     "tr": "Dil ara…",
     "files": [
       "src/components/Editor/NewFileDialog.tsx"
+    ]
+  },
+  "1q0uqi33y8k": {
+    "en": "Problems",
+    "tr": "Sorunlar",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx",
+      "src/components/Editor/Sidebar.tsx"
+    ]
+  },
+  "18ab6eyzad9": {
+    "en": "Filter by severity",
+    "tr": "Önem düzeyine göre süz",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "227ro36zg1r": {
+    "en": "Problems in the open files",
+    "tr": "Açık dosyalardaki sorunlar",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "pehcbcwuxt": {
+    "en": "No problems in the open files.",
+    "tr": "Açık dosyalarda sorun yok.",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "22eaak0epw7": {
+    "en": "Problems are found by the editor's JavaScript, TypeScript, JSON, CSS, SCSS and Less checks.",
+    "tr": "Sorunları editörün JavaScript, TypeScript, JSON, CSS, SCSS ve Less denetimleri bulur.",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "i5psy3eo0h": {
+    "en": "No problems with the selected severities.",
+    "tr": "Seçili önem düzeylerinde sorun yok.",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "16p53zbqpcm": {
+    "en": "Ln {line}, Col {column}",
+    "tr": "Sat {line}, Süt {column}",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx",
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "1xfudkl8jdi": {
+    "en": "{name}: {count} problems",
+    "tr": "{name}: {count} sorun",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "1rtpja5eg52": {
+    "en": "Go to line {line} in {file}",
+    "tr": "{file} dosyasında {line}. satıra git",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "27lgjspq3qv": {
+    "en": "Error",
+    "tr": "Hata",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
+    ]
+  },
+  "1cycpb44zxv": {
+    "en": "Warnings",
+    "tr": "Uyarılar",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx",
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "yj5t8j86jz": {
+    "en": "Infos",
+    "tr": "Bilgiler",
+    "files": [
+      "src/components/Editor/ProblemsPanel.tsx"
     ]
   },
   "14jgpa0aqwi": {
@@ -28919,6 +29678,140 @@
       "src/components/Editor/SaveDialog.tsx"
     ]
   },
+  "fntrb8diun": {
+    "en": "Search all files",
+    "tr": "Tüm dosyalarda ara",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "ftijdg7iz5": {
+    "en": "Replace",
+    "tr": "Değiştir",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "1oflfod6vv5": {
+    "en": "Show replace",
+    "tr": "Değiştirme alanını göster",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "18czthzr4c3": {
+    "en": "Hide replace",
+    "tr": "Değiştirme alanını gizle",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "13tyqf7bfog": {
+    "en": "Match case",
+    "tr": "Büyük/küçük harf eşleşsin",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "t3waszgmpe": {
+    "en": "Match whole word",
+    "tr": "Yalnızca tam kelime",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "29hpalvftyv": {
+    "en": "Use regular expression",
+    "tr": "Düzenli ifade kullan",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "1qdi3got1aj": {
+    "en": "Replace all",
+    "tr": "Tümünü değiştir",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "rey2e3v6wx": {
+    "en": "{count} results in {files} files",
+    "tr": "{count} sonuç, {files} dosyada",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "bmynvs465m": {
+    "en": "Only the first {limit} results are shown; narrow the search to see the rest.",
+    "tr": "Yalnızca ilk {limit} sonuç gösteriliyor; diğerlerini görmek için aramayı daraltın.",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "279i95mehv2": {
+    "en": "No results found.",
+    "tr": "Sonuç bulunamadı.",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "1hnulcoe82i": {
+    "en": "Invalid regular expression: {message}",
+    "tr": "Geçersiz düzenli ifade: {message}",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "1raxmee0otr": {
+    "en": "Search all open files for text or a regular expression. Clicking a result opens the file and selects the match.",
+    "tr": "Açık dosyaların hepsinde metin veya düzenli ifade arayın. Bir sonuca tıklayınca dosya açılır ve eşleşme seçilir.",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "1hqybpui0at": {
+    "en": "Search results",
+    "tr": "Arama sonuçları",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx",
+      "src/components/Guide/MinecraftBook.tsx"
+    ]
+  },
+  "12tawrgptab": {
+    "en": "{name}: {count} results",
+    "tr": "{name}: {count} sonuç",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "173cqlt2rp0": {
+    "en": "{file}, line {line}: {text}",
+    "tr": "{file}, {line}. satır: {text}",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "1bnjfez3sbo": {
+    "en": "Replace all?",
+    "tr": "Tümü değiştirilsin mi?",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "ll3080biby": {
+    "en": "{count} matches in {files} files will be replaced with “{text}”. You can undo the change in each file with {undo} in that file.",
+    "tr": "{files} dosyadaki {count} eşleşme “{text}” ile değiştirilecek. Her dosyadaki değişikliği o dosyada {undo} ile geri alabilirsiniz.",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
+  "mit26bfilu": {
+    "en": "{count} matches in {files} files will be deleted. You can undo the change in each file with {undo} in that file.",
+    "tr": "{files} dosyadaki {count} eşleşme silinecek. Her dosyadaki değişikliği o dosyada {undo} ile geri alabilirsiniz.",
+    "files": [
+      "src/components/Editor/SearchPanel.tsx"
+    ]
+  },
   "ayeghpa99m": {
     "en": "{lines} lines · {chars} characters",
     "tr": "{lines} satır · {chars} karakter",
@@ -28980,6 +29873,34 @@
     "tr": "Sohbet, README veya forumlar için kod bloğu.",
     "files": [
       "src/components/Editor/ShareDialog.tsx"
+    ]
+  },
+  "16bpw0trls6": {
+    "en": "from Quick actions",
+    "tr": "Hızlı işlemler'den",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "2a4hfvfr5rp": {
+    "en": "Esc exits",
+    "tr": "Esc ile çıkılır",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "17bff1a16a9": {
+    "en": "Problems panel",
+    "tr": "Sorunlar paneli",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
+    ]
+  },
+  "1oli6t4ehge": {
+    "en": "Search and replace in files",
+    "tr": "Dosyalarda ara ve değiştir",
+    "files": [
+      "src/components/Editor/ShortcutsDialog.tsx"
     ]
   },
   "1nawtb0o72j": {
@@ -29166,13 +30087,6 @@
       "src/components/Editor/Sidebar.tsx"
     ]
   },
-  "16p53zbqpcm": {
-    "en": "Ln {line}, Col {column}",
-    "tr": "Sat {line}, Süt {column}",
-    "files": [
-      "src/components/Editor/StatusBar.tsx"
-    ]
-  },
   "1hgyyazwwmo": {
     "en": "({count} selected)",
     "tr": "({count} seçili)",
@@ -29229,6 +30143,13 @@
       "src/components/Editor/StatusBar.tsx"
     ]
   },
+  "26l27mt06m8": {
+    "en": "Open the Problems panel: {errors} errors, {warnings} warnings, {infos} infos",
+    "tr": "Sorunlar panelini aç: {errors} hata, {warnings} uyarı, {infos} bilgi",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
   "rrusbj3fvp": {
     "en": "Saved",
     "tr": "Kaydedildi",
@@ -29256,6 +30177,13 @@
   "1zx92mgpq6c": {
     "en": "Status bar",
     "tr": "Durum çubuğu",
+    "files": [
+      "src/components/Editor/StatusBar.tsx"
+    ]
+  },
+  "v8jcll74ae": {
+    "en": "Vim status",
+    "tr": "Vim durumu",
     "files": [
       "src/components/Editor/StatusBar.tsx"
     ]
@@ -29318,9 +30246,9 @@
       "src/components/Editor/WebPreview.tsx"
     ]
   },
-  "sg7slt0r8u": {
-    "en": "Nothing to preview. Add an HTML, CSS, Markdown, SVG, Mermaid or LaTeX file, or start from the Web project template.",
-    "tr": "Önizlenecek dosya yok. HTML, CSS, Markdown, SVG, Mermaid veya LaTeX dosyası ekleyin ya da Web projesi şablonuyla başlayın.",
+  "1ff0afdayad": {
+    "en": "Nothing to preview. Add an HTML, CSS, Markdown, AsciiDoc, SVG, Mermaid, Graphviz, LaTeX, ABC, GLSL or Logo file, or start from the Web project template.",
+    "tr": "Önizlenecek dosya yok. HTML, CSS, Markdown, AsciiDoc, SVG, Mermaid, Graphviz, LaTeX, ABC, GLSL ya da Logo dosyası ekleyin veya Web projesi şablonuyla başlayın.",
     "files": [
       "src/components/Editor/WebPreview.tsx"
     ]
@@ -29368,6 +30296,41 @@
       "src/components/Editor/WebPreview.tsx"
     ]
   },
+  "1txxnv5nj6i": {
+    "en": "Loading the Graphviz engine…",
+    "tr": "Graphviz çizge motoru yükleniyor…",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1inu6z9dsvz": {
+    "en": "Loading the ABC notation engine…",
+    "tr": "ABC nota motoru yükleniyor…",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "z8nizy2z89": {
+    "en": "Loading the AsciiDoc engine…",
+    "tr": "AsciiDoc motoru yükleniyor…",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1hx7b8uf2mt": {
+    "en": "Preparing the shader preview…",
+    "tr": "Gölgelendirici önizlemesi hazırlanıyor…",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "uqzu8wxcu2": {
+    "en": "Loading the Logo interpreter…",
+    "tr": "Logo yorumlayıcısı yükleniyor…",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
   "13n4ig8l5ln": {
     "en": "The preview engine could not be loaded ({message}).",
     "tr": "Önizleme motoru yüklenemedi ({message}).",
@@ -29385,6 +30348,91 @@
   "1uqhbcsrm1m": {
     "en": "The formula could not be rendered",
     "tr": "Formül işlenemedi",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "fd83aq5184": {
+    "en": "The graph could not be drawn",
+    "tr": "Çizge çizilemedi",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1az6yjt75ag": {
+    "en": "The music could not be rendered",
+    "tr": "Nota yazılamadı",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1hgdqu4m2aa": {
+    "en": "The document could not be converted",
+    "tr": "Belge dönüştürülemedi",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1x594ccxih6": {
+    "en": "The shader could not be compiled",
+    "tr": "Gölgelendirici derlenemedi",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1wazwmrpsyg": {
+    "en": "Pause",
+    "tr": "Duraklat",
+    "files": [
+      "src/components/Editor/WebPreview.tsx",
+      "src/components/GameEngine/editor/text.ts"
+    ]
+  },
+  "jsxeydh1jb": {
+    "en": "WebGL is not available in this browser, so the shader can't be shown.",
+    "tr": "Bu tarayıcıda WebGL kullanılamıyor, bu yüzden gölgelendirici gösterilemiyor.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1jmvu2pzmy3": {
+    "en": "Nothing to show yet; start writing your graph in DOT.",
+    "tr": "Henüz gösterilecek bir şey yok; çizgenizi DOT diliyle yazmaya başlayın.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "mn5dqc1z7q": {
+    "en": "Nothing to show yet; start writing your tune in ABC notation.",
+    "tr": "Henüz gösterilecek bir şey yok; ezginizi ABC notasyonuyla yazmaya başlayın.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "20izb00z0qp": {
+    "en": "Nothing to show yet; start writing a fragment shader.",
+    "tr": "Henüz gösterilecek bir şey yok; bir parça gölgelendiricisi yazmaya başlayın.",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "hd9awqux2a": {
+    "en": "The program stopped with an error",
+    "tr": "Program bir hatayla durdu",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "1bm9dad1swi": {
+    "en": "Lines: {lines} · Steps: {steps}",
+    "tr": "Çizgi: {lines} · Adım: {steps}",
+    "files": [
+      "src/components/Editor/WebPreview.tsx"
+    ]
+  },
+  "80tdacffke": {
+    "en": "The turtle's drawing",
+    "tr": "Kaplumbağanın çizimi",
     "files": [
       "src/components/Editor/WebPreview.tsx"
     ]
@@ -29798,13 +30846,6 @@
   "6em4pgy3as": {
     "en": "Local",
     "tr": "Yerel",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "1wazwmrpsyg": {
-    "en": "Pause",
-    "tr": "Duraklat",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -30228,13 +31269,6 @@
   "1q3mxv7c2ll": {
     "en": "Collapse",
     "tr": "Birleştir",
-    "files": [
-      "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "1cycpb44zxv": {
-    "en": "Warnings",
-    "tr": "Uyarılar",
     "files": [
       "src/components/GameEngine/editor/text.ts"
     ]
@@ -33538,14 +34572,6 @@
     "tr": "Geçiş yok. Grafikte bir durumun kenarındaki noktadan diğerine sürükleyin ya da buradan ekleyin.",
     "files": [
       "src/components/GameEngine/editor/text.ts"
-    ]
-  },
-  "2faaveaf735": {
-    "en": "Default",
-    "tr": "Varsayılan",
-    "files": [
-      "src/components/GameEngine/editor/text.ts",
-      "src/components/Social/SocialSettings.tsx"
     ]
   },
   "1c1q31b19ii": {
@@ -37890,9 +38916,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "1m6t36a6xkx": {
-    "en": "C, C++, C#, Java, Go, Rust, Kotlin and others need a sign-in. Code is scanned by Hanogt Security first, then runs on an isolated compiler service; 20 runs a minute.",
-    "tr": "C, C++, C#, Java, Go, Rust, Kotlin ve diğerleri giriş gerektirir. Kod önce Hanogt Security ile taranır, sonra izole bir derleyici hizmetinde çalışır; dakikada 20 çalıştırma.",
+  "1ba3o1r53sy": {
+    "en": "C, C++, C#, Java, Go, Rust, Kotlin and others need a sign-in. Code is scanned by Hanogt Security first, then runs on an isolated compiler service; 40, 150 or 400 files a minute depending on your plan.",
+    "tr": "C, C++, C#, Java, Go, Rust, Kotlin ve diğerleri giriş gerektirir. Kod önce Hanogt Security ile taranır, sonra izole bir derleyici hizmetinde çalışır; planınıza göre dakikada 40, 150 veya 400 dosya.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -37904,9 +38930,9 @@
       "src/components/Guide/book-content.ts"
     ]
   },
-  "agcdzs90kt": {
-    "en": "HTML, CSS, Markdown, SVG, Mermaid and LaTeX show up live in a safe preview panel.",
-    "tr": "HTML, CSS, Markdown, SVG, Mermaid ve LaTeX güvenli önizleme panelinde canlı görünür.",
+  "6m4kg17of": {
+    "en": "HTML, CSS, Markdown, SVG, Mermaid, LaTeX, Graphviz, ABC notation, AsciiDoc, GLSL and Logo show up live in a safe preview panel.",
+    "tr": "HTML, CSS, Markdown, SVG, Mermaid, LaTeX, Graphviz, ABC notası, AsciiDoc, GLSL ve Logo güvenli önizleme panelinde canlı görünür.",
     "files": [
       "src/components/Guide/book-content.ts"
     ]
@@ -39722,13 +40748,6 @@
   "3dux9wgr5p": {
     "en": "Search the guide: 2FA, remix, tilemap…",
     "tr": "Kılavuzda ara: 2FA, remiks, tilemap…",
-    "files": [
-      "src/components/Guide/MinecraftBook.tsx"
-    ]
-  },
-  "1hqybpui0at": {
-    "en": "Search results",
-    "tr": "Arama sonuçları",
     "files": [
       "src/components/Guide/MinecraftBook.tsx"
     ]
@@ -42450,13 +43469,6 @@
   "2a6t4xzeei8": {
     "en": "Hide sidebar",
     "tr": "Kenar çubuğunu gizle",
-    "files": [
-      "src/components/HanogtAI/ChatSidebar.tsx"
-    ]
-  },
-  "26k5j93b7e5": {
-    "en": "View",
-    "tr": "Görünüm",
     "files": [
       "src/components/HanogtAI/ChatSidebar.tsx"
     ]
@@ -47013,14 +48025,6 @@
     "tr": "Kapalı. Açmak için önce bir şifre ekle.",
     "files": [
       "src/components/Security/AccountSecurityCard.tsx"
-    ]
-  },
-  "1szo4wvkawl": {
-    "en": "Turn on",
-    "tr": "Aç",
-    "files": [
-      "src/components/Security/AccountSecurityCard.tsx",
-      "src/components/VoiceCallProvider.tsx"
     ]
   },
   "20xixacat15": {
@@ -53114,9 +54118,9 @@
       "src/lib/ai/knowledge.ts"
     ]
   },
-  "64tclpssn": {
-    "en": "Press **Run** (Ctrl+Enter):\n• **In the browser ({browser} languages):** {browserList} run in a separate Web Worker (data formats are checked by a validator); no sign-in needed and code never leaves your device. Infinite loops are stopped after 15 seconds.\n• **On the compiler service ({server} languages):** C, C++, C#, Java, Go, Rust, Kotlin and more need sign-in; code is first screened by Hanogt Security and then compiled in an isolated service (the operator's runner or Wandbox). The limit is 20 runs per minute.\n• **Preview ({preview} languages):** {previewList} render live in a sandboxed preview panel.\n• **Input:** `input()`, `Scanner`, `cin` and `io.read()` read from the text in the **Input** tab.\n• Python downloads ~12 MB on first use; give it a moment.",
-    "tr": "**Çalıştır** düğmesine bas (Ctrl+Enter):\n• **Tarayıcıda ({browser} dil):** {browserList} ayrı bir Web Worker içinde çalışır (veri biçimleri doğrulayıcıyla denetlenir); giriş gerekmez, kod sunucuya gitmez. Sonsuz döngüler 15 saniyede durdurulur.\n• **Derleyici hizmetinde ({server} dil):** C, C++, C#, Java, Go, Rust, Kotlin ve diğerleri giriş yapmayı gerektirir; kod önce Hanogt Security ile taranır, sonra izole bir hizmette (yöneticinin çalıştırıcısı ya da Wandbox) derlenir. Dakikada 20 çalıştırma sınırı vardır.\n• **Önizleme ({preview} dil):** {previewList} güvenli önizleme panelinde canlı görüntülenir.\n• **Girdi:** `input()`, `Scanner`, `cin`, `io.read()` okumaları **Girdi** sekmesindeki metinden gelir.\n• Python ilk açılışta ~12 MB indirir; biraz bekle.",
+  "6lmcey36jd": {
+    "en": "Press **Run** (Ctrl+Enter):\n• **In the browser ({browser} languages):** {browserList} run in a separate Web Worker (data formats are checked by a validator); no sign-in needed and code never leaves your device. Infinite loops are stopped after 15 seconds.\n• **On the compiler service ({server} languages):** C, C++, C#, Java, Go, Rust, Kotlin and more need sign-in; code is first screened by Hanogt Security and then compiled in an isolated service (the operator's runner or Wandbox). You can run 40 (Free), 150 (Plus) or 400 (Pro) files per minute, depending on your plan.\n• **Preview ({preview} languages):** {previewList} render live in a sandboxed preview panel.\n• **Input:** `input()`, `Scanner`, `cin` and `io.read()` read from the text in the **Input** tab.\n• Python downloads ~12 MB on first use; give it a moment.",
+    "tr": "**Çalıştır** düğmesine bas (Ctrl+Enter):\n• **Tarayıcıda ({browser} dil):** {browserList} ayrı bir Web Worker içinde çalışır (veri biçimleri doğrulayıcıyla denetlenir); giriş gerekmez, kod sunucuya gitmez. Sonsuz döngüler 15 saniyede durdurulur.\n• **Derleyici hizmetinde ({server} dil):** C, C++, C#, Java, Go, Rust, Kotlin ve diğerleri giriş yapmayı gerektirir; kod önce Hanogt Security ile taranır, sonra izole bir hizmette (yöneticinin çalıştırıcısı ya da Wandbox) derlenir. Planına göre dakikada 40 (Ücretsiz), 150 (Plus) veya 400 (Pro) dosya çalıştırabilirsin.\n• **Önizleme ({preview} dil):** {previewList} güvenli önizleme panelinde canlı görüntülenir.\n• **Girdi:** `input()`, `Scanner`, `cin`, `io.read()` okumaları **Girdi** sekmesindeki metinden gelir.\n• Python ilk açılışta ~12 MB indirir; biraz bekle.",
     "files": [
       "src/lib/ai/knowledge.ts"
     ]
@@ -55254,9 +56258,9 @@
       "src/lib/faq.ts"
     ]
   },
-  "118kcquftdv": {
-    "en": "JavaScript, TypeScript, Python, SQL (SQLite), Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace and MIPS run right in your browser, inside a separate Web Worker; YAML, TOML, XML, INI, .env, CSV and JSON files are validated there too, and SVG, Mermaid and LaTeX are previewed in the browser. That code never reaches a server and needs no sign-in. Compiled languages (C, C++, C#, Java, Go, Rust and more) run when you are signed in: they are screened by Hanogt Security and then run in an isolated compiler service (the operator's own runner or the public Wandbox), never on Hanogt's servers.",
-    "tr": "JavaScript, TypeScript, Python, SQL (SQLite), Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace ve MIPS doğrudan tarayıcınızda, ayrı bir Web Worker içinde çalışır; YAML, TOML, XML, INI, .env, CSV ve JSON dosyaları da tarayıcıda doğrulanır, SVG, Mermaid ve LaTeX tarayıcıda önizlenir. Bu kod hiçbir sunucuya gitmez ve giriş gerektirmez. Derlenen diller (C, C++, C#, Java, Go, Rust ve diğerleri) giriş yaptığınızda, Hanogt Security taramasından sonra Hanogt sunucusunda değil, izole bir derleyici hizmetinde (yöneticinin kendi çalıştırıcısı ya da herkese açık Wandbox) çalıştırılır.",
+  "1uqondru59e": {
+    "en": "JavaScript, TypeScript, Python, SQL (SQLite), Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace, MIPS, Clojure, CoffeeScript, jq and WebAssembly (WAT) run right in your browser, inside a separate Web Worker; Less and SCSS are compiled to CSS there; YAML, TOML, XML, INI, .env, CSV and JSON files are validated there too, and SVG, Mermaid, LaTeX, Graphviz DOT, ABC notation, AsciiDoc, GLSL and Logo are previewed in the browser. That code never reaches a server and needs no sign-in. Compiled languages (C, C++, C#, Java, Go, Rust and more) run when you are signed in: they are screened by Hanogt Security and then run in an isolated compiler service (the operator's own runner or the public Wandbox), never on Hanogt's servers.",
+    "tr": "JavaScript, TypeScript, Python, SQL (SQLite), Lua, Scheme, Brainfuck, Prolog, Forth, BASIC, Befunge, Whitespace, MIPS, Clojure, CoffeeScript, jq ve WebAssembly (WAT) doğrudan tarayıcınızda, ayrı bir Web Worker içinde çalışır; Less ve SCSS dosyaları orada CSS'e derlenir; YAML, TOML, XML, INI, .env, CSV ve JSON dosyaları da tarayıcıda doğrulanır, SVG, Mermaid, LaTeX, Graphviz DOT, ABC notası, AsciiDoc, GLSL ve Logo tarayıcıda önizlenir. Bu kod hiçbir sunucuya gitmez ve giriş gerektirmez. Derlenen diller (C, C++, C#, Java, Go, Rust ve diğerleri) giriş yaptığınızda, Hanogt Security taramasından sonra Hanogt sunucusunda değil, izole bir derleyici hizmetinde (yöneticinin kendi çalıştırıcısı ya da herkese açık Wandbox) çalıştırılır.",
     "files": [
       "src/lib/faq.ts"
     ]
@@ -56398,6 +57402,27 @@
   "216fe88mj79": {
     "en": "In-app request channel",
     "tr": "Uygulama içi başvuru kanalı",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1tx7kwted36": {
+    "en": "New languages in the code editor run in your browser: jq, Less, SCSS, WebAssembly text (WAT) and Clojure code, and Graphviz DOT, ABC notation, AsciiDoc, GLSL and Logo previews, are processed in your browser; for these languages your code and input are never sent to any server. CoffeeScript is no longer sent to Wandbox; it is compiled and run in your browser. These languages' runtimes are downloaded from our site only the first time you use them.",
+    "tr": "Kod editöründe yeni diller tarayıcınızda çalışır: jq, Less, SCSS, WebAssembly metni (WAT) ve Clojure kodu ile Graphviz DOT, ABC nota, AsciiDoc, GLSL ve Logo önizlemeleri tarayıcınızda işlenir; bu dillerde kodunuz ve girdiniz hiçbir sunucuya gönderilmez. CoffeeScript artık Wandbox'a gönderilmez, tarayıcınızda derlenip çalıştırılır. Bu dillerin çalışma zamanları yalnızca ilk kullanımda sitemizden indirilir.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1sbagm0x7b8": {
+    "en": "Local history in the code editor: snapshots of your files (when you save, when you run and every few minutes while you edit, if the content changed) are kept only in this browser's local database (IndexedDB); they are not sent to our server or to Cloud Firestore. Up to 30 snapshots per file and 25 MB in all are kept, and the oldest are deleted when a limit is reached. You can turn local history off in the editor settings and delete one file's history or all of it from the History panel. The browser storage table in the Privacy Policy was updated accordingly.",
+    "tr": "Kod editöründe yerel geçmiş: Dosyalarınızın anlık görüntüleri (kaydettiğinizde, çalıştırdığınızda ve düzenlerken birkaç dakikada bir, içerik değiştiyse) yalnızca bu tarayıcının yerel veritabanında (IndexedDB) saklanır; sunucumuza veya Cloud Firestore'a gönderilmez. Dosya başına en fazla 30 anlık görüntü ve toplam 25 MB tutulur, sınır aşılınca en eskiler silinir. Yerel geçmişi editör ayarlarından kapatabilir, Geçmiş panelinden bir dosyanın ya da bütün dosyaların geçmişini silebilirsiniz. Gizlilik Politikası'ndaki tarayıcı depolama tablosu buna göre güncellendi.",
+    "files": [
+      "src/lib/legal.ts"
+    ]
+  },
+  "1hp1ax4pzgj": {
+    "en": "The Running code section of the Privacy Policy was corrected: for languages that run on the server, the Input tab takes up to 10,000 (Free), 50,000 (Plus) or 100,000 (Pro) characters depending on your plan, and the number of files you can run per minute is 40, 150 or 400 depending on your plan (the previous text said 10,000 characters and 20 runs a minute).",
+    "tr": "Gizlilik Politikası'nın kod çalıştırma bölümü düzeltildi: Sunucuda çalışan dillerde Girdi sekmesine planınıza göre en fazla 10.000 (Ücretsiz), 50.000 (Plus) veya 100.000 (Pro) karakter yazabilirsiniz ve dakikada çalıştırılabilen dosya sayısı planınıza göre 40, 150 veya 400'dür (önceki metinde 10.000 karakter ve dakikada 20 çalıştırma yazıyordu).",
     "files": [
       "src/lib/legal.ts"
     ]
@@ -57583,7 +58608,8 @@
     "en": "Division by zero",
     "tr": "Sıfıra bölme",
     "files": [
-      "src/lib/runtimes/basic.ts"
+      "src/lib/runtimes/basic.ts",
+      "src/lib/runtimes/logo.ts"
     ]
   },
   "10l6zu9vo2y": {
@@ -58479,6 +59505,146 @@
       "src/lib/runtimes/languages.ts"
     ]
   },
+  "1mg6fecfh01": {
+    "en": "I don't know how to {name}",
+    "tr": "{name} komutunu bilmiyorum",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "1xjycqaq09w": {
+    "en": "Not enough inputs to {name}",
+    "tr": "{name} için yeterli girdi yok",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "23ehl635z7e": {
+    "en": "Too many inputs to {name}",
+    "tr": "{name} için fazla girdi var",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "e651s01uhm": {
+    "en": "You don't say what to do with {value}",
+    "tr": "{value} ile ne yapılacağı söylenmedi",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "15a57winqxk": {
+    "en": "{name} didn't output to {caller}",
+    "tr": "{name} bir değer döndürmedi ama {caller} bir girdi bekliyordu",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "fjaf9jqksu": {
+    "en": "{name} doesn't like {value} as input",
+    "tr": "{name}, {value} değerini girdi olarak kabul etmiyor",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "m2ius3ho8v": {
+    "en": "{name} has no value",
+    "tr": "{name} değişkeninin değeri yok",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "q575hwe53h": {
+    "en": "Unexpected {text}",
+    "tr": "Beklenmeyen {text}",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "2f3jzzs0qeg": {
+    "en": "Missing )",
+    "tr": "Kapanış ) eksik",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "j3o3t34hax": {
+    "en": "Missing ]",
+    "tr": "Kapanış ] eksik",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "1r8so9mp57c": {
+    "en": "TO {name} has no END",
+    "tr": "TO {name} için END eksik",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "rfos4r3wuu": {
+    "en": "TO can only be used at the top level of the program",
+    "tr": "TO yalnızca programın en üst düzeyinde kullanılabilir",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "1acnrc5ccvu": {
+    "en": "TO needs a procedure name",
+    "tr": "TO sonrasında bir yordam adı gerekiyor",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "eg567i2zl5": {
+    "en": "{name} is a primitive; give your procedure another name",
+    "tr": "{name} yerleşik bir komut; yordamınıza başka bir ad verin",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "9ddfate42k": {
+    "en": "{name} can't be used here",
+    "tr": "{name} burada kullanılamaz",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "bebya5bq39": {
+    "en": "OUTPUT can only be used inside a procedure",
+    "tr": "OUTPUT yalnızca bir yordamın içinde kullanılabilir",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "248r1d8bdeo": {
+    "en": "Step limit reached ({count} steps); the program may contain an infinite loop",
+    "tr": "Adım sınırı aşıldı ({count} adım); programda sonsuz döngü olabilir",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "9gox7grk4y": {
+    "en": "Procedures are nested too deeply ({count} levels); check the stop condition of the recursion",
+    "tr": "Yordamlar çok derin iç içe çağrıldı ({count} düzey); özyinelemenin durma koşulunu kontrol edin",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "28z0bvgfnnx": {
+    "en": "The drawing is too large (at most {count} lines)",
+    "tr": "Çizim çok büyük (en fazla {count} çizgi)",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
+  "ulsvoeooqh": {
+    "en": "… (output truncated)",
+    "tr": "… (çıktı kısaltıldı)",
+    "files": [
+      "src/lib/runtimes/logo.ts"
+    ]
+  },
   "1sjl6g2d4zv": {
     "en": "Unknown instruction: {name}",
     "tr": "Bilinmeyen komut: {name}",
@@ -59256,6 +60422,160 @@
       "src/lib/runtimes/templates.ts"
     ]
   },
+  "bt6521armv": {
+    "en": "Group the orders",
+    "tr": "Siparişleri grupla",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "1rcp2x715zu": {
+    "en": "group_by, map, add and string interpolation; the data comes from the Input tab.",
+    "tr": "group_by, map, add ve metin içine değer yerleştirme; veriler Girdi sekmesinden okunur.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "hntjldq0rr": {
+    "en": "Theme buttons",
+    "tr": "Tema düğmeleri",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "1i6pt820ic8": {
+    "en": "A map, a parametric mixin and each() make a button class for every colour.",
+    "tr": "Bir eşlem, parametreli mixin ve each() ile her renk için bir düğme sınıfı.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "21dudjxstqu": {
+    "en": "Functions, @extend and loops",
+    "tr": "Fonksiyon, @extend ve döngü",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "w618dhod80": {
+    "en": "@function, a placeholder selector, @extend and @each over a map.",
+    "tr": "@function, yer tutucu seçici, @extend ve bir eşlem üzerinde @each.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "26a26mnu6vs": {
+    "en": "Prime sieve",
+    "tr": "Asal sayı eleği",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "x0whho3ei6": {
+    "en": "Reads n with read_i32 and prints the primes up to n with a sieve in linear memory.",
+    "tr": "read_i32 ile n'yi okur, doğrusal bellekte Eratosthenes eleğiyle asal sayıları yazdırır.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "1zbetjuv605": {
+    "en": "Word frequencies",
+    "tr": "Kelime sıklığı",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "2c1nzmgmba2": {
+    "en": "read-line, a ->> pipeline, frequencies, sort-by and an atom.",
+    "tr": "read-line, ->> zinciri, frequencies, sort-by ve bir atom.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "2cjq5m3cz9t": {
+    "en": "Classes and inheritance",
+    "tr": "Sınıflar ve kalıtım",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "1acyo19rttu": {
+    "en": "extends/super, @ parameters, comprehensions and destructuring.",
+    "tr": "extends/super, @ parametreleri, liste kavrayışı ve yapı bozma.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "sf72f019ew": {
+    "en": "Flow chart with clusters",
+    "tr": "Kümeli akış şeması",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "x8lddn43nj": {
+    "en": "subgraph cluster_… groups, a dashed edge and labels.",
+    "tr": "subgraph cluster_… grupları, kesikli kenar ve etiketler.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "1p1rlhpeyz5": {
+    "en": "A jig with chords",
+    "tr": "Akorlu bir jig",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "1daxb4r4mh1": {
+    "en": "6/8 time, repeat signs and chord symbols.",
+    "tr": "6/8 ölçü, tekrar işaretleri ve akor sembolleri.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "26hp4fknx5e": {
+    "en": "Short guide",
+    "tr": "Kısa kılavuz",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "204wd0bt52t": {
+    "en": "Numbered steps, a checklist, admonitions, a sidebar and a table.",
+    "tr": "Numaralı adımlar, yapılacaklar listesi, uyarı blokları, kenar notu ve tablo.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "jt3go5k4dr": {
+    "en": "A complete shader with main()",
+    "tr": "main() ile tam gölgelendirici",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "14hykgb4a8e": {
+    "en": "A grid of pulsing rings that uses u_resolution and u_time.",
+    "tr": "u_resolution ve u_time kullanan, nabız gibi atan halkalardan bir ızgara.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "nk0s28ys4u": {
+    "en": "Recursive tree and spiral",
+    "tr": "Özyinelemeli ağaç ve sarmal",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
+  "13tufkjmwcd": {
+    "en": "A procedure that calls itself, a FOR loop and colours from RGB lists.",
+    "tr": "Kendini çağıran bir yordam, FOR döngüsü ve RGB listeleriyle renkler.",
+    "files": [
+      "src/lib/runtimes/templates.ts"
+    ]
+  },
   "rr5ogwl1t4": {
     "en": "Web project (HTML + CSS + JS)",
     "tr": "Web projesi (HTML + CSS + JS)",
@@ -59326,6 +60646,55 @@
       "src/lib/runtimes/templates.ts"
     ]
   },
+  "1dl8esaj7hg": {
+    "en": "The module must export a function named main or _start: (func (export \"main\") …)",
+    "tr": "Modül main ya da _start adlı bir fonksiyonu dışa aktarmalı: (func (export \"main\") …)",
+    "files": [
+      "src/lib/runtimes/wat.ts"
+    ]
+  },
+  "e220de8jl1": {
+    "en": "{name} must not take parameters (it takes {count})",
+    "tr": "{name} parametre almamalı (şu an {count} parametre alıyor)",
+    "files": [
+      "src/lib/runtimes/wat.ts"
+    ]
+  },
+  "nqmansgysk": {
+    "en": "print needs the module to export its memory as \"memory\": (memory (export \"memory\") 1)",
+    "tr": "print için modülün belleğini \"memory\" adıyla dışa aktarması gerekir: (memory (export \"memory\") 1)",
+    "files": [
+      "src/lib/runtimes/wat.ts"
+    ]
+  },
+  "1ix1lkbxyvz": {
+    "en": "print tried to read outside the memory (address {ptr}, length {len})",
+    "tr": "print belleğin dışını okumaya çalıştı (adres {ptr}, uzunluk {len})",
+    "files": [
+      "src/lib/runtimes/wat.ts"
+    ]
+  },
+  "10iznivugzy": {
+    "en": "The import {name} is not provided. Available: env.print, env.print_i32, env.print_i64, env.print_f32, env.print_f64, env.print_char, env.read_i32, env.memory",
+    "tr": "{name} içe aktarımı sağlanmıyor. Kullanılabilenler: env.print, env.print_i32, env.print_i64, env.print_f32, env.print_f64, env.print_char, env.read_i32, env.memory",
+    "files": [
+      "src/lib/runtimes/wat.ts"
+    ]
+  },
+  "2bcholw9oag": {
+    "en": "Importing {name} (a {kind}) is not supported",
+    "tr": "{kind} türündeki {name} içe aktarımı desteklenmiyor",
+    "files": [
+      "src/lib/runtimes/wat.ts"
+    ]
+  },
+  "zgabw1c8la": {
+    "en": "main returned {value}",
+    "tr": "main şunu döndürdü: {value}",
+    "files": [
+      "src/lib/runtimes/wat.ts"
+    ]
+  },
   "1obpa4kfv4t": {
     "en": "Invalid JSON.",
     "tr": "Geçersiz JSON.",
@@ -59385,6 +60754,20 @@
   "5abxbi3m9u": {
     "en": "Left on the stack",
     "tr": "Yığında kalanlar",
+    "files": [
+      "src/lib/runtimes/worker.ts"
+    ]
+  },
+  "6w8tgllvot": {
+    "en": "(The compiled CSS is empty: this file only holds variables, mixins or comments.)",
+    "tr": "(Derlenen CSS boş: bu dosya yalnızca değişken, mixin ya da yorum içeriyor.)",
+    "files": [
+      "src/lib/runtimes/worker.ts"
+    ]
+  },
+  "lcfr49sefy": {
+    "en": "Deprecation warning",
+    "tr": "Kullanımdan kalkma uyarısı",
     "files": [
       "src/lib/runtimes/worker.ts"
     ]

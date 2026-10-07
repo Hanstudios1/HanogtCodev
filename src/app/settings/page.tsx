@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import {
-    AlertTriangle, Check, ClipboardCopy, Cloud, CloudOff, Code2, Download, Eye, LoaderCircle, MousePointer2, Palette, Plus, RotateCcw, Save, Search,
-    Settings2, Sparkles, SquareTerminal, Terminal, Type, Undo2, Upload, X, type LucideIcon,
+    AlertTriangle, Check, ClipboardCopy, Cloud, CloudOff, Code2, Download, Eye, Keyboard, LoaderCircle, MousePointer2, Palette, Plus, RotateCcw, Save, Search,
+    Settings2, Sparkles, SquareTerminal, Terminal, Trash2, Type, Undo2, Upload, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
@@ -22,6 +22,7 @@ import {
     serializeEditorSettings, useEditorSettings, useEditorSettingsUpdatedAt, type AccountEditorSettings, type EditorSettings,
     type EditorSettingsSyncState, type SettingsImportError,
 } from "@/lib/editor-settings";
+import { openLocalHistory } from "@/lib/editor/local-history";
 import { useI18n, type Copy } from "@/lib/i18n";
 import { LANGUAGES as CODE_LANGUAGES, languageDisplayName } from "@/lib/runtimes/languages";
 import { useTheme } from "@/lib/theme";
@@ -40,6 +41,9 @@ const EDITOR_LANGUAGES = CODE_LANGUAGES.filter((language) => language.engine !==
 
 type Choice = { value: string | number; label: Copy };
 
+/** A button under a row's description for something that isn't a setting (e.g. clearing data). */
+type RowAction = "clearLocalHistory";
+
 type RowBase = {
     label: Copy;
     description?: Copy;
@@ -47,6 +51,7 @@ type RowBase = {
     keywords?: string;
     /** Hidden while false (e.g. the wrap column when wrapping is off). */
     visible?: (settings: EditorSettings) => boolean;
+    action?: RowAction;
 };
 
 type RowDef = RowBase & (
@@ -259,6 +264,25 @@ const SECTIONS: readonly SectionDef[] = [
                 options: EDITOR_LANGUAGES.map((language) => ({ value: language.id, label: { TR: language.name, EN: language.name } })),
             },
             { kind: "toggle", key: "linkedEditing", label: { TR: "Bağlantılı düzenleme", EN: "Linked editing" }, description: { TR: "HTML'de açılış etiketini değiştirince kapanış etiketi de değişir.", EN: "In HTML, renaming an opening tag also renames the closing tag." }, keywords: "html tag etiket" },
+            { kind: "toggle", key: "emmet", label: { TR: "Emmet kısaltmaları", EN: "Emmet abbreviations" }, description: { TR: "HTML, CSS, SCSS, Less, JSX ve TSX dosyalarında ul>li*3 veya m10 gibi kısaltmaların açılımını öneri listesinde gösterir; Tab ya da Enter ile eklenir.", EN: "In HTML, CSS, SCSS, Less, JSX and TSX files, shows the expansion of abbreviations such as ul>li*3 or m10 in the suggestion list; Tab or Enter inserts it." }, keywords: "emmet abbreviation kısaltma html css scss less jsx tsx snippet" },
+        ],
+    },
+    {
+        id: "keyboard",
+        icon: Keyboard,
+        title: { TR: "Klavye", EN: "Keyboard" },
+        description: { TR: "Editörün tuş düzeni.", EN: "How the editor responds to the keyboard." },
+        rows: [
+            {
+                kind: "segmented", key: "keybindingMode",
+                label: { TR: "Tuş düzeni", EN: "Keybindings" },
+                description: { TR: "Vim: normal, ekleme ve görsel kipler ile : komutları (:w kaydeder). Geçerli kip editörün durum çubuğunda görünür; Hızlı işlemler (Ctrl/⌘+K) ve diğer Hanogt kısayolları çalışmaya devam eder.", EN: "Vim: normal, insert and visual modes and : commands (:w saves). The current mode shows in the editor's status bar; Quick actions (Ctrl/⌘+K) and the other Hanogt shortcuts keep working." },
+                keywords: "vim keybindings keymap modal tuş düzeni kısayol klavye normal insert visual",
+                options: [
+                    { value: "default", label: { TR: "Varsayılan", EN: "Default" } },
+                    { value: "vim", label: { TR: "Vim", EN: "Vim" } },
+                ],
+            },
         ],
     },
     {
@@ -308,6 +332,12 @@ const SECTIONS: readonly SectionDef[] = [
             { kind: "toggle", key: "confirmCloseUnsaved", label: { TR: "Kaydedilmemiş sekmeyi kapatırken sor", EN: "Ask before closing an unsaved tab" }, keywords: "close tab unsaved kapat sekme kaydedilmemiş" },
             { kind: "toggle", key: "trimTrailingWhitespace", label: { TR: "Satır sonu boşluklarını sil", EN: "Trim trailing whitespace" }, description: { TR: "Kaydederken satırların sonundaki boşlukları kaldırır.", EN: "Removes spaces at the end of lines when saving." }, keywords: "trim whitespace boşluk" },
             { kind: "toggle", key: "insertFinalNewline", label: { TR: "Sona boş satır ekle", EN: "Insert a final newline" }, description: { TR: "Kaydederken dosyanın bir satır sonuyla bitmesini sağlar.", EN: "Makes sure the file ends with a line break when saving." }, keywords: "newline satır" },
+            {
+                kind: "toggle", key: "localHistory", action: "clearLocalHistory",
+                label: { TR: "Yerel geçmiş", EN: "Local history" },
+                description: { TR: "Dosyalarınızın anlık görüntülerini yalnızca bu tarayıcıda saklar (dosya başına en fazla 30): kaydettiğinizde, çalıştırdığınızda ve düzenlerken 3 dakikada bir. Editördeki Geçmiş panelinden karşılaştırıp geri yükleyebilirsiniz.", EN: "Keeps snapshots of your files in this browser only (up to 30 per file): when you save, when you run and every 3 minutes while you edit. Compare and restore them from the History panel in the editor." },
+                keywords: "local history snapshot timeline restore version yerel geçmiş anlık görüntü sürüm geri yükle",
+            },
         ],
     },
     {
@@ -409,6 +439,12 @@ const C = {
     loseChangesTitle: { TR: "Kaydedilmemiş değişiklikler kaybolsun mu?", EN: "Discard the unsaved changes?" },
     loseChangesMessage: { TR: "Hesabınızdaki ayarlar yüklenince bu sayfadaki kaydedilmemiş değişiklikler kaybolur.", EN: "Loading your account's settings discards the unsaved changes on this page." },
     loadConfirm: { TR: "Yükle", EN: "Load" },
+    clearLocalHistory: { TR: "Yerel geçmişi temizle", EN: "Clear local history" },
+    clearLocalHistoryTitle: { TR: "Yerel geçmiş silinsin mi?", EN: "Clear local history?" },
+    clearLocalHistoryMessage: { TR: "Bu tarayıcıdaki tüm anlık görüntüler silinecek. Dosyalarınız ve projeleriniz değişmez.", EN: "Every snapshot in this browser will be deleted. Your files and projects don't change." },
+    clearLocalHistoryConfirm: { TR: "Sil", EN: "Delete" },
+    localHistoryCleared: { TR: "Yerel geçmiş temizlendi.", EN: "Local history was cleared." },
+    localHistoryUnavailable: { TR: "Bu tarayıcıda yerel geçmiş kullanılamıyor.", EN: "Local history isn't available in this browser." },
 } satisfies Record<string, Copy>;
 
 const IMPORT_ERRORS: Record<SettingsImportError, Copy> = {
@@ -810,7 +846,7 @@ function LanguageTabSizes({ value, fallback, onChange, labelledBy }: { value: Re
     );
 }
 
-function SettingRow({ row, settings, onPatch, siteTheme }: { row: RowDef; settings: EditorSettings; onPatch: (patch: Partial<EditorSettings>) => void; siteTheme: "light" | "dark" }) {
+function SettingRow({ row, settings, onPatch, siteTheme, onAction }: { row: RowDef; settings: EditorSettings; onPatch: (patch: Partial<EditorSettings>) => void; siteTheme: "light" | "dark"; onAction?: (action: RowAction) => void }) {
     const { tx, locale } = useI18n();
     const baseId = useId();
     const labelId = `${baseId}-label`;
@@ -887,6 +923,12 @@ function SettingRow({ row, settings, onPatch, siteTheme }: { row: RowDef; settin
                     )}
                 </div>
                 {row.description && <p id={descriptionId} className="mt-0.5 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{tx(row.description)}</p>}
+                {row.action === "clearLocalHistory" && onAction && (
+                    <button type="button" onClick={() => onAction(row.action!)} className="-ms-2 mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400" data-clear-local-history>
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        {tx(C.clearLocalHistory)}
+                    </button>
+                )}
             </div>
             <div className={wide ? "w-full" : "flex shrink-0 sm:justify-end"}>{control}</div>
         </div>
@@ -1152,6 +1194,23 @@ export default function EditorSettingsPage() {
         const previous = settings;
         patchSettings({ ...DEFAULT_EDITOR_SETTINGS });
         toast({ tone: "info", message: tx(C.resetDone), action: { label: tx(C.undo), onClick: () => setDraft(previous) } });
+    };
+
+    /** Local history lives in this browser (IndexedDB), apart from the settings. */
+    const clearLocalHistory = async () => {
+        const accepted = await confirm({ title: tx(C.clearLocalHistoryTitle), message: tx(C.clearLocalHistoryMessage), confirmLabel: tx(C.clearLocalHistoryConfirm), destructive: true });
+        if (!accepted) return;
+        const history = await openLocalHistory();
+        if (!history) {
+            toast({ tone: "error", message: tx(C.localHistoryUnavailable) });
+            return;
+        }
+        try {
+            await history.clearAll();
+            toast({ tone: "success", message: tx(C.localHistoryCleared) });
+        } catch {
+            toast({ tone: "error", message: tx(C.localHistoryUnavailable) });
+        }
     };
 
     const exportSettings = () => {
@@ -1439,7 +1498,7 @@ export default function EditorSettingsPage() {
                                             )}
                                         </header>
                                         <div className="divide-y divide-zinc-100 dark:divide-white/5">
-                                            {rows.map((row) => <SettingRow key={row.key} row={row} settings={settings} onPatch={patchSettings} siteTheme={siteTheme} />)}
+                                            {rows.map((row) => <SettingRow key={row.key} row={row} settings={settings} onPatch={patchSettings} siteTheme={siteTheme} onAction={(action) => { if (action === "clearLocalHistory") void clearLocalHistory(); }} />)}
                                         </div>
                                     </motion.section>
                                 );

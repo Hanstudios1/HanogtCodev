@@ -6,12 +6,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
+import { AnsiPieces } from "@/components/Editor/AnsiText";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
-import { linkifyOutput, stripAnsi } from "@/components/Editor/output-links";
+import { linkifyAnsiOutput, stripAnsi } from "@/components/Editor/output-links";
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
 import { useEditorSettings } from "@/lib/editor-settings";
 import { useI18n, type Copy as CopyText } from "@/lib/i18n";
 import { PLAN_COPY, PLAN_RUN_LIMITS, PLAN_RUN_SIZES } from "@/lib/plans";
+import type { BrowserStatusCode } from "@/lib/runtimes/browser-runner";
 import { LANGUAGES, languageDisplayName } from "@/lib/runtimes/languages";
 import type { RunFailure, RunNotice } from "@/services/piston";
 
@@ -77,6 +79,18 @@ const C = {
     runFailed: { TR: "Çalıştırma tamamlanamadı: {message}", EN: "The run could not be completed: {message}" },
     signIn: { TR: "Giriş yap", EN: "Sign in" },
 } satisfies Record<string, CopyText>;
+
+/** What a browser runtime is loading on its first run (the worker's status codes); the rest show "Running…". */
+const LOADING: Partial<Record<BrowserStatusCode, CopyText>> = {
+    loading_python: { TR: "Python çalışma zamanı yükleniyor (ilk çalıştırmada yaklaşık 12 MB)…", EN: "Loading the Python runtime (about 12 MB on the first run)…" },
+    loading_prolog: { TR: "Prolog çalışma zamanı yükleniyor…", EN: "Loading the Prolog runtime…" },
+    loading_clojure: { TR: "Clojure yorumlayıcısı yükleniyor…", EN: "Loading the Clojure interpreter…" },
+    loading_sass: { TR: "Sass derleyicisi yükleniyor (ilk çalıştırmada yaklaşık 1 MB)…", EN: "Loading the Sass compiler (about 1 MB on the first run)…" },
+    loading_jq: { TR: "jq çalışma zamanı yükleniyor…", EN: "Loading the jq runtime…" },
+    loading_wat: { TR: "WebAssembly metin derleyicisi yükleniyor…", EN: "Loading the WebAssembly text compiler…" },
+    loading_coffeescript: { TR: "CoffeeScript derleyicisi yükleniyor…", EN: "Loading the CoffeeScript compiler…" },
+    loading_less: { TR: "Less derleyicisi yükleniyor…", EN: "Loading the Less compiler…" },
+};
 
 const FAILURES: Record<RunFailure["code"], CopyText> = {
     auth_required: { TR: "Bu dili çalıştırmak için giriş yapın. Tarayıcıda çalışan diller (JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS ve diğerleri) ile YAML, TOML, XML ve JSON doğrulayıcıları girişsiz de çalışır.", EN: "Sign in to run this language. Browser languages (JavaScript, TypeScript, Python, SQL, Lua, Prolog, BASIC, Forth, MIPS and more) and the YAML, TOML, XML and JSON validators run without signing in." },
@@ -242,11 +256,7 @@ export default function Console({ run, history, onClearHistory, stdin, onStdinCh
                             {run.status === "running" && (
                                 <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300" role="status">
                                     <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
-                                    {run.loading?.code === "loading_python"
-                                        ? tx({ TR: "Python çalışma zamanı yükleniyor (ilk çalıştırmada yaklaşık 12 MB)…", EN: "Loading the Python runtime (about 12 MB on the first run)…" })
-                                        : run.loading?.code === "loading_prolog"
-                                            ? tx({ TR: "Prolog çalışma zamanı yükleniyor…", EN: "Loading the Prolog runtime…" })
-                                            : tx(C.running)}
+                                    {tx((run.loading && LOADING[run.loading.code]) || C.running)}
                                 </div>
                             )}
                             {run.security && <SecurityPanel risk={run.security.risk} findings={run.security.findings} />}
@@ -304,7 +314,7 @@ export default function Console({ run, history, onClearHistory, stdin, onStdinCh
                         </div>
                         <div className="flex gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3">
                             <Server className="mt-0.5 h-5 w-5 shrink-0 text-indigo-500" aria-hidden />
-                            <p>{tx({ TR: "Sunucuda çalışanlar: {list}. Hanogt Security Bot taramasından sonra izole bir uzak derleyicide çalışır (giriş gerekir, dakikada 20 çalıştırma, en fazla 25 saniye).", EN: "Runs on the server: {list}. Runs on an isolated remote compiler after a Hanogt Security Bot scan (sign-in required, 20 runs per minute, 25 seconds max)." }, { list: serverLanguages })}</p>
+                            <p>{tx({ TR: "Sunucuda çalışanlar: {list}. Hanogt Security Bot taramasından sonra izole bir uzak derleyicide çalışır (giriş gerekir, planınıza göre dakikada 40, 150 veya 400 dosya, en fazla 25 saniye).", EN: "Runs on the server: {list}. Runs on an isolated remote compiler after a Hanogt Security Bot scan (sign-in required, 40, 150 or 400 files a minute depending on your plan, 25 seconds max)." }, { list: serverLanguages })}</p>
                         </div>
                         <div className="flex gap-3 rounded-xl border border-zinc-200 p-3 dark:border-white/10">
                             <Info className="mt-0.5 h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
@@ -343,20 +353,25 @@ function OutputText({ text, entry, onGoToLine, className }: { text: string; entr
     const { tx } = useI18n();
     // Editor Settings: the console's text size and whether long lines wrap.
     const { consoleFontSize, consoleWordWrap } = useEditorSettings();
-    const segments = useMemo(() => linkifyOutput(stripAnsi(text), [entry.name]), [text, entry.name]);
+    // Terminal colours (ANSI escape codes) and "file:line" links together.
+    const chunks = useMemo(() => linkifyAnsiOutput(text, [entry.name]), [text, entry.name]);
     return (
         <pre className={`font-mono ${consoleWordWrap ? "whitespace-pre-wrap break-words" : "overflow-x-auto whitespace-pre"} ${className}`} style={{ fontSize: consoleFontSize, lineHeight: 1.6 }} data-console-wrap={consoleWordWrap ? "on" : "off"}>
-            {segments.map((segment, index) => (typeof segment === "string" ? segment : (
-                <button
-                    key={index}
-                    type="button"
-                    onClick={() => onGoToLine(entry.tabId, segment.line, segment.column)}
-                    className="rounded underline decoration-dotted underline-offset-2 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-300"
-                    title={tx(C.goToLine, { line: segment.line })}
-                >
-                    {segment.text}
-                </button>
-            )))}
+            {chunks.map((chunk, index) => {
+                const link = chunk.link;
+                if (!link) return <AnsiPieces key={index} pieces={chunk.pieces} />;
+                return (
+                    <button
+                        key={index}
+                        type="button"
+                        onClick={() => onGoToLine(entry.tabId, link.line, link.column)}
+                        className="rounded underline decoration-dotted underline-offset-2 hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-300"
+                        title={tx(C.goToLine, { line: link.line })}
+                    >
+                        <AnsiPieces pieces={chunk.pieces} />
+                    </button>
+                );
+            })}
         </pre>
     );
 }

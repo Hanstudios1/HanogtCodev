@@ -52,3 +52,18 @@ export const EDIT_SHORTCUTS = {
 export function shortcutText(entry: ShortcutKeys, mac: boolean): string {
     return formatShortcut(mac && entry.mac ? entry.mac : entry.keys, mac);
 }
+
+/** A two-step shortcut such as "Ctrl+K Z" (the second key is pressed after releasing the first). */
+export function chordText(first: readonly string[], second: readonly string[], mac: boolean): string {
+    return `${formatShortcut(first, mac)} ${formatShortcut(second, mac)}`;
+}
+
+/** Hanogt's view shortcuts (palette, shortcuts dialog and keyboard handlers). */
+export const VIEW_SHORTCUTS = {
+    /** Like VS Code's View: Toggle Word Wrap. */
+    wordWrap: { keys: ["Alt", "Z"] },
+    /** Ctrl/⌘+K opens Quick actions; Z right after it toggles Zen mode. */
+    zen: { keys: ["Mod", "K"], then: ["Z"] },
+    problems: { keys: ["Mod", "Shift", "M"] },
+    search: { keys: ["Mod", "Shift", "F"] },
+} as const satisfies Record<string, ShortcutKeys & { then?: readonly string[] }>;

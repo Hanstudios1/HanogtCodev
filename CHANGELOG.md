@@ -1,5 +1,55 @@
 # Değişiklik Günlüğü
 
+## 0.3.33 — 2026-10-07
+
+### Kod editörüne 10 yeni dil, sorunlar paneli, projede arama, yerel geçmiş ve Vim
+
+- **10 yeni kullanılabilir dil (57 → 67), hepsi tarayıcıda:**
+  - **Çalışanlar:** jq (Girdi sekmesindeki JSON'a filtre uygular; boş girdi
+    `null`), Less ve SCSS (CSS'e derler; hatalar satır, sütun ve kod
+    parçasıyla), WebAssembly metni WAT (wabt ile doğrulanır; `main` veya
+    `_start` çağrılır, `env.print_*`, `console.log` ve temel WASI içe
+    aktarımları), Clojure (Scittle; `println`, `read-line`, `format`).
+  - **Önizlemeler:** Graphviz DOT (SVG, `layout=`), ABC nota (her parça ayrı
+    nota sayfası), AsciiDoc (güvenli kip), GLSL (WebGL2, `mainImage` ya da
+    `main()`, `iTime`/`iResolution`/`iMouse`; azaltılmış harekette duraklatılmış
+    başlar) ve Logo (kendi kaplumbağa yorumlayıcımız, SVG).
+  - **CoffeeScript** artık Wandbox'a gönderilmiyor: tarayıcıda kaynak
+    haritasıyla derlenip çalışıyor, hatalar `.coffee` satırlarını gösteriyor.
+  - Her dilin simgesi, sözdizimi renklendirmesi, başlangıç şablonu ve ek
+    dosya şablonu var. Çalışma zamanları yalnızca ilk kullanımda iniyor;
+    `worker.js` her açılışta yeniden doğrulanıyor, yüklediği dosyalar içerik
+    karmasıyla adresleniyor, Pyodide `/runtimes/pyodide/<sürüm>/` altına
+    taşındı. Önizleme çerçeveleri yalnızca kendi nonce'unu taşıyan betikleri
+    çalıştırıyor. Kullanılmayan PGlite paketi kaldırıldı.
+- **Editör geliştirmeleri:**
+  - **Konsolda ANSI renkleri:** kalın, soluk, italik, altı çizili, 16 renk,
+    256 renk ve 24 bit renk; açık ve koyu temaya uygun. Tıklanabilir hata
+    bağlantıları renkli çıktıda da çalışıyor.
+  - **Hızlı anahtarlar ve Zen modu:** komut paletinde kelime kaydırma
+    (Alt+Z), mini harita ve yapışkan kaydırma; Zen modu (Ctrl/⌘+K Z) yan
+    panelleri, konsolu ve site başlığını gizleyip editörü ortalar, Esc ile
+    çıkar.
+  - **Sorunlar paneli (Ctrl/⌘+Shift+M):** açık dosyaların hata, uyarı ve
+    bilgileri; önem derecesine göre süzme, tıklayınca dosya ve satır açılır;
+    durum çubuğundaki sayılar paneli açar.
+  - **Projede ara (Ctrl/⌘+Shift+F):** bütün dosyalarda büyük/küçük harf, tam
+    kelime ve düzenli ifade seçenekleriyle arama, dosyalara göre gruplanmış
+    sonuçlar; "Tümünü değiştir" onay ister ve her dosyada tek adımda geri
+    alınır. Sonuçlar 2.000 ile sınırlı.
+  - **Emmet:** HTML, CSS, SCSS, Less ve JSX'te (ayarlardan kapatılabilir).
+  - **Yerel geçmiş:** dosyaların anlık görüntüleri kaydederken, çalıştırırken
+    ve düzenlerken 3 dakikada bir (değiştiyse) yalnızca bu tarayıcıda
+    (IndexedDB) tutulur; dosya başına 30, toplam 25 MB. Geçmiş panelinde
+    fark görünümü ve geri alınabilir geri yükleme; ayarlardan kapatma ve
+    geçmişi silme.
+  - **Vim tuşları:** editör ayarlarında tuş düzeni (Varsayılan / Vim); Vim
+    durumu durum çubuğunda.
+- Gizlilik Politikası'nın kod çalıştırma bölümündeki eski sınırlar düzeltildi
+  (girdi plana göre 10.000 / 50.000 / 100.000 karakter, dakikada 40 / 150 /
+  400 dosya); rehber ve Hanogt AI bilgi tabanındaki aynı bilgi güncellendi.
+- Gizlilik Politikası 5.9.
+
 ## 0.3.32 — 2026-10-07
 
 ### Ücretli planlara yeni avantajlar, yenilenen Hesap Ayarları

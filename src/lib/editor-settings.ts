@@ -137,6 +137,12 @@ export interface EditorSettings {
     acceptSuggestionOnEnter: "on" | "smart" | "off";
     /** Ask before closing a tab with unsaved changes. */
     confirmCloseUnsaved: boolean;
+    /** Emmet abbreviations (ul>li*3, m10) in HTML, CSS, SCSS, Less, JSX and TSX files. */
+    emmet: boolean;
+    /** Snapshots of the files in this browser (IndexedDB) on save, on run and every few minutes. */
+    localHistory: boolean;
+    /** Keyboard behaviour of the code editor: Monaco's own keys or Vim's modes. */
+    keybindingMode: "default" | "vim";
 }
 
 export const DEFAULT_EDITOR_SETTINGS: EditorSettings = Object.freeze({
@@ -196,6 +202,9 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = Object.freeze({
     minimapSide: "right",
     acceptSuggestionOnEnter: "on",
     confirmCloseUnsaved: true,
+    emmet: true,
+    localHistory: true,
+    keybindingMode: "default",
 }) as EditorSettings;
 
 export const SETTING_LIMITS = {
@@ -323,6 +332,9 @@ export function sanitizeEditorSettings(input: unknown): EditorSettings {
         minimapSide: oneOf(raw.minimapSide, ["right", "left"] as const, d.minimapSide),
         acceptSuggestionOnEnter: oneOf(raw.acceptSuggestionOnEnter, ["on", "smart", "off"] as const, d.acceptSuggestionOnEnter),
         confirmCloseUnsaved: bool(raw.confirmCloseUnsaved, d.confirmCloseUnsaved),
+        emmet: bool(raw.emmet, d.emmet),
+        localHistory: bool(raw.localHistory, d.localHistory),
+        keybindingMode: oneOf(raw.keybindingMode, ["default", "vim"] as const, d.keybindingMode),
     };
 }
 

@@ -1,9 +1,9 @@
 "use client";
 
 import {
-    ChevronDown, ClipboardCopy, Command, Copy as CopyIcon, Download, ExternalLink, Eye, FilePlus2, FolderDown, Keyboard, Languages, Link2, ListOrdered,
-    LoaderCircle, MessageSquareCode, MoreVertical, PanelRightClose, PanelRightOpen, Pencil, Play, Redo2, RefreshCw, Replace, Save, Search, Send,
-    Settings, Share2, Square, SquarePen, Sun, Terminal, TextSelect, Trash2, Undo2, Upload, UsersRound, Wand2,
+    ChevronDown, CircleAlert, ClipboardCopy, Command, Copy as CopyIcon, Download, ExternalLink, Eye, FilePlus2, Focus, FolderDown, History as HistoryIcon, Keyboard, Languages, Link2, ListOrdered,
+    LoaderCircle, MapIcon, MessageSquareCode, Minimize2, MoreVertical, PanelRightClose, PanelRightOpen, PanelTop, Pencil, Play, Redo2, RefreshCw, Replace, Save,
+    Search, Send, Settings, Share2, Square, SquarePen, Sun, Terminal, TextSelect, Trash2, Undo2, Upload, UsersRound, Wand2, WrapText,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,12 +20,16 @@ import CollabStartDialog from "@/components/Editor/CollabStartDialog";
 import CommandPalette, { type PaletteCommand } from "@/components/Editor/CommandPalette";
 import Console, { type ConsoleTab } from "@/components/Editor/Console";
 import EditorTabs from "@/components/Editor/EditorTabs";
+import HistoryDiffDialog, { type HistoryDiff } from "@/components/Editor/HistoryDiffDialog";
+import HistoryPanel, { HISTORY_TITLE } from "@/components/Editor/HistoryPanel";
 import LanguageIcon from "@/components/Editor/LanguageIcon";
 import MediaPublishButton, { MEDIA_BUTTON_COPY } from "@/components/Editor/MediaPublishButton";
 import { useConfirm } from "@/components/Editor/Modal";
 import NewFileDialog, { EngineBadge, LanguagePickerDialog, type NewFileRequest } from "@/components/Editor/NewFileDialog";
+import ProblemsPanel, { PROBLEMS_TITLE } from "@/components/Editor/ProblemsPanel";
 import PublishDialog from "@/components/Editor/PublishDialog";
 import SaveDialog from "@/components/Editor/SaveDialog";
+import SearchPanel, { INITIAL_SEARCH, SEARCH_TITLE, type SearchState } from "@/components/Editor/SearchPanel";
 import ShareDialog from "@/components/Editor/ShareDialog";
 import ShortcutsDialog from "@/components/Editor/ShortcutsDialog";
 import Sidebar, { SIDEBAR_COPY } from "@/components/Editor/Sidebar";
@@ -37,11 +41,14 @@ import {
     MAX_TABS, buildProjectZip, buildSnippetFile, downloadName, readUploadedFiles, triggerDownload, uniqueFileName,
     type UploadIssue,
 } from "@/components/Editor/editor-files";
-import { EDIT_SHORTCUTS, formatShortcut, isTypingTarget, shortcutText, useIsMac } from "@/components/Editor/keyboard";
+import { EDIT_SHORTCUTS, VIEW_SHORTCUTS, chordText, formatShortcut, isTypingTarget, shortcutText, useIsMac } from "@/components/Editor/keyboard";
 import { MediaApiError, mediaAction, mediaErrorText } from "@/components/Editor/media-api";
 import { mediaPostPath, ownerTag, parseMediaPublication, type MediaPublication } from "@/components/Editor/media-publish";
 import type { HistoryEntry, RunEntry, RunState } from "@/components/Editor/run-types";
 import { storedPublication, useMediaPublication } from "@/components/Editor/useMediaPublication";
+import { useLocalHistory } from "@/components/Editor/useLocalHistory";
+import { useProblems } from "@/components/Editor/useProblems";
+import { useTabModels } from "@/components/Editor/useTabModels";
 import { useFirebaseBridge, useRawSession } from "@/components/Provider";
 import { publishAiContext } from "@/lib/ai/context-store";
 import { useApplyRequests, type ApplyRequest } from "@/lib/ai/editor-apply";
@@ -50,7 +57,11 @@ import type { CollabFileContent } from "@/lib/collab/doc";
 import type { CollabClosed } from "@/lib/collab/session-client";
 import { COLLAB_PARAM, sharedFileIds, useEditorCollab } from "@/lib/collab/use-editor-collab";
 import { EDITOR_IMPORT_PARAM, consumeEditorImportBundle, type EditorImportError } from "@/lib/editor-bridge";
-import { readEditorSettings, useEditorSettings } from "@/lib/editor-settings";
+import { readEditorSettings, updateEditorSettings, useEditorSettings } from "@/lib/editor-settings";
+import { escapeRegExp, planReplacements, type SearchMatch, type SearchOptions } from "@/lib/editor/find-in-files";
+import { historyAccountTag, type SnapshotMeta } from "@/lib/editor/local-history";
+import { applyModelEdits, ensureModel, replaceModelText } from "@/lib/editor/models";
+import type { Problem } from "@/lib/editor/problems";
 import { useI18n, type Copy } from "@/lib/i18n";
 import type { MonacoApi } from "@/lib/monaco";
 import { useMyPlan } from "@/lib/plan-client";
@@ -76,6 +87,8 @@ interface EditorTab {
 type StoredTab = { name?: unknown; lang?: unknown; code?: unknown; id?: unknown; isSaved?: unknown };
 type GameScriptResponse = { id: string; name: string; language: "csharp" | "cpp"; content: string; revision?: string | null };
 type DialogName = "new" | "palette" | "shortcuts" | "share" | "save" | "language" | "publish" | "collab" | null;
+/** The output panel's sections. */
+type PanelTab = "console" | "preview" | "team" | "problems" | "search" | "history";
 /** An editor command shown in the Edit menu and the command palette. */
 type EditorCommand = { id: string; label: string; icon: ReactNode; shortcut?: string; hint?: string; keywords?: string; disabled?: boolean; danger?: boolean; run: () => void };
 
@@ -161,7 +174,7 @@ function readRecovery(email: string): { tabs: EditorTab[]; projectId: number | n
 }
 
 /** Monaco model URI; the extension lets the TypeScript service treat .tsx/.jsx files correctly. */
-function modelPath(tab: EditorTab) {
+function modelPath(tab: Pick<EditorTab, "id" | "name" | "lang">) {
     const fromName = languageFromFileName(tab.name);
     const dot = tab.name.lastIndexOf(".");
     const extension = fromName?.id === tab.lang && dot > 0 ? tab.name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9+#_-]/g, "") : fileExtensionFor(tab.lang);
@@ -291,6 +304,40 @@ const C = {
     collabKept: { TR: "{count} dosya editörüne eklendi (kaydedilmedi).", EN: "{count} files were added to your editor (not saved yet)." },
     collabPublishOwner: { TR: "Oturumdaki kodu yalnızca oturum sahibi yayınlayabilir.", EN: "Only the session's owner can publish its code." },
     collabAutoSave: { TR: "Canlı oturum: değişiklikler anında paylaşılır", EN: "Live session: changes are shared instantly" },
+    viewGroup: { TR: "Görünüm", EN: "View" },
+    toggleWordWrap: { TR: "Satır kaydırmayı aç/kapat", EN: "Toggle word wrap" },
+    toggleMinimap: { TR: "Mini haritayı aç/kapat", EN: "Toggle minimap" },
+    toggleStickyScroll: { TR: "Yapışkan kaydırmayı aç/kapat", EN: "Toggle sticky scroll" },
+    toggleZen: { TR: "Zen modunu aç/kapat", EN: "Toggle Zen mode" },
+    zenHint: { TR: "Paneller gizlenir, editör ortalanır", EN: "Hides the panels and centres the editor" },
+    exitZen: { TR: "Zen modundan çık", EN: "Exit Zen mode" },
+    stateOn: { TR: "Şu an açık", EN: "Currently on" },
+    stateOff: { TR: "Şu an kapalı", EN: "Currently off" },
+    wordWrapName: { TR: "Satır kaydırma", EN: "Word wrap" },
+    minimapName: { TR: "Mini harita", EN: "Minimap" },
+    stickyScrollName: { TR: "Yapışkan kaydırma", EN: "Sticky scroll" },
+    zenName: { TR: "Zen modu", EN: "Zen mode" },
+    turnedOn: { TR: "{name} açıldı.", EN: "{name} is on." },
+    turnedOff: { TR: "{name} kapatıldı.", EN: "{name} is off." },
+    zenRunning: { TR: "Program çalışıyor; çıktısı konsolda.", EN: "The program is running; its output is in the console." },
+    showConsole: { TR: "Konsolu göster", EN: "Show the console" },
+    monacoToggleWordWrap: { TR: "Hanogt: Satır kaydırmayı aç/kapat", EN: "Hanogt: Toggle word wrap" },
+    showProblems: { TR: "Sorunlar panelini aç/kapat", EN: "Toggle the Problems panel" },
+    problemsHint: { TR: "{errors} hata, {warnings} uyarı, {infos} bilgi", EN: "{errors} errors, {warnings} warnings, {infos} infos" },
+    monacoProblems: { TR: "Hanogt: Sorunlar", EN: "Hanogt: Problems" },
+    searchFiles: { TR: "Dosyalarda ara", EN: "Search in files" },
+    searchFilesHint: { TR: "Tüm açık dosyalarda bul ve değiştir", EN: "Find and replace in all open files" },
+    monacoSearchFiles: { TR: "Hanogt: Dosyalarda ara", EN: "Hanogt: Search in files" },
+    replacedAll: { TR: "{files} dosyada {count} eşleşme değiştirildi. Geri almak için ilgili dosyada {undo} kullanın.", EN: "Replaced {count} matches in {files} files. Use {undo} in a file to undo its change." },
+    replaceReadOnly: { TR: "Bu canlı oturumda düzenleme izniniz yok.", EN: "You can't edit files in this live session." },
+    localHistory: { TR: "Yerel geçmiş", EN: "Local history" },
+    localHistoryHint: { TR: "Dosyaların bu tarayıcıdaki anlık görüntüleri", EN: "Snapshots of your files in this browser" },
+    restored: { TR: "{name}, {time} tarihli sürümüne döndürüldü. Geri almak için {undo}.", EN: "{name} was restored to the version from {time}. Press {undo} to undo." },
+    restoreMissing: { TR: "Anlık görüntü bulunamadı ya da dosya artık açık değil.", EN: "The snapshot wasn't found, or the file isn't open anymore." },
+    restoreSame: { TR: "Dosya zaten bu sürümle aynı.", EN: "The file is already the same as this version." },
+    snapshotTaken: { TR: "{name} için anlık görüntü alındı.", EN: "A snapshot of {name} was taken." },
+    snapshotUnchanged: { TR: "{name}, son anlık görüntüden beri değişmedi.", EN: "{name} hasn't changed since its last snapshot." },
+    vimFailed: { TR: "Vim tuşları yüklenemedi; editör varsayılan tuşlarla çalışıyor.", EN: "The Vim keybindings couldn't be loaded; the editor uses its default keys." },
 } satisfies Record<string, Copy>;
 
 const ISSUE_LABELS: Record<UploadIssue["reason"], Copy> = {
@@ -328,7 +375,7 @@ function EditorContent() {
     // How many files one run starts at once: Free 8, Plus 25, Pro 75 (the server counts its own files a minute).
     const plan = useMyPlan(sessionEmail || null);
     const maxRunFiles = PLAN_RUN_LIMITS[plan].files;
-    const { tx, language: uiLanguage, dir } = useI18n();
+    const { tx, language: uiLanguage, dir, locale } = useI18n();
     const { theme: siteTheme, toggle: toggleSiteTheme } = useTheme();
     const settings = useEditorSettings();
     const mac = useIsMac();
@@ -411,12 +458,22 @@ function EditorContent() {
     const runCounter = useRef(0);
     const abortRef = useRef<AbortController | null>(null);
 
-    const [panelTab, setPanelTab] = useState<"console" | "preview" | "team">("console");
+    const [panelTab, setPanelTab] = useState<PanelTab>("console");
     const [consoleTab, setConsoleTab] = useState<ConsoleTab>("output");
     const [panelOpen, setPanelOpen] = useState(true);
     const [panelWidth, setPanelWidth] = useState(440);
     const [previewKey, setPreviewKey] = useState(0);
     const [dialog, setDialog] = useState<DialogName>(null);
+    const dialogRef = useRef<DialogName>(null);
+    useEffect(() => {
+        dialogRef.current = dialog;
+    }, [dialog]);
+    /** When Ctrl/⌘+K last opened Quick actions (a Z right after it toggles Zen mode). */
+    const [paletteChordAt, setPaletteChordAt] = useState(0);
+    /** Zen mode: no side panels, toolbar or status bar; the editor is centred. */
+    const [zen, setZen] = useState(false);
+    /** Polite screen reader message for the view toggles. */
+    const [announcement, setAnnouncement] = useState("");
     const [saveDialog, setSaveDialog] = useState<{ key: number; defaultName: string }>({ key: 0, defaultName: "" });
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState(false);
@@ -430,7 +487,7 @@ function EditorContent() {
     const splitRef = useRef<HTMLDivElement>(null);
     const runMenuRef = useRef<HTMLDivElement>(null);
     const moreMenuRef = useRef<HTMLDivElement>(null);
-    const pendingReveal = useRef<{ tabId: string; line: number; column?: number } | null>(null);
+    const pendingReveal = useRef<{ tabId: string; line: number; column?: number; end?: { line: number; column: number } } | null>(null);
     const consumedImports = useRef(new Set<string>());
 
     const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
@@ -656,6 +713,13 @@ function EditorContent() {
         return () => window.clearTimeout(timer);
     }, [tabs, ready, isGameMode, collabTabs, currentProjectId, currentProjectName, publication, workspaceKey, sessionEmail]);
 
+    // ------------------------------------------------------------------ local history
+    // Snapshots in this browser only (IndexedDB): per account and workspace, by file name.
+    const historyScope = `${historyAccountTag(sessionEmail)}|${collabTabs && collab.session ? `collab:${collab.session.id}` : isGameMode ? `game:${gameProjectId}:${currentGameScriptId ?? "draft"}` : currentProjectId !== null ? `project:${currentProjectId}` : "draft"}`;
+    const historyIsDraft = !collabTabs && (isGameMode ? !currentGameScriptId : currentProjectId === null);
+    const localHistory = useLocalHistory({ enabled: settings.localHistory, scope: historyScope, draft: historyIsDraft, tabs });
+    const { snapshot: takeSnapshot, store: historyStore, keyFor: historyKeyFor, bump: bumpHistory } = localHistory;
+
     // ------------------------------------------------------------------ tabs
     const updateTabs = useCallback((updater: (current: EditorTab[]) => EditorTab[]) => setTabs(updater), [setTabs]);
 
@@ -781,8 +845,10 @@ function EditorContent() {
         const switchLanguage = Boolean(detected && detected.id !== target.lang && !isGameMode);
         setTabs(current.map((tab) => (tab.id === id ? { ...tab, name, lang: switchLanguage && detected ? detected.id : tab.lang, isSaved: false } : tab)));
         if (switchLanguage && detected) toast({ tone: "info", message: tx(C.languageChanged, { language: detected.name }) });
+        // The file's local history follows the new name.
+        if (name !== target.name) void historyStore?.renameFile(historyKeyFor(target.name), historyKeyFor(name), name).then(bumpHistory, () => undefined);
         return null;
-    }, [isGameMode, setTabs, toast, tx]);
+    }, [bumpHistory, historyKeyFor, historyStore, isGameMode, setTabs, toast, tx]);
 
     const duplicateTab = useCallback((id: string) => {
         const current = tabsRef.current;
@@ -889,10 +955,13 @@ function EditorContent() {
         const started = Date.now();
         const entries: RunEntry[] = limited.map((tab) => ({ tabId: tab.id, name: tab.name, language: tab.lang, engine: BROWSER_LANGUAGES.has(tab.lang) ? "browser" : "server", job: null }));
         setRun({ id, status: "running", startedAt: started, entries, loading: null });
+        if (readEditorSettings().localHistory) void takeSnapshot("run");
         setPanelOpen(true);
         setPanelTab("console");
         setConsoleTab("output");
         const update = (change: (state: RunState) => RunState) => setRun((current) => (current && current.id === id ? change(current) : current));
+        // Zen mode hides the console; say where the output goes.
+        if (zen) toast({ tone: "info", message: tx(C.zenRunning), action: { label: tx(C.showConsole), onClick: () => setZen(false) } });
         try {
             const result = await executeProjectSecure(limited.map((tab) => ({ name: tab.name, language: tab.lang, code: tab.code })), {
                 stdin,
@@ -917,7 +986,7 @@ function EditorContent() {
         } finally {
             if (abortRef.current === controller) abortRef.current = null;
         }
-    }, [maxRunFiles, plan, settings.tabSize, stdin, toast, tx, uiLanguage]);
+    }, [maxRunFiles, plan, settings.tabSize, stdin, takeSnapshot, toast, tx, uiLanguage, zen]);
 
     const handleRun = useCallback(() => {
         if (isRunning) return;
@@ -954,22 +1023,29 @@ function EditorContent() {
 
     const stopRun = useCallback(() => abortRef.current?.abort(), []);
 
-    const revealLine = useCallback((line: number, column = 1) => {
+    /** Moves the cursor to a position, or selects up to `end` (a search match). */
+    const revealLine = useCallback((line: number, column = 1, end?: { line: number; column: number }) => {
         if (!editorInstance) return;
         const model = editorInstance.getModel();
         const target = Math.min(Math.max(1, line), model?.getLineCount() ?? line);
-        editorInstance.setPosition({ lineNumber: target, column: Math.max(1, column) });
-        editorInstance.revealLineInCenter(target);
+        if (end) {
+            const range = { startLineNumber: target, startColumn: Math.max(1, column), endLineNumber: Math.max(target, Math.min(end.line, model?.getLineCount() ?? end.line)), endColumn: Math.max(1, end.column) };
+            editorInstance.setSelection(range);
+            editorInstance.revealRangeInCenterIfOutsideViewport(range);
+        } else {
+            editorInstance.setPosition({ lineNumber: target, column: Math.max(1, column) });
+            editorInstance.revealLineInCenter(target);
+        }
         editorInstance.focus();
     }, [editorInstance]);
 
-    const goToLine = useCallback((tabId: string, line: number, column?: number) => {
+    const goToLine = useCallback((tabId: string, line: number, column?: number, end?: { line: number; column: number }) => {
         if (!tabsRef.current.some((tab) => tab.id === tabId)) return;
         if (tabId === shownTabId) {
-            revealLine(line, column);
+            revealLine(line, column, end);
             return;
         }
-        pendingReveal.current = { tabId, line, column };
+        pendingReveal.current = { tabId, line, column, end };
         setActiveTabId(tabId);
     }, [shownTabId, revealLine]);
 
@@ -978,7 +1054,7 @@ function EditorContent() {
         if (!pending || pending.tabId !== shownTabId || !editorInstance) return;
         const frame = window.requestAnimationFrame(() => {
             pendingReveal.current = null;
-            revealLine(pending.line, pending.column);
+            revealLine(pending.line, pending.column, pending.end);
         });
         return () => window.cancelAnimationFrame(frame);
     }, [shownTabId, editorInstance, revealLine]);
@@ -1234,6 +1310,47 @@ function EditorContent() {
 
     const startRename = useCallback((id: string) => setRenameRequest((previous) => ({ id, nonce: (previous?.nonce ?? 0) + 1 })), []);
 
+    // ------------------------------------------------------------------ view
+    // Quick toggles save the editor settings (every open editor follows them).
+    const lastWordWrap = useRef<"on" | "bounded">("on");
+    const toggleWordWrap = useCallback(() => {
+        const current = readEditorSettings().wordWrap;
+        if (current !== "off") lastWordWrap.current = current;
+        const next = current === "off" ? lastWordWrap.current : "off";
+        updateEditorSettings({ wordWrap: next });
+        setAnnouncement(tx(next === "off" ? C.turnedOff : C.turnedOn, { name: tx(C.wordWrapName) }));
+    }, [tx]);
+    const toggleMinimap = useCallback(() => {
+        const next = !readEditorSettings().minimap;
+        updateEditorSettings({ minimap: next });
+        setAnnouncement(tx(next ? C.turnedOn : C.turnedOff, { name: tx(C.minimapName) }));
+    }, [tx]);
+    const toggleStickyScroll = useCallback(() => {
+        const next = !readEditorSettings().stickyScroll;
+        updateEditorSettings({ stickyScroll: next });
+        setAnnouncement(tx(next ? C.turnedOn : C.turnedOff, { name: tx(C.stickyScrollName) }));
+    }, [tx]);
+    const toggleZen = useCallback(() => {
+        const next = !zen;
+        setMenuOpen(null);
+        setZen(next);
+        setAnnouncement(tx(next ? C.turnedOn : C.turnedOff, { name: tx(C.zenName) }));
+        // The toolbar button that had focus may be gone: keep typing in the editor.
+        window.requestAnimationFrame(() => editorInstance?.focus());
+    }, [editorInstance, tx, zen]);
+
+    // Esc leaves Zen mode unless something else used it (the editor's find widget, a menu, a field).
+    useEffect(() => {
+        if (!zen) return;
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== "Escape" || event.defaultPrevented || event.isComposing || isTypingTarget(event.target)) return;
+            event.preventDefault();
+            actionsRef.current.toggleZen();
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [zen]);
+
     // ------------------------------------------------------------------ media
     const openPublish = useCallback(() => {
         // The code of someone else's live session isn't the participant's to publish.
@@ -1385,23 +1502,53 @@ function EditorContent() {
             // The formatted text reaches the tabs through the editor's change event and a render.
             await new Promise((resolve) => window.setTimeout(resolve, 60));
         }
+        // Local history: a snapshot of every changed file (also before signing in, when nothing goes to the cloud).
+        if (current.localHistory) void takeSnapshot("save");
         plainSaveRef.current();
         if (current.runOnSave) plainRunRef.current();
-    }, [editorInstance]);
+    }, [editorInstance, takeSnapshot]);
     const saveNow = useCallback(() => void saveCommand(), [saveCommand]);
 
     // ------------------------------------------------------------------ keyboard
-    const actionsRef = useRef({ run: handleRun, runActive: handleRunActive, save: saveNow, palette: () => setDialog("palette"), switchTab: (index: number) => void index });
+    const actionsRef = useRef<{
+        run: () => void;
+        runActive: () => void;
+        save: () => void;
+        palette: (fromShortcut?: boolean) => void;
+        switchTab: (index: number) => void;
+        toggleWordWrap: () => void;
+        toggleZen: () => void;
+        toggleProblems: (fromKeyboard?: boolean) => void;
+        openSearch: () => void;
+    }>({
+        run: handleRun,
+        runActive: handleRunActive,
+        save: saveNow,
+        palette: () => undefined,
+        switchTab: () => undefined,
+        toggleWordWrap,
+        toggleZen,
+        toggleProblems: () => undefined,
+        openSearch: () => undefined,
+    });
     useEffect(() => {
         actionsRef.current = {
             run: handleRun,
             runActive: handleRunActive,
             save: saveNow,
-            palette: () => setDialog((current) => (current === "palette" ? null : "palette")),
+            /** Opens or closes Quick actions; the shortcut also starts the Ctrl/⌘+K Z chord. */
+            palette: (fromShortcut = false) => {
+                if (fromShortcut && dialogRef.current !== "palette") setPaletteChordAt(performance.now());
+                setDialog((current) => (current === "palette" ? null : "palette"));
+            },
             switchTab: (index: number) => {
                 const tab = tabsRef.current[index - 1];
                 if (tab) setActiveTabId(tab.id);
             },
+            toggleWordWrap,
+            toggleZen,
+            toggleProblems,
+            openSearch,
         };
     });
 
@@ -1419,10 +1566,20 @@ function EditorContent() {
                 else actionsRef.current.run();
             } else if (mod && !event.altKey && !event.shiftKey && key === "k") {
                 event.preventDefault();
-                actionsRef.current.palette();
+                actionsRef.current.palette(true);
+            } else if (mod && event.shiftKey && !event.altKey && event.code === "KeyM") {
+                event.preventDefault();
+                actionsRef.current.toggleProblems(true);
+            } else if (mod && event.shiftKey && !event.altKey && event.code === "KeyF") {
+                event.preventDefault();
+                actionsRef.current.openSearch();
             } else if (event.altKey && !event.ctrlKey && !event.metaKey && /^Digit[1-9]$/.test(event.code) && !isTypingTarget(event.target)) {
                 event.preventDefault();
                 actionsRef.current.switchTab(Number(event.code.slice(5)));
+            } else if (event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.code === "KeyZ" && !isTypingTarget(event.target)) {
+                // Alt+Z (⌥Z): word wrap, as in VS Code.
+                event.preventDefault();
+                actionsRef.current.toggleWordWrap();
             }
         };
         window.addEventListener("keydown", onKeyDown);
@@ -1438,7 +1595,10 @@ function EditorContent() {
             editorInstance.addAction({ id: "hanogt.run", label: tx(C.monacoRun), keybindings: [mod | monaco.KeyCode.Enter], run: () => actionsRef.current.run() }),
             editorInstance.addAction({ id: "hanogt.runActive", label: tx(C.monacoRunActive), keybindings: [mod | monaco.KeyMod.Shift | monaco.KeyCode.Enter], run: () => actionsRef.current.runActive() }),
             editorInstance.addAction({ id: "hanogt.save", label: tx(C.monacoSave), keybindings: [mod | monaco.KeyCode.KeyS], run: () => actionsRef.current.save() }),
-            editorInstance.addAction({ id: "hanogt.palette", label: tx(C.monacoQuickActions), keybindings: [mod | monaco.KeyCode.KeyK], run: () => actionsRef.current.palette() }),
+            editorInstance.addAction({ id: "hanogt.palette", label: tx(C.monacoQuickActions), keybindings: [mod | monaco.KeyCode.KeyK], run: () => actionsRef.current.palette(true) }),
+            editorInstance.addAction({ id: "hanogt.toggleWordWrap", label: tx(C.monacoToggleWordWrap), keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyZ], run: () => actionsRef.current.toggleWordWrap() }),
+            editorInstance.addAction({ id: "hanogt.problems", label: tx(C.monacoProblems), keybindings: [mod | monaco.KeyMod.Shift | monaco.KeyCode.KeyM], run: () => actionsRef.current.toggleProblems(true) }),
+            editorInstance.addAction({ id: "hanogt.searchFiles", label: tx(C.monacoSearchFiles), keybindings: [mod | monaco.KeyMod.Shift | monaco.KeyCode.KeyF], run: () => actionsRef.current.openSearch() }),
             monaco.editor.registerCommand("hanogt.switchTab", (_accessor: unknown, index: unknown) => actionsRef.current.switchTab(Number(index))),
             ...Array.from({ length: 9 }, (_, offset) => monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.Alt | (monaco.KeyCode.Digit1 + offset), command: "hanogt.switchTab", commandArgs: offset + 1 })),
         ];
@@ -1456,10 +1616,174 @@ function EditorContent() {
         }
     }, [tabs, monacoInstance, editorInstance]);
 
+    // Every open file has a model (markers for all of them, replace-all and history restores as undoable edits).
+    useTabModels({ monaco: monacoInstance, editorInstance, tabs, enabled: !collabTabs, pathFor: modelPath });
+
+    // ------------------------------------------------------------------ problems
+    const collabSession = collab.session;
+    const problemFiles = tabs.map((tab) => ({ tabId: tab.id, name: tab.name, language: tab.lang, path: collabTabs && collabSession ? collabSession.modelPath(tab.id) : modelPath(tab) }));
+    const problems = useProblems(monacoInstance, problemFiles);
+    /** Changes when Ctrl/⌘+Shift+M opened the panel, so its list takes the focus. */
+    const [problemsFocus, setProblemsFocus] = useState(0);
+    const toggleProblems = useCallback((fromKeyboard = false) => {
+        if (panelOpen && panelTab === "problems" && !zen) {
+            setPanelOpen(false);
+            editorInstance?.focus();
+            return;
+        }
+        setZen(false);
+        setPanelOpen(true);
+        setPanelTab("problems");
+        if (fromKeyboard) setProblemsFocus((value) => value + 1);
+    }, [editorInstance, panelOpen, panelTab, zen]);
+    const openProblem = useCallback((problem: Problem) => goToLine(problem.tabId, problem.line, problem.column), [goToLine]);
+
+    // ------------------------------------------------------------------ search in files
+    const [searchState, setSearchState] = useState<SearchState>(INITIAL_SEARCH);
+    /** Changes when Ctrl/⌘+Shift+F opened the panel, so its search box takes the focus. */
+    const [searchFocus, setSearchFocus] = useState(0);
+    const canEditFiles = !collabTabs || collab.canEdit;
+    const openSearch = useCallback(() => {
+        // A selection on one line becomes the query, as in VS Code.
+        const model = editorInstance?.getModel();
+        const selection = editorInstance?.getSelection();
+        const selected = model && selection && !selection.isEmpty() && selection.startLineNumber === selection.endLineNumber ? model.getValueInRange(selection) : "";
+        if (selected.trim() && selected.length <= 200) setSearchState((current) => ({ ...current, query: current.regex ? escapeRegExp(selected) : selected }));
+        setZen(false);
+        setPanelOpen(true);
+        setPanelTab("search");
+        setSearchFocus((value) => value + 1);
+    }, [editorInstance]);
+    const openSearchMatch = useCallback((tabId: string, match: SearchMatch) => goToLine(tabId, match.line, match.column, { line: match.line, column: match.endColumn }), [goToLine]);
+
+    /**
+     * Replace all: every file's matches change in its Monaco model as one undo
+     * step (Ctrl+Z in that file takes it back). The matches are found again in
+     * the models' current text, so nothing typed since the search is lost.
+     */
+    const replaceInFiles = useCallback((options: SearchOptions, replacement: string) => {
+        if (!monacoInstance) return;
+        if (!canEditFiles) {
+            toast({ tone: "warning", message: tx(C.replaceReadOnly) });
+            return;
+        }
+        const live = collabTabs ? collabSession : null;
+        const shownModel = editorInstance?.getModel() ?? null;
+        const changed = new Map<string, string>();
+        let fileCount = 0;
+        let count = 0;
+        for (const tab of tabsRef.current) {
+            // A live session's model joins the shared document when it is created.
+            const model = ensureModel(monacoInstance, live ? live.modelPath(tab.id) : modelPath(tab), tab.code, tab.lang);
+            const edits = planReplacements(model.getValue(), options, replacement).map((edit) => ({
+                range: { startLineNumber: edit.line, startColumn: edit.column, endLineNumber: edit.line, endColumn: edit.endColumn },
+                text: edit.text,
+            }));
+            if (!edits.length) continue;
+            if (model === shownModel && editorInstance) {
+                editorInstance.pushUndoStop();
+                editorInstance.executeEdits("hanogt-replace-all", edits);
+                editorInstance.pushUndoStop();
+            } else if (!applyModelEdits(model, edits)) {
+                continue;
+            } else if (!live) {
+                changed.set(tab.id, model.getValue());
+            }
+            fileCount += 1;
+            count += edits.length;
+        }
+        // The editor reports its own model's change; the other files' text goes to the tabs here.
+        if (changed.size) setTabs((current) => current.map((tab) => (changed.has(tab.id) ? { ...tab, code: changed.get(tab.id) ?? tab.code, isSaved: false } : tab)));
+        if (count) toast({ tone: "success", message: tx(C.replacedAll, { count, files: fileCount, undo: formatShortcut(["Mod", "Z"], mac) }) });
+    }, [canEditFiles, collabSession, collabTabs, editorInstance, mac, monacoInstance, setTabs, toast, tx]);
+
+    // ------------------------------------------------------------------ local history panel
+    const openHistory = useCallback(() => {
+        setZen(false);
+        setPanelOpen(true);
+        setPanelTab("history");
+    }, []);
+    const formatSnapshotTime = useCallback((at: number) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(at), [locale]);
+    const [historyDiff, setHistoryDiff] = useState<(HistoryDiff & { meta: SnapshotMeta }) | null>(null);
+
+    const compareSnapshot = useCallback(async (meta: SnapshotMeta) => {
+        const snapshot = await historyStore?.get(meta.id).catch(() => null);
+        const tab = tabsRef.current.find((item) => item.name === meta.name);
+        if (!snapshot || !tab) {
+            toast({ tone: "error", message: tx(C.restoreMissing) });
+            return;
+        }
+        setHistoryDiff({ meta, name: tab.name, lang: tab.lang, original: snapshot.code, modified: tab.code, time: formatSnapshotTime(meta.at) });
+    }, [formatSnapshotTime, historyStore, toast, tx]);
+
+    /** Puts a snapshot back as one undoable edit; the current text becomes a snapshot first. */
+    const restoreSnapshot = useCallback(async (meta: SnapshotMeta) => {
+        if (!historyStore || !monacoInstance) return;
+        if (!canEditFiles) {
+            toast({ tone: "warning", message: tx(C.replaceReadOnly) });
+            return;
+        }
+        const snapshot = await historyStore.get(meta.id).catch(() => null);
+        const tab = tabsRef.current.find((item) => item.name === meta.name);
+        if (!snapshot || !tab) {
+            toast({ tone: "error", message: tx(C.restoreMissing) });
+            return;
+        }
+        if (snapshot.code === tab.code) {
+            setHistoryDiff(null);
+            toast({ tone: "info", message: tx(C.restoreSame) });
+            return;
+        }
+        await historyStore.snapshot({ fileKey: historyKeyFor(tab.name), name: tab.name, lang: tab.lang, code: tab.code, reason: "restore" }).catch(() => null);
+        const live = collabTabs ? collabSession : null;
+        const model = ensureModel(monacoInstance, live ? live.modelPath(tab.id) : modelPath(tab), tab.code, tab.lang);
+        if (model === editorInstance?.getModel()) {
+            editorInstance.pushUndoStop();
+            editorInstance.executeEdits("hanogt-history", [{ range: model.getFullModelRange(), text: snapshot.code, forceMoveMarkers: true }]);
+            editorInstance.pushUndoStop();
+        } else {
+            replaceModelText(model, snapshot.code);
+            if (!live) setTabs((current) => current.map((item) => (item.id === tab.id ? { ...item, code: model.getValue(), isSaved: false } : item)));
+            setActiveTabId(tab.id);
+        }
+        bumpHistory();
+        setHistoryDiff(null);
+        toast({ tone: "success", message: tx(C.restored, { name: tab.name, time: formatSnapshotTime(meta.at), undo: formatShortcut(["Mod", "Z"], mac) }) });
+    }, [bumpHistory, canEditFiles, collabSession, collabTabs, editorInstance, formatSnapshotTime, historyKeyFor, historyStore, mac, monacoInstance, setTabs, toast, tx]);
+
+    const snapshotNow = useCallback(async (tabId: string) => {
+        const tab = tabsRef.current.find((item) => item.id === tabId);
+        if (!tab) return;
+        const stored = await takeSnapshot("manual", [tabId]);
+        toast({ tone: stored ? "success" : "info", message: tx(stored ? C.snapshotTaken : C.snapshotUnchanged, { name: tab.name }) });
+    }, [takeSnapshot, toast, tx]);
+
     const handleEditorMount = useCallback((instance: editor.IStandaloneCodeEditor, monaco: MonacoApi) => {
         setEditorInstance(instance);
         setMonacoInstance(monaco);
     }, []);
+
+    // ------------------------------------------------------------------ vim
+    // Vim keybindings (editor setting): loaded on demand, with their status line in the status bar.
+    const vimEnabled = settings.keybindingMode === "vim";
+    const [vimStatusNode, setVimStatusNode] = useState<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!vimEnabled || !editorInstance || !monacoInstance || !vimStatusNode) return;
+        let cancelled = false;
+        let stop: (() => void) | null = null;
+        import("@/lib/editor/vim")
+            .then(({ startVim }) => {
+                if (cancelled) return;
+                stop = startVim(monacoInstance, editorInstance, vimStatusNode, { save: () => actionsRef.current.save() });
+            })
+            .catch(() => {
+                if (!cancelled) toast({ tone: "error", message: txRef.current(C.vimFailed) });
+            });
+        return () => {
+            cancelled = true;
+            stop?.();
+        };
+    }, [vimEnabled, editorInstance, monacoInstance, vimStatusNode, toast]);
 
     // Menus close on an outside click/tap or Escape.
     useEffect(() => {
@@ -1562,6 +1886,25 @@ function EditorContent() {
         ];
     }, [collab.busy, collab.session, collab.title, copyCollabLink, isGameMode, openCollab, openTeamPanel, tx]);
 
+    /** View toggles (palette); the hint shows the current state. */
+    const problemCounts = problems.counts;
+    const viewCommands = useMemo<EditorCommand[]>(() => {
+        const icon = (Icon: typeof WrapText) => <Icon className="h-4 w-4" aria-hidden />;
+        const state = (on: boolean) => tx(on ? C.stateOn : C.stateOff);
+        return [
+            { id: "toggle-word-wrap", label: tx(C.toggleWordWrap), hint: state(settings.wordWrap !== "off"), icon: icon(WrapText), shortcut: shortcutText(VIEW_SHORTCUTS.wordWrap, mac), keywords: "word wrap line satır kaydır sar", run: toggleWordWrap },
+            { id: "toggle-minimap", label: tx(C.toggleMinimap), hint: state(settings.minimap), icon: icon(MapIcon), keywords: "minimap mini harita overview", run: toggleMinimap },
+            { id: "toggle-sticky-scroll", label: tx(C.toggleStickyScroll), hint: state(settings.stickyScroll), icon: icon(PanelTop), keywords: "sticky scroll yapışkan kaydırma başlık", run: toggleStickyScroll },
+            { id: "toggle-zen", label: tx(C.toggleZen), hint: tx(C.zenHint), icon: icon(Focus), shortcut: chordText(VIEW_SHORTCUTS.zen.keys, VIEW_SHORTCUTS.zen.then, mac), keywords: "zen focus odak tam ekran fullscreen distraction", run: toggleZen },
+            {
+                id: "problems", label: tx(C.showProblems), hint: tx(C.problemsHint, { errors: problemCounts.error, warnings: problemCounts.warning, infos: problemCounts.info }), icon: icon(CircleAlert),
+                shortcut: shortcutText(VIEW_SHORTCUTS.problems, mac), keywords: "problems errors warnings markers diagnostics sorunlar hatalar uyarılar", run: () => toggleProblems(),
+            },
+            { id: "search-files", label: tx(C.searchFiles), hint: tx(C.searchFilesHint), icon: icon(Search), shortcut: shortcutText(VIEW_SHORTCUTS.search, mac), keywords: "search find replace grep files all project ara bul değiştir dosyalar tümü", run: openSearch },
+            { id: "local-history", label: tx(C.localHistory), hint: tx(C.localHistoryHint), icon: icon(HistoryIcon), keywords: "history snapshot timeline restore compare diff geçmiş anlık görüntü geri yükle karşılaştır sürüm version", run: openHistory },
+        ];
+    }, [mac, openHistory, openSearch, problemCounts, settings.minimap, settings.stickyScroll, settings.wordWrap, toggleMinimap, toggleProblems, toggleStickyScroll, toggleWordWrap, toggleZen, tx]);
+
     const toMenuItem = ({ id, label, icon, shortcut, disabled, danger, run }: EditorCommand): ToolbarMenuItem => ({ id, label, icon, shortcut, disabled, danger, onSelect: run });
     const editMenuSections: ToolbarMenuSection[] = [
         { id: "edit", label: tx(C.editGroup), items: editCommands.map(toMenuItem) },
@@ -1588,6 +1931,7 @@ function EditorContent() {
             { id: "settings", group: actions, label: tx(C.settings), icon: <Settings className="h-4 w-4" aria-hidden />, keywords: "settings ayarlar font tema", run: () => router.push("/settings") },
             { id: "shortcuts", group: actions, label: tx(C.paletteShortcuts), icon: <Keyboard className="h-4 w-4" aria-hidden />, keywords: "keyboard kısayol", run: () => setDialog("shortcuts") },
             { id: "monaco", group: actions, label: tx(C.monacoPalette), shortcut: "F1", icon: <Command className="h-4 w-4" aria-hidden />, run: () => { editorInstance?.focus(); editorInstance?.trigger("hanogt", "editor.action.quickCommand", null); } },
+            ...viewCommands.map(toPalette(tx(C.viewGroup))),
             ...fileCommands.map(toPalette(tx(C.fileGroup))),
             ...editCommands.map(toPalette(tx(C.editGroup))),
             ...teamCommands.map(toPalette(tx(COLLAB_COPY.group))),
@@ -1614,7 +1958,7 @@ function EditorContent() {
         return commands;
         // modShortcut only depends on `mac`.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tx, runMode, programTabs.length, maxRunFiles, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, isGameMode, mac, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile, fileCommands, editCommands, teamCommands, mediaCommands]);
+    }, [tx, runMode, programTabs.length, maxRunFiles, isRunning, notRunnableReason, handleRun, activeIsProgram, activeIsValidator, handleRunActive, isGameMode, mac, hasPreview, showPreview, toggleSiteTheme, router, editorInstance, tabs, createFile, viewCommands, fileCommands, editCommands, teamCommands, mediaCommands]);
 
     // ------------------------------------------------------------------ render helpers
     // In a live session "saved" means the server has every local change.
@@ -1652,6 +1996,29 @@ function EditorContent() {
         void openFiles([...event.dataTransfer.files]);
     };
 
+    // The output panel's sections: console, preview and team first, then the tools.
+    const problemTotal = problems.counts.error + problems.counts.warning;
+    const panelSections: Array<{ id: PanelTab; label: string; title?: string; icon: ReactNode; extra?: ReactNode; tool?: boolean }> = [
+        { id: "console", label: tx(C.console), icon: <Terminal className="h-3.5 w-3.5" aria-hidden />, extra: isRunning ? <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden /> : null },
+        ...(hasPreview ? [{ id: "preview" as const, label: tx(C.previewPanel), icon: <Eye className="h-3.5 w-3.5" aria-hidden /> }] : []),
+        ...(collab.session ? [{
+            id: "team" as const, label: tx(COLLAB_COPY.team), icon: <UsersRound className="h-3.5 w-3.5" aria-hidden />,
+            extra: collab.chatUnread > 0 && panelTab !== "team" ? <span className="rounded-full bg-red-500 px-1.5 text-[10px] font-bold tabular-nums text-white">{collab.chatUnread > 9 ? "9+" : collab.chatUnread}</span> : null,
+        }] : []),
+        {
+            id: "problems", label: tx(PROBLEMS_TITLE), tool: true,
+            title: tx(C.withShortcut, { label: tx(PROBLEMS_TITLE), shortcut: shortcutText(VIEW_SHORTCUTS.problems, mac) }),
+            icon: <CircleAlert className={`h-3.5 w-3.5 ${problems.counts.error && panelTab !== "problems" ? "text-red-500" : ""}`} aria-hidden />,
+            extra: problemTotal > 0 ? <span className={`rounded-full px-1.5 text-[10px] font-bold tabular-nums ${problems.counts.error ? "bg-red-500 text-white" : "bg-amber-500 text-amber-950"}`}>{problemTotal > 99 ? "99+" : problemTotal}</span> : null,
+        },
+        {
+            id: "search", label: tx(SEARCH_TITLE), tool: true,
+            title: tx(C.withShortcut, { label: tx(C.searchFiles), shortcut: shortcutText(VIEW_SHORTCUTS.search, mac) }),
+            icon: <Search className="h-3.5 w-3.5" aria-hidden />,
+        },
+        { id: "history", label: tx(HISTORY_TITLE), title: tx(C.localHistory), tool: true, icon: <HistoryIcon className="h-3.5 w-3.5" aria-hidden /> },
+    ];
+
     const menuItem = (label: string, icon: ReactNode, onClick: () => void, options: { disabled?: boolean; hint?: string } = {}) => (
         <button type="button" role="menuitem" disabled={options.disabled} onClick={() => { setMenuOpen(null); onClick(); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-start text-sm text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-white/10">
             {icon}
@@ -1670,20 +2037,30 @@ function EditorContent() {
     }
 
     return (
-        <div className="flex h-dvh w-full overflow-hidden bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white" onDragEnter={onDragEnter} onDragOver={(event) => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }} onDragLeave={onDragLeave} onDrop={onDrop}>
-            <Sidebar
-                backHref={backHref}
-                saveShortcut={modShortcut("S")}
-                paletteShortcut={modShortcut("K")}
-                onNewFile={isGameMode ? undefined : () => setDialog("new")}
-                onUpload={isGameMode ? undefined : () => fileInputRef.current?.click()}
-                onSave={saveNow}
-                onDownload={() => downloadTab()}
-                onDownloadProject={() => void downloadProject()}
-                onShare={() => setDialog("share")}
-                onPalette={() => setDialog("palette")}
-                onShortcuts={() => setDialog("shortcuts")}
-            />
+        <div className="flex h-dvh w-full overflow-hidden bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white" data-zen={zen ? "on" : "off"} onDragEnter={onDragEnter} onDragOver={(event) => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }} onDragLeave={onDragLeave} onDrop={onDrop}>
+            {!zen && (
+                <Sidebar
+                    backHref={backHref}
+                    saveShortcut={modShortcut("S")}
+                    paletteShortcut={modShortcut("K")}
+                    zenShortcut={chordText(VIEW_SHORTCUTS.zen.keys, VIEW_SHORTCUTS.zen.then, mac)}
+                    problemsShortcut={shortcutText(VIEW_SHORTCUTS.problems, mac)}
+                    problemCount={problems.counts.error}
+                    onNewFile={isGameMode ? undefined : () => setDialog("new")}
+                    onUpload={isGameMode ? undefined : () => fileInputRef.current?.click()}
+                    onSave={saveNow}
+                    onDownload={() => downloadTab()}
+                    onDownloadProject={() => void downloadProject()}
+                    onShare={() => setDialog("share")}
+                    onPalette={() => setDialog("palette")}
+                    onShortcuts={() => setDialog("shortcuts")}
+                    onZen={toggleZen}
+                    onProblems={() => toggleProblems()}
+                    onSearch={openSearch}
+                    searchShortcut={shortcutText(VIEW_SHORTCUTS.search, mac)}
+                    onHistory={openHistory}
+                />
+            )}
             <input
                 ref={fileInputRef}
                 type="file"
@@ -1698,28 +2075,48 @@ function EditorContent() {
                 }}
             />
 
-            <div className="relative flex min-w-0 flex-1 flex-col">
-                {activeTab ? (
-                    <EditorTabs
-                        tabs={tabs}
-                        activeId={activeTab.id}
-                        onSelect={setActiveTabId}
-                        onClose={(id) => void closeTabs([id])}
-                        onCloseOthers={(id) => void closeTabs(tabs.filter((tab) => tab.id !== id).map((tab) => tab.id))}
-                        onCloseToRight={(id) => void closeTabs(tabs.slice(tabs.findIndex((tab) => tab.id === id) + 1).map((tab) => tab.id))}
-                        onRename={renameTab}
-                        onDuplicate={isGameMode ? undefined : duplicateTab}
-                        onDelete={(id) => void deleteTab(id)}
-                        onDownload={(id) => downloadTab(id)}
-                        onReorder={reorderTabs}
-                        onNew={isGameMode ? undefined : () => setDialog("new")}
-                        renameRequest={renameRequest}
-                    />
-                ) : (
-                    <div className="h-11 shrink-0 border-b border-zinc-200 bg-white dark:border-white/10 dark:bg-zinc-950" />
-                )}
+            <div className={`relative flex min-w-0 flex-1 flex-col ${zen ? "mx-auto w-full max-w-5xl" : ""}`}>
+                <div className="flex shrink-0 items-stretch">
+                    <div className="min-w-0 flex-1">
+                        {activeTab ? (
+                            <EditorTabs
+                                tabs={tabs}
+                                activeId={activeTab.id}
+                                onSelect={setActiveTabId}
+                                onClose={(id) => void closeTabs([id])}
+                                onCloseOthers={(id) => void closeTabs(tabs.filter((tab) => tab.id !== id).map((tab) => tab.id))}
+                                onCloseToRight={(id) => void closeTabs(tabs.slice(tabs.findIndex((tab) => tab.id === id) + 1).map((tab) => tab.id))}
+                                onRename={renameTab}
+                                onDuplicate={isGameMode ? undefined : duplicateTab}
+                                onDelete={(id) => void deleteTab(id)}
+                                onDownload={(id) => downloadTab(id)}
+                                onReorder={reorderTabs}
+                                onNew={isGameMode ? undefined : () => setDialog("new")}
+                                renameRequest={renameRequest}
+                            />
+                        ) : (
+                            <div className="h-11 shrink-0 border-b border-zinc-200 bg-white dark:border-white/10 dark:bg-zinc-950" />
+                        )}
+                    </div>
+                    {zen && (
+                        <button
+                            type="button"
+                            onClick={toggleZen}
+                            title={tx(C.withShortcut, { label: tx(C.exitZen), shortcut: "Esc" })}
+                            aria-label={tx(C.exitZen)}
+                            aria-keyshortcuts="Escape"
+                            data-zen-exit
+                            className="flex shrink-0 items-center gap-1.5 border-b border-s border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                        >
+                            <Minimize2 className="h-4 w-4" aria-hidden />
+                            <span className="hidden sm:inline">{tx(C.exitZen)}</span>
+                            <kbd className="hidden rounded border border-zinc-200 px-1 font-mono text-[10px] font-normal text-zinc-400 md:inline dark:border-white/10">Esc</kbd>
+                        </button>
+                    )}
+                </div>
 
                 {/* Toolbar */}
+                {!zen && (
                 <div className="flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200 bg-white px-2 sm:px-3 dark:border-white/10 dark:bg-zinc-950">
                     <Link href={backHref} className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-100 md:hidden dark:text-zinc-400 dark:hover:bg-white/10" aria-label={tx(SIDEBAR_COPY.back)}>
                         <ChevronDown className="h-5 w-5 rotate-90 rtl:-rotate-90" aria-hidden />
@@ -1808,6 +2205,10 @@ function EditorContent() {
                                     {menuItem(tx(SIDEBAR_COPY.downloadProject), <FolderDown className="h-4 w-4" aria-hidden />, () => void downloadProject())}
                                     {menuItem(tx(SIDEBAR_COPY.share), <Share2 className="h-4 w-4" aria-hidden />, () => setDialog("share"))}
                                     {menuItem(tx(SIDEBAR_COPY.palette), <Command className="h-4 w-4" aria-hidden />, () => setDialog("palette"))}
+                                    {menuItem(tx(C.searchFiles), <Search className="h-4 w-4" aria-hidden />, openSearch)}
+                                    {menuItem(tx(C.showProblems), <CircleAlert className="h-4 w-4" aria-hidden />, () => toggleProblems())}
+                                    {menuItem(tx(C.localHistory), <HistoryIcon className="h-4 w-4" aria-hidden />, openHistory)}
+                                    {menuItem(tx(C.toggleZen), <Focus className="h-4 w-4" aria-hidden />, toggleZen)}
                                     {menuItem(tx(C.toggleTheme), <Sun className="h-4 w-4" aria-hidden />, toggleSiteTheme)}
                                     {menuItem(tx(C.settings), <Settings className="h-4 w-4" aria-hidden />, () => router.push("/settings"))}
                                 </div>
@@ -1815,10 +2216,11 @@ function EditorContent() {
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* Editor and output */}
                 <div ref={splitRef} className="flex min-h-0 flex-1 flex-col lg:flex-row">
-                    <section className={`relative min-h-0 min-w-0 flex-1 p-1.5 sm:p-2 ${panelOpen ? "basis-[55%] lg:basis-auto" : ""}`} aria-label={activeTab?.name}>
+                    <section className={`relative min-h-0 min-w-0 flex-1 p-1.5 sm:p-2 ${panelOpen && !zen ? "basis-[55%] lg:basis-auto" : ""}`} aria-label={activeTab?.name}>
                         {activeTab && collabTabs && collab.session ? (
                             <CollabCodeEditor
                                 key={`collab-${collab.session.id}`}
@@ -1868,25 +2270,66 @@ function EditorContent() {
                                         return next;
                                     });
                                 }}
-                                className="hidden w-1.5 shrink-0 cursor-col-resize bg-transparent transition hover:bg-indigo-500/40 focus-visible:bg-indigo-500/60 focus-visible:outline-none lg:block"
+                                className={`hidden w-1.5 shrink-0 cursor-col-resize bg-transparent transition hover:bg-indigo-500/40 focus-visible:bg-indigo-500/60 focus-visible:outline-none ${zen ? "" : "lg:block"}`}
                             />
-                            <aside className="flex min-h-0 shrink-0 basis-[45%] flex-col border-t border-zinc-200 bg-white lg:basis-auto lg:border-s lg:border-t-0 dark:border-white/10 dark:bg-zinc-950" style={{ ["--panel-width" as string]: `${panelWidth}px` }}>
+                            {/* Zen mode hides the panel without unmounting it (the preview and the team chat keep their state). */}
+                            <aside className={`${zen ? "hidden" : "flex"} min-h-0 shrink-0 basis-[45%] flex-col border-t border-zinc-200 bg-white lg:basis-auto lg:border-s lg:border-t-0 dark:border-white/10 dark:bg-zinc-950`} style={{ ["--panel-width" as string]: `${panelWidth}px` }}>
                                 <div className="flex h-full min-h-0 flex-col lg:w-[var(--panel-width)] lg:max-w-[70vw]">
-                                    <div className="flex shrink-0 items-center gap-1 border-b border-zinc-200 px-2 py-1 dark:border-white/10" role="tablist" aria-label={tx(C.panel)}>
-                                        {(["console", "preview", "team"] as const).filter((name) => name === "console" || (name === "preview" ? hasPreview : Boolean(collab.session))).map((name) => (
-                                            <button key={name} type="button" role="tab" aria-selected={panelTab === name} onClick={() => setPanelTab(name)} className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${panelTab === name ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"}`}>
-                                                {name === "console" ? <Terminal className="h-3.5 w-3.5" aria-hidden /> : name === "preview" ? <Eye className="h-3.5 w-3.5" aria-hidden /> : <UsersRound className="h-3.5 w-3.5" aria-hidden />}
-                                                {tx(name === "console" ? C.console : name === "preview" ? C.previewPanel : COLLAB_COPY.team)}
-                                                {name === "console" && isRunning && <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden />}
-                                                {name === "team" && collab.chatUnread > 0 && panelTab !== "team" && (
-                                                    <span className="rounded-full bg-red-500 px-1.5 text-[10px] font-bold tabular-nums text-white">{collab.chatUnread > 9 ? "9+" : collab.chatUnread}</span>
-                                                )}
-                                            </button>
-                                        ))}
+                                    <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-zinc-200 px-2 py-1 [scrollbar-width:none] dark:border-white/10" role="tablist" aria-label={tx(C.panel)}>
+                                        {panelSections.map((section, index) => {
+                                            const selected = panelTab === section.id;
+                                            // The tools (problems, search, history) are icons at the end; their name shows when selected.
+                                            const firstTool = section.tool && !panelSections[index - 1]?.tool;
+                                            return (
+                                                <button
+                                                    key={section.id}
+                                                    type="button"
+                                                    role="tab"
+                                                    aria-selected={selected}
+                                                    onClick={() => setPanelTab(section.id)}
+                                                    title={section.tool ? section.title ?? section.label : undefined}
+                                                    data-panel-tab={section.id}
+                                                    className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${firstTool ? "ms-auto" : ""} ${selected ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"}`}
+                                                >
+                                                    {section.icon}
+                                                    <span className={section.tool && !selected ? "sr-only" : undefined}>{section.label}</span>
+                                                    {section.extra}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                     <div className="min-h-0 flex-1">
-                                        {panelTab === "team" && collab.session ? (
-                                            <CollabPanel session={collab.session} visible={panelOpen} onCopyLink={() => void copyCollabLink()} />
+                                        {panelTab === "problems" ? (
+                                            <ProblemsPanel groups={problems.groups} counts={problems.counts} onOpen={openProblem} focusRequest={problemsFocus} />
+                                        ) : panelTab === "search" ? (
+                                            <SearchPanel
+                                                files={tabs}
+                                                state={searchState}
+                                                onStateChange={setSearchState}
+                                                onOpenMatch={openSearchMatch}
+                                                onReplaceAll={replaceInFiles}
+                                                confirm={confirm}
+                                                canReplace={canEditFiles}
+                                                focusRequest={searchFocus}
+                                            />
+                                        ) : panelTab === "history" ? (
+                                            <HistoryPanel
+                                                tabs={tabs}
+                                                activeTabId={shownTabId}
+                                                store={localHistory.store}
+                                                status={localHistory.status}
+                                                version={localHistory.version}
+                                                enabled={settings.localHistory}
+                                                keyFor={localHistory.keyFor}
+                                                onCompare={(meta) => void compareSnapshot(meta)}
+                                                onRestore={(meta) => void restoreSnapshot(meta)}
+                                                onSnapshotNow={(tabId) => void snapshotNow(tabId)}
+                                                onEnable={() => updateEditorSettings({ localHistory: true })}
+                                                onChanged={localHistory.bump}
+                                                confirm={confirm}
+                                            />
+                                        ) : panelTab === "team" && collab.session ? (
+                                            <CollabPanel session={collab.session} visible={panelOpen && !zen} onCopyLink={() => void copyCollabLink()} />
                                         ) : panelTab === "preview" && hasPreview ? (
                                             <WebPreview files={previewFiles} activeFile={previewActive} stdin={stdin} dark={dark} reloadKey={previewKey} />
                                         ) : (
@@ -1914,7 +2357,10 @@ function EditorContent() {
                     )}
                 </div>
 
+                {(!zen || vimEnabled) && (
                 <StatusBar
+                    minimal={zen}
+                    vimStatusRef={vimEnabled ? setVimStatusNode : undefined}
                     editor={editorInstance}
                     monaco={monacoInstance}
                     language={activeLanguage.id}
@@ -1922,11 +2368,16 @@ function EditorContent() {
                     onLanguageClick={() => setDialog("language")}
                     saveState={saveState}
                     autoSaveNote={autoSaveNote}
+                    problems={problems.counts}
+                    onProblemsClick={() => toggleProblems()}
                 />
+                )}
                 <p className="sr-only" aria-live="polite">{isRunning ? tx(C.running) : ""}</p>
+                <p className="sr-only" aria-live="polite">{announcement}</p>
             </div>
 
-            <CommandPalette open={dialog === "palette"} onClose={() => setDialog(null)} commands={paletteCommands} />
+            <HistoryDiffDialog diff={historyDiff} monaco={monacoInstance} onClose={() => setHistoryDiff(null)} onRestore={() => historyDiff && void restoreSnapshot(historyDiff.meta)} />
+            <CommandPalette open={dialog === "palette"} onClose={() => setDialog(null)} commands={paletteCommands} chordArmedAt={paletteChordAt} chords={{ z: toggleZen }} />
             <CollabStartDialog
                 open={dialog === "collab"}
                 onClose={() => setDialog(null)}
@@ -1971,7 +2422,7 @@ function EditorContent() {
             />
             {confirmDialog}
             <ToastViewport toasts={toasts} onDismiss={dismissToast} />
-            <AIAssistant />
+            {!zen && <AIAssistant />}
         </div>
     );
 }

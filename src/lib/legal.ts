@@ -7,10 +7,10 @@ import { isOperatorPublished, type OperatorInfo } from "@/lib/legal-info";
  * notes are { TR, EN } copy so they follow the interface language; the Turkish
  * text prevails.
  */
-export const LEGAL_VERSION = "5.8";
+export const LEGAL_VERSION = "5.9";
 export const LEGAL_EFFECTIVE_DATE: Copy = { TR: "7 Ekim 2026", EN: "7 October 2026" };
 /** Stored in the browser when the user acknowledges the notice; a new id re-shows the notice. */
-export const LEGAL_NOTICE_ID = "5.8-2026-10-07";
+export const LEGAL_NOTICE_ID = "5.9-2026-10-07";
 
 /** Labels of the operator's details: the card on every legal page and the data controller tables. */
 export const OPERATOR_LABELS = {
@@ -79,6 +79,15 @@ export function legalChangesSince(noticeId: string | null, max = 3): LegalChange
 
 /** Newest first. The first entry is listed in the notice shown after an update. */
 export const LEGAL_CHANGES: LegalChange[] = [
+    {
+        version: "5.9",
+        date: { TR: "7 Ekim 2026", EN: "7 October 2026" },
+        items: [
+            { TR: "Kod editöründe yeni diller tarayıcınızda çalışır: jq, Less, SCSS, WebAssembly metni (WAT) ve Clojure kodu ile Graphviz DOT, ABC nota, AsciiDoc, GLSL ve Logo önizlemeleri tarayıcınızda işlenir; bu dillerde kodunuz ve girdiniz hiçbir sunucuya gönderilmez. CoffeeScript artık Wandbox'a gönderilmez, tarayıcınızda derlenip çalıştırılır. Bu dillerin çalışma zamanları yalnızca ilk kullanımda sitemizden indirilir.", EN: "New languages in the code editor run in your browser: jq, Less, SCSS, WebAssembly text (WAT) and Clojure code, and Graphviz DOT, ABC notation, AsciiDoc, GLSL and Logo previews, are processed in your browser; for these languages your code and input are never sent to any server. CoffeeScript is no longer sent to Wandbox; it is compiled and run in your browser. These languages' runtimes are downloaded from our site only the first time you use them." },
+            { TR: "Kod editöründe yerel geçmiş: Dosyalarınızın anlık görüntüleri (kaydettiğinizde, çalıştırdığınızda ve düzenlerken birkaç dakikada bir, içerik değiştiyse) yalnızca bu tarayıcının yerel veritabanında (IndexedDB) saklanır; sunucumuza veya Cloud Firestore'a gönderilmez. Dosya başına en fazla 30 anlık görüntü ve toplam 25 MB tutulur, sınır aşılınca en eskiler silinir. Yerel geçmişi editör ayarlarından kapatabilir, Geçmiş panelinden bir dosyanın ya da bütün dosyaların geçmişini silebilirsiniz. Gizlilik Politikası'ndaki tarayıcı depolama tablosu buna göre güncellendi.", EN: "Local history in the code editor: snapshots of your files (when you save, when you run and every few minutes while you edit, if the content changed) are kept only in this browser's local database (IndexedDB); they are not sent to our server or to Cloud Firestore. Up to 30 snapshots per file and 25 MB in all are kept, and the oldest are deleted when a limit is reached. You can turn local history off in the editor settings and delete one file's history or all of it from the History panel. The browser storage table in the Privacy Policy was updated accordingly." },
+            { TR: "Gizlilik Politikası'nın kod çalıştırma bölümü düzeltildi: Sunucuda çalışan dillerde Girdi sekmesine planınıza göre en fazla 10.000 (Ücretsiz), 50.000 (Plus) veya 100.000 (Pro) karakter yazabilirsiniz ve dakikada çalıştırılabilen dosya sayısı planınıza göre 40, 150 veya 400'dür (önceki metinde 10.000 karakter ve dakikada 20 çalıştırma yazıyordu).", EN: "The Running code section of the Privacy Policy was corrected: for languages that run on the server, the Input tab takes up to 10,000 (Free), 50,000 (Plus) or 100,000 (Pro) characters depending on your plan, and the number of files you can run per minute is 40, 150 or 400 depending on your plan (the previous text said 10,000 characters and 20 runs a minute)." },
+        ],
+    },
     {
         version: "5.8",
         date: { TR: "7 Ekim 2026", EN: "7 October 2026" },

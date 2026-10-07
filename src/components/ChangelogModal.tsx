@@ -24,6 +24,22 @@ export interface UpdateEntry {
 /** Newest first; the About page builds its release timeline from the same list. */
 export const UPDATES: UpdateEntry[] = [
     {
+        id: "v0.3.33",
+        version: "v0.3.33",
+        date: "2026-10-07",
+        title: { TR: "Kod editörüne 10 yeni dil ve yeni araçlar", EN: "10 new languages and new tools in the code editor" },
+        desc: { TR: "jq, Less, SCSS, WebAssembly metni, Clojure ve beş yeni önizleme dili tarayıcıda çalışıyor; editöre sorunlar paneli, projede arama, yerel geçmiş, Emmet, Zen modu ve Vim tuşları geldi.", EN: "jq, Less, SCSS, WebAssembly text, Clojure and five new preview languages run in your browser; the editor gained a problems panel, project search, local history, Emmet, Zen mode and Vim keys." },
+        items: [
+            { TR: "Tarayıcıda çalışan yeni diller: jq, Less, SCSS, WebAssembly metni (WAT) ve Clojure; CoffeeScript artık sunucuya gitmeden tarayıcıda çalışıyor.", EN: "New languages that run in your browser: jq, Less, SCSS, WebAssembly text (WAT) and Clojure; CoffeeScript now runs in the browser instead of on a server." },
+            { TR: "Yeni önizlemeler: Graphviz DOT, ABC nota, AsciiDoc, GLSL gölgelendiricileri ve Logo kaplumbağa çizimleri.", EN: "New previews: Graphviz DOT, ABC notation, AsciiDoc, GLSL shaders and Logo turtle drawings." },
+            { TR: "Konsolda ANSI renkleri; hata bağlantıları renkli çıktıda da çalışır.", EN: "ANSI colours in the console; error links work in coloured output too." },
+            { TR: "Sorunlar paneli (Ctrl/⌘+Shift+M) ve projede ara ve değiştir (Ctrl/⌘+Shift+F).", EN: "A problems panel (Ctrl/⌘+Shift+M) and search and replace across the project (Ctrl/⌘+Shift+F)." },
+            { TR: "Yerel geçmiş: dosyalarının anlık görüntüleri yalnızca bu tarayıcıda tutulur; farkı görüp geri yükleyebilirsin.", EN: "Local history: snapshots of your files are kept only in this browser; compare and restore them." },
+            { TR: "Emmet, Zen modu (Ctrl/⌘+K Z), kelime kaydırma için Alt+Z ve isteğe bağlı Vim tuşları.", EN: "Emmet, Zen mode (Ctrl/⌘+K Z), Alt+Z for word wrap and optional Vim keys." },
+            { TR: "Gizlilik Politikası 5.9.", EN: "Privacy Policy 5.9." },
+        ],
+    },
+    {
         id: "v0.3.32",
         version: "v0.3.32",
         date: "2026-10-07",

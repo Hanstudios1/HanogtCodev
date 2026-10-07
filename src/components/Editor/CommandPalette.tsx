@@ -1,7 +1,7 @@
 "use client";
 
 import { CornerDownLeft, Search } from "lucide-react";
-import { useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import Modal from "@/components/Editor/Modal";
 import { matchScore } from "@/components/Editor/search";
 import { useI18n } from "@/lib/i18n";
@@ -24,14 +24,35 @@ interface CommandPaletteProps {
     open: boolean;
     onClose: () => void;
     commands: PaletteCommand[];
+    /**
+     * When the palette was opened with its shortcut (Ctrl/⌘+K), the time
+     * (performance.now()) it happened: a key from `chords` pressed right
+     * after it completes a two-step shortcut such as Ctrl/⌘+K Z.
+     */
+    chordArmedAt?: number;
+    /** Second keys of two-step shortcuts (lower case) and what they do. */
+    chords?: Readonly<Record<string, () => void>>;
 }
 
-export default function CommandPalette({ open, onClose, commands }: CommandPaletteProps) {
+/** How long after Ctrl/⌘+K the second key of a two-step shortcut is accepted. */
+const CHORD_WINDOW_MS = 1500;
+/** A letter typed this soon after the chord key means a search ("zip"), not the shortcut. */
+const CHORD_CONTINUATION_MS = 280;
+
+export default function CommandPalette({ open, onClose, commands, chordArmedAt = 0, chords }: CommandPaletteProps) {
     const { tx } = useI18n();
     const [query, setQuery] = useState("");
     const [activeIndex, setActiveIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
     const listId = useId();
+    /** The second key of a two-step shortcut, waiting to see whether more letters follow. */
+    const pendingChord = useRef<{ key: string; typed: string; timer: number } | null>(null);
+    useEffect(() => {
+        const pending = pendingChord;
+        return () => {
+            if (pending.current) window.clearTimeout(pending.current.timer);
+        };
+    }, []);
     // Every opening starts with an empty search, also after Mod+K closed the palette.
     const [wasOpen, setWasOpen] = useState(open);
     if (open !== wasOpen) {
@@ -51,7 +72,14 @@ export default function CommandPalette({ open, onClose, commands }: CommandPalet
     }, [commands, query]);
     const active = Math.min(activeIndex, Math.max(0, results.length - 1));
 
+    const cancelChord = () => {
+        const pending = pendingChord.current;
+        if (pending) window.clearTimeout(pending.timer);
+        pendingChord.current = null;
+        return pending;
+    };
     const close = () => {
+        cancelChord();
         setQuery("");
         setActiveIndex(0);
         onClose();
@@ -61,6 +89,48 @@ export default function CommandPalette({ open, onClose, commands }: CommandPalet
         close();
         // Let the dialog close (and restore focus) before the command moves focus elsewhere.
         window.setTimeout(command.run, 0);
+    };
+    const runChord = (key: string) => {
+        const action = chords?.[key];
+        close();
+        if (action) window.setTimeout(action, 0);
+    };
+    /**
+     * Two-step shortcuts: right after Ctrl/⌘+K, a chord key (Z) in the empty
+     * search box runs its action unless another letter follows at once.
+     * Returns true when the key was handled here.
+     */
+    const handleChordKey = (event: ReactKeyboardEvent<HTMLInputElement>): boolean => {
+        if (event.nativeEvent.isComposing) return false;
+        const pending = pendingChord.current;
+        if (pending) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                runChord(pending.key);
+                return true;
+            }
+            cancelChord();
+            if (event.key === "Backspace") {
+                event.preventDefault();
+                return true;
+            }
+            if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                // A search that starts with the chord letter: keep both letters.
+                event.preventDefault();
+                setQuery(`${pending.typed}${event.key}`);
+                setActiveIndex(0);
+                return true;
+            }
+            // Arrows and other keys: the letter counts as typed.
+            setQuery(pending.typed);
+            return false;
+        }
+        const key = event.key.toLowerCase();
+        const armed = chordArmedAt > 0 && performance.now() - chordArmedAt < CHORD_WINDOW_MS;
+        if (!armed || query || !chords?.[key] || event.ctrlKey || event.metaKey || event.altKey || event.key.length !== 1) return false;
+        event.preventDefault();
+        pendingChord.current = { key, typed: event.key, timer: window.setTimeout(() => runChord(key), CHORD_CONTINUATION_MS) };
+        return true;
     };
     const move = (delta: number) => {
         if (!results.length) return;
@@ -82,6 +152,7 @@ export default function CommandPalette({ open, onClose, commands }: CommandPalet
                         setActiveIndex(0);
                     }}
                     onKeyDown={(event) => {
+                        if (handleChordKey(event)) return;
                         if (event.key === "ArrowDown") { event.preventDefault(); move(1); }
                         else if (event.key === "ArrowUp") { event.preventDefault(); move(-1); }
                         else if (event.key === "Enter") { event.preventDefault(); execute(results[active]); }

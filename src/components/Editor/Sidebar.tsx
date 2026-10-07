@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Command, Download, FilePlus2, FolderDown, Keyboard, Moon, Save, Settings, Share2, Sun, Upload } from "lucide-react";
+import { ArrowLeft, CircleAlert, Command, Download, FilePlus2, Focus, FolderDown, History, Keyboard, Moon, Save, Search, Settings, Share2, Sun, Upload } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useI18n, type Copy } from "@/lib/i18n";
@@ -15,12 +15,25 @@ export interface EditorActions {
     onShare: () => void;
     onPalette: () => void;
     onShortcuts: () => void;
+    /** Enters Zen mode (the sidebar itself is hidden there). */
+    onZen?: () => void;
+    /** Opens or closes the Problems panel. */
+    onProblems?: () => void;
+    /** Opens search in all files. */
+    onSearch?: () => void;
+    /** Opens the local history. */
+    onHistory?: () => void;
 }
 
 interface SidebarProps extends EditorActions {
     backHref?: string;
     saveShortcut: string;
     paletteShortcut: string;
+    zenShortcut?: string;
+    problemsShortcut?: string;
+    searchShortcut?: string;
+    /** Errors and warnings in the open files (a dot on the Problems button). */
+    problemCount?: number;
 }
 
 export const SIDEBAR_COPY = {
@@ -33,6 +46,10 @@ export const SIDEBAR_COPY = {
     share: { TR: "Kod parçacığını paylaş", EN: "Share snippet" },
     palette: { TR: "Hızlı işlemler", EN: "Quick actions" },
     shortcuts: { TR: "Klavye kısayolları", EN: "Keyboard shortcuts" },
+    zen: { TR: "Zen modu", EN: "Zen mode" },
+    problems: { TR: "Sorunlar", EN: "Problems" },
+    search: { TR: "Dosyalarda ara", EN: "Search in files" },
+    history: { TR: "Yerel geçmiş", EN: "Local history" },
     settings: { TR: "Editör ayarları", EN: "Editor settings" },
     light: { TR: "Açık temaya geç", EN: "Switch to light theme" },
     dark: { TR: "Koyu temaya geç", EN: "Switch to dark theme" },
@@ -54,7 +71,7 @@ function ActionButton({ label, shortcut, onClick, children, accent = false }: { 
 }
 
 /** The editor's vertical activity bar (tablet and desktop). */
-export default function Sidebar({ backHref = "/dashboard", saveShortcut, paletteShortcut, onNewFile, onUpload, onSave, onDownload, onDownloadProject, onShare, onPalette, onShortcuts }: SidebarProps) {
+export default function Sidebar({ backHref = "/dashboard", saveShortcut, paletteShortcut, zenShortcut, problemsShortcut, searchShortcut, problemCount = 0, onNewFile, onUpload, onSave, onDownload, onDownloadProject, onShare, onPalette, onShortcuts, onZen, onProblems, onSearch, onHistory }: SidebarProps) {
     const { tx } = useI18n();
     const { theme, toggle } = useTheme();
     return (
@@ -70,8 +87,19 @@ export default function Sidebar({ backHref = "/dashboard", saveShortcut, palette
                 <ActionButton label={tx(SIDEBAR_COPY.downloadProject)} onClick={onDownloadProject}><FolderDown className="h-5 w-5" aria-hidden /></ActionButton>
                 <ActionButton label={tx(SIDEBAR_COPY.share)} onClick={onShare}><Share2 className="h-5 w-5" aria-hidden /></ActionButton>
                 <div className="my-1 h-px w-6 bg-zinc-200 dark:bg-white/10" />
+                {onSearch && <ActionButton label={tx(SIDEBAR_COPY.search)} shortcut={searchShortcut} onClick={onSearch}><Search className="h-5 w-5" aria-hidden /></ActionButton>}
+                {onProblems && (
+                    <ActionButton label={tx(SIDEBAR_COPY.problems)} shortcut={problemsShortcut} onClick={onProblems}>
+                        <span className="relative">
+                            <CircleAlert className="h-5 w-5" aria-hidden />
+                            {problemCount > 0 && <span className="absolute -end-1 -top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-950" aria-hidden />}
+                        </span>
+                    </ActionButton>
+                )}
+                {onHistory && <ActionButton label={tx(SIDEBAR_COPY.history)} onClick={onHistory}><History className="h-5 w-5" aria-hidden /></ActionButton>}
                 <ActionButton label={tx(SIDEBAR_COPY.palette)} shortcut={paletteShortcut} onClick={onPalette}><Command className="h-5 w-5" aria-hidden /></ActionButton>
                 <ActionButton label={tx(SIDEBAR_COPY.shortcuts)} onClick={onShortcuts}><Keyboard className="h-5 w-5" aria-hidden /></ActionButton>
+                {onZen && <ActionButton label={tx(SIDEBAR_COPY.zen)} shortcut={zenShortcut} onClick={onZen}><Focus className="h-5 w-5" aria-hidden /></ActionButton>}
             </div>
             <div className="flex flex-col items-center gap-1">
                 <ActionButton label={tx(theme === "dark" ? SIDEBAR_COPY.light : SIDEBAR_COPY.dark)} onClick={toggle}>

@@ -4,6 +4,7 @@ import Editor, { type BeforeMount, type OnMount } from "@monaco-editor/react";
 import { LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { editor } from "monaco-editor";
+import { retainEmmet } from "@/lib/editor/emmet";
 import { DEFAULT_EDITOR_SETTINGS, resolveEditorTheme, tabSizeFor, toMonacoOptions, useEditorSettings, type EditorSettings } from "@/lib/editor-settings";
 import { useI18n } from "@/lib/i18n";
 import { configureMonaco, setupMonaco, type MonacoApi } from "@/lib/monaco";
@@ -66,6 +67,64 @@ export default function CodeEditor({ language, theme, monacoTheme, value, onChan
         ...options,
     }), [settings, readOnly, options, ariaLabel, tx]);
 
+    /**
+     * The text stays in sync both ways: the editor reports changes through
+     * onChange and a new `value` from the parent replaces the text. The parent
+     * can re-render with an older value when typing outruns its renders; the
+     * values the editor reported but the parent hasn't caught up with are
+     * remembered, so such a stale value is ignored instead of undoing the newer
+     * keystrokes (@monaco-editor/react re-applied it and moved the cursor).
+     */
+    const reported = useRef<{ uri: string; values: string[] }>({ uri: "", values: [] });
+    const applying = useRef(false);
+    const onChangeRef = useRef(onChange);
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+    const handleChange = useCallback((next: string | undefined) => {
+        if (applying.current) return;
+        const uri = editorRef.current?.getModel()?.uri.toString() ?? "";
+        const values = reported.current.uri === uri ? reported.current.values : [];
+        reported.current = { uri, values: [...values.slice(-199), next ?? ""] };
+        onChangeRef.current(next);
+    }, []);
+
+    const appliedValue = useRef(value);
+    useEffect(() => {
+        const instance = editorRef.current;
+        const monaco = monacoRef.current;
+        if (!mounted || !instance || !monaco || appliedValue.current === value) return;
+        appliedValue.current = value;
+        const model = instance.getModel();
+        if (!model) return;
+        // Values reported for this model (another file's don't count).
+        if (reported.current.uri !== model.uri.toString()) reported.current = { uri: model.uri.toString(), values: [] };
+        if (value === model.getValue()) {
+            // The parent caught up with the editor.
+            reported.current.values = [];
+            return;
+        }
+        const echo = reported.current.values.lastIndexOf(value);
+        if (echo >= 0) {
+            reported.current.values = reported.current.values.slice(echo + 1);
+            return;
+        }
+        // A change made outside the editor (another file shown, a clean-up on save…): one undoable edit.
+        applying.current = true;
+        try {
+            if (instance.getOption(monaco.editor.EditorOption.readOnly)) {
+                instance.setValue(value);
+            } else {
+                instance.pushUndoStop();
+                instance.executeEdits("", [{ range: model.getFullModelRange(), text: value, forceMoveMarkers: true }]);
+                instance.pushUndoStop();
+            }
+        } finally {
+            applying.current = false;
+        }
+        reported.current.values = [];
+    }, [mounted, value]);
+
     const handleMount = useCallback<OnMount>((instance, monaco: MonacoApi) => {
         editorRef.current = instance;
         monacoRef.current = monaco;
@@ -91,6 +150,12 @@ export default function CodeEditor({ language, theme, monacoTheme, value, onChan
         return () => subscription.dispose();
     }, [mounted, tabSize, settings.insertSpaces, settings.detectIndentation]);
 
+    // Emmet abbreviations (editor setting, on by default) while this editor is on the page.
+    useEffect(() => {
+        if (!mounted || !monacoRef.current || !settings.emmet) return;
+        return retainEmmet(monacoRef.current);
+    }, [mounted, settings.emmet]);
+
     useEffect(() => {
         if (!mounted || !monacoRef.current) return;
         const monaco = monacoRef.current;
@@ -99,14 +164,15 @@ export default function CodeEditor({ language, theme, monacoTheme, value, onChan
     }, [mounted, settings.fontFamily, settings.fontSize, settings.fontWeight, settings.letterSpacing]);
 
     return (
-        <div className={`h-full w-full overflow-hidden rounded-xl border border-zinc-200 shadow-sm dark:border-zinc-800 ${className}`}>
+        // Code reads left to right; Monaco drew its lines off-screen inside right-to-left pages.
+        <div dir="ltr" className={`h-full w-full overflow-hidden rounded-xl border border-zinc-200 shadow-sm dark:border-zinc-800 ${className}`}>
             <Editor
                 height="100%"
                 language={monacoLanguage}
                 path={path}
-                value={value}
+                defaultValue={value}
                 theme={resolvedTheme}
-                onChange={onChange}
+                onChange={handleChange}
                 beforeMount={beforeMount}
                 onMount={handleMount}
                 loading={<div className="flex items-center gap-2 text-sm text-zinc-500"><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />{tx({ TR: "Editör yükleniyor…", EN: "Loading the editor…" })}</div>}
